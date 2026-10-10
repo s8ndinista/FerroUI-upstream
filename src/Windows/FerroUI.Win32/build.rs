@@ -3,7 +3,10 @@
 //! them to `$OUT_DIR/<name>.rs` (included by the module of each file).
 //!
 //! The four files of the reference are in the crate (`direct_x/directx.idl`,
-//! `d_composition/dcomp.idl`, `win32_com/win32.idl`, `win_rt/winrt.idl`); a
+//! `d_composition/dcomp.idl`, `win32_com/win32.idl`, `win_rt/winrt.idl`), and
+//! one that is written from the C# declarations of the reference, which has
+//! no file for the provider interfaces of UI Automation
+//! (`automation/interop/uia.idl`); a
 //! file is compiled from the stage that ports the structures it names and
 //! the code that uses it (docs/porting/win32-platform.md, section 2.2).
 //! Until then the tests of the generator hold that it still generates.
@@ -18,6 +21,7 @@ const COMPILED: &[(&str, &str)] = &[
     ("d_composition/dcomp.idl", "dcomp.rs"),
     ("win_rt/winrt.idl", "winrt.rs"),
     ("win32_com/win32.idl", "win32.rs"),
+    ("automation/interop/uia.idl", "uia.rs"),
 ];
 
 fn main() {
