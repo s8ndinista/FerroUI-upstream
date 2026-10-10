@@ -19,6 +19,7 @@
 // on every host.
 #![cfg_attr(not(windows), allow(dead_code))]
 
+pub mod automation;
 pub mod d_composition;
 pub mod direct_x;
 pub mod input;

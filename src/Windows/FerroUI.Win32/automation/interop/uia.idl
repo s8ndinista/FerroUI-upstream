@@ -1,0 +1,719 @@
+// The provider interfaces of UI Automation the Windows backend implements, for the MicroCom
+// generator (src/tools/MicroCom.CodeGenerator).
+//
+// The reference has no interface definition file for them: it declares each interface in C#
+// (`Interop/I*.cs` of its automation project) for the COM source generator of its runtime. This
+// file is written from those declarations: every interface with its identifier and its methods
+// in the order of the declaration, which is the order of the virtual function table, under the
+// names of the reference (`GetProviderOptions` where the header of the system has the property
+// `ProviderOptions`). The enumerations and the identifiers of properties, patterns, events and
+// control types are the ones the reference declares beside the interfaces.
+//
+// Compared with `UIAutomationCore.idl` of the Windows SDK: the identifiers and the order of the
+// methods are the ones of the system for every interface here. Two declarations of the reference
+// differ from the header, and this file follows the header for the first:
+//   - `ITextProvider::RangeFromPoint` takes a `UiaPoint` by value in the header and two doubles
+//     in the reference. The two are the same call on 32-bit x86 and on ARM64, and are not on
+//     x86-64, where a structure of sixteen bytes is passed by reference. No class of the
+//     reference implements the interface, so nothing there is called through it.
+//   - the member `Rotatation` of the property identifiers is `UIA_RotationPropertyId` (30166):
+//     the value is the one of the system, the name is the one of the reference.
+// The reference also leaves out what the header added after it was written (the provider
+// options above `UseComThreading`, the events after `Changes`): nothing here uses them.
+//
+// The lines below name the Rust type of every type name the file does not declare.
+@rust-types-from super
+@rust-map BOOL i32
+@rust-map HWND isize
+@rust-map LPCWSTR *const u16
+@rust-map BSTR *mut u16
+@rust-map VARIANT crate::automation::marshalling::ComVariant
+@rust-map SAFEARRAY_PTR crate::automation::marshalling::SafeArrayRef
+
+[flags]
+enum ProviderOptions
+{
+    ClientSideProvider = 0x0001,
+    ServerSideProvider = 0x0002,
+    NonClientAreaProvider = 0x0004,
+    OverrideProvider = 0x0008,
+    ProviderOwnsSetFocus = 0x0010,
+    UseComThreading = 0x0020
+}
+
+enum UiaPropertyId
+{
+    RuntimeId = 30000,
+    BoundingRectangle,
+    ProcessId,
+    ControlType,
+    LocalizedControlType,
+    Name,
+    AcceleratorKey,
+    AccessKey,
+    HasKeyboardFocus,
+    IsKeyboardFocusable,
+    IsEnabled,
+    AutomationId,
+    ClassName,
+    HelpText,
+    ClickablePoint,
+    Culture,
+    IsControlElement,
+    IsContentElement,
+    LabeledBy,
+    IsPassword,
+    NativeWindowHandle,
+    ItemType,
+    IsOffscreen,
+    Orientation,
+    FrameworkId,
+    IsRequiredForForm,
+    ItemStatus,
+    IsDockPatternAvailable,
+    IsExpandCollapsePatternAvailable,
+    IsGridItemPatternAvailable,
+    IsGridPatternAvailable,
+    IsInvokePatternAvailable,
+    IsMultipleViewPatternAvailable,
+    IsRangeValuePatternAvailable,
+    IsScrollPatternAvailable,
+    IsScrollItemPatternAvailable,
+    IsSelectionItemPatternAvailable,
+    IsSelectionPatternAvailable,
+    IsTablePatternAvailable,
+    IsTableItemPatternAvailable,
+    IsTextPatternAvailable,
+    IsTogglePatternAvailable,
+    IsTransformPatternAvailable,
+    IsValuePatternAvailable,
+    IsWindowPatternAvailable,
+    ValueValue,
+    ValueIsReadOnly,
+    RangeValueValue,
+    RangeValueIsReadOnly,
+    RangeValueMinimum,
+    RangeValueMaximum,
+    RangeValueLargeChange,
+    RangeValueSmallChange,
+    ScrollHorizontalScrollPercent,
+    ScrollHorizontalViewSize,
+    ScrollVerticalScrollPercent,
+    ScrollVerticalViewSize,
+    ScrollHorizontallyScrollable,
+    ScrollVerticallyScrollable,
+    SelectionSelection,
+    SelectionCanSelectMultiple,
+    SelectionIsSelectionRequired,
+    GridRowCount,
+    GridColumnCount,
+    GridItemRow,
+    GridItemColumn,
+    GridItemRowSpan,
+    GridItemColumnSpan,
+    GridItemContainingGrid,
+    DockDockPosition,
+    ExpandCollapseExpandCollapseState,
+    MultipleViewCurrentView,
+    MultipleViewSupportedViews,
+    WindowCanMaximize,
+    WindowCanMinimize,
+    WindowWindowVisualState,
+    WindowWindowInteractionState,
+    WindowIsModal,
+    WindowIsTopmost,
+    SelectionItemIsSelected,
+    SelectionItemSelectionContainer,
+    TableRowHeaders,
+    TableColumnHeaders,
+    TableRowOrColumnMajor,
+    TableItemRowHeaderItems,
+    TableItemColumnHeaderItems,
+    ToggleToggleState,
+    TransformCanMove,
+    TransformCanResize,
+    TransformCanRotate,
+    IsLegacyIAccessiblePatternAvailable,
+    LegacyIAccessibleChildId,
+    LegacyIAccessibleName,
+    LegacyIAccessibleValue,
+    LegacyIAccessibleDescription,
+    LegacyIAccessibleRole,
+    LegacyIAccessibleState,
+    LegacyIAccessibleHelp,
+    LegacyIAccessibleKeyboardShortcut,
+    LegacyIAccessibleSelection,
+    LegacyIAccessibleDefaultAction,
+    AriaRole,
+    AriaProperties,
+    IsDataValidForForm,
+    ControllerFor,
+    DescribedBy,
+    FlowsTo,
+    ProviderDescription,
+    IsItemContainerPatternAvailable,
+    IsVirtualizedItemPatternAvailable,
+    IsSynchronizedInputPatternAvailable,
+    OptimizeForVisualContent,
+    IsObjectModelPatternAvailable,
+    AnnotationAnnotationTypeId,
+    AnnotationAnnotationTypeName,
+    AnnotationAuthor,
+    AnnotationDateTime,
+    AnnotationTarget,
+    IsAnnotationPatternAvailable,
+    IsTextPattern2Available,
+    StylesStyleId,
+    StylesStyleName,
+    StylesFillColor,
+    StylesFillPatternStyle,
+    StylesShape,
+    StylesFillPatternColor,
+    StylesExtendedProperties,
+    IsStylesPatternAvailable,
+    IsSpreadsheetPatternAvailable,
+    SpreadsheetItemFormula,
+    SpreadsheetItemAnnotationObjects,
+    SpreadsheetItemAnnotationTypes,
+    IsSpreadsheetItemPatternAvailable,
+    Transform2CanZoom,
+    IsTransformPattern2Available,
+    LiveSetting,
+    IsTextChildPatternAvailable,
+    IsDragPatternAvailable,
+    DragIsGrabbed,
+    DragDropEffect,
+    DragDropEffects,
+    IsDropTargetPatternAvailable,
+    DropTargetDropTargetEffect,
+    DropTargetDropTargetEffects,
+    DragGrabbedItems,
+    Transform2ZoomLevel,
+    Transform2ZoomMinimum,
+    Transform2ZoomMaximum,
+    FlowsFrom,
+    IsTextEditPatternAvailable,
+    IsPeripheral,
+    IsCustomNavigationPatternAvailable,
+    PositionInSet,
+    SizeOfSet,
+    Level,
+    AnnotationTypes,
+    AnnotationObjects,
+    LandmarkType,
+    LocalizedLandmarkType,
+    FullDescription,
+    FillColor,
+    OutlineColor,
+    FillType,
+    VisualEffects,
+    OutlineThickness,
+    CenterPoint,
+    Rotatation,
+    Size,
+    IsSelectionPattern2Available,
+    Selection2FirstSelectedItem,
+    Selection2LastSelectedItem,
+    Selection2CurrentSelectedItem,
+    Selection2ItemCount,
+    HeadingLevel,
+    IsDialog
+}
+
+enum UiaPatternId
+{
+    Invoke = 10000,
+    Selection,
+    Value,
+    RangeValue,
+    Scroll,
+    ExpandCollapse,
+    Grid,
+    GridItem,
+    MultipleView,
+    Window,
+    SelectionItem,
+    Dock,
+    Table,
+    TableItem,
+    Text,
+    Toggle,
+    Transform,
+    ScrollItem,
+    LegacyIAccessible,
+    ItemContainer,
+    VirtualizedItem,
+    SynchronizedInput,
+    ObjectModel,
+    Annotation,
+    Text2,
+    Styles,
+    Spreadsheet,
+    SpreadsheetItem,
+    Transform2,
+    TextChild,
+    Drag,
+    DropTarget,
+    TextEdit,
+    CustomNavigation
+}
+
+enum UiaControlTypeId
+{
+    Button = 50000,
+    Calendar,
+    CheckBox,
+    ComboBox,
+    Edit,
+    Hyperlink,
+    Image,
+    ListItem,
+    List,
+    Menu,
+    MenuBar,
+    MenuItem,
+    ProgressBar,
+    RadioButton,
+    ScrollBar,
+    Slider,
+    Spinner,
+    StatusBar,
+    Tab,
+    TabItem,
+    Text,
+    ToolBar,
+    ToolTip,
+    Tree,
+    TreeItem,
+    Custom,
+    Group,
+    Thumb,
+    DataGrid,
+    DataItem,
+    Document,
+    SplitButton,
+    Window,
+    Pane,
+    Header,
+    HeaderItem,
+    Table,
+    TitleBar,
+    Separator,
+    SemanticZoom,
+    AppBar
+}
+
+enum UiaLandmarkType
+{
+    Custom = 80000,
+    Form,
+    Main,
+    Navigation,
+    Search
+}
+
+enum UiaHeadingLevel
+{
+    None = 80050,
+    Level1,
+    Level2,
+    Level3,
+    Level4,
+    Level5,
+    Level6,
+    Level7,
+    Level8,
+    Level9
+}
+
+enum UiaLiveSetting
+{
+    Off = 0,
+    Polite,
+    Assertive
+}
+
+enum NavigateDirection
+{
+    Parent,
+    NextSibling,
+    PreviousSibling,
+    FirstChild,
+    LastChild
+}
+
+enum AsyncContentLoadedState
+{
+    Beginning,
+    Progress,
+    Completed
+}
+
+enum StructureChangeType
+{
+    ChildAdded,
+    ChildRemoved,
+    ChildrenInvalidated,
+    ChildrenBulkAdded,
+    ChildrenBulkRemoved,
+    ChildrenReordered
+}
+
+enum UiaEventId
+{
+    ToolTipOpened = 20000,
+    ToolTipClosed,
+    StructureChanged,
+    MenuOpened,
+    AutomationPropertyChanged,
+    AutomationFocusChanged,
+    AsyncContentLoaded,
+    MenuClosed,
+    LayoutInvalidated,
+    Invoke_Invoked,
+    SelectionItem_ElementAddedToSelection,
+    SelectionItem_ElementRemovedFromSelection,
+    SelectionItem_ElementSelected,
+    Selection_Invalidated,
+    Text_TextSelectionChanged,
+    Text_TextChanged,
+    Window_WindowOpened,
+    Window_WindowClosed,
+    MenuModeStart,
+    MenuModeEnd,
+    InputReachedTarget,
+    InputReachedOtherElement,
+    InputDiscarded,
+    SystemAlert,
+    LiveRegionChanged,
+    HostedFragmentRootsInvalidated,
+    Drag_DragStart,
+    Drag_DragCancel,
+    Drag_DragComplete,
+    DropTarget_DragEnter,
+    DropTarget_DragLeave,
+    DropTarget_Dropped,
+    TextEdit_TextChanged,
+    TextEdit_ConversionTargetChanged,
+    Changes
+}
+
+enum DockPosition
+{
+    Top,
+    Left,
+    Bottom,
+    Right,
+    Fill,
+    None
+}
+
+enum SynchronizedInputType
+{
+    KeyUp = 0x01,
+    KeyDown = 0x02,
+    MouseLeftButtonUp = 0x04,
+    MouseLeftButtonDown = 0x08,
+    MouseRightButtonUp = 0x10,
+    MouseRightButtonDown = 0x20
+}
+
+enum RowOrColumnMajor
+{
+    RowMajor,
+    ColumnMajor,
+    Indeterminate
+}
+
+enum SupportedTextSelection
+{
+    None,
+    Single,
+    Multiple
+}
+
+enum TextPatternRangeEndpoint
+{
+    Start = 0,
+    End = 1
+}
+
+enum TextUnit
+{
+    Character = 0,
+    Format = 1,
+    Word = 2,
+    Line = 3,
+    Paragraph = 4,
+    Page = 5,
+    Document = 6
+}
+
+enum WindowVisualState
+{
+    Normal,
+    Maximized,
+    Minimized
+}
+
+enum WindowInteractionState
+{
+    Running,
+    Closing,
+    ReadyForUserInteraction,
+    BlockedByModalWindow,
+    NotResponding
+}
+
+// `UiaRect` of the system: the bounding rectangle of a fragment in screen coordinates.
+struct UiaRect
+{
+    double left;
+    double top;
+    double width;
+    double height;
+}
+
+// `UiaPoint` of the system.
+struct UiaPoint
+{
+    double x;
+    double y;
+}
+
+[uuid(d6dd68d1-86fd-4332-8666-9abedea2d24c)]
+interface IRawElementProviderSimple : IUnknown
+{
+    HRESULT GetProviderOptions([out, retval] ProviderOptions* pRetVal);
+    HRESULT GetPatternProvider([in] int patternId, [out, retval] IUnknown** pRetVal);
+    HRESULT GetPropertyValue([in] int propertyId, [out, retval] VARIANT* pRetVal);
+    HRESULT GetHostRawElementProvider([out, retval] IRawElementProviderSimple** pRetVal);
+}
+
+[uuid(a0a839a9-8da1-4a82-806a-8e0d44e79f56)]
+interface IRawElementProviderSimple2 : IRawElementProviderSimple
+{
+    HRESULT ShowContextMenu();
+}
+
+[uuid(f7063da8-8359-439c-9297-bbc5299a7d87)]
+interface IRawElementProviderFragment : IUnknown
+{
+    HRESULT Navigate([in] NavigateDirection direction, [out, retval] IRawElementProviderFragment** pRetVal);
+    HRESULT GetRuntimeId([out, retval] SAFEARRAY_PTR* pRetVal);
+    HRESULT GetBoundingRectangle([out, retval] UiaRect* pRetVal);
+    HRESULT GetEmbeddedFragmentRoots([out, retval] SAFEARRAY_PTR* pRetVal);
+    HRESULT SetFocus();
+    HRESULT GetFragmentRoot([out, retval] IRawElementProviderFragmentRoot** pRetVal);
+}
+
+[uuid(620ce2a5-ab8f-40a9-86cb-de3c75599b58)]
+interface IRawElementProviderFragmentRoot : IUnknown
+{
+    HRESULT ElementProviderFromPoint([in] double x, [in] double y, [out, retval] IRawElementProviderFragment** pRetVal);
+    HRESULT GetFocus([out, retval] IRawElementProviderFragment** pRetVal);
+}
+
+[uuid(a407b27b-0f6d-4427-9292-473c7bf93258)]
+interface IRawElementProviderAdviseEvents : IUnknown
+{
+    HRESULT AdviseEventAdded([in] int eventId, [in] SAFEARRAY_PTR properties);
+    HRESULT AdviseEventRemoved([in] int eventId, [in] SAFEARRAY_PTR properties);
+}
+
+[uuid(54fcb24b-e18e-47a2-b4d3-eccbe77599a2)]
+interface IInvokeProvider : IUnknown
+{
+    HRESULT Invoke();
+}
+
+// The state is `ToggleState` of the automation contracts of the controls (the values of the
+// system: off, on, indeterminate).
+[uuid(56d00bd0-c4f4-433c-a836-1a52a57e0892)]
+interface IToggleProvider : IUnknown
+{
+    HRESULT Toggle();
+    HRESULT GetToggleState([out, retval] int* pRetVal);
+}
+
+[uuid(c7935180-6fb3-4201-b174-7df73adbf64a)]
+interface IValueProvider : IUnknown
+{
+    HRESULT SetValue([in] LPCWSTR value);
+    HRESULT GetValue([out, retval] BSTR* pRetVal);
+    HRESULT GetIsReadOnly([out, retval] BOOL* pRetVal);
+}
+
+[uuid(36dc7aef-33e6-4691-afe1-2be7274b3d33)]
+interface IRangeValueProvider : IUnknown
+{
+    HRESULT SetValue([in] double value);
+    HRESULT GetValue([out, retval] double* pRetVal);
+    HRESULT GetIsReadOnly([out, retval] BOOL* pRetVal);
+    HRESULT GetMaximum([out, retval] double* pRetVal);
+    HRESULT GetMinimum([out, retval] double* pRetVal);
+    HRESULT GetLargeChange([out, retval] double* pRetVal);
+    HRESULT GetSmallChange([out, retval] double* pRetVal);
+}
+
+[uuid(d847d3a5-cab0-4a98-8c32-ecb45c59ad24)]
+interface IExpandCollapseProvider : IUnknown
+{
+    HRESULT Expand();
+    HRESULT Collapse();
+    HRESULT GetExpandCollapseState([out, retval] int* pRetVal);
+}
+
+[uuid(fb8b03af-3bdf-48d4-bd36-1a65793be168)]
+interface ISelectionProvider : IUnknown
+{
+    HRESULT GetSelection([out, retval] SAFEARRAY_PTR* pRetVal);
+    HRESULT CanSelectMultiple([out, retval] BOOL* pRetVal);
+    HRESULT IsSelectionRequired([out, retval] BOOL* pRetVal);
+}
+
+[uuid(2acad808-b2d4-452d-a407-91ff1ad167b2)]
+interface ISelectionItemProvider : IUnknown
+{
+    HRESULT Select();
+    HRESULT AddToSelection();
+    HRESULT RemoveFromSelection();
+    HRESULT GetIsSelected([out, retval] BOOL* pRetVal);
+    HRESULT GetSelectionContainer([out, retval] IRawElementProviderSimple** pRetVal);
+}
+
+// The amounts are `ScrollAmount` of the automation contracts of the controls (the values of the
+// system: large decrement, small decrement, no amount, large increment, small increment).
+[uuid(b38b8077-1fc3-42a5-8cae-d40c2215055a)]
+interface IScrollProvider : IUnknown
+{
+    HRESULT Scroll([in] int horizontalAmount, [in] int verticalAmount);
+    HRESULT SetScrollPercent([in] double horizontalPercent, [in] double verticalPercent);
+    HRESULT GetHorizontalScrollPercent([out, retval] double* pRetVal);
+    HRESULT GetVerticalScrollPercent([out, retval] double* pRetVal);
+    HRESULT GetHorizontalViewSize([out, retval] double* pRetVal);
+    HRESULT GetVerticalViewSize([out, retval] double* pRetVal);
+    HRESULT GetHorizontallyScrollable([out, retval] BOOL* pRetVal);
+    HRESULT GetVerticallyScrollable([out, retval] BOOL* pRetVal);
+}
+
+[uuid(2360c714-4bf1-4b26-ba65-9b21316127eb)]
+interface IScrollItemProvider : IUnknown
+{
+    HRESULT ScrollIntoView();
+}
+
+[uuid(159bc72c-4ad3-485e-9637-d7052edf0146)]
+interface IDockProvider : IUnknown
+{
+    HRESULT SetDockPosition([in] DockPosition dockPosition);
+    HRESULT GetDockPosition([out, retval] DockPosition* pRetVal);
+}
+
+[uuid(d02541f1-fb81-4d64-ae32-f520f8a6dbd1)]
+interface IGridItemProvider : IUnknown
+{
+    HRESULT GetRow([out, retval] int* pRetVal);
+    HRESULT GetColumn([out, retval] int* pRetVal);
+    HRESULT GetRowSpan([out, retval] int* pRetVal);
+    HRESULT GetColumnSpan([out, retval] int* pRetVal);
+    HRESULT GetContainingGrid([out, retval] IRawElementProviderSimple** pRetVal);
+}
+
+[uuid(b17d6187-0907-464b-a168-0ef17a1572b1)]
+interface IGridProvider : IUnknown
+{
+    HRESULT GetItem([in] int row, [in] int column, [out, retval] IRawElementProviderSimple** pRetVal);
+    HRESULT GetRowCount([out, retval] int* pRetVal);
+    HRESULT GetColumnCount([out, retval] int* pRetVal);
+}
+
+[uuid(6278cab1-b556-4a1a-b4e0-418acc523201)]
+interface IMultipleViewProvider : IUnknown
+{
+    HRESULT GetViewName([in] int viewId, [out, retval] BSTR* pRetVal);
+    HRESULT SetCurrentView([in] int viewId);
+    HRESULT GetCurrentView([out, retval] int* pRetVal);
+    HRESULT GetSupportedViews([out, retval] SAFEARRAY_PTR* pRetVal);
+}
+
+[uuid(29db1a06-02ce-4cf7-9b42-565d4fab20ee)]
+interface ISynchronizedInputProvider : IUnknown
+{
+    HRESULT StartListening([in] SynchronizedInputType inputType);
+    HRESULT Cancel();
+}
+
+[uuid(b9734fa6-771f-4d78-9c90-2517999349cd)]
+interface ITableItemProvider : IUnknown
+{
+    HRESULT GetRowHeaderItems([out, retval] SAFEARRAY_PTR* pRetVal);
+    HRESULT GetColumnHeaderItems([out, retval] SAFEARRAY_PTR* pRetVal);
+}
+
+[uuid(9c860395-97b3-490a-b52a-858cc22af166)]
+interface ITableProvider : IUnknown
+{
+    HRESULT GetRowHeaders([out, retval] SAFEARRAY_PTR* pRetVal);
+    HRESULT GetColumnHeaders([out, retval] SAFEARRAY_PTR* pRetVal);
+    HRESULT GetRowOrColumnMajor([out, retval] RowOrColumnMajor* pRetVal);
+}
+
+[uuid(5347ad7b-c355-46f8-aff5-909033582f63)]
+interface ITextRangeProvider : IUnknown
+{
+    HRESULT Clone([out, retval] ITextRangeProvider** pRetVal);
+    HRESULT Compare([in] ITextRangeProvider* range, [out, retval] BOOL* pRetVal);
+    HRESULT CompareEndpoints([in] TextPatternRangeEndpoint endpoint, [in] ITextRangeProvider* targetRange, [in] TextPatternRangeEndpoint targetEndpoint, [out, retval] int* pRetVal);
+    HRESULT ExpandToEnclosingUnit([in] TextUnit unit);
+    HRESULT FindAttribute([in] int attribute, [in] VARIANT value, [in] BOOL backward, [out, retval] ITextRangeProvider** pRetVal);
+    HRESULT FindText([in] BSTR text, [in] BOOL backward, [in] BOOL ignoreCase, [out, retval] ITextRangeProvider** pRetVal);
+    HRESULT GetAttributeValue([in] int attribute, [out, retval] VARIANT* pRetVal);
+    HRESULT GetBoundingRectangles([out, retval] SAFEARRAY_PTR* pRetVal);
+    HRESULT GetEnclosingElement([out, retval] IRawElementProviderSimple** pRetVal);
+    HRESULT GetText([in] int maxLength, [out, retval] BSTR* pRetVal);
+    HRESULT Move([in] TextUnit unit, [in] int count, [out, retval] int* pRetVal);
+    HRESULT MoveEndpointByUnit([in] TextPatternRangeEndpoint endpoint, [in] TextUnit unit, [in] int count, [out, retval] int* pRetVal);
+    HRESULT MoveEndpointByRange([in] TextPatternRangeEndpoint endpoint, [in] ITextRangeProvider* targetRange, [in] TextPatternRangeEndpoint targetEndpoint);
+    HRESULT Select();
+    HRESULT AddToSelection();
+    HRESULT RemoveFromSelection();
+    HRESULT ScrollIntoView([in] BOOL alignToTop);
+    HRESULT GetChildren([out, retval] SAFEARRAY_PTR* pRetVal);
+}
+
+[uuid(3589c92c-63f3-4367-99bb-ada653b77cf2)]
+interface ITextProvider : IUnknown
+{
+    HRESULT GetSelection([out, retval] SAFEARRAY_PTR* pRetVal);
+    HRESULT GetVisibleRanges([out, retval] SAFEARRAY_PTR* pRetVal);
+    HRESULT RangeFromChild([in] IRawElementProviderSimple* childElement, [out, retval] ITextRangeProvider** pRetVal);
+    HRESULT RangeFromPoint([in] UiaPoint point, [out, retval] ITextRangeProvider** pRetVal);
+    HRESULT GetDocumentRange([out, retval] ITextRangeProvider** pRetVal);
+    HRESULT GetSupportedTextSelection([out, retval] SupportedTextSelection* pRetVal);
+}
+
+[uuid(6829ddc4-4f91-4ffa-b86f-bd3e2987cb4c)]
+interface ITransformProvider : IUnknown
+{
+    HRESULT Move([in] double x, [in] double y);
+    HRESULT Resize([in] double width, [in] double height);
+    HRESULT Rotate([in] double degrees);
+    HRESULT GetCanMove([out, retval] BOOL* pRetVal);
+    HRESULT GetCanResize([out, retval] BOOL* pRetVal);
+    HRESULT GetCanRotate([out, retval] BOOL* pRetVal);
+}
+
+[uuid(987df77b-db06-4d77-8f8a-86a9c3bb90b9)]
+interface IWindowProvider : IUnknown
+{
+    HRESULT SetVisualState([in] WindowVisualState state);
+    HRESULT Close();
+    HRESULT WaitForInputIdle([in] int milliseconds, [out, retval] BOOL* pRetVal);
+    HRESULT GetMaximizable([out, retval] BOOL* pRetVal);
+    HRESULT GetMinimizable([out, retval] BOOL* pRetVal);
+    HRESULT GetIsModal([out, retval] BOOL* pRetVal);
+    HRESULT GetVisualState([out, retval] WindowVisualState* pRetVal);
+    HRESULT GetInteractionState([out, retval] WindowInteractionState* pRetVal);
+    HRESULT GetIsTopmost([out, retval] BOOL* pRetVal);
+}
