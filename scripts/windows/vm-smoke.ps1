@@ -352,8 +352,26 @@ Say ""
 Say "-- tests"
 if (-not $SkipTests -and -not $failed.Contains('build')) {
     $testFeatures = if ($angle) { '' } else { '--no-default-features' }
-    if ((Run 'test' "cargo test --locked $jobsArgument -p ferroui-win32 $testFeatures --no-fail-fast") -ne 0) { $failed.Add('tests') }
-    Tail 'test' 6 'test result|FAILED|panicked'
+    if ((Run 'test' "cargo test --locked $jobsArgument -p ferroui-win32 $testFeatures --no-fail-fast") -ne 0) {
+        $failed.Add('tests')
+        Tail 'test' 6 'test result|FAILED|panicked|exit code'
+        # A test that takes the process down (an access violation) leaves no result line and the
+        # harness has captured what it printed. The tests of the library are run again one at a
+        # time with their output: the last test the log names without a result is the one that
+        # ended the process.
+        Say "the tests of the library again, one at a time with their output:"
+        Run 'test-serial' "cargo test --locked $jobsArgument -p ferroui-win32 $testFeatures --lib -- --test-threads=1 --nocapture" | Out-Null
+        $serial = Join-Path $logs 'test-serial.log'
+        if (Test-Path $serial) {
+            $unfinished = @(Get-Content $serial | Where-Object { $_ -match '^test \S+' -and $_ -notmatch '\.\.\. (ok|FAILED|ignored)\s*$' })
+            $started = @(Get-Content $serial | Where-Object { $_ -match '^test \S+' })
+            if ($started.Count -gt 0) { Say ("    the last test that started: {0}" -f $started[-1]) }
+            foreach ($line in ($unfinished | Select-Object -Last 3)) { Say "    without a result on its line: $line" }
+            Tail 'test-serial' 8 'test result|FAILED|panicked|exit code|STATUS_'
+        }
+    } else {
+        Tail 'test' 6 'test result|FAILED|panicked'
+    }
 }
 
 # ---- smoke runs -------------------------------------------------------------------------------
