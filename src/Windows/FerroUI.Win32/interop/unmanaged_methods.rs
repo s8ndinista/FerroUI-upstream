@@ -2247,11 +2247,15 @@ mod native {
     /// `wglGetProcAddress`: the address of an entry point of the driver of
     /// the current context that the system library does not export; null
     /// if it has none, or if no context is current.
+    ///
+    /// Some implementations answer 1, 2, 3 or -1 instead of null for an
+    /// entry point they do not have: those are null here too, so that no
+    /// caller takes one for a function.
     pub fn wgl_get_proc_address(name: &std::ffi::CStr) -> *const c_void {
         // SAFETY: a null-terminated string that lives through the call.
         match unsafe { gl::wglGetProcAddress(name.as_ptr().cast()) } {
-            Some(entry) => entry as *const c_void,
-            None => std::ptr::null(),
+            Some(entry) if crate::open_gl::wgl_display::is_entry_point(entry as usize) => entry as *const c_void,
+            _ => std::ptr::null(),
         }
     }
 
