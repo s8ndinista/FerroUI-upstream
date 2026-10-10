@@ -6,7 +6,7 @@ pub mod wgl_consts;
 
 #[cfg(windows)]
 mod wgl_context;
-mod wgl_display;
+pub(crate) mod wgl_display;
 #[cfg(windows)]
 mod wgl_gdi_resource_manager;
 #[cfg(windows)]

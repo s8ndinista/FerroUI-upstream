@@ -82,6 +82,15 @@ pub(crate) fn context_attributes(version: GlVersion) -> [i32; 8] {
     ]
 }
 
+/// Whether what `wglGetProcAddress` answered is the address of an entry
+/// point. The function answers null for a name the driver does not have;
+/// some implementations answer 1, 2, 3 or -1 instead, and calling one of
+/// those is an access violation.
+// Not in the reference, which converts whatever is answered but null.
+pub(crate) fn is_entry_point(address: usize) -> bool {
+    !matches!(address, 0..=3 | usize::MAX)
+}
+
 #[cfg(windows)]
 pub(crate) use imp::WglDisplay;
 
@@ -187,7 +196,18 @@ mod imp {
         // ask: the tests of the crate run on the threads of the harness.
         fn initialize_core() -> Initialized {
             let bootstrap_window = WglGdiResourceManager::create_offscreen_window();
+            // Not in the reference: without a window (a process without a
+            // desktop to create one on) the device context asked for would
+            // be the one of the whole screen, and without a device context
+            // there is nothing to create a context for.
+            if bootstrap_window == 0 {
+                return Initialized::NoBootstrapContext;
+            }
             let bootstrap_dc = WglGdiResourceManager::get_dc(bootstrap_window);
+            if bootstrap_dc == 0 {
+                WglGdiResourceManager::destroy_window(bootstrap_window);
+                return Initialized::NoBootstrapContext;
+            }
             let mut default_pfd = bootstrap_pixel_format_descriptor();
             let mut default_pixel_format = choose_pixel_format(bootstrap_dc, &default_pfd);
             set_pixel_format(bootstrap_dc, default_pixel_format, &default_pfd);
@@ -286,7 +306,15 @@ mod imp {
             share: Option<&Rc<WglContext>>,
         ) -> Result<Option<Rc<WglContext>>, OpenGlException> {
             let window = WglGdiResourceManager::create_offscreen_window();
+            // As for the bootstrap window: no window, no context.
+            if window == 0 {
+                return Ok(None);
+            }
             let dc = WglGdiResourceManager::get_dc(window);
+            if dc == 0 {
+                WglGdiResourceManager::destroy_window(window);
+                return Ok(None);
+            }
             set_pixel_format(dc, state.default_pixel_format, &state.default_pfd);
             for version in versions {
                 if version.type_() != GlProfileType::OpenGL {
@@ -337,6 +365,15 @@ mod imp {
 mod tests {
     // Not from upstream: the reference has no tests of WGL.
     use super::*;
+
+    #[test]
+    fn the_values_some_drivers_answer_for_a_missing_entry_point_are_not_entry_points() {
+        for missing in [0usize, 1, 2, 3, usize::MAX] {
+            assert!(!is_entry_point(missing));
+        }
+        assert!(is_entry_point(4));
+        assert!(is_entry_point(0x7ff6_0000_1000));
+    }
     use ferroui_opengl::GlProfileType;
 
     #[test]
