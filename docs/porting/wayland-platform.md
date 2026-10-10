@@ -323,6 +323,23 @@ Three earlier runs of the job belong to the record. Run 38091618151 (commit `933
 
 The log of sway has "A configure is scheduled for an uninitialized xdg_surface" once for every popup: sway 1.9 unconstrains a popup before the popup's first commit. It is noise of the compositor.
 
+### Measured in the virtual machine for stage 2, parts 1 to 3 (2026-10-11) **[VM]**
+
+Ubuntu 24.04.3 on ARM64, sway 1.9 and grim, `ferroui-vm-wayland/scripts/stage2a.sh`, sources at commit `17089f29` (the second run of the script; the first, on `0816ddd5`, had the same smoke results with 54 and 50 checks and showed the misplaced popups described above):
+
+| Step | Result |
+|---|---|
+| Tests of the crate | 52 passed |
+| Smoke through `wl_shm` buffers and through EGL (`LIBGL_ALWAYS_SOFTWARE=1`), scale 1 and scale 2 | 59 of 59 each |
+| The same on an output of 1200 by 720 at scale 1.5 | 55 of 55 each |
+| Smoke through EGL with the driver the machine chooses by itself | 59 of 59 |
+| The ControlCatalog, 7 pages, output of 1280 by 800; of 2560 by 1600 at scale 2; of 1920 by 1200 at scale 1.5 | 7 pictures each in `ferroui-screenshots/wayland/stage2/`, `stage2/scale2/`, `stage2/scale15/` |
+| The catalog with the first combo box of the ComboBox page open: through `wl_shm` buffers, through EGL, and at scale 2 | "Popup placement: [ok]" each (an anchor of (510, 154, 250 by 32)); `software-popup-01-ComboBox.png`, `egl-popup-01-ComboBox.png`, `scale2/software-popup-01-ComboBox.png`: the list directly under its combo box |
+| The catalog with the first menu item of the Menu page open | "Popup placement: [ok]" (an anchor of (280, 116, 47 by 32)); `software-popup-01-Menu.png`: the menu under "File" |
+| The catalog floating on an output of 1600 by 1000 after it asked once for less than full decorations | `software-decorated-01-Home.png`, `software-decorated-02-Buttons.png`: the title bar with the title and the caption buttons, the border; the window at the size it asks for |
+
+**A popup opened while its control is moving.** What the picture hook met is reachable by a user: a press on a control of a page that is still sliding in opens its popup at the place the control has at that moment, because the anchor rectangle is the control's bounds transformed to the root at the time of the update (`calculate_anchor_rect`, `transform_to_visual`), and nothing updates it when only a render transform changes. Read against upstream at the tracked commit (`Popup.cs`): the position of an open popup is updated when the window moves (`PositionChanged`), when the placement target raises `LayoutUpdated`, and when a parent popup moves; an animated render transform raises none of them, so upstream leaves the popup where the control was as well, on every platform (on Wayland the compositor then also slides a popup that would leave the output back into it, which is why the pictures had it at the edge). This is from reading both sources; it was not reproduced in a host test of the controls crate (a combo box on a page pushed with a slide, opened in the middle of the transition), which is the way to confirm it and to see where the popup is once the transition ends. Nothing in the controls crate was changed for it.
+
 ### Measured in the virtual machine (2026-10-10) **[VM]**
 
 Ubuntu 24.04.3 on ARM64 (`aarch64-unknown-linux-gnu`), sway 1.9 and grim from the distribution, the sources and the build directory on the shared folder (`ferroui-vm-wayland/scripts/stage1b.sh`, commit `3c93449f`):
