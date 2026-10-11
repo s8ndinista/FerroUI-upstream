@@ -329,6 +329,43 @@ $env:RUST_BACKTRACE = '1'
 $jobsArgument = if ($Jobs -gt 0) { "-j$Jobs" } else { '' }
 Set-Location $Source
 
+# ---- the room of the target directory ---------------------------------------------------------
+# Every sync is a new source directory, and cargo keeps the artifacts of the crates of a workspace
+# apart by the path of their sources: the artifacts of the crates of the previous sync are never
+# used again and stay (the disk of the owner's machine was down to 2.7 GB after a few syncs). When
+# the source path is not the one the target directory was last built from, the artifacts of the
+# crates of the workspace are removed before the build; those of the crates of the registry
+# (ANGLE and Skia among them, the long builds) are the same for every sync and stay.
+function Free-GB([string]$path) {
+    $root = [System.IO.Path]::GetPathRoot((Resolve-Path $path).Path)
+    $drive = New-Object System.IO.DriveInfo($root)
+    return [math]::Round($drive.AvailableFreeSpace / 1GB, 1)
+}
+New-Item -ItemType Directory -Force -Path $TargetDir | Out-Null
+$builtFrom = Join-Path $TargetDir '.vm-smoke-source'
+$previous = if (Test-Path $builtFrom) { (Get-Content $builtFrom | Select-Object -First 1) } else { '' }
+Say ("target directory: {0} GB free on its disk" -f (Free-GB $TargetDir))
+if ($previous -ne $Source) {
+    if (Test-Path (Join-Path $TargetDir 'debug')) {
+        $metadata = cmd /c "cargo metadata --locked --no-deps --format-version 1 2>nul" | Out-String
+        $packages = @()
+        try { $packages = @((ConvertFrom-Json $metadata).packages | ForEach-Object { $_.name }) } catch { $packages = @() }
+        if ($packages.Count -gt 0) {
+            $arguments = ($packages | ForEach-Object { "-p $_" }) -join ' '
+            cmd /c "cargo clean --locked $arguments > nul 2>&1" | Out-Null
+            Say ("target directory: the artifacts of the {0} crates of the workspace were removed (last built from '{1}'); {2} GB free" -f $packages.Count, $previous, (Free-GB $TargetDir))
+        } else {
+            Say "target directory: the crates of the workspace could not be listed (cargo metadata); nothing was removed"
+        }
+    }
+    Set-Content -Path $builtFrom -Value $Source -Encoding ASCII
+}
+$free = Free-GB $TargetDir
+if ($free -lt 2) {
+    Say ("MISSING: {0} GB free on the disk of the target directory ({1}); the build needs more than 2 GB. Remove the target directory, or what else fills the disk, and start again." -f $free, $TargetDir)
+    exit 2
+}
+
 # ---- build ------------------------------------------------------------------------------------
 Say ""
 Say "-- build"

@@ -195,6 +195,9 @@ mod tests {
                 assert!(context.is_lost());
             }
             None => {
+                if crate::interop::unmanaged_methods::current_session_id() == Some(0) {
+                    println!("WGL: session 0: the OpenGL of the system is not asked for here");
+                }
                 assert!(WglPlatformOpenGlInterface::primary_context().is_none());
                 println!("WGL: the system creates no context of OpenGL 4.0 or 3.2 (no driver with the extensions of WGL)");
             }
