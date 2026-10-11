@@ -84,6 +84,10 @@ microcom-codegen.workspace = true
 # any host like the crate itself (the Skia backend is not: its bindings are built with a C++
 # toolchain of the target).
 ferroui-vello.workspace = true
+# The tests of the automation nodes build a window of controls on the windowing platform of the
+# unit tests of the controls.
+ferroui-base = { workspace = true, features = ["testing"] }
+ferroui-controls = { workspace = true, features = ["testing"] }
 
 [[example]]
 name = "win32_window"

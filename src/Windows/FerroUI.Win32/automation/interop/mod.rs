@@ -25,6 +25,7 @@ mod uia {
 }
 
 pub use uia::*;
+#[allow(unused_imports)] // The tests implement the trait.
 pub(crate) use uia_core_provider_api::{IUiaCoreProviderApi, UiaCoreProviderApi};
 #[allow(unused_imports)] // Nothing of the port looks an identifier up yet: the tests do.
 pub(crate) use uia_core_types_api::{AutomationIdType, UiaCoreTypesApi};

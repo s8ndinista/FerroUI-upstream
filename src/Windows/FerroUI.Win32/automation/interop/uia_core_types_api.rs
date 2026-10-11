@@ -7,6 +7,7 @@ use ferroui_microcom::Guid;
 /// The kind of identifier a lookup asks for.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[repr(i32)]
+#[allow(dead_code)] // The kinds are the ones the reference declares.
 pub(crate) enum AutomationIdType {
     Property,
     Pattern,
