@@ -5,15 +5,13 @@
 //! from, with an abstract nested class `Sink` their sinks derive from. Here
 //! the window holds a [`WindowBaseImpl`], its sink holds a [`Sink`], and what
 //! the derived classes override is the trait [`ISinkOwner`].
-//!
-//! The drag and drop part of the sink (`WindowImplBase.DragDrop.cs`) belongs
-//! to stage 2 of `docs/porting/wayland-platform.md`.
 
 use crate::screens::wayland_output_snapshot::WaylandOutputId;
 use crate::server::persistent::i_w_surface::IWSurface;
 use crate::server::persistent::i_w_xdg_top_level::WXdgShellSurfaceProxy;
 use crate::server::wayland_worker_client::WaylandWorkerClient;
 use crate::wayland_cursor_factory::WaylandCursorImpl;
+use crate::window_impl_base_drag_drop::DragDropState;
 use crate::window_impl_base_keyboard::KeyRepeat;
 use ferroui_base::input::raw::{IRawInputEventArgs, RawKeyEventArgs, RawKeyEventType, RawTextInputEventArgs};
 use ferroui_base::input::{IInputDevice, IInputRoot, KeyboardDevice, MouseDevice, TouchDevice};
@@ -223,6 +221,7 @@ pub(crate) struct Sink {
     is_disposed: Cell<bool>,
     raw_event_grouper: RawEventGrouper,
     pub(crate) key_repeat: KeyRepeat,
+    pub(crate) drag_drop: DragDropState,
 }
 
 impl Sink {
@@ -241,6 +240,7 @@ impl Sink {
                     Some(client.input_dispatch_queue().clone()),
                 ),
                 key_repeat: KeyRepeat::new(this.clone()),
+                drag_drop: DragDropState::default(),
             }
         })
     }
@@ -291,11 +291,19 @@ impl Sink {
             return;
         }
 
+        if self.handle_drag_drop_dispatch(&args, &input_root) {
+            return;
+        }
+
         if parent.handle_surface_specific_dispatch(&args) {
             return;
         }
 
         parent.base().raise_input(args.clone());
+
+        if self.handle_drag_drop_post_dispatch(&args) {
+            return;
+        }
 
         if args.handled() {
             return;

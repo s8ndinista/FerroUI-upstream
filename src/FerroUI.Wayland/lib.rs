@@ -1,8 +1,9 @@
 //! ferroui-wayland
 //!
 //! The windowing platform of FerroUI for Wayland compositors: windows over
-//! `xdg_toplevel`, input, screens, cursors, and render surfaces over shared
-//! memory buffers and over EGL. `docs/porting/wayland-platform.md` has the
+//! `xdg_toplevel`, popups, input, screens, cursors, the clipboard and drag
+//! and drop over `wl_data_device`, and render surfaces over shared memory
+//! buffers and over EGL. `docs/porting/wayland-platform.md` has the
 //! design and the stages.
 //!
 //! A worker thread owns the connection to the compositor and renders; the UI
@@ -16,6 +17,7 @@
 //! the geometry of a window, the frames of pointer events) exists on every
 //! system, which is where its tests run during development.
 
+pub mod clipboard;
 pub mod screens;
 pub mod server;
 pub mod ferro_wayland_exception;
@@ -43,6 +45,8 @@ pub mod wayland_top_level_factory;
 pub mod window_impl;
 #[cfg(target_os = "linux")]
 pub mod window_impl_base;
+#[cfg(target_os = "linux")]
+mod window_impl_base_drag_drop;
 #[cfg(target_os = "linux")]
 mod window_impl_base_keyboard;
 #[cfg(target_os = "linux")]

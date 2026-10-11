@@ -2,6 +2,8 @@
 //! top-level of the worker, waits for its first configure, and receives its
 //! events on the UI thread.
 
+use crate::server::transient::clipboard::wayland_offer_cookie::WaylandOfferCookie;
+use ferroui_base::input::DragDropEffects;
 use crate::screens::wayland_output_snapshot::WaylandOutputId;
 use crate::server::persistent::decoration_mode::DecorationMode;
 use crate::server::persistent::i_w_surface_event_sink::{
@@ -109,6 +111,29 @@ impl WindowImplSink {
 }
 
 impl IWSurfaceEventSink for WindowImplSink {
+    fn on_drag_enter(
+        &self,
+        position: Point,
+        mime_types: Vec<String>,
+        offer_cookie: Arc<WaylandOfferCookie>,
+        source_effects: DragDropEffects,
+        modifiers: RawInputModifiers,
+    ) {
+        self.base.on_drag_enter(position, mime_types, offer_cookie, source_effects, modifiers);
+    }
+
+    fn on_drag_motion(&self, position: Point, modifiers: RawInputModifiers) {
+        self.base.on_drag_motion(position, modifiers);
+    }
+
+    fn on_drag_leave(&self) {
+        self.base.on_drag_leave();
+    }
+
+    fn on_drop(&self, position: Point, modifiers: RawInputModifiers) {
+        self.base.on_drop(position, modifiers);
+    }
+
     fn on_pointer_enter(&self, timestamp: u64, serial: u32, position: Point) {
         self.base.on_pointer_enter(timestamp, serial, position);
     }

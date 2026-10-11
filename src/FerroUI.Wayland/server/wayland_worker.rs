@@ -15,6 +15,7 @@
 //! `docs/porting/wayland-platform.md`; `WAYLAND_DEBUG=1` makes the library
 //! print the same messages.
 
+use super::cross_thread_result::{cross_thread_result, CrossThreadResult};
 use super::interop::wakeup_fd::WakeupFd;
 use super::interop::wayland_connection::{DispatchResult, WaylandConnection};
 use super::persistent::i_persistent_object::{ConnectionContext, IPersistentWaylandObject};
@@ -171,6 +172,18 @@ impl WaylandWorker {
             let _ = sender.send(callback(worker));
         }));
         receiver
+    }
+
+    /// Posts a callback to the wayland thread queue out-of-band (bypassing the compositor batch)
+    /// and returns its result as a future (`InvokeOobAsync`). A callback that panics, and one
+    /// that is never run, give no result.
+    pub fn invoke_oob_async<T: Send + 'static>(
+        &self,
+        callback: impl FnOnce(&mut WaylandWorkerThread) -> T + Send + 'static,
+    ) -> CrossThreadResult<T> {
+        let (completion, result) = cross_thread_result();
+        self.post_oob(Box::new(move |worker| completion.complete(callback(worker))));
+        result
     }
 
     /// Asks for a tick of the render loop at the end of the current iteration of the worker.
@@ -483,6 +496,7 @@ impl WaylandWorkerState {
             cursors: &self.cursors,
             cursor_manager: &globals.cursor_manager,
             connection_id: globals.connection_id,
+            worker: &self.worker,
         };
         globals.input_dispatcher.notify_cursor_changed(surface, &cx);
     }

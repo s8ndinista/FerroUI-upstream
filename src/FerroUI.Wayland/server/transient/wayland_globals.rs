@@ -5,22 +5,26 @@
 //! (`RegistryBootstrap`), the globals are made from the record, and the
 //! registry listener writes to the globals from then on.
 //!
-//! The globals of the later parts of stage 2 of `docs/porting/wayland-platform.md`
-//! (the data device manager, text input, the exporter of `xdg-foreign`) and of
-//! stage 3 (`linux-dmabuf`) are not bound yet.
+//! The globals of the last part of stage 2 of `docs/porting/wayland-platform.md`
+//! (text input, the exporter of `xdg-foreign`) and of stage 3 (`linux-dmabuf`)
+//! are not bound yet.
 
+use super::clipboard::wayland_data_source::WaylandDataSource;
 use super::rendering::wayland_egl_wsi_platform_graphics::WaylandEglWsiPlatformGraphics;
 use super::wayland_cursor_manager::WaylandCursorManager;
 use super::wayland_input_dispatcher::WaylandInputDispatcher;
 use super::wayland_outputs_tracker::WaylandOutputsTracker;
 use crate::server::interop::wayland_connection::WaylandConnection;
 use crate::server::wayland_platform_graphics::IWaylandGraphics;
-use crate::server::wayland_worker::WaylandWorkerState;
+use crate::server::wayland_worker::{WaylandWorker, WaylandWorkerState};
 use crate::ferro_wayland_exception::FerroWaylandException;
 use ferroui_base::logging::{LogEventLevel, Logger};
 use std::collections::HashMap;
 use std::rc::Rc;
+use std::sync::Arc;
+use wayland_client::backend::ObjectId;
 use wayland_client::protocol::wl_compositor::WlCompositor;
+use wayland_client::protocol::wl_data_device_manager::WlDataDeviceManager;
 use wayland_client::protocol::wl_registry::{self, WlRegistry};
 use wayland_client::protocol::wl_shm::{self, WlShm};
 use wayland_client::{Connection, Dispatch, Proxy, QueueHandle, WEnum};
@@ -58,6 +62,12 @@ pub struct WaylandGlobals {
     pub xdg_decoration_manager: Option<ZxdgDecorationManagerV1>,
     pub fractional_scale_manager: Option<WpFractionalScaleManagerV1>,
     pub viewporter: Option<WpViewporter>,
+    pub data_device_manager: Option<WlDataDeviceManager>,
+    /// The data sources of the connection (the selection this client set, the source of a
+    /// drag it started), by the identity of their protocol objects.
+    pub data_sources: HashMap<ObjectId, WaylandDataSource>,
+    /// The worker the globals belong to.
+    pub worker: Arc<WaylandWorker>,
     pub input_dispatcher: WaylandInputDispatcher,
     pub cursor_manager: WaylandCursorManager,
     /// The application identifier of the top-levels (an addition, see the options).
@@ -113,6 +123,9 @@ impl WaylandGlobals {
             Self::bind(&registry, &known_globals, 1, 1, &queue_handle)?;
         let viewporter: Option<WpViewporter> = Self::bind(&registry, &known_globals, 1, 1, &queue_handle)?;
 
+        // Clipboard / DnD
+        let data_device_manager: Option<WlDataDeviceManager> = Self::bind(&registry, &known_globals, 3, 3, &queue_handle)?;
+
         let mut globals = WaylandGlobals {
             queue_handle: queue_handle.clone(),
             connection_id: connection.id(),
@@ -127,6 +140,9 @@ impl WaylandGlobals {
             xdg_decoration_manager,
             fractional_scale_manager,
             viewporter,
+            data_device_manager,
+            data_sources: HashMap::new(),
+            worker: state.worker.clone(),
             input_dispatcher: WaylandInputDispatcher::new(),
             cursor_manager,
             app_id: state.options.app_id.clone(),
@@ -145,7 +161,7 @@ impl WaylandGlobals {
         }
 
         // Seats are bound reactively via the registry listener and managed by the input dispatcher
-        globals.input_dispatcher.on_initial_globals_bound();
+        globals.input_dispatcher.on_initial_globals_bound(globals.data_device_manager.as_ref(), &globals.worker, &queue_handle);
 
         state.globals = Some(globals);
 
@@ -199,7 +215,31 @@ impl WaylandGlobals {
             return;
         }
         let queue_handle = self.queue_handle.clone();
-        self.input_dispatcher.on_seat_added(global_name, &self.registry, bind_version, &queue_handle);
+        self.input_dispatcher.on_seat_added(
+            global_name,
+            &self.registry,
+            bind_version,
+            &queue_handle,
+            self.data_device_manager.as_ref(),
+            &self.worker,
+        );
+    }
+
+    /// Whether a seat of the connection has a data device.
+    pub fn input_dispatcher_has_data_device(&self) -> bool {
+        self.input_dispatcher.get_data_device().is_some()
+    }
+
+    /// Whether the first data device has a source of this client as the selection.
+    pub fn input_dispatcher_has_selection_source(&self) -> bool {
+        self.input_dispatcher.get_data_device().is_some_and(|device| device.active_source.is_some())
+    }
+
+    /// Destroys a data source of the connection and forgets it.
+    pub fn dispose_data_source(&mut self, id: &ObjectId) {
+        if let Some(mut source) = self.data_sources.remove(id) {
+            source.dispose();
+        }
     }
 
     fn bind<I>(
@@ -253,6 +293,9 @@ impl WaylandGlobals {
 
     /// Releases what the globals hold: the connection is lost or closed.
     pub fn dispose(mut self, state: &WaylandWorkerState) {
+        for (_, mut source) in self.data_sources.drain() {
+            source.dispose();
+        }
         self.input_dispatcher.dispose();
         self.cursor_manager.dispose();
         self.outputs.dispose();
@@ -281,7 +324,9 @@ impl Dispatch<WlRegistry, ()> for WaylandWorkerState {
                 if let Some(bootstrap) = &mut state.registry_bootstrap {
                     bootstrap.removed.push(name);
                 } else if let Some(globals) = &mut state.globals {
-                    globals.input_dispatcher.on_seat_removed(name);
+                    if let Some(source) = globals.input_dispatcher.on_seat_removed(name) {
+                        globals.dispose_data_source(&source);
+                    }
                     if globals.outputs.on_global_removed(name) {
                         // The surfaces that were on the output are not told that they left it.
                         for top_level in state.top_levels.values_mut() {
@@ -325,6 +370,18 @@ impl Dispatch<WpFractionalScaleManagerV1, ()> for WaylandWorkerState {
         _: &mut Self,
         _: &WpFractionalScaleManagerV1,
         _: <WpFractionalScaleManagerV1 as Proxy>::Event,
+        _: &(),
+        _: &Connection,
+        _: &QueueHandle<Self>,
+    ) {
+    }
+}
+
+impl Dispatch<WlDataDeviceManager, ()> for WaylandWorkerState {
+    fn event(
+        _: &mut Self,
+        _: &WlDataDeviceManager,
+        _: <WlDataDeviceManager as Proxy>::Event,
         _: &(),
         _: &Connection,
         _: &QueueHandle<Self>,
