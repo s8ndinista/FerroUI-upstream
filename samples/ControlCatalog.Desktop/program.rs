@@ -446,7 +446,12 @@ fn open_popups_of_pages(interval: Duration) {
                 let text_boxes = new.iter().find(|visual| visual.cast::<TextBox>().is_some() && visual.is_effectively_visible());
                 let cards = || {
                     new.iter().find(|visual| {
-                        !card_pressed.get() && focused.borrow().is_none() && visual.cast::<TextBox>().is_none() && visual.is_effectively_visible()
+                        !card_pressed.get()
+                            && focused.borrow().is_none()
+                            && visual.cast::<TextBox>().is_none()
+                            && visual.is_effectively_visible()
+                            // A card of a gallery, not a button of the navigation.
+                            && visual.get_visual_ancestors().any(|ancestor| ancestor.cast::<control_catalog::controls::CardGrid>().is_some())
                     })
                 };
                 if focused.borrow().is_some() { None } else { text_boxes.or_else(cards).cloned() }
