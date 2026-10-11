@@ -11,17 +11,21 @@
 //! let code = AppBuilder::configure::<App>().use_skia().start_linux_fb_dev(&args, None, 1.0, None)?;
 //! ```
 //!
-//! Without an input backend the devices are those the environment names
-//! when `FERROUI_USE_EVDEV=1`: one variable `FERROUI_EVDEV_DEVICE_{name}`
-//! per device, `(path):type=(touchscreen|multitouch|keyboard|mouse)`,
-//! with an optional `:calibration=m11,m12,m21,m22,m31,m32` for the touch
-//! screens. The keys of a keyboard are those of a US layout.
+//! Without an input backend the input is read through `libinput` from
+//! every event device (touch, absolute pointers, buttons and the wheel,
+//! as the reference: no keys and no relative motion), or, with
+//! `FERROUI_USE_EVDEV=1`, from the devices the environment names: one
+//! variable `FERROUI_EVDEV_DEVICE_{name}` per device,
+//! `(path):type=(touchscreen|multitouch|keyboard|mouse)`, with an optional
+//! `:calibration=m11,m12,m21,m22,m31,m32` for the touch screens. The keys
+//! of a keyboard are those of a US layout.
 //!
 //! The design, what is built and what was verified where:
 //! `docs/porting/linux-framebuffer-platform.md`. Built so far: the
-//! framebuffer device output with software rendering and the evdev input
-//! backend. The DRM output and the `libinput` backend are stage 2; their
-//! entry points fail with a message that says so.
+//! framebuffer device output with software rendering, the evdev input
+//! backend and the `libinput` backend (the default; the library is
+//! opened at run time). The DRM output is the next stage; its entry point
+//! fails with a message that says so.
 //!
 //! The parts that are functions of values compile on every Unix system
 //! (their tests run on a development machine that is not Linux); what
