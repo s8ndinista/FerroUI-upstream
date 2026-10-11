@@ -7,69 +7,112 @@ Generated from upstream commit `17350180c33b063f0e98abbfd19aa3cae63f5d56`. Back 
 | | |
 |---|---|
 | Upstream | `src/Windows/Avalonia.Win32.Automation` |
-| FerroUI | `src/Windows/FerroUI.Win32.Automation` (not created yet) |
-| Crate | `ferroui-win32-automation` |
-| Phase / priority | not started / out of current scope / - |
-| Files | 0/40 (0.0%), 1 not applicable |
-| Types | 0/64 (0.0%) |
-| Members | 0/598 (0.0%) |
+| FerroUI | `src/Windows/FerroUI.Win32/automation` (exists) |
+| Crate | `ferroui-win32` |
+| Phase / priority | 1 - desktop (Windows) / P0 |
+| Files | 40/40 (100.0%), 1 not applicable |
+| Types | 19/64 (45 waived) (100.0%) |
+| Members | 124/598 (474 waived) (100.0%) |
+| Contracts (interfaces) | 0/25 |
+| Property registrations | 0/0 |
+| Routed events | 0/0 |
 
-This backend is outside the current porting scope. It is tracked at file and type granularity only; member counts are totals.
+## Contracts
+
+Every interface of the project. Each becomes a `pub trait` with the same name (the `I` prefix is kept).
+
+| Interface | Access | Upstream file | Members | Status |
+|---|---|---|---|---|
+| `Avalonia.Win32.Automation.Interop.IDockProvider` | internal | `Interop/IDockProvider.cs` | 0/2 (2 waived) | waived |
+| `Avalonia.Win32.Automation.Interop.IExpandCollapseProvider` | internal | `Interop/IExpandCollapseProvider.cs` | 0/3 (3 waived) | waived |
+| `Avalonia.Win32.Automation.Interop.IGridItemProvider` | internal | `Interop/IGridItemProvider.cs` | 0/5 (5 waived) | waived |
+| `Avalonia.Win32.Automation.Interop.IGridProvider` | internal | `Interop/IGridProvider.cs` | 0/3 (3 waived) | waived |
+| `Avalonia.Win32.Automation.Interop.IInvokeProvider` | internal | `Interop/IInvokeProvider.cs` | 0/1 (1 waived) | waived |
+| `Avalonia.Win32.Automation.Interop.IMultipleViewProvider` | internal | `Interop/IMultipleViewProvider.cs` | 0/4 (4 waived) | waived |
+| `Avalonia.Win32.Automation.Interop.IRangeValueProvider` | internal | `Interop/IRangeValueProvider.cs` | 0/7 (7 waived) | waived |
+| `Avalonia.Win32.Automation.Interop.IRawElementProviderAdviseEvents` | internal | `Interop/IRawElementProviderAdviseEvents.cs` | 0/2 (2 waived) | waived |
+| `Avalonia.Win32.Automation.Interop.IRawElementProviderFragment` | internal | `Interop/IRawElementProviderFragment.cs` | 0/6 (6 waived) | waived |
+| `Avalonia.Win32.Automation.Interop.IRawElementProviderFragmentRoot` | internal | `Interop/IRawElementProviderFragmentRoot.cs` | 0/2 (2 waived) | waived |
+| `Avalonia.Win32.Automation.Interop.IRawElementProviderSimple` | internal | `Interop/IRawElementProviderSimple.cs` | 0/4 (4 waived) | waived |
+| `Avalonia.Win32.Automation.Interop.IRawElementProviderSimple2` | internal | `Interop/IRawElementProviderSimple2.cs` | 0/1 (1 waived) | waived |
+| `Avalonia.Win32.Automation.Interop.IScrollItemProvider` | internal | `Interop/IScrollItemProvider.cs` | 0/1 (1 waived) | waived |
+| `Avalonia.Win32.Automation.Interop.IScrollProvider` | internal | `Interop/IScrollProvider.cs` | 0/8 (8 waived) | waived |
+| `Avalonia.Win32.Automation.Interop.ISelectionItemProvider` | internal | `Interop/ISelectionItemProvider.cs` | 0/5 (5 waived) | waived |
+| `Avalonia.Win32.Automation.Interop.ISelectionProvider` | internal | `Interop/ISelectionProvider.cs` | 0/3 (3 waived) | waived |
+| `Avalonia.Win32.Automation.Interop.ISynchronizedInputProvider` | internal | `Interop/ISynchronizedInputProvider.cs` | 0/2 (2 waived) | waived |
+| `Avalonia.Win32.Automation.Interop.ITableItemProvider` | internal | `Interop/ITableItemProvider.cs` | 0/2 (2 waived) | waived |
+| `Avalonia.Win32.Automation.Interop.ITableProvider` | internal | `Interop/ITableProvider.cs` | 0/3 (3 waived) | waived |
+| `Avalonia.Win32.Automation.Interop.ITextProvider` | internal | `Interop/ITextProvider.cs` | 0/6 (6 waived) | waived |
+| `Avalonia.Win32.Automation.Interop.ITextRangeProvider` | internal | `Interop/ITextRangeProvider.cs` | 0/18 (18 waived) | waived |
+| `Avalonia.Win32.Automation.Interop.IToggleProvider` | internal | `Interop/IToggleProvider.cs` | 0/2 (2 waived) | waived |
+| `Avalonia.Win32.Automation.Interop.ITransformProvider` | internal | `Interop/ITransformProvider.cs` | 0/6 (6 waived) | waived |
+| `Avalonia.Win32.Automation.Interop.IValueProvider` | internal | `Interop/IValueProvider.cs` | 0/3 (3 waived) | waived |
+| `Avalonia.Win32.Automation.Interop.IWindowProvider` | internal | `Interop/IWindowProvider.cs` | 0/9 (9 waived) | waived |
 
 ## Files
 
-### `(project root)` - files 0/9, types 0/9, members 0/74
+### `(project root)` - files 9/9, types 9/9, members 70/74 (4 waived)
 
-| Upstream file | Types | Members | Status |
-|---|---|---|---|
-| `AutomationNode.ExpandCollapse.cs` | `AutomationNode` | 4 | not started |
-| `AutomationNode.RangeValue.cs` | `AutomationNode` | 7 | not started |
-| `AutomationNode.Scroll.cs` | `AutomationNode` | 9 | not started |
-| `AutomationNode.Selection.cs` | `AutomationNode` | 8 | not started |
-| `AutomationNode.Toggle.cs` | `AutomationNode` | 2 | not started |
-| `AutomationNode.Value.cs` | `AutomationNode` | 3 | not started |
-| `AutomationNode.cs` | `AutomationNode` | 23 | not started |
-| `GlobalSuppressions.cs` | - | 0 | not started |
-| `InteropAutomationNode.cs` | `InteropAutomationNode` | 11 | not started |
-| `RootAutomationNode.cs` | `RootAutomationNode` | 7 | not started |
+| Upstream file | Rust file | Status | Types | Members | Notes |
+|---|---|---|---|---|---|
+| `AutomationNode.ExpandCollapse.cs` | `automation_node_expand_collapse.rs` | present | 1/1 | 4/4 |  |
+| `AutomationNode.RangeValue.cs` | `automation_node_range_value.rs` | present | 1/1 | 7/7 |  |
+| `AutomationNode.Scroll.cs` | `automation_node_scroll.rs` | present | 1/1 | 9/9 |  |
+| `AutomationNode.Selection.cs` | `automation_node_selection.rs` | present | 1/1 | 8/8 |  |
+| `AutomationNode.Toggle.cs` | `automation_node_toggle.rs` | present | 1/1 | 2/2 |  |
+| `AutomationNode.Value.cs` | `automation_node_value.rs` | present | 1/1 | 3/3 |  |
+| `AutomationNode.cs` | `automation_node.rs` | present | 1/1 | 20/23 (3 waived) |  |
+| `GlobalSuppressions.cs` | - | n/a | - | - | no non-private types (assembly attributes, global usings or file-local helpers) |
+| `InteropAutomationNode.cs` | `interop_automation_node.rs` | present | 1/1 | 10/11 (1 waived) |  |
+| `RootAutomationNode.cs` | `root_automation_node.rs` | present | 1/1 | 7/7 |  |
 
-### `Interop` - files 0/27, types 0/47, members 0/484
+### `Interop` - files 27/27, types 3/47 (44 waived), members 18/484 (466 waived)
 
-| Upstream file | Types | Members | Status |
-|---|---|---|---|
-| `IDockProvider.cs` | `DockPosition`, `IDockProvider` | 8 | not started |
-| `IExpandCollapseProvider.cs` | `IExpandCollapseProvider` | 3 | not started |
-| `IGridItemProvider.cs` | `IGridItemProvider` | 5 | not started |
-| `IGridProvider.cs` | `IGridProvider` | 3 | not started |
-| `IInvokeProvider.cs` | `IInvokeProvider` | 1 | not started |
-| `IMultipleViewProvider.cs` | `IMultipleViewProvider` | 4 | not started |
-| `IRangeValueProvider.cs` | `IRangeValueProvider` | 7 | not started |
-| `IRawElementProviderAdviseEvents.cs` | `IRawElementProviderAdviseEvents` | 2 | not started |
-| `IRawElementProviderFragment.cs` | `NavigateDirection`, `IRawElementProviderFragment` | 11 | not started |
-| `IRawElementProviderFragmentRoot.cs` | `IRawElementProviderFragmentRoot` | 2 | not started |
-| `IRawElementProviderSimple.cs` | `ProviderOptions`, `UiaPropertyId`, `UiaPatternId`, `UiaControlTypeId`, `UiaLandmarkType`, `UiaHeadingLevel`, `UiaLiveSetting`, `IRawElementProviderSimple` | 278 | not started |
-| `IRawElementProviderSimple2.cs` | `IRawElementProviderSimple2` | 1 | not started |
-| `IScrollItemProvider.cs` | `IScrollItemProvider` | 1 | not started |
-| `IScrollProvider.cs` | `IScrollProvider` | 8 | not started |
-| `ISelectionItemProvider.cs` | `ISelectionItemProvider` | 5 | not started |
-| `ISelectionProvider.cs` | `ISelectionProvider` | 3 | not started |
-| `ISynchronizedInputProvider.cs` | `SynchronizedInputType`, `ISynchronizedInputProvider` | 8 | not started |
-| `ITableItemProvider.cs` | `ITableItemProvider` | 2 | not started |
-| `ITableProvider.cs` | `RowOrColumnMajor`, `ITableProvider` | 6 | not started |
-| `ITextProvider.cs` | `SupportedTextSelection`, `ITextProvider` | 9 | not started |
-| `ITextRangeProvider.cs` | `TextPatternRangeEndpoint`, `TextUnit`, `ITextRangeProvider` | 27 | not started |
-| `IToggleProvider.cs` | `IToggleProvider` | 2 | not started |
-| `ITransformProvider.cs` | `ITransformProvider` | 6 | not started |
-| `IValueProvider.cs` | `IValueProvider` | 3 | not started |
-| `IWindowProvider.cs` | `WindowVisualState`, `WindowInteractionState`, `IWindowProvider` | 17 | not started |
-| `UiaCoreProviderApi.cs` | `AsyncContentLoadedState`, `StructureChangeType`, `UiaEventId`, `UiaCoreProviderApi` | 52 | not started |
-| `UiaCoreTypesApi.cs` | `UiaCoreTypesApi`, `UiaCoreTypesApi.AutomationIdType` | 10 | not started |
+| Upstream file | Rust file | Status | Types | Members | Notes |
+|---|---|---|---|---|---|
+| `IDockProvider.cs` | `interop/uia.idl` | present | 0/2 (2 waived) | 0/8 (8 waived) | replaced: the 25 provider interfaces with their enumerations and identifiers are declared in one interface definition file written from the C# declarations (upstream has none) and compiled by the build script of the crate (MicroCom generator); the scanner does not read generated code. Tests of the crate hold every identifier, the slot count of every table and values along every range of identifiers |
+| `IExpandCollapseProvider.cs` | `interop/uia.idl` | present | 0/1 (1 waived) | 0/3 (3 waived) | replaced: the 25 provider interfaces with their enumerations and identifiers are declared in one interface definition file written from the C# declarations (upstream has none) and compiled by the build script of the crate (MicroCom generator); the scanner does not read generated code. Tests of the crate hold every identifier, the slot count of every table and values along every range of identifiers |
+| `IGridItemProvider.cs` | `interop/uia.idl` | present | 0/1 (1 waived) | 0/5 (5 waived) | replaced: the 25 provider interfaces with their enumerations and identifiers are declared in one interface definition file written from the C# declarations (upstream has none) and compiled by the build script of the crate (MicroCom generator); the scanner does not read generated code. Tests of the crate hold every identifier, the slot count of every table and values along every range of identifiers |
+| `IGridProvider.cs` | `interop/uia.idl` | present | 0/1 (1 waived) | 0/3 (3 waived) | replaced: the 25 provider interfaces with their enumerations and identifiers are declared in one interface definition file written from the C# declarations (upstream has none) and compiled by the build script of the crate (MicroCom generator); the scanner does not read generated code. Tests of the crate hold every identifier, the slot count of every table and values along every range of identifiers |
+| `IInvokeProvider.cs` | `interop/uia.idl` | present | 0/1 (1 waived) | 0/1 (1 waived) | replaced: the 25 provider interfaces with their enumerations and identifiers are declared in one interface definition file written from the C# declarations (upstream has none) and compiled by the build script of the crate (MicroCom generator); the scanner does not read generated code. Tests of the crate hold every identifier, the slot count of every table and values along every range of identifiers |
+| `IMultipleViewProvider.cs` | `interop/uia.idl` | present | 0/1 (1 waived) | 0/4 (4 waived) | replaced: the 25 provider interfaces with their enumerations and identifiers are declared in one interface definition file written from the C# declarations (upstream has none) and compiled by the build script of the crate (MicroCom generator); the scanner does not read generated code. Tests of the crate hold every identifier, the slot count of every table and values along every range of identifiers |
+| `IRangeValueProvider.cs` | `interop/uia.idl` | present | 0/1 (1 waived) | 0/7 (7 waived) | replaced: the 25 provider interfaces with their enumerations and identifiers are declared in one interface definition file written from the C# declarations (upstream has none) and compiled by the build script of the crate (MicroCom generator); the scanner does not read generated code. Tests of the crate hold every identifier, the slot count of every table and values along every range of identifiers |
+| `IRawElementProviderAdviseEvents.cs` | `interop/uia.idl` | present | 0/1 (1 waived) | 0/2 (2 waived) | replaced: the 25 provider interfaces with their enumerations and identifiers are declared in one interface definition file written from the C# declarations (upstream has none) and compiled by the build script of the crate (MicroCom generator); the scanner does not read generated code. Tests of the crate hold every identifier, the slot count of every table and values along every range of identifiers |
+| `IRawElementProviderFragment.cs` | `interop/uia.idl` | present | 0/2 (2 waived) | 0/11 (11 waived) | replaced: the 25 provider interfaces with their enumerations and identifiers are declared in one interface definition file written from the C# declarations (upstream has none) and compiled by the build script of the crate (MicroCom generator); the scanner does not read generated code. Tests of the crate hold every identifier, the slot count of every table and values along every range of identifiers |
+| `IRawElementProviderFragmentRoot.cs` | `interop/uia.idl` | present | 0/1 (1 waived) | 0/2 (2 waived) | replaced: the 25 provider interfaces with their enumerations and identifiers are declared in one interface definition file written from the C# declarations (upstream has none) and compiled by the build script of the crate (MicroCom generator); the scanner does not read generated code. Tests of the crate hold every identifier, the slot count of every table and values along every range of identifiers |
+| `IRawElementProviderSimple.cs` | `interop/uia.idl` | present | 0/8 (8 waived) | 0/278 (278 waived) | replaced: the 25 provider interfaces with their enumerations and identifiers are declared in one interface definition file written from the C# declarations (upstream has none) and compiled by the build script of the crate (MicroCom generator); the scanner does not read generated code. Tests of the crate hold every identifier, the slot count of every table and values along every range of identifiers |
+| `IRawElementProviderSimple2.cs` | `interop/uia.idl` | present | 0/1 (1 waived) | 0/1 (1 waived) | replaced: the 25 provider interfaces with their enumerations and identifiers are declared in one interface definition file written from the C# declarations (upstream has none) and compiled by the build script of the crate (MicroCom generator); the scanner does not read generated code. Tests of the crate hold every identifier, the slot count of every table and values along every range of identifiers |
+| `IScrollItemProvider.cs` | `interop/uia.idl` | present | 0/1 (1 waived) | 0/1 (1 waived) | replaced: the 25 provider interfaces with their enumerations and identifiers are declared in one interface definition file written from the C# declarations (upstream has none) and compiled by the build script of the crate (MicroCom generator); the scanner does not read generated code. Tests of the crate hold every identifier, the slot count of every table and values along every range of identifiers |
+| `IScrollProvider.cs` | `interop/uia.idl` | present | 0/1 (1 waived) | 0/8 (8 waived) | replaced: the 25 provider interfaces with their enumerations and identifiers are declared in one interface definition file written from the C# declarations (upstream has none) and compiled by the build script of the crate (MicroCom generator); the scanner does not read generated code. Tests of the crate hold every identifier, the slot count of every table and values along every range of identifiers |
+| `ISelectionItemProvider.cs` | `interop/uia.idl` | present | 0/1 (1 waived) | 0/5 (5 waived) | replaced: the 25 provider interfaces with their enumerations and identifiers are declared in one interface definition file written from the C# declarations (upstream has none) and compiled by the build script of the crate (MicroCom generator); the scanner does not read generated code. Tests of the crate hold every identifier, the slot count of every table and values along every range of identifiers |
+| `ISelectionProvider.cs` | `interop/uia.idl` | present | 0/1 (1 waived) | 0/3 (3 waived) | replaced: the 25 provider interfaces with their enumerations and identifiers are declared in one interface definition file written from the C# declarations (upstream has none) and compiled by the build script of the crate (MicroCom generator); the scanner does not read generated code. Tests of the crate hold every identifier, the slot count of every table and values along every range of identifiers |
+| `ISynchronizedInputProvider.cs` | `interop/uia.idl` | present | 0/2 (2 waived) | 0/8 (8 waived) | replaced: the 25 provider interfaces with their enumerations and identifiers are declared in one interface definition file written from the C# declarations (upstream has none) and compiled by the build script of the crate (MicroCom generator); the scanner does not read generated code. Tests of the crate hold every identifier, the slot count of every table and values along every range of identifiers |
+| `ITableItemProvider.cs` | `interop/uia.idl` | present | 0/1 (1 waived) | 0/2 (2 waived) | replaced: the 25 provider interfaces with their enumerations and identifiers are declared in one interface definition file written from the C# declarations (upstream has none) and compiled by the build script of the crate (MicroCom generator); the scanner does not read generated code. Tests of the crate hold every identifier, the slot count of every table and values along every range of identifiers |
+| `ITableProvider.cs` | `interop/uia.idl` | present | 0/2 (2 waived) | 0/6 (6 waived) | replaced: the 25 provider interfaces with their enumerations and identifiers are declared in one interface definition file written from the C# declarations (upstream has none) and compiled by the build script of the crate (MicroCom generator); the scanner does not read generated code. Tests of the crate hold every identifier, the slot count of every table and values along every range of identifiers |
+| `ITextProvider.cs` | `interop/uia.idl` | present | 0/2 (2 waived) | 0/9 (9 waived) | replaced: the 25 provider interfaces with their enumerations and identifiers are declared in one interface definition file written from the C# declarations (upstream has none) and compiled by the build script of the crate (MicroCom generator); the scanner does not read generated code. Tests of the crate hold every identifier, the slot count of every table and values along every range of identifiers |
+| `ITextRangeProvider.cs` | `interop/uia.idl` | present | 0/3 (3 waived) | 0/27 (27 waived) | replaced: the 25 provider interfaces with their enumerations and identifiers are declared in one interface definition file written from the C# declarations (upstream has none) and compiled by the build script of the crate (MicroCom generator); the scanner does not read generated code. Tests of the crate hold every identifier, the slot count of every table and values along every range of identifiers |
+| `IToggleProvider.cs` | `interop/uia.idl` | present | 0/1 (1 waived) | 0/2 (2 waived) | replaced: the 25 provider interfaces with their enumerations and identifiers are declared in one interface definition file written from the C# declarations (upstream has none) and compiled by the build script of the crate (MicroCom generator); the scanner does not read generated code. Tests of the crate hold every identifier, the slot count of every table and values along every range of identifiers |
+| `ITransformProvider.cs` | `interop/uia.idl` | present | 0/1 (1 waived) | 0/6 (6 waived) | replaced: the 25 provider interfaces with their enumerations and identifiers are declared in one interface definition file written from the C# declarations (upstream has none) and compiled by the build script of the crate (MicroCom generator); the scanner does not read generated code. Tests of the crate hold every identifier, the slot count of every table and values along every range of identifiers |
+| `IValueProvider.cs` | `interop/uia.idl` | present | 0/1 (1 waived) | 0/3 (3 waived) | replaced: the 25 provider interfaces with their enumerations and identifiers are declared in one interface definition file written from the C# declarations (upstream has none) and compiled by the build script of the crate (MicroCom generator); the scanner does not read generated code. Tests of the crate hold every identifier, the slot count of every table and values along every range of identifiers |
+| `IWindowProvider.cs` | `interop/uia.idl` | present | 0/3 (3 waived) | 0/17 (17 waived) | replaced: the 25 provider interfaces with their enumerations and identifiers are declared in one interface definition file written from the C# declarations (upstream has none) and compiled by the build script of the crate (MicroCom generator); the scanner does not read generated code. Tests of the crate hold every identifier, the slot count of every table and values along every range of identifiers |
+| `UiaCoreProviderApi.cs` | `interop/uia_core_provider_api.rs` | present | 1/4 (3 waived) | 8/52 (44 waived) |  |
+| `UiaCoreTypesApi.cs` | `interop/uia_core_types_api.rs` | present | 2/2 | 10/10 |  |
 
-### `Marshalling` - files 0/4, types 0/8, members 0/40
+### `Marshalling` - files 4/4, types 7/8 (1 waived), members 36/40 (4 waived)
 
-| Upstream file | Types | Members | Status |
-|---|---|---|---|
-| `ComVariant.cs` | `ComVariant` | 7 | not started |
-| `ComVariantMarshaller.cs` | `ComVariantMarshaller` | 3 | not started |
-| `SafeArrayMarshaller.cs` | `SafeArrayMarshaller<T>` | 3 | not started |
-| `SafeArrayRef.cs` | `SafeArrayRef`, `SafeArrayRef.SAFEARRAY`, `SafeArrayRef.SAFEARRAYBOUND`, `SafeArrayRef.VariableLengthInlineArray<T>`, `SafeArrayRef.ADVANCED_FEATURE_FLAGS` | 27 | not started |
+| Upstream file | Rust file | Status | Types | Members | Notes |
+|---|---|---|---|---|---|
+| `ComVariant.cs` | `marshalling/com_variant.rs` | present | 1/1 | 7/7 |  |
+| `ComVariantMarshaller.cs` | `marshalling/com_variant_marshaller.rs` | present | 1/1 | 3/3 |  |
+| `SafeArrayMarshaller.cs` | `marshalling/safe_array_marshaller.rs` | present | 1/1 | 3/3 |  |
+| `SafeArrayRef.cs` | `marshalling/safe_array_ref.rs` | present | 4/5 (1 waived) | 23/27 (4 waived) |  |
+
+## Rust-only files
+
+Rust sources of this crate that no upstream file maps to. Give each a reason in `docs/porting/data/path-overrides.toml` (`[[rust_only]]`), or map upstream files to it (`[[map]]`).
+
+| Rust file | Reason | Types defined |
+|---|---|---|
+| `marshalling/ole_aut.rs` | the functions of oleaut32 the marshalling calls (upstream imports them in SafeArrayRef.cs and reaches the strings through its runtime), with a stand-in of the same memory layout on hosts that are not Windows | `Block` |
+
+Tests, examples and build scripts (not scanned): `automation_node_tests.rs`, `marshalling/com_variant_tests.rs`, `marshalling/safe_array_ref_tests.rs`.
