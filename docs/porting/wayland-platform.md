@@ -364,6 +364,18 @@ The first of the two runs (commit `92aa2d12`) had the clipboard phase pass at th
 
 **What part 4 does not measure.** A drag between two clients: both drags of the phase start and end in the application, so the offer side reads no pipe during a drag (the code that would is the code the clipboard phase runs: `WaylandDataTransfer` over an offer cookie) and the source side of a drag answers no `send` (the same handler as the selection's). A test client that is a drop target or a drag source needs a mapped surface of its own and, as a source, its own thread (the drop handler of the application reads synchronously while the test client would have to write). Also not measured: a bitmap through the clipboard, the cursor of a drag (`wl_pointer.set_cursor` during a drag is not visible in a screen copy), a drag started by touch, and `wl_data_device` on Mutter or KWin (their `source_actions` and `action` order, the cursor during a drag).
 
+### Measured in the virtual machine for stage 2, part 4 (2026-10-11) **[VM]**
+
+Ubuntu 24.04.3 on ARM64, sway 1.9, grim, wl-clipboard 2.2.1, `ferroui-vm-wayland/scripts/stage2b.sh`, sources at commit `cf933e21`:
+
+| Step | Result |
+|---|---|
+| Tests of the crate | 68 passed |
+| Smoke through `wl_shm` buffers and through EGL (`LIBGL_ALWAYS_SOFTWARE=1`), scale 1 and scale 2 | 80 of 80 each |
+| Smoke through `wl_shm` buffers on an output of 1200 by 720 at scale 1.5 | 76 of 76 |
+| Smoke through EGL with the driver the machine chooses by itself | 80 of 80 |
+| The ControlCatalog's Clipboard and Drag+Drop pages, through `wl_shm` buffers and through EGL, output of 1280 by 800 | 4 pictures in `ferroui-screenshots/wayland/stage2b/` (`software-01-Clipboard.png`, `software-02-Drag-Drop.png`, and the two of EGL): the pages as under X11. The pictures show the pages; nobody pressed their buttons (the clipboard and the drags are what the smoke mode measures) |
+
 ### Measured in the virtual machine for stage 2, parts 1 to 3 (2026-10-11) **[VM]**
 
 Ubuntu 24.04.3 on ARM64, sway 1.9 and grim, `ferroui-vm-wayland/scripts/stage2a.sh`, sources at commit `17089f29` (the second run of the script; the first, on `0816ddd5`, had the same smoke results with 54 and 50 checks and showed the misplaced popups described above):
