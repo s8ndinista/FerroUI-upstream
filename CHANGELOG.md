@@ -4,6 +4,8 @@ All notable changes to FerroUI are recorded in this file. The format follows [Ke
 
 ## [Unreleased]
 
+- **Vulkan.** `ferroui-vulkan` is the Vulkan platform contracts crate and no longer a reserved name: the instance, the device, the graphics context, the swap chain render target of a surface and the import of external objects, over the `ash` bindings with the loader of the system opened at run time. The Skia backend has a Vulkan GPU (Ganesh on Vulkan) on Linux, and behind its feature `vulkan` elsewhere; the X11 platform takes the rendering mode `X11RenderingMode::Vulkan`. Verified on Mesa's software implementation only; the Windows and Android backends still pass the mode over.
+
 ## [0.1.0-preview.1] - Unreleased
 
 The first preview. It is being prepared and has not been published; the date is set when it is.

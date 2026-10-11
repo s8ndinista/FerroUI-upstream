@@ -1184,6 +1184,7 @@ dependencies = [
  "ferroui-opengl",
  "ferroui-skia",
  "ferroui-themes-simple",
+ "ferroui-vulkan",
  "libc",
  "x11-dl",
  "zbus",

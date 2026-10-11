@@ -68,6 +68,12 @@ skia-safe = { workspace = true, features = ["gl", "vulkan"] }
 [target.'cfg(target_os = "android")'.dependencies]
 skia-safe = { workspace = true, features = ["gl"] }
 
+# The Vulkan GPU on a headless surface of the Vulkan implementation of the machine. An empty test
+# without the `ferro_skia_vulkan` configuration.
+[[test]]
+name = "vulkan_frames"
+path = "gpu/vulkan/frames_test.rs"
+
 [features]
 # The Vulkan GPU of the backend (`gpu/vulkan`) on a target whose table above does not have it: Skia
 # with Ganesh on Vulkan. Off by default. On Linux the GPU is always built and the feature changes

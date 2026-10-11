@@ -20,6 +20,7 @@ ferroui-controls.workspace = true
 ferroui-dialogs.workspace = true
 ferroui-freedesktop.workspace = true
 ferroui-opengl.workspace = true
+ferroui-vulkan.workspace = true
 bitflags.workspace = true
 
 # What the example draws and shapes text with. Optional, behind the feature the example requires,

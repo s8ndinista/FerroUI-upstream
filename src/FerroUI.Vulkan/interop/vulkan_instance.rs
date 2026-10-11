@@ -50,7 +50,7 @@ impl VulkanInstance {
         let name = c_string(options.application_name.as_deref().unwrap_or(DEFAULT_NAME));
         let engine_name = c_string(DEFAULT_NAME);
 
-        let gapi = VulkanGlobalApi::new(get_proc_address.clone());
+        let gapi = VulkanGlobalApi::try_new(get_proc_address.clone())?;
 
         let supported_extensions = Self::get_supported_extensions(&gapi)?;
         let app_info = vk::ApplicationInfo::default()

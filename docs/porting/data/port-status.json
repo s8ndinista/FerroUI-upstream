@@ -2,23 +2,23 @@
  "upstreamCommit": "17350180c33b063f0e98abbfd19aa3cae63f5d56",
  "inScope": {
   "files": [
-   2593,
+   2595,
    2626,
    0
   ],
   "types": [
-   3622,
+   3626,
    4066,
    311
   ],
   "members": [
-   28173,
+   28180,
    34206,
-   4619
+   4624
   ]
  },
  "allProjects": {
-  "membersPresent": 28173,
+  "membersPresent": 28180,
   "members": 37391,
   "membersNotApplicable": 1132,
   "membersOutOfScope": 2053
@@ -8014,19 +8014,19 @@
    "scope": "in",
    "detail": "full",
    "files": [
-    86,
+    88,
     88,
     0
    ],
    "types": [
-    176,
+    180,
     291,
     107
    ],
    "members": [
-    3531,
+    3538,
     4897,
-    1076
+    1081
    ],
    "interfaces": [
     8,
@@ -8045,9 +8045,9 @@
     "alias field": 1,
     "const": 2,
     "field": 254,
-    "fn": 498,
+    "fn": 504,
     "free fn": 103,
-    "free item": 16,
+    "free item": 17,
     "overload fn": 7,
     "trait": 3,
     "trait fn": 4,
@@ -8197,6 +8197,12 @@
     ],
     "TransparencyHelper.cs": [
      "transparency_helper.rs"
+    ],
+    "Vulkan/VulkanNativeInterop.cs": [
+     "vulkan/vulkan_native_interop.rs"
+    ],
+    "Vulkan/VulkanSupport.cs": [
+     "vulkan/vulkan_support.rs"
     ],
     "X11ActiveWindowTracker.cs": [
      "x11_active_window_tracker.rs"
@@ -9571,6 +9577,7 @@
     "gpu/graphite/graphite_gr_context.rs",
     "gpu/i_skia_gr_context.rs",
     "gpu/metal/tests.rs",
+    "gpu/vulkan/frames_test.rs",
     "gpu/vulkan/tests.rs",
     "locked_framebuffer.rs",
     "tests.rs",
