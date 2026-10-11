@@ -979,6 +979,58 @@ jobs:
           echo "$out" | grep -q "Unable to connect to Wayland display"
 
 
+  # The smoke mode under a newer sway than the runner has: the container of a distribution whose
+  # sway is 1.10 or later (version 5 or more of xdg_wm_base, so that a popup is moved with
+  # xdg_popup.reposition where sway 1.9 has it created again; popups of an input method, so that
+  # the textinput phase can compare the cursor rectangle at the compositor). Informational: the
+  # phases were written against sway 1.9, and what differs here is a finding, not a failure of the
+  # workflow (docs/porting/wayland-platform.md, section 12.3). The compositor does not run as
+  # root: the run is made by a user of the container.
+  wayland-next:
+    name: Informational (Linux, Wayland under the sway of Debian 13)
+    runs-on: ubuntu-latest
+    container: debian:trixie
+    continue-on-error: true
+    timeout-minutes: 90
+    env:
+      CARGO_PROFILE_DEV_DEBUG: 0
+      CARGO_PROFILE_TEST_DEBUG: 0
+    steps:
+      - name: System packages
+        run: |
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            ca-certificates curl git build-essential pkg-config python3 util-linux \
+            sway wl-clipboard libwayland-client0 libwayland-egl1 libxkbcommon0 xkb-data \
+            libegl1 libegl-mesa0 libgl1 libgles2 libgl1-mesa-dri \
+            libfontconfig1-dev libfreetype-dev fonts-dejavu-core
+          sway --version
+          useradd -m tester
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: dtolnay/rust-toolchain@89b12181fb390509a0842a86cc55eeb8eb928c1d # stable
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+        with:
+          key: wayland-next
+      - name: Build the window example
+        run: cargo build --locked -p ferroui-wayland --features example --example wayland_window
+      - name: A window on a compositor, rendered through wl_shm buffers
+        if: ${{ !cancelled() }}
+        run: |
+          chmod -R a+rX . 2>/dev/null || true
+          runuser -u tester -- scripts/wayland/sway-run.sh -- \
+            timeout 300 target/debug/examples/wayland_window --smoke
+      - name: On an output of scale 1.5, through wl_shm buffers
+        if: ${{ !cancelled() }}
+        run: |
+          runuser -u tester -- scripts/wayland/sway-run.sh --size 1200x720 --scale 1.5 -- \
+            timeout 300 target/debug/examples/wayland_window --smoke --expect-scale=1.5 --skip=resize
+      - name: The same rendered through EGL
+        if: ${{ !cancelled() }}
+        run: |
+          runuser -u tester -- env LIBGL_ALWAYS_SOFTWARE=1 scripts/wayland/sway-run.sh -- \
+            timeout 300 target/debug/examples/wayland_window --smoke --mode=egl
+
+
   # The Android platform (docs/porting/android-platform.md, section 12): the tests of what is logic,
   # and the package of the smoke application built without Gradle. Nothing runs on a device here:
   # the emulator runs are made on the development machine (scripts/android/emu-smoke.sh).
