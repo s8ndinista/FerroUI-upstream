@@ -36,6 +36,11 @@ run file-async --file "$work/fb-async.raw" --async --size=800x480
 
 if [ -n "$UINPUT" ]; then
     run file-uinput --file "$work/fb-uinput.raw" --uinput
+    if ldconfig -p 2>/dev/null | grep -q 'libinput\.so\.10'; then
+        run file-libinput --file "$work/fb-libinput.raw" --uinput --libinput
+    else
+        echo "== file-libinput: skipped, libinput.so.10 is not installed"
+    fi
 else
     echo "== file-uinput: skipped, /dev/uinput is not available"
 fi

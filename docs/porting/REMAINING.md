@@ -8,8 +8,8 @@ Generated from upstream commit `17350180c33b063f0e98abbfd19aa3cae63f5d56`. The s
 
 | | Present | Total | Missing | Waived | Not applicable | Out of scope | Share |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| Members of the projects in scope | 28023 | 32701 | 1810 | 2868 | - | - | 93.9% of total less waived |
-| Members of every upstream source project of the extraction | 28023 | 37391 | 1810 | 2868 | 1132 | 3558 | 74.9% of total |
+| Members of the projects in scope | 28028 | 32701 | 1805 | 2868 | - | - | 93.9% of total less waived |
+| Members of every upstream source project of the extraction | 28028 | 37391 | 1805 | 2868 | 1132 | 3558 | 75.0% of total |
 
 The first row is the headline of the tracking: it leaves out the waived members and everything out of scope. The second row leaves out nothing: every member of every C# project the extraction reads, whether or not the port will ever have it. A member is *present* when an item of the mapped name exists; names are matched, not behaviour.
 
@@ -44,7 +44,7 @@ Files, types and members as present / missing / waived. *n/a* counts the files m
 | [Avalonia.Headless](tracking/Avalonia.Headless.md) | in | 11 / 0 / 0 | 22 / 0 / 2 | 238 / 0 / 13 | 0 (0) | 94.8% |
 | [Avalonia.Headless.NUnit](tracking/Avalonia.Headless.NUnit.md) | in: every file not applicable | 0 / 0 / 0 | 0 / 0 / 0 | 0 / 0 / 0 | 4 (4) | 0.0% |
 | [Avalonia.Headless.XUnit](tracking/Avalonia.Headless.XUnit.md) | in: every file not applicable | 0 / 0 / 0 | 0 / 0 / 0 | 0 / 0 / 0 | 14 (26) | 0.0% |
-| [Avalonia.LinuxFramebuffer](tracking/Avalonia.LinuxFramebuffer.md) | in | 20 / 10 / 0 | 30 / 46 / 0 | 164 / 365 / 0 | 0 (0) | 31.0% |
+| [Avalonia.LinuxFramebuffer](tracking/Avalonia.LinuxFramebuffer.md) | in | 25 / 5 / 0 | 34 / 42 / 0 | 169 / 360 / 0 | 0 (0) | 31.9% |
 | [Avalonia.Markup](tracking/Avalonia.Markup.md) | in | 7 / 0 / 0 | 7 / 0 / 30 | 12 / 0 / 55 | 1 (0) | 17.9% |
 | [Avalonia.Markup.Xaml](tracking/Avalonia.Markup.Xaml.md) | in | 46 / 0 / 0 | 61 / 0 / 2 | 208 / 0 / 31 | 2 (1) | 86.7% |
 | [Avalonia.Markup.Xaml.Loader](tracking/Avalonia.Markup.Xaml.Loader.md) | in | 66 / 0 / 0 | 120 / 0 / 6 | 422 / 0 / 83 | 1 (1) | 83.4% |
@@ -259,10 +259,10 @@ Files without a Rust file, types without a Rust type, and members without a Rust
 
 ### [Avalonia.LinuxFramebuffer](tracking/Avalonia.LinuxFramebuffer.md)
 
-10 files, 46 types and 365 members missing (342 members of the missing types, 23 members of types that exist).
+5 files, 42 types and 360 members missing (337 members of the missing types, 23 members of types that exist).
 
-- **Files (10):** `DrmConnectorType.cs`, `DrmOutputOptions.cs`, `Input/LibInput/LibInputBackend.Pointer.cs`, `Input/LibInput/LibInputBackend.Touch.cs`, `Input/LibInput/LibInputBackend.cs`, `Input/LibInput/LibInputBackendOptions.cs`, `Input/LibInput/LibInputNativeUnsafeMethods.cs`, `Output/Drm.cs`, `Output/DrmBindings.cs`, `Output/DrmOutput.cs`
-- **Types (46):** `AbsAxis`, `AxisEventCode`, `DrmCard`, `DrmConnector`, `DrmConnectorType`, `DrmEncoder`, `DrmModeConnection`, `DrmModeInfo`, `DrmModeSubPixel`, `DrmOutput`, `DrmOutputOptions`, `DrmResources`, `EvKey`, `EvType`, `FbIoCtl`, `LibDrm`, `LibDrm.DrmEventContext`, `LibDrm.DrmEventPageFlipHandler2Delegate`, `LibDrm.DrmEventPageFlipHandlerDelegate`, `LibDrm.DrmEventSequenceHandlerDelegate`, `LibDrm.DrmEventVBlankHandlerDelegate`, `LibDrm.DrmModePageFlip`, `LibDrm.DrmModeType`, `LibDrm.GbmBoFlags`, `LibDrm.GbmBoHandle`, `LibDrm.GbmBoUserDataDestroyCallbackDelegate`, `LibDrm.GbmColorFormats`, `LibDrm.drmModeConnector`, `LibDrm.drmModeCrtc`, `LibDrm.drmModeEncoder`, `LibDrm.drmModeModeInfo`, `LibDrm.drmModeRes`, `LibInputBackend`, `LibInputBackendOptions`, `LibInputNativeUnsafeMethods`, `LibInputNativeUnsafeMethods.LibInputEventType`, `LibInputNativeUnsafeMethods.LibInputPointerAxis`, `LibInputNativeUnsafeMethods.LibInputPointerAxisSource`, `NativeUnsafeMethods`, `PollFd`, `VBlankFlags`, `epoll_data`, `epoll_event`, `fd_set`
+- **Files (5):** `DrmConnectorType.cs`, `DrmOutputOptions.cs`, `Output/Drm.cs`, `Output/DrmBindings.cs`, `Output/DrmOutput.cs`
+- **Types (42):** `AbsAxis`, `AxisEventCode`, `DrmCard`, `DrmConnector`, `DrmConnectorType`, `DrmEncoder`, `DrmModeConnection`, `DrmModeInfo`, `DrmModeSubPixel`, `DrmOutput`, `DrmOutputOptions`, `DrmResources`, `EvKey`, `EvType`, `FbIoCtl`, `LibDrm`, `LibDrm.DrmEventContext`, `LibDrm.DrmEventPageFlipHandler2Delegate`, `LibDrm.DrmEventPageFlipHandlerDelegate`, `LibDrm.DrmEventSequenceHandlerDelegate`, `LibDrm.DrmEventVBlankHandlerDelegate`, `LibDrm.DrmModePageFlip`, `LibDrm.DrmModeType`, `LibDrm.GbmBoFlags`, `LibDrm.GbmBoHandle`, `LibDrm.GbmBoUserDataDestroyCallbackDelegate`, `LibDrm.GbmColorFormats`, `LibDrm.drmModeConnector`, `LibDrm.drmModeCrtc`, `LibDrm.drmModeEncoder`, `LibDrm.drmModeModeInfo`, `LibDrm.drmModeRes`, `LibInputNativeUnsafeMethods`, `LibInputNativeUnsafeMethods.LibInputEventType`, `LibInputNativeUnsafeMethods.LibInputPointerAxis`, `LibInputNativeUnsafeMethods.LibInputPointerAxisSource`, `NativeUnsafeMethods`, `PollFd`, `VBlankFlags`, `epoll_data`, `epoll_event`, `fd_set`
 - **Members of types that exist (23):** `EvDevDevice.EventTypes`, `EvDevDevice.AbsX`, `EvDevDevice.AbsY`, `EvDevDevice..ctor`, `EvDevDevice.NextEvent`, `EvDevDeviceDescription..ctor`, `EvDevDeviceDescription.Path`, `EvDevDeviceHandler.OnEvent`, `EvDevDeviceHandler..ctor`, `EvDevDeviceHandler.Device`, `EvDevDeviceHandler.InputRoot`, `EvDevDeviceHandler.RaiseEvent`, `FbDevBackBuffer.Dispose`, `FbDevBackBuffer.LockFb`, `FbDevBackBuffer.Address`, `FbdevOutput..ctor`, `FbdevOutput..ctor`, `FbdevOutput.Lock`, `FbdevOutput.~FbdevOutput`, `LinuxFramebufferLifetime..ctor`, `LinuxFramebufferPlatformExtensions.StartLinuxDrm`, `input_event.Key`, `input_event.Axis`
 
 ### [Avalonia.Skia](tracking/Avalonia.Skia.md)

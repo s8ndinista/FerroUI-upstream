@@ -10,8 +10,8 @@ The master status of the port: every upstream project, file, type and member (pu
 
 Two numbers, because one hides what the other shows.
 
-1. **Of what is in scope: 93.9%.** The 33 upstream projects that are in scope have 32701 members (public, protected and internal) in files that apply to the port. 28023 have a counterpart, 1810 are missing and 2868 are waived: declared not ported, each with a reason ([waiver-audit.md](waiver-audit.md)). The percentage is `present / (total - waived)`. It says nothing about projects that are out of scope, and it counts a waived member as if it did not exist.
-2. **Of everything upstream has: 74.9%.** Every C# source project of the extraction, in scope or not, has 37391 members; the port has a counterpart for 28023. The total includes the 2868 waived members, the 1132 members of files marked not applicable and the 3558 members of projects that are out of scope or not started. The rest of that distance is what [REMAINING.md](REMAINING.md) lists; part of it is never ported by design (the waived and not applicable members), so this number does not reach 100.
+1. **Of what is in scope: 93.9%.** The 33 upstream projects that are in scope have 32701 members (public, protected and internal) in files that apply to the port. 28028 have a counterpart, 1805 are missing and 2868 are waived: declared not ported, each with a reason ([waiver-audit.md](waiver-audit.md)). The percentage is `present / (total - waived)`. It says nothing about projects that are out of scope, and it counts a waived member as if it did not exist.
+2. **Of everything upstream has: 75.0%.** Every C# source project of the extraction, in scope or not, has 37391 members; the port has a counterpart for 28028. The total includes the 2868 waived members, the 1132 members of files marked not applicable and the 3558 members of projects that are out of scope or not started. The rest of that distance is what [REMAINING.md](REMAINING.md) lists; part of it is never ported by design (the waived and not applicable members), so this number does not reach 100.
 
 Both numbers match names, not behaviour (Legend, below). Projects the extraction does not read (analyzers, generators of upstream's own build, the D-Bus library) are listed in REMAINING.md with their size in files.
 
@@ -55,9 +55,9 @@ Percentages are `present / (total - waived)`. Member matching is by name with re
 
 | | Ported | Total | Waived | % |
 |---|---:|---:|---:|---:|
-| C# files | 2580 | 2626 | 0 | 98.2% |
-| Types | 3497 | 3991 | 311 | 95.0% |
-| Members | 28023 | 32701 | 2868 | 93.9% |
+| C# files | 2585 | 2626 | 0 | 98.4% |
+| Types | 3501 | 3991 | 311 | 95.1% |
+| Members | 28028 | 32701 | 2868 | 93.9% |
 | Contracts (interfaces) | 465 | 490 | - | 94.9% |
 | Property registrations | 1218 | 1233 | - | 98.8% |
 | Routed events | 108 | 108 | - | 100.0% |
@@ -97,7 +97,7 @@ The % column is member coverage (file coverage for plain file lists).
 | [Avalonia.Headless](tracking/Avalonia.Headless.md) | `src/Headless/Avalonia.Headless` | `src/Headless/FerroUI.Headless` | `ferroui-headless` | 11/11 | 22/24 (2 waived) | 238/251 (13 waived) | 100.0% | 1 - test infrastructure | P1 |
 | [Avalonia.Headless.NUnit](tracking/Avalonia.Headless.NUnit.md) | `src/Headless/Avalonia.Headless.NUnit` | `src/Headless/FerroUI.Headless.NUnit` | `ferroui-headless-nunit` | 0/0 | 0/0 | 0/0 | - | 1 - test infrastructure | P1 |
 | [Avalonia.Headless.XUnit](tracking/Avalonia.Headless.XUnit.md) | `src/Headless/Avalonia.Headless.XUnit` | `src/Headless/FerroUI.Headless.XUnit` | `ferroui-headless-xunit` | 0/0 | 0/0 | 0/0 | - | 1 - test infrastructure | P1 |
-| [Avalonia.LinuxFramebuffer](tracking/Avalonia.LinuxFramebuffer.md) | `src/Linux/Avalonia.LinuxFramebuffer` | `src/Linux/FerroUI.LinuxFramebuffer` | `ferroui-linuxframebuffer` | 20/30 | 30/76 | 164/529 | 31.0% | 5 - desktop (Linux) | P2 |
+| [Avalonia.LinuxFramebuffer](tracking/Avalonia.LinuxFramebuffer.md) | `src/Linux/Avalonia.LinuxFramebuffer` | `src/Linux/FerroUI.LinuxFramebuffer` | `ferroui-linuxframebuffer` | 25/30 | 34/76 | 169/529 | 31.9% | 5 - desktop (Linux) | P2 |
 | [Avalonia.Markup](tracking/Avalonia.Markup.md) | `src/Markup/Avalonia.Markup` | `src/Markup/FerroUI.Markup` | `ferroui-markup` | 7/7 | 7/37 (30 waived) | 12/67 (55 waived) | 100.0% | 2 - xaml + themes | P1 |
 | [Avalonia.Markup.Xaml](tracking/Avalonia.Markup.Xaml.md) | `src/Markup/Avalonia.Markup.Xaml` | `src/Markup/FerroUI.Markup.Xaml` | `ferroui-markup-xaml` | 46/46 | 61/63 (2 waived) | 208/239 (31 waived) | 100.0% | 2 - xaml + themes | P1 |
 | [Avalonia.Markup.Xaml.Loader](tracking/Avalonia.Markup.Xaml.Loader.md) | `src/Markup/Avalonia.Markup.Xaml.Loader` | `src/Markup/FerroUI.Markup.Xaml.Loader` | `ferroui-markup-xaml-loader` | 66/66 | 120/126 (6 waived) | 422/505 (83 waived) | 100.0% | 2 - xaml + themes | P1 |

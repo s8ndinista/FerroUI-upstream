@@ -2,23 +2,23 @@
  "upstreamCommit": "17350180c33b063f0e98abbfd19aa3cae63f5d56",
  "inScope": {
   "files": [
-   2580,
+   2585,
    2626,
    0
   ],
   "types": [
-   3497,
+   3501,
    3991,
    311
   ],
   "members": [
-   28023,
+   28028,
    32701,
    2868
   ]
  },
  "allProjects": {
-  "membersPresent": 28023,
+  "membersPresent": 28028,
   "members": 37391,
   "membersNotApplicable": 1132,
   "membersOutOfScope": 3558
@@ -8686,17 +8686,17 @@
    "scope": "in",
    "detail": "full",
    "files": [
-    20,
+    25,
     30,
     0
    ],
    "types": [
-    30,
+    34,
     76,
     0
    ],
    "members": [
-    164,
+    169,
     529,
     0
    ],
@@ -8714,8 +8714,8 @@
    ],
    "notApplicableFiles": 0,
    "matchKinds": {
-    "field": 65,
-    "fn": 93,
+    "field": 66,
+    "fn": 97,
     "free fn": 1,
     "overload fn": 5
    },
@@ -8746,6 +8746,21 @@
     ],
     "Input/IScreenInfoProvider.cs": [
      "input/i_screen_info_provider.rs"
+    ],
+    "Input/LibInput/LibInputBackend.Pointer.cs": [
+     "input/lib_input/lib_input_backend_pointer.rs"
+    ],
+    "Input/LibInput/LibInputBackend.Touch.cs": [
+     "input/lib_input/lib_input_backend_touch.rs"
+    ],
+    "Input/LibInput/LibInputBackend.cs": [
+     "input/lib_input/lib_input_backend.rs"
+    ],
+    "Input/LibInput/LibInputBackendOptions.cs": [
+     "input/lib_input/lib_input_backend_options.rs"
+    ],
+    "Input/LibInput/LibInputNativeUnsafeMethods.cs": [
+     "input/lib_input/lib_input_native_unsafe_methods.rs"
     ],
     "Input/NullInput/NullInputBackend.cs": [
      "input/null_input/null_input_backend.rs"

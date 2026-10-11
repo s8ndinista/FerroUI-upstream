@@ -22,6 +22,8 @@
 //!   multi-touch screen through `/dev/uinput` (needs access to it), read
 //!   them with the evdev backend and check that the events written to
 //!   them arrive as raw input.
+//! - `--libinput` (with `--uinput`): read the multi-touch screen through
+//!   the `libinput` backend instead (the library must be installed).
 //! - `--dump <path>`: write the content of the framebuffer, as raw bytes,
 //!   when the checks are done.
 //!
@@ -61,6 +63,7 @@ mod app {
         EvDevBackend, EvDevDeviceDescription, EvDevKeyboardDeviceDescription, EvDevMouseDeviceDescription,
         EvDevMultiTouchScreenDeviceDescription, EvDevTouchScreenDeviceDescription,
     };
+    use ferroui_linuxframebuffer::input::lib_input::{LibInputBackend, LibInputBackendOptions};
     use ferroui_linuxframebuffer::input::null_input::NullInputBackend;
     use ferroui_linuxframebuffer::input::{IInputBackend, IScreenInfoProvider};
     use ferroui_linuxframebuffer::native_unsafe_methods::{
@@ -97,6 +100,8 @@ mod app {
         fixed_info: fb_fix_screeninfo,
         dump: Option<String>,
         devices: Option<VirtualDevices>,
+        /// Whether the devices are read through the `libinput` backend.
+        libinput: bool,
         log: Rc<RefCell<Vec<Logged>>>,
         failed: Cell<u32>,
         passed: Cell<u32>,
@@ -243,6 +248,9 @@ mod app {
     const UI_SET_KEYBIT: u32 = ioc(IOC_WRITE, b'U', 101, 4);
     const UI_SET_RELBIT: u32 = ioc(IOC_WRITE, b'U', 102, 4);
     const UI_SET_ABSBIT: u32 = ioc(IOC_WRITE, b'U', 103, 4);
+    const UI_SET_PROPBIT: u32 = ioc(IOC_WRITE, b'U', 110, 4);
+    /// `INPUT_PROP_DIRECT`: the device is on the screen it controls.
+    const INPUT_PROP_DIRECT: u16 = 1;
 
     impl UinputDevice {
         fn set_bit(file: &File, request: u32, bit: u16) -> std::io::Result<()> {
@@ -272,6 +280,7 @@ mod app {
             }
             if !abs.is_empty() {
                 Self::set_bit(&file, UI_SET_EVBIT, ev_type::EV_ABS)?;
+                Self::set_bit(&file, UI_SET_PROPBIT, INPUT_PROP_DIRECT)?;
             }
             for &(axis, minimum, maximum) in abs {
                 Self::set_bit(&file, UI_SET_ABSBIT, axis)?;
@@ -282,6 +291,9 @@ mod app {
                     setup.code = axis;
                     setup.absinfo.minimum = minimum;
                     setup.absinfo.maximum = maximum;
+                    if axis != abs_axis::ABS_MT_SLOT && axis != abs_axis::ABS_MT_TRACKING_ID {
+                        setup.absinfo.resolution = 10;
+                    }
                     if libc::ioctl(fd, UI_ABS_SETUP as _, &setup) < 0 {
                         return Err(std::io::Error::last_os_error());
                     }
@@ -529,6 +541,11 @@ mod app {
                             return false;
                         };
                         // Odd steps write, even steps look (three ticks later).
+                        // The library takes a moment to add its device.
+                        if smoke.libinput && step_number == 7 && waited.get() < 20 {
+                            waited.set(waited.get() + 1);
+                            return true;
+                        }
                         if step_number % 2 == 0 {
                             if waited.get() < 3 {
                                 waited.set(waited.get() + 1);
@@ -604,6 +621,7 @@ mod app {
                                 ],
                             ),
                             7 => {
+                                waited.set(0);
                                 let touch = &devices.multi_touch;
                                 touch.report(&[
                                     (ev_type::EV_ABS, abs_axis::ABS_MT_SLOT, 0),
@@ -639,7 +657,8 @@ mod app {
                         }
                     }
                 }
-                step.set(step.get() + 1);
+                // With the library only the multi-touch screen is read.
+                step.set(if smoke.libinput && step.get() == 0 { 7 } else { step.get() + 1 });
                 true
             },
             Duration::from_millis(50),
@@ -746,10 +765,14 @@ mod app {
                 for description in devices.descriptions() {
                     println!("  virtual input device {}", description.path().unwrap_or_default());
                 }
-                Rc::new(RecordingBackend {
-                    inner: Rc::new(EvDevBackend::new(devices.descriptions())),
-                    log: log.clone(),
-                })
+                let inner: Rc<dyn IInputBackend> = if flag("--libinput") {
+                    Rc::new(LibInputBackend::with_options(LibInputBackendOptions {
+                        events: Some(vec![devices.multi_touch.event_node.clone()]),
+                    }))
+                } else {
+                    Rc::new(EvDevBackend::new(devices.descriptions()))
+                };
+                Rc::new(RecordingBackend { inner, log: log.clone() })
             }
             None => Rc::new(NullInputBackend::new()),
         };
@@ -760,6 +783,7 @@ mod app {
             fixed_info,
             dump: argument("--dump"),
             devices,
+            libinput: flag("--libinput"),
             log,
             failed: Cell::new(0),
             passed: Cell::new(0),
