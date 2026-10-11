@@ -475,6 +475,12 @@ impl Drop for UiaClient {
     }
 }
 
+/// The window of the desktop that has the foreground; 0 when none has.
+pub fn foreground_window() -> isize {
+    // SAFETY: no arguments.
+    unsafe { windows_sys::Win32::UI::WindowsAndMessaging::GetForegroundWindow() as isize }
+}
+
 /// Ends COM on the calling thread, after every value of this module of the
 /// thread was dropped.
 pub fn uninitialize_com() {
