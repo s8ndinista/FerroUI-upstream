@@ -29,7 +29,8 @@ ferroui-win32 = { workspace = true }
 # The native control demo of Linux: a window of the X server and a file chooser of GTK.
 [target.'cfg(target_os = "linux")'.dependencies]
 ferroui-x11 = { workspace = true }
-# The Wayland backend, which `FERROUI_CATALOG_WAYLAND` selects.
+# The Wayland backend, which the catalog uses when a compositor can be reached, with the backend
+# of the platform detection as its fallback (`FERROUI_CATALOG_WAYLAND=0` leaves it out).
 ferroui-wayland = { workspace = true }
 
 [features]
