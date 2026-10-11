@@ -305,9 +305,24 @@ impl Element {
     }
 }
 
-/// The names of the elements that got the focus, as the handler heard of
-/// them.
-pub type FocusLog = Arc<Mutex<Vec<String>>>;
+/// The elements that got the focus, as the handler was told of them: interface pointers the
+/// log holds a reference of, until the client reads them.
+///
+/// The handler does not ask an element anything. It is called by the automation core while
+/// the provider that raised the event may still be inside the call that raised it, on its UI
+/// thread; a question to the element is a call of the provider, which waits for that thread
+/// (run 38101124412 did not end after the first event of a provider of the process of the
+/// client). The client asks later, on its own thread ([`UiaClient::take_focus_events`]).
+#[derive(Clone, Default)]
+pub struct FocusLog {
+    elements: Arc<Mutex<Vec<usize>>>,
+}
+
+impl FocusLog {
+    pub fn new() -> FocusLog {
+        FocusLog::default()
+    }
+}
 
 struct FocusChangedHandler {
     log: FocusLog,
@@ -318,11 +333,10 @@ impl IUIAutomationFocusChangedEventHandlerImpl for FocusChangedHandler {
         if sender.is_null() {
             return Ok(());
         }
-        // The element is the caller's: it is read without taking it.
-        let element = std::mem::ManuallyDrop::new(Element(Owned(sender)));
-        let name = element.name().unwrap_or_else(|error| format!("<{error}>"));
-        let control_type = element.control_type().map(control_type_name).unwrap_or_default();
-        self.log.lock().unwrap_or_else(std::sync::PoisonError::into_inner).push(format!("{control_type} {name:?}"));
+        // SAFETY: a live interface pointer of the caller; the log takes a reference of it
+        // (`AddRef`, the second slot), which the client gives back when it has read it.
+        unsafe { slot::<unsafe extern "system" fn(*mut c_void) -> u32>(sender, 1)(sender) };
+        self.log.elements.lock().unwrap_or_else(std::sync::PoisonError::into_inner).push(sender as usize);
         Ok(())
     }
 }
@@ -446,8 +460,24 @@ impl UiaClient {
         Ok(result)
     }
 
-    /// Listens for changes of the focus: the log gets the control type and
-    /// the name of every element the system reports.
+    /// The control type and the name of every element the log was told of since the last call,
+    /// read now, on the thread of the client.
+    pub fn take_focus_events(&self, log: &FocusLog) -> Vec<String> {
+        let elements = std::mem::take(&mut *log.elements.lock().unwrap_or_else(std::sync::PoisonError::into_inner));
+        elements
+            .into_iter()
+            .map(|element| {
+                // The reference the handler took becomes the element's.
+                let element = Element(Owned(element as *mut c_void));
+                let name = element.name().unwrap_or_else(|error| format!("<{error}>"));
+                let control_type = element.control_type().map(control_type_name).unwrap_or_default();
+                format!("{control_type} {name:?}")
+            })
+            .collect()
+    }
+
+    /// Listens for changes of the focus: the log gets every element the
+    /// system reports.
     pub fn add_focus_changed_event_handler(&mut self, log: FocusLog) -> Result<(), String> {
         let handler = IUIAutomationFocusChangedEventHandler::from_impl(FocusChangedHandler { log });
         // SAFETY: the slot of `AddFocusChangedEventHandler`, no cache

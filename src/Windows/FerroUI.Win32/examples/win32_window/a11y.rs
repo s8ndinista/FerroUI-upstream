@@ -44,7 +44,7 @@ use ferroui_win32::automation::testing::{
 use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 use std::sync::atomic::{AtomicU32, Ordering};
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 const TITLE: &str = "FerroUI accessibility smoke";
@@ -128,8 +128,12 @@ struct Report {
 }
 
 impl Report {
+    /// A check: printed when it is made, so that a run that does not end shows how far it
+    /// got, and kept for the count.
     fn check(&mut self, ok: bool, text: impl Into<String>) -> bool {
-        self.lines.push((ok, text.into()));
+        let text = text.into();
+        println!("{} {text}", if ok { "[ ok ]" } else { "[FAIL]" });
+        self.lines.push((ok, text));
         ok
     }
 
@@ -391,7 +395,8 @@ fn client(handle: isize, clicks: &AtomicU32, report: &mut Report) -> Result<(), 
     report.check(before == 25.0 && after == 60.0, format!("IUIAutomationRangeValuePattern::SetValue took the slider from {before} to {after}"));
 
     // The focus.
-    let log: FocusLog = Arc::new(Mutex::new(Vec::new()));
+    let log = FocusLog::new();
+    let mut events: Vec<String> = Vec::new();
     client.add_focus_changed_event_handler(log.clone())?;
     // The slider may have the focus already: setting a value through a pattern gave it to the
     // element in run 38100265175 (the focused element of the system was the slider before
@@ -404,27 +409,25 @@ fn client(handle: isize, clicks: &AtomicU32, report: &mut Report) -> Result<(), 
     if let Err(error) = slider.set_focus() {
         report.check(false, format!("IUIAutomationElement::SetFocus on the slider: {error}"));
     }
-    let heard = |log: &FocusLog| log.lock().unwrap_or_else(std::sync::PoisonError::into_inner).clone();
     // The events of the focus a client hears are those of the desktop. Where another window has
-    // the foreground (a runner of the CI service shows a dialog of the system over everything:
-    // run 38099421796 heard of an element of another process and not of the slider, which had
-    // the focus of its window), whether the event of the slider arrives is not this run's to
-    // say: it is checked where the window of the run is the foreground window, and reported
-    // as not checked elsewhere. That a node raises the event is a test of the crate.
+    // the foreground (a runner of the CI service shows a dialog of the system over everything),
+    // whether the event of the slider arrives is not this run's to say: it is checked where
+    // the window of the run is the foreground window, and reported as not checked elsewhere.
+    // That a node raises the event is a test of the crate.
     let foreground = foreground_window();
     let ours = foreground == handle;
     let arrived = wait_until(Duration::from_secs(if ours { 10 } else { 3 }), || {
-        heard(&log).iter().any(|entry| entry.starts_with("Slider"))
+        events.extend(client.take_focus_events(&log));
+        events.iter().any(|entry| entry.starts_with("Slider"))
     });
     if ours || arrived {
         report.check(
             arrived,
-            format!("a focus changed event arrived for the slider after IUIAutomationElement::SetFocus: {:?}", heard(&log)),
+            format!("a focus changed event arrived for the slider after IUIAutomationElement::SetFocus: {events:?}"),
         );
     } else {
         report.infos.push(format!(
-            "the focus changed event of the slider was not checked: the foreground window of the desktop is {foreground:#x}, not the window of the run ({handle:#x}); the handler heard {:?}",
-            heard(&log)
+            "the focus changed event of the slider was not checked: the foreground window of the desktop is {foreground:#x}, not the window of the run ({handle:#x}); the handler heard {events:?}"
         ));
     }
     let has_focus = slider.has_keyboard_focus()?;
@@ -455,11 +458,7 @@ fn finish(mut report: Report) {
     let clicks = ui.clicks.load(Ordering::SeqCst);
     report.check(clicks == 1, format!("the button was clicked {clicks} time(s)"));
 
-    println!("-- accessibility: the checks");
     let failed = report.lines.iter().filter(|(ok, _)| !ok).count();
-    for (ok, text) in &report.lines {
-        println!("{} {text}", if *ok { "[ ok ]" } else { "[FAIL]" });
-    }
     for text in &report.infos {
         println!("[info] {text}");
     }
