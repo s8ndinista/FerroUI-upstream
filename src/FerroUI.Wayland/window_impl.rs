@@ -2,9 +2,11 @@
 //! the state the framework asks for, and the requests to the top-level of the
 //! worker.
 //!
-//! Not built yet (`docs/porting/wayland-platform.md`, stage 2): the text
-//! input method, and the file chooser portal of the storage provider with its
-//! parent handle from `xdg-foreign` (the managed dialogs answer alone).
+//! The text input method of the window is in `window_impl_text_input.rs`.
+//!
+//! Not built yet (`docs/porting/wayland-platform.md`, stage 2): the file
+//! chooser portal of the storage provider with its parent handle from
+//! `xdg-foreign` (the managed dialogs answer alone).
 
 use crate::server::persistent::decoration_mode::DecorationMode;
 use crate::server::persistent::i_w_surface::IWSurface;
@@ -16,6 +18,8 @@ use crate::server::wayland_dispatch_priority::WaylandDispatchPriority;
 use crate::server::wayland_worker_client::WaylandWorkerClient;
 use crate::window_impl_base::{get, set, Callback, ISinkOwner, RawEvent, WindowBaseImpl};
 use crate::window_impl_sink::WindowImplSink;
+use crate::window_impl_text_input::WaylandTextInputMethod;
+use ferroui_base::input::text_input::ITextInputMethodImpl;
 use ferroui_base::input::raw::{IRawInputEventArgs, RawPointerEventArgs, RawPointerEventType};
 use ferroui_base::input::{IInputRoot, KeyboardDevice, PointerPressedEventArgs, WindowDecorationsElementRole};
 use ferroui_base::platform::storage::file_io::BclLauncher;
@@ -63,6 +67,7 @@ pub struct WindowImpl {
     // This is a limitation of V1 of the protocol that's supported in the wild
     csd_sticky: Cell<bool>,
     title: RefCell<Option<String>>,
+    text_input_method: RefCell<Option<Rc<WaylandTextInputMethod>>>,
     storage_provider: RefCell<Option<Rc<FallbackStorageProvider>>>,
     server_reported_mode: Cell<DecorationMode>,
     app_requested_decoration_extension: Cell<bool>,
@@ -198,6 +203,7 @@ impl WindowImpl {
             max_size: Cell::new(None),
             csd_sticky: Cell::new(false),
             title: RefCell::new(None),
+            text_input_method: RefCell::new(None),
             storage_provider: RefCell::new(None),
             server_reported_mode: Cell::new(DecorationMode::ClientSide),
             app_requested_decoration_extension: Cell::new(false),
@@ -243,6 +249,11 @@ impl WindowImpl {
 
     pub(crate) fn size_limits(&self) -> (Option<Size>, Option<Size>) {
         (self.min_size.get(), self.max_size.get())
+    }
+
+    /// The text input method of the window, when the framework has asked for it.
+    pub(crate) fn text_input_method(&self) -> Option<Rc<WaylandTextInputMethod>> {
+        self.text_input_method.borrow().clone()
     }
 
     pub(crate) fn csd_sticky(&self) -> bool {
@@ -418,6 +429,15 @@ impl ISinkOwner for WindowImpl {
 
 impl IOptionalFeatureProvider for WindowImpl {
     fn try_get_feature(&self, feature_type: TypeId) -> Option<Rc<dyn Any>> {
+        if feature_type == TypeId::of::<dyn ITextInputMethodImpl>() {
+            let text_input_method: Rc<dyn ITextInputMethodImpl> = self
+                .text_input_method
+                .borrow_mut()
+                .get_or_insert_with(|| WaylandTextInputMethod::new(self.this.clone()))
+                .clone();
+            return Some(Rc::new(text_input_method));
+        }
+
         if feature_type == TypeId::of::<dyn IStorageProvider>() {
             let storage_provider: Rc<dyn IStorageProvider> = self
                 .storage_provider
@@ -437,7 +457,6 @@ impl IOptionalFeatureProvider for WindowImpl {
             return Some(Rc::new(launcher));
         }
 
-        // The text input method and the clipboard are features of stage 2.
         None
     }
 }

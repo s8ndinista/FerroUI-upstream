@@ -189,6 +189,7 @@ mod imp {
     use crate::server::transient::wayland_cursor_manager::WaylandCursorManager;
     use crate::server::transient::wayland_globals::WaylandGlobals;
     use crate::server::transient::wayland_input_dispatcher_keyboard::KeyboardHandler;
+    use crate::server::transient::wayland_text_input_v3::{TextInputManager, WorkerTextInputV3};
     use crate::server::wayland_worker::{WaylandWorker, WaylandWorkerState};
     use ferroui_base::input::StandardCursorType;
     use ferroui_base::Point;
@@ -202,6 +203,7 @@ mod imp {
     use wayland_client::protocol::wl_surface::WlSurface;
     use wayland_client::protocol::wl_touch::{self, WlTouch};
     use wayland_client::{Connection, Dispatch, Proxy, QueueHandle, WEnum};
+    use wayland_protocols::wp::text_input::zv3::client::zwp_text_input_manager_v3::ZwpTextInputManagerV3;
 
     /// The shell surface a `wl_surface` belongs to, by the user data it was created with.
     pub(crate) fn find_surface_for_wl_surface(surface: &WlSurface) -> Option<WSurfaceId> {
@@ -238,11 +240,23 @@ mod imp {
 
     pub struct WaylandInputDispatcher {
         seats: HashMap<u32, Seat>,
+        /// Worker-side facade for `zwp_text_input_v3`. `None` until
+        /// `on_initial_globals_bound` runs (and may stay `None` if the
+        /// compositor does not advertise the manager).
+        text_input_v3: Option<WorkerTextInputV3>,
     }
 
     impl WaylandInputDispatcher {
         pub fn new() -> Self {
-            Self { seats: HashMap::new() }
+            Self { seats: HashMap::new(), text_input_v3: None }
+        }
+
+        pub(crate) fn text_input_v3(&self) -> Option<&WorkerTextInputV3> {
+            self.text_input_v3.as_ref()
+        }
+
+        pub(crate) fn text_input_v3_mut(&mut self) -> Option<&mut WorkerTextInputV3> {
+            self.text_input_v3.as_mut()
         }
 
         pub(crate) fn notify_cursor_changed(&self, surface: WSurfaceId, cx: &InputContext<'_>) {
@@ -307,26 +321,44 @@ mod imp {
         ) {
             let mut seat = Seat::new(registry, global_name, version, queue_handle);
             seat.ensure_data_device(data_device_manager, worker, queue_handle);
+            if let Some(text_input) = &mut self.text_input_v3 {
+                text_input.on_seat_added(global_name, &seat.wl_seat);
+            }
             self.seats.insert(global_name, seat);
         }
 
-        /// Called once after the globals have been bound. Backfills the data devices for
-        /// any seats that were announced before this point. The reference also makes the
-        /// text input facade here, which belongs to the last part of stage 2.
+        /// Called once after the globals have been bound. Constructs the text-input-v3
+        /// facade if the manager is present and backfills per-seat objects (data devices,
+        /// text-input-v3 objects) for any seats that were announced before this point.
         pub(crate) fn on_initial_globals_bound(
             &mut self,
             data_device_manager: Option<&WlDataDeviceManager>,
+            text_input_manager: Option<&ZwpTextInputManagerV3>,
             worker: &Arc<WaylandWorker>,
             queue_handle: &QueueHandle<WaylandWorkerState>,
         ) {
-            for seat in self.seats.values_mut() {
+            if let Some(manager) = text_input_manager {
+                self.text_input_v3 = Some(WorkerTextInputV3::new(TextInputManager::new(manager.clone(), queue_handle.clone())));
+            }
+            let mut names: Vec<u32> = self.seats.keys().copied().collect();
+            names.sort_unstable();
+            for name in names {
+                let Some(seat) = self.seats.get_mut(&name) else {
+                    continue;
+                };
                 seat.ensure_data_device(data_device_manager, worker, queue_handle);
+                if let Some(text_input) = &mut self.text_input_v3 {
+                    text_input.on_seat_added(name, &seat.wl_seat);
+                }
             }
         }
 
         /// Releases a seat that was taken away. The source its data device had set as the
         /// selection is returned for the caller to dispose.
         pub(crate) fn on_seat_removed(&mut self, global_name: u32) -> Option<ObjectId> {
+            if let Some(text_input) = &mut self.text_input_v3 {
+                text_input.on_seat_removed(global_name);
+            }
             self.seats.remove(&global_name).and_then(Seat::dispose)
         }
 
@@ -334,6 +366,9 @@ mod imp {
         pub fn dispose(&mut self) {
             for (_, seat) in self.seats.drain() {
                 seat.dispose();
+            }
+            if let Some(mut text_input) = self.text_input_v3.take() {
+                text_input.dispose();
             }
         }
 

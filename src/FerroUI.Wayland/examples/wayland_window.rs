@@ -34,8 +34,20 @@
 //!   backend.
 //! - `--expect-scale=N`: the scale of the output, which the window has to
 //!   take.
-//! - `--skip=a,b`: phases to leave out (`screens`, `frames`, `input`, `popup`, `decorations`,
-//!   `cursor`, `resize`, `state`, `title`).
+//! - `--skip=a,b`: phases to leave out (`screens`, `frames`, `input`, `popup`, `clipboard`,
+//!   `dragdrop`, `textinput`, `decorations`, `cursor`, `resize`, `state`, `title`).
+//!
+//! The phase `textinput` makes the test client the input method of the seat
+//! (`zwp_input_method_manager_v2`, which sway has): it is activated when a
+//! text box of the window takes the focus, sends a preedit, commits text and
+//! deletes around the cursor, and maps an input popup, whose place and
+//! rectangle are the cursor rectangle the window sent.
+//!
+//! With `--input-method=TEXT` (and optionally `--input-method-preedit=TEXT`)
+//! the example is no application but that input method alone, for another
+//! client: it waits until a text input is enabled, commits the text, sets
+//! the preedit, and ends when the text input is disabled or after a minute.
+//! `scripts/wayland/catalog-pictures.sh` types into the ControlCatalog with it.
 //!
 //! Touch is not checked: wlroots has no protocol that synthesizes it.
 //!
@@ -226,7 +238,63 @@ mod app {
         std::env::args().find_map(|arg| arg.strip_prefix("--mode=").map(str::to_string)).unwrap_or("software".to_string())
     }
 
+    /// The mode `--input-method=TEXT`: the input method of the seat for another client.
+    fn run_input_method(text: &str, preedit: Option<&str>) -> ExitCode {
+        let step = Duration::from_millis(100);
+        let mut probe = match probe::Probe::connect() {
+            Ok(probe) => probe,
+            Err(error) => {
+                println!("Input method: no connection: {error}");
+                return ExitCode::FAILURE;
+            }
+        };
+        if let Err(error) = probe.input_method_start() {
+            println!("Input method: {error}");
+            return ExitCode::FAILURE;
+        }
+        println!("Input method: waiting for a text input");
+        let started = std::time::Instant::now();
+        while !probe.input_method().active {
+            if !probe.alive() || probe.input_method().unavailable || started.elapsed() > Duration::from_secs(120) {
+                println!("Input method: no text input was enabled (unavailable: {})", probe.input_method().unavailable);
+                return ExitCode::FAILURE;
+            }
+            std::thread::sleep(step);
+        }
+        // The client sends its state in several commits: wait until it is quiet.
+        let mut serial = probe.input_method().done_count;
+        loop {
+            std::thread::sleep(step * 3);
+            let now = probe.input_method().done_count;
+            if now == serial {
+                break;
+            }
+            serial = now;
+        }
+        let state = probe.input_method();
+        println!("Input method: activated; content type {:?}, surrounding text {:?}", state.content_type, state.surrounding);
+        let sent = probe.input_method_send(None, Some(text), None);
+        println!("Input method: committed {text:?}: {sent:?}");
+        if let Some(preedit) = preedit {
+            std::thread::sleep(step * 5);
+            let length = preedit.len() as i32;
+            let sent = probe.input_method_send(None, None, Some((preedit, length, length)));
+            println!("Input method: preedit {preedit:?}: {sent:?}");
+        }
+        let started = std::time::Instant::now();
+        while probe.alive() && probe.input_method().active && started.elapsed() < Duration::from_secs(60) {
+            std::thread::sleep(step);
+        }
+        println!("Input method: done; the last surrounding text was {:?}", probe.input_method().surrounding);
+        probe.input_method_stop();
+        ExitCode::SUCCESS
+    }
+
     pub fn run() -> ExitCode {
+        if let Some(text) = std::env::args().find_map(|arg| arg.strip_prefix("--input-method=").map(str::to_string)) {
+            let preedit = std::env::args().find_map(|arg| arg.strip_prefix("--input-method-preedit=").map(str::to_string));
+            return run_input_method(&text, preedit.as_deref());
+        }
         let smoke = std::env::args().any(|arg| arg == "--smoke");
         let args: Vec<String> = std::env::args()
             .skip(1)
@@ -514,8 +582,14 @@ mod app {
         use wayland_protocols_wlr::data_control::v1::client::zwlr_data_control_manager_v1::ZwlrDataControlManagerV1;
         use wayland_protocols_wlr::data_control::v1::client::zwlr_data_control_offer_v1::{self, ZwlrDataControlOfferV1};
         use wayland_protocols_wlr::data_control::v1::client::zwlr_data_control_source_v1::{self, ZwlrDataControlSourceV1};
+        use std::os::fd::OwnedFd;
         use wayland_client::protocol::wl_buffer::WlBuffer;
+        use wayland_client::protocol::wl_compositor::WlCompositor;
         use wayland_client::protocol::wl_output::WlOutput;
+        use wayland_client::protocol::wl_surface::WlSurface;
+        use wayland_protocols_misc::zwp_input_method_v2::client::zwp_input_method_manager_v2::ZwpInputMethodManagerV2;
+        use wayland_protocols_misc::zwp_input_method_v2::client::zwp_input_method_v2::{self, ZwpInputMethodV2};
+        use wayland_protocols_misc::zwp_input_method_v2::client::zwp_input_popup_surface_v2::{self, ZwpInputPopupSurfaceV2};
         use wayland_client::protocol::wl_registry::{self, WlRegistry};
         use wayland_client::protocol::wl_seat::WlSeat;
         use wayland_client::protocol::wl_shm::{self, WlShm};
@@ -538,8 +612,30 @@ mod app {
             stride: u32,
         }
 
+        /// What the input method of the test client was told: the state of the text input of
+        /// the focused client, as of the last `done`.
+        #[derive(Clone, Debug, Default)]
+        pub struct InputMethodState {
+            pub active: bool,
+            pub activations: u32,
+            pub deactivations: u32,
+            /// The number of `done` events: the serial a commit of the input method names.
+            pub done_count: u32,
+            /// The seat has an input method already.
+            pub unavailable: bool,
+            /// The text around the cursor, and the cursor and the anchor in bytes.
+            pub surrounding: Option<(String, u32, u32)>,
+            /// The content hint and the content purpose, as numbers of the protocol.
+            pub content_type: Option<(u32, u32)>,
+            /// The rectangles the input popup was given, relative to the popup.
+            pub rectangles: Vec<(i32, i32, i32, i32)>,
+        }
+
         #[derive(Default)]
         struct State {
+            /// The input method as of the last `done`, and what arrived since.
+            input_method: InputMethodState,
+            pending_input_method: InputMethodState,
             globals: Vec<(u32, String, u32)>,
             buffer: Option<BufferInfo>,
             y_invert: bool,
@@ -641,6 +737,64 @@ mod app {
             }
         }
 
+        impl Dispatch<ZwpInputMethodV2, ()> for State {
+            fn event(
+                state: &mut Self,
+                _: &ZwpInputMethodV2,
+                event: zwp_input_method_v2::Event,
+                _: &(),
+                _: &Connection,
+                _: &QueueHandle<Self>,
+            ) {
+                let pending = &mut state.pending_input_method;
+                match event {
+                    zwp_input_method_v2::Event::Activate => {
+                        // An activation starts from nothing.
+                        pending.active = true;
+                        pending.surrounding = None;
+                        pending.content_type = None;
+                    }
+                    zwp_input_method_v2::Event::Deactivate => pending.active = false,
+                    zwp_input_method_v2::Event::SurroundingText { text, cursor, anchor } => {
+                        pending.surrounding = Some((text, cursor, anchor));
+                    }
+                    zwp_input_method_v2::Event::ContentType { hint, purpose } => {
+                        pending.content_type = Some((u32::from(hint), u32::from(purpose)));
+                    }
+                    zwp_input_method_v2::Event::Done => {
+                        let current = &mut state.input_method;
+                        if pending.active && !current.active {
+                            current.activations += 1;
+                        }
+                        if !pending.active && current.active {
+                            current.deactivations += 1;
+                        }
+                        current.active = pending.active;
+                        current.surrounding = pending.surrounding.clone();
+                        current.content_type = pending.content_type;
+                        current.done_count += 1;
+                    }
+                    zwp_input_method_v2::Event::Unavailable => state.input_method.unavailable = true,
+                    _ => {}
+                }
+            }
+        }
+
+        impl Dispatch<ZwpInputPopupSurfaceV2, ()> for State {
+            fn event(
+                state: &mut Self,
+                _: &ZwpInputPopupSurfaceV2,
+                event: zwp_input_popup_surface_v2::Event,
+                _: &(),
+                _: &Connection,
+                _: &QueueHandle<Self>,
+            ) {
+                if let zwp_input_popup_surface_v2::Event::TextInputRectangle { x, y, width, height } = event {
+                    state.input_method.rectangles.push((x, y, width, height));
+                }
+            }
+        }
+
         impl Dispatch<WlRegistry, ()> for State {
             fn event(state: &mut Self, _: &WlRegistry, event: wl_registry::Event, _: &(), _: &Connection, _: &QueueHandle<Self>) {
                 if let wl_registry::Event::Global { name, interface, version } = event {
@@ -673,6 +827,9 @@ mod app {
         }
 
         delegate_noop!(State: ignore WlShm);
+        delegate_noop!(State: ignore WlCompositor);
+        delegate_noop!(State: ignore WlSurface);
+        delegate_noop!(State: ignore ZwpInputMethodManagerV2);
         delegate_noop!(State: ignore WlSeat);
         delegate_noop!(State: ignore WlOutput);
         delegate_noop!(State: ignore WlShmPool);
@@ -711,6 +868,13 @@ mod app {
             keyboard: Option<ZwpVirtualKeyboardV1>,
             data_control: Option<(ZwlrDataControlManagerV1, ZwlrDataControlDeviceV1)>,
             data_source: Option<ZwlrDataControlSourceV1>,
+            seat: WlSeat,
+            compositor: Option<WlCompositor>,
+            input_method_manager: Option<ZwpInputMethodManagerV2>,
+            input_method: Option<ZwpInputMethodV2>,
+            /// The popup of the input method: its surface, its role, its buffer and the memory
+            /// of the buffer.
+            input_popup: Option<(WlSurface, ZwpInputPopupSurfaceV2, WlBuffer, OwnedFd)>,
             time: u32,
         }
 
@@ -744,6 +908,9 @@ mod app {
                     let device = manager.get_data_device(&seat, &handle, ());
                     (manager, device)
                 });
+                let compositor: Option<WlCompositor> = find("wl_compositor").map(|name| registry.bind(name, 4, &handle, ()));
+                let input_method_manager: Option<ZwpInputMethodManagerV2> =
+                    find("zwp_input_method_manager_v2").map(|name| registry.bind(name, 1, &handle, ()));
                 queue.roundtrip(&mut state).map_err(|error| error.to_string())?;
 
                 Ok(Self {
@@ -757,8 +924,104 @@ mod app {
                     keyboard,
                     data_control,
                     data_source: None,
+                    seat,
+                    compositor,
+                    input_method_manager,
+                    input_method: None,
+                    input_popup: None,
                     time: 1000,
                 })
+            }
+
+            /// Whether the compositor lets a client be the input method of a seat.
+            pub fn has_input_method(&self) -> bool {
+                self.input_method_manager.is_some()
+            }
+
+            /// Makes this client the input method of the seat.
+            pub fn input_method_start(&mut self) -> Result<(), String> {
+                let manager = self.input_method_manager.as_ref().ok_or("the compositor has no zwp_input_method_manager_v2")?;
+                if self.input_method.is_none() {
+                    self.input_method = Some(manager.get_input_method(&self.seat, &self.queue.handle(), ()));
+                }
+                self.sync()?;
+                if self.state.input_method.unavailable {
+                    return Err("the seat has an input method already".to_string());
+                }
+                Ok(())
+            }
+
+            /// What the input method was told, as of the last `done` of the compositor.
+            pub fn input_method(&mut self) -> InputMethodState {
+                let _ = self.sync();
+                self.state.input_method.clone()
+            }
+
+            /// One batch of the input method: characters to delete around the cursor (in
+            /// bytes), a text to commit, a preedit with its cursor (in bytes); then the commit
+            /// with the serial, which is the number of `done` events so far.
+            pub fn input_method_send(
+                &mut self,
+                delete: Option<(u32, u32)>,
+                commit: Option<&str>,
+                preedit: Option<(&str, i32, i32)>,
+            ) -> Result<(), String> {
+                self.sync()?;
+                let input_method = self.input_method.as_ref().ok_or("no input method")?;
+                if let Some((before, after)) = delete {
+                    input_method.delete_surrounding_text(before, after);
+                }
+                if let Some(text) = commit {
+                    input_method.commit_string(text.to_string());
+                }
+                if let Some((text, begin, end)) = preedit {
+                    input_method.set_preedit_string(text.to_string(), begin, end);
+                }
+                input_method.commit(self.state.input_method.done_count);
+                self.sync()
+            }
+
+            /// Maps a popup of the input method: a surface of one colour, which the compositor
+            /// places at the cursor rectangle of the text input.
+            pub fn input_method_popup(&mut self, size: (i32, i32), colour: (u8, u8, u8)) -> Result<(), String> {
+                let handle = self.queue.handle();
+                let compositor = self.compositor.as_ref().ok_or("the compositor has no wl_compositor of version 4")?;
+                let input_method = self.input_method.as_ref().ok_or("no input method")?;
+                let stride = size.0 * 4;
+                let length = (stride * size.1) as usize;
+                let fd = memfd_of_length(c"ferroui-wayland-input-popup", length).map_err(|error| error.to_string())?;
+                {
+                    let mut mapping = MemoryMapping::shared_read_write(fd.as_fd(), length).map_err(|error| error.to_string())?;
+                    let data = mapping.as_mut_slice().ok_or("the buffer of the popup cannot be written")?;
+                    for pixel in data.chunks_exact_mut(4) {
+                        pixel.copy_from_slice(&[colour.2, colour.1, colour.0, 0xff]);
+                    }
+                }
+                let pool = self.shm.create_pool(fd.as_fd(), length as i32, &handle, ());
+                let buffer = pool.create_buffer(0, size.0, size.1, stride, wl_shm::Format::Argb8888, &handle, ());
+                pool.destroy();
+                let surface = compositor.create_surface(&handle, ());
+                let popup = input_method.get_input_popup_surface(&surface, &handle, ());
+                surface.attach(Some(&buffer), 0, 0);
+                surface.damage_buffer(0, 0, size.0, size.1);
+                surface.commit();
+                self.input_popup = Some((surface, popup, buffer, fd));
+                self.sync()
+            }
+
+            /// Gives up the popup and the input method.
+            pub fn input_method_stop(&mut self) {
+                if let Some((surface, popup, buffer, _)) = self.input_popup.take() {
+                    popup.destroy();
+                    surface.destroy();
+                    buffer.destroy();
+                }
+                if let Some(input_method) = self.input_method.take() {
+                    input_method.destroy();
+                }
+                let _ = self.sync();
+                self.state.input_method = InputMethodState::default();
+                self.state.pending_input_method = InputMethodState::default();
             }
 
             /// Whether the compositor lets this client see and set the selection (the data
@@ -1201,6 +1464,10 @@ mod app {
                     report.phase("dragdrop");
                     drag_drop_checks(&report, probe, &window, client.as_ref()).await;
                 }
+                if options.runs("textinput") {
+                    report.phase("textinput");
+                    text_input_checks(&report, probe, &window, client.as_ref()).await;
+                }
                 if options.runs("resize") {
                     report.phase("resize");
                     resize_checks(&report, probe, &window).await;
@@ -1385,6 +1652,270 @@ mod app {
                 }
                 delay(Duration::from_millis(200)).await;
             }
+        }
+
+        /// The colour of the popup of the input method of the test client.
+        const INPUT_POPUP_FILL: (u8, u8, u8) = (0xff, 0x00, 0xff);
+        const INPUT_POPUP_SIZE: (i32, i32) = (48, 24);
+        /// Where the text box of the phase is in the window.
+        const TEXT_BOX_ORIGIN: (f64, f64) = (160.0, 140.0);
+
+        /// The text input of the worker: the number of seats with a text input object, and
+        /// the state of every surface that registered a sink.
+        fn text_input_state(
+            client: &Rc<WaylandWorkerClient>,
+        ) -> Option<(usize, Vec<ferroui_wayland::server::transient::wayland_text_input_v3::TextInputSurfaceSnapshot>)> {
+            client.invoke_oob(|worker| worker.state.text_input_snapshot()).recv_timeout(STEP_TIMEOUT).ok().flatten()
+        }
+
+        /// Waits until the input method of the test client has heard nothing new for a moment:
+        /// the window sends its state in several commits, each answered with a `done`, and a
+        /// commit of the input method has to name the last.
+        async fn input_method_quiet(probe: &mut Probe) {
+            let mut serial = probe.input_method().done_count;
+            for _ in 0..20 {
+                delay(Duration::from_millis(150)).await;
+                let now = probe.input_method().done_count;
+                if now == serial {
+                    return;
+                }
+                serial = now;
+            }
+        }
+
+        /// The input method of a top-level over `zwp_text_input_v3`, with the test client as
+        /// the input method of the seat.
+        async fn text_input_checks(report: &Report, probe: &mut Probe, window: &Ref<Window>, client: Option<&Rc<WaylandWorkerClient>>) {
+            use ferroui_controls::presenters::TextPresenter;
+            use ferroui_controls::TextBox;
+
+            let Some(client) = client else {
+                report.check("text input", false, "the platform has no worker client".to_string());
+                return;
+            };
+            let seats = text_input_state(client).map(|(seats, _)| seats);
+            report.check(
+                "text input manager",
+                seats.is_some_and(|seats| seats > 0),
+                format!("the worker has zwp_text_input_manager_v3 and a text input object for {seats:?} seats"),
+            );
+            if !probe.has_input_method() {
+                report.check("input method", false, "the compositor has no zwp_input_method_manager_v2".to_string());
+                return;
+            }
+            let started = probe.input_method_start();
+            report.check("input method", started.is_ok(), format!("the test client is the input method of the seat: {started:?}"));
+            if started.is_err() || seats.is_none() {
+                return;
+            }
+
+            // A page with a text box in place of the content of the window, for this phase.
+            let text_box = TextBox::new();
+            text_box.set_width(320.0);
+            text_box.set_horizontal_alignment(HorizontalAlignment::Left);
+            text_box.set_vertical_alignment(VerticalAlignment::Top);
+            text_box.set_margin(Thickness::new(TEXT_BOX_ORIGIN.0, TEXT_BOX_ORIGIN.1, 0.0, 0.0));
+            let page = Border::new();
+            page.set_background(Some(brush(FILL)));
+            page.set_child(&text_box);
+            let previous_content = window.content();
+            window.set_content(Some(Control::boxed(page)));
+            delay(Duration::from_millis(300)).await;
+            let preedit_of = |text_box: &Ref<TextBox>| -> Option<String> {
+                text_box
+                    .clone()
+                    .upcast::<ferroui_base::Visual>()
+                    .get_visual_descendants()
+                    .find_map(|visual| visual.cast::<TextPresenter>())
+                    .and_then(|presenter| presenter.preedit_text())
+            };
+            let text_of = |text_box: &Ref<TextBox>| text_box.text().unwrap_or_default();
+
+            // 1. The focus of a text box enables the text input, and the compositor activates
+            //    the input method with the state of the client.
+            let focused = text_box.focus();
+            let enabled = wait_for(STEP_TIMEOUT, || {
+                probe.input_method().active
+                    && text_input_state(client).is_some_and(|(_, surfaces)| {
+                        surfaces.iter().any(|surface| surface.has_client && surface.last_sent_enabled && !surface.entered_seats.is_empty())
+                    })
+            })
+            .await;
+            input_method_quiet(probe).await;
+            let worker = text_input_state(client).map(|(_, surfaces)| surfaces).unwrap_or_default();
+            report.check(
+                "enable",
+                focused && enabled,
+                format!("a text box took the focus ({focused}) and the text input of its surface is enabled: {worker:?}"),
+            );
+            let state = probe.input_method();
+            report.check(
+                "activate",
+                state.active && state.activations == 1 && state.content_type.is_some_and(|(_, purpose)| purpose == 0),
+                format!(
+                    "the input method was activated {} time(s) with the content type {:?} (hint, purpose; normal is 0) and the surrounding text {:?}",
+                    state.activations, state.content_type, state.surrounding
+                ),
+            );
+            report.check(
+                "surrounding text",
+                state.surrounding.as_ref().is_some_and(|(text, cursor, anchor)| text.is_empty() && *cursor == 0 && *anchor == 0),
+                format!("the empty text box is announced as {:?}", state.surrounding),
+            );
+
+            // 2. A preedit of the input method is the preedit of the text box, and not its text.
+            let sent = probe.input_method_send(None, None, Some(("ni", 2, 2)));
+            let arrived = wait_for(STEP_TIMEOUT, || {
+                let _ = probe.sync();
+                preedit_of(&text_box).as_deref() == Some("ni")
+            })
+            .await;
+            report.check(
+                "preedit",
+                sent.is_ok() && arrived && text_of(&text_box).is_empty(),
+                format!("the preedit \"ni\": {sent:?}; the text box has the preedit {:?} and the text {:?}", preedit_of(&text_box), text_of(&text_box)),
+            );
+
+            // 3. A commit replaces the preedit with text; the input method hears of the new
+            //    text around the cursor, in bytes.
+            input_method_quiet(probe).await;
+            let committed = "\u{4f60}\u{597d}";
+            let sent = probe.input_method_send(None, Some(committed), None);
+            let arrived = wait_for(STEP_TIMEOUT, || {
+                let _ = probe.sync();
+                text_of(&text_box) == committed && preedit_of(&text_box).is_none()
+            })
+            .await;
+            report.check(
+                "commit",
+                sent.is_ok() && arrived,
+                format!("two characters committed: {sent:?}; the text box has the text {:?} and the preedit {:?}", text_of(&text_box), preedit_of(&text_box)),
+            );
+            let told = wait_for(STEP_TIMEOUT, || {
+                probe.input_method().surrounding.is_some_and(|(text, cursor, anchor)| text == committed && cursor == 6 && anchor == 6)
+            })
+            .await;
+            report.check(
+                "surrounding text after the commit",
+                told,
+                format!("the input method is told {:?} (the cursor after six bytes)", probe.input_method().surrounding),
+            );
+
+            // 4. One batch with a commit and a preedit: both, in the order of the protocol.
+            input_method_quiet(probe).await;
+            let sent = probe.input_method_send(None, Some("!"), Some(("x", 1, 1)));
+            let expected = format!("{committed}!");
+            let arrived = wait_for(STEP_TIMEOUT, || {
+                let _ = probe.sync();
+                text_of(&text_box) == expected && preedit_of(&text_box).as_deref() == Some("x")
+            })
+            .await;
+            report.check(
+                "commit and preedit",
+                sent.is_ok() && arrived,
+                format!("a batch with both: {sent:?}; the text {:?}, the preedit {:?}", text_of(&text_box), preedit_of(&text_box)),
+            );
+
+            // 5. Deleting around the cursor: four bytes before it are two characters. The
+            //    batch has no preedit, which clears the one of the batch before.
+            let told = wait_for(STEP_TIMEOUT, || probe.input_method().surrounding.is_some_and(|(text, _, _)| text == expected)).await;
+            input_method_quiet(probe).await;
+            let sent = probe.input_method_send(Some((4, 0)), None, None);
+            let arrived = wait_for(STEP_TIMEOUT, || {
+                let _ = probe.sync();
+                text_of(&text_box) == "\u{4f60}" && preedit_of(&text_box).is_none()
+            })
+            .await;
+            report.check(
+                "delete surrounding text",
+                told && sent.is_ok() && arrived,
+                format!("four bytes before the cursor deleted: {sent:?}; the text {:?}, the preedit {:?}", text_of(&text_box), preedit_of(&text_box)),
+            );
+
+            // 6. The cursor rectangle: the compositor places a popup of the input method below
+            //    it and tells the popup the rectangle, relative to the popup.
+            input_method_quiet(probe).await;
+            let rectangle = text_input_state(client)
+                .and_then(|(_, surfaces)| surfaces.into_iter().find(|surface| surface.has_client))
+                .and_then(|surface| surface.cursor_rectangle);
+            let mapped = probe.input_method_popup(INPUT_POPUP_SIZE, INPUT_POPUP_FILL);
+            let reported = wait_for(STEP_TIMEOUT, || !probe.input_method().rectangles.is_empty()).await;
+            let rectangles = probe.input_method().rectangles;
+            let last = rectangles.last().copied();
+            report.check(
+                "cursor rectangle",
+                mapped.is_ok()
+                    && reported
+                    && matches!((rectangle, last), (Some((_, _, w, h)), Some((_, _, rw, rh))) if (w, h) == (rw, rh)),
+                format!(
+                    "the worker sent the cursor rectangle {rectangle:?} (x, y, width, height of the surface); the popup of the input method ({mapped:?}) is told {last:?}, relative to itself"
+                ),
+            );
+            if let (Some((x, y, _, h)), true) = (rectangle, probe.has_screencopy()) {
+                let scaling = window.render_scaling();
+                // A point inside the popup when its top left corner is the bottom left corner of
+                // the cursor rectangle, which is where sway puts it.
+                let inside = (f64::from(x) + f64::from(INPUT_POPUP_SIZE.0) / 2.0, f64::from(y + h) + f64::from(INPUT_POPUP_SIZE.1) / 2.0);
+                let point = ((inside.0 * scaling) as u32, (inside.1 * scaling) as u32);
+                let picture = picture_with(probe, point, INPUT_POPUP_FILL).await;
+                let pixel = picture.as_ref().ok().and_then(|picture| picture.pixel(point.0, point.1));
+                report.check(
+                    "input popup",
+                    close_to(pixel, INPUT_POPUP_FILL),
+                    format!(
+                        "the pixel at {point:?}, below the cursor rectangle, is {pixel:?}; the popup of the input method is {INPUT_POPUP_FILL:?}"
+                    ),
+                );
+            }
+
+            // 7. The keyboard still types: the input method has no grab, and a key arrives as
+            //    a key and as its text.
+            if probe.has_keyboard() {
+                const KEY_A: u32 = 30;
+                let keymap = default_keymap_text().and_then(|keymap| probe.keyboard_keymap(&keymap));
+                delay(Duration::from_millis(300)).await;
+                let sent = probe.keyboard_key(KEY_A, true).and_then(|()| probe.keyboard_key(KEY_A, false));
+                let typed = wait_for(STEP_TIMEOUT, || {
+                    let _ = probe.sync();
+                    text_of(&text_box) == "\u{4f60}a"
+                })
+                .await;
+                report.check(
+                    "key while enabled",
+                    keymap.is_ok() && sent.is_ok() && typed,
+                    format!("the key of \"a\" with the text input enabled: {sent:?}; the text {:?}", text_of(&text_box)),
+                );
+            }
+
+            // 8. The text box goes (the content of the window is put back): the text input is
+            //    disabled and the input method deactivated.
+            window.set_content(previous_content);
+            let disabled = wait_for(STEP_TIMEOUT, || {
+                !probe.input_method().active
+                    && text_input_state(client).is_some_and(|(_, surfaces)| surfaces.iter().all(|surface| !surface.has_client))
+            })
+            .await;
+            let state = probe.input_method();
+            report.check(
+                "disable",
+                disabled && state.deactivations == 1,
+                format!(
+                    "without the text box the text input is disabled: the input method was deactivated {} time(s); the worker has {:?}",
+                    state.deactivations,
+                    text_input_state(client).map(|(_, surfaces)| surfaces)
+                ),
+            );
+
+            probe.input_method_stop();
+            let alive = probe.alive();
+            let worker_alive = text_input_state(client).is_some();
+            report.check(
+                "connections",
+                alive && worker_alive,
+                format!("the test client ({alive}) and the worker ({worker_alive}) are still connected"),
+            );
+            // The marker is back for the phases that follow.
+            delay(Duration::from_millis(300)).await;
         }
 
         /// The frames of the window as the compositor composed them.

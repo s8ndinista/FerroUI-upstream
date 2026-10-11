@@ -21,7 +21,9 @@ pub mod clipboard;
 pub mod screens;
 pub mod server;
 pub mod ferro_wayland_exception;
+pub mod text_input_options_converter;
 pub mod wayland_platform_options;
+pub mod wayland_text_utils;
 pub mod xkb_key_transform;
 
 #[cfg(target_os = "linux")]
@@ -53,6 +55,8 @@ mod window_impl_base_keyboard;
 mod window_impl_base_pointer;
 #[cfg(target_os = "linux")]
 mod window_impl_sink;
+#[cfg(target_os = "linux")]
+mod window_impl_text_input;
 #[cfg(target_os = "linux")]
 pub mod xkb_common_keymap;
 #[cfg(target_os = "linux")]

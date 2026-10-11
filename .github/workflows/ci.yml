@@ -932,6 +932,21 @@ jobs:
             done
           done
           exit $result
+      # The TextBox page of the catalog with the test client of the example as the input method of
+      # the seat: the first text box takes the focus, the input method commits a text and leaves a
+      # preedit, and the step fails unless the catalog says the text box has the text.
+      - name: An input method types into a text box of the ControlCatalog
+        if: ${{ !cancelled() }}
+        run: |
+          result=0
+          for scale in 1 1.5; do
+            FERROUI_SMOKE_SCREENSHOT_PAGES=TextBox CATALOG_POPUP=textbox \
+              CATALOG_INPUT_METHOD=target/debug/examples/wayland_window \
+              CATALOG_INPUT_TEXT="typed by an input method: 你好" CATALOG_INPUT_PREEDIT="ni hao" \
+              scripts/wayland/sway-run.sh --size 1920x1200 --scale "$scale" -- \
+              sh scripts/wayland/catalog-pictures.sh target/debug/control-catalog-desktop "catalog-pictures/scale-$scale" software 6000 || result=1
+          done
+          exit $result
       - name: Upload the pictures of the catalog
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
