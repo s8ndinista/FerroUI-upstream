@@ -7,12 +7,14 @@
 //! FERROUI_SMOKE_EXIT_MS=20000 FERROUI_SMOKE_PAGES=150 cargo run -p control-catalog-desktop
 //! FERROUI_SMOKE_SCREENSHOTS=target/screenshots cargo run -p control-catalog-desktop
 //! FERROUI_CATALOG_THEME=simple cargo run -p control-catalog-desktop
-//! FERROUI_CATALOG_WAYLAND=1 cargo run -p control-catalog-desktop
+//! FERROUI_CATALOG_WAYLAND=0 cargo run -p control-catalog-desktop
 //! ```
 //!
-//! On Linux `FERROUI_CATALOG_WAYLAND=1` (or `software`, for rendering
-//! through shared memory buffers alone) selects the Wayland backend, with
-//! the backend of the platform detection as its fallback.
+//! On Linux the catalog uses the Wayland backend when a compositor can be
+//! reached, with the backend of the platform detection (X11) as its
+//! fallback, as the original does (`UseWaylandWithFallback`).
+//! `FERROUI_CATALOG_WAYLAND=0` (or `x11`) leaves the backend of the platform
+//! detection alone; `software` renders through shared memory buffers alone.
 //!
 //! With `FERROUI_SMOKE_EXIT_MS=<n>` the main window is closed after `n`
 //! milliseconds, which ends the main loop; the process exits with the exit
@@ -118,24 +120,24 @@ pub fn build_ferro_app() -> AppBuilder {
         .log_to_trace(LogEventLevel::Warning, &[])
 }
 
-/// The Wayland backend, when `FERROUI_CATALOG_WAYLAND` asks for it: `1` (or `egl`) with the
-/// rendering of its options (EGL when the compositor and the driver have it), `software` through
-/// shared memory buffers alone. With a compositor that cannot be used the backend of the
-/// platform detection takes over.
+/// The Wayland backend with the backend of the platform detection as its fallback, as the
+/// original (`UseWaylandWithFallback()` after `UsePlatformDetect()`): with a compositor that
+/// cannot be reached or used the fallback takes over.
 ///
-/// The original calls `UseWaylandWithFallback()` always. Here it is asked for, because the
-/// Wayland backend has no clipboard, no drag and drop and no input method yet (the later
-/// parts of stage 2 of `docs/porting/wayland-platform.md`): a catalog that moved to Wayland by
-/// itself on a Wayland session would lose what it has there through the X11 backend.
+/// `FERROUI_CATALOG_WAYLAND` is the port's own, for the runs that need one backend: `0` (or
+/// `x11`) leaves the backend of the platform detection alone, which is how the catalog is run
+/// through XWayland on a Wayland session; `software` renders through shared memory buffers
+/// alone; anything else, and no value, renders as the options of the backend say (EGL when the
+/// compositor and the driver have it).
 #[cfg(target_os = "linux")]
 fn use_wayland_of_the_environment(builder: AppBuilder) -> AppBuilder {
     use ferroui_wayland::{FerroWaylandPlatformExtensions, WaylandPlatformOptions};
     let mut options = WaylandPlatformOptions::new();
     match std::env::var("FERROUI_CATALOG_WAYLAND").ok().as_deref() {
-        Some("1") | Some("egl") => {}
+        Some("0") | Some("x11") => return builder,
         // No profile to make a context with: no display of EGL is created.
         Some("software") => options.gl_profiles = Vec::new(),
-        _ => return builder,
+        _ => {}
     }
     println!("ControlCatalog: the Wayland backend, with the backend of the platform detection as its fallback");
     builder.with(std::rc::Rc::new(options)).use_wayland_with_fallback()
