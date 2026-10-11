@@ -23,6 +23,21 @@
 //! (the module `imp` at the end, with the implementations of the contracts
 //! over the bindings).
 //!
+//! One difference of behaviour, for compositors that take the protocol at its
+//! word (wlroots; measured under sway 1.9). The state a client sends with the
+//! commit that enables it is what the compositor supports for that session:
+//! "the client must set the features it supports in the same commit as
+//! enable", and wlroots ignores a surrounding text, a content type or a cursor
+//! rectangle of a later commit when the enabling one had none. The reference
+//! enables at once when the client is set (`SetActive`), before the UI thread
+//! has sent the state of the client, so on such a compositor the input method
+//! never hears of the text around the cursor and cannot place its popup. Here
+//! `set_active` only marks the surface, and [`WaylandTextInputV3::flush`],
+//! which the worker calls after it ran the commands of the UI thread, sends
+//! `enable` with everything that arrived with it, in one commit. A kind of
+//! state that arrives for the first time after that is sent by enabling again
+//! (the sequence of a reset), also at the flush.
+//!
 //! One difference of representation: the options of a text input client hold
 //! a reference counted list (the locale hints) and cannot cross to the
 //! worker, so the proxy converts them on the UI thread and the facade keeps
@@ -171,16 +186,38 @@ impl<M: ITextInputManagerV3, S: IWaylandTextInputV3Events> WaylandTextInputV3<M,
         has_client: bool,
         supports_preedit: bool,
         supports_surrounding_text: bool,
-        surfaces: &dyn ITextInputSurfaces,
     ) {
-        let Self { seats, surfaces: per_surfaces, .. } = self;
-        let Some(ps) = per_surfaces.get_mut(&s) else {
+        let Some(ps) = self.surfaces.get_mut(&s) else {
             return;
         };
         ps.has_client = has_client;
         ps.supports_preedit = supports_preedit;
         ps.supports_surrounding_text = supports_surrounding_text;
-        Self::push_state_to_entered_seats(seats, s, ps, surfaces);
+        // The reference pushes the state to the entered seats here. The port does it at the
+        // flush, with the state of the client that arrives after this call (see the head of
+        // the file).
+        ps.needs_push = true;
+    }
+
+    /// Sends what was held back: `enable` or `disable` for the surfaces whose client changed
+    /// since the last flush, and `enable` again for those that got a kind of state the
+    /// enabling commit did not have. The worker calls it after the commands of the UI thread.
+    pub fn flush(&mut self, surfaces: &dyn ITextInputSurfaces) {
+        let Self { seats, surfaces: per_surfaces, .. } = self;
+        let mut pending: Vec<WSurfaceId> =
+            per_surfaces.values().filter(|ps| ps.needs_push || ps.needs_reenable).map(|ps| ps.surface).collect();
+        pending.sort();
+        for s in pending {
+            let Some(ps) = per_surfaces.get_mut(&s) else {
+                continue;
+            };
+            if std::mem::take(&mut ps.needs_push) {
+                ps.needs_reenable = false;
+                Self::push_state_to_entered_seats(seats, s, ps, surfaces);
+            } else if std::mem::take(&mut ps.needs_reenable) {
+                Self::reset_surface(seats, s, ps, surfaces);
+            }
+        }
     }
 
     /// Aborts any in-flight IME composition for this surface: sends
@@ -207,6 +244,8 @@ impl<M: ITextInputManagerV3, S: IWaylandTextInputV3Events> WaylandTextInputV3<M,
         ps.cursor_rect = None;
         ps.options = None;
         ps.has_client = false;
+        ps.declared = Features::default();
+        ps.needs_reenable = false;
     }
 
     pub fn set_cursor_rect(&mut self, s: WSurfaceId, logical: Rect, surfaces: &dyn ITextInputSurfaces) {
@@ -216,6 +255,10 @@ impl<M: ITextInputManagerV3, S: IWaylandTextInputV3Events> WaylandTextInputV3<M,
         };
         ps.cursor_rect = Some(logical);
         if !ps.last_sent_enabled {
+            return;
+        }
+        if !ps.declared.cursor_rectangle {
+            ps.needs_reenable = true;
             return;
         }
         let (x, y, w, h) = translate_cursor_rect(surfaces, s, logical);
@@ -239,6 +282,10 @@ impl<M: ITextInputManagerV3, S: IWaylandTextInputV3Events> WaylandTextInputV3<M,
         if !ps.last_sent_enabled {
             return;
         }
+        if !ps.declared.content_type {
+            ps.needs_reenable = true;
+            return;
+        }
         let (hint, purpose) = options;
         for name in &ps.entered_seats {
             let Some(seat) = seats.get_mut(name) else {
@@ -258,6 +305,10 @@ impl<M: ITextInputManagerV3, S: IWaylandTextInputV3Events> WaylandTextInputV3<M,
         ps.surrounding_cursor_char = cursor_char;
         ps.surrounding_anchor_char = anchor_char;
         if !ps.last_sent_enabled || !ps.supports_surrounding_text {
+            return;
+        }
+        if !ps.declared.surrounding_text {
+            ps.needs_reenable = true;
             return;
         }
         let text = ps.surrounding_text.as_deref().unwrap_or_default();
@@ -283,9 +334,19 @@ impl<M: ITextInputManagerV3, S: IWaylandTextInputV3Events> WaylandTextInputV3<M,
         let Some(ps) = per_surfaces.get_mut(&s) else {
             return;
         };
+        Self::reset_surface(seats, s, ps, surfaces);
+    }
+
+    fn reset_surface(
+        seats: &mut BTreeMap<u32, PerSeat<M::TextInput>>,
+        s: WSurfaceId,
+        ps: &mut PerSurface<S>,
+        surfaces: &dyn ITextInputSurfaces,
+    ) {
         if !ps.has_client {
             return;
         }
+        ps.declared = Features::of(ps);
         let mut had_delivered_preedit = false;
         for name in &ps.entered_seats {
             let Some(seat) = seats.get_mut(name) else {
@@ -367,6 +428,7 @@ impl<M: ITextInputManagerV3, S: IWaylandTextInputV3Events> WaylandTextInputV3<M,
             seat.commit();
         }
         ps.last_sent_enabled = enable;
+        ps.declared = if enable { Features::of(ps) } else { Features::default() };
     }
 
     fn push_seat_state_locked(seat: &PerSeat<M::TextInput>, s: WSurfaceId, ps: &PerSurface<S>, surfaces: &dyn ITextInputSurfaces) {
@@ -405,11 +467,14 @@ impl<M: ITextInputManagerV3, S: IWaylandTextInputV3Events> WaylandTextInputV3<M,
         ps.entered_seats.push(seat_global_name);
         seat.clear_pending();
 
-        if ps.has_client {
+        // A client that was set and not flushed yet is enabled by the flush, which finds the
+        // seat entered.
+        if ps.has_client && !ps.needs_push {
             seat.proxy.enable();
             Self::push_seat_state_locked(seat, ws, ps, surfaces);
             seat.commit();
             ps.last_sent_enabled = true;
+            ps.declared = Features::of(ps);
         }
     }
 
@@ -644,10 +709,36 @@ pub fn clamp_surrounding_for_wayland(text: &str, cursor_char: i32, anchor_char: 
 
 // ----- inner state types -----
 
+/// The kinds of state a commit that enables carries: what the compositor supports for the
+/// session it starts.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+struct Features {
+    content_type: bool,
+    cursor_rectangle: bool,
+    surrounding_text: bool,
+}
+
+impl Features {
+    /// What `push_seat_state_locked` sends for the surface as it is.
+    fn of<S>(ps: &PerSurface<S>) -> Self {
+        Self {
+            content_type: ps.options.is_some(),
+            cursor_rectangle: ps.cursor_rect.is_some(),
+            surrounding_text: ps.supports_surrounding_text && ps.surrounding_text.is_some(),
+        }
+    }
+}
+
 struct PerSurface<S> {
     surface: WSurfaceId,
     sink: S,
     entered_seats: Vec<u32>,
+    /// The client changed and the seats were not told yet (the port's own: see `flush`).
+    needs_push: bool,
+    /// A kind of state arrived that the enabling commit did not have (the port's own).
+    needs_reenable: bool,
+    /// What the enabling commit had (the port's own).
+    declared: Features,
     has_client: bool,
     #[allow(dead_code)] // Kept as the reference keeps it: nothing reads it there either.
     supports_preedit: bool,
@@ -666,6 +757,9 @@ impl<S> PerSurface<S> {
             surface,
             sink,
             entered_seats: Vec::new(),
+            needs_push: false,
+            needs_reenable: false,
+            declared: Features::default(),
             has_client: false,
             supports_preedit: false,
             supports_surrounding_text: false,
@@ -1049,13 +1143,33 @@ mod tests {
             Self { text_input, requests, sink, surfaces: FakeSurfaces { shadow: Thickness::default(), token: TOKEN }, surface }
         }
 
-        /// The surface has the focus of the seat and a client that supports everything.
+        /// The surface has the focus of the seat and a client that supports everything, which
+        /// was enabled with a content type, a cursor rectangle and an empty surrounding text.
         fn active() -> Self {
             let mut fixture = Self::new();
-            fixture.text_input.on_enter(SEAT, Some(fixture.surface), &fixture.surfaces);
-            fixture.text_input.set_active(fixture.surface, true, true, true, &fixture.surfaces);
+            let surface = fixture.surface;
+            fixture.text_input.on_enter(SEAT, Some(surface), &fixture.surfaces);
+            fixture.text_input.set_active(surface, true, true, true);
+            fixture.text_input.set_options(surface, (ContentHint::NONE, ContentPurpose::Normal));
+            fixture.text_input.set_cursor_rect(surface, Rect::new(0.0, 0.0, 1.0, 1.0), &fixture.surfaces);
+            fixture.text_input.set_surrounding_text(surface, String::new(), 0, 0);
+            fixture.flush();
             fixture.take();
             fixture
+        }
+
+        /// The surface has the focus of the seat and a client that was enabled with no state.
+        fn bare() -> Self {
+            let mut fixture = Self::new();
+            fixture.text_input.on_enter(SEAT, Some(fixture.surface), &fixture.surfaces);
+            fixture.text_input.set_active(fixture.surface, true, true, true);
+            fixture.flush();
+            fixture.take();
+            fixture
+        }
+
+        fn flush(&mut self) {
+            self.text_input.flush(&self.surfaces);
         }
 
         /// The requests of the seat since the last call.
@@ -1084,29 +1198,88 @@ mod tests {
         // The focus alone asks for nothing: no client yet.
         assert_eq!(fixture.take(), vec![]);
 
-        fixture.text_input.set_active(fixture.surface, true, true, true, &fixture.surfaces);
+        // The client alone asks for nothing either: the flush does.
+        fixture.text_input.set_active(fixture.surface, true, true, true);
+        assert_eq!(fixture.take(), vec![]);
+        fixture.flush();
         assert_eq!(fixture.take(), vec![Request::Enable, Request::Commit]);
         assert_eq!(fixture.serial(), 1);
+        // A flush with nothing held back sends nothing.
+        fixture.flush();
+        assert_eq!(fixture.take(), vec![]);
 
         // The client goes: disable and a commit.
-        fixture.text_input.set_active(fixture.surface, false, false, false, &fixture.surfaces);
+        fixture.text_input.set_active(fixture.surface, false, false, false);
+        fixture.flush();
         assert_eq!(fixture.take(), vec![Request::Disable, Request::Commit]);
         assert_eq!(fixture.serial(), 2);
 
         // Without a client and without having been enabled there is nothing to disable, but
         // the state is committed.
-        fixture.text_input.set_active(fixture.surface, false, false, false, &fixture.surfaces);
+        fixture.text_input.set_active(fixture.surface, false, false, false);
+        fixture.flush();
         assert_eq!(fixture.take(), vec![Request::Commit]);
+    }
+
+    #[test]
+    fn the_state_that_arrives_with_the_client_is_in_the_commit_that_enables() {
+        let mut fixture = Fixture::new();
+        let surface = fixture.surface;
+        fixture.text_input.on_enter(SEAT, Some(surface), &fixture.surfaces);
+        // The order of the UI thread: the client, then its state.
+        fixture.text_input.set_active(surface, true, true, true);
+        fixture.text_input.set_options(surface, (ContentHint::MULTILINE, ContentPurpose::Normal));
+        fixture.text_input.set_surrounding_text(surface, "abc".to_string(), 3, 3);
+        fixture.text_input.set_cursor_rect(surface, Rect::new(7.0, 8.0, 1.0, 14.0), &fixture.surfaces);
+        assert_eq!(fixture.take(), vec![]);
+        fixture.flush();
+        assert_eq!(
+            fixture.take(),
+            vec![
+                Request::Enable,
+                Request::ContentType(ContentHint::MULTILINE, ContentPurpose::Normal),
+                Request::CursorRectangle(7, 8, 1, 14),
+                Request::SurroundingText("abc".to_string(), 3, 3),
+                Request::ChangeCause(ChangeCause::Other),
+                Request::Commit,
+            ]
+        );
+        assert_eq!(fixture.serial(), 1);
+    }
+
+    #[test]
+    fn a_kind_of_state_the_enabling_commit_did_not_have_enables_again() {
+        let mut fixture = Fixture::bare();
+        let surface = fixture.surface;
+        let before = fixture.serial();
+
+        // The cursor rectangle arrives a frame after the client: the compositor would ignore
+        // it in a commit of its own.
+        fixture.text_input.set_cursor_rect(surface, Rect::new(7.0, 8.0, 1.0, 14.0), &fixture.surfaces);
+        assert_eq!(fixture.take(), vec![]);
+        fixture.flush();
+        assert_eq!(
+            fixture.take(),
+            vec![Request::Disable, Request::Commit, Request::Enable, Request::CursorRectangle(7, 8, 1, 14), Request::Commit]
+        );
+        assert_eq!(fixture.serial(), before + 2);
+
+        // From then on a change of it is a commit of its own.
+        fixture.text_input.set_cursor_rect(surface, Rect::new(9.0, 8.0, 1.0, 14.0), &fixture.surfaces);
+        assert_eq!(fixture.take(), vec![Request::CursorRectangle(9, 8, 1, 14), Request::Commit]);
+        fixture.flush();
+        assert_eq!(fixture.take(), vec![]);
     }
 
     #[test]
     fn the_focus_that_arrives_after_the_client_enables_with_the_state_of_the_client() {
         let mut fixture = Fixture::new();
         let surface = fixture.surface;
-        fixture.text_input.set_active(surface, true, true, true, &fixture.surfaces);
+        fixture.text_input.set_active(surface, true, true, true);
         fixture.text_input.set_options(surface, (ContentHint::MULTILINE, ContentPurpose::Email));
         fixture.text_input.set_cursor_rect(surface, Rect::new(10.0, 20.0, 1.0, 16.0), &fixture.surfaces);
         fixture.text_input.set_surrounding_text(surface, "hello".to_string(), 5, 2);
+        fixture.flush();
         // No seat entered the surface: nothing was sent.
         assert_eq!(fixture.take(), vec![]);
 
@@ -1138,7 +1311,8 @@ mod tests {
         let surface = WSurfaceId::new();
         text_input.on_enter(SEAT, Some(surface), &surfaces);
         text_input.register_surface(surface, FakeSink::default());
-        text_input.set_active(surface, true, true, true, &surfaces);
+        text_input.set_active(surface, true, true, true);
+        text_input.flush(&surfaces);
         let sent: Vec<Request> = requests.borrow().iter().map(|(_, request)| request.clone()).collect();
         assert_eq!(sent, vec![Request::Enable, Request::Commit]);
     }
@@ -1166,6 +1340,9 @@ mod tests {
             ]
         );
         assert_eq!(fixture.serial(), 4);
+        // Nothing was held back.
+        fixture.flush();
+        assert_eq!(fixture.take(), vec![]);
     }
 
     #[test]
@@ -1181,9 +1358,11 @@ mod tests {
         let mut fixture = Fixture::new();
         let surface = fixture.surface;
         fixture.text_input.on_enter(SEAT, Some(surface), &fixture.surfaces);
-        fixture.text_input.set_active(surface, true, true, false, &fixture.surfaces);
+        fixture.text_input.set_active(surface, true, true, false);
+        fixture.flush();
         fixture.take();
         fixture.text_input.set_surrounding_text(surface, "text".to_string(), 0, 0);
+        fixture.flush();
         assert_eq!(fixture.take(), vec![]);
     }
 
@@ -1266,7 +1445,7 @@ mod tests {
 
     #[test]
     fn deleting_without_surrounding_text_is_dropped() {
-        let mut fixture = Fixture::active();
+        let mut fixture = Fixture::bare();
         fixture.text_input.on_delete_surrounding_text(SEAT, 5, 4);
         fixture.done();
         // Nothing to delete arrives (the first done that is taken says "no preedit" once).
@@ -1309,7 +1488,10 @@ mod tests {
 
         // The focus comes back: enabled again, the state of the client sent again.
         fixture.text_input.on_enter(SEAT, Some(fixture.surface), &fixture.surfaces);
-        assert_eq!(fixture.take(), vec![Request::Enable, Request::Commit]);
+        let sent = fixture.take();
+        assert_eq!(sent.first(), Some(&Request::Enable));
+        assert_eq!(sent.last(), Some(&Request::Commit));
+        assert!(sent.contains(&Request::CursorRectangle(0, 0, 1, 1)), "{sent:?}");
     }
 
     #[test]
@@ -1333,7 +1515,8 @@ mod tests {
         assert_eq!(snapshot[0].surrounding_text, None);
 
         // The next client starts clean: enabled, nothing of the old state.
-        fixture.text_input.set_active(surface, true, true, true, &fixture.surfaces);
+        fixture.text_input.set_active(surface, true, true, true);
+        fixture.flush();
         assert_eq!(fixture.take(), vec![Request::Enable, Request::Commit]);
     }
 
@@ -1341,7 +1524,6 @@ mod tests {
     fn a_reset_is_disable_and_enable_and_clears_the_preedit_of_the_client() {
         let mut fixture = Fixture::active();
         let surface = fixture.surface;
-        fixture.text_input.set_options(surface, (ContentHint::NONE, ContentPurpose::Normal));
         fixture.text_input.on_preedit_string(SEAT, Some("ni".to_string()), 2, 2);
         fixture.done();
         fixture.updates();
@@ -1356,6 +1538,9 @@ mod tests {
                 Request::Commit,
                 Request::Enable,
                 Request::ContentType(ContentHint::NONE, ContentPurpose::Normal),
+                Request::CursorRectangle(0, 0, 1, 1),
+                Request::SurroundingText(String::new(), 0, 0),
+                Request::ChangeCause(ChangeCause::Other),
                 Request::Commit
             ]
         );

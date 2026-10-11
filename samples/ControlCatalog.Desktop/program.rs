@@ -602,7 +602,10 @@ fn backdrop_run(_directory: PathBuf) {
 /// first pictures had the popups at the edge of the output the page came in from).
 ///
 /// With `textbox` the first text box of the page is given the focus instead, and every look
-/// after that prints its text when it changed: what an input method committed to it.
+/// after that prints its text when it changed: what an input method committed to it. A page
+/// that is a gallery of samples has no text box of its own: there the first card is pressed
+/// once, and the first text box of the sample it opens takes the focus. The looks are twelve
+/// a page in this mode, so that both steps fit before the picture.
 fn open_popups_of_pages(interval: Duration) {
     let (menu, text_box) = match std::env::var("FERROUI_SMOKE_OPEN_POPUP").ok().as_deref() {
         Some("menu") => (true, false),
@@ -611,6 +614,8 @@ fn open_popups_of_pages(interval: Duration) {
         _ => return,
     };
     let focused: std::cell::RefCell<Option<(Ref<TextBox>, Option<String>)>> = std::cell::RefCell::new(None);
+    let card_pressed = std::cell::Cell::new(false);
+    let looks = if text_box { 12 } else { 4 };
     let seen: std::cell::RefCell<Option<Vec<Ref<Visual>>>> = std::cell::RefCell::new(None);
     let opened: std::cell::RefCell<Option<Ref<Visual>>> = std::cell::RefCell::new(None);
     let candidate: std::cell::RefCell<Option<(Ref<Visual>, Option<ferroui_base::Point>)>> = std::cell::RefCell::new(None);
@@ -637,7 +642,7 @@ fn open_popups_of_pages(interval: Duration) {
                 .get_visual_descendants()
                 .filter(|visual| {
                     if text_box {
-                        visual.cast::<TextBox>().is_some()
+                        visual.cast::<TextBox>().is_some() || visual.cast::<ferroui_controls::Button>().is_some()
                     } else if menu {
                         visual.cast::<MenuItem>().is_some()
                     } else {
@@ -654,7 +659,19 @@ fn open_popups_of_pages(interval: Duration) {
             if first_look {
                 return true;
             }
-            if let Some(first) = new.into_iter().find(|visual| visual.is_effectively_visible()) {
+            // A text box before a card; a card only once, and only while no text box has the focus.
+            let pick = if text_box {
+                let text_boxes = new.iter().find(|visual| visual.cast::<TextBox>().is_some() && visual.is_effectively_visible());
+                let cards = || {
+                    new.iter().find(|visual| {
+                        !card_pressed.get() && focused.borrow().is_none() && visual.cast::<TextBox>().is_none() && visual.is_effectively_visible()
+                    })
+                };
+                if focused.borrow().is_some() { None } else { text_boxes.or_else(cards).cloned() }
+            } else {
+                new.into_iter().find(|visual| visual.is_effectively_visible())
+            };
+            if let Some(first) = pick {
                 let window_visual = window.clone().upcast::<Visual>();
                 println!(
                     "Screenshots: a control to open appeared at {:?} of the window",
@@ -691,12 +708,16 @@ fn open_popups_of_pages(interval: Duration) {
                 } else if let Some(text_box) = first.cast::<TextBox>() {
                     println!("Screenshots: giving a text box the focus: {}", text_box.focus());
                     *focused.borrow_mut() = Some((text_box.clone(), text_box.text()));
+                } else if let Some(card) = first.cast::<ferroui_controls::Button>() {
+                    println!("Screenshots: pressing the first card of a gallery");
+                    card_pressed.set(true);
+                    <ferroui_controls::Button as ferroui_controls::ButtonImpl>::on_click(&card);
                 }
                 *opened.borrow_mut() = Some(first);
             }
             true
         },
-        interval / 4,
+        interval / looks,
         DispatcherPriority::BACKGROUND,
     );
     // The timer lives as long as the run.

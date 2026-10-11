@@ -1787,12 +1787,12 @@ mod imp {
             let Some(sink) = surface.text_input_sink.clone() else {
                 return;
             };
-            self.with_text_input(id, |text_input, surfaces| {
+            self.with_text_input(id, |text_input, _| {
                 // RegisterSurface is idempotent and safe to re-issue here in case
                 // the V3 facade only became available after the broker registered.
                 text_input.register_surface(id, sink);
                 text_input.abort_composition(id);
-                text_input.set_active(id, has_client, supports_preedit, supports_surrounding_text, surfaces);
+                text_input.set_active(id, has_client, supports_preedit, supports_surrounding_text);
             });
         }
 
@@ -1825,6 +1825,15 @@ mod imp {
             let text_input = self.globals.as_ref()?.input_dispatcher.text_input_v3()?;
             let surfaces = WorkerTextInputSurfaces { top_levels: &self.top_levels, popups: &self.popups };
             Some((text_input.seat_count(), text_input.snapshot(&surfaces)))
+        }
+
+        /// Sends what the text input of the connection held back while the commands of the UI
+        /// thread ran (`WaylandTextInputV3::flush`).
+        pub(crate) fn flush_text_input(&mut self) {
+            let WaylandWorkerState { globals, top_levels, popups, .. } = self;
+            if let Some(text_input) = globals.as_mut().and_then(|globals| globals.input_dispatcher.text_input_v3_mut()) {
+                text_input.flush(&WorkerTextInputSurfaces { top_levels, popups });
+            }
         }
 
         /// A shell surface loses its connection (`WXdgShellSurface.OnDisconnected` of the
