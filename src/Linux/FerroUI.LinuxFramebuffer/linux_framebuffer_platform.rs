@@ -19,7 +19,7 @@ use ferroui_base::platform::{
 };
 use ferroui_base::reactive::{Disposable, IDisposable};
 use ferroui_base::rendering::composition::Compositor;
-use ferroui_base::rendering::{DefaultRenderTimer, IRenderLoop, IRenderTimer, RenderLoop, UiThreadRenderTimer};
+use ferroui_base::rendering::{IRenderLoop, IRenderTimer, RenderLoop, SleepLoopRenderTimer, UiThreadRenderTimer};
 use ferroui_base::threading::{CancellationToken, CancellationTokenSource, Dispatcher};
 use ferroui_base::utilities::HandlerList;
 use ferroui_base::{FerroLocator, LocatorExtensions, Ref};
@@ -112,7 +112,12 @@ impl LinuxFramebufferPlatform {
         let timer: Arc<dyn IRenderTimer> = if opts.should_render_on_ui_thread {
             Arc::new(UiThreadRenderTimer::new(opts.fps))
         } else {
-            Arc::new(DefaultRenderTimer::new(opts.fps))
+            // The reference uses its default render timer here, which
+            // ticks on threads of a pool. The compositor of the port is
+            // confined to one render thread, and the default timer starts
+            // a thread each time it is started; the timer that keeps one
+            // thread is used (DEVIATIONS.md).
+            Arc::new(SleepLoopRenderTimer::new(opts.fps))
         };
 
         Dispatcher::initialize_ui_thread_dispatcher(EpollDispatcherImpl::new(Box::new(
