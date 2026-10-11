@@ -88,6 +88,67 @@ mod app {
     thread_local! {
         /// The marker of the main window: what the popup of the smoke mode is placed at.
         static MARKER: RefCell<Option<Ref<Border>>> = const { RefCell::new(None) };
+        /// The drag and drop of the smoke mode: what a press on the marker drags, what the
+        /// window answers a drag with, and what it saw.
+        static DRAG: RefCell<DragProbe> = RefCell::new(DragProbe::default());
+    }
+
+    /// The text a press on the marker drags in the smoke mode.
+    const DRAG_TEXT: &str = "dragged by the smoke mode";
+
+    /// What the window does with a drag in the smoke mode, and what it saw of one.
+    #[derive(Default)]
+    struct DragProbe {
+        /// A press on the marker starts a drag.
+        armed: bool,
+        /// The window answers a drag with no effect.
+        refuse: bool,
+        /// The events of the drop target: the kind, the place, the text of the data.
+        events: Vec<(&'static str, ferroui_base::Point, Option<String>)>,
+        /// The result of the drag the marker started.
+        result: Option<ferroui_base::input::DragDropEffects>,
+    }
+
+    /// Makes `target` a drop target that records what it sees and `source` the source of a
+    /// drag of a text, when the smoke mode armed it.
+    fn attach_drag_and_drop(target: &Ref<Border>, source: &Ref<Border>) {
+        use ferroui_base::input::{DataTransfer, DataTransferExtensions, DataTransferItem, DragDrop, DragDropEffects, DragEventArgs, InputElement};
+        use ferroui_base::interactivity::Interactive;
+
+        DragDrop::set_allow_drop(target, true);
+        let weak_target = target.downgrade();
+        let record = |kind: &'static str| {
+            let weak_target = weak_target.clone();
+            move |_: &Interactive, e: &DragEventArgs| {
+                let position = weak_target.upgrade().map(|target| e.get_position(&target)).unwrap_or_default();
+                let refuse = DRAG.with(|drag| {
+                    let mut drag = drag.borrow_mut();
+                    let text = if kind == "drop" { e.data_transfer().try_get_text() } else { None };
+                    drag.events.push((kind, position, text));
+                    drag.refuse
+                });
+                e.set_drag_effects(if refuse { DragDropEffects::NONE } else { DragDropEffects::COPY });
+            }
+        };
+        DragDrop::add_drag_enter_handler(target, record("enter"));
+        DragDrop::add_drag_over_handler(target, record("over"));
+        DragDrop::add_drop_handler(target, record("drop"));
+        DragDrop::add_drag_leave_handler(target, |_, _| {
+            DRAG.with(|drag| drag.borrow_mut().events.push(("leave", ferroui_base::Point::default(), None)));
+        });
+
+        source.add_handler(&InputElement::pointer_pressed_event(), |_, e| {
+            if !DRAG.with(|drag| drag.borrow().armed) {
+                return;
+            }
+            let transfer = DataTransfer::new();
+            transfer.add(DataTransferItem::create_text(Some(DRAG_TEXT)));
+            let drag = DragDrop::do_drag_drop_async(e, transfer, DragDropEffects::COPY | DragDropEffects::MOVE);
+            drop(Dispatcher::ui_thread().invoke_async_task_local(move || async move {
+                let result = drag.await;
+                DRAG.with(|drag| drag.borrow_mut().result = Some(result));
+            }));
+        });
     }
 
     /// Whether every check of the smoke mode passed.
@@ -144,6 +205,7 @@ mod app {
         border.set_background(Some(brush(FILL)));
         border.set_child(&marker);
         MARKER.with(|cell| *cell.borrow_mut() = Some(marker.clone()));
+        attach_drag_and_drop(&border, &marker);
 
         let window = Window::new();
         window.set_title(Some(TITLE.to_string()));
@@ -439,8 +501,19 @@ mod app {
     /// The test client: a second connection to the compositor that reads the composed output
     /// and synthesizes input, through the protocols wlroots has for that.
     mod probe {
-        use ferroui_wayland::server::interop::unsafe_native_methods::{memfd_of_length, MemoryMapping};
+        use ferroui_wayland::server::interop::pipe2_stream::{Pipe2Stream, PipeDirection};
+        use ferroui_wayland::server::interop::unsafe_native_methods::{memfd_of_length, pipe2_cloexec, MemoryMapping};
+        use std::collections::HashMap;
+        use std::io::Write;
         use std::os::fd::AsFd;
+        use std::sync::mpsc::{channel, Receiver};
+        use std::sync::Arc;
+        use wayland_client::backend::ObjectId;
+        use wayland_client::{event_created_child, Proxy};
+        use wayland_protocols_wlr::data_control::v1::client::zwlr_data_control_device_v1::{self, ZwlrDataControlDeviceV1};
+        use wayland_protocols_wlr::data_control::v1::client::zwlr_data_control_manager_v1::ZwlrDataControlManagerV1;
+        use wayland_protocols_wlr::data_control::v1::client::zwlr_data_control_offer_v1::{self, ZwlrDataControlOfferV1};
+        use wayland_protocols_wlr::data_control::v1::client::zwlr_data_control_source_v1::{self, ZwlrDataControlSourceV1};
         use wayland_client::protocol::wl_buffer::WlBuffer;
         use wayland_client::protocol::wl_output::WlOutput;
         use wayland_client::protocol::wl_registry::{self, WlRegistry};
@@ -472,6 +545,100 @@ mod app {
             y_invert: bool,
             ready: bool,
             failed: bool,
+            /// The offers the data control device announced, with their MIME types.
+            offers: HashMap<ObjectId, (ZwlrDataControlOfferV1, Vec<String>)>,
+            /// The offer that is the selection.
+            selection: Option<ObjectId>,
+            /// How many times the selection changed.
+            selections: u32,
+            /// What the source of the probe gives, by MIME type.
+            outgoing: Vec<(String, Arc<Vec<u8>>)>,
+            /// The MIME types the source of the probe was asked for.
+            sent: Vec<String>,
+            source_cancelled: bool,
+        }
+
+        impl Dispatch<ZwlrDataControlDeviceV1, ()> for State {
+            fn event(
+                state: &mut Self,
+                _: &ZwlrDataControlDeviceV1,
+                event: zwlr_data_control_device_v1::Event,
+                _: &(),
+                _: &Connection,
+                _: &QueueHandle<Self>,
+            ) {
+                match event {
+                    zwlr_data_control_device_v1::Event::DataOffer { id } => {
+                        state.offers.insert(id.id(), (id, Vec::new()));
+                    }
+                    zwlr_data_control_device_v1::Event::Selection { id } => {
+                        let selection = id.map(|offer| offer.id());
+                        state.selections += 1;
+                        // The offers before this one are over.
+                        let stale: Vec<ObjectId> = state.offers.keys().filter(|key| Some(*key) != selection.as_ref()).cloned().collect();
+                        for key in stale {
+                            if let Some((offer, _)) = state.offers.remove(&key) {
+                                offer.destroy();
+                            }
+                        }
+                        state.selection = selection;
+                    }
+                    zwlr_data_control_device_v1::Event::PrimarySelection { id: Some(offer) } => {
+                        state.offers.remove(&offer.id());
+                        offer.destroy();
+                    }
+                    _ => {}
+                }
+            }
+
+            event_created_child!(State, ZwlrDataControlDeviceV1, [
+                zwlr_data_control_device_v1::EVT_DATA_OFFER_OPCODE => (ZwlrDataControlOfferV1, ()),
+            ]);
+        }
+
+        impl Dispatch<ZwlrDataControlOfferV1, ()> for State {
+            fn event(
+                state: &mut Self,
+                proxy: &ZwlrDataControlOfferV1,
+                event: zwlr_data_control_offer_v1::Event,
+                _: &(),
+                _: &Connection,
+                _: &QueueHandle<Self>,
+            ) {
+                if let zwlr_data_control_offer_v1::Event::Offer { mime_type } = event {
+                    if let Some((_, mime_types)) = state.offers.get_mut(&proxy.id()) {
+                        mime_types.push(mime_type);
+                    }
+                }
+            }
+        }
+
+        impl Dispatch<ZwlrDataControlSourceV1, ()> for State {
+            fn event(
+                state: &mut Self,
+                _: &ZwlrDataControlSourceV1,
+                event: zwlr_data_control_source_v1::Event,
+                _: &(),
+                _: &Connection,
+                _: &QueueHandle<Self>,
+            ) {
+                match event {
+                    zwlr_data_control_source_v1::Event::Send { mime_type, fd } => {
+                        let data = state.outgoing.iter().find(|(mime, _)| *mime == mime_type).map(|(_, data)| data.clone());
+                        state.sent.push(mime_type);
+                        // Written on a thread of its own: the reader is the application, whose
+                        // UI thread is the thread of this call.
+                        std::thread::spawn(move || {
+                            let mut stream = Pipe2Stream::new(fd, PipeDirection::Out);
+                            if let Some(data) = data {
+                                let _ = stream.write_all(&data);
+                            }
+                        });
+                    }
+                    zwlr_data_control_source_v1::Event::Cancelled => state.source_cancelled = true,
+                    _ => {}
+                }
+            }
         }
 
         impl Dispatch<WlRegistry, ()> for State {
@@ -514,6 +681,7 @@ mod app {
         delegate_noop!(State: ignore ZwlrVirtualPointerManagerV1);
         delegate_noop!(State: ignore ZwlrVirtualPointerV1);
         delegate_noop!(State: ignore ZwpVirtualKeyboardManagerV1);
+        delegate_noop!(State: ignore ZwlrDataControlManagerV1);
         delegate_noop!(State: ignore ZwpVirtualKeyboardV1);
 
         /// A picture of an output: red, green and blue of every pixel, top row first.
@@ -541,6 +709,8 @@ mod app {
             screencopy: Option<ZwlrScreencopyManagerV1>,
             pointer: Option<ZwlrVirtualPointerV1>,
             keyboard: Option<ZwpVirtualKeyboardV1>,
+            data_control: Option<(ZwlrDataControlManagerV1, ZwlrDataControlDeviceV1)>,
+            data_source: Option<ZwlrDataControlSourceV1>,
             time: u32,
         }
 
@@ -569,9 +739,95 @@ mod app {
                     let manager: ZwpVirtualKeyboardManagerV1 = registry.bind(name, 1, &handle, ());
                     manager.create_virtual_keyboard(&seat, &handle, ())
                 });
+                let data_control = find("zwlr_data_control_manager_v1").map(|name| {
+                    let manager: ZwlrDataControlManagerV1 = registry.bind(name, 1, &handle, ());
+                    let device = manager.get_data_device(&seat, &handle, ());
+                    (manager, device)
+                });
                 queue.roundtrip(&mut state).map_err(|error| error.to_string())?;
 
-                Ok(Self { connection, queue, state, shm, output, screencopy, pointer, keyboard, time: 1000 })
+                Ok(Self {
+                    connection,
+                    queue,
+                    state,
+                    shm,
+                    output,
+                    screencopy,
+                    pointer,
+                    keyboard,
+                    data_control,
+                    data_source: None,
+                    time: 1000,
+                })
+            }
+
+            /// Whether the compositor lets this client see and set the selection (the data
+            /// control protocol of wlroots, which `wl-copy` and `wl-paste` use as well).
+            pub fn has_data_control(&self) -> bool {
+                self.data_control.is_some()
+            }
+
+            /// How many times the selection changed, as this client saw it.
+            pub fn selections(&mut self) -> u32 {
+                let _ = self.sync();
+                self.state.selections
+            }
+
+            /// The MIME types of the selection, `None` without a selection.
+            pub fn selection_mime_types(&mut self) -> Option<Vec<String>> {
+                let _ = self.sync();
+                let selection = self.state.selection.as_ref()?;
+                self.state.offers.get(selection).map(|(_, mime_types)| mime_types.clone())
+            }
+
+            /// Asks the owner of the selection for its data of a MIME type. The data arrives on
+            /// the channel once the owner wrote all of it; the owner may be this process, so
+            /// the pipe is read on a thread of its own.
+            pub fn read_selection(&mut self, mime_type: &str) -> Result<Receiver<Vec<u8>>, String> {
+                self.sync()?;
+                let selection = self.state.selection.as_ref().ok_or("there is no selection")?;
+                let (offer, _) = self.state.offers.get(selection).ok_or("the selection has no offer")?;
+                let (read, write) = pipe2_cloexec().map_err(|error| error.to_string())?;
+                offer.receive(mime_type.to_string(), write.as_fd());
+                drop(write);
+                self.connection.flush().map_err(|error| error.to_string())?;
+                let (sender, receiver) = channel();
+                std::thread::spawn(move || {
+                    if let Ok(bytes) = Pipe2Stream::new(read, PipeDirection::In).read_to_end() {
+                        let _ = sender.send(bytes);
+                    }
+                });
+                Ok(receiver)
+            }
+
+            /// Makes this client the owner of the selection, with the data given by MIME type.
+            pub fn set_selection(&mut self, data: Vec<(&str, Vec<u8>)>) -> Result<(), String> {
+                let handle = self.queue.handle();
+                let (manager, device) = self.data_control.as_ref().ok_or("no data control")?;
+                let source = manager.create_data_source(&handle, ());
+                for (mime_type, _) in &data {
+                    source.offer(mime_type.to_string());
+                }
+                self.state.outgoing = data.into_iter().map(|(mime_type, bytes)| (mime_type.to_string(), Arc::new(bytes))).collect();
+                self.state.sent.clear();
+                self.state.source_cancelled = false;
+                device.set_selection(Some(&source));
+                if let Some(previous) = self.data_source.replace(source) {
+                    previous.destroy();
+                }
+                self.sync()
+            }
+
+            /// The MIME types the source of this client was asked for since it was set.
+            pub fn sent(&mut self) -> Vec<String> {
+                let _ = self.sync();
+                self.state.sent.clone()
+            }
+
+            /// Whether the source of this client was replaced by another selection.
+            pub fn source_cancelled(&mut self) -> bool {
+                let _ = self.sync();
+                self.state.source_cancelled
             }
 
             pub fn has_screencopy(&self) -> bool {
@@ -779,7 +1035,7 @@ mod app {
         /// How long the window may take to close after it was asked to.
         const CLOSE_TIMEOUT: Duration = Duration::from_secs(10);
         /// After this the run has hung and the process is ended.
-        const RUN_TIMEOUT: Duration = Duration::from_secs(180);
+        const RUN_TIMEOUT: Duration = Duration::from_secs(240);
         /// The mode the output is given in the resize phase.
         const NEW_MODE: (u32, u32) = (1024, 600);
 
@@ -936,6 +1192,14 @@ mod app {
                 if options.runs("popup") {
                     report.phase("popup");
                     popup_checks(&report, probe, &window, client.as_ref()).await;
+                }
+                if options.runs("clipboard") {
+                    report.phase("clipboard");
+                    clipboard_checks(&report, probe, client.as_ref(), &options).await;
+                }
+                if options.runs("dragdrop") {
+                    report.phase("dragdrop");
+                    drag_drop_checks(&report, probe, &window, client.as_ref()).await;
                 }
                 if options.runs("resize") {
                     report.phase("resize");
@@ -1364,6 +1628,340 @@ mod app {
             }
             delay(Duration::from_millis(200)).await;
             probe.pointer_button(false)
+        }
+
+        /// The data sources the worker has and whether its first data device owns the selection.
+        fn data_sources(client: &Rc<WaylandWorkerClient>) -> Option<(usize, bool)> {
+            client
+                .invoke_oob(|worker| {
+                    let globals = worker.state.globals.as_ref()?;
+                    let owner = globals.input_dispatcher_has_selection_source();
+                    Some((globals.data_sources.len(), owner))
+                })
+                .recv_timeout(STEP_TIMEOUT)
+                .ok()
+                .flatten()
+        }
+
+        /// Runs a future of the UI thread to its end while the test client answers the
+        /// compositor: its events are dispatched only when it is asked to.
+        async fn pumped<T: 'static>(probe: &mut Probe, future: impl Future<Output = T> + 'static) -> Option<T> {
+            let task = Dispatcher::ui_thread().invoke_async_task_local(move || future);
+            let done = wait_for(STEP_TIMEOUT, || {
+                let _ = probe.sync();
+                task.is_completed()
+            })
+            .await;
+            if done {
+                task.result().ok()
+            } else {
+                None
+            }
+        }
+
+        /// The data of the selection as the test client reads it.
+        async fn read_by_probe(probe: &mut Probe, mime_type: &str) -> Result<Vec<u8>, String> {
+            let receiver = probe.read_selection(mime_type)?;
+            let mut bytes = None;
+            wait_for(STEP_TIMEOUT, || {
+                let _ = probe.sync();
+                bytes = receiver.try_recv().ok();
+                bytes.is_some()
+            })
+            .await;
+            bytes.ok_or_else(|| format!("no data of the type {mime_type} within {} seconds", STEP_TIMEOUT.as_secs()))
+        }
+
+        /// Runs a command and gives what it wrote, without holding up the UI thread, which
+        /// serves the selection the command may ask for.
+        async fn command_output(program: &str, arguments: &[&str], input: Option<Vec<u8>>) -> Result<Vec<u8>, String> {
+            use std::io::Write;
+            use std::process::{Command, Stdio};
+            let mut command = Command::new(program);
+            command.args(arguments).stdout(Stdio::piped()).stderr(Stdio::piped());
+            command.stdin(if input.is_some() { Stdio::piped() } else { Stdio::null() });
+            let mut child = command.spawn().map_err(|error| format!("{program} cannot be started: {error}"))?;
+            if let (Some(input), Some(mut stdin)) = (input, child.stdin.take()) {
+                let _ = stdin.write_all(&input);
+            }
+            let (sender, receiver) = std::sync::mpsc::channel();
+            std::thread::spawn(move || {
+                let _ = sender.send(child.wait_with_output());
+            });
+            let mut output = None;
+            wait_for(STEP_TIMEOUT, || {
+                output = receiver.try_recv().ok();
+                output.is_some()
+            })
+            .await;
+            match output {
+                Some(Ok(output)) if output.status.success() => Ok(output.stdout),
+                Some(Ok(output)) => Err(format!("{program} failed: {}", String::from_utf8_lossy(&output.stderr).trim())),
+                Some(Err(error)) => Err(format!("{program}: {error}")),
+                None => Err(format!("{program} did not end within {} seconds", STEP_TIMEOUT.as_secs())),
+            }
+        }
+
+        /// The clipboard: the selection of the data device, in both directions, against the
+        /// test client (which sees and sets the selection through the data control protocol
+        /// of the compositor) and against `wl-paste` and `wl-copy`.
+        async fn clipboard_checks(report: &Report, probe: &mut Probe, client: Option<&Rc<WaylandWorkerClient>>, options: &Options) {
+            use ferroui_base::input::platform::{ClipboardExtensions, IClipboard, IClipboardImpl};
+            use ferroui_base::input::{DataFormat, DataTransfer, DataTransferItem};
+
+            const UTF8: &str = "text/plain;charset=utf-8";
+            const BYTES: &str = "application/x-ferroui-smoke-bytes";
+
+            let (Some(clipboard), Some(clipboard_impl)) = (
+                FerroLocator::current().get_service::<dyn IClipboard>(),
+                FerroLocator::current().get_service::<dyn IClipboardImpl>(),
+            ) else {
+                report.check("clipboard", false, "the platform has no clipboard".to_string());
+                return;
+            };
+            let Some(client) = client else {
+                report.check("clipboard", false, "the platform has no worker client".to_string());
+                return;
+            };
+
+            let device = client
+                .invoke_oob(|worker| {
+                    let globals = worker.state.globals.as_ref()?;
+                    Some((globals.data_device_manager.is_some(), globals.input_dispatcher_has_data_device()))
+                })
+                .recv_timeout(STEP_TIMEOUT)
+                .ok()
+                .flatten();
+            report.check(
+                "data device",
+                device == Some((true, true)),
+                format!("the worker has the data device manager and a data device of the seat: {device:?}"),
+            );
+            if !probe.has_data_control() {
+                report.check("test client", false, "the compositor has no data control manager for the test client".to_string());
+                return;
+            }
+
+            let owner = |clipboard_impl: &Rc<dyn IClipboardImpl>| {
+                let clipboard_impl = clipboard_impl.clone();
+                async move {
+                    match clipboard_impl.as_owned_clipboard_impl() {
+                        Some(owned) => owned.is_current_owner_async().await.ok(),
+                        None => None,
+                    }
+                }
+            };
+
+            // The application sets a text; the other client reads it.
+            let text = "Text of the smoke mode: caf\u{e9} \u{4e16}\u{754c}";
+            let before = probe.selections();
+            let set = pumped(probe, clipboard.set_text_async(Some(text))).await;
+            let announced = wait_for(STEP_TIMEOUT, || probe.selections() > before).await;
+            let mime_types = probe.selection_mime_types().unwrap_or_default();
+            report.check(
+                "text set",
+                matches!(set, Some(Ok(()))) && announced && mime_types == [UTF8, "text/plain"],
+                format!("the selection the compositor announces to the other client has the types {mime_types:?}"),
+            );
+            let read = read_by_probe(probe, UTF8).await;
+            report.check(
+                "text read by the other client",
+                read.as_deref() == Ok(text.as_bytes()),
+                format!("{:?}", read.as_ref().map(|bytes| String::from_utf8_lossy(bytes).into_owned())),
+            );
+            let is_owner = pumped(probe, owner(&clipboard_impl)).await.flatten();
+            report.check("owner", is_owner == Some(true), format!("the application owns the clipboard: {is_owner:?}"));
+
+            // A text, bytes of a format of the application, and a format of the process.
+            let bytes_format = DataFormat::create_bytes_application_format("smoke-bytes");
+            let payload: Vec<u8> = (0..=255u8).collect();
+            let transfer = DataTransfer::new();
+            let item = DataTransferItem::new();
+            item.set(&DataFormat::text(), Some("with bytes".to_string()));
+            item.set(&bytes_format, Some(Rc::from(payload.as_slice())));
+            item.set(&DataFormat::create_in_process_format::<String>("smoke-private"), Some("private".to_string()));
+            transfer.add(item);
+            let before = probe.selections();
+            let set = pumped(probe, clipboard.set_data_async(Some(transfer))).await;
+            let announced = wait_for(STEP_TIMEOUT, || probe.selections() > before).await;
+            let mime_types = probe.selection_mime_types().unwrap_or_default();
+            let read = read_by_probe(probe, BYTES).await;
+            report.check(
+                "application format",
+                matches!(set, Some(Ok(()))) && announced && mime_types == [UTF8, "text/plain", BYTES] && read.as_deref() == Ok(payload.as_slice()),
+                format!("types {mime_types:?} (the format of the process is not offered); {} bytes read", read.as_ref().map(Vec::len).unwrap_or(0)),
+            );
+
+            // More than a pipe holds: the writer waits for the reader.
+            let large: String = (0..(1 << 20)).map(|index| char::from(b'a' + (index % 26) as u8)).collect();
+            let before = probe.selections();
+            let set = pumped(probe, clipboard.set_text_async(Some(&large))).await;
+            let announced = wait_for(STEP_TIMEOUT, || probe.selections() > before).await;
+            let read = read_by_probe(probe, "text/plain").await;
+            report.check(
+                "large text",
+                matches!(set, Some(Ok(()))) && announced && read.as_deref() == Ok(large.as_bytes()),
+                format!("{} of {} bytes read by the other client", read.as_ref().map(Vec::len).unwrap_or(0), large.len()),
+            );
+
+            if options.runs("wl-clipboard") {
+                let set = pumped(probe, clipboard.set_text_async(Some(text))).await;
+                let pasted = command_output("wl-paste", &["--no-newline"], None).await;
+                report.check(
+                    "wl-paste",
+                    matches!(set, Some(Ok(()))) && pasted.as_deref() == Ok(text.as_bytes()),
+                    format!("{:?}", pasted.as_ref().map(|bytes| String::from_utf8_lossy(bytes).into_owned())),
+                );
+            }
+
+            // The other client sets a text; the application reads it and is not the owner.
+            let other = "Text of the other client: gr\u{fc}\u{df}e";
+            let sources_before = data_sources(client);
+            let set = probe.set_selection(vec![(UTF8, other.as_bytes().to_vec())]);
+            let lost = wait_for(STEP_TIMEOUT, || data_sources(client) == Some((0, false))).await;
+            let got = pumped(probe, clipboard.try_get_text_async()).await;
+            let is_owner = pumped(probe, owner(&clipboard_impl)).await.flatten();
+            report.check(
+                "text of the other client",
+                set.is_ok() && matches!(&got, Some(Ok(Some(got))) if got == other) && is_owner == Some(false),
+                format!("read {got:?}; owner: {is_owner:?}; asked for {:?}", probe.sent()),
+            );
+            report.check(
+                "source cancelled",
+                lost,
+                format!("the worker had {sources_before:?} (sources, owner) and has {:?} after the other client took the selection", data_sources(client)),
+            );
+
+            // Bytes of the format of the application, more than a pipe holds.
+            let large_bytes: Vec<u8> = (0..(1usize << 20)).map(|index| (index % 251) as u8).collect();
+            let set = probe.set_selection(vec![(BYTES, large_bytes.clone())]);
+            let got = pumped(probe, clipboard.try_get_value_async(&bytes_format)).await;
+            let length = match &got {
+                Some(Ok(Some(bytes))) => bytes.len(),
+                _ => 0,
+            };
+            report.check(
+                "large data of the other client",
+                set.is_ok() && matches!(&got, Some(Ok(Some(bytes))) if **bytes == *large_bytes.as_slice()),
+                format!("{length} of {} bytes read by the application", large_bytes.len()),
+            );
+
+            // A list of files.
+            let file = std::env::current_exe().ok().map(|path| path.display().to_string()).unwrap_or_default();
+            let set = probe.set_selection(vec![("text/uri-list", format!("file://{file}\r\n").into_bytes())]);
+            let got = pumped(probe, clipboard.try_get_files_async()).await;
+            let names: Vec<String> = match &got {
+                Some(Ok(Some(files))) => files.iter().map(|file| file.name()).collect(),
+                _ => Vec::new(),
+            };
+            let expected = std::path::Path::new(&file).file_name().map(|name| name.to_string_lossy().into_owned());
+            report.check(
+                "files of the other client",
+                set.is_ok() && names.len() == 1 && names.first() == expected.as_ref(),
+                format!("the list of one file gives {names:?}"),
+            );
+
+            if options.runs("wl-clipboard") {
+                // `wl-copy` stays in the foreground as the owner until the selection is replaced.
+                let copied = "Text of wl-copy";
+                let before = probe.selections();
+                let child = std::process::Command::new("wl-copy").args(["--foreground", copied]).spawn();
+                let announced = wait_for(STEP_TIMEOUT, || probe.selections() > before).await;
+                let got = pumped(probe, clipboard.try_get_text_async()).await;
+                report.check(
+                    "wl-copy",
+                    child.is_ok() && announced && matches!(&got, Some(Ok(Some(got))) if got == copied),
+                    format!("read {got:?}{}", child.as_ref().err().map(|error| format!("; wl-copy cannot be started: {error}")).unwrap_or_default()),
+                );
+                if let Ok(mut child) = child {
+                    let _ = child.kill();
+                    let _ = child.wait();
+                }
+            }
+
+            // The application clears the clipboard: a selection without a type.
+            let before = probe.selections();
+            let cleared = pumped(probe, clipboard.clear_async()).await;
+            let announced = wait_for(STEP_TIMEOUT, || probe.selections() > before).await;
+            let mime_types = probe.selection_mime_types();
+            let replaced = probe.source_cancelled();
+            report.check(
+                "clear",
+                matches!(cleared, Some(Ok(()))) && announced && mime_types.clone().unwrap_or_default().is_empty() && replaced,
+                format!("the selection after the clear has the types {mime_types:?}; the source of the other client was cancelled: {replaced}"),
+            );
+            report.check("connection", probe.alive(), "the compositor ended neither connection".to_string());
+        }
+
+        /// Drag and drop: a press on the marker starts a drag of a text, the compositor leads
+        /// it over the window, which is the drop target as well, and the release drops it;
+        /// then a drag the window refuses.
+        async fn drag_drop_checks(report: &Report, probe: &mut Probe, window: &Ref<Window>, client: Option<&Rc<WaylandWorkerClient>>) {
+            use ferroui_base::input::DragDropEffects;
+
+            if !probe.has_pointer() {
+                report.check("drag", false, "the compositor has no virtual pointer for the test client".to_string());
+                return;
+            }
+            let Some(client) = client else {
+                report.check("drag", false, "the platform has no worker client".to_string());
+                return;
+            };
+            let client_size = window.client_size();
+            let extent = (client_size.width as u32, client_size.height as u32);
+            let from = ((MARKER_ORIGIN.0 + MARKER_SIZE / 2.0) as i32, (MARKER_ORIGIN.1 + MARKER_SIZE / 2.0) as i32);
+            let by = (200, 150);
+            let target = Point::new(f64::from(from.0 + by.0), f64::from(from.1 + by.1));
+
+            for refuse in [false, true] {
+                DRAG.with(|drag| *drag.borrow_mut() = DragProbe { armed: true, refuse, ..DragProbe::default() });
+                let dragged = drag(probe, from, by, extent).await;
+                let ended = wait_for(STEP_TIMEOUT, || DRAG.with(|drag| drag.borrow().result.is_some())).await;
+                let (events, result) = DRAG.with(|drag| {
+                    let mut drag = drag.borrow_mut();
+                    drag.armed = false;
+                    (std::mem::take(&mut drag.events), drag.result)
+                });
+                let count = |kind: &str| events.iter().filter(|event| event.0 == kind).count();
+                let summary = format!(
+                    "{} enter, {} over, {} drop, {} leave; result {result:?}; {dragged:?}",
+                    count("enter"),
+                    count("over"),
+                    count("drop"),
+                    count("leave")
+                );
+                if refuse {
+                    report.check(
+                        "refused drag",
+                        dragged.is_ok() && ended && result == Some(DragDropEffects::NONE) && count("enter") == 1 && count("drop") == 0,
+                        summary,
+                    );
+                } else {
+                    let dropped = events.iter().find(|event| event.0 == "drop");
+                    let at_target = dropped.is_some_and(|event| (event.1.x - target.x).abs() <= 2.0 && (event.1.y - target.y).abs() <= 2.0);
+                    report.check(
+                        "drag",
+                        dragged.is_ok() && ended && count("enter") == 1 && count("over") >= 1 && count("drop") == 1,
+                        summary,
+                    );
+                    report.check(
+                        "drop",
+                        at_target && dropped.is_some_and(|event| event.2.as_deref() == Some(DRAG_TEXT)),
+                        format!("the drop at {:?} (expected {target:?}) has the text {:?}", dropped.map(|event| event.1), dropped.and_then(|event| event.2.clone())),
+                    );
+                    report.check("drag result", result == Some(DragDropEffects::COPY), format!("the source is told {result:?}"));
+                }
+                let sources = wait_for(STEP_TIMEOUT, || data_sources(client).is_some_and(|(sources, _)| sources == 0)).await;
+                report.check(
+                    if refuse { "source after the refused drag" } else { "source after the drop" },
+                    sources,
+                    format!("the worker has {:?} (sources, owner)", data_sources(client)),
+                );
+                // The pointer is given back to the window before the next drag.
+                delay(Duration::from_millis(300)).await;
+            }
+            DRAG.with(|drag| *drag.borrow_mut() = DragProbe::default());
+            report.check("connection", probe.alive(), "the compositor ended neither connection".to_string());
         }
 
         /// Decorations: what the compositor answered about them; then the application asks

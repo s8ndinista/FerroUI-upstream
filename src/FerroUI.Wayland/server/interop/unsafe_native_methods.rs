@@ -29,6 +29,18 @@ pub fn pipe2_nonblocking() -> io::Result<(OwnedFd, OwnedFd)> {
     Ok(unsafe { (OwnedFd::from_raw_fd(fds[0]), OwnedFd::from_raw_fd(fds[1])) })
 }
 
+/// A pipe whose ends block and are closed in a child process (`pipe2` with `O_CLOEXEC`): the
+/// reading end and the writing end. The pipe of a data transfer.
+pub fn pipe2_cloexec() -> io::Result<(OwnedFd, OwnedFd)> {
+    let mut fds = [0 as RawFd; 2];
+    // SAFETY: `fds` is an array of two descriptors, which is what the call writes.
+    if unsafe { libc::pipe2(fds.as_mut_ptr(), libc::O_CLOEXEC) } != 0 {
+        return Err(io::Error::last_os_error());
+    }
+    // SAFETY: the call succeeded, so both are open descriptors nobody else owns.
+    Ok(unsafe { (OwnedFd::from_raw_fd(fds[0]), OwnedFd::from_raw_fd(fds[1])) })
+}
+
 /// Reads at most one byte from a descriptor that does not block. The result is not looked at
 /// by the caller, as in the reference.
 pub fn read_one(fd: BorrowedFd<'_>) {

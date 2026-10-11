@@ -992,12 +992,13 @@ jobs:
           key: wayland
       # libwayland-client, libwayland-egl, libEGL and libxkbcommon are opened at run time (nothing
       # links them); Skia links FreeType and Fontconfig, and needs a font to answer for the default
-      # family. xkb-data has the keymap the virtual keyboard of the example gives the compositor.
+      # family. xkb-data has the keymap the virtual keyboard of the example gives the compositor;
+      # wl-clipboard has wl-copy and wl-paste, the other clients of the clipboard phase.
       - name: System packages
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            sway libwayland-client0 libwayland-egl1 libxkbcommon0 xkb-data \
+            sway wl-clipboard libwayland-client0 libwayland-egl1 libxkbcommon0 xkb-data \
             libegl1 libegl-mesa0 libgl1 libgles2 libgl1-mesa-dri \
             libfontconfig1-dev libfreetype6-dev fonts-dejavu-core pkg-config
           sway --version

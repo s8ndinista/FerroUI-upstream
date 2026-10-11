@@ -2,6 +2,7 @@
 //! what runs on the thread that owns the connection to the compositor, and
 //! the handles the UI thread reaches it through.
 
+pub mod cross_thread_result;
 pub mod persistent;
 pub mod server_signaler;
 pub mod transient;

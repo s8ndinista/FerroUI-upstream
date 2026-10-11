@@ -7,6 +7,8 @@ pub mod wayland_input_dispatcher;
 pub mod wayland_outputs_tracker;
 
 #[cfg(target_os = "linux")]
+pub mod clipboard;
+#[cfg(target_os = "linux")]
 pub mod rendering;
 #[cfg(target_os = "linux")]
 pub mod wayland_cursor_manager;
