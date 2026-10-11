@@ -2,7 +2,8 @@
 //!
 //! The windowing platform of FerroUI for Wayland compositors: windows over
 //! `xdg_toplevel`, popups, input, screens, cursors, the clipboard and drag
-//! and drop over `wl_data_device`, and render surfaces over shared memory
+//! and drop over `wl_data_device`, input methods over `zwp_text_input_v3`,
+//! the parent handle of a portal dialog over `xdg-foreign`, and render surfaces over shared memory
 //! buffers and over EGL. `docs/porting/wayland-platform.md` has the
 //! design and the stages.
 //!
@@ -26,6 +27,8 @@ pub mod wayland_platform_options;
 pub mod wayland_text_utils;
 pub mod xkb_key_transform;
 
+#[cfg(target_os = "linux")]
+pub mod i_wayland_xdg_top_level_export;
 #[cfg(target_os = "linux")]
 pub mod popup_impl;
 #[cfg(target_os = "linux")]

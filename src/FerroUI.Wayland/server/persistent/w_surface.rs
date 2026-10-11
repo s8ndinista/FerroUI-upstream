@@ -18,7 +18,7 @@
 //!
 //! The text input members of a surface need the facade of the connection and
 //! the surface together, so they are methods of the state of the worker (the
-//! last block of the module `imp`). The export of a top-level belongs to later
+//! last block of the module `imp`). The export of a top-level belonged to later
 //! parts of stage 2 of `docs/porting/wayland-platform.md`.
 
 use ferroui_base::{PixelSize, Point, Rect, Size, Thickness};
@@ -296,6 +296,7 @@ mod imp {
     use crate::server::transient::i_wayland_text_input_v3_events::WaylandTextInputV3EventsProxy;
     use crate::server::transient::wayland_globals::WaylandGlobals;
     use crate::server::transient::wayland_text_input_v3::{WorkerTextInputSurfaces, WorkerTextInputV3};
+    use crate::server::transient::xdg_toplevel_export::{ExportedTopLevel, XdgToplevelExport, XdgToplevelExportId};
     use crate::server::wayland_worker::{WaylandWorker, WaylandWorkerState};
     use crate::ferro_wayland_exception::FerroWaylandException;
     use crate::text_input_options_converter::{ContentHint, ContentPurpose};
@@ -901,6 +902,8 @@ mod imp {
         decoration: Option<ZxdgToplevelDecorationV1>,
         // Disable SSD support completely and don't allow re-enabling it because we can't
         csd_sticky: bool,
+        // Active xdg-foreign exports for this surface (worker thread only).
+        active_exports: Vec<XdgToplevelExport>,
     }
 
     impl WXdgTopLevel {
@@ -924,7 +927,42 @@ mod imp {
                 title: None,
                 decoration: None,
                 csd_sticky: false,
+                active_exports: Vec::new(),
             }
+        }
+
+        /// Worker-thread: exports this toplevel via xdg-foreign-unstable-v2, returning the
+        /// number of the export and a result that resolves once the compositor has emitted
+        /// the handle event. Returns `None` if the exporter global is not bound on the
+        /// current connection or this toplevel isn't currently connected.
+        pub fn export_toplevel(&mut self, globals: Option<&WaylandGlobals>) -> Option<ExportedTopLevel> {
+            let globals = globals?;
+            let exporter = globals.xdg_exporter.as_ref()?;
+            let wl_surface = self.shell.surface.wl_surface.as_ref()?;
+            self.xdg_top_level.as_ref()?;
+            self.shell.surface.connection_id?;
+            let (export, exported) = XdgToplevelExport::new(self.shell.surface.id, exporter, wl_surface, globals.queue_handle());
+            self.active_exports.push(export);
+            Some(exported)
+        }
+
+        /// Destroys an export of this top-level and forgets it (`XdgToplevelExport.Dispose`
+        /// with `RemoveExport`).
+        pub fn dispose_export(&mut self, id: XdgToplevelExportId) {
+            if let Some(index) = self.active_exports.iter().position(|export| export.id() == id) {
+                self.active_exports.remove(index).dispose();
+            }
+        }
+
+        pub(crate) fn on_export_handle(&mut self, id: XdgToplevelExportId, handle: String) {
+            if let Some(export) = self.active_exports.iter_mut().find(|export| export.id() == id) {
+                export.on_handle(handle);
+            }
+        }
+
+        /// The number of exports of this top-level that are alive, for a test.
+        pub fn active_export_count(&self) -> usize {
+            self.active_exports.len()
         }
 
         pub fn shell(&self) -> &WXdgShellSurface {
@@ -1141,6 +1179,9 @@ mod imp {
 
         fn on_disconnected(&mut self) {
             self.shell.event_sink.on_keyboard_leave();
+            for mut export in std::mem::take(&mut self.active_exports) {
+                export.dispose();
+            }
             if let Some(decoration) = self.decoration.take() {
                 decoration.destroy();
             }

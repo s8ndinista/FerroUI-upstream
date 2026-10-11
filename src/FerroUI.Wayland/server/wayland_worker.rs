@@ -11,9 +11,12 @@
 //! render targets, which the compositor of the framework calls during a tick
 //! of the render loop, reach it without a reference to the worker.
 //!
-//! The protocol tracer of the reference (`Tracer`) belongs to stage 2 of
-//! `docs/porting/wayland-platform.md`; `WAYLAND_DEBUG=1` makes the library
-//! print the same messages.
+//! The protocol tracer of the reference (`Tracer`, which its bindings call
+//! for every request and event and which writes to the log area
+//! `WaylandProtocol`) has no counterpart: the bindings of the port have no
+//! hook between a proxy and the wire. `WAYLAND_DEBUG=1` makes the library
+//! print the same messages to the error stream, and a probe that finds the
+//! log area enabled says so there (`TRACE_AREA`).
 
 use super::cross_thread_result::{cross_thread_result, CrossThreadResult};
 use super::interop::wakeup_fd::WakeupFd;
@@ -56,6 +59,10 @@ pub type WorkerMarshaller = Rc<dyn Fn(WorkerJob, WaylandDispatchPriority)>;
 
 /// The name of the worker thread.
 const THREAD_NAME: &str = "FerroWayland";
+
+/// Dedicated log area so protocol tracing can be enabled independently of
+/// the platform's normal verbose ("Wayland") traffic (`Tracer.TraceArea`).
+pub const TRACE_AREA: &str = "WaylandProtocol";
 
 thread_local! {
     /// The state of the worker, on the worker thread.
@@ -206,6 +213,13 @@ impl WaylandWorker {
             if let Some(logger) = Logger::try_get(LogEventLevel::Error, "Wayland") {
                 logger.log_with_values(None, "Failed to connect to Wayland display: {Error}", &[error]);
             }
+        } else if let Some(logger) = Logger::try_get(LogEventLevel::Verbose, TRACE_AREA) {
+            // Where the reference installs its tracer on the display.
+            logger.log(
+                None,
+                "The requests and events of the connection are traced by libwayland-client, not by this backend: \
+                 start the application with WAYLAND_DEBUG=1 and read its error stream",
+            );
         }
         connected
     }

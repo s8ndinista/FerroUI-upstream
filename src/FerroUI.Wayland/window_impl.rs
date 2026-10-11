@@ -3,10 +3,8 @@
 //! worker.
 //!
 //! The text input method of the window is in `window_impl_text_input.rs`.
-//!
-//! Not built yet (`docs/porting/wayland-platform.md`, stage 2): the file
-//! chooser portal of the storage provider with its parent handle from
-//! `xdg-foreign` (the managed dialogs answer alone).
+//! The first storage provider is the file chooser of the desktop portal with
+//! a parent handle from `xdg-foreign`.
 
 use crate::server::persistent::decoration_mode::DecorationMode;
 use crate::server::persistent::i_w_surface::IWSurface;
@@ -17,7 +15,11 @@ use crate::server::persistent::xdg_configure_batch::{XdgConfigureBatch, XdgTople
 use crate::server::wayland_dispatch_priority::WaylandDispatchPriority;
 use crate::server::wayland_worker_client::WaylandWorkerClient;
 use crate::window_impl_base::{get, set, Callback, ISinkOwner, RawEvent, WindowBaseImpl};
+use crate::i_wayland_xdg_top_level_export::IWaylandXdgTopLevelExport;
 use crate::window_impl_sink::WindowImplSink;
+use ferroui_base::input::LocalBoxFuture;
+use ferroui_freedesktop::dbus_system_dialog::{DBusSystemDialog, ParentLeaseProvider};
+use ferroui_freedesktop::i_portal_parent_lease::IPortalParentLease;
 use crate::window_impl_text_input::WaylandTextInputMethod;
 use ferroui_base::input::text_input::ITextInputMethodImpl;
 use ferroui_base::input::raw::{IRawInputEventArgs, RawPointerEventArgs, RawPointerEventType};
@@ -304,12 +306,28 @@ impl WindowImpl {
         }
     }
 
-    /// The storage providers of the window, in the order of the reference. The first of
-    /// the reference, the file chooser of the desktop portal with a parent handle from
-    /// `xdg-foreign`, belongs to stage 2: the managed dialogs answer alone until then.
+    /// The storage providers of the window, in the order of the reference.
     fn build_storage_factories(&self) -> Vec<StorageProviderFactory> {
         let window = self.this.clone();
-        vec![Rc::new(move || {
+        let portal_window = self.this.clone();
+        // Probe xdg-foreign-v2 export at factory-eval time. The DBus portal is only
+        // useful with a real wayland: parent_window — exposing the dialog as a
+        // floating, unparented window is worse UX than a managed in-process picker.
+        // If the probe fails (no exporter global, surface not mapped, or compositor
+        // never delivers the handle), return None and let FallbackStorageProvider
+        // move on to ManagedStorageProvider. The factory is re-evaluated on every
+        // (re)connect via FallbackStorageProvider::reset.
+        let portal: StorageProviderFactory = Rc::new(move || {
+            let window = portal_window.clone();
+            Box::pin(async move {
+                let first_lease = Self::acquire_portal_parent_lease_async(window.clone()).await?;
+                // We don't keep the probe lease around — each picker call exports fresh.
+                first_lease.dispose_async().await;
+                let provider: ParentLeaseProvider = Rc::new(move || Self::acquire_portal_parent_lease_async(window.clone()));
+                DBusSystemDialog::try_create_async(Some(provider)).await
+            })
+        });
+        vec![portal, Rc::new(move || {
             // HACK: relies on focus root being TopLevel which currently is true
             let provider: Option<Rc<dyn IStorageProvider>> = window
                 .upgrade()
@@ -318,6 +336,27 @@ impl WindowImpl {
                 .map(|tl| Rc::new(ManagedStorageProvider::new(Some(&tl), None)) as Rc<dyn IStorageProvider>);
             Box::pin(std::future::ready(provider))
         })]
+    }
+
+    /// The parent handle of a portal dialog of this window (`wayland:<handle>`), `None` on a
+    /// compositor without `zxdg_exporter_v2` and for a window that is not shown.
+    pub fn acquire_portal_parent_lease(&self) -> LocalBoxFuture<Option<Rc<dyn IPortalParentLease>>> {
+        Self::acquire_portal_parent_lease_async(self.this.clone())
+    }
+
+    /// The parent handle of a portal dialog: an export of the top-level, which lives as long
+    /// as the lease.
+    pub(crate) fn acquire_portal_parent_lease_async(window: Weak<WindowImpl>) -> LocalBoxFuture<Option<Rc<dyn IPortalParentLease>>> {
+        Box::pin(async move {
+            let proxy = window.upgrade()?.surface_proxy()?;
+            let export = proxy.export_toplevel().await?;
+            let Some(raw) = export.handle_task().await else {
+                export.dispose();
+                return None;
+            };
+            let lease: Rc<dyn IPortalParentLease> = Rc::new(XdgForeignPortalParentLease { export, handle: format!("wayland:{raw}") });
+            Some(lease)
+        })
     }
 
     /// Refreshes the storage provider's factory chain after a new surface was created.
@@ -353,6 +392,22 @@ impl WindowImpl {
         if let Some(current) = current {
             current.dispose();
         }
+    }
+}
+
+struct XdgForeignPortalParentLease {
+    export: Rc<dyn IWaylandXdgTopLevelExport>,
+    handle: String,
+}
+
+impl IPortalParentLease for XdgForeignPortalParentLease {
+    fn handle(&self) -> String {
+        self.handle.clone()
+    }
+
+    fn dispose_async(&self) -> LocalBoxFuture<()> {
+        self.export.dispose();
+        Box::pin(std::future::ready(()))
     }
 }
 
