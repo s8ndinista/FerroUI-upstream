@@ -2321,3 +2321,29 @@ rust = "storage/ios_storage_provider.rs"
 types = { IOSStorageProvider = "IosStorageProvider" }
 reason = "the name follows the naming of Rust"
 
+# ---------------------------------------------------------------- Avalonia.Wayland
+# The declaration files the bindings replace (docs/porting/wayland-platform.md, section 2). What is open of the
+# project after this is the dmabuf swapchain and a foreign display (stage 3).
+
+[[map]]
+project = "Avalonia.Wayland"
+upstream = ["Server/Interop/XkbCommonNativeMethods.cs"]
+kind = "not-applicable"
+reason = "the platform invokes of `libxkbcommon` and their constants: the declarations are those of the crate `xkbcommon-dl`, which opens the library at run time; the four classes over them (`XkbContext`, `XkbCommonKeymap`, `XkbComposeTable`, `XkbComposeState`) are ported (docs/porting/wayland-platform.md, section 2.2)"
+
+[[map]]
+project = "Avalonia.Wayland"
+upstream = ["Server/Interop/WaylandEglNativeMethods.cs"]
+kind = "not-applicable"
+reason = "the three platform invokes of `libwayland-egl` (`wl_egl_window_create`, `_resize`, `_destroy`): the declarations are those of the crate `wayland-egl`, used by `server/transient/rendering/wayland_egl_wsi_surface.rs` (docs/porting/wayland-platform.md, section 2.1)"
+
+[[map]]
+project = "Avalonia.Wayland"
+upstream = ["Server/Interop/UnsafeNativeMethods.cs"]
+kind = "replaced"
+rust = "server/interop/unsafe_native_methods.rs"
+reason = "the platform invokes of the C library and of `libwayland-cursor` with their structures and constants (`pollfd`, `PollEvents`, `Errno`, `wl_cursor`, `wl_cursor_image`): the declarations are those of the crate `libc`, wrapped here in safe functions over owned descriptors and mappings (`pipe2_nonblocking`, `poll_two`, `memfd_of_length`, `MemoryMapping`), and the cursor themes are read by the crate `wayland-cursor` (docs/porting/wayland-platform.md, sections 2.1 and 2.3)"
+
+[[rust_only]]
+path = "src/FerroUI.Wayland/server/cross_thread_result.rs"
+reason = "The result of work another thread does, awaited or waited for where it was asked: the `Task` of the original (`WaylandWorker.InvokeOobAsync`, a read or a write of a pipe on a pool thread, the handle of an export)"

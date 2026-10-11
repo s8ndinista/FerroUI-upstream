@@ -3,24 +3,24 @@
  "inScope": {
   "files": [
    2634,
-   2677,
+   2675,
    0
   ],
   "types": [
    3564,
-   4038,
-   311
+   4036,
+   324
   ],
   "members": [
    28401,
-   32988,
-   2868
+   32952,
+   3036
   ]
  },
  "allProjects": {
   "membersPresent": 28401,
   "members": 37391,
-  "membersNotApplicable": 1132,
+  "membersNotApplicable": 1168,
   "membersOutOfScope": 3271
  },
  "projects": [
@@ -7880,18 +7880,18 @@
    "detail": "full",
    "files": [
     74,
-    81,
+    79,
     0
    ],
    "types": [
     97,
-    123,
-    0
+    121,
+    13
    ],
    "members": [
     542,
-    816,
-    0
+    780,
+    168
    ],
    "interfaces": [
     14,
@@ -7905,7 +7905,7 @@
     0,
     0
    ],
-   "notApplicableFiles": 0,
+   "notApplicableFiles": 2,
    "matchKinds": {
     "field": 81,
     "fn": 417,

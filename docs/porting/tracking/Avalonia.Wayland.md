@@ -10,9 +10,9 @@ Generated from upstream commit `17350180c33b063f0e98abbfd19aa3cae63f5d56`. Back 
 | FerroUI | `src/FerroUI.Wayland` (exists) |
 | Crate | `ferroui-wayland` |
 | Phase / priority | 5 - desktop (Linux) / P1 |
-| Files | 74/81 (91.4%) |
-| Types | 97/123 (78.9%) |
-| Members | 542/816 (66.4%) |
+| Files | 74/79 (93.7%), 2 not applicable |
+| Types | 97/121 (13 waived) (89.8%) |
+| Members | 542/780 (168 waived) (88.6%) |
 | Contracts (interfaces) | 14/14 |
 | Property registrations | 0/0 |
 | Routed events | 0/0 |
@@ -35,27 +35,27 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 | `Avalonia.Wayland.Server.Persistent.IWXdgTopLevelEventSink` | internal | `Server/Persistent/IWSurfaceEventSink.cs` | 3/3 | present |
 | `Avalonia.Wayland.Server.Persistent.IWaylandCursor` | internal | `Server/Persistent/IWaylandCursor.cs` | 1/1 | present |
 | `Avalonia.Wayland.Server.Transient.IWaylandTextInputV3Events` | internal | `Server/Transient/IWaylandTextInputV3Events.cs` | 1/1 | present |
-| `Avalonia.Wayland.Server.Transient.Rendering.IWaylandFramebufferSurface` | internal | `Server/Transient/Rendering/IWaylandFramebufferSurface.cs` | 6/7 | partial |
-| `Avalonia.Wayland.Server.WaylandPlatformGraphics.IWaylandGraphics` | public | `Server/WaylandPlatformGraphics.cs` | 1/2 | partial |
+| `Avalonia.Wayland.Server.Transient.Rendering.IWaylandFramebufferSurface` | internal | `Server/Transient/Rendering/IWaylandFramebufferSurface.cs` | 6/7 (1 waived) | present |
+| `Avalonia.Wayland.Server.WaylandPlatformGraphics.IWaylandGraphics` | public | `Server/WaylandPlatformGraphics.cs` | 1/2 (1 waived) | present |
 
 ## Files
 
-### `(project root)` - files 26/26, types 32/33, members 149/196
+### `(project root)` - files 26/26, types 32/33 (1 waived), members 149/196 (47 waived)
 
 | Upstream file | Rust file | Status | Types | Members | Notes |
 |---|---|---|---|---|---|
-| `AvaloniaWaylandException.cs` | `ferro_wayland_exception.rs` | partial | 6/6 | 8/23 |  |
+| `AvaloniaWaylandException.cs` | `ferro_wayland_exception.rs` | present | 6/6 | 8/23 (15 waived) |  |
 | `AvaloniaWaylandPlatformExtensions.cs` | `ferro_wayland_platform_extensions.rs` | present | 1/1 | 2/2 |  |
 | `IWaylandXdgTopLevelExport.cs` | `i_wayland_xdg_top_level_export.rs` | present | 1/1 | 1/1 |  |
 | `PopupImpl.Sink.cs` | `popup_impl_sink.rs` | present | 1/1 | 0/0 |  |
 | `PopupImpl.cs` | `popup_impl.rs` | present | 1/1 | 11/11 |  |
 | `TextInputOptionsConverter.cs` | `text_input_options_converter.rs` | present | 1/1 | 1/1 |  |
-| `WaylandConversionExtensions.cs` | `wayland_conversion_extensions.rs` | partial | 0/1 | 0/4 |  |
+| `WaylandConversionExtensions.cs` | `wayland_conversion_extensions.rs` | present | 0/1 (1 waived) | 0/4 (4 waived) |  |
 | `WaylandCursorFactory.cs` | `wayland_cursor_factory.rs` | present | 2/2 | 6/6 |  |
 | `WaylandGlibDispatcher.cs` | `wayland_glib_dispatcher.rs` | present | 1/1 | 1/1 |  |
 | `WaylandPlatform.cs` | `wayland_platform.rs` | present | 1/1 | 2/2 |  |
 | `WaylandPlatformOptions.cs` | `wayland_platform_options.rs` | present | 1/1 | 9/9 |  |
-| `WaylandSurfaceCreateResult.cs` | `wayland_surface_create_result.rs` | partial | 1/1 | 0/1 |  |
+| `WaylandSurfaceCreateResult.cs` | `wayland_surface_create_result.rs` | present | 1/1 | 0/1 (1 waived) |  |
 | `WaylandTextUtils.cs` | `wayland_text_utils.rs` | present | 1/1 | 3/3 |  |
 | `WaylandTopLevelFactory.cs` | `wayland_top_level_factory.rs` | present | 1/1 | 6/6 |  |
 | `WindowImpl.Sink.cs` | `window_impl_sink.rs` | present | 1/1 | 0/0 |  |
@@ -64,85 +64,12 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 | `WindowImplBase.DragDrop.cs` | `window_impl_base_drag_drop.rs` | present | 1/1 | 0/0 |  |
 | `WindowImplBase.Keyboard.cs` | `window_impl_base_keyboard.rs` | present | 1/1 | 0/0 |  |
 | `WindowImplBase.Pointer.cs` | `window_impl_base_pointer.rs` | present | 1/1 | 0/0 |  |
-| `WindowImplBase.cs` | `window_impl_base.rs` | partial | 2/2 | 38/65 |  |
+| `WindowImplBase.cs` | `window_impl_base.rs` | present | 2/2 | 38/65 (27 waived) |  |
 | `XkbCommonKeymap.cs` | `xkb_common_keymap.rs` | present | 1/1 | 6/6 |  |
 | `XkbComposeState.cs` | `xkb_compose_state.rs` | present | 1/1 | 6/6 |  |
 | `XkbComposeTable.cs` | `xkb_compose_table.rs` | present | 1/1 | 3/3 |  |
 | `XkbContext.cs` | `xkb_context.rs` | present | 1/1 | 3/3 |  |
 | `XkbKeyTransform.cs` | `xkb_key_transform.rs` | present | 1/1 | 5/5 |  |
-
-<details><summary><code>AvaloniaWaylandException.cs</code> - 15 missing</summary>
-
-- `AvaloniaWaylandException` (class): 2 missing
-  - `AvaloniaWaylandException(string? message)` *(1 of 3 constructors found)*
-  - `AvaloniaWaylandException(string? message, Exception? innerException)` *(1 of 3 constructors found)*
-- `AvaloniaWaylandPollException` (class): 2 missing
-  - `AvaloniaWaylandPollException(string? message)` *(1 of 3 constructors found)*
-  - `AvaloniaWaylandPollException(string? message, Exception? innerException)` *(1 of 3 constructors found)*
-- `AvaloniaWaylandNetworkException` (class): 2 missing
-  - `AvaloniaWaylandNetworkException(string? message)` *(1 of 3 constructors found)*
-  - `AvaloniaWaylandNetworkException(string? message, Exception? innerException)` *(1 of 3 constructors found)*
-- `AvaloniaWaylandFlushException` (class): 2 missing
-  - `AvaloniaWaylandFlushException(string? message, Exception? innerException)` *(2 of 4 constructors found)*
-  - `AvaloniaWaylandFlushException(UnsafeNativeMethods.Errno errno)` *(internal; 2 of 4 constructors found)*
-- `AvaloniaWaylandReadException` (class): 2 missing
-  - `AvaloniaWaylandReadException(string? message, Exception? innerException)` *(2 of 4 constructors found)*
-  - `AvaloniaWaylandReadException(UnsafeNativeMethods.Errno errno)` *(internal; 2 of 4 constructors found)*
-- `AvaloniaWaylandProtocolErrorException` (class): 5 missing
-  - `AvaloniaWaylandProtocolErrorException(string? message)` *(1 of 4 constructors found)*
-  - `AvaloniaWaylandProtocolErrorException(string? message, Exception? innerException)` *(1 of 4 constructors found)*
-  - `AvaloniaWaylandProtocolErrorException(uint errorCode, string errorMessage)` *(internal; 1 of 4 constructors found)*
-  - `uint ErrorCode { get; }`
-  - `string? ErrorMessage { get; }`
-
-</details>
-
-<details><summary><code>WaylandConversionExtensions.cs</code> - 5 missing</summary>
-
-- `WaylandConversionExtensions` (class, internal): **type missing** (4 members)
-
-</details>
-
-<details><summary><code>WaylandSurfaceCreateResult.cs</code> - 1 missing</summary>
-
-- `WaylandSurfaceCreateResult<T>` (class): 1 missing
-  - `WaylandSurfaceCreateResult(T Proxy, Func<IPlatformRenderSurface[]> GetRenderSurfaces, Task<XdgConfigureBatc...`
-
-</details>
-
-<details><summary><code>WindowImplBase.cs</code> - 27 missing</summary>
-
-- `WindowBaseImpl` (class): 24 missing
-  - `IReadOnlyList<object> CurrentOutputIds { get; set; }` *(internal; getter `current_output_ids` found, setter `set_current_output_ids` missing)*
-  - `Compositor Compositor { get; }`
-  - `double DesktopScaling { get; }`
-  - `IPlatformHandle? Handle { get; }`
-  - `abstract IPlatformRenderSurface[] Surfaces { get; }`
-  - `PixelPoint Position { get; }`
-  - `Point PointToClient(PixelPoint point)`
-  - `PixelPoint PointToScreen(Point point)`
-  - `void Activate()`
-  - `void SetTopmost(bool value)`
-  - `abstract Size MaxAutoSizeHint { get; }`
-  - `virtual Size? FrameSize { get; }`
-  - `WindowTransparencyLevel TransparencyLevel { get; }`
-  - `AcrylicPlatformCompensationLevels AcrylicCompensationLevels { get; }`
-  - `void SetTransparencyLevelHint(IReadOnlyList<WindowTransparencyLevel> transparencyLevels)`
-  - `void SetFrameThemeVariant(PlatformThemeVariant? themeVariant)`
-  - `Sink? CurrentSink { get; set; }` *(protected)*
-  - `abstract void Show(bool activate, bool isDialog)`
-  - `virtual void Hide()`
-  - `abstract IPopupImpl? CreatePopup()`
-  - `virtual void Dispose()`
-  - `abstract WXdgShellSurfaceProxy? SurfaceProxy { get; }` *(internal)*
-  - `void PostToUiThread(Action action)` *(protected)*
-  - `virtual object? TryGetFeature(Type featureType)`
-- `WindowBaseImpl.Sink` (class): 3 missing
-  - `TouchDevice Touch { get; }` *(protected)*
-  - `MouseDevice Mouse { get; }` *(protected)*
-  - `KeyboardDevice Keyboard { get; }` *(protected)*
-
-</details>
 
 ### `Clipboard` - files 5/5, types 6/6, members 34/34
 
@@ -154,104 +81,61 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 | `WaylandMimeMapper.cs` | `clipboard/wayland_mime_mapper.rs` | present | 1/1 | 8/8 |  |
 | `WaylandOutgoingTransfer.cs` | `clipboard/wayland_outgoing_transfer.rs` | present | 1/1 | 5/5 |  |
 
-### `Screens` - files 3/3, types 6/6, members 19/20
+### `Screens` - files 3/3, types 6/6, members 19/20 (1 waived)
 
 | Upstream file | Rust file | Status | Types | Members | Notes |
 |---|---|---|---|---|---|
 | `IWaylandOutputsSink.cs` | `screens/i_wayland_outputs_sink.rs` | present | 1/1 | 1/1 |  |
 | `SnapshotScreensImpl.cs` | `screens/snapshot_screens_impl.rs` | present | 3/3 | 17/17 |  |
-| `WaylandOutputSnapshot.cs` | `screens/wayland_output_snapshot.rs` | partial | 2/2 | 1/2 |  |
+| `WaylandOutputSnapshot.cs` | `screens/wayland_output_snapshot.rs` | present | 2/2 | 1/2 (1 waived) |  |
 
-<details><summary><code>WaylandOutputSnapshot.cs</code> - 1 missing</summary>
-
-- `WaylandOutputSnapshot` (class): 1 missing
-  - `WaylandOutputSnapshot(object Id, string? Name, string? Description, string? Manufacturer, string? Model, Pi...`
-
-</details>
-
-### `Server` - files 7/7, types 8/8, members 35/47
+### `Server` - files 7/7, types 8/8, members 35/47 (11 waived)
 
 | Upstream file | Rust file | Status | Types | Members | Notes |
 |---|---|---|---|---|---|
 | `ServerSignaler.cs` | `server/server_signaler.rs` | present | 1/1 | 2/2 |  |
 | `WaylandDispatchPriority.cs` | `server/wayland_dispatch_priority.rs` | present | 1/1 | 2/2 |  |
 | `WaylandMarshallers.cs` | `server/wayland_marshallers.rs` | present | 1/1 | 1/1 |  |
-| `WaylandPlatformGraphics.cs` | `server/wayland_platform_graphics.rs` | partial | 2/2 | 10/11 |  |
+| `WaylandPlatformGraphics.cs` | `server/wayland_platform_graphics.rs` | present | 2/2 | 10/11 (1 waived) |  |
 | `WaylandWorker.RenderTimer.cs` | `server/wayland_worker_render_timer.rs` | present | 1/1 | 3/3 |  |
-| `WaylandWorker.cs` | `server/wayland_worker.rs` | partial | 1/1 | 6/16 |  |
-| `WaylandWorkerClient.cs` | `server/wayland_worker_client.rs` | partial | 1/1 | 11/12 |  |
+| `WaylandWorker.cs` | `server/wayland_worker.rs` | partial | 1/1 | 6/16 (9 waived) |  |
+| `WaylandWorkerClient.cs` | `server/wayland_worker_client.rs` | present | 1/1 | 11/12 (1 waived) |  |
 
-<details><summary><code>WaylandPlatformGraphics.cs</code> - 1 missing</summary>
+<details><summary><code>WaylandWorker.cs</code> - 1 missing</summary>
 
-- `WaylandPlatformGraphics.IWaylandGraphics` (interface): 1 missing
-  - `IPlatformRenderSurface CreateRenderSurface(WSurface surface)`
-
-</details>
-
-<details><summary><code>WaylandWorker.cs</code> - 10 missing</summary>
-
-- `WaylandWorker` (class): 10 missing
-  - `WaylandGlobals? Globals { get; }`
-  - `IRawEventGrouperDispatchQueue InputDispatchQueue { get; }`
-  - `Compositor Compositor { get; }`
-  - `WaylandWorkerClient Client { get; }`
-  - `void PostWithCommit(Action cb)`
-  - `Task InvokeOobAsync(Action cb)` *(1 of 2 overloads found)*
-  - `static WaylandConnection? Probe(WaylandPlatformOptions options, out ExceptionDispatchInfo? error)` *(1 of 2 overloads found)*
+- `WaylandWorker` (class): 1 missing
   - `void Start(WaylandPlatformOptions options, WlDisplay foreignDisplay, WaylandOutputsSinkProxy? outputsSink =...` *(1 of 2 overloads found)*
-  - `void RegisterPersistentObject(IPersistentWaylandObject waylandObject)`
-  - `void UnregisterPersistentObject(IPersistentWaylandObject waylandObject)`
+  - waived (`WaylandWorkerClient::post_with_commit`: a command posted with a commit goes through the compositor of the framework, an object of the UI thread): `PostWithCommit`
+  - waived (one `probe`, whose result is the connection or the error): `Probe`
+  - waived (the compositor of the framework, the queue of the raw input and the client are objects of the UI thread and belong to `WaylandWorkerClient` (`compositor`, `input_dispatch_queue`), which is made with the worker): `InputDispatchQueue`, `Compositor`, `Client`
+  - waived (the overload without a result is `invoke_oob_async` with the unit type): `InvokeOobAsync`
+  - waived (the persistent objects are kept by kind and by number: `WaylandWorkerThread::register_top_level`, `register_popup`, `register_standard_cursor`, `register_bitmap_cursor`, `unregister_surface`, `destroy_cursor`): `RegisterPersistentObject`, `UnregisterPersistentObject`
+  - waived (the worker of the port is two types (docs/porting/wayland-platform.md, section 4.2): the globals are a field of the state of the worker thread (`WaylandWorkerState::globals`)): `Globals`
 
 </details>
 
-<details><summary><code>WaylandWorkerClient.cs</code> - 1 missing</summary>
-
-- `WaylandWorkerClient` (class): 1 missing
-  - `Task<T> InvokeOobAsync<T>(Func<T> cb)`
-
-</details>
-
-### `Server/Interop` - files 4/7, types 4/16, members 14/134
+### `Server/Interop` - files 4/5, types 4/14 (6 waived), members 14/98 (46 waived)
 
 | Upstream file | Rust file | Status | Types | Members | Notes |
 |---|---|---|---|---|---|
 | `DrmGbmUnsafeNativeMethods.cs` | `server/interop/drm_gbm_unsafe_native_methods.rs` | missing | 0/4 | 0/37 |  |
 | `Pipe2Stream.cs` | `server/interop/pipe2_stream.rs` | present | 1/1 | 1/1 |  |
-| `UnsafeNativeMethods.cs` | `server/interop/unsafe_native_methods.rs` | partial | 0/6 | 0/42 |  |
-| `WakeupFd.cs` | `server/interop/wakeup_fd.rs` | partial | 1/1 | 4/6 |  |
-| `WaylandConnection.cs` | `server/interop/wayland_connection.rs` | partial | 2/2 | 9/12 |  |
-| `WaylandEglNativeMethods.cs` | `server/interop/wayland_egl_native_methods.rs` | missing | 0/1 | 0/3 |  |
-| `XkbCommonNativeMethods.cs` | `server/interop/xkb_common_native_methods.rs` | missing | 0/1 | 0/33 |  |
+| `UnsafeNativeMethods.cs` | `server/interop/unsafe_native_methods.rs` | present | 0/6 (6 waived) | 0/42 (42 waived) | replaced: the platform invokes of the C library and of `libwayland-cursor` with their structures and constants (`pollfd`, `PollEvents`, `Errno`, `wl_cursor`, `wl_cursor_image`): the declarations are those of the crate `libc`, wrapped here in safe functions over owned descriptors and mappings (`pipe2_nonblocking`, `poll_two`, `memfd_of_length`, `MemoryMapping`), and the cursor themes are read by the crate `wayland-cursor` (docs/porting/wayland-platform.md, sections 2.1 and 2.3) |
+| `WakeupFd.cs` | `server/interop/wakeup_fd.rs` | present | 1/1 | 4/6 (2 waived) |  |
+| `WaylandConnection.cs` | `server/interop/wayland_connection.rs` | partial | 2/2 | 9/12 (2 waived) |  |
+| `WaylandEglNativeMethods.cs` | - | n/a | - | - | not-applicable: the three platform invokes of `libwayland-egl` (`wl_egl_window_create`, `_resize`, `_destroy`): the declarations are those of the crate `wayland-egl`, used by `server/transient/rendering/wayland_egl_wsi_surface.rs` (docs/porting/wayland-platform.md, section 2.1) |
+| `XkbCommonNativeMethods.cs` | - | n/a | - | - | not-applicable: the platform invokes of `libxkbcommon` and their constants: the declarations are those of the crate `xkbcommon-dl`, which opens the library at run time; the four classes over them (`XkbContext`, `XkbCommonKeymap`, `XkbComposeTable`, `XkbComposeState`) are ported (docs/porting/wayland-platform.md, section 2.2) |
 
-<details><summary><code>UnsafeNativeMethods.cs</code> - 48 missing</summary>
+<details><summary><code>WaylandConnection.cs</code> - 1 missing</summary>
 
-- `UnsafeNativeMethods` (class, internal): **type missing** (20 members)
-- `UnsafeNativeMethods.pollfd` (struct, public): **type missing** (3 members)
-- `UnsafeNativeMethods.PollEvents` (enum, public): **type missing** (6 members)
-- `UnsafeNativeMethods.Errno` (enum, public): **type missing** (5 members)
-- `UnsafeNativeMethods.wl_cursor_image` (struct, public): **type missing** (5 members)
-- `UnsafeNativeMethods.wl_cursor` (struct, public): **type missing** (3 members)
-
-</details>
-
-<details><summary><code>WakeupFd.cs</code> - 2 missing</summary>
-
-- `WakeupFd` (class): 2 missing
-  - `~WakeupFd()` *(protected)*
-  - `void Dispose()`
-
-</details>
-
-<details><summary><code>WaylandConnection.cs</code> - 3 missing</summary>
-
-- `WaylandConnection` (class): 3 missing
-  - `WaylandConnection(int fd)` *(1 of 3 constructors found)*
+- `WaylandConnection` (class): 1 missing
   - `WaylandConnection(WlDisplay foreignDisplay)` *(1 of 3 constructors found)*
-  - `DispatchResult DispatchQueueOrWakeup(WlEventQueue queue, int wakeupFd)` *(1 of 2 overloads found)*
+  - waived (`WaylandConnection::connect_to_fd`): `.ctor`
+  - waived (one `dispatch_queue_or_wakeup`: a connection of the port has one queue): `DispatchQueueOrWakeup`
 
 </details>
 
-### `Server/Persistent` - files 13/13, types 23/26, members 152/190
+### `Server/Persistent` - files 13/13, types 23/26 (3 waived), members 152/190 (38 waived)
 
 | Upstream file | Rust file | Status | Types | Members | Notes |
 |---|---|---|---|---|---|
@@ -261,175 +145,57 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 | `IWSurfaceEventSink.cs` | `server/persistent/i_w_surface_event_sink.rs` | present | 3/3 | 24/24 |  |
 | `IWXdgTopLevel.cs` | `server/persistent/i_w_xdg_top_level.rs` | present | 3/3 | 15/15 |  |
 | `IWaylandCursor.cs` | `server/persistent/i_wayland_cursor.rs` | present | 1/1 | 1/1 |  |
-| `WSurface.cs` | `server/persistent/w_surface.rs` | partial | 4/7 | 61/92 |  |
-| `WaylandBitmapCursor.cs` | `server/persistent/wayland_bitmap_cursor.rs` | partial | 1/1 | 10/12 |  |
-| `WaylandCursor.cs` | `server/persistent/wayland_cursor.rs` | partial | 3/3 | 3/6 |  |
+| `WSurface.cs` | `server/persistent/w_surface.rs` | present | 4/7 (3 waived) | 61/92 (31 waived) |  |
+| `WaylandBitmapCursor.cs` | `server/persistent/wayland_bitmap_cursor.rs` | present | 1/1 | 10/12 (2 waived) |  |
+| `WaylandCursor.cs` | `server/persistent/wayland_cursor.rs` | present | 3/3 | 3/6 (3 waived) |  |
 | `WaylandInputEventCookie.cs` | `server/persistent/wayland_input_event_cookie.rs` | present | 1/1 | 3/3 |  |
-| `XdgConfigureBatch.cs` | `server/persistent/xdg_configure_batch.rs` | partial | 2/2 | 16/17 |  |
+| `XdgConfigureBatch.cs` | `server/persistent/xdg_configure_batch.rs` | present | 2/2 | 16/17 (1 waived) |  |
 | `XdgPopupConfigureBatch.cs` | `server/persistent/xdg_popup_configure_batch.rs` | present | 1/1 | 5/5 |  |
-| `XdgPopupPositionerParams.cs` | `server/persistent/xdg_popup_positioner_params.rs` | partial | 1/1 | 0/1 |  |
+| `XdgPopupPositionerParams.cs` | `server/persistent/xdg_popup_positioner_params.rs` | present | 1/1 | 0/1 (1 waived) |  |
 
-<details><summary><code>WSurface.cs</code> - 34 missing</summary>
-
-- `WSurface` (class): 16 missing
-  - `WaylandConnection? Connection { get; private set; }` *(protected)*
-  - `WaylandGlobals? Globals { get; private set; }`
-  - `WlDisplay? CurrentDisplay { get; }`
-  - `void Disconnect()`
-  - `virtual void RegisterTextInputSink(WaylandTextInputV3EventsProxy sink)`
-  - `virtual void SetTextInputActive(bool hasClient, bool supportsPreedit, bool supportsSurroundingText, int ses...`
-  - `virtual void AbortTextInputComposition()`
-  - `virtual void SetTextInputCursorRect(Rect rect)`
-  - `virtual void SetTextInputOptions(TextInputOptions options)`
-  - `virtual void SetTextInputSurroundingText(string text, int cursorChar, int anchorChar)`
-  - `virtual void ResetTextInput()`
-  - `virtual bool CanCommitOutOfBand { get; }` *(protected)*
-  - `IPlatformRenderSurface[] RenderSurfaces { get; }`
-  - `bool EnforceBufferCreationRoundtrip { get; }`
-  - `virtual void OnOutputsChanged()` *(protected)*
-  - `virtual void OnScaleChanged(double scale)` *(protected)*
-- `WXdgShellSurface` (class): 3 missing
-  - `override void OnScaleChanged(double scale)` *(protected)*
-  - `override void OnOutputsChanged()` *(protected)*
-  - `virtual void OnConfigureBatchComplete(uint serial)` *(protected)*
-- `WXdgShellSurface.XdgSurfaceListener` (class, internal): **type missing** (2 members)
-- `WXdgTopLevel` (class): 2 missing
-  - `TaskCompletionSource<XdgConfigureBatch> BasicInitCompletedTcs { get; }` *(protected)*
-  - `void RemoveExport(XdgToplevelExport export)` *(internal)*
-- `WXdgTopLevel.TopLevelListener` (class, internal): **type missing** (4 members)
-- `WXdgPopup.PopupListener` (class, internal): **type missing** (4 members)
-
-</details>
-
-<details><summary><code>WaylandBitmapCursor.cs</code> - 2 missing</summary>
-
-- `WaylandBitmapCursor` (class): 2 missing
-  - `WaylandGlobals? Globals { get; }`
-  - `override void Destroy()`
-
-</details>
-
-<details><summary><code>WaylandCursor.cs</code> - 3 missing</summary>
-
-- `WaylandCursorImage` (struct): 1 missing
-  - `WaylandCursorImage(WlSurface Surface, int HotspotX, int HotspotY)`
-- `WaylandCursor` (class): 1 missing
-  - `abstract void Destroy()`
-- `WaylandStandardCursor` (class): 1 missing
-  - `override void Destroy()`
-
-</details>
-
-<details><summary><code>XdgConfigureBatch.cs</code> - 1 missing</summary>
-
-- `XdgToplevelStates` (enum): 1 missing
-  - `None = 0`
-
-</details>
-
-<details><summary><code>XdgPopupPositionerParams.cs</code> - 1 missing</summary>
-
-- `XdgPopupPositionerParams` (struct): 1 missing
-  - `XdgPopupPositionerParams(Size Size, Thickness Deflate, Rect AnchorRect, XdgPositioner.AnchorEnum Anchor, Xd...`
-
-</details>
-
-### `Server/Transient` - files 8/8, types 10/10, members 78/84
+### `Server/Transient` - files 8/8, types 10/10, members 78/84 (5 waived)
 
 | Upstream file | Rust file | Status | Types | Members | Notes |
 |---|---|---|---|---|---|
 | `IWaylandTextInputV3Events.cs` | `server/transient/i_wayland_text_input_v3_events.rs` | present | 1/1 | 1/1 |  |
-| `WaylandCursorManager.cs` | `server/transient/wayland_cursor_manager.rs` | partial | 2/2 | 3/4 |  |
-| `WaylandGlobals.cs` | `server/transient/wayland_globals.rs` | partial | 1/1 | 19/22 |  |
+| `WaylandCursorManager.cs` | `server/transient/wayland_cursor_manager.rs` | present | 2/2 | 3/4 (1 waived) |  |
+| `WaylandGlobals.cs` | `server/transient/wayland_globals.rs` | partial | 1/1 | 19/22 (2 waived) |  |
 | `WaylandInputDispatcher.Keyboard.cs` | `server/transient/wayland_input_dispatcher_keyboard.rs` | present | 1/1 | 0/0 |  |
 | `WaylandInputDispatcher.cs` | `server/transient/wayland_input_dispatcher.rs` | present | 1/1 | 11/11 |  |
-| `WaylandOutputsTracker.cs` | `server/transient/wayland_outputs_tracker.rs` | partial | 2/2 | 30/31 |  |
+| `WaylandOutputsTracker.cs` | `server/transient/wayland_outputs_tracker.rs` | present | 2/2 | 30/31 (1 waived) |  |
 | `WaylandTextInputV3.cs` | `server/transient/wayland_text_input_v3.rs` | present | 1/1 | 12/12 |  |
-| `XdgToplevelExport.cs` | `server/transient/xdg_toplevel_export.rs` | partial | 1/1 | 2/3 |  |
+| `XdgToplevelExport.cs` | `server/transient/xdg_toplevel_export.rs` | present | 1/1 | 2/3 (1 waived) |  |
 
-<details><summary><code>WaylandCursorManager.cs</code> - 1 missing</summary>
+<details><summary><code>WaylandGlobals.cs</code> - 1 missing</summary>
 
-- `WaylandCursorManager.CursorEntry` (struct): 1 missing
-  - `CursorEntry(WlSurface Surface, WlBuffer buffer, int HotspotX, int HotspotY)`
-
-</details>
-
-<details><summary><code>WaylandGlobals.cs</code> - 3 missing</summary>
-
-- `WaylandGlobals` (class): 3 missing
-  - `event Action<uint>? GlobalRemoved`
+- `WaylandGlobals` (class): 1 missing
   - `ZwpLinuxDmabufV1? LinuxDmabuf { get; }`
-  - `WaylandConnection Connection { get; }`
+  - waived (the globals keep the number of their connection (`connection_id`) and the handle of its queue; the connection is a field of the worker thread beside the state): `Connection`
+  - waived (the one subscriber of the event is the outputs tracker: the `Dispatch` implementation of the registry calls `WaylandOutputsTracker::on_global_removed` and the input dispatcher directly): `GlobalRemoved`
 
 </details>
 
-<details><summary><code>WaylandOutputsTracker.cs</code> - 1 missing</summary>
-
-- `WaylandOutputsTracker.Output` (class): 1 missing
-  - `void OnWlOutputDone()` *(internal)*
-
-</details>
-
-<details><summary><code>XdgToplevelExport.cs</code> - 1 missing</summary>
-
-- `XdgToplevelExport` (class): 1 missing
-  - `IWaylandXdgTopLevelExport GetUiThreadHandle()`
-
-</details>
-
-### `Server/Transient/Clipboard` - files 4/4, types 4/7, members 45/63
+### `Server/Transient/Clipboard` - files 4/4, types 4/7 (3 waived), members 45/63 (18 waived)
 
 | Upstream file | Rust file | Status | Types | Members | Notes |
 |---|---|---|---|---|---|
-| `WaylandDataDevice.cs` | `server/transient/clipboard/wayland_data_device.rs` | partial | 1/2 | 18/25 |  |
-| `WaylandDataOffer.cs` | `server/transient/clipboard/wayland_data_offer.rs` | partial | 1/2 | 11/15 |  |
-| `WaylandDataSource.cs` | `server/transient/clipboard/wayland_data_source.rs` | partial | 1/2 | 10/17 |  |
+| `WaylandDataDevice.cs` | `server/transient/clipboard/wayland_data_device.rs` | present | 1/2 (1 waived) | 18/25 (7 waived) |  |
+| `WaylandDataOffer.cs` | `server/transient/clipboard/wayland_data_offer.rs` | present | 1/2 (1 waived) | 11/15 (4 waived) |  |
+| `WaylandDataSource.cs` | `server/transient/clipboard/wayland_data_source.rs` | present | 1/2 (1 waived) | 10/17 (7 waived) |  |
 | `WaylandOfferCookie.cs` | `server/transient/clipboard/wayland_offer_cookie.rs` | present | 1/1 | 6/6 |  |
 
-<details><summary><code>WaylandDataDevice.cs</code> - 8 missing</summary>
-
-- `WaylandDataDeviceListener` (class, internal): **type missing** (7 members)
-
-</details>
-
-<details><summary><code>WaylandDataOffer.cs</code> - 5 missing</summary>
-
-- `WaylandDataOfferListener` (class, internal): **type missing** (4 members)
-
-</details>
-
-<details><summary><code>WaylandDataSource.cs</code> - 8 missing</summary>
-
-- `WaylandDataSourceListener` (class, internal): **type missing** (7 members)
-
-</details>
-
-### `Server/Transient/Rendering` - files 4/8, types 4/11, members 16/48
+### `Server/Transient/Rendering` - files 4/8, types 4/11, members 16/48 (2 waived)
 
 | Upstream file | Rust file | Status | Types | Members | Notes |
 |---|---|---|---|---|---|
-| `IWaylandFramebufferSurface.cs` | `server/transient/rendering/i_wayland_framebuffer_surface.rs` | partial | 1/1 | 6/7 |  |
+| `IWaylandFramebufferSurface.cs` | `server/transient/rendering/i_wayland_framebuffer_surface.rs` | present | 1/1 | 6/7 (1 waived) |  |
 | `WaylandDmabufFeedback.cs` | `server/transient/rendering/wayland_dmabuf_feedback.rs` | missing | 0/4 | 0/17 |  |
 | `WaylandEglDisplay.cs` | `server/transient/rendering/wayland_egl_display.rs` | missing | 0/1 | 0/5 |  |
 | `WaylandEglDmaBufPlatformGraphics.cs` | `server/transient/rendering/wayland_egl_dma_buf_platform_graphics.rs` | missing | 0/1 | 0/5 |  |
 | `WaylandEglDmaBufSurface.cs` | `server/transient/rendering/wayland_egl_dma_buf_surface.rs` | missing | 0/1 | 0/3 |  |
-| `WaylandEglWsiPlatformGraphics.cs` | `server/transient/rendering/wayland_egl_wsi_platform_graphics.rs` | partial | 1/1 | 4/5 |  |
+| `WaylandEglWsiPlatformGraphics.cs` | `server/transient/rendering/wayland_egl_wsi_platform_graphics.rs` | present | 1/1 | 4/5 (1 waived) |  |
 | `WaylandEglWsiSurface.cs` | `server/transient/rendering/wayland_egl_wsi_surface.rs` | present | 1/1 | 3/3 |  |
 | `WaylandFramebuffer.cs` | `server/transient/rendering/wayland_framebuffer.rs` | present | 1/1 | 3/3 |  |
-
-<details><summary><code>IWaylandFramebufferSurface.cs</code> - 1 missing</summary>
-
-- `IWaylandFramebufferSurface` (interface): 1 missing
-  - `WaylandGlobals? Globals { get; }`
-
-</details>
-
-<details><summary><code>WaylandEglWsiPlatformGraphics.cs</code> - 1 missing</summary>
-
-- `WaylandEglWsiPlatformGraphics` (class): 1 missing
-  - `IPlatformRenderSurface CreateRenderSurface(WSurface surface)`
-
-</details>
 
 ## Rust-only files
 
@@ -437,6 +203,6 @@ Rust sources of this crate that no upstream file maps to. Give each a reason in 
 
 | Rust file | Reason | Types defined |
 |---|---|---|
-| `server/cross_thread_result.rs` | **unmapped** | `CrossThreadCompletion`, `CrossThreadResult`, `Shared` |
+| `server/cross_thread_result.rs` | The result of work another thread does, awaited or waited for where it was asked: the `Task` of the original (`WaylandWorker.InvokeOobAsync`, a read or a write of a pipe on a pool thread, the handle of an export) | `CrossThreadCompletion`, `CrossThreadResult`, `Shared` |
 
 Tests, examples and build scripts (not scanned): `examples/wayland_window.rs`.
