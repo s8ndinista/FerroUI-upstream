@@ -31,7 +31,7 @@ fn named_presenter(name: &str) -> Ref<ContentPresenter> {
 
 /// The parts of the template of a navigation page that a navigation with a
 /// transition needs.
-fn navigation_page_template() -> Rc<dyn IControlTemplate> {
+pub(crate) fn navigation_page_template() -> Rc<dyn IControlTemplate> {
     FuncControlTemplate::new(|_, ns| {
         let content_host = Panel::new();
         content_host.set_name(Some("PART_ContentHost".to_string()));
@@ -58,7 +58,7 @@ fn navigation_page_template() -> Rc<dyn IControlTemplate> {
 
 /// A page whose template is `content` at the left top corner, 20 from the
 /// left and 30 from the top.
-fn page_with(content: Option<Ref<Control>>) -> Ref<Page> {
+pub(crate) fn page_with(content: Option<Ref<Control>>) -> Ref<Page> {
     let page = ContentPage::new();
     page.set_template(Some(FuncControlTemplate::new(move |_, ns| {
         let presenter = named_presenter("PART_ContentPresenter");
@@ -115,13 +115,13 @@ fn shell() -> Shell {
 }
 
 /// One frame of the application.
-fn frame() {
+pub(crate) fn frame() {
     MediaContext::instance().render();
     Dispatcher::ui_thread().run_jobs(None);
 }
 
 /// Runs frames until `task` has completed, and a few more.
-fn run_to_end(task: &DispatcherTask<()>) {
+pub(crate) fn run_to_end(task: &DispatcherTask<()>) {
     for _ in 0..500 {
         if task.is_completed() {
             break;
