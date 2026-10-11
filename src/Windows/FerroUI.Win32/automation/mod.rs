@@ -9,3 +9,23 @@
 
 pub mod interop;
 pub mod marshalling;
+
+mod automation_node;
+mod automation_node_expand_collapse;
+mod automation_node_range_value;
+mod automation_node_scroll;
+mod automation_node_selection;
+mod automation_node_toggle;
+mod automation_node_value;
+mod interop_automation_node;
+mod root_automation_node;
+
+#[allow(unused_imports)] // The window uses them on Windows.
+pub(crate) use automation_node::{AutomationNode, NodeKind};
+#[allow(unused_imports)]
+pub(crate) use interop_automation_node::InteropAutomationNode;
+#[allow(unused_imports)]
+pub(crate) use root_automation_node::RootAutomationNode;
+
+#[cfg(test)]
+mod automation_node_tests;

@@ -17,6 +17,7 @@ pub use safe_array_ref::{
     SafeArrayElement, SafeArrayLockError, SafeArrayRef, ADVANCED_FEATURE_FLAGS, SAFEARRAY, SAFEARRAYBOUND,
 };
 
+#[allow(unused_imports)] // The tests read and free the strings the nodes make.
 pub(crate) use ole_aut::{free_bstr, ptr_to_string_bstr, string_to_bstr};
 
 #[cfg(test)]
