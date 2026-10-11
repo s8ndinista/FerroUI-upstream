@@ -10,7 +10,7 @@
 //! - the invoke pattern of the button raises its click, the toggle pattern
 //!   toggles the check box, the value pattern sets the text of the text
 //!   box, the range value pattern sets the slider;
-//! - a handler of focus changes hears of the text box getting the focus.
+//! - a handler of focus changes hears of the slider getting the focus.
 //!
 //! Every check prints `[ ok ]` or `[FAIL]` with what it saw; the exit code
 //! is 1 if any failed. What this cannot show is a screen reader reading the
@@ -158,6 +158,11 @@ fn create_main_window() -> Ref<Window> {
 
     let text_box = TextBox::new();
     text_box.set_text(Some(TEXT));
+    // A text box takes the focus through its presenter, a part of its template, which this one
+    // does not have (the client of its input method fails without one: run 38098620662). It is
+    // made not focusable, which is then what the client has to read of it; the focus of the run
+    // is given to the slider.
+    text_box.set_focusable(false);
     text_box.set_width(200.0);
     text_box.set_height(32.0);
 
@@ -326,11 +331,11 @@ fn client(handle: isize, clicks: &AtomicU32, report: &mut Report) -> Result<(), 
     let (edit, edit_info) = find(EDIT_TYPE, None)?;
     let (check_box, check_box_info) = find(CHECK_BOX_TYPE, Some(CHECK_BOX))?;
     let (slider, slider_info) = find(SLIDER_TYPE, None)?;
-    for (what, info) in [("text box", edit_info), ("check box", check_box_info), ("slider", slider_info)] {
+    for (what, info, focusable) in [("text box", edit_info, false), ("check box", check_box_info, true), ("slider", slider_info, true)] {
         report.check(
-            info.is_enabled && info.is_keyboard_focusable && inside(info.bounding_rectangle, root_info.bounding_rectangle),
+            info.is_enabled && info.is_keyboard_focusable == focusable && inside(info.bounding_rectangle, root_info.bounding_rectangle),
             format!(
-                "the {what} is a {} that is enabled ({}), focusable ({}) and inside the window: {:?}",
+                "the {what} is a {} that is enabled ({}), focusable ({}; made {focusable}) and inside the window: {:?}",
                 info.control_type_name(),
                 info.is_enabled,
                 info.is_keyboard_focusable,
@@ -386,14 +391,14 @@ fn client(handle: isize, clicks: &AtomicU32, report: &mut Report) -> Result<(), 
     // The focus.
     let log: FocusLog = Arc::new(Mutex::new(Vec::new()));
     client.add_focus_changed_event_handler(log.clone())?;
-    if let Err(error) = edit.set_focus() {
-        report.check(false, format!("IUIAutomationElement::SetFocus on the text box: {error}"));
+    if let Err(error) = slider.set_focus() {
+        report.check(false, format!("IUIAutomationElement::SetFocus on the slider: {error}"));
     }
     let heard = |log: &FocusLog| log.lock().unwrap_or_else(std::sync::PoisonError::into_inner).clone();
-    let arrived = wait_until(Duration::from_secs(10), || heard(&log).iter().any(|entry| entry.starts_with("Edit")));
-    report.check(arrived, format!("a focus changed event arrived for the text box after IUIAutomationElement::SetFocus: {:?}", heard(&log)));
-    let has_focus = edit.has_keyboard_focus()?;
-    report.check(has_focus, format!("the text box has the keyboard focus: {has_focus}"));
+    let arrived = wait_until(Duration::from_secs(10), || heard(&log).iter().any(|entry| entry.starts_with("Slider")));
+    report.check(arrived, format!("a focus changed event arrived for the slider after IUIAutomationElement::SetFocus: {:?}", heard(&log)));
+    let has_focus = slider.has_keyboard_focus()?;
+    report.check(has_focus, format!("the slider has the keyboard focus: {has_focus}"));
     let focused = match client.focused_element()? {
         Some(focused) => format!("{} {:?}", control_type_name(focused.control_type()?), focused.name()?),
         None => "nothing".to_owned(),
