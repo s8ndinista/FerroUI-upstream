@@ -947,6 +947,19 @@ jobs:
               sh scripts/wayland/catalog-pictures.sh target/debug/control-catalog-desktop "catalog-pictures/scale-$scale" software 10000 || result=1
           done
           exit $result
+      # The catalog asks for no backend: like the original it uses Wayland when a compositor can be
+      # reached (and here nothing else can be: there is no X server).
+      - name: The ControlCatalog uses the Wayland backend without being asked
+        if: ${{ !cancelled() }}
+        run: |
+          scripts/wayland/sway-run.sh --size 1280x800 -- sh -c '
+            FERROUI_SMOKE_EXIT_MS=8000 target/debug/control-catalog-desktop & pid=$!
+            sleep 5
+            views="$(swaymsg -t get_tree | grep -c "control-catalog-desktop")"
+            echo "lines of the tree of the compositor that name the catalog: $views"
+            wait $pid; status=$?
+            echo "the catalog ended with $status"
+            test "$views" -ge 1 && test $status -eq 0'
       - name: Upload the pictures of the catalog
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
