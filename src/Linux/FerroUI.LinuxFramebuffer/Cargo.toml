@@ -1,6 +1,6 @@
 [package]
 name = "ferroui-linuxframebuffer"
-description = "Reserved name: the Linux framebuffer platform of FerroUI, which is not ported yet. This version is an empty placeholder"
+description = "The Linux framebuffer platform of FerroUI: one full-screen top-level on a framebuffer device or a KMS output, with input from the kernel's input devices"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -13,6 +13,29 @@ categories.workspace = true
 
 [lib]
 path = "lib.rs"
+
+[dependencies]
+ferroui-base.workspace = true
+ferroui-controls.workspace = true
+
+# The example draws real frames, which needs a renderer, a text shaper and
+# a theme. They are optional so that the crate and its tests build without
+# the native libraries of Skia and HarfBuzz
+# (docs/porting/linux-framebuffer-platform.md, section 1).
+ferroui-harfbuzz = { workspace = true, optional = true }
+ferroui-skia = { workspace = true, optional = true }
+ferroui-themes-simple = { workspace = true, optional = true }
+
+[target.'cfg(unix)'.dependencies]
+libc.workspace = true
+
+[features]
+example = ["dep:ferroui-harfbuzz", "dep:ferroui-skia", "dep:ferroui-themes-simple"]
+
+[[example]]
+name = "linuxfb_smoke"
+path = "examples/linuxfb_smoke.rs"
+required-features = ["example"]
 
 # The group of the crate in the table of the README (docs/release.md).
 [package.metadata.release]
