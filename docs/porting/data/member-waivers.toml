@@ -5143,3 +5143,48 @@ project = "Avalonia.FreeDesktop.AtSpi"
 type = "Avalonia.FreeDesktop.AtSpi.AtSpiServer"
 member = "SyncContext"
 reason = "the handlers are called by a task of the UI dispatcher; there is no synchronization context to hand to a D-Bus library"
+
+[[waive]]
+project = "Avalonia.Win32.Automation"
+type = "Avalonia.Win32.Automation.Interop.AsyncContentLoadedState"
+reason = "declared in interop/uia.idl with the other enumerations (generated code, which the scanner does not read)"
+
+[[waive]]
+project = "Avalonia.Win32.Automation"
+type = "Avalonia.Win32.Automation.Interop.StructureChangeType"
+reason = "declared in interop/uia.idl with the other enumerations (generated code, which the scanner does not read)"
+
+[[waive]]
+project = "Avalonia.Win32.Automation"
+type = "Avalonia.Win32.Automation.Interop.UiaEventId"
+reason = "declared in interop/uia.idl with the other enumerations (generated code, which the scanner does not read)"
+
+[[waive]]
+project = "Avalonia.Win32.Automation"
+type = "Avalonia.Win32.Automation.Marshalling.SafeArrayRef*VariableLengthInlineArray*"
+reason = "Rust: the descriptor of an array of one dimension has its one bound as a field"
+
+[[waive]]
+project = "Avalonia.Win32.Automation"
+type = "Avalonia.Win32.Automation.Marshalling.SafeArrayRef"
+member = "*TryCreate(IEnumerable*"
+reason = "Rust: the element type is a trait implementation, so the entry point that tells it from the values and the one for COM interfaces are one generic function"
+
+[[waive]]
+project = "Avalonia.Win32.Automation"
+type = "Avalonia.Win32.Automation.AutomationNode"
+member = "*InvokeSync<TInterface*"
+reason = "Rust: the two overloads for a provider contract are one generic function (`invoke_sync_provider`), and the two without are `invoke_sync`"
+
+[[waive]]
+project = "Avalonia.Win32.Automation"
+type = "Avalonia.Win32.Automation.AutomationNode"
+member = "*Peer { get; protected set; }*"
+reason = "Rust: the peer is held by the table of the UI thread, not by the COM object; the root contract a root node replaces it with is read from the peer"
+
+[[waive]]
+project = "Avalonia.Win32.Automation"
+type = "Avalonia.Win32.Automation.InteropAutomationNode"
+member = "*Navigate(*"
+reason = "Rust: the override is `navigates`, which the one `navigate` of the node asks (the kinds of a node are not classes)"
+

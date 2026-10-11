@@ -12,7 +12,7 @@ Generated from upstream commit `17350180c33b063f0e98abbfd19aa3cae63f5d56`. Back 
 | Phase / priority | 1 - desktop (Windows) / P0 |
 | Files | 92/95 (96.8%) |
 | Types | 218/276 (79.0%) |
-| Members | 2080/2605 (79.8%) |
+| Members | 2081/2605 (79.9%) |
 | Contracts (interfaces) | 7/7 |
 | Property registrations | 0/0 |
 | Routed events | 0/0 |
@@ -262,17 +262,17 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 
 </details>
 
-### `Interop` - files 3/3, types 81/119, members 1263/1564
+### `Interop` - files 3/3, types 81/119, members 1264/1564
 
 | Upstream file | Rust file | Status | Types | Members | Notes |
 |---|---|---|---|---|---|
 | `TaskBarList.cs` | `interop/task_bar_list.rs` | present | 1/1 | 2/2 |  |
-| `UnmanagedMethods.cs` | `interop/unmanaged_methods.rs` | partial | 78/115 | 1245/1542 |  |
+| `UnmanagedMethods.cs` | `interop/unmanaged_methods.rs` | partial | 78/115 | 1246/1542 |  |
 | `Win32Icon.cs` | `interop/win32_icon.rs` | partial | 2/3 | 16/20 |  |
 
-<details><summary><code>UnmanagedMethods.cs</code> - 334 missing</summary>
+<details><summary><code>UnmanagedMethods.cs</code> - 333 missing</summary>
 
-- `UnmanagedMethods` (class) (ported as module-level items): 70 missing
+- `UnmanagedMethods` (class) (ported as module-level items): 69 missing
   - `static int EnableMouseInPointer(bool enable)`
   - `static bool GetPointerCursorId(uint pointerId, out uint cursorId)`
   - `static int SetDIBitsToDevice(IntPtr hdc, int XDest, int YDest, uint dwWidth, uint dwHeight, int XSrc, int Y...`
@@ -333,7 +333,6 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
   - `static bool ImmSetOpenStatus(IntPtr hIMC, bool flag)`
   - `static bool ImmSetActiveContext(IntPtr hIMC, bool flag)`
   - `static bool ImmSetStatusWindowPos(IntPtr hIMC, ref POINT lpptPos)`
-  - `static bool ImmIsIME(IntPtr HKL)`
   - `static string? ImmGetCompositionString(IntPtr hIMC, GCS dwIndex)` *(1 of 2 overloads found)*
   - `static int LCIDToLocaleName(uint Locale, StringBuilder lpName, int cchName, int dwFlags)`
   - `static uint MAKELCID(uint lgid, uint srtid)`
@@ -589,4 +588,4 @@ Rust sources of this crate that no upstream file maps to. Give each a reason in 
 | `win_rt/numerics.rs` | The vector, quaternion and matrix values the interfaces of `winrt.idl` pass, by their layout: upstream maps the names to the types of the numerics library of its runtime | `Matrix4x4`, `Quaternion`, `Vector2`, `Vector3` |
 | `wnd_proc_guard.rs` | Keeps a panic from unwinding out of a window procedure through the frames of the system: caught, kept, and raised again by the message loop (docs/porting/win32-platform.md, section 5) |  |
 
-Tests, examples and build scripts (not scanned): `build.rs`, `d_composition/d_composition_tests.rs`, `examples/win32_window.rs`, `ole_tests.rs`, `win_rt/composition/win_ui_composition_tests.rs`, `win_rt/win_rt_tests.rs`.
+Tests, examples and build scripts (not scanned): `build.rs`, `d_composition/d_composition_tests.rs`, `examples/win32_window.rs`, `examples/win32_window/a11y.rs`, `ole_tests.rs`, `win_rt/composition/win_ui_composition_tests.rs`, `win_rt/win_rt_tests.rs`.

@@ -2,26 +2,26 @@
  "upstreamCommit": "17350180c33b063f0e98abbfd19aa3cae63f5d56",
  "inScope": {
   "files": [
-   2582,
-   2596,
+   2622,
+   2636,
    0
   ],
   "types": [
-   3503,
-   3915,
-   311
+   3522,
+   3979,
+   356
   ],
   "members": [
-   28176,
-   32172,
-   2868
+   28301,
+   32770,
+   3342
   ]
  },
  "allProjects": {
-  "membersPresent": 28176,
+  "membersPresent": 28301,
   "members": 37391,
   "membersNotApplicable": 1132,
-  "membersOutOfScope": 4087
+  "membersOutOfScope": 3489
  },
  "projects": [
   {
@@ -9491,7 +9491,7 @@
     0
    ],
    "members": [
-    2080,
+    2081,
     2605,
     0
    ],
@@ -9514,7 +9514,7 @@
     "derive": 2,
     "field": 309,
     "fn": 572,
-    "free fn": 157,
+    "free fn": 158,
     "free item": 45,
     "overload fn": 10,
     "trait": 14,
@@ -9807,23 +9807,23 @@
   {
    "name": "Avalonia.Win32.Automation",
    "path": "src/Windows/Avalonia.Win32.Automation",
-   "rust": "src/Windows/FerroUI.Win32.Automation",
-   "scope": "out",
-   "detail": "types",
+   "rust": "src/Windows/FerroUI.Win32/automation",
+   "scope": "in",
+   "detail": "full",
    "files": [
-    0,
+    40,
     40,
     0
    ],
    "types": [
-    0,
+    19,
     64,
-    0
+    45
    ],
    "members": [
-    0,
+    124,
     598,
-    0
+    474
    ],
    "interfaces": [
     0,
@@ -9838,9 +9838,138 @@
     0
    ],
    "notApplicableFiles": 1,
-   "matchKinds": {},
-   "presentFiles": {},
-   "rustOnly": []
+   "matchKinds": {
+    "const": 7,
+    "field": 8,
+    "fn": 91,
+    "overload fn": 1,
+    "variant": 17
+   },
+   "presentFiles": {
+    "AutomationNode.ExpandCollapse.cs": [
+     "automation_node_expand_collapse.rs"
+    ],
+    "AutomationNode.RangeValue.cs": [
+     "automation_node_range_value.rs"
+    ],
+    "AutomationNode.Scroll.cs": [
+     "automation_node_scroll.rs"
+    ],
+    "AutomationNode.Selection.cs": [
+     "automation_node_selection.rs"
+    ],
+    "AutomationNode.Toggle.cs": [
+     "automation_node_toggle.rs"
+    ],
+    "AutomationNode.Value.cs": [
+     "automation_node_value.rs"
+    ],
+    "AutomationNode.cs": [
+     "automation_node.rs"
+    ],
+    "Interop/IDockProvider.cs": [
+     "interop/uia.idl"
+    ],
+    "Interop/IExpandCollapseProvider.cs": [
+     "interop/uia.idl"
+    ],
+    "Interop/IGridItemProvider.cs": [
+     "interop/uia.idl"
+    ],
+    "Interop/IGridProvider.cs": [
+     "interop/uia.idl"
+    ],
+    "Interop/IInvokeProvider.cs": [
+     "interop/uia.idl"
+    ],
+    "Interop/IMultipleViewProvider.cs": [
+     "interop/uia.idl"
+    ],
+    "Interop/IRangeValueProvider.cs": [
+     "interop/uia.idl"
+    ],
+    "Interop/IRawElementProviderAdviseEvents.cs": [
+     "interop/uia.idl"
+    ],
+    "Interop/IRawElementProviderFragment.cs": [
+     "interop/uia.idl"
+    ],
+    "Interop/IRawElementProviderFragmentRoot.cs": [
+     "interop/uia.idl"
+    ],
+    "Interop/IRawElementProviderSimple.cs": [
+     "interop/uia.idl"
+    ],
+    "Interop/IRawElementProviderSimple2.cs": [
+     "interop/uia.idl"
+    ],
+    "Interop/IScrollItemProvider.cs": [
+     "interop/uia.idl"
+    ],
+    "Interop/IScrollProvider.cs": [
+     "interop/uia.idl"
+    ],
+    "Interop/ISelectionItemProvider.cs": [
+     "interop/uia.idl"
+    ],
+    "Interop/ISelectionProvider.cs": [
+     "interop/uia.idl"
+    ],
+    "Interop/ISynchronizedInputProvider.cs": [
+     "interop/uia.idl"
+    ],
+    "Interop/ITableItemProvider.cs": [
+     "interop/uia.idl"
+    ],
+    "Interop/ITableProvider.cs": [
+     "interop/uia.idl"
+    ],
+    "Interop/ITextProvider.cs": [
+     "interop/uia.idl"
+    ],
+    "Interop/ITextRangeProvider.cs": [
+     "interop/uia.idl"
+    ],
+    "Interop/IToggleProvider.cs": [
+     "interop/uia.idl"
+    ],
+    "Interop/ITransformProvider.cs": [
+     "interop/uia.idl"
+    ],
+    "Interop/IValueProvider.cs": [
+     "interop/uia.idl"
+    ],
+    "Interop/IWindowProvider.cs": [
+     "interop/uia.idl"
+    ],
+    "Interop/UiaCoreProviderApi.cs": [
+     "interop/uia_core_provider_api.rs"
+    ],
+    "Interop/UiaCoreTypesApi.cs": [
+     "interop/uia_core_types_api.rs"
+    ],
+    "InteropAutomationNode.cs": [
+     "interop_automation_node.rs"
+    ],
+    "Marshalling/ComVariant.cs": [
+     "marshalling/com_variant.rs"
+    ],
+    "Marshalling/ComVariantMarshaller.cs": [
+     "marshalling/com_variant_marshaller.rs"
+    ],
+    "Marshalling/SafeArrayMarshaller.cs": [
+     "marshalling/safe_array_marshaller.rs"
+    ],
+    "Marshalling/SafeArrayRef.cs": [
+     "marshalling/safe_array_ref.rs"
+    ],
+    "RootAutomationNode.cs": [
+     "root_automation_node.rs"
+    ]
+   },
+   "rustOnly": [
+    "marshalling/ole_aut.rs"
+   ]
   },
   {
    "name": "Avalonia.Win32.Interoperability",
