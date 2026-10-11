@@ -10,9 +10,9 @@ Generated from upstream commit `17350180c33b063f0e98abbfd19aa3cae63f5d56`. Back 
 | FerroUI | `src/FerroUI.Wayland` (exists) |
 | Crate | `ferroui-wayland` |
 | Phase / priority | 5 - desktop (Linux) / P1 |
-| Files | 58/81 (71.6%) |
-| Types | 80/123 (65.0%) |
-| Members | 418/816 (51.2%) |
+| Files | 68/81 (84.0%) |
+| Types | 91/123 (74.0%) |
+| Members | 509/816 (62.4%) |
 | Contracts (interfaces) | 12/14 |
 | Property registrations | 0/0 |
 | Routed events | 0/0 |
@@ -27,7 +27,7 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 | `Avalonia.Wayland.Screens.IWaylandOutputsSink` | internal | `Screens/IWaylandOutputsSink.cs` | 1/1 | present |
 | `Avalonia.Wayland.Server.Persistent.IPersistentWaylandObject` | internal | `Server/Persistent/IPersistentObject.cs` | 2/2 | present |
 | `Avalonia.Wayland.Server.Persistent.IWSurface` | internal | `Server/Persistent/IWSurface.cs` | 3/10 | partial |
-| `Avalonia.Wayland.Server.Persistent.IWSurfaceEventSink` | internal | `Server/Persistent/IWSurfaceEventSink.cs` | 15/19 | partial |
+| `Avalonia.Wayland.Server.Persistent.IWSurfaceEventSink` | internal | `Server/Persistent/IWSurfaceEventSink.cs` | 19/19 | present |
 | `Avalonia.Wayland.Server.Persistent.IWXdgPopup` | internal | `Server/Persistent/IWXdgTopLevel.cs` | 1/1 | present |
 | `Avalonia.Wayland.Server.Persistent.IWXdgPopupEventSink` | internal | `Server/Persistent/IWSurfaceEventSink.cs` | 2/2 | present |
 | `Avalonia.Wayland.Server.Persistent.IWXdgShellSurface` | internal | `Server/Persistent/IWXdgTopLevel.cs` | 2/2 | present |
@@ -61,7 +61,7 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 | `WindowImpl.Sink.cs` | `window_impl_sink.rs` | present | 1/1 | 0/0 |  |
 | `WindowImpl.TextInput.cs` | `window_impl.rs` | present | 1/1 | 0/0 | partial merged into main file |
 | `WindowImpl.cs` | `window_impl.rs` | present | 1/1 | 38/38 |  |
-| `WindowImplBase.DragDrop.cs` | `window_impl_base.rs` | present | 1/1 | 0/0 | partial merged into main file |
+| `WindowImplBase.DragDrop.cs` | `window_impl_base_drag_drop.rs` | present | 1/1 | 0/0 |  |
 | `WindowImplBase.Keyboard.cs` | `window_impl_base_keyboard.rs` | present | 1/1 | 0/0 |  |
 | `WindowImplBase.Pointer.cs` | `window_impl_base_pointer.rs` | present | 1/1 | 0/0 |  |
 | `WindowImplBase.cs` | `window_impl_base.rs` | partial | 2/2 | 38/65 |  |
@@ -144,15 +144,15 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 
 </details>
 
-### `Clipboard` - files 0/5, types 0/6, members 0/34
+### `Clipboard` - files 5/5, types 6/6, members 34/34
 
 | Upstream file | Rust file | Status | Types | Members | Notes |
 |---|---|---|---|---|---|
-| `WaylandClipboardImpl.cs` | `clipboard/wayland_clipboard_impl.rs` | missing | 0/1 | 0/6 |  |
-| `WaylandDataTransfer.cs` | `clipboard/wayland_data_transfer.rs` | missing | 0/2 | 0/14 |  |
-| `WaylandDragSource.cs` | `clipboard/wayland_drag_source.rs` | missing | 0/1 | 0/1 |  |
-| `WaylandMimeMapper.cs` | `clipboard/wayland_mime_mapper.rs` | missing | 0/1 | 0/8 |  |
-| `WaylandOutgoingTransfer.cs` | `clipboard/wayland_outgoing_transfer.rs` | missing | 0/1 | 0/5 |  |
+| `WaylandClipboardImpl.cs` | `clipboard/wayland_clipboard_impl.rs` | present | 1/1 | 6/6 |  |
+| `WaylandDataTransfer.cs` | `clipboard/wayland_data_transfer.rs` | present | 2/2 | 14/14 |  |
+| `WaylandDragSource.cs` | `clipboard/wayland_drag_source.rs` | present | 1/1 | 1/1 |  |
+| `WaylandMimeMapper.cs` | `clipboard/wayland_mime_mapper.rs` | present | 1/1 | 8/8 |  |
+| `WaylandOutgoingTransfer.cs` | `clipboard/wayland_outgoing_transfer.rs` | present | 1/1 | 5/5 |  |
 
 ### `Screens` - files 3/3, types 6/6, members 19/20
 
@@ -169,7 +169,7 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 
 </details>
 
-### `Server` - files 7/7, types 8/8, members 34/47
+### `Server` - files 7/7, types 8/8, members 35/47
 
 | Upstream file | Rust file | Status | Types | Members | Notes |
 |---|---|---|---|---|---|
@@ -178,7 +178,7 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 | `WaylandMarshallers.cs` | `server/wayland_marshallers.rs` | present | 1/1 | 1/1 |  |
 | `WaylandPlatformGraphics.cs` | `server/wayland_platform_graphics.rs` | partial | 2/2 | 10/11 |  |
 | `WaylandWorker.RenderTimer.cs` | `server/wayland_worker_render_timer.rs` | present | 1/1 | 3/3 |  |
-| `WaylandWorker.cs` | `server/wayland_worker.rs` | partial | 1/1 | 5/16 |  |
+| `WaylandWorker.cs` | `server/wayland_worker.rs` | partial | 1/1 | 6/16 |  |
 | `WaylandWorkerClient.cs` | `server/wayland_worker_client.rs` | partial | 1/1 | 11/12 |  |
 
 <details><summary><code>WaylandPlatformGraphics.cs</code> - 1 missing</summary>
@@ -188,16 +188,15 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 
 </details>
 
-<details><summary><code>WaylandWorker.cs</code> - 11 missing</summary>
+<details><summary><code>WaylandWorker.cs</code> - 10 missing</summary>
 
-- `WaylandWorker` (class): 11 missing
+- `WaylandWorker` (class): 10 missing
   - `WaylandGlobals? Globals { get; }`
   - `IRawEventGrouperDispatchQueue InputDispatchQueue { get; }`
   - `Compositor Compositor { get; }`
   - `WaylandWorkerClient Client { get; }`
   - `void PostWithCommit(Action cb)`
-  - `Task<T> InvokeOobAsync<T>(Func<T> cb)`
-  - `Task InvokeOobAsync(Action cb)`
+  - `Task InvokeOobAsync(Action cb)` *(1 of 2 overloads found)*
   - `static WaylandConnection? Probe(WaylandPlatformOptions options, out ExceptionDispatchInfo? error)` *(1 of 2 overloads found)*
   - `void Start(WaylandPlatformOptions options, WlDisplay foreignDisplay, WaylandOutputsSinkProxy? outputsSink =...` *(1 of 2 overloads found)*
   - `void RegisterPersistentObject(IPersistentWaylandObject waylandObject)`
@@ -212,12 +211,12 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 
 </details>
 
-### `Server/Interop` - files 3/7, types 3/16, members 13/134
+### `Server/Interop` - files 4/7, types 4/16, members 14/134
 
 | Upstream file | Rust file | Status | Types | Members | Notes |
 |---|---|---|---|---|---|
 | `DrmGbmUnsafeNativeMethods.cs` | `server/interop/drm_gbm_unsafe_native_methods.rs` | missing | 0/4 | 0/37 |  |
-| `Pipe2Stream.cs` | `server/interop/pipe2_stream.rs` | missing | 0/1 | 0/1 |  |
+| `Pipe2Stream.cs` | `server/interop/pipe2_stream.rs` | present | 1/1 | 1/1 |  |
 | `UnsafeNativeMethods.cs` | `server/interop/unsafe_native_methods.rs` | partial | 0/6 | 0/42 |  |
 | `WakeupFd.cs` | `server/interop/wakeup_fd.rs` | partial | 1/1 | 4/6 |  |
 | `WaylandConnection.cs` | `server/interop/wayland_connection.rs` | partial | 2/2 | 9/12 |  |
@@ -252,20 +251,20 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 
 </details>
 
-### `Server/Persistent` - files 13/13, types 23/26, members 137/190
+### `Server/Persistent` - files 13/13, types 23/26, members 142/190
 
 | Upstream file | Rust file | Status | Types | Members | Notes |
 |---|---|---|---|---|---|
 | `DecorationMode.cs` | `server/persistent/decoration_mode.rs` | present | 1/1 | 2/2 |  |
 | `IPersistentObject.cs` | `server/persistent/i_persistent_object.rs` | present | 1/1 | 2/2 |  |
 | `IWSurface.cs` | `server/persistent/i_w_surface.rs` | partial | 1/1 | 3/10 |  |
-| `IWSurfaceEventSink.cs` | `server/persistent/i_w_surface_event_sink.rs` | partial | 3/3 | 20/24 |  |
+| `IWSurfaceEventSink.cs` | `server/persistent/i_w_surface_event_sink.rs` | present | 3/3 | 24/24 |  |
 | `IWXdgTopLevel.cs` | `server/persistent/i_w_xdg_top_level.rs` | partial | 3/3 | 14/15 |  |
 | `IWaylandCursor.cs` | `server/persistent/i_wayland_cursor.rs` | present | 1/1 | 1/1 |  |
 | `WSurface.cs` | `server/persistent/w_surface.rs` | partial | 4/7 | 59/92 |  |
 | `WaylandBitmapCursor.cs` | `server/persistent/wayland_bitmap_cursor.rs` | partial | 1/1 | 10/12 |  |
 | `WaylandCursor.cs` | `server/persistent/wayland_cursor.rs` | partial | 3/3 | 3/6 |  |
-| `WaylandInputEventCookie.cs` | `server/persistent/wayland_input_event_cookie.rs` | partial | 1/1 | 2/3 |  |
+| `WaylandInputEventCookie.cs` | `server/persistent/wayland_input_event_cookie.rs` | present | 1/1 | 3/3 |  |
 | `XdgConfigureBatch.cs` | `server/persistent/xdg_configure_batch.rs` | partial | 2/2 | 16/17 |  |
 | `XdgPopupConfigureBatch.cs` | `server/persistent/xdg_popup_configure_batch.rs` | present | 1/1 | 5/5 |  |
 | `XdgPopupPositionerParams.cs` | `server/persistent/xdg_popup_positioner_params.rs` | partial | 1/1 | 0/1 |  |
@@ -280,16 +279,6 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
   - `void SetTextInputOptions(TextInputOptions options)`
   - `void SetTextInputSurroundingText(string text, int cursorChar, int anchorChar)`
   - `void ResetTextInput()`
-
-</details>
-
-<details><summary><code>IWSurfaceEventSink.cs</code> - 4 missing</summary>
-
-- `IWSurfaceEventSink` (interface): 4 missing
-  - `void OnDragEnter(Point position, string[] mimeTypes, WaylandOfferCookie offerCookie, DragDropEffects source...`
-  - `void OnDragMotion(Point position, RawInputModifiers modifiers)`
-  - `void OnDragLeave()`
-  - `void OnDrop(Point position, RawInputModifiers modifiers)`
 
 </details>
 
@@ -353,13 +342,6 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 
 </details>
 
-<details><summary><code>WaylandInputEventCookie.cs</code> - 1 missing</summary>
-
-- `WaylandInputEventCookie` (class): 1 missing
-  - `void PostOob(Action<WaylandGlobals> cb)`
-
-</details>
-
 <details><summary><code>XdgConfigureBatch.cs</code> - 1 missing</summary>
 
 - `XdgToplevelStates` (enum): 1 missing
@@ -374,15 +356,15 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 
 </details>
 
-### `Server/Transient` - files 5/8, types 7/10, members 55/84
+### `Server/Transient` - files 5/8, types 7/10, members 60/84
 
 | Upstream file | Rust file | Status | Types | Members | Notes |
 |---|---|---|---|---|---|
 | `IWaylandTextInputV3Events.cs` | `server/transient/i_wayland_text_input_v3_events.rs` | missing | 0/1 | 0/1 |  |
 | `WaylandCursorManager.cs` | `server/transient/wayland_cursor_manager.rs` | partial | 2/2 | 3/4 |  |
-| `WaylandGlobals.cs` | `server/transient/wayland_globals.rs` | partial | 1/1 | 15/22 |  |
+| `WaylandGlobals.cs` | `server/transient/wayland_globals.rs` | partial | 1/1 | 17/22 |  |
 | `WaylandInputDispatcher.Keyboard.cs` | `server/transient/wayland_input_dispatcher_keyboard.rs` | present | 1/1 | 0/0 |  |
-| `WaylandInputDispatcher.cs` | `server/transient/wayland_input_dispatcher.rs` | partial | 1/1 | 7/11 |  |
+| `WaylandInputDispatcher.cs` | `server/transient/wayland_input_dispatcher.rs` | partial | 1/1 | 10/11 |  |
 | `WaylandOutputsTracker.cs` | `server/transient/wayland_outputs_tracker.rs` | partial | 2/2 | 30/31 |  |
 | `WaylandTextInputV3.cs` | `server/transient/wayland_text_input_v3.rs` | missing | 0/1 | 0/12 |  |
 | `XdgToplevelExport.cs` | `server/transient/xdg_toplevel_export.rs` | missing | 0/1 | 0/3 |  |
@@ -394,26 +376,21 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 
 </details>
 
-<details><summary><code>WaylandGlobals.cs</code> - 7 missing</summary>
+<details><summary><code>WaylandGlobals.cs</code> - 5 missing</summary>
 
-- `WaylandGlobals` (class): 7 missing
+- `WaylandGlobals` (class): 5 missing
   - `event Action<uint>? GlobalRemoved`
-  - `WlDataDeviceManager? DataDeviceManager { get; }`
   - `ZwpLinuxDmabufV1? LinuxDmabuf { get; }`
   - `ZwpTextInputManagerV3? TextInputManagerV3 { get; }`
   - `ZxdgExporterV2? XdgExporter { get; }`
   - `WaylandConnection Connection { get; }`
-  - `WaylandWorker Worker { get; }`
 
 </details>
 
-<details><summary><code>WaylandInputDispatcher.cs</code> - 4 missing</summary>
+<details><summary><code>WaylandInputDispatcher.cs</code> - 1 missing</summary>
 
-- `WaylandInputDispatcher` (class): 4 missing
-  - `void SetDndCursor(StandardCursorType cursorType)` *(internal)*
-  - `WlSurface? FindOriginSurface()` *(internal)*
+- `WaylandInputDispatcher` (class): 1 missing
   - `WaylandTextInputV3? TextInputV3 { get; private set; }` *(internal)*
-  - `WaylandDataDevice? GetDataDevice()` *(internal)*
 
 </details>
 
@@ -424,14 +401,32 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 
 </details>
 
-### `Server/Transient/Clipboard` - files 0/4, types 0/7, members 0/63
+### `Server/Transient/Clipboard` - files 4/4, types 4/7, members 45/63
 
 | Upstream file | Rust file | Status | Types | Members | Notes |
 |---|---|---|---|---|---|
-| `WaylandDataDevice.cs` | `server/transient/clipboard/wayland_data_device.rs` | missing | 0/2 | 0/25 |  |
-| `WaylandDataOffer.cs` | `server/transient/clipboard/wayland_data_offer.rs` | missing | 0/2 | 0/15 |  |
-| `WaylandDataSource.cs` | `server/transient/clipboard/wayland_data_source.rs` | missing | 0/2 | 0/17 |  |
-| `WaylandOfferCookie.cs` | `server/transient/clipboard/wayland_offer_cookie.rs` | missing | 0/1 | 0/6 |  |
+| `WaylandDataDevice.cs` | `server/transient/clipboard/wayland_data_device.rs` | partial | 1/2 | 18/25 |  |
+| `WaylandDataOffer.cs` | `server/transient/clipboard/wayland_data_offer.rs` | partial | 1/2 | 11/15 |  |
+| `WaylandDataSource.cs` | `server/transient/clipboard/wayland_data_source.rs` | partial | 1/2 | 10/17 |  |
+| `WaylandOfferCookie.cs` | `server/transient/clipboard/wayland_offer_cookie.rs` | present | 1/1 | 6/6 |  |
+
+<details><summary><code>WaylandDataDevice.cs</code> - 8 missing</summary>
+
+- `WaylandDataDeviceListener` (class, internal): **type missing** (7 members)
+
+</details>
+
+<details><summary><code>WaylandDataOffer.cs</code> - 5 missing</summary>
+
+- `WaylandDataOfferListener` (class, internal): **type missing** (4 members)
+
+</details>
+
+<details><summary><code>WaylandDataSource.cs</code> - 8 missing</summary>
+
+- `WaylandDataSourceListener` (class, internal): **type missing** (7 members)
+
+</details>
 
 ### `Server/Transient/Rendering` - files 4/8, types 4/11, members 16/48
 
@@ -463,5 +458,9 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 ## Rust-only files
 
 Rust sources of this crate that no upstream file maps to. Give each a reason in `docs/porting/data/path-overrides.toml` (`[[rust_only]]`), or map upstream files to it (`[[map]]`).
+
+| Rust file | Reason | Types defined |
+|---|---|---|
+| `server/cross_thread_result.rs` | **unmapped** | `CrossThreadCompletion`, `CrossThreadResult`, `Shared` |
 
 Tests, examples and build scripts (not scanned): `examples/wayland_window.rs`.
