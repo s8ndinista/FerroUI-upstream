@@ -9,71 +9,175 @@ Generated from upstream commit `17350180c33b063f0e98abbfd19aa3cae63f5d56`. Back 
 | Upstream | `src/Linux/Avalonia.LinuxFramebuffer` |
 | FerroUI | `src/Linux/FerroUI.LinuxFramebuffer` (exists) |
 | Crate | `ferroui-linuxframebuffer` |
-| Phase / priority | not started / out of current scope / - |
-| Files | 0/30 (0.0%) |
-| Types | 0/76 (0.0%) |
-| Members | 0/529 (0.0%) |
+| Phase / priority | 5 - desktop (Linux) / P2 |
+| Files | 20/30 (66.7%) |
+| Types | 30/76 (39.5%) |
+| Members | 164/529 (31.0%) |
+| Contracts (interfaces) | 4/4 |
+| Property registrations | 0/0 |
+| Routed events | 0/0 |
 
-This backend is outside the current porting scope. It is tracked at file and type granularity only; member counts are totals.
+## Contracts
+
+Every interface of the project. Each becomes a `pub trait` with the same name (the `I` prefix is kept).
+
+| Interface | Access | Upstream file | Members | Status |
+|---|---|---|---|---|
+| `Avalonia.LinuxFramebuffer.Input.IInputBackend` | public | `Input/IInputBackend.cs` | 2/2 | present |
+| `Avalonia.LinuxFramebuffer.Input.IScreenInfoProvider` | public | `Input/IScreenInfoProvider.cs` | 1/1 | present |
+| `Avalonia.LinuxFramebuffer.Output.IGlOutputBackend` | public | `Output/IGlOutputBackend.cs` | 1/1 | present |
+| `Avalonia.LinuxFramebuffer.Output.IOutputBackend` | public | `Output/IOutputBackend.cs` | 2/2 | present |
 
 ## Files
 
-### `(project root)` - files 0/8, types 0/27, members 0/246
+### `(project root)` - files 6/8, types 14/27, members 122/246
 
-| Upstream file | Types | Members | Status |
-|---|---|---|---|
-| `DrmConnectorType.cs` | `DrmConnectorType` | 17 | not started |
-| `DrmOutputOptions.cs` | `DrmOutputOptions` | 7 | not started |
-| `EpollDispatcherImpl.cs` | `EpollDispatcherImpl` | 12 | not started |
-| `FramebufferToplevelImpl.cs` | `FramebufferToplevelImpl` | 30 | not started |
-| `LinuxFramebufferPlatform.cs` | `LinuxFramebufferIconLoaderStub`, `LinuxFramebufferPlatform`, `LinuxFramebufferLifetime`, `LinuxFramebufferPlatformExtensions` | 22 | not started |
-| `LinuxFramebufferPlatformOptions.cs` | `LinuxFramebufferPlatformOptions` | 2 | not started |
-| `NativeUnsafeMethods.cs` | `NativeUnsafeMethods`, `PollFd`, `FbIoCtl`, `VBlankFlags`, `fb_vblank`, `fb_fix_screeninfo`, `fb_bitfield`, `fb_var_screeninfo`, `EvType`, `input_event`, `fd_set`, `AxisEventCode`, `AbsAxis`, `EvKey`, `input_absinfo`, `epoll_data`, `epoll_event` | 154 | not started |
-| `Stubs.cs` | `CursorFactoryStub` | 2 | not started |
+| Upstream file | Rust file | Status | Types | Members | Notes |
+|---|---|---|---|---|---|
+| `DrmConnectorType.cs` | `drm_connector_type.rs` | missing | 0/1 | 0/17 |  |
+| `DrmOutputOptions.cs` | `drm_output_options.rs` | missing | 0/1 | 0/7 |  |
+| `EpollDispatcherImpl.cs` | `epoll_dispatcher_impl.rs` | present | 1/1 | 12/12 |  |
+| `FramebufferToplevelImpl.cs` | `framebuffer_toplevel_impl.rs` | present | 1/1 | 30/30 |  |
+| `LinuxFramebufferPlatform.cs` | `linux_framebuffer_platform.rs` | partial | 4/4 | 20/22 |  |
+| `LinuxFramebufferPlatformOptions.cs` | `linux_framebuffer_platform_options.rs` | present | 1/1 | 2/2 |  |
+| `NativeUnsafeMethods.cs` | `native_unsafe_methods.rs` | partial | 6/17 | 56/154 |  |
+| `Stubs.cs` | `stubs.rs` | present | 1/1 | 2/2 |  |
 
-### `Input` - files 0/3, types 0/3, members 0/6
+<details><summary><code>LinuxFramebufferPlatform.cs</code> - 2 missing</summary>
 
-| Upstream file | Types | Members | Status |
-|---|---|---|---|
-| `IInputBackend.cs` | `IInputBackend` | 2 | not started |
-| `IScreenInfoProvider.cs` | `IScreenInfoProvider` | 1 | not started |
-| `RawEventGroupingThreadingHelper.cs` | `RawEventGroupingThreadingHelper` | 3 | not started |
+- `LinuxFramebufferLifetime` (class): 1 missing
+  - `LinuxFramebufferLifetime(IOutputBackend fb, IInputBackend? input)` *(1 of 2 constructors found)*
+- `LinuxFramebufferPlatformExtensions` (class): 1 missing
+  - `static int StartLinuxDrm(this AppBuilder builder, string[] args, string? card = null, bool connectorsForceP...` *(1 of 2 overloads found)*
 
-### `Input/EvDev` - files 0/5, types 0/7, members 0/28
+</details>
 
-| Upstream file | Types | Members | Status |
-|---|---|---|---|
-| `EvDevBackend.cs` | `EvDevBackend` | 4 | not started |
-| `EvDevDevice.cs` | `EvDevDevice`, `EvDevAxisInfo` | 10 | not started |
-| `EvDevDeviceDescription.cs` | `EvDevDeviceDescription` | 3 | not started |
-| `EvDevTouchScreen.cs` | `EvDevSingleTouchScreen`, `EvDevDeviceHandler` | 9 | not started |
-| `EvDevTouchScreenDeviceDescription.cs` | `EvDevTouchScreenDeviceDescription` | 2 | not started |
+<details><summary><code>NativeUnsafeMethods.cs</code> - 109 missing</summary>
+
+- `NativeUnsafeMethods` (class, internal): **type missing** (19 members)
+- `PollFd` (struct, internal): **type missing** (3 members)
+- `FbIoCtl` (enum, internal): **type missing** (6 members)
+- `VBlankFlags` (enum, internal): **type missing** (9 members)
+- `EvType` (enum, internal): **type missing** (12 members)
+- `input_event` (struct): 2 missing
+  - `EvKey Key { get; }`
+  - `AbsAxis Axis { get; }`
+- `fd_set` (struct, internal): **type missing** (2 members)
+- `AxisEventCode` (enum, internal): **type missing** (11 members)
+- `AbsAxis` (enum, internal): **type missing** (24 members)
+- `EvKey` (enum, internal): **type missing** (4 members)
+- `epoll_data` (struct, internal): **type missing** (4 members)
+- `epoll_event` (struct, internal): **type missing** (2 members)
+
+</details>
+
+### `Input` - files 3/3, types 3/3, members 6/6
+
+| Upstream file | Rust file | Status | Types | Members | Notes |
+|---|---|---|---|---|---|
+| `IInputBackend.cs` | `input/i_input_backend.rs` | present | 1/1 | 2/2 |  |
+| `IScreenInfoProvider.cs` | `input/i_screen_info_provider.rs` | present | 1/1 | 1/1 |  |
+| `RawEventGroupingThreadingHelper.cs` | `input/raw_event_grouping_threading_helper.rs` | present | 1/1 | 3/3 |  |
+
+### `Input/EvDev` - files 5/5, types 7/7, members 16/28
+
+| Upstream file | Rust file | Status | Types | Members | Notes |
+|---|---|---|---|---|---|
+| `EvDevBackend.cs` | `input/ev_dev/ev_dev_backend.rs` | present | 1/1 | 4/4 |  |
+| `EvDevDevice.cs` | `input/ev_dev/ev_dev_device.rs` | partial | 2/2 | 5/10 |  |
+| `EvDevDeviceDescription.cs` | `input/ev_dev/ev_dev_device_description.rs` | partial | 1/1 | 1/3 |  |
+| `EvDevTouchScreen.cs` | `input/ev_dev/ev_dev_touch_screen.rs` | partial | 2/2 | 4/9 |  |
+| `EvDevTouchScreenDeviceDescription.cs` | `input/ev_dev/ev_dev_touch_screen_device_description.rs` | present | 1/1 | 2/2 |  |
+
+<details><summary><code>EvDevDevice.cs</code> - 5 missing</summary>
+
+- `EvDevDevice` (class): 5 missing
+  - `List<EvType> EventTypes { get; private set; }`
+  - `input_absinfo? AbsX { get; }`
+  - `input_absinfo? AbsY { get; }`
+  - `EvDevDevice(int fd, IntPtr dev)`
+  - `input_event? NextEvent()`
+
+</details>
+
+<details><summary><code>EvDevDeviceDescription.cs</code> - 2 missing</summary>
+
+- `EvDevDeviceDescription` (class): 2 missing
+  - `EvDevDeviceDescription()` *(protected internal)*
+  - `string? Path { get; set; }` *(getter `path` found, setter `set_path` missing)*
+
+</details>
+
+<details><summary><code>EvDevTouchScreen.cs</code> - 5 missing</summary>
+
+- `EvDevDeviceHandler` (class): 5 missing
+  - `event Action<RawInputEventArgs>? OnEvent`
+  - `EvDevDeviceHandler(EvDevDevice device)`
+  - `EvDevDevice Device { get; }`
+  - `IInputRoot InputRoot { get; set; }`
+  - `void RaiseEvent(RawInputEventArgs ev)` *(protected)*
+
+</details>
 
 ### `Input/LibInput` - files 0/5, types 0/8, members 0/66
 
-| Upstream file | Types | Members | Status |
-|---|---|---|---|
-| `LibInputBackend.Pointer.cs` | `LibInputBackend` | 0 | not started |
-| `LibInputBackend.Touch.cs` | `LibInputBackend` | 0 | not started |
-| `LibInputBackend.cs` | `LibInputBackend` | 4 | not started |
-| `LibInputBackendOptions.cs` | `LibInputBackendOptions` | 1 | not started |
-| `LibInputNativeUnsafeMethods.cs` | `LibInputNativeUnsafeMethods`, `LibInputNativeUnsafeMethods.LibInputEventType`, `LibInputNativeUnsafeMethods.LibInputPointerAxisSource`, `LibInputNativeUnsafeMethods.LibInputPointerAxis` | 61 | not started |
+| Upstream file | Rust file | Status | Types | Members | Notes |
+|---|---|---|---|---|---|
+| `LibInputBackend.Pointer.cs` | `input/lib_input/lib_input_backend_pointer.rs` | missing | 0/1 | 0/0 |  |
+| `LibInputBackend.Touch.cs` | `input/lib_input/lib_input_backend_touch.rs` | missing | 0/1 | 0/0 |  |
+| `LibInputBackend.cs` | `input/lib_input/lib_input_backend.rs` | missing | 0/1 | 0/4 |  |
+| `LibInputBackendOptions.cs` | `input/lib_input/lib_input_backend_options.rs` | missing | 0/1 | 0/1 |  |
+| `LibInputNativeUnsafeMethods.cs` | `input/lib_input/lib_input_native_unsafe_methods.rs` | missing | 0/4 | 0/61 |  |
 
-### `Input/NullInput` - files 0/1, types 0/1, members 0/2
+### `Input/NullInput` - files 1/1, types 1/1, members 2/2
 
-| Upstream file | Types | Members | Status |
-|---|---|---|---|
-| `NullInputBackend.cs` | `NullInputBackend` | 2 | not started |
+| Upstream file | Rust file | Status | Types | Members | Notes |
+|---|---|---|---|---|---|
+| `NullInputBackend.cs` | `input/null_input/null_input_backend.rs` | present | 1/1 | 2/2 |  |
 
-### `Output` - files 0/8, types 0/30, members 0/181
+### `Output` - files 5/8, types 5/30, members 18/181
 
-| Upstream file | Types | Members | Status |
-|---|---|---|---|
-| `Drm.cs` | `DrmModeConnection`, `DrmModeSubPixel`, `LibDrm`, `LibDrm.DrmEventVBlankHandlerDelegate`, `LibDrm.DrmEventPageFlipHandlerDelegate`, `LibDrm.DrmEventPageFlipHandler2Delegate`, `LibDrm.DrmEventSequenceHandlerDelegate`, `LibDrm.DrmEventContext`, `LibDrm.drmModeRes`, `LibDrm.DrmModeType`, `LibDrm.drmModeModeInfo`, `LibDrm.drmModeConnector`, `LibDrm.drmModeEncoder`, `LibDrm.drmModeCrtc`, `LibDrm.DrmModePageFlip`, `LibDrm.GbmBoFlags`, `LibDrm.GbmBoUserDataDestroyCallbackDelegate`, `LibDrm.GbmBoHandle`, `LibDrm.GbmColorFormats` | 117 | not started |
-| `DrmBindings.cs` | `DrmConnector`, `DrmModeInfo`, `DrmEncoder`, `DrmResources`, `DrmCard` | 28 | not started |
-| `DrmOutput.cs` | `DrmOutput` | 11 | not started |
-| `FbDevBackBuffer.cs` | `FbDevBackBuffer` | 7 | not started |
-| `FbDevOutputOptions.cs` | `FbDevOutputOptions` | 5 | not started |
-| `FbdevOutput.cs` | `FbdevOutput` | 10 | not started |
-| `IGlOutputBackend.cs` | `IGlOutputBackend` | 1 | not started |
-| `IOutputBackend.cs` | `IOutputBackend` | 2 | not started |
+| Upstream file | Rust file | Status | Types | Members | Notes |
+|---|---|---|---|---|---|
+| `Drm.cs` | `output/drm.rs` | missing | 0/19 | 0/117 |  |
+| `DrmBindings.cs` | `output/drm_bindings.rs` | missing | 0/5 | 0/28 |  |
+| `DrmOutput.cs` | `output/drm_output.rs` | missing | 0/1 | 0/11 |  |
+| `FbDevBackBuffer.cs` | `output/fb_dev_back_buffer.rs` | partial | 1/1 | 4/7 |  |
+| `FbDevOutputOptions.cs` | `output/fb_dev_output_options.rs` | present | 1/1 | 5/5 |  |
+| `FbdevOutput.cs` | `output/fbdev_output.rs` | partial | 1/1 | 6/10 |  |
+| `IGlOutputBackend.cs` | `output/i_gl_output_backend.rs` | present | 1/1 | 1/1 |  |
+| `IOutputBackend.cs` | `output/i_output_backend.rs` | present | 1/1 | 2/2 |  |
+
+<details><summary><code>FbDevBackBuffer.cs</code> - 3 missing</summary>
+
+- `FbDevBackBuffer` (class): 3 missing
+  - `void Dispose()`
+  - `static LockedFramebuffer LockFb(IntPtr address, fb_var_screeninfo varInfo, fb_fix_screeninfo fixedInfo, Vec...`
+  - `IntPtr Address { get; private set; }`
+
+</details>
+
+<details><summary><code>FbdevOutput.cs</code> - 4 missing</summary>
+
+- `FbdevOutput` (class): 4 missing
+  - `FbdevOutput(string? fileName, PixelFormat? format)` *(1 of 3 constructors found)*
+  - `FbdevOutput(FbDevOutputOptions options)` *(1 of 3 constructors found)*
+  - `ILockedFramebuffer Lock(IRenderTarget.RenderTargetSceneInfo _, out FramebufferLockProperties properties)`
+  - `~FbdevOutput()` *(protected)*
+
+</details>
+
+## Rust-only files
+
+Rust sources of this crate that no upstream file maps to. Give each a reason in `docs/porting/data/path-overrides.toml` (`[[rust_only]]`), or map upstream files to it (`[[map]]`).
+
+| Rust file | Reason | Types defined |
+|---|---|---|
+| `input/ev_dev/ev_dev_key_table.rs` | **unmapped** |  |
+| `input/ev_dev/ev_dev_keyboard.rs` | **unmapped** | `EvDevKeyboard`, `EvDevKeyboardDeviceDescription` |
+| `input/ev_dev/ev_dev_mouse.rs` | **unmapped** | `EvDevMouse`, `EvDevMouseDeviceDescription` |
+| `input/ev_dev/ev_dev_multi_touch_screen.rs` | **unmapped** | `EvDevMultiTouchScreen`, `EvDevMultiTouchScreenDeviceDescription`, `Slot` |
+| `output/fb_device.rs` | **unmapped** | `FbMapping`, `FileFbDevice`, `IFbDevice`, `LinuxFbDevice` |
+| `raw_event_grouping.rs` | **unmapped** | `AutomaticRawEventGrouperDispatchQueue`, `GrouperState`, `IRawEventGrouperDispatchQueue`, `ManualRawEventGrouperDispatchQueue`, `ManualRawEventGrouperDispatchQueueDispatcherInputProvider`, `MergedPoints`, `RawEvent`, `RawEventGrouper`, `RawEventHandler` |
+
+Tests, examples and build scripts (not scanned): `examples/linuxfb_smoke.rs`.

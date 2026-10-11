@@ -2,26 +2,26 @@
  "upstreamCommit": "17350180c33b063f0e98abbfd19aa3cae63f5d56",
  "inScope": {
   "files": [
-   2560,
-   2596,
+   2580,
+   2626,
    0
   ],
   "types": [
-   3467,
-   3915,
+   3497,
+   3991,
    311
   ],
   "members": [
-   27859,
-   32172,
+   28023,
+   32701,
    2868
   ]
  },
  "allProjects": {
-  "membersPresent": 27859,
+  "membersPresent": 28023,
   "members": 37391,
   "membersNotApplicable": 1132,
-  "membersOutOfScope": 4087
+  "membersOutOfScope": 3558
  },
  "projects": [
   {
@@ -8683,25 +8683,25 @@
    "name": "Avalonia.LinuxFramebuffer",
    "path": "src/Linux/Avalonia.LinuxFramebuffer",
    "rust": "src/Linux/FerroUI.LinuxFramebuffer",
-   "scope": "out",
-   "detail": "types",
+   "scope": "in",
+   "detail": "full",
    "files": [
-    0,
+    20,
     30,
     0
    ],
    "types": [
-    0,
+    30,
     76,
     0
    ],
    "members": [
-    0,
+    164,
     529,
     0
    ],
    "interfaces": [
-    0,
+    4,
     4
    ],
    "propertyRegistrations": [
@@ -8713,9 +8713,82 @@
     0
    ],
    "notApplicableFiles": 0,
-   "matchKinds": {},
-   "presentFiles": {},
-   "rustOnly": []
+   "matchKinds": {
+    "field": 65,
+    "fn": 93,
+    "free fn": 1,
+    "overload fn": 5
+   },
+   "presentFiles": {
+    "EpollDispatcherImpl.cs": [
+     "epoll_dispatcher_impl.rs"
+    ],
+    "FramebufferToplevelImpl.cs": [
+     "framebuffer_toplevel_impl.rs"
+    ],
+    "Input/EvDev/EvDevBackend.cs": [
+     "input/ev_dev/ev_dev_backend.rs"
+    ],
+    "Input/EvDev/EvDevDevice.cs": [
+     "input/ev_dev/ev_dev_device.rs"
+    ],
+    "Input/EvDev/EvDevDeviceDescription.cs": [
+     "input/ev_dev/ev_dev_device_description.rs"
+    ],
+    "Input/EvDev/EvDevTouchScreen.cs": [
+     "input/ev_dev/ev_dev_touch_screen.rs"
+    ],
+    "Input/EvDev/EvDevTouchScreenDeviceDescription.cs": [
+     "input/ev_dev/ev_dev_touch_screen_device_description.rs"
+    ],
+    "Input/IInputBackend.cs": [
+     "input/i_input_backend.rs"
+    ],
+    "Input/IScreenInfoProvider.cs": [
+     "input/i_screen_info_provider.rs"
+    ],
+    "Input/NullInput/NullInputBackend.cs": [
+     "input/null_input/null_input_backend.rs"
+    ],
+    "Input/RawEventGroupingThreadingHelper.cs": [
+     "input/raw_event_grouping_threading_helper.rs"
+    ],
+    "LinuxFramebufferPlatform.cs": [
+     "linux_framebuffer_platform.rs"
+    ],
+    "LinuxFramebufferPlatformOptions.cs": [
+     "linux_framebuffer_platform_options.rs"
+    ],
+    "NativeUnsafeMethods.cs": [
+     "native_unsafe_methods.rs"
+    ],
+    "Output/FbDevBackBuffer.cs": [
+     "output/fb_dev_back_buffer.rs"
+    ],
+    "Output/FbDevOutputOptions.cs": [
+     "output/fb_dev_output_options.rs"
+    ],
+    "Output/FbdevOutput.cs": [
+     "output/fbdev_output.rs"
+    ],
+    "Output/IGlOutputBackend.cs": [
+     "output/i_gl_output_backend.rs"
+    ],
+    "Output/IOutputBackend.cs": [
+     "output/i_output_backend.rs"
+    ],
+    "Stubs.cs": [
+     "stubs.rs"
+    ]
+   },
+   "rustOnly": [
+    "input/ev_dev/ev_dev_key_table.rs",
+    "input/ev_dev/ev_dev_keyboard.rs",
+    "input/ev_dev/ev_dev_mouse.rs",
+    "input/ev_dev/ev_dev_multi_touch_screen.rs",
+    "output/fb_device.rs",
+    "raw_event_grouping.rs"
+   ]
   },
   {
    "name": "Avalonia.Markup",

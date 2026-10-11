@@ -10,8 +10,8 @@ The master status of the port: every upstream project, file, type and member (pu
 
 Two numbers, because one hides what the other shows.
 
-1. **Of what is in scope: 95.1%.** The 32 upstream projects that are in scope have 32172 members (public, protected and internal) in files that apply to the port. 27859 have a counterpart, 1445 are missing and 2868 are waived: declared not ported, each with a reason ([waiver-audit.md](waiver-audit.md)). The percentage is `present / (total - waived)`. It says nothing about projects that are out of scope, and it counts a waived member as if it did not exist.
-2. **Of everything upstream has: 74.5%.** Every C# source project of the extraction, in scope or not, has 37391 members; the port has a counterpart for 27859. The total includes the 2868 waived members, the 1132 members of files marked not applicable and the 4087 members of projects that are out of scope or not started. The rest of that distance is what [REMAINING.md](REMAINING.md) lists; part of it is never ported by design (the waived and not applicable members), so this number does not reach 100.
+1. **Of what is in scope: 93.9%.** The 33 upstream projects that are in scope have 32701 members (public, protected and internal) in files that apply to the port. 28023 have a counterpart, 1810 are missing and 2868 are waived: declared not ported, each with a reason ([waiver-audit.md](waiver-audit.md)). The percentage is `present / (total - waived)`. It says nothing about projects that are out of scope, and it counts a waived member as if it did not exist.
+2. **Of everything upstream has: 74.9%.** Every C# source project of the extraction, in scope or not, has 37391 members; the port has a counterpart for 28023. The total includes the 2868 waived members, the 1132 members of files marked not applicable and the 3558 members of projects that are out of scope or not started. The rest of that distance is what [REMAINING.md](REMAINING.md) lists; part of it is never ported by design (the waived and not applicable members), so this number does not reach 100.
 
 Both numbers match names, not behaviour (Legend, below). Projects the extraction does not read (analyzers, generators of upstream's own build, the D-Bus library) are listed in REMAINING.md with their size in files.
 
@@ -55,15 +55,15 @@ Percentages are `present / (total - waived)`. Member matching is by name with re
 
 | | Ported | Total | Waived | % |
 |---|---:|---:|---:|---:|
-| C# files | 2560 | 2596 | 0 | 98.6% |
-| Types | 3467 | 3915 | 311 | 96.2% |
-| Members | 27859 | 32172 | 2868 | 95.1% |
-| Contracts (interfaces) | 461 | 486 | - | 94.9% |
+| C# files | 2580 | 2626 | 0 | 98.2% |
+| Types | 3497 | 3991 | 311 | 95.0% |
+| Members | 28023 | 32701 | 2868 | 93.9% |
+| Contracts (interfaces) | 465 | 490 | - | 94.9% |
 | Property registrations | 1218 | 1233 | - | 98.8% |
 | Routed events | 108 | 108 | - | 100.0% |
 | Other files (native sources, XAML, TypeScript, fonts) | 243 | 265 | - | 91.7% |
 
-142 upstream files are not applicable and not counted. Out of the current scope (below): 201 files, 435 types, 4087 members.
+142 upstream files are not applicable and not counted. Out of the current scope (below): 171 files, 359 types, 3558 members.
 
 ## Projects
 
@@ -97,6 +97,7 @@ The % column is member coverage (file coverage for plain file lists).
 | [Avalonia.Headless](tracking/Avalonia.Headless.md) | `src/Headless/Avalonia.Headless` | `src/Headless/FerroUI.Headless` | `ferroui-headless` | 11/11 | 22/24 (2 waived) | 238/251 (13 waived) | 100.0% | 1 - test infrastructure | P1 |
 | [Avalonia.Headless.NUnit](tracking/Avalonia.Headless.NUnit.md) | `src/Headless/Avalonia.Headless.NUnit` | `src/Headless/FerroUI.Headless.NUnit` | `ferroui-headless-nunit` | 0/0 | 0/0 | 0/0 | - | 1 - test infrastructure | P1 |
 | [Avalonia.Headless.XUnit](tracking/Avalonia.Headless.XUnit.md) | `src/Headless/Avalonia.Headless.XUnit` | `src/Headless/FerroUI.Headless.XUnit` | `ferroui-headless-xunit` | 0/0 | 0/0 | 0/0 | - | 1 - test infrastructure | P1 |
+| [Avalonia.LinuxFramebuffer](tracking/Avalonia.LinuxFramebuffer.md) | `src/Linux/Avalonia.LinuxFramebuffer` | `src/Linux/FerroUI.LinuxFramebuffer` | `ferroui-linuxframebuffer` | 20/30 | 30/76 | 164/529 | 31.0% | 5 - desktop (Linux) | P2 |
 | [Avalonia.Markup](tracking/Avalonia.Markup.md) | `src/Markup/Avalonia.Markup` | `src/Markup/FerroUI.Markup` | `ferroui-markup` | 7/7 | 7/37 (30 waived) | 12/67 (55 waived) | 100.0% | 2 - xaml + themes | P1 |
 | [Avalonia.Markup.Xaml](tracking/Avalonia.Markup.Xaml.md) | `src/Markup/Avalonia.Markup.Xaml` | `src/Markup/FerroUI.Markup.Xaml` | `ferroui-markup-xaml` | 46/46 | 61/63 (2 waived) | 208/239 (31 waived) | 100.0% | 2 - xaml + themes | P1 |
 | [Avalonia.Markup.Xaml.Loader](tracking/Avalonia.Markup.Xaml.Loader.md) | `src/Markup/Avalonia.Markup.Xaml.Loader` | `src/Markup/FerroUI.Markup.Xaml.Loader` | `ferroui-markup-xaml-loader` | 66/66 | 120/126 (6 waived) | 422/505 (83 waived) | 100.0% | 2 - xaml + themes | P1 |
@@ -125,7 +126,6 @@ Tracked so that the size of the remaining work is known: files, types and member
 | [Avalonia.Vulkan](tracking/Avalonia.Vulkan.md) | `src/Avalonia.Vulkan` | `src/FerroUI.Vulkan` | `ferroui-vulkan` | 0/30 | 0/151 | 0/2034 | 0.0% | not started / out of current scope | - |
 | [Avalonia.Wayland](tracking/Avalonia.Wayland.md) | `src/Avalonia.Wayland` | `src/FerroUI.Wayland` | `ferroui-wayland` | 0/81 | 0/123 | 0/816 | 0.0% | not started / out of current scope | - |
 | [Avalonia.Headless.Vnc](tracking/Avalonia.Headless.Vnc.md) | `src/Headless/Avalonia.Headless.Vnc` | `src/Headless/FerroUI.Headless.Vnc` | `ferroui-headless-vnc` | 0/3 | 0/3 | 0/11 | 0.0% | not started / out of current scope | - |
-| [Avalonia.LinuxFramebuffer](tracking/Avalonia.LinuxFramebuffer.md) | `src/Linux/Avalonia.LinuxFramebuffer` | `src/Linux/FerroUI.LinuxFramebuffer` | `ferroui-linuxframebuffer` | 0/30 | 0/76 | 0/529 | 0.0% | not started / out of current scope | - |
 | [Avalonia.Win32.Automation](tracking/Avalonia.Win32.Automation.md) | `src/Windows/Avalonia.Win32.Automation` | `src/Windows/FerroUI.Win32.Automation` | `ferroui-win32-automation` | 0/40 | 0/64 | 0/598 | 0.0% | not started / out of current scope | - |
 | [Avalonia.Win32.Interoperability](tracking/Avalonia.Win32.Interoperability.md) | `src/Windows/Avalonia.Win32.Interoperability` | `src/Windows/FerroUI.Win32.Interoperability` | `ferroui-win32-interoperability` | 0/2 | 0/2 | 0/11 | 0.0% | not started / out of current scope | - |
 | [Avalonia.WinUI](tracking/Avalonia.WinUI.md) | `src/Windows/Avalonia.WinUI` | `src/Windows/FerroUI.WinUI` | `ferroui-winui` | 0/15 | 0/16 | 0/88 | 0.0% | not started / out of current scope | - |
@@ -167,7 +167,7 @@ Libraries.
 | `src/Headless/Avalonia.Headless.NUnit` | 4 | `src/Headless/FerroUI.Headless.NUnit` | not created | [Avalonia.Headless.NUnit](tracking/Avalonia.Headless.NUnit.md) |
 | `src/Headless/Avalonia.Headless.Vnc` | 3 | `src/Headless/FerroUI.Headless.Vnc` | workspace member | [Avalonia.Headless.Vnc](tracking/Avalonia.Headless.Vnc.md) (out of scope) |
 | `src/Headless/Avalonia.Headless.XUnit` | 14 | `src/Headless/FerroUI.Headless.XUnit` | not created | [Avalonia.Headless.XUnit](tracking/Avalonia.Headless.XUnit.md) |
-| `src/Linux/Avalonia.LinuxFramebuffer` | 30 | `src/Linux/FerroUI.LinuxFramebuffer` | workspace member | [Avalonia.LinuxFramebuffer](tracking/Avalonia.LinuxFramebuffer.md) (out of scope) |
+| `src/Linux/Avalonia.LinuxFramebuffer` | 30 | `src/Linux/FerroUI.LinuxFramebuffer` | workspace member | [Avalonia.LinuxFramebuffer](tracking/Avalonia.LinuxFramebuffer.md) |
 | `src/Markup/Avalonia.Markup` | 8 | `src/Markup/FerroUI.Markup` | workspace member | [Avalonia.Markup](tracking/Avalonia.Markup.md) |
 | `src/Markup/Avalonia.Markup.Xaml` | 48 | `src/Markup/FerroUI.Markup.Xaml` | workspace member | [Avalonia.Markup.Xaml](tracking/Avalonia.Markup.Xaml.md) |
 | `src/Markup/Avalonia.Markup.Xaml.Loader` | 67 | `src/Markup/FerroUI.Markup.Xaml.Loader` | workspace member | [Avalonia.Markup.Xaml.Loader](tracking/Avalonia.Markup.Xaml.Loader.md) |
@@ -376,7 +376,7 @@ FerroUI-only crates have no upstream source directory (for example the MicroCom 
 
 ## Rust-only files
 
-372 Rust source files have no upstream counterpart (22 without a recorded reason). They are listed at the end of each project page.
+378 Rust source files have no upstream counterpart (28 without a recorded reason). They are listed at the end of each project page.
 
 | Project | Rust file | Reason |
 |---|---|---|
@@ -691,6 +691,12 @@ FerroUI-only crates have no upstream source directory (for example the MicroCom 
 | [Avalonia.Headless](tracking/Avalonia.Headless.md) | `src/Headless/FerroUI.Headless/tests.rs` | the unit tests of the module |
 | [Avalonia.Headless](tracking/Avalonia.Headless.md) | `src/Headless/FerroUI.Headless/unit_tests/headless_unit_test_application.rs` | test support: `HeadlessUnitTestApplication.cs` of the upstream test library (`tests/Avalonia.UnitTests`), the application on the headless platform with the Simple theme that the headless probe tests of the controls run with; the headless platform and the theme are built on the controls, so the tests are in this crate |
 | [Avalonia.Headless](tracking/Avalonia.Headless.md) | `src/Headless/FerroUI.Headless/unit_tests/test_application.rs` | test support: `TestApplication.cs` of the upstream unit test project of the headless platform, the two test assemblies that stand for the upstream test projects that compile its files, and the facts and theories that dispatch a test to the session of its assembly (what the xUnit integration does, which is not ported) |
+| [Avalonia.LinuxFramebuffer](tracking/Avalonia.LinuxFramebuffer.md) | `src/Linux/FerroUI.LinuxFramebuffer/input/ev_dev/ev_dev_key_table.rs` | **unmapped** |
+| [Avalonia.LinuxFramebuffer](tracking/Avalonia.LinuxFramebuffer.md) | `src/Linux/FerroUI.LinuxFramebuffer/input/ev_dev/ev_dev_keyboard.rs` | **unmapped** |
+| [Avalonia.LinuxFramebuffer](tracking/Avalonia.LinuxFramebuffer.md) | `src/Linux/FerroUI.LinuxFramebuffer/input/ev_dev/ev_dev_mouse.rs` | **unmapped** |
+| [Avalonia.LinuxFramebuffer](tracking/Avalonia.LinuxFramebuffer.md) | `src/Linux/FerroUI.LinuxFramebuffer/input/ev_dev/ev_dev_multi_touch_screen.rs` | **unmapped** |
+| [Avalonia.LinuxFramebuffer](tracking/Avalonia.LinuxFramebuffer.md) | `src/Linux/FerroUI.LinuxFramebuffer/output/fb_device.rs` | **unmapped** |
+| [Avalonia.LinuxFramebuffer](tracking/Avalonia.LinuxFramebuffer.md) | `src/Linux/FerroUI.LinuxFramebuffer/raw_event_grouping.rs` | **unmapped** |
 | [Avalonia.Markup](tracking/Avalonia.Markup.md) | `src/Markup/FerroUI.Markup/markup/parsers/property_parser.rs` | port of `Parsers/PropertyParser.cs` of Avalonia.Markup.Xaml: it lives next to the grammars that share its character reader |
 | [Avalonia.Markup.Xaml](tracking/Avalonia.Markup.Xaml.md) | `src/Markup/FerroUI.Markup.Xaml/converters/type_converter.rs` | counterpart of .NET `System.ComponentModel.TypeConverter` and `ITypeDescriptorContext`, which the converters of the markup runtime derive from and receive |
 | [Avalonia.Markup.Xaml](tracking/Avalonia.Markup.Xaml.md) | `src/Markup/FerroUI.Markup.Xaml/object_casts.rs` | type tests on untyped objects: the `is` / `as` casts upstream performs on the objects of a parent stack, on provide-value targets and on root objects |
