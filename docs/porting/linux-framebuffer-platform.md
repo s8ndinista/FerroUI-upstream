@@ -169,6 +169,21 @@ How a virtual framebuffer is told from the machine's console: the script records
 
 **Not verified by any of this: a real board.** No level runs on hardware with a panel and a touch screen: driver-specific pixel layouts (a 16-bit panel, a driver that refuses `FBIOPUT_VSCREENINFO`), `FBIO_WAITFORVSYNC` on a real controller, page flips at a panel's refresh rate, a touch controller's calibration. The measured results are added below this line as they are obtained.
 
+### Measured on the development machine (2026-10-11) **[M]**
+
+`cargo check -p ferroui-linuxframebuffer --target x86_64-unknown-linux-gnu --all-targets` is clean; `cargo test -p ferroui-linuxframebuffer` on the Mac: 45 tests (the layouts and request numbers, the timer arithmetic, the formats and `set_bpp`, the output against a file with the back buffer, direct rendering and the blit thread, the top-level, the descriptions, the four evdev state machines, the key table, the mapping of the `libinput` backend). The example needs the native libraries of Skia and is not compiled there.
+
+### Measured by the CI job `linuxfb` (run 38108606784, 2026-10-11; Ubuntu, x86-64, kernel 6.17.0-1022-azure) **[CI]**
+
+- The tests: 43 at that commit, with those that need Linux (the dispatcher's loop on `epoll` and `timerfd`: the signal from another thread, input, the timer after 30 ms, background processing, cancellation; the request numbers of the input `ioctl`s; the size of `input_absinfo` against the C library's).
+- The kernel of the runner: no `vfb` ("CONFIG_FB_VIRTUAL is not set"); `vkms` loads and its framebuffer emulation appears as `/dev/fb1` "vkmsdrmfb", 1024x768, 32 bits (beside the machine's own `/dev/fb0` "hyperv_drmdrmfb", which is not opened); `/dev/uinput` is available. The module was unloaded at the end.
+- The smoke runs, all passed: a file in BGRA, RGBA and RGB565 (the pixels read back from the file are the fill colour, in 16 bits within the precision of the format), direct rendering, the blit thread; a file with the four virtual input devices (touch screen: 3 raw events; keyboard: 10, with the texts "a" and "A"; mouse: 4; multi-touch screen: 5, each compared with the expected type, position and identifier); the same on `/dev/fb1` with the frame read back from the device node; the device refused when the expected identification does not match.
+
+### Measured in the virtual machine (2026-10-11; Ubuntu 24.04, ARM64, kernel 7.0.0-34-generic) **[VM]**
+
+The same script: 43 tests; no `vfb`, `vkms` with `/dev/fb1` "vkmsdrmfb" beside the machine's `/dev/fb0` "virtio_gpudrmfb", `uinput`. The smoke runs passed but one: the RGB565 run panicked on the render timer thread ("a compositor that is confined to its render thread was rendered by another thread"), which was the default render timer starting a second thread and not the format (section 12; the platform uses the timer that keeps one thread since). After that run `vkms` could not be unloaded in the machine (one reference; on the CI runner it unloads): the script now tells the holder of the devices that they are going, names it, and takes the module up again in its next run.
+
+
 ## 11. Stages
 
 | Stage | Content | What verifies it |
