@@ -14,7 +14,7 @@ use ferroui_vulkan::{
     try_get_vulkan_khr_surface, try_get_vulkan_render_target_surface, IVulkanContextExternalObjectsFeature,
     IVulkanKhrSurfacePlatformSurfaceFactory, IVulkanPlatformGraphicsContext, VulkanException,
 };
-use skia_safe::gpu::vk::{BackendContext, GetProcOf};
+use skia_safe::gpu::vk::{BackendContext, GetProcOf, Version};
 use skia_safe::gpu::{direct_contexts, ContextOptions};
 use std::any::{Any, TypeId};
 use std::ffi::{c_void, CStr};
@@ -85,7 +85,11 @@ impl VulkanSkiaGpu {
                     device.handle() as usize as _,
                     (device.main_queue_handle() as usize as _, device.graphics_queue_family_index() as usize),
                     &get_proc,
-                    None,
+                    // The version Skia validates the entry points for. Without one Skia takes the
+                    // version of the loader, and a driver hands out the entry points of the
+                    // version the instance was created for only: 1.1 is what the platform
+                    // graphics ask for by default and the least Skia accepts.
+                    Some(Version::new(1, 1, 0)),
                 )
                 .build()
             };
