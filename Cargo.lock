@@ -1076,6 +1076,7 @@ dependencies = [
  "ferroui-harfbuzz",
  "ferroui-metal",
  "ferroui-opengl",
+ "ferroui-vulkan",
  "skia-safe",
 ]
 

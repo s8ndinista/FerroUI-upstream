@@ -2,23 +2,23 @@
  "upstreamCommit": "17350180c33b063f0e98abbfd19aa3cae63f5d56",
  "inScope": {
   "files": [
-   2590,
+   2593,
    2626,
    0
   ],
   "types": [
-   3618,
+   3622,
    4066,
    311
   ],
   "members": [
-   28142,
+   28173,
    34206,
    4619
   ]
  },
  "allProjects": {
-  "membersPresent": 28142,
+  "membersPresent": 28173,
   "members": 37391,
   "membersNotApplicable": 1132,
   "membersOutOfScope": 2053
@@ -9365,17 +9365,17 @@
    "scope": "in",
    "detail": "full",
    "files": [
-    51,
+    54,
     54,
     0
    ],
    "types": [
-    62,
+    66,
     66,
     0
    ],
    "members": [
-    398,
+    429,
     451,
     21
    ],
@@ -9393,10 +9393,10 @@
    ],
    "notApplicableFiles": 0,
    "matchKinds": {
-    "alias fn": 5,
+    "alias fn": 6,
     "alias free fn": 10,
     "field": 29,
-    "fn": 305,
+    "fn": 335,
     "free fn": 35,
     "free item": 1,
     "overload fn": 12,
@@ -9468,6 +9468,15 @@
     ],
     "Gpu/SkiaGpuRenderTarget.cs": [
      "gpu/skia_gpu_render_target.rs"
+    ],
+    "Gpu/Vulkan/VulkanSkiaExternalObjectsFeature.cs": [
+     "gpu/vulkan/vulkan_skia_external_objects_feature.rs"
+    ],
+    "Gpu/Vulkan/VulkanSkiaGpu.cs": [
+     "gpu/vulkan/vulkan_skia_gpu.rs"
+    ],
+    "Gpu/Vulkan/VulkanSkiaRenderTarget.cs": [
+     "gpu/vulkan/vulkan_skia_render_target.rs"
     ],
     "Helpers/DrawingContextHelper.cs": [
      "helpers/drawing_context_helper.rs"
@@ -9562,6 +9571,7 @@
     "gpu/graphite/graphite_gr_context.rs",
     "gpu/i_skia_gr_context.rs",
     "gpu/metal/tests.rs",
+    "gpu/vulkan/tests.rs",
     "locked_framebuffer.rs",
     "tests.rs",
     "unit_tests/hit_testing.rs",

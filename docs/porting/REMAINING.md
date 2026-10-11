@@ -8,8 +8,8 @@ Generated from upstream commit `17350180c33b063f0e98abbfd19aa3cae63f5d56`. The s
 
 | | Present | Total | Missing | Waived | Not applicable | Out of scope | Share |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| Members of the projects in scope | 28142 | 34206 | 1445 | 4619 | - | - | 95.1% of total less waived |
-| Members of every upstream source project of the extraction | 28142 | 37391 | 1445 | 4619 | 1132 | 2053 | 75.3% of total |
+| Members of the projects in scope | 28173 | 34206 | 1414 | 4619 | - | - | 95.2% of total less waived |
+| Members of every upstream source project of the extraction | 28173 | 37391 | 1414 | 4619 | 1132 | 2053 | 75.3% of total |
 
 The first row is the headline of the tracking: it leaves out the waived members and everything out of scope. The second row leaves out nothing: every member of every C# project the extraction reads, whether or not the port will ever have it. A member is *present* when an item of the mapped name exists; names are matched, not behaviour.
 
@@ -48,7 +48,7 @@ Files, types and members as present / missing / waived. *n/a* counts the files m
 | [Avalonia.Markup](tracking/Avalonia.Markup.md) | in | 7 / 0 / 0 | 7 / 0 / 30 | 12 / 0 / 55 | 1 (0) | 17.9% |
 | [Avalonia.Markup.Xaml](tracking/Avalonia.Markup.Xaml.md) | in | 46 / 0 / 0 | 61 / 0 / 2 | 208 / 0 / 31 | 2 (1) | 86.7% |
 | [Avalonia.Markup.Xaml.Loader](tracking/Avalonia.Markup.Xaml.Loader.md) | in | 66 / 0 / 0 | 120 / 0 / 6 | 422 / 0 / 83 | 1 (1) | 83.4% |
-| [Avalonia.Skia](tracking/Avalonia.Skia.md) | in | 51 / 3 / 0 | 62 / 4 / 0 | 398 / 32 / 21 | 0 (0) | 88.2% |
+| [Avalonia.Skia](tracking/Avalonia.Skia.md) | in | 54 / 0 / 0 | 66 / 0 / 0 | 429 / 1 / 21 | 0 (0) | 95.1% |
 | [Avalonia.Win32](tracking/Avalonia.Win32.md) | in | 70 / 25 / 0 | 182 / 94 / 0 | 1763 / 842 / 0 | 0 (0) | 67.7% |
 | [Avalonia.iOS](tracking/Avalonia.iOS.md) | in | 37 / 3 / 0 | 51 / 5 / 1 | 254 / 60 / 17 | 1 (0) | 76.7% |
 | [Avalonia.Generators](tracking/Avalonia.Generators.md) | in: every file not applicable | 0 / 0 / 0 | 0 / 0 / 0 | 0 / 0 / 0 | 31 (264) | 0.0% |
@@ -259,10 +259,8 @@ Files without a Rust file, types without a Rust type, and members without a Rust
 
 ### [Avalonia.Skia](tracking/Avalonia.Skia.md)
 
-3 files, 4 types and 32 members missing (31 members of the missing types, 1 members of types that exist).
+0 files, 0 types and 1 members missing (0 members of the missing types, 1 members of types that exist).
 
-- **Files (3):** `Gpu/Vulkan/VulkanSkiaExternalObjectsFeature.cs`, `Gpu/Vulkan/VulkanSkiaGpu.cs`, `Gpu/Vulkan/VulkanSkiaRenderTarget.cs`
-- **Types (4):** `VulkanSkiaExternalObjectsFeature`, `VulkanSkiaGpu`, `VulkanSkiaRenderTarget`, `VulkanSkiaRenderTarget.VulkanSkiaRenderSession`
 - **Members of types that exist (1):** `DrawingContextHelper.RenderAsync`
 
 ### [Avalonia.Win32](tracking/Avalonia.Win32.md)

@@ -27,6 +27,7 @@ use ferroui_base::media::text_formatting::GlyphInfo;
 use ferroui_base::media::{GlyphRun, GlyphTypeface};
 use ferroui_base::platform::IGlyphRunImpl;
 use ferroui_opengl::IGlContext;
+use ferroui_vulkan::IVulkanPlatformGraphicsContext;
 use skia_safe::{ColorType, FontHinting, PathBuilder};
 use std::fs::File;
 use std::io::{self, Read};
@@ -70,6 +71,28 @@ impl PlatformRenderInterface {
             return Self::create_metal_gpu(metal, self.max_resource_bytes, self.use_stencil_buffers);
         }
 
+        if let Some(vulkan) = features.try_get::<dyn IVulkanPlatformGraphicsContext>() {
+            return Self::create_vulkan_gpu(vulkan, self.max_resource_bytes, self.use_stencil_buffers);
+        }
+
+        panic!("Graphics context of type is not supported");
+    }
+
+    #[cfg(ferro_skia_vulkan)]
+    fn create_vulkan_gpu(
+        vulkan: Rc<dyn IVulkanPlatformGraphicsContext>,
+        max_resource_bytes: Option<i64>,
+        use_stencil_buffers: Option<bool>,
+    ) -> Rc<dyn ISkiaGpu> {
+        crate::gpu::vulkan::VulkanSkiaGpu::new(vulkan, max_resource_bytes, use_stencil_buffers)
+    }
+
+    #[cfg(not(ferro_skia_vulkan))]
+    fn create_vulkan_gpu(
+        _vulkan: Rc<dyn IVulkanPlatformGraphicsContext>,
+        _max_resource_bytes: Option<i64>,
+        _use_stencil_buffers: Option<bool>,
+    ) -> Rc<dyn ISkiaGpu> {
         panic!("Graphics context of type is not supported");
     }
 

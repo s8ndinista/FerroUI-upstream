@@ -10,9 +10,9 @@ Generated from upstream commit `17350180c33b063f0e98abbfd19aa3cae63f5d56`. Back 
 | FerroUI | `src/Skia/FerroUI.Skia` (exists) |
 | Crate | `ferroui-skia` |
 | Phase / priority | 1 - rendering / P0 |
-| Files | 51/54 (94.4%) |
-| Types | 62/66 (93.9%) |
-| Members | 398/451 (21 waived) (92.6%) |
+| Files | 54/54 (100.0%) |
+| Types | 66/66 (100.0%) |
+| Members | 429/451 (21 waived) (99.8%) |
 | Contracts (interfaces) | 10/10 |
 | Property registrations | 0/0 |
 | Routed events | 0/0 |
@@ -102,13 +102,13 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 | `GlSkiaSharedTextureForComposition.cs` | `gpu/open_gl/gl_skia_shared_texture_for_composition.rs` | present | 1/1 | 7/7 |  |
 | `IGlSkiaSpecificOptionsFeature.cs` | `gpu/open_gl/i_gl_skia_specific_options_feature.rs` | present | 1/1 | 1/1 |  |
 
-### `Gpu/Vulkan` - files 0/3, types 0/4, members 0/31
+### `Gpu/Vulkan` - files 3/3, types 4/4, members 31/31
 
 | Upstream file | Rust file | Status | Types | Members | Notes |
 |---|---|---|---|---|---|
-| `VulkanSkiaExternalObjectsFeature.cs` | `gpu/vulkan/vulkan_skia_external_objects_feature.rs` | missing | 0/1 | 0/9 |  |
-| `VulkanSkiaGpu.cs` | `gpu/vulkan/vulkan_skia_gpu.rs` | missing | 0/1 | 0/12 |  |
-| `VulkanSkiaRenderTarget.cs` | `gpu/vulkan/vulkan_skia_render_target.rs` | missing | 0/2 | 0/10 |  |
+| `VulkanSkiaExternalObjectsFeature.cs` | `gpu/vulkan/vulkan_skia_external_objects_feature.rs` | present | 1/1 | 9/9 |  |
+| `VulkanSkiaGpu.cs` | `gpu/vulkan/vulkan_skia_gpu.rs` | present | 1/1 | 12/12 |  |
+| `VulkanSkiaRenderTarget.cs` | `gpu/vulkan/vulkan_skia_render_target.rs` | present | 2/2 | 10/10 |  |
 
 ### `Helpers` - files 5/5, types 5/5, members 9/13 (3 waived)
 
@@ -137,6 +137,7 @@ Rust sources of this crate that no upstream file maps to. Give each a reason in 
 | `gpu/graphite/graphite_gr_context.rs` | the Graphite implementation of the backend-neutral GPU context (the binding has separate Ganesh and Graphite context types) | `GraphiteGrContext`, `GraphiteState`, `UploadedImage` |
 | `gpu/i_skia_gr_context.rs` | the backend-neutral GPU context of the Skia backend (the binding has separate Ganesh and Graphite context types, SkiaSharp has one `GRContext`) | `ISkiaGrContext`, `SkiaGpuBackend` |
 | `gpu/metal/tests.rs` | the unit tests of the module | `ExternalObjectsDevice`, `FakeEvent`, `FakeExternalObjects`, `FakeTexture`, `GraphiteTarget`, `Id`, `Log`, `LogSink`, `Sel`, `TestMetalDevice`, `TextureRenderTarget`, `TextureSession`, ... (13 total) |
+| `gpu/vulkan/tests.rs` | the unit tests of the module | `HeadlessSurface`, `HeadlessSurfaceFactory`, `TestSurface` |
 | `locked_framebuffer.rs` | a locked framebuffer described by plain values: the `Platform/LockedFramebuffer.cs` of Avalonia.Base, which the base crate cannot hold without unsafe code, for the surfaces of the backend | `LockedFramebuffer` |
 | `tests.rs` | the unit tests of the module | `BrushSpec`, `Material`, `MockFramebuffer`, `MockSurface`, `Target`, `TwoSquares`, `TwoSquaresBrush` |
 | `unit_tests/hit_testing.rs` | the port of upstream's Skia unit test project (tests/Avalonia.Skia.UnitTests) and its test doubles, not of the library | `CompositorTestServices`, `LocatorScope` |
