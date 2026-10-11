@@ -18,3 +18,5 @@ pub mod wayland_cursor_manager;
 pub mod wayland_globals;
 #[cfg(target_os = "linux")]
 mod wayland_input_dispatcher_keyboard;
+#[cfg(target_os = "linux")]
+pub mod xdg_toplevel_export;

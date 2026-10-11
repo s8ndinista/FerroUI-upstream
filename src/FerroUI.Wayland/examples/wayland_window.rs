@@ -35,7 +35,7 @@
 //! - `--expect-scale=N`: the scale of the output, which the window has to
 //!   take.
 //! - `--skip=a,b`: phases to leave out (`screens`, `frames`, `input`, `popup`, `clipboard`,
-//!   `dragdrop`, `textinput`, `decorations`, `cursor`, `resize`, `state`, `title`).
+//!   `dragdrop`, `textinput`, `export`, `decorations`, `cursor`, `resize`, `state`, `title`).
 //!
 //! The phase `textinput` makes the test client the input method of the seat
 //! (`zwp_input_method_manager_v2`, which sway has): it is activated when a
@@ -587,6 +587,8 @@ mod app {
         use wayland_client::protocol::wl_compositor::WlCompositor;
         use wayland_client::protocol::wl_output::WlOutput;
         use wayland_client::protocol::wl_surface::WlSurface;
+        use wayland_protocols::xdg::foreign::zv2::client::zxdg_imported_v2::{self, ZxdgImportedV2};
+        use wayland_protocols::xdg::foreign::zv2::client::zxdg_importer_v2::ZxdgImporterV2;
         use wayland_protocols_misc::zwp_input_method_v2::client::zwp_input_method_manager_v2::ZwpInputMethodManagerV2;
         use wayland_protocols_misc::zwp_input_method_v2::client::zwp_input_method_v2::{self, ZwpInputMethodV2};
         use wayland_protocols_misc::zwp_input_method_v2::client::zwp_input_popup_surface_v2::{self, ZwpInputPopupSurfaceV2};
@@ -633,6 +635,8 @@ mod app {
 
         #[derive(Default)]
         struct State {
+            /// The compositor said that the top-level this client imported is gone.
+            imported_destroyed: bool,
             /// The input method as of the last `done`, and what arrived since.
             input_method: InputMethodState,
             pending_input_method: InputMethodState,
@@ -780,6 +784,14 @@ mod app {
             }
         }
 
+        impl Dispatch<ZxdgImportedV2, ()> for State {
+            fn event(state: &mut Self, _: &ZxdgImportedV2, event: zxdg_imported_v2::Event, _: &(), _: &Connection, _: &QueueHandle<Self>) {
+                if let zxdg_imported_v2::Event::Destroyed = event {
+                    state.imported_destroyed = true;
+                }
+            }
+        }
+
         impl Dispatch<ZwpInputPopupSurfaceV2, ()> for State {
             fn event(
                 state: &mut Self,
@@ -830,6 +842,7 @@ mod app {
         delegate_noop!(State: ignore WlCompositor);
         delegate_noop!(State: ignore WlSurface);
         delegate_noop!(State: ignore ZwpInputMethodManagerV2);
+        delegate_noop!(State: ignore ZxdgImporterV2);
         delegate_noop!(State: ignore WlSeat);
         delegate_noop!(State: ignore WlOutput);
         delegate_noop!(State: ignore WlShmPool);
@@ -870,6 +883,8 @@ mod app {
             data_source: Option<ZwlrDataControlSourceV1>,
             seat: WlSeat,
             compositor: Option<WlCompositor>,
+            importer: Option<ZxdgImporterV2>,
+            imported: Option<ZxdgImportedV2>,
             input_method_manager: Option<ZwpInputMethodManagerV2>,
             input_method: Option<ZwpInputMethodV2>,
             /// The popup of the input method: its surface, its role, its buffer and the memory
@@ -911,6 +926,7 @@ mod app {
                 let compositor: Option<WlCompositor> = find("wl_compositor").map(|name| registry.bind(name, 4, &handle, ()));
                 let input_method_manager: Option<ZwpInputMethodManagerV2> =
                     find("zwp_input_method_manager_v2").map(|name| registry.bind(name, 1, &handle, ()));
+                let importer: Option<ZxdgImporterV2> = find("zxdg_importer_v2").map(|name| registry.bind(name, 1, &handle, ()));
                 queue.roundtrip(&mut state).map_err(|error| error.to_string())?;
 
                 Ok(Self {
@@ -926,11 +942,35 @@ mod app {
                     data_source: None,
                     seat,
                     compositor,
+                    importer,
+                    imported: None,
                     input_method_manager,
                     input_method: None,
                     input_popup: None,
                     time: 1000,
                 })
+            }
+
+            /// Whether the compositor has the importer of `xdg-foreign`.
+            pub fn has_importer(&self) -> bool {
+                self.importer.is_some()
+            }
+
+            /// Imports a top-level another client exported, by its handle. A handle the
+            /// compositor does not know is answered with `destroyed`.
+            pub fn import_top_level(&mut self, handle: &str) -> Result<(), String> {
+                let importer = self.importer.as_ref().ok_or("the compositor has no zxdg_importer_v2")?;
+                self.state.imported_destroyed = false;
+                if let Some(previous) = self.imported.replace(importer.import_toplevel(handle.to_string(), &self.queue.handle(), ())) {
+                    previous.destroy();
+                }
+                self.sync()
+            }
+
+            /// Whether the compositor said that the imported top-level is gone.
+            pub fn imported_destroyed(&mut self) -> bool {
+                let _ = self.sync();
+                self.state.imported_destroyed
             }
 
             /// Whether the compositor lets a client be the input method of a seat.
@@ -1468,6 +1508,10 @@ mod app {
                     report.phase("textinput");
                     text_input_checks(&report, probe, &window, client.as_ref()).await;
                 }
+                if options.runs("export") {
+                    report.phase("export");
+                    export_checks(&report, probe, &window, client.as_ref()).await;
+                }
                 if options.runs("resize") {
                     report.phase("resize");
                     resize_checks(&report, probe, &window).await;
@@ -1652,6 +1696,89 @@ mod app {
                 }
                 delay(Duration::from_millis(200)).await;
             }
+        }
+
+        /// The exports of the first top-level of the worker, and whether the connection has the
+        /// exporter of `xdg-foreign`.
+        fn exports(client: &Rc<WaylandWorkerClient>) -> Option<(bool, usize)> {
+            client
+                .invoke_oob(|worker| {
+                    let globals = worker.state.globals.as_ref()?;
+                    let exports = worker.state.top_levels.values().map(|top_level| top_level.active_export_count()).sum();
+                    Some((globals.xdg_exporter.is_some(), exports))
+                })
+                .recv_timeout(STEP_TIMEOUT)
+                .ok()
+                .flatten()
+        }
+
+        /// The parent handle of a portal dialog: the window exported through `xdg-foreign`, and
+        /// imported by the test client.
+        async fn export_checks(report: &Report, probe: &mut Probe, window: &Ref<Window>, client: Option<&Rc<WaylandWorkerClient>>) {
+            use ferroui_wayland::window_impl::WindowImpl;
+            let Some(client) = client else {
+                report.check("export", false, "the platform has no worker client".to_string());
+                return;
+            };
+            let before = exports(client);
+            report.check(
+                "exporter",
+                before == Some((true, 0)),
+                format!("the worker has zxdg_exporter_v2 and no export yet: {before:?}"),
+            );
+            let Some(window_impl) = window.platform_impl() else {
+                report.check("window", false, "the window has no platform implementation".to_string());
+                return;
+            };
+            let Some(lease) = window_impl.as_any().downcast_ref::<WindowImpl>().map(WindowImpl::acquire_portal_parent_lease) else {
+                report.check("window", false, "the platform implementation is not a window of the backend".to_string());
+                return;
+            };
+            let lease = pumped(probe, lease).await.flatten();
+            let handle = lease.as_ref().map(|lease| lease.handle());
+            let exported = exports(client);
+            report.check(
+                "parent handle",
+                handle.as_deref().is_some_and(|handle| handle.strip_prefix("wayland:").is_some_and(|raw| !raw.is_empty()))
+                    && exported == Some((true, 1)),
+                format!("the lease of the window has the handle {handle:?}; the worker has {exported:?} (exporter, exports)"),
+            );
+            let Some(lease) = lease else {
+                return;
+            };
+            if probe.has_importer() {
+                // The compositor knows the handle: another client imports the window by it, and
+                // is told when the export ends.
+                let raw = handle.as_deref().and_then(|handle| handle.strip_prefix("wayland:")).unwrap_or_default().to_string();
+                let imported = probe.import_top_level(&raw);
+                delay(Duration::from_millis(200)).await;
+                let destroyed = probe.imported_destroyed();
+                report.check(
+                    "import",
+                    imported.is_ok() && !destroyed,
+                    format!("the test client imported the window by the handle: {imported:?}; told that it is gone: {destroyed}"),
+                );
+                let unknown = probe.import_top_level("no-such-handle");
+                let refused = wait_for(STEP_TIMEOUT, || probe.imported_destroyed()).await;
+                report.check("unknown handle", unknown.is_ok() && refused, format!("a handle nobody exported is refused: {refused}"));
+                let _ = probe.import_top_level(&raw);
+                delay(Duration::from_millis(200)).await;
+                let known_again = !probe.imported_destroyed();
+                pumped(probe, lease.dispose_async()).await;
+                let ended = wait_for(STEP_TIMEOUT, || probe.imported_destroyed()).await;
+                let after = exports(client);
+                report.check(
+                    "lease disposed",
+                    known_again && ended && after == Some((true, 0)),
+                    format!("with the lease the export ends: the importer is told ({ended}); the worker has {after:?}"),
+                );
+            } else {
+                pumped(probe, lease.dispose_async()).await;
+                let after = wait_for(STEP_TIMEOUT, || exports(client) == Some((true, 0))).await;
+                report.check("lease disposed", after, format!("with the lease the export ends: {:?}", exports(client)));
+            }
+            let alive = probe.alive() && exports(client).is_some();
+            report.check("connections", alive, format!("the test client and the worker are still connected: {alive}"));
         }
 
         /// The colour of the popup of the input method of the test client.

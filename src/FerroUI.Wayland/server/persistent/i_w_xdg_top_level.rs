@@ -3,13 +3,20 @@
 //! (`WXdgShellSurfaceProxy`, `WXdgTopLevelProxy`, `WXdgPopupProxy`, which the
 //! reference generates).
 //!
-//! `ExportToplevel` belongs to a later part of stage 2 of
-//! `docs/porting/wayland-platform.md`.
+//! `export_toplevel` is the one member with a result: the generated proxy of
+//! the reference wraps it into a task; here the call is posted out of band and
+//! its result is awaited (`CrossThreadResult`), and the handle of the UI thread
+//! is made from what the worker gave.
 
 use super::i_w_surface::WSurfaceProxy;
 use super::i_w_surface_event_sink::PlatformInputEventCookie;
 use super::w_surface::WSurfaceId;
 use super::xdg_popup_positioner_params::XdgPopupPositionerParams;
+use crate::i_wayland_xdg_top_level_export::IWaylandXdgTopLevelExport;
+use crate::server::cross_thread_result::cross_thread_result;
+use crate::server::transient::xdg_toplevel_export::UiThreadHandle;
+use ferroui_base::input::LocalBoxFuture;
+use std::rc::Rc;
 use crate::server::wayland_dispatch_priority::WaylandDispatchPriority;
 use crate::server::wayland_worker::WorkerMarshaller;
 use ferroui_base::{Size, Thickness};
@@ -48,6 +55,12 @@ pub trait IWXdgTopLevel: IWXdgShellSurface {
 
     /// Destroys the decoration object and disables its creation completely.
     fn destroy_decoration(&self);
+
+    /// Creates an xdg-foreign-v2 export of this toplevel on the worker; the returned
+    /// façade's handle task completes asynchronously when the compositor delivers the
+    /// handle event. Resolves to `None` if the exporter global isn't bound or the toplevel
+    /// isn't currently connected.
+    fn export_toplevel(&self) -> LocalBoxFuture<Option<Rc<dyn IWaylandXdgTopLevelExport>>>;
 }
 
 /// A shell surface of the worker as the UI thread holds it.
@@ -221,6 +234,25 @@ impl IWXdgTopLevel for WXdgTopLevelProxy {
                 top_level.destroy_decoration();
             }
         });
+    }
+
+    fn export_toplevel(&self) -> LocalBoxFuture<Option<Rc<dyn IWaylandXdgTopLevelExport>>> {
+        let (completion, result) = cross_thread_result();
+        let owner = self.id();
+        self.post_with_priority(
+            move |worker, id| {
+                let globals = worker.state.globals.as_ref();
+                let exported = worker.state.top_levels.get_mut(&id).and_then(|top_level| top_level.export_toplevel(globals));
+                let worker_handle = worker.state.worker.clone();
+                completion.complete(exported.map(|exported| (worker_handle, exported)));
+            },
+            WaylandDispatchPriority::Oob,
+        );
+        Box::pin(async move {
+            let (worker, exported) = result.await.flatten()?;
+            let handle: Rc<dyn IWaylandXdgTopLevelExport> = Rc::new(UiThreadHandle::new(worker, owner, exported));
+            Some(handle)
+        })
     }
 }
 
