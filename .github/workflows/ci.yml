@@ -846,7 +846,7 @@ jobs:
   linuxfb:
     name: Build and test (Linux framebuffer, virtual devices)
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 90
     env:
       CARGO_PROFILE_DEV_DEBUG: 0
       CARGO_PROFILE_TEST_DEBUG: 0
@@ -881,6 +881,18 @@ jobs:
       - name: The smoke runs (a file; the virtual framebuffer and virtual input devices where available)
         run: |
           sudo sh scripts/linuxfb/smoke.sh target/debug/examples/linuxfb_smoke "$RUNNER_TEMP/linuxfb-smoke" "$RUNNER_TEMP/linuxfb-devices"
+      # The catalog on the virtual framebuffer: the content of the device per page, as pictures
+      # (the memory of the framebuffer device, read from its node).
+      - name: Build the ControlCatalog
+        run: cargo build --locked -p control-catalog-desktop
+      - name: The ControlCatalog on the virtual framebuffer
+        run: |
+          . "$RUNNER_TEMP/linuxfb-devices"
+          if [ -z "$FB_NODE" ]; then
+            echo "::notice::no virtual framebuffer device on this runner: the catalog was not run on the framebuffer platform"
+            exit 0
+          fi
+          sudo sh scripts/linuxfb/catalog-pictures.sh target/debug/control-catalog-desktop "$FB_NODE" "$FB_ID" "$RUNNER_TEMP/linuxfb-smoke/catalog"
       - name: A frame of the file framebuffer as a picture
         if: always()
         run: |
