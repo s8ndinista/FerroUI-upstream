@@ -1,0 +1,534 @@
+use super::{
+    VulkanCommandBuffer, VulkanCommandBufferPool, VulkanImage, VulkanKhrSurface, VulkanMemoryHelper,
+    VulkanSemaphorePair,
+};
+use crate::{
+    IVulkanKhrSurfacePlatformSurface, IVulkanPlatformGraphicsContext, VulkanException, VulkanExceptionExtensions,
+    VulkanResultExtensions,
+};
+use ash::vk;
+use ferroui_base::PixelSize;
+use std::cell::{Cell, RefCell};
+use std::rc::Rc;
+use std::thread;
+use std::time::Duration;
+
+/// The swap chain of a platform surface and what presenting a frame to it
+/// needs.
+pub(crate) struct VulkanDisplay {
+    context: Rc<dyn IVulkanPlatformGraphicsContext>,
+    semaphore_pair: VulkanSemaphorePair,
+    next_image: Cell<u32>,
+    surface: RefCell<Option<VulkanKhrSurface>>,
+    surface_format: Cell<vk::SurfaceFormatKHR>,
+    swapchain: Cell<vk::SwapchainKHR>,
+    swapchain_extent: Cell<vk::Extent2D>,
+    platform_surface: Rc<dyn IVulkanKhrSurfacePlatformSurface>,
+    swapchain_images: RefCell<Vec<vk::Image>>,
+    swapchain_image_views: RefCell<Vec<vk::ImageView>>,
+    command_buffer_pool: Rc<VulkanCommandBufferPool>,
+    size: Cell<PixelSize>,
+}
+
+/// What a swap chain is created with, as far as it follows from the
+/// capabilities of the surface.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) struct SwapchainParameters {
+    pub image_count: u32,
+    pub extent: vk::Extent2D,
+    pub present_mode: vk::PresentModeKHR,
+    pub pre_transform: vk::SurfaceTransformFlagsKHR,
+    pub composite_alpha: vk::CompositeAlphaFlagsKHR,
+}
+
+impl SwapchainParameters {
+    /// One image more than the surface needs, within its limit; the extent
+    /// of the surface, or the size of the platform surface within the
+    /// limits when the surface leaves the extent open; mailbox before FIFO
+    /// before immediate presentation; no rotation by the swap chain when
+    /// the surface is rotated by a quarter turn and can do without;
+    /// premultiplied alpha when the surface composes it.
+    pub fn new(
+        capabilities: &vk::SurfaceCapabilitiesKHR,
+        modes: &[vk::PresentModeKHR],
+        surface_size: PixelSize,
+    ) -> Self {
+        let mut image_count = capabilities.min_image_count.wrapping_add(1);
+        if capabilities.max_image_count > 0 && image_count > capabilities.max_image_count {
+            image_count = capabilities.max_image_count;
+        }
+
+        let supports_identity_transform =
+            capabilities.supported_transforms.contains(vk::SurfaceTransformFlagsKHR::IDENTITY);
+        let is_rotated = capabilities.current_transform.contains(vk::SurfaceTransformFlagsKHR::ROTATE_90)
+            || capabilities.current_transform.contains(vk::SurfaceTransformFlagsKHR::ROTATE_270);
+
+        let extent = if capabilities.current_extent.width != u32::MAX {
+            capabilities.current_extent
+        } else {
+            let width = capabilities
+                .min_image_extent
+                .width
+                .max(capabilities.max_image_extent.width.min(surface_size.width as u32));
+            let height = capabilities
+                .min_image_extent
+                .height
+                .max(capabilities.max_image_extent.height.min(surface_size.height as u32));
+            vk::Extent2D { width, height }
+        };
+
+        let present_mode = if modes.contains(&vk::PresentModeKHR::MAILBOX) {
+            vk::PresentModeKHR::MAILBOX
+        } else if modes.contains(&vk::PresentModeKHR::FIFO) {
+            vk::PresentModeKHR::FIFO
+        } else {
+            vk::PresentModeKHR::IMMEDIATE
+        };
+
+        Self {
+            image_count,
+            extent,
+            present_mode,
+            pre_transform: if supports_identity_transform && is_rotated {
+                vk::SurfaceTransformFlagsKHR::IDENTITY
+            } else {
+                capabilities.current_transform
+            },
+            composite_alpha: if capabilities
+                .supported_composite_alpha
+                .contains(vk::CompositeAlphaFlagsKHR::PRE_MULTIPLIED)
+            {
+                vk::CompositeAlphaFlagsKHR::PRE_MULTIPLIED
+            } else {
+                vk::CompositeAlphaFlagsKHR::OPAQUE
+            },
+        }
+    }
+}
+
+impl VulkanDisplay {
+    fn new(
+        context: Rc<dyn IVulkanPlatformGraphicsContext>,
+        surface: VulkanKhrSurface,
+        swapchain: vk::SwapchainKHR,
+        swapchain_extent: vk::Extent2D,
+        platform_surface: Rc<dyn IVulkanKhrSurfacePlatformSurface>,
+    ) -> Result<Self, VulkanException> {
+        let semaphore_pair = VulkanSemaphorePair::new(context.clone())?;
+        let command_buffer_pool = VulkanCommandBufferPool::new(context.clone(), false)?;
+        let display = Self {
+            context,
+            semaphore_pair,
+            next_image: Cell::new(0),
+            surface: RefCell::new(Some(surface)),
+            surface_format: Cell::new(vk::SurfaceFormatKHR::default()),
+            swapchain: Cell::new(swapchain),
+            swapchain_extent: Cell::new(swapchain_extent),
+            platform_surface,
+            swapchain_images: RefCell::new(Vec::new()),
+            swapchain_image_views: RefCell::new(Vec::new()),
+            command_buffer_pool,
+            size: Cell::new(PixelSize::default()),
+        };
+        display.create_swapchain_images()?;
+        Ok(display)
+    }
+
+    pub fn command_buffer_pool(&self) -> &Rc<VulkanCommandBufferPool> {
+        &self.command_buffer_pool
+    }
+
+    pub fn size(&self) -> PixelSize {
+        self.size.get()
+    }
+
+    /// The format of the surface, asked once.
+    pub fn surface_format(&self) -> Result<vk::SurfaceFormatKHR, VulkanException> {
+        if self.surface_format.get().format == vk::Format::UNDEFINED {
+            if let Some(surface) = self.surface.borrow().as_ref() {
+                self.surface_format.set(surface.get_surface_format()?);
+            }
+        }
+        Ok(self.surface_format.get())
+    }
+
+    fn create_swapchain(
+        context: &Rc<dyn IVulkanPlatformGraphicsContext>,
+        surface: &VulkanKhrSurface,
+        old_display: Option<&VulkanDisplay>,
+    ) -> Result<(vk::SwapchainKHR, vk::Extent2D), VulkanException> {
+        while !surface.can_surface_present()? {
+            thread::sleep(Duration::from_millis(16));
+        }
+
+        let capabilities = context
+            .instance_api()
+            .get_physical_device_surface_capabilities_khr(context.physical_device_handle(), surface.handle())
+            .throw_on_error("vkGetPhysicalDeviceSurfaceCapabilitiesKHR")?;
+
+        let modes = context
+            .instance_api()
+            .get_physical_device_surface_present_modes_khr(context.physical_device_handle(), surface.handle())
+            .throw_on_error("vkGetPhysicalDeviceSurfacePresentModesKHR")?;
+
+        let surface_format = surface.get_surface_format()?;
+        let parameters = SwapchainParameters::new(&capabilities, &modes, surface.size());
+
+        let swapchain_create_info = vk::SwapchainCreateInfoKHR::default()
+            .surface(surface.handle())
+            .min_image_count(parameters.image_count)
+            .image_format(surface_format.format)
+            .image_color_space(surface_format.color_space)
+            .image_extent(parameters.extent)
+            .image_usage(vk::ImageUsageFlags::COLOR_ATTACHMENT | vk::ImageUsageFlags::TRANSFER_DST)
+            .image_sharing_mode(vk::SharingMode::EXCLUSIVE)
+            .image_array_layers(1)
+            .pre_transform(parameters.pre_transform)
+            .composite_alpha(parameters.composite_alpha)
+            .present_mode(parameters.present_mode)
+            .clipped(true)
+            .old_swapchain(old_display.map_or(vk::SwapchainKHR::null(), |display| display.swapchain.get()));
+        let swapchain = context
+            .device_api()
+            .create_swapchain_khr(context.device_handle(), &swapchain_create_info)
+            .throw_on_error("vkCreateSwapchainKHR")?;
+        if let Some(old_display) = old_display {
+            old_display.destroy_swapchain();
+        }
+        Ok((swapchain, parameters.extent))
+    }
+
+    fn destroy_swapchain(&self) {
+        if self.swapchain.get() != vk::SwapchainKHR::null() {
+            self.context.device_api().destroy_swapchain_khr(self.context.device_handle(), self.swapchain.get());
+        }
+        self.swapchain.set(vk::SwapchainKHR::null());
+    }
+
+    /// Creates the surface of the platform surface and a swap chain for it.
+    pub fn create_display(
+        context: &Rc<dyn IVulkanPlatformGraphicsContext>,
+        surface: Rc<dyn IVulkanKhrSurfacePlatformSurface>,
+    ) -> Result<VulkanDisplay, VulkanException> {
+        let khr_surface = VulkanKhrSurface::new(context.clone(), surface.clone());
+        let (swapchain, extent) = Self::create_swapchain(context, &khr_surface, None)?;
+        VulkanDisplay::new(context.clone(), khr_surface, swapchain, extent, surface)
+    }
+
+    fn destroy_current_image_views(&self) {
+        let views = std::mem::take(&mut *self.swapchain_image_views.borrow_mut());
+        for image_view in views {
+            self.context.device_api().destroy_image_view(self.context.device_handle(), image_view);
+        }
+    }
+
+    fn create_swapchain_images(&self) -> Result<(), VulkanException> {
+        self.destroy_current_image_views();
+        let extent = self.swapchain_extent.get();
+        self.size.set(PixelSize::new(extent.width as i32, extent.height as i32));
+        let images = self
+            .context
+            .device_api()
+            .get_swapchain_images_khr(self.context.device_handle(), self.swapchain.get())
+            .throw_on_error("vkGetSwapchainImagesKHR")?;
+        let format = self.surface_format()?.format;
+        let mut views = Vec::with_capacity(images.len());
+        for image in &images {
+            views.push(self.create_swapchain_image_view(*image, format)?);
+        }
+        *self.swapchain_images.borrow_mut() = images;
+        *self.swapchain_image_views.borrow_mut() = views;
+        Ok(())
+    }
+
+    fn create_swapchain_image_view(
+        &self,
+        swapchain_image: vk::Image,
+        format: vk::Format,
+    ) -> Result<vk::ImageView, VulkanException> {
+        let image_view_create_info = vk::ImageViewCreateInfo::default()
+            .subresource_range(vk::ImageSubresourceRange {
+                aspect_mask: vk::ImageAspectFlags::COLOR,
+                level_count: 1,
+                layer_count: 1,
+                ..Default::default()
+            })
+            .format(format)
+            .image(swapchain_image)
+            .view_type(vk::ImageViewType::TYPE_2D);
+        self.context
+            .device_api()
+            .create_image_view(self.context.device_handle(), &image_view_create_info)
+            .throw_on_error("vkCreateImageView")
+    }
+
+    fn recreate_swapchain(&self) -> Result<(), VulkanException> {
+        if self.surface.borrow().is_none() {
+            return self.recreate_surface();
+        }
+        let _ = self.context.device_api().device_wait_idle(self.context.device_handle());
+        let (swapchain, extent) = {
+            let surface = self.surface.borrow();
+            let surface = surface.as_ref().expect("the surface was checked above");
+            Self::create_swapchain(&self.context, surface, Some(self))?
+        };
+        self.swapchain.set(swapchain);
+        self.swapchain_extent.set(extent);
+        self.create_swapchain_images()
+    }
+
+    fn recreate_surface(&self) -> Result<(), VulkanException> {
+        if let Some(surface) = self.surface.borrow_mut().take() {
+            surface.dispose();
+        }
+        *self.surface.borrow_mut() =
+            Some(VulkanKhrSurface::new(self.context.clone(), self.platform_surface.clone()));
+        self.destroy_swapchain();
+        self.recreate_swapchain()
+    }
+
+    /// Recreates the swap chain when the size of the surface is not the
+    /// size of the swap chain anymore, and tells that it did.
+    pub fn ensure_swapchain_available(&self) -> Result<bool, VulkanException> {
+        let surface_size = self.surface.borrow().as_ref().map(|surface| surface.size());
+        if Some(self.size.get()) != surface_size {
+            self.recreate_swapchain()?;
+            return Ok(true);
+        }
+        Ok(false)
+    }
+
+    /// Acquires the next image of the swap chain and starts the commands
+    /// that fill it.
+    pub fn start_presentation(&self) -> Result<Rc<VulkanCommandBuffer>, VulkanException> {
+        self.next_image.set(0);
+        loop {
+            let (acquire_result, next_image) = self.context.device_api().acquire_next_image_khr(
+                self.context.device_handle(),
+                self.swapchain.get(),
+                u64::MAX,
+                self.semaphore_pair.image_available_semaphore().handle(),
+                vk::Fence::null(),
+            );
+            self.next_image.set(next_image);
+            if acquire_result == vk::Result::ERROR_OUT_OF_DATE_KHR || acquire_result == vk::Result::SUBOPTIMAL_KHR {
+                self.recreate_swapchain()?;
+            } else if acquire_result == vk::Result::ERROR_SURFACE_LOST_KHR {
+                self.recreate_surface()?;
+            } else {
+                acquire_result.throw_on_error("vkAcquireNextImageKHR")?;
+                break;
+            }
+        }
+
+        let command_buffer = self.command_buffer_pool.create_command_buffer()?;
+        command_buffer.begin_recording()?;
+        VulkanMemoryHelper::transition_layout(
+            &*self.context,
+            &command_buffer,
+            self.current_image(),
+            vk::ImageLayout::UNDEFINED,
+            vk::AccessFlags::NONE,
+            vk::ImageLayout::TRANSFER_DST_OPTIMAL,
+            vk::AccessFlags::TRANSFER_WRITE,
+            1,
+        );
+        Ok(command_buffer)
+    }
+
+    fn current_image(&self) -> vk::Image {
+        self.swapchain_images.borrow()[self.next_image.get() as usize]
+    }
+
+    /// Records the copy of `image`, scaled to the size of the swap chain,
+    /// into the acquired image.
+    pub fn blit_image_to_current_image(&self, command_buffer: &VulkanCommandBuffer, image: &VulkanImage) {
+        VulkanMemoryHelper::transition_layout(
+            &*self.context,
+            command_buffer,
+            image.handle(),
+            image.current_layout(),
+            vk::AccessFlags::NONE,
+            vk::ImageLayout::TRANSFER_SRC_OPTIMAL,
+            vk::AccessFlags::TRANSFER_READ,
+            image.mip_levels(),
+        );
+
+        let size = self.size.get();
+        let src_blit_region = vk::ImageBlit {
+            src_offsets: [
+                vk::Offset3D::default(),
+                vk::Offset3D { x: image.size().width, y: image.size().height, z: 1 },
+            ],
+            dst_offsets: [vk::Offset3D::default(), vk::Offset3D { x: size.width, y: size.height, z: 1 }],
+            src_subresource: vk::ImageSubresourceLayers {
+                aspect_mask: vk::ImageAspectFlags::COLOR,
+                layer_count: 1,
+                ..Default::default()
+            },
+            dst_subresource: vk::ImageSubresourceLayers {
+                aspect_mask: vk::ImageAspectFlags::COLOR,
+                layer_count: 1,
+                ..Default::default()
+            },
+        };
+
+        self.context.device_api().cmd_blit_image(
+            command_buffer.handle(),
+            image.handle(),
+            vk::ImageLayout::TRANSFER_SRC_OPTIMAL,
+            self.current_image(),
+            vk::ImageLayout::TRANSFER_DST_OPTIMAL,
+            &[src_blit_region],
+            vk::Filter::LINEAR,
+        );
+
+        VulkanMemoryHelper::transition_layout(
+            &*self.context,
+            command_buffer,
+            image.handle(),
+            vk::ImageLayout::TRANSFER_SRC_OPTIMAL,
+            vk::AccessFlags::TRANSFER_READ,
+            image.current_layout(),
+            vk::AccessFlags::NONE,
+            image.mip_levels(),
+        );
+    }
+
+    /// Submits the commands and presents the acquired image.
+    pub fn end_presentation(&self, command_buffer: &VulkanCommandBuffer) -> Result<(), VulkanException> {
+        VulkanMemoryHelper::transition_layout(
+            &*self.context,
+            command_buffer,
+            self.current_image(),
+            vk::ImageLayout::TRANSFER_DST_OPTIMAL,
+            vk::AccessFlags::NONE,
+            vk::ImageLayout::PRESENT_SRC_KHR,
+            vk::AccessFlags::NONE,
+            1,
+        );
+        command_buffer.submit_with(
+            &[self.semaphore_pair.image_available_semaphore()],
+            &[vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT],
+            &[self.semaphore_pair.render_finished_semaphore()],
+            None,
+        )?;
+
+        let (call_result, result) = self.context.device_api().vk_queue_present_khr(
+            self.context.main_queue_handle(),
+            self.semaphore_pair.render_finished_semaphore().handle(),
+            self.swapchain.get(),
+            self.next_image.get(),
+        );
+        call_result.throw_on_error("vkQueuePresentKHR")?;
+        result.throw_on_error("vkQueuePresentKHR")
+    }
+
+    pub fn dispose(&self) {
+        let _ = self.context.device_api().device_wait_idle(self.context.device_handle());
+        self.semaphore_pair.dispose();
+        self.destroy_current_image_views();
+        self.destroy_swapchain();
+        self.command_buffer_pool.dispose();
+        if let Some(surface) = self.surface.borrow_mut().take() {
+            surface.dispose();
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn capabilities() -> vk::SurfaceCapabilitiesKHR {
+        vk::SurfaceCapabilitiesKHR {
+            min_image_count: 2,
+            max_image_count: 0,
+            current_extent: vk::Extent2D { width: 800, height: 600 },
+            min_image_extent: vk::Extent2D { width: 1, height: 1 },
+            max_image_extent: vk::Extent2D { width: 4096, height: 4096 },
+            max_image_array_layers: 1,
+            supported_transforms: vk::SurfaceTransformFlagsKHR::IDENTITY,
+            current_transform: vk::SurfaceTransformFlagsKHR::IDENTITY,
+            supported_composite_alpha: vk::CompositeAlphaFlagsKHR::OPAQUE,
+            supported_usage_flags: vk::ImageUsageFlags::COLOR_ATTACHMENT,
+        }
+    }
+
+    const FIFO: &[vk::PresentModeKHR] = &[vk::PresentModeKHR::FIFO];
+
+    #[test]
+    fn one_image_more_than_the_minimum_within_the_maximum() {
+        let mut caps = capabilities();
+        assert_eq!(SwapchainParameters::new(&caps, FIFO, PixelSize::new(1, 1)).image_count, 3);
+        caps.max_image_count = 8;
+        assert_eq!(SwapchainParameters::new(&caps, FIFO, PixelSize::new(1, 1)).image_count, 3);
+        caps.max_image_count = 2;
+        assert_eq!(SwapchainParameters::new(&caps, FIFO, PixelSize::new(1, 1)).image_count, 2);
+    }
+
+    #[test]
+    fn the_extent_of_the_surface_is_taken_when_it_has_one() {
+        let caps = capabilities();
+        let parameters = SwapchainParameters::new(&caps, FIFO, PixelSize::new(320, 200));
+        assert_eq!(parameters.extent, vk::Extent2D { width: 800, height: 600 });
+    }
+
+    #[test]
+    fn an_open_extent_is_the_size_of_the_platform_surface_within_the_limits() {
+        let mut caps = capabilities();
+        caps.current_extent = vk::Extent2D { width: u32::MAX, height: u32::MAX };
+        caps.min_image_extent = vk::Extent2D { width: 16, height: 16 };
+        caps.max_image_extent = vk::Extent2D { width: 1000, height: 500 };
+        let extent = |w, h| SwapchainParameters::new(&caps, FIFO, PixelSize::new(w, h)).extent;
+        assert_eq!(extent(320, 200), vk::Extent2D { width: 320, height: 200 });
+        assert_eq!(extent(4000, 3000), vk::Extent2D { width: 1000, height: 500 });
+        assert_eq!(extent(1, 2), vk::Extent2D { width: 16, height: 16 });
+    }
+
+    #[test]
+    fn mailbox_before_fifo_before_immediate() {
+        let caps = capabilities();
+        let mode = |modes: &[vk::PresentModeKHR]| SwapchainParameters::new(&caps, modes, PixelSize::new(1, 1)).present_mode;
+        assert_eq!(
+            mode(&[vk::PresentModeKHR::IMMEDIATE, vk::PresentModeKHR::FIFO, vk::PresentModeKHR::MAILBOX]),
+            vk::PresentModeKHR::MAILBOX
+        );
+        assert_eq!(mode(&[vk::PresentModeKHR::IMMEDIATE, vk::PresentModeKHR::FIFO]), vk::PresentModeKHR::FIFO);
+        assert_eq!(mode(&[vk::PresentModeKHR::FIFO_RELAXED]), vk::PresentModeKHR::IMMEDIATE);
+        assert_eq!(mode(&[]), vk::PresentModeKHR::IMMEDIATE);
+    }
+
+    #[test]
+    fn a_quarter_turn_is_left_to_the_compositor_when_the_surface_allows() {
+        let mut caps = capabilities();
+        caps.current_transform = vk::SurfaceTransformFlagsKHR::ROTATE_90;
+        caps.supported_transforms = vk::SurfaceTransformFlagsKHR::IDENTITY | vk::SurfaceTransformFlagsKHR::ROTATE_90;
+        let transform = |caps: &vk::SurfaceCapabilitiesKHR| {
+            SwapchainParameters::new(caps, FIFO, PixelSize::new(1, 1)).pre_transform
+        };
+        assert_eq!(transform(&caps), vk::SurfaceTransformFlagsKHR::IDENTITY);
+        caps.current_transform = vk::SurfaceTransformFlagsKHR::ROTATE_270;
+        assert_eq!(transform(&caps), vk::SurfaceTransformFlagsKHR::IDENTITY);
+        // A half turn is not handled by the swap chain either way.
+        caps.current_transform = vk::SurfaceTransformFlagsKHR::ROTATE_180;
+        assert_eq!(transform(&caps), vk::SurfaceTransformFlagsKHR::ROTATE_180);
+        // Without the identity among the supported transforms the current one stays.
+        caps.current_transform = vk::SurfaceTransformFlagsKHR::ROTATE_90;
+        caps.supported_transforms = vk::SurfaceTransformFlagsKHR::ROTATE_90;
+        assert_eq!(transform(&caps), vk::SurfaceTransformFlagsKHR::ROTATE_90);
+    }
+
+    #[test]
+    fn premultiplied_alpha_when_the_surface_composes_it() {
+        let mut caps = capabilities();
+        let alpha = |caps: &vk::SurfaceCapabilitiesKHR| {
+            SwapchainParameters::new(caps, FIFO, PixelSize::new(1, 1)).composite_alpha
+        };
+        assert_eq!(alpha(&caps), vk::CompositeAlphaFlagsKHR::OPAQUE);
+        caps.supported_composite_alpha = vk::CompositeAlphaFlagsKHR::OPAQUE | vk::CompositeAlphaFlagsKHR::PRE_MULTIPLIED;
+        assert_eq!(alpha(&caps), vk::CompositeAlphaFlagsKHR::PRE_MULTIPLIED);
+        caps.supported_composite_alpha = vk::CompositeAlphaFlagsKHR::INHERIT;
+        assert_eq!(alpha(&caps), vk::CompositeAlphaFlagsKHR::OPAQUE);
+    }
+}

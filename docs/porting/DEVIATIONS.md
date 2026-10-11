@@ -657,6 +657,7 @@ Not built yet (each fails or answers "not available" as stated, and is tracked a
 |---|---|---|---|
 | The dmabuf swapchain (`WaylandEglDmaBuf*`, `WaylandDmabufFeedback`, GBM and DRM). | `use_dmabuf_swapchain` logs a warning and renders through a `wl_egl_window`. | Missing | 3 |
 | `WaylandWorker.Start(options, WlDisplay foreignDisplay)` (a display another toolkit owns). | Not offered. | Missing | 3 |
+
 ### Linux framebuffer platform (`src/Linux/FerroUI.LinuxFramebuffer/`)
 
 The design, the bindings and what each stage builds are in `linux-framebuffer-platform.md`. The systematic difference of this backend is where input is turned into raw events: on the UI thread, from values the input thread sends, because a raw event holds objects of that thread.
@@ -683,6 +684,27 @@ Not built yet; each fails with a message that names its stage:
 | Upstream | Port | Kind | Stage |
 |---|---|---|---|
 | `DrmOutput`, `DrmCard`, `DrmResources`, `DrmConnector`, `DrmModeInfo`, `DrmOutputOptions`, `DrmConnectorType`, the declarations of `Drm.cs`; `StartLinuxDrm` (two overloads). | `start_linux_drm` panics ("The DRM output is not built yet"); the overload with options does not exist. | Missing | 2b |
+
+### Vulkan (`src/FerroUI.Vulkan/`, `src/Skia/FerroUI.Skia/gpu/vulkan/`)
+
+Design and what was verified where: [`vulkan.md`](vulkan.md).
+
+| Upstream | Port | Kind | Reason | Since |
+|---|---|---|---|---|
+| `VulkanStructs.cs` and `VulkanEnums.cs` declare the structures, handles and enumerations the project uses; `VulkanGlobalApi`, `VulkanInstanceApi` and `VulkanDeviceApi` are generated tables of function pointers. | The types are those of the `ash` bindings (0.38.0), each under its upstream name as an alias (`unmanaged_interop/vulkan_enums.rs`, `vulkan_structs.rs`); the three tables are the tables of the bindings, filled through the same lookups, with upstream's members as safe functions over typed handles. | Representation | The headers are not written a second time; the values and fields are not counted as members of the port (`path-overrides.toml`). | vulkan |
+| A missing entry point is a null delegate, which fails when called. | A missing entry point is a function that stops the program when called. | Behaviour | The form of the tables of the bindings. The optional entry points are not called without their extension, as upstream. | vulkan |
+| `VulkanInstance.Create` names the application (unless the options do) and the engine after the framework. | Both names are `FerroUI`. | Behaviour | The name of the port. | vulkan |
+| With `UseDebug`, `CreateDebugUtilsMessengerEXT` is called whether or not `VK_EXT_debug_utils` was enabled; without the extension the delegate is null. | The messenger is created only when the extension was enabled. | Behaviour | The call without the extension would stop the program. | vulkan |
+| An enumeration (`vkEnumerate...`, `vkGet...` with a count) makes two calls. | The same two calls, repeated when the second answers `VK_INCOMPLETE` (the list grew in between). `vkEnumerateInstanceExtensionProperties` failing at its first call is a failure (upstream reads the result of the second only). | Behaviour | The loop the specification asks for. | vulkan |
+| Failures are exceptions (`VulkanException`). | `Result<_, VulkanException>` inside the crate, with upstream's messages; a panic with the same message where a contract cannot report (creating a context, beginning and ending a frame, importing an object). `VulkanPlatformGraphics::try_create` logs and returns `None`, as upstream catches. | Representation | Porting guide: exceptions. | vulkan |
+| `IVulkanInstance`, `IVulkanDevice`, the delegates of the options and the platform features (`Dictionary<Type, object>`) are plain objects. | `Send + Sync` and held in `Arc`: the platform graphics, which two threads share, hold them. The platform features map a `TypeId` to an `Arc` of the feature. | Representation | `IPlatformGraphics` is `Send + Sync` (`render-thread.md`). | vulkan |
+| The device lock is a monitor with a count and an owner thread. | A mutex and a condition variable with the same count and owner. | Representation | No reentrant lock in the standard library. | vulkan |
+| The Skia backend tests `is IVulkanPlatformGraphicsContext`; a surface is tested with `is IVulkanKhrSurfacePlatformSurface`. | The context announces itself through its optional features; a surface through `try_get_surface_kind`. | Representation | Porting guide: `is` on an interface. | vulkan |
+| `VulkanContext.Dispose` does nothing. | Disposes the command pool of its external objects feature and lets go of the feature. | Behaviour | The feature holds its context and the context its feature; without a collector the pair would never be freed. | vulkan |
+| `ImportSemaphore` leaves the semaphore it created when the import fails. | Destroys it before failing. | Behaviour | | vulkan |
+| `VulkanPlatformGraphics.GetSharedContext` stores the context it creates in `_currentSharedContext`, which nothing reads. | The field is not kept. | Representation | | vulkan |
+| `Utf8BufferArray` is disposable and has a finalizer. | Owned vectors, freed when dropped. | Representation | | vulkan |
+| `System.Version` for the API version of the options. | `ferroui_vulkan::Version` (major, minor, build). | Representation | | vulkan |
 
 ### iOS platform (`src/iOS/FerroUI.iOS/`)
 

@@ -2364,3 +2364,18 @@ reason = "the platform invokes of the C library and of `libwayland-cursor` with 
 [[rust_only]]
 path = "src/FerroUI.Wayland/server/cross_thread_result.rs"
 reason = "The result of work another thread does, awaited or waited for where it was asked: the `Task` of the original (`WaylandWorker.InvokeOobAsync`, a read or a write of a pipe on a pool thread, the handle of an export)"
+# ---------------------------------------------------------------- Avalonia.Vulkan
+
+[[map]]
+project = "Avalonia.Vulkan"
+upstream = ["UnmanagedInterop/VulkanEnums.cs"]
+kind = "replaced"
+rust = "unmanaged_interop/vulkan_enums.rs"
+reason = "the enumerations and flag sets of the Vulkan headers are those of the `ash` bindings (docs/porting/vulkan.md, section 3): each upstream name is an alias of the type of the bindings, which carries every value as an associated constant, so the values are not written a second time"
+
+[[map]]
+project = "Avalonia.Vulkan"
+upstream = ["UnmanagedInterop/VulkanStructs.cs"]
+kind = "replaced"
+rust = "unmanaged_interop/vulkan_structs.rs"
+reason = "the handles and structures of the Vulkan headers are those of the `ash` bindings (docs/porting/vulkan.md, section 3): each upstream name is an alias of the type of the bindings, whose fields are those of the headers in snake case"
