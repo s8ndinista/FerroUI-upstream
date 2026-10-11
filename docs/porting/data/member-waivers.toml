@@ -4093,6 +4093,286 @@ project = "Avalonia.X11"
 type = "Avalonia.X11.Screens.X11Screens.FallBackScreen"
 reason = "`X11Screen::new_fall_back`: a screen of the same type without a scaling provider, whose refresh does nothing"
 
+# ---------------------------------------------------------------- Avalonia.Wayland
+# The triage of 2026-10-11 (docs/porting/wayland-platform.md, section 12.2): what the scanner does not find because it
+# is written differently. Not waived, and open: the dmabuf swapchain, `ZwpLinuxDmabufV1` of the globals and a display
+# another toolkit owns (stage 3).
+
+[[waive]]
+project = "Avalonia.Wayland"
+type = "Avalonia.Wayland.Server.Persistent.WXdgShellSurface.XdgSurfaceListener"
+reason = "a listener class of the generated bindings of the original; the bindings of the port dispatch the events of a protocol object to the state of the worker, so the listener is the `Dispatch` implementation of the protocol object beside the object it belongs to (docs/porting/wayland-platform.md, section 2.1); in `server/persistent/w_surface.rs`"
+
+[[waive]]
+project = "Avalonia.Wayland"
+type = "Avalonia.Wayland.Server.Persistent.WXdgTopLevel.TopLevelListener"
+reason = "a listener class of the generated bindings of the original; the bindings of the port dispatch the events of a protocol object to the state of the worker, so the listener is the `Dispatch` implementation of the protocol object beside the object it belongs to (docs/porting/wayland-platform.md, section 2.1); in `server/persistent/w_surface.rs`"
+
+[[waive]]
+project = "Avalonia.Wayland"
+type = "Avalonia.Wayland.Server.Persistent.WXdgPopup.PopupListener"
+reason = "a listener class of the generated bindings of the original; the bindings of the port dispatch the events of a protocol object to the state of the worker, so the listener is the `Dispatch` implementation of the protocol object beside the object it belongs to (docs/porting/wayland-platform.md, section 2.1); in `server/persistent/w_surface.rs`"
+
+[[waive]]
+project = "Avalonia.Wayland"
+type = "*.WaylandDataDeviceListener"
+reason = "a listener class of the generated bindings of the original; the bindings of the port dispatch the events of a protocol object to the state of the worker, so the listener is the `Dispatch` implementation of the protocol object beside the object it belongs to (docs/porting/wayland-platform.md, section 2.1); in `server/transient/clipboard/wayland_data_device.rs`"
+
+[[waive]]
+project = "Avalonia.Wayland"
+type = "*.WaylandDataOfferListener"
+reason = "a listener class of the generated bindings of the original; the bindings of the port dispatch the events of a protocol object to the state of the worker, so the listener is the `Dispatch` implementation of the protocol object beside the object it belongs to (docs/porting/wayland-platform.md, section 2.1); in `server/transient/clipboard/wayland_data_offer.rs`"
+
+[[waive]]
+project = "Avalonia.Wayland"
+type = "*.WaylandDataSourceListener"
+reason = "a listener class of the generated bindings of the original; the bindings of the port dispatch the events of a protocol object to the state of the worker, so the listener is the `Dispatch` implementation of the protocol object beside the object it belongs to (docs/porting/wayland-platform.md, section 2.1); in `server/transient/clipboard/wayland_data_source.rs`"
+
+[[waive]]
+project = "Avalonia.Wayland"
+type = "Avalonia.Wayland.WaylandConversionExtensions"
+reason = "a class of extension methods: they are the functions of the module `wayland_conversion_extensions.rs` (`positioner_parameters_to_wayland`, `anchor_to_wayland`, `gravity_to_wayland`, `constraint_adjustment_to_wayland`)"
+
+[[waive]]
+project = "Avalonia.Wayland"
+type = "Avalonia.Wayland.AvaloniaWayland*Exception"
+member = "*innerException*"
+reason = "one error type with a kind (`FerroWaylandExceptionKind`) stands for the exception classes; an inner exception is `FerroWaylandException::with_inner`"
+
+[[waive]]
+project = "Avalonia.Wayland"
+type = "Avalonia.Wayland.AvaloniaWayland*Exception"
+member = "*(string? message)"
+reason = "one error type with a kind (`FerroWaylandExceptionKind`) stands for the exception classes; a kind is made with the arguments the backend makes it with (`new` of the kind)"
+
+[[waive]]
+project = "Avalonia.Wayland"
+type = "Avalonia.Wayland.AvaloniaWayland*Exception"
+member = "*Errno errno*"
+reason = "one error type with a kind (`FerroWaylandExceptionKind`) stands for the exception classes; `from_errno` of the flush and of the read error"
+
+[[waive]]
+project = "Avalonia.Wayland"
+type = "Avalonia.Wayland.AvaloniaWaylandProtocolErrorException"
+member = "*uint errorCode, string errorMessage*"
+reason = "one error type with a kind (`FerroWaylandExceptionKind`) stands for the exception classes; `FerroWaylandProtocolErrorException::with_code`"
+
+[[waive]]
+project = "Avalonia.Wayland"
+type = "Avalonia.Wayland.AvaloniaWaylandProtocolErrorException"
+member = "Error*"
+reason = "one error type with a kind (`FerroWaylandExceptionKind`) stands for the exception classes; the code and the message of a protocol error are the fields of `FerroWaylandExceptionKind::ProtocolError`"
+
+[[waive]]
+project = "Avalonia.Wayland"
+type = "Avalonia.Wayland.WaylandSurfaceCreateResult*"
+member = "WaylandSurfaceCreateResult(*"
+reason = "the primary constructor of a record: the struct is made with its fields"
+
+[[waive]]
+project = "Avalonia.Wayland"
+type = "Avalonia.Wayland.Screens.WaylandOutputSnapshot"
+member = "WaylandOutputSnapshot(*"
+reason = "the primary constructor of a record: the struct is made with its fields"
+
+[[waive]]
+project = "Avalonia.Wayland"
+type = "Avalonia.Wayland.Server.Persistent.WaylandCursorImage"
+member = "WaylandCursorImage(*"
+reason = "the primary constructor of a record: the struct is made with its fields"
+
+[[waive]]
+project = "Avalonia.Wayland"
+type = "Avalonia.Wayland.Server.Persistent.XdgPopupPositionerParams"
+member = "XdgPopupPositionerParams(*"
+reason = "the primary constructor of a record: the struct is made with its fields"
+
+[[waive]]
+project = "Avalonia.Wayland"
+type = "Avalonia.Wayland.Server.Transient.WaylandCursorManager.CursorEntry"
+member = "CursorEntry(*"
+reason = "the primary constructor of a record: the struct is made with its fields"
+
+[[waive]]
+project = "Avalonia.Wayland"
+type = "Avalonia.Wayland.WindowBaseImpl"
+member = "*"
+reason = "the base class of a window and of a popup: Rust has no implementation inheritance, so `WindowBaseImpl` is the state both hold (`base()`), and what the class implements of the window contracts (`ITopLevelImpl`, `IWindowBaseImpl`, `IOptionalFeatureProvider`, `IDisposable`: the compositor, the scaling, the handle, the surfaces, the position and the conversions of points, activation, topmost, the size hints, the transparency members, show, hide, the popup, dispose, the features) is implemented by `WindowImpl` and by `PopupImpl` each, as are its abstract members; the current sink and the surface proxy are fields of each; the output identities are set by the sink (`Sink::on_surface_outputs_changed`); `PostToUiThread` has no user in the original either"
+
+[[waive]]
+project = "Avalonia.Wayland"
+type = "Avalonia.Wayland.WindowBaseImpl.Sink"
+member = "*Device *"
+reason = "the devices of a sink are those of the state of its window (`WindowBaseImpl::mouse`, `touch`, `keyboard`), read through the parent of the sink"
+
+[[waive]]
+project = "Avalonia.Wayland"
+type = "Avalonia.Wayland.Server.WaylandWorker"
+member = "*Globals*"
+reason = "the worker of the port is two types (docs/porting/wayland-platform.md, section 4.2): the globals are a field of the state of the worker thread (`WaylandWorkerState::globals`)"
+
+[[waive]]
+project = "Avalonia.Wayland"
+type = "Avalonia.Wayland.Server.WaylandWorker"
+member = "*InputDispatchQueue*"
+reason = "the compositor of the framework, the queue of the raw input and the client are objects of the UI thread and belong to `WaylandWorkerClient` (`compositor`, `input_dispatch_queue`), which is made with the worker"
+
+[[waive]]
+project = "Avalonia.Wayland"
+type = "Avalonia.Wayland.Server.WaylandWorker"
+member = "Compositor Compositor*"
+reason = "the compositor of the framework, the queue of the raw input and the client are objects of the UI thread and belong to `WaylandWorkerClient` (`compositor`, `input_dispatch_queue`), which is made with the worker"
+
+[[waive]]
+project = "Avalonia.Wayland"
+type = "Avalonia.Wayland.Server.WaylandWorker"
+member = "*WaylandWorkerClient Client*"
+reason = "the compositor of the framework, the queue of the raw input and the client are objects of the UI thread and belong to `WaylandWorkerClient` (`compositor`, `input_dispatch_queue`), which is made with the worker"
+
+[[waive]]
+project = "Avalonia.Wayland"
+type = "Avalonia.Wayland.Server.WaylandWorker"
+member = "*PostWithCommit*"
+reason = "`WaylandWorkerClient::post_with_commit`: a command posted with a commit goes through the compositor of the framework, an object of the UI thread"
+
+[[waive]]
+project = "Avalonia.Wayland"
+type = "Avalonia.Wayland.Server.WaylandWorker"
+member = "Task InvokeOobAsync(Action cb)"
+reason = "the overload without a result is `invoke_oob_async` with the unit type"
+
+[[waive]]
+project = "Avalonia.Wayland"
+type = "Avalonia.Wayland.Server.WaylandWorker"
+member = "*out ExceptionDispatchInfo*"
+reason = "one `probe`, whose result is the connection or the error"
+
+[[waive]]
+project = "Avalonia.Wayland"
+type = "Avalonia.Wayland.Server.WaylandWorker"
+member = "*egisterPersistentObject*"
+reason = "the persistent objects are kept by kind and by number: `WaylandWorkerThread::register_top_level`, `register_popup`, `register_standard_cursor`, `register_bitmap_cursor`, `unregister_surface`, `destroy_cursor`"
+
+[[waive]]
+project = "Avalonia.Wayland"
+type = "Avalonia.Wayland.Server.WaylandWorkerClient"
+member = "*InvokeOobAsync*"
+reason = "`WaylandWorker::invoke_oob_async`, which the clipboard calls on the worker; the client has `invoke_oob` (a channel) for a wait"
+
+[[waive]]
+project = "Avalonia.Wayland"
+type = "Avalonia.Wayland.Server.WaylandPlatformGraphics.IWaylandGraphics"
+member = "*CreateRenderSurface*"
+reason = "the render surfaces of a window are handles made on the UI thread that name the surface of the worker; the GPU backend makes a render target for a surface, not a render surface (DEVIATIONS.md, Wayland platform)"
+
+[[waive]]
+project = "Avalonia.Wayland"
+type = "Avalonia.Wayland.Server.Transient.Rendering.WaylandEglWsiPlatformGraphics"
+member = "*CreateRenderSurface*"
+reason = "the render surfaces of a window are handles made on the UI thread that name the surface of the worker; the GPU backend makes a render target for a surface, not a render surface (DEVIATIONS.md, Wayland platform)"
+
+[[waive]]
+project = "Avalonia.Wayland"
+type = "Avalonia.Wayland.Server.Interop.WakeupFd"
+member = "*WakeupFd()"
+reason = "the two descriptors are owned (`OwnedFd`) and closed when the value is dropped"
+
+[[waive]]
+project = "Avalonia.Wayland"
+type = "Avalonia.Wayland.Server.Interop.WakeupFd"
+member = "void Dispose()"
+reason = "the two descriptors are owned (`OwnedFd`) and closed when the value is dropped"
+
+[[waive]]
+project = "Avalonia.Wayland"
+type = "Avalonia.Wayland.Server.Interop.WaylandConnection"
+member = "WaylandConnection(int fd)"
+reason = "`WaylandConnection::connect_to_fd`"
+
+[[waive]]
+project = "Avalonia.Wayland"
+type = "Avalonia.Wayland.Server.Interop.WaylandConnection"
+member = "*DispatchQueueOrWakeup(WlEventQueue*"
+reason = "one `dispatch_queue_or_wakeup`: a connection of the port has one queue"
+
+[[waive]]
+project = "Avalonia.Wayland"
+type = "Avalonia.Wayland.Server.Persistent.WSurface"
+member = "*"
+reason = "members that are written differently, because the surfaces of the worker are entries of its state found by number and not objects that hold the worker, the connection and the globals: the connection and the globals are given to a method that needs them (`ConnectionContext`, an argument) and the surface keeps the number of its connection (`current_connection_id`); `Disconnect` is `WaylandWorkerThread::unregister_surface`; the seven text input members are methods of `WaylandWorkerState` (`register_text_input_sink`, `set_text_input_active`, `abort_text_input_composition`, `set_text_input_cursor_rect`, `set_text_input_options`, `set_text_input_surrounding_text`, `reset_text_input`), which has the surface and the facade of the connection at once; `CanCommitOutOfBand` is `WXdgShellSurface::can_commit_out_of_band`; the render surfaces are made by the worker client (`create_top_level_handle`, `create_popup_handle`); `EnforceBufferCreationRoundtrip` is the member of `IWaylandFramebufferSurface` each kind of surface implements; `OnOutputsChanged` and `OnScaleChanged` are the value an event handler returns (`SurfaceChange`), which the shell surface applies (`apply_change`)"
+
+[[waive]]
+project = "Avalonia.Wayland"
+type = "Avalonia.Wayland.Server.Persistent.WXdgShellSurface"
+member = "*On*Changed*"
+reason = "the overrides are `WXdgShellSurface::apply_change`, which is given what an event of the surface changed (`SurfaceChange`)"
+
+[[waive]]
+project = "Avalonia.Wayland"
+type = "Avalonia.Wayland.Server.Persistent.WXdgShellSurface"
+member = "*OnConfigureBatchComplete*"
+reason = "a virtual method without a body of its own: `on_configure_batch_complete` of `WXdgTopLevel` and of `WXdgPopup`, called by the `Dispatch` implementation of `xdg_surface`"
+
+[[waive]]
+project = "Avalonia.Wayland"
+type = "Avalonia.Wayland.Server.Persistent.WXdgTopLevel"
+member = "*BasicInitCompletedTcs*"
+reason = "the sender of a channel (`basic_init_completed`), on which the worker sends the first sealed configure"
+
+[[waive]]
+project = "Avalonia.Wayland"
+type = "Avalonia.Wayland.Server.Persistent.WXdgTopLevel"
+member = "*RemoveExport*"
+reason = "`WXdgTopLevel::dispose_export`, which destroys the export and removes it"
+
+[[waive]]
+project = "Avalonia.Wayland"
+type = "Avalonia.Wayland.Server.Persistent.WaylandBitmapCursor"
+member = "*Globals*"
+reason = "the globals are given to `on_connected` (`ConnectionContext`)"
+
+[[waive]]
+project = "Avalonia.Wayland"
+type = "Avalonia.Wayland.Server.Persistent.Wayland*Cursor"
+member = "*void Destroy()"
+reason = "`WaylandWorkerThread::destroy_cursor`, which removes the cursor of either kind by its number and disconnects a bitmap cursor"
+
+[[waive]]
+project = "Avalonia.Wayland"
+type = "Avalonia.Wayland.Server.Persistent.XdgToplevelStates"
+member = "None*"
+reason = "the empty set of the flags (`XdgToplevelStates::empty()`)"
+
+[[waive]]
+project = "Avalonia.Wayland"
+type = "Avalonia.Wayland.Server.Transient.WaylandGlobals"
+member = "*GlobalRemoved*"
+reason = "the one subscriber of the event is the outputs tracker: the `Dispatch` implementation of the registry calls `WaylandOutputsTracker::on_global_removed` and the input dispatcher directly"
+
+[[waive]]
+project = "Avalonia.Wayland"
+type = "Avalonia.Wayland.Server.Transient.WaylandGlobals"
+member = "WaylandConnection Connection*"
+reason = "the globals keep the number of their connection (`connection_id`) and the handle of its queue; the connection is a field of the worker thread beside the state"
+
+[[waive]]
+project = "Avalonia.Wayland"
+type = "Avalonia.Wayland.Server.Transient.WaylandOutputsTracker.Output"
+member = "*OnWlOutputDone*"
+reason = "`WaylandOutputsTracker::on_output_done`: the tracker finds the output by its registry name"
+
+[[waive]]
+project = "Avalonia.Wayland"
+type = "Avalonia.Wayland.Server.Transient.XdgToplevelExport"
+member = "*GetUiThreadHandle*"
+reason = "`UiThreadHandle::new`: the handle of the UI thread is made there, from the number of the export and the result of its handle, which is what crosses from the worker"
+
+[[waive]]
+project = "Avalonia.Wayland"
+type = "Avalonia.Wayland.Server.Transient.Rendering.IWaylandFramebufferSurface"
+member = "*Globals*"
+reason = "the globals are an argument of `on_before_new_buffer_attached`"
+
 # ---------------------------------------------------------------- aliases of the waiver audit (2026-10-10)
 # Former waivers whose reason named the Rust item that stands for the member (docs/porting/waiver-audit.md,
 # class b). An alias is checked at every run: the member counts as present only while the item exists.
