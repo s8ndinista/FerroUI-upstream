@@ -2225,6 +2225,19 @@ mod native {
         unsafe { gl::wglDeleteContext(h(context)) != 0 }
     }
 
+    /// The session of the process (`ProcessIdToSessionId`): 0 is the session of services,
+    /// which has no desktop of a user; `None` when the system does not say.
+    pub fn current_session_id() -> Option<u32> {
+        #[link(name = "kernel32", kind = "raw-dylib")]
+        unsafe extern "system" {
+            fn GetCurrentProcessId() -> u32;
+            fn ProcessIdToSessionId(process_id: u32, session_id: *mut u32) -> i32;
+        }
+        let mut session = u32::MAX;
+        // SAFETY: a number of this frame the system writes to.
+        (unsafe { ProcessIdToSessionId(GetCurrentProcessId(), &mut session) } != 0).then_some(session)
+    }
+
     /// `wglMakeCurrent`: makes a context current on the calling thread with
     /// a device context; two zeros release the current context.
     pub fn wgl_make_current(dc: isize, context: isize) -> bool {

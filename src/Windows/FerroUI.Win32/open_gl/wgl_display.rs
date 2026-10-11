@@ -101,8 +101,8 @@ mod imp {
     use super::super::wgl_restore_context::WglRestoreContext;
     use super::{bootstrap_pixel_format_descriptor, context_attributes, pixel_format_attributes};
     use crate::interop::unmanaged_methods::{
-        choose_pixel_format, describe_pixel_format, load_library, set_pixel_format, wgl_create_context,
-        wgl_get_proc_address, wgl_make_current,
+        choose_pixel_format, current_session_id, describe_pixel_format, load_library, set_pixel_format,
+        wgl_create_context, wgl_delete_context, wgl_get_proc_address, wgl_make_current,
     };
     use crate::interop::unmanaged_methods::PixelFormatDescriptor;
     use ferroui_base::reactive::IDisposable;
@@ -195,6 +195,20 @@ mod imp {
         // context is current only inside a call), so the port does not
         // ask: the tests of the crate run on the threads of the harness.
         fn initialize_core() -> Initialized {
+            // Not in the reference. Session 0, where services run, has no desktop a person
+            // sees, and the OpenGL driver of a display adapter is not made for it: in the
+            // owner's virtual machine (the OpenGL 4.0 of Parallels) the test of the crate that
+            // creates the platform graphics ended its process there with an access violation,
+            // after the sentinel answers of `wglGetProcAddress` and the missing window and
+            // device context had been ruled out (the runs at 63f13c8c and fa67abc8;
+            // docs/porting/win32-platform.md, section 10.5). A process of session 0 does not
+            // ask the system for OpenGL: the mode is passed over there, as on a system without
+            // a driver, and the window renders in software.
+            if current_session_id() == Some(0) {
+                return Initialized::Failed(
+                    "the OpenGL of the system is not used in session 0 (a process without a desktop of a user)".to_owned(),
+                );
+            }
             let bootstrap_window = WglGdiResourceManager::create_offscreen_window();
             // Not in the reference: without a window (a process without a
             // desktop to create one on) the device context asked for would
@@ -208,16 +222,32 @@ mod imp {
                 WglGdiResourceManager::destroy_window(bootstrap_window);
                 return Initialized::NoBootstrapContext;
             }
+            // Every step is asked whether it succeeded before the next is taken (the reference
+            // goes on with whatever the steps answered): without a pixel format there is no
+            // context to create, and without a current context the entry points of the driver
+            // are not asked for.
+            let release = || {
+                WglGdiResourceManager::release_dc(bootstrap_window, bootstrap_dc);
+                WglGdiResourceManager::destroy_window(bootstrap_window);
+            };
             let mut default_pfd = bootstrap_pixel_format_descriptor();
             let mut default_pixel_format = choose_pixel_format(bootstrap_dc, &default_pfd);
-            set_pixel_format(bootstrap_dc, default_pixel_format, &default_pfd);
-
-            let bootstrap_context = wgl_create_context(bootstrap_dc);
-            if bootstrap_context == 0 {
+            if default_pixel_format == 0 || !set_pixel_format(bootstrap_dc, default_pixel_format, &default_pfd) {
+                release();
                 return Initialized::NoBootstrapContext;
             }
 
-            wgl_make_current(bootstrap_dc, bootstrap_context);
+            let bootstrap_context = wgl_create_context(bootstrap_dc);
+            if bootstrap_context == 0 {
+                release();
+                return Initialized::NoBootstrapContext;
+            }
+
+            if !wgl_make_current(bootstrap_dc, bootstrap_context) {
+                wgl_delete_context(bootstrap_context);
+                release();
+                return Initialized::NoBootstrapContext;
+            }
             let create_context_attribs = wgl_get_proc_address(c"wglCreateContextAttribsARB");
             let choose_pixel_format_arb = wgl_get_proc_address(c"wglChoosePixelFormatARB");
             let debug_message_callback = wgl_get_proc_address(c"glDebugMessageCallback");
