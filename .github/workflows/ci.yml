@@ -142,6 +142,16 @@ jobs:
       - name: Smoke run with the OpenGL of the system (WGL), or its fallback
         timeout-minutes: 5
         run: cargo run --locked -p ferroui-win32 --no-default-features --example win32_window -- --smoke --rendering wgl
+      # UI Automation (docs/porting/win32-platform.md, section 13). The example shows a window of
+      # controls; a client on a second thread with its own COM apartment gets the element of the
+      # window from its handle through the client interface of the system (CUIAutomation), walks
+      # the tree (control types, names, states, bounding rectangles of a button, a text box, a
+      # check box and a slider), invokes the button, toggles the check box, sets the text and the
+      # slider through their patterns, and hears of a focus change. No screen reader is run.
+      - name: Accessibility, the tree of a window through the client interface of UI Automation
+        if: ${{ !cancelled() }}
+        timeout-minutes: 5
+        run: cargo run --locked -p ferroui-win32 --no-default-features --example win32_window -- --a11y
       # A feature set of Skia without a published binary makes the Skia bindings build Skia from
       # source (an hour, with LLVM). This asks the release of the bindings which sets exist for
       # the target: the raster set the desktop entry point needs today, which gates the steps
@@ -361,6 +371,21 @@ jobs:
           echo "::endgroup::"
           ls -l target/screenshots/extended || result=1
           exit $result
+      # The tree of the catalog as a client of UI Automation reads it: every element of the main
+      # window with its control type, name, states and bounding rectangle in a file, and the count
+      # of each control type in the log.
+      - name: The accessibility tree of the catalog
+        if: ${{ !cancelled() && steps.skia.outputs.raster == 'true' }}
+        timeout-minutes: 15
+        env:
+          FERROUI_SMOKE_A11Y_TREE: target/screenshots/accessibility/control-catalog-tree.txt
+          FERROUI_SMOKE_RENDERING: software
+          RUST_BACKTRACE: 1
+        run: |
+          cargo build --locked -p control-catalog-desktop
+          timeout 600 ./target/debug/control-catalog-desktop.exe
+          wc -l "$FERROUI_SMOKE_A11Y_TREE"
+          tail -n 1 "$FERROUI_SMOKE_A11Y_TREE"
       - name: Keep the pictures of the catalog
         if: ${{ always() && steps.skia.outputs.raster == 'true' }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
@@ -403,6 +428,10 @@ jobs:
       - name: Smoke run with the OpenGL of the system (WGL), or its fallback
         timeout-minutes: 5
         run: cargo run --locked --target aarch64-pc-windows-msvc -p ferroui-win32 --no-default-features --example win32_window -- --smoke --rendering wgl
+      - name: Accessibility, the tree of a window through the client interface of UI Automation
+        if: ${{ !cancelled() }}
+        timeout-minutes: 5
+        run: cargo run --locked --target aarch64-pc-windows-msvc -p ferroui-win32 --no-default-features --example win32_window -- --a11y
       - name: Build with ANGLE (the time of the mozangle build)
         if: ${{ !cancelled() }}
         timeout-minutes: 90

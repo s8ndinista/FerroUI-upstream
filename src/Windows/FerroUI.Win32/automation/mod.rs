@@ -9,6 +9,9 @@
 
 pub mod interop;
 pub mod marshalling;
+#[cfg(windows)]
+#[doc(hidden)]
+pub mod testing;
 
 mod automation_node;
 mod automation_node_expand_collapse;

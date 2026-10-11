@@ -5,6 +5,7 @@
 //! ```text
 //! cargo run -p ferroui-win32 --example win32_window              # stays until the window is closed
 //! cargo run -p ferroui-win32 --example win32_window -- --smoke   # checks the backend and exits
+//! cargo run -p ferroui-win32 --example win32_window -- --a11y    # checks UI Automation and exits
 //! ```
 //!
 //! With `--smoke` the example runs without a user: it draws a number of
@@ -16,6 +17,11 @@
 //! exit code is 0 only if every frame was drawn and every check passed.
 //! This run is how the backend is proved on a Windows machine without a
 //! person, the CI runner first of all, so its output is meant to be read.
+//!
+//! With `--a11y` the example shows a window of controls instead, and a
+//! client of UI Automation on a second thread reads their tree and drives
+//! their patterns through the client interface of the system
+//! (`win32_window/a11y.rs`).
 //!
 //! The renderer is the Vello backend in its CPU mode: it has no C or C++
 //! sources, so the example is checked for a Windows target on any host. The
@@ -33,6 +39,10 @@
 //! what was drawn, so the path to the GPU is checked, not assumed.
 //! `--angle-probe` adds what ANGLE reports of itself.
 
+#[cfg(windows)]
+#[path = "win32_window/a11y.rs"]
+mod a11y;
+
 #[cfg(not(windows))]
 fn main() {
     eprintln!("win32_window: this example only runs on Windows");
@@ -49,7 +59,9 @@ fn main() -> std::process::ExitCode {
     if trace {
         teardown::at_start();
     }
-    let code = windows::run();
+    // `--a11y`: the accessibility phase, a run of its own with a window of controls
+    // (win32_window/a11y.rs).
+    let code = if std::env::args().any(|argument| argument == "--a11y") { a11y::run() } else { windows::run() };
     // The last line the program prints itself: what follows is the end of the process (the
     // values of the thread, the libraries).
     println!("main returns");
