@@ -38,8 +38,8 @@ use ferroui_vello::{VelloApplicationExtensions, VelloOptions, VelloRenderingMode
 use ferroui_win32::{Win32ApplicationExtensions, Win32PlatformOptions, Win32RenderingMode};
 use std::process::ExitCode;
 use ferroui_win32::automation::testing::{
-    control_type_name, count_by_control_type, uninitialize_com, Element, ElementInfo, FocusLog, UiaClient, INVOKE_PATTERN,
-    RANGE_VALUE_PATTERN, TOGGLE_PATTERN, VALUE_PATTERN,
+    control_type_name, count_by_control_type, foreground_window, uninitialize_com, Element, ElementInfo, FocusLog, UiaClient,
+    INVOKE_PATTERN, RANGE_VALUE_PATTERN, TOGGLE_PATTERN, VALUE_PATTERN,
 };
 use std::cell::{Cell, RefCell};
 use std::rc::Rc;
@@ -123,6 +123,8 @@ thread_local! {
 #[derive(Default)]
 struct Report {
     lines: Vec<(bool, String)>,
+    /// Lines that are no checks.
+    infos: Vec<String>,
 }
 
 impl Report {
@@ -395,8 +397,28 @@ fn client(handle: isize, clicks: &AtomicU32, report: &mut Report) -> Result<(), 
         report.check(false, format!("IUIAutomationElement::SetFocus on the slider: {error}"));
     }
     let heard = |log: &FocusLog| log.lock().unwrap_or_else(std::sync::PoisonError::into_inner).clone();
-    let arrived = wait_until(Duration::from_secs(10), || heard(&log).iter().any(|entry| entry.starts_with("Slider")));
-    report.check(arrived, format!("a focus changed event arrived for the slider after IUIAutomationElement::SetFocus: {:?}", heard(&log)));
+    // The events of the focus a client hears are those of the desktop. Where another window has
+    // the foreground (a runner of the CI service shows a dialog of the system over everything:
+    // run 38099421796 heard of an element of another process and not of the slider, which had
+    // the focus of its window), whether the event of the slider arrives is not this run's to
+    // say: it is checked where the window of the run is the foreground window, and reported
+    // as not checked elsewhere. That a node raises the event is a test of the crate.
+    let foreground = foreground_window();
+    let ours = foreground == handle;
+    let arrived = wait_until(Duration::from_secs(if ours { 10 } else { 3 }), || {
+        heard(&log).iter().any(|entry| entry.starts_with("Slider"))
+    });
+    if ours || arrived {
+        report.check(
+            arrived,
+            format!("a focus changed event arrived for the slider after IUIAutomationElement::SetFocus: {:?}", heard(&log)),
+        );
+    } else {
+        report.infos.push(format!(
+            "the focus changed event of the slider was not checked: the foreground window of the desktop is {foreground:#x}, not the window of the run ({handle:#x}); the handler heard {:?}",
+            heard(&log)
+        ));
+    }
     let has_focus = slider.has_keyboard_focus()?;
     report.check(has_focus, format!("the slider has the keyboard focus: {has_focus}"));
     let focused = match client.focused_element()? {
@@ -429,6 +451,9 @@ fn finish(mut report: Report) {
     let failed = report.lines.iter().filter(|(ok, _)| !ok).count();
     for (ok, text) in &report.lines {
         println!("{} {text}", if *ok { "[ ok ]" } else { "[FAIL]" });
+    }
+    for text in &report.infos {
+        println!("[info] {text}");
     }
     println!("accessibility: {} checks, {failed} failed", report.lines.len());
     FAILED.with(|count| count.set(failed));
