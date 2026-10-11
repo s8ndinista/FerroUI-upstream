@@ -1,8 +1,7 @@
 //! The start of the backend (the port of `WaylandPlatform.cs`).
-//!
-//! Not bound yet (`docs/porting/wayland-platform.md`, stage 2): the
-//! clipboard and the drag source.
 
+use crate::clipboard::wayland_clipboard_impl::WaylandClipboardImpl;
+use crate::clipboard::wayland_drag_source::WaylandDragSource;
 use crate::screens::i_wayland_outputs_sink::{IWaylandOutputsSink, WaylandOutputsSinkProxy};
 use crate::screens::snapshot_screens_impl::SnapshotScreensImpl;
 use crate::server::wayland_worker::WaylandWorker;
@@ -12,7 +11,9 @@ use crate::ferro_wayland_exception::FerroWaylandException;
 use crate::wayland_glib_dispatcher::WaylandGlibDispatcher;
 use crate::wayland_platform_options::WaylandPlatformOptions;
 use crate::wayland_top_level_factory::WaylandTopLevelFactory;
-use ferroui_base::input::platform::{KeyGestureFormatInfo, PlatformHotkeyConfiguration};
+use ferroui_base::input::platform::{
+    Clipboard, IClipboard, IClipboardImpl, IPlatformDragSource, KeyGestureFormatInfo, PlatformHotkeyConfiguration,
+};
 use ferroui_base::input::{IKeyboardDevice, KeyModifiers, KeyboardDevice};
 use ferroui_base::platform::{ICursorFactory, IPlatformSettings, ManagedDispatcherImpl};
 use ferroui_base::rendering::IRenderLoop;
@@ -94,6 +95,11 @@ impl WaylandPlatform {
         // that a fallback backend finds the media context and the dispatcher untouched.
         let client = WaylandWorkerClient::new(worker.clone());
 
+        let clipboard_impl = WaylandClipboardImpl::new(worker.clone());
+        let clipboard: Rc<dyn IClipboard> = Clipboard::new(clipboard_impl.clone());
+        let clipboard_impl: Rc<dyn IClipboardImpl> = clipboard_impl;
+        let drag_source: Rc<dyn IPlatformDragSource> = Rc::new(WaylandDragSource::new());
+
         let keyboard = KeyboardDevice::new();
         let windowing_platform: Rc<dyn IWindowingPlatform> =
             Rc::new(WaylandTopLevelFactory::new(client.clone(), keyboard.clone()));
@@ -116,6 +122,12 @@ impl WaylandPlatform {
             .to_constant(keyboard_device)
             .bind::<dyn ICursorFactory>()
             .to_constant(cursor_factory)
+            .bind::<dyn IClipboardImpl>()
+            .to_constant(clipboard_impl)
+            .bind::<dyn IClipboard>()
+            .to_constant(clipboard)
+            .bind::<dyn IPlatformDragSource>()
+            .to_constant(drag_source)
             .bind::<dyn IPlatformSettings>()
             .to_constant(platform_settings)
             .bind::<dyn IMountedVolumeInfoProvider>()

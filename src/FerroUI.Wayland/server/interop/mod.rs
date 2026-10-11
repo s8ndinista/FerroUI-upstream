@@ -6,6 +6,7 @@
 //! ported: their declarations are those of the crates `wayland-egl` and
 //! `xkbcommon-dl`.
 
+pub mod pipe2_stream;
 pub mod unsafe_native_methods;
 pub mod wakeup_fd;
 pub mod wayland_connection;

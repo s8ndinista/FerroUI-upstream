@@ -5,16 +5,19 @@
 //! posted to the UI thread at the default priority, with its arguments as
 //! values.
 //!
-//! The members of drag and drop (`OnDragEnter`, `OnDragMotion`, `OnDragLeave`,
-//! `OnDrop`) belong to a later part of stage 2 of
-//! `docs/porting/wayland-platform.md`.
+//! The members of drag and drop exist on Linux only: they carry the token of
+//! an offer, which is an object of the connection.
 
 use super::decoration_mode::DecorationMode;
 use super::xdg_configure_batch::XdgConfigureBatch;
 use super::xdg_popup_configure_batch::XdgPopupConfigureBatch;
 use crate::screens::wayland_output_snapshot::WaylandOutputId;
 use crate::server::wayland_marshallers::UiThreadRef;
+#[cfg(target_os = "linux")]
+use crate::server::transient::clipboard::wayland_offer_cookie::WaylandOfferCookie;
 use ferroui_base::input::raw::RawPointerEventType;
+#[cfg(target_os = "linux")]
+use ferroui_base::input::DragDropEffects;
 use ferroui_base::input::{Key, PhysicalKey, RawInputModifiers};
 use ferroui_base::threading::Dispatcher;
 use ferroui_base::{Point, Vector};
@@ -51,6 +54,22 @@ pub trait IWSurfaceEventSink {
     fn on_key_up(&self, timestamp: u64, key: Key, modifiers: RawInputModifiers, physical_key: PhysicalKey, key_symbol: Option<String>);
     fn on_keyboard_leave(&self);
     fn on_key_repeat_info(&self, rate: i32, delay: i32);
+
+    #[cfg(target_os = "linux")]
+    fn on_drag_enter(
+        &self,
+        position: Point,
+        mime_types: Vec<String>,
+        offer_cookie: Arc<WaylandOfferCookie>,
+        source_effects: DragDropEffects,
+        modifiers: RawInputModifiers,
+    );
+    #[cfg(target_os = "linux")]
+    fn on_drag_motion(&self, position: Point, modifiers: RawInputModifiers);
+    #[cfg(target_os = "linux")]
+    fn on_drag_leave(&self);
+    #[cfg(target_os = "linux")]
+    fn on_drop(&self, position: Point, modifiers: RawInputModifiers);
 
     /// Compositor's preferred render scale for this surface changed.
     /// Either an integer (wl_surface preferred_buffer_scale / wl_output max)
@@ -181,6 +200,33 @@ impl WSurfaceEventSinkProxy {
 
     pub fn on_key_repeat_info(&self, rate: i32, delay: i32) {
         self.target.post(move |sink| sink.on_key_repeat_info(rate, delay));
+    }
+
+    #[cfg(target_os = "linux")]
+    pub fn on_drag_enter(
+        &self,
+        position: Point,
+        mime_types: Vec<String>,
+        offer_cookie: Arc<WaylandOfferCookie>,
+        source_effects: DragDropEffects,
+        modifiers: RawInputModifiers,
+    ) {
+        self.target.post(move |sink| sink.on_drag_enter(position, mime_types, offer_cookie, source_effects, modifiers));
+    }
+
+    #[cfg(target_os = "linux")]
+    pub fn on_drag_motion(&self, position: Point, modifiers: RawInputModifiers) {
+        self.target.post(move |sink| sink.on_drag_motion(position, modifiers));
+    }
+
+    #[cfg(target_os = "linux")]
+    pub fn on_drag_leave(&self) {
+        self.target.post(|sink| sink.on_drag_leave());
+    }
+
+    #[cfg(target_os = "linux")]
+    pub fn on_drop(&self, position: Point, modifiers: RawInputModifiers) {
+        self.target.post(move |sink| sink.on_drop(position, modifiers));
     }
 
     pub fn on_scale_changed(&self, scale: f64) {

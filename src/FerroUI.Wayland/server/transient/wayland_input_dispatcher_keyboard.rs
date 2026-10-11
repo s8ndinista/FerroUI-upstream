@@ -164,6 +164,9 @@ impl Dispatch<WlKeyboard, u32> for WaylandWorkerState {
         _qhandle: &QueueHandle<Self>,
     ) {
         with_seat(state, *data, |seat, cx| {
+            if let wl_keyboard::Event::Enter { serial, .. } | wl_keyboard::Event::Key { serial, .. } = &event {
+                seat.note_input_serial(*serial);
+            }
             let keyboard_modifiers = seat.keyboard_modifiers;
             if let Some(handler) = &mut seat.keyboard_handler {
                 if let Some(modifiers) = handler.on_event(event, keyboard_modifiers, cx) {

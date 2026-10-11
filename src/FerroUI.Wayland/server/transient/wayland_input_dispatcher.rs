@@ -7,9 +7,8 @@
 //! of the port cannot be captured by closures while the state of the worker
 //! is borrowed for the dispatch.
 //!
-//! The data device of a seat (clipboard, drag and drop, with the cursor of a
-//! drag and the surface a drag starts from) and the text input facade belong
-//! to stage 2 of `docs/porting/wayland-platform.md`.
+//! The text input facade belongs to the last part of stage 2 of
+//! `docs/porting/wayland-platform.md`.
 
 use ferroui_base::input::raw::RawPointerEventType;
 use ferroui_base::input::RawInputModifiers;
@@ -185,13 +184,18 @@ mod imp {
     use crate::server::persistent::w_surface::{shell_surface_of, WSurfaceId, WXdgPopup, WXdgShellSurface, WXdgTopLevel, WlSurfaceData};
     use crate::server::persistent::wayland_cursor::{resolve_cursor, WaylandCursorId, WaylandCursors};
     use crate::server::persistent::wayland_input_event_cookie::WaylandInputEventCookie;
+    use crate::server::transient::clipboard::wayland_data_device::WaylandDataDevice;
+    use crate::server::transient::clipboard::wayland_data_offer::WaylandDataOffer;
     use crate::server::transient::wayland_cursor_manager::WaylandCursorManager;
     use crate::server::transient::wayland_globals::WaylandGlobals;
     use crate::server::transient::wayland_input_dispatcher_keyboard::KeyboardHandler;
-    use crate::server::wayland_worker::WaylandWorkerState;
+    use crate::server::wayland_worker::{WaylandWorker, WaylandWorkerState};
+    use ferroui_base::input::StandardCursorType;
     use ferroui_base::Point;
     use std::collections::HashMap;
     use std::sync::Arc;
+    use wayland_client::backend::ObjectId;
+    use wayland_client::protocol::wl_data_device_manager::WlDataDeviceManager;
     use wayland_client::protocol::wl_pointer::{self, WlPointer};
     use wayland_client::protocol::wl_registry::WlRegistry;
     use wayland_client::protocol::wl_seat::{self, WlSeat};
@@ -214,6 +218,7 @@ mod imp {
         pub cursors: &'a WaylandCursors,
         pub cursor_manager: &'a WaylandCursorManager,
         pub connection_id: u64,
+        pub worker: &'a Arc<WaylandWorker>,
     }
 
     impl InputContext<'_> {
@@ -246,27 +251,86 @@ mod imp {
             }
         }
 
+        /// Sets the pointer cursor to provide visual DnD action feedback.
+        /// Called from the Wayland thread when `wl_data_source.action` fires during an active drag.
+        pub(crate) fn set_dnd_cursor(&self, cursor_type: StandardCursorType, cursor_manager: &WaylandCursorManager) {
+            for seat in self.seats.values() {
+                seat.set_dnd_cursor(cursor_type, cursor_manager);
+            }
+        }
+
+        /// Returns the `wl_surface` that currently has pointer focus.
+        /// Used as the origin surface for `wl_data_device.start_drag`.
+        pub(crate) fn find_origin_surface(&self) -> Option<WlSurface> {
+            self.seats_in_order().find_map(|seat| seat.pointer_focused_wl_surface().cloned())
+        }
+
+        /// The seats in the order of their registry names (the reference has them in the
+        /// order they were announced).
+        fn seats_in_order(&self) -> impl Iterator<Item = &Seat> {
+            let mut names: Vec<u32> = self.seats.keys().copied().collect();
+            names.sort_unstable();
+            names.into_iter().filter_map(|name| self.seats.get(&name))
+        }
+
+        /// Returns the first available data device, or `None` if no seat has one.
+        /// Used by the clipboard implementation to access the active selection.
+        pub(crate) fn get_data_device(&self) -> Option<&WaylandDataDevice> {
+            self.seats_in_order().find_map(|seat| seat.data_device.as_ref())
+        }
+
+        /// The first available data device, to change it.
+        pub(crate) fn get_data_device_mut(&mut self) -> Option<&mut WaylandDataDevice> {
+            let seat = self.get_data_device()?.seat();
+            self.data_device_of_mut(seat)
+        }
+
+        /// The data device of a seat.
+        pub(crate) fn data_device_of_mut(&mut self, seat: u32) -> Option<&mut WaylandDataDevice> {
+            self.seats.get_mut(&seat)?.data_device.as_mut()
+        }
+
+        /// The offer of the identity `id`, whichever data device has it.
+        pub(crate) fn find_data_offer_mut(&mut self, id: &ObjectId) -> Option<&mut WaylandDataOffer> {
+            self.seats.values_mut().find_map(|seat| seat.data_device.as_mut()?.find_offer_mut(id))
+        }
+
+        #[allow(clippy::too_many_arguments)]
         pub(crate) fn on_seat_added(
             &mut self,
             global_name: u32,
             registry: &WlRegistry,
             version: u32,
             queue_handle: &QueueHandle<WaylandWorkerState>,
+            data_device_manager: Option<&WlDataDeviceManager>,
+            worker: &Arc<WaylandWorker>,
         ) {
-            let seat = Seat::new(registry, global_name, version, queue_handle);
+            let mut seat = Seat::new(registry, global_name, version, queue_handle);
+            seat.ensure_data_device(data_device_manager, worker, queue_handle);
             self.seats.insert(global_name, seat);
         }
 
-        /// The globals of the connection are bound. The reference makes the text input facade
-        /// here and gives every seat its data device: both belong to stage 2.
-        pub(crate) fn on_initial_globals_bound(&mut self) {}
-
-        pub(crate) fn on_seat_removed(&mut self, global_name: u32) {
-            if let Some(seat) = self.seats.remove(&global_name) {
-                seat.dispose();
+        /// Called once after the globals have been bound. Backfills the data devices for
+        /// any seats that were announced before this point. The reference also makes the
+        /// text input facade here, which belongs to the last part of stage 2.
+        pub(crate) fn on_initial_globals_bound(
+            &mut self,
+            data_device_manager: Option<&WlDataDeviceManager>,
+            worker: &Arc<WaylandWorker>,
+            queue_handle: &QueueHandle<WaylandWorkerState>,
+        ) {
+            for seat in self.seats.values_mut() {
+                seat.ensure_data_device(data_device_manager, worker, queue_handle);
             }
         }
 
+        /// Releases a seat that was taken away. The source its data device had set as the
+        /// selection is returned for the caller to dispose.
+        pub(crate) fn on_seat_removed(&mut self, global_name: u32) -> Option<ObjectId> {
+            self.seats.remove(&global_name).and_then(Seat::dispose)
+        }
+
+        /// Releases every seat. The data sources are disposed by the globals, which keep them.
         pub fn dispose(&mut self) {
             for (_, seat) in self.seats.drain() {
                 seat.dispose();
@@ -290,6 +354,7 @@ mod imp {
         pointer_handler: Option<PointerHandler>,
         touch_handler: Option<TouchHandler>,
         pub(crate) keyboard_handler: Option<KeyboardHandler>,
+        pub(crate) data_device: Option<WaylandDataDevice>,
         pub(crate) keyboard_modifiers: RawInputModifiers,
     }
 
@@ -302,7 +367,47 @@ mod imp {
                 pointer_handler: None,
                 touch_handler: None,
                 keyboard_handler: None,
+                data_device: None,
                 keyboard_modifiers: RawInputModifiers::NONE,
+            }
+        }
+
+        /// The `wl_surface` currently under pointer focus, exposed for DnD origin lookup.
+        fn pointer_focused_wl_surface(&self) -> Option<&WlSurface> {
+            self.pointer_handler.as_ref()?.focused_wl_surface.as_ref()
+        }
+
+        /// Creates the data device for this seat if a `wl_data_device_manager` is available
+        /// and the device hasn't been created yet. Called when the seat is made and also after
+        /// the manager global becomes available (seats can be announced before the manager).
+        fn ensure_data_device(
+            &mut self,
+            data_device_manager: Option<&WlDataDeviceManager>,
+            worker: &Arc<WaylandWorker>,
+            queue_handle: &QueueHandle<WaylandWorkerState>,
+        ) {
+            if self.data_device.is_some() {
+                return;
+            }
+
+            let Some(manager) = data_device_manager else {
+                return;
+            };
+
+            let wl_data_device = manager.get_data_device(&self.wl_seat, queue_handle, self.global_name);
+            self.data_device = Some(WaylandDataDevice::new(wl_data_device, self.global_name, worker.clone()));
+        }
+
+        /// Records the serial of an input event that can authorize `set_selection`.
+        pub(crate) fn note_input_serial(&mut self, serial: u32) {
+            if let Some(data_device) = &mut self.data_device {
+                data_device.last_input_serial = serial;
+            }
+        }
+
+        fn set_dnd_cursor(&self, cursor_type: StandardCursorType, cursor_manager: &WaylandCursorManager) {
+            if let Some(handler) = &self.pointer_handler {
+                handler.set_dnd_cursor(cursor_type, cursor_manager);
             }
         }
 
@@ -335,7 +440,9 @@ mod imp {
             }
         }
 
-        fn dispose(self) {
+        /// Releases the seat and its devices. The source the data device had set as the
+        /// selection is returned for the caller to dispose.
+        fn dispose(self) -> Option<ObjectId> {
             if let Some(handler) = self.pointer_handler {
                 handler.dispose();
             }
@@ -345,8 +452,10 @@ mod imp {
             if let Some(handler) = self.keyboard_handler {
                 handler.dispose();
             }
+            let active_source = self.data_device.and_then(WaylandDataDevice::dispose);
             // `wl_seat.release` exists from version 5, the least the seat is bound with.
             self.wl_seat.release();
+            active_source
         }
 
         fn notify_cursor_changed(&self, surface: WSurfaceId, cx: &InputContext<'_>) {
@@ -425,6 +534,22 @@ mod imp {
             }
         }
 
+        /// Sets the pointer cursor to reflect the current DnD action.
+        /// Called from the `action` callback of a data source during an active drag source operation.
+        ///
+        /// TODO: Weston does not honor `wl_pointer.set_cursor` during drag.
+        /// To support Weston, we'd need to attach cursor buffers to the drag icon surface
+        /// passed to `wl_data_device.start_drag`. Our current approach matches Qt behavior
+        /// and works correctly with KWin/Mutter. Weston compat is low priority.
+        fn set_dnd_cursor(&self, cursor_type: StandardCursorType, cursor_manager: &WaylandCursorManager) {
+            match cursor_manager.get_cursor(cursor_type) {
+                Some(cursor) => {
+                    self.pointer.set_cursor(self.last_enter_serial, Some(&cursor.surface), cursor.hotspot_x, cursor.hotspot_y);
+                }
+                None => self.pointer.set_cursor(self.last_enter_serial, None, 0, 0),
+            }
+        }
+
         fn dispose(self) {
             self.pointer.release();
         }
@@ -469,7 +594,7 @@ mod imp {
                     let position = self.pointer_position;
                     let cookie = pressed.then(|| {
                         let cookie: PlatformInputEventCookie =
-                            Arc::new(WaylandInputEventCookie::new(seat.wl_seat.clone(), serial, cx.connection_id));
+                            Arc::new(WaylandInputEventCookie::new(seat.wl_seat.clone(), serial, cx.connection_id, cx.worker.clone()));
                         cookie
                     });
                     self.frame_actions.push(PointerAction::Button { time, serial, type_, modifiers, position, cookie });
@@ -601,7 +726,7 @@ mod imp {
                     let shell_surface = find_surface_for_wl_surface(&surface);
                     let position = Point::new(x, y);
                     let cookie: PlatformInputEventCookie =
-                        Arc::new(WaylandInputEventCookie::new(seat.wl_seat.clone(), serial, cx.connection_id));
+                        Arc::new(WaylandInputEventCookie::new(seat.wl_seat.clone(), serial, cx.connection_id, cx.worker.clone()));
                     self.frame_actions.push(TouchAction::Down { time, id, shell_surface, position, cookie });
                 }
                 wl_touch::Event::Motion { time, id, x, y } => {
@@ -652,9 +777,9 @@ mod imp {
         seat_name: u32,
         f: impl FnOnce(&mut Seat, &InputContext<'_>) -> R,
     ) -> Option<R> {
-        let WaylandWorkerState { globals, top_levels, popups, cursors, .. } = state;
+        let WaylandWorkerState { globals, top_levels, popups, cursors, worker, .. } = state;
         let WaylandGlobals { input_dispatcher, cursor_manager, connection_id, .. } = globals.as_mut()?;
-        let cx = InputContext { top_levels, popups, cursors, cursor_manager, connection_id: *connection_id };
+        let cx = InputContext { top_levels, popups, cursors, cursor_manager, connection_id: *connection_id, worker };
         let seat = input_dispatcher.seat_mut(seat_name)?;
         Some(f(seat, &cx))
     }
@@ -686,6 +811,9 @@ mod imp {
             _qhandle: &QueueHandle<Self>,
         ) {
             with_seat(state, *data, |seat, cx| {
+                if let wl_pointer::Event::Button { serial, .. } = &event {
+                    seat.note_input_serial(*serial);
+                }
                 let Seat { wl_seat, pointer_handler, keyboard_modifiers, .. } = seat;
                 if let Some(handler) = pointer_handler {
                     handler.on_event(event, &SeatInfo { wl_seat, keyboard_modifiers: *keyboard_modifiers }, cx);
@@ -704,6 +832,9 @@ mod imp {
             _qhandle: &QueueHandle<Self>,
         ) {
             with_seat(state, *data, |seat, cx| {
+                if let wl_touch::Event::Down { serial, .. } = &event {
+                    seat.note_input_serial(*serial);
+                }
                 let Seat { wl_seat, touch_handler, keyboard_modifiers, .. } = seat;
                 if let Some(handler) = touch_handler {
                     handler.on_event(event, &SeatInfo { wl_seat, keyboard_modifiers: *keyboard_modifiers }, cx);
