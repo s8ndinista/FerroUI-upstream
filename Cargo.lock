@@ -463,6 +463,7 @@ dependencies = [
  "ferroui-base",
  "ferroui-controls",
  "ferroui-desktop",
+ "ferroui-linuxframebuffer",
  "ferroui-vello",
  "ferroui-win32",
  "ferroui-x11",

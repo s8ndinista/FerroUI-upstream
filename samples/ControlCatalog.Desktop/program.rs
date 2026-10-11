@@ -53,6 +53,9 @@ mod embed_sample_gtk;
 #[path = "NativeControls/Gtk/gtk_helper.rs"]
 mod gtk_helper;
 
+#[cfg(target_os = "linux")]
+mod linux_framebuffer;
+
 use control_catalog::App;
 use ferroui_base::logging::LogEventLevel;
 use ferroui_base::media::imaging::{Bitmap, BitmapEncoderOptions, PngBitmapEncoderOptions, RenderTargetBitmap};
@@ -68,6 +71,15 @@ fn main() -> std::process::ExitCode {
     let args: Vec<String> = std::env::args().skip(1).collect();
 
     let builder = build_ferro_app();
+
+    // As the desktop entry point of the reference: `--fbdev` runs the
+    // catalog on the Linux framebuffer platform (`--drm` waits for the DRM
+    // output of that platform).
+    #[cfg(target_os = "linux")]
+    if args.iter().any(|arg| arg == "--fbdev") {
+        let exit_code = linux_framebuffer::start(builder, &args);
+        return std::process::ExitCode::from(exit_code as u8);
+    }
 
     let exit_code = builder.start_with_classic_desktop_lifetime(&args);
     // With `FERROUI_VELLO_PERF` the Vello backend says where the time of its
