@@ -10,8 +10,8 @@ The master status of the port: every upstream project, file, type and member (pu
 
 Two numbers, because one hides what the other shows.
 
-1. **Of what is in scope: 93.9%.** The 33 upstream projects that are in scope have 32988 members (public, protected and internal) in files that apply to the port. 28277 have a counterpart, 1843 are missing and 2868 are waived: declared not ported, each with a reason ([waiver-audit.md](waiver-audit.md)). The percentage is `present / (total - waived)`. It says nothing about projects that are out of scope, and it counts a waived member as if it did not exist.
-2. **Of everything upstream has: 75.6%.** Every C# source project of the extraction, in scope or not, has 37391 members; the port has a counterpart for 28277. The total includes the 2868 waived members, the 1132 members of files marked not applicable and the 3271 members of projects that are out of scope or not started. The rest of that distance is what [REMAINING.md](REMAINING.md) lists; part of it is never ported by design (the waived and not applicable members), so this number does not reach 100.
+1. **Of what is in scope: 94.2%.** The 33 upstream projects that are in scope have 32988 members (public, protected and internal) in files that apply to the port. 28368 have a counterpart, 1752 are missing and 2868 are waived: declared not ported, each with a reason ([waiver-audit.md](waiver-audit.md)). The percentage is `present / (total - waived)`. It says nothing about projects that are out of scope, and it counts a waived member as if it did not exist.
+2. **Of everything upstream has: 75.9%.** Every C# source project of the extraction, in scope or not, has 37391 members; the port has a counterpart for 28368. The total includes the 2868 waived members, the 1132 members of files marked not applicable and the 3271 members of projects that are out of scope or not started. The rest of that distance is what [REMAINING.md](REMAINING.md) lists; part of it is never ported by design (the waived and not applicable members), so this number does not reach 100.
 
 Both numbers match names, not behaviour (Legend, below). Projects the extraction does not read (analyzers, generators of upstream's own build, the D-Bus library) are listed in REMAINING.md with their size in files.
 
@@ -55,9 +55,9 @@ Percentages are `present / (total - waived)`. Member matching is by name with re
 
 | | Ported | Total | Waived | % |
 |---|---:|---:|---:|---:|
-| C# files | 2618 | 2677 | 0 | 97.8% |
-| Types | 3547 | 4038 | 311 | 95.2% |
-| Members | 28277 | 32988 | 2868 | 93.9% |
+| C# files | 2628 | 2677 | 0 | 98.2% |
+| Types | 3558 | 4038 | 311 | 95.5% |
+| Members | 28368 | 32988 | 2868 | 94.2% |
 | Contracts (interfaces) | 473 | 500 | - | 94.6% |
 | Property registrations | 1218 | 1233 | - | 98.8% |
 | Routed events | 108 | 108 | - | 100.0% |
@@ -91,7 +91,7 @@ The % column is member coverage (file coverage for plain file lists).
 | [Avalonia.Remote.Protocol](tracking/Avalonia.Remote.Protocol.md) | `src/Avalonia.Remote.Protocol` | `src/FerroUI.Remote.Protocol` | `ferroui-remote-protocol` | 14/14 | 54/55 (1 waived) | 198/202 (3 waived) | 99.5% | 4 - tooling | P3 |
 | [Avalonia.Themes.Fluent](tracking/Avalonia.Themes.Fluent.md) | `src/Avalonia.Themes.Fluent` | `src/FerroUI.Themes.Fluent` | `ferroui-themes-fluent` | 5/5 | 6/6 | 68/73 (5 waived) | 100.0% | 2 - xaml + themes | P1 |
 | [Avalonia.Themes.Simple](tracking/Avalonia.Themes.Simple.md) | `src/Avalonia.Themes.Simple` | `src/FerroUI.Themes.Simple` | `ferroui-themes-simple` | 1/1 | 1/1 | 1/1 | 100.0% | 2 - xaml + themes | P2 |
-| [Avalonia.Wayland](tracking/Avalonia.Wayland.md) | `src/Avalonia.Wayland` | `src/FerroUI.Wayland` | `ferroui-wayland` | 58/81 | 80/123 | 418/816 | 51.2% | 5 - desktop (Linux) | P1 |
+| [Avalonia.Wayland](tracking/Avalonia.Wayland.md) | `src/Avalonia.Wayland` | `src/FerroUI.Wayland` | `ferroui-wayland` | 68/81 | 91/123 | 509/816 | 62.4% | 5 - desktop (Linux) | P1 |
 | [Avalonia.X11](tracking/Avalonia.X11.md) | `src/Avalonia.X11` | `src/FerroUI.X11` | `ferroui-x11` | 86/88 | 176/291 (107 waived) | 3531/4897 (1076 waived) | 92.4% | 5 - desktop (Linux) | P1 |
 | [Avalonia.Browser](tracking/Avalonia.Browser.md) | `src/Browser/Avalonia.Browser` | `src/Browser/FerroUI.Browser` | `ferroui-browser` | 50/50 | 60/62 (2 waived) | 340/428 (88 waived) | 100.0% | 3 - browser | P2 |
 | [Avalonia.HarfBuzz](tracking/Avalonia.HarfBuzz.md) | `src/HarfBuzz/Avalonia.HarfBuzz` | `src/HarfBuzz/FerroUI.HarfBuzz` | `ferroui-harfbuzz` | 3/3 | 3/3 | 5/8 (3 waived) | 100.0% | 1 - rendering | P0 |
@@ -376,7 +376,7 @@ FerroUI-only crates have no upstream source directory (for example the MicroCom 
 
 ## Rust-only files
 
-372 Rust source files have no upstream counterpart (22 without a recorded reason). They are listed at the end of each project page.
+373 Rust source files have no upstream counterpart (23 without a recorded reason). They are listed at the end of each project page.
 
 | Project | Rust file | Reason |
 |---|---|---|
@@ -676,6 +676,7 @@ FerroUI-only crates have no upstream source directory (for example the MicroCom 
 | [Avalonia.Themes.Simple](tracking/Avalonia.Themes.Simple.md) | `src/FerroUI.Themes.Simple/compiled_xaml.rs` | generated by the Rust emitter of the XAML compiler (`rust_emitter::generate_class_file`): the compiled documents of the crate, the counterpart of the IL the upstream build task writes into the assembly |
 | [Avalonia.Themes.Simple](tracking/Avalonia.Themes.Simple.md) | `src/FerroUI.Themes.Simple/register_types.rs` | the type table of the crate (porting guide, Classes): its namespaces, its classes and what it states about itself for markup; takes the place of the assembly metadata the upstream compiler and loader reflect over |
 | [Avalonia.Themes.Simple](tracking/Avalonia.Themes.Simple.md) | `src/FerroUI.Themes.Simple/rust_paths.rs` | generated by scripts/generate_markup_types.py: the public Rust paths of the registered types of the crate, which the emitter of the XAML compiler writes into generated code |
+| [Avalonia.Wayland](tracking/Avalonia.Wayland.md) | `src/FerroUI.Wayland/server/cross_thread_result.rs` | **unmapped** |
 | [Avalonia.X11](tracking/Avalonia.X11.md) | `src/FerroUI.X11/interop/native_library.rs` | A shared library opened at run time and its functions resolved by name: what the runtime of the original does for a platform invoke (`DllImport`) of GLib, GTK, libSM and libICE |
 | [Avalonia.X11](tracking/Avalonia.X11.md) | `src/FerroUI.X11/pixel_buffer.rs` | A framebuffer over pixels the crate owns, for what the original makes with the `LockedFramebuffer` constructor over memory of its own (cursor and icon pixels) |
 | [Avalonia.X11](tracking/Avalonia.X11.md) | `src/FerroUI.X11/raw_event_grouping.rs` | The port of `src/Shared/RawEventGrouping.cs`, a source file the original compiles into every backend that queues its input (it belongs to no project of the tracking) |

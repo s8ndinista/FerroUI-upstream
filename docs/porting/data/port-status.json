@@ -2,23 +2,23 @@
  "upstreamCommit": "17350180c33b063f0e98abbfd19aa3cae63f5d56",
  "inScope": {
   "files": [
-   2618,
+   2628,
    2677,
    0
   ],
   "types": [
-   3547,
+   3558,
    4038,
    311
   ],
   "members": [
-   28277,
+   28368,
    32988,
    2868
   ]
  },
  "allProjects": {
-  "membersPresent": 28277,
+  "membersPresent": 28368,
   "members": 37391,
   "membersNotApplicable": 1132,
   "membersOutOfScope": 3271
@@ -7879,17 +7879,17 @@
    "scope": "in",
    "detail": "full",
    "files": [
-    58,
+    68,
     81,
     0
    ],
    "types": [
-    80,
+    91,
     123,
     0
    ],
    "members": [
-    418,
+    509,
     816,
     0
    ],
@@ -7907,10 +7907,10 @@
    ],
    "notApplicableFiles": 0,
    "matchKinds": {
-    "field": 67,
-    "fn": 323,
-    "free fn": 1,
-    "free item": 1,
+    "field": 79,
+    "fn": 390,
+    "free fn": 8,
+    "free item": 6,
     "trait": 7,
     "trait fn": 3,
     "variant": 16
@@ -7921,6 +7921,21 @@
     ],
     "AvaloniaWaylandPlatformExtensions.cs": [
      "ferro_wayland_platform_extensions.rs"
+    ],
+    "Clipboard/WaylandClipboardImpl.cs": [
+     "clipboard/wayland_clipboard_impl.rs"
+    ],
+    "Clipboard/WaylandDataTransfer.cs": [
+     "clipboard/wayland_data_transfer.rs"
+    ],
+    "Clipboard/WaylandDragSource.cs": [
+     "clipboard/wayland_drag_source.rs"
+    ],
+    "Clipboard/WaylandMimeMapper.cs": [
+     "clipboard/wayland_mime_mapper.rs"
+    ],
+    "Clipboard/WaylandOutgoingTransfer.cs": [
+     "clipboard/wayland_outgoing_transfer.rs"
     ],
     "PopupImpl.Sink.cs": [
      "popup_impl_sink.rs"
@@ -7936,6 +7951,9 @@
     ],
     "Screens/WaylandOutputSnapshot.cs": [
      "screens/wayland_output_snapshot.rs"
+    ],
+    "Server/Interop/Pipe2Stream.cs": [
+     "server/interop/pipe2_stream.rs"
     ],
     "Server/Interop/UnsafeNativeMethods.cs": [
      "server/interop/unsafe_native_methods.rs"
@@ -7987,6 +8005,18 @@
     ],
     "Server/ServerSignaler.cs": [
      "server/server_signaler.rs"
+    ],
+    "Server/Transient/Clipboard/WaylandDataDevice.cs": [
+     "server/transient/clipboard/wayland_data_device.rs"
+    ],
+    "Server/Transient/Clipboard/WaylandDataOffer.cs": [
+     "server/transient/clipboard/wayland_data_offer.rs"
+    ],
+    "Server/Transient/Clipboard/WaylandDataSource.cs": [
+     "server/transient/clipboard/wayland_data_source.rs"
+    ],
+    "Server/Transient/Clipboard/WaylandOfferCookie.cs": [
+     "server/transient/clipboard/wayland_offer_cookie.rs"
     ],
     "Server/Transient/Rendering/IWaylandFramebufferSurface.cs": [
      "server/transient/rendering/i_wayland_framebuffer_surface.rs"
@@ -8064,7 +8094,7 @@
      "window_impl.rs"
     ],
     "WindowImplBase.DragDrop.cs": [
-     "window_impl_base.rs"
+     "window_impl_base_drag_drop.rs"
     ],
     "WindowImplBase.Keyboard.cs": [
      "window_impl_base_keyboard.rs"
@@ -8091,7 +8121,9 @@
      "xkb_key_transform.rs"
     ]
    },
-   "rustOnly": []
+   "rustOnly": [
+    "server/cross_thread_result.rs"
+   ]
   },
   {
    "name": "Avalonia.X11",
