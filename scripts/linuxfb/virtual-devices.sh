@@ -90,9 +90,9 @@ elif modprobe vkms 2>/dev/null; then
     LOADED="$LOADED vkms"
     sleep 1
     for c in /sys/class/drm/card[0-9]*; do
-        [ -e "$c/device/driver" ] || continue
-        case "$(readlink -f "$c/device/driver")" in
-            */vkms) DRM_CARD="/dev/dri/$(basename "$c")" ;;
+        # The device of the card is the platform (or faux) device "vkms".
+        case "$(readlink -f "$c/device")" in
+            */vkms|*/vkms.[0-9]*) DRM_CARD="/dev/dri/$(basename "$c")" ;;
         esac
     done
     echo "vkms: loaded, card ${DRM_CARD:-not found}"
