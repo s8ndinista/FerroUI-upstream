@@ -4,6 +4,8 @@ All notable changes to FerroUI are recorded in this file. The format follows [Ke
 
 ## [Unreleased]
 
+- **Vulkan.** `ferroui-vulkan` is the Vulkan platform contracts crate and no longer a reserved name: the instance, the device, the graphics context, the swap chain render target of a surface and the import of external objects, over the `ash` bindings with the loader of the system opened at run time. The Skia backend has a Vulkan GPU (Ganesh on Vulkan) on Linux, and behind its feature `vulkan` elsewhere; the X11 platform takes the rendering mode `X11RenderingMode::Vulkan`. Verified on Mesa's software implementation only; the Windows and Android backends still pass the mode over.
+
 ### Added
 
 - **`ferroui-linuxframebuffer`**: the Linux framebuffer platform replaces its placeholder. An application runs without a window system as one full-screen view on a framebuffer device (`start_linux_fb_dev`), rendered in software, with input through `libinput` (opened at run time) or read directly from event devices (`FERROUI_USE_EVDEV=1`: touch, multi-touch, a keyboard with a US layout, a mouse). Verified on virtual devices (the framebuffer emulation of `vkms`, `uinput`), not on a board. The DRM/KMS output is not ported yet: `start_linux_drm` fails with a message that says so.

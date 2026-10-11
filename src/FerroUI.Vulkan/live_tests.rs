@@ -317,7 +317,7 @@ fn frames_are_presented_through_a_swap_chain_and_the_swap_chain_follows_the_surf
         required_instance_extensions: vec!["VK_EXT_headless_surface".to_string()],
         // The devices are asked whether they present to a headless surface, as a platform asks
         // about a window of its own.
-        device_check_surface_factory: Some(Arc::new(create_headless_surface)),
+        device_check_surface_factory: Some(Arc::new(|instance: &Arc<dyn IVulkanInstance>| Ok(create_headless_surface(instance)))),
         ..Default::default()
     };
     platform_options.set_khr_surface_factory(Arc::new(HeadlessSurfaceFactory));

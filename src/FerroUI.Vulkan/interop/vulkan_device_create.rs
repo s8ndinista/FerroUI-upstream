@@ -40,7 +40,8 @@ impl VulkanDevice {
             return Err(VulkanException::new("No devices found"));
         }
 
-        let surface_for_probe_ptr = platform_options.device_check_surface_factory.as_ref().map(|factory| factory(&instance));
+        let surface_for_probe_ptr =
+            platform_options.device_check_surface_factory.as_ref().map(|factory| factory(&instance)).transpose()?;
         let surface_for_probe: Option<vk::SurfaceKHR> =
             surface_for_probe_ptr.filter(|surface| *surface != 0).map(vk::Handle::from_raw);
 

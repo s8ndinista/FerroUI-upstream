@@ -18,6 +18,19 @@ impl VulkanGlobalApi {
         Self { vk_get_proc_address, fp }
     }
 
+    /// Resolves the entry points, or names the first one the lookup does not
+    /// know: a lookup that is not that of a Vulkan loader (or a loader that
+    /// could not be opened) fails here, where the reference fails to fill
+    /// its table.
+    pub fn try_new(vk_get_proc_address: VkGetInstanceProcAddressDelegate) -> Result<Self, crate::VulkanException> {
+        for name in ["vkEnumerateInstanceLayerProperties", "vkCreateInstance", "vkEnumerateInstanceExtensionProperties"] {
+            if vk_get_proc_address(0, name) == 0 {
+                return Err(crate::VulkanException::new(format!("Unable to find the entry point {name}")));
+            }
+        }
+        Ok(Self::new(vk_get_proc_address))
+    }
+
     /// The address of an entry point of `instance`.
     pub fn get_proc_address(&self, instance: vk::Instance, name: &str) -> isize {
         (self.vk_get_proc_address)(vk::Handle::as_raw(instance) as isize, name)
@@ -153,6 +166,16 @@ mod tests {
             properties.extension_name[i] = *b as std::ffi::c_char;
         }
         assert_eq!(fixed_name(&properties.extension_name), "VK_KHR_surface");
+    }
+
+    #[test]
+    fn a_lookup_that_knows_no_entry_point_gives_no_table() {
+        let error = VulkanGlobalApi::try_new(std::sync::Arc::new(|_, _| 0)).err().unwrap();
+        assert_eq!(error.message(), "Unable to find the entry point vkEnumerateInstanceLayerProperties");
+        let error = VulkanGlobalApi::try_new(std::sync::Arc::new(|_, name| (name != "vkCreateInstance") as isize))
+            .err()
+            .unwrap();
+        assert_eq!(error.message(), "Unable to find the entry point vkCreateInstance");
     }
 
     #[test]

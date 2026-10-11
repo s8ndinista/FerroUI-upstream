@@ -46,6 +46,8 @@ pub mod sm_lib;
 #[cfg(unix)]
 pub mod transparency_helper;
 #[cfg(unix)]
+mod vulkan;
+#[cfg(unix)]
 pub mod x11_active_window_tracker;
 #[cfg(unix)]
 pub(crate) mod x11_at_spi_accessibility;

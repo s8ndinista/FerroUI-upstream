@@ -137,7 +137,8 @@ Rust sources of this crate that no upstream file maps to. Give each a reason in 
 | `gpu/graphite/graphite_gr_context.rs` | the Graphite implementation of the backend-neutral GPU context (the binding has separate Ganesh and Graphite context types) | `GraphiteGrContext`, `GraphiteState`, `UploadedImage` |
 | `gpu/i_skia_gr_context.rs` | the backend-neutral GPU context of the Skia backend (the binding has separate Ganesh and Graphite context types, SkiaSharp has one `GRContext`) | `ISkiaGrContext`, `SkiaGpuBackend` |
 | `gpu/metal/tests.rs` | the unit tests of the module | `ExternalObjectsDevice`, `FakeEvent`, `FakeExternalObjects`, `FakeTexture`, `GraphiteTarget`, `Id`, `Log`, `LogSink`, `Sel`, `TestMetalDevice`, `TextureRenderTarget`, `TextureSession`, ... (13 total) |
-| `gpu/vulkan/tests.rs` | the unit tests of the module | `HeadlessSurface`, `HeadlessSurfaceFactory`, `TestSurface` |
+| `gpu/vulkan/frames_test.rs` | **unmapped** | `HeadlessSurface`, `HeadlessSurfaceFactory`, `TestSurface` |
+| `gpu/vulkan/tests.rs` | the unit tests of the module |  |
 | `locked_framebuffer.rs` | a locked framebuffer described by plain values: the `Platform/LockedFramebuffer.cs` of Avalonia.Base, which the base crate cannot hold without unsafe code, for the surfaces of the backend | `LockedFramebuffer` |
 | `tests.rs` | the unit tests of the module | `BrushSpec`, `Material`, `MockFramebuffer`, `MockSurface`, `Target`, `TwoSquares`, `TwoSquaresBrush` |
 | `unit_tests/hit_testing.rs` | the port of upstream's Skia unit test project (tests/Avalonia.Skia.UnitTests) and its test doubles, not of the library | `CompositorTestServices`, `LocatorScope` |

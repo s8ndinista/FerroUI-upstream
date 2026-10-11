@@ -7,6 +7,8 @@
 //! xvfb-run -a cargo run -p ferroui-x11 --features example --example x11_window -- --smoke
 //! ```
 //!
+//! `--mode=vulkan` renders with Vulkan (the loader of the system and
+//! `VK_KHR_xlib_surface`), with software rendering as the fallback.
 //! `--mode=glx` and `--mode=egl` render with OpenGL through GLX or EGL
 //! (with software rendering as the fallback, as an application would list
 //! it); without the option the window is rendered in software. GLX refuses
@@ -242,6 +244,7 @@ mod app {
         options.rendering_mode = match mode().as_str() {
             "glx" => vec![X11RenderingMode::Glx, X11RenderingMode::Software],
             "egl" => vec![X11RenderingMode::Egl, X11RenderingMode::Software],
+            "vulkan" => vec![X11RenderingMode::Vulkan, X11RenderingMode::Software],
             _ => vec![X11RenderingMode::Software],
         };
 
@@ -1248,12 +1251,17 @@ mod app {
                     // The mode is expected not to initialize (GLX on a renderer of its blacklist):
                     // the platform has to have gone on to software rendering.
                     report.phase("fallback");
-                    let fell_back = platform.glx_graphics().is_none() && platform.egl_graphics().is_none();
+                    let fell_back = platform.glx_graphics().is_none()
+                        && platform.egl_graphics().is_none()
+                        && platform.vulkan_graphics().is_none();
                     report.check(
                         "software rendering took over",
                         fell_back,
                         format!("the platform has {} platform graphics", if fell_back { "no" } else { "the" }),
                     );
+                } else if mode == "vulkan" && options.runs("gpu") {
+                    report.phase("gpu");
+                    vulkan_checks(&report, &platform, &window);
                 } else if mode != "software" && options.runs("gpu") {
                     report.phase("gpu");
                     gpu_checks(&report, &platform, &window, &mode);
@@ -1455,6 +1463,75 @@ mod app {
             }
 
             checks
+        }
+
+        /// Rendering with Vulkan: the platform registered the platform
+        /// graphics of Vulkan and did not fall back, the window has a
+        /// render window, and a context of the graphics has a device, the
+        /// surface factory of the platform and a queue under its lock. The
+        /// frame itself is checked through the server, by the pixels of the
+        /// phase before: it reached the window through the swap chain.
+        fn vulkan_checks(report: &Report, platform: &Rc<FerroX11Platform>, window: &Ref<Window>) {
+            use ferroui_base::platform::{IOptionalFeatureProvider, IPlatformGraphics};
+            use ferroui_vulkan::{IVulkanKhrSurfacePlatformSurfaceFactory, IVulkanPlatformGraphicsContext};
+            use ferroui_x11::x11_window::X11Window;
+
+            let Some(graphics) = platform.vulkan_graphics() else {
+                report.check(
+                    "platform graphics",
+                    false,
+                    "the platform has no graphics of the mode vulkan: it fell back to software (the log says why)".to_string(),
+                );
+                return;
+            };
+            report.check("platform graphics", true, "the platform registered the graphics of vulkan".to_string());
+
+            let render_window = window
+                .platform_impl()
+                .and_then(|window_impl| {
+                    window_impl.as_any().downcast_ref::<X11Window>().map(|window| (window.xid(), window.render_xid()))
+                })
+                .is_some_and(|(xid, render_xid)| render_xid != 0 && render_xid != xid);
+            report.check(
+                "render window",
+                render_window,
+                format!("the window {} a render window of its own", if render_window { "has" } else { "has not" }),
+            );
+
+            let context = graphics.create_context();
+            let features: &dyn IOptionalFeatureProvider = &*context;
+            let Some(vulkan) = features.try_get::<dyn IVulkanPlatformGraphicsContext>() else {
+                report.check("context", false, "the context of the graphics is not a Vulkan context".to_string());
+                return;
+            };
+            let device = vulkan.device();
+            let lock = context.ensure_current();
+            let queue = device.main_queue_handle();
+            lock.dispose();
+            report.check(
+                "context",
+                device.handle() != 0 && queue != 0,
+                format!(
+                    "a context of the graphics has the device {:#x} with the queue family {} and the extensions {}",
+                    device.handle(),
+                    device.graphics_queue_family_index(),
+                    device.enabled_extensions().join(" ")
+                ),
+            );
+            let has_factory = features.try_get_shared::<dyn IVulkanKhrSurfacePlatformSurfaceFactory>().is_some();
+            report.check(
+                "surface factory",
+                has_factory,
+                format!("the context {} the surface factory of the platform", if has_factory { "has" } else { "has not" }),
+            );
+            let has_xlib = vulkan.instance().enabled_extensions().iter().any(|name| name == "VK_KHR_xlib_surface");
+            report.check(
+                "instance",
+                has_xlib,
+                format!("the instance has the extensions {}", vulkan.instance().enabled_extensions().join(" ")),
+            );
+            context.dispose();
+            device.dispose();
         }
 
         /// Rendering with OpenGL: the platform graphics of the mode, the

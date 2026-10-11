@@ -10,9 +10,9 @@ Generated from upstream commit `17350180c33b063f0e98abbfd19aa3cae63f5d56`. Back 
 | FerroUI | `src/FerroUI.X11` (exists) |
 | Crate | `ferroui-x11` |
 | Phase / priority | 5 - desktop (Linux) / P1 |
-| Files | 86/88 (97.7%) |
-| Types | 176/291 (107 waived) (95.7%) |
-| Members | 3531/4897 (1076 waived) (92.4%) |
+| Files | 88/88 (100.0%) |
+| Types | 180/291 (107 waived) (97.8%) |
+| Members | 3538/4897 (1081 waived) (92.7%) |
 | Contracts (interfaces) | 8/8 |
 | Property registrations | 0/0 |
 | Routed events | 0/0 |
@@ -434,12 +434,12 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 
 </details>
 
-### `Vulkan` - files 0/2, types 0/4, members 0/12
+### `Vulkan` - files 2/2, types 4/4, members 7/12 (5 waived)
 
 | Upstream file | Rust file | Status | Types | Members | Notes |
 |---|---|---|---|---|---|
-| `VulkanNativeInterop.cs` | `vulkan/vulkan_native_interop.rs` | missing | 0/2 | 0/8 |  |
-| `VulkanSupport.cs` | `vulkan/vulkan_support.rs` | missing | 0/2 | 0/4 |  |
+| `VulkanNativeInterop.cs` | `vulkan/vulkan_native_interop.rs` | present | 2/2 | 3/8 (5 waived) |  |
+| `VulkanSupport.cs` | `vulkan/vulkan_support.rs` | present | 2/2 | 4/4 |  |
 
 ### `X11WindowModes` - files 4/4, types 8/8, members 27/36
 

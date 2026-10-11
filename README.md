@@ -33,14 +33,14 @@ FerroUI is a cross-platform UI framework for Rust: a retained-mode control libra
 | XAML | Compilation of markup to Rust source at build time (used by the themes and the samples), and the run-time loader with the upstream test suites |
 | Themes | Fluent and Simple load for every ported control |
 | Windows platform | Windows, input, clipboard and drag and drop over OLE, file dialogs, tray icon, native control host, extended client area; rendering in software, through ANGLE and through DirectComposition. Input methods (IME), UI Automation, WGL and the blur effects of composition outstanding |
-| Linux platform (X11) | Windows, input, input methods (XIM, IBus, Fcitx), clipboard, drag and drop, the desktop portals, GTK file dialogs, menus and tray icon over D-Bus, session management, native control host, accessibility over AT-SPI; rendering in software, through GLX and EGL. Wayland, the Linux framebuffer and Vulkan outstanding |
+| Linux platform (X11) | Windows, input, input methods (XIM, IBus, Fcitx), clipboard, drag and drop, the desktop portals, GTK file dialogs, menus and tray icon over D-Bus, session management, native control host, accessibility over AT-SPI; rendering in software, through GLX, EGL and Vulkan. Wayland outstanding |
 | Linux framebuffer platform | One full-screen view on a framebuffer device (`/dev/fb0`) with software rendering; input through `libinput` or directly from event devices (touch, multi-touch, keyboard with a US layout, mouse). Verified on virtual devices only (`vkms`, `uinput`), not on a board; the DRM/KMS output outstanding |
 | iOS platform | A view over Metal, touch, keyboard and text input, clipboard, storage, native control host, accessibility. Verified in the simulator only |
 | Android platform | A view over a surface with EGL or software rendering, touch, keyboard and text input, lifecycle, clipboard, storage, native control host, accessibility. Verified on the emulator only; the native library is built with a nightly toolchain for now (`docs/porting/android-platform.md`, section 5.1) |
 | Browser (WebAssembly) | Working; in progress |
 | Vello render backend | Experimental: CPU, hybrid and GPU modes, measured against the Skia backend, which is the default and the reference; the open work is listed in `docs/porting/vello-backend.md`, section 13 |
 
-About 95 percent of the members of the upstream projects that are in scope have a counterpart, and about three quarters of the members of every upstream project (the projects that are not ported yet, such as Wayland and Vulkan, count in the second number). The per-subsystem state is tracked in [docs/porting/CRITICAL-PATH.md](docs/porting/CRITICAL-PATH.md) and the per-member state in [docs/porting/TRACKING.md](docs/porting/TRACKING.md).
+About 95 percent of the members of the upstream projects that are in scope have a counterpart, and about three quarters of the members of every upstream project (the projects that are not ported yet, such as Wayland, count in the second number). The per-subsystem state is tracked in [docs/porting/CRITICAL-PATH.md](docs/porting/CRITICAL-PATH.md) and the per-member state in [docs/porting/TRACKING.md](docs/porting/TRACKING.md).
 
 ## Requirements
 
