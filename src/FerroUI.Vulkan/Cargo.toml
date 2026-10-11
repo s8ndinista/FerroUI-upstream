@@ -1,6 +1,6 @@
 [package]
 name = "ferroui-vulkan"
-description = "Reserved name: the Vulkan platform contracts of FerroUI, which is not ported yet. This version is an empty placeholder"
+description = "The Vulkan platform contracts of FerroUI: the instance, the device, the graphics context, the swap chain render target of a surface and the import of external objects"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -13,6 +13,10 @@ categories.workspace = true
 
 [lib]
 path = "lib.rs"
+
+[dependencies]
+ferroui-base.workspace = true
+ash.workspace = true
 
 # The group of the crate in the table of the README (docs/release.md).
 [package.metadata.release]
