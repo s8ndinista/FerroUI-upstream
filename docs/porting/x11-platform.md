@@ -498,7 +498,7 @@ Verified nowhere yet: a GPU with a hardware driver (the visual preference and th
 | 2f (built) | Session management, the native control host, XEmbed, the catalog's native control demo | The smoke run with `--embed`: a native window in the host, a plug embedded in a socket window of the example. The state machine of session management against a recorder; no session manager runs in the job (the open fails and is logged) |
 | 3 (built) | Accessibility: `X11AtSpiAccessibility` and `Avalonia.FreeDesktop.AtSpi` (27 files): `atspi.md` | The smoke run with `--a11y` (the example is the registry; a client on a second connection walks the tree, acts and listens) and with `--a11y=real` (the bus launcher and the registry daemon of `at-spi2-core`). A screen reader was not run |
 | 4 (stage 1 of it built) | Wayland (`Avalonia.Wayland`, 81 files), sharing the FreeDesktop crate: its own document, `wayland-platform.md` | sway on the headless backend of wlroots in the job `wayland` |
-| 5 | The framebuffer backend (`Avalonia.LinuxFramebuffer`, 30 files: DRM and fbdev) | To be designed |
+| 5 (fbdev and input built, DRM open) | The framebuffer backend (`Avalonia.LinuxFramebuffer`, 30 files: DRM and fbdev): a crate and a document of its own, `linux-framebuffer-platform.md` | The job `linuxfb` |
 
 ## 15. Deviations
 
