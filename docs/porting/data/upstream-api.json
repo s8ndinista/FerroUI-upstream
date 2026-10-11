@@ -406595,10 +406595,12 @@
   {
    "name": "Avalonia.Win32.Automation",
    "path": "src/Windows/Avalonia.Win32.Automation",
-   "detail": "types",
-   "scope": "out",
-   "phase": "not started / out of current scope",
-   "priority": "-",
+   "detail": "full",
+   "scope": "in",
+   "rust": "src/Windows/FerroUI.Win32/automation",
+   "crate": "ferroui-win32",
+   "phase": "1 - desktop (Windows)",
+   "priority": "P0",
    "files": [
     {
      "path": "AutomationNode.ExpandCollapse.cs",
@@ -406618,7 +406620,50 @@
        "bases": [
         "UIA.IExpandCollapseProvider"
        ],
-       "memberCount": 4
+       "members": [
+        {
+         "kind": "method",
+         "name": "GetExpandCollapseState",
+         "accessibility": "explicit",
+         "line": 9,
+         "type": "int",
+         "explicitInterface": "UIA.IExpandCollapseProvider",
+         "params": 0,
+         "signature": "int UIA.IExpandCollapseProvider.GetExpandCollapseState()"
+        },
+        {
+         "kind": "method",
+         "name": "ToUiaExpandCollapseState",
+         "accessibility": "internal",
+         "modifiers": [
+          "static"
+         ],
+         "line": 16,
+         "type": "int",
+         "params": 1,
+         "signature": "static int ToUiaExpandCollapseState(ExpandCollapseState state)"
+        },
+        {
+         "kind": "method",
+         "name": "Expand",
+         "accessibility": "explicit",
+         "line": 25,
+         "type": "void",
+         "explicitInterface": "UIA.IExpandCollapseProvider",
+         "params": 0,
+         "signature": "void UIA.IExpandCollapseProvider.Expand()"
+        },
+        {
+         "kind": "method",
+         "name": "Collapse",
+         "accessibility": "explicit",
+         "line": 26,
+         "type": "void",
+         "explicitInterface": "UIA.IExpandCollapseProvider",
+         "params": 0,
+         "signature": "void UIA.IExpandCollapseProvider.Collapse()"
+        }
+       ]
       }
      ]
     },
@@ -406640,7 +406685,77 @@
        "bases": [
         "UIA.IRangeValueProvider"
        ],
-       "memberCount": 7
+       "members": [
+        {
+         "kind": "method",
+         "name": "GetValue",
+         "accessibility": "explicit",
+         "line": 8,
+         "type": "double",
+         "explicitInterface": "UIA.IRangeValueProvider",
+         "params": 0,
+         "signature": "double UIA.IRangeValueProvider.GetValue()"
+        },
+        {
+         "kind": "method",
+         "name": "GetIsReadOnly",
+         "accessibility": "explicit",
+         "line": 9,
+         "type": "bool",
+         "explicitInterface": "UIA.IRangeValueProvider",
+         "params": 0,
+         "signature": "bool UIA.IRangeValueProvider.GetIsReadOnly()"
+        },
+        {
+         "kind": "method",
+         "name": "GetMaximum",
+         "accessibility": "explicit",
+         "line": 10,
+         "type": "double",
+         "explicitInterface": "UIA.IRangeValueProvider",
+         "params": 0,
+         "signature": "double UIA.IRangeValueProvider.GetMaximum()"
+        },
+        {
+         "kind": "method",
+         "name": "GetMinimum",
+         "accessibility": "explicit",
+         "line": 11,
+         "type": "double",
+         "explicitInterface": "UIA.IRangeValueProvider",
+         "params": 0,
+         "signature": "double UIA.IRangeValueProvider.GetMinimum()"
+        },
+        {
+         "kind": "method",
+         "name": "GetLargeChange",
+         "accessibility": "explicit",
+         "line": 12,
+         "type": "double",
+         "explicitInterface": "UIA.IRangeValueProvider",
+         "params": 0,
+         "signature": "double UIA.IRangeValueProvider.GetLargeChange()"
+        },
+        {
+         "kind": "method",
+         "name": "GetSmallChange",
+         "accessibility": "explicit",
+         "line": 13,
+         "type": "double",
+         "explicitInterface": "UIA.IRangeValueProvider",
+         "params": 0,
+         "signature": "double UIA.IRangeValueProvider.GetSmallChange()"
+        },
+        {
+         "kind": "method",
+         "name": "SetValue",
+         "accessibility": "public",
+         "line": 15,
+         "type": "void",
+         "params": 1,
+         "signature": "void SetValue(double value)"
+        }
+       ]
       }
      ]
     },
@@ -406663,7 +406778,98 @@
         "UIA.IScrollProvider",
         "UIA.IScrollItemProvider"
        ],
-       "memberCount": 9
+       "members": [
+        {
+         "kind": "method",
+         "name": "GetHorizontallyScrollable",
+         "accessibility": "explicit",
+         "line": 8,
+         "type": "bool",
+         "explicitInterface": "UIA.IScrollProvider",
+         "params": 0,
+         "signature": "bool UIA.IScrollProvider.GetHorizontallyScrollable()"
+        },
+        {
+         "kind": "method",
+         "name": "GetHorizontalScrollPercent",
+         "accessibility": "explicit",
+         "line": 9,
+         "type": "double",
+         "explicitInterface": "UIA.IScrollProvider",
+         "params": 0,
+         "signature": "double UIA.IScrollProvider.GetHorizontalScrollPercent()"
+        },
+        {
+         "kind": "method",
+         "name": "GetHorizontalViewSize",
+         "accessibility": "explicit",
+         "line": 10,
+         "type": "double",
+         "explicitInterface": "UIA.IScrollProvider",
+         "params": 0,
+         "signature": "double UIA.IScrollProvider.GetHorizontalViewSize()"
+        },
+        {
+         "kind": "method",
+         "name": "GetVerticallyScrollable",
+         "accessibility": "explicit",
+         "line": 11,
+         "type": "bool",
+         "explicitInterface": "UIA.IScrollProvider",
+         "params": 0,
+         "signature": "bool UIA.IScrollProvider.GetVerticallyScrollable()"
+        },
+        {
+         "kind": "method",
+         "name": "GetVerticalScrollPercent",
+         "accessibility": "explicit",
+         "line": 12,
+         "type": "double",
+         "explicitInterface": "UIA.IScrollProvider",
+         "params": 0,
+         "signature": "double UIA.IScrollProvider.GetVerticalScrollPercent()"
+        },
+        {
+         "kind": "method",
+         "name": "GetVerticalViewSize",
+         "accessibility": "explicit",
+         "line": 13,
+         "type": "double",
+         "explicitInterface": "UIA.IScrollProvider",
+         "params": 0,
+         "signature": "double UIA.IScrollProvider.GetVerticalViewSize()"
+        },
+        {
+         "kind": "method",
+         "name": "Scroll",
+         "accessibility": "explicit",
+         "line": 15,
+         "type": "void",
+         "explicitInterface": "UIA.IScrollProvider",
+         "params": 2,
+         "signature": "void UIA.IScrollProvider.Scroll(ScrollAmount horizontalAmount, ScrollAmount verticalAmount)"
+        },
+        {
+         "kind": "method",
+         "name": "SetScrollPercent",
+         "accessibility": "explicit",
+         "line": 20,
+         "type": "void",
+         "explicitInterface": "UIA.IScrollProvider",
+         "params": 2,
+         "signature": "void UIA.IScrollProvider.SetScrollPercent(double horizontalPercent, double verticalPercent)"
+        },
+        {
+         "kind": "method",
+         "name": "ScrollIntoView",
+         "accessibility": "explicit",
+         "line": 25,
+         "type": "void",
+         "explicitInterface": "UIA.IScrollItemProvider",
+         "params": 0,
+         "signature": "void UIA.IScrollItemProvider.ScrollIntoView()"
+        }
+       ]
       }
      ]
     },
@@ -406686,7 +406892,88 @@
         "UIA.ISelectionProvider",
         "UIA.ISelectionItemProvider"
        ],
-       "memberCount": 8
+       "members": [
+        {
+         "kind": "method",
+         "name": "CanSelectMultiple",
+         "accessibility": "explicit",
+         "line": 11,
+         "type": "bool",
+         "explicitInterface": "UIA.ISelectionProvider",
+         "params": 0,
+         "signature": "bool UIA.ISelectionProvider.CanSelectMultiple()"
+        },
+        {
+         "kind": "method",
+         "name": "IsSelectionRequired",
+         "accessibility": "explicit",
+         "line": 13,
+         "type": "bool",
+         "explicitInterface": "UIA.ISelectionProvider",
+         "params": 0,
+         "signature": "bool UIA.ISelectionProvider.IsSelectionRequired()"
+        },
+        {
+         "kind": "method",
+         "name": "GetIsSelected",
+         "accessibility": "explicit",
+         "line": 16,
+         "type": "bool",
+         "explicitInterface": "UIA.ISelectionItemProvider",
+         "params": 0,
+         "signature": "bool UIA.ISelectionItemProvider.GetIsSelected()"
+        },
+        {
+         "kind": "method",
+         "name": "GetSelectionContainer",
+         "accessibility": "explicit",
+         "line": 18,
+         "type": "UIA.IRawElementProviderSimple?",
+         "explicitInterface": "UIA.ISelectionItemProvider",
+         "params": 0,
+         "signature": "UIA.IRawElementProviderSimple? UIA.ISelectionItemProvider.GetSelectionContainer()"
+        },
+        {
+         "kind": "method",
+         "name": "GetSelection",
+         "accessibility": "explicit",
+         "line": 24,
+         "type": "UIA.IRawElementProviderSimple[]",
+         "explicitInterface": "UIA.ISelectionProvider",
+         "params": 0,
+         "signature": "UIA.IRawElementProviderSimple[] UIA.ISelectionProvider.GetSelection()"
+        },
+        {
+         "kind": "method",
+         "name": "AddToSelection",
+         "accessibility": "explicit",
+         "line": 30,
+         "type": "void",
+         "explicitInterface": "UIA.ISelectionItemProvider",
+         "params": 0,
+         "signature": "void UIA.ISelectionItemProvider.AddToSelection()"
+        },
+        {
+         "kind": "method",
+         "name": "RemoveFromSelection",
+         "accessibility": "explicit",
+         "line": 32,
+         "type": "void",
+         "explicitInterface": "UIA.ISelectionItemProvider",
+         "params": 0,
+         "signature": "void UIA.ISelectionItemProvider.RemoveFromSelection()"
+        },
+        {
+         "kind": "method",
+         "name": "Select",
+         "accessibility": "explicit",
+         "line": 35,
+         "type": "void",
+         "explicitInterface": "UIA.ISelectionItemProvider",
+         "params": 0,
+         "signature": "void UIA.ISelectionItemProvider.Select()"
+        }
+       ]
       }
      ]
     },
@@ -406708,7 +406995,28 @@
        "bases": [
         "UIA.IToggleProvider"
        ],
-       "memberCount": 2
+       "members": [
+        {
+         "kind": "method",
+         "name": "GetToggleState",
+         "accessibility": "explicit",
+         "line": 8,
+         "type": "ToggleState",
+         "explicitInterface": "UIA.IToggleProvider",
+         "params": 0,
+         "signature": "ToggleState UIA.IToggleProvider.GetToggleState()"
+        },
+        {
+         "kind": "method",
+         "name": "Toggle",
+         "accessibility": "explicit",
+         "line": 9,
+         "type": "void",
+         "explicitInterface": "UIA.IToggleProvider",
+         "params": 0,
+         "signature": "void UIA.IToggleProvider.Toggle()"
+        }
+       ]
       }
      ]
     },
@@ -406730,7 +407038,38 @@
        "bases": [
         "UIA.IValueProvider"
        ],
-       "memberCount": 3
+       "members": [
+        {
+         "kind": "method",
+         "name": "GetIsReadOnly",
+         "accessibility": "explicit",
+         "line": 9,
+         "type": "bool",
+         "explicitInterface": "UIA.IValueProvider",
+         "params": 0,
+         "signature": "bool UIA.IValueProvider.GetIsReadOnly()"
+        },
+        {
+         "kind": "method",
+         "name": "GetValue",
+         "accessibility": "explicit",
+         "line": 10,
+         "type": "string?",
+         "explicitInterface": "UIA.IValueProvider",
+         "params": 0,
+         "signature": "string? UIA.IValueProvider.GetValue()"
+        },
+        {
+         "kind": "method",
+         "name": "SetValue",
+         "accessibility": "explicit",
+         "line": 12,
+         "type": "void",
+         "explicitInterface": "UIA.IValueProvider",
+         "params": 1,
+         "signature": "void UIA.IValueProvider.SetValue([MarshalAs(UnmanagedType.LPWStr)] string? value)"
+        }
+       ]
       }
      ]
     },
@@ -406758,7 +407097,253 @@
        "attributes": [
         "GeneratedComClass"
        ],
-       "memberCount": 23,
+       "members": [
+        {
+         "kind": "ctor",
+         "name": ".ctor",
+         "accessibility": "public",
+         "line": 62,
+         "params": 1,
+         "signature": "AutomationNode(AutomationPeer peer)"
+        },
+        {
+         "kind": "property",
+         "name": "Peer",
+         "accessibility": "public",
+         "line": 74,
+         "type": "AutomationPeer",
+         "accessors": {
+          "get": "public",
+          "set": "protected"
+         },
+         "signature": "AutomationPeer Peer { get; protected set; }"
+        },
+        {
+         "kind": "method",
+         "name": "GetBoundingRectangle",
+         "accessibility": "public",
+         "modifiers": [
+          "virtual"
+         ],
+         "line": 76,
+         "type": "Rect",
+         "params": 0,
+         "signature": "virtual Rect GetBoundingRectangle()"
+        },
+        {
+         "kind": "method",
+         "name": "GetFragmentRoot",
+         "accessibility": "public",
+         "modifiers": [
+          "virtual"
+         ],
+         "line": 81,
+         "type": "IRawElementProviderFragmentRoot?",
+         "params": 0,
+         "signature": "virtual IRawElementProviderFragmentRoot? GetFragmentRoot()"
+        },
+        {
+         "kind": "method",
+         "name": "GetHostRawElementProvider",
+         "accessibility": "public",
+         "modifiers": [
+          "virtual"
+         ],
+         "line": 86,
+         "type": "IRawElementProviderSimple?",
+         "params": 0,
+         "signature": "virtual IRawElementProviderSimple? GetHostRawElementProvider()"
+        },
+        {
+         "kind": "method",
+         "name": "GetProviderOptions",
+         "accessibility": "public",
+         "modifiers": [
+          "virtual"
+         ],
+         "line": 87,
+         "type": "ProviderOptions",
+         "params": 0,
+         "signature": "virtual ProviderOptions GetProviderOptions()"
+        },
+        {
+         "kind": "method",
+         "name": "GetPatternProvider",
+         "accessibility": "public",
+         "modifiers": [
+          "virtual"
+         ],
+         "line": 89,
+         "type": "object?",
+         "params": 1,
+         "signature": "virtual object? GetPatternProvider(int patternId)"
+        },
+        {
+         "kind": "method",
+         "name": "GetPropertyValue",
+         "accessibility": "public",
+         "modifiers": [
+          "virtual"
+         ],
+         "line": 108,
+         "type": "object?",
+         "params": 1,
+         "signature": "virtual object? GetPropertyValue(int propertyId)"
+        },
+        {
+         "kind": "method",
+         "name": "GetRuntimeId",
+         "accessibility": "public",
+         "line": 150,
+         "type": "int[]",
+         "params": 0,
+         "signature": "int[] GetRuntimeId()"
+        },
+        {
+         "kind": "method",
+         "name": "Navigate",
+         "accessibility": "public",
+         "modifiers": [
+          "virtual"
+         ],
+         "line": 152,
+         "type": "IRawElementProviderFragment?",
+         "params": 1,
+         "signature": "virtual IRawElementProviderFragment? Navigate(NavigateDirection direction)"
+        },
+        {
+         "kind": "method",
+         "name": "SetFocus",
+         "accessibility": "public",
+         "line": 185,
+         "type": "void",
+         "params": 0,
+         "signature": "void SetFocus()"
+        },
+        {
+         "kind": "method",
+         "name": "GetOrCreate",
+         "accessibility": "public",
+         "modifiers": [
+          "static"
+         ],
+         "attributes": [
+          "return: NotNullIfNotNull(nameof(peer))"
+         ],
+         "line": 187,
+         "type": "AutomationNode?",
+         "params": 1,
+         "signature": "static AutomationNode? GetOrCreate(AutomationPeer? peer)"
+        },
+        {
+         "kind": "method",
+         "name": "Release",
+         "accessibility": "public",
+         "modifiers": [
+          "static"
+         ],
+         "line": 193,
+         "type": "void",
+         "params": 1,
+         "signature": "static void Release(AutomationPeer peer)"
+        },
+        {
+         "kind": "method",
+         "name": "GetEmbeddedFragmentRoots",
+         "accessibility": "explicit",
+         "line": 195,
+         "type": "IRawElementProviderSimple[]?",
+         "explicitInterface": "IRawElementProviderFragment",
+         "params": 0,
+         "signature": "IRawElementProviderSimple[]? IRawElementProviderFragment.GetEmbeddedFragmentRoots()"
+        },
+        {
+         "kind": "method",
+         "name": "ShowContextMenu",
+         "accessibility": "explicit",
+         "line": 196,
+         "type": "void",
+         "explicitInterface": "IRawElementProviderSimple2",
+         "params": 0,
+         "signature": "void IRawElementProviderSimple2.ShowContextMenu()"
+        },
+        {
+         "kind": "method",
+         "name": "Invoke",
+         "accessibility": "explicit",
+         "line": 197,
+         "type": "void",
+         "explicitInterface": "IInvokeProvider",
+         "params": 0,
+         "signature": "void IInvokeProvider.Invoke()"
+        },
+        {
+         "kind": "method",
+         "name": "InvokeSync",
+         "accessibility": "protected",
+         "line": 199,
+         "type": "void",
+         "params": 1,
+         "signature": "void InvokeSync(Action action)"
+        },
+        {
+         "kind": "method",
+         "name": "InvokeSync",
+         "accessibility": "protected",
+         "line": 207,
+         "type": "T",
+         "params": 1,
+         "arity": 1,
+         "signature": "T InvokeSync<T>(Func<T> func)"
+        },
+        {
+         "kind": "method",
+         "name": "InvokeSync",
+         "accessibility": "protected",
+         "line": 215,
+         "type": "void",
+         "params": 1,
+         "arity": 1,
+         "signature": "void InvokeSync<TInterface>(Action<TInterface> action)"
+        },
+        {
+         "kind": "method",
+         "name": "InvokeSync",
+         "accessibility": "protected",
+         "line": 234,
+         "type": "TResult",
+         "params": 1,
+         "arity": 2,
+         "signature": "TResult InvokeSync<TInterface, TResult>(Func<TInterface, TResult> func)"
+        },
+        {
+         "kind": "method",
+         "name": "RaiseChildrenChanged",
+         "accessibility": "protected",
+         "line": 251,
+         "type": "void",
+         "params": 0,
+         "signature": "void RaiseChildrenChanged()"
+        },
+        {
+         "kind": "method",
+         "name": "RaiseFocusChanged",
+         "accessibility": "protected",
+         "line": 260,
+         "type": "void",
+         "params": 1,
+         "signature": "void RaiseFocusChanged(AutomationNode? focused)"
+        },
+        {
+         "kind": "method",
+         "name": "RaiseLiveRegionChanged",
+         "accessibility": "protected",
+         "line": 267,
+         "type": "void",
+         "params": 0,
+         "signature": "void RaiseLiveRegionChanged()"
+        }
+       ],
        "privateMembers": 15
       }
      ]
@@ -406790,7 +407375,127 @@
        "attributes": [
         "GeneratedComClass"
        ],
-       "memberCount": 11,
+       "members": [
+        {
+         "kind": "ctor",
+         "name": ".ctor",
+         "accessibility": "public",
+         "line": 18,
+         "params": 1,
+         "signature": "InteropAutomationNode(InteropAutomationPeer peer)"
+        },
+        {
+         "kind": "method",
+         "name": "GetBoundingRectangle",
+         "accessibility": "public",
+         "modifiers": [
+          "override"
+         ],
+         "line": 24,
+         "type": "Rect",
+         "params": 0,
+         "signature": "override Rect GetBoundingRectangle()"
+        },
+        {
+         "kind": "method",
+         "name": "GetFragmentRoot",
+         "accessibility": "public",
+         "modifiers": [
+          "override"
+         ],
+         "line": 25,
+         "type": "IRawElementProviderFragmentRoot?",
+         "params": 0,
+         "signature": "override IRawElementProviderFragmentRoot? GetFragmentRoot()"
+        },
+        {
+         "kind": "method",
+         "name": "GetProviderOptions",
+         "accessibility": "public",
+         "modifiers": [
+          "override"
+         ],
+         "line": 26,
+         "type": "ProviderOptions",
+         "params": 0,
+         "signature": "override ProviderOptions GetProviderOptions()"
+        },
+        {
+         "kind": "method",
+         "name": "GetPatternProvider",
+         "accessibility": "public",
+         "modifiers": [
+          "override"
+         ],
+         "line": 28,
+         "type": "object?",
+         "params": 1,
+         "signature": "override object? GetPatternProvider(int patternId)"
+        },
+        {
+         "kind": "method",
+         "name": "GetPropertyValue",
+         "accessibility": "public",
+         "modifiers": [
+          "override"
+         ],
+         "line": 29,
+         "type": "object?",
+         "params": 1,
+         "signature": "override object? GetPropertyValue(int propertyId)"
+        },
+        {
+         "kind": "method",
+         "name": "GetHostRawElementProvider",
+         "accessibility": "public",
+         "modifiers": [
+          "override"
+         ],
+         "line": 31,
+         "type": "IRawElementProviderSimple?",
+         "params": 0,
+         "signature": "override IRawElementProviderSimple? GetHostRawElementProvider()"
+        },
+        {
+         "kind": "method",
+         "name": "Navigate",
+         "accessibility": "public",
+         "modifiers": [
+          "override"
+         ],
+         "line": 38,
+         "type": "IRawElementProviderFragment?",
+         "params": 1,
+         "signature": "override IRawElementProviderFragment? Navigate(NavigateDirection direction)"
+        },
+        {
+         "kind": "method",
+         "name": "ElementProviderFromPoint",
+         "accessibility": "public",
+         "line": 43,
+         "type": "IRawElementProviderFragment?",
+         "params": 2,
+         "signature": "IRawElementProviderFragment? ElementProviderFromPoint(double x, double y)"
+        },
+        {
+         "kind": "method",
+         "name": "GetFocus",
+         "accessibility": "public",
+         "line": 44,
+         "type": "IRawElementProviderFragment?",
+         "params": 0,
+         "signature": "IRawElementProviderFragment? GetFocus()"
+        },
+        {
+         "kind": "method",
+         "name": "GetEmbeddedFragmentRoots",
+         "accessibility": "public",
+         "line": 45,
+         "type": "IRawElementProviderSimple[]?",
+         "params": 0,
+         "signature": "IRawElementProviderSimple[]? GetEmbeddedFragmentRoots()"
+        }
+       ],
        "privateMembers": 1
       }
      ]
@@ -406817,7 +407522,83 @@
        "attributes": [
         "GeneratedComClass"
        ],
-       "memberCount": 7,
+       "members": [
+        {
+         "kind": "ctor",
+         "name": ".ctor",
+         "accessibility": "public",
+         "line": 14,
+         "params": 1,
+         "signature": "RootAutomationNode(AutomationPeer peer)"
+        },
+        {
+         "kind": "method",
+         "name": "GetFragmentRoot",
+         "accessibility": "public",
+         "modifiers": [
+          "override"
+         ],
+         "line": 22,
+         "type": "IRawElementProviderFragmentRoot?",
+         "params": 0,
+         "signature": "override IRawElementProviderFragmentRoot? GetFragmentRoot()"
+        },
+        {
+         "kind": "property",
+         "name": "Peer",
+         "accessibility": "public",
+         "modifiers": [
+          "new"
+         ],
+         "line": 23,
+         "type": "IRootProvider",
+         "accessors": {
+          "get": "public"
+         },
+         "signature": "new IRootProvider Peer { get; }"
+        },
+        {
+         "kind": "property",
+         "name": "WindowImpl",
+         "accessibility": "public",
+         "line": 24,
+         "type": "IWindowBaseImpl?",
+         "accessors": {
+          "get": "public"
+         },
+         "signature": "IWindowBaseImpl? WindowImpl { get; }"
+        },
+        {
+         "kind": "method",
+         "name": "ElementProviderFromPoint",
+         "accessibility": "public",
+         "line": 26,
+         "type": "IRawElementProviderFragment?",
+         "params": 2,
+         "signature": "IRawElementProviderFragment? ElementProviderFromPoint(double x, double y)"
+        },
+        {
+         "kind": "method",
+         "name": "GetFocus",
+         "accessibility": "public",
+         "line": 37,
+         "type": "IRawElementProviderFragment?",
+         "params": 0,
+         "signature": "IRawElementProviderFragment? GetFocus()"
+        },
+        {
+         "kind": "method",
+         "name": "GetHostRawElementProvider",
+         "accessibility": "public",
+         "modifiers": [
+          "override"
+         ],
+         "line": 43,
+         "type": "IRawElementProviderSimple?",
+         "params": 0,
+         "signature": "override IRawElementProviderSimple? GetHostRawElementProvider()"
+        }
+       ],
        "privateMembers": 1
       }
      ]
@@ -406836,7 +407617,44 @@
        "attributes": [
         "Guid(\"70d46e77-e3a8-449d-913c-e30eb2afecdb\")"
        ],
-       "memberCount": 6
+       "members": [
+        {
+         "kind": "enum member",
+         "name": "Top",
+         "signature": "Top",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Left",
+         "signature": "Left",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Bottom",
+         "signature": "Bottom",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Right",
+         "signature": "Right",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Fill",
+         "signature": "Fill",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "None",
+         "signature": "None",
+         "accessibility": "public"
+        }
+       ]
       },
       {
        "name": "IDockProvider",
@@ -406853,7 +407671,26 @@
         "GeneratedComInterface(Options = ComInterfaceOptions.ManagedObjectWrapper)",
         "Guid(\"159bc72c-4ad3-485e-9637-d7052edf0146\")"
        ],
-       "memberCount": 2
+       "members": [
+        {
+         "kind": "method",
+         "name": "SetDockPosition",
+         "accessibility": "public",
+         "line": 21,
+         "type": "void",
+         "params": 1,
+         "signature": "void SetDockPosition(DockPosition dockPosition)"
+        },
+        {
+         "kind": "method",
+         "name": "GetDockPosition",
+         "accessibility": "public",
+         "line": 22,
+         "type": "DockPosition",
+         "params": 0,
+         "signature": "DockPosition GetDockPosition()"
+        }
+       ]
       }
      ]
     },
@@ -406876,7 +407713,35 @@
         "GeneratedComInterface(Options = ComInterfaceOptions.ManagedObjectWrapper)",
         "Guid(\"d847d3a5-cab0-4a98-8c32-ecb45c59ad24\")"
        ],
-       "memberCount": 3
+       "members": [
+        {
+         "kind": "method",
+         "name": "Expand",
+         "accessibility": "public",
+         "line": 10,
+         "type": "void",
+         "params": 0,
+         "signature": "void Expand()"
+        },
+        {
+         "kind": "method",
+         "name": "Collapse",
+         "accessibility": "public",
+         "line": 11,
+         "type": "void",
+         "params": 0,
+         "signature": "void Collapse()"
+        },
+        {
+         "kind": "method",
+         "name": "GetExpandCollapseState",
+         "accessibility": "public",
+         "line": 12,
+         "type": "int",
+         "params": 0,
+         "signature": "int GetExpandCollapseState()"
+        }
+       ]
       }
      ]
     },
@@ -406899,7 +407764,53 @@
         "GeneratedComInterface(Options = ComInterfaceOptions.ManagedObjectWrapper)",
         "Guid(\"d02541f1-fb81-4d64-ae32-f520f8a6dbd1\")"
        ],
-       "memberCount": 5
+       "members": [
+        {
+         "kind": "method",
+         "name": "GetRow",
+         "accessibility": "public",
+         "line": 10,
+         "type": "int",
+         "params": 0,
+         "signature": "int GetRow()"
+        },
+        {
+         "kind": "method",
+         "name": "GetColumn",
+         "accessibility": "public",
+         "line": 11,
+         "type": "int",
+         "params": 0,
+         "signature": "int GetColumn()"
+        },
+        {
+         "kind": "method",
+         "name": "GetRowSpan",
+         "accessibility": "public",
+         "line": 12,
+         "type": "int",
+         "params": 0,
+         "signature": "int GetRowSpan()"
+        },
+        {
+         "kind": "method",
+         "name": "GetColumnSpan",
+         "accessibility": "public",
+         "line": 13,
+         "type": "int",
+         "params": 0,
+         "signature": "int GetColumnSpan()"
+        },
+        {
+         "kind": "method",
+         "name": "GetContainingGrid",
+         "accessibility": "public",
+         "line": 14,
+         "type": "IRawElementProviderSimple",
+         "params": 0,
+         "signature": "IRawElementProviderSimple GetContainingGrid()"
+        }
+       ]
       }
      ]
     },
@@ -406922,7 +407833,35 @@
         "GeneratedComInterface(Options = ComInterfaceOptions.ManagedObjectWrapper)",
         "Guid(\"b17d6187-0907-464b-a168-0ef17a1572b1\")"
        ],
-       "memberCount": 3
+       "members": [
+        {
+         "kind": "method",
+         "name": "GetItem",
+         "accessibility": "public",
+         "line": 10,
+         "type": "IRawElementProviderSimple?",
+         "params": 2,
+         "signature": "IRawElementProviderSimple? GetItem(int row, int column)"
+        },
+        {
+         "kind": "method",
+         "name": "GetRowCount",
+         "accessibility": "public",
+         "line": 11,
+         "type": "int",
+         "params": 0,
+         "signature": "int GetRowCount()"
+        },
+        {
+         "kind": "method",
+         "name": "GetColumnCount",
+         "accessibility": "public",
+         "line": 12,
+         "type": "int",
+         "params": 0,
+         "signature": "int GetColumnCount()"
+        }
+       ]
       }
      ]
     },
@@ -406945,7 +407884,17 @@
         "GeneratedComInterface(Options = ComInterfaceOptions.ManagedObjectWrapper)",
         "Guid(\"54fcb24b-e18e-47a2-b4d3-eccbe77599a2\")"
        ],
-       "memberCount": 1
+       "members": [
+        {
+         "kind": "method",
+         "name": "Invoke",
+         "accessibility": "public",
+         "line": 14,
+         "type": "void",
+         "params": 0,
+         "signature": "void Invoke()"
+        }
+       ]
       }
      ]
     },
@@ -406968,7 +407917,50 @@
         "GeneratedComInterface(Options = ComInterfaceOptions.ManagedObjectWrapper)",
         "Guid(\"6278cab1-b556-4a1a-b4e0-418acc523201\")"
        ],
-       "memberCount": 4
+       "members": [
+        {
+         "kind": "method",
+         "name": "GetViewName",
+         "accessibility": "public",
+         "attributes": [
+          "return: MarshalAs(UnmanagedType.BStr)"
+         ],
+         "line": 13,
+         "type": "string",
+         "params": 1,
+         "signature": "string GetViewName(int viewId)"
+        },
+        {
+         "kind": "method",
+         "name": "SetCurrentView",
+         "accessibility": "public",
+         "line": 15,
+         "type": "void",
+         "params": 1,
+         "signature": "void SetCurrentView(int viewId)"
+        },
+        {
+         "kind": "method",
+         "name": "GetCurrentView",
+         "accessibility": "public",
+         "line": 16,
+         "type": "int",
+         "params": 0,
+         "signature": "int GetCurrentView()"
+        },
+        {
+         "kind": "method",
+         "name": "GetSupportedViews",
+         "accessibility": "public",
+         "attributes": [
+          "return: MarshalUsing(typeof(SafeArrayMarshaller<int>))"
+         ],
+         "line": 17,
+         "type": "int[]",
+         "params": 0,
+         "signature": "int[] GetSupportedViews()"
+        }
+       ]
       }
      ]
     },
@@ -406991,7 +407983,74 @@
         "GeneratedComInterface(Options = ComInterfaceOptions.ManagedObjectWrapper)",
         "Guid(\"36dc7aef-33e6-4691-afe1-2be7274b3d33\")"
        ],
-       "memberCount": 7
+       "members": [
+        {
+         "kind": "method",
+         "name": "SetValue",
+         "accessibility": "public",
+         "line": 10,
+         "type": "void",
+         "params": 1,
+         "signature": "void SetValue(double value)"
+        },
+        {
+         "kind": "method",
+         "name": "GetValue",
+         "accessibility": "public",
+         "line": 11,
+         "type": "double",
+         "params": 0,
+         "signature": "double GetValue()"
+        },
+        {
+         "kind": "method",
+         "name": "GetIsReadOnly",
+         "accessibility": "public",
+         "attributes": [
+          "return: MarshalAs(UnmanagedType.Bool)"
+         ],
+         "line": 13,
+         "type": "bool",
+         "params": 0,
+         "signature": "bool GetIsReadOnly()"
+        },
+        {
+         "kind": "method",
+         "name": "GetMaximum",
+         "accessibility": "public",
+         "line": 16,
+         "type": "double",
+         "params": 0,
+         "signature": "double GetMaximum()"
+        },
+        {
+         "kind": "method",
+         "name": "GetMinimum",
+         "accessibility": "public",
+         "line": 17,
+         "type": "double",
+         "params": 0,
+         "signature": "double GetMinimum()"
+        },
+        {
+         "kind": "method",
+         "name": "GetLargeChange",
+         "accessibility": "public",
+         "line": 18,
+         "type": "double",
+         "params": 0,
+         "signature": "double GetLargeChange()"
+        },
+        {
+         "kind": "method",
+         "name": "GetSmallChange",
+         "accessibility": "public",
+         "line": 19,
+         "type": "double",
+         "params": 0,
+         "signature": "double GetSmallChange()"
+        }
+       ]
       }
      ]
     },
@@ -407014,7 +408073,26 @@
         "GeneratedComInterface(Options = ComInterfaceOptions.ManagedObjectWrapper)",
         "Guid(\"a407b27b-0f6d-4427-9292-473c7bf93258\")"
        ],
-       "memberCount": 2
+       "members": [
+        {
+         "kind": "method",
+         "name": "AdviseEventAdded",
+         "accessibility": "public",
+         "line": 12,
+         "type": "void",
+         "params": 2,
+         "signature": "void AdviseEventAdded(int eventId, [MarshalUsing(typeof(SafeArrayMarshaller<int>))] int[] properties)"
+        },
+        {
+         "kind": "method",
+         "name": "AdviseEventRemoved",
+         "accessibility": "public",
+         "line": 16,
+         "type": "void",
+         "params": 2,
+         "signature": "void AdviseEventRemoved(int eventId, [MarshalUsing(typeof(SafeArrayMarshaller<int>))] int[] properties)"
+        }
+       ]
       }
      ]
     },
@@ -407032,7 +408110,38 @@
        "attributes": [
         "Guid(\"670c3006-bf4c-428b-8534-e1848f645122\")"
        ],
-       "memberCount": 5
+       "members": [
+        {
+         "kind": "enum member",
+         "name": "Parent",
+         "signature": "Parent",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "NextSibling",
+         "signature": "NextSibling",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "PreviousSibling",
+         "signature": "PreviousSibling",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "FirstChild",
+         "signature": "FirstChild",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "LastChild",
+         "signature": "LastChild",
+         "accessibility": "public"
+        }
+       ]
       },
       {
        "name": "IRawElementProviderFragment",
@@ -407049,7 +408158,68 @@
         "GeneratedComInterface(Options = ComInterfaceOptions.ManagedObjectWrapper)",
         "Guid(\"f7063da8-8359-439c-9297-bbc5299a7d87\")"
        ],
-       "memberCount": 6
+       "members": [
+        {
+         "kind": "method",
+         "name": "Navigate",
+         "accessibility": "public",
+         "line": 22,
+         "type": "IRawElementProviderFragment?",
+         "params": 1,
+         "signature": "IRawElementProviderFragment? Navigate(NavigateDirection direction)"
+        },
+        {
+         "kind": "method",
+         "name": "GetRuntimeId",
+         "accessibility": "public",
+         "attributes": [
+          "return: MarshalUsing(typeof(SafeArrayMarshaller<int>))"
+         ],
+         "line": 23,
+         "type": "int[]?",
+         "params": 0,
+         "signature": "int[]? GetRuntimeId()"
+        },
+        {
+         "kind": "method",
+         "name": "GetBoundingRectangle",
+         "accessibility": "public",
+         "line": 25,
+         "type": "Rect",
+         "params": 0,
+         "signature": "Rect GetBoundingRectangle()"
+        },
+        {
+         "kind": "method",
+         "name": "GetEmbeddedFragmentRoots",
+         "accessibility": "public",
+         "attributes": [
+          "return: MarshalUsing(typeof(SafeArrayMarshaller<IRawElementProviderSimple>))"
+         ],
+         "line": 26,
+         "type": "IRawElementProviderSimple[]?",
+         "params": 0,
+         "signature": "IRawElementProviderSimple[]? GetEmbeddedFragmentRoots()"
+        },
+        {
+         "kind": "method",
+         "name": "SetFocus",
+         "accessibility": "public",
+         "line": 28,
+         "type": "void",
+         "params": 0,
+         "signature": "void SetFocus()"
+        },
+        {
+         "kind": "method",
+         "name": "GetFragmentRoot",
+         "accessibility": "public",
+         "line": 29,
+         "type": "IRawElementProviderFragmentRoot?",
+         "params": 0,
+         "signature": "IRawElementProviderFragmentRoot? GetFragmentRoot()"
+        }
+       ]
       }
      ]
     },
@@ -407072,7 +408242,26 @@
         "GeneratedComInterface(Options = ComInterfaceOptions.ManagedObjectWrapper)",
         "Guid(\"620ce2a5-ab8f-40a9-86cb-de3c75599b58\")"
        ],
-       "memberCount": 2
+       "members": [
+        {
+         "kind": "method",
+         "name": "ElementProviderFromPoint",
+         "accessibility": "public",
+         "line": 10,
+         "type": "IRawElementProviderFragment?",
+         "params": 2,
+         "signature": "IRawElementProviderFragment? ElementProviderFromPoint(double x, double y)"
+        },
+        {
+         "kind": "method",
+         "name": "GetFocus",
+         "accessibility": "public",
+         "line": 11,
+         "type": "IRawElementProviderFragment?",
+         "params": 0,
+         "signature": "IRawElementProviderFragment? GetFocus()"
+        }
+       ]
       }
      ]
     },
@@ -407091,7 +408280,44 @@
         "Flags"
        ],
        "flags": true,
-       "memberCount": 6
+       "members": [
+        {
+         "kind": "enum member",
+         "name": "ClientSideProvider",
+         "signature": "ClientSideProvider = 0x0001",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "ServerSideProvider",
+         "signature": "ServerSideProvider = 0x0002",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "NonClientAreaProvider",
+         "signature": "NonClientAreaProvider = 0x0004",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "OverrideProvider",
+         "signature": "OverrideProvider = 0x0008",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "ProviderOwnsSetFocus",
+         "signature": "ProviderOwnsSetFocus = 0x0010",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "UseComThreading",
+         "signature": "UseComThreading = 0x0020",
+         "accessibility": "public"
+        }
+       ]
       },
       {
        "name": "UiaPropertyId",
@@ -407100,7 +408326,1058 @@
        "fullName": "Avalonia.Win32.Automation.Interop.UiaPropertyId",
        "accessibility": "internal",
        "line": 18,
-       "memberCount": 175
+       "members": [
+        {
+         "kind": "enum member",
+         "name": "RuntimeId",
+         "signature": "RuntimeId = 30000",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "BoundingRectangle",
+         "signature": "BoundingRectangle",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "ProcessId",
+         "signature": "ProcessId",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "ControlType",
+         "signature": "ControlType",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "LocalizedControlType",
+         "signature": "LocalizedControlType",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Name",
+         "signature": "Name",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "AcceleratorKey",
+         "signature": "AcceleratorKey",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "AccessKey",
+         "signature": "AccessKey",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "HasKeyboardFocus",
+         "signature": "HasKeyboardFocus",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "IsKeyboardFocusable",
+         "signature": "IsKeyboardFocusable",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "IsEnabled",
+         "signature": "IsEnabled",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "AutomationId",
+         "signature": "AutomationId",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "ClassName",
+         "signature": "ClassName",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "HelpText",
+         "signature": "HelpText",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "ClickablePoint",
+         "signature": "ClickablePoint",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Culture",
+         "signature": "Culture",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "IsControlElement",
+         "signature": "IsControlElement",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "IsContentElement",
+         "signature": "IsContentElement",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "LabeledBy",
+         "signature": "LabeledBy",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "IsPassword",
+         "signature": "IsPassword",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "NativeWindowHandle",
+         "signature": "NativeWindowHandle",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "ItemType",
+         "signature": "ItemType",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "IsOffscreen",
+         "signature": "IsOffscreen",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Orientation",
+         "signature": "Orientation",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "FrameworkId",
+         "signature": "FrameworkId",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "IsRequiredForForm",
+         "signature": "IsRequiredForForm",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "ItemStatus",
+         "signature": "ItemStatus",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "IsDockPatternAvailable",
+         "signature": "IsDockPatternAvailable",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "IsExpandCollapsePatternAvailable",
+         "signature": "IsExpandCollapsePatternAvailable",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "IsGridItemPatternAvailable",
+         "signature": "IsGridItemPatternAvailable",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "IsGridPatternAvailable",
+         "signature": "IsGridPatternAvailable",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "IsInvokePatternAvailable",
+         "signature": "IsInvokePatternAvailable",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "IsMultipleViewPatternAvailable",
+         "signature": "IsMultipleViewPatternAvailable",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "IsRangeValuePatternAvailable",
+         "signature": "IsRangeValuePatternAvailable",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "IsScrollPatternAvailable",
+         "signature": "IsScrollPatternAvailable",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "IsScrollItemPatternAvailable",
+         "signature": "IsScrollItemPatternAvailable",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "IsSelectionItemPatternAvailable",
+         "signature": "IsSelectionItemPatternAvailable",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "IsSelectionPatternAvailable",
+         "signature": "IsSelectionPatternAvailable",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "IsTablePatternAvailable",
+         "signature": "IsTablePatternAvailable",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "IsTableItemPatternAvailable",
+         "signature": "IsTableItemPatternAvailable",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "IsTextPatternAvailable",
+         "signature": "IsTextPatternAvailable",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "IsTogglePatternAvailable",
+         "signature": "IsTogglePatternAvailable",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "IsTransformPatternAvailable",
+         "signature": "IsTransformPatternAvailable",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "IsValuePatternAvailable",
+         "signature": "IsValuePatternAvailable",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "IsWindowPatternAvailable",
+         "signature": "IsWindowPatternAvailable",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "ValueValue",
+         "signature": "ValueValue",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "ValueIsReadOnly",
+         "signature": "ValueIsReadOnly",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "RangeValueValue",
+         "signature": "RangeValueValue",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "RangeValueIsReadOnly",
+         "signature": "RangeValueIsReadOnly",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "RangeValueMinimum",
+         "signature": "RangeValueMinimum",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "RangeValueMaximum",
+         "signature": "RangeValueMaximum",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "RangeValueLargeChange",
+         "signature": "RangeValueLargeChange",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "RangeValueSmallChange",
+         "signature": "RangeValueSmallChange",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "ScrollHorizontalScrollPercent",
+         "signature": "ScrollHorizontalScrollPercent",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "ScrollHorizontalViewSize",
+         "signature": "ScrollHorizontalViewSize",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "ScrollVerticalScrollPercent",
+         "signature": "ScrollVerticalScrollPercent",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "ScrollVerticalViewSize",
+         "signature": "ScrollVerticalViewSize",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "ScrollHorizontallyScrollable",
+         "signature": "ScrollHorizontallyScrollable",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "ScrollVerticallyScrollable",
+         "signature": "ScrollVerticallyScrollable",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "SelectionSelection",
+         "signature": "SelectionSelection",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "SelectionCanSelectMultiple",
+         "signature": "SelectionCanSelectMultiple",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "SelectionIsSelectionRequired",
+         "signature": "SelectionIsSelectionRequired",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "GridRowCount",
+         "signature": "GridRowCount",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "GridColumnCount",
+         "signature": "GridColumnCount",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "GridItemRow",
+         "signature": "GridItemRow",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "GridItemColumn",
+         "signature": "GridItemColumn",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "GridItemRowSpan",
+         "signature": "GridItemRowSpan",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "GridItemColumnSpan",
+         "signature": "GridItemColumnSpan",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "GridItemContainingGrid",
+         "signature": "GridItemContainingGrid",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "DockDockPosition",
+         "signature": "DockDockPosition",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "ExpandCollapseExpandCollapseState",
+         "signature": "ExpandCollapseExpandCollapseState",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "MultipleViewCurrentView",
+         "signature": "MultipleViewCurrentView",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "MultipleViewSupportedViews",
+         "signature": "MultipleViewSupportedViews",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "WindowCanMaximize",
+         "signature": "WindowCanMaximize",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "WindowCanMinimize",
+         "signature": "WindowCanMinimize",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "WindowWindowVisualState",
+         "signature": "WindowWindowVisualState",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "WindowWindowInteractionState",
+         "signature": "WindowWindowInteractionState",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "WindowIsModal",
+         "signature": "WindowIsModal",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "WindowIsTopmost",
+         "signature": "WindowIsTopmost",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "SelectionItemIsSelected",
+         "signature": "SelectionItemIsSelected",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "SelectionItemSelectionContainer",
+         "signature": "SelectionItemSelectionContainer",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "TableRowHeaders",
+         "signature": "TableRowHeaders",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "TableColumnHeaders",
+         "signature": "TableColumnHeaders",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "TableRowOrColumnMajor",
+         "signature": "TableRowOrColumnMajor",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "TableItemRowHeaderItems",
+         "signature": "TableItemRowHeaderItems",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "TableItemColumnHeaderItems",
+         "signature": "TableItemColumnHeaderItems",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "ToggleToggleState",
+         "signature": "ToggleToggleState",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "TransformCanMove",
+         "signature": "TransformCanMove",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "TransformCanResize",
+         "signature": "TransformCanResize",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "TransformCanRotate",
+         "signature": "TransformCanRotate",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "IsLegacyIAccessiblePatternAvailable",
+         "signature": "IsLegacyIAccessiblePatternAvailable",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "LegacyIAccessibleChildId",
+         "signature": "LegacyIAccessibleChildId",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "LegacyIAccessibleName",
+         "signature": "LegacyIAccessibleName",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "LegacyIAccessibleValue",
+         "signature": "LegacyIAccessibleValue",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "LegacyIAccessibleDescription",
+         "signature": "LegacyIAccessibleDescription",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "LegacyIAccessibleRole",
+         "signature": "LegacyIAccessibleRole",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "LegacyIAccessibleState",
+         "signature": "LegacyIAccessibleState",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "LegacyIAccessibleHelp",
+         "signature": "LegacyIAccessibleHelp",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "LegacyIAccessibleKeyboardShortcut",
+         "signature": "LegacyIAccessibleKeyboardShortcut",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "LegacyIAccessibleSelection",
+         "signature": "LegacyIAccessibleSelection",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "LegacyIAccessibleDefaultAction",
+         "signature": "LegacyIAccessibleDefaultAction",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "AriaRole",
+         "signature": "AriaRole",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "AriaProperties",
+         "signature": "AriaProperties",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "IsDataValidForForm",
+         "signature": "IsDataValidForForm",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "ControllerFor",
+         "signature": "ControllerFor",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "DescribedBy",
+         "signature": "DescribedBy",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "FlowsTo",
+         "signature": "FlowsTo",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "ProviderDescription",
+         "signature": "ProviderDescription",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "IsItemContainerPatternAvailable",
+         "signature": "IsItemContainerPatternAvailable",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "IsVirtualizedItemPatternAvailable",
+         "signature": "IsVirtualizedItemPatternAvailable",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "IsSynchronizedInputPatternAvailable",
+         "signature": "IsSynchronizedInputPatternAvailable",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "OptimizeForVisualContent",
+         "signature": "OptimizeForVisualContent",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "IsObjectModelPatternAvailable",
+         "signature": "IsObjectModelPatternAvailable",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "AnnotationAnnotationTypeId",
+         "signature": "AnnotationAnnotationTypeId",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "AnnotationAnnotationTypeName",
+         "signature": "AnnotationAnnotationTypeName",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "AnnotationAuthor",
+         "signature": "AnnotationAuthor",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "AnnotationDateTime",
+         "signature": "AnnotationDateTime",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "AnnotationTarget",
+         "signature": "AnnotationTarget",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "IsAnnotationPatternAvailable",
+         "signature": "IsAnnotationPatternAvailable",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "IsTextPattern2Available",
+         "signature": "IsTextPattern2Available",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "StylesStyleId",
+         "signature": "StylesStyleId",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "StylesStyleName",
+         "signature": "StylesStyleName",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "StylesFillColor",
+         "signature": "StylesFillColor",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "StylesFillPatternStyle",
+         "signature": "StylesFillPatternStyle",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "StylesShape",
+         "signature": "StylesShape",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "StylesFillPatternColor",
+         "signature": "StylesFillPatternColor",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "StylesExtendedProperties",
+         "signature": "StylesExtendedProperties",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "IsStylesPatternAvailable",
+         "signature": "IsStylesPatternAvailable",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "IsSpreadsheetPatternAvailable",
+         "signature": "IsSpreadsheetPatternAvailable",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "SpreadsheetItemFormula",
+         "signature": "SpreadsheetItemFormula",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "SpreadsheetItemAnnotationObjects",
+         "signature": "SpreadsheetItemAnnotationObjects",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "SpreadsheetItemAnnotationTypes",
+         "signature": "SpreadsheetItemAnnotationTypes",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "IsSpreadsheetItemPatternAvailable",
+         "signature": "IsSpreadsheetItemPatternAvailable",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Transform2CanZoom",
+         "signature": "Transform2CanZoom",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "IsTransformPattern2Available",
+         "signature": "IsTransformPattern2Available",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "LiveSetting",
+         "signature": "LiveSetting",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "IsTextChildPatternAvailable",
+         "signature": "IsTextChildPatternAvailable",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "IsDragPatternAvailable",
+         "signature": "IsDragPatternAvailable",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "DragIsGrabbed",
+         "signature": "DragIsGrabbed",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "DragDropEffect",
+         "signature": "DragDropEffect",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "DragDropEffects",
+         "signature": "DragDropEffects",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "IsDropTargetPatternAvailable",
+         "signature": "IsDropTargetPatternAvailable",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "DropTargetDropTargetEffect",
+         "signature": "DropTargetDropTargetEffect",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "DropTargetDropTargetEffects",
+         "signature": "DropTargetDropTargetEffects",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "DragGrabbedItems",
+         "signature": "DragGrabbedItems",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Transform2ZoomLevel",
+         "signature": "Transform2ZoomLevel",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Transform2ZoomMinimum",
+         "signature": "Transform2ZoomMinimum",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Transform2ZoomMaximum",
+         "signature": "Transform2ZoomMaximum",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "FlowsFrom",
+         "signature": "FlowsFrom",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "IsTextEditPatternAvailable",
+         "signature": "IsTextEditPatternAvailable",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "IsPeripheral",
+         "signature": "IsPeripheral",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "IsCustomNavigationPatternAvailable",
+         "signature": "IsCustomNavigationPatternAvailable",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "PositionInSet",
+         "signature": "PositionInSet",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "SizeOfSet",
+         "signature": "SizeOfSet",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Level",
+         "signature": "Level",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "AnnotationTypes",
+         "signature": "AnnotationTypes",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "AnnotationObjects",
+         "signature": "AnnotationObjects",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "LandmarkType",
+         "signature": "LandmarkType",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "LocalizedLandmarkType",
+         "signature": "LocalizedLandmarkType",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "FullDescription",
+         "signature": "FullDescription",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "FillColor",
+         "signature": "FillColor",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "OutlineColor",
+         "signature": "OutlineColor",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "FillType",
+         "signature": "FillType",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "VisualEffects",
+         "signature": "VisualEffects",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "OutlineThickness",
+         "signature": "OutlineThickness",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "CenterPoint",
+         "signature": "CenterPoint",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Rotatation",
+         "signature": "Rotatation",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Size",
+         "signature": "Size",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "IsSelectionPattern2Available",
+         "signature": "IsSelectionPattern2Available",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Selection2FirstSelectedItem",
+         "signature": "Selection2FirstSelectedItem",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Selection2LastSelectedItem",
+         "signature": "Selection2LastSelectedItem",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Selection2CurrentSelectedItem",
+         "signature": "Selection2CurrentSelectedItem",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Selection2ItemCount",
+         "signature": "Selection2ItemCount",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "HeadingLevel",
+         "signature": "HeadingLevel",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "IsDialog",
+         "signature": "IsDialog",
+         "accessibility": "public"
+        }
+       ]
       },
       {
        "name": "UiaPatternId",
@@ -407109,7 +409386,212 @@
        "fullName": "Avalonia.Win32.Automation.Interop.UiaPatternId",
        "accessibility": "internal",
        "line": 197,
-       "memberCount": 34
+       "members": [
+        {
+         "kind": "enum member",
+         "name": "Invoke",
+         "signature": "Invoke = 10000",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Selection",
+         "signature": "Selection",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Value",
+         "signature": "Value",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "RangeValue",
+         "signature": "RangeValue",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Scroll",
+         "signature": "Scroll",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "ExpandCollapse",
+         "signature": "ExpandCollapse",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Grid",
+         "signature": "Grid",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "GridItem",
+         "signature": "GridItem",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "MultipleView",
+         "signature": "MultipleView",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Window",
+         "signature": "Window",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "SelectionItem",
+         "signature": "SelectionItem",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Dock",
+         "signature": "Dock",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Table",
+         "signature": "Table",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "TableItem",
+         "signature": "TableItem",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Text",
+         "signature": "Text",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Toggle",
+         "signature": "Toggle",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Transform",
+         "signature": "Transform",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "ScrollItem",
+         "signature": "ScrollItem",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "LegacyIAccessible",
+         "signature": "LegacyIAccessible",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "ItemContainer",
+         "signature": "ItemContainer",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "VirtualizedItem",
+         "signature": "VirtualizedItem",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "SynchronizedInput",
+         "signature": "SynchronizedInput",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "ObjectModel",
+         "signature": "ObjectModel",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Annotation",
+         "signature": "Annotation",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Text2",
+         "signature": "Text2",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Styles",
+         "signature": "Styles",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Spreadsheet",
+         "signature": "Spreadsheet",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "SpreadsheetItem",
+         "signature": "SpreadsheetItem",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Transform2",
+         "signature": "Transform2",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "TextChild",
+         "signature": "TextChild",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Drag",
+         "signature": "Drag",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "DropTarget",
+         "signature": "DropTarget",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "TextEdit",
+         "signature": "TextEdit",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "CustomNavigation",
+         "signature": "CustomNavigation",
+         "accessibility": "public"
+        }
+       ]
       },
       {
        "name": "UiaControlTypeId",
@@ -407118,7 +409600,254 @@
        "fullName": "Avalonia.Win32.Automation.Interop.UiaControlTypeId",
        "accessibility": "internal",
        "line": 235,
-       "memberCount": 41
+       "members": [
+        {
+         "kind": "enum member",
+         "name": "Button",
+         "signature": "Button = 50000",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Calendar",
+         "signature": "Calendar",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "CheckBox",
+         "signature": "CheckBox",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "ComboBox",
+         "signature": "ComboBox",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Edit",
+         "signature": "Edit",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Hyperlink",
+         "signature": "Hyperlink",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Image",
+         "signature": "Image",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "ListItem",
+         "signature": "ListItem",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "List",
+         "signature": "List",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Menu",
+         "signature": "Menu",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "MenuBar",
+         "signature": "MenuBar",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "MenuItem",
+         "signature": "MenuItem",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "ProgressBar",
+         "signature": "ProgressBar",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "RadioButton",
+         "signature": "RadioButton",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "ScrollBar",
+         "signature": "ScrollBar",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Slider",
+         "signature": "Slider",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Spinner",
+         "signature": "Spinner",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "StatusBar",
+         "signature": "StatusBar",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Tab",
+         "signature": "Tab",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "TabItem",
+         "signature": "TabItem",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Text",
+         "signature": "Text",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "ToolBar",
+         "signature": "ToolBar",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "ToolTip",
+         "signature": "ToolTip",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Tree",
+         "signature": "Tree",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "TreeItem",
+         "signature": "TreeItem",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Custom",
+         "signature": "Custom",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Group",
+         "signature": "Group",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Thumb",
+         "signature": "Thumb",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "DataGrid",
+         "signature": "DataGrid",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "DataItem",
+         "signature": "DataItem",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Document",
+         "signature": "Document",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "SplitButton",
+         "signature": "SplitButton",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Window",
+         "signature": "Window",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Pane",
+         "signature": "Pane",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Header",
+         "signature": "Header",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "HeaderItem",
+         "signature": "HeaderItem",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Table",
+         "signature": "Table",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "TitleBar",
+         "signature": "TitleBar",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Separator",
+         "signature": "Separator",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "SemanticZoom",
+         "signature": "SemanticZoom",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "AppBar",
+         "signature": "AppBar",
+         "accessibility": "public"
+        }
+       ]
       },
       {
        "name": "UiaLandmarkType",
@@ -407127,7 +409856,38 @@
        "fullName": "Avalonia.Win32.Automation.Interop.UiaLandmarkType",
        "accessibility": "internal",
        "line": 280,
-       "memberCount": 5
+       "members": [
+        {
+         "kind": "enum member",
+         "name": "Custom",
+         "signature": "Custom = 80000",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Form",
+         "signature": "Form",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Main",
+         "signature": "Main",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Navigation",
+         "signature": "Navigation",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Search",
+         "signature": "Search",
+         "accessibility": "public"
+        }
+       ]
       },
       {
        "name": "UiaHeadingLevel",
@@ -407136,7 +409896,68 @@
        "fullName": "Avalonia.Win32.Automation.Interop.UiaHeadingLevel",
        "accessibility": "internal",
        "line": 289,
-       "memberCount": 10
+       "members": [
+        {
+         "kind": "enum member",
+         "name": "None",
+         "signature": "None = 80050",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Level1",
+         "signature": "Level1",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Level2",
+         "signature": "Level2",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Level3",
+         "signature": "Level3",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Level4",
+         "signature": "Level4",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Level5",
+         "signature": "Level5",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Level6",
+         "signature": "Level6",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Level7",
+         "signature": "Level7",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Level8",
+         "signature": "Level8",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Level9",
+         "signature": "Level9",
+         "accessibility": "public"
+        }
+       ]
       },
       {
        "name": "UiaLiveSetting",
@@ -407145,7 +409966,26 @@
        "fullName": "Avalonia.Win32.Automation.Interop.UiaLiveSetting",
        "accessibility": "internal",
        "line": 303,
-       "memberCount": 3
+       "members": [
+        {
+         "kind": "enum member",
+         "name": "Off",
+         "signature": "Off = 0",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Polite",
+         "signature": "Polite",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Assertive",
+         "signature": "Assertive",
+         "accessibility": "public"
+        }
+       ]
       },
       {
        "name": "IRawElementProviderSimple",
@@ -407162,7 +410002,50 @@
         "GeneratedComInterface",
         "Guid(\"d6dd68d1-86fd-4332-8666-9abedea2d24c\")"
        ],
-       "memberCount": 4
+       "members": [
+        {
+         "kind": "method",
+         "name": "GetProviderOptions",
+         "accessibility": "public",
+         "line": 314,
+         "type": "ProviderOptions",
+         "params": 0,
+         "signature": "ProviderOptions GetProviderOptions()"
+        },
+        {
+         "kind": "method",
+         "name": "GetPatternProvider",
+         "accessibility": "public",
+         "attributes": [
+          "return: MarshalAs(UnmanagedType.Interface)"
+         ],
+         "line": 315,
+         "type": "object?",
+         "params": 1,
+         "signature": "object? GetPatternProvider(int patternId)"
+        },
+        {
+         "kind": "method",
+         "name": "GetPropertyValue",
+         "accessibility": "public",
+         "attributes": [
+          "return: MarshalUsing(typeof(ComVariantMarshaller))"
+         ],
+         "line": 317,
+         "type": "object?",
+         "params": 1,
+         "signature": "object? GetPropertyValue(int propertyId)"
+        },
+        {
+         "kind": "method",
+         "name": "GetHostRawElementProvider",
+         "accessibility": "public",
+         "line": 319,
+         "type": "IRawElementProviderSimple?",
+         "params": 0,
+         "signature": "IRawElementProviderSimple? GetHostRawElementProvider()"
+        }
+       ]
       }
      ]
     },
@@ -407188,7 +410071,17 @@
         "GeneratedComInterface(Options = ComInterfaceOptions.ManagedObjectWrapper)",
         "Guid(\"a0a839a9-8da1-4a82-806a-8e0d44e79f56\")"
        ],
-       "memberCount": 1
+       "members": [
+        {
+         "kind": "method",
+         "name": "ShowContextMenu",
+         "accessibility": "public",
+         "line": 10,
+         "type": "void",
+         "params": 0,
+         "signature": "void ShowContextMenu()"
+        }
+       ]
       }
      ]
     },
@@ -407211,7 +410104,17 @@
         "GeneratedComInterface(Options = ComInterfaceOptions.ManagedObjectWrapper)",
         "Guid(\"2360c714-4bf1-4b26-ba65-9b21316127eb\")"
        ],
-       "memberCount": 1
+       "members": [
+        {
+         "kind": "method",
+         "name": "ScrollIntoView",
+         "accessibility": "public",
+         "line": 10,
+         "type": "void",
+         "params": 0,
+         "signature": "void ScrollIntoView()"
+        }
+       ]
       }
      ]
     },
@@ -407234,7 +410137,86 @@
         "GeneratedComInterface(Options = ComInterfaceOptions.ManagedObjectWrapper)",
         "Guid(\"b38b8077-1fc3-42a5-8cae-d40c2215055a\")"
        ],
-       "memberCount": 8
+       "members": [
+        {
+         "kind": "method",
+         "name": "Scroll",
+         "accessibility": "public",
+         "line": 11,
+         "type": "void",
+         "params": 2,
+         "signature": "void Scroll(ScrollAmount horizontalAmount, ScrollAmount verticalAmount)"
+        },
+        {
+         "kind": "method",
+         "name": "SetScrollPercent",
+         "accessibility": "public",
+         "line": 12,
+         "type": "void",
+         "params": 2,
+         "signature": "void SetScrollPercent(double horizontalPercent, double verticalPercent)"
+        },
+        {
+         "kind": "method",
+         "name": "GetHorizontalScrollPercent",
+         "accessibility": "public",
+         "line": 13,
+         "type": "double",
+         "params": 0,
+         "signature": "double GetHorizontalScrollPercent()"
+        },
+        {
+         "kind": "method",
+         "name": "GetVerticalScrollPercent",
+         "accessibility": "public",
+         "line": 14,
+         "type": "double",
+         "params": 0,
+         "signature": "double GetVerticalScrollPercent()"
+        },
+        {
+         "kind": "method",
+         "name": "GetHorizontalViewSize",
+         "accessibility": "public",
+         "line": 15,
+         "type": "double",
+         "params": 0,
+         "signature": "double GetHorizontalViewSize()"
+        },
+        {
+         "kind": "method",
+         "name": "GetVerticalViewSize",
+         "accessibility": "public",
+         "line": 16,
+         "type": "double",
+         "params": 0,
+         "signature": "double GetVerticalViewSize()"
+        },
+        {
+         "kind": "method",
+         "name": "GetHorizontallyScrollable",
+         "accessibility": "public",
+         "attributes": [
+          "return: MarshalAs(UnmanagedType.Bool)"
+         ],
+         "line": 18,
+         "type": "bool",
+         "params": 0,
+         "signature": "bool GetHorizontallyScrollable()"
+        },
+        {
+         "kind": "method",
+         "name": "GetVerticallyScrollable",
+         "accessibility": "public",
+         "attributes": [
+          "return: MarshalAs(UnmanagedType.Bool)"
+         ],
+         "line": 21,
+         "type": "bool",
+         "params": 0,
+         "signature": "bool GetVerticallyScrollable()"
+        }
+       ]
       }
      ]
     },
@@ -407257,7 +410239,56 @@
         "GeneratedComInterface(Options = ComInterfaceOptions.ManagedObjectWrapper)",
         "Guid(\"2acad808-b2d4-452d-a407-91ff1ad167b2\")"
        ],
-       "memberCount": 5
+       "members": [
+        {
+         "kind": "method",
+         "name": "Select",
+         "accessibility": "public",
+         "line": 10,
+         "type": "void",
+         "params": 0,
+         "signature": "void Select()"
+        },
+        {
+         "kind": "method",
+         "name": "AddToSelection",
+         "accessibility": "public",
+         "line": 11,
+         "type": "void",
+         "params": 0,
+         "signature": "void AddToSelection()"
+        },
+        {
+         "kind": "method",
+         "name": "RemoveFromSelection",
+         "accessibility": "public",
+         "line": 12,
+         "type": "void",
+         "params": 0,
+         "signature": "void RemoveFromSelection()"
+        },
+        {
+         "kind": "method",
+         "name": "GetIsSelected",
+         "accessibility": "public",
+         "attributes": [
+          "return: MarshalAs(UnmanagedType.Bool)"
+         ],
+         "line": 14,
+         "type": "bool",
+         "params": 0,
+         "signature": "bool GetIsSelected()"
+        },
+        {
+         "kind": "method",
+         "name": "GetSelectionContainer",
+         "accessibility": "public",
+         "line": 17,
+         "type": "IRawElementProviderSimple?",
+         "params": 0,
+         "signature": "IRawElementProviderSimple? GetSelectionContainer()"
+        }
+       ]
       }
      ]
     },
@@ -407280,7 +410311,44 @@
         "GeneratedComInterface(Options = ComInterfaceOptions.ManagedObjectWrapper)",
         "Guid(\"fb8b03af-3bdf-48d4-bd36-1a65793be168\")"
        ],
-       "memberCount": 3
+       "members": [
+        {
+         "kind": "method",
+         "name": "GetSelection",
+         "accessibility": "public",
+         "attributes": [
+          "return: MarshalUsing(typeof(SafeArrayMarshaller<IRawElementProviderSimple>))"
+         ],
+         "line": 12,
+         "type": "IRawElementProviderSimple[]",
+         "params": 0,
+         "signature": "IRawElementProviderSimple[] GetSelection()"
+        },
+        {
+         "kind": "method",
+         "name": "CanSelectMultiple",
+         "accessibility": "public",
+         "attributes": [
+          "return: MarshalAs(UnmanagedType.Bool)"
+         ],
+         "line": 15,
+         "type": "bool",
+         "params": 0,
+         "signature": "bool CanSelectMultiple()"
+        },
+        {
+         "kind": "method",
+         "name": "IsSelectionRequired",
+         "accessibility": "public",
+         "attributes": [
+          "return: MarshalAs(UnmanagedType.Bool)"
+         ],
+         "line": 18,
+         "type": "bool",
+         "params": 0,
+         "signature": "bool IsSelectionRequired()"
+        }
+       ]
       }
      ]
     },
@@ -407298,7 +410366,44 @@
        "attributes": [
         "Guid(\"fdc8f176-aed2-477a-8c89-5604c66f278d\")"
        ],
-       "memberCount": 6
+       "members": [
+        {
+         "kind": "enum member",
+         "name": "KeyUp",
+         "signature": "KeyUp = 0x01",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "KeyDown",
+         "signature": "KeyDown = 0x02",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "MouseLeftButtonUp",
+         "signature": "MouseLeftButtonUp = 0x04",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "MouseLeftButtonDown",
+         "signature": "MouseLeftButtonDown = 0x08",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "MouseRightButtonUp",
+         "signature": "MouseRightButtonUp = 0x10",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "MouseRightButtonDown",
+         "signature": "MouseRightButtonDown = 0x20",
+         "accessibility": "public"
+        }
+       ]
       },
       {
        "name": "ISynchronizedInputProvider",
@@ -407315,7 +410420,26 @@
         "GeneratedComInterface(Options = ComInterfaceOptions.ManagedObjectWrapper)",
         "Guid(\"29db1a06-02ce-4cf7-9b42-565d4fab20ee\")"
        ],
-       "memberCount": 2
+       "members": [
+        {
+         "kind": "method",
+         "name": "StartListening",
+         "accessibility": "public",
+         "line": 21,
+         "type": "void",
+         "params": 1,
+         "signature": "void StartListening(SynchronizedInputType inputType)"
+        },
+        {
+         "kind": "method",
+         "name": "Cancel",
+         "accessibility": "public",
+         "line": 22,
+         "type": "void",
+         "params": 0,
+         "signature": "void Cancel()"
+        }
+       ]
       }
      ]
     },
@@ -407338,7 +410462,32 @@
         "GeneratedComInterface(Options = ComInterfaceOptions.ManagedObjectWrapper)",
         "Guid(\"b9734fa6-771f-4d78-9c90-2517999349cd\")"
        ],
-       "memberCount": 2
+       "members": [
+        {
+         "kind": "method",
+         "name": "GetRowHeaderItems",
+         "accessibility": "public",
+         "attributes": [
+          "return: MarshalUsing(typeof(SafeArrayMarshaller<IRawElementProviderSimple>))"
+         ],
+         "line": 12,
+         "type": "IRawElementProviderSimple[]",
+         "params": 0,
+         "signature": "IRawElementProviderSimple[] GetRowHeaderItems()"
+        },
+        {
+         "kind": "method",
+         "name": "GetColumnHeaderItems",
+         "accessibility": "public",
+         "attributes": [
+          "return: MarshalUsing(typeof(SafeArrayMarshaller<IRawElementProviderSimple>))"
+         ],
+         "line": 14,
+         "type": "IRawElementProviderSimple[]",
+         "params": 0,
+         "signature": "IRawElementProviderSimple[] GetColumnHeaderItems()"
+        }
+       ]
       }
      ]
     },
@@ -407356,7 +410505,26 @@
        "attributes": [
         "Guid(\"15fdf2e2-9847-41cd-95dd-510612a025ea\")"
        ],
-       "memberCount": 3
+       "members": [
+        {
+         "kind": "enum member",
+         "name": "RowMajor",
+         "signature": "RowMajor",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "ColumnMajor",
+         "signature": "ColumnMajor",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Indeterminate",
+         "signature": "Indeterminate",
+         "accessibility": "public"
+        }
+       ]
       },
       {
        "name": "ITableProvider",
@@ -407373,7 +410541,41 @@
         "GeneratedComInterface(Options = ComInterfaceOptions.ManagedObjectWrapper)",
         "Guid(\"9c860395-97b3-490a-b52a-858cc22af166\")"
        ],
-       "memberCount": 3
+       "members": [
+        {
+         "kind": "method",
+         "name": "GetRowHeaders",
+         "accessibility": "public",
+         "attributes": [
+          "return: MarshalUsing(typeof(SafeArrayMarshaller<IRawElementProviderSimple>))"
+         ],
+         "line": 20,
+         "type": "IRawElementProviderSimple[]",
+         "params": 0,
+         "signature": "IRawElementProviderSimple[] GetRowHeaders()"
+        },
+        {
+         "kind": "method",
+         "name": "GetColumnHeaders",
+         "accessibility": "public",
+         "attributes": [
+          "return: MarshalUsing(typeof(SafeArrayMarshaller<IRawElementProviderSimple>))"
+         ],
+         "line": 22,
+         "type": "IRawElementProviderSimple[]",
+         "params": 0,
+         "signature": "IRawElementProviderSimple[] GetColumnHeaders()"
+        },
+        {
+         "kind": "method",
+         "name": "GetRowOrColumnMajor",
+         "accessibility": "public",
+         "line": 24,
+         "type": "RowOrColumnMajor",
+         "params": 0,
+         "signature": "RowOrColumnMajor GetRowOrColumnMajor()"
+        }
+       ]
       }
      ]
     },
@@ -407393,7 +410595,26 @@
         "Guid(\"3d9e3d8f-bfb0-484f-84ab-93ff4280cbc4\")"
        ],
        "flags": true,
-       "memberCount": 3
+       "members": [
+        {
+         "kind": "enum member",
+         "name": "None",
+         "signature": "None",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Single",
+         "signature": "Single",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Multiple",
+         "signature": "Multiple",
+         "accessibility": "public"
+        }
+       ]
       },
       {
        "name": "ITextProvider",
@@ -407410,7 +410631,68 @@
         "GeneratedComInterface(Options = ComInterfaceOptions.ManagedObjectWrapper)",
         "Guid(\"3589c92c-63f3-4367-99bb-ada653b77cf2\")"
        ],
-       "memberCount": 6
+       "members": [
+        {
+         "kind": "method",
+         "name": "GetSelection",
+         "accessibility": "public",
+         "attributes": [
+          "return: MarshalUsing(typeof(SafeArrayMarshaller<ITextRangeProvider>))"
+         ],
+         "line": 22,
+         "type": "ITextRangeProvider[]",
+         "params": 0,
+         "signature": "ITextRangeProvider[] GetSelection()"
+        },
+        {
+         "kind": "method",
+         "name": "GetVisibleRanges",
+         "accessibility": "public",
+         "attributes": [
+          "return: MarshalUsing(typeof(SafeArrayMarshaller<ITextRangeProvider>))"
+         ],
+         "line": 24,
+         "type": "ITextRangeProvider[]",
+         "params": 0,
+         "signature": "ITextRangeProvider[] GetVisibleRanges()"
+        },
+        {
+         "kind": "method",
+         "name": "RangeFromChild",
+         "accessibility": "public",
+         "line": 26,
+         "type": "ITextRangeProvider",
+         "params": 1,
+         "signature": "ITextRangeProvider RangeFromChild(IRawElementProviderSimple childElement)"
+        },
+        {
+         "kind": "method",
+         "name": "RangeFromPoint",
+         "accessibility": "public",
+         "line": 28,
+         "type": "ITextRangeProvider",
+         "params": 2,
+         "signature": "ITextRangeProvider RangeFromPoint(double X, double Y)"
+        },
+        {
+         "kind": "method",
+         "name": "GetDocumentRange",
+         "accessibility": "public",
+         "line": 30,
+         "type": "ITextRangeProvider",
+         "params": 0,
+         "signature": "ITextRangeProvider GetDocumentRange()"
+        },
+        {
+         "kind": "method",
+         "name": "GetSupportedTextSelection",
+         "accessibility": "public",
+         "line": 31,
+         "type": "SupportedTextSelection",
+         "params": 0,
+         "signature": "SupportedTextSelection GetSupportedTextSelection()"
+        }
+       ]
       }
      ]
     },
@@ -407425,7 +410707,20 @@
        "fullName": "Avalonia.Win32.Automation.Interop.TextPatternRangeEndpoint",
        "accessibility": "internal",
        "line": 8,
-       "memberCount": 2
+       "members": [
+        {
+         "kind": "enum member",
+         "name": "Start",
+         "signature": "Start = 0",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "End",
+         "signature": "End = 1",
+         "accessibility": "public"
+        }
+       ]
       },
       {
        "name": "TextUnit",
@@ -407434,7 +410729,50 @@
        "fullName": "Avalonia.Win32.Automation.Interop.TextUnit",
        "accessibility": "internal",
        "line": 14,
-       "memberCount": 7
+       "members": [
+        {
+         "kind": "enum member",
+         "name": "Character",
+         "signature": "Character = 0",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Format",
+         "signature": "Format = 1",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Word",
+         "signature": "Word = 2",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Line",
+         "signature": "Line = 3",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Paragraph",
+         "signature": "Paragraph = 4",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Page",
+         "signature": "Page = 5",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Document",
+         "signature": "Document = 6",
+         "accessibility": "public"
+        }
+       ]
       },
       {
        "name": "ITextRangeProvider",
@@ -407451,7 +410789,185 @@
         "GeneratedComInterface(Options = ComInterfaceOptions.ManagedObjectWrapper)",
         "Guid(\"5347ad7b-c355-46f8-aff5-909033582f63\")"
        ],
-       "memberCount": 18
+       "members": [
+        {
+         "kind": "method",
+         "name": "Clone",
+         "accessibility": "public",
+         "line": 29,
+         "type": "ITextRangeProvider",
+         "params": 0,
+         "signature": "ITextRangeProvider Clone()"
+        },
+        {
+         "kind": "method",
+         "name": "Compare",
+         "accessibility": "public",
+         "attributes": [
+          "return: MarshalAs(UnmanagedType.Bool)"
+         ],
+         "line": 31,
+         "type": "bool",
+         "params": 1,
+         "signature": "bool Compare(ITextRangeProvider range)"
+        },
+        {
+         "kind": "method",
+         "name": "CompareEndpoints",
+         "accessibility": "public",
+         "line": 34,
+         "type": "int",
+         "params": 3,
+         "signature": "int CompareEndpoints(TextPatternRangeEndpoint endpoint, ITextRangeProvider targetRange, TextPatternRangeEndpoint targetEndpoint)"
+        },
+        {
+         "kind": "method",
+         "name": "ExpandToEnclosingUnit",
+         "accessibility": "public",
+         "line": 37,
+         "type": "void",
+         "params": 1,
+         "signature": "void ExpandToEnclosingUnit(TextUnit unit)"
+        },
+        {
+         "kind": "method",
+         "name": "FindAttribute",
+         "accessibility": "public",
+         "line": 39,
+         "type": "ITextRangeProvider",
+         "params": 3,
+         "signature": "ITextRangeProvider FindAttribute(int attribute, [MarshalUsing(typeof(ComVariantMarshaller))] object value, [MarshalAs(UnmanagedType.Bool)] bool backward)"
+        },
+        {
+         "kind": "method",
+         "name": "FindText",
+         "accessibility": "public",
+         "line": 43,
+         "type": "ITextRangeProvider",
+         "params": 3,
+         "signature": "ITextRangeProvider FindText([MarshalAs(UnmanagedType.BStr)] string text, [MarshalAs(UnmanagedType.Bool)] bool backward, [MarshalAs(UnmanagedType.Bool)] bool ignoreCase)"
+        },
+        {
+         "kind": "method",
+         "name": "GetAttributeValue",
+         "accessibility": "public",
+         "attributes": [
+          "return: MarshalUsing(typeof(ComVariantMarshaller))"
+         ],
+         "line": 47,
+         "type": "object",
+         "params": 1,
+         "signature": "object GetAttributeValue(int attribute)"
+        },
+        {
+         "kind": "method",
+         "name": "GetBoundingRectangles",
+         "accessibility": "public",
+         "attributes": [
+          "return: MarshalUsing(typeof(SafeArrayMarshaller<double>))"
+         ],
+         "line": 49,
+         "type": "double[]",
+         "params": 0,
+         "signature": "double[] GetBoundingRectangles()"
+        },
+        {
+         "kind": "method",
+         "name": "GetEnclosingElement",
+         "accessibility": "public",
+         "line": 51,
+         "type": "IRawElementProviderSimple",
+         "params": 0,
+         "signature": "IRawElementProviderSimple GetEnclosingElement()"
+        },
+        {
+         "kind": "method",
+         "name": "GetText",
+         "accessibility": "public",
+         "attributes": [
+          "return: MarshalAs(UnmanagedType.BStr)"
+         ],
+         "line": 52,
+         "type": "string",
+         "params": 1,
+         "signature": "string GetText(int maxLength)"
+        },
+        {
+         "kind": "method",
+         "name": "Move",
+         "accessibility": "public",
+         "line": 54,
+         "type": "int",
+         "params": 2,
+         "signature": "int Move(TextUnit unit, int count)"
+        },
+        {
+         "kind": "method",
+         "name": "MoveEndpointByUnit",
+         "accessibility": "public",
+         "line": 55,
+         "type": "int",
+         "params": 3,
+         "signature": "int MoveEndpointByUnit(TextPatternRangeEndpoint endpoint, TextUnit unit, int count)"
+        },
+        {
+         "kind": "method",
+         "name": "MoveEndpointByRange",
+         "accessibility": "public",
+         "line": 57,
+         "type": "void",
+         "params": 3,
+         "signature": "void MoveEndpointByRange(TextPatternRangeEndpoint endpoint, ITextRangeProvider targetRange, TextPatternRangeEndpoint targetEndpoint)"
+        },
+        {
+         "kind": "method",
+         "name": "Select",
+         "accessibility": "public",
+         "line": 60,
+         "type": "void",
+         "params": 0,
+         "signature": "void Select()"
+        },
+        {
+         "kind": "method",
+         "name": "AddToSelection",
+         "accessibility": "public",
+         "line": 61,
+         "type": "void",
+         "params": 0,
+         "signature": "void AddToSelection()"
+        },
+        {
+         "kind": "method",
+         "name": "RemoveFromSelection",
+         "accessibility": "public",
+         "line": 62,
+         "type": "void",
+         "params": 0,
+         "signature": "void RemoveFromSelection()"
+        },
+        {
+         "kind": "method",
+         "name": "ScrollIntoView",
+         "accessibility": "public",
+         "line": 63,
+         "type": "void",
+         "params": 1,
+         "signature": "void ScrollIntoView([MarshalAs(UnmanagedType.Bool)] bool alignToTop)"
+        },
+        {
+         "kind": "method",
+         "name": "GetChildren",
+         "accessibility": "public",
+         "attributes": [
+          "return: MarshalUsing(typeof(SafeArrayMarshaller<IRawElementProviderSimple>))"
+         ],
+         "line": 64,
+         "type": "IRawElementProviderSimple[]",
+         "params": 0,
+         "signature": "IRawElementProviderSimple[] GetChildren()"
+        }
+       ]
       }
      ]
     },
@@ -407474,7 +410990,26 @@
         "GeneratedComInterface(Options = ComInterfaceOptions.ManagedObjectWrapper)",
         "Guid(\"56d00bd0-c4f4-433c-a836-1a52a57e0892\")"
        ],
-       "memberCount": 2
+       "members": [
+        {
+         "kind": "method",
+         "name": "Toggle",
+         "accessibility": "public",
+         "line": 11,
+         "type": "void",
+         "params": 0,
+         "signature": "void Toggle()"
+        },
+        {
+         "kind": "method",
+         "name": "GetToggleState",
+         "accessibility": "public",
+         "line": 12,
+         "type": "ToggleState",
+         "params": 0,
+         "signature": "ToggleState GetToggleState()"
+        }
+       ]
       }
      ]
     },
@@ -407497,7 +411032,71 @@
         "GeneratedComInterface(Options = ComInterfaceOptions.ManagedObjectWrapper)",
         "Guid(\"6829ddc4-4f91-4ffa-b86f-bd3e2987cb4c\")"
        ],
-       "memberCount": 6
+       "members": [
+        {
+         "kind": "method",
+         "name": "Move",
+         "accessibility": "public",
+         "line": 10,
+         "type": "void",
+         "params": 2,
+         "signature": "void Move(double x, double y)"
+        },
+        {
+         "kind": "method",
+         "name": "Resize",
+         "accessibility": "public",
+         "line": 11,
+         "type": "void",
+         "params": 2,
+         "signature": "void Resize(double width, double height)"
+        },
+        {
+         "kind": "method",
+         "name": "Rotate",
+         "accessibility": "public",
+         "line": 12,
+         "type": "void",
+         "params": 1,
+         "signature": "void Rotate(double degrees)"
+        },
+        {
+         "kind": "method",
+         "name": "GetCanMove",
+         "accessibility": "public",
+         "attributes": [
+          "return: MarshalAs(UnmanagedType.Bool)"
+         ],
+         "line": 14,
+         "type": "bool",
+         "params": 0,
+         "signature": "bool GetCanMove()"
+        },
+        {
+         "kind": "method",
+         "name": "GetCanResize",
+         "accessibility": "public",
+         "attributes": [
+          "return: MarshalAs(UnmanagedType.Bool)"
+         ],
+         "line": 17,
+         "type": "bool",
+         "params": 0,
+         "signature": "bool GetCanResize()"
+        },
+        {
+         "kind": "method",
+         "name": "GetCanRotate",
+         "accessibility": "public",
+         "attributes": [
+          "return: MarshalAs(UnmanagedType.Bool)"
+         ],
+         "line": 20,
+         "type": "bool",
+         "params": 0,
+         "signature": "bool GetCanRotate()"
+        }
+       ]
       }
      ]
     },
@@ -407520,7 +411119,41 @@
         "GeneratedComInterface(Options = ComInterfaceOptions.ManagedObjectWrapper)",
         "Guid(\"c7935180-6fb3-4201-b174-7df73adbf64a\")"
        ],
-       "memberCount": 3
+       "members": [
+        {
+         "kind": "method",
+         "name": "SetValue",
+         "accessibility": "public",
+         "line": 10,
+         "type": "void",
+         "params": 1,
+         "signature": "void SetValue([MarshalAs(UnmanagedType.LPWStr)] string? value)"
+        },
+        {
+         "kind": "method",
+         "name": "GetValue",
+         "accessibility": "public",
+         "attributes": [
+          "return: MarshalAs(UnmanagedType.BStr)"
+         ],
+         "line": 12,
+         "type": "string?",
+         "params": 0,
+         "signature": "string? GetValue()"
+        },
+        {
+         "kind": "method",
+         "name": "GetIsReadOnly",
+         "accessibility": "public",
+         "attributes": [
+          "return: MarshalAs(UnmanagedType.Bool)"
+         ],
+         "line": 15,
+         "type": "bool",
+         "params": 0,
+         "signature": "bool GetIsReadOnly()"
+        }
+       ]
       }
      ]
     },
@@ -407538,7 +411171,26 @@
        "attributes": [
         "Guid(\"fdc8f176-aed2-477a-8c89-ea04cc5f278d\")"
        ],
-       "memberCount": 3
+       "members": [
+        {
+         "kind": "enum member",
+         "name": "Normal",
+         "signature": "Normal",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Maximized",
+         "signature": "Maximized",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Minimized",
+         "signature": "Minimized",
+         "accessibility": "public"
+        }
+       ]
       },
       {
        "name": "WindowInteractionState",
@@ -407550,7 +411202,38 @@
        "attributes": [
         "Guid(\"65101cc7-7904-408e-87a7-8c6dbd83a18b\")"
        ],
-       "memberCount": 5
+       "members": [
+        {
+         "kind": "enum member",
+         "name": "Running",
+         "signature": "Running",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Closing",
+         "signature": "Closing",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "ReadyForUserInteraction",
+         "signature": "ReadyForUserInteraction",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "BlockedByModalWindow",
+         "signature": "BlockedByModalWindow",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "NotResponding",
+         "signature": "NotResponding",
+         "accessibility": "public"
+        }
+       ]
       },
       {
        "name": "IWindowProvider",
@@ -407567,7 +411250,104 @@
         "GeneratedComInterface(Options = ComInterfaceOptions.ManagedObjectWrapper)",
         "Guid(\"987df77b-db06-4d77-8f8a-86a9c3bb90b9\")"
        ],
-       "memberCount": 9
+       "members": [
+        {
+         "kind": "method",
+         "name": "SetVisualState",
+         "accessibility": "public",
+         "line": 28,
+         "type": "void",
+         "params": 1,
+         "signature": "void SetVisualState(WindowVisualState state)"
+        },
+        {
+         "kind": "method",
+         "name": "Close",
+         "accessibility": "public",
+         "line": 29,
+         "type": "void",
+         "params": 0,
+         "signature": "void Close()"
+        },
+        {
+         "kind": "method",
+         "name": "WaitForInputIdle",
+         "accessibility": "public",
+         "attributes": [
+          "return: MarshalAs(UnmanagedType.Bool)"
+         ],
+         "line": 31,
+         "type": "bool",
+         "params": 1,
+         "signature": "bool WaitForInputIdle(int milliseconds)"
+        },
+        {
+         "kind": "method",
+         "name": "GetMaximizable",
+         "accessibility": "public",
+         "attributes": [
+          "return: MarshalAs(UnmanagedType.Bool)"
+         ],
+         "line": 34,
+         "type": "bool",
+         "params": 0,
+         "signature": "bool GetMaximizable()"
+        },
+        {
+         "kind": "method",
+         "name": "GetMinimizable",
+         "accessibility": "public",
+         "attributes": [
+          "return: MarshalAs(UnmanagedType.Bool)"
+         ],
+         "line": 37,
+         "type": "bool",
+         "params": 0,
+         "signature": "bool GetMinimizable()"
+        },
+        {
+         "kind": "method",
+         "name": "GetIsModal",
+         "accessibility": "public",
+         "attributes": [
+          "return: MarshalAs(UnmanagedType.Bool)"
+         ],
+         "line": 40,
+         "type": "bool",
+         "params": 0,
+         "signature": "bool GetIsModal()"
+        },
+        {
+         "kind": "method",
+         "name": "GetVisualState",
+         "accessibility": "public",
+         "line": 43,
+         "type": "WindowVisualState",
+         "params": 0,
+         "signature": "WindowVisualState GetVisualState()"
+        },
+        {
+         "kind": "method",
+         "name": "GetInteractionState",
+         "accessibility": "public",
+         "line": 44,
+         "type": "WindowInteractionState",
+         "params": 0,
+         "signature": "WindowInteractionState GetInteractionState()"
+        },
+        {
+         "kind": "method",
+         "name": "GetIsTopmost",
+         "accessibility": "public",
+         "attributes": [
+          "return: MarshalAs(UnmanagedType.Bool)"
+         ],
+         "line": 46,
+         "type": "bool",
+         "params": 0,
+         "signature": "bool GetIsTopmost()"
+        }
+       ]
       }
      ]
     },
@@ -407585,7 +411365,26 @@
        "attributes": [
         "Guid(\"d8e55844-7043-4edc-979d-593cc6b4775e\")"
        ],
-       "memberCount": 3
+       "members": [
+        {
+         "kind": "enum member",
+         "name": "Beginning",
+         "signature": "Beginning",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Progress",
+         "signature": "Progress",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Completed",
+         "signature": "Completed",
+         "accessibility": "public"
+        }
+       ]
       },
       {
        "name": "StructureChangeType",
@@ -407597,7 +411396,44 @@
        "attributes": [
         "Guid(\"e4cfef41-071d-472c-a65c-c14f59ea81eb\")"
        ],
-       "memberCount": 6
+       "members": [
+        {
+         "kind": "enum member",
+         "name": "ChildAdded",
+         "signature": "ChildAdded",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "ChildRemoved",
+         "signature": "ChildRemoved",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "ChildrenInvalidated",
+         "signature": "ChildrenInvalidated",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "ChildrenBulkAdded",
+         "signature": "ChildrenBulkAdded",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "ChildrenBulkRemoved",
+         "signature": "ChildrenBulkRemoved",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "ChildrenReordered",
+         "signature": "ChildrenReordered",
+         "accessibility": "public"
+        }
+       ]
       },
       {
        "name": "UiaEventId",
@@ -407606,7 +411442,218 @@
        "fullName": "Avalonia.Win32.Automation.Interop.UiaEventId",
        "accessibility": "internal",
        "line": 26,
-       "memberCount": 35
+       "members": [
+        {
+         "kind": "enum member",
+         "name": "ToolTipOpened",
+         "signature": "ToolTipOpened = 20000",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "ToolTipClosed",
+         "signature": "ToolTipClosed",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "StructureChanged",
+         "signature": "StructureChanged",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "MenuOpened",
+         "signature": "MenuOpened",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "AutomationPropertyChanged",
+         "signature": "AutomationPropertyChanged",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "AutomationFocusChanged",
+         "signature": "AutomationFocusChanged",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "AsyncContentLoaded",
+         "signature": "AsyncContentLoaded",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "MenuClosed",
+         "signature": "MenuClosed",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "LayoutInvalidated",
+         "signature": "LayoutInvalidated",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Invoke_Invoked",
+         "signature": "Invoke_Invoked",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "SelectionItem_ElementAddedToSelection",
+         "signature": "SelectionItem_ElementAddedToSelection",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "SelectionItem_ElementRemovedFromSelection",
+         "signature": "SelectionItem_ElementRemovedFromSelection",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "SelectionItem_ElementSelected",
+         "signature": "SelectionItem_ElementSelected",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Selection_Invalidated",
+         "signature": "Selection_Invalidated",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Text_TextSelectionChanged",
+         "signature": "Text_TextSelectionChanged",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Text_TextChanged",
+         "signature": "Text_TextChanged",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Window_WindowOpened",
+         "signature": "Window_WindowOpened",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Window_WindowClosed",
+         "signature": "Window_WindowClosed",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "MenuModeStart",
+         "signature": "MenuModeStart",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "MenuModeEnd",
+         "signature": "MenuModeEnd",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "InputReachedTarget",
+         "signature": "InputReachedTarget",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "InputReachedOtherElement",
+         "signature": "InputReachedOtherElement",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "InputDiscarded",
+         "signature": "InputDiscarded",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "SystemAlert",
+         "signature": "SystemAlert",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "LiveRegionChanged",
+         "signature": "LiveRegionChanged",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "HostedFragmentRootsInvalidated",
+         "signature": "HostedFragmentRootsInvalidated",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Drag_DragStart",
+         "signature": "Drag_DragStart",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Drag_DragCancel",
+         "signature": "Drag_DragCancel",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Drag_DragComplete",
+         "signature": "Drag_DragComplete",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "DropTarget_DragEnter",
+         "signature": "DropTarget_DragEnter",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "DropTarget_DragLeave",
+         "signature": "DropTarget_DragLeave",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "DropTarget_Dropped",
+         "signature": "DropTarget_Dropped",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "TextEdit_TextChanged",
+         "signature": "TextEdit_TextChanged",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "TextEdit_ConversionTargetChanged",
+         "signature": "TextEdit_ConversionTargetChanged",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Changes",
+         "signature": "Changes",
+         "accessibility": "public"
+        }
+       ]
       },
       {
        "name": "UiaCoreProviderApi",
@@ -407620,7 +411667,132 @@
         "partial"
        ],
        "partial": true,
-       "memberCount": 8
+       "members": [
+        {
+         "kind": "field",
+         "name": "UIA_E_ELEMENTNOTENABLED",
+         "accessibility": "public",
+         "modifiers": [
+          "const"
+         ],
+         "line": 67,
+         "type": "int",
+         "signature": "const int UIA_E_ELEMENTNOTENABLED"
+        },
+        {
+         "kind": "method",
+         "name": "UiaClientsAreListening",
+         "accessibility": "public",
+         "modifiers": [
+          "static",
+          "partial"
+         ],
+         "attributes": [
+          "LibraryImport(\"UIAutomationCore.dll\", StringMarshalling = StringMarshalling.Utf8)",
+          "return: MarshalAs(UnmanagedType.Bool)"
+         ],
+         "line": 69,
+         "type": "bool",
+         "params": 0,
+         "signature": "static bool UiaClientsAreListening()"
+        },
+        {
+         "kind": "method",
+         "name": "UiaReturnRawElementProvider",
+         "accessibility": "public",
+         "modifiers": [
+          "static",
+          "partial"
+         ],
+         "attributes": [
+          "LibraryImport(\"UIAutomationCore.dll\", StringMarshalling = StringMarshalling.Utf8)"
+         ],
+         "line": 73,
+         "type": "IntPtr",
+         "params": 4,
+         "signature": "static IntPtr UiaReturnRawElementProvider(IntPtr hwnd, IntPtr wParam, IntPtr lParam, IRawElementProviderSimple? el)"
+        },
+        {
+         "kind": "method",
+         "name": "UiaHostProviderFromHwnd",
+         "accessibility": "public",
+         "modifiers": [
+          "static",
+          "partial"
+         ],
+         "attributes": [
+          "LibraryImport(\"UIAutomationCore.dll\", StringMarshalling = StringMarshalling.Utf8)"
+         ],
+         "line": 76,
+         "type": "int",
+         "params": 2,
+         "signature": "static int UiaHostProviderFromHwnd(IntPtr hwnd, [MarshalAs(UnmanagedType.Interface)] out IRawElementProviderSimple provider)"
+        },
+        {
+         "kind": "method",
+         "name": "UiaRaiseAutomationEvent",
+         "accessibility": "public",
+         "modifiers": [
+          "static",
+          "partial"
+         ],
+         "attributes": [
+          "LibraryImport(\"UIAutomationCore.dll\", StringMarshalling = StringMarshalling.Utf8)"
+         ],
+         "line": 79,
+         "type": "int",
+         "params": 2,
+         "signature": "static int UiaRaiseAutomationEvent(IRawElementProviderSimple? provider, int id)"
+        },
+        {
+         "kind": "method",
+         "name": "UiaRaiseAutomationPropertyChangedEvent",
+         "accessibility": "public",
+         "modifiers": [
+          "static",
+          "partial"
+         ],
+         "attributes": [
+          "LibraryImport(\"UIAutomationCore.dll\", StringMarshalling = StringMarshalling.Utf8)"
+         ],
+         "line": 82,
+         "type": "int",
+         "params": 4,
+         "signature": "static int UiaRaiseAutomationPropertyChangedEvent(IRawElementProviderSimple? provider, int id, [MarshalUsing(typeof(ComVariantMarshaller))] object? oldValue, [MarshalUsing(typeof(ComVariantMarshaller))] object? newValue)"
+        },
+        {
+         "kind": "method",
+         "name": "UiaRaiseStructureChangedEvent",
+         "accessibility": "public",
+         "modifiers": [
+          "static",
+          "partial"
+         ],
+         "attributes": [
+          "LibraryImport(\"UIAutomationCore.dll\", StringMarshalling = StringMarshalling.Utf8)"
+         ],
+         "line": 85,
+         "type": "int",
+         "params": 4,
+         "signature": "static int UiaRaiseStructureChangedEvent(IRawElementProviderSimple? provider, StructureChangeType structureChangeType, int[]? runtimeId, int runtimeIdLen)"
+        },
+        {
+         "kind": "method",
+         "name": "UiaDisconnectProvider",
+         "accessibility": "public",
+         "modifiers": [
+          "static",
+          "partial"
+         ],
+         "attributes": [
+          "LibraryImport(\"UIAutomationCore.dll\", StringMarshalling = StringMarshalling.Utf8)"
+         ],
+         "line": 88,
+         "type": "int",
+         "params": 1,
+         "signature": "static int UiaDisconnectProvider(IRawElementProviderSimple? provider)"
+        }
+       ]
       }
      ]
     },
@@ -407640,7 +411812,64 @@
         "partial"
        ],
        "partial": true,
-       "memberCount": 5,
+       "members": [
+        {
+         "kind": "field",
+         "name": "UIA_E_ELEMENTNOTENABLED",
+         "accessibility": "internal",
+         "modifiers": [
+          "const"
+         ],
+         "line": 22,
+         "type": "int",
+         "signature": "const int UIA_E_ELEMENTNOTENABLED"
+        },
+        {
+         "kind": "field",
+         "name": "UIA_E_ELEMENTNOTAVAILABLE",
+         "accessibility": "internal",
+         "modifiers": [
+          "const"
+         ],
+         "line": 23,
+         "type": "int",
+         "signature": "const int UIA_E_ELEMENTNOTAVAILABLE"
+        },
+        {
+         "kind": "field",
+         "name": "UIA_E_NOCLICKABLEPOINT",
+         "accessibility": "internal",
+         "modifiers": [
+          "const"
+         ],
+         "line": 24,
+         "type": "int",
+         "signature": "const int UIA_E_NOCLICKABLEPOINT"
+        },
+        {
+         "kind": "field",
+         "name": "UIA_E_PROXYASSEMBLYNOTLOADED",
+         "accessibility": "internal",
+         "modifiers": [
+          "const"
+         ],
+         "line": 25,
+         "type": "int",
+         "signature": "const int UIA_E_PROXYASSEMBLYNOTLOADED"
+        },
+        {
+         "kind": "method",
+         "name": "UiaLookupId",
+         "accessibility": "internal",
+         "modifiers": [
+          "static"
+         ],
+         "line": 27,
+         "type": "int",
+         "params": 2,
+         "signature": "static int UiaLookupId(AutomationIdType type, ref Guid guid)"
+        }
+       ],
        "privateMembers": 1,
        "nestedTypes": [
         {
@@ -407651,7 +411880,38 @@
          "accessibility": "internal",
          "line": 13,
          "outer": "UiaCoreTypesApi",
-         "memberCount": 5
+         "members": [
+          {
+           "kind": "enum member",
+           "name": "Property",
+           "signature": "Property",
+           "accessibility": "public"
+          },
+          {
+           "kind": "enum member",
+           "name": "Pattern",
+           "signature": "Pattern",
+           "accessibility": "public"
+          },
+          {
+           "kind": "enum member",
+           "name": "Event",
+           "signature": "Event",
+           "accessibility": "public"
+          },
+          {
+           "kind": "enum member",
+           "name": "ControlType",
+           "signature": "ControlType",
+           "accessibility": "public"
+          },
+          {
+           "kind": "enum member",
+           "name": "TextAttribute",
+           "signature": "TextAttribute",
+           "accessibility": "public"
+          }
+         ]
         }
        ]
       }
@@ -407674,7 +411934,91 @@
        "attributes": [
         "StructLayout(LayoutKind.Explicit)"
        ],
-       "memberCount": 7,
+       "members": [
+        {
+         "kind": "field",
+         "name": "VARIANT_TRUE",
+         "accessibility": "internal",
+         "modifiers": [
+          "const"
+         ],
+         "line": 17,
+         "type": "short",
+         "signature": "const short VARIANT_TRUE"
+        },
+        {
+         "kind": "field",
+         "name": "VARIANT_FALSE",
+         "accessibility": "internal",
+         "modifiers": [
+          "const"
+         ],
+         "line": 18,
+         "type": "short",
+         "signature": "const short VARIANT_FALSE"
+        },
+        {
+         "kind": "method",
+         "name": "Dispose",
+         "accessibility": "public",
+         "line": 100,
+         "type": "void",
+         "params": 0,
+         "signature": "void Dispose()"
+        },
+        {
+         "kind": "method",
+         "name": "Create",
+         "accessibility": "public",
+         "modifiers": [
+          "static",
+          "unsafe"
+         ],
+         "line": 140,
+         "type": "ComVariant",
+         "params": 1,
+         "signature": "static ComVariant Create(object? value)"
+        },
+        {
+         "kind": "property",
+         "name": "Null",
+         "accessibility": "public",
+         "modifiers": [
+          "static"
+         ],
+         "line": 248,
+         "type": "ComVariant",
+         "accessors": {
+          "get": "public"
+         },
+         "signature": "static ComVariant Null { get; }"
+        },
+        {
+         "kind": "method",
+         "name": "AsObject",
+         "accessibility": "public",
+         "modifiers": [
+          "readonly",
+          "unsafe"
+         ],
+         "line": 254,
+         "type": "object?",
+         "params": 0,
+         "signature": "readonly object? AsObject()"
+        },
+        {
+         "kind": "property",
+         "name": "VarType",
+         "accessibility": "public",
+         "line": 334,
+         "type": "VarEnum",
+         "accessors": {
+          "get": "public",
+          "set": "private"
+         },
+         "signature": "VarEnum VarType { get; private set; }"
+        }
+       ],
        "privateMembers": 6
       }
      ]
@@ -407696,7 +412040,44 @@
        "attributes": [
         "CustomMarshaller(typeof(object), MarshalMode.Default, typeof(ComVariantMarshaller))"
        ],
-       "memberCount": 3
+       "members": [
+        {
+         "kind": "method",
+         "name": "ConvertToUnmanaged",
+         "accessibility": "public",
+         "modifiers": [
+          "static"
+         ],
+         "line": 9,
+         "type": "ComVariant",
+         "params": 1,
+         "signature": "static ComVariant ConvertToUnmanaged(object? managed)"
+        },
+        {
+         "kind": "method",
+         "name": "ConvertToManaged",
+         "accessibility": "public",
+         "modifiers": [
+          "static"
+         ],
+         "line": 11,
+         "type": "object?",
+         "params": 1,
+         "signature": "static object? ConvertToManaged(ComVariant unmanaged)"
+        },
+        {
+         "kind": "method",
+         "name": "Free",
+         "accessibility": "public",
+         "modifiers": [
+          "static"
+         ],
+         "line": 13,
+         "type": "void",
+         "params": 1,
+         "signature": "static void Free(ComVariant unmanaged)"
+        }
+       ]
       }
      ]
     },
@@ -407721,7 +412102,44 @@
        "attributes": [
         "CustomMarshaller(typeof(CustomMarshallerAttribute.GenericPlaceholder[]), MarshalMode.Default, typeof(SafeArrayMarshaller<>))"
        ],
-       "memberCount": 3
+       "members": [
+        {
+         "kind": "method",
+         "name": "ConvertToUnmanaged",
+         "accessibility": "public",
+         "modifiers": [
+          "static"
+         ],
+         "line": 11,
+         "type": "SafeArrayRef",
+         "params": 1,
+         "signature": "static SafeArrayRef ConvertToUnmanaged(T[]? managed)"
+        },
+        {
+         "kind": "method",
+         "name": "ConvertToManaged",
+         "accessibility": "public",
+         "modifiers": [
+          "static"
+         ],
+         "line": 16,
+         "type": "T[]?",
+         "params": 1,
+         "signature": "static T[]? ConvertToManaged(SafeArrayRef unmanaged)"
+        },
+        {
+         "kind": "method",
+         "name": "Free",
+         "accessibility": "public",
+         "modifiers": [
+          "static"
+         ],
+         "line": 18,
+         "type": "void",
+         "params": 1,
+         "signature": "static void Free(SafeArrayRef unmanaged)"
+        }
+       ]
       }
      ]
     },
@@ -407741,7 +412159,55 @@
         "partial"
        ],
        "partial": true,
-       "memberCount": 4,
+       "members": [
+        {
+         "kind": "method",
+         "name": "Destroy",
+         "accessibility": "public",
+         "line": 91,
+         "type": "void",
+         "params": 0,
+         "signature": "void Destroy()"
+        },
+        {
+         "kind": "method",
+         "name": "ToArray",
+         "accessibility": "public",
+         "modifiers": [
+          "static"
+         ],
+         "line": 99,
+         "type": "T[]?",
+         "params": 1,
+         "arity": 1,
+         "signature": "static T[]? ToArray<T>(SafeArrayRef? safearray)"
+        },
+        {
+         "kind": "method",
+         "name": "TryCreate",
+         "accessibility": "public",
+         "modifiers": [
+          "static"
+         ],
+         "line": 171,
+         "type": "bool",
+         "params": 3,
+         "arity": 1,
+         "signature": "static bool TryCreate<T>(T[]? managed, [NotNullWhen(true)] out SafeArrayRef? safearray, out VarEnum varEnum)"
+        },
+        {
+         "kind": "method",
+         "name": "TryCreate",
+         "accessibility": "public",
+         "modifiers": [
+          "static"
+         ],
+         "line": 183,
+         "type": "bool",
+         "params": 3,
+         "signature": "static bool TryCreate(IEnumerable? managed, [NotNullWhen(true)] out SafeArrayRef? safearray, out VarEnum varEnum)"
+        }
+       ],
        "privateMembers": 8,
        "nestedTypes": [
         {
@@ -407752,7 +412218,56 @@
          "accessibility": "internal",
          "line": 21,
          "outer": "SafeArrayRef",
-         "memberCount": 6
+         "members": [
+          {
+           "kind": "field",
+           "name": "cDims",
+           "accessibility": "internal",
+           "line": 24,
+           "type": "ushort",
+           "signature": "ushort cDims"
+          },
+          {
+           "kind": "field",
+           "name": "fFeatures",
+           "accessibility": "internal",
+           "line": 31,
+           "type": "ADVANCED_FEATURE_FLAGS",
+           "signature": "ADVANCED_FEATURE_FLAGS fFeatures"
+          },
+          {
+           "kind": "field",
+           "name": "cbElements",
+           "accessibility": "internal",
+           "line": 34,
+           "type": "uint",
+           "signature": "uint cbElements"
+          },
+          {
+           "kind": "field",
+           "name": "cLocks",
+           "accessibility": "internal",
+           "line": 37,
+           "type": "uint",
+           "signature": "uint cLocks"
+          },
+          {
+           "kind": "field",
+           "name": "pvData",
+           "accessibility": "internal",
+           "line": 40,
+           "type": "void*",
+           "signature": "void* pvData"
+          },
+          {
+           "kind": "field",
+           "name": "rgsabound",
+           "accessibility": "internal",
+           "line": 43,
+           "type": "VariableLengthInlineArray<SAFEARRAYBOUND>",
+           "signature": "VariableLengthInlineArray<SAFEARRAYBOUND> rgsabound"
+          }
+         ]
         },
         {
          "name": "SAFEARRAYBOUND",
@@ -407762,7 +412277,24 @@
          "accessibility": "internal",
          "line": 45,
          "outer": "SafeArrayRef",
-         "memberCount": 2
+         "members": [
+          {
+           "kind": "field",
+           "name": "cElements",
+           "accessibility": "internal",
+           "line": 48,
+           "type": "uint",
+           "signature": "uint cElements"
+          },
+          {
+           "kind": "field",
+           "name": "lLbound",
+           "accessibility": "internal",
+           "line": 51,
+           "type": "int",
+           "signature": "int lLbound"
+          }
+         ]
         },
         {
          "name": "VariableLengthInlineArray",
@@ -407776,7 +412308,41 @@
          "typeParameters": [
           "T"
          ],
-         "memberCount": 3
+         "members": [
+          {
+           "kind": "field",
+           "name": "e0",
+           "accessibility": "internal",
+           "line": 57,
+           "type": "T",
+           "signature": "T e0"
+          },
+          {
+           "kind": "indexer",
+           "name": "this[]",
+           "accessibility": "internal",
+           "line": 59,
+           "type": "ref T",
+           "accessors": {
+            "get": "internal"
+           },
+           "params": 1,
+           "signature": "ref T this[int index] { get; }"
+          },
+          {
+           "kind": "method",
+           "name": "AsSpan",
+           "accessibility": "internal",
+           "attributes": [
+            "UnscopedRef",
+            "MethodImpl(MethodImplOptions.AggressiveInlining)"
+           ],
+           "line": 66,
+           "type": "Span<T>",
+           "params": 1,
+           "signature": "Span<T> AsSpan(int length)"
+          }
+         ]
         },
         {
          "name": "ADVANCED_FEATURE_FLAGS",
@@ -407793,7 +412359,80 @@
           "Flags"
          ],
          "flags": true,
-         "memberCount": 12
+         "members": [
+          {
+           "kind": "enum member",
+           "name": "FADF_AUTO",
+           "signature": "FADF_AUTO = 0x0001",
+           "accessibility": "public"
+          },
+          {
+           "kind": "enum member",
+           "name": "FADF_STATIC",
+           "signature": "FADF_STATIC = 0x0002",
+           "accessibility": "public"
+          },
+          {
+           "kind": "enum member",
+           "name": "FADF_EMBEDDED",
+           "signature": "FADF_EMBEDDED = 0x0004",
+           "accessibility": "public"
+          },
+          {
+           "kind": "enum member",
+           "name": "FADF_FIXEDSIZE",
+           "signature": "FADF_FIXEDSIZE = 0x0010",
+           "accessibility": "public"
+          },
+          {
+           "kind": "enum member",
+           "name": "FADF_RECORD",
+           "signature": "FADF_RECORD = 0x0020",
+           "accessibility": "public"
+          },
+          {
+           "kind": "enum member",
+           "name": "FADF_HAVEIID",
+           "signature": "FADF_HAVEIID = 0x0040",
+           "accessibility": "public"
+          },
+          {
+           "kind": "enum member",
+           "name": "FADF_HAVEVARTYPE",
+           "signature": "FADF_HAVEVARTYPE = 0x0080",
+           "accessibility": "public"
+          },
+          {
+           "kind": "enum member",
+           "name": "FADF_BSTR",
+           "signature": "FADF_BSTR = 0x0100",
+           "accessibility": "public"
+          },
+          {
+           "kind": "enum member",
+           "name": "FADF_UNKNOWN",
+           "signature": "FADF_UNKNOWN = 0x0200",
+           "accessibility": "public"
+          },
+          {
+           "kind": "enum member",
+           "name": "FADF_DISPATCH",
+           "signature": "FADF_DISPATCH = 0x0400",
+           "accessibility": "public"
+          },
+          {
+           "kind": "enum member",
+           "name": "FADF_VARIANT",
+           "signature": "FADF_VARIANT = 0x0800",
+           "accessibility": "public"
+          },
+          {
+           "kind": "enum member",
+           "name": "FADF_RESERVED",
+           "signature": "FADF_RESERVED = 0xF008",
+           "accessibility": "public"
+          }
+         ]
         }
        ]
       }

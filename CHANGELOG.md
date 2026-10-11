@@ -4,6 +4,10 @@ All notable changes to FerroUI are recorded in this file. The format follows [Ke
 
 ## [Unreleased]
 
+### Added
+
+- **UI Automation on Windows** (`ferroui-win32`): a window answers for its accessibility tree; the automation peers of the controls are exposed as providers of UI Automation (the element and fragment interfaces and the invoke, toggle, value, range value, expand and collapse, selection, selection item, scroll and scroll item patterns) with their property, structure and focus events. Verified by a client over the client interface of the system in CI; no screen reader has been run against it.
+
 ## [0.1.0-preview.1] - Unreleased
 
 The first preview. It is being prepared and has not been published; the date is set when it is.

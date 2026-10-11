@@ -2321,3 +2321,20 @@ rust = "storage/ios_storage_provider.rs"
 types = { IOSStorageProvider = "IosStorageProvider" }
 reason = "the name follows the naming of Rust"
 
+# ---------------------------------------------------------------- Avalonia.Win32.Automation
+
+[[map]]
+project = "Avalonia.Win32.Automation"
+upstream = ["Interop/I*.cs"]
+kind = "replaced"
+rust = "interop/uia.idl"
+reason = "the 25 provider interfaces with their enumerations and identifiers are declared in one interface definition file written from the C# declarations (upstream has none) and compiled by the build script of the crate (MicroCom generator); the scanner does not read generated code. Tests of the crate hold every identifier, the slot count of every table and values along every range of identifiers"
+
+[[rust_only]]
+path = "src/Windows/FerroUI.Win32/automation/marshalling/ole_aut.rs"
+reason = "the functions of oleaut32 the marshalling calls (upstream imports them in SafeArrayRef.cs and reaches the strings through its runtime), with a stand-in of the same memory layout on hosts that are not Windows"
+
+[[rust_only]]
+path = "src/Windows/FerroUI.Win32/automation/testing/*"
+reason = "a client of UI Automation for the smoke run and the walk of the catalog; upstream tests with tools outside its repository"
+
