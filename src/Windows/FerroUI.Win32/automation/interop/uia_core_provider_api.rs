@@ -16,6 +16,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 /// The provider functions of the automation core.
+#[allow(dead_code)] // The functions are the ones the reference declares; it does not call all of them either.
 pub(crate) trait IUiaCoreProviderApi {
     /// Whether any client listens for events.
     fn uia_clients_are_listening(&self) -> bool;
@@ -55,6 +56,7 @@ thread_local! {
 /// The functions of the automation core, as the reference names them.
 pub(crate) struct UiaCoreProviderApi;
 
+#[allow(dead_code)] // As the trait.
 impl UiaCoreProviderApi {
     pub const UIA_E_ELEMENTNOTENABLED: i32 = 0x8004_0200u32 as i32;
 
@@ -124,6 +126,7 @@ mod system {
 
     #[cfg_attr(not(target_arch = "x86"), link(name = "uiautomationcore", kind = "raw-dylib"))]
     #[cfg_attr(target_arch = "x86", link(name = "uiautomationcore", kind = "raw-dylib", import_name_type = "undecorated"))]
+    #[allow(dead_code)] // As the trait.
     unsafe extern "system" {
         fn UiaClientsAreListening() -> i32;
         fn UiaReturnRawElementProvider(hwnd: isize, w_param: usize, l_param: isize, el: *mut c_void) -> isize;
