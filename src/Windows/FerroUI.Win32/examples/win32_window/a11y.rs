@@ -22,11 +22,16 @@
 //! renderer is the Vello backend in its CPU mode, as for those. The
 //! controls have no theme: the window has the template of a top level of
 //! the test theme of the controls, so that its content is in its tree, and
-//! the controls below it have their sizes set. Nothing of them is drawn,
-//! and nothing of them needs to be: the run reads what the peers say.
+//! the controls below it have their sizes set and their names given as
+//! automation names (a control without a template has no presenter to take
+//! a name from). Nothing of them is drawn, and nothing of them needs to be:
+//! the run reads what the peers say.
 
+use ferroui_base::media::text_formatting::testing::TestTextShaperImpl;
+use ferroui_base::platform::ITextShaperImpl;
 use ferroui_base::threading::{CancellationTokenSource, Dispatcher, DispatcherPriority, DispatcherTimer};
-use ferroui_base::Ref;
+use ferroui_base::{FerroLocator, Ref};
+use ferroui_controls::automation::AutomationProperties;
 use ferroui_controls::testing::top_level_template;
 use ferroui_controls::{AppBuilder, Application, Button, CheckBox, Control, Slider, StackPanel, TextBox, Window};
 use ferroui_vello::{VelloApplicationExtensions, VelloOptions, VelloRenderingMode};
@@ -68,6 +73,17 @@ pub fn run() -> ExitCode {
         .with(Rc::new(VelloOptions::with_rendering_mode(VelloRenderingMode::Cpu)))
         .use_win32()
         .use_vello()
+        // An application needs a text shaper to be set up. The one of the unit tests of the
+        // base library has no C or C++ sources (the example is checked for a Windows target on
+        // any host); nothing asks it to shape: the controls of the window have no templates,
+        // so no text is laid out.
+        .use_text_shaping_subsystem(
+            || {
+                let shaper: Rc<dyn ITextShaperImpl> = Rc::new(TestTextShaperImpl::new());
+                FerroLocator::current_mutable().bind::<dyn ITextShaperImpl>().to_constant(shaper);
+            },
+            "the text shaper of the unit tests",
+        )
         .setup_without_starting();
     let _application = builder.instance();
 
@@ -125,6 +141,7 @@ fn create_main_window() -> Ref<Window> {
 
     let button = Button::new();
     button.set_content(Some(Rc::new(BUTTON.to_string())));
+    AutomationProperties::set_name(&button, Some(BUTTON));
     button.set_width(200.0);
     button.set_height(32.0);
     let counter = clicks.clone();
@@ -134,6 +151,7 @@ fn create_main_window() -> Ref<Window> {
 
     let disabled = Button::new();
     disabled.set_content(Some(Rc::new(DISABLED_BUTTON.to_string())));
+    AutomationProperties::set_name(&disabled, Some(DISABLED_BUTTON));
     disabled.set_width(200.0);
     disabled.set_height(32.0);
     disabled.set_is_enabled(false);
@@ -145,6 +163,7 @@ fn create_main_window() -> Ref<Window> {
 
     let check_box = CheckBox::new();
     check_box.set_content(Some(Rc::new(CHECK_BOX.to_string())));
+    AutomationProperties::set_name(&check_box, Some(CHECK_BOX));
     check_box.set_width(200.0);
     check_box.set_height(32.0);
 
@@ -175,8 +194,13 @@ fn create_main_window() -> Ref<Window> {
             Some(Ui { window: window.clone(), text_box, check_box, slider, clicks: clicks.clone() });
     });
 
+    let shown = window.downgrade();
     window.opened(move || {
         println!("-- accessibility: the window is open");
+        // A window peer follows the focus of the keyboard device while its window is active.
+        if let Some(shown) = shown.upgrade() {
+            shown.activate();
+        }
         // The client starts once the window was laid out and shown.
         let clicks = clicks.clone();
         let _timer = DispatcherTimer::run_once(move || start_client(clicks.clone()), Duration::from_millis(500), DispatcherPriority::NORMAL);
@@ -362,7 +386,9 @@ fn client(handle: isize, clicks: &AtomicU32, report: &mut Report) -> Result<(), 
     // The focus.
     let log: FocusLog = Arc::new(Mutex::new(Vec::new()));
     client.add_focus_changed_event_handler(log.clone())?;
-    edit.set_focus()?;
+    if let Err(error) = edit.set_focus() {
+        report.check(false, format!("IUIAutomationElement::SetFocus on the text box: {error}"));
+    }
     let heard = |log: &FocusLog| log.lock().unwrap_or_else(std::sync::PoisonError::into_inner).clone();
     let arrived = wait_until(Duration::from_secs(10), || heard(&log).iter().any(|entry| entry.starts_with("Edit")));
     report.check(arrived, format!("a focus changed event arrived for the text box after IUIAutomationElement::SetFocus: {:?}", heard(&log)));

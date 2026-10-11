@@ -639,3 +639,102 @@ fn the_control_types_the_landmarks_and_the_heading_levels_of_the_system() {
     assert_eq!(0, AutomationNode::to_uia_expand_collapse_state(ExpandCollapseState::Collapsed));
     assert_eq!(1, AutomationNode::to_uia_expand_collapse_state(ExpandCollapseState::Expanded));
 }
+
+/// The window of the accessibility run of the example (`win32_window
+/// --a11y`): controls without a theme below a window that has the template
+/// of a top level, with their sizes set and their names given as
+/// automation names. What the run expects of them holds here, on every
+/// host, before it is asked of the system.
+#[test]
+fn controls_without_a_theme_have_what_the_smoke_run_reads() {
+    use ferroui_controls::automation::AutomationProperties;
+    use ferroui_controls::testing::top_level_template;
+
+    let focusable = TestServices::focusable_window();
+    let _app = UnitTestApplication::start(TestServices {
+        keyboard_device: focusable.keyboard_device,
+        keyboard_navigation: focusable.keyboard_navigation,
+        input_manager: focusable.input_manager,
+        theme: None,
+        ..TestServices::styled_window()
+    });
+    let recorder = Rc::new(Recorder::default());
+    UiaCoreProviderApi::set_for_thread(Some(recorder.clone()));
+
+    let button = Button::new();
+    button.set_content(Some(Rc::new("Invoke me".to_string())));
+    AutomationProperties::set_name(&button, Some("Invoke me"));
+    let text_box = TextBox::new();
+    text_box.set_text(Some("Hello"));
+    let check_box = CheckBox::new();
+    AutomationProperties::set_name(&check_box, Some("Check me"));
+    let slider = Slider::new();
+    slider.set_minimum(0.0);
+    slider.set_maximum(100.0);
+    slider.set_range_value(25.0);
+    let panel = StackPanel::new();
+    for control in [&*button as &Control, &text_box, &check_box, &slider] {
+        control.set_width(200.0);
+        control.set_height(32.0);
+    }
+    panel.children().add(&button);
+    panel.children().add(&text_box);
+    panel.children().add(&check_box);
+    panel.children().add(&slider);
+    let window = Window::new();
+    window.set_template(Some(top_level_template()));
+    window.set_title(Some("Smoke".to_string()));
+    window.set_width(480.0);
+    window.set_height(360.0);
+    window.set_content(Some(Control::boxed(&panel)));
+    window.show();
+    window.layout_manager().execute_initial_layout_pass();
+    window.activate();
+
+    let peer = ControlAutomationPeer::create_peer_for_element(&window);
+    let root = AutomationNode::get_or_create(Some(&peer)).expect("the node of the window");
+    assert_eq!(UiaControlTypeId::Window, control_type(&root));
+    assert_eq!(Some("Smoke".to_owned()), text(&root, UiaPropertyId::Name));
+
+    let rect = |node: &IRawElementProviderSimple| {
+        let rect = ComPtr::from_ref(node).cast::<IRawElementProviderFragment>().unwrap().get_bounding_rectangle().unwrap();
+        (rect.width, rect.height)
+    };
+    let found_button = find(&root, UiaControlTypeId::Button);
+    assert_eq!(Some("Invoke me".to_owned()), text(&found_button, UiaPropertyId::Name));
+    let edit = find(&root, UiaControlTypeId::Edit);
+    let found_check_box = find(&root, UiaControlTypeId::CheckBox);
+    assert_eq!(Some("Check me".to_owned()), text(&found_check_box, UiaPropertyId::Name));
+    let found_slider = find(&root, UiaControlTypeId::Slider);
+    for node in [&found_button, &edit, &found_check_box, &found_slider] {
+        assert!(flag(node, UiaPropertyId::IsEnabled));
+        assert!(flag(node, UiaPropertyId::IsKeyboardFocusable), "{:?}", control_type(node));
+        assert_eq!((200.0, 32.0), rect(node), "{:?}", control_type(node));
+    }
+    let patterns = |node: &IRawElementProviderSimple| {
+        [UiaPatternId::Invoke, UiaPatternId::Toggle, UiaPatternId::Value, UiaPatternId::RangeValue]
+            .map(|pattern| has_pattern(node, pattern))
+    };
+    assert_eq!([true, false, false, false], patterns(&found_button));
+    assert_eq!([false, true, false, false], patterns(&found_check_box));
+    assert_eq!([false, false, true, false], patterns(&edit));
+    assert!(patterns(&found_slider)[3] && !patterns(&found_slider)[0]);
+
+    let toggle = found_check_box.cast::<IToggleProvider>().unwrap();
+    assert_eq!(0, toggle.get_toggle_state().unwrap());
+    toggle.toggle().unwrap();
+    assert_eq!(1, toggle.get_toggle_state().unwrap());
+    let range = found_slider.cast::<IRangeValueProvider>().unwrap();
+    assert_eq!(25.0, range.get_value().unwrap());
+    range.set_value(60.0).unwrap();
+    assert_eq!(60.0, slider.value());
+
+    // The focus through the node, and its event.
+    recorder.calls.take();
+    edit.cast::<IRawElementProviderFragment>().unwrap().set_focus().unwrap();
+    Dispatcher::ui_thread().run_jobs(None);
+    assert!(flag(&edit, UiaPropertyId::HasKeyboardFocus));
+    let calls = recorder.calls.take();
+    assert!(calls.contains(&format!("event {} AutomationFocusChanged", number(Some(&edit)))), "the calls: {calls:?}");
+    UiaCoreProviderApi::set_for_thread(None);
+}
