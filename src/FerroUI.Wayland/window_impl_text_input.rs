@@ -36,6 +36,11 @@ pub(crate) struct WaylandTextInputMethod {
     /// handlers).
     client_subscriptions: RefCell<Vec<Rc<dyn IDisposable>>>,
     has_preedit: Cell<bool>,
+    /// The options that were set last. The framework sets the options of the focused element
+    /// before it sets the client, and the worker forgets the state of a surface when its
+    /// client changes: they are sent again after the client (the port's own; the reference
+    /// loses them, DEVIATIONS.md).
+    options: RefCell<Option<TextInputOptions>>,
     sink_proxy: RefCell<Option<WaylandTextInputV3EventsProxy>>,
 
     // Each callback the worker emits carries the session token most
@@ -60,6 +65,7 @@ impl WaylandTextInputMethod {
             client: RefCell::new(None),
             client_subscriptions: RefCell::new(Vec::new()),
             has_preedit: Cell::new(false),
+            options: RefCell::new(None),
             sink_proxy: RefCell::new(None),
             client_epoch: Cell::new(0),
             registered_against_surface: Cell::new(None),
@@ -115,6 +121,11 @@ impl WaylandTextInputMethod {
         }
 
         proxy.set_text_input_active(has_client, supports_preedit, supports_surrounding, self.client_epoch.get());
+        if has_client {
+            if let Some(options) = &*self.options.borrow() {
+                proxy.set_text_input_options(options);
+            }
+        }
     }
 
     fn push_surrounding(&self) {
@@ -190,6 +201,7 @@ impl ITextInputMethodImpl for WaylandTextInputMethod {
     }
 
     fn set_options(&self, options: &TextInputOptions) {
+        *self.options.borrow_mut() = Some(options.clone());
         if let Some(proxy) = self.owner.upgrade().and_then(|owner| owner.surface_proxy()) {
             proxy.set_text_input_options(options);
         }

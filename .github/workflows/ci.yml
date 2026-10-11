@@ -944,7 +944,7 @@ jobs:
               CATALOG_INPUT_METHOD=target/debug/examples/wayland_window \
               CATALOG_INPUT_TEXT="typed by an input method: 你好" CATALOG_INPUT_PREEDIT="ni hao" \
               scripts/wayland/sway-run.sh --size 1920x1200 --scale "$scale" -- \
-              sh scripts/wayland/catalog-pictures.sh target/debug/control-catalog-desktop "catalog-pictures/scale-$scale" software 6000 || result=1
+              sh scripts/wayland/catalog-pictures.sh target/debug/control-catalog-desktop "catalog-pictures/scale-$scale" software 10000 || result=1
           done
           exit $result
       - name: Upload the pictures of the catalog

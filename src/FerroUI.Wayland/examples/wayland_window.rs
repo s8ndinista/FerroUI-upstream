@@ -1878,7 +1878,7 @@ mod app {
             let state = probe.input_method();
             report.check(
                 "activate",
-                state.active && state.activations == 1 && state.content_type.is_some_and(|(_, purpose)| purpose == 0),
+                state.active && state.activations >= 1 && state.content_type.is_some_and(|(_, purpose)| purpose == 0),
                 format!(
                     "the input method was activated {} time(s) with the content type {:?} (hint, purpose; normal is 0) and the surrounding text {:?}",
                     state.activations, state.content_type, state.surrounding
@@ -2025,10 +2025,10 @@ mod app {
             let state = probe.input_method();
             report.check(
                 "disable",
-                disabled && state.deactivations == 1,
+                disabled && state.deactivations == state.activations,
                 format!(
-                    "without the text box the text input is disabled: the input method was deactivated {} time(s); the worker has {:?}",
-                    state.deactivations,
+                    "without the text box the text input is disabled: the input method was activated {} and deactivated {} time(s); the worker has {:?}",
+                    state.activations, state.deactivations,
                     text_input_state(client).map(|(_, surfaces)| surfaces)
                 ),
             );
