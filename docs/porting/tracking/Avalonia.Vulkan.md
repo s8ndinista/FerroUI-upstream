@@ -9,56 +9,82 @@ Generated from upstream commit `17350180c33b063f0e98abbfd19aa3cae63f5d56`. Back 
 | Upstream | `src/Avalonia.Vulkan` |
 | FerroUI | `src/FerroUI.Vulkan` (exists) |
 | Crate | `ferroui-vulkan` |
-| Phase / priority | not started / out of current scope / - |
-| Files | 0/30 (0.0%) |
-| Types | 0/151 (0.0%) |
-| Members | 0/2034 (0.0%) |
+| Phase / priority | 2 - rendering backends / P2 |
+| Files | 30/30 (100.0%) |
+| Types | 151/151 (100.0%) |
+| Members | 283/2034 (1751 waived) (100.0%) |
+| Contracts (interfaces) | 12/12 |
+| Property registrations | 0/0 |
+| Routed events | 0/0 |
 
-This backend is outside the current porting scope. It is tracked at file and type granularity only; member counts are totals.
+## Contracts
+
+Every interface of the project. Each becomes a `pub trait` with the same name (the `I` prefix is kept).
+
+| Interface | Access | Upstream file | Members | Status |
+|---|---|---|---|---|
+| `Avalonia.Vulkan.IVulkanContextExternalObjectsFeature` | public | `IVulkanContextExternalObjectsFeature.cs` | 7/7 | present |
+| `Avalonia.Vulkan.IVulkanDevice` | public | `IVulkanDevice.cs` | 8/8 | present |
+| `Avalonia.Vulkan.IVulkanExternalImage` | public | `IVulkanContextExternalObjectsFeature.cs` | 1/1 | present |
+| `Avalonia.Vulkan.IVulkanExternalSemaphore` | public | `IVulkanContextExternalObjectsFeature.cs` | 3/3 | present |
+| `Avalonia.Vulkan.IVulkanInstance` | public | `IVulkanDevice.cs` | 4/4 | present |
+| `Avalonia.Vulkan.IVulkanKhrSurfacePlatformSurface` | public | `IVulkanPlatformSurface.cs` | 3/3 | present |
+| `Avalonia.Vulkan.IVulkanKhrSurfacePlatformSurfaceFactory` | public | `IVulkanPlatformSurface.cs` | 2/2 | present |
+| `Avalonia.Vulkan.IVulkanPlatformGraphicsContext` | public | `IVulkanDevice.cs` | 10/10 | present |
+| `Avalonia.Vulkan.IVulkanRenderSession` | public | `IVulkanRenderTarget.cs` | 5/5 | present |
+| `Avalonia.Vulkan.IVulkanRenderTarget` | public | `IVulkanRenderTarget.cs` | 1/1 | present |
+| `Avalonia.Vulkan.IVulkanRenderTargetPlatformSurface` | public | `IVulkanPlatformSurface.cs` | 1/1 | present |
+| `Avalonia.Vulkan.VulkanPlatformGraphics.IVulkanDeviceFactory` | public | `VulkanPlatformGraphics.cs` | 3/3 | present |
 
 ## Files
 
-### `(project root)` - files 0/12, types 0/26, members 0/130
+### `(project root)` - files 12/12, types 26/26, members 130/130
 
-| Upstream file | Types | Members | Status |
-|---|---|---|---|
-| `IVulkanContextExternalObjectsFeature.cs` | `IVulkanContextExternalObjectsFeature`, `IVulkanExternalSemaphore`, `IVulkanExternalImage` | 11 | not started |
-| `IVulkanDevice.cs` | `IVulkanDevice`, `IVulkanInstance`, `IVulkanPlatformGraphicsContext` | 22 | not started |
-| `IVulkanPlatformSurface.cs` | `IVulkanKhrSurfacePlatformSurface`, `IVulkanRenderTargetPlatformSurface`, `IVulkanKhrSurfacePlatformSurfaceFactory` | 6 | not started |
-| `IVulkanRenderTarget.cs` | `IVulkanRenderTarget`, `IVulkanRenderSession` | 6 | not started |
-| `VulkanBindings.cs` | `VulkanHelpers` | 3 | not started |
-| `VulkanContext.cs` | `VulkanContext` | 15 | not started |
-| `VulkanException.cs` | `VulkanException`, `VulkanExceptionExtensions` | 5 | not started |
-| `VulkanExternalObjectsFeature.cs` | `VulkanExternalObjectsFeature` | 10 | not started |
-| `VulkanImageInfo.cs` | `VulkanImageInfo` | 12 | not started |
-| `VulkanKhrSurfaceRenderTarget.cs` | `VulkanKhrRenderTarget`, `VulkanKhrRenderTarget.RenderingSession` | 14 | not started |
-| `VulkanOptions.cs` | `VulkanOptions`, `VulkanInstanceCreationOptions`, `VulkanDeviceCreationOptions`, `VulkanPlatformSpecificOptions`, `VkGetInstanceProcAddressDelegate` | 18 | not started |
-| `VulkanPlatformGraphics.cs` | `VulkanPlatformGraphics`, `VulkanPlatformGraphics.IVulkanDeviceFactory` | 8 | not started |
+| Upstream file | Rust file | Status | Types | Members | Notes |
+|---|---|---|---|---|---|
+| `IVulkanContextExternalObjectsFeature.cs` | `i_vulkan_context_external_objects_feature.rs` | present | 3/3 | 11/11 |  |
+| `IVulkanDevice.cs` | `i_vulkan_device.rs` | present | 3/3 | 22/22 |  |
+| `IVulkanPlatformSurface.cs` | `i_vulkan_platform_surface.rs` | present | 3/3 | 6/6 |  |
+| `IVulkanRenderTarget.cs` | `i_vulkan_render_target.rs` | present | 2/2 | 6/6 |  |
+| `VulkanBindings.cs` | `vulkan_bindings.rs` | present | 1/1 | 3/3 |  |
+| `VulkanContext.cs` | `vulkan_context.rs` | present | 1/1 | 15/15 |  |
+| `VulkanException.cs` | `vulkan_exception.rs` | present | 2/2 | 5/5 |  |
+| `VulkanExternalObjectsFeature.cs` | `vulkan_external_objects_feature.rs` | present | 1/1 | 10/10 |  |
+| `VulkanImageInfo.cs` | `vulkan_image_info.rs` | present | 1/1 | 12/12 |  |
+| `VulkanKhrSurfaceRenderTarget.cs` | `vulkan_khr_surface_render_target.rs` | present | 2/2 | 14/14 |  |
+| `VulkanOptions.cs` | `vulkan_options.rs` | present | 5/5 | 18/18 |  |
+| `VulkanPlatformGraphics.cs` | `vulkan_platform_graphics.rs` | present | 2/2 | 8/8 |  |
 
-### `Interop` - files 0/12, types 0/15, members 0/85
+### `Interop` - files 12/12, types 15/15, members 85/85
 
-| Upstream file | Types | Members | Status |
-|---|---|---|---|
-| `VulkanCommandBuffer.cs` | `VulkanCommandBuffer` | 8 | not started |
-| `VulkanCommandBufferPool.cs` | `VulkanCommandBufferPool` | 7 | not started |
-| `VulkanDebugLogger.cs` | `VulkanDebugLogger` | 1 | not started |
-| `VulkanDevice.Create.cs` | `VulkanDevice` | 1 | not started |
-| `VulkanDevice.cs` | `VulkanDevice` | 10 | not started |
-| `VulkanDisplay.cs` | `VulkanDisplay` | 9 | not started |
-| `VulkanFence.cs` | `VulkanFence` | 5 | not started |
-| `VulkanImage.cs` | `VulkanImageBase`, `VulkanImageBase.MemoryImportInfo`, `VulkanImage` | 21 | not started |
-| `VulkanInstance.cs` | `VulkanInstance` | 7 | not started |
-| `VulkanKhrSurface.cs` | `VulkanKhrSurface` | 6 | not started |
-| `VulkanMemoryHelper.cs` | `VulkanMemoryHelper` | 2 | not started |
-| `VulkanSemaphore.cs` | `VulkanSemaphore`, `VulkanSemaphorePair` | 8 | not started |
+| Upstream file | Rust file | Status | Types | Members | Notes |
+|---|---|---|---|---|---|
+| `VulkanCommandBuffer.cs` | `interop/vulkan_command_buffer.rs` | present | 1/1 | 8/8 |  |
+| `VulkanCommandBufferPool.cs` | `interop/vulkan_command_buffer_pool.rs` | present | 1/1 | 7/7 |  |
+| `VulkanDebugLogger.cs` | `interop/vulkan_debug_logger.rs` | present | 1/1 | 1/1 |  |
+| `VulkanDevice.Create.cs` | `interop/vulkan_device_create.rs` | present | 1/1 | 1/1 |  |
+| `VulkanDevice.cs` | `interop/vulkan_device.rs` | present | 1/1 | 10/10 |  |
+| `VulkanDisplay.cs` | `interop/vulkan_display.rs` | present | 1/1 | 9/9 |  |
+| `VulkanFence.cs` | `interop/vulkan_fence.rs` | present | 1/1 | 5/5 |  |
+| `VulkanImage.cs` | `interop/vulkan_image.rs` | present | 3/3 | 21/21 |  |
+| `VulkanInstance.cs` | `interop/vulkan_instance.rs` | present | 1/1 | 7/7 |  |
+| `VulkanKhrSurface.cs` | `interop/vulkan_khr_surface.rs` | present | 1/1 | 6/6 |  |
+| `VulkanMemoryHelper.cs` | `interop/vulkan_memory_helper.rs` | present | 1/1 | 2/2 |  |
+| `VulkanSemaphore.cs` | `interop/vulkan_semaphore.rs` | present | 2/2 | 8/8 |  |
 
-### `UnmanagedInterop` - files 0/6, types 0/110, members 0/1819
+### `UnmanagedInterop` - files 6/6, types 110/110, members 68/1819 (1751 waived)
 
-| Upstream file | Types | Members | Status |
-|---|---|---|---|
-| `Utf8BufferArray.cs` | `Utf8BufferArray` | 6 | not started |
-| `VulkanDeviceApi.cs` | `VulkanDeviceApi` | 41 | not started |
-| `VulkanEnums.cs` | `VkResult`, `VkStructureType`, `VkPhysicalDeviceType`, `VkQueueFlags`, `VkDeviceQueueCreateFlags`, `VkFenceCreateFlags`, `VkCommandPoolCreateFlags`, `VkCommandBufferLevel`, `VkCommandBufferUsageFlags`, `VkPipelineStageFlags`, `VkFormat`, `VkColorSpaceKHR`, `VkMemoryPropertyFlags`, `VkMemoryHeapFlags`, `VkImageLayout`, `VkAccessFlags`, `VkBufferUsageFlags`, `VkImageUsageFlags`, `VkImageAspectFlags`, `VkImageCreateFlags`, `VkImageType`, `VkSampleCountFlags`, `VkImageTiling`, `VkSharingMode`, `VkImageViewCreateFlags`, `VkImageViewType`, `VkComponentSwizzle`, `VkDependencyFlags`, `VkSurfaceTransformFlagsKHR`, `VkCompositeAlphaFlagsKHR`, `VkPresentModeKHR`, `VkSwapchainCreateFlagsKHR`, `VkFilter`, `VkDebugUtilsMessageSeverityFlagsEXT`, `VkDebugUtilsMessageTypeFlagsEXT`, `VkObjectType`, `VkSemaphoreImportFlags`, `VkExternalSemaphoreHandleTypeFlags`, `VkExternalMemoryHandleTypeFlagBits` | 1304 | not started |
-| `VulkanGlobalApi.cs` | `VulkanGlobalApi` | 5 | not started |
-| `VulkanInstanceApi.cs` | `VulkanInstanceApi` | 18 | not started |
-| `VulkanStructs.cs` | `VkInstance`, `VkPhysicalDevice`, `VkDevice`, `VkSwapchainKHR`, `VkSemaphore`, `VkFence`, `VkImage`, `VkImageView`, `VkDeviceMemory`, `VkQueue`, `VkCommandPool`, `VkCommandBuffer`, `VkSurfaceKHR`, `VkDebugUtilsMessengerEXT`, `VkLayerProperties`, `VkDebugUtilsLabelEXT`, `VkDebugUtilsObjectNameInfoEXT`, `VkDebugUtilsMessengerCallbackDataEXT`, `VkDebugUtilsMessengerCallbackEXTDelegate`, `VkDebugUtilsMessengerCreateInfoEXT`, `VkInstanceCreateInfo`, `VkApplicationInfo`, `VkPhysicalDeviceSparseProperties`, `VkPhysicalDeviceProperties`, `VkPhysicalDeviceProperties2`, `VkPhysicalDeviceIDProperties`, `VkPhysicalDeviceLimits`, `VkExtensionProperties`, `VkQueueFamilyProperties`, `VkExtent2D`, `VkExtent3D`, `VkDeviceQueueCreateInfo`, `VkDeviceCreateInfo`, `VkFenceCreateInfo`, `VkCommandPoolCreateInfo`, `VkCommandBufferAllocateInfo`, `VkCommandBufferBeginInfo`, `VkSemaphoreCreateInfo`, `VkSubmitInfo`, `VkSurfaceFormatKHR`, `VkMemoryType`, `VkMemoryHeap`, `VkPhysicalDeviceMemoryProperties`, `VkPhysicalDeviceMemoryProperties.VkMemoryTypesBuffer`, `VkPhysicalDeviceMemoryProperties.VkMemoryHeapsBuffer`, `VkImageCreateInfo`, `VkMemoryRequirements`, `VkMemoryAllocateInfo`, `VkComponentMapping`, `VkImageSubresourceRange`, `VkImageViewCreateInfo`, `VkImageMemoryBarrier`, `VkSurfaceCapabilitiesKHR`, `VkSwapchainCreateInfoKHR`, `VkOffset3D`, `VkImageSubresourceLayers`, `VkImageBlit`, `VkBuffer`, `VkBufferCreateInfo`, `VkBufferImageCopy`, `VkPresentInfoKHR`, `VkImportSemaphoreFdInfoKHR`, `VkImportSemaphoreWin32HandleInfoKHR`, `VkImportMemoryFdInfoKHR`, `VkImportMemoryWin32HandleInfoKHR`, `VkMemoryDedicatedAllocateInfo`, `VkExternalMemoryImageCreateInfo` | 445 | not started |
+| Upstream file | Rust file | Status | Types | Members | Notes |
+|---|---|---|---|---|---|
+| `Utf8BufferArray.cs` | `unmanaged_interop/utf8_buffer_array.rs` | present | 1/1 | 4/6 (2 waived) |  |
+| `VulkanDeviceApi.cs` | `unmanaged_interop/vulkan_device_api.rs` | present | 1/1 | 41/41 |  |
+| `VulkanEnums.cs` | `unmanaged_interop/vulkan_enums.rs` | present | 39/39 | 0/1304 (1304 waived) | replaced: the enumerations and flag sets of the Vulkan headers are those of the `ash` bindings (docs/porting/vulkan.md, section 3): each upstream name is an alias of the type of the bindings, which carries every value as an associated constant, so the values are not written a second time |
+| `VulkanGlobalApi.cs` | `unmanaged_interop/vulkan_global_api.rs` | present | 1/1 | 5/5 |  |
+| `VulkanInstanceApi.cs` | `unmanaged_interop/vulkan_instance_api.rs` | present | 1/1 | 18/18 |  |
+| `VulkanStructs.cs` | `unmanaged_interop/vulkan_structs.rs` | present | 67/67 | 0/445 (445 waived) | replaced: the handles and structures of the Vulkan headers are those of the `ash` bindings (docs/porting/vulkan.md, section 3): each upstream name is an alias of the type of the bindings, whose fields are those of the headers in snake case |
+
+## Rust-only files
+
+Rust sources of this crate that no upstream file maps to. Give each a reason in `docs/porting/data/path-overrides.toml` (`[[rust_only]]`), or map upstream files to it (`[[map]]`).
+
+Tests, examples and build scripts (not scanned): `live_tests.rs`.

@@ -567,6 +567,27 @@ Not built yet (each fails, logs or answers "not available" as stated, and is tra
 |---|---|---|---|
 | The rendering mode Vulkan (`VulkanSupport`, `VulkanNativeInterop`). | Passed over like a mode that failed to initialize. | Missing | 2a, after the Vulkan GPU of the Skia backend |
 
+### Vulkan (`src/FerroUI.Vulkan/`, `src/Skia/FerroUI.Skia/gpu/vulkan/`)
+
+Design and what was verified where: [`vulkan.md`](vulkan.md).
+
+| Upstream | Port | Kind | Reason | Since |
+|---|---|---|---|---|
+| `VulkanStructs.cs` and `VulkanEnums.cs` declare the structures, handles and enumerations the project uses; `VulkanGlobalApi`, `VulkanInstanceApi` and `VulkanDeviceApi` are generated tables of function pointers. | The types are those of the `ash` bindings (0.38.0), each under its upstream name as an alias (`unmanaged_interop/vulkan_enums.rs`, `vulkan_structs.rs`); the three tables are the tables of the bindings, filled through the same lookups, with upstream's members as safe functions over typed handles. | Representation | The headers are not written a second time; the values and fields are not counted as members of the port (`path-overrides.toml`). | vulkan |
+| A missing entry point is a null delegate, which fails when called. | A missing entry point is a function that stops the program when called. | Behaviour | The form of the tables of the bindings. The optional entry points are not called without their extension, as upstream. | vulkan |
+| `VulkanInstance.Create` names the application (unless the options do) and the engine after the framework. | Both names are `FerroUI`. | Behaviour | The name of the port. | vulkan |
+| With `UseDebug`, `CreateDebugUtilsMessengerEXT` is called whether or not `VK_EXT_debug_utils` was enabled; without the extension the delegate is null. | The messenger is created only when the extension was enabled. | Behaviour | The call without the extension would stop the program. | vulkan |
+| An enumeration (`vkEnumerate...`, `vkGet...` with a count) makes two calls. | The same two calls, repeated when the second answers `VK_INCOMPLETE` (the list grew in between). `vkEnumerateInstanceExtensionProperties` failing at its first call is a failure (upstream reads the result of the second only). | Behaviour | The loop the specification asks for. | vulkan |
+| Failures are exceptions (`VulkanException`). | `Result<_, VulkanException>` inside the crate, with upstream's messages; a panic with the same message where a contract cannot report (creating a context, beginning and ending a frame, importing an object). `VulkanPlatformGraphics::try_create` logs and returns `None`, as upstream catches. | Representation | Porting guide: exceptions. | vulkan |
+| `IVulkanInstance`, `IVulkanDevice`, the delegates of the options and the platform features (`Dictionary<Type, object>`) are plain objects. | `Send + Sync` and held in `Arc`: the platform graphics, which two threads share, hold them. The platform features map a `TypeId` to an `Arc` of the feature. | Representation | `IPlatformGraphics` is `Send + Sync` (`render-thread.md`). | vulkan |
+| The device lock is a monitor with a count and an owner thread. | A mutex and a condition variable with the same count and owner. | Representation | No reentrant lock in the standard library. | vulkan |
+| The Skia backend tests `is IVulkanPlatformGraphicsContext`; a surface is tested with `is IVulkanKhrSurfacePlatformSurface`. | The context announces itself through its optional features; a surface through `try_get_surface_kind`. | Representation | Porting guide: `is` on an interface. | vulkan |
+| `VulkanContext.Dispose` does nothing. | Disposes the command pool of its external objects feature and lets go of the feature. | Behaviour | The feature holds its context and the context its feature; without a collector the pair would never be freed. | vulkan |
+| `ImportSemaphore` leaves the semaphore it created when the import fails. | Destroys it before failing. | Behaviour | | vulkan |
+| `VulkanPlatformGraphics.GetSharedContext` stores the context it creates in `_currentSharedContext`, which nothing reads. | The field is not kept. | Representation | | vulkan |
+| `Utf8BufferArray` is disposable and has a finalizer. | Owned vectors, freed when dropped. | Representation | | vulkan |
+| `System.Version` for the API version of the options. | `ferroui_vulkan::Version` (major, minor, build). | Representation | | vulkan |
+
 ### iOS platform (`src/iOS/FerroUI.iOS/`)
 
 The design, the binding choice and what each stage builds are in `ios-platform.md`. The systematic difference of this backend is how its classes are declared: upstream's are managed classes exported to the Objective-C runtime by attributes, with their state in fields; the port declares each class with `define_class!` of the `objc2` bindings and keeps its state in the instance variables of the object, and where a class has logic that can be tested without UIKit the class forwards to a plain Rust type that holds it (`ViewControllerState`, `AppDelegateEvents`, the functions of `input_handler.rs` and `ios_screens.rs`).

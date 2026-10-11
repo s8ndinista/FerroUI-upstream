@@ -2,26 +2,26 @@
  "upstreamCommit": "17350180c33b063f0e98abbfd19aa3cae63f5d56",
  "inScope": {
   "files": [
-   2560,
-   2596,
+   2590,
+   2626,
    0
   ],
   "types": [
-   3467,
-   3915,
+   3618,
+   4066,
    311
   ],
   "members": [
-   27859,
-   32172,
-   2868
+   28142,
+   34206,
+   4619
   ]
  },
  "allProjects": {
-  "membersPresent": 27859,
+  "membersPresent": 28142,
   "members": 37391,
   "membersNotApplicable": 1132,
-  "membersOutOfScope": 4087
+  "membersOutOfScope": 2053
  },
  "projects": [
   {
@@ -7838,25 +7838,25 @@
    "name": "Avalonia.Vulkan",
    "path": "src/Avalonia.Vulkan",
    "rust": "src/FerroUI.Vulkan",
-   "scope": "out",
-   "detail": "types",
+   "scope": "in",
+   "detail": "full",
    "files": [
-    0,
+    30,
     30,
     0
    ],
    "types": [
-    0,
+    151,
     151,
     0
    ],
    "members": [
-    0,
+    283,
     2034,
-    0
+    1751
    ],
    "interfaces": [
-    0,
+    12,
     12
    ],
    "propertyRegistrations": [
@@ -7868,8 +7868,105 @@
     0
    ],
    "notApplicableFiles": 0,
-   "matchKinds": {},
-   "presentFiles": {},
+   "matchKinds": {
+    "alias fn": 1,
+    "const": 2,
+    "field": 35,
+    "fn": 242,
+    "overload fn": 3
+   },
+   "presentFiles": {
+    "IVulkanContextExternalObjectsFeature.cs": [
+     "i_vulkan_context_external_objects_feature.rs"
+    ],
+    "IVulkanDevice.cs": [
+     "i_vulkan_device.rs"
+    ],
+    "IVulkanPlatformSurface.cs": [
+     "i_vulkan_platform_surface.rs"
+    ],
+    "IVulkanRenderTarget.cs": [
+     "i_vulkan_render_target.rs"
+    ],
+    "Interop/VulkanCommandBuffer.cs": [
+     "interop/vulkan_command_buffer.rs"
+    ],
+    "Interop/VulkanCommandBufferPool.cs": [
+     "interop/vulkan_command_buffer_pool.rs"
+    ],
+    "Interop/VulkanDebugLogger.cs": [
+     "interop/vulkan_debug_logger.rs"
+    ],
+    "Interop/VulkanDevice.Create.cs": [
+     "interop/vulkan_device_create.rs"
+    ],
+    "Interop/VulkanDevice.cs": [
+     "interop/vulkan_device.rs"
+    ],
+    "Interop/VulkanDisplay.cs": [
+     "interop/vulkan_display.rs"
+    ],
+    "Interop/VulkanFence.cs": [
+     "interop/vulkan_fence.rs"
+    ],
+    "Interop/VulkanImage.cs": [
+     "interop/vulkan_image.rs"
+    ],
+    "Interop/VulkanInstance.cs": [
+     "interop/vulkan_instance.rs"
+    ],
+    "Interop/VulkanKhrSurface.cs": [
+     "interop/vulkan_khr_surface.rs"
+    ],
+    "Interop/VulkanMemoryHelper.cs": [
+     "interop/vulkan_memory_helper.rs"
+    ],
+    "Interop/VulkanSemaphore.cs": [
+     "interop/vulkan_semaphore.rs"
+    ],
+    "UnmanagedInterop/Utf8BufferArray.cs": [
+     "unmanaged_interop/utf8_buffer_array.rs"
+    ],
+    "UnmanagedInterop/VulkanDeviceApi.cs": [
+     "unmanaged_interop/vulkan_device_api.rs"
+    ],
+    "UnmanagedInterop/VulkanEnums.cs": [
+     "unmanaged_interop/vulkan_enums.rs"
+    ],
+    "UnmanagedInterop/VulkanGlobalApi.cs": [
+     "unmanaged_interop/vulkan_global_api.rs"
+    ],
+    "UnmanagedInterop/VulkanInstanceApi.cs": [
+     "unmanaged_interop/vulkan_instance_api.rs"
+    ],
+    "UnmanagedInterop/VulkanStructs.cs": [
+     "unmanaged_interop/vulkan_structs.rs"
+    ],
+    "VulkanBindings.cs": [
+     "vulkan_bindings.rs"
+    ],
+    "VulkanContext.cs": [
+     "vulkan_context.rs"
+    ],
+    "VulkanException.cs": [
+     "vulkan_exception.rs"
+    ],
+    "VulkanExternalObjectsFeature.cs": [
+     "vulkan_external_objects_feature.rs"
+    ],
+    "VulkanImageInfo.cs": [
+     "vulkan_image_info.rs"
+    ],
+    "VulkanKhrSurfaceRenderTarget.cs": [
+     "vulkan_khr_surface_render_target.rs"
+    ],
+    "VulkanOptions.cs": [
+     "vulkan_options.rs"
+    ],
+    "VulkanPlatformGraphics.cs": [
+     "vulkan_platform_graphics.rs"
+    ]
+   },
    "rustOnly": []
   },
   {

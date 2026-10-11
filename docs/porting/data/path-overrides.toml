@@ -2321,3 +2321,18 @@ rust = "storage/ios_storage_provider.rs"
 types = { IOSStorageProvider = "IosStorageProvider" }
 reason = "the name follows the naming of Rust"
 
+# ---------------------------------------------------------------- Avalonia.Vulkan
+
+[[map]]
+project = "Avalonia.Vulkan"
+upstream = ["UnmanagedInterop/VulkanEnums.cs"]
+kind = "replaced"
+rust = "unmanaged_interop/vulkan_enums.rs"
+reason = "the enumerations and flag sets of the Vulkan headers are those of the `ash` bindings (docs/porting/vulkan.md, section 3): each upstream name is an alias of the type of the bindings, which carries every value as an associated constant, so the values are not written a second time"
+
+[[map]]
+project = "Avalonia.Vulkan"
+upstream = ["UnmanagedInterop/VulkanStructs.cs"]
+kind = "replaced"
+rust = "unmanaged_interop/vulkan_structs.rs"
+reason = "the handles and structures of the Vulkan headers are those of the `ash` bindings (docs/porting/vulkan.md, section 3): each upstream name is an alias of the type of the bindings, whose fields are those of the headers in snake case"

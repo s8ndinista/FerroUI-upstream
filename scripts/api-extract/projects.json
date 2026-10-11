@@ -50,7 +50,7 @@
     { "path": "src/Android/Avalonia.Android", "detail": "full", "crate": "ferroui-android", "phase": "6 - mobile (Android)", "priority": "P1" },
     { "path": "src/iOS/*", "detail": "full", "crate": "ferroui-ios", "phase": "6 - mobile (iOS)", "priority": "P2" },
     { "path": "src/Linux/*", "detail": "types", "scope": "out", "phase": "not started / out of current scope", "priority": "-" },
-    { "path": "src/Avalonia.Vulkan", "detail": "types", "scope": "out", "phase": "not started / out of current scope", "priority": "-" }
+    { "path": "src/Avalonia.Vulkan", "detail": "full", "rust": "src/FerroUI.Vulkan", "crate": "ferroui-vulkan", "phase": "2 - rendering backends", "priority": "P2" }
   ],
   "//expanded": "Planning data (scope, phase, priority) of one project that a `dir/*` entry above expands to, where it differs from its siblings. Read by scripts/port-status only; the extractor ignores it.",
   "expanded": [

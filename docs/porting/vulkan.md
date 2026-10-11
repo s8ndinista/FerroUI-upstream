@@ -1,0 +1,84 @@
+# Vulkan: the platform contracts, the Skia GPU and the platform wiring
+
+Status: living document, started 2026-10-11. It covers the upstream project `Avalonia.Vulkan` (30 files, 151 types, 2034 members), the three files of the Skia backend under `Skia/Avalonia.Skia/Gpu/Vulkan`, and the Vulkan files of the windowing platforms (`Avalonia.X11/Vulkan`, `Android/Avalonia.Android/Platform/Vulkan`, `Windows/Avalonia.Win32/Vulkan`: two files each), all at the tracked commit.
+
+Marks used below: **[V]** read in the sources named, **[R]** asked of the release of the Skia binaries, **[H]** run on the development host (macOS, no Vulkan implementation), **[CI]** run by a job of the continuous integration, **[VM]** run in the Ubuntu virtual machine. What carries no mark was written and type-checked but not run.
+
+## 1. What upstream has
+
+- `Avalonia.Vulkan` is both a contracts project and an implementation. The contracts: `IVulkanInstance` and `IVulkanDevice` (handles as integers, the two lookups of entry points, the lock of the device), `IVulkanPlatformGraphicsContext` (the graphics context of a device), the surfaces (`IVulkanKhrSurfacePlatformSurface`, its factory, `IVulkanRenderTargetPlatformSurface`), `IVulkanRenderTarget` and `IVulkanRenderSession`, `VulkanImageInfo`, and the external objects feature. The implementation: `VulkanPlatformGraphics` (the `IPlatformGraphics` every platform registers) over `VulkanInstance.Create` (application info, extensions, layers, the debug messenger), `VulkanDevice.Create` (the choice of the physical device and of the queue family, the device with all queues of the family), `VulkanContext`, and the swap chain render target: `VulkanKhrRenderTarget` renders a frame into an image of its own (`VulkanImage`) and, when the session ends, blits it into the next image of the swap chain (`VulkanDisplay`) and presents.
+- The entry points are three generated tables of function pointers (`VulkanGlobalApi`, `VulkanInstanceApi`, `VulkanDeviceApi`), filled by name through a delegate: the platform gives `vkGetInstanceProcAddr` of the loader it opened, or the application gives its own. Nothing is linked. The structures and enumerations (`VulkanStructs.cs`, `VulkanEnums.cs`: 1751 of the 2034 members) are a hand-kept subset of the Vulkan headers.
+- A platform adds `VulkanPlatformSpecificOptions`: the lookup of the loader, the instance extensions of its window system (`VK_KHR_xlib_surface`, `VK_KHR_win32_surface`, `VK_KHR_android_surface`), a surface the physical devices are asked about, and the factory that turns a window into a surface.
+- The Skia backend has `VulkanSkiaGpu` (a Ganesh context over the device of a Vulkan context), `VulkanSkiaRenderTarget` (a Skia surface over the image of a session) and `VulkanSkiaExternalObjectsFeature` (imported images as Skia images).
+
+## 2. Feasibility: which Skia binaries exist (part 0)
+
+A from-source build of Skia is ruled out (hours and gigabytes), so the Vulkan GPU of the Skia backend can be built where a prebuilt Skia with the feature `vulkan` and the other features of the target is published.
+
+How the key of a binary is formed **[V]** (`skia-bindings` 0.153.3, `build_support/binary_cache/binaries.rs` and `build_support/features.rs`): the first 20 characters of the commit of the bindings (`b7f043e0b1e2a850e702`), the target, the sorted feature ids joined with `-` (`jpeg-decode` and `jpeg-encode` are `jpegd` and `jpege`). `vulkan` alone is refused by the build script: it needs an engine, `ganesh` or `graphite`, which is named with it (`gl` implies `ganesh`). The list of published keys is not in the crate; it is asked of the release `0.153.3` of `rust-skia/skia-binaries` with a request for the first byte of the archive, as the job `x11` of CI asks for its key **[R]** (2026-10-11):
+
+| Target | `ganesh-gl-…-vulkan` | `ganesh-…-vulkan` | `graphite-…-vulkan` | Ganesh and Graphite with Vulkan |
+|---|---|---|---|---|
+| `x86_64-unknown-linux-gnu` | published | published | published | no |
+| `aarch64-unknown-linux-gnu` | published | published | published | no |
+| `aarch64-linux-android` | published | published | published | no |
+| `x86_64-linux-android` | published | published | published | no |
+| `x86_64-pc-windows-msvc` | **no** | published | published | no |
+| `aarch64-pc-windows-msvc` | **no** | published | no | no |
+| `aarch64-apple-darwin`, `x86_64-apple-darwin` | (not applicable) | published | no with `metal` | no |
+
+(`…` stands for `jpegd-jpege-pdf`, the default features of `skia-safe`. Also not published anywhere: `vulkan` with the window system features `x11`, `egl` or `wayland`, and `d3d` with `vulkan`.)
+
+Consequences:
+
+- **Linux (both targets): feasible.** The feature set of the Skia backend becomes `gl` and `vulkan` (key `ganesh-gl-jpegd-jpege-pdf-vulkan`): one binary serves GLX, EGL and Vulkan. The job `x11` asks for the new key.
+- **Android: feasible, not switched on.** The binary with `gl` and `vulkan` exists, so the feature `vulkan` of `ferroui-skia` builds there without a source build. The default stays `gl`: nothing was run on the emulator with the other binary, and the working backend is not moved to an unverified binary while a preview is published.
+- **Windows: not feasible beside ANGLE.** Ganesh on OpenGL (ANGLE, the default rendering mode) and Vulkan have no common binary. A build with the feature `vulkan` there compiles Skia from source. The Vulkan files of the Windows backend depend on the contracts crate only, not on Skia.
+- **macOS: not built.** No binary has Metal and Vulkan together, the host has no Vulkan loader and no MoltenVK (`vulkaninfo` is absent, no `libvulkan` or `libMoltenVK` in the library directories) **[H]**, and no Linux target of the Rust toolchain is installed. So on the host the contracts crate is built and its tests of values run; the Skia Vulkan files and the X11 files are compiled by CI and in the virtual machine.
+
+## 3. The binding
+
+`ash` 0.38.0, pinned exactly (MIT OR Apache-2.0; with `libloading`, ISC), without its default features: `loaded` (the loader of the system is opened at run time: `ash::Entry::load` and `load_from`), `debug` and `std`. No library is linked, on any target. The alternative, writing the tables by hand like `glx/glx.rs`, would mean writing the structures and enumerations of the headers a second time, as upstream did.
+
+How upstream's interop maps, file by file:
+
+| Upstream | Port | What it is |
+|---|---|---|
+| `UnmanagedInterop/VulkanGlobalApi.cs` | `unmanaged_interop/vulkan_global_api.rs` | `ash::EntryFnV1_0` filled through the delegate with a null instance; the three entry points upstream declares as members |
+| `UnmanagedInterop/VulkanInstanceApi.cs` | `unmanaged_interop/vulkan_instance_api.rs` | `ash::InstanceFnV1_0` and `V1_1`, the tables of `VK_KHR_surface` and `VK_EXT_debug_utils`, and (for `vkDestroyDevice` and `vkGetDeviceQueue`, which upstream asks the instance for) `ash::DeviceFnV1_0`, all filled through `IVulkanInstance::get_instance_proc_address` |
+| `UnmanagedInterop/VulkanDeviceApi.cs` | `unmanaged_interop/vulkan_device_api.rs` | `ash::DeviceFnV1_0` and the tables of `VK_KHR_swapchain`, `VK_KHR_external_semaphore_fd` and `_win32`, filled through the device lookup with the instance lookup as the fallback, as upstream |
+| `UnmanagedInterop/VulkanEnums.cs`, `VulkanStructs.cs` | `unmanaged_interop/vulkan_enums.rs`, `vulkan_structs.rs` | every upstream type name as an alias of the type of `ash::vk` (`VkFormat = vk::Format`); values and fields are those of the bindings and are not repeated |
+| `UnmanagedInterop/Utf8BufferArray.cs` | `unmanaged_interop/utf8_buffer_array.rs` | owned `CString`s and the array of pointers to them |
+
+The tables are filled with the closure form of the bindings (`load(|name| ...)`), not through `ash::Instance::load`, because the lookup is a delegate of the platform or of the application and not necessarily a C function. An entry point that is missing is replaced by a function that stops the program when called, where upstream has a null delegate; the optional ones (the surface, swap chain and import functions) are never called without their extension.
+
+`unsafe` is confined to the three tables (each call with its safety argument: results written to locals, counts and pointers taken from slices, structures whose lifetime covers what they point to), the debug callback, `IVulkanInstance::get_device_proc_address` of the instance, and the tests. The members of the tables are safe functions over typed handles; their contract is that the handles belong to the instance or device the table was made for, which the objects of the crate guarantee by construction.
+
+`ash` is exported again by the crate (`ferroui_vulkan::ash`), so the platforms and the Skia backend name one version.
+
+## 4. The contracts in Rust
+
+- **Threads.** `IPlatformGraphics` is shared by the UI thread and the render thread, and `VulkanPlatformGraphics` holds an instance and, with a custom shared device, a device: `IVulkanInstance` and `IVulkanDevice` are `Send + Sync` and held in `Arc`. The delegates of the options and the platform features (`Arc<dyn Fn .. + Send + Sync>`, `Arc<dyn Any + Send + Sync>`) too. A context, its render targets, sessions, images and command buffers belong to the thread that created the context (`Rc`).
+- **The lock of the device** is upstream's monitor with a count and an owner: a mutex and a condition variable here; a thread may lock again, another thread waits; `main_queue_handle` panics without the lock. The result of `lock` is an `Rc<dyn IDisposable>`, which cannot leave the thread.
+- **Recognising things.** A context announces itself (`try_get::<dyn IVulkanPlatformGraphicsContext>()`), as an OpenGL context does; a surface announces that it is a Vulkan surface through `try_get_surface_kind` (`try_get_vulkan_khr_surface`, `try_get_vulkan_render_target_surface`); the surface factory of the platform is a shared feature (`try_get_shared`).
+- **Failures.** Inside the crate a failure is a `Result<_, VulkanException>`; the message is upstream's (`vkCreateSwapchainKHR returned VK_ERROR_...`). `VulkanPlatformGraphics::try_create` logs it and returns `None`, as upstream catches. Where a contract has no way to report (creating a context, beginning and ending a frame, importing) the failure is a panic with the same message, the convention of the OpenGL crate.
+- **The internal members** of `IVulkanPlatformGraphicsContext` (the tables and the typed handles) are members of the trait and the tables are public types: the trait is implemented by this crate only, as upstream marks it.
+
+## 5. Stages
+
+1. **`ferroui-vulkan`** (built **[H]**): the 30 files. Host tests of everything that is a function of values (the version packing, the result names, the extension sets of the instance and of the device, the choice of the queue family and of the device, the memory type, the mip levels, the surface format, the parameters of the swap chain from the capabilities, the render format, the handle type tables, the option defaults, the enumeration helper) and of the platform graphics over a device double (64 tests); eight tests against the Vulkan implementation of the machine through its loader (instance and device, the lock across threads, command buffers, fences and images, the whole swap chain render target on a headless surface with a resize, the external objects feature with a semaphore and an image exported as file descriptors and imported). Without a loader they print why and pass; with `FERROUI_VULKAN_TEST_REQUIRE=1` they fail instead.
+2. **The Skia Vulkan GPU** (`src/Skia/FerroUI.Skia/gpu/vulkan/`): on Linux always (configuration `ferro_skia_vulkan` from the build script, with the target table of the manifest), elsewhere behind the cargo feature `vulkan` of `ferroui-skia`, off by default.
+3. **The platforms**: the X11 mode walk takes `X11RenderingMode::Vulkan`; Android and Windows as section 2 allows.
+4. **Verification**: the job `x11` of CI with lavapipe (`mesa-vulkan-drivers`, `vulkan-tools`): the tests of the contracts crate with `FERROUI_VULKAN_TEST_REQUIRE=1`, the smoke run of the X11 example with `--mode=vulkan` under Xvfb.
+
+## 6. Differences from upstream
+
+Recorded in `DEVIATIONS.md` ("Vulkan"). In short: the names given to Vulkan for the application and the engine are `FerroUI`; the debug messenger is created only when its extension was enabled; an enumeration that grew between its two calls is asked again; disposing a context frees the command pool of its external objects feature (upstream leaves it, and with a collector has no cycle to break); a semaphore whose import failed is destroyed; the field `_currentSharedContext`, which upstream writes and never reads, is not kept.
+
+## 7. Sharing a device with the Vello backend (not built)
+
+The Vello backend creates its own `wgpu` device. To render with the device of this crate it would create its `wgpu` device from raw handles: `wgpu::hal::vulkan::Instance::from_raw` with the instance of `IVulkanInstance` (and its enabled extensions), `Adapter::device_from_raw` with the device, the queue family index and the enabled device extensions of `IVulkanDevice`, then `wgpu::Adapter::create_device_from_hal`; each frame it would wrap the image of `IVulkanRenderSession::image_info` with `Device::texture_from_raw` and take the lock of the device (`IVulkanPlatformGraphicsContext::ensure_current`) around submission, since `wgpu` assumes it owns the queue. The version of `ash` that `wgpu` links would have to be the pinned one. Out of scope here.
+
+## 8. What is verified and what is not
+
+See the report at the end of each stage in `CONTINUATION.md`. A hardware Vulkan driver was not used anywhere: every run is on Mesa's software implementation (lavapipe). Windows and Android were not run.

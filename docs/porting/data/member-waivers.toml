@@ -5143,3 +5143,23 @@ project = "Avalonia.FreeDesktop.AtSpi"
 type = "Avalonia.FreeDesktop.AtSpi.AtSpiServer"
 member = "SyncContext"
 reason = "the handlers are called by a task of the UI dispatcher; there is no synchronization context to hand to a D-Bus library"
+
+# ---------------------------------------------------------------- Avalonia.Vulkan
+
+[[alias]]
+project = "Avalonia.Vulkan"
+type = "Avalonia.Vulkan.Interop.Utf8BufferArray"
+member = "implicit operator"
+rust = ["as_slice"]
+
+[[waive]]
+project = "Avalonia.Vulkan"
+type = "Avalonia.Vulkan.Interop.Utf8BufferArray"
+member = "Dispose"
+reason = "the array and its strings are owned vectors, freed when the value is dropped; there is no unmanaged block to release by hand"
+
+[[waive]]
+project = "Avalonia.Vulkan"
+type = "Avalonia.Vulkan.Interop.Utf8BufferArray"
+member = "~Utf8BufferArray"
+reason = "a finalizer for the unmanaged block, which the owned vectors of the port do not need"
