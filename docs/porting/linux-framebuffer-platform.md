@@ -29,10 +29,10 @@ What upstream does not have, which matters for what a port can honestly claim **
 
 - **No keyboard.** Neither backend reads a key: `LibInputBackend` handles event types between `TOUCH_DOWN` and `TOUCH_CANCEL` and between `POINTER_MOTION` and `POINTER_AXIS`; the keyboard device that is registered never receives an event.
 - **No relative pointer.** `LIBINPUT_EVENT_POINTER_MOTION` falls into the default branch ("is not mapped"): a mouse does not move the pointer; only absolute devices (tablets, the pointer of a virtual machine) do.
-- **Unreachable and wrong branches in the pointer mapping.** The high-resolution wheel (`POINTER_SCROLL_WHEEL`, 409) is above the range the thread forwards (up to `POINTER_AXIS`, 403), so only the legacy wheel event is handled. The right button is mapped to "up" for state 1 and to "down" for state 2, and the middle button to "up" for state 2; `libinput` has two button states, 0 and 1, so the right button never goes down and the middle button never comes up.
+- **Unreachable and wrong branches in the pointer mapping.** The high-resolution wheel (`POINTER_SCROLL_WHEEL`, the value after `POINTER_AXIS`) is above the range the thread forwards, so only the legacy wheel event is handled; the two events describe the same step of a wheel, so forwarding both would scroll twice. The right button is mapped to "up" for state 1 and to "down" for state 2, and the middle button to "up" for state 2; `libinput` has two button states, 0 and 1, so the right button never goes down and the middle button never comes up.
 - **No cursor image, no screens, no clipboard, no storage provider.**
 
-The port ports what is there, and adds input that the task of this stage asks for and that a UI without a window system needs, as additions that are marked as such in the code and in DEVIATIONS.md (section 7): keys, relative pointers and multi-touch (protocol B) in the evdev backend; the three button states corrected in the `libinput` backend.
+The port ports what is there, and adds input that the task of this stage asks for and that a UI without a window system needs, as additions that are marked as such in the code and in DEVIATIONS.md (section 7): keys, relative pointers and multi-touch (protocol B) in the evdev backend; the button states corrected in the `libinput` backend.
 
 ## 3. Bindings
 
@@ -73,7 +73,7 @@ Pixel formats, as upstream **[V]**: 16 bits per pixel is `Rgb565`; 32 bits with 
 
 The vertical sync is `FBIO_WAITFORVSYNC`; its result is ignored as upstream ignores it (a driver without it returns an error and the frame is copied at once).
 
-## 6. The DRM output (stage 2)
+## 6. The DRM output (stage 2b, not built)
 
 `DrmCard` opens the card (the given path, else the first `/dev/dri/card*` that has resources), `DrmResources` lists connectors, encoders and CRTCs, `DrmOutput` picks the connector (connected, optionally of the types of the options), the mode (the options' resolution, else the preferred mode), creates the GBM device and surface (`XRGB8888`, scan-out and rendering), the EGL display on it, the context of the options' versions, and sets the CRTC with the first buffer. A frame: `eglSwapBuffers`, lock the front buffer, a DRM framebuffer for the buffer object (kept in its user data and removed by its destroy callback), `drmModePageFlip` with an event, wait for the event with `poll` and `drmHandleEvent`, release the previous buffer. `PlatformGraphics` hands the renderer the one context (`uses_shared_context`), so Skia's Ganesh GL backend draws on it. The orientation of the options rotates the reported size and the session.
 
@@ -95,7 +95,7 @@ Additions (three device types, each a description and a handler, selected by `ty
 
 A keyboard layout is not read from the system (there is no `xkbcommon` here): the symbols are those of a US keyboard. That is a limit of the addition, stated in the README of the crate.
 
-**libinput** (`input/lib_input/`, stage 2). The port of the three partial files and the options, with the corrections of section 2 recorded in DEVIATIONS.md: the buttons use states 0 and 1; the forwarded range includes the high-resolution wheel, and when it is delivered the legacy axis event of the same wheel step is not also turned into a scroll. Relative motion and keys stay unmapped there, as upstream; a machine that needs them uses the evdev backend.
+**libinput** (`input/lib_input/`, stage 2a, built). The port of the three partial files and the options. The thread owns the context and sends each event as a value (`LibInputEvent`: the type and the fields the mapping reads, taken before the event is destroyed); positions are asked of the library in a fixed range and scaled to the screen on the UI thread, where the mapping (`LibInputState`) keeps the pointer position and the contacts by slot. One correction, recorded in DEVIATIONS.md: the buttons use the states 0 and 1. The forwarded range is upstream's (the branch of the high-resolution wheel is ported and not reached). Relative motion and keys stay unmapped, as upstream; a machine that needs them uses the evdev backend.
 
 `RawEventGroupingThreadingHelper` is ported; nothing upstream uses it.
 
@@ -128,10 +128,10 @@ Entry points (`LinuxFramebufferPlatformExtensions`), one function per upstream o
 | `Output/FbdevOutput.cs` | `output/fbdev_output.rs` (and `output/fb_device.rs`, the device trait, an addition) | 1 |
 | `Output/FbDevBackBuffer.cs` | `output/fb_dev_back_buffer.rs` | 1 |
 | `Output/FbDevOutputOptions.cs` | `output/fb_dev_output_options.rs` | 1 |
-| `Output/Drm.cs` | `output/drm.rs` | 2 |
-| `Output/DrmBindings.cs` | `output/drm_bindings.rs` | 2 |
-| `Output/DrmOutput.cs` | `output/drm_output.rs` | 2 |
-| `Output/DrmOutputOptions.cs`, `DrmConnectorType.cs` | `output/drm_output_options.rs`, `drm_connector_type.rs` | 2 |
+| `Output/Drm.cs` | `output/drm.rs` |2b |
+| `Output/DrmBindings.cs` | `output/drm_bindings.rs` |2b |
+| `Output/DrmOutput.cs` | `output/drm_output.rs` |2b |
+| `Output/DrmOutputOptions.cs`, `DrmConnectorType.cs` | `output/drm_output_options.rs`, `drm_connector_type.rs` |2b |
 | `Input/IInputBackend.cs`, `Input/IScreenInfoProvider.cs` | `input/i_input_backend.rs`, `input/i_screen_info_provider.rs` | 1 |
 | `Input/NullInput/NullInputBackend.cs` | `input/null_input/null_input_backend.rs` | 1 |
 | `Input/RawEventGroupingThreadingHelper.cs` | `input/raw_event_grouping_threading_helper.rs` | 1 |
@@ -141,12 +141,12 @@ Entry points (`LinuxFramebufferPlatformExtensions`), one function per upstream o
 | `Input/EvDev/EvDevTouchScreen.cs` | `input/ev_dev/ev_dev_touch_screen.rs` | 1 |
 | `Input/EvDev/EvDevTouchScreenDeviceDescription.cs` | `input/ev_dev/ev_dev_touch_screen_device_description.rs` | 1 |
 | (additions) | `input/ev_dev/ev_dev_keyboard.rs`, `ev_dev_key_table.rs`, `ev_dev_mouse.rs`, `ev_dev_multi_touch_screen.rs` | 1 |
-| `Input/LibInput/LibInputBackend.cs`, `.Pointer.cs`, `.Touch.cs` | `input/lib_input/lib_input_backend.rs`, `lib_input_backend_pointer.rs`, `lib_input_backend_touch.rs` | 2 |
-| `Input/LibInput/LibInputBackendOptions.cs` | `input/lib_input/lib_input_backend_options.rs` | 2 |
-| `Input/LibInput/LibInputNativeUnsafeMethods.cs` | `input/lib_input/lib_input_native_unsafe_methods.rs` | 2 |
+| `Input/LibInput/LibInputBackend.cs`, `.Pointer.cs`, `.Touch.cs` | `input/lib_input/lib_input_backend.rs`, `lib_input_backend_pointer.rs`, `lib_input_backend_touch.rs` |2a |
+| `Input/LibInput/LibInputBackendOptions.cs` | `input/lib_input/lib_input_backend_options.rs` |2a |
+| `Input/LibInput/LibInputNativeUnsafeMethods.cs` | `input/lib_input/lib_input_native_unsafe_methods.rs` |2a |
 | `src/Shared/RawEventGrouping.cs` | `raw_event_grouping.rs` (the file of the X11 crate, as upstream compiles one file into both projects) | 1 |
 
-A member of a later stage that is reachable in an earlier one fails with a message that names its stage (`start_linux_drm`, the default `libinput` backend) and counts as missing in the tracking.
+A member of a later stage that is reachable in an earlier one fails with a message that names its stage (`start_linux_drm`) and counts as missing in the tracking.
 
 ## 10. Verification
 
@@ -174,8 +174,9 @@ How a virtual framebuffer is told from the machine's console: the script records
 | Stage | Content | What verifies it |
 |---|---|---|
 | 0 | This document; the project in scope in the tracking | |
-| 1 | The crate; the platform and its options; the dispatcher; the lifetime; the top-level; the fbdev output with the device trait; the evdev backend with upstream's single touch screen and the three added device types; the null backend; the example | Levels 1 to 4 |
-| 2 | The DRM output (`drm.rs`, `drm_bindings.rs`, `drm_output.rs`, the options); the `libinput` backend | Levels 1, 2 (structure sizes, the mapping of `libinput` event values), 5 |
+| 1 (built) | The crate; the platform and its options; the dispatcher; the lifetime; the top-level; the fbdev output with the device trait; the evdev backend with upstream's single touch screen and the three added device types; the null backend; the example | Levels 1 to 4 |
+| 2a (built) | The `libinput` backend | Levels 1 and 2 (the mapping of event values, the forwarded ranges, the calibration by orientation); level 4 with `--libinput`: a virtual multi-touch screen read through the library |
+| 2b | The DRM output (`drm.rs`, `drm_bindings.rs`, `drm_output.rs`, the options) | Levels 1, 2 (structure sizes), 5 |
 | 3 | CI steps; the CRITICAL-PATH row; the hand-over in CONTINUATION.md | The job |
 | 4 | The ControlCatalog on the platform (`--fbdev`, `--drm`, as upstream's `ControlCatalog.Desktop`), pictures | Level 6 |
 

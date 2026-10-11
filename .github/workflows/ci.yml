@@ -1190,7 +1190,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            libfontconfig1-dev libfreetype6-dev fonts-dejavu-core pkg-config kmod
+            libfontconfig1-dev libfreetype6-dev fonts-dejavu-core pkg-config kmod libinput10
       - name: Tests of the crate
         run: cargo test --locked -p ferroui-linuxframebuffer --no-fail-fast
       - name: Build the example

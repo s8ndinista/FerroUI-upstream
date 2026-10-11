@@ -10,9 +10,9 @@ Generated from upstream commit `17350180c33b063f0e98abbfd19aa3cae63f5d56`. Back 
 | FerroUI | `src/Linux/FerroUI.LinuxFramebuffer` (exists) |
 | Crate | `ferroui-linuxframebuffer` |
 | Phase / priority | 5 - desktop (Linux) / P2 |
-| Files | 20/30 (66.7%) |
-| Types | 30/76 (39.5%) |
-| Members | 164/529 (31.0%) |
+| Files | 25/30 (83.3%) |
+| Types | 34/76 (44.7%) |
+| Members | 169/529 (31.9%) |
 | Contracts (interfaces) | 4/4 |
 | Property registrations | 0/0 |
 | Routed events | 0/0 |
@@ -119,15 +119,24 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 
 </details>
 
-### `Input/LibInput` - files 0/5, types 0/8, members 0/66
+### `Input/LibInput` - files 5/5, types 4/8, members 5/66
 
 | Upstream file | Rust file | Status | Types | Members | Notes |
 |---|---|---|---|---|---|
-| `LibInputBackend.Pointer.cs` | `input/lib_input/lib_input_backend_pointer.rs` | missing | 0/1 | 0/0 |  |
-| `LibInputBackend.Touch.cs` | `input/lib_input/lib_input_backend_touch.rs` | missing | 0/1 | 0/0 |  |
-| `LibInputBackend.cs` | `input/lib_input/lib_input_backend.rs` | missing | 0/1 | 0/4 |  |
-| `LibInputBackendOptions.cs` | `input/lib_input/lib_input_backend_options.rs` | missing | 0/1 | 0/1 |  |
-| `LibInputNativeUnsafeMethods.cs` | `input/lib_input/lib_input_native_unsafe_methods.rs` | missing | 0/4 | 0/61 |  |
+| `LibInputBackend.Pointer.cs` | `input/lib_input/lib_input_backend_pointer.rs` | present | 1/1 | 0/0 |  |
+| `LibInputBackend.Touch.cs` | `input/lib_input/lib_input_backend_touch.rs` | present | 1/1 | 0/0 |  |
+| `LibInputBackend.cs` | `input/lib_input/lib_input_backend.rs` | present | 1/1 | 4/4 |  |
+| `LibInputBackendOptions.cs` | `input/lib_input/lib_input_backend_options.rs` | present | 1/1 | 1/1 |  |
+| `LibInputNativeUnsafeMethods.cs` | `input/lib_input/lib_input_native_unsafe_methods.rs` | partial | 0/4 | 0/61 |  |
+
+<details><summary><code>LibInputNativeUnsafeMethods.cs</code> - 65 missing</summary>
+
+- `LibInputNativeUnsafeMethods` (class, internal): **type missing** (25 members)
+- `LibInputNativeUnsafeMethods.LibInputEventType` (enum, public): **type missing** (30 members)
+- `LibInputNativeUnsafeMethods.LibInputPointerAxisSource` (enum, public): **type missing** (4 members)
+- `LibInputNativeUnsafeMethods.LibInputPointerAxis` (enum, public): **type missing** (2 members)
+
+</details>
 
 ### `Input/NullInput` - files 1/1, types 1/1, members 2/2
 

@@ -240,7 +240,7 @@ impl LinuxFramebufferLifetime {
                 if std::env::var("FERROUI_USE_EVDEV").is_ok_and(|value| value == "1") {
                     Rc::new(EvDevBackend::create_from_environment().unwrap_or_else(|error| panic!("{error}")))
                 } else {
-                    crate::input::lib_input_backend_is_not_built()
+                    Rc::new(crate::input::lib_input::LibInputBackend::new())
                 }
             }
         };
