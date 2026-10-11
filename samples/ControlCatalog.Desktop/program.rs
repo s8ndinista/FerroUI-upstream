@@ -31,7 +31,10 @@
 //! a screenshot run `FERROUI_SMOKE_OPEN_POPUP=combobox` (or `menu`) opens
 //! the first combo box (or the first menu item) of each page that is shown,
 //! so that a picture taken from outside (the compositor's, on Wayland) has a
-//! popup in it; the frame the framework draws of the window does not. With
+//! popup in it; the frame the framework draws of the window does not;
+//! `FERROUI_SMOKE_OPEN_POPUP=textbox` gives the first text box of each page
+//! the focus instead, and prints its text whenever it changed, so that an
+//! input method of the session can type into it. With
 //! `FERROUI_SMOKE_DRAWN_DECORATIONS` the window asks once for less than
 //! full decorations before the first page, after which a Wayland compositor
 //! leaves the decorations to the framework. On
@@ -79,7 +82,7 @@ use ferroui_base::media::imaging::{Bitmap, BitmapEncoderOptions, PngBitmapEncode
 use ferroui_base::platform::{AlphaFormat, PixelFormat};
 use ferroui_base::threading::{DispatcherPriority, DispatcherTimer};
 use ferroui_base::{PixelPoint, PixelRect, PixelSize, Ref, Size, Vector, Visual};
-use ferroui_controls::{AppBuilder, Application, ComboBox, MenuItem, Window, WindowDecorations};
+use ferroui_controls::{AppBuilder, Application, ComboBox, MenuItem, TextBox, Window, WindowDecorations};
 use ferroui_desktop::AppBuilderDesktopExtensions;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
@@ -597,12 +600,17 @@ fn backdrop_run(_directory: PathBuf) {
 /// once it is at the same place at two looks: a page comes in with a transition that slides
 /// its content, and a popup takes its place from where its control is when it opens (the
 /// first pictures had the popups at the edge of the output the page came in from).
+///
+/// With `textbox` the first text box of the page is given the focus instead, and every look
+/// after that prints its text when it changed: what an input method committed to it.
 fn open_popups_of_pages(interval: Duration) {
-    let menu = match std::env::var("FERROUI_SMOKE_OPEN_POPUP").ok().as_deref() {
-        Some("menu") => true,
-        Some("combobox") | Some("1") => false,
+    let (menu, text_box) = match std::env::var("FERROUI_SMOKE_OPEN_POPUP").ok().as_deref() {
+        Some("menu") => (true, false),
+        Some("combobox") | Some("1") => (false, false),
+        Some("textbox") => (false, true),
         _ => return,
     };
+    let focused: std::cell::RefCell<Option<(Ref<TextBox>, Option<String>)>> = std::cell::RefCell::new(None);
     let seen: std::cell::RefCell<Option<Vec<Ref<Visual>>>> = std::cell::RefCell::new(None);
     let opened: std::cell::RefCell<Option<Ref<Visual>>> = std::cell::RefCell::new(None);
     let candidate: std::cell::RefCell<Option<(Ref<Visual>, Option<ferroui_base::Point>)>> = std::cell::RefCell::new(None);
@@ -611,13 +619,31 @@ fn open_popups_of_pages(interval: Duration) {
             let Some(window) = main_window() else { return true };
             // One look after a popup was opened: where the platform put it.
             if let Some(control) = opened.borrow_mut().take() {
-                report_popup_placement(&window, &control);
+                if !text_box {
+                    report_popup_placement(&window, &control);
+                }
+            }
+            // The text of the text box that has the focus, when it changed.
+            if let Some((focused, last)) = focused.borrow_mut().as_mut() {
+                let text = focused.text();
+                if text != *last {
+                    println!("Text input: the focused text box has the text {:?}", text.clone().unwrap_or_default());
+                    *last = text;
+                }
             }
             let candidates: Vec<Ref<Visual>> = window
                 .clone()
                 .upcast::<Visual>()
                 .get_visual_descendants()
-                .filter(|visual| if menu { visual.cast::<MenuItem>().is_some() } else { visual.cast::<ComboBox>().is_some() })
+                .filter(|visual| {
+                    if text_box {
+                        visual.cast::<TextBox>().is_some()
+                    } else if menu {
+                        visual.cast::<MenuItem>().is_some()
+                    } else {
+                        visual.cast::<ComboBox>().is_some()
+                    }
+                })
                 .collect();
             let mut seen = seen.borrow_mut();
             let first_look = seen.is_none();
@@ -662,6 +688,9 @@ fn open_popups_of_pages(interval: Duration) {
                 } else if let Some(menu_item) = first.cast::<MenuItem>() {
                     println!("Screenshots: opening a menu item");
                     menu_item.open();
+                } else if let Some(text_box) = first.cast::<TextBox>() {
+                    println!("Screenshots: giving a text box the focus: {}", text_box.focus());
+                    *focused.borrow_mut() = Some((text_box.clone(), text_box.text()));
                 }
                 *opened.borrow_mut() = Some(first);
             }

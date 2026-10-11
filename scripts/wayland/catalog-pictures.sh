@@ -16,6 +16,13 @@
 # <mode>-popup-NN-<page>.png: a popup is a surface of its own, which only the compositor's
 # picture shows. Use it with FERROUI_SMOKE_SCREENSHOT_PAGES=ComboBox (or Menu).
 #
+# With CATALOG_POPUP=textbox the first text box of each page is given the focus instead. With
+# CATALOG_INPUT_METHOD=<the wayland_window example> as well, that example is started as the
+# input method of the seat (zwp_input_method_v2, which sway has): once the text box has the
+# focus it commits CATALOG_INPUT_TEXT (and sets the preedit CATALOG_INPUT_PREEDIT, when given),
+# and the script fails unless the catalog says the text box has that text. Use it with
+# FERROUI_SMOKE_SCREENSHOT_PAGES=TextBox; the pictures are named <mode>-textinput-NN-<page>.png.
+#
 # With CATALOG_DECORATED=1 the window of the catalog gives up the decorations of the compositor
 # (FERROUI_SMOKE_DRAWN_DECORATIONS) and is made a floating window (swaymsg), so that the title
 # bar, the border and the shadow the framework draws are in the picture:
@@ -48,6 +55,19 @@ if [ -n "${CATALOG_POPUP:-}" ]; then
     export FERROUI_SMOKE_OPEN_POPUP="$CATALOG_POPUP"
 fi
 
+input_method_pid=""
+if [ "${CATALOG_POPUP:-}" = textbox ]; then
+    prefix="$mode-textinput"
+    if [ -n "${CATALOG_INPUT_METHOD:-}" ]; then
+        if [ -n "${CATALOG_INPUT_PREEDIT:-}" ]; then
+            "$CATALOG_INPUT_METHOD" "--input-method=${CATALOG_INPUT_TEXT:-text}" "--input-method-preedit=$CATALOG_INPUT_PREEDIT" > "$out/input-method-$mode.log" 2>&1 &
+        else
+            "$CATALOG_INPUT_METHOD" "--input-method=${CATALOG_INPUT_TEXT:-text}" > "$out/input-method-$mode.log" 2>&1 &
+        fi
+        input_method_pid=$!
+    fi
+fi
+
 if [ -n "${CATALOG_DECORATED:-}" ]; then
     prefix="$mode-decorated"
     export FERROUI_SMOKE_DRAWN_DECORATIONS=1
@@ -74,8 +94,17 @@ done
 
 pictures="$(ls "$out" | grep -c "^$prefix-[0-9][0-9]-.*\.png$")"
 echo "catalog-pictures.sh: $pictures pictures of the compositor in $out ($mode)"
-grep -E "^ControlCatalog: |panicked|Screenshots written|Screenshots: opening|Screenshots: a control|Screenshots: the control|^Popup placement:|rotocol error|cannot go on" "$log" | head -n 20
-if [ -n "${CATALOG_POPUP:-}" ]; then
+grep -E "^ControlCatalog: |panicked|Screenshots written|Screenshots: opening|Screenshots: giving|Screenshots: a control|Screenshots: the control|^Popup placement:|^Text input:|rotocol error|cannot go on" "$log" | head -n 20
+if [ -n "$input_method_pid" ]; then
+    # The input method ends by itself when the text box loses the focus (the catalog closed).
+    wait "$input_method_pid"
+    cat "$out/input-method-$mode.log"
+    if ! grep -F "Text input: the focused text box has the text" "$log" | grep -qF "${CATALOG_INPUT_TEXT:-text}"; then
+        echo "catalog-pictures.sh: the text of the input method did not reach the text box" >&2
+        exit 1
+    fi
+fi
+if [ -n "${CATALOG_POPUP:-}" ] && [ "${CATALOG_POPUP:-}" != textbox ]; then
     # The catalog says where the compositor put the popup it opened, and whether that is at
     # the control the popup belongs to.
     if ! grep -q "^Popup placement: \[ok\]" "$log" || grep -q "^Popup placement: \[FAILED\]" "$log"; then
