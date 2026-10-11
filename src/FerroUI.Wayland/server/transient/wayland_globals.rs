@@ -31,6 +31,7 @@ use wayland_protocols::wp::fractional_scale::v1::client::wp_fractional_scale_man
 use wayland_protocols::wp::text_input::zv3::client::zwp_text_input_manager_v3::ZwpTextInputManagerV3;
 use wayland_protocols::wp::viewporter::client::wp_viewporter::WpViewporter;
 use wayland_protocols::xdg::decoration::zv1::client::zxdg_decoration_manager_v1::ZxdgDecorationManagerV1;
+use wayland_protocols::xdg::foreign::zv2::client::zxdg_exporter_v2::ZxdgExporterV2;
 use wayland_protocols::xdg::shell::client::xdg_wm_base::{self, XdgWmBase};
 use wayland_protocols::xdg::xdg_output::zv1::client::zxdg_output_manager_v1::ZxdgOutputManagerV1;
 
@@ -64,6 +65,7 @@ pub struct WaylandGlobals {
     pub viewporter: Option<WpViewporter>,
     pub data_device_manager: Option<WlDataDeviceManager>,
     pub text_input_manager_v3: Option<ZwpTextInputManagerV3>,
+    pub xdg_exporter: Option<ZxdgExporterV2>,
     /// The data sources of the connection (the selection this client set, the source of a
     /// drag it started), by the identity of their protocol objects.
     pub data_sources: HashMap<ObjectId, WaylandDataSource>,
@@ -129,6 +131,8 @@ impl WaylandGlobals {
 
         let text_input_manager_v3: Option<ZwpTextInputManagerV3> = Self::bind(&registry, &known_globals, 1, 1, &queue_handle)?;
 
+        let xdg_exporter: Option<ZxdgExporterV2> = Self::bind(&registry, &known_globals, 1, 1, &queue_handle)?;
+
         let mut globals = WaylandGlobals {
             queue_handle: queue_handle.clone(),
             connection_id: connection.id(),
@@ -145,6 +149,7 @@ impl WaylandGlobals {
             viewporter,
             data_device_manager,
             text_input_manager_v3,
+            xdg_exporter,
             data_sources: HashMap::new(),
             worker: state.worker.clone(),
             input_dispatcher: WaylandInputDispatcher::new(),
