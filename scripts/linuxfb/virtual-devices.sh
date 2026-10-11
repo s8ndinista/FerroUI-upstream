@@ -174,7 +174,17 @@ else
 fi
 
 # vkms: the virtual KMS driver (CONFIG_DRM_VKMS); its fbdev emulation is a framebuffer device as well.
-if loaded vkms; then
+if loaded vkms && grep -qw vkms "$marker" 2>/dev/null; then
+    # Loaded by an earlier run of this script, which could not unload it (the marker is the proof): its devices
+    # are the script's own and are used; "down" tries to unload it again.
+    for node in $(vkms_nodes); do
+        case "$node" in
+            /dev/dri/*) DRM_CARD="$node" ;;
+            /dev/fb*) if [ -z "$FB_NODE" ]; then FB_NODE="$node"; FB_ID="vkms"; fi ;;
+        esac
+    done
+    echo "vkms: still loaded from an earlier run of this script (see $marker): its devices are used: card ${DRM_CARD:-not found}, framebuffer ${FB_NODE:-not found}"
+elif loaded vkms; then
     echo "vkms: already loaded, left alone"
 elif {
     # The devices of vkms get a seat of their own, so that the display manager of the machine leaves them alone.

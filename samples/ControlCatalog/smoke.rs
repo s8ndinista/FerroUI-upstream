@@ -12,11 +12,19 @@ use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 use std::time::Duration;
 
-/// The view model of the main window of the application, once it exists.
+/// The view model of the main window (or of the main view) of the
+/// application, once it exists.
 fn main_view_model() -> Option<Rc<MainWindowViewModel>> {
     let lifetime = Application::current()?.application_lifetime()?;
-    let main_window = lifetime.as_classic_desktop_style_application_lifetime()?.main_window()?;
-    from_markup_value::<Rc<MainWindowViewModel>>(&main_window.data_context())
+    if let Some(desktop) = lifetime.as_classic_desktop_style_application_lifetime() {
+        let main_window = desktop.main_window()?;
+        return from_markup_value::<Rc<MainWindowViewModel>>(&main_window.data_context());
+    }
+    // With one view (the Linux framebuffer platform): the view is the
+    // navigation host of the main view (`App::create_main_view_host`).
+    let host = lifetime.as_single_view_application_lifetime()?.main_view()?;
+    let page = host.cast::<ferroui_controls::PageNavigationHost>()?.page()?;
+    from_markup_value::<Rc<MainWindowViewModel>>(&page.data_context())
 }
 
 /// The pages the drawer offers: the home page, the pages of the sections
