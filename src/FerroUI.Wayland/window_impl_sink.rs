@@ -94,6 +94,12 @@ impl WindowImplSink {
             parent.base().apply_current_cursor(Some(surface_proxy.as_shell_surface()));
         }
 
+        // Re-register text-input sink on the freshly created worker
+        // surface and re-apply current state, if a client is attached.
+        if let Some(text_input_method) = parent.text_input_method() {
+            text_input_method.on_surface_created();
+        }
+
         // Refresh the storage provider's factory chain — the previous wayland
         // connection is gone, and the new compositor may expose different globals.
         parent.reset_storage_provider();

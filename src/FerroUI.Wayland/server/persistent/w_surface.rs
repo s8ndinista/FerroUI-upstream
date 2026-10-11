@@ -16,7 +16,9 @@
 //! and what it calls on the parent (`RegisterPendingChildPopup`) is done by
 //! the worker's state (`WaylandWorkerState::try_attach_popup_to_parent`).
 //!
-//! The members of text input and the export of a top-level belong to later
+//! The text input members of a surface need the facade of the connection and
+//! the surface together, so they are methods of the state of the worker (the
+//! last block of the module `imp`). The export of a top-level belongs to later
 //! parts of stage 2 of `docs/porting/wayland-platform.md`.
 
 use ferroui_base::{PixelSize, Point, Rect, Size, Thickness};
@@ -291,9 +293,13 @@ mod imp {
     use crate::server::transient::rendering::i_wayland_framebuffer_surface::{
         IWaylandFramebufferSurface, IWaylandSurfaceRenderTarget,
     };
+    use crate::server::transient::i_wayland_text_input_v3_events::WaylandTextInputV3EventsProxy;
     use crate::server::transient::wayland_globals::WaylandGlobals;
+    use crate::server::transient::wayland_text_input_v3::{WorkerTextInputSurfaces, WorkerTextInputV3};
     use crate::server::wayland_worker::{WaylandWorker, WaylandWorkerState};
     use crate::ferro_wayland_exception::FerroWaylandException;
+    use crate::text_input_options_converter::{ContentHint, ContentPurpose};
+    use ferroui_base::Rect;
     use ferroui_base::platform::{PlatformRenderTargetState, RenderTargetSceneInfo};
     use std::rc::{Rc, Weak};
     use std::sync::mpsc::Sender;
@@ -356,6 +362,16 @@ mod imp {
         /// the worker thread — updated via `set_cursor`, consumed by the input dispatcher when
         /// refreshing the pointer cursor.
         current_cursor: Option<WaylandCursorId>,
+        /// Whether this surface currently has an active text input client.
+        /// Set via message from the UI thread, read on the Wayland thread to gate compose
+        /// processing.
+        has_text_input_client: bool,
+        text_input_sink: Option<WaylandTextInputV3EventsProxy>,
+        /// Session token last received via `set_text_input_active`.
+        /// Stamped on every worker→UI IME callback so the UI broker can drop
+        /// callbacks belonging to a previous client (the client epoch of the text input
+        /// method of a window).
+        text_input_session_token: i32,
     }
 
     impl WSurface {
@@ -375,6 +391,9 @@ mod imp {
                 current_scale: 1.0,
                 active_render_targets: Vec::new(),
                 current_cursor: None,
+                has_text_input_client: false,
+                text_input_sink: None,
+                text_input_session_token: 0,
             }
         }
 
@@ -397,10 +416,14 @@ mod imp {
         }
 
         /// Whether this surface currently has an active text input client, which gates
-        /// compose processing. A client is set through the text input members of the
-        /// surface, which belong to stage 2: until then there is none.
+        /// compose processing.
         pub fn has_text_input_client(&self) -> bool {
-            false
+            self.has_text_input_client
+        }
+
+        /// The session token last received via `set_text_input_active`.
+        pub fn text_input_session_token(&self) -> i32 {
+            self.text_input_session_token
         }
 
         /// The number of the connection the surface is on (`CurrentDisplay` of the reference).
@@ -1673,6 +1696,101 @@ mod imp {
                 }
                 xdg_toplevel::Event::Close => top_level.top_level_event_sink.on_close(),
                 _ => {}
+            }
+        }
+    }
+
+    /// The text input members of a surface (`RegisterTextInputSink`, `SetTextInputActive`,
+    /// `AbortTextInputComposition`, `SetTextInputCursorRect`, `SetTextInputOptions`,
+    /// `SetTextInputSurroundingText`, `ResetTextInput` of `WSurface` in the reference). They
+    /// are here because each needs the surface and the facade of the connection (the text
+    /// input of the input dispatcher of the globals) at once. A surface that is gone ignores
+    /// the call; without the facade (a compositor without `zwp_text_input_manager_v3`, or no
+    /// connection) only what the surface itself keeps is set.
+    impl WaylandWorkerState {
+        /// The surface `id` with the facade of the connection and the view of the surfaces
+        /// the facade reads.
+        fn with_text_input(&mut self, id: WSurfaceId, call: impl FnOnce(&mut WorkerTextInputV3, &WorkerTextInputSurfaces<'_>)) {
+            let WaylandWorkerState { globals, top_levels, popups, .. } = self;
+            if shell_surface_of(top_levels, popups, id).is_none() {
+                return;
+            }
+            let Some(text_input) = globals.as_mut().and_then(|globals| globals.input_dispatcher.text_input_v3_mut()) else {
+                return;
+            };
+            call(text_input, &WorkerTextInputSurfaces { top_levels, popups });
+        }
+
+        pub(crate) fn register_text_input_sink(&mut self, id: WSurfaceId, sink: WaylandTextInputV3EventsProxy) {
+            let Some(shell) = self.shell_mut(id) else {
+                return;
+            };
+            shell.surface_mut().text_input_sink = Some(sink.clone());
+            self.with_text_input(id, |text_input, _| text_input.register_surface(id, sink));
+        }
+
+        pub(crate) fn set_text_input_active(
+            &mut self,
+            id: WSurfaceId,
+            has_client: bool,
+            supports_preedit: bool,
+            supports_surrounding_text: bool,
+            session_token: i32,
+        ) {
+            let Some(shell) = self.shell_mut(id) else {
+                return;
+            };
+            let surface = shell.surface_mut();
+            surface.has_text_input_client = has_client;
+            surface.text_input_session_token = session_token;
+            let Some(sink) = surface.text_input_sink.clone() else {
+                return;
+            };
+            self.with_text_input(id, |text_input, surfaces| {
+                // RegisterSurface is idempotent and safe to re-issue here in case
+                // the V3 facade only became available after the broker registered.
+                text_input.register_surface(id, sink);
+                text_input.abort_composition(id);
+                text_input.set_active(id, has_client, supports_preedit, supports_surrounding_text, surfaces);
+            });
+        }
+
+        pub(crate) fn abort_text_input_composition(&mut self, id: WSurfaceId) {
+            self.with_text_input(id, |text_input, _| text_input.abort_composition(id));
+        }
+
+        pub(crate) fn set_text_input_cursor_rect(&mut self, id: WSurfaceId, rect: Rect) {
+            self.with_text_input(id, |text_input, surfaces| text_input.set_cursor_rect(id, rect, surfaces));
+        }
+
+        pub(crate) fn set_text_input_options(&mut self, id: WSurfaceId, options: (ContentHint, ContentPurpose)) {
+            self.with_text_input(id, |text_input, _| text_input.set_options(id, options));
+        }
+
+        pub(crate) fn set_text_input_surrounding_text(&mut self, id: WSurfaceId, text: String, cursor_char: i32, anchor_char: i32) {
+            self.with_text_input(id, |text_input, _| text_input.set_surrounding_text(id, text, cursor_char, anchor_char));
+        }
+
+        pub(crate) fn reset_text_input(&mut self, id: WSurfaceId) {
+            self.with_text_input(id, |text_input, surfaces| text_input.reset(id, surfaces));
+        }
+
+        /// The text input of the connection as a test sees it: the number of seats with a text
+        /// input object, and the state of every surface that registered a sink. `None`
+        /// without a connection and on a compositor without `zwp_text_input_manager_v3`.
+        pub fn text_input_snapshot(
+            &self,
+        ) -> Option<(usize, Vec<crate::server::transient::wayland_text_input_v3::TextInputSurfaceSnapshot>)> {
+            let text_input = self.globals.as_ref()?.input_dispatcher.text_input_v3()?;
+            let surfaces = WorkerTextInputSurfaces { top_levels: &self.top_levels, popups: &self.popups };
+            Some((text_input.seat_count(), text_input.snapshot(&surfaces)))
+        }
+
+        /// A shell surface loses its connection (`WXdgShellSurface.OnDisconnected` of the
+        /// reference begins with this): the facade forgets it.
+        pub(crate) fn unregister_text_input_surface(&mut self, id: WSurfaceId) {
+            if let Some(text_input) = self.globals.as_mut().and_then(|globals| globals.input_dispatcher.text_input_v3_mut()) {
+                text_input.unregister_surface(id);
             }
         }
     }

@@ -5,9 +5,8 @@
 //! (`RegistryBootstrap`), the globals are made from the record, and the
 //! registry listener writes to the globals from then on.
 //!
-//! The globals of the last part of stage 2 of `docs/porting/wayland-platform.md`
-//! (text input, the exporter of `xdg-foreign`) and of stage 3 (`linux-dmabuf`)
-//! are not bound yet.
+//! The global of stage 3 of `docs/porting/wayland-platform.md` (`linux-dmabuf`)
+//! is not bound yet.
 
 use super::clipboard::wayland_data_source::WaylandDataSource;
 use super::rendering::wayland_egl_wsi_platform_graphics::WaylandEglWsiPlatformGraphics;
@@ -29,6 +28,7 @@ use wayland_client::protocol::wl_registry::{self, WlRegistry};
 use wayland_client::protocol::wl_shm::{self, WlShm};
 use wayland_client::{Connection, Dispatch, Proxy, QueueHandle, WEnum};
 use wayland_protocols::wp::fractional_scale::v1::client::wp_fractional_scale_manager_v1::WpFractionalScaleManagerV1;
+use wayland_protocols::wp::text_input::zv3::client::zwp_text_input_manager_v3::ZwpTextInputManagerV3;
 use wayland_protocols::wp::viewporter::client::wp_viewporter::WpViewporter;
 use wayland_protocols::xdg::decoration::zv1::client::zxdg_decoration_manager_v1::ZxdgDecorationManagerV1;
 use wayland_protocols::xdg::shell::client::xdg_wm_base::{self, XdgWmBase};
@@ -63,6 +63,7 @@ pub struct WaylandGlobals {
     pub fractional_scale_manager: Option<WpFractionalScaleManagerV1>,
     pub viewporter: Option<WpViewporter>,
     pub data_device_manager: Option<WlDataDeviceManager>,
+    pub text_input_manager_v3: Option<ZwpTextInputManagerV3>,
     /// The data sources of the connection (the selection this client set, the source of a
     /// drag it started), by the identity of their protocol objects.
     pub data_sources: HashMap<ObjectId, WaylandDataSource>,
@@ -126,6 +127,8 @@ impl WaylandGlobals {
         // Clipboard / DnD
         let data_device_manager: Option<WlDataDeviceManager> = Self::bind(&registry, &known_globals, 3, 3, &queue_handle)?;
 
+        let text_input_manager_v3: Option<ZwpTextInputManagerV3> = Self::bind(&registry, &known_globals, 1, 1, &queue_handle)?;
+
         let mut globals = WaylandGlobals {
             queue_handle: queue_handle.clone(),
             connection_id: connection.id(),
@@ -141,6 +144,7 @@ impl WaylandGlobals {
             fractional_scale_manager,
             viewporter,
             data_device_manager,
+            text_input_manager_v3,
             data_sources: HashMap::new(),
             worker: state.worker.clone(),
             input_dispatcher: WaylandInputDispatcher::new(),
@@ -161,7 +165,12 @@ impl WaylandGlobals {
         }
 
         // Seats are bound reactively via the registry listener and managed by the input dispatcher
-        globals.input_dispatcher.on_initial_globals_bound(globals.data_device_manager.as_ref(), &globals.worker, &queue_handle);
+        globals.input_dispatcher.on_initial_globals_bound(
+            globals.data_device_manager.as_ref(),
+            globals.text_input_manager_v3.as_ref(),
+            &globals.worker,
+            &queue_handle,
+        );
 
         state.globals = Some(globals);
 

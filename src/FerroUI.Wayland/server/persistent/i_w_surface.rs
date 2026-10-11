@@ -4,14 +4,17 @@
 //! priority says otherwise, and finds the surface by its number there. A
 //! surface that is gone ignores the call.
 //!
-//! The members of text input (`RegisterTextInputSink`, `SetTextInputActive`,
-//! `AbortTextInputComposition`, `SetTextInputCursorRect`,
-//! `SetTextInputOptions`, `SetTextInputSurroundingText`, `ResetTextInput`)
-//! belong to stage 2 of `docs/porting/wayland-platform.md`.
+//! `set_text_input_options` converts the options to the content type of the
+//! protocol on the UI thread: the options hold a reference counted list (the
+//! locale hints), which cannot cross to the worker.
 
 use super::i_wayland_cursor::WaylandCursorProxy;
 use super::w_surface::{shell_surface_of_mut, WSurfaceId};
+use crate::server::transient::i_wayland_text_input_v3_events::WaylandTextInputV3EventsProxy;
 use crate::server::wayland_dispatch_priority::WaylandDispatchPriority;
+use crate::text_input_options_converter;
+use ferroui_base::input::text_input::TextInputOptions;
+use ferroui_base::Rect;
 use crate::server::wayland_worker::{WaylandWorkerState, WaylandWorkerThread, WorkerMarshaller};
 
 /// Worker-side surface commands posted from UI thread.
@@ -21,6 +24,35 @@ pub trait IWSurface {
     /// Sets the pointer cursor shown while the pointer is over this surface. `None` selects the
     /// default arrow. The cursor is the UI-side proxy, which names the worker-side cursor.
     fn set_cursor(&self, cursor: Option<&WaylandCursorProxy>);
+
+    /// Registers the UI-thread sink to receive worker→UI text-input v3 events
+    /// (preedit/commit/delete-surrounding). Idempotent. Does nothing on
+    /// compositors that lack zwp_text_input_manager_v3.
+    fn register_text_input_sink(&self, sink: WaylandTextInputV3EventsProxy);
+
+    /// Toggles the text-input client. Sets the compose-key gate
+    /// (XKB-compose runs only when a client is attached) and, when v3 is
+    /// available, drives enable/disable on all entered seats. The
+    /// `session_token` stamps every subsequent worker→UI
+    /// IME callback so the UI broker can drop callbacks emitted for a
+    /// previous client.
+    fn set_text_input_active(&self, has_client: bool, supports_preedit: bool, supports_surrounding_text: bool, session_token: i32);
+
+    /// Aborts any in-flight IME composition (disable+commit on entered seats).
+    fn abort_text_input_composition(&self);
+
+    /// Updates the IME cursor rectangle (logical, surface-local coordinates).
+    fn set_text_input_cursor_rect(&self, rect: Rect);
+
+    /// Updates the IME content-type (hint+purpose).
+    fn set_text_input_options(&self, options: &TextInputOptions);
+
+    /// Updates surrounding text + selection. `cursor_char` / `anchor_char` are UTF-16
+    /// code-unit offsets into the supplied string (the indexing of the framework).
+    fn set_text_input_surrounding_text(&self, text: &str, cursor_char: i32, anchor_char: i32);
+
+    /// Resets the IME state (clears any pending preedit/commit).
+    fn reset_text_input(&self);
 
     /// Toggles whether this surface accepts pointer/touch input. When `false`
     /// the surface gets an empty wl_surface input region, so the compositor routes
@@ -73,6 +105,38 @@ impl IWSurface for WSurfaceProxy {
             }
             worker.state.notify_cursor_changed(id);
         });
+    }
+
+    fn register_text_input_sink(&self, sink: WaylandTextInputV3EventsProxy) {
+        self.post(move |worker, id| worker.state.register_text_input_sink(id, sink));
+    }
+
+    fn set_text_input_active(&self, has_client: bool, supports_preedit: bool, supports_surrounding_text: bool, session_token: i32) {
+        self.post(move |worker, id| {
+            worker.state.set_text_input_active(id, has_client, supports_preedit, supports_surrounding_text, session_token);
+        });
+    }
+
+    fn abort_text_input_composition(&self) {
+        self.post(|worker, id| worker.state.abort_text_input_composition(id));
+    }
+
+    fn set_text_input_cursor_rect(&self, rect: Rect) {
+        self.post(move |worker, id| worker.state.set_text_input_cursor_rect(id, rect));
+    }
+
+    fn set_text_input_options(&self, options: &TextInputOptions) {
+        let options = text_input_options_converter::convert(options);
+        self.post(move |worker, id| worker.state.set_text_input_options(id, options));
+    }
+
+    fn set_text_input_surrounding_text(&self, text: &str, cursor_char: i32, anchor_char: i32) {
+        let text = text.to_string();
+        self.post(move |worker, id| worker.state.set_text_input_surrounding_text(id, text, cursor_char, anchor_char));
+    }
+
+    fn reset_text_input(&self) {
+        self.post(|worker, id| worker.state.reset_text_input(id));
     }
 
     fn set_hit_test_visible(&self, value: bool) {

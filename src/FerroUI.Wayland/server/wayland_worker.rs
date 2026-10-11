@@ -584,6 +584,7 @@ impl WaylandWorkerThread {
     fn disconnect_persistent_object(&mut self, key: PersistentKey) {
         match key {
             PersistentKey::Surface(id) => {
+                self.state.unregister_text_input_surface(id);
                 if let Some(top_level) = self.state.top_levels.get_mut(&id) {
                     top_level.on_disconnected();
                 } else if let Some(popup) = self.state.popups.get_mut(&id) {
