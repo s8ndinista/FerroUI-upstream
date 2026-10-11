@@ -715,16 +715,20 @@ mod app {
         let options = FbDevOutputOptions {
             render_directly_to_mapped_memory: flag("--direct"),
             use_async_front_buffer_blit: flag("--async").then_some(true),
+            pixel_format: match argument("--request-format").as_deref() {
+                Some("bgra") => Some(PixelFormat::BGRA8888),
+                Some("rgba") => Some(PixelFormat::RGBA8888),
+                _ => None,
+            },
             ..Default::default()
         };
-        let (var_info, fixed_info) = match (device.get_var_screen_info(), device.get_fix_screen_info()) {
-            (Ok(var_info), Ok(fixed_info)) => (var_info, fixed_info),
-            (Err(error), _) | (_, Err(error)) => return fail(format!("{node}: {error}")),
-        };
+        // The device is asked again once the output has it: a requested
+        // format changes what it reports.
         let output = match FbdevOutput::with_device(device, options) {
             Ok(output) => output,
             Err(error) => return fail(format!("{node}: {error}")),
         };
+        let (var_info, fixed_info) = (output.var_screen_info(), output.fix_screen_info());
 
         let log = Rc::new(RefCell::new(Vec::new()));
         let devices = if flag("--uinput") {

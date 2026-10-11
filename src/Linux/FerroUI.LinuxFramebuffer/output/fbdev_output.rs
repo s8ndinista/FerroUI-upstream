@@ -164,6 +164,18 @@ impl FbdevOutput {
         &self.id
     }
 
+    /// The variable information of the device the output draws with. An
+    /// addition, for diagnostics.
+    pub fn var_screen_info(&self) -> fb_var_screeninfo {
+        self.inner.var_info
+    }
+
+    /// The fixed information of the device the output draws with. An
+    /// addition, for diagnostics.
+    pub fn fix_screen_info(&self) -> fb_fix_screeninfo {
+        self.inner.fixed_info
+    }
+
     /// Releases the mapped memory (once the frame that uses it has ended)
     /// and closes the device.
     pub fn dispose(&self) {
