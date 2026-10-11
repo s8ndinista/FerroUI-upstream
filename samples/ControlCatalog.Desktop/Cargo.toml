@@ -32,6 +32,7 @@ ferroui-x11 = { workspace = true }
 # The Wayland backend, which the catalog uses when a compositor can be reached, with the backend
 # of the platform detection as its fallback (`FERROUI_CATALOG_WAYLAND=0` leaves it out).
 ferroui-wayland = { workspace = true }
+ferroui-linuxframebuffer = { workspace = true }
 
 [features]
 # The Vello render backend beside Skia: `FERROUI_RENDERER=vello` (the default order of its modes),
