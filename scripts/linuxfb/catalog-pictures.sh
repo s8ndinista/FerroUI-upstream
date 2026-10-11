@@ -16,7 +16,7 @@ here="$(cd "$(dirname "$0")" && pwd)"
 mkdir -p "$out/raw"
 rm -f "$out"/raw/*.raw "$out"/*.png
 
-FRAMEBUFFER="$node" FERROUI_LINUXFB_EXPECT_ID="$id" FERROUI_LINUXFB_DUMPS="$out/raw" FERROUI_SMOKE_PAGES="$ms" \
+FRAMEBUFFER="$node" FERROUI_LINUXFB_EXPECT_ID="$id" FERROUI_LINUXFB_DUMPS="$out/raw" FERROUI_LINUXFB_PAGE_MS="$ms" \
     timeout 600 "$bin" --fbdev --no-input > "$out/catalog.log" 2>&1
 status=$?
 echo "catalog: exit $status"
