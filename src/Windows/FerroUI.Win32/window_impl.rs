@@ -674,7 +674,7 @@ mod imp {
             }
         }
 
-        #[allow(dead_code)] // Read by the automation of the backend, a later stage.
+        #[allow(dead_code)] // The reference reads it in its automation project; nothing of the port does.
         pub(crate) fn parent_impl(&self) -> Option<Rc<WindowImpl>> {
             self.parent.borrow().clone()
         }
