@@ -12,7 +12,8 @@
 //!   writes to it (a virtual device must not be mistaken for a console).
 //! - `FERROUI_LINUXFB_DUMPS=<directory>`: the pages of
 //!   `FERROUI_SMOKE_SCREENSHOT_PAGES` are shown one after the other
-//!   (`FERROUI_SMOKE_PAGES` milliseconds each) and the content of the
+//!   (`FERROUI_LINUXFB_PAGE_MS` milliseconds each; not `FERROUI_SMOKE_PAGES`,
+//!   which starts the cycle through every page) and the content of the
 //!   framebuffer device is written for each as raw bytes, which
 //!   `scripts/linuxfb/fb-to-png.py` turns into pictures; then the
 //!   application shuts down.
@@ -70,7 +71,7 @@ fn dump_run(output: Arc<FbdevOutput>, node: String, directory: PathBuf) {
     let pages = std::env::var("FERROUI_SMOKE_SCREENSHOT_PAGES").unwrap_or_else(|_| crate::SCREENSHOT_PAGES.to_string());
     let headers: Vec<String> =
         pages.split(',').map(str::trim).filter(|header| !header.is_empty()).map(str::to_string).collect();
-    let interval = Duration::from_millis(crate::environment_milliseconds("FERROUI_SMOKE_PAGES").unwrap_or(1500));
+    let interval = Duration::from_millis(crate::environment_milliseconds("FERROUI_LINUXFB_PAGE_MS").unwrap_or(1500));
     println!("Dumps of {headers:?} to {}, {interval:?} a page", directory.display());
     control_catalog::show_pages(
         headers,
