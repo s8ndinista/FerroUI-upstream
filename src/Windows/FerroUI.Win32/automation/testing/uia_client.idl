@@ -1,0 +1,9 @@
+// The one client interface of UI Automation the client of the test runs implements, for the
+// MicroCom generator: the handler of a focus change (`UIAutomationClient.idl` of the Windows
+// SDK). The interfaces the client calls are called through their tables (testing/mod.rs).
+// Not from the reference.
+[uuid(c270f6b5-5c69-4290-9745-7a7f97169468)]
+interface IUIAutomationFocusChangedEventHandler : IUnknown
+{
+    HRESULT HandleFocusChangedEvent([in] void* sender);
+}

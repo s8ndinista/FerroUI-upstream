@@ -51,3 +51,16 @@ fn winrt_idl_generates() {
     // A property: the method that reads it keeps its name, the one that sets it is `Set...`.
     assert!(rs.contains("pub fn set_opacity(&self"));
 }
+
+/// The provider interfaces of UI Automation, written from the C# declarations of the reference.
+#[test]
+fn uia_idl_generates() {
+    let Some(rs) = generate("automation/interop/uia.idl") else { return };
+    // An interface that derives from another: its implementation trait asks for the one of the base.
+    assert!(rs.contains("pub trait IRawElementProviderSimple2Impl: IRawElementProviderSimpleImpl"));
+    // A structure returned through the last parameter is the result.
+    assert!(rs.contains(
+        "fn get_property_value(&self, property_id: i32) -> Result<crate::automation::marshalling::ComVariant, HResult>;"
+    ));
+    assert!(rs.contains("const IID: Guid = Guid::from_u128(0xd6dd68d186fd433286669abedea2d24c);"));
+}

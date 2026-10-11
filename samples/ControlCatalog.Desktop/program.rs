@@ -574,6 +574,94 @@ fn screenshot_run(directory: PathBuf) {
     );
 }
 
+/// `FERROUI_SMOKE_A11Y_TREE=<file>` (on Windows): once the window is up, a
+/// client of UI Automation on a second thread walks the tree of the main
+/// window through the client interface of the system, writes every element
+/// (control type, name, class, states, bounding rectangle) to the file and
+/// prints how many elements of each control type it found; the window is
+/// closed when the walk is done. The process ends with code 1 when the walk
+/// fails or finds nothing of the framework.
+#[cfg(windows)]
+fn accessibility_tree_run(path: PathBuf) {
+    use ferroui_base::threading::Dispatcher;
+    use ferroui_win32::automation::testing::{count_by_control_type, uninitialize_com, UiaClient};
+
+    fn walk(handle: isize, path: &std::path::Path) -> Result<String, String> {
+        let client = UiaClient::new()?;
+        let root = client.element_from_handle(handle)?;
+        let started = std::time::Instant::now();
+        let elements = client.descendants(&root)?;
+        let mut lines = vec![format!("{:?}", root.info(0)?)];
+        let mut infos = Vec::with_capacity(elements.len());
+        for (depth, element) in &elements {
+            let info = element.info(*depth)?;
+            let [left, top, right, bottom] = info.bounding_rectangle;
+            lines.push(format!(
+                "{}{} {:?} class {:?} framework {:?} enabled {} focusable {} at ({left},{top})-({right},{bottom})",
+                "  ".repeat(info.depth),
+                info.control_type_name(),
+                info.name,
+                info.class_name,
+                info.framework_id,
+                info.is_enabled,
+                info.is_keyboard_focusable
+            ));
+            infos.push(info);
+        }
+        let seconds = started.elapsed().as_secs_f64();
+        let of_the_framework = infos.iter().filter(|info| info.framework_id == "FerroUI").count();
+        let counts = count_by_control_type(&infos);
+        let summary = format!(
+            "{} elements below the window ({of_the_framework} of the framework), walked and read in {seconds:.1} s: {}",
+            infos.len(),
+            counts.iter().map(|(name, count)| format!("{count} {name}")).collect::<Vec<_>>().join(", ")
+        );
+        lines.push(summary.clone());
+        if let Some(parent) = path.parent().filter(|parent| !parent.as_os_str().is_empty()) {
+            std::fs::create_dir_all(parent).map_err(|error| format!("{}: {error}", parent.display()))?;
+        }
+        std::fs::write(path, lines.join("\n") + "\n").map_err(|error| format!("{}: {error}", path.display()))?;
+        drop(elements);
+        drop(root);
+        drop(client);
+        if of_the_framework == 0 {
+            return Err(format!("the tree has no element of the framework: {summary}"));
+        }
+        Ok(summary)
+    }
+
+    let milliseconds = environment_milliseconds("FERROUI_SMOKE_A11Y_AFTER_MS").unwrap_or(3000);
+    println!("Will walk the accessibility tree of the main window after {milliseconds} ms");
+    let _timer = DispatcherTimer::run_once(
+        move || {
+            let handle = main_window().and_then(|window| window.try_get_platform_handle()).map_or(0, |handle| handle.handle());
+            let dispatcher = Dispatcher::ui_thread();
+            let path = path.clone();
+            std::thread::spawn(move || {
+                let result = walk(handle, &path);
+                uninitialize_com();
+                match result {
+                    Ok(summary) => println!("[ ok ] the accessibility tree of the catalog ({}): {summary}", path.display()),
+                    Err(error) => {
+                        println!("[FAIL] the accessibility tree of the catalog: {error}");
+                        std::process::exit(1);
+                    }
+                }
+                dispatcher.post(
+                    || {
+                        if let Some(main_window) = main_window() {
+                            main_window.close();
+                        }
+                    },
+                    DispatcherPriority::NORMAL,
+                );
+            });
+        },
+        Duration::from_millis(milliseconds),
+        DispatcherPriority::NORMAL,
+    );
+}
+
 /// The smoke run asked for with `FERROUI_SMOKE_EXIT_MS`,
 /// `FERROUI_SMOKE_PAGES` and `FERROUI_SMOKE_SCREENSHOTS`.
 fn smoke_run() {
@@ -583,6 +671,11 @@ fn smoke_run() {
         screenshot_run(PathBuf::from(directory));
     } else if let Some(ms) = environment_milliseconds("FERROUI_SMOKE_PAGES") {
         control_catalog::show_every_page(Duration::from_millis(ms));
+    }
+
+    #[cfg(windows)]
+    if let Some(path) = std::env::var_os("FERROUI_SMOKE_A11Y_TREE").filter(|path| !path.is_empty()) {
+        accessibility_tree_run(PathBuf::from(path));
     }
 
     if let Some(ms) = environment_milliseconds("FERROUI_SMOKE_EXIT_MS") {
