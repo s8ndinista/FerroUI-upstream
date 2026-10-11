@@ -9,7 +9,9 @@
 // `ProviderOptions`). The enumerations and the identifiers of properties, patterns, events and
 // control types are the ones the reference declares beside the interfaces.
 //
-// Compared with `UIAutomationCore.idl` of the Windows SDK: the identifiers and the order of the
+// Compared with `UIAutomationCore.idl` of the Windows SDK (through the declarations of the
+// `windows` crate, which are generated from the metadata of the SDK: the identifier and the
+// names of the slots of all 25 interfaces, by a script): the identifiers and the order of the
 // methods are the ones of the system for every interface here. Two declarations of the reference
 // differ from the header, and this file follows the header for the first:
 //   - `ITextProvider::RangeFromPoint` takes a `UiaPoint` by value in the header and two doubles

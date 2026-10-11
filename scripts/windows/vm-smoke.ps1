@@ -429,6 +429,13 @@ if (-not (Test-Path $example)) {
         if ($code -ne 0) { $failed.Add("smoke run ($mode)") }
         Tail $name 200 '^\[(FAIL|info| ok )\]|^smoke run|panicked|^Windows |^Screens|^  '
     }
+    # UI Automation: a client on a second thread reads and drives a window of controls through
+    # the client interface of the system. No screen reader is run.
+    $name = 'smoke-a11y'
+    $commandLine = "`"$example`" --a11y"
+    $code = if ($InteractiveUser) { Run-Interactive $name $commandLine } else { Run $name $commandLine }
+    if ($code -ne 0) { $failed.Add('accessibility run (UI Automation)') }
+    Tail $name 200 '^\[(FAIL|info| ok )\]|^accessibility|^-- accessibility|panicked|^  '
     # Through ANGLE with each composition mode that presents through a surface of its own.
     if ($Modes -contains 'angle') {
         foreach ($composition in @('dcomp', 'winui', 'dxgi')) {

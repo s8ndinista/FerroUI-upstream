@@ -22,6 +22,7 @@ const COMPILED: &[(&str, &str)] = &[
     ("win_rt/winrt.idl", "winrt.rs"),
     ("win32_com/win32.idl", "win32.rs"),
     ("automation/interop/uia.idl", "uia.rs"),
+    ("automation/testing/uia_client.idl", "uia_client.rs"),
 ];
 
 fn main() {
