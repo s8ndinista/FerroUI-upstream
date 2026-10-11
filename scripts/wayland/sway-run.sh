@@ -2,7 +2,9 @@
 # Runs a command as a client of a headless sway (the compositor of the tests of the Wayland
 # backend: docs/porting/wayland-platform.md, section 11.1).
 #
-#   scripts/wayland/sway-run.sh [--scale N] [--size WxH] [--log FILE] -- command [arguments...]
+#   scripts/wayland/sway-run.sh [--scale N] [--size WxH] [--log FILE] [--debug] -- command [arguments...]
+#
+# With --debug the compositor logs at its debug level (use it with --log: the log is long).
 #
 # The compositor runs on the headless backend of wlroots with its software renderer, on a
 # configuration without a bar and without borders, so that the one tiled window covers the output
@@ -16,11 +18,13 @@ set -u
 scale=1
 size=1280x720
 log=""
+debug=""
 while [ $# -gt 0 ]; do
     case "$1" in
         --scale) scale="$2"; shift 2 ;;
         --size) size="$2"; shift 2 ;;
         --log) log="$2"; shift 2 ;;
+        --debug) debug="-d"; shift ;;
         --) shift; break ;;
         *) echo "sway-run.sh: unknown option $1" >&2; exit 2 ;;
     esac
@@ -48,7 +52,7 @@ export XDG_RUNTIME_DIR="$runtime"
 unset DISPLAY WAYLAND_DISPLAY SWAYSOCK
 
 WLR_BACKENDS=headless WLR_LIBINPUT_NO_DEVICES=1 WLR_RENDERER=pixman \
-    sway --config "$config" > "$sway_log" 2>&1 &
+    sway $debug --config "$config" > "$sway_log" 2>&1 &
 sway_pid=$!
 
 cleanup() {
