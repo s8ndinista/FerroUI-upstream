@@ -75,7 +75,7 @@ def main():
     png += chunk(b"IEND", b"")
     with open(target, "wb") as f:
         f.write(png)
-    distinct = len(set(bytes(rows[i:i + 3]) for i in range(1, min(len(rows), 3 * 200000), 97)))
+    distinct = len(set(bytes(rows[i:i + 3]) for i in range(1, len(rows) - 3, 97)))
     print(f"{target}: {width}x{height}, {bits} bits per pixel, {distinct} distinct colours in a sample")
     return 0
 
