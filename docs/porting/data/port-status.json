@@ -2,23 +2,23 @@
  "upstreamCommit": "17350180c33b063f0e98abbfd19aa3cae63f5d56",
  "inScope": {
   "files": [
-   2628,
+   2634,
    2677,
    0
   ],
   "types": [
-   3558,
+   3564,
    4038,
    311
   ],
   "members": [
-   28368,
+   28401,
    32988,
    2868
   ]
  },
  "allProjects": {
-  "membersPresent": 28368,
+  "membersPresent": 28401,
   "members": 37391,
   "membersNotApplicable": 1132,
   "membersOutOfScope": 3271
@@ -7879,22 +7879,22 @@
    "scope": "in",
    "detail": "full",
    "files": [
-    68,
+    74,
     81,
     0
    ],
    "types": [
-    91,
+    97,
     123,
     0
    ],
    "members": [
-    509,
+    542,
     816,
     0
    ],
    "interfaces": [
-    12,
+    14,
     14
    ],
    "propertyRegistrations": [
@@ -7907,9 +7907,9 @@
    ],
    "notApplicableFiles": 0,
    "matchKinds": {
-    "field": 79,
-    "fn": 390,
-    "free fn": 8,
+    "field": 81,
+    "fn": 417,
+    "free fn": 12,
     "free item": 6,
     "trait": 7,
     "trait fn": 3,
@@ -7936,6 +7936,9 @@
     ],
     "Clipboard/WaylandOutgoingTransfer.cs": [
      "clipboard/wayland_outgoing_transfer.rs"
+    ],
+    "IWaylandXdgTopLevelExport.cs": [
+     "i_wayland_xdg_top_level_export.rs"
     ],
     "PopupImpl.Sink.cs": [
      "popup_impl_sink.rs"
@@ -8018,6 +8021,9 @@
     "Server/Transient/Clipboard/WaylandOfferCookie.cs": [
      "server/transient/clipboard/wayland_offer_cookie.rs"
     ],
+    "Server/Transient/IWaylandTextInputV3Events.cs": [
+     "server/transient/i_wayland_text_input_v3_events.rs"
+    ],
     "Server/Transient/Rendering/IWaylandFramebufferSurface.cs": [
      "server/transient/rendering/i_wayland_framebuffer_surface.rs"
     ],
@@ -8045,6 +8051,12 @@
     "Server/Transient/WaylandOutputsTracker.cs": [
      "server/transient/wayland_outputs_tracker.rs"
     ],
+    "Server/Transient/WaylandTextInputV3.cs": [
+     "server/transient/wayland_text_input_v3.rs"
+    ],
+    "Server/Transient/XdgToplevelExport.cs": [
+     "server/transient/xdg_toplevel_export.rs"
+    ],
     "Server/WaylandDispatchPriority.cs": [
      "server/wayland_dispatch_priority.rs"
     ],
@@ -8062,6 +8074,9 @@
     ],
     "Server/WaylandWorkerClient.cs": [
      "server/wayland_worker_client.rs"
+    ],
+    "TextInputOptionsConverter.cs": [
+     "text_input_options_converter.rs"
     ],
     "WaylandConversionExtensions.cs": [
      "wayland_conversion_extensions.rs"
@@ -8081,6 +8096,9 @@
     "WaylandSurfaceCreateResult.cs": [
      "wayland_surface_create_result.rs"
     ],
+    "WaylandTextUtils.cs": [
+     "wayland_text_utils.rs"
+    ],
     "WaylandTopLevelFactory.cs": [
      "wayland_top_level_factory.rs"
     ],
@@ -8088,7 +8106,7 @@
      "window_impl_sink.rs"
     ],
     "WindowImpl.TextInput.cs": [
-     "window_impl.rs"
+     "window_impl_text_input.rs"
     ],
     "WindowImpl.cs": [
      "window_impl.rs"

@@ -10,10 +10,10 @@ Generated from upstream commit `17350180c33b063f0e98abbfd19aa3cae63f5d56`. Back 
 | FerroUI | `src/FerroUI.Wayland` (exists) |
 | Crate | `ferroui-wayland` |
 | Phase / priority | 5 - desktop (Linux) / P1 |
-| Files | 68/81 (84.0%) |
-| Types | 91/123 (74.0%) |
-| Members | 509/816 (62.4%) |
-| Contracts (interfaces) | 12/14 |
+| Files | 74/81 (91.4%) |
+| Types | 97/123 (78.9%) |
+| Members | 542/816 (66.4%) |
+| Contracts (interfaces) | 14/14 |
 | Property registrations | 0/0 |
 | Routed events | 0/0 |
 
@@ -23,43 +23,43 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 
 | Interface | Access | Upstream file | Members | Status |
 |---|---|---|---|---|
-| `Avalonia.Wayland.IWaylandXdgTopLevelExport` | internal | `IWaylandXdgTopLevelExport.cs` | 0/1 | missing |
+| `Avalonia.Wayland.IWaylandXdgTopLevelExport` | internal | `IWaylandXdgTopLevelExport.cs` | 1/1 | present |
 | `Avalonia.Wayland.Screens.IWaylandOutputsSink` | internal | `Screens/IWaylandOutputsSink.cs` | 1/1 | present |
 | `Avalonia.Wayland.Server.Persistent.IPersistentWaylandObject` | internal | `Server/Persistent/IPersistentObject.cs` | 2/2 | present |
-| `Avalonia.Wayland.Server.Persistent.IWSurface` | internal | `Server/Persistent/IWSurface.cs` | 3/10 | partial |
+| `Avalonia.Wayland.Server.Persistent.IWSurface` | internal | `Server/Persistent/IWSurface.cs` | 10/10 | present |
 | `Avalonia.Wayland.Server.Persistent.IWSurfaceEventSink` | internal | `Server/Persistent/IWSurfaceEventSink.cs` | 19/19 | present |
 | `Avalonia.Wayland.Server.Persistent.IWXdgPopup` | internal | `Server/Persistent/IWXdgTopLevel.cs` | 1/1 | present |
 | `Avalonia.Wayland.Server.Persistent.IWXdgPopupEventSink` | internal | `Server/Persistent/IWSurfaceEventSink.cs` | 2/2 | present |
 | `Avalonia.Wayland.Server.Persistent.IWXdgShellSurface` | internal | `Server/Persistent/IWXdgTopLevel.cs` | 2/2 | present |
-| `Avalonia.Wayland.Server.Persistent.IWXdgTopLevel` | internal | `Server/Persistent/IWXdgTopLevel.cs` | 11/12 | partial |
+| `Avalonia.Wayland.Server.Persistent.IWXdgTopLevel` | internal | `Server/Persistent/IWXdgTopLevel.cs` | 12/12 | present |
 | `Avalonia.Wayland.Server.Persistent.IWXdgTopLevelEventSink` | internal | `Server/Persistent/IWSurfaceEventSink.cs` | 3/3 | present |
 | `Avalonia.Wayland.Server.Persistent.IWaylandCursor` | internal | `Server/Persistent/IWaylandCursor.cs` | 1/1 | present |
-| `Avalonia.Wayland.Server.Transient.IWaylandTextInputV3Events` | internal | `Server/Transient/IWaylandTextInputV3Events.cs` | 0/1 | missing |
+| `Avalonia.Wayland.Server.Transient.IWaylandTextInputV3Events` | internal | `Server/Transient/IWaylandTextInputV3Events.cs` | 1/1 | present |
 | `Avalonia.Wayland.Server.Transient.Rendering.IWaylandFramebufferSurface` | internal | `Server/Transient/Rendering/IWaylandFramebufferSurface.cs` | 6/7 | partial |
 | `Avalonia.Wayland.Server.WaylandPlatformGraphics.IWaylandGraphics` | public | `Server/WaylandPlatformGraphics.cs` | 1/2 | partial |
 
 ## Files
 
-### `(project root)` - files 23/26, types 29/33, members 144/196
+### `(project root)` - files 26/26, types 32/33, members 149/196
 
 | Upstream file | Rust file | Status | Types | Members | Notes |
 |---|---|---|---|---|---|
 | `AvaloniaWaylandException.cs` | `ferro_wayland_exception.rs` | partial | 6/6 | 8/23 |  |
 | `AvaloniaWaylandPlatformExtensions.cs` | `ferro_wayland_platform_extensions.rs` | present | 1/1 | 2/2 |  |
-| `IWaylandXdgTopLevelExport.cs` | `i_wayland_xdg_top_level_export.rs` | missing | 0/1 | 0/1 |  |
+| `IWaylandXdgTopLevelExport.cs` | `i_wayland_xdg_top_level_export.rs` | present | 1/1 | 1/1 |  |
 | `PopupImpl.Sink.cs` | `popup_impl_sink.rs` | present | 1/1 | 0/0 |  |
 | `PopupImpl.cs` | `popup_impl.rs` | present | 1/1 | 11/11 |  |
-| `TextInputOptionsConverter.cs` | `text_input_options_converter.rs` | missing | 0/1 | 0/1 |  |
+| `TextInputOptionsConverter.cs` | `text_input_options_converter.rs` | present | 1/1 | 1/1 |  |
 | `WaylandConversionExtensions.cs` | `wayland_conversion_extensions.rs` | partial | 0/1 | 0/4 |  |
 | `WaylandCursorFactory.cs` | `wayland_cursor_factory.rs` | present | 2/2 | 6/6 |  |
 | `WaylandGlibDispatcher.cs` | `wayland_glib_dispatcher.rs` | present | 1/1 | 1/1 |  |
 | `WaylandPlatform.cs` | `wayland_platform.rs` | present | 1/1 | 2/2 |  |
 | `WaylandPlatformOptions.cs` | `wayland_platform_options.rs` | present | 1/1 | 9/9 |  |
 | `WaylandSurfaceCreateResult.cs` | `wayland_surface_create_result.rs` | partial | 1/1 | 0/1 |  |
-| `WaylandTextUtils.cs` | `wayland_text_utils.rs` | missing | 0/1 | 0/3 |  |
+| `WaylandTextUtils.cs` | `wayland_text_utils.rs` | present | 1/1 | 3/3 |  |
 | `WaylandTopLevelFactory.cs` | `wayland_top_level_factory.rs` | present | 1/1 | 6/6 |  |
 | `WindowImpl.Sink.cs` | `window_impl_sink.rs` | present | 1/1 | 0/0 |  |
-| `WindowImpl.TextInput.cs` | `window_impl.rs` | present | 1/1 | 0/0 | partial merged into main file |
+| `WindowImpl.TextInput.cs` | `window_impl_text_input.rs` | present | 1/1 | 0/0 |  |
 | `WindowImpl.cs` | `window_impl.rs` | present | 1/1 | 38/38 |  |
 | `WindowImplBase.DragDrop.cs` | `window_impl_base_drag_drop.rs` | present | 1/1 | 0/0 |  |
 | `WindowImplBase.Keyboard.cs` | `window_impl_base_keyboard.rs` | present | 1/1 | 0/0 |  |
@@ -251,17 +251,17 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 
 </details>
 
-### `Server/Persistent` - files 13/13, types 23/26, members 142/190
+### `Server/Persistent` - files 13/13, types 23/26, members 152/190
 
 | Upstream file | Rust file | Status | Types | Members | Notes |
 |---|---|---|---|---|---|
 | `DecorationMode.cs` | `server/persistent/decoration_mode.rs` | present | 1/1 | 2/2 |  |
 | `IPersistentObject.cs` | `server/persistent/i_persistent_object.rs` | present | 1/1 | 2/2 |  |
-| `IWSurface.cs` | `server/persistent/i_w_surface.rs` | partial | 1/1 | 3/10 |  |
+| `IWSurface.cs` | `server/persistent/i_w_surface.rs` | present | 1/1 | 10/10 |  |
 | `IWSurfaceEventSink.cs` | `server/persistent/i_w_surface_event_sink.rs` | present | 3/3 | 24/24 |  |
-| `IWXdgTopLevel.cs` | `server/persistent/i_w_xdg_top_level.rs` | partial | 3/3 | 14/15 |  |
+| `IWXdgTopLevel.cs` | `server/persistent/i_w_xdg_top_level.rs` | present | 3/3 | 15/15 |  |
 | `IWaylandCursor.cs` | `server/persistent/i_wayland_cursor.rs` | present | 1/1 | 1/1 |  |
-| `WSurface.cs` | `server/persistent/w_surface.rs` | partial | 4/7 | 59/92 |  |
+| `WSurface.cs` | `server/persistent/w_surface.rs` | partial | 4/7 | 61/92 |  |
 | `WaylandBitmapCursor.cs` | `server/persistent/wayland_bitmap_cursor.rs` | partial | 1/1 | 10/12 |  |
 | `WaylandCursor.cs` | `server/persistent/wayland_cursor.rs` | partial | 3/3 | 3/6 |  |
 | `WaylandInputEventCookie.cs` | `server/persistent/wayland_input_event_cookie.rs` | present | 1/1 | 3/3 |  |
@@ -269,34 +269,13 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 | `XdgPopupConfigureBatch.cs` | `server/persistent/xdg_popup_configure_batch.rs` | present | 1/1 | 5/5 |  |
 | `XdgPopupPositionerParams.cs` | `server/persistent/xdg_popup_positioner_params.rs` | partial | 1/1 | 0/1 |  |
 
-<details><summary><code>IWSurface.cs</code> - 7 missing</summary>
+<details><summary><code>WSurface.cs</code> - 34 missing</summary>
 
-- `IWSurface` (interface): 7 missing
-  - `void RegisterTextInputSink(Avalonia.Wayland.Server.Transient.WaylandTextInputV3EventsProxy sink)`
-  - `void SetTextInputActive(bool hasClient, bool supportsPreedit, bool supportsSurroundingText, int sessionToken)`
-  - `void AbortTextInputComposition()`
-  - `void SetTextInputCursorRect(Rect rect)`
-  - `void SetTextInputOptions(TextInputOptions options)`
-  - `void SetTextInputSurroundingText(string text, int cursorChar, int anchorChar)`
-  - `void ResetTextInput()`
-
-</details>
-
-<details><summary><code>IWXdgTopLevel.cs</code> - 1 missing</summary>
-
-- `IWXdgTopLevel` (interface): 1 missing
-  - `IWaylandXdgTopLevelExport? ExportToplevel()`
-
-</details>
-
-<details><summary><code>WSurface.cs</code> - 36 missing</summary>
-
-- `WSurface` (class): 17 missing
+- `WSurface` (class): 16 missing
   - `WaylandConnection? Connection { get; private set; }` *(protected)*
   - `WaylandGlobals? Globals { get; private set; }`
   - `WlDisplay? CurrentDisplay { get; }`
   - `void Disconnect()`
-  - `int TextInputSessionToken { get; private set; }` *(internal)*
   - `virtual void RegisterTextInputSink(WaylandTextInputV3EventsProxy sink)`
   - `virtual void SetTextInputActive(bool hasClient, bool supportsPreedit, bool supportsSurroundingText, int ses...`
   - `virtual void AbortTextInputComposition()`
@@ -314,9 +293,8 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
   - `override void OnOutputsChanged()` *(protected)*
   - `virtual void OnConfigureBatchComplete(uint serial)` *(protected)*
 - `WXdgShellSurface.XdgSurfaceListener` (class, internal): **type missing** (2 members)
-- `WXdgTopLevel` (class): 3 missing
+- `WXdgTopLevel` (class): 2 missing
   - `TaskCompletionSource<XdgConfigureBatch> BasicInitCompletedTcs { get; }` *(protected)*
-  - `IWaylandXdgTopLevelExport? ExportToplevel()`
   - `void RemoveExport(XdgToplevelExport export)` *(internal)*
 - `WXdgTopLevel.TopLevelListener` (class, internal): **type missing** (4 members)
 - `WXdgPopup.PopupListener` (class, internal): **type missing** (4 members)
@@ -356,18 +334,18 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 
 </details>
 
-### `Server/Transient` - files 5/8, types 7/10, members 60/84
+### `Server/Transient` - files 8/8, types 10/10, members 78/84
 
 | Upstream file | Rust file | Status | Types | Members | Notes |
 |---|---|---|---|---|---|
-| `IWaylandTextInputV3Events.cs` | `server/transient/i_wayland_text_input_v3_events.rs` | missing | 0/1 | 0/1 |  |
+| `IWaylandTextInputV3Events.cs` | `server/transient/i_wayland_text_input_v3_events.rs` | present | 1/1 | 1/1 |  |
 | `WaylandCursorManager.cs` | `server/transient/wayland_cursor_manager.rs` | partial | 2/2 | 3/4 |  |
-| `WaylandGlobals.cs` | `server/transient/wayland_globals.rs` | partial | 1/1 | 17/22 |  |
+| `WaylandGlobals.cs` | `server/transient/wayland_globals.rs` | partial | 1/1 | 19/22 |  |
 | `WaylandInputDispatcher.Keyboard.cs` | `server/transient/wayland_input_dispatcher_keyboard.rs` | present | 1/1 | 0/0 |  |
-| `WaylandInputDispatcher.cs` | `server/transient/wayland_input_dispatcher.rs` | partial | 1/1 | 10/11 |  |
+| `WaylandInputDispatcher.cs` | `server/transient/wayland_input_dispatcher.rs` | present | 1/1 | 11/11 |  |
 | `WaylandOutputsTracker.cs` | `server/transient/wayland_outputs_tracker.rs` | partial | 2/2 | 30/31 |  |
-| `WaylandTextInputV3.cs` | `server/transient/wayland_text_input_v3.rs` | missing | 0/1 | 0/12 |  |
-| `XdgToplevelExport.cs` | `server/transient/xdg_toplevel_export.rs` | missing | 0/1 | 0/3 |  |
+| `WaylandTextInputV3.cs` | `server/transient/wayland_text_input_v3.rs` | present | 1/1 | 12/12 |  |
+| `XdgToplevelExport.cs` | `server/transient/xdg_toplevel_export.rs` | partial | 1/1 | 2/3 |  |
 
 <details><summary><code>WaylandCursorManager.cs</code> - 1 missing</summary>
 
@@ -376,21 +354,12 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 
 </details>
 
-<details><summary><code>WaylandGlobals.cs</code> - 5 missing</summary>
+<details><summary><code>WaylandGlobals.cs</code> - 3 missing</summary>
 
-- `WaylandGlobals` (class): 5 missing
+- `WaylandGlobals` (class): 3 missing
   - `event Action<uint>? GlobalRemoved`
   - `ZwpLinuxDmabufV1? LinuxDmabuf { get; }`
-  - `ZwpTextInputManagerV3? TextInputManagerV3 { get; }`
-  - `ZxdgExporterV2? XdgExporter { get; }`
   - `WaylandConnection Connection { get; }`
-
-</details>
-
-<details><summary><code>WaylandInputDispatcher.cs</code> - 1 missing</summary>
-
-- `WaylandInputDispatcher` (class): 1 missing
-  - `WaylandTextInputV3? TextInputV3 { get; private set; }` *(internal)*
 
 </details>
 
@@ -398,6 +367,13 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 
 - `WaylandOutputsTracker.Output` (class): 1 missing
   - `void OnWlOutputDone()` *(internal)*
+
+</details>
+
+<details><summary><code>XdgToplevelExport.cs</code> - 1 missing</summary>
+
+- `XdgToplevelExport` (class): 1 missing
+  - `IWaylandXdgTopLevelExport GetUiThreadHandle()`
 
 </details>
 
