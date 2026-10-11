@@ -1913,6 +1913,9 @@ mod app {
             let by = (200, 150);
             let target = Point::new(f64::from(from.0 + by.0), f64::from(from.1 + by.1));
 
+            // The sources the worker has before the drags: the selection, when the application
+            // owns the clipboard.
+            let sources_before = data_sources(client);
             for refuse in [false, true] {
                 DRAG.with(|drag| *drag.borrow_mut() = DragProbe { armed: true, refuse, ..DragProbe::default() });
                 let dragged = drag(probe, from, by, extent).await;
@@ -1933,7 +1936,7 @@ mod app {
                 if refuse {
                     report.check(
                         "refused drag",
-                        dragged.is_ok() && ended && result == Some(DragDropEffects::NONE) && count("enter") == 1 && count("drop") == 0,
+                        dragged.is_ok() && ended && result == Some(DragDropEffects::NONE) && count("enter") >= 1 && count("drop") == 0,
                         summary,
                     );
                 } else {
@@ -1941,7 +1944,8 @@ mod app {
                     let at_target = dropped.is_some_and(|event| (event.1.x - target.x).abs() <= 2.0 && (event.1.y - target.y).abs() <= 2.0);
                     report.check(
                         "drag",
-                        dragged.is_ok() && ended && count("enter") == 1 && count("over") >= 1 && count("drop") == 1,
+                        // The marker and the window around it are entered one after the other.
+                        dragged.is_ok() && ended && count("enter") >= 1 && count("over") >= 1 && count("drop") == 1,
                         summary,
                     );
                     report.check(
@@ -1951,11 +1955,11 @@ mod app {
                     );
                     report.check("drag result", result == Some(DragDropEffects::COPY), format!("the source is told {result:?}"));
                 }
-                let sources = wait_for(STEP_TIMEOUT, || data_sources(client).is_some_and(|(sources, _)| sources == 0)).await;
+                let sources = wait_for(STEP_TIMEOUT, || sources_before.is_some() && data_sources(client) == sources_before).await;
                 report.check(
                     if refuse { "source after the refused drag" } else { "source after the drop" },
                     sources,
-                    format!("the worker has {:?} (sources, owner)", data_sources(client)),
+                    format!("the worker has {:?} (sources, owner), as before the drag ({sources_before:?}): the source of the drag is gone", data_sources(client)),
                 );
                 // The pointer is given back to the window before the next drag.
                 delay(Duration::from_millis(300)).await;
