@@ -577,9 +577,33 @@ mod windows {
                     "[info] frame {frame}: the frame is read back at the offset ({offset_x}, {offset_y}) of its texture (glReadPixels of ANGLE reads the texture, not the rectangle of the frame)"
                 );
             }
-            if offset_x < width && offset_y < height {
-                painted += (width as usize * height as usize)
-                    - ((width - offset_x) as usize * (height - offset_y) as usize);
+            // What the frame covers. The pixels the offset hides count as painted. The offset
+            // found above is the one at which three places hold what was drawn, and those
+            // places lie in areas of one colour, so they also hold at an offset that is a
+            // pixel or two short of the real one; and what lies before the frame in its
+            // texture is partly blank and partly what an earlier frame left there (the first
+            // frame after the resize in run 38097791235, on ARM64 through Windows.UI.Composition:
+            // "415960 of 416000 pixels painted", forty blank pixels of a column that was no
+            // part of the frame). So the frame covers the window when every blank pixel lies
+            // before some offset of at most 16 pixels each way: in the columns and rows a
+            // frame at that offset does not reach.
+            if flipped && painted != pixels.len() / 4 {
+                let total = width as usize * height as usize;
+                let blank = total - painted;
+                if blank <= 16 * (width as usize + height as usize) {
+                    let blanks: Vec<(i32, i32)> = pixels
+                        .chunks_exact(4)
+                        .enumerate()
+                        .filter(|(_, pixel)| *pixel == [0, 0, 0, 0])
+                        .map(|(index, _)| ((index % width as usize) as i32, (index / width as usize) as i32))
+                        .collect();
+                    let before_some_offset = (0..=16)
+                        .flat_map(|y| (0..=16).map(move |x| (x, y)))
+                        .any(|(offset_x, offset_y)| blanks.iter().all(|&(x, y)| x < offset_x || y < offset_y));
+                    if before_some_offset {
+                        painted = total;
+                    }
+                }
             }
             // The pixel at a point of the window, in the rows of OpenGL.
             let pixel_at = |x: i32, y: i32| -> [u8; 4] {
