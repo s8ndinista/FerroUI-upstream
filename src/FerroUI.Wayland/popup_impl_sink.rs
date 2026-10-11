@@ -205,10 +205,14 @@ impl IWXdgPopupEventSink for PopupImplSink {
             proxy.set_pending_ack_serial(batch.serial);
         }
 
-        // Not in the reference: a popup that was created again in place of a reposition
-        // (a compositor without `xdg_popup.reposition`) has no buffer and is shown again by
-        // its next frame, which nothing else asks for when only its place changed.
-        if batch.recreated {
+        // Not in the reference: a frame is asked for. The serial is acknowledged with the next
+        // buffer, and nothing else asks for one when only the place of the popup changed: a
+        // popup that was created again in place of a reposition (a compositor without
+        // `xdg_popup.reposition`) has no buffer and is shown again by that frame, and one that
+        // was repositioned stays where it was until its configure is acknowledged and
+        // committed (measured under sway 1.10: the compositor moved the popup only with its
+        // next frame).
+        {
             if let Some(parent) = self.parent() {
                 if let Some(paint) = get(&parent.base().paint) {
                     paint(Rect::from_size(parent.base().client_size()));
