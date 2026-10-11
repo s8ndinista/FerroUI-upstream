@@ -344,16 +344,21 @@ mod tests {
         let value = WaylandDataTransferItem::convert_data(&string, b"<b>x</b>".to_vec()).unwrap();
         assert_eq!(value.downcast_ref::<String>().unwrap(), "<b>x</b>");
 
-        // What is no image is no bitmap.
-        let bitmap: DataFormat = DataFormat::bitmap().into();
-        assert!(WaylandDataTransferItem::convert_data(&bitmap, vec![1, 2, 3]).is_none());
+        // A format of the process has no value that could come through a pipe.
+        let private: DataFormat = DataFormat::create_in_process_format::<u32>("private").into();
+        assert!(WaylandDataTransferItem::convert_data(&private, vec![1, 2, 3]).is_none());
     }
 
     #[test]
     fn a_list_of_uris_is_a_list_of_files() {
         assert!(files_of(None).is_none());
         assert!(files_of(Some(Vec::new())).is_none());
-        let files = files_of(Some(b"file:///tmp/a.txt\r\nfile:///tmp/b.txt\r\n".to_vec())).unwrap();
+        // Only what exists is an item: this test binary and its directory, not a third path.
+        let binary = std::env::current_exe().unwrap();
+        let directory = binary.parent().unwrap();
+        let list = format!("# a comment\r\nfile://{}\r\nfile://{}\r\nfile:///nonexistent/ferroui-wayland-test\r\n", binary.display(), directory.display());
+        let files = files_of(Some(list.into_bytes())).unwrap();
         assert_eq!(files.len(), 2);
+        assert_eq!(files[0].name(), binary.file_name().unwrap().to_string_lossy());
     }
 }
