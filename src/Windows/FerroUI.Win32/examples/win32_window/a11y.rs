@@ -393,6 +393,14 @@ fn client(handle: isize, clicks: &AtomicU32, report: &mut Report) -> Result<(), 
     // The focus.
     let log: FocusLog = Arc::new(Mutex::new(Vec::new()));
     client.add_focus_changed_event_handler(log.clone())?;
+    // The slider may have the focus already: setting a value through a pattern gave it to the
+    // element in run 38100265175 (the focused element of the system was the slider before
+    // this point, and no event followed a focus that did not change). The focus goes to the
+    // check box first, so that the slider getting it is a change.
+    if let Err(error) = check_box.set_focus() {
+        report.check(false, format!("IUIAutomationElement::SetFocus on the check box: {error}"));
+    }
+    std::thread::sleep(Duration::from_millis(300));
     if let Err(error) = slider.set_focus() {
         report.check(false, format!("IUIAutomationElement::SetFocus on the slider: {error}"));
     }
