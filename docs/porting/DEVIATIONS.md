@@ -594,7 +594,6 @@ Not built yet (each fails, logs or answers "not available" as stated, and is tra
 
 | Upstream | Port | Kind | Stage |
 |---|---|---|---|
-| The rendering mode Vulkan (`VulkanSupport`, `VulkanNativeInterop`). | Passed over like a mode that failed to initialize. | Missing | 2a, after the Vulkan GPU of the Skia backend |
 
 ### Wayland platform (`src/FerroUI.Wayland/`)
 
@@ -705,6 +704,12 @@ Design and what was verified where: [`vulkan.md`](vulkan.md).
 | `VulkanPlatformGraphics.GetSharedContext` stores the context it creates in `_currentSharedContext`, which nothing reads. | The field is not kept. | Representation | | vulkan |
 | `Utf8BufferArray` is disposable and has a finalizer. | Owned vectors, freed when dropped. | Representation | | vulkan |
 | `System.Version` for the API version of the options. | `ferroui_vulkan::Version` (major, minor, build). | Representation | | vulkan |
+| `VulkanGlobalApi` fails to fill its table when the lookup lacks one of its three entry points. | `VulkanGlobalApi::try_new` names the entry point that is missing; `VulkanInstance::create` fails with it. | Representation | The table of the bindings cannot be left unfilled. | vulkan |
+| `DeviceCheckSurfaceFactory` returns the surface and throws when it cannot create one. | Returns `Result<u64, VulkanException>`. | Representation | The failure is the failure of the device creation, as upstream. | vulkan |
+| The X11 platform declares `vkGetInstanceProcAddr` of `libvulkan.so.1` as a platform invoke: the library is found when the creation of the instance first calls it, and a missing library is the exception `TryCreate` logs. | `VulkanSupport::try_initialize` opens the library first; without it the same message is logged and the mode fails to initialize before the window for the device check is created. | Behaviour | A lookup that cannot find the loader has no entry point to call. | vulkan |
+| `X11VulkanInterface` and `VkXlibSurfaceCreateInfoKHR` are declared by the X11 project. | The table and the structure of the bindings (`ash::khr::xlib_surface`). | Representation | | vulkan |
+| The Skia backend has the Vulkan GPU on every platform (SkiaSharp carries every back end). | On Linux always; elsewhere behind the feature `vulkan` of `ferroui-skia`, off by default. The Android and Windows backends pass the Vulkan mode over. | Missing | The published Skia binaries (`vulkan.md`, section 2): none with Ganesh on OpenGL and Vulkan for Windows; the Android one exists and was not run. | vulkan |
+| `VulkanSkiaGpu` passes the formats, layouts and tilings of an image to Skia as numbers. | The numbers are mapped to the enumerations of the Skia bindings for the values the framework produces (two formats, the layouts of Vulkan 1.0 and of a presented image, two tilings); any other value is a panic that names it. | Behaviour | The enumerations of the bindings are Rust enumerations, which cannot hold a value they do not declare. | vulkan |
 
 ### iOS platform (`src/iOS/FerroUI.iOS/`)
 

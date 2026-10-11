@@ -762,15 +762,16 @@ jobs:
             libx11-6 libxi6 libxrandr2 libxcursor1 libxfixes3 libxext6 libxtst6 \
             libgl1 libglx-mesa0 libegl1 libegl-mesa0 libgl1-mesa-dri mesa-utils \
             libfontconfig1-dev libfreetype6-dev fonts-dejavu-core pkg-config \
-            libglib2.0-0 libgtk-3-0 at-spi2-core libglib2.0-bin
+            libglib2.0-0 libgtk-3-0 at-spi2-core libglib2.0-bin \
+            libvulkan1 mesa-vulkan-drivers vulkan-tools
       - name: Skia features of the target
         run: |
-          # Ganesh on OpenGL, for the rendering modes GLX and EGL of the platform, and nothing
-          # else: a feature set without a published binary would make the Skia bindings build
-          # Skia from source.
+          # Ganesh on OpenGL and on Vulkan, for the rendering modes GLX, EGL and Vulkan of the
+          # platform, and nothing else: a feature set without a published binary would make the
+          # Skia bindings build Skia from source.
           features="$(cargo tree --locked -p ferroui-skia -e features,normal --target x86_64-unknown-linux-gnu | grep -oE 'skia-bindings feature "(gl|egl|x11|wayland|ganesh|graphite|metal|vulkan|d3d)"' | sort -u | tr '\n' ' ')"
           echo "GPU features: '$features'"
-          test "$features" = 'skia-bindings feature "ganesh" skia-bindings feature "gl" '
+          test "$features" = 'skia-bindings feature "ganesh" skia-bindings feature "gl" skia-bindings feature "vulkan" '
       # The release of the Skia bindings is asked which binaries it has for Linux with that
       # feature set: the build below must download one and not compile Skia (an hour).
       - name: Skia binaries published for Linux
@@ -782,18 +783,37 @@ jobs:
           echo "skia-bindings $version, commit $hash"
           missing=0
           for target in x86_64-unknown-linux-gnu aarch64-unknown-linux-gnu; do
-            for key in jpegd-jpege-pdf ganesh-gl-jpegd-jpege-pdf; do
+            for key in jpegd-jpege-pdf ganesh-gl-jpegd-jpege-pdf ganesh-gl-jpegd-jpege-pdf-vulkan; do
               if curl -sfL -r 0-0 -o /dev/null "https://github.com/rust-skia/skia-binaries/releases/download/$version/skia-binaries-$hash-$target-$key.tar.gz"; then
                 echo "::notice::Skia binary published for $target: $key"
               else
                 echo "::warning::no Skia binary for $target with the features $key"
-                if [ "$key" = ganesh-gl-jpegd-jpege-pdf ]; then missing=1; fi
+                if [ "$key" = ganesh-gl-jpegd-jpege-pdf-vulkan ]; then missing=1; fi
               fi
             done
           done
           test "$missing" = 0
       - name: Tests of the X11 crate (no server needed)
         run: cargo test --locked -p ferroui-x11 --no-fail-fast
+      # Vulkan on Mesa's software implementation (lavapipe; docs/porting/vulkan.md): the tests of
+      # the contracts crate against it (the instance and the device, the lock, command buffers and
+      # images, the swap chain render target on a headless surface, the import of external
+      # objects), then the Vulkan GPU of the Skia backend drawing frames that are read back. With
+      # FERROUI_VULKAN_TEST_REQUIRE the tests fail where they would pass over a missing
+      # implementation.
+      - name: What the system offers for Vulkan
+        if: ${{ !cancelled() }}
+        run: vulkaninfo --summary || true
+      - name: The Vulkan contracts crate against lavapipe
+        if: ${{ !cancelled() }}
+        env:
+          FERROUI_VULKAN_TEST_REQUIRE: 1
+        run: cargo test --locked -p ferroui-vulkan --no-fail-fast -- --nocapture --test-threads=1
+      - name: The Vulkan GPU of the Skia backend against lavapipe
+        if: ${{ !cancelled() }}
+        env:
+          FERROUI_VULKAN_TEST_REQUIRE: 1
+        run: cargo test --locked -p ferroui-skia --test vulkan_frames -- --nocapture
       # The input methods over D-Bus against doubles of the IBus and Fcitx services: first over a
       # socket pair, without a bus (as on every host), then on a private session bus, where the
       # doubles take and release the well-known names for real (one test at a time: the names are
@@ -836,6 +856,14 @@ jobs:
         run: |
           xvfb-run -a --server-args="-screen 0 1280x1024x24" \
             timeout 300 target/debug/examples/x11_window --smoke --mode=egl
+      # Vulkan on lavapipe: the platform graphics of Vulkan and no fallback, a context with its
+      # device, and the frame of the Skia backend presented through the swap chain to the window
+      # (VK_KHR_xlib_surface), read back through the server (XGetImage) like every frame.
+      - name: The same rendered through Vulkan
+        if: ${{ !cancelled() }}
+        run: |
+          xvfb-run -a --server-args="-screen 0 1280x1024x24" \
+            timeout 300 target/debug/examples/x11_window --smoke --mode=vulkan
       # Software rendering with the frames sent through the shared memory extension (MIT-SHM).
       - name: The same through the shared memory framebuffer
         if: ${{ !cancelled() }}

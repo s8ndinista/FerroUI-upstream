@@ -5,6 +5,7 @@ use crate::x11_platform_lifetime_events::X11PlatformLifetimeEvents;
 use ferroui_controls::platform::IPlatformLifetimeEventsImpl;
 use crate::dispatching::{GlibDispatcherImpl, IX11PlatformDispatcher, X11PlatformThreading};
 use crate::glx::GlxPlatformGraphics;
+use crate::vulkan::VulkanSupport;
 use crate::raw_event_grouping::ManualRawEventGrouperDispatchQueue;
 use crate::screens::X11Screens;
 use crate::selections::clipboard::X11ClipboardImpl;
@@ -34,6 +35,7 @@ use ferroui_base::platform::{ICursorFactory, IPlatformGraphics, IPlatformSetting
 use ferroui_base::rendering::composition::Compositor;
 use ferroui_base::rendering::{IRenderLoop, IRenderTimer, RenderLoop, SleepLoopRenderTimer, UiThreadRenderTimer};
 use ferroui_base::threading::Dispatcher;
+use ferroui_vulkan::{VulkanOptions, VulkanPlatformGraphics};
 use ferroui_base::{FerroLocator, LocatorExtensions};
 use ferroui_controls::platform::IMountedVolumeInfoProvider;
 use ferroui_freedesktop::dbus_ime::X11DBusImeHelper;
@@ -78,6 +80,7 @@ pub struct FerroX11Platform {
     display: Cell<Option<XDisplay>>,
     glx_graphics: OnceCell<Arc<GlxPlatformGraphics>>,
     egl_graphics: OnceCell<Arc<X11EglPlatformGraphics>>,
+    vulkan_graphics: OnceCell<Arc<VulkanPlatformGraphics>>,
     cursor_factory: OnceCell<Rc<X11CursorFactory>>,
 }
 
@@ -109,6 +112,7 @@ impl FerroX11Platform {
             display: Cell::new(None),
             glx_graphics: OnceCell::new(),
             egl_graphics: OnceCell::new(),
+            vulkan_graphics: OnceCell::new(),
             cursor_factory: OnceCell::new(),
         })
     }
@@ -215,6 +219,12 @@ impl FerroX11Platform {
     /// registered (`glfeature as EglPlatformGraphics` of the reference).
     pub fn egl_graphics(&self) -> Option<Arc<X11EglPlatformGraphics>> {
         self.egl_graphics.get().cloned()
+    }
+
+    /// The platform graphics of Vulkan, when they are the ones the platform
+    /// registered.
+    pub fn vulkan_graphics(&self) -> Option<Arc<VulkanPlatformGraphics>> {
+        self.vulkan_graphics.get().cloned()
     }
 
     /// Opens the connections and registers the services of the platform.
@@ -374,11 +384,12 @@ impl FerroX11Platform {
                 let _ = self.egl_graphics.set(egl.clone());
                 Some(egl as Arc<dyn IPlatformGraphics>)
             }
-            // Stage 2a of docs/porting/x11-platform.md, its last part: the platform graphics of
-            // Vulkan (`VulkanSupport.TryInitialize`) wait for the Vulkan project of the port and
-            // the Vulkan GPU of the Skia backend. Until then the mode is passed over like one
-            // that failed to initialize.
-            X11RenderingMode::Vulkan => None,
+            X11RenderingMode::Vulkan => {
+                let vulkan_options = FerroLocator::current().get_service::<VulkanOptions>().map(|options| (*options).clone());
+                let vulkan = VulkanSupport::try_initialize(&info, vulkan_options)?;
+                let _ = self.vulkan_graphics.set(vulkan.clone());
+                Some(vulkan as Arc<dyn IPlatformGraphics>)
+            }
             X11RenderingMode::Software => None,
         });
         if let Some(graphics) = &graphics {

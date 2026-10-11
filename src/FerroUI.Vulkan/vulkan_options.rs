@@ -1,4 +1,4 @@
-use crate::{IVulkanDevice, IVulkanInstance, IVulkanKhrSurfacePlatformSurfaceFactory};
+use crate::{IVulkanDevice, IVulkanInstance, IVulkanKhrSurfacePlatformSurfaceFactory, VulkanException};
 use std::any::{Any, TypeId};
 use std::collections::HashMap;
 use std::fmt;
@@ -10,8 +10,10 @@ use std::sync::Arc;
 pub type VkGetInstanceProcAddressDelegate = Arc<dyn Fn(isize, &str) -> isize + Send + Sync>;
 
 /// Creates a `VkSurfaceKHR` on an instance, for asking the physical devices
-/// whether they can present.
-pub type VulkanDeviceCheckSurfaceFactory = Arc<dyn Fn(&Arc<dyn IVulkanInstance>) -> u64 + Send + Sync>;
+/// whether they can present. Zero stands for no surface: the devices are
+/// not asked then. A failure is the failure of the creation of the device.
+pub type VulkanDeviceCheckSurfaceFactory =
+    Arc<dyn Fn(&Arc<dyn IVulkanInstance>) -> Result<u64, VulkanException> + Send + Sync>;
 
 /// A version number of three parts.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
