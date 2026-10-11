@@ -1970,15 +1970,29 @@ mod app {
             let rectangles = probe.input_method().rectangles;
             let last = rectangles.last().copied();
             report.check(
-                "cursor rectangle",
-                mapped.is_ok()
-                    && reported
-                    && matches!((rectangle, last), (Some((_, _, w, h)), Some((_, _, rw, rh))) if (w, h) == (rw, rh)),
-                format!(
-                    "the worker sent the cursor rectangle {rectangle:?} (x, y, width, height of the surface); the popup of the input method ({mapped:?}) is told {last:?}, relative to itself"
-                ),
+                "cursor rectangle sent",
+                rectangle.is_some_and(|(x, y, w, h)| {
+                    f64::from(x) > TEXT_BOX_ORIGIN.0 && f64::from(y) > TEXT_BOX_ORIGIN.1 && w >= 1 && h > 1
+                }),
+                format!("the worker sent the cursor rectangle {rectangle:?} (x, y, width, height of the surface): inside the text box at {TEXT_BOX_ORIGIN:?}"),
             );
-            if let (Some((x, y, _, h)), true) = (rectangle, probe.has_screencopy()) {
+            if mapped.is_ok() && !reported {
+                // sway has the popups of an input method from 1.10; 1.9 (measured: its binary has
+                // no handler for one) neither places the surface nor tells it a rectangle, and
+                // the input method protocol has no other way to see the rectangle.
+                println!(
+                    "  [not measured] cursor rectangle at the compositor: the compositor gave the popup of the input method no rectangle (it has no input popups)"
+                );
+            } else {
+                report.check(
+                    "cursor rectangle",
+                    mapped.is_ok() && matches!((rectangle, last), (Some((_, _, w, h)), Some((_, _, rw, rh))) if (w, h) == (rw, rh)),
+                    format!(
+                        "the worker sent the cursor rectangle {rectangle:?}; the popup of the input method ({mapped:?}) is told {last:?}, relative to itself"
+                    ),
+                );
+            }
+            if let (Some((x, y, _, h)), true, true) = (rectangle, probe.has_screencopy(), reported) {
                 let scaling = window.render_scaling();
                 // A point inside the popup when its top left corner is the bottom left corner of
                 // the cursor rectangle, which is where sway puts it.

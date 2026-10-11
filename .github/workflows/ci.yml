@@ -1045,16 +1045,6 @@ jobs:
         run: |
           scripts/wayland/sway-run.sh --size 1200x720 --scale 1.5 -- \
             timeout 300 target/debug/examples/wayland_window --smoke --mode=egl --expect-scale=1.5 --skip=resize
-      # Temporary: what the compositor does with the popup of an input method.
-      - name: Diagnostic of the input popup
-        if: ${{ !cancelled() }}
-        run: |
-          grep -a -c -E "input_popup|popup_surface" "$(command -v sway)" || true
-          grep -a -o -E "[A-Za-z_ ]*(input_popup|popup_surface|input.method|IME)[A-Za-z_ %:.]*" "$(command -v sway)" | sort -u | head -n 40 || true
-          scripts/wayland/sway-run.sh --debug --log "$PWD/sway-debug.log" -- \
-            timeout 300 target/debug/examples/wayland_window --smoke \
-            --skip=screens,frames,input,cursor,popup,clipboard,dragdrop,export,resize,state,title,decorations || true
-          grep -n -i -E "popup|input.method|text.input|im_|relay" sway-debug.log | tail -n 80 || true
       # The ControlCatalog on the Wayland backend with a combo box and a menu open: the catalog
       # says where the compositor put each popup, and the step fails when that is not at the
       # control the popup belongs to. The pictures the compositor took are an artifact.
