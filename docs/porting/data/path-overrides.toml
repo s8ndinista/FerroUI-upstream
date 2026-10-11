@@ -2066,9 +2066,8 @@ upstream = ["PortableXaml/AvaloniaResourceXamlInfo.cs"]
 kind = "not-applicable"
 reason = "the serialised index from class to resource path that the resources task of upstream packs into an assembly (`!AvaloniaResourceXamlInfo`): dropped by docs/porting/xaml.md 6.3. The document of a class is registered with the class (`FerroRuntimeXamlLoader::class_document`) or compiled, and then listed in the `.xamlmeta` of its crate"
 
-# Avalonia.Skia on Vulkan. `Avalonia.Vulkan` is out of the current scope (scripts/api-extract/projects.json,
-# TRACKING.md): no platform of the port has Vulkan. When a Vulkan platform is ported, these three
-# entries are removed and the files go to `src/Skia/FerroUI.Skia/gpu/vulkan/`.
+# Avalonia.Skia on Vulkan: the three files of `Gpu/Vulkan` have the Rust files of the default rule under
+# `src/Skia/FerroUI.Skia/gpu/vulkan/` (docs/porting/vulkan.md).
 
 # ---------------------------------------------------------------- Avalonia.Remote.Protocol
 #

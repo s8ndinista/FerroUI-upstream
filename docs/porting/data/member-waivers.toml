@@ -3955,6 +3955,12 @@ rust = ["import_shared_image"]
 
 [[alias]]
 project = "Avalonia.Skia"
+type = "Avalonia.Skia.Vulkan.VulkanSkiaExternalObjectsFeature"
+member = "ImportImage"
+rust = ["import_shared_image"]
+
+[[alias]]
+project = "Avalonia.Skia"
 type = "Avalonia.Skia.GlSkiaSharedTextureForComposition"
 member = "Dispose"
 rust = ["dispose_with"]

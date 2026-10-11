@@ -23,6 +23,7 @@ ferroui-base.workspace = true
 ferroui-controls.workspace = true
 ferroui-opengl.workspace = true
 ferroui-metal.workspace = true
+ferroui-vulkan.workspace = true
 skia-safe.workspace = true
 
 [dev-dependencies]
@@ -52,19 +53,28 @@ skia-safe = { workspace = true, features = ["gl"] }
 [target.'cfg(windows)'.dependencies]
 skia-safe = { workspace = true, features = ["gl"] }
 
-# Linux: the rendering modes of the X11 backend are GLX and EGL (docs/porting/x11-platform.md,
-# section 4). Only `gl`: the features `x11`, `egl` and `wayland` of the bindings add the window
-# system libraries Skia would create its own interface with, and the backend gives Skia the
-# entry points of the context the platform created. A binary of Skia with this feature set is
-# published for x86-64 and for ARM64 (the job `x11` of CI asks).
+# Linux: the rendering modes of the X11 backend are GLX, EGL and Vulkan (docs/porting/x11-platform.md,
+# section 4; docs/porting/vulkan.md, section 2). `gl` and `vulkan`, not the features `x11`, `egl`
+# and `wayland` of the bindings: those add the window system libraries Skia would create its own
+# interface with, and the backend gives Skia the entry points of the context or device the
+# platform created. A binary of Skia with this feature set is published for x86-64 and for ARM64
+# (the job `x11` of CI asks). `build.rs` mirrors `vulkan` as the `ferro_skia_vulkan` configuration.
 [target.'cfg(target_os = "linux")'.dependencies]
-skia-safe = { workspace = true, features = ["gl"] }
+skia-safe = { workspace = true, features = ["gl", "vulkan"] }
 
 # Android: the rendering mode the Android backend offers first is OpenGL ES through the EGL of the
 # system (docs/porting/android-platform.md, section 6). A binary of Skia with this feature set is
 # published for the target.
 [target.'cfg(target_os = "android")'.dependencies]
 skia-safe = { workspace = true, features = ["gl"] }
+
+[features]
+# The Vulkan GPU of the backend (`gpu/vulkan`) on a target whose table above does not have it: Skia
+# with Ganesh on Vulkan. Off by default. On Linux the GPU is always built and the feature changes
+# nothing. A binary of Skia with the resulting feature set is published for Android; on Windows
+# and on Apple targets there is none, and the bindings then compile Skia from source
+# (docs/porting/vulkan.md, section 2).
+vulkan = ["skia-safe/vulkan", "skia-safe/ganesh"]
 
 # The group of the crate in the table of the README (docs/release.md).
 [package.metadata.release]
