@@ -22,6 +22,18 @@ pub(crate) fn to_int32(value: isize) -> i32 {
     (value as i64 & 0xffff_ffff) as u32 as i32
 }
 
+/// The object identifier of a `WM_GETOBJECT` message that asks for the
+/// provider of UI Automation of the window (`UiaRootObjectId` of the
+/// system; other identifiers ask for the older accessibility interface,
+/// which the default processing answers).
+pub(crate) const UIA_ROOT_OBJECT_ID: i64 = -25;
+
+/// Whether the parameter of a `WM_GETOBJECT` message asks for the provider
+/// of UI Automation.
+pub(crate) fn is_uia_root_object_id(l_param: isize) -> bool {
+    l_param as i64 == UIA_ROOT_OBJECT_ID
+}
+
 pub(crate) fn high_word(param: i32) -> i32 {
     param >> 16
 }
@@ -450,6 +462,8 @@ pub(crate) fn intermediate_mouse_points(
 #[cfg(windows)]
 mod imp {
     use super::*;
+    use crate::automation::interop::UiaCoreProviderApi;
+    use crate::automation::AutomationNode;
     use crate::input::{Imm32InputMethod, KeyInterop, WindowsKeyboardDevice};
     use crate::interop::unmanaged_methods::*;
     use crate::win32_platform::Win32Platform;
@@ -463,7 +477,9 @@ mod imp {
     use std::cell::LazyCell;
     use ferroui_base::threading::{Dispatcher, DispatcherPriority};
     use ferroui_base::Vector;
+    use ferroui_controls::automation::peers::ControlAutomationPeer;
     use ferroui_controls::platform::{IScreenImpl, ScreensBaseImplExt};
+    use ferroui_controls::Control;
     use ferroui_controls::{WindowCloseReason, WindowDecorations, WindowResizeReason};
     use std::rc::Rc;
 
@@ -702,8 +718,9 @@ mod imp {
                     // The first and foremost thing to do - notify the TopLevel
                     self.invoke_closed();
 
-                    // The automation provider of the window is released
-                    // here by the reference: it arrives with its stage.
+                    // The window gives up the providers the automation core
+                    // holds for it.
+                    UiaCoreProviderApi::uia_return_raw_element_provider(hwnd, 0, 0, None);
 
                     // We need to release IMM context and state to avoid leaks.
                     if Imm32InputMethod::current().hwnd() == hwnd {
@@ -1292,8 +1309,22 @@ mod imp {
                     return 0;
                 }
 
-                // WM_GETOBJECT: the automation provider of the window
-                // belongs to the automation project of the backend.
+                WindowsMessage::WM_GETOBJECT => {
+                    if is_uia_root_object_id(l_param) {
+                        let control = self.try_owner().and_then(|owner| owner.focus_root().cast::<Control>());
+                        if let Some(control) = control {
+                            let peer = ControlAutomationPeer::create_peer_for_element(&control);
+                            let node = AutomationNode::get_or_create(Some(&peer));
+                            return UiaCoreProviderApi::uia_return_raw_element_provider(
+                                hwnd,
+                                w_param,
+                                l_param,
+                                node.as_deref(),
+                            );
+                        }
+                    }
+                }
+
                 WindowsMessage::WM_WINDOWPOSCHANGED => {
                     // SAFETY: the parameter of the WM_WINDOWPOSCHANGED
                     // message this procedure is processing.
@@ -1613,6 +1644,15 @@ mod tests {
     fn the_client_size_of_a_size_message() {
         assert_eq!(client_size_from_l_param(make_l_param(800, 600)), Size::new(800.0, 600.0));
         assert_eq!(client_size_from_l_param(make_l_param(0, 0)), Size::new(0.0, 0.0));
+    }
+
+    #[test]
+    fn only_the_root_object_of_ui_automation_is_answered_with_a_provider() {
+        assert!(is_uia_root_object_id(-25));
+        // OBJID_CLIENT and OBJID_WINDOW of the older interface.
+        assert!(!is_uia_root_object_id(-4));
+        assert!(!is_uia_root_object_id(0));
+        assert!(!is_uia_root_object_id(25));
     }
 
     #[test]
