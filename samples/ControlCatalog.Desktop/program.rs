@@ -743,8 +743,13 @@ fn report_popup_placement(window: &Ref<Window>, control: &Ref<Visual>) {
     let Some(client) = FerroLocator::current().get_service::<WaylandWorkerClient>() else {
         return;
     };
+    // The place of the control on the surface of the window: against the root of its visual
+    // tree, which is the window itself or, where the framework draws the decorations (a
+    // compositor without a decoration manager: Mutter), what holds the title bar above it. The
+    // first run under Mutter compared with the place in the window and was off by the title bar.
     let window_visual = window.clone().upcast::<Visual>();
-    let Some(origin) = control.translate_point(Point::new(0.0, 0.0), &window_visual) else {
+    let root = control.get_visual_ancestors().last().unwrap_or(window_visual);
+    let Some(origin) = control.translate_point(Point::new(0.0, 0.0), &root) else {
         println!("Popup placement: [FAILED] the control is not in the window");
         return;
     };
@@ -781,7 +786,7 @@ fn report_popup_placement(window: &Ref<Window>, control: &Ref<Visual>) {
             None => false,
         };
         println!(
-            "Popup placement: [{}] the control is at ({}, {}) with {} by {} in the window; the positioner was {:?} against the window geometry {:?}; the compositor configured {:?}",
+            "Popup placement: [{}] the control is at ({}, {}) with {} by {} on the surface of the window; the positioner was {:?} against the window geometry {:?}; the compositor configured {:?}",
             if verdict { "ok" } else { "FAILED" },
             origin.x,
             origin.y,
