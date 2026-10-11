@@ -6,7 +6,8 @@ use std::process::Command;
 ///
 /// - Which GPU back end of Skia the build has. The Skia dependency is built
 ///   with Ganesh on OpenGL where the manifest of this crate asks for it; the
-///   `ferro_skia_ganesh_gl` configuration tells the sources.
+///   `ferro_skia_ganesh_gl` configuration tells the sources. Likewise Ganesh
+///   on Vulkan and the `ferro_skia_vulkan` configuration.
 /// - Skia's prebuilt archive for the browser uses Emscripten's script-based
 ///   setjmp and longjmp, which a module that unwinds with WebAssembly
 ///   exceptions (Rust 1.93 and later) does not provide:
@@ -18,6 +19,7 @@ use std::process::Command;
 fn main() {
     println!("cargo:rerun-if-changed=build.rs");
     println!("cargo:rustc-check-cfg=cfg(ferro_skia_ganesh_gl)");
+    println!("cargo:rustc-check-cfg=cfg(ferro_skia_vulkan)");
 
     // Keep in step with the target tables of the manifest.
     if env::var("CARGO_CFG_TARGET_OS").as_deref() == Ok("emscripten") {
@@ -32,6 +34,11 @@ fn main() {
     }
     if env::var("CARGO_CFG_TARGET_OS").as_deref() == Ok("android") {
         println!("cargo:rustc-cfg=ferro_skia_ganesh_gl");
+    }
+
+    // Ganesh on Vulkan: always on Linux, elsewhere with the feature `vulkan` of this crate.
+    if env::var("CARGO_CFG_TARGET_OS").as_deref() == Ok("linux") || env::var("CARGO_FEATURE_VULKAN").is_ok() {
+        println!("cargo:rustc-cfg=ferro_skia_vulkan");
     }
 
     if env::var("CARGO_CFG_TARGET_VENDOR").as_deref() != Ok("apple") {
