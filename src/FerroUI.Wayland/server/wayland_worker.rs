@@ -380,6 +380,9 @@ impl WaylandWorker {
             }
             self.run_queue();
             self.render_timer.tick_render_loop_if_needed();
+            // The commands of the UI thread ran (the out-of-band ones in the queue, those of
+            // a commit in the tick): the text input sends what it held back for them.
+            with_worker_thread(|worker| worker.state.flush_text_input());
         }
     }
 }
