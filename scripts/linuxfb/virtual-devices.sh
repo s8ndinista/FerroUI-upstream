@@ -12,6 +12,12 @@
 #   UINPUT=1              /dev/uinput can be opened, or empty
 #   LOADED="vfb vkms uinput"  the modules this run loaded (those that were loaded before are left alone)
 #
+# A module that "down" cannot unload (something of the machine opened the new device) is written to a marker
+# file that survives the state file, $marker below; the next "up" or "down" tries again before anything else,
+# and both say loudly what is still loaded and what holds it. While vkms is loaded by this script a udev rule
+# in /run (gone at reboot) assigns its devices to a seat of their own, so that the display manager of the
+# machine does not open them; before unloading, a synthetic "remove" event tells whoever opened them anyway.
+#
 # How a virtual framebuffer is told from the console of the machine: the nodes of /sys/class/graphics are listed
 # before a module is loaded; only a node that appeared afterwards AND whose name is that of the virtual driver is
 # reported. A framebuffer the machine had before (its console) is never reported, whatever its name.
@@ -23,29 +29,113 @@ if [ -z "$action" ] || [ -z "$state" ]; then
     exit 2
 fi
 
+marker=/var/tmp/ferroui-linuxfb-modules.marker
+rule=/run/udev/rules.d/00-ferroui-linuxfb-vkms.rules
+
+# The device nodes of vkms: its card and its framebuffer emulation.
+vkms_nodes() {
+    for c in /sys/class/drm/card[0-9]*; do
+        [ -e "$c" ] || continue
+        case "$(readlink -f "$c/device")" in
+            */vkms|*/vkms.[0-9]*) echo "/dev/dri/$(basename "$c")" ;;
+        esac
+    done
+    for n in /sys/class/graphics/fb[0-9]*; do
+        [ -e "$n" ] || continue
+        case "$(cat "$n/name" 2>/dev/null)" in
+            vkms*) echo "/dev/$(basename "$n")" ;;
+        esac
+    done
+}
+
+# The processes that have a node of vkms open.
+holders() {
+    nodes="$(vkms_nodes)"
+    [ -n "$nodes" ] || return 0
+    for fd in /proc/[0-9]*/fd/*; do
+        target="$(readlink "$fd" 2>/dev/null)" || continue
+        for node in $nodes; do
+            if [ "$target" = "$node" ]; then
+                pid="$(echo "$fd" | cut -d/ -f3)"
+                echo "$node is open in process $pid ($(cat /proc/$pid/comm 2>/dev/null))"
+            fi
+        done
+    done | sort -u
+}
+
+# Unloads one module this script loaded; for vkms, whoever opened its devices is told that they are going.
+unload() {
+    module="$1"
+    [ -d "/sys/module/$module" ] || { echo "$module is not loaded"; return 0; }
+    if [ "$module" = vkms ]; then
+        for c in /sys/class/drm/card[0-9]*; do
+            case "$(readlink -f "$c/device" 2>/dev/null)" in
+                */vkms|*/vkms.[0-9]*)
+                    for d in "$c"-* "$c"; do [ -e "$d" ] && udevadm trigger --action=remove "$d" 2>/dev/null; done ;;
+            esac
+        done
+        sleep 2
+    fi
+    for attempt in 1 2 3; do
+        if modprobe -r "$module" 2>/dev/null; then
+            echo "unloaded $module"
+            return 0
+        fi
+        sleep 1
+    done
+    echo "COULD NOT UNLOAD $module: $(cat /sys/module/$module/refcnt 2>/dev/null) references; it stays loaded until it is released or the machine restarts"
+    if [ "$module" = vkms ]; then
+        h="$(holders)"
+        if [ -n "$h" ]; then
+            echo "$h"
+        else
+            echo "no process has its devices open: the holder is in the kernel (the framebuffer console, if it took the new device: $(cat /proc/fb 2>/dev/null | tr '\n' ';'))"
+        fi
+    fi
+    return 1
+}
+
+# Modules an earlier run could not unload.
+retry_marker() {
+    [ -f "$marker" ] || return 0
+    left=""
+    for module in $(cat "$marker"); do
+        echo "left by an earlier run: $module"
+        unload "$module" || left="$left $module"
+    done
+    if [ -n "$left" ]; then echo "$left" > "$marker"; else rm -f "$marker"; fi
+}
+
 fb_nodes() { ls /sys/class/graphics 2>/dev/null | grep '^fb[0-9][0-9]*$' | sort; }
 loaded() { [ -d "/sys/module/$1" ]; }
 
 if [ "$action" = down ]; then
     LOADED=""
     [ -f "$state" ] && . "$state"
-    status=0
+    retry_marker
+    left="$(cat "$marker" 2>/dev/null)"
     # In the reverse order of loading.
     for module in uinput vkms vfb; do
         case " $LOADED " in
-            *" $module "*)
-                if modprobe -r "$module" 2>/dev/null; then
-                    echo "unloaded $module"
-                else
-                    echo "could not unload $module (still in use: $(cat /sys/module/$module/refcnt 2>/dev/null) references)"
-                    status=1
-                fi ;;
+            *" $module "*) unload "$module" || left="$left $module" ;;
         esac
     done
     rm -f "$state"
-    exit $status
+    if [ -f "$rule" ]; then
+        rm -f "$rule"
+        udevadm control --reload 2>/dev/null
+    fi
+    if [ -n "$left" ]; then
+        echo "$left" > "$marker"
+        echo "final state: STILL LOADED:$left (recorded in $marker; the next run tries again)"
+        exit 1
+    fi
+    rm -f "$marker"
+    echo "final state: nothing of this script is loaded (vfb, vkms and uinput are as the machine had them)"
+    exit 0
 fi
 
+retry_marker
 before="$(fb_nodes)"
 echo "framebuffer devices before: $(echo $before | tr '\n' ' ')$(for n in $before; do printf '%s="%s" ' "$n" "$(cat /sys/class/graphics/$n/name 2>/dev/null)"; done)"
 LOADED=""
@@ -86,7 +176,14 @@ fi
 # vkms: the virtual KMS driver (CONFIG_DRM_VKMS); its fbdev emulation is a framebuffer device as well.
 if loaded vkms; then
     echo "vkms: already loaded, left alone"
-elif modprobe vkms 2>/dev/null; then
+elif {
+    # The devices of vkms get a seat of their own, so that the display manager of the machine leaves them alone.
+    mkdir -p "$(dirname "$rule")" 2>/dev/null
+    printf '%s\n' 'SUBSYSTEM=="drm", DEVPATH=="*/vkms*", ENV{ID_SEAT}="seat-ferroui-vkms", TAG+="mutter-device-ignore"' \
+        'SUBSYSTEM=="graphics", DEVPATH=="*/vkms*", ENV{ID_SEAT}="seat-ferroui-vkms"' > "$rule" 2>/dev/null
+    udevadm control --reload 2>/dev/null
+    modprobe vkms 2>/dev/null
+}; then
     LOADED="$LOADED vkms"
     sleep 1
     for c in /sys/class/drm/card[0-9]*; do

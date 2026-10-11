@@ -6,6 +6,8 @@ All notable changes to FerroUI are recorded in this file. The format follows [Ke
 
 ### Added
 
+- **`ferroui-linuxframebuffer`**: the Linux framebuffer platform replaces its placeholder. An application runs without a window system as one full-screen view on a framebuffer device (`start_linux_fb_dev`), rendered in software, with input through `libinput` (opened at run time) or read directly from event devices (`FERROUI_USE_EVDEV=1`: touch, multi-touch, a keyboard with a US layout, a mouse). Verified on virtual devices (the framebuffer emulation of `vkms`, `uinput`), not on a board. The DRM/KMS output is not ported yet: `start_linux_drm` fails with a message that says so.
+
 - **UI Automation on Windows** (`ferroui-win32`): a window answers for its accessibility tree; the automation peers of the controls are exposed as providers of UI Automation (the element and fragment interfaces and the invoke, toggle, value, range value, expand and collapse, selection, selection item, scroll and scroll item patterns) with their property, structure and focus events. Verified by a client over the client interface of the system in CI; no screen reader has been run against it.
 
 ## [0.1.0-preview.1] - Unreleased
