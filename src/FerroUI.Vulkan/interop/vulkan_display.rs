@@ -28,6 +28,100 @@ pub(crate) struct VulkanDisplay {
     swapchain_image_views: RefCell<Vec<vk::ImageView>>,
     command_buffer_pool: Rc<VulkanCommandBufferPool>,
     size: Cell<PixelSize>,
+    /// What the swap chain was created with.
+    parameters: Cell<SwapchainParameters>,
+    /// What the results of the presentation engine said of the swap chain
+    /// since it was last checked, before a frame.
+    state: Cell<SwapchainState>,
+}
+
+/// What a result of `vkAcquireNextImageKHR` or `vkQueuePresentKHR` means for
+/// the swap chain.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum SwapchainResult {
+    /// The image was acquired or presented.
+    Success,
+    /// The image was acquired or presented, and the swap chain no longer
+    /// matches the surface exactly (`VK_SUBOPTIMAL_KHR`): a success.
+    Suboptimal,
+    /// The swap chain can no longer be used (`VK_ERROR_OUT_OF_DATE_KHR`):
+    /// nothing was acquired or presented.
+    OutOfDate,
+    /// The surface is gone (`VK_ERROR_SURFACE_LOST_KHR`).
+    SurfaceLost,
+    /// Any other result, a failure.
+    Failed(vk::Result),
+}
+
+impl SwapchainResult {
+    pub fn of(result: vk::Result) -> Self {
+        match result {
+            vk::Result::SUCCESS => Self::Success,
+            vk::Result::SUBOPTIMAL_KHR => Self::Suboptimal,
+            vk::Result::ERROR_OUT_OF_DATE_KHR => Self::OutOfDate,
+            vk::Result::ERROR_SURFACE_LOST_KHR => Self::SurfaceLost,
+            other => Self::Failed(other),
+        }
+    }
+
+    fn severity(self) -> u8 {
+        match self {
+            Self::Success => 0,
+            Self::Suboptimal => 1,
+            Self::OutOfDate => 2,
+            Self::SurfaceLost => 3,
+            Self::Failed(_) => 4,
+        }
+    }
+
+    /// What a present means: the result of the call and the result for the
+    /// one swap chain presented, the worse of the two.
+    pub fn of_present(call_result: vk::Result, result: vk::Result) -> Self {
+        let (call, swapchain) = (Self::of(call_result), Self::of(result));
+        if call.severity() >= swapchain.severity() { call } else { swapchain }
+    }
+}
+
+/// What is known of the swap chain between two frames.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum SwapchainState {
+    /// Nothing was reported.
+    Current,
+    /// An image was acquired or presented with `VK_SUBOPTIMAL_KHR`: the swap
+    /// chain is recreated before the next frame if the surface now asks for
+    /// other parameters than it was created with.
+    Suboptimal,
+    /// A present answered `VK_ERROR_OUT_OF_DATE_KHR`: the swap chain is
+    /// recreated before the next frame.
+    OutOfDate,
+}
+
+impl SwapchainState {
+    /// The state after `result`, which was a success or out of date.
+    pub fn after(self, result: SwapchainResult) -> Self {
+        match (self, result) {
+            (_, SwapchainResult::OutOfDate) | (Self::OutOfDate, _) => Self::OutOfDate,
+            (_, SwapchainResult::Suboptimal) | (Self::Suboptimal, _) => Self::Suboptimal,
+            _ => Self::Current,
+        }
+    }
+
+    /// Whether the swap chain is recreated before a frame: when the size of
+    /// the surface is not the size of the swap chain, when it is out of
+    /// date, and when it was reported suboptimal and the surface now asks
+    /// for other parameters (`parameters_changed`, asked only then).
+    pub fn needs_recreation(
+        self,
+        size_differs: bool,
+        parameters_changed: impl FnOnce() -> Result<bool, VulkanException>,
+    ) -> Result<bool, VulkanException> {
+        Ok(match self {
+            _ if size_differs => true,
+            Self::OutOfDate => true,
+            Self::Suboptimal => parameters_changed()?,
+            Self::Current => false,
+        })
+    }
 }
 
 /// What a swap chain is created with, as far as it follows from the
@@ -111,7 +205,7 @@ impl VulkanDisplay {
         context: Rc<dyn IVulkanPlatformGraphicsContext>,
         surface: VulkanKhrSurface,
         swapchain: vk::SwapchainKHR,
-        swapchain_extent: vk::Extent2D,
+        parameters: SwapchainParameters,
         platform_surface: Rc<dyn IVulkanKhrSurfacePlatformSurface>,
     ) -> Result<Self, VulkanException> {
         let semaphore_pair = VulkanSemaphorePair::new(context.clone())?;
@@ -123,12 +217,14 @@ impl VulkanDisplay {
             surface: RefCell::new(Some(surface)),
             surface_format: Cell::new(vk::SurfaceFormatKHR::default()),
             swapchain: Cell::new(swapchain),
-            swapchain_extent: Cell::new(swapchain_extent),
+            swapchain_extent: Cell::new(parameters.extent),
             platform_surface,
             swapchain_images: RefCell::new(Vec::new()),
             swapchain_image_views: RefCell::new(Vec::new()),
             command_buffer_pool,
             size: Cell::new(PixelSize::default()),
+            parameters: Cell::new(parameters),
+            state: Cell::new(SwapchainState::Current),
         };
         display.create_swapchain_images()?;
         Ok(display)
@@ -156,7 +252,7 @@ impl VulkanDisplay {
         context: &Rc<dyn IVulkanPlatformGraphicsContext>,
         surface: &VulkanKhrSurface,
         old_display: Option<&VulkanDisplay>,
-    ) -> Result<(vk::SwapchainKHR, vk::Extent2D), VulkanException> {
+    ) -> Result<(vk::SwapchainKHR, SwapchainParameters), VulkanException> {
         while !surface.can_surface_present()? {
             thread::sleep(Duration::from_millis(16));
         }
@@ -195,7 +291,21 @@ impl VulkanDisplay {
         if let Some(old_display) = old_display {
             old_display.destroy_swapchain();
         }
-        Ok((swapchain, parameters.extent))
+        Ok((swapchain, parameters))
+    }
+
+    /// Whether the surface now asks for other parameters of a swap chain
+    /// than the current one was created with (the present mode aside).
+    fn parameters_changed(&self) -> Result<bool, VulkanException> {
+        let surface = self.surface.borrow();
+        let Some(surface) = surface.as_ref() else { return Ok(true) };
+        let capabilities = self
+            .context
+            .instance_api()
+            .get_physical_device_surface_capabilities_khr(self.context.physical_device_handle(), surface.handle())
+            .throw_on_error("vkGetPhysicalDeviceSurfaceCapabilitiesKHR")?;
+        let current = self.parameters.get();
+        Ok(SwapchainParameters::new(&capabilities, &[current.present_mode], surface.size()) != current)
     }
 
     fn destroy_swapchain(&self) {
@@ -211,8 +321,8 @@ impl VulkanDisplay {
         surface: Rc<dyn IVulkanKhrSurfacePlatformSurface>,
     ) -> Result<VulkanDisplay, VulkanException> {
         let khr_surface = VulkanKhrSurface::new(context.clone(), surface.clone());
-        let (swapchain, extent) = Self::create_swapchain(context, &khr_surface, None)?;
-        VulkanDisplay::new(context.clone(), khr_surface, swapchain, extent, surface)
+        let (swapchain, parameters) = Self::create_swapchain(context, &khr_surface, None)?;
+        VulkanDisplay::new(context.clone(), khr_surface, swapchain, parameters, surface)
     }
 
     fn destroy_current_image_views(&self) {
@@ -267,13 +377,15 @@ impl VulkanDisplay {
             return self.recreate_surface();
         }
         let _ = self.context.device_api().device_wait_idle(self.context.device_handle());
-        let (swapchain, extent) = {
+        let (swapchain, parameters) = {
             let surface = self.surface.borrow();
             let surface = surface.as_ref().expect("the surface was checked above");
             Self::create_swapchain(&self.context, surface, Some(self))?
         };
         self.swapchain.set(swapchain);
-        self.swapchain_extent.set(extent);
+        self.swapchain_extent.set(parameters.extent);
+        self.parameters.set(parameters);
+        self.state.set(SwapchainState::Current);
         self.create_swapchain_images()
     }
 
@@ -288,10 +400,12 @@ impl VulkanDisplay {
     }
 
     /// Recreates the swap chain when the size of the surface is not the
-    /// size of the swap chain anymore, and tells that it did.
+    /// size of the swap chain anymore, or when a result of the last frame
+    /// asked for it (`SwapchainState`), and tells that it did.
     pub fn ensure_swapchain_available(&self) -> Result<bool, VulkanException> {
         let surface_size = self.surface.borrow().as_ref().map(|surface| surface.size());
-        if Some(self.size.get()) != surface_size {
+        let state = self.state.replace(SwapchainState::Current);
+        if state.needs_recreation(Some(self.size.get()) != surface_size, || self.parameters_changed())? {
             self.recreate_swapchain()?;
             return Ok(true);
         }
@@ -311,13 +425,17 @@ impl VulkanDisplay {
                 vk::Fence::null(),
             );
             self.next_image.set(next_image);
-            if acquire_result == vk::Result::ERROR_OUT_OF_DATE_KHR || acquire_result == vk::Result::SUBOPTIMAL_KHR {
-                self.recreate_swapchain()?;
-            } else if acquire_result == vk::Result::ERROR_SURFACE_LOST_KHR {
-                self.recreate_surface()?;
-            } else {
-                acquire_result.throw_on_error("vkAcquireNextImageKHR")?;
-                break;
+            match SwapchainResult::of(acquire_result) {
+                SwapchainResult::Success => break,
+                // The image is acquired and its semaphore will be signalled: it is used, and the
+                // swap chain is looked at again before the next frame.
+                SwapchainResult::Suboptimal => {
+                    self.state.set(self.state.get().after(SwapchainResult::Suboptimal));
+                    break;
+                }
+                SwapchainResult::OutOfDate => self.recreate_swapchain()?,
+                SwapchainResult::SurfaceLost => self.recreate_surface()?,
+                SwapchainResult::Failed(result) => result.throw_on_error("vkAcquireNextImageKHR")?,
             }
         }
 
@@ -420,8 +538,17 @@ impl VulkanDisplay {
             self.swapchain.get(),
             self.next_image.get(),
         );
-        call_result.throw_on_error("vkQueuePresentKHR")?;
-        result.throw_on_error("vkQueuePresentKHR")
+        match SwapchainResult::of_present(call_result, result) {
+            SwapchainResult::Success => Ok(()),
+            // Presented (suboptimal), or not presented because the swap chain is out of date: the
+            // frame is not a failure, and the swap chain is looked at before the next one.
+            outcome @ (SwapchainResult::Suboptimal | SwapchainResult::OutOfDate) => {
+                self.state.set(self.state.get().after(outcome));
+                Ok(())
+            }
+            SwapchainResult::SurfaceLost => vk::Result::ERROR_SURFACE_LOST_KHR.throw_on_error("vkQueuePresentKHR"),
+            SwapchainResult::Failed(result) => result.throw_on_error("vkQueuePresentKHR"),
+        }
     }
 
     pub fn dispose(&self) {
@@ -517,6 +644,80 @@ mod tests {
         caps.current_transform = vk::SurfaceTransformFlagsKHR::ROTATE_90;
         caps.supported_transforms = vk::SurfaceTransformFlagsKHR::ROTATE_90;
         assert_eq!(transform(&caps), vk::SurfaceTransformFlagsKHR::ROTATE_90);
+    }
+
+    #[test]
+    fn the_results_of_the_presentation_engine_are_classified() {
+        assert_eq!(SwapchainResult::of(vk::Result::SUCCESS), SwapchainResult::Success);
+        assert_eq!(SwapchainResult::of(vk::Result::SUBOPTIMAL_KHR), SwapchainResult::Suboptimal);
+        assert_eq!(SwapchainResult::of(vk::Result::ERROR_OUT_OF_DATE_KHR), SwapchainResult::OutOfDate);
+        assert_eq!(SwapchainResult::of(vk::Result::ERROR_SURFACE_LOST_KHR), SwapchainResult::SurfaceLost);
+        assert_eq!(
+            SwapchainResult::of(vk::Result::ERROR_DEVICE_LOST),
+            SwapchainResult::Failed(vk::Result::ERROR_DEVICE_LOST)
+        );
+        // Not reached with an infinite timeout, and no image: a failure, as every result but success was.
+        assert_eq!(SwapchainResult::of(vk::Result::TIMEOUT), SwapchainResult::Failed(vk::Result::TIMEOUT));
+    }
+
+    #[test]
+    fn a_present_is_the_worse_of_its_two_results() {
+        let present = SwapchainResult::of_present;
+        assert_eq!(present(vk::Result::SUCCESS, vk::Result::SUCCESS), SwapchainResult::Success);
+        assert_eq!(present(vk::Result::SUBOPTIMAL_KHR, vk::Result::SUBOPTIMAL_KHR), SwapchainResult::Suboptimal);
+        assert_eq!(present(vk::Result::SUCCESS, vk::Result::SUBOPTIMAL_KHR), SwapchainResult::Suboptimal);
+        assert_eq!(
+            present(vk::Result::ERROR_OUT_OF_DATE_KHR, vk::Result::SUBOPTIMAL_KHR),
+            SwapchainResult::OutOfDate
+        );
+        assert_eq!(
+            present(vk::Result::ERROR_DEVICE_LOST, vk::Result::SUCCESS),
+            SwapchainResult::Failed(vk::Result::ERROR_DEVICE_LOST)
+        );
+        assert_eq!(
+            present(vk::Result::SUBOPTIMAL_KHR, vk::Result::ERROR_SURFACE_LOST_KHR),
+            SwapchainResult::SurfaceLost
+        );
+    }
+
+    #[test]
+    fn the_state_keeps_the_strongest_report_until_it_is_checked() {
+        use SwapchainState::*;
+        assert_eq!(Current.after(SwapchainResult::Success), Current);
+        assert_eq!(Current.after(SwapchainResult::Suboptimal), Suboptimal);
+        assert_eq!(Suboptimal.after(SwapchainResult::Success), Suboptimal);
+        assert_eq!(Suboptimal.after(SwapchainResult::OutOfDate), OutOfDate);
+        assert_eq!(OutOfDate.after(SwapchainResult::Suboptimal), OutOfDate);
+    }
+
+    #[test]
+    fn a_suboptimal_swap_chain_is_recreated_only_when_the_surface_asks_for_other_parameters() {
+        use SwapchainState::*;
+        let never = || -> Result<bool, VulkanException> { panic!("the parameters are not asked for") };
+        assert!(!Current.needs_recreation(false, never).unwrap());
+        assert!(Current.needs_recreation(true, never).unwrap());
+        assert!(OutOfDate.needs_recreation(false, never).unwrap());
+        assert!(Suboptimal.needs_recreation(true, never).unwrap());
+        assert!(!Suboptimal.needs_recreation(false, || Ok(false)).unwrap());
+        assert!(Suboptimal.needs_recreation(false, || Ok(true)).unwrap());
+    }
+
+    #[test]
+    fn a_rotated_surface_asks_for_the_same_parameters_again() {
+        // Android while the screen is rotated: the swap chain keeps the identity transform, every
+        // present answers VK_SUBOPTIMAL_KHR, and the capabilities give the parameters it was
+        // created with, so it is not recreated for each frame.
+        let mut caps = capabilities();
+        caps.current_extent = vk::Extent2D { width: 2400, height: 1080 };
+        caps.current_transform = vk::SurfaceTransformFlagsKHR::ROTATE_90;
+        caps.supported_transforms = vk::SurfaceTransformFlagsKHR::IDENTITY | vk::SurfaceTransformFlagsKHR::ROTATE_90;
+        let created = SwapchainParameters::new(&caps, &[vk::PresentModeKHR::MAILBOX, vk::PresentModeKHR::FIFO], PixelSize::new(2400, 1080));
+        let again = SwapchainParameters::new(&caps, &[created.present_mode], PixelSize::new(2400, 1080));
+        assert_eq!(created, again);
+        // The screen rotated back: the extent differs, and the swap chain is recreated.
+        caps.current_extent = vk::Extent2D { width: 1080, height: 2400 };
+        caps.current_transform = vk::SurfaceTransformFlagsKHR::IDENTITY;
+        assert_ne!(SwapchainParameters::new(&caps, &[created.present_mode], PixelSize::new(1080, 2400)), created);
     }
 
     #[test]

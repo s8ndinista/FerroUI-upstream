@@ -302,7 +302,7 @@ Open:
 
 1. The Windows feature with Skia from source has not been built anywhere. A CI job that builds it once (cached) would show the time and the ControlCatalog through Vulkan on a runner; the hosted Windows runners have no Vulkan driver, so a run there needs a software implementation (Mesa's lavapipe for Windows, or Microsoft's Dozen over WARP).
 2. Whether the Android default should move to the binary with OpenGL ES and Vulkan (one binary for both modes): the emulator runs are green with it in all three modes; the owner's decision; the library grows by about 2 MB.
-3. **`VK_SUBOPTIMAL_KHR` on a rotated Android screen.** Every present while the screen is rotated answers it (the swap chain keeps the identity transform, as upstream), and upstream's `ThrowOnError` makes each such frame a failure, which the compositor logs; the frames are shown. Treating the result as a success at present (and recreating the swap chain only when the size changes) would be a deviation for the contracts crate; on the emulator it costs a logged panic per frame in landscape.
+3. ~~`VK_SUBOPTIMAL_KHR` on a rotated Android screen~~: fixed (2026-10-15) in `ferroui-vulkan` under the owner's policy of fixing upstream defects: a success at acquire and present, the swap chain recreated before the next frame only when the surface asks for other parameters; the identity transform kept (`vulkan.md`, section 6; `DEVIATIONS.md`, "Vulkan"). The emulator run of the rotation phase with the fix is recorded in `android-platform.md` 10.5 when it has run.
 
 ## Vulkan: the contracts crate, the Skia GPU and the X11 mode (2026-10-11)
 
@@ -315,7 +315,7 @@ Branch `vulkan` (pull request 185). [`vulkan.md`](vulkan.md) has the design, the
 
 Open, in the order of their worth:
 
-1. **A hardware driver.** Every run is on Mesa's software implementation. What to look at first on a real GPU: presentation while a window is resized (`VulkanDisplay::end_presentation` treats `VK_SUBOPTIMAL_KHR` of `vkQueuePresentKHR` as a failure, as upstream does, and the failure is a panic of the render session here), a discrete and an integrated device with `prefer_discrete_gpu`, and the import of external objects from another process.
+1. **A hardware driver.** Every run is on Mesa's software implementation. What to look at first on a real GPU: presentation while a window is resized (`VK_SUBOPTIMAL_KHR` and `VK_ERROR_OUT_OF_DATE_KHR` of `vkQueuePresentKHR` mark the swap chain since 2026-10-15 instead of failing the frame, see "Vulkan on Android and Windows"), a discrete and an integrated device with `prefer_discrete_gpu`, and the import of external objects from another process.
 2. **Android**: done (2026-10-15), see "Vulkan on Android and Windows" above.
 3. **Windows**: done (2026-10-15) with Skia from source behind an opt-in feature, see above.
 4. **The ControlCatalog rendered through Vulkan**: its desktop host has no way to ask for the mode on Linux (`FERROUI_SMOKE_RENDERING` is read on Windows only); with one, the picture run of the X11 stages can be repeated.
