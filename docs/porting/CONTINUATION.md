@@ -296,7 +296,7 @@ Branch `vulkan-android-windows`. The two files of each platform, wired into its 
 - Without the feature of the platform crate a list that names `Vulkan` passes it over with a warning that names the feature, because the Skia backend would have no GPU for its graphics.
 - No new `thread_local!` (the base of this branch has no `ferro_thread_local!` yet; nothing of this work needs a thread-local variable).
 
-Runs: **the emulator, green** (2026-10-15, `android-platform.md` 10.5): the package with the feature passes the modes `vulkan` (64 checks), `egl` and `software`; the default package passes `egl` and `software`. The virtual machine run with `--vulkan-probe` (and whether the machine has a Vulkan driver at all) is recorded in `win32-platform.md` 10.5 when it has run.
+Runs: **the emulator, green** (2026-10-15, `android-platform.md` 10.5): the package with the feature passes the modes `vulkan` (64 checks), `egl` and `software`; the default package passes `egl` and `software`. **The virtual machine** (`--vulkan-probe`, `win32-platform.md` 10.5): `vulkan-1.dll` is there, but no Vulkan graphics initialise (no Vulkan driver of the Parallels display adapter); only the failure path of the Windows mode ran. The probe prints the logged reason since; the Windows surface, swap chain and frames need a machine with a Vulkan driver.
 
 Open:
 
