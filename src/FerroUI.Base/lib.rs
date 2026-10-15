@@ -9,6 +9,7 @@ pub mod collections;
 pub mod controls;
 pub mod data;
 pub mod diagnostics;
+pub mod ferro_thread_local;
 pub mod input;
 pub mod interactivity;
 pub mod layout;
