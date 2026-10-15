@@ -1157,4 +1157,21 @@ mod tests {
         assert_eq!(corner(SurfaceOrientation::Rotation180), (1.0, 1.0));
         assert_eq!(corner(SurfaceOrientation::Rotation270), (0.0, 1.0));
     }
+
+    #[test]
+    fn the_top_left_corner_of_the_scene_is_turned_clockwise() {
+        // The scene is drawn into the texture with its top row at v = 1 (the session is not
+        // flipped), and the screen's top is y = 1: the corner of the screen whose vertex
+        // samples (0, 1) shows the scene's top-left corner. The smoke example expects its
+        // marker there.
+        let screen_corner = |o| {
+            let v = rotation_vertices(o);
+            let i = (0..4).find(|i| v[i * 4 + 2] == 0.0 && v[i * 4 + 3] == 1.0).unwrap();
+            (v[i * 4], v[i * 4 + 1])
+        };
+        assert_eq!(screen_corner(SurfaceOrientation::Rotation0), (-1.0, 1.0)); // top left
+        assert_eq!(screen_corner(SurfaceOrientation::Rotation90), (1.0, 1.0)); // top right
+        assert_eq!(screen_corner(SurfaceOrientation::Rotation180), (1.0, -1.0)); // bottom right
+        assert_eq!(screen_corner(SurfaceOrientation::Rotation270), (-1.0, -1.0)); // bottom left
+    }
 }
