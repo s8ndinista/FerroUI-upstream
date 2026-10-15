@@ -1270,11 +1270,14 @@ jobs:
         with:
           key: linuxfb
       # Skia links FreeType and Fontconfig, and needs a font to answer for the default family.
+      # The DRM output opens libdrm, libgbm and libEGL at run time; Mesa renders on the card of
+      # vkms in software (its kms_swrast driver, in libgl1-mesa-dri).
       - name: System packages
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            libfontconfig1-dev libfreetype6-dev fonts-dejavu-core pkg-config kmod libinput10
+            libfontconfig1-dev libfreetype6-dev fonts-dejavu-core pkg-config kmod libinput10 \
+            libdrm2 libgbm1 libegl1 libegl-mesa0 libgl1-mesa-dri
       - name: Tests of the crate
         run: cargo test --locked -p ferroui-linuxframebuffer --no-fail-fast
       - name: Build the example
@@ -1290,8 +1293,9 @@ jobs:
           sudo sh scripts/linuxfb/virtual-devices.sh up "$RUNNER_TEMP/linuxfb-devices" | tee "$RUNNER_TEMP/linuxfb-devices.log"
           . "$RUNNER_TEMP/linuxfb-devices"
           if [ -n "$FB_NODE" ]; then echo "::notice::virtual framebuffer device: $FB_NODE ($FB_ID)"; else echo "::notice::no virtual framebuffer device on this runner: the output is exercised against a file only"; fi
+          if [ -n "$DRM_CARD" ]; then echo "::notice::virtual card: $DRM_CARD (vkms): the DRM output runs on it"; else echo "::notice::no virtual card on this runner: the DRM output is covered by its host tests only"; fi
           if [ -n "$UINPUT" ]; then echo "::notice::uinput is available: the evdev backend reads virtual devices"; else echo "::notice::uinput is not available on this runner: the evdev backend is covered by its host tests only"; fi
-      - name: The smoke runs (a file; the virtual framebuffer and virtual input devices where available)
+      - name: The smoke runs (a file; the virtual framebuffer, the virtual card and virtual input devices where available)
         run: |
           sudo sh scripts/linuxfb/smoke.sh target/debug/examples/linuxfb_smoke "$RUNNER_TEMP/linuxfb-smoke" "$RUNNER_TEMP/linuxfb-devices"
       # The catalog on the virtual framebuffer: the content of the device per page, as pictures
@@ -1306,6 +1310,16 @@ jobs:
             exit 0
           fi
           sudo sh scripts/linuxfb/catalog-pictures.sh target/debug/control-catalog-desktop "$FB_NODE" "$FB_ID" "$RUNNER_TEMP/linuxfb-smoke/catalog"
+      # The catalog on a KMS output of the virtual card, drawn with OpenGL: the framebuffer the CRTC
+      # scans out per page, as pictures.
+      - name: The ControlCatalog on the virtual card (DRM output)
+        run: |
+          . "$RUNNER_TEMP/linuxfb-devices"
+          if [ -z "$DRM_CARD" ]; then
+            echo "::notice::no virtual card on this runner: the catalog was not run on the DRM output"
+            exit 0
+          fi
+          sudo sh scripts/linuxfb/catalog-pictures.sh target/debug/control-catalog-desktop "$DRM_CARD" vkms "$RUNNER_TEMP/linuxfb-smoke/catalog-drm"
       - name: A frame of the file framebuffer as a picture
         if: always()
         run: |

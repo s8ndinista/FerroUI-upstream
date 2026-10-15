@@ -62,9 +62,8 @@
 //! whose screen holds nothing but the run.
 //!
 //! Not ported, because the platforms and options they name do not exist
-//! yet: the command line switches `--wait-for-attach`, `--fbdev`, `--vnc`,
-//! `--full-headless`, `--drm`, `--dxgi` (with `--scaling`,
-//! `--orientation`, `--card`), and of the application builder the data
+//! yet: the command line switches `--wait-for-attach`, `--vnc`,
+//! `--full-headless`, `--dxgi`, and of the application builder the data
 //! annotations validation, the X11, Vulkan and composition
 //! options, the Inter font, the developer tools and the native control
 //! samples of `NativeControls/` for Windows and macOS
@@ -103,12 +102,17 @@ fn main() -> std::process::ExitCode {
 
     let builder = build_ferro_app();
 
-    // As the desktop entry point of the reference: `--fbdev` runs the
-    // catalog on the Linux framebuffer platform (`--drm` waits for the DRM
-    // output of that platform).
+    // As the desktop entry point of the reference: `--fbdev` and `--drm`
+    // run the catalog on the Linux framebuffer platform, on a framebuffer
+    // device and on a KMS output.
     #[cfg(target_os = "linux")]
     if args.iter().any(|arg| arg == "--fbdev") {
         let exit_code = linux_framebuffer::start(builder, &args);
+        return std::process::ExitCode::from(exit_code as u8);
+    }
+    #[cfg(target_os = "linux")]
+    if args.iter().any(|arg| arg == "--drm") {
+        let exit_code = linux_framebuffer::start_drm(builder, &args);
         return std::process::ExitCode::from(exit_code as u8);
     }
 

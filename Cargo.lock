@@ -964,6 +964,7 @@ dependencies = [
  "ferroui-base",
  "ferroui-controls",
  "ferroui-harfbuzz",
+ "ferroui-opengl",
  "ferroui-skia",
  "ferroui-themes-simple",
  "libc",

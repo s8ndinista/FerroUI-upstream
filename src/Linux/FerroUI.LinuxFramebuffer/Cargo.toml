@@ -17,6 +17,8 @@ path = "lib.rs"
 [dependencies]
 ferroui-base.workspace = true
 ferroui-controls.workspace = true
+# The EGL display, contexts and surfaces of the DRM output.
+ferroui-opengl.workspace = true
 
 # The example draws real frames, which needs a renderer, a text shaper and
 # a theme. They are optional so that the crate and its tests build without

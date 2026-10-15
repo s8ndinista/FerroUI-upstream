@@ -1,28 +1,35 @@
 //! The catalog on the Linux framebuffer platform, as the desktop entry
-//! point of the reference starts it with `--fbdev` (and `--scaling`): one
+//! point of the reference starts it: with `--fbdev` (and `--scaling`) one
 //! full-screen view on the framebuffer device `FRAMEBUFFER` names, or
-//! `/dev/fb0`.
+//! `/dev/fb0`; with `--drm` (and `--card <path>`, `--scaling`,
+//! `--orientation <Rotation0|Rotation90|Rotation180|Rotation270>`) one
+//! full-screen view on the first connected connector of the card, drawn
+//! with OpenGL.
 //!
-//! Additions for runs on a virtual framebuffer:
+//! Additions for runs on virtual devices:
 //!
 //! - `--no-input` starts without an input backend (the default reads
 //!   every event device of the machine through `libinput`).
-//! - `FERROUI_LINUXFB_EXPECT_ID=<prefix>`: the catalog refuses a device
-//!   whose identification does not begin with the prefix, before it
-//!   writes to it (a virtual device must not be mistaken for a console).
+//! - `FERROUI_LINUXFB_EXPECT_ID=<prefix>`: the catalog refuses a
+//!   framebuffer device whose identification does not begin with the
+//!   prefix, before it writes to it (a virtual device must not be mistaken
+//!   for a console). `FERROUI_LINUXFB_EXPECT_DRIVER=<name>` does the same
+//!   for the driver of a card (`vkms`), before a mode is set on it.
 //! - `FERROUI_LINUXFB_DUMPS=<directory>`: the pages of
 //!   `FERROUI_SMOKE_SCREENSHOT_PAGES` are shown one after the other
 //!   (`FERROUI_LINUXFB_PAGE_MS` milliseconds each; not `FERROUI_SMOKE_PAGES`,
 //!   which starts the cycle through every page) and the content of the
-//!   framebuffer device is written for each as raw bytes, which
+//!   framebuffer device, or the framebuffer the CRTC of the card scans
+//!   out, is written for each as raw bytes, which
 //!   `scripts/linuxfb/fb-to-png.py` turns into pictures; then the
 //!   application shuts down.
 
 use ferroui_controls::{AppBuilder, Application};
 use ferroui_linuxframebuffer::input::null_input::NullInputBackend;
 use ferroui_linuxframebuffer::input::IInputBackend;
-use ferroui_linuxframebuffer::output::{FbDevOutputOptions, FbdevOutput, IOutputBackend};
-use ferroui_linuxframebuffer::LinuxFramebufferPlatformExtensions;
+use ferroui_base::platform::SurfaceOrientation;
+use ferroui_linuxframebuffer::output::{drm_scanout, DrmCard, DrmOutput, FbDevOutputOptions, FbdevOutput, IOutputBackend};
+use ferroui_linuxframebuffer::{DrmOutputOptions, LinuxFramebufferPlatformExtensions};
 use std::io::Read;
 use std::path::PathBuf;
 use std::rc::Rc;
@@ -34,10 +41,50 @@ fn get_scaling(args: &[String]) -> f64 {
     idx.and_then(|idx| args.get(idx + 1)).and_then(|value| value.parse().ok()).unwrap_or(1.0)
 }
 
+fn get_orientation(args: &[String]) -> SurfaceOrientation {
+    let idx = args.iter().position(|arg| arg == "--orientation");
+    // The names of the enumeration, ignoring case, or their numbers (`Enum.TryParse`).
+    match idx.and_then(|idx| args.get(idx + 1)).map(|value| value.to_ascii_lowercase()).as_deref() {
+        Some("rotation90" | "1") => SurfaceOrientation::Rotation90,
+        Some("rotation180" | "2") => SurfaceOrientation::Rotation180,
+        Some("rotation270" | "3") => SurfaceOrientation::Rotation270,
+        _ => SurfaceOrientation::Rotation0,
+    }
+}
+
+fn get_card(args: &[String]) -> Option<String> {
+    let idx = args.iter().position(|arg| arg == "--card");
+    idx.and_then(|idx| args.get(idx + 1)).cloned()
+}
+
 fn shutdown() {
     let lifetime = Application::current().and_then(|application| application.application_lifetime());
     if let Some(controlled) = lifetime.as_ref().and_then(|lifetime| lifetime.as_controlled_application_lifetime()) {
         controlled.shutdown(0);
+    }
+}
+
+/// What the pictures are read from.
+#[derive(Clone)]
+enum DumpSource {
+    Fbdev(Arc<FbdevOutput>, String),
+    Drm(Arc<DrmOutput>),
+}
+
+/// Writes the framebuffer the CRTC of the output scans out as raw bytes.
+fn dump_drm(output: &DrmOutput, path: &PathBuf) {
+    let result = drm_scanout::read_scanout(output.card().fd(), output.crtc_id())
+        .and_then(|scanout| std::fs::write(path, &scanout.data).map(|()| scanout));
+    match result {
+        Ok(scanout) => println!(
+            "Dump: {} {}x{} {} {}",
+            path.display(),
+            scanout.width,
+            scanout.height,
+            scanout.bits_per_pixel,
+            scanout.pitch
+        ),
+        Err(error) => println!("Dump: {} could not be written: {error}", path.display()),
     }
 }
 
@@ -63,7 +110,7 @@ fn dump(output: &FbdevOutput, node: &str, path: &PathBuf) {
 }
 
 /// The run asked for with `FERROUI_LINUXFB_DUMPS`.
-fn dump_run(output: Arc<FbdevOutput>, node: String, directory: PathBuf) {
+fn dump_run(source: DumpSource, directory: PathBuf) {
     if let Err(error) = std::fs::create_dir_all(&directory) {
         println!("Dumps: the directory {} could not be created: {error}", directory.display());
         return;
@@ -78,7 +125,10 @@ fn dump_run(output: Arc<FbdevOutput>, node: String, directory: PathBuf) {
         interval,
         move |index, header| {
             let name = crate::screenshot_name(index, header, "").replace(".png", ".raw");
-            dump(&output, &node, &directory.join(name));
+            match &source {
+                DumpSource::Fbdev(output, node) => dump(output, node, &directory.join(name)),
+                DumpSource::Drm(output) => dump_drm(output, &directory.join(name)),
+            }
         },
         || {
             println!("Dumps written: shutting down");
@@ -113,12 +163,51 @@ pub fn start(builder: AppBuilder, args: &[String]) -> i32 {
     let input_backend: Option<Rc<dyn IInputBackend>> =
         args.iter().any(|arg| arg == "--no-input").then(|| Rc::new(NullInputBackend::new()) as Rc<dyn IInputBackend>);
 
-    let builder = match std::env::var_os("FERROUI_LINUXFB_DUMPS").filter(|directory| !directory.is_empty()) {
-        Some(directory) => {
-            let output = output.clone();
-            builder.after_setup(move |_| dump_run(output.clone(), node.clone(), PathBuf::from(&directory)))
-        }
+    let builder = with_dumps(builder, DumpSource::Fbdev(output.clone(), node));
+    builder.start_linux_direct(args, output, input_backend)
+}
+
+/// The pictures run, when the environment asks for it.
+fn with_dumps(builder: AppBuilder, source: DumpSource) -> AppBuilder {
+    match std::env::var_os("FERROUI_LINUXFB_DUMPS").filter(|directory| !directory.is_empty()) {
+        Some(directory) => builder.after_setup(move |_| dump_run(source.clone(), PathBuf::from(&directory))),
         None => builder,
+    }
+}
+
+/// Starts the catalog on a KMS output of a card (`--drm`); returns the
+/// exit code.
+pub fn start_drm(builder: AppBuilder, args: &[String]) -> i32 {
+    let card = get_card(args);
+    let name = card.clone().unwrap_or_else(|| "the first card of /dev/dri".to_owned());
+    let drm_card = match DrmCard::new(card.as_deref()) {
+        Ok(drm_card) => drm_card,
+        Err(error) => {
+            eprintln!("ControlCatalog: {name} cannot be used: {error}");
+            return 1;
+        }
     };
+    let driver = drm_scanout::driver_name(drm_card.fd()).unwrap_or_default();
+    if let Ok(expected) = std::env::var("FERROUI_LINUXFB_EXPECT_DRIVER") {
+        if driver != expected {
+            eprintln!("ControlCatalog: {name} is driven by \"{driver}\", not by \"{expected}\"; nothing was written to it");
+            return 1;
+        }
+    }
+    let options = DrmOutputOptions { scaling: get_scaling(args), orientation: get_orientation(args), ..Default::default() };
+    let output = match DrmOutput::from_card(drm_card, false, Some(options)) {
+        Ok(output) => output,
+        Err(error) => {
+            eprintln!("ControlCatalog: {name} cannot be used: {error}");
+            return 1;
+        }
+    };
+    let size = output.pixel_size();
+    println!("ControlCatalog: the card {name} \"{driver}\", CRTC {}, {}x{}", output.crtc_id(), size.width, size.height);
+
+    let input_backend: Option<Rc<dyn IInputBackend>> =
+        args.iter().any(|arg| arg == "--no-input").then(|| Rc::new(NullInputBackend::new()) as Rc<dyn IInputBackend>);
+
+    let builder = with_dumps(builder, DumpSource::Drm(output.clone()));
     builder.start_linux_direct(args, output, input_backend)
 }

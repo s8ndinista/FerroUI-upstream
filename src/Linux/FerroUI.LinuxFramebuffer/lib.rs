@@ -21,11 +21,12 @@
 //! of a keyboard are those of a US layout.
 //!
 //! The design, what is built and what was verified where:
-//! `docs/porting/linux-framebuffer-platform.md`. Built so far: the
-//! framebuffer device output with software rendering, the evdev input
-//! backend and the `libinput` backend (the default; the library is
-//! opened at run time). The DRM output is the next stage; its entry point
-//! fails with a message that says so.
+//! `docs/porting/linux-framebuffer-platform.md`. Built: the framebuffer
+//! device output with software rendering, the DRM output (a KMS
+//! connector drawn with OpenGL through EGL on a GBM surface; `libdrm`,
+//! `libgbm` and `libEGL` are opened at run time), the evdev input backend
+//! and the `libinput` backend (the default; the library is opened at run
+//! time).
 //!
 //! The parts that are functions of values compile on every Unix system
 //! (their tests run on a development machine that is not Linux); what
@@ -35,18 +36,24 @@
 #![cfg(unix)]
 #![cfg_attr(not(target_os = "linux"), allow(dead_code))]
 
+mod drm_connector_type;
+mod drm_output_options;
 mod epoll_dispatcher_impl;
 mod framebuffer_toplevel_impl;
 pub mod input;
 #[cfg(target_os = "linux")]
 mod linux_framebuffer_platform;
 mod linux_framebuffer_platform_options;
+#[cfg(target_os = "linux")]
+mod native_library;
 pub mod native_unsafe_methods;
 pub mod output;
 pub mod raw_event_grouping;
 #[cfg(target_os = "linux")]
 mod stubs;
 
+pub use drm_connector_type::DrmConnectorType;
+pub use drm_output_options::DrmOutputOptions;
 #[cfg(target_os = "linux")]
 pub use epoll_dispatcher_impl::EpollDispatcherImpl;
 pub use framebuffer_toplevel_impl::FramebufferToplevelImpl;

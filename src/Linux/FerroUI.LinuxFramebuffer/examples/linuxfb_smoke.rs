@@ -1,11 +1,13 @@
 //! An application on the framebuffer platform that checks itself: the
-//! Skia renderer in software and the Simple theme, one view filled with
-//! one colour, on a framebuffer that is a plain file or a (virtual)
-//! framebuffer device, with input from virtual devices it creates.
+//! Skia renderer and the Simple theme, one view filled with one colour, on
+//! a framebuffer that is a plain file or a (virtual) framebuffer device
+//! (drawn in software), or on a KMS output of a (virtual) card (drawn with
+//! OpenGL through EGL on GBM), with input from virtual devices it creates.
 //!
 //! ```text
 //! cargo run -p ferroui-linuxframebuffer --features example --example linuxfb_smoke -- --file /tmp/fb.raw
 //! sudo .../linuxfb_smoke --fbdev /dev/fb1 --expect-id vkms --uinput
+//! sudo .../linuxfb_smoke --drm /dev/dri/card1 --expect-driver vkms
 //! ```
 //!
 //! - `--file <path>`: the framebuffer is a file of 640 by 400 pixels
@@ -16,6 +18,12 @@
 //!   device reports begins with the prefix, so that a virtual device
 //!   (`Virtual FB` of `vfb`, `vkms` of the emulation of `vkms`) cannot be
 //!   mistaken for the console of the machine.
+//! - `--drm <card> --expect-driver <name>`: the DRM output on the card.
+//!   The example sets a mode on it only when the name of its driver is the
+//!   one given (`vkms` for the virtual KMS driver). The frame is read back
+//!   from the framebuffer the CRTC scans out (`output::drm_scanout`), so
+//!   the check sees what the card shows. With `--orientation=90|180|270`
+//!   the scene is drawn rotated (the rotation pass of the output).
 //! - `--direct`, `--async`: draw directly into the mapped memory; copy
 //!   frames on the blit thread.
 //! - `--uinput`: create a touch screen, a keyboard, a mouse and a
@@ -49,7 +57,7 @@ mod app {
     use ferroui_base::input::IInputRoot;
     use ferroui_base::media::immutable::ImmutableSolidColorBrush;
     use ferroui_base::media::Color;
-    use ferroui_base::platform::PixelFormat;
+    use ferroui_base::platform::{PixelFormat, SurfaceOrientation};
     use ferroui_base::reactive::IDisposable;
     use ferroui_base::styling::Styles;
     use ferroui_base::threading::{DispatcherPriority, DispatcherTimer};
@@ -71,10 +79,11 @@ mod app {
         IOC_READ, IOC_WRITE,
     };
     use ferroui_linuxframebuffer::output::{
-        FbDevOutputOptions, FbdevOutput, FileFbDevice, IFbDevice, IOutputBackend, LinuxFbDevice,
+        drm_scanout, DrmCard, DrmOutput, FbDevOutputOptions, FbdevOutput, FileFbDevice, IFbDevice, IOutputBackend,
+        LinuxFbDevice,
     };
     use ferroui_linuxframebuffer::raw_event_grouping::RawEvent;
-    use ferroui_linuxframebuffer::LinuxFramebufferPlatformExtensions;
+    use ferroui_linuxframebuffer::{DrmOutputOptions, LinuxFramebufferPlatformExtensions};
     use ferroui_skia::SkiaApplicationExtensions;
     use ferroui_themes_simple::SimpleTheme;
     use std::cell::{Cell, RefCell};
@@ -84,6 +93,7 @@ mod app {
     use std::process::ExitCode;
     use std::rc::Rc;
     use std::sync::atomic::{AtomicBool, Ordering};
+    use std::sync::Arc;
     use std::time::{Duration, Instant};
 
     /// The colour the view is filled with.
@@ -93,11 +103,31 @@ mod app {
     /// Whether every check passed.
     static SMOKE_PASSED: AtomicBool = AtomicBool::new(false);
 
+    /// Where the frame is read back from.
+    enum FrameSource {
+        /// The node of a framebuffer device, or the file that stands for one.
+        Fb { node: String, var_info: fb_var_screeninfo, fixed_info: fb_fix_screeninfo },
+        /// The framebuffer the CRTC of a DRM output scans out.
+        Drm(Arc<DrmOutput>),
+    }
+
+    /// A frame as read back: rows of `pitch` bytes.
+    struct Frame {
+        data: Vec<u8>,
+        width: u32,
+        height: u32,
+        pitch: u32,
+        bits_per_pixel: u32,
+        /// Red in the low byte (else blue, as `BGRA8888` and `XRGB8888`).
+        rgba: bool,
+    }
+
     /// What the application needs of the command line and of `run`.
     struct Smoke {
-        node: String,
-        var_info: fb_var_screeninfo,
-        fixed_info: fb_fix_screeninfo,
+        source: FrameSource,
+        /// The size of the frame in pixels.
+        width: u32,
+        height: u32,
         dump: Option<String>,
         devices: Option<VirtualDevices>,
         /// Whether the devices are read through the `libinput` backend.
@@ -434,18 +464,42 @@ mod app {
         }
     }
 
-    /// The bytes of the framebuffer, read from its node.
-    fn read_framebuffer(smoke: &Smoke) -> std::io::Result<Vec<u8>> {
-        let length = smoke.fixed_info.line_length as u64 * smoke.var_info.yres as u64;
-        let mut content = Vec::new();
-        File::open(&smoke.node)?.take(length).read_to_end(&mut content)?;
-        Ok(content)
+    /// The frame as the device shows it: the bytes of the framebuffer,
+    /// read from its node, or the framebuffer the CRTC scans out.
+    fn read_framebuffer(smoke: &Smoke) -> std::io::Result<Frame> {
+        match &smoke.source {
+            FrameSource::Fb { node, var_info, fixed_info } => {
+                let length = fixed_info.line_length as u64 * var_info.yres as u64;
+                let mut content = Vec::new();
+                File::open(node)?.take(length).read_to_end(&mut content)?;
+                Ok(Frame {
+                    data: content,
+                    width: var_info.xres,
+                    height: var_info.yres,
+                    pitch: fixed_info.line_length,
+                    bits_per_pixel: var_info.bits_per_pixel,
+                    rgba: var_info.blue.offset == 16,
+                })
+            }
+            FrameSource::Drm(output) => {
+                let scanout = drm_scanout::read_scanout(output.card().fd(), output.crtc_id())?;
+                Ok(Frame {
+                    data: scanout.data,
+                    width: scanout.width,
+                    height: scanout.height,
+                    pitch: scanout.pitch,
+                    bits_per_pixel: scanout.bits_per_pixel,
+                    rgba: false,
+                })
+            }
+        }
     }
 
     /// The colour of a pixel of the framebuffer as red, green and blue.
-    fn pixel(smoke: &Smoke, content: &[u8], x: u32, y: u32) -> Option<(u8, u8, u8)> {
-        let bytes = smoke.var_info.bits_per_pixel as usize / 8;
-        let offset = y as usize * smoke.fixed_info.line_length as usize + x as usize * bytes;
+    fn pixel(frame: &Frame, x: u32, y: u32) -> Option<(u8, u8, u8)> {
+        let content = &frame.data;
+        let bytes = frame.bits_per_pixel as usize / 8;
+        let offset = y as usize * frame.pitch as usize + x as usize * bytes;
         let px = content.get(offset..offset + bytes)?;
         if bytes == 2 {
             // The 16-bit format of the renderer: five bits of red at the top.
@@ -453,7 +507,7 @@ mod app {
             let expand = |v: u16, bits: u32| ((v as u32 * 255) / ((1 << bits) - 1)) as u8;
             return Some((expand(value >> 11, 5), expand((value >> 5) & 0x3f, 6), expand(value & 0x1f, 5)));
         }
-        if smoke.var_info.blue.offset == 16 {
+        if frame.rgba {
             Some((px[0], px[1], px[2]))
         } else {
             Some((px[2], px[1], px[0]))
@@ -471,17 +525,17 @@ mod app {
         let started = Instant::now();
         let step = Cell::new(0u32);
         let waited = Cell::new(0u32);
-        let (width, height) = (smoke.var_info.xres, smoke.var_info.yres);
+        let (width, height) = (smoke.width, smoke.height);
         let (w, h) = (width as f64, height as f64);
 
         let finish = {
             let smoke = smoke.clone();
             move || {
                 if let Some(dump) = &smoke.dump {
-                    match read_framebuffer(&smoke).and_then(|content| std::fs::write(dump, content)) {
-                        Ok(()) => println!(
-                            "The framebuffer was written to {dump} ({width}x{height}, {} bits, line length {})",
-                            smoke.var_info.bits_per_pixel, smoke.fixed_info.line_length
+                    match read_framebuffer(&smoke).and_then(|frame| std::fs::write(dump, &frame.data).map(|()| frame)) {
+                        Ok(frame) => println!(
+                            "The framebuffer was written to {dump} ({}x{}, {} bits, line length {})",
+                            frame.width, frame.height, frame.bits_per_pixel, frame.pitch
                         ),
                         Err(error) => smoke.check("dump", false, format!("{error}")),
                     }
@@ -514,12 +568,28 @@ mod app {
                 match step.get() {
                     0 => {
                         // The frame: the middle and the corners have the colour of the view.
-                        let content = read_framebuffer(&smoke).unwrap_or_default();
-                        let points = [(width / 2, height / 2), (0, 0), (width - 1, height - 1)];
-                        let colours: Vec<_> = points.iter().map(|&(x, y)| pixel(&smoke, &content, x, y)).collect();
+                        let frame = read_framebuffer(&smoke);
+                        // The points of the frame as the device holds it (a rotated scene is
+                        // shown on a frame of the device's own size).
+                        let colours: Vec<_> = match &frame {
+                            Ok(frame) => {
+                                let (fw, fh) = (frame.width.max(1), frame.height.max(1));
+                                [(fw / 2, fh / 2), (0, 0), (fw - 1, fh - 1)]
+                                    .iter()
+                                    .map(|&(x, y)| pixel(frame, x, y))
+                                    .collect()
+                            }
+                            Err(_) => vec![None; 3],
+                        };
                         let arrived = colours.iter().all(|&colour| is_fill(colour));
-                        if !arrived && started.elapsed() < Duration::from_secs(10) {
+                        // The DRM output creates its EGL objects with the first frame, which
+                        // takes a while on a software renderer.
+                        let limit = if matches!(smoke.source, FrameSource::Drm(_)) { 30 } else { 10 };
+                        if !arrived && started.elapsed() < Duration::from_secs(limit) {
                             return true;
+                        }
+                        if let Err(error) = &frame {
+                            println!("  the frame could not be read back: {error}");
                         }
                         smoke.check(
                             "frame",
@@ -700,35 +770,36 @@ mod app {
         var_info
     }
 
-    pub fn run() -> ExitCode {
-        let fail = |message: String| {
-            println!("  [FAILED] setup: {message}");
-            println!("SMOKE FAILED");
-            ExitCode::FAILURE
-        };
+    /// What a run is drawn on: the output, where its frame is read back
+    /// from, and the result of the check of the output.
+    type CreatedOutput = (Arc<dyn IOutputBackend>, FrameSource, (bool, String));
 
-        println!("Phase: output");
+    /// A file or a framebuffer device, drawn in software.
+    fn fb_output() -> Result<CreatedOutput, String> {
         let (node, device): (String, Box<dyn IFbDevice>) = if let Some(path) = argument("--file") {
             match FileFbDevice::create(&path, file_var_info()) {
                 Ok(device) => (path, Box::new(device)),
-                Err(error) => return fail(format!("the file {path} cannot be created: {error}")),
+                Err(error) => return Err(format!("the file {path} cannot be created: {error}")),
             }
         } else if let Some(node) = argument("--fbdev") {
             let Some(expected) = argument("--expect-id") else {
-                return fail("--fbdev needs --expect-id, the beginning of the identification of the device".to_owned());
+                return Err("--fbdev needs --expect-id, the beginning of the identification of the device".to_owned());
             };
             let device = match LinuxFbDevice::open(&node) {
                 Ok(device) => device,
-                Err(error) => return fail(format!("{node}: {error}")),
+                Err(error) => return Err(format!("{node}: {error}")),
             };
             // Nothing is written to a device that is not the expected one.
             let id = device.get_fix_screen_info().map(|info| info.id_string()).unwrap_or_default();
             if !id.starts_with(&expected) {
-                return fail(format!("{node} is \"{id}\", not a device whose identification begins with \"{expected}\"; nothing was written to it"));
+                return Err(format!("{node} is \"{id}\", not a device whose identification begins with \"{expected}\"; nothing was written to it"));
             }
             (node, Box::new(device))
         } else {
-            return fail("one of --file <path> and --fbdev <node> --expect-id <prefix> is needed".to_owned());
+            return Err(
+                "one of --file <path>, --fbdev <node> --expect-id <prefix> and --drm <card> --expect-driver <name> is needed"
+                    .to_owned(),
+            );
         };
 
         let options = FbDevOutputOptions {
@@ -745,9 +816,87 @@ mod app {
         // format changes what it reports.
         let output = match FbdevOutput::with_device(device, options) {
             Ok(output) => output,
-            Err(error) => return fail(format!("{node}: {error}")),
+            Err(error) => return Err(format!("{node}: {error}")),
         };
         let (var_info, fixed_info) = (output.var_screen_info(), output.fix_screen_info());
+        let format = match (var_info.bits_per_pixel, var_info.blue.offset) {
+            (16, _) => PixelFormat::RGB565,
+            (32, 16) => PixelFormat::RGBA8888,
+            _ => PixelFormat::BGRA8888,
+        };
+        let size = output.pixel_size();
+        let check = (
+            size.width as u32 == var_info.xres && size.height as u32 == var_info.yres && size.width > 0 && size.height > 0,
+            format!(
+                "{node} is \"{}\": {}x{}, {} bits per pixel, lines of {} bytes, drawn as {format:?}",
+                output.id(),
+                size.width,
+                size.height,
+                var_info.bits_per_pixel,
+                fixed_info.line_length
+            ),
+        );
+        let output: Arc<dyn IOutputBackend> = output;
+        Ok((output, FrameSource::Fb { node, var_info, fixed_info }, check))
+    }
+
+    /// A KMS output of a card, drawn with OpenGL.
+    fn drm_output(card: &str) -> Result<CreatedOutput, String> {
+        let Some(expected) = argument("--expect-driver") else {
+            return Err("--drm needs --expect-driver, the name of the driver of the card".to_owned());
+        };
+        let drm_card = DrmCard::new(Some(card)).map_err(|error| format!("{card}: {error}"))?;
+        // No mode is set on a card that is not the expected one.
+        let driver = drm_scanout::driver_name(drm_card.fd()).unwrap_or_default();
+        if driver != expected {
+            return Err(format!("{card} is driven by \"{driver}\", not by \"{expected}\"; nothing was written to it"));
+        }
+        match drm_card.get_resources(false) {
+            Ok(resources) => resources.dump(),
+            Err(error) => return Err(format!("{card}: {error}")),
+        }
+        let orientation = match argument("--orientation").as_deref() {
+            Some("90") => SurfaceOrientation::Rotation90,
+            Some("180") => SurfaceOrientation::Rotation180,
+            Some("270") => SurfaceOrientation::Rotation270,
+            _ => SurfaceOrientation::Rotation0,
+        };
+        let options = DrmOutputOptions { orientation, ..Default::default() };
+        let output = DrmOutput::from_card(drm_card, false, Some(options)).map_err(|error| format!("{card}: {error}"))?;
+        let size = output.pixel_size();
+        let check = (
+            size.width > 0 && size.height > 0,
+            format!(
+                "{card} is driven by \"{driver}\": CRTC {}, {}x{} as the top-level sees it ({orientation:?})",
+                output.crtc_id(),
+                size.width,
+                size.height
+            ),
+        );
+        let backend: Arc<dyn IOutputBackend> = output.clone();
+        Ok((backend, FrameSource::Drm(output), check))
+    }
+
+    pub fn run() -> ExitCode {
+        let fail = |message: String| {
+            println!("  [FAILED] setup: {message}");
+            println!("SMOKE FAILED");
+            ExitCode::FAILURE
+        };
+
+        println!("Phase: output");
+        let (output, source, output_check) = if let Some(card) = argument("--drm") {
+            match drm_output(&card) {
+                Ok(created) => created,
+                Err(message) => return fail(message),
+            }
+        } else {
+            match fb_output() {
+                Ok(created) => created,
+                Err(message) => return fail(message),
+            }
+        };
+        let size = output.pixel_size();
 
         let log = Rc::new(RefCell::new(Vec::new()));
         let devices = if flag("--uinput") {
@@ -778,9 +927,9 @@ mod app {
         };
 
         let smoke = Rc::new(Smoke {
-            node: node.clone(),
-            var_info,
-            fixed_info,
+            source,
+            width: size.width as u32,
+            height: size.height as u32,
             dump: argument("--dump"),
             devices,
             libinput: flag("--libinput"),
@@ -788,27 +937,7 @@ mod app {
             failed: Cell::new(0),
             passed: Cell::new(0),
         });
-        let format = match (var_info.bits_per_pixel, var_info.blue.offset) {
-            (16, _) => PixelFormat::RGB565,
-            (32, 16) => PixelFormat::RGBA8888,
-            _ => PixelFormat::BGRA8888,
-        };
-        let size = output.pixel_size();
-        smoke.check(
-            "output",
-            size.width as u32 == var_info.xres
-                && size.height as u32 == var_info.yres
-                && size.width > 0
-                && size.height > 0,
-            format!(
-                "{node} is \"{}\": {}x{}, {} bits per pixel, lines of {} bytes, drawn as {format:?}",
-                output.id(),
-                size.width,
-                size.height,
-                var_info.bits_per_pixel,
-                fixed_info.line_length
-            ),
-        );
+        smoke.check("output", output_check.0, output_check.1);
         SMOKE.with(|slot| *slot.borrow_mut() = Some(smoke));
 
         // The run must end by itself.
