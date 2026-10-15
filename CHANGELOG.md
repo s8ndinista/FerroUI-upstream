@@ -4,6 +4,12 @@ All notable changes to FerroUI are recorded in this file. The format follows [Ke
 
 ## [Unreleased]
 
+## [0.1.0-preview.2] - Unreleased
+
+The second preview.
+
+It adds the facade crate `ferroui`, which makes FerroUI one dependency, and fills the six names the first preview reserved: the Wayland and Linux framebuffer platforms, the Vulkan contracts, the WinUI integration and the VNC server of the headless platform. It completes the Windows platform (the composition modes, WGL, the input method, UI Automation, Vulkan), adds OpenGL on macOS and iOS, and builds Android with stable Rust. It is a preview: the public API may change in any part.
+
 ### Added
 
 - **`ferroui`**: the facade crate replaces its placeholder. One dependency (`ferroui = "=0.1.0-preview.2"`) that re-exports the common crates under short names (`ferroui::base`, `ferroui::controls`, `ferroui::markup`, and per feature `desktop`, `themes_fluent`, `themes_simple`, `markup_xaml`, `dialogs`, `browser`, `vello`, `headless`, ...), with `ferroui::prelude` for the types of a minimal application. Features: `desktop` and `fluent` by default; `simple`, `xaml`, `color-picker`, `dialogs`, `browser`, `vello`, `vello-hybrid`, `vello-gpu`, `headless`, `opengl`, `metal` and `vulkan`. An application that compiles its markup still names the crates the compiled code calls. Example: `cargo run -p ferroui --example hello`.
@@ -22,6 +28,25 @@ All notable changes to FerroUI are recorded in this file. The format follows [Ke
 ### Changed
 
 - **Android builds with stable Rust.** The native library of an application no longer needs a nightly toolchain, `-Zbuild-std` or unstable flags: the framework keeps its thread-local variables in one table per thread on Android instead of one key of the C library per variable (of which the system has 128 for a process), and a library takes 9 keys (`docs/porting/android-platform.md`, section 5.1). `scripts/android/apk.sh` builds with the stable toolchain and the target `aarch64-linux-android`.
+- **One loader of the libraries opened at run time** on Linux (`ferroui-base`): `ferroui_base::platform::native_library` (`NativeLibrary`, `native_functions!`) is shared by the X11, Wayland and Linux framebuffer crates, which had loaders of their own. Their behaviour is unchanged.
+- **The text view visual of an input method client is optional** (`ferroui-base`, `ferroui-controls`): `TextInputMethodClient::text_view_visual` returns an `Option`, as upstream's value is nullable.
+
+### Fixed
+
+- **A text box without a template** panicked when it got or lost the focus with an input method active; it takes the focus now (`ferroui-controls`).
+- **A popup opened while its target is moved by a render transform** (a page that slides in) stayed where the target was at the opening; an open popup is positioned again when the transform of its target changes (`ferroui-controls`; an upstream defect, recorded in `docs/porting/DEVIATIONS.md`, Popup).
+- **The children of a border with a box shadow in a render target bitmap of more than 96 DPI** were drawn at twice their size and away from their place; the transform of a drawing context after a restore is the logical one again (`ferroui-skia`; an upstream defect, recorded in DEVIATIONS).
+- **The render timer of the macOS native library** stops its display link when it is destroyed; a tick at the exit of the process read the freed timer (`ferroui-native`).
+
+### Known limitations
+
+- **Verification.** The new platforms and modes were verified in CI, in virtual machines, in the iOS simulator and on the Android emulator, not on real devices, boards or GPUs; no screen reader was run on any platform. The per-platform documents under `docs/porting` say what was run where.
+- **WinUI.** Input, the input method, drag and drop and a client of UI Automation inside a WinUI 3 application are not verified (`docs/porting/winui.md`, section 9).
+- **Wayland.** Opt-in, as upstream: the platform detection chooses X11. Not verified on a desktop compositor with input, with a real input method, or with the dmabuf swap chain on a GPU.
+- **OpenGL on macOS and iOS** needs Skia built with `RUSTFLAGS="--cfg ferro_skia_apple_ganesh"`; the default build draws with Graphite on Metal.
+- **Vulkan on Windows** compiles Skia from source (the feature `vulkan` of `ferroui-win32`).
+- **Markup.** The build-time compiler of markup does not have the manifest keys, `include_xaml!` per class, the generated `register_types` or the diagnostics and cache of the build yet (`docs/porting/xaml.md`, 9.10.1).
+- **API stability, the Vello backend, documentation.** As for the first preview.
 
 ## [0.1.0-preview.1] - 2026-10-15
 
@@ -62,5 +87,6 @@ The preview makes the framework available as crates so that it can be tried outs
 - **Documentation.** The API documentation is the documentation comments carried over by the port; there are no guides beyond the README and the documents under `docs/`. Not every crate is expected to build on docs.rs (see `docs/release.md`).
 - **Tests of the published crates.** The packages hold the sources of the tests but not the test fonts and images of the Skia backend; the test suites are run from the repository.
 
-[Unreleased]: https://github.com/wieslawsoltes/FerroUI/compare/v0.1.0-preview.1...main
+[Unreleased]: https://github.com/wieslawsoltes/FerroUI/compare/v0.1.0-preview.2...main
+[0.1.0-preview.2]: https://github.com/wieslawsoltes/FerroUI/compare/v0.1.0-preview.1...v0.1.0-preview.2
 [0.1.0-preview.1]: https://github.com/wieslawsoltes/FerroUI/releases/tag/v0.1.0-preview.1

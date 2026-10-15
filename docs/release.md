@@ -1,6 +1,6 @@
 # Releasing FerroUI
 
-How the crates of the workspace are published to crates.io: which crates, in which order, at which version, what each package holds, how the release workflow runs and what has to be true before it is run. Nothing has been published yet; section 12 lists what the owner decides before the first release.
+How the crates of the workspace are published to crates.io: which crates, in which order, at which version, what each package holds, how the release workflow runs and what has to be true before it is run. The first preview, `0.1.0-preview.1`, is published (tag `v0.1.0-preview.1`, 37 crates); the workspace carries the next version, `0.1.0-preview.2`. Section 12 records the decisions the owner made before the first release.
 
 Publishing cannot be taken back. A version of a crate can be yanked (Cargo then no longer selects it for new builds) but never removed or replaced, and the name of a crate belongs to the account that published it first. Everything below is arranged so that a release is rehearsed completely before anything is uploaded.
 
@@ -15,6 +15,8 @@ scripts/release/crates.py check         # what a published crate has to state
 ```
 
 ### 1.1 The published crates
+
+**Now (2026-10-15): 37 crates**, every one with code; `scripts/release/crates.py order` prints them in the order of publication, and the crate table of the README lists them by group. The table below is the state on 2026-10-10, the first 26; the paragraphs after it say how the others joined.
 
 The state on 2026-10-10, in the order of publication. The size is the size of the package (`.crate`, compressed); crates.io accepts 10 MiB. The dry run prints the current table.
 
@@ -51,7 +53,9 @@ The build-time crates are part of the set because published crates name them: `f
 
 Joined since the table was made (2026-10-10): `ferroui-win32` (`src/Windows/FerroUI.Win32`, Platforms, 155 KiB), packaged by the dry run with the others; with `ferroui-x11` (`src/FerroUI.X11`, Platforms), which joined the same day, the dry run packages 28, and with `ferroui-freedesktop` (`src/FerroUI.FreeDesktop`, Platforms; the FreeDesktop services the Linux platforms share, a dependency of `ferroui-x11`) 29. Its default feature `angle` brings a dependency of Windows targets only (the crate `mozangle`), so the package builds on the hosts of the release like the rest. `ferroui-android` (`src/Android/FerroUI.Android`, Platforms) joined the same day (the dry run packages 31 with it, `ferroui-ios` and `ferroui-freedesktop`). Its dependencies on the renderer, the text shaper, `jni-sys` and `libc` are dependencies of Android targets only, and its package carries the Java sources of the backend (`java/`), which an application compiles with the SDK (`scripts/android/apk.sh`).
 
-`ferroui-wayland` (`src/FerroUI.Wayland`, Platforms; the Wayland platform backend, 135 KiB) joined on 2026-10-10 as well: the dry run packages 32 with it. Its dependencies on the Wayland crates, `xkbcommon-dl` and `libc` are dependencies of Linux targets only, and none of them links a system library (they are opened at run time), so the package builds on the hosts of the release like the rest.
+`ferroui-wayland` (`src/FerroUI.Wayland`, Platforms; the Wayland platform backend, 135 KiB) joined on 2026-10-10 as well: the dry run packages 32 with it.
+
+The first preview added the five other names of section 2.2 as placeholders (37 packages). Each of the six placeholders is a real crate since 2026-10-15, at the same path and name: `ferroui` (the facade, section 2.1), `ferroui-wayland`, `ferroui-vulkan`, `ferroui-linuxframebuffer`, `ferroui-winui` and `ferroui-headless-vnc`. The set is still 37 crates. Its dependencies on the Wayland crates, `xkbcommon-dl` and `libc` are dependencies of Linux targets only, and none of them links a system library (they are opened at run time), so the package builds on the hosts of the release like the rest.
 
 Every crate was checked in the same way: packaged, and built from its package, by `scripts/release/publish.sh --dry-run` (section 8). `cargo publish --dry-run -p <crate>` cannot be used for this before the first release: it resolves the dependencies of the package in the registry, where the other crates of the workspace are not yet. `cargo package --workspace` (Cargo 1.90 and later) resolves them among the packages it has just assembled instead, which is what the dry run uses, and so every crate got the full check, not only the ones without dependencies in the workspace.
 
@@ -104,7 +108,7 @@ Every name was looked up on 2026-10-10 in the sparse index of crates.io (`https:
 | `ferro-ui`, `ferro_ui` | free |
 | `ferroui-windows`, `ferroui-win32`, `ferroui-linux`, `ferroui-x11` (candidates for the platform crates in progress) | free |
 
-No name is taken, so nothing blocks on names. A name is claimed by the first publish and by nothing else, and until then anyone can take it. All 37 names of the first preview (the 31 crates with code and the six reserved names of section 2.2) were looked up again on 2026-10-10 before the release, and all were free.
+No name was taken then, so nothing blocked on names. A name is claimed by the first publish and by nothing else; the first preview claimed all 37 names below for the project. All 37 names of the first preview (the 31 crates with code and the six reserved names of section 2.2) were looked up again on 2026-10-10 before the release, and all were free.
 
 Two names are not under the `ferroui-` prefix. The owner decided on 2026-10-10 to keep the names as they are (section 12): `xamlx` is the name of the external library the crate is a port of, and `microcom-codegen` is named after the interop library whose design it follows. Publishing them claims those names on crates.io for this project. The alternatives are `ferroui-xamlx` and `ferroui-microcom-codegen`; a rename touches the manifests, the `use` paths and the profile overrides of the root manifest.
 
@@ -130,26 +134,25 @@ Two names are not under the `ferroui-` prefix. The owner decided on 2026-10-10 t
 
   The last row was not in the proposal. The contracts are what an application names when a control of its own draws with the graphics API (an OpenGL control, the import of external objects), and upstream's meta package brings them; they are small and of Rust alone, so they are features and not defaults. An application for the browser turns the default features off and names `browser` and a theme.
 - **The prelude** (`ferroui::prelude`) holds what a minimal application names, which is what the minimal applications of the repository import (`src/FerroUI.Desktop/examples/hello_window.rs`, `src/FerroUI.Themes.Simple/examples/themed_window.rs`, the `App` and `Program` of the small samples): the declaration of an application class (`ferro_class!`, `ferro_impl_classes!`, `instantiate`, `Ref`, `FerroObjectImpl`, `Application`, `ApplicationImpl`, `ApplicationImplExt`, `NewApplication`), starting it (`AppBuilder`, and `AppBuilderDesktopExtensions` with `desktop`), the window and the common controls and panels (`Window`, `Control`, `Border`, `Button`, `CheckBox`, `TextBlock`, `TextBox`, `StackPanel`, `Grid`), the values of a layout (`Thickness`, `CornerRadius`, `HorizontalAlignment`, `VerticalAlignment`, `Orientation`, `Color`) and the theme of the features that are on (`FluentTheme`, `SimpleTheme`). Nothing else: the rest is reached through the modules, so that a glob import of the prelude does not shadow the names of an application.
-- **Not in the facade.** The build-time crates (`ferroui-build`, `ferroui-build-scan`, `xamlx`): a build dependency cannot be re-exported, and the code the markup compiler writes names the crates it calls by their own names (`::ferroui_base::...`, `::ferroui_markup_xaml::...`), so a crate that compiles its markup depends on those crates directly. The tools and the designer support (`ferroui-designer-support`, `ferroui-remote-protocol`, `microcom-codegen`), the interop runtime of the native platforms (`ferroui-microcom`), the font collection (`ferroui-fonts-inter`), and the platforms that are opted into by name (`ferroui-wayland`, `ferroui-freedesktop`, `ferroui-linuxframebuffer`, `ferroui-ios`, `ferroui-android`): an application names those crates beside the facade.
+- **Not in the facade.** The build-time crates (`ferroui-build`, `ferroui-build-scan`, `xamlx`): a build dependency cannot be re-exported, and the code the markup compiler writes names the crates it calls by their own names (`::ferroui_base::...`, `::ferroui_markup_xaml::...`), so a crate that compiles its markup depends on those crates directly. The tools and the designer support (`ferroui-designer-support`, `ferroui-remote-protocol`, `microcom-codegen`), the interop runtime of the native platforms (`ferroui-microcom`), the font collection (`ferroui-fonts-inter`), the platforms that are opted into by name (`ferroui-wayland`, `ferroui-freedesktop`, `ferroui-linuxframebuffer`, `ferroui-ios`, `ferroui-android`), the WinUI integration (`ferroui-winui`) and the VNC server of the headless platform (`ferroui-headless-vnc`): an application names those crates beside the facade.
 - **Upstream's counterpart** is the meta package `Avalonia` (`packages/Avalonia/Avalonia.csproj`): it references the core libraries of `build/CoreLibraries.props` (base, controls, designer support, OpenGL, Metal, Vulkan, dialogs, markup, XAML, MicroCom), the remote protocol, the build tasks, the source generators and the analyzers, and carries the props and targets of the build and the previewer. The desktop entry point and the themes are separate packages there (`Avalonia.Desktop`, `Avalonia.Themes.Fluent`); here they are features of the facade, on by default, because the facade is the one dependency of an application. MSBuild props and targets have no counterpart (Cargo has no build integration a library can bring), and the build tasks and generators are the build script of an application.
 - It is pinned to the other crates like every crate of the workspace, so `ferroui = "=0.1.0-preview.2"` selects one consistent set, which is the main use of it during the previews. It depends on 21 crates of the workspace and is published after all of them (`crates.py order`).
 - **Verified** (2026-10-15, macOS): the example `hello` (`src/FerroUI/examples/hello.rs`, a window with a text block and a button under the Fluent theme, written against the prelude alone) builds and runs (`FERROUI_SMOKE_EXIT_MS=2500 cargo run -p ferroui --example hello`: the window opens and closes, exit code 0); the two documentation tests of `lib.rs` pass (a complete application, compiled; the builder after platform detection, run); `cargo check -p ferroui` passes with no features and with every feature; the documentation builds without warnings with the features of docs.rs.
 
 ### 2.2 Reserved names
 
-The owner decided on 2026-10-10 to reserve, with the first preview, the names of the parts that do not exist yet. Each is a member of the workspace with a manifest, a crate comment that says it is a placeholder, no code and no dependencies; its description on crates.io starts with "Reserved name". A later preview replaces the placeholder with the real crate at the same path.
+The owner decided on 2026-10-10 to reserve, with the first preview, the names of the parts that did not exist yet. Each was published with `0.1.0-preview.1` as a placeholder: a member of the workspace with a manifest, a crate comment that said it is a placeholder, no code and no dependencies, and a description on crates.io that started with "Reserved name". All six are real crates since 2026-10-15, at the same path and name, and are published with real descriptions from `0.1.0-preview.2` on; no crate of the workspace is a placeholder any more.
 
-| Crate | Directory | For |
+| Crate | Directory | Now |
 |---|---|---|
-| `ferroui` | `src/FerroUI` | the facade crate of section 2.1; the facade replaced the placeholder for the second preview |
-| `ferroui-wayland` | `src/FerroUI.Wayland` | the Wayland platform (upstream `Avalonia.Wayland`); the port replaced the placeholder for the second preview (`docs/porting/wayland-platform.md`) |
-| `ferroui-vulkan` | `src/FerroUI.Vulkan` | the Vulkan platform contracts (upstream `Avalonia.Vulkan`); the port replaced the placeholder for the second preview (`docs/porting/vulkan.md`) |
-| `ferroui-linuxframebuffer` | `src/Linux/FerroUI.LinuxFramebuffer` | the Linux framebuffer platform (upstream `Avalonia.LinuxFramebuffer`); the port replaced the placeholder for the second preview (`docs/porting/linux-framebuffer-platform.md`) |
-| `ferroui-winui` | `src/Windows/FerroUI.WinUI` | the WinUI integration (upstream `Avalonia.WinUI`); the port replaced the placeholder for the second preview (`docs/porting/winui.md`) |
+| `ferroui` | `src/FerroUI` | the facade crate of section 2.1 |
+| `ferroui-wayland` | `src/FerroUI.Wayland` | the Wayland platform (upstream `Avalonia.Wayland`; `docs/porting/wayland-platform.md`) |
+| `ferroui-vulkan` | `src/FerroUI.Vulkan` | the Vulkan platform contracts (upstream `Avalonia.Vulkan`; `docs/porting/vulkan.md`) |
+| `ferroui-linuxframebuffer` | `src/Linux/FerroUI.LinuxFramebuffer` | the Linux framebuffer platform (upstream `Avalonia.LinuxFramebuffer`; `docs/porting/linux-framebuffer-platform.md`) |
+| `ferroui-winui` | `src/Windows/FerroUI.WinUI` | the WinUI integration (upstream `Avalonia.WinUI`; `docs/porting/winui.md`) |
+| `ferroui-headless-vnc` | `src/Headless/FerroUI.Headless.Vnc` | the VNC server of the headless platform (upstream `Avalonia.Headless.Vnc`; `docs/porting/headless-vnc.md`) |
 
-`ferroui-headless-vnc` was reserved with the first preview and is ported since (2026-10-15): the crate at `src/Headless/FerroUI.Headless.Vnc` is the VNC server of the headless platform (upstream `Avalonia.Headless.Vnc`, `docs/porting/headless-vnc.md`), published from the next preview with its real description. It is no longer only a reserved name.
-
-crates.io has no way to reserve a prefix: names are flat, and owning `ferroui` or any `ferroui-*` crate gives no right over other names that begin the same way. Publishing a name is the only protection. Not reserved: a name for the UI Automation bridge of Windows (planned as a module of `ferroui-win32`) and names for the upstream projects that have no counterpart in Rust (the interoperability with other .NET toolkits, the adapters of .NET test frameworks, the analyzers).
+crates.io has no way to reserve a prefix: names are flat, and owning `ferroui` or any `ferroui-*` crate gives no right over other names that begin the same way. Publishing a name is the only protection. Not reserved: a name for the UI Automation bridge of Windows (a module of `ferroui-win32`, `automation`) and names for the upstream projects that have no counterpart in Rust (the interoperability with other .NET toolkits, the adapters of .NET test frameworks, the analyzers).
 
 ## 3. Version scheme
 
@@ -225,7 +228,7 @@ What someone who depends on the published crates needs, beside Rust 1.89:
 
 ## 7. docs.rs
 
-docs.rs builds the documentation of every published version on a Linux host without network access. What is expected, none of it verified on docs.rs itself (that is only possible after a publish):
+docs.rs builds the documentation of every published version on a Linux host without network access. **The first preview on docs.rs** (`https://docs.rs/crate/<crate>/0.1.0-preview.1/status.json`, read on 2026-10-15): 36 of the 37 crates built, the Skia backend, the desktop entry point, the browser platform and the facade among them; `ferroui-ios` failed. The six placeholders of section 2.2 had no code then, so the facade, Wayland, Vulkan, the framebuffer platform, WinUI and the VNC server are first documented with the second preview. What was expected before the first publish:
 
 | Crates | Expectation |
 |---|---|
@@ -235,7 +238,7 @@ docs.rs builds the documentation of every published version on a Linux host with
 | `ferroui-harfbuzz`, `ferroui-headless` | Depend on the HarfBuzz build from source, which needs the C++ compiler of the docs.rs image and no network. Expected to build for the default Linux target. |
 | `ferroui-skia`, `ferroui-desktop`, `ferroui-browser`, `ferroui` | Depend on the build of `skia-bindings` (the facade through its default feature `desktop`; `[package.metadata.docs.rs]` adds the features that need nothing beyond the host), which without network cannot download Skia. The Skia bindings are documented on docs.rs themselves, so their build has a way to do without the binaries there; whether it carries through to a dependent crate with the features FerroUI enables is not known. **May fail**; if it does, the remedy is a docs.rs feature set or target for these crates, in the next preview (for the facade: documentation without the feature `desktop`). `ferroui-browser` is documented for the Linux host, not for `wasm32-unknown-emscripten`, which docs.rs cannot build (no Emscripten). |
 
-A failed documentation build does not affect the crate on crates.io: it shows as a failed badge in the README table. The first preview is the test.
+A failed documentation build does not affect the crate on crates.io: it shows as a failed badge in the README table. Open for the next preview: the documentation build of `ferroui-ios`.
 
 ## 8. Scripts and workflow
 
@@ -259,7 +262,7 @@ It runs `crates.py check` and the check of the README table, packages the publis
 
 ### 8.2 The check of the continuous integration
 
-The job `packaging` of `ci.yml` runs `publish.sh --dry-run --no-verify` on Linux for every pull request and push that changes more than documentation. It compiles nothing: it installs the toolchain, resolves the dependencies and assembles 26 packages. Locally the script takes about half a minute with a warm registry cache, most of it the resolution of each package; on a runner about two minutes with the installation of the toolchain and a cold cache (an estimate: the job has not run on a runner yet). It catches a crate without metadata, a dependency that is not pinned, a dependency of a published crate on an unpublished one, a dependency cycle, a package above the size limit, a missing notice and a stale README table. It does not catch a package that no longer builds (a build script that reaches outside its package again): that is the full dry run, which the release workflow runs, and which is worth running by hand after a change of a build script.
+The job `packaging` of `ci.yml` runs `publish.sh --dry-run --no-verify` on Linux for every pull request and push that changes more than documentation. It compiles nothing: it installs the toolchain, resolves the dependencies and assembles the packages (37 since 2026-10-15). Locally the script takes about half a minute with a warm registry cache, most of it the resolution of each package; on a runner it is the job "Packages of the published crates" of every CI run (green, last on run 38769434562 of 2026-10-15). It catches a crate without metadata, a dependency that is not pinned, a dependency of a published crate on an unpublished one, a dependency cycle, a package above the size limit, a missing notice and a stale README table. It does not catch a package that no longer builds (a build script that reaches outside its package again): that is the full dry run, which the release workflow runs, and which is worth running by hand after a change of a build script.
 
 ### 8.3 The release workflow
 
@@ -293,7 +296,7 @@ Before the release:
 
 - [ ] The CI is green on `main`, including a run of the macOS job on the merged state (dispatch the CI workflow by hand on `main`; it does not run for a push).
 - [ ] The tracking pages are current: `docs/porting/CRITICAL-PATH.md` and the generated `docs/porting/TRACKING.md`.
-- [ ] The README states the status honestly: what works on which platform (macOS desktop and the browser; Windows and Linux in progress; the Vello backend experimental), and that the release is a preview.
+- [ ] The README states the status honestly: what works on which platform, how each was verified (CI, a virtual machine, a simulator or an emulator) and what was not, that the Vello backend is experimental, and that the release is a preview.
 - [ ] `CHANGELOG.md` has the entry of the version, with what it contains and its known limitations, and the date.
 - [ ] `scripts/release/set-version.sh <version>` was run if the version changed, and the installation section of the README names the version.
 - [ ] `scripts/release/readme-crates-table.sh --check` passes.
@@ -320,19 +323,19 @@ Yank every crate of that version (the owner, with `cargo yank --version <version
 
 - Per-crate README files: every package carries the README of the repository.
 - The site assembly scripts of the browser platform are not in a package (section 6.1).
-- The documentation builds on docs.rs are unverified (section 7).
+- The documentation build of `ferroui-ios` on docs.rs fails (section 7); the crates that were placeholders in the first preview have not been built there yet.
 
 None of these blocks a preview.
 
 ## 12. Decisions before the first release
 
-Made by the owner on 2026-10-10, when the first preview was released:
+Made by the owner on 2026-10-10, before the first preview was released (on 2026-10-15). They are kept as the record of that release; where a later preview changed the state, the item says so.
 
-1. **Go**: yes. The first publish creates 37 crates under the owner's account for good: the 31 crates with code and the six reserved names of section 2.2.
+1. **Go**: yes. The first publish created 37 crates under the owner's account for good: the 31 crates with code and the six reserved names of section 2.2 (all six are real crates since, section 2.2).
 2. **The names `xamlx` and `microcom-codegen`**: kept as they are.
-3. **The bare name `ferroui`**: published as an empty placeholder; the facade of section 2.1 replaces it in a later preview (built for the second preview).
+3. **The bare name `ferroui`**: published as an empty placeholder; the facade of section 2.1 replaces it from the second preview on.
 4. **The rate limit**: not raised; the first release takes as long as the limit of new crates makes it (section 8.3).
 5. **The environment `crates-io`**: as the repository has it; required reviewers were not asked for.
 6. **The token**: the repository secret `CARGO_REGISTRY_TOKEN`; trusted publishing can replace it now that the crates exist.
-7. **The unfinished platforms**: all are in the first preview (Windows, Linux on X11 with the FreeDesktop services, iOS, Android), with their state in the changelog; Android with the note that its native library needs a nightly toolchain.
+7. **The unfinished platforms**: all are in the first preview (Windows, Linux on X11 with the FreeDesktop services, iOS, Android), with their state in the changelog; Android with the note that its native library needs a nightly toolchain (since 2026-10-15 it builds with stable Rust: `docs/porting/android-platform.md`, section 5.1).
 8. **The changelog entry**: `CHANGELOG.md`, the entry of `0.1.0-preview.1`.

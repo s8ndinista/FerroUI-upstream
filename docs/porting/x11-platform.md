@@ -2,7 +2,7 @@
 
 The design of the Linux desktop backend of FerroUI, the decisions it rests on, the file table of the port and its stages. Upstream: `src/Avalonia.X11` (88 files, 291 types, 4897 members) with `src/Avalonia.FreeDesktop` (18 files, 26 types, 216 members) at the tracked commit (`TRACKING.md`). `Avalonia.FreeDesktop.AtSpi` (27 files, accessibility) is stage 3 and has its own document, `atspi.md`; `Avalonia.Wayland` (81 files) and `Avalonia.LinuxFramebuffer` (30 files) are later stages, named at the end.
 
-Marks, as in `browser-platform.md`: **[V]** verified from sources (the upstream files, the sources of a crate in the cargo registry, `cargo info`), **[M]** measured here (a build or a test run on this machine), **[R]** recalled and not verified here, **[CI]** to be shown by the CI job on a real X server. **[VM]** measured in a virtual machine on the development machine (Ubuntu 24.04, ARM64, section 13). The development machine is a Mac; the CI job runs on x86-64 and had not run when this was written.
+Marks, as in `browser-platform.md`: **[V]** verified from sources (the upstream files, the sources of a crate in the cargo registry, `cargo info`), **[M]** measured here (a build or a test run on this machine), **[R]** recalled and not verified here, **[CI]** to be shown by the CI job on a real X server. **[VM]** measured in a virtual machine on the development machine (Ubuntu 24.04, ARM64, section 13). The development machine is a Mac; the CI job `x11` runs on x86-64 (green, last on run 38769434562 of 2026-10-15).
 
 ## 1. Crates
 
