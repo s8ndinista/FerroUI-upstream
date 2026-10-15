@@ -14,9 +14,10 @@
 ///
 /// ```ignore
 /// native_library! {
+///     #[library = "libfoo.so.1"]
 ///     /// The functions of libfoo.
-///     pub struct LibFoo("libfoo.so.1") {
-///         foo_create: fn(c_int) -> *mut c_void;
+///     pub struct LibFoo {
+///         foo_create: unsafe extern "C" fn(c_int) -> *mut c_void,
 ///     }
 /// }
 /// ```
@@ -27,9 +28,10 @@
 /// The library stays loaded for the life of the process.
 macro_rules! native_library {
     (
+        #[library = $library:literal]
         $(#[$meta:meta])*
-        $vis:vis struct $table:ident($library:literal) {
-            $($name:ident: fn($($arg:ty),* $(,)?) $(-> $ret:ty)?;)*
+        $vis:vis struct $table:ident {
+            $($name:ident: unsafe extern "C" fn($($arg:ty),* $(,)?) $(-> $ret:ty)?,)*
         }
     ) => {
         $(#[$meta])*

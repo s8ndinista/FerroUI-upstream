@@ -2,23 +2,23 @@
  "upstreamCommit": "17350180c33b063f0e98abbfd19aa3cae63f5d56",
  "inScope": {
   "files": [
-   2585,
+   2590,
    2626,
    0
   ],
   "types": [
-   3501,
+   3528,
    3991,
    311
   ],
   "members": [
-   28028,
+   28183,
    32701,
    2868
   ]
  },
  "allProjects": {
-  "membersPresent": 28028,
+  "membersPresent": 28183,
   "members": 37391,
   "membersNotApplicable": 1132,
   "membersOutOfScope": 3558
@@ -8686,17 +8686,17 @@
    "scope": "in",
    "detail": "full",
    "files": [
-    25,
+    30,
     30,
     0
    ],
    "types": [
-    34,
+    61,
     76,
     0
    ],
    "members": [
-    169,
+    324,
     529,
     0
    ],
@@ -8714,12 +8714,21 @@
    ],
    "notApplicableFiles": 0,
    "matchKinds": {
-    "field": 66,
-    "fn": 97,
-    "free fn": 1,
-    "overload fn": 5
+    "field": 136,
+    "fn": 134,
+    "free fn": 2,
+    "free item": 1,
+    "overload fn": 7,
+    "trait": 1,
+    "variant": 43
    },
    "presentFiles": {
+    "DrmConnectorType.cs": [
+     "drm_connector_type.rs"
+    ],
+    "DrmOutputOptions.cs": [
+     "drm_output_options.rs"
+    ],
     "EpollDispatcherImpl.cs": [
      "epoll_dispatcher_impl.rs"
     ],
@@ -8777,6 +8786,15 @@
     "NativeUnsafeMethods.cs": [
      "native_unsafe_methods.rs"
     ],
+    "Output/Drm.cs": [
+     "output/drm.rs"
+    ],
+    "Output/DrmBindings.cs": [
+     "output/drm_bindings.rs"
+    ],
+    "Output/DrmOutput.cs": [
+     "output/drm_output.rs"
+    ],
     "Output/FbDevBackBuffer.cs": [
      "output/fb_dev_back_buffer.rs"
     ],
@@ -8801,6 +8819,8 @@
     "input/ev_dev/ev_dev_keyboard.rs",
     "input/ev_dev/ev_dev_mouse.rs",
     "input/ev_dev/ev_dev_multi_touch_screen.rs",
+    "native_library.rs",
+    "output/drm_scanout.rs",
     "output/fb_device.rs",
     "raw_event_grouping.rs"
    ]

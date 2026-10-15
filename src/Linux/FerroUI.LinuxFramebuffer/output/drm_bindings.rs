@@ -199,7 +199,7 @@ impl DrmResources {
 
         let lib = LibDrm::get()?;
         // SAFETY: a call with a descriptor; the result is null or resources the caller frees.
-        let res = unsafe { (lib.drm.drmModeGetResources)(fd) };
+        let res = unsafe { lib.drm_mode_get_resources(fd) };
         if res.is_null() {
             return Err(io::Error::new(
                 io::Error::last_os_error().kind(),
@@ -215,14 +215,14 @@ impl DrmResources {
             let mut crtcs = Vec::with_capacity(res.count_crtcs.max(0) as usize);
             for c in 0..res.count_crtcs.max(0) as usize {
                 // SAFETY: see above; the result is null or a CRTC the caller frees.
-                let crtc = unsafe { (lib.drm.drmModeGetCrtc)(fd, *res.crtcs.add(c)) };
+                let crtc = unsafe { lib.drm_mode_get_crtc(fd, *res.crtcs.add(c)) };
                 if crtc.is_null() {
                     return Err(io::Error::other("drmModeGetCrtc failed"));
                 }
                 // SAFETY: a CRTC of the library, read and freed once.
                 unsafe {
                     crtcs.push(*crtc);
-                    (lib.drm.drmModeFreeCrtc)(crtc);
+                    lib.drm_mode_free_crtc(crtc);
                 }
             }
 
@@ -230,14 +230,14 @@ impl DrmResources {
                 // SAFETY: as for the CRTCs.
                 let id = unsafe { *res.encoders.add(c) };
                 // SAFETY: as for the CRTCs.
-                let enc = unsafe { (lib.drm.drmModeGetEncoder)(fd, id) };
+                let enc = unsafe { lib.drm_mode_get_encoder(fd, id) };
                 if enc.is_null() {
                     return Err(io::Error::other("drmModeGetEncoder failed"));
                 }
                 // SAFETY: an encoder of the library, read and freed once.
                 unsafe {
                     this.encoders.insert(id, DrmEncoder::new(*enc, &crtcs));
-                    (lib.drm.drmModeFreeEncoder)(enc);
+                    lib.drm_mode_free_encoder(enc);
                 }
             }
 
@@ -247,9 +247,9 @@ impl DrmResources {
                 // SAFETY: as for the CRTCs.
                 let conn = unsafe {
                     if connectors_force_probe {
-                        (lib.drm.drmModeGetConnector)(fd, id)
+                        lib.drm_mode_get_connector(fd, id)
                     } else {
-                        (lib.drm.drmModeGetConnectorCurrent)(fd, id)
+                        lib.drm_mode_get_connector_current(fd, id)
                     }
                 };
                 if conn.is_null() {
@@ -258,14 +258,14 @@ impl DrmResources {
                 // SAFETY: a connector of the library, read and freed once.
                 unsafe {
                     this.connectors.push(DrmConnector::new(&*conn));
-                    (lib.drm.drmModeFreeConnector)(conn);
+                    lib.drm_mode_free_connector(conn);
                 }
             }
             Ok(this)
         };
         let result = read();
         // SAFETY: the resources the call above returned, freed once.
-        unsafe { (lib.drm.drmModeFreeResources)(res) };
+        unsafe { lib.drm_mode_free_resources(res) };
         result
     }
 
@@ -358,18 +358,18 @@ impl DrmCard {
                     // SAFETY: a call with a descriptor; the result is null or resources that
                     // are read here and freed once.
                     unsafe {
-                        let resources = (lib.drm.drmModeGetResources)(fd);
+                        let resources = lib.drm_mode_get_resources(fd);
                         if !resources.is_null()
                             && (*resources).count_crtcs > 0
                             && (*resources).count_encoders > 0
                             && (*resources).count_connectors > 0
                         {
-                            (lib.drm.drmModeFreeResources)(resources);
+                            lib.drm_mode_free_resources(resources);
                             return Ok(Self { fd: AtomicI32::new(fd) });
                         }
 
                         if !resources.is_null() {
-                            (lib.drm.drmModeFreeResources)(resources);
+                            lib.drm_mode_free_resources(resources);
                         }
                         libc::close(fd);
                     }
