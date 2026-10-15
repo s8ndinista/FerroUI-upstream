@@ -1,6 +1,6 @@
 # A popup opened while its target is moved by a render transform (October 2026)
 
-Prepared for a decision of the owner. Nothing in the controls crate was changed: the behaviour is as described here, and the tests named below record it.
+**Decided (2026-10-15):** the owner chose the recommendation: record the difference as a deviation and fix it after the first preview. Fix 1 and 2 are in `primitives/popup.rs` (DEVIATIONS.md, "Popup"), with the reposition per frame; the ignored test below is active and passes, and the test of case (a) checks only the place given at the opening. The rest of this document is the analysis as it was written before the decision.
 
 ## What was seen
 

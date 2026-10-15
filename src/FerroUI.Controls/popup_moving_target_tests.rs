@@ -5,13 +5,14 @@
 //! The question they settle (`docs/porting/decisions/`, the decision on a
 //! popup opened while its target moves): a popup takes its anchor rectangle
 //! from where its target is at the time of the request (the bounds of the
-//! target transformed to the root), and an open popup is positioned again
-//! when its window moves, when the bounds of its target change in a layout
-//! pass, or when a parent popup moves. An animated render transform raises
-//! none of the three, so a popup opened in the middle of a transition stays
-//! where its target was then. That is the behaviour of upstream as well,
-//! and the second test records it; the third, ignored, states what a fix
-//! would have to achieve.
+//! target transformed to the root). Upstream positions an open popup again
+//! only when its window moves, when the bounds of its target change in a
+//! layout pass, or when a parent popup moves; an animated render transform
+//! raises none of the three, so there a popup opened in the middle of a
+//! transition stays where its target was then. The port also positions it
+//! again when a render transform above the target changes (DEVIATIONS.md,
+//! Popup): the second test checks the place given at the opening, the third
+//! that the popup ends below its target.
 //!
 //! The frames are the frames of an application, as in the tests of the
 //! native control host.
@@ -182,15 +183,13 @@ fn popup_opened_after_the_transition_is_placed_at_its_target() {
     assert_eq!(PixelPoint::new(40, 80), popup_position(&shell));
 }
 
-/// (a), the behaviour as it is, which is upstream's: a popup opened while
-/// its page slides in is given the rectangle of its target at that moment,
-/// and nothing positions it again when the page comes to rest, so it stays
-/// to the right of its target by what was left of the slide.
+/// (a) at the moment it opens: a popup opened while its page slides in is
+/// given the rectangle of its target at that moment, as upstream does.
 ///
 /// A user reaches this: the target is hit at its visual position during the
 /// transition (asserted here), so a press there opens the popup.
 #[test]
-fn popup_opened_during_the_transition_keeps_the_place_its_target_had_then_known_difference() {
+fn popup_opened_during_the_transition_is_placed_where_its_target_is_then() {
     let _app = UnitTestApplication::start(TestServices::styled_window());
     let shell = shell(1500.0);
     let target = target();
@@ -232,7 +231,6 @@ fn popup_opened_during_the_transition_keeps_the_place_its_target_had_then_known_
         given.x > at_rest().x + 1.0 && given.x <= moving.x,
         "the anchor rectangle {given:?} is that of the moving target (seen at {moving:?})"
     );
-    let updates_when_opened = shell.updates.borrow().len();
     let position_when_opened = popup_position(&shell);
     // Centred below the rectangle it was given: 20 further right, within the
     // pixel the positioner rounds a fractional place to (the target is
@@ -243,22 +241,14 @@ fn popup_opened_during_the_transition_keeps_the_place_its_target_had_then_known_
     );
     assert_eq!(80, position_when_opened.y);
 
-    run_to_end(&navigation);
-    assert_eq!(Some(at_rest()), position_in(&target, &shell.window));
-
-    // Nothing positioned the popup again: it is where the target was.
-    assert_eq!(updates_when_opened, shell.updates.borrow().len(), "the popup was not positioned again");
-    assert_eq!(position_when_opened, popup_position(&shell));
-    assert_ne!(PixelPoint::new(40, 80), popup_position(&shell));
     assert!(popup.is_open());
 }
 
-/// (a), as it would be with the proposed fix (the decision document): the
-/// popup is positioned again when the transform of its target to the root
-/// changes, so it ends below its target.
+/// (a) to the end, the deviation (DEVIATIONS.md, Popup; the decision
+/// document): the popup is positioned again when the transform of its
+/// target to the root changes, so it ends below its target. Upstream leaves
+/// it where the target was when it opened.
 #[test]
-#[ignore = "known difference shared with upstream: an open popup is not positioned again when only a render \
-            transform moves its target (docs/porting/decisions/popup-opened-while-its-target-moves.md)"]
 fn popup_opened_during_the_transition_ends_at_its_target() {
     let _app = UnitTestApplication::start(TestServices::styled_window());
     let shell = shell(1500.0);
