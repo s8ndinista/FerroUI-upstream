@@ -33,6 +33,15 @@ impl EvDevDeviceDescription {
         }
     }
 
+    pub fn set_path(&mut self, value: Option<String>) {
+        match self {
+            Self::TouchScreen(description) => description.path = value,
+            Self::Keyboard(description) => description.path = value,
+            Self::Mouse(description) => description.path = value,
+            Self::MultiTouchScreen(description) => description.path = value,
+        }
+    }
+
     /// Parses the value of an environment variable that names a device.
     pub(crate) fn parse_from_env(env: &str) -> Result<Self, String> {
         let format_ex = || FORMAT_ERROR.to_owned();
@@ -97,6 +106,22 @@ mod tests {
             panic!("not a touch screen");
         };
         assert_eq!(touch.calibration_matrix, Matrix::new(0.0, 1.0, -1.0, 0.0, 10.0, 20.0));
+    }
+
+    #[test]
+    fn the_path_is_set_on_the_description_of_every_kind() {
+        for env in [
+            "/dev/input/event0:type=touchscreen",
+            "/dev/input/event0:type=multitouch",
+            "/dev/input/event0:type=keyboard",
+            "/dev/input/event0:type=mouse",
+        ] {
+            let mut description = EvDevDeviceDescription::parse_from_env(env).unwrap();
+            description.set_path(Some("/dev/input/event7".to_owned()));
+            assert_eq!(description.path(), Some("/dev/input/event7"), "{env}");
+            description.set_path(None);
+            assert_eq!(description.path(), None, "{env}");
+        }
     }
 
     #[test]
