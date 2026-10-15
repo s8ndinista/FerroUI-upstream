@@ -2,7 +2,7 @@
 //! (the port of `Glx/GlxDisplay.cs`).
 
 use super::glx::{GlxFbConfig, GlxInterface};
-use super::glx_consts::*;
+use super::glx_consts::GlxConsts;
 use super::glx_context::GlxContext;
 use crate::x11_info::X11Info;
 use crate::x11_platform::X11PlatformOptions;
@@ -20,25 +20,25 @@ pub const IGNORE_RENDERER_BLACKLIST_VARIABLE: &str = "FERROUI_GLX_IGNORE_RENDERE
 
 /// The attributes of the frame buffer configuration that is asked for.
 pub(crate) const BASE_ATTRIBS: [i32; 20] = [
-    GLX_X_RENDERABLE,
+    GlxConsts::GLX_X_RENDERABLE,
     1,
-    GLX_RENDER_TYPE,
-    GLX_RGBA_BIT,
-    GLX_DRAWABLE_TYPE,
-    GLX_WINDOW_BIT | GLX_PBUFFER_BIT,
-    GLX_DOUBLEBUFFER,
+    GlxConsts::GLX_RENDER_TYPE,
+    GlxConsts::GLX_RGBA_BIT,
+    GlxConsts::GLX_DRAWABLE_TYPE,
+    GlxConsts::GLX_WINDOW_BIT | GlxConsts::GLX_PBUFFER_BIT,
+    GlxConsts::GLX_DOUBLEBUFFER,
     1,
-    GLX_RED_SIZE,
+    GlxConsts::GLX_RED_SIZE,
     8,
-    GLX_GREEN_SIZE,
+    GlxConsts::GLX_GREEN_SIZE,
     8,
-    GLX_BLUE_SIZE,
+    GlxConsts::GLX_BLUE_SIZE,
     8,
-    GLX_ALPHA_SIZE,
+    GlxConsts::GLX_ALPHA_SIZE,
     8,
-    GLX_DEPTH_SIZE,
+    GlxConsts::GLX_DEPTH_SIZE,
     1,
-    GLX_STENCIL_SIZE,
+    GlxConsts::GLX_STENCIL_SIZE,
     8,
 ];
 
@@ -63,14 +63,14 @@ pub(crate) fn choose_configuration(depths: &[Option<i32>]) -> Option<usize> {
 
 /// The profile mask of the context attributes for a version (`Create`).
 pub(crate) fn profile_mask(profile: GlVersion) -> i32 {
-    let mut profile_mask = GLX_CONTEXT_CORE_PROFILE_BIT_ARB;
+    let mut profile_mask = GlxConsts::GLX_CONTEXT_CORE_PROFILE_BIT_ARB;
     if profile.type_() == GlProfileType::OpenGL
         && profile.is_compatibility_profile()
         && (profile.major() > 3 || profile.major() == 3 && profile.minor() >= 2)
     {
-        profile_mask = GLX_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB;
+        profile_mask = GlxConsts::GLX_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB;
     } else if profile.type_() == GlProfileType::OpenGLES {
-        profile_mask = GLX_CONTEXT_ES2_PROFILE_BIT_EXT;
+        profile_mask = GlxConsts::GLX_CONTEXT_ES2_PROFILE_BIT_EXT;
     }
     profile_mask
 }
@@ -78,11 +78,11 @@ pub(crate) fn profile_mask(profile: GlVersion) -> i32 {
 /// The attributes a context of a version is created with.
 pub(crate) fn context_attribs(profile: GlVersion) -> [i32; 7] {
     [
-        GLX_CONTEXT_MAJOR_VERSION_ARB,
+        GlxConsts::GLX_CONTEXT_MAJOR_VERSION_ARB,
         profile.major(),
-        GLX_CONTEXT_MINOR_VERSION_ARB,
+        GlxConsts::GLX_CONTEXT_MINOR_VERSION_ARB,
         profile.minor(),
-        GLX_CONTEXT_PROFILE_MASK_ARB,
+        GlxConsts::GLX_CONTEXT_PROFILE_MASK_ARB,
         profile_mask(profile),
         0,
     ]
@@ -170,10 +170,11 @@ impl GlxDisplay {
         let Some(visual) = visuals[chosen] else {
             return Err(OpenGlException::new("Unable to get visual info from FBConfig"));
         };
-        let sample_count = glx.get_fb_config_attrib(deferred_display, fbconfig, GLX_SAMPLES).unwrap_or(0);
-        let stencil_size = glx.get_fb_config_attrib(deferred_display, fbconfig, GLX_STENCIL_SIZE).unwrap_or(0);
+        let sample_count = glx.get_fb_config_attrib(deferred_display, fbconfig, GlxConsts::GLX_SAMPLES).unwrap_or(0);
+        let stencil_size =
+            glx.get_fb_config_attrib(deferred_display, fbconfig, GlxConsts::GLX_STENCIL_SIZE).unwrap_or(0);
 
-        let attributes = [GLX_PBUFFER_WIDTH, 1, GLX_PBUFFER_HEIGHT, 1, 0];
+        let attributes = [GlxConsts::GLX_PBUFFER_WIDTH, 1, GlxConsts::GLX_PBUFFER_HEIGHT, 1, 0];
 
         // As the reference, which creates two pixel buffers here that it does not use.
         glx.create_pbuffer(deferred_display, fbconfig, &attributes);
@@ -227,7 +228,8 @@ impl GlxDisplay {
     }
 
     fn create_p_buffer(&self) -> XID {
-        self.glx.create_pbuffer(self.deferred_display, self.fbconfig, &[GLX_PBUFFER_WIDTH, 1, GLX_PBUFFER_HEIGHT, 1, 0])
+        let attributes = [GlxConsts::GLX_PBUFFER_WIDTH, 1, GlxConsts::GLX_PBUFFER_HEIGHT, 1, 0];
+        self.glx.create_pbuffer(self.deferred_display, self.fbconfig, &attributes)
     }
 
     /// A context with a pixel buffer of its own as its default drawable
@@ -333,35 +335,35 @@ mod tests {
     #[test]
     fn the_configuration_asks_for_a_double_buffered_rgba_window_with_stencil() {
         let value = |name: i32| BASE_ATTRIBS.chunks(2).find(|pair| pair[0] == name).map(|pair| pair[1]);
-        assert_eq!(value(GLX_X_RENDERABLE), Some(1));
-        assert_eq!(value(GLX_RENDER_TYPE), Some(GLX_RGBA_BIT));
-        assert_eq!(value(GLX_DRAWABLE_TYPE), Some(GLX_WINDOW_BIT | GLX_PBUFFER_BIT));
-        assert_eq!(value(GLX_DOUBLEBUFFER), Some(1));
-        assert_eq!(value(GLX_ALPHA_SIZE), Some(8));
-        assert_eq!(value(GLX_STENCIL_SIZE), Some(8));
+        assert_eq!(value(GlxConsts::GLX_X_RENDERABLE), Some(1));
+        assert_eq!(value(GlxConsts::GLX_RENDER_TYPE), Some(GlxConsts::GLX_RGBA_BIT));
+        assert_eq!(value(GlxConsts::GLX_DRAWABLE_TYPE), Some(GlxConsts::GLX_WINDOW_BIT | GlxConsts::GLX_PBUFFER_BIT));
+        assert_eq!(value(GlxConsts::GLX_DOUBLEBUFFER), Some(1));
+        assert_eq!(value(GlxConsts::GLX_ALPHA_SIZE), Some(8));
+        assert_eq!(value(GlxConsts::GLX_STENCIL_SIZE), Some(8));
     }
 
     #[test]
     fn the_profile_of_a_context_follows_its_version() {
         let core = GlVersion::new(GlProfileType::OpenGL, 4, 0);
-        assert_eq!(profile_mask(core), GLX_CONTEXT_CORE_PROFILE_BIT_ARB);
+        assert_eq!(profile_mask(core), GlxConsts::GLX_CONTEXT_CORE_PROFILE_BIT_ARB);
         let compatibility = GlVersion::with_compatibility_profile(GlProfileType::OpenGL, 3, 2, true);
-        assert_eq!(profile_mask(compatibility), GLX_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB);
+        assert_eq!(profile_mask(compatibility), GlxConsts::GLX_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB);
         // Before 3.2 there are no profiles: the bit of the core profile is sent, as in the reference.
         let old = GlVersion::with_compatibility_profile(GlProfileType::OpenGL, 3, 0, true);
-        assert_eq!(profile_mask(old), GLX_CONTEXT_CORE_PROFILE_BIT_ARB);
+        assert_eq!(profile_mask(old), GlxConsts::GLX_CONTEXT_CORE_PROFILE_BIT_ARB);
         let es = GlVersion::new(GlProfileType::OpenGLES, 3, 0);
-        assert_eq!(profile_mask(es), GLX_CONTEXT_ES2_PROFILE_BIT_EXT);
+        assert_eq!(profile_mask(es), GlxConsts::GLX_CONTEXT_ES2_PROFILE_BIT_EXT);
 
         assert_eq!(
             context_attribs(GlVersion::new(GlProfileType::OpenGLES, 3, 2)),
             [
-                GLX_CONTEXT_MAJOR_VERSION_ARB,
+                GlxConsts::GLX_CONTEXT_MAJOR_VERSION_ARB,
                 3,
-                GLX_CONTEXT_MINOR_VERSION_ARB,
+                GlxConsts::GLX_CONTEXT_MINOR_VERSION_ARB,
                 2,
-                GLX_CONTEXT_PROFILE_MASK_ARB,
-                GLX_CONTEXT_ES2_PROFILE_BIT_EXT,
+                GlxConsts::GLX_CONTEXT_PROFILE_MASK_ARB,
+                GlxConsts::GLX_CONTEXT_ES2_PROFILE_BIT_EXT,
                 0
             ]
         );

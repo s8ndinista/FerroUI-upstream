@@ -118,9 +118,10 @@ impl FileWatcherTransport {
             std::thread::sleep(Duration::from_millis(100));
         }
     }
+}
 
-    /// `ITransportWithEnforcedMethod.PreviewerMethod`.
-    pub(crate) fn previewer_method(&self) -> &'static str {
+impl ITransportWithEnforcedMethod for FileWatcherTransport {
+    fn previewer_method(&self) -> &'static str {
         methods::HTML
     }
 }
@@ -159,6 +160,11 @@ impl IFerroRemoteTransportConnection for FileWatcherTransport {
             .spawn(move || Self::updater_thread(this))
             .expect("failed to start the file watcher thread");
     }
+}
+
+/// A transport that decides the method of the previewer itself.
+pub(crate) trait ITransportWithEnforcedMethod {
+    fn previewer_method(&self) -> &'static str;
 }
 
 #[cfg(test)]

@@ -577,7 +577,7 @@ impl StatusNotifierItemDbusObj {
             return Ok(());
         };
         let handle = self.handle.borrow_mut().get_or_insert_with(|| UiThreadHandle::register(this)).clone();
-        let object = StatusNotifierItemObject { item: handle, menu: self.menu.clone(), state: self.state.clone() };
+        let object = StatusNotifierItemDbusObjImpl { item: handle, menu: self.menu.clone(), state: self.state.clone() };
         self.connection.object_server().at(STATUS_NOTIFIER_ITEM_PATH, object).await.map(|_| ())
     }
 
@@ -585,7 +585,8 @@ impl StatusNotifierItemDbusObj {
     fn unexport(&self) {
         let connection = self.connection.clone();
         drop(Dispatcher::ui_thread().invoke_async_task_local(move || async move {
-            let _ = connection.object_server().remove::<StatusNotifierItemObject, _>(STATUS_NOTIFIER_ITEM_PATH).await;
+            let object_server = connection.object_server();
+            let _ = object_server.remove::<StatusNotifierItemDbusObjImpl, _>(STATUS_NOTIFIER_ITEM_PATH).await;
         }));
     }
 
@@ -601,12 +602,12 @@ impl StatusNotifierItemDbusObj {
             let Ok(emitter) = SignalEmitter::new(&connection, STATUS_NOTIFIER_ITEM_PATH) else {
                 return;
             };
-            let _ = StatusNotifierItemObject::new_title(&emitter).await;
-            let _ = StatusNotifierItemObject::new_icon(&emitter).await;
-            let _ = StatusNotifierItemObject::new_attention_icon(&emitter).await;
-            let _ = StatusNotifierItemObject::new_overlay_icon(&emitter).await;
-            let _ = StatusNotifierItemObject::new_tool_tip(&emitter).await;
-            let _ = StatusNotifierItemObject::new_status(&emitter, STATUS_ACTIVE).await;
+            let _ = StatusNotifierItemDbusObjImpl::new_title(&emitter).await;
+            let _ = StatusNotifierItemDbusObjImpl::new_icon(&emitter).await;
+            let _ = StatusNotifierItemDbusObjImpl::new_attention_icon(&emitter).await;
+            let _ = StatusNotifierItemDbusObjImpl::new_overlay_icon(&emitter).await;
+            let _ = StatusNotifierItemDbusObjImpl::new_tool_tip(&emitter).await;
+            let _ = StatusNotifierItemDbusObjImpl::new_status(&emitter, STATUS_ACTIVE).await;
         }));
     }
 
@@ -630,14 +631,15 @@ impl StatusNotifierItemDbusObj {
     }
 }
 
-/// The object the connection exports for the item.
-pub(crate) struct StatusNotifierItemObject {
+/// The object the connection exports for the item: the handler of the
+/// interface of `StatusNotifierItemDbusObj`, on the thread of the connection.
+pub(crate) struct StatusNotifierItemDbusObjImpl {
     item: UiThreadHandle<StatusNotifierItemDbusObj>,
     menu: OwnedObjectPath,
     state: Arc<Mutex<ItemState>>,
 }
 
-impl StatusNotifierItemObject {
+impl StatusNotifierItemDbusObjImpl {
     fn state(&self) -> std::sync::MutexGuard<'_, ItemState> {
         self.state.lock().unwrap_or_else(PoisonError::into_inner)
     }
@@ -647,7 +649,7 @@ impl StatusNotifierItemObject {
 type ToolTip = (String, Vec<DBusPixmap>, String, String);
 
 #[zbus::interface(name = "org.kde.StatusNotifierItem")]
-impl StatusNotifierItemObject {
+impl StatusNotifierItemDbusObjImpl {
     #[zbus(property)]
     fn category(&self) -> String {
         self.state().category.clone()

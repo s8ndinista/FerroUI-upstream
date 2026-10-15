@@ -197,9 +197,20 @@ impl FerroX11Platform {
         self.deferred_display.get().expect("the X11 platform is initialized")
     }
 
+    /// Sets the connection the thread that renders draws through
+    /// (`DeferredDisplay { set; }`).
+    pub fn set_deferred_display(&self, value: XDisplay) {
+        self.deferred_display.set(Some(value));
+    }
+
     /// The connection of the UI thread.
     pub fn display(&self) -> XDisplay {
         self.display.get().expect("the X11 platform is initialized")
+    }
+
+    /// Sets the connection of the UI thread (`Display { set; }`).
+    pub fn set_display(&self, value: XDisplay) {
+        self.display.set(Some(value));
     }
 
     /// The platform graphics of GLX, when they are the ones the platform
@@ -260,11 +271,11 @@ impl FerroX11Platform {
         let Some(display) = xlib::x_open_display() else {
             X11Exception::new("XOpenDisplay failed").throw();
         };
-        self.display.set(Some(display));
+        self.set_display(display);
         let Some(deferred_display) = xlib::x_open_display() else {
             X11Exception::new("XOpenDisplay failed").throw();
         };
-        self.deferred_display.set(Some(deferred_display));
+        self.set_deferred_display(deferred_display);
 
         self.orphaned_window.set(xlib::x_create_simple_window(
             display,

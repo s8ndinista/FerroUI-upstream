@@ -1,5 +1,5 @@
 use crate::design_window_loader::DesignWindowLoader;
-use crate::remote::file_watcher_transport::FileWatcherTransport;
+use crate::remote::file_watcher_transport::{FileWatcherTransport, ITransportWithEnforcedMethod};
 use crate::remote::html_transport::HtmlWebSocketTransport;
 use crate::remote::previewer_windowing_platform::PreviewerWindowingPlatform;
 use ferroui_base::threading::{CancellationToken, Dispatcher, DispatcherPriority};
