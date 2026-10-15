@@ -806,7 +806,7 @@ impl X11Window {
             );
         }
 
-        surfaces.push(Arc::new(SurfacePlatformHandle { shared: window.shared.clone() }));
+        surfaces.push(Arc::new(SurfacePlatformHandle::new(&window)));
 
         *window.surfaces.borrow_mut() = surfaces;
         window.update_effective_system_decorations();
@@ -2681,6 +2681,10 @@ pub struct SurfacePlatformHandle {
 }
 
 impl SurfacePlatformHandle {
+    pub fn new(owner: &X11Window) -> Self {
+        Self { shared: owner.shared.clone() }
+    }
+
     fn client_size(&self) -> Size {
         let real_size = self.shared.real_size();
         Size::new(real_size.width as f64 / self.shared.scaling(), real_size.height as f64 / self.shared.scaling())
