@@ -3,7 +3,7 @@
 //! declared with the table form of the macro directly, so the table is
 //! exercised on the host whatever the target.
 
-use crate::ferro_thread_local::AccessError;
+use crate::ferro_thread_local::table::AccessError;
 use std::cell::{Cell, RefCell};
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::atomic::{AtomicUsize, Ordering};

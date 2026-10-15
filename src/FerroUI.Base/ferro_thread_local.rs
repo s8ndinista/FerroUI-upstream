@@ -44,13 +44,17 @@
     ferro_tls_table,
     all(test, any(target_os = "linux", target_os = "macos"))
 ))]
-mod table;
-#[cfg(any(
-    target_os = "android",
-    ferro_tls_table,
-    all(test, any(target_os = "linux", target_os = "macos"))
-))]
+#[doc(hidden)]
+pub mod table;
+
+/// The type of a variable [`ferro_thread_local!`](macro@crate::ferro_thread_local) declares, and
+/// the error of its `try_with`: those of the standard library where the macro is
+/// `std::thread_local!`, those of the table on Android. Code that names the type (a function that
+/// takes `&'static LocalKey<T>`) names this one.
+#[cfg(any(target_os = "android", ferro_tls_table))]
 pub use table::{AccessError, LocalKey};
+#[cfg(not(any(target_os = "android", ferro_tls_table)))]
+pub use std::thread::{AccessError, LocalKey};
 
 /// Declares thread-local variables: `std::thread_local!` on targets with
 /// thread-local statics, a slot of the table of the thread on Android (see
@@ -101,12 +105,12 @@ macro_rules! ferro_thread_local {
 #[macro_export]
 macro_rules! __ferro_thread_local_table {
     (@key $(#[$attr:meta])* $vis:vis $name:ident, $t:ty, $init:expr) => {
-        $(#[$attr])* $vis static $name: $crate::ferro_thread_local::LocalKey<$t> = {
+        $(#[$attr])* $vis static $name: $crate::ferro_thread_local::table::LocalKey<$t> = {
             #[inline]
             fn __init() -> $t {
                 $init
             }
-            $crate::ferro_thread_local::LocalKey::new(__init)
+            $crate::ferro_thread_local::table::LocalKey::new(__init)
         };
     };
     () => {};
