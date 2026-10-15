@@ -510,8 +510,8 @@ mod app {
             &self.events
         }
 
-        fn text_view_visual(&self) -> Ref<Visual> {
-            self.visual.clone()
+        fn text_view_visual(&self) -> Option<Ref<Visual>> {
+            Some(self.visual.clone())
         }
 
         fn supports_preedit(&self) -> bool {

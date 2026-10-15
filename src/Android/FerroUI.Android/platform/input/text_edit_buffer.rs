@@ -322,8 +322,8 @@ pub(crate) mod test_support {
             &self.events
         }
 
-        fn text_view_visual(&self) -> Ref<Visual> {
-            unreachable!("the Android input method does not ask for the visual")
+        fn text_view_visual(&self) -> Option<Ref<Visual>> {
+            None
         }
 
         fn supports_preedit(&self) -> bool {

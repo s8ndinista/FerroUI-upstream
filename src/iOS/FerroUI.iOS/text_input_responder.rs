@@ -1074,7 +1074,7 @@ mod uikit {
                 let get = || -> Option<Retained<UITextPosition>> {
                 log("IUITextInput:GetClosestPositionToPoint");
 
-                let presenter = self.ivars().client.text_view_visual().cast::<TextPresenter>();
+                let presenter = self.ivars().client.text_view_visual().and_then(|visual| visual.cast::<TextPresenter>());
 
                 if let Some(presenter) = presenter {
                     let hit_result = presenter.text_layout().hit_test_point(Point::new(point.x, point.y));

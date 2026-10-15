@@ -688,8 +688,8 @@ mod windows {
             &self.events
         }
 
-        fn text_view_visual(&self) -> Ref<ferroui_base::Visual> {
-            unreachable!("the input method of the system does not ask for the visual")
+        fn text_view_visual(&self) -> Option<Ref<ferroui_base::Visual>> {
+            None
         }
 
         fn supports_preedit(&self) -> bool {

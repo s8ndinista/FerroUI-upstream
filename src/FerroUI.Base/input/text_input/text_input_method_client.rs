@@ -74,8 +74,9 @@ pub trait TextInputMethodClient {
     /// The events of the client.
     fn events(&self) -> &TextInputMethodClientEvents;
 
-    /// The visual that's showing the text.
-    fn text_view_visual(&self) -> Ref<Visual>;
+    /// The visual that's showing the text, or `None` when the client has
+    /// none (a text box without a template).
+    fn text_view_visual(&self) -> Option<Ref<Visual>>;
 
     /// Indicates if the text input method client is capable of displaying
     /// non-committed input on the cursor position.

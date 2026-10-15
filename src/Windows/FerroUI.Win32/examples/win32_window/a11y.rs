@@ -165,9 +165,10 @@ fn create_main_window() -> Ref<Window> {
     let text_box = TextBox::new();
     text_box.set_text(Some(TEXT));
     // A text box takes the focus through its presenter, a part of its template, which this one
-    // does not have (the client of its input method fails without one: run 38098620662). It is
-    // made not focusable, which is then what the client has to read of it; the focus of the run
-    // is given to the slider.
+    // does not have. The client of its input method failed without one (run 38098620662) until
+    // its text view visual became optional, as upstream's is nullable; the text box stays not
+    // focusable, which is then what the client has to read of it, so that the focus of the run,
+    // as measured on the runners, is given to the slider.
     text_box.set_focusable(false);
     text_box.set_width(200.0);
     text_box.set_height(32.0);
