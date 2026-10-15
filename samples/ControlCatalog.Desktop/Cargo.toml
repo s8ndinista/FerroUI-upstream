@@ -28,6 +28,10 @@ ferroui-vello = { workspace = true, optional = true, features = ["hybrid", "gpu"
 [target.'cfg(windows)'.dependencies]
 ferroui-win32 = { workspace = true }
 
+# The options of a smoke run on macOS (`FERROUI_SMOKE_RENDERING`).
+[target.'cfg(target_os = "macos")'.dependencies]
+ferroui-native = { workspace = true }
+
 # The native control demo of Linux: a window of the X server and a file chooser of GTK.
 [target.'cfg(target_os = "linux")'.dependencies]
 ferroui-x11 = { workspace = true }

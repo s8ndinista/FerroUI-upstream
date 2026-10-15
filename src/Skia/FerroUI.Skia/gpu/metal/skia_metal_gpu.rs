@@ -1,4 +1,7 @@
 use super::{AutoReleasePool, SkiaMetalExternalObjectsFeature};
+#[cfg(ferro_skia_apple_ganesh)]
+use crate::gpu::ganesh::GaneshGrContext;
+#[cfg(not(ferro_skia_apple_ganesh))]
 use crate::gpu::graphite::GraphiteGrContext;
 use crate::gpu::{
     ISkiaGpu, ISkiaGpuRenderSession, ISkiaGpuRenderTarget, ISkiaGrContext, ISkiaSurface, ScopedGrContext,
@@ -15,18 +18,36 @@ use ferroui_base::platform::{
 };
 use ferroui_base::reactive::IDisposable;
 use ferroui_base::PixelSize;
+#[cfg(ferro_skia_apple_ganesh)]
+use crate::skia_options::SkiaOptions;
+#[cfg(ferro_skia_apple_ganesh)]
+use skia_safe::gpu::{
+    backend_render_targets, direct_contexts, mtl, surfaces, BackendRenderTarget, ContextOptions, SurfaceOrigin,
+};
+#[cfg(not(ferro_skia_apple_ganesh))]
 use skia_safe::gpu::graphite::mtl::{backend_textures, context_factory, BackendContext};
+#[cfg(not(ferro_skia_apple_ganesh))]
 use skia_safe::gpu::graphite::surfaces;
 use skia_safe::{ColorType, Surface};
 use std::any::{Any, TypeId};
 use std::cell::RefCell;
 use std::rc::Rc;
 
-/// The Graphite context shared by a Metal GPU and its render targets; empty
-/// once the GPU has been disposed.
-pub(super) type SharedContext = Rc<RefCell<Option<Rc<GraphiteGrContext>>>>;
+/// The Skia context of a Metal GPU: Graphite, or Ganesh in the configuration
+/// `ferro_skia_apple_ganesh` (the original's `GRContext`).
+#[cfg(not(ferro_skia_apple_ganesh))]
+pub(super) type MetalGrContext = GraphiteGrContext;
+/// The Skia context of a Metal GPU: Graphite, or Ganesh in the configuration
+/// `ferro_skia_apple_ganesh` (the original's `GRContext`).
+#[cfg(ferro_skia_apple_ganesh)]
+pub(super) type MetalGrContext = GaneshGrContext;
 
-/// A Skia GPU that renders with a platform Metal device through Graphite.
+/// The Skia context shared by a Metal GPU and its render targets; empty
+/// once the GPU has been disposed.
+pub(super) type SharedContext = Rc<RefCell<Option<Rc<MetalGrContext>>>>;
+
+/// A Skia GPU that renders with a platform Metal device through Graphite
+/// (Ganesh in the configuration `ferro_skia_apple_ganesh`).
 pub struct SkiaMetalGpu {
     context: SharedContext,
     device: Rc<dyn IMetalDevice>,
@@ -42,6 +63,7 @@ impl SkiaMetalGpu {
     ///
     /// # Panics
     /// Panics when Skia cannot create a context for the device.
+    #[cfg(not(ferro_skia_apple_ganesh))]
     pub fn new(device: Rc<dyn IMetalDevice>, max_resource_bytes: Option<i64>, _use_stencil_buffers: Option<bool>) -> Rc<Self> {
         // SAFETY: the device contract hands out valid `id<MTLDevice>` and
         // `id<MTLCommandQueue>` handles; Skia retains both for the lifetime
@@ -65,11 +87,44 @@ impl SkiaMetalGpu {
         Rc::new(Self { context, device, external_objects })
     }
 
-    /// The Graphite context of the GPU.
+    /// Creates a Skia GPU for a Metal device on Ganesh (the configuration
+    /// `ferro_skia_apple_ganesh`), as the original does: the stencil option
+    /// and the limit of the resource cache go to the context.
+    ///
+    /// # Panics
+    /// Panics when Skia cannot create a context for the device.
+    #[cfg(ferro_skia_apple_ganesh)]
+    pub fn new(device: Rc<dyn IMetalDevice>, max_resource_bytes: Option<i64>, use_stencil_buffers: Option<bool>) -> Rc<Self> {
+        let avoid_stencil_buffers = SkiaOptions::should_avoid_stencil_buffers(use_stencil_buffers);
+        // SAFETY: the device contract hands out valid `id<MTLDevice>` and
+        // `id<MTLCommandQueue>` handles; the backend context retains both
+        // until it is dropped, and the direct context takes references of
+        // its own.
+        let backend_context = unsafe { mtl::BackendContext::new(device.device() as _, device.command_queue() as _) };
+        let mut options = ContextOptions::default();
+        options.avoid_stencil_buffers = avoid_stencil_buffers;
+        let context = direct_contexts::make_metal(&backend_context, &options)
+            .map(GaneshGrContext::new)
+            .unwrap_or_else(|| panic!("Unable to create GRContext from Metal device."));
+        let context = Rc::new(context);
+        let shared: SharedContext = Rc::new(RefCell::new(Some(context.clone())));
+
+        let features: &dyn IOptionalFeatureProvider = &*device;
+        let external_objects = features
+            .try_get::<dyn IMetalExternalObjectsFeature>()
+            .map(|external_objects| Rc::new(SkiaMetalExternalObjectsFeature::new(shared.clone(), external_objects)));
+        if let Some(max_resource_bytes) = max_resource_bytes {
+            context.set_resource_cache_limit(max_resource_bytes);
+        }
+
+        Rc::new(Self { context: shared, device, external_objects })
+    }
+
+    /// The Skia context of the GPU.
     ///
     /// # Panics
     /// Panics when the GPU has been disposed.
-    pub fn gr_context(&self) -> Rc<GraphiteGrContext> {
+    pub fn gr_context(&self) -> Rc<MetalGrContext> {
         self.context.borrow().clone().expect("SkiaMetalGpu has been disposed")
     }
 }
@@ -100,7 +155,11 @@ impl IPlatformGraphicsContext for SkiaMetalGpu {
 
     fn dispose(&self) {
         if let Some(context) = self.context.borrow_mut().take() {
+            #[cfg(not(ferro_skia_apple_ganesh))]
             context.dispose();
+            // The device is never lost, so the resources are freed with it.
+            #[cfg(ferro_skia_apple_ganesh)]
+            context.dispose(true);
         }
     }
 
@@ -165,6 +224,7 @@ impl SkiaMetalRenderTarget {
 }
 
 impl ISkiaGpuRenderTarget for SkiaMetalRenderTarget {
+    #[cfg(not(ferro_skia_apple_ganesh))]
     fn begin_rendering_session(&self, _scene_info: &RenderTargetSceneInfo) -> Rc<dyn ISkiaGpuRenderSession> {
         let target = self.target.borrow().clone().expect("SkiaMetalRenderTarget has been disposed");
         let context = self.context.borrow().clone().expect("SkiaMetalGpu has been disposed");
@@ -189,6 +249,39 @@ impl ISkiaGpuRenderTarget for SkiaMetalRenderTarget {
         Rc::new(SkiaMetalRenderSession::new(context, surface, session))
     }
 
+    /// The texture of the session as a Ganesh render target with the origin
+    /// the session reports (the configuration `ferro_skia_apple_ganesh`), as
+    /// the original does.
+    #[cfg(ferro_skia_apple_ganesh)]
+    fn begin_rendering_session(&self, _scene_info: &RenderTargetSceneInfo) -> Rc<dyn ISkiaGpuRenderSession> {
+        // The original: "TODO: use expectedPixelSize".
+        let target = self.target.borrow().clone().expect("SkiaMetalRenderTarget has been disposed");
+        let context = self.context.borrow().clone().expect("SkiaMetalGpu has been disposed");
+
+        let session = target.begin_rendering();
+        let size = session.size();
+
+        // SAFETY: the session keeps the `id<MTLTexture>` it hands out alive
+        // until it is disposed, which happens after the surface and the
+        // render target wrapping the texture are released (see
+        // `SkiaMetalRenderSession::dispose`).
+        let texture_info = unsafe { mtl::TextureInfo::new(session.texture() as _) };
+        let backend_target = backend_render_targets::make_mtl((size.width, size.height), &texture_info);
+
+        let origin = if session.is_y_flipped() { SurfaceOrigin::BottomLeft } else { SurfaceOrigin::TopLeft };
+        let surface = context.with_context(|context| {
+            surfaces::wrap_backend_render_target(context, &backend_target, origin, ColorType::BGRA8888, None, None)
+        });
+
+        let Some(surface) = surface else {
+            drop(backend_target);
+            session.dispose();
+            panic!("Unable to create a Skia surface for the Metal texture.");
+        };
+
+        Rc::new(SkiaMetalRenderSession::new(context, surface, session, backend_target))
+    }
+
     fn state(&self) -> PlatformRenderTargetState {
         match &*self.target.borrow() {
             Some(target) => target.state(),
@@ -205,9 +298,13 @@ impl ISkiaGpuRenderTarget for SkiaMetalRenderTarget {
 
 /// One frame rendered with Skia to a Metal texture.
 pub struct SkiaMetalRenderSession {
-    context: Rc<GraphiteGrContext>,
+    context: Rc<MetalGrContext>,
     surface: RefCell<Option<Surface>>,
     session: RefCell<Option<Rc<dyn IMetalPlatformSurfaceRenderingSession>>>,
+    /// The texture of the session as a Ganesh render target, released after
+    /// the surface and the session.
+    #[cfg(ferro_skia_apple_ganesh)]
+    backend_target: RefCell<Option<BackendRenderTarget>>,
     scale_factor: f64,
     is_y_flipped: bool,
     auto_release_pool: AutoReleasePool,
@@ -215,9 +312,10 @@ pub struct SkiaMetalRenderSession {
 
 impl SkiaMetalRenderSession {
     fn new(
-        context: Rc<GraphiteGrContext>,
+        context: Rc<MetalGrContext>,
         surface: Surface,
         session: Rc<dyn IMetalPlatformSurfaceRenderingSession>,
+        #[cfg(ferro_skia_apple_ganesh)] backend_target: BackendRenderTarget,
     ) -> Self {
         Self {
             auto_release_pool: AutoReleasePool::new(),
@@ -226,6 +324,8 @@ impl SkiaMetalRenderSession {
             scale_factor: session.scaling(),
             is_y_flipped: session.is_y_flipped(),
             session: RefCell::new(Some(session)),
+            #[cfg(ferro_skia_apple_ganesh)]
+            backend_target: RefCell::new(Some(backend_target)),
         }
     }
 }
@@ -261,6 +361,9 @@ impl ISkiaGpuRenderSession for SkiaMetalRenderSession {
         if let Some(session) = self.session.borrow_mut().take() {
             session.dispose();
         }
+
+        #[cfg(ferro_skia_apple_ganesh)]
+        self.backend_target.borrow_mut().take();
 
         self.auto_release_pool.dispose();
     }

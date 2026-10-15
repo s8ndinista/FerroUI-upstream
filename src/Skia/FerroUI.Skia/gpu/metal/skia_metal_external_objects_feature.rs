@@ -1,5 +1,4 @@
-use super::skia_metal_gpu::SharedContext;
-use crate::gpu::graphite::GraphiteGrContext;
+use super::skia_metal_gpu::{MetalGrContext, SharedContext};
 use crate::gpu::ISkiaGrContext;
 use crate::immutable_bitmap::ImmutableBitmap;
 use crate::metal::{IMetalExternalObjectsFeature, IMetalExternalTexture, IMetalSharedEvent};
@@ -11,24 +10,32 @@ use ferroui_base::platform::{
 use ferroui_base::rendering::composition::{
     CompositionGpuImportedImageSynchronizationCapabilities, ICompositionImportableSharedGpuContextImage,
 };
+#[cfg(ferro_skia_apple_ganesh)]
+use skia_safe::gpu::{backend_render_targets, mtl, surfaces, SurfaceOrigin};
+#[cfg(not(ferro_skia_apple_ganesh))]
 use skia_safe::gpu::graphite::mtl::backend_textures;
+#[cfg(not(ferro_skia_apple_ganesh))]
 use skia_safe::gpu::graphite::{surfaces, Recorder};
+#[cfg(not(ferro_skia_apple_ganesh))]
 use skia_safe::gpu::Mipmapped;
-use skia_safe::{BlendMode, ColorType, Image, Paint, SamplingOptions};
+use skia_safe::ColorType;
+#[cfg(not(ferro_skia_apple_ganesh))]
+use skia_safe::{BlendMode, Image, Paint, SamplingOptions};
 use std::any::Any;
 use std::rc::Rc;
 use std::sync::Arc;
 
 /// Imports images and shared events that were created outside of the
-/// framework into the Graphite context of a Metal Skia GPU, through the
+/// framework into the Graphite context (the Ganesh context in the
+/// configuration `ferro_skia_apple_ganesh`) of a Metal Skia GPU, through the
 /// external objects feature of the Metal device.
 ///
 /// The feature and everything it imports are objects of the render
 /// interface: they hold the Graphite context of the GPU and objects of the
 /// device, and are used under the lock of the compositor they belong to.
 // The original holds its `SkiaMetalGpu`; the GPU owns the feature here, so
-// the feature holds what it reads of the GPU instead: the Graphite context
-// the GPU shares with its render targets.
+// the feature holds what it reads of the GPU instead: the Skia context the
+// GPU shares with its render targets.
 pub struct SkiaMetalExternalObjectsFeature {
     context: SharedContext,
     inner: Rc<dyn IMetalExternalObjectsFeature>,
@@ -73,7 +80,7 @@ fn imported_semaphore(semaphore: &Rc<dyn IPlatformRenderInterfaceImportedSemapho
 
 /// An image of another device or process, imported as a texture of the
 /// Metal device. A snapshot copies the texture into an image of the
-/// Graphite context.
+/// Skia context.
 pub struct ImportedImage {
     context: SharedContext,
     feature: Rc<dyn IMetalExternalObjectsFeature>,
@@ -83,15 +90,16 @@ pub struct ImportedImage {
 }
 
 impl ImportedImage {
-    /// The Graphite context of the GPU.
+    /// The Skia context of the GPU.
     ///
     /// # Panics
     /// Panics when the GPU has been disposed.
-    fn gr_context(&self) -> Rc<GraphiteGrContext> {
+    fn gr_context(&self) -> Rc<MetalGrContext> {
         self.context.borrow().clone().expect("SkiaMetalGpu has been disposed")
     }
 
     /// A copy of `image` with its rows in the opposite order.
+    #[cfg(not(ferro_skia_apple_ganesh))]
     fn flip_vertically(recorder: &mut Recorder, image: &Image) -> Option<Image> {
         let mut surface = surfaces::render_target(recorder, image.image_info(), Mipmapped::No, None, None)?;
         let mut paint = Paint::default();
@@ -131,6 +139,7 @@ impl IPlatformRenderInterfaceImportedImage for ImportedImage {
     /// Panics when the GPU has been disposed, when a semaphore was not
     /// imported by this backend and when the texture cannot be wrapped or
     /// copied.
+    #[cfg(not(ferro_skia_apple_ganesh))]
     fn snapshot_with_timeline_semaphores(
         &self,
         wait_for_semaphore: &Rc<dyn IPlatformRenderInterfaceImportedSemaphore>,
@@ -170,6 +179,46 @@ impl IPlatformRenderInterfaceImportedImage for ImportedImage {
         };
 
         let rv = ImmutableBitmap::from_image(image, None);
+        gr_context.flush();
+        self.feature.submit_signal(&**imported_semaphore(signal_semaphore).event(), signal_value);
+        Arc::new(rv)
+    }
+
+    /// # Panics
+    /// Panics when the GPU has been disposed, when a semaphore was not
+    /// imported by this backend and when the texture cannot be wrapped.
+    #[cfg(ferro_skia_apple_ganesh)]
+    fn snapshot_with_timeline_semaphores(
+        &self,
+        wait_for_semaphore: &Rc<dyn IPlatformRenderInterfaceImportedSemaphore>,
+        wait_for_value: u64,
+        signal_semaphore: &Rc<dyn IPlatformRenderInterfaceImportedSemaphore>,
+        signal_value: u64,
+    ) -> Arc<SharedBitmapImpl> {
+        let gr_context = self.gr_context();
+
+        // `Flush(true, false)` of the original: submitted, not waited for.
+        gr_context.flush();
+        self.feature.submit_wait(&**imported_semaphore(wait_for_semaphore).event(), wait_for_value);
+
+        // SAFETY: the imported texture keeps the `id<MTLTexture>` it hands
+        // out alive until it is disposed; the render target and the surface
+        // that wrap the texture are released before this function returns,
+        // and the snapshot is a copy of its own (the surface wraps a render
+        // target, which an image cannot share).
+        let texture_info = unsafe { mtl::TextureInfo::new(self.texture.handle() as _) };
+        let backend_target =
+            backend_render_targets::make_mtl((self.texture.width(), self.texture.height()), &texture_info);
+        let origin = if self.top_left_origin { SurfaceOrigin::TopLeft } else { SurfaceOrigin::BottomLeft };
+        let surface = gr_context.with_context(|context| {
+            surfaces::wrap_backend_render_target(context, &backend_target, origin, self.color_type, None, None)
+        });
+        let Some(mut surface) = surface else {
+            panic!("Unable to create a Skia surface for the Metal texture.");
+        };
+        let rv = ImmutableBitmap::from_image(surface.image_snapshot(), None);
+        drop(surface);
+        drop(backend_target);
         gr_context.flush();
         self.feature.submit_signal(&**imported_semaphore(signal_semaphore).event(), signal_value);
         Arc::new(rv)

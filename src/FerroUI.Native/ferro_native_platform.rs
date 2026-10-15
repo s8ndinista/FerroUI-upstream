@@ -9,6 +9,7 @@ use crate::extensions::as_com_bool;
 use crate::ferro_native_application_platform::FerroNativeApplicationPlatform;
 use crate::ferro_native_menu_exporter::FerroNativeMenuExporter;
 use crate::ferro_native_drag_source::{free_data_transfer_handle, FerroNativeDragSource};
+use crate::ferro_native_gl_platform_graphics::FerroNativeGlPlatformGraphics;
 use crate::ferro_native_platform_extensions::{
     FerroNativePlatformOptions, FerroNativeRenderingMode, MacOSPlatformOptions,
 };
@@ -337,8 +338,16 @@ impl FerroNativePlatform {
         for mode in &options.rendering_mode {
             match mode {
                 FerroNativeRenderingMode::OpenGl => {
-                    // OpenGL platform graphics are not ported yet: the mode
-                    // is skipped like a mode that failed to initialize.
+                    // A failure is ignored, as in the original: the next
+                    // mode is tried.
+                    let Ok(Some(display)) = factory.obtain_gl_display() else {
+                        continue;
+                    };
+                    let Ok(gl) = FerroNativeGlPlatformGraphics::new(display, &factory) else {
+                        continue;
+                    };
+                    *self.platform_graphics.borrow_mut() = Some(Arc::new(gl));
+                    break;
                 }
                 FerroNativeRenderingMode::Metal => {
                     let Ok(metal) = MetalPlatformGraphics::new(&factory) else {

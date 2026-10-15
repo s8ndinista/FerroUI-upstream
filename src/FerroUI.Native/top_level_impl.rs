@@ -11,6 +11,7 @@ use crate::ferro_native_text_input_method::FerroNativeTextInputMethod;
 use crate::frn_automation_peer::FrnAutomationPeer;
 use crate::helpers::*;
 use crate::interop::*;
+use crate::ferro_native_gl_platform_graphics::GlPlatformSurface;
 use crate::metal::MetalPlatformSurface;
 use crate::native_control_host_impl::NativeControlHostImpl;
 use crate::platform_behavior_inhibition::PlatformBehaviorInhibition;
@@ -180,6 +181,7 @@ pub struct TopLevelImpl {
     /// The render surfaces, in a cell the thread that renders reads too
     /// (`render_surfaces`): filled by `init`, emptied by `dispose`.
     surfaces: SharedSurfaces,
+    gl_surface: RefCell<Option<Arc<GlPlatformSurface>>>,
     metal_surface: RefCell<Option<Arc<MetalPlatformSurface>>>,
     framebuffer_surface: RefCell<Option<Arc<TopLevelFramebufferSurface>>>,
 
@@ -210,6 +212,7 @@ impl TopLevelImpl {
             transparency_level: Cell::new(WindowTransparencyLevel::none()),
             handle: RefCell::new(None),
             surfaces: Arc::new(Mutex::new(Vec::new())),
+            gl_surface: RefCell::new(None),
             metal_surface: RefCell::new(None),
             framebuffer_surface: RefCell::new(None),
             input: RefCell::new(None),
@@ -235,14 +238,17 @@ impl TopLevelImpl {
             .map(|native| Rc::new(PlatformBehaviorInhibition::new(native)));
 
         *self.input_method.borrow_mut() = Some(FerroNativeTextInputMethod::new(&native));
+        let gl_surface = GlPlatformSurface::new(native.clone());
         let metal_surface = MetalPlatformSurface::new(native.clone());
         let framebuffer_surface =
             TopLevelFramebufferSurface::new(native, self.saved_logical_size.get(), self.saved_scaling.get());
+        *self.gl_surface.borrow_mut() = Some(gl_surface.clone());
         *self.metal_surface.borrow_mut() = Some(metal_surface.clone());
         *self.framebuffer_surface.borrow_mut() = Some(framebuffer_surface.clone());
+        let gl_surface: Arc<dyn IPlatformRenderSurface> = gl_surface;
         let metal_surface: Arc<dyn IPlatformRenderSurface> = metal_surface;
         let framebuffer_surface: Arc<dyn IPlatformRenderSurface> = framebuffer_surface;
-        *lock_shared(&self.surfaces) = vec![metal_surface, framebuffer_surface];
+        *lock_shared(&self.surfaces) = vec![gl_surface, metal_surface, framebuffer_surface];
     }
 
     /// Hands the size and the scaling the top-level saved to its software
@@ -702,6 +708,10 @@ impl TopLevelImpl {
         // top-level they hold, here on the UI thread: a surface that the
         // thread that renders drops last cannot release it there.
         lock_shared(&self.surfaces).clear();
+        let gl_surface = self.gl_surface.borrow_mut().take();
+        if let Some(gl_surface) = gl_surface {
+            gl_surface.close();
+        }
         let metal_surface = self.metal_surface.borrow_mut().take();
         if let Some(metal_surface) = metal_surface {
             metal_surface.close();
