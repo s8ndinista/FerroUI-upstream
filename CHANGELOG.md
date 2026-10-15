@@ -12,9 +12,9 @@ All notable changes to FerroUI are recorded in this file. The format follows [Ke
 - **Vulkan** (`ferroui-vulkan`, `ferroui-skia`, `ferroui-x11`): `ferroui-vulkan` is the Vulkan platform contracts crate and no longer a reserved name: the instance, the device, the graphics context, the swap chain render target of a surface and the import of external objects, over the `ash` bindings with the loader of the system opened at run time. The Skia backend renders through it (Ganesh on Vulkan), and the X11 platform takes the rendering mode Vulkan.
 - **UI Automation on Windows** (`ferroui-win32`): a window answers for its accessibility tree; the automation peers of the controls are exposed as providers of UI Automation (the element and fragment interfaces and the invoke, toggle, value, range value, expand and collapse, selection, selection item, scroll and scroll item patterns) with their property, structure and focus events. Verified by a client over the client interface of the system in CI; no screen reader has been run against it.
 
-## [0.1.0-preview.1] - Unreleased
+## [0.1.0-preview.1] - 2026-10-15
 
-The first preview. It is being prepared and has not been published; the date is set when it is.
+The first preview.
 
 The preview makes the framework available as crates so that it can be tried outside the repository. It is not a stable release: the public API is not settled, several subsystems are incomplete, and the per-subsystem state is tracked in [docs/porting/CRITICAL-PATH.md](docs/porting/CRITICAL-PATH.md).
 
@@ -51,5 +51,5 @@ The preview makes the framework available as crates so that it can be tried outs
 - **Documentation.** The API documentation is the documentation comments carried over by the port; there are no guides beyond the README and the documents under `docs/`. Not every crate is expected to build on docs.rs (see `docs/release.md`).
 - **Tests of the published crates.** The packages hold the sources of the tests but not the test fonts and images of the Skia backend; the test suites are run from the repository.
 
-[Unreleased]: https://github.com/wieslawsoltes/FerroUI/commits/main
-[0.1.0-preview.1]: https://github.com/wieslawsoltes/FerroUI/commits/main
+[Unreleased]: https://github.com/wieslawsoltes/FerroUI/compare/v0.1.0-preview.1...main
+[0.1.0-preview.1]: https://github.com/wieslawsoltes/FerroUI/releases/tag/v0.1.0-preview.1
