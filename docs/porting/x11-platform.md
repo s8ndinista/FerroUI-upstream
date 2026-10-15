@@ -112,7 +112,7 @@ What crosses to the render thread is `Send + Sync` by construction:
 |---|---|---|---|
 | Software, `XPutImage` | `X11FramebufferSurface.cs` | 1, built | A retained framebuffer (BGRA, premultiplied) of the size of the window (`XGetGeometry`), sent with `XPutImage` under `XLockDisplay`, followed by `XSync`. Kept between frames only with `use_retained_framebuffer`. The window has the visual of depth 32 when the screen has one, else depth 24. |
 | Software, shared memory | `XShm/*`, `X11DeferredDisplayDispatcher.cs`, `LibC.cs` | 2b, built | `XShmCreateImage` over a System V segment (`shmget`, `shmat`), `XShmPutImage` with a completion event, at most two frames in flight (a third `lock` waits on the events of the render connection), images pooled by size and disposed in the order of the extension's specification (detach, destroy the image, detach and remove the segment). Only with `use_x_shm_framebuffer`, depth 32 and the extension; the surface comes before the `XPutImage` one in the list of the window. The dispatcher of the completion events is an object of the thread that renders (`X11DeferredDisplayDispatcher::for_current_thread`); upstream creates it on the platform and uses it from the render thread. The completion event is declared in `xlib.rs`: the declaration of the bindings has two members of other sizes, which moves the segment identifier. |
-| EGL | `X11EglHelper.cs`, `EglPlatformGraphics` of the OpenGL project (ported) | 2a, built | `libEGL.so.1` loaded by name; the display through `EGL_PLATFORM_X11` when the client extensions have it; configurations probed by creating a window surface on a throwaway window, those with a visual of depth 32 first (an nvidia workaround); the window takes the visual of the configuration; a child window as the render window; the `EglGlPlatformSurface` of the OpenGL crate. |
+| EGL | `X11EglHelper.cs`, `EglPlatformGraphics` of the OpenGL project (ported) | 2a, built | `libEGL.so.1` loaded by name with `EglInterface::new_default` (`new EglInterface()`, since 2026-10-15); the display through `EGL_PLATFORM_X11` when the client extensions have it; configurations probed by creating a window surface on a throwaway window, those with a visual of depth 32 first (an nvidia workaround); the window takes the visual of the configuration; a child window as the render window; the `EglGlPlatformSurface` of the OpenGL crate. |
 | GLX | `Glx/*` | 2a, built | `libGL` opened at run time, `glXCreateContextAttribsARB` through `glXGetProcAddress`; a frame buffer configuration with a preference for a visual of depth 32; a pixel buffer as the default drawable of a context; the profiles of the options tried in order; the renderer blacklist (`llvmpipe`, `SVGA3D`; `FERROUI_GLX_IGNORE_RENDERER_BLACKLIST=1` overrides it); the render window resized from the compositor at the beginning of a frame. Upstream's default mode list is GLX, then software. |
 | Vulkan | `Vulkan/*` | 2a, built (2026-10-11, `vulkan.md`) | The platform graphics of `ferroui-vulkan` over `libvulkan.so.1`, opened at run time, with `VK_KHR_xlib_surface` over the render window. Without the loader, an instance with the surface extensions or a device that presents to a window of the server the mode fails to initialize and the walk goes on. |
 
@@ -207,7 +207,7 @@ One row per upstream file. "built" files are on the branch; the stage of an open
 | `X11AtSpiAccessibility.cs` | 176 | `x11_at_spi_accessibility.rs` | 3 | built | the server is in the FreeDesktop crate (`atspi.md`) |
 | `X11CursorFactory.cs` | 182 | `x11_cursor_factory.rs` | 1 | built |  |
 | `X11DeferredDisplayDispatcher.cs` | 98 | `x11_deferred_display_dispatcher.rs` | 2b | built |  |
-| `X11EglHelper.cs` | 97 | `x11_egl_helper.rs` | 2a | built | with the display factory of `InitializeGraphics`, the loader of `libEGL` and the platform graphics of EGL (`X11EglPlatformGraphics`) |
+| `X11EglHelper.cs` | 97 | `x11_egl_helper.rs` | 2a | built | with the display factory of `InitializeGraphics` (the interface from `EglInterface::new_default`) and the platform graphics of EGL (`X11EglPlatformGraphics`) |
 | `X11EnumExtensions.cs` | 30 | `x11_enum_extensions.rs` | 1 | built |  |
 | `X11Enums.cs` | 121 | `x11_enums.rs` | 1 | built |  |
 | `X11Exception.cs` | 12 | `x11_exception.rs` | 1 | built |  |
@@ -484,6 +484,19 @@ Ubuntu 24.04 on x86-64 (`ubuntu-latest`), Mesa 25.2.8 (`llvmpipe (LLVM 20.1.2, 2
 The first run of the extended job (29e3c0ac) failed in its three smoke steps and was superseded before its log could be read; the virtual machine had shown the same two causes by then (the announcement of `xclip`, and the monitors lost to the reset of the server), and the run above has both fixes.
 
 Verified nowhere yet: a GPU with a hardware driver (the visual preference and the configuration probe exist for nvidia; the blacklist for `llvmpipe` and `SVGA3D` is only exercised as a refusal), input from a real device, a compositing manager under plain X11, more than one X screen (the platform uses the default screen, as upstream).
+
+### Measured for the EGL library loaded as upstream does (2026-10-15) **[VM]**
+
+Ubuntu 24.04 on ARM64 in the virtual machine, Mesa 25.2.8 (`llvmpipe (LLVM 20.1.2, 128 bits)`, EGL 1.5), Xvfb; branch `x11-egl-interface` (source commit `57145003`, the same tree as the rebased head), the stage script `ferroui-vm-x11egl/scripts/stage.sh` on the share. The EGL mode creates its interface with `EglInterface::new_default` (entry points through `eglGetProcAddress`) in place of the loader of the crate (`dlsym`).
+
+| Run | Result |
+|---|---|
+| `cargo test -p ferroui-x11` | 253 passed |
+| Smoke through EGL (`--mode=egl`) | 37 of 37: the platform registered the graphics of EGL, the offscreen draw read back with `glReadPixels`, the pixels of the window on the server |
+| Smoke, software (for comparison) | 33 of 33 |
+| The ControlCatalog in the EGL mode alone (`FERROUI_SMOKE_RENDERING=egl`, no fallback) | Exit 0; seven pages (Home, Buttons, TextBlock, ListBox, Image, Calendar, Slider) pictured from the framework, from the compositor (six: the window closes after the last page) and from the X server (`server-NN-<page>.png`, what EGL presented), 20 pictures in `ferroui-screenshots/x11-egl` |
+
+The log has the two warnings of Mesa without DRI3 on Xvfb and the error of the session management library without `SESSION_MANAGER`, as every earlier run; no panic.
 
 ## 14. Stages
 
