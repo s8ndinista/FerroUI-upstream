@@ -36,7 +36,7 @@ checksum = "940b3a0ca603d1eade50a4846a2afffd5ef57a9feac2c0e2ec2e14f9ead76000"
 
 [[package]]
 name = "app-without-lifetime"
-version = "0.1.0-preview.2"
+version = "0.1.0-preview.3"
 dependencies = [
  "ferroui-base",
  "ferroui-controls",
@@ -241,7 +241,7 @@ dependencies = [
 
 [[package]]
 name = "binding-demo"
-version = "0.1.0-preview.2"
+version = "0.1.0-preview.3"
 dependencies = [
  "ferroui-base",
  "ferroui-controls",
@@ -431,7 +431,7 @@ dependencies = [
 
 [[package]]
 name = "control-catalog"
-version = "0.1.0-preview.2"
+version = "0.1.0-preview.3"
 dependencies = [
  "ferroui-base",
  "ferroui-build",
@@ -454,7 +454,7 @@ dependencies = [
 
 [[package]]
 name = "control-catalog-android"
-version = "0.1.0-preview.2"
+version = "0.1.0-preview.3"
 dependencies = [
  "control-catalog",
  "ferroui-android",
@@ -464,7 +464,7 @@ dependencies = [
 
 [[package]]
 name = "control-catalog-browser"
-version = "0.1.0-preview.2"
+version = "0.1.0-preview.3"
 dependencies = [
  "control-catalog",
  "ferroui-base",
@@ -476,7 +476,7 @@ dependencies = [
 
 [[package]]
 name = "control-catalog-desktop"
-version = "0.1.0-preview.2"
+version = "0.1.0-preview.3"
 dependencies = [
  "control-catalog",
  "ferroui-base",
@@ -493,7 +493,7 @@ dependencies = [
 
 [[package]]
 name = "control-catalog-ios"
-version = "0.1.0-preview.2"
+version = "0.1.0-preview.3"
 dependencies = [
  "control-catalog",
  "ferroui-base",
@@ -507,7 +507,7 @@ dependencies = [
 
 [[package]]
 name = "control-gallery-winui"
-version = "0.1.0-preview.2"
+version = "0.1.0-preview.3"
 dependencies = [
  "control-catalog",
  "ferroui-base",
@@ -522,7 +522,7 @@ dependencies = [
 
 [[package]]
 name = "control-samples"
-version = "0.1.0-preview.2"
+version = "0.1.0-preview.3"
 dependencies = [
  "ferroui-base",
  "ferroui-build",
@@ -780,7 +780,7 @@ checksum = "f4beca3cb2444e3304ac30843cc091f44ed58932353cd492ce740067bfce6b12"
 
 [[package]]
 name = "ferroui"
-version = "0.1.0-preview.2"
+version = "0.1.0-preview.3"
 dependencies = [
  "ferroui-base",
  "ferroui-browser",
@@ -807,7 +807,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-android"
-version = "0.1.0-preview.2"
+version = "0.1.0-preview.3"
 dependencies = [
  "ferroui-base",
  "ferroui-controls",
@@ -822,7 +822,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-base"
-version = "0.1.0-preview.2"
+version = "0.1.0-preview.3"
 dependencies = [
  "bitflags",
  "ferroui-build-scan",
@@ -834,7 +834,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-benchmarks"
-version = "0.1.0-preview.2"
+version = "0.1.0-preview.3"
 dependencies = [
  "ferroui-base",
  "ferroui-controls",
@@ -847,7 +847,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-browser"
-version = "0.1.0-preview.2"
+version = "0.1.0-preview.3"
 dependencies = [
  "ferroui-base",
  "ferroui-controls",
@@ -862,7 +862,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-build"
-version = "0.1.0-preview.2"
+version = "0.1.0-preview.3"
 dependencies = [
  "ferroui-base",
  "ferroui-build-scan",
@@ -873,7 +873,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-build-scan"
-version = "0.1.0-preview.2"
+version = "0.1.0-preview.3"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -882,7 +882,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-controls"
-version = "0.1.0-preview.2"
+version = "0.1.0-preview.3"
 dependencies = [
  "bitflags",
  "ferroui-base",
@@ -892,7 +892,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-controls-color-picker"
-version = "0.1.0-preview.2"
+version = "0.1.0-preview.3"
 dependencies = [
  "ferroui-base",
  "ferroui-build",
@@ -905,7 +905,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-designer-support"
-version = "0.1.0-preview.2"
+version = "0.1.0-preview.3"
 dependencies = [
  "ferroui-base",
  "ferroui-controls",
@@ -918,7 +918,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-desktop"
-version = "0.1.0-preview.2"
+version = "0.1.0-preview.3"
 dependencies = [
  "ferroui-base",
  "ferroui-controls",
@@ -931,7 +931,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-dialogs"
-version = "0.1.0-preview.2"
+version = "0.1.0-preview.3"
 dependencies = [
  "ferroui-base",
  "ferroui-build",
@@ -942,7 +942,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-fonts-inter"
-version = "0.1.0-preview.2"
+version = "0.1.0-preview.3"
 dependencies = [
  "ferroui-base",
  "ferroui-controls",
@@ -951,7 +951,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-freedesktop"
-version = "0.1.0-preview.2"
+version = "0.1.0-preview.3"
 dependencies = [
  "bitflags",
  "ferroui-base",
@@ -962,7 +962,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-harfbuzz"
-version = "0.1.0-preview.2"
+version = "0.1.0-preview.3"
 dependencies = [
  "ferroui-base",
  "ferroui-controls",
@@ -971,7 +971,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-headless"
-version = "0.1.0-preview.2"
+version = "0.1.0-preview.3"
 dependencies = [
  "ferroui-base",
  "ferroui-controls",
@@ -982,7 +982,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-headless-vnc"
-version = "0.1.0-preview.2"
+version = "0.1.0-preview.3"
 dependencies = [
  "bitflags",
  "des",
@@ -999,7 +999,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-integration-tests-win32"
-version = "0.1.0-preview.2"
+version = "0.1.0-preview.3"
 dependencies = [
  "ferroui-base",
  "ferroui-controls",
@@ -1011,7 +1011,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-ios"
-version = "0.1.0-preview.2"
+version = "0.1.0-preview.3"
 dependencies = [
  "bitflags",
  "block2",
@@ -1034,7 +1034,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-leak-tests"
-version = "0.1.0-preview.2"
+version = "0.1.0-preview.3"
 dependencies = [
  "ferroui-base",
  "ferroui-controls",
@@ -1044,7 +1044,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-linuxframebuffer"
-version = "0.1.0-preview.2"
+version = "0.1.0-preview.3"
 dependencies = [
  "ferroui-base",
  "ferroui-controls",
@@ -1057,7 +1057,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-markup"
-version = "0.1.0-preview.2"
+version = "0.1.0-preview.3"
 dependencies = [
  "ferroui-base",
  "ferroui-controls",
@@ -1065,7 +1065,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-markup-xaml"
-version = "0.1.0-preview.2"
+version = "0.1.0-preview.3"
 dependencies = [
  "ferroui-base",
  "ferroui-build-scan",
@@ -1075,7 +1075,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-markup-xaml-loader"
-version = "0.1.0-preview.2"
+version = "0.1.0-preview.3"
 dependencies = [
  "ferroui-base",
  "ferroui-build-scan",
@@ -1086,7 +1086,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-markup-xaml-tests"
-version = "0.1.0-preview.2"
+version = "0.1.0-preview.3"
 dependencies = [
  "ferroui-base",
  "ferroui-build",
@@ -1101,18 +1101,18 @@ dependencies = [
 
 [[package]]
 name = "ferroui-metal"
-version = "0.1.0-preview.2"
+version = "0.1.0-preview.3"
 dependencies = [
  "ferroui-base",
 ]
 
 [[package]]
 name = "ferroui-microcom"
-version = "0.1.0-preview.2"
+version = "0.1.0-preview.3"
 
 [[package]]
 name = "ferroui-native"
-version = "0.1.0-preview.2"
+version = "0.1.0-preview.3"
 dependencies = [
  "cc",
  "ferroui-base",
@@ -1128,7 +1128,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-opengl"
-version = "0.1.0-preview.2"
+version = "0.1.0-preview.3"
 dependencies = [
  "ferroui-base",
  "ferroui-build-scan",
@@ -1139,11 +1139,11 @@ dependencies = [
 
 [[package]]
 name = "ferroui-remote-protocol"
-version = "0.1.0-preview.2"
+version = "0.1.0-preview.3"
 
 [[package]]
 name = "ferroui-render-backends-comparison"
-version = "0.1.0-preview.2"
+version = "0.1.0-preview.3"
 dependencies = [
  "ferroui-base",
  "ferroui-controls",
@@ -1158,7 +1158,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-render-tests"
-version = "0.1.0-preview.2"
+version = "0.1.0-preview.3"
 dependencies = [
  "ferroui-base",
  "ferroui-controls",
@@ -1171,7 +1171,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-skia"
-version = "0.1.0-preview.2"
+version = "0.1.0-preview.3"
 dependencies = [
  "cc",
  "ferroui-base",
@@ -1186,7 +1186,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-themes-fluent"
-version = "0.1.0-preview.2"
+version = "0.1.0-preview.3"
 dependencies = [
  "ferroui-base",
  "ferroui-build",
@@ -1198,7 +1198,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-themes-simple"
-version = "0.1.0-preview.2"
+version = "0.1.0-preview.3"
 dependencies = [
  "ferroui-base",
  "ferroui-build",
@@ -1212,7 +1212,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-vello"
-version = "0.1.0-preview.2"
+version = "0.1.0-preview.3"
 dependencies = [
  "ferroui-base",
  "ferroui-controls",
@@ -1246,7 +1246,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-vulkan"
-version = "0.1.0-preview.2"
+version = "0.1.0-preview.3"
 dependencies = [
  "ash",
  "ferroui-base",
@@ -1254,7 +1254,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-wayland"
-version = "0.1.0-preview.2"
+version = "0.1.0-preview.3"
 dependencies = [
  "bitflags",
  "ferroui-base",
@@ -1279,7 +1279,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-win32"
-version = "0.1.0-preview.2"
+version = "0.1.0-preview.3"
 dependencies = [
  "bitflags",
  "ferroui-base",
@@ -1296,7 +1296,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-winui"
-version = "0.1.0-preview.2"
+version = "0.1.0-preview.3"
 dependencies = [
  "ferroui-base",
  "ferroui-controls",
@@ -1308,7 +1308,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-x11"
-version = "0.1.0-preview.2"
+version = "0.1.0-preview.3"
 dependencies = [
  "bitflags",
  "ferroui-base",
@@ -1608,7 +1608,7 @@ dependencies = [
 
 [[package]]
 name = "integration-test-app"
-version = "0.1.0-preview.2"
+version = "0.1.0-preview.3"
 dependencies = [
  "ferroui-base",
  "ferroui-controls",
@@ -1956,11 +1956,11 @@ dependencies = [
 
 [[package]]
 name = "microcom-codegen"
-version = "0.1.0-preview.2"
+version = "0.1.0-preview.3"
 
 [[package]]
 name = "mini-mvvm"
-version = "0.1.0-preview.2"
+version = "0.1.0-preview.3"
 dependencies = [
  "ferroui-base",
  "ferroui-build-scan",
@@ -2507,7 +2507,7 @@ checksum = "d6f6ff9a378485b298a5286656da665ba74413d36db0979633275d2e708145d4"
 
 [[package]]
 name = "render-demo"
-version = "0.1.0-preview.2"
+version = "0.1.0-preview.3"
 dependencies = [
  "control-samples",
  "ferroui-base",
@@ -2606,14 +2606,14 @@ dependencies = [
 
 [[package]]
 name = "sample-build"
-version = "0.1.0-preview.2"
+version = "0.1.0-preview.3"
 dependencies = [
  "ferroui-build",
 ]
 
 [[package]]
 name = "sample-support"
-version = "0.1.0-preview.2"
+version = "0.1.0-preview.3"
 dependencies = [
  "ferroui-base",
  "ferroui-controls",
@@ -2622,7 +2622,7 @@ dependencies = [
 
 [[package]]
 name = "sample-testing"
-version = "0.1.0-preview.2"
+version = "0.1.0-preview.3"
 dependencies = [
  "ferroui-base",
  "ferroui-controls",
@@ -2635,7 +2635,7 @@ dependencies = [
 
 [[package]]
 name = "sandbox"
-version = "0.1.0-preview.2"
+version = "0.1.0-preview.3"
 dependencies = [
  "ferroui-base",
  "ferroui-controls",
@@ -2918,7 +2918,7 @@ dependencies = [
 
 [[package]]
 name = "text-test-app"
-version = "0.1.0-preview.2"
+version = "0.1.0-preview.3"
 dependencies = [
  "ferroui-base",
  "ferroui-controls",
@@ -3247,7 +3247,7 @@ checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
 
 [[package]]
 name = "virtualization-demo"
-version = "0.1.0-preview.2"
+version = "0.1.0-preview.3"
 dependencies = [
  "control-samples",
  "ferroui-base",
@@ -3879,7 +3879,7 @@ dependencies = [
 
 [[package]]
 name = "winui-embed-sample"
-version = "0.1.0-preview.2"
+version = "0.1.0-preview.3"
 dependencies = [
  "ferroui-base",
  "ferroui-controls",
@@ -3910,7 +3910,7 @@ dependencies = [
 
 [[package]]
 name = "xaml-include-fixture-application"
-version = "0.1.0-preview.2"
+version = "0.1.0-preview.3"
 dependencies = [
  "ferroui-base",
  "ferroui-build",
@@ -3924,7 +3924,7 @@ dependencies = [
 
 [[package]]
 name = "xaml-include-fixture-theme"
-version = "0.1.0-preview.2"
+version = "0.1.0-preview.3"
 dependencies = [
  "ferroui-base",
  "ferroui-build",
@@ -3935,7 +3935,7 @@ dependencies = [
 
 [[package]]
 name = "xamlx"
-version = "0.1.0-preview.2"
+version = "0.1.0-preview.3"
 dependencies = [
  "roxmltree 0.20.0",
 ]
