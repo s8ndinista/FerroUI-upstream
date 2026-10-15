@@ -108,27 +108,32 @@ No name is taken, so nothing blocks on names. A name is claimed by the first pub
 
 Two names are not under the `ferroui-` prefix. The owner decided on 2026-10-10 to keep the names as they are (section 12): `xamlx` is the name of the external library the crate is a port of, and `microcom-codegen` is named after the interop library whose design it follows. Publishing them claims those names on crates.io for this project. The alternatives are `ferroui-xamlx` and `ferroui-microcom-codegen`; a rename touches the manifests, the `use` paths and the profile overrides of the root manifest.
 
-### 2.1 The bare name `ferroui`
+### 2.1 The bare name `ferroui`: the facade crate
 
-`ferroui` is free and is the name people will try first. A facade crate is proposed, and not built yet, because what it exports is a decision about the public face of the project:
+`ferroui` is the name people will try first. It was published with the first preview as an empty placeholder (section 2.2); for the second preview it is the facade crate, built as proposed here before (2026-10-15):
 
-- A crate `ferroui` at `src/FerroUI` with no code of its own: it re-exports the common crates under short names (`ferroui::base`, `ferroui::controls`, `ferroui::markup`, ...) and a prelude of the types of a minimal application.
-- Features choose the parts, so that an application names one dependency:
+- **No code of its own.** `src/FerroUI/lib.rs` holds re-exports, a prelude of re-exports and documentation, and `#![forbid(unsafe_code)]`. Every module of the crate is one crate of the workspace, under the name of that crate without the `ferroui-` prefix (`-` becomes `_`), so the module of a crate never has to be looked up: `ferroui-base` is `ferroui::base`, `ferroui-themes-fluent` is `ferroui::themes_fluent`.
+- **Features choose the parts**, so that an application names one dependency, `ferroui = "=0.1.0-preview.2"`:
 
-  | Feature | Brings | Default |
-  |---|---|---|
-  | `desktop` | `ferroui-desktop` (platform detection, Skia, HarfBuzz) | yes |
-  | `fluent` | `ferroui-themes-fluent` | yes |
-  | `simple` | `ferroui-themes-simple` | no |
-  | `xaml` | `ferroui-markup-xaml` and the run-time loader | no |
-  | `color-picker`, `dialogs` | the libraries of those names | no |
-  | `browser` | `ferroui-browser` | no |
-  | `vello`, `vello-hybrid`, `vello-gpu` | `ferroui-vello` with its modes | no |
-  | `headless` | `ferroui-headless` | no |
+  | Feature | Brings | Modules | Default |
+  |---|---|---|---|
+  | (none) | `ferroui-base`, `ferroui-controls`, `ferroui-markup` | `base`, `controls`, `markup` | always |
+  | `desktop` | `ferroui-desktop` (platform detection) with Skia, HarfBuzz and the platform of the operating system: `ferroui-native` on macOS, `ferroui-win32` on Windows, `ferroui-x11` on Linux | `desktop`, `skia`, `harfbuzz`, `native` / `win32` / `x11` | yes |
+  | `fluent` | `ferroui-themes-fluent` | `themes_fluent` | yes |
+  | `simple` | `ferroui-themes-simple` | `themes_simple` | no |
+  | `xaml` | `ferroui-markup-xaml` and the run-time loader (`ferroui-markup-xaml-loader` with its feature `runtime`) | `markup_xaml`, `markup_xaml_loader` | no |
+  | `color-picker`, `dialogs` | `ferroui-controls-color-picker`, `ferroui-dialogs` | `controls_color_picker`, `dialogs` | no |
+  | `browser` | `ferroui-browser`, with Skia and HarfBuzz | `browser`, `skia`, `harfbuzz` | no |
+  | `vello`, `vello-hybrid`, `vello-gpu` | `ferroui-vello`; the second and third turn on its features `hybrid` and `gpu` | `vello` | no |
+  | `headless` | `ferroui-headless` | `headless` | no |
+  | `opengl`, `metal`, `vulkan` | the platform graphics contracts `ferroui-opengl`, `ferroui-metal`, `ferroui-vulkan` | `opengl`, `metal`, `vulkan` | no |
 
-- It is pinned to the other crates like every crate of the workspace, so `ferroui = "=0.1.0-preview.1"` selects one consistent set, which is the main use of it during the previews.
-
-Until the facade exists, the name is held by an empty placeholder crate at `src/FerroUI`, published with the first preview (section 2.2).
+  The last row was not in the proposal. The contracts are what an application names when a control of its own draws with the graphics API (an OpenGL control, the import of external objects), and upstream's meta package brings them; they are small and of Rust alone, so they are features and not defaults. An application for the browser turns the default features off and names `browser` and a theme.
+- **The prelude** (`ferroui::prelude`) holds what a minimal application names, which is what the minimal applications of the repository import (`src/FerroUI.Desktop/examples/hello_window.rs`, `src/FerroUI.Themes.Simple/examples/themed_window.rs`, the `App` and `Program` of the small samples): the declaration of an application class (`ferro_class!`, `ferro_impl_classes!`, `instantiate`, `Ref`, `FerroObjectImpl`, `Application`, `ApplicationImpl`, `ApplicationImplExt`, `NewApplication`), starting it (`AppBuilder`, and `AppBuilderDesktopExtensions` with `desktop`), the window and the common controls and panels (`Window`, `Control`, `Border`, `Button`, `CheckBox`, `TextBlock`, `TextBox`, `StackPanel`, `Grid`), the values of a layout (`Thickness`, `CornerRadius`, `HorizontalAlignment`, `VerticalAlignment`, `Orientation`, `Color`) and the theme of the features that are on (`FluentTheme`, `SimpleTheme`). Nothing else: the rest is reached through the modules, so that a glob import of the prelude does not shadow the names of an application.
+- **Not in the facade.** The build-time crates (`ferroui-build`, `ferroui-build-scan`, `xamlx`): a build dependency cannot be re-exported, and the code the markup compiler writes names the crates it calls by their own names (`::ferroui_base::...`, `::ferroui_markup_xaml::...`), so a crate that compiles its markup depends on those crates directly. The tools and the designer support (`ferroui-designer-support`, `ferroui-remote-protocol`, `microcom-codegen`), the interop runtime of the native platforms (`ferroui-microcom`), the font collection (`ferroui-fonts-inter`), and the platforms that are opted into by name (`ferroui-wayland`, `ferroui-freedesktop`, `ferroui-linuxframebuffer`, `ferroui-ios`, `ferroui-android`): an application names those crates beside the facade.
+- **Upstream's counterpart** is the meta package `Avalonia` (`packages/Avalonia/Avalonia.csproj`): it references the core libraries of `build/CoreLibraries.props` (base, controls, designer support, OpenGL, Metal, Vulkan, dialogs, markup, XAML, MicroCom), the remote protocol, the build tasks, the source generators and the analyzers, and carries the props and targets of the build and the previewer. The desktop entry point and the themes are separate packages there (`Avalonia.Desktop`, `Avalonia.Themes.Fluent`); here they are features of the facade, on by default, because the facade is the one dependency of an application. MSBuild props and targets have no counterpart (Cargo has no build integration a library can bring), and the build tasks and generators are the build script of an application.
+- It is pinned to the other crates like every crate of the workspace, so `ferroui = "=0.1.0-preview.2"` selects one consistent set, which is the main use of it during the previews. It depends on 21 crates of the workspace and is published after all of them (`crates.py order`).
+- **Verified** (2026-10-15, macOS): the example `hello` (`src/FerroUI/examples/hello.rs`, a window with a text block and a button under the Fluent theme, written against the prelude alone) builds and runs (`FERROUI_SMOKE_EXIT_MS=2500 cargo run -p ferroui --example hello`: the window opens and closes, exit code 0); the two documentation tests of `lib.rs` pass (a complete application, compiled; the builder after platform detection, run); `cargo check -p ferroui` passes with no features and with every feature; the documentation builds without warnings with the features of docs.rs.
 
 ### 2.2 Reserved names
 
@@ -136,7 +141,7 @@ The owner decided on 2026-10-10 to reserve, with the first preview, the names of
 
 | Crate | Directory | For |
 |---|---|---|
-| `ferroui` | `src/FerroUI` | the facade crate of section 2.1 |
+| `ferroui` | `src/FerroUI` | the facade crate of section 2.1; the facade replaced the placeholder for the second preview |
 | `ferroui-wayland` | `src/FerroUI.Wayland` | the Wayland platform (upstream `Avalonia.Wayland`); the port replaced the placeholder for the second preview (`docs/porting/wayland-platform.md`) |
 | `ferroui-vulkan` | `src/FerroUI.Vulkan` | the Vulkan platform contracts (upstream `Avalonia.Vulkan`); the port replaced the placeholder for the second preview (`docs/porting/vulkan.md`) |
 | `ferroui-linuxframebuffer` | `src/Linux/FerroUI.LinuxFramebuffer` | the Linux framebuffer platform (upstream `Avalonia.LinuxFramebuffer`); the port replaced the placeholder for the second preview (`docs/porting/linux-framebuffer-platform.md`) |
@@ -228,7 +233,7 @@ docs.rs builds the documentation of every published version on a Linux host with
 | `ferroui-native` | `[package.metadata.docs.rs]` sets the macOS targets (the crate is empty elsewhere). On docs.rs the build script generates the bindings and skips the native library (`DOCS_RS`), since the host has no compiler for Objective-C++ against the macOS SDK and documentation links nothing. Expected to build. |
 | `ferroui-vello` | Documented with the `hybrid` and `gpu` features for `aarch64-apple-darwin`, the target whose window they draw into. Its dependencies are Rust only. Expected to build. |
 | `ferroui-harfbuzz`, `ferroui-headless` | Depend on the HarfBuzz build from source, which needs the C++ compiler of the docs.rs image and no network. Expected to build for the default Linux target. |
-| `ferroui-skia`, `ferroui-desktop`, `ferroui-browser` | Depend on the build of `skia-bindings`, which without network cannot download Skia. The Skia bindings are documented on docs.rs themselves, so their build has a way to do without the binaries there; whether it carries through to a dependent crate with the features FerroUI enables is not known. **May fail**; if it does, the remedy is a docs.rs feature set or target for these three crates, in the next preview. `ferroui-browser` is documented for the Linux host, not for `wasm32-unknown-emscripten`, which docs.rs cannot build (no Emscripten). |
+| `ferroui-skia`, `ferroui-desktop`, `ferroui-browser`, `ferroui` | Depend on the build of `skia-bindings` (the facade through its default feature `desktop`; `[package.metadata.docs.rs]` adds the features that need nothing beyond the host), which without network cannot download Skia. The Skia bindings are documented on docs.rs themselves, so their build has a way to do without the binaries there; whether it carries through to a dependent crate with the features FerroUI enables is not known. **May fail**; if it does, the remedy is a docs.rs feature set or target for these crates, in the next preview (for the facade: documentation without the feature `desktop`). `ferroui-browser` is documented for the Linux host, not for `wasm32-unknown-emscripten`, which docs.rs cannot build (no Emscripten). |
 
 A failed documentation build does not affect the crate on crates.io: it shows as a failed badge in the README table. The first preview is the test.
 
@@ -313,7 +318,6 @@ Yank every crate of that version (the owner, with `cargo yank --version <version
 
 ## 11. What is not done yet
 
-- The facade crate `ferroui` (section 2.1).
 - Per-crate README files: every package carries the README of the repository.
 - The site assembly scripts of the browser platform are not in a package (section 6.1).
 - The documentation builds on docs.rs are unverified (section 7).
@@ -326,7 +330,7 @@ Made by the owner on 2026-10-10, when the first preview was released:
 
 1. **Go**: yes. The first publish creates 37 crates under the owner's account for good: the 31 crates with code and the six reserved names of section 2.2.
 2. **The names `xamlx` and `microcom-codegen`**: kept as they are.
-3. **The bare name `ferroui`**: published as an empty placeholder; the facade of section 2.1 replaces it in a later preview.
+3. **The bare name `ferroui`**: published as an empty placeholder; the facade of section 2.1 replaces it in a later preview (built for the second preview).
 4. **The rate limit**: not raised; the first release takes as long as the limit of new crates makes it (section 8.3).
 5. **The environment `crates-io`**: as the repository has it; required reviewers were not asked for.
 6. **The token**: the repository secret `CARGO_REGISTRY_TOKEN`; trusted publishing can replace it now that the crates exist.

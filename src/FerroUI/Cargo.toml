@@ -1,6 +1,6 @@
 [package]
 name = "ferroui"
-description = "Reserved name: the facade crate of FerroUI, which does not exist yet. This version is an empty placeholder"
+description = "FerroUI in one dependency: the facade crate that re-exports the common crates under short names, with a prelude and features that choose the platform, the theme and the backends"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -13,6 +13,75 @@ categories.workspace = true
 
 [lib]
 path = "lib.rs"
+
+# What each feature brings is the table of docs/release.md, section 2.1. The facade has no code of
+# its own: every module of the crate is a re-export of one crate of the workspace, under the name of
+# that crate without the `ferroui-` prefix.
+[features]
+default = ["desktop", "fluent"]
+# The desktop entry point (`use_platform_detect`): the platform of the operating system (macOS,
+# Windows or X11 on Linux), Skia for rendering and HarfBuzz for text shaping.
+desktop = ["dep:ferroui-desktop", "dep:ferroui-skia", "dep:ferroui-harfbuzz", "dep:ferroui-native", "dep:ferroui-win32", "dep:ferroui-x11"]
+# The themes.
+fluent = ["dep:ferroui-themes-fluent"]
+simple = ["dep:ferroui-themes-simple"]
+# The XAML run-time library and the run-time loader of markup.
+xaml = ["dep:ferroui-markup-xaml", "dep:ferroui-markup-xaml-loader"]
+# The libraries of controls beside the control set.
+color-picker = ["dep:ferroui-controls-color-picker"]
+dialogs = ["dep:ferroui-dialogs"]
+# The browser platform (wasm32-unknown-emscripten), with Skia and HarfBuzz as on the desktop.
+browser = ["dep:ferroui-browser", "dep:ferroui-skia", "dep:ferroui-harfbuzz"]
+# The Vello render backend: its CPU mode, and its two GPU modes.
+vello = ["dep:ferroui-vello"]
+vello-hybrid = ["vello", "ferroui-vello/hybrid"]
+vello-gpu = ["vello", "ferroui-vello/gpu"]
+# The headless platform, for tests.
+headless = ["dep:ferroui-headless"]
+# The platform graphics contracts, for a control that draws with the graphics API itself.
+opengl = ["dep:ferroui-opengl"]
+metal = ["dep:ferroui-metal"]
+vulkan = ["dep:ferroui-vulkan"]
+
+[dependencies]
+ferroui-base.workspace = true
+ferroui-controls.workspace = true
+ferroui-markup.workspace = true
+ferroui-desktop = { workspace = true, optional = true }
+ferroui-skia = { workspace = true, optional = true }
+ferroui-harfbuzz = { workspace = true, optional = true }
+ferroui-themes-fluent = { workspace = true, optional = true }
+ferroui-themes-simple = { workspace = true, optional = true }
+ferroui-markup-xaml = { workspace = true, optional = true }
+ferroui-markup-xaml-loader = { workspace = true, optional = true, features = ["runtime"] }
+ferroui-controls-color-picker = { workspace = true, optional = true }
+ferroui-dialogs = { workspace = true, optional = true }
+ferroui-browser = { workspace = true, optional = true }
+ferroui-vello = { workspace = true, optional = true }
+ferroui-headless = { workspace = true, optional = true }
+ferroui-opengl = { workspace = true, optional = true }
+ferroui-metal = { workspace = true, optional = true }
+ferroui-vulkan = { workspace = true, optional = true }
+
+# The platforms `desktop` selects among, each on its operating system (as `ferroui-desktop` has them).
+[target.'cfg(target_os = "macos")'.dependencies]
+ferroui-native = { workspace = true, optional = true }
+
+[target.'cfg(windows)'.dependencies]
+ferroui-win32 = { workspace = true, optional = true }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+ferroui-x11 = { workspace = true, optional = true }
+
+[[example]]
+name = "hello"
+path = "examples/hello.rs"
+required-features = ["desktop", "fluent"]
+
+# docs.rs documents the default features with the libraries that need no more than the host
+# (docs/release.md, section 7).
+[package.metadata.docs.rs]
+features = ["simple", "xaml", "color-picker", "dialogs", "headless", "opengl", "metal", "vulkan"]
 
 # The group of the crate in the table of the README (docs/release.md).
 [package.metadata.release]
