@@ -109,7 +109,9 @@ mod uikit {
     use ferroui_controls::application_lifetimes::IActivatableLifetime;
     use ferroui_controls::platform::{IPlatformIconLoader, IScreenImpl, IWindowingPlatform};
     use ferroui_controls::AppBuilder;
+    #[cfg(not(ferroui_docsrs))]
     use ferroui_harfbuzz::HarfBuzzApplicationExtensions;
+    #[cfg(not(ferroui_docsrs))]
     use ferroui_skia::SkiaApplicationExtensions;
     use std::cell::RefCell;
     use std::collections::HashMap;
@@ -129,11 +131,14 @@ mod uikit {
     }
 
     fn use_ios(builder: &AppBuilder, app_delegate: Option<Rc<dyn IFerroAppDelegate>>) -> AppBuilder {
-        builder
+        let builder = builder
             .use_standard_runtime_platform_subsystem()
-            .use_windowing_subsystem(move || Platform::register(app_delegate.clone()), "iOS")
-            .use_harfbuzz()
-            .use_skia()
+            .use_windowing_subsystem(move || Platform::register(app_delegate.clone()), "iOS");
+        // The documentation build of docs.rs has neither (the `ferroui_docsrs` configuration of
+        // the manifest); every other build selects both.
+        #[cfg(not(ferroui_docsrs))]
+        let builder = builder.use_harfbuzz().use_skia();
+        builder
     }
 
     impl IosApplicationExtensions for AppBuilder {

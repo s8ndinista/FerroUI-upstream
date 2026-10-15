@@ -21,13 +21,18 @@ ferroui-controls.workspace = true
 ferroui-metal.workspace = true
 # The OpenGL contracts the platform implements (OpenGL ES over EAGL).
 ferroui-opengl.workspace = true
-# The platform selects its renderer and its text shaper, as the original does (`use_ios`).
-ferroui-harfbuzz.workspace = true
-ferroui-skia.workspace = true
 bitflags.workspace = true
 
 # What the example shows its content with. Optional, behind the feature the example requires.
 ferroui-themes-simple = { workspace = true, optional = true }
+
+# The platform selects its renderer and its text shaper, as the original does (`use_ios`). Not in
+# the documentation build of docs.rs, which sets the `ferroui_docsrs` configuration (`rustc-args`
+# for Cargo and the compiler, `rustdoc-args` for the sources): on its Linux host neither HarfBuzz
+# nor Skia builds for an iOS target, and the documentation needs neither (docs/release.md, section 7).
+[target.'cfg(not(ferroui_docsrs))'.dependencies]
+ferroui-harfbuzz.workspace = true
+ferroui-skia.workspace = true
 
 # The run loop of the main thread and the main dispatch queue (Core Foundation and libdispatch,
 # declared in `interop.rs`) exist on every Apple system, which is what lets the dispatcher be
@@ -180,7 +185,13 @@ harness = false
 [package.metadata.release]
 group = "platforms"
 
-# The crate has its content on iOS only, so its documentation is the one of that target.
+# The crate has its content on iOS only, so its documentation is the one of that target. The
+# configuration `ferroui_docsrs` leaves out the renderer and the text shaper (see above).
 [package.metadata.docs.rs]
 default-target = "aarch64-apple-ios"
 targets = ["aarch64-apple-ios", "aarch64-apple-ios-sim"]
+rustc-args = ["--cfg", "ferroui_docsrs"]
+rustdoc-args = ["--cfg", "ferroui_docsrs"]
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ["cfg(ferroui_docsrs)"] }
