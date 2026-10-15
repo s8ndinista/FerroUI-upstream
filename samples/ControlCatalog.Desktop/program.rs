@@ -51,7 +51,7 @@
 //! what of a window lies outside the desktop, so the run first moves and
 //! shrinks the window until all of it is on its screen. On Windows
 //! `FERROUI_SMOKE_RENDERING=software` or `angle` asks for that rendering
-//! mode alone (on macOS `opengl`, `metal` or `software`), `FERROUI_SMOKE_COMPOSITION` for a composition mode, and
+//! mode alone (`vulkan` too, in a build with the feature `vulkan`; on macOS `opengl`, `metal` or `software`), `FERROUI_SMOKE_COMPOSITION` for a composition mode, and
 //! `FERROUI_SMOKE_TRANSPARENCY=mica|acrylic|blur|transparent` makes the
 //! window ask for that transparency level. With
 //! `FERROUI_SMOKE_BACKDROP=<directory>` and a transparency level the run
@@ -201,8 +201,9 @@ fn use_renderer_of_the_environment(builder: AppBuilder) -> AppBuilder {
 }
 
 /// The options of a smoke run on Windows, from the environment:
-/// `FERROUI_SMOKE_RENDERING=software|angle|wgl` asks for that rendering mode
-/// alone (no fallback, so a mode that does not work fails the run).
+/// `FERROUI_SMOKE_RENDERING=software|angle|wgl|vulkan` asks for that rendering
+/// mode alone (no fallback, so a mode that does not work fails the run;
+/// `vulkan` needs the feature `vulkan`, which builds Skia from source).
 #[cfg(windows)]
 fn smoke_platform_options(builder: AppBuilder) -> AppBuilder {
     use ferroui_win32::{Win32PlatformOptions, Win32RenderingMode};
@@ -217,6 +218,7 @@ fn smoke_platform_options(builder: AppBuilder) -> AppBuilder {
         // The OpenGL of the system, with software rendering behind it: a system without a
         // driver for it (the generic implementation is OpenGL 1.1) passes the mode over.
         Some("wgl") => options.rendering_mode = vec![Win32RenderingMode::Wgl, Win32RenderingMode::Software],
+        Some("vulkan") => options.rendering_mode = vec![Win32RenderingMode::Vulkan],
         _ => return builder,
     }
     println!("Rendering modes: {:?}; composition modes: {:?}", options.rendering_mode, options.composition_mode);
