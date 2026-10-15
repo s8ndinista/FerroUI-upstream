@@ -9,6 +9,15 @@
 //! thread, so [`capture`](HeadlessVncFramebufferSource::capture) does its
 //! work there and waits for it (the frame itself is kept under a lock by
 //! the window, as upstream).
+//!
+//! One difference: the input events reach the window in the order the
+//! client sent them. Upstream posts each event on its own; the input
+//! extensions of a headless window run the jobs of the dispatcher before
+//! they deliver an event, so an event posted while another is delivered
+//! (a release right after a press, as a client that is not a person sends
+//! them) is delivered first, and the press after it. Here the events wait
+//! in a queue of the source, and each post delivers what is queued, in
+//! order, unless a delivery is running already.
 
 use crate::remote_viewing::vnc::server::VncServerSession;
 use crate::remote_viewing::vnc::{
@@ -21,7 +30,8 @@ use ferroui_base::utilities::{NumberFormatInfo, ThreadBound};
 use ferroui_base::{PixelRect, Point, Ref, Vector};
 use ferroui_controls::Window;
 use ferroui_headless::HeadlessWindowExtensions;
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
+use std::collections::VecDeque;
 use std::sync::{Arc, Mutex, MutexGuard, PoisonError, Weak};
 
 bitflags::bitflags! {
@@ -43,6 +53,9 @@ fn lock<T>(mutex: &Mutex<T>) -> MutexGuard<'_, T> {
     mutex.lock().unwrap_or_else(PoisonError::into_inner)
 }
 
+/// An input event that waits for the UI thread.
+type PendingInput = Box<dyn FnOnce(&HeadlessVncFramebufferSource) + Send>;
+
 /// The framebuffer source of a VNC server session that shows a headless
 /// window.
 pub struct HeadlessVncFramebufferSource {
@@ -53,6 +66,11 @@ pub struct HeadlessVncFramebufferSource {
     framebuffer: Mutex<Arc<VncFramebuffer>>,
     previous_buttons: Mutex<VncButton>,
     key_state: Mutex<RawInputModifiers>,
+    /// The input events that wait for the UI thread, in the order they
+    /// came.
+    pending_input: Mutex<VecDeque<PendingInput>>,
+    /// Whether the UI thread delivers input events.
+    delivering_input: ThreadBound<Cell<bool>>,
 }
 
 impl HeadlessVncFramebufferSource {
@@ -70,6 +88,8 @@ impl HeadlessVncFramebufferSource {
             framebuffer: Mutex::new(VncFramebuffer::new("FerroUI", 1, 1, VncPixelFormat::RGB32)),
             previous_buttons: Mutex::new(VncButton::empty()),
             key_state: Mutex::new(RawInputModifiers::NONE),
+            pending_input: Mutex::new(VecDeque::new()),
+            delivering_input: ThreadBound::new(Cell::new(false)),
         });
 
         let weak = Arc::downgrade(&source);
@@ -95,43 +115,34 @@ impl HeadlessVncFramebufferSource {
 
             let modifiers = RawInputModifiers::from_bits_retain((buttons.bits() & 7) << 4);
 
-            Dispatcher::ui_thread().post(
-                move || {
-                    let window = this.window();
-                    let previous_buttons = *lock(&this.previous_buttons);
-                    if let Some(window) = &window {
-                        window.mouse_move(pt, RawInputModifiers::NONE);
-                    }
-                    for btn in CHECKED_BUTTONS {
-                        if previous_buttons.contains(btn) && !buttons.contains(btn) {
-                            if let Some(window) = &window {
-                                window.mouse_up(pt, translate_button(btn), modifiers);
-                            }
-                        }
-                    }
-
-                    for btn in CHECKED_BUTTONS {
-                        if !previous_buttons.contains(btn) && buttons.contains(btn) {
-                            if let Some(window) = &window {
-                                window.mouse_down(pt, translate_button(btn), modifiers);
-                            }
-                        }
-                    }
-
-                    if buttons == VncButton::SCROLL_UP {
-                        if let Some(window) = &window {
-                            window.mouse_wheel(pt, Vector::ONE, modifiers);
-                        }
-                    } else if buttons == VncButton::SCROLL_DOWN {
-                        if let Some(window) = &window {
-                            window.mouse_wheel(pt, Vector::ONE.negate(), modifiers);
-                        }
-                    }
-
+            this.post_input(move |this| {
+                let window = this.window();
+                let Some(window) = window else {
                     *lock(&this.previous_buttons) = buttons;
-                },
-                DispatcherPriority::INPUT,
-            );
+                    return;
+                };
+                let previous_buttons = *lock(&this.previous_buttons);
+                window.mouse_move(pt, RawInputModifiers::NONE);
+                for btn in CHECKED_BUTTONS {
+                    if previous_buttons.contains(btn) && !buttons.contains(btn) {
+                        window.mouse_up(pt, translate_button(btn), modifiers);
+                    }
+                }
+
+                for btn in CHECKED_BUTTONS {
+                    if !previous_buttons.contains(btn) && buttons.contains(btn) {
+                        window.mouse_down(pt, translate_button(btn), modifiers);
+                    }
+                }
+
+                if buttons == VncButton::SCROLL_UP {
+                    window.mouse_wheel(pt, Vector::ONE, modifiers);
+                } else if buttons == VncButton::SCROLL_DOWN {
+                    window.mouse_wheel(pt, Vector::ONE.negate(), modifiers);
+                }
+
+                *lock(&this.previous_buttons) = buttons;
+            });
         });
 
         let weak = Arc::downgrade(&source);
@@ -161,37 +172,58 @@ impl HeadlessVncFramebufferSource {
             };
 
             let pressed = args.pressed();
-            Dispatcher::ui_thread().post(
-                move || {
-                    let window = this.window();
-                    let key_state = *lock(&this.key_state);
-                    if let Some(window) = &window {
-                        if pressed {
-                            window.key_press(
-                                key,
-                                key_state,
-                                PhysicalKey::None,
-                                key_symbol.as_deref(),
-                            );
-                        } else {
-                            window.key_release(
-                                key,
-                                key_state,
-                                PhysicalKey::None,
-                                key_symbol.as_deref(),
-                            );
-                        }
-                    }
+            this.post_input(move |this| {
+                let Some(window) = this.window() else {
+                    return;
+                };
+                let key_state = *lock(&this.key_state);
+                if pressed {
+                    window.key_press(key, key_state, PhysicalKey::None, key_symbol.as_deref());
+                } else {
+                    window.key_release(key, key_state, PhysicalKey::None, key_symbol.as_deref());
+                }
 
-                    if let (Some(input_text), Some(window)) = (&input_text, &window) {
-                        window.key_text_input(input_text);
-                    }
-                },
-                DispatcherPriority::INPUT,
-            );
+                if let Some(input_text) = &input_text {
+                    window.key_text_input(input_text);
+                }
+            });
         });
 
         source
+    }
+
+    /// Queues an input event and posts its delivery to the UI thread, at
+    /// input priority.
+    fn post_input(&self, input: impl FnOnce(&HeadlessVncFramebufferSource) + Send + 'static) {
+        lock(&self.pending_input).push_back(Box::new(input));
+        let this = self.arc();
+        Dispatcher::ui_thread().post(move || this.deliver_input(), DispatcherPriority::INPUT);
+    }
+
+    /// Delivers the queued input events in order, on the UI thread. A
+    /// delivery that starts while one runs (from the jobs the input
+    /// extensions of the window run) leaves the queue to it.
+    fn deliver_input(&self) {
+        struct Delivering<'a>(&'a Cell<bool>);
+        impl Drop for Delivering<'_> {
+            fn drop(&mut self) {
+                self.0.set(false);
+            }
+        }
+
+        let delivering = self.delivering_input.get();
+        if delivering.replace(true) {
+            return;
+        }
+        let _delivering = Delivering(delivering);
+
+        loop {
+            let input = lock(&self.pending_input).pop_front();
+            let Some(input) = input else {
+                return;
+            };
+            input(self);
+        }
     }
 
     fn arc(&self) -> Arc<HeadlessVncFramebufferSource> {
