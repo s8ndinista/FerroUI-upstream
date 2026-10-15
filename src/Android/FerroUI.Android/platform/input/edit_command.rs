@@ -68,6 +68,10 @@ impl EditCommand {
         EditCommand::CommitText { text, new_cursor_position }
     }
 
+    pub fn key_event(key_event: Option<KeyEventToDispatch>) -> EditCommand {
+        EditCommand::KeyEvent(key_event)
+    }
+
     pub fn apply(&self, buffer: &TextEditBuffer) {
         match self {
             EditCommand::Selection { start, end } => {
@@ -279,9 +283,9 @@ mod tests {
     #[test]
     fn a_key_event_is_dispatched_to_the_view() {
         let (_client, input_method, buffer) = buffer_of("", 0, 0);
-        EditCommand::KeyEvent(Some(KeyEventToDispatch::New { action: KEY_EVENT_ACTION_DOWN, code: KEYCODE_ENTER }))
+        EditCommand::key_event(Some(KeyEventToDispatch::New { action: KEY_EVENT_ACTION_DOWN, code: KEYCODE_ENTER }))
             .apply(&buffer);
-        EditCommand::KeyEvent(None).apply(&buffer);
+        EditCommand::key_event(None).apply(&buffer);
         assert_eq!(input_method.take_calls(), vec![Call::KeyNew(KEY_EVENT_ACTION_DOWN, KEYCODE_ENTER)]);
     }
 }

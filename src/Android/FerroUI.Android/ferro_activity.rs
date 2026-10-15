@@ -222,7 +222,7 @@ impl FerroActivity {
         ACTIVITIES.with(|activities| activities.borrow_mut().insert(handle, this.clone()));
 
         let content = this.content.borrow().clone();
-        this.initialize_view(content);
+        this.initialize_ferro_view(content);
         handle
     }
 
@@ -300,9 +300,9 @@ impl FerroActivity {
         drop(removed);
     }
 
-    fn initialize_view(self: &Rc<Self>, initial_content: Option<BoxedValue>) {
+    fn initialize_ferro_view(self: &Rc<Self>, initial_content: Option<BoxedValue>) {
         if self.is_main_activity {
-            FerroMainActivity::initialize_view(self, initial_content);
+            FerroMainActivity::initialize_ferro_view(self, initial_content);
             return;
         }
 
