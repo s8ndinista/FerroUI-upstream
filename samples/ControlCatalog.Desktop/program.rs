@@ -14,7 +14,8 @@
 //! reached, with the backend of the platform detection (X11) as its
 //! fallback, as the original does (`UseWaylandWithFallback`).
 //! `FERROUI_CATALOG_WAYLAND=0` (or `x11`) leaves the backend of the platform
-//! detection alone; `software` renders through shared memory buffers alone.
+//! detection alone; `software` renders through shared memory buffers alone;
+//! `dmabuf` asks for the dmabuf swapchain of the backend.
 //!
 //! With `FERROUI_SMOKE_EXIT_MS=<n>` the main window is closed after `n`
 //! milliseconds, which ends the main loop; the process exits with the exit
@@ -139,8 +140,9 @@ pub fn build_ferro_app() -> AppBuilder {
 /// `FERROUI_CATALOG_WAYLAND` is the port's own, for the runs that need one backend: `0` (or
 /// `x11`) leaves the backend of the platform detection alone, which is how the catalog is run
 /// through XWayland on a Wayland session; `software` renders through shared memory buffers
-/// alone; anything else, and no value, renders as the options of the backend say (EGL when the
-/// compositor and the driver have it).
+/// alone; `dmabuf` asks for the dmabuf swapchain (`use_dmabuf_swapchain`), which the backend
+/// uses when the compositor has `zwp_linux_dmabuf_v1`; anything else, and no value, renders as
+/// the options of the backend say (EGL when the compositor and the driver have it).
 #[cfg(target_os = "linux")]
 fn use_wayland_of_the_environment(builder: AppBuilder) -> AppBuilder {
     use ferroui_wayland::{FerroWaylandPlatformExtensions, WaylandPlatformOptions};
@@ -149,6 +151,7 @@ fn use_wayland_of_the_environment(builder: AppBuilder) -> AppBuilder {
         Some("0") | Some("x11") => return builder,
         // No profile to make a context with: no display of EGL is created.
         Some("software") => options.gl_profiles = Vec::new(),
+        Some("dmabuf") => options.use_dmabuf_swapchain = Some(true),
         _ => {}
     }
     println!("ControlCatalog: the Wayland backend, with the backend of the platform detection as its fallback");

@@ -2,7 +2,7 @@
 # Pictures of the ControlCatalog on the Wayland backend, taken by the compositor.
 #
 #   scripts/wayland/sway-run.sh [--scale N] -- \
-#       scripts/wayland/catalog-pictures.sh <catalog binary> <output directory> [software|egl] [interval ms]
+#       scripts/wayland/catalog-pictures.sh <catalog binary> <output directory> [software|egl|dmabuf] [interval ms]
 #
 # Runs inside a compositor that has the screen copy protocol of wlroots (sway-run.sh starts one):
 # the catalog shows a handful of pages one after the other (FERROUI_SMOKE_SCREENSHOTS, with the
@@ -42,6 +42,7 @@ log="$out/catalog-$mode.log"
 
 case "$mode" in
     egl) wayland=1 ;;
+    dmabuf) wayland=dmabuf ;;
     *) wayland=software ;;
 esac
 
