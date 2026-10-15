@@ -55,10 +55,6 @@ The first build compiles or downloads Skia and can take a while.
 
 ## Installation
 
-<!-- release-note:begin (removed at the first publish; docs/release.md, "Checklist") -->
-> **Upcoming.** The crates are not on crates.io yet. The first preview, `0.1.0-preview.1`, is being prepared; until it is published the dependency lines below do not resolve and the badges of the table read "not found". Build from the repository instead ([Getting started](#getting-started)).
-<!-- release-note:end -->
-
 FerroUI is a set of crates that are released together at one version. A desktop application names the base library, the controls, the desktop entry point and a theme:
 
 ```toml
