@@ -1959,6 +1959,7 @@ mod windows {
     /// orange and presented, read back from the window. Run with
     /// `--vulkan-probe`.
     fn vulkan_probe(report: &Report) {
+        use ferroui_base::logging::{LogEventLevel, Logger, StringLogSink};
         use ferroui_base::platform::IOptionalFeatureProvider;
         use ferroui_vulkan::ash::{self, vk};
         use ferroui_vulkan::{IVulkanKhrSurfacePlatformSurfaceFactory, IVulkanPlatformGraphicsContext, IVulkanRenderSession};
@@ -1978,10 +1979,26 @@ mod windows {
                 "vulkan-1.dll is not on this system: no Vulkan driver is installed"
             },
         );
-        let Some(graphics) = VulkanSupport::try_initialize(None) else {
+        // What the mode logs in the area `Vulkan` while it initialises (why it does not), kept for
+        // the report; the sink of the application, if any, is given back afterwards.
+        let reasons = Arc::new(std::sync::Mutex::new(Vec::<String>::new()));
+        let previous_sink = Logger::sink();
+        let sink_reasons = reasons.clone();
+        Logger::set_sink(Some(Arc::new(StringLogSink::new(
+            move |line| sink_reasons.lock().unwrap_or_else(std::sync::PoisonError::into_inner).push(line.to_string()),
+            LogEventLevel::Warning,
+            &["Vulkan"],
+        ))));
+        let graphics = VulkanSupport::try_initialize(None);
+        Logger::set_sink(previous_sink);
+        let reasons = reasons.lock().unwrap_or_else(std::sync::PoisonError::into_inner).join(" | ");
+        let Some(graphics) = graphics else {
             report.info(
                 "Vulkan",
-                "no platform graphics of Vulkan on this machine (the log of the area Vulkan says why); nothing more is probed",
+                format!(
+                    "no platform graphics of Vulkan on this machine: {}; nothing more is probed",
+                    if reasons.is_empty() { "nothing was logged" } else { reasons.as_str() }
+                ),
             );
             return;
         };
