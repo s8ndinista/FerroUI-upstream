@@ -10,9 +10,9 @@ Generated from upstream commit `17350180c33b063f0e98abbfd19aa3cae63f5d56`. Back 
 | FerroUI | `src/Windows/FerroUI.Win32` (exists) |
 | Crate | `ferroui-win32` |
 | Phase / priority | 1 - desktop (Windows) / P0 |
-| Files | 92/95 (96.8%) |
-| Types | 218/276 (79.0%) |
-| Members | 2081/2605 (79.9%) |
+| Files | 94/95 (98.9%) |
+| Types | 222/276 (80.4%) |
+| Members | 2087/2605 (5 waived) (80.3%) |
 | Contracts (interfaces) | 7/7 |
 | Property registrations | 0/0 |
 | Routed events | 0/0 |
@@ -516,12 +516,12 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 
 </details>
 
-### `Vulkan` - files 0/2, types 0/4, members 0/11
+### `Vulkan` - files 2/2, types 4/4, members 6/11 (5 waived)
 
 | Upstream file | Rust file | Status | Types | Members | Notes |
 |---|---|---|---|---|---|
-| `VulkanNativeInterop.cs` | `vulkan/vulkan_native_interop.rs` | missing | 0/2 | 0/8 |  |
-| `VulkanSupport.cs` | `vulkan/vulkan_support.rs` | missing | 0/2 | 0/3 |  |
+| `VulkanNativeInterop.cs` | `vulkan/vulkan_native_interop.rs` | present | 2/2 | 3/8 (5 waived) |  |
+| `VulkanSupport.cs` | `vulkan/vulkan_support.rs` | present | 2/2 | 3/3 |  |
 
 ### `WinRT` - files 5/5, types 10/10, members 83/84
 

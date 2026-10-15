@@ -10,9 +10,9 @@ Generated from upstream commit `17350180c33b063f0e98abbfd19aa3cae63f5d56`. Back 
 | FerroUI | `src/Android/FerroUI.Android` (exists) |
 | Crate | `ferroui-android` |
 | Phase / priority | 6 - mobile (Android) / P1 |
-| Files | 56/58 (96.6%) |
-| Types | 71/88 (80.7%) |
-| Members | 347/447 (77.6%) |
+| Files | 58/58 (100.0%) |
+| Types | 75/88 (85.2%) |
+| Members | 353/447 (4 waived) (79.7%) |
 | Contracts (interfaces) | 6/7 |
 | Property registrations | 0/0 |
 | Routed events | 0/0 |
@@ -305,12 +305,12 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 
 </details>
 
-### `Platform/Vulkan` - files 0/2, types 0/4, members 0/10
+### `Platform/Vulkan` - files 2/2, types 4/4, members 6/10 (4 waived)
 
 | Upstream file | Rust file | Status | Types | Members | Notes |
 |---|---|---|---|---|---|
-| `VulkanNativeInterop.cs` | `platform/vulkan/vulkan_native_interop.rs` | missing | 0/2 | 0/7 |  |
-| `VulkanSupport.cs` | `platform/vulkan/vulkan_support.rs` | missing | 0/2 | 0/3 |  |
+| `VulkanNativeInterop.cs` | `platform/vulkan/vulkan_native_interop.rs` | present | 2/2 | 3/7 (4 waived) |  |
+| `VulkanSupport.cs` | `platform/vulkan/vulkan_support.rs` | present | 2/2 | 3/3 |  |
 
 ## Rust-only files
 

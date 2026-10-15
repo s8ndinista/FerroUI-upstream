@@ -432,6 +432,8 @@ The script injected the tap when the application asked for it, two seconds after
 
 Built **[M]**: `scripts/android/apk.sh smoke --features ferroui-android/vulkan` (the option `--features` passes cargo features to the build) and the default package without the feature, both for `aarch64-linux-android`; the host tests of the loop (Vulkan taken when it is named and initialises, passed over when it does not, never asked in the default order). `scripts/android/emu-smoke.sh --modes "vulkan egl software"` runs the package with the feature in each mode: in the mode `vulkan` the smoke application asks for Vulkan alone (no fallback), checks the platform graphics (a context of them is a Vulkan context, with a device and its queue, the surface factory, and an instance with `VK_KHR_android_surface`), and its frame checks then read back frames drawn by Ganesh on Vulkan. The SwiftShader of the emulator offers Vulkan **[R]** (section 6: the emulator reports ANGLE on the Vulkan of SwiftShader).
 
+Tracking after the two files: 58 of 58 files, 75 of 88 types, 353 of 447 members (4 waived: the fields of `VkAndroidSurfaceCreateInfoKHR`, which are those of the bindings).
+
 Run on the emulator: not yet (the orchestrator runs the emulator; the result is recorded here when it has run).
 
 

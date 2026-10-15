@@ -724,6 +724,8 @@ Windows has no native menu bar to export a menu to, so the native menu of a wind
 
 `Avalonia.Win32.Automation` is in scope since 2026-10-11 (the `"rust"` key of its entry points at the module): 40 of 40 files, and of 64 types and 598 members, 19 and 124 are found by the scanner and 45 and 474 are waived, because the 25 interfaces and their enumerations are generated from `uia.idl`, which the scanner does not read (`path-overrides.toml`, `member-waivers.toml`); tests of the crate hold their identifiers and slot counts. In scope overall: 28301 of 32770 members (96.2 %); of every upstream project 75.7 %.
 
+After Vulkan (2026-10-15): 94 of 95 files, 222 of 276 types, 2087 of 2605 members (5 waived: the fields of `VkWin32SurfaceCreateInfoKHR`, which are those of the bindings); in scope overall 29345 of 36113 members (95.2 %), of every upstream project 78.5 %.
+
 A file counts when it exists; a file that is built in part counts as a file and its missing members will count as missing once members are extracted. The type count is dominated by the interop file (119 types, most of them enumerations and structures of calls later stages make; 50 present).
 
 ## 13. The automation project: UI Automation
