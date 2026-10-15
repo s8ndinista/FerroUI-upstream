@@ -2,23 +2,23 @@
  "upstreamCommit": "17350180c33b063f0e98abbfd19aa3cae63f5d56",
  "inScope": {
   "files": [
-   2756,
+   2760,
    2775,
    0
   ],
   "types": [
-   3812,
+   3820,
    4327,
    369
   ],
   "members": [
-   29333,
+   29345,
    36113,
-   5266
+   5275
   ]
  },
  "allProjects": {
-  "membersPresent": 29333,
+  "membersPresent": 29345,
   "members": 37391,
   "membersNotApplicable": 1168,
   "membersOutOfScope": 110
@@ -494,19 +494,19 @@
    "scope": "in",
    "detail": "full",
    "files": [
-    56,
+    58,
     58,
     0
    ],
    "types": [
-    71,
+    75,
     88,
     0
    ],
    "members": [
-    347,
+    353,
     447,
-    0
+    4
    ],
    "interfaces": [
     6,
@@ -523,9 +523,9 @@
    "notApplicableFiles": 0,
    "matchKinds": {
     "field": 1,
-    "fn": 323,
+    "fn": 328,
     "free fn": 3,
-    "free item": 2,
+    "free item": 3,
     "overload fn": 8,
     "variant": 10
    },
@@ -691,6 +691,12 @@
     ],
     "Platform/Storage/AndroidStorageProvider.cs": [
      "platform/storage/android_storage_provider.rs"
+    ],
+    "Platform/Vulkan/VulkanNativeInterop.cs": [
+     "platform/vulkan/vulkan_native_interop.rs"
+    ],
+    "Platform/Vulkan/VulkanSupport.cs": [
+     "platform/vulkan/vulkan_support.rs"
     ],
     "PlatformIconLoader.cs": [
      "platform_icon_loader.rs"
@@ -9916,19 +9922,19 @@
    "scope": "in",
    "detail": "full",
    "files": [
-    92,
+    94,
     95,
     0
    ],
    "types": [
-    218,
+    222,
     276,
     0
    ],
    "members": [
-    2081,
+    2087,
     2605,
-    0
+    5
    ],
    "interfaces": [
     7,
@@ -9948,9 +9954,9 @@
     "const": 61,
     "derive": 2,
     "field": 309,
-    "fn": 572,
+    "fn": 577,
     "free fn": 158,
-    "free item": 45,
+    "free item": 46,
     "overload fn": 10,
     "trait": 14,
     "variant": 909
@@ -10144,6 +10150,12 @@
     ],
     "TrayIconImpl.cs": [
      "tray_icon_impl.rs"
+    ],
+    "Vulkan/VulkanNativeInterop.cs": [
+     "vulkan/vulkan_native_interop.rs"
+    ],
+    "Vulkan/VulkanSupport.cs": [
+     "vulkan/vulkan_support.rs"
     ],
     "Win32DispatcherImpl.cs": [
      "win32_dispatcher_impl.rs"
