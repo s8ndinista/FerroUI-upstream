@@ -41,12 +41,12 @@ pub(crate) fn inverse_scale_transform(scaling: f64) -> Option<DXGI_MATRIX_3X2_F>
     Some(DXGI_MATRIX_3X2_F { _11: 1.0 / scaling as f32, _22: 1.0 / scaling as f32, ..Default::default() })
 }
 
+// Created by a host of another toolkit: the swap chain panel of the WinUI integration
+// (`ferroui-winui`), which the reference grants access to its internals.
 #[cfg(windows)]
-#[allow(unused_imports)] // Created by a host of another toolkit, which the port does not have yet.
-pub(crate) use imp::{SwapChainGlRenderTarget, SwapChainGlSurface};
+pub use imp::{SwapChainGlRenderTarget, SwapChainGlSurface};
 
 #[cfg(windows)]
-#[allow(dead_code)] // As above: the tests construct it.
 mod imp {
     use super::super::{AngleContextDisplay, AngleWin32EglDisplay};
     use super::{inverse_scale_transform, DXGI_MATRIX_3X2_F, IDXGI_SWAP_CHAIN3_GUID, SET_MATRIX_TRANSFORM_SLOT};
@@ -98,7 +98,7 @@ mod imp {
     /// The surface. It is shared between the threads; the view a thread
     /// asks for is a surface of its own over the same state. The three
     /// functions of the host are called on the thread that renders.
-    pub(crate) struct SwapChainGlSurface {
+    pub struct SwapChainGlSurface {
         inner: Arc<Inner>,
     }
 
@@ -276,7 +276,7 @@ mod imp {
         }
     }
 
-    pub(crate) struct SwapChainGlRenderTarget {
+    pub struct SwapChainGlRenderTarget {
         base: EglPlatformSurfaceRenderTargetBase,
         /// The display of ANGLE of the context.
         display: Rc<AngleWin32EglDisplay>,
