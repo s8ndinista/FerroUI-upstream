@@ -72,10 +72,18 @@ mod imp {
 
         fn new() -> Self {
             let factory = Self { cache: RefCell::new(HashMap::new()) };
-            factory.load_module_cursor(StandardCursorType::DragMove, "ole32.dll", 2);
-            factory.load_module_cursor(StandardCursorType::DragCopy, "ole32.dll", 3);
-            factory.load_module_cursor(StandardCursorType::DragLink, "ole32.dll", 4);
+            factory.static_constructor();
             factory
+        }
+
+        /// The static constructor of the reference: the cursors of a drag,
+        /// which OLE has, enter the cache before any cursor is asked for.
+        /// The cache of the reference is a static of the process; here it is
+        /// the cache of the factory of the thread, filled when it is made.
+        fn static_constructor(&self) {
+            self.load_module_cursor(StandardCursorType::DragMove, "ole32.dll", 2);
+            self.load_module_cursor(StandardCursorType::DragCopy, "ole32.dll", 3);
+            self.load_module_cursor(StandardCursorType::DragLink, "ole32.dll", 4);
         }
 
         fn load_module_cursor(&self, cursor_type: StandardCursorType, module: &str, id: i32) {

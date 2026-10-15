@@ -2,7 +2,7 @@
 //! extensions of WGL are found, and the creation of contexts (the port of
 //! `OpenGl/WglDisplay.cs`).
 
-use super::wgl_consts::*;
+use super::wgl_consts::WglConsts;
 use crate::interop::unmanaged_methods::{PixelFormatDescriptor, PixelFormatDescriptorFlags};
 use ferroui_opengl::GlVersion;
 
@@ -28,23 +28,23 @@ pub(crate) fn bootstrap_pixel_format_descriptor() -> PixelFormatDescriptor {
 /// bits of alpha, no depth and no stencil.
 pub(crate) fn pixel_format_attributes() -> [i32; 19] {
     [
-        WGL_DRAW_TO_WINDOW_ARB,
+        WglConsts::WGL_DRAW_TO_WINDOW_ARB,
         1,
-        WGL_ACCELERATION_ARB,
-        WGL_FULL_ACCELERATION_ARB,
-        WGL_SUPPORT_OPENGL_ARB,
+        WglConsts::WGL_ACCELERATION_ARB,
+        WglConsts::WGL_FULL_ACCELERATION_ARB,
+        WglConsts::WGL_SUPPORT_OPENGL_ARB,
         1,
-        WGL_DOUBLE_BUFFER_ARB,
+        WglConsts::WGL_DOUBLE_BUFFER_ARB,
         1,
-        WGL_PIXEL_TYPE_ARB,
-        WGL_TYPE_RGBA_ARB,
-        WGL_COLOR_BITS_ARB,
+        WglConsts::WGL_PIXEL_TYPE_ARB,
+        WglConsts::WGL_TYPE_RGBA_ARB,
+        WglConsts::WGL_COLOR_BITS_ARB,
         32,
-        WGL_ALPHA_BITS_ARB,
+        WglConsts::WGL_ALPHA_BITS_ARB,
         8,
-        WGL_DEPTH_BITS_ARB,
+        WglConsts::WGL_DEPTH_BITS_ARB,
         0,
-        WGL_STENCIL_BITS_ARB,
+        WglConsts::WGL_STENCIL_BITS_ARB,
         0,
         0, // End
     ]
@@ -55,9 +55,9 @@ pub(crate) fn pixel_format_attributes() -> [i32; 19] {
 /// the core profile otherwise.
 pub(crate) fn profile_mask(version: GlVersion) -> i32 {
     if version.is_compatibility_profile() && (version.major() > 3 || version.major() == 3 && version.minor() >= 2) {
-        WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB
+        WglConsts::WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB
     } else {
-        WGL_CONTEXT_CORE_PROFILE_BIT_ARB
+        WglConsts::WGL_CONTEXT_CORE_PROFILE_BIT_ARB
     }
 }
 
@@ -66,16 +66,16 @@ pub(crate) fn profile_mask(version: GlVersion) -> i32 {
 pub(crate) fn context_attributes(version: GlVersion) -> [i32; 8] {
     [
         // major
-        WGL_CONTEXT_MAJOR_VERSION_ARB,
+        WglConsts::WGL_CONTEXT_MAJOR_VERSION_ARB,
         version.major(),
         // minor
-        WGL_CONTEXT_MINOR_VERSION_ARB,
+        WglConsts::WGL_CONTEXT_MINOR_VERSION_ARB,
         version.minor(),
         // core or compatibility profile
-        WGL_CONTEXT_PROFILE_MASK_ARB,
+        WglConsts::WGL_CONTEXT_PROFILE_MASK_ARB,
         profile_mask(version),
         // debug
-        // WGL_CONTEXT_FLAGS_ARB, 1,
+        // WglConsts::WGL_CONTEXT_FLAGS_ARB, 1,
         // end
         0,
         0,
@@ -435,13 +435,13 @@ mod tests {
 
         assert_eq!(Some(&0), attributes.last());
         let pairs: Vec<(i32, i32)> = attributes[..18].chunks(2).map(|pair| (pair[0], pair[1])).collect();
-        assert!(pairs.contains(&(WGL_ACCELERATION_ARB, WGL_FULL_ACCELERATION_ARB)));
-        assert!(pairs.contains(&(WGL_PIXEL_TYPE_ARB, WGL_TYPE_RGBA_ARB)));
-        assert!(pairs.contains(&(WGL_COLOR_BITS_ARB, 32)));
-        assert!(pairs.contains(&(WGL_ALPHA_BITS_ARB, 8)));
-        assert!(pairs.contains(&(WGL_DEPTH_BITS_ARB, 0)));
-        assert!(pairs.contains(&(WGL_STENCIL_BITS_ARB, 0)));
-        assert!(pairs.contains(&(WGL_DOUBLE_BUFFER_ARB, 1)));
+        assert!(pairs.contains(&(WglConsts::WGL_ACCELERATION_ARB, WglConsts::WGL_FULL_ACCELERATION_ARB)));
+        assert!(pairs.contains(&(WglConsts::WGL_PIXEL_TYPE_ARB, WglConsts::WGL_TYPE_RGBA_ARB)));
+        assert!(pairs.contains(&(WglConsts::WGL_COLOR_BITS_ARB, 32)));
+        assert!(pairs.contains(&(WglConsts::WGL_ALPHA_BITS_ARB, 8)));
+        assert!(pairs.contains(&(WglConsts::WGL_DEPTH_BITS_ARB, 0)));
+        assert!(pairs.contains(&(WglConsts::WGL_STENCIL_BITS_ARB, 0)));
+        assert!(pairs.contains(&(WglConsts::WGL_DOUBLE_BUFFER_ARB, 1)));
     }
 
     #[test]
@@ -449,24 +449,24 @@ mod tests {
         let core = GlVersion::new(GlProfileType::OpenGL, 4, 0);
         let compatibility = |major, minor| GlVersion::with_compatibility_profile(GlProfileType::OpenGL, major, minor, true);
 
-        assert_eq!(WGL_CONTEXT_CORE_PROFILE_BIT_ARB, profile_mask(core));
-        assert_eq!(WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB, profile_mask(compatibility(4, 0)));
-        assert_eq!(WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB, profile_mask(compatibility(3, 2)));
+        assert_eq!(WglConsts::WGL_CONTEXT_CORE_PROFILE_BIT_ARB, profile_mask(core));
+        assert_eq!(WglConsts::WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB, profile_mask(compatibility(4, 0)));
+        assert_eq!(WglConsts::WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB, profile_mask(compatibility(3, 2)));
         // Before 3.2 there are no profiles.
-        assert_eq!(WGL_CONTEXT_CORE_PROFILE_BIT_ARB, profile_mask(compatibility(3, 1)));
-        assert_eq!(WGL_CONTEXT_CORE_PROFILE_BIT_ARB, profile_mask(compatibility(2, 1)));
+        assert_eq!(WglConsts::WGL_CONTEXT_CORE_PROFILE_BIT_ARB, profile_mask(compatibility(3, 1)));
+        assert_eq!(WglConsts::WGL_CONTEXT_CORE_PROFILE_BIT_ARB, profile_mask(compatibility(2, 1)));
     }
 
     #[test]
     fn the_attributes_of_a_context_name_its_version_and_profile() {
         assert_eq!(
             [
-                WGL_CONTEXT_MAJOR_VERSION_ARB,
+                WglConsts::WGL_CONTEXT_MAJOR_VERSION_ARB,
                 3,
-                WGL_CONTEXT_MINOR_VERSION_ARB,
+                WglConsts::WGL_CONTEXT_MINOR_VERSION_ARB,
                 2,
-                WGL_CONTEXT_PROFILE_MASK_ARB,
-                WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
+                WglConsts::WGL_CONTEXT_PROFILE_MASK_ARB,
+                WglConsts::WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
                 0,
                 0
             ],

@@ -42,6 +42,34 @@ impl ICONDIRENTRY {
     }
 }
 
+/// The header of an icon file: the three numbers and the first entry of its
+/// directory, which the other entries follow.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[allow(non_snake_case)]
+pub(crate) struct ICONDIR {
+    // Must be 0
+    pub idReserved: u16,
+    // Must be 1
+    pub idType: u16,
+    // Count of entries
+    pub idCount: u16,
+    // First entry (anysize array)
+    pub idEntries: ICONDIRENTRY,
+}
+
+impl ICONDIR {
+    /// The header at the start of `bytes`, which hold at least
+    /// [`ICONDIR_SIZE`] bytes.
+    fn read(bytes: &[u8]) -> ICONDIR {
+        ICONDIR {
+            idReserved: u16::from_le_bytes([bytes[0], bytes[1]]),
+            idType: u16::from_le_bytes([bytes[2], bytes[3]]),
+            idCount: u16::from_le_bytes([bytes[4], bytes[5]]),
+            idEntries: ICONDIRENTRY::read(&bytes[6..ICONDIR_SIZE]),
+        }
+    }
+}
+
 /// The image of an icon file that was chosen for a size: where its bytes
 /// are in the file, and the size its entry states.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -59,13 +87,12 @@ pub(crate) fn find_best_icon_image(icon_data: &[u8], size: PixelSize, bit_depth:
         return None;
     }
 
-    let id_reserved = u16::from_le_bytes([icon_data[0], icon_data[1]]);
-    let id_type = u16::from_le_bytes([icon_data[2], icon_data[3]]);
-    let id_count = usize::from(u16::from_le_bytes([icon_data[4], icon_data[5]]));
+    let dir = ICONDIR::read(icon_data);
 
-    if id_reserved != 0 || id_type != 1 || id_count == 0 {
+    if dir.idReserved != 0 || dir.idType != 1 || dir.idCount == 0 {
         return None;
     }
+    let id_count = usize::from(dir.idCount);
 
     let mut best_width: u8 = 0;
     let mut best_height: u8 = 0;
@@ -77,9 +104,11 @@ pub(crate) fn find_best_icon_image(icon_data: &[u8], size: PixelSize, bit_depth:
     let mut best_bytes_in_res = 0u32;
     let mut best_bit_depth = 0u32;
     let mut best_image_offset = 0u32;
+    // The entries start with the first entry of the header.
     for index in 0..id_count {
         let start = 6 + index * ICONDIRENTRY_SIZE;
-        let entry = ICONDIRENTRY::read(&icon_data[start..start + ICONDIRENTRY_SIZE]);
+        let entry =
+            if index == 0 { dir.idEntries } else { ICONDIRENTRY::read(&icon_data[start..start + ICONDIRENTRY_SIZE]) };
         let mut update_best_fit = false;
         let mut icon_bit_depth: u32;
         if entry.bColorCount != 0 {

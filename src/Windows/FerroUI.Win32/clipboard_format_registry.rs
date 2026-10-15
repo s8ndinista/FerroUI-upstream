@@ -96,12 +96,20 @@ impl<S: ClipboardFormatSystem> ClipboardFormatList<S> {
     pub fn new(system: S) -> ClipboardFormatList<S> {
         let image_formats = ImageFormats::new();
         let mut list = ClipboardFormatList { system, formats: Vec::new(), image_formats };
-        list.add_data_format(DataFormat::text().into(), ClipboardFormat::CF_UNICODETEXT);
-        list.add_data_format(DataFormat::file().into(), ClipboardFormat::CF_HDROP);
-        list.add_data_format(list.image_formats.dib_data_format.clone(), ClipboardFormat::CF_DIB);
-        list.add_data_format(list.image_formats.dib_v5_data_format.clone(), ClipboardFormat::CF_DIBV5);
-        list.add_data_format(list.image_formats.h_bitmap_data_format.clone(), ClipboardFormat::CF_BITMAP);
+        list.static_constructor();
         list
+    }
+
+    /// The static constructor of the reference: the formats the system
+    /// defines start the list. The list of the reference is a static of the
+    /// process; here it is the list of the thread, which starts this way
+    /// when it is made.
+    fn static_constructor(&mut self) {
+        self.add_data_format(DataFormat::text().into(), ClipboardFormat::CF_UNICODETEXT);
+        self.add_data_format(DataFormat::file().into(), ClipboardFormat::CF_HDROP);
+        self.add_data_format(self.image_formats.dib_data_format.clone(), ClipboardFormat::CF_DIB);
+        self.add_data_format(self.image_formats.dib_v5_data_format.clone(), ClipboardFormat::CF_DIBV5);
+        self.add_data_format(self.image_formats.h_bitmap_data_format.clone(), ClipboardFormat::CF_BITMAP);
     }
 
     pub fn image_formats(&self) -> &ImageFormats {

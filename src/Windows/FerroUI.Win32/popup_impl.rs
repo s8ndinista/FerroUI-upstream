@@ -4,7 +4,7 @@
 
 use crate::interop::unmanaged_methods::{
     create_window_ex, get_ancestor, get_class_long_ptr, get_focus, set_class_long_ptr, set_focus, ClassLongIndex,
-    ClassStyles, HitTestValues, MouseActivate, WindowStyles, WindowsMessage, CW_USEDEFAULT, MONITOR,
+    ClassStyles, GetAncestorFlags, HitTestValues, MouseActivate, WindowStyles, WindowsMessage, CW_USEDEFAULT, MONITOR,
 };
 use crate::window_impl::{WindowImpl, WindowKind, WindowProperties};
 use ferroui_base::{PixelPoint, Size};
@@ -15,9 +15,6 @@ use ferroui_controls::primitives::popup_positioning::{
 use ferroui_controls::{WindowDecorations, WindowResizeReason, WindowState};
 use std::cell::{Cell, RefCell};
 use std::rc::Rc;
-
-/// `GA_ROOT` of `GetAncestor`: the root window of a chain of parents.
-const GA_ROOT: u32 = 2;
 
 /// A popup of the Windows backend.
 ///
@@ -170,7 +167,7 @@ impl PopupState {
         };
 
         let focus_owner = get_focus();
-        if focus_owner != 0 && get_ancestor(focus_owner, GA_ROOT) == parent_handle {
+        if focus_owner != 0 && get_ancestor(focus_owner, GetAncestorFlags::GA_ROOT) == parent_handle {
             set_focus(parent_handle);
         }
     }
