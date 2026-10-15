@@ -100,8 +100,28 @@ impl<T: 'static> LocalKey<T> {
     /// The value of this thread, created first if it does not exist yet (from
     /// `provided` when that holds a value, else by the initialiser); null when
     /// the variable was destroyed on this thread.
+    ///
+    /// The path of a value that exists is short and inlined even without
+    /// optimisation (a development build of an application does every property
+    /// access through it): the index, the key, the table, the slot.
+    #[inline(always)]
     fn get_or_create(&'static self, provided: Option<&mut Option<T>>) -> *const T {
         let state = (self.state)();
+        let index = state.index.load(Ordering::Relaxed);
+        if index != 0 {
+            let value = alive_value(index - 1);
+            if !value.is_null() {
+                return value.cast_const().cast();
+            }
+        }
+        self.get_or_create_slow(state, provided)
+    }
+
+    /// `get_or_create` when the value does not exist yet on this thread, or
+    /// was destroyed.
+    #[cold]
+    #[inline(never)]
+    fn get_or_create_slow(&'static self, state: &'static KeyState<T>, provided: Option<&mut Option<T>>) -> *const T {
         let index = state.index();
         // SAFETY: the table belongs to this thread and outlives every call made on it
         // (it is freed by the destructor of the key, after the last value).
@@ -142,6 +162,7 @@ impl<T: 'static> LocalKey<T> {
     /// # Panics
     /// Panics when the variable was destroyed on this thread (the thread is
     /// ending), with the message of `std::thread::LocalKey::with`.
+    #[inline(always)]
     pub fn with<F, R>(&'static self, f: F) -> R
     where
         F: FnOnce(&T) -> R,
@@ -155,6 +176,7 @@ impl<T: 'static> LocalKey<T> {
     /// Calls `f` with a reference to the value of this thread, creating the
     /// value first if this thread has not used the variable yet; an
     /// [`AccessError`] when the variable was destroyed on this thread.
+    #[inline(always)]
     pub fn try_with<F, R>(&'static self, f: F) -> Result<R, AccessError>
     where
         F: FnOnce(&T) -> R,
@@ -403,6 +425,28 @@ static KEY: AtomicUsize = AtomicUsize::new(0);
 
 /// The value of the key of a thread whose table was destroyed.
 const DESTROYED: *mut c_void = 1 as *mut c_void;
+
+/// The value at `index` of the table of this thread, when the thread has a
+/// table and the value exists; null otherwise (the slow path decides).
+#[inline(always)]
+fn alive_value(index: usize) -> *mut u8 {
+    let key = KEY.load(Ordering::Acquire);
+    if key == 0 {
+        return ptr::null_mut();
+    }
+    // SAFETY: a key of this module.
+    let table = unsafe { pthread_getspecific((key - 1) as PthreadKey) };
+    if table.is_null() || table == DESTROYED {
+        return ptr::null_mut();
+    }
+    // SAFETY: the key holds a table of this thread until it is destroyed; the borrow ends
+    // here and calls nothing of a value.
+    let slots = unsafe { &*(*table.cast::<Table>()).slots.get() };
+    match slots.get(index) {
+        Some(State::Alive(slot)) => slot.value,
+        _ => ptr::null_mut(),
+    }
+}
 
 fn key() -> PthreadKey {
     match KEY.load(Ordering::Acquire) {
