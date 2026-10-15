@@ -2426,3 +2426,13 @@ reason = "Application.Start with a composed Application that overrides OnLaunche
 [[rust_only]]
 path = "src/Windows/FerroUI.WinUI/automation/mod.rs"
 reason = "The module of the automation files, with the result code of an element that is not enabled (the exception of the original reaches the client as that code)"
+
+# ---------------------------------------------------------------- Avalonia.LinuxFramebuffer
+
+[[map]]
+project = "Avalonia.LinuxFramebuffer"
+upstream = ["Input/LibInput/LibInputNativeUnsafeMethods.cs"]
+kind = "renamed"
+rust = "input/lib_input/lib_input_native_unsafe_methods.rs"
+types = { LibInputNativeUnsafeMethods = "LibInput" }
+reason = "the platform invokes of `libinput.so.10` are the fields of the table `LibInput`, each the function of its C name (declared with `native_library!`, opened with `dlopen` and resolved with `dlsym` when the backend starts; linux-framebuffer-platform.md, section 3)"

@@ -6456,3 +6456,261 @@ project = "Avalonia.Win32"
 type = "Avalonia.Win32.Interop.UnmanagedMethods.FILEDESCRIPTORW"
 member = "cFileName"
 reason = "a descriptor is read from the bytes of a `FileGroupDescriptorW` block at the offsets of the structure (`FILEDESCRIPTORW::SIZE`, `OFFSET_OF_*`; `read_descriptors_from_bytes`), which reads the flags, the size and the name"
+
+# ---------------------------------------------------------------- Avalonia.LinuxFramebuffer
+# The leftovers of the tracking page (2026-10-15), each read against the upstream file and the port
+# (docs/porting/linux-framebuffer-platform.md). The enumerations of the kernel and of `libinput` are
+# modules of constants of the same names: the codes are open sets (a device reports codes no
+# enumeration names), so they stay numbers compared with the fields of the events, and the scanner,
+# which looks for a type, does not see a module. The C functions are those of the `libc` crate or the
+# fields of a table of a library opened at run time.
+
+[[alias]]
+project = "Avalonia.LinuxFramebuffer"
+type = "Avalonia.LinuxFramebuffer.LinuxFramebufferLifetime"
+member = ".ctor"
+rust = ["with_input"]
+
+[[waive]]
+project = "Avalonia.LinuxFramebuffer"
+type = "Avalonia.LinuxFramebuffer.NativeUnsafeMethods"
+reason = "a class of declarations of C functions of `libc` and `libevdev` and three constants: the port calls the functions and constants of the `libc` crate, and the system calls on files through the safe functions of the module `sys` of native_unsafe_methods.rs; each member says where it is"
+
+[[waive]]
+project = "Avalonia.LinuxFramebuffer"
+type = "Avalonia.LinuxFramebuffer.NativeUnsafeMethods"
+member = "open"
+reason = "`sys::open` of native_unsafe_methods.rs, `open(pathname, flags, 0)` behind a safe signature that returns the error of the call"
+
+[[waive]]
+project = "Avalonia.LinuxFramebuffer"
+type = "Avalonia.LinuxFramebuffer.NativeUnsafeMethods"
+member = "close"
+reason = "`sys::close` of native_unsafe_methods.rs; the descriptors the port keeps are `OwnedFd`s, which close themselves when dropped"
+
+[[waive]]
+project = "Avalonia.LinuxFramebuffer"
+type = "Avalonia.LinuxFramebuffer.NativeUnsafeMethods"
+member = "ioctl"
+reason = "one safe function of the module `sys` of native_unsafe_methods.rs per kind of argument: `ioctl_struct` (a structure read or written), `ioctl_buffer` (a buffer whose length is in the request) and `ioctl_null` (no argument, as `FBIO_WAITFORVSYNC` is called)"
+
+[[waive]]
+project = "Avalonia.LinuxFramebuffer"
+type = "Avalonia.LinuxFramebuffer.NativeUnsafeMethods"
+member = "mmap"
+reason = "`libc::mmap`, called by `FbMapping` (output/fb_device.rs) for the memory of the framebuffer device and by the read-back of output/drm_scanout.rs"
+
+[[waive]]
+project = "Avalonia.LinuxFramebuffer"
+type = "Avalonia.LinuxFramebuffer.NativeUnsafeMethods"
+member = "munmap"
+reason = "`libc::munmap`, called by the Drop of `FbMapping` (output/fb_device.rs) and by the read-back of output/drm_scanout.rs"
+
+[[waive]]
+project = "Avalonia.LinuxFramebuffer"
+type = "Avalonia.LinuxFramebuffer.NativeUnsafeMethods"
+member = "memcpy"
+reason = "the copy of the back buffer to the device is `FbMapping::copy_from` (output/fb_device.rs), a copy of slices"
+
+[[waive]]
+project = "Avalonia.LinuxFramebuffer"
+type = "Avalonia.LinuxFramebuffer.NativeUnsafeMethods"
+member = "select"
+reason = "declared and called by no file of the reference; the port waits with `epoll` and `poll` as the reference does"
+
+[[waive]]
+project = "Avalonia.LinuxFramebuffer"
+type = "Avalonia.LinuxFramebuffer.NativeUnsafeMethods"
+member = "poll"
+reason = "`libc::poll` with `libc::pollfd`, in input/lib_input/lib_input_backend.rs and output/drm_output.rs, where the reference calls it"
+
+[[waive]]
+project = "Avalonia.LinuxFramebuffer"
+type = "Avalonia.LinuxFramebuffer.NativeUnsafeMethods"
+member = "libevdev_*"
+reason = "`libevdev` is replaced by the device's own requests (`EVIOCGNAME`, `EVIOCGBIT`, `EVIOCGABS` in `EvDevDevice::new`) and by `read` (`EvDevDevice::read_events`), input/ev_dev/ev_dev_device.rs; DEVIATIONS.md, Linux framebuffer platform"
+
+[[waive]]
+project = "Avalonia.LinuxFramebuffer"
+type = "Avalonia.LinuxFramebuffer.NativeUnsafeMethods"
+member = "epoll_*"
+reason = "`libc::epoll_create1`, `libc::epoll_ctl` and `libc::epoll_wait`, in epoll_dispatcher_impl.rs and input/ev_dev/ev_dev_backend.rs, where the reference calls them"
+
+[[waive]]
+project = "Avalonia.LinuxFramebuffer"
+type = "Avalonia.LinuxFramebuffer.NativeUnsafeMethods"
+member = "EPOLL*"
+reason = "the constants of the `libc` crate, `libc::EPOLLIN` and `libc::EPOLL_CTL_ADD`"
+
+[[waive]]
+project = "Avalonia.LinuxFramebuffer"
+type = "Avalonia.LinuxFramebuffer.NativeUnsafeMethods"
+member = "O_NONBLOCK"
+reason = "the constant of the `libc` crate, `libc::O_NONBLOCK` (input/ev_dev/ev_dev_device.rs)"
+
+[[waive]]
+project = "Avalonia.LinuxFramebuffer"
+type = "Avalonia.LinuxFramebuffer.PollFd"
+reason = "the structure of the C library as the `libc` crate declares it, `libc::pollfd` (input/lib_input/lib_input_backend.rs, output/drm_output.rs)"
+
+[[waive]]
+project = "Avalonia.LinuxFramebuffer"
+type = "Avalonia.LinuxFramebuffer.fd_set"
+reason = "the argument of `select`, which no file of the reference calls; `libc::fd_set` is the C library's"
+
+[[waive]]
+project = "Avalonia.LinuxFramebuffer"
+type = "Avalonia.LinuxFramebuffer.epoll_data"
+reason = "the union of the data of an `epoll` event, which the `libc` crate declares as the 64-bit field `u64` of `libc::epoll_event`: the port puts the index of the device (input/ev_dev/ev_dev_backend.rs) or the code of the source (epoll_dispatcher_impl.rs) there"
+
+[[waive]]
+project = "Avalonia.LinuxFramebuffer"
+type = "Avalonia.LinuxFramebuffer.epoll_event"
+reason = "the structure of the C library as the `libc` crate declares it, `libc::epoll_event` (`events` and the data as `u64`)"
+
+[[waive]]
+project = "Avalonia.LinuxFramebuffer"
+type = "Avalonia.LinuxFramebuffer.FbIoCtl"
+reason = "the request numbers are the `u32` constants of the module `fb_io_ctl` of native_unsafe_methods.rs under the same names (`ioctl` takes the request as a number); the tests there check that two of them are the encoded ones"
+
+[[waive]]
+project = "Avalonia.LinuxFramebuffer"
+type = "Avalonia.LinuxFramebuffer.VBlankFlags"
+reason = "the flags are the `u32` constants of the module `v_blank_flags` of native_unsafe_methods.rs under the same names; `fb_vblank::flags` is the number they are tested against"
+
+[[waive]]
+project = "Avalonia.LinuxFramebuffer"
+type = "Avalonia.LinuxFramebuffer.EvType"
+reason = "the types are the `u16` constants of the module `ev_type` of native_unsafe_methods.rs under the same names, compared with `input_event::type_`; `ev_type::ALL` takes the place of `Enum.GetValues<EvType>()` in `EvDevDevice::new`"
+
+[[waive]]
+project = "Avalonia.LinuxFramebuffer"
+type = "Avalonia.LinuxFramebuffer.AxisEventCode"
+reason = "the codes are the `u16` constants of the module `axis_event_code` of native_unsafe_methods.rs under the same names, compared with `input_event::code` (input/ev_dev/ev_dev_mouse.rs)"
+
+[[waive]]
+project = "Avalonia.LinuxFramebuffer"
+type = "Avalonia.LinuxFramebuffer.AbsAxis"
+reason = "the codes are the `u16` constants of the module `abs_axis` of native_unsafe_methods.rs under the same names (with the axes of the multi-touch protocol added), compared with `input_event::code`"
+
+[[waive]]
+project = "Avalonia.LinuxFramebuffer"
+type = "Avalonia.LinuxFramebuffer.EvKey"
+reason = "the codes are the `u16` constants of the module `ev_key` of native_unsafe_methods.rs under the same names, compared with `input_event::code` and with the button of a `libinput` event"
+
+[[waive]]
+project = "Avalonia.LinuxFramebuffer"
+type = "Avalonia.LinuxFramebuffer.input_event"
+member = "Key"
+reason = "the code of the event is the field `code`, a number compared with the constants of the module `ev_key` (`ev.code == ev_key::BTN_TOUCH`); the kernel's codes are an open set"
+
+[[waive]]
+project = "Avalonia.LinuxFramebuffer"
+type = "Avalonia.LinuxFramebuffer.input_event"
+member = "Axis"
+reason = "the code of the event is the field `code`, a number compared with the constants of the module `abs_axis` (`ev.code == abs_axis::ABS_X`); the kernel's codes are an open set"
+
+[[alias]]
+project = "Avalonia.LinuxFramebuffer"
+type = "Avalonia.LinuxFramebuffer.Input.EvDev.EvDevDevice"
+member = "NextEvent"
+rust = ["read_events"]
+
+[[waive]]
+project = "Avalonia.LinuxFramebuffer"
+type = "Avalonia.LinuxFramebuffer.Input.EvDev.EvDevDeviceDescription"
+member = "EvDevDeviceDescription()*"
+reason = "the description is an enumeration of the kinds of device (the abstract class and its subclass of the reference, with the kinds the port adds): a case is made of the description of its kind, and the enumeration has no constructor of its own"
+
+[[waive]]
+project = "Avalonia.LinuxFramebuffer"
+type = "Avalonia.LinuxFramebuffer.Input.EvDev.EvDevDeviceHandler"
+member = "OnEvent"
+reason = "a handler writes the raw events it raises as values into the list `out` that `handle_event` takes, and the backend hands them to the callback of `IInputBackend::initialize` on the UI thread (`State::handle`, input/ev_dev/ev_dev_backend.rs; linux-framebuffer-platform.md, section 4)"
+
+[[waive]]
+project = "Avalonia.LinuxFramebuffer"
+type = "Avalonia.LinuxFramebuffer.Input.EvDev.EvDevDeviceHandler"
+member = "EvDevDeviceHandler(*"
+reason = "the handler is a trait without state: each handler's constructor takes the information of its device (`EvDevDeviceInfo`), and the backend keeps the device beside the handler (`DeviceEntry`, input/ev_dev/ev_dev_backend.rs)"
+
+[[waive]]
+project = "Avalonia.LinuxFramebuffer"
+type = "Avalonia.LinuxFramebuffer.Input.EvDev.EvDevDeviceHandler"
+member = "Device"
+reason = "the backend keeps the device beside its handler (`DeviceEntry::_device`, input/ev_dev/ev_dev_backend.rs), whose descriptor the input thread reads; a handler reads the facts of the device it needs when it is created"
+
+[[waive]]
+project = "Avalonia.LinuxFramebuffer"
+type = "Avalonia.LinuxFramebuffer.Input.EvDev.EvDevDeviceHandler"
+member = "InputRoot"
+reason = "the input root is the backend's (`State::input_root`, set by `set_input_root`, input/ev_dev/ev_dev_backend.rs), which makes the raw input events of the values a handler raises; without it the backend reports `InputRoot hasn't been set` once, where the reference throws"
+
+[[waive]]
+project = "Avalonia.LinuxFramebuffer"
+type = "Avalonia.LinuxFramebuffer.Input.EvDev.EvDevDeviceHandler"
+member = "RaiseEvent"
+reason = "a handler pushes an `EvDevRawEvent` to the list `out` of `handle_event` (`EvDevSingleTouchScreen::raise_event` and the handlers of the other kinds)"
+
+[[waive]]
+project = "Avalonia.LinuxFramebuffer"
+type = "Avalonia.LinuxFramebuffer.Input.LibInput.LibInputNativeUnsafeMethods"
+member = "static LibInputNativeUnsafeMethods()"
+reason = "the static constructor fills the interface of the two callbacks: the static `INTERFACE` of lib_input_native_unsafe_methods.rs, a `libinput_interface` with `open_restricted` and `close_restricted`, initialised in place"
+
+[[waive]]
+project = "Avalonia.LinuxFramebuffer"
+type = "Avalonia.LinuxFramebuffer.Input.LibInput.LibInputNativeUnsafeMethods"
+member = "static IntPtr libinput_path_create_context()"
+reason = "the overload that passes the interface of this file is `LibInput::path_create_context` (lib_input_native_unsafe_methods.rs), which returns the context as an object that owns it"
+
+[[waive]]
+project = "Avalonia.LinuxFramebuffer"
+type = "*.LibInputNativeUnsafeMethods.LibInputEventType"
+reason = "the types are the `i32` constants of the module `lib_input_event_type` of lib_input_native_unsafe_methods.rs under the same names, compared with the type of an event (input/lib_input/lib_input_backend.rs)"
+
+[[waive]]
+project = "Avalonia.LinuxFramebuffer"
+type = "*.LibInputNativeUnsafeMethods.LibInputPointerAxisSource"
+reason = "the sources are the `i32` constants of the module `lib_input_pointer_axis_source` of lib_input_native_unsafe_methods.rs under the same names, compared with the source of an axis event"
+
+[[waive]]
+project = "Avalonia.LinuxFramebuffer"
+type = "*.LibInputNativeUnsafeMethods.LibInputPointerAxis"
+reason = "the axes are the `i32` constants of the module `lib_input_pointer_axis` of lib_input_native_unsafe_methods.rs under the same names, passed to the functions of the table"
+
+[[waive]]
+project = "Avalonia.LinuxFramebuffer"
+type = "Avalonia.LinuxFramebuffer.Output.FbDevBackBuffer"
+member = "Dispose"
+reason = "dropping the buffer frees its memory (a vector) and stops the blit thread (the Drop of `AsyncFbBlitter` joins it), output/fb_dev_back_buffer.rs"
+
+[[alias]]
+project = "Avalonia.LinuxFramebuffer"
+type = "Avalonia.LinuxFramebuffer.Output.FbDevBackBuffer"
+member = "LockFb"
+rust = ["lock_mapped"]
+
+[[waive]]
+project = "Avalonia.LinuxFramebuffer"
+type = "Avalonia.LinuxFramebuffer.Output.FbDevBackBuffer"
+member = "Address"
+reason = "the memory of the buffer is the vector `pixels` (a field), which `lock` hands to the frame and the frame's dispose gives back; the address of a frame is `ILockedFramebuffer::address` of `FbLockedFramebuffer` (output/fb_dev_back_buffer.rs)"
+
+[[alias]]
+project = "Avalonia.LinuxFramebuffer"
+type = "Avalonia.LinuxFramebuffer.FbdevOutput"
+member = ".ctor"
+rust = ["with_format", "with_options"]
+
+[[waive]]
+project = "Avalonia.LinuxFramebuffer"
+type = "Avalonia.LinuxFramebuffer.FbdevOutput"
+member = "Lock"
+reason = "the function of the render target `create_framebuffer_render_target` returns: `TargetState::lock` (output/fbdev_output.rs), which keeps the back buffer between frames, as the reference keeps it in the output"
+
+[[waive]]
+project = "Avalonia.LinuxFramebuffer"
+type = "Avalonia.LinuxFramebuffer.FbdevOutput"
+member = "~FbdevOutput()"
+reason = "no finalizer: the device and its mapped memory release themselves when dropped (the `OwnedFd` of `LinuxFbDevice`, the Drop of `FbMapping`, output/fb_device.rs), and `dispose` releases them earlier"
