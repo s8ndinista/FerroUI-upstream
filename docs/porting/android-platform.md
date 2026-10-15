@@ -154,9 +154,20 @@ The recommendation of this document: (a) until the owner decides; (b) if Android
 |---|---|---|
 | `Software` | `FramebufferManager`: the renderer draws into the buffer `ANativeWindow_lock` returns (RGBA 8888 premultiplied, or RGB 565 opaque, as the window says) and `ANativeWindow_unlockAndPost` shows it | 1 |
 | `Egl` | OpenGL ES through the EGL of the system on the native window; Skia's Ganesh on that context | 1 |
-| `Vulkan` | `VulkanSupport` | after the Vulkan project of the port (out of scope today); passed over like a mode that fails to initialise |
+| `Vulkan` | `VulkanSupport` (`platform/vulkan/`): the platform graphics of `ferroui-vulkan` over the loader of the system (`libvulkan.so`, opened at run time), presenting through `VK_KHR_android_surface` to the native window of the surface view; Skia's Ganesh on the device | built (section 6.1); only when an application names it, with the feature `vulkan` |
 
 **EGL.** Upstream calls `EglPlatformGraphics.TryCreate()`, whose display loads `libEGL.so` by name. The EGL of the port (`ferroui-opengl`) takes a loader function instead of a library name, and its platform graphics are bound to the thread that created them, because a display and a context are objects of one thread there. On Android the compositor renders on the render thread, so the backend has platform graphics of its own (`android_egl.rs`), written like the ones of ANGLE on Windows (`win32-platform.md` 6.1, "Threads"): the graphics hold nothing of a thread; a context loads the interface (`dlopen("libEGL.so")`, entry points by `dlsym` and then `eglGetProcAddress`) and creates its display object on the thread that asks for it. The display of the system is one per process and counted (`eglInitialize`/`eglTerminate`), so a display object per context is the same display. The platform probes once on the UI thread (a display, a context, made current, disposed), as `TryCreate` does by creating the display.
+
+### 6.1 Vulkan
+
+As upstream, the mode is in the loop of the platform and in no default order: an application names it in `AndroidPlatformOptions::rendering_mode` (with or without fallbacks behind it), and `VulkanOptions` registered with the application builder reach `VulkanSupport::try_initialize`, as upstream reads them from the locator.
+
+- **The two files.** `vulkan_support.rs` is `VulkanSupport.cs`: the lookup of the loader, `try_initialize` (the instance extension `VK_KHR_android_surface`, the surface factory as the platform feature, no surface for asking the devices, as upstream), the factory, the surface (scaling and size of the surface view, `create_surface`) and `create_android_surface`, which refuses a null window with upstream's message. `vulkan_native_interop.rs` is `VulkanNativeInterop.cs`: the entry point `vkCreateAndroidSurfaceKHR` resolved through the instance, and the structure, both those of `ash` (`ash::khr::android_surface`, `vk::AndroidSurfaceCreateInfoKHR`), as on X11.
+- **Which surface.** Upstream's factory takes any surface that is a native handle surface; the only one among the surfaces of a top-level is the surface view (`SurfaceViewHandle`), which the factory recognises by its type, as the X11 factory does its window.
+- **The native window.** The surface of Vulkan is created with a counted reference to the native window held for the time of the call (`SurfaceViewHandle::native_window`), as the framebuffer and the EGL surface hold one (section 4); upstream passes the address the view holds. The Vulkan surface takes a reference of its own.
+- **Skia.** The feature `vulkan` of `ferroui-android` turns on the feature `vulkan` of `ferroui-skia`: the Skia dependency then has Ganesh on OpenGL ES and Ganesh on Vulkan, the published binary `ganesh-gl-jpegd-jpege-pdf-vulkan` for the target, and nothing is compiled from source **[M]** (the build of the smoke application with the feature fetched `skia-binaries-b7f043e0b1e2a850e702-aarch64-linux-android-ganesh-gl-jpegd-jpege-pdf-vulkan.tar.gz`; the binary links no Vulkan library, so the package still needs libraries of the system only; the stripped library of the smoke application grew from 70 to 72 MB, the package stayed at 14 MB).
+- **The default does not change.** Without the feature the Skia dependency is the binary with OpenGL ES alone, as before, and the default order of the rendering modes is upstream's (EGL, then software) with or without it. Without the feature a list that names `Vulkan` passes the mode over with a warning in the area `Vulkan` that names the feature: the graphics would initialise, and the Skia backend would have no GPU for them (`DEVIATIONS.md`).
+- **Thread-local storage.** Nothing of the mode declares a thread-local variable (section 5.1); the loader and the bindings declare none either.
 
 **The surface of a top-level** is, as upstream, three surfaces: an `EglGlPlatformSurface` over what the surface view publishes (handle, size, scaling; waits skipped), the framebuffer manager, and the handle of the native window. The renderer takes the first it can use.
 
@@ -275,8 +286,8 @@ One row per upstream file. "Java" names the class of the Java layer that belongs
 | `Platform/Specific/Helpers/AndroidMotionEventsHelper.cs` | 252 | `platform/specific/helpers/android_motion_events_helper.rs` | `FerroView` | 1 | |
 | `Platform/Storage/AndroidStorageItem.cs` | 671 | `platform/storage/android_storage_item.rs` | `StorageHelper` | 2d | |
 | `Platform/Storage/AndroidStorageProvider.cs` | 344 | `platform/storage/android_storage_provider.rs` | | 2d | |
-| `Platform/Vulkan/VulkanNativeInterop.cs` | 25 | `platform/vulkan/vulkan_native_interop.rs` | | later | with the Vulkan project |
-| `Platform/Vulkan/VulkanSupport.cs` | 71 | `platform/vulkan/vulkan_support.rs` | | later | |
+| `Platform/Vulkan/VulkanNativeInterop.cs` | 25 | `platform/vulkan/vulkan_native_interop.rs` | | Vulkan | the table and the structure of `ash` (section 6.1) |
+| `Platform/Vulkan/VulkanSupport.cs` | 71 | `platform/vulkan/vulkan_support.rs` | | Vulkan | with the feature `vulkan` (section 6.1) |
 
 Files of the port without an upstream file: `interop/java.rs` (JNI, section 2.1), `interop/ndk.rs` (the NDK, section 2.2), `interop/natives.rs` (the table of native methods and the guard of section 2.3), `android_egl.rs` (the EGL library of the system and the platform graphics of section 6), `log.rs` (the log of the system, where the standard streams of a process go nowhere), `interop/listeners.rs` (a click listener whose handler is a closure, for the native controls of an application), `explore_by_touch_helper.rs` (what the access helper inherits from a library class upstream, section 7.3), `automation/node_info.rs` (the values of an accessibility node).
 
@@ -417,7 +428,12 @@ The script injected the tap when the application asked for it, two seconds after
 
 **Not proven by a run:** TalkBack (no accessibility service was enabled: the accessibility events the helper sends had no listener, nobody moved an accessibility focus, and no hover event of touch exploration was delivered); the hover path and the focus actions are host tests only; selection items, scroll viewers and expanders through the node provider on a device (host tests); API levels below 36 (the boolean checked state, and no unique id below API 33).
 
-## 11. Stages
+### 10.5 The Vulkan mode
+
+Built **[M]**: `scripts/android/apk.sh smoke --features ferroui-android/vulkan` (the option `--features` passes cargo features to the build) and the default package without the feature, both for `aarch64-linux-android`; the host tests of the loop (Vulkan taken when it is named and initialises, passed over when it does not, never asked in the default order). `scripts/android/emu-smoke.sh --modes "vulkan egl software"` runs the package with the feature in each mode: in the mode `vulkan` the smoke application asks for Vulkan alone (no fallback), checks the platform graphics (a context of them is a Vulkan context, with a device and its queue, the surface factory, and an instance with `VK_KHR_android_surface`), and its frame checks then read back frames drawn by Ganesh on Vulkan. The SwiftShader of the emulator offers Vulkan **[R]** (section 6: the emulator reports ANGLE on the Vulkan of SwiftShader).
+
+Run on the emulator: not yet (the orchestrator runs the emulator; the result is recorded here when it has run).
+
 
 | Stage | Content | What its emulator run proves |
 |---|---|---|
@@ -428,7 +444,7 @@ The script injected the tap when the application asked for it, two seconds after
 | **2c** (built and run, 2026-10-10) | lifecycle: the surface lost and created again, `onNewIntent` and protocol activation, activity and permission results, rotation, the back button (`BackPressedCallback`, `IActivityNavigationService`, `AndroidSystemNavigationManagerImpl`) | the script sends the application to the background and back, rotates, sends an intent, presses back, starts the activity a second time |
 | **2d** (built and run, 2026-10-10; with what this table had as 2e and 2f) | services: the clipboard, the launcher, the platform feedback; the storage provider and items; the native control host and the embed sample of the catalog | the checks of 10.3; the pickers themselves need a person |
 | **3** (built and run, 2026-10-10) | accessibility: the access helper, the node info providers, the delegate and node provider of the platform in place of the AndroidX helper | the nodes of four controls read from the provider and from `uiautomator dump`, their actions (10.4); not TalkBack |
-| later | Vulkan, with the Vulkan project of the port | |
+| **Vulkan** (built, 2026-10-15) | `VulkanSupport`, `VulkanNativeInterop`, the mode in the loop, the feature `vulkan` (section 6.1); the smoke application with `mode=vulkan` | the smoke application with the Vulkan mode alone: the platform graphics of Vulkan, a context with its device and the surface extension, and every frame check of stage 1 drawn by Ganesh on Vulkan (section 10.5) |
 
 ## 12. CI
 
@@ -438,4 +454,4 @@ No emulator runs in CI: a hosted Linux runner can run the x86-64 emulator with K
 
 ## 13. Deviations
 
-Recorded in `DEVIATIONS.md`, section "Android platform": the Java layer and what stays in Java; the platform classes in place of AndroidX; events copied in Java; the counted native window; the platform graphics per thread; the names (package, classes, the meta-data key, the log tag); the API level; what is not built yet and how each such place behaves.
+Recorded in `DEVIATIONS.md`, section "Android platform": the Java layer and what stays in Java; the platform classes in place of AndroidX; events copied in Java; the counted native window; the platform graphics per thread; the names (package, classes, the meta-data key, the log tag); the API level; the Vulkan mode behind a feature, and the reference to the native window held while its Vulkan surface is created; what is not built yet and how each such place behaves.
