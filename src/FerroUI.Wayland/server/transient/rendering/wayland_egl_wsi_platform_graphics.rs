@@ -39,7 +39,7 @@ pub struct WaylandEglWsiPlatformGraphics {
 /// `eglGetProcAddress`; a name it does not know is looked up among the
 /// exported symbols here, which covers a library older than EGL 1.5, whose
 /// `eglGetProcAddress` answers for extensions only.
-fn load_egl_interface() -> Result<EglInterface, OpenGlException> {
+pub(crate) fn load_egl_interface() -> Result<EglInterface, OpenGlException> {
     // SAFETY: the name is a terminated string; the library is never closed, so what it
     // exports stays valid.
     let library = unsafe { libc::dlopen(EGL_LIBRARY.as_ptr(), libc::RTLD_LAZY | libc::RTLD_LOCAL) };

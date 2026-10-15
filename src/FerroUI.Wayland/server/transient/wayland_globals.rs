@@ -4,11 +4,9 @@
 //! writes to it. Here the announcements of the first round trip are recorded
 //! (`RegistryBootstrap`), the globals are made from the record, and the
 //! registry listener writes to the globals from then on.
-//!
-//! The global of stage 3 of `docs/porting/wayland-platform.md` (`linux-dmabuf`)
-//! is not bound yet.
 
 use super::clipboard::wayland_data_source::WaylandDataSource;
+use super::rendering::wayland_egl_dma_buf_platform_graphics::WaylandEglDmaBufPlatformGraphics;
 use super::rendering::wayland_egl_wsi_platform_graphics::WaylandEglWsiPlatformGraphics;
 use super::wayland_cursor_manager::WaylandCursorManager;
 use super::wayland_input_dispatcher::WaylandInputDispatcher;
@@ -28,6 +26,7 @@ use wayland_client::protocol::wl_registry::{self, WlRegistry};
 use wayland_client::protocol::wl_shm::{self, WlShm};
 use wayland_client::{Connection, Dispatch, Proxy, QueueHandle, WEnum};
 use wayland_protocols::wp::fractional_scale::v1::client::wp_fractional_scale_manager_v1::WpFractionalScaleManagerV1;
+use wayland_protocols::wp::linux_dmabuf::zv1::client::zwp_linux_dmabuf_v1::ZwpLinuxDmabufV1;
 use wayland_protocols::wp::text_input::zv3::client::zwp_text_input_manager_v3::ZwpTextInputManagerV3;
 use wayland_protocols::wp::viewporter::client::wp_viewporter::WpViewporter;
 use wayland_protocols::xdg::decoration::zv1::client::zxdg_decoration_manager_v1::ZxdgDecorationManagerV1;
@@ -64,6 +63,7 @@ pub struct WaylandGlobals {
     pub fractional_scale_manager: Option<WpFractionalScaleManagerV1>,
     pub viewporter: Option<WpViewporter>,
     pub data_device_manager: Option<WlDataDeviceManager>,
+    pub linux_dmabuf: Option<ZwpLinuxDmabufV1>,
     pub text_input_manager_v3: Option<ZwpTextInputManagerV3>,
     pub xdg_exporter: Option<ZxdgExporterV2>,
     /// The data sources of the connection (the selection this client set, the source of a
@@ -128,6 +128,7 @@ impl WaylandGlobals {
 
         // Clipboard / DnD
         let data_device_manager: Option<WlDataDeviceManager> = Self::bind(&registry, &known_globals, 3, 3, &queue_handle)?;
+        let linux_dmabuf: Option<ZwpLinuxDmabufV1> = Self::bind(&registry, &known_globals, 4, 4, &queue_handle)?;
 
         let text_input_manager_v3: Option<ZwpTextInputManagerV3> = Self::bind(&registry, &known_globals, 1, 1, &queue_handle)?;
 
@@ -148,6 +149,7 @@ impl WaylandGlobals {
             fractional_scale_manager,
             viewporter,
             data_device_manager,
+            linux_dmabuf,
             text_input_manager_v3,
             xdg_exporter,
             data_sources: HashMap::new(),
@@ -184,19 +186,29 @@ impl WaylandGlobals {
 
         // GPU swapchain selection. Default is WSI (wl_egl_window +
         // eglSwapBuffers) — required for NVIDIA and most resilient to driver
-        // quirks. The dmabuf path (`use_dmabuf_swapchain`) is stage 3.
+        // quirks. Opt in to the dmabuf path (we own the allocator) by setting
+        // use_dmabuf_swapchain = true.
         let use_dmabuf = state.options.use_dmabuf_swapchain.unwrap_or(false);
-        if use_dmabuf {
-            if let Some(logger) = Logger::try_get(LogEventLevel::Warning, "Wayland") {
-                logger.log(
-                    None,
-                    "The dmabuf swapchain is not built yet (stage 3 of docs/porting/wayland-platform.md): \
-                     rendering goes through a wl_egl_window",
-                );
+        let has_linux_dmabuf = state.globals.as_ref().is_some_and(|globals| globals.linux_dmabuf.is_some());
+        let gl_profiles = state.options.gl_profiles.clone();
+        let gpu: Option<Rc<dyn IWaylandGraphics>> = if use_dmabuf && has_linux_dmabuf {
+            WaylandEglDmaBufPlatformGraphics::try_create(connection, state, &gl_profiles)
+                .map(|graphics| graphics as Rc<dyn IWaylandGraphics>)
+        } else {
+            if use_dmabuf {
+                // Not in the reference, which takes this branch without a word: the swapchain
+                // was asked for and the compositor has no `zwp_linux_dmabuf_v1` (DEVIATIONS.md).
+                if let Some(logger) = Logger::try_get(LogEventLevel::Warning, "OpenGL") {
+                    logger.log(
+                        None,
+                        "The dmabuf swapchain was requested, but the compositor has no zwp_linux_dmabuf_v1 \
+                         (version 4 or later): rendering through a wl_egl_window",
+                    );
+                }
             }
-        }
-        let gpu = WaylandEglWsiPlatformGraphics::try_create(connection, &state.options.gl_profiles)
-            .map(|graphics| graphics as Rc<dyn IWaylandGraphics>);
+            WaylandEglWsiPlatformGraphics::try_create(connection, &gl_profiles)
+                .map(|graphics| graphics as Rc<dyn IWaylandGraphics>)
+        };
         state.worker.platform_graphics().initialize(gpu);
 
         // TODO: sanity checks
@@ -396,6 +408,20 @@ impl Dispatch<WlDataDeviceManager, ()> for WaylandWorkerState {
         _: &mut Self,
         _: &WlDataDeviceManager,
         _: <WlDataDeviceManager as Proxy>::Event,
+        _: &(),
+        _: &Connection,
+        _: &QueueHandle<Self>,
+    ) {
+    }
+}
+
+impl Dispatch<ZwpLinuxDmabufV1, ()> for WaylandWorkerState {
+    /// From version 4 the global sends no events (`format` and `modifier` are deprecated
+    /// for the feedback).
+    fn event(
+        _: &mut Self,
+        _: &ZwpLinuxDmabufV1,
+        _: <ZwpLinuxDmabufV1 as Proxy>::Event,
         _: &(),
         _: &Connection,
         _: &QueueHandle<Self>,

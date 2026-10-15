@@ -206,6 +206,17 @@ pub trait EglPlatformImageSurfaceRenderTarget {
             return Err(RenderTargetCorruptedException::new().into());
         }
 
+        self.try_begin_draw_core(scene_info)
+    }
+
+    /// Begins a frame, the context not being lost, or says that the target is not ready
+    /// or is corrupted (the `RenderTargetNotReadyException` a render target of the original
+    /// throws from `BeginDrawCore`). The default begins the frame with
+    /// [`begin_draw_core`](Self::begin_draw_core).
+    fn try_begin_draw_core(
+        &self,
+        scene_info: &RenderTargetSceneInfo,
+    ) -> Result<Rc<dyn IGlPlatformSurfaceRenderingSession>, RenderTargetError> {
         Ok(self.begin_draw_core(scene_info))
     }
 
