@@ -3,9 +3,9 @@
 [![CI](https://github.com/wieslawsoltes/FerroUI/actions/workflows/ci.yml/badge.svg)](https://github.com/wieslawsoltes/FerroUI/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-FerroUI is a cross-platform UI framework for Rust: a retained-mode control library with a styled property system, data binding, XAML markup, control themes and a composition-based renderer. It is a port of the Avalonia UI framework to idiomatic, safe Rust that keeps the original architecture, contracts and behaviour, so that applications, themes and markup written against that model carry over with their structure intact.
+FerroUI is a cross-platform UI framework for Rust: a retained-mode control library with a styled property system, data binding, XAML markup, control themes and a composition-based renderer. It is a port of the Avalonia UI framework to Rust that keeps the original architecture, contracts and behaviour, so that applications, themes and markup written against that model carry over with their structure intact.
 
-> **Status: preview.** The framework builds and runs on macOS, Windows, Linux (X11), iOS, Android and in the browser, paints themed controls and passes a large ported test suite. The public API is not stable and several subsystems are incomplete; macOS and the browser are the most complete platforms, the others are newer and less tested. See [Project status](#project-status).
+> **Status: preview.** `0.1.0-preview.1` is published on crates.io; `0.1.0-preview.2` is in preparation ([CHANGELOG.md](CHANGELOG.md)). Every upstream file and member in scope is ported or waived with a recorded reason. The framework runs on macOS, Windows, Linux (X11, Wayland and the framebuffer), iOS, Android and in the browser. It was verified in continuous integration, in virtual machines, in the iOS simulator and on the Android emulator, not on a range of real devices; the public API is not stable. See [Project status](#project-status).
 
 ![Fluent theme rendered by FerroUI](docs/porting/images/themed_window_fluent.png)
 
@@ -14,57 +14,64 @@ FerroUI is a cross-platform UI framework for Rust: a retained-mode control libra
 - **Complete object model.** Styled and direct properties with value priorities, inheritance, coercion and change notification; logical and visual trees; routed events; layout; input, focus and gestures.
 - **Styling and theming.** Selectors, styles, control themes, resources, theme variants and transitions. The Fluent and Simple themes are included.
 - **Data binding.** Compiled and reflection-style binding paths, converters, multi-bindings, data validation and templates.
-- **XAML.** A port of the XamlX compiler front end together with the framework's transformers and markup extensions. Documents are compiled to Rust source by the build script of a crate, or loaded at run time.
-- **Composition renderer.** A compositor with a render loop, dirty-region tracking and server-side visuals, drawing through a backend-neutral drawing context.
-- **Swappable backends.** Rendering and windowing sit behind contracts. The backends are Skia (Graphite on Metal, Ganesh on OpenGL, ANGLE and WebGL, raster) for rendering, with an experimental Vello backend, HarfBuzz for text shaping, and platform backends for macOS, Windows, Linux (X11), iOS, Android and the browser.
+- **XAML.** A port of the XamlX compiler front end with the framework's transformers and markup extensions. Documents are compiled to Rust source by the build script of a crate, or loaded at run time.
+- **Composition renderer.** A compositor with a render loop on its own thread, dirty-region tracking, server-side visuals and composition animations, drawing through a backend-neutral drawing context.
+- **Swappable backends.** Rendering and windowing sit behind contracts. Skia renders through Graphite on Metal, Ganesh on OpenGL, ANGLE, WebGL and Vulkan, or in software; an experimental Vello backend sits behind the same contracts; HarfBuzz shapes text.
 - **Safe Rust.** The controls, markup, XAML and theme crates contain no `unsafe` code. It is confined to a small part of the object model core and to the rendering, text shaping, platform and interop backends.
 
 ## Project status
 
+The state per subsystem is tracked in [docs/porting/CRITICAL-PATH.md](docs/porting/CRITICAL-PATH.md), the state per upstream member in [docs/porting/TRACKING.md](docs/porting/TRACKING.md), and what is not ported in [docs/porting/REMAINING.md](docs/porting/REMAINING.md). Of the upstream projects in scope, every member has a counterpart or is waived with a reason (30354 present, 5856 waived, none missing); of every upstream project, in scope or not, the port has 81 percent of the members.
+
+### Framework
+
 | Area | State |
 |---|---|
-| Property system, trees, layout, input, styling, resources | Ported |
+| Property system, trees, layout, input, styling, resources | Ported, with the upstream test suites |
 | Data binding, animation, transitions | Ported |
 | Media, text layout, fonts | Ported |
-| Compositor and render loop | Working; composition animations and custom visuals outstanding |
-| Skia and HarfBuzz backends | Working |
-| macOS platform | Windows, input, clipboard, drag and drop, menus, tray icon; rendering through Metal, OpenGL (with Skia built with `--cfg ferro_skia_apple_ganesh`) or in software; storage dialogs and parts of accessibility outstanding |
-| Controls | Most of the control set, including items controls, text input, menus, pickers, calendar, pages and automation peers |
-| XAML | Compilation of markup to Rust source at build time (used by the themes and the samples), and the run-time loader with the upstream test suites |
-| Themes | Fluent and Simple load for every ported control |
-| Windows platform | Windows, input, input methods (IME) and the input pane, clipboard and drag and drop over OLE, file dialogs, tray icon, native control host, extended client area, UI Automation; rendering in software, through ANGLE, WGL, DirectComposition, Windows.UI.Composition (with the blur, acrylic and Mica transparency levels) and a DXGI swap chain; Vulkan behind the opt-in feature `vulkan` (Skia compiled from source). Verified on CI runners and in a virtual machine; the look of acrylic and Mica on a real desktop and screen readers are not verified. Hosting in a WinUI 3 application (`ferroui-winui`: a swap chain panel with input, text input, cursors, drag and drop and automation) is new: verified in a virtual machine by the smoke run of its sample (rendering, the automation tree, closing); input, drag and drop and a UI Automation client there are not verified |
-| Linux platform (X11) | Windows, input, input methods (XIM, IBus, Fcitx), clipboard, drag and drop, the desktop portals, GTK file dialogs, menus and tray icon over D-Bus, session management, native control host, accessibility over AT-SPI; rendering in software, through GLX, EGL and Vulkan |
-| Linux platform (Wayland) | Opt-in, as upstream (the platform detection still chooses X11): toplevels over xdg-shell with server-side or drawn decorations, popups, pointer, keyboard, touch and text input, clipboard and drag and drop; rendering through shared memory buffers, EGL, and an opt-in dmabuf swap chain (GBM buffers handed to the compositor); a display another library opened. Verified under sway and the headless Mutter of GNOME Shell; the dmabuf swap chain itself only where a compositor has a render node |
-| Linux framebuffer platform | One full-screen view on a framebuffer device (`/dev/fb0`) with software rendering, or on a KMS output (`start_linux_drm`) drawn with OpenGL through EGL on GBM; input through `libinput` or directly from event devices (touch, multi-touch, keyboard with a US layout, mouse). Verified on virtual devices only (`vkms` with Mesa's software renderer, `uinput`), not on a board or a GPU |
-| iOS platform | A view over Metal or OpenGL ES (OpenGL ES with Skia built with `--cfg ferro_skia_apple_ganesh`), touch, keyboard and text input, clipboard, storage, native control host, accessibility. Verified in the simulator only |
-| Android platform | A view over a surface with EGL or software rendering (Vulkan behind the opt-in feature `vulkan`), touch, keyboard and text input, lifecycle, clipboard, storage, native control host, accessibility. Verified on the emulator only |
-| Browser (WebAssembly) | Working; in progress |
-| Vello render backend | Experimental: CPU, hybrid and GPU modes, measured against the Skia backend, which is the default and the reference; the open work is listed in `docs/porting/vello-backend.md`, section 13 |
+| Compositor and render loop | Ported, including composition animations, custom visuals and the import of external GPU objects; the render loop runs on its own thread on the desktop |
+| Controls | The control set, including items controls, text input, menus, pickers, calendar, pages, the colour picker, the managed dialogs and automation peers |
+| XAML | The run-time loader with the upstream test suites, and compilation of markup to Rust source in build scripts (used by the themes, the dialogs and the ControlCatalog sample); hot reload and parts of the build integration are open |
+| Themes | Fluent and Simple, for every control |
+| Skia and HarfBuzz backends | Ported; Skia is the default and reference renderer |
+| Vello backend | Experimental: CPU, hybrid and GPU modes, measured against Skia; open work in [vello-backend.md](docs/porting/vello-backend.md), section 13 |
 
-About 95 percent of the members of the upstream projects that are in scope have a counterpart, and about three quarters of the members of every upstream project (the projects that are not ported yet count in the second number). The per-subsystem state is tracked in [docs/porting/CRITICAL-PATH.md](docs/porting/CRITICAL-PATH.md) and the per-member state in [docs/porting/TRACKING.md](docs/porting/TRACKING.md).
+### Platforms
+
+| Platform | What works | Verified |
+|---|---|---|
+| macOS | Windows, input, input methods, clipboard, drag and drop, menus, tray icon, storage pickers, native control host, accessibility; Metal (default), OpenGL (with Skia built with `--cfg ferro_skia_apple_ganesh`) and software rendering | CI and the development machine; the storage pickers and a screen reader not exercised |
+| Windows | Windows, input, input methods and the input pane, clipboard and drag and drop over OLE, file dialogs, tray icon, native control host, extended client area, UI Automation; rendering in software, through ANGLE, WGL, DirectComposition, Windows.UI.Composition (with blur, acrylic and Mica) and a DXGI swap chain; Vulkan behind the feature `vulkan` | CI (x64 and ARM64) and a Windows 11 ARM64 virtual machine; screen readers and the look of acrylic and Mica on a real desktop not verified |
+| WinUI 3 hosting (`ferroui-winui`) | The content in a swap chain panel of a WinUI 3 window, with input, text input, cursors, drag and drop and automation | The smoke run of its sample (rendering, the automation tree, closing) in a virtual machine; input, drag and drop and a UI Automation client not verified |
+| Linux, X11 | Windows, input, input methods (XIM, IBus, Fcitx), clipboard, drag and drop, desktop portals, GTK file dialogs, menus and tray icon over D-Bus, session management, native control host, accessibility over AT-SPI; rendering in software, through GLX, EGL and Vulkan | CI under Xvfb and an Ubuntu virtual machine; no screen reader |
+| Linux, Wayland | Opt-in, as upstream (platform detection chooses X11): toplevels with server-side or drawn decorations, popups, pointer, keyboard, touch and text input, clipboard and drag and drop, fractional scaling; rendering through shared memory, EGL or a dmabuf swap chain | CI under headless sway and a virtual machine (sway, headless Mutter); a desktop compositor with input and the dmabuf swap chain on a GPU not verified |
+| Linux framebuffer | One full-screen view on `/dev/fb0` (software) or on a KMS output (OpenGL through EGL on GBM), with input through `libinput` or the event devices | Virtual devices only (`vkms`, `uinput`) in CI and a virtual machine; not on a board |
+| iOS | A view over Metal or OpenGL ES, touch, keyboard and text input, clipboard, storage, native control host, accessibility | The simulator; no signed device build, no VoiceOver |
+| Android | A view over EGL, software or Vulkan (feature `vulkan`), touch, keyboard and the input method, lifecycle, clipboard, storage, native control host, accessibility; builds with stable Rust | The emulator (API 36); no device, no TalkBack |
+| Browser (WebAssembly) | A view in a web page, rendered with WebGL 2 or a 2D canvas, input, clipboard, storage, native control host; an opt-in build renders from a worker thread | Headless Chrome in CI; other browsers not verified |
+| Headless | Windows without a screen for tests, and a VNC server (`ferroui-headless-vnc`) to see and drive an application remotely | Tests; the VNC server with a test client, not with real viewers |
 
 ## Requirements
 
-- Rust 1.89 or later
-- One of the platforms:
-  - macOS 11 or later with the Xcode command line tools
-  - Windows (x64 or ARM64; verified on Windows 11 and on the Windows Server runners of the continuous integration) with the MSVC build tools; rendering through ANGLE needs `libclang`
-  - Linux with X11 and the development packages of fontconfig
-  - iOS (Xcode), Android (the SDK and NDK, and a nightly toolchain for the native library) and the browser (Emscripten): see the platform documents under `docs/porting`
-- Python 3 for the maintenance scripts (not needed to build)
+- Rust 1.89 or later (the browser needs 1.93 or later).
+- Python 3 for the maintenance scripts (not needed to build).
+- The first build downloads a prebuilt Skia for the target, or builds it from source where no prebuilt binary matches (Vulkan on Windows), and builds HarfBuzz from source with a C++ compiler; it can take a while.
 
-The first build compiles or downloads Skia and can take a while.
+Per platform:
+
+| Platform | Needs | Details |
+|---|---|---|
+| macOS | macOS 11 or later and the Xcode command line tools (the platform compiles an Objective-C++ library) | [apple-opengl.md](docs/porting/apple-opengl.md) for the OpenGL configuration |
+| Windows | x64 or ARM64, the MSVC build tools; `libclang` for ANGLE (the default feature `angle`); the feature `vulkan` builds Skia from source. Hosting in WinUI 3 needs the Windows App SDK 1.6 runtime and its bootstrap library beside the executable | [win32-platform.md](docs/porting/win32-platform.md), [winui.md](docs/porting/winui.md) |
+| Linux | The development packages of fontconfig and FreeType; the system libraries (Xlib, GTK, GLib, EGL, Vulkan, `libwayland-client`, `libxkbcommon`, `libinput`, `libdrm`, `libgbm`) are opened at run time, none is linked | [x11-platform.md](docs/porting/x11-platform.md), [wayland-platform.md](docs/porting/wayland-platform.md), [linux-framebuffer-platform.md](docs/porting/linux-framebuffer-platform.md) |
+| iOS | Xcode with the iOS SDK and the targets `aarch64-apple-ios` and `aarch64-apple-ios-sim`; an application is bundled without an Xcode project (`scripts/ios/bundle.sh`) | [ios-platform.md](docs/porting/ios-platform.md) |
+| Android | The Android SDK and NDK, stable Rust with the target `aarch64-linux-android`, API level 26 or later; packaged without Gradle (`scripts/android/apk.sh`) | [android-platform.md](docs/porting/android-platform.md) |
+| Browser | The target `wasm32-unknown-emscripten`, Emscripten and the pinned `wasm-bindgen` command-line tool (`scripts/browser/setup.sh` installs them); the opt-in build with threads also needs the pinned nightly toolchain | [browser-platform.md](docs/porting/browser-platform.md) |
 
 ## Installation
 
-FerroUI is a set of crates that are released together at one version. From `0.1.0-preview.2` on, an application can name one dependency, the facade crate `ferroui`, which re-exports the common crates under short names (`ferroui::base`, `ferroui::controls`, ...) with a prelude of the types of a minimal application; its default features are the desktop platforms and the Fluent theme, and further features add the Simple theme, XAML loading at run time, the colour picker, the dialogs, the browser platform, the Vello backend and the headless platform ([docs/release.md](docs/release.md), section 2.1):
-
-```toml
-[dependencies]
-ferroui = "=0.1.0-preview.2"
-```
-
-Or the crates themselves: a desktop application names the base library, the controls, the desktop entry point and a theme:
+FerroUI is a set of crates that are released together at one version. A desktop application names the base library, the controls, the desktop entry point and a theme:
 
 ```toml
 [dependencies]
@@ -74,7 +81,11 @@ ferroui-desktop = "=0.1.0-preview.1"
 ferroui-themes-fluent = "=0.1.0-preview.1"
 ```
 
+From `0.1.0-preview.2` on, an application can name one dependency instead: the facade crate `ferroui` (an empty placeholder in `0.1.0-preview.1`). It re-exports the common crates under short names (`ferroui::base`, `ferroui::controls`, ...) with a prelude of the types of a minimal application; its default features are the desktop platforms and the Fluent theme, and further features add the Simple theme, XAML loading at run time, the colour picker, the dialogs, the browser platform, the Vello backend, the headless platform and the graphics contracts ([docs/release.md](docs/release.md), section 2.1). In the repository it is used already: `cargo run -p ferroui --example hello`.
+
 A preview is a pre-release in the sense of semantic versioning (`0.1.0-preview.1`, `0.1.0-preview.2`, ... before `0.1.0`). Cargo selects a pre-release only when it is named, and the crates of one preview depend on one another at exactly that version, so name the same version for every FerroUI crate, as above. A preview may change any part of the public API. The release process is described in [docs/release.md](docs/release.md) and the changes of each release in [CHANGELOG.md](CHANGELOG.md).
+
+The platforms that are not part of platform detection are named by their own crates beside the others: `ferroui-wayland`, `ferroui-linuxframebuffer`, `ferroui-ios`, `ferroui-android`, `ferroui-browser`, `ferroui-winui` and `ferroui-headless-vnc`.
 
 Markup is loaded at run time with `ferroui-markup-xaml-loader` (the feature `xaml` of the facade), or compiled by the build script of the application with `ferroui-build` (a build dependency) against `ferroui-markup-xaml`. The code the markup compiler writes names the crates it calls by their own names, so an application that compiles its markup depends on those crates directly, beside or instead of the facade.
 
@@ -139,7 +150,7 @@ Markup is loaded at run time with `ferroui-markup-xaml-loader` (the feature `xam
 | [`ferroui-winui`](https://crates.io/crates/ferroui-winui) | FerroUI content inside a WinUI 3 (Windows App SDK) application: a swap chain panel with pointer, keyboard and text input, cursors, drag and drop and automation | [![version](https://img.shields.io/crates/v/ferroui-winui.svg)](https://crates.io/crates/ferroui-winui) | [![downloads](https://img.shields.io/crates/d/ferroui-winui.svg)](https://crates.io/crates/ferroui-winui) | [![docs.rs](https://img.shields.io/docsrs/ferroui-winui)](https://docs.rs/ferroui-winui) |
 | [`ferroui-x11`](https://crates.io/crates/ferroui-x11) | The X11 windowing platform of FerroUI for Linux | [![version](https://img.shields.io/crates/v/ferroui-x11.svg)](https://crates.io/crates/ferroui-x11) | [![downloads](https://img.shields.io/crates/d/ferroui-x11.svg)](https://crates.io/crates/ferroui-x11) | [![docs.rs](https://img.shields.io/docsrs/ferroui-x11)](https://docs.rs/ferroui-x11) |
 | [`ferroui-desktop`](https://crates.io/crates/ferroui-desktop) | The desktop entry point of FerroUI: platform detection with the default render and text shaping backends | [![version](https://img.shields.io/crates/v/ferroui-desktop.svg)](https://crates.io/crates/ferroui-desktop) | [![downloads](https://img.shields.io/crates/d/ferroui-desktop.svg)](https://crates.io/crates/ferroui-desktop) | [![docs.rs](https://img.shields.io/docsrs/ferroui-desktop)](https://docs.rs/ferroui-desktop) |
-| [`ferroui-wayland`](https://crates.io/crates/ferroui-wayland) | The Wayland windowing platform of FerroUI for Linux | [![version](https://img.shields.io/crates/v/ferroui-wayland.svg)](https://crates.io/crates/ferroui-wayland) | [![downloads](https://img.shields.io/crates/d/ferroui-wayland.svg)](https://crates.io/crates/ferroui-wayland) | [![docs.rs](https://img.shields.io/docsrs/ferroui-wayland)](https://docs.rs/ferroui-wayland) |
+| [`ferroui-wayland`](https://crates.io/crates/ferroui-wayland) | The Wayland platform of FerroUI for Linux: toplevels and popups over xdg-shell, pointer, keyboard, touch and text input, clipboard and drag and drop, rendered through shared memory, EGL or a dmabuf swap chain | [![version](https://img.shields.io/crates/v/ferroui-wayland.svg)](https://crates.io/crates/ferroui-wayland) | [![downloads](https://img.shields.io/crates/d/ferroui-wayland.svg)](https://crates.io/crates/ferroui-wayland) | [![docs.rs](https://img.shields.io/docsrs/ferroui-wayland)](https://docs.rs/ferroui-wayland) |
 
 **Tools and designer support**
 
@@ -164,11 +175,11 @@ cargo build --workspace
 Run the examples:
 
 ```sh
-# A window with a few controls built in code
-cargo run -p ferroui-desktop --example hello_window
-
-# The same through the facade crate and its prelude, with the Fluent theme
+# A minimal application through the facade crate and its prelude, with the Fluent theme
 cargo run -p ferroui --example hello
+
+# The same with the crates named one by one
+cargo run -p ferroui-desktop --example hello_window
 
 # Themed controls, Simple theme (add -- --fluent for the Fluent theme)
 cargo run -p ferroui-themes-simple --example themed_window
@@ -176,6 +187,8 @@ cargo run -p ferroui-themes-simple --example themed_window
 # The ControlCatalog sample application
 cargo run -p control-catalog-desktop
 ```
+
+The ControlCatalog runs on the other platforms too: on Linux it takes the Wayland backend when a compositor is reachable, as the original sample does (`FERROUI_CATALOG_WAYLAND=0` keeps X11), on the framebuffer with `--fbdev` or `--drm`, and on the headless platform behind a VNC server with `--vnc`; in the browser through `scripts/build-browser.sh control-catalog-browser`; on iOS through `scripts/ios/sim-catalog.sh` and on Android through `scripts/android/emu-catalog.sh`. The platform documents under [docs/porting](docs/porting) have the details.
 
 Run the tests:
 
@@ -185,9 +198,43 @@ cargo test --workspace
 
 ### A minimal application
 
-An application is a class derived from `Application` that creates its main window when the framework has finished initialising. The window content can be built in code:
+An application is a class derived from `Application` that creates its main window when the framework has finished initialising. With the facade crate everything it names comes from `ferroui::prelude`:
 
 ```rust
+use ferroui::prelude::*;
+use std::rc::Rc;
+
+#[repr(C)]
+pub struct App {
+    base: Application,
+}
+
+ferro_class!(App: Application);
+ferro_impl_classes!(App: FerroObjectImpl);
+
+impl NewApplication for App {
+    fn new_application() -> Ref<Self> {
+        instantiate(Self { base: Application::construct() })
+    }
+}
+
+impl ApplicationImpl for App {
+    fn initialize(this: &Self) {
+        Self::parent_initialize(this);
+        this.styles().add(FluentTheme::new().as_style());
+    }
+
+    fn on_framework_initialization_completed(this: &Self) {
+        let lifetime = this.application_lifetime();
+        if let Some(desktop) =
+            lifetime.as_ref().and_then(|lifetime| lifetime.as_classic_desktop_style_application_lifetime())
+        {
+            desktop.set_main_window(Some(create_main_window()));
+        }
+        Self::parent_on_framework_initialization_completed(this);
+    }
+}
+
 fn create_main_window() -> Ref<Window> {
     let text = TextBlock::new();
     text.set_text(Some("Hello from FerroUI"));
@@ -217,7 +264,7 @@ fn main() -> std::process::ExitCode {
 }
 ```
 
-The complete program, including the `App` class declaration, is [`hello_window.rs`](src/FerroUI.Desktop/examples/hello_window.rs). With the facade crate the program imports `ferroui::prelude::*` instead of the crates one by one: [`hello.rs`](src/FerroUI/examples/hello.rs). The API is still changing; those examples are kept building and are the authoritative reference.
+The complete programs are [`hello.rs`](src/FerroUI/examples/hello.rs) (the facade) and [`hello_window.rs`](src/FerroUI.Desktop/examples/hello_window.rs) (the crates one by one). The API is still changing; those examples are kept building and are the authoritative reference.
 
 ### Markup
 
@@ -236,43 +283,32 @@ Views can be written in XAML. FerroUI uses its own XML namespace:
 
 ## Repository layout
 
-The layout follows the upstream project so that files can be compared side by side.
+The layout follows the upstream project so that files can be compared side by side; the crate of each directory is in the table of crates above.
 
-| Path | Crate | Contents |
-|---|---|---|
-| `src/FerroUI.Base` | `ferroui-base` | Object model, layout, input, styling, media, text, animation, binding core, compositor |
-| `src/FerroUI.Controls` | `ferroui-controls` | Application model, top levels, the control set, automation peers |
-| `src/Markup/FerroUI.Markup` | `ferroui-markup` | Binding path parsing and reflection-style bindings |
-| `src/Markup/FerroUI.Markup.Xaml` | `ferroui-markup-xaml` | XAML run-time library and markup extensions |
-| `src/Markup/FerroUI.Markup.Xaml.Loader` | `ferroui-markup-xaml-loader` | Compiler extensions and the run-time loader |
-| `external/XamlX` | `xamlx` | XAML compiler front end |
-| `src/Skia/FerroUI.Skia` | `ferroui-skia` | Skia render backend |
-| `src/HarfBuzz/FerroUI.HarfBuzz` | `ferroui-harfbuzz` | HarfBuzz text shaping backend |
-| `src/FerroUI.OpenGL` | `ferroui-opengl` | OpenGL contracts used by the GL render path |
-| `src/FerroUI.Fonts.Inter` | `ferroui-fonts-inter` | Embedded Inter font collection |
-| `src/FerroUI.Native`, `native/FerroUI.Native` | `ferroui-native` | macOS platform backend and its native library |
-| `src/FerroUI.MicroCom` | `ferroui-microcom` | COM-style interop runtime used by the native backend |
-| `src/FerroUI.Desktop` | `ferroui-desktop` | Desktop entry point and platform detection |
-| `src/Browser/FerroUI.Browser` | `ferroui-browser` | Browser platform backend (WebAssembly) and its script module |
-| `src/FerroUI.Themes.Fluent`, `src/FerroUI.Themes.Simple` | `ferroui-themes-fluent`, `ferroui-themes-simple` | Themes |
-| `samples` | `control-catalog`, `control-catalog-desktop`, `mini-mvvm` | Sample applications |
-| `tests` | | Ported XAML test suites |
-| `docs/porting` | | Porting guide, design notes and tracking documents |
-| `scripts` | | Code generators, upstream synchronisation and status tooling |
+| Path | Contents |
+|---|---|
+| `src` | The crates of the framework, one directory per upstream project (`src/FerroUI.Base`, `src/FerroUI.Controls`, `src/Markup/...`, `src/Skia/...`, `src/Windows/...`, ...) |
+| `native/FerroUI.Native` | The Objective-C++ library of the macOS platform |
+| `external/XamlX` | The XAML compiler front end (`xamlx`) |
+| `samples` | The sample applications: the ControlCatalog with its hosts for the desktop, the browser, iOS and Android, the WinUI gallery, and the smaller samples |
+| `tests` | Test crates: the XAML suites, the render tests, the leak tests, the benchmarks, the Windows integration tests and the comparison of the render backends |
+| `docs/porting` | The porting guide, the design and verification documents of each platform, and the tracking |
+| `scripts` | Code generators, upstream synchronisation, the status tooling, the release scripts and the build and run scripts of each platform |
 
 ## Documentation
 
 - [Porting guide](docs/porting/PORTING-GUIDE.md): the class model, naming and mapping rules, and the conventions every ported file follows.
-- [Critical path](docs/porting/CRITICAL-PATH.md): subsystem status and known gaps.
-- [Tracking](docs/porting/TRACKING.md): generated per-file, per-type and per-member status.
-- [XAML design](docs/porting/xaml.md): the markup pipeline, the run-time loader and the planned ahead-of-time compiler.
+- [Critical path](docs/porting/CRITICAL-PATH.md): the state of each subsystem and what is open.
+- [Tracking](docs/porting/TRACKING.md) and [what is left](docs/porting/REMAINING.md): generated per-file, per-type and per-member status.
+- [Deviations](docs/porting/DEVIATIONS.md): every place where the port differs from upstream, and why.
+- [XAML design](docs/porting/xaml.md): the markup pipeline, the run-time loader and the compiler of markup to Rust.
+- Platforms: [Windows](docs/porting/win32-platform.md), [WinUI](docs/porting/winui.md), [Linux on X11](docs/porting/x11-platform.md) with [AT-SPI](docs/porting/atspi.md), [Wayland](docs/porting/wayland-platform.md), [Linux framebuffer](docs/porting/linux-framebuffer-platform.md), [OpenGL on macOS and iOS](docs/porting/apple-opengl.md), [iOS](docs/porting/ios-platform.md), [Android](docs/porting/android-platform.md), [browser](docs/porting/browser-platform.md) with its [render worker](docs/porting/browser-render-worker.md), [headless VNC](docs/porting/headless-vnc.md), [Vulkan](docs/porting/vulkan.md).
+- Rendering: [render thread](docs/porting/render-thread.md), [Vello backend](docs/porting/vello-backend.md), [render tests](docs/porting/render-tests.md).
 - [Releasing](docs/release.md): the published crates, the version scheme and the release workflow; [changelog](CHANGELOG.md).
-- [Browser platform design](docs/porting/browser-platform.md).
-- [Browser render worker design](docs/porting/browser-render-worker.md): stage B2 of the render thread, rendering from a worker in the browser.
 
 ## Contributing
 
-The project is in an early phase and its structure is still moving, so please open an issue to discuss a change before sending a pull request. Contributions are expected to follow the [porting guide](docs/porting/PORTING-GUIDE.md): port files one to one with their tests, keep behaviour identical to the reference implementation, and keep `cargo test --workspace` green.
+Please open an issue to discuss a change before sending a pull request. Contributions are expected to follow the [porting guide](docs/porting/PORTING-GUIDE.md): port files one to one with their tests, keep behaviour identical to the reference implementation (or record the difference in [DEVIATIONS.md](docs/porting/DEVIATIONS.md)), and keep `cargo test --workspace` green.
 
 ## License
 

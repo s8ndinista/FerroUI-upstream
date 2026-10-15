@@ -150,6 +150,8 @@ A check that has not passed after 60 seconds fails the run. Each call of the sys
 
 The `windows` job has an informative step (`continue-on-error`), after the pictures of the catalog: the tests of the crate on the target, the build of the sample, `fetch-windows-app-sdk.ps1 -InstallRuntime` (the runtime 1.6 installed on the runner, the bootstrap library beside the executable) and the smoke run. Not measured yet: whether the image of `windows-latest` installs the runtime (the installer adds packages; the runner is an administrator) and runs a WinUI 3 application in its session. The step stays informative until a first run has shown that; if the image cannot install or run it, the reason goes here and the run moves to the virtual machine alone.
 
+**The first run on a runner [CI]** (run 38769434562, 2026-10-15, the integration branch of the third batch, `windows-latest`, x64): the image installs the runtime (`windowsappruntimeinstall-x64.exe --quiet`, exit code 0; the x64 and x86 packages of the runtime 1.6 installed), and the smoke run passed every check of section 7.2 up to and including the close of the window: the bootstrap, the framework, the window with the panel, `Loaded` (752 by 480), the swap chain set 1687 ms after activation, 35 frames, the peer of the panel with its class name, control type and one child, the peer of the content with one child, and "the window closes". The process then did not end, and the step was stopped by its timeout of 45 minutes. In the virtual machine the same program ends with 0 after the close (section 7.5). Open: why the process does not end on the runner; until that is known the step stays informative.
+
 ### 7.4 The virtual machine
 
 `scripts/windows/vm-smoke.ps1 -WinUI` runs the tests of the crate, fetches the bootstrap library beside the sample, checks that the Windows App Runtime 1.6 is installed (it installs nothing; `-InstallWindowsAppRuntime` installs it, with the owner's authorisation), builds the sample and runs its smoke mode in the session of the interactive user. Steps, from the host:
@@ -196,3 +198,4 @@ The runs in the virtual machine (section 7.5) established the bootstrap, `Applic
 - drag and drop in both directions, and the agile completion handlers of the operations;
 - the automation tree with a client of UI Automation, and a screen reader;
 - the release of the composed objects (no leak, no use after release) when a window closes.
+- the end of the process after the window closes on a hosted runner of CI, where it did not end (section 7.3).
