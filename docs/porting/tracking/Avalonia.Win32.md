@@ -10,9 +10,9 @@ Generated from upstream commit `17350180c33b063f0e98abbfd19aa3cae63f5d56`. Back 
 | FerroUI | `src/Windows/FerroUI.Win32` (exists) |
 | Crate | `ferroui-win32` |
 | Phase / priority | 1 - desktop (Windows) / P0 |
-| Files | 94/95 (98.9%) |
-| Types | 222/276 (80.4%) |
-| Members | 2087/2605 (5 waived) (80.3%) |
+| Files | 94/94 (100.0%), 1 not applicable |
+| Types | 251/275 (24 waived) (100.0%) |
+| Members | 2348/2603 (255 waived) (100.0%) |
 | Contracts (interfaces) | 7/7 |
 | Property registrations | 0/0 |
 | Routed events | 0/0 |
@@ -33,34 +33,34 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 
 ## Files
 
-### `(project root)` - files 42/43, types 51/52, members 332/358
+### `(project root)` - files 42/42, types 51/51, members 334/356 (22 waived)
 
 | Upstream file | Rust file | Status | Types | Members | Notes |
 |---|---|---|---|---|---|
 | `AngleOptions.cs` | `angle_options.rs` | present | 2/2 | 4/4 |  |
-| `ClipboardFormatRegistry.cs` | `clipboard_format_registry.rs` | partial | 1/1 | 8/9 |  |
+| `ClipboardFormatRegistry.cs` | `clipboard_format_registry.rs` | present | 1/1 | 8/9 (1 waived) |  |
 | `ClipboardImpl.cs` | `clipboard_impl.rs` | present | 1/1 | 5/5 |  |
-| `CursorFactory.cs` | `cursor_factory.rs` | partial | 2/2 | 8/9 |  |
-| `DataTransferToOleDataObjectWrapper.cs` | `data_transfer_to_ole_data_object_wrapper.rs` | partial | 1/1 | 10/15 |  |
+| `CursorFactory.cs` | `cursor_factory.rs` | present | 2/2 | 9/9 |  |
+| `DataTransferToOleDataObjectWrapper.cs` | `data_transfer_to_ole_data_object_wrapper.rs` | present | 1/1 | 10/15 (5 waived) |  |
 | `DragSource.cs` | `drag_source.rs` | present | 1/1 | 1/1 |  |
-| `EmbeddedWindowImpl.cs` | `embedded_window_impl.rs` | partial | 1/1 | 1/2 |  |
+| `EmbeddedWindowImpl.cs` | `embedded_window_impl.rs` | present | 1/1 | 1/2 (1 waived) |  |
 | `FramebufferManager.cs` | `framebuffer_manager.rs` | present | 1/1 | 4/4 |  |
 | `IBlurHost.cs` | `i_blur_host.rs` | present | 2/2 | 6/6 |  |
 | `IWindowsSurfaceFactory.cs` | `i_windows_surface_factory.rs` | present | 1/1 | 2/2 |  |
 | `IconImpl.cs` | `icon_impl.rs` | present | 1/1 | 6/6 |  |
-| `NonPumpingWaitHelperImpl.cs` | `non_pumping_wait_helper_impl.rs` | missing | 0/1 | 0/2 |  |
+| `NonPumpingWaitHelperImpl.cs` | - | n/a | - | - | not-applicable: the implementation of `NonPumpingLockHelper.IHelperImpl` (`WaitForMultipleObjectsEx` without pumping), which the platform binds and `WM_PAINT` installs through `NonPumpingSyncContext`, so that a managed lock on a COM thread does not run the message loop while it waits: the contract and the synchronization context are not applicable in the base library (`Utilities/NonPumpingLockHelper.cs`, `Threading/NonPumpingSyncContext.cs`), because a Rust lock never pumps messages (docs/porting/win32-platform.md, section 5; DEVIATIONS.md, Windows platform backend) |
 | `OffscreenParentWindow.cs` | `offscreen_parent_window.rs` | present | 1/1 | 1/1 |  |
 | `OleContext.cs` | `ole_context.rs` | present | 1/1 | 3/3 |  |
 | `OleDataObjectHelper.cs` | `ole_data_object_helper.rs` | present | 1/1 | 6/6 |  |
 | `OleDataObjectToDataTransferItemWrapper.cs` | `ole_data_object_to_data_transfer_item_wrapper.rs` | present | 1/1 | 3/3 |  |
 | `OleDataObjectToDataTransferWrapper.cs` | `ole_data_object_to_data_transfer_wrapper.rs` | present | 1/1 | 4/4 |  |
 | `OleDragSource.cs` | `ole_drag_source.rs` | present | 1/1 | 2/2 |  |
-| `OleDropTarget.cs` | `ole_drop_target.rs` | partial | 1/1 | 7/9 |  |
-| `OleVirtualFileData.cs` | `ole_virtual_file_data.rs` | partial | 2/2 | 6/7 |  |
+| `OleDropTarget.cs` | `ole_drop_target.rs` | present | 1/1 | 7/9 (2 waived) |  |
+| `OleVirtualFileData.cs` | `ole_virtual_file_data.rs` | present | 2/2 | 6/7 (1 waived) |  |
 | `PlatformConstants.cs` | `platform_constants.rs` | present | 1/1 | 7/7 |  |
-| `PopupImpl.cs` | `popup_impl.rs` | partial | 1/1 | 1/10 |  |
+| `PopupImpl.cs` | `popup_impl.rs` | present | 1/1 | 1/10 (9 waived) |  |
 | `ScreenImpl.cs` | `screen_impl.rs` | present | 1/1 | 10/10 |  |
-| `SimpleWindow.cs` | `simple_window.rs` | partial | 1/1 | 3/4 |  |
+| `SimpleWindow.cs` | `simple_window.rs` | present | 1/1 | 4/4 |  |
 | `SwapChainTopLevelImpl.cs` | `swap_chain_top_level_impl.rs` | present | 1/1 | 28/28 |  |
 | `TrayIconImpl.cs` | `tray_icon_impl.rs` | present | 1/1 | 11/11 |  |
 | `Win32DispatcherImpl.cs` | `win32_dispatcher_impl.rs` | present | 1/1 | 14/14 |  |
@@ -72,423 +72,70 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 | `Win32PlatformSettings.cs` | `win32_platform_settings.rs` | present | 1/1 | 7/7 |  |
 | `Win32StorageProvider.cs` | `win32_storage_provider.rs` | present | 1/1 | 7/7 |  |
 | `Win32TopLevelSceneInfo.cs` | `win32_top_level_scene_info.rs` | present | 1/1 | 2/2 |  |
-| `Win32TypeExtensions.cs` | `win32_type_extensions.rs` | partial | 1/1 | 1/2 |  |
+| `Win32TypeExtensions.cs` | `win32_type_extensions.rs` | present | 1/1 | 1/2 (1 waived) |  |
 | `WinScreen.cs` | `win_screen.rs` | present | 1/1 | 3/3 |  |
 | `WindowImpl.AppWndProc.cs` | `window_impl_app_wnd_proc.rs` | present | 1/1 | 3/3 |  |
 | `WindowImpl.CustomCaptionProc.cs` | `window_impl_custom_caption_proc.rs` | present | 1/1 | 1/1 | renamed: a part of the window class with a file of its own, which stage 2 builds: without this entry the rule for partial classes would count it as present in `window_impl.rs` |
 | `WindowImpl.WndProc.cs` | `window_impl.rs` | present | 1/1 | 3/3 | partial merged into main file |
-| `WindowImpl.cs` | `window_impl.rs` | partial | 2/2 | 89/90 |  |
-| `WindowsMountedVolumeInfoListener.cs` | `windows_mounted_volume_info_listener.rs` | partial | 1/1 | 2/3 |  |
+| `WindowImpl.cs` | `window_impl.rs` | present | 2/2 | 89/90 (1 waived) |  |
+| `WindowsMountedVolumeInfoListener.cs` | `windows_mounted_volume_info_listener.rs` | present | 1/1 | 2/3 (1 waived) |  |
 | `WindowsMountedVolumeInfoProvider.cs` | `windows_mounted_volume_info_provider.rs` | present | 1/1 | 1/1 |  |
 
-<details><summary><code>ClipboardFormatRegistry.cs</code> - 1 missing</summary>
-
-- `ClipboardFormatRegistry` (class): 1 missing
-  - `static ClipboardFormatRegistry()` *(static)*
-
-</details>
-
-<details><summary><code>CursorFactory.cs</code> - 1 missing</summary>
-
-- `CursorFactory` (class): 1 missing
-  - `static CursorFactory()` *(static)*
-
-</details>
-
-<details><summary><code>DataTransferToOleDataObjectWrapper.cs</code> - 5 missing</summary>
-
-- `DataTransferToOleDataObjectWrapper` (class): 5 missing
-  - `int Win32Com.IDataObject.DAdvise(FORMATETC* pFormatetc, int advf, void* adviseSink)` *(explicit)*
-  - `void Win32Com.IDataObject.DUnadvise(int connection)` *(explicit)*
-  - `void* Win32Com.IDataObject.EnumDAdvise()` *(explicit)*
-  - `FORMATETC Win32Com.IDataObject.GetCanonicalFormatEtc(FORMATETC* formatIn)` *(explicit)*
-  - `uint Win32Com.IDataObject.SetData(FORMATETC* pformatetc, STGMEDIUM* pmedium, int fRelease)` *(explicit)*
-
-</details>
-
-<details><summary><code>EmbeddedWindowImpl.cs</code> - 1 missing</summary>
-
-- `EmbeddedWindowImpl` (class): 1 missing
-  - `override IntPtr CreateWindowOverride(ushort atom)` *(protected)*
-
-</details>
-
-<details><summary><code>OleDropTarget.cs</code> - 2 missing</summary>
-
-- `OleDropTarget` (class): 2 missing
-  - `static DragDropEffects ConvertDropEffect(DropEffect effect)` *(1 of 2 overloads found)*
-  - `override void Destroyed()` *(protected)*
-
-</details>
-
-<details><summary><code>OleVirtualFileData.cs</code> - 1 missing</summary>
-
-- `OleVirtualFileData.Descriptor` (record struct): 1 missing
-  - `Descriptor(string Name, ulong? Size)`
-
-</details>
-
-<details><summary><code>PopupImpl.cs</code> - 9 missing</summary>
-
-- `PopupImpl` (class): 9 missing
-  - `override void Show(bool activate, bool isDialog)`
-  - `override bool ShouldTakeFocusOnClick { get; }` *(protected)*
-  - `override Size MaxAutoSizeHint { get; }`
-  - `override IntPtr CreateWindowOverride(ushort atom)` *(protected)*
-  - `override IntPtr WndProc(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam)` *(protected)*
-  - `void SetWindowManagerAddShadowHint(bool enabled)`
-  - `void SetHitTestVisible(bool isHitTestVisible)`
-  - `void TakeFocus()`
-  - `IPopupPositioner PopupPositioner { get; }`
-
-</details>
-
-<details><summary><code>SimpleWindow.cs</code> - 1 missing</summary>
-
-- `SimpleWindow` (class): 1 missing
-  - `static SimpleWindow()` *(static)*
-
-</details>
-
-<details><summary><code>Win32TypeExtensions.cs</code> - 1 missing</summary>
-
-- `Win32TypeExtensions` (class): 1 missing
-  - `static PixelRect ToPixelRect(this RECT rect)` *(1 of 2 overloads found)*
-
-</details>
-
-<details><summary><code>WindowImpl.cs</code> - 1 missing</summary>
-
-- `WindowImpl` (class): 1 missing
-  - `PixelSize EglGlPlatformSurface.IEglWindowGlPlatformSurfaceInfo.Size { get; }` *(explicit)*
-
-</details>
-
-<details><summary><code>WindowsMountedVolumeInfoListener.cs</code> - 1 missing</summary>
-
-- `WindowsMountedVolumeInfoListener` (class): 1 missing
-  - `virtual void Dispose(bool disposing)` *(protected; 1 of 2 overloads found)*
-
-</details>
-
-### `DComposition` - files 6/6, types 8/8, members 31/34
+### `DComposition` - files 6/6, types 8/8, members 31/34 (3 waived)
 
 | Upstream file | Rust file | Status | Types | Members | Notes |
 |---|---|---|---|---|---|
 | `DirectCompositedWindow.cs` | `d_composition/direct_composited_window.rs` | present | 1/1 | 5/5 |  |
 | `DirectCompositedWindowSurface.cs` | `d_composition/direct_composited_window_surface.rs` | present | 2/2 | 10/10 |  |
-| `DirectCompositionConnection.cs` | `d_composition/direct_composition_connection.rs` | partial | 1/1 | 5/7 |  |
-| `DirectCompositionShared.cs` | `d_composition/direct_composition_shared.rs` | partial | 1/1 | 3/4 |  |
+| `DirectCompositionConnection.cs` | `d_composition/direct_composition_connection.rs` | present | 1/1 | 5/7 (2 waived) |  |
+| `DirectCompositionShared.cs` | `d_composition/direct_composition_shared.rs` | present | 1/1 | 3/4 (1 waived) |  |
 | `NativeMethods.cs` | `d_composition/native_methods.rs` | present | 1/1 | 1/1 |  |
 | `NativeStructs.cs` | `d_composition/native_structs.rs` | present | 2/2 | 7/7 |  |
 
-<details><summary><code>DirectCompositionConnection.cs</code> - 2 missing</summary>
-
-- `DirectCompositionConnection` (class): 2 missing
-  - `bool RequiresNoRedirectionBitmap { get; }`
-  - `IPlatformRenderSurface CreateSurface(EglGlPlatformSurface.IEglWindowGlPlatformSurfaceInfo info)`
-
-</details>
-
-<details><summary><code>DirectCompositionShared.cs</code> - 1 missing</summary>
-
-- `DirectCompositionShared` (class): 1 missing
-  - `void Dispose()`
-
-</details>
-
-### `DirectX` - files 7/7, types 28/42, members 126/242
+### `DirectX` - files 7/7, types 42/42, members 238/242 (4 waived)
 
 | Upstream file | Rust file | Status | Types | Members | Notes |
 |---|---|---|---|---|---|
-| `DirectXEnums.cs` | `direct_x/direct_x_enums.rs` | partial | 1/15 | 1/113 |  |
-| `DirectXStructs.cs` | `direct_x/direct_x_structs.rs` | partial | 18/18 | 102/104 |  |
+| `DirectXEnums.cs` | `direct_x/direct_x_enums.rs` | present | 15/15 | 113/113 |  |
+| `DirectXStructs.cs` | `direct_x/direct_x_structs.rs` | present | 18/18 | 102/104 (2 waived) |  |
 | `DirectXUnmanagedMethods.cs` | `direct_x/direct_x_unmanaged_methods.rs` | present | 1/1 | 3/3 |  |
-| `DxgiConnection.cs` | `direct_x/dxgi_connection.rs` | partial | 1/1 | 5/7 |  |
+| `DxgiConnection.cs` | `direct_x/dxgi_connection.rs` | present | 1/1 | 5/7 (2 waived) |  |
 | `DxgiRenderTarget.cs` | `direct_x/dxgi_render_target.rs` | present | 1/1 | 5/5 |  |
 | `DxgiSwapchainWindow.cs` | `direct_x/dxgi_swapchain_window.rs` | present | 1/1 | 2/2 |  |
 | `IDirect3D11TexturePlatformSurface.cs` | `direct_x/i_direct3_d11_texture_platform_surface.rs` | present | 5/5 | 8/8 |  |
 
-<details><summary><code>DirectXEnums.cs</code> - 126 missing</summary>
-
-- `D3D_FEATURE_LEVEL` (enum, internal): **type missing** (11 members)
-- `D3D11_RESOURCE_DIMENSION` (enum, internal): **type missing** (4 members)
-- `D3D11_USAGE` (enum, internal): **type missing** (4 members)
-- `D3D11_RESOURCE_MISC_FLAG` (enum, internal): **type missing** (17 members)
-- `D3D11_BIND_FLAG` (enum, internal): **type missing** (10 members)
-- `DXGI_SWAP_EFFECT` (enum, internal): **type missing** (4 members)
-- `DXGI_SWAP_CHAIN_FLAG` (enum, internal): **type missing** (13 members)
-- `DXGI_SCALING` (enum, internal): **type missing** (3 members)
-- `DXGI_RESIDENCY` (enum, internal): **type missing** (3 members)
-- `DXGI_MODE_ROTATION` (enum, internal): **type missing** (5 members)
-- `DXGI_ALPHA_MODE` (enum, internal): **type missing** (5 members)
-- `D3D_DRIVER_TYPE` (enum, internal): **type missing** (6 members)
-- `DXGI_ERROR` (enum, internal): **type missing** (24 members)
-- `DXGI_MWA` (enum, internal): **type missing** (3 members)
-
-</details>
-
-<details><summary><code>DirectXStructs.cs</code> - 2 missing</summary>
-
-- `HANDLE` (struct): 2 missing
-  - `readonly void* Value`
-  - `HANDLE(void* value)`
-
-</details>
-
-<details><summary><code>DxgiConnection.cs</code> - 2 missing</summary>
-
-- `DxgiConnection` (class): 2 missing
-  - `bool RequiresNoRedirectionBitmap { get; }`
-  - `IPlatformRenderSurface CreateSurface(EglGlPlatformSurface.IEglWindowGlPlatformSurfaceInfo info)`
-
-</details>
-
-### `Input` - files 6/6, types 7/7, members 37/38
+### `Input` - files 6/6, types 7/7, members 38/38
 
 | Upstream file | Rust file | Status | Types | Members | Notes |
 |---|---|---|---|---|---|
 | `Imm32CaretManager.cs` | `input/imm32_caret_manager.rs` | present | 1/1 | 3/3 |  |
-| `Imm32InputMethod.cs` | `input/imm32_input_method.rs` | partial | 1/1 | 21/22 |  |
+| `Imm32InputMethod.cs` | `input/imm32_input_method.rs` | present | 1/1 | 22/22 |  |
 | `KeyInterop.cs` | `input/key_interop.rs` | present | 1/1 | 5/5 |  |
 | `WindowsInputPane.cs` | `input/windows_input_pane.rs` | present | 1/1 | 2/2 |  |
 | `WindowsKeyboardDevice.cs` | `input/windows_keyboard_device.rs` | present | 1/1 | 2/2 |  |
 | `WindowsMouseDevice.cs` | `input/windows_mouse_device.rs` | present | 2/2 | 4/4 |  |
 
-<details><summary><code>Imm32InputMethod.cs</code> - 1 missing</summary>
-
-- `Imm32InputMethod` (class): 1 missing
-  - `string? Composition { get; internal set; }` *(getter `composition` found, setter `set_composition` missing)*
-
-</details>
-
-### `Interop` - files 3/3, types 81/119, members 1264/1564
+### `Interop` - files 3/3, types 95/119 (24 waived), members 1353/1564 (211 waived)
 
 | Upstream file | Rust file | Status | Types | Members | Notes |
 |---|---|---|---|---|---|
 | `TaskBarList.cs` | `interop/task_bar_list.rs` | present | 1/1 | 2/2 |  |
-| `UnmanagedMethods.cs` | `interop/unmanaged_methods.rs` | partial | 78/115 | 1246/1542 |  |
-| `Win32Icon.cs` | `interop/win32_icon.rs` | partial | 2/3 | 16/20 |  |
+| `UnmanagedMethods.cs` | `interop/unmanaged_methods.rs` | present | 91/115 (24 waived) | 1331/1542 (211 waived) |  |
+| `Win32Icon.cs` | `interop/win32_icon.rs` | present | 3/3 | 20/20 |  |
 
-<details><summary><code>UnmanagedMethods.cs</code> - 333 missing</summary>
-
-- `UnmanagedMethods` (class) (ported as module-level items): 69 missing
-  - `static int EnableMouseInPointer(bool enable)`
-  - `static bool GetPointerCursorId(uint pointerId, out uint cursorId)`
-  - `static int SetDIBitsToDevice(IntPtr hdc, int XDest, int YDest, uint dwWidth, uint dwHeight, int XSrc, int Y...`
-  - `static int SetDIBits(IntPtr hdc, IntPtr hbm, uint start, uint cLines, IntPtr lpBits, IntPtr lpbmi, uint fuC...`
-  - `static IntPtr CreateRectRgn(int x1, int y1, int x2, int y2)`
-  - `static bool EndPaint(IntPtr hWnd, ref PAINTSTRUCT lpPaint)`
-  - `static uint GetCaretBlinkTime()`
-  - `static bool EnumChildWindows(IntPtr parentHwnd, EnumWindowsProc enumFunc, IntPtr lParam)`
-  - `static uint GetWindowLongPtr(IntPtr hWnd, int nIndex)`
-  - `static uint GetWindowLong32b(IntPtr hWnd, int nIndex)`
-  - `static bool GetUpdateRect(IntPtr hwnd, out RECT lpRect, bool bErase)`
-  - `static bool InvalidateRect(IntPtr hWnd, RECT* lpRect, bool bErase)` *(1 of 2 overloads found)*
-  - `static bool ValidateRect(IntPtr hWnd, IntPtr lpRect)`
-  - `static bool IsWindowEnabled(IntPtr hWnd)`
-  - `static bool IsWindowUnicode(IntPtr hWnd)`
-  - `static IntPtr GetParent(IntPtr hWnd)`
-  - `static IntPtr CreateTimerQueue()`
-  - `static bool DeleteTimerQueueEx(IntPtr TimerQueue, IntPtr CompletionEvent)`
-  - `static bool CreateTimerQueueTimer(out IntPtr phNewTimer, IntPtr TimerQueue, WaitOrTimerCallback Callback, I...`
-  - `static bool DeleteTimerQueueTimer(IntPtr TimerQueue, IntPtr Timer, IntPtr CompletionEvent)`
-  - `static IntPtr SetClassLong(IntPtr hWnd, ClassLongIndex nIndex, IntPtr dwNewLong)`
-  - `static uint GetClassLongPtr32(IntPtr hWnd, int nIndex)`
-  - `static IntPtr GetClassLongPtr64(IntPtr hWnd, int nIndex)`
-  - `static T CreateInstance<T>(in Guid clsid, in Guid iid) where T : IUnknown` *(internal)*
-  - `static IntPtr GetClipboardData(ClipboardFormat uFormat)`
-  - `static IntPtr SetClipboardData(ClipboardFormat uFormat, IntPtr hMem)`
-  - `static IntPtr GlobalLock(IntPtr handle)`
-  - `static bool GlobalUnlock(IntPtr handle)`
-  - `static IntPtr LoadLibraryEx(string fileName, IntPtr hFile, int flags)`
-  - `static bool GetSaveFileName(IntPtr lpofn)`
-  - `static bool GetOpenFileName(IntPtr lpofn)`
-  - `static int CommDlgExtendedError()`
-  - `static bool ShCoreAvailable { get; }`
-  - `static void GetScaleFactorForMonitor(IntPtr hMon, out uint pScale)`
-  - `static bool SendMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam)` *(1 of 2 overloads found)*
-  - `static int SetDIBitsToDevice(IntPtr hdc, int XDest, int YDest, uint dwWidth, uint dwHeight, int XSrc, int Y...`
-  - `static bool CloseHandle(IntPtr hObject)`
-  - `static IntPtr CreateDIBSection(IntPtr hDC, ref BITMAPINFOHEADER pBitmapInfo, DIBColorTable usage, out IntPt...`
-  - `static IntPtr CreateDIBSection(IntPtr hDC, in BITMAPV5HEADER pBitmapInfo, DIBColorTable usage, out IntPtr l...`
-  - `static IntPtr CreateDIBitmap(IntPtr hDC, in BITMAPV5HEADER pBitmapInfo, int flInit, IntPtr lplpVoid, IntPtr...`
-  - `static bool GdiFlush()`
-  - `static bool BitBlt(IntPtr hDC, int x, int y, int cx, int cy, IntPtr hdcSrc, int x1, int y1, uint rop)`
-  - `static IntPtr CreateCompatibleBitmap(IntPtr hDC, int cx, int cy)`
-  - `static int GetObject(IntPtr h, int c, IntPtr pv)`
-  - `static int GetBitmapDimensionEx(IntPtr hbit, ref SIZE lpsize)`
-  - `static IntPtr CreateCompatibleDC(IntPtr hdc)`
-  - `static IntPtr SelectObject(IntPtr hdc, IntPtr hObject)`
-  - `static int DescribePixelFormat(IntPtr hdc, int iPixelFormat, int bytes, ref PixelFormatDescriptor pfd)` *(1 of 2 overloads found)*
-  - `static int StretchDIBits(IntPtr hdc, int xDest, int yDest, int DestWidth, int DestHeight, int xSrc, int ySr...`
-  - `static int StretchBlt(IntPtr hdc, int xDest, int yDest, int DestWidth, int DestHeight, IntPtr hdcSrc, int x...`
-  - `static IntPtr CreateFileMapping(IntPtr hFile, IntPtr lpFileMappingAttributes, uint flProtect, uint dwMaximu...`
-  - `static IntPtr CopyMemory(IntPtr dest, IntPtr src, UIntPtr count)`
-  - `static int DragQueryFile(IntPtr hDrop, int iFile, StringBuilder? lpszFile, int cch)`
-  - `static int DwmGetWindowAttribute(IntPtr hwnd, int dwAttribute, out RECT pvAttribute, int cbAttribute)`
-  - `static bool SetLayeredWindowAttributes(IntPtr hwnd, uint crKey, byte bAlpha, LayeredWindowFlags dwFlags)`
-  - `const int WAIT_FAILED`
-  - `static int WaitForMultipleObjectsEx(int nCount, IntPtr[] pHandles, bool bWaitAll, int dwMilliseconds, bool ...` *(internal)*
-  - `static bool ImmSetOpenStatus(IntPtr hIMC, bool flag)`
-  - `static bool ImmSetActiveContext(IntPtr hIMC, bool flag)`
-  - `static bool ImmSetStatusWindowPos(IntPtr hIMC, ref POINT lpptPos)`
-  - `static string? ImmGetCompositionString(IntPtr hIMC, GCS dwIndex)` *(1 of 2 overloads found)*
-  - `static int LCIDToLocaleName(uint Locale, StringBuilder lpName, int cchName, int dwFlags)`
-  - `static uint MAKELCID(uint lgid, uint srtid)`
-  - `const long ISC_SHOWUICANDIDATEWINDOW`
-  - `const long ISC_SHOWUIGUIDELINE`
-  - `const long ISC_SHOWUIALLCANDIDATEWINDOW`
-  - `const long ISC_SHOWUIALL`
-  - `const uint TME_QUERY`
-  - `const uint TME_CANCEL`
-- `UnmanagedMethods.TimerProc` (delegate, public): **type missing** (0 members)
-- `UnmanagedMethods.TimeCallback` (delegate, public): **type missing** (0 members)
-- `UnmanagedMethods.WaitOrTimerCallback` (delegate, public): **type missing** (0 members)
-- `UnmanagedMethods.PointerDeviceChangeFlags` (enum, public): **type missing** (12 members)
-- `UnmanagedMethods.BitmapColorSpace` (enum, public): **type missing** (5 members)
-- `UnmanagedMethods.BitmapIntent` (enum, public): **type missing** (4 members)
-- `UnmanagedMethods.DIBColorTable` (enum, public): **type missing** (2 members)
-- `UnmanagedMethods.PenMask` (enum, public): **type missing** (5 members)
-- `UnmanagedMethods.TouchFlags` (enum, public): **type missing** (1 members)
-- `UnmanagedMethods.POINTER_TOUCH_INFO` (struct): 6 missing
-  - `TouchFlags touchFlags`
-  - `int rcContactRawLeft`
-  - `int rcContactRawTop`
-  - `int rcContactRawRight`
-  - `int rcContactRawBottom`
-  - `uint orientation`
-- `UnmanagedMethods.POINTER_PEN_INFO` (struct): 1 missing
-  - `PenMask penMask`
-- `UnmanagedMethods.POINTER_INFO` (struct): 9 missing
-  - `uint frameId`
-  - `IntPtr hwndTarget`
-  - `int ptHimetricLocationX`
-  - `int ptHimetricLocationY`
-  - `int ptPixelLocationRawX`
-  - `int ptPixelLocationRawY`
-  - `int inputData`
-  - `ModifierKeys dwKeyStates`
-  - `ulong PerformanceCount`
-- `UnmanagedMethods.RGBQUAD` (struct, public): **type missing** (4 members)
-- `UnmanagedMethods.BITMAP` (struct, public): **type missing** (7 members)
-- `UnmanagedMethods.BITMAPV5HEADER` (struct): 13 missing
-  - `uint bV5Size`
-  - `int bV5XPelsPerMeter`
-  - `int bV5YPelsPerMeter`
-  - `uint bV5ClrUsed`
-  - `uint bV5ClrImportant`
-  - `CIEXYZTRIPLE bV5Endpoints`
-  - `uint bV5GammaRed`
-  - `uint bV5GammaGreen`
-  - `uint bV5GammaBlue`
-  - `uint bV5ProfileData`
-  - `uint bV5ProfileSize`
-  - `uint bV5Reserved`
-  - `void Init()`
-- `UnmanagedMethods.CIEXYZTRIPLE` (struct, internal): **type missing** (3 members)
-- `UnmanagedMethods.CIEXYZ` (struct, internal): **type missing** (3 members)
-- `UnmanagedMethods.EnumWindowsProc` (delegate, public): **type missing** (0 members)
-- `UnmanagedMethods.GetAncestorFlags` (enum, public): **type missing** (3 members)
-- `UnmanagedMethods.LayeredWindowFlags` (enum, public): **type missing** (2 members)
-- `UnmanagedMethods.DWM_BLURBEHIND` (struct, public): **type missing** (4 members)
-- `UnmanagedMethods.RTL_OSVERSIONINFOEX` (struct, internal): **type missing** (6 members)
-- `UnmanagedMethods.LOGFONT` (struct, public): **type missing** (14 members)
-- `UnmanagedMethods.WindowCompositionAttributeData` (struct, internal): **type missing** (3 members)
-- `UnmanagedMethods.WindowCompositionAttribute` (enum, internal): **type missing** (1 members)
-- `UnmanagedMethods.AccentState` (enum, internal): **type missing** (7 members)
-- `UnmanagedMethods.AccentFlags` (enum, internal): **type missing** (4 members)
-- `UnmanagedMethods.AccentPolicy` (struct, internal): **type missing** (4 members)
-- `UnmanagedMethods.MONITORINFOEX` (struct): 2 missing
-  - `MONITORINFO Base` *(internal)*
-  - `static MONITORINFOEX Create()`
-- `UnmanagedMethods.MSG` (struct, public): **type missing** (6 members)
-- `UnmanagedMethods.PAINTSTRUCT` (struct, public): **type missing** (6 members)
-- `UnmanagedMethods.NCCALCSIZE_PARAMS` (struct, public): **type missing** (2 members)
-- `UnmanagedMethods.TRACKMOUSEEVENT` (struct, public): **type missing** (4 members)
-- `UnmanagedMethods.WINDOWPLACEMENT` (struct): 1 missing
-  - `static WINDOWPLACEMENT Default { get; }`
-- `UnmanagedMethods.WNDCLASSEX` (struct, public): **type missing** (12 members)
-- `UnmanagedMethods.TOUCHINPUT` (struct): 2 missing
-  - `IntPtr Source`
-  - `IntPtr ExtraInfo`
-- `UnmanagedMethods.ICONINFO` (struct, public): **type missing** (5 members)
-- `UnmanagedMethods.OpenFileNameFlags` (enum, public): **type missing** (5 members)
-- `UnmanagedMethods.MarkFullscreenWindow` (delegate, public): **type missing** (0 members)
-- `UnmanagedMethods.SetOverlayIcon` (delegate, public): **type missing** (0 members)
-- `UnmanagedMethods.HrInit` (delegate, public): **type missing** (0 members)
-- `UnmanagedMethods.ITaskBarList3VTable` (struct, public): **type missing** (21 members)
-- `UnmanagedMethods.DROPFILES` (struct, public): **type missing** (4 members)
-- `UnmanagedMethods.FILEDESCRIPTORW` (struct): 11 missing
-  - `uint dwFlags`
-  - `Guid clsid`
-  - `SIZE sizel`
-  - `POINT pointl`
-  - `uint dwFileAttributes`
-  - `FILETIME ftCreationTime`
-  - `FILETIME ftLastAccessTime`
-  - `FILETIME ftLastWriteTime`
-  - `uint nFileSizeHigh`
-  - `uint nFileSizeLow`
-  - `char cFileName`
-- `PixelFormatDescriptorFlags` (enum): 14 missing
-  - `PFD_STEREO = 0x00000002`
-  - `PFD_DRAW_TO_BITMAP = 0x00000008`
-  - `PFD_SUPPORT_GDI = 0x00000010`
-  - `PFD_GENERIC_FORMAT = 0x00000040`
-  - `PFD_NEED_PALETTE = 0x00000080`
-  - `PFD_NEED_SYSTEM_PALETTE = 0x00000100`
-  - `PFD_SWAP_EXCHANGE = 0x00000200`
-  - `PFD_SWAP_COPY = 0x00000400`
-  - `PFD_SWAP_LAYER_BUFFERS = 0x00000800`
-  - `PFD_GENERIC_ACCELERATED = 0x00001000`
-  - `PFD_SUPPORT_DIRECTDRAW = 0x00002000`
-  - `PFD_DEPTH_DONTCARE = 0x20000000`
-  - `PFD_DOUBLEBUFFER_DONTCARE = 0x40000000`
-  - `PFD_STEREO_DONTCARE = 0x80000000`
-- `NIIF` (enum, internal): **type missing** (9 members)
-
-</details>
-
-<details><summary><code>Win32Icon.cs</code> - 5 missing</summary>
-
-- `Win32Icon.ICONDIR` (struct, public): **type missing** (4 members)
-
-</details>
-
-### `OpenGl` - files 7/7, types 6/7, members 32/90
+### `OpenGl` - files 7/7, types 7/7, members 89/90 (1 waived)
 
 | Upstream file | Rust file | Status | Types | Members | Notes |
 |---|---|---|---|---|---|
-| `WglConsts.cs` | `open_gl/wgl_consts.rs` | partial | 0/1 | 0/56 |  |
-| `WglContext.cs` | `open_gl/wgl_context.rs` | partial | 1/1 | 16/17 |  |
+| `WglConsts.cs` | `open_gl/wgl_consts.rs` | present | 1/1 | 56/56 |  |
+| `WglContext.cs` | `open_gl/wgl_context.rs` | present | 1/1 | 16/17 (1 waived) |  |
 | `WglDisplay.cs` | `open_gl/wgl_display.rs` | present | 1/1 | 2/2 |  |
-| `WglGdiResourceManager.cs` | `open_gl/wgl_gdi_resource_manager.rs` | partial | 1/1 | 4/5 |  |
+| `WglGdiResourceManager.cs` | `open_gl/wgl_gdi_resource_manager.rs` | present | 1/1 | 5/5 |  |
 | `WglGlPlatformSurface.cs` | `open_gl/wgl_gl_platform_surface.rs` | present | 1/1 | 2/2 |  |
 | `WglPlatformOpenGlInterface.cs` | `open_gl/wgl_platform_open_gl_interface.rs` | present | 1/1 | 6/6 |  |
 | `WglRestoreContext.cs` | `open_gl/wgl_restore_context.rs` | present | 1/1 | 2/2 |  |
 
-<details><summary><code>WglConsts.cs</code> - 57 missing</summary>
-
-- `WglConsts` (class, internal): **type missing** (56 members)
-
-</details>
-
-<details><summary><code>WglContext.cs</code> - 1 missing</summary>
-
-- `WglContext` (class): 1 missing
-  - `IDisposable Lock()` *(internal)*
-
-</details>
-
-<details><summary><code>WglGdiResourceManager.cs</code> - 1 missing</summary>
-
-- `WglGdiResourceManager` (class): 1 missing
-  - `static WglGdiResourceManager()` *(static)*
-
-</details>
-
-### `OpenGl/Angle` - files 9/9, types 12/12, members 61/63
+### `OpenGl/Angle` - files 9/9, types 12/12, members 61/63 (2 waived)
 
 | Upstream file | Rust file | Status | Types | Members | Notes |
 |---|---|---|---|---|---|
@@ -496,25 +143,11 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 | `AngleEglInterface.cs` | `open_gl/angle/angle_egl_interface.rs` | present | 1/1 | 3/3 |  |
 | `AngleExternalD3D11Texture2D.cs` | `open_gl/angle/angle_external_d3d11_texture2_d.rs` | present | 2/2 | 11/11 |  |
 | `AngleExternalObjectsFeature.cs` | `open_gl/angle/angle_external_objects_feature.rs` | present | 1/1 | 14/14 |  |
-| `AngleWin32EglDisplay.cs` | `open_gl/angle/angle_win32_egl_display.rs` | partial | 1/1 | 7/8 |  |
+| `AngleWin32EglDisplay.cs` | `open_gl/angle/angle_win32_egl_display.rs` | present | 1/1 | 7/8 (1 waived) |  |
 | `AngleWin32PlatformGraphicsFactory.cs` | `open_gl/angle/angle_win32_platform_graphics_factory.rs` | present | 1/1 | 1/1 |  |
 | `D3D11AngleWin32PlatformGraphics.cs` | `open_gl/angle/d3d11_angle_win32_platform_graphics.rs` | present | 1/1 | 6/6 |  |
 | `D3D9AngleWin32PlatformGraphics.cs` | `open_gl/angle/d3d9_angle_win32_platform_graphics.rs` | present | 1/1 | 5/5 |  |
-| `SwapChainGlSurface.cs` | `open_gl/angle/swap_chain_gl_surface.rs` | partial | 3/3 | 12/13 |  |
-
-<details><summary><code>AngleWin32EglDisplay.cs</code> - 1 missing</summary>
-
-- `AngleWin32EglDisplay` (class): 1 missing
-  - `override bool DisplayLockIsSharedWithContexts { get; }` *(protected)*
-
-</details>
-
-<details><summary><code>SwapChainGlSurface.cs</code> - 1 missing</summary>
-
-- `SwapChainGlRenderTarget` (class): 1 missing
-  - `SwapChainGlRenderTarget(EglContext context, IDXGISwapChain1 swapChain, Func<PixelSize> getSizeFunc, Func<do...`
-
-</details>
+| `SwapChainGlSurface.cs` | `open_gl/angle/swap_chain_gl_surface.rs` | present | 3/3 | 12/13 (1 waived) |  |
 
 ### `Vulkan` - files 2/2, types 4/4, members 6/11 (5 waived)
 
@@ -523,60 +156,27 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 | `VulkanNativeInterop.cs` | `vulkan/vulkan_native_interop.rs` | present | 2/2 | 3/8 (5 waived) |  |
 | `VulkanSupport.cs` | `vulkan/vulkan_support.rs` | present | 2/2 | 3/3 |  |
 
-### `WinRT` - files 5/5, types 10/10, members 83/84
+### `WinRT` - files 5/5, types 10/10, members 83/84 (1 waived)
 
 | Upstream file | Rust file | Status | Types | Members | Notes |
 |---|---|---|---|---|---|
-| `NativeWinRTMethods.cs` | `win_rt/native_win_rt_methods.rs` | partial | 6/6 | 22/23 |  |
+| `NativeWinRTMethods.cs` | `win_rt/native_win_rt_methods.rs` | present | 6/6 | 22/23 (1 waived) |  |
 | `WinRTApiInformation.cs` | `win_rt/win_rt_api_information.rs` | present | 1/1 | 10/10 |  |
 | `WinRTColor.cs` | `win_rt/win_rt_color.rs` | present | 1/1 | 6/6 |  |
 | `WinRTInspectable.cs` | `win_rt/win_rt_inspectable.rs` | present | 1/1 | 3/3 |  |
 | `WinRTPropertyValue.cs` | `win_rt/win_rt_property_value.rs` | present | 1/1 | 42/42 |  |
 
-<details><summary><code>NativeWinRTMethods.cs</code> - 1 missing</summary>
-
-- `NativeWinRTMethods` (class): 1 missing
-  - `static IntPtr WindowsCreateString(string sourceString)` *(internal; 1 of 2 overloads found)*
-
-</details>
-
-### `WinRT/Composition` - files 7/7, types 15/15, members 115/121
+### `WinRT/Composition` - files 7/7, types 15/15, members 115/121 (6 waived)
 
 | Upstream file | Rust file | Status | Types | Members | Notes |
 |---|---|---|---|---|---|
 | `D2DEffects.cs` | `win_rt/composition/d2d_effects.rs` | present | 1/1 | 42/42 |  |
-| `WinUIEffectBase.cs` | `win_rt/composition/win_ui_effect_base.rs` | partial | 8/8 | 35/38 |  |
+| `WinUIEffectBase.cs` | `win_rt/composition/win_ui_effect_base.rs` | present | 8/8 | 35/38 (3 waived) |  |
 | `WinUiCompositedWindow.cs` | `win_rt/composition/win_ui_composited_window.rs` | present | 1/1 | 7/7 |  |
 | `WinUiCompositedWindowSurface.cs` | `win_rt/composition/win_ui_composited_window_surface.rs` | present | 2/2 | 10/10 |  |
-| `WinUiCompositionShared.cs` | `win_rt/composition/win_ui_composition_shared.rs` | partial | 1/1 | 11/12 |  |
+| `WinUiCompositionShared.cs` | `win_rt/composition/win_ui_composition_shared.rs` | present | 1/1 | 11/12 (1 waived) |  |
 | `WinUiCompositionUtils.cs` | `win_rt/composition/win_ui_composition_utils.rs` | present | 1/1 | 5/5 |  |
-| `WinUiCompositorConnection.cs` | `win_rt/composition/win_ui_compositor_connection.rs` | partial | 1/1 | 5/7 |  |
-
-<details><summary><code>WinUIEffectBase.cs</code> - 3 missing</summary>
-
-- `WinUIEffectBase` (class): 1 missing
-  - `override void Destroyed()` *(protected)*
-- `WinUIGaussianBlurEffect` (class): 1 missing
-  - `WinUIGaussianBlurEffect(IGraphicsEffectSource source)`
-- `SaturationEffect` (class): 1 missing
-  - `SaturationEffect(IGraphicsEffectSource source)`
-
-</details>
-
-<details><summary><code>WinUiCompositionShared.cs</code> - 1 missing</summary>
-
-- `WinUiCompositionShared` (class): 1 missing
-  - `void Dispose()`
-
-</details>
-
-<details><summary><code>WinUiCompositorConnection.cs</code> - 2 missing</summary>
-
-- `WinUiCompositorConnection` (class): 2 missing
-  - `bool RequiresNoRedirectionBitmap { get; }`
-  - `IPlatformRenderSurface CreateSurface(EglGlPlatformSurface.IEglWindowGlPlatformSurfaceInfo info)`
-
-</details>
+| `WinUiCompositorConnection.cs` | `win_rt/composition/win_ui_compositor_connection.rs` | present | 1/1 | 5/7 (2 waived) |  |
 
 ## Rust-only files
 
