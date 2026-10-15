@@ -25,12 +25,16 @@
 //! - A work item that is still queued when the session is disposed is
 //!   dropped, and its task is cancelled; the original leaves such a task
 //!   incomplete for ever.
+//! - The cleanup after a test of a shared application also processes the
+//!   composition batches the test left in flight
+//!   ([`finish_composition_in_flight`]), so that they do not hold back the
+//!   commits of the next test.
 
 use crate::{
-    FerroHeadlessPlatformExtensions, FerroHeadlessPlatformOptions, FerroTestApplicationAttribute,
+    FerroHeadlessPlatform, FerroHeadlessPlatformExtensions, FerroHeadlessPlatformOptions, FerroTestApplicationAttribute,
     FerroTestIsolationAttribute, FerroTestIsolationLevel,
 };
-use ferroui_base::media::FontManager;
+use ferroui_base::media::{FontManager, MediaContext};
 use ferroui_base::reactive::IDisposable;
 use ferroui_base::threading::{
     CancellationToken, CancellationTokenSource, Dispatcher, DispatcherFrame, FerroSynchronizationContext,
@@ -601,6 +605,39 @@ impl IDisposable for HeadlessUnitTestSession {
     }
 }
 
+/// Processes the composition batches the test has left in flight, so that
+/// the next test of a shared application starts with none.
+///
+/// Not in the original (DEVIATIONS.md, Headless platform), whose cleanup of
+/// a shared application only runs the jobs. A batch is processed by a tick
+/// of the render timer, and the timer of the headless platform ticks on the
+/// dispatcher of the session, which does not run between two dispatches: a
+/// batch the jobs after a test commit (a test that closes a window ends so:
+/// the window hides before its renderer is disposed, which asks for a
+/// commit) stays in flight into the next test, whose commits the media
+/// context then holds back until a tick. A window the next test shows is
+/// not composed by its jobs, and its composition visual is not attached to
+/// its target (the snapshot test of the rendering tests failed so, in the
+/// order of tests in which the leak test ran before it). An isolated
+/// application is set up afresh for every test and has nothing in flight.
+///
+/// A tick processes the batches and posts their completion; the jobs after
+/// it run the completion and the render pass it schedules, which may commit
+/// once more. As many rounds as the headless window extensions render at
+/// most in one go.
+fn finish_composition_in_flight() {
+    let Some(media_context) = FerroLocator::current().get_service::<MediaContext>() else {
+        return;
+    };
+    for _ in 0..10 {
+        if !media_context.has_composition_batches_in_flight() {
+            return;
+        }
+        FerroHeadlessPlatform::force_render_timer_tick(1);
+        Dispatcher::ui_thread().run_jobs(None);
+    }
+}
+
 impl SessionThread {
     fn ensure_shared_application(&self) -> Box<dyn IDisposable> {
         let old_context = FerroSynchronizationContext::current();
@@ -612,7 +649,10 @@ impl SessionThread {
         }
 
         Box::new(Cleanup::new(move || {
-            let jobs = catch_unwind(|| Dispatcher::ui_thread().run_jobs(None));
+            let jobs = catch_unwind(|| {
+                Dispatcher::ui_thread().run_jobs(None);
+                finish_composition_in_flight();
+            });
             FerroSynchronizationContext::set_current(old_context);
             if let Err(ex) = jobs {
                 resume_unwind(ex);
