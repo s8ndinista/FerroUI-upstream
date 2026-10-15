@@ -54,12 +54,27 @@ Wiring, as upstream: `FerroNativePlatform` tries `ObtainGlDisplay` and the graph
 
 ## 4. Verification on macOS
 
-- `cargo test -p ferroui-native` in both configurations: seven tests of the CGL graphics over the real native display, the OpenGL of the system, a real IOSurface and a real shared event of the Metal device (the version is 3.2 core or later, one shared context, the sharing of contexts and of contexts made from a shared one, a lost context, the names and refusals of the external objects feature, an IOSurface imported as a rectangle texture, a shared event signalled and waited for as a timeline semaphore). See section 6 for the counts.
+- `cargo test -p ferroui-native` in both configurations: six tests of the CGL graphics over the real native display, the OpenGL of the system, a real IOSurface and a real shared event of the Metal device (the version is 3.2 core or later, one shared context, the sharing of contexts and of contexts made from a shared one, a lost context, the names and refusals of the external objects feature, an IOSurface imported as a rectangle texture, a shared event signalled and waited for as a timeline semaphore). See section 6 for the counts.
 - `examples/platform_window.rs -- --opengl` in the configuration `ferro_skia_apple_ganesh`: the platform chooses the CGL graphics (OpenGL 4.1 core on this machine), a frame of the window's OpenGL render target cleared to (51, 102, 153) with OpenGL and read back before it is presented gives exactly that colour (1280 by 800 pixels at scaling 2, y flipped), the window is painted by Skia through Ganesh on the CGL context, and with `FERROUI_SMOKE_CAPTURE` the scene drawn into an offscreen layer of the render backend (a GPU surface of the same context) is written as PNG **[M]**.
-- The ControlCatalog with `FERROUI_SMOKE_RENDERING=opengl` (macOS options of the desktop entry point, OpenGL alone) in the configuration `ferro_skia_apple_ganesh`: a screenshot run of the catalog (section 6) **[M]**.
+- The ControlCatalog with `FERROUI_SMOKE_RENDERING=opengl` (macOS options of the desktop entry point, OpenGL alone; the run prints which graphics the platform applied) in the configuration `ferro_skia_apple_ganesh`: a screenshot run of the catalog (section 6) **[M]**.
 
 ## 5. iOS: the EAGL graphics
 
 See `ios-platform.md`, section 7, for the files `eagl/eagl_display.rs`, `eagl/eagl_layer_surface.rs` and `eagl/layer_fbo.rs`, the layer class of the view and the threads. The same configuration of the Skia backend (`ferro_skia_apple_ganesh`) gives Ganesh on OpenGL ES there; the binary for both iOS targets is in the table of section 2.
 
 ## 6. Runs
+
+All on 2026-10-15, on the development Mac, branch `apple-completion` **[M]**. Pictures and logs under `/Volumes/1TB-macOS/ferroui-screenshots/macos-gl/`; each is a frame the application draws, never a capture of the screen.
+
+| Run | Build | Result |
+|---|---|---|
+| `cargo test -p ferroui-native` | default and `ferro_skia_apple_ganesh` | 125 passed in each, the six tests of the CGL graphics among them |
+| `cargo test -p ferroui-skia` | `ferro_skia_apple_ganesh` (with `RUSTDOCFLAGS` for the doctests) | 467 passed, 9 ignored; the Graphite tests of the Metal GPU are not compiled in this build |
+| `examples/platform_window.rs --opengl`, `FERROUI_SMOKE_EXIT_MS=2500`, `FERROUI_SMOKE_CAPTURE` | `ferro_skia_apple_ganesh` | Exit 0. OpenGL 4.1 core; the probe frame (1280 by 800 pixels at scaling 2, y flipped) read back (51, 102, 153, 255), the colour it was cleared to; a paint by Skia through Ganesh on CGL; `platform_window-opengl.png` is the scene drawn into an offscreen layer of the backend (a GPU surface of the CGL context) |
+| The same, before the patch `0002` of the native library | `ferro_skia_apple_ganesh` | The run passed and the process crashed at its exit, three of three, in `PlatformRenderTimer::OnTick` (a display link tick on a freed timer); `--metal` in the default build exited cleanly, three of three. With the patch: exit 0, three of three |
+| ControlCatalog, `FERROUI_SMOKE_RENDERING=opengl`, `FERROUI_SMOKE_SCREENSHOTS` | `ferro_skia_apple_ganesh` | Exit 0; "Platform graphics: OpenGL (CGL)"; Home, Buttons, TextBlock, ListBox, Image, Calendar and Slider shown and written (`catalog-opengl/`, the frames the framework draws of the window) |
+| ControlCatalog, `FERROUI_SMOKE_RENDERING=metal` | `ferro_skia_apple_ganesh` | Exit 0; "Platform graphics: Metal" (Metal on Ganesh); the same seven pages (`catalog-metal/`), the same pictures as with OpenGL |
+| `cargo check` and `cargo test -p ferroui-ios`; the example and the catalog host for `aarch64-apple-ios-sim` | both | Built for both iOS targets in both configurations; 104 host tests and the ten checks of the dispatcher pass. Not run in the simulator (`CONTINUATION.md` has the commands) |
+
+Not verified: the OpenGL mode of macOS driven by hand (live resize, several windows sharing the context, popups), the external objects feature of the CGL context with a producer of another API (the tests import a real IOSurface and a real shared event, without a picture drawn into either), the OpenGL ES mode of iOS in the simulator.
+
