@@ -2,7 +2,7 @@
 
 The design of the port of upstream's `src/Windows/Avalonia.WinUI` (the tracked commit, `17350180`): the framework's content inside a WinUI 3 application of the Windows App SDK. The crate is `ferroui-winui` (`src/Windows/FerroUI.WinUI`), which held the reserved name until this port (`docs/release.md`, section 2.2). The differences from upstream are in `DEVIATIONS.md`, "WinUI integration"; the state is in `CRITICAL-PATH.md`, row 32.
 
-Marks used below: **[V]** verified here (read in the sources named, or run on this machine), **[CI]** to be established by the step of the Windows job of CI (section 7.3), **[VM]** to be established in the owner's Windows 11 ARM64 virtual machine (section 7.4). Nothing of this crate has run on Windows yet.
+Marks used below: **[V]** verified here (read in the sources named, or run on this machine), **[CI]** to be established by the step of the Windows job of CI (section 7.3), **[VM]** established in the owner's Windows 11 ARM64 virtual machine (section 7.4; the first run is section 7.5).
 
 ## 1. What is ported
 
@@ -144,7 +144,7 @@ Everything of the integration runs on the thread of the XAML application, which 
 7. the automation tree XAML builds of the panel (`FrameworkElementAutomationPeer.CreatePeerForElement` of its element): the class name `FerroSwapChainPanel` and the control type `Pane` (overrides of the composed peer), at least one child (the proxy of the embedded root), which has the content's peers as children;
 8. the window closes, and the application ends.
 
-A check that has not passed after 60 seconds fails the run. What it does not check: pixels of the swap chain (a capture of a window does not reliably hold a composition swap chain), input (it needs a person or injected input), the input method, drag and drop and the cursor.
+A check that has not passed after 60 seconds fails the run. Each call of the system in step 7 and the close of step 8 is announced by a `[step]` line, and the automation objects of the integration print a `[trace]` line on the error stream for what XAML asks of them (`FERROUI_WINUI_TRACE`, which the smoke run sets): a run that ends in the frames of the system names the call it was in. When the window is closed, the application lets go of it (and of its panel) inside the handler of `Closed`, while XAML still runs, and then ends the loop. What it does not check: pixels of the swap chain (a capture of a window does not reliably hold a composition swap chain), input (it needs a person or injected input), the input method, drag and drop and the cursor.
 
 ### 7.3 CI
 
@@ -162,6 +162,12 @@ powershell -NoProfile -ExecutionPolicy Bypass -File <S>:\ferroui-vm-windows\src-
 
 The runtime the machine needs: the Windows App Runtime 1.6 for ARM64, from Microsoft's installer `windowsappruntimeinstall-arm64.exe` of release 1.6.241114003 (`https://aka.ms/windowsappsdk/1.6/1.6.241114003/windowsappruntimeinstall-arm64.exe`), which `-InstallWindowsAppRuntime` downloads and runs with `--quiet`. Once installed, later runs omit the switch.
 
+### 7.5 What the first run showed (2026-10-15)
+
+The first run in the virtual machine (commit `629520ed`; the Windows App Runtime 1.6 installed by `-InstallWindowsAppRuntime`, installer exit code 0) **[VM]**: the 21 tests passed on the target; the sample built (508 s); the smoke run passed steps 1 to 6 and the first two checks of step 7: the bootstrap, `Application.Start` with the composed application, the window with the composed panel, `Loaded` (client size 1334 by 666), the swap chain set on the panel 3.2 s after activation, 46 frames, and the peer of the panel created through the override of `OnCreateAutomationPeer` with the class name and the control type of the overrides of the composed peer. It then ended with an access violation (`0xC0000005`) in the next call, `GetChildren` of the peer of the panel.
+
+The cause: the creation of a proxy (`FerroToXamlPeerProxy::new`) read the value of the proxy from the pointer of its `IAutomationPeer`, which is an interface of the inner object (an object of XAML), not of the outer object the runtime of the port made; it wrote the pointer of the proxy into the memory of XAML's object, and left the proxy without its own pointer (`SetParent` of each child then dereferenced null). The value is now read from the outer object's own first interface before the query. The other three places that read the value of a composed object read it from that interface already.
+
 ## 8. `Avalonia.Win32.Interoperability`: not applicable
 
 The project hosts the content in Windows Forms: `WinFormsAvaloniaControlHost`, a `System.Windows.Forms.Control` that creates an `EmbeddableControlRoot` (whose top-level is the embedded window of the Windows backend) as its child window and forwards focus, size and dialog characters, and `WinFormsAvaloniaMessageFilter`, an `IMessageFilter` of the Windows Forms message loop that dispatches the key messages of the framework's own windows before Windows Forms takes them. Windows Forms is a toolkit of .NET; a Rust program has no Windows Forms to host in. What stands for it in Rust:
@@ -173,11 +179,10 @@ The tracking records both files as not applicable with this reason (`docs/portin
 
 ## 9. What is not verified
 
-Nothing of the integration has run on Windows. In the order a first run would show them:
+The first run in the virtual machine (section 7.5) established the bootstrap, `Application.Start` with the composed application, the composed panel with its override of `OnCreateAutomationPeer`, `Loaded`, the swap chain set on the panel and frames rendered, and the class name and control type of the composed peer. Not verified yet, in the order a run would show them:
 
-- the bootstrap with the runtime 1.6, and `Application.Start` with the composed application (`OnLaunched` called through the override);
-- composition: that XAML accepts the outer objects of the port (the panel, the overlay grid, the peers, the application) and calls their overrides, and that the protected interfaces are answered by the inner objects;
-- the swap chain: created on ANGLE's device, set on the panel, presented with the inverse scale transform;
+- the children of the automation peers (the proxies; the crash of the first run, section 7.5) and the close of the window;
+- that the protected interfaces are answered by the inner objects (the cursor of the overlay); the picture the swap chain presents, with the inverse scale transform;
 - input: pointer, wheel, keys, characters, the tab boundary, the cursor of the overlay;
 - the input method over `CoreTextEditContext` (`GetForCurrentView` in a desktop application of WinUI, as the reference calls it);
 - drag and drop in both directions, and the agile completion handlers of the operations;

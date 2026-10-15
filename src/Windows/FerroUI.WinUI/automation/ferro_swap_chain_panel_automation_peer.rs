@@ -93,6 +93,7 @@ mod imp {
         }
 
         fn get_children_core(&self) -> Result<Option<ComPtr<IVectorAutomationPeer>>, HResult> {
+            super::super::trace("panel peer: GetChildrenCore of the base");
             let list = self
                 .base
                 .base::<IAutomationPeerOverrides>()?
@@ -100,11 +101,15 @@ mod imp {
                 .unwrap_or_else(|| AutomationPeerVector::new(Vec::new()));
 
             if let Some(root_peer) = self.try_get_embedded_root_peer() {
+                super::super::trace("panel peer: the proxy of the embedded root");
                 let proxy = FerroToXamlPeerProxy::get_or_create(&root_peer, &self.this.upgrade().ok_or(HResult::POINTER)?)?;
+                super::super::trace("panel peer: SetParent of the proxy");
                 proxy.set_parent(Some(self.this_peer()))?;
+                super::super::trace("panel peer: Append of the proxy");
                 list.append(Some(&proxy))?;
             }
 
+            super::super::trace("panel peer: GetChildrenCore returns");
             Ok(Some(list))
         }
 

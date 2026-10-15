@@ -12,7 +12,8 @@ use ferroui_win32::win_rt::{HStringInterop, NativeWinRTMethods};
 use ferroui_winui::interop::{AutomationControlType, IAutomationPeer, IFrameworkElementAutomationPeerStatics};
 use ferroui_winui::XamlApplication;
 use std::cell::Cell;
-use std::rc::Rc;
+use std::io::Write;
+use std::rc::{Rc, Weak};
 use std::time::{Duration, Instant};
 
 thread_local! {
@@ -46,11 +47,13 @@ fn take_string(handle: isize) -> String {
 }
 
 /// Starts the checks once the main window is activated; the run closes the
-/// window and ends the application when they are done.
+/// window and ends the application when they are done. The timer holds the
+/// window weakly: `App` drops it when it is closed.
 pub fn start(window: Rc<MainWindow>) {
     report(App::lifetime().main_view().is_some(), "the catalog set the main view of the single view lifetime");
     report(true, "the main window with the swap chain panel is created and activated");
 
+    let window: Weak<MainWindow> = Rc::downgrade(&window);
     let started = Instant::now();
     let frames = Rc::new(Cell::new(0u32));
     let counting = Rc::new(Cell::new(false));
@@ -60,6 +63,11 @@ pub fn start(window: Rc<MainWindow>) {
             if finished.get() {
                 return false;
             }
+            let Some(window) = window.upgrade() else {
+                report(false, "the main window is gone before the checks ended");
+                finished.set(true);
+                return false;
+            };
             let panel = window.ferro_panel();
             let root = panel.get_embedded_root_for_automation();
             let loaded = root.is_some();
@@ -77,16 +85,16 @@ pub fn start(window: Rc<MainWindow>) {
                 report(true, &format!("the swap chain is set on the panel ({} ms after activation)", elapsed.as_millis()));
                 report(true, &format!("{} frames rendered", frames.get()));
                 check_automation(&window);
-                finish(&window);
                 finished.set(true);
+                finish(&window);
                 return false;
             }
             if elapsed > LOAD_TIMEOUT {
                 report(loaded, "the panel loaded");
                 report(attached, "the swap chain is set on the panel");
                 report(frames.get() >= FRAMES, &format!("{} of {FRAMES} frames rendered", frames.get()));
-                finish(&window);
                 finished.set(true);
+                finish(&window);
                 return false;
             }
             true
@@ -107,44 +115,77 @@ fn count_frames(top_level: ferroui_base::Ref<ferroui_controls::TopLevel>, frames
     });
 }
 
+/// A line before a call of the system, so that a run that ends in the
+/// system's frames names the call it was in.
+fn step(what: &str) {
+    let mut out = std::io::stdout().lock();
+    let _ = writeln!(out, "[step] {what}");
+    let _ = out.flush();
+}
+
 /// The automation tree XAML builds of the panel: the peer the panel creates
 /// (`OnCreateAutomationPeer`, overridden by the composed panel), its class
 /// name and control type (overrides of the peer), and the peer of the
 /// content beneath it (the proxy of the embedded root, with the content's
-/// peers as its children).
+/// peers as its children). Each call of the system is announced by a
+/// `[step]` line; the automation objects of the integration add `[trace]`
+/// lines of what XAML asks of them (`FERROUI_WINUI_TRACE`, which `main` sets
+/// for a smoke run).
 fn check_automation(window: &MainWindow) {
     let result = (|| -> Result<(), HResult> {
+        step("RoGetActivationFactory(FrameworkElementAutomationPeer)");
         let statics = NativeWinRTMethods::create_activation_factory::<IFrameworkElementAutomationPeerStatics>(
             "Microsoft.UI.Xaml.Automation.Peers.FrameworkElementAutomationPeer",
         )?;
         let element = window.ferro_panel().as_ui_element();
+        step("FrameworkElementAutomationPeer.CreatePeerForElement(the panel)");
         let peer: ComPtr<IAutomationPeer> = statics.create_peer_for_element(Some(&element))?.ok_or(HResult::POINTER)?;
+        step("the peer of the panel: GetClassName");
         let class_name = take_string(peer.get_class_name()?);
         report(class_name == "FerroSwapChainPanel", &format!("the automation peer of the panel has the class name {class_name:?}"));
+        step("the peer of the panel: GetAutomationControlType");
         let control_type = peer.get_automation_control_type()?;
         report(control_type == AutomationControlType::Pane, &format!("the automation peer of the panel is a {control_type:?}"));
 
+        step("the peer of the panel: GetChildren");
         let children = peer.get_children()?.ok_or(HResult::POINTER)?;
+        step("the children of the panel: Size");
         let count = children.size()?;
         report(count >= 1, &format!("the automation peer of the panel has {count} children"));
         if count >= 1 {
+            step("the children of the panel: GetAt(the last)");
             let root = children.get_at(count - 1)?.ok_or(HResult::POINTER)?;
+            step("the peer of the content: GetClassName");
             let root_class = take_string(root.get_class_name()?);
-            let root_children = root.get_children()?.ok_or(HResult::POINTER)?.size()?;
-            report(root_children >= 1, &format!("the peer of the content ({root_class:?}) has {root_children} children"));
+            step("the peer of the content: GetChildren");
+            let root_children = root.get_children()?.ok_or(HResult::POINTER)?;
+            step("the children of the content: Size");
+            let root_count = root_children.size()?;
+            report(root_count >= 1, &format!("the peer of the content ({root_class:?}) has {root_count} children"));
+            step("the peer of the content: IsControlElement");
             info(&format!("the peer of the content is a control element: {}", root.is_control_element()? != 0));
+            if root_count >= 1 {
+                step("the children of the content: GetAt(0)");
+                let first = root_children.get_at(0)?.ok_or(HResult::POINTER)?;
+                step("the first child of the content: GetClassName");
+                info(&format!("the first child of the content is a {:?}", take_string(first.get_class_name()?)));
+            }
+            step("releasing the peers of the content");
         }
+        step("releasing the peer of the panel");
         Ok(())
     })();
+    step("the automation check returned");
     if let Err(error) = result {
         report(false, &format!("the automation tree of the panel: {error}"));
     }
 }
 
-/// Closes the window, which ends the application.
+/// Closes the window; `App` drops it and ends the application when it is
+/// closed.
 fn finish(window: &MainWindow) {
-    let closed = window.window().on_closed(|| XamlApplication.exit());
-    let close = closed.and_then(|_| window.window().close());
+    step("Window.Close");
+    let close = window.window().close();
     report(close.is_ok(), "the window closes");
     if close.is_err() {
         XamlApplication.exit();

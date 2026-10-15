@@ -9,6 +9,7 @@ use ferroui_controls::{AppBuilder, Control};
 use ferroui_harfbuzz::HarfBuzzApplicationExtensions;
 use ferroui_skia::SkiaApplicationExtensions;
 use ferroui_win32::Win32ApplicationExtensions;
+use ferroui_winui::XamlApplication;
 use std::any::Any;
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -28,6 +29,12 @@ impl App {
         LIFETIME.with(Rc::clone)
     }
 
+    /// Lets go of the main window, if the application still holds it.
+    pub fn shutdown() {
+        let window = WINDOW.with(|slot| slot.borrow_mut().take());
+        drop(window);
+    }
+
     /// `OnLaunched`.
     pub fn on_launched(smoke: bool) {
         let lifetime: Rc<dyn IApplicationLifetime> = Self::lifetime();
@@ -44,6 +51,17 @@ impl App {
         };
         if let Err(error) = window.activate() {
             panic!("activating the main window failed: {error}");
+        }
+        // When the window is closed, the application lets go of it (its
+        // panel, whose content stops rendering) while XAML still runs, and
+        // ends: the objects of XAML are not released after the loop of the
+        // application has returned.
+        let closed = window.window().on_closed(|| {
+            App::shutdown();
+            XamlApplication.exit();
+        });
+        if let Err(error) = closed {
+            panic!("subscribing to the closing of the main window failed: {error}");
         }
         if smoke {
             crate::smoke::start(window.clone());
