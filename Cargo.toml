@@ -63,6 +63,7 @@ members = [
     "samples/AppWithoutLifetime",
     "samples/IntegrationTestApp",
     "samples/ControlCatalog.Android",
+    "samples/ControlGallery.WinUI",
 ]
 
 [workspace.package]

@@ -60,6 +60,19 @@
   of the catalog (control-catalog-desktop with FERROUI_SMOKE_SCREENSHOTS) in both rendering modes;
   the pictures are copied to vm-smoke-screenshots beside the report.
 
+.PARAMETER WinUI
+  Also run the tests of the WinUI integration (ferroui-winui) and the smoke run of its sample
+  (control-gallery-winui --smoke: the catalog in a WinUI 3 window; docs/porting/winui.md, section
+  7). The sample needs the Windows App Runtime 1.6 on the machine, which the script checks for and
+  does not install (see -InstallWindowsAppRuntime), and the bootstrap library of the Windows App SDK
+  beside the executable, which scripts\winui\fetch-windows-app-sdk.ps1 downloads from nuget.org
+  (the package Microsoft.WindowsAppSDK 1.6.241114003) and copies there.
+
+.PARAMETER InstallWindowsAppRuntime
+  With -WinUI: install the Windows App Runtime 1.6 first (the installer of Microsoft,
+  windowsappruntimeinstall-<arch>.exe of release 1.6.241114003, run quietly). Only with the
+  owner's authorisation: it installs packages on the machine.
+
 .PARAMETER AllowUnmarkedSource
   Run although the sources carry no mark of a completed sync. By default the script refuses a
   source tree without the file .vm-sync-commit (written last by scripts/windows/vm-sync.sh, with
@@ -98,6 +111,8 @@ param(
     [string]$RustupHome = '',
     [string]$LibclangPath = '',
     [switch]$Desktop,
+    [switch]$WinUI,
+    [switch]$InstallWindowsAppRuntime,
     [int]$HelloRepeat = 1,
     [switch]$SkipBuild,
     [switch]$SkipTests,
@@ -598,6 +613,40 @@ if ($Desktop) {
             $copy = Join-Path (Join-Path (Split-Path -Parent $Report) 'vm-smoke-screenshots') $mode
             New-Item -ItemType Directory -Force -Path $copy | Out-Null
             Copy-Item (Join-Path $directory '*.png') $copy -Force -ErrorAction SilentlyContinue
+        }
+    }
+}
+
+# ---- the WinUI integration --------------------------------------------------------------------
+if ($WinUI) {
+    Say ""
+    Say "-- the WinUI integration"
+    if ((Run 'winui-tests' "cargo test --locked $jobsArgument -p ferroui-winui --no-fail-fast") -ne 0) { $failed.Add('ferroui-winui tests') }
+    Tail 'winui-tests' 20 'FAILED|^test result|panicked'
+    $fetch = Join-Path $Source 'scripts\winui\fetch-windows-app-sdk.ps1'
+    $debug = Join-Path $TargetDir 'debug'
+    if ($InstallWindowsAppRuntime) {
+        if ((Run 'winui-runtime' "powershell -NoProfile -ExecutionPolicy Bypass -File `"$fetch`" -Destination `"$debug`" -InstallRuntime") -ne 0) { $failed.Add('Windows App Runtime install') }
+        Tail 'winui-runtime' 20
+    } else {
+        if ((Run 'winui-bootstrap' "powershell -NoProfile -ExecutionPolicy Bypass -File `"$fetch`" -Destination `"$debug`"") -ne 0) { $failed.Add('Windows App SDK bootstrap library') }
+        Tail 'winui-bootstrap' 10
+    }
+    $runtime = @(Get-AppxPackage -AllUsers -Name 'Microsoft.WindowsAppRuntime.1.6*' -ErrorAction SilentlyContinue)
+    if ($runtime.Count -eq 0) {
+        Say "the Windows App Runtime 1.6 is not installed (-InstallWindowsAppRuntime installs it)"
+        $failed.Add('Windows App Runtime 1.6 missing')
+    } else {
+        foreach ($package in $runtime) { Say "    $($package.PackageFullName)" }
+        if ((Run 'winui-build' "cargo build --locked $jobsArgument -p control-gallery-winui") -ne 0) {
+            $failed.Add('control-gallery-winui build')
+            Tail 'winui-build' 40
+        } else {
+            $gallery = Join-Path $debug 'control-gallery-winui.exe'
+            $commandLine = "`"$gallery`" --smoke"
+            $code = if ($InteractiveUser) { Run-Interactive 'winui-smoke' $commandLine 300 } else { Run 'winui-smoke' $commandLine }
+            if ($code -ne 0) { $failed.Add('WinUI smoke run') }
+            Tail 'winui-smoke' 60 '^\[(FAIL|info| ok )\]|panicked|error'
         }
     }
 }

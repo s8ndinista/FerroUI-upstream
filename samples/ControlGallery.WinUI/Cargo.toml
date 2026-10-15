@@ -1,0 +1,33 @@
+[package]
+name = "control-gallery-winui"
+description = "The ControlCatalog sample of FerroUI in a WinUI 3 window, through the swap chain panel of ferroui-winui"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+autotests = false
+autobenches = false
+autoexamples = false
+# The build script embeds the application manifest (`app.manifest`) in the executable.
+build = "build.rs"
+
+[[bin]]
+name = "control-gallery-winui"
+path = "main.rs"
+
+[dependencies]
+ferroui-base = { workspace = true }
+ferroui-controls = { workspace = true }
+control-catalog = { path = "../ControlCatalog" }
+
+# The sample runs on Windows only: WinUI 3 of the Windows App SDK, the Windows backend with ANGLE
+# (the swap chain of the panel is created on ANGLE's Direct3D 11 device), Skia and HarfBuzz, as the
+# reference's sample sets the application up.
+[target.'cfg(windows)'.dependencies]
+ferroui-winui = { workspace = true }
+ferroui-win32 = { workspace = true, features = ["angle"] }
+ferroui-skia = { workspace = true }
+ferroui-harfbuzz = { workspace = true }
+ferroui-microcom = { workspace = true }

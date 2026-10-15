@@ -494,6 +494,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "control-gallery-winui"
+version = "0.1.0-preview.2"
+dependencies = [
+ "control-catalog",
+ "ferroui-base",
+ "ferroui-controls",
+ "ferroui-harfbuzz",
+ "ferroui-microcom",
+ "ferroui-skia",
+ "ferroui-win32",
+ "ferroui-winui",
+]
+
+[[package]]
 name = "control-samples"
 version = "0.1.0-preview.2"
 dependencies = [
@@ -1207,6 +1221,14 @@ dependencies = [
 [[package]]
 name = "ferroui-winui"
 version = "0.1.0-preview.2"
+dependencies = [
+ "ferroui-base",
+ "ferroui-controls",
+ "ferroui-microcom",
+ "ferroui-win32",
+ "microcom-codegen",
+ "windows-sys",
+]
 
 [[package]]
 name = "ferroui-x11"
