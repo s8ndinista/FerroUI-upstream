@@ -282,7 +282,7 @@ impl VncStream {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, unix))]
 mod tests {
     // Not from upstream.
     use super::*;

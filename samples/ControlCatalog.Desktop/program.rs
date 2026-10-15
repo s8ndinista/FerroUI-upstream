@@ -61,8 +61,18 @@
 //! That run reads the screen under its own window: it is for a machine
 //! whose screen holds nothing but the run.
 //!
+//! With the command line switch `--vnc` the catalog runs on the headless
+//! platform, without a window on the screen, and a VNC server on port 5901
+//! of the loopback address shows its main window to a VNC viewer and passes
+//! the keyboard and the mouse of the viewer to it; the application ends
+//! when the main window closes.
+//!
+//! ```text
+//! cargo run -p control-catalog-desktop -- --vnc
+//! ```
+//!
 //! Not ported, because the platforms and options they name do not exist
-//! yet: the command line switches `--wait-for-attach`, `--vnc`,
+//! yet: the command line switches `--wait-for-attach`,
 //! `--full-headless`, `--dxgi`, and of the application builder the data
 //! annotations validation, the X11, Vulkan and composition
 //! options, the Inter font, the developer tools and the native control
@@ -92,8 +102,9 @@ use ferroui_base::platform::{AlphaFormat, PixelFormat};
 use ferroui_base::rendering::composition::ElementComposition;
 use ferroui_base::threading::{DispatcherPriority, DispatcherTimer};
 use ferroui_base::{PixelPoint, PixelRect, PixelSize, Ref, Size, Vector, Visual};
-use ferroui_controls::{AppBuilder, Application, ComboBox, MenuItem, TextBox, Window, WindowDecorations};
+use ferroui_controls::{AppBuilder, Application, ComboBox, MenuItem, ShutdownMode, TextBox, Window, WindowDecorations};
 use ferroui_desktop::AppBuilderDesktopExtensions;
+use ferroui_headless_vnc::HeadlessVncPlatformExtensions;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
@@ -113,6 +124,10 @@ fn main() -> std::process::ExitCode {
     #[cfg(target_os = "linux")]
     if args.iter().any(|arg| arg == "--drm") {
         let exit_code = linux_framebuffer::start_drm(builder, &args);
+        return std::process::ExitCode::from(exit_code as u8);
+    }
+    if args.iter().any(|arg| arg == "--vnc") {
+        let exit_code = builder.start_with_headless_vnc_platform(None, 5901, &args, ShutdownMode::OnMainWindowClose);
         return std::process::ExitCode::from(exit_code as u8);
     }
 

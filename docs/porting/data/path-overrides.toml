@@ -1780,6 +1780,14 @@ path = "src/Headless/FerroUI.Headless/unit_tests/test_application.rs"
 reason = "test support: `TestApplication.cs` of the upstream unit test project of the headless platform, the two test assemblies that stand for the upstream test projects that compile its files, and the facts and theories that dispatch a test to the session of its assembly (what the xUnit integration does, which is not ported)"
 
 [[rust_only]]
+path = "src/Headless/FerroUI.Headless.Vnc/remote_viewing/*"
+reason = "the RFB server the VNC project is built on: a port of the parts of the .NET library RemoteViewing (BSD-2-Clause) that the upstream project uses through its NuGet package, which is no upstream source (docs/porting/headless-vnc.md, section 3)"
+
+[[rust_only]]
+path = "src/Headless/FerroUI.Headless.Vnc/tests/*"
+reason = "tests of the VNC server with an RFB client of their own; the upstream project has no tests"
+
+[[rust_only]]
 path = "src/Headless/FerroUI.Headless/unit_tests/headless_unit_test_application.rs"
 reason = "test support: `HeadlessUnitTestApplication.cs` of the upstream test library (`tests/Avalonia.UnitTests`), the application on the headless platform with the Simple theme that the headless probe tests of the controls run with; the headless platform and the theme are built on the controls, so the tests are in this crate"
 

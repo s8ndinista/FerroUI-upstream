@@ -1443,7 +1443,7 @@ impl IVncServerSession for VncServerSession {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, unix))]
 mod tests {
     // Not from upstream: the protocol of a session, driven over a socket pair.
     use super::*;
