@@ -2378,3 +2378,29 @@ upstream = ["UnmanagedInterop/VulkanStructs.cs"]
 kind = "replaced"
 rust = "unmanaged_interop/vulkan_structs.rs"
 reason = "the handles and structures of the Vulkan headers are those of the `ash` bindings (docs/porting/vulkan.md, section 3): each upstream name is an alias of the type of the bindings, whose fields are those of the headers in snake case"
+
+# ---------------------------------------------------------------- Avalonia.Win32.Interoperability
+
+[[map]]
+project = "Avalonia.Win32.Interoperability"
+upstream = ["WinForms/WinFormsAvaloniaControlHost.cs", "WinForms/WinFormsAvaloniaMessageFilter.cs"]
+kind = "not-applicable"
+reason = "hosting in Windows Forms: a Control of System.Windows.Forms that embeds the content and a message filter of its message loop. Windows Forms is a toolkit of .NET with no counterpart in Rust, so nothing can host the content this way; a Rust program on Windows hosts it in a window of the backend, in a window of another toolkit through the embedded window of the backend, or in WinUI 3 through ferroui-winui (docs/porting/winui.md, section 8)"
+
+# ---------------------------------------------------------------- Avalonia.WinUI
+
+[[rust_only]]
+path = "src/Windows/FerroUI.WinUI/interop/*.rs"
+reason = "The bindings of the Windows Runtime the integration calls and implements, generated from interop/winui.idl, and what the projections of the runtime of the original provide around them: string handles and activation, composed classes (the outer object of a derived class), delegates, the await of an asynchronous operation, collections and the boxes of delegates passed as objects (docs/porting/winui.md, section 3)"
+
+[[rust_only]]
+path = "src/Windows/FerroUI.WinUI/windows_app_sdk.rs"
+reason = "The bootstrap of the Windows App SDK for an unpackaged process (MddBootstrapInitialize2, WindowsAppRuntime_EnsureIsLoaded), which the build tasks of the SDK generate into a C# application (docs/porting/winui.md, section 3.3)"
+
+[[rust_only]]
+path = "src/Windows/FerroUI.WinUI/xaml_application.rs"
+reason = "Application.Start with a composed Application that overrides OnLaunched, and the window and the grid of the sample's markup: what the XAML compiler generates for a C# application (docs/porting/winui.md, section 3.4)"
+
+[[rust_only]]
+path = "src/Windows/FerroUI.WinUI/automation/mod.rs"
+reason = "The module of the automation files, with the result code of an element that is not enabled (the exception of the original reaches the client as that code)"

@@ -140,7 +140,7 @@ The owner decided on 2026-10-10 to reserve, with the first preview, the names of
 | `ferroui-wayland` | `src/FerroUI.Wayland` | the Wayland platform (upstream `Avalonia.Wayland`); the port replaced the placeholder for the second preview (`docs/porting/wayland-platform.md`) |
 | `ferroui-vulkan` | `src/FerroUI.Vulkan` | the Vulkan platform contracts (upstream `Avalonia.Vulkan`); the port replaced the placeholder for the second preview (`docs/porting/vulkan.md`) |
 | `ferroui-linuxframebuffer` | `src/Linux/FerroUI.LinuxFramebuffer` | the Linux framebuffer platform (upstream `Avalonia.LinuxFramebuffer`); the port replaced the placeholder for the second preview (`docs/porting/linux-framebuffer-platform.md`) |
-| `ferroui-winui` | `src/Windows/FerroUI.WinUI` | the WinUI integration (upstream `Avalonia.WinUI`) |
+| `ferroui-winui` | `src/Windows/FerroUI.WinUI` | the WinUI integration (upstream `Avalonia.WinUI`); the port replaced the placeholder for the second preview (`docs/porting/winui.md`) |
 | `ferroui-headless-vnc` | `src/Headless/FerroUI.Headless.Vnc` | the VNC server of the headless platform (upstream `Avalonia.Headless.Vnc`) |
 
 crates.io has no way to reserve a prefix: names are flat, and owning `ferroui` or any `ferroui-*` crate gives no right over other names that begin the same way. Publishing a name is the only protection. Not reserved: a name for the UI Automation bridge of Windows (planned as a module of `ferroui-win32`) and names for the upstream projects that have no counterpart in Rust (the interoperability with other .NET toolkits, the adapters of .NET test frameworks, the analyzers).

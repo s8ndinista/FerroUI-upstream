@@ -82,15 +82,17 @@ note = "the head of the catalog for tvOS (Avalonia.iOS); no C# sources of its ow
 
 [[sample]]
 upstream = "samples/ControlGallery.WinUI"
-note = "needs Avalonia.WinUI, which is out of scope"
+rust = "samples/ControlGallery.WinUI"
+note = "the catalog in a WinUI 3 window through ferroui-winui, with a smoke mode (docs/porting/winui.md, section 7)"
 
 [[sample]]
 upstream = "samples/WinUIEmbedSample"
-note = "needs Avalonia.WinUI, which is out of scope"
+note = "not ported yet: controls of WinUI beside the embedded content; the integration it needs is ferroui-winui"
 
 [[sample]]
 upstream = "samples/interop/WindowsInteropTest"
-note = "needs Avalonia.Win32.Interoperability (hosting in WinForms and WPF), which is out of scope"
+state = "not applicable"
+note = "hosting in Windows Forms (Avalonia.Win32.Interoperability), which has no counterpart in Rust (docs/porting/winui.md, section 8)"
 
 [[sample]]
 upstream = "samples/XEmbedSample"

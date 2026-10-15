@@ -10,8 +10,8 @@ The master status of the port: every upstream project, file, type and member (pu
 
 Two numbers, because one hides what the other shows.
 
-1. **Of what is in scope: 95.1%.** The 36 upstream projects that are in scope have 36113 members (public, protected and internal) in files that apply to the port. 29333 have a counterpart, 1514 are missing and 5266 are waived: declared not ported, each with a reason ([waiver-audit.md](waiver-audit.md)). The percentage is `present / (total - waived)`. It says nothing about projects that are out of scope, and it counts a waived member as if it did not exist.
-2. **Of everything upstream has: 78.4%.** Every C# source project of the extraction, in scope or not, has 37391 members; the port has a counterpart for 29333. The total includes the 5266 waived members, the 1168 members of files marked not applicable and the 110 members of projects that are out of scope or not started. The rest of that distance is what [REMAINING.md](REMAINING.md) lists; part of it is never ported by design (the waived and not applicable members), so this number does not reach 100.
+1. **Of what is in scope: 95.1%.** The 38 upstream projects that are in scope have 36201 members (public, protected and internal) in files that apply to the port. 29421 have a counterpart, 1514 are missing and 5266 are waived: declared not ported, each with a reason ([waiver-audit.md](waiver-audit.md)). The percentage is `present / (total - waived)`. It says nothing about projects that are out of scope, and it counts a waived member as if it did not exist.
+2. **Of everything upstream has: 78.7%.** Every C# source project of the extraction, in scope or not, has 37391 members; the port has a counterpart for 29421. The total includes the 5266 waived members, the 1179 members of files marked not applicable and the 11 members of projects that are out of scope or not started. The rest of that distance is what [REMAINING.md](REMAINING.md) lists; part of it is never ported by design (the waived and not applicable members), so this number does not reach 100.
 
 Both numbers match names, not behaviour (Legend, below). Projects the extraction does not read (analyzers, generators of upstream's own build, the D-Bus library) are listed in REMAINING.md with their size in files.
 
@@ -55,15 +55,15 @@ Percentages are `present / (total - waived)`. Member matching is by name with re
 
 | | Ported | Total | Waived | % |
 |---|---:|---:|---:|---:|
-| C# files | 2756 | 2775 | 0 | 99.3% |
-| Types | 3812 | 4327 | 369 | 96.3% |
-| Members | 29333 | 36113 | 5266 | 95.1% |
+| C# files | 2771 | 2790 | 0 | 99.3% |
+| Types | 3828 | 4343 | 369 | 96.3% |
+| Members | 29421 | 36201 | 5266 | 95.1% |
 | Contracts (interfaces) | 491 | 541 | - | 90.8% |
 | Property registrations | 1218 | 1233 | - | 98.8% |
 | Routed events | 108 | 108 | - | 100.0% |
 | Other files (native sources, XAML, TypeScript, fonts) | 243 | 265 | - | 91.7% |
 
-145 upstream files are not applicable and not counted. Out of the current scope (below): 20 files, 21 types, 110 members.
+147 upstream files are not applicable and not counted. Out of the current scope (below): 3 files, 3 types, 11 members.
 
 ## Projects
 
@@ -106,6 +106,8 @@ The % column is member coverage (file coverage for plain file lists).
 | [Avalonia.Skia](tracking/Avalonia.Skia.md) | `src/Skia/Avalonia.Skia` | `src/Skia/FerroUI.Skia` | `ferroui-skia` | 54/54 | 66/66 | 429/451 (21 waived) | 99.8% | 1 - rendering | P0 |
 | [Avalonia.Win32](tracking/Avalonia.Win32.md) | `src/Windows/Avalonia.Win32` | `src/Windows/FerroUI.Win32` | `ferroui-win32` | 92/95 | 218/276 | 2081/2605 | 79.9% | 1 - desktop (Windows) | P0 |
 | [Avalonia.Win32.Automation](tracking/Avalonia.Win32.Automation.md) | `src/Windows/Avalonia.Win32.Automation` | `src/Windows/FerroUI.Win32/automation` | `ferroui-win32` | 40/40 | 19/64 (45 waived) | 124/598 (474 waived) | 100.0% | 1 - desktop (Windows) | P0 |
+| [Avalonia.Win32.Interoperability](tracking/Avalonia.Win32.Interoperability.md) | `src/Windows/Avalonia.Win32.Interoperability` | `src/Windows/FerroUI.Win32.Interoperability` | (none: hosting in Windows Forms, which has no counterpart in Rust; docs/porting/winui.md, section 8) | 0/0 | 0/0 | 0/0 | - | 1 - desktop (Windows) | - |
+| [Avalonia.WinUI](tracking/Avalonia.WinUI.md) | `src/Windows/Avalonia.WinUI` | `src/Windows/FerroUI.WinUI` | `ferroui-winui` | 15/15 | 16/16 | 88/88 | 100.0% | 1 - desktop (Windows) | P2 |
 | [Avalonia.iOS](tracking/Avalonia.iOS.md) | `src/iOS/Avalonia.iOS` | `src/iOS/FerroUI.iOS` | `ferroui-ios` | 37/40 | 51/57 (1 waived) | 254/331 (17 waived) | 80.9% | 6 - mobile (iOS) | P2 |
 | [Avalonia.Generators](tracking/Avalonia.Generators.md) | `src/tools/Avalonia.Generators` | `src/tools/FerroUI.Generators` | (merged into ferroui-build, see docs/porting/xaml.md) | 0/0 | 0/0 | 0/0 | - | 2 - xaml + themes | P2 |
 
@@ -127,8 +129,6 @@ Tracked so that the size of the remaining work is known: files, types and member
 | Project | Upstream path | FerroUI path | Crate | Files | Types | Members | % | Phase | Priority |
 |---|---|---|---|---:|---:|---:|---:|---|---|
 | [Avalonia.Headless.Vnc](tracking/Avalonia.Headless.Vnc.md) | `src/Headless/Avalonia.Headless.Vnc` | `src/Headless/FerroUI.Headless.Vnc` | `ferroui-headless-vnc` | 0/3 | 0/3 | 0/11 | 0.0% | not started / out of current scope | - |
-| [Avalonia.Win32.Interoperability](tracking/Avalonia.Win32.Interoperability.md) | `src/Windows/Avalonia.Win32.Interoperability` | `src/Windows/FerroUI.Win32.Interoperability` | `ferroui-win32-interoperability` | 0/2 | 0/2 | 0/11 | 0.0% | not started / out of current scope | - |
-| [Avalonia.WinUI](tracking/Avalonia.WinUI.md) | `src/Windows/Avalonia.WinUI` | `src/Windows/FerroUI.WinUI` | `ferroui-winui` | 0/15 | 0/16 | 0/88 | 0.0% | not started / out of current scope | - |
 
 ## Project structure
 
@@ -174,8 +174,8 @@ Libraries.
 | `src/Skia/Avalonia.Skia` | 54 | `src/Skia/FerroUI.Skia` | workspace member | [Avalonia.Skia](tracking/Avalonia.Skia.md) |
 | `src/Windows/Avalonia.Win32` | 95 | `src/Windows/FerroUI.Win32` | workspace member | [Avalonia.Win32](tracking/Avalonia.Win32.md) |
 | `src/Windows/Avalonia.Win32.Automation` | 41 | `src/Windows/FerroUI.Win32/automation` | directory exists | [Avalonia.Win32.Automation](tracking/Avalonia.Win32.Automation.md) |
-| `src/Windows/Avalonia.Win32.Interoperability` | 2 | `src/Windows/FerroUI.Win32.Interoperability` | not created | [Avalonia.Win32.Interoperability](tracking/Avalonia.Win32.Interoperability.md) (out of scope) |
-| `src/Windows/Avalonia.WinUI` | 15 | `src/Windows/FerroUI.WinUI` | workspace member | [Avalonia.WinUI](tracking/Avalonia.WinUI.md) (out of scope) |
+| `src/Windows/Avalonia.Win32.Interoperability` | 2 | `src/Windows/FerroUI.Win32.Interoperability` | not created | [Avalonia.Win32.Interoperability](tracking/Avalonia.Win32.Interoperability.md) |
+| `src/Windows/Avalonia.WinUI` | 15 | `src/Windows/FerroUI.WinUI` | workspace member | [Avalonia.WinUI](tracking/Avalonia.WinUI.md) |
 | `src/iOS/Avalonia.iOS` | 41 | `src/iOS/FerroUI.iOS` | workspace member | [Avalonia.iOS](tracking/Avalonia.iOS.md) |
 | `src/tools/Avalonia.Analyzers.CSharp` | 12 | `src/tools/FerroUI.Analyzers.CSharp` | not created | not tracked |
 | `src/tools/Avalonia.Analyzers.CodeFixes.CSharp` | 3 | `src/tools/FerroUI.Analyzers.CodeFixes.CSharp` | not created | not tracked |
@@ -244,7 +244,7 @@ Sample applications. Same directory names; binary crates.
 | `samples/ControlCatalog.MacCatalyst` | 0 | `samples/ControlCatalog.MacCatalyst` | not created | not tracked |
 | `samples/ControlCatalog.iOS` | 3 | `samples/ControlCatalog.iOS` | workspace member | not tracked |
 | `samples/ControlCatalog.tvOS` | 0 | `samples/ControlCatalog.tvOS` | not created | not tracked |
-| `samples/ControlGallery.WinUI` | 2 | `samples/ControlGallery.WinUI` | not created | not tracked |
+| `samples/ControlGallery.WinUI` | 2 | `samples/ControlGallery.WinUI` | workspace member | not tracked |
 | `samples/Generators.Sandbox` | 6 | `samples/Generators.Sandbox` | not created | not tracked |
 | `samples/GpuInterop` | 26 | `samples/GpuInterop` | not created | not tracked |
 | `samples/IntegrationTestApp` | 38 | `samples/IntegrationTestApp` | workspace member | not tracked |
@@ -317,6 +317,7 @@ Upstream unit tests are ported next to the code (`#[cfg(test)] mod tests` or `<f
 | `samples/ControlCatalog.Browser` | `samples/ControlCatalog.Browser` (not tracked) |
 | `samples/ControlCatalog.Desktop` | `samples/ControlCatalog.Desktop` (not tracked) |
 | `samples/ControlCatalog.iOS` | `samples/ControlCatalog.iOS` (not tracked) |
+| `samples/ControlGallery.WinUI` | `samples/ControlGallery.WinUI` (not tracked) |
 | `samples/IntegrationTestApp` | `samples/IntegrationTestApp` (not tracked) |
 | `samples/MiniMvvm` | `samples/MiniMvvm` (not tracked) |
 | `samples/RenderDemo` | `samples/RenderDemo` (not tracked) |
@@ -376,7 +377,7 @@ FerroUI-only crates have no upstream source directory (for example the MicroCom 
 
 ## Rust-only files
 
-382 Rust source files have no upstream counterpart (29 without a recorded reason). They are listed at the end of each project page.
+389 Rust source files have no upstream counterpart (29 without a recorded reason). They are listed at the end of each project page.
 
 | Project | Rust file | Reason |
 |---|---|---|
@@ -761,4 +762,11 @@ FerroUI-only crates have no upstream source directory (for example the MicroCom 
 | [Avalonia.Win32](tracking/Avalonia.Win32.md) | `src/Windows/FerroUI.Win32/win_rt/numerics.rs` | The vector, quaternion and matrix values the interfaces of `winrt.idl` pass, by their layout: upstream maps the names to the types of the numerics library of its runtime |
 | [Avalonia.Win32](tracking/Avalonia.Win32.md) | `src/Windows/FerroUI.Win32/wnd_proc_guard.rs` | Keeps a panic from unwinding out of a window procedure through the frames of the system: caught, kept, and raised again by the message loop (docs/porting/win32-platform.md, section 5) |
 | [Avalonia.Win32.Automation](tracking/Avalonia.Win32.Automation.md) | `src/Windows/FerroUI.Win32/automation/marshalling/ole_aut.rs` | the functions of oleaut32 the marshalling calls (upstream imports them in SafeArrayRef.cs and reaches the strings through its runtime), with a stand-in of the same memory layout on hosts that are not Windows |
+| [Avalonia.WinUI](tracking/Avalonia.WinUI.md) | `src/Windows/FerroUI.WinUI/interop/async_operation.rs` | The bindings of the Windows Runtime the integration calls and implements, generated from interop/winui.idl, and what the projections of the runtime of the original provide around them: string handles and activation, composed classes (the outer object of a derived class), delegates, the await of an asynchronous operation, collections and the boxes of delegates passed as objects (docs/porting/winui.md, section 3) |
+| [Avalonia.WinUI](tracking/Avalonia.WinUI.md) | `src/Windows/FerroUI.WinUI/interop/collections.rs` | The bindings of the Windows Runtime the integration calls and implements, generated from interop/winui.idl, and what the projections of the runtime of the original provide around them: string handles and activation, composed classes (the outer object of a derived class), delegates, the await of an asynchronous operation, collections and the boxes of delegates passed as objects (docs/porting/winui.md, section 3) |
+| [Avalonia.WinUI](tracking/Avalonia.WinUI.md) | `src/Windows/FerroUI.WinUI/interop/composable.rs` | The bindings of the Windows Runtime the integration calls and implements, generated from interop/winui.idl, and what the projections of the runtime of the original provide around them: string handles and activation, composed classes (the outer object of a derived class), delegates, the await of an asynchronous operation, collections and the boxes of delegates passed as objects (docs/porting/winui.md, section 3) |
+| [Avalonia.WinUI](tracking/Avalonia.WinUI.md) | `src/Windows/FerroUI.WinUI/interop/event_handlers.rs` | The bindings of the Windows Runtime the integration calls and implements, generated from interop/winui.idl, and what the projections of the runtime of the original provide around them: string handles and activation, composed classes (the outer object of a derived class), delegates, the await of an asynchronous operation, collections and the boxes of delegates passed as objects (docs/porting/winui.md, section 3) |
+| [Avalonia.WinUI](tracking/Avalonia.WinUI.md) | `src/Windows/FerroUI.WinUI/interop/win_rt.rs` | The bindings of the Windows Runtime the integration calls and implements, generated from interop/winui.idl, and what the projections of the runtime of the original provide around them: string handles and activation, composed classes (the outer object of a derived class), delegates, the await of an asynchronous operation, collections and the boxes of delegates passed as objects (docs/porting/winui.md, section 3) |
+| [Avalonia.WinUI](tracking/Avalonia.WinUI.md) | `src/Windows/FerroUI.WinUI/windows_app_sdk.rs` | The bootstrap of the Windows App SDK for an unpackaged process (MddBootstrapInitialize2, WindowsAppRuntime_EnsureIsLoaded), which the build tasks of the SDK generate into a C# application (docs/porting/winui.md, section 3.3) |
+| [Avalonia.WinUI](tracking/Avalonia.WinUI.md) | `src/Windows/FerroUI.WinUI/xaml_application.rs` | Application.Start with a composed Application that overrides OnLaunched, and the window and the grid of the sample's markup: what the XAML compiler generates for a C# application (docs/porting/winui.md, section 3.4) |
 | [Avalonia.iOS](tracking/Avalonia.iOS.md) | `src/iOS/FerroUI.iOS/completion.rs` | A value set once on the main thread and the future that waits for it: what stands for the tasks the original completes from the completion handlers of UIKit |

@@ -2,26 +2,26 @@
  "upstreamCommit": "17350180c33b063f0e98abbfd19aa3cae63f5d56",
  "inScope": {
   "files": [
-   2756,
-   2775,
+   2771,
+   2790,
    0
   ],
   "types": [
-   3812,
-   4327,
+   3828,
+   4343,
    369
   ],
   "members": [
-   29333,
-   36113,
+   29421,
+   36201,
    5266
   ]
  },
  "allProjects": {
-  "membersPresent": 29333,
+  "membersPresent": 29421,
   "members": 37391,
-  "membersNotApplicable": 1168,
-  "membersOutOfScope": 110
+  "membersNotApplicable": 1179,
+  "membersOutOfScope": 11
  },
  "projects": [
   {
@@ -10410,21 +10410,21 @@
    "name": "Avalonia.Win32.Interoperability",
    "path": "src/Windows/Avalonia.Win32.Interoperability",
    "rust": "src/Windows/FerroUI.Win32.Interoperability",
-   "scope": "out",
-   "detail": "types",
+   "scope": "in",
+   "detail": "full",
    "files": [
     0,
-    2,
+    0,
     0
    ],
    "types": [
     0,
-    2,
+    0,
     0
    ],
    "members": [
     0,
-    11,
+    0,
     0
    ],
    "interfaces": [
@@ -10439,7 +10439,7 @@
     0,
     0
    ],
-   "notApplicableFiles": 0,
+   "notApplicableFiles": 2,
    "matchKinds": {},
    "presentFiles": {},
    "rustOnly": []
@@ -10448,20 +10448,20 @@
    "name": "Avalonia.WinUI",
    "path": "src/Windows/Avalonia.WinUI",
    "rust": "src/Windows/FerroUI.WinUI",
-   "scope": "out",
-   "detail": "types",
+   "scope": "in",
+   "detail": "full",
    "files": [
-    0,
+    15,
     15,
     0
    ],
    "types": [
-    0,
+    16,
     16,
     0
    ],
    "members": [
-    0,
+    88,
     88,
     0
    ],
@@ -10478,9 +10478,66 @@
     0
    ],
    "notApplicableFiles": 0,
-   "matchKinds": {},
-   "presentFiles": {},
-   "rustOnly": []
+   "matchKinds": {
+    "alias fn": 1,
+    "fn": 87
+   },
+   "presentFiles": {
+    "Automation/AvaloniaSwapChainPanelAutomationPeer.cs": [
+     "automation/ferro_swap_chain_panel_automation_peer.rs"
+    ],
+    "Automation/AvaloniaToXamlPeerProxy.ExpandCollapse.cs": [
+     "automation/ferro_to_xaml_peer_proxy_expand_collapse.rs"
+    ],
+    "Automation/AvaloniaToXamlPeerProxy.Invoke.cs": [
+     "automation/ferro_to_xaml_peer_proxy_invoke.rs"
+    ],
+    "Automation/AvaloniaToXamlPeerProxy.RangeValue.cs": [
+     "automation/ferro_to_xaml_peer_proxy_range_value.rs"
+    ],
+    "Automation/AvaloniaToXamlPeerProxy.Scroll.cs": [
+     "automation/ferro_to_xaml_peer_proxy_scroll.rs"
+    ],
+    "Automation/AvaloniaToXamlPeerProxy.Selection.cs": [
+     "automation/ferro_to_xaml_peer_proxy_selection.rs"
+    ],
+    "Automation/AvaloniaToXamlPeerProxy.Toggle.cs": [
+     "automation/ferro_to_xaml_peer_proxy_toggle.rs"
+    ],
+    "Automation/AvaloniaToXamlPeerProxy.Value.cs": [
+     "automation/ferro_to_xaml_peer_proxy_value.rs"
+    ],
+    "Automation/AvaloniaToXamlPeerProxy.cs": [
+     "automation/ferro_to_xaml_peer_proxy.rs"
+    ],
+    "Automation/ControlTypeMap.cs": [
+     "automation/control_type_map.rs"
+    ],
+    "AvaloniaSwapChainPanel.cs": [
+     "ferro_swap_chain_panel.rs"
+    ],
+    "WinUICursorFactory.cs": [
+     "win_ui_cursor_factory.rs"
+    ],
+    "WinUIDragSource.cs": [
+     "win_ui_drag_source.rs"
+    ],
+    "WinUIKeyInterop.cs": [
+     "win_ui_key_interop.rs"
+    ],
+    "WinUITextInputMethod.cs": [
+     "win_ui_text_input_method.rs"
+    ]
+   },
+   "rustOnly": [
+    "interop/async_operation.rs",
+    "interop/collections.rs",
+    "interop/composable.rs",
+    "interop/event_handlers.rs",
+    "interop/win_rt.rs",
+    "windows_app_sdk.rs",
+    "xaml_application.rs"
+   ]
   },
   {
    "name": "Avalonia.iOS",

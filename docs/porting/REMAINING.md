@@ -8,8 +8,8 @@ Generated from upstream commit `17350180c33b063f0e98abbfd19aa3cae63f5d56`. The s
 
 | | Present | Total | Missing | Waived | Not applicable | Out of scope | Share |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| Members of the projects in scope | 29333 | 36113 | 1514 | 5266 | - | - | 95.1% of total less waived |
-| Members of every upstream source project of the extraction | 29333 | 37391 | 1514 | 5266 | 1168 | 110 | 78.4% of total |
+| Members of the projects in scope | 29421 | 36201 | 1514 | 5266 | - | - | 95.1% of total less waived |
+| Members of every upstream source project of the extraction | 29421 | 37391 | 1514 | 5266 | 1179 | 11 | 78.7% of total |
 
 The first row is the headline of the tracking: it leaves out the waived members and everything out of scope. The second row leaves out nothing: every member of every C# project the extraction reads, whether or not the port will ever have it. A member is *present* when an item of the mapped name exists; names are matched, not behaviour.
 
@@ -53,11 +53,11 @@ Files, types and members as present / missing / waived. *n/a* counts the files m
 | [Avalonia.Skia](tracking/Avalonia.Skia.md) | in | 54 / 0 / 0 | 66 / 0 / 0 | 429 / 1 / 21 | 0 (0) | 95.1% |
 | [Avalonia.Win32](tracking/Avalonia.Win32.md) | in | 92 / 3 / 0 | 218 / 58 / 0 | 2081 / 524 / 0 | 0 (0) | 79.9% |
 | [Avalonia.Win32.Automation](tracking/Avalonia.Win32.Automation.md) | in | 40 / 0 / 0 | 19 / 0 / 45 | 124 / 0 / 474 | 1 (0) | 20.7% |
+| [Avalonia.Win32.Interoperability](tracking/Avalonia.Win32.Interoperability.md) | in: every file not applicable | 0 / 0 / 0 | 0 / 0 / 0 | 0 / 0 / 0 | 2 (11) | 0.0% |
+| [Avalonia.WinUI](tracking/Avalonia.WinUI.md) | in | 15 / 0 / 0 | 16 / 0 / 0 | 88 / 0 / 0 | 0 (0) | 100.0% |
 | [Avalonia.iOS](tracking/Avalonia.iOS.md) | in | 37 / 3 / 0 | 51 / 5 / 1 | 254 / 60 / 17 | 1 (0) | 76.7% |
 | [Avalonia.Generators](tracking/Avalonia.Generators.md) | in: every file not applicable | 0 / 0 / 0 | 0 / 0 / 0 | 0 / 0 / 0 | 31 (264) | 0.0% |
 | [Avalonia.Headless.Vnc](tracking/Avalonia.Headless.Vnc.md) | out (started) | 3 files | 3 types | 11 members | 0 (0) | 0.0% |
-| [Avalonia.Win32.Interoperability](tracking/Avalonia.Win32.Interoperability.md) | out (not started) | 2 files | 2 types | 11 members | 0 (0) | 0.0% |
-| [Avalonia.WinUI](tracking/Avalonia.WinUI.md) | out (started) | 15 files | 16 types | 88 members | 0 (0) | 0.0% |
 
 Files that are not C#:
 
@@ -174,7 +174,7 @@ From `docs/porting/data/samples.toml`; a sample counts as ported when the direct
 | `samples/ControlCatalog.MacCatalyst` | 0 | not ported | - | the head of the catalog for Mac Catalyst (Avalonia.iOS); no C# sources of its own |
 | `samples/ControlCatalog.iOS` | 3 | ported | `samples/ControlCatalog.iOS` | the head of the catalog for Avalonia.iOS |
 | `samples/ControlCatalog.tvOS` | 0 | not ported | - | the head of the catalog for tvOS (Avalonia.iOS); no C# sources of its own |
-| `samples/ControlGallery.WinUI` | 2 | not ported | - | needs Avalonia.WinUI, which is out of scope |
+| `samples/ControlGallery.WinUI` | 2 | ported | `samples/ControlGallery.WinUI` | the catalog in a WinUI 3 window through ferroui-winui, with a smoke mode (docs/porting/winui.md, section 7) |
 | `samples/Generators.Sandbox` | 6 | not applicable | - | exercises the source generators of tools/Avalonia.Generators, which the port replaces (docs/porting/xaml.md 3.8) |
 | `samples/GpuInterop` | 26 | not ported | - | not listed in samples.toml |
 | `samples/IntegrationTestApp` | 38 | ported | `samples/IntegrationTestApp` | the application the integration tests drive |
@@ -192,11 +192,11 @@ From `docs/porting/data/samples.toml`; a sample counts as ported when the direct
 | `samples/UnloadableAssemblyLoadContext/UnloadableAssemblyLoadContext` | 5 | not applicable | - | unloading of a collectible AssemblyLoadContext of the .NET runtime |
 | `samples/UnloadableAssemblyLoadContext/UnloadableAssemblyLoadContextPlug` | 3 | not applicable | - | the plug-in assembly of the sample above |
 | `samples/VirtualizationDemo` | 13 | ported | `samples/VirtualizationDemo` |  |
-| `samples/WinUIEmbedSample` | 4 | not ported | - | needs Avalonia.WinUI, which is out of scope |
+| `samples/WinUIEmbedSample` | 4 | not ported | - | not ported yet: controls of WinUI beside the embedded content; the integration it needs is ferroui-winui |
 | `samples/XEmbedSample` | 3 | not ported | - | embedding through XEmbed of the X11 backend |
-| `samples/interop/WindowsInteropTest` | 5 | not ported | - | needs Avalonia.Win32.Interoperability (hosting in WinForms and WPF), which is out of scope |
+| `samples/interop/WindowsInteropTest` | 5 | not applicable | - | hosting in Windows Forms (Avalonia.Win32.Interoperability), which has no counterpart in Rust (docs/porting/winui.md, section 8) |
 
-14 of 30 samples are ported.
+15 of 30 samples are ported.
 
 ## Missing, by project
 
