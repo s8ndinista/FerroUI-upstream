@@ -313,47 +313,45 @@ pub mod lib_drm {
     #[cfg(target_os = "linux")]
     mod imp {
         use super::*;
-        use crate::native_library::native_library;
+        use crate::native_library::load_library;
         use std::io;
         use std::sync::OnceLock;
 
-        native_library! {
-            #[library = "libdrm.so.2"]
+        ferroui_base::native_functions! {
             /// The functions of `libdrm` the output calls.
-            pub struct LibDrmFunctions {
-                drmModeGetResources: unsafe extern "C" fn(c_int) -> *mut drmModeRes,
-                drmModeFreeResources: unsafe extern "C" fn(*mut drmModeRes),
-                drmModeGetConnector: unsafe extern "C" fn(c_int, u32) -> *mut drmModeConnector,
-                drmModeGetConnectorCurrent: unsafe extern "C" fn(c_int, u32) -> *mut drmModeConnector,
-                drmModeFreeConnector: unsafe extern "C" fn(*mut drmModeConnector),
-                drmModeGetEncoder: unsafe extern "C" fn(c_int, u32) -> *mut drmModeEncoder,
-                drmModeFreeEncoder: unsafe extern "C" fn(*mut drmModeEncoder),
-                drmModeGetCrtc: unsafe extern "C" fn(c_int, u32) -> *mut drmModeCrtc,
-                drmModeFreeCrtc: unsafe extern "C" fn(*mut drmModeCrtc),
-                drmModeAddFB: unsafe extern "C" fn(c_int, u32, u32, u8, u8, u32, u32, *mut u32) -> c_int,
-                drmModeAddFB2: unsafe extern "C" fn(c_int, u32, u32, u32, *const u32, *const u32, *const u32, *mut u32, u32) -> c_int,
-                drmModeSetCrtc: unsafe extern "C" fn(c_int, u32, u32, u32, u32, *mut u32, c_int, *mut drmModeModeInfo) -> c_int,
-                drmModeRmFB: unsafe extern "C" fn(c_int, u32) -> c_int,
-                drmModePageFlip: unsafe extern "C" fn(c_int, u32, u32, u32, *mut c_void) -> c_int,
-                drmHandleEvent: unsafe extern "C" fn(c_int, *mut DrmEventContext) -> c_int,
+            pub struct LibDrmFunctions(lib) {
+                lib::drmModeGetResources: unsafe extern "C" fn(c_int) -> *mut drmModeRes;
+                lib::drmModeFreeResources: unsafe extern "C" fn(*mut drmModeRes);
+                lib::drmModeGetConnector: unsafe extern "C" fn(c_int, u32) -> *mut drmModeConnector;
+                lib::drmModeGetConnectorCurrent: unsafe extern "C" fn(c_int, u32) -> *mut drmModeConnector;
+                lib::drmModeFreeConnector: unsafe extern "C" fn(*mut drmModeConnector);
+                lib::drmModeGetEncoder: unsafe extern "C" fn(c_int, u32) -> *mut drmModeEncoder;
+                lib::drmModeFreeEncoder: unsafe extern "C" fn(*mut drmModeEncoder);
+                lib::drmModeGetCrtc: unsafe extern "C" fn(c_int, u32) -> *mut drmModeCrtc;
+                lib::drmModeFreeCrtc: unsafe extern "C" fn(*mut drmModeCrtc);
+                lib::drmModeAddFB: unsafe extern "C" fn(c_int, u32, u32, u8, u8, u32, u32, *mut u32) -> c_int;
+                lib::drmModeAddFB2: unsafe extern "C" fn(c_int, u32, u32, u32, *const u32, *const u32, *const u32, *mut u32, u32) -> c_int;
+                lib::drmModeSetCrtc: unsafe extern "C" fn(c_int, u32, u32, u32, u32, *mut u32, c_int, *mut drmModeModeInfo) -> c_int;
+                lib::drmModeRmFB: unsafe extern "C" fn(c_int, u32) -> c_int;
+                lib::drmModePageFlip: unsafe extern "C" fn(c_int, u32, u32, u32, *mut c_void) -> c_int;
+                lib::drmHandleEvent: unsafe extern "C" fn(c_int, *mut DrmEventContext) -> c_int;
             }
         }
 
-        native_library! {
-            #[library = "libgbm.so.1"]
+        ferroui_base::native_functions! {
             /// The functions of `libgbm` the output calls.
-            pub struct LibGbmFunctions {
-                gbm_create_device: unsafe extern "C" fn(c_int) -> *mut c_void,
-                gbm_surface_create: unsafe extern "C" fn(*mut c_void, u32, u32, u32, u32) -> *mut c_void,
-                gbm_surface_lock_front_buffer: unsafe extern "C" fn(*mut c_void) -> *mut c_void,
-                gbm_surface_release_buffer: unsafe extern "C" fn(*mut c_void, *mut c_void),
-                gbm_bo_get_user_data: unsafe extern "C" fn(*mut c_void) -> *mut c_void,
-                gbm_bo_set_user_data: unsafe extern "C" fn(*mut c_void, *mut c_void, Option<GbmBoUserDataDestroyCallbackDelegate>),
-                gbm_bo_get_width: unsafe extern "C" fn(*mut c_void) -> u32,
-                gbm_bo_get_height: unsafe extern "C" fn(*mut c_void) -> u32,
-                gbm_bo_get_stride: unsafe extern "C" fn(*mut c_void) -> u32,
-                gbm_bo_get_format: unsafe extern "C" fn(*mut c_void) -> u32,
-                gbm_bo_get_handle: unsafe extern "C" fn(*mut c_void) -> GbmBoHandle,
+            pub struct LibGbmFunctions(lib) {
+                lib::gbm_create_device: unsafe extern "C" fn(c_int) -> *mut c_void;
+                lib::gbm_surface_create: unsafe extern "C" fn(*mut c_void, u32, u32, u32, u32) -> *mut c_void;
+                lib::gbm_surface_lock_front_buffer: unsafe extern "C" fn(*mut c_void) -> *mut c_void;
+                lib::gbm_surface_release_buffer: unsafe extern "C" fn(*mut c_void, *mut c_void);
+                lib::gbm_bo_get_user_data: unsafe extern "C" fn(*mut c_void) -> *mut c_void;
+                lib::gbm_bo_set_user_data: unsafe extern "C" fn(*mut c_void, *mut c_void, Option<GbmBoUserDataDestroyCallbackDelegate>);
+                lib::gbm_bo_get_width: unsafe extern "C" fn(*mut c_void) -> u32;
+                lib::gbm_bo_get_height: unsafe extern "C" fn(*mut c_void) -> u32;
+                lib::gbm_bo_get_stride: unsafe extern "C" fn(*mut c_void) -> u32;
+                lib::gbm_bo_get_format: unsafe extern "C" fn(*mut c_void) -> u32;
+                lib::gbm_bo_get_handle: unsafe extern "C" fn(*mut c_void) -> GbmBoHandle;
             }
         }
 
@@ -369,7 +367,12 @@ pub mod lib_drm {
             pub(crate) fn get() -> io::Result<&'static LibDrm> {
                 static LIBRARIES: OnceLock<Result<LibDrm, String>> = OnceLock::new();
                 LIBRARIES
-                    .get_or_init(|| Ok(LibDrm { drm: LibDrmFunctions::load()?, gbm: LibGbmFunctions::load()? }))
+                    .get_or_init(|| {
+                        Ok(LibDrm {
+                            drm: load_library(c"libdrm.so.2", LibDrmFunctions::load)?,
+                            gbm: load_library(c"libgbm.so.1", LibGbmFunctions::load)?,
+                        })
+                    })
                     .as_ref()
                     .map_err(|error| io::Error::new(io::ErrorKind::NotFound, error.clone()))
             }

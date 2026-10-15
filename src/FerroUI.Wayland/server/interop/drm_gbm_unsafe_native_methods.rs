@@ -7,14 +7,16 @@
 //! `libdrm.so.2`, which its runtime resolves when one is first called.
 //! Here both libraries are opened at run time when the table is first
 //! asked for ([`DrmGbmUnsafeNativeMethods::get`]), through the loader of
-//! the X11 crate (`NativeLibrary` and `native_functions!`), which the
-//! other libraries of the Linux backends are opened with: nothing links
-//! them, a machine without them gets an error that names the library, and
-//! the swapchain is then not created (the backend renders through a
-//! `wl_egl_window` or in software, as it does when the reference's call
-//! throws). The three functions of the C library are those of `libc`.
+//! the base crate (`ferroui_base::platform::native_library`: `NativeLibrary`
+//! and `native_functions!`), which the other libraries of the Linux
+//! backends are opened with: nothing links them, a machine without them
+//! gets an error that names the library, and the swapchain is then not
+//! created (the backend renders through a `wl_egl_window` or in software,
+//! as it does when the reference's call throws). The three functions of the
+//! C library are those of `libc`.
 
-use ferroui_x11::interop::native_library::{native_functions, NativeLibrary, NativeLibraryError};
+use ferroui_base::native_functions;
+use ferroui_base::platform::native_library::{NativeLibrary, NativeLibraryError};
 use std::ffi::{c_char, c_int, c_void, CStr};
 use std::sync::OnceLock;
 

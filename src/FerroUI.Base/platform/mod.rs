@@ -136,6 +136,12 @@ mod i_text_shaper_impl;
 pub use i_font_manager_impl::IFontManagerImpl;
 pub use i_text_shaper_impl::ITextShaperImpl;
 
+// --- libraries opened at run time ---
+
+/// The loader of the backends of Unix systems (an addition of the port).
+#[cfg(all(unix, not(target_os = "emscripten")))]
+pub mod native_library;
+
 // --- storage contracts ---
 
 pub mod storage;

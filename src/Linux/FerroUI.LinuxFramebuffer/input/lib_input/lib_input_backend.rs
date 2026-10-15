@@ -111,6 +111,7 @@ pub use imp::LibInputBackend;
 #[cfg(target_os = "linux")]
 mod imp {
     use super::super::lib_input_native_unsafe_methods::LibInput;
+    use crate::native_library::load_library;
     use super::*;
     use crate::input::{IInputBackend, IScreenInfoProvider};
     use crate::raw_event_grouping::RawEvent;
@@ -322,7 +323,7 @@ mod imp {
                 .map_or(SurfaceOrientation::Rotation0, |surface_orientation| surface_orientation.orientation());
             *self.state.screen.borrow_mut() = Some(screen);
             *self.state.on_input.borrow_mut() = Some(on_input);
-            let lib = LibInput::load().unwrap_or_else(|error| panic!("{error}"));
+            let lib = load_library(c"libinput.so.10", LibInput::load).unwrap_or_else(|error| panic!("{error}"));
             let events = event_devices(self.options.as_ref());
             if let Some(logger) = Logger::try_get(LogEventLevel::Debug, "LinuxFramebuffer/Input/LibInput") {
                 logger.log(None, &format!("{} event devices", events.len()));
