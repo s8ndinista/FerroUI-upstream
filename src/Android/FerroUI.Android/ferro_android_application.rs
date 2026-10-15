@@ -54,6 +54,12 @@ impl FerroAndroidApplication {
         LIFETIME.with(|lifetime| lifetime.borrow().clone())
     }
 
+    /// Sets the lifetime of the application (`IAndroidApplication.Lifetime`
+    /// of the reference, set once the application is created).
+    pub(crate) fn set_lifetime(value: Option<Rc<ApplicationLifetime>>) {
+        LIFETIME.with(|lifetime| *lifetime.borrow_mut() = value);
+    }
+
     /// `onCreate` of the application class.
     pub(crate) fn on_create(application: JavaObject) {
         let _ = APPLICATION.set(application);
@@ -68,7 +74,7 @@ impl FerroAndroidApplication {
 
         let lifetime = ApplicationLifetime::new();
 
-        LIFETIME.with(|slot| *slot.borrow_mut() = Some(lifetime.clone()));
+        Self::set_lifetime(Some(lifetime.clone()));
 
         builder.setup_with_lifetime(lifetime);
     }
