@@ -352,7 +352,17 @@ Open in the X11 project and around it, in order:
 4. **The first native control of the catalog's Native Embed page** (the window `mplayer` plays in) is empty in the one picture taken of it, while the second (the GTK file chooser) is shown: `x11-platform.md`, section 13, has what the log says. Run `ferroui-vm-linux/scripts/embed-picture.sh` (no build; ten minutes) and read `logs/embed-picture-tree.log`: if the window of the player is mapped inside its holder and the later pictures show the video, it was the moment of the picture; if not, the host or the default child window is at fault. The run that was made had both holders at x = +1120 in a window 1100 wide: the native control host placed them during the transition of the page and not again, which is fixed in the controls crate (`DEVIATIONS.md`, "Native control host"). Run the script again on a build with that fix: the holders must be inside the window from the first tree on.
 5. Vulkan, Wayland and the framebuffer backend: as described in the section above this one.
 
-## The Linux platform: Wayland, stages 1 and 1b (2026-10-10), stage 2 parts 1 to 5 (2026-10-11)
+## The Linux platform: Wayland, stages 1 and 1b (2026-10-10), stage 2 parts 1 to 5 (2026-10-11), stage 3 (2026-10-15)
+
+**Stage 3 is built (2026-10-15, branch `wayland-stage3` on `integration-preview2`; `wayland-platform.md`, sections 4.4, 5.1, 11 and 12): the dmabuf swapchain and a display another library opened.** The tracking page of the project has nothing open. What to know:
+
+- The swapchain is `server/transient/rendering/wayland_egl_dma_buf_*.rs`, `wayland_egl_display.rs`, `wayland_dmabuf_feedback.rs` and `server/interop/drm_gbm_unsafe_native_methods.rs`. It is chosen in `WaylandGlobals::create` when `use_dmabuf_swapchain` is set and the compositor has `zwp_linux_dmabuf_v1`; a window lists both OpenGL surfaces and each answers only while its backend is bound (`WaylandEglDmaBufPlatformGraphics::is_current`).
+- `wayland-client` cannot move an object to another queue, so the `wl_buffer` of `zwp_linux_buffer_params_v1.created` gets the object data of the worker's queue from a custom `ObjectData` of the parameters object (`DmaBufCreateParamsListener`), during a queue-less `Connection::roundtrip`. That pattern is the one to use wherever upstream uses a temporary queue and `SetQueue`.
+- `libgbm`/`libdrm` are opened with the X11 crate's `NativeLibrary` and `native_functions!` (now `#[macro_export]`). The branch `linux-framebuffer-drm` has its own macro (`native_library!`) for the same libraries; the proposal (`wayland-platform.md`, section 5.1) is to move the X11 loader into `ferroui-base` once that branch is merged and have both crates use it. Not done, to keep off the files of an unmerged branch.
+- The OpenGL crate's image render target got the `try_begin_draw_core` seam the window render target has (a surface that is not ready is an error, not a panic).
+- `sway-run.sh` takes `--renderer gles2 --render-node PATH`; only then does sway announce `zwp_linux_dmabuf_v1`. The CI jobs measure the fallback (the software renderer); the job `wayland` also tries the runner's render node (loading `vgem`) as an informational step. `FERROUI_CATALOG_WAYLAND=dmabuf` and `catalog-pictures.sh ... dmabuf` run the catalog through the swapchain. The script of the virtual machine is `ferroui-vm-wayland/scripts/stage3.sh`.
+- Open: the swapchain on a hardware GPU and under Mutter or KWin with their render nodes; explicit synchronization (upstream has none); `wayland-platform.md`, section 12.3.
+
 
 Branch `wayland-platform` (pull request 183). `wayland-platform.md` has the design, the file table and what was measured where; `DEVIATIONS.md` has the section "Wayland platform". In short:
 
