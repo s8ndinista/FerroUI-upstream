@@ -7,13 +7,24 @@
 //! scripts/ios/sim-smoke.sh "iPhone 17"          # builds, installs, runs the smoke mode, reports
 //! ```
 //!
+//! `FERROUI_IOS_RENDERING_MODE` sets the rendering modes of the platform
+//! (`OpenGl`, `Metal`, or both separated by a comma, in their order). The
+//! OpenGL ES mode draws with Skia's Ganesh on OpenGL ES, which is a build
+//! of the Skia backend of its own:
+//!
+//! ```text
+//! RUSTFLAGS="--cfg ferro_skia_apple_ganesh" SIMCTL_CHILD_FERROUI_IOS_RENDERING_MODE=OpenGl \
+//!     scripts/ios/sim-smoke.sh "iPhone 17"
+//! ```
+//!
 //! With `--smoke` the example checks itself and exits: the size and the
 //! scaling of the view against what UIKit says of the view, of its window
 //! and of the screen; the safe area against the layout guide of the view;
-//! the screens; that frames are presented on the Metal layer; and the
-//! pixels of a frame, read back from the texture it was drawn to (the
-//! colours of the three shapes where the layout puts them, and that the
-//! band of the text is not empty). Every check prints a line, to the
+//! the screens; that frames are presented on the layer (Metal, or EAGL in
+//! the OpenGL ES mode); and the pixels of a frame, read back from the
+//! texture or the renderbuffer it was drawn to (the colours of the three
+//! shapes where the layout puts them, and that the band of the text is not
+//! empty). Every check prints a line, to the
 //! standard output and to `Documents/ios_view_smoke.txt` in the data
 //! container of the application; the exit code is 0 only when all of them
 //! passed.
@@ -63,7 +74,7 @@ fn main() {
 
 #[cfg(target_os = "ios")]
 fn main() {
-    ferroui_ios::run_application::<app::App>()
+    ferroui_ios::run_application_with(std::rc::Rc::new(app::ExampleDelegate))
 }
 
 #[cfg(target_os = "ios")]
@@ -78,11 +89,55 @@ mod app {
     use ferroui_controls::automation::AutomationProperties;
     use ferroui_controls::primitives::RangeBase;
     use ferroui_controls::{
-        Application, ApplicationImpl, ApplicationImplExt, Border, Button, CheckBox, Control, NewApplication, Panel,
-        Slider, StackPanel, TextBlock, TextBox,
+        AppBuilder, Application, ApplicationImpl, ApplicationImplExt, Border, Button, CheckBox, Control,
+        NewApplication, Panel, Slider, StackPanel, TextBlock, TextBox,
+    };
+    use ferroui_ios::{
+        FerroApplicationDelegate, IFerroAppDelegate, IosApplicationExtensions, IosPlatformOptions, IosRenderingMode,
     };
     use ferroui_themes_simple::SimpleTheme;
     use std::rc::Rc;
+
+    /// The environment variable with the rendering modes of the platform,
+    /// in their order: names of `IosRenderingMode` separated by commas
+    /// (`OpenGl`, `Metal`). Without it the platform has its default modes.
+    /// The simulator passes `SIMCTL_CHILD_FERROUI_IOS_RENDERING_MODE` of
+    /// `simctl launch` to the application as this variable.
+    pub const RENDERING_MODE_VARIABLE: &str = "FERROUI_IOS_RENDERING_MODE";
+
+    /// The rendering modes of the environment, if it names any.
+    ///
+    /// # Panics
+    /// Panics when a name is not one of a mode.
+    pub fn requested_rendering_modes() -> Option<Vec<IosRenderingMode>> {
+        let value = std::env::var(RENDERING_MODE_VARIABLE).ok()?;
+        let modes = value
+            .split(',')
+            .filter(|name| !name.trim().is_empty())
+            .map(|name| match name.parse::<IosRenderingMode>() {
+                Ok(mode) => mode,
+                Err(error) => panic!("{RENDERING_MODE_VARIABLE}: {error}"),
+            })
+            .collect();
+        Some(modes)
+    }
+
+    /// The application delegate of the example: the default one, with the
+    /// rendering modes of the environment.
+    pub struct ExampleDelegate;
+
+    impl FerroApplicationDelegate for ExampleDelegate {
+        fn create_app_builder(&self, app_delegate: Rc<dyn IFerroAppDelegate>) -> AppBuilder {
+            AppBuilder::configure::<App>().use_ios_with_delegate(app_delegate)
+        }
+
+        fn customize_app_builder(&self, builder: AppBuilder) -> AppBuilder {
+            match requested_rendering_modes() {
+                Some(rendering_mode) => builder.with(Rc::new(IosPlatformOptions { rendering_mode })),
+                None => builder,
+            }
+        }
+    }
 
     /// The colour the view is filled with.
     pub const FILL: (u8, u8, u8) = (0x33, 0x66, 0x99);
@@ -258,7 +313,7 @@ mod smoke {
     use ferroui_ios::metal::FrameCapture;
     use ferroui_ios::single_view_lifetime::SingleViewLifetime;
     use ferroui_ios::view_controller::safe_area_padding_of;
-    use ferroui_ios::{FerroView, Platform};
+    use ferroui_ios::{FerroView, IosRenderingMode, Platform};
     use objc2::rc::Retained;
     use std::cell::Cell;
     use std::io::Write;
@@ -415,11 +470,20 @@ mod smoke {
     fn run_checks(frame: Option<&FrameCapture>) -> Vec<Check> {
         let mut checks = Vec::new();
 
+        // The graphics of the first mode asked for (Metal, then OpenGL ES,
+        // by default; FERROUI_IOS_RENDERING_MODE names others).
+        let rendering_mode = Platform::rendering_mode();
+        let expected_mode = super::app::requested_rendering_modes()
+            .and_then(|modes| modes.first().copied())
+            .unwrap_or(IosRenderingMode::Metal);
         check(
             &mut checks,
             "platform",
-            Platform::graphics().is_some() && Platform::timer().is_some(),
-            "the platform has its graphics (Metal) and its render timer".to_string(),
+            Platform::graphics().is_some() && Platform::timer().is_some() && rendering_mode == Some(expected_mode),
+            format!(
+                "the platform has its graphics ({}) and its render timer (expected: {expected_mode})",
+                rendering_mode.map_or("none".to_string(), |mode| mode.to_string())
+            ),
         );
 
         let Some(view) = view() else {
@@ -515,7 +579,7 @@ mod smoke {
 
         // Frames.
         let frames = view.frames_presented();
-        check(&mut checks, "frames", frames >= FRAMES, format!("{frames} frame(s) presented on the Metal layer"));
+        check(&mut checks, "frames", frames >= FRAMES, format!("{frames} frame(s) presented on the layer"));
 
         // The pixels of a frame.
         match frame {

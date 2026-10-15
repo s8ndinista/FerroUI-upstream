@@ -1,5 +1,7 @@
-//! The view: a `UIView` with a Metal layer that hosts a top-level of the
-//! framework and can be embedded into the view tree of an application.
+//! The view: a `UIView` with a Metal layer, or an EAGL layer when the
+//! graphics of the platform are those of OpenGL ES, that hosts a top-level
+//! of the framework and can be embedded into the view tree of an
+//! application.
 //!
 //! The view is the accessibility container of its top-level: it answers
 //! the questions of the container protocol from the wrapper of the root
@@ -7,6 +9,7 @@
 //! remote, which the reference adds on tvOS, are not ported.
 
 use crate::automation_peer_wrapper::{element_object_of, wrapper_of, AutomationPeerWrapper, ViewWrapperHost, NOT_FOUND};
+use crate::eagl::{eagl_layer_class, EaglLayerSurface, SharedEaglLayer};
 use crate::input_handler::InputHandler;
 use crate::insets_manager::InsetsManager;
 use crate::ios_launcher::IosLauncher;
@@ -42,7 +45,11 @@ use ferroui_controls::{
 use objc2::rc::{Retained, Weak};
 use objc2::runtime::{AnyClass, AnyObject};
 use objc2::{define_class, msg_send, sel, ClassType, DefinedClass, MainThreadMarker, MainThreadOnly, Message};
-use objc2_foundation::{NSInteger, NSObjectProtocol, NSSet};
+use objc2_foundation::{NSDictionary, NSInteger, NSNumber, NSObjectProtocol, NSSet, NSString};
+#[allow(deprecated)]
+use objc2_open_gl_es::{
+    kEAGLColorFormatRGBA8, kEAGLDrawablePropertyColorFormat, kEAGLDrawablePropertyRetainedBacking, EAGLDrawable,
+};
 use objc2_quartz_core::{CADisplayLink, CAMetalLayer};
 use objc2_ui_kit::{
     UIEvent, UIPanGestureRecognizer, UIPasteboard, UIPress, UIPressesEvent, UIResponder, UIScreen, UIScrollTypeMask, UITouch,
@@ -89,9 +96,11 @@ define_class!(
     impl FerroView {
         #[unsafe(method(layerClass))]
         fn layer_class() -> &'static AnyClass {
-            // The reference answers with the layer of OpenGL ES when the
-            // graphics of the platform are EAGL (stage 4).
-            CAMetalLayer::class()
+            if Platform::eagl_graphics().is_some() {
+                eagl_layer_class()
+            } else {
+                CAMetalLayer::class()
+            }
         }
 
         #[unsafe(method(canBecomeFirstResponder))]
@@ -344,14 +353,40 @@ impl FerroView {
         }
     }
 
+    // OpenGL ES and its bindings are deprecated (`eagl`).
+    #[allow(deprecated)]
     fn init_layer_surface(&self, mtm: MainThreadMarker) {
         let l = self.layer();
         // The main screen, as the reference: the view is in no window yet.
-        #[allow(deprecated)]
         let scale = UIScreen::mainScreen(mtm).scale();
         l.setContentsScale(scale);
         l.setOpaque(true);
-        if let Ok(metal_layer) = l.downcast::<CAMetalLayer>() {
+        if let Some(eagl_layer) = SharedEaglLayer::new(l.clone()) {
+            let no = NSNumber::new_bool(false);
+            let retained_backing: &AnyObject = &no;
+            // SAFETY: the keys and the colour format are constants of EAGL,
+            // and the dictionary maps the keys of drawable properties to
+            // values of the types EAGL documents for them (a number and a
+            // string); the layer is set up on the main thread before any
+            // other thread has it.
+            unsafe {
+                let color_format: &AnyObject = kEAGLColorFormatRGBA8;
+                let properties = NSDictionary::<NSString, AnyObject>::from_slices(
+                    &[kEAGLDrawablePropertyRetainedBacking, kEAGLDrawablePropertyColorFormat],
+                    &[retained_backing, color_format],
+                );
+                eagl_layer.drawable().setDrawableProperties(Some(&properties));
+            }
+            let top_level_impl = &self.state().top_level_impl;
+            // What the reference's surface finds in the platform, a static
+            // class, on the thread that renders.
+            let (Some(graphics), Some(timer)) = (Platform::eagl_graphics(), Platform::timer()) else {
+                panic!("iOS backend wasn't initialized. Make sure use_ios was called.");
+            };
+            let surface: Arc<dyn IPlatformRenderSurface> =
+                EaglLayerSurface::new(Arc::new(eagl_layer), graphics, timer, top_level_impl.shared.clone());
+            top_level_impl.set_surfaces(vec![surface]);
+        } else if let Ok(metal_layer) = l.downcast::<CAMetalLayer>() {
             metal_layer.setOpaque(false);
             let top_level_impl = &self.state().top_level_impl;
             let surface: Arc<dyn IPlatformRenderSurface> =
@@ -427,7 +462,15 @@ impl FerroView {
         }
     }
 
-    fn reset_text_input(&self) {
+    fn set_cursor_rect(&self, rect: Rect) {
+        self.ivars().cursor_rect.set(rect);
+    }
+
+    fn set_options(&self, options: &TextInputOptions) {
+        *self.ivars().options.borrow_mut() = Some(options.clone());
+    }
+
+    fn reset(&self) {
         if self.is_driving_text() {
             self.becomeFirstResponder();
         }
@@ -536,19 +579,19 @@ impl ITextInputMethodImpl for ViewTextInputMethod {
 
     fn set_cursor_rect(&self, rect: Rect) {
         if let Some(view) = self.view.load() {
-            view.ivars().cursor_rect.set(rect);
+            view.set_cursor_rect(rect);
         }
     }
 
     fn set_options(&self, options: &TextInputOptions) {
         if let Some(view) = self.view.load() {
-            *view.ivars().options.borrow_mut() = Some(options.clone());
+            view.set_options(options);
         }
     }
 
     fn reset(&self) {
         if let Some(view) = self.view.load() {
-            view.reset_text_input();
+            view.reset();
         }
     }
 }
@@ -649,6 +692,20 @@ impl TopLevelImpl {
     /// The view of the top-level, while it lives.
     pub fn view(&self) -> Option<Retained<FerroView>> {
         self.view.load()
+    }
+
+    /// Does nothing, as in the reference: the compositor of the platform
+    /// decides what is drawn. The contract of the port has no such member;
+    /// kept as the reference has it.
+    pub fn invalidate(&self, _rect: Rect) {
+        // No-op
+    }
+
+    /// The size of the frame of a window: none, a view has no frame. The
+    /// contract of the port has it for windows only; kept as the reference
+    /// has it.
+    pub fn frame_size(&self) -> Option<Size> {
+        None
     }
 }
 

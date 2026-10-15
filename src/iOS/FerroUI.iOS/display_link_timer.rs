@@ -14,6 +14,7 @@ use objc2_ui_kit::{UIApplicationDidEnterBackgroundNotification, UIApplicationWil
 use std::ptr::NonNull;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, PoisonError};
+use std::thread::Thread;
 use std::time::Instant;
 
 /// What the timer and the target of its display link share.
@@ -72,6 +73,7 @@ impl DisplayLinkTarget {
 /// The render timer of the platform.
 pub struct DisplayLinkTimer {
     state: Arc<TimerState>,
+    timer_thread: Thread,
 }
 
 impl DisplayLinkTimer {
@@ -102,9 +104,10 @@ impl DisplayLinkTimer {
                 run_loop.run();
             }
         });
-        if let Err(error) = spawned {
-            panic!("Unable to start the thread of the render timer: {error}");
-        }
+        let timer_thread = match spawned {
+            Ok(handle) => handle.thread().clone(),
+            Err(error) => panic!("Unable to start the thread of the render timer: {error}"),
+        };
 
         // The reference pauses the link while the application is in the
         // background. A link is paused by a property of an object that
@@ -117,7 +120,13 @@ impl DisplayLinkTimer {
         Self::observe(entered_background, state.clone(), true);
         Self::observe(will_enter_foreground, state.clone(), false);
 
-        Arc::new(DisplayLinkTimer { state })
+        Arc::new(DisplayLinkTimer { state, timer_thread })
+    }
+
+    /// The thread of the display link: where the timer ticks and, the
+    /// timer running in the background, where the compositor renders.
+    pub fn timer_thread(&self) -> &Thread {
+        &self.timer_thread
     }
 
     fn observe(name: &NSNotificationName, state: Arc<TimerState>, paused: bool) {

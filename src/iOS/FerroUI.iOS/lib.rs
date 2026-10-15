@@ -3,12 +3,12 @@
 //! The platform of FerroUI for iOS: a `UIView` that hosts a top-level, the
 //! application delegate with the single-view lifetime, the dispatcher on
 //! the run loop of the main thread, the render timer on a display link,
-//! Metal graphics over the layer of the view, touch, key and scroll input,
-//! text input from the keyboard of the system, the settings of the
-//! system, the safe area and the screens. `docs/porting/ios-platform.md` has the design, the file
+//! Metal or OpenGL ES graphics over the layer of the view, touch, key and
+//! scroll input, text input from the keyboard of the system, the settings
+//! of the system, the safe area and the screens. `docs/porting/ios-platform.md` has the design, the file
 //! table and the stages.
 //!
-//! The platform calls UIKit, Core Animation and Metal through the `objc2`
+//! The platform calls UIKit, Core Animation, Metal and EAGL through the `objc2`
 //! family of crates; nothing of it is written in Objective-C. Everything
 //! that touches UIKit exists on iOS only. What is logic and not a call into
 //! the system (the options, the translation of touches, the safe area, the
@@ -44,6 +44,10 @@ pub mod interop;
 
 #[cfg(target_os = "ios")]
 pub mod display_link_timer;
+// OpenGL ES, which Apple deprecated in iOS 12, as are its bindings.
+#[cfg(target_os = "ios")]
+#[allow(deprecated)]
+pub mod eagl;
 #[cfg(target_os = "ios")]
 pub mod ferro_scene_delegate;
 #[cfg(target_os = "ios")]

@@ -357,6 +357,10 @@ impl AutomationPeerWrapper {
         self.accessibility_container_type.get()
     }
 
+    pub(crate) fn set_accessibility_container_type(&self, value: AccessibilityContainerType) {
+        self.accessibility_container_type.set(value);
+    }
+
     /// The number of the accessibility elements of the container, which
     /// are brought up to date first.
     pub(crate) fn accessibility_element_count(&self) -> isize {
@@ -524,7 +528,7 @@ impl AutomationPeerWrapper {
         if self.is_container {
             let is_named_selection_item = self.peer.get_provider::<dyn ISelectionItemProvider>().is_some()
                 && !self.peer.get_name().chars().all(char::is_whitespace);
-            self.accessibility_container_type.set(if is_named_selection_item {
+            self.set_accessibility_container_type(if is_named_selection_item {
                 AccessibilityContainerType::None
             } else {
                 AccessibilityContainerType::SemanticGroup
@@ -639,6 +643,14 @@ impl AutomationPeerWrapper {
         }
 
         self.children_list.borrow_mut().clear();
+    }
+}
+
+/// `implicit operator AutomationPeer(AutomationPeerWrapper instance)`: the
+/// peer of the wrapper.
+impl From<&AutomationPeerWrapper> for Ref<AutomationPeer> {
+    fn from(instance: &AutomationPeerWrapper) -> Self {
+        instance.peer.clone()
     }
 }
 
@@ -910,6 +922,12 @@ mod tests {
 
         fn post_page_scrolled(&self) {
             self.page_scrolled.set(self.page_scrolled.get() + 1);
+        }
+
+        /// The tests have no view of UIKit.
+        #[cfg(target_os = "ios")]
+        fn native_view(&self) -> Option<objc2::rc::Retained<objc2_ui_kit::UIView>> {
+            None
         }
     }
 
@@ -1213,5 +1231,21 @@ mod tests {
         assert!(wrapper.get_accessibility_element_at(0).is_none());
         text_box.set_text(Some("abcd"));
         assert_eq!(Some("abc".to_string()), text.accessibility_value());
+    }
+
+    #[test]
+    fn a_wrapper_converts_to_its_peer_and_its_container_type_is_set() {
+        let _scope = Dispatcher::unit_test_scope();
+        let panel = onscreen!(StackPanel::new(), "");
+        let peer = ControlAutomationPeer::create_peer_for_element(&panel);
+        let wrapper = AutomationPeerWrapper::new(TestView::new(), peer.clone());
+
+        let converted: Ref<AutomationPeer> = (&*wrapper).into();
+        assert!(converted.ptr_eq(&peer));
+
+        wrapper.set_accessibility_container_type(AccessibilityContainerType::SemanticGroup);
+        assert_eq!(AccessibilityContainerType::SemanticGroup, wrapper.accessibility_container_type());
+        wrapper.set_accessibility_container_type(AccessibilityContainerType::None);
+        assert_eq!(AccessibilityContainerType::None, wrapper.accessibility_container_type());
     }
 }

@@ -17,6 +17,11 @@
 //! without it); with `FERROUI_SMOKE_EXIT_MS=<n>` the process exits after
 //! `n` milliseconds, and without it after the last page.
 //!
+//! `FERROUI_IOS_RENDERING_MODE=<modes>` sets the rendering modes of the
+//! platform (`OpenGl`, `Metal`, separated by commas, in their order); the
+//! OpenGL ES mode needs the Skia backend built with
+//! `RUSTFLAGS="--cfg ferro_skia_apple_ganesh"`.
+//!
 //! The native control demo of iOS (`EmbedSampleIos`) is in
 //! [`embed_sample_ios`]. Not ported: the launch screen
 //! (`Resources/LaunchScreen.xib`: the bundle states an empty launch
@@ -46,7 +51,9 @@ mod host {
     use ferroui_base::metadata::from_markup_value;
     use ferroui_base::threading::{DispatcherPriority, DispatcherTimer};
     use ferroui_controls::{AppBuilder, Application, PageNavigationHost};
-    use ferroui_ios::{FerroApplicationDelegate, IFerroAppDelegate, IosApplicationExtensions};
+    use ferroui_ios::{
+        FerroApplicationDelegate, IFerroAppDelegate, IosApplicationExtensions, IosPlatformOptions, IosRenderingMode,
+    };
     use std::cell::Cell;
     use std::rc::Rc;
     use std::time::Duration;
@@ -61,13 +68,38 @@ mod host {
         }
 
         fn customize_app_builder(&self, builder: AppBuilder) -> AppBuilder {
-            builder
+            let builder = builder
                 .after_setup(|_| {
                     EmbedSample::set_implementation(Some(Rc::new(EmbedSampleIos)));
                 })
                 .after_setup(|_| smoke_run())
-                .log_to_trace(LogEventLevel::Warning, &[])
+                .log_to_trace(LogEventLevel::Warning, &[]);
+            match rendering_modes() {
+                Some(rendering_mode) => builder.with(Rc::new(IosPlatformOptions { rendering_mode })),
+                None => builder,
+            }
         }
+    }
+
+    /// The rendering modes of the platform from `FERROUI_IOS_RENDERING_MODE`
+    /// (names of `IosRenderingMode` separated by commas, in their order),
+    /// when it is set: not in the reference, whose host has the default
+    /// modes. The simulator passes `SIMCTL_CHILD_FERROUI_IOS_RENDERING_MODE`
+    /// of `simctl launch` to the application as this variable.
+    ///
+    /// # Panics
+    /// Panics when a name is not one of a mode.
+    fn rendering_modes() -> Option<Vec<IosRenderingMode>> {
+        let value = std::env::var("FERROUI_IOS_RENDERING_MODE").ok()?;
+        let modes = value
+            .split(',')
+            .filter(|name| !name.trim().is_empty())
+            .map(|name| match name.parse::<IosRenderingMode>() {
+                Ok(mode) => mode,
+                Err(error) => panic!("FERROUI_IOS_RENDERING_MODE: {error}"),
+            })
+            .collect();
+        Some(modes)
     }
 
     fn environment_milliseconds(name: &str) -> Option<u64> {
