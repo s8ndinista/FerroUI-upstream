@@ -93,8 +93,11 @@ if [ -n "$DRM_CARD" ]; then
         run drm --drm "$DRM_CARD" --expect-driver vkms --dump "$work/drm.raw"
         picture drm "$work/drm.raw"
     fi
-    run drm-rotated --drm "$DRM_CARD" --expect-driver vkms --orientation=90 --dump "$work/drm-rotated.raw"
-    picture drm-rotated "$work/drm-rotated.raw"
+    # The scene turned: the marker of the view's top-left corner must be in the corner the rotation puts it.
+    for degrees in 90 180 270; do
+        run "drm-rotated-$degrees" --drm "$DRM_CARD" --expect-driver vkms --orientation=$degrees --dump "$work/drm-rotated-$degrees.raw"
+        picture "drm-rotated-$degrees" "$work/drm-rotated-$degrees.raw"
+    done
     # The example must refuse a card whose driver is not the one it was told to expect, before it sets a mode.
     echo "== drm-refused: --drm $DRM_CARD --expect-driver not-this-driver"
     if timeout 60 "$bin" --drm "$DRM_CARD" --expect-driver not-this-driver > "$work/drm-refused.log" 2>&1; then
