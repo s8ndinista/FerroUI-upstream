@@ -1,11 +1,14 @@
 #!/bin/sh
-# Runs the ControlCatalog on a (virtual) framebuffer device and turns the content of the device, written per
-# page by the catalog, into PNG files (docs/porting/linux-framebuffer-platform.md, section 10, level 6).
+# Runs the ControlCatalog on a (virtual) framebuffer device or on a KMS output of a (virtual) card and turns
+# the frame, written per page by the catalog, into PNG files (docs/porting/linux-framebuffer-platform.md,
+# section 10, level 6).
 #
 #   catalog-pictures.sh <control-catalog-desktop> <framebuffer node> <expected identification> <output directory> [ms per page]
+#   catalog-pictures.sh <control-catalog-desktop> /dev/dri/cardN <expected driver> <output directory> [ms per page]
 #
-# The catalog refuses a device whose identification does not begin with the expected one. What is turned into
-# pictures is the memory of that framebuffer device; nothing is captured from a screen. Run as root (the device).
+# The catalog refuses a framebuffer device whose identification does not begin with the expected one, and a card
+# whose driver is not the expected one. What is turned into pictures is the memory of that framebuffer device, or
+# the framebuffer the CRTC of the card scans out; nothing is captured from a screen. Run as root (the device).
 set -u
 bin="$1"
 node="$2"
@@ -16,9 +19,16 @@ here="$(cd "$(dirname "$0")" && pwd)"
 mkdir -p "$out/raw"
 rm -f "$out"/raw/*.raw "$out"/*.png
 
-FRAMEBUFFER="$node" FERROUI_LINUXFB_EXPECT_ID="$id" FERROUI_LINUXFB_DUMPS="$out/raw" FERROUI_LINUXFB_PAGE_MS="$ms" \
-    timeout 600 "$bin" --fbdev --no-input > "$out/catalog.log" 2>&1
-status=$?
+case "$node" in
+    /dev/dri/*)
+        FERROUI_LINUXFB_EXPECT_DRIVER="$id" FERROUI_LINUXFB_DUMPS="$out/raw" FERROUI_LINUXFB_PAGE_MS="$ms" \
+            timeout 600 "$bin" --drm --card "$node" --no-input > "$out/catalog.log" 2>&1
+        status=$? ;;
+    *)
+        FRAMEBUFFER="$node" FERROUI_LINUXFB_EXPECT_ID="$id" FERROUI_LINUXFB_DUMPS="$out/raw" FERROUI_LINUXFB_PAGE_MS="$ms" \
+            timeout 600 "$bin" --fbdev --no-input > "$out/catalog.log" 2>&1
+        status=$? ;;
+esac
 echo "catalog: exit $status"
 grep -E 'ControlCatalog:|Dumps|Selecting|No page|panicked|error' "$out/catalog.log" | cut -c1-300
 

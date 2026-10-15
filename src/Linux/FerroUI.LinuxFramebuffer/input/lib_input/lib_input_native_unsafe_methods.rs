@@ -4,8 +4,9 @@
 //! The reference declares platform invokes of `libinput.so.10`, which its
 //! runtime resolves when one is first called. Here the library is opened
 //! with `dlopen` and every function is resolved when the backend starts
-//! (docs/porting/linux-framebuffer-platform.md, section 3): nothing links
-//! the library, and a machine without it gets an error that names it.
+//! (`native_library.rs`; docs/porting/linux-framebuffer-platform.md,
+//! section 3): nothing links the library, and a machine without it gets an
+//! error that names it.
 
 #![allow(non_camel_case_types)]
 
@@ -67,12 +68,13 @@ pub use imp::LibInput;
 
 #[cfg(target_os = "linux")]
 mod imp {
-    use std::ffi::{c_char, c_double, c_int, c_void, CStr, CString};
+    use crate::native_library::native_library;
+    use std::ffi::{c_char, c_double, c_int, c_void, CString};
 
     /// `struct libinput_interface`: how the library opens and closes the
     /// devices.
     #[repr(C)]
-    struct libinput_interface {
+    pub(crate) struct libinput_interface {
         open_restricted: unsafe extern "C" fn(path: *const c_char, flags: c_int, user_data: *mut c_void) -> c_int,
         close_restricted: unsafe extern "C" fn(fd: c_int, user_data: *mut c_void),
     }
@@ -95,68 +97,33 @@ mod imp {
 
     static INTERFACE: libinput_interface = libinput_interface { open_restricted, close_restricted };
 
-    const LIBRARY: &CStr = c"libinput.so.10";
-
-    macro_rules! lib_input {
-        ($($name:ident: fn($($arg:ty),*) $(-> $ret:ty)?;)*) => {
-            /// The functions of the library, resolved.
-            #[allow(dead_code)]
-            pub struct LibInput {
-                $($name: unsafe extern "C" fn($($arg),*) $(-> $ret)?,)*
-            }
-
-            impl LibInput {
-                /// Opens the library and resolves its functions.
-                pub fn load() -> Result<Self, String> {
-                    // SAFETY: `LIBRARY` is a valid C string; the handle is
-                    // kept for the life of the process.
-                    let library = unsafe { libc::dlopen(LIBRARY.as_ptr(), libc::RTLD_NOW | libc::RTLD_LOCAL) };
-                    if library.is_null() {
-                        return Err("Unable to load shared library 'libinput.so.10' or one of its dependencies.".to_owned());
-                    }
-                    Ok(Self {
-                        $($name: {
-                            let name = CString::new(stringify!($name)).expect("an identifier has no NUL");
-                            // SAFETY: a valid handle and a valid C string.
-                            let symbol = unsafe { libc::dlsym(library, name.as_ptr()) };
-                            if symbol.is_null() {
-                                return Err(format!("libinput.so.10 does not export {}", stringify!($name)));
-                            }
-                            // SAFETY: the symbol is the C function of this
-                            // name, whose signature is the declared one
-                            // (libinput.h).
-                            unsafe { std::mem::transmute::<*mut c_void, unsafe extern "C" fn($($arg),*) $(-> $ret)?>(symbol) }
-                        },)*
-                    })
-                }
-            }
-        };
-    }
-
-    lib_input! {
-        libinput_path_create_context: fn(*const libinput_interface, *mut c_void) -> *mut c_void;
-        libinput_path_add_device: fn(*mut c_void, *const c_char) -> *mut c_void;
-        libinput_path_remove_device: fn(*mut c_void);
-        libinput_device_config_calibration_set_matrix: fn(*mut c_void, *const f32) -> c_int;
-        libinput_get_fd: fn(*mut c_void) -> c_int;
-        libinput_dispatch: fn(*mut c_void) -> c_int;
-        libinput_get_event: fn(*mut c_void) -> *mut c_void;
-        libinput_event_get_type: fn(*mut c_void) -> c_int;
-        libinput_event_destroy: fn(*mut c_void);
-        libinput_event_get_touch_event: fn(*mut c_void) -> *mut c_void;
-        libinput_event_touch_get_slot: fn(*mut c_void) -> c_int;
-        libinput_event_touch_get_time_usec: fn(*mut c_void) -> u64;
-        libinput_event_touch_get_x_transformed: fn(*mut c_void, u32) -> c_double;
-        libinput_event_touch_get_y_transformed: fn(*mut c_void, u32) -> c_double;
-        libinput_event_get_pointer_event: fn(*mut c_void) -> *mut c_void;
-        libinput_event_pointer_get_time_usec: fn(*mut c_void) -> u64;
-        libinput_event_pointer_get_absolute_x_transformed: fn(*mut c_void, u32) -> c_double;
-        libinput_event_pointer_get_absolute_y_transformed: fn(*mut c_void, u32) -> c_double;
-        libinput_event_pointer_get_button: fn(*mut c_void) -> u32;
-        libinput_event_pointer_get_button_state: fn(*mut c_void) -> c_int;
-        libinput_event_pointer_get_axis_source: fn(*mut c_void) -> c_int;
-        libinput_event_pointer_get_axis_value_discrete: fn(*mut c_void, c_int) -> c_double;
-        libinput_event_pointer_get_scroll_value_v120: fn(*mut c_void, c_int) -> c_double;
+    native_library! {
+        /// The functions of the library, resolved.
+        pub struct LibInput("libinput.so.10") {
+            libinput_path_create_context: fn(*const libinput_interface, *mut c_void) -> *mut c_void;
+            libinput_path_add_device: fn(*mut c_void, *const c_char) -> *mut c_void;
+            libinput_path_remove_device: fn(*mut c_void);
+            libinput_device_config_calibration_set_matrix: fn(*mut c_void, *const f32) -> c_int;
+            libinput_get_fd: fn(*mut c_void) -> c_int;
+            libinput_dispatch: fn(*mut c_void) -> c_int;
+            libinput_get_event: fn(*mut c_void) -> *mut c_void;
+            libinput_event_get_type: fn(*mut c_void) -> c_int;
+            libinput_event_destroy: fn(*mut c_void);
+            libinput_event_get_touch_event: fn(*mut c_void) -> *mut c_void;
+            libinput_event_touch_get_slot: fn(*mut c_void) -> c_int;
+            libinput_event_touch_get_time_usec: fn(*mut c_void) -> u64;
+            libinput_event_touch_get_x_transformed: fn(*mut c_void, u32) -> c_double;
+            libinput_event_touch_get_y_transformed: fn(*mut c_void, u32) -> c_double;
+            libinput_event_get_pointer_event: fn(*mut c_void) -> *mut c_void;
+            libinput_event_pointer_get_time_usec: fn(*mut c_void) -> u64;
+            libinput_event_pointer_get_absolute_x_transformed: fn(*mut c_void, u32) -> c_double;
+            libinput_event_pointer_get_absolute_y_transformed: fn(*mut c_void, u32) -> c_double;
+            libinput_event_pointer_get_button: fn(*mut c_void) -> u32;
+            libinput_event_pointer_get_button_state: fn(*mut c_void) -> c_int;
+            libinput_event_pointer_get_axis_source: fn(*mut c_void) -> c_int;
+            libinput_event_pointer_get_axis_value_discrete: fn(*mut c_void, c_int) -> c_double;
+            libinput_event_pointer_get_scroll_value_v120: fn(*mut c_void, c_int) -> c_double;
+        }
     }
 
     /// A context of the library with the path backend. It belongs to the
