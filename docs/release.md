@@ -137,9 +137,9 @@ The owner decided on 2026-10-10 to reserve, with the first preview, the names of
 | Crate | Directory | For |
 |---|---|---|
 | `ferroui` | `src/FerroUI` | the facade crate of section 2.1 |
-| `ferroui-wayland` | `src/FerroUI.Wayland` | the Wayland platform (upstream `Avalonia.Wayland`; the port is on the branch `wayland-platform`, pull request 183, and replaces the placeholder in the preview after the first) |
-| `ferroui-vulkan` | `src/FerroUI.Vulkan` | the Vulkan platform contracts (upstream `Avalonia.Vulkan`); the port replaced the placeholder on 2026-10-11 (`docs/porting/vulkan.md`), so the preview after the first carries code under this name |
-| `ferroui-linuxframebuffer` | `src/Linux/FerroUI.LinuxFramebuffer` | the Linux framebuffer platform (upstream `Avalonia.LinuxFramebuffer`) |
+| `ferroui-wayland` | `src/FerroUI.Wayland` | the Wayland platform (upstream `Avalonia.Wayland`); the port replaced the placeholder for the second preview (`docs/porting/wayland-platform.md`) |
+| `ferroui-vulkan` | `src/FerroUI.Vulkan` | the Vulkan platform contracts (upstream `Avalonia.Vulkan`); the port replaced the placeholder for the second preview (`docs/porting/vulkan.md`) |
+| `ferroui-linuxframebuffer` | `src/Linux/FerroUI.LinuxFramebuffer` | the Linux framebuffer platform (upstream `Avalonia.LinuxFramebuffer`); the port replaced the placeholder for the second preview (`docs/porting/linux-framebuffer-platform.md`) |
 | `ferroui-winui` | `src/Windows/FerroUI.WinUI` | the WinUI integration (upstream `Avalonia.WinUI`) |
 | `ferroui-headless-vnc` | `src/Headless/FerroUI.Headless.Vnc` | the VNC server of the headless platform (upstream `Avalonia.Headless.Vnc`) |
 
