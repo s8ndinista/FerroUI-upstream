@@ -2,7 +2,7 @@
 
 The design of the port of upstream's `src/Windows/Avalonia.WinUI` (the tracked commit, `17350180`): the framework's content inside a WinUI 3 application of the Windows App SDK. The crate is `ferroui-winui` (`src/Windows/FerroUI.WinUI`), which held the reserved name until this port (`docs/release.md`, section 2.2). The differences from upstream are in `DEVIATIONS.md`, "WinUI integration"; the state is in `CRITICAL-PATH.md`, row 32.
 
-Marks used below: **[V]** verified here (read in the sources named, or run on this machine), **[CI]** to be established by the step of the Windows job of CI (section 7.3), **[VM]** established in the owner's Windows 11 ARM64 virtual machine (section 7.4; the first run is section 7.5).
+Marks used below: **[V]** verified here (read in the sources named, or run on this machine), **[CI]** to be established by the step of the Windows job of CI (section 7.3), **[VM]** established in the owner's Windows 11 ARM64 virtual machine (section 7.4; the runs are section 7.5).
 
 ## 1. What is ported
 
@@ -162,11 +162,20 @@ powershell -NoProfile -ExecutionPolicy Bypass -File <S>:\ferroui-vm-windows\src-
 
 The runtime the machine needs: the Windows App Runtime 1.6 for ARM64, from Microsoft's installer `windowsappruntimeinstall-arm64.exe` of release 1.6.241114003 (`https://aka.ms/windowsappsdk/1.6/1.6.241114003/windowsappruntimeinstall-arm64.exe`), which `-InstallWindowsAppRuntime` downloads and runs with `--quiet`. Once installed, later runs omit the switch.
 
-### 7.5 What the first run showed (2026-10-15)
+### 7.5 What the runs in the virtual machine showed (2026-10-15)
 
 The first run in the virtual machine (commit `629520ed`; the Windows App Runtime 1.6 installed by `-InstallWindowsAppRuntime`, installer exit code 0) **[VM]**: the 21 tests passed on the target; the sample built (508 s); the smoke run passed steps 1 to 6 and the first two checks of step 7: the bootstrap, `Application.Start` with the composed application, the window with the composed panel, `Loaded` (client size 1334 by 666), the swap chain set on the panel 3.2 s after activation, 46 frames, and the peer of the panel created through the override of `OnCreateAutomationPeer` with the class name and the control type of the overrides of the composed peer. It then ended with an access violation (`0xC0000005`) in the next call, `GetChildren` of the peer of the panel.
 
 The cause: the creation of a proxy (`FerroToXamlPeerProxy::new`) read the value of the proxy from the pointer of its `IAutomationPeer`, which is an interface of the inner object (an object of XAML), not of the outer object the runtime of the port made; it wrote the pointer of the proxy into the memory of XAML's object, and left the proxy without its own pointer (`SetParent` of each child then dereferenced null). The value is now read from the outer object's own first interface before the query. The other three places that read the value of a composed object read it from that interface already.
+
+The second run (commit `c22d5163`, the same machine, the runtime installed by the first) **[VM]**: `RESULT: passed`. The 21 tests passed on the target (255 s), the bootstrap library was fetched, the sample built (578 s), and the smoke run exited with 0 and passed every check of section 7.2:
+
+- the bootstrap of the Windows App SDK 1.6, the framework set up, the main view set, the window with the panel created and activated;
+- `Loaded` with the client size 1334 by 666; the swap chain set on the panel 2044 ms after activation; 40 frames rendered;
+- the peer of the panel: the class name `FerroSwapChainPanel` and the control type `Pane` of the overrides of the composed peer, one child (the proxy of the embedded root, created, given its parent with `SetParent` and appended to the list of the base, as the `[trace]` lines show); the peer of the content (`EmbeddableControlRoot`) with one child, whose class name is `Panel`; the peer of the content is not a control element, as the reference collapses it;
+- the window closes, the application lets go of it inside `Closed` (the `[trace]` lines show the two proxies destroyed), and the process ends with 0.
+
+The same run passed the steps of the Windows backend that `vm-smoke.ps1` runs before it (the builds with and without ANGLE, the tests, the smoke runs in software, through ANGLE, WGL and ANGLE with DirectComposition).
 
 ## 8. `Avalonia.Win32.Interoperability`: not applicable
 
@@ -179,9 +188,8 @@ The tracking records both files as not applicable with this reason (`docs/portin
 
 ## 9. What is not verified
 
-The first run in the virtual machine (section 7.5) established the bootstrap, `Application.Start` with the composed application, the composed panel with its override of `OnCreateAutomationPeer`, `Loaded`, the swap chain set on the panel and frames rendered, and the class name and control type of the composed peer. Not verified yet, in the order a run would show them:
+The runs in the virtual machine (section 7.5) established the bootstrap, `Application.Start` with the composed application, the composed panel with its override of `OnCreateAutomationPeer`, `Loaded`, the swap chain set on the panel and frames rendered, the composed peer of the panel with its overrides, the proxies of the content's peers with their parents and children, and the close of the window with the release of the panel and of the proxies. Not verified yet, in the order a run would show them:
 
-- the children of the automation peers (the proxies; the crash of the first run, section 7.5) and the close of the window;
 - that the protected interfaces are answered by the inner objects (the cursor of the overlay); the picture the swap chain presents, with the inverse scale transform;
 - input: pointer, wheel, keys, characters, the tab boundary, the cursor of the overlay;
 - the input method over `CoreTextEditContext` (`GetForCurrentView` in a desktop application of WinUI, as the reference calls it);
