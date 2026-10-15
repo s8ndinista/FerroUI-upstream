@@ -25,6 +25,7 @@ pub mod direct_x;
 pub mod input;
 pub mod interop;
 pub mod open_gl;
+pub mod vulkan;
 pub mod win32_com;
 pub mod win_rt;
 

@@ -23,6 +23,7 @@ pub(crate) mod platform_support;
 pub(crate) mod skia_platform;
 pub(crate) mod specific;
 pub(crate) mod storage;
+pub(crate) mod vulkan;
 
 pub use android_activatable_lifetime::AndroidActivatableLifetime;
 pub use android_insets_manager::AndroidInsetsManager;

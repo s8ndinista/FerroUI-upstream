@@ -28,6 +28,14 @@ default = ["angle"]
 # targets the feature adds nothing). Without it the mode fails to initialise with a message that
 # says so, and the backend goes on to the next mode of the options: software rendering.
 angle = ["dep:mozangle"]
+# The Skia backend with its Vulkan GPU, which draws in the rendering mode `Vulkan` (an application
+# names it in `Win32PlatformOptions::rendering_mode`; the default order, ANGLE then software, does
+# not change). Off by default: no published binary of Skia for Windows has Vulkan beside OpenGL,
+# so with this feature the Skia bindings compile Skia from source where the application is built
+# (LLVM, Python 3, git, ninja and the network, and an hour or more; docs/porting/vulkan.md,
+# section 2). The Vulkan files of the backend need nothing of it: without the feature the mode is
+# passed over with a warning, because the Skia backend would have no GPU for its graphics.
+vulkan = ["dep:ferroui-skia", "ferroui-skia/vulkan"]
 
 [dependencies]
 ferroui-base.workspace = true
@@ -36,6 +44,9 @@ ferroui-controls.workspace = true
 ferroui-opengl.workspace = true
 # The COM runtime of the bindings the build script generates.
 ferroui-microcom.workspace = true
+# The Vulkan rendering mode (`vulkan/`): the contracts and the platform graphics of Vulkan. Nothing
+# is linked: the loader of the system (`vulkan-1.dll`) is opened at run time.
+ferroui-vulkan.workspace = true
 bitflags.workspace = true
 
 # The bindings of the Windows API (docs/porting/win32-platform.md, section 2): declarations only,
@@ -72,6 +83,12 @@ windows-sys = { workspace = true, features = [
 [target.'cfg(windows)'.dependencies.mozangle]
 workspace = true
 features = ["egl"]
+optional = true
+
+# The Skia backend of the feature `vulkan`: only its feature is wanted, so that the renderer of
+# the application has the Vulkan GPU.
+[target.'cfg(windows)'.dependencies.ferroui-skia]
+workspace = true
 optional = true
 
 [build-dependencies]
