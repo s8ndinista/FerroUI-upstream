@@ -63,7 +63,9 @@ impl FerroNativeTextInputMethod {
             return;
         };
 
-        let text_view_visual = client.text_view_visual();
+        let Some(text_view_visual) = client.text_view_visual() else {
+            return;
+        };
 
         let Some(visual_root) = text_view_visual.visual_root() else {
             return;

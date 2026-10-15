@@ -4736,8 +4736,8 @@ impl TextInputMethodClient for TestTextClient {
     fn events(&self) -> &TextInputMethodClientEvents {
         &self.events
     }
-    fn text_view_visual(&self) -> Ref<Visual> {
-        self.view.borrow().clone()
+    fn text_view_visual(&self) -> Option<Ref<Visual>> {
+        Some(self.view.borrow().clone())
     }
     fn supports_preedit(&self) -> bool {
         true

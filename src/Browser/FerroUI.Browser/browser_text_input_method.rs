@@ -368,8 +368,8 @@ mod tests {
             &self.events
         }
 
-        fn text_view_visual(&self) -> Ref<Visual> {
-            unreachable!("the text input method of the browser does not ask for the visual")
+        fn text_view_visual(&self) -> Option<Ref<Visual>> {
+            None
         }
 
         fn supports_preedit(&self) -> bool {

@@ -323,8 +323,8 @@ impl TextInputMethodClient for TestClient {
         &self.events
     }
 
-    fn text_view_visual(&self) -> Ref<Visual> {
-        unreachable!("the input methods over D-Bus do not ask for the visual")
+    fn text_view_visual(&self) -> Option<Ref<Visual>> {
+        None
     }
 
     fn supports_preedit(&self) -> bool {
