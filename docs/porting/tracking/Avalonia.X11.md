@@ -491,7 +491,6 @@ Rust sources of this crate that no upstream file maps to. Give each a reason in 
 
 | Rust file | Reason | Types defined |
 |---|---|---|
-| `interop/native_library.rs` | A shared library opened at run time and its functions resolved by name: what the runtime of the original does for a platform invoke (`DllImport`) of GLib, GTK, libSM and libICE | `NativeLibrary`, `NativeLibraryError` |
 | `pixel_buffer.rs` | A framebuffer over pixels the crate owns, for what the original makes with the `LockedFramebuffer` constructor over memory of its own (cursor and icon pixels) | `PixelBuffer` |
 | `raw_event_grouping.rs` | The port of `src/Shared/RawEventGrouping.cs`, a source file the original compiles into every backend that queues its input (it belongs to no project of the tracking) | `AutomaticRawEventGrouperDispatchQueue`, `GrouperState`, `IRawEventGrouperDispatchQueue`, `ManualRawEventGrouperDispatchQueue`, `MergedPoints`, `RawEvent`, `RawEventGrouper`, `RawEventHandler` |
 | `selections/drag_drop/x11_drag_source/tests.rs` | the unit tests of the module | `Call`, `FakeHost` |

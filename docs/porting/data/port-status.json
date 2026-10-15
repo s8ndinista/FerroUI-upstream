@@ -4595,6 +4595,7 @@
     "numerics/vector3.rs",
     "numerics/vector4.rs",
     "platform/i_drawing_context_impl_with_effects.rs",
+    "platform/native_library.rs",
     "platform/render_interface_access.rs",
     "platform/storage/file_io/path.rs",
     "register_types.rs",
@@ -8581,7 +8582,6 @@
     ]
    },
    "rustOnly": [
-    "interop/native_library.rs",
     "pixel_buffer.rs",
     "raw_event_grouping.rs",
     "selections/drag_drop/x11_drag_source/tests.rs",
