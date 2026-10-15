@@ -106,9 +106,9 @@ ferroui-freedesktop = { version = "=0.1.0-preview.2", path = "src/FerroUI.FreeDe
 ferroui-android = { version = "=0.1.0-preview.2", path = "src/Android/FerroUI.Android" }
 ferroui-browser = { version = "=0.1.0-preview.2", path = "src/Browser/FerroUI.Browser" }
 ferroui-headless = { version = "=0.1.0-preview.2", path = "src/Headless/FerroUI.Headless" }
+ferroui-headless-vnc = { version = "=0.1.0-preview.2", path = "src/Headless/FerroUI.Headless.Vnc" }
 # Reserved names: empty placeholders until the ports exist (docs/release.md, section 2.2).
 ferroui = { version = "=0.1.0-preview.2", path = "src/FerroUI" }
-ferroui-headless-vnc = { version = "=0.1.0-preview.2", path = "src/Headless/FerroUI.Headless.Vnc" }
 ferroui-vulkan = { version = "=0.1.0-preview.2", path = "src/FerroUI.Vulkan" }
 ferroui-linuxframebuffer = { version = "=0.1.0-preview.2", path = "src/Linux/FerroUI.LinuxFramebuffer" }
 ferroui-winui = { version = "=0.1.0-preview.2", path = "src/Windows/FerroUI.WinUI" }
@@ -210,6 +210,12 @@ rust_decimal = { version = "1.43", default-features = false }
 time = { version = "0.3", default-features = false }
 # The mounted volumes of the managed file chooser.
 sysinfo = { version = "0.37", default-features = false, features = ["disk"] }
+# The RFB server of the VNC server of the headless platform (docs/porting/headless-vnc.md, section 3):
+# zlib streams of the Tight encoding (pure Rust, `miniz_oxide`), DES of the VNC password challenge and
+# the random bytes of the challenge.
+flate2 = { version = "1.1", default-features = false, features = ["rust_backend"] }
+des = { version = "0.9" }
+getrandom = { version = "0.4" }
 
 # The default release build is the one that is built most often, so it is set up for build time:
 # thin LTO over the default sixteen code generation units, which generates code on all cores.
