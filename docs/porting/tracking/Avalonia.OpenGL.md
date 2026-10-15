@@ -12,7 +12,7 @@ Generated from upstream commit `17350180c33b063f0e98abbfd19aa3cae63f5d56`. Back 
 | Phase / priority | 2 - rendering backends / P2 |
 | Files | 39/39 (100.0%) |
 | Types | 61/63 (2 waived) (100.0%) |
-| Members | 603/639 (30 waived) (99.0%) |
+| Members | 607/639 (32 waived) (100.0%) |
 | Contracts (interfaces) | 18/18 |
 | Property registrations | 0/0 |
 | Routed events | 0/0 |
@@ -79,13 +79,13 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 | `OpenGlControlBase.cs` | `controls/open_gl_control_base.rs` | present | 1/1 | 11/11 |  |
 | `OpenGlControlResources.cs` | `controls/open_gl_control_resources.rs` | present | 1/1 | 7/7 |  |
 
-### `Egl` - files 15/15, types 23/23, members 255/271 (10 waived)
+### `Egl` - files 15/15, types 23/23, members 259/271 (12 waived)
 
 | Upstream file | Rust file | Status | Types | Members | Notes |
 |---|---|---|---|---|---|
 | `EglConsts.cs` | `egl/egl_consts.rs` | present | 1/1 | 97/97 |  |
 | `EglContext.cs` | `egl/egl_context.rs` | present | 1/1 | 21/21 |  |
-| `EglDisplay.cs` | `egl/egl_display.rs` | partial | 1/1 | 16/20 (1 waived) |  |
+| `EglDisplay.cs` | `egl/egl_display.rs` | present | 1/1 | 17/20 (3 waived) |  |
 | `EglDisplayOptions.cs` | `egl/egl_display_options.rs` | present | 4/4 | 16/16 |  |
 | `EglDisplayUtils.cs` | `egl/egl_display_utils.rs` | present | 2/2 | 10/10 |  |
 | `EglErrors.cs` | `egl/egl_errors.rs` | present | 1/1 | 15/15 |  |
@@ -95,34 +95,9 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 | `EglGlPlatformSurface.cs` | `egl/egl_gl_platform_surface.rs` | present | 3/3 | 6/6 |  |
 | `EglGlPlatformSurfaceBase.cs` | `egl/egl_gl_platform_surface_base.rs` | present | 2/2 | 5/10 (5 waived) |  |
 | `EglImage.cs` | `egl/egl_image.rs` | present | 1/1 | 3/3 |  |
-| `EglInterface.cs` | `egl/egl_interface.rs` | partial | 1/1 | 37/39 |  |
-| `EglPlatformGraphics.cs` | `egl/egl_platform_graphics.rs` | partial | 1/1 | 6/7 |  |
+| `EglInterface.cs` | `egl/egl_interface.rs` | present | 1/1 | 39/39 |  |
+| `EglPlatformGraphics.cs` | `egl/egl_platform_graphics.rs` | present | 1/1 | 7/7 |  |
 | `EglSurface.cs` | `egl/egl_surface.rs` | present | 1/1 | 4/4 |  |
-
-<details><summary><code>EglDisplay.cs</code> - 3 missing</summary>
-
-- `EglDisplay` (class): 3 missing
-  - `EglDisplay(IntPtr display, EglDisplayOptions options)` *(2 of 3 constructors found)*
-  - `virtual bool DisplayLockIsSharedWithContexts { get; }` *(protected)*
-  - `object? ContextSharedSyncRoot { get; }` *(internal)*
-  - waived (one function takes the place of the overloads with an array and with a pointer: `create_pbuffer_from_client_buffer(buffer_type, handle, &[i32])`): `CreatePBufferFromClientBuffer`
-
-</details>
-
-<details><summary><code>EglInterface.cs</code> - 2 missing</summary>
-
-- `EglInterface` (class): 2 missing
-  - `EglInterface(string library)` *(1 of 3 constructors found)*
-  - `EglInterface()` *(1 of 3 constructors found)*
-
-</details>
-
-<details><summary><code>EglPlatformGraphics.cs</code> - 1 missing</summary>
-
-- `EglPlatformGraphics` (class): 1 missing
-  - `static EglPlatformGraphics? TryCreate(Func<EglDisplay> displayFactory)` *(1 of 2 overloads found)*
-
-</details>
 
 ### `Features` - files 1/1, types 2/2, members 25/25
 

@@ -2196,6 +2196,14 @@ kind = "renamed"
 rust = "x11_window_xim.rs"
 reason = "not ported yet: the input method of the server (`XimInputMethod`) is stage 2 of docs/porting/x11-platform.md"
 
+[[map]]
+project = "Avalonia.X11"
+upstream = ["NativeDialogs/Gtk.cs"]
+kind = "renamed"
+rust = "native_dialogs/gtk.rs"
+types = { signal_generic = "SignalGeneric", signal_dialog_response = "SignalDialogResponse" }
+reason = "the two delegates of the signals are function types named in the case of Rust types (`SignalGeneric`, `SignalDialogResponse`)"
+
 [[rust_only]]
 path = "src/FerroUI.X11/raw_event_grouping.rs"
 reason = "The port of `src/Shared/RawEventGrouping.cs`, a source file the original compiles into every backend that queues its input (it belongs to no project of the tracking)"

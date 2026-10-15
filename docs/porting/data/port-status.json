@@ -7,18 +7,18 @@
    0
   ],
   "types": [
-   3919,
+   3923,
    4345,
-   393
+   394
   ],
   "members": [
-   30083,
+   30280,
    36210,
-   5527
+   5661
   ]
  },
  "allProjects": {
-  "membersPresent": 30083,
+  "membersPresent": 30280,
   "members": 37391,
   "membersNotApplicable": 1181,
   "membersOutOfScope": 0
@@ -4760,7 +4760,7 @@
    "members": [
     6255,
     6405,
-    148
+    150
    ],
    "interfaces": [
     83,
@@ -6670,17 +6670,17 @@
     0
    ],
    "types": [
-    17,
+    18,
     18,
     0
    ],
    "members": [
-    173,
+    174,
     176,
-    1
+    2
    ],
    "interfaces": [
-    0,
+    1,
     1
    ],
    "propertyRegistrations": [
@@ -6696,7 +6696,7 @@
     "alias fn": 2,
     "alias free item": 1,
     "field": 2,
-    "fn": 161,
+    "fn": 162,
     "free item": 2,
     "overload fn": 5
    },
@@ -6944,9 +6944,9 @@
     0
    ],
    "members": [
-    175,
+    213,
     216,
-    0
+    3
    ],
    "interfaces": [
     3,
@@ -6962,8 +6962,10 @@
    ],
    "notApplicableFiles": 0,
    "matchKinds": {
-    "field": 6,
-    "fn": 104,
+    "alias const": 19,
+    "alias fn": 4,
+    "field": 5,
+    "fn": 120,
     "free fn": 1,
     "overload fn": 1,
     "trait fn": 8,
@@ -7484,9 +7486,9 @@
     2
    ],
    "members": [
-    603,
+    607,
     639,
-    30
+    32
    ],
    "interfaces": [
     18,
@@ -7504,10 +7506,10 @@
    "matchKinds": {
     "alias fn": 3,
     "field": 24,
-    "fn": 270,
+    "fn": 273,
     "free fn": 92,
     "free item": 181,
-    "overload fn": 4,
+    "overload fn": 5,
     "trait fn": 3,
     "variant": 26
    },
@@ -7657,7 +7659,7 @@
    "members": [
     198,
     202,
-    3
+    4
    ],
    "interfaces": [
     4,
@@ -8280,14 +8282,14 @@
     0
    ],
    "types": [
-    180,
+    183,
     291,
-    107
+    108
    ],
    "members": [
-    3538,
+    3691,
     4897,
-    1081
+    1206
    ],
    "interfaces": [
     8,
@@ -8303,11 +8305,13 @@
    ],
    "notApplicableFiles": 0,
    "matchKinds": {
-    "alias field": 1,
-    "const": 2,
-    "field": 254,
-    "fn": 504,
-    "free fn": 103,
+    "alias field": 3,
+    "alias fn": 1,
+    "alias free fn": 6,
+    "const": 98,
+    "field": 266,
+    "fn": 507,
+    "free fn": 136,
     "free item": 17,
     "overload fn": 7,
     "trait": 3,
@@ -9805,7 +9809,7 @@
     0
    ],
    "members": [
-    429,
+    430,
     451,
     21
    ],
@@ -9824,10 +9828,10 @@
    "notApplicableFiles": 0,
    "matchKinds": {
     "alias fn": 6,
-    "alias free fn": 10,
+    "alias free fn": 12,
     "field": 29,
     "fn": 335,
-    "free fn": 35,
+    "free fn": 34,
     "free item": 1,
     "overload fn": 12,
     "trait": 1

@@ -2,6 +2,16 @@
 
 This page is the hand-over point for the next working period: what was finished, what is in flight, the tasks that come next in order, and how to run them. Read it after `CLOUD-WORKERS.md`, which stays the standing brief of every worker. Update it at the end of each period.
 
+## What the tracking listed as missing in the X11 backend and its neighbours (2026-10-15)
+
+Branch `close-tracking-x11`. The tracking pages of `Avalonia.X11`, `Avalonia.FreeDesktop`, `Avalonia.OpenGL`, `Avalonia.Controls`, `Avalonia.DesignerSupport`, `Avalonia.Skia` and `Avalonia.Remote.Protocol` have nothing missing now (331 members were listed: 278, 41, 6, 2, 2, 1 and 1). Each member was read in the upstream file and in the port:
+
+- **Ported**: `EglInterface::from_library` and `EglInterface::new_default` (the EGL library of the system loaded by name, `EglInterface(string)` and `EglInterface()`), `EglDisplay::new_default`, `EglPlatformGraphics::try_create_default`; the setters `set_display` and `set_deferred_display` of the X11 platform; `SurfacePlatformHandle::new`; the trait `ITransportWithEnforcedMethod` of the designer; `GlxConsts` as a type with its constants, two of which (`GLX_BAD_VALUE`, `GLX_EXTENSIONS`) the mechanical conversion had lost.
+- **Found under their own names** once the scanner could see them: the wrappers of `xlib.rs` that the macro `plain!` writes (now called with braces and a whole signature), the functions of the tables of `native_functions!` (`ICELib`, `SMLib`: the scanner reads a field of such a table, `scripts/port-status/README.md`), the D-Bus interface of the tray item (`StatusNotifierItemDbusObjImpl`, renamed from `StatusNotifierItemObject`).
+- **Aliases and waivers** (`member-waivers.toml`, the section of 2026-10-15 at its end; `path-overrides.toml` for the two delegate types of `Gtk.cs`): calls of the libraries made inside a function of `xlib.rs` that copies and frees what the library returns; overload sets that are one function; declarations of `XLib.cs` and `Glx.cs` that no file of upstream calls (as the Windows backend does for `UnmanagedMethods`); members that a different structure carries (the window modes take the window, the hooks of overrides are closures, the providers of the selections are members and not base classes); the display lock of EGL, which guards nothing for objects of one thread.
+- **Verified on the Mac**: `cargo check -p ferroui-x11 -p ferroui-freedesktop --target x86_64-unknown-linux-gnu --all-targets`, the tests of `ferroui-opengl` and `ferroui-designer-support`, the OpenGL crate checked for Windows and the browser. Not run: the X11 backend in the virtual machine (no behaviour of it changed: the GLX constants are the same values under a type, the setters are what `initialize` calls).
+- Open: the X11 backend still loads `libEGL` with its own loader (`dlsym`, DEVIATIONS.md, X11 platform); moving it to `EglInterface::new_default`, as upstream, waits for a run in the virtual machine.
+
 ## OpenGL on the Apple platforms, and the rest of the iOS page (2026-10-15)
 
 Branch `apple-completion` (on `integration-preview2`). [`apple-opengl.md`](apple-opengl.md) has the design and the runs. The tracking pages of `Avalonia.Native` and `Avalonia.iOS` have nothing open: every file, type and member is present or waived with a reason.
