@@ -32,6 +32,7 @@ mod rendering_tests;
 mod second_window_tests;
 mod services_tests;
 mod setup_tests;
+mod shared_session_tests;
 mod threading_tests;
 
 /// A future that is completed by hand: the stand-in for a task completion

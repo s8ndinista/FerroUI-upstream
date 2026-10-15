@@ -307,6 +307,14 @@ impl MediaContext {
 
     // --- compositors --------------------------------------------------------
 
+    /// Whether a committed composition batch has not been processed by its
+    /// server compositor yet: while one is, the render passes hold the next
+    /// commits back. Not in upstream: the session of the headless platform
+    /// asks it between two tests of a shared application.
+    pub fn has_composition_batches_in_flight(&self) -> bool {
+        !self.pending_composition_batches.borrow().is_empty()
+    }
+
     fn commit_compositor(&self, compositor: &Rc<Compositor>) -> Arc<CompositionBatch> {
         // The compositor is allowed to schedule the next batch during the
         // commit if an update was requested while it was doing an update
