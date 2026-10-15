@@ -10,6 +10,6 @@ mod invalidation_aware_surface_view;
 mod top_level_impl;
 
 #[cfg(target_os = "android")]
-pub(crate) use invalidation_aware_surface_view::SurfaceProperties;
+pub(crate) use invalidation_aware_surface_view::{SurfaceProperties, SurfaceViewHandle};
 #[cfg(target_os = "android")]
 pub use top_level_impl::TopLevelImpl;

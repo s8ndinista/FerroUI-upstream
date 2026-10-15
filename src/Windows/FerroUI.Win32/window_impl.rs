@@ -214,6 +214,8 @@ pub(crate) fn placement_for_resize(
 pub use imp::WindowImpl;
 #[cfg(windows)]
 pub(crate) use imp::WindowKind;
+#[cfg(windows)]
+pub(crate) use imp::WindowImplPlatformHandle;
 
 #[cfg(windows)]
 mod imp {

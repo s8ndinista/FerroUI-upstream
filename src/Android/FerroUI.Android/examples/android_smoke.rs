@@ -20,8 +20,11 @@
 //!
 //! The file `smoke.properties` of the files directory, when the script has
 //! written it, selects what is run: `mode=software` renders through the
-//! native window instead of EGL, `input=0` leaves out the checks that need
-//! the script to act (touch, keys, the night mode).
+//! native window instead of EGL, `mode=vulkan` renders through Vulkan alone
+//! (the library built with the feature `vulkan` of ferroui-android:
+//! `scripts/android/apk.sh smoke --features ferroui-android/vulkan`),
+//! `input=0` leaves out the checks that need the script to act (touch,
+//! keys, the night mode).
 //!
 //! A line `SCRIPT <command> <arguments>` asks the script that runs the
 //! application to do something on the device (`scripts/android/emu-smoke.sh`
@@ -106,6 +109,7 @@ mod app {
     #[derive(Clone, Copy)]
     struct SmokeOptions {
         software: bool,
+        vulkan: bool,
         input: bool,
     }
 
@@ -117,12 +121,15 @@ mod app {
     }
 
     fn read_options() -> SmokeOptions {
-        let mut options = SmokeOptions { software: false, input: true };
+        let mut options = SmokeOptions { software: false, vulkan: false, input: true };
         let text =
             files_dir().and_then(|directory| std::fs::read_to_string(format!("{directory}/smoke.properties")).ok());
         for line in text.as_deref().unwrap_or_default().lines() {
             match line.trim().split_once('=') {
-                Some(("mode", value)) => options.software = value.trim() == "software",
+                Some(("mode", value)) => {
+                    options.software = value.trim() == "software";
+                    options.vulkan = value.trim() == "vulkan";
+                }
                 Some(("input", value)) => options.input = value.trim() != "0",
                 _ => {}
             }
@@ -131,7 +138,8 @@ mod app {
     }
 
     thread_local! {
-        static OPTIONS: Cell<SmokeOptions> = const { Cell::new(SmokeOptions { software: false, input: true }) };
+        static OPTIONS: Cell<SmokeOptions> =
+            const { Cell::new(SmokeOptions { software: false, vulkan: false, input: true }) };
         static REPORT: Report = Report::default();
     }
 
@@ -219,6 +227,10 @@ mod app {
         let options = AndroidPlatformOptions {
             rendering_mode: if smoke.software {
                 vec![AndroidRenderingMode::Software]
+            } else if smoke.vulkan {
+                // Vulkan alone, without a fallback: a mode that does not initialise fails the
+                // run instead of being passed over.
+                vec![AndroidRenderingMode::Vulkan]
             } else {
                 AndroidPlatformOptions::default().rendering_mode
             },
@@ -234,7 +246,62 @@ mod app {
                 Dispatcher::ui_thread().check_access() && AndroidPlatform::options().is_some(),
                 "the platform is initialized and the dispatcher belongs to the main thread",
             );
+            if smoke.vulkan {
+                vulkan_checks();
+            }
         })
+    }
+
+    /// Rendering with Vulkan: the platform registered the platform graphics
+    /// of Vulkan, and a context of them has a device with a queue under its
+    /// lock, the surface factory of the platform and an instance with the
+    /// surface extension of Android. The frames themselves are checked by
+    /// the readback, on the render thread.
+    fn vulkan_checks() {
+        use ferroui_base::platform::{IOptionalFeatureProvider, IPlatformGraphics};
+        use ferroui_base::LocatorExtensions;
+        use ferroui_vulkan::{IVulkanKhrSurfacePlatformSurfaceFactory, IVulkanPlatformGraphicsContext};
+
+        let Some(graphics) = ferroui_base::FerroLocator::current().get_service::<Arc<dyn IPlatformGraphics>>() else {
+            check("platform graphics", false, "the platform registered no platform graphics");
+            return;
+        };
+        let context = graphics.create_context();
+        let features: &dyn IOptionalFeatureProvider = &*context;
+        let Some(vulkan) = features.try_get::<dyn IVulkanPlatformGraphicsContext>() else {
+            check("platform graphics", false, "the platform graphics are not the graphics of Vulkan");
+            context.dispose();
+            return;
+        };
+        check("platform graphics", true, "the platform registered the graphics of Vulkan");
+        let device = vulkan.device();
+        let lock = context.ensure_current();
+        let queue = device.main_queue_handle();
+        lock.dispose();
+        check(
+            "Vulkan context",
+            device.handle() != 0 && queue != 0,
+            format!(
+                "a context of the graphics has the device {:#x} with the queue family {} and the extensions {}",
+                device.handle(),
+                device.graphics_queue_family_index(),
+                device.enabled_extensions().join(" ")
+            ),
+        );
+        let has_factory = features.try_get_shared::<dyn IVulkanKhrSurfacePlatformSurfaceFactory>().is_some();
+        check(
+            "Vulkan surface factory",
+            has_factory,
+            format!("the context {} the surface factory of the platform", if has_factory { "has" } else { "has not" }),
+        );
+        let has_android = vulkan.instance().enabled_extensions().iter().any(|name| name == "VK_KHR_android_surface");
+        check(
+            "Vulkan instance",
+            has_android,
+            format!("the instance has the extensions {}", vulkan.instance().enabled_extensions().join(" ")),
+        );
+        context.dispose();
+        device.dispose();
     }
 
     // ---- the view -------------------------------------------------------------------------
@@ -1087,7 +1154,11 @@ mod app {
                     readback.thread,
                     readback.surface.0,
                     readback.surface.1,
-                    if readback.gpu { "GPU: OpenGL ES through EGL" } else { "raster: the buffer of the native window" }
+                    match (readback.gpu, OPTIONS.with(Cell::get).vulkan) {
+                        (true, true) => "GPU: Vulkan",
+                        (true, false) => "GPU: OpenGL ES through EGL",
+                        (false, _) => "raster: the buffer of the native window",
+                    }
                 ),
             );
             check(
@@ -1101,6 +1172,8 @@ mod app {
                 readback.frames == 0 || readback.gpu != software,
                 if software {
                     "software was asked for and the frames are raster"
+                } else if OPTIONS.with(Cell::get).vulkan {
+                    "Vulkan was asked for and the frames are drawn on a GPU surface"
                 } else {
                     "the default order gave a GPU surface"
                 },

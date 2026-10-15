@@ -18,6 +18,9 @@ path = "lib.rs"
 ferroui-base.workspace = true
 ferroui-controls.workspace = true
 ferroui-opengl.workspace = true
+# The Vulkan rendering mode (`platform/vulkan`): the contracts and the platform graphics of Vulkan.
+# Nothing is linked: the loader of the system is opened at run time.
+ferroui-vulkan.workspace = true
 
 # What exists on Android only. The renderer and the text shaper are selected by `use_android`, as
 # the reference does; the declarations of the Java Native Interface and the C library (`dlopen` for
@@ -33,6 +36,14 @@ libc.workspace = true
 # The smoke application reads the frames it draws back from their Skia surface.
 [target.'cfg(target_os = "android")'.dev-dependencies]
 skia-safe.workspace = true
+
+[features]
+# The Vulkan rendering mode (`AndroidRenderingMode::Vulkan`), which an application names in
+# `AndroidPlatformOptions::rendering_mode`; the default order (EGL, then software) does not change.
+# It gives the Skia backend its Vulkan GPU (Ganesh on Vulkan beside Ganesh on OpenGL ES), from the
+# published binary of Skia with both for the Android targets: nothing is compiled from source
+# (docs/porting/vulkan.md, section 2). Without it the mode is passed over with a warning.
+vulkan = ["ferroui-skia/vulkan"]
 
 # The smoke application: a shared library that `scripts/android/apk.sh` packages
 # (docs/porting/android-platform.md, sections 9 and 10). Empty on another system.

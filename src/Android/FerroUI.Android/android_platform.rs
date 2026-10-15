@@ -39,10 +39,11 @@ impl Default for AndroidPlatformOptions {
 /// The loop over the rendering modes (`InitializeGraphics`): the graphics
 /// of the first mode that initializes, `None` for the software mode.
 ///
-/// `try_create_egl` creates the platform graphics of EGL. The Vulkan mode
-/// waits for the Vulkan project of the port
-/// (docs/porting/android-platform.md, section 6) and is passed over like a
-/// mode that fails to initialize.
+/// `try_create_egl` creates the platform graphics of EGL, `try_create_vulkan`
+/// those of Vulkan (`VulkanSupport`, with the [`VulkanOptions`] an
+/// application registered; docs/porting/android-platform.md, section 6).
+///
+/// [`VulkanOptions`]: ferroui_vulkan::VulkanOptions
 ///
 /// # Panics
 /// Panics, as the reference throws, when the list is empty and when none
@@ -51,6 +52,7 @@ impl Default for AndroidPlatformOptions {
 pub(crate) fn initialize_graphics_core<G>(
     opts: &AndroidPlatformOptions,
     try_create_egl: &mut dyn FnMut() -> Option<G>,
+    try_create_vulkan: &mut dyn FnMut() -> Option<G>,
 ) -> Option<G> {
     if opts.rendering_mode.is_empty() {
         panic!("AndroidPlatformOptions.rendering_mode must not be empty or null");
@@ -64,7 +66,11 @@ pub(crate) fn initialize_graphics_core<G>(
                     return Some(egl);
                 }
             }
-            AndroidRenderingMode::Vulkan => {}
+            AndroidRenderingMode::Vulkan => {
+                if let Some(vulkan) = try_create_vulkan() {
+                    return Some(vulkan);
+                }
+            }
         }
     }
 
@@ -206,8 +212,38 @@ mod imp {
         }
 
         fn initialize_graphics(opts: &AndroidPlatformOptions) -> Option<Arc<dyn IPlatformGraphics>> {
-            initialize_graphics_core(opts, &mut AndroidEglPlatformGraphics::try_create)
-                .map(|egl| Arc::new(egl) as Arc<dyn IPlatformGraphics>)
+            initialize_graphics_core(
+                opts,
+                &mut || AndroidEglPlatformGraphics::try_create().map(|egl| Arc::new(egl) as Arc<dyn IPlatformGraphics>),
+                &mut Self::try_create_vulkan,
+            )
+        }
+
+        /// The platform graphics of Vulkan, with the options an application
+        /// registered.
+        #[cfg(feature = "vulkan")]
+        fn try_create_vulkan() -> Option<Arc<dyn IPlatformGraphics>> {
+            use crate::platform::vulkan::VulkanSupport;
+            use ferroui_vulkan::VulkanOptions;
+
+            let vulkan_options = FerroLocator::current().get_service::<VulkanOptions>().map(|options| (*options).clone());
+            VulkanSupport::try_initialize(vulkan_options).map(|vulkan| vulkan as Arc<dyn IPlatformGraphics>)
+        }
+
+        /// Without the feature `vulkan` the Skia backend has no Vulkan GPU
+        /// to draw on the graphics of Vulkan with, so the mode is passed
+        /// over, and says why.
+        #[cfg(not(feature = "vulkan"))]
+        fn try_create_vulkan() -> Option<Arc<dyn IPlatformGraphics>> {
+            use ferroui_base::logging::{LogEventLevel, Logger};
+
+            if let Some(logger) = Logger::try_get(LogEventLevel::Warning, "Vulkan") {
+                logger.log(
+                    None,
+                    "The Vulkan rendering mode needs the feature `vulkan` of ferroui-android (Skia with Vulkan); the mode is passed over",
+                );
+            }
+            None
         }
     }
 }
@@ -235,10 +271,14 @@ mod tests {
     #[test]
     fn the_default_order_takes_egl_when_it_initializes() {
         let mut asked = 0;
-        let graphics = initialize_graphics_core(&AndroidPlatformOptions::default(), &mut || {
-            asked += 1;
-            Some(7)
-        });
+        let graphics = initialize_graphics_core(
+            &AndroidPlatformOptions::default(),
+            &mut || {
+                asked += 1;
+                Some(7)
+            },
+            &mut || panic!("Vulkan is not in the default order"),
+        );
         assert_eq!(graphics, Some(7));
         assert_eq!(asked, 1);
     }
@@ -246,10 +286,14 @@ mod tests {
     #[test]
     fn the_default_order_ends_at_software_when_egl_does_not_initialize() {
         let mut asked = 0;
-        let graphics = initialize_graphics_core::<i32>(&AndroidPlatformOptions::default(), &mut || {
-            asked += 1;
-            None
-        });
+        let graphics = initialize_graphics_core::<i32>(
+            &AndroidPlatformOptions::default(),
+            &mut || {
+                asked += 1;
+                None
+            },
+            &mut || panic!("Vulkan is not in the default order"),
+        );
         assert_eq!(graphics, None);
         assert_eq!(asked, 1);
     }
@@ -259,6 +303,7 @@ mod tests {
         let graphics = initialize_graphics_core::<i32>(
             &options(vec![AndroidRenderingMode::Software, AndroidRenderingMode::Egl]),
             &mut || panic!("EGL must not be asked for"),
+            &mut || panic!("Vulkan must not be asked for"),
         );
         assert_eq!(graphics, None);
     }
@@ -266,7 +311,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "must not be empty or null")]
     fn an_empty_list_fails() {
-        initialize_graphics_core::<i32>(&options(vec![]), &mut || None);
+        initialize_graphics_core::<i32>(&options(vec![]), &mut || None, &mut || None);
     }
 
     #[test]
@@ -275,6 +320,43 @@ mod tests {
         initialize_graphics_core::<i32>(
             &options(vec![AndroidRenderingMode::Egl, AndroidRenderingMode::Vulkan]),
             &mut || None,
+            &mut || None,
         );
+    }
+
+    #[test]
+    fn vulkan_is_taken_when_it_is_named_and_initializes() {
+        let asked = std::cell::RefCell::new(Vec::new());
+        let graphics = initialize_graphics_core(
+            &options(vec![AndroidRenderingMode::Vulkan, AndroidRenderingMode::Egl, AndroidRenderingMode::Software]),
+            &mut || {
+                asked.borrow_mut().push("egl");
+                Some(2)
+            },
+            &mut || {
+                asked.borrow_mut().push("vulkan");
+                Some(3)
+            },
+        );
+        assert_eq!(graphics, Some(3));
+        assert_eq!(*asked.borrow(), vec!["vulkan"]);
+    }
+
+    #[test]
+    fn vulkan_that_does_not_initialize_is_passed_over() {
+        let asked = std::cell::RefCell::new(Vec::new());
+        let graphics = initialize_graphics_core(
+            &options(vec![AndroidRenderingMode::Vulkan, AndroidRenderingMode::Egl]),
+            &mut || {
+                asked.borrow_mut().push("egl");
+                Some(2)
+            },
+            &mut || {
+                asked.borrow_mut().push("vulkan");
+                None
+            },
+        );
+        assert_eq!(graphics, Some(2));
+        assert_eq!(*asked.borrow(), vec!["vulkan", "egl"]);
     }
 }

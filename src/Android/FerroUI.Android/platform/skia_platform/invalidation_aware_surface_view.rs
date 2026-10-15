@@ -211,6 +211,13 @@ impl SurfaceViewHandle {
     pub fn new(shared: Arc<SurfaceShared>) -> Self {
         Self { shared }
     }
+
+    /// A reference to the native window, held by whoever uses the window
+    /// for longer than reading its address (the surface of Vulkan while it
+    /// is created); `None` while there is no surface.
+    pub fn native_window(&self) -> Option<NativeWindow> {
+        self.shared.native_window()
+    }
 }
 
 impl IPlatformHandle for SurfaceViewHandle {
