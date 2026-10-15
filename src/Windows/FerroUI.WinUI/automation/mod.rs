@@ -22,6 +22,20 @@ pub(crate) use ferro_swap_chain_panel_automation_peer::FerroSwapChainPanelAutoma
 #[cfg(windows)]
 pub(crate) const ELEMENT_NOT_ENABLED: ferroui_microcom::HResult = ferroui_microcom::HResult(0x8004_0200);
 
+/// A line on the standard error stream for each step of the automation
+/// objects XAML calls, when `FERROUI_WINUI_TRACE` is set: what a run that
+/// ends in the system's frames names last (a diagnostic of the port; the
+/// smoke run of the sample sets the variable).
+#[cfg(windows)]
+pub(crate) fn trace(what: &str) {
+    use std::io::Write;
+    if std::env::var_os("FERROUI_WINUI_TRACE").is_some() {
+        let mut error = std::io::stderr().lock();
+        let _ = writeln!(error, "[trace] automation: {what}");
+        let _ = error.flush();
+    }
+}
+
 /// The result of a call of a provider of the framework as a result of COM.
 #[cfg(windows)]
 pub(crate) fn enabled<T>(result: Result<T, ferroui_controls::automation::ElementNotEnabledException>) -> Result<T, ferroui_microcom::HResult> {
