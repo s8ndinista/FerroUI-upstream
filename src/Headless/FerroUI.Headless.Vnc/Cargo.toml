@@ -1,6 +1,6 @@
 [package]
 name = "ferroui-headless-vnc"
-description = "Reserved name: the VNC server of the headless platform of FerroUI, which is not ported yet. This version is an empty placeholder"
+description = "The VNC server of the headless platform of FerroUI: an application runs without a screen and is seen and driven through a VNC viewer"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -13,6 +13,26 @@ categories.workspace = true
 
 [lib]
 path = "lib.rs"
+
+[dependencies]
+ferroui-base.workspace = true
+ferroui-controls.workspace = true
+ferroui-headless.workspace = true
+bitflags.workspace = true
+# The RFB server (`remote_viewing/`, a port of the parts of RemoteViewing the original uses;
+# docs/porting/headless-vnc.md): zlib for the basic compression of the Tight encoding, JPEG for its
+# JPEG compression, DES for the VNC password challenge and the random challenge itself.
+flate2.workspace = true
+jpeg-encoder.workspace = true
+des.workspace = true
+getrandom.workspace = true
+
+[dev-dependencies]
+# The tests run the server with an application that renders with Skia and has the Simple theme,
+# and write the frames their client receives as PNG files.
+ferroui-skia.workspace = true
+ferroui-themes-simple.workspace = true
+png.workspace = true
 
 # The group of the crate in the table of the README (docs/release.md).
 [package.metadata.release]
