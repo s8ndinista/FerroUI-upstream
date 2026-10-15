@@ -8,17 +8,17 @@ use ferroui_base::platform::{AlphaFormat, PixelFormat};
 /// The formats of the buffer of a window (`WINDOW_FORMAT_*`).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[repr(i32)]
-#[allow(dead_code)]
+#[allow(dead_code, non_camel_case_types)]
 pub(crate) enum AndroidPixelFormat {
-    Rgba8888 = 1,
-    Rgbx8888 = 2,
-    Rgb565 = 4,
+    WINDOW_FORMAT_RGBA_8888 = 1,
+    WINDOW_FORMAT_RGBX_8888 = 2,
+    WINDOW_FORMAT_RGB_565 = 4,
 }
 
 /// The pixel format, the alpha format and the bytes of a row of a locked
 /// buffer of the given window format and stride (in pixels).
 pub(crate) fn buffer_layout(format: i32, stride: i32) -> (PixelFormat, AlphaFormat, i32) {
-    if format == AndroidPixelFormat::Rgb565 as i32 {
+    if format == AndroidPixelFormat::WINDOW_FORMAT_RGB_565 as i32 {
         (PixelFormat::RGB565, AlphaFormat::Opaque, stride * 2)
     } else {
         (PixelFormat::RGBA8888, AlphaFormat::Premul, stride * 4)
@@ -174,7 +174,7 @@ mod tests {
     #[test]
     fn a_565_window_is_opaque_with_two_bytes_a_pixel() {
         assert_eq!(
-            buffer_layout(AndroidPixelFormat::Rgb565 as i32, 1088),
+            buffer_layout(AndroidPixelFormat::WINDOW_FORMAT_RGB_565 as i32, 1088),
             (PixelFormat::RGB565, AlphaFormat::Opaque, 2176)
         );
     }
@@ -182,11 +182,11 @@ mod tests {
     #[test]
     fn every_other_window_is_premultiplied_rgba() {
         assert_eq!(
-            buffer_layout(AndroidPixelFormat::Rgba8888 as i32, 1088),
+            buffer_layout(AndroidPixelFormat::WINDOW_FORMAT_RGBA_8888 as i32, 1088),
             (PixelFormat::RGBA8888, AlphaFormat::Premul, 4352)
         );
         assert_eq!(
-            buffer_layout(AndroidPixelFormat::Rgbx8888 as i32, 720),
+            buffer_layout(AndroidPixelFormat::WINDOW_FORMAT_RGBX_8888 as i32, 720),
             (PixelFormat::RGBA8888, AlphaFormat::Premul, 2880)
         );
     }

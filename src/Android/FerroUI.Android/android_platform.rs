@@ -140,6 +140,10 @@ mod imp {
     pub struct AndroidPlatform;
 
     impl AndroidPlatform {
+        /// The instance of the platform. Its members are functions of the
+        /// type, so the value only names the platform.
+        pub const INSTANCE: AndroidPlatform = AndroidPlatform;
+
         /// The options the platform was initialized with.
         pub fn options() -> Option<Rc<AndroidPlatformOptions>> {
             OPTIONS.with(|options| options.borrow().clone())

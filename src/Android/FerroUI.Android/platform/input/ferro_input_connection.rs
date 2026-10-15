@@ -346,7 +346,7 @@ impl FerroInputConnection {
     }
 
     pub fn send_key_event(&self, e: Option<KeyEventToDispatch>) -> bool {
-        self.queue_command(EditCommand::KeyEvent(e));
+        self.queue_command(EditCommand::key_event(e));
 
         true
     }

@@ -21,7 +21,7 @@ use std::rc::Rc;
 pub struct FerroMainActivity;
 
 impl FerroMainActivity {
-    pub(crate) fn initialize_view(activity: &Rc<FerroActivity>, initial_content: Option<BoxedValue>) {
+    pub(crate) fn initialize_ferro_view(activity: &Rc<FerroActivity>, initial_content: Option<BoxedValue>) {
         if let Some(lifetime) = FerroAndroidApplication::lifetime() {
             let initial_content =
                 initial_content.or_else(|| lifetime.main_view_factory().map(|factory| Control::boxed(factory())));
