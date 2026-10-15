@@ -159,6 +159,11 @@ impl Imm32InputMethod {
         self.composition.borrow().clone()
     }
 
+    /// Sets the composition string (the internal setter of `Composition`).
+    pub(crate) fn set_composition(&self, composition: Option<String>) {
+        *self.composition.borrow_mut() = composition;
+    }
+
     fn parent(&self) -> Option<Rc<dyn Imm32Parent>> {
         self.parent.borrow().as_ref().and_then(Weak::upgrade)
     }
@@ -258,7 +263,7 @@ impl Imm32InputMethod {
     }
 
     pub fn composition_changed(&self, composition: Option<String>, cursor_position: Option<i32>) {
-        *self.composition.borrow_mut() = composition.clone();
+        self.set_composition(composition.clone());
         self.composition_cursor_position.set(cursor_position);
 
         let Some(client) = self.client() else {
@@ -301,7 +306,7 @@ impl Imm32InputMethod {
     }
 
     pub fn handle_composition_start(&self) {
-        *self.composition.borrow_mut() = None;
+        self.set_composition(None);
         self.composition_cursor_position.set(None);
 
         if let Some(client) = self.client() {
@@ -327,7 +332,7 @@ impl Imm32InputMethod {
             }
         }
 
-        *self.composition.borrow_mut() = None;
+        self.set_composition(None);
         self.composition_cursor_position.set(None);
 
         if let Some(client) = self.client() {
@@ -350,7 +355,7 @@ impl Imm32InputMethod {
         if result_changed {
             let result_string = self.get_composition_string(GCS::GCS_RESULTSTR);
 
-            *self.composition.borrow_mut() = None;
+            self.set_composition(None);
             self.composition_cursor_position.set(None);
 
             if let Some(client) = self.client() {
@@ -391,7 +396,7 @@ impl Imm32InputMethod {
 impl ITextInputMethodImpl for Imm32InputMethod {
     fn set_client(&self, client: Option<Rc<dyn TextInputMethodClient>>) {
         if let Some(old) = self.client() {
-            *self.composition.borrow_mut() = None;
+            self.set_composition(None);
             self.composition_cursor_position.set(None);
 
             old.set_preedit_text_with_cursor(None, None);
@@ -473,7 +478,7 @@ impl ITextInputMethodImpl for Imm32InputMethod {
 
                 this.is_composing.set(false);
 
-                *this.composition.borrow_mut() = None;
+                this.set_composition(None);
                 this.composition_cursor_position.set(None);
             }
         }));

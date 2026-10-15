@@ -41,9 +41,25 @@ pub const TME_HOVER: u32 = 0x0000_0001;
 pub const TME_LEAVE: u32 = 0x0000_0002;
 #[allow(missing_docs)]
 pub const TME_NONCLIENT: u32 = 0x0000_0010;
+#[allow(missing_docs)]
+pub const TME_QUERY: u32 = 0x4000_0000;
+#[allow(missing_docs)]
+pub const TME_CANCEL: u32 = 0x8000_0000;
 
+/// The flags of the parameter of `WM_IME_SETCONTEXT`: which windows of the
+/// input method the default processing shows.
+pub const ISC_SHOWUICANDIDATEWINDOW: i64 = 0x0000_0001;
 /// `ISC_SHOWUICOMPOSITIONWINDOW` of `WM_IME_SETCONTEXT`.
 pub const ISC_SHOWUICOMPOSITIONWINDOW: i64 = 0x8000_0000;
+#[allow(missing_docs)]
+pub const ISC_SHOWUIGUIDELINE: i64 = 0x4000_0000;
+#[allow(missing_docs)]
+pub const ISC_SHOWUIALLCANDIDATEWINDOW: i64 = 0x0000_000F;
+#[allow(missing_docs)]
+pub const ISC_SHOWUIALL: i64 = 0xC000_000F;
+
+/// The result of a wait function that failed (`WaitForMultipleObjectsEx`).
+pub const WAIT_FAILED: i32 = 0xFFFF_FFFF_u32 as i32;
 
 /// The values of the insert-after argument of `SetWindowPos`.
 pub struct WindowPosZOrder;
@@ -1288,6 +1304,47 @@ bitflags::bitflags! {
 }
 
 bitflags::bitflags! {
+    /// `PenMask` of the interop declarations: which members of the pen
+    /// information are valid.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+    pub struct PenMask: u32 {
+        const PEN_MASK_NONE = 0x00000000;
+        const PEN_MASK_PRESSURE = 0x00000001;
+        const PEN_MASK_ROTATION = 0x00000002;
+        const PEN_MASK_TILT_X = 0x00000004;
+        const PEN_MASK_TILT_Y = 0x00000008;
+    }
+}
+
+bitflags::bitflags! {
+    /// `TouchFlags` of the interop declarations.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+    pub struct TouchFlags: u32 {
+        const TOUCH_FLAG_NONE = 0x00000000;
+    }
+}
+
+bitflags::bitflags! {
+    /// `PointerDeviceChangeFlags` of the interop declarations: what changed
+    /// of a pointer device (`WM_POINTERDEVICECHANGE`).
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+    pub struct PointerDeviceChangeFlags: u32 {
+        const PDC_ARRIVAL = 0x001;
+        const PDC_REMOVAL = 0x002;
+        const PDC_ORIENTATION_0 = 0x004;
+        const PDC_ORIENTATION_90 = 0x008;
+        const PDC_ORIENTATION_180 = 0x010;
+        const PDC_ORIENTATION_270 = 0x020;
+        const PDC_MODE_DEFAULT = 0x040;
+        const PDC_MODE_CENTERED = 0x080;
+        const PDC_MAPPING_CHANGE = 0x100;
+        const PDC_RESOLUTION = 0x200;
+        const PDC_ORIGIN = 0x400;
+        const PDC_MODE_ASPECTRATIOPRESERVED = 0x800;
+    }
+}
+
+bitflags::bitflags! {
     /// `TouchMask` of the interop declarations.
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
     pub struct TouchMask: u32 {
@@ -1296,6 +1353,93 @@ bitflags::bitflags! {
         const TOUCH_MASK_ORIENTATION = 0x00000002;
         const TOUCH_MASK_PRESSURE = 0x00000004;
     }
+}
+
+/// `GetAncestorFlags` of the interop declarations: which ancestor
+/// `GetAncestor` answers.
+pub struct GetAncestorFlags;
+
+#[allow(missing_docs)]
+impl GetAncestorFlags {
+    pub const GA_PARENT: u32 = 1;
+    pub const GA_ROOT: u32 = 2;
+    pub const GA_ROOTOWNER: u32 = 3;
+}
+
+bitflags::bitflags! {
+    /// `LayeredWindowFlags` of the interop declarations: what
+    /// `SetLayeredWindowAttributes` sets.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+    pub struct LayeredWindowFlags: u32 {
+        const LWA_ALPHA = 0x00000002;
+        const LWA_COLORKEY = 0x00000001;
+    }
+}
+
+/// `WindowCompositionAttribute` of the interop declarations: the attribute
+/// of `SetWindowCompositionAttribute` the reference names.
+pub struct WindowCompositionAttribute;
+
+#[allow(missing_docs)]
+impl WindowCompositionAttribute {
+    pub const WCA_ACCENT_POLICY: i32 = 19;
+}
+
+/// `AccentState` of the interop declarations: the accent of a window.
+pub struct AccentState;
+
+#[allow(missing_docs)]
+impl AccentState {
+    pub const ACCENT_DISABLED: i32 = 0;
+    pub const ACCENT_ENABLE_GRADIENT: i32 = 1;
+    pub const ACCENT_ENABLE_TRANSPARENTGRADIENT: i32 = 2;
+    pub const ACCENT_ENABLE_BLURBEHIND: i32 = 3;
+    /// Windows 10 version 1703 and later.
+    pub const ACCENT_ENABLE_ACRYLIC: i32 = 4;
+    /// Windows 10 version 1809 and later.
+    pub const ACCENT_ENABLE_HOSTBACKDROP: i32 = 5;
+    pub const ACCENT_INVALID_STATE: i32 = 6;
+}
+
+/// `AccentFlags` of the interop declarations: the borders an accent draws.
+pub struct AccentFlags;
+
+#[allow(missing_docs, non_upper_case_globals)]
+impl AccentFlags {
+    pub const DrawLeftBorder: i32 = 0x20;
+    pub const DrawTopBorder: i32 = 0x40;
+    pub const DrawRightBorder: i32 = 0x80;
+    pub const DrawBottomBorder: i32 = 0x100;
+}
+
+bitflags::bitflags! {
+    /// `OpenFileNameFlags` of the interop declarations: the options of the
+    /// file dialogs of the common dialog library.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+    pub struct OpenFileNameFlags: u32 {
+        const OFN_ALLOWMULTISELECT = 0x00000200;
+        const OFN_EXPLORER = 0x00080000;
+        const OFN_HIDEREADONLY = 0x00000004;
+        const OFN_NOREADONLYRETURN = 0x00008000;
+        const OFN_OVERWRITEPROMPT = 0x00000002;
+    }
+}
+
+/// `NIIF` of the interop declarations: the icon and the options of the
+/// balloon of a notification icon, as constants.
+pub struct NIIF;
+
+#[allow(missing_docs)]
+impl NIIF {
+    pub const NONE: u32 = 0x00000000;
+    pub const INFO: u32 = 0x00000001;
+    pub const WARNING: u32 = 0x00000002;
+    pub const ERROR: u32 = 0x00000003;
+    pub const USER: u32 = 0x00000004;
+    pub const ICON_MASK: u32 = 0x0000000F;
+    pub const NOSOUND: u32 = 0x00000010;
+    pub const LARGE_ICON: u32 = 0x00000020;
+    pub const RESPECT_QUIET_TIME: u32 = 0x00000080;
 }
 
 /// `ClassLongIndex` of the interop declarations: the values the system uses, as constants.
@@ -1443,8 +1587,22 @@ pub struct PixelFormatDescriptorFlags;
 #[allow(missing_docs)]
 impl PixelFormatDescriptorFlags {
     pub const PFD_DOUBLEBUFFER: u32 = 0x00000001;
+    pub const PFD_STEREO: u32 = 0x00000002;
     pub const PFD_DRAW_TO_WINDOW: u32 = 0x00000004;
+    pub const PFD_DRAW_TO_BITMAP: u32 = 0x00000008;
+    pub const PFD_SUPPORT_GDI: u32 = 0x00000010;
     pub const PFD_SUPPORT_OPENGL: u32 = 0x00000020;
+    pub const PFD_GENERIC_FORMAT: u32 = 0x00000040;
+    pub const PFD_NEED_PALETTE: u32 = 0x00000080;
+    pub const PFD_NEED_SYSTEM_PALETTE: u32 = 0x00000100;
+    pub const PFD_SWAP_EXCHANGE: u32 = 0x00000200;
+    pub const PFD_SWAP_COPY: u32 = 0x00000400;
+    pub const PFD_SWAP_LAYER_BUFFERS: u32 = 0x00000800;
+    pub const PFD_GENERIC_ACCELERATED: u32 = 0x00001000;
+    pub const PFD_SUPPORT_DIRECTDRAW: u32 = 0x00002000;
+    pub const PFD_DEPTH_DONTCARE: u32 = 0x20000000;
+    pub const PFD_DOUBLEBUFFER_DONTCARE: u32 = 0x40000000;
+    pub const PFD_STEREO_DONTCARE: u32 = 0x80000000;
 }
 
 /// `PixelFormatDescriptor` of the interop declarations: the layout of the
@@ -1715,10 +1873,46 @@ impl BitmapCompressionMode {
     pub const BI_PNG: u32 = 5;
 }
 
-/// `BitmapColorSpace.LCS_sRGB` of the interop declarations.
-pub const LCS_SRGB: u32 = 0x7352_4742;
-/// `BitmapIntent.LCS_GM_ABS_COLORIMETRIC` of the interop declarations.
-pub const LCS_GM_ABS_COLORIMETRIC: u32 = 8;
+/// `BitmapColorSpace` of the interop declarations: the colour space of a
+/// version 5 bitmap header, as constants.
+pub struct BitmapColorSpace;
+
+#[allow(missing_docs, non_upper_case_globals)]
+impl BitmapColorSpace {
+    pub const LCS_CALIBRATED_RGB: u32 = 0;
+    pub const LCS_sRGB: u32 = 0x7352_4742;
+    pub const LCS_WINDOWS_COLOR_SPACE: u32 = 0x5769_6E20;
+    pub const PROFILE_LINKED: u32 = 0x4C49_4E4B;
+    pub const PROFILE_EMBEDDED: u32 = 0x4D42_4544;
+}
+
+/// `BitmapIntent` of the interop declarations: the rendering intent of a
+/// version 5 bitmap header, as constants. The values are the ones of the
+/// system headers (`wingdi.h`); the reference declares the names in the
+/// order 1, 2, 4, 8, which gives each the value of another, so that the
+/// header it writes says `LCS_GM_BUSINESS` where it names
+/// `LCS_GM_ABS_COLORIMETRIC` (docs/porting/DEVIATIONS.md).
+pub struct BitmapIntent;
+
+#[allow(missing_docs)]
+impl BitmapIntent {
+    pub const LCS_GM_BUSINESS: u32 = 1;
+    pub const LCS_GM_GRAPHICS: u32 = 2;
+    pub const LCS_GM_IMAGES: u32 = 4;
+    pub const LCS_GM_ABS_COLORIMETRIC: u32 = 8;
+}
+
+/// `DIBColorTable` of the interop declarations: what the colour table of a
+/// device independent bitmap holds.
+pub struct DIBColorTable;
+
+#[allow(missing_docs)]
+impl DIBColorTable {
+    /// The colour table holds colours.
+    pub const DIB_RGB_COLORS: u32 = 0;
+    /// The colour table holds indices into the palette.
+    pub const DIB_PAL_COLORS: u32 = 1;
+}
 
 /// The size of a `BITMAPV5HEADER`, in bytes.
 pub const SIZE_OF_BITMAPV5HEADER: u32 = 124;

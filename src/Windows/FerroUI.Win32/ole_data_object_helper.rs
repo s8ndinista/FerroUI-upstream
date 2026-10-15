@@ -10,8 +10,8 @@
 //! independent bitmap).
 
 use crate::interop::unmanaged_methods::{
-    BitmapCompressionMode, ClipboardFormat, BITMAPINFOHEADER, BITMAPV5HEADER, DVASPECT, FORMATETC, LCS_GM_ABS_COLORIMETRIC,
-    LCS_SRGB, SIZE_OF_DROPFILES, TYMED,
+    BitmapCompressionMode, ClipboardFormat, BITMAPINFOHEADER, BITMAPV5HEADER, BitmapColorSpace, BitmapIntent, DVASPECT, FORMATETC,
+    SIZE_OF_DROPFILES, TYMED,
 };
 use ferroui_base::platform::PixelFormat;
 
@@ -145,8 +145,8 @@ pub(crate) fn bitmap_v5_header(
         b_v5_red_mask: masks[1],
         b_v5_green_mask: masks[2],
         b_v5_blue_mask: masks[3],
-        b_v5_cs_type: LCS_SRGB,
-        b_v5_intent: LCS_GM_ABS_COLORIMETRIC,
+        b_v5_cs_type: BitmapColorSpace::LCS_sRGB,
+        b_v5_intent: BitmapIntent::LCS_GM_ABS_COLORIMETRIC,
     }
 }
 

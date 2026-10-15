@@ -89,16 +89,7 @@ fn worker(queue: Receiver<Op>, ready: Sender<u32>) {
 }
 
 fn manager() -> &'static Manager {
-    MANAGER.get_or_init(|| {
-        let (queue, jobs) = channel();
-        let (ready, started) = channel();
-        std::thread::Builder::new()
-            .name("Win32 OpenGL HDC manager".to_owned())
-            .spawn(move || worker(jobs, ready))
-            .expect("the thread of the OpenGL device contexts starts");
-        let thread_id = started.recv().expect("the thread of the OpenGL device contexts runs");
-        Manager { queue: Mutex::new(queue), thread_id }
-    })
+    MANAGER.get_or_init(WglGdiResourceManager::static_constructor)
 }
 
 fn run<T>(job: impl FnOnce(Sender<T>) -> Op) -> T {
@@ -117,6 +108,20 @@ fn run<T>(job: impl FnOnce(Sender<T>) -> Op) -> T {
 pub(crate) struct WglGdiResourceManager;
 
 impl WglGdiResourceManager {
+    /// The static constructor of the reference: starts the thread, which
+    /// registers the class of the windows before it takes jobs. It runs
+    /// when the first job is given.
+    fn static_constructor() -> Manager {
+        let (queue, jobs) = channel();
+        let (ready, started) = channel();
+        std::thread::Builder::new()
+            .name("Win32 OpenGL HDC manager".to_owned())
+            .spawn(move || worker(jobs, ready))
+            .expect("the thread of the OpenGL device contexts starts");
+        let thread_id = started.recv().expect("the thread of the OpenGL device contexts runs");
+        Manager { queue: Mutex::new(queue), thread_id }
+    }
+
     /// A window that is never shown; 0 if it could not be created.
     pub fn create_offscreen_window() -> isize {
         run(|result| Op::CreateWindow { result })

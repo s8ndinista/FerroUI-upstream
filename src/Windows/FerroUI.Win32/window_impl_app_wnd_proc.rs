@@ -1608,12 +1608,14 @@ mod tests {
 
     #[test]
     fn the_default_processing_of_the_input_context_is_told_not_to_show_the_composition_window() {
+        use crate::interop::unmanaged_methods::{ISC_SHOWUIALL, ISC_SHOWUIALLCANDIDATEWINDOW, ISC_SHOWUIGUIDELINE};
         // ISC_SHOWUIALL: every candidate window, the guide line and the
         // composition window.
-        assert_eq!(0x4000_000F, ime_set_context_l_param(0xC000_000F_u32 as isize) & 0xFFFF_FFFF);
-        assert_eq!(0x0000_000F, ime_set_context_l_param(0x0000_000F));
+        let all_but_composition = (ISC_SHOWUIGUIDELINE | ISC_SHOWUIALLCANDIDATEWINDOW) as isize;
+        assert_eq!(all_but_composition, ime_set_context_l_param(ISC_SHOWUIALL as isize) & 0xFFFF_FFFF);
+        assert_eq!(0x0000_000F, ime_set_context_l_param(ISC_SHOWUIALLCANDIDATEWINDOW as isize));
         // The parameter as a 32-bit value that was sign extended.
-        assert_eq!(0x4000_000F, ime_set_context_l_param(0xC000_000F_u32 as i32 as isize) & 0xFFFF_FFFF);
+        assert_eq!(all_but_composition, ime_set_context_l_param(ISC_SHOWUIALL as u32 as i32 as isize) & 0xFFFF_FFFF);
     }
 
     /// A message parameter that packs two 16-bit values.
