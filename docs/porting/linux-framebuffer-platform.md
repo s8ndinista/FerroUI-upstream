@@ -230,6 +230,8 @@ Not measured: a GPU driver (the buffers of a GPU cannot be read back by `drm_sca
 | 3 | CI steps; the CRITICAL-PATH row; the hand-over in CONTINUATION.md | The job |
 | 4 (built) | The ControlCatalog on the platform (`--fbdev`; `--drm` with `--card`, `--scaling`, `--orientation`, as upstream's `ControlCatalog.Desktop`), pictures | Level 6 |
 
+The tracking page has nothing missing since 2026-10-15: 383 of 529 members found and 146 waived. The table of `libinput` is mapped to its upstream class (`path-overrides.toml`); the enumerations of `NativeUnsafeMethods.cs` and `LibInputNativeUnsafeMethods.cs`, which are modules of constants of the same names, and the C functions of `libc` are waived with the place each lives (`member-waivers.toml`, section `Avalonia.LinuxFramebuffer`).
+
 ## 12. Deviations
 
 Recorded in `DEVIATIONS.md`, section "Linux framebuffer platform": the renderer is the caller's choice; `libevdev` replaced by the device's own `ioctl`s; input crossing threads as values; the device trait of the fbdev output; the renamed environment variables; the added evdev device types; the corrected button states and wheel range of the `libinput` backend; the EGL half of the DRM output on the render thread; the read result of the page flip; the user data of a buffer object; the enumerations of the library as numbers; the read back of the scanned-out frame.

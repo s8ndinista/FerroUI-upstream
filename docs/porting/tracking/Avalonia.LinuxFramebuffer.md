@@ -11,8 +11,8 @@ Generated from upstream commit `17350180c33b063f0e98abbfd19aa3cae63f5d56`. Back 
 | Crate | `ferroui-linuxframebuffer` |
 | Phase / priority | 5 - desktop (Linux) / P2 |
 | Files | 30/30 (100.0%) |
-| Types | 61/76 (80.3%) |
-| Members | 350/529 (66.2%) |
+| Types | 62/76 (14 waived) (100.0%) |
+| Members | 383/529 (146 waived) (100.0%) |
 | Contracts (interfaces) | 4/4 |
 | Property registrations | 0/0 |
 | Routed events | 0/0 |
@@ -30,7 +30,7 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 
 ## Files
 
-### `(project root)` - files 8/8, types 16/27, members 147/246
+### `(project root)` - files 8/8, types 16/27 (11 waived), members 148/246 (98 waived)
 
 | Upstream file | Rust file | Status | Types | Members | Notes |
 |---|---|---|---|---|---|
@@ -38,36 +38,10 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 | `DrmOutputOptions.cs` | `drm_output_options.rs` | present | 1/1 | 7/7 |  |
 | `EpollDispatcherImpl.cs` | `epoll_dispatcher_impl.rs` | present | 1/1 | 12/12 |  |
 | `FramebufferToplevelImpl.cs` | `framebuffer_toplevel_impl.rs` | present | 1/1 | 30/30 |  |
-| `LinuxFramebufferPlatform.cs` | `linux_framebuffer_platform.rs` | partial | 4/4 | 21/22 |  |
+| `LinuxFramebufferPlatform.cs` | `linux_framebuffer_platform.rs` | present | 4/4 | 22/22 |  |
 | `LinuxFramebufferPlatformOptions.cs` | `linux_framebuffer_platform_options.rs` | present | 1/1 | 2/2 |  |
-| `NativeUnsafeMethods.cs` | `native_unsafe_methods.rs` | partial | 6/17 | 56/154 |  |
+| `NativeUnsafeMethods.cs` | `native_unsafe_methods.rs` | present | 6/17 (11 waived) | 56/154 (98 waived) |  |
 | `Stubs.cs` | `stubs.rs` | present | 1/1 | 2/2 |  |
-
-<details><summary><code>LinuxFramebufferPlatform.cs</code> - 1 missing</summary>
-
-- `LinuxFramebufferLifetime` (class): 1 missing
-  - `LinuxFramebufferLifetime(IOutputBackend fb, IInputBackend? input)` *(1 of 2 constructors found)*
-
-</details>
-
-<details><summary><code>NativeUnsafeMethods.cs</code> - 109 missing</summary>
-
-- `NativeUnsafeMethods` (class, internal): **type missing** (19 members)
-- `PollFd` (struct, internal): **type missing** (3 members)
-- `FbIoCtl` (enum, internal): **type missing** (6 members)
-- `VBlankFlags` (enum, internal): **type missing** (9 members)
-- `EvType` (enum, internal): **type missing** (12 members)
-- `input_event` (struct): 2 missing
-  - `EvKey Key { get; }`
-  - `AbsAxis Axis { get; }`
-- `fd_set` (struct, internal): **type missing** (2 members)
-- `AxisEventCode` (enum, internal): **type missing** (11 members)
-- `AbsAxis` (enum, internal): **type missing** (24 members)
-- `EvKey` (enum, internal): **type missing** (4 members)
-- `epoll_data` (struct, internal): **type missing** (4 members)
-- `epoll_event` (struct, internal): **type missing** (2 members)
-
-</details>
 
 ### `Input` - files 3/3, types 3/3, members 6/6
 
@@ -77,47 +51,17 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 | `IScreenInfoProvider.cs` | `input/i_screen_info_provider.rs` | present | 1/1 | 1/1 |  |
 | `RawEventGroupingThreadingHelper.cs` | `input/raw_event_grouping_threading_helper.rs` | present | 1/1 | 3/3 |  |
 
-### `Input/EvDev` - files 5/5, types 7/7, members 16/28
+### `Input/EvDev` - files 5/5, types 7/7, members 22/28 (6 waived)
 
 | Upstream file | Rust file | Status | Types | Members | Notes |
 |---|---|---|---|---|---|
 | `EvDevBackend.cs` | `input/ev_dev/ev_dev_backend.rs` | present | 1/1 | 4/4 |  |
-| `EvDevDevice.cs` | `input/ev_dev/ev_dev_device.rs` | partial | 2/2 | 5/10 |  |
-| `EvDevDeviceDescription.cs` | `input/ev_dev/ev_dev_device_description.rs` | partial | 1/1 | 1/3 |  |
-| `EvDevTouchScreen.cs` | `input/ev_dev/ev_dev_touch_screen.rs` | partial | 2/2 | 4/9 |  |
+| `EvDevDevice.cs` | `input/ev_dev/ev_dev_device.rs` | present | 2/2 | 10/10 |  |
+| `EvDevDeviceDescription.cs` | `input/ev_dev/ev_dev_device_description.rs` | present | 1/1 | 2/3 (1 waived) |  |
+| `EvDevTouchScreen.cs` | `input/ev_dev/ev_dev_touch_screen.rs` | present | 2/2 | 4/9 (5 waived) |  |
 | `EvDevTouchScreenDeviceDescription.cs` | `input/ev_dev/ev_dev_touch_screen_device_description.rs` | present | 1/1 | 2/2 |  |
 
-<details><summary><code>EvDevDevice.cs</code> - 5 missing</summary>
-
-- `EvDevDevice` (class): 5 missing
-  - `List<EvType> EventTypes { get; private set; }`
-  - `input_absinfo? AbsX { get; }`
-  - `input_absinfo? AbsY { get; }`
-  - `EvDevDevice(int fd, IntPtr dev)`
-  - `input_event? NextEvent()`
-
-</details>
-
-<details><summary><code>EvDevDeviceDescription.cs</code> - 2 missing</summary>
-
-- `EvDevDeviceDescription` (class): 2 missing
-  - `EvDevDeviceDescription()` *(protected internal)*
-  - `string? Path { get; set; }` *(getter `path` found, setter `set_path` missing)*
-
-</details>
-
-<details><summary><code>EvDevTouchScreen.cs</code> - 5 missing</summary>
-
-- `EvDevDeviceHandler` (class): 5 missing
-  - `event Action<RawInputEventArgs>? OnEvent`
-  - `EvDevDeviceHandler(EvDevDevice device)`
-  - `EvDevDevice Device { get; }`
-  - `IInputRoot InputRoot { get; set; }`
-  - `void RaiseEvent(RawInputEventArgs ev)` *(protected)*
-
-</details>
-
-### `Input/LibInput` - files 5/5, types 4/8, members 5/66
+### `Input/LibInput` - files 5/5, types 5/8 (3 waived), members 28/66 (38 waived)
 
 | Upstream file | Rust file | Status | Types | Members | Notes |
 |---|---|---|---|---|---|
@@ -125,16 +69,7 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 | `LibInputBackend.Touch.cs` | `input/lib_input/lib_input_backend_touch.rs` | present | 1/1 | 0/0 |  |
 | `LibInputBackend.cs` | `input/lib_input/lib_input_backend.rs` | present | 1/1 | 4/4 |  |
 | `LibInputBackendOptions.cs` | `input/lib_input/lib_input_backend_options.rs` | present | 1/1 | 1/1 |  |
-| `LibInputNativeUnsafeMethods.cs` | `input/lib_input/lib_input_native_unsafe_methods.rs` | partial | 0/4 | 0/61 |  |
-
-<details><summary><code>LibInputNativeUnsafeMethods.cs</code> - 65 missing</summary>
-
-- `LibInputNativeUnsafeMethods` (class, internal): **type missing** (25 members)
-- `LibInputNativeUnsafeMethods.LibInputEventType` (enum, public): **type missing** (30 members)
-- `LibInputNativeUnsafeMethods.LibInputPointerAxisSource` (enum, public): **type missing** (4 members)
-- `LibInputNativeUnsafeMethods.LibInputPointerAxis` (enum, public): **type missing** (2 members)
-
-</details>
+| `LibInputNativeUnsafeMethods.cs` | `input/lib_input/lib_input_native_unsafe_methods.rs` | present | 1/4 (3 waived) | 23/61 (38 waived) | renamed: the platform invokes of `libinput.so.10` are the fields of the table `LibInput`, each the function of its C name (declared with `native_library!`, opened with `dlopen` and resolved with `dlsym` when the backend starts; linux-framebuffer-platform.md, section 3) |
 
 ### `Input/NullInput` - files 1/1, types 1/1, members 2/2
 
@@ -142,37 +77,18 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 |---|---|---|---|---|---|
 | `NullInputBackend.cs` | `input/null_input/null_input_backend.rs` | present | 1/1 | 2/2 |  |
 
-### `Output` - files 8/8, types 30/30, members 174/181
+### `Output` - files 8/8, types 30/30, members 177/181 (4 waived)
 
 | Upstream file | Rust file | Status | Types | Members | Notes |
 |---|---|---|---|---|---|
 | `Drm.cs` | `output/drm.rs` | present | 19/19 | 117/117 |  |
 | `DrmBindings.cs` | `output/drm_bindings.rs` | present | 5/5 | 28/28 |  |
 | `DrmOutput.cs` | `output/drm_output.rs` | present | 1/1 | 11/11 |  |
-| `FbDevBackBuffer.cs` | `output/fb_dev_back_buffer.rs` | partial | 1/1 | 4/7 |  |
+| `FbDevBackBuffer.cs` | `output/fb_dev_back_buffer.rs` | present | 1/1 | 5/7 (2 waived) |  |
 | `FbDevOutputOptions.cs` | `output/fb_dev_output_options.rs` | present | 1/1 | 5/5 |  |
-| `FbdevOutput.cs` | `output/fbdev_output.rs` | partial | 1/1 | 6/10 |  |
+| `FbdevOutput.cs` | `output/fbdev_output.rs` | present | 1/1 | 8/10 (2 waived) |  |
 | `IGlOutputBackend.cs` | `output/i_gl_output_backend.rs` | present | 1/1 | 1/1 |  |
 | `IOutputBackend.cs` | `output/i_output_backend.rs` | present | 1/1 | 2/2 |  |
-
-<details><summary><code>FbDevBackBuffer.cs</code> - 3 missing</summary>
-
-- `FbDevBackBuffer` (class): 3 missing
-  - `void Dispose()`
-  - `static LockedFramebuffer LockFb(IntPtr address, fb_var_screeninfo varInfo, fb_fix_screeninfo fixedInfo, Vec...`
-  - `IntPtr Address { get; private set; }`
-
-</details>
-
-<details><summary><code>FbdevOutput.cs</code> - 4 missing</summary>
-
-- `FbdevOutput` (class): 4 missing
-  - `FbdevOutput(string? fileName, PixelFormat? format)` *(1 of 3 constructors found)*
-  - `FbdevOutput(FbDevOutputOptions options)` *(1 of 3 constructors found)*
-  - `ILockedFramebuffer Lock(IRenderTarget.RenderTargetSceneInfo _, out FramebufferLockProperties properties)`
-  - `~FbdevOutput()` *(protected)*
-
-</details>
 
 ## Rust-only files
 
