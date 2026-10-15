@@ -206,7 +206,7 @@ Design, decisions, file table, what was measured and the stages: `android-platfo
 5. **2e, storage**: `Platform/Storage/AndroidStorageProvider.cs` and `AndroidStorageItem.cs` (the storage access framework through `DocumentsContract`, without the AndroidX document file), `IActivityResultHandler.cs`, `PlatformSupport.cs` (permissions): the Java activity forwards `onActivityResult` and `onRequestPermissionsResult`.
 6. **2f, the native control host**: `AndroidNativeControlHostImpl.cs`, and `EmbedSample.Android.cs` of the catalog host.
 
-Then stage 3 (accessibility: `AvaloniaAccessHelper.cs` and the nine node info providers, over `AccessibilityNodeProvider`), and Vulkan with the Vulkan project.
+Then stage 3 (accessibility: `AvaloniaAccessHelper.cs` and the nine node info providers, over `AccessibilityNodeProvider`), and Vulkan with the Vulkan project (both done since: Vulkan in the section "Vulkan on Android and Windows" below).
 
 **Not verified anywhere yet**: the CI job (it had not run); the build for `x86_64-linux-android` (whether a Skia binary is published for it); API levels other than 36 (the paths below API 30 of `PlatformHelper` are written and never ran); `--gpu host` of the emulator; a real device. The member extraction for the project is not made (`upstream-api.json` has its files and types; members are a total).
 
@@ -312,6 +312,22 @@ What is open, in order:
 
 Pictures: nothing of this part changes what the ControlCatalog shows under Xvfb. A menu exported over D-Bus is drawn by a desktop shell that has a registrar (a global menu applet), and a tray icon by a shell that has a watcher (the KDE system tray; on GNOME the AppIndicator extension, which the Ubuntu session has): the catalog pages worth a new capture are the main window in a real desktop session with such a shell, for its tray icon and, where a global menu exists, its menu bar. The native embed page changes with stage 2f.
 
+## Vulkan on Android and Windows (2026-10-15)
+
+Branch `vulkan-android-windows`. The two files of each platform, wired into its loop over the rendering modes as upstream (in no default order: Vulkan only when an application names it). Design and what was verified: `vulkan.md` (sections 2, 5 and 8), `android-platform.md` (sections 6.1 and 10.5), `win32-platform.md` (section 6.1 and the table of 10.5); differences in `DEVIATIONS.md`, "Vulkan".
+
+- **Android**: `platform/vulkan/` (`VK_KHR_android_surface`, `libvulkan.so` opened at run time); the feature `vulkan` of `ferroui-android` gives the Skia dependency Ganesh on Vulkan from the published binary `ganesh-gl-jpegd-jpege-pdf-vulkan` (no source build). The default build keeps the binary with OpenGL ES alone and the default order EGL, then software. The smoke application has `mode=vulkan`; `scripts/android/apk.sh` has `--features`, and `scripts/android/emu-smoke.sh --modes` takes `vulkan`.
+- **Windows**: `vulkan/` (`VK_KHR_win32_surface`, `vulkan-1.dll`); the feature `vulkan` of `ferroui-win32` (off by default) gives the Skia backend Ganesh on Vulkan, for which no binary is published beside OpenGL, so Skia is compiled from source (LLVM, Python 3, git and the network, ninja; an hour and more, not measured). The Vulkan files themselves are built without the feature, and `win32_window --vulkan-probe` runs them without Skia (frames cleared with Vulkan commands and read back from the window). `control-catalog-desktop` has the feature `vulkan` and `FERROUI_SMOKE_RENDERING=vulkan`.
+- Without the feature of the platform crate a list that names `Vulkan` passes it over with a warning that names the feature, because the Skia backend would have no GPU for its graphics.
+- No new `thread_local!` (the base of this branch has no `ferro_thread_local!` yet; nothing of this work needs a thread-local variable).
+
+Runs: the emulator run of the package with the feature (`--modes "vulkan egl software"`) and of the default package, and the virtual machine run with `--vulkan-probe` (and whether the machine has a Vulkan driver at all) are recorded in `android-platform.md` 10.5 and `win32-platform.md` 10.5 when they have run.
+
+Open:
+
+1. The Windows feature with Skia from source has not been built anywhere. A CI job that builds it once (cached) would show the time and the ControlCatalog through Vulkan on a runner; the hosted Windows runners have no Vulkan driver, so a run there needs a software implementation (Mesa's lavapipe for Windows, or Microsoft's Dozen over WARP).
+2. Whether the Android default should move to the binary with OpenGL ES and Vulkan (one binary for both modes) once the emulator runs are green: the owner's decision; the package grows by about 2 MB.
+
 ## Vulkan: the contracts crate, the Skia GPU and the X11 mode (2026-10-11)
 
 Branch `vulkan` (pull request 185). [`vulkan.md`](vulkan.md) has the design, the feasibility per target and what was verified; `DEVIATIONS.md`, "Vulkan", the differences. In short:
@@ -324,8 +340,8 @@ Branch `vulkan` (pull request 185). [`vulkan.md`](vulkan.md) has the design, the
 Open, in the order of their worth:
 
 1. **A hardware driver.** Every run is on Mesa's software implementation. What to look at first on a real GPU: presentation while a window is resized (`VulkanDisplay::end_presentation` treats `VK_SUBOPTIMAL_KHR` of `vkQueuePresentKHR` as a failure, as upstream does, and the failure is a panic of the render session here), a discrete and an integrated device with `prefer_discrete_gpu`, and the import of external objects from another process.
-2. **Android** (`Platform/Vulkan/VulkanSupport.cs`, `VulkanNativeInterop.cs`): a Skia binary with `gl` and `vulkan` exists for the target, so the work is the two files (`VK_KHR_android_surface` over the native window of the surface view, the loader `libvulkan.so`), the feature `vulkan` of `ferroui-skia` in the Android build, and a run on the emulator (its software Vulkan is SwiftShader).
-3. **Windows** (`Vulkan/VulkanSupport.cs`, `VulkanNativeInterop.cs`): the two files need only the contracts crate (`VK_KHR_win32_surface`, `vulkan-1.dll`), but the Skia backend cannot draw with them beside ANGLE: no binary has Ganesh on OpenGL and Vulkan for Windows. Either a second feature set of the Windows build (Ganesh on Vulkan without OpenGL, which is published) or the Vello backend.
+2. **Android**: done (2026-10-15), see "Vulkan on Android and Windows" above.
+3. **Windows**: done (2026-10-15) with Skia from source behind an opt-in feature, see above.
 4. **The ControlCatalog rendered through Vulkan**: its desktop host has no way to ask for the mode on Linux (`FERROUI_SMOKE_RENDERING` is read on Windows only); with one, the picture run of the X11 stages can be repeated.
 5. **Sharing the device with the Vello backend**: `vulkan.md`, section 7.
 
