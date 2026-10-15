@@ -36,8 +36,9 @@ impl X11EglTarget {
 }
 
 /// Loads the EGL library of the system and resolves its entry points by
-/// name (the constructor `EglInterface()` of the reference, which the
-/// OpenGL crate leaves to the platform).
+/// name with `dlsym` (the reference uses the constructor `EglInterface()`,
+/// `EglInterface::new_default` of the OpenGL crate, which resolves them with
+/// `eglGetProcAddress`; DEVIATIONS.md, X11 platform).
 pub fn load_egl_interface() -> Result<EglInterface, OpenGlException> {
     // SAFETY: the name is a terminated string; the library is never closed, so what it
     // exports stays valid.

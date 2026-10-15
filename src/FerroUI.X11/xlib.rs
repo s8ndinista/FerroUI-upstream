@@ -162,11 +162,14 @@ fn c_string(text: &str) -> CString {
 /// Generates a wrapper for a call that passes the connection and plain
 /// values only.
 macro_rules! plain {
-    ($(#[$meta:meta])* $name:ident => $function:ident($($arg:ident: $ty:ty),*) -> $ret:ty) => {
+    (
+        $(#[$meta:meta])*
+        pub fn $name:ident($display:ident: XDisplay $(, $arg:ident: $ty:ty)* $(,)?) -> $ret:ty = $function:ident;
+    ) => {
         $(#[$meta])*
-        pub fn $name(display: XDisplay $(, $arg: $ty)*) -> $ret {
+        pub fn $name($display: XDisplay $(, $arg: $ty)*) -> $ret {
             // SAFETY: plain call (see the module documentation).
-            unsafe { (x().$function)(display.raw() $(, $arg)*) }
+            unsafe { (x().$function)($display.raw() $(, $arg)*) }
         }
     };
 }
@@ -185,110 +188,199 @@ pub fn x_open_display() -> Option<XDisplay> {
     (!display.is_null()).then_some(XDisplay(display))
 }
 
-plain!(
+plain! {
     /// `XConnectionNumber`: the file descriptor of the connection.
-    x_connection_number => XConnectionNumber() -> c_int);
-plain!(
+    pub fn x_connection_number(display: XDisplay) -> c_int = XConnectionNumber;
+}
+plain! {
     /// `XDefaultScreen`.
-    x_default_screen => XDefaultScreen() -> c_int);
-plain!(
+    pub fn x_default_screen(display: XDisplay) -> c_int = XDefaultScreen;
+}
+plain! {
     /// `XBlackPixel`.
-    x_black_pixel => XBlackPixel(screen: c_int) -> c_ulong);
-plain!(
+    pub fn x_black_pixel(display: XDisplay, screen: c_int) -> c_ulong = XBlackPixel;
+}
+plain! {
     /// `XRootWindow`.
-    x_root_window => XRootWindow(screen: c_int) -> XID);
-plain!(
+    pub fn x_root_window(display: XDisplay, screen: c_int) -> XID = XRootWindow;
+}
+plain! {
     /// `XDefaultRootWindow`.
-    x_default_root_window => XDefaultRootWindow() -> XID);
-plain!(
+    pub fn x_default_root_window(display: XDisplay) -> XID = XDefaultRootWindow;
+}
+plain! {
     /// `XCreateFontCursor`.
-    x_create_font_cursor => XCreateFontCursor(shape: c_uint) -> XID);
-plain!(
+    pub fn x_create_font_cursor(display: XDisplay, shape: c_uint) -> XID = XCreateFontCursor;
+}
+plain! {
     /// `XFreeCursor`.
-    x_free_cursor => XFreeCursor(cursor: XID) -> c_int);
-plain!(
+    pub fn x_free_cursor(display: XDisplay, cursor: XID) -> c_int = XFreeCursor;
+}
+plain! {
     /// `XDefineCursor`.
-    x_define_cursor => XDefineCursor(window: XID, cursor: XID) -> c_int);
-plain!(
+    pub fn x_define_cursor(display: XDisplay, window: XID, cursor: XID) -> c_int = XDefineCursor;
+}
+plain! {
     /// `XCreateSimpleWindow`.
-    x_create_simple_window => XCreateSimpleWindow(parent: XID, x: c_int, y: c_int, width: c_uint, height: c_uint,
-        border_width: c_uint, border: c_ulong, background: c_ulong) -> XID);
-plain!(
+    pub fn x_create_simple_window(
+        display: XDisplay,
+        parent: XID,
+        x: c_int,
+        y: c_int,
+        width: c_uint,
+        height: c_uint,
+        border_width: c_uint,
+        border: c_ulong,
+        background: c_ulong,
+    ) -> XID = XCreateSimpleWindow;
+}
+plain! {
     /// `XDestroyWindow`.
-    x_destroy_window => XDestroyWindow(window: XID) -> c_int);
-plain!(
+    pub fn x_destroy_window(display: XDisplay, window: XID) -> c_int = XDestroyWindow;
+}
+plain! {
     /// `XMapWindow`.
-    x_map_window => XMapWindow(window: XID) -> c_int);
-plain!(
+    pub fn x_map_window(display: XDisplay, window: XID) -> c_int = XMapWindow;
+}
+plain! {
     /// `XUnmapWindow`.
-    x_unmap_window => XUnmapWindow(window: XID) -> c_int);
-plain!(
+    pub fn x_unmap_window(display: XDisplay, window: XID) -> c_int = XUnmapWindow;
+}
+plain! {
     /// `XRaiseWindow`.
-    x_raise_window => XRaiseWindow(window: XID) -> c_int);
-plain!(
+    pub fn x_raise_window(display: XDisplay, window: XID) -> c_int = XRaiseWindow;
+}
+plain! {
     /// `XResizeWindow`.
-    x_resize_window => XResizeWindow(window: XID, width: c_uint, height: c_uint) -> c_int);
-plain!(
+    pub fn x_resize_window(
+        display: XDisplay,
+        window: XID,
+        width: c_uint,
+        height: c_uint,
+    ) -> c_int = XResizeWindow;
+}
+plain! {
     /// `XMoveResizeWindow`.
-    x_move_resize_window => XMoveResizeWindow(window: XID, x: c_int, y: c_int, width: c_uint, height: c_uint) -> c_int);
-plain!(
+    pub fn x_move_resize_window(
+        display: XDisplay,
+        window: XID,
+        x: c_int,
+        y: c_int,
+        width: c_uint,
+        height: c_uint,
+    ) -> c_int = XMoveResizeWindow;
+}
+plain! {
     /// `XReparentWindow`.
-    x_reparent_window => XReparentWindow(window: XID, parent: XID, x: c_int, y: c_int) -> c_int);
-plain!(
+    pub fn x_reparent_window(
+        display: XDisplay,
+        window: XID,
+        parent: XID,
+        x: c_int,
+        y: c_int,
+    ) -> c_int = XReparentWindow;
+}
+plain! {
     /// `XSetWindowBackground`.
-    x_set_window_background => XSetWindowBackground(window: XID, background: c_ulong) -> c_int);
-plain!(
+    pub fn x_set_window_background(
+        display: XDisplay,
+        window: XID,
+        background: c_ulong,
+    ) -> c_int = XSetWindowBackground;
+}
+plain! {
     /// `XIconifyWindow`.
-    x_iconify_window => XIconifyWindow(window: XID, screen: c_int) -> c_int);
-plain!(
+    pub fn x_iconify_window(display: XDisplay, window: XID, screen: c_int) -> c_int = XIconifyWindow;
+}
+plain! {
     /// `XSelectInput`.
-    x_select_input => XSelectInput(window: XID, mask: c_long) -> c_int);
-plain!(
+    pub fn x_select_input(display: XDisplay, window: XID, mask: c_long) -> c_int = XSelectInput;
+}
+plain! {
     /// `XDeleteProperty`.
-    x_delete_property => XDeleteProperty(window: XID, property: Atom) -> c_int);
-plain!(
+    pub fn x_delete_property(display: XDisplay, window: XID, property: Atom) -> c_int = XDeleteProperty;
+}
+plain! {
     /// `XSetTransientForHint`.
-    x_set_transient_for_hint => XSetTransientForHint(window: XID, parent: XID) -> c_int);
-plain!(
+    pub fn x_set_transient_for_hint(
+        display: XDisplay,
+        window: XID,
+        parent: XID,
+    ) -> c_int = XSetTransientForHint;
+}
+plain! {
     /// `XSetInputFocus`.
-    x_set_input_focus => XSetInputFocus(focus: XID, revert_to: c_int, time: Time) -> c_int);
-plain!(
+    pub fn x_set_input_focus(
+        display: XDisplay,
+        focus: XID,
+        revert_to: c_int,
+        time: Time,
+    ) -> c_int = XSetInputFocus;
+}
+plain! {
     /// `XUngrabPointer`.
-    x_ungrab_pointer => XUngrabPointer(time: Time) -> c_int);
-plain!(
+    pub fn x_ungrab_pointer(display: XDisplay, time: Time) -> c_int = XUngrabPointer;
+}
+plain! {
     /// `XGetSelectionOwner`.
-    x_get_selection_owner => XGetSelectionOwner(selection: Atom) -> XID);
-plain!(
+    pub fn x_get_selection_owner(display: XDisplay, selection: Atom) -> XID = XGetSelectionOwner;
+}
+plain! {
     /// `XSetSelectionOwner`.
-    x_set_selection_owner => XSetSelectionOwner(selection: Atom, owner: XID, time: Time) -> c_int);
-plain!(
+    pub fn x_set_selection_owner(
+        display: XDisplay,
+        selection: Atom,
+        owner: XID,
+        time: Time,
+    ) -> c_int = XSetSelectionOwner;
+}
+plain! {
     /// `XConvertSelection`.
-    x_convert_selection => XConvertSelection(selection: Atom, target: Atom, property: Atom, requestor: XID,
-        time: Time) -> c_int);
-plain!(
+    pub fn x_convert_selection(
+        display: XDisplay,
+        selection: Atom,
+        target: Atom,
+        property: Atom,
+        requestor: XID,
+        time: Time,
+    ) -> c_int = XConvertSelection;
+}
+plain! {
     /// `XFlush`.
-    x_flush => XFlush() -> c_int);
-plain!(
+    pub fn x_flush(display: XDisplay) -> c_int = XFlush;
+}
+plain! {
     /// `XPending`: the number of events that were received and not yet
     /// taken from the queue.
-    x_pending => XPending() -> c_int);
-plain!(
+    pub fn x_pending(display: XDisplay) -> c_int = XPending;
+}
+plain! {
     /// `XLockDisplay`.
-    x_lock_display => XLockDisplay() -> ());
-plain!(
+    pub fn x_lock_display(display: XDisplay) -> () = XLockDisplay;
+}
+plain! {
     /// `XUnlockDisplay`.
-    x_unlock_display => XUnlockDisplay() -> ());
-plain!(
+    pub fn x_unlock_display(display: XDisplay) -> () = XUnlockDisplay;
+}
+plain! {
     /// `XMaxRequestSize`, in units of four bytes.
-    x_max_request_size => XMaxRequestSize() -> c_long);
-plain!(
+    pub fn x_max_request_size(display: XDisplay) -> c_long = XMaxRequestSize;
+}
+plain! {
     /// `XExtendedMaxRequestSize`, in units of four bytes; zero without the
     /// big requests extension.
-    x_extended_max_request_size => XExtendedMaxRequestSize() -> c_long);
-plain!(
+    pub fn x_extended_max_request_size(display: XDisplay) -> c_long = XExtendedMaxRequestSize;
+}
+plain! {
     /// `XCreateColormap` with a visual that came from the server
     /// (`XMatchVisualInfo`, a GLX or EGL configuration).
-    x_create_colormap_raw => XCreateColormap(window: XID, visual: *mut Visual, alloc: c_int) -> XID);
+    pub fn x_create_colormap_raw(
+        display: XDisplay,
+        window: XID,
+        visual: *mut Visual,
+        alloc: c_int,
+    ) -> XID = XCreateColormap;
+}
 
 /// `XSync`.
 pub fn x_sync(display: XDisplay, discard: bool) -> c_int {
@@ -343,9 +435,10 @@ pub fn x_get_visual_info_by_id(display: XDisplay, visual_id: c_ulong) -> Option<
     }
 }
 
-plain!(
+plain! {
     /// `XFreeColormap`.
-    x_free_colormap => XFreeColormap(colormap: XID) -> c_int);
+    pub fn x_free_colormap(display: XDisplay, colormap: XID) -> c_int = XFreeColormap;
+}
 
 /// `XCreateColormap` for a visual of the connection.
 pub fn x_create_colormap(display: XDisplay, window: XID, visual: &VisualInfo, alloc: c_int) -> XID {
@@ -855,12 +948,14 @@ pub fn new_window_changes() -> XWindowChanges {
     unsafe { std::mem::zeroed() }
 }
 
-plain!(
+plain! {
     /// `XGrabServer`.
-    x_grab_server => XGrabServer() -> c_int);
-plain!(
+    pub fn x_grab_server(display: XDisplay) -> c_int = XGrabServer;
+}
+plain! {
     /// `XUngrabServer`.
-    x_ungrab_server => XUngrabServer() -> c_int);
+    pub fn x_ungrab_server(display: XDisplay) -> c_int = XUngrabServer;
+}
 
 /// The pointer as seen from a window, with the deepest window under it as
 /// the child (`XLib.QueryPointer`): the tree is walked with the server
