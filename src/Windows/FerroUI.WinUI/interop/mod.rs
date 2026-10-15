@@ -64,7 +64,7 @@ pub(crate) mod collections;
 #[cfg(windows)]
 pub(crate) mod composable;
 #[cfg(windows)]
-pub(crate) mod event_handlers;
+pub mod event_handlers;
 pub(crate) mod win_rt;
 
 #[cfg(test)]

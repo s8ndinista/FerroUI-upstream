@@ -78,11 +78,14 @@ fn main() -> std::process::ExitCode {
         // The automation objects of the integration print what XAML asks of
         // them (docs/porting/winui.md, section 7.2).
         std::env::set_var("FERROUI_WINUI_TRACE", "1");
+        smoke::set_smoke();
     }
     let started = XamlApplication::start(move |_| app::App::on_launched(smoke));
+    smoke::end_step("Application.Start returned");
     // The window, if the loop ended without closing it, before the runtime
     // goes.
     app::App::shutdown();
+    smoke::end_step("MddBootstrapShutdown");
     drop(sdk);
     if let Err(error) = started {
         smoke::report(false, &format!("Application.Start failed: {error}"));
@@ -90,7 +93,9 @@ fn main() -> std::process::ExitCode {
     }
 
     if smoke && !smoke::passed() {
+        smoke::end_step("main returns: failed");
         return std::process::ExitCode::FAILURE;
     }
+    smoke::end_step("main returns");
     std::process::ExitCode::SUCCESS
 }

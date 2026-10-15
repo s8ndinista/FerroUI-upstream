@@ -449,6 +449,13 @@ SPEC = [
     ("IWindow", X + "IWindow"),
     ("IWindowFactory", X + "IWindowFactory"),
     ("IWindowStatics", X + "IWindowStatics"),
+    # The resources of the application (XamlControlsResources, merged as the App.xaml of the
+    # reference's samples merges it) and the type information of the controls library
+    ("IResourceDictionary", X + "IResourceDictionary"),
+    ("IResourceDictionaryFactory", X + "IResourceDictionaryFactory"),
+    ("IXamlMetadataProvider", X + "Markup.IXamlMetadataProvider"),
+    ("IXamlControlsXamlMetaDataProviderStatics", X + "XamlTypeInfo.IXamlControlsXamlMetaDataProviderStatics"),
+    ("IXamlReaderStatics", X + "Markup.IXamlReaderStatics"),
     # Elements
     ("IDependencyObject", X + "IDependencyObject"),
     ("IUIElement", X + "IUIElement"),
@@ -458,6 +465,17 @@ SPEC = [
     ("IFrameworkElement", X + "IFrameworkElement"),
     ("IPanel", X + "Controls.IPanel"),
     ("IGridFactory", X + "Controls.IGridFactory"),
+    ("IGridStatics", X + "Controls.IGridStatics"),
+    # The controls of WinUIEmbedSample
+    ("ITextBlock", X + "Controls.ITextBlock"),
+    ("ITextBox", X + "Controls.ITextBox"),
+    ("IButtonBase", X + "Controls.Primitives.IButtonBase"),
+    ("IRangeBase", X + "Controls.Primitives.IRangeBase"),
+    ("IRangeBaseValueChangedEventArgs", X + "Controls.Primitives.IRangeBaseValueChangedEventArgs"),
+    ("RangeBaseValueChangedEventHandler", X + "Controls.Primitives.RangeBaseValueChangedEventHandler"),
+    ("ISelector", X + "Controls.Primitives.ISelector"),
+    ("ISelectionChangedEventArgs", X + "Controls.ISelectionChangedEventArgs"),
+    ("SelectionChangedEventHandler", X + "Controls.SelectionChangedEventHandler"),
     ("ISwapChainPanel", X + "Controls.ISwapChainPanel"),
     ("ISwapChainPanelFactory", X + "Controls.ISwapChainPanelFactory"),
     ("IBrush", X + "Media.IBrush"),
@@ -541,6 +559,7 @@ SPEC = [
     ("IStorageFolderStatics", "Windows.Storage.IStorageFolderStatics"),
     # Generic instances
     ("IVectorUIElement", C + "IVector`1<Microsoft.UI.Xaml.UIElement>"),
+    ("IVectorResourceDictionary", C + "IVector`1<Microsoft.UI.Xaml.ResourceDictionary>"),
     ("IVectorAutomationPeer", C + "IVector`1<Microsoft.UI.Xaml.Automation.Peers.AutomationPeer>"),
     ("IVectorViewAutomationPeer", C + "IVectorView`1<Microsoft.UI.Xaml.Automation.Peers.AutomationPeer>"),
     ("IIterableAutomationPeer", C + "IIterable`1<Microsoft.UI.Xaml.Automation.Peers.AutomationPeer>"),
@@ -555,6 +574,7 @@ SPEC = [
     ("TypedEventHandlerSwapChainPanelObject", F + "TypedEventHandler`2<Microsoft.UI.Xaml.Controls.SwapChainPanel,object>"),
     ("TypedEventHandlerUIElementCharacterReceived", F + "TypedEventHandler`2<Microsoft.UI.Xaml.UIElement,Microsoft.UI.Xaml.Input.CharacterReceivedRoutedEventArgs>"),
     ("TypedEventHandlerUIElementDragStarting", F + "TypedEventHandler`2<Microsoft.UI.Xaml.UIElement,Microsoft.UI.Xaml.DragStartingEventArgs>"),
+    ("TypedEventHandlerFrameworkElementObject", F + "TypedEventHandler`2<Microsoft.UI.Xaml.FrameworkElement,object>"),
     ("TypedEventHandlerTextRequested", F + "TypedEventHandler`2<Windows.UI.Text.Core.CoreTextEditContext,Windows.UI.Text.Core.CoreTextTextRequestedEventArgs>"),
     ("TypedEventHandlerSelectionRequested", F + "TypedEventHandler`2<Windows.UI.Text.Core.CoreTextEditContext,Windows.UI.Text.Core.CoreTextSelectionRequestedEventArgs>"),
     ("TypedEventHandlerLayoutRequested", F + "TypedEventHandler`2<Windows.UI.Text.Core.CoreTextEditContext,Windows.UI.Text.Core.CoreTextLayoutRequestedEventArgs>"),

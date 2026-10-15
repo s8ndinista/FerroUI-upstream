@@ -87,7 +87,8 @@ note = "the catalog in a WinUI 3 window through ferroui-winui, with a smoke mode
 
 [[sample]]
 upstream = "samples/WinUIEmbedSample"
-note = "not ported yet: controls of WinUI beside the embedded content; the integration it needs is ferroui-winui"
+rust = "samples/WinUIEmbedSample"
+note = "controls of WinUI beside the content in one WinUI 3 window through ferroui-winui, with a smoke mode (docs/porting/winui.md, section 7.6); the content (EmbeddedView) is tested on every host"
 
 [[sample]]
 upstream = "samples/interop/WindowsInteropTest"

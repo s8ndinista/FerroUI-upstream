@@ -1,0 +1,59 @@
+[package]
+name = "winui-embed-sample"
+description = "The WinUIEmbedSample sample of FerroUI: controls of WinUI 3 beside FerroUI content in one window, through the swap chain panel of ferroui-winui"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+# The build script compiles the markup documents of the content (`sample-build`) and embeds the
+# application manifest (`app.manifest`) in the executable.
+build = "build.rs"
+
+# Unit tests live next to the code (`tests/` modules of the library), not as integration test
+# targets.
+autotests = false
+autobenches = false
+autoexamples = false
+autobins = false
+
+# The content of the panel: `FerroApp.xaml` and `EmbeddedView.xaml` with their classes, built and
+# tested on every host.
+[lib]
+path = "lib.rs"
+
+# The WinUI application (`App.xaml.cs`, `MainWindow.xaml.cs` and the generated `Main`), which runs
+# on Windows only.
+[[bin]]
+name = "winui-embed-sample"
+path = "main.rs"
+
+[dependencies]
+# The compiled markup of the crate calls the typed functions of the declared members.
+ferroui-base = { workspace = true, features = ["markup-functions"] }
+ferroui-controls = { workspace = true }
+ferroui-markup = { workspace = true }
+ferroui-markup-xaml = { workspace = true }
+ferroui-themes-fluent = { workspace = true }
+sample-support = { path = "../SampleSupport" }
+
+# The application: WinUI 3 of the Windows App SDK, the Windows backend with ANGLE (the swap chain
+# of the panel is created on ANGLE's Direct3D 11 device), Skia and HarfBuzz, as the reference's
+# sample sets the application up.
+[target.'cfg(windows)'.dependencies]
+ferroui-winui = { workspace = true }
+ferroui-win32 = { workspace = true, features = ["angle"] }
+ferroui-skia = { workspace = true }
+ferroui-harfbuzz = { workspace = true }
+ferroui-microcom = { workspace = true }
+# The local time of the lines of the diagnostics, and the end of a smoke run that does not end.
+windows-sys = { workspace = true, features = ["Win32_Foundation", "Win32_System_SystemInformation", "Win32_System_Threading"] }
+
+[build-dependencies]
+sample-build = { path = "../SampleBuild" }
+
+[dev-dependencies]
+ferroui-base = { workspace = true, features = ["testing"] }
+ferroui-controls = { workspace = true, features = ["testing"] }
+sample-testing = { path = "../SampleTesting" }

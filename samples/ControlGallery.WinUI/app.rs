@@ -29,10 +29,25 @@ impl App {
         LIFETIME.with(Rc::clone)
     }
 
-    /// Lets go of the main window, if the application still holds it.
+    /// Lets go of the main window, if the application still holds it, and of
+    /// the main view.
+    ///
+    /// The main view is let go of here, while the threads of the framework
+    /// run, and not with the thread-local values of the main thread when the
+    /// process ends: the system ends every other thread first (a thread
+    /// inside a lock of the framework leaves it held), and then a destructor
+    /// of the tree of controls that takes such a lock never returns
+    /// (docs/porting/win32-platform.md, section 11.3; docs/porting/winui.md,
+    /// section 7.3). The reference's runtime finalizes nothing at the end.
     pub fn shutdown() {
         let window = WINDOW.with(|slot| slot.borrow_mut().take());
         drop(window);
+        let main_view = LIFETIME.with(|lifetime| {
+            let main_view = lifetime.main_view();
+            lifetime.set_main_view(None);
+            main_view
+        });
+        drop(main_view);
     }
 
     /// `OnLaunched`.
@@ -57,7 +72,9 @@ impl App {
         // ends: the objects of XAML are not released after the loop of the
         // application has returned.
         let closed = window.window().on_closed(|| {
+            crate::smoke::end_step("Closed: the application lets go of the window and of the main view");
             App::shutdown();
+            crate::smoke::end_step("Application.Exit");
             XamlApplication.exit();
         });
         if let Err(error) = closed {

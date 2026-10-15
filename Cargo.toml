@@ -64,6 +64,7 @@ members = [
     "samples/IntegrationTestApp",
     "samples/ControlCatalog.Android",
     "samples/ControlGallery.WinUI",
+    "samples/WinUIEmbedSample",
 ]
 
 [workspace.package]

@@ -61,9 +61,9 @@
   the pictures are copied to vm-smoke-screenshots beside the report.
 
 .PARAMETER WinUI
-  Also run the tests of the WinUI integration (ferroui-winui) and the smoke run of its sample
-  (control-gallery-winui --smoke: the catalog in a WinUI 3 window; docs/porting/winui.md, section
-  7). The sample needs the Windows App Runtime 1.6 on the machine, which the script checks for and
+  Also run the tests of the WinUI integration (ferroui-winui) and the smoke runs of its two samples
+  (control-gallery-winui --smoke: the catalog in a WinUI 3 window; winui-embed-sample --smoke:
+  controls of WinUI beside the content; docs/porting/winui.md, section 7). The samples need the Windows App Runtime 1.6 on the machine, which the script checks for and
   does not install (see -InstallWindowsAppRuntime), and the bootstrap library of the Windows App SDK
   beside the executable, which scripts\winui\fetch-windows-app-sdk.ps1 downloads from nuget.org
   (the package Microsoft.WindowsAppSDK 1.6.241114003) and copies there.
@@ -638,15 +638,18 @@ if ($WinUI) {
         $failed.Add('Windows App Runtime 1.6 missing')
     } else {
         foreach ($package in $runtime) { Say "    $($package.PackageFullName)" }
-        if ((Run 'winui-build' "cargo build --locked $jobsArgument -p control-gallery-winui") -ne 0) {
-            $failed.Add('control-gallery-winui build')
+        if ((Run 'winui-build' "cargo build --locked $jobsArgument -p control-gallery-winui -p winui-embed-sample") -ne 0) {
+            $failed.Add('WinUI samples build')
             Tail 'winui-build' 40
         } else {
-            $gallery = Join-Path $debug 'control-gallery-winui.exe'
-            $commandLine = "`"$gallery`" --smoke"
-            $code = if ($InteractiveUser) { Run-Interactive 'winui-smoke' $commandLine 300 } else { Run 'winui-smoke' $commandLine }
-            if ($code -ne 0) { $failed.Add('WinUI smoke run') }
-            Tail 'winui-smoke' 60 '^\[(FAIL|info| ok )\]|panicked|error'
+            foreach ($sample in @('control-gallery-winui', 'winui-embed-sample')) {
+                $executable = Join-Path $debug "$sample.exe"
+                $commandLine = "`"$executable`" --smoke"
+                $name = "winui-smoke-$sample"
+                $code = if ($InteractiveUser) { Run-Interactive $name $commandLine 300 } else { Run $name $commandLine }
+                if ($code -ne 0) { $failed.Add("WinUI smoke run ($sample)") }
+                Tail $name 80 '^\[(FAIL|info| ok |step)\]|panicked|error'
+            }
         }
     }
 }

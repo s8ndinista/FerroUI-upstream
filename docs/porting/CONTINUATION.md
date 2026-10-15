@@ -409,11 +409,19 @@ Branch `winui` (pull request 197, merged). [`winui.md`](winui.md) has the design
 - `samples/ControlGallery.WinUI` (`control-gallery-winui`): the catalog in a WinUI 3 window, with `--smoke` (`winui.md`, section 7.2).
 - Verified: 21 host tests; `cargo check -p ferroui-winui` for `x86_64-pc-windows-msvc` (with the tests) and `aarch64-pc-windows-msvc`; the sample's own sources against stand-ins of the catalog, Skia and HarfBuzz. **The first run in the virtual machine** (`winui.md`, section 7.5) passed the bootstrap, the composed application, panel and peer, `Loaded`, the swap chain set on the panel and 46 frames, then crashed in `GetChildren` of the peer of the panel: the value of a proxy was read through an interface of the inner object (fixed; the smoke run now prints a `[step]` line before each call and `[trace]` lines from the automation objects). **The second run** (`c22d5163`) passed: every check of the smoke run, the automation tree of the panel and of the content, and the close of the window (`winui.md`, section 7.5).
 
+**The leftovers (branch `winui-leftovers`, 2026-10-15)**:
+
+- `samples/WinUIEmbedSample` (`winui-embed-sample`) is ported: the content (`FerroApp.xaml`, `EmbeddedView.xaml` and their classes) is a library with 14 host tests; the WinUI application loads the reference's `MainWindow.xaml` at run time and adds its handlers and the panel in code; `--smoke` checks both sides (`winui.md`, section 7.6). Checked for both Windows targets against stand-ins of Skia and HarfBuzz.
+- `XamlApplication::start` merges `XamlControlsResources` into the resources of the application, as the `App.xaml` of both samples does, and the composed application answers `IXamlMetadataProvider` through `XamlControlsXamlMetaDataProvider` (`winui.md`, section 3.4). The IDL has the interfaces for both and for the second sample (36 parameterized instances).
+- **The step of CI**: the first two runs installed the runtime and passed every check of the smoke run, then the process did not end and the step ran into its limit (`timeout` of the shell did not end it). The likely cause is the end of a process on Windows (`win32-platform.md`, section 11.3): the main view stayed in a thread-local value until the destructors of the main thread ran after the other threads were ended. Both samples now let go of the main view in `Closed`; the smoke runs print the steps of the end and a watchdog fails a run that does not end; `scripts/winui/smoke-run.ps1` runs the samples with a limit and terminates a process that stays. The step is required now (`winui.md`, section 7.3).
+- Skia with Vulkan on Windows (the feature `vulkan` of `ferroui-win32`): `.github/workflows/skia-vulkan-windows.yml`, dispatched by hand and weekly (`vulkan.md`, section 8.1).
+
 Open, in order:
 
-1. **The informative step of the `windows` job** (`winui.md`, section 7.3): whether the runner installs the runtime and runs the sample; then either required, or the reason it cannot be recorded and the step removed.
-2. Input, the input method and drag and drop by hand in the machine (`vm-smoke.ps1 -WinUI` builds and runs the sample; without `--smoke` it stays open); the automation tree with a client of UI Automation; what is left is `winui.md`, section 9.
-3. `samples/WinUIEmbedSample` (WinUI controls beside the embedded content).
+1. **The first required run of the WinUI step** (the pull request of `winui-leftovers`): that both processes end. If one stays, its `[step]` lines name the place.
+2. **The first run of the Skia Vulkan workflow** (dispatch it after the merge): the build time and whether the source build succeeds; the result goes to `vulkan.md`, section 8.1.
+3. `WinUIEmbedSample` in the virtual machine (`vm-smoke.ps1 -WinUI` builds and runs both samples), then by hand: the controls of both sides, focus, drag and drop between them, the clipboard, cursors, hover, ink.
+4. Input, the input method and drag and drop by hand in the machine (without `--smoke` the samples stay open); the automation tree with a client of UI Automation; what is left is `winui.md`, section 9.
 
 ## Vulkan: the contracts crate, the Skia GPU and the X11 mode (2026-10-11)
 
