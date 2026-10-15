@@ -1,6 +1,6 @@
 [package]
 name = "ferroui-ios"
-description = "The iOS platform of FerroUI: a UIKit view, touch input and Metal graphics"
+description = "The iOS platform of FerroUI: a UIKit view, touch input and Metal and OpenGL ES graphics"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -19,6 +19,8 @@ ferroui-base.workspace = true
 ferroui-controls.workspace = true
 # The Metal contracts the platform implements.
 ferroui-metal.workspace = true
+# The OpenGL contracts the platform implements (OpenGL ES over EAGL).
+ferroui-opengl.workspace = true
 # The platform selects its renderer and its text shaper, as the original does (`use_ios`).
 ferroui-harfbuzz.workspace = true
 ferroui-skia.workspace = true
@@ -91,6 +93,13 @@ objc2-metal = { version = "=0.3.2", default-features = false, features = [
     "MTLResource",
     "MTLTexture",
     "MTLTypes",
+] }
+# OpenGL ES over EAGL (docs/porting/ios-platform.md, section 7): the context, its share group, the
+# drawable protocol of the layer and the storage and presentation of its renderbuffer.
+objc2-open-gl-es = { version = "=0.3.2", default-features = false, features = [
+    "std",
+    "EAGL",
+    "EAGLDrawable",
 ] }
 objc2-ui-kit = { version = "=0.3.2", default-features = false, features = [
     "std",

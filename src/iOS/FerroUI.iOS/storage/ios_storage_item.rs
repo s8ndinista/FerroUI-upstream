@@ -151,6 +151,10 @@ mod uikit {
             &self.file_path
         }
 
+        fn can_bookmark(&self) -> bool {
+            true
+        }
+
         fn name(&self) -> String {
             self.name.clone()
         }
@@ -240,6 +244,11 @@ mod uikit {
             ready(result)
         }
 
+        fn release_bookmark_async(&self) -> LocalBoxFuture<()> {
+            // no-op
+            ready(())
+        }
+
         fn save_bookmark_async(&self) -> LocalBoxFuture<Option<String>> {
             // SAFETY: a URL may always be asked for its security scope.
             if !unsafe { self.security_scoped_ancestor_url.startAccessingSecurityScopedResource() } {
@@ -269,6 +278,8 @@ mod uikit {
             unsafe { self.security_scoped_ancestor_url.stopAccessingSecurityScopedResource() };
             ready(bookmark)
         }
+
+        fn dispose(&self) {}
     }
 
     /// Creates the item of a URL: a folder for a URL with a directory
@@ -295,7 +306,9 @@ mod uikit {
     macro_rules! storage_item {
         ($type:ident, $kind:tt) => {
             impl IDisposable for $type {
-                fn dispose(&self) {}
+                fn dispose(&self) {
+                    self.base.dispose()
+                }
             }
 
             impl IStorageItem for $type {
@@ -312,7 +325,7 @@ mod uikit {
                 }
 
                 fn can_bookmark(&self) -> bool {
-                    true
+                    self.base.can_bookmark()
                 }
 
                 fn save_bookmark_async(&self) -> LocalBoxFuture<Option<String>> {
@@ -349,8 +362,7 @@ mod uikit {
 
             impl IStorageBookmarkItem for $type {
                 fn release_bookmark_async(&self) -> LocalBoxFuture<()> {
-                    // no-op
-                    ready(())
+                    self.base.release_bookmark_async()
                 }
             }
         };

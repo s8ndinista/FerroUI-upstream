@@ -28,6 +28,14 @@ impl MetalRenderTarget {
     pub fn pending_layout(&self) -> (PixelSize, f64) {
         self.shared.pending_layout()
     }
+
+    /// Sets the layout the next frame is drawn for. The reference's view
+    /// sets it on its render target; the view of the port sets it in the
+    /// state it shares with its surface (`layoutSubviews`), which is where
+    /// this writes too.
+    pub fn set_pending_layout(&self, value: (PixelSize, f64)) {
+        self.shared.set_pending_layout(value);
+    }
 }
 
 impl IPlatformRenderSurfaceRenderTarget for MetalRenderTarget {}
