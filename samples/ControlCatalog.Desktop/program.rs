@@ -29,7 +29,11 @@
 //! (headers of pages, separated by commas; by default the home page and a
 //! handful of others) are shown one after the other, `FERROUI_SMOKE_PAGES`
 //! milliseconds each (1500 by default), and each is drawn into a bitmap
-//! through the render target of the framework (`NN-<header>.png`). On
+//! through the render target of the framework (`NN-<header>.png`, drawn by
+//! the immediate renderer into a render target bitmap) and drawn by the
+//! compositor of the window as it draws the frames it presents
+//! (`NN-<header>-composed.png`, a snapshot of the composition visual of the
+//! window at its render scaling). On
 //! a screenshot run `FERROUI_SMOKE_OPEN_POPUP=combobox` (or `menu`) opens
 //! the first combo box (or the first menu item) of each page that is shown,
 //! so that a picture taken from outside (the compositor's, on Wayland) has a
@@ -85,6 +89,7 @@ use control_catalog::App;
 use ferroui_base::logging::LogEventLevel;
 use ferroui_base::media::imaging::{Bitmap, BitmapEncoderOptions, PngBitmapEncoderOptions, RenderTargetBitmap};
 use ferroui_base::platform::{AlphaFormat, PixelFormat};
+use ferroui_base::rendering::composition::ElementComposition;
 use ferroui_base::threading::{DispatcherPriority, DispatcherTimer};
 use ferroui_base::{PixelPoint, PixelRect, PixelSize, Ref, Size, Vector, Visual};
 use ferroui_controls::{AppBuilder, Application, ComboBox, MenuItem, TextBox, Window, WindowDecorations};
@@ -260,6 +265,43 @@ fn save_frame(window: &Ref<Window>, path: &Path) -> std::io::Result<PixelSize> {
     result.map(|()| pixel_size)
 }
 
+/// Writes the window as its compositor draws it: a snapshot of the
+/// composition visual of the window at its render scaling, which the render
+/// thread draws from the same server visuals, through the same drawing code,
+/// as the frames it presents in the window (the bitmap of `save_frame` is
+/// drawn by the immediate renderer instead). The picture is written when
+/// the render thread has drawn it, after this returns.
+fn save_composed(window: &Ref<Window>, path: PathBuf, header: String) {
+    let Some(visual) = ElementComposition::get_element_visual(window) else {
+        println!("Screenshot of {header}: the window has no composition visual");
+        return;
+    };
+    let compositor = visual.compositor();
+    let task = compositor.create_composition_visual_snapshot(&visual, window.render_scaling());
+    // The job goes with the next batch: committed now, it draws the page
+    // that is shown, before the run selects the next one.
+    compositor.commit();
+    let pending = task.clone();
+    task.on_completed(move || match pending.take_result() {
+        Some(Ok(bitmap)) => match bitmap.save_to_file(&path.to_string_lossy(), &png()) {
+            Ok(()) => {
+                let size = bitmap.pixel_size();
+                println!(
+                    "Screenshot of {header}: {} ({} by {}, the frame of the compositor)",
+                    path.display(),
+                    size.width,
+                    size.height
+                );
+            }
+            Err(error) => {
+                println!("Screenshot of {header}: the snapshot could not be written to {}: {error}", path.display())
+            }
+        },
+        Some(Err(error)) => println!("Screenshot of {header}: the compositor made no snapshot: {error}"),
+        None => {}
+    });
+}
+
 /// The client area of the window as the system composed it: the pixels
 /// (four bytes each, blue first, opaque), their size, and the number of
 /// what the capture holds, in words (the number of different colours among
@@ -301,6 +343,8 @@ fn save_screenshots(directory: &Path, index: usize, header: &str) {
         ),
         Err(error) => println!("Screenshot of {header}: the frame could not be written to {}: {error}", frame.display()),
     }
+
+    save_composed(&window, directory.join(screenshot_name(index, header, "-composed")), header.to_string());
 
     match capture_window(&window) {
         None => {}
