@@ -21,7 +21,7 @@ FerroUI is a cross-platform UI framework for Rust: a retained-mode control libra
 
 ## Project status
 
-The state per subsystem is tracked in [docs/porting/CRITICAL-PATH.md](docs/porting/CRITICAL-PATH.md), the state per upstream member in [docs/porting/TRACKING.md](docs/porting/TRACKING.md), and what is not ported in [docs/porting/REMAINING.md](docs/porting/REMAINING.md). Of the upstream projects in scope, every member has a counterpart or is waived with a reason (30354 present, 5856 waived, none missing); of every upstream project, in scope or not, the port has 81 percent of the members.
+The state per subsystem is tracked in [docs/porting/CRITICAL-PATH.md](docs/porting/CRITICAL-PATH.md), the state per upstream member in [docs/porting/TRACKING.md](docs/porting/TRACKING.md), and what is not ported in [docs/porting/REMAINING.md](docs/porting/REMAINING.md). The checks that still need real hardware or a person at the screen are listed in [docs/porting/manual-verification.md](docs/porting/manual-verification.md). Of the upstream projects in scope, every member has a counterpart or is waived with a reason (30354 present, 5856 waived, none missing); of every upstream project, in scope or not, the port has 81 percent of the members.
 
 ### Framework
 
