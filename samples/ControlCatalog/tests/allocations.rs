@@ -118,7 +118,7 @@ mod counting {
         }
     }
 
-    fn add(counter: &'static std::thread::LocalKey<Cell<u64>>, amount: u64) {
+    fn add(counter: &'static ferroui_base::ferro_thread_local::LocalKey<Cell<u64>>, amount: u64) {
         // What the recorder of the allocation trace allocates is its own.
         if trace::is_inside() {
             return;

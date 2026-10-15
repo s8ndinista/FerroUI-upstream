@@ -428,7 +428,7 @@ impl GridSplitter {
     }
 
     fn splitter_cursor(
-        slot: &'static std::thread::LocalKey<RefCell<Option<Rc<Cursor>>>>,
+        slot: &'static ferroui_base::ferro_thread_local::LocalKey<RefCell<Option<Rc<Cursor>>>>,
         cursor_type: StandardCursorType,
     ) -> Rc<Cursor> {
         if let Some(cursor) = slot.with(|slot| slot.borrow().clone()) {

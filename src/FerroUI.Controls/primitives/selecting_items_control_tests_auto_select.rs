@@ -61,7 +61,7 @@ fn init_with_begin_end_init(target: &SelectingItemsControl, items: ItemsSource) 
 
 /// Overrides the default selection mode of the class `T` on the current
 /// thread, once.
-fn override_selection_mode<T: ferroui_base::ObjectType>(done: &'static std::thread::LocalKey<Cell<bool>>) {
+fn override_selection_mode<T: ferroui_base::ObjectType>(done: &'static ferroui_base::ferro_thread_local::LocalKey<Cell<bool>>) {
     if !done.replace(true) {
         SelectingItemsControl::selection_mode_property().override_default_value::<T>(SelectionMode::ALWAYS_SELECTED);
     }
