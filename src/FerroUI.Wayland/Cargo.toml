@@ -1,6 +1,6 @@
 [package]
 name = "ferroui-wayland"
-description = "The Wayland windowing platform of FerroUI for Linux"
+description = "The Wayland platform of FerroUI for Linux: toplevels and popups over xdg-shell, pointer, keyboard, touch and text input, clipboard and drag and drop, rendered through shared memory, EGL or a dmabuf swap chain"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
