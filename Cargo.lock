@@ -736,6 +736,29 @@ checksum = "f4beca3cb2444e3304ac30843cc091f44ed58932353cd492ce740067bfce6b12"
 [[package]]
 name = "ferroui"
 version = "0.1.0-preview.2"
+dependencies = [
+ "ferroui-base",
+ "ferroui-browser",
+ "ferroui-controls",
+ "ferroui-controls-color-picker",
+ "ferroui-desktop",
+ "ferroui-dialogs",
+ "ferroui-harfbuzz",
+ "ferroui-headless",
+ "ferroui-markup",
+ "ferroui-markup-xaml",
+ "ferroui-markup-xaml-loader",
+ "ferroui-metal",
+ "ferroui-native",
+ "ferroui-opengl",
+ "ferroui-skia",
+ "ferroui-themes-fluent",
+ "ferroui-themes-simple",
+ "ferroui-vello",
+ "ferroui-vulkan",
+ "ferroui-win32",
+ "ferroui-x11",
+]
 
 [[package]]
 name = "ferroui-android"

@@ -57,7 +57,14 @@ The first build compiles or downloads Skia and can take a while.
 
 ## Installation
 
-FerroUI is a set of crates that are released together at one version. A desktop application names the base library, the controls, the desktop entry point and a theme:
+FerroUI is a set of crates that are released together at one version. From `0.1.0-preview.2` on, an application can name one dependency, the facade crate `ferroui`, which re-exports the common crates under short names (`ferroui::base`, `ferroui::controls`, ...) with a prelude of the types of a minimal application; its default features are the desktop platforms and the Fluent theme, and further features add the Simple theme, XAML loading at run time, the colour picker, the dialogs, the browser platform, the Vello backend and the headless platform ([docs/release.md](docs/release.md), section 2.1):
+
+```toml
+[dependencies]
+ferroui = "=0.1.0-preview.2"
+```
+
+Or the crates themselves: a desktop application names the base library, the controls, the desktop entry point and a theme:
 
 ```toml
 [dependencies]
@@ -69,7 +76,7 @@ ferroui-themes-fluent = "=0.1.0-preview.1"
 
 A preview is a pre-release in the sense of semantic versioning (`0.1.0-preview.1`, `0.1.0-preview.2`, ... before `0.1.0`). Cargo selects a pre-release only when it is named, and the crates of one preview depend on one another at exactly that version, so name the same version for every FerroUI crate, as above. A preview may change any part of the public API. The release process is described in [docs/release.md](docs/release.md) and the changes of each release in [CHANGELOG.md](CHANGELOG.md).
 
-Markup is loaded at run time with `ferroui-markup-xaml-loader`, or compiled by the build script of the application with `ferroui-build` (a build dependency) against `ferroui-markup-xaml`.
+Markup is loaded at run time with `ferroui-markup-xaml-loader` (the feature `xaml` of the facade), or compiled by the build script of the application with `ferroui-build` (a build dependency) against `ferroui-markup-xaml`. The code the markup compiler writes names the crates it calls by their own names, so an application that compiles its markup depends on those crates directly, beside or instead of the facade.
 
 ### Crates
 
@@ -79,8 +86,8 @@ Markup is loaded at run time with `ferroui-markup-xaml-loader`, or compiled by t
 
 | Crate | Description | Version | Downloads | Documentation |
 |---|---|---|---|---|
-| [`ferroui`](https://crates.io/crates/ferroui) | Reserved name: the facade crate of FerroUI, which does not exist yet. This version is an empty placeholder | [![version](https://img.shields.io/crates/v/ferroui.svg)](https://crates.io/crates/ferroui) | [![downloads](https://img.shields.io/crates/d/ferroui.svg)](https://crates.io/crates/ferroui) | [![docs.rs](https://img.shields.io/docsrs/ferroui)](https://docs.rs/ferroui) |
 | [`ferroui-base`](https://crates.io/crates/ferroui-base) | The base library of FerroUI: the property system, layout, input, styling, media, text, animation, data binding and the compositor | [![version](https://img.shields.io/crates/v/ferroui-base.svg)](https://crates.io/crates/ferroui-base) | [![downloads](https://img.shields.io/crates/d/ferroui-base.svg)](https://crates.io/crates/ferroui-base) | [![docs.rs](https://img.shields.io/docsrs/ferroui-base)](https://docs.rs/ferroui-base) |
+| [`ferroui`](https://crates.io/crates/ferroui) | FerroUI in one dependency: the facade crate that re-exports the common crates under short names, with a prelude and features that choose the platform, the theme and the backends | [![version](https://img.shields.io/crates/v/ferroui.svg)](https://crates.io/crates/ferroui) | [![downloads](https://img.shields.io/crates/d/ferroui.svg)](https://crates.io/crates/ferroui) | [![docs.rs](https://img.shields.io/docsrs/ferroui)](https://docs.rs/ferroui) |
 
 **Controls and themes**
 
@@ -160,6 +167,9 @@ Run the examples:
 # A window with a few controls built in code
 cargo run -p ferroui-desktop --example hello_window
 
+# The same through the facade crate and its prelude, with the Fluent theme
+cargo run -p ferroui --example hello
+
 # Themed controls, Simple theme (add -- --fluent for the Fluent theme)
 cargo run -p ferroui-themes-simple --example themed_window
 
@@ -207,7 +217,7 @@ fn main() -> std::process::ExitCode {
 }
 ```
 
-The complete program, including the `App` class declaration, is [`hello_window.rs`](src/FerroUI.Desktop/examples/hello_window.rs). The API is still changing; that example is kept building and is the authoritative reference.
+The complete program, including the `App` class declaration, is [`hello_window.rs`](src/FerroUI.Desktop/examples/hello_window.rs). With the facade crate the program imports `ferroui::prelude::*` instead of the crates one by one: [`hello.rs`](src/FerroUI/examples/hello.rs). The API is still changing; those examples are kept building and are the authoritative reference.
 
 ### Markup
 
