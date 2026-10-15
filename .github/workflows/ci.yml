@@ -1288,6 +1288,11 @@ jobs:
           key: android
       - name: Tests of the Android crate (the logic, on the host)
         run: cargo test --locked -p ferroui-android --no-fail-fast
+      # The thread-local variables of the framework are slots of one table per thread on Android
+      # (android-platform.md, section 5.1); --cfg ferro_tls_table makes the host build use the table,
+      # so the tests of the base crate run against it.
+      - name: Tests of the base crate against the table of thread-local variables
+        run: RUSTFLAGS="--cfg ferro_tls_table" cargo test --locked -p ferroui-base --lib --no-fail-fast
       # The image has an Android SDK; what it has of it is printed, and the versions the scripts pin
       # (scripts/android/env.sh) are installed when they are missing.
       - name: The Android SDK of the image, and the pinned packages
