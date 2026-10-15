@@ -155,7 +155,7 @@ Until this decision the native library was built with a nightly toolchain, `-Zbu
 
 A disassembly of the catalog library (`tls-keys.sh --callers`) finds three callers of `pthread_key_create`: the table, the lazy key of the standard library and the emulated TLS, so nothing else creates keys. No dependency that an Android application links declares a `thread_local!` there: `skia-safe` has one only for Vulkan (not built for Android) and `sysinfo` only for FreeBSD and Windows. The count is an upper bound for the library (a key is created when its variable is first used); the virtual machine and the system libraries hold their own **[R]**. The library needs the same seven system libraries as before; `__emutls_get_address` is resolved from the compiler runtime, which the clang of the NDK links last, so the link line needs nothing beyond what cargo passes (with the nightly build the runtime had to come first, `-Zpre-link-args`, because the standard library then used emulated TLS too).
 
-**Verified.** On the host: the tests of the table (`ferroui-base`, `tests/ferro_thread_local_tests.rs`: laziness, isolation per thread, initialisers that use other variables and their own, the order of destruction, access from destructors, the error and the panic compared with those of the standard library, 140 variables in one table, a declaration in an `impl` block); and the whole framework against the table: with `RUSTFLAGS="--cfg ferro_tls_table"` every `ferro_thread_local!` of a build on Linux or macOS uses the table, and `cargo check --workspace --tests` and the test suites of `ferroui-base` (4362), `ferroui-controls` (4358), `ferroui-headless` (89), `ferroui-markup-xaml` (196), the markup tests (598) and the ControlCatalog (959) pass with it. On the device: see section 10.5.
+**Verified.** On the host: the tests of the table (`ferroui-base`, `tests/ferro_thread_local_tests.rs`: laziness, isolation per thread, initialisers that use other variables and their own, the order of destruction, access from destructors, the error and the panic compared with those of the standard library, 140 variables in one table, a declaration in an `impl` block); and the whole framework against the table: with `RUSTFLAGS="--cfg ferro_tls_table"` every `ferro_thread_local!` of a build on Linux or macOS uses the table, and `cargo check --workspace --tests` and the test suites of `ferroui-base` (4362), `ferroui-controls` (4358), `ferroui-headless` (89), `ferroui-markup-xaml` (196), the markup tests (598) and the ControlCatalog (959) pass with it. On the emulator **[E]**: the smoke application passes every check in both rendering modes and the catalog shows its pages, as the nightly build does (section 10.5).
 
 **The rule for new code.** A thread-local variable is declared with `ferroui_base::ferro_thread_local!` (inside `ferroui-base`, `crate::ferro_thread_local!`; inside a macro of the base crate, `$crate::ferro_thread_local!`), never with `thread_local!`, and a signature names `ferroui_base::ferro_thread_local::LocalKey`. The conventions job of CI fails on a `thread_local!` or a `std::thread::LocalKey` outside the allow-list of `scripts/android/convert-thread-locals.py`; the CI job `android` fails when a library takes more than 16 keys. An application's own `thread_local!` still works on Android: each takes one key.
 
@@ -430,9 +430,19 @@ The script injected the tap when the application asked for it, two seconds after
 
 **Not proven by a run:** TalkBack (no accessibility service was enabled: the accessibility events the helper sends had no listener, nobody moved an accessibility focus, and no hover event of touch exploration was delivered); the hover path and the focus actions are host tests only; selection items, scroll viewers and expanders through the node provider on a device (host tests); API levels below 36 (the boolean checked state, and no unique id below API 33).
 
-### 10.5 Built with stable Rust (2026-10-15)
+### 10.5 Built with stable Rust (2026-10-15) **[E]**
 
-The smoke application and the ControlCatalog built with the stable toolchain (1.90.0) and the table of section 5.1, 9 keys of the C library each. The emulator run of both packages is pending.
+The smoke application and the ControlCatalog built with the stable toolchain (1.90.0) and the table of section 5.1, 9 keys of the C library each (the candidate), run back to back with the same two packages of the integration branch before the change, built with the nightly toolchain and the rebuilt standard library (the baseline), on one freshly booted device `ferroui_api36` that had settled for 90 seconds with nothing else running:
+
+| | Baseline (nightly) | Candidate (stable, the table) |
+|---|---|---|
+| Smoke, EGL | `RESULT: PASS`, 60 checks | `RESULT: PASS`, 60 checks |
+| Smoke, software | `RESULT: PASS`, 60 checks | `RESULT: PASS`, 60 checks |
+| Catalog | `CATALOG PASSED`, 8 pages with their pictures (the text box with the soft keyboard included) | the same |
+| Catalog, loading the library to the main view shown | 1.73 s | 1.01 s |
+| Crashes, `AccessError` or key errors in the log | none | none |
+
+An earlier run of the candidate the same day failed checks of the insets, the input pane, the window dump, the night mode and the return to the foreground, and the catalog was ended by the system during its start: the emulator then shared the machine with a virtual machine, and the system's own processes (the system UI, the input method, the services of Google) had ANRs throughout. The run above, without the virtual machine, passes every check in both builds.
 
 ## 11. Stages
 
