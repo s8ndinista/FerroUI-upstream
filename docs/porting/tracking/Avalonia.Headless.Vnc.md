@@ -9,20 +9,70 @@ Generated from upstream commit `17350180c33b063f0e98abbfd19aa3cae63f5d56`. Back 
 | Upstream | `src/Headless/Avalonia.Headless.Vnc` |
 | FerroUI | `src/Headless/FerroUI.Headless.Vnc` (exists) |
 | Crate | `ferroui-headless-vnc` |
-| Phase / priority | not started / out of current scope / - |
-| Files | 0/3 (0.0%) |
-| Types | 0/3 (0.0%) |
-| Members | 0/11 (0.0%) |
+| Phase / priority | 1 - test infrastructure / P1 |
+| Files | 3/3 (100.0%) |
+| Types | 3/3 (100.0%) |
+| Members | 11/11 (100.0%) |
 | Contracts (interfaces) | 0/0 |
 | Property registrations | 0/0 |
 | Routed events | 0/0 |
 
 ## Files
 
-### `(project root)` - files 0/3, types 0/3, members 0/11
+### `(project root)` - files 3/3, types 3/3, members 11/11
 
 | Upstream file | Rust file | Status | Types | Members | Notes |
 |---|---|---|---|---|---|
-| `AvaloniaVncLogger.cs` | `ferro_vnc_logger.rs` | missing | 0/1 | 0/3 |  |
-| `HeadlessVncFramebufferSource.cs` | `headless_vnc_framebuffer_source.rs` | missing | 0/1 | 0/6 |  |
-| `HeadlessVncPlatformExtensions.cs` | `headless_vnc_platform_extensions.rs` | missing | 0/1 | 0/2 |  |
+| `AvaloniaVncLogger.cs` | `ferro_vnc_logger.rs` | present | 1/1 | 3/3 |  |
+| `HeadlessVncFramebufferSource.cs` | `headless_vnc_framebuffer_source.rs` | present | 1/1 | 6/6 |  |
+| `HeadlessVncPlatformExtensions.cs` | `headless_vnc_platform_extensions.rs` | present | 1/1 | 2/2 |  |
+
+## Rust-only files
+
+Rust sources of this crate that no upstream file maps to. Give each a reason in `docs/porting/data/path-overrides.toml` (`[[rust_only]]`), or map upstream files to it (`[[map]]`).
+
+| Rust file | Reason | Types defined |
+|---|---|---|
+| `remote_viewing/logging.rs` | the RFB server the VNC project is built on: a port of the parts of the .NET library RemoteViewing (BSD-2-Clause) that the upstream project uses through its NuGet package, which is no upstream source (docs/porting/headless-vnc.md, section 3) | `EventId`, `ILogger`, `LogFormatter`, `LogLevel`, `LoggerExtensions` |
+| `remote_viewing/utility/auto_clear.rs` | the RFB server the VNC project is built on: a port of the parts of the .NET library RemoteViewing (BSD-2-Clause) that the upstream project uses through its NuGet package, which is no upstream source (docs/porting/headless-vnc.md, section 3) | `AutoClear` |
+| `remote_viewing/utility/periodic_thread.rs` | the RFB server the VNC project is built on: a port of the parts of the .NET library RemoteViewing (BSD-2-Clause) that the upstream project uses through its NuGet package, which is no upstream source (docs/porting/headless-vnc.md, section 3) | `PeriodicThread`, `Requests`, `Signals` |
+| `remote_viewing/utility/reentrant_lock.rs` | the RFB server the VNC project is built on: a port of the parts of the .NET library RemoteViewing (BSD-2-Clause) that the upstream project uses through its NuGet package, which is no upstream source (docs/porting/headless-vnc.md, section 3) | `Owner`, `ReentrantLock`, `ReentrantLockGuard` |
+| `remote_viewing/vnc/authentication_method.rs` | the RFB server the VNC project is built on: a port of the parts of the .NET library RemoteViewing (BSD-2-Clause) that the upstream project uses through its NuGet package, which is no upstream source (docs/porting/headless-vnc.md, section 3) | `AuthenticationMethod` |
+| `remote_viewing/vnc/extended_desktop_size_reason.rs` | the RFB server the VNC project is built on: a port of the parts of the .NET library RemoteViewing (BSD-2-Clause) that the upstream project uses through its NuGet package, which is no upstream source (docs/porting/headless-vnc.md, section 3) | `ExtendedDesktopSizeReason` |
+| `remote_viewing/vnc/extended_desktop_size_status.rs` | the RFB server the VNC project is built on: a port of the parts of the .NET library RemoteViewing (BSD-2-Clause) that the upstream project uses through its NuGet package, which is no upstream source (docs/porting/headless-vnc.md, section 3) | `ExtendedDesktopSizeStatus` |
+| `remote_viewing/vnc/i_vnc_framebuffer_source.rs` | the RFB server the VNC project is built on: a port of the parts of the .NET library RemoteViewing (BSD-2-Clause) that the upstream project uses through its NuGet package, which is no upstream source (docs/porting/headless-vnc.md, section 3) | `IVncFramebufferSource` |
+| `remote_viewing/vnc/i_vnc_password_challenge.rs` | the RFB server the VNC project is built on: a port of the parts of the .NET library RemoteViewing (BSD-2-Clause) that the upstream project uses through its NuGet package, which is no upstream source (docs/porting/headless-vnc.md, section 3) | `IVncPasswordChallenge` |
+| `remote_viewing/vnc/key_changed_event_args.rs` | the RFB server the VNC project is built on: a port of the parts of the .NET library RemoteViewing (BSD-2-Clause) that the upstream project uses through its NuGet package, which is no upstream source (docs/porting/headless-vnc.md, section 3) | `KeyChangedEventArgs` |
+| `remote_viewing/vnc/key_sym.rs` | the RFB server the VNC project is built on: a port of the parts of the .NET library RemoteViewing (BSD-2-Clause) that the upstream project uses through its NuGet package, which is no upstream source (docs/porting/headless-vnc.md, section 3) | `KeySym` |
+| `remote_viewing/vnc/pointer_changed_event_args.rs` | the RFB server the VNC project is built on: a port of the parts of the .NET library RemoteViewing (BSD-2-Clause) that the upstream project uses through its NuGet package, which is no upstream source (docs/porting/headless-vnc.md, section 3) | `PointerChangedEventArgs` |
+| `remote_viewing/vnc/remote_clipboard_changed_event_args.rs` | the RFB server the VNC project is built on: a port of the parts of the .NET library RemoteViewing (BSD-2-Clause) that the upstream project uses through its NuGet package, which is no upstream source (docs/porting/headless-vnc.md, section 3) | `RemoteClipboardChangedEventArgs` |
+| `remote_viewing/vnc/server/creating_desktop_event_args.rs` | the RFB server the VNC project is built on: a port of the parts of the .NET library RemoteViewing (BSD-2-Clause) that the upstream project uses through its NuGet package, which is no upstream source (docs/porting/headless-vnc.md, section 3) | `CreatingDesktopEventArgs` |
+| `remote_viewing/vnc/server/encoder_statistics.rs` | the RFB server the VNC project is built on: a port of the parts of the .NET library RemoteViewing (BSD-2-Clause) that the upstream project uses through its NuGet package, which is no upstream source (docs/porting/headless-vnc.md, section 3) | `EncoderStatistics` |
+| `remote_viewing/vnc/server/framebuffer_update_request.rs` | the RFB server the VNC project is built on: a port of the parts of the .NET library RemoteViewing (BSD-2-Clause) that the upstream project uses through its NuGet package, which is no upstream source (docs/porting/headless-vnc.md, section 3) | `FramebufferUpdateRequest` |
+| `remote_viewing/vnc/server/framebuffer_updating_event_args.rs` | the RFB server the VNC project is built on: a port of the parts of the .NET library RemoteViewing (BSD-2-Clause) that the upstream project uses through its NuGet package, which is no upstream source (docs/porting/headless-vnc.md, section 3) | `FramebufferUpdatingEventArgs` |
+| `remote_viewing/vnc/server/i_vnc_framebuffer_cache.rs` | the RFB server the VNC project is built on: a port of the parts of the .NET library RemoteViewing (BSD-2-Clause) that the upstream project uses through its NuGet package, which is no upstream source (docs/porting/headless-vnc.md, section 3) | `IVncFramebufferCache` |
+| `remote_viewing/vnc/server/i_vnc_server_session.rs` | the RFB server the VNC project is built on: a port of the parts of the .NET library RemoteViewing (BSD-2-Clause) that the upstream project uses through its NuGet package, which is no upstream source (docs/porting/headless-vnc.md, section 3) | `IVncServerSession` |
+| `remote_viewing/vnc/server/password_provided_event_args.rs` | the RFB server the VNC project is built on: a port of the parts of the .NET library RemoteViewing (BSD-2-Clause) that the upstream project uses through its NuGet package, which is no upstream source (docs/porting/headless-vnc.md, section 3) | `PasswordProvidedEventArgs` |
+| `remote_viewing/vnc/server/raw_encoder.rs` | the RFB server the VNC project is built on: a port of the parts of the .NET library RemoteViewing (BSD-2-Clause) that the upstream project uses through its NuGet package, which is no upstream source (docs/porting/headless-vnc.md, section 3) | `RawEncoder` |
+| `remote_viewing/vnc/server/tight_compression.rs` | the RFB server the VNC project is built on: a port of the parts of the .NET library RemoteViewing (BSD-2-Clause) that the upstream project uses through its NuGet package, which is no upstream source (docs/porting/headless-vnc.md, section 3) | `TightCompression` |
+| `remote_viewing/vnc/server/tight_compression_control.rs` | the RFB server the VNC project is built on: a port of the parts of the .NET library RemoteViewing (BSD-2-Clause) that the upstream project uses through its NuGet package, which is no upstream source (docs/porting/headless-vnc.md, section 3) | `TightCompressionControl` |
+| `remote_viewing/vnc/server/tight_encoder.rs` | the RFB server the VNC project is built on: a port of the parts of the .NET library RemoteViewing (BSD-2-Clause) that the upstream project uses through its NuGet package, which is no upstream source (docs/porting/headless-vnc.md, section 3) | `TightEncoder` |
+| `remote_viewing/vnc/server/vnc_encoder.rs` | the RFB server the VNC project is built on: a port of the parts of the .NET library RemoteViewing (BSD-2-Clause) that the upstream project uses through its NuGet package, which is no upstream source (docs/porting/headless-vnc.md, section 3) | `VncEncoder` |
+| `remote_viewing/vnc/server/vnc_event.rs` | the RFB server the VNC project is built on: a port of the parts of the .NET library RemoteViewing (BSD-2-Clause) that the upstream project uses through its NuGet package, which is no upstream source (docs/porting/headless-vnc.md, section 3) | `VncEvent`, `VncEventHandler` |
+| `remote_viewing/vnc/server/vnc_framebuffer_cache.rs` | the RFB server the VNC project is built on: a port of the parts of the .NET library RemoteViewing (BSD-2-Clause) that the upstream project uses through its NuGet package, which is no upstream source (docs/porting/headless-vnc.md, section 3) | `VncFramebufferCache` |
+| `remote_viewing/vnc/server/vnc_message_type.rs` | the RFB server the VNC project is built on: a port of the parts of the .NET library RemoteViewing (BSD-2-Clause) that the upstream project uses through its NuGet package, which is no upstream source (docs/porting/headless-vnc.md, section 3) | `VncMessageType` |
+| `remote_viewing/vnc/server/vnc_server_session.rs` | the RFB server the VNC project is built on: a port of the parts of the .NET library RemoteViewing (BSD-2-Clause) that the upstream project uses through its NuGet package, which is no upstream source (docs/porting/headless-vnc.md, section 3) | `CreateFramebufferCache`, `Rectangle`, `VncServerSession` |
+| `remote_viewing/vnc/server/vnc_server_session_options.rs` | the RFB server the VNC project is built on: a port of the parts of the .NET library RemoteViewing (BSD-2-Clause) that the upstream project uses through its NuGet package, which is no upstream source (docs/porting/headless-vnc.md, section 3) | `VncServerSessionOptions` |
+| `remote_viewing/vnc/version.rs` | the RFB server the VNC project is built on: a port of the parts of the .NET library RemoteViewing (BSD-2-Clause) that the upstream project uses through its NuGet package, which is no upstream source (docs/porting/headless-vnc.md, section 3) | `Version` |
+| `remote_viewing/vnc/vnc_encoding.rs` | the RFB server the VNC project is built on: a port of the parts of the .NET library RemoteViewing (BSD-2-Clause) that the upstream project uses through its NuGet package, which is no upstream source (docs/porting/headless-vnc.md, section 3) | `VncEncoding` |
+| `remote_viewing/vnc/vnc_exception.rs` | the RFB server the VNC project is built on: a port of the parts of the .NET library RemoteViewing (BSD-2-Clause) that the upstream project uses through its NuGet package, which is no upstream source (docs/porting/headless-vnc.md, section 3) | `VncException` |
+| `remote_viewing/vnc/vnc_failure_reason.rs` | the RFB server the VNC project is built on: a port of the parts of the .NET library RemoteViewing (BSD-2-Clause) that the upstream project uses through its NuGet package, which is no upstream source (docs/porting/headless-vnc.md, section 3) | `VncFailureReason` |
+| `remote_viewing/vnc/vnc_framebuffer.rs` | the RFB server the VNC project is built on: a port of the parts of the .NET library RemoteViewing (BSD-2-Clause) that the upstream project uses through its NuGet package, which is no upstream source (docs/porting/headless-vnc.md, section 3) | `VncFramebuffer` |
+| `remote_viewing/vnc/vnc_password_challenge.rs` | the RFB server the VNC project is built on: a port of the parts of the .NET library RemoteViewing (BSD-2-Clause) that the upstream project uses through its NuGet package, which is no upstream source (docs/porting/headless-vnc.md, section 3) | `VncPasswordChallenge` |
+| `remote_viewing/vnc/vnc_pixel_format.rs` | the RFB server the VNC project is built on: a port of the parts of the .NET library RemoteViewing (BSD-2-Clause) that the upstream project uses through its NuGet package, which is no upstream source (docs/porting/headless-vnc.md, section 3) | `VncPixelFormat` |
+| `remote_viewing/vnc/vnc_rectangle.rs` | the RFB server the VNC project is built on: a port of the parts of the .NET library RemoteViewing (BSD-2-Clause) that the upstream project uses through its NuGet package, which is no upstream source (docs/porting/headless-vnc.md, section 3) | `VncRectangle` |
+| `remote_viewing/vnc/vnc_stream.rs` | the RFB server the VNC project is built on: a port of the parts of the .NET library RemoteViewing (BSD-2-Clause) that the upstream project uses through its NuGet package, which is no upstream source (docs/porting/headless-vnc.md, section 3) | `VncStream` |
+| `remote_viewing/vnc/vnc_transport.rs` | the RFB server the VNC project is built on: a port of the parts of the .NET library RemoteViewing (BSD-2-Clause) that the upstream project uses through its NuGet package, which is no upstream source (docs/porting/headless-vnc.md, section 3) | `TransportWriter`, `VncTransport` |
+| `remote_viewing/vnc/vnc_utility.rs` | the RFB server the VNC project is built on: a port of the parts of the .NET library RemoteViewing (BSD-2-Clause) that the upstream project uses through its NuGet package, which is no upstream source (docs/porting/headless-vnc.md, section 3) | `VncUtility` |
+
+Tests, examples and build scripts (not scanned): `tests/headless_vnc_server.rs`, `tests/support/rfb_client.rs`.

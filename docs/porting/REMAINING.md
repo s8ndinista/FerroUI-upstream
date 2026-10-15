@@ -8,8 +8,8 @@ Generated from upstream commit `17350180c33b063f0e98abbfd19aa3cae63f5d56`. The s
 
 | | Present | Total | Missing | Waived | Not applicable | Out of scope | Share |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| Members of the projects in scope | 27859 | 32172 | 1445 | 2868 | - | - | 95.1% of total less waived |
-| Members of every upstream source project of the extraction | 27859 | 37391 | 1445 | 2868 | 1132 | 4087 | 74.5% of total |
+| Members of the projects in scope | 27870 | 32183 | 1445 | 2868 | - | - | 95.1% of total less waived |
+| Members of every upstream source project of the extraction | 27870 | 37391 | 1445 | 2868 | 1132 | 4076 | 74.5% of total |
 
 The first row is the headline of the tracking: it leaves out the waived members and everything out of scope. The second row leaves out nothing: every member of every C# project the extraction reads, whether or not the port will ever have it. A member is *present* when an item of the mapped name exists; names are matched, not behaviour.
 
@@ -43,6 +43,7 @@ Files, types and members as present / missing / waived. *n/a* counts the files m
 | [Avalonia.HarfBuzz](tracking/Avalonia.HarfBuzz.md) | in | 3 / 0 / 0 | 3 / 0 / 0 | 5 / 0 / 3 | 0 (0) | 62.5% |
 | [Avalonia.Headless](tracking/Avalonia.Headless.md) | in | 11 / 0 / 0 | 22 / 0 / 2 | 238 / 0 / 13 | 0 (0) | 94.8% |
 | [Avalonia.Headless.NUnit](tracking/Avalonia.Headless.NUnit.md) | in: every file not applicable | 0 / 0 / 0 | 0 / 0 / 0 | 0 / 0 / 0 | 4 (4) | 0.0% |
+| [Avalonia.Headless.Vnc](tracking/Avalonia.Headless.Vnc.md) | in | 3 / 0 / 0 | 3 / 0 / 0 | 11 / 0 / 0 | 0 (0) | 100.0% |
 | [Avalonia.Headless.XUnit](tracking/Avalonia.Headless.XUnit.md) | in: every file not applicable | 0 / 0 / 0 | 0 / 0 / 0 | 0 / 0 / 0 | 14 (26) | 0.0% |
 | [Avalonia.Markup](tracking/Avalonia.Markup.md) | in | 7 / 0 / 0 | 7 / 0 / 30 | 12 / 0 / 55 | 1 (0) | 17.9% |
 | [Avalonia.Markup.Xaml](tracking/Avalonia.Markup.Xaml.md) | in | 46 / 0 / 0 | 61 / 0 / 2 | 208 / 0 / 31 | 2 (1) | 86.7% |
@@ -53,7 +54,6 @@ Files, types and members as present / missing / waived. *n/a* counts the files m
 | [Avalonia.Generators](tracking/Avalonia.Generators.md) | in: every file not applicable | 0 / 0 / 0 | 0 / 0 / 0 | 0 / 0 / 0 | 31 (264) | 0.0% |
 | [Avalonia.Vulkan](tracking/Avalonia.Vulkan.md) | out (started) | 30 files | 151 types | 2034 members | 0 (0) | 0.0% |
 | [Avalonia.Wayland](tracking/Avalonia.Wayland.md) | out (started) | 81 files | 123 types | 816 members | 0 (0) | 0.0% |
-| [Avalonia.Headless.Vnc](tracking/Avalonia.Headless.Vnc.md) | out (started) | 3 files | 3 types | 11 members | 0 (0) | 0.0% |
 | [Avalonia.LinuxFramebuffer](tracking/Avalonia.LinuxFramebuffer.md) | out (started) | 30 files | 76 types | 529 members | 0 (0) | 0.0% |
 | [Avalonia.Win32.Automation](tracking/Avalonia.Win32.Automation.md) | out (not started) | 40 files | 64 types | 598 members | 1 (0) | 0.0% |
 | [Avalonia.Win32.Interoperability](tracking/Avalonia.Win32.Interoperability.md) | out (not started) | 2 files | 2 types | 11 members | 0 (0) | 0.0% |

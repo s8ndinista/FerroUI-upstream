@@ -2,26 +2,26 @@
  "upstreamCommit": "17350180c33b063f0e98abbfd19aa3cae63f5d56",
  "inScope": {
   "files": [
-   2560,
-   2596,
+   2563,
+   2599,
    0
   ],
   "types": [
-   3467,
-   3915,
+   3470,
+   3918,
    311
   ],
   "members": [
-   27859,
-   32172,
+   27870,
+   32183,
    2868
   ]
  },
  "allProjects": {
-  "membersPresent": 27859,
+  "membersPresent": 27870,
   "members": 37391,
   "membersNotApplicable": 1132,
-  "membersOutOfScope": 4087
+  "membersOutOfScope": 4076
  },
  "projects": [
   {
@@ -8607,20 +8607,20 @@
    "name": "Avalonia.Headless.Vnc",
    "path": "src/Headless/Avalonia.Headless.Vnc",
    "rust": "src/Headless/FerroUI.Headless.Vnc",
-   "scope": "out",
+   "scope": "in",
    "detail": "full",
    "files": [
-    0,
+    3,
     3,
     0
    ],
    "types": [
-    0,
+    3,
     3,
     0
    ],
    "members": [
-    0,
+    11,
     11,
     0
    ],
@@ -8637,9 +8637,64 @@
     0
    ],
    "notApplicableFiles": 0,
-   "matchKinds": {},
-   "presentFiles": {},
-   "rustOnly": []
+   "matchKinds": {
+    "fn": 10,
+    "overload fn": 1
+   },
+   "presentFiles": {
+    "AvaloniaVncLogger.cs": [
+     "ferro_vnc_logger.rs"
+    ],
+    "HeadlessVncFramebufferSource.cs": [
+     "headless_vnc_framebuffer_source.rs"
+    ],
+    "HeadlessVncPlatformExtensions.cs": [
+     "headless_vnc_platform_extensions.rs"
+    ]
+   },
+   "rustOnly": [
+    "remote_viewing/logging.rs",
+    "remote_viewing/utility/auto_clear.rs",
+    "remote_viewing/utility/periodic_thread.rs",
+    "remote_viewing/utility/reentrant_lock.rs",
+    "remote_viewing/vnc/authentication_method.rs",
+    "remote_viewing/vnc/extended_desktop_size_reason.rs",
+    "remote_viewing/vnc/extended_desktop_size_status.rs",
+    "remote_viewing/vnc/i_vnc_framebuffer_source.rs",
+    "remote_viewing/vnc/i_vnc_password_challenge.rs",
+    "remote_viewing/vnc/key_changed_event_args.rs",
+    "remote_viewing/vnc/key_sym.rs",
+    "remote_viewing/vnc/pointer_changed_event_args.rs",
+    "remote_viewing/vnc/remote_clipboard_changed_event_args.rs",
+    "remote_viewing/vnc/server/creating_desktop_event_args.rs",
+    "remote_viewing/vnc/server/encoder_statistics.rs",
+    "remote_viewing/vnc/server/framebuffer_update_request.rs",
+    "remote_viewing/vnc/server/framebuffer_updating_event_args.rs",
+    "remote_viewing/vnc/server/i_vnc_framebuffer_cache.rs",
+    "remote_viewing/vnc/server/i_vnc_server_session.rs",
+    "remote_viewing/vnc/server/password_provided_event_args.rs",
+    "remote_viewing/vnc/server/raw_encoder.rs",
+    "remote_viewing/vnc/server/tight_compression.rs",
+    "remote_viewing/vnc/server/tight_compression_control.rs",
+    "remote_viewing/vnc/server/tight_encoder.rs",
+    "remote_viewing/vnc/server/vnc_encoder.rs",
+    "remote_viewing/vnc/server/vnc_event.rs",
+    "remote_viewing/vnc/server/vnc_framebuffer_cache.rs",
+    "remote_viewing/vnc/server/vnc_message_type.rs",
+    "remote_viewing/vnc/server/vnc_server_session.rs",
+    "remote_viewing/vnc/server/vnc_server_session_options.rs",
+    "remote_viewing/vnc/version.rs",
+    "remote_viewing/vnc/vnc_encoding.rs",
+    "remote_viewing/vnc/vnc_exception.rs",
+    "remote_viewing/vnc/vnc_failure_reason.rs",
+    "remote_viewing/vnc/vnc_framebuffer.rs",
+    "remote_viewing/vnc/vnc_password_challenge.rs",
+    "remote_viewing/vnc/vnc_pixel_format.rs",
+    "remote_viewing/vnc/vnc_rectangle.rs",
+    "remote_viewing/vnc/vnc_stream.rs",
+    "remote_viewing/vnc/vnc_transport.rs",
+    "remote_viewing/vnc/vnc_utility.rs"
+   ]
   },
   {
    "name": "Avalonia.Headless.XUnit",
