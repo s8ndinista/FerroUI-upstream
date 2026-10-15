@@ -15,6 +15,13 @@ What is declared not ported was audited entry by entry on 2026-10-10 ([`waiver-a
 
 How the tracking is regenerated changed with it: `run.sh` reads the tracked commit of upstream, not the `HEAD` of the checkout (it exports the tree of that commit and of its submodules to a temporary directory and removes it); a waiver that names the Rust item should be an `[[alias]]`, which is checked at every run (constructors with `member = ".ctor"`, properties, fields and events too); a sample that is ported gets its `rust` directory in `docs/porting/data/samples.toml`.
 
+## Two defects of the macOS pictures of the catalog (2026-10-15)
+
+Branch `macos-render-fixes`. The screenshot run of the catalog on macOS at scaling 2 showed two defects; neither is a fault of the port against upstream.
+
+- **The selected navigation item on the Buttons page** (an empty box, its content twice as large and away from its place). Only the picture was wrong: it is a render target bitmap of 192 DPI, drawn by the immediate renderer, and upstream's Skia drawing context draws the children of a border with a box shadow at twice their scale there. The window (the compositor) is correct. The screenshot run now also writes the compositor's picture of every page (`NN-<header>-composed.png`). Waiting for the owner: `decisions/render-target-bitmap-scaled-box-shadow.md`. Tests: `src/Headless/FerroUI.Headless/unit_tests/render_scaling_tests.rs`.
+- **The family emoji on the TextBlock page** (three framed figures instead of "one emoji"). Not a defect: each of the three (the single code point, and the two sequences joined by zero width joiners) is shaped into one glyph of Apple Color Emoji, as CoreText shapes them, and the glyphs of that font on this system (macOS 26) are figures in a framed square for all three; CoreText draws the same pictures (`/Volumes/1TB-macOS/ferroui-screenshots/macos-render-fixes/coretext-family-emoji.png`). The sample text is upstream's. Test: `zero_width_joiner_sequences_are_one_emoji_glyph_each` in `src/Skia/FerroUI.Skia/text_tests.rs` (macOS only).
+
 ## State at the hand-over of 2026-10-07
 
 Merged this period, in order: #26, #34, #33, #31, #27, #32, #29, #30, #36, #35, #28, #37, #38, #40, #41, #39, #42, #43.
@@ -648,6 +655,8 @@ Also: the layout clock is in milliseconds (`DEVIATIONS.md`, Layout). Found while
 - **The previewer method stays renamed.** It keeps the port's name, `ferroui-remote`, and gets no alias for upstream's name (designer support, pull request 128).
 
 ## Decisions waiting for the owner
+
+- **A render target bitmap of more than 96 DPI and box shadows (2026-10-15).** The children of a border with a box shadow are drawn at twice their scale into a render target bitmap of 192 DPI, as upstream draws them: the Skia drawing context reads its transform back from the canvas after the shadow, with the DPI scale in it. The window is not affected. `decisions/render-target-bitmap-scaled-box-shadow.md` has the cause, the file-by-file comparison, the tests (one asserts the behaviour, one ignored acceptance test) and a verified fix of six lines; it recommends taking the fix as a recorded deviation.
 
 - **Windows: where the ANGLE libraries come from (2026-10-10).** Upstream's default rendering mode on Windows is OpenGL ES through ANGLE on Direct3D 11, and it ships its own build of ANGLE. The port takes crates from crates.io only. `win32-platform.md`, section 6.2, lists the candidates (a crate that carries ANGLE binaries, building ANGLE in CI and publishing it with the port, or WGL and the software mode alone until Vulkan). Needed before stage 2b. The same section records that Graphite has no Direct3D backend in the Skia bindings, so "Graphite on Windows" means Vulkan.
 - **Bindings from expression trees.** `CompiledBinding.Create<TIn, TOut>(Expression)` and `BindingExpressionVisitor` (36 tests) have no counterpart in the port. `xaml.md` 3.6.1 compares three options: no counterpart (recommended; the builder chain stands for the expression tree), a `binding_path!` macro, or a run-time expression model. The note maps each of the 36 tests to its counterpart: 27 have one in `CompiledBindingPathBuilder`.

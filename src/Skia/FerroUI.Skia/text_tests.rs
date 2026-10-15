@@ -832,3 +832,50 @@ fn text_layout_right_to_left_paragraph_with_arabic() {
     layout.dispose();
     scope.dispose();
 }
+
+/// The family emoji of the text page of the catalog: the single code point
+/// of a family, then a man, a woman and a girl joined by zero width
+/// joiners, then the same with a boy. Each is one cluster and one glyph of
+/// the system emoji font of macOS, as CoreText shapes them (five glyphs
+/// with the two spaces): the sequences are not split before shaping, and
+/// the fallback font is chosen for the whole cluster. The pictures of that
+/// font are framed silhouettes on recent systems, for all three.
+#[cfg(target_os = "macos")]
+#[test]
+fn zero_width_joiner_sequences_are_one_emoji_glyph_each() {
+    use ferroui_base::media::text_formatting::{ShapedTextRun, TextRun};
+
+    let scope = start();
+
+    let text = "\u{1F46A} \u{1F468}\u{200D}\u{1F469}\u{200D}\u{1F467} \
+                \u{1F468}\u{200D}\u{1F469}\u{200D}\u{1F467}\u{200D}\u{1F466}";
+    let layout = TextLayout::new(
+        text,
+        Typeface::default_typeface(),
+        TextLayoutOptions { font_size: 32.0, ..TextLayoutOptions::default() },
+    );
+    assert_eq!(1, layout.text_lines().len());
+    let line = layout.text_lines()[0].clone();
+
+    // The shaped runs of the line: the family of their font, their length
+    // in code units and their number of glyphs.
+    let mut runs: Vec<(String, i32, usize)> = Vec::new();
+    for run in line.text_runs().iter() {
+        let Some(run) = run.downcast_ref::<ShapedTextRun>() else { continue };
+        let buffer = run.shaped_buffer();
+        runs.push((buffer.glyph_typeface().family_name().to_owned(), run.length(), buffer.glyph_infos().len()));
+    }
+
+    // The family (two code units), a space, the first sequence (eight code
+    // units), a space, the second sequence (eleven): five runs of a glyph
+    // each, the emoji in the emoji font.
+    assert_eq!(5, runs.len(), "{runs:?}");
+    assert_eq!(vec![2, 1, 8, 1, 11], runs.iter().map(|(_, length, _)| *length).collect::<Vec<_>>(), "{runs:?}");
+    assert_eq!(vec![1; 5], runs.iter().map(|(_, _, glyphs)| *glyphs).collect::<Vec<_>>(), "{runs:?}");
+    for index in [0, 2, 4] {
+        assert_eq!("Apple Color Emoji", runs[index].0, "{runs:?}");
+    }
+
+    layout.dispose();
+    scope.dispose();
+}
