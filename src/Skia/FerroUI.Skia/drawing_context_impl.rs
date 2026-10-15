@@ -390,12 +390,21 @@ impl DrawingContextImpl {
         )
     }
 
-    /// Restores the canvas state. The transform of the context is whatever
-    /// the canvas has afterwards.
+    /// Restores the canvas state. The transform of the context is what the
+    /// canvas has afterwards, less the post transform of a scaled context.
     fn restore_canvas(&mut self) {
         let canvas = self.canvas.get();
         canvas.restore();
-        self.current_transform = Some(matrix44_to_matrix(&canvas.local_to_device()));
+        // Deviation (DEVIATIONS.md, Skia backend): upstream reads the
+        // transform back from the canvas (`Canvas.TotalMatrix44`), post
+        // transform included, so a scaled context (a render target bitmap of
+        // more than 96 DPI) scaled the transforms pushed after a restore
+        // twice. The transform of the context is the logical one.
+        let total = matrix44_to_matrix(&canvas.local_to_device());
+        self.current_transform = Some(match self.post_transform {
+            Some(post_transform) => total * post_transform.invert(),
+            None => total,
+        });
     }
 
     /// The relative transform of a brush conjugated into target space: the
