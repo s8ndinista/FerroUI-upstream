@@ -1,4 +1,4 @@
-use super::EglDisplay;
+use super::{EglDisplay, EglDisplayCreationOptions, EglDisplayOptions, EglInterface};
 use crate::OpenGlException;
 use ferroui_base::logging::{LogEventLevel, Logger};
 use ferroui_base::platform::{IPlatformGraphics, IPlatformGraphicsContext};
@@ -29,13 +29,27 @@ impl EglPlatformGraphics {
         self.display.get()
     }
 
+    /// The platform graphics of the default display of the EGL library of the
+    /// system (`TryCreate()`), with multiple contexts and context sharing, which
+    /// most implementations of EGL support; a failure is logged and gives `None`.
+    pub fn try_create_default() -> Option<EglPlatformGraphics> {
+        Self::try_create(|| {
+            let egl = EglInterface::new_default()?;
+            EglDisplay::new_with_creation_options(EglDisplayCreationOptions {
+                base: EglDisplayOptions {
+                    egl: Some(Rc::new(egl)),
+                    // Those are expected to be supported by most EGL implementations
+                    supports_multiple_contexts: true,
+                    supports_context_sharing: true,
+                    ..Default::default()
+                },
+                ..Default::default()
+            })
+        })
+    }
+
     /// Creates the platform graphics of the display `display_factory` creates; a failure of
     /// the factory is logged and gives `None`.
-    ///
-    /// The overload of the original without arguments creates the default display of the
-    /// EGL library of the system, which it loads by name: that constructor of the interface
-    /// is not ported, a platform passes a factory that creates the display with its
-    /// interface.
     pub fn try_create(
         display_factory: impl FnOnce() -> Result<Rc<EglDisplay>, OpenGlException>,
     ) -> Option<EglPlatformGraphics> {
