@@ -376,7 +376,7 @@ FerroUI-only crates have no upstream source directory (for example the MicroCom 
 
 ## Rust-only files
 
-382 Rust source files have no upstream counterpart (29 without a recorded reason). They are listed at the end of each project page.
+384 Rust source files have no upstream counterpart (29 without a recorded reason). They are listed at the end of each project page.
 
 | Project | Rust file | Reason |
 |---|---|---|
@@ -407,6 +407,8 @@ FerroUI-only crates have no upstream source directory (for example the MicroCom 
 | [Avalonia.Base](tracking/Avalonia.Base.md) | `src/FerroUI.Base/data/model/model_type.rs` | the contracts of the .NET runtime library that bindings observe on a model object (`INotifyPropertyChanged`, `INotifyCollectionChanged`, `INotifyDataErrorInfo`, events, indexers) and the declaration of a model type, which takes the place of reflection over the object |
 | [Avalonia.Base](tracking/Avalonia.Base.md) | `src/FerroUI.Base/diagnostics/perf_counters.rs` | counters of the work the framework does per operation, behind the feature `perf-counters` (docs/porting/performance, design 09): not from upstream, which is measured with the tools of its runtime |
 | [Avalonia.Base](tracking/Avalonia.Base.md) | `src/FerroUI.Base/element_ref.rs` | a reference to an element that the holder does not own, held weakly and compared by identity: the value type of properties that point sideways or up the tree (a placement target, the target of a label), a plain object reference upstream |
+| [Avalonia.Base](tracking/Avalonia.Base.md) | `src/FerroUI.Base/ferro_thread_local.rs` | the declaration of thread-local variables: `thread_local!` on every target but Android, where each would take one of the 128 keys of the C library of a process (docs/porting/android-platform.md, section 5.1); thread-static fields of the managed runtime upstream |
+| [Avalonia.Base](tracking/Avalonia.Base.md) | `src/FerroUI.Base/ferro_thread_local/table.rs` | the table of thread-local variables of a thread on Android behind one key of the C library (docs/porting/android-platform.md, section 5.1); the managed runtime keeps thread-static fields itself upstream |
 | [Avalonia.Base](tracking/Avalonia.Base.md) | `src/FerroUI.Base/i_support_initialize.rs` | counterpart of .NET `System.ComponentModel.ISupportInitialize` |
 | [Avalonia.Base](tracking/Avalonia.Base.md) | `src/FerroUI.Base/input/i_command.rs` | counterpart of .NET `System.Windows.Input.ICommand` |
 | [Avalonia.Base](tracking/Avalonia.Base.md) | `src/FerroUI.Base/input/platform/clipboard_error.rs` | the error of a failed clipboard operation, by category: upstream lets the exceptions of the platform through |
