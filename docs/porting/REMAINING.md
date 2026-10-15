@@ -8,8 +8,8 @@ Generated from upstream commit `17350180c33b063f0e98abbfd19aa3cae63f5d56`. The s
 
 | | Present | Total | Missing | Waived | Not applicable | Out of scope | Share |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| Members of the projects in scope | 30083 | 36210 | 600 | 5527 | - | - | 98.0% of total less waived |
-| Members of every upstream source project of the extraction | 30083 | 37391 | 600 | 5527 | 1181 | 0 | 80.5% of total |
+| Members of the projects in scope | 30157 | 36210 | 331 | 5722 | - | - | 98.9% of total less waived |
+| Members of every upstream source project of the extraction | 30157 | 37391 | 331 | 5722 | 1181 | 0 | 80.7% of total |
 
 The first row is the headline of the tracking: it leaves out the waived members and everything out of scope. The second row leaves out nothing: every member of every C# project the extraction reads, whether or not the port will ever have it. A member is *present* when an item of the mapped name exists; names are matched, not behaviour.
 
@@ -20,7 +20,7 @@ Files, types and members as present / missing / waived. *n/a* counts the files m
 | Project | Scope | Files | Types | Members | n/a files (members) | Member share of all |
 |---|---|---:|---:|---:|---:|---:|
 | [XamlX](tracking/XamlX.md) | in | 62 / 0 / 0 | 172 / 0 / 5 | 722 / 0 / 156 | 26 (194) | 67.4% |
-| [Avalonia.Android](tracking/Avalonia.Android.md) | in | 58 / 0 / 0 | 75 / 13 / 0 | 353 / 90 / 4 | 0 (0) | 79.0% |
+| [Avalonia.Android](tracking/Avalonia.Android.md) | in | 58 / 0 / 0 | 86 / 0 / 2 | 394 / 0 / 53 | 0 (0) | 88.1% |
 | [Avalonia.Base](tracking/Avalonia.Base.md) | in | 1248 / 0 / 0 | 1524 / 0 / 135 | 10398 / 0 / 1035 | 51 (620) | 86.3% |
 | [Avalonia.Build.Tasks](tracking/Avalonia.Build.Tasks.md) | in | 6 / 0 / 0 | 6 / 0 / 1 | 7 / 0 / 28 | 4 (9) | 15.9% |
 | [Avalonia.Controls](tracking/Avalonia.Controls.md) | in | 538 / 0 / 0 | 621 / 0 / 7 | 6255 / 2 / 148 | 1 (0) | 97.7% |
@@ -47,7 +47,7 @@ Files, types and members as present / missing / waived. *n/a* counts the files m
 | [Avalonia.Headless.NUnit](tracking/Avalonia.Headless.NUnit.md) | in: every file not applicable | 0 / 0 / 0 | 0 / 0 / 0 | 0 / 0 / 0 | 4 (4) | 0.0% |
 | [Avalonia.Headless.Vnc](tracking/Avalonia.Headless.Vnc.md) | in | 3 / 0 / 0 | 3 / 0 / 0 | 11 / 0 / 0 | 0 (0) | 100.0% |
 | [Avalonia.Headless.XUnit](tracking/Avalonia.Headless.XUnit.md) | in: every file not applicable | 0 / 0 / 0 | 0 / 0 / 0 | 0 / 0 / 0 | 14 (26) | 0.0% |
-| [Avalonia.LinuxFramebuffer](tracking/Avalonia.LinuxFramebuffer.md) | in | 30 / 0 / 0 | 61 / 15 / 0 | 350 / 179 / 0 | 0 (0) | 66.2% |
+| [Avalonia.LinuxFramebuffer](tracking/Avalonia.LinuxFramebuffer.md) | in | 30 / 0 / 0 | 62 / 0 / 14 | 383 / 0 / 146 | 0 (0) | 72.4% |
 | [Avalonia.Markup](tracking/Avalonia.Markup.md) | in | 7 / 0 / 0 | 7 / 0 / 30 | 12 / 0 / 55 | 1 (0) | 17.9% |
 | [Avalonia.Markup.Xaml](tracking/Avalonia.Markup.Xaml.md) | in | 46 / 0 / 0 | 61 / 0 / 2 | 208 / 0 / 31 | 2 (1) | 86.7% |
 | [Avalonia.Markup.Xaml.Loader](tracking/Avalonia.Markup.Xaml.Loader.md) | in | 66 / 0 / 0 | 120 / 0 / 6 | 422 / 0 / 83 | 1 (1) | 83.4% |
@@ -202,13 +202,6 @@ From `docs/porting/data/samples.toml`; a sample counts as ported when the direct
 
 Files without a Rust file, types without a Rust type, and members without a Rust item, for the projects in scope. Names only: the page of each project has the signatures and, for files that exist in part, the members by file.
 
-### [Avalonia.Android](tracking/Avalonia.Android.md)
-
-0 files, 13 types and 90 members missing (27 members of the missing types, 63 members of types that exist).
-
-- **Types (13):** `AndroidFramebuffer.ANativeWindow_Buffer`, `AndroidFramebuffer.ARect`, `CommitTextCommand`, `CompositionRegionCommand`, `CompositionTextCommand`, `DeleteRegionCommand`, `DeleteRegionInCodePointsCommand`, `FinishComposingCommand`, `IAndroidApplication`, `KeyEventCommand`, `NodeInfoProviderInitializer`, `SelectionCommand`, `WellKnownAndroidStorageFolder`
-- **Members of types that exist (63), by type:** `AndroidFramebuffer` 10, `AvaloniaInputConnection` 8, `AvaloniaView` 8, `AvaloniaAndroidApplication<TApp>` 4, `AndroidFramebuffer.AndroidPixelFormat` 3, `AndroidInputMethod<TView>` 3, `AndroidStorageFile` 3, `AndroidStorageFolder` 3, `AndroidStorageItem` 3, `NodeInfoProvider<T>` 3, `TopLevelImpl` 3, `AndroidInsetsManager` 2, `AvaloniaActivity` 2, `IAndroidInputMethod` 2, `InvalidationAwareSurfaceView` 2, `AndroidPlatform` 1, `AndroidScreens` 1, `AvaloniaMainActivity` 1, `ClipDataToDataTransferWrapper` 1
-
 ### [Avalonia.Controls](tracking/Avalonia.Controls.md)
 
 0 files, 0 types and 2 members missing (0 members of the missing types, 2 members of types that exist).
@@ -246,13 +239,6 @@ Files without a Rust file, types without a Rust type, and members without a Rust
 
 - **Types (4):** `GlxConsts`, `Gtk.signal_dialog_response`, `Gtk.signal_generic`, `XLib.GrabResult`
 - **Members of types that exist (177), by type:** `XLib` 130, `SMLib` 7, `X11Window.X11WindowMode` 7, `Glib` 5, `ICELib` 5, `AvaloniaX11Platform` 3, `GlxInterface` 3, `CursorImpl` 2, `DragDropDataProvider` 2, `DragDropDataTransfer` 2, `XLib.XGeometry` 2, `DataFormatHelper` 1, `GlxDisplay` 1, `SelectionDataProvider` 1, `X11EglHelper` 1, `X11FramebufferSurface` 1, `X11Window` 1, `X11Window.DefaultTopLevelWindowMode` 1, `X11Window.InputProxyWindowMode` 1, `X11Window.SurfacePlatformHandle` 1
-
-### [Avalonia.LinuxFramebuffer](tracking/Avalonia.LinuxFramebuffer.md)
-
-0 files, 15 types and 179 members missing (157 members of the missing types, 22 members of types that exist).
-
-- **Types (15):** `AbsAxis`, `AxisEventCode`, `EvKey`, `EvType`, `FbIoCtl`, `LibInputNativeUnsafeMethods`, `LibInputNativeUnsafeMethods.LibInputEventType`, `LibInputNativeUnsafeMethods.LibInputPointerAxis`, `LibInputNativeUnsafeMethods.LibInputPointerAxisSource`, `NativeUnsafeMethods`, `PollFd`, `VBlankFlags`, `epoll_data`, `epoll_event`, `fd_set`
-- **Members of types that exist (22):** `EvDevDevice.EventTypes`, `EvDevDevice.AbsX`, `EvDevDevice.AbsY`, `EvDevDevice..ctor`, `EvDevDevice.NextEvent`, `EvDevDeviceDescription..ctor`, `EvDevDeviceDescription.Path`, `EvDevDeviceHandler.OnEvent`, `EvDevDeviceHandler..ctor`, `EvDevDeviceHandler.Device`, `EvDevDeviceHandler.InputRoot`, `EvDevDeviceHandler.RaiseEvent`, `FbDevBackBuffer.Dispose`, `FbDevBackBuffer.LockFb`, `FbDevBackBuffer.Address`, `FbdevOutput..ctor`, `FbdevOutput..ctor`, `FbdevOutput.Lock`, `FbdevOutput.~FbdevOutput`, `LinuxFramebufferLifetime..ctor`, `input_event.Key`, `input_event.Axis`
 
 ### [Avalonia.Skia](tracking/Avalonia.Skia.md)
 
