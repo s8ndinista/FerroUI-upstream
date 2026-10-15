@@ -2101,6 +2101,7 @@ impl ITextInputMethodImpl for RecordingInputMethod {
 #[test]
 fn text_box_without_template_is_focused_with_an_input_method() {
     let _scope = test_scope();
+    let _focus = focus_scope();
     let input_method = Rc::new(RecordingInputMethod::default());
     let window_impl = MockWindowingPlatform::create_window_mock();
     window_impl.setup_feature::<dyn ITextInputMethodImpl>(input_method.clone());

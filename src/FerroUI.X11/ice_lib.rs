@@ -2,7 +2,8 @@
 //! `ICELib.cs`): the transport of the session management protocol.
 //! `libICE.so.6` is opened at run time.
 
-use crate::interop::native_library::{native_functions, NativeLibrary, NativeLibraryError};
+use ferroui_base::native_functions;
+use ferroui_base::platform::native_library::{NativeLibrary, NativeLibraryError};
 use crate::sm_lib::{IceWatchProc, SmcErrorHandler};
 use std::ffi::{c_int, c_void, CStr};
 use std::sync::OnceLock;

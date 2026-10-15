@@ -11,7 +11,8 @@
 //! only these methods make. That is what lets them be safe functions.
 
 use crate::interop::glib::{GSList, Glib};
-use crate::interop::native_library::{native_functions, NativeLibrary, NativeLibraryError};
+use ferroui_base::native_functions;
+use ferroui_base::platform::native_library::{NativeLibrary, NativeLibraryError};
 use crate::x11_platform::X11PlatformOptions;
 use ferroui_base::{FerroLocator, LocatorExtensions};
 use std::ffi::{c_char, c_int, c_ulong, c_void, CStr, CString};

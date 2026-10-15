@@ -55,6 +55,11 @@ paste.workspace = true
 rust_decimal.workspace = true
 time.workspace = true
 
+# The loader of libraries opened at run time (`platform::native_library`), which the backends of
+# Unix systems share.
+[target.'cfg(all(unix, not(target_os = "emscripten")))'.dependencies]
+libc.workspace = true
+
 [build-dependencies]
 # The source scanner and the export of the type model: the standard library and `syn`, nothing of the
 # framework.

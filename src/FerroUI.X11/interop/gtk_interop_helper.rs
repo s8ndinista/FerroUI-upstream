@@ -36,7 +36,7 @@ mod tests {
     /// exist the test does not start GTK, which needs a display.
     #[test]
     fn without_gtk_the_call_fails_with_the_message_of_the_reference() {
-        if crate::interop::native_library::NativeLibrary::open(c"libgtk-3.so.0").is_ok() {
+        if ferroui_base::platform::native_library::NativeLibrary::open(c"libgtk-3.so.0").is_ok() {
             return;
         }
         let mut call = std::pin::pin!(GtkInteropHelper::run_on_glib_thread(|| 1));

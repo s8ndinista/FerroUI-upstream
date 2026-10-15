@@ -1,7 +1,8 @@
 //! The functions of the session management library the platform calls
 //! (the port of `SMLib.cs`). `libSM.so.6` is opened at run time.
 
-use crate::interop::native_library::{native_functions, NativeLibrary, NativeLibraryError};
+use ferroui_base::native_functions;
+use ferroui_base::platform::native_library::{NativeLibrary, NativeLibraryError};
 use std::ffi::{c_char, c_int, c_ulong, c_void, CStr};
 use std::sync::OnceLock;
 

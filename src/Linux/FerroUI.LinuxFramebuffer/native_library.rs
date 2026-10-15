@@ -8,66 +8,71 @@
 //! (docs/porting/linux-framebuffer-platform.md, section 3): nothing links
 //! the libraries, and a machine without one gets an error that names it.
 //! An addition of the port; the declarations of each library are in the
-//! file of the reference that declares them.
+//! file of the reference that declares them, as tables of the loader of the
+//! base crate (`ferroui_base::native_functions!`), which the other Linux
+//! backends share.
 
-/// Declares a table of the functions of a library and its `load`.
-///
-/// ```ignore
-/// native_library! {
-///     #[library = "libfoo.so.1"]
-///     /// The functions of libfoo.
-///     pub struct LibFoo {
-///         foo_create: unsafe extern "C" fn(c_int) -> *mut c_void,
-///     }
-/// }
-/// ```
-///
-/// Each field is the function of the same name, with the C signature the
-/// declaration gives; it is called as `(table.foo_create)(1)` in an
-/// `unsafe` block whose safety argument is the contract of the C function.
-/// The library stays loaded for the life of the process.
-macro_rules! native_library {
-    (
-        #[library = $library:literal]
-        $(#[$meta:meta])*
-        $vis:vis struct $table:ident {
-            $($name:ident: unsafe extern "C" fn($($arg:ty),* $(,)?) $(-> $ret:ty)?,)*
-        }
-    ) => {
-        $(#[$meta])*
-        #[allow(non_snake_case, dead_code)]
-        $vis struct $table {
-            $(pub(crate) $name: unsafe extern "C" fn($($arg),*) $(-> $ret)?,)*
-        }
+use ferroui_base::platform::native_library::{NativeLibrary, NativeLibraryError};
+use std::ffi::CStr;
 
-        impl $table {
-            /// Opens the library and resolves its functions.
-            pub fn load() -> Result<Self, String> {
-                let library_name = ::std::ffi::CString::new($library).expect("a library name has no NUL");
-                // SAFETY: the name is a valid C string; the handle is kept for the life of
-                // the process, so what the library exports stays valid.
-                let library = unsafe { ::libc::dlopen(library_name.as_ptr(), ::libc::RTLD_NOW | ::libc::RTLD_LOCAL) };
-                if library.is_null() {
-                    return Err(format!("Unable to load shared library '{}' or one of its dependencies.", $library));
-                }
-                Ok(Self {
-                    $($name: {
-                        let name = ::std::ffi::CString::new(stringify!($name)).expect("an identifier has no NUL");
-                        // SAFETY: a valid handle and a valid C string.
-                        let symbol = unsafe { ::libc::dlsym(library, name.as_ptr()) };
-                        if symbol.is_null() {
-                            return Err(format!("{} does not export {}", $library, stringify!($name)));
-                        }
-                        // SAFETY: the symbol is the C function of this name, whose signature
-                        // is the declared one (the header of the library).
-                        unsafe {
-                            ::std::mem::transmute::<*mut ::std::ffi::c_void, unsafe extern "C" fn($($arg),*) $(-> $ret)?>(symbol)
-                        }
-                    },)*
-                })
-            }
-        }
-    };
+/// Opens the library of that name and resolves its table with `load` (the
+/// `load` of a table of `ferroui_base::native_functions!`).
+///
+/// Every function of the library is bound when it is opened, and its
+/// symbols stay out of the global namespace (`RTLD_NOW | RTLD_LOCAL`). The
+/// library stays loaded for the life of the process. The error names the
+/// library that cannot be loaded or the function it does not export.
+pub(crate) fn load_library<T>(
+    library: &'static CStr,
+    load: impl FnOnce(&NativeLibrary) -> Result<T, NativeLibraryError>,
+) -> Result<T, String> {
+    let library = NativeLibrary::open_with_flags(library, libc::RTLD_NOW | libc::RTLD_LOCAL).map_err(message)?;
+    load(&library).map_err(message)
 }
 
-pub(crate) use native_library;
+/// The message of the backend for a library or a function that cannot be
+/// had.
+fn message(error: NativeLibraryError) -> String {
+    match error {
+        NativeLibraryError::EntryPoint { library, symbol } => format!("{library} does not export {symbol}"),
+        error @ NativeLibraryError::Library { .. } => error.to_string(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    // Not from the reference.
+    use super::*;
+
+    #[test]
+    fn a_library_that_does_not_exist_is_an_error_with_its_name() {
+        let error = load_library(c"libferroui-there-is-no-such-library.so.0", |_| Ok(())).unwrap_err();
+        assert_eq!(
+            error,
+            "Unable to load shared library 'libferroui-there-is-no-such-library.so.0' or one of its dependencies."
+        );
+    }
+
+    /// The C library is loaded in every process: a table of a function it
+    /// has is loaded, one of a function it does not have is an error that
+    /// names both.
+    #[test]
+    fn a_function_that_is_missing_is_an_error_with_its_name() {
+        ferroui_base::native_functions! {
+            struct Table(lib) {
+                lib::getpid: unsafe extern "C" fn() -> libc::pid_t;
+            }
+        }
+        let table = load_library(c"libc.so.6", Table::load).unwrap();
+        // SAFETY: `getpid` takes nothing and always succeeds.
+        assert_eq!(unsafe { (table.getpid)() } as u32, std::process::id());
+
+        ferroui_base::native_functions! {
+            struct Missing(lib) {
+                lib::ferroui_no_such_function: unsafe extern "C" fn();
+            }
+        }
+        let error = load_library(c"libc.so.6", Missing::load).err().unwrap();
+        assert_eq!(error, "libc.so.6 does not export ferroui_no_such_function");
+    }
+}
