@@ -1,6 +1,6 @@
 # The children of a border with a box shadow in a render target bitmap of more than 96 DPI (October 2026)
 
-Prepared for a decision of the owner. On the branch `macos-render-fixes` nothing in the Skia backend is changed: the behaviour is upstream's, as described here, and the tests named below record it. The fix of section "The smallest correct fix" is the branch `macos-render-fixes-rtb-transform`, one commit on top of it, with the deviation recorded and the acceptance test turned on.
+Prepared for a decision of the owner. On the branch `macos-render-fixes` nothing in the Skia backend is changed: the behaviour is upstream's, as described here, and the tests named below record it. The fix of section "The smallest correct fix" is the branch `macos-render-fixes-rtb-transform`, on top of it, with the deviation recorded and the acceptance test turned on.
 
 ## What was seen
 
