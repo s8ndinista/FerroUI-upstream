@@ -11,8 +11,10 @@ use std::rc::{Rc, Weak};
 /// that are created on it.
 // The original guards the display with a monitor, which a deriving class can share with
 // the contexts of the display (`DisplayLockIsSharedWithContexts`, `ContextSharedSyncRoot`).
-// The objects of this crate belong to one thread, so there is nothing to guard: `lock`
-// returns a handle that does nothing and the two members are not ported.
+// The display and its contexts are `Rc` objects of one thread here (not `Send`; the
+// platform graphics bind the display to its thread), so no second thread can enter
+// either: `lock` returns a handle that does nothing and the two members have nothing to
+// share.
 pub struct EglDisplay {
     this: Weak<EglDisplay>,
     egl: Rc<EglInterface>,
@@ -25,10 +27,17 @@ pub struct EglDisplay {
 }
 
 impl EglDisplay {
+    /// The default display of the EGL library of the system (`new EglDisplay()`):
+    /// the interface is [`EglInterface::new_default`].
+    pub fn new_default() -> Result<Rc<EglDisplay>, OpenGlException> {
+        let egl = EglInterface::new_default()?;
+        Self::new_with_creation_options(EglDisplayCreationOptions {
+            base: EglDisplayOptions { egl: Some(Rc::new(egl)), ..Default::default() },
+            ..Default::default()
+        })
+    }
+
     /// Creates the display the options describe (`new EglDisplay(EglDisplayCreationOptions)`).
-    ///
-    /// The constructor of the original without arguments, which loads the EGL library of
-    /// the system by name, is not ported; see [`EglInterface`].
     pub fn new_with_creation_options(options: EglDisplayCreationOptions) -> Result<Rc<EglDisplay>, OpenGlException> {
         let display = EglDisplayUtils::create_display(&options)?;
         Self::new(display, options.base)
