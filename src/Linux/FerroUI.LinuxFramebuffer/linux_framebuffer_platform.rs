@@ -6,7 +6,8 @@ use crate::framebuffer_toplevel_impl::FramebufferToplevelImpl;
 use crate::input::ev_dev::EvDevBackend;
 use crate::input::IInputBackend;
 use crate::linux_framebuffer_platform_options::LinuxFramebufferPlatformOptions;
-use crate::output::{FbDevOutputOptions, FbdevOutput, IOutputBackend};
+use crate::output::{DrmOutput, FbDevOutputOptions, FbdevOutput, IOutputBackend};
+use crate::DrmOutputOptions;
 use crate::raw_event_grouping::{
     IRawEventGrouperDispatchQueue, ManualRawEventGrouperDispatchQueue,
     ManualRawEventGrouperDispatchQueueDispatcherInputProvider,
@@ -357,16 +358,26 @@ pub trait LinuxFramebufferPlatformExtensions {
         input_backend: Option<Rc<dyn IInputBackend>>,
     ) -> io::Result<i32>;
 
-    /// Starts the application on a KMS output.
-    ///
-    /// # Panics
-    /// Always: the DRM output is stage 2 of
-    /// docs/porting/linux-framebuffer-platform.md and is not built yet.
+    /// Starts the application on a KMS output: the first connected
+    /// connector of the card `card` (or of the first usable card of
+    /// `/dev/dri`) in its preferred mode, and runs it until it shuts down.
+    /// Returns the exit code.
     fn start_linux_drm(
         &self,
         args: &[String],
         card: Option<&str>,
         scaling: f64,
+        input_backend: Option<Rc<dyn IInputBackend>>,
+    ) -> io::Result<i32>;
+
+    /// As [`start_linux_drm`](Self::start_linux_drm), probing the
+    /// connectors when asked to and with the options of the output.
+    fn start_linux_drm_with_options(
+        &self,
+        args: &[String],
+        card: Option<&str>,
+        connectors_force_probe: bool,
+        options: Option<DrmOutputOptions>,
         input_backend: Option<Rc<dyn IInputBackend>>,
     ) -> io::Result<i32>;
 
@@ -428,12 +439,26 @@ impl LinuxFramebufferPlatformExtensions for AppBuilder {
 
     fn start_linux_drm(
         &self,
-        _args: &[String],
-        _card: Option<&str>,
-        _scaling: f64,
-        _input_backend: Option<Rc<dyn IInputBackend>>,
+        args: &[String],
+        card: Option<&str>,
+        scaling: f64,
+        input_backend: Option<Rc<dyn IInputBackend>>,
     ) -> io::Result<i32> {
-        panic!("The DRM output is not built yet (stage 2 of docs/porting/linux-framebuffer-platform.md)")
+        let output = DrmOutput::new(card, false, None)?;
+        output.set_scaling(scaling);
+        Ok(self.start_linux_direct(args, output, input_backend))
+    }
+
+    fn start_linux_drm_with_options(
+        &self,
+        args: &[String],
+        card: Option<&str>,
+        connectors_force_probe: bool,
+        options: Option<DrmOutputOptions>,
+        input_backend: Option<Rc<dyn IInputBackend>>,
+    ) -> io::Result<i32> {
+        let output = DrmOutput::new(card, connectors_force_probe, options)?;
+        Ok(self.start_linux_direct(args, output, input_backend))
     }
 
     fn start_linux_direct(
