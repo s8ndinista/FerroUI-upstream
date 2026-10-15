@@ -317,3 +317,22 @@ fn many_variables_fit_one_table() {
     thread::spawn(run).join().unwrap();
     thread::spawn(run).join().unwrap();
 }
+
+#[test]
+fn a_variable_is_a_constant_as_with_the_standard_library() {
+    // Declared in an `impl` block, as an associated constant, and passed on as a
+    // `&'static LocalKey`.
+    struct Owner;
+    impl Owner {
+        crate::__ferro_thread_local_table! {
+            static COUNT: Cell<u32> = const { Cell::new(0) };
+        }
+    }
+    fn add(key: &'static crate::ferro_thread_local::table::LocalKey<Cell<u32>>, amount: u32) {
+        key.set(key.get() + amount);
+    }
+
+    add(&Owner::COUNT, 2);
+    add(&Owner::COUNT, 3);
+    assert_eq!(Owner::COUNT.get(), 5);
+}
