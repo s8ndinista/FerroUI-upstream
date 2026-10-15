@@ -10,9 +10,9 @@ Generated from upstream commit `17350180c33b063f0e98abbfd19aa3cae63f5d56`. Back 
 | FerroUI | `src/FerroUI.Native` (exists) |
 | Crate | `ferroui-native` |
 | Phase / priority | 1 - desktop (macOS) / P0 |
-| Files | 48/49 (98.0%) |
-| Types | 67/85 (10 waived) (89.3%) |
-| Members | 473/601 (59 waived) (87.3%) |
+| Files | 49/49 (100.0%) |
+| Types | 75/85 (10 waived) (100.0%) |
+| Members | 542/601 (59 waived) (100.0%) |
 | Contracts (interfaces) | 1/4 |
 | Property registrations | 1/1 |
 | Routed events | 0/0 |
@@ -30,13 +30,13 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 
 ## Files
 
-### `(project root)` - files 48/49, types 67/85 (10 waived), members 473/601 (59 waived)
+### `(project root)` - files 49/49, types 75/85 (10 waived), members 542/601 (59 waived)
 
 | Upstream file | Rust file | Status | Types | Members | Notes |
 |---|---|---|---|---|---|
 | `AvaloniaNativeApplicationPlatform.cs` | `ferro_native_application_platform.rs` | present | 1/1 | 11/11 |  |
 | `AvaloniaNativeDragSource.cs` | `ferro_native_drag_source.rs` | present | 1/1 | 2/2 |  |
-| `AvaloniaNativeGlPlatformGraphics.cs` | `ferro_native_gl_platform_graphics.rs` | missing (types found elsewhere) | 1/9 | 1/70 | types found in `metal.rs` (add to path-overrides.toml) |
+| `AvaloniaNativeGlPlatformGraphics.cs` | `ferro_native_gl_platform_graphics.rs` | present | 9/9 | 70/70 |  |
 | `AvaloniaNativeMenuExporter.cs` | `ferro_native_menu_exporter.rs` | present | 2/2 | 13/13 |  |
 | `AvaloniaNativePlatform.cs` | `ferro_native_platform.rs` | present | 1/1 | 13/13 |  |
 | `AvaloniaNativePlatformExtensions.cs` | `ferro_native_platform_extensions.rs` | present | 4/4 | 13/13 |  |
@@ -83,27 +83,6 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 | `TrayIconImpl.cs` | `tray_icon_impl.rs` | present | 1/1 | 8/8 |  |
 | `WindowImpl.cs` | `window_impl.rs` | present | 1/1 | 31/32 (1 waived) |  |
 | `WindowImplBase.cs` | `window_impl_base.rs` | present | 1/2 (1 waived) | 19/23 (4 waived) |  |
-
-<details><summary><code>AvaloniaNativeGlPlatformGraphics.cs</code> - 77 missing</summary>
-
-- `AvaloniaNativeGlPlatformGraphics` (class, internal): **type missing** (8 members)
-- `GlDisplay` (class, internal): **type missing** (8 members)
-- `GlContext` (class, internal): **type missing** (15 members)
-- `GlPlatformSurfaceRenderTarget` (class, internal): **type missing** (4 members)
-- `GlPlatformSurfaceRenderingSession` (class, internal): **type missing** (6 members)
-- `GlPlatformSurface` (class, internal): **type missing** (2 members)
-- `GlExternalObjectsFeature` (class, internal): **type missing** (13 members)
-- `MtlEventSemaphore` (class, internal): **type missing** (6 members)
-- `ImportedTexture` (class) in `metal.rs`: 7 missing
-  - `ImportedTexture(GlContext context, int type, int id, int internalFormat, PlatformGraphicsExternalImagePrope...`
-  - `void AcquireKeyedMutex(uint key)`
-  - `void ReleaseKeyedMutex(uint key)`
-  - `int TextureId { get; }`
-  - `int InternalFormat { get; }`
-  - `int TextureType { get; }`
-  - `PlatformGraphicsExternalImageProperties Properties { get; }`
-
-</details>
 
 ## IDL contracts: `avn.idl` -> `frn.idl`
 
