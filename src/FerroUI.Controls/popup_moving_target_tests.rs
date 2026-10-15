@@ -234,8 +234,13 @@ fn popup_opened_during_the_transition_keeps_the_place_its_target_had_then_known_
     );
     let updates_when_opened = shell.updates.borrow().len();
     let position_when_opened = popup_position(&shell);
-    // Centred below the rectangle it was given: 20 further right.
-    assert_eq!((given.x + 20.0).round() as i32, position_when_opened.x);
+    // Centred below the rectangle it was given: 20 further right, within the
+    // pixel the positioner rounds a fractional place to (the target is
+    // caught at any fraction of a pixel while it moves).
+    assert!(
+        (given.x + 20.0 - f64::from(position_when_opened.x)).abs() < 1.0,
+        "the popup at {position_when_opened:?} is centred below the anchor rectangle {given:?}"
+    );
     assert_eq!(80, position_when_opened.y);
 
     run_to_end(&navigation);
