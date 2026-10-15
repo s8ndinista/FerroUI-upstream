@@ -10,9 +10,9 @@ Generated from upstream commit `17350180c33b063f0e98abbfd19aa3cae63f5d56`. Back 
 | FerroUI | `src/Linux/FerroUI.LinuxFramebuffer` (exists) |
 | Crate | `ferroui-linuxframebuffer` |
 | Phase / priority | 5 - desktop (Linux) / P2 |
-| Files | 25/30 (83.3%) |
-| Types | 34/76 (44.7%) |
-| Members | 169/529 (31.9%) |
+| Files | 30/30 (100.0%) |
+| Types | 61/76 (80.3%) |
+| Members | 324/529 (61.2%) |
 | Contracts (interfaces) | 4/4 |
 | Property registrations | 0/0 |
 | Routed events | 0/0 |
@@ -30,25 +30,23 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 
 ## Files
 
-### `(project root)` - files 6/8, types 14/27, members 122/246
+### `(project root)` - files 8/8, types 16/27, members 147/246
 
 | Upstream file | Rust file | Status | Types | Members | Notes |
 |---|---|---|---|---|---|
-| `DrmConnectorType.cs` | `drm_connector_type.rs` | missing | 0/1 | 0/17 |  |
-| `DrmOutputOptions.cs` | `drm_output_options.rs` | missing | 0/1 | 0/7 |  |
+| `DrmConnectorType.cs` | `drm_connector_type.rs` | present | 1/1 | 17/17 |  |
+| `DrmOutputOptions.cs` | `drm_output_options.rs` | present | 1/1 | 7/7 |  |
 | `EpollDispatcherImpl.cs` | `epoll_dispatcher_impl.rs` | present | 1/1 | 12/12 |  |
 | `FramebufferToplevelImpl.cs` | `framebuffer_toplevel_impl.rs` | present | 1/1 | 30/30 |  |
-| `LinuxFramebufferPlatform.cs` | `linux_framebuffer_platform.rs` | partial | 4/4 | 20/22 |  |
+| `LinuxFramebufferPlatform.cs` | `linux_framebuffer_platform.rs` | partial | 4/4 | 21/22 |  |
 | `LinuxFramebufferPlatformOptions.cs` | `linux_framebuffer_platform_options.rs` | present | 1/1 | 2/2 |  |
 | `NativeUnsafeMethods.cs` | `native_unsafe_methods.rs` | partial | 6/17 | 56/154 |  |
 | `Stubs.cs` | `stubs.rs` | present | 1/1 | 2/2 |  |
 
-<details><summary><code>LinuxFramebufferPlatform.cs</code> - 2 missing</summary>
+<details><summary><code>LinuxFramebufferPlatform.cs</code> - 1 missing</summary>
 
 - `LinuxFramebufferLifetime` (class): 1 missing
   - `LinuxFramebufferLifetime(IOutputBackend fb, IInputBackend? input)` *(1 of 2 constructors found)*
-- `LinuxFramebufferPlatformExtensions` (class): 1 missing
-  - `static int StartLinuxDrm(this AppBuilder builder, string[] args, string? card = null, bool connectorsForceP...` *(1 of 2 overloads found)*
 
 </details>
 
@@ -144,18 +142,50 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 |---|---|---|---|---|---|
 | `NullInputBackend.cs` | `input/null_input/null_input_backend.rs` | present | 1/1 | 2/2 |  |
 
-### `Output` - files 5/8, types 5/30, members 18/181
+### `Output` - files 8/8, types 30/30, members 148/181
 
 | Upstream file | Rust file | Status | Types | Members | Notes |
 |---|---|---|---|---|---|
-| `Drm.cs` | `output/drm.rs` | missing | 0/19 | 0/117 |  |
-| `DrmBindings.cs` | `output/drm_bindings.rs` | missing | 0/5 | 0/28 |  |
-| `DrmOutput.cs` | `output/drm_output.rs` | missing | 0/1 | 0/11 |  |
+| `Drm.cs` | `output/drm.rs` | partial | 19/19 | 91/117 |  |
+| `DrmBindings.cs` | `output/drm_bindings.rs` | present | 5/5 | 28/28 |  |
+| `DrmOutput.cs` | `output/drm_output.rs` | present | 1/1 | 11/11 |  |
 | `FbDevBackBuffer.cs` | `output/fb_dev_back_buffer.rs` | partial | 1/1 | 4/7 |  |
 | `FbDevOutputOptions.cs` | `output/fb_dev_output_options.rs` | present | 1/1 | 5/5 |  |
 | `FbdevOutput.cs` | `output/fbdev_output.rs` | partial | 1/1 | 6/10 |  |
 | `IGlOutputBackend.cs` | `output/i_gl_output_backend.rs` | present | 1/1 | 1/1 |  |
 | `IOutputBackend.cs` | `output/i_output_backend.rs` | present | 1/1 | 2/2 |  |
+
+<details><summary><code>Drm.cs</code> - 26 missing</summary>
+
+- `LibDrm` (class): 26 missing
+  - `static drmModeRes* drmModeGetResources(int fd)`
+  - `static void drmModeFreeResources(drmModeRes* res)`
+  - `static drmModeConnector* drmModeGetConnector(int fd, uint connector)`
+  - `static drmModeConnector* drmModeGetConnectorCurrent(int fd, uint connector)`
+  - `static void drmModeFreeConnector(drmModeConnector* res)`
+  - `static drmModeEncoder* drmModeGetEncoder(int fd, uint id)`
+  - `static void drmModeFreeEncoder(drmModeEncoder* enc)`
+  - `static drmModeCrtc* drmModeGetCrtc(int fd, uint id)`
+  - `static void drmModeFreeCrtc(drmModeCrtc* enc)`
+  - `static int drmModeAddFB(int fd, uint width, uint height, byte depth, byte bpp, uint pitch, uint bo_handle, ...`
+  - `static int drmModeAddFB2(int fd, uint width, uint height, uint pixel_format, uint[] bo_handles, uint[] pitc...`
+  - `static int drmModeSetCrtc(int fd, uint crtcId, uint bufferId, uint x, uint y, uint *connectors, int count, ...`
+  - `static void drmModeRmFB(int fd, int id)`
+  - `static void drmModePageFlip(int fd, uint crtc_id, uint fb_id, DrmModePageFlip flags, void *user_data)`
+  - `static void drmHandleEvent(int fd, DrmEventContext* context)`
+  - `static IntPtr gbm_create_device(int fd)`
+  - `static IntPtr gbm_surface_create(IntPtr device, int width, int height, uint format, GbmBoFlags flags)`
+  - `static IntPtr gbm_surface_lock_front_buffer(IntPtr surface)`
+  - `static int gbm_surface_release_buffer(IntPtr surface, IntPtr bo)`
+  - `static IntPtr gbm_bo_get_user_data(IntPtr surface)`
+  - `static IntPtr gbm_bo_set_user_data(IntPtr bo, IntPtr userData, GbmBoUserDataDestroyCallbackDelegate onFree)`
+  - `static uint gbm_bo_get_width(IntPtr bo)`
+  - `static uint gbm_bo_get_height(IntPtr bo)`
+  - `static uint gbm_bo_get_stride(IntPtr bo)`
+  - `static uint gbm_bo_get_format(IntPtr bo)`
+  - `static GbmBoHandle gbm_bo_get_handle(IntPtr bo)`
+
+</details>
 
 <details><summary><code>FbDevBackBuffer.cs</code> - 3 missing</summary>
 
@@ -186,6 +216,8 @@ Rust sources of this crate that no upstream file maps to. Give each a reason in 
 | `input/ev_dev/ev_dev_keyboard.rs` | **unmapped** | `EvDevKeyboard`, `EvDevKeyboardDeviceDescription` |
 | `input/ev_dev/ev_dev_mouse.rs` | **unmapped** | `EvDevMouse`, `EvDevMouseDeviceDescription` |
 | `input/ev_dev/ev_dev_multi_touch_screen.rs` | **unmapped** | `EvDevMultiTouchScreen`, `EvDevMultiTouchScreenDeviceDescription`, `Slot` |
+| `native_library.rs` | **unmapped** |  |
+| `output/drm_scanout.rs` | **unmapped** | `DrmScanout`, `drm_gem_close`, `drm_mode_crtc`, `drm_mode_fb_cmd`, `drm_mode_map_dumb`, `drm_version` |
 | `output/fb_device.rs` | **unmapped** | `FbMapping`, `FileFbDevice`, `IFbDevice`, `LinuxFbDevice` |
 | `raw_event_grouping.rs` | **unmapped** | `AutomaticRawEventGrouperDispatchQueue`, `GrouperState`, `IRawEventGrouperDispatchQueue`, `ManualRawEventGrouperDispatchQueue`, `ManualRawEventGrouperDispatchQueueDispatcherInputProvider`, `MergedPoints`, `RawEvent`, `RawEventGrouper`, `RawEventHandler` |
 

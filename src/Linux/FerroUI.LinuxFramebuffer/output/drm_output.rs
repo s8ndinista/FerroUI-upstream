@@ -251,7 +251,7 @@ mod imp {
         if let Some(output) = data.output.upgrade() {
             // SAFETY: a call with the card's descriptor (or -1 once it is closed) and a number.
             unsafe {
-                (output.lib.drm.drmModeRmFB)(output.card.fd(), data.fb_id);
+                output.lib.drm_mode_rm_fb(output.card.fd(), data.fb_id);
             }
         }
     }
@@ -318,21 +318,21 @@ mod imp {
             if bo.is_null() {
                 return Err(io::Error::new(io::ErrorKind::InvalidInput, "bo is 0"));
             }
-            let gbm = &self.lib.gbm;
-            let drm = &self.lib.drm;
+            let gbm = self.lib;
+            let drm = self.lib;
             // SAFETY: `bo` is a buffer object of the output's surface, locked by the caller; the
             // user data is null or the box this function attached.
             unsafe {
-                let data = (gbm.gbm_bo_get_user_data)(bo);
+                let data = gbm.gbm_bo_get_user_data(bo);
                 if !data.is_null() {
                     return Ok((*data.cast::<FbUserData>()).fb_id);
                 }
 
-                let w = (gbm.gbm_bo_get_width)(bo);
-                let h = (gbm.gbm_bo_get_height)(bo);
-                let stride = (gbm.gbm_bo_get_stride)(bo);
-                let handle = (gbm.gbm_bo_get_handle)(bo).u32;
-                let format = (gbm.gbm_bo_get_format)(bo);
+                let w = gbm.gbm_bo_get_width(bo);
+                let h = gbm.gbm_bo_get_height(bo);
+                let stride = gbm.gbm_bo_get_stride(bo);
+                let handle = gbm.gbm_bo_get_handle(bo).u32;
+                let format = gbm.gbm_bo_get_format(bo);
 
                 // prepare for the new ioctl call
                 let handles = [handle, 0, 0, 0];
@@ -340,21 +340,21 @@ mod imp {
                 let offsets = [0u32; 4];
 
                 let mut fb_handle = 0u32;
-                let mut ret = (drm.drmModeAddFB2)(
+                let mut ret = drm.drm_mode_add_fb2(
                     self.card.fd(),
                     w,
                     h,
                     format,
-                    handles.as_ptr(),
-                    pitches.as_ptr(),
-                    offsets.as_ptr(),
+                    &handles,
+                    &pitches,
+                    &offsets,
                     &mut fb_handle,
                     0,
                 );
 
                 if ret != 0 {
                     // legacy fallback
-                    ret = (drm.drmModeAddFB)(self.card.fd(), w, h, 24, 32, stride, handle, &mut fb_handle);
+                    ret = drm.drm_mode_add_fb(self.card.fd(), w, h, 24, 32, stride, handle, &mut fb_handle);
 
                     if ret != 0 {
                         return Err(io::Error::other(format!("drmModeAddFb failed {ret}")));
@@ -362,7 +362,7 @@ mod imp {
                 }
 
                 let data = Box::into_raw(Box::new(FbUserData { output: self.this.clone(), fb_id: fb_handle }));
-                (gbm.gbm_bo_set_user_data)(bo, data.cast(), Some(fb_destroy_callback));
+                gbm.gbm_bo_set_user_data(bo, data.cast(), Some(fb_destroy_callback));
 
                 Ok(fb_handle)
             }
@@ -452,14 +452,14 @@ mod imp {
             }
 
             // SAFETY: the surface of the output, whose buffers were just swapped.
-            let bo = unsafe { (self.lib.gbm.gbm_surface_lock_front_buffer)(self.gbm_target_surface.0) };
+            let bo = unsafe { self.lib.gbm_surface_lock_front_buffer(self.gbm_target_surface.0) };
             let fb_id = self.get_fb_id_for_bo(bo).map_err(|error| OpenGlException::new(error.to_string()))?;
             let mut connector_id = self.connector_id;
             let mut mode = self.mode;
 
             // SAFETY: the card's descriptor, one connector and the mode, all alive for the call.
             let res =
-                unsafe { (self.lib.drm.drmModeSetCrtc)(self.card.fd(), self.crtc_id, fb_id, 0, 0, &mut connector_id, 1, &mut mode) };
+                unsafe { self.lib.drm_mode_set_crtc(self.card.fd(), self.crtc_id, fb_id, 0, 0, &mut connector_id, 1, &mut mode) };
             if res != 0 {
                 return Err(OpenGlException::new(format!(
                     "drmModeSetCrtc failed: {} ({res})",
@@ -723,19 +723,19 @@ mod imp {
 
             let crtc_id = get_crtc(resources, connector)?;
             // SAFETY: a call with the card's descriptor; the result is a device or null.
-            let device = unsafe { (lib.gbm.gbm_create_device)(card.fd()) };
+            let device = unsafe { lib.gbm_create_device(card.fd()) };
             if device.is_null() {
                 return Err(io::Error::other("Unable to create GBM device"));
             }
             let resolution = mode_info.resolution();
             // SAFETY: the device just created, a size and the flags of a scan-out buffer.
             let gbm_target_surface = unsafe {
-                (lib.gbm.gbm_surface_create)(
+                lib.gbm_surface_create(
                     device,
                     resolution.width as u32,
                     resolution.height as u32,
                     gbm_color_formats::GBM_FORMAT_XRGB8888,
-                    (GbmBoFlags::GBM_BO_USE_SCANOUT | GbmBoFlags::GBM_BO_USE_RENDERING).0,
+                    GbmBoFlags::GBM_BO_USE_SCANOUT | GbmBoFlags::GBM_BO_USE_RENDERING,
                 )
             };
             if gbm_target_surface.is_null() {
@@ -982,7 +982,7 @@ mod imp {
             let lib = parent.lib;
             let surface = parent.gbm_target_surface.0;
             // SAFETY: the surface of the output, whose buffers were just swapped.
-            let next_bo = unsafe { (lib.gbm.gbm_surface_lock_front_buffer)(surface) };
+            let next_bo = unsafe { lib.gbm_surface_lock_front_buffer(surface) };
             if next_bo.is_null() {
                 // Not sure what else can be done
                 println!("gbm_surface_lock_front_buffer failed");
@@ -997,11 +997,11 @@ mod imp {
                 // SAFETY: the card's descriptor and numbers; the user data is the flag above,
                 // which outlives the wait for the event that hands it back.
                 let ret = unsafe {
-                    (lib.drm.drmModePageFlip)(
+                    lib.drm_mode_page_flip(
                         fd,
                         parent.crtc_id,
                         fb,
-                        DrmModePageFlip::EVENT.0,
+                        DrmModePageFlip::EVENT,
                         (&waiting_for_flip as *const Cell<bool>).cast_mut().cast(),
                     )
                 };
@@ -1011,7 +1011,7 @@ mod imp {
                     // does not come; the buffer that was not shown goes back to the surface.
                     println!("drmModePageFlip failed {ret}");
                     // SAFETY: the buffer object locked above, released once.
-                    unsafe { (lib.gbm.gbm_surface_release_buffer)(surface, next_bo) };
+                    unsafe { lib.gbm_surface_release_buffer(surface, next_bo) };
                 } else {
                     let mut ctx = DrmEventContext {
                         version: 4,
@@ -1024,13 +1024,13 @@ mod imp {
                         // and its handler are alive for the call.
                         unsafe {
                             libc::poll(&mut pfd, 1, -1);
-                            (lib.drm.drmHandleEvent)(fd, &mut ctx);
+                            lib.drm_handle_event(fd, &mut ctx);
                         }
                     }
 
                     // SAFETY: the buffer object that was shown until the flip, locked before and
                     // released once.
-                    unsafe { (lib.gbm.gbm_surface_release_buffer)(surface, egl.current_bo.get()) };
+                    unsafe { lib.gbm_surface_release_buffer(surface, egl.current_bo.get()) };
                     egl.current_bo.set(next_bo);
                 }
             }
