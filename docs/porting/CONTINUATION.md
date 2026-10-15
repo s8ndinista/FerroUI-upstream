@@ -2,6 +2,8 @@
 
 This page is the hand-over point for the next working period: what was finished, what is in flight, the tasks that come next in order, and how to run them. Read it after `CLOUD-WORKERS.md`, which stays the standing brief of every worker. Update it at the end of each period.
 
+The checks that need real hardware or a person at the screen are listed per platform in `manual-verification.md`.
+
 ## Hand-over: the state on 2026-10-15
 
 **The port.** Every upstream file, type and member in scope is ported or waived with a reason: 30354 of 36210 members present, 5856 waived, none missing (`TRACKING.md`; `REMAINING.md` lists what is out of scope or not counted; `waiver-audit.md` audits the waivers). Of every upstream project the extraction reads, in scope or not, the port has 81.2 % of the members. Every upstream test project that is counted has its tests ported or waived except one test of designer support (below). `main` is the merge of `integration-preview3` (pull request 198); the CI run of that integration branch (38769434562) is green in every job. The workspace is at `0.1.0-preview.2`; `0.1.0-preview.1` is published (37 crates), and no crate of the workspace is a placeholder any more (`docs/release.md`, section 2.2).
