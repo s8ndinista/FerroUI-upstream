@@ -473,6 +473,7 @@ dependencies = [
  "ferroui-base",
  "ferroui-controls",
  "ferroui-desktop",
+ "ferroui-headless-vnc",
  "ferroui-vello",
  "ferroui-win32",
  "ferroui-x11",

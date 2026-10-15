@@ -31,8 +31,18 @@
 //! `FERROUI_SMOKE_RENDERING=software` or `angle` asks for that rendering
 //! mode alone.
 //!
+//! With the command line switch `--vnc` the catalog runs on the headless
+//! platform, without a window on the screen, and a VNC server on port 5901
+//! of the loopback address shows its main window to a VNC viewer and passes
+//! the keyboard and the mouse of the viewer to it; the application ends
+//! when the main window closes.
+//!
+//! ```text
+//! cargo run -p control-catalog-desktop -- --vnc
+//! ```
+//!
 //! Not ported, because the platforms and options they name do not exist
-//! yet: the command line switches `--wait-for-attach`, `--fbdev`, `--vnc`,
+//! yet: the command line switches `--wait-for-attach`, `--fbdev`,
 //! `--full-headless`, `--drm`, `--dxgi` (with `--scaling`,
 //! `--orientation`, `--card`), and of the application builder the data
 //! annotations validation, the Wayland, X11, Vulkan and composition
@@ -59,8 +69,9 @@ use ferroui_base::media::imaging::{Bitmap, BitmapEncoderOptions, PngBitmapEncode
 use ferroui_base::platform::{AlphaFormat, PixelFormat};
 use ferroui_base::threading::{DispatcherPriority, DispatcherTimer};
 use ferroui_base::{PixelSize, Ref, Vector, Visual};
-use ferroui_controls::{AppBuilder, Application, Window};
+use ferroui_controls::{AppBuilder, Application, ShutdownMode, Window};
 use ferroui_desktop::AppBuilderDesktopExtensions;
+use ferroui_headless_vnc::HeadlessVncPlatformExtensions;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
@@ -68,6 +79,11 @@ fn main() -> std::process::ExitCode {
     let args: Vec<String> = std::env::args().skip(1).collect();
 
     let builder = build_ferro_app();
+
+    if args.iter().any(|arg| arg == "--vnc") {
+        let exit_code = builder.start_with_headless_vnc_platform(None, 5901, &args, ShutdownMode::OnMainWindowClose);
+        return std::process::ExitCode::from(exit_code as u8);
+    }
 
     let exit_code = builder.start_with_classic_desktop_lifetime(&args);
     // With `FERROUI_VELLO_PERF` the Vello backend says where the time of its

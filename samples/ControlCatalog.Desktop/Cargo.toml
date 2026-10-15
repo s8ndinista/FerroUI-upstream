@@ -19,6 +19,8 @@ path = "program.rs"
 ferroui-base = { workspace = true }
 ferroui-controls = { workspace = true }
 ferroui-desktop = { workspace = true }
+# `--vnc`: the catalog on the headless platform, seen and driven through a VNC viewer.
+ferroui-headless-vnc = { workspace = true }
 control-catalog = { path = "../ControlCatalog" }
 ferroui-vello = { workspace = true, optional = true, features = ["hybrid", "gpu"] }
 

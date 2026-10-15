@@ -4,6 +4,10 @@ All notable changes to FerroUI are recorded in this file. The format follows [Ke
 
 ## [Unreleased]
 
+### Added
+
+- **VNC server of the headless platform** (`ferroui-headless-vnc`, until now a reserved name): an application runs on the headless platform and is seen and driven through a VNC viewer (`HeadlessVncPlatformExtensions::start_with_headless_vnc_platform`, optionally with a password). The RFB server is a port of the parts of the .NET library RemoteViewing that the original uses (BSD-2-Clause): raw and Tight encodings, VNC authentication, desktop resize requests. The ControlCatalog desktop sample takes `--vnc` (port 5901). See `docs/porting/headless-vnc.md`; verified with a client of the tests, not with real VNC viewers.
+
 ## [0.1.0-preview.1] - Unreleased
 
 The first preview. It is being prepared and has not been published; the date is set when it is.

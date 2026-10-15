@@ -53,6 +53,12 @@ Avalonia itself incorporates code from other projects (for example WPF-derived l
 - License: MIT, Copyright (c) .NET Foundation and Contributors
 - Used for: the masked text engine `src/FerroUI.Controls/utils/masked_text_provider.rs`, derived from `System.ComponentModel.MaskedTextProvider` (the class the upstream masked text box is built on).
 
+## RemoteViewing
+
+- Project: <https://github.com/quamotion/remoteviewing> (package `Quamotion.RemoteViewing` 1.1.211)
+- License: BSD-2-Clause, Copyright (c) 2013 James F. Bellinger
+- Used for: the RFB (VNC) server of the VNC server of the headless platform, ported under `src/Headless/FerroUI.Headless.Vnc/remote_viewing/`: the parts of the library the upstream project uses (see `src/Headless/FerroUI.Headless.Vnc/NOTICE.md`, which holds the license text).
+
 ## Code under other licenses
 
 Some ported files derive from sources that the upstream project took from third parties under licenses other than MIT. They keep their original header lines, and the component-level notice lists them with the full license text:
@@ -66,6 +72,6 @@ Some ported files derive from sources that the upstream project took from third 
 
 ## Third-party crates
 
-Rust dependencies are used under their own licenses as declared in their crate metadata; they are not vendored in this repository. Direct dependencies: `skia-safe` (MIT), `harfbuzz-sys` (MIT), `bitflags`, `paste`, `cc`, `roxmltree`, `time` (MIT OR Apache-2.0), `rust_decimal` (MIT) and `sysinfo` (MIT).
+Rust dependencies are used under their own licenses as declared in their crate metadata; they are not vendored in this repository. Direct dependencies: `skia-safe` (MIT), `harfbuzz-sys` (MIT), `bitflags`, `paste`, `cc`, `roxmltree`, `time` (MIT OR Apache-2.0), `rust_decimal` (MIT) and `sysinfo` (MIT); for the VNC server of the headless platform `flate2`, `jpeg-encoder`, `des` and `getrandom` (MIT OR Apache-2.0).
 
 The Vello render backend (`src/Vello/FerroUI.Vello`) links crates of the Vello project and their companions: `kurbo`, `peniko`, `vello_cpu` (with `vello_common`), `linesweeper` and `png`, each under the Apache License 2.0 or the MIT license at the choice of the user. The versions, what each is used for and the copyright lines are in `src/Vello/FerroUI.Vello/NOTICE.md`.

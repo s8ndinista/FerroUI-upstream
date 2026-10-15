@@ -139,7 +139,8 @@ The owner decided on 2026-10-10 to reserve, with the first preview, the names of
 | `ferroui-vulkan` | `src/FerroUI.Vulkan` | the Vulkan platform contracts (upstream `Avalonia.Vulkan`) |
 | `ferroui-linuxframebuffer` | `src/Linux/FerroUI.LinuxFramebuffer` | the Linux framebuffer platform (upstream `Avalonia.LinuxFramebuffer`) |
 | `ferroui-winui` | `src/Windows/FerroUI.WinUI` | the WinUI integration (upstream `Avalonia.WinUI`) |
-| `ferroui-headless-vnc` | `src/Headless/FerroUI.Headless.Vnc` | the VNC server of the headless platform (upstream `Avalonia.Headless.Vnc`) |
+
+`ferroui-headless-vnc` was reserved with the first preview and is ported since (2026-10-15): the crate at `src/Headless/FerroUI.Headless.Vnc` is the VNC server of the headless platform (upstream `Avalonia.Headless.Vnc`, `docs/porting/headless-vnc.md`), published from the next preview with its real description. It is no longer only a reserved name.
 
 crates.io has no way to reserve a prefix: names are flat, and owning `ferroui` or any `ferroui-*` crate gives no right over other names that begin the same way. Publishing a name is the only protection. Not reserved: a name for the UI Automation bridge of Windows (planned as a module of `ferroui-win32`) and names for the upstream projects that have no counterpart in Rust (the interoperability with other .NET toolkits, the adapters of .NET test frameworks, the analyzers).
 

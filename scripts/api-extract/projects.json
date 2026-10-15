@@ -53,7 +53,5 @@
     { "path": "src/Avalonia.Vulkan", "detail": "types", "scope": "out", "phase": "not started / out of current scope", "priority": "-" }
   ],
   "//expanded": "Planning data (scope, phase, priority) of one project that a `dir/*` entry above expands to, where it differs from its siblings. Read by scripts/port-status only; the extractor ignores it.",
-  "expanded": [
-    { "path": "src/Headless/Avalonia.Headless.Vnc", "scope": "out", "phase": "not started / out of current scope", "priority": "-" }
-  ]
+  "expanded": []
 }
