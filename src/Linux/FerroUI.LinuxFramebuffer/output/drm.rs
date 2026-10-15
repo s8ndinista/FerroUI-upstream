@@ -318,40 +318,42 @@ pub mod lib_drm {
         use std::sync::OnceLock;
 
         native_library! {
+            #[library = "libdrm.so.2"]
             /// The functions of `libdrm` the output calls.
-            pub struct LibDrmFunctions("libdrm.so.2") {
-                drmModeGetResources: fn(c_int) -> *mut drmModeRes;
-                drmModeFreeResources: fn(*mut drmModeRes);
-                drmModeGetConnector: fn(c_int, u32) -> *mut drmModeConnector;
-                drmModeGetConnectorCurrent: fn(c_int, u32) -> *mut drmModeConnector;
-                drmModeFreeConnector: fn(*mut drmModeConnector);
-                drmModeGetEncoder: fn(c_int, u32) -> *mut drmModeEncoder;
-                drmModeFreeEncoder: fn(*mut drmModeEncoder);
-                drmModeGetCrtc: fn(c_int, u32) -> *mut drmModeCrtc;
-                drmModeFreeCrtc: fn(*mut drmModeCrtc);
-                drmModeAddFB: fn(c_int, u32, u32, u8, u8, u32, u32, *mut u32) -> c_int;
-                drmModeAddFB2: fn(c_int, u32, u32, u32, *const u32, *const u32, *const u32, *mut u32, u32) -> c_int;
-                drmModeSetCrtc: fn(c_int, u32, u32, u32, u32, *mut u32, c_int, *mut drmModeModeInfo) -> c_int;
-                drmModeRmFB: fn(c_int, u32) -> c_int;
-                drmModePageFlip: fn(c_int, u32, u32, u32, *mut c_void) -> c_int;
-                drmHandleEvent: fn(c_int, *mut DrmEventContext) -> c_int;
+            pub struct LibDrmFunctions {
+                drmModeGetResources: unsafe extern "C" fn(c_int) -> *mut drmModeRes,
+                drmModeFreeResources: unsafe extern "C" fn(*mut drmModeRes),
+                drmModeGetConnector: unsafe extern "C" fn(c_int, u32) -> *mut drmModeConnector,
+                drmModeGetConnectorCurrent: unsafe extern "C" fn(c_int, u32) -> *mut drmModeConnector,
+                drmModeFreeConnector: unsafe extern "C" fn(*mut drmModeConnector),
+                drmModeGetEncoder: unsafe extern "C" fn(c_int, u32) -> *mut drmModeEncoder,
+                drmModeFreeEncoder: unsafe extern "C" fn(*mut drmModeEncoder),
+                drmModeGetCrtc: unsafe extern "C" fn(c_int, u32) -> *mut drmModeCrtc,
+                drmModeFreeCrtc: unsafe extern "C" fn(*mut drmModeCrtc),
+                drmModeAddFB: unsafe extern "C" fn(c_int, u32, u32, u8, u8, u32, u32, *mut u32) -> c_int,
+                drmModeAddFB2: unsafe extern "C" fn(c_int, u32, u32, u32, *const u32, *const u32, *const u32, *mut u32, u32) -> c_int,
+                drmModeSetCrtc: unsafe extern "C" fn(c_int, u32, u32, u32, u32, *mut u32, c_int, *mut drmModeModeInfo) -> c_int,
+                drmModeRmFB: unsafe extern "C" fn(c_int, u32) -> c_int,
+                drmModePageFlip: unsafe extern "C" fn(c_int, u32, u32, u32, *mut c_void) -> c_int,
+                drmHandleEvent: unsafe extern "C" fn(c_int, *mut DrmEventContext) -> c_int,
             }
         }
 
         native_library! {
+            #[library = "libgbm.so.1"]
             /// The functions of `libgbm` the output calls.
-            pub struct LibGbmFunctions("libgbm.so.1") {
-                gbm_create_device: fn(c_int) -> *mut c_void;
-                gbm_surface_create: fn(*mut c_void, u32, u32, u32, u32) -> *mut c_void;
-                gbm_surface_lock_front_buffer: fn(*mut c_void) -> *mut c_void;
-                gbm_surface_release_buffer: fn(*mut c_void, *mut c_void);
-                gbm_bo_get_user_data: fn(*mut c_void) -> *mut c_void;
-                gbm_bo_set_user_data: fn(*mut c_void, *mut c_void, Option<GbmBoUserDataDestroyCallbackDelegate>);
-                gbm_bo_get_width: fn(*mut c_void) -> u32;
-                gbm_bo_get_height: fn(*mut c_void) -> u32;
-                gbm_bo_get_stride: fn(*mut c_void) -> u32;
-                gbm_bo_get_format: fn(*mut c_void) -> u32;
-                gbm_bo_get_handle: fn(*mut c_void) -> GbmBoHandle;
+            pub struct LibGbmFunctions {
+                gbm_create_device: unsafe extern "C" fn(c_int) -> *mut c_void,
+                gbm_surface_create: unsafe extern "C" fn(*mut c_void, u32, u32, u32, u32) -> *mut c_void,
+                gbm_surface_lock_front_buffer: unsafe extern "C" fn(*mut c_void) -> *mut c_void,
+                gbm_surface_release_buffer: unsafe extern "C" fn(*mut c_void, *mut c_void),
+                gbm_bo_get_user_data: unsafe extern "C" fn(*mut c_void) -> *mut c_void,
+                gbm_bo_set_user_data: unsafe extern "C" fn(*mut c_void, *mut c_void, Option<GbmBoUserDataDestroyCallbackDelegate>),
+                gbm_bo_get_width: unsafe extern "C" fn(*mut c_void) -> u32,
+                gbm_bo_get_height: unsafe extern "C" fn(*mut c_void) -> u32,
+                gbm_bo_get_stride: unsafe extern "C" fn(*mut c_void) -> u32,
+                gbm_bo_get_format: unsafe extern "C" fn(*mut c_void) -> u32,
+                gbm_bo_get_handle: unsafe extern "C" fn(*mut c_void) -> GbmBoHandle,
             }
         }
 
@@ -370,6 +372,181 @@ pub mod lib_drm {
                     .get_or_init(|| Ok(LibDrm { drm: LibDrmFunctions::load()?, gbm: LibGbmFunctions::load()? }))
                     .as_ref()
                     .map_err(|error| io::Error::new(io::ErrorKind::NotFound, error.clone()))
+            }
+        }
+
+        // The functions of the reference's class, each a call of the table of its library.
+        //
+        // # Safety (of every function below)
+        // The arguments satisfy the contract of the C function of the same name: a descriptor of
+        // an open card, objects of the library that are alive, pointers to as many elements as
+        // the function reads or writes.
+        #[allow(clippy::missing_safety_doc, clippy::too_many_arguments)]
+        impl LibDrm {
+            pub(crate) unsafe fn drm_mode_get_resources(&self, fd: c_int) -> *mut drmModeRes {
+                unsafe { (self.drm.drmModeGetResources)(fd) }
+            }
+
+            pub(crate) unsafe fn drm_mode_free_resources(&self, res: *mut drmModeRes) {
+                unsafe { (self.drm.drmModeFreeResources)(res) }
+            }
+
+            pub(crate) unsafe fn drm_mode_get_connector(&self, fd: c_int, connector: u32) -> *mut drmModeConnector {
+                unsafe { (self.drm.drmModeGetConnector)(fd, connector) }
+            }
+
+            pub(crate) unsafe fn drm_mode_get_connector_current(&self, fd: c_int, connector: u32) -> *mut drmModeConnector {
+                unsafe { (self.drm.drmModeGetConnectorCurrent)(fd, connector) }
+            }
+
+            pub(crate) unsafe fn drm_mode_free_connector(&self, res: *mut drmModeConnector) {
+                unsafe { (self.drm.drmModeFreeConnector)(res) }
+            }
+
+            pub(crate) unsafe fn drm_mode_get_encoder(&self, fd: c_int, id: u32) -> *mut drmModeEncoder {
+                unsafe { (self.drm.drmModeGetEncoder)(fd, id) }
+            }
+
+            pub(crate) unsafe fn drm_mode_free_encoder(&self, enc: *mut drmModeEncoder) {
+                unsafe { (self.drm.drmModeFreeEncoder)(enc) }
+            }
+
+            pub(crate) unsafe fn drm_mode_get_crtc(&self, fd: c_int, id: u32) -> *mut drmModeCrtc {
+                unsafe { (self.drm.drmModeGetCrtc)(fd, id) }
+            }
+
+            pub(crate) unsafe fn drm_mode_free_crtc(&self, enc: *mut drmModeCrtc) {
+                unsafe { (self.drm.drmModeFreeCrtc)(enc) }
+            }
+
+            pub(crate) unsafe fn drm_mode_add_fb(
+                &self,
+                fd: c_int,
+                width: u32,
+                height: u32,
+                depth: u8,
+                bpp: u8,
+                pitch: u32,
+                bo_handle: u32,
+                buf_id: &mut u32,
+            ) -> c_int {
+                unsafe { (self.drm.drmModeAddFB)(fd, width, height, depth, bpp, pitch, bo_handle, buf_id) }
+            }
+
+            pub(crate) unsafe fn drm_mode_add_fb2(
+                &self,
+                fd: c_int,
+                width: u32,
+                height: u32,
+                pixel_format: u32,
+                bo_handles: &[u32; 4],
+                pitches: &[u32; 4],
+                offsets: &[u32; 4],
+                buf_id: &mut u32,
+                flags: u32,
+            ) -> c_int {
+                unsafe {
+                    (self.drm.drmModeAddFB2)(
+                        fd,
+                        width,
+                        height,
+                        pixel_format,
+                        bo_handles.as_ptr(),
+                        pitches.as_ptr(),
+                        offsets.as_ptr(),
+                        buf_id,
+                        flags,
+                    )
+                }
+            }
+
+            pub(crate) unsafe fn drm_mode_set_crtc(
+                &self,
+                fd: c_int,
+                crtc_id: u32,
+                buffer_id: u32,
+                x: u32,
+                y: u32,
+                connectors: *mut u32,
+                count: c_int,
+                mode: *mut drmModeModeInfo,
+            ) -> c_int {
+                unsafe { (self.drm.drmModeSetCrtc)(fd, crtc_id, buffer_id, x, y, connectors, count, mode) }
+            }
+
+            pub(crate) unsafe fn drm_mode_rm_fb(&self, fd: c_int, id: u32) -> c_int {
+                unsafe { (self.drm.drmModeRmFB)(fd, id) }
+            }
+
+            pub(crate) unsafe fn drm_mode_page_flip(
+                &self,
+                fd: c_int,
+                crtc_id: u32,
+                fb_id: u32,
+                flags: DrmModePageFlip,
+                user_data: *mut c_void,
+            ) -> c_int {
+                unsafe { (self.drm.drmModePageFlip)(fd, crtc_id, fb_id, flags.0, user_data) }
+            }
+
+            pub(crate) unsafe fn drm_handle_event(&self, fd: c_int, context: *mut DrmEventContext) -> c_int {
+                unsafe { (self.drm.drmHandleEvent)(fd, context) }
+            }
+
+            pub(crate) unsafe fn gbm_create_device(&self, fd: c_int) -> *mut c_void {
+                unsafe { (self.gbm.gbm_create_device)(fd) }
+            }
+
+            pub(crate) unsafe fn gbm_surface_create(
+                &self,
+                device: *mut c_void,
+                width: u32,
+                height: u32,
+                format: u32,
+                flags: GbmBoFlags,
+            ) -> *mut c_void {
+                unsafe { (self.gbm.gbm_surface_create)(device, width, height, format, flags.0) }
+            }
+
+            pub(crate) unsafe fn gbm_surface_lock_front_buffer(&self, surface: *mut c_void) -> *mut c_void {
+                unsafe { (self.gbm.gbm_surface_lock_front_buffer)(surface) }
+            }
+
+            pub(crate) unsafe fn gbm_surface_release_buffer(&self, surface: *mut c_void, bo: *mut c_void) {
+                unsafe { (self.gbm.gbm_surface_release_buffer)(surface, bo) }
+            }
+
+            pub(crate) unsafe fn gbm_bo_get_user_data(&self, bo: *mut c_void) -> *mut c_void {
+                unsafe { (self.gbm.gbm_bo_get_user_data)(bo) }
+            }
+
+            pub(crate) unsafe fn gbm_bo_set_user_data(
+                &self,
+                bo: *mut c_void,
+                user_data: *mut c_void,
+                on_free: Option<GbmBoUserDataDestroyCallbackDelegate>,
+            ) {
+                unsafe { (self.gbm.gbm_bo_set_user_data)(bo, user_data, on_free) }
+            }
+
+            pub(crate) unsafe fn gbm_bo_get_width(&self, bo: *mut c_void) -> u32 {
+                unsafe { (self.gbm.gbm_bo_get_width)(bo) }
+            }
+
+            pub(crate) unsafe fn gbm_bo_get_height(&self, bo: *mut c_void) -> u32 {
+                unsafe { (self.gbm.gbm_bo_get_height)(bo) }
+            }
+
+            pub(crate) unsafe fn gbm_bo_get_stride(&self, bo: *mut c_void) -> u32 {
+                unsafe { (self.gbm.gbm_bo_get_stride)(bo) }
+            }
+
+            pub(crate) unsafe fn gbm_bo_get_format(&self, bo: *mut c_void) -> u32 {
+                unsafe { (self.gbm.gbm_bo_get_format)(bo) }
+            }
+
+            pub(crate) unsafe fn gbm_bo_get_handle(&self, bo: *mut c_void) -> GbmBoHandle {
+                unsafe { (self.gbm.gbm_bo_get_handle)(bo) }
             }
         }
     }
