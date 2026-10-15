@@ -10,16 +10,7 @@ Branch `apple-completion` (on `integration-preview2`). [`apple-opengl.md`](apple
 - **Skia**: no published binary has Ganesh on OpenGL next to Graphite, so the OpenGL modes of macOS and iOS draw with the configuration `RUSTFLAGS="--cfg ferro_skia_apple_ganesh"` (doctests need the same in `RUSTDOCFLAGS`): Ganesh on OpenGL and Ganesh on Metal, from the published binary `ganesh-gl-jpegd-jpege-metal-pdf`. The default build keeps Graphite on Metal. Use a build directory per configuration.
 - **iOS** (`ios-platform.md`, sections 7 and 14, stage 4): `eagl/` (upstream `Eagl/`, three files), the layer class that follows the graphics, the rendering mode as upstream, and the members the page listed as missing; two waivers and two aliases in `member-waivers.toml`.
 - **Verified on the Mac**: `cargo test -p ferroui-native` (six new tests over the real CGL, an IOSurface and a Metal shared event) and `cargo test -p ferroui-skia` in the Ganesh configuration; `examples/platform_window.rs --opengl` (a frame of the window's OpenGL render target read back, a picture of the offscreen layer); the catalog's screenshot run with OpenGL alone and with Metal on Ganesh (pictures under `/Volumes/1TB-macOS/ferroui-screenshots/macos-gl/`). The iOS crate is built for both targets in both configurations and its host tests pass.
-- **Next: the iOS simulator run of the OpenGL ES mode** (not run; it needs the simulator slot). With the updated `Cargo.lock` committed:
-
-  ```sh
-  CARGO_TARGET_DIR=/Volumes/1TB-macOS/ferroui-ios-ganesh RUSTFLAGS="--cfg ferro_skia_apple_ganesh" \
-  SIMCTL_CHILD_FERROUI_IOS_RENDERING_MODE=OpenGl scripts/ios/sim-smoke.sh "iPhone 17 Pro"
-  CARGO_TARGET_DIR=/Volumes/1TB-macOS/ferroui-ios-ganesh RUSTFLAGS="--cfg ferro_skia_apple_ganesh" \
-  SIMCTL_CHILD_FERROUI_IOS_RENDERING_MODE=OpenGl scripts/ios/sim-catalog.sh "iPhone 17 Pro"
-  ```
-
-  The check "platform" must name OpenGl; "frames", "frame size" and "pixels" then show the EAGL path drawing. The same smoke run with `SIMCTL_CHILD_FERROUI_IOS_RENDERING_MODE=Metal` in that build shows Metal on Ganesh. Record the results with **[S]** in `ios-platform.md`, section 12.
+- **The iOS simulator runs of the OpenGL ES mode** (run by the orchestrator on `69462a42`, `ios-platform.md`, section 12, run 10): the smoke mode passed in the OpenGL ES mode (8 frames on the EAGL layer, the frame read back with the exact colours) and in the Metal mode of the same build (Metal on Ganesh), and the catalog was shown in the OpenGL ES mode. The commands, for a later run: `CARGO_TARGET_DIR=<a directory of its own> RUSTFLAGS="--cfg ferro_skia_apple_ganesh" SIMCTL_CHILD_FERROUI_IOS_RENDERING_MODE=OpenGl scripts/ios/sim-smoke.sh "iPhone 17 Pro"` (and `scripts/ios/sim-catalog.sh`).
 - Open: a signed device build for iOS; the OpenGL mode of macOS has not been driven by hand (resize, several windows, the shared context across windows) beyond the screenshot run.
 
 ## What is left: one place to look (2026-10-10)
