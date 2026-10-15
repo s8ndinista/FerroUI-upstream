@@ -12,7 +12,7 @@ Generated from upstream commit `17350180c33b063f0e98abbfd19aa3cae63f5d56`. Back 
 | Phase / priority | 1 - controls / P0 |
 | Files | 538/538 (100.0%), 1 not applicable |
 | Types | 621/628 (7 waived) (100.0%) |
-| Members | 6255/6405 (148 waived) (100.0%) |
+| Members | 6255/6405 (150 waived) (100.0%) |
 | Contracts (interfaces) | 83/83 |
 | Property registrations | 938/938 |
 | Routed events | 67/67 |
@@ -756,20 +756,12 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 | `RemoteServer.cs` | `remote/remote_server.rs` | present | 1/1 | 3/3 |  |
 | `RemoteWidget.cs` | `remote/remote_widget.rs` | present | 2/2 | 6/6 |  |
 
-### `Remote/Server` - files 2/2, types 2/2, members 6/8
+### `Remote/Server` - files 2/2, types 2/2, members 6/8 (2 waived)
 
 | Upstream file | Rust file | Status | Types | Members | Notes |
 |---|---|---|---|---|---|
 | `RemoteServerTopLevelImpl.Framebuffer.cs` | `remote/server/remote_server_top_level_impl_framebuffer.rs` | present | 1/1 | 0/0 |  |
-| `RemoteServerTopLevelImpl.cs` | `remote/server/remote_server_top_level_impl.rs` | partial | 1/1 | 6/8 |  |
-
-<details><summary><code>RemoteServerTopLevelImpl.cs</code> - 2 missing</summary>
-
-- `RemoteServerTopLevelImpl` (class): 2 missing
-  - `virtual void OnMessage(IAvaloniaRemoteTransportConnection transport, object obj)` *(protected)*
-  - `IFramebufferRenderTarget CreateFramebufferRenderTarget()`
-
-</details>
+| `RemoteServerTopLevelImpl.cs` | `remote/server/remote_server_top_level_impl.rs` | present | 1/1 | 6/8 (2 waived) |  |
 
 ### `Selection` - files 10/10, types 16/17 (1 waived), members 151/176 (25 waived)
 

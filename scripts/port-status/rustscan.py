@@ -163,6 +163,7 @@ _ITEM_HEAD = re.compile(r"^" + _VIS + r"(?:unsafe\s+|auto\s+)*(impl|trait|struct
 _FN = re.compile(r"\bfn\s+(r#)?([A-Za-z_]\w*)")
 _CONST = re.compile(r"\b(?:const|static)\s+(?:mut\s+)?([A-Za-z_]\w*)\s*:")
 _FLAG_CONST = re.compile(r"\bconst\s+([A-Za-z_]\w*)\s*=")
+_TABLE_FN = re.compile(r"^[A-Za-z_]\w*\s*::\s*([A-Za-z_]\w*)\s*(?:as\s*\"[^\"]*\"\s*)?:\s*(?:unsafe\s+)?(?:extern\b|fn\b)")
 _TYPE_ALIAS = re.compile(r"^" + _VIS + r"type\s+([A-Za-z_]\w*)")
 _MACRO = re.compile(r"^(?:[\w:$]+::)?(\w+)!\s*(\w+)?\s*\(?\s*$", re.S)
 _MACRO_HEAD = re.compile(r"^(?:[\w:$]+::)?(\w+)!\s*\(?", re.S)
@@ -285,6 +286,12 @@ def scan_rust(path: str, src: str) -> RustFile:
         if ctx_kind == "struct":
             for m in _FLAG_CONST.finditer(seg):
                 rf.type(owner).consts.add(m.group(1))
+            # A function of a table of entry points written for the `native_functions!` macro
+            # (`library::name as "Symbol": unsafe extern "C" fn(..);`): a field of the table.
+            m = _TABLE_FN.match(seg)
+            if m:
+                t = rf.type(owner)
+                t.fields[m.group(1)] = t.fields.get(m.group(1), False)
             return
         if ctx_kind not in _ITEM_CTX:
             return
