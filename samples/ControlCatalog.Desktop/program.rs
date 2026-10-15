@@ -229,7 +229,18 @@ fn smoke_platform_options(builder: AppBuilder) -> AppBuilder {
         _ => return builder,
     }
     println!("Rendering modes: {:?}", options.rendering_mode);
-    builder.with(std::rc::Rc::new(options))
+    builder.with(std::rc::Rc::new(options)).after_setup(|_| {
+        // Which graphics the platform applied: the OpenGL graphics are the
+        // ones with a shared context, the Metal ones have none.
+        use ferroui_base::platform::IPlatformGraphics;
+        use ferroui_base::{FerroLocator, LocatorExtensions};
+        let graphics = FerroLocator::current().get_service::<std::sync::Arc<dyn IPlatformGraphics>>();
+        match graphics.as_deref() {
+            Some(graphics) if graphics.uses_shared_context() => println!("Platform graphics: OpenGL (CGL)"),
+            Some(_) => println!("Platform graphics: Metal"),
+            None => println!("Platform graphics: none (software)"),
+        }
+    })
 }
 
 #[cfg(not(any(windows, target_os = "macos")))]

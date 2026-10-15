@@ -2,23 +2,23 @@
  "upstreamCommit": "17350180c33b063f0e98abbfd19aa3cae63f5d56",
  "inScope": {
   "files": [
-   2756,
+   2760,
    2775,
    0
   ],
   "types": [
-   3812,
+   3825,
    4327,
    369
   ],
   "members": [
-   29333,
+   29460,
    36113,
-   5266
+   5268
   ]
  },
  "allProjects": {
-  "membersPresent": 29333,
+  "membersPresent": 29460,
   "members": 37391,
   "membersNotApplicable": 1168,
   "membersOutOfScope": 110
@@ -7269,17 +7269,17 @@
    "scope": "in",
    "detail": "full",
    "files": [
-    48,
+    49,
     49,
     0
    ],
    "types": [
-    67,
+    75,
     85,
     10
    ],
    "members": [
-    473,
+    542,
     601,
     59
    ],
@@ -7301,7 +7301,7 @@
     "alias fn": 11,
     "alias free fn": 10,
     "field": 18,
-    "fn": 407,
+    "fn": 476,
     "free fn": 6,
     "overload fn": 10,
     "trait": 1,
@@ -7314,6 +7314,9 @@
     ],
     "AvaloniaNativeDragSource.cs": [
      "ferro_native_drag_source.rs"
+    ],
+    "AvaloniaNativeGlPlatformGraphics.cs": [
+     "ferro_native_gl_platform_graphics.rs"
     ],
     "AvaloniaNativeMenuExporter.cs": [
      "ferro_native_menu_exporter.rs"
@@ -10489,19 +10492,19 @@
    "scope": "in",
    "detail": "full",
    "files": [
-    37,
+    40,
     40,
     0
    ],
    "types": [
-    51,
+    56,
     57,
     1
    ],
    "members": [
-    254,
+    312,
     331,
-    17
+    19
    ],
    "interfaces": [
     3,
@@ -10517,12 +10520,15 @@
    ],
    "notApplicableFiles": 1,
    "matchKinds": {
+    "alias fn": 1,
+    "alias free fn": 2,
     "const": 1,
     "field": 5,
-    "fn": 229,
+    "fn": 283,
     "free fn": 5,
     "free item": 5,
     "overload fn": 5,
+    "trait": 1,
     "trait fn": 2,
     "variant": 2
    },
@@ -10568,6 +10574,15 @@
     ],
     "DisplayLinkTimer.cs": [
      "display_link_timer.rs"
+    ],
+    "Eagl/EaglDisplay.cs": [
+     "eagl/eagl_display.rs"
+    ],
+    "Eagl/EaglLayerSurface.cs": [
+     "eagl/eagl_layer_surface.rs"
+    ],
+    "Eagl/LayerFbo.cs": [
+     "eagl/layer_fbo.rs"
     ],
     "Extensions.cs": [
      "extensions.rs"

@@ -5499,3 +5499,29 @@ project = "Avalonia.X11"
 type = "Avalonia.X11.Vulkan.VkXlibSurfaceCreateInfoKHR"
 member = "*"
 reason = "the structure is the one of the `ash` bindings (`vk::XlibSurfaceCreateInfoKHR`, under its upstream name as an alias in `vulkan/vulkan_native_interop.rs`), whose fields are those of the Vulkan headers in snake case; `sType` is set by `Default` (docs/porting/vulkan.md, section 3)"
+
+# iOS platform
+
+[[waive]]
+project = "Avalonia.iOS"
+type = "Avalonia.iOS.AvaloniaView"
+member = "SetRenderTarget"
+reason = "no counterpart: the render target is created on the render thread, where the view (main-thread-only) cannot be reached; the view writes its layout into the state it shares with its surface (`SurfaceShared::set_pending_layout` in `layoutSubviews`), which the target reads, so a new target has the latest layout without the call (DEVIATIONS.md, iOS platform)"
+
+[[waive]]
+project = "Avalonia.iOS"
+type = "Avalonia.iOS.InputHandler"
+member = "*Handle(UISwipeGestureRecognizer*"
+reason = "tvOS only: the view adds the swipe gesture recognizers of a remote only when `OperatingSystem.IsTvOS()`, and the one branch of the handler is for tvOS; tvOS is not a target of the port (docs/porting/ios-platform.md, section 1)"
+
+[[alias]]
+project = "Avalonia.iOS"
+type = "Avalonia.iOS.Extensions"
+member = "ToAvalonia"
+rust = ["to_size", "to_point"]
+
+[[alias]]
+project = "Avalonia.iOS"
+type = "Avalonia.IOSApplicationExtensions"
+member = "UseiOS"
+rust = ["use_ios", "use_ios_with_delegate"]

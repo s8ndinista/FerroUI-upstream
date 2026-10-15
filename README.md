@@ -28,7 +28,7 @@ FerroUI is a cross-platform UI framework for Rust: a retained-mode control libra
 | Media, text layout, fonts | Ported |
 | Compositor and render loop | Working; composition animations and custom visuals outstanding |
 | Skia and HarfBuzz backends | Working |
-| macOS platform | Windows, input, clipboard, drag and drop, menus, tray icon; storage dialogs and parts of accessibility outstanding |
+| macOS platform | Windows, input, clipboard, drag and drop, menus, tray icon; rendering through Metal, OpenGL (with Skia built with `--cfg ferro_skia_apple_ganesh`) or in software; storage dialogs and parts of accessibility outstanding |
 | Controls | Most of the control set, including items controls, text input, menus, pickers, calendar, pages and automation peers |
 | XAML | Compilation of markup to Rust source at build time (used by the themes and the samples), and the run-time loader with the upstream test suites |
 | Themes | Fluent and Simple load for every ported control |
@@ -36,7 +36,7 @@ FerroUI is a cross-platform UI framework for Rust: a retained-mode control libra
 | Linux platform (X11) | Windows, input, input methods (XIM, IBus, Fcitx), clipboard, drag and drop, the desktop portals, GTK file dialogs, menus and tray icon over D-Bus, session management, native control host, accessibility over AT-SPI; rendering in software, through GLX, EGL and Vulkan |
 | Linux platform (Wayland) | Opt-in, as upstream (the platform detection still chooses X11): toplevels over xdg-shell with server-side or drawn decorations, popups, pointer, keyboard, touch and text input, clipboard and drag and drop; rendering through shared memory buffers and EGL. Verified under sway and the headless Mutter of GNOME Shell; the dmabuf swap chain outstanding |
 | Linux framebuffer platform | One full-screen view on a framebuffer device (`/dev/fb0`) with software rendering; input through `libinput` or directly from event devices (touch, multi-touch, keyboard with a US layout, mouse). Verified on virtual devices only (`vkms`, `uinput`), not on a board; the DRM/KMS output outstanding |
-| iOS platform | A view over Metal, touch, keyboard and text input, clipboard, storage, native control host, accessibility. Verified in the simulator only |
+| iOS platform | A view over Metal or OpenGL ES (OpenGL ES with Skia built with `--cfg ferro_skia_apple_ganesh`, not yet run), touch, keyboard and text input, clipboard, storage, native control host, accessibility. Verified in the simulator only |
 | Android platform | A view over a surface with EGL or software rendering, touch, keyboard and text input, lifecycle, clipboard, storage, native control host, accessibility. Verified on the emulator only; the native library is built with a nightly toolchain for now (`docs/porting/android-platform.md`, section 5.1) |
 | Browser (WebAssembly) | Working; in progress |
 | Vello render backend | Experimental: CPU, hybrid and GPU modes, measured against the Skia backend, which is the default and the reference; the open work is listed in `docs/porting/vello-backend.md`, section 13 |

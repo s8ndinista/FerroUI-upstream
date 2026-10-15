@@ -2,6 +2,26 @@
 
 This page is the hand-over point for the next working period: what was finished, what is in flight, the tasks that come next in order, and how to run them. Read it after `CLOUD-WORKERS.md`, which stays the standing brief of every worker. Update it at the end of each period.
 
+## OpenGL on the Apple platforms, and the rest of the iOS page (2026-10-15)
+
+Branch `apple-completion` (on `integration-preview2`). [`apple-opengl.md`](apple-opengl.md) has the design and the runs. The tracking pages of `Avalonia.Native` and `Avalonia.iOS` have nothing open: every file, type and member is present or waived with a reason.
+
+- **macOS**: `ferro_native_gl_platform_graphics.rs` (upstream `AvaloniaNativeGlPlatformGraphics.cs`, eight classes) over the native CGL code the port already had; the rendering mode OpenGL of `FerroNativePlatformOptions` as upstream (default order Metal, OpenGL, Software, unchanged); the OpenGL surface first among the surfaces of a top level. A patch of the native library (`0002`): the render timer stops its display link when it is destroyed (a tick at the exit of the process read the freed timer).
+- **Skia**: no published binary has Ganesh on OpenGL next to Graphite, so the OpenGL modes of macOS and iOS draw with the configuration `RUSTFLAGS="--cfg ferro_skia_apple_ganesh"` (doctests need the same in `RUSTDOCFLAGS`): Ganesh on OpenGL and Ganesh on Metal, from the published binary `ganesh-gl-jpegd-jpege-metal-pdf`. The default build keeps Graphite on Metal. Use a build directory per configuration.
+- **iOS** (`ios-platform.md`, sections 7 and 14, stage 4): `eagl/` (upstream `Eagl/`, three files), the layer class that follows the graphics, the rendering mode as upstream, and the members the page listed as missing; two waivers and two aliases in `member-waivers.toml`.
+- **Verified on the Mac**: `cargo test -p ferroui-native` (six new tests over the real CGL, an IOSurface and a Metal shared event) and `cargo test -p ferroui-skia` in the Ganesh configuration; `examples/platform_window.rs --opengl` (a frame of the window's OpenGL render target read back, a picture of the offscreen layer); the catalog's screenshot run with OpenGL alone and with Metal on Ganesh (pictures under `/Volumes/1TB-macOS/ferroui-screenshots/macos-gl/`). The iOS crate is built for both targets in both configurations and its host tests pass.
+- **Next: the iOS simulator run of the OpenGL ES mode** (not run; it needs the simulator slot). With the updated `Cargo.lock` committed:
+
+  ```sh
+  CARGO_TARGET_DIR=/Volumes/1TB-macOS/ferroui-ios-ganesh RUSTFLAGS="--cfg ferro_skia_apple_ganesh" \
+  SIMCTL_CHILD_FERROUI_IOS_RENDERING_MODE=OpenGl scripts/ios/sim-smoke.sh "iPhone 17 Pro"
+  CARGO_TARGET_DIR=/Volumes/1TB-macOS/ferroui-ios-ganesh RUSTFLAGS="--cfg ferro_skia_apple_ganesh" \
+  SIMCTL_CHILD_FERROUI_IOS_RENDERING_MODE=OpenGl scripts/ios/sim-catalog.sh "iPhone 17 Pro"
+  ```
+
+  The check "platform" must name OpenGl; "frames", "frame size" and "pixels" then show the EAGL path drawing. The same smoke run with `SIMCTL_CHILD_FERROUI_IOS_RENDERING_MODE=Metal` in that build shows Metal on Ganesh. Record the results with **[S]** in `ios-platform.md`, section 12.
+- Open: a signed device build for iOS; the OpenGL mode of macOS has not been driven by hand (resize, several windows, the shared context across windows) beyond the screenshot run.
+
 ## What is left: one place to look (2026-10-10)
 
 [`REMAINING.md`](REMAINING.md) is the single list of what the port does not have. It is generated with the tracking pages (`scripts/port-status/run.sh`; `--check` covers it), so it cannot drift from them: per upstream project its scope and its files, types and members present, missing and waived, and for the projects out of scope their size; the upstream test projects with their tests present, missing and waived; the upstream samples, ported or not; then, by project, the names of the missing files, types and members. Lists of what is left that older sections of this page hold are history of the day they were written; where they differ from `REMAINING.md`, it is right.

@@ -10,9 +10,9 @@ Generated from upstream commit `17350180c33b063f0e98abbfd19aa3cae63f5d56`. Back 
 | FerroUI | `src/iOS/FerroUI.iOS` (exists) |
 | Crate | `ferroui-ios` |
 | Phase / priority | 6 - mobile (iOS) / P2 |
-| Files | 37/40 (92.5%), 1 not applicable |
-| Types | 51/57 (1 waived) (91.1%) |
-| Members | 254/331 (17 waived) (80.9%) |
+| Files | 40/40 (100.0%), 1 not applicable |
+| Types | 56/57 (1 waived) (100.0%) |
+| Members | 312/331 (19 waived) (100.0%) |
 | Contracts (interfaces) | 3/3 |
 | Property registrations | 0/0 |
 | Routed events | 0/0 |
@@ -29,111 +29,36 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 
 ## Files
 
-### `(project root)` - files 26/26, types 38/39 (1 waived), members 174/211 (17 waived)
+### `(project root)` - files 26/26, types 38/39 (1 waived), members 192/211 (19 waived)
 
 | Upstream file | Rust file | Status | Types | Members | Notes |
 |---|---|---|---|---|---|
 | `ActivatableLifetime.cs` | `activatable_lifetime.rs` | present | 1/1 | 1/1 |  |
-| `AutomationPeerWrapper.cs` | `automation_peer_wrapper.rs` | partial | 1/1 | 13/15 |  |
-| `AvaloniaAppDelegate.cs` | `ferro_app_delegate.rs` | partial | 3/3 | 13/16 | renamed: the generic delegate class an application derives from is one class of the Objective-C runtime (`FerroAppDelegate`) and the trait `FerroApplicationDelegate` for the two overridable members; `IAvaloniaAppInternalDelegate` (URLs and user activities) is stage 2 of docs/porting/ios-platform.md |
+| `AutomationPeerWrapper.cs` | `automation_peer_wrapper.rs` | present | 1/1 | 15/15 |  |
+| `AvaloniaAppDelegate.cs` | `ferro_app_delegate.rs` | present | 3/3 | 16/16 | renamed: the generic delegate class an application derives from is one class of the Objective-C runtime (`FerroAppDelegate`) and the trait `FerroApplicationDelegate` for the two overridable members; `IAvaloniaAppInternalDelegate` (URLs and user activities) is stage 2 of docs/porting/ios-platform.md |
 | `AvaloniaSceneDelegate.cs` | `ferro_scene_delegate.rs` | present | 1/1 | 5/5 | renamed: the window of a scene with the view in it is ported; the activations a scene is connected with or receives are stage 2 |
 | `AvaloniaView.Automation.cs` | `ferro_view.rs` | present | 1/1 | 4/4 | partial merged into main file |
-| `AvaloniaView.Text.cs` | `ferro_view.rs` | partial | 1/1 | 3/6 | partial merged into main file |
-| `AvaloniaView.cs` | `ferro_view.rs` | partial | 2/2 | 47/50 | renamed: the view, its layer, its layout, touches and its top-level are ported; key presses, the settings that follow the traits and the features that are services of their own are stage 2 |
+| `AvaloniaView.Text.cs` | `ferro_view.rs` | present | 1/1 | 6/6 | partial merged into main file |
+| `AvaloniaView.cs` | `ferro_view.rs` | present | 2/2 | 49/50 (1 waived) | renamed: the view, its layer, its layout, touches and its top-level are ported; key presses, the settings that follow the traits and the features that are services of their own are stage 2 |
 | `CombinedSpan3.cs` | `combined_span3.rs` | present | 1/1 | 6/6 |  |
 | `DispatcherImpl.cs` | `dispatcher_impl.rs` | present | 1/1 | 9/9 |  |
-| `DisplayLinkTimer.cs` | `display_link_timer.rs` | partial | 1/1 | 3/4 |  |
-| `Extensions.cs` | `extensions.rs` | partial | 1/1 | 1/3 |  |
+| `DisplayLinkTimer.cs` | `display_link_timer.rs` | present | 1/1 | 4/4 |  |
+| `Extensions.cs` | `extensions.rs` | present | 1/1 | 3/3 |  |
 | `IOSLauncher.cs` | `ios_launcher.rs` | present | 1/1 | 2/2 | renamed: the name follows the naming of Rust |
 | `IOSPlatformFeedback.cs` | `ios_platform_feedback.rs` | present | 1/1 | 2/2 | renamed: the name follows the naming of Rust |
-| `InputHandler.cs` | `input_handler.rs` | partial | 1/1 | 4/5 |  |
+| `InputHandler.cs` | `input_handler.rs` | present | 1/1 | 4/5 (1 waived) |  |
 | `InsetsManager.cs` | `insets_manager.rs` | present | 1/1 | 6/6 |  |
 | `Interop.cs` | `interop.rs` | present | 1/2 (1 waived) | 0/17 (17 waived) | replaced: the static class of platform invokes is a module of `extern` declarations: the same functions of Core Foundation and libdispatch |
 | `NativeControlHostImpl.cs` | `native_control_host_impl.rs` | present | 2/2 | 9/9 |  |
-| `Platform.cs` | `platform.rs` | partial | 4/4 | 9/10 | renamed: the names follow the naming of Rust |
+| `Platform.cs` | `platform.rs` | present | 4/4 | 10/10 | renamed: the names follow the naming of Rust |
 | `PlatformSettings.cs` | `platform_settings.rs` | present | 1/1 | 4/4 |  |
 | `SingleViewLifetime.cs` | `single_view_lifetime.rs` | present | 1/1 | 3/3 |  |
 | `Stubs.cs` | `stubs.rs` | present | 4/4 | 12/12 |  |
 | `TextInputResponder.Properties.cs` | `text_input_responder.rs` | present | 1/1 | 0/0 | merged: the two parts of the partial class are one file; the responder and its position and range classes are classes of the Objective-C runtime declared with `define_class!` (`TextInputResponder`, `FerroTextPosition`, `FerroEmptyTextPosition`, `FerroTextRange`) |
 | `TextInputResponder.cs` | `text_input_responder.rs` | present | 1/1 | 0/0 | merged: the two parts of the partial class are one file; the responder and its position and range classes are classes of the Objective-C runtime declared with `define_class!` (`TextInputResponder`, `FerroTextPosition`, `FerroEmptyTextPosition`, `FerroTextRange`) |
 | `UIKitInputPane.cs` | `ui_kit_input_pane.rs` | present | 1/1 | 2/2 | renamed: the file name splits the acronym as the naming of Rust does |
-| `ViewController.cs` | `view_controller.rs` | partial | 2/2 | 7/11 | renamed: the view controller class forwards to `ViewControllerState`, which is what the view holds of it and what the tests drive |
+| `ViewController.cs` | `view_controller.rs` | present | 2/2 | 11/11 | renamed: the view controller class forwards to `ViewControllerState`, which is what the view holds of it and what the tests drive |
 | `iOSScreens.cs` | `ios_screens.rs` | present | 2/2 | 9/9 | renamed: the names follow the naming of Rust |
-
-<details><summary><code>AutomationPeerWrapper.cs</code> - 2 missing</summary>
-
-- `AutomationPeerWrapper` (class): 2 missing
-  - `UIAccessibilityContainerType AccessibilityContainerType { get; set; }` *(getter `accessibility_container_type` found, setter `set_accessibility_container_type` missing)*
-  - `static implicit operator AutomationPeer(AutomationPeerWrapper instance)`
-
-</details>
-
-<details><summary><code>AvaloniaAppDelegate.cs</code> - 3 missing</summary>
-
-- `AvaloniaAppDelegate<TApp>` (class): 3 missing
-  - `AvaloniaAppDelegate()`
-  - `event EventHandler<ActivatedEventArgs> IAvaloniaAppDelegate.Activated` *(explicit)*
-  - `event EventHandler<ActivatedEventArgs> IAvaloniaAppDelegate.Deactivated` *(explicit)*
-
-</details>
-
-<details><summary><code>AvaloniaView.Text.cs</code> - 3 missing</summary>
-
-- `AvaloniaView` (class): 3 missing
-  - `void ITextInputMethodImpl.SetCursorRect(Rect rect)` *(explicit)*
-  - `void ITextInputMethodImpl.SetOptions(TextInputOptions options)` *(explicit)*
-  - `void ITextInputMethodImpl.Reset()` *(explicit)*
-
-</details>
-
-<details><summary><code>AvaloniaView.cs</code> - 3 missing</summary>
-
-- `AvaloniaView` (class): 1 missing
-  - `void SetRenderTarget(Metal.MetalRenderTarget target)` *(internal)*
-- `AvaloniaView.TopLevelImpl` (class): 2 missing
-  - `void Invalidate(Rect rect)`
-  - `Size? FrameSize { get; }`
-
-</details>
-
-<details><summary><code>DisplayLinkTimer.cs</code> - 1 missing</summary>
-
-- `DisplayLinkTimer` (class): 1 missing
-  - `Thread TimerThread { get; }`
-
-</details>
-
-<details><summary><code>Extensions.cs</code> - 2 missing</summary>
-
-- `Extensions` (class) (ported as module-level items): 2 missing
-  - `static Size ToAvalonia(this CGSize size)`
-  - `static Point ToAvalonia(this CGPoint point)`
-
-</details>
-
-<details><summary><code>InputHandler.cs</code> - 1 missing</summary>
-
-- `InputHandler` (class): 1 missing
-  - `void Handle(UISwipeGestureRecognizer recognizer)` *(2 of 3 overloads found)*
-
-</details>
-
-<details><summary><code>Platform.cs</code> - 1 missing</summary>
-
-- `IOSApplicationExtensions` (class): 1 missing
-  - `static AppBuilder UseiOS(this AppBuilder builder)` *(1 of 2 overloads found)*
-
-</details>
-
-<details><summary><code>ViewController.cs</code> - 4 missing</summary>
-
-- `DefaultAvaloniaViewController` (class): 4 missing
-  - `UIStatusBarStyle IAvaloniaViewController.PreferredStatusBarStyle { get; set; }` *(explicit; getter `preferred_status_bar_style` found, setter `set_preferred_status_bar_style` missing)*
-  - `bool IAvaloniaViewController.PrefersStatusBarHidden { get; set; }` *(explicit; getter `prefers_status_bar_hidden` found, setter `set_prefers_status_bar_hidden` missing)*
-  - `Thickness SafeAreaPadding { get; private set; }`
-  - `event EventHandler? SafeAreaPaddingChanged`
-
-</details>
 
 ### `Clipboard` - files 4/4, types 4/4, members 18/18
 
@@ -144,15 +69,15 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 | `PasteboardItemToDataTransferItemWrapper.cs` | `clipboard/pasteboard_item_to_data_transfer_item_wrapper.rs` | present | 1/1 | 3/3 |  |
 | `PasteboardToDataTransferWrapper.cs` | `clipboard/pasteboard_to_data_transfer_wrapper.rs` | present | 1/1 | 4/4 |  |
 
-### `Eagl` - files 0/3, types 0/5, members 0/36
+### `Eagl` - files 3/3, types 5/5, members 36/36
 
 | Upstream file | Rust file | Status | Types | Members | Notes |
 |---|---|---|---|---|---|
-| `EaglDisplay.cs` | `eagl/eagl_display.rs` | missing | 0/2 | 0/20 |  |
-| `EaglLayerSurface.cs` | `eagl/eagl_layer_surface.rs` | missing | 0/1 | 0/2 |  |
-| `LayerFbo.cs` | `eagl/layer_fbo.rs` | missing | 0/2 | 0/14 |  |
+| `EaglDisplay.cs` | `eagl/eagl_display.rs` | present | 2/2 | 20/20 |  |
+| `EaglLayerSurface.cs` | `eagl/eagl_layer_surface.rs` | present | 1/1 | 2/2 |  |
+| `LayerFbo.cs` | `eagl/layer_fbo.rs` | present | 2/2 | 14/14 |  |
 
-### `Metal` - files 5/5, types 5/5, members 24/25
+### `Metal` - files 5/5, types 5/5, members 25/25
 
 | Upstream file | Rust file | Status | Types | Members | Notes |
 |---|---|---|---|---|---|
@@ -160,14 +85,7 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 | `MetalDrawingSession.cs` | `metal/metal_drawing_session.rs` | present | 1/1 | 6/6 |  |
 | `MetalPlatformGraphics.cs` | `metal/metal_platform_graphics.rs` | present | 1/1 | 4/4 |  |
 | `MetalPlatformSurface.cs` | `metal/metal_platform_surface.rs` | present | 1/1 | 2/2 |  |
-| `MetalRenderTarget.cs` | `metal/metal_render_target.rs` | partial | 1/1 | 3/4 |  |
-
-<details><summary><code>MetalRenderTarget.cs</code> - 1 missing</summary>
-
-- `MetalRenderTarget` (class): 1 missing
-  - `(PixelSize size, double scaling) PendingLayout { get; set; }` *(getter `pending_layout` found, setter `set_pending_layout` missing)*
-
-</details>
+| `MetalRenderTarget.cs` | `metal/metal_render_target.rs` | present | 1/1 | 4/4 |  |
 
 ### `Properties` - files 0/0, types 0/0, members 0/0
 
@@ -175,21 +93,12 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 |---|---|---|---|---|---|
 | `AssemblyInfo.cs` | - | n/a | - | - | no non-private types (assembly attributes, global usings or file-local helpers) |
 
-### `Storage` - files 2/2, types 4/4, members 38/41
+### `Storage` - files 2/2, types 4/4, members 41/41
 
 | Upstream file | Rust file | Status | Types | Members | Notes |
 |---|---|---|---|---|---|
-| `IOSStorageItem.cs` | `storage/ios_storage_item.rs` | partial | 3/3 | 23/26 | renamed: the names follow the naming of Rust |
+| `IOSStorageItem.cs` | `storage/ios_storage_item.rs` | present | 3/3 | 26/26 | renamed: the names follow the naming of Rust |
 | `IOSStorageProvider.cs` | `storage/ios_storage_provider.rs` | present | 1/1 | 15/15 | renamed: the name follows the naming of Rust |
-
-<details><summary><code>IOSStorageItem.cs</code> - 3 missing</summary>
-
-- `IOSStorageItem` (class): 3 missing
-  - `bool CanBookmark { get; }`
-  - `Task ReleaseBookmarkAsync()`
-  - `void Dispose()`
-
-</details>
 
 ## Rust-only files
 

@@ -519,7 +519,7 @@ impl GlPlatformSurfaceRenderingSession {
     #[track_caller]
     fn with_session<R>(&self, f: impl FnOnce(&IFrnGlSurfaceRenderingSession) -> R) -> R {
         match self.session.borrow().as_ref() {
-            Some(session) => f(&**session),
+            Some(session) => f(session),
             None => panic!("Cannot access a disposed object: GlPlatformSurfaceRenderingSession"),
         }
     }
@@ -946,7 +946,7 @@ mod tests {
 
     /// The message of the panic `f` ends with.
     fn panic_message(f: impl FnOnce()) -> String {
-        let payload = catch_unwind(AssertUnwindSafe(f)).err().expect("a panic");
+        let payload = catch_unwind(AssertUnwindSafe(f)).expect_err("a panic");
         match payload.downcast::<String>() {
             Ok(message) => *message,
             Err(payload) => payload.downcast::<&str>().map(|message| message.to_string()).unwrap_or_default(),

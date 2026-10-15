@@ -8,8 +8,8 @@ Generated from upstream commit `17350180c33b063f0e98abbfd19aa3cae63f5d56`. The s
 
 | | Present | Total | Missing | Waived | Not applicable | Out of scope | Share |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| Members of the projects in scope | 29333 | 36113 | 1514 | 5266 | - | - | 95.1% of total less waived |
-| Members of every upstream source project of the extraction | 29333 | 37391 | 1514 | 5266 | 1168 | 110 | 78.4% of total |
+| Members of the projects in scope | 29460 | 36113 | 1385 | 5268 | - | - | 95.5% of total less waived |
+| Members of every upstream source project of the extraction | 29460 | 37391 | 1385 | 5268 | 1168 | 110 | 78.8% of total |
 
 The first row is the headline of the tracking: it leaves out the waived members and everything out of scope. The second row leaves out nothing: every member of every C# project the extraction reads, whether or not the port will ever have it. A member is *present* when an item of the mapped name exists; names are matched, not behaviour.
 
@@ -33,7 +33,7 @@ Files, types and members as present / missing / waived. *n/a* counts the files m
 | [Avalonia.FreeDesktop.AtSpi](tracking/Avalonia.FreeDesktop.AtSpi.md) | in | 27 / 0 / 0 | 27 / 0 / 0 | 423 / 0 / 11 | 0 (0) | 97.5% |
 | [Avalonia.Metal](tracking/Avalonia.Metal.md) | in | 2 / 0 / 0 | 7 / 0 / 0 | 21 / 0 / 0 | 0 (0) | 100.0% |
 | [Avalonia.MicroCom](tracking/Avalonia.MicroCom.md) | in | 1 / 0 / 0 | 1 / 0 / 0 | 1 / 0 / 5 | 0 (0) | 16.7% |
-| [Avalonia.Native](tracking/Avalonia.Native.md) | in | 48 / 1 / 0 | 67 / 8 / 10 | 473 / 69 / 59 | 0 (0) | 78.7% |
+| [Avalonia.Native](tracking/Avalonia.Native.md) | in | 49 / 0 / 0 | 75 / 0 / 10 | 542 / 0 / 59 | 0 (0) | 90.2% |
 | [Avalonia.OpenGL](tracking/Avalonia.OpenGL.md) | in | 39 / 0 / 0 | 61 / 0 / 2 | 603 / 6 / 30 | 0 (0) | 94.4% |
 | [Avalonia.Remote.Protocol](tracking/Avalonia.Remote.Protocol.md) | in | 14 / 0 / 0 | 54 / 0 / 1 | 198 / 1 / 3 | 0 (0) | 98.0% |
 | [Avalonia.Themes.Fluent](tracking/Avalonia.Themes.Fluent.md) | in | 5 / 0 / 0 | 6 / 0 / 0 | 68 / 0 / 5 | 1 (0) | 93.2% |
@@ -53,7 +53,7 @@ Files, types and members as present / missing / waived. *n/a* counts the files m
 | [Avalonia.Skia](tracking/Avalonia.Skia.md) | in | 54 / 0 / 0 | 66 / 0 / 0 | 429 / 1 / 21 | 0 (0) | 95.1% |
 | [Avalonia.Win32](tracking/Avalonia.Win32.md) | in | 92 / 3 / 0 | 218 / 58 / 0 | 2081 / 524 / 0 | 0 (0) | 79.9% |
 | [Avalonia.Win32.Automation](tracking/Avalonia.Win32.Automation.md) | in | 40 / 0 / 0 | 19 / 0 / 45 | 124 / 0 / 474 | 1 (0) | 20.7% |
-| [Avalonia.iOS](tracking/Avalonia.iOS.md) | in | 37 / 3 / 0 | 51 / 5 / 1 | 254 / 60 / 17 | 1 (0) | 76.7% |
+| [Avalonia.iOS](tracking/Avalonia.iOS.md) | in | 40 / 0 / 0 | 56 / 0 / 1 | 312 / 0 / 19 | 1 (0) | 94.3% |
 | [Avalonia.Generators](tracking/Avalonia.Generators.md) | in: every file not applicable | 0 / 0 / 0 | 0 / 0 / 0 | 0 / 0 / 0 | 31 (264) | 0.0% |
 | [Avalonia.Headless.Vnc](tracking/Avalonia.Headless.Vnc.md) | out (started) | 3 files | 3 types | 11 members | 0 (0) | 0.0% |
 | [Avalonia.Win32.Interoperability](tracking/Avalonia.Win32.Interoperability.md) | out (not started) | 2 files | 2 types | 11 members | 0 (0) | 0.0% |
@@ -229,14 +229,6 @@ Files without a Rust file, types without a Rust type, and members without a Rust
 
 - **Members of types that exist (41):** `FcitxKeyState.FcitxKeyState_None`, `FcitxKeyState.FcitxKeyState_Shift`, `FcitxKeyState.FcitxKeyState_CapsLock`, `FcitxKeyState.FcitxKeyState_Ctrl`, `FcitxKeyState.FcitxKeyState_Alt`, `FcitxKeyState.FcitxKeyState_Alt_Shift`, `FcitxKeyState.FcitxKeyState_Ctrl_Shift`, `FcitxKeyState.FcitxKeyState_Ctrl_Alt`, `FcitxKeyState.FcitxKeyState_Ctrl_Alt_Shift`, `FcitxKeyState.FcitxKeyState_NumLock`, `FcitxKeyState.FcitxKeyState_Super`, `FcitxKeyState.FcitxKeyState_ScrollLock`, `FcitxKeyState.FcitxKeyState_MousePressed`, `FcitxKeyState.FcitxKeyState_HandledMask`, `FcitxKeyState.FcitxKeyState_IgnoredMask`, `FcitxKeyState.FcitxKeyState_Super2`, `FcitxKeyState.FcitxKeyState_Hyper`, `FcitxKeyState.FcitxKeyState_Meta`, `FcitxKeyState.FcitxKeyState_UsedMask`, `LinuxMountedVolumeInfoListener.Dispose`, `StatusNotifierItemDbusObj.Category`, `StatusNotifierItemDbusObj.Id`, `StatusNotifierItemDbusObj.Title`, `StatusNotifierItemDbusObj.Status`, `StatusNotifierItemDbusObj.WindowId`, `StatusNotifierItemDbusObj.IconThemePath`, `StatusNotifierItemDbusObj.ItemIsMenu`, `StatusNotifierItemDbusObj.IconName`, `StatusNotifierItemDbusObj.IconPixmap`, `StatusNotifierItemDbusObj.OverlayIconName`, `StatusNotifierItemDbusObj.OverlayIconPixmap`, `StatusNotifierItemDbusObj.AttentionIconName`, `StatusNotifierItemDbusObj.AttentionIconPixmap`, `StatusNotifierItemDbusObj.AttentionMovieName`, `StatusNotifierItemDbusObj.ToolTip`, `StatusNotifierItemDbusObj.HandleGetPropertyAsync`, `StatusNotifierItemDbusObj.HandleGetAllPropertiesAsync`, `StatusNotifierItemDbusObj.ContextMenuAsync`, `StatusNotifierItemDbusObj.ActivateAsync`, `StatusNotifierItemDbusObj.SecondaryActivateAsync`, `StatusNotifierItemDbusObj.ScrollAsync`
 
-### [Avalonia.Native](tracking/Avalonia.Native.md)
-
-1 files, 8 types and 69 members missing (62 members of the missing types, 7 members of types that exist).
-
-- **Files (1):** `AvaloniaNativeGlPlatformGraphics.cs`
-- **Types (8):** `AvaloniaNativeGlPlatformGraphics`, `GlContext`, `GlDisplay`, `GlExternalObjectsFeature`, `GlPlatformSurface`, `GlPlatformSurfaceRenderTarget`, `GlPlatformSurfaceRenderingSession`, `MtlEventSemaphore`
-- **Members of types that exist (7):** `ImportedTexture..ctor`, `ImportedTexture.AcquireKeyedMutex`, `ImportedTexture.ReleaseKeyedMutex`, `ImportedTexture.TextureId`, `ImportedTexture.InternalFormat`, `ImportedTexture.TextureType`, `ImportedTexture.Properties`
-
 ### [Avalonia.OpenGL](tracking/Avalonia.OpenGL.md)
 
 0 files, 0 types and 6 members missing (0 members of the missing types, 6 members of types that exist).
@@ -285,11 +277,3 @@ Files without a Rust file, types without a Rust type, and members without a Rust
 - **Files (3):** `NonPumpingWaitHelperImpl.cs`, `Vulkan/VulkanNativeInterop.cs`, `Vulkan/VulkanSupport.cs`
 - **Types (58):** `D3D11_BIND_FLAG`, `D3D11_RESOURCE_DIMENSION`, `D3D11_RESOURCE_MISC_FLAG`, `D3D11_USAGE`, `D3D_DRIVER_TYPE`, `D3D_FEATURE_LEVEL`, `DXGI_ALPHA_MODE`, `DXGI_ERROR`, `DXGI_MODE_ROTATION`, `DXGI_MWA`, `DXGI_RESIDENCY`, `DXGI_SCALING`, `DXGI_SWAP_CHAIN_FLAG`, `DXGI_SWAP_EFFECT`, `NIIF`, `NonPumpingWaitHelperImpl`, `UnmanagedMethods.AccentFlags`, `UnmanagedMethods.AccentPolicy`, `UnmanagedMethods.AccentState`, `UnmanagedMethods.BITMAP`, `UnmanagedMethods.BitmapColorSpace`, `UnmanagedMethods.BitmapIntent`, `UnmanagedMethods.CIEXYZ`, `UnmanagedMethods.CIEXYZTRIPLE`, `UnmanagedMethods.DIBColorTable`, `UnmanagedMethods.DROPFILES`, `UnmanagedMethods.DWM_BLURBEHIND`, `UnmanagedMethods.EnumWindowsProc`, `UnmanagedMethods.GetAncestorFlags`, `UnmanagedMethods.HrInit`, `UnmanagedMethods.ICONINFO`, `UnmanagedMethods.ITaskBarList3VTable`, `UnmanagedMethods.LOGFONT`, `UnmanagedMethods.LayeredWindowFlags`, `UnmanagedMethods.MSG`, `UnmanagedMethods.MarkFullscreenWindow`, `UnmanagedMethods.NCCALCSIZE_PARAMS`, `UnmanagedMethods.OpenFileNameFlags`, `UnmanagedMethods.PAINTSTRUCT`, `UnmanagedMethods.PenMask`, `UnmanagedMethods.PointerDeviceChangeFlags`, `UnmanagedMethods.RGBQUAD`, `UnmanagedMethods.RTL_OSVERSIONINFOEX`, `UnmanagedMethods.SetOverlayIcon`, `UnmanagedMethods.TRACKMOUSEEVENT`, `UnmanagedMethods.TimeCallback`, `UnmanagedMethods.TimerProc`, `UnmanagedMethods.TouchFlags`, `UnmanagedMethods.WNDCLASSEX`, `UnmanagedMethods.WaitOrTimerCallback`, `UnmanagedMethods.WindowCompositionAttribute`, `UnmanagedMethods.WindowCompositionAttributeData`, `VkWin32SurfaceCreateInfoKHR`, `VulkanSupport`, `VulkanSupport.VulkanSurfaceFactory`, `WglConsts`, `Win32Icon.ICONDIR`, `Win32VulkanInterface`
 - **Members of types that exist (171), by type:** `UnmanagedMethods` 69, `PixelFormatDescriptorFlags` 14, `UnmanagedMethods.BITMAPV5HEADER` 13, `UnmanagedMethods.FILEDESCRIPTORW` 11, `PopupImpl` 9, `UnmanagedMethods.POINTER_INFO` 9, `UnmanagedMethods.POINTER_TOUCH_INFO` 6, `DataTransferToOleDataObjectWrapper` 5, `DirectCompositionConnection` 2, `DxgiConnection` 2, `HANDLE` 2, `OleDropTarget` 2, `UnmanagedMethods.MONITORINFOEX` 2, `UnmanagedMethods.TOUCHINPUT` 2, `WinUiCompositorConnection` 2, `AngleWin32EglDisplay` 1, `ClipboardFormatRegistry` 1, `CursorFactory` 1, `DirectCompositionShared` 1, `EmbeddedWindowImpl` 1, `Imm32InputMethod` 1, `NativeWinRTMethods` 1, `OleVirtualFileData.Descriptor` 1, `SaturationEffect` 1, `SimpleWindow` 1, `SwapChainGlRenderTarget` 1, `UnmanagedMethods.POINTER_PEN_INFO` 1, `UnmanagedMethods.WINDOWPLACEMENT` 1, `WglContext` 1, `WglGdiResourceManager` 1, `Win32TypeExtensions` 1, `WinUIEffectBase` 1, `WinUIGaussianBlurEffect` 1, `WinUiCompositionShared` 1, `WindowImpl` 1, `WindowsMountedVolumeInfoListener` 1
-
-### [Avalonia.iOS](tracking/Avalonia.iOS.md)
-
-3 files, 5 types and 60 members missing (36 members of the missing types, 24 members of types that exist).
-
-- **Files (3):** `Eagl/EaglDisplay.cs`, `Eagl/EaglLayerSurface.cs`, `Eagl/LayerFbo.cs`
-- **Types (5):** `EaglLayerSurface`, `EaglPlatformGraphics`, `GlContext`, `LayerFbo`, `SizeSynchronizedLayerFbo`
-- **Members of types that exist (24):** `AutomationPeerWrapper.AccessibilityContainerType`, `AutomationPeerWrapper.implicit operator`, `AvaloniaAppDelegate<TApp>..ctor`, `AvaloniaAppDelegate<TApp>.Activated`, `AvaloniaAppDelegate<TApp>.Deactivated`, `AvaloniaView.SetCursorRect`, `AvaloniaView.SetOptions`, `AvaloniaView.Reset`, `AvaloniaView.SetRenderTarget`, `AvaloniaView.TopLevelImpl.Invalidate`, `AvaloniaView.TopLevelImpl.FrameSize`, `DefaultAvaloniaViewController.PreferredStatusBarStyle`, `DefaultAvaloniaViewController.PrefersStatusBarHidden`, `DefaultAvaloniaViewController.SafeAreaPadding`, `DefaultAvaloniaViewController.SafeAreaPaddingChanged`, `DisplayLinkTimer.TimerThread`, `Extensions.ToAvalonia`, `Extensions.ToAvalonia`, `IOSApplicationExtensions.UseiOS`, `IOSStorageItem.CanBookmark`, `IOSStorageItem.ReleaseBookmarkAsync`, `IOSStorageItem.Dispose`, `InputHandler.Handle`, `MetalRenderTarget.PendingLayout`
