@@ -11,13 +11,9 @@ use ferroui_base::platform::{IPlatformGraphics, IPlatformGraphicsContext};
 use ferroui_base::utilities::ThreadBound;
 use ferroui_opengl::egl::egl_consts::{EGL_EXTENSIONS, EGL_NATIVE_VISUAL_ID, EGL_NONE, EGL_PLATFORM_X11_EXT};
 use ferroui_opengl::egl::{EglDisplay, EglDisplayCreationOptions, EglDisplayOptions, EglInterface};
-use ferroui_opengl::{GetProcAddress, GlVersion, OpenGlException};
+use ferroui_opengl::{GlVersion, OpenGlException};
 use std::cell::RefCell;
-use std::ffi::{c_void, CString};
 use std::rc::Rc;
-
-/// The name the EGL library of the system is loaded by.
-const EGL_LIBRARY: &std::ffi::CStr = c"libEGL.so.1";
 
 /// What the helper needs of a connection: the connection that renders and
 /// the root window (`X11Info.DeferredDisplay`, `X11Info.RootWindow`). The
@@ -33,35 +29,6 @@ impl X11EglTarget {
     pub fn new(x11: &X11Info) -> Self {
         Self { deferred_display: x11.deferred_display(), root_window: x11.root_window() }
     }
-}
-
-/// Loads the EGL library of the system and resolves its entry points by
-/// name with `dlsym` (the reference uses the constructor `EglInterface()`,
-/// `EglInterface::new_default` of the OpenGL crate, which resolves them with
-/// `eglGetProcAddress`; DEVIATIONS.md, X11 platform).
-pub fn load_egl_interface() -> Result<EglInterface, OpenGlException> {
-    // SAFETY: the name is a terminated string; the library is never closed, so what it
-    // exports stays valid.
-    let library = unsafe { libc::dlopen(EGL_LIBRARY.as_ptr(), libc::RTLD_LAZY | libc::RTLD_LOCAL) };
-    if library.is_null() {
-        return Err(OpenGlException::new("Unable to load shared library 'libEGL.so.1' or one of its dependencies."));
-    }
-    // The handle as a number, so that the loader can be an ordinary closure.
-    let library = library as usize;
-    let get_proc_address: GetProcAddress = Rc::new(move |name: &str| -> *const c_void {
-        let Ok(name) = CString::new(name) else {
-            return std::ptr::null();
-        };
-        // SAFETY: the handle is the one `dlopen` returned and the library is still loaded;
-        // the name is a terminated string that lives for the call.
-        unsafe { libc::dlsym(library as *mut c_void, name.as_ptr()).cast_const() }
-    });
-    if get_proc_address("eglGetDisplay").is_null() {
-        return Err(OpenGlException::new("libEGL.so.1 does not export the entry points of EGL"));
-    }
-    // SAFETY: the loader returns null or the address of the export of that name of the EGL
-    // library, which stays loaded.
-    Ok(unsafe { EglInterface::new(&get_proc_address) })
 }
 
 /// Resolves the visual that matches the EGL config's native visual id.
@@ -178,7 +145,7 @@ pub(crate) fn has_x11_platform_extension(client_extensions: Option<&str>) -> boo
 /// Creates the display of EGL for a connection (the display factory of
 /// `InitializeGraphics`).
 pub fn create_display(x11: X11EglTarget, gl_profiles: &[GlVersion]) -> Result<Rc<EglDisplay>, OpenGlException> {
-    let egl = Rc::new(load_egl_interface()?);
+    let egl = Rc::new(EglInterface::new_default()?);
     let mut options = EglDisplayCreationOptions {
         base: EglDisplayOptions {
             supports_context_sharing: true,
