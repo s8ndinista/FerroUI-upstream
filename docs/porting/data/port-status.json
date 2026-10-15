@@ -2,26 +2,26 @@
  "upstreamCommit": "17350180c33b063f0e98abbfd19aa3cae63f5d56",
  "inScope": {
   "files": [
-   2761,
-   2775,
+   2792,
+   2792,
    0
   ],
   "types": [
-   3823,
-   4327,
-   369
+   3919,
+   4345,
+   393
   ],
   "members": [
-   29403,
-   36113,
-   5266
+   30083,
+   36210,
+   5527
   ]
  },
  "allProjects": {
-  "membersPresent": 29403,
+  "membersPresent": 30083,
   "members": 37391,
-  "membersNotApplicable": 1168,
-  "membersOutOfScope": 110
+  "membersNotApplicable": 1181,
+  "membersOutOfScope": 0
  },
  "projects": [
   {
@@ -494,19 +494,19 @@
    "scope": "in",
    "detail": "full",
    "files": [
-    56,
+    58,
     58,
     0
    ],
    "types": [
-    71,
+    75,
     88,
     0
    ],
    "members": [
-    347,
+    353,
     447,
-    0
+    4
    ],
    "interfaces": [
     6,
@@ -523,9 +523,9 @@
    "notApplicableFiles": 0,
    "matchKinds": {
     "field": 1,
-    "fn": 323,
+    "fn": 328,
     "free fn": 3,
-    "free item": 2,
+    "free item": 3,
     "overload fn": 8,
     "variant": 10
    },
@@ -691,6 +691,12 @@
     ],
     "Platform/Storage/AndroidStorageProvider.cs": [
      "platform/storage/android_storage_provider.rs"
+    ],
+    "Platform/Vulkan/VulkanNativeInterop.cs": [
+     "platform/vulkan/vulkan_native_interop.rs"
+    ],
+    "Platform/Vulkan/VulkanSupport.cs": [
+     "platform/vulkan/vulkan_support.rs"
     ],
     "PlatformIconLoader.cs": [
      "platform_icon_loader.rs"
@@ -7271,17 +7277,17 @@
    "scope": "in",
    "detail": "full",
    "files": [
-    48,
+    49,
     49,
     0
    ],
    "types": [
-    67,
+    75,
     85,
     10
    ],
    "members": [
-    473,
+    542,
     601,
     59
    ],
@@ -7303,7 +7309,7 @@
     "alias fn": 11,
     "alias free fn": 10,
     "field": 18,
-    "fn": 407,
+    "fn": 476,
     "free fn": 6,
     "overload fn": 10,
     "trait": 1,
@@ -7316,6 +7322,9 @@
     ],
     "AvaloniaNativeDragSource.cs": [
      "ferro_native_drag_source.rs"
+    ],
+    "AvaloniaNativeGlPlatformGraphics.cs": [
+     "ferro_native_gl_platform_graphics.rs"
     ],
     "AvaloniaNativeMenuExporter.cs": [
      "ferro_native_menu_exporter.rs"
@@ -8962,20 +8971,20 @@
    "name": "Avalonia.Headless.Vnc",
    "path": "src/Headless/Avalonia.Headless.Vnc",
    "rust": "src/Headless/FerroUI.Headless.Vnc",
-   "scope": "out",
+   "scope": "in",
    "detail": "full",
    "files": [
-    0,
+    3,
     3,
     0
    ],
    "types": [
-    0,
+    3,
     3,
     0
    ],
    "members": [
-    0,
+    11,
     11,
     0
    ],
@@ -8992,9 +9001,64 @@
     0
    ],
    "notApplicableFiles": 0,
-   "matchKinds": {},
-   "presentFiles": {},
-   "rustOnly": []
+   "matchKinds": {
+    "fn": 10,
+    "overload fn": 1
+   },
+   "presentFiles": {
+    "AvaloniaVncLogger.cs": [
+     "ferro_vnc_logger.rs"
+    ],
+    "HeadlessVncFramebufferSource.cs": [
+     "headless_vnc_framebuffer_source.rs"
+    ],
+    "HeadlessVncPlatformExtensions.cs": [
+     "headless_vnc_platform_extensions.rs"
+    ]
+   },
+   "rustOnly": [
+    "remote_viewing/logging.rs",
+    "remote_viewing/utility/auto_clear.rs",
+    "remote_viewing/utility/periodic_thread.rs",
+    "remote_viewing/utility/reentrant_lock.rs",
+    "remote_viewing/vnc/authentication_method.rs",
+    "remote_viewing/vnc/extended_desktop_size_reason.rs",
+    "remote_viewing/vnc/extended_desktop_size_status.rs",
+    "remote_viewing/vnc/i_vnc_framebuffer_source.rs",
+    "remote_viewing/vnc/i_vnc_password_challenge.rs",
+    "remote_viewing/vnc/key_changed_event_args.rs",
+    "remote_viewing/vnc/key_sym.rs",
+    "remote_viewing/vnc/pointer_changed_event_args.rs",
+    "remote_viewing/vnc/remote_clipboard_changed_event_args.rs",
+    "remote_viewing/vnc/server/creating_desktop_event_args.rs",
+    "remote_viewing/vnc/server/encoder_statistics.rs",
+    "remote_viewing/vnc/server/framebuffer_update_request.rs",
+    "remote_viewing/vnc/server/framebuffer_updating_event_args.rs",
+    "remote_viewing/vnc/server/i_vnc_framebuffer_cache.rs",
+    "remote_viewing/vnc/server/i_vnc_server_session.rs",
+    "remote_viewing/vnc/server/password_provided_event_args.rs",
+    "remote_viewing/vnc/server/raw_encoder.rs",
+    "remote_viewing/vnc/server/tight_compression.rs",
+    "remote_viewing/vnc/server/tight_compression_control.rs",
+    "remote_viewing/vnc/server/tight_encoder.rs",
+    "remote_viewing/vnc/server/vnc_encoder.rs",
+    "remote_viewing/vnc/server/vnc_event.rs",
+    "remote_viewing/vnc/server/vnc_framebuffer_cache.rs",
+    "remote_viewing/vnc/server/vnc_message_type.rs",
+    "remote_viewing/vnc/server/vnc_server_session.rs",
+    "remote_viewing/vnc/server/vnc_server_session_options.rs",
+    "remote_viewing/vnc/version.rs",
+    "remote_viewing/vnc/vnc_encoding.rs",
+    "remote_viewing/vnc/vnc_exception.rs",
+    "remote_viewing/vnc/vnc_failure_reason.rs",
+    "remote_viewing/vnc/vnc_framebuffer.rs",
+    "remote_viewing/vnc/vnc_password_challenge.rs",
+    "remote_viewing/vnc/vnc_pixel_format.rs",
+    "remote_viewing/vnc/vnc_rectangle.rs",
+    "remote_viewing/vnc/vnc_stream.rs",
+    "remote_viewing/vnc/vnc_transport.rs",
+    "remote_viewing/vnc/vnc_utility.rs"
+   ]
   },
   {
    "name": "Avalonia.Headless.XUnit",
@@ -9041,17 +9105,17 @@
    "scope": "in",
    "detail": "full",
    "files": [
-    25,
+    30,
     30,
     0
    ],
    "types": [
-    34,
+    61,
     76,
     0
    ],
    "members": [
-    169,
+    350,
     529,
     0
    ],
@@ -9069,12 +9133,21 @@
    ],
    "notApplicableFiles": 0,
    "matchKinds": {
-    "field": 66,
-    "fn": 97,
-    "free fn": 1,
-    "overload fn": 5
+    "field": 136,
+    "fn": 160,
+    "free fn": 2,
+    "free item": 1,
+    "overload fn": 7,
+    "trait": 1,
+    "variant": 43
    },
    "presentFiles": {
+    "DrmConnectorType.cs": [
+     "drm_connector_type.rs"
+    ],
+    "DrmOutputOptions.cs": [
+     "drm_output_options.rs"
+    ],
     "EpollDispatcherImpl.cs": [
      "epoll_dispatcher_impl.rs"
     ],
@@ -9132,6 +9205,15 @@
     "NativeUnsafeMethods.cs": [
      "native_unsafe_methods.rs"
     ],
+    "Output/Drm.cs": [
+     "output/drm.rs"
+    ],
+    "Output/DrmBindings.cs": [
+     "output/drm_bindings.rs"
+    ],
+    "Output/DrmOutput.cs": [
+     "output/drm_output.rs"
+    ],
     "Output/FbDevBackBuffer.cs": [
      "output/fb_dev_back_buffer.rs"
     ],
@@ -9156,6 +9238,8 @@
     "input/ev_dev/ev_dev_keyboard.rs",
     "input/ev_dev/ev_dev_mouse.rs",
     "input/ev_dev/ev_dev_multi_touch_screen.rs",
+    "native_library.rs",
+    "output/drm_scanout.rs",
     "output/fb_device.rs",
     "raw_event_grouping.rs"
    ]
@@ -9935,19 +10019,19 @@
    "scope": "in",
    "detail": "full",
    "files": [
-    92,
-    95,
+    94,
+    94,
     0
    ],
    "types": [
-    218,
-    276,
-    0
+    251,
+    275,
+    24
    ],
    "members": [
-    2081,
-    2605,
-    0
+    2348,
+    2603,
+    255
    ],
    "interfaces": [
     7,
@@ -9961,18 +10045,19 @@
     0,
     0
    ],
-   "notApplicableFiles": 0,
+   "notApplicableFiles": 1,
    "matchKinds": {
     "alias fn": 1,
-    "const": 61,
+    "alias free fn": 4,
+    "const": 117,
     "derive": 2,
-    "field": 309,
-    "fn": 572,
+    "field": 313,
+    "fn": 581,
     "free fn": 158,
-    "free item": 45,
+    "free item": 53,
     "overload fn": 10,
     "trait": 14,
-    "variant": 909
+    "variant": 1095
    },
    "presentFiles": {
     "AngleOptions.cs": [
@@ -10163,6 +10248,12 @@
     ],
     "TrayIconImpl.cs": [
      "tray_icon_impl.rs"
+    ],
+    "Vulkan/VulkanNativeInterop.cs": [
+     "vulkan/vulkan_native_interop.rs"
+    ],
+    "Vulkan/VulkanSupport.cs": [
+     "vulkan/vulkan_support.rs"
     ],
     "Win32DispatcherImpl.cs": [
      "win32_dispatcher_impl.rs"
@@ -10429,21 +10520,21 @@
    "name": "Avalonia.Win32.Interoperability",
    "path": "src/Windows/Avalonia.Win32.Interoperability",
    "rust": "src/Windows/FerroUI.Win32.Interoperability",
-   "scope": "out",
-   "detail": "types",
+   "scope": "in",
+   "detail": "full",
    "files": [
     0,
-    2,
+    0,
     0
    ],
    "types": [
     0,
-    2,
+    0,
     0
    ],
    "members": [
     0,
-    11,
+    0,
     0
    ],
    "interfaces": [
@@ -10458,7 +10549,7 @@
     0,
     0
    ],
-   "notApplicableFiles": 0,
+   "notApplicableFiles": 2,
    "matchKinds": {},
    "presentFiles": {},
    "rustOnly": []
@@ -10467,20 +10558,20 @@
    "name": "Avalonia.WinUI",
    "path": "src/Windows/Avalonia.WinUI",
    "rust": "src/Windows/FerroUI.WinUI",
-   "scope": "out",
-   "detail": "types",
+   "scope": "in",
+   "detail": "full",
    "files": [
-    0,
+    15,
     15,
     0
    ],
    "types": [
-    0,
+    16,
     16,
     0
    ],
    "members": [
-    0,
+    88,
     88,
     0
    ],
@@ -10497,9 +10588,66 @@
     0
    ],
    "notApplicableFiles": 0,
-   "matchKinds": {},
-   "presentFiles": {},
-   "rustOnly": []
+   "matchKinds": {
+    "alias fn": 1,
+    "fn": 87
+   },
+   "presentFiles": {
+    "Automation/AvaloniaSwapChainPanelAutomationPeer.cs": [
+     "automation/ferro_swap_chain_panel_automation_peer.rs"
+    ],
+    "Automation/AvaloniaToXamlPeerProxy.ExpandCollapse.cs": [
+     "automation/ferro_to_xaml_peer_proxy_expand_collapse.rs"
+    ],
+    "Automation/AvaloniaToXamlPeerProxy.Invoke.cs": [
+     "automation/ferro_to_xaml_peer_proxy_invoke.rs"
+    ],
+    "Automation/AvaloniaToXamlPeerProxy.RangeValue.cs": [
+     "automation/ferro_to_xaml_peer_proxy_range_value.rs"
+    ],
+    "Automation/AvaloniaToXamlPeerProxy.Scroll.cs": [
+     "automation/ferro_to_xaml_peer_proxy_scroll.rs"
+    ],
+    "Automation/AvaloniaToXamlPeerProxy.Selection.cs": [
+     "automation/ferro_to_xaml_peer_proxy_selection.rs"
+    ],
+    "Automation/AvaloniaToXamlPeerProxy.Toggle.cs": [
+     "automation/ferro_to_xaml_peer_proxy_toggle.rs"
+    ],
+    "Automation/AvaloniaToXamlPeerProxy.Value.cs": [
+     "automation/ferro_to_xaml_peer_proxy_value.rs"
+    ],
+    "Automation/AvaloniaToXamlPeerProxy.cs": [
+     "automation/ferro_to_xaml_peer_proxy.rs"
+    ],
+    "Automation/ControlTypeMap.cs": [
+     "automation/control_type_map.rs"
+    ],
+    "AvaloniaSwapChainPanel.cs": [
+     "ferro_swap_chain_panel.rs"
+    ],
+    "WinUICursorFactory.cs": [
+     "win_ui_cursor_factory.rs"
+    ],
+    "WinUIDragSource.cs": [
+     "win_ui_drag_source.rs"
+    ],
+    "WinUIKeyInterop.cs": [
+     "win_ui_key_interop.rs"
+    ],
+    "WinUITextInputMethod.cs": [
+     "win_ui_text_input_method.rs"
+    ]
+   },
+   "rustOnly": [
+    "interop/async_operation.rs",
+    "interop/collections.rs",
+    "interop/composable.rs",
+    "interop/event_handlers.rs",
+    "interop/win_rt.rs",
+    "windows_app_sdk.rs",
+    "xaml_application.rs"
+   ]
   },
   {
    "name": "Avalonia.iOS",
@@ -10508,19 +10656,19 @@
    "scope": "in",
    "detail": "full",
    "files": [
-    37,
+    40,
     40,
     0
    ],
    "types": [
-    51,
+    56,
     57,
     1
    ],
    "members": [
-    254,
+    312,
     331,
-    17
+    19
    ],
    "interfaces": [
     3,
@@ -10536,12 +10684,15 @@
    ],
    "notApplicableFiles": 1,
    "matchKinds": {
+    "alias fn": 1,
+    "alias free fn": 2,
     "const": 1,
     "field": 5,
-    "fn": 229,
+    "fn": 283,
     "free fn": 5,
     "free item": 5,
     "overload fn": 5,
+    "trait": 1,
     "trait fn": 2,
     "variant": 2
    },
@@ -10587,6 +10738,15 @@
     ],
     "DisplayLinkTimer.cs": [
      "display_link_timer.rs"
+    ],
+    "Eagl/EaglDisplay.cs": [
+     "eagl/eagl_display.rs"
+    ],
+    "Eagl/EaglLayerSurface.cs": [
+     "eagl/eagl_layer_surface.rs"
+    ],
+    "Eagl/LayerFbo.cs": [
+     "eagl/layer_fbo.rs"
     ],
     "Extensions.cs": [
      "extensions.rs"
