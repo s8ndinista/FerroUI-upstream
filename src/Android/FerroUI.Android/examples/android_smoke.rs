@@ -240,7 +240,7 @@ mod app {
             options.rendering_mode, smoke.input
         ));
 
-        AppBuilder::configure::<App>().with(Rc::new(options)).use_android().after_setup(|_| {
+        AppBuilder::configure::<App>().with(Rc::new(options)).use_android().after_setup(move |_| {
             check(
                 "setup",
                 Dispatcher::ui_thread().check_access() && AndroidPlatform::options().is_some(),

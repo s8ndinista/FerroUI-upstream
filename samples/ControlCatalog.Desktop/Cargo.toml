@@ -44,3 +44,7 @@ ferroui-linuxframebuffer = { workspace = true }
 # The Vello render backend beside Skia: `FERROUI_RENDERER=vello` (the default order of its modes),
 # `vello-hybrid`, `vello-gpu` or `vello-cpu` then chooses it at start.
 vello = ["dep:ferroui-vello"]
+# The Vulkan rendering mode on Windows (`FERROUI_SMOKE_RENDERING=vulkan`): the feature `vulkan` of
+# the Windows backend, with which Skia is compiled from source (docs/porting/vulkan.md, section 2).
+# Elsewhere it changes nothing.
+vulkan = ["ferroui-win32/vulkan"]
