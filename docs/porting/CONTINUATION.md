@@ -15,6 +15,13 @@ What is declared not ported was audited entry by entry on 2026-10-10 ([`waiver-a
 
 How the tracking is regenerated changed with it: `run.sh` reads the tracked commit of upstream, not the `HEAD` of the checkout (it exports the tree of that commit and of its submodules to a temporary directory and removes it); a waiver that names the Rust item should be an `[[alias]]`, which is checked at every run (constructors with `member = ".ctor"`, properties, fields and events too); a sample that is ported gets its `rust` directory in `docs/porting/data/samples.toml`.
 
+## The facade crate and the Win32 leftovers (2026-10-15)
+
+Branch `facade-and-win32-leftovers` (from `vulkan-android-windows`, pull request 194).
+
+- **The facade crate `ferroui`** (`src/FerroUI`, the name reserved with the first preview) is built as `docs/release.md`, section 2.1, proposed: no code of its own; the crates under their names without the prefix (`ferroui::base`, `ferroui::controls`, `ferroui::markup` always; `desktop`, `skia`, `harfbuzz` and the platform of the operating system with the feature `desktop`; `themes_fluent`, `themes_simple`, `markup_xaml`, `markup_xaml_loader`, `controls_color_picker`, `dialogs`, `browser`, `vello`, `headless`, `opengl`, `metal`, `vulkan` with theirs); `ferroui::prelude` with the types of a minimal application; `desktop` and `fluent` by default. The example `hello` builds and runs on macOS, the two documentation tests pass, `crates.py check` passes and `crates.py order` publishes the facade after its 21 dependencies. Open: an application that compiles its markup still names the crates the compiled code calls (the compiler writes their own names); a later preview can teach the emitter a crate path, which would let the facade carry such an application too.
+- **Win32**: the leftovers of the tracking page are done (`win32-platform.md`, section 12): nothing of `Avalonia.Win32` is missing. Checked for both Windows targets on macOS and tested on every host; the regression run on Windows is for the coordinator (`scripts/windows/vm-smoke.ps1 -Desktop`).
+
 ## State at the hand-over of 2026-10-07
 
 Merged this period, in order: #26, #34, #33, #31, #27, #32, #29, #30, #36, #35, #28, #37, #38, #40, #41, #39, #42, #43.

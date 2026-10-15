@@ -3,24 +3,24 @@
  "inScope": {
   "files": [
    2760,
-   2775,
+   2774,
    0
   ],
   "types": [
-   3820,
-   4327,
-   369
+   3849,
+   4326,
+   393
   ],
   "members": [
-   29345,
-   36113,
-   5275
+   29606,
+   36111,
+   5525
   ]
  },
  "allProjects": {
-  "membersPresent": 29345,
+  "membersPresent": 29606,
   "members": 37391,
-  "membersNotApplicable": 1168,
+  "membersNotApplicable": 1170,
   "membersOutOfScope": 110
  },
  "projects": [
@@ -9923,18 +9923,18 @@
    "detail": "full",
    "files": [
     94,
-    95,
+    94,
     0
    ],
    "types": [
-    222,
-    276,
-    0
+    251,
+    275,
+    24
    ],
    "members": [
-    2087,
-    2605,
-    5
+    2348,
+    2603,
+    255
    ],
    "interfaces": [
     7,
@@ -9948,18 +9948,19 @@
     0,
     0
    ],
-   "notApplicableFiles": 0,
+   "notApplicableFiles": 1,
    "matchKinds": {
     "alias fn": 1,
-    "const": 61,
+    "alias free fn": 4,
+    "const": 117,
     "derive": 2,
-    "field": 309,
-    "fn": 577,
+    "field": 313,
+    "fn": 581,
     "free fn": 158,
-    "free item": 46,
+    "free item": 53,
     "overload fn": 10,
     "trait": 14,
-    "variant": 909
+    "variant": 1095
    },
    "presentFiles": {
     "AngleOptions.cs": [

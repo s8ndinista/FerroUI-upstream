@@ -8,8 +8,8 @@ Generated from upstream commit `17350180c33b063f0e98abbfd19aa3cae63f5d56`. The s
 
 | | Present | Total | Missing | Waived | Not applicable | Out of scope | Share |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| Members of the projects in scope | 29345 | 36113 | 1493 | 5275 | - | - | 95.2% of total less waived |
-| Members of every upstream source project of the extraction | 29345 | 37391 | 1493 | 5275 | 1168 | 110 | 78.5% of total |
+| Members of the projects in scope | 29606 | 36111 | 980 | 5525 | - | - | 96.8% of total less waived |
+| Members of every upstream source project of the extraction | 29606 | 37391 | 980 | 5525 | 1170 | 110 | 79.2% of total |
 
 The first row is the headline of the tracking: it leaves out the waived members and everything out of scope. The second row leaves out nothing: every member of every C# project the extraction reads, whether or not the port will ever have it. A member is *present* when an item of the mapped name exists; names are matched, not behaviour.
 
@@ -51,7 +51,7 @@ Files, types and members as present / missing / waived. *n/a* counts the files m
 | [Avalonia.Markup.Xaml](tracking/Avalonia.Markup.Xaml.md) | in | 46 / 0 / 0 | 61 / 0 / 2 | 208 / 0 / 31 | 2 (1) | 86.7% |
 | [Avalonia.Markup.Xaml.Loader](tracking/Avalonia.Markup.Xaml.Loader.md) | in | 66 / 0 / 0 | 120 / 0 / 6 | 422 / 0 / 83 | 1 (1) | 83.4% |
 | [Avalonia.Skia](tracking/Avalonia.Skia.md) | in | 54 / 0 / 0 | 66 / 0 / 0 | 429 / 1 / 21 | 0 (0) | 95.1% |
-| [Avalonia.Win32](tracking/Avalonia.Win32.md) | in | 94 / 1 / 0 | 222 / 54 / 0 | 2087 / 513 / 5 | 0 (0) | 80.1% |
+| [Avalonia.Win32](tracking/Avalonia.Win32.md) | in | 94 / 0 / 0 | 251 / 0 / 24 | 2348 / 0 / 255 | 1 (2) | 90.1% |
 | [Avalonia.Win32.Automation](tracking/Avalonia.Win32.Automation.md) | in | 40 / 0 / 0 | 19 / 0 / 45 | 124 / 0 / 474 | 1 (0) | 20.7% |
 | [Avalonia.iOS](tracking/Avalonia.iOS.md) | in | 37 / 3 / 0 | 51 / 5 / 1 | 254 / 60 / 17 | 1 (0) | 76.7% |
 | [Avalonia.Generators](tracking/Avalonia.Generators.md) | in: every file not applicable | 0 / 0 / 0 | 0 / 0 / 0 | 0 / 0 / 0 | 31 (264) | 0.0% |
@@ -276,14 +276,6 @@ Files without a Rust file, types without a Rust type, and members without a Rust
 0 files, 0 types and 1 members missing (0 members of the missing types, 1 members of types that exist).
 
 - **Members of types that exist (1):** `DrawingContextHelper.RenderAsync`
-
-### [Avalonia.Win32](tracking/Avalonia.Win32.md)
-
-1 files, 54 types and 513 members missing (342 members of the missing types, 171 members of types that exist).
-
-- **Files (1):** `NonPumpingWaitHelperImpl.cs`
-- **Types (54):** `D3D11_BIND_FLAG`, `D3D11_RESOURCE_DIMENSION`, `D3D11_RESOURCE_MISC_FLAG`, `D3D11_USAGE`, `D3D_DRIVER_TYPE`, `D3D_FEATURE_LEVEL`, `DXGI_ALPHA_MODE`, `DXGI_ERROR`, `DXGI_MODE_ROTATION`, `DXGI_MWA`, `DXGI_RESIDENCY`, `DXGI_SCALING`, `DXGI_SWAP_CHAIN_FLAG`, `DXGI_SWAP_EFFECT`, `NIIF`, `NonPumpingWaitHelperImpl`, `UnmanagedMethods.AccentFlags`, `UnmanagedMethods.AccentPolicy`, `UnmanagedMethods.AccentState`, `UnmanagedMethods.BITMAP`, `UnmanagedMethods.BitmapColorSpace`, `UnmanagedMethods.BitmapIntent`, `UnmanagedMethods.CIEXYZ`, `UnmanagedMethods.CIEXYZTRIPLE`, `UnmanagedMethods.DIBColorTable`, `UnmanagedMethods.DROPFILES`, `UnmanagedMethods.DWM_BLURBEHIND`, `UnmanagedMethods.EnumWindowsProc`, `UnmanagedMethods.GetAncestorFlags`, `UnmanagedMethods.HrInit`, `UnmanagedMethods.ICONINFO`, `UnmanagedMethods.ITaskBarList3VTable`, `UnmanagedMethods.LOGFONT`, `UnmanagedMethods.LayeredWindowFlags`, `UnmanagedMethods.MSG`, `UnmanagedMethods.MarkFullscreenWindow`, `UnmanagedMethods.NCCALCSIZE_PARAMS`, `UnmanagedMethods.OpenFileNameFlags`, `UnmanagedMethods.PAINTSTRUCT`, `UnmanagedMethods.PenMask`, `UnmanagedMethods.PointerDeviceChangeFlags`, `UnmanagedMethods.RGBQUAD`, `UnmanagedMethods.RTL_OSVERSIONINFOEX`, `UnmanagedMethods.SetOverlayIcon`, `UnmanagedMethods.TRACKMOUSEEVENT`, `UnmanagedMethods.TimeCallback`, `UnmanagedMethods.TimerProc`, `UnmanagedMethods.TouchFlags`, `UnmanagedMethods.WNDCLASSEX`, `UnmanagedMethods.WaitOrTimerCallback`, `UnmanagedMethods.WindowCompositionAttribute`, `UnmanagedMethods.WindowCompositionAttributeData`, `WglConsts`, `Win32Icon.ICONDIR`
-- **Members of types that exist (171), by type:** `UnmanagedMethods` 69, `PixelFormatDescriptorFlags` 14, `UnmanagedMethods.BITMAPV5HEADER` 13, `UnmanagedMethods.FILEDESCRIPTORW` 11, `PopupImpl` 9, `UnmanagedMethods.POINTER_INFO` 9, `UnmanagedMethods.POINTER_TOUCH_INFO` 6, `DataTransferToOleDataObjectWrapper` 5, `DirectCompositionConnection` 2, `DxgiConnection` 2, `HANDLE` 2, `OleDropTarget` 2, `UnmanagedMethods.MONITORINFOEX` 2, `UnmanagedMethods.TOUCHINPUT` 2, `WinUiCompositorConnection` 2, `AngleWin32EglDisplay` 1, `ClipboardFormatRegistry` 1, `CursorFactory` 1, `DirectCompositionShared` 1, `EmbeddedWindowImpl` 1, `Imm32InputMethod` 1, `NativeWinRTMethods` 1, `OleVirtualFileData.Descriptor` 1, `SaturationEffect` 1, `SimpleWindow` 1, `SwapChainGlRenderTarget` 1, `UnmanagedMethods.POINTER_PEN_INFO` 1, `UnmanagedMethods.WINDOWPLACEMENT` 1, `WglContext` 1, `WglGdiResourceManager` 1, `Win32TypeExtensions` 1, `WinUIEffectBase` 1, `WinUIGaussianBlurEffect` 1, `WinUiCompositionShared` 1, `WindowImpl` 1, `WindowsMountedVolumeInfoListener` 1
 
 ### [Avalonia.iOS](tracking/Avalonia.iOS.md)
 
