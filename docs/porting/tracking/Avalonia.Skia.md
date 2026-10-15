@@ -12,7 +12,7 @@ Generated from upstream commit `17350180c33b063f0e98abbfd19aa3cae63f5d56`. Back 
 | Phase / priority | 1 - rendering / P0 |
 | Files | 54/54 (100.0%) |
 | Types | 66/66 (100.0%) |
-| Members | 429/451 (21 waived) (99.8%) |
+| Members | 430/451 (21 waived) (100.0%) |
 | Contracts (interfaces) | 10/10 |
 | Property registrations | 0/0 |
 | Routed events | 0/0 |
@@ -110,22 +110,15 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 | `VulkanSkiaGpu.cs` | `gpu/vulkan/vulkan_skia_gpu.rs` | present | 1/1 | 12/12 |  |
 | `VulkanSkiaRenderTarget.cs` | `gpu/vulkan/vulkan_skia_render_target.rs` | present | 2/2 | 10/10 |  |
 
-### `Helpers` - files 5/5, types 5/5, members 9/13 (3 waived)
+### `Helpers` - files 5/5, types 5/5, members 10/13 (3 waived)
 
 | Upstream file | Rust file | Status | Types | Members | Notes |
 |---|---|---|---|---|---|
-| `DrawingContextHelper.cs` | `helpers/drawing_context_helper.rs` | partial | 1/1 | 3/4 |  |
+| `DrawingContextHelper.cs` | `helpers/drawing_context_helper.rs` | present | 1/1 | 4/4 |  |
 | `ImageSavingHelper.cs` | `helpers/image_saving_helper.rs` | present | 1/1 | 2/5 (3 waived) |  |
 | `PenHelper.cs` | `helpers/pen_helper.rs` | present | 1/1 | 1/1 |  |
 | `PixelFormatHelper.cs` | `helpers/pixel_format_helper.rs` | present | 1/1 | 1/1 |  |
 | `SKPathHelper.cs` | `helpers/sk_path_helper.rs` | present | 1/1 | 2/2 |  |
-
-<details><summary><code>DrawingContextHelper.cs</code> - 1 missing</summary>
-
-- `DrawingContextHelper` (class) (ported as module-level items): 1 missing
-  - `static Task RenderAsync(SKCanvas canvas, Visual visual, Rect clipRect, Vector dpi)` *(1 of 2 overloads found)*
-
-</details>
 
 ## Rust-only files
 

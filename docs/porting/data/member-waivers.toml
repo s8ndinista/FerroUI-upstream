@@ -6456,3 +6456,874 @@ project = "Avalonia.Win32"
 type = "Avalonia.Win32.Interop.UnmanagedMethods.FILEDESCRIPTORW"
 member = "cFileName"
 reason = "a descriptor is read from the bytes of a `FileGroupDescriptorW` block at the offsets of the structure (`FILEDESCRIPTORW::SIZE`, `OFFSET_OF_*`; `read_descriptors_from_bytes`), which reads the flags, the size and the name"
+
+# ---------------------------------------------------------------- Avalonia.X11
+# The review of 2026-10-15 of what the tracking listed as missing in the X11 backend. `XLib.cs` declares
+# every function of the libraries that its files call and some that none of them calls; `xlib.rs` has a safe
+# function for each call the backend makes, and several of them make more than one call of the library
+# (a result is copied out of the memory of the library and freed before the function returns).
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XCloseDisplay"
+reason = "declared by the reference and called by none of its files; the function is `XCloseDisplay` of the Xlib bindings (`x11-dl`), and `xlib.rs` has a safe function for each call the backend makes (x11-platform.md, section 2)"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XSynchronize"
+reason = "declared by the reference and called by none of its files; the function is `XSynchronize` of the Xlib bindings (`x11-dl`), and `xlib.rs` has a safe function for each call the backend makes (x11-platform.md, section 2)"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XMapSubindows"
+reason = "declared by the reference and called by none of its files; the function is `XMapSubindows` of the Xlib bindings (`x11-dl`), and `xlib.rs` has a safe function for each call the backend makes (x11-platform.md, section 2)"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XUnmapSubwindows"
+reason = "declared by the reference and called by none of its files; the function is `XUnmapSubwindows` of the Xlib bindings (`x11-dl`), and `xlib.rs` has a safe function for each call the backend makes (x11-platform.md, section 2)"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XSetWMName"
+reason = "declared by the reference and called by none of its files; the function is `XSetWMName` of the Xlib bindings (`x11-dl`), and `xlib.rs` has a safe function for each call the backend makes (x11-platform.md, section 2)"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XLowerWindow"
+reason = "declared by the reference and called by none of its files; the function is `XLowerWindow` of the Xlib bindings (`x11-dl`), and `xlib.rs` has a safe function for each call the backend makes (x11-platform.md, section 2)"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XGrabPointer"
+reason = "declared by the reference and called by none of its files; the function is `XGrabPointer` of the Xlib bindings (`x11-dl`), and `xlib.rs` has a safe function for each call the backend makes (x11-platform.md, section 2)"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XWarpPointer"
+reason = "declared by the reference and called by none of its files; the function is `XWarpPointer` of the Xlib bindings (`x11-dl`), and `xlib.rs` has a safe function for each call the backend makes (x11-platform.md, section 2)"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XClearWindow"
+reason = "declared by the reference and called by none of its files; the function is `XClearWindow` of the Xlib bindings (`x11-dl`), and `xlib.rs` has a safe function for each call the backend makes (x11-platform.md, section 2)"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XClearArea"
+reason = "declared by the reference and called by none of its files; the function is `XClearArea` of the Xlib bindings (`x11-dl`), and `xlib.rs` has a safe function for each call the backend makes (x11-platform.md, section 2)"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XDefaultScreenOfDisplay"
+reason = "declared by the reference and called by none of its files; the function is `XDefaultScreenOfDisplay` of the Xlib bindings (`x11-dl`), and `xlib.rs` has a safe function for each call the backend makes (x11-platform.md, section 2)"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XScreenNumberOfScreen"
+reason = "declared by the reference and called by none of its files; the function is `XScreenNumberOfScreen` of the Xlib bindings (`x11-dl`), and `xlib.rs` has a safe function for each call the backend makes (x11-platform.md, section 2)"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XDefaultVisual"
+reason = "declared by the reference and called by none of its files; the function is `XDefaultVisual` of the Xlib bindings (`x11-dl`), and `xlib.rs` has a safe function for each call the backend makes (x11-platform.md, section 2)"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XDefaultDepth"
+reason = "declared by the reference and called by none of its files; the function is `XDefaultDepth` of the Xlib bindings (`x11-dl`), and `xlib.rs` has a safe function for each call the backend makes (x11-platform.md, section 2)"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XDefaultColormap"
+reason = "declared by the reference and called by none of its files; the function is `XDefaultColormap` of the Xlib bindings (`x11-dl`), and `xlib.rs` has a safe function for each call the backend makes (x11-platform.md, section 2)"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XLookupColor"
+reason = "declared by the reference and called by none of its files; the function is `XLookupColor` of the Xlib bindings (`x11-dl`), and `xlib.rs` has a safe function for each call the backend makes (x11-platform.md, section 2)"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XAllocColor"
+reason = "declared by the reference and called by none of its files; the function is `XAllocColor` of the Xlib bindings (`x11-dl`), and `xlib.rs` has a safe function for each call the backend makes (x11-platform.md, section 2)"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XSetFunction"
+reason = "declared by the reference and called by none of its files; the function is `XSetFunction` of the Xlib bindings (`x11-dl`), and `xlib.rs` has a safe function for each call the backend makes (x11-platform.md, section 2)"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XSetLineAttributes"
+reason = "declared by the reference and called by none of its files; the function is `XSetLineAttributes` of the Xlib bindings (`x11-dl`), and `xlib.rs` has a safe function for each call the backend makes (x11-platform.md, section 2)"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XDrawLine"
+reason = "declared by the reference and called by none of its files; the function is `XDrawLine` of the Xlib bindings (`x11-dl`), and `xlib.rs` has a safe function for each call the backend makes (x11-platform.md, section 2)"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XDrawRectangle"
+reason = "declared by the reference and called by none of its files; the function is `XDrawRectangle` of the Xlib bindings (`x11-dl`), and `xlib.rs` has a safe function for each call the backend makes (x11-platform.md, section 2)"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XFillRectangle"
+reason = "declared by the reference and called by none of its files; the function is `XFillRectangle` of the Xlib bindings (`x11-dl`), and `xlib.rs` has a safe function for each call the backend makes (x11-platform.md, section 2)"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XCopyArea"
+reason = "declared by the reference and called by none of its files; the function is `XCopyArea` of the Xlib bindings (`x11-dl`), and `xlib.rs` has a safe function for each call the backend makes (x11-platform.md, section 2)"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XUndefineCursor"
+reason = "declared by the reference and called by none of its files; the function is `XUndefineCursor` of the Xlib bindings (`x11-dl`), and `xlib.rs` has a safe function for each call the backend makes (x11-platform.md, section 2)"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XCreatePixmapFromBitmapData"
+reason = "declared by the reference and called by none of its files; the function is `XCreatePixmapFromBitmapData` of the Xlib bindings (`x11-dl`), and `xlib.rs` has a safe function for each call the backend makes (x11-platform.md, section 2)"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XCreatePixmap"
+reason = "declared by the reference and called by none of its files; the function is `XCreatePixmap` of the Xlib bindings (`x11-dl`), and `xlib.rs` has a safe function for each call the backend makes (x11-platform.md, section 2)"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XFreePixmap"
+reason = "declared by the reference and called by none of its files; the function is `XFreePixmap` of the Xlib bindings (`x11-dl`), and `xlib.rs` has a safe function for each call the backend makes (x11-platform.md, section 2)"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XQueryBestCursor"
+reason = "declared by the reference and called by none of its files; the function is `XQueryBestCursor` of the Xlib bindings (`x11-dl`), and `xlib.rs` has a safe function for each call the backend makes (x11-platform.md, section 2)"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XWhitePixel"
+reason = "declared by the reference and called by none of its files; the function is `XWhitePixel` of the Xlib bindings (`x11-dl`), and `xlib.rs` has a safe function for each call the backend makes (x11-platform.md, section 2)"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XSetZoomHints"
+reason = "declared by the reference and called by none of its files; the function is `XSetZoomHints` of the Xlib bindings (`x11-dl`), and `xlib.rs` has a safe function for each call the backend makes (x11-platform.md, section 2)"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XGetIconSizes"
+reason = "declared by the reference and called by none of its files; the function is `XGetIconSizes` of the Xlib bindings (`x11-dl`), and `xlib.rs` has a safe function for each call the backend makes (x11-platform.md, section 2)"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XGetErrorText"
+reason = "declared by the reference and called by none of its files; the function is `XGetErrorText` of the Xlib bindings (`x11-dl`), and `xlib.rs` has a safe function for each call the backend makes (x11-platform.md, section 2)"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XSetPlaneMask"
+reason = "declared by the reference and called by none of its files; the function is `XSetPlaneMask` of the Xlib bindings (`x11-dl`), and `xlib.rs` has a safe function for each call the backend makes (x11-platform.md, section 2)"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XSetForeground"
+reason = "declared by the reference and called by none of its files; the function is `XSetForeground` of the Xlib bindings (`x11-dl`), and `xlib.rs` has a safe function for each call the backend makes (x11-platform.md, section 2)"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XSetBackground"
+reason = "declared by the reference and called by none of its files; the function is `XSetBackground` of the Xlib bindings (`x11-dl`), and `xlib.rs` has a safe function for each call the backend makes (x11-platform.md, section 2)"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XBell"
+reason = "declared by the reference and called by none of its files; the function is `XBell` of the Xlib bindings (`x11-dl`), and `xlib.rs` has a safe function for each call the backend makes (x11-platform.md, section 2)"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XPeekEvent"
+reason = "declared by the reference and called by none of its files; the function is `XPeekEvent` of the Xlib bindings (`x11-dl`), and `xlib.rs` has a safe function for each call the backend makes (x11-platform.md, section 2)"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XkbIgnoreExtension"
+reason = "declared by the reference and called by none of its files; the function is `XkbIgnoreExtension` of the Xlib bindings (`x11-dl`), and `xlib.rs` has a safe function for each call the backend makes (x11-platform.md, section 2)"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XCloseIM"
+reason = "declared by the reference and called by none of its files; the function is `XCloseIM` of the Xlib bindings (`x11-dl`), and `xlib.rs` has a safe function for each call the backend makes (x11-platform.md, section 2)"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib.GrabResult"
+reason = "the result of `XGrabPointer`, which the reference declares and calls nowhere: a drag relies on the implicit grab of the press that started it (x11-platform.md, section 10)"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XShmQueryExtension"
+reason = "called inside `xlib::x_shm_query` with `XShmQueryVersion`: the probe of the extension that `X11Info` makes on the connection that renders"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XShmQueryVersion"
+reason = "called inside `xlib::x_shm_query` after `XShmQueryExtension`: the probe of the extension that `X11Info` makes on the connection that renders"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XNextEvent"
+reason = "the overload with a pointer and the one with a reference are one function, `xlib::x_next_event`, which returns the event"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XFree"
+reason = "the memory a function of the library returns is copied out and freed with `XFree` of the bindings inside the function of `xlib.rs` that received it (`x_get_window_property`, `get_atom_name`, `x_query_tree`, `x_get_visual_info_by_id`, `x_get_wm_hints`, ...): no caller outside the module holds memory of the library to free"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XConfigureResizeWindow"
+reason = "the overload with a size and the one with a width and a height are one function, `xlib::x_configure_resize_window`"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XGetAtomName"
+reason = "called inside `xlib::get_atom_name` (`XLib.GetAtomName`), which copies the name and frees it"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XGetGeometry"
+reason = "the five overloads differ in which results are asked for: one function, `xlib::x_get_geometry`, returns every value of the drawable as an `XGeometry` (`None` when the call fails)"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XFilterEvent"
+reason = "the overload with a pointer and the one with a reference are one function, `xlib::x_filter_event`"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XCreateGC"
+reason = "the overload with values is called with none by the reference: one function, `xlib::x_create_gc`; the blit of `X11FramebufferSurface` makes its graphics context inside `xlib::x_put_image_32`"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XInitImage"
+reason = "called inside `xlib::x_put_image_32`, the blit of `X11FramebufferSurface` (`XInitImage`, `XCreateGC`, `XPutImage`, `XFreeGC`)"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XDestroyImage"
+reason = "the overload with a pointer and the one with a reference are one function, `xlib::x_destroy_image`"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XPutImage"
+reason = "called inside `xlib::x_put_image_32`, the blit of `X11FramebufferSurface` (`XInitImage`, `XCreateGC`, `XPutImage`, `XFreeGC`); the shared memory image is sent by `xlib::x_shm_put_image`"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "VisualIDMask"
+reason = "the constant of the Xlib bindings (`x11_dl::xlib::VisualIDMask`), which `xlib::x_get_visual_info_by_id` passes"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XGetVisualInfo"
+reason = "called inside `xlib::x_get_visual_info_by_id` (`XLib.XGetVisualInfoById`), which copies the visual and frees the list"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XGetIMValues"
+reason = "called inside `xlib::x_get_im_supported_styles` (`XNQueryInputStyle`), which copies the styles and frees the list"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XCreateIC"
+reason = "the four variadic overloads are the two kinds of input context the window creates: `xlib::x_create_ic_preedit_position` (with the nested list of the preedit attributes) and `xlib::x_create_ic_simple`"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XVaCreateNestedList"
+reason = "the three variadic overloads build the attribute lists of an input context: inside `xlib::x_create_ic_preedit_position` and `xlib::x_set_ic_spot_location`, which free the list after the call"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XSetICValues"
+reason = "called inside `xlib::x_set_ic_spot_location` (`XNPreeditAttributes` with a nested list of the spot location)"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XFixesQueryExtension"
+reason = "called inside `xlib::x_fixes_query_major_version` with `XFixesQueryVersion`: the probe of the extension that `X11Info` makes"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XFixesQueryVersion"
+reason = "called inside `xlib::x_fixes_query_major_version` after `XFixesQueryExtension`: the probe of the extension that `X11Info` makes"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XFixesCreateRegion"
+reason = "called inside `xlib::x_fixes_set_input_shape` with `XFixesSetWindowShapeRegion` and `XFixesDestroyRegion`: the input shape of a window (`X11Window.UpdateInputShape`)"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XFixesSetWindowShapeRegion"
+reason = "called inside `xlib::x_fixes_set_input_shape` with `XFixesCreateRegion` and `XFixesDestroyRegion`: the input shape of a window (`X11Window.UpdateInputShape`)"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XFixesDestroyRegion"
+reason = "called inside `xlib::x_fixes_set_input_shape` with `XFixesCreateRegion` and `XFixesSetWindowShapeRegion`: the input shape of a window (`X11Window.UpdateInputShape`)"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XRRFreeMonitors"
+reason = "called inside `xlib::xrr_get_monitors`, which copies the monitors (`MonitorInfo`) and frees the list"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XRRGetScreenResources"
+reason = "called inside `xlib::xrr_get_output_modes` with `XRRGetOutputInfo` and `XRRGetCrtcInfo`, each result copied (`OutputMode`) and freed"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XRRFreeScreenResources"
+reason = "called inside `xlib::xrr_get_output_modes`, which copies what it reads (`OutputMode`) and frees the resources"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XRRGetOutputInfo"
+reason = "called inside `xlib::xrr_get_output_modes` with `XRRGetScreenResources` and `XRRGetCrtcInfo`, each result copied (`OutputMode`) and freed"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XRRFreeOutputInfo"
+reason = "called inside `xlib::xrr_get_output_modes`, which copies what it reads (`OutputMode`) and frees the output information"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XRRGetCrtcInfo"
+reason = "called inside `xlib::xrr_get_output_modes` with `XRRGetScreenResources` and `XRRGetOutputInfo`, each result copied (`OutputMode`) and freed"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XRRFreeCrtcInfo"
+reason = "called inside `xlib::xrr_get_output_modes`, which copies what it reads (`OutputMode`) and frees the controller information"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XRRListOutputProperties"
+reason = "called inside `xlib::xrr_list_output_properties_as_array` (`XLib.XRRListOutputPropertiesAsArray`), which copies the atoms and frees the list"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XIFreeDeviceInfo"
+reason = "called inside `xlib::xi_query_device`, which copies the devices and their classes (`XIDeviceInfo`, `XIClassInfo`) and frees the list"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XISetMask"
+reason = "the masks of `XiSelectEvents` are built by `xlib::xi_event_mask_bytes`, which sets the bit of every event type of a device in a mask of bytes"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XiEventMaskLen"
+reason = "the length of a mask is that of the bytes `xlib::xi_event_mask_bytes` builds, as long as the highest event type needs (the reference sends four bytes, an `int`, for the types below 32 it selects)"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XAllocClassHint"
+reason = "called inside `xlib::x_set_class_hint` with `XSetClassHint` and `XFree`: the class hint of a window"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "CreateEventWindow"
+reason = "`selections::selection_helper::create_event_window`: the window that receives the events of the selections and of the screens is made beside the selections that use it (the reference keeps the helper in `XLib`)"
+
+[[alias]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XChangeProperty"
+rust = ["x_change_property_bytes", "x_change_property_longs"]
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib"
+member = "XChangeProperty"
+reason = "the ten overloads differ in the type of the data: two functions take their place, `xlib::x_change_property_bytes` (format 8: bytes and text) and `xlib::x_change_property_longs` (format 32: atoms, cardinals, windows, icons and the Motif hints as their five longs)"
+
+[[alias]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib.XGeometry"
+member = "bw"
+rust = ["border_width"]
+
+[[alias]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.XLib.XGeometry"
+member = "d"
+rust = ["depth"]
+
+[[alias]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.X11Window"
+member = ".ctor"
+rust = ["with_mode"]
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.AvaloniaX11Platform"
+member = "DeferredDisplayDispatcher"
+reason = "`X11DeferredDisplayDispatcher::for_current_thread(deferred_display)`: the dispatcher is an object of the thread that renders, created when that thread first asks for it, because its callbacks hold render targets of that thread (the reference creates it on the platform, on the UI thread; DEVIATIONS.md, X11 platform)"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.CursorImpl"
+member = ".ctor"
+reason = "one type is both classes of the reference (`CursorImpl` and the image cursor derived from it): `CursorImpl::new(handle)` is the constructor with a handle, and the constructor without one is the base of `XImageCursor`, whose constructor is `CursorImpl::from_image`"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.CursorImpl"
+member = "Handle"
+reason = "the getter is `CursorImpl::handle`; the protected setter is used by the constructor of `XImageCursor` only, and `CursorImpl::from_image` makes the cursor with its handle"
+
+[[alias]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.X11EglHelper"
+member = "GetVisualInfo"
+rust = ["get_visual_info", "get_visual_info_of_display"]
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.X11FramebufferSurface"
+member = "Lock"
+reason = "`TargetState::lock` of `x11_framebuffer_surface.rs`: the framebuffer the reference keeps in the surface is kept by the render target, which is made on the thread that renders (x11-platform.md, section 6; DEVIATIONS.md, X11 platform)"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.Glx.GlxInterface"
+member = "ChooseVisual"
+reason = "declared by the reference and called by none of its files (the visual of a configuration is `GetVisualFromFBConfig`, `GlxInterface::get_visual_from_fb_config`); the function is `glXChooseVisual` of the GLX bindings (`x11_dl::glx`)"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.Glx.GlxInterface"
+member = "CreateContext"
+reason = "declared by the reference and called by none of its files (a context is created with `glXCreateContextAttribsARB`, `GlxInterface::create_context_attribs_arb`); the function is `glXCreateContext` of the GLX bindings (`x11_dl::glx`)"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.Glx.GlxInterface"
+member = "GlGetError"
+reason = "declared by the reference and called by none of its files; `glGetError` is an entry point of the OpenGL interface of a context (`GlBasicInfoInterface::get_error` of the OpenGL crate)"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.Glx.GlxDisplay"
+member = "X11Info"
+reason = "the display is shared with the thread that renders (`Arc<GlxDisplay>`), and the information of the connection is an object of the UI thread (`Rc<X11Info>`): the display keeps the one value the reference reads through it, `GlxDisplay::deferred_display` (`X11Info.DeferredDisplay`)"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.Interop.Glib"
+member = "g_main_loop_quit"
+reason = "`GMainLoop::g_main_loop_quit`: the main loop `Glib::g_main_loop_new` returns is the type `GMainLoop`, whose functions take no pointer; the C function is the field `g_main_loop_quit` of the table of `interop/glib.rs`"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.Interop.Glib"
+member = "g_main_loop_run"
+reason = "`GMainLoop::g_main_loop_run`: the main loop `Glib::g_main_loop_new` returns is the type `GMainLoop`, whose functions take no pointer; the C function is the field `g_main_loop_run` of the table of `interop/glib.rs`"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.Interop.Glib"
+member = "g_main_loop_unref"
+reason = "the `Drop` of `GMainLoop`, the main loop `Glib::g_main_loop_new` returns, gives back its reference; the C function is the field `g_main_loop_unref` of the table of `interop/glib.rs`"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.Interop.Glib"
+member = "g_main_context_find_source_by_id"
+reason = "called inside `Glib::g_source_get_can_recurse` and `Glib::g_source_set_can_recurse`, which take the identifier of a source of the default context (what `GLibDispatcherImpl` does with the source it finds)"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.Interop.Glib"
+member = "g_unix_fd_add_full"
+reason = "the overload with a callback is `Glib::g_unix_fd_add_full`; the C function it calls is the field `g_unix_fd_add_full` of the table of `interop/glib.rs`"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.Selections.SelectionDataProvider"
+member = "Dispose"
+reason = "the provider is a member of the two classes that derive from it in the reference (composition, not a base class), and each disposes itself: `DragDropDataProvider::dispose` and `X11ClipboardImpl::dispose`"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.Selections.DragDrop.DragDropDataProvider"
+member = "Activity"
+reason = "the handler is held by the provider it is made of: `DragDropDataProvider::set_activity` sets `SelectionDataProvider::set_on_activity`; the reference only ever sets the property (the drag source)"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.Selections.DragDrop.DragDropDataProvider"
+member = "OnActivity"
+reason = "the override calls the handler: `SelectionDataProvider` calls the handler `DragDropDataProvider::set_activity` gave it where the reference calls `OnActivity`"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.Selections.DragDrop.DragDropDataTransfer"
+member = "ProvideFormats"
+reason = "`provide_formats` of the `PlatformDataTransferImpl` implementation of `Transfer` in `drag_drop_data_transfer.rs`: the drag holds the data transfer of the base library instead of deriving from it"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.Selections.DragDrop.DragDropDataTransfer"
+member = "ProvideItems"
+reason = "`provide_items` of the `PlatformDataTransferImpl` implementation of `Transfer` in `drag_drop_data_transfer.rs`: the drag holds the data transfer of the base library instead of deriving from it"
+
+[[alias]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.Selections.DataFormatHelper"
+member = "ToAtoms"
+rust = ["to_atoms", "formats_to_atoms"]
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.X11Window.X11WindowMode"
+member = "Window"
+reason = "every function of the trait `X11WindowMode` takes the window (`&X11Window`), through which the platform, the connection, the information of the connection and the two handles are read (`window.platform()`, `window.x11()`, `window.xid()`); there is no window to keep, so no `Init`"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.X11Window.X11WindowMode"
+member = "Display"
+reason = "every function of the trait `X11WindowMode` takes the window (`&X11Window`), through which the platform, the connection, the information of the connection and the two handles are read (`window.platform()`, `window.x11()`, `window.xid()`); there is no window to keep, so no `Init`"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.X11Window.X11WindowMode"
+member = "X11"
+reason = "every function of the trait `X11WindowMode` takes the window (`&X11Window`), through which the platform, the connection, the information of the connection and the two handles are read (`window.platform()`, `window.x11()`, `window.xid()`); there is no window to keep, so no `Init`"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.X11Window.X11WindowMode"
+member = "Platform"
+reason = "every function of the trait `X11WindowMode` takes the window (`&X11Window`), through which the platform, the connection, the information of the connection and the two handles are read (`window.platform()`, `window.x11()`, `window.xid()`); there is no window to keep, so no `Init`"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.X11Window.X11WindowMode"
+member = "Handle"
+reason = "every function of the trait `X11WindowMode` takes the window (`&X11Window`), through which the platform, the connection, the information of the connection and the two handles are read (`window.platform()`, `window.x11()`, `window.xid()`); there is no window to keep, so no `Init`"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.X11Window.X11WindowMode"
+member = "RenderHandle"
+reason = "every function of the trait `X11WindowMode` takes the window (`&X11Window`), through which the platform, the connection, the information of the connection and the two handles are read (`window.platform()`, `window.x11()`, `window.xid()`); there is no window to keep, so no `Init`"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.X11Window.X11WindowMode"
+member = "Init"
+reason = "every function of the trait `X11WindowMode` takes the window (`&X11Window`), through which the platform, the connection, the information of the connection and the two handles are read (`window.platform()`, `window.x11()`, `window.xid()`); there is no window to keep, so no `Init`"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.X11Window.DefaultTopLevelWindowMode"
+member = "OnManualXRaiseWindow"
+reason = "the closure `on_manual_x_raise_window` that `DefaultTopLevelWindowMode::activate_with` calls after it raised the window itself; the default mode passes one that does nothing"
+
+[[waive]]
+project = "Avalonia.X11"
+type = "Avalonia.X11.X11Window.InputProxyWindowMode"
+member = "OnManualXRaiseWindow"
+reason = "the closure the input proxy mode passes to `DefaultTopLevelWindowMode::activate_with`, which gives the focus to the proxy window"
+
+# ---------------------------------------------------------------- Avalonia.FreeDesktop (review of 2026-10-15)
+
+[[alias]]
+project = "Avalonia.FreeDesktop"
+type = "Avalonia.FreeDesktop.StatusNotifierItemDbusObj"
+member = "ContextMenuAsync"
+rust = ["context_menu"]
+
+[[alias]]
+project = "Avalonia.FreeDesktop"
+type = "Avalonia.FreeDesktop.StatusNotifierItemDbusObj"
+member = "ActivateAsync"
+rust = ["activate"]
+
+[[alias]]
+project = "Avalonia.FreeDesktop"
+type = "Avalonia.FreeDesktop.StatusNotifierItemDbusObj"
+member = "SecondaryActivateAsync"
+rust = ["secondary_activate"]
+
+[[alias]]
+project = "Avalonia.FreeDesktop"
+type = "Avalonia.FreeDesktop.StatusNotifierItemDbusObj"
+member = "ScrollAsync"
+rust = ["scroll"]
+
+[[waive]]
+project = "Avalonia.FreeDesktop"
+type = "Avalonia.FreeDesktop.StatusNotifierItemDbusObj"
+member = "HandleGetPropertyAsync"
+reason = "the handler of `org.freedesktop.DBus.Properties.Get` that the generator of the reference writes: `zbus` answers it from the `#[zbus(property)]` functions of the interface of `StatusNotifierItemDbusObjImpl`"
+
+[[waive]]
+project = "Avalonia.FreeDesktop"
+type = "Avalonia.FreeDesktop.StatusNotifierItemDbusObj"
+member = "HandleGetAllPropertiesAsync"
+reason = "the handler of `org.freedesktop.DBus.Properties.GetAll` that the generator of the reference writes: `zbus` answers it from the `#[zbus(property)]` functions of the interface of `StatusNotifierItemDbusObjImpl`"
+
+[[waive]]
+project = "Avalonia.FreeDesktop"
+type = "Avalonia.FreeDesktop.LinuxMountedVolumeInfoListener"
+member = "*Dispose(bool disposing)*"
+reason = "the .NET dispose pattern (`Dispose(bool)` called by `Dispose` with true): one `dispose`, the `IDisposable` implementation of the listener"
+
+[[alias]]
+project = "Avalonia.FreeDesktop"
+type = "Avalonia.FreeDesktop.DBusIme.Fcitx.FcitxKeyState"
+member = "FcitxKeyState_None"
+rust = ["NONE"]
+
+[[alias]]
+project = "Avalonia.FreeDesktop"
+type = "Avalonia.FreeDesktop.DBusIme.Fcitx.FcitxKeyState"
+member = "FcitxKeyState_Shift"
+rust = ["SHIFT"]
+
+[[alias]]
+project = "Avalonia.FreeDesktop"
+type = "Avalonia.FreeDesktop.DBusIme.Fcitx.FcitxKeyState"
+member = "FcitxKeyState_CapsLock"
+rust = ["CAPS_LOCK"]
+
+[[alias]]
+project = "Avalonia.FreeDesktop"
+type = "Avalonia.FreeDesktop.DBusIme.Fcitx.FcitxKeyState"
+member = "FcitxKeyState_Ctrl"
+rust = ["CTRL"]
+
+[[alias]]
+project = "Avalonia.FreeDesktop"
+type = "Avalonia.FreeDesktop.DBusIme.Fcitx.FcitxKeyState"
+member = "FcitxKeyState_Alt"
+rust = ["ALT"]
+
+[[alias]]
+project = "Avalonia.FreeDesktop"
+type = "Avalonia.FreeDesktop.DBusIme.Fcitx.FcitxKeyState"
+member = "FcitxKeyState_Alt_Shift"
+rust = ["ALT_SHIFT"]
+
+[[alias]]
+project = "Avalonia.FreeDesktop"
+type = "Avalonia.FreeDesktop.DBusIme.Fcitx.FcitxKeyState"
+member = "FcitxKeyState_Ctrl_Shift"
+rust = ["CTRL_SHIFT"]
+
+[[alias]]
+project = "Avalonia.FreeDesktop"
+type = "Avalonia.FreeDesktop.DBusIme.Fcitx.FcitxKeyState"
+member = "FcitxKeyState_Ctrl_Alt"
+rust = ["CTRL_ALT"]
+
+[[alias]]
+project = "Avalonia.FreeDesktop"
+type = "Avalonia.FreeDesktop.DBusIme.Fcitx.FcitxKeyState"
+member = "FcitxKeyState_Ctrl_Alt_Shift"
+rust = ["CTRL_ALT_SHIFT"]
+
+[[alias]]
+project = "Avalonia.FreeDesktop"
+type = "Avalonia.FreeDesktop.DBusIme.Fcitx.FcitxKeyState"
+member = "FcitxKeyState_NumLock"
+rust = ["NUM_LOCK"]
+
+[[alias]]
+project = "Avalonia.FreeDesktop"
+type = "Avalonia.FreeDesktop.DBusIme.Fcitx.FcitxKeyState"
+member = "FcitxKeyState_Super"
+rust = ["SUPER"]
+
+[[alias]]
+project = "Avalonia.FreeDesktop"
+type = "Avalonia.FreeDesktop.DBusIme.Fcitx.FcitxKeyState"
+member = "FcitxKeyState_ScrollLock"
+rust = ["SCROLL_LOCK"]
+
+[[alias]]
+project = "Avalonia.FreeDesktop"
+type = "Avalonia.FreeDesktop.DBusIme.Fcitx.FcitxKeyState"
+member = "FcitxKeyState_MousePressed"
+rust = ["MOUSE_PRESSED"]
+
+[[alias]]
+project = "Avalonia.FreeDesktop"
+type = "Avalonia.FreeDesktop.DBusIme.Fcitx.FcitxKeyState"
+member = "FcitxKeyState_HandledMask"
+rust = ["HANDLED_MASK"]
+
+[[alias]]
+project = "Avalonia.FreeDesktop"
+type = "Avalonia.FreeDesktop.DBusIme.Fcitx.FcitxKeyState"
+member = "FcitxKeyState_IgnoredMask"
+rust = ["IGNORED_MASK"]
+
+[[alias]]
+project = "Avalonia.FreeDesktop"
+type = "Avalonia.FreeDesktop.DBusIme.Fcitx.FcitxKeyState"
+member = "FcitxKeyState_Super2"
+rust = ["SUPER2"]
+
+[[alias]]
+project = "Avalonia.FreeDesktop"
+type = "Avalonia.FreeDesktop.DBusIme.Fcitx.FcitxKeyState"
+member = "FcitxKeyState_Hyper"
+rust = ["HYPER"]
+
+[[alias]]
+project = "Avalonia.FreeDesktop"
+type = "Avalonia.FreeDesktop.DBusIme.Fcitx.FcitxKeyState"
+member = "FcitxKeyState_Meta"
+rust = ["META"]
+
+[[alias]]
+project = "Avalonia.FreeDesktop"
+type = "Avalonia.FreeDesktop.DBusIme.Fcitx.FcitxKeyState"
+member = "FcitxKeyState_UsedMask"
+rust = ["USED_MASK"]
+
+# ---------------------------------------------------------------- Avalonia.OpenGL (review of 2026-10-15)
+
+[[waive]]
+project = "Avalonia.OpenGL"
+type = "Avalonia.OpenGL.Egl.EglDisplay"
+member = "DisplayLockIsSharedWithContexts"
+reason = "the display and its contexts are `Rc` objects of one thread (not `Send`; the platform graphics bind the display to the thread that created it), so no second thread can enter either: the monitor of the display guards nothing here (`EglDisplay::lock` returns an empty handle) and there is no lock to share with the contexts; the platform graphics of ANGLE, the one backend that overrides it upstream, give every context a display of its own (win32-platform.md, section 6)"
+
+[[waive]]
+project = "Avalonia.OpenGL"
+type = "Avalonia.OpenGL.Egl.EglDisplay"
+member = "ContextSharedSyncRoot"
+reason = "the display and its contexts are `Rc` objects of one thread (not `Send`; the platform graphics bind the display to the thread that created it), so no second thread can enter either: the monitor of the display guards nothing here (`EglDisplay::lock` returns an empty handle) and there is no lock to share with the contexts; the platform graphics of ANGLE, the one backend that overrides it upstream, give every context a display of its own (win32-platform.md, section 6)"
+
+# ---------------------------------------------------------------- Avalonia.Controls, Avalonia.DesignerSupport, Avalonia.Skia,
+# Avalonia.Remote.Protocol (review of 2026-10-15)
+
+[[waive]]
+project = "Avalonia.Controls"
+type = "Avalonia.Controls.Remote.Server.RemoteServerTopLevelImpl"
+member = "OnMessage"
+reason = "`RemoteServerSurface::on_message`: the messages arrive on the reader thread of the transport, so the handler belongs to the part of the class that thread may reach (`RemoteServerSurface`); the override of a derived class is the closure `OnMessageOverride` given to `RemoteServerTopLevelImpl::with_overrides`"
+
+[[waive]]
+project = "Avalonia.Controls"
+type = "Avalonia.Controls.Remote.Server.RemoteServerTopLevelImpl"
+member = "CreateFramebufferRenderTarget"
+reason = "`create_framebuffer_render_target` of the `IFramebufferPlatformSurface` implementation of `RemoteServerSurface`, the surface of the class, which the compositor reaches from the thread that renders"
+
+[[waive]]
+project = "Avalonia.DesignerSupport"
+type = "Avalonia.DesignerSupport.Remote.PreviewerWindowImpl"
+member = "OnMessage"
+reason = "the closure `OnMessageOverride` that `PreviewerWindowImpl::new` gives to `RemoteServerTopLevelImpl::with_overrides`: it takes `ClientViewportAllocatedMessage` (the scaling, then a frame on the UI thread) and leaves every other message to the base"
+
+[[alias]]
+project = "Avalonia.Skia"
+type = "Avalonia.Skia.Helpers.DrawingContextHelper"
+member = "RenderAsync"
+rust = ["render_async", "render_async_clipped"]
+
+[[waive]]
+project = "Avalonia.Remote.Protocol"
+type = "Metsys.Bson.TypeHelper"
+member = "FindProperty"
+reason = "of the three overloads, the one by name is `TypeHelper::find_property` and the one by class and name `TypeHelper::find_property_info`; the third walks an expression tree (`x => x.Name`) to the name of a member, which the port has no use for: a property is named by its declared name (see `ExpressionHelper`)"
+
