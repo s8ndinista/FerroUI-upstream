@@ -31,17 +31,20 @@ pub struct SimpleWindow {
 }
 
 impl SimpleWindow {
-    fn class_atom() -> u16 {
-        let atom = CLASS_ATOM.get();
-        if atom != 0 {
-            return atom;
-        }
+    /// The static constructor of the reference: registers the class of
+    /// the windows. It runs when the first window of the thread is created.
+    fn static_constructor() {
         // One class a thread: the name carries the thread, where the
         // reference makes the name unique with a new identifier.
         let class_name = format!("FerroSimpleWindow-{:?}-{}", std::thread::current().id(), std::process::id());
-        let atom = register_class_ex(&class_name, 0, wnd_proc, 0);
-        CLASS_ATOM.set(atom);
-        atom
+        CLASS_ATOM.set(register_class_ex(&class_name, 0, wnd_proc, 0));
+    }
+
+    fn class_atom() -> u16 {
+        if CLASS_ATOM.get() == 0 {
+            Self::static_constructor();
+        }
+        CLASS_ATOM.get()
     }
 
     /// Creates the window; `wnd_proc` handles its messages, or the default
