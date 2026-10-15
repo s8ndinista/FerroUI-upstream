@@ -109,26 +109,14 @@ fn red_bounds_in_a_render_target_bitmap_of_192_dpi() -> Option<(i32, i32, i32, i
     red_bounds(&pixels, size, format)
 }
 
-/// What a render target bitmap of 192 DPI has, as upstream has it: the
-/// probe twice as large and twice as far from the origin of the bitmap.
-/// The drawing context of the bitmap scales what it draws to its DPI (a
-/// transform after the transform of the context), and after the box shadow
-/// it reads the transform of the context back from the canvas, scale
-/// included: the transforms pushed for the children of the border are then
-/// scaled twice.
-fn shadowed_border_child_is_scaled_twice_in_a_render_target_bitmap_of_192_dpi_known_difference() {
-    let (left, top, right, bottom) = expected_bounds();
-    assert_eq!(Some((left * 2, top * 2, right * 2, bottom * 2)), red_bounds_in_a_render_target_bitmap_of_192_dpi());
-}
-ferro_fact!(shadowed_border_child_is_scaled_twice_in_a_render_target_bitmap_of_192_dpi_known_difference);
-
 /// A render target bitmap of 192 DPI has the probe where the frame of the
-/// window has it: the acceptance test of the fix the decision document
-/// describes.
+/// window has it. Upstream draws it twice as large and twice as far from
+/// the origin: the drawing context of the bitmap scales what it draws to
+/// its DPI (a transform after the transform of the context), and after the
+/// box shadow it read the transform of the context back from the canvas,
+/// scale included, so the transforms pushed for the children of the border
+/// were scaled twice (DEVIATIONS.md, Skia backend).
 fn shadowed_border_child_is_in_place_in_a_render_target_bitmap_of_192_dpi() {
     assert_eq!(Some(expected_bounds()), red_bounds_in_a_render_target_bitmap_of_192_dpi());
 }
-ferro_fact!(
-    #[ignore = "upstream behaviour, a decision of the owner: docs/porting/decisions/render-target-bitmap-scaled-box-shadow.md"]
-    shadowed_border_child_is_in_place_in_a_render_target_bitmap_of_192_dpi
-);
+ferro_fact!(shadowed_border_child_is_in_place_in_a_render_target_bitmap_of_192_dpi);
