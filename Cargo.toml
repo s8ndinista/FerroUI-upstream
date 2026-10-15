@@ -97,7 +97,10 @@ xamlx = { version = "=0.1.0-preview.2", path = "external/XamlX/src/XamlX" }
 ferroui-microcom = { version = "=0.1.0-preview.2", path = "src/FerroUI.MicroCom" }
 microcom-codegen = { version = "=0.1.0-preview.2", path = "src/tools/MicroCom.CodeGenerator" }
 ferroui-native = { version = "=0.1.0-preview.2", path = "src/FerroUI.Native" }
-ferroui-win32 = { version = "=0.1.0-preview.2", path = "src/Windows/FerroUI.Win32" }
+# Without its default feature `angle`: a crate that wants ANGLE asks for it (ferroui-desktop, the
+# desktop catalog, the integration tests), and ferroui-winui, which does not need it to compile, is
+# checked for a Windows target on any host.
+ferroui-win32 = { version = "=0.1.0-preview.2", path = "src/Windows/FerroUI.Win32", default-features = false }
 ferroui-desktop = { version = "=0.1.0-preview.2", path = "src/FerroUI.Desktop" }
 ferroui-x11 = { version = "=0.1.0-preview.2", path = "src/FerroUI.X11" }
 ferroui-wayland = { version = "=0.1.0-preview.2", path = "src/FerroUI.Wayland" }

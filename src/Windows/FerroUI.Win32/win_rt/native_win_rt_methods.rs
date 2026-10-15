@@ -90,11 +90,11 @@ fn check(result: i32) -> Result<(), HResult> {
 }
 
 /// The functions of the Windows Runtime.
-pub(crate) struct NativeWinRTMethods;
+pub struct NativeWinRTMethods;
 
 impl NativeWinRTMethods {
     /// Creates a string handle with the text. The caller deletes it.
-    pub(crate) fn windows_create_string(source_string: &str) -> Result<isize, HResult> {
+    pub fn windows_create_string(source_string: &str) -> Result<isize, HResult> {
         let text: Vec<u16> = source_string.encode_utf16().collect();
         let mut string = 0;
         // SAFETY: the text is valid for its length, which is passed; the
@@ -105,7 +105,7 @@ impl NativeWinRTMethods {
     }
 
     /// The text of a string handle; the empty text for the null handle.
-    pub(crate) fn windows_get_string_raw_buffer(hstring: isize) -> String {
+    pub fn windows_get_string_raw_buffer(hstring: isize) -> String {
         let mut length = 0;
         // SAFETY: a string handle (the null handle is the empty string);
         // the buffer the system returns is valid for the length it reports
@@ -120,7 +120,7 @@ impl NativeWinRTMethods {
     }
 
     /// Deletes a string handle.
-    pub(crate) fn windows_delete_string(hstring: isize) {
+    pub fn windows_delete_string(hstring: isize) {
         // SAFETY: a string handle the caller owns and does not use again.
         unsafe {
             WindowsDeleteString(hstring);
@@ -129,7 +129,7 @@ impl NativeWinRTMethods {
 
     /// Activates the runtime class of the name and asks the object for the
     /// interface.
-    pub(crate) fn create_instance<T: Interface>(full_name: &str) -> Result<ComPtr<T>, HResult> {
+    pub fn create_instance<T: Interface>(full_name: &str) -> Result<ComPtr<T>, HResult> {
         let s = HStringInterop::new(Some(full_name))?;
         Self::ensure_ro_initialized()?;
         let mut p_unk = std::ptr::null_mut();
@@ -144,7 +144,7 @@ impl NativeWinRTMethods {
 
     /// The activation factory of the runtime class of the name, as the
     /// interface.
-    pub(crate) fn create_activation_factory<TFactory: Interface>(full_name: &str) -> Result<ComPtr<TFactory>, HResult> {
+    pub fn create_activation_factory<TFactory: Interface>(full_name: &str) -> Result<ComPtr<TFactory>, HResult> {
         let s = HStringInterop::new(Some(full_name))?;
         Self::ensure_ro_initialized()?;
         let guid = TFactory::IID;
@@ -239,7 +239,7 @@ impl NativeWinRTMethods {
 
 /// A string handle of the Windows Runtime with its text; deletes the
 /// handle when dropped if it owns it.
-pub(crate) struct HStringInterop {
+pub struct HStringInterop {
     s: isize,
     owns: bool,
 }
@@ -247,7 +247,7 @@ pub(crate) struct HStringInterop {
 impl HStringInterop {
     /// Creates a string handle for the text (the null handle for `None`)
     /// and owns it.
-    pub(crate) fn new(s: Option<&str>) -> Result<HStringInterop, HResult> {
+    pub fn new(s: Option<&str>) -> Result<HStringInterop, HResult> {
         let s = match s {
             None => 0,
             Some(s) => NativeWinRTMethods::windows_create_string(s)?,
@@ -256,17 +256,17 @@ impl HStringInterop {
     }
 
     /// Wraps a string handle, owned or borrowed.
-    pub(crate) fn from_handle(str: isize, owns: bool) -> HStringInterop {
+    pub fn from_handle(str: isize, owns: bool) -> HStringInterop {
         HStringInterop { s: str, owns }
     }
 
     /// The handle.
-    pub(crate) fn handle(&self) -> isize {
+    pub fn handle(&self) -> isize {
         self.s
     }
 
     /// The text, or `None` for the null handle.
-    pub(crate) fn value(&self) -> Option<String> {
+    pub fn value(&self) -> Option<String> {
         if self.s == 0 {
             return None;
         }

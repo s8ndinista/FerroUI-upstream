@@ -36,7 +36,7 @@ mod guid;
 mod hresult;
 mod unknown;
 
-pub use com_object::{make_com, make_com_with, ComObject, ImplementedBy, InterfaceEntry};
+pub use com_object::{make_com, make_com_with, set_inner, ComObject, ImplementedBy, InterfaceEntry};
 pub use com_ptr::ComPtr;
 pub use guid::Guid;
 pub use hresult::{

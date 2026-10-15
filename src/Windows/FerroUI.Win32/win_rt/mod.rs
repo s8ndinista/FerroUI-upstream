@@ -20,8 +20,9 @@ mod win_rt_inspectable;
 #[cfg(windows)]
 mod win_rt_property_value;
 
+// The WinUI integration (`ferroui-winui`) activates its classes and makes its strings with these.
 #[cfg(windows)]
-pub(crate) use native_win_rt_methods::{HStringInterop, NativeWinRTMethods};
+pub use native_win_rt_methods::{HStringInterop, NativeWinRTMethods};
 #[cfg(windows)]
 #[allow(unused_imports)] // The composition connection of stage 2c creates the queue.
 pub(crate) use native_win_rt_methods::{
