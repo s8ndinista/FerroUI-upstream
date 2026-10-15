@@ -38,6 +38,15 @@
 //! read back with `glReadPixels` before it is presented and compared with
 //! what was drawn, so the path to the GPU is checked, not assumed.
 //! `--angle-probe` adds what ANGLE reports of itself.
+//!
+//! `--vulkan-probe` adds what the Vulkan of the machine does with a window
+//! of the backend: the rendering mode `Vulkan` is initialised as the
+//! platform would (`ferroui_win32::vulkan::VulkanSupport`), a context of its
+//! graphics renders three frames into the swap chain of a window of its
+//! own, each cleared to orange with Vulkan commands, and the window is read
+//! back. The example draws with the Vello backend, so the probe needs no
+//! Skia with Vulkan (the feature `vulkan` of the crate). A machine without
+//! a Vulkan loader or driver is reported, not failed.
 
 #[cfg(windows)]
 #[path = "win32_window/a11y.rs"]
@@ -1944,6 +1953,236 @@ mod windows {
         }
     }
 
+    /// What the Vulkan of this machine does with a window of the backend:
+    /// the platform graphics of the rendering mode `Vulkan`, a context of
+    /// them, a swap chain on the surface of a window, and frames cleared to
+    /// orange and presented, read back from the window. Run with
+    /// `--vulkan-probe`.
+    fn vulkan_probe(report: &Report) {
+        use ferroui_base::platform::IOptionalFeatureProvider;
+        use ferroui_vulkan::ash::{self, vk};
+        use ferroui_vulkan::{IVulkanKhrSurfacePlatformSurfaceFactory, IVulkanPlatformGraphicsContext, IVulkanRenderSession};
+        use ferroui_win32::interop::unmanaged_methods::load_library;
+        use ferroui_win32::vulkan::VulkanSupport;
+        use std::ffi::c_void;
+
+        const ORANGE: [u8; 3] = [255, 128, 0];
+
+        println!("-- Vulkan");
+        let loader = load_library("vulkan-1.dll") != 0;
+        report.info(
+            "Vulkan loader",
+            if loader {
+                "vulkan-1.dll is on this system"
+            } else {
+                "vulkan-1.dll is not on this system: no Vulkan driver is installed"
+            },
+        );
+        let Some(graphics) = VulkanSupport::try_initialize(None) else {
+            report.info(
+                "Vulkan",
+                "no platform graphics of Vulkan on this machine (the log of the area Vulkan says why); nothing more is probed",
+            );
+            return;
+        };
+        report.check("Vulkan platform graphics", true, "the rendering mode Vulkan initialises on this machine");
+
+        let context = graphics.create_context();
+        let features: &dyn IOptionalFeatureProvider = &*context;
+        let Some(vulkan) = features.try_get::<dyn IVulkanPlatformGraphicsContext>() else {
+            report.check("Vulkan context", false, "the context of the graphics is not a Vulkan context");
+            context.dispose();
+            return;
+        };
+        let device = vulkan.device();
+        report.info(
+            "Vulkan device",
+            format!(
+                "{:#x}, queue family {}, extensions {}",
+                device.handle(),
+                device.graphics_queue_family_index(),
+                device.enabled_extensions().join(" ")
+            ),
+        );
+        let has_factory = features.try_get_shared::<dyn IVulkanKhrSurfacePlatformSurfaceFactory>().is_some();
+        report.check(
+            "Vulkan surface factory",
+            has_factory,
+            format!("the context {} the surface factory of the platform", if has_factory { "has" } else { "has not" }),
+        );
+        let has_win32 = vulkan.instance().enabled_extensions().iter().any(|name| name == "VK_KHR_win32_surface");
+        report.check(
+            "Vulkan instance",
+            has_win32,
+            format!("the instance has the extensions {}", vulkan.instance().enabled_extensions().join(" ")),
+        );
+        let has_swapchain = device.enabled_extensions().iter().any(|name| name == "VK_KHR_swapchain");
+        report.check(
+            "Vulkan swap chain",
+            has_swapchain,
+            format!("the device {} VK_KHR_swapchain", if has_swapchain { "has" } else { "has not" }),
+        );
+
+        // A window of its own, whose handle surface becomes a Vulkan surface.
+        let windowing_platform = FerroLocator::current().get_required_service::<dyn IWindowingPlatform>();
+        let window = windowing_platform.create_window();
+        window.resize(Size::new(200.0, 120.0), WindowResizeReason::Application);
+        window.show(false, false);
+        let hwnd = window.handle().map_or(0, |handle| handle.handle());
+        let surfaces = window.surfaces();
+        let target = vulkan.create_render_target(&surfaces);
+        report.check(
+            "Vulkan render target",
+            target.state().is_ready,
+            "a swap chain render target on the surface of the window handle",
+        );
+
+        // The device with the entry points of the bindings, for the commands of the probe.
+        let instance = vulkan.instance();
+        let device_handle = device.handle();
+        // SAFETY: the handle is the device of the context, and the lookup is that of its
+        // instance.
+        let ash_device = unsafe {
+            ash::Device::load_with(
+                |name| instance.get_device_proc_address(device_handle, name.to_str().unwrap_or_default()) as *const c_void,
+                vulkan.device_handle(),
+            )
+        };
+
+        // Clears the image of a session to orange: into the layout of a transfer destination,
+        // cleared, and back into the layout it was in, on the queue of the context (whose lock the
+        // session holds).
+        let clear = |session: &dyn IVulkanRenderSession| -> Result<(), vk::Result> {
+            let info = session.image_info();
+            let image: vk::Image = vk::Handle::from_raw(info.handle);
+            let layout = vk::ImageLayout::from_raw(info.layout as i32);
+            let range = vk::ImageSubresourceRange::default()
+                .aspect_mask(vk::ImageAspectFlags::COLOR)
+                .level_count(1)
+                .layer_count(1);
+            let barrier = |old: vk::ImageLayout, new: vk::ImageLayout| {
+                vk::ImageMemoryBarrier::default()
+                    .src_access_mask(vk::AccessFlags::MEMORY_WRITE)
+                    .dst_access_mask(vk::AccessFlags::MEMORY_READ | vk::AccessFlags::MEMORY_WRITE)
+                    .old_layout(old)
+                    .new_layout(new)
+                    .src_queue_family_index(vk::QUEUE_FAMILY_IGNORED)
+                    .dst_queue_family_index(vk::QUEUE_FAMILY_IGNORED)
+                    .image(image)
+                    .subresource_range(range)
+            };
+            // SAFETY: every object is created here on the device of the context and destroyed
+            // before the function returns, after the fence said the commands completed; the
+            // image is the image of the session, which lives while the session does.
+            unsafe {
+                let pool = ash_device.create_command_pool(
+                    &vk::CommandPoolCreateInfo::default().queue_family_index(vulkan.graphics_queue_family_index()),
+                    None,
+                )?;
+                let result = (|| {
+                    let buffers = ash_device.allocate_command_buffers(
+                        &vk::CommandBufferAllocateInfo::default()
+                            .command_pool(pool)
+                            .level(vk::CommandBufferLevel::PRIMARY)
+                            .command_buffer_count(1),
+                    )?;
+                    let buffer = buffers[0];
+                    ash_device.begin_command_buffer(
+                        buffer,
+                        &vk::CommandBufferBeginInfo::default().flags(vk::CommandBufferUsageFlags::ONE_TIME_SUBMIT),
+                    )?;
+                    ash_device.cmd_pipeline_barrier(
+                        buffer,
+                        vk::PipelineStageFlags::ALL_COMMANDS,
+                        vk::PipelineStageFlags::TRANSFER,
+                        vk::DependencyFlags::empty(),
+                        &[],
+                        &[],
+                        &[barrier(layout, vk::ImageLayout::TRANSFER_DST_OPTIMAL)],
+                    );
+                    ash_device.cmd_clear_color_image(
+                        buffer,
+                        image,
+                        vk::ImageLayout::TRANSFER_DST_OPTIMAL,
+                        &vk::ClearColorValue { float32: [1.0, 128.0 / 255.0, 0.0, 1.0] },
+                        &[range],
+                    );
+                    ash_device.cmd_pipeline_barrier(
+                        buffer,
+                        vk::PipelineStageFlags::TRANSFER,
+                        vk::PipelineStageFlags::ALL_COMMANDS,
+                        vk::DependencyFlags::empty(),
+                        &[],
+                        &[],
+                        &[barrier(vk::ImageLayout::TRANSFER_DST_OPTIMAL, layout)],
+                    );
+                    ash_device.end_command_buffer(buffer)?;
+                    let fence = ash_device.create_fence(&vk::FenceCreateInfo::default(), None)?;
+                    let submitted = ash_device
+                        .queue_submit(
+                            vulkan.main_queue_handle(),
+                            &[vk::SubmitInfo::default().command_buffers(&buffers)],
+                            fence,
+                        )
+                        .and_then(|()| ash_device.wait_for_fences(&[fence], true, u64::MAX));
+                    ash_device.destroy_fence(fence, None);
+                    submitted
+                })();
+                ash_device.destroy_command_pool(pool, None);
+                result
+            }
+        };
+
+        let mut cleared = 0;
+        let mut detail = String::new();
+        for _ in 0..3 {
+            let session = target.begin_draw();
+            let size = session.size();
+            match clear(&*session) {
+                Ok(()) => cleared += 1,
+                Err(error) => detail = format!("a clear failed: {error:?}"),
+            }
+            session.dispose();
+            if detail.is_empty() {
+                detail = format!("frames of {}x{} px cleared and presented", size.width, size.height);
+            }
+        }
+        report.check("Vulkan frames", cleared == 3, format!("{cleared} of 3: {detail}"));
+
+        // What reached the window: the middle of the client area, read back through the desktop
+        // window manager, which composes the frame a moment after it was presented.
+        let mut read = None;
+        let mut capture_error = String::new();
+        for attempt in 0..10 {
+            if attempt > 0 {
+                std::thread::sleep(Duration::from_millis(100));
+            }
+            match presented::capture(hwnd) {
+                Ok(capture) => {
+                    let pixel = capture.at(capture.width / 2, capture.height / 2);
+                    read = Some(pixel);
+                    if pixel.iter().zip(ORANGE).all(|(&read, expected)| read.abs_diff(expected) <= 2) {
+                        break;
+                    }
+                }
+                Err(error) => capture_error = error,
+            }
+        }
+        report.check(
+            "Vulkan frame on the window",
+            read.is_some_and(|pixel| pixel.iter().zip(ORANGE).all(|(&read, expected)| read.abs_diff(expected) <= 2)),
+            match read {
+                Some(pixel) => format!("the middle of the client area reads back as {pixel:?}, presented {ORANGE:?}"),
+                None => format!("the window could not be read back: {capture_error}"),
+            },
+        );
+
+        target.dispose();
+        context.dispose();
+        device.dispose();
+        window.dispose();
+    }
+
     pub fn run() -> ExitCode {
         let smoke = std::env::args().any(|argument| argument == "--smoke");
         if smoke {
@@ -1958,6 +2197,7 @@ mod windows {
             }));
         }
         let probe_angle = std::env::args().any(|argument| argument == "--angle-probe");
+        let probe_vulkan = std::env::args().any(|argument| argument == "--vulkan-probe");
 
         // `--rendering software|angle`: the one rendering mode of the run,
         // without a fallback, so that a mode that does not initialise fails
@@ -2367,6 +2607,10 @@ mod windows {
 
         if probe_angle {
             angle_probe(&state.report);
+        }
+
+        if probe_vulkan {
+            vulkan_probe(&state.report);
         }
 
         let failures = state.report.failures.borrow().clone();
