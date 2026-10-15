@@ -19,7 +19,7 @@ use ferroui_win32::wnd_proc_guard::guard;
 macro_rules! delegate {
     ($(#[$doc:meta])* $name:ident, $interface:ident, $implementation:ident, ($($arg:ident : $ty:ty),*)) => {
         $(#[$doc])*
-        pub(crate) fn $name(handler: impl Fn($($ty),*) + 'static) -> ComPtr<$interface> {
+        pub fn $name(handler: impl Fn($($ty),*) + 'static) -> ComPtr<$interface> {
             struct Delegate<F>(F);
 
             impl<F: Fn($($ty),*) + 'static> $implementation for Delegate<F> {
@@ -80,6 +80,24 @@ delegate!(
     /// `TypedEventHandler<UIElement, DragStartingEventArgs>`.
     drag_starting_handler, TypedEventHandlerUIElementDragStarting, TypedEventHandlerUIElementDragStartingImpl,
     (sender: Option<&IUIElement>, args: Option<&IDragStartingEventArgs>)
+);
+
+delegate!(
+    /// `TypedEventHandler<FrameworkElement, Object>`: `FrameworkElement.Loading`.
+    loading_handler, TypedEventHandlerFrameworkElementObject, TypedEventHandlerFrameworkElementObjectImpl,
+    (sender: Option<&IFrameworkElement>, args: Option<&IInspectable>)
+);
+
+delegate!(
+    /// `RangeBaseValueChangedEventHandler`: `RangeBase.ValueChanged` (a slider).
+    range_base_value_changed_handler, RangeBaseValueChangedEventHandler, RangeBaseValueChangedEventHandlerImpl,
+    (sender: Option<&IInspectable>, e: Option<&IRangeBaseValueChangedEventArgs>)
+);
+
+delegate!(
+    /// `SelectionChangedEventHandler`: `Selector.SelectionChanged` (a combo box).
+    selection_changed_handler, SelectionChangedEventHandler, SelectionChangedEventHandlerImpl,
+    (sender: Option<&IInspectable>, e: Option<&ISelectionChangedEventArgs>)
 );
 
 delegate!(

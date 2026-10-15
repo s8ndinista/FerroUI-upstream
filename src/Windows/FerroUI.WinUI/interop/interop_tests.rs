@@ -109,7 +109,7 @@ fn every_parameterized_instance_has_the_identifier_of_its_signature() {
         checked += 1;
     }
     // Every instance the integration declares.
-    assert_eq!(34, checked);
+    assert_eq!(36, checked);
 }
 
 #[test]
@@ -121,6 +121,9 @@ fn the_bindings_have_the_identifiers_of_the_metadata() {
     assert_eq!(Guid::parse("94ea2b94-e9cc-49e0-c0ff-ee64ca8f5b90").unwrap(), IAgileObject::IID);
     assert_eq!(Guid::parse("bf6608af-4041-47c3-b263-a918eb5eaef2").unwrap(), ICoreTextEditContext::IID);
     assert_eq!(Guid::parse("c3c01020-320c-5cf6-9d24-d396bbfa4d8b").unwrap(), IUIElement::IID);
+    // What XAML asks the application object for (the type information of
+    // the markup it loads).
+    assert_eq!(Guid::parse("a96251f0-2214-5d53-8746-ce99a2593cd7").unwrap(), IXamlMetadataProvider::IID);
 }
 
 #[test]
@@ -134,4 +137,7 @@ fn the_structures_have_the_layout_of_the_abi() {
     assert_eq!(8, size_of::<WindowId>());
     assert_eq!(8, align_of::<WindowId>());
     assert_eq!(8, size_of::<CoreTextRange>());
+    // A string handle and a value (an enumeration; a second string handle).
+    assert_eq!(2 * size_of::<usize>(), size_of::<TypeName>());
+    assert_eq!(2 * size_of::<usize>(), size_of::<XmlnsDefinition>());
 }

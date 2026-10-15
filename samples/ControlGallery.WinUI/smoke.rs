@@ -14,11 +14,21 @@ use ferroui_winui::XamlApplication;
 use std::cell::Cell;
 use std::io::Write;
 use std::rc::{Rc, Weak};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Mutex;
 use std::time::{Duration, Instant};
 
 ferroui_base::ferro_thread_local! {
     static FAILED: Cell<bool> = const { Cell::new(false) };
 }
+
+/// Whether this is a smoke run (`--smoke`).
+static SMOKE: AtomicBool = AtomicBool::new(false);
+/// The last `[step]` line, which the watchdog of the end of the process
+/// names.
+static LAST_STEP: Mutex<String> = Mutex::new(String::new());
+/// How long the process has to end once the window is closed.
+const END_TIMEOUT: Duration = Duration::from_secs(60);
 
 /// How long the panel has to load and to get its swap chain.
 const LOAD_TIMEOUT: Duration = Duration::from_secs(60);
@@ -115,9 +125,55 @@ fn count_frames(top_level: ferroui_base::Ref<ferroui_controls::TopLevel>, frames
     });
 }
 
+/// Marks the run as a smoke run: the steps of the end of the application
+/// are printed too.
+pub fn set_smoke() {
+    SMOKE.store(true, Ordering::SeqCst);
+}
+
+/// A step of the end of the application (the window closed, the loop ended,
+/// the Windows App SDK released, `main` returning), printed in a smoke run.
+pub fn end_step(what: &str) {
+    if SMOKE.load(Ordering::SeqCst) {
+        step(what);
+    }
+}
+
+/// From the close of the window on, a thread watches that the process ends:
+/// if it still runs after [`END_TIMEOUT`], the run fails with the last step
+/// it reached, and the process is ended. A process that stayed after the
+/// smoke checks had passed held the step of CI until the limit of the step
+/// (runs 38741696373 and 38769434562); this names where. It cannot see a
+/// process that hangs inside `ExitProcess` (the system ends this thread
+/// first): the step of CI ends such a process itself and says so.
+fn watch_the_end() {
+    let _ = std::thread::Builder::new().name("smoke end watchdog".to_owned()).spawn(|| {
+        std::thread::sleep(END_TIMEOUT);
+        let last = LAST_STEP.lock().map(|last| last.clone()).unwrap_or_default();
+        let mut out = std::io::stdout().lock();
+        let _ = writeln!(
+            out,
+            "[FAIL] the process did not end within {} s after the window was closed; the last step: {last}",
+            END_TIMEOUT.as_secs()
+        );
+        let _ = out.flush();
+        // SAFETY: ends this process.
+        unsafe {
+            windows_sys::Win32::System::Threading::TerminateProcess(
+                windows_sys::Win32::System::Threading::GetCurrentProcess(),
+                97,
+            )
+        };
+    });
+}
+
 /// A line before a call of the system, so that a run that ends in the
 /// system's frames names the call it was in.
 fn step(what: &str) {
+    if let Ok(mut last) = LAST_STEP.lock() {
+        last.clear();
+        last.push_str(what);
+    }
     let mut out = std::io::stdout().lock();
     let _ = writeln!(out, "[step] {what}");
     let _ = out.flush();
@@ -184,6 +240,7 @@ fn check_automation(window: &MainWindow) {
 /// Closes the window; `App` drops it and ends the application when it is
 /// closed.
 fn finish(window: &MainWindow) {
+    watch_the_end();
     step("Window.Close");
     let close = window.window().close();
     report(close.is_ok(), "the window closes");

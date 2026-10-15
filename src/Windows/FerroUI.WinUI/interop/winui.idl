@@ -593,6 +593,18 @@ struct Rect
     FLOAT Width;
     FLOAT Height;
 }
+// Windows.UI.Xaml.Interop.TypeName
+struct TypeName
+{
+    HSTRING Name;
+    INT32 Kind;
+}
+// Microsoft.UI.Xaml.Markup.XmlnsDefinition
+struct XmlnsDefinition
+{
+    HSTRING XmlNamespace;
+    HSTRING Namespace;
+}
 // Windows.Foundation.Size
 struct Size
 {
@@ -645,6 +657,11 @@ struct Thickness
     DOUBLE Top;
     DOUBLE Right;
     DOUBLE Bottom;
+}
+// Windows.UI.Text.FontWeight
+struct FontWeight
+{
+    UINT16 Weight;
 }
 // Windows.UI.Color
 struct Color
@@ -716,8 +733,8 @@ interface IClosable : IInspectable
 [uuid(06A8F4E7-1146-55AF-820D-EBD55643B021)]
 interface IApplication : IInspectable
 {
-    [propget] HRESULT Resources([out, retval] IInspectable** result);
-    [propput] HRESULT Resources(IInspectable* value);
+    [propget] HRESULT Resources([out, retval] IResourceDictionary** result);
+    [propput] HRESULT Resources(IResourceDictionary* value);
     [propget] HRESULT DebugSettings([out, retval] IInspectable** result);
     [propget] HRESULT RequestedTheme([out, retval] INT32* result);
     [propput] HRESULT RequestedTheme(INT32 value);
@@ -802,6 +819,47 @@ interface IWindowFactory : IInspectable
 interface IWindowStatics : IInspectable
 {
     [propget] HRESULT Current([out, retval] IWindow** result);
+}
+
+// Microsoft.UI.Xaml.IResourceDictionary
+[uuid(1B690975-A710-5783-A6E1-15836F6186C2)]
+interface IResourceDictionary : IInspectable
+{
+    [propget] HRESULT Source([out, retval] IInspectable** result);
+    [propput] HRESULT Source(IInspectable* value);
+    [propget] HRESULT MergedDictionaries([out, retval] IVectorResourceDictionary** result);
+    [propget] HRESULT ThemeDictionaries([out, retval] void** result);
+}
+
+// Microsoft.UI.Xaml.IResourceDictionaryFactory
+[uuid(EA22A48F-AB71-56F6-A392-D82310C8AA7B)]
+interface IResourceDictionaryFactory : IInspectable
+{
+    HRESULT CreateInstance(IInspectable* baseInterface, [out] IInspectable** innerInterface, [out, retval] IResourceDictionary** result);
+}
+
+// Microsoft.UI.Xaml.Markup.IXamlMetadataProvider
+[uuid(A96251F0-2214-5D53-8746-CE99A2593CD7)]
+interface IXamlMetadataProvider : IInspectable
+{
+    HRESULT GetXamlType(TypeName type, [out, retval] void** result);
+    HRESULT GetXamlTypeByFullName(HSTRING fullName, [out, retval] void** result);
+    HRESULT GetXmlnsDefinitions([out] UINT32* resultSize, [out] XmlnsDefinition** result);
+}
+
+// Microsoft.UI.Xaml.XamlTypeInfo.IXamlControlsXamlMetaDataProviderStatics
+[uuid(2D7EB3FD-ECDB-5084-B7E0-12F9598381EF)]
+interface IXamlControlsXamlMetaDataProviderStatics : IInspectable
+{
+    HRESULT Initialize();
+}
+
+// Microsoft.UI.Xaml.Markup.IXamlReaderStatics
+[uuid(82A4CD9E-435E-5AEB-8C4F-300CECE45CAE)]
+interface IXamlReaderStatics : IInspectable
+{
+    HRESULT Load(HSTRING xaml, [out, retval] IInspectable** result);
+    HRESULT LoadWithInitialTemplateValidation(HSTRING xaml, [out, retval] IInspectable** result);
 }
 
 // Microsoft.UI.Xaml.IDependencyObject
@@ -1163,8 +1221,8 @@ interface IUIElementStatics : IInspectable
 interface IFrameworkElement : IInspectable
 {
     [propget] HRESULT Triggers([out, retval] IInspectable** result);
-    [propget] HRESULT Resources([out, retval] IInspectable** result);
-    [propput] HRESULT Resources(IInspectable* value);
+    [propget] HRESULT Resources([out, retval] IResourceDictionary** result);
+    [propput] HRESULT Resources(IResourceDictionary* value);
     [propget] HRESULT Tag([out, retval] IInspectable** result);
     [propput] HRESULT Tag(IInspectable* value);
     [propget] HRESULT Language([out, retval] HSTRING* result);
@@ -1227,9 +1285,9 @@ interface IFrameworkElement : IInspectable
     HRESULT remove_SizeChanged(EventRegistrationToken token);
     HRESULT add_LayoutUpdated(void* handler, [out, retval] EventRegistrationToken* result);
     HRESULT remove_LayoutUpdated(EventRegistrationToken token);
-    HRESULT add_Loading(void* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT add_Loading(TypedEventHandlerFrameworkElementObject* handler, [out, retval] EventRegistrationToken* result);
     HRESULT remove_Loading(EventRegistrationToken token);
-    HRESULT add_ActualThemeChanged(void* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT add_ActualThemeChanged(TypedEventHandlerFrameworkElementObject* handler, [out, retval] EventRegistrationToken* result);
     HRESULT remove_ActualThemeChanged(EventRegistrationToken token);
     HRESULT add_EffectiveViewportChanged(void* handler, [out, retval] EventRegistrationToken* result);
     HRESULT remove_EffectiveViewportChanged(EventRegistrationToken token);
@@ -1257,6 +1315,286 @@ interface IPanel : IInspectable
 interface IGridFactory : IInspectable
 {
     HRESULT CreateInstance(IInspectable* baseInterface, [out] IInspectable** innerInterface, [out, retval] IInspectable** result);
+}
+
+// Microsoft.UI.Xaml.Controls.IGridStatics
+[uuid(EF9CF81D-A431-50F4-ABF5-3023FE447704)]
+interface IGridStatics : IInspectable
+{
+    [propget] HRESULT BackgroundSizingProperty([out, retval] IInspectable** result);
+    [propget] HRESULT BorderBrushProperty([out, retval] IInspectable** result);
+    [propget] HRESULT BorderThicknessProperty([out, retval] IInspectable** result);
+    [propget] HRESULT CornerRadiusProperty([out, retval] IInspectable** result);
+    [propget] HRESULT PaddingProperty([out, retval] IInspectable** result);
+    [propget] HRESULT RowSpacingProperty([out, retval] IInspectable** result);
+    [propget] HRESULT ColumnSpacingProperty([out, retval] IInspectable** result);
+    [propget] HRESULT RowProperty([out, retval] IInspectable** result);
+    HRESULT GetRow(IFrameworkElement* element, [out, retval] INT32* result);
+    HRESULT SetRow(IFrameworkElement* element, INT32 value);
+    [propget] HRESULT ColumnProperty([out, retval] IInspectable** result);
+    HRESULT GetColumn(IFrameworkElement* element, [out, retval] INT32* result);
+    HRESULT SetColumn(IFrameworkElement* element, INT32 value);
+    [propget] HRESULT RowSpanProperty([out, retval] IInspectable** result);
+    HRESULT GetRowSpan(IFrameworkElement* element, [out, retval] INT32* result);
+    HRESULT SetRowSpan(IFrameworkElement* element, INT32 value);
+    [propget] HRESULT ColumnSpanProperty([out, retval] IInspectable** result);
+    HRESULT GetColumnSpan(IFrameworkElement* element, [out, retval] INT32* result);
+    HRESULT SetColumnSpan(IFrameworkElement* element, INT32 value);
+}
+
+// Microsoft.UI.Xaml.Controls.ITextBlock
+[uuid(1AC8D84F-392C-5C7E-83F5-A53E3BF0ABB0)]
+interface ITextBlock : IInspectable
+{
+    [propget] HRESULT FontSize([out, retval] DOUBLE* result);
+    [propput] HRESULT FontSize(DOUBLE value);
+    [propget] HRESULT FontFamily([out, retval] IInspectable** result);
+    [propput] HRESULT FontFamily(IInspectable* value);
+    [propget] HRESULT FontWeight([out, retval] FontWeight* result);
+    [propput] HRESULT FontWeight(FontWeight value);
+    [propget] HRESULT FontStyle([out, retval] INT32* result);
+    [propput] HRESULT FontStyle(INT32 value);
+    [propget] HRESULT FontStretch([out, retval] INT32* result);
+    [propput] HRESULT FontStretch(INT32 value);
+    [propget] HRESULT CharacterSpacing([out, retval] INT32* result);
+    [propput] HRESULT CharacterSpacing(INT32 value);
+    [propget] HRESULT Foreground([out, retval] IBrush** result);
+    [propput] HRESULT Foreground(IBrush* value);
+    [propget] HRESULT TextWrapping([out, retval] INT32* result);
+    [propput] HRESULT TextWrapping(INT32 value);
+    [propget] HRESULT TextTrimming([out, retval] INT32* result);
+    [propput] HRESULT TextTrimming(INT32 value);
+    [propget] HRESULT TextAlignment([out, retval] INT32* result);
+    [propput] HRESULT TextAlignment(INT32 value);
+    [propget] HRESULT Text([out, retval] HSTRING* result);
+    [propput] HRESULT Text(HSTRING value);
+    [propget] HRESULT Inlines([out, retval] IInspectable** result);
+    [propget] HRESULT Padding([out, retval] Thickness* result);
+    [propput] HRESULT Padding(Thickness value);
+    [propget] HRESULT LineHeight([out, retval] DOUBLE* result);
+    [propput] HRESULT LineHeight(DOUBLE value);
+    [propget] HRESULT LineStackingStrategy([out, retval] INT32* result);
+    [propput] HRESULT LineStackingStrategy(INT32 value);
+    [propget] HRESULT IsTextSelectionEnabled([out, retval] boolean* result);
+    [propput] HRESULT IsTextSelectionEnabled(boolean value);
+    [propget] HRESULT SelectedText([out, retval] HSTRING* result);
+    [propget] HRESULT ContentStart([out, retval] IInspectable** result);
+    [propget] HRESULT ContentEnd([out, retval] IInspectable** result);
+    [propget] HRESULT SelectionStart([out, retval] IInspectable** result);
+    [propget] HRESULT SelectionEnd([out, retval] IInspectable** result);
+    [propget] HRESULT BaselineOffset([out, retval] DOUBLE* result);
+    [propget] HRESULT SelectionHighlightColor([out, retval] IInspectable** result);
+    [propput] HRESULT SelectionHighlightColor(IInspectable* value);
+    [propget] HRESULT MaxLines([out, retval] INT32* result);
+    [propput] HRESULT MaxLines(INT32 value);
+    [propget] HRESULT TextLineBounds([out, retval] INT32* result);
+    [propput] HRESULT TextLineBounds(INT32 value);
+    [propget] HRESULT OpticalMarginAlignment([out, retval] INT32* result);
+    [propput] HRESULT OpticalMarginAlignment(INT32 value);
+    [propget] HRESULT IsColorFontEnabled([out, retval] boolean* result);
+    [propput] HRESULT IsColorFontEnabled(boolean value);
+    [propget] HRESULT TextReadingOrder([out, retval] INT32* result);
+    [propput] HRESULT TextReadingOrder(INT32 value);
+    [propget] HRESULT IsTextScaleFactorEnabled([out, retval] boolean* result);
+    [propput] HRESULT IsTextScaleFactorEnabled(boolean value);
+    [propget] HRESULT TextDecorations([out, retval] UINT32* result);
+    [propput] HRESULT TextDecorations(UINT32 value);
+    [propget] HRESULT IsTextTrimmed([out, retval] boolean* result);
+    [propget] HRESULT HorizontalTextAlignment([out, retval] INT32* result);
+    [propput] HRESULT HorizontalTextAlignment(INT32 value);
+    [propget] HRESULT TextHighlighters([out, retval] void** result);
+    [propget] HRESULT SelectionFlyout([out, retval] IInspectable** result);
+    [propput] HRESULT SelectionFlyout(IInspectable* value);
+    HRESULT add_SelectionChanged(RoutedEventHandler* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_SelectionChanged(EventRegistrationToken token);
+    HRESULT add_ContextMenuOpening(void* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_ContextMenuOpening(EventRegistrationToken token);
+    HRESULT add_IsTextTrimmedChanged(void* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_IsTextTrimmedChanged(EventRegistrationToken token);
+    HRESULT SelectAll();
+    HRESULT Select(IInspectable* start, IInspectable* end);
+    HRESULT GetAlphaMask([out, retval] IInspectable** result);
+    HRESULT CopySelectionToClipboard();
+}
+
+// Microsoft.UI.Xaml.Controls.ITextBox
+[uuid(873AF7C2-AB89-5D76-8DBE-3D6325669DF5)]
+interface ITextBox : IInspectable
+{
+    [propget] HRESULT Text([out, retval] HSTRING* result);
+    [propput] HRESULT Text(HSTRING value);
+    [propget] HRESULT SelectedText([out, retval] HSTRING* result);
+    [propput] HRESULT SelectedText(HSTRING value);
+    [propget] HRESULT SelectionLength([out, retval] INT32* result);
+    [propput] HRESULT SelectionLength(INT32 value);
+    [propget] HRESULT SelectionStart([out, retval] INT32* result);
+    [propput] HRESULT SelectionStart(INT32 value);
+    [propget] HRESULT MaxLength([out, retval] INT32* result);
+    [propput] HRESULT MaxLength(INT32 value);
+    [propget] HRESULT IsReadOnly([out, retval] boolean* result);
+    [propput] HRESULT IsReadOnly(boolean value);
+    [propget] HRESULT AcceptsReturn([out, retval] boolean* result);
+    [propput] HRESULT AcceptsReturn(boolean value);
+    [propget] HRESULT TextAlignment([out, retval] INT32* result);
+    [propput] HRESULT TextAlignment(INT32 value);
+    [propget] HRESULT TextWrapping([out, retval] INT32* result);
+    [propput] HRESULT TextWrapping(INT32 value);
+    [propget] HRESULT IsSpellCheckEnabled([out, retval] boolean* result);
+    [propput] HRESULT IsSpellCheckEnabled(boolean value);
+    [propget] HRESULT IsTextPredictionEnabled([out, retval] boolean* result);
+    [propput] HRESULT IsTextPredictionEnabled(boolean value);
+    [propget] HRESULT InputScope([out, retval] IInspectable** result);
+    [propput] HRESULT InputScope(IInspectable* value);
+    [propget] HRESULT Header([out, retval] IInspectable** result);
+    [propput] HRESULT Header(IInspectable* value);
+    [propget] HRESULT HeaderTemplate([out, retval] IInspectable** result);
+    [propput] HRESULT HeaderTemplate(IInspectable* value);
+    [propget] HRESULT PlaceholderText([out, retval] HSTRING* result);
+    [propput] HRESULT PlaceholderText(HSTRING value);
+    [propget] HRESULT SelectionHighlightColor([out, retval] IInspectable** result);
+    [propput] HRESULT SelectionHighlightColor(IInspectable* value);
+    [propget] HRESULT PreventKeyboardDisplayOnProgrammaticFocus([out, retval] boolean* result);
+    [propput] HRESULT PreventKeyboardDisplayOnProgrammaticFocus(boolean value);
+    [propget] HRESULT IsColorFontEnabled([out, retval] boolean* result);
+    [propput] HRESULT IsColorFontEnabled(boolean value);
+    [propget] HRESULT SelectionHighlightColorWhenNotFocused([out, retval] IInspectable** result);
+    [propput] HRESULT SelectionHighlightColorWhenNotFocused(IInspectable* value);
+    [propget] HRESULT HorizontalTextAlignment([out, retval] INT32* result);
+    [propput] HRESULT HorizontalTextAlignment(INT32 value);
+    [propget] HRESULT CharacterCasing([out, retval] INT32* result);
+    [propput] HRESULT CharacterCasing(INT32 value);
+    [propget] HRESULT PlaceholderForeground([out, retval] IBrush** result);
+    [propput] HRESULT PlaceholderForeground(IBrush* value);
+    [propget] HRESULT CanPasteClipboardContent([out, retval] boolean* result);
+    [propget] HRESULT CanUndo([out, retval] boolean* result);
+    [propget] HRESULT CanRedo([out, retval] boolean* result);
+    [propget] HRESULT SelectionFlyout([out, retval] IInspectable** result);
+    [propput] HRESULT SelectionFlyout(IInspectable* value);
+    [propget] HRESULT ProofingMenuFlyout([out, retval] IInspectable** result);
+    [propget] HRESULT Description([out, retval] IInspectable** result);
+    [propput] HRESULT Description(IInspectable* value);
+    HRESULT add_TextChanged(void* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_TextChanged(EventRegistrationToken token);
+    HRESULT add_SelectionChanged(RoutedEventHandler* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_SelectionChanged(EventRegistrationToken token);
+    HRESULT add_ContextMenuOpening(void* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_ContextMenuOpening(EventRegistrationToken token);
+    HRESULT add_Paste(void* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_Paste(EventRegistrationToken token);
+    HRESULT add_TextCompositionStarted(void* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_TextCompositionStarted(EventRegistrationToken token);
+    HRESULT add_TextCompositionChanged(void* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_TextCompositionChanged(EventRegistrationToken token);
+    HRESULT add_TextCompositionEnded(void* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_TextCompositionEnded(EventRegistrationToken token);
+    HRESULT add_CopyingToClipboard(void* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_CopyingToClipboard(EventRegistrationToken token);
+    HRESULT add_CuttingToClipboard(void* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_CuttingToClipboard(EventRegistrationToken token);
+    HRESULT add_BeforeTextChanging(void* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_BeforeTextChanging(EventRegistrationToken token);
+    HRESULT add_SelectionChanging(void* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_SelectionChanging(EventRegistrationToken token);
+    HRESULT Select(INT32 start, INT32 length);
+    HRESULT SelectAll();
+    HRESULT GetRectFromCharacterIndex(INT32 charIndex, boolean trailingEdge, [out, retval] Rect* result);
+    HRESULT GetLinguisticAlternativesAsync([out, retval] void** result);
+    HRESULT Undo();
+    HRESULT Redo();
+    HRESULT PasteFromClipboard();
+    HRESULT CopySelectionToClipboard();
+    HRESULT CutSelectionToClipboard();
+    HRESULT ClearUndoRedoHistory();
+    [propget] HRESULT TextReadingOrder([out, retval] INT32* result);
+    [propput] HRESULT TextReadingOrder(INT32 value);
+    [propget] HRESULT DesiredCandidateWindowAlignment([out, retval] INT32* result);
+    [propput] HRESULT DesiredCandidateWindowAlignment(INT32 value);
+    HRESULT add_CandidateWindowBoundsChanged(void* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_CandidateWindowBoundsChanged(EventRegistrationToken token);
+    HRESULT add_TextChanging(void* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_TextChanging(EventRegistrationToken token);
+}
+
+// Microsoft.UI.Xaml.Controls.Primitives.IButtonBase
+[uuid(65714269-2473-5327-A652-0EA6BCE7F403)]
+interface IButtonBase : IInspectable
+{
+    [propget] HRESULT ClickMode([out, retval] INT32* result);
+    [propput] HRESULT ClickMode(INT32 value);
+    [propget] HRESULT IsPointerOver([out, retval] boolean* result);
+    [propget] HRESULT IsPressed([out, retval] boolean* result);
+    [propget] HRESULT Command([out, retval] void** result);
+    [propput] HRESULT Command(void* value);
+    [propget] HRESULT CommandParameter([out, retval] IInspectable** result);
+    [propput] HRESULT CommandParameter(IInspectable* value);
+    HRESULT add_Click(RoutedEventHandler* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_Click(EventRegistrationToken token);
+}
+
+// Microsoft.UI.Xaml.Controls.Primitives.IRangeBase
+[uuid(540D6D61-8FAC-5D5C-B5B0-E172A7DDE103)]
+interface IRangeBase : IInspectable
+{
+    [propget] HRESULT Minimum([out, retval] DOUBLE* result);
+    [propput] HRESULT Minimum(DOUBLE value);
+    [propget] HRESULT Maximum([out, retval] DOUBLE* result);
+    [propput] HRESULT Maximum(DOUBLE value);
+    [propget] HRESULT SmallChange([out, retval] DOUBLE* result);
+    [propput] HRESULT SmallChange(DOUBLE value);
+    [propget] HRESULT LargeChange([out, retval] DOUBLE* result);
+    [propput] HRESULT LargeChange(DOUBLE value);
+    [propget] HRESULT Value([out, retval] DOUBLE* result);
+    [propput] HRESULT Value(DOUBLE value);
+    HRESULT add_ValueChanged(RangeBaseValueChangedEventHandler* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_ValueChanged(EventRegistrationToken token);
+}
+
+// Microsoft.UI.Xaml.Controls.Primitives.IRangeBaseValueChangedEventArgs
+[uuid(B0181692-9578-51C7-9D1C-ADFCF8945AA9)]
+interface IRangeBaseValueChangedEventArgs : IInspectable
+{
+    [propget] HRESULT OldValue([out, retval] DOUBLE* result);
+    [propget] HRESULT NewValue([out, retval] DOUBLE* result);
+}
+
+// Microsoft.UI.Xaml.Controls.Primitives.RangeBaseValueChangedEventHandler
+[uuid(23F0E209-9455-54CB-B8BC-0B49553C7DCC)]
+interface RangeBaseValueChangedEventHandler : IUnknown
+{
+    HRESULT Invoke(IInspectable* sender, IRangeBaseValueChangedEventArgs* e);
+}
+
+// Microsoft.UI.Xaml.Controls.Primitives.ISelector
+[uuid(8F7E2159-E61D-576F-8476-F83FDE3D689E)]
+interface ISelector : IInspectable
+{
+    [propget] HRESULT SelectedIndex([out, retval] INT32* result);
+    [propput] HRESULT SelectedIndex(INT32 value);
+    [propget] HRESULT SelectedItem([out, retval] IInspectable** result);
+    [propput] HRESULT SelectedItem(IInspectable* value);
+    [propget] HRESULT SelectedValue([out, retval] IInspectable** result);
+    [propput] HRESULT SelectedValue(IInspectable* value);
+    [propget] HRESULT SelectedValuePath([out, retval] HSTRING* result);
+    [propput] HRESULT SelectedValuePath(HSTRING value);
+    [propget] HRESULT IsSynchronizedWithCurrentItem([out, retval] void** result);
+    [propput] HRESULT IsSynchronizedWithCurrentItem(void* value);
+    HRESULT add_SelectionChanged(SelectionChangedEventHandler* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_SelectionChanged(EventRegistrationToken token);
+}
+
+// Microsoft.UI.Xaml.Controls.ISelectionChangedEventArgs
+[uuid(B6C18076-4B76-5416-AD29-E2DC20C46246)]
+interface ISelectionChangedEventArgs : IInspectable
+{
+    [propget] HRESULT AddedItems([out, retval] void** result);
+    [propget] HRESULT RemovedItems([out, retval] void** result);
+}
+
+// Microsoft.UI.Xaml.Controls.SelectionChangedEventHandler
+[uuid(A232390D-0E34-595E-8931-FA928A9909F4)]
+interface SelectionChangedEventHandler : IUnknown
+{
+    HRESULT Invoke(IInspectable* sender, ISelectionChangedEventArgs* e);
 }
 
 // Microsoft.UI.Xaml.Controls.ISwapChainPanel
@@ -2193,6 +2531,24 @@ interface IVectorUIElement : IInspectable
     HRESULT ReplaceAll(UINT32 itemsSize, IUIElement** items);
 }
 
+// Windows.Foundation.Collections.IVector`1<Microsoft.UI.Xaml.ResourceDictionary>: pinterface({913337e9-11a1-4345-a3a2-4e7f956e222d};rc(Microsoft.UI.Xaml.ResourceDictionary;{1b690975-a710-5783-a6e1-15836f6186c2}))
+[uuid(C6FBFE1A-F015-5B23-8E7E-14497E9707A1)]
+interface IVectorResourceDictionary : IInspectable
+{
+    HRESULT GetAt(UINT32 index, [out, retval] IResourceDictionary** result);
+    [propget] HRESULT Size([out, retval] UINT32* result);
+    HRESULT GetView([out, retval] void** result);
+    HRESULT IndexOf(IResourceDictionary* value, [out] UINT32* index, [out, retval] boolean* result);
+    HRESULT SetAt(UINT32 index, IResourceDictionary* value);
+    HRESULT InsertAt(UINT32 index, IResourceDictionary* value);
+    HRESULT RemoveAt(UINT32 index);
+    HRESULT Append(IResourceDictionary* value);
+    HRESULT RemoveAtEnd();
+    HRESULT Clear();
+    HRESULT GetMany(UINT32 startIndex, UINT32 itemsSize, IResourceDictionary** items, [out, retval] UINT32* result);
+    HRESULT ReplaceAll(UINT32 itemsSize, IResourceDictionary** items);
+}
+
 // Windows.Foundation.Collections.IVector`1<Microsoft.UI.Xaml.Automation.Peers.AutomationPeer>: pinterface({913337e9-11a1-4345-a3a2-4e7f956e222d};rc(Microsoft.UI.Xaml.Automation.Peers.AutomationPeer;{e51d3e4e-34f0-568c-999f-6277e2afe6d7}))
 [uuid(91D7782F-C53A-5620-8CE1-0D9419249322)]
 interface IVectorAutomationPeer : IInspectable
@@ -2323,6 +2679,13 @@ interface TypedEventHandlerUIElementCharacterReceived : IUnknown
 interface TypedEventHandlerUIElementDragStarting : IUnknown
 {
     HRESULT Invoke(IUIElement* sender, IDragStartingEventArgs* args);
+}
+
+// Windows.Foundation.TypedEventHandler`2<Microsoft.UI.Xaml.FrameworkElement,object>: pinterface({9de1c534-6ae1-11e0-84e1-18a905bcc53f};rc(Microsoft.UI.Xaml.FrameworkElement;{fe08f13d-dc6a-5495-ad44-c2d8d21863b0});cinterface(IInspectable))
+[uuid(53876073-BE4F-5DAC-9AE0-015DB6E40C74)]
+interface TypedEventHandlerFrameworkElementObject : IUnknown
+{
+    HRESULT Invoke(IFrameworkElement* sender, IInspectable* args);
 }
 
 // Windows.Foundation.TypedEventHandler`2<Windows.UI.Text.Core.CoreTextEditContext,Windows.UI.Text.Core.CoreTextTextRequestedEventArgs>: pinterface({9de1c534-6ae1-11e0-84e1-18a905bcc53f};rc(Windows.UI.Text.Core.CoreTextEditContext;{bf6608af-4041-47c3-b263-a918eb5eaef2});rc(Windows.UI.Text.Core.CoreTextTextRequestedEventArgs;{f096a2d0-41c6-4c02-8b1a-d953b00cabb3}))

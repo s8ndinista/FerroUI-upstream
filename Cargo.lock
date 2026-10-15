@@ -517,6 +517,7 @@ dependencies = [
  "ferroui-skia",
  "ferroui-win32",
  "ferroui-winui",
+ "windows-sys",
 ]
 
 [[package]]
@@ -3874,6 +3875,26 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "23b97319f7b8343df12cc98938e5c3eb436064524c8d2b4e30a1d3a36eecdf81"
 dependencies = [
  "memchr",
+]
+
+[[package]]
+name = "winui-embed-sample"
+version = "0.1.0-preview.2"
+dependencies = [
+ "ferroui-base",
+ "ferroui-controls",
+ "ferroui-harfbuzz",
+ "ferroui-markup",
+ "ferroui-markup-xaml",
+ "ferroui-microcom",
+ "ferroui-skia",
+ "ferroui-themes-fluent",
+ "ferroui-win32",
+ "ferroui-winui",
+ "sample-build",
+ "sample-support",
+ "sample-testing",
+ "windows-sys",
 ]
 
 [[package]]
