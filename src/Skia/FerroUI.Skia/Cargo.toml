@@ -41,8 +41,18 @@ cc.workspace = true
 # OpenGL (GLX or EGL) for Linux, Ganesh on OpenGL ES (EGL) for Android. Raster
 # is always present. `build.rs` mirrors the tables with Ganesh on OpenGL as the
 # `ferro_skia_ganesh_gl` configuration.
-[target.'cfg(target_vendor = "apple")'.dependencies]
+[target.'cfg(all(target_vendor = "apple", not(ferro_skia_apple_ganesh)))'.dependencies]
 skia-safe = { workspace = true, features = ["graphite", "metal"] }
+
+# Apple targets with OpenGL: the rendering mode OpenGL of the macOS backend (CGL) and of the iOS
+# backend (EAGL) needs Ganesh on OpenGL, and no published binary of Skia has Ganesh on OpenGL next
+# to Graphite (docs/porting/apple-opengl.md, section 2). The configuration
+# `ferro_skia_apple_ganesh`, given with `RUSTFLAGS="--cfg ferro_skia_apple_ganesh"`, builds the
+# backend with Ganesh on OpenGL and on Metal instead: the binary `ganesh-gl-jpegd-jpege-metal-pdf`
+# is published for both macOS targets and for the iOS targets. Cargo evaluates the configuration
+# of a target table with the flags of the compiler, so the flag picks the table.
+[target.'cfg(all(target_vendor = "apple", ferro_skia_apple_ganesh))'.dependencies]
+skia-safe = { workspace = true, features = ["gl", "metal"] }
 
 [target.'cfg(target_os = "emscripten")'.dependencies]
 skia-safe = { workspace = true, features = ["gl"] }

@@ -1,6 +1,6 @@
 [package]
 name = "ferroui-native"
-description = "The macOS platform of FerroUI: windows, input, clipboard, drag and drop, menus and Metal graphics over a native library"
+description = "The macOS platform of FerroUI: windows, input, clipboard, drag and drop, menus and Metal and OpenGL graphics over a native library"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -23,6 +23,8 @@ ferroui-microcom.workspace = true
 # The Metal contracts the platform implements; which backend draws with them is the application's
 # choice.
 ferroui-metal.workspace = true
+# The OpenGL contracts the platform implements (the rendering mode OpenGL, over CGL).
+ferroui-opengl.workspace = true
 
 [dev-dependencies]
 ferroui-harfbuzz.workspace = true

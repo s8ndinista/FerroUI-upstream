@@ -20,6 +20,9 @@ fn main() {
     println!("cargo:rerun-if-changed=build.rs");
     println!("cargo:rustc-check-cfg=cfg(ferro_skia_ganesh_gl)");
     println!("cargo:rustc-check-cfg=cfg(ferro_skia_vulkan)");
+    // Given by the application with `RUSTFLAGS="--cfg ferro_skia_apple_ganesh"`: the manifest then
+    // builds Skia with Ganesh on OpenGL and on Metal for Apple targets instead of Graphite.
+    println!("cargo:rustc-check-cfg=cfg(ferro_skia_apple_ganesh)");
 
     // Keep in step with the target tables of the manifest.
     if env::var("CARGO_CFG_TARGET_OS").as_deref() == Ok("emscripten") {
@@ -33,6 +36,13 @@ fn main() {
         println!("cargo:rustc-cfg=ferro_skia_ganesh_gl");
     }
     if env::var("CARGO_CFG_TARGET_OS").as_deref() == Ok("android") {
+        println!("cargo:rustc-cfg=ferro_skia_ganesh_gl");
+    }
+    // Apple targets in the configuration of the manifest that has Ganesh on OpenGL (macOS with CGL,
+    // iOS with EAGL); the configuration is visible to the build script as `CARGO_CFG_*`.
+    if env::var("CARGO_CFG_TARGET_VENDOR").as_deref() == Ok("apple")
+        && env::var("CARGO_CFG_FERRO_SKIA_APPLE_GANESH").is_ok()
+    {
         println!("cargo:rustc-cfg=ferro_skia_ganesh_gl");
     }
 

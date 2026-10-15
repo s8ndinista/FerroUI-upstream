@@ -6,7 +6,7 @@
 
 #[cfg(any(ferro_skia_ganesh_gl, ferro_skia_vulkan))]
 pub mod ganesh;
-#[cfg(target_vendor = "apple")]
+#[cfg(all(target_vendor = "apple", not(ferro_skia_apple_ganesh)))]
 pub mod graphite;
 #[cfg(target_vendor = "apple")]
 pub mod metal;
