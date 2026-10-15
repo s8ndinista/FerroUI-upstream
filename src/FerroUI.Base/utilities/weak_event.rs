@@ -386,7 +386,7 @@ mod tests {
         }
 
         fn weak_ev() -> Rc<WeakEvent<Rc<EventSource>, EventArgs>> {
-            thread_local! {
+            crate::ferro_thread_local! {
                 static WEAK_EV: Rc<WeakEvent<Rc<EventSource>, EventArgs>> = WeakEvent::register_plain(
                     |t: &Rc<EventSource>, s| t.add_event(s),
                     |t: &Rc<EventSource>, s| t.remove_event(s));

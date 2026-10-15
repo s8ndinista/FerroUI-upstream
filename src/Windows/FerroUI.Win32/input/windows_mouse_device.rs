@@ -22,7 +22,7 @@ pub struct WindowsMouseDevice {
 impl WindowsMouseDevice {
     /// The mouse device of the calling thread.
     pub fn instance() -> Rc<WindowsMouseDevice> {
-        thread_local! {
+        ferroui_base::ferro_thread_local! {
             static INSTANCE: Rc<WindowsMouseDevice> = Rc::new(WindowsMouseDevice::new());
         }
         INSTANCE.with(Rc::clone)

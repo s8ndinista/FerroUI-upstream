@@ -9,7 +9,7 @@ use crate::reactive::IDisposable;
 
 static AUTO_INSTALL: AtomicBool = AtomicBool::new(true);
 
-thread_local! {
+crate::ferro_thread_local! {
     static CURRENT: RefCell<Option<Arc<FerroSynchronizationContext>>> = const { RefCell::new(None) };
 }
 

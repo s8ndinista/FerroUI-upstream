@@ -30,7 +30,7 @@ impl TestMultiValueConverter {
 
     /// The shared instance.
     pub fn instance() -> Rc<TestMultiValueConverter> {
-        thread_local! {
+        ferroui_base::ferro_thread_local! {
             static INSTANCE: Rc<TestMultiValueConverter> = TestMultiValueConverter::new();
         }
         INSTANCE.with(Rc::clone)

@@ -31,7 +31,7 @@ use std::rc::Rc;
 
 const IME_BUFFER_SIZE: usize = 64 * 1024;
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     /// The buffer text is looked up into (`ImeBuffer`): one per thread,
     /// made when a key first produces text.
     static IME_BUFFER: RefCell<Vec<u8>> = const { RefCell::new(Vec::new()) };

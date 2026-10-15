@@ -10,7 +10,7 @@ use std::rc::Rc;
 
 type BrushAnimatorRegistration = (Rc<dyn Fn(&dyn IBrush) -> bool>, TypeId, AnimatorFactory);
 
-thread_local! {
+crate::ferro_thread_local! {
     static BRUSH_ANIMATORS: RefCell<Vec<BrushAnimatorRegistration>> = const { RefCell::new(Vec::new()) };
 }
 

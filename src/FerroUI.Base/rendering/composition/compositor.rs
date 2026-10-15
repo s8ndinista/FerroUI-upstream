@@ -28,7 +28,7 @@ pub trait ICompositorScheduler {
 
 static NEXT_COMPOSITOR_KEY: AtomicU64 = AtomicU64::new(1);
 
-thread_local! {
+crate::ferro_thread_local! {
     /// The compositors of this thread by key: lets `Send` callbacks that
     /// come back to the thread find their compositor.
     static COMPOSITORS: RefCell<HashMap<u64, Weak<Compositor>>> = RefCell::new(HashMap::new());

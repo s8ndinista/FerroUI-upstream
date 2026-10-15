@@ -81,7 +81,7 @@ mod imp {
     use std::collections::HashMap;
     use std::rc::{Rc, Weak};
 
-    thread_local! {
+    ferroui_base::ferro_thread_local! {
         static EMPTY_ICON: RefCell<Option<Rc<Win32Icon>>> = const { RefCell::new(None) };
         static NEXT_UNIQUE_ID: Cell<i32> = const { Cell::new(0) };
         static TASK_BAR_MONITOR: Cell<isize> = const { Cell::new(0) };

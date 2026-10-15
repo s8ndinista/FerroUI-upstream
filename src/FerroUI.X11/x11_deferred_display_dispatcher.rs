@@ -31,7 +31,7 @@ impl<C> ShmCompletionCallbacks<C> {
     }
 }
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     /// The dispatchers of this thread, by connection.
     static DISPATCHERS: RefCell<Vec<(XDisplay, Rc<X11DeferredDisplayDispatcher>)>> = const { RefCell::new(Vec::new()) };
 }

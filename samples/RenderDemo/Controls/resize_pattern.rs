@@ -15,7 +15,7 @@ use ferroui_base::{
 use ferroui_controls::{Control, ControlImpl};
 use std::rc::Rc;
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static GRID_PEN: Rc<dyn IPen> =
         Pen::with_brush(Some(SolidColorBrush::with_color(Color::from_rgb(60, 90, 130)).into()), 1.0).into();
     static DIAGONAL_PEN: Rc<dyn IPen> =

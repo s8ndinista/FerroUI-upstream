@@ -9,7 +9,7 @@ use super::{ILogSink, LogEventLevel, ParametrizedLogger};
 static SINK: RwLock<Option<Arc<dyn ILogSink + Send + Sync>>> = RwLock::new(None);
 static HAS_SINK: AtomicBool = AtomicBool::new(false);
 
-thread_local! {
+crate::ferro_thread_local! {
     static THREAD_SINK: RefCell<Option<Rc<dyn ILogSink>>> = const { RefCell::new(None) };
     static HAS_THREAD_SINK: Cell<bool> = const { Cell::new(false) };
 }

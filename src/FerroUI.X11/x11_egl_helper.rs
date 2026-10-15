@@ -205,7 +205,7 @@ pub fn create_display(x11: X11EglTarget, gl_profiles: &[GlVersion]) -> Result<Rc
     EglDisplay::new_with_creation_options(options)
 }
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     /// The display of the thread that renders, when that is not the thread
     /// the platform graphics were created on.
     static THREAD_DISPLAY: RefCell<Option<Rc<EglDisplay>>> = const { RefCell::new(None) };

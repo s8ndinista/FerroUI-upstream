@@ -29,7 +29,7 @@ struct OldNewValue {
 /// original).
 const MAX_OLD_NEW_VALUES_POOL_SIZE: usize = 4;
 
-thread_local! {
+crate::ferro_thread_local! {
     /// The lists in which [`ValueStore::set_inheritance_parent`] pairs the
     /// old and the new inherited values, kept for the next change (the pool
     /// of property dictionaries of the original): a change takes a list

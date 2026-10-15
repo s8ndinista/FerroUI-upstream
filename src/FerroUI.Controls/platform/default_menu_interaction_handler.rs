@@ -23,7 +23,7 @@ use std::time::Duration;
 /// when the pointer hovers over a menu item.
 pub type MenuDelayRun = Rc<dyn Fn(Box<dyn Fn()>, Duration)>;
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static MENU_SHOW_DELAY: Cell<Duration> = const { Cell::new(Duration::from_millis(400)) };
 }
 

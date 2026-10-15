@@ -406,7 +406,7 @@ fn cancellation_of_completed_animation_does_not_fail() {
 #[derive(Default)]
 struct FakeAnimator;
 
-thread_local! {
+crate::ferro_thread_local! {
     static FAKE_CALL_COUNT: Cell<u32> = const { Cell::new(0) };
     static FAKE_LAST_PROGRESS: Cell<f64> = const { Cell::new(f64::NAN) };
 }

@@ -11,7 +11,7 @@ use crate::threading::{CancellationToken, CancellationTokenRegistration, Dispatc
 use std::cell::{Cell, RefCell};
 use std::collections::HashMap;
 
-thread_local! {
+crate::ferro_thread_local! {
     static ACTIONS: RefCell<HashMap<u64, Box<dyn FnOnce()>>> = RefCell::new(HashMap::new());
     static NEXT_ID: Cell<u64> = const { Cell::new(0) };
 }

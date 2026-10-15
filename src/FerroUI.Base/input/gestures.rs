@@ -40,7 +40,7 @@ struct GesturesData {
     hold_cancellation_token: RefCell<Option<Rc<Cell<bool>>>>,
 }
 
-thread_local! {
+crate::ferro_thread_local! {
     static DATA: &'static GesturesData = Box::leak(Box::new(GesturesData {
         holding: HandlerList::new(),
         tapped: HandlerList::new(),

@@ -7,7 +7,7 @@ use ferroui_base::styling::ThemeVariant;
 use ferroui_base::{ferro_class_info, instantiate, Ref};
 use ferroui_controls::{ComboBox, ContentPage, ItemsSource, ThemeVariantScope};
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static PINK: ThemeVariant = ThemeVariant::new("Pink", Some(ThemeVariant::light()));
 }
 

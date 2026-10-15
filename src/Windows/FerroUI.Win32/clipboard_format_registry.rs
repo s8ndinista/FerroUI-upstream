@@ -190,7 +190,7 @@ mod imp {
         }
     }
 
-    thread_local! {
+    ferroui_base::ferro_thread_local! {
         static FORMATS: RefCell<ClipboardFormatList<System>> = RefCell::new(ClipboardFormatList::new(System));
     }
 

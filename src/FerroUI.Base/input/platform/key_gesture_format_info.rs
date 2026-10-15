@@ -47,7 +47,7 @@ impl KeyGestureFormatInfo {
 
     /// The invariant format info, used as formatting fallback.
     pub fn invariant() -> Rc<KeyGestureFormatInfo> {
-        thread_local! {
+        crate::ferro_thread_local! {
             static INVARIANT: Rc<KeyGestureFormatInfo> = Rc::new(KeyGestureFormatInfo::default());
         }
         INVARIANT.with(Rc::clone)

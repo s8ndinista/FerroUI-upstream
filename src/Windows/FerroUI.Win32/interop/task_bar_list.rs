@@ -83,7 +83,7 @@ mod imp {
         }
     }
 
-    thread_local! {
+    ferroui_base::ferro_thread_local! {
         static TASK_BAR_LIST: OnceCell<Option<Instance>> = const { OnceCell::new() };
     }
 

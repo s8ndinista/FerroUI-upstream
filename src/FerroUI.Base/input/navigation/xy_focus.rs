@@ -20,7 +20,7 @@ struct XYFocusParams {
     score: f64,
 }
 
-thread_local! {
+crate::ferro_thread_local! {
     static INSTANCE: XYFocus = XYFocus::new();
 }
 

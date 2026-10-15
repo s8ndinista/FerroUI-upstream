@@ -6,7 +6,7 @@ use super::{
 use std::cell::RefCell;
 use std::rc::Rc;
 
-thread_local! {
+crate::ferro_thread_local! {
     static PROPERTY_ACCESSORS: RefCell<Vec<Rc<dyn IPropertyAccessorPlugin>>> = RefCell::new(vec![
         Rc::new(FerroPropertyAccessorPlugin),
         Rc::new(MethodAccessorPlugin),

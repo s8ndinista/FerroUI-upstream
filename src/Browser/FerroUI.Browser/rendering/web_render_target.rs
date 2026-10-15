@@ -117,7 +117,7 @@ impl BrowserRenderTarget {
 /// How a thread asks the registry of its script for a render target.
 type ScriptRenderTargets = fn(i32) -> Option<BrowserRenderTarget>;
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     /// The render targets of this thread, by their id in the registry of the
     /// script side. Each thread has a table of its own: a render target
     /// exists on the thread whose script created it (the page, or the worker
@@ -202,7 +202,7 @@ pub(crate) fn update_size(js: &JsObject, size: PixelSize) {
 mod tests {
     use super::*;
 
-    thread_local! {
+    ferroui_base::ferro_thread_local! {
         /// How often the thread of a test asked its script for a target.
         static ASKED: Cell<u32> = const { Cell::new(0) };
     }

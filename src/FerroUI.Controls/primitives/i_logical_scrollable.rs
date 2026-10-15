@@ -69,7 +69,7 @@ pub trait ILogicalScrollable: IScrollable {
 
 type LogicalScrollableCast = for<'a> fn(&'a FerroObject) -> Option<&'a dyn ILogicalScrollable>;
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static LOGICAL_SCROLLABLE_TYPES: RefCell<Vec<(&'static TypeInfo, LogicalScrollableCast)>> =
         const { RefCell::new(Vec::new()) };
 }

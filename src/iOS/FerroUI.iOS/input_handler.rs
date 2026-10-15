@@ -472,7 +472,7 @@ mod uikit {
     use std::collections::HashMap;
     use std::rc::Rc;
 
-    thread_local! {
+    ferroui_base::ferro_thread_local! {
         /// The identifier of the next touch, across the views of the
         /// application.
         static NEXT_TOUCH_POINT_ID: Cell<i64> = const { Cell::new(1) };

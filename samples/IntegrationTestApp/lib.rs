@@ -58,7 +58,7 @@ pub use topmost_window_test::TopmostWindowTest;
 
 use std::cell::Cell;
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static OVERLAY_POPUPS: Cell<bool> = const { Cell::new(false) };
 }
 

@@ -151,7 +151,7 @@ impl Random {
 pub(crate) mod test_seed {
     use std::cell::Cell;
 
-    thread_local! {
+    ferroui_base::ferro_thread_local! {
         static NEXT: Cell<Option<i32>> = const { Cell::new(None) };
     }
 

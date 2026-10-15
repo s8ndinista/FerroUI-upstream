@@ -289,7 +289,7 @@ impl PendingClose {
     }
 }
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static PENDING_CLOSES: RefCell<Vec<Rc<PendingClose>>> = const { RefCell::new(Vec::new()) };
 }
 

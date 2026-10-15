@@ -151,7 +151,7 @@ mod app {
         passed: Cell<u32>,
     }
 
-    thread_local! {
+    ferroui_base::ferro_thread_local! {
         static SMOKE: RefCell<Option<Rc<Smoke>>> = const { RefCell::new(None) };
         /// The timer of the checks, kept for the length of the run.
         static TIMER: RefCell<Option<Rc<dyn IDisposable>>> = const { RefCell::new(None) };

@@ -85,7 +85,7 @@ fn registry() -> MutexGuard<'static, SurfaceRegistry> {
 /// What a thread runs when the first frame of a canvas has been drawn.
 type FirstFrameHandler = Box<dyn FnOnce()>;
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     /// What the calling thread runs when the first frame of a canvas has
     /// been drawn, by the id of the render target of the canvas
     /// ([`BrowserSurfaceShared::on_first_frame`]). A handler holds objects

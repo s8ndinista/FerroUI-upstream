@@ -49,7 +49,7 @@ mod imp {
     const SID_I_FRAMEWORK_INPUT_PANE: Guid = Guid::from_u128(0x5752238B_24F0_495A_82F1_2FD593056796);
     const CLSCTX_INPROC_SERVER: u32 = 1;
 
-    thread_local! {
+    ferroui_base::ferro_thread_local! {
         static INPUT_PANE_SUPPORTED: bool = WinRTApiInformation::is_type_present("Windows.UI.ViewManagement.InputPane");
     }
 

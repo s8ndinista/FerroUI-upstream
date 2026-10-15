@@ -10,7 +10,7 @@ use std::marker::PhantomData;
 use std::ops::Deref;
 use std::rc::{Rc, Weak};
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static EMPTY: Rc<ItemsSourceView> = ItemsSourceView::new(ItemsSource::from_items([]));
     // This is a sentinel value and must be unique.
     static UNINITIALIZED_SOURCE: ItemsSource = ItemsSource::from_items([]);

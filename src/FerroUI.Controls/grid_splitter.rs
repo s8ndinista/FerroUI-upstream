@@ -110,7 +110,7 @@ struct ResizeData {
     scaling: f64,
 }
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static COLUMN_SPLITTER_CURSOR: RefCell<Option<Rc<Cursor>>> = const { RefCell::new(None) };
     static ROW_SPLITTER_CURSOR: RefCell<Option<Rc<Cursor>>> = const { RefCell::new(None) };
 }

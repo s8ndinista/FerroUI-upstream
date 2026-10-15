@@ -53,7 +53,7 @@ pub struct PropertyAccessor {
     pub public: bool,
 }
 
-thread_local! {
+crate::ferro_thread_local! {
     /// The accessors each type declares, by the address of its runtime type,
     /// in declaration order, with the definition each returns.
     static ACCESSORS: RefCell<HashMap<usize, Vec<(PropertyAccessor, &'static FerroProperty)>>> =

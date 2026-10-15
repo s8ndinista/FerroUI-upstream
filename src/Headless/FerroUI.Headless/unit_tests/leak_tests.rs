@@ -19,7 +19,7 @@ fn test_data() -> impl Iterator<Item = String> {
     (0..50).map(|i| i.to_string())
 }
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static PREVIOUS_FONT_MANAGER: RefCell<Option<Weak<FontManager>>> = const { RefCell::new(None) };
 }
 

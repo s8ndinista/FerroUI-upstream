@@ -207,7 +207,7 @@ impl<V> Drop for PromiseFuture<V> {
     }
 }
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static PAGE_COMPLETIONS: Rc<Completions<JsObject>> = Completions::new();
 }
 

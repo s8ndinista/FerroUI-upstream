@@ -81,7 +81,7 @@ impl FontFamily {
 
     /// Represents the default font family.
     pub fn default_family() -> FontFamily {
-        thread_local! {
+        crate::ferro_thread_local! {
             static DEFAULT: FontFamily = FontFamily::new(FontFamily::DEFAULT_FONT_FAMILY_NAME);
         }
         DEFAULT.with(Clone::clone)

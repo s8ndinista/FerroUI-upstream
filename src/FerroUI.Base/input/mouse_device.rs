@@ -12,7 +12,7 @@ use std::any::Any;
 use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 
-thread_local! {
+crate::ferro_thread_local! {
     static PRIMARY: RefCell<Option<Rc<MouseDevice>>> = const { RefCell::new(None) };
 }
 

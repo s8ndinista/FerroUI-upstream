@@ -67,7 +67,7 @@ pub(crate) fn value_text(value: &Option<BoxedValue>) -> Option<String> {
 pub(crate) struct NavigationDemoHelper;
 
 impl NavigationDemoHelper {
-    thread_local! {
+    ferroui_base::ferro_thread_local! {
         /// Pastel background brushes cycled by page index.
         static PAGE_BRUSHES: Vec<Rc<dyn IBrush>> = PAGE_COLORS
             .iter()

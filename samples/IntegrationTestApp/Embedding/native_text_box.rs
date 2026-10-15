@@ -16,7 +16,7 @@ use ferroui_controls::{
 use std::cell::RefCell;
 use std::rc::Rc;
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static FACTORY: RefCell<Option<Rc<dyn INativeTextBoxFactory>>> = const { RefCell::new(None) };
 }
 

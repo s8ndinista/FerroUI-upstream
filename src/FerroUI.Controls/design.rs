@@ -39,7 +39,7 @@ fn style_key(target: &Rc<dyn IStyle>) -> usize {
     }
 }
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static IS_DESIGN_MODE: Cell<bool> = const { Cell::new(false) };
     static PREVIEW_WITH: RefCell<HashMap<usize, (Target, Option<PreviewTemplate>)>> = RefCell::new(HashMap::new());
     static TEMPLATE_DATA_CONTEXT: RefCell<HashMap<usize, (Rc<dyn IDataTemplate>, Option<BoxedValue>)>> =

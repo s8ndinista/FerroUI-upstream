@@ -14,7 +14,7 @@ use std::cell::{Cell, RefCell};
 use std::collections::HashMap;
 use std::rc::{Rc, Weak};
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     /// The windows of this mode by their identifier on the server: how the
     /// keyboard device's change of focus finds the mode of the top-level
     /// the focus is in (the reference casts the platform implementation

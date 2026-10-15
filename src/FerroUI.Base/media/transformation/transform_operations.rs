@@ -29,7 +29,7 @@ impl PartialEq for TransformOperations {
 impl TransformOperations {
     /// The shared empty operation list.
     pub fn identity() -> Rc<TransformOperations> {
-        thread_local! {
+        crate::ferro_thread_local! {
             static IDENTITY: Rc<TransformOperations> = Rc::new(TransformOperations::new(Vec::new()));
         }
         IDENTITY.with(Rc::clone)

@@ -69,7 +69,7 @@ mod recording {
     // The blocks that are alive, by address.
     static RECORDS: Mutex<BTreeMap<usize, Record>> = Mutex::new(BTreeMap::new());
 
-    thread_local! {
+    ferroui_base::ferro_thread_local! {
         // The thread is inside the recorder: what the recorder itself
         // allocates and frees is not recorded.
         static INSIDE: Cell<bool> = const { Cell::new(false) };

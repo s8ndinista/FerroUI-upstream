@@ -51,7 +51,7 @@ struct Pending {
     subscription: Option<Rc<dyn IDisposable>>,
 }
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     /// The pending entries per element. Elements are held weakly.
     static ENTRIES: RefCell<Vec<Pending>> = const { RefCell::new(Vec::new()) };
 }

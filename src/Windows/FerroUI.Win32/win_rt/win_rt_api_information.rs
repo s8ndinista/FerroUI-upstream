@@ -5,7 +5,7 @@ use ferroui_base::logging::{LogArea, LogEventLevel, Logger};
 use ferroui_microcom::ComPtr;
 use std::cell::OnceCell;
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     // The reference keeps one object for the process. An interface pointer
     // of the port belongs to the thread that got it, so every thread that
     // asks has its own.

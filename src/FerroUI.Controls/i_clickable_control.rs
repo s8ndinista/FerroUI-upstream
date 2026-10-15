@@ -15,7 +15,7 @@ use std::rc::Rc;
 
 type Adapter = Rc<dyn Fn(&FerroObject) -> Option<Rc<dyn IClickableControl>>>;
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static CLICKABLE_TYPES: RefCell<Vec<(&'static TypeInfo, Adapter)>> = const { RefCell::new(Vec::new()) };
 }
 

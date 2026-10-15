@@ -91,7 +91,7 @@ mod counting {
     use std::cell::Cell;
     use std::sync::atomic::{AtomicI64, Ordering};
 
-    thread_local! {
+    ferroui_base::ferro_thread_local! {
         // Constants without destructors: reading them allocates nothing, so
         // the allocator may use them.
         static ALLOCATIONS: Cell<u64> = const { Cell::new(0) };

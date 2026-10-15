@@ -47,7 +47,7 @@ impl std::fmt::Debug for Win32PlatformGraphics {
     }
 }
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static KIND: Cell<Option<Win32PlatformGraphicsKind>> = const { Cell::new(None) };
 }
 

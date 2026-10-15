@@ -26,7 +26,7 @@ pub trait IScrollAnchorProvider {
 
 type ProviderCast = for<'a> fn(&'a FerroObject) -> Option<&'a dyn IScrollAnchorProvider>;
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static PROVIDER_TYPES: RefCell<Vec<(&'static TypeInfo, ProviderCast)>> = const { RefCell::new(Vec::new()) };
 }
 

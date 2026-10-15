@@ -54,7 +54,7 @@ fn property_map() -> [(&'static AutomationProperty, FrnAutomationProperty); 10] 
     ]
 }
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     /// The wrapper of each wrapped peer, by the address of the peer.
     ///
     /// The reference keeps the wrapper for as long as the peer lives (a

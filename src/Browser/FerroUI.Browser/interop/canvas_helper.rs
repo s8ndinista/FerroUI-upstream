@@ -66,7 +66,7 @@ pub const RENDER_TARGET_KIND_SOFTWARE: i32 = 1;
 /// The kind of a render target a worker reports as rendered with WebGL.
 pub const RENDER_TARGET_KIND_WEB_GL: i32 = 2;
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     // Per thread: the report arrives on the thread whose worker created the
     // render target, and that thread is the one that wants to hear of it.
     static RENDER_TARGET_REGISTERED: HandlerList<dyn Fn(i32, i32)> = HandlerList::new();
@@ -99,7 +99,7 @@ pub fn on_render_target_registered(target_id: i32, kind: i32) {
     }
 }
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     // Per thread: the size of a canvas is observed on the thread of the page.
     static SIZE_CHANGED: HandlerList<dyn Fn(i32, f64, f64, f64)> = HandlerList::new();
 }

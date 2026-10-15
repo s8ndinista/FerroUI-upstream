@@ -452,7 +452,7 @@ pub fn clr_property_info(
     property_type: ValueType,
     cached_boxed_boolean: bool,
 ) -> Rc<dyn IPropertyInfo> {
-    thread_local! {
+    ferroui_base::ferro_thread_local! {
         static INFOS: RefCell<HashMap<(usize, &'static str, bool), Rc<dyn IPropertyInfo>>> = RefCell::new(HashMap::new());
     }
     let key = (markup as *const MarkupType as usize, name, is_static);
@@ -979,7 +979,7 @@ pub fn complete_root_name_scope(
 /// The run-time loader converts the arguments of untyped members with it;
 /// generated code reaches it through [`to_object`].
 pub fn untyped_object_form(value: &BoxedValue) -> Option<BoxedValue> {
-    thread_local! {
+    ferroui_base::ferro_thread_local! {
         static CONTROL: std::cell::OnceCell<Option<(&'static TypeInfo, ValueType)>> =
             const { std::cell::OnceCell::new() };
     }

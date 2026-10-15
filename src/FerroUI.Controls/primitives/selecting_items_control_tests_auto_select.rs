@@ -87,7 +87,7 @@ ferro_impl_classes!(
 
 impl FerroObjectImpl for TestSelector {
     fn constructed(this: &Self) {
-        thread_local! {
+        ferroui_base::ferro_thread_local! {
             static DONE: Cell<bool> = const { Cell::new(false) };
         }
         override_selection_mode::<TestSelector>(&DONE);
@@ -175,7 +175,7 @@ ferro_impl_classes!(
 
 impl FerroObjectImpl for AlwaysSelectedTestSelectorHidingFirstContainers {
     fn constructed(this: &Self) {
-        thread_local! {
+        ferroui_base::ferro_thread_local! {
             static DONE: Cell<bool> = const { Cell::new(false) };
         }
         override_selection_mode::<AlwaysSelectedTestSelectorHidingFirstContainers>(&DONE);
@@ -226,7 +226,7 @@ ferro_impl_classes!(
 
 impl FerroObjectImpl for AlwaysSelectedTestSelectorDisablingFirstContainers {
     fn constructed(this: &Self) {
-        thread_local! {
+        ferroui_base::ferro_thread_local! {
             static DONE: Cell<bool> = const { Cell::new(false) };
         }
         override_selection_mode::<AlwaysSelectedTestSelectorDisablingFirstContainers>(&DONE);

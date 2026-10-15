@@ -14,7 +14,7 @@ use std::sync::{Arc, Mutex, PoisonError};
 use std::thread::{self, ThreadId};
 use std::time::Instant;
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     /// The dispatcher implementation that belongs to this thread; what
     /// callbacks hand their panics to.
     static CURRENT: RefCell<Weak<DispatcherImpl>> = const { RefCell::new(Weak::new()) };

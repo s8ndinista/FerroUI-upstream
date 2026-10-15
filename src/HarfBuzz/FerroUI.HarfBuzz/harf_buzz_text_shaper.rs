@@ -10,7 +10,7 @@ use ferroui_base::Vector;
 use std::cell::RefCell;
 use std::rc::Rc;
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     /// The shaping buffer, reused between calls.
     static BUFFER: RefCell<hb::Buffer> = RefCell::new(hb::Buffer::new());
 }

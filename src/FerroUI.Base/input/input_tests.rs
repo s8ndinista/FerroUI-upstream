@@ -3627,7 +3627,7 @@ fn platform_hotkey_configuration_defaults() {
 /// Makes focusable test controls answer the access key pressed query the
 /// way a button does: they are the target of their own access key.
 fn access_key_targets() {
-    thread_local! {
+    crate::ferro_thread_local! {
         static DONE: Cell<bool> = const { Cell::new(false) };
     }
     if DONE.replace(true) {

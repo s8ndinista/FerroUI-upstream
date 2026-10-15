@@ -25,7 +25,7 @@ struct EventSubscriptions {
     subscriptions: Vec<EventSubscription>,
 }
 
-thread_local! {
+crate::ferro_thread_local! {
     static TOTAL_HANDLERS_COUNT: Cell<usize> = const { Cell::new(0) };
     static NEXT_TOKEN: Cell<u64> = const { Cell::new(1) };
 }

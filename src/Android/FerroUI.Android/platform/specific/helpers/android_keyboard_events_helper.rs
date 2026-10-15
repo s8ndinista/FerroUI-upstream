@@ -336,7 +336,7 @@ mod tests {
     }
 
     fn test_device() -> Option<Rc<dyn IKeyboardDevice>> {
-        thread_local! {
+        ferroui_base::ferro_thread_local! {
             static DEVICE: Rc<KeyboardDevice> = KeyboardDevice::new();
         }
         Some(DEVICE.with(|device| device.clone()))

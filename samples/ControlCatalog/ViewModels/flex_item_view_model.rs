@@ -10,7 +10,7 @@ use mini_mvvm::ViewModelBase;
 use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     /// `Random.Shared`.
     static SHARED_RANDOM: RefCell<Random> = RefCell::new(Random::new());
 }

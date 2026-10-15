@@ -283,7 +283,7 @@ impl<T: PartialEq + 'static> ModelTypeBuilder<T> {
     }
 }
 
-thread_local! {
+crate::ferro_thread_local! {
     static MODELS: RefCell<HashMap<TypeId, Rc<ModelType>>> = RefCell::new(HashMap::new());
 }
 

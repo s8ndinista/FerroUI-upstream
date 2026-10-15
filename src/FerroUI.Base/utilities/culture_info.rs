@@ -60,7 +60,7 @@ bitflags! {
     }
 }
 
-thread_local! {
+crate::ferro_thread_local! {
     static CURRENT_CULTURE: RefCell<CultureInfo> = RefCell::new(CultureInfo::invariant_culture());
     static CURRENT_UI_CULTURE: RefCell<CultureInfo> = RefCell::new(CultureInfo::invariant_culture());
 }
@@ -83,7 +83,7 @@ pub struct CultureInfo {
 impl CultureInfo {
     /// The culture-independent (invariant) culture; its name is empty.
     pub fn invariant_culture() -> CultureInfo {
-        thread_local! {
+        crate::ferro_thread_local! {
             static INVARIANT: CultureInfo = CultureInfo { name: Rc::from(""), lcid: INVARIANT_LCID, date_time_format: None, number_format: None };
         }
         INVARIANT.with(Clone::clone)

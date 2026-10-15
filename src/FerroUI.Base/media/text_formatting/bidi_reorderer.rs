@@ -7,7 +7,7 @@ use crate::media::text_formatting::{ShapedTextRun, TextRun};
 use crate::media::FlowDirection;
 use crate::utilities::ArrayBuilder;
 
-thread_local! {
+crate::ferro_thread_local! {
     static INSTANCE: RefCell<BidiReorderer> = const { RefCell::new(BidiReorderer::new()) };
 }
 

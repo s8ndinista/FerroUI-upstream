@@ -94,7 +94,7 @@ impl AsRef<PlatformScreen> for BrowserScreen {
     }
 }
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static INSTANCE: RefCell<Option<Rc<BrowserScreens>>> = const { RefCell::new(None) };
 }
 

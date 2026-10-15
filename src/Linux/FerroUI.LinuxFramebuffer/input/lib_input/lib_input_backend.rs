@@ -133,7 +133,7 @@ mod imp {
         touch: Rc<TouchDevice>,
     }
 
-    thread_local! {
+    ferroui_base::ferro_thread_local! {
         /// The backends of the UI thread, by the number their input
         /// threads post with.
         static BACKENDS: RefCell<HashMap<u64, Weak<State>>> = RefCell::new(HashMap::new());

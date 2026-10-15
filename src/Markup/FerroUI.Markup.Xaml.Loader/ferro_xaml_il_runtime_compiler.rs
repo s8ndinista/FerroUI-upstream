@@ -32,7 +32,7 @@ use crate::compiler_extensions::{
 use crate::runtime::framework::{self, DocumentBody, RuntimeDocumentTypeBuilderProvider};
 use crate::runtime::type_system::RuntimeTypeSystem;
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static TYPE_SYSTEM: RefCell<Option<Rc<RuntimeTypeSystem>>> = const { RefCell::new(None) };
 }
 
@@ -62,7 +62,7 @@ const TIMINGS_VARIABLE: &str = "FERROUI_XAML_TIMINGS";
 /// The number of groups a thread keeps; the cache is emptied when it is full.
 const MAX_CACHED_GROUPS: usize = 1024;
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     /// The transformed groups of this thread by [`group_key`].
     static GROUPS: RefCell<std::collections::HashMap<String, Rc<TransformedGroup>>> =
         RefCell::new(std::collections::HashMap::new());

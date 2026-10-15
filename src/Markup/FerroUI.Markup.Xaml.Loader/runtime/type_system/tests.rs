@@ -646,7 +646,7 @@ mod projection {
         pub name: Option<String>,
     }
 
-    thread_local! {
+    ferroui_base::ferro_thread_local! {
         static CURRENT: RefCell<String> = RefCell::new("initial".to_string());
     }
 

@@ -427,7 +427,7 @@ ferro_markup_enum!(IntrinsicsTestsEnum { Foo }, { namespace: "RtXamlParserTests"
 
 // --- InitializationTests.cs ------------------------------------------------
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     pub(crate) static INIT_EVENTS: RefCell<Vec<String>> = const { RefCell::new(Vec::new()) };
     static INIT_NEXT_ID: Cell<i32> = const { Cell::new(0) };
 }
@@ -1502,7 +1502,7 @@ pub(crate) fn register() {
         MarkupType::register_all(types);
     });
 
-    thread_local! {
+    ferroui_base::ferro_thread_local! {
         static REGISTERED: Cell<bool> = const { Cell::new(false) };
     }
     if REGISTERED.replace(true) {

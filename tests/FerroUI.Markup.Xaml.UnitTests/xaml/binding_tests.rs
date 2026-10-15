@@ -112,7 +112,7 @@ crate::test_identity_eq!(CultureAppender);
 impl CultureAppender {
     /// `CultureAppender.Instance`.
     pub fn instance() -> Rc<dyn IValueConverter> {
-        thread_local! {
+        ferroui_base::ferro_thread_local! {
             static INSTANCE: Rc<CultureAppender> = Rc::new(CultureAppender);
         }
         INSTANCE.with(|instance| -> Rc<dyn IValueConverter> { instance.clone() })

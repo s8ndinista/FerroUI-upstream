@@ -12,7 +12,7 @@ use std::rc::Rc;
 /// Gives the offset of local time from UTC at a UTC instant.
 pub type LocalUtcOffsetProvider = Rc<dyn Fn(DateTime) -> TimeSpan>;
 
-thread_local! {
+crate::ferro_thread_local! {
     // TIMEZONE-SEAM: platform crates install the offset of the system time zone here
     // (`TimeZoneInfo::set_local_utc_offset_provider`); the default is UTC.
     static LOCAL_UTC_OFFSET_PROVIDER: RefCell<Option<LocalUtcOffsetProvider>> = const { RefCell::new(None) };

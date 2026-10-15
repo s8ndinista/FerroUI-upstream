@@ -29,7 +29,7 @@ use std::collections::HashMap;
 use std::ffi::c_void;
 use std::rc::{Rc, Weak};
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     /// The data objects of this thread that the system (or the backend)
     /// still holds, by the address of the COM object.
     static LIVE: RefCell<HashMap<usize, Weak<DataTransferToOleDataObjectWrapper>>> = RefCell::new(HashMap::new());

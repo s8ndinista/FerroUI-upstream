@@ -27,7 +27,7 @@ impl Clock {
     }
 }
 
-thread_local! {
+crate::ferro_thread_local! {
     /// The dispatcher timers of the running instances of this thread. They
     /// are `Rc`-based, so they stay on the thread they were started on; the
     /// thread-safe subscription only carries the key.

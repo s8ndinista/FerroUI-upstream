@@ -50,7 +50,7 @@ impl NewApplication for TestApplication {
 
 impl ApplicationImpl for TestApplication {}
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     /// The isolation of the test assembly whose session runs on this thread: the compilation
     /// symbol of the original (`PERTEST`).
     static ISOLATION_LEVEL: Cell<FerroTestIsolationLevel> = const { Cell::new(FerroTestIsolationLevel::PerTest) };
@@ -102,7 +102,7 @@ pub(crate) static PER_ASSEMBLY: FerroTestAssembly = FerroTestAssembly {
     test_isolation: Some(FerroTestIsolationAttribute::new(FerroTestIsolationLevel::PerAssembly)),
 };
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     /// The number of the test that the session of this thread runs, or ran last.
     static CURRENT_TEST: Cell<u64> = const { Cell::new(0) };
 }

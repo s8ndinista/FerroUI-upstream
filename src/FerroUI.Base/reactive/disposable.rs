@@ -44,7 +44,7 @@ impl<F: FnOnce()> IDisposable for AnonymousDisposable<F> {
 impl Disposable {
     /// A disposable that does nothing.
     pub fn empty() -> Rc<dyn IDisposable> {
-        thread_local! {
+        crate::ferro_thread_local! {
             static EMPTY: Rc<dyn IDisposable> = Rc::new(EmptyDisposable);
         }
         EMPTY.with(Rc::clone)

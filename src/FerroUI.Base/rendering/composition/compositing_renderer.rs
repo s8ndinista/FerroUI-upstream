@@ -20,7 +20,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 
 static NEXT_RENDERER_KEY: AtomicU64 = AtomicU64::new(1);
 
-thread_local! {
+crate::ferro_thread_local! {
     /// The renderers of this thread by key: lets the `Send` continuation of
     /// a batch find its renderer once it is back on the thread.
     static RENDERERS: RefCell<HashMap<u64, Weak<CompositingRenderer>>> = RefCell::new(HashMap::new());

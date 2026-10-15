@@ -1419,7 +1419,7 @@ fn base_types_are_walked_through_their_metadata() {
 
 // --- array attribute arguments, constructor parameters, static properties ------
 
-thread_local! {
+crate::ferro_thread_local! {
     static META_STATIC_LEVEL: std::cell::Cell<i32> = const { std::cell::Cell::new(3) };
 }
 

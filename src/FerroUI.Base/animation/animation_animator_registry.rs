@@ -65,7 +65,7 @@ impl Registry {
     }
 }
 
-thread_local! {
+crate::ferro_thread_local! {
     static REGISTRY: RefCell<Registry> = RefCell::new(Registry::new());
 }
 

@@ -6,7 +6,7 @@ use std::rc::Rc;
 
 const CLASS_PROPERTY_PREFIX: &str = "__FerroReserved::Classes::";
 
-thread_local! {
+crate::ferro_thread_local! {
     static REGISTERED_PROPERTIES: RefCell<HashMap<String, &'static FerroProperty>> = RefCell::new(HashMap::new());
 }
 

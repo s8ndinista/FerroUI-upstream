@@ -533,7 +533,7 @@ mod imp {
     /// when supported, falling back to the integer pixel location on platforms that do not
     /// implement `GetPointerDeviceRects` (e.g. Wine/Proton).
     fn get_himetric_location(info: &POINTER_INFO) -> Point {
-        thread_local! {
+        ferroui_base::ferro_thread_local! {
             static IS_GET_POINTER_DEVICE_RECTS_AVAILABLE: bool = has_get_pointer_device_rects();
         }
 

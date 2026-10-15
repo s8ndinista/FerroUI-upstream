@@ -15,7 +15,7 @@ use std::any::Any;
 use std::cell::RefCell;
 use std::rc::Rc;
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static LOG: RefCell<Vec<&'static str>> = const { RefCell::new(Vec::new()) };
 }
 

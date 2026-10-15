@@ -25,7 +25,7 @@ use std::cell::{Cell, RefCell};
 use std::collections::HashMap;
 use std::rc::Rc;
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static ACTIVITIES: RefCell<HashMap<i64, Rc<FerroActivity>>> = RefCell::new(HashMap::new());
 }
 

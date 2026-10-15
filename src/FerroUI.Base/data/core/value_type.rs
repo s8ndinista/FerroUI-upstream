@@ -232,7 +232,7 @@ impl Registry {
     }
 }
 
-thread_local! {
+crate::ferro_thread_local! {
     static REGISTRY: RefCell<Option<Registry>> = const { RefCell::new(None) };
     /// Registrations made before the table was first used on the thread.
     static DEFERRED: RefCell<Vec<fn()>> = const { RefCell::new(Vec::new()) };
@@ -243,7 +243,7 @@ static GLOBAL: std::sync::Mutex<Vec<fn()>> = std::sync::Mutex::new(Vec::new());
 /// The length of [`GLOBAL`], readable without the lock.
 static GLOBAL_LEN: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
 
-thread_local! {
+crate::ferro_thread_local! {
     /// How many of the [`GLOBAL`] registrations ran on the thread.
     static GLOBAL_APPLIED: std::cell::Cell<usize> = const { std::cell::Cell::new(0) };
 }

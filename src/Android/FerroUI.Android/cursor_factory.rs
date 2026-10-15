@@ -12,7 +12,7 @@ pub struct CursorFactory;
 
 struct CursorImpl;
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static ZERO_CURSOR: Rc<CursorImpl> = Rc::new(CursorImpl);
 }
 

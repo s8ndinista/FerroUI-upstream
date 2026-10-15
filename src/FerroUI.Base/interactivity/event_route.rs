@@ -21,7 +21,7 @@ const POOL_SIZE: usize = 8;
 /// The initial capacity of a route list.
 const INITIAL_CAPACITY: usize = 16;
 
-thread_local! {
+crate::ferro_thread_local! {
     static POOL: RefCell<Vec<Vec<RouteItem>>> = const { RefCell::new(Vec::new()) };
 }
 

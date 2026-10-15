@@ -17,7 +17,7 @@ use std::sync::OnceLock;
 static APPLICATION: OnceLock<JavaObject> = OnceLock::new();
 static BUILD: OnceLock<fn() -> AppBuilder> = OnceLock::new();
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static LIFETIME: RefCell<Option<Rc<ApplicationLifetime>>> = const { RefCell::new(None) };
 }
 

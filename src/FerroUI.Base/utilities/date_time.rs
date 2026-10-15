@@ -28,7 +28,7 @@ use std::str::FromStr;
 /// Gives the current UTC time.
 pub type UtcNowProvider = Rc<dyn Fn() -> DateTime>;
 
-thread_local! {
+crate::ferro_thread_local! {
     // CLOCK-SEAM: tests pin "now" here. The wall clock itself is `IRuntimePlatform::get_utc_now`.
     static UTC_NOW_PROVIDER: RefCell<Option<UtcNowProvider>> = const { RefCell::new(None) };
 }

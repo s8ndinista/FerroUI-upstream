@@ -9,7 +9,7 @@ use ferroui_microcom::ComPtr;
 use std::cell::RefCell;
 use std::rc::Rc;
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static CURRENT: RefCell<Option<Rc<OleContext>>> = const { RefCell::new(None) };
 }
 

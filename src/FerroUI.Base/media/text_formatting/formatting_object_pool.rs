@@ -23,7 +23,7 @@ pub type RentedList<T> = Vec<T>;
 impl FormattingObjectPool {
     /// The pool of the current thread.
     pub fn instance() -> &'static FormattingObjectPool {
-        thread_local! {
+        crate::ferro_thread_local! {
             static INSTANCE: &'static FormattingObjectPool = Box::leak(Box::new(FormattingObjectPool {
                 text_run_lists: ListPool::new(),
                 unshaped_text_run_lists: ListPool::new(),

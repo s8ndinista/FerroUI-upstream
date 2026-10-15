@@ -39,7 +39,7 @@ use std::io::{Read, Write};
 use std::rc::Rc;
 use wasm_bindgen::prelude::*;
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static MAIN_VIEW: RefCell<Option<Ref<Control>>> = const { RefCell::new(None) };
     static RESULTS: RefCell<HashMap<String, String>> = RefCell::new(HashMap::new());
 }

@@ -35,7 +35,7 @@ mod imp {
     use std::rc::{Rc, Weak};
     use std::sync::Arc;
 
-    thread_local! {
+    ferroui_base::ferro_thread_local! {
         // The icons of the thread that are alive. The reference casts the
         // icon a window is given to this class; the contract of an icon has
         // no way to ask for its type, so a window finds the icon it was

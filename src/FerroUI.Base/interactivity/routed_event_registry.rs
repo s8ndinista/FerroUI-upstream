@@ -24,7 +24,7 @@ impl RoutedEventRegistry {
 
     /// The routed event registry instance of the current thread.
     pub fn instance() -> &'static RoutedEventRegistry {
-        thread_local! {
+        crate::ferro_thread_local! {
             static INSTANCE: &'static RoutedEventRegistry = Box::leak(Box::new(RoutedEventRegistry::new()));
         }
         INSTANCE.with(|instance| *instance)

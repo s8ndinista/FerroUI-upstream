@@ -140,7 +140,7 @@ mod tests {
     use std::cell::RefCell;
     use std::ffi::{c_char, c_void};
 
-    thread_local! {
+    ferroui_base::ferro_thread_local! {
         static CALLS: RefCell<Vec<String>> = const { RefCell::new(Vec::new()) };
     }
 

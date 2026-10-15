@@ -264,7 +264,7 @@ ferro_markup_type!(class MainWindowViewModel {
 
 // --- the background thread ------------------------------------------------------------------
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     /// The view models of this thread whose `CurrentTime` a background thread sets, by the
     /// number of each.
     static CURRENT_TIME_TARGETS: RefCell<HashMap<u64, Weak<MainWindowViewModel>>> = RefCell::new(HashMap::new());
