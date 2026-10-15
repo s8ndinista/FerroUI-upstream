@@ -1,7 +1,7 @@
 use crate::sk_cache_base::SkCacheBase;
 use skia_safe::TextBlobBuilder;
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static SHARED: SkCacheBase<Builder> = const { SkCacheBase::new() };
 }
 

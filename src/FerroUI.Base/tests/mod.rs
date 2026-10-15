@@ -109,7 +109,7 @@ pub(crate) use static_type;
 /// per-thread property definitions.
 macro_rules! once_per_thread {
     ($body:block) => {{
-        ::std::thread_local! {
+        $crate::ferro_thread_local! {
             static DONE: ::std::cell::Cell<bool> = const { ::std::cell::Cell::new(false) };
         }
         if !DONE.replace(true) $body

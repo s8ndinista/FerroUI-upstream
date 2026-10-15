@@ -56,7 +56,7 @@ use std::collections::HashMap;
 use std::rc::{Rc, Weak};
 use std::sync::{Arc, Mutex, PoisonError};
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static TOP_LEVELS: RefCell<HashMap<i64, Weak<TopLevelImpl>>> = RefCell::new(HashMap::new());
     static INSETS_MANAGERS: RefCell<HashMap<i64, Weak<AndroidInsetsManager>>> = RefCell::new(HashMap::new());
 }

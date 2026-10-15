@@ -19,7 +19,7 @@ impl ObjectConverters {
     /// A value converter that returns true if the input object is a null
     /// reference.
     pub fn is_null() -> Rc<dyn IValueConverter> {
-        thread_local! {
+        crate::ferro_thread_local! {
             static IS_NULL: Rc<dyn IValueConverter> =
                 Rc::new(FuncValueConverter::<Object, bool>::new(|x| x.is_none()));
         }
@@ -28,7 +28,7 @@ impl ObjectConverters {
 
     /// A value converter that returns true if the input object is not null.
     pub fn is_not_null() -> Rc<dyn IValueConverter> {
-        thread_local! {
+        crate::ferro_thread_local! {
             static IS_NOT_NULL: Rc<dyn IValueConverter> =
                 Rc::new(FuncValueConverter::<Object, bool>::new(|x| x.is_some()));
         }
@@ -38,7 +38,7 @@ impl ObjectConverters {
     /// A value converter that returns true if the input object is equal to a
     /// parameter object.
     pub fn equal() -> Rc<dyn IValueConverter> {
-        thread_local! {
+        crate::ferro_thread_local! {
             static EQUAL: Rc<dyn IValueConverter> =
                 Rc::new(FuncValueConverterWithParameter::<Object, Object, bool>::new(|a, b| match &a {
                     Some(a) => equals(a, &b),
@@ -51,7 +51,7 @@ impl ObjectConverters {
     /// A value converter that returns true if the input object is not equal
     /// to a parameter object.
     pub fn not_equal() -> Rc<dyn IValueConverter> {
-        thread_local! {
+        crate::ferro_thread_local! {
             static NOT_EQUAL: Rc<dyn IValueConverter> =
                 Rc::new(FuncValueConverterWithParameter::<Object, Object, bool>::new(|a, b| match &a {
                     Some(a) => !equals(a, &b),
@@ -63,7 +63,7 @@ impl ObjectConverters {
 
     /// A multi-value converter that returns true if all inputs are null.
     pub fn are_all_null() -> Rc<dyn IMultiValueConverter> {
-        thread_local! {
+        crate::ferro_thread_local! {
             static ARE_ALL_NULL: Rc<dyn IMultiValueConverter> =
                 Rc::new(FuncMultiValueConverter::<Object, bool>::new(|x| x.iter().all(|item| item.is_none())));
         }
@@ -73,7 +73,7 @@ impl ObjectConverters {
     /// A multi-value converter that returns true if at least one input is
     /// null.
     pub fn are_any_null() -> Rc<dyn IMultiValueConverter> {
-        thread_local! {
+        crate::ferro_thread_local! {
             static ARE_ANY_NULL: Rc<dyn IMultiValueConverter> =
                 Rc::new(FuncMultiValueConverter::<Object, bool>::new(|x| x.iter().any(|item| item.is_none())));
         }
@@ -83,7 +83,7 @@ impl ObjectConverters {
     /// A multi-value converter that returns true if all inputs are equal to
     /// each other. Null values are not considered equal to anything.
     pub fn are_all_equal() -> Rc<dyn IMultiValueConverter> {
-        thread_local! {
+        crate::ferro_thread_local! {
             static ARE_ALL_EQUAL: Rc<dyn IMultiValueConverter> =
                 Rc::new(FuncMultiValueConverter::<Object, bool>::new(ObjectConverters::equality_function));
         }

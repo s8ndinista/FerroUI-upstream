@@ -873,7 +873,7 @@ impl DrawingContextImpl {
     /// The noise texture of acrylic materials as a repeating, nearly
     /// transparent shader.
     fn acrylic_noise_shader(&self) -> Option<sk::Shader> {
-        thread_local! {
+        ferroui_base::ferro_thread_local! {
             static ACRYLIC_NOISE: std::cell::OnceCell<Option<(sk::Image, sk::Shader)>> =
                 const { std::cell::OnceCell::new() };
         }

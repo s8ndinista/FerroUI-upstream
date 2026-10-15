@@ -268,7 +268,7 @@ mod imp {
     use std::sync::atomic::{AtomicIsize, AtomicU64, Ordering};
     use std::sync::Arc;
 
-    thread_local! {
+    ferroui_base::ferro_thread_local! {
         /// The windows of this thread that exist: what roots a window while
         /// its handle is alive.
         static INSTANCES: RefCell<Vec<Rc<WindowImpl>>> = const { RefCell::new(Vec::new()) };
@@ -488,7 +488,7 @@ mod imp {
     }
 
     fn default_cursor() -> isize {
-        thread_local! {
+        ferroui_base::ferro_thread_local! {
             static DEFAULT_CURSOR: isize = load_cursor(0, Cursor::IDC_ARROW);
         }
         DEFAULT_CURSOR.with(|cursor| *cursor)

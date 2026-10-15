@@ -97,7 +97,7 @@ mod app {
     const NESTED_FILL: (u8, u8, u8) = (0x22, 0xaa, 0x55);
     const NESTED_SIZE: (f64, f64) = (80.0, 40.0);
 
-    thread_local! {
+    ferroui_base::ferro_thread_local! {
         /// The marker of the main window: what the popup of the smoke mode is placed at.
         static MARKER: RefCell<Option<Ref<Border>>> = const { RefCell::new(None) };
         /// The drag and drop of the smoke mode: what a press on the marker drags, what the

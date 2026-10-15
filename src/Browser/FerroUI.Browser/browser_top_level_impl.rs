@@ -31,7 +31,7 @@ use std::collections::HashMap;
 use std::rc::{Rc, Weak};
 use std::sync::{Arc, Mutex, PoisonError};
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static LAST_TOP_LEVEL_ID: Cell<i32> = const { Cell::new(0) };
     static TOP_LEVELS: RefCell<HashMap<i32, Weak<BrowserTopLevelImpl>>> = RefCell::new(HashMap::new());
     static GLOBAL_EVENTS_INITIALIZED: Cell<bool> = const { Cell::new(false) };

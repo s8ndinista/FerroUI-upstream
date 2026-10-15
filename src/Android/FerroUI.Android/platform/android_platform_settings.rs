@@ -65,7 +65,7 @@ pub(crate) trait ISettingsContext {
     fn register_configuration_changed_receiver(&self);
 }
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static INSTANCE: RefCell<Option<Rc<AndroidPlatformSettings>>> = const { RefCell::new(None) };
 }
 

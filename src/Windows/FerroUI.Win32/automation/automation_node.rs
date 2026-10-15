@@ -118,7 +118,7 @@ struct NodeTable {
     sweep_at: usize,
 }
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static S_NODES: RefCell<NodeTable> = RefCell::new(NodeTable::default());
 }
 
@@ -150,7 +150,7 @@ impl AutomationNode {
     /// The map of the reference from the properties of the peers to the
     /// property identifiers of the system (`s_propertyMap`).
     fn property_map(property: &'static AutomationProperty) -> Option<UiaPropertyId> {
-        thread_local! {
+        ferroui_base::ferro_thread_local! {
             static MAP: Vec<(&'static AutomationProperty, UiaPropertyId)> = vec![
                 (AutomationElementIdentifiers::automation_id_property(), UiaPropertyId::AutomationId),
                 (AutomationElementIdentifiers::bounding_rectangle_property(), UiaPropertyId::BoundingRectangle),

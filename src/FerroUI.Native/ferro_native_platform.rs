@@ -49,7 +49,7 @@ use std::ffi::{c_char, c_int, c_void, CString};
 use std::rc::Rc;
 use std::sync::Arc;
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static KEYBOARD_DEVICE: Rc<KeyboardDevice> = KeyboardDevice::new();
     static COMPOSITOR: RefCell<Option<Rc<Compositor>>> = const { RefCell::new(None) };
 }

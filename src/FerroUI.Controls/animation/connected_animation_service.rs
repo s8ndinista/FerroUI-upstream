@@ -7,7 +7,7 @@ use std::cell::{Cell, RefCell};
 use std::collections::HashMap;
 use std::rc::Rc;
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     /// The service of each top level (the conditional weak table of the
     /// reference): an entry goes away with its top level.
     static PER_VIEW: RefCell<Vec<(WeakRef<TopLevel>, Ref<ConnectedAnimationService>)>> =

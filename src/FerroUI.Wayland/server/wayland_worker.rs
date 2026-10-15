@@ -64,7 +64,7 @@ const THREAD_NAME: &str = "FerroWayland";
 /// the platform's normal verbose ("Wayland") traffic (`Tracer.TraceArea`).
 pub const TRACE_AREA: &str = "WaylandProtocol";
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     /// The state of the worker, on the worker thread.
     static WORKER_THREAD: RefCell<Option<WaylandWorkerThread>> = const { RefCell::new(None) };
 }

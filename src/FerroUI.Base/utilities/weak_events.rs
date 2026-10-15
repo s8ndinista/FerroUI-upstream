@@ -22,7 +22,7 @@ impl WeakEventArgs for FerroPropertyChangedEventArgs<'static> {
 /// thread.
 pub struct WeakEvents;
 
-thread_local! {
+crate::ferro_thread_local! {
     static COLLECTION_CHANGED: Rc<WeakEvent<Rc<dyn INotifyCollectionChanged>, CollectionChange>> =
         WeakEvent::<Rc<dyn INotifyCollectionChanged>, CollectionChange>::register_returning_unsubscribe(|c, s| {
             // The handler belongs to the collection, so it refers to it weakly.
@@ -213,7 +213,7 @@ mod tests {
         }
     }
 
-    thread_local! {
+    crate::ferro_thread_local! {
         static CALLS: Cell<i32> = const { Cell::new(0) };
     }
 

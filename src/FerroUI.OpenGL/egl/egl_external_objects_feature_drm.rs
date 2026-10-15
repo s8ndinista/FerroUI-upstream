@@ -445,7 +445,7 @@ mod tests {
         format_queries: i32,
     }
 
-    thread_local! {
+    ferroui_base::ferro_thread_local! {
         static EGL: RefCell<FakeEgl> = RefCell::new(FakeEgl::default());
     }
 

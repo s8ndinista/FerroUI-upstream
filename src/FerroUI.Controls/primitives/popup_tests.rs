@@ -228,7 +228,7 @@ impl IHitTester for TestHitTester {
     }
 }
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     /// A bubbling routed event (the reference tests borrow the click event
     /// of buttons for it).
     static TEST_CLICK_EVENT: &'static RoutedEvent<RoutedEventArgs> =

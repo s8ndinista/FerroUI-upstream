@@ -107,7 +107,7 @@ impl FontVariationSettings {
 
     /// The empty settings: no axis is varied.
     pub fn empty() -> FontVariationSettings {
-        thread_local! {
+        crate::ferro_thread_local! {
             static EMPTY: FontVariationSettings = FontVariationSettings::from_sorted(Vec::new());
         }
 

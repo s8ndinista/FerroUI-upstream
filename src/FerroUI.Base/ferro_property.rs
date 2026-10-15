@@ -499,7 +499,7 @@ impl FerroProperty {
 
     /// The marker value that represents an unset property value.
     pub fn unset_value() -> BoxedValue {
-        thread_local! {
+        crate::ferro_thread_local! {
             static UNSET: BoxedValue = Rc::new(UnsetValueType);
         }
         UNSET.with(Rc::clone)
@@ -752,7 +752,7 @@ macro_rules! ferro_property {
         $(#[$meta])*
         #[inline]
         $vis fn $name() -> &'static $ty {
-            ::std::thread_local! {
+            $crate::ferro_thread_local! {
                 static CELL: ::std::cell::Cell<::std::option::Option<&'static $ty>> =
                     const { ::std::cell::Cell::new(::std::option::Option::None) };
             }
@@ -781,7 +781,7 @@ macro_rules! ferro_property {
         $(#[$meta])*
         #[inline]
         $vis fn $name() -> &'static $ty {
-            ::std::thread_local! {
+            $crate::ferro_thread_local! {
                 static CELL: ::std::cell::Cell<::std::option::Option<&'static $ty>> =
                     const { ::std::cell::Cell::new(::std::option::Option::None) };
             }

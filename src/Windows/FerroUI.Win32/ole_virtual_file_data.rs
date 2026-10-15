@@ -102,7 +102,7 @@ mod imp {
     use std::io::{self, Read, Seek, SeekFrom, Write};
     use std::rc::Rc;
 
-    thread_local! {
+    ferroui_base::ferro_thread_local! {
         static FILE_GROUP_DESCRIPTOR_FORMAT: DataFormatOf<Rc<[u8]>> =
             DataFormat::create_bytes_platform_format("FileGroupDescriptorW");
         static FILE_CONTENTS_FORMAT: DataFormatOf<Rc<[u8]>> = DataFormat::create_bytes_platform_format("FileContents");

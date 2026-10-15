@@ -16,7 +16,7 @@ pub trait IHeadered {
 
 type HeaderedCast = for<'a> fn(&'a FerroObject) -> Option<&'a dyn IHeadered>;
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static HEADERED_TYPES: RefCell<Vec<(&'static TypeInfo, HeaderedCast)>> = const { RefCell::new(Vec::new()) };
 }
 

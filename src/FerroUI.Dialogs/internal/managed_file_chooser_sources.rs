@@ -18,7 +18,7 @@ pub struct ManagedFileChooserSources {
     get_all_items_delegate: RefCell<Rc<dyn Fn(&ManagedFileChooserSources) -> Vec<ManagedFileChooserNavigationItem>>>,
 }
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static MOUNTED_VOLUMES: FerroList<MountedVolumeInfo> = FerroList::new();
 }
 

@@ -59,7 +59,7 @@ pub trait IScrollSnapPointsInfo {
 
 type SnapPointsInfoCast = for<'a> fn(&'a FerroObject) -> Option<&'a dyn IScrollSnapPointsInfo>;
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static SNAP_POINTS_INFO_TYPES: RefCell<Vec<(&'static TypeInfo, SnapPointsInfoCast)>> =
         const { RefCell::new(Vec::new()) };
 }

@@ -67,7 +67,7 @@ impl LoadedQueues {
     }
 }
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static LOADED: RefCell<LoadedQueues> = RefCell::new(LoadedQueues::default());
 }
 

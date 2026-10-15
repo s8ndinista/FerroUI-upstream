@@ -54,7 +54,7 @@ impl IScheduling for PageScheduling {
     }
 }
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static INSTANCE: RefCell<Option<Rc<BrowserSingleThreadedDispatcherImpl>>> = const { RefCell::new(None) };
 }
 

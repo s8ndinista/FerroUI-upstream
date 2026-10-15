@@ -23,7 +23,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, PoisonError};
 use std::task::{Context, Poll, Waker};
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     /// The objects of this thread that exported objects stand for.
     static OBJECTS: RefCell<HashMap<u64, Rc<dyn Any>>> = RefCell::new(HashMap::new());
 }

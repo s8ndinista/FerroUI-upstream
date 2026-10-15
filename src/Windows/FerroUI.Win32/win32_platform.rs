@@ -46,7 +46,7 @@ const DEFAULT_FRAMES_PER_SECOND: i32 = 60;
 /// `SPI_SETWORKAREA`: the work area of a monitor changed.
 const SPI_SETWORKAREA: usize = 0x002F;
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static INSTANCE: RefCell<Option<Rc<Win32Platform>>> = const { RefCell::new(None) };
     static OPTIONS: RefCell<Option<Win32PlatformOptions>> = const { RefCell::new(None) };
     static COMPOSITOR: RefCell<Option<KeptForTheProcess<Rc<Compositor>>>> = const { RefCell::new(None) };

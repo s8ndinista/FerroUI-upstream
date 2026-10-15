@@ -218,7 +218,7 @@ mod counting {
     use std::cell::{Cell, RefCell};
     use std::collections::HashMap;
 
-    thread_local! {
+    crate::ferro_thread_local! {
         static COUNTS: [Cell<u64>; COUNT] = const { [const { Cell::new(0) }; COUNT] };
         static VIRTUAL_CALLS: RefCell<HashMap<&'static str, u64>> = RefCell::new(HashMap::new());
     }

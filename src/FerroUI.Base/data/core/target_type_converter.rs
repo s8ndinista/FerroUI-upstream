@@ -131,7 +131,7 @@ mod tests {
     crate::tests::test_class!(ConvertedDerivedShape: ConvertedShape);
     crate::tests::test_class!(ConvertedPlainObject: FerroObject);
 
-    thread_local! {
+    crate::ferro_thread_local! {
         static PARSED_SHAPES: Cell<i32> = const { Cell::new(0) };
     }
 

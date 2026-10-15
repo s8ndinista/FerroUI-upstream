@@ -4,7 +4,7 @@ use ferroui_base::{BoxedValue, PropertyValue};
 use std::cell::OnceCell;
 use std::rc::Rc;
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static EMPTY_INDEXES: Rc<dyn IReadOnlySelectionList<i32>> = Rc::new(ReadOnlySelectionList::new(Vec::new()));
 }
 

@@ -528,7 +528,7 @@ struct DependencyResolver;
 impl DependencyResolver {
     /// Gets the default instance of [`DependencyResolver`].
     fn instance() -> Rc<dyn IFerroDependencyResolver> {
-        thread_local! {
+        ferroui_base::ferro_thread_local! {
             static INSTANCE: Rc<DependencyResolver> = Rc::new(DependencyResolver);
         }
         INSTANCE.with(|instance| instance.clone())

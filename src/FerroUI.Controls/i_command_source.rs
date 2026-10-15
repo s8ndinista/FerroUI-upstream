@@ -14,7 +14,7 @@ use std::rc::Rc;
 
 type Adapter = Rc<dyn Fn(&FerroObject) -> Option<Rc<dyn ICommandSource>>>;
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static SOURCE_TYPES: RefCell<Vec<(&'static TypeInfo, Adapter)>> = const { RefCell::new(Vec::new()) };
 }
 

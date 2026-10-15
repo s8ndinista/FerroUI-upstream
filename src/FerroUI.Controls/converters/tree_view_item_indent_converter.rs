@@ -13,7 +13,7 @@ pub struct TreeViewItemIndentConverter;
 impl TreeViewItemIndentConverter {
     /// The shared instance of the converter.
     pub fn instance() -> Rc<TreeViewItemIndentConverter> {
-        thread_local! {
+        ferroui_base::ferro_thread_local! {
             static INSTANCE: Rc<TreeViewItemIndentConverter> = Rc::new(TreeViewItemIndentConverter);
         }
         INSTANCE.with(Rc::clone)

@@ -21,7 +21,7 @@ use crate::*;
 use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 
-thread_local! {
+crate::ferro_thread_local! {
     /// What was called on the thread, in order.
     static LOG: RefCell<Vec<String>> = const { RefCell::new(Vec::new()) };
 }

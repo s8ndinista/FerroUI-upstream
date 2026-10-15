@@ -28,7 +28,7 @@ struct State {
     program_log: String,
 }
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static STATE: RefCell<State> = RefCell::new(State::default());
 }
 

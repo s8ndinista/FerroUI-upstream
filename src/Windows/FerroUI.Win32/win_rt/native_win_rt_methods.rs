@@ -70,7 +70,7 @@ pub(crate) enum RO_INIT_TYPE {
     RO_INIT_MULTITHREADED = 1,
 }
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     // The reference has one flag for the process: its runtime initialises
     // COM on every thread it starts, so only the first activation has
     // anything to do. A thread of the port has no apartment until this

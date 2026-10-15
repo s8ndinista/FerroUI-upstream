@@ -42,7 +42,7 @@ impl PartialEq for dyn IStyle {
 }
 
 
-thread_local! {
+crate::ferro_thread_local! {
     static EMPTY: Rc<Vec<Rc<dyn IStyle>>> = Rc::new(Vec::new());
 }
 

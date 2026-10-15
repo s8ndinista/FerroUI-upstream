@@ -259,7 +259,7 @@ mod tests {
     use crate::GetProcAddress;
     use std::ffi::c_void;
 
-    thread_local! {
+    ferroui_base::ferro_thread_local! {
         static TERMINATED: Cell<i32> = const { Cell::new(0) };
         static DESTROYED_SURFACES: Cell<i32> = const { Cell::new(0) };
     }

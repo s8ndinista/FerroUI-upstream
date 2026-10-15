@@ -133,7 +133,7 @@ fn address<T: ?Sized>(ptr: *const T) -> usize {
     ptr as *const () as usize
 }
 
-thread_local! {
+crate::ferro_thread_local! {
     /// The shared pools of lists returned by `get_alive`, one per item type.
     static LIST_POOLS: RefCell<HashMap<TypeId, Box<dyn Any>>> = RefCell::new(HashMap::new());
 }

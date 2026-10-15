@@ -24,7 +24,7 @@ use std::collections::{HashMap, VecDeque};
 use std::rc::{Rc, Weak};
 use std::sync::atomic::{AtomicI64, Ordering};
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static CONNECTIONS: RefCell<HashMap<i64, Weak<FerroInputConnection>>> = RefCell::new(HashMap::new());
 }
 

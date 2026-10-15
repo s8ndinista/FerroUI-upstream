@@ -44,7 +44,7 @@ impl WindowsKeyboardDevice {
 impl WindowsKeyboardDevice {
     /// The keyboard device of the calling thread.
     pub fn instance() -> std::rc::Rc<ferroui_base::input::KeyboardDevice> {
-        thread_local! {
+        ferroui_base::ferro_thread_local! {
             static INSTANCE: std::rc::Rc<ferroui_base::input::KeyboardDevice> = ferroui_base::input::KeyboardDevice::new();
         }
         INSTANCE.with(std::rc::Rc::clone)

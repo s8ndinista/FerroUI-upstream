@@ -6,7 +6,7 @@ use std::any::Any;
 use std::cell::RefCell;
 use std::rc::Rc;
 
-thread_local! {
+crate::ferro_thread_local! {
     static INSTANCE: Rc<DragDropDevice> = Rc::new(DragDropDevice { last_target: RefCell::new(None) });
 }
 

@@ -8,7 +8,7 @@ use ferroui_base::{ferro_markup_type, BoxedValue};
 
 use crate::support::TypeModule;
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static SOME_STATIC_PROPERTY: RefCell<Option<BoxedValue>> = const { RefCell::new(None) };
 }
 

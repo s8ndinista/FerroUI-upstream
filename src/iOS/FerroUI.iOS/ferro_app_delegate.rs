@@ -159,7 +159,7 @@ mod uikit {
     use std::ptr::NonNull;
     use std::rc::Rc;
 
-    thread_local! {
+    ferroui_base::ferro_thread_local! {
         /// What the application gave `run_application`: UIKit creates the
         /// delegate object itself, from the name of its class, so the
         /// object finds here what a derived class would have overridden.

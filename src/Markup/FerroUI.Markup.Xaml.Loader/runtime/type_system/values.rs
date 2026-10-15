@@ -243,7 +243,7 @@ pub struct RuntimeArray {
 
 type ArrayForm = fn(&[MarkupValue], bool) -> Option<BoxedValue>;
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static ARRAY_FORMS: std::cell::RefCell<std::collections::HashMap<TypeId, ArrayForm>> =
         std::cell::RefCell::new(std::collections::HashMap::new());
 }

@@ -58,7 +58,7 @@ type CompletedHandler = dyn Fn(&ConnectedAnimationCompletedEventArgs);
 const COORDINATED_FADE_START_THRESHOLD: f64 = 0.6;
 const COORDINATED_FADE_RANGE: f64 = 0.4;
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static DIRECT_EASING: Easing = Easing::new(SplineEasing::with_points(0.0, 0.0, 0.58, 1.0));
     static BASIC_EASING: Easing = Easing::new(SplineEasing::with_points(0.42, 0.0, 0.58, 1.0));
     static GRAVITY_EASING: Easing = Easing::new(SplineEasing::with_points(0.1, 0.9, 0.2, 1.0));

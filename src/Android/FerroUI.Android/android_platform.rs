@@ -124,7 +124,7 @@ mod imp {
         }
     }
 
-    thread_local! {
+    ferroui_base::ferro_thread_local! {
         static OPTIONS: RefCell<Option<Rc<AndroidPlatformOptions>>> = const { RefCell::new(None) };
         static COMPOSITOR: RefCell<Option<Rc<Compositor>>> = const { RefCell::new(None) };
         static TIMER: RefCell<Option<Arc<ChoreographerTimer>>> = const { RefCell::new(None) };

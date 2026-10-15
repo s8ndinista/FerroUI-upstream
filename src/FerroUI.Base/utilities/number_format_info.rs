@@ -15,7 +15,7 @@ use super::CultureInfo;
 use std::cell::Cell;
 use std::rc::Rc;
 
-thread_local! {
+crate::ferro_thread_local! {
     static INVARIANT: Rc<NumberFormatInfo> = Rc::new(NumberFormatInfo::new());
 }
 

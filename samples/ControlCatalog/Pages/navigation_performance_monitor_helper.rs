@@ -80,7 +80,7 @@ pub(crate) struct NavigationPerformanceMonitorHelper {
 }
 
 impl NavigationPerformanceMonitorHelper {
-    thread_local! {
+    ferroui_base::ferro_thread_local! {
         static CURRENT_BORDER_BRUSH: Rc<dyn IBrush> = SolidColorBrush::with_color(parse_color("#0078D4")).into();
         static DEFAULT_BORDER_BRUSH: Rc<dyn IBrush> = SolidColorBrush::with_color(parse_color("#CCCCCC")).into();
     }

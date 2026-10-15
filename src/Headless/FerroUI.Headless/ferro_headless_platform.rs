@@ -23,7 +23,7 @@ use std::collections::HashMap;
 use std::rc::Rc;
 use std::sync::Arc;
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     // The two static fields of the original. They are per thread: the compositor is an `Rc`,
     // and a headless application lives on the one thread that initialised the platform.
     static COMPOSITOR: RefCell<Option<Rc<Compositor>>> = const { RefCell::new(None) };

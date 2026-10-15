@@ -16,7 +16,7 @@ extern "C" {
     pub fn now() -> f64;
 }
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static ANIMATION_FRAME: HandlerList<dyn Fn(f64)> = HandlerList::new();
 }
 

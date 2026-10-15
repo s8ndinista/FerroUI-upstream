@@ -24,7 +24,7 @@ use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::Arc;
 use xamlx::XamlError;
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     // The static fields of the original. They belong to the UI thread: the
     // handler of the connection posts every message to it.
     static SUPPORTED_PIXEL_FORMATS: RefCell<Option<Message>> = const { RefCell::new(None) };

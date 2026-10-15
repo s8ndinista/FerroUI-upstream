@@ -2,7 +2,7 @@
 
 use std::cell::Cell;
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static IS_INITIALIZED: Cell<bool> = const { Cell::new(false) };
 }
 

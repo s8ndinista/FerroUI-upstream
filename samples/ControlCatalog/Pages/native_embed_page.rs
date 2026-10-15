@@ -116,7 +116,7 @@ impl NativeEmbedPage {
     }
 }
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static IMPLEMENTATION: RefCell<Option<Rc<dyn INativeDemoControl>>> = const { RefCell::new(None) };
 }
 

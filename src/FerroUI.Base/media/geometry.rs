@@ -742,7 +742,7 @@ pub(crate) mod tests {
         });
 
         fn new() -> Ref<Self> {
-            thread_local! {
+            crate::ferro_thread_local! {
                 static DONE: Cell<bool> = const { Cell::new(false) };
             }
             if !DONE.replace(true) {

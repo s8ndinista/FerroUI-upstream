@@ -231,7 +231,7 @@ mod tests {
     use crate::{FerroObject, StyledProperty, StyledPropertyMetadata};
     use std::panic::{catch_unwind, AssertUnwindSafe};
 
-    thread_local! {
+    crate::ferro_thread_local! {
         static TEST_PROPERTIES: Vec<&'static FerroProperty> = create_test_properties();
     }
 

@@ -16,7 +16,7 @@ ferro_static_type!(ThemeDictionariesTests);
 impl ThemeDictionariesTests {
     /// The theme variant `Custom`, which inherits the light one.
     pub fn custom() -> ThemeVariant {
-        thread_local! {
+        ferroui_base::ferro_thread_local! {
             static CUSTOM: ThemeVariant = ThemeVariant::new("Custom", Some(ThemeVariant::light()));
         }
         CUSTOM.with(ThemeVariant::clone)

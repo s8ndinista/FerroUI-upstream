@@ -21,7 +21,7 @@ impl RecycleKey {
     /// Allocates a key that is different from every other key on the
     /// current thread.
     pub fn new_unique() -> Self {
-        thread_local! {
+        ferroui_base::ferro_thread_local! {
             static NEXT: Cell<u64> = const { Cell::new(1 << 63) };
         }
         RecycleKey::Id(NEXT.with(|next| next.replace(next.get() + 1)))

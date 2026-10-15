@@ -351,7 +351,7 @@ struct PopulateOverride {
     result: Option<xamlx::exceptions::XamlResult<()>>,
 }
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static POPULATE_OVERRIDES: std::cell::RefCell<HashMap<usize, PopulateOverride>> =
         std::cell::RefCell::new(HashMap::new());
 }

@@ -6,7 +6,7 @@ use ferroui_base::{FerroLocator, ObjectType, Ref, StaticType, TypeInfo, Upcast};
 use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static SETUP_WAS_ALREADY_CALLED: Cell<bool> = const { Cell::new(false) };
 }
 

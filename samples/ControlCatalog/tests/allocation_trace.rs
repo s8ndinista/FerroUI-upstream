@@ -87,7 +87,7 @@ mod recording {
     static TRACKING: AtomicBool = AtomicBool::new(false);
     static RECORDS: Mutex<Option<HashMap<usize, Record>>> = Mutex::new(None);
 
-    thread_local! {
+    ferroui_base::ferro_thread_local! {
         // The thread is inside the recorder: what the recorder itself
         // allocates and frees is not recorded.
         static INSIDE: Cell<bool> = const { Cell::new(false) };

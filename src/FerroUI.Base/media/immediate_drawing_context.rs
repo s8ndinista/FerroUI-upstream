@@ -40,7 +40,7 @@ impl ImmediatePushedState {
     pub const NONE: ImmediatePushedState = ImmediatePushedState { level: 0 };
 }
 
-thread_local! {
+crate::ferro_thread_local! {
     static STATE_STACK_POOL: RefCell<Vec<Vec<PushedStateType>>> = const { RefCell::new(Vec::new()) };
     static TRANSFORM_STACK_POOL: RefCell<Vec<Vec<TransformContainer>>> = const { RefCell::new(Vec::new()) };
 }

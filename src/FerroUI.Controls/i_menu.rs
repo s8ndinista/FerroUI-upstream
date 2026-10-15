@@ -24,7 +24,7 @@ pub(crate) trait IMenu: IMenuElement {
 
 type Adapter = Rc<dyn Fn(&FerroObject) -> Option<Rc<dyn IMenu>>>;
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static MENU_TYPES: RefCell<Vec<(&'static TypeInfo, Adapter)>> = const { RefCell::new(Vec::new()) };
 }
 

@@ -21,7 +21,7 @@ use std::time::Instant;
 // the order of decades or more".
 const DISTANT_FUTURE_INTERVAL: f64 = 50.0 * 365.0 * 24.0 * 3600.0;
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     /// The dispatcher of the main thread. The callbacks of the run loop and
     /// of the main queue run on the main thread and find it here.
     static INSTANCE: RefCell<Option<Rc<DispatcherImpl>>> = const { RefCell::new(None) };

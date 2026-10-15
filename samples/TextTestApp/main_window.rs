@@ -89,7 +89,7 @@ fn selection_changed_args(e: &Rc<dyn IRoutedEventArgs>) -> &SelectionChangedEven
     e.downcast_ref::<SelectionChangedEventArgs>().expect("the arguments of a selection changed event")
 }
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static TRANSPARENT_ALICE_BLUE: Rc<dyn IBrush> = SolidColorBrush::from_uint32(0x0F0188FF).into();
     static TRANSPARENT_ANTIQUE_WHITE: Rc<dyn IBrush> = SolidColorBrush::from_uint32(0x28DF8000).into();
 }

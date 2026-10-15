@@ -484,7 +484,7 @@ fn default_dispatcher_impl() -> Rc<dyn IDispatcherImpl> {
     }
 }
 
-thread_local! {
+crate::ferro_thread_local! {
     static THREAD_ID: ThreadId = thread::current().id();
 }
 

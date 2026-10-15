@@ -38,7 +38,7 @@ const MONTH_NAMES: [&str; 12] = [
 const ABBREVIATED_MONTH_NAMES: [&str; 12] =
     ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-thread_local! {
+crate::ferro_thread_local! {
     static INVARIANT: Rc<DateTimeFormatInfo> = Rc::new(DateTimeFormatInfo::new());
 }
 

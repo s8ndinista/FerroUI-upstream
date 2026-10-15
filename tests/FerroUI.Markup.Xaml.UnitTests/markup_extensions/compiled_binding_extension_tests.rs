@@ -160,7 +160,7 @@ impl AppendConverter {
 
     /// `AppendConverter.Instance`.
     pub fn instance() -> Rc<dyn IValueConverter> {
-        thread_local! {
+        ferroui_base::ferro_thread_local! {
             static INSTANCE: Rc<AppendConverter> = AppendConverter::new();
         }
         INSTANCE.with(|instance| instance.as_value_converter())

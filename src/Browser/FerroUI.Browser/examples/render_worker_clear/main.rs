@@ -187,7 +187,7 @@ struct Canvas {
     painter: Painter,
 }
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     /// The canvas surface, on the thread of the page.
     static SURFACE: RefCell<Option<CanvasSurface>> = const { RefCell::new(None) };
     /// The size and the scaling of the canvas and the kind of its target, as

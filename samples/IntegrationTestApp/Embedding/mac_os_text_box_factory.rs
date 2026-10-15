@@ -48,7 +48,7 @@ impl Handlers {
     }
 }
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     /// The text box of each native view of the class of the sample, by the address of the
     /// view: what the methods of the class find their text box with.
     static TEXT_BOXES: RefCell<HashMap<usize, Weak<MacOSTextBox>>> = RefCell::new(HashMap::new());

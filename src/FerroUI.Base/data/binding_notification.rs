@@ -77,7 +77,7 @@ pub struct BindingNotification {
 impl BindingNotification {
     /// A binding notification representing the null value.
     pub fn null() -> Rc<BindingNotification> {
-        thread_local! {
+        crate::ferro_thread_local! {
             static NULL: Rc<BindingNotification> = Rc::new(BindingNotification::new(None));
         }
         NULL.with(Rc::clone)
@@ -85,7 +85,7 @@ impl BindingNotification {
 
     /// A binding notification representing the unset value marker.
     pub fn unset_value() -> Rc<BindingNotification> {
-        thread_local! {
+        crate::ferro_thread_local! {
             static UNSET_VALUE: Rc<BindingNotification> =
                 Rc::new(BindingNotification::new(Some(FerroProperty::unset_value())));
         }

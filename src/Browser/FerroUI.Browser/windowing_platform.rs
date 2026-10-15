@@ -22,7 +22,7 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     // Capture the initial global object of the page.
     static GLOBAL_THIS: RefCell<Option<JsObject>> = const { RefCell::new(None) };
     static KEYBOARD: RefCell<Option<Rc<KeyboardDevice>>> = const { RefCell::new(None) };

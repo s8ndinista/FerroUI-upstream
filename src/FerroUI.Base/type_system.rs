@@ -1042,7 +1042,7 @@ macro_rules! ferro_class {
     (@register_class $name:ident : $base:ident) => {
         #[inline]
         fn register_class() {
-            ::std::thread_local! {
+            $crate::ferro_thread_local! {
                 static REGISTERED: ::std::cell::Cell<bool> = const { ::std::cell::Cell::new(false) };
             }
             #[cold]
@@ -1442,7 +1442,7 @@ macro_rules! ferro_static_type {
         impl $crate::StaticType for $name {
             const TYPE: &'static $crate::TypeInfo = {
                 fn class_init() {
-                    ::std::thread_local! {
+                    $crate::ferro_thread_local! {
                         static REGISTERED: ::std::cell::Cell<bool> = const { ::std::cell::Cell::new(false) };
                     }
                     if !REGISTERED.replace(true) {

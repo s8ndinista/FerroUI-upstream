@@ -64,7 +64,7 @@ mod imp {
     impl CursorFactory {
         /// The cursor factory of the calling thread.
         pub fn instance() -> Rc<CursorFactory> {
-            thread_local! {
+            ferroui_base::ferro_thread_local! {
                 static INSTANCE: Rc<CursorFactory> = Rc::new(CursorFactory::new());
             }
             INSTANCE.with(Rc::clone)

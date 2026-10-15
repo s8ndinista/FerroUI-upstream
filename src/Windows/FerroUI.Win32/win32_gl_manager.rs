@@ -33,7 +33,7 @@ pub(crate) enum Win32PlatformGraphics {
     Wgl(WglPlatformOpenGlInterface),
 }
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static KIND: Cell<Option<Win32PlatformGraphicsKind>> = const { Cell::new(None) };
 }
 

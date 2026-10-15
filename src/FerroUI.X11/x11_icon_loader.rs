@@ -48,7 +48,7 @@ impl IPlatformIconLoader for X11IconLoader {
     }
 }
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     /// The icons this loader made that are still alive.
     static ICONS: RefCell<Vec<Weak<X11IconData>>> = const { RefCell::new(Vec::new()) };
 }

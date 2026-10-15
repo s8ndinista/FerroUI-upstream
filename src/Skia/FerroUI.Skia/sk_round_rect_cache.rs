@@ -2,7 +2,7 @@ use crate::sk_cache_base::SkCacheBase;
 use ferroui_base::RoundedRect;
 use skia_safe::{RRect, Rect, Vector};
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static SHARED: SkCacheBase<RRect> = const { SkCacheBase::new() };
 }
 

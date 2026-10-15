@@ -121,7 +121,7 @@ mod uikit {
     use std::ptr::NonNull;
     use std::rc::Rc;
 
-    thread_local! {
+    ferroui_base::ferro_thread_local! {
         static INSTANCE: Rc<UIKitInputPane> = UIKitInputPane::new();
     }
 

@@ -18,7 +18,7 @@ const PC_INFORMATION: &str = ":information";
 const PC_SUCCESS: &str = ":success";
 const PC_WARNING: &str = ":warning";
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     /// The click handlers of the buttons whose `CloseOnClick` is set: what
     /// removing the handler needs when the property is reset.
     static CLOSE_ON_CLICK_HANDLERS: RefCell<Vec<(WeakRef<Button>, RoutedEventHandlerToken)>> =

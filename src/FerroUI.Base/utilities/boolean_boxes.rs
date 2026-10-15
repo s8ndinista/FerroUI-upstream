@@ -4,7 +4,7 @@
 use crate::BoxedValue;
 use std::rc::Rc;
 
-thread_local! {
+crate::ferro_thread_local! {
     static TRUE: BoxedValue = Rc::new(true);
     static FALSE: BoxedValue = Rc::new(false);
 }

@@ -27,7 +27,7 @@ const NOISE_OPACITY: f64 = 0.0225;
 /// the Skia backend) with its alpha scaled to the opacity of the noise, as
 /// the color filter of the Skia backend scales it: truncated to a byte.
 fn acrylic_noise() -> Option<ImageData> {
-    thread_local! {
+    ferroui_base::ferro_thread_local! {
         static ACRYLIC_NOISE: std::cell::OnceCell<Option<ImageData>> = const { std::cell::OnceCell::new() };
     }
 
