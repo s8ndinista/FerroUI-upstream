@@ -262,7 +262,7 @@ mod imp {
         }
     }
 
-    thread_local! {
+    ferroui_base::ferro_thread_local! {
         /// The static constructor of the reference: the first panel binds
         /// the drag source.
         static DRAG_SOURCE_BOUND: Cell<bool> = const { Cell::new(false) };

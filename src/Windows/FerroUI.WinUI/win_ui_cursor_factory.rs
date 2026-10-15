@@ -58,7 +58,7 @@ mod imp {
         cache: RefCell<HashMap<StandardCursorType, Rc<WinUICursorImpl>>>,
     }
 
-    thread_local! {
+    ferroui_base::ferro_thread_local! {
         static INSTANCE: Rc<WinUICursorFactory> = Rc::new(WinUICursorFactory::new());
     }
 
