@@ -4,7 +4,7 @@
 //! `native/FerroUI.Native` (compiled and linked by `build.rs`), the raw
 //! COM bindings generated from `frn.idl` and the platform implementation on
 //! top of them: dispatcher, render timer, windows, popups, screens, cursors,
-//! platform settings and the Metal platform graphics.
+//! platform settings and the Metal and OpenGL platform graphics.
 //!
 //! An application selects the backend with
 //! [`FerroNativePlatformExtensions::use_ferro_native`] on its application
@@ -44,6 +44,8 @@ mod extensions;
 mod ferro_native_application_platform;
 #[cfg(target_os = "macos")]
 mod ferro_native_drag_source;
+#[cfg(target_os = "macos")]
+mod ferro_native_gl_platform_graphics;
 #[cfg(target_os = "macos")]
 mod ferro_native_menu_exporter;
 #[cfg(target_os = "macos")]
@@ -121,6 +123,10 @@ pub use self::{
     embeddable_top_level_impl::EmbeddableTopLevelImpl,
     ferro_native_application_platform::FerroNativeApplicationPlatform,
     ferro_native_drag_source::FerroNativeDragSource,
+    ferro_native_gl_platform_graphics::{
+        FerroNativeGlPlatformGraphics, GlContext, GlDisplay, GlPlatformSurface, GlPlatformSurfaceRenderTarget,
+        GlPlatformSurfaceRenderingSession,
+    },
     ferro_native_menu_exporter::FerroNativeMenuExporter,
     ferro_native_platform::FerroNativePlatform,
     ferro_native_render_timer::FerroNativeRenderTimer,

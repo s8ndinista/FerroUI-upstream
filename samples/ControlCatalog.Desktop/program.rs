@@ -51,7 +51,7 @@
 //! what of a window lies outside the desktop, so the run first moves and
 //! shrinks the window until all of it is on its screen. On Windows
 //! `FERROUI_SMOKE_RENDERING=software` or `angle` asks for that rendering
-//! mode alone, `FERROUI_SMOKE_COMPOSITION` for a composition mode, and
+//! mode alone (on macOS `opengl`, `metal` or `software`), `FERROUI_SMOKE_COMPOSITION` for a composition mode, and
 //! `FERROUI_SMOKE_TRANSPARENCY=mica|acrylic|blur|transparent` makes the
 //! window ask for that transparency level. With
 //! `FERROUI_SMOKE_BACKDROP=<directory>` and a transparency level the run
@@ -239,7 +239,27 @@ fn smoke_composition_mode() -> ferroui_win32::Win32CompositionMode {
     }
 }
 
-#[cfg(not(windows))]
+/// The options of a smoke run on macOS, from the environment:
+/// `FERROUI_SMOKE_RENDERING=opengl|metal|software` asks for that rendering
+/// mode alone (no fallback, so a mode that does not work fails the run).
+/// `opengl` needs the Skia backend built with Ganesh on OpenGL
+/// (`RUSTFLAGS="--cfg ferro_skia_apple_ganesh"`, docs/porting/apple-opengl.md).
+#[cfg(target_os = "macos")]
+fn smoke_platform_options(builder: AppBuilder) -> AppBuilder {
+    use ferroui_native::{FerroNativePlatformOptions, FerroNativeRenderingMode};
+
+    let mut options = FerroNativePlatformOptions::default();
+    match std::env::var("FERROUI_SMOKE_RENDERING").ok().as_deref() {
+        Some("opengl") => options.rendering_mode = vec![FerroNativeRenderingMode::OpenGl],
+        Some("metal") => options.rendering_mode = vec![FerroNativeRenderingMode::Metal],
+        Some("software") => options.rendering_mode = vec![FerroNativeRenderingMode::Software],
+        _ => return builder,
+    }
+    println!("Rendering modes: {:?}", options.rendering_mode);
+    builder.with(std::rc::Rc::new(options))
+}
+
+#[cfg(not(any(windows, target_os = "macos")))]
 fn smoke_platform_options(builder: AppBuilder) -> AppBuilder {
     builder
 }
