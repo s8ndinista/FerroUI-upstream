@@ -193,7 +193,7 @@ The stage list of the section below is as it was written after stage 1; its item
 
 Design, decisions, file table, what was measured and the stages: `android-platform.md`. Row 29 of `CRITICAL-PATH.md`.
 
-**What exists.** The crate `ferroui-android` (`src/Android/FerroUI.Android`) with its Java layer (`java/org/ferroui/android`), the smoke application (`examples/android_smoke.rs`), the catalog host (`samples/ControlCatalog.Android`), and four scripts under `scripts/android/`: `env.sh` (the pinned NDK, build tools, platform and nightly toolchain), `apk.sh smoke|catalog` (the package, without Gradle), `emu-smoke.sh` and `emu-catalog.sh` (the emulator runs; `emu-common.sh` is their shared part). Both emulator scripts passed on 2026-10-10 on the device `ferroui_api36` (`android-platform.md`, section 10.1).
+**What exists.** The crate `ferroui-android` (`src/Android/FerroUI.Android`) with its Java layer (`java/org/ferroui/android`), the smoke application (`examples/android_smoke.rs`), the catalog host (`samples/ControlCatalog.Android`), and four scripts under `scripts/android/`: `env.sh` (the pinned NDK, build tools and platform), `apk.sh smoke|catalog` (the package, without Gradle), `emu-smoke.sh` and `emu-catalog.sh` (the emulator runs; `emu-common.sh` is their shared part). Both emulator scripts passed on 2026-10-10 on the device `ferroui_api36` (`android-platform.md`, section 10.1).
 
 **How to work on it.**
 
@@ -202,7 +202,7 @@ Design, decisions, file table, what was measured and the stages: `android-platfo
 - A crash on the device: the scripts leave `logcat-*.txt` and `crash-*.txt`; the frames of the library in a tombstone are named from the symbol table of the library that was not stripped (`<target directory>/aarch64-linux-android/debug/...`), with `llvm-nm -n` of the NDK.
 - A new call into the framework of the system goes through `interop/java.rs` (by name and signature, checked before the call); a new override of a framework class is a method of the Java class that forwards to a native method registered in `interop/natives.rs`. Logic stays in the Rust file of the upstream class, behind a trait where the tests should reach it (`IInsetsWindow`, `IDisplaySource`, `IMotionEventsTopLevel`).
 
-**Waiting for the owner: the toolchain.** An application for Android cannot be built with stable Rust as things are (`android-platform.md`, section 5.1, with three alternatives and their cost). Until the decision the scripts build with `nightly-2026-07-01`, `-Zbuild-std` and `-Zhas-thread-local=yes`, confined to `scripts/android/apk.sh` and the CI job.
+**The toolchain (decided 2026-10-15).** The native library is built with stable Rust: the framework keeps its thread-local variables in one table per thread on Android (`ferro_thread_local!`, `android-platform.md` section 5.1), so the standard library as it is distributed suffices; the library takes 9 keys of the C library (`scripts/android/tls-keys.sh`, run by `apk.sh`). New code declares thread-local variables with `ferroui_base::ferro_thread_local!` (`PORTING-GUIDE.md`, "Threading model"); after a rebase, `scripts/android/convert-thread-locals.py` converts what came in, and its `--check` is part of the conventions job.
 
 **Stage 2, in order** (each with what its emulator run proves, `android-platform.md` section 11):
 

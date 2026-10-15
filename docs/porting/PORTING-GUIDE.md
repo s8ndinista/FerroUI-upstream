@@ -274,6 +274,8 @@ More parts of the declaration forms:
 
 Everything is UI-thread-affine and `Rc`-based. Property definitions and registries are per-thread. Cross-thread work goes through the dispatcher (`Dispatcher::ui_thread().post(..)`), whose callbacks must be `Send`.
 
+**Thread-local variables are declared with `ferroui_base::ferro_thread_local!`, never with `thread_local!`** (in `ferroui-base` itself `crate::ferro_thread_local!`, in a macro of the base crate `$crate::ferro_thread_local!`; a signature names `ferroui_base::ferro_thread_local::LocalKey`). The macro has the grammar and the methods of `thread_local!` and is `thread_local!` on every target but Android, where each `thread_local!` would take one of the 128 keys of the C library of a process and the macro is a slot of one table per thread instead (`android-platform.md`, section 5.1). The conventions job fails on a `thread_local!` outside the allow-list of `scripts/android/convert-thread-locals.py`; after a rebase that brings new ones, run the script.
+
 ## Reporting (for every porting task)
 
 File inventory (Rust path ← C# path, complete/partial), every skipped or deferred member, behavioural differences from C#, test counts and the `cargo test` summary line, the `grep` result for rule 2, and anything uncertain. Be factual.
