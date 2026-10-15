@@ -2205,8 +2205,8 @@ path = "src/FerroUI.X11/event.rs"
 reason = "The multicast events of the backend's own classes (a C# `event Action` of the original): a list of handlers with tokens to remove them"
 
 [[rust_only]]
-path = "src/FerroUI.X11/interop/native_library.rs"
-reason = "A shared library opened at run time and its functions resolved by name: what the runtime of the original does for a platform invoke (`DllImport`) of GLib, GTK, libSM and libICE"
+path = "src/FerroUI.Base/platform/native_library.rs"
+reason = "A shared library opened at run time and its functions resolved by name: what the runtime of the original does for a platform invoke (`DllImport`); the one loader of the X11 (GLib, GTK, libSM, libICE), Wayland (libgbm, libdrm) and Linux framebuffer (libinput, libdrm, libgbm) backends"
 
 [[rust_only]]
 path = "src/FerroUI.X11/pixel_buffer.rs"
