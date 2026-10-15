@@ -13,7 +13,8 @@
 //! GLib, so a callback that panics is caught at the boundary and logged;
 //! callers that want the panic (the dispatcher) catch it themselves first.
 
-use super::native_library::{native_functions, NativeLibrary, NativeLibraryError};
+use ferroui_base::native_functions;
+use ferroui_base::platform::native_library::{NativeLibrary, NativeLibraryError};
 use bitflags::bitflags;
 use ferroui_base::logging::{LogEventLevel, Logger};
 use std::any::Any;

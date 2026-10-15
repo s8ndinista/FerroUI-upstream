@@ -68,7 +68,6 @@ pub use imp::LibInput;
 
 #[cfg(target_os = "linux")]
 mod imp {
-    use crate::native_library::native_library;
     use std::ffi::{c_char, c_double, c_int, c_void, CString};
 
     /// `struct libinput_interface`: how the library opens and closes the
@@ -97,33 +96,32 @@ mod imp {
 
     static INTERFACE: libinput_interface = libinput_interface { open_restricted, close_restricted };
 
-    native_library! {
-        #[library = "libinput.so.10"]
+    ferroui_base::native_functions! {
         /// The functions of the library, resolved.
-        pub struct LibInput {
-            libinput_path_create_context: unsafe extern "C" fn(*const libinput_interface, *mut c_void) -> *mut c_void,
-            libinput_path_add_device: unsafe extern "C" fn(*mut c_void, *const c_char) -> *mut c_void,
-            libinput_path_remove_device: unsafe extern "C" fn(*mut c_void),
-            libinput_device_config_calibration_set_matrix: unsafe extern "C" fn(*mut c_void, *const f32) -> c_int,
-            libinput_get_fd: unsafe extern "C" fn(*mut c_void) -> c_int,
-            libinput_dispatch: unsafe extern "C" fn(*mut c_void) -> c_int,
-            libinput_get_event: unsafe extern "C" fn(*mut c_void) -> *mut c_void,
-            libinput_event_get_type: unsafe extern "C" fn(*mut c_void) -> c_int,
-            libinput_event_destroy: unsafe extern "C" fn(*mut c_void),
-            libinput_event_get_touch_event: unsafe extern "C" fn(*mut c_void) -> *mut c_void,
-            libinput_event_touch_get_slot: unsafe extern "C" fn(*mut c_void) -> c_int,
-            libinput_event_touch_get_time_usec: unsafe extern "C" fn(*mut c_void) -> u64,
-            libinput_event_touch_get_x_transformed: unsafe extern "C" fn(*mut c_void, u32) -> c_double,
-            libinput_event_touch_get_y_transformed: unsafe extern "C" fn(*mut c_void, u32) -> c_double,
-            libinput_event_get_pointer_event: unsafe extern "C" fn(*mut c_void) -> *mut c_void,
-            libinput_event_pointer_get_time_usec: unsafe extern "C" fn(*mut c_void) -> u64,
-            libinput_event_pointer_get_absolute_x_transformed: unsafe extern "C" fn(*mut c_void, u32) -> c_double,
-            libinput_event_pointer_get_absolute_y_transformed: unsafe extern "C" fn(*mut c_void, u32) -> c_double,
-            libinput_event_pointer_get_button: unsafe extern "C" fn(*mut c_void) -> u32,
-            libinput_event_pointer_get_button_state: unsafe extern "C" fn(*mut c_void) -> c_int,
-            libinput_event_pointer_get_axis_source: unsafe extern "C" fn(*mut c_void) -> c_int,
-            libinput_event_pointer_get_axis_value_discrete: unsafe extern "C" fn(*mut c_void, c_int) -> c_double,
-            libinput_event_pointer_get_scroll_value_v120: unsafe extern "C" fn(*mut c_void, c_int) -> c_double,
+        pub struct LibInput(lib) {
+            lib::libinput_path_create_context: unsafe extern "C" fn(*const libinput_interface, *mut c_void) -> *mut c_void;
+            lib::libinput_path_add_device: unsafe extern "C" fn(*mut c_void, *const c_char) -> *mut c_void;
+            lib::libinput_path_remove_device: unsafe extern "C" fn(*mut c_void);
+            lib::libinput_device_config_calibration_set_matrix: unsafe extern "C" fn(*mut c_void, *const f32) -> c_int;
+            lib::libinput_get_fd: unsafe extern "C" fn(*mut c_void) -> c_int;
+            lib::libinput_dispatch: unsafe extern "C" fn(*mut c_void) -> c_int;
+            lib::libinput_get_event: unsafe extern "C" fn(*mut c_void) -> *mut c_void;
+            lib::libinput_event_get_type: unsafe extern "C" fn(*mut c_void) -> c_int;
+            lib::libinput_event_destroy: unsafe extern "C" fn(*mut c_void);
+            lib::libinput_event_get_touch_event: unsafe extern "C" fn(*mut c_void) -> *mut c_void;
+            lib::libinput_event_touch_get_slot: unsafe extern "C" fn(*mut c_void) -> c_int;
+            lib::libinput_event_touch_get_time_usec: unsafe extern "C" fn(*mut c_void) -> u64;
+            lib::libinput_event_touch_get_x_transformed: unsafe extern "C" fn(*mut c_void, u32) -> c_double;
+            lib::libinput_event_touch_get_y_transformed: unsafe extern "C" fn(*mut c_void, u32) -> c_double;
+            lib::libinput_event_get_pointer_event: unsafe extern "C" fn(*mut c_void) -> *mut c_void;
+            lib::libinput_event_pointer_get_time_usec: unsafe extern "C" fn(*mut c_void) -> u64;
+            lib::libinput_event_pointer_get_absolute_x_transformed: unsafe extern "C" fn(*mut c_void, u32) -> c_double;
+            lib::libinput_event_pointer_get_absolute_y_transformed: unsafe extern "C" fn(*mut c_void, u32) -> c_double;
+            lib::libinput_event_pointer_get_button: unsafe extern "C" fn(*mut c_void) -> u32;
+            lib::libinput_event_pointer_get_button_state: unsafe extern "C" fn(*mut c_void) -> c_int;
+            lib::libinput_event_pointer_get_axis_source: unsafe extern "C" fn(*mut c_void) -> c_int;
+            lib::libinput_event_pointer_get_axis_value_discrete: unsafe extern "C" fn(*mut c_void, c_int) -> c_double;
+            lib::libinput_event_pointer_get_scroll_value_v120: unsafe extern "C" fn(*mut c_void, c_int) -> c_double;
         }
     }
 
