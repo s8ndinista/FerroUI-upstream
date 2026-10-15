@@ -1,0 +1,2469 @@
+// The COM interfaces of the Windows Runtime the WinUI integration uses, for the MicroCom
+// generator (src/tools/MicroCom.CodeGenerator), as the Windows backend declares its own in
+// `win_rt/winrt.idl`. The reference has no such file: it is written against the projections
+// of its runtime (C#/WinRT). Every interface below is the one of the metadata, with its
+// identifier and its methods in the order of the vtable:
+//
+// * Microsoft.UI.Xaml, Microsoft.UI.Input, Microsoft.UI.Dispatching, Microsoft.UI.Content:
+//   `Microsoft.UI.Xaml.winmd` and `Microsoft.UI.winmd` of the Windows App SDK 1.6
+//   (package Microsoft.WindowsAppSDK 1.6.241114003);
+// * Windows.*: `Windows.Foundation.UniversalApiContract.winmd` and
+//   `Windows.Foundation.FoundationContract.winmd` of the Windows SDK 10.0.19041.
+//
+// `scripts/winui/winui-idl.py` writes this file from those files (docs/porting/winui.md,
+// section 3). A property is a `[propget]` and a `[propput]` method, an event the two methods
+// `add_` and `remove_`; an overloaded method has the name of its overload attribute. A
+// runtime class is passed as its default interface, a class or an interface the file does
+// not declare as `IInspectable*` or `void*`, an enumeration the file does not declare as its
+// underlying type. A parameterized interface or delegate is declared for each instance the
+// integration uses, under a name of its own, with the identifier the Windows Runtime
+// derives from its signature (the comment above it; a test of the crate derives it again).
+@rust-types-from super
+@rust-map HSTRING isize
+@rust-map GUID Guid
+@rust-map boolean u8
+@rust-map BYTE u8
+@rust-map WCHAR u16
+@rust-map INT16 i16
+@rust-map UINT16 u16
+@rust-map INT32 i32
+@rust-map UINT32 u32
+@rust-map INT64 i64
+@rust-map UINT64 u64
+@rust-map FLOAT f32
+@rust-map DOUBLE f64
+
+enum TrustLevel
+{
+    BaseTrust,
+    PartialTrust,
+    FullTrust
+}
+
+[uuid(AF86E2E0-B12D-4c6a-9C5A-D7AA65101E90)]
+interface IInspectable : IUnknown
+{
+    HRESULT GetIids([out] UINT32* iidCount, [out] GUID** iids);
+    HRESULT GetRuntimeClassName([out] HSTRING* className);
+    HRESULT GetTrustLevel([out] TrustLevel* trustLevel);
+}
+
+[uuid(00000035-0000-0000-C000-000000000046)]
+interface IActivationFactory : IInspectable
+{
+    HRESULT ActivateInstance([out, retval] IInspectable** instance);
+}
+
+// objidl.h: an object that may be called on any thread without marshaling. The handlers of the
+// completion of an asynchronous operation answer to it (the operation calls them on the thread
+// it completes on, as it calls the handlers of C#/WinRT, which are agile too).
+[uuid(94ea2b94-e9cc-49e0-c0ff-ee64ca8f5b90)]
+interface IAgileObject : IUnknown
+{
+}
+
+// microsoft.ui.xaml.media.dxinterop.h of the Windows App SDK: how a swap chain is given to a
+// swap chain panel.
+[uuid(63aad0b8-7c24-40ff-85a8-640d944cc325)]
+interface ISwapChainPanelNative : IUnknown
+{
+    HRESULT SetSwapChain(void* swapChain);
+}
+
+// Enumerations
+
+// Microsoft.UI.Xaml.Automation.Peers.AutomationControlType (int32)
+enum AutomationControlType
+{
+    Button = 0,
+    Calendar = 1,
+    CheckBox = 2,
+    ComboBox = 3,
+    Edit = 4,
+    Hyperlink = 5,
+    Image = 6,
+    ListItem = 7,
+    List = 8,
+    Menu = 9,
+    MenuBar = 10,
+    MenuItem = 11,
+    ProgressBar = 12,
+    RadioButton = 13,
+    ScrollBar = 14,
+    Slider = 15,
+    Spinner = 16,
+    StatusBar = 17,
+    Tab = 18,
+    TabItem = 19,
+    Text = 20,
+    ToolBar = 21,
+    ToolTip = 22,
+    Tree = 23,
+    TreeItem = 24,
+    Custom = 25,
+    Group = 26,
+    Thumb = 27,
+    DataGrid = 28,
+    DataItem = 29,
+    Document = 30,
+    SplitButton = 31,
+    Window = 32,
+    Pane = 33,
+    Header = 34,
+    HeaderItem = 35,
+    Table = 36,
+    TitleBar = 37,
+    Separator = 38,
+    SemanticZoom = 39,
+    AppBar = 40,
+    FlipView = 41,
+}
+// Microsoft.UI.Xaml.Automation.Peers.PatternInterface (int32)
+enum PatternInterface
+{
+    Invoke = 0,
+    Selection = 1,
+    Value = 2,
+    RangeValue = 3,
+    Scroll = 4,
+    ScrollItem = 5,
+    ExpandCollapse = 6,
+    Grid = 7,
+    GridItem = 8,
+    MultipleView = 9,
+    Window = 10,
+    SelectionItem = 11,
+    Dock = 12,
+    Table = 13,
+    TableItem = 14,
+    Toggle = 15,
+    Transform = 16,
+    Text = 17,
+    ItemContainer = 18,
+    VirtualizedItem = 19,
+    Text2 = 20,
+    TextChild = 21,
+    TextRange = 22,
+    Annotation = 23,
+    Drag = 24,
+    DropTarget = 25,
+    ObjectModel = 26,
+    Spreadsheet = 27,
+    SpreadsheetItem = 28,
+    Styles = 29,
+    Transform2 = 30,
+    SynchronizedInput = 31,
+    TextEdit = 32,
+    CustomNavigation = 33,
+}
+// Microsoft.UI.Xaml.Automation.Peers.AutomationEvents (int32)
+enum AutomationEvents
+{
+    ToolTipOpened = 0,
+    ToolTipClosed = 1,
+    MenuOpened = 2,
+    MenuClosed = 3,
+    AutomationFocusChanged = 4,
+    InvokePatternOnInvoked = 5,
+    SelectionItemPatternOnElementAddedToSelection = 6,
+    SelectionItemPatternOnElementRemovedFromSelection = 7,
+    SelectionItemPatternOnElementSelected = 8,
+    SelectionPatternOnInvalidated = 9,
+    TextPatternOnTextSelectionChanged = 10,
+    TextPatternOnTextChanged = 11,
+    AsyncContentLoaded = 12,
+    PropertyChanged = 13,
+    StructureChanged = 14,
+    DragStart = 15,
+    DragCancel = 16,
+    DragComplete = 17,
+    DragEnter = 18,
+    DragLeave = 19,
+    Dropped = 20,
+    LiveRegionChanged = 21,
+    InputReachedTarget = 22,
+    InputReachedOtherElement = 23,
+    InputDiscarded = 24,
+    WindowClosed = 25,
+    WindowOpened = 26,
+    ConversionTargetChanged = 27,
+    TextEditTextChanged = 28,
+    LayoutInvalidated = 29,
+}
+// Microsoft.UI.Xaml.Automation.ToggleState (int32)
+enum ToggleState
+{
+    Off = 0,
+    On = 1,
+    Indeterminate = 2,
+}
+// Microsoft.UI.Xaml.Automation.ExpandCollapseState (int32)
+enum ExpandCollapseState
+{
+    Collapsed = 0,
+    Expanded = 1,
+    PartiallyExpanded = 2,
+    LeafNode = 3,
+}
+// Microsoft.UI.Xaml.Automation.ScrollAmount (int32)
+enum ScrollAmount
+{
+    LargeDecrement = 0,
+    SmallDecrement = 1,
+    NoAmount = 2,
+    LargeIncrement = 3,
+    SmallIncrement = 4,
+}
+// Microsoft.UI.Xaml.FocusState (int32)
+enum FocusState
+{
+    Unfocused = 0,
+    Pointer = 1,
+    Keyboard = 2,
+    Programmatic = 3,
+}
+// Microsoft.UI.Xaml.Input.FocusNavigationDirection (int32)
+enum FocusNavigationDirection
+{
+    Next = 0,
+    Previous = 1,
+    Up = 2,
+    Down = 3,
+    Left = 4,
+    Right = 5,
+    None = 6,
+}
+// Microsoft.UI.Input.PointerDeviceType (int32)
+enum PointerDeviceType
+{
+    Touch = 0,
+    Pen = 1,
+    Mouse = 2,
+    Touchpad = 3,
+}
+// Microsoft.UI.Input.PointerUpdateKind (int32)
+enum PointerUpdateKind
+{
+    Other = 0,
+    LeftButtonPressed = 1,
+    LeftButtonReleased = 2,
+    RightButtonPressed = 3,
+    RightButtonReleased = 4,
+    MiddleButtonPressed = 5,
+    MiddleButtonReleased = 6,
+    XButton1Pressed = 7,
+    XButton1Released = 8,
+    XButton2Pressed = 9,
+    XButton2Released = 10,
+}
+// Microsoft.UI.Input.InputSystemCursorShape (int32)
+enum InputSystemCursorShape
+{
+    Arrow = 0,
+    Cross = 1,
+    Hand = 3,
+    Help = 4,
+    IBeam = 5,
+    SizeAll = 6,
+    SizeNortheastSouthwest = 7,
+    SizeNorthSouth = 8,
+    SizeNorthwestSoutheast = 9,
+    SizeWestEast = 10,
+    UniversalNo = 11,
+    UpArrow = 12,
+    Wait = 13,
+    Pin = 14,
+    Person = 15,
+    AppStarting = 16,
+}
+// Windows.System.VirtualKey (int32)
+enum VirtualKey
+{
+    None = 0,
+    LeftButton = 1,
+    RightButton = 2,
+    Cancel = 3,
+    MiddleButton = 4,
+    XButton1 = 5,
+    XButton2 = 6,
+    Back = 8,
+    Tab = 9,
+    Clear = 12,
+    Enter = 13,
+    Shift = 16,
+    Control = 17,
+    Menu = 18,
+    Pause = 19,
+    CapitalLock = 20,
+    Kana = 21,
+    Hangul = 21,
+    Junja = 23,
+    Final = 24,
+    Hanja = 25,
+    Kanji = 25,
+    Escape = 27,
+    Convert = 28,
+    NonConvert = 29,
+    Accept = 30,
+    ModeChange = 31,
+    Space = 32,
+    PageUp = 33,
+    PageDown = 34,
+    End = 35,
+    Home = 36,
+    Left = 37,
+    Up = 38,
+    Right = 39,
+    Down = 40,
+    Select = 41,
+    Print = 42,
+    Execute = 43,
+    Snapshot = 44,
+    Insert = 45,
+    Delete = 46,
+    Help = 47,
+    Number0 = 48,
+    Number1 = 49,
+    Number2 = 50,
+    Number3 = 51,
+    Number4 = 52,
+    Number5 = 53,
+    Number6 = 54,
+    Number7 = 55,
+    Number8 = 56,
+    Number9 = 57,
+    A = 65,
+    B = 66,
+    C = 67,
+    D = 68,
+    E = 69,
+    F = 70,
+    G = 71,
+    H = 72,
+    I = 73,
+    J = 74,
+    K = 75,
+    L = 76,
+    M = 77,
+    N = 78,
+    O = 79,
+    P = 80,
+    Q = 81,
+    R = 82,
+    S = 83,
+    T = 84,
+    U = 85,
+    V = 86,
+    W = 87,
+    X = 88,
+    Y = 89,
+    Z = 90,
+    LeftWindows = 91,
+    RightWindows = 92,
+    Application = 93,
+    Sleep = 95,
+    NumberPad0 = 96,
+    NumberPad1 = 97,
+    NumberPad2 = 98,
+    NumberPad3 = 99,
+    NumberPad4 = 100,
+    NumberPad5 = 101,
+    NumberPad6 = 102,
+    NumberPad7 = 103,
+    NumberPad8 = 104,
+    NumberPad9 = 105,
+    Multiply = 106,
+    Add = 107,
+    Separator = 108,
+    Subtract = 109,
+    Decimal = 110,
+    Divide = 111,
+    F1 = 112,
+    F2 = 113,
+    F3 = 114,
+    F4 = 115,
+    F5 = 116,
+    F6 = 117,
+    F7 = 118,
+    F8 = 119,
+    F9 = 120,
+    F10 = 121,
+    F11 = 122,
+    F12 = 123,
+    F13 = 124,
+    F14 = 125,
+    F15 = 126,
+    F16 = 127,
+    F17 = 128,
+    F18 = 129,
+    F19 = 130,
+    F20 = 131,
+    F21 = 132,
+    F22 = 133,
+    F23 = 134,
+    F24 = 135,
+    NavigationView = 136,
+    NavigationMenu = 137,
+    NavigationUp = 138,
+    NavigationDown = 139,
+    NavigationLeft = 140,
+    NavigationRight = 141,
+    NavigationAccept = 142,
+    NavigationCancel = 143,
+    NumberKeyLock = 144,
+    Scroll = 145,
+    LeftShift = 160,
+    RightShift = 161,
+    LeftControl = 162,
+    RightControl = 163,
+    LeftMenu = 164,
+    RightMenu = 165,
+    GoBack = 166,
+    GoForward = 167,
+    Refresh = 168,
+    Stop = 169,
+    Search = 170,
+    Favorites = 171,
+    GoHome = 172,
+    GamepadA = 195,
+    GamepadB = 196,
+    GamepadX = 197,
+    GamepadY = 198,
+    GamepadRightShoulder = 199,
+    GamepadLeftShoulder = 200,
+    GamepadLeftTrigger = 201,
+    GamepadRightTrigger = 202,
+    GamepadDPadUp = 203,
+    GamepadDPadDown = 204,
+    GamepadDPadLeft = 205,
+    GamepadDPadRight = 206,
+    GamepadMenu = 207,
+    GamepadView = 208,
+    GamepadLeftThumbstickButton = 209,
+    GamepadRightThumbstickButton = 210,
+    GamepadLeftThumbstickUp = 211,
+    GamepadLeftThumbstickDown = 212,
+    GamepadLeftThumbstickRight = 213,
+    GamepadLeftThumbstickLeft = 214,
+    GamepadRightThumbstickUp = 215,
+    GamepadRightThumbstickDown = 216,
+    GamepadRightThumbstickRight = 217,
+    GamepadRightThumbstickLeft = 218,
+}
+// Windows.System.VirtualKeyModifiers (uint32)
+enum VirtualKeyModifiers
+{
+    None = 0,
+    Control = 1,
+    Menu = 2,
+    Shift = 4,
+    Windows = 8,
+}
+// Windows.UI.Core.CoreVirtualKeyStates (uint32)
+enum CoreVirtualKeyStates
+{
+    None = 0,
+    Down = 1,
+    Locked = 2,
+}
+// Windows.UI.Text.Core.CoreTextInputScope (int32)
+enum CoreTextInputScope
+{
+    Default = 0,
+    Url = 1,
+    FilePath = 2,
+    FileName = 3,
+    EmailUserName = 4,
+    EmailAddress = 5,
+    UserName = 6,
+    PersonalFullName = 7,
+    PersonalNamePrefix = 8,
+    PersonalGivenName = 9,
+    PersonalMiddleName = 10,
+    PersonalSurname = 11,
+    PersonalNameSuffix = 12,
+    Address = 13,
+    AddressPostalCode = 14,
+    AddressStreet = 15,
+    AddressStateOrProvince = 16,
+    AddressCity = 17,
+    AddressCountryName = 18,
+    AddressCountryShortName = 19,
+    CurrencyAmountAndSymbol = 20,
+    CurrencyAmount = 21,
+    Date = 22,
+    DateMonth = 23,
+    DateDay = 24,
+    DateYear = 25,
+    DateMonthName = 26,
+    DateDayName = 27,
+    Number = 29,
+    SingleCharacter = 30,
+    Password = 31,
+    TelephoneNumber = 32,
+    TelephoneCountryCode = 33,
+    TelephoneAreaCode = 34,
+    TelephoneLocalNumber = 35,
+    Time = 36,
+    TimeHour = 37,
+    TimeMinuteOrSecond = 38,
+    NumberFullWidth = 39,
+    AlphanumericHalfWidth = 40,
+    AlphanumericFullWidth = 41,
+    CurrencyChinese = 42,
+    Bopomofo = 43,
+    Hiragana = 44,
+    KatakanaHalfWidth = 45,
+    KatakanaFullWidth = 46,
+    Hanja = 47,
+    HangulHalfWidth = 48,
+    HangulFullWidth = 49,
+    Search = 50,
+    Formula = 51,
+    SearchIncremental = 52,
+    ChineseHalfWidth = 53,
+    ChineseFullWidth = 54,
+    NativeScript = 55,
+    Text = 57,
+    Chat = 58,
+    NameOrPhoneNumber = 59,
+    EmailUserNameOrAddress = 60,
+    Private = 61,
+    Maps = 62,
+    PasswordNumeric = 63,
+    FormulaNumber = 67,
+    ChatWithoutEmoji = 68,
+    Digits = 28,
+    PinNumeric = 64,
+    PinAlphanumeric = 65,
+}
+// Windows.UI.Text.Core.CoreTextInputPaneDisplayPolicy (int32)
+enum CoreTextInputPaneDisplayPolicy
+{
+    Automatic = 0,
+    Manual = 1,
+}
+// Windows.UI.Text.Core.CoreTextTextUpdatingResult (int32)
+enum CoreTextTextUpdatingResult
+{
+    Succeeded = 0,
+    Failed = 1,
+}
+// Windows.UI.Text.Core.CoreTextSelectionUpdatingResult (int32)
+enum CoreTextSelectionUpdatingResult
+{
+    Succeeded = 0,
+    Failed = 1,
+}
+// Windows.UI.Text.Core.CoreTextFormatUpdatingResult (int32)
+enum CoreTextFormatUpdatingResult
+{
+    Succeeded = 0,
+    Failed = 1,
+}
+// Windows.ApplicationModel.DataTransfer.DataPackageOperation (uint32)
+enum DataPackageOperation
+{
+    None = 0,
+    Copy = 1,
+    Move = 2,
+    Link = 4,
+}
+// Windows.Foundation.AsyncStatus (int32)
+enum AsyncStatus
+{
+    Canceled = 2,
+    Completed = 1,
+    Error = 3,
+    Started = 0,
+}
+
+// Structures
+
+// Windows.Foundation.EventRegistrationToken
+struct EventRegistrationToken
+{
+    INT64 Value;
+}
+// Windows.Foundation.Rect
+struct Rect
+{
+    FLOAT X;
+    FLOAT Y;
+    FLOAT Width;
+    FLOAT Height;
+}
+// Windows.Foundation.Size
+struct Size
+{
+    FLOAT Width;
+    FLOAT Height;
+}
+// Windows.Foundation.Point
+struct Point
+{
+    FLOAT X;
+    FLOAT Y;
+}
+// Windows.Foundation.Numerics.Vector3
+struct Vector3
+{
+    FLOAT X;
+    FLOAT Y;
+    FLOAT Z;
+}
+// Windows.Foundation.Numerics.Matrix4x4
+struct Matrix4x4
+{
+    FLOAT M11;
+    FLOAT M12;
+    FLOAT M13;
+    FLOAT M14;
+    FLOAT M21;
+    FLOAT M22;
+    FLOAT M23;
+    FLOAT M24;
+    FLOAT M31;
+    FLOAT M32;
+    FLOAT M33;
+    FLOAT M34;
+    FLOAT M41;
+    FLOAT M42;
+    FLOAT M43;
+    FLOAT M44;
+}
+// Windows.Foundation.Numerics.Vector2
+struct Vector2
+{
+    FLOAT X;
+    FLOAT Y;
+}
+// Microsoft.UI.Xaml.Thickness
+struct Thickness
+{
+    DOUBLE Left;
+    DOUBLE Top;
+    DOUBLE Right;
+    DOUBLE Bottom;
+}
+// Windows.UI.Color
+struct Color
+{
+    BYTE A;
+    BYTE R;
+    BYTE G;
+    BYTE B;
+}
+// Windows.UI.Core.CorePhysicalKeyStatus
+struct CorePhysicalKeyStatus
+{
+    UINT32 RepeatCount;
+    UINT32 ScanCode;
+    boolean IsExtendedKey;
+    boolean IsMenuKeyDown;
+    boolean WasKeyDown;
+    boolean IsKeyReleased;
+}
+// Microsoft.UI.Xaml.Automation.Peers.RawElementProviderRuntimeId
+struct RawElementProviderRuntimeId
+{
+    UINT32 Part1;
+    UINT32 Part2;
+}
+// Microsoft.UI.WindowId
+struct WindowId
+{
+    UINT64 Value;
+}
+// Microsoft.UI.DisplayId
+struct DisplayId
+{
+    UINT64 Value;
+}
+// Windows.UI.Text.Core.CoreTextRange
+struct CoreTextRange
+{
+    INT32 StartCaretPosition;
+    INT32 EndCaretPosition;
+}
+// Windows.Foundation.DateTime
+struct DateTime
+{
+    INT64 UniversalTime;
+}
+
+// Interfaces and delegates
+
+// Windows.Foundation.IAsyncInfo
+[uuid(00000036-0000-0000-C000-000000000046)]
+interface IAsyncInfo : IInspectable
+{
+    [propget] HRESULT Id([out, retval] UINT32* result);
+    [propget] HRESULT Status([out, retval] AsyncStatus* result);
+    [propget] HRESULT ErrorCode([out, retval] INT32* result);
+    HRESULT Cancel();
+    HRESULT Close();
+}
+
+// Windows.Foundation.IClosable
+[uuid(30D5A829-7FA4-4026-83BB-D75BAE4EA99E)]
+interface IClosable : IInspectable
+{
+    HRESULT Close();
+}
+
+// Microsoft.UI.Xaml.IApplication
+[uuid(06A8F4E7-1146-55AF-820D-EBD55643B021)]
+interface IApplication : IInspectable
+{
+    [propget] HRESULT Resources([out, retval] IInspectable** result);
+    [propput] HRESULT Resources(IInspectable* value);
+    [propget] HRESULT DebugSettings([out, retval] IInspectable** result);
+    [propget] HRESULT RequestedTheme([out, retval] INT32* result);
+    [propput] HRESULT RequestedTheme(INT32 value);
+    [propget] HRESULT FocusVisualKind([out, retval] INT32* result);
+    [propput] HRESULT FocusVisualKind(INT32 value);
+    [propget] HRESULT HighContrastAdjustment([out, retval] UINT32* result);
+    [propput] HRESULT HighContrastAdjustment(UINT32 value);
+    HRESULT add_UnhandledException(void* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_UnhandledException(EventRegistrationToken token);
+    HRESULT Exit();
+}
+
+// Microsoft.UI.Xaml.IApplicationStatics
+[uuid(4E0D09F5-4358-512C-A987-503B52848E95)]
+interface IApplicationStatics : IInspectable
+{
+    [propget] HRESULT Current([out, retval] IApplication** result);
+    HRESULT Start(ApplicationInitializationCallback* callback);
+    HRESULT LoadComponent(IInspectable* component, IInspectable* resourceLocator);
+    HRESULT LoadComponentWithResourceLocation(IInspectable* component, IInspectable* resourceLocator, INT32 componentResourceLocation);
+}
+
+// Microsoft.UI.Xaml.IApplicationFactory
+[uuid(9FD96657-5294-5A65-A1DB-4FEA143597DA)]
+interface IApplicationFactory : IInspectable
+{
+    HRESULT CreateInstance(IInspectable* baseInterface, [out] IInspectable** innerInterface, [out, retval] IApplication** result);
+}
+
+// Microsoft.UI.Xaml.IApplicationOverrides
+[uuid(A33E81EF-C665-503B-8827-D27EF1720A06)]
+interface IApplicationOverrides : IInspectable
+{
+    HRESULT OnLaunched(IInspectable* args);
+}
+
+// Microsoft.UI.Xaml.ApplicationInitializationCallback
+[uuid(D8EEF1C9-1234-56F1-9963-45DD9C80A661)]
+interface ApplicationInitializationCallback : IUnknown
+{
+    HRESULT Invoke(IInspectable* p);
+}
+
+// Microsoft.UI.Xaml.IWindow
+[uuid(61F0EC79-5D52-56B5-86FB-40FA4AF288B0)]
+interface IWindow : IInspectable
+{
+    [propget] HRESULT Bounds([out, retval] Rect* result);
+    [propget] HRESULT Visible([out, retval] boolean* result);
+    [propget] HRESULT Content([out, retval] IUIElement** result);
+    [propput] HRESULT Content(IUIElement* value);
+    [propget] HRESULT CoreWindow([out, retval] IInspectable** result);
+    [propget] HRESULT Compositor([out, retval] IInspectable** result);
+    [propget] HRESULT Dispatcher([out, retval] IInspectable** result);
+    [propget] HRESULT DispatcherQueue([out, retval] IDispatcherQueue** result);
+    [propget] HRESULT Title([out, retval] HSTRING* result);
+    [propput] HRESULT Title(HSTRING value);
+    [propget] HRESULT ExtendsContentIntoTitleBar([out, retval] boolean* result);
+    [propput] HRESULT ExtendsContentIntoTitleBar(boolean value);
+    HRESULT add_Activated(void* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_Activated(EventRegistrationToken token);
+    HRESULT add_Closed(TypedEventHandlerObjectWindowEventArgs* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_Closed(EventRegistrationToken token);
+    HRESULT add_SizeChanged(void* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_SizeChanged(EventRegistrationToken token);
+    HRESULT add_VisibilityChanged(void* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_VisibilityChanged(EventRegistrationToken token);
+    HRESULT Activate();
+    HRESULT Close();
+    HRESULT SetTitleBar(IUIElement* titleBar);
+}
+
+// Microsoft.UI.Xaml.IWindowFactory
+[uuid(F0441536-AFEF-5222-918F-324A9B2DEC75)]
+interface IWindowFactory : IInspectable
+{
+    HRESULT CreateInstance(IInspectable* baseInterface, [out] IInspectable** innerInterface, [out, retval] IWindow** result);
+}
+
+// Microsoft.UI.Xaml.IWindowStatics
+[uuid(8CC985E3-A41A-5DF4-B531-D3A1788D86C5)]
+interface IWindowStatics : IInspectable
+{
+    [propget] HRESULT Current([out, retval] IWindow** result);
+}
+
+// Microsoft.UI.Xaml.IDependencyObject
+[uuid(E7BEAEE7-160E-50F7-8789-D63463F979FA)]
+interface IDependencyObject : IInspectable
+{
+    HRESULT GetValue(IInspectable* dp, [out, retval] IInspectable** result);
+    HRESULT SetValue(IInspectable* dp, IInspectable* value);
+    HRESULT ClearValue(IInspectable* dp);
+    HRESULT ReadLocalValue(IInspectable* dp, [out, retval] IInspectable** result);
+    HRESULT GetAnimationBaseValue(IInspectable* dp, [out, retval] IInspectable** result);
+    HRESULT RegisterPropertyChangedCallback(IInspectable* dp, void* callback, [out, retval] INT64* result);
+    HRESULT UnregisterPropertyChangedCallback(IInspectable* dp, INT64 token);
+    [propget] HRESULT Dispatcher([out, retval] IInspectable** result);
+    [propget] HRESULT DispatcherQueue([out, retval] IDispatcherQueue** result);
+}
+
+// Microsoft.UI.Xaml.IUIElement
+[uuid(C3C01020-320C-5CF6-9D24-D396BBFA4D8B)]
+interface IUIElement : IInspectable
+{
+    [propget] HRESULT DesiredSize([out, retval] Size* result);
+    [propget] HRESULT AllowDrop([out, retval] boolean* result);
+    [propput] HRESULT AllowDrop(boolean value);
+    [propget] HRESULT Opacity([out, retval] DOUBLE* result);
+    [propput] HRESULT Opacity(DOUBLE value);
+    [propget] HRESULT Clip([out, retval] IInspectable** result);
+    [propput] HRESULT Clip(IInspectable* value);
+    [propget] HRESULT RenderTransform([out, retval] IInspectable** result);
+    [propput] HRESULT RenderTransform(IInspectable* value);
+    [propget] HRESULT Projection([out, retval] IInspectable** result);
+    [propput] HRESULT Projection(IInspectable* value);
+    [propget] HRESULT Transform3D([out, retval] IInspectable** result);
+    [propput] HRESULT Transform3D(IInspectable* value);
+    [propget] HRESULT RenderTransformOrigin([out, retval] Point* result);
+    [propput] HRESULT RenderTransformOrigin(Point value);
+    [propget] HRESULT IsHitTestVisible([out, retval] boolean* result);
+    [propput] HRESULT IsHitTestVisible(boolean value);
+    [propget] HRESULT Visibility([out, retval] INT32* result);
+    [propput] HRESULT Visibility(INT32 value);
+    [propget] HRESULT RenderSize([out, retval] Size* result);
+    [propget] HRESULT UseLayoutRounding([out, retval] boolean* result);
+    [propput] HRESULT UseLayoutRounding(boolean value);
+    [propget] HRESULT Transitions([out, retval] IInspectable** result);
+    [propput] HRESULT Transitions(IInspectable* value);
+    [propget] HRESULT CacheMode([out, retval] IInspectable** result);
+    [propput] HRESULT CacheMode(IInspectable* value);
+    [propget] HRESULT IsTapEnabled([out, retval] boolean* result);
+    [propput] HRESULT IsTapEnabled(boolean value);
+    [propget] HRESULT IsDoubleTapEnabled([out, retval] boolean* result);
+    [propput] HRESULT IsDoubleTapEnabled(boolean value);
+    [propget] HRESULT CanDrag([out, retval] boolean* result);
+    [propput] HRESULT CanDrag(boolean value);
+    [propget] HRESULT IsRightTapEnabled([out, retval] boolean* result);
+    [propput] HRESULT IsRightTapEnabled(boolean value);
+    [propget] HRESULT IsHoldingEnabled([out, retval] boolean* result);
+    [propput] HRESULT IsHoldingEnabled(boolean value);
+    [propget] HRESULT ManipulationMode([out, retval] UINT32* result);
+    [propput] HRESULT ManipulationMode(UINT32 value);
+    [propget] HRESULT PointerCaptures([out, retval] void** result);
+    [propget] HRESULT ContextFlyout([out, retval] IInspectable** result);
+    [propput] HRESULT ContextFlyout(IInspectable* value);
+    [propget] HRESULT CompositeMode([out, retval] INT32* result);
+    [propput] HRESULT CompositeMode(INT32 value);
+    [propget] HRESULT Lights([out, retval] void** result);
+    [propget] HRESULT CanBeScrollAnchor([out, retval] boolean* result);
+    [propput] HRESULT CanBeScrollAnchor(boolean value);
+    [propget] HRESULT ExitDisplayModeOnAccessKeyInvoked([out, retval] boolean* result);
+    [propput] HRESULT ExitDisplayModeOnAccessKeyInvoked(boolean value);
+    [propget] HRESULT IsAccessKeyScope([out, retval] boolean* result);
+    [propput] HRESULT IsAccessKeyScope(boolean value);
+    [propget] HRESULT AccessKeyScopeOwner([out, retval] IDependencyObject** result);
+    [propput] HRESULT AccessKeyScopeOwner(IDependencyObject* value);
+    [propget] HRESULT AccessKey([out, retval] HSTRING* result);
+    [propput] HRESULT AccessKey(HSTRING value);
+    [propget] HRESULT KeyTipPlacementMode([out, retval] INT32* result);
+    [propput] HRESULT KeyTipPlacementMode(INT32 value);
+    [propget] HRESULT KeyTipHorizontalOffset([out, retval] DOUBLE* result);
+    [propput] HRESULT KeyTipHorizontalOffset(DOUBLE value);
+    [propget] HRESULT KeyTipVerticalOffset([out, retval] DOUBLE* result);
+    [propput] HRESULT KeyTipVerticalOffset(DOUBLE value);
+    [propget] HRESULT KeyTipTarget([out, retval] IDependencyObject** result);
+    [propput] HRESULT KeyTipTarget(IDependencyObject* value);
+    [propget] HRESULT XYFocusKeyboardNavigation([out, retval] INT32* result);
+    [propput] HRESULT XYFocusKeyboardNavigation(INT32 value);
+    [propget] HRESULT XYFocusUpNavigationStrategy([out, retval] INT32* result);
+    [propput] HRESULT XYFocusUpNavigationStrategy(INT32 value);
+    [propget] HRESULT XYFocusDownNavigationStrategy([out, retval] INT32* result);
+    [propput] HRESULT XYFocusDownNavigationStrategy(INT32 value);
+    [propget] HRESULT XYFocusLeftNavigationStrategy([out, retval] INT32* result);
+    [propput] HRESULT XYFocusLeftNavigationStrategy(INT32 value);
+    [propget] HRESULT XYFocusRightNavigationStrategy([out, retval] INT32* result);
+    [propput] HRESULT XYFocusRightNavigationStrategy(INT32 value);
+    [propget] HRESULT KeyboardAccelerators([out, retval] void** result);
+    [propget] HRESULT KeyboardAcceleratorPlacementTarget([out, retval] IDependencyObject** result);
+    [propput] HRESULT KeyboardAcceleratorPlacementTarget(IDependencyObject* value);
+    [propget] HRESULT KeyboardAcceleratorPlacementMode([out, retval] INT32* result);
+    [propput] HRESULT KeyboardAcceleratorPlacementMode(INT32 value);
+    [propget] HRESULT HighContrastAdjustment([out, retval] UINT32* result);
+    [propput] HRESULT HighContrastAdjustment(UINT32 value);
+    [propget] HRESULT TabFocusNavigation([out, retval] INT32* result);
+    [propput] HRESULT TabFocusNavigation(INT32 value);
+    [propget] HRESULT OpacityTransition([out, retval] IInspectable** result);
+    [propput] HRESULT OpacityTransition(IInspectable* value);
+    [propget] HRESULT Translation([out, retval] Vector3* result);
+    [propput] HRESULT Translation(Vector3 value);
+    [propget] HRESULT TranslationTransition([out, retval] IInspectable** result);
+    [propput] HRESULT TranslationTransition(IInspectable* value);
+    [propget] HRESULT Rotation([out, retval] FLOAT* result);
+    [propput] HRESULT Rotation(FLOAT value);
+    [propget] HRESULT RotationTransition([out, retval] IInspectable** result);
+    [propput] HRESULT RotationTransition(IInspectable* value);
+    [propget] HRESULT Scale([out, retval] Vector3* result);
+    [propput] HRESULT Scale(Vector3 value);
+    [propget] HRESULT ScaleTransition([out, retval] IInspectable** result);
+    [propput] HRESULT ScaleTransition(IInspectable* value);
+    [propget] HRESULT TransformMatrix([out, retval] Matrix4x4* result);
+    [propput] HRESULT TransformMatrix(Matrix4x4 value);
+    [propget] HRESULT CenterPoint([out, retval] Vector3* result);
+    [propput] HRESULT CenterPoint(Vector3 value);
+    [propget] HRESULT RotationAxis([out, retval] Vector3* result);
+    [propput] HRESULT RotationAxis(Vector3 value);
+    [propget] HRESULT ActualOffset([out, retval] Vector3* result);
+    [propget] HRESULT ActualSize([out, retval] Vector2* result);
+    [propget] HRESULT XamlRoot([out, retval] IXamlRoot** result);
+    [propput] HRESULT XamlRoot(IXamlRoot* value);
+    [propget] HRESULT Shadow([out, retval] IInspectable** result);
+    [propput] HRESULT Shadow(IInspectable* value);
+    [propget] HRESULT RasterizationScale([out, retval] DOUBLE* result);
+    [propput] HRESULT RasterizationScale(DOUBLE value);
+    [propget] HRESULT FocusState([out, retval] FocusState* result);
+    [propget] HRESULT UseSystemFocusVisuals([out, retval] boolean* result);
+    [propput] HRESULT UseSystemFocusVisuals(boolean value);
+    [propget] HRESULT XYFocusLeft([out, retval] IDependencyObject** result);
+    [propput] HRESULT XYFocusLeft(IDependencyObject* value);
+    [propget] HRESULT XYFocusRight([out, retval] IDependencyObject** result);
+    [propput] HRESULT XYFocusRight(IDependencyObject* value);
+    [propget] HRESULT XYFocusUp([out, retval] IDependencyObject** result);
+    [propput] HRESULT XYFocusUp(IDependencyObject* value);
+    [propget] HRESULT XYFocusDown([out, retval] IDependencyObject** result);
+    [propput] HRESULT XYFocusDown(IDependencyObject* value);
+    [propget] HRESULT IsTabStop([out, retval] boolean* result);
+    [propput] HRESULT IsTabStop(boolean value);
+    [propget] HRESULT TabIndex([out, retval] INT32* result);
+    [propput] HRESULT TabIndex(INT32 value);
+    HRESULT add_KeyUp(KeyEventHandler* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_KeyUp(EventRegistrationToken token);
+    HRESULT add_KeyDown(KeyEventHandler* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_KeyDown(EventRegistrationToken token);
+    HRESULT add_GotFocus(RoutedEventHandler* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_GotFocus(EventRegistrationToken token);
+    HRESULT add_LostFocus(RoutedEventHandler* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_LostFocus(EventRegistrationToken token);
+    HRESULT add_DragStarting(TypedEventHandlerUIElementDragStarting* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_DragStarting(EventRegistrationToken token);
+    HRESULT add_DropCompleted(void* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_DropCompleted(EventRegistrationToken token);
+    HRESULT add_CharacterReceived(TypedEventHandlerUIElementCharacterReceived* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_CharacterReceived(EventRegistrationToken token);
+    HRESULT add_DragEnter(DragEventHandler* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_DragEnter(EventRegistrationToken token);
+    HRESULT add_DragLeave(DragEventHandler* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_DragLeave(EventRegistrationToken token);
+    HRESULT add_DragOver(DragEventHandler* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_DragOver(EventRegistrationToken token);
+    HRESULT add_Drop(DragEventHandler* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_Drop(EventRegistrationToken token);
+    HRESULT add_PointerPressed(PointerEventHandler* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_PointerPressed(EventRegistrationToken token);
+    HRESULT add_PointerMoved(PointerEventHandler* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_PointerMoved(EventRegistrationToken token);
+    HRESULT add_PointerReleased(PointerEventHandler* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_PointerReleased(EventRegistrationToken token);
+    HRESULT add_PointerEntered(PointerEventHandler* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_PointerEntered(EventRegistrationToken token);
+    HRESULT add_PointerExited(PointerEventHandler* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_PointerExited(EventRegistrationToken token);
+    HRESULT add_PointerCaptureLost(PointerEventHandler* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_PointerCaptureLost(EventRegistrationToken token);
+    HRESULT add_PointerCanceled(PointerEventHandler* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_PointerCanceled(EventRegistrationToken token);
+    HRESULT add_PointerWheelChanged(PointerEventHandler* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_PointerWheelChanged(EventRegistrationToken token);
+    HRESULT add_Tapped(void* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_Tapped(EventRegistrationToken token);
+    HRESULT add_DoubleTapped(void* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_DoubleTapped(EventRegistrationToken token);
+    HRESULT add_Holding(void* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_Holding(EventRegistrationToken token);
+    HRESULT add_ContextRequested(void* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_ContextRequested(EventRegistrationToken token);
+    HRESULT add_ContextCanceled(void* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_ContextCanceled(EventRegistrationToken token);
+    HRESULT add_RightTapped(void* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_RightTapped(EventRegistrationToken token);
+    HRESULT add_ManipulationStarting(void* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_ManipulationStarting(EventRegistrationToken token);
+    HRESULT add_ManipulationInertiaStarting(void* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_ManipulationInertiaStarting(EventRegistrationToken token);
+    HRESULT add_ManipulationStarted(void* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_ManipulationStarted(EventRegistrationToken token);
+    HRESULT add_ManipulationDelta(void* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_ManipulationDelta(EventRegistrationToken token);
+    HRESULT add_ManipulationCompleted(void* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_ManipulationCompleted(EventRegistrationToken token);
+    HRESULT add_AccessKeyDisplayRequested(void* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_AccessKeyDisplayRequested(EventRegistrationToken token);
+    HRESULT add_AccessKeyDisplayDismissed(void* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_AccessKeyDisplayDismissed(EventRegistrationToken token);
+    HRESULT add_AccessKeyInvoked(void* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_AccessKeyInvoked(EventRegistrationToken token);
+    HRESULT add_ProcessKeyboardAccelerators(void* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_ProcessKeyboardAccelerators(EventRegistrationToken token);
+    HRESULT add_GettingFocus(void* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_GettingFocus(EventRegistrationToken token);
+    HRESULT add_LosingFocus(void* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_LosingFocus(EventRegistrationToken token);
+    HRESULT add_NoFocusCandidateFound(void* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_NoFocusCandidateFound(EventRegistrationToken token);
+    HRESULT add_PreviewKeyDown(KeyEventHandler* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_PreviewKeyDown(EventRegistrationToken token);
+    HRESULT add_PreviewKeyUp(KeyEventHandler* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_PreviewKeyUp(EventRegistrationToken token);
+    HRESULT add_BringIntoViewRequested(void* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_BringIntoViewRequested(EventRegistrationToken token);
+    HRESULT Measure(Size availableSize);
+    HRESULT Arrange(Rect finalRect);
+    HRESULT CapturePointer(IPointer* value, [out, retval] boolean* result);
+    HRESULT ReleasePointerCapture(IPointer* value);
+    HRESULT ReleasePointerCaptures();
+    HRESULT AddHandler(IRoutedEvent* routedEvent, IInspectable* handler, boolean handledEventsToo);
+    HRESULT RemoveHandler(IRoutedEvent* routedEvent, IInspectable* handler);
+    HRESULT TransformToVisual(IUIElement* visual, [out, retval] IGeneralTransform** result);
+    HRESULT InvalidateMeasure();
+    HRESULT InvalidateArrange();
+    HRESULT UpdateLayout();
+    HRESULT CancelDirectManipulations([out, retval] boolean* result);
+    HRESULT StartDragAsync(IPointerPoint* pointerPoint, [out, retval] IAsyncOperationDataPackageOperation** result);
+    HRESULT StartBringIntoView();
+    HRESULT StartBringIntoViewWithOptions(IInspectable* options);
+    HRESULT TryInvokeKeyboardAccelerator(IInspectable* args);
+    HRESULT Focus(FocusState value, [out, retval] boolean* result);
+    HRESULT StartAnimation(void* animation);
+    HRESULT StopAnimation(void* animation);
+}
+
+// Microsoft.UI.Xaml.IUIElementOverrides
+[uuid(9034F41E-AB7B-59E7-8168-50DE6B689DDE)]
+interface IUIElementOverrides : IInspectable
+{
+    HRESULT OnCreateAutomationPeer([out, retval] IAutomationPeer** result);
+    HRESULT OnDisconnectVisualChildren();
+    HRESULT FindSubElementsForTouchTargeting(Point point, Rect boundingRect, [out, retval] void** result);
+    HRESULT GetChildrenInTabFocusOrder([out, retval] void** result);
+    HRESULT OnKeyboardAcceleratorInvoked(IInspectable* args);
+    HRESULT OnProcessKeyboardAccelerators(IInspectable* args);
+    HRESULT OnBringIntoViewRequested(IInspectable* e);
+    HRESULT PopulatePropertyInfoOverride(HSTRING propertyName, IInspectable* animationPropertyInfo);
+}
+
+// Microsoft.UI.Xaml.IUIElementProtected
+[uuid(8F69B9E9-1F00-5834-9BF1-A9257BED39F0)]
+interface IUIElementProtected : IInspectable
+{
+    [propget] HRESULT ProtectedCursor([out, retval] IInputCursor** result);
+    [propput] HRESULT ProtectedCursor(IInputCursor* value);
+}
+
+// Microsoft.UI.Xaml.IUIElementStatics
+[uuid(D2921D87-3584-5E22-8A3A-C2C78DAB4F6E)]
+interface IUIElementStatics : IInspectable
+{
+    [propget] HRESULT KeyDownEvent([out, retval] IRoutedEvent** result);
+    [propget] HRESULT KeyUpEvent([out, retval] IRoutedEvent** result);
+    [propget] HRESULT PointerEnteredEvent([out, retval] IRoutedEvent** result);
+    [propget] HRESULT PointerPressedEvent([out, retval] IRoutedEvent** result);
+    [propget] HRESULT PointerMovedEvent([out, retval] IRoutedEvent** result);
+    [propget] HRESULT PointerReleasedEvent([out, retval] IRoutedEvent** result);
+    [propget] HRESULT PointerExitedEvent([out, retval] IRoutedEvent** result);
+    [propget] HRESULT PointerCaptureLostEvent([out, retval] IRoutedEvent** result);
+    [propget] HRESULT PointerCanceledEvent([out, retval] IRoutedEvent** result);
+    [propget] HRESULT PointerWheelChangedEvent([out, retval] IRoutedEvent** result);
+    [propget] HRESULT TappedEvent([out, retval] IRoutedEvent** result);
+    [propget] HRESULT DoubleTappedEvent([out, retval] IRoutedEvent** result);
+    [propget] HRESULT HoldingEvent([out, retval] IRoutedEvent** result);
+    [propget] HRESULT RightTappedEvent([out, retval] IRoutedEvent** result);
+    [propget] HRESULT ManipulationStartingEvent([out, retval] IRoutedEvent** result);
+    [propget] HRESULT ManipulationInertiaStartingEvent([out, retval] IRoutedEvent** result);
+    [propget] HRESULT ManipulationStartedEvent([out, retval] IRoutedEvent** result);
+    [propget] HRESULT ManipulationDeltaEvent([out, retval] IRoutedEvent** result);
+    [propget] HRESULT ManipulationCompletedEvent([out, retval] IRoutedEvent** result);
+    [propget] HRESULT DragEnterEvent([out, retval] IRoutedEvent** result);
+    [propget] HRESULT DragLeaveEvent([out, retval] IRoutedEvent** result);
+    [propget] HRESULT DragOverEvent([out, retval] IRoutedEvent** result);
+    [propget] HRESULT DropEvent([out, retval] IRoutedEvent** result);
+    [propget] HRESULT GettingFocusEvent([out, retval] IRoutedEvent** result);
+    [propget] HRESULT LosingFocusEvent([out, retval] IRoutedEvent** result);
+    [propget] HRESULT NoFocusCandidateFoundEvent([out, retval] IRoutedEvent** result);
+    [propget] HRESULT PreviewKeyDownEvent([out, retval] IRoutedEvent** result);
+    [propget] HRESULT CharacterReceivedEvent([out, retval] IRoutedEvent** result);
+    [propget] HRESULT PreviewKeyUpEvent([out, retval] IRoutedEvent** result);
+    [propget] HRESULT BringIntoViewRequestedEvent([out, retval] IRoutedEvent** result);
+    [propget] HRESULT ContextRequestedEvent([out, retval] IRoutedEvent** result);
+    [propget] HRESULT AllowDropProperty([out, retval] IInspectable** result);
+    [propget] HRESULT OpacityProperty([out, retval] IInspectable** result);
+    [propget] HRESULT ClipProperty([out, retval] IInspectable** result);
+    [propget] HRESULT RenderTransformProperty([out, retval] IInspectable** result);
+    [propget] HRESULT ProjectionProperty([out, retval] IInspectable** result);
+    [propget] HRESULT Transform3DProperty([out, retval] IInspectable** result);
+    [propget] HRESULT RenderTransformOriginProperty([out, retval] IInspectable** result);
+    [propget] HRESULT IsHitTestVisibleProperty([out, retval] IInspectable** result);
+    [propget] HRESULT VisibilityProperty([out, retval] IInspectable** result);
+    [propget] HRESULT UseLayoutRoundingProperty([out, retval] IInspectable** result);
+    [propget] HRESULT TransitionsProperty([out, retval] IInspectable** result);
+    [propget] HRESULT CacheModeProperty([out, retval] IInspectable** result);
+    [propget] HRESULT IsTapEnabledProperty([out, retval] IInspectable** result);
+    [propget] HRESULT IsDoubleTapEnabledProperty([out, retval] IInspectable** result);
+    [propget] HRESULT CanDragProperty([out, retval] IInspectable** result);
+    [propget] HRESULT IsRightTapEnabledProperty([out, retval] IInspectable** result);
+    [propget] HRESULT IsHoldingEnabledProperty([out, retval] IInspectable** result);
+    [propget] HRESULT ManipulationModeProperty([out, retval] IInspectable** result);
+    [propget] HRESULT PointerCapturesProperty([out, retval] IInspectable** result);
+    [propget] HRESULT ContextFlyoutProperty([out, retval] IInspectable** result);
+    [propget] HRESULT CompositeModeProperty([out, retval] IInspectable** result);
+    [propget] HRESULT LightsProperty([out, retval] IInspectable** result);
+    [propget] HRESULT CanBeScrollAnchorProperty([out, retval] IInspectable** result);
+    [propget] HRESULT ExitDisplayModeOnAccessKeyInvokedProperty([out, retval] IInspectable** result);
+    [propget] HRESULT IsAccessKeyScopeProperty([out, retval] IInspectable** result);
+    [propget] HRESULT AccessKeyScopeOwnerProperty([out, retval] IInspectable** result);
+    [propget] HRESULT AccessKeyProperty([out, retval] IInspectable** result);
+    [propget] HRESULT KeyTipPlacementModeProperty([out, retval] IInspectable** result);
+    [propget] HRESULT KeyTipHorizontalOffsetProperty([out, retval] IInspectable** result);
+    [propget] HRESULT KeyTipVerticalOffsetProperty([out, retval] IInspectable** result);
+    [propget] HRESULT KeyTipTargetProperty([out, retval] IInspectable** result);
+    [propget] HRESULT XYFocusKeyboardNavigationProperty([out, retval] IInspectable** result);
+    [propget] HRESULT XYFocusUpNavigationStrategyProperty([out, retval] IInspectable** result);
+    [propget] HRESULT XYFocusDownNavigationStrategyProperty([out, retval] IInspectable** result);
+    [propget] HRESULT XYFocusLeftNavigationStrategyProperty([out, retval] IInspectable** result);
+    [propget] HRESULT XYFocusRightNavigationStrategyProperty([out, retval] IInspectable** result);
+    [propget] HRESULT KeyboardAcceleratorPlacementTargetProperty([out, retval] IInspectable** result);
+    [propget] HRESULT KeyboardAcceleratorPlacementModeProperty([out, retval] IInspectable** result);
+    [propget] HRESULT HighContrastAdjustmentProperty([out, retval] IInspectable** result);
+    [propget] HRESULT TabFocusNavigationProperty([out, retval] IInspectable** result);
+    [propget] HRESULT ShadowProperty([out, retval] IInspectable** result);
+    [propget] HRESULT FocusStateProperty([out, retval] IInspectable** result);
+    [propget] HRESULT UseSystemFocusVisualsProperty([out, retval] IInspectable** result);
+    [propget] HRESULT XYFocusLeftProperty([out, retval] IInspectable** result);
+    [propget] HRESULT XYFocusRightProperty([out, retval] IInspectable** result);
+    [propget] HRESULT XYFocusUpProperty([out, retval] IInspectable** result);
+    [propget] HRESULT XYFocusDownProperty([out, retval] IInspectable** result);
+    [propget] HRESULT IsTabStopProperty([out, retval] IInspectable** result);
+    [propget] HRESULT TabIndexProperty([out, retval] IInspectable** result);
+    HRESULT TryStartDirectManipulation(IPointer* value, [out, retval] boolean* result);
+    HRESULT RegisterAsScrollPort(IUIElement* element);
+}
+
+// Microsoft.UI.Xaml.IFrameworkElement
+[uuid(FE08F13D-DC6A-5495-AD44-C2D8D21863B0)]
+interface IFrameworkElement : IInspectable
+{
+    [propget] HRESULT Triggers([out, retval] IInspectable** result);
+    [propget] HRESULT Resources([out, retval] IInspectable** result);
+    [propput] HRESULT Resources(IInspectable* value);
+    [propget] HRESULT Tag([out, retval] IInspectable** result);
+    [propput] HRESULT Tag(IInspectable* value);
+    [propget] HRESULT Language([out, retval] HSTRING* result);
+    [propput] HRESULT Language(HSTRING value);
+    [propget] HRESULT ActualWidth([out, retval] DOUBLE* result);
+    [propget] HRESULT ActualHeight([out, retval] DOUBLE* result);
+    [propget] HRESULT Width([out, retval] DOUBLE* result);
+    [propput] HRESULT Width(DOUBLE value);
+    [propget] HRESULT Height([out, retval] DOUBLE* result);
+    [propput] HRESULT Height(DOUBLE value);
+    [propget] HRESULT MinWidth([out, retval] DOUBLE* result);
+    [propput] HRESULT MinWidth(DOUBLE value);
+    [propget] HRESULT MaxWidth([out, retval] DOUBLE* result);
+    [propput] HRESULT MaxWidth(DOUBLE value);
+    [propget] HRESULT MinHeight([out, retval] DOUBLE* result);
+    [propput] HRESULT MinHeight(DOUBLE value);
+    [propget] HRESULT MaxHeight([out, retval] DOUBLE* result);
+    [propput] HRESULT MaxHeight(DOUBLE value);
+    [propget] HRESULT HorizontalAlignment([out, retval] INT32* result);
+    [propput] HRESULT HorizontalAlignment(INT32 value);
+    [propget] HRESULT VerticalAlignment([out, retval] INT32* result);
+    [propput] HRESULT VerticalAlignment(INT32 value);
+    [propget] HRESULT Margin([out, retval] Thickness* result);
+    [propput] HRESULT Margin(Thickness value);
+    [propget] HRESULT Name([out, retval] HSTRING* result);
+    [propput] HRESULT Name(HSTRING value);
+    [propget] HRESULT BaseUri([out, retval] IInspectable** result);
+    [propget] HRESULT DataContext([out, retval] IInspectable** result);
+    [propput] HRESULT DataContext(IInspectable* value);
+    [propget] HRESULT AllowFocusOnInteraction([out, retval] boolean* result);
+    [propput] HRESULT AllowFocusOnInteraction(boolean value);
+    [propget] HRESULT FocusVisualMargin([out, retval] Thickness* result);
+    [propput] HRESULT FocusVisualMargin(Thickness value);
+    [propget] HRESULT FocusVisualSecondaryThickness([out, retval] Thickness* result);
+    [propput] HRESULT FocusVisualSecondaryThickness(Thickness value);
+    [propget] HRESULT FocusVisualPrimaryThickness([out, retval] Thickness* result);
+    [propput] HRESULT FocusVisualPrimaryThickness(Thickness value);
+    [propget] HRESULT FocusVisualSecondaryBrush([out, retval] IBrush** result);
+    [propput] HRESULT FocusVisualSecondaryBrush(IBrush* value);
+    [propget] HRESULT FocusVisualPrimaryBrush([out, retval] IBrush** result);
+    [propput] HRESULT FocusVisualPrimaryBrush(IBrush* value);
+    [propget] HRESULT AllowFocusWhenDisabled([out, retval] boolean* result);
+    [propput] HRESULT AllowFocusWhenDisabled(boolean value);
+    [propget] HRESULT Style([out, retval] IInspectable** result);
+    [propput] HRESULT Style(IInspectable* value);
+    [propget] HRESULT Parent([out, retval] IDependencyObject** result);
+    [propget] HRESULT FlowDirection([out, retval] INT32* result);
+    [propput] HRESULT FlowDirection(INT32 value);
+    [propget] HRESULT RequestedTheme([out, retval] INT32* result);
+    [propput] HRESULT RequestedTheme(INT32 value);
+    [propget] HRESULT IsLoaded([out, retval] boolean* result);
+    [propget] HRESULT ActualTheme([out, retval] INT32* result);
+    HRESULT add_Loaded(RoutedEventHandler* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_Loaded(EventRegistrationToken token);
+    HRESULT add_Unloaded(RoutedEventHandler* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_Unloaded(EventRegistrationToken token);
+    HRESULT add_DataContextChanged(void* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_DataContextChanged(EventRegistrationToken token);
+    HRESULT add_SizeChanged(SizeChangedEventHandler* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_SizeChanged(EventRegistrationToken token);
+    HRESULT add_LayoutUpdated(void* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_LayoutUpdated(EventRegistrationToken token);
+    HRESULT add_Loading(void* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_Loading(EventRegistrationToken token);
+    HRESULT add_ActualThemeChanged(void* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_ActualThemeChanged(EventRegistrationToken token);
+    HRESULT add_EffectiveViewportChanged(void* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_EffectiveViewportChanged(EventRegistrationToken token);
+    HRESULT FindName(HSTRING name, [out, retval] IInspectable** result);
+    HRESULT SetBinding(IInspectable* dp, IInspectable* binding);
+    HRESULT GetBindingExpression(IInspectable* dp, [out, retval] IInspectable** result);
+}
+
+// Microsoft.UI.Xaml.Controls.IPanel
+[uuid(27A1B418-56F3-525E-B883-CEFED905EED3)]
+interface IPanel : IInspectable
+{
+    [propget] HRESULT Children([out, retval] IVectorUIElement** result);
+    [propget] HRESULT Background([out, retval] IBrush** result);
+    [propput] HRESULT Background(IBrush* value);
+    [propget] HRESULT IsItemsHost([out, retval] boolean* result);
+    [propget] HRESULT ChildrenTransitions([out, retval] IInspectable** result);
+    [propput] HRESULT ChildrenTransitions(IInspectable* value);
+    [propget] HRESULT BackgroundTransition([out, retval] IInspectable** result);
+    [propput] HRESULT BackgroundTransition(IInspectable* value);
+}
+
+// Microsoft.UI.Xaml.Controls.IGridFactory
+[uuid(B16BF561-FC6C-57C6-8EBC-0B06CE4513AA)]
+interface IGridFactory : IInspectable
+{
+    HRESULT CreateInstance(IInspectable* baseInterface, [out] IInspectable** innerInterface, [out, retval] IInspectable** result);
+}
+
+// Microsoft.UI.Xaml.Controls.ISwapChainPanel
+[uuid(08844F85-AA1B-540D-BEF2-B2BB7B257F8C)]
+interface ISwapChainPanel : IInspectable
+{
+    [propget] HRESULT CompositionScaleX([out, retval] FLOAT* result);
+    [propget] HRESULT CompositionScaleY([out, retval] FLOAT* result);
+    HRESULT add_CompositionScaleChanged(TypedEventHandlerSwapChainPanelObject* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_CompositionScaleChanged(EventRegistrationToken token);
+    HRESULT CreateCoreIndependentInputSource(UINT32 deviceKinds, [out, retval] IInspectable** result);
+}
+
+// Microsoft.UI.Xaml.Controls.ISwapChainPanelFactory
+[uuid(38D00B69-5759-5F37-9E1C-3AE0D4288B26)]
+interface ISwapChainPanelFactory : IInspectable
+{
+    HRESULT CreateInstance(IInspectable* baseInterface, [out] IInspectable** innerInterface, [out, retval] ISwapChainPanel** result);
+}
+
+// Microsoft.UI.Xaml.Media.IBrush
+[uuid(2DE3CB83-1329-5679-88F8-C822BC5442CB)]
+interface IBrush : IInspectable
+{
+    [propget] HRESULT Opacity([out, retval] DOUBLE* result);
+    [propput] HRESULT Opacity(DOUBLE value);
+    [propget] HRESULT Transform([out, retval] IInspectable** result);
+    [propput] HRESULT Transform(IInspectable* value);
+    [propget] HRESULT RelativeTransform([out, retval] IInspectable** result);
+    [propput] HRESULT RelativeTransform(IInspectable* value);
+}
+
+// Microsoft.UI.Xaml.Media.ISolidColorBrushFactory
+[uuid(7B559384-4DAA-54F4-91EF-33A23FD816CA)]
+interface ISolidColorBrushFactory : IInspectable
+{
+    HRESULT CreateInstanceWithColor(Color color, [out, retval] IInspectable** result);
+}
+
+// Microsoft.UI.Xaml.Media.IGeneralTransform
+[uuid(04EEDEEB-31E5-54C0-AE3F-8BD06645D339)]
+interface IGeneralTransform : IInspectable
+{
+    [propget] HRESULT Inverse([out, retval] IGeneralTransform** result);
+    HRESULT TransformPoint(Point point, [out, retval] Point* result);
+    HRESULT TryTransform(Point inPoint, [out] Point* outPoint, [out, retval] boolean* result);
+    HRESULT TransformBounds(Rect rect, [out, retval] Rect* result);
+}
+
+// Microsoft.UI.Xaml.IXamlRoot
+[uuid(60CB215A-AD15-520A-8B01-4416824F0441)]
+interface IXamlRoot : IInspectable
+{
+    [propget] HRESULT Content([out, retval] IUIElement** result);
+    [propget] HRESULT Size([out, retval] Size* result);
+    [propget] HRESULT RasterizationScale([out, retval] DOUBLE* result);
+    [propget] HRESULT IsHostVisible([out, retval] boolean* result);
+    HRESULT add_Changed(void* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_Changed(EventRegistrationToken token);
+}
+
+// Microsoft.UI.Xaml.IXamlRoot2
+[uuid(BDEE0F42-71CB-50C5-829B-4614D98C5794)]
+interface IXamlRoot2 : IInspectable
+{
+    [propget] HRESULT ContentIslandEnvironment([out, retval] IContentIslandEnvironment** result);
+}
+
+// Microsoft.UI.Xaml.IWindowEventArgs
+[uuid(1140827C-FE0A-5268-BC2B-F4492C2CCB49)]
+interface IWindowEventArgs : IInspectable
+{
+    [propget] HRESULT Handled([out, retval] boolean* result);
+    [propput] HRESULT Handled(boolean value);
+}
+
+// Microsoft.UI.Xaml.IRoutedEvent
+[uuid(B2B432BC-EFCA-575E-9D2A-703F8B9C380F)]
+interface IRoutedEvent : IInspectable
+{
+}
+
+// Microsoft.UI.Xaml.IRoutedEventArgs
+[uuid(0908C407-1C7D-5DE3-9C50-D971C62EC8EC)]
+interface IRoutedEventArgs : IInspectable
+{
+    [propget] HRESULT OriginalSource([out, retval] IInspectable** result);
+}
+
+// Microsoft.UI.Xaml.ISizeChangedEventArgs
+[uuid(FE76324E-6DFB-58B1-9DCD-886CA8F9A2EA)]
+interface ISizeChangedEventArgs : IInspectable
+{
+    [propget] HRESULT PreviousSize([out, retval] Size* result);
+    [propget] HRESULT NewSize([out, retval] Size* result);
+}
+
+// Microsoft.UI.Xaml.RoutedEventHandler
+[uuid(DAE23D85-69CA-5BDF-805B-6161A3A215CC)]
+interface RoutedEventHandler : IUnknown
+{
+    HRESULT Invoke(IInspectable* sender, IRoutedEventArgs* e);
+}
+
+// Microsoft.UI.Xaml.SizeChangedEventHandler
+[uuid(8D7B1A58-14C6-51C9-892C-9FCCE368E77D)]
+interface SizeChangedEventHandler : IUnknown
+{
+    HRESULT Invoke(IInspectable* sender, ISizeChangedEventArgs* e);
+}
+
+// Microsoft.UI.Xaml.DragEventHandler
+[uuid(277AFC83-CB67-56C8-B601-1B9C0F1C3D32)]
+interface DragEventHandler : IUnknown
+{
+    HRESULT Invoke(IInspectable* sender, IDragEventArgs* e);
+}
+
+// Microsoft.UI.Xaml.IDragEventArgs
+[uuid(47AC5757-E4BC-52BA-8AB9-1BF81AAD7900)]
+interface IDragEventArgs : IInspectable
+{
+    [propget] HRESULT Handled([out, retval] boolean* result);
+    [propput] HRESULT Handled(boolean value);
+    [propget] HRESULT Data([out, retval] IDataPackage** result);
+    [propput] HRESULT Data(IDataPackage* value);
+    [propget] HRESULT DataView([out, retval] IDataPackageView** result);
+    [propget] HRESULT DragUIOverride([out, retval] IInspectable** result);
+    [propget] HRESULT Modifiers([out, retval] UINT32* result);
+    [propget] HRESULT AcceptedOperation([out, retval] DataPackageOperation* result);
+    [propput] HRESULT AcceptedOperation(DataPackageOperation value);
+    [propget] HRESULT AllowedOperations([out, retval] DataPackageOperation* result);
+    HRESULT GetDeferral([out, retval] IDragOperationDeferral** result);
+    HRESULT GetPosition(IUIElement* relativeTo, [out, retval] Point* result);
+}
+
+// Microsoft.UI.Xaml.IDragOperationDeferral
+[uuid(462C1880-FC6A-5035-8ABF-564BACB78158)]
+interface IDragOperationDeferral : IInspectable
+{
+    HRESULT Complete();
+}
+
+// Microsoft.UI.Xaml.IDragStartingEventArgs
+[uuid(AD17BACE-9613-5666-A31B-79A73FBA77CF)]
+interface IDragStartingEventArgs : IInspectable
+{
+    [propget] HRESULT Cancel([out, retval] boolean* result);
+    [propput] HRESULT Cancel(boolean value);
+    [propget] HRESULT Data([out, retval] IDataPackage** result);
+    [propget] HRESULT DragUI([out, retval] IDragUI** result);
+    [propget] HRESULT AllowedOperations([out, retval] DataPackageOperation* result);
+    [propput] HRESULT AllowedOperations(DataPackageOperation value);
+    HRESULT GetDeferral([out, retval] IDragOperationDeferral** result);
+    HRESULT GetPosition(IUIElement* relativeTo, [out, retval] Point* result);
+}
+
+// Microsoft.UI.Xaml.IDragUI
+[uuid(35F170E0-93BF-58DA-877A-8EC77D8D9F00)]
+interface IDragUI : IInspectable
+{
+    HRESULT SetContentFromBitmapImage(IInspectable* bitmapImage);
+    HRESULT SetContentFromBitmapImageWithAnchorPoint(IInspectable* bitmapImage, Point anchorPoint);
+    HRESULT SetContentFromSoftwareBitmap(IInspectable* softwareBitmap);
+    HRESULT SetContentFromSoftwareBitmapWithAnchorPoint(IInspectable* softwareBitmap, Point anchorPoint);
+    HRESULT SetContentFromDataPackage();
+}
+
+// Microsoft.UI.Xaml.Input.IPointer
+[uuid(1F9AFBF5-11A3-5E68-AA1B-72FEBFA0AB23)]
+interface IPointer : IInspectable
+{
+    [propget] HRESULT PointerId([out, retval] UINT32* result);
+    [propget] HRESULT PointerDeviceType([out, retval] PointerDeviceType* result);
+    [propget] HRESULT IsInContact([out, retval] boolean* result);
+    [propget] HRESULT IsInRange([out, retval] boolean* result);
+}
+
+// Microsoft.UI.Xaml.Input.IPointerRoutedEventArgs
+[uuid(66E78A9A-1BEC-5F92-B1A1-EA6334EE511C)]
+interface IPointerRoutedEventArgs : IInspectable
+{
+    [propget] HRESULT Pointer([out, retval] IPointer** result);
+    [propget] HRESULT KeyModifiers([out, retval] VirtualKeyModifiers* result);
+    [propget] HRESULT Handled([out, retval] boolean* result);
+    [propput] HRESULT Handled(boolean value);
+    [propget] HRESULT IsGenerated([out, retval] boolean* result);
+    HRESULT GetCurrentPoint(IUIElement* relativeTo, [out, retval] IPointerPoint** result);
+    HRESULT GetIntermediatePoints(IUIElement* relativeTo, [out, retval] IVectorPointerPoint** result);
+}
+
+// Microsoft.UI.Xaml.Input.PointerEventHandler
+[uuid(A48A71E1-8BB4-5597-9E31-903A3F6A04FB)]
+interface PointerEventHandler : IUnknown
+{
+    HRESULT Invoke(IInspectable* sender, IPointerRoutedEventArgs* e);
+}
+
+// Microsoft.UI.Xaml.Input.IKeyRoutedEventArgs
+[uuid(EE357007-A2D6-5C75-9431-05FD66EC7915)]
+interface IKeyRoutedEventArgs : IInspectable
+{
+    [propget] HRESULT Key([out, retval] VirtualKey* result);
+    [propget] HRESULT KeyStatus([out, retval] CorePhysicalKeyStatus* result);
+    [propget] HRESULT Handled([out, retval] boolean* result);
+    [propput] HRESULT Handled(boolean value);
+    [propget] HRESULT OriginalKey([out, retval] VirtualKey* result);
+    [propget] HRESULT DeviceId([out, retval] HSTRING* result);
+}
+
+// Microsoft.UI.Xaml.Input.KeyEventHandler
+[uuid(DB68E7CC-9A2B-527D-9989-25284DACCC03)]
+interface KeyEventHandler : IUnknown
+{
+    HRESULT Invoke(IInspectable* sender, IKeyRoutedEventArgs* e);
+}
+
+// Microsoft.UI.Xaml.Input.ICharacterReceivedRoutedEventArgs
+[uuid(E26CA5BB-34C3-5C1E-9A16-00B80B07A899)]
+interface ICharacterReceivedRoutedEventArgs : IInspectable
+{
+    [propget] HRESULT Character([out, retval] WCHAR* result);
+    [propget] HRESULT KeyStatus([out, retval] CorePhysicalKeyStatus* result);
+    [propget] HRESULT Handled([out, retval] boolean* result);
+    [propput] HRESULT Handled(boolean value);
+}
+
+// Microsoft.UI.Xaml.Input.IFocusManagerStatics
+[uuid(E73DCE04-E23A-5FB3-96AB-7DF04C51DFF2)]
+interface IFocusManagerStatics : IInspectable
+{
+    HRESULT add_GotFocus(void* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_GotFocus(EventRegistrationToken token);
+    HRESULT add_LostFocus(void* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_LostFocus(EventRegistrationToken token);
+    HRESULT add_GettingFocus(void* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_GettingFocus(EventRegistrationToken token);
+    HRESULT add_LosingFocus(void* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_LosingFocus(EventRegistrationToken token);
+    HRESULT TryFocusAsync(IDependencyObject* element, FocusState value, [out, retval] void** result);
+    HRESULT TryMoveFocusAsync(FocusNavigationDirection focusNavigationDirection, [out, retval] void** result);
+    HRESULT TryMoveFocusWithOptionsAsync(FocusNavigationDirection focusNavigationDirection, IFindNextElementOptions* focusNavigationOptions, [out, retval] void** result);
+    HRESULT TryMoveFocusWithOptions(FocusNavigationDirection focusNavigationDirection, IFindNextElementOptions* focusNavigationOptions, [out, retval] boolean* result);
+    HRESULT FindNextElement(FocusNavigationDirection focusNavigationDirection, [out, retval] IDependencyObject** result);
+    HRESULT FindFirstFocusableElement(IDependencyObject* searchScope, [out, retval] IDependencyObject** result);
+    HRESULT FindLastFocusableElement(IDependencyObject* searchScope, [out, retval] IDependencyObject** result);
+    HRESULT FindNextElementWithOptions(FocusNavigationDirection focusNavigationDirection, IFindNextElementOptions* focusNavigationOptions, [out, retval] IDependencyObject** result);
+    HRESULT FindNextFocusableElement(FocusNavigationDirection focusNavigationDirection, [out, retval] IUIElement** result);
+    HRESULT FindNextFocusableElementWithHint(FocusNavigationDirection focusNavigationDirection, Rect hintRect, [out, retval] IUIElement** result);
+    HRESULT TryMoveFocus(FocusNavigationDirection focusNavigationDirection, [out, retval] boolean* result);
+    HRESULT GetFocusedElement([out, retval] IInspectable** result);
+    HRESULT GetFocusedElementWithRoot(IXamlRoot* xamlRoot, [out, retval] IInspectable** result);
+}
+
+// Microsoft.UI.Xaml.Input.IFindNextElementOptions
+[uuid(7F88E76B-7417-5447-AED4-2FABD291BDC6)]
+interface IFindNextElementOptions : IInspectable
+{
+    [propget] HRESULT SearchRoot([out, retval] IDependencyObject** result);
+    [propput] HRESULT SearchRoot(IDependencyObject* value);
+    [propget] HRESULT ExclusionRect([out, retval] Rect* result);
+    [propput] HRESULT ExclusionRect(Rect value);
+    [propget] HRESULT HintRect([out, retval] Rect* result);
+    [propput] HRESULT HintRect(Rect value);
+    [propget] HRESULT XYFocusNavigationStrategyOverride([out, retval] INT32* result);
+    [propput] HRESULT XYFocusNavigationStrategyOverride(INT32 value);
+}
+
+// Microsoft.UI.Xaml.Automation.Peers.IAutomationPeer
+[uuid(E51D3E4E-34F0-568C-999F-6277E2AFE6D7)]
+interface IAutomationPeer : IInspectable
+{
+    [propget] HRESULT EventsSource([out, retval] IAutomationPeer** result);
+    [propput] HRESULT EventsSource(IAutomationPeer* value);
+    HRESULT GetPattern(PatternInterface patternInterface, [out, retval] IInspectable** result);
+    HRESULT RaiseAutomationEvent(AutomationEvents eventId);
+    HRESULT RaisePropertyChangedEvent(IInspectable* automationProperty, IInspectable* oldValue, IInspectable* newValue);
+    HRESULT GetAcceleratorKey([out, retval] HSTRING* result);
+    HRESULT GetAccessKey([out, retval] HSTRING* result);
+    HRESULT GetAutomationControlType([out, retval] AutomationControlType* result);
+    HRESULT GetAutomationId([out, retval] HSTRING* result);
+    HRESULT GetBoundingRectangle([out, retval] Rect* result);
+    HRESULT GetChildren([out, retval] IVectorAutomationPeer** result);
+    HRESULT Navigate(INT32 direction, [out, retval] IInspectable** result);
+    HRESULT GetClassName([out, retval] HSTRING* result);
+    HRESULT GetClickablePoint([out, retval] Point* result);
+    HRESULT GetHelpText([out, retval] HSTRING* result);
+    HRESULT GetItemStatus([out, retval] HSTRING* result);
+    HRESULT GetItemType([out, retval] HSTRING* result);
+    HRESULT GetLabeledBy([out, retval] IAutomationPeer** result);
+    HRESULT GetLocalizedControlType([out, retval] HSTRING* result);
+    HRESULT GetName([out, retval] HSTRING* result);
+    HRESULT GetOrientation([out, retval] INT32* result);
+    HRESULT HasKeyboardFocus([out, retval] boolean* result);
+    HRESULT IsContentElement([out, retval] boolean* result);
+    HRESULT IsControlElement([out, retval] boolean* result);
+    HRESULT IsEnabled([out, retval] boolean* result);
+    HRESULT IsKeyboardFocusable([out, retval] boolean* result);
+    HRESULT IsOffscreen([out, retval] boolean* result);
+    HRESULT IsPassword([out, retval] boolean* result);
+    HRESULT IsRequiredForForm([out, retval] boolean* result);
+    HRESULT SetFocus();
+    HRESULT GetParent([out, retval] IAutomationPeer** result);
+    HRESULT InvalidatePeer();
+    HRESULT GetPeerFromPoint(Point point, [out, retval] IAutomationPeer** result);
+    HRESULT GetElementFromPoint(Point pointInWindowCoordinates, [out, retval] IInspectable** result);
+    HRESULT GetFocusedElement([out, retval] IInspectable** result);
+    HRESULT GetLiveSetting([out, retval] INT32* result);
+    HRESULT ShowContextMenu();
+    HRESULT GetControlledPeers([out, retval] IVectorViewAutomationPeer** result);
+    HRESULT GetAnnotations([out, retval] void** result);
+    HRESULT SetParent(IAutomationPeer* peer);
+    HRESULT RaiseTextEditTextChangedEvent(INT32 automationTextEditChangeType, void* changedData);
+    HRESULT GetPositionInSet([out, retval] INT32* result);
+    HRESULT GetSizeOfSet([out, retval] INT32* result);
+    HRESULT GetLevel([out, retval] INT32* result);
+    HRESULT RaiseStructureChangedEvent(INT32 structureChangeType, IAutomationPeer* child);
+    HRESULT GetLandmarkType([out, retval] INT32* result);
+    HRESULT GetLocalizedLandmarkType([out, retval] HSTRING* result);
+    HRESULT IsPeripheral([out, retval] boolean* result);
+    HRESULT IsDataValidForForm([out, retval] boolean* result);
+    HRESULT GetFullDescription([out, retval] HSTRING* result);
+    HRESULT GetCulture([out, retval] INT32* result);
+    HRESULT RaiseNotificationEvent(INT32 notificationKind, INT32 notificationProcessing, HSTRING displayString, HSTRING activityId);
+    HRESULT GetHeadingLevel([out, retval] INT32* result);
+    HRESULT IsDialog([out, retval] boolean* result);
+}
+
+// Microsoft.UI.Xaml.Automation.Peers.IAutomationPeerOverrides
+[uuid(44F8F6DF-1B60-512D-A295-DD8C276C4618)]
+interface IAutomationPeerOverrides : IInspectable
+{
+    HRESULT GetPatternCore(PatternInterface patternInterface, [out, retval] IInspectable** result);
+    HRESULT GetAcceleratorKeyCore([out, retval] HSTRING* result);
+    HRESULT GetAccessKeyCore([out, retval] HSTRING* result);
+    HRESULT GetAutomationControlTypeCore([out, retval] AutomationControlType* result);
+    HRESULT GetAutomationIdCore([out, retval] HSTRING* result);
+    HRESULT GetBoundingRectangleCore([out, retval] Rect* result);
+    HRESULT GetChildrenCore([out, retval] IVectorAutomationPeer** result);
+    HRESULT NavigateCore(INT32 direction, [out, retval] IInspectable** result);
+    HRESULT GetClassNameCore([out, retval] HSTRING* result);
+    HRESULT GetClickablePointCore([out, retval] Point* result);
+    HRESULT GetHelpTextCore([out, retval] HSTRING* result);
+    HRESULT GetItemStatusCore([out, retval] HSTRING* result);
+    HRESULT GetItemTypeCore([out, retval] HSTRING* result);
+    HRESULT GetLabeledByCore([out, retval] IAutomationPeer** result);
+    HRESULT GetLocalizedControlTypeCore([out, retval] HSTRING* result);
+    HRESULT GetNameCore([out, retval] HSTRING* result);
+    HRESULT GetOrientationCore([out, retval] INT32* result);
+    HRESULT HasKeyboardFocusCore([out, retval] boolean* result);
+    HRESULT IsContentElementCore([out, retval] boolean* result);
+    HRESULT IsControlElementCore([out, retval] boolean* result);
+    HRESULT IsEnabledCore([out, retval] boolean* result);
+    HRESULT IsKeyboardFocusableCore([out, retval] boolean* result);
+    HRESULT IsOffscreenCore([out, retval] boolean* result);
+    HRESULT IsPasswordCore([out, retval] boolean* result);
+    HRESULT IsRequiredForFormCore([out, retval] boolean* result);
+    HRESULT SetFocusCore();
+    HRESULT GetPeerFromPointCore(Point point, [out, retval] IAutomationPeer** result);
+    HRESULT GetElementFromPointCore(Point pointInWindowCoordinates, [out, retval] IInspectable** result);
+    HRESULT GetFocusedElementCore([out, retval] IInspectable** result);
+    HRESULT GetLiveSettingCore([out, retval] INT32* result);
+    HRESULT ShowContextMenuCore();
+    HRESULT GetControlledPeersCore([out, retval] IVectorViewAutomationPeer** result);
+    HRESULT GetAnnotationsCore([out, retval] void** result);
+    HRESULT GetPositionInSetCore([out, retval] INT32* result);
+    HRESULT GetSizeOfSetCore([out, retval] INT32* result);
+    HRESULT GetLevelCore([out, retval] INT32* result);
+    HRESULT GetLandmarkTypeCore([out, retval] INT32* result);
+    HRESULT GetLocalizedLandmarkTypeCore([out, retval] HSTRING* result);
+    HRESULT IsPeripheralCore([out, retval] boolean* result);
+    HRESULT IsDataValidForFormCore([out, retval] boolean* result);
+    HRESULT GetFullDescriptionCore([out, retval] HSTRING* result);
+    HRESULT GetDescribedByCore([out, retval] IIterableAutomationPeer** result);
+    HRESULT GetFlowsToCore([out, retval] IIterableAutomationPeer** result);
+    HRESULT GetFlowsFromCore([out, retval] IIterableAutomationPeer** result);
+    HRESULT GetCultureCore([out, retval] INT32* result);
+    HRESULT GetHeadingLevelCore([out, retval] INT32* result);
+    HRESULT IsDialogCore([out, retval] boolean* result);
+}
+
+// Microsoft.UI.Xaml.Automation.Peers.IAutomationPeerProtected
+[uuid(9663B2C3-8C1F-56D4-ABD9-268082A9E8BC)]
+interface IAutomationPeerProtected : IInspectable
+{
+    HRESULT PeerFromProvider(IIRawElementProviderSimple* provider, [out, retval] IAutomationPeer** result);
+    HRESULT ProviderFromPeer(IAutomationPeer* peer, [out, retval] IIRawElementProviderSimple** result);
+}
+
+// Microsoft.UI.Xaml.Automation.Peers.IAutomationPeerStatics
+[uuid(90B157FF-18D5-5623-850C-612CEAE576BD)]
+interface IAutomationPeerStatics : IInspectable
+{
+    HRESULT ListenerExists(AutomationEvents eventId, [out, retval] boolean* result);
+    HRESULT GenerateRawElementProviderRuntimeId([out, retval] RawElementProviderRuntimeId* result);
+}
+
+// Microsoft.UI.Xaml.Automation.Peers.IAutomationPeerFactory
+[uuid(A1AF86A0-6EC6-5BE2-858F-72808BE6FDDD)]
+interface IAutomationPeerFactory : IInspectable
+{
+    HRESULT CreateInstance(IInspectable* baseInterface, [out] IInspectable** innerInterface, [out, retval] IAutomationPeer** result);
+}
+
+// Microsoft.UI.Xaml.Automation.Peers.IFrameworkElementAutomationPeer
+[uuid(7DAB4F24-605C-51CB-87DB-3EED1B9FB37B)]
+interface IFrameworkElementAutomationPeer : IInspectable
+{
+    [propget] HRESULT Owner([out, retval] IUIElement** result);
+}
+
+// Microsoft.UI.Xaml.Automation.Peers.IFrameworkElementAutomationPeerFactory
+[uuid(1682C3F8-238D-5C7E-A5A5-08CC3C10AC7C)]
+interface IFrameworkElementAutomationPeerFactory : IInspectable
+{
+    HRESULT CreateInstanceWithOwner(IFrameworkElement* owner, IInspectable* baseInterface, [out] IInspectable** innerInterface, [out, retval] IFrameworkElementAutomationPeer** result);
+}
+
+// Microsoft.UI.Xaml.Automation.Peers.IFrameworkElementAutomationPeerStatics
+[uuid(081F6FBE-6500-528A-A506-F5A4D41DDF6C)]
+interface IFrameworkElementAutomationPeerStatics : IInspectable
+{
+    HRESULT FromElement(IUIElement* element, [out, retval] IAutomationPeer** result);
+    HRESULT CreatePeerForElement(IUIElement* element, [out, retval] IAutomationPeer** result);
+}
+
+// Microsoft.UI.Xaml.Automation.Provider.IIRawElementProviderSimple
+[uuid(F90BC239-ADE2-55C9-A838-A3B0579763C5)]
+interface IIRawElementProviderSimple : IInspectable
+{
+}
+
+// Microsoft.UI.Xaml.Automation.Provider.IInvokeProvider
+[uuid(02481105-3378-544D-B4E1-A1B368AFBC02)]
+interface IInvokeProvider : IInspectable
+{
+    HRESULT Invoke();
+}
+
+// Microsoft.UI.Xaml.Automation.Provider.IToggleProvider
+[uuid(021080C2-30A9-52EF-BC32-2B79847B6BA7)]
+interface IToggleProvider : IInspectable
+{
+    [propget] HRESULT ToggleState([out, retval] ToggleState* result);
+    HRESULT Toggle();
+}
+
+// Microsoft.UI.Xaml.Automation.Provider.IValueProvider
+[uuid(984F11CF-4611-588E-B52E-B96A12322C71)]
+interface IValueProvider : IInspectable
+{
+    [propget] HRESULT IsReadOnly([out, retval] boolean* result);
+    [propget] HRESULT Value([out, retval] HSTRING* result);
+    HRESULT SetValue(HSTRING value);
+}
+
+// Microsoft.UI.Xaml.Automation.Provider.IRangeValueProvider
+[uuid(729AE414-1E8F-5020-82BB-BB574D145FD8)]
+interface IRangeValueProvider : IInspectable
+{
+    [propget] HRESULT IsReadOnly([out, retval] boolean* result);
+    [propget] HRESULT LargeChange([out, retval] DOUBLE* result);
+    [propget] HRESULT Maximum([out, retval] DOUBLE* result);
+    [propget] HRESULT Minimum([out, retval] DOUBLE* result);
+    [propget] HRESULT SmallChange([out, retval] DOUBLE* result);
+    [propget] HRESULT Value([out, retval] DOUBLE* result);
+    HRESULT SetValue(DOUBLE value);
+}
+
+// Microsoft.UI.Xaml.Automation.Provider.IScrollProvider
+[uuid(7E2E5AF3-FF50-5365-BCFE-EF424B2FD590)]
+interface IScrollProvider : IInspectable
+{
+    [propget] HRESULT HorizontallyScrollable([out, retval] boolean* result);
+    [propget] HRESULT HorizontalScrollPercent([out, retval] DOUBLE* result);
+    [propget] HRESULT HorizontalViewSize([out, retval] DOUBLE* result);
+    [propget] HRESULT VerticallyScrollable([out, retval] boolean* result);
+    [propget] HRESULT VerticalScrollPercent([out, retval] DOUBLE* result);
+    [propget] HRESULT VerticalViewSize([out, retval] DOUBLE* result);
+    HRESULT Scroll(ScrollAmount horizontalAmount, ScrollAmount verticalAmount);
+    HRESULT SetScrollPercent(DOUBLE horizontalPercent, DOUBLE verticalPercent);
+}
+
+// Microsoft.UI.Xaml.Automation.Provider.IScrollItemProvider
+[uuid(8A6FB8EB-E5F1-58EB-8E72-8B95F236FC47)]
+interface IScrollItemProvider : IInspectable
+{
+    HRESULT ScrollIntoView();
+}
+
+// Microsoft.UI.Xaml.Automation.Provider.ISelectionProvider
+[uuid(80D56D4E-0052-541F-9411-9D1778B3BFCA)]
+interface ISelectionProvider : IInspectable
+{
+    [propget] HRESULT CanSelectMultiple([out, retval] boolean* result);
+    [propget] HRESULT IsSelectionRequired([out, retval] boolean* result);
+    HRESULT GetSelection([out] UINT32* resultSize, [out] IIRawElementProviderSimple*** result);
+}
+
+// Microsoft.UI.Xaml.Automation.Provider.ISelectionItemProvider
+[uuid(C9DFDD81-D4AC-5D31-BE7F-24FAB16060E4)]
+interface ISelectionItemProvider : IInspectable
+{
+    [propget] HRESULT IsSelected([out, retval] boolean* result);
+    [propget] HRESULT SelectionContainer([out, retval] IIRawElementProviderSimple** result);
+    HRESULT AddToSelection();
+    HRESULT RemoveFromSelection();
+    HRESULT Select();
+}
+
+// Microsoft.UI.Xaml.Automation.Provider.IExpandCollapseProvider
+[uuid(6CEF349C-B181-5D0B-B297-C3B0166120C3)]
+interface IExpandCollapseProvider : IInspectable
+{
+    [propget] HRESULT ExpandCollapseState([out, retval] ExpandCollapseState* result);
+    HRESULT Collapse();
+    HRESULT Expand();
+}
+
+// Microsoft.UI.Input.IInputCursor
+[uuid(359B15F9-19C2-5714-8432-75176826406B)]
+interface IInputCursor : IInspectable
+{
+}
+
+// Microsoft.UI.Input.IInputSystemCursor
+[uuid(59F538E7-C500-59AB-8B54-0BC6100FD49E)]
+interface IInputSystemCursor : IInspectable
+{
+    [propget] HRESULT CursorShape([out, retval] InputSystemCursorShape* result);
+}
+
+// Microsoft.UI.Input.IInputSystemCursorStatics
+[uuid(D3860BB6-698A-5814-AEDD-C2FA8BBA5A02)]
+interface IInputSystemCursorStatics : IInspectable
+{
+    HRESULT Create(InputSystemCursorShape type, [out, retval] IInputSystemCursor** result);
+}
+
+// Microsoft.UI.Input.IPointerPoint
+[uuid(0D430EE6-252C-59A4-B2A2-D44264DC6A40)]
+interface IPointerPoint : IInspectable
+{
+    [propget] HRESULT FrameId([out, retval] UINT32* result);
+    [propget] HRESULT IsInContact([out, retval] boolean* result);
+    [propget] HRESULT PointerDeviceType([out, retval] PointerDeviceType* result);
+    [propget] HRESULT PointerId([out, retval] UINT32* result);
+    [propget] HRESULT Position([out, retval] Point* result);
+    [propget] HRESULT Properties([out, retval] IPointerPointProperties** result);
+    [propget] HRESULT Timestamp([out, retval] UINT64* result);
+    HRESULT GetTransformedPoint(void* transform, [out, retval] IPointerPoint** result);
+}
+
+// Microsoft.UI.Input.IPointerPointProperties
+[uuid(D760ED77-4B10-57A5-B3CC-D9BF3413E996)]
+interface IPointerPointProperties : IInspectable
+{
+    [propget] HRESULT ContactRect([out, retval] Rect* result);
+    [propget] HRESULT IsBarrelButtonPressed([out, retval] boolean* result);
+    [propget] HRESULT IsCanceled([out, retval] boolean* result);
+    [propget] HRESULT IsEraser([out, retval] boolean* result);
+    [propget] HRESULT IsHorizontalMouseWheel([out, retval] boolean* result);
+    [propget] HRESULT IsInRange([out, retval] boolean* result);
+    [propget] HRESULT IsInverted([out, retval] boolean* result);
+    [propget] HRESULT IsLeftButtonPressed([out, retval] boolean* result);
+    [propget] HRESULT IsMiddleButtonPressed([out, retval] boolean* result);
+    [propget] HRESULT IsPrimary([out, retval] boolean* result);
+    [propget] HRESULT IsRightButtonPressed([out, retval] boolean* result);
+    [propget] HRESULT IsXButton1Pressed([out, retval] boolean* result);
+    [propget] HRESULT IsXButton2Pressed([out, retval] boolean* result);
+    [propget] HRESULT MouseWheelDelta([out, retval] INT32* result);
+    [propget] HRESULT Orientation([out, retval] FLOAT* result);
+    [propget] HRESULT PointerUpdateKind([out, retval] PointerUpdateKind* result);
+    [propget] HRESULT Pressure([out, retval] FLOAT* result);
+    [propget] HRESULT TouchConfidence([out, retval] boolean* result);
+    [propget] HRESULT Twist([out, retval] FLOAT* result);
+    [propget] HRESULT XTilt([out, retval] FLOAT* result);
+    [propget] HRESULT YTilt([out, retval] FLOAT* result);
+}
+
+// Microsoft.UI.Input.IInputKeyboardSourceStatics
+[uuid(F4E1563D-8C2E-5BCD-B784-47ADEAA3CD7E)]
+interface IInputKeyboardSourceStatics : IInspectable
+{
+    HRESULT GetKeyStateForCurrentThread(VirtualKey virtualKey, [out, retval] CoreVirtualKeyStates* result);
+}
+
+// Microsoft.UI.Dispatching.IDispatcherQueue
+[uuid(F6EBF8FA-BE1C-5BF6-A467-73DA28738AE8)]
+interface IDispatcherQueue : IInspectable
+{
+    HRESULT CreateTimer([out, retval] IInspectable** result);
+    HRESULT TryEnqueue(DispatcherQueueHandler* callback, [out, retval] boolean* result);
+    HRESULT TryEnqueueWithPriority(INT32 priority, DispatcherQueueHandler* callback, [out, retval] boolean* result);
+    HRESULT add_ShutdownStarting(void* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_ShutdownStarting(EventRegistrationToken token);
+    HRESULT add_ShutdownCompleted(void* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_ShutdownCompleted(EventRegistrationToken token);
+}
+
+// Microsoft.UI.Dispatching.DispatcherQueueHandler
+[uuid(2E0872A9-4E29-5F14-B688-FB96D5F9D5F8)]
+interface DispatcherQueueHandler : IUnknown
+{
+    HRESULT Invoke();
+}
+
+// Microsoft.UI.Content.IContentIslandEnvironment
+[uuid(C334236D-DA88-566D-811D-74AEF2EBA978)]
+interface IContentIslandEnvironment : IInspectable
+{
+    [propget] HRESULT AppWindowId([out, retval] WindowId* result);
+    [propget] HRESULT DisplayId([out, retval] DisplayId* result);
+    HRESULT add_SettingChanged(void* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_SettingChanged(EventRegistrationToken token);
+    HRESULT add_StateChanged(void* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_StateChanged(EventRegistrationToken token);
+}
+
+// Windows.UI.Text.Core.ICoreTextServicesManagerStatics
+[uuid(1520A388-E2CF-4D65-AEB9-B32D86FE39B9)]
+interface ICoreTextServicesManagerStatics : IInspectable
+{
+    HRESULT GetForCurrentView([out, retval] ICoreTextServicesManager** result);
+}
+
+// Windows.UI.Text.Core.ICoreTextServicesManager
+[uuid(C2507D83-6E0A-4A8A-BDF8-1948874854BA)]
+interface ICoreTextServicesManager : IInspectable
+{
+    [propget] HRESULT InputLanguage([out, retval] IInspectable** result);
+    HRESULT add_InputLanguageChanged(void* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_InputLanguageChanged(EventRegistrationToken cookie);
+    HRESULT CreateEditContext([out, retval] ICoreTextEditContext** result);
+}
+
+// Windows.UI.Text.Core.ICoreTextEditContext
+[uuid(BF6608AF-4041-47C3-B263-A918EB5EAEF2)]
+interface ICoreTextEditContext : IInspectable
+{
+    [propget] HRESULT Name([out, retval] HSTRING* result);
+    [propput] HRESULT Name(HSTRING value);
+    [propget] HRESULT InputScope([out, retval] CoreTextInputScope* result);
+    [propput] HRESULT InputScope(CoreTextInputScope value);
+    [propget] HRESULT IsReadOnly([out, retval] boolean* result);
+    [propput] HRESULT IsReadOnly(boolean value);
+    [propget] HRESULT InputPaneDisplayPolicy([out, retval] CoreTextInputPaneDisplayPolicy* result);
+    [propput] HRESULT InputPaneDisplayPolicy(CoreTextInputPaneDisplayPolicy value);
+    HRESULT add_TextRequested(TypedEventHandlerTextRequested* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_TextRequested(EventRegistrationToken cookie);
+    HRESULT add_SelectionRequested(TypedEventHandlerSelectionRequested* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_SelectionRequested(EventRegistrationToken cookie);
+    HRESULT add_LayoutRequested(TypedEventHandlerLayoutRequested* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_LayoutRequested(EventRegistrationToken cookie);
+    HRESULT add_TextUpdating(TypedEventHandlerTextUpdating* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_TextUpdating(EventRegistrationToken cookie);
+    HRESULT add_SelectionUpdating(TypedEventHandlerSelectionUpdating* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_SelectionUpdating(EventRegistrationToken cookie);
+    HRESULT add_FormatUpdating(TypedEventHandlerFormatUpdating* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_FormatUpdating(EventRegistrationToken cookie);
+    HRESULT add_CompositionStarted(TypedEventHandlerCompositionStarted* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_CompositionStarted(EventRegistrationToken cookie);
+    HRESULT add_CompositionCompleted(TypedEventHandlerCompositionCompleted* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_CompositionCompleted(EventRegistrationToken cookie);
+    HRESULT add_FocusRemoved(TypedEventHandlerFocusRemoved* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_FocusRemoved(EventRegistrationToken cookie);
+    HRESULT NotifyFocusEnter();
+    HRESULT NotifyFocusLeave();
+    HRESULT NotifyTextChanged(CoreTextRange modifiedRange, INT32 newLength, CoreTextRange newSelection);
+    HRESULT NotifySelectionChanged(CoreTextRange selection);
+    HRESULT NotifyLayoutChanged();
+}
+
+// Windows.UI.Text.Core.ICoreTextTextRequestedEventArgs
+[uuid(F096A2D0-41C6-4C02-8B1A-D953B00CABB3)]
+interface ICoreTextTextRequestedEventArgs : IInspectable
+{
+    [propget] HRESULT Request([out, retval] ICoreTextTextRequest** result);
+}
+
+// Windows.UI.Text.Core.ICoreTextTextRequest
+[uuid(50D950A9-F51E-4CC1-8CA1-E6346D1A61BE)]
+interface ICoreTextTextRequest : IInspectable
+{
+    [propget] HRESULT Range([out, retval] CoreTextRange* result);
+    [propget] HRESULT Text([out, retval] HSTRING* result);
+    [propput] HRESULT Text(HSTRING value);
+    [propget] HRESULT IsCanceled([out, retval] boolean* result);
+    HRESULT GetDeferral([out, retval] IInspectable** result);
+}
+
+// Windows.UI.Text.Core.ICoreTextSelectionRequestedEventArgs
+[uuid(13C6682B-F614-421A-8F4B-9EC8A5A37FCD)]
+interface ICoreTextSelectionRequestedEventArgs : IInspectable
+{
+    [propget] HRESULT Request([out, retval] ICoreTextSelectionRequest** result);
+}
+
+// Windows.UI.Text.Core.ICoreTextSelectionRequest
+[uuid(F0A70403-208B-4301-883C-74CA7485FD8D)]
+interface ICoreTextSelectionRequest : IInspectable
+{
+    [propget] HRESULT Selection([out, retval] CoreTextRange* result);
+    [propput] HRESULT Selection(CoreTextRange value);
+    [propget] HRESULT IsCanceled([out, retval] boolean* result);
+    HRESULT GetDeferral([out, retval] IInspectable** result);
+}
+
+// Windows.UI.Text.Core.ICoreTextLayoutRequestedEventArgs
+[uuid(B1DC6AE0-9A7B-4E9E-A566-4A6B5F8AD676)]
+interface ICoreTextLayoutRequestedEventArgs : IInspectable
+{
+    [propget] HRESULT Request([out, retval] ICoreTextLayoutRequest** result);
+}
+
+// Windows.UI.Text.Core.ICoreTextLayoutRequest
+[uuid(2555A8CC-51FD-4F03-98BF-AC78174D68E0)]
+interface ICoreTextLayoutRequest : IInspectable
+{
+    [propget] HRESULT Range([out, retval] CoreTextRange* result);
+    [propget] HRESULT LayoutBounds([out, retval] ICoreTextLayoutBounds** result);
+    [propget] HRESULT IsCanceled([out, retval] boolean* result);
+    HRESULT GetDeferral([out, retval] IInspectable** result);
+}
+
+// Windows.UI.Text.Core.ICoreTextLayoutBounds
+[uuid(E972C974-4436-4917-80D0-A525E4CA6780)]
+interface ICoreTextLayoutBounds : IInspectable
+{
+    [propget] HRESULT TextBounds([out, retval] Rect* result);
+    [propput] HRESULT TextBounds(Rect value);
+    [propget] HRESULT ControlBounds([out, retval] Rect* result);
+    [propput] HRESULT ControlBounds(Rect value);
+}
+
+// Windows.UI.Text.Core.ICoreTextTextUpdatingEventArgs
+[uuid(EEA7918D-CC2B-4F03-8FF6-02FD217DB450)]
+interface ICoreTextTextUpdatingEventArgs : IInspectable
+{
+    [propget] HRESULT Range([out, retval] CoreTextRange* result);
+    [propget] HRESULT Text([out, retval] HSTRING* result);
+    [propget] HRESULT NewSelection([out, retval] CoreTextRange* result);
+    [propget] HRESULT InputLanguage([out, retval] IInspectable** result);
+    [propget] HRESULT Result([out, retval] CoreTextTextUpdatingResult* result);
+    [propput] HRESULT Result(CoreTextTextUpdatingResult value);
+    [propget] HRESULT IsCanceled([out, retval] boolean* result);
+    HRESULT GetDeferral([out, retval] IInspectable** result);
+}
+
+// Windows.UI.Text.Core.ICoreTextSelectionUpdatingEventArgs
+[uuid(D445839F-FE7F-4BD5-8A26-0922C1B3E639)]
+interface ICoreTextSelectionUpdatingEventArgs : IInspectable
+{
+    [propget] HRESULT Selection([out, retval] CoreTextRange* result);
+    [propget] HRESULT Result([out, retval] CoreTextSelectionUpdatingResult* result);
+    [propput] HRESULT Result(CoreTextSelectionUpdatingResult value);
+    [propget] HRESULT IsCanceled([out, retval] boolean* result);
+    HRESULT GetDeferral([out, retval] IInspectable** result);
+}
+
+// Windows.UI.Text.Core.ICoreTextFormatUpdatingEventArgs
+[uuid(7310BD33-B4A8-43B1-B37B-0724D4ACA7AB)]
+interface ICoreTextFormatUpdatingEventArgs : IInspectable
+{
+    [propget] HRESULT Range([out, retval] CoreTextRange* result);
+    [propget] HRESULT TextColor([out, retval] void** result);
+    [propget] HRESULT BackgroundColor([out, retval] void** result);
+    [propget] HRESULT UnderlineColor([out, retval] void** result);
+    [propget] HRESULT UnderlineType([out, retval] void** result);
+    [propget] HRESULT Reason([out, retval] INT32* result);
+    [propget] HRESULT Result([out, retval] CoreTextFormatUpdatingResult* result);
+    [propput] HRESULT Result(CoreTextFormatUpdatingResult value);
+    [propget] HRESULT IsCanceled([out, retval] boolean* result);
+    HRESULT GetDeferral([out, retval] IInspectable** result);
+}
+
+// Windows.UI.Text.Core.ICoreTextCompositionStartedEventArgs
+[uuid(276B16A9-64E7-4AB0-BC4B-A02D73835BFB)]
+interface ICoreTextCompositionStartedEventArgs : IInspectable
+{
+    [propget] HRESULT IsCanceled([out, retval] boolean* result);
+    HRESULT GetDeferral([out, retval] IInspectable** result);
+}
+
+// Windows.UI.Text.Core.ICoreTextCompositionCompletedEventArgs
+[uuid(1F34EBB6-B79F-4121-A5E7-FDA9B8616E30)]
+interface ICoreTextCompositionCompletedEventArgs : IInspectable
+{
+    [propget] HRESULT IsCanceled([out, retval] boolean* result);
+    [propget] HRESULT CompositionSegments([out, retval] void** result);
+    HRESULT GetDeferral([out, retval] IInspectable** result);
+}
+
+// Windows.ApplicationModel.DataTransfer.IDataPackageView
+[uuid(7B840471-5900-4D85-A90B-10CB85FE3552)]
+interface IDataPackageView : IInspectable
+{
+    [propget] HRESULT Properties([out, retval] IInspectable** result);
+    [propget] HRESULT RequestedOperation([out, retval] DataPackageOperation* result);
+    HRESULT ReportOperationCompleted(DataPackageOperation value);
+    [propget] HRESULT AvailableFormats([out, retval] void** result);
+    HRESULT Contains(HSTRING formatId, [out, retval] boolean* result);
+    HRESULT GetDataAsync(HSTRING formatId, [out, retval] void** result);
+    HRESULT GetTextAsync([out, retval] IAsyncOperationString** result);
+    HRESULT GetCustomTextAsync(HSTRING formatId, [out, retval] IAsyncOperationString** result);
+    HRESULT GetUriAsync([out, retval] void** result);
+    HRESULT GetHtmlFormatAsync([out, retval] IAsyncOperationString** result);
+    HRESULT GetResourceMapAsync([out, retval] void** result);
+    HRESULT GetRtfAsync([out, retval] IAsyncOperationString** result);
+    HRESULT GetBitmapAsync([out, retval] void** result);
+    HRESULT GetStorageItemsAsync([out, retval] IAsyncOperationStorageItems** result);
+}
+
+// Windows.ApplicationModel.DataTransfer.IDataPackage
+[uuid(61EBF5C7-EFEA-4346-9554-981D7E198FFE)]
+interface IDataPackage : IInspectable
+{
+    HRESULT GetView([out, retval] IDataPackageView** result);
+    [propget] HRESULT Properties([out, retval] IInspectable** result);
+    [propget] HRESULT RequestedOperation([out, retval] DataPackageOperation* result);
+    [propput] HRESULT RequestedOperation(DataPackageOperation value);
+    HRESULT add_OperationCompleted(void* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_OperationCompleted(EventRegistrationToken token);
+    HRESULT add_Destroyed(void* handler, [out, retval] EventRegistrationToken* result);
+    HRESULT remove_Destroyed(EventRegistrationToken token);
+    HRESULT SetData(HSTRING formatId, IInspectable* value);
+    HRESULT SetDataProvider(HSTRING formatId, void* delayRenderer);
+    HRESULT SetText(HSTRING value);
+    HRESULT SetUri(IInspectable* value);
+    HRESULT SetHtmlFormat(HSTRING value);
+    [propget] HRESULT ResourceMap([out, retval] void** result);
+    HRESULT SetRtf(HSTRING value);
+    HRESULT SetBitmap(IInspectable* value);
+    HRESULT SetStorageItemsReadOnly(IIterableStorageItem* value);
+    HRESULT SetStorageItems(IIterableStorageItem* value, boolean readOnly);
+}
+
+// Windows.ApplicationModel.DataTransfer.IStandardDataFormatsStatics
+[uuid(7ED681A1-A880-40C9-B4ED-0BEE1E15F549)]
+interface IStandardDataFormatsStatics : IInspectable
+{
+    [propget] HRESULT Text([out, retval] HSTRING* result);
+    [propget] HRESULT Uri([out, retval] HSTRING* result);
+    [propget] HRESULT Html([out, retval] HSTRING* result);
+    [propget] HRESULT Rtf([out, retval] HSTRING* result);
+    [propget] HRESULT Bitmap([out, retval] HSTRING* result);
+    [propget] HRESULT StorageItems([out, retval] HSTRING* result);
+}
+
+// Windows.Storage.IStorageItem
+[uuid(4207A996-CA2F-42F7-BDE8-8B10457A7F30)]
+interface IStorageItem : IInspectable
+{
+    HRESULT RenameAsyncOverloadDefaultOptions(HSTRING desiredName, [out, retval] void** result);
+    HRESULT RenameAsync(HSTRING desiredName, INT32 option, [out, retval] void** result);
+    HRESULT DeleteAsyncOverloadDefaultOptions([out, retval] void** result);
+    HRESULT DeleteAsync(INT32 option, [out, retval] void** result);
+    HRESULT GetBasicPropertiesAsync([out, retval] void** result);
+    [propget] HRESULT Name([out, retval] HSTRING* result);
+    [propget] HRESULT Path([out, retval] HSTRING* result);
+    [propget] HRESULT Attributes([out, retval] UINT32* result);
+    [propget] HRESULT DateCreated([out, retval] DateTime* result);
+    HRESULT IsOfType(UINT32 type, [out, retval] boolean* result);
+}
+
+// Windows.Storage.IStorageFile
+[uuid(FA3F6186-4214-428C-A64C-14C9AC7315EA)]
+interface IStorageFile : IInspectable
+{
+    [propget] HRESULT FileType([out, retval] HSTRING* result);
+    [propget] HRESULT ContentType([out, retval] HSTRING* result);
+    HRESULT OpenAsync(INT32 accessMode, [out, retval] void** result);
+    HRESULT OpenTransactedWriteAsync([out, retval] void** result);
+    HRESULT CopyOverloadDefaultNameAndOptions(IStorageFolder* destinationFolder, [out, retval] IAsyncOperationStorageFile** result);
+    HRESULT CopyOverloadDefaultOptions(IStorageFolder* destinationFolder, HSTRING desiredNewName, [out, retval] IAsyncOperationStorageFile** result);
+    HRESULT CopyOverload(IStorageFolder* destinationFolder, HSTRING desiredNewName, INT32 option, [out, retval] IAsyncOperationStorageFile** result);
+    HRESULT CopyAndReplaceAsync(IStorageFile* fileToReplace, [out, retval] void** result);
+    HRESULT MoveOverloadDefaultNameAndOptions(IStorageFolder* destinationFolder, [out, retval] void** result);
+    HRESULT MoveOverloadDefaultOptions(IStorageFolder* destinationFolder, HSTRING desiredNewName, [out, retval] void** result);
+    HRESULT MoveOverload(IStorageFolder* destinationFolder, HSTRING desiredNewName, INT32 option, [out, retval] void** result);
+    HRESULT MoveAndReplaceAsync(IStorageFile* fileToReplace, [out, retval] void** result);
+}
+
+// Windows.Storage.IStorageFolder
+[uuid(72D1CB78-B3EF-4F75-A80B-6FD9DAE2944B)]
+interface IStorageFolder : IInspectable
+{
+    HRESULT CreateFileAsyncOverloadDefaultOptions(HSTRING desiredName, [out, retval] IAsyncOperationStorageFile** result);
+    HRESULT CreateFileAsync(HSTRING desiredName, INT32 options, [out, retval] IAsyncOperationStorageFile** result);
+    HRESULT CreateFolderAsyncOverloadDefaultOptions(HSTRING desiredName, [out, retval] IAsyncOperationStorageFolder** result);
+    HRESULT CreateFolderAsync(HSTRING desiredName, INT32 options, [out, retval] IAsyncOperationStorageFolder** result);
+    HRESULT GetFileAsync(HSTRING name, [out, retval] IAsyncOperationStorageFile** result);
+    HRESULT GetFolderAsync(HSTRING name, [out, retval] IAsyncOperationStorageFolder** result);
+    HRESULT GetItemAsync(HSTRING name, [out, retval] void** result);
+    HRESULT GetFilesAsyncOverloadDefaultOptionsStartAndCount([out, retval] void** result);
+    HRESULT GetFoldersAsyncOverloadDefaultOptionsStartAndCount([out, retval] void** result);
+    HRESULT GetItemsAsyncOverloadDefaultStartAndCount([out, retval] IAsyncOperationStorageItems** result);
+}
+
+// Windows.Storage.IStorageFileStatics
+[uuid(5984C710-DAF2-43C8-8BB4-A4D3EACFD03F)]
+interface IStorageFileStatics : IInspectable
+{
+    HRESULT GetFileFromPathAsync(HSTRING path, [out, retval] IAsyncOperationStorageFile** result);
+    HRESULT GetFileFromApplicationUriAsync(IInspectable* uri, [out, retval] IAsyncOperationStorageFile** result);
+    HRESULT CreateStreamedFileAsync(HSTRING displayNameWithExtension, void* dataRequested, void* thumbnail, [out, retval] IAsyncOperationStorageFile** result);
+    HRESULT ReplaceWithStreamedFileAsync(IStorageFile* fileToReplace, void* dataRequested, void* thumbnail, [out, retval] IAsyncOperationStorageFile** result);
+    HRESULT CreateStreamedFileFromUriAsync(HSTRING displayNameWithExtension, IInspectable* uri, void* thumbnail, [out, retval] IAsyncOperationStorageFile** result);
+    HRESULT ReplaceWithStreamedFileFromUriAsync(IStorageFile* fileToReplace, IInspectable* uri, void* thumbnail, [out, retval] IAsyncOperationStorageFile** result);
+}
+
+// Windows.Storage.IStorageFolderStatics
+[uuid(08F327FF-85D5-48B9-AEE9-28511E339F9F)]
+interface IStorageFolderStatics : IInspectable
+{
+    HRESULT GetFolderFromPathAsync(HSTRING path, [out, retval] IAsyncOperationStorageFolder** result);
+}
+
+// Windows.Foundation.Collections.IVector`1<Microsoft.UI.Xaml.UIElement>: pinterface({913337e9-11a1-4345-a3a2-4e7f956e222d};rc(Microsoft.UI.Xaml.UIElement;{c3c01020-320c-5cf6-9d24-d396bbfa4d8b}))
+[uuid(EA4A1AF0-4286-5F11-8142-6B0169F4E9DE)]
+interface IVectorUIElement : IInspectable
+{
+    HRESULT GetAt(UINT32 index, [out, retval] IUIElement** result);
+    [propget] HRESULT Size([out, retval] UINT32* result);
+    HRESULT GetView([out, retval] void** result);
+    HRESULT IndexOf(IUIElement* value, [out] UINT32* index, [out, retval] boolean* result);
+    HRESULT SetAt(UINT32 index, IUIElement* value);
+    HRESULT InsertAt(UINT32 index, IUIElement* value);
+    HRESULT RemoveAt(UINT32 index);
+    HRESULT Append(IUIElement* value);
+    HRESULT RemoveAtEnd();
+    HRESULT Clear();
+    HRESULT GetMany(UINT32 startIndex, UINT32 itemsSize, IUIElement** items, [out, retval] UINT32* result);
+    HRESULT ReplaceAll(UINT32 itemsSize, IUIElement** items);
+}
+
+// Windows.Foundation.Collections.IVector`1<Microsoft.UI.Xaml.Automation.Peers.AutomationPeer>: pinterface({913337e9-11a1-4345-a3a2-4e7f956e222d};rc(Microsoft.UI.Xaml.Automation.Peers.AutomationPeer;{e51d3e4e-34f0-568c-999f-6277e2afe6d7}))
+[uuid(91D7782F-C53A-5620-8CE1-0D9419249322)]
+interface IVectorAutomationPeer : IInspectable
+{
+    HRESULT GetAt(UINT32 index, [out, retval] IAutomationPeer** result);
+    [propget] HRESULT Size([out, retval] UINT32* result);
+    HRESULT GetView([out, retval] IVectorViewAutomationPeer** result);
+    HRESULT IndexOf(IAutomationPeer* value, [out] UINT32* index, [out, retval] boolean* result);
+    HRESULT SetAt(UINT32 index, IAutomationPeer* value);
+    HRESULT InsertAt(UINT32 index, IAutomationPeer* value);
+    HRESULT RemoveAt(UINT32 index);
+    HRESULT Append(IAutomationPeer* value);
+    HRESULT RemoveAtEnd();
+    HRESULT Clear();
+    HRESULT GetMany(UINT32 startIndex, UINT32 itemsSize, IAutomationPeer** items, [out, retval] UINT32* result);
+    HRESULT ReplaceAll(UINT32 itemsSize, IAutomationPeer** items);
+}
+
+// Windows.Foundation.Collections.IVectorView`1<Microsoft.UI.Xaml.Automation.Peers.AutomationPeer>: pinterface({bbe1fa4c-b0e3-4583-baef-1f1b2e483e56};rc(Microsoft.UI.Xaml.Automation.Peers.AutomationPeer;{e51d3e4e-34f0-568c-999f-6277e2afe6d7}))
+[uuid(26501CC8-81AB-54E0-8049-2BBD47C9FF36)]
+interface IVectorViewAutomationPeer : IInspectable
+{
+    HRESULT GetAt(UINT32 index, [out, retval] IAutomationPeer** result);
+    [propget] HRESULT Size([out, retval] UINT32* result);
+    HRESULT IndexOf(IAutomationPeer* value, [out] UINT32* index, [out, retval] boolean* result);
+    HRESULT GetMany(UINT32 startIndex, UINT32 itemsSize, IAutomationPeer** items, [out, retval] UINT32* result);
+}
+
+// Windows.Foundation.Collections.IIterable`1<Microsoft.UI.Xaml.Automation.Peers.AutomationPeer>: pinterface({faa585ea-6214-4217-afda-7f46de5869b3};rc(Microsoft.UI.Xaml.Automation.Peers.AutomationPeer;{e51d3e4e-34f0-568c-999f-6277e2afe6d7}))
+[uuid(3513D61B-FF0F-523D-872C-A496ADB9BCA2)]
+interface IIterableAutomationPeer : IInspectable
+{
+    HRESULT First([out, retval] IIteratorAutomationPeer** result);
+}
+
+// Windows.Foundation.Collections.IIterator`1<Microsoft.UI.Xaml.Automation.Peers.AutomationPeer>: pinterface({6a79e863-4300-459a-9966-cbb660963ee1};rc(Microsoft.UI.Xaml.Automation.Peers.AutomationPeer;{e51d3e4e-34f0-568c-999f-6277e2afe6d7}))
+[uuid(F5322C8C-BC0A-56CF-812C-5FE140021F62)]
+interface IIteratorAutomationPeer : IInspectable
+{
+    [propget] HRESULT Current([out, retval] IAutomationPeer** result);
+    [propget] HRESULT HasCurrent([out, retval] boolean* result);
+    HRESULT MoveNext([out, retval] boolean* result);
+    HRESULT GetMany(UINT32 itemsSize, IAutomationPeer** items, [out, retval] UINT32* result);
+}
+
+// Windows.Foundation.Collections.IVector`1<Microsoft.UI.Input.PointerPoint>: pinterface({913337e9-11a1-4345-a3a2-4e7f956e222d};rc(Microsoft.UI.Input.PointerPoint;{0d430ee6-252c-59a4-b2a2-d44264dc6a40}))
+[uuid(8220CF33-5D76-5607-BB7D-B7CD07D27F33)]
+interface IVectorPointerPoint : IInspectable
+{
+    HRESULT GetAt(UINT32 index, [out, retval] IPointerPoint** result);
+    [propget] HRESULT Size([out, retval] UINT32* result);
+    HRESULT GetView([out, retval] void** result);
+    HRESULT IndexOf(IPointerPoint* value, [out] UINT32* index, [out, retval] boolean* result);
+    HRESULT SetAt(UINT32 index, IPointerPoint* value);
+    HRESULT InsertAt(UINT32 index, IPointerPoint* value);
+    HRESULT RemoveAt(UINT32 index);
+    HRESULT Append(IPointerPoint* value);
+    HRESULT RemoveAtEnd();
+    HRESULT Clear();
+    HRESULT GetMany(UINT32 startIndex, UINT32 itemsSize, IPointerPoint** items, [out, retval] UINT32* result);
+    HRESULT ReplaceAll(UINT32 itemsSize, IPointerPoint** items);
+}
+
+// Windows.Foundation.Collections.IVectorView`1<Windows.Storage.IStorageItem>: pinterface({bbe1fa4c-b0e3-4583-baef-1f1b2e483e56};{4207a996-ca2f-42f7-bde8-8b10457a7f30})
+[uuid(85575A41-06CB-58D0-B98A-7C8F06E6E9D7)]
+interface IVectorViewStorageItem : IInspectable
+{
+    HRESULT GetAt(UINT32 index, [out, retval] IStorageItem** result);
+    [propget] HRESULT Size([out, retval] UINT32* result);
+    HRESULT IndexOf(IStorageItem* value, [out] UINT32* index, [out, retval] boolean* result);
+    HRESULT GetMany(UINT32 startIndex, UINT32 itemsSize, IStorageItem** items, [out, retval] UINT32* result);
+}
+
+// Windows.Foundation.Collections.IIterable`1<Windows.Storage.IStorageItem>: pinterface({faa585ea-6214-4217-afda-7f46de5869b3};{4207a996-ca2f-42f7-bde8-8b10457a7f30})
+[uuid(BB8B8418-65D1-544B-B083-6D172F568C73)]
+interface IIterableStorageItem : IInspectable
+{
+    HRESULT First([out, retval] IIteratorStorageItem** result);
+}
+
+// Windows.Foundation.Collections.IIterator`1<Windows.Storage.IStorageItem>: pinterface({6a79e863-4300-459a-9966-cbb660963ee1};{4207a996-ca2f-42f7-bde8-8b10457a7f30})
+[uuid(05B487C2-3830-5D3C-98DA-25FA11542DBD)]
+interface IIteratorStorageItem : IInspectable
+{
+    [propget] HRESULT Current([out, retval] IStorageItem** result);
+    [propget] HRESULT HasCurrent([out, retval] boolean* result);
+    HRESULT MoveNext([out, retval] boolean* result);
+    HRESULT GetMany(UINT32 itemsSize, IStorageItem** items, [out, retval] UINT32* result);
+}
+
+// Windows.Foundation.IReference`1<Microsoft.UI.Xaml.Input.KeyEventHandler>: pinterface({61c17706-2d65-11e0-9ae8-d48564015472};delegate({db68e7cc-9a2b-527d-9989-25284daccc03}))
+[uuid(BF4375EF-DACF-532E-90D9-AA1202B6055F)]
+interface IReferenceKeyEventHandler : IInspectable
+{
+    [propget] HRESULT Value([out, retval] KeyEventHandler** result);
+}
+
+// Windows.Foundation.IReference`1<Windows.Foundation.TypedEventHandler`2<Microsoft.UI.Xaml.UIElement,Microsoft.UI.Xaml.Input.CharacterReceivedRoutedEventArgs>>: pinterface({61c17706-2d65-11e0-9ae8-d48564015472};pinterface({9de1c534-6ae1-11e0-84e1-18a905bcc53f};rc(Microsoft.UI.Xaml.UIElement;{c3c01020-320c-5cf6-9d24-d396bbfa4d8b});rc(Microsoft.UI.Xaml.Input.CharacterReceivedRoutedEventArgs;{e26ca5bb-34c3-5c1e-9a16-00b80b07a899})))
+[uuid(FBAE9FE5-6CE1-5313-BF35-7B5BD24BB498)]
+interface IReferenceCharacterReceivedHandler : IInspectable
+{
+    [propget] HRESULT Value([out, retval] TypedEventHandlerUIElementCharacterReceived** result);
+}
+
+// Windows.Foundation.TypedEventHandler`2<object,Microsoft.UI.Xaml.WindowEventArgs>: pinterface({9de1c534-6ae1-11e0-84e1-18a905bcc53f};cinterface(IInspectable);rc(Microsoft.UI.Xaml.WindowEventArgs;{1140827c-fe0a-5268-bc2b-f4492c2ccb49}))
+[uuid(2A954D28-7F8B-5479-8CE9-900424A0409F)]
+interface TypedEventHandlerObjectWindowEventArgs : IUnknown
+{
+    HRESULT Invoke(IInspectable* sender, IWindowEventArgs* args);
+}
+
+// Windows.Foundation.TypedEventHandler`2<Microsoft.UI.Xaml.Controls.SwapChainPanel,object>: pinterface({9de1c534-6ae1-11e0-84e1-18a905bcc53f};rc(Microsoft.UI.Xaml.Controls.SwapChainPanel;{08844f85-aa1b-540d-bef2-b2bb7b257f8c});cinterface(IInspectable))
+[uuid(20DDC438-23C6-50EC-9CA4-261AB79EDBA7)]
+interface TypedEventHandlerSwapChainPanelObject : IUnknown
+{
+    HRESULT Invoke(ISwapChainPanel* sender, IInspectable* args);
+}
+
+// Windows.Foundation.TypedEventHandler`2<Microsoft.UI.Xaml.UIElement,Microsoft.UI.Xaml.Input.CharacterReceivedRoutedEventArgs>: pinterface({9de1c534-6ae1-11e0-84e1-18a905bcc53f};rc(Microsoft.UI.Xaml.UIElement;{c3c01020-320c-5cf6-9d24-d396bbfa4d8b});rc(Microsoft.UI.Xaml.Input.CharacterReceivedRoutedEventArgs;{e26ca5bb-34c3-5c1e-9a16-00b80b07a899}))
+[uuid(4F45A267-2B57-5EB1-B382-E542D5A19F7A)]
+interface TypedEventHandlerUIElementCharacterReceived : IUnknown
+{
+    HRESULT Invoke(IUIElement* sender, ICharacterReceivedRoutedEventArgs* args);
+}
+
+// Windows.Foundation.TypedEventHandler`2<Microsoft.UI.Xaml.UIElement,Microsoft.UI.Xaml.DragStartingEventArgs>: pinterface({9de1c534-6ae1-11e0-84e1-18a905bcc53f};rc(Microsoft.UI.Xaml.UIElement;{c3c01020-320c-5cf6-9d24-d396bbfa4d8b});rc(Microsoft.UI.Xaml.DragStartingEventArgs;{ad17bace-9613-5666-a31b-79a73fba77cf}))
+[uuid(D0B66E28-3F45-5B7A-A768-188963BB76A4)]
+interface TypedEventHandlerUIElementDragStarting : IUnknown
+{
+    HRESULT Invoke(IUIElement* sender, IDragStartingEventArgs* args);
+}
+
+// Windows.Foundation.TypedEventHandler`2<Windows.UI.Text.Core.CoreTextEditContext,Windows.UI.Text.Core.CoreTextTextRequestedEventArgs>: pinterface({9de1c534-6ae1-11e0-84e1-18a905bcc53f};rc(Windows.UI.Text.Core.CoreTextEditContext;{bf6608af-4041-47c3-b263-a918eb5eaef2});rc(Windows.UI.Text.Core.CoreTextTextRequestedEventArgs;{f096a2d0-41c6-4c02-8b1a-d953b00cabb3}))
+[uuid(C7E08176-4134-50B7-BC73-729E9F9AD22A)]
+interface TypedEventHandlerTextRequested : IUnknown
+{
+    HRESULT Invoke(ICoreTextEditContext* sender, ICoreTextTextRequestedEventArgs* args);
+}
+
+// Windows.Foundation.TypedEventHandler`2<Windows.UI.Text.Core.CoreTextEditContext,Windows.UI.Text.Core.CoreTextSelectionRequestedEventArgs>: pinterface({9de1c534-6ae1-11e0-84e1-18a905bcc53f};rc(Windows.UI.Text.Core.CoreTextEditContext;{bf6608af-4041-47c3-b263-a918eb5eaef2});rc(Windows.UI.Text.Core.CoreTextSelectionRequestedEventArgs;{13c6682b-f614-421a-8f4b-9ec8a5a37fcd}))
+[uuid(882E51E1-F4A3-57E5-9392-6A8C38579181)]
+interface TypedEventHandlerSelectionRequested : IUnknown
+{
+    HRESULT Invoke(ICoreTextEditContext* sender, ICoreTextSelectionRequestedEventArgs* args);
+}
+
+// Windows.Foundation.TypedEventHandler`2<Windows.UI.Text.Core.CoreTextEditContext,Windows.UI.Text.Core.CoreTextLayoutRequestedEventArgs>: pinterface({9de1c534-6ae1-11e0-84e1-18a905bcc53f};rc(Windows.UI.Text.Core.CoreTextEditContext;{bf6608af-4041-47c3-b263-a918eb5eaef2});rc(Windows.UI.Text.Core.CoreTextLayoutRequestedEventArgs;{b1dc6ae0-9a7b-4e9e-a566-4a6b5f8ad676}))
+[uuid(1A5F5596-561C-57F6-A4FF-CB85013C6544)]
+interface TypedEventHandlerLayoutRequested : IUnknown
+{
+    HRESULT Invoke(ICoreTextEditContext* sender, ICoreTextLayoutRequestedEventArgs* args);
+}
+
+// Windows.Foundation.TypedEventHandler`2<Windows.UI.Text.Core.CoreTextEditContext,Windows.UI.Text.Core.CoreTextTextUpdatingEventArgs>: pinterface({9de1c534-6ae1-11e0-84e1-18a905bcc53f};rc(Windows.UI.Text.Core.CoreTextEditContext;{bf6608af-4041-47c3-b263-a918eb5eaef2});rc(Windows.UI.Text.Core.CoreTextTextUpdatingEventArgs;{eea7918d-cc2b-4f03-8ff6-02fd217db450}))
+[uuid(FD896A84-DF7C-50D5-9167-58F616BDDB6E)]
+interface TypedEventHandlerTextUpdating : IUnknown
+{
+    HRESULT Invoke(ICoreTextEditContext* sender, ICoreTextTextUpdatingEventArgs* args);
+}
+
+// Windows.Foundation.TypedEventHandler`2<Windows.UI.Text.Core.CoreTextEditContext,Windows.UI.Text.Core.CoreTextSelectionUpdatingEventArgs>: pinterface({9de1c534-6ae1-11e0-84e1-18a905bcc53f};rc(Windows.UI.Text.Core.CoreTextEditContext;{bf6608af-4041-47c3-b263-a918eb5eaef2});rc(Windows.UI.Text.Core.CoreTextSelectionUpdatingEventArgs;{d445839f-fe7f-4bd5-8a26-0922c1b3e639}))
+[uuid(6B140A40-D461-555A-B6EB-5DBB8E2101E5)]
+interface TypedEventHandlerSelectionUpdating : IUnknown
+{
+    HRESULT Invoke(ICoreTextEditContext* sender, ICoreTextSelectionUpdatingEventArgs* args);
+}
+
+// Windows.Foundation.TypedEventHandler`2<Windows.UI.Text.Core.CoreTextEditContext,Windows.UI.Text.Core.CoreTextFormatUpdatingEventArgs>: pinterface({9de1c534-6ae1-11e0-84e1-18a905bcc53f};rc(Windows.UI.Text.Core.CoreTextEditContext;{bf6608af-4041-47c3-b263-a918eb5eaef2});rc(Windows.UI.Text.Core.CoreTextFormatUpdatingEventArgs;{7310bd33-b4a8-43b1-b37b-0724d4aca7ab}))
+[uuid(3E4EF599-4CC2-5248-BF2D-13F17613B0A6)]
+interface TypedEventHandlerFormatUpdating : IUnknown
+{
+    HRESULT Invoke(ICoreTextEditContext* sender, ICoreTextFormatUpdatingEventArgs* args);
+}
+
+// Windows.Foundation.TypedEventHandler`2<Windows.UI.Text.Core.CoreTextEditContext,Windows.UI.Text.Core.CoreTextCompositionStartedEventArgs>: pinterface({9de1c534-6ae1-11e0-84e1-18a905bcc53f};rc(Windows.UI.Text.Core.CoreTextEditContext;{bf6608af-4041-47c3-b263-a918eb5eaef2});rc(Windows.UI.Text.Core.CoreTextCompositionStartedEventArgs;{276b16a9-64e7-4ab0-bc4b-a02d73835bfb}))
+[uuid(E671D625-5B59-57E6-A92E-40009507853A)]
+interface TypedEventHandlerCompositionStarted : IUnknown
+{
+    HRESULT Invoke(ICoreTextEditContext* sender, ICoreTextCompositionStartedEventArgs* args);
+}
+
+// Windows.Foundation.TypedEventHandler`2<Windows.UI.Text.Core.CoreTextEditContext,Windows.UI.Text.Core.CoreTextCompositionCompletedEventArgs>: pinterface({9de1c534-6ae1-11e0-84e1-18a905bcc53f};rc(Windows.UI.Text.Core.CoreTextEditContext;{bf6608af-4041-47c3-b263-a918eb5eaef2});rc(Windows.UI.Text.Core.CoreTextCompositionCompletedEventArgs;{1f34ebb6-b79f-4121-a5e7-fda9b8616e30}))
+[uuid(A2D7059E-68ED-5260-8D8E-1DCF3D25D663)]
+interface TypedEventHandlerCompositionCompleted : IUnknown
+{
+    HRESULT Invoke(ICoreTextEditContext* sender, ICoreTextCompositionCompletedEventArgs* args);
+}
+
+// Windows.Foundation.TypedEventHandler`2<Windows.UI.Text.Core.CoreTextEditContext,object>: pinterface({9de1c534-6ae1-11e0-84e1-18a905bcc53f};rc(Windows.UI.Text.Core.CoreTextEditContext;{bf6608af-4041-47c3-b263-a918eb5eaef2});cinterface(IInspectable))
+[uuid(EF53B467-C472-5B59-A827-38ADC3A9D326)]
+interface TypedEventHandlerFocusRemoved : IUnknown
+{
+    HRESULT Invoke(ICoreTextEditContext* sender, IInspectable* args);
+}
+
+// Windows.Foundation.IAsyncOperation`1<Windows.ApplicationModel.DataTransfer.DataPackageOperation>: pinterface({9fc2b0bb-e446-44e2-aa61-9cab8f636af2};enum(Windows.ApplicationModel.DataTransfer.DataPackageOperation;u4))
+[uuid(8B98AEA9-64F0-5672-B30E-DFD9C2E4F6FE)]
+interface IAsyncOperationDataPackageOperation : IInspectable
+{
+    [propput] HRESULT Completed(AsyncOperationCompletedHandlerDataPackageOperation* handler);
+    [propget] HRESULT Completed([out, retval] AsyncOperationCompletedHandlerDataPackageOperation** result);
+    HRESULT GetResults([out, retval] DataPackageOperation* result);
+}
+
+// Windows.Foundation.AsyncOperationCompletedHandler`1<Windows.ApplicationModel.DataTransfer.DataPackageOperation>: pinterface({fcdcf02c-e5d8-4478-915a-4d90b74b83a5};enum(Windows.ApplicationModel.DataTransfer.DataPackageOperation;u4))
+[uuid(ADD21D46-17DF-5A43-A685-3262FCE84643)]
+interface AsyncOperationCompletedHandlerDataPackageOperation : IUnknown
+{
+    HRESULT Invoke(IAsyncOperationDataPackageOperation* asyncInfo, AsyncStatus asyncStatus);
+}
+
+// Windows.Foundation.IAsyncOperation`1<Windows.Foundation.Collections.IVectorView`1<Windows.Storage.IStorageItem>>: pinterface({9fc2b0bb-e446-44e2-aa61-9cab8f636af2};pinterface({bbe1fa4c-b0e3-4583-baef-1f1b2e483e56};{4207a996-ca2f-42f7-bde8-8b10457a7f30}))
+[uuid(4B1C0FD7-7A01-5E7A-A6FE-BE4500283F23)]
+interface IAsyncOperationStorageItems : IInspectable
+{
+    [propput] HRESULT Completed(AsyncOperationCompletedHandlerStorageItems* handler);
+    [propget] HRESULT Completed([out, retval] AsyncOperationCompletedHandlerStorageItems** result);
+    HRESULT GetResults([out, retval] IVectorViewStorageItem** result);
+}
+
+// Windows.Foundation.AsyncOperationCompletedHandler`1<Windows.Foundation.Collections.IVectorView`1<Windows.Storage.IStorageItem>>: pinterface({fcdcf02c-e5d8-4478-915a-4d90b74b83a5};pinterface({bbe1fa4c-b0e3-4583-baef-1f1b2e483e56};{4207a996-ca2f-42f7-bde8-8b10457a7f30}))
+[uuid(51436E75-ACE1-5A68-B260-F843B846F0DB)]
+interface AsyncOperationCompletedHandlerStorageItems : IUnknown
+{
+    HRESULT Invoke(IAsyncOperationStorageItems* asyncInfo, AsyncStatus asyncStatus);
+}
+
+// Windows.Foundation.IAsyncOperation`1<string>: pinterface({9fc2b0bb-e446-44e2-aa61-9cab8f636af2};string)
+[uuid(3E1FE603-F897-5263-B328-0806426B8A79)]
+interface IAsyncOperationString : IInspectable
+{
+    [propput] HRESULT Completed(AsyncOperationCompletedHandlerString* handler);
+    [propget] HRESULT Completed([out, retval] AsyncOperationCompletedHandlerString** result);
+    HRESULT GetResults([out, retval] HSTRING* result);
+}
+
+// Windows.Foundation.AsyncOperationCompletedHandler`1<string>: pinterface({fcdcf02c-e5d8-4478-915a-4d90b74b83a5};string)
+[uuid(B79A741F-7FB5-50AE-9E99-911201EC3D41)]
+interface AsyncOperationCompletedHandlerString : IUnknown
+{
+    HRESULT Invoke(IAsyncOperationString* asyncInfo, AsyncStatus asyncStatus);
+}
+
+// Windows.Foundation.IAsyncOperation`1<Windows.Storage.StorageFile>: pinterface({9fc2b0bb-e446-44e2-aa61-9cab8f636af2};rc(Windows.Storage.StorageFile;{fa3f6186-4214-428c-a64c-14c9ac7315ea}))
+[uuid(5E52F8CE-ACED-5A42-95B4-F674DD84885E)]
+interface IAsyncOperationStorageFile : IInspectable
+{
+    [propput] HRESULT Completed(AsyncOperationCompletedHandlerStorageFile* handler);
+    [propget] HRESULT Completed([out, retval] AsyncOperationCompletedHandlerStorageFile** result);
+    HRESULT GetResults([out, retval] IStorageFile** result);
+}
+
+// Windows.Foundation.AsyncOperationCompletedHandler`1<Windows.Storage.StorageFile>: pinterface({fcdcf02c-e5d8-4478-915a-4d90b74b83a5};rc(Windows.Storage.StorageFile;{fa3f6186-4214-428c-a64c-14c9ac7315ea}))
+[uuid(E521C894-2C26-5946-9E61-2B5E188D01ED)]
+interface AsyncOperationCompletedHandlerStorageFile : IUnknown
+{
+    HRESULT Invoke(IAsyncOperationStorageFile* asyncInfo, AsyncStatus asyncStatus);
+}
+
+// Windows.Foundation.IAsyncOperation`1<Windows.Storage.StorageFolder>: pinterface({9fc2b0bb-e446-44e2-aa61-9cab8f636af2};rc(Windows.Storage.StorageFolder;{72d1cb78-b3ef-4f75-a80b-6fd9dae2944b}))
+[uuid(6BE9E7D7-E83A-5CBC-802C-1768960B52C3)]
+interface IAsyncOperationStorageFolder : IInspectable
+{
+    [propput] HRESULT Completed(AsyncOperationCompletedHandlerStorageFolder* handler);
+    [propget] HRESULT Completed([out, retval] AsyncOperationCompletedHandlerStorageFolder** result);
+    HRESULT GetResults([out, retval] IStorageFolder** result);
+}
+
+// Windows.Foundation.AsyncOperationCompletedHandler`1<Windows.Storage.StorageFolder>: pinterface({fcdcf02c-e5d8-4478-915a-4d90b74b83a5};rc(Windows.Storage.StorageFolder;{72d1cb78-b3ef-4f75-a80b-6fd9dae2944b}))
+[uuid(C211026E-9E63-5452-BA54-3A07D6A96874)]
+interface AsyncOperationCompletedHandlerStorageFolder : IUnknown
+{
+    HRESULT Invoke(IAsyncOperationStorageFolder* asyncInfo, AsyncStatus asyncStatus);
+}
