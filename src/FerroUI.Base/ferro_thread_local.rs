@@ -105,12 +105,18 @@ macro_rules! ferro_thread_local {
 #[macro_export]
 macro_rules! __ferro_thread_local_table {
     (@key $(#[$attr:meta])* $vis:vis $name:ident, $t:ty, $init:expr) => {
-        $(#[$attr])* $vis static $name: $crate::ferro_thread_local::table::LocalKey<$t> = {
+        $(#[$attr])* $vis const $name: $crate::ferro_thread_local::table::LocalKey<$t> = {
             #[inline]
-            fn __init() -> $t {
-                $init
+            fn __state() -> &'static $crate::ferro_thread_local::table::KeyState<$t> {
+                #[inline]
+                fn __init() -> $t {
+                    $init
+                }
+                static STATE: $crate::ferro_thread_local::table::KeyState<$t> =
+                    $crate::ferro_thread_local::table::KeyState::new(__init);
+                &STATE
             }
-            $crate::ferro_thread_local::table::LocalKey::new(__init)
+            $crate::ferro_thread_local::table::LocalKey::new(__state)
         };
     };
     () => {};

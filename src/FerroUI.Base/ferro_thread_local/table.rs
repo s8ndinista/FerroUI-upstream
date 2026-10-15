@@ -14,10 +14,49 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 /// A thread-local variable kept in the table of the thread: what
 /// [`ferro_thread_local!`](macro@crate::ferro_thread_local) declares on Android.
 /// It has the methods of `std::thread::LocalKey`, with the same contracts.
+///
+/// As with the standard library, the variable is a constant (so that it can
+/// be declared in an `impl` block, and `&NAME` is a `&'static`): it holds a
+/// function that returns the static state of the declaration, never a
+/// reference to mutable memory.
 pub struct LocalKey<T: 'static> {
+    state: fn() -> &'static KeyState<T>,
+}
+
+/// The static state of a declaration: its index and its initialiser.
+#[doc(hidden)]
+pub struct KeyState<T: 'static> {
     /// The index in the table plus one; zero until the first use.
     index: AtomicUsize,
     init: fn() -> T,
+}
+
+impl<T: 'static> KeyState<T> {
+    #[doc(hidden)]
+    pub const fn new(init: fn() -> T) -> Self {
+        Self { index: AtomicUsize::new(0), init }
+    }
+
+    /// The index of the variable in the table of every thread.
+    #[inline]
+    fn index(&'static self) -> usize {
+        let index = self.index.load(Ordering::Relaxed);
+        if index != 0 {
+            return index - 1;
+        }
+        self.assign_index()
+    }
+
+    #[cold]
+    fn assign_index(&'static self) -> usize {
+        let candidate = NEXT_INDEX.fetch_add(1, Ordering::Relaxed);
+        // Another thread may have assigned one in the meantime; its number
+        // wins and the candidate stays unused.
+        match self.index.compare_exchange(0, candidate, Ordering::Relaxed, Ordering::Relaxed) {
+            Ok(_) => candidate - 1,
+            Err(assigned) => assigned - 1,
+        }
+    }
 }
 
 /// The error of [`LocalKey::try_with`]: the variable was destroyed on this
@@ -54,36 +93,16 @@ static NEXT_INDEX: AtomicUsize = AtomicUsize::new(1);
 
 impl<T: 'static> LocalKey<T> {
     #[doc(hidden)]
-    pub const fn new(init: fn() -> T) -> Self {
-        Self { index: AtomicUsize::new(0), init }
-    }
-
-    /// The index of the variable in the table of every thread.
-    #[inline]
-    fn index(&'static self) -> usize {
-        let index = self.index.load(Ordering::Relaxed);
-        if index != 0 {
-            return index - 1;
-        }
-        self.assign_index()
-    }
-
-    #[cold]
-    fn assign_index(&'static self) -> usize {
-        let candidate = NEXT_INDEX.fetch_add(1, Ordering::Relaxed);
-        // Another thread may have assigned one in the meantime; its number
-        // wins and the candidate stays unused.
-        match self.index.compare_exchange(0, candidate, Ordering::Relaxed, Ordering::Relaxed) {
-            Ok(_) => candidate - 1,
-            Err(assigned) => assigned - 1,
-        }
+    pub const fn new(state: fn() -> &'static KeyState<T>) -> Self {
+        Self { state }
     }
 
     /// The value of this thread, created first if it does not exist yet (from
     /// `provided` when that holds a value, else by the initialiser); null when
     /// the variable was destroyed on this thread.
     fn get_or_create(&'static self, provided: Option<&mut Option<T>>) -> *const T {
-        let index = self.index();
+        let state = (self.state)();
+        let index = state.index();
         // SAFETY: the table belongs to this thread and outlives every call made on it
         // (it is freed by the destructor of the key, after the last value).
         let Some(table) = (unsafe { current_table() }) else {
@@ -96,7 +115,7 @@ impl<T: 'static> LocalKey<T> {
         }
         // No borrow of the table is held while the initialiser runs: it may use other
         // variables, which may grow the table.
-        let value = provided.and_then(Option::take).unwrap_or_else(self.init);
+        let value = provided.and_then(Option::take).unwrap_or_else(state.init);
         let value = Box::into_raw(Box::new(value));
         let slot = Slot { value: value.cast(), free: free_value::<T>, needs_drop: needs_drop::<T>() };
         match table.store(index, slot) {
