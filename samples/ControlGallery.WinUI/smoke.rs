@@ -16,7 +16,7 @@ use std::io::Write;
 use std::rc::{Rc, Weak};
 use std::time::{Duration, Instant};
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static FAILED: Cell<bool> = const { Cell::new(false) };
 }
 

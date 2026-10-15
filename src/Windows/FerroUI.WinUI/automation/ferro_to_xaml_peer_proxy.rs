@@ -26,7 +26,7 @@ mod imp {
     use std::ffi::c_void;
     use std::rc::{Rc, Weak};
 
-    thread_local! {
+    ferroui_base::ferro_thread_local! {
         /// The proxy of each peer of the framework, while XAML holds it: the
         /// reference keys a weak table by the peer, whose entry lives as long
         /// as the peer does; a counted proxy that holds its peer cannot be

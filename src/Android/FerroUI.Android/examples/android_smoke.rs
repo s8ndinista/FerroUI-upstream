@@ -137,7 +137,7 @@ mod app {
         options
     }
 
-    thread_local! {
+    ferroui_base::ferro_thread_local! {
         static OPTIONS: Cell<SmokeOptions> =
             const { Cell::new(SmokeOptions { software: false, vulkan: false, input: true }) };
         static REPORT: Report = Report::default();
@@ -805,7 +805,7 @@ mod app {
             text: RefCell<String>,
         }
 
-        thread_local! {
+        ferroui_base::ferro_thread_local! {
             /// How many times the main view was made: once per start of the activity.
             static STARTS: Cell<u32> = const { Cell::new(0) };
         }

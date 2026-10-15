@@ -63,7 +63,7 @@ struct MainWindow {
     text_box: Ref<TextBox>,
 }
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static MAIN_WINDOW: RefCell<Option<MainWindow>> = const { RefCell::new(None) };
 }
 

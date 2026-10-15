@@ -14,7 +14,7 @@ use std::any::Any;
 use std::cell::RefCell;
 use std::rc::Rc;
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     /// `App.Lifetime` of the reference.
     static LIFETIME: Rc<SingleViewLifetime> = Rc::new(SingleViewLifetime::default());
     /// `_window` of the reference's application.
