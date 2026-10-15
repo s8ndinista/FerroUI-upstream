@@ -77,6 +77,11 @@ impl NativeLibrary {
 /// Each entry names the library (an argument of `load`) the function is
 /// in, as the `DllImport` attribute of the reference does, and the
 /// exported name when the field is named otherwise (`as "Name"`).
+///
+/// Exported for the Wayland crate, which declares the functions of `libgbm`
+/// and `libdrm` with it (docs/porting/wayland-platform.md, section 2.3).
+#[macro_export]
+#[doc(hidden)]
 macro_rules! native_functions {
     (@symbol $f:ident) => { stringify!($f) };
     (@symbol $f:ident $symbol:literal) => { $symbol };
@@ -105,7 +110,7 @@ macro_rules! native_functions {
                         // has the size and the validity of a non-null address.
                         $f: unsafe {
                             std::mem::transmute::<*const std::ffi::c_void, $ty>(
-                                $flib.symbol($crate::interop::native_library::native_functions!(@symbol $f $($symbol)?))?,
+                                $flib.symbol($crate::native_functions!(@symbol $f $($symbol)?))?,
                             )
                         },
                     )*
@@ -114,7 +119,7 @@ macro_rules! native_functions {
         }
     };
 }
-pub(crate) use native_functions;
+pub use native_functions;
 
 #[cfg(test)]
 mod tests {
