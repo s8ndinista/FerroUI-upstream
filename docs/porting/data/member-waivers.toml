@@ -5536,9 +5536,923 @@ project = "Avalonia.Android"
 type = "Avalonia.Android.Platform.Vulkan.VkAndroidSurfaceCreateInfoKHR"
 member = "*"
 reason = "the structure is the one of the `ash` bindings (`vk::AndroidSurfaceCreateInfoKHR`, under its upstream name as an alias in `platform/vulkan/vulkan_native_interop.rs`), whose fields are those of the Vulkan headers in snake case; `sType` is set by `Default` (docs/porting/vulkan.md, section 3)"
+# ---------------------------------------------------------------- Avalonia.Win32
+# The leftovers of the tracking page (2026-10-15): what the scanner does not find because the port puts
+# it on another type or in another shape (docs/porting/win32-platform.md, sections 2 and 3), and the
+# declarations of the interop file that the backend does not call. Members whose Rust item stands for
+# them one to one are aliases; the rest are waivers whose reason names where the behaviour is.
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.ClipboardFormatRegistry"
+member = "static ClipboardFormatRegistry()"
+reason = "the static constructor is `ClipboardFormatList::static_constructor`: the list of the thread (`FORMATS`), which the registry wraps, starts with the formats of the system when it is made (the list of the reference is a static of the process)"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.DataTransferToOleDataObjectWrapper"
+member = "*IDataObject.*"
+reason = "the explicit members of `IDataObject` are implemented by `DataObjectCallback`, the COM object over the wrapper (`impl IDataObjectImpl for DataObjectCallback`: `d_advise`, `d_unadvise`, `enum_d_advise`, `get_canonical_format_etc`, `set_data`, with the answers of the reference)"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.EmbeddedWindowImpl"
+member = "CreateWindowOverride"
+reason = "a window has a kind instead of a derived class (DEVIATIONS.md, Windows platform backend): `WindowImpl::create_window_override` creates an embedded window with `embedded_window_impl::create_window`"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.PopupImpl"
+member = "*"
+reason = "a popup is a `WindowImpl` of the kind `WindowKind::Popup` instead of a derived class (DEVIATIONS.md, Windows platform backend): the overrides are the branches of the kind in `window_impl.rs` (`show`, `should_take_focus_on_click`, `max_auto_size_hint`, `create_window_override`, the window procedure), which ask `PopupState` of `popup_impl.rs` (`create_window`, `wnd_proc`, `max_auto_size_hint`, `set_window_manager_add_shadow_hint`, `set_hit_test_visible`, `take_focus`, `popup_positioner`)"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.OleDropTarget"
+member = "ConvertDropEffect"
+reason = "the two overloads are two functions of `ole_drop_target.rs`: `convert_drop_effect` (from the effect of OLE) and `convert_drop_effect_to_ole` (to it)"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.OleDropTarget"
+member = "Destroyed"
+reason = "`Drop` of `OleDropTarget` releases the data object of the drag, as the override does when the COM object is destroyed"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.OleVirtualFileData.Descriptor"
+member = "Descriptor(*"
+reason = "the positional record is a structure with public fields (`name`, `size`), created with a structure literal"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Win32TypeExtensions"
+member = "ToPixelRect"
+reason = "the `RECT` of the generated bindings and the `RECT` of the interop file are one structure here (`interop::unmanaged_methods::RECT`), so one implementation of `to_pixel_rect` stands for both overloads"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.WindowImpl"
+member = "*IEglWindowGlPlatformSurfaceInfo.Size*"
+reason = "the window is not the surface information of EGL: `WindowImplPlatformHandle`, the handle surface the render thread reads, implements `IEglWindowGlPlatformSurfaceInfo` (`size` from `GetClientRect`), because a window is an object of the UI thread (DEVIATIONS.md, Windows platform backend)"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.WindowsMountedVolumeInfoListener"
+member = "Dispose"
+reason = "one `dispose` (`IDisposable`) for both overloads: there is no finalizer that would call the protected one with `false`"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.DComposition.DirectCompositionConnection"
+member = "RequiresNoRedirectionBitmap"
+reason = "the surface factory of the UI thread is `DirectCompositionSurfaceFactory`, a handle to the connection, which is shared with its thread (`impl IWindowsSurfaceFactory for DirectCompositionSurfaceFactory`)"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.DComposition.DirectCompositionConnection"
+member = "CreateSurface"
+reason = "the surface factory of the UI thread is `DirectCompositionSurfaceFactory`, a handle to the connection, which is shared with its thread (`impl IWindowsSurfaceFactory for DirectCompositionSurfaceFactory`)"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.DComposition.DirectCompositionShared"
+member = "Dispose"
+reason = "`Dispose` releases the device: dropping the value releases its reference (`SharedCom` over `ComPtr`)"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.DirectX.DxgiConnection"
+member = "RequiresNoRedirectionBitmap"
+reason = "the surface factory of the UI thread is `DxgiSurfaceFactory`, a handle to the connection, which is shared with its thread (`impl IWindowsSurfaceFactory for DxgiSurfaceFactory`)"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.DirectX.DxgiConnection"
+member = "CreateSurface"
+reason = "the surface factory of the UI thread is `DxgiSurfaceFactory`, a handle to the connection, which is shared with its thread (`impl IWindowsSurfaceFactory for DxgiSurfaceFactory`)"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.WinRT.Composition.WinUiCompositorConnection"
+member = "RequiresNoRedirectionBitmap"
+reason = "the surface factory of the UI thread is `WinUiCompositorSurfaceFactory`, a handle to the connection, which is shared with its thread (`impl IWindowsSurfaceFactory for WinUiCompositorSurfaceFactory`)"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.WinRT.Composition.WinUiCompositorConnection"
+member = "CreateSurface"
+reason = "the surface factory of the UI thread is `WinUiCompositorSurfaceFactory`, a handle to the connection, which is shared with its thread (`impl IWindowsSurfaceFactory for WinUiCompositorSurfaceFactory`)"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.WinRT.Composition.WinUiCompositionShared"
+member = "Dispose"
+reason = "`Dispose` releases the compositor and the brushes: dropping the value releases its references (`SharedCom` over `ComPtr`)"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.DirectX.HANDLE"
+member = "*"
+reason = "a tuple structure, `HANDLE(pub isize)`: the value is its field `.0` and it is constructed as `HANDLE(value)`"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.OpenGl.WglContext"
+member = "Lock"
+reason = "a context of WGL is an object of the thread that created it (`Rc`), so there is no monitor to enter while a context is created with it as the shared context (the note of the type in `open_gl/wgl_context.rs`)"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.OpenGl.Angle.AngleWin32EglDisplay"
+member = "DisplayLockIsSharedWithContexts"
+reason = "the base member is not ported: the objects of the OpenGL crate belong to one thread, so the lock of a display is not shared with its contexts (the note of `EglDisplay` in `src/FerroUI.OpenGL/egl/egl_display.rs`)"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.OpenGl.Angle.SwapChainGlRenderTarget"
+member = "SwapChainGlRenderTarget(*"
+reason = "created with a structure literal by `SwapChainGlSurface::create_gl_render_target`, which holds what the constructor takes (the context, the swap chain and the size and scaling of the surface)"
 
 [[waive]]
 project = "Avalonia.Win32"
 type = "Avalonia.Win32.Vulkan.VkWin32SurfaceCreateInfoKHR"
 member = "*"
 reason = "the structure is the one of the `ash` bindings (`vk::Win32SurfaceCreateInfoKHR`, under its upstream name as an alias in `vulkan/vulkan_native_interop.rs`), whose fields are those of the Vulkan headers in snake case; `sType` is set by `Default` (docs/porting/vulkan.md, section 3)"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.WinRT.NativeWinRTMethods"
+member = "WindowsCreateString"
+reason = "the declaration of the system is the `extern` function `WindowsCreateString` of the file (a text and its length); `windows_create_string` is the overload that takes the text alone"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.WinRT.Composition.WinUIEffectBase"
+member = "Destroyed"
+reason = "the sources of an effect are counted references the COM object holds (`sources` of `WinUIEffectBase`), released when it is dropped"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.WinRT.Composition.WinUIGaussianBlurEffect"
+member = "WinUIGaussianBlurEffect(*"
+reason = "an effect is a value that says what it is (`WinUIEffect`), and the base class is the COM object over it with its sources: `WinUIEffectBase::new(WinUIGaussianBlurEffect, &[source])`"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.WinRT.Composition.SaturationEffect"
+member = "SaturationEffect(*"
+reason = "an effect is a value that says what it is (`WinUIEffect`), and the base class is the COM object over it with its sources: `WinUIEffectBase::new(SaturationEffect, &[source])`"
+
+# UnmanagedMethods: the calls the backend makes are safe functions of the module `native` of
+# `interop/unmanaged_methods.rs` over the declarations of windows-sys (win32-platform.md, section 3.2).
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods"
+member = "InvalidateRect"
+reason = "the overload with a pointer to a rectangle is called with null by the reference, for the whole window: `invalidate_window`; the overload with a rectangle is `invalidate_rect`"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods"
+member = "ImmGetCompositionString"
+reason = "the two overloads are two functions: `imm_get_composition_string` (the text of the composition) and `imm_get_composition_value` (a number of it, the call without a buffer)"
+
+[[alias]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods"
+member = "EnumChildWindows"
+rust = ["enum_windows"]
+
+[[alias]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods"
+member = "SetClassLong"
+rust = ["set_class_long_ptr"]
+
+[[alias]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods"
+member = "CreateInstance"
+rust = ["co_create_instance"]
+
+[[alias]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods"
+member = "SetLayeredWindowAttributes"
+rust = ["set_layered_window_alpha"]
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods"
+member = "EnableMouseInPointer"
+reason = "declared by the reference and called by none of its files: the module `native` declares the calls the backend makes (win32-platform.md, section 3.2)"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods"
+member = "GetPointerCursorId"
+reason = "declared by the reference and called by none of its files: the module `native` declares the calls the backend makes (win32-platform.md, section 3.2)"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods"
+member = "SetDIBits"
+reason = "declared by the reference and called by none of its files: the module `native` declares the calls the backend makes (win32-platform.md, section 3.2)"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods"
+member = "GetCaretBlinkTime"
+reason = "declared by the reference and called by none of its files: the module `native` declares the calls the backend makes (win32-platform.md, section 3.2)"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods"
+member = "GetUpdateRect"
+reason = "declared by the reference and called by none of its files: the module `native` declares the calls the backend makes (win32-platform.md, section 3.2)"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods"
+member = "ValidateRect"
+reason = "declared by the reference and called by none of its files: the module `native` declares the calls the backend makes (win32-platform.md, section 3.2)"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods"
+member = "IsWindowEnabled"
+reason = "declared by the reference and called by none of its files: the module `native` declares the calls the backend makes (win32-platform.md, section 3.2)"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods"
+member = "IsWindowUnicode"
+reason = "declared by the reference and called by none of its files: the module `native` declares the calls the backend makes (win32-platform.md, section 3.2)"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods"
+member = "GetParent"
+reason = "declared by the reference and called by none of its files: the module `native` declares the calls the backend makes (win32-platform.md, section 3.2)"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods"
+member = "CreateTimerQueue"
+reason = "declared by the reference and called by none of its files: the module `native` declares the calls the backend makes (win32-platform.md, section 3.2)"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods"
+member = "DeleteTimerQueueEx"
+reason = "declared by the reference and called by none of its files: the module `native` declares the calls the backend makes (win32-platform.md, section 3.2)"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods"
+member = "CreateTimerQueueTimer"
+reason = "declared by the reference and called by none of its files: the module `native` declares the calls the backend makes (win32-platform.md, section 3.2)"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods"
+member = "DeleteTimerQueueTimer"
+reason = "declared by the reference and called by none of its files: the module `native` declares the calls the backend makes (win32-platform.md, section 3.2)"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods"
+member = "LoadLibraryEx"
+reason = "declared by the reference and called by none of its files: the module `native` declares the calls the backend makes (win32-platform.md, section 3.2)"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods"
+member = "GetSaveFileName"
+reason = "declared by the reference and called by none of its files: the module `native` declares the calls the backend makes (win32-platform.md, section 3.2)"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods"
+member = "GetOpenFileName"
+reason = "declared by the reference and called by none of its files: the module `native` declares the calls the backend makes (win32-platform.md, section 3.2)"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods"
+member = "CommDlgExtendedError"
+reason = "declared by the reference and called by none of its files: the module `native` declares the calls the backend makes (win32-platform.md, section 3.2)"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods"
+member = "GetScaleFactorForMonitor"
+reason = "declared by the reference and called by none of its files: the module `native` declares the calls the backend makes (win32-platform.md, section 3.2)"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods"
+member = "CloseHandle"
+reason = "declared by the reference and called by none of its files: the module `native` declares the calls the backend makes (win32-platform.md, section 3.2)"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods"
+member = "CreateDIBitmap"
+reason = "declared by the reference and called by none of its files: the module `native` declares the calls the backend makes (win32-platform.md, section 3.2)"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods"
+member = "GetBitmapDimensionEx"
+reason = "declared by the reference and called by none of its files: the module `native` declares the calls the backend makes (win32-platform.md, section 3.2)"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods"
+member = "CreateFileMapping"
+reason = "declared by the reference and called by none of its files: the module `native` declares the calls the backend makes (win32-platform.md, section 3.2)"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods"
+member = "CopyMemory"
+reason = "declared by the reference and called by none of its files: the module `native` declares the calls the backend makes (win32-platform.md, section 3.2)"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods"
+member = "DwmGetWindowAttribute"
+reason = "declared by the reference and called by none of its files: the module `native` declares the calls the backend makes (win32-platform.md, section 3.2)"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods"
+member = "ImmSetOpenStatus"
+reason = "declared by the reference and called by none of its files: the module `native` declares the calls the backend makes (win32-platform.md, section 3.2)"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods"
+member = "ImmSetActiveContext"
+reason = "declared by the reference and called by none of its files: the module `native` declares the calls the backend makes (win32-platform.md, section 3.2)"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods"
+member = "ImmSetStatusWindowPos"
+reason = "declared by the reference and called by none of its files: the module `native` declares the calls the backend makes (win32-platform.md, section 3.2)"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods"
+member = "LCIDToLocaleName"
+reason = "declared by the reference and called by none of its files: the module `native` declares the calls the backend makes (win32-platform.md, section 3.2)"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods"
+member = "MAKELCID"
+reason = "declared by the reference and called by none of its files: the module `native` declares the calls the backend makes (win32-platform.md, section 3.2)"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods"
+member = "SetDIBitsToDevice"
+reason = "both overloads are the call of `draw_bitmap_to_window`, which draws the pixels of a framebuffer into the device context of the window"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods"
+member = "CreateRectRgn"
+reason = "the region of the blur is created, used and deleted inside `dwm_enable_blur_behind_window`"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods"
+member = "EndPaint"
+reason = "`begin_paint` returns a `PaintScope`, whose `Drop` calls `EndPaint` with the structure `BeginPaint` filled"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods"
+member = "GetWindowLongPtr"
+reason = "the 64-bit half of `GetWindowLong` of the reference: `get_window_long` calls the function of the system for the target"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods"
+member = "GetWindowLong32b"
+reason = "the 32-bit half of `GetWindowLong` of the reference: `get_window_long` calls the function of the system for the target"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods"
+member = "GetClassLongPtr32"
+reason = "the 32-bit half of `GetClassLongPtr` of the reference: `get_class_long_ptr` calls the function of the system for the target"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods"
+member = "GetClassLongPtr64"
+reason = "the 64-bit half of `GetClassLongPtr` of the reference: `get_class_long_ptr` calls the function of the system for the target"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods"
+member = "GetClipboardData"
+reason = "made inside `get_clipboard_unicode_text` and `set_clipboard_unicode_text`, which own the global memory of the text while the clipboard is open"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods"
+member = "SetClipboardData"
+reason = "made inside `get_clipboard_unicode_text` and `set_clipboard_unicode_text`, which own the global memory of the text while the clipboard is open"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods"
+member = "GlobalLock"
+reason = "made inside the functions that read and write a block of global memory (`read_global`, `write_global`, and the text of the clipboard), which lock and unlock it around the copy"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods"
+member = "GlobalUnlock"
+reason = "made inside the functions that read and write a block of global memory (`read_global`, `write_global`, and the text of the clipboard), which lock and unlock it around the copy"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods"
+member = "ShCoreAvailable"
+reason = "`has_get_dpi_for_monitor`: the callers ask whether shcore.dll has `GetDpiForMonitor`, the function they call next, where the reference asks whether the library loads"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods"
+member = "SendMessage"
+reason = "one function, `send_message`, for both overloads (the result as a number)"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods"
+member = "DescribePixelFormat"
+reason = "one function, `describe_pixel_format`, for both overloads: it describes the format of an index into a descriptor it returns"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods"
+member = "CreateDIBSection"
+reason = "both overloads (a version 3 and a version 5 header) are the call of `ScreenContexts::section`, which takes the bytes of the header"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods"
+member = "GdiFlush"
+reason = "made inside the conversions of bitmaps of the module `native` (`hbitmap_to_bgra`, `dib_to_bgra`, `pixels_to_hbitmap`, with the contexts of `ScreenContexts`), which own the contexts and the bitmaps they create"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods"
+member = "BitBlt"
+reason = "made inside the conversions of bitmaps of the module `native` (`hbitmap_to_bgra`, `dib_to_bgra`, `pixels_to_hbitmap`, with the contexts of `ScreenContexts`), which own the contexts and the bitmaps they create"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods"
+member = "CreateCompatibleBitmap"
+reason = "made inside the conversions of bitmaps of the module `native` (`hbitmap_to_bgra`, `dib_to_bgra`, `pixels_to_hbitmap`, with the contexts of `ScreenContexts`), which own the contexts and the bitmaps they create"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods"
+member = "GetObject"
+reason = "made inside the conversions of bitmaps of the module `native` (`hbitmap_to_bgra`, `dib_to_bgra`, `pixels_to_hbitmap`, with the contexts of `ScreenContexts`), which own the contexts and the bitmaps they create"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods"
+member = "CreateCompatibleDC"
+reason = "made inside the conversions of bitmaps of the module `native` (`hbitmap_to_bgra`, `dib_to_bgra`, `pixels_to_hbitmap`, with the contexts of `ScreenContexts`), which own the contexts and the bitmaps they create"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods"
+member = "SelectObject"
+reason = "made inside the conversions of bitmaps of the module `native` (`hbitmap_to_bgra`, `dib_to_bgra`, `pixels_to_hbitmap`, with the contexts of `ScreenContexts`), which own the contexts and the bitmaps they create"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods"
+member = "StretchDIBits"
+reason = "made inside the conversions of bitmaps of the module `native` (`hbitmap_to_bgra`, `dib_to_bgra`, `pixels_to_hbitmap`, with the contexts of `ScreenContexts`), which own the contexts and the bitmaps they create"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods"
+member = "StretchBlt"
+reason = "`hbitmap_to_bgra` copies a bitmap handle into a section whose rows run from the top with `BitBlt`, where the reference copies it mirrored into a section whose rows run from the bottom; the pixels are the same"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods"
+member = "DragQueryFile"
+reason = "`drag_query_file_names` asks for the count and then for each name, the calls the reference makes in a loop"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods"
+member = "WaitForMultipleObjectsEx"
+reason = "called only by `NonPumpingWaitHelperImpl`, which is not applicable (path-overrides.toml)"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.TimeCallback"
+reason = "the callback of a declaration that the reference calls from none of its files (the multimedia timer)"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.WaitOrTimerCallback"
+reason = "the callback of a declaration that the reference calls from none of its files (`CreateTimerQueueTimer`)"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.TimerProc"
+reason = "`SetTimer` is called without a procedure (`set_timer`): the timer posts `WM_TIMER` to the window, as in every call the reference makes"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.EnumWindowsProc"
+reason = "the procedure of `EnumChildWindows` is the `extern \"system\"` function `thunk` of `enum_windows`, which calls the closure it is given"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.MarkFullscreenWindow"
+reason = "the function types of the slots of the task bar list are declared beside the list in `interop/task_bar_list.rs` (`ITaskBarList3VTable`)"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.SetOverlayIcon"
+reason = "the function types of the slots of the task bar list are declared beside the list in `interop/task_bar_list.rs` (`ITaskBarList3VTable`)"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.HrInit"
+reason = "the function types of the slots of the task bar list are declared beside the list in `interop/task_bar_list.rs` (`ITaskBarList3VTable`)"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.ITaskBarList3VTable"
+reason = "declared beside the list in `interop/task_bar_list.rs`, whose tests check its size and the places of the three slots the backend calls"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.BITMAP"
+reason = "the structure of windows-sys (`gdi::BITMAP`) is filled and read inside the function of `native` that makes the call (win32-platform.md, section 2.1)"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.DWM_BLURBEHIND"
+reason = "the structure of windows-sys (`dwm::DWM_BLURBEHIND`) is filled and read inside the function of `native` that makes the call (win32-platform.md, section 2.1)"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.LOGFONT"
+reason = "the structure of windows-sys (`gdi::LOGFONTW`) is filled and read inside the function of `native` that makes the call (win32-platform.md, section 2.1)"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.MSG"
+reason = "the structure of windows-sys (`wm::MSG`) is filled and read inside the function of `native` that makes the call (win32-platform.md, section 2.1)"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.PAINTSTRUCT"
+reason = "the structure of windows-sys (`gdi::PAINTSTRUCT`) is filled and read inside the function of `native` that makes the call (win32-platform.md, section 2.1)"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.NCCALCSIZE_PARAMS"
+reason = "the structure of windows-sys (`wm::NCCALCSIZE_PARAMS`) is filled and read inside the function of `native` that makes the call (win32-platform.md, section 2.1)"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.TRACKMOUSEEVENT"
+reason = "the structure of windows-sys (`kbm::TRACKMOUSEEVENT`) is filled and read inside the function of `native` that makes the call (win32-platform.md, section 2.1)"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.WNDCLASSEX"
+reason = "the structure of windows-sys (`wm::WNDCLASSEXW`) is filled and read inside the function of `native` that makes the call (win32-platform.md, section 2.1)"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.ICONINFO"
+reason = "the structure of windows-sys (`wm::ICONINFO`) is filled and read inside the function of `native` that makes the call (win32-platform.md, section 2.1)"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.RTL_OSVERSIONINFOEX"
+reason = "the structure of windows-sys (`si::OSVERSIONINFOW`) is filled and read inside the function of `native` that makes the call (win32-platform.md, section 2.1)"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.RGBQUAD"
+reason = "declared by the reference and used by none of its files: the colour table of a bitmap is read and written as bytes (`ole_data_object_helper.rs`)"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.WindowCompositionAttributeData"
+reason = "the argument of `SetWindowCompositionAttribute`, which the reference calls from none of its files"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.AccentPolicy"
+reason = "the argument of `SetWindowCompositionAttribute`, which the reference calls from none of its files"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.CIEXYZTRIPLE"
+reason = "the end points of a version 5 bitmap header, which the reference leaves zero: `BITMAPV5HEADER::to_bytes` writes zeros in their place"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.CIEXYZ"
+reason = "the end points of a version 5 bitmap header, which the reference leaves zero: `BITMAPV5HEADER::to_bytes` writes zeros in their place"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.DROPFILES"
+reason = "the header of a block of file names is written as bytes by `ole_data_object_helper.rs` (`SIZE_OF_DROPFILES`, the offset of the names and the flag of wide characters)"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.POINTER_INFO"
+member = "frameId"
+reason = "the structure of the port holds the members of `POINTER_INFO` the backend reads, copied from the structure of windows-sys that `get_pointer_info` fills"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.POINTER_INFO"
+member = "hwndTarget"
+reason = "the structure of the port holds the members of `POINTER_INFO` the backend reads, copied from the structure of windows-sys that `get_pointer_info` fills"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.POINTER_INFO"
+member = "ptHimetricLocationX"
+reason = "the structure of the port holds the members of `POINTER_INFO` the backend reads, copied from the structure of windows-sys that `get_pointer_info` fills"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.POINTER_INFO"
+member = "ptHimetricLocationY"
+reason = "the structure of the port holds the members of `POINTER_INFO` the backend reads, copied from the structure of windows-sys that `get_pointer_info` fills"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.POINTER_INFO"
+member = "ptPixelLocationRawX"
+reason = "the structure of the port holds the members of `POINTER_INFO` the backend reads, copied from the structure of windows-sys that `get_pointer_info` fills"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.POINTER_INFO"
+member = "ptPixelLocationRawY"
+reason = "the structure of the port holds the members of `POINTER_INFO` the backend reads, copied from the structure of windows-sys that `get_pointer_info` fills"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.POINTER_INFO"
+member = "inputData"
+reason = "the structure of the port holds the members of `POINTER_INFO` the backend reads, copied from the structure of windows-sys that `get_pointer_info` fills"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.POINTER_INFO"
+member = "dwKeyStates"
+reason = "the structure of the port holds the members of `POINTER_INFO` the backend reads, copied from the structure of windows-sys that `get_pointer_info` fills"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.POINTER_INFO"
+member = "PerformanceCount"
+reason = "the structure of the port holds the members of `POINTER_INFO` the backend reads, copied from the structure of windows-sys that `get_pointer_info` fills"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.POINTER_TOUCH_INFO"
+member = "touchFlags"
+reason = "the structure of the port holds the members of `POINTER_TOUCH_INFO` the backend reads, copied from the structure of windows-sys that `get_pointer_touch_info` fills"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.POINTER_TOUCH_INFO"
+member = "rcContactRawLeft"
+reason = "the structure of the port holds the members of `POINTER_TOUCH_INFO` the backend reads, copied from the structure of windows-sys that `get_pointer_touch_info` fills"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.POINTER_TOUCH_INFO"
+member = "rcContactRawTop"
+reason = "the structure of the port holds the members of `POINTER_TOUCH_INFO` the backend reads, copied from the structure of windows-sys that `get_pointer_touch_info` fills"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.POINTER_TOUCH_INFO"
+member = "rcContactRawRight"
+reason = "the structure of the port holds the members of `POINTER_TOUCH_INFO` the backend reads, copied from the structure of windows-sys that `get_pointer_touch_info` fills"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.POINTER_TOUCH_INFO"
+member = "rcContactRawBottom"
+reason = "the structure of the port holds the members of `POINTER_TOUCH_INFO` the backend reads, copied from the structure of windows-sys that `get_pointer_touch_info` fills"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.POINTER_TOUCH_INFO"
+member = "orientation"
+reason = "the structure of the port holds the members of `POINTER_TOUCH_INFO` the backend reads, copied from the structure of windows-sys that `get_pointer_touch_info` fills"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.POINTER_PEN_INFO"
+member = "penMask"
+reason = "the structure of the port holds the members of `POINTER_PEN_INFO` the backend reads, copied from the structure of windows-sys that `get_pointer_pen_info` fills"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.TOUCHINPUT"
+member = "Source"
+reason = "the structure of the port holds the members of `TOUCHINPUT` the backend reads, copied from the structures of windows-sys that `get_touch_input_info` fills"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.TOUCHINPUT"
+member = "ExtraInfo"
+reason = "the structure of the port holds the members of `TOUCHINPUT` the backend reads, copied from the structures of windows-sys that `get_touch_input_info` fills"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.BITMAPV5HEADER"
+member = "bV5Size"
+reason = "the members the reference leaves zero: `BITMAPV5HEADER::to_bytes` lays the structure out as the system does, with its size first and zeros in their place"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.BITMAPV5HEADER"
+member = "bV5XPelsPerMeter"
+reason = "the members the reference leaves zero: `BITMAPV5HEADER::to_bytes` lays the structure out as the system does, with its size first and zeros in their place"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.BITMAPV5HEADER"
+member = "bV5YPelsPerMeter"
+reason = "the members the reference leaves zero: `BITMAPV5HEADER::to_bytes` lays the structure out as the system does, with its size first and zeros in their place"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.BITMAPV5HEADER"
+member = "bV5ClrUsed"
+reason = "the members the reference leaves zero: `BITMAPV5HEADER::to_bytes` lays the structure out as the system does, with its size first and zeros in their place"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.BITMAPV5HEADER"
+member = "bV5ClrImportant"
+reason = "the members the reference leaves zero: `BITMAPV5HEADER::to_bytes` lays the structure out as the system does, with its size first and zeros in their place"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.BITMAPV5HEADER"
+member = "bV5Endpoints"
+reason = "the members the reference leaves zero: `BITMAPV5HEADER::to_bytes` lays the structure out as the system does, with its size first and zeros in their place"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.BITMAPV5HEADER"
+member = "bV5GammaRed"
+reason = "the members the reference leaves zero: `BITMAPV5HEADER::to_bytes` lays the structure out as the system does, with its size first and zeros in their place"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.BITMAPV5HEADER"
+member = "bV5GammaGreen"
+reason = "the members the reference leaves zero: `BITMAPV5HEADER::to_bytes` lays the structure out as the system does, with its size first and zeros in their place"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.BITMAPV5HEADER"
+member = "bV5GammaBlue"
+reason = "the members the reference leaves zero: `BITMAPV5HEADER::to_bytes` lays the structure out as the system does, with its size first and zeros in their place"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.BITMAPV5HEADER"
+member = "bV5ProfileData"
+reason = "the members the reference leaves zero: `BITMAPV5HEADER::to_bytes` lays the structure out as the system does, with its size first and zeros in their place"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.BITMAPV5HEADER"
+member = "bV5ProfileSize"
+reason = "the members the reference leaves zero: `BITMAPV5HEADER::to_bytes` lays the structure out as the system does, with its size first and zeros in their place"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.BITMAPV5HEADER"
+member = "bV5Reserved"
+reason = "the members the reference leaves zero: `BITMAPV5HEADER::to_bytes` lays the structure out as the system does, with its size first and zeros in their place"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.BITMAPV5HEADER"
+member = "Init"
+reason = "`BITMAPV5HEADER::to_bytes` writes the size of the structure as its first member"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.MONITORINFOEX"
+member = "Base"
+reason = "`get_monitor_info` fills the structure of windows-sys (`MONITORINFOEXW`) with its size set and returns its members as a value of the port"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.MONITORINFOEX"
+member = "Create"
+reason = "`get_monitor_info` fills the structure of windows-sys (`MONITORINFOEXW`) with its size set and returns its members as a value of the port"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.WINDOWPLACEMENT"
+member = "Default"
+reason = "`WINDOWPLACEMENT::default()`; the length is set by `get_window_placement` and `set_window_placement`, which pass the structure to the system"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.FILEDESCRIPTORW"
+member = "dwFlags"
+reason = "a descriptor is read from the bytes of a `FileGroupDescriptorW` block at the offsets of the structure (`FILEDESCRIPTORW::SIZE`, `OFFSET_OF_*`; `read_descriptors_from_bytes`), which reads the flags, the size and the name"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.FILEDESCRIPTORW"
+member = "clsid"
+reason = "a descriptor is read from the bytes of a `FileGroupDescriptorW` block at the offsets of the structure (`FILEDESCRIPTORW::SIZE`, `OFFSET_OF_*`; `read_descriptors_from_bytes`), which reads the flags, the size and the name"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.FILEDESCRIPTORW"
+member = "sizel"
+reason = "a descriptor is read from the bytes of a `FileGroupDescriptorW` block at the offsets of the structure (`FILEDESCRIPTORW::SIZE`, `OFFSET_OF_*`; `read_descriptors_from_bytes`), which reads the flags, the size and the name"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.FILEDESCRIPTORW"
+member = "pointl"
+reason = "a descriptor is read from the bytes of a `FileGroupDescriptorW` block at the offsets of the structure (`FILEDESCRIPTORW::SIZE`, `OFFSET_OF_*`; `read_descriptors_from_bytes`), which reads the flags, the size and the name"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.FILEDESCRIPTORW"
+member = "dwFileAttributes"
+reason = "a descriptor is read from the bytes of a `FileGroupDescriptorW` block at the offsets of the structure (`FILEDESCRIPTORW::SIZE`, `OFFSET_OF_*`; `read_descriptors_from_bytes`), which reads the flags, the size and the name"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.FILEDESCRIPTORW"
+member = "ftCreationTime"
+reason = "a descriptor is read from the bytes of a `FileGroupDescriptorW` block at the offsets of the structure (`FILEDESCRIPTORW::SIZE`, `OFFSET_OF_*`; `read_descriptors_from_bytes`), which reads the flags, the size and the name"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.FILEDESCRIPTORW"
+member = "ftLastAccessTime"
+reason = "a descriptor is read from the bytes of a `FileGroupDescriptorW` block at the offsets of the structure (`FILEDESCRIPTORW::SIZE`, `OFFSET_OF_*`; `read_descriptors_from_bytes`), which reads the flags, the size and the name"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.FILEDESCRIPTORW"
+member = "ftLastWriteTime"
+reason = "a descriptor is read from the bytes of a `FileGroupDescriptorW` block at the offsets of the structure (`FILEDESCRIPTORW::SIZE`, `OFFSET_OF_*`; `read_descriptors_from_bytes`), which reads the flags, the size and the name"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.FILEDESCRIPTORW"
+member = "nFileSizeHigh"
+reason = "a descriptor is read from the bytes of a `FileGroupDescriptorW` block at the offsets of the structure (`FILEDESCRIPTORW::SIZE`, `OFFSET_OF_*`; `read_descriptors_from_bytes`), which reads the flags, the size and the name"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.FILEDESCRIPTORW"
+member = "nFileSizeLow"
+reason = "a descriptor is read from the bytes of a `FileGroupDescriptorW` block at the offsets of the structure (`FILEDESCRIPTORW::SIZE`, `OFFSET_OF_*`; `read_descriptors_from_bytes`), which reads the flags, the size and the name"
+
+[[waive]]
+project = "Avalonia.Win32"
+type = "Avalonia.Win32.Interop.UnmanagedMethods.FILEDESCRIPTORW"
+member = "cFileName"
+reason = "a descriptor is read from the bytes of a `FileGroupDescriptorW` block at the offsets of the structure (`FILEDESCRIPTORW::SIZE`, `OFFSET_OF_*`; `read_descriptors_from_bytes`), which reads the flags, the size and the name"
