@@ -8,19 +8,20 @@ Generated from upstream commit `17350180c33b063f0e98abbfd19aa3cae63f5d56`. Back 
 |---|---|
 | Upstream | `src/Windows/Avalonia.Win32.Interoperability` |
 | FerroUI | `src/Windows/FerroUI.Win32.Interoperability` (not created yet) |
-| Crate | `ferroui-win32-interoperability` |
-| Phase / priority | not started / out of current scope / - |
-| Files | 0/2 (0.0%) |
-| Types | 0/2 (0.0%) |
-| Members | 0/11 (0.0%) |
-
-This backend is outside the current porting scope. It is tracked at file and type granularity only; member counts are totals.
+| Crate | (none: hosting in Windows Forms, which has no counterpart in Rust; docs/porting/winui.md, section 8) |
+| Phase / priority | 1 - desktop (Windows) / - |
+| Files | 0/0 (-), 2 not applicable |
+| Types | 0/0 (-) |
+| Members | 0/0 (-) |
+| Contracts (interfaces) | 0/0 |
+| Property registrations | 0/0 |
+| Routed events | 0/0 |
 
 ## Files
 
-### `WinForms` - files 0/2, types 0/2, members 0/11
+### `WinForms` - files 0/0, types 0/0, members 0/0
 
-| Upstream file | Types | Members | Status |
-|---|---|---|---|
-| `WinFormsAvaloniaControlHost.cs` | `WinFormsAvaloniaControlHost` | 10 | not started |
-| `WinFormsAvaloniaMessageFilter.cs` | `WinFormsAvaloniaMessageFilter` | 1 | not started |
+| Upstream file | Rust file | Status | Types | Members | Notes |
+|---|---|---|---|---|---|
+| `WinFormsAvaloniaControlHost.cs` | - | n/a | - | - | not-applicable: hosting in Windows Forms: a Control of System.Windows.Forms that embeds the content and a message filter of its message loop. Windows Forms is a toolkit of .NET with no counterpart in Rust, so nothing can host the content this way; a Rust program on Windows hosts it in a window of the backend, in a window of another toolkit through the embedded window of the backend, or in WinUI 3 through ferroui-winui (docs/porting/winui.md, section 8) |
+| `WinFormsAvaloniaMessageFilter.cs` | - | n/a | - | - | not-applicable: hosting in Windows Forms: a Control of System.Windows.Forms that embeds the content and a message filter of its message loop. Windows Forms is a toolkit of .NET with no counterpart in Rust, so nothing can host the content this way; a Rust program on Windows hosts it in a window of the backend, in a window of another toolkit through the embedded window of the backend, or in WinUI 3 through ferroui-winui (docs/porting/winui.md, section 8) |

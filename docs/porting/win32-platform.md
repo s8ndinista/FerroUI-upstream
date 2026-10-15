@@ -10,8 +10,8 @@ Marks used below: **[V]** verified here (read in the sources named, or measured 
 |---|---:|---:|---:|---|
 | `Avalonia.Win32` | 95 | 276 | 2605 | in scope since 2026-10-10; stages 1, 2.0, 2a, 2b (ANGLE, WGL and Vulkan), 2c, 2d, 2e, 2f and text input built and run (this document); Vulkan built, opt-in (section 6.1) |
 | `Avalonia.Win32.Automation` | 40 | 64 | 598 | in scope since 2026-10-11 and built: the module `automation` of the crate (section 13) |
-| `Avalonia.Win32.Interoperability` | 2 | - | - | out of scope; hosting in WPF and Windows Forms, which has no counterpart in Rust |
-| `Avalonia.WinUI` | 15 | - | - | out of scope; a host inside a WinUI application |
+| `Avalonia.Win32.Interoperability` | 2 | - | - | not applicable since 2026-10-15: hosting in Windows Forms, which has no counterpart in Rust (`winui.md`, section 8) |
+| `Avalonia.WinUI` | 15 | 16 | 88 | ported since 2026-10-15: the crate `ferroui-winui`, a host inside a WinUI 3 application (`winui.md`) |
 
 `Avalonia.Win32` is one of the two windowing backends upstream has for the desktop on Windows and the only one an application uses: windows and popups over `HWND`, the message loop as the dispatcher, input from window messages, the clipboard and drag and drop over OLE, GPU rendering through ANGLE (OpenGL ES on Direct3D 11), WGL or Vulkan, and presentation through the redirection surface of the window, DirectComposition, Windows.UI.Composition or a DXGI swap chain.
 
@@ -172,7 +172,7 @@ Upstream registers a window class per window with a delegate of the instance as 
 | `OpenGl/Angle/AngleWin32PlatformGraphicsFactory.cs` | 48 | `open_gl/angle/angle_win32_platform_graphics_factory.rs` | 2b | built |
 | `OpenGl/Angle/D3D11AngleWin32PlatformGraphics.cs` | 91 | `open_gl/angle/d3d11_angle_win32_platform_graphics.rs` | 2b, 2c | built: a context has the two features (`AngleD3DTextureFeature`, `AngleExternalObjectsFeature`) since the DirectComposition part of 2c, and its display of ANGLE as a third (`AngleContextDisplay`) since the DXGI swap chain mode |
 | `OpenGl/Angle/D3D9AngleWin32PlatformGraphics.cs` | 53 | `open_gl/angle/d3d9_angle_win32_platform_graphics.rs` | 2b | built |
-| `OpenGl/Angle/SwapChainGlSurface.cs` | 252 | `open_gl/angle/swap_chain_gl_surface.rs` | 2c | built: for a host of another toolkit, which the port does not have (the WinUI project is out of scope); the transform and the vtable slot are tested on every host, nothing creates the surface outside a test |
+| `OpenGl/Angle/SwapChainGlSurface.cs` | 252 | `open_gl/angle/swap_chain_gl_surface.rs` | 2c | built: for a host of another toolkit, the swap chain panel of the WinUI integration (`winui.md`, public for it since 2026-10-15); the transform and the vtable slot are tested on every host |
 | `OpenGl/WglConsts.cs` | 64 | `open_gl/wgl_consts.rs` | 2b | built |
 | `OpenGl/WglContext.cs` | 108 | `open_gl/wgl_context.rs` | 2b | built: without the monitor of the reference (a context is of one thread) |
 | `OpenGl/WglDisplay.cs` | 170 | `open_gl/wgl_display.rs` | 2b | built: the pixel formats, the profile and the attributes of a context are functions of values |
@@ -376,7 +376,7 @@ The seven files of `WinRT/Composition`, in `win_rt/composition/`:
 
 **The display of ANGLE of a context.** The reference casts the display of a context to `AngleWin32EglDisplay`. A context of the port holds the EGL display, so the wrapper is a feature of every context of the Direct3D 11 graphics (`AngleContextDisplay`: the wrapper and the shared handle of the context), beside the two features of section 6.1.
 
-**The last two files have no caller in the port.** Upstream's `Avalonia.WinUI` (a host inside a WinUI application, out of scope) is their only user. They are ported because they are files of this project; what runs of them is what a test constructs (the top-level driven as a host would; the transform and the vtable slot). The swap chain itself has never been created.
+**The last two files are for the WinUI integration.** Upstream's `Avalonia.WinUI` is their only user; since 2026-10-15 the port has it (`ferroui-winui`, `winui.md`), and the two types are public for it. What has run of them is what a test constructs (the top-level driven as a host would; the transform and the vtable slot): the swap chain itself has not been created yet, which the smoke run of the sample of the integration is the first to do (`winui.md`, section 7).
 
 ### 6.7 WGL: the OpenGL of the system
 

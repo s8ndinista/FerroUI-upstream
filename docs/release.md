@@ -145,7 +145,7 @@ The owner decided on 2026-10-10 to reserve, with the first preview, the names of
 | `ferroui-wayland` | `src/FerroUI.Wayland` | the Wayland platform (upstream `Avalonia.Wayland`); the port replaced the placeholder for the second preview (`docs/porting/wayland-platform.md`) |
 | `ferroui-vulkan` | `src/FerroUI.Vulkan` | the Vulkan platform contracts (upstream `Avalonia.Vulkan`); the port replaced the placeholder for the second preview (`docs/porting/vulkan.md`) |
 | `ferroui-linuxframebuffer` | `src/Linux/FerroUI.LinuxFramebuffer` | the Linux framebuffer platform (upstream `Avalonia.LinuxFramebuffer`); the port replaced the placeholder for the second preview (`docs/porting/linux-framebuffer-platform.md`) |
-| `ferroui-winui` | `src/Windows/FerroUI.WinUI` | the WinUI integration (upstream `Avalonia.WinUI`) |
+| `ferroui-winui` | `src/Windows/FerroUI.WinUI` | the WinUI integration (upstream `Avalonia.WinUI`); the port replaced the placeholder for the second preview (`docs/porting/winui.md`) |
 
 `ferroui-headless-vnc` was reserved with the first preview and is ported since (2026-10-15): the crate at `src/Headless/FerroUI.Headless.Vnc` is the VNC server of the headless platform (upstream `Avalonia.Headless.Vnc`, `docs/porting/headless-vnc.md`), published from the next preview with its real description. It is no longer only a reserved name.
 
