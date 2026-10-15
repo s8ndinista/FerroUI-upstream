@@ -386,6 +386,22 @@ jobs:
           timeout 600 ./target/debug/control-catalog-desktop.exe
           wc -l "$FERROUI_SMOKE_A11Y_TREE"
           tail -n 1 "$FERROUI_SMOKE_A11Y_TREE"
+      # The WinUI integration (docs/porting/winui.md, section 7): its tests on the target, and the
+      # sample that hosts the catalog in a WinUI 3 window (ControlGallery.WinUI), smoke-run against
+      # the Windows App Runtime 1.6, which the step installs on the runner with the bootstrap
+      # library beside the executable. Informative until a first run has measured that the image
+      # installs the runtime and runs the application.
+      - name: WinUI integration (tests, the Windows App Runtime, the sample's smoke run; informative)
+        if: ${{ !cancelled() && steps.skia.outputs.raster == 'true' }}
+        continue-on-error: true
+        timeout-minutes: 45
+        env:
+          RUST_BACKTRACE: 1
+        run: |
+          cargo test --locked -p ferroui-winui --no-fail-fast
+          cargo build --locked -p control-gallery-winui
+          pwsh -NoProfile -File scripts/winui/fetch-windows-app-sdk.ps1 -Destination target/debug -InstallRuntime
+          timeout 300 ./target/debug/control-gallery-winui.exe --smoke
       - name: Keep the pictures of the catalog
         if: ${{ always() && steps.skia.outputs.raster == 'true' }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
