@@ -60,6 +60,11 @@ time.workspace = true
 # framework.
 ferroui-build-scan = { workspace = true }
 
+# `--cfg ferro_tls_table` makes every `ferro_thread_local!` of a build use the table of the Android
+# targets on a Linux or macOS host, so that test suites run against it (`ferro_thread_local.rs`).
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ["cfg(ferro_tls_table)"] }
+
 # The group of the crate in the table of the README (docs/release.md).
 [package.metadata.release]
 group = "core"
