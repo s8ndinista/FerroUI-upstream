@@ -17,3 +17,5 @@ pub use angle_win32_platform_graphics_factory::{AnglePlatformGraphics, AngleWin3
 pub(crate) use d3d11_angle_win32_platform_graphics::AngleContextDisplay;
 pub use d3d11_angle_win32_platform_graphics::D3D11AngleWin32PlatformGraphics;
 pub use d3d9_angle_win32_platform_graphics::D3D9AngleWin32PlatformGraphics;
+#[cfg(windows)]
+pub use swap_chain_gl_surface::{SwapChainGlRenderTarget, SwapChainGlSurface};

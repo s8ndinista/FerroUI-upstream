@@ -90,7 +90,7 @@ mod win32_platform;
 #[cfg(windows)]
 mod win_screen;
 #[cfg(windows)]
-mod wnd_proc_guard;
+pub mod wnd_proc_guard;
 
 pub use angle_options::{AngleOptions, PlatformApi};
 pub use cursor_factory::cursor_resource_id;
@@ -98,6 +98,7 @@ pub use platform_constants::{PlatformConstants, Version};
 pub use win32_platform_options::{Win32CompositionMode, Win32DpiAwareness, Win32PlatformOptions, Win32RenderingMode};
 pub use win32_top_level_scene_info::Win32TopLevelSceneInfo;
 pub use win32_type_extensions::Win32TypeExtensions;
+pub use swap_chain_top_level_impl::SwapChainTopLevelImpl;
 
 #[cfg(windows)]
 pub use clipboard_impl::ClipboardImpl;

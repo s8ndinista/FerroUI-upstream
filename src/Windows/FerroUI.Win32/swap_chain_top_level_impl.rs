@@ -20,8 +20,10 @@ use std::sync::Arc;
 /// an externally managed swap-chain surface (e.g. a swap chain panel of
 /// another toolkit or any other host that supplies an OpenGL surface).
 /// Sizing, scaling and input pumping are driven by the host.
-#[allow(dead_code)] // Created by a host of another toolkit, which the port does not have yet; the tests construct it.
-pub(crate) struct SwapChainTopLevelImpl {
+///
+/// The swap chain panel of the WinUI integration (`ferroui-winui`) creates
+/// it; the reference grants that project access to its internals.
+pub struct SwapChainTopLevelImpl {
     gl_surface: Arc<dyn IPlatformRenderSurface>,
     client_size: Cell<Size>,
     scaling: Cell<f64>,
@@ -38,7 +40,6 @@ pub(crate) struct SwapChainTopLevelImpl {
     text_input_method: RefCell<Option<Rc<dyn ITextInputMethodImpl>>>,
 }
 
-#[allow(dead_code)]
 impl SwapChainTopLevelImpl {
     /// `gl_surface` is the surface of the host, which answers as an OpenGL
     /// surface (the reference takes it by that type).

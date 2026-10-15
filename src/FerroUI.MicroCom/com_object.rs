@@ -1,6 +1,6 @@
 use std::ffi::c_void;
 use std::marker::PhantomData;
-use std::sync::atomic::{fence, AtomicU32, Ordering};
+use std::sync::atomic::{fence, AtomicPtr, AtomicU32, Ordering};
 
 use crate::{ComPtr, Guid, IUnknownVtbl, Interface, RawHResult, E_NOINTERFACE, E_POINTER, S_OK};
 
@@ -49,10 +49,11 @@ impl<T> InterfaceEntry<T> {
 
 /// The object behind its wrappers (the shadow of the MicroCom runtime): the
 /// reference count, the wrappers in the order the interfaces were given,
-/// and the Rust value.
+/// the inner object of a composed object ([`set_inner`]), and the Rust value.
 struct Shadow<T> {
     refs: AtomicU32,
     wrappers: Box<[Wrapper<T>]>,
+    inner: AtomicPtr<c_void>,
     value: T,
 }
 
@@ -90,7 +91,12 @@ fn new_object<T>(value: T, interfaces: impl Iterator<Item = InterfaceEntry<T>>) 
             matches_iid: entry.matches_iid,
         })
         .collect();
-    let shadow = Box::into_raw(Box::new(Shadow { refs: AtomicU32::new(1), wrappers, value }));
+    let shadow = Box::into_raw(Box::new(Shadow {
+        refs: AtomicU32::new(1),
+        wrappers,
+        inner: AtomicPtr::new(std::ptr::null_mut()),
+        value,
+    }));
     // SAFETY: the allocation above, which nothing else refers to yet; the
     // wrappers live in an allocation of their own that does not move for as
     // long as the shadow lives, so pointers to them stay valid.
@@ -140,6 +146,35 @@ where
     unsafe { ComPtr::from_raw(first as *mut I).unwrap_unchecked() }
 }
 
+/// Makes the object of `this` the outer object of an aggregate: the object
+/// whose implementation of `QueryInterface` asks `inner` for every interface
+/// it was not made with, and which releases `inner` when it is destroyed.
+///
+/// This is how a class of the Windows Runtime is derived from (composition:
+/// the factory of a composable class creates the base object as the inner
+/// object of the outer object it is given, and hands out the inner object's
+/// non-delegating `IUnknown`, whose interfaces count their references on
+/// the outer object). The MicroCom runtime has no counterpart: its objects
+/// are created by one side only. An object that is not composed answers
+/// for its own interfaces alone, as before.
+///
+/// Until this is called, the object answers for its own interfaces only,
+/// which is what the factory sees while it creates the inner object.
+///
+/// # Safety
+/// `this` must be an interface pointer of a live object made by
+/// [`make_com`] or [`make_com_with`] whose value is a `T`, and `inner` an
+/// owned reference to the non-delegating `IUnknown` of an object that
+/// aggregates it (or null). The reference is the object's from now on. An
+/// object has one inner object: an earlier one is released.
+pub unsafe fn set_inner<T>(this: *mut c_void, inner: *mut c_void) {
+    let shadow = (*(this as *const ComObject<T>)).shadow;
+    let earlier = (*shadow).inner.swap(inner, Ordering::AcqRel);
+    if !earlier.is_null() {
+        (*(earlier as *const crate::IUnknown)).release();
+    }
+}
+
 /// The three `IUnknown` slots for a [`ComObject<T>`] exposing interface `I`.
 pub struct UnknownThunks<I, T>(PhantomData<(I, T)>);
 
@@ -166,6 +201,13 @@ impl<I: Interface, T> UnknownThunks<I, T> {
                 return S_OK;
             }
         }
+        // An interface of the inner object of a composed object: its
+        // non-delegating `QueryInterface` answers with an interface whose
+        // references are counted on this object (`set_inner`).
+        let inner = (*shadow).inner.load(Ordering::Acquire);
+        if !inner.is_null() {
+            return (*(inner as *const crate::IUnknown)).query_interface_raw(&*riid, ppv);
+        }
         *ppv = std::ptr::null_mut();
         E_NOINTERFACE
     }
@@ -180,6 +222,15 @@ impl<I: Interface, T> UnknownThunks<I, T> {
         let left = (*shadow).refs.fetch_sub(1, Ordering::Release) - 1;
         if left == 0 {
             fence(Ordering::Acquire);
+            // The inner object of a composed object goes first, and may call
+            // the outer object while it goes (its interfaces count on this
+            // object): a count of one keeps those calls from destroying the
+            // object a second time.
+            let inner = (*shadow).inner.swap(std::ptr::null_mut(), Ordering::AcqRel);
+            if !inner.is_null() {
+                (*shadow).refs.store(1, Ordering::Relaxed);
+                (*(inner as *const crate::IUnknown)).release();
+            }
             drop(Box::from_raw(shadow));
         }
         left
@@ -376,6 +427,38 @@ mod tests {
         assert!(!dropped.get());
         drop(unknown);
         assert!(dropped.get());
+    }
+
+    struct Inner(u32, #[allow(dead_code)] DropFlag);
+
+    impl ISecondImpl for Inner {
+        fn second(&self) -> u32 {
+            self.0
+        }
+    }
+
+    #[test]
+    fn a_composed_object_asks_its_inner_object_and_releases_it() {
+        let outer_dropped = Rc::new(Cell::new(false));
+        let inner_dropped = Rc::new(Cell::new(false));
+        let outer: ComPtr<IFirst> = make_com(Both(1, DropFlag(outer_dropped.clone())));
+        // Not composed yet: an interface the object was not made with.
+        assert_eq!(Err(crate::HResult(E_NOINTERFACE)), outer.cast::<ISecond>().map(|_| ()));
+
+        let inner: ComPtr<ISecond> = make_com(Inner(7, DropFlag(inner_dropped.clone())));
+        unsafe { set_inner::<Both>(outer.as_ptr() as *mut c_void, inner.into_raw() as *mut c_void) };
+
+        // Its own interfaces first, then the inner object's.
+        assert_eq!(2, outer.first());
+        let second = outer.cast::<ISecond>().unwrap();
+        assert_eq!(7, second.second());
+        assert_eq!(Err(crate::HResult(E_NOINTERFACE)), outer.cast::<IThird>().map(|_| ()));
+        drop(second);
+
+        // The inner object goes with the outer one.
+        drop(outer);
+        assert!(outer_dropped.get());
+        assert!(inner_dropped.get());
     }
 
     #[test]
