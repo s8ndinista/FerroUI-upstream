@@ -15,8 +15,8 @@
 #   --no-cargo          package the library that is already built
 #
 # Environment: ANDROID_HOME (the SDK); CARGO_TARGET_DIR is honoured; see scripts/android/env.sh for
-# the pinned versions of the NDK, the build tools and the platform, and for the nightly Rust
-# toolchain (with the component rust-src) the native library is built with.
+# the pinned versions of the NDK, the build tools and the platform. The native library is built with
+# the stable Rust toolchain and its target (rustup target add aarch64-linux-android).
 #
 # The last line printed is "APK: <path>".
 set -euo pipefail
@@ -110,27 +110,26 @@ mkdir -p "$work/classes" "$work/stage/lib/$abi"
 
 # 1. The native library.
 if [ "$run_cargo" = 1 ]; then
-    echo "== cargo +$FERROUI_ANDROID_RUST_TOOLCHAIN build -Zbuild-std ${cargo_args[*]} --target $target (${profile})"
-    # The standard library is built with the application, with thread-local storage through the
-    # emulated TLS of the compiler runtime (docs/porting/android-platform.md, section 5.1): the
-    # standard library of the Android targets as it is distributed keeps every thread-local variable
-    # under a key of the C library, and the system has 128 of those for a process.
-    target_env="$(printf '%s' "$target" | tr 'a-z-' 'A-Z_')"
-    compiler_var="CARGO_TARGET_${target_env}_LINKER"
-    builtins="$("${!compiler_var}" --print-libgcc-file-name)"
-    if [ ! -f "$builtins" ]; then
-        echo "the compiler runtime of the NDK was not found: $builtins" >&2
+    echo "== cargo build ${cargo_args[*]} --target $target (${profile})"
+    # The stable toolchain and the standard library as it is distributed for the target. Its
+    # thread-local variables take a key of the C library each (the system has 128 for a process);
+    # the framework keeps its own in one table per thread (ferro_thread_local!), so the library
+    # needs a handful (docs/porting/android-platform.md, section 5.1).
+    if command -v rustup >/dev/null && ! rustup target list --installed | grep -qx "$target"; then
+        echo "the Rust target $target is not installed: rustup target add $target" >&2
         exit 1
     fi
-    export "CARGO_TARGET_${target_env}_RUSTFLAGS=-Zhas-thread-local=yes -Zpre-link-args=$builtins"
-    (cd "$repo" && cargo "+$FERROUI_ANDROID_RUST_TOOLCHAIN" build -Zbuild-std=std,panic_unwind \
-        "${cargo_args[@]}" --target "$target" ${profile_args[@]+"${profile_args[@]}"})
+    (cd "$repo" && cargo build "${cargo_args[@]}" --target "$target" ${profile_args[@]+"${profile_args[@]}"})
 fi
 built="$cargo_target_dir/$target/$profile_dir/${library_dir:+$library_dir/}lib$library.so"
 if [ ! -f "$built" ]; then
     echo "the library was not built: $built" >&2
     exit 1
 fi
+# The keys of the C library the library takes for thread-local storage stay well under the 128 of
+# a process (docs/porting/android-platform.md, section 5.1).
+echo "== keys for thread-local storage"
+"$repo/scripts/android/tls-keys.sh" "$built"
 if [ "$strip" = 1 ]; then
     "$FERROUI_ANDROID_TOOLCHAIN/llvm-strip" --strip-unneeded -o "$work/stage/lib/$abi/lib$library.so" "$built"
 else
