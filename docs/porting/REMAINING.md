@@ -8,8 +8,8 @@ Generated from upstream commit `17350180c33b063f0e98abbfd19aa3cae63f5d56`. The s
 
 | | Present | Total | Missing | Waived | Not applicable | Out of scope | Share |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| Members of the projects in scope | 28301 | 32770 | 1127 | 3342 | - | - | 96.2% of total less waived |
-| Members of every upstream source project of the extraction | 28301 | 37391 | 1127 | 3342 | 1132 | 3489 | 75.7% of total |
+| Members of the projects in scope | 29333 | 36113 | 1514 | 5266 | - | - | 95.1% of total less waived |
+| Members of every upstream source project of the extraction | 29333 | 37391 | 1514 | 5266 | 1168 | 110 | 78.4% of total |
 
 The first row is the headline of the tracking: it leaves out the waived members and everything out of scope. The second row leaves out nothing: every member of every C# project the extraction reads, whether or not the port will ever have it. A member is *present* when an item of the mapped name exists; names are matched, not behaviour.
 
@@ -38,24 +38,24 @@ Files, types and members as present / missing / waived. *n/a* counts the files m
 | [Avalonia.Remote.Protocol](tracking/Avalonia.Remote.Protocol.md) | in | 14 / 0 / 0 | 54 / 0 / 1 | 198 / 1 / 3 | 0 (0) | 98.0% |
 | [Avalonia.Themes.Fluent](tracking/Avalonia.Themes.Fluent.md) | in | 5 / 0 / 0 | 6 / 0 / 0 | 68 / 0 / 5 | 1 (0) | 93.2% |
 | [Avalonia.Themes.Simple](tracking/Avalonia.Themes.Simple.md) | in | 1 / 0 / 0 | 1 / 0 / 0 | 1 / 0 / 0 | 1 (0) | 100.0% |
-| [Avalonia.X11](tracking/Avalonia.X11.md) | in | 86 / 2 / 0 | 176 / 8 / 107 | 3531 / 290 / 1076 | 0 (0) | 72.1% |
+| [Avalonia.Vulkan](tracking/Avalonia.Vulkan.md) | in | 30 / 0 / 0 | 151 / 0 / 0 | 283 / 0 / 1751 | 0 (0) | 13.9% |
+| [Avalonia.Wayland](tracking/Avalonia.Wayland.md) | in | 74 / 5 / 0 | 97 / 11 / 13 | 542 / 70 / 168 | 2 (36) | 66.4% |
+| [Avalonia.X11](tracking/Avalonia.X11.md) | in | 88 / 0 / 0 | 180 / 4 / 107 | 3538 / 278 / 1081 | 0 (0) | 72.2% |
 | [Avalonia.Browser](tracking/Avalonia.Browser.md) | in | 50 / 0 / 0 | 60 / 0 / 2 | 340 / 0 / 88 | 2 (13) | 77.1% |
 | [Avalonia.HarfBuzz](tracking/Avalonia.HarfBuzz.md) | in | 3 / 0 / 0 | 3 / 0 / 0 | 5 / 0 / 3 | 0 (0) | 62.5% |
 | [Avalonia.Headless](tracking/Avalonia.Headless.md) | in | 11 / 0 / 0 | 22 / 0 / 2 | 238 / 0 / 13 | 0 (0) | 94.8% |
 | [Avalonia.Headless.NUnit](tracking/Avalonia.Headless.NUnit.md) | in: every file not applicable | 0 / 0 / 0 | 0 / 0 / 0 | 0 / 0 / 0 | 4 (4) | 0.0% |
 | [Avalonia.Headless.XUnit](tracking/Avalonia.Headless.XUnit.md) | in: every file not applicable | 0 / 0 / 0 | 0 / 0 / 0 | 0 / 0 / 0 | 14 (26) | 0.0% |
+| [Avalonia.LinuxFramebuffer](tracking/Avalonia.LinuxFramebuffer.md) | in | 25 / 5 / 0 | 34 / 42 / 0 | 169 / 360 / 0 | 0 (0) | 31.9% |
 | [Avalonia.Markup](tracking/Avalonia.Markup.md) | in | 7 / 0 / 0 | 7 / 0 / 30 | 12 / 0 / 55 | 1 (0) | 17.9% |
 | [Avalonia.Markup.Xaml](tracking/Avalonia.Markup.Xaml.md) | in | 46 / 0 / 0 | 61 / 0 / 2 | 208 / 0 / 31 | 2 (1) | 86.7% |
 | [Avalonia.Markup.Xaml.Loader](tracking/Avalonia.Markup.Xaml.Loader.md) | in | 66 / 0 / 0 | 120 / 0 / 6 | 422 / 0 / 83 | 1 (1) | 83.4% |
-| [Avalonia.Skia](tracking/Avalonia.Skia.md) | in | 51 / 3 / 0 | 62 / 4 / 0 | 398 / 32 / 21 | 0 (0) | 88.2% |
+| [Avalonia.Skia](tracking/Avalonia.Skia.md) | in | 54 / 0 / 0 | 66 / 0 / 0 | 429 / 1 / 21 | 0 (0) | 95.1% |
 | [Avalonia.Win32](tracking/Avalonia.Win32.md) | in | 92 / 3 / 0 | 218 / 58 / 0 | 2081 / 524 / 0 | 0 (0) | 79.9% |
 | [Avalonia.Win32.Automation](tracking/Avalonia.Win32.Automation.md) | in | 40 / 0 / 0 | 19 / 0 / 45 | 124 / 0 / 474 | 1 (0) | 20.7% |
 | [Avalonia.iOS](tracking/Avalonia.iOS.md) | in | 37 / 3 / 0 | 51 / 5 / 1 | 254 / 60 / 17 | 1 (0) | 76.7% |
 | [Avalonia.Generators](tracking/Avalonia.Generators.md) | in: every file not applicable | 0 / 0 / 0 | 0 / 0 / 0 | 0 / 0 / 0 | 31 (264) | 0.0% |
-| [Avalonia.Vulkan](tracking/Avalonia.Vulkan.md) | out (started) | 30 files | 151 types | 2034 members | 0 (0) | 0.0% |
-| [Avalonia.Wayland](tracking/Avalonia.Wayland.md) | out (started) | 81 files | 123 types | 816 members | 0 (0) | 0.0% |
 | [Avalonia.Headless.Vnc](tracking/Avalonia.Headless.Vnc.md) | out (started) | 3 files | 3 types | 11 members | 0 (0) | 0.0% |
-| [Avalonia.LinuxFramebuffer](tracking/Avalonia.LinuxFramebuffer.md) | out (started) | 30 files | 76 types | 529 members | 0 (0) | 0.0% |
 | [Avalonia.Win32.Interoperability](tracking/Avalonia.Win32.Interoperability.md) | out (not started) | 2 files | 2 types | 11 members | 0 (0) | 0.0% |
 | [Avalonia.WinUI](tracking/Avalonia.WinUI.md) | out (started) | 15 files | 16 types | 88 members | 0 (0) | 0.0% |
 
@@ -249,20 +249,33 @@ Files without a Rust file, types without a Rust type, and members without a Rust
 
 - **Members of types that exist (1):** `TypeHelper.FindProperty`
 
+### [Avalonia.Wayland](tracking/Avalonia.Wayland.md)
+
+5 files, 11 types and 70 members missing (67 members of the missing types, 3 members of types that exist).
+
+- **Files (5):** `Server/Interop/DrmGbmUnsafeNativeMethods.cs`, `Server/Transient/Rendering/WaylandDmabufFeedback.cs`, `Server/Transient/Rendering/WaylandEglDisplay.cs`, `Server/Transient/Rendering/WaylandEglDmaBufPlatformGraphics.cs`, `Server/Transient/Rendering/WaylandEglDmaBufSurface.cs`
+- **Types (11):** `DmabufFormatModifierPair`, `DmabufTranche`, `DrmDevice`, `DrmGbmUnsafeNativeMethods`, `GbmBoFlags`, `GbmBoHandle`, `WaylandDmabufFeedback`, `WaylandDmabufFeedback.FeedbackListener`, `WaylandEglDisplay`, `WaylandEglDmaBufPlatformGraphics`, `WaylandEglDmaBufSurface`
+- **Members of types that exist (3):** `WaylandConnection..ctor`, `WaylandGlobals.LinuxDmabuf`, `WaylandWorker.Start`
+
 ### [Avalonia.X11](tracking/Avalonia.X11.md)
 
-2 files, 8 types and 290 members missing (113 members of the missing types, 177 members of types that exist).
+0 files, 4 types and 278 members missing (101 members of the missing types, 177 members of types that exist).
 
-- **Files (2):** `Vulkan/VulkanNativeInterop.cs`, `Vulkan/VulkanSupport.cs`
-- **Types (8):** `GlxConsts`, `Gtk.signal_dialog_response`, `Gtk.signal_generic`, `VkXlibSurfaceCreateInfoKHR`, `VulkanSupport`, `VulkanSupport.VulkanSurfaceFactory`, `X11VulkanInterface`, `XLib.GrabResult`
+- **Types (4):** `GlxConsts`, `Gtk.signal_dialog_response`, `Gtk.signal_generic`, `XLib.GrabResult`
 - **Members of types that exist (177), by type:** `XLib` 130, `SMLib` 7, `X11Window.X11WindowMode` 7, `Glib` 5, `ICELib` 5, `AvaloniaX11Platform` 3, `GlxInterface` 3, `CursorImpl` 2, `DragDropDataProvider` 2, `DragDropDataTransfer` 2, `XLib.XGeometry` 2, `DataFormatHelper` 1, `GlxDisplay` 1, `SelectionDataProvider` 1, `X11EglHelper` 1, `X11FramebufferSurface` 1, `X11Window` 1, `X11Window.DefaultTopLevelWindowMode` 1, `X11Window.InputProxyWindowMode` 1, `X11Window.SurfacePlatformHandle` 1
+
+### [Avalonia.LinuxFramebuffer](tracking/Avalonia.LinuxFramebuffer.md)
+
+5 files, 42 types and 360 members missing (337 members of the missing types, 23 members of types that exist).
+
+- **Files (5):** `DrmConnectorType.cs`, `DrmOutputOptions.cs`, `Output/Drm.cs`, `Output/DrmBindings.cs`, `Output/DrmOutput.cs`
+- **Types (42):** `AbsAxis`, `AxisEventCode`, `DrmCard`, `DrmConnector`, `DrmConnectorType`, `DrmEncoder`, `DrmModeConnection`, `DrmModeInfo`, `DrmModeSubPixel`, `DrmOutput`, `DrmOutputOptions`, `DrmResources`, `EvKey`, `EvType`, `FbIoCtl`, `LibDrm`, `LibDrm.DrmEventContext`, `LibDrm.DrmEventPageFlipHandler2Delegate`, `LibDrm.DrmEventPageFlipHandlerDelegate`, `LibDrm.DrmEventSequenceHandlerDelegate`, `LibDrm.DrmEventVBlankHandlerDelegate`, `LibDrm.DrmModePageFlip`, `LibDrm.DrmModeType`, `LibDrm.GbmBoFlags`, `LibDrm.GbmBoHandle`, `LibDrm.GbmBoUserDataDestroyCallbackDelegate`, `LibDrm.GbmColorFormats`, `LibDrm.drmModeConnector`, `LibDrm.drmModeCrtc`, `LibDrm.drmModeEncoder`, `LibDrm.drmModeModeInfo`, `LibDrm.drmModeRes`, `LibInputNativeUnsafeMethods`, `LibInputNativeUnsafeMethods.LibInputEventType`, `LibInputNativeUnsafeMethods.LibInputPointerAxis`, `LibInputNativeUnsafeMethods.LibInputPointerAxisSource`, `NativeUnsafeMethods`, `PollFd`, `VBlankFlags`, `epoll_data`, `epoll_event`, `fd_set`
+- **Members of types that exist (23):** `EvDevDevice.EventTypes`, `EvDevDevice.AbsX`, `EvDevDevice.AbsY`, `EvDevDevice..ctor`, `EvDevDevice.NextEvent`, `EvDevDeviceDescription..ctor`, `EvDevDeviceDescription.Path`, `EvDevDeviceHandler.OnEvent`, `EvDevDeviceHandler..ctor`, `EvDevDeviceHandler.Device`, `EvDevDeviceHandler.InputRoot`, `EvDevDeviceHandler.RaiseEvent`, `FbDevBackBuffer.Dispose`, `FbDevBackBuffer.LockFb`, `FbDevBackBuffer.Address`, `FbdevOutput..ctor`, `FbdevOutput..ctor`, `FbdevOutput.Lock`, `FbdevOutput.~FbdevOutput`, `LinuxFramebufferLifetime..ctor`, `LinuxFramebufferPlatformExtensions.StartLinuxDrm`, `input_event.Key`, `input_event.Axis`
 
 ### [Avalonia.Skia](tracking/Avalonia.Skia.md)
 
-3 files, 4 types and 32 members missing (31 members of the missing types, 1 members of types that exist).
+0 files, 0 types and 1 members missing (0 members of the missing types, 1 members of types that exist).
 
-- **Files (3):** `Gpu/Vulkan/VulkanSkiaExternalObjectsFeature.cs`, `Gpu/Vulkan/VulkanSkiaGpu.cs`, `Gpu/Vulkan/VulkanSkiaRenderTarget.cs`
-- **Types (4):** `VulkanSkiaExternalObjectsFeature`, `VulkanSkiaGpu`, `VulkanSkiaRenderTarget`, `VulkanSkiaRenderTarget.VulkanSkiaRenderSession`
 - **Members of types that exist (1):** `DrawingContextHelper.RenderAsync`
 
 ### [Avalonia.Win32](tracking/Avalonia.Win32.md)

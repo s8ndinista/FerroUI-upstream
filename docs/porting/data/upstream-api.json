@@ -383254,10 +383254,10 @@
   {
    "name": "Avalonia.LinuxFramebuffer",
    "path": "src/Linux/Avalonia.LinuxFramebuffer",
-   "detail": "types",
-   "scope": "out",
-   "phase": "not started / out of current scope",
-   "priority": "-",
+   "detail": "full",
+   "scope": "in",
+   "phase": "5 - desktop (Linux)",
+   "priority": "P2",
    "files": [
     {
      "path": "DrmConnectorType.cs",
@@ -383273,7 +383273,110 @@
        "bases": [
         "uint"
        ],
-       "memberCount": 17
+       "members": [
+        {
+         "kind": "enum member",
+         "name": "None",
+         "signature": "None",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "VGA",
+         "signature": "VGA",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "DVI_I",
+         "signature": "DVI_I",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "DVI_D",
+         "signature": "DVI_D",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "DVI_A",
+         "signature": "DVI_A",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Composite",
+         "signature": "Composite",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "S_Video",
+         "signature": "S_Video",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "LVDS",
+         "signature": "LVDS",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Component",
+         "signature": "Component",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "DIN",
+         "signature": "DIN",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "DisplayPort",
+         "signature": "DisplayPort",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "HDMI_A",
+         "signature": "HDMI_A",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "HDMI_B",
+         "signature": "HDMI_B",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "TV",
+         "signature": "TV",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "eDP",
+         "signature": "eDP",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "Virtual",
+         "signature": "Virtual",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "DSI",
+         "signature": "DSI",
+         "accessibility": "public"
+        }
+       ]
       }
      ]
     },
@@ -383288,7 +383391,92 @@
        "fullName": "Avalonia.LinuxFramebuffer.DrmOutputOptions",
        "accessibility": "public",
        "line": 9,
-       "memberCount": 7
+       "members": [
+        {
+         "kind": "property",
+         "name": "Scaling",
+         "accessibility": "public",
+         "line": 15,
+         "type": "double",
+         "accessors": {
+          "get": "public",
+          "set": "public"
+         },
+         "signature": "double Scaling { get; set; }"
+        },
+        {
+         "kind": "property",
+         "name": "Orientation",
+         "accessibility": "public",
+         "line": 21,
+         "type": "SurfaceOrientation",
+         "accessors": {
+          "get": "public",
+          "set": "public"
+         },
+         "signature": "SurfaceOrientation Orientation { get; set; }"
+        },
+        {
+         "kind": "property",
+         "name": "EnableInitialBufferSwapping",
+         "accessibility": "public",
+         "line": 27,
+         "type": "bool",
+         "accessors": {
+          "get": "public",
+          "set": "public"
+         },
+         "signature": "bool EnableInitialBufferSwapping { get; set; }"
+        },
+        {
+         "kind": "property",
+         "name": "InitialBufferSwappingColor",
+         "accessibility": "public",
+         "line": 33,
+         "type": "Color",
+         "accessors": {
+          "get": "public",
+          "set": "public"
+         },
+         "signature": "Color InitialBufferSwappingColor { get; set; }"
+        },
+        {
+         "kind": "property",
+         "name": "VideoMode",
+         "accessibility": "public",
+         "line": 39,
+         "type": "PixelSize?",
+         "accessors": {
+          "get": "public",
+          "set": "public"
+         },
+         "signature": "PixelSize? VideoMode { get; set; }"
+        },
+        {
+         "kind": "property",
+         "name": "ConnectorType",
+         "accessibility": "public",
+         "line": 45,
+         "type": "DrmConnectorType?",
+         "accessors": {
+          "get": "public",
+          "set": "public"
+         },
+         "signature": "DrmConnectorType? ConnectorType { get; set; }"
+        },
+        {
+         "kind": "property",
+         "name": "ConnectorTypeId",
+         "accessibility": "public",
+         "line": 51,
+         "type": "uint?",
+         "accessors": {
+          "get": "public",
+          "set": "public"
+         },
+         "signature": "uint? ConnectorTypeId { get; set; }"
+        }
+       ]
       }
      ]
     },
@@ -383310,7 +383498,122 @@
         "IControlledDispatcherImpl",
         "IDispatcherImplWithExplicitBackgroundProcessing"
        ],
-       "memberCount": 12,
+       "members": [
+        {
+         "kind": "ctor",
+         "name": ".ctor",
+         "accessibility": "public",
+         "line": 93,
+         "params": 1,
+         "signature": "EpollDispatcherImpl(ManagedDispatcherImpl.IManagedDispatcherInputProvider inputProvider)"
+        },
+        {
+         "kind": "method",
+         "name": "RunLoop",
+         "accessibility": "public",
+         "line": 135,
+         "type": "void",
+         "params": 1,
+         "signature": "void RunLoop(CancellationToken cancellationToken)"
+        },
+        {
+         "kind": "method",
+         "name": "Signal",
+         "accessibility": "public",
+         "line": 224,
+         "type": "void",
+         "params": 0,
+         "signature": "void Signal()"
+        },
+        {
+         "kind": "property",
+         "name": "CurrentThreadIsLoopThread",
+         "accessibility": "public",
+         "line": 235,
+         "type": "bool",
+         "accessors": {
+          "get": "public"
+         },
+         "signature": "bool CurrentThreadIsLoopThread { get; }"
+        },
+        {
+         "kind": "event",
+         "name": "Signaled",
+         "accessibility": "public",
+         "line": 237,
+         "type": "Action?",
+         "signature": "event Action? Signaled"
+        },
+        {
+         "kind": "event",
+         "name": "Timer",
+         "accessibility": "public",
+         "line": 238,
+         "type": "Action?",
+         "signature": "event Action? Timer"
+        },
+        {
+         "kind": "method",
+         "name": "UpdateTimer",
+         "accessibility": "public",
+         "line": 240,
+         "type": "void",
+         "params": 1,
+         "signature": "void UpdateTimer(long? dueTimeInMs)"
+        },
+        {
+         "kind": "property",
+         "name": "Now",
+         "accessibility": "public",
+         "line": 248,
+         "type": "long",
+         "accessors": {
+          "get": "public"
+         },
+         "signature": "long Now { get; }"
+        },
+        {
+         "kind": "property",
+         "name": "CanQueryPendingInput",
+         "accessibility": "public",
+         "line": 249,
+         "type": "bool",
+         "accessors": {
+          "get": "public"
+         },
+         "signature": "bool CanQueryPendingInput { get; }"
+        },
+        {
+         "kind": "property",
+         "name": "HasPendingInput",
+         "accessibility": "public",
+         "line": 251,
+         "type": "bool",
+         "accessors": {
+          "get": "public"
+         },
+         "signature": "bool HasPendingInput { get; }"
+        },
+        {
+         "kind": "event",
+         "name": "ReadyForBackgroundProcessing",
+         "accessibility": "explicit",
+         "line": 254,
+         "type": "Action?",
+         "explicitInterface": "IDispatcherImplWithExplicitBackgroundProcessing",
+         "signature": "event Action? IDispatcherImplWithExplicitBackgroundProcessing.ReadyForBackgroundProcessing"
+        },
+        {
+         "kind": "method",
+         "name": "RequestBackgroundProcessing",
+         "accessibility": "explicit",
+         "line": 260,
+         "type": "void",
+         "explicitInterface": "IDispatcherImplWithExplicitBackgroundProcessing",
+         "params": 0,
+         "signature": "void IDispatcherImplWithExplicitBackgroundProcessing.RequestBackgroundProcessing()"
+        }
+       ],
        "privateMembers": 34
       }
      ]
@@ -383331,7 +383634,326 @@
         "IScreenInfoProvider",
         "ISurfaceOrientation"
        ],
-       "memberCount": 30,
+       "members": [
+        {
+         "kind": "property",
+         "name": "InputRoot",
+         "accessibility": "public",
+         "line": 21,
+         "type": "IInputRoot?",
+         "accessors": {
+          "get": "public",
+          "set": "private"
+         },
+         "signature": "IInputRoot? InputRoot { get; private set; }"
+        },
+        {
+         "kind": "ctor",
+         "name": ".ctor",
+         "accessibility": "public",
+         "line": 23,
+         "params": 2,
+         "signature": "FramebufferToplevelImpl(IOutputBackend outputBackend, IInputBackend inputBackend)"
+        },
+        {
+         "kind": "property",
+         "name": "Compositor",
+         "accessibility": "public",
+         "line": 35,
+         "type": "Compositor",
+         "accessors": {
+          "get": "public"
+         },
+         "signature": "Compositor Compositor { get; }"
+        },
+        {
+         "kind": "method",
+         "name": "Dispose",
+         "accessibility": "public",
+         "line": 37,
+         "type": "void",
+         "params": 0,
+         "signature": "void Dispose()"
+        },
+        {
+         "kind": "method",
+         "name": "SetInputRoot",
+         "accessibility": "public",
+         "line": 42,
+         "type": "void",
+         "params": 1,
+         "signature": "void SetInputRoot(IInputRoot inputRoot)"
+        },
+        {
+         "kind": "method",
+         "name": "PointToClient",
+         "accessibility": "public",
+         "line": 48,
+         "type": "Point",
+         "params": 1,
+         "signature": "Point PointToClient(PixelPoint p)"
+        },
+        {
+         "kind": "method",
+         "name": "PointToScreen",
+         "accessibility": "public",
+         "line": 50,
+         "type": "PixelPoint",
+         "params": 1,
+         "signature": "PixelPoint PointToScreen(Point p)"
+        },
+        {
+         "kind": "method",
+         "name": "SetCursor",
+         "accessibility": "public",
+         "line": 52,
+         "type": "void",
+         "params": 1,
+         "signature": "void SetCursor(ICursorImpl? cursor)"
+        },
+        {
+         "kind": "property",
+         "name": "DesktopScaling",
+         "accessibility": "public",
+         "line": 56,
+         "type": "double",
+         "accessors": {
+          "get": "public"
+         },
+         "signature": "double DesktopScaling { get; }"
+        },
+        {
+         "kind": "property",
+         "name": "Handle",
+         "accessibility": "public",
+         "line": 57,
+         "type": "IPlatformHandle?",
+         "accessors": {
+          "get": "public"
+         },
+         "signature": "IPlatformHandle? Handle { get; }"
+        },
+        {
+         "kind": "property",
+         "name": "ClientSize",
+         "accessibility": "public",
+         "line": 58,
+         "type": "Size",
+         "accessors": {
+          "get": "public"
+         },
+         "signature": "Size ClientSize { get; }"
+        },
+        {
+         "kind": "property",
+         "name": "FrameSize",
+         "accessibility": "public",
+         "line": 59,
+         "type": "Size?",
+         "accessors": {
+          "get": "public"
+         },
+         "signature": "Size? FrameSize { get; }"
+        },
+        {
+         "kind": "property",
+         "name": "MouseDevice",
+         "accessibility": "public",
+         "line": 60,
+         "type": "IMouseDevice",
+         "accessors": {
+          "get": "public"
+         },
+         "signature": "IMouseDevice MouseDevice { get; }"
+        },
+        {
+         "kind": "method",
+         "name": "CreatePopup",
+         "accessibility": "public",
+         "line": 61,
+         "type": "IPopupImpl?",
+         "params": 0,
+         "signature": "IPopupImpl? CreatePopup()"
+        },
+        {
+         "kind": "property",
+         "name": "RenderScaling",
+         "accessibility": "public",
+         "line": 63,
+         "type": "double",
+         "accessors": {
+          "get": "public"
+         },
+         "signature": "double RenderScaling { get; }"
+        },
+        {
+         "kind": "property",
+         "name": "Surfaces",
+         "accessibility": "public",
+         "line": 64,
+         "type": "IPlatformRenderSurface[]",
+         "accessors": {
+          "get": "public"
+         },
+         "signature": "IPlatformRenderSurface[] Surfaces { get; }"
+        },
+        {
+         "kind": "property",
+         "name": "Input",
+         "accessibility": "public",
+         "line": 65,
+         "type": "Action<RawInputEventArgs>?",
+         "accessors": {
+          "get": "public",
+          "set": "public"
+         },
+         "signature": "Action<RawInputEventArgs>? Input { get; set; }"
+        },
+        {
+         "kind": "property",
+         "name": "Paint",
+         "accessibility": "public",
+         "line": 66,
+         "type": "Action<Rect>?",
+         "accessors": {
+          "get": "public",
+          "set": "public"
+         },
+         "signature": "Action<Rect>? Paint { get; set; }"
+        },
+        {
+         "kind": "property",
+         "name": "Resized",
+         "accessibility": "public",
+         "line": 67,
+         "type": "Action<Size, WindowResizeReason>?",
+         "accessors": {
+          "get": "public",
+          "set": "public"
+         },
+         "signature": "Action<Size, WindowResizeReason>? Resized { get; set; }"
+        },
+        {
+         "kind": "property",
+         "name": "ScalingChanged",
+         "accessibility": "public",
+         "line": 68,
+         "type": "Action<double>?",
+         "accessors": {
+          "get": "public",
+          "set": "public"
+         },
+         "signature": "Action<double>? ScalingChanged { get; set; }"
+        },
+        {
+         "kind": "property",
+         "name": "TransparencyLevelChanged",
+         "accessibility": "public",
+         "line": 70,
+         "type": "Action<WindowTransparencyLevel>?",
+         "accessors": {
+          "get": "public",
+          "set": "public"
+         },
+         "signature": "Action<WindowTransparencyLevel>? TransparencyLevelChanged { get; set; }"
+        },
+        {
+         "kind": "property",
+         "name": "Closed",
+         "accessibility": "public",
+         "line": 72,
+         "type": "Action?",
+         "accessors": {
+          "get": "public",
+          "set": "public"
+         },
+         "signature": "Action? Closed { get; set; }"
+        },
+        {
+         "kind": "property",
+         "name": "LostFocus",
+         "accessibility": "public",
+         "line": 73,
+         "type": "Action?",
+         "accessors": {
+          "get": "public",
+          "set": "public"
+         },
+         "signature": "Action? LostFocus { get; set; }"
+        },
+        {
+         "kind": "property",
+         "name": "ScaledSize",
+         "accessibility": "public",
+         "line": 75,
+         "type": "Size",
+         "accessors": {
+          "get": "public"
+         },
+         "signature": "Size ScaledSize { get; }"
+        },
+        {
+         "kind": "method",
+         "name": "SetTransparencyLevelHint",
+         "accessibility": "public",
+         "line": 77,
+         "type": "void",
+         "params": 1,
+         "signature": "void SetTransparencyLevelHint(IReadOnlyList<WindowTransparencyLevel> transparencyLevel)"
+        },
+        {
+         "kind": "property",
+         "name": "TransparencyLevel",
+         "accessibility": "public",
+         "line": 79,
+         "type": "WindowTransparencyLevel",
+         "accessors": {
+          "get": "public"
+         },
+         "signature": "WindowTransparencyLevel TransparencyLevel { get; }"
+        },
+        {
+         "kind": "method",
+         "name": "SetFrameThemeVariant",
+         "accessibility": "public",
+         "line": 81,
+         "type": "void",
+         "params": 1,
+         "signature": "void SetFrameThemeVariant(PlatformThemeVariant? themeVariant)"
+        },
+        {
+         "kind": "property",
+         "name": "AcrylicCompensationLevels",
+         "accessibility": "public",
+         "line": 83,
+         "type": "AcrylicPlatformCompensationLevels",
+         "accessors": {
+          "get": "public"
+         },
+         "signature": "AcrylicPlatformCompensationLevels AcrylicCompensationLevels { get; }"
+        },
+        {
+         "kind": "method",
+         "name": "TryGetFeature",
+         "accessibility": "public",
+         "line": 84,
+         "type": "object?",
+         "params": 1,
+         "signature": "object? TryGetFeature(Type featureType)"
+        },
+        {
+         "kind": "property",
+         "name": "Orientation",
+         "accessibility": "explicit",
+         "line": 86,
+         "type": "SurfaceOrientation",
+         "explicitInterface": "ISurfaceOrientation",
+         "accessors": {
+          "get": "explicit"
+         },
+         "signature": "SurfaceOrientation ISurfaceOrientation.Orientation { get; }"
+        }
+       ],
        "privateMembers": 3
       }
      ]
@@ -383350,7 +383972,35 @@
        "bases": [
         "IPlatformIconLoader"
        ],
-       "memberCount": 3,
+       "members": [
+        {
+         "kind": "method",
+         "name": "LoadIcon",
+         "accessibility": "public",
+         "line": 34,
+         "type": "IWindowIconImpl",
+         "params": 1,
+         "signature": "IWindowIconImpl LoadIcon(string fileName)"
+        },
+        {
+         "kind": "method",
+         "name": "LoadIcon",
+         "accessibility": "public",
+         "line": 36,
+         "type": "IWindowIconImpl",
+         "params": 1,
+         "signature": "IWindowIconImpl LoadIcon(Stream stream)"
+        },
+        {
+         "kind": "method",
+         "name": "LoadIcon",
+         "accessibility": "public",
+         "line": 38,
+         "type": "IWindowIconImpl",
+         "params": 1,
+         "signature": "IWindowIconImpl LoadIcon(IBitmapImpl bitmap)"
+        }
+       ],
        "privateMembers": 1
       },
       {
@@ -383360,7 +384010,46 @@
        "fullName": "Avalonia.LinuxFramebuffer.LinuxFramebufferPlatform",
        "accessibility": "internal",
        "line": 41,
-       "memberCount": 3,
+       "members": [
+        {
+         "kind": "field",
+         "name": "EventGrouperDispatchQueue",
+         "accessibility": "public",
+         "modifiers": [
+          "static"
+         ],
+         "line": 44,
+         "type": "ManualRawEventGrouperDispatchQueue",
+         "signature": "static ManualRawEventGrouperDispatchQueue EventGrouperDispatchQueue"
+        },
+        {
+         "kind": "property",
+         "name": "Compositor",
+         "accessibility": "internal",
+         "modifiers": [
+          "static"
+         ],
+         "line": 46,
+         "type": "Compositor",
+         "accessors": {
+          "get": "internal",
+          "set": "private"
+         },
+         "signature": "static Compositor Compositor { get; private set; }"
+        },
+        {
+         "kind": "method",
+         "name": "Initialize",
+         "accessibility": "internal",
+         "modifiers": [
+          "static"
+         ],
+         "line": 79,
+         "type": "LinuxFramebufferLifetime",
+         "params": 3,
+         "signature": "static LinuxFramebufferLifetime Initialize(AppBuilder builder, IOutputBackend outputBackend, IInputBackend? inputBackend)"
+        }
+       ],
        "privateMembers": 3
       },
       {
@@ -383375,7 +384064,104 @@
         "ISingleViewApplicationLifetime",
         "ISingleTopLevelApplicationLifetime"
        ],
-       "memberCount": 10,
+       "members": [
+        {
+         "kind": "property",
+         "name": "Token",
+         "accessibility": "public",
+         "line": 96,
+         "type": "CancellationToken",
+         "accessors": {
+          "get": "public"
+         },
+         "signature": "CancellationToken Token { get; }"
+        },
+        {
+         "kind": "ctor",
+         "name": ".ctor",
+         "accessibility": "public",
+         "line": 98,
+         "params": 1,
+         "signature": "LinuxFramebufferLifetime(IOutputBackend fb)"
+        },
+        {
+         "kind": "ctor",
+         "name": ".ctor",
+         "accessibility": "public",
+         "line": 103,
+         "params": 2,
+         "signature": "LinuxFramebufferLifetime(IOutputBackend fb, IInputBackend? input)"
+        },
+        {
+         "kind": "property",
+         "name": "MainView",
+         "accessibility": "public",
+         "line": 109,
+         "type": "Control?",
+         "accessors": {
+          "get": "public",
+          "set": "public"
+         },
+         "signature": "Control? MainView { get; set; }"
+        },
+        {
+         "kind": "property",
+         "name": "ExitCode",
+         "accessibility": "public",
+         "line": 123,
+         "type": "int",
+         "accessors": {
+          "get": "public",
+          "set": "private"
+         },
+         "signature": "int ExitCode { get; private set; }"
+        },
+        {
+         "kind": "event",
+         "name": "Startup",
+         "accessibility": "public",
+         "line": 124,
+         "type": "EventHandler<ControlledApplicationLifetimeStartupEventArgs>?",
+         "signature": "event EventHandler<ControlledApplicationLifetimeStartupEventArgs>? Startup"
+        },
+        {
+         "kind": "event",
+         "name": "Exit",
+         "accessibility": "public",
+         "line": 125,
+         "type": "EventHandler<ControlledApplicationLifetimeExitEventArgs>?",
+         "signature": "event EventHandler<ControlledApplicationLifetimeExitEventArgs>? Exit"
+        },
+        {
+         "kind": "method",
+         "name": "Start",
+         "accessibility": "public",
+         "line": 127,
+         "type": "void",
+         "params": 1,
+         "signature": "void Start(string[] args)"
+        },
+        {
+         "kind": "method",
+         "name": "Shutdown",
+         "accessibility": "public",
+         "line": 132,
+         "type": "void",
+         "params": 1,
+         "signature": "void Shutdown(int exitCode)"
+        },
+        {
+         "kind": "property",
+         "name": "TopLevel",
+         "accessibility": "public",
+         "line": 141,
+         "type": "TopLevel?",
+         "accessors": {
+          "get": "public"
+         },
+         "signature": "TopLevel? TopLevel { get; }"
+        }
+       ],
        "privateMembers": 5
       },
       {
@@ -383388,7 +384174,86 @@
        "modifiers": [
         "static"
        ],
-       "memberCount": 6
+       "members": [
+        {
+         "kind": "method",
+         "name": "StartLinuxFbDev",
+         "accessibility": "public",
+         "modifiers": [
+          "static"
+         ],
+         "line": 180,
+         "type": "int",
+         "params": 5,
+         "extension": true,
+         "signature": "static int StartLinuxFbDev(this AppBuilder builder, string[] args, string? fbdev = null, double scaling = 1, IInputBackend? inputBackend = default)"
+        },
+        {
+         "kind": "method",
+         "name": "StartLinuxFbDev",
+         "accessibility": "public",
+         "modifiers": [
+          "static"
+         ],
+         "line": 182,
+         "type": "int",
+         "params": 6,
+         "extension": true,
+         "signature": "static int StartLinuxFbDev(this AppBuilder builder, string[] args, string fbdev, PixelFormat? format, double scaling, IInputBackend? inputBackend = default)"
+        },
+        {
+         "kind": "method",
+         "name": "StartLinuxFbDev",
+         "accessibility": "public",
+         "modifiers": [
+          "static"
+         ],
+         "line": 185,
+         "type": "int",
+         "params": 4,
+         "extension": true,
+         "signature": "static int StartLinuxFbDev(this AppBuilder builder, string[] args, FbDevOutputOptions options, IInputBackend? inputBackend = default)"
+        },
+        {
+         "kind": "method",
+         "name": "StartLinuxDrm",
+         "accessibility": "public",
+         "modifiers": [
+          "static"
+         ],
+         "line": 189,
+         "type": "int",
+         "params": 5,
+         "extension": true,
+         "signature": "static int StartLinuxDrm(this AppBuilder builder, string[] args, string? card = null, double scaling = 1, IInputBackend? inputBackend = default)"
+        },
+        {
+         "kind": "method",
+         "name": "StartLinuxDrm",
+         "accessibility": "public",
+         "modifiers": [
+          "static"
+         ],
+         "line": 191,
+         "type": "int",
+         "params": 6,
+         "extension": true,
+         "signature": "static int StartLinuxDrm(this AppBuilder builder, string[] args, string? card = null, bool connectorsForceProbe = false, DrmOutputOptions? options = null, IInputBackend? inputBackend = default)"
+        },
+        {
+         "kind": "method",
+         "name": "StartLinuxDirect",
+         "accessibility": "public",
+         "modifiers": [
+          "static"
+         ],
+         "line": 194,
+         "type": "int",
+         "params": 4,
+         "extension": true,
+         "signature": "static int StartLinuxDirect(this AppBuilder builder, string[] args, IOutputBackend outputBackend, IInputBackend? inputBackend = default)"
+        }
+       ]
       }
      ]
     },
@@ -383403,7 +384268,32 @@
        "fullName": "Avalonia.LinuxFramebuffer.LinuxFramebufferPlatformOptions",
        "accessibility": "public",
        "line": 6,
-       "memberCount": 2
+       "members": [
+        {
+         "kind": "property",
+         "name": "Fps",
+         "accessibility": "public",
+         "line": 12,
+         "type": "int",
+         "accessors": {
+          "get": "public",
+          "set": "public"
+         },
+         "signature": "int Fps { get; set; }"
+        },
+        {
+         "kind": "property",
+         "name": "ShouldRenderOnUIThread",
+         "accessibility": "public",
+         "line": 19,
+         "type": "bool",
+         "accessors": {
+          "get": "public",
+          "set": "public"
+         },
+         "signature": "bool ShouldRenderOnUIThread { get; set; }"
+        }
+       ]
       }
      ]
     },
@@ -383421,7 +384311,297 @@
        "modifiers": [
         "unsafe"
        ],
-       "memberCount": 19
+       "members": [
+        {
+         "kind": "method",
+         "name": "open",
+         "accessibility": "public",
+         "modifiers": [
+          "static",
+          "extern"
+         ],
+         "attributes": [
+          "DllImport(\"libc\", EntryPoint = \"open\", SetLastError = true)"
+         ],
+         "line": 15,
+         "type": "int",
+         "params": 3,
+         "signature": "static int open(string pathname, int flags, int mode)"
+        },
+        {
+         "kind": "method",
+         "name": "close",
+         "accessibility": "public",
+         "modifiers": [
+          "static",
+          "extern"
+         ],
+         "attributes": [
+          "DllImport(\"libc\", EntryPoint = \"close\", SetLastError = true)"
+         ],
+         "line": 18,
+         "type": "int",
+         "params": 1,
+         "signature": "static int close(int fd)"
+        },
+        {
+         "kind": "method",
+         "name": "ioctl",
+         "accessibility": "public",
+         "modifiers": [
+          "static",
+          "extern"
+         ],
+         "attributes": [
+          "DllImport(\"libc\", EntryPoint = \"ioctl\", SetLastError = true)"
+         ],
+         "line": 21,
+         "type": "int",
+         "params": 3,
+         "signature": "static int ioctl(int fd, FbIoCtl code, void* arg)"
+        },
+        {
+         "kind": "method",
+         "name": "mmap",
+         "accessibility": "public",
+         "modifiers": [
+          "static",
+          "extern"
+         ],
+         "attributes": [
+          "DllImport(\"libc\", EntryPoint = \"mmap\", SetLastError = true)"
+         ],
+         "line": 24,
+         "type": "IntPtr",
+         "params": 6,
+         "signature": "static IntPtr mmap(IntPtr addr, IntPtr length, int prot, int flags, int fd, IntPtr offset)"
+        },
+        {
+         "kind": "method",
+         "name": "munmap",
+         "accessibility": "public",
+         "modifiers": [
+          "static",
+          "extern"
+         ],
+         "attributes": [
+          "DllImport(\"libc\", EntryPoint = \"munmap\", SetLastError = true)"
+         ],
+         "line": 27,
+         "type": "int",
+         "params": 2,
+         "signature": "static int munmap(IntPtr addr, IntPtr length)"
+        },
+        {
+         "kind": "method",
+         "name": "memcpy",
+         "accessibility": "public",
+         "modifiers": [
+          "static",
+          "extern"
+         ],
+         "attributes": [
+          "DllImport(\"libc\", EntryPoint = \"memcpy\", SetLastError = true)"
+         ],
+         "line": 30,
+         "type": "int",
+         "params": 3,
+         "signature": "static int memcpy(IntPtr dest, IntPtr src, IntPtr length)"
+        },
+        {
+         "kind": "method",
+         "name": "select",
+         "accessibility": "public",
+         "modifiers": [
+          "static",
+          "extern"
+         ],
+         "attributes": [
+          "DllImport(\"libc\", EntryPoint = \"select\", SetLastError = true)"
+         ],
+         "line": 33,
+         "type": "int",
+         "params": 5,
+         "signature": "static int select(int nfds, void* rfds, void* wfds, void* exfds, IntPtr* timevals)"
+        },
+        {
+         "kind": "method",
+         "name": "poll",
+         "accessibility": "public",
+         "modifiers": [
+          "static",
+          "extern"
+         ],
+         "attributes": [
+          "DllImport(\"libc\", EntryPoint = \"poll\", SetLastError = true)"
+         ],
+         "line": 37,
+         "type": "int",
+         "params": 3,
+         "signature": "static int poll(PollFd* fds, IntPtr nfds, int timeout)"
+        },
+        {
+         "kind": "method",
+         "name": "libevdev_new_from_fd",
+         "accessibility": "public",
+         "modifiers": [
+          "static",
+          "extern"
+         ],
+         "attributes": [
+          "DllImport(\"libevdev.so.2\", EntryPoint = \"libevdev_new_from_fd\", SetLastError = true)"
+         ],
+         "line": 40,
+         "type": "int",
+         "params": 2,
+         "signature": "static int libevdev_new_from_fd(int fd, out IntPtr dev)"
+        },
+        {
+         "kind": "method",
+         "name": "libevdev_has_event_type",
+         "accessibility": "public",
+         "modifiers": [
+          "static",
+          "extern"
+         ],
+         "attributes": [
+          "DllImport(\"libevdev.so.2\", EntryPoint = \"libevdev_has_event_type\", SetLastError = true)"
+         ],
+         "line": 43,
+         "type": "int",
+         "params": 2,
+         "signature": "static int libevdev_has_event_type(IntPtr dev, EvType type)"
+        },
+        {
+         "kind": "method",
+         "name": "libevdev_next_event",
+         "accessibility": "public",
+         "modifiers": [
+          "static",
+          "extern"
+         ],
+         "attributes": [
+          "DllImport(\"libevdev.so.2\", EntryPoint = \"libevdev_next_event\", SetLastError = true)"
+         ],
+         "line": 46,
+         "type": "int",
+         "params": 3,
+         "signature": "static int libevdev_next_event(IntPtr dev, int flags, out input_event ev)"
+        },
+        {
+         "kind": "method",
+         "name": "libevdev_get_name",
+         "accessibility": "public",
+         "modifiers": [
+          "static",
+          "extern"
+         ],
+         "attributes": [
+          "DllImport(\"libevdev.so.2\", EntryPoint = \"libevdev_get_name\", SetLastError = true)"
+         ],
+         "line": 49,
+         "type": "IntPtr",
+         "params": 1,
+         "signature": "static IntPtr libevdev_get_name(IntPtr dev)"
+        },
+        {
+         "kind": "method",
+         "name": "libevdev_get_abs_info",
+         "accessibility": "public",
+         "modifiers": [
+          "static",
+          "extern"
+         ],
+         "attributes": [
+          "DllImport(\"libevdev.so.2\", EntryPoint = \"libevdev_get_abs_info\", SetLastError = true)"
+         ],
+         "line": 51,
+         "type": "input_absinfo*",
+         "params": 2,
+         "signature": "static input_absinfo* libevdev_get_abs_info(IntPtr dev, int code)"
+        },
+        {
+         "kind": "method",
+         "name": "epoll_create1",
+         "accessibility": "public",
+         "modifiers": [
+          "extern",
+          "static"
+         ],
+         "attributes": [
+          "DllImport(\"libc\")"
+         ],
+         "line": 54,
+         "type": "int",
+         "params": 1,
+         "signature": "static int epoll_create1(int size)"
+        },
+        {
+         "kind": "method",
+         "name": "epoll_ctl",
+         "accessibility": "public",
+         "modifiers": [
+          "extern",
+          "static"
+         ],
+         "attributes": [
+          "DllImport(\"libc\")"
+         ],
+         "line": 57,
+         "type": "int",
+         "params": 4,
+         "signature": "static int epoll_ctl(int epfd, int op, int fd, ref epoll_event __event)"
+        },
+        {
+         "kind": "method",
+         "name": "epoll_wait",
+         "accessibility": "public",
+         "modifiers": [
+          "extern",
+          "static"
+         ],
+         "attributes": [
+          "DllImport(\"libc\")"
+         ],
+         "line": 60,
+         "type": "int",
+         "params": 4,
+         "signature": "static int epoll_wait(int epfd, epoll_event* events, int maxevents, int timeout)"
+        },
+        {
+         "kind": "field",
+         "name": "EPOLLIN",
+         "accessibility": "public",
+         "modifiers": [
+          "const"
+         ],
+         "line": 63,
+         "type": "int",
+         "signature": "const int EPOLLIN"
+        },
+        {
+         "kind": "field",
+         "name": "EPOLL_CTL_ADD",
+         "accessibility": "public",
+         "modifiers": [
+          "const"
+         ],
+         "line": 64,
+         "type": "int",
+         "signature": "const int EPOLL_CTL_ADD"
+        },
+        {
+         "kind": "field",
+         "name": "O_NONBLOCK",
+         "accessibility": "public",
+         "modifiers": [
+          "const"
+         ],
+         "line": 65,
+         "type": "int",
+         "signature": "const int O_NONBLOCK"
+        }
+       ]
       },
       {
        "name": "PollFd",
@@ -383433,7 +384613,32 @@
        "attributes": [
         "StructLayout(LayoutKind.Sequential)"
        ],
-       "memberCount": 3
+       "members": [
+        {
+         "kind": "field",
+         "name": "fd",
+         "accessibility": "public",
+         "line": 70,
+         "type": "int",
+         "signature": "int fd"
+        },
+        {
+         "kind": "field",
+         "name": "events",
+         "accessibility": "public",
+         "line": 71,
+         "type": "short",
+         "signature": "short events"
+        },
+        {
+         "kind": "field",
+         "name": "revents",
+         "accessibility": "public",
+         "line": 72,
+         "type": "short",
+         "signature": "short revents"
+        }
+       ]
       },
       {
        "name": "FbIoCtl",
@@ -383445,7 +384650,44 @@
        "bases": [
         "uint"
        ],
-       "memberCount": 6
+       "members": [
+        {
+         "kind": "enum member",
+         "name": "FBIOGET_VSCREENINFO",
+         "signature": "FBIOGET_VSCREENINFO = 0x4600",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "FBIOPUT_VSCREENINFO",
+         "signature": "FBIOPUT_VSCREENINFO = 0x4601",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "FBIOGET_FSCREENINFO",
+         "signature": "FBIOGET_FSCREENINFO = 0x4602",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "FBIOGET_VBLANK",
+         "signature": "FBIOGET_VBLANK = 0x80204612u",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "FBIO_WAITFORVSYNC",
+         "signature": "FBIO_WAITFORVSYNC = 0x40044620",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "FBIOPAN_DISPLAY",
+         "signature": "FBIOPAN_DISPLAY = 0x4606",
+         "accessibility": "public"
+        }
+       ]
       },
       {
        "name": "VBlankFlags",
@@ -383458,7 +384700,62 @@
         "Flags"
        ],
        "flags": true,
-       "memberCount": 9
+       "members": [
+        {
+         "kind": "enum member",
+         "name": "FB_VBLANK_VBLANKING",
+         "signature": "FB_VBLANK_VBLANKING = 0x001",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "FB_VBLANK_HBLANKING",
+         "signature": "FB_VBLANK_HBLANKING = 0x002",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "FB_VBLANK_HAVE_VBLANK",
+         "signature": "FB_VBLANK_HAVE_VBLANK = 0x004",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "FB_VBLANK_HAVE_HBLANK",
+         "signature": "FB_VBLANK_HAVE_HBLANK = 0x008",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "FB_VBLANK_HAVE_COUNT",
+         "signature": "FB_VBLANK_HAVE_COUNT = 0x010",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "FB_VBLANK_HAVE_VCOUNT",
+         "signature": "FB_VBLANK_HAVE_VCOUNT = 0x020",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "FB_VBLANK_HAVE_HCOUNT",
+         "signature": "FB_VBLANK_HAVE_HCOUNT = 0x040",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "FB_VBLANK_VSYNCING",
+         "signature": "FB_VBLANK_VSYNCING = 0x080",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "FB_VBLANK_HAVE_VSYNC",
+         "signature": "FB_VBLANK_HAVE_VSYNC = 0x100",
+         "accessibility": "public"
+        }
+       ]
       },
       {
        "name": "fb_vblank",
@@ -383473,7 +384770,16 @@
        "attributes": [
         "StructLayout(LayoutKind.Sequential)"
        ],
-       "memberCount": 1,
+       "members": [
+        {
+         "kind": "field",
+         "name": "flags",
+         "accessibility": "public",
+         "line": 101,
+         "type": "VBlankFlags",
+         "signature": "VBlankFlags flags"
+        }
+       ],
        "privateMembers": 4
       },
       {
@@ -383489,7 +384795,120 @@
        "attributes": [
         "StructLayout(LayoutKind.Sequential)"
        ],
-       "memberCount": 14
+       "members": [
+        {
+         "kind": "field",
+         "name": "id",
+         "accessibility": "public",
+         "line": 111,
+         "type": "byte",
+         "signature": "byte id"
+        },
+        {
+         "kind": "field",
+         "name": "smem_start",
+         "accessibility": "public",
+         "line": 113,
+         "type": "IntPtr",
+         "signature": "IntPtr smem_start"
+        },
+        {
+         "kind": "field",
+         "name": "smem_len",
+         "accessibility": "public",
+         "line": 116,
+         "type": "__u32",
+         "signature": "__u32 smem_len"
+        },
+        {
+         "kind": "field",
+         "name": "type",
+         "accessibility": "public",
+         "line": 118,
+         "type": "__u32",
+         "signature": "__u32 type"
+        },
+        {
+         "kind": "field",
+         "name": "type_aux",
+         "accessibility": "public",
+         "line": 119,
+         "type": "__u32",
+         "signature": "__u32 type_aux"
+        },
+        {
+         "kind": "field",
+         "name": "visual",
+         "accessibility": "public",
+         "line": 120,
+         "type": "__u32",
+         "signature": "__u32 visual"
+        },
+        {
+         "kind": "field",
+         "name": "xpanstep",
+         "accessibility": "public",
+         "line": 121,
+         "type": "__u16",
+         "signature": "__u16 xpanstep"
+        },
+        {
+         "kind": "field",
+         "name": "ypanstep",
+         "accessibility": "public",
+         "line": 122,
+         "type": "__u16",
+         "signature": "__u16 ypanstep"
+        },
+        {
+         "kind": "field",
+         "name": "ywrapstep",
+         "accessibility": "public",
+         "line": 123,
+         "type": "__u16",
+         "signature": "__u16 ywrapstep"
+        },
+        {
+         "kind": "field",
+         "name": "line_length",
+         "accessibility": "public",
+         "line": 124,
+         "type": "__u32",
+         "signature": "__u32 line_length"
+        },
+        {
+         "kind": "field",
+         "name": "mmio_start",
+         "accessibility": "public",
+         "line": 126,
+         "type": "IntPtr",
+         "signature": "IntPtr mmio_start"
+        },
+        {
+         "kind": "field",
+         "name": "mmio_len",
+         "accessibility": "public",
+         "line": 129,
+         "type": "__u32",
+         "signature": "__u32 mmio_len"
+        },
+        {
+         "kind": "field",
+         "name": "accel",
+         "accessibility": "public",
+         "line": 131,
+         "type": "__u32",
+         "signature": "__u32 accel"
+        },
+        {
+         "kind": "field",
+         "name": "reserved",
+         "accessibility": "public",
+         "line": 132,
+         "type": "__u16",
+         "signature": "__u16 reserved"
+        }
+       ]
       },
       {
        "name": "fb_bitfield",
@@ -383501,7 +384920,32 @@
        "attributes": [
         "StructLayout(LayoutKind.Sequential)"
        ],
-       "memberCount": 3
+       "members": [
+        {
+         "kind": "field",
+         "name": "offset",
+         "accessibility": "public",
+         "line": 138,
+         "type": "__u32",
+         "signature": "__u32 offset"
+        },
+        {
+         "kind": "field",
+         "name": "length",
+         "accessibility": "public",
+         "line": 139,
+         "type": "__u32",
+         "signature": "__u32 length"
+        },
+        {
+         "kind": "field",
+         "name": "msb_right",
+         "accessibility": "public",
+         "line": 141,
+         "type": "__u32",
+         "signature": "__u32 msb_right"
+        }
+       ]
       },
       {
        "name": "fb_var_screeninfo",
@@ -383516,7 +384960,224 @@
        "attributes": [
         "StructLayout(LayoutKind.Sequential)"
        ],
-       "memberCount": 27
+       "members": [
+        {
+         "kind": "field",
+         "name": "xres",
+         "accessibility": "public",
+         "line": 148,
+         "type": "__u32",
+         "signature": "__u32 xres"
+        },
+        {
+         "kind": "field",
+         "name": "yres",
+         "accessibility": "public",
+         "line": 149,
+         "type": "__u32",
+         "signature": "__u32 yres"
+        },
+        {
+         "kind": "field",
+         "name": "xres_virtual",
+         "accessibility": "public",
+         "line": 150,
+         "type": "__u32",
+         "signature": "__u32 xres_virtual"
+        },
+        {
+         "kind": "field",
+         "name": "yres_virtual",
+         "accessibility": "public",
+         "line": 151,
+         "type": "__u32",
+         "signature": "__u32 yres_virtual"
+        },
+        {
+         "kind": "field",
+         "name": "xoffset",
+         "accessibility": "public",
+         "line": 152,
+         "type": "__u32",
+         "signature": "__u32 xoffset"
+        },
+        {
+         "kind": "field",
+         "name": "yoffset",
+         "accessibility": "public",
+         "line": 153,
+         "type": "__u32",
+         "signature": "__u32 yoffset"
+        },
+        {
+         "kind": "field",
+         "name": "bits_per_pixel",
+         "accessibility": "public",
+         "line": 155,
+         "type": "__u32",
+         "signature": "__u32 bits_per_pixel"
+        },
+        {
+         "kind": "field",
+         "name": "grayscale",
+         "accessibility": "public",
+         "line": 156,
+         "type": "__u32",
+         "signature": "__u32 grayscale"
+        },
+        {
+         "kind": "field",
+         "name": "red",
+         "accessibility": "public",
+         "line": 158,
+         "type": "fb_bitfield",
+         "signature": "fb_bitfield red"
+        },
+        {
+         "kind": "field",
+         "name": "green",
+         "accessibility": "public",
+         "line": 159,
+         "type": "fb_bitfield",
+         "signature": "fb_bitfield green"
+        },
+        {
+         "kind": "field",
+         "name": "blue",
+         "accessibility": "public",
+         "line": 160,
+         "type": "fb_bitfield",
+         "signature": "fb_bitfield blue"
+        },
+        {
+         "kind": "field",
+         "name": "transp",
+         "accessibility": "public",
+         "line": 161,
+         "type": "fb_bitfield",
+         "signature": "fb_bitfield transp"
+        },
+        {
+         "kind": "field",
+         "name": "nonstd",
+         "accessibility": "public",
+         "line": 163,
+         "type": "__u32",
+         "signature": "__u32 nonstd"
+        },
+        {
+         "kind": "field",
+         "name": "activate",
+         "accessibility": "public",
+         "line": 165,
+         "type": "__u32",
+         "signature": "__u32 activate"
+        },
+        {
+         "kind": "field",
+         "name": "height",
+         "accessibility": "public",
+         "line": 167,
+         "type": "__u32",
+         "signature": "__u32 height"
+        },
+        {
+         "kind": "field",
+         "name": "width",
+         "accessibility": "public",
+         "line": 168,
+         "type": "__u32",
+         "signature": "__u32 width"
+        },
+        {
+         "kind": "field",
+         "name": "accel_flags",
+         "accessibility": "public",
+         "line": 170,
+         "type": "__u32",
+         "signature": "__u32 accel_flags"
+        },
+        {
+         "kind": "field",
+         "name": "pixclock",
+         "accessibility": "public",
+         "line": 173,
+         "type": "__u32",
+         "signature": "__u32 pixclock"
+        },
+        {
+         "kind": "field",
+         "name": "left_margin",
+         "accessibility": "public",
+         "line": 175,
+         "type": "__u32",
+         "signature": "__u32 left_margin"
+        },
+        {
+         "kind": "field",
+         "name": "right_margin",
+         "accessibility": "public",
+         "line": 176,
+         "type": "__u32",
+         "signature": "__u32 right_margin"
+        },
+        {
+         "kind": "field",
+         "name": "upper_margin",
+         "accessibility": "public",
+         "line": 177,
+         "type": "__u32",
+         "signature": "__u32 upper_margin"
+        },
+        {
+         "kind": "field",
+         "name": "lower_margin",
+         "accessibility": "public",
+         "line": 178,
+         "type": "__u32",
+         "signature": "__u32 lower_margin"
+        },
+        {
+         "kind": "field",
+         "name": "hsync_len",
+         "accessibility": "public",
+         "line": 179,
+         "type": "__u32",
+         "signature": "__u32 hsync_len"
+        },
+        {
+         "kind": "field",
+         "name": "vsync_len",
+         "accessibility": "public",
+         "line": 180,
+         "type": "__u32",
+         "signature": "__u32 vsync_len"
+        },
+        {
+         "kind": "field",
+         "name": "sync",
+         "accessibility": "public",
+         "line": 181,
+         "type": "__u32",
+         "signature": "__u32 sync"
+        },
+        {
+         "kind": "field",
+         "name": "vmode",
+         "accessibility": "public",
+         "line": 182,
+         "type": "__u32",
+         "signature": "__u32 vmode"
+        },
+        {
+         "kind": "field",
+         "name": "reserved",
+         "accessibility": "public",
+         "line": 183,
+         "type": "__u32",
+         "signature": "__u32 reserved"
+        }
+       ]
       },
       {
        "name": "EvType",
@@ -383525,7 +385186,80 @@
        "fullName": "Avalonia.LinuxFramebuffer.EvType",
        "accessibility": "internal",
        "line": 187,
-       "memberCount": 12
+       "members": [
+        {
+         "kind": "enum member",
+         "name": "EV_SYN",
+         "signature": "EV_SYN = 0x00",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "EV_KEY",
+         "signature": "EV_KEY = 0x01",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "EV_REL",
+         "signature": "EV_REL = 0x02",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "EV_ABS",
+         "signature": "EV_ABS = 0x03",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "EV_MSC",
+         "signature": "EV_MSC = 0x04",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "EV_SW",
+         "signature": "EV_SW = 0x05",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "EV_LED",
+         "signature": "EV_LED = 0x11",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "EV_SND",
+         "signature": "EV_SND = 0x12",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "EV_REP",
+         "signature": "EV_REP = 0x14",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "EV_FF",
+         "signature": "EV_FF = 0x15",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "EV_PWR",
+         "signature": "EV_PWR = 0x16",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "EV_FF_STATUS",
+         "signature": "EV_FF_STATUS = 0x17",
+         "accessibility": "public"
+        }
+       ]
       },
       {
        "name": "input_event",
@@ -383537,7 +385271,76 @@
        "attributes": [
         "StructLayout(LayoutKind.Sequential)"
        ],
-       "memberCount": 7,
+       "members": [
+        {
+         "kind": "field",
+         "name": "_type",
+         "accessibility": "public",
+         "line": 207,
+         "type": "ushort",
+         "signature": "ushort _type"
+        },
+        {
+         "kind": "field",
+         "name": "_code",
+         "accessibility": "public",
+         "line": 207,
+         "type": "ushort",
+         "signature": "ushort _code"
+        },
+        {
+         "kind": "field",
+         "name": "value",
+         "accessibility": "public",
+         "line": 208,
+         "type": "int",
+         "signature": "int value"
+        },
+        {
+         "kind": "property",
+         "name": "Type",
+         "accessibility": "public",
+         "line": 209,
+         "type": "EvType",
+         "accessors": {
+          "get": "public"
+         },
+         "signature": "EvType Type { get; }"
+        },
+        {
+         "kind": "property",
+         "name": "Key",
+         "accessibility": "public",
+         "line": 210,
+         "type": "EvKey",
+         "accessors": {
+          "get": "public"
+         },
+         "signature": "EvKey Key { get; }"
+        },
+        {
+         "kind": "property",
+         "name": "Axis",
+         "accessibility": "public",
+         "line": 211,
+         "type": "AbsAxis",
+         "accessors": {
+          "get": "public"
+         },
+         "signature": "AbsAxis Axis { get; }"
+        },
+        {
+         "kind": "property",
+         "name": "Timestamp",
+         "accessibility": "public",
+         "line": 213,
+         "type": "ulong",
+         "accessors": {
+          "get": "public"
+         },
+         "signature": "ulong Timestamp { get; }"
+        }
+       ],
        "privateMembers": 2
       },
       {
@@ -383553,7 +385356,24 @@
        "attributes": [
         "StructLayout(LayoutKind.Sequential)"
        ],
-       "memberCount": 2
+       "members": [
+        {
+         "kind": "field",
+         "name": "count",
+         "accessibility": "public",
+         "line": 227,
+         "type": "int",
+         "signature": "int count"
+        },
+        {
+         "kind": "field",
+         "name": "fds",
+         "accessibility": "public",
+         "line": 228,
+         "type": "byte",
+         "signature": "byte fds"
+        }
+       ]
       },
       {
        "name": "AxisEventCode",
@@ -383562,7 +385382,74 @@
        "fullName": "Avalonia.LinuxFramebuffer.AxisEventCode",
        "accessibility": "internal",
        "line": 231,
-       "memberCount": 11
+       "members": [
+        {
+         "kind": "enum member",
+         "name": "REL_X",
+         "signature": "REL_X = 0x00",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "REL_Y",
+         "signature": "REL_Y = 0x01",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "REL_Z",
+         "signature": "REL_Z = 0x02",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "REL_RX",
+         "signature": "REL_RX = 0x03",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "REL_RY",
+         "signature": "REL_RY = 0x04",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "REL_RZ",
+         "signature": "REL_RZ = 0x05",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "REL_HWHEEL",
+         "signature": "REL_HWHEEL = 0x06",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "REL_DIAL",
+         "signature": "REL_DIAL = 0x07",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "REL_WHEEL",
+         "signature": "REL_WHEEL = 0x08",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "REL_MISC",
+         "signature": "REL_MISC = 0x09",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "REL_MAX",
+         "signature": "REL_MAX = 0x0f",
+         "accessibility": "public"
+        }
+       ]
       },
       {
        "name": "AbsAxis",
@@ -383571,7 +385458,152 @@
        "fullName": "Avalonia.LinuxFramebuffer.AbsAxis",
        "accessibility": "internal",
        "line": 246,
-       "memberCount": 24
+       "members": [
+        {
+         "kind": "enum member",
+         "name": "ABS_X",
+         "signature": "ABS_X = 0x00",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "ABS_Y",
+         "signature": "ABS_Y = 0x01",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "ABS_Z",
+         "signature": "ABS_Z = 0x02",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "ABS_RX",
+         "signature": "ABS_RX = 0x03",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "ABS_RY",
+         "signature": "ABS_RY = 0x04",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "ABS_RZ",
+         "signature": "ABS_RZ = 0x05",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "ABS_THROTTLE",
+         "signature": "ABS_THROTTLE = 0x06",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "ABS_RUDDER",
+         "signature": "ABS_RUDDER = 0x07",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "ABS_WHEEL",
+         "signature": "ABS_WHEEL = 0x08",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "ABS_GAS",
+         "signature": "ABS_GAS = 0x09",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "ABS_BRAKE",
+         "signature": "ABS_BRAKE = 0x0a",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "ABS_HAT0X",
+         "signature": "ABS_HAT0X = 0x10",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "ABS_HAT0Y",
+         "signature": "ABS_HAT0Y = 0x11",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "ABS_HAT1X",
+         "signature": "ABS_HAT1X = 0x12",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "ABS_HAT1Y",
+         "signature": "ABS_HAT1Y = 0x13",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "ABS_HAT2X",
+         "signature": "ABS_HAT2X = 0x14",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "ABS_HAT2Y",
+         "signature": "ABS_HAT2Y = 0x15",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "ABS_HAT3X",
+         "signature": "ABS_HAT3X = 0x16",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "ABS_HAT3Y",
+         "signature": "ABS_HAT3Y = 0x17",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "ABS_PRESSURE",
+         "signature": "ABS_PRESSURE = 0x18",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "ABS_DISTANCE",
+         "signature": "ABS_DISTANCE = 0x19",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "ABS_TILT_X",
+         "signature": "ABS_TILT_X = 0x1a",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "ABS_TILT_Y",
+         "signature": "ABS_TILT_Y = 0x1b",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "ABS_TOOL_WIDTH",
+         "signature": "ABS_TOOL_WIDTH = 0x1c",
+         "accessibility": "public"
+        }
+       ]
       },
       {
        "name": "EvKey",
@@ -383580,7 +385612,32 @@
        "fullName": "Avalonia.LinuxFramebuffer.EvKey",
        "accessibility": "internal",
        "line": 274,
-       "memberCount": 4
+       "members": [
+        {
+         "kind": "enum member",
+         "name": "BTN_LEFT",
+         "signature": "BTN_LEFT = 0x110",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "BTN_RIGHT",
+         "signature": "BTN_RIGHT = 0x111",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "BTN_MIDDLE",
+         "signature": "BTN_MIDDLE = 0x112",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "BTN_TOUCH",
+         "signature": "BTN_TOUCH = 0x14a",
+         "accessibility": "public"
+        }
+       ]
       },
       {
        "name": "input_absinfo",
@@ -383592,7 +385649,56 @@
        "attributes": [
         "StructLayout(LayoutKind.Sequential)"
        ],
-       "memberCount": 6
+       "members": [
+        {
+         "kind": "field",
+         "name": "value",
+         "accessibility": "public",
+         "line": 285,
+         "type": "__s32",
+         "signature": "__s32 value"
+        },
+        {
+         "kind": "field",
+         "name": "minimum",
+         "accessibility": "public",
+         "line": 286,
+         "type": "__s32",
+         "signature": "__s32 minimum"
+        },
+        {
+         "kind": "field",
+         "name": "maximum",
+         "accessibility": "public",
+         "line": 287,
+         "type": "__s32",
+         "signature": "__s32 maximum"
+        },
+        {
+         "kind": "field",
+         "name": "fuzz",
+         "accessibility": "public",
+         "line": 288,
+         "type": "__s32",
+         "signature": "__s32 fuzz"
+        },
+        {
+         "kind": "field",
+         "name": "flat",
+         "accessibility": "public",
+         "line": 289,
+         "type": "__s32",
+         "signature": "__s32 flat"
+        },
+        {
+         "kind": "field",
+         "name": "resolution",
+         "accessibility": "public",
+         "line": 290,
+         "type": "__s32",
+         "signature": "__s32 resolution"
+        }
+       ]
       },
       {
        "name": "epoll_data",
@@ -383604,7 +385710,52 @@
        "attributes": [
         "StructLayout(LayoutKind.Explicit)"
        ],
-       "memberCount": 4
+       "members": [
+        {
+         "kind": "field",
+         "name": "ptr",
+         "accessibility": "public",
+         "attributes": [
+          "FieldOffset(0)"
+         ],
+         "line": 297,
+         "type": "IntPtr",
+         "signature": "IntPtr ptr"
+        },
+        {
+         "kind": "field",
+         "name": "fd",
+         "accessibility": "public",
+         "attributes": [
+          "FieldOffset(0)"
+         ],
+         "line": 299,
+         "type": "int",
+         "signature": "int fd"
+        },
+        {
+         "kind": "field",
+         "name": "u32",
+         "accessibility": "public",
+         "attributes": [
+          "FieldOffset(0)"
+         ],
+         "line": 301,
+         "type": "uint",
+         "signature": "uint u32"
+        },
+        {
+         "kind": "field",
+         "name": "u64",
+         "accessibility": "public",
+         "attributes": [
+          "FieldOffset(0)"
+         ],
+         "line": 303,
+         "type": "ulong",
+         "signature": "ulong u64"
+        }
+       ]
       },
       {
        "name": "epoll_event",
@@ -383616,7 +385767,24 @@
        "attributes": [
         "StructLayout(LayoutKind.Sequential)"
        ],
-       "memberCount": 2
+       "members": [
+        {
+         "kind": "field",
+         "name": "events",
+         "accessibility": "public",
+         "line": 310,
+         "type": "uint",
+         "signature": "uint events"
+        },
+        {
+         "kind": "field",
+         "name": "data",
+         "accessibility": "public",
+         "line": 311,
+         "type": "epoll_data",
+         "signature": "epoll_data data"
+        }
+       ]
       }
      ]
     },
@@ -383634,7 +385802,26 @@
        "bases": [
         "ICursorFactory"
        ],
-       "memberCount": 2,
+       "members": [
+        {
+         "kind": "method",
+         "name": "GetCursor",
+         "accessibility": "public",
+         "line": 10,
+         "type": "ICursorImpl",
+         "params": 1,
+         "signature": "ICursorImpl GetCursor(StandardCursorType cursorType)"
+        },
+        {
+         "kind": "method",
+         "name": "CreateCursor",
+         "accessibility": "public",
+         "line": 11,
+         "type": "ICursorImpl",
+         "params": 2,
+         "signature": "ICursorImpl CreateCursor(Bitmap cursor, PixelPoint hotSpot)"
+        }
+       ],
        "privateMembers": 1
       }
      ]
@@ -383650,7 +385837,26 @@
        "fullName": "Avalonia.LinuxFramebuffer.Input.IInputBackend",
        "accessibility": "public",
        "line": 7,
-       "memberCount": 2
+       "members": [
+        {
+         "kind": "method",
+         "name": "Initialize",
+         "accessibility": "public",
+         "line": 9,
+         "type": "void",
+         "params": 2,
+         "signature": "void Initialize(IScreenInfoProvider info, Action<RawInputEventArgs> onInput)"
+        },
+        {
+         "kind": "method",
+         "name": "SetInputRoot",
+         "accessibility": "public",
+         "line": 10,
+         "type": "void",
+         "params": 1,
+         "signature": "void SetInputRoot(IInputRoot root)"
+        }
+       ]
       }
      ]
     },
@@ -383665,7 +385871,19 @@
        "fullName": "Avalonia.LinuxFramebuffer.Input.IScreenInfoProvider",
        "accessibility": "public",
        "line": 3,
-       "memberCount": 1
+       "members": [
+        {
+         "kind": "property",
+         "name": "ScaledSize",
+         "accessibility": "public",
+         "line": 5,
+         "type": "Size",
+         "accessors": {
+          "get": "public"
+         },
+         "signature": "Size ScaledSize { get; }"
+        }
+       ]
       }
      ]
     },
@@ -383683,7 +385901,34 @@
        "bases": [
         "IDisposable"
        ],
-       "memberCount": 3,
+       "members": [
+        {
+         "kind": "ctor",
+         "name": ".ctor",
+         "accessibility": "public",
+         "line": 14,
+         "params": 1,
+         "signature": "RawEventGroupingThreadingHelper(Action<RawInputEventArgs> eventCallback)"
+        },
+        {
+         "kind": "method",
+         "name": "OnEvent",
+         "accessibility": "public",
+         "line": 29,
+         "type": "void",
+         "params": 1,
+         "signature": "void OnEvent(RawInputEventArgs args)"
+        },
+        {
+         "kind": "method",
+         "name": "Dispose",
+         "accessibility": "public",
+         "line": 41,
+         "type": "void",
+         "params": 0,
+         "signature": "void Dispose()"
+        }
+       ],
        "privateMembers": 4
       }
      ]
@@ -383702,7 +385947,46 @@
        "bases": [
         "IInputBackend"
        ],
-       "memberCount": 4,
+       "members": [
+        {
+         "kind": "ctor",
+         "name": ".ctor",
+         "accessibility": "public",
+         "line": 18,
+         "params": 1,
+         "signature": "EvDevBackend(EvDevDeviceDescription[] devices)"
+        },
+        {
+         "kind": "method",
+         "name": "Initialize",
+         "accessibility": "public",
+         "line": 49,
+         "type": "void",
+         "params": 2,
+         "signature": "void Initialize(IScreenInfoProvider info, Action<RawInputEventArgs> onInput)"
+        },
+        {
+         "kind": "method",
+         "name": "SetInputRoot",
+         "accessibility": "public",
+         "line": 73,
+         "type": "void",
+         "params": 1,
+         "signature": "void SetInputRoot(IInputRoot root)"
+        },
+        {
+         "kind": "method",
+         "name": "CreateFromEnvironment",
+         "accessibility": "public",
+         "modifiers": [
+          "static"
+         ],
+         "line": 81,
+         "type": "EvDevBackend",
+         "params": 0,
+         "signature": "static EvDevBackend CreateFromEnvironment()"
+        }
+       ],
        "privateMembers": 7
       }
      ]
@@ -383721,7 +386005,93 @@
        "modifiers": [
         "unsafe"
        ],
-       "memberCount": 8,
+       "members": [
+        {
+         "kind": "property",
+         "name": "Fd",
+         "accessibility": "public",
+         "line": 9,
+         "type": "int",
+         "accessors": {
+          "get": "public"
+         },
+         "signature": "int Fd { get; }"
+        },
+        {
+         "kind": "property",
+         "name": "Name",
+         "accessibility": "public",
+         "line": 11,
+         "type": "string?",
+         "accessors": {
+          "get": "public"
+         },
+         "signature": "string? Name { get; }"
+        },
+        {
+         "kind": "property",
+         "name": "EventTypes",
+         "accessibility": "public",
+         "line": 12,
+         "type": "List<EvType>",
+         "accessors": {
+          "get": "public",
+          "set": "private"
+         },
+         "signature": "List<EvType> EventTypes { get; private set; }"
+        },
+        {
+         "kind": "property",
+         "name": "AbsX",
+         "accessibility": "public",
+         "line": 13,
+         "type": "input_absinfo?",
+         "accessors": {
+          "get": "public"
+         },
+         "signature": "input_absinfo? AbsX { get; }"
+        },
+        {
+         "kind": "property",
+         "name": "AbsY",
+         "accessibility": "public",
+         "line": 14,
+         "type": "input_absinfo?",
+         "accessors": {
+          "get": "public"
+         },
+         "signature": "input_absinfo? AbsY { get; }"
+        },
+        {
+         "kind": "ctor",
+         "name": ".ctor",
+         "accessibility": "public",
+         "line": 16,
+         "params": 2,
+         "signature": "EvDevDevice(int fd, IntPtr dev)"
+        },
+        {
+         "kind": "method",
+         "name": "NextEvent",
+         "accessibility": "public",
+         "line": 34,
+         "type": "input_event?",
+         "params": 0,
+         "signature": "input_event? NextEvent()"
+        },
+        {
+         "kind": "method",
+         "name": "Open",
+         "accessibility": "public",
+         "modifiers": [
+          "static"
+         ],
+         "line": 42,
+         "type": "EvDevDevice",
+         "params": 1,
+         "signature": "static EvDevDevice Open(string device)"
+        }
+       ],
        "privateMembers": 1
       },
       {
@@ -383731,7 +386101,32 @@
        "fullName": "Avalonia.LinuxFramebuffer.Input.EvDev.EvDevAxisInfo",
        "accessibility": "internal",
        "line": 58,
-       "memberCount": 2
+       "members": [
+        {
+         "kind": "property",
+         "name": "Minimum",
+         "accessibility": "public",
+         "line": 60,
+         "type": "int",
+         "accessors": {
+          "get": "public",
+          "set": "public"
+         },
+         "signature": "int Minimum { get; set; }"
+        },
+        {
+         "kind": "property",
+         "name": "Maximum",
+         "accessibility": "public",
+         "line": 61,
+         "type": "int",
+         "accessors": {
+          "get": "public",
+          "set": "public"
+         },
+         "signature": "int Maximum { get; set; }"
+        }
+       ]
       }
      ]
     },
@@ -383749,7 +386144,40 @@
        "modifiers": [
         "abstract"
        ],
-       "memberCount": 3
+       "members": [
+        {
+         "kind": "ctor",
+         "name": ".ctor",
+         "accessibility": "protected internal",
+         "line": 8,
+         "params": 0,
+         "signature": "EvDevDeviceDescription()"
+        },
+        {
+         "kind": "property",
+         "name": "Path",
+         "accessibility": "public",
+         "line": 13,
+         "type": "string?",
+         "accessors": {
+          "get": "public",
+          "set": "public"
+         },
+         "signature": "string? Path { get; set; }"
+        },
+        {
+         "kind": "method",
+         "name": "ParseFromEnv",
+         "accessibility": "internal",
+         "modifiers": [
+          "static"
+         ],
+         "line": 15,
+         "type": "EvDevDeviceDescription",
+         "params": 1,
+         "signature": "static EvDevDeviceDescription ParseFromEnv(string env)"
+        }
+       ]
       }
      ]
     },
@@ -383767,7 +386195,28 @@
        "bases": [
         "EvDevDeviceHandler"
        ],
-       "memberCount": 2,
+       "members": [
+        {
+         "kind": "ctor",
+         "name": ".ctor",
+         "accessibility": "public",
+         "line": 20,
+         "params": 3,
+         "signature": "EvDevSingleTouchScreen(EvDevDevice device, EvDevTouchScreenDeviceDescription description, IScreenInfoProvider screenInfo)"
+        },
+        {
+         "kind": "method",
+         "name": "HandleEvent",
+         "accessibility": "protected",
+         "modifiers": [
+          "override"
+         ],
+         "line": 32,
+         "type": "void",
+         "params": 1,
+         "signature": "override void HandleEvent(input_event ev)"
+        }
+       ],
        "privateMembers": 10
       },
       {
@@ -383780,7 +386229,80 @@
        "modifiers": [
         "abstract"
        ],
-       "memberCount": 7,
+       "members": [
+        {
+         "kind": "event",
+         "name": "OnEvent",
+         "accessibility": "public",
+         "line": 96,
+         "type": "Action<RawInputEventArgs>?",
+         "signature": "event Action<RawInputEventArgs>? OnEvent"
+        },
+        {
+         "kind": "ctor",
+         "name": ".ctor",
+         "accessibility": "public",
+         "line": 98,
+         "params": 1,
+         "signature": "EvDevDeviceHandler(EvDevDevice device)"
+        },
+        {
+         "kind": "property",
+         "name": "Device",
+         "accessibility": "public",
+         "line": 103,
+         "type": "EvDevDevice",
+         "accessors": {
+          "get": "public"
+         },
+         "signature": "EvDevDevice Device { get; }"
+        },
+        {
+         "kind": "property",
+         "name": "InputRoot",
+         "accessibility": "public",
+         "attributes": [
+          "AllowNull"
+         ],
+         "line": 105,
+         "type": "IInputRoot",
+         "accessors": {
+          "get": "public",
+          "set": "public"
+         },
+         "signature": "IInputRoot InputRoot { get; set; }"
+        },
+        {
+         "kind": "method",
+         "name": "HandleEvents",
+         "accessibility": "public",
+         "line": 112,
+         "type": "void",
+         "params": 0,
+         "signature": "void HandleEvents()"
+        },
+        {
+         "kind": "method",
+         "name": "RaiseEvent",
+         "accessibility": "protected",
+         "line": 119,
+         "type": "void",
+         "params": 1,
+         "signature": "void RaiseEvent(RawInputEventArgs ev)"
+        },
+        {
+         "kind": "method",
+         "name": "HandleEvent",
+         "accessibility": "protected",
+         "modifiers": [
+          "abstract"
+         ],
+         "line": 121,
+         "type": "void",
+         "params": 1,
+         "signature": "abstract void HandleEvent(input_event ev)"
+        }
+       ],
        "privateMembers": 1
       }
      ]
@@ -383802,7 +386324,32 @@
        "bases": [
         "EvDevDeviceDescription"
        ],
-       "memberCount": 2
+       "members": [
+        {
+         "kind": "property",
+         "name": "CalibrationMatrix",
+         "accessibility": "public",
+         "line": 7,
+         "type": "Matrix",
+         "accessors": {
+          "get": "public",
+          "set": "public"
+         },
+         "signature": "Matrix CalibrationMatrix { get; set; }"
+        },
+        {
+         "kind": "method",
+         "name": "ParseFromEnv",
+         "accessibility": "internal",
+         "modifiers": [
+          "static"
+         ],
+         "line": 9,
+         "type": "EvDevTouchScreenDeviceDescription",
+         "params": 2,
+         "signature": "static EvDevTouchScreenDeviceDescription ParseFromEnv(string path, Dictionary<string, string> options)"
+        }
+       ]
       }
      ]
     },
@@ -383821,7 +386368,7 @@
         "partial"
        ],
        "partial": true,
-       "memberCount": 0,
+       "members": [],
        "privateMembers": 4
       }
      ]
@@ -383841,7 +386388,7 @@
         "partial"
        ],
        "partial": true,
-       "memberCount": 0,
+       "members": [],
        "privateMembers": 3
       }
      ]
@@ -383864,7 +386411,42 @@
        "bases": [
         "IInputBackend"
        ],
-       "memberCount": 4,
+       "members": [
+        {
+         "kind": "ctor",
+         "name": ".ctor",
+         "accessibility": "public",
+         "line": 19,
+         "params": 0,
+         "signature": "LibInputBackend()"
+        },
+        {
+         "kind": "ctor",
+         "name": ".ctor",
+         "accessibility": "public",
+         "line": 24,
+         "params": 1,
+         "signature": "LibInputBackend(LibInputBackendOptions options)"
+        },
+        {
+         "kind": "method",
+         "name": "Initialize",
+         "accessibility": "public",
+         "line": 78,
+         "type": "void",
+         "params": 2,
+         "signature": "void Initialize(IScreenInfoProvider screen, Action<RawInputEventArgs> onInput)"
+        },
+        {
+         "kind": "method",
+         "name": "SetInputRoot",
+         "accessibility": "public",
+         "line": 96,
+         "type": "void",
+         "params": 1,
+         "signature": "void SetInputRoot(IInputRoot root)"
+        }
+       ],
        "privateMembers": 8
       }
      ]
@@ -383883,7 +386465,20 @@
        "modifiers": [
         "sealed"
        ],
-       "memberCount": 1
+       "members": [
+        {
+         "kind": "property",
+         "name": "Events",
+         "accessibility": "public",
+         "line": 14,
+         "type": "IReadOnlyList<string>?",
+         "accessors": {
+          "get": "public",
+          "init": "public"
+         },
+         "signature": "IReadOnlyList<string>? Events { get; init; }"
+        }
+       ]
       }
      ]
     },
@@ -383901,7 +386496,399 @@
        "modifiers": [
         "unsafe"
        ],
-       "memberCount": 25,
+       "members": [
+        {
+         "kind": "static ctor",
+         "name": ".cctor",
+         "accessibility": "static",
+         "modifiers": [
+          "static"
+         ],
+         "line": 30,
+         "params": 0,
+         "signature": "static LibInputNativeUnsafeMethods()"
+        },
+        {
+         "kind": "method",
+         "name": "libinput_path_create_context",
+         "accessibility": "public",
+         "modifiers": [
+          "extern",
+          "static"
+         ],
+         "attributes": [
+          "DllImport(LibInput)"
+         ],
+         "line": 46,
+         "type": "IntPtr",
+         "params": 2,
+         "signature": "static IntPtr libinput_path_create_context(IntPtr* iface, IntPtr userData)"
+        },
+        {
+         "kind": "method",
+         "name": "libinput_path_create_context",
+         "accessibility": "public",
+         "modifiers": [
+          "static"
+         ],
+         "line": 49,
+         "type": "IntPtr",
+         "params": 0,
+         "signature": "static IntPtr libinput_path_create_context()"
+        },
+        {
+         "kind": "method",
+         "name": "libinput_path_add_device",
+         "accessibility": "public",
+         "modifiers": [
+          "extern",
+          "static"
+         ],
+         "attributes": [
+          "DllImport(LibInput)"
+         ],
+         "line": 52,
+         "type": "IntPtr",
+         "params": 2,
+         "signature": "static IntPtr libinput_path_add_device(IntPtr ctx, [MarshalAs(UnmanagedType.LPStr)] string path)"
+        },
+        {
+         "kind": "method",
+         "name": "libinput_path_remove_device",
+         "accessibility": "public",
+         "modifiers": [
+          "extern",
+          "static"
+         ],
+         "attributes": [
+          "DllImport(LibInput)"
+         ],
+         "line": 55,
+         "type": "IntPtr",
+         "params": 1,
+         "signature": "static IntPtr libinput_path_remove_device(IntPtr device)"
+        },
+        {
+         "kind": "method",
+         "name": "libinput_device_config_calibration_set_matrix",
+         "accessibility": "public",
+         "modifiers": [
+          "extern",
+          "static"
+         ],
+         "attributes": [
+          "DllImport(LibInput)"
+         ],
+         "line": 58,
+         "type": "int",
+         "params": 2,
+         "signature": "static int libinput_device_config_calibration_set_matrix(IntPtr device, float[] matrix)"
+        },
+        {
+         "kind": "method",
+         "name": "libinput_get_fd",
+         "accessibility": "public",
+         "modifiers": [
+          "extern",
+          "static"
+         ],
+         "attributes": [
+          "DllImport(LibInput)"
+         ],
+         "line": 61,
+         "type": "int",
+         "params": 1,
+         "signature": "static int libinput_get_fd(IntPtr ctx)"
+        },
+        {
+         "kind": "method",
+         "name": "libinput_dispatch",
+         "accessibility": "public",
+         "modifiers": [
+          "extern",
+          "static"
+         ],
+         "attributes": [
+          "DllImport(LibInput)"
+         ],
+         "line": 64,
+         "type": "void",
+         "params": 1,
+         "signature": "static void libinput_dispatch(IntPtr ctx)"
+        },
+        {
+         "kind": "method",
+         "name": "libinput_get_event",
+         "accessibility": "public",
+         "modifiers": [
+          "extern",
+          "static"
+         ],
+         "attributes": [
+          "DllImport(LibInput)"
+         ],
+         "line": 67,
+         "type": "IntPtr",
+         "params": 1,
+         "signature": "static IntPtr libinput_get_event(IntPtr ctx)"
+        },
+        {
+         "kind": "method",
+         "name": "libinput_event_get_type",
+         "accessibility": "public",
+         "modifiers": [
+          "extern",
+          "static"
+         ],
+         "attributes": [
+          "DllImport(LibInput)"
+         ],
+         "line": 70,
+         "type": "LibInputEventType",
+         "params": 1,
+         "signature": "static LibInputEventType libinput_event_get_type(IntPtr ev)"
+        },
+        {
+         "kind": "method",
+         "name": "libinput_event_destroy",
+         "accessibility": "public",
+         "modifiers": [
+          "extern",
+          "static"
+         ],
+         "attributes": [
+          "DllImport(LibInput)"
+         ],
+         "line": 138,
+         "type": "void",
+         "params": 1,
+         "signature": "static void libinput_event_destroy(IntPtr ev)"
+        },
+        {
+         "kind": "method",
+         "name": "libinput_event_get_touch_event",
+         "accessibility": "public",
+         "modifiers": [
+          "extern",
+          "static"
+         ],
+         "attributes": [
+          "DllImport(LibInput)"
+         ],
+         "line": 141,
+         "type": "IntPtr",
+         "params": 1,
+         "signature": "static IntPtr libinput_event_get_touch_event(IntPtr ev)"
+        },
+        {
+         "kind": "method",
+         "name": "libinput_event_touch_get_slot",
+         "accessibility": "public",
+         "modifiers": [
+          "extern",
+          "static"
+         ],
+         "attributes": [
+          "DllImport(LibInput)"
+         ],
+         "line": 144,
+         "type": "int",
+         "params": 1,
+         "signature": "static int libinput_event_touch_get_slot(IntPtr ev)"
+        },
+        {
+         "kind": "method",
+         "name": "libinput_event_touch_get_time_usec",
+         "accessibility": "public",
+         "modifiers": [
+          "extern",
+          "static"
+         ],
+         "attributes": [
+          "DllImport(LibInput)"
+         ],
+         "line": 147,
+         "type": "ulong",
+         "params": 1,
+         "signature": "static ulong libinput_event_touch_get_time_usec(IntPtr ev)"
+        },
+        {
+         "kind": "method",
+         "name": "libinput_event_touch_get_x_transformed",
+         "accessibility": "public",
+         "modifiers": [
+          "extern",
+          "static"
+         ],
+         "attributes": [
+          "DllImport(LibInput)"
+         ],
+         "line": 150,
+         "type": "double",
+         "params": 2,
+         "signature": "static double libinput_event_touch_get_x_transformed(IntPtr ev, int width)"
+        },
+        {
+         "kind": "method",
+         "name": "libinput_event_touch_get_y_transformed",
+         "accessibility": "public",
+         "modifiers": [
+          "extern",
+          "static"
+         ],
+         "attributes": [
+          "DllImport(LibInput)"
+         ],
+         "line": 153,
+         "type": "double",
+         "params": 2,
+         "signature": "static double libinput_event_touch_get_y_transformed(IntPtr ev, int height)"
+        },
+        {
+         "kind": "method",
+         "name": "libinput_event_get_pointer_event",
+         "accessibility": "public",
+         "modifiers": [
+          "extern",
+          "static"
+         ],
+         "attributes": [
+          "DllImport(LibInput)"
+         ],
+         "line": 156,
+         "type": "IntPtr",
+         "params": 1,
+         "signature": "static IntPtr libinput_event_get_pointer_event(IntPtr ev)"
+        },
+        {
+         "kind": "method",
+         "name": "libinput_event_pointer_get_time_usec",
+         "accessibility": "public",
+         "modifiers": [
+          "extern",
+          "static"
+         ],
+         "attributes": [
+          "DllImport(LibInput)"
+         ],
+         "line": 159,
+         "type": "ulong",
+         "params": 1,
+         "signature": "static ulong libinput_event_pointer_get_time_usec(IntPtr ev)"
+        },
+        {
+         "kind": "method",
+         "name": "libinput_event_pointer_get_absolute_x_transformed",
+         "accessibility": "public",
+         "modifiers": [
+          "extern",
+          "static"
+         ],
+         "attributes": [
+          "DllImport(LibInput)"
+         ],
+         "line": 162,
+         "type": "double",
+         "params": 2,
+         "signature": "static double libinput_event_pointer_get_absolute_x_transformed(IntPtr ev, int width)"
+        },
+        {
+         "kind": "method",
+         "name": "libinput_event_pointer_get_absolute_y_transformed",
+         "accessibility": "public",
+         "modifiers": [
+          "extern",
+          "static"
+         ],
+         "attributes": [
+          "DllImport(LibInput)"
+         ],
+         "line": 165,
+         "type": "double",
+         "params": 2,
+         "signature": "static double libinput_event_pointer_get_absolute_y_transformed(IntPtr ev, int height)"
+        },
+        {
+         "kind": "method",
+         "name": "libinput_event_pointer_get_button",
+         "accessibility": "public",
+         "modifiers": [
+          "extern",
+          "static"
+         ],
+         "attributes": [
+          "DllImport(LibInput)"
+         ],
+         "line": 168,
+         "type": "int",
+         "params": 1,
+         "signature": "static int libinput_event_pointer_get_button(IntPtr ev)"
+        },
+        {
+         "kind": "method",
+         "name": "libinput_event_pointer_get_button_state",
+         "accessibility": "public",
+         "modifiers": [
+          "extern",
+          "static"
+         ],
+         "attributes": [
+          "DllImport(LibInput)"
+         ],
+         "line": 171,
+         "type": "int",
+         "params": 1,
+         "signature": "static int libinput_event_pointer_get_button_state(IntPtr ev)"
+        },
+        {
+         "kind": "method",
+         "name": "libinput_event_pointer_get_axis_source",
+         "accessibility": "public",
+         "modifiers": [
+          "extern",
+          "static"
+         ],
+         "attributes": [
+          "DllImport(LibInput)"
+         ],
+         "line": 174,
+         "type": "LibInputPointerAxisSource",
+         "params": 1,
+         "signature": "static LibInputPointerAxisSource libinput_event_pointer_get_axis_source(IntPtr ev)"
+        },
+        {
+         "kind": "method",
+         "name": "libinput_event_pointer_get_axis_value_discrete",
+         "accessibility": "public",
+         "modifiers": [
+          "extern",
+          "static"
+         ],
+         "attributes": [
+          "DllImport((LibInput))"
+         ],
+         "line": 177,
+         "type": "double",
+         "params": 2,
+         "signature": "static double libinput_event_pointer_get_axis_value_discrete(IntPtr ev, LibInputPointerAxis axis)"
+        },
+        {
+         "kind": "method",
+         "name": "libinput_event_pointer_get_scroll_value_v120",
+         "accessibility": "public",
+         "modifiers": [
+          "extern",
+          "static"
+         ],
+         "attributes": [
+          "DllImport(LibInput)"
+         ],
+         "line": 180,
+         "type": "double",
+         "params": 2,
+         "signature": "static double libinput_event_pointer_get_scroll_value_v120(IntPtr ev, LibInputPointerAxis axis)"
+        }
+       ],
        "privateMembers": 6,
        "nestedTypes": [
         {
@@ -383912,7 +386899,188 @@
          "accessibility": "public",
          "line": 73,
          "outer": "LibInputNativeUnsafeMethods",
-         "memberCount": 30
+         "members": [
+          {
+           "kind": "enum member",
+           "name": "LIBINPUT_EVENT_NONE",
+           "signature": "LIBINPUT_EVENT_NONE = 0",
+           "accessibility": "public"
+          },
+          {
+           "kind": "enum member",
+           "name": "LIBINPUT_EVENT_DEVICE_ADDED",
+           "signature": "LIBINPUT_EVENT_DEVICE_ADDED",
+           "accessibility": "public"
+          },
+          {
+           "kind": "enum member",
+           "name": "LIBINPUT_EVENT_DEVICE_REMOVED",
+           "signature": "LIBINPUT_EVENT_DEVICE_REMOVED",
+           "accessibility": "public"
+          },
+          {
+           "kind": "enum member",
+           "name": "LIBINPUT_EVENT_KEYBOARD_KEY",
+           "signature": "LIBINPUT_EVENT_KEYBOARD_KEY = 300",
+           "accessibility": "public"
+          },
+          {
+           "kind": "enum member",
+           "name": "LIBINPUT_EVENT_POINTER_MOTION",
+           "signature": "LIBINPUT_EVENT_POINTER_MOTION = 400",
+           "accessibility": "public"
+          },
+          {
+           "kind": "enum member",
+           "name": "LIBINPUT_EVENT_POINTER_MOTION_ABSOLUTE",
+           "signature": "LIBINPUT_EVENT_POINTER_MOTION_ABSOLUTE",
+           "accessibility": "public"
+          },
+          {
+           "kind": "enum member",
+           "name": "LIBINPUT_EVENT_POINTER_BUTTON",
+           "signature": "LIBINPUT_EVENT_POINTER_BUTTON",
+           "accessibility": "public"
+          },
+          {
+           "kind": "enum member",
+           "name": "LIBINPUT_EVENT_POINTER_AXIS",
+           "signature": "LIBINPUT_EVENT_POINTER_AXIS",
+           "accessibility": "public"
+          },
+          {
+           "kind": "enum member",
+           "name": "LIBINPUT_EVENT_POINTER_SCROLL_WHEEL",
+           "signature": "LIBINPUT_EVENT_POINTER_SCROLL_WHEEL",
+           "accessibility": "public"
+          },
+          {
+           "kind": "enum member",
+           "name": "LIBINPUT_EVENT_POINTER_SCROLL_FINGER",
+           "signature": "LIBINPUT_EVENT_POINTER_SCROLL_FINGER",
+           "accessibility": "public"
+          },
+          {
+           "kind": "enum member",
+           "name": "LIBINPUT_EVENT_POINTER_SCROLL_CONTINUOUS",
+           "signature": "LIBINPUT_EVENT_POINTER_SCROLL_CONTINUOUS",
+           "accessibility": "public"
+          },
+          {
+           "kind": "enum member",
+           "name": "LIBINPUT_EVENT_TOUCH_DOWN",
+           "signature": "LIBINPUT_EVENT_TOUCH_DOWN = 500",
+           "accessibility": "public"
+          },
+          {
+           "kind": "enum member",
+           "name": "LIBINPUT_EVENT_TOUCH_UP",
+           "signature": "LIBINPUT_EVENT_TOUCH_UP",
+           "accessibility": "public"
+          },
+          {
+           "kind": "enum member",
+           "name": "LIBINPUT_EVENT_TOUCH_MOTION",
+           "signature": "LIBINPUT_EVENT_TOUCH_MOTION",
+           "accessibility": "public"
+          },
+          {
+           "kind": "enum member",
+           "name": "LIBINPUT_EVENT_TOUCH_CANCEL",
+           "signature": "LIBINPUT_EVENT_TOUCH_CANCEL",
+           "accessibility": "public"
+          },
+          {
+           "kind": "enum member",
+           "name": "LIBINPUT_EVENT_TOUCH_FRAME",
+           "signature": "LIBINPUT_EVENT_TOUCH_FRAME",
+           "accessibility": "public"
+          },
+          {
+           "kind": "enum member",
+           "name": "LIBINPUT_EVENT_TABLET_TOOL_AXIS",
+           "signature": "LIBINPUT_EVENT_TABLET_TOOL_AXIS = 600",
+           "accessibility": "public"
+          },
+          {
+           "kind": "enum member",
+           "name": "LIBINPUT_EVENT_TABLET_TOOL_PROXIMITY",
+           "signature": "LIBINPUT_EVENT_TABLET_TOOL_PROXIMITY",
+           "accessibility": "public"
+          },
+          {
+           "kind": "enum member",
+           "name": "LIBINPUT_EVENT_TABLET_TOOL_TIP",
+           "signature": "LIBINPUT_EVENT_TABLET_TOOL_TIP",
+           "accessibility": "public"
+          },
+          {
+           "kind": "enum member",
+           "name": "LIBINPUT_EVENT_TABLET_TOOL_BUTTON",
+           "signature": "LIBINPUT_EVENT_TABLET_TOOL_BUTTON",
+           "accessibility": "public"
+          },
+          {
+           "kind": "enum member",
+           "name": "LIBINPUT_EVENT_TABLET_PAD_BUTTON",
+           "signature": "LIBINPUT_EVENT_TABLET_PAD_BUTTON = 700",
+           "accessibility": "public"
+          },
+          {
+           "kind": "enum member",
+           "name": "LIBINPUT_EVENT_TABLET_PAD_RING",
+           "signature": "LIBINPUT_EVENT_TABLET_PAD_RING",
+           "accessibility": "public"
+          },
+          {
+           "kind": "enum member",
+           "name": "LIBINPUT_EVENT_TABLET_PAD_STRIP",
+           "signature": "LIBINPUT_EVENT_TABLET_PAD_STRIP",
+           "accessibility": "public"
+          },
+          {
+           "kind": "enum member",
+           "name": "LIBINPUT_EVENT_GESTURE_SWIPE_BEGIN",
+           "signature": "LIBINPUT_EVENT_GESTURE_SWIPE_BEGIN = 800",
+           "accessibility": "public"
+          },
+          {
+           "kind": "enum member",
+           "name": "LIBINPUT_EVENT_GESTURE_SWIPE_UPDATE",
+           "signature": "LIBINPUT_EVENT_GESTURE_SWIPE_UPDATE",
+           "accessibility": "public"
+          },
+          {
+           "kind": "enum member",
+           "name": "LIBINPUT_EVENT_GESTURE_SWIPE_END",
+           "signature": "LIBINPUT_EVENT_GESTURE_SWIPE_END",
+           "accessibility": "public"
+          },
+          {
+           "kind": "enum member",
+           "name": "LIBINPUT_EVENT_GESTURE_PINCH_BEGIN",
+           "signature": "LIBINPUT_EVENT_GESTURE_PINCH_BEGIN",
+           "accessibility": "public"
+          },
+          {
+           "kind": "enum member",
+           "name": "LIBINPUT_EVENT_GESTURE_PINCH_UPDATE",
+           "signature": "LIBINPUT_EVENT_GESTURE_PINCH_UPDATE",
+           "accessibility": "public"
+          },
+          {
+           "kind": "enum member",
+           "name": "LIBINPUT_EVENT_GESTURE_PINCH_END",
+           "signature": "LIBINPUT_EVENT_GESTURE_PINCH_END",
+           "accessibility": "public"
+          },
+          {
+           "kind": "enum member",
+           "name": "LIBINPUT_EVENT_SWITCH_TOGGLE",
+           "signature": "LIBINPUT_EVENT_SWITCH_TOGGLE = 900",
+           "accessibility": "public"
+          }
+         ]
         },
         {
          "name": "LibInputPointerAxisSource",
@@ -383922,7 +387090,32 @@
          "accessibility": "public",
          "line": 107,
          "outer": "LibInputNativeUnsafeMethods",
-         "memberCount": 4
+         "members": [
+          {
+           "kind": "enum member",
+           "name": "LIBINPUT_POINTER_AXIS_SOURCE_WHEEL",
+           "signature": "LIBINPUT_POINTER_AXIS_SOURCE_WHEEL = 1",
+           "accessibility": "public"
+          },
+          {
+           "kind": "enum member",
+           "name": "LIBINPUT_POINTER_AXIS_SOURCE_FINGER",
+           "signature": "LIBINPUT_POINTER_AXIS_SOURCE_FINGER",
+           "accessibility": "public"
+          },
+          {
+           "kind": "enum member",
+           "name": "LIBINPUT_POINTER_AXIS_SOURCE_CONTINUOUS",
+           "signature": "LIBINPUT_POINTER_AXIS_SOURCE_CONTINUOUS",
+           "accessibility": "public"
+          },
+          {
+           "kind": "enum member",
+           "name": "LIBINPUT_POINTER_AXIS_SOURCE_WHEEL_TILT",
+           "signature": "LIBINPUT_POINTER_AXIS_SOURCE_WHEEL_TILT",
+           "accessibility": "public"
+          }
+         ]
         },
         {
          "name": "LibInputPointerAxis",
@@ -383932,7 +387125,20 @@
          "accessibility": "public",
          "line": 132,
          "outer": "LibInputNativeUnsafeMethods",
-         "memberCount": 2
+         "members": [
+          {
+           "kind": "enum member",
+           "name": "LIBINPUT_POINTER_AXIS_SCROLL_VERTICAL",
+           "signature": "LIBINPUT_POINTER_AXIS_SCROLL_VERTICAL = 0",
+           "accessibility": "public"
+          },
+          {
+           "kind": "enum member",
+           "name": "LIBINPUT_POINTER_AXIS_SCROLL_HORIZONTAL",
+           "signature": "LIBINPUT_POINTER_AXIS_SCROLL_HORIZONTAL = 1",
+           "accessibility": "public"
+          }
+         ]
         }
        ]
       }
@@ -383952,7 +387158,26 @@
        "bases": [
         "IInputBackend"
        ],
-       "memberCount": 2
+       "members": [
+        {
+         "kind": "method",
+         "name": "Initialize",
+         "accessibility": "public",
+         "line": 9,
+         "type": "void",
+         "params": 2,
+         "signature": "void Initialize(IScreenInfoProvider screen, Action<RawInputEventArgs> onInput)"
+        },
+        {
+         "kind": "method",
+         "name": "SetInputRoot",
+         "accessibility": "public",
+         "line": 13,
+         "type": "void",
+         "params": 1,
+         "signature": "void SetInputRoot(IInputRoot root)"
+        }
+       ]
       }
      ]
     },
@@ -383967,7 +387192,26 @@
        "fullName": "Avalonia.LinuxFramebuffer.Output.DrmModeConnection",
        "accessibility": "public",
        "line": 9,
-       "memberCount": 3
+       "members": [
+        {
+         "kind": "enum member",
+         "name": "DRM_MODE_CONNECTED",
+         "signature": "DRM_MODE_CONNECTED = 1",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "DRM_MODE_DISCONNECTED",
+         "signature": "DRM_MODE_DISCONNECTED = 2",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "DRM_MODE_UNKNOWNCONNECTION",
+         "signature": "DRM_MODE_UNKNOWNCONNECTION = 3",
+         "accessibility": "public"
+        }
+       ]
       },
       {
        "name": "DrmModeSubPixel",
@@ -383976,7 +387220,44 @@
        "fullName": "Avalonia.LinuxFramebuffer.Output.DrmModeSubPixel",
        "accessibility": "public",
        "line": 16,
-       "memberCount": 6
+       "members": [
+        {
+         "kind": "enum member",
+         "name": "DRM_MODE_SUBPIXEL_UNKNOWN",
+         "signature": "DRM_MODE_SUBPIXEL_UNKNOWN = 1",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "DRM_MODE_SUBPIXEL_HORIZONTAL_RGB",
+         "signature": "DRM_MODE_SUBPIXEL_HORIZONTAL_RGB = 2",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "DRM_MODE_SUBPIXEL_HORIZONTAL_BGR",
+         "signature": "DRM_MODE_SUBPIXEL_HORIZONTAL_BGR = 3",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "DRM_MODE_SUBPIXEL_VERTICAL_RGB",
+         "signature": "DRM_MODE_SUBPIXEL_VERTICAL_RGB = 4",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "DRM_MODE_SUBPIXEL_VERTICAL_BGR",
+         "signature": "DRM_MODE_SUBPIXEL_VERTICAL_BGR = 5",
+         "accessibility": "public"
+        },
+        {
+         "kind": "enum member",
+         "name": "DRM_MODE_SUBPIXEL_NONE",
+         "signature": "DRM_MODE_SUBPIXEL_NONE = 6",
+         "accessibility": "public"
+        }
+       ]
       },
       {
        "name": "LibDrm",
@@ -383989,7 +387270,424 @@
         "static",
         "unsafe"
        ],
-       "memberCount": 26,
+       "members": [
+        {
+         "kind": "method",
+         "name": "drmModeGetResources",
+         "accessibility": "public",
+         "modifiers": [
+          "static",
+          "extern"
+         ],
+         "attributes": [
+          "DllImport(libdrm, SetLastError = true)"
+         ],
+         "line": 157,
+         "type": "drmModeRes*",
+         "params": 1,
+         "signature": "static drmModeRes* drmModeGetResources(int fd)"
+        },
+        {
+         "kind": "method",
+         "name": "drmModeFreeResources",
+         "accessibility": "public",
+         "modifiers": [
+          "static",
+          "extern"
+         ],
+         "attributes": [
+          "DllImport(libdrm, SetLastError = true)"
+         ],
+         "line": 159,
+         "type": "void",
+         "params": 1,
+         "signature": "static void drmModeFreeResources(drmModeRes* res)"
+        },
+        {
+         "kind": "method",
+         "name": "drmModeGetConnector",
+         "accessibility": "public",
+         "modifiers": [
+          "static",
+          "extern"
+         ],
+         "attributes": [
+          "DllImport(libdrm, SetLastError = true)"
+         ],
+         "line": 162,
+         "type": "drmModeConnector*",
+         "params": 2,
+         "signature": "static drmModeConnector* drmModeGetConnector(int fd, uint connector)"
+        },
+        {
+         "kind": "method",
+         "name": "drmModeGetConnectorCurrent",
+         "accessibility": "public",
+         "modifiers": [
+          "static",
+          "extern"
+         ],
+         "attributes": [
+          "DllImport(libdrm, SetLastError = true)"
+         ],
+         "line": 164,
+         "type": "drmModeConnector*",
+         "params": 2,
+         "signature": "static drmModeConnector* drmModeGetConnectorCurrent(int fd, uint connector)"
+        },
+        {
+         "kind": "method",
+         "name": "drmModeFreeConnector",
+         "accessibility": "public",
+         "modifiers": [
+          "static",
+          "extern"
+         ],
+         "attributes": [
+          "DllImport(libdrm, SetLastError = true)"
+         ],
+         "line": 166,
+         "type": "void",
+         "params": 1,
+         "signature": "static void drmModeFreeConnector(drmModeConnector* res)"
+        },
+        {
+         "kind": "method",
+         "name": "drmModeGetEncoder",
+         "accessibility": "public",
+         "modifiers": [
+          "static",
+          "extern"
+         ],
+         "attributes": [
+          "DllImport(libdrm, SetLastError = true)"
+         ],
+         "line": 169,
+         "type": "drmModeEncoder*",
+         "params": 2,
+         "signature": "static drmModeEncoder* drmModeGetEncoder(int fd, uint id)"
+        },
+        {
+         "kind": "method",
+         "name": "drmModeFreeEncoder",
+         "accessibility": "public",
+         "modifiers": [
+          "static",
+          "extern"
+         ],
+         "attributes": [
+          "DllImport(libdrm, SetLastError = true)"
+         ],
+         "line": 171,
+         "type": "void",
+         "params": 1,
+         "signature": "static void drmModeFreeEncoder(drmModeEncoder* enc)"
+        },
+        {
+         "kind": "method",
+         "name": "drmModeGetCrtc",
+         "accessibility": "public",
+         "modifiers": [
+          "static",
+          "extern"
+         ],
+         "attributes": [
+          "DllImport(libdrm, SetLastError = true)"
+         ],
+         "line": 173,
+         "type": "drmModeCrtc*",
+         "params": 2,
+         "signature": "static drmModeCrtc* drmModeGetCrtc(int fd, uint id)"
+        },
+        {
+         "kind": "method",
+         "name": "drmModeFreeCrtc",
+         "accessibility": "public",
+         "modifiers": [
+          "static",
+          "extern"
+         ],
+         "attributes": [
+          "DllImport(libdrm, SetLastError = true)"
+         ],
+         "line": 175,
+         "type": "void",
+         "params": 1,
+         "signature": "static void drmModeFreeCrtc(drmModeCrtc* enc)"
+        },
+        {
+         "kind": "method",
+         "name": "drmModeAddFB",
+         "accessibility": "public",
+         "modifiers": [
+          "static",
+          "extern"
+         ],
+         "attributes": [
+          "DllImport(libdrm, SetLastError = true)"
+         ],
+         "line": 178,
+         "type": "int",
+         "params": 8,
+         "signature": "static int drmModeAddFB(int fd, uint width, uint height, byte depth, byte bpp, uint pitch, uint bo_handle, out uint buf_id)"
+        },
+        {
+         "kind": "method",
+         "name": "drmModeAddFB2",
+         "accessibility": "public",
+         "modifiers": [
+          "static",
+          "extern"
+         ],
+         "attributes": [
+          "DllImport(libdrm, SetLastError = true)"
+         ],
+         "line": 183,
+         "type": "int",
+         "params": 9,
+         "signature": "static int drmModeAddFB2(int fd, uint width, uint height, uint pixel_format, uint[] bo_handles, uint[] pitches, uint[] offsets, out uint buf_id, uint flags)"
+        },
+        {
+         "kind": "method",
+         "name": "drmModeSetCrtc",
+         "accessibility": "public",
+         "modifiers": [
+          "static",
+          "extern"
+         ],
+         "attributes": [
+          "DllImport(libdrm, SetLastError = true)"
+         ],
+         "line": 188,
+         "type": "int",
+         "params": 8,
+         "signature": "static int drmModeSetCrtc(int fd, uint crtcId, uint bufferId, uint x, uint y, uint *connectors, int count, drmModeModeInfo* mode)"
+        },
+        {
+         "kind": "method",
+         "name": "drmModeRmFB",
+         "accessibility": "public",
+         "modifiers": [
+          "static",
+          "extern"
+         ],
+         "attributes": [
+          "DllImport(libdrm, SetLastError = true)"
+         ],
+         "line": 193,
+         "type": "void",
+         "params": 2,
+         "signature": "static void drmModeRmFB(int fd, int id)"
+        },
+        {
+         "kind": "method",
+         "name": "drmModePageFlip",
+         "accessibility": "public",
+         "modifiers": [
+          "static",
+          "extern"
+         ],
+         "attributes": [
+          "DllImport(libdrm, SetLastError = true)"
+         ],
+         "line": 205,
+         "type": "void",
+         "params": 5,
+         "signature": "static void drmModePageFlip(int fd, uint crtc_id, uint fb_id, DrmModePageFlip flags, void *user_data)"
+        },
+        {
+         "kind": "method",
+         "name": "drmHandleEvent",
+         "accessibility": "public",
+         "modifiers": [
+          "static",
+          "extern"
+         ],
+         "attributes": [
+          "DllImport(libdrm, SetLastError = true)"
+         ],
+         "line": 210,
+         "type": "void",
+         "params": 2,
+         "signature": "static void drmHandleEvent(int fd, DrmEventContext* context)"
+        },
+        {
+         "kind": "method",
+         "name": "gbm_create_device",
+         "accessibility": "public",
+         "modifiers": [
+          "static",
+          "extern"
+         ],
+         "attributes": [
+          "DllImport(libgbm, SetLastError = true)"
+         ],
+         "line": 213,
+         "type": "IntPtr",
+         "params": 1,
+         "signature": "static IntPtr gbm_create_device(int fd)"
+        },
+        {
+         "kind": "method",
+         "name": "gbm_surface_create",
+         "accessibility": "public",
+         "modifiers": [
+          "static",
+          "extern"
+         ],
+         "attributes": [
+          "DllImport(libgbm, SetLastError = true)"
+         ],
+         "line": 247,
+         "type": "IntPtr",
+         "params": 5,
+         "signature": "static IntPtr gbm_surface_create(IntPtr device, int width, int height, uint format, GbmBoFlags flags)"
+        },
+        {
+         "kind": "method",
+         "name": "gbm_surface_lock_front_buffer",
+         "accessibility": "public",
+         "modifiers": [
+          "static",
+          "extern"
+         ],
+         "attributes": [
+          "DllImport(libgbm, SetLastError = true)"
+         ],
+         "line": 249,
+         "type": "IntPtr",
+         "params": 1,
+         "signature": "static IntPtr gbm_surface_lock_front_buffer(IntPtr surface)"
+        },
+        {
+         "kind": "method",
+         "name": "gbm_surface_release_buffer",
+         "accessibility": "public",
+         "modifiers": [
+          "static",
+          "extern"
+         ],
+         "attributes": [
+          "DllImport(libgbm, SetLastError = true)"
+         ],
+         "line": 251,
+         "type": "int",
+         "params": 2,
+         "signature": "static int gbm_surface_release_buffer(IntPtr surface, IntPtr bo)"
+        },
+        {
+         "kind": "method",
+         "name": "gbm_bo_get_user_data",
+         "accessibility": "public",
+         "modifiers": [
+          "static",
+          "extern"
+         ],
+         "attributes": [
+          "DllImport(libgbm, SetLastError = true)"
+         ],
+         "line": 253,
+         "type": "IntPtr",
+         "params": 1,
+         "signature": "static IntPtr gbm_bo_get_user_data(IntPtr surface)"
+        },
+        {
+         "kind": "method",
+         "name": "gbm_bo_set_user_data",
+         "accessibility": "public",
+         "modifiers": [
+          "static",
+          "extern"
+         ],
+         "attributes": [
+          "DllImport(libgbm, SetLastError = true)"
+         ],
+         "line": 259,
+         "type": "IntPtr",
+         "params": 3,
+         "signature": "static IntPtr gbm_bo_set_user_data(IntPtr bo, IntPtr userData, GbmBoUserDataDestroyCallbackDelegate onFree)"
+        },
+        {
+         "kind": "method",
+         "name": "gbm_bo_get_width",
+         "accessibility": "public",
+         "modifiers": [
+          "static",
+          "extern"
+         ],
+         "attributes": [
+          "DllImport(libgbm, SetLastError = true)"
+         ],
+         "line": 263,
+         "type": "uint",
+         "params": 1,
+         "signature": "static uint gbm_bo_get_width(IntPtr bo)"
+        },
+        {
+         "kind": "method",
+         "name": "gbm_bo_get_height",
+         "accessibility": "public",
+         "modifiers": [
+          "static",
+          "extern"
+         ],
+         "attributes": [
+          "DllImport(libgbm, SetLastError = true)"
+         ],
+         "line": 266,
+         "type": "uint",
+         "params": 1,
+         "signature": "static uint gbm_bo_get_height(IntPtr bo)"
+        },
+        {
+         "kind": "method",
+         "name": "gbm_bo_get_stride",
+         "accessibility": "public",
+         "modifiers": [
+          "static",
+          "extern"
+         ],
+         "attributes": [
+          "DllImport(libgbm, SetLastError = true)"
+         ],
+         "line": 269,
+         "type": "uint",
+         "params": 1,
+         "signature": "static uint gbm_bo_get_stride(IntPtr bo)"
+        },
+        {
+         "kind": "method",
+         "name": "gbm_bo_get_format",
+         "accessibility": "public",
+         "modifiers": [
+          "static",
+          "extern"
+         ],
+         "attributes": [
+          "DllImport(libgbm, SetLastError = true)"
+         ],
+         "line": 272,
+         "type": "uint",
+         "params": 1,
+         "signature": "static uint gbm_bo_get_format(IntPtr bo)"
+        },
+        {
+         "kind": "method",
+         "name": "gbm_bo_get_handle",
+         "accessibility": "public",
+         "modifiers": [
+          "static",
+          "extern"
+         ],
+         "attributes": [
+          "DllImport(libgbm, SetLastError = true)"
+         ],
+         "line": 290,
+         "type": "GbmBoHandle",
+         "params": 1,
+         "signature": "static GbmBoHandle gbm_bo_get_handle(IntPtr bo)"
+        }
+       ],
        "privateMembers": 2,
        "nestedTypes": [
         {
@@ -384007,7 +387705,7 @@
           "UnmanagedFunctionPointer(CallingConvention.Cdecl)"
          ],
          "signature": "void DrmEventVBlankHandlerDelegate(int fd, uint sequence, uint tv_sec, uint tv_usec, void* user_data)",
-         "memberCount": 0
+         "members": []
         },
         {
          "name": "DrmEventPageFlipHandlerDelegate",
@@ -384024,7 +387722,7 @@
           "UnmanagedFunctionPointer(CallingConvention.Cdecl)"
          ],
          "signature": "void DrmEventPageFlipHandlerDelegate(int fd, uint sequence, uint tv_sec, uint tv_usec, void* user_data)",
-         "memberCount": 0
+         "members": []
         },
         {
          "name": "DrmEventPageFlipHandler2Delegate",
@@ -384041,7 +387739,7 @@
           "UnmanagedFunctionPointer(CallingConvention.Cdecl)"
          ],
          "signature": "IntPtr DrmEventPageFlipHandler2Delegate(int fd, uint sequence, uint tv_sec, uint tv_usec, uint crtc_id, void* user_data)",
-         "memberCount": 0
+         "members": []
         },
         {
          "name": "DrmEventSequenceHandlerDelegate",
@@ -384058,7 +387756,7 @@
           "UnmanagedFunctionPointer(CallingConvention.Cdecl)"
          ],
          "signature": "void DrmEventSequenceHandlerDelegate(int fd, ulong sequence, ulong ns, ulong user_data)",
-         "memberCount": 0
+         "members": []
         },
         {
          "name": "DrmEventContext",
@@ -384071,7 +387769,48 @@
          "attributes": [
           "StructLayout(LayoutKind.Sequential)"
          ],
-         "memberCount": 5
+         "members": [
+          {
+           "kind": "field",
+           "name": "version",
+           "accessibility": "public",
+           "line": 60,
+           "type": "int",
+           "signature": "int version"
+          },
+          {
+           "kind": "field",
+           "name": "vblank_handler",
+           "accessibility": "public",
+           "line": 61,
+           "type": "IntPtr",
+           "signature": "IntPtr vblank_handler"
+          },
+          {
+           "kind": "field",
+           "name": "page_flip_handler",
+           "accessibility": "public",
+           "line": 62,
+           "type": "IntPtr",
+           "signature": "IntPtr page_flip_handler"
+          },
+          {
+           "kind": "field",
+           "name": "page_flip_handler2",
+           "accessibility": "public",
+           "line": 63,
+           "type": "IntPtr",
+           "signature": "IntPtr page_flip_handler2"
+          },
+          {
+           "kind": "field",
+           "name": "sequence_handler",
+           "accessibility": "public",
+           "line": 64,
+           "type": "IntPtr",
+           "signature": "IntPtr sequence_handler"
+          }
+         ]
         },
         {
          "name": "drmModeRes",
@@ -384084,7 +387823,72 @@
          "attributes": [
           "StructLayout(LayoutKind.Sequential)"
          ],
-         "memberCount": 8,
+         "members": [
+          {
+           "kind": "field",
+           "name": "count_fbs",
+           "accessibility": "public",
+           "line": 70,
+           "type": "int",
+           "signature": "int count_fbs"
+          },
+          {
+           "kind": "field",
+           "name": "fbs",
+           "accessibility": "public",
+           "line": 71,
+           "type": "uint *",
+           "signature": "uint * fbs"
+          },
+          {
+           "kind": "field",
+           "name": "count_crtcs",
+           "accessibility": "public",
+           "line": 73,
+           "type": "int",
+           "signature": "int count_crtcs"
+          },
+          {
+           "kind": "field",
+           "name": "crtcs",
+           "accessibility": "public",
+           "line": 74,
+           "type": "uint *",
+           "signature": "uint * crtcs"
+          },
+          {
+           "kind": "field",
+           "name": "count_connectors",
+           "accessibility": "public",
+           "line": 76,
+           "type": "int",
+           "signature": "int count_connectors"
+          },
+          {
+           "kind": "field",
+           "name": "connectors",
+           "accessibility": "public",
+           "line": 77,
+           "type": "uint *",
+           "signature": "uint * connectors"
+          },
+          {
+           "kind": "field",
+           "name": "count_encoders",
+           "accessibility": "public",
+           "line": 79,
+           "type": "int",
+           "signature": "int count_encoders"
+          },
+          {
+           "kind": "field",
+           "name": "encoders",
+           "accessibility": "public",
+           "line": 80,
+           "type": "uint *",
+           "signature": "uint * encoders"
+          }
+         ],
          "privateMembers": 4
         },
         {
@@ -384099,7 +387903,50 @@
           "Flags"
          ],
          "flags": true,
-         "memberCount": 7
+         "members": [
+          {
+           "kind": "enum member",
+           "name": "DRM_MODE_TYPE_BUILTIN",
+           "signature": "DRM_MODE_TYPE_BUILTIN = (1 << 0)",
+           "accessibility": "public"
+          },
+          {
+           "kind": "enum member",
+           "name": "DRM_MODE_TYPE_CLOCK_C",
+           "signature": "DRM_MODE_TYPE_CLOCK_C = ((1 << 1) | DRM_MODE_TYPE_BUILTIN)",
+           "accessibility": "public"
+          },
+          {
+           "kind": "enum member",
+           "name": "DRM_MODE_TYPE_CRTC_C",
+           "signature": "DRM_MODE_TYPE_CRTC_C = ((1 << 2) | DRM_MODE_TYPE_BUILTIN)",
+           "accessibility": "public"
+          },
+          {
+           "kind": "enum member",
+           "name": "DRM_MODE_TYPE_PREFERRED",
+           "signature": "DRM_MODE_TYPE_PREFERRED = (1 << 3)",
+           "accessibility": "public"
+          },
+          {
+           "kind": "enum member",
+           "name": "DRM_MODE_TYPE_DEFAULT",
+           "signature": "DRM_MODE_TYPE_DEFAULT = (1 << 4)",
+           "accessibility": "public"
+          },
+          {
+           "kind": "enum member",
+           "name": "DRM_MODE_TYPE_USERDEF",
+           "signature": "DRM_MODE_TYPE_USERDEF = (1 << 5)",
+           "accessibility": "public"
+          },
+          {
+           "kind": "enum member",
+           "name": "DRM_MODE_TYPE_DRIVER",
+           "signature": "DRM_MODE_TYPE_DRIVER = (1 << 6)",
+           "accessibility": "public"
+          }
+         ]
         },
         {
          "name": "drmModeModeInfo",
@@ -384112,7 +387959,139 @@
          "attributes": [
           "StructLayout(LayoutKind.Sequential)"
          ],
-         "memberCount": 16
+         "members": [
+          {
+           "kind": "field",
+           "name": "clock",
+           "accessibility": "public",
+           "line": 101,
+           "type": "uint",
+           "signature": "uint clock"
+          },
+          {
+           "kind": "field",
+           "name": "hdisplay",
+           "accessibility": "public",
+           "line": 102,
+           "type": "ushort",
+           "signature": "ushort hdisplay"
+          },
+          {
+           "kind": "field",
+           "name": "hsync_start",
+           "accessibility": "public",
+           "line": 102,
+           "type": "ushort",
+           "signature": "ushort hsync_start"
+          },
+          {
+           "kind": "field",
+           "name": "hsync_end",
+           "accessibility": "public",
+           "line": 102,
+           "type": "ushort",
+           "signature": "ushort hsync_end"
+          },
+          {
+           "kind": "field",
+           "name": "htotal",
+           "accessibility": "public",
+           "line": 102,
+           "type": "ushort",
+           "signature": "ushort htotal"
+          },
+          {
+           "kind": "field",
+           "name": "hskew",
+           "accessibility": "public",
+           "line": 102,
+           "type": "ushort",
+           "signature": "ushort hskew"
+          },
+          {
+           "kind": "field",
+           "name": "vdisplay",
+           "accessibility": "public",
+           "line": 103,
+           "type": "ushort",
+           "signature": "ushort vdisplay"
+          },
+          {
+           "kind": "field",
+           "name": "vsync_start",
+           "accessibility": "public",
+           "line": 103,
+           "type": "ushort",
+           "signature": "ushort vsync_start"
+          },
+          {
+           "kind": "field",
+           "name": "vsync_end",
+           "accessibility": "public",
+           "line": 103,
+           "type": "ushort",
+           "signature": "ushort vsync_end"
+          },
+          {
+           "kind": "field",
+           "name": "vtotal",
+           "accessibility": "public",
+           "line": 103,
+           "type": "ushort",
+           "signature": "ushort vtotal"
+          },
+          {
+           "kind": "field",
+           "name": "vscan",
+           "accessibility": "public",
+           "line": 103,
+           "type": "ushort",
+           "signature": "ushort vscan"
+          },
+          {
+           "kind": "field",
+           "name": "vrefresh",
+           "accessibility": "public",
+           "line": 105,
+           "type": "uint",
+           "signature": "uint vrefresh"
+          },
+          {
+           "kind": "field",
+           "name": "flags",
+           "accessibility": "public",
+           "line": 107,
+           "type": "uint",
+           "signature": "uint flags"
+          },
+          {
+           "kind": "field",
+           "name": "type",
+           "accessibility": "public",
+           "line": 108,
+           "type": "DrmModeType",
+           "signature": "DrmModeType type"
+          },
+          {
+           "kind": "field",
+           "name": "name",
+           "accessibility": "public",
+           "line": 109,
+           "type": "byte",
+           "signature": "byte name"
+          },
+          {
+           "kind": "property",
+           "name": "Resolution",
+           "accessibility": "public",
+           "line": 110,
+           "type": "PixelSize",
+           "accessors": {
+            "get": "public"
+           },
+           "signature": "PixelSize Resolution { get; }"
+          }
+         ]
         },
         {
          "name": "drmModeConnector",
@@ -384125,7 +388104,128 @@
          "attributes": [
           "StructLayout(LayoutKind.Sequential)"
          ],
-         "memberCount": 15
+         "members": [
+          {
+           "kind": "field",
+           "name": "connector_id",
+           "accessibility": "public",
+           "line": 115,
+           "type": "uint",
+           "signature": "uint connector_id"
+          },
+          {
+           "kind": "field",
+           "name": "encoder_id",
+           "accessibility": "public",
+           "line": 116,
+           "type": "uint",
+           "signature": "uint encoder_id"
+          },
+          {
+           "kind": "field",
+           "name": "connector_type",
+           "accessibility": "public",
+           "line": 117,
+           "type": "uint",
+           "signature": "uint connector_type"
+          },
+          {
+           "kind": "field",
+           "name": "connector_type_id",
+           "accessibility": "public",
+           "line": 118,
+           "type": "uint",
+           "signature": "uint connector_type_id"
+          },
+          {
+           "kind": "field",
+           "name": "connection",
+           "accessibility": "public",
+           "line": 119,
+           "type": "DrmModeConnection",
+           "signature": "DrmModeConnection connection"
+          },
+          {
+           "kind": "field",
+           "name": "mmWidth",
+           "accessibility": "public",
+           "line": 120,
+           "type": "uint",
+           "signature": "uint mmWidth"
+          },
+          {
+           "kind": "field",
+           "name": "mmHeight",
+           "accessibility": "public",
+           "line": 120,
+           "type": "uint",
+           "signature": "uint mmHeight"
+          },
+          {
+           "kind": "field",
+           "name": "subpixel",
+           "accessibility": "public",
+           "line": 121,
+           "type": "DrmModeSubPixel",
+           "signature": "DrmModeSubPixel subpixel"
+          },
+          {
+           "kind": "field",
+           "name": "count_modes",
+           "accessibility": "public",
+           "line": 123,
+           "type": "int",
+           "signature": "int count_modes"
+          },
+          {
+           "kind": "field",
+           "name": "modes",
+           "accessibility": "public",
+           "line": 124,
+           "type": "drmModeModeInfo*",
+           "signature": "drmModeModeInfo* modes"
+          },
+          {
+           "kind": "field",
+           "name": "count_props",
+           "accessibility": "public",
+           "line": 126,
+           "type": "int",
+           "signature": "int count_props"
+          },
+          {
+           "kind": "field",
+           "name": "props",
+           "accessibility": "public",
+           "line": 127,
+           "type": "uint *",
+           "signature": "uint * props"
+          },
+          {
+           "kind": "field",
+           "name": "prop_values",
+           "accessibility": "public",
+           "line": 128,
+           "type": "ulong *",
+           "signature": "ulong * prop_values"
+          },
+          {
+           "kind": "field",
+           "name": "count_encoders",
+           "accessibility": "public",
+           "line": 130,
+           "type": "int",
+           "signature": "int count_encoders"
+          },
+          {
+           "kind": "field",
+           "name": "encoders",
+           "accessibility": "public",
+           "line": 131,
+           "type": "uint *",
+           "signature": "uint * encoders"
+          }
+         ]
         },
         {
          "name": "drmModeEncoder",
@@ -384138,7 +388238,48 @@
          "attributes": [
           "StructLayout(LayoutKind.Sequential)"
          ],
-         "memberCount": 5
+         "members": [
+          {
+           "kind": "field",
+           "name": "encoder_id",
+           "accessibility": "public",
+           "line": 136,
+           "type": "uint",
+           "signature": "uint encoder_id"
+          },
+          {
+           "kind": "field",
+           "name": "encoder_type",
+           "accessibility": "public",
+           "line": 137,
+           "type": "uint",
+           "signature": "uint encoder_type"
+          },
+          {
+           "kind": "field",
+           "name": "crtc_id",
+           "accessibility": "public",
+           "line": 138,
+           "type": "uint",
+           "signature": "uint crtc_id"
+          },
+          {
+           "kind": "field",
+           "name": "possible_crtcs",
+           "accessibility": "public",
+           "line": 139,
+           "type": "uint",
+           "signature": "uint possible_crtcs"
+          },
+          {
+           "kind": "field",
+           "name": "possible_clones",
+           "accessibility": "public",
+           "line": 140,
+           "type": "uint",
+           "signature": "uint possible_clones"
+          }
+         ]
         },
         {
          "name": "drmModeCrtc",
@@ -384151,7 +388292,80 @@
          "attributes": [
           "StructLayout(LayoutKind.Sequential)"
          ],
-         "memberCount": 9
+         "members": [
+          {
+           "kind": "field",
+           "name": "crtc_id",
+           "accessibility": "public",
+           "line": 145,
+           "type": "uint",
+           "signature": "uint crtc_id"
+          },
+          {
+           "kind": "field",
+           "name": "buffer_id",
+           "accessibility": "public",
+           "line": 146,
+           "type": "uint",
+           "signature": "uint buffer_id"
+          },
+          {
+           "kind": "field",
+           "name": "x",
+           "accessibility": "public",
+           "line": 148,
+           "type": "uint",
+           "signature": "uint x"
+          },
+          {
+           "kind": "field",
+           "name": "y",
+           "accessibility": "public",
+           "line": 148,
+           "type": "uint",
+           "signature": "uint y"
+          },
+          {
+           "kind": "field",
+           "name": "width",
+           "accessibility": "public",
+           "line": 149,
+           "type": "uint",
+           "signature": "uint width"
+          },
+          {
+           "kind": "field",
+           "name": "height",
+           "accessibility": "public",
+           "line": 149,
+           "type": "uint",
+           "signature": "uint height"
+          },
+          {
+           "kind": "field",
+           "name": "mode_valid",
+           "accessibility": "public",
+           "line": 150,
+           "type": "int",
+           "signature": "int mode_valid"
+          },
+          {
+           "kind": "field",
+           "name": "mode",
+           "accessibility": "public",
+           "line": 151,
+           "type": "drmModeModeInfo",
+           "signature": "drmModeModeInfo mode"
+          },
+          {
+           "kind": "field",
+           "name": "gamma_size",
+           "accessibility": "public",
+           "line": 153,
+           "type": "int",
+           "signature": "int gamma_size"
+          }
+         ]
         },
         {
          "name": "DrmModePageFlip",
@@ -384165,7 +388379,32 @@
           "Flags"
          ],
          "flags": true,
-         "memberCount": 4
+         "members": [
+          {
+           "kind": "enum member",
+           "name": "Event",
+           "signature": "Event = 1",
+           "accessibility": "public"
+          },
+          {
+           "kind": "enum member",
+           "name": "Async",
+           "signature": "Async = 2",
+           "accessibility": "public"
+          },
+          {
+           "kind": "enum member",
+           "name": "Absolute",
+           "signature": "Absolute = 4",
+           "accessibility": "public"
+          },
+          {
+           "kind": "enum member",
+           "name": "Relative",
+           "signature": "Relative = 8",
+           "accessibility": "public"
+          }
+         ]
         },
         {
          "name": "GbmBoFlags",
@@ -384179,7 +388418,44 @@
           "Flags"
          ],
          "flags": true,
-         "memberCount": 6
+         "members": [
+          {
+           "kind": "enum member",
+           "name": "GBM_BO_USE_SCANOUT",
+           "signature": "GBM_BO_USE_SCANOUT = (1 << 0)",
+           "accessibility": "public"
+          },
+          {
+           "kind": "enum member",
+           "name": "GBM_BO_USE_CURSOR",
+           "signature": "GBM_BO_USE_CURSOR = (1 << 1)",
+           "accessibility": "public"
+          },
+          {
+           "kind": "enum member",
+           "name": "GBM_BO_USE_CURSOR_64X64",
+           "signature": "GBM_BO_USE_CURSOR_64X64 = GBM_BO_USE_CURSOR",
+           "accessibility": "public"
+          },
+          {
+           "kind": "enum member",
+           "name": "GBM_BO_USE_RENDERING",
+           "signature": "GBM_BO_USE_RENDERING = (1 << 2)",
+           "accessibility": "public"
+          },
+          {
+           "kind": "enum member",
+           "name": "GBM_BO_USE_WRITE",
+           "signature": "GBM_BO_USE_WRITE = (1 << 3)",
+           "accessibility": "public"
+          },
+          {
+           "kind": "enum member",
+           "name": "GBM_BO_USE_LINEAR",
+           "signature": "GBM_BO_USE_LINEAR = (1 << 4)",
+           "accessibility": "public"
+          }
+         ]
         },
         {
          "name": "GbmBoUserDataDestroyCallbackDelegate",
@@ -384193,7 +388469,7 @@
           "UnmanagedFunctionPointer(CallingConvention.Cdecl)"
          ],
          "signature": "void GbmBoUserDataDestroyCallbackDelegate(IntPtr bo, IntPtr data)",
-         "memberCount": 0
+         "members": []
         },
         {
          "name": "GbmBoHandle",
@@ -384206,7 +388482,63 @@
          "attributes": [
           "StructLayout(LayoutKind.Explicit)"
          ],
-         "memberCount": 5
+         "members": [
+          {
+           "kind": "field",
+           "name": "ptr",
+           "accessibility": "public",
+           "attributes": [
+            "FieldOffset(0)"
+           ],
+           "line": 278,
+           "type": "void *",
+           "signature": "void * ptr"
+          },
+          {
+           "kind": "field",
+           "name": "s32",
+           "accessibility": "public",
+           "attributes": [
+            "FieldOffset(0)"
+           ],
+           "line": 280,
+           "type": "int",
+           "signature": "int s32"
+          },
+          {
+           "kind": "field",
+           "name": "u32",
+           "accessibility": "public",
+           "attributes": [
+            "FieldOffset(0)"
+           ],
+           "line": 282,
+           "type": "uint",
+           "signature": "uint u32"
+          },
+          {
+           "kind": "field",
+           "name": "s64",
+           "accessibility": "public",
+           "attributes": [
+            "FieldOffset(0)"
+           ],
+           "line": 284,
+           "type": "long",
+           "signature": "long s64"
+          },
+          {
+           "kind": "field",
+           "name": "u64",
+           "accessibility": "public",
+           "attributes": [
+            "FieldOffset(0)"
+           ],
+           "line": 286,
+           "type": "ulong",
+           "signature": "ulong u64"
+          }
+         ]
         },
         {
          "name": "GbmColorFormats",
@@ -384219,7 +388551,34 @@
          "modifiers": [
           "static"
          ],
-         "memberCount": 2
+         "members": [
+          {
+           "kind": "method",
+           "name": "FourCC",
+           "accessibility": "public",
+           "modifiers": [
+            "static"
+           ],
+           "line": 295,
+           "type": "uint",
+           "params": 4,
+           "signature": "static uint FourCC(char a, char b, char c, char d)"
+          },
+          {
+           "kind": "property",
+           "name": "GBM_FORMAT_XRGB8888",
+           "accessibility": "public",
+           "modifiers": [
+            "static"
+           ],
+           "line": 298,
+           "type": "uint",
+           "accessors": {
+            "get": "public"
+           },
+           "signature": "static uint GBM_FORMAT_XRGB8888 { get; }"
+          }
+         ]
         }
        ]
       }
@@ -384242,7 +388601,126 @@
        "attributes": [
         "DebuggerDisplay(\"{Name}\")"
        ],
-       "memberCount": 11,
+       "members": [
+        {
+         "kind": "property",
+         "name": "Connection",
+         "accessibility": "public",
+         "line": 22,
+         "type": "DrmModeConnection",
+         "accessors": {
+          "get": "public"
+         },
+         "signature": "DrmModeConnection Connection { get; }"
+        },
+        {
+         "kind": "property",
+         "name": "Id",
+         "accessibility": "public",
+         "line": 23,
+         "type": "uint",
+         "accessors": {
+          "get": "public"
+         },
+         "signature": "uint Id { get; }"
+        },
+        {
+         "kind": "property",
+         "name": "Name",
+         "accessibility": "public",
+         "line": 24,
+         "type": "string",
+         "accessors": {
+          "get": "public"
+         },
+         "signature": "string Name { get; }"
+        },
+        {
+         "kind": "property",
+         "name": "SizeMm",
+         "accessibility": "public",
+         "line": 25,
+         "type": "Size",
+         "accessors": {
+          "get": "public"
+         },
+         "signature": "Size SizeMm { get; }"
+        },
+        {
+         "kind": "property",
+         "name": "SubPixel",
+         "accessibility": "public",
+         "line": 26,
+         "type": "DrmModeSubPixel",
+         "accessors": {
+          "get": "public"
+         },
+         "signature": "DrmModeSubPixel SubPixel { get; }"
+        },
+        {
+         "kind": "property",
+         "name": "EncoderId",
+         "accessibility": "internal",
+         "line": 27,
+         "type": "uint",
+         "accessors": {
+          "get": "internal"
+         },
+         "signature": "uint EncoderId { get; }"
+        },
+        {
+         "kind": "property",
+         "name": "EncoderIds",
+         "accessibility": "internal",
+         "line": 28,
+         "type": "List<uint>",
+         "accessors": {
+          "get": "internal"
+         },
+         "signature": "List<uint> EncoderIds { get; }"
+        },
+        {
+         "kind": "property",
+         "name": "Modes",
+         "accessibility": "public",
+         "line": 29,
+         "type": "List<DrmModeInfo>",
+         "accessors": {
+          "get": "public"
+         },
+         "signature": "List<DrmModeInfo> Modes { get; }"
+        },
+        {
+         "kind": "property",
+         "name": "ConnectorType",
+         "accessibility": "public",
+         "line": 30,
+         "type": "DrmConnectorType",
+         "accessors": {
+          "get": "public"
+         },
+         "signature": "DrmConnectorType ConnectorType { get; }"
+        },
+        {
+         "kind": "property",
+         "name": "ConnectorTypeId",
+         "accessibility": "public",
+         "line": 31,
+         "type": "uint",
+         "accessors": {
+          "get": "public"
+         },
+         "signature": "uint ConnectorTypeId { get; }"
+        },
+        {
+         "kind": "ctor",
+         "name": ".ctor",
+         "accessibility": "internal",
+         "line": 32,
+         "params": 1,
+         "signature": "DrmConnector(drmModeConnector* conn)"
+        }
+       ],
        "privateMembers": 1
       },
       {
@@ -384255,7 +388733,57 @@
        "modifiers": [
         "unsafe"
        ],
-       "memberCount": 5
+       "members": [
+        {
+         "kind": "field",
+         "name": "Mode",
+         "accessibility": "internal",
+         "line": 54,
+         "type": "drmModeModeInfo",
+         "signature": "drmModeModeInfo Mode"
+        },
+        {
+         "kind": "ctor",
+         "name": ".ctor",
+         "accessibility": "internal",
+         "line": 56,
+         "params": 1,
+         "signature": "DrmModeInfo(ref drmModeModeInfo info)"
+        },
+        {
+         "kind": "property",
+         "name": "Resolution",
+         "accessibility": "public",
+         "line": 63,
+         "type": "PixelSize",
+         "accessors": {
+          "get": "public"
+         },
+         "signature": "PixelSize Resolution { get; }"
+        },
+        {
+         "kind": "property",
+         "name": "IsPreferred",
+         "accessibility": "public",
+         "line": 64,
+         "type": "bool",
+         "accessors": {
+          "get": "public"
+         },
+         "signature": "bool IsPreferred { get; }"
+        },
+        {
+         "kind": "property",
+         "name": "Name",
+         "accessibility": "public",
+         "line": 66,
+         "type": "string?",
+         "accessors": {
+          "get": "public"
+         },
+         "signature": "string? Name { get; }"
+        }
+       ]
       },
       {
        "name": "DrmEncoder",
@@ -384267,7 +388795,38 @@
        "modifiers": [
         "unsafe"
        ],
-       "memberCount": 3
+       "members": [
+        {
+         "kind": "property",
+         "name": "Encoder",
+         "accessibility": "public",
+         "line": 71,
+         "type": "drmModeEncoder",
+         "accessors": {
+          "get": "public"
+         },
+         "signature": "drmModeEncoder Encoder { get; }"
+        },
+        {
+         "kind": "property",
+         "name": "PossibleCrtcs",
+         "accessibility": "public",
+         "line": 72,
+         "type": "List<drmModeCrtc>",
+         "accessors": {
+          "get": "public"
+         },
+         "signature": "List<drmModeCrtc> PossibleCrtcs { get; }"
+        },
+        {
+         "kind": "ctor",
+         "name": ".ctor",
+         "accessibility": "public",
+         "line": 74,
+         "params": 2,
+         "signature": "DrmEncoder(drmModeEncoder encoder, drmModeCrtc[] crtcs)"
+        }
+       ]
       },
       {
        "name": "DrmResources",
@@ -384279,7 +388838,47 @@
        "modifiers": [
         "unsafe"
        ],
-       "memberCount": 4
+       "members": [
+        {
+         "kind": "property",
+         "name": "Connectors",
+         "accessibility": "public",
+         "line": 88,
+         "type": "List<DrmConnector>",
+         "accessors": {
+          "get": "public"
+         },
+         "signature": "List<DrmConnector> Connectors { get; }"
+        },
+        {
+         "kind": "property",
+         "name": "Encoders",
+         "accessibility": "internal",
+         "line": 89,
+         "type": "Dictionary<uint, DrmEncoder>",
+         "accessors": {
+          "get": "internal"
+         },
+         "signature": "Dictionary<uint, DrmEncoder> Encoders { get; }"
+        },
+        {
+         "kind": "ctor",
+         "name": ".ctor",
+         "accessibility": "public",
+         "line": 90,
+         "params": 2,
+         "signature": "DrmResources(int fd, bool connectorsForceProbe = false)"
+        },
+        {
+         "kind": "method",
+         "name": "Dump",
+         "accessibility": "internal",
+         "line": 128,
+         "type": "void",
+         "params": 0,
+         "signature": "void Dump()"
+        }
+       ]
       },
       {
        "name": "DrmCard",
@@ -384294,7 +388893,54 @@
        "bases": [
         "IDisposable"
        ],
-       "memberCount": 5
+       "members": [
+        {
+         "kind": "property",
+         "name": "Fd",
+         "accessibility": "public",
+         "line": 152,
+         "type": "int",
+         "accessors": {
+          "get": "public",
+          "set": "private"
+         },
+         "signature": "int Fd { get; private set; }"
+        },
+        {
+         "kind": "ctor",
+         "name": ".ctor",
+         "accessibility": "public",
+         "line": 153,
+         "params": 1,
+         "signature": "DrmCard(string? path = null)"
+        },
+        {
+         "kind": "ctor",
+         "name": ".ctor",
+         "accessibility": "public",
+         "line": 196,
+         "params": 1,
+         "signature": "DrmCard(int fd)"
+        },
+        {
+         "kind": "method",
+         "name": "GetResources",
+         "accessibility": "public",
+         "line": 201,
+         "type": "DrmResources",
+         "params": 1,
+         "signature": "DrmResources GetResources(bool connectorsForceProbe = false)"
+        },
+        {
+         "kind": "method",
+         "name": "Dispose",
+         "accessibility": "public",
+         "line": 202,
+         "type": "void",
+         "params": 0,
+         "signature": "void Dispose()"
+        }
+       ]
       }
      ]
     },
@@ -384317,7 +388963,114 @@
         "IGlPlatformSurface",
         "ISurfaceOrientation"
        ],
-       "memberCount": 11,
+       "members": [
+        {
+         "kind": "property",
+         "name": "PixelSize",
+         "accessibility": "public",
+         "line": 21,
+         "type": "PixelSize",
+         "accessors": {
+          "get": "public"
+         },
+         "signature": "PixelSize PixelSize { get; }"
+        },
+        {
+         "kind": "property",
+         "name": "Scaling",
+         "accessibility": "public",
+         "line": 25,
+         "type": "double",
+         "accessors": {
+          "get": "public",
+          "set": "public"
+         },
+         "signature": "double Scaling { get; set; }"
+        },
+        {
+         "kind": "property",
+         "name": "Orientation",
+         "accessibility": "public",
+         "line": 31,
+         "type": "SurfaceOrientation",
+         "accessors": {
+          "get": "public",
+          "set": "public"
+         },
+         "signature": "SurfaceOrientation Orientation { get; set; }"
+        },
+        {
+         "kind": "property",
+         "name": "PlatformGraphics",
+         "accessibility": "public",
+         "line": 51,
+         "type": "IPlatformGraphics",
+         "accessors": {
+          "get": "public",
+          "set": "private"
+         },
+         "signature": "IPlatformGraphics PlatformGraphics { get; private set; }"
+        },
+        {
+         "kind": "ctor",
+         "name": ".ctor",
+         "accessibility": "public",
+         "line": 53,
+         "params": 5,
+         "signature": "DrmOutput(DrmCard card, DrmResources resources, DrmConnector connector, DrmModeInfo modeInfo, DrmOutputOptions? options = null)"
+        },
+        {
+         "kind": "ctor",
+         "name": ".ctor",
+         "accessibility": "public",
+         "line": 61,
+         "params": 3,
+         "signature": "DrmOutput(string? path = null, bool connectorsForceProbe = false, DrmOutputOptions? options = null)"
+        },
+        {
+         "kind": "ctor",
+         "name": ".ctor",
+         "accessibility": "public",
+         "line": 66,
+         "params": 3,
+         "signature": "DrmOutput(DrmCard card, bool connectorsForceProbe = false, DrmOutputOptions? options = null)"
+        },
+        {
+         "kind": "ctor",
+         "name": ".ctor",
+         "accessibility": "public",
+         "line": 109,
+         "params": 4,
+         "signature": "DrmOutput(DrmCard card, DrmResources resources, DrmConnector connector, DrmModeInfo modeInfo)"
+        },
+        {
+         "kind": "method",
+         "name": "CreateGlRenderTarget",
+         "accessibility": "public",
+         "line": 391,
+         "type": "IGlPlatformSurfaceRenderTarget",
+         "params": 0,
+         "signature": "IGlPlatformSurfaceRenderTarget CreateGlRenderTarget()"
+        },
+        {
+         "kind": "method",
+         "name": "CreateGlRenderTarget",
+         "accessibility": "public",
+         "line": 394,
+         "type": "IGlPlatformSurfaceRenderTarget",
+         "params": 1,
+         "signature": "IGlPlatformSurfaceRenderTarget CreateGlRenderTarget(IGlContext context)"
+        },
+        {
+         "kind": "method",
+         "name": "CreateContext",
+         "accessibility": "public",
+         "line": 537,
+         "type": "IGlContext",
+         "params": 0,
+         "signature": "IGlContext CreateContext()"
+        }
+       ],
        "privateMembers": 22
       }
      ]
@@ -384339,7 +389092,80 @@
        "bases": [
         "IDisposable"
        ],
-       "memberCount": 7,
+       "members": [
+        {
+         "kind": "ctor",
+         "name": ".ctor",
+         "accessibility": "public",
+         "line": 76,
+         "params": 5,
+         "signature": "FbDevBackBuffer(int fb, fb_fix_screeninfo fixedInfo, fb_var_screeninfo varInfo, IntPtr targetAddress, bool asyncBlit)"
+        },
+        {
+         "kind": "method",
+         "name": "Dispose",
+         "accessibility": "public",
+         "line": 89,
+         "type": "void",
+         "params": 0,
+         "signature": "void Dispose()"
+        },
+        {
+         "kind": "method",
+         "name": "LockFb",
+         "accessibility": "public",
+         "modifiers": [
+          "static"
+         ],
+         "line": 101,
+         "type": "LockedFramebuffer",
+         "params": 5,
+         "signature": "static LockedFramebuffer LockFb(IntPtr address, fb_var_screeninfo varInfo, fb_fix_screeninfo fixedInfo, Vector dpi, Action? dispose)"
+        },
+        {
+         "kind": "method",
+         "name": "Lock",
+         "accessibility": "public",
+         "line": 123,
+         "type": "ILockedFramebuffer",
+         "params": 1,
+         "signature": "ILockedFramebuffer Lock(Vector dpi)"
+        },
+        {
+         "kind": "property",
+         "name": "Address",
+         "accessibility": "public",
+         "line": 152,
+         "type": "IntPtr",
+         "accessors": {
+          "get": "public",
+          "set": "private"
+         },
+         "signature": "IntPtr Address { get; private set; }"
+        },
+        {
+         "kind": "property",
+         "name": "Size",
+         "accessibility": "public",
+         "line": 153,
+         "type": "PixelSize",
+         "accessors": {
+          "get": "public"
+         },
+         "signature": "PixelSize Size { get; }"
+        },
+        {
+         "kind": "property",
+         "name": "RowBytes",
+         "accessibility": "public",
+         "line": 154,
+         "type": "int",
+         "accessors": {
+          "get": "public"
+         },
+         "signature": "int RowBytes { get; }"
+        }
+       ],
        "privateMembers": 8
       }
      ]
@@ -384355,7 +389181,68 @@
        "fullName": "Avalonia.LinuxFramebuffer.Output.FbDevOutputOptions",
        "accessibility": "public",
        "line": 5,
-       "memberCount": 5
+       "members": [
+        {
+         "kind": "property",
+         "name": "FileName",
+         "accessibility": "public",
+         "line": 11,
+         "type": "string?",
+         "accessors": {
+          "get": "public",
+          "set": "public"
+         },
+         "signature": "string? FileName { get; set; }"
+        },
+        {
+         "kind": "property",
+         "name": "PixelFormat",
+         "accessibility": "public",
+         "line": 18,
+         "type": "PixelFormat?",
+         "accessors": {
+          "get": "public",
+          "set": "public"
+         },
+         "signature": "PixelFormat? PixelFormat { get; set; }"
+        },
+        {
+         "kind": "property",
+         "name": "RenderDirectlyToMappedMemory",
+         "accessibility": "public",
+         "line": 24,
+         "type": "bool",
+         "accessors": {
+          "get": "public",
+          "set": "public"
+         },
+         "signature": "bool RenderDirectlyToMappedMemory { get; set; }"
+        },
+        {
+         "kind": "property",
+         "name": "Scaling",
+         "accessibility": "public",
+         "line": 29,
+         "type": "double",
+         "accessors": {
+          "get": "public",
+          "set": "public"
+         },
+         "signature": "double Scaling { get; set; }"
+        },
+        {
+         "kind": "property",
+         "name": "UseAsyncFrontBufferBlit",
+         "accessibility": "public",
+         "line": 35,
+         "type": "bool?",
+         "accessors": {
+          "get": "public",
+          "set": "public"
+         },
+         "signature": "bool? UseAsyncFrontBufferBlit { get; set; }"
+        }
+       ]
       }
      ]
     },
@@ -384379,7 +389266,101 @@
         "IDisposable",
         "IOutputBackend"
        ],
-       "memberCount": 10,
+       "members": [
+        {
+         "kind": "property",
+         "name": "Scaling",
+         "accessibility": "public",
+         "line": 21,
+         "type": "double",
+         "accessors": {
+          "get": "public",
+          "set": "public"
+         },
+         "signature": "double Scaling { get; set; }"
+        },
+        {
+         "kind": "ctor",
+         "name": ".ctor",
+         "accessibility": "public",
+         "line": 28,
+         "params": 1,
+         "signature": "FbdevOutput(string? fileName = null)"
+        },
+        {
+         "kind": "ctor",
+         "name": ".ctor",
+         "accessibility": "public",
+         "line": 40,
+         "params": 2,
+         "signature": "FbdevOutput(string? fileName, PixelFormat? format)"
+        },
+        {
+         "kind": "ctor",
+         "name": ".ctor",
+         "accessibility": "public",
+         "line": 53,
+         "params": 1,
+         "signature": "FbdevOutput(FbDevOutputOptions options)"
+        },
+        {
+         "kind": "property",
+         "name": "Id",
+         "accessibility": "public",
+         "line": 152,
+         "type": "string",
+         "accessors": {
+          "get": "public",
+          "set": "private"
+         },
+         "signature": "string Id { get; private set; }"
+        },
+        {
+         "kind": "property",
+         "name": "PixelSize",
+         "accessibility": "public",
+         "line": 154,
+         "type": "PixelSize",
+         "accessors": {
+          "get": "public"
+         },
+         "signature": "PixelSize PixelSize { get; }"
+        },
+        {
+         "kind": "method",
+         "name": "Lock",
+         "accessibility": "public",
+         "line": 165,
+         "type": "ILockedFramebuffer",
+         "params": 2,
+         "signature": "ILockedFramebuffer Lock(IRenderTarget.RenderTargetSceneInfo _, out FramebufferLockProperties properties)"
+        },
+        {
+         "kind": "method",
+         "name": "CreateFramebufferRenderTarget",
+         "accessibility": "public",
+         "line": 188,
+         "type": "IFramebufferRenderTarget",
+         "params": 0,
+         "signature": "IFramebufferRenderTarget CreateFramebufferRenderTarget()"
+        },
+        {
+         "kind": "method",
+         "name": "Dispose",
+         "accessibility": "public",
+         "line": 204,
+         "type": "void",
+         "params": 0,
+         "signature": "void Dispose()"
+        },
+        {
+         "kind": "finalizer",
+         "name": "~FbdevOutput",
+         "accessibility": "protected",
+         "line": 212,
+         "signature": "~FbdevOutput()"
+        }
+       ],
        "privateMembers": 11
       }
      ]
@@ -384398,7 +389379,19 @@
        "bases": [
         "IOutputBackend"
        ],
-       "memberCount": 1
+       "members": [
+        {
+         "kind": "property",
+         "name": "PlatformGraphics",
+         "accessibility": "public",
+         "line": 7,
+         "type": "IPlatformGraphics",
+         "accessors": {
+          "get": "public"
+         },
+         "signature": "IPlatformGraphics PlatformGraphics { get; }"
+        }
+       ]
       }
      ]
     },
@@ -384416,7 +389409,31 @@
        "bases": [
         "IPlatformRenderSurface"
        ],
-       "memberCount": 2
+       "members": [
+        {
+         "kind": "property",
+         "name": "PixelSize",
+         "accessibility": "public",
+         "line": 7,
+         "type": "PixelSize",
+         "accessors": {
+          "get": "public"
+         },
+         "signature": "PixelSize PixelSize { get; }"
+        },
+        {
+         "kind": "property",
+         "name": "Scaling",
+         "accessibility": "public",
+         "line": 8,
+         "type": "double",
+         "accessors": {
+          "get": "public",
+          "set": "public"
+         },
+         "signature": "double Scaling { get; set; }"
+        }
+       ]
       }
      ]
     }
