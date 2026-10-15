@@ -2,26 +2,26 @@
  "upstreamCommit": "17350180c33b063f0e98abbfd19aa3cae63f5d56",
  "inScope": {
   "files": [
-   2622,
-   2636,
+   2756,
+   2775,
    0
   ],
   "types": [
-   3522,
-   3979,
-   356
+   3812,
+   4327,
+   369
   ],
   "members": [
-   28301,
-   32770,
-   3342
+   29333,
+   36113,
+   5266
   ]
  },
  "allProjects": {
-  "membersPresent": 28301,
+  "membersPresent": 29333,
   "members": 37391,
-  "membersNotApplicable": 1132,
-  "membersOutOfScope": 3489
+  "membersNotApplicable": 1168,
+  "membersOutOfScope": 110
  },
  "projects": [
   {
@@ -7838,25 +7838,25 @@
    "name": "Avalonia.Vulkan",
    "path": "src/Avalonia.Vulkan",
    "rust": "src/FerroUI.Vulkan",
-   "scope": "out",
-   "detail": "types",
+   "scope": "in",
+   "detail": "full",
    "files": [
-    0,
+    30,
     30,
     0
    ],
    "types": [
-    0,
+    151,
     151,
     0
    ],
    "members": [
-    0,
+    283,
     2034,
-    0
+    1751
    ],
    "interfaces": [
-    0,
+    12,
     12
    ],
    "propertyRegistrations": [
@@ -7868,33 +7868,130 @@
     0
    ],
    "notApplicableFiles": 0,
-   "matchKinds": {},
-   "presentFiles": {},
+   "matchKinds": {
+    "alias fn": 1,
+    "const": 2,
+    "field": 35,
+    "fn": 242,
+    "overload fn": 3
+   },
+   "presentFiles": {
+    "IVulkanContextExternalObjectsFeature.cs": [
+     "i_vulkan_context_external_objects_feature.rs"
+    ],
+    "IVulkanDevice.cs": [
+     "i_vulkan_device.rs"
+    ],
+    "IVulkanPlatformSurface.cs": [
+     "i_vulkan_platform_surface.rs"
+    ],
+    "IVulkanRenderTarget.cs": [
+     "i_vulkan_render_target.rs"
+    ],
+    "Interop/VulkanCommandBuffer.cs": [
+     "interop/vulkan_command_buffer.rs"
+    ],
+    "Interop/VulkanCommandBufferPool.cs": [
+     "interop/vulkan_command_buffer_pool.rs"
+    ],
+    "Interop/VulkanDebugLogger.cs": [
+     "interop/vulkan_debug_logger.rs"
+    ],
+    "Interop/VulkanDevice.Create.cs": [
+     "interop/vulkan_device_create.rs"
+    ],
+    "Interop/VulkanDevice.cs": [
+     "interop/vulkan_device.rs"
+    ],
+    "Interop/VulkanDisplay.cs": [
+     "interop/vulkan_display.rs"
+    ],
+    "Interop/VulkanFence.cs": [
+     "interop/vulkan_fence.rs"
+    ],
+    "Interop/VulkanImage.cs": [
+     "interop/vulkan_image.rs"
+    ],
+    "Interop/VulkanInstance.cs": [
+     "interop/vulkan_instance.rs"
+    ],
+    "Interop/VulkanKhrSurface.cs": [
+     "interop/vulkan_khr_surface.rs"
+    ],
+    "Interop/VulkanMemoryHelper.cs": [
+     "interop/vulkan_memory_helper.rs"
+    ],
+    "Interop/VulkanSemaphore.cs": [
+     "interop/vulkan_semaphore.rs"
+    ],
+    "UnmanagedInterop/Utf8BufferArray.cs": [
+     "unmanaged_interop/utf8_buffer_array.rs"
+    ],
+    "UnmanagedInterop/VulkanDeviceApi.cs": [
+     "unmanaged_interop/vulkan_device_api.rs"
+    ],
+    "UnmanagedInterop/VulkanEnums.cs": [
+     "unmanaged_interop/vulkan_enums.rs"
+    ],
+    "UnmanagedInterop/VulkanGlobalApi.cs": [
+     "unmanaged_interop/vulkan_global_api.rs"
+    ],
+    "UnmanagedInterop/VulkanInstanceApi.cs": [
+     "unmanaged_interop/vulkan_instance_api.rs"
+    ],
+    "UnmanagedInterop/VulkanStructs.cs": [
+     "unmanaged_interop/vulkan_structs.rs"
+    ],
+    "VulkanBindings.cs": [
+     "vulkan_bindings.rs"
+    ],
+    "VulkanContext.cs": [
+     "vulkan_context.rs"
+    ],
+    "VulkanException.cs": [
+     "vulkan_exception.rs"
+    ],
+    "VulkanExternalObjectsFeature.cs": [
+     "vulkan_external_objects_feature.rs"
+    ],
+    "VulkanImageInfo.cs": [
+     "vulkan_image_info.rs"
+    ],
+    "VulkanKhrSurfaceRenderTarget.cs": [
+     "vulkan_khr_surface_render_target.rs"
+    ],
+    "VulkanOptions.cs": [
+     "vulkan_options.rs"
+    ],
+    "VulkanPlatformGraphics.cs": [
+     "vulkan_platform_graphics.rs"
+    ]
+   },
    "rustOnly": []
   },
   {
    "name": "Avalonia.Wayland",
    "path": "src/Avalonia.Wayland",
    "rust": "src/FerroUI.Wayland",
-   "scope": "out",
-   "detail": "types",
+   "scope": "in",
+   "detail": "full",
    "files": [
-    0,
-    81,
+    74,
+    79,
     0
    ],
    "types": [
-    0,
-    123,
-    0
+    97,
+    121,
+    13
    ],
    "members": [
-    0,
-    816,
-    0
+    542,
+    780,
+    168
    ],
    "interfaces": [
-    0,
+    14,
     14
    ],
    "propertyRegistrations": [
@@ -7905,10 +8002,243 @@
     0,
     0
    ],
-   "notApplicableFiles": 0,
-   "matchKinds": {},
-   "presentFiles": {},
-   "rustOnly": []
+   "notApplicableFiles": 2,
+   "matchKinds": {
+    "field": 81,
+    "fn": 417,
+    "free fn": 12,
+    "free item": 6,
+    "trait": 7,
+    "trait fn": 3,
+    "variant": 16
+   },
+   "presentFiles": {
+    "AvaloniaWaylandException.cs": [
+     "ferro_wayland_exception.rs"
+    ],
+    "AvaloniaWaylandPlatformExtensions.cs": [
+     "ferro_wayland_platform_extensions.rs"
+    ],
+    "Clipboard/WaylandClipboardImpl.cs": [
+     "clipboard/wayland_clipboard_impl.rs"
+    ],
+    "Clipboard/WaylandDataTransfer.cs": [
+     "clipboard/wayland_data_transfer.rs"
+    ],
+    "Clipboard/WaylandDragSource.cs": [
+     "clipboard/wayland_drag_source.rs"
+    ],
+    "Clipboard/WaylandMimeMapper.cs": [
+     "clipboard/wayland_mime_mapper.rs"
+    ],
+    "Clipboard/WaylandOutgoingTransfer.cs": [
+     "clipboard/wayland_outgoing_transfer.rs"
+    ],
+    "IWaylandXdgTopLevelExport.cs": [
+     "i_wayland_xdg_top_level_export.rs"
+    ],
+    "PopupImpl.Sink.cs": [
+     "popup_impl_sink.rs"
+    ],
+    "PopupImpl.cs": [
+     "popup_impl.rs"
+    ],
+    "Screens/IWaylandOutputsSink.cs": [
+     "screens/i_wayland_outputs_sink.rs"
+    ],
+    "Screens/SnapshotScreensImpl.cs": [
+     "screens/snapshot_screens_impl.rs"
+    ],
+    "Screens/WaylandOutputSnapshot.cs": [
+     "screens/wayland_output_snapshot.rs"
+    ],
+    "Server/Interop/Pipe2Stream.cs": [
+     "server/interop/pipe2_stream.rs"
+    ],
+    "Server/Interop/UnsafeNativeMethods.cs": [
+     "server/interop/unsafe_native_methods.rs"
+    ],
+    "Server/Interop/WakeupFd.cs": [
+     "server/interop/wakeup_fd.rs"
+    ],
+    "Server/Interop/WaylandConnection.cs": [
+     "server/interop/wayland_connection.rs"
+    ],
+    "Server/Persistent/DecorationMode.cs": [
+     "server/persistent/decoration_mode.rs"
+    ],
+    "Server/Persistent/IPersistentObject.cs": [
+     "server/persistent/i_persistent_object.rs"
+    ],
+    "Server/Persistent/IWSurface.cs": [
+     "server/persistent/i_w_surface.rs"
+    ],
+    "Server/Persistent/IWSurfaceEventSink.cs": [
+     "server/persistent/i_w_surface_event_sink.rs"
+    ],
+    "Server/Persistent/IWXdgTopLevel.cs": [
+     "server/persistent/i_w_xdg_top_level.rs"
+    ],
+    "Server/Persistent/IWaylandCursor.cs": [
+     "server/persistent/i_wayland_cursor.rs"
+    ],
+    "Server/Persistent/WSurface.cs": [
+     "server/persistent/w_surface.rs"
+    ],
+    "Server/Persistent/WaylandBitmapCursor.cs": [
+     "server/persistent/wayland_bitmap_cursor.rs"
+    ],
+    "Server/Persistent/WaylandCursor.cs": [
+     "server/persistent/wayland_cursor.rs"
+    ],
+    "Server/Persistent/WaylandInputEventCookie.cs": [
+     "server/persistent/wayland_input_event_cookie.rs"
+    ],
+    "Server/Persistent/XdgConfigureBatch.cs": [
+     "server/persistent/xdg_configure_batch.rs"
+    ],
+    "Server/Persistent/XdgPopupConfigureBatch.cs": [
+     "server/persistent/xdg_popup_configure_batch.rs"
+    ],
+    "Server/Persistent/XdgPopupPositionerParams.cs": [
+     "server/persistent/xdg_popup_positioner_params.rs"
+    ],
+    "Server/ServerSignaler.cs": [
+     "server/server_signaler.rs"
+    ],
+    "Server/Transient/Clipboard/WaylandDataDevice.cs": [
+     "server/transient/clipboard/wayland_data_device.rs"
+    ],
+    "Server/Transient/Clipboard/WaylandDataOffer.cs": [
+     "server/transient/clipboard/wayland_data_offer.rs"
+    ],
+    "Server/Transient/Clipboard/WaylandDataSource.cs": [
+     "server/transient/clipboard/wayland_data_source.rs"
+    ],
+    "Server/Transient/Clipboard/WaylandOfferCookie.cs": [
+     "server/transient/clipboard/wayland_offer_cookie.rs"
+    ],
+    "Server/Transient/IWaylandTextInputV3Events.cs": [
+     "server/transient/i_wayland_text_input_v3_events.rs"
+    ],
+    "Server/Transient/Rendering/IWaylandFramebufferSurface.cs": [
+     "server/transient/rendering/i_wayland_framebuffer_surface.rs"
+    ],
+    "Server/Transient/Rendering/WaylandEglWsiPlatformGraphics.cs": [
+     "server/transient/rendering/wayland_egl_wsi_platform_graphics.rs"
+    ],
+    "Server/Transient/Rendering/WaylandEglWsiSurface.cs": [
+     "server/transient/rendering/wayland_egl_wsi_surface.rs"
+    ],
+    "Server/Transient/Rendering/WaylandFramebuffer.cs": [
+     "server/transient/rendering/wayland_framebuffer.rs"
+    ],
+    "Server/Transient/WaylandCursorManager.cs": [
+     "server/transient/wayland_cursor_manager.rs"
+    ],
+    "Server/Transient/WaylandGlobals.cs": [
+     "server/transient/wayland_globals.rs"
+    ],
+    "Server/Transient/WaylandInputDispatcher.Keyboard.cs": [
+     "server/transient/wayland_input_dispatcher_keyboard.rs"
+    ],
+    "Server/Transient/WaylandInputDispatcher.cs": [
+     "server/transient/wayland_input_dispatcher.rs"
+    ],
+    "Server/Transient/WaylandOutputsTracker.cs": [
+     "server/transient/wayland_outputs_tracker.rs"
+    ],
+    "Server/Transient/WaylandTextInputV3.cs": [
+     "server/transient/wayland_text_input_v3.rs"
+    ],
+    "Server/Transient/XdgToplevelExport.cs": [
+     "server/transient/xdg_toplevel_export.rs"
+    ],
+    "Server/WaylandDispatchPriority.cs": [
+     "server/wayland_dispatch_priority.rs"
+    ],
+    "Server/WaylandMarshallers.cs": [
+     "server/wayland_marshallers.rs"
+    ],
+    "Server/WaylandPlatformGraphics.cs": [
+     "server/wayland_platform_graphics.rs"
+    ],
+    "Server/WaylandWorker.RenderTimer.cs": [
+     "server/wayland_worker_render_timer.rs"
+    ],
+    "Server/WaylandWorker.cs": [
+     "server/wayland_worker.rs"
+    ],
+    "Server/WaylandWorkerClient.cs": [
+     "server/wayland_worker_client.rs"
+    ],
+    "TextInputOptionsConverter.cs": [
+     "text_input_options_converter.rs"
+    ],
+    "WaylandConversionExtensions.cs": [
+     "wayland_conversion_extensions.rs"
+    ],
+    "WaylandCursorFactory.cs": [
+     "wayland_cursor_factory.rs"
+    ],
+    "WaylandGlibDispatcher.cs": [
+     "wayland_glib_dispatcher.rs"
+    ],
+    "WaylandPlatform.cs": [
+     "wayland_platform.rs"
+    ],
+    "WaylandPlatformOptions.cs": [
+     "wayland_platform_options.rs"
+    ],
+    "WaylandSurfaceCreateResult.cs": [
+     "wayland_surface_create_result.rs"
+    ],
+    "WaylandTextUtils.cs": [
+     "wayland_text_utils.rs"
+    ],
+    "WaylandTopLevelFactory.cs": [
+     "wayland_top_level_factory.rs"
+    ],
+    "WindowImpl.Sink.cs": [
+     "window_impl_sink.rs"
+    ],
+    "WindowImpl.TextInput.cs": [
+     "window_impl_text_input.rs"
+    ],
+    "WindowImpl.cs": [
+     "window_impl.rs"
+    ],
+    "WindowImplBase.DragDrop.cs": [
+     "window_impl_base_drag_drop.rs"
+    ],
+    "WindowImplBase.Keyboard.cs": [
+     "window_impl_base_keyboard.rs"
+    ],
+    "WindowImplBase.Pointer.cs": [
+     "window_impl_base_pointer.rs"
+    ],
+    "WindowImplBase.cs": [
+     "window_impl_base.rs"
+    ],
+    "XkbCommonKeymap.cs": [
+     "xkb_common_keymap.rs"
+    ],
+    "XkbComposeState.cs": [
+     "xkb_compose_state.rs"
+    ],
+    "XkbComposeTable.cs": [
+     "xkb_compose_table.rs"
+    ],
+    "XkbContext.cs": [
+     "xkb_context.rs"
+    ],
+    "XkbKeyTransform.cs": [
+     "xkb_key_transform.rs"
+    ]
+   },
+   "rustOnly": [
+    "server/cross_thread_result.rs"
+   ]
   },
   {
    "name": "Avalonia.X11",
@@ -7917,19 +8247,19 @@
    "scope": "in",
    "detail": "full",
    "files": [
-    86,
+    88,
     88,
     0
    ],
    "types": [
-    176,
+    180,
     291,
     107
    ],
    "members": [
-    3531,
+    3538,
     4897,
-    1076
+    1081
    ],
    "interfaces": [
     8,
@@ -7948,9 +8278,9 @@
     "alias field": 1,
     "const": 2,
     "field": 254,
-    "fn": 498,
+    "fn": 504,
     "free fn": 103,
-    "free item": 16,
+    "free item": 17,
     "overload fn": 7,
     "trait": 3,
     "trait fn": 4,
@@ -8100,6 +8430,12 @@
     ],
     "TransparencyHelper.cs": [
      "transparency_helper.rs"
+    ],
+    "Vulkan/VulkanNativeInterop.cs": [
+     "vulkan/vulkan_native_interop.rs"
+    ],
+    "Vulkan/VulkanSupport.cs": [
+     "vulkan/vulkan_support.rs"
     ],
     "X11ActiveWindowTracker.cs": [
      "x11_active_window_tracker.rs"
@@ -8683,25 +9019,25 @@
    "name": "Avalonia.LinuxFramebuffer",
    "path": "src/Linux/Avalonia.LinuxFramebuffer",
    "rust": "src/Linux/FerroUI.LinuxFramebuffer",
-   "scope": "out",
-   "detail": "types",
+   "scope": "in",
+   "detail": "full",
    "files": [
-    0,
+    25,
     30,
     0
    ],
    "types": [
-    0,
+    34,
     76,
     0
    ],
    "members": [
-    0,
+    169,
     529,
     0
    ],
    "interfaces": [
-    0,
+    4,
     4
    ],
    "propertyRegistrations": [
@@ -8713,9 +9049,97 @@
     0
    ],
    "notApplicableFiles": 0,
-   "matchKinds": {},
-   "presentFiles": {},
-   "rustOnly": []
+   "matchKinds": {
+    "field": 66,
+    "fn": 97,
+    "free fn": 1,
+    "overload fn": 5
+   },
+   "presentFiles": {
+    "EpollDispatcherImpl.cs": [
+     "epoll_dispatcher_impl.rs"
+    ],
+    "FramebufferToplevelImpl.cs": [
+     "framebuffer_toplevel_impl.rs"
+    ],
+    "Input/EvDev/EvDevBackend.cs": [
+     "input/ev_dev/ev_dev_backend.rs"
+    ],
+    "Input/EvDev/EvDevDevice.cs": [
+     "input/ev_dev/ev_dev_device.rs"
+    ],
+    "Input/EvDev/EvDevDeviceDescription.cs": [
+     "input/ev_dev/ev_dev_device_description.rs"
+    ],
+    "Input/EvDev/EvDevTouchScreen.cs": [
+     "input/ev_dev/ev_dev_touch_screen.rs"
+    ],
+    "Input/EvDev/EvDevTouchScreenDeviceDescription.cs": [
+     "input/ev_dev/ev_dev_touch_screen_device_description.rs"
+    ],
+    "Input/IInputBackend.cs": [
+     "input/i_input_backend.rs"
+    ],
+    "Input/IScreenInfoProvider.cs": [
+     "input/i_screen_info_provider.rs"
+    ],
+    "Input/LibInput/LibInputBackend.Pointer.cs": [
+     "input/lib_input/lib_input_backend_pointer.rs"
+    ],
+    "Input/LibInput/LibInputBackend.Touch.cs": [
+     "input/lib_input/lib_input_backend_touch.rs"
+    ],
+    "Input/LibInput/LibInputBackend.cs": [
+     "input/lib_input/lib_input_backend.rs"
+    ],
+    "Input/LibInput/LibInputBackendOptions.cs": [
+     "input/lib_input/lib_input_backend_options.rs"
+    ],
+    "Input/LibInput/LibInputNativeUnsafeMethods.cs": [
+     "input/lib_input/lib_input_native_unsafe_methods.rs"
+    ],
+    "Input/NullInput/NullInputBackend.cs": [
+     "input/null_input/null_input_backend.rs"
+    ],
+    "Input/RawEventGroupingThreadingHelper.cs": [
+     "input/raw_event_grouping_threading_helper.rs"
+    ],
+    "LinuxFramebufferPlatform.cs": [
+     "linux_framebuffer_platform.rs"
+    ],
+    "LinuxFramebufferPlatformOptions.cs": [
+     "linux_framebuffer_platform_options.rs"
+    ],
+    "NativeUnsafeMethods.cs": [
+     "native_unsafe_methods.rs"
+    ],
+    "Output/FbDevBackBuffer.cs": [
+     "output/fb_dev_back_buffer.rs"
+    ],
+    "Output/FbDevOutputOptions.cs": [
+     "output/fb_dev_output_options.rs"
+    ],
+    "Output/FbdevOutput.cs": [
+     "output/fbdev_output.rs"
+    ],
+    "Output/IGlOutputBackend.cs": [
+     "output/i_gl_output_backend.rs"
+    ],
+    "Output/IOutputBackend.cs": [
+     "output/i_output_backend.rs"
+    ],
+    "Stubs.cs": [
+     "stubs.rs"
+    ]
+   },
+   "rustOnly": [
+    "input/ev_dev/ev_dev_key_table.rs",
+    "input/ev_dev/ev_dev_keyboard.rs",
+    "input/ev_dev/ev_dev_mouse.rs",
+    "input/ev_dev/ev_dev_multi_touch_screen.rs",
+    "output/fb_device.rs",
+    "raw_event_grouping.rs"
+   ]
   },
   {
    "name": "Avalonia.Markup",
@@ -9268,17 +9692,17 @@
    "scope": "in",
    "detail": "full",
    "files": [
-    51,
+    54,
     54,
     0
    ],
    "types": [
-    62,
+    66,
     66,
     0
    ],
    "members": [
-    398,
+    429,
     451,
     21
    ],
@@ -9296,10 +9720,10 @@
    ],
    "notApplicableFiles": 0,
    "matchKinds": {
-    "alias fn": 5,
+    "alias fn": 6,
     "alias free fn": 10,
     "field": 29,
-    "fn": 305,
+    "fn": 335,
     "free fn": 35,
     "free item": 1,
     "overload fn": 12,
@@ -9371,6 +9795,15 @@
     ],
     "Gpu/SkiaGpuRenderTarget.cs": [
      "gpu/skia_gpu_render_target.rs"
+    ],
+    "Gpu/Vulkan/VulkanSkiaExternalObjectsFeature.cs": [
+     "gpu/vulkan/vulkan_skia_external_objects_feature.rs"
+    ],
+    "Gpu/Vulkan/VulkanSkiaGpu.cs": [
+     "gpu/vulkan/vulkan_skia_gpu.rs"
+    ],
+    "Gpu/Vulkan/VulkanSkiaRenderTarget.cs": [
+     "gpu/vulkan/vulkan_skia_render_target.rs"
     ],
     "Helpers/DrawingContextHelper.cs": [
      "helpers/drawing_context_helper.rs"
@@ -9465,6 +9898,8 @@
     "gpu/graphite/graphite_gr_context.rs",
     "gpu/i_skia_gr_context.rs",
     "gpu/metal/tests.rs",
+    "gpu/vulkan/frames_test.rs",
+    "gpu/vulkan/tests.rs",
     "locked_framebuffer.rs",
     "tests.rs",
     "unit_tests/hit_testing.rs",
