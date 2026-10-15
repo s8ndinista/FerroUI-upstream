@@ -38,6 +38,11 @@ jobs:
       # is lost at the next regeneration, so it has to be made in the script.
       - name: Generated composition code is up to date
         run: python3 scripts/generate_composition.py --check
+      # Thread-local variables are declared with ferroui_base::ferro_thread_local!, which on Android
+      # is a slot of one table per thread: a thread_local! there takes one of the 128 keys of the C
+      # library (docs/porting/android-platform.md, section 5.1). The allow-list is in the script.
+      - name: No thread_local! outside of ferro_thread_local!
+        run: python3 scripts/android/convert-thread-locals.py --check
 
   # The crates that are published stay publishable (docs/release.md): the manifests state what
   # crates.io needs, the crates of the workspace are pinned to one another at the version of the
@@ -1379,12 +1384,11 @@ jobs:
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$ANDROID_HOME" \
             "ndk;28.2.13676358" "build-tools;36.0.0" "platforms;android-36" > /dev/null
           ls "$ANDROID_HOME/ndk"
-      # The native library is built together with the standard library, for thread-local storage
-      # that does not take a key of the C library per variable (android-platform.md, section 5.1).
-      - name: The toolchain that builds the standard library
-        run: |
-          . scripts/android/env.sh
-          rustup toolchain install "$FERROUI_ANDROID_RUST_TOOLCHAIN" --profile minimal --component rust-src
+      # The native library is built with the stable toolchain: the framework keeps its thread-local
+      # variables in one table per thread (ferro_thread_local!), so the standard library as it is
+      # distributed for the target is enough (android-platform.md, section 5.1).
+      - name: The Rust target
+        run: rustup target add aarch64-linux-android
       - name: Skia features of the target
         run: |
           # Ganesh on OpenGL, for which a Skia binary is published for the target. The scripts do not
@@ -1402,5 +1406,4 @@ jobs:
       - name: The ControlCatalog host compiles for the target
         run: |
           . scripts/android/env.sh
-          rustup target add aarch64-linux-android
           cargo check --locked -p control-catalog-android --target aarch64-linux-android
