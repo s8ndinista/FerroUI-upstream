@@ -25,6 +25,10 @@ ferroui-base.workspace = true
 ferroui-controls.workspace = true
 paste.workspace = true
 
+# `EglInterface::from_library`: the EGL library of the system is loaded by name (`dlopen`).
+[target.'cfg(all(unix, not(target_os = "emscripten")))'.dependencies]
+libc.workspace = true
+
 [build-dependencies]
 # The source scanner and the export of the type model: the standard library and `syn`, nothing of the
 # framework.

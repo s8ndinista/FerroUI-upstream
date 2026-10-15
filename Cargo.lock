@@ -1132,6 +1132,7 @@ dependencies = [
  "ferroui-base",
  "ferroui-build-scan",
  "ferroui-controls",
+ "libc",
  "paste",
 ]
 

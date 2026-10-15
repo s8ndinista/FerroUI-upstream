@@ -1,14 +1,15 @@
 use crate::entry_points::{gl_entry_points, GetProcAddress};
-use std::ffi::{c_char, c_void, CStr};
+use crate::OpenGlException;
+use std::ffi::{c_char, c_void, CStr, CString};
 use std::ptr;
+use std::rc::Rc;
 
 /// The entry points of EGL the framework itself calls.
 ///
 /// The interface is built from a loader of entry points
-/// ([`EglInterface::new`]). The constructors of the original that load the
-/// EGL library by name (`EglInterface()`, `EglInterface(string library)`) are
-/// not ported: a platform that has EGL resolves `eglGetProcAddress` of its
-/// library and passes the loader.
+/// ([`EglInterface::new`]), or from the EGL library of the system, loaded by
+/// name, whose `eglGetProcAddress` resolves them
+/// ([`EglInterface::from_library`], [`EglInterface::new_default`]).
 pub struct EglInterface {
     egl: EglEntryPoints,
 }
@@ -131,6 +132,119 @@ fn attrs_ptr(attrs: Option<&[i32]>) -> *const i32 {
     attrs.map_or(ptr::null(), <[i32]>::as_ptr)
 }
 
+/// The library `EglInterface()` loads (`Load()`): the EGL library of Linux or
+/// of Android; another system has none.
+fn default_library() -> Result<&'static str, OpenGlException> {
+    if cfg!(target_os = "linux") {
+        Ok("libEGL.so.1")
+    } else if cfg!(target_os = "android") {
+        Ok("libEGL.so")
+    } else {
+        // The message of `PlatformNotSupportedException`.
+        Err(OpenGlException::new("Operation is not supported on this platform."))
+    }
+}
+
+/// The signature of `eglGetProcAddress`.
+type EglGetProcAddress = unsafe extern "system" fn(*const c_char) -> *const c_void;
+
+/// Loads `library` and returns a loader that resolves a name with its
+/// `eglGetProcAddress` (`Load(string library)`).
+fn load(library: &str) -> Result<GetProcAddress, OpenGlException> {
+    let Some(handle) = native_library::load(library) else {
+        // The message of the `DllNotFoundException` of `NativeLibrary.Load`.
+        return Err(OpenGlException::new(format!(
+            "Unable to load shared library '{library}' or one of its dependencies."
+        )));
+    };
+    let address = native_library::export(handle, "eglGetProcAddress");
+    if address.is_null() {
+        return Err(OpenGlException::new(format!("{library} doesn't expose eglGetProcAddress")));
+    }
+    // SAFETY: the address is that of the export `eglGetProcAddress` of an EGL library,
+    // whose C declaration is the signature of the type.
+    let get_proc_address = unsafe { std::mem::transmute::<*const c_void, EglGetProcAddress>(address) };
+    Ok(Rc::new(move |name: &str| -> *const c_void {
+        let Ok(name) = CString::new(name) else {
+            return ptr::null();
+        };
+        // SAFETY: the function is `eglGetProcAddress` of a library that stays loaded; the
+        // name is a terminated string that lives for the call.
+        unsafe { get_proc_address(name.as_ptr()) }
+    }))
+}
+
+/// A shared library of the system loaded by name and its exports: what
+/// `NativeLibrary.Load` and `NativeLibrary.TryGetExport` of the runtime of
+/// the original do. A library is never unloaded.
+mod native_library {
+    use std::ffi::c_void;
+
+    /// The library `name`; `None` when it cannot be loaded.
+    #[cfg(all(unix, not(target_os = "emscripten")))]
+    pub(super) fn load(name: &str) -> Option<usize> {
+        let name = std::ffi::CString::new(name).ok()?;
+        // SAFETY: the name is a terminated string; the handle is never closed.
+        let handle = unsafe { libc::dlopen(name.as_ptr(), libc::RTLD_NOW | libc::RTLD_LOCAL) };
+        (!handle.is_null()).then_some(handle as usize)
+    }
+
+    /// The address of the export `name` of a library `load` returned; null
+    /// when it has none.
+    #[cfg(all(unix, not(target_os = "emscripten")))]
+    pub(super) fn export(library: usize, name: &str) -> *const c_void {
+        let Ok(name) = std::ffi::CString::new(name) else {
+            return std::ptr::null();
+        };
+        // SAFETY: the handle is one `dlopen` returned and is never closed; the name is a
+        // terminated string that lives for the call.
+        unsafe { libc::dlsym(library as *mut c_void, name.as_ptr()).cast_const() }
+    }
+
+    #[cfg(windows)]
+    #[link(name = "kernel32")]
+    extern "system" {
+        fn LoadLibraryW(file_name: *const u16) -> *mut c_void;
+        fn GetProcAddress(module: *mut c_void, proc_name: *const std::ffi::c_char) -> *mut c_void;
+    }
+
+    /// The library `name`; `None` when it cannot be loaded.
+    #[cfg(windows)]
+    pub(super) fn load(name: &str) -> Option<usize> {
+        if name.contains('\0') {
+            return None;
+        }
+        let name: Vec<u16> = name.encode_utf16().chain(std::iter::once(0)).collect();
+        // SAFETY: the name is a terminated wide string; the module is never freed.
+        let module = unsafe { LoadLibraryW(name.as_ptr()) };
+        (!module.is_null()).then_some(module as usize)
+    }
+
+    /// The address of the export `name` of a library `load` returned; null
+    /// when it has none.
+    #[cfg(windows)]
+    pub(super) fn export(library: usize, name: &str) -> *const c_void {
+        let Ok(name) = std::ffi::CString::new(name) else {
+            return std::ptr::null();
+        };
+        // SAFETY: the module is one `LoadLibraryW` returned and is never freed; the name is
+        // a terminated string that lives for the call.
+        unsafe { GetProcAddress(library as *mut c_void, name.as_ptr()).cast_const() }
+    }
+
+    /// A system without shared libraries (the browser): nothing can be
+    /// loaded.
+    #[cfg(not(any(all(unix, not(target_os = "emscripten")), windows)))]
+    pub(super) fn load(_name: &str) -> Option<usize> {
+        None
+    }
+
+    #[cfg(not(any(all(unix, not(target_os = "emscripten")), windows)))]
+    pub(super) fn export(_library: usize, _name: &str) -> *const c_void {
+        std::ptr::null()
+    }
+}
+
 impl EglInterface {
     /// Resolves the entry points with `get_proc_address`.
     ///
@@ -144,6 +258,31 @@ impl EglInterface {
     /// Panics when a required entry point cannot be resolved.
     pub unsafe fn new(get_proc_address: &GetProcAddress) -> Self {
         Self { egl: EglEntryPoints::load(get_proc_address, &()) }
+    }
+
+    /// Loads the EGL library `library` of the system by name and resolves the
+    /// entry points with its `eglGetProcAddress` (`EglInterface(string library)`).
+    /// Fails when the library cannot be loaded or does not export
+    /// `eglGetProcAddress`.
+    ///
+    /// # Panics
+    /// Panics when a required entry point cannot be resolved.
+    pub fn from_library(library: &str) -> Result<Self, OpenGlException> {
+        let get_proc_address = load(library)?;
+        // SAFETY: the loader asks `eglGetProcAddress` of the library, which returns null or
+        // the address of the entry point of that name; the library is never unloaded, so
+        // the entry points stay valid.
+        Ok(unsafe { Self::new(&get_proc_address) })
+    }
+
+    /// The EGL library of the system (`EglInterface()`): `libEGL.so.1` on
+    /// Linux, `libEGL.so` on Android. Fails on another system, and as
+    /// [`from_library`](Self::from_library) does.
+    ///
+    /// # Panics
+    /// Panics when a required entry point cannot be resolved.
+    pub fn new_default() -> Result<Self, OpenGlException> {
+        Self::from_library(default_library()?)
     }
 
     /// `eglGetPlatformDisplayEXT`.
@@ -442,5 +581,43 @@ mod tests {
         assert!(!egl.is_create_image_khr_available());
         assert!(!egl.is_destroy_image_khr_available());
         assert!(!egl.is_query_dma_buf_formats_ext_available());
+    }
+
+    /// The library of `EglInterface()` is the one of Linux or of Android, and
+    /// another system has none.
+    #[test]
+    fn the_default_library_is_the_one_of_the_system() {
+        let library = default_library();
+        if cfg!(target_os = "linux") {
+            assert_eq!(library.unwrap(), "libEGL.so.1");
+        } else if cfg!(target_os = "android") {
+            assert_eq!(library.unwrap(), "libEGL.so");
+        } else {
+            assert_eq!(library.err().unwrap().to_string(), "Operation is not supported on this platform.");
+        }
+    }
+
+    #[test]
+    fn a_library_that_does_not_exist_is_an_error_with_its_name() {
+        let error = EglInterface::from_library("libferroui-there-is-no-such-library.so.0").err().unwrap();
+        assert_eq!(
+            error.to_string(),
+            "Unable to load shared library 'libferroui-there-is-no-such-library.so.0' or one of its dependencies."
+        );
+    }
+
+    /// A library that loads but is not an EGL library.
+    #[cfg(any(target_os = "linux", target_os = "macos", windows))]
+    #[test]
+    fn a_library_without_the_loader_of_egl_is_an_error() {
+        #[cfg(target_os = "linux")]
+        const LIBRARY: &str = "libc.so.6";
+        #[cfg(target_os = "macos")]
+        const LIBRARY: &str = "libSystem.B.dylib";
+        #[cfg(windows)]
+        const LIBRARY: &str = "kernel32.dll";
+
+        let error = EglInterface::from_library(LIBRARY).err().unwrap();
+        assert_eq!(error.to_string(), format!("{LIBRARY} doesn't expose eglGetProcAddress"));
     }
 }
