@@ -20,10 +20,6 @@ pub struct TextBoxTextInputMethodClient {
     events: TextInputMethodClientEvents,
     parent: RefCell<Option<WeakRef<TextBox>>>,
     presenter: RefCell<Option<WeakRef<TextPresenter>>>,
-    /// The last presenter: the contract of the base crate has no "no text
-    /// view" value, so the visual of the last presenter is reported while
-    /// the client has none.
-    last_text_view_visual: RefCell<Option<WeakRef<TextPresenter>>>,
     selection_changed: Cell<bool>,
     is_in_change: Cell<bool>,
     parent_property_changed: RefCell<Option<Rc<dyn IDisposable>>>,
@@ -49,16 +45,8 @@ impl TextInputMethodClient for TextBoxTextInputMethodClient {
         &self.events
     }
 
-    fn text_view_visual(&self) -> Ref<Visual> {
-        let presenter = self.presenter().or_else(|| {
-            let last = self.last_text_view_visual.borrow().clone();
-            last.and_then(|last| last.upgrade())
-        });
-
-        match presenter {
-            Some(presenter) => presenter.upcast(),
-            None => panic!("The text input method client has no text view visual."),
-        }
+    fn text_view_visual(&self) -> Option<Ref<Visual>> {
+        self.presenter().map(Ref::upcast)
     }
 
     fn surrounding_text(&self) -> String {
@@ -160,7 +148,6 @@ impl TextBoxTextInputMethodClient {
             events: TextInputMethodClientEvents::new(),
             parent: RefCell::new(None),
             presenter: RefCell::new(None),
-            last_text_view_visual: RefCell::new(None),
             selection_changed: Cell::new(false),
             is_in_change: Cell::new(false),
             parent_property_changed: RefCell::new(None),
@@ -228,8 +215,6 @@ impl TextBoxTextInputMethodClient {
         *self.presenter.borrow_mut() = presenter.map(Ref::downgrade);
 
         if let Some(presenter) = presenter {
-            *self.last_text_view_visual.borrow_mut() = Some(presenter.downgrade());
-
             presenter.set_current_im_client(self.this.upgrade());
 
             let weak = self.this.clone();

@@ -40,7 +40,9 @@ use ferroui_base::input::platform::{
     PlatformClipboardManager,
 };
 use ferroui_base::input::raw::{RawKeyEventArgs, RawKeyEventType};
-use ferroui_base::input::text_input::{TextInputMethodClient, TextInputMethodClientRequestedEventArgs, TextSelection};
+use ferroui_base::input::text_input::{
+    ITextInputMethodImpl, TextInputMethodClient, TextInputMethodClientRequestedEventArgs, TextInputOptions, TextSelection,
+};
 use ferroui_base::input::{
     ICommand, ICommandSource, IInputDevice, InputElement, InputElementImpl, Key, KeyDeviceType, KeyEventArgs,
     KeyGesture, KeyModifiers, MouseButton, PhysicalKey, RawInputModifiers, TextInputEventArgs,
@@ -2070,6 +2072,54 @@ fn input_method_client_surrounding_text_uses_full_document_for_multiline_text() 
 
     assert_eq!("one\ntwo", client.surrounding_text());
     assert_eq!(TextSelection::new(5, 5), client.selection());
+}
+
+/// The input method of a window in the test below: it keeps the client it
+/// was last given.
+#[derive(Default)]
+struct RecordingInputMethod {
+    client: RefCell<Option<Rc<dyn TextInputMethodClient>>>,
+}
+
+impl ITextInputMethodImpl for RecordingInputMethod {
+    fn set_client(&self, client: Option<Rc<dyn TextInputMethodClient>>) {
+        drop(self.client.replace(client));
+    }
+
+    fn set_cursor_rect(&self, _rect: Rect) {}
+
+    fn set_options(&self, _options: &TextInputOptions) {}
+
+    fn reset(&self) {}
+}
+
+// Not from the reference. A text box without a template has no presenter,
+// so the client of its input method has no text view visual: upstream's
+// `TextViewVisual` is null there, and the input method manager tracks no
+// visual. Focusing it, and taking the focus away, with an input method
+// active must not fail.
+#[test]
+fn text_box_without_template_is_focused_with_an_input_method() {
+    let _scope = test_scope();
+    let input_method = Rc::new(RecordingInputMethod::default());
+    let window_impl = MockWindowingPlatform::create_window_mock();
+    window_impl.setup_feature::<dyn ITextInputMethodImpl>(input_method.clone());
+    let target = TextBox::new();
+    target.set_text(Some("text"));
+    let _window = show_in_window(target.clone(), window_impl);
+
+    target.focus();
+
+    assert!(target.is_focused());
+    let client = input_method.client.borrow().clone().expect("the focused text box is the client of the input method");
+    assert!(client.text_view_visual().is_none());
+    assert_eq!("text", client.surrounding_text());
+    assert_eq!(Rect::default(), client.cursor_rectangle());
+
+    target.set_is_enabled(false);
+
+    assert!(!target.is_focused());
+    assert!(input_method.client.borrow().is_none());
 }
 
 #[test]

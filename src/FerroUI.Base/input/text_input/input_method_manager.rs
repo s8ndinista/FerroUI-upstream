@@ -171,7 +171,7 @@ impl TextInputMethodManager {
         }
 
         let client = self.client();
-        let text_view_visual = client.as_ref().map(|client| client.text_view_visual());
+        let text_view_visual = client.as_ref().and_then(|client| client.text_view_visual());
         self.transform_tracker.set_visual(text_view_visual.as_ref());
 
         if let Some(im) = &im {
@@ -206,7 +206,7 @@ impl TextInputMethodManager {
     }
 
     fn on_text_view_visual_changed(&self) {
-        let text_view_visual = self.client().map(|client| client.text_view_visual());
+        let text_view_visual = self.client().and_then(|client| client.text_view_visual());
         self.transform_tracker.set_visual(text_view_visual.as_ref());
     }
 
