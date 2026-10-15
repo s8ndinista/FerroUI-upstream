@@ -13,6 +13,8 @@
 #                       (default: $FERROUI_ANDROID_BUILD_DIR, else <cargo target directory>/android)
 #   --no-strip          package the library with its symbol table
 #   --no-cargo          package the library that is already built
+#   --features LIST     cargo features of the build, for example ferroui-android/vulkan (the Vulkan
+#                       rendering mode with the Skia binary that has Ganesh on Vulkan as well)
 #
 # Environment: ANDROID_HOME (the SDK); CARGO_TARGET_DIR is honoured; see scripts/android/env.sh for
 # the pinned versions of the NDK, the build tools and the platform, and for the nightly Rust
@@ -22,7 +24,7 @@
 set -euo pipefail
 
 usage() {
-    sed -n '2,20p' "$0" | sed 's/^# \{0,1\}//'
+    sed -n '2,22p' "$0" | sed 's/^# \{0,1\}//'
 }
 
 app=""
@@ -31,6 +33,7 @@ abi="arm64-v8a"
 out=""
 strip=1
 run_cargo=1
+features=""
 while [ $# -gt 0 ]; do
     case "$1" in
         smoke|catalog) app="$1" ;;
@@ -39,6 +42,7 @@ while [ $# -gt 0 ]; do
         --out) out="${2:?--out needs a value}"; shift ;;
         --no-strip) strip=0 ;;
         --no-cargo) run_cargo=0 ;;
+        --features) features="${2:?--features needs a value}"; shift ;;
         -h|--help) usage; exit 0 ;;
         *) echo "unknown argument: $1" >&2; usage >&2; exit 2 ;;
     esac
@@ -91,6 +95,9 @@ if [ "$profile" = "release" ]; then
 else
     profile_dir="debug"
     profile_args=()
+fi
+if [ -n "$features" ]; then
+    profile_args+=(--features "$features")
 fi
 
 for tool in "$FERROUI_ANDROID_BUILD_TOOLS/aapt2" "$FERROUI_ANDROID_BUILD_TOOLS/d8" "$FERROUI_ANDROID_BUILD_TOOLS/zipalign" \

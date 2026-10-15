@@ -14,7 +14,8 @@
 #   --apk FILE        the package to run (default: the debug package apk.sh builds)
 #   --build           build the package first (scripts/android/apk.sh smoke)
 #   --gpu MODE        the GPU mode of the emulator: swiftshader_indirect (default) or host
-#   --modes "A B"     the rendering modes to run, of egl and software (default: both)
+#   --modes "A B"     the rendering modes to run, of egl, software and vulkan (default: egl software;
+#                     vulkan needs a package built with apk.sh smoke --features ferroui-android/vulkan)
 #   --no-input        do nothing the application asks for but pictures (it then skips the checks
 #                     that need the script: touch, keys, the night mode)
 #
@@ -38,7 +39,7 @@ while [ $# -gt 0 ]; do
         --gpu) gpu="${2:?--gpu needs a value}"; shift ;;
         --modes) modes="${2:?--modes needs a value}"; shift ;;
         --no-input) input=0 ;;
-        -h|--help) sed -n '2,22p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+        -h|--help) sed -n '2,23p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
         *) echo "unknown argument: $1" >&2; exit 2 ;;
     esac
     shift

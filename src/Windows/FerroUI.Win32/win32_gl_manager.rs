@@ -8,6 +8,7 @@ use crate::win32_platform_options::{Win32CompositionMode, Win32PlatformOptions, 
 use ferroui_base::platform::IPlatformGraphics;
 use ferroui_base::{FerroLocator, LocatorExtensions};
 use ferroui_opengl::IPlatformGraphicsOpenGlContextFactory;
+use ferroui_vulkan::VulkanPlatformGraphics;
 use std::cell::Cell;
 use std::rc::Rc;
 use std::sync::Arc;
@@ -24,13 +25,26 @@ pub(crate) enum Win32PlatformGraphicsKind {
     /// The OpenGL of the system: a window is rendered through its device
     /// context, with a context of WGL.
     Wgl,
+    /// Vulkan: a window is rendered through a swap chain on a surface of
+    /// its handle, and has no surface of the platform graphics.
+    Vulkan,
 }
 
 /// The platform graphics the loop over the rendering modes chose.
-#[derive(Debug)]
 pub(crate) enum Win32PlatformGraphics {
     Angle(D3D11AngleWin32PlatformGraphics),
     Wgl(WglPlatformOpenGlInterface),
+    Vulkan(Arc<VulkanPlatformGraphics>),
+}
+
+impl std::fmt::Debug for Win32PlatformGraphics {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Angle(angle) => f.debug_tuple("Angle").field(angle).finish(),
+            Self::Wgl(wgl) => f.debug_tuple("Wgl").field(wgl).finish(),
+            Self::Vulkan(_) => f.write_str("Vulkan"),
+        }
+    }
 }
 
 thread_local! {
@@ -56,6 +70,7 @@ impl Win32GlManager {
             opts,
             &mut || AngleWin32PlatformGraphicsFactory::try_create(Some(&angle_options), selection_callback.clone()),
             &mut Self::try_create_wgl,
+            &mut Self::try_create_vulkan,
             &mut Self::try_create_and_register_composition,
         )?;
 
@@ -82,6 +97,13 @@ impl Win32GlManager {
             }
             #[cfg(not(windows))]
             Win32PlatformGraphics::Wgl(_) => None,
+            // Neither are the graphics of Vulkan.
+            Win32PlatformGraphics::Vulkan(vulkan) => {
+                KIND.with(|kind| kind.set(Some(Win32PlatformGraphicsKind::Vulkan)));
+                let gl: Arc<dyn IPlatformGraphics> = vulkan;
+                FerroLocator::current_mutable().bind::<Arc<dyn IPlatformGraphics>>().to_constant(Rc::new(gl.clone()));
+                Some(gl)
+            }
         }
     }
 
@@ -94,6 +116,39 @@ impl Win32GlManager {
 
     #[cfg(not(windows))]
     fn try_create_wgl() -> Option<WglPlatformOpenGlInterface> {
+        None
+    }
+
+    /// The platform graphics of Vulkan (`VulkanSupport`), with the options
+    /// an application registered.
+    #[cfg(all(windows, feature = "vulkan"))]
+    fn try_create_vulkan() -> Option<Arc<VulkanPlatformGraphics>> {
+        use crate::vulkan::VulkanSupport;
+        use ferroui_vulkan::VulkanOptions;
+
+        let vulkan_options = FerroLocator::current().get_service::<VulkanOptions>().map(|options| (*options).clone());
+        VulkanSupport::try_initialize(vulkan_options)
+    }
+
+    /// Without the feature `vulkan` the Skia backend has no Vulkan GPU to
+    /// draw on the graphics of Vulkan with (the published Skia binaries for
+    /// Windows have no Vulkan beside OpenGL), so the mode is passed over,
+    /// and says why.
+    #[cfg(all(windows, not(feature = "vulkan")))]
+    fn try_create_vulkan() -> Option<Arc<VulkanPlatformGraphics>> {
+        use ferroui_base::logging::{LogEventLevel, Logger};
+
+        if let Some(logger) = Logger::try_get(LogEventLevel::Warning, "Vulkan") {
+            logger.log(
+                None,
+                "The Vulkan rendering mode needs the feature `vulkan` of ferroui-win32 (Skia with Vulkan); the mode is passed over",
+            );
+        }
+        None
+    }
+
+    #[cfg(not(windows))]
+    fn try_create_vulkan() -> Option<Arc<VulkanPlatformGraphics>> {
         None
     }
 
@@ -136,14 +191,12 @@ impl Win32GlManager {
     /// composition mode other than the redirection surface.
     ///
     /// `try_create_wgl` creates the platform graphics of the OpenGL of the
-    /// system.
-    ///
-    /// Vulkan is not built yet (after the Vulkan project of the port) and
-    /// is passed over like a mode that fails to initialize.
+    /// system, `try_create_vulkan` those of Vulkan.
     pub(crate) fn initialize_core(
         opts: &Win32PlatformOptions,
         try_create_angle: &mut dyn FnMut() -> Option<AnglePlatformGraphics>,
         try_create_wgl: &mut dyn FnMut() -> Option<WglPlatformOpenGlInterface>,
+        try_create_vulkan: &mut dyn FnMut() -> Option<Arc<VulkanPlatformGraphics>>,
         try_register_composition: &mut dyn FnMut(Win32CompositionMode) -> bool,
     ) -> Option<Win32PlatformGraphics> {
         if opts.rendering_mode.is_empty() {
@@ -169,7 +222,11 @@ impl Win32GlManager {
                         return Some(Win32PlatformGraphics::Wgl(wgl));
                     }
                 }
-                Win32RenderingMode::Vulkan => {}
+                Win32RenderingMode::Vulkan => {
+                    if let Some(vulkan) = try_create_vulkan() {
+                        return Some(Win32PlatformGraphics::Vulkan(vulkan));
+                    }
+                }
             }
         }
 
@@ -222,9 +279,10 @@ mod tests {
         try_create_angle: &mut dyn FnMut() -> Option<AnglePlatformGraphics>,
         try_register_composition: &mut dyn FnMut(Win32CompositionMode) -> bool,
     ) -> Option<D3D11AngleWin32PlatformGraphics> {
-        match Win32GlManager::initialize_core(opts, try_create_angle, &mut || None, try_register_composition) {
+        match Win32GlManager::initialize_core(opts, try_create_angle, &mut || None, &mut || None, try_register_composition) {
             Some(Win32PlatformGraphics::Angle(gl)) => Some(gl),
             Some(Win32PlatformGraphics::Wgl(_)) => panic!("no graphics of WGL were offered"),
+            Some(Win32PlatformGraphics::Vulkan(_)) => panic!("no graphics of Vulkan were offered"),
             None => None,
         }
     }
@@ -370,6 +428,7 @@ mod tests {
                 asked += 1;
                 wgl()
             },
+            &mut || panic!("Vulkan is not in the list"),
             &mut |_| panic!("no composition without ANGLE"),
         );
 
@@ -392,6 +451,7 @@ mod tests {
                 asked += 1;
                 None
             },
+            &mut || panic!("Vulkan is not in the list"),
             &mut |_| panic!("no composition without ANGLE"),
         );
 
@@ -412,6 +472,7 @@ mod tests {
                 order.borrow_mut().push("wgl");
                 wgl()
             },
+            &mut || panic!("Vulkan is not in the list"),
             &mut |_| false,
         );
 
@@ -422,6 +483,94 @@ mod tests {
     #[test]
     #[should_panic(expected = "has a value of \"Wgl\", but no options were applied.")]
     fn wgl_alone_on_a_system_without_a_driver_is_an_error() {
-        Win32GlManager::initialize_core(&options(vec![Win32RenderingMode::Wgl]), &mut || None, &mut || None, &mut |_| false);
+        Win32GlManager::initialize_core(
+            &options(vec![Win32RenderingMode::Wgl]),
+            &mut || None,
+            &mut || None,
+            &mut || None,
+            &mut |_| false,
+        );
+    }
+
+    /// Platform graphics of Vulkan over a device factory that is never
+    /// asked: the loop only hands them on.
+    fn vulkan() -> Option<Arc<VulkanPlatformGraphics>> {
+        use ferroui_vulkan::{IVulkanDevice, IVulkanDeviceFactory, VulkanException, VulkanPlatformSpecificOptions};
+
+        struct NoDevices;
+
+        impl IVulkanDeviceFactory for NoDevices {
+            fn uses_shaded_device(&self) -> bool {
+                false
+            }
+
+            fn get_shared_device(&self, _platform_options: &VulkanPlatformSpecificOptions) -> Arc<dyn IVulkanDevice> {
+                panic!("the loop creates no device")
+            }
+
+            fn create_device(
+                &self,
+                _platform_options: &VulkanPlatformSpecificOptions,
+            ) -> Result<Arc<dyn IVulkanDevice>, VulkanException> {
+                panic!("the loop creates no device")
+            }
+        }
+
+        Some(Arc::new(VulkanPlatformGraphics::new(Arc::new(NoDevices), VulkanPlatformSpecificOptions::default())))
+    }
+
+    #[test]
+    fn vulkan_is_taken_when_it_is_named_and_registers_no_composition_mode() {
+        let order = std::cell::RefCell::new(Vec::new());
+        let gl = Win32GlManager::initialize_core(
+            &options(vec![Win32RenderingMode::Vulkan, Win32RenderingMode::AngleEgl, Win32RenderingMode::Software]),
+            &mut || {
+                order.borrow_mut().push("angle");
+                d3d11()
+            },
+            &mut || panic!("WGL is not in the list"),
+            &mut || {
+                order.borrow_mut().push("vulkan");
+                vulkan()
+            },
+            &mut |_| panic!("no composition without ANGLE"),
+        );
+
+        assert!(matches!(gl, Some(Win32PlatformGraphics::Vulkan(_))));
+        assert_eq!(vec!["vulkan"], *order.borrow());
+    }
+
+    #[test]
+    fn vulkan_that_does_not_initialize_is_passed_over() {
+        let order = std::cell::RefCell::new(Vec::new());
+        let gl = Win32GlManager::initialize_core(
+            &options(vec![Win32RenderingMode::Vulkan, Win32RenderingMode::Wgl, Win32RenderingMode::Software]),
+            &mut || panic!("ANGLE is not in the list"),
+            &mut || {
+                order.borrow_mut().push("wgl");
+                None
+            },
+            &mut || {
+                order.borrow_mut().push("vulkan");
+                None
+            },
+            &mut |_| panic!("no composition without ANGLE"),
+        );
+
+        assert!(gl.is_none());
+        assert_eq!(vec!["vulkan", "wgl"], *order.borrow());
+    }
+
+    #[test]
+    fn the_default_order_never_asks_for_vulkan() {
+        let gl = Win32GlManager::initialize_core(
+            &Win32PlatformOptions::default(),
+            &mut || None,
+            &mut || None,
+            &mut || panic!("Vulkan is only used when an application names it"),
+            &mut |_| false,
+        );
+
+        assert!(gl.is_none());
     }
 }
