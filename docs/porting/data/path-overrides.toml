@@ -2436,3 +2436,29 @@ kind = "renamed"
 rust = "input/lib_input/lib_input_native_unsafe_methods.rs"
 types = { LibInputNativeUnsafeMethods = "LibInput" }
 reason = "the platform invokes of `libinput.so.10` are the fields of the table `LibInput`, each the function of its C name (declared with `native_library!`, opened with `dlopen` and resolved with `dlsym` when the backend starts; linux-framebuffer-platform.md, section 3)"
+
+# ---------------------------------------------------------------- Avalonia.Android
+
+[[map]]
+project = "Avalonia.Android"
+upstream = ["Platform/Input/EditCommand.cs"]
+kind = "renamed"
+rust = "platform/input/edit_command.rs"
+types = { SelectionCommand = "EditCommand", CompositionRegionCommand = "EditCommand", DeleteRegionCommand = "EditCommand", DeleteRegionInCodePointsCommand = "EditCommand", CompositionTextCommand = "EditCommand", CommitTextCommand = "EditCommand", FinishComposingCommand = "EditCommand", KeyEventCommand = "EditCommand" }
+reason = "the abstract command and its eight subclasses are one enumeration, `EditCommand`, with a variant per class: the constructor of a class is the function of the enumeration named after it (`EditCommand::selection`, ...), and `apply` matches the variant"
+
+[[map]]
+project = "Avalonia.Android"
+upstream = ["Platform/Storage/AndroidStorageItem.cs"]
+kind = "renamed"
+rust = "platform/storage/android_storage_item.rs"
+types = { WellKnownAndroidStorageFolder = "AndroidStorageFolder" }
+reason = "WellKnownAndroidStorageFolder, a folder that only replaces the name, is the folder with a name of its own (`AndroidStorageFolder::new_well_known`, the field `name`)"
+
+[[map]]
+project = "Avalonia.Android"
+upstream = ["Platform/SkiaPlatform/AndroidFramebuffer.cs"]
+kind = "merged"
+rust = ["platform/skia_platform/android_framebuffer.rs", "interop/ndk.rs"]
+types = { ANativeWindow_Buffer = "ANativeWindowBuffer" }
+reason = "the declarations of the NDK of the file (`ANativeWindow_*`, `AChoreographer_*`, `ARect`, `ANativeWindow_Buffer`) are in interop/ndk.rs, the one module that calls the NDK, behind `NativeWindow`, `LockedBuffer` and `Choreographer`"

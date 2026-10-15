@@ -6714,3 +6714,334 @@ project = "Avalonia.LinuxFramebuffer"
 type = "Avalonia.LinuxFramebuffer.FbdevOutput"
 member = "~FbdevOutput()"
 reason = "no finalizer: the device and its mapped memory release themselves when dropped (the `OwnedFd` of `LinuxFbDevice`, the Drop of `FbMapping`, output/fb_device.rs), and `dispose` releases them earlier"
+
+# ---------------------------------------------------------------- Avalonia.Android
+# The leftovers of the tracking page (2026-10-15), each read against the upstream file and the port
+# (docs/porting/android-platform.md). The classes the system creates (the application, the activities,
+# the view, the input connection) are classes of the Java layer of the crate
+# (src/Android/FerroUI.Android/java/org/ferroui/android): their overrides of the methods of the system
+# are Java methods that call the native side, and the aliases below name the Rust function each one
+# calls. What the Java method does without the native side is a waiver that says so.
+
+[[alias]]
+project = "Avalonia.Android"
+type = "Avalonia.Android.AvaloniaActivity"
+member = "OnNewIntent"
+rust = ["handle_intent"]
+
+[[waive]]
+project = "Avalonia.Android"
+type = "Avalonia.Android.IAndroidApplication"
+reason = "an internal contract with one implementation, through which the activities read the lifetime from the application object of the system: the application is one per process, and the lifetime is `FerroAndroidApplication::lifetime` and `set_lifetime` (ferro_android_application.rs)"
+
+[[waive]]
+project = "Avalonia.Android"
+type = "Avalonia.Android.AvaloniaAndroidApplication*"
+member = "AvaloniaAndroidApplication(*"
+reason = "the constructor .NET for Android calls to wrap a Java object: the application object is an instance of the Java class `FerroApplication`, which the system creates and which loads the library of the application"
+
+[[waive]]
+project = "Avalonia.Android"
+type = "Avalonia.Android.AvaloniaAndroidApplication*"
+member = "CreateAppBuilder"
+reason = "an application gives the function that makes its builder to `android_application!` (lib.rs), which `FerroAndroidApplication::set_builder` keeps: that function is CreateAppBuilder followed by CustomizeAppBuilder, usually `AppBuilder::configure::<App>().use_android()`"
+
+[[waive]]
+project = "Avalonia.Android"
+type = "Avalonia.Android.AvaloniaAndroidApplication*"
+member = "CustomizeAppBuilder"
+reason = "an application gives the function that makes its builder to `android_application!` (lib.rs), which `FerroAndroidApplication::set_builder` keeps: that function is CreateAppBuilder followed by CustomizeAppBuilder, so the customisation is the application's own code in it"
+
+[[waive]]
+project = "Avalonia.Android"
+type = "Avalonia.Android.AvaloniaView"
+member = "*InitEditorInfo"
+reason = "the top-level of the view keeps the function, since it exists before the view does: `IInitEditorInfo` is implemented by the host of the input method the top-level owns (`ViewInputMethodHost`, platform/input/android_input_method.rs), and `on_create_input_connection` (ferro_view_input.rs) reads it with `TopLevelImpl::editor_info_init`"
+
+# The three dispatch overrides are methods of the Java view (FerroView.java), which copies the motion
+# event and calls `dispatch_motion_event`; the hover override calls the access helper's
+# `dispatch_access_hover_event` as well.
+[[alias]]
+project = "Avalonia.Android"
+type = "Avalonia.Android.AvaloniaView"
+member = "DispatchHoverEvent"
+rust = ["dispatch_access_hover_event"]
+
+[[alias]]
+project = "Avalonia.Android"
+type = "Avalonia.Android.AvaloniaView"
+member = "DispatchGenericPointerEvent"
+rust = ["dispatch_motion_event"]
+
+[[alias]]
+project = "Avalonia.Android"
+type = "Avalonia.Android.AvaloniaView"
+member = "DispatchTouchEvent"
+rust = ["dispatch_motion_event"]
+
+# onAttachedToWindow and onConfigurationChanged of the Java view read the configuration and call
+# `send_configuration_changed`; onVisibilityAggregated calls `on_visibility_changed`.
+[[alias]]
+project = "Avalonia.Android"
+type = "Avalonia.Android.AvaloniaView"
+member = "OnAttachedToWindow"
+rust = ["send_configuration_changed"]
+
+[[alias]]
+project = "Avalonia.Android"
+type = "Avalonia.Android.AvaloniaView"
+member = "OnConfigurationChanged"
+rust = ["send_configuration_changed"]
+
+[[alias]]
+project = "Avalonia.Android"
+type = "Avalonia.Android.AvaloniaView"
+member = "OnVisibilityAggregated"
+rust = ["on_visibility_changed"]
+
+[[waive]]
+project = "Avalonia.Android"
+type = "Avalonia.Android.AvaloniaView"
+member = "OnVisibilityChanged"
+reason = "the two overloads are one function, `on_visibility_changed` (ferro_view.rs): the override of the system's `onVisibilityChanged(View, int)` is a method of the Java view (FerroView.java), which calls it with whether the view is visible"
+
+[[waive]]
+project = "Avalonia.Android"
+type = "Avalonia.Android.Automation.NodeInfoProviderInitializer"
+reason = "declared and used by no file of the reference: the access helper creates each provider with its constructor (`get_or_create_node_info_providers_from_peer`, ferro_access_helper.rs)"
+
+[[waive]]
+project = "Avalonia.Android"
+type = "Avalonia.Android.Automation.NodeInfoProvider*"
+member = "PeerPropertyChanged"
+reason = "the override is a function a provider passes to `NodeInfoProvider::new` (the type `PeerPropertyChanged` of node_info_provider.rs), which the handler on the property changes of the peer calls; `None` is the empty virtual of the reference"
+
+[[waive]]
+project = "Avalonia.Android"
+type = "Avalonia.Android.Automation.NodeInfoProvider*"
+member = "PerformNodeAction"
+reason = "abstract: a member of the trait `INodeInfoProvider` (automation/i_node_info_provider.rs), which each provider implements and which holds a `NodeInfoProvider` for what the base class shares"
+
+[[waive]]
+project = "Avalonia.Android"
+type = "Avalonia.Android.Automation.NodeInfoProvider*"
+member = "PopulateNodeInfo"
+reason = "abstract: a member of the trait `INodeInfoProvider` (automation/i_node_info_provider.rs), which each provider implements and which holds a `NodeInfoProvider` for what the base class shares"
+
+[[alias]]
+project = "Avalonia.Android"
+type = "Avalonia.Android.Platform.AndroidInsetsManager"
+member = "OnStart"
+rust = ["on_insets_animation_start"]
+
+[[waive]]
+project = "Avalonia.Android"
+type = "Avalonia.Android.Platform.AndroidInsetsManager"
+member = "OnProgress"
+reason = "returns the insets it is given: the `onProgress` of the animation callback of the Java layer (PlatformHelper.java) does the same without calling the native side"
+
+[[waive]]
+project = "Avalonia.Android"
+type = "Avalonia.Android.Platform.AndroidScreens"
+member = "Dispose"
+reason = "dropping the screens drops their display source, whose Drop unregisters the display listener (`ContextDisplaySource`, platform/android_screens.rs)"
+
+[[waive]]
+project = "Avalonia.Android"
+type = "Avalonia.Android.Platform.ClipDataToDataTransferWrapper"
+member = "Context"
+reason = "the context is shared with the items of the wrapper in `ClipDataOwner` (`ClipDataOwner::context`, platform/clip_data_to_data_transfer_wrapper.rs), which the items read it from"
+
+[[waive]]
+project = "Avalonia.Android"
+type = "Avalonia.Android.Platform.Input.*AndroidInputMethod*"
+member = "View"
+reason = "the view is used for calls of the system only: they are the functions of the host of the input method (`IInputMethodHost`, platform/input/android_input_method.rs; `ViewInputMethodHost` holds the Java view), and those the edit buffer calls are the functions of `IAndroidInputMethod` (`dispatch_key_event`, `hide_soft_input`, `update_selection`, `update_extracted_text`)"
+
+[[waive]]
+project = "Avalonia.Android"
+type = "Avalonia.Android.Platform.Input.*AndroidInputMethod*"
+member = "IMM"
+reason = "the input method manager is used for calls of the system only: they are the functions of the host of the input method (`IInputMethodHost`, platform/input/android_input_method.rs; `ViewInputMethodHost` holds the manager), and those the edit buffer calls are the functions of `IAndroidInputMethod` (`hide_soft_input`, `update_selection`, `update_extracted_text`)"
+
+[[waive]]
+project = "Avalonia.Android"
+type = "Avalonia.Android.Platform.Input.AndroidInputMethod*"
+member = "IsActive"
+reason = "the default method `is_active` of the trait `IAndroidInputMethod` (platform/input/text_edit_buffer.rs), `client().is_some()`, which `AndroidInputMethod` implements"
+
+[[waive]]
+project = "Avalonia.Android"
+type = "Avalonia.Android.Platform.Input.AvaloniaInputConnection"
+member = "Handler"
+reason = "null in the reference: `getHandler` of the Java input connection (FerroInputConnection.java) returns null without calling the native side"
+
+[[waive]]
+project = "Avalonia.Android"
+type = "Avalonia.Android.Platform.Input.AvaloniaInputConnection"
+member = "ClearMetaKeyStates"
+reason = "false in the reference: the method of the Java input connection (FerroInputConnection.java) returns false without calling the native side"
+
+[[waive]]
+project = "Avalonia.Android"
+type = "Avalonia.Android.Platform.Input.AvaloniaInputConnection"
+member = "CommitCompletion"
+reason = "false in the reference: the method of the Java input connection (FerroInputConnection.java) returns false without calling the native side"
+
+[[waive]]
+project = "Avalonia.Android"
+type = "Avalonia.Android.Platform.Input.AvaloniaInputConnection"
+member = "CommitContent"
+reason = "false in the reference: the method of the Java input connection (FerroInputConnection.java) returns false without calling the native side"
+
+[[waive]]
+project = "Avalonia.Android"
+type = "Avalonia.Android.Platform.Input.AvaloniaInputConnection"
+member = "CommitCorrection"
+reason = "false in the reference: the method of the Java input connection (FerroInputConnection.java) returns false without calling the native side"
+
+[[waive]]
+project = "Avalonia.Android"
+type = "Avalonia.Android.Platform.Input.AvaloniaInputConnection"
+member = "PerformPrivateCommand"
+reason = "false in the reference: the method of the Java input connection (FerroInputConnection.java) returns false without calling the native side"
+
+[[waive]]
+project = "Avalonia.Android"
+type = "Avalonia.Android.Platform.Input.AvaloniaInputConnection"
+member = "ReportFullscreenMode"
+reason = "false in the reference: the method of the Java input connection (FerroInputConnection.java) returns false without calling the native side"
+
+[[waive]]
+project = "Avalonia.Android"
+type = "Avalonia.Android.Platform.Input.AvaloniaInputConnection"
+member = "RequestCursorUpdates"
+reason = "false in the reference: the method of the Java input connection (FerroInputConnection.java) returns false without calling the native side"
+
+# The commands of EditCommand.cs are the variants of the enumeration `EditCommand` (path-overrides.toml):
+# the constructor of each class is the function of the enumeration named after it.
+[[alias]]
+project = "Avalonia.Android"
+type = "Avalonia.Android.Platform.Input.SelectionCommand"
+member = ".ctor"
+rust = ["selection"]
+
+[[alias]]
+project = "Avalonia.Android"
+type = "Avalonia.Android.Platform.Input.CompositionRegionCommand"
+member = ".ctor"
+rust = ["composition_region"]
+
+[[alias]]
+project = "Avalonia.Android"
+type = "Avalonia.Android.Platform.Input.DeleteRegionCommand"
+member = ".ctor"
+rust = ["delete_region"]
+
+[[alias]]
+project = "Avalonia.Android"
+type = "Avalonia.Android.Platform.Input.DeleteRegionInCodePointsCommand"
+member = ".ctor"
+rust = ["delete_region_in_code_points"]
+
+[[alias]]
+project = "Avalonia.Android"
+type = "Avalonia.Android.Platform.Input.CompositionTextCommand"
+member = ".ctor"
+rust = ["composition_text"]
+
+[[alias]]
+project = "Avalonia.Android"
+type = "Avalonia.Android.Platform.Input.CommitTextCommand"
+member = ".ctor"
+rust = ["commit_text"]
+
+[[alias]]
+project = "Avalonia.Android"
+type = "Avalonia.Android.Platform.Input.KeyEventCommand"
+member = ".ctor"
+rust = ["key_event"]
+
+[[waive]]
+project = "Avalonia.Android"
+type = "Avalonia.Android.Platform.SkiaPlatform.AndroidFramebuffer"
+member = "Address"
+reason = "the address is that of the locked buffer, `ILockedFramebuffer::address`; the reference sets it to null in Dispose, and here `dispose` gives the buffer back, after which the address is null (platform/skia_platform/android_framebuffer.rs)"
+
+[[waive]]
+project = "Avalonia.Android"
+type = "Avalonia.Android.Platform.SkiaPlatform.AndroidFramebuffer"
+member = "ANativeWindow_*"
+reason = "declared in interop/ndk.rs, the one module that calls the NDK, and called through the native window (`NativeWindow::from_surface`, `width`, `height`, `lock`, the Drop of `NativeWindow` and of `LockedBuffer`)"
+
+[[waive]]
+project = "Avalonia.Android"
+type = "Avalonia.Android.Platform.SkiaPlatform.AndroidFramebuffer"
+member = "AChoreographer_*"
+reason = "declared in interop/ndk.rs, the one module that calls the NDK, and called through `Choreographer::instance` and `post_frame_callback`; `AChoreographer_postFrameCallback64`, which API level 26 lacks, is looked up at run time (`post_frame_callback64`)"
+
+[[waive]]
+project = "Avalonia.Android"
+type = "Avalonia.Android.InvalidationAwareSurfaceView"
+member = "*Handle"
+reason = "the platform handle of the surface is `SurfaceViewHandle` (platform/skia_platform/invalidation_aware_surface_view.rs), which shares the native window with the render thread: `handle` of its IPlatformHandle impl"
+
+[[waive]]
+project = "Avalonia.Android"
+type = "Avalonia.Android.InvalidationAwareSurfaceView"
+member = "*HandleDescriptor"
+reason = "the platform handle of the surface is `SurfaceViewHandle` (platform/skia_platform/invalidation_aware_surface_view.rs), which shares the native window with the render thread: `handle_descriptor` of its IPlatformHandle impl, `SurfaceView`"
+
+[[waive]]
+project = "Avalonia.Android"
+type = "Avalonia.Android.Platform.SkiaPlatform.TopLevelImpl"
+member = "*SkipWaits*"
+reason = "the surface information EGL reads on the render thread is `EglSurfaceInfo` (platform/skia_platform/top_level_impl.rs): `skip_waits` of its IEglWindowGlPlatformSurfaceInfoWithWaitPolicy impl, true"
+
+[[waive]]
+project = "Avalonia.Android"
+type = "Avalonia.Android.Platform.SkiaPlatform.TopLevelImpl"
+member = "*IEglWindowGlPlatformSurfaceInfo.Size*"
+reason = "the surface information EGL reads on the render thread is `EglSurfaceInfo` (platform/skia_platform/top_level_impl.rs): `size` of its IEglWindowGlPlatformSurfaceInfo impl, the size of the surface"
+
+[[waive]]
+project = "Avalonia.Android"
+type = "Avalonia.Android.Platform.SkiaPlatform.TopLevelImpl"
+member = "*IEglWindowGlPlatformSurfaceInfo.Scaling*"
+reason = "the surface information EGL reads on the render thread is `EglSurfaceInfo` (platform/skia_platform/top_level_impl.rs): `scaling` of its IEglWindowGlPlatformSurfaceInfo impl, the scaling of the surface"
+
+[[waive]]
+project = "Avalonia.Android"
+type = "Avalonia.Android.Platform.Storage.AndroidStorageItem"
+member = "GetBasicPropertiesAsync"
+reason = "abstract: a member of the trait `IStorageItem`, which the folder and the file implement (`get_basic_properties_async` in the impls the macro `storage_item!` of platform/storage/android_storage_item.rs writes, over the `get_basic_properties` of each)"
+
+[[waive]]
+project = "Avalonia.Android"
+type = "Avalonia.Android.Platform.Storage.AndroidStorageItem"
+member = "DeleteAsync"
+reason = "abstract: a member of the trait `IStorageItem`, which the folder and the file implement (`delete_async` in the impls the macro `storage_item!` of platform/storage/android_storage_item.rs writes, over the `delete_core` of each)"
+
+[[waive]]
+project = "Avalonia.Android"
+type = "Avalonia.Android.Platform.Storage.AndroidStorageItem"
+member = "MoveAsync"
+reason = "abstract: a member of the trait `IStorageItem`, which the folder and the file implement (`move_async` in the impls the macro `storage_item!` of platform/storage/android_storage_item.rs writes, over the `move_core` of each)"
+
+[[waive]]
+project = "Avalonia.Android"
+type = "Avalonia.Android.Platform.Storage.AndroidStorageF*"
+member = "GetBasicPropertiesAsync"
+reason = "`get_basic_properties_async` of the IStorageItem impl the macro `storage_item!` (platform/storage/android_storage_item.rs) writes for the folder and the file, over the type's own `get_basic_properties`; the scanner does not read the bodies of macros"
+
+[[waive]]
+project = "Avalonia.Android"
+type = "Avalonia.Android.Platform.Storage.AndroidStorageF*"
+member = "DeleteAsync"
+reason = "`delete_async` of the IStorageItem impl the macro `storage_item!` (platform/storage/android_storage_item.rs) writes for the folder and the file, over the type's own `delete_core`; the scanner does not read the bodies of macros"
+
+[[waive]]
+project = "Avalonia.Android"
+type = "Avalonia.Android.Platform.Storage.AndroidStorageF*"
+member = "MoveAsync"
+reason = "`move_async` of the IStorageItem impl the macro `storage_item!` (platform/storage/android_storage_item.rs) writes for the folder and the file, over the type's own `move_core`; the scanner does not read the bodies of macros"
