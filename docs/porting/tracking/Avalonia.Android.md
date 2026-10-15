@@ -11,8 +11,8 @@ Generated from upstream commit `17350180c33b063f0e98abbfd19aa3cae63f5d56`. Back 
 | Crate | `ferroui-android` |
 | Phase / priority | 6 - mobile (Android) / P1 |
 | Files | 58/58 (100.0%) |
-| Types | 75/88 (85.2%) |
-| Members | 353/447 (4 waived) (79.7%) |
+| Types | 86/88 (2 waived) (100.0%) |
+| Members | 394/447 (53 waived) (100.0%) |
 | Contracts (interfaces) | 6/7 |
 | Property registrations | 0/0 |
 | Routed events | 0/0 |
@@ -26,28 +26,28 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 | `Avalonia.Android.Automation.INodeInfoProvider` | public | `Automation/INodeInfoProvider.cs` | 3/3 | present |
 | `Avalonia.Android.IActivityNavigationService` | public | `IAndroidNavigationService.cs` | 1/1 | present |
 | `Avalonia.Android.IActivityResultHandler` | public | `IActivityResultHandler.cs` | 2/2 | present |
-| `Avalonia.Android.IAndroidApplication` | internal | `AvaloniaAndroidApplication.cs` | 0/1 | missing |
+| `Avalonia.Android.IAndroidApplication` | internal | `AvaloniaAndroidApplication.cs` | 0/1 (1 waived) | waived |
 | `Avalonia.Android.IAvaloniaActivity` | public | `IAvaloniaActivity.cs` | 3/3 | present |
 | `Avalonia.Android.IInitEditorInfo` | internal | `IInitEditorInfo.cs` | 1/1 | present |
-| `Avalonia.Android.Platform.Input.IAndroidInputMethod` | internal | `Platform/Input/AndroidInputMethod.cs` | 3/5 | partial |
+| `Avalonia.Android.Platform.Input.IAndroidInputMethod` | internal | `Platform/Input/AndroidInputMethod.cs` | 3/5 (2 waived) | present |
 
 ## Files
 
-### `(project root)` - files 20/20, types 28/29, members 93/110
+### `(project root)` - files 20/20, types 28/29 (1 waived), members 104/110 (6 waived)
 
 | Upstream file | Rust file | Status | Types | Members | Notes |
 |---|---|---|---|---|---|
 | `AndroidDispatcherImpl.cs` | `android_dispatcher_impl.rs` | present | 1/1 | 11/11 |  |
-| `AndroidPlatform.cs` | `android_platform.rs` | partial | 4/4 | 9/10 |  |
+| `AndroidPlatform.cs` | `android_platform.rs` | present | 4/4 | 10/10 |  |
 | `AndroidRuntimePlatform.cs` | `android_runtime_platform.rs` | present | 2/2 | 3/3 |  |
 | `AndroidViewControlHandle.cs` | `android_view_control_handle.rs` | present | 1/1 | 4/4 |  |
 | `ApplicationLifetime.cs` | `application_lifetime.rs` | present | 1/1 | 2/2 |  |
 | `AvaloniaAccessHelper.cs` | `ferro_access_helper.rs` | present | 1/1 | 5/5 |  |
-| `AvaloniaActivity.cs` | `ferro_activity.rs` | partial | 1/1 | 17/19 |  |
-| `AvaloniaAndroidApplication.cs` | `ferro_android_application.rs` | partial | 1/2 | 1/6 |  |
-| `AvaloniaMainActivity.cs` | `ferro_main_activity.rs` | partial | 1/1 | 2/3 |  |
-| `AvaloniaView.Input.cs` | `ferro_view_input.rs` | partial | 1/1 | 3/7 |  |
-| `AvaloniaView.cs` | `ferro_view.rs` | partial | 1/1 | 6/10 |  |
+| `AvaloniaActivity.cs` | `ferro_activity.rs` | present | 1/1 | 19/19 |  |
+| `AvaloniaAndroidApplication.cs` | `ferro_android_application.rs` | present | 1/2 (1 waived) | 2/6 (4 waived) |  |
+| `AvaloniaMainActivity.cs` | `ferro_main_activity.rs` | present | 1/1 | 3/3 |  |
+| `AvaloniaView.Input.cs` | `ferro_view_input.rs` | present | 1/1 | 6/7 (1 waived) |  |
+| `AvaloniaView.cs` | `ferro_view.rs` | present | 1/1 | 9/10 (1 waived) |  |
 | `BackPressedCallback.cs` | `back_pressed_callback.rs` | present | 1/1 | 2/2 |  |
 | `ChoreographerTimer.cs` | `choreographer_timer.rs` | present | 1/1 | 3/3 |  |
 | `CursorFactory.cs` | `cursor_factory.rs` | present | 1/1 | 2/2 |  |
@@ -58,219 +58,56 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 | `PlatformIconLoader.cs` | `platform_icon_loader.rs` | present | 2/2 | 5/5 |  |
 | `Stubs.cs` | `stubs.rs` | present | 3/3 | 10/10 |  |
 
-<details><summary><code>AndroidPlatform.cs</code> - 1 missing</summary>
-
-- `AndroidPlatform` (class): 1 missing
-  - `static readonly AndroidPlatform Instance`
-
-</details>
-
-<details><summary><code>AvaloniaActivity.cs</code> - 2 missing</summary>
-
-- `AvaloniaActivity` (class): 2 missing
-  - `override void OnNewIntent(Intent? intent)` *(protected)*
-  - `virtual void InitializeAvaloniaView(object? initialContent)` *(private protected)*
-
-</details>
-
-<details><summary><code>AvaloniaAndroidApplication.cs</code> - 6 missing</summary>
-
-- `IAndroidApplication` (interface, internal): **type missing** (1 members)
-- `AvaloniaAndroidApplication<TApp>` (class): 4 missing
-  - `ApplicationLifetime? IAndroidApplication.Lifetime { get; set; }` *(explicit; getter `lifetime` found, setter `set_lifetime` missing)*
-  - `AvaloniaAndroidApplication(nint javaReference, JniHandleOwnership transfer)` *(protected)*
-  - `virtual AppBuilder CreateAppBuilder()` *(protected)*
-  - `virtual AppBuilder CustomizeAppBuilder(AppBuilder builder)` *(protected)*
-
-</details>
-
-<details><summary><code>AvaloniaMainActivity.cs</code> - 1 missing</summary>
-
-- `AvaloniaMainActivity` (class): 1 missing
-  - `override void InitializeAvaloniaView(object? initialContent)` *(private protected)*
-
-</details>
-
-<details><summary><code>AvaloniaView.Input.cs</code> - 4 missing</summary>
-
-- `AvaloniaView` (class) in `ferro_view.rs`: 4 missing
-  - `void IInitEditorInfo.InitEditorInfo(Func<TopLevelImpl, EditorInfo, IInputConnection> init)` *(explicit)*
-  - `override bool DispatchHoverEvent(MotionEvent? e)` *(protected)*
-  - `override bool DispatchGenericPointerEvent(MotionEvent? e)` *(protected)*
-  - `override bool DispatchTouchEvent(MotionEvent? e)`
-
-</details>
-
-<details><summary><code>AvaloniaView.cs</code> - 4 missing</summary>
-
-- `AvaloniaView` (class): 4 missing
-  - `override void OnAttachedToWindow()` *(protected)*
-  - `override void OnVisibilityAggregated(bool isVisible)`
-  - `void OnVisibilityChanged(bool isVisible)` *(internal; 1 of 2 overloads found)*
-  - `override void OnConfigurationChanged(Configuration? newConfig)` *(protected)*
-
-</details>
-
-### `Automation` - files 9/9, types 9/10, members 30/33
+### `Automation` - files 9/9, types 9/10 (1 waived), members 30/33 (3 waived)
 
 | Upstream file | Rust file | Status | Types | Members | Notes |
 |---|---|---|---|---|---|
 | `ExpandCollapseNodeInfoProvider.cs` | `automation/expand_collapse_node_info_provider.rs` | present | 1/1 | 3/3 |  |
 | `INodeInfoProvider.cs` | `automation/i_node_info_provider.rs` | present | 1/1 | 3/3 |  |
 | `InvokeNodeInfoProvider.cs` | `automation/invoke_node_info_provider.rs` | present | 1/1 | 3/3 |  |
-| `NodeInfoProvider.cs` | `automation/node_info_provider.rs` | partial | 1/2 | 5/8 |  |
+| `NodeInfoProvider.cs` | `automation/node_info_provider.rs` | present | 1/2 (1 waived) | 5/8 (3 waived) |  |
 | `RangeValueNodeInfoProvider.cs` | `automation/range_value_node_info_provider.rs` | present | 1/1 | 3/3 |  |
 | `ScrollNodeInfoProvider.cs` | `automation/scroll_node_info_provider.rs` | present | 1/1 | 3/3 |  |
 | `SelectionItemNodeInfoProvider.cs` | `automation/selection_item_node_info_provider.rs` | present | 1/1 | 3/3 |  |
 | `ToggleNodeInfoProvider.cs` | `automation/toggle_node_info_provider.rs` | present | 1/1 | 3/3 |  |
 | `ValueNodeInfoProvider.cs` | `automation/value_node_info_provider.rs` | present | 1/1 | 4/4 |  |
 
-<details><summary><code>NodeInfoProvider.cs</code> - 4 missing</summary>
-
-- `NodeInfoProviderInitializer` (delegate, internal): **type missing** (0 members)
-- `NodeInfoProvider<T>` (class): 3 missing
-  - `virtual void PeerPropertyChanged(object? sender, AutomationPropertyChangedEventArgs e)` *(protected)*
-  - `abstract bool PerformNodeAction(int action, Bundle? arguments)`
-  - `abstract void PopulateNodeInfo(AccessibilityNodeInfoCompat nodeInfo)`
-
-</details>
-
-### `Platform` - files 13/13, types 15/15, members 64/68
+### `Platform` - files 13/13, types 15/15, members 65/68 (3 waived)
 
 | Upstream file | Rust file | Status | Types | Members | Notes |
 |---|---|---|---|---|---|
 | `AndroidActivatableLifetime.cs` | `platform/android_activatable_lifetime.rs` | present | 1/1 | 3/3 |  |
 | `AndroidDataFormatHelper.cs` | `platform/android_data_format_helper.rs` | present | 1/1 | 2/2 |  |
-| `AndroidInsetsManager.cs` | `platform/android_insets_manager.rs` | partial | 2/2 | 17/19 |  |
+| `AndroidInsetsManager.cs` | `platform/android_insets_manager.rs` | present | 2/2 | 18/19 (1 waived) |  |
 | `AndroidLauncher.cs` | `platform/android_launcher.rs` | present | 1/1 | 3/3 |  |
 | `AndroidNativeControlHostImpl.cs` | `platform/android_native_control_host_impl.rs` | present | 1/1 | 5/5 |  |
 | `AndroidPlatformFeedback.cs` | `platform/android_platform_feedback.rs` | present | 1/1 | 2/2 |  |
 | `AndroidPlatformSettings.cs` | `platform/android_platform_settings.rs` | present | 1/1 | 7/7 |  |
-| `AndroidScreens.cs` | `platform/android_screens.rs` | partial | 2/2 | 9/10 |  |
+| `AndroidScreens.cs` | `platform/android_screens.rs` | present | 2/2 | 9/10 (1 waived) |  |
 | `AndroidSystemNavigationManager.cs` | `platform/android_system_navigation_manager.rs` | present | 1/1 | 3/3 |  |
 | `ClipDataItemToDataTransferItemWrapper.cs` | `platform/clip_data_item_to_data_transfer_item_wrapper.rs` | present | 1/1 | 3/3 |  |
-| `ClipDataToDataTransferWrapper.cs` | `platform/clip_data_to_data_transfer_wrapper.rs` | partial | 1/1 | 4/5 |  |
+| `ClipDataToDataTransferWrapper.cs` | `platform/clip_data_to_data_transfer_wrapper.rs` | present | 1/1 | 4/5 (1 waived) |  |
 | `ClipboardImpl.cs` | `platform/clipboard_impl.rs` | present | 1/1 | 4/4 |  |
 | `PlatformSupport.cs` | `platform/platform_support.rs` | present | 1/1 | 2/2 |  |
 
-<details><summary><code>AndroidInsetsManager.cs</code> - 2 missing</summary>
-
-- `AndroidInsetsManager` (class): 2 missing
-  - `override WindowInsetsAnimationCompat.BoundsCompat? OnStart(WindowInsetsAnimationCompat? animation, WindowIn...`
-  - `override WindowInsetsCompat? OnProgress(WindowInsetsCompat? insets, IList<WindowInsetsAnimationCompat>? run...`
-
-</details>
-
-<details><summary><code>AndroidScreens.cs</code> - 1 missing</summary>
-
-- `AndroidScreens` (class): 1 missing
-  - `void Dispose()`
-
-</details>
-
-<details><summary><code>ClipDataToDataTransferWrapper.cs</code> - 1 missing</summary>
-
-- `ClipDataToDataTransferWrapper` (class): 1 missing
-  - `Context? Context { get; }`
-
-</details>
-
-### `Platform/Input` - files 5/5, types 7/15, members 57/85
+### `Platform/Input` - files 5/5, types 15/15, members 72/85 (13 waived)
 
 | Upstream file | Rust file | Status | Types | Members | Notes |
 |---|---|---|---|---|---|
-| `AndroidInputMethod.cs` | `platform/input/android_input_method.rs` | partial | 3/3 | 17/22 |  |
+| `AndroidInputMethod.cs` | `platform/input/android_input_method.rs` | present | 3/3 | 17/22 (5 waived) |  |
 | `AndroidKeyboardDevice.cs` | `platform/input/android_keyboard_device.rs` | present | 1/1 | 1/1 |  |
-| `AvaloniaInputConnection.cs` | `platform/input/ferro_input_connection.rs` | partial | 1/1 | 27/35 |  |
-| `EditCommand.cs` | `platform/input/edit_command.rs` | partial | 1/9 | 1/16 |  |
+| `AvaloniaInputConnection.cs` | `platform/input/ferro_input_connection.rs` | present | 1/1 | 27/35 (8 waived) |  |
+| `EditCommand.cs` | `platform/input/edit_command.rs` | present | 9/9 | 16/16 | renamed: the abstract command and its eight subclasses are one enumeration, `EditCommand`, with a variant per class: the constructor of a class is the function of the enumeration named after it (`EditCommand::selection`, ...), and `apply` matches the variant |
 | `TextEditBuffer.cs` | `platform/input/text_edit_buffer.rs` | present | 1/1 | 11/11 |  |
 
-<details><summary><code>AndroidInputMethod.cs</code> - 5 missing</summary>
-
-- `IAndroidInputMethod` (interface) in `platform/input/text_edit_buffer.rs`: 2 missing
-  - `View View { get; }`
-  - `InputMethodManager IMM { get; }`
-- `AndroidInputMethod<TView>` (class): 3 missing
-  - `View View { get; }`
-  - `bool IsActive { get; }`
-  - `InputMethodManager IMM { get; }`
-
-</details>
-
-<details><summary><code>AvaloniaInputConnection.cs</code> - 8 missing</summary>
-
-- `AvaloniaInputConnection` (class): 8 missing
-  - `Handler? Handler { get; }`
-  - `bool ClearMetaKeyStates([GeneratedEnum] MetaKeyStates states)`
-  - `bool CommitCompletion(CompletionInfo? text)`
-  - `bool CommitContent(InputContentInfo inputContentInfo, [GeneratedEnum] InputContentFlags flags, Bundle? opts)`
-  - `bool CommitCorrection(CorrectionInfo? correctionInfo)`
-  - `bool PerformPrivateCommand(string? action, Bundle? data)`
-  - `bool ReportFullscreenMode(bool enabled)`
-  - `bool RequestCursorUpdates(int cursorUpdateMode)`
-
-</details>
-
-<details><summary><code>EditCommand.cs</code> - 23 missing</summary>
-
-- `SelectionCommand` (class, internal): **type missing** (2 members)
-- `CompositionRegionCommand` (class, internal): **type missing** (2 members)
-- `DeleteRegionCommand` (class, internal): **type missing** (2 members)
-- `DeleteRegionInCodePointsCommand` (class, internal): **type missing** (2 members)
-- `CompositionTextCommand` (class, internal): **type missing** (2 members)
-- `CommitTextCommand` (class, internal): **type missing** (2 members)
-- `FinishComposingCommand` (class, internal): **type missing** (1 members)
-- `KeyEventCommand` (class, internal): **type missing** (2 members)
-
-</details>
-
-### `Platform/SkiaPlatform` - files 4/4, types 5/7, members 56/83
+### `Platform/SkiaPlatform` - files 4/4, types 7/7, members 68/83 (15 waived)
 
 | Upstream file | Rust file | Status | Types | Members | Notes |
 |---|---|---|---|---|---|
-| `AndroidFramebuffer.cs` | `platform/skia_platform/android_framebuffer.rs` | partial | 2/4 | 7/29 |  |
+| `AndroidFramebuffer.cs` | `platform/skia_platform/android_framebuffer.rs`, `interop/ndk.rs` | present | 4/4 | 19/29 (10 waived) | merged: the declarations of the NDK of the file (`ANativeWindow_*`, `AChoreographer_*`, `ARect`, `ANativeWindow_Buffer`) are in interop/ndk.rs, the one module that calls the NDK, behind `NativeWindow`, `LockedBuffer` and `Choreographer` |
 | `FramebufferManager.cs` | `platform/skia_platform/framebuffer_manager.rs` | present | 1/1 | 3/3 |  |
-| `InvalidationAwareSurfaceView.cs` | `platform/skia_platform/invalidation_aware_surface_view.rs` | partial | 1/1 | 11/13 |  |
-| `TopLevelImpl.cs` | `platform/skia_platform/top_level_impl.rs` | partial | 1/1 | 35/38 |  |
-
-<details><summary><code>AndroidFramebuffer.cs</code> - 24 missing</summary>
-
-- `AndroidFramebuffer` (class): 10 missing
-  - `IntPtr Address { get; set; }` *(getter `address` found, setter `set_address` missing)*
-  - `static IntPtr ANativeWindow_fromSurface(IntPtr jniEnv, IntPtr handle)` *(internal)*
-  - `static int ANativeWindow_getWidth(IntPtr window)` *(internal)*
-  - `static int ANativeWindow_getHeight(IntPtr window)` *(internal)*
-  - `static void ANativeWindow_release(IntPtr window)` *(internal)*
-  - `static void ANativeWindow_unlockAndPost(IntPtr window)` *(internal)*
-  - `static IntPtr AChoreographer_getInstance()` *(internal)*
-  - `static void AChoreographer_postFrameCallback(IntPtr choreographer, delegate* unmanaged<int, IntPtr, void> c...` *(internal)*
-  - `static void AChoreographer_postFrameCallback64(IntPtr choreographer, delegate* unmanaged<long, IntPtr, void...` *(internal)*
-  - `static int ANativeWindow_lock(IntPtr window, ANativeWindow_Buffer* outBuffer, ARect* inOutDirtyBounds)` *(internal)*
-- `AndroidFramebuffer.AndroidPixelFormat` (enum): 3 missing
-  - `WINDOW_FORMAT_RGBA_8888 = 1`
-  - `WINDOW_FORMAT_RGBX_8888 = 2`
-  - `WINDOW_FORMAT_RGB_565 = 4`
-- `AndroidFramebuffer.ARect` (struct, internal): **type missing** (4 members)
-- `AndroidFramebuffer.ANativeWindow_Buffer` (struct, internal): **type missing** (5 members)
-
-</details>
-
-<details><summary><code>InvalidationAwareSurfaceView.cs</code> - 2 missing</summary>
-
-- `InvalidationAwareSurfaceView` (class): 2 missing
-  - `IntPtr IPlatformHandle.Handle { get; }` *(explicit)*
-  - `string IPlatformHandle.HandleDescriptor { get; }` *(explicit)*
-
-</details>
-
-<details><summary><code>TopLevelImpl.cs</code> - 3 missing</summary>
-
-- `TopLevelImpl` (class): 3 missing
-  - `bool EglGlPlatformSurface.IEglWindowGlPlatformSurfaceInfoWithWaitPolicy.SkipWaits { get; }` *(explicit)*
-  - `PixelSize EglGlPlatformSurface.IEglWindowGlPlatformSurfaceInfo.Size { get; }` *(explicit)*
-  - `double EglGlPlatformSurface.IEglWindowGlPlatformSurfaceInfo.Scaling { get; }` *(explicit)*
-
-</details>
+| `InvalidationAwareSurfaceView.cs` | `platform/skia_platform/invalidation_aware_surface_view.rs` | present | 1/1 | 11/13 (2 waived) |  |
+| `TopLevelImpl.cs` | `platform/skia_platform/top_level_impl.rs` | present | 1/1 | 35/38 (3 waived) |  |
 
 ### `Platform/Specific/Helpers` - files 3/3, types 3/3, members 8/8
 
@@ -280,30 +117,12 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 | `AndroidKeyboardEventsHelper.cs` | `platform/specific/helpers/android_keyboard_events_helper.rs` | present | 1/1 | 4/4 |  |
 | `AndroidMotionEventsHelper.cs` | `platform/specific/helpers/android_motion_events_helper.rs` | present | 1/1 | 3/3 |  |
 
-### `Platform/Storage` - files 2/2, types 4/5, members 39/50
+### `Platform/Storage` - files 2/2, types 5/5, members 41/50 (9 waived)
 
 | Upstream file | Rust file | Status | Types | Members | Notes |
 |---|---|---|---|---|---|
-| `AndroidStorageItem.cs` | `platform/storage/android_storage_item.rs` | partial | 3/4 | 24/35 |  |
+| `AndroidStorageItem.cs` | `platform/storage/android_storage_item.rs` | present | 4/4 | 26/35 (9 waived) | renamed: WellKnownAndroidStorageFolder, a folder that only replaces the name, is the folder with a name of its own (`AndroidStorageFolder::new_well_known`, the field `name`) |
 | `AndroidStorageProvider.cs` | `platform/storage/android_storage_provider.rs` | present | 1/1 | 15/15 |  |
-
-<details><summary><code>AndroidStorageItem.cs</code> - 12 missing</summary>
-
-- `AndroidStorageItem` (class): 3 missing
-  - `abstract Task<StorageItemProperties> GetBasicPropertiesAsync()`
-  - `abstract Task DeleteAsync()`
-  - `abstract Task<IStorageItem?> MoveAsync(IStorageFolder destination)`
-- `AndroidStorageFolder` (class): 3 missing
-  - `override async Task DeleteAsync()`
-  - `override Task<StorageItemProperties> GetBasicPropertiesAsync()`
-  - `override async Task<IStorageItem?> MoveAsync(IStorageFolder destination)`
-- `WellKnownAndroidStorageFolder` (class, internal): **type missing** (2 members)
-- `AndroidStorageFile` (class): 3 missing
-  - `override Task<StorageItemProperties> GetBasicPropertiesAsync()`
-  - `override async Task DeleteAsync()`
-  - `override async Task<IStorageItem?> MoveAsync(IStorageFolder destination)`
-
-</details>
 
 ### `Platform/Vulkan` - files 2/2, types 4/4, members 6/10 (4 waived)
 
@@ -324,7 +143,6 @@ Rust sources of this crate that no upstream file maps to. Give each a reason in 
 | `interop/java.rs` | **unmapped** | `Attachment`, `JavaClass`, `JavaLocal`, `JavaObject`, `JavaRef`, `JavaValue`, `NativeMethod`, `Returned`, `Target` |
 | `interop/listeners.rs` | **unmapped** |  |
 | `interop/natives.rs` | **unmapped** | `JBoolean` |
-| `interop/ndk.rs` | **unmapped** | `AChoreographer`, `ALooper`, `ANativeWindow`, `ANativeWindowBuffer`, `ARect`, `Choreographer`, `FrameCallback`, `FrameCallback64`, `IFrameCallback`, `LockedBuffer`, `NativeWindow`, `PostFrameCallback64` |
 | `interop/signature.rs` | **unmapped** | `JavaType` |
 | `log.rs` | **unmapped** | `LogPriority` |
 
