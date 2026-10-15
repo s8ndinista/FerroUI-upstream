@@ -4101,8 +4101,8 @@ reason = "`X11Screen::new_fall_back`: a screen of the same type without a scalin
 
 # ---------------------------------------------------------------- Avalonia.Wayland
 # The triage of 2026-10-11 (docs/porting/wayland-platform.md, section 12.2): what the scanner does not find because it
-# is written differently. Not waived, and open: the dmabuf swapchain, `ZwpLinuxDmabufV1` of the globals and a display
-# another toolkit owns (stage 3).
+# is written differently. Stage 3 (2026-10-15) ported what was open then: the dmabuf swapchain, `ZwpLinuxDmabufV1` of
+# the globals and a display another toolkit owns.
 
 [[waive]]
 project = "Avalonia.Wayland"
@@ -4276,6 +4276,12 @@ project = "Avalonia.Wayland"
 type = "Avalonia.Wayland.Server.Transient.Rendering.WaylandEglWsiPlatformGraphics"
 member = "*CreateRenderSurface*"
 reason = "the render surfaces of a window are handles made on the UI thread that name the surface of the worker; the GPU backend makes a render target for a surface, not a render surface (DEVIATIONS.md, Wayland platform)"
+
+[[waive]]
+project = "Avalonia.Wayland"
+type = "Avalonia.Wayland.Server.Transient.Rendering.WaylandEglDmaBufPlatformGraphics"
+member = "*CreateRenderSurface*"
+reason = "the render surfaces of a window are handles made on the UI thread that name the surface of the worker (`WaylandWorkerClient::render_surfaces`), and the surface of the swapchain answers as an OpenGL surface only while this backend is bound; the GPU backend makes a render target for a surface, not a render surface (DEVIATIONS.md, Wayland platform)"
 
 [[waive]]
 project = "Avalonia.Wayland"

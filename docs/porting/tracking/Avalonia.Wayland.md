@@ -10,9 +10,9 @@ Generated from upstream commit `17350180c33b063f0e98abbfd19aa3cae63f5d56`. Back 
 | FerroUI | `src/FerroUI.Wayland` (exists) |
 | Crate | `ferroui-wayland` |
 | Phase / priority | 5 - desktop (Linux) / P1 |
-| Files | 74/79 (93.7%), 2 not applicable |
-| Types | 97/121 (13 waived) (89.8%) |
-| Members | 542/780 (168 waived) (88.6%) |
+| Files | 79/79 (100.0%), 2 not applicable |
+| Types | 108/121 (13 waived) (100.0%) |
+| Members | 612/780 (168 waived) (100.0%) |
 | Contracts (interfaces) | 14/14 |
 | Property registrations | 0/0 |
 | Routed events | 0/0 |
@@ -89,7 +89,7 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 | `SnapshotScreensImpl.cs` | `screens/snapshot_screens_impl.rs` | present | 3/3 | 17/17 |  |
 | `WaylandOutputSnapshot.cs` | `screens/wayland_output_snapshot.rs` | present | 2/2 | 1/2 (1 waived) |  |
 
-### `Server` - files 7/7, types 8/8, members 35/47 (11 waived)
+### `Server` - files 7/7, types 8/8, members 36/47 (11 waived)
 
 | Upstream file | Rust file | Status | Types | Members | Notes |
 |---|---|---|---|---|---|
@@ -98,42 +98,20 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 | `WaylandMarshallers.cs` | `server/wayland_marshallers.rs` | present | 1/1 | 1/1 |  |
 | `WaylandPlatformGraphics.cs` | `server/wayland_platform_graphics.rs` | present | 2/2 | 10/11 (1 waived) |  |
 | `WaylandWorker.RenderTimer.cs` | `server/wayland_worker_render_timer.rs` | present | 1/1 | 3/3 |  |
-| `WaylandWorker.cs` | `server/wayland_worker.rs` | partial | 1/1 | 6/16 (9 waived) |  |
+| `WaylandWorker.cs` | `server/wayland_worker.rs` | present | 1/1 | 7/16 (9 waived) |  |
 | `WaylandWorkerClient.cs` | `server/wayland_worker_client.rs` | present | 1/1 | 11/12 (1 waived) |  |
 
-<details><summary><code>WaylandWorker.cs</code> - 1 missing</summary>
-
-- `WaylandWorker` (class): 1 missing
-  - `void Start(WaylandPlatformOptions options, WlDisplay foreignDisplay, WaylandOutputsSinkProxy? outputsSink =...` *(1 of 2 overloads found)*
-  - waived (`WaylandWorkerClient::post_with_commit`: a command posted with a commit goes through the compositor of the framework, an object of the UI thread): `PostWithCommit`
-  - waived (one `probe`, whose result is the connection or the error): `Probe`
-  - waived (the compositor of the framework, the queue of the raw input and the client are objects of the UI thread and belong to `WaylandWorkerClient` (`compositor`, `input_dispatch_queue`), which is made with the worker): `InputDispatchQueue`, `Compositor`, `Client`
-  - waived (the overload without a result is `invoke_oob_async` with the unit type): `InvokeOobAsync`
-  - waived (the persistent objects are kept by kind and by number: `WaylandWorkerThread::register_top_level`, `register_popup`, `register_standard_cursor`, `register_bitmap_cursor`, `unregister_surface`, `destroy_cursor`): `RegisterPersistentObject`, `UnregisterPersistentObject`
-  - waived (the worker of the port is two types (docs/porting/wayland-platform.md, section 4.2): the globals are a field of the state of the worker thread (`WaylandWorkerState::globals`)): `Globals`
-
-</details>
-
-### `Server/Interop` - files 4/5, types 4/14 (6 waived), members 14/98 (46 waived)
+### `Server/Interop` - files 5/5, types 8/14 (6 waived), members 53/98 (45 waived)
 
 | Upstream file | Rust file | Status | Types | Members | Notes |
 |---|---|---|---|---|---|
-| `DrmGbmUnsafeNativeMethods.cs` | `server/interop/drm_gbm_unsafe_native_methods.rs` | missing | 0/4 | 0/37 |  |
+| `DrmGbmUnsafeNativeMethods.cs` | `server/interop/drm_gbm_unsafe_native_methods.rs` | present | 4/4 | 37/37 |  |
 | `Pipe2Stream.cs` | `server/interop/pipe2_stream.rs` | present | 1/1 | 1/1 |  |
 | `UnsafeNativeMethods.cs` | `server/interop/unsafe_native_methods.rs` | present | 0/6 (6 waived) | 0/42 (42 waived) | replaced: the platform invokes of the C library and of `libwayland-cursor` with their structures and constants (`pollfd`, `PollEvents`, `Errno`, `wl_cursor`, `wl_cursor_image`): the declarations are those of the crate `libc`, wrapped here in safe functions over owned descriptors and mappings (`pipe2_nonblocking`, `poll_two`, `memfd_of_length`, `MemoryMapping`), and the cursor themes are read by the crate `wayland-cursor` (docs/porting/wayland-platform.md, sections 2.1 and 2.3) |
 | `WakeupFd.cs` | `server/interop/wakeup_fd.rs` | present | 1/1 | 4/6 (2 waived) |  |
-| `WaylandConnection.cs` | `server/interop/wayland_connection.rs` | partial | 2/2 | 9/12 (2 waived) |  |
+| `WaylandConnection.cs` | `server/interop/wayland_connection.rs` | present | 2/2 | 11/12 (1 waived) |  |
 | `WaylandEglNativeMethods.cs` | - | n/a | - | - | not-applicable: the three platform invokes of `libwayland-egl` (`wl_egl_window_create`, `_resize`, `_destroy`): the declarations are those of the crate `wayland-egl`, used by `server/transient/rendering/wayland_egl_wsi_surface.rs` (docs/porting/wayland-platform.md, section 2.1) |
 | `XkbCommonNativeMethods.cs` | - | n/a | - | - | not-applicable: the platform invokes of `libxkbcommon` and their constants: the declarations are those of the crate `xkbcommon-dl`, which opens the library at run time; the four classes over them (`XkbContext`, `XkbCommonKeymap`, `XkbComposeTable`, `XkbComposeState`) are ported (docs/porting/wayland-platform.md, section 2.2) |
-
-<details><summary><code>WaylandConnection.cs</code> - 1 missing</summary>
-
-- `WaylandConnection` (class): 1 missing
-  - `WaylandConnection(WlDisplay foreignDisplay)` *(1 of 3 constructors found)*
-  - waived (`WaylandConnection::connect_to_fd`): `.ctor`
-  - waived (one `dispatch_queue_or_wakeup`: a connection of the port has one queue): `DispatchQueueOrWakeup`
-
-</details>
 
 ### `Server/Persistent` - files 13/13, types 23/26 (3 waived), members 152/190 (38 waived)
 
@@ -153,27 +131,18 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 | `XdgPopupConfigureBatch.cs` | `server/persistent/xdg_popup_configure_batch.rs` | present | 1/1 | 5/5 |  |
 | `XdgPopupPositionerParams.cs` | `server/persistent/xdg_popup_positioner_params.rs` | present | 1/1 | 0/1 (1 waived) |  |
 
-### `Server/Transient` - files 8/8, types 10/10, members 78/84 (5 waived)
+### `Server/Transient` - files 8/8, types 10/10, members 79/84 (5 waived)
 
 | Upstream file | Rust file | Status | Types | Members | Notes |
 |---|---|---|---|---|---|
 | `IWaylandTextInputV3Events.cs` | `server/transient/i_wayland_text_input_v3_events.rs` | present | 1/1 | 1/1 |  |
 | `WaylandCursorManager.cs` | `server/transient/wayland_cursor_manager.rs` | present | 2/2 | 3/4 (1 waived) |  |
-| `WaylandGlobals.cs` | `server/transient/wayland_globals.rs` | partial | 1/1 | 19/22 (2 waived) |  |
+| `WaylandGlobals.cs` | `server/transient/wayland_globals.rs` | present | 1/1 | 20/22 (2 waived) |  |
 | `WaylandInputDispatcher.Keyboard.cs` | `server/transient/wayland_input_dispatcher_keyboard.rs` | present | 1/1 | 0/0 |  |
 | `WaylandInputDispatcher.cs` | `server/transient/wayland_input_dispatcher.rs` | present | 1/1 | 11/11 |  |
 | `WaylandOutputsTracker.cs` | `server/transient/wayland_outputs_tracker.rs` | present | 2/2 | 30/31 (1 waived) |  |
 | `WaylandTextInputV3.cs` | `server/transient/wayland_text_input_v3.rs` | present | 1/1 | 12/12 |  |
 | `XdgToplevelExport.cs` | `server/transient/xdg_toplevel_export.rs` | present | 1/1 | 2/3 (1 waived) |  |
-
-<details><summary><code>WaylandGlobals.cs</code> - 1 missing</summary>
-
-- `WaylandGlobals` (class): 1 missing
-  - `ZwpLinuxDmabufV1? LinuxDmabuf { get; }`
-  - waived (the globals keep the number of their connection (`connection_id`) and the handle of its queue; the connection is a field of the worker thread beside the state): `Connection`
-  - waived (the one subscriber of the event is the outputs tracker: the `Dispatch` implementation of the registry calls `WaylandOutputsTracker::on_global_removed` and the input dispatcher directly): `GlobalRemoved`
-
-</details>
 
 ### `Server/Transient/Clipboard` - files 4/4, types 4/7 (3 waived), members 45/63 (18 waived)
 
@@ -184,15 +153,15 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 | `WaylandDataSource.cs` | `server/transient/clipboard/wayland_data_source.rs` | present | 1/2 (1 waived) | 10/17 (7 waived) |  |
 | `WaylandOfferCookie.cs` | `server/transient/clipboard/wayland_offer_cookie.rs` | present | 1/1 | 6/6 |  |
 
-### `Server/Transient/Rendering` - files 4/8, types 4/11, members 16/48 (2 waived)
+### `Server/Transient/Rendering` - files 8/8, types 11/11, members 45/48 (3 waived)
 
 | Upstream file | Rust file | Status | Types | Members | Notes |
 |---|---|---|---|---|---|
 | `IWaylandFramebufferSurface.cs` | `server/transient/rendering/i_wayland_framebuffer_surface.rs` | present | 1/1 | 6/7 (1 waived) |  |
-| `WaylandDmabufFeedback.cs` | `server/transient/rendering/wayland_dmabuf_feedback.rs` | missing | 0/4 | 0/17 |  |
-| `WaylandEglDisplay.cs` | `server/transient/rendering/wayland_egl_display.rs` | missing | 0/1 | 0/5 |  |
-| `WaylandEglDmaBufPlatformGraphics.cs` | `server/transient/rendering/wayland_egl_dma_buf_platform_graphics.rs` | missing | 0/1 | 0/5 |  |
-| `WaylandEglDmaBufSurface.cs` | `server/transient/rendering/wayland_egl_dma_buf_surface.rs` | missing | 0/1 | 0/3 |  |
+| `WaylandDmabufFeedback.cs` | `server/transient/rendering/wayland_dmabuf_feedback.rs` | present | 4/4 | 17/17 |  |
+| `WaylandEglDisplay.cs` | `server/transient/rendering/wayland_egl_display.rs` | present | 1/1 | 5/5 |  |
+| `WaylandEglDmaBufPlatformGraphics.cs` | `server/transient/rendering/wayland_egl_dma_buf_platform_graphics.rs` | present | 1/1 | 4/5 (1 waived) |  |
+| `WaylandEglDmaBufSurface.cs` | `server/transient/rendering/wayland_egl_dma_buf_surface.rs` | present | 1/1 | 3/3 |  |
 | `WaylandEglWsiPlatformGraphics.cs` | `server/transient/rendering/wayland_egl_wsi_platform_graphics.rs` | present | 1/1 | 4/5 (1 waived) |  |
 | `WaylandEglWsiSurface.cs` | `server/transient/rendering/wayland_egl_wsi_surface.rs` | present | 1/1 | 3/3 |  |
 | `WaylandFramebuffer.cs` | `server/transient/rendering/wayland_framebuffer.rs` | present | 1/1 | 3/3 |  |

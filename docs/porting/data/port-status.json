@@ -2,23 +2,23 @@
  "upstreamCommit": "17350180c33b063f0e98abbfd19aa3cae63f5d56",
  "inScope": {
   "files": [
-   2756,
+   2761,
    2775,
    0
   ],
   "types": [
-   3812,
+   3823,
    4327,
    369
   ],
   "members": [
-   29333,
+   29403,
    36113,
    5266
   ]
  },
  "allProjects": {
-  "membersPresent": 29333,
+  "membersPresent": 29403,
   "members": 37391,
   "membersNotApplicable": 1168,
   "membersOutOfScope": 110
@@ -7976,17 +7976,17 @@
    "scope": "in",
    "detail": "full",
    "files": [
-    74,
+    79,
     79,
     0
    ],
    "types": [
-    97,
+    108,
     121,
     13
    ],
    "members": [
-    542,
+    612,
     780,
     168
    ],
@@ -8004,13 +8004,15 @@
    ],
    "notApplicableFiles": 2,
    "matchKinds": {
-    "field": 81,
-    "fn": 417,
+    "const": 5,
+    "field": 95,
+    "fn": 464,
     "free fn": 12,
     "free item": 6,
+    "overload fn": 1,
     "trait": 7,
     "trait fn": 3,
-    "variant": 16
+    "variant": 19
    },
    "presentFiles": {
     "AvaloniaWaylandException.cs": [
@@ -8051,6 +8053,9 @@
     ],
     "Screens/WaylandOutputSnapshot.cs": [
      "screens/wayland_output_snapshot.rs"
+    ],
+    "Server/Interop/DrmGbmUnsafeNativeMethods.cs": [
+     "server/interop/drm_gbm_unsafe_native_methods.rs"
     ],
     "Server/Interop/Pipe2Stream.cs": [
      "server/interop/pipe2_stream.rs"
@@ -8123,6 +8128,18 @@
     ],
     "Server/Transient/Rendering/IWaylandFramebufferSurface.cs": [
      "server/transient/rendering/i_wayland_framebuffer_surface.rs"
+    ],
+    "Server/Transient/Rendering/WaylandDmabufFeedback.cs": [
+     "server/transient/rendering/wayland_dmabuf_feedback.rs"
+    ],
+    "Server/Transient/Rendering/WaylandEglDisplay.cs": [
+     "server/transient/rendering/wayland_egl_display.rs"
+    ],
+    "Server/Transient/Rendering/WaylandEglDmaBufPlatformGraphics.cs": [
+     "server/transient/rendering/wayland_egl_dma_buf_platform_graphics.rs"
+    ],
+    "Server/Transient/Rendering/WaylandEglDmaBufSurface.cs": [
+     "server/transient/rendering/wayland_egl_dma_buf_surface.rs"
     ],
     "Server/Transient/Rendering/WaylandEglWsiPlatformGraphics.cs": [
      "server/transient/rendering/wayland_egl_wsi_platform_graphics.rs"
@@ -10683,5 +10700,12 @@
   }
  ],
  "unusedPathOverrides": [],
- "unusedWaivers": []
+ "unusedWaivers": [
+  {
+   "project": "Avalonia.Wayland",
+   "type": "Avalonia.Wayland.Server.Interop.WaylandConnection",
+   "member": "WaylandConnection(int fd)",
+   "reason": "`WaylandConnection::connect_to_fd`"
+  }
+ ]
 }

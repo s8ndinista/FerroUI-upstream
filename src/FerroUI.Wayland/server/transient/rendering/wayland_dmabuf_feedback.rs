@@ -70,7 +70,7 @@ impl WaylandDmabufFeedback {
 
     /// The listener the feedback object is created with: its user data.
     pub fn listener(self) -> FeedbackListener {
-        FeedbackListener { feedback: Mutex::new(self) }
+        FeedbackListener::new(self)
     }
 
     fn reset_pending_tranche(&mut self) {
@@ -95,6 +95,12 @@ pub struct FeedbackListener {
 }
 
 impl FeedbackListener {
+    /// The listener of a feedback, which it owns from then on (the reference holds a reference
+    /// to the feedback, whose properties it sets).
+    pub fn new(feedback: WaylandDmabufFeedback) -> Self {
+        Self { feedback: Mutex::new(feedback) }
+    }
+
     /// The feedback, as it stands.
     pub fn with_feedback<R>(&self, f: impl FnOnce(&WaylandDmabufFeedback) -> R) -> R {
         f(&self.feedback.lock().unwrap_or_else(PoisonError::into_inner))

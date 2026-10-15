@@ -8,8 +8,8 @@ Generated from upstream commit `17350180c33b063f0e98abbfd19aa3cae63f5d56`. The s
 
 | | Present | Total | Missing | Waived | Not applicable | Out of scope | Share |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| Members of the projects in scope | 29333 | 36113 | 1514 | 5266 | - | - | 95.1% of total less waived |
-| Members of every upstream source project of the extraction | 29333 | 37391 | 1514 | 5266 | 1168 | 110 | 78.4% of total |
+| Members of the projects in scope | 29403 | 36113 | 1444 | 5266 | - | - | 95.3% of total less waived |
+| Members of every upstream source project of the extraction | 29403 | 37391 | 1444 | 5266 | 1168 | 110 | 78.6% of total |
 
 The first row is the headline of the tracking: it leaves out the waived members and everything out of scope. The second row leaves out nothing: every member of every C# project the extraction reads, whether or not the port will ever have it. A member is *present* when an item of the mapped name exists; names are matched, not behaviour.
 
@@ -39,7 +39,7 @@ Files, types and members as present / missing / waived. *n/a* counts the files m
 | [Avalonia.Themes.Fluent](tracking/Avalonia.Themes.Fluent.md) | in | 5 / 0 / 0 | 6 / 0 / 0 | 68 / 0 / 5 | 1 (0) | 93.2% |
 | [Avalonia.Themes.Simple](tracking/Avalonia.Themes.Simple.md) | in | 1 / 0 / 0 | 1 / 0 / 0 | 1 / 0 / 0 | 1 (0) | 100.0% |
 | [Avalonia.Vulkan](tracking/Avalonia.Vulkan.md) | in | 30 / 0 / 0 | 151 / 0 / 0 | 283 / 0 / 1751 | 0 (0) | 13.9% |
-| [Avalonia.Wayland](tracking/Avalonia.Wayland.md) | in | 74 / 5 / 0 | 97 / 11 / 13 | 542 / 70 / 168 | 2 (36) | 66.4% |
+| [Avalonia.Wayland](tracking/Avalonia.Wayland.md) | in | 79 / 0 / 0 | 108 / 0 / 13 | 612 / 0 / 168 | 2 (36) | 75.0% |
 | [Avalonia.X11](tracking/Avalonia.X11.md) | in | 88 / 0 / 0 | 180 / 4 / 107 | 3538 / 278 / 1081 | 0 (0) | 72.2% |
 | [Avalonia.Browser](tracking/Avalonia.Browser.md) | in | 50 / 0 / 0 | 60 / 0 / 2 | 340 / 0 / 88 | 2 (13) | 77.1% |
 | [Avalonia.HarfBuzz](tracking/Avalonia.HarfBuzz.md) | in | 3 / 0 / 0 | 3 / 0 / 0 | 5 / 0 / 3 | 0 (0) | 62.5% |
@@ -248,14 +248,6 @@ Files without a Rust file, types without a Rust type, and members without a Rust
 0 files, 0 types and 1 members missing (0 members of the missing types, 1 members of types that exist).
 
 - **Members of types that exist (1):** `TypeHelper.FindProperty`
-
-### [Avalonia.Wayland](tracking/Avalonia.Wayland.md)
-
-5 files, 11 types and 70 members missing (67 members of the missing types, 3 members of types that exist).
-
-- **Files (5):** `Server/Interop/DrmGbmUnsafeNativeMethods.cs`, `Server/Transient/Rendering/WaylandDmabufFeedback.cs`, `Server/Transient/Rendering/WaylandEglDisplay.cs`, `Server/Transient/Rendering/WaylandEglDmaBufPlatformGraphics.cs`, `Server/Transient/Rendering/WaylandEglDmaBufSurface.cs`
-- **Types (11):** `DmabufFormatModifierPair`, `DmabufTranche`, `DrmDevice`, `DrmGbmUnsafeNativeMethods`, `GbmBoFlags`, `GbmBoHandle`, `WaylandDmabufFeedback`, `WaylandDmabufFeedback.FeedbackListener`, `WaylandEglDisplay`, `WaylandEglDmaBufPlatformGraphics`, `WaylandEglDmaBufSurface`
-- **Members of types that exist (3):** `WaylandConnection..ctor`, `WaylandGlobals.LinuxDmabuf`, `WaylandWorker.Start`
 
 ### [Avalonia.X11](tracking/Avalonia.X11.md)
 
