@@ -4538,6 +4538,8 @@
     "data/model/model_type.rs",
     "diagnostics/perf_counters.rs",
     "element_ref.rs",
+    "ferro_thread_local.rs",
+    "ferro_thread_local/table.rs",
     "i_support_initialize.rs",
     "input/i_command.rs",
     "input/platform/clipboard_error.rs",

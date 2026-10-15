@@ -1610,6 +1610,14 @@ reason = "counterpart of .NET `System.ComponentModel.TypeConverter` and `ITypeDe
 # The object model and the markup metadata, where upstream relies on the CLR, reflection or attributes.
 
 [[rust_only]]
+path = "src/FerroUI.Base/ferro_thread_local.rs"
+reason = "the declaration of thread-local variables: `thread_local!` on every target but Android, where each would take one of the 128 keys of the C library of a process (docs/porting/android-platform.md, section 5.1); thread-static fields of the managed runtime upstream"
+
+[[rust_only]]
+path = "src/FerroUI.Base/ferro_thread_local/table.rs"
+reason = "the table of thread-local variables of a thread on Android behind one key of the C library (docs/porting/android-platform.md, section 5.1); the managed runtime keeps thread-static fields itself upstream"
+
+[[rust_only]]
 path = "src/FerroUI.Base/element_ref.rs"
 reason = "a reference to an element that the holder does not own, held weakly and compared by identity: the value type of properties that point sideways or up the tree (a placement target, the target of a label), a plain object reference upstream"
 
