@@ -142,7 +142,8 @@ pub use uikit::DefaultFerroViewController;
 mod uikit {
     use super::{IFerroViewController, StatusBarStyle, ViewControllerState};
     use crate::extensions::{to_rect, to_size};
-    use ferroui_base::{Rect, Size};
+    use ferroui_base::reactive::IDisposable;
+    use ferroui_base::{Rect, Size, Thickness};
     use objc2::rc::{Retained, Weak};
     use objc2::{define_class, msg_send, DefinedClass, MainThreadMarker, MainThreadOnly};
     use objc2_foundation::NSObjectProtocol;
@@ -230,6 +231,38 @@ mod uikit {
         /// The view controller as the view of the port sees it.
         pub fn controller(&self) -> Rc<dyn IFerroViewController> {
             self.state().clone()
+        }
+    }
+
+    /// The contract of a view controller, which the class implements as the
+    /// reference's does, through its state. The getters of the status bar
+    /// are the values that were set (or the defaults), not the answers to
+    /// UIKit (`preferredStatusBarStyle` and `prefersStatusBarHidden` of the
+    /// class), as in the reference, where the two are implemented
+    /// explicitly.
+    impl IFerroViewController for DefaultFerroViewController {
+        fn preferred_status_bar_style(&self) -> StatusBarStyle {
+            self.state().preferred_status_bar_style()
+        }
+
+        fn set_preferred_status_bar_style(&self, value: StatusBarStyle) {
+            self.state().set_preferred_status_bar_style(value);
+        }
+
+        fn prefers_status_bar_hidden(&self) -> bool {
+            IFerroViewController::prefers_status_bar_hidden(&**self.state())
+        }
+
+        fn set_prefers_status_bar_hidden(&self, value: bool) {
+            self.state().set_prefers_status_bar_hidden(value);
+        }
+
+        fn safe_area_padding(&self) -> Thickness {
+            self.state().safe_area_padding()
+        }
+
+        fn safe_area_padding_changed(&self, handler: Rc<dyn Fn()>) -> Rc<dyn IDisposable> {
+            self.state().safe_area_padding_changed(handler)
         }
     }
 

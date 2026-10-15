@@ -2,6 +2,7 @@
 //! services of the platform.
 
 use std::fmt;
+use std::str::FromStr;
 
 /// Represents the rendering mode for platform graphics.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -21,6 +22,22 @@ impl fmt::Display for IosRenderingMode {
             IosRenderingMode::OpenGl => "OpenGl",
             IosRenderingMode::Metal => "Metal",
         })
+    }
+}
+
+/// The mode of a name, as `Display` writes it, in any case: what parsing
+/// the name of a member of an enumeration does in the reference. An
+/// addition of the port, for an application that reads the modes from its
+/// environment.
+impl FromStr for IosRenderingMode {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.trim() {
+            name if name.eq_ignore_ascii_case("OpenGl") => Ok(IosRenderingMode::OpenGl),
+            name if name.eq_ignore_ascii_case("Metal") => Ok(IosRenderingMode::Metal),
+            name => Err(format!("Requested value '{name}' was not found.")),
+        }
     }
 }
 
@@ -76,6 +93,7 @@ mod uikit {
     use crate::activatable_lifetime::ActivatableLifetime;
     use crate::dispatcher_impl::DispatcherImpl;
     use crate::display_link_timer::DisplayLinkTimer;
+    use crate::eagl::EaglPlatformGraphics;
     use crate::ferro_app_delegate::IFerroAppDelegate;
     use crate::ios_screens::IosScreens;
     use crate::metal::MetalPlatformGraphics;
@@ -132,6 +150,11 @@ mod uikit {
     struct PlatformState {
         options: Option<Rc<IosPlatformOptions>>,
         graphics: Option<Arc<dyn IPlatformGraphics>>,
+        /// The graphics again when they are those of EAGL: what the
+        /// reference finds by testing the type of the graphics.
+        eagl_graphics: Option<Arc<EaglPlatformGraphics>>,
+        /// The rendering mode the graphics are of.
+        rendering_mode: Option<IosRenderingMode>,
         timer: Option<Arc<DisplayLinkTimer>>,
         compositor: Option<Rc<Compositor>>,
         settings: Option<Rc<PlatformSettings>>,
@@ -156,6 +179,19 @@ mod uikit {
         /// The graphics of the platform.
         pub fn graphics() -> Option<Arc<dyn IPlatformGraphics>> {
             STATE.with(|state| state.borrow().graphics.clone())
+        }
+
+        /// The graphics of the platform when they are those of OpenGL ES
+        /// over EAGL.
+        pub(crate) fn eagl_graphics() -> Option<Arc<EaglPlatformGraphics>> {
+            STATE.with(|state| state.borrow().eagl_graphics.clone())
+        }
+
+        /// The rendering mode of the graphics of the platform: the first
+        /// mode of the options that could be applied. An addition of the
+        /// port, for an application that tests itself.
+        pub fn rendering_mode() -> Option<IosRenderingMode> {
+            STATE.with(|state| state.borrow().rendering_mode)
         }
 
         /// The render timer of the platform.
@@ -190,7 +226,7 @@ mod uikit {
             let options =
                 FerroLocator::current().get_service::<IosPlatformOptions>().unwrap_or_default();
 
-            let graphics = Self::initialize_graphics(&options);
+            let (graphics, eagl_graphics, rendering_mode) = Self::initialize_graphics(&options);
             let timer = match Self::timer() {
                 Some(timer) => timer,
                 None => DisplayLinkTimer::new(),
@@ -201,6 +237,8 @@ mod uikit {
                 let mut state = state.borrow_mut();
                 state.options = Some(options);
                 state.graphics = Some(graphics.clone());
+                state.eagl_graphics = eagl_graphics;
+                state.rendering_mode = Some(rendering_mode);
                 state.timer = Some(timer.clone());
             });
 
@@ -265,15 +303,21 @@ mod uikit {
             locator.bind_to_self(compositor);
         }
 
-        fn initialize_graphics(opts: &IosPlatformOptions) -> Arc<dyn IPlatformGraphics> {
+        /// The graphics of the first mode of the options that can be
+        /// created, the graphics of EAGL again when they are those, and the
+        /// mode.
+        fn initialize_graphics(
+            opts: &IosPlatformOptions,
+        ) -> (Arc<dyn IPlatformGraphics>, Option<Arc<EaglPlatformGraphics>>, IosRenderingMode) {
             let graphics = initialize_graphics_with(opts, |rendering_mode| match rendering_mode {
-                // Stage 4 of docs/porting/ios-platform.md: OpenGL ES over
-                // an EAGL layer is not built, so the mode counts as one
-                // that could not be created and the next mode is tried.
-                IosRenderingMode::OpenGl => None,
-                IosRenderingMode::Metal => {
-                    MetalPlatformGraphics::try_create().map(|graphics| graphics as Arc<dyn IPlatformGraphics>)
-                }
+                IosRenderingMode::OpenGl => EaglPlatformGraphics::try_create().map(|eagl_graphics| {
+                    let graphics: Arc<dyn IPlatformGraphics> = eagl_graphics.clone();
+                    (graphics, Some(eagl_graphics), rendering_mode)
+                }),
+                IosRenderingMode::Metal => MetalPlatformGraphics::try_create().map(|metal_graphics| {
+                    let graphics: Arc<dyn IPlatformGraphics> = metal_graphics;
+                    (graphics, None, rendering_mode)
+                }),
             });
             match graphics {
                 Ok(graphics) => graphics,
@@ -309,6 +353,17 @@ mod tests {
 
         let graphics = initialize_graphics_with(&IosPlatformOptions::default(), |mode| Some(mode.to_string()));
         assert_eq!(Ok("Metal".to_string()), graphics);
+    }
+
+    #[test]
+    fn a_mode_is_parsed_from_its_name_in_any_case() {
+        assert_eq!(Ok(IosRenderingMode::OpenGl), "OpenGl".parse());
+        assert_eq!(Ok(IosRenderingMode::OpenGl), " opengl ".parse());
+        assert_eq!(Ok(IosRenderingMode::Metal), "METAL".parse());
+        assert_eq!(Err("Requested value 'Vulkan' was not found.".to_string()), "Vulkan".parse::<IosRenderingMode>());
+        for mode in [IosRenderingMode::OpenGl, IosRenderingMode::Metal] {
+            assert_eq!(Ok(mode), mode.to_string().parse());
+        }
     }
 
     #[test]

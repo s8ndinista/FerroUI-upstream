@@ -138,6 +138,7 @@ mod uikit {
     use crate::platform::IosApplicationExtensions;
     use crate::single_view_lifetime::SingleViewLifetime;
     use block2::RcBlock;
+    use ferroui_base::reactive::IDisposable;
     use ferroui_controls::application_lifetimes::{ActivatedEventArgs, ActivationKind, IApplicationLifetime};
     use ferroui_controls::{AppBuilder, NewApplication};
     use objc2::rc::{Allocated, Retained};
@@ -295,6 +296,32 @@ mod uikit {
             }
         }
     );
+
+    impl FerroAppDelegate {
+        /// Creates a delegate, which observes the background and foreground
+        /// notifications of the application from then on. UIKit creates the
+        /// delegate of an application itself, from the name of its class
+        /// (`run_application`); this is for an application that creates
+        /// one.
+        pub fn new(mtm: MainThreadMarker) -> Retained<Self> {
+            // SAFETY: `init` of the class, which sets the instance
+            // variables and calls `init` of the superclass, on an object
+            // that was just allocated.
+            unsafe { msg_send![mtm.alloc::<Self>(), init] }
+        }
+    }
+
+    /// The events of the delegate, which it raises for the activations of
+    /// the application.
+    impl IFerroAppDelegate for FerroAppDelegate {
+        fn activated(&self, handler: Rc<dyn Fn(&ActivatedEventArgs)>) -> Rc<dyn IDisposable> {
+            self.ivars().events.activated(handler)
+        }
+
+        fn deactivated(&self, handler: Rc<dyn Fn(&ActivatedEventArgs)>) -> Rc<dyn IDisposable> {
+            self.ivars().events.deactivated(handler)
+        }
+    }
 
     /// What the scene delegate asks of the application delegate: the
     /// activations a scene is connected with or receives.
