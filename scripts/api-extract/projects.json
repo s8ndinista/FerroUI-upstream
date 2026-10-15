@@ -42,8 +42,8 @@
 
     { "path": "src/Windows/Avalonia.Win32", "detail": "full", "crate": "ferroui-win32", "phase": "1 - desktop (Windows)", "priority": "P0" },
     { "path": "src/Windows/Avalonia.Win32.Automation", "detail": "full", "rust": "src/Windows/FerroUI.Win32/automation", "crate": "ferroui-win32", "phase": "1 - desktop (Windows)", "priority": "P0" },
-    { "path": "src/Windows/Avalonia.Win32.Interoperability", "detail": "types", "scope": "out", "phase": "not started / out of current scope", "priority": "-" },
-    { "path": "src/Windows/Avalonia.WinUI", "detail": "types", "scope": "out", "phase": "not started / out of current scope", "priority": "-" },
+    { "path": "src/Windows/Avalonia.Win32.Interoperability", "detail": "full", "rust": "src/Windows/FerroUI.Win32.Interoperability", "crate": "(none: hosting in Windows Forms, which has no counterpart in Rust; docs/porting/winui.md, section 8)", "phase": "1 - desktop (Windows)", "priority": "-" },
+    { "path": "src/Windows/Avalonia.WinUI", "detail": "full", "crate": "ferroui-winui", "phase": "1 - desktop (Windows)", "priority": "P2" },
     { "path": "src/Avalonia.FreeDesktop", "detail": "full", "crate": "ferroui-freedesktop", "phase": "5 - desktop (Linux)", "priority": "P1" },
     { "path": "src/Avalonia.FreeDesktop.AtSpi", "detail": "full", "rust": "src/FerroUI.FreeDesktop/at_spi", "crate": "ferroui-freedesktop", "phase": "5 - desktop (Linux)", "priority": "P1" },
     { "path": "src/Avalonia.Wayland", "detail": "full", "crate": "ferroui-wayland", "phase": "5 - desktop (Linux)", "priority": "P1" },

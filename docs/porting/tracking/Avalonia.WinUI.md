@@ -9,36 +9,53 @@ Generated from upstream commit `17350180c33b063f0e98abbfd19aa3cae63f5d56`. Back 
 | Upstream | `src/Windows/Avalonia.WinUI` |
 | FerroUI | `src/Windows/FerroUI.WinUI` (exists) |
 | Crate | `ferroui-winui` |
-| Phase / priority | not started / out of current scope / - |
-| Files | 0/15 (0.0%) |
-| Types | 0/16 (0.0%) |
-| Members | 0/88 (0.0%) |
-
-This backend is outside the current porting scope. It is tracked at file and type granularity only; member counts are totals.
+| Phase / priority | 1 - desktop (Windows) / P2 |
+| Files | 15/15 (100.0%) |
+| Types | 16/16 (100.0%) |
+| Members | 88/88 (100.0%) |
+| Contracts (interfaces) | 0/0 |
+| Property registrations | 0/0 |
+| Routed events | 0/0 |
 
 ## Files
 
-### `(project root)` - files 0/5, types 0/6, members 0/23
+### `(project root)` - files 5/5, types 6/6, members 23/23
 
-| Upstream file | Types | Members | Status |
-|---|---|---|---|
-| `AvaloniaSwapChainPanel.cs` | `AvaloniaSwapChainPanel` | 7 | not started |
-| `WinUICursorFactory.cs` | `WinUICursorImpl`, `WinUICursorFactory` | 6 | not started |
-| `WinUIDragSource.cs` | `WinUIDragSource` | 1 | not started |
-| `WinUIKeyInterop.cs` | `WinUIKeyInterop` | 3 | not started |
-| `WinUITextInputMethod.cs` | `WinUITextInputMethod` | 6 | not started |
+| Upstream file | Rust file | Status | Types | Members | Notes |
+|---|---|---|---|---|---|
+| `AvaloniaSwapChainPanel.cs` | `ferro_swap_chain_panel.rs` | present | 1/1 | 7/7 |  |
+| `WinUICursorFactory.cs` | `win_ui_cursor_factory.rs` | present | 2/2 | 6/6 |  |
+| `WinUIDragSource.cs` | `win_ui_drag_source.rs` | present | 1/1 | 1/1 |  |
+| `WinUIKeyInterop.cs` | `win_ui_key_interop.rs` | present | 1/1 | 3/3 |  |
+| `WinUITextInputMethod.cs` | `win_ui_text_input_method.rs` | present | 1/1 | 6/6 |  |
 
-### `Automation` - files 0/10, types 0/10, members 0/65
+### `Automation` - files 10/10, types 10/10, members 65/65
 
-| Upstream file | Types | Members | Status |
-|---|---|---|---|
-| `AvaloniaSwapChainPanelAutomationPeer.cs` | `AvaloniaSwapChainPanelAutomationPeer` | 8 | not started |
-| `AvaloniaToXamlPeerProxy.ExpandCollapse.cs` | `AvaloniaToXamlPeerProxy` | 3 | not started |
-| `AvaloniaToXamlPeerProxy.Invoke.cs` | `AvaloniaToXamlPeerProxy` | 1 | not started |
-| `AvaloniaToXamlPeerProxy.RangeValue.cs` | `AvaloniaToXamlPeerProxy` | 7 | not started |
-| `AvaloniaToXamlPeerProxy.Scroll.cs` | `AvaloniaToXamlPeerProxy` | 9 | not started |
-| `AvaloniaToXamlPeerProxy.Selection.cs` | `AvaloniaToXamlPeerProxy` | 8 | not started |
-| `AvaloniaToXamlPeerProxy.Toggle.cs` | `AvaloniaToXamlPeerProxy` | 2 | not started |
-| `AvaloniaToXamlPeerProxy.Value.cs` | `AvaloniaToXamlPeerProxy` | 3 | not started |
-| `AvaloniaToXamlPeerProxy.cs` | `AvaloniaToXamlPeerProxy` | 23 | not started |
-| `ControlTypeMap.cs` | `ControlTypeMap` | 1 | not started |
+| Upstream file | Rust file | Status | Types | Members | Notes |
+|---|---|---|---|---|---|
+| `AvaloniaSwapChainPanelAutomationPeer.cs` | `automation/ferro_swap_chain_panel_automation_peer.rs` | present | 1/1 | 8/8 |  |
+| `AvaloniaToXamlPeerProxy.ExpandCollapse.cs` | `automation/ferro_to_xaml_peer_proxy_expand_collapse.rs` | present | 1/1 | 3/3 |  |
+| `AvaloniaToXamlPeerProxy.Invoke.cs` | `automation/ferro_to_xaml_peer_proxy_invoke.rs` | present | 1/1 | 1/1 |  |
+| `AvaloniaToXamlPeerProxy.RangeValue.cs` | `automation/ferro_to_xaml_peer_proxy_range_value.rs` | present | 1/1 | 7/7 |  |
+| `AvaloniaToXamlPeerProxy.Scroll.cs` | `automation/ferro_to_xaml_peer_proxy_scroll.rs` | present | 1/1 | 9/9 |  |
+| `AvaloniaToXamlPeerProxy.Selection.cs` | `automation/ferro_to_xaml_peer_proxy_selection.rs` | present | 1/1 | 8/8 |  |
+| `AvaloniaToXamlPeerProxy.Toggle.cs` | `automation/ferro_to_xaml_peer_proxy_toggle.rs` | present | 1/1 | 2/2 |  |
+| `AvaloniaToXamlPeerProxy.Value.cs` | `automation/ferro_to_xaml_peer_proxy_value.rs` | present | 1/1 | 3/3 |  |
+| `AvaloniaToXamlPeerProxy.cs` | `automation/ferro_to_xaml_peer_proxy.rs` | present | 1/1 | 23/23 |  |
+| `ControlTypeMap.cs` | `automation/control_type_map.rs` | present | 1/1 | 1/1 |  |
+
+## Rust-only files
+
+Rust sources of this crate that no upstream file maps to. Give each a reason in `docs/porting/data/path-overrides.toml` (`[[rust_only]]`), or map upstream files to it (`[[map]]`).
+
+| Rust file | Reason | Types defined |
+|---|---|---|
+| `interop/async_operation.rs` | The bindings of the Windows Runtime the integration calls and implements, generated from interop/winui.idl, and what the projections of the runtime of the original provide around them: string handles and activation, composed classes (the outer object of a derived class), delegates, the await of an asynchronous operation, collections and the boxes of delegates passed as objects (docs/porting/winui.md, section 3) | `AsyncOperationFuture`, `AsyncOperationInterface`, `Completion`, `SharedCompletion` |
+| `interop/collections.rs` | The bindings of the Windows Runtime the integration calls and implements, generated from interop/winui.idl, and what the projections of the runtime of the original provide around them: string handles and activation, composed classes (the outer object of a derived class), delegates, the await of an asynchronous operation, collections and the boxes of delegates passed as objects (docs/porting/winui.md, section 3) | `AutomationPeerIterator`, `AutomationPeerVector`, `AutomationPeerVectorView`, `Identity`, `StorageItemIterator`, `StorageItems` |
+| `interop/composable.rs` | The bindings of the Windows Runtime the integration calls and implements, generated from interop/winui.idl, and what the projections of the runtime of the original provide around them: string handles and activation, composed classes (the outer object of a derived class), delegates, the await of an asynchronous operation, collections and the boxes of delegates passed as objects (docs/porting/winui.md, section 3) | `Composed`, `ComposedBase` |
+| `interop/event_handlers.rs` | The bindings of the Windows Runtime the integration calls and implements, generated from interop/winui.idl, and what the projections of the runtime of the original provide around them: string handles and activation, composed classes (the outer object of a derived class), delegates, the await of an asynchronous operation, collections and the boxes of delegates passed as objects (docs/porting/winui.md, section 3) |  |
+| `interop/win_rt.rs` | The bindings of the Windows Runtime the integration calls and implements, generated from interop/winui.idl, and what the projections of the runtime of the original provide around them: string handles and activation, composed classes (the outer object of a derived class), delegates, the await of an asynchronous operation, collections and the boxes of delegates passed as objects (docs/porting/winui.md, section 3) | `AgileComPtr` |
+| `windows_app_sdk.rs` | The bootstrap of the Windows App SDK for an unpackaged process (MddBootstrapInitialize2, WindowsAppRuntime_EnsureIsLoaded), which the build tasks of the SDK generate into a C# application (docs/porting/winui.md, section 3.3) | `MddBootstrapInitialize2`, `MddBootstrapShutdown`, `WindowsAppRuntimeEnsureIsLoaded`, `WindowsAppSdk`, `WindowsAppSdkOptions` |
+| `xaml_application.rs` | Application.Start with a composed Application that overrides OnLaunched, and the window and the grid of the sample's markup: what the XAML compiler generates for a C# application (docs/porting/winui.md, section 3.4) | `ApplicationOuter`, `Launched`, `XamlApplication`, `XamlGrid`, `XamlWindow` |
+
+Tests, examples and build scripts (not scanned): `build.rs`, `interop/interop_tests.rs`.

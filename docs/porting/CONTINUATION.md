@@ -336,6 +336,23 @@ Open:
 2. Whether the Android default should move to the binary with OpenGL ES and Vulkan (one binary for both modes): the emulator runs are green with it in all three modes; the owner's decision; the library grows by about 2 MB.
 3. ~~`VK_SUBOPTIMAL_KHR` on a rotated Android screen~~: fixed (2026-10-15) in `ferroui-vulkan` under the owner's policy of fixing upstream defects: a success at acquire and present, the swap chain recreated before the next frame only when the surface asks for other parameters; the identity transform kept (`vulkan.md`, section 6; `DEVIATIONS.md`, "Vulkan"). The emulator run of the rotation phase with the fix is recorded in `android-platform.md` 10.5 when it has run.
 
+## The WinUI integration (2026-10-15)
+
+Branch `winui` (on `integration-preview2`). [`winui.md`](winui.md) has the design, the bindings, the threads and how it is tested; `DEVIATIONS.md`, "WinUI integration", the differences. In short:
+
+- `src/Windows/FerroUI.WinUI` (`ferroui-winui`, which was a reserved name): the 15 files of `Avalonia.WinUI`, file by file. Tracking: 15 of 15 files, 16 of 16 types, 88 of 88 members. `Avalonia.Win32.Interoperability` (hosting in Windows Forms) is in scope as not applicable.
+- The interfaces of WinUI 3 and of the Windows Runtime it calls are in `interop/winui.idl` for the MicroCom generator, written from the metadata of the Windows App SDK 1.6 by `scripts/winui/winui-idl.py` (it reproduces the file byte for byte; it needs `ikdasm` of Mono and the two packages of nuget.org named in the script). The derived classes of the reference are composed objects: `ferroui_microcom::set_inner` is new for them.
+- The Windows backend: `SwapChainTopLevelImpl`, `SwapChainGlSurface`, `NativeWinRTMethods`, `HStringInterop` and `wnd_proc_guard` are public; the workspace dependency on `ferroui-win32` is without ANGLE (its dependents that want ANGLE ask for it).
+- `samples/ControlGallery.WinUI` (`control-gallery-winui`): the catalog in a WinUI 3 window, with `--smoke` (`winui.md`, section 7.2).
+- Verified: 21 host tests; `cargo check -p ferroui-winui` for `x86_64-pc-windows-msvc` (with the tests) and `aarch64-pc-windows-msvc`; the sample's own sources against stand-ins of the catalog, Skia and HarfBuzz. **Nothing has run on Windows.**
+
+Open, in order:
+
+1. **The first run in the virtual machine** (`winui.md`, section 7.4): `vm-sync.sh <commit>`, then `vm-smoke.ps1 -WinUI -InstallWindowsAppRuntime` (installs the Windows App Runtime 1.6 for ARM64, Microsoft's `windowsappruntimeinstall-arm64.exe` of 1.6.241114003; the owner authorises the install). What a first run shows is listed in `winui.md`, section 9, in the order it would show it.
+2. **The informative step of the `windows` job** (`winui.md`, section 7.3): whether the runner installs the runtime and runs the sample; then either required, or the reason it cannot be recorded and the step removed.
+3. Input, the input method and drag and drop by hand in the machine; the automation tree with a client of UI Automation.
+4. `samples/WinUIEmbedSample` (WinUI controls beside the embedded content).
+
 ## Vulkan: the contracts crate, the Skia GPU and the X11 mode (2026-10-11)
 
 Branch `vulkan` (pull request 185). [`vulkan.md`](vulkan.md) has the design, the feasibility per target and what was verified; `DEVIATIONS.md`, "Vulkan", the differences. In short:

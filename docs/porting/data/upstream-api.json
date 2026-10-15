@@ -440941,9 +440941,11 @@
   {
    "name": "Avalonia.Win32.Interoperability",
    "path": "src/Windows/Avalonia.Win32.Interoperability",
-   "detail": "types",
-   "scope": "out",
-   "phase": "not started / out of current scope",
+   "detail": "full",
+   "scope": "in",
+   "rust": "src/Windows/FerroUI.Win32.Interoperability",
+   "crate": "(none: hosting in Windows Forms, which has no counterpart in Rust; docs/porting/winui.md, section 8)",
+   "phase": "1 - desktop (Windows)",
    "priority": "-",
    "files": [
     {
@@ -440964,7 +440966,124 @@
        "attributes": [
         "ToolboxItem(true)"
        ],
-       "memberCount": 10,
+       "members": [
+        {
+         "kind": "ctor",
+         "name": ".ctor",
+         "accessibility": "public",
+         "line": 31,
+         "params": 0,
+         "signature": "WinFormsAvaloniaControlHost()"
+        },
+        {
+         "kind": "property",
+         "name": "Content",
+         "accessibility": "public",
+         "attributes": [
+          "DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)"
+         ],
+         "line": 62,
+         "type": "AvControl?",
+         "accessors": {
+          "get": "public",
+          "set": "public"
+         },
+         "signature": "AvControl? Content { get; set; }"
+        },
+        {
+         "kind": "method",
+         "name": "OnHandleCreated",
+         "accessibility": "protected",
+         "modifiers": [
+          "override"
+         ],
+         "line": 80,
+         "type": "void",
+         "params": 1,
+         "signature": "override void OnHandleCreated(EventArgs e)"
+        },
+        {
+         "kind": "method",
+         "name": "OnHandleDestroyed",
+         "accessibility": "protected",
+         "modifiers": [
+          "override"
+         ],
+         "line": 102,
+         "type": "void",
+         "params": 1,
+         "signature": "override void OnHandleDestroyed(EventArgs e)"
+        },
+        {
+         "kind": "method",
+         "name": "Dispose",
+         "accessibility": "protected",
+         "modifiers": [
+          "override"
+         ],
+         "line": 112,
+         "type": "void",
+         "params": 1,
+         "signature": "override void Dispose(bool disposing)"
+        },
+        {
+         "kind": "method",
+         "name": "OnGotFocus",
+         "accessibility": "protected",
+         "modifiers": [
+          "override"
+         ],
+         "line": 130,
+         "type": "void",
+         "params": 1,
+         "signature": "override void OnGotFocus(EventArgs e)"
+        },
+        {
+         "kind": "method",
+         "name": "OnResize",
+         "accessibility": "protected",
+         "modifiers": [
+          "override"
+         ],
+         "line": 145,
+         "type": "void",
+         "params": 1,
+         "signature": "override void OnResize(EventArgs e)"
+        },
+        {
+         "kind": "method",
+         "name": "OnPaint",
+         "accessibility": "protected",
+         "modifiers": [
+          "override"
+         ],
+         "line": 152,
+         "type": "void",
+         "params": 1,
+         "signature": "override void OnPaint(PaintEventArgs e)"
+        },
+        {
+         "kind": "method",
+         "name": "IsInputChar",
+         "accessibility": "protected",
+         "modifiers": [
+          "override"
+         ],
+         "line": 172,
+         "type": "bool",
+         "params": 1,
+         "signature": "override bool IsInputChar(char charCode)"
+        },
+        {
+         "kind": "method",
+         "name": "PreFilterMessage",
+         "accessibility": "public",
+         "line": 177,
+         "type": "bool",
+         "params": 1,
+         "signature": "bool PreFilterMessage(ref Message m)"
+        }
+       ],
        "privateMembers": 7
       }
      ]
@@ -440983,7 +441102,17 @@
        "bases": [
         "IMessageFilter"
        ],
-       "memberCount": 1,
+       "members": [
+        {
+         "kind": "method",
+         "name": "PreFilterMessage",
+         "accessibility": "public",
+         "line": 18,
+         "type": "bool",
+         "params": 1,
+         "signature": "bool PreFilterMessage(ref Message m)"
+        }
+       ],
        "privateMembers": 1
       }
      ]
@@ -440993,10 +441122,11 @@
   {
    "name": "Avalonia.WinUI",
    "path": "src/Windows/Avalonia.WinUI",
-   "detail": "types",
-   "scope": "out",
-   "phase": "not started / out of current scope",
-   "priority": "-",
+   "detail": "full",
+   "scope": "in",
+   "crate": "ferroui-winui",
+   "phase": "1 - desktop (Windows)",
+   "priority": "P2",
    "files": [
     {
      "path": "AvaloniaSwapChainPanel.cs",
@@ -441016,7 +441146,84 @@
        "bases": [
         "SwapChainPanel"
        ],
-       "memberCount": 7,
+       "members": [
+        {
+         "kind": "static ctor",
+         "name": ".cctor",
+         "accessibility": "static",
+         "modifiers": [
+          "static"
+         ],
+         "line": 52,
+         "params": 0,
+         "signature": "static AvaloniaSwapChainPanel()"
+        },
+        {
+         "kind": "method",
+         "name": "GetPanelFor",
+         "accessibility": "internal",
+         "modifiers": [
+          "static"
+         ],
+         "line": 64,
+         "type": "AvaloniaSwapChainPanel?",
+         "params": 1,
+         "signature": "static AvaloniaSwapChainPanel? GetPanelFor(global::Avalonia.Platform.ITopLevelImpl impl)"
+        },
+        {
+         "kind": "ctor",
+         "name": ".ctor",
+         "accessibility": "public",
+         "line": 77,
+         "params": 0,
+         "signature": "AvaloniaSwapChainPanel()"
+        },
+        {
+         "kind": "property",
+         "name": "Content",
+         "accessibility": "public",
+         "line": 119,
+         "type": "AvControl?",
+         "accessors": {
+          "get": "public",
+          "set": "public"
+         },
+         "signature": "AvControl? Content { get; set; }"
+        },
+        {
+         "kind": "method",
+         "name": "OnCreateAutomationPeer",
+         "accessibility": "protected",
+         "modifiers": [
+          "override"
+         ],
+         "line": 130,
+         "type": "Microsoft.UI.Xaml.Automation.Peers.AutomationPeer",
+         "params": 0,
+         "signature": "override Microsoft.UI.Xaml.Automation.Peers.AutomationPeer OnCreateAutomationPeer()"
+        },
+        {
+         "kind": "method",
+         "name": "GetEmbeddedRootForAutomation",
+         "accessibility": "internal",
+         "line": 140,
+         "type": "global::Avalonia.Controls.Embedding.EmbeddableControlRoot?",
+         "params": 0,
+         "signature": "global::Avalonia.Controls.Embedding.EmbeddableControlRoot? GetEmbeddedRootForAutomation()"
+        },
+        {
+         "kind": "method",
+         "name": "StartOutgoingDragAsync",
+         "accessibility": "internal",
+         "modifiers": [
+          "async"
+         ],
+         "line": 803,
+         "type": "Task<DragDropEffects>",
+         "params": 2,
+         "signature": "async Task<DragDropEffects> StartOutgoingDragAsync(IDataTransfer data, DragDropEffects allowed)"
+        }
+       ],
        "privateMembers": 59
       }
      ]
@@ -441038,7 +441245,36 @@
        "bases": [
         "ICursorImpl"
        ],
-       "memberCount": 3
+       "members": [
+        {
+         "kind": "ctor",
+         "name": ".ctor",
+         "accessibility": "public",
+         "line": 17,
+         "params": 1,
+         "signature": "WinUICursorImpl(InputCursor? cursor)"
+        },
+        {
+         "kind": "property",
+         "name": "Cursor",
+         "accessibility": "public",
+         "line": 22,
+         "type": "InputCursor?",
+         "accessors": {
+          "get": "public"
+         },
+         "signature": "InputCursor? Cursor { get; }"
+        },
+        {
+         "kind": "method",
+         "name": "Dispose",
+         "accessibility": "public",
+         "line": 24,
+         "type": "void",
+         "params": 0,
+         "signature": "void Dispose()"
+        }
+       ]
       },
       {
        "name": "WinUICursorFactory",
@@ -441053,7 +441289,40 @@
        "bases": [
         "ICursorFactory"
        ],
-       "memberCount": 3,
+       "members": [
+        {
+         "kind": "property",
+         "name": "Instance",
+         "accessibility": "public",
+         "modifiers": [
+          "static"
+         ],
+         "line": 32,
+         "type": "WinUICursorFactory",
+         "accessors": {
+          "get": "public"
+         },
+         "signature": "static WinUICursorFactory Instance { get; }"
+        },
+        {
+         "kind": "method",
+         "name": "GetCursor",
+         "accessibility": "public",
+         "line": 38,
+         "type": "ICursorImpl",
+         "params": 1,
+         "signature": "ICursorImpl GetCursor(StandardCursorType cursorType)"
+        },
+        {
+         "kind": "method",
+         "name": "CreateCursor",
+         "accessibility": "public",
+         "line": 48,
+         "type": "ICursorImpl",
+         "params": 2,
+         "signature": "ICursorImpl CreateCursor(Bitmap cursor, PixelPoint hotSpot)"
+        }
+       ],
        "privateMembers": 3
       }
      ]
@@ -441075,7 +441344,20 @@
        "bases": [
         "IPlatformDragSource"
        ],
-       "memberCount": 1
+       "members": [
+        {
+         "kind": "method",
+         "name": "DoDragDropAsync",
+         "accessibility": "public",
+         "modifiers": [
+          "async"
+         ],
+         "line": 19,
+         "type": "Task<DragDropEffects>",
+         "params": 3,
+         "signature": "async Task<DragDropEffects> DoDragDropAsync(PointerPressedEventArgs triggerEvent, IDataTransfer dataTransfer, DragDropEffects allowedEffects)"
+        }
+       ]
       }
      ]
     },
@@ -441093,7 +441375,44 @@
        "modifiers": [
         "static"
        ],
-       "memberCount": 3,
+       "members": [
+        {
+         "kind": "method",
+         "name": "Resolve",
+         "accessibility": "public",
+         "modifiers": [
+          "static"
+         ],
+         "line": 19,
+         "type": "(Key Key, PhysicalKey PhysicalKey, string? KeySymbol)",
+         "params": 2,
+         "signature": "static (Key Key, PhysicalKey PhysicalKey, string? KeySymbol) Resolve(VirtualKey virtualKey, CorePhysicalKeyStatus status)"
+        },
+        {
+         "kind": "method",
+         "name": "KeyFromVirtualKey",
+         "accessibility": "public",
+         "modifiers": [
+          "static"
+         ],
+         "line": 30,
+         "type": "Key",
+         "params": 1,
+         "signature": "static Key KeyFromVirtualKey(VirtualKey virtualKey)"
+        },
+        {
+         "kind": "method",
+         "name": "ModifiersFromVirtualKeyModifiers",
+         "accessibility": "public",
+         "modifiers": [
+          "static"
+         ],
+         "line": 36,
+         "type": "RawInputModifiers",
+         "params": 1,
+         "signature": "static RawInputModifiers ModifiersFromVirtualKeyModifiers(VirtualKeyModifiers modifiers)"
+        }
+       ],
        "privateMembers": 1
       }
      ]
@@ -441115,7 +441434,61 @@
        "bases": [
         "ITextInputMethodImpl"
        ],
-       "memberCount": 6,
+       "members": [
+        {
+         "kind": "ctor",
+         "name": ".ctor",
+         "accessibility": "public",
+         "line": 36,
+         "params": 4,
+         "signature": "WinUITextInputMethod(AvaloniaSwapChainPanel panel, Func<Action<RawInputEventArgs>?> getInput, Func<IInputRoot?> getInputRoot, Func<IKeyboardDevice?> getKeyboardDevice)"
+        },
+        {
+         "kind": "method",
+         "name": "SetClient",
+         "accessibility": "public",
+         "line": 72,
+         "type": "void",
+         "params": 1,
+         "signature": "void SetClient(TextInputMethodClient? client)"
+        },
+        {
+         "kind": "method",
+         "name": "SetCursorRect",
+         "accessibility": "public",
+         "line": 99,
+         "type": "void",
+         "params": 1,
+         "signature": "void SetCursorRect(Rect rect)"
+        },
+        {
+         "kind": "method",
+         "name": "SetOptions",
+         "accessibility": "public",
+         "line": 105,
+         "type": "void",
+         "params": 1,
+         "signature": "void SetOptions(TextInputOptions options)"
+        },
+        {
+         "kind": "method",
+         "name": "Reset",
+         "accessibility": "public",
+         "line": 121,
+         "type": "void",
+         "params": 0,
+         "signature": "void Reset()"
+        },
+        {
+         "kind": "method",
+         "name": "OnPanelFocusChanged",
+         "accessibility": "public",
+         "line": 130,
+         "type": "void",
+         "params": 1,
+         "signature": "void OnPanelFocusChanged(bool hasFocus)"
+        }
+       ],
        "privateMembers": 32
       }
      ]
@@ -441139,7 +441512,96 @@
        "bases": [
         "FrameworkElementAutomationPeer"
        ],
-       "memberCount": 8,
+       "members": [
+        {
+         "kind": "ctor",
+         "name": ".ctor",
+         "accessibility": "public",
+         "line": 21,
+         "params": 1,
+         "signature": "AvaloniaSwapChainPanelAutomationPeer(AvaloniaSwapChainPanel panel)"
+        },
+        {
+         "kind": "property",
+         "name": "Panel",
+         "accessibility": "internal",
+         "line": 26,
+         "type": "AvaloniaSwapChainPanel",
+         "accessors": {
+          "get": "internal"
+         },
+         "signature": "AvaloniaSwapChainPanel Panel { get; }"
+        },
+        {
+         "kind": "method",
+         "name": "GetClassNameCore",
+         "accessibility": "protected",
+         "modifiers": [
+          "override"
+         ],
+         "line": 28,
+         "type": "string",
+         "params": 0,
+         "signature": "override string GetClassNameCore()"
+        },
+        {
+         "kind": "method",
+         "name": "GetAutomationControlTypeCore",
+         "accessibility": "protected",
+         "modifiers": [
+          "override"
+         ],
+         "line": 30,
+         "type": "AutomationControlType",
+         "params": 0,
+         "signature": "override AutomationControlType GetAutomationControlTypeCore()"
+        },
+        {
+         "kind": "method",
+         "name": "GetChildrenCore",
+         "accessibility": "protected",
+         "modifiers": [
+          "override"
+         ],
+         "line": 32,
+         "type": "IList<XamlAutomationPeer>",
+         "params": 0,
+         "signature": "override IList<XamlAutomationPeer> GetChildrenCore()"
+        },
+        {
+         "kind": "method",
+         "name": "GetFocusedElementCore",
+         "accessibility": "protected",
+         "modifiers": [
+          "override"
+         ],
+         "line": 46,
+         "type": "object",
+         "params": 0,
+         "signature": "override object GetFocusedElementCore()"
+        },
+        {
+         "kind": "method",
+         "name": "GetElementFromPointCore",
+         "accessibility": "protected",
+         "modifiers": [
+          "override"
+         ],
+         "line": 55,
+         "type": "object",
+         "params": 1,
+         "signature": "override object GetElementFromPointCore(XamlPoint point)"
+        },
+        {
+         "kind": "method",
+         "name": "TransformAvaloniaRectToScreen",
+         "accessibility": "internal",
+         "line": 67,
+         "type": "(double x, double y, double width, double height)",
+         "params": 1,
+         "signature": "(double x, double y, double width, double height) TransformAvaloniaRectToScreen(AvRect rect)"
+        }
+       ],
        "privateMembers": 8
       }
      ]
@@ -441163,7 +441625,40 @@
        "bases": [
         "IExpandCollapseProvider"
        ],
-       "memberCount": 3
+       "members": [
+        {
+         "kind": "property",
+         "name": "ExpandCollapseState",
+         "accessibility": "explicit",
+         "line": 10,
+         "type": "ExpandCollapseState",
+         "explicitInterface": "IExpandCollapseProvider",
+         "accessors": {
+          "get": "explicit"
+         },
+         "signature": "ExpandCollapseState IExpandCollapseProvider.ExpandCollapseState { get; }"
+        },
+        {
+         "kind": "method",
+         "name": "Expand",
+         "accessibility": "explicit",
+         "line": 27,
+         "type": "void",
+         "explicitInterface": "IExpandCollapseProvider",
+         "params": 0,
+         "signature": "void IExpandCollapseProvider.Expand()"
+        },
+        {
+         "kind": "method",
+         "name": "Collapse",
+         "accessibility": "explicit",
+         "line": 28,
+         "type": "void",
+         "explicitInterface": "IExpandCollapseProvider",
+         "params": 0,
+         "signature": "void IExpandCollapseProvider.Collapse()"
+        }
+       ]
       }
      ]
     },
@@ -441186,7 +441681,18 @@
        "bases": [
         "IInvokeProvider"
        ],
-       "memberCount": 1
+       "members": [
+        {
+         "kind": "method",
+         "name": "Invoke",
+         "accessibility": "explicit",
+         "line": 8,
+         "type": "void",
+         "explicitInterface": "IInvokeProvider",
+         "params": 0,
+         "signature": "void IInvokeProvider.Invoke()"
+        }
+       ]
       }
      ]
     },
@@ -441209,7 +441715,90 @@
        "bases": [
         "IRangeValueProvider"
        ],
-       "memberCount": 7
+       "members": [
+        {
+         "kind": "property",
+         "name": "IsReadOnly",
+         "accessibility": "explicit",
+         "line": 8,
+         "type": "bool",
+         "explicitInterface": "IRangeValueProvider",
+         "accessors": {
+          "get": "explicit"
+         },
+         "signature": "bool IRangeValueProvider.IsReadOnly { get; }"
+        },
+        {
+         "kind": "property",
+         "name": "Minimum",
+         "accessibility": "explicit",
+         "line": 9,
+         "type": "double",
+         "explicitInterface": "IRangeValueProvider",
+         "accessors": {
+          "get": "explicit"
+         },
+         "signature": "double IRangeValueProvider.Minimum { get; }"
+        },
+        {
+         "kind": "property",
+         "name": "Maximum",
+         "accessibility": "explicit",
+         "line": 10,
+         "type": "double",
+         "explicitInterface": "IRangeValueProvider",
+         "accessors": {
+          "get": "explicit"
+         },
+         "signature": "double IRangeValueProvider.Maximum { get; }"
+        },
+        {
+         "kind": "property",
+         "name": "Value",
+         "accessibility": "explicit",
+         "line": 11,
+         "type": "double",
+         "explicitInterface": "IRangeValueProvider",
+         "accessors": {
+          "get": "explicit"
+         },
+         "signature": "double IRangeValueProvider.Value { get; }"
+        },
+        {
+         "kind": "property",
+         "name": "LargeChange",
+         "accessibility": "explicit",
+         "line": 12,
+         "type": "double",
+         "explicitInterface": "IRangeValueProvider",
+         "accessors": {
+          "get": "explicit"
+         },
+         "signature": "double IRangeValueProvider.LargeChange { get; }"
+        },
+        {
+         "kind": "property",
+         "name": "SmallChange",
+         "accessibility": "explicit",
+         "line": 13,
+         "type": "double",
+         "explicitInterface": "IRangeValueProvider",
+         "accessors": {
+          "get": "explicit"
+         },
+         "signature": "double IRangeValueProvider.SmallChange { get; }"
+        },
+        {
+         "kind": "method",
+         "name": "SetValue",
+         "accessibility": "explicit",
+         "line": 15,
+         "type": "void",
+         "explicitInterface": "IRangeValueProvider",
+         "params": 1,
+         "signature": "void IRangeValueProvider.SetValue(double value)"
+        }
+       ]
       }
      ]
     },
@@ -441233,7 +441822,110 @@
         "IScrollProvider",
         "IScrollItemProvider"
        ],
-       "memberCount": 9,
+       "members": [
+        {
+         "kind": "property",
+         "name": "HorizontallyScrollable",
+         "accessibility": "explicit",
+         "line": 10,
+         "type": "bool",
+         "explicitInterface": "IScrollProvider",
+         "accessors": {
+          "get": "explicit"
+         },
+         "signature": "bool IScrollProvider.HorizontallyScrollable { get; }"
+        },
+        {
+         "kind": "property",
+         "name": "HorizontalScrollPercent",
+         "accessibility": "explicit",
+         "line": 11,
+         "type": "double",
+         "explicitInterface": "IScrollProvider",
+         "accessors": {
+          "get": "explicit"
+         },
+         "signature": "double IScrollProvider.HorizontalScrollPercent { get; }"
+        },
+        {
+         "kind": "property",
+         "name": "HorizontalViewSize",
+         "accessibility": "explicit",
+         "line": 12,
+         "type": "double",
+         "explicitInterface": "IScrollProvider",
+         "accessors": {
+          "get": "explicit"
+         },
+         "signature": "double IScrollProvider.HorizontalViewSize { get; }"
+        },
+        {
+         "kind": "property",
+         "name": "VerticallyScrollable",
+         "accessibility": "explicit",
+         "line": 13,
+         "type": "bool",
+         "explicitInterface": "IScrollProvider",
+         "accessors": {
+          "get": "explicit"
+         },
+         "signature": "bool IScrollProvider.VerticallyScrollable { get; }"
+        },
+        {
+         "kind": "property",
+         "name": "VerticalScrollPercent",
+         "accessibility": "explicit",
+         "line": 14,
+         "type": "double",
+         "explicitInterface": "IScrollProvider",
+         "accessors": {
+          "get": "explicit"
+         },
+         "signature": "double IScrollProvider.VerticalScrollPercent { get; }"
+        },
+        {
+         "kind": "property",
+         "name": "VerticalViewSize",
+         "accessibility": "explicit",
+         "line": 15,
+         "type": "double",
+         "explicitInterface": "IScrollProvider",
+         "accessors": {
+          "get": "explicit"
+         },
+         "signature": "double IScrollProvider.VerticalViewSize { get; }"
+        },
+        {
+         "kind": "method",
+         "name": "Scroll",
+         "accessibility": "explicit",
+         "line": 17,
+         "type": "void",
+         "explicitInterface": "IScrollProvider",
+         "params": 2,
+         "signature": "void IScrollProvider.Scroll(ScrollAmount horizontalAmount, ScrollAmount verticalAmount)"
+        },
+        {
+         "kind": "method",
+         "name": "SetScrollPercent",
+         "accessibility": "explicit",
+         "line": 20,
+         "type": "void",
+         "explicitInterface": "IScrollProvider",
+         "params": 2,
+         "signature": "void IScrollProvider.SetScrollPercent(double horizontalPercent, double verticalPercent)"
+        },
+        {
+         "kind": "method",
+         "name": "ScrollIntoView",
+         "accessibility": "explicit",
+         "line": 23,
+         "type": "void",
+         "explicitInterface": "IScrollItemProvider",
+         "params": 0,
+         "signature": "void IScrollItemProvider.ScrollIntoView()"
+        }
+       ],
        "privateMembers": 1
       }
      ]
@@ -441258,7 +441950,96 @@
         "ISelectionProvider",
         "ISelectionItemProvider"
        ],
-       "memberCount": 8
+       "members": [
+        {
+         "kind": "property",
+         "name": "CanSelectMultiple",
+         "accessibility": "explicit",
+         "line": 13,
+         "type": "bool",
+         "explicitInterface": "ISelectionProvider",
+         "accessors": {
+          "get": "explicit"
+         },
+         "signature": "bool ISelectionProvider.CanSelectMultiple { get; }"
+        },
+        {
+         "kind": "property",
+         "name": "IsSelectionRequired",
+         "accessibility": "explicit",
+         "line": 14,
+         "type": "bool",
+         "explicitInterface": "ISelectionProvider",
+         "accessors": {
+          "get": "explicit"
+         },
+         "signature": "bool ISelectionProvider.IsSelectionRequired { get; }"
+        },
+        {
+         "kind": "method",
+         "name": "GetSelection",
+         "accessibility": "explicit",
+         "line": 16,
+         "type": "IRawElementProviderSimple[]",
+         "explicitInterface": "ISelectionProvider",
+         "params": 0,
+         "signature": "IRawElementProviderSimple[] ISelectionProvider.GetSelection()"
+        },
+        {
+         "kind": "property",
+         "name": "IsSelected",
+         "accessibility": "explicit",
+         "line": 32,
+         "type": "bool",
+         "explicitInterface": "ISelectionItemProvider",
+         "accessors": {
+          "get": "explicit"
+         },
+         "signature": "bool ISelectionItemProvider.IsSelected { get; }"
+        },
+        {
+         "kind": "property",
+         "name": "SelectionContainer",
+         "accessibility": "explicit",
+         "line": 34,
+         "type": "IRawElementProviderSimple?",
+         "explicitInterface": "ISelectionItemProvider",
+         "accessors": {
+          "get": "explicit"
+         },
+         "signature": "IRawElementProviderSimple? ISelectionItemProvider.SelectionContainer { get; }"
+        },
+        {
+         "kind": "method",
+         "name": "AddToSelection",
+         "accessibility": "explicit",
+         "line": 48,
+         "type": "void",
+         "explicitInterface": "ISelectionItemProvider",
+         "params": 0,
+         "signature": "void ISelectionItemProvider.AddToSelection()"
+        },
+        {
+         "kind": "method",
+         "name": "RemoveFromSelection",
+         "accessibility": "explicit",
+         "line": 49,
+         "type": "void",
+         "explicitInterface": "ISelectionItemProvider",
+         "params": 0,
+         "signature": "void ISelectionItemProvider.RemoveFromSelection()"
+        },
+        {
+         "kind": "method",
+         "name": "Select",
+         "accessibility": "explicit",
+         "line": 50,
+         "type": "void",
+         "explicitInterface": "ISelectionItemProvider",
+         "params": 0,
+         "signature": "void ISelectionItemProvider.Select()"
+        }
+       ]
       }
      ]
     },
@@ -441281,7 +442062,30 @@
        "bases": [
         "IToggleProvider"
        ],
-       "memberCount": 2
+       "members": [
+        {
+         "kind": "property",
+         "name": "ToggleState",
+         "accessibility": "explicit",
+         "line": 10,
+         "type": "ToggleState",
+         "explicitInterface": "IToggleProvider",
+         "accessors": {
+          "get": "explicit"
+         },
+         "signature": "ToggleState IToggleProvider.ToggleState { get; }"
+        },
+        {
+         "kind": "method",
+         "name": "Toggle",
+         "accessibility": "explicit",
+         "line": 26,
+         "type": "void",
+         "explicitInterface": "IToggleProvider",
+         "params": 0,
+         "signature": "void IToggleProvider.Toggle()"
+        }
+       ]
       }
      ]
     },
@@ -441304,7 +442108,42 @@
        "bases": [
         "IValueProvider"
        ],
-       "memberCount": 3
+       "members": [
+        {
+         "kind": "property",
+         "name": "IsReadOnly",
+         "accessibility": "explicit",
+         "line": 8,
+         "type": "bool",
+         "explicitInterface": "IValueProvider",
+         "accessors": {
+          "get": "explicit"
+         },
+         "signature": "bool IValueProvider.IsReadOnly { get; }"
+        },
+        {
+         "kind": "property",
+         "name": "Value",
+         "accessibility": "explicit",
+         "line": 10,
+         "type": "string",
+         "explicitInterface": "IValueProvider",
+         "accessors": {
+          "get": "explicit"
+         },
+         "signature": "string IValueProvider.Value { get; }"
+        },
+        {
+         "kind": "method",
+         "name": "SetValue",
+         "accessibility": "explicit",
+         "line": 12,
+         "type": "void",
+         "explicitInterface": "IValueProvider",
+         "params": 1,
+         "signature": "void IValueProvider.SetValue(string value)"
+        }
+       ]
       }
      ]
     },
@@ -441327,7 +442166,283 @@
        "bases": [
         "XamlAutomationPeer"
        ],
-       "memberCount": 23,
+       "members": [
+        {
+         "kind": "property",
+         "name": "Peer",
+         "accessibility": "internal",
+         "line": 37,
+         "type": "AvPeer",
+         "accessors": {
+          "get": "internal"
+         },
+         "signature": "AvPeer Peer { get; }"
+        },
+        {
+         "kind": "method",
+         "name": "GetOrCreate",
+         "accessibility": "public",
+         "modifiers": [
+          "static"
+         ],
+         "line": 39,
+         "type": "AvaloniaToXamlPeerProxy",
+         "params": 2,
+         "signature": "static AvaloniaToXamlPeerProxy GetOrCreate(AvPeer peer, AvaloniaSwapChainPanelAutomationPeer host)"
+        },
+        {
+         "kind": "method",
+         "name": "TryGet",
+         "accessibility": "internal",
+         "modifiers": [
+          "static"
+         ],
+         "line": 44,
+         "type": "AvaloniaToXamlPeerProxy?",
+         "params": 1,
+         "signature": "static AvaloniaToXamlPeerProxy? TryGet(AvPeer? peer)"
+        },
+        {
+         "kind": "method",
+         "name": "GetChildrenCore",
+         "accessibility": "protected",
+         "modifiers": [
+          "override"
+         ],
+         "line": 51,
+         "type": "IList<XamlAutomationPeer>",
+         "params": 0,
+         "signature": "override IList<XamlAutomationPeer> GetChildrenCore()"
+        },
+        {
+         "kind": "method",
+         "name": "GetClassNameCore",
+         "accessibility": "protected",
+         "modifiers": [
+          "override"
+         ],
+         "line": 68,
+         "type": "string",
+         "params": 0,
+         "signature": "override string GetClassNameCore()"
+        },
+        {
+         "kind": "method",
+         "name": "GetNameCore",
+         "accessibility": "protected",
+         "modifiers": [
+          "override"
+         ],
+         "line": 70,
+         "type": "string",
+         "params": 0,
+         "signature": "override string GetNameCore()"
+        },
+        {
+         "kind": "method",
+         "name": "GetAutomationIdCore",
+         "accessibility": "protected",
+         "modifiers": [
+          "override"
+         ],
+         "line": 72,
+         "type": "string",
+         "params": 0,
+         "signature": "override string GetAutomationIdCore()"
+        },
+        {
+         "kind": "method",
+         "name": "GetHelpTextCore",
+         "accessibility": "protected",
+         "modifiers": [
+          "override"
+         ],
+         "line": 74,
+         "type": "string",
+         "params": 0,
+         "signature": "override string GetHelpTextCore()"
+        },
+        {
+         "kind": "method",
+         "name": "GetAcceleratorKeyCore",
+         "accessibility": "protected",
+         "modifiers": [
+          "override"
+         ],
+         "line": 76,
+         "type": "string",
+         "params": 0,
+         "signature": "override string GetAcceleratorKeyCore()"
+        },
+        {
+         "kind": "method",
+         "name": "GetAccessKeyCore",
+         "accessibility": "protected",
+         "modifiers": [
+          "override"
+         ],
+         "line": 78,
+         "type": "string",
+         "params": 0,
+         "signature": "override string GetAccessKeyCore()"
+        },
+        {
+         "kind": "method",
+         "name": "GetItemStatusCore",
+         "accessibility": "protected",
+         "modifiers": [
+          "override"
+         ],
+         "line": 80,
+         "type": "string",
+         "params": 0,
+         "signature": "override string GetItemStatusCore()"
+        },
+        {
+         "kind": "method",
+         "name": "GetItemTypeCore",
+         "accessibility": "protected",
+         "modifiers": [
+          "override"
+         ],
+         "line": 82,
+         "type": "string",
+         "params": 0,
+         "signature": "override string GetItemTypeCore()"
+        },
+        {
+         "kind": "method",
+         "name": "GetLocalizedControlTypeCore",
+         "accessibility": "protected",
+         "modifiers": [
+          "override"
+         ],
+         "line": 84,
+         "type": "string",
+         "params": 0,
+         "signature": "override string GetLocalizedControlTypeCore()"
+        },
+        {
+         "kind": "method",
+         "name": "GetAutomationControlTypeCore",
+         "accessibility": "protected",
+         "modifiers": [
+          "override"
+         ],
+         "line": 87,
+         "type": "AutomationControlType",
+         "params": 0,
+         "signature": "override AutomationControlType GetAutomationControlTypeCore()"
+        },
+        {
+         "kind": "method",
+         "name": "GetBoundingRectangleCore",
+         "accessibility": "protected",
+         "modifiers": [
+          "override"
+         ],
+         "line": 90,
+         "type": "XamlRect",
+         "params": 0,
+         "signature": "override XamlRect GetBoundingRectangleCore()"
+        },
+        {
+         "kind": "method",
+         "name": "HasKeyboardFocusCore",
+         "accessibility": "protected",
+         "modifiers": [
+          "override"
+         ],
+         "line": 100,
+         "type": "bool",
+         "params": 0,
+         "signature": "override bool HasKeyboardFocusCore()"
+        },
+        {
+         "kind": "method",
+         "name": "IsKeyboardFocusableCore",
+         "accessibility": "protected",
+         "modifiers": [
+          "override"
+         ],
+         "line": 102,
+         "type": "bool",
+         "params": 0,
+         "signature": "override bool IsKeyboardFocusableCore()"
+        },
+        {
+         "kind": "method",
+         "name": "IsEnabledCore",
+         "accessibility": "protected",
+         "modifiers": [
+          "override"
+         ],
+         "line": 104,
+         "type": "bool",
+         "params": 0,
+         "signature": "override bool IsEnabledCore()"
+        },
+        {
+         "kind": "method",
+         "name": "IsContentElementCore",
+         "accessibility": "protected",
+         "modifiers": [
+          "override"
+         ],
+         "line": 108,
+         "type": "bool",
+         "params": 0,
+         "signature": "override bool IsContentElementCore()"
+        },
+        {
+         "kind": "method",
+         "name": "IsControlElementCore",
+         "accessibility": "protected",
+         "modifiers": [
+          "override"
+         ],
+         "line": 110,
+         "type": "bool",
+         "params": 0,
+         "signature": "override bool IsControlElementCore()"
+        },
+        {
+         "kind": "method",
+         "name": "IsOffscreenCore",
+         "accessibility": "protected",
+         "modifiers": [
+          "override"
+         ],
+         "line": 112,
+         "type": "bool",
+         "params": 0,
+         "signature": "override bool IsOffscreenCore()"
+        },
+        {
+         "kind": "method",
+         "name": "SetFocusCore",
+         "accessibility": "protected",
+         "modifiers": [
+          "override"
+         ],
+         "line": 114,
+         "type": "void",
+         "params": 0,
+         "signature": "override void SetFocusCore()"
+        },
+        {
+         "kind": "method",
+         "name": "GetPatternCore",
+         "accessibility": "protected",
+         "modifiers": [
+          "override"
+         ],
+         "line": 116,
+         "type": "object",
+         "params": 1,
+         "signature": "override object GetPatternCore(PatternInterface patternInterface)"
+        }
+       ],
        "privateMembers": 7
       }
      ]
@@ -441346,7 +442461,20 @@
        "modifiers": [
         "static"
        ],
-       "memberCount": 1
+       "members": [
+        {
+         "kind": "method",
+         "name": "ToXaml",
+         "accessibility": "public",
+         "modifiers": [
+          "static"
+         ],
+         "line": 8,
+         "type": "XamlControlType",
+         "params": 1,
+         "signature": "static XamlControlType ToXaml(AvControlType type)"
+        }
+       ]
       }
      ]
     }
