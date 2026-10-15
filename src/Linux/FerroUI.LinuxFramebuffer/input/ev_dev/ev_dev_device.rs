@@ -91,27 +91,42 @@ mod imp {
             self.info.name.as_deref()
         }
 
+        /// The event types the device reports (`ev_type`).
+        pub fn event_types(&self) -> &[u16] {
+            &self.info.event_types
+        }
+
+        pub fn abs_x(&self) -> Option<input_absinfo> {
+            self.info.abs_x()
+        }
+
+        pub fn abs_y(&self) -> Option<input_absinfo> {
+            self.info.abs_y()
+        }
+
         /// Opens the device without blocking and reads what it is.
         pub fn open(device: &str) -> io::Result<Self> {
             let fd = sys::open(device, libc::O_RDONLY | libc::O_NONBLOCK)
                 .map_err(|error| io::Error::new(error.kind(), format!("Unable to open {device} code {error}")))?;
             // SAFETY: `fd` was just opened and is owned by nothing else.
             let fd = unsafe { OwnedFd::from_raw_fd(fd) };
+            // A failure drops the descriptor, which closes it.
+            Self::new(fd).map_err(|error| {
+                io::Error::new(error.kind(), format!("Unable to initialize evdev for {device} code {error}"))
+            })
+        }
+
+        /// The device open on `fd`: reads its name, the event types it
+        /// reports and its absolute axes, which the reference's constructor
+        /// asks `libevdev` for. Fails when the descriptor is not an event
+        /// device (its name cannot be read).
+        pub fn new(fd: OwnedFd) -> io::Result<Self> {
             let raw = fd.as_raw_fd();
 
             let mut name = [0u8; 256];
-            let name = match sys::ioctl_buffer(raw, eviocgname(name.len()), &mut name) {
-                Ok(_) => {
-                    let len = name.iter().position(|&b| b == 0).unwrap_or(name.len());
-                    Some(String::from_utf8_lossy(&name[..len]).into_owned())
-                }
-                Err(error) => {
-                    return Err(io::Error::new(
-                        error.kind(),
-                        format!("Unable to initialize evdev for {device} code {error}"),
-                    ));
-                }
-            };
+            sys::ioctl_buffer(raw, eviocgname(name.len()), &mut name)?;
+            let len = name.iter().position(|&b| b == 0).unwrap_or(name.len());
+            let name = Some(String::from_utf8_lossy(&name[..len]).into_owned());
 
             // The bits of the event types the device has.
             let mut bits = [0u8; 4];
