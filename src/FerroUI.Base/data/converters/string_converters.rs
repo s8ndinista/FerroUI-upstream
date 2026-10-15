@@ -9,7 +9,7 @@ impl StringConverters {
     /// A value converter that returns true if the input string is null or an
     /// empty string.
     pub fn is_null_or_empty() -> Rc<dyn IValueConverter> {
-        thread_local! {
+        crate::ferro_thread_local! {
             static IS_NULL_OR_EMPTY: Rc<dyn IValueConverter> =
                 Rc::new(FuncValueConverter::<Option<String>, bool>::new(|x| x.is_none_or(|x| x.is_empty())));
         }
@@ -19,7 +19,7 @@ impl StringConverters {
     /// A value converter that returns true if the input string is not null
     /// or empty.
     pub fn is_not_null_or_empty() -> Rc<dyn IValueConverter> {
-        thread_local! {
+        crate::ferro_thread_local! {
             static IS_NOT_NULL_OR_EMPTY: Rc<dyn IValueConverter> =
                 Rc::new(FuncValueConverter::<Option<String>, bool>::new(|x| !x.is_none_or(|x| x.is_empty())));
         }

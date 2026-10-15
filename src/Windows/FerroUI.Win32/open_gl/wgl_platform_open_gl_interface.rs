@@ -46,7 +46,7 @@ mod imp {
     use std::panic::{catch_unwind, AssertUnwindSafe};
     use std::rc::Rc;
 
-    thread_local! {
+    ferroui_base::ferro_thread_local! {
         static PRIMARY_CONTEXT: RefCell<Option<Rc<WglContext>>> = const { RefCell::new(None) };
     }
 

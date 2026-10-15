@@ -13,7 +13,7 @@ pub struct DefaultValueConverter;
 impl DefaultValueConverter {
     /// The shared instance.
     pub fn instance() -> Rc<dyn IValueConverter> {
-        thread_local! {
+        crate::ferro_thread_local! {
             static INSTANCE: Rc<dyn IValueConverter> = Rc::new(DefaultValueConverter);
         }
         INSTANCE.with(Rc::clone)

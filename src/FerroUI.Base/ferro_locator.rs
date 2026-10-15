@@ -41,7 +41,7 @@ pub struct FerroLocator {
     registry: RefCell<HashMap<TypeId, Factory>>,
 }
 
-thread_local! {
+crate::ferro_thread_local! {
     static CURRENT: RefCell<Option<(Rc<dyn IFerroDependencyResolver>, Rc<FerroLocator>)>> =
         const { RefCell::new(None) };
 }

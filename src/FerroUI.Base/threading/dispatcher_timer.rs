@@ -8,7 +8,7 @@ use crate::reactive::{Disposable, IDisposable};
 use crate::utilities::HandlerList;
 use crate::BoxedValue;
 
-thread_local! {
+crate::ferro_thread_local! {
     static ACTIVE_TIMERS_COUNT: Cell<i32> = const { Cell::new(0) };
 }
 

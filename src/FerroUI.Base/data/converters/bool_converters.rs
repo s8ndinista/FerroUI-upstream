@@ -13,7 +13,7 @@ pub struct BoolConverters;
 impl BoolConverters {
     /// A multi-value converter that returns true if all inputs are true.
     pub fn and() -> Rc<dyn IMultiValueConverter> {
-        thread_local! {
+        crate::ferro_thread_local! {
             static AND: Rc<dyn IMultiValueConverter> =
                 Rc::new(FuncMultiValueConverter::<bool, bool>::new(|x| x.iter().all(|y| *y)));
         }
@@ -23,7 +23,7 @@ impl BoolConverters {
     /// A multi-value converter that returns true if any of the inputs is
     /// true.
     pub fn or() -> Rc<dyn IMultiValueConverter> {
-        thread_local! {
+        crate::ferro_thread_local! {
             static OR: Rc<dyn IMultiValueConverter> =
                 Rc::new(FuncMultiValueConverter::<bool, bool>::new(|x| x.iter().any(|y| *y)));
         }
@@ -33,7 +33,7 @@ impl BoolConverters {
     /// A value converter that returns true when input is false and false
     /// when input is true.
     pub fn not() -> Rc<dyn IValueConverter> {
-        thread_local! {
+        crate::ferro_thread_local! {
             static NOT: Rc<dyn IValueConverter> = Rc::new(NotConverter);
         }
         NOT.with(Rc::clone)

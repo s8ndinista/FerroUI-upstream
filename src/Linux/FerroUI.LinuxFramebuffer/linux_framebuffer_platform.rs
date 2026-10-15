@@ -64,7 +64,7 @@ impl IPlatformIconLoader for LinuxFramebufferIconLoaderStub {
     }
 }
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     /// `EventGrouperDispatchQueue`: the raw input of the top-level, which
     /// the dispatcher implementation hands out one event at a time.
     static EVENT_GROUPER_DISPATCH_QUEUE: Rc<ManualRawEventGrouperDispatchQueue> =

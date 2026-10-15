@@ -18,7 +18,7 @@ use std::cell::{Cell, RefCell};
 use std::collections::HashMap;
 use std::rc::{Rc, Weak};
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static VIEWS: RefCell<HashMap<i64, Rc<FerroView>>> = RefCell::new(HashMap::new());
 }
 

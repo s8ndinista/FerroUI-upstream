@@ -41,7 +41,7 @@ xaml_class!(TextBoxPage, "/Pages/TextBoxPage.xaml");
 impl TextBoxPage {
     /// The registry of the samples of the gallery (the static field `Demos`).
     pub(crate) fn demos() -> FerroList<Rc<SampleInfo>> {
-        thread_local! {
+        ferroui_base::ferro_thread_local! {
             static DEMOS: FerroList<Rc<SampleInfo>> = FerroList::from_items([
                 SampleInfo::new(
                     SampleGroups::OVERVIEW,

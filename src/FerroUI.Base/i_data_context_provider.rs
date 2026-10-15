@@ -1,7 +1,7 @@
 use crate::{BoxedValue, FerroObject, StyledElement, TypeInfo};
 use std::cell::RefCell;
 
-thread_local! {
+crate::ferro_thread_local! {
     static PROVIDER_TYPES: RefCell<Vec<&'static TypeInfo>> = const { RefCell::new(Vec::new()) };
 }
 

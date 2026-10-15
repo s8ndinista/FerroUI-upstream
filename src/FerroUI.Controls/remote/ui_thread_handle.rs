@@ -21,7 +21,7 @@ struct Entry {
     is_alive: Box<dyn Fn() -> bool>,
 }
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static OBJECTS: RefCell<HashMap<u64, Entry>> = RefCell::new(HashMap::new());
 }
 

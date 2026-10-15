@@ -198,7 +198,7 @@ ferro_impl_classes!(
 
 impl FerroObjectImpl for TopmostWindow {
     fn constructed(this: &Self) {
-        thread_local! {
+        ferroui_base::ferro_thread_local! {
             static DONE: Cell<bool> = const { Cell::new(false) };
         }
         if !DONE.replace(true) {

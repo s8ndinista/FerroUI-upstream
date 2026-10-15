@@ -48,7 +48,7 @@ impl FontManager {
     /// Internal upstream, where the Skia unit tests see it; public here so
     /// that the tests of the Skia crate reach it.
     pub fn system_fonts_key() -> Uri {
-        thread_local! {
+        crate::ferro_thread_local! {
             static SYSTEM_FONTS_KEY: Uri = Uri::try_create("fonts:SystemFonts", UriKind::Absolute)
                 .expect("the system fonts key is an absolute uri");
         }

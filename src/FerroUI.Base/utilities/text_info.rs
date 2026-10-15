@@ -5,7 +5,7 @@ use super::i_culture_data_provider::find_culture_data;
 use super::CultureInfo;
 use std::rc::Rc;
 
-thread_local! {
+crate::ferro_thread_local! {
     static INVARIANT: Rc<TextInfo> = Rc::new(TextInfo::new());
 }
 

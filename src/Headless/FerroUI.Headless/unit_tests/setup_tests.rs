@@ -10,7 +10,7 @@
 use super::test_application::ferro_theory;
 use std::cell::Cell;
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static INSTANCE_COUNT: Cell<i32> = const { Cell::new(0) };
 }
 

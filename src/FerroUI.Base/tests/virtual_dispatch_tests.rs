@@ -16,7 +16,7 @@ use super::*;
 use crate::*;
 use std::cell::RefCell;
 
-thread_local! {
+crate::ferro_thread_local! {
     /// The overrides that ran on the thread, in order.
     static LOG: RefCell<Vec<&'static str>> = const { RefCell::new(Vec::new()) };
 }

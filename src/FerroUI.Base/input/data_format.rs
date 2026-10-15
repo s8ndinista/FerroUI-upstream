@@ -36,7 +36,7 @@ impl Hash for DataFormat {
     }
 }
 
-thread_local! {
+crate::ferro_thread_local! {
     static TEXT: DataFormatOf<String> = DataFormat::create_universal_format("Text");
     static BITMAP: DataFormatOf<Rc<Bitmap>> = DataFormat::create_universal_format("Bitmap");
     static FILE: DataFormatOf<Rc<dyn IStorageItem>> = DataFormat::create_universal_format("File");

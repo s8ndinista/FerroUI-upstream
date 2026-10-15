@@ -160,7 +160,7 @@ mod uikit {
         settings: Option<Rc<PlatformSettings>>,
     }
 
-    thread_local! {
+    ferroui_base::ferro_thread_local! {
         /// The state of the platform: what the reference keeps in static
         /// fields. The platform is registered on the main thread, and its
         /// state is read there.

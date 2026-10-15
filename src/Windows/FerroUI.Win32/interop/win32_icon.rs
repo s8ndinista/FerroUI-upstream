@@ -229,7 +229,7 @@ mod imp {
     /// `ERROR_NOT_ENOUGH_MEMORY`.
     const ERROR_NOT_ENOUGH_MEMORY: u32 = 8;
 
-    thread_local! {
+    ferroui_base::ferro_thread_local! {
         static BIT_DEPTH: Cell<u32> = const { Cell::new(0) };
     }
 

@@ -58,7 +58,7 @@ impl Drop for EntryGuard {
     }
 }
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static ENTRIES: RefCell<HashMap<usize, Rc<Entry>>> = RefCell::new(HashMap::new());
     static NEXT_ID: std::cell::Cell<u64> = const { std::cell::Cell::new(1) };
 }

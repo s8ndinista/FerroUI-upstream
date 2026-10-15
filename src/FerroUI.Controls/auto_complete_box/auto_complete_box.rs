@@ -2190,7 +2190,7 @@ impl AutoCompleteSearch {
     fn get_filter(filter_mode: AutoCompleteFilterMode) -> Option<AutoCompleteFilterPredicate<Option<String>>> {
         type Filter = fn(Option<&str>, &Option<String>) -> bool;
 
-        thread_local! {
+        ferroui_base::ferro_thread_local! {
             static FILTERS: [AutoCompleteFilterPredicate<Option<String>>; 12] = {
                 let filters: [Filter; 12] = [
                     AutoCompleteSearch::starts_with,

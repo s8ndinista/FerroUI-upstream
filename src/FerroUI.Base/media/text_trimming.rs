@@ -40,7 +40,7 @@ struct Instances {
     path_segment_ellipsis: Rc<dyn TextTrimming>,
 }
 
-thread_local! {
+crate::ferro_thread_local! {
     static INSTANCES: Instances = Instances {
         none: Rc::new(TextNoneTrimming),
         character_ellipsis: Rc::new(TextTrailingTrimming::new(DEFAULT_ELLIPSIS_CHAR, false)),

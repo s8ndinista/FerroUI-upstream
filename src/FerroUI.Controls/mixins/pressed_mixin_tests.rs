@@ -34,7 +34,7 @@ impl FerroObjectImpl for TestControl {
 
 impl TestControl {
     fn class_init() {
-        thread_local! {
+        ferroui_base::ferro_thread_local! {
             static DONE: Cell<bool> = const { Cell::new(false) };
         }
         if DONE.replace(true) {

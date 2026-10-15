@@ -15,7 +15,7 @@ use std::rc::Rc;
 /// `lParam`, to the result.
 pub type SimpleWndProc = Rc<dyn Fn(isize, u32, usize, isize) -> isize>;
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     /// The atom of the class, registered when the first window is created.
     static CLASS_ATOM: Cell<u16> = const { Cell::new(0) };
     /// The window procedures of the windows of this thread, by handle.

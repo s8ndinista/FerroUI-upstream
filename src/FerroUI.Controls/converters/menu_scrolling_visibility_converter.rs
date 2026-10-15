@@ -17,7 +17,7 @@ pub struct MenuScrollingVisibilityConverter;
 impl MenuScrollingVisibilityConverter {
     /// The shared instance of the converter.
     pub fn instance() -> Rc<MenuScrollingVisibilityConverter> {
-        thread_local! {
+        ferroui_base::ferro_thread_local! {
             static INSTANCE: Rc<MenuScrollingVisibilityConverter> = Rc::new(MenuScrollingVisibilityConverter);
         }
         INSTANCE.with(Rc::clone)

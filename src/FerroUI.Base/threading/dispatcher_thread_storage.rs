@@ -33,7 +33,7 @@ impl Drop for CurrentThreadDispatcher {
     }
 }
 
-thread_local! {
+crate::ferro_thread_local! {
     static CURRENT_THREAD_DISPATCHER: RefCell<Option<CurrentThreadDispatcher>> = const { RefCell::new(None) };
     static CURRENT_THREAD_LOCAL: RefCell<Option<Rc<DispatcherLocal>>> = const { RefCell::new(None) };
     static UI_THREAD_CACHE: RefCell<(u64, Option<Arc<Dispatcher>>)> = const { RefCell::new((0, None)) };

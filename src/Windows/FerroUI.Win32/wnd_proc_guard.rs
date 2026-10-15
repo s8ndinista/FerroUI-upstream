@@ -19,7 +19,7 @@ use std::cell::RefCell;
 use std::panic::{catch_unwind, resume_unwind, AssertUnwindSafe};
 use std::rc::Rc;
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static PENDING: RefCell<Option<Box<dyn Any + Send>>> = const { RefCell::new(None) };
     static PENDING_HOOK: RefCell<Option<Rc<dyn Fn()>>> = const { RefCell::new(None) };
 }

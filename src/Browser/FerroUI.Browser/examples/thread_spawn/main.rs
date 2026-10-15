@@ -25,7 +25,7 @@ use wasm_bindgen::prelude::*;
 /// thread other than the one that started it.
 type Report = (u64, bool);
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     /// The receiving end of the channel while the thread runs.
     static PENDING: RefCell<Option<Receiver<Report>>> = const { RefCell::new(None) };
     /// The last state, kept once the thread has answered or failed.

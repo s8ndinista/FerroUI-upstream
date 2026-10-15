@@ -692,7 +692,7 @@ impl VirtualizingStackPanel {
 
     /// The recycle key that marks an item which is its own container.
     fn item_is_its_own_container() -> RecycleKey {
-        thread_local! {
+        ferroui_base::ferro_thread_local! {
             static KEY: RecycleKey = RecycleKey::new_unique();
         }
         KEY.with(|key| *key)

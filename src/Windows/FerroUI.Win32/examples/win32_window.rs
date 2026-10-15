@@ -133,7 +133,7 @@ mod teardown {
         }
     }
 
-    thread_local! {
+    ferroui_base::ferro_thread_local! {
         static FIRST: Marker = const { Marker("the value of the main thread that was registered first is destroyed (the last of them)") };
         static LAST: Marker = const { Marker("the values of the main thread are being destroyed (the one registered last is the first)") };
     }

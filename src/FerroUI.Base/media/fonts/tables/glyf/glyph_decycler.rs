@@ -6,7 +6,7 @@ use crate::media::fonts::tables::decycler::Decycler;
 /// The number of idle instances the pool keeps.
 const POOL_MAX_SIZE: usize = 16;
 
-thread_local! {
+crate::ferro_thread_local! {
     static POOL: RefCell<Vec<GlyphDecycler>> = const { RefCell::new(Vec::new()) };
 }
 

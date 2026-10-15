@@ -15,7 +15,7 @@ use crate::data::core::{ValueType, ValueTypes};
 use crate::*;
 use std::any::TypeId;
 
-thread_local! {
+crate::ferro_thread_local! {
     /// The static constructors that ran on the thread, in order.
     static LOG: RefCell<Vec<&'static str>> = const { RefCell::new(Vec::new()) };
 }

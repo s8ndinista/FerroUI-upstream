@@ -23,7 +23,7 @@ fn file_type(name: &str, patterns: &[&str], uniform_type_identifiers: &[&str], m
         .with_mime_types(mime_types)
 }
 
-thread_local! {
+crate::ferro_thread_local! {
     // One instance of each file type per thread, as the static properties
     // upstream: a file type is compared by identity.
     static WELL_KNOWN: WellKnown = WellKnown {

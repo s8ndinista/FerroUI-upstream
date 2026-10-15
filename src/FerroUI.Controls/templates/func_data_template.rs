@@ -18,7 +18,7 @@ pub struct FuncDataTemplate {
     supports_recycling: bool,
 }
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static DEFAULT: Rc<FuncDataTemplate> = FuncDataTemplate::new(
         |_| true,
         |data, _| {

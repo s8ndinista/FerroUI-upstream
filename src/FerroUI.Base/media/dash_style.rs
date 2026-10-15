@@ -87,7 +87,7 @@ impl DashStyle {
 
     /// Represents a dashed dash style.
     pub fn dash() -> Rc<ImmutableDashStyle> {
-        thread_local! {
+        crate::ferro_thread_local! {
             static DASH: Rc<ImmutableDashStyle> = Rc::new(ImmutableDashStyle::new(Some(&[2.0, 2.0]), 1.0));
         }
         DASH.with(Rc::clone)
@@ -95,7 +95,7 @@ impl DashStyle {
 
     /// Represents a dotted dash style.
     pub fn dot() -> Rc<ImmutableDashStyle> {
-        thread_local! {
+        crate::ferro_thread_local! {
             static DOT: Rc<ImmutableDashStyle> = Rc::new(ImmutableDashStyle::new(Some(&[0.0, 2.0]), 0.0));
         }
         DOT.with(Rc::clone)
@@ -103,7 +103,7 @@ impl DashStyle {
 
     /// Represents a dashed dotted dash style.
     pub fn dash_dot() -> Rc<ImmutableDashStyle> {
-        thread_local! {
+        crate::ferro_thread_local! {
             static DASH_DOT: Rc<ImmutableDashStyle> =
                 Rc::new(ImmutableDashStyle::new(Some(&[2.0, 2.0, 0.0, 2.0]), 1.0));
         }
@@ -112,7 +112,7 @@ impl DashStyle {
 
     /// Represents a dashed double dotted dash style.
     pub fn dash_dot_dot() -> Rc<ImmutableDashStyle> {
-        thread_local! {
+        crate::ferro_thread_local! {
             static DASH_DOT_DOT: Rc<ImmutableDashStyle> =
                 Rc::new(ImmutableDashStyle::new(Some(&[2.0, 2.0, 0.0, 2.0, 0.0, 2.0]), 1.0));
         }

@@ -57,7 +57,7 @@ impl DictionaryKey {
 
 type KeyedSourceInfo = (DictionaryKey, HashMap<ResourceKey, XamlSourceInfo>);
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     /// The source info of objects that are not part of the class model,
     /// keyed by identity and held weakly.
     static SOURCE_INFO: RefCell<HashMap<usize, (Weak<dyn AnyValue>, Option<XamlSourceInfo>)>> =

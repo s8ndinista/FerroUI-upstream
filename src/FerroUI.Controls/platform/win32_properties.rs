@@ -47,7 +47,7 @@ type WndProcHook = dyn Fn(isize, u32, isize, isize, &mut bool) -> isize;
 /// weakly) and the callbacks it invokes, in order.
 type InvocationLists<F: ?Sized> = RefCell<Vec<(Weak<F>, Vec<Rc<F>>)>>;
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static WINDOW_STYLES_LISTS: InvocationLists<WindowStyles> = const { RefCell::new(Vec::new()) };
     static WND_PROC_HOOK_LISTS: InvocationLists<WndProcHook> = const { RefCell::new(Vec::new()) };
 }

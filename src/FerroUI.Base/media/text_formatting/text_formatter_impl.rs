@@ -18,7 +18,7 @@ use crate::utilities::{MathUtilities, ReadOnlyMemory};
 
 const DEFAULT_TEXT: [u16; DEFAULT_TEXT_SOURCE_LENGTH as usize] = [b'a' as u16; DEFAULT_TEXT_SOURCE_LENGTH as usize];
 
-thread_local! {
+crate::ferro_thread_local! {
     static EMPTY: ReadOnlyMemory<u16> = ReadOnlyMemory::from_vec(vec![b' ' as u16]);
 
     /// The bidi scratch state of the thread; reused by every formatted line.

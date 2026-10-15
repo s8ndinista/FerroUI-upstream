@@ -26,7 +26,7 @@ fn text(value: Option<Option<BoxedValue>>) -> String {
     value.flatten().and_then(|v| v.downcast_ref::<String>().cloned()).unwrap()
 }
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static LOADS: Cell<u32> = const { Cell::new(0) };
     static SEEN_PROVIDER: Cell<bool> = const { Cell::new(false) };
     static REENTRANT: RefCell<Option<Rc<ResourceInclude>>> = const { RefCell::new(None) };

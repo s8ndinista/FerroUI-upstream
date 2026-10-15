@@ -57,7 +57,7 @@ fn instance_prefix() -> &'static str {
     INSTANCE_PREFIX.get_or_init(|| format!("{IN_PROCESS_MIME_PREFIX}{}-", new_identifier()))
 }
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     /// Maps in-process DnD operation keys to the original data transfer.
     /// Accessed exclusively from the UI thread.
     /// When the receive side sees a sentinel MIME type matching this instance's prefix,

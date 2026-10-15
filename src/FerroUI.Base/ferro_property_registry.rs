@@ -53,7 +53,7 @@ fn collect(
 impl FerroPropertyRegistry {
     /// The property registry of the current thread.
     pub fn instance() -> &'static FerroPropertyRegistry {
-        thread_local! {
+        crate::ferro_thread_local! {
             static INSTANCE: &'static FerroPropertyRegistry = Box::leak(Box::default());
         }
         INSTANCE.with(|instance| *instance)

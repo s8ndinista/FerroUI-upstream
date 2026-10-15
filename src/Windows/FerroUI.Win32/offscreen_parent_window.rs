@@ -10,7 +10,7 @@ impl OffscreenParentWindow {
     /// The handle of the hidden parent window, which is created on first
     /// use and lives as long as the thread.
     pub fn handle() -> isize {
-        thread_local! {
+        ferroui_base::ferro_thread_local! {
             static SIMPLE_WINDOW: SimpleWindow = SimpleWindow::new(None);
         }
         SIMPLE_WINDOW.with(SimpleWindow::handle)

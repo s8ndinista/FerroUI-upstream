@@ -113,7 +113,7 @@ impl Notification {
     /// Makes the binding metadata of the class and its cast to
     /// [`INotification`] known on the current thread, once.
     fn ensure_registered() {
-        thread_local! {
+        ferroui_base::ferro_thread_local! {
             static REGISTERED: Cell<bool> = const { Cell::new(false) };
         }
 

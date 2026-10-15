@@ -111,7 +111,7 @@ struct Ui {
     clicks: Arc<AtomicU32>,
 }
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static UI: RefCell<Option<Ui>> = const { RefCell::new(None) };
     /// Ends the message loop of the phase.
     static DONE: RefCell<Option<CancellationTokenSource>> = const { RefCell::new(None) };

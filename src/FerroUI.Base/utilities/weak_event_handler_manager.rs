@@ -78,7 +78,7 @@ impl WeakEventHandlerManager {
     }
 }
 
-thread_local! {
+crate::ferro_thread_local! {
     /// The storage of each pair of event arguments and subscriber types.
     static SUBSCRIPTION_TYPE_STORAGE: RefCell<HashMap<TypeId, Box<dyn Any>>> = RefCell::new(HashMap::new());
 }

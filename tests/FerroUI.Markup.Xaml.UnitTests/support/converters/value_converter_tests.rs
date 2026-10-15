@@ -28,7 +28,7 @@ impl TestConverter {
 
     /// The shared instance.
     pub fn instance() -> Rc<TestConverter> {
-        thread_local! {
+        ferroui_base::ferro_thread_local! {
             static INSTANCE: Rc<TestConverter> = TestConverter::new();
         }
         INSTANCE.with(Rc::clone)

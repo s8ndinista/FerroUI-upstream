@@ -438,7 +438,7 @@ pub(crate) mod tests {
     use std::cell::{Cell, RefCell};
     use std::ffi::{c_char, c_void};
 
-    thread_local! {
+    ferroui_base::ferro_thread_local! {
         /// The platform displays that were asked for: the platform, the
         /// native display and the attributes.
         pub(crate) static PLATFORM_DISPLAYS: RefCell<Vec<(i32, isize, Vec<i32>)>> = const { RefCell::new(Vec::new()) };

@@ -12,7 +12,7 @@ use std::cell::RefCell;
 
 type ContainerCast = for<'a> fn(&'a FerroObject) -> Option<&'a dyn INavigableContainer>;
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static CONTAINER_TYPES: RefCell<Vec<(&'static TypeInfo, ContainerCast)>> = const { RefCell::new(Vec::new()) };
 }
 

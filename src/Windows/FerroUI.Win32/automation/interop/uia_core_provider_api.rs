@@ -48,7 +48,7 @@ pub(crate) trait IUiaCoreProviderApi {
     fn uia_disconnect_provider(&self, provider: Option<&IRawElementProviderSimple>) -> i32;
 }
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     /// What stands in for the automation core on this thread (a test).
     static OVERRIDE: RefCell<Option<Rc<dyn IUiaCoreProviderApi>>> = const { RefCell::new(None) };
 }

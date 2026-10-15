@@ -359,7 +359,7 @@ macro_rules! ferro_routed_event {
         $(#[$meta])*
         #[inline]
         $vis fn $name() -> &'static $ty {
-            ::std::thread_local! {
+            $crate::ferro_thread_local! {
                 static CELL: ::std::cell::Cell<::std::option::Option<&'static $ty>> =
                     const { ::std::cell::Cell::new(::std::option::Option::None) };
             }

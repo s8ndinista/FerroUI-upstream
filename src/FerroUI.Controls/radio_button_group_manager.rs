@@ -31,7 +31,7 @@ pub(crate) trait IRadioButton {
 
 type Adapter = Rc<dyn Fn(&FerroObject) -> Option<Rc<dyn IRadioButton>>>;
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static RADIO_BUTTON_TYPES: RefCell<Vec<(&'static TypeInfo, Adapter)>> = const { RefCell::new(Vec::new()) };
     static DEFAULT: Rc<RadioButtonGroupManager> = Rc::new(RadioButtonGroupManager::new());
     static REGISTERED_VISUAL_ROOTS: RefCell<Vec<(Weak<dyn IPresentationSource>, Rc<RadioButtonGroupManager>)>> =

@@ -147,7 +147,7 @@ pub(crate) mod tests {
     use super::*;
     use std::cell::RefCell;
 
-    thread_local! {
+    ferroui_base::ferro_thread_local! {
         pub(crate) static CALLS: RefCell<Vec<String>> = const { RefCell::new(Vec::new()) };
     }
 

@@ -19,7 +19,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::time::Instant;
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static IS_UI_THREAD: Cell<Option<bool>> = const { Cell::new(None) };
     static INSTANCE: RefCell<Weak<AndroidDispatcherImpl>> = const { RefCell::new(Weak::new()) };
 }

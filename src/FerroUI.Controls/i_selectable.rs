@@ -20,7 +20,7 @@ pub trait ISelectable {
 
 type SelectableCast = for<'a> fn(&'a FerroObject) -> Option<&'a dyn ISelectable>;
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static SELECTABLE_TYPES: RefCell<Vec<(&'static TypeInfo, SelectableCast)>> = const { RefCell::new(Vec::new()) };
 }
 

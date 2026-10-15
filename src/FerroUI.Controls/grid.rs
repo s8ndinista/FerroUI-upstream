@@ -62,7 +62,7 @@ const LAYOUT_LOOP_MAX_COUNT: i32 = 5;
 /// The index that terminates a chain of cells.
 const NO_CELL: usize = i32::MAX as usize;
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     /// The temporary array used during layout for various purposes. It holds
     /// indices into the definitions being processed, or -1.
     static TEMP_DEFINITIONS: RefCell<Vec<i32>> = const { RefCell::new(Vec::new()) };
@@ -2748,7 +2748,7 @@ impl Grid {
 const GRID_LINES_DASH_LENGTH: f64 = 4.0;
 const GRID_LINES_PEN_WIDTH: f64 = 1.0;
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     /// The size of the last arranged grid that shows its lines; shared by
     /// all the renderers, as in the reference.
     static GRID_LINES_LAST_ARRANGE_SIZE: Cell<Size> = const { Cell::new(Size::new(0.0, 0.0)) };

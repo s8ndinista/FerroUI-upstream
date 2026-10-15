@@ -16,7 +16,7 @@ use crate::utilities::ReadOnlyMemory;
 const WORD_JOINER: u16 = 0x2060;
 const WORD_JOINER_RUN_LENGTH: usize = 8;
 
-thread_local! {
+crate::ferro_thread_local! {
     static WORD_JOINER_RUN: ReadOnlyMemory<u16> = ReadOnlyMemory::from_vec(vec![WORD_JOINER; WORD_JOINER_RUN_LENGTH]);
 }
 

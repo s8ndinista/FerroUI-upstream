@@ -322,7 +322,7 @@ pub(crate) struct LocalTask {
     completion: TaskCompletion,
 }
 
-thread_local! {
+crate::ferro_thread_local! {
     /// The (dispatcher id, task id) of the task being polled on this thread.
     static CURRENT_TASK: Cell<Option<(u64, u64)>> = const { Cell::new(None) };
 }

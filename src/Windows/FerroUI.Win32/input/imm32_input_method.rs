@@ -573,7 +573,7 @@ mod imp {
         //every Dispatcher should have their own InputMethod.
         /// The input method of the calling thread (`Current`).
         pub fn current() -> Rc<Imm32InputMethod> {
-            thread_local! {
+            ferroui_base::ferro_thread_local! {
                 static CURRENT: Rc<Imm32InputMethod> = Imm32InputMethod::new(Rc::new(Win32ImmSystem));
             }
             CURRENT.with(Rc::clone)

@@ -97,7 +97,7 @@ ferro_class! {
     }
 }
 
-thread_local! {
+crate::ferro_thread_local! {
     static ROOTED_VISUAL_CHILDREN_COUNT: Cell<i32> = const { Cell::new(0) };
 }
 crate::ferro_class_info!(Visual { new: Visual::new });

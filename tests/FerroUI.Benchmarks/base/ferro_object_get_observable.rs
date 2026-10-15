@@ -11,7 +11,7 @@ use ferroui_base::{
 };
 use std::cell::Cell;
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     /// The static field of the upstream class that the handlers add to. A
     /// benchmark runs on a thread of its own, so the field of the thread is
     /// the field of the benchmark.

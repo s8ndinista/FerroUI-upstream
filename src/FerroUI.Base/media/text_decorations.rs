@@ -13,7 +13,7 @@ macro_rules! text_decorations {
     ($(#[$meta:meta])* $name:ident, $location:ident) => {
         $(#[$meta])*
         pub fn $name() -> TextDecorationCollection {
-            thread_local! {
+            crate::ferro_thread_local! {
                 static VALUE: TextDecorationCollection = create(TextDecorationLocation::$location);
             }
             VALUE.with(Clone::clone)

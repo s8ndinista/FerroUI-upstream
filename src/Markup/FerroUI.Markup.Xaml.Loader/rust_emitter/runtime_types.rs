@@ -59,7 +59,7 @@ pub struct RuntimeMarkup(&'static MarkupType);
 /// A registered property of the run-time type system.
 pub struct RuntimeEmitProperty(&'static FerroProperty);
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     /// The descriptions handed out so far, by the address of what they describe: one per
     /// class, metadata and property of the process, kept as long as the registries they
     /// describe (the life of the thread).

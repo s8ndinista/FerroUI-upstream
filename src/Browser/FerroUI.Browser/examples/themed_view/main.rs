@@ -81,7 +81,7 @@ struct Services {
     safe_area_changes: u32,
 }
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     /// The second view of the page, while it is open (`themedViewSecondView`).
     static SECOND_VIEW: RefCell<Option<Rc<FerroView>>> = const { RefCell::new(None) };
     static THEME_VARIANT: RefCell<Option<String>> = const { RefCell::new(None) };
@@ -432,7 +432,7 @@ struct Panics {
     invoke: Option<String>,
 }
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static PANICS: RefCell<Panics> = RefCell::new(Panics::default());
 }
 

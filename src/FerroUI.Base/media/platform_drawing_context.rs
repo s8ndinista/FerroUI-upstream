@@ -38,7 +38,7 @@ fn reborrow_impl<'s, 'a>(value: &'s mut &'a mut dyn IDrawingContextImpl) -> &'s 
     &mut **value
 }
 
-thread_local! {
+crate::ferro_thread_local! {
     static TRANSFORM_STACK_POOL: RefCell<Vec<Vec<Matrix>>> = const { RefCell::new(Vec::new()) };
 }
 

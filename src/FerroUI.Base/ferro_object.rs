@@ -79,7 +79,7 @@ unsafe impl ObjectType for FerroObject {
 
     #[inline]
     fn register_class() {
-        thread_local! {
+        crate::ferro_thread_local! {
             static REGISTERED: Cell<bool> = const { Cell::new(false) };
         }
         if !REGISTERED.replace(true) {

@@ -16,7 +16,7 @@ fn invariant() -> CultureInfo {
 /// A culture of the test culture data (`en-US`, `en-GB`); every other name
 /// has no data and falls back.
 fn culture_of(name: &str) -> CultureInfo {
-    thread_local! {
+    crate::ferro_thread_local! {
         static REGISTERED: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
     }
     if !REGISTERED.replace(true) {

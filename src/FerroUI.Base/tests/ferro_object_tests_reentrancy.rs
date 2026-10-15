@@ -107,7 +107,7 @@ impl Class1 {
     }
 }
 
-thread_local! {
+crate::ferro_thread_local! {
     static DROP_READER: RefCell<Option<Box<dyn Fn()>>> = const { RefCell::new(None) };
 }
 

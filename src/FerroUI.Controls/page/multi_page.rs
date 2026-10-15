@@ -269,7 +269,7 @@ impl MultiPage {
     /// same handle is returned for the same collection for as long as a
     /// handle is alive, so that assigning it twice is not a change.
     pub fn items_source_of(pages: &PageList) -> ItemsSource {
-        thread_local! {
+        ferroui_base::ferro_thread_local! {
             static SOURCES: RefCell<Vec<Weak<PageItemsList>>> = const { RefCell::new(Vec::new()) };
         }
 

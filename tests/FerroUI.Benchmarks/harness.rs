@@ -691,7 +691,7 @@ pub mod allocations {
         use std::alloc::{GlobalAlloc, Layout, System};
         use std::cell::Cell;
 
-        thread_local! {
+        ferroui_base::ferro_thread_local! {
             static ALLOCATIONS: Cell<u64> = const { Cell::new(0) };
             static BYTES: Cell<u64> = const { Cell::new(0) };
         }

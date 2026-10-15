@@ -21,7 +21,7 @@ use crate::support::TypeModule;
 
 // The static fields `RaisedOption` and `ObjectsCreated` of the test class.
 // Every test runs on its own thread, so the fields are per thread.
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static RAISED_OPTION: RefCell<Option<Rc<dyn Fn(&BoxedValue) -> bool>>> = const { RefCell::new(None) };
     static OBJECTS_CREATED: Cell<Option<i32>> = const { Cell::new(None) };
 }

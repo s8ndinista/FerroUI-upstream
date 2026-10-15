@@ -37,7 +37,7 @@ impl ConcatConverter {
 
     /// The shared instance.
     pub fn instance() -> Rc<ConcatConverter> {
-        thread_local! {
+        ferroui_base::ferro_thread_local! {
             static INSTANCE: Rc<ConcatConverter> = ConcatConverter::new();
         }
         INSTANCE.with(Rc::clone)

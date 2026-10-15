@@ -257,7 +257,7 @@ pub fn catalog_rendering() -> String {
     )
 }
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     /// The batch of the commit [`catalog_request_frame`] asked for last.
     static REQUESTED_FRAME: RefCell<Option<Arc<CompositionBatch>>> = const { RefCell::new(None) };
 }

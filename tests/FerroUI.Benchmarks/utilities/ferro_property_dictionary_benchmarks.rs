@@ -341,7 +341,7 @@ impl MockProperties {
     /// 32 mock properties in a shuffled order. They belong to the thread
     /// (properties do), which creates them when it first asks for them.
     pub fn shuffled_properties() -> Rc<[&'static FerroProperty]> {
-        thread_local! {
+        ferroui_base::ferro_thread_local! {
             static SHUFFLED_PROPERTIES: Rc<[&'static FerroProperty]> = {
                 let mut shuffled_properties: Vec<&'static FerroProperty> = Vec::with_capacity(32);
 

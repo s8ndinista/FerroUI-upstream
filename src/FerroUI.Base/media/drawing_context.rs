@@ -175,7 +175,7 @@ enum CoreRef<'a> {
     Owned(Box<dyn IDrawingContextCore + 'a>),
 }
 
-thread_local! {
+crate::ferro_thread_local! {
     static STATE_STACK_POOL: RefCell<Vec<Vec<PushedStateType>>> = const { RefCell::new(Vec::new()) };
 }
 

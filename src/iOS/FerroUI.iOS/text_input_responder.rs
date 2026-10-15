@@ -338,7 +338,7 @@ mod uikit {
         assert!(text_trait::YES == UITextSpellCheckingType::Yes.0);
     };
 
-    thread_local! {
+    ferroui_base::ferro_thread_local! {
         /// The responder of the platform that is the first responder: a
         /// view, or a text input responder of a view. What the reference
         /// keeps in a static property of the view.
@@ -426,7 +426,7 @@ mod uikit {
         type Result = Self;
     }
 
-    thread_local! {
+    ferroui_base::ferro_thread_local! {
         static EMPTY_POSITION: OnceCell<Retained<FerroEmptyTextPosition>> = const { OnceCell::new() };
     }
 

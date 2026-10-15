@@ -29,7 +29,7 @@ pub trait INativeMenuExporterProvider {
 
 type Adapter = Rc<dyn Fn(&FerroObject) -> Option<Rc<dyn INativeMenuExporterProvider>>>;
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static PROVIDER_TYPES: RefCell<Vec<(&'static TypeInfo, Adapter)>> = const { RefCell::new(Vec::new()) };
 }
 

@@ -359,7 +359,7 @@ impl LastParentStack {
     }
 }
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static RESOURCE_NODE_BUFFER: RefCell<Vec<BoxedValue>> = RefCell::new(Vec::with_capacity(8));
     static LAST_PARENT_STACK: RefCell<Option<LastParentStack>> = const { RefCell::new(None) };
     static LAST_APPLICATION_PROVIDER: RefCell<Option<Rc<ApplicationParentStackProvider>>> = const { RefCell::new(None) };

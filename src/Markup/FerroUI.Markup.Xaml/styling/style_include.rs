@@ -22,7 +22,7 @@ pub struct StyleInclude {
     source: RefCell<Option<Uri>>,
 }
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static NO_STYLES: Rc<Vec<Rc<dyn IStyle>>> = Rc::new(Vec::new());
 }
 

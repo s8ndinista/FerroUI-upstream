@@ -11,7 +11,7 @@ use ferroui_base::{
 use std::cell::RefCell;
 use std::rc::Rc;
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     /// The binding of the content of a cell to the item of its row (the
     /// data context of the cell).
     static ROW_BINDING: Rc<CompiledBinding> = CompiledBinding::empty();

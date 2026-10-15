@@ -220,7 +220,7 @@ mod tests {
     use crate::interop::thread_proxy::ThreadWork;
     use std::cell::{Cell, RefCell};
 
-    thread_local! {
+    ferroui_base::ferro_thread_local! {
         /// The frame loops started on the thread of a test.
         static FRAME_LOOPS: Cell<u32> = const { Cell::new(0) };
         /// The id a test gives its thread; 0 is what a build without threads
@@ -256,7 +256,7 @@ mod tests {
         true
     }
 
-    thread_local! {
+    ferroui_base::ferro_thread_local! {
         /// What the script of the thread of a test says it has proxied.
         static PROXIED: Cell<Option<u64>> = const { Cell::new(None) };
         /// What the ticks of the thread of a test reported.

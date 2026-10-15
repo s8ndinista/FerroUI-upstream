@@ -20,13 +20,13 @@ struct Inner {
 #[derive(Clone)]
 pub struct ThemeVariant(Rc<Inner>);
 
-thread_local! {
+crate::ferro_thread_local! {
     static DEFAULT: ThemeVariant = ThemeVariant::from_key("Default".into());
     static LIGHT: ThemeVariant = ThemeVariant::from_key("Light".into());
     static DARK: ThemeVariant = ThemeVariant::from_key("Dark".into());
 }
 
-thread_local! {
+crate::ferro_thread_local! {
     /// The classes, other than styled elements, whose objects are theme
     /// variant roots.
     static ROOT_TYPES: RefCell<Vec<&'static TypeInfo>> = const { RefCell::new(Vec::new()) };

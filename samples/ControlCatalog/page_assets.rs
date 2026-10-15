@@ -27,7 +27,7 @@ pub trait IPageAssets {
     fn ensure_page_assets(&self, page: &str) -> Option<PageAssetsFuture>;
 }
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static IMPLEMENTATION: RefCell<Option<Rc<dyn IPageAssets>>> = const { RefCell::new(None) };
 }
 

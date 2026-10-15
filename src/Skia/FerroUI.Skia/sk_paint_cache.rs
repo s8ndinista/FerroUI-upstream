@@ -1,7 +1,7 @@
 use crate::sk_cache_base::SkCacheBase;
 use skia_safe::Paint;
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static SHARED: SkCacheBase<Paint> = const { SkCacheBase::new() };
 }
 

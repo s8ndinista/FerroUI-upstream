@@ -38,7 +38,7 @@ use std::rc::{Rc, Weak};
 use std::sync::Arc;
 use std::time::Instant;
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     /// `_nextGlobalZOrder`: per thread, as the windows of a headless
     /// application live on its one UI thread.
     static NEXT_GLOBAL_Z_ORDER: Cell<i32> = const { Cell::new(1) };

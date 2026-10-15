@@ -88,7 +88,7 @@ fn text(value: &str) -> Option<String> {
     Some(value.to_string())
 }
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     /// The actions that run when a cancellation token of a test transition
     /// is cancelled; a token only carries the key of its action.
     static CANCEL_ACTIONS: RefCell<HashMap<u64, Box<dyn FnOnce()>>> = RefCell::new(HashMap::new());

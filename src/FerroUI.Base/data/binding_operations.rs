@@ -9,7 +9,7 @@ impl BindingOperations {
     /// The marker value that tells a binding target to do nothing: the
     /// binding value is ignored.
     pub fn do_nothing() -> BoxedValue {
-        thread_local! {
+        crate::ferro_thread_local! {
             static DO_NOTHING: BoxedValue = Rc::new(DoNothingType);
         }
         DO_NOTHING.with(Rc::clone)

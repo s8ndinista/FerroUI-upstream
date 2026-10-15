@@ -27,7 +27,7 @@ pub trait IContentPresenterHost {
 
 type HostCast = for<'a> fn(&'a FerroObject) -> Option<&'a dyn IContentPresenterHost>;
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static HOST_TYPES: RefCell<Vec<(&'static TypeInfo, HostCast)>> = const { RefCell::new(Vec::new()) };
 }
 

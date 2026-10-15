@@ -14,7 +14,7 @@ use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::rc::Rc;
 use std::sync::Arc;
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     // The static fields of the original. They are per thread: the windows
     // are objects of the UI thread, and the previewer has one.
     static KEYBOARD: Rc<KeyboardDevice> = KeyboardDevice::new();

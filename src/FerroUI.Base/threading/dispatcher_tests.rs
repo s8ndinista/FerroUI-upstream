@@ -2185,7 +2185,7 @@ fn operation_wait_with_timeout() {
 // never captured. What remains of those tests is below; the two async-local
 // tests have nothing to test.
 
-thread_local! {
+crate::ferro_thread_local! {
     static CULTURE: RefCell<&'static str> = const { RefCell::new("default") };
 }
 

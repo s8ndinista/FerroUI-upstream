@@ -85,7 +85,7 @@ mod imp {
     use std::rc::Rc;
     use std::time::Duration;
 
-    thread_local! {
+    ferroui_base::ferro_thread_local! {
         static UI_SETTINGS_SUPPORTED: OnceCell<bool> = const { OnceCell::new() };
         static GLOBALIZATION_SUPPORTED: OnceCell<bool> = const { OnceCell::new() };
     }

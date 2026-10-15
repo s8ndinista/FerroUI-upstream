@@ -25,7 +25,7 @@ use std::io::{Read, Write};
 use std::rc::{Rc, Weak};
 use std::sync::{Arc, Mutex};
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     /// The render interfaces `initialize` registered on this thread: see
     /// [`HeadlessPlatformRenderInterface::is_current`].
     static INSTANCES: RefCell<Vec<Weak<HeadlessPlatformRenderInterface>>> = const { RefCell::new(Vec::new()) };

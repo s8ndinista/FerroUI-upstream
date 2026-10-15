@@ -30,7 +30,7 @@ impl BrowserRuntimePlatformServices {
     }
 }
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static INFO: Cell<Option<RuntimePlatformInfo>> = const { Cell::new(None) };
 }
 

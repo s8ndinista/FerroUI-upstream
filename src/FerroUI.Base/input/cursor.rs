@@ -118,7 +118,7 @@ impl fmt::Display for ParseCursorError {
 
 impl std::error::Error for ParseCursorError {}
 
-thread_local! {
+crate::ferro_thread_local! {
     static DEFAULT_CURSOR: RefCell<Option<Rc<Cursor>>> = const { RefCell::new(None) };
 }
 

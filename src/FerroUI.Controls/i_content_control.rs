@@ -38,7 +38,7 @@ pub trait IContentControl {
 
 type ContentControlCast = for<'a> fn(&'a FerroObject) -> Option<&'a dyn IContentControl>;
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static CONTENT_CONTROL_TYPES: RefCell<Vec<(&'static TypeInfo, ContentControlCast)>> = const { RefCell::new(Vec::new()) };
 }
 

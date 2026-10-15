@@ -448,7 +448,7 @@ mod tests {
         graphics.get_shared_context();
     }
 
-    thread_local! {
+    ferroui_base::ferro_thread_local! {
         /// The canvases the thread of a test told its script to let go of.
         static UNREGISTERED: RefCell<Vec<i32>> = const { RefCell::new(Vec::new()) };
     }

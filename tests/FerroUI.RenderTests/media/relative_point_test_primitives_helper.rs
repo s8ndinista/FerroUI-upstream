@@ -17,7 +17,7 @@ use ferroui_base::{
 use ferroui_controls::{Control, ControlImpl};
 use std::rc::Rc;
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static S_GEOMETRY: Ref<Geometry> =
         Geometry::parse("m 80 200 c 40 20 150 -40 160 0 l 0 30 c -40 -30 -160 10 -160 -30 z").expect("the path data is valid");
 }

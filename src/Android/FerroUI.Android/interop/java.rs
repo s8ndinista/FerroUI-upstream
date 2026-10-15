@@ -79,7 +79,7 @@ impl Drop for Attachment {
     }
 }
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static ATTACHMENT: Attachment = const { Attachment { attached_here: Cell::new(false) } };
 }
 

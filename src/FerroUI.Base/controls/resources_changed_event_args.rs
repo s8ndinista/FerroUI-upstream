@@ -10,7 +10,7 @@ pub struct ResourcesChangedEventArgs {
     pub sequence_number: i32,
 }
 
-thread_local! {
+crate::ferro_thread_local! {
     static LAST_SEQUENCE_NUMBER: Cell<i32> = const { Cell::new(0) };
 }
 

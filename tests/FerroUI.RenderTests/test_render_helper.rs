@@ -83,7 +83,7 @@ pub fn backend_name() -> &'static str {
 
 /// Upstream's static constructor.
 fn initialize_thread() {
-    thread_local! {
+    ferroui_base::ferro_thread_local! {
         static INITIALIZED: Cell<bool> = const { Cell::new(false) };
     }
 

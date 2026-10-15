@@ -14,7 +14,7 @@ use ferroui_controls::Application;
 use std::cell::RefCell;
 use std::sync::{Arc, Weak};
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static PREVIOUS_APP_REF: RefCell<Option<WeakRef<Application>>> = const { RefCell::new(None) };
     static PREVIOUS_DISPATCHER_REF: RefCell<Option<Weak<Dispatcher>>> = const { RefCell::new(None) };
 }

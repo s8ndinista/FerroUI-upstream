@@ -365,7 +365,7 @@ mod tests {
         }
     }
 
-    thread_local! {
+    ferroui_base::ferro_thread_local! {
         // The connection holds its top-level weakly: the tests keep them.
         static TOP_LEVELS: RefCell<Vec<Rc<dyn IInputConnectionTopLevel>>> = const { RefCell::new(Vec::new()) };
     }

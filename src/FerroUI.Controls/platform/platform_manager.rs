@@ -4,7 +4,7 @@ use ferroui_base::{FerroLocator, LocatorExtensions};
 use std::cell::Cell;
 use std::rc::Rc;
 
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static DESIGNER_MODE: Cell<bool> = const { Cell::new(false) };
 }
 
