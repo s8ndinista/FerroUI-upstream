@@ -8,6 +8,21 @@ private:
 
 public:
     FORWARD_IUNKNOWN()
+
+    // The display link calls back with this object as its context: it is
+    // stopped and released with the object, or a tick that comes after the
+    // last reference was given back (at the exit of the process, while the
+    // exit handlers run) reads a freed object.
+    virtual ~PlatformRenderTimer()
+    {
+        if (_displayLink != nil)
+        {
+            CVDisplayLinkStop(_displayLink);
+            CVDisplayLinkRelease(_displayLink);
+            _displayLink = nil;
+        }
+    }
+
     virtual int RegisterTick (
         IFrnActionCallback* callback) override
     {
