@@ -20,6 +20,7 @@ use ferroui_base::logical_tree::LogicalTreeAttachmentEventArgs;
 use ferroui_base::media::{ScaleTransform, Transform};
 use ferroui_base::reactive::{AnonymousObserver, CompositeDisposable, Disposable, IDisposable, ObservableExt};
 use ferroui_base::styling::ThemeVariant;
+use ferroui_base::threading::{Dispatcher, DispatcherPriority};
 use ferroui_base::utilities::HandlerList;
 use ferroui_base::{
     ferro_class, ferro_impl_classes, ferro_property, instantiate, AttachedProperty, DirectProperty,
@@ -56,6 +57,14 @@ pub struct Popup {
     closed: HandlerList<dyn Fn()>,
     opened: HandlerList<dyn Fn()>,
     closing: HandlerList<dyn Fn(&CancelEventArgs)>,
+    /// Deviation (DEVIATIONS.md, Popup): the subscriptions to the render
+    /// transforms of the placement target and of its ancestors while the
+    /// popup is open (`subscribe_placement_target_transforms`).
+    placement_target_transform_subscriptions: RefCell<Vec<Rc<dyn IDisposable>>>,
+    queued_for_placement_target_move: Cell<bool>,
+    /// The rectangle of the placement target in its root when the popup
+    /// was last positioned for a change of a render transform.
+    last_placement_target_rect: Cell<Option<Rect>>,
 }
 
 ferro_class!(Popup: Control);
@@ -104,6 +113,9 @@ impl FerroObjectImpl for Popup {
                 }
 
                 open_state.set_placement_target(new_target);
+                if this.placement() != PlacementMode::Pointer {
+                    this.subscribe_placement_target_transforms();
+                }
             }
 
             this.update_host_position(&open_state.popup_host, &open_state.placement_target());
@@ -325,6 +337,9 @@ impl Popup {
             closed: HandlerList::new(),
             opened: HandlerList::new(),
             closing: HandlerList::new(),
+            placement_target_transform_subscriptions: RefCell::new(Vec::new()),
+            queued_for_placement_target_move: Cell::new(false),
+            last_placement_target_rect: Cell::new(None),
         }
     }
 
@@ -701,6 +716,17 @@ impl Popup {
 
         self.subscribe_to_top_level(&top_level, &placement_target, &handler_cleanup);
 
+        // Deviation (DEVIATIONS.md, Popup): see
+        // `subscribe_placement_target_transforms`.
+        if self.placement() != PlacementMode::Pointer {
+            let weak = weak.clone();
+            handler_cleanup.add(Disposable::create(move || {
+                if let Some(this) = weak.upgrade() {
+                    this.unsubscribe_placement_target_transforms();
+                }
+            }));
+        }
+
         if let Some(input_manager) = InputManager::instance() {
             let weak = weak.clone();
             handler_cleanup.add(input_manager.process().subscribe(Rc::new(AnonymousObserver::new(
@@ -759,6 +785,10 @@ impl Popup {
             template_applied_subscription,
         ));
         *self.open_state.borrow_mut() = Some(open_state);
+
+        if self.placement() != PlacementMode::Pointer {
+            self.subscribe_placement_target_transforms();
+        }
 
         if let Some(parent_popup) = parent_popup {
             parent_popup.add_opened_popup(&this);
@@ -978,6 +1008,96 @@ impl Popup {
         popup_host.set_height(self.height() * scale_y);
         popup_host.set_min_height(self.min_height() * scale_y);
         popup_host.set_max_height(self.max_height() * scale_y);
+    }
+
+    /// Subscribes to the changes of the render transforms of the placement
+    /// target and of its visual ancestors, in place of the previous
+    /// subscriptions, and remembers where the target is in its root.
+    ///
+    /// Deviation (DEVIATIONS.md, Popup): upstream positions an open popup
+    /// again only when its window or parent popup moves and when the
+    /// bounds of the placement target change (`Popup.HandlePositionChange`,
+    /// `PlacementTargetLayoutUpdated`). The anchor rectangle is the place of
+    /// the target in the root, which the render transforms are part of, so
+    /// a popup opened while its target was moved by an animated render
+    /// transform (a page that slides in) stayed where the target was when
+    /// it opened. The popup is positioned again, once per frame, when a
+    /// render transform of the chain is set, replaced or removed, or a
+    /// mutable one changes in place, and the place of the target in the
+    /// root differs from the last one (`docs/porting/decisions/
+    /// popup-opened-while-its-target-moves.md`).
+    fn subscribe_placement_target_transforms(&self) {
+        self.unsubscribe_placement_target_transforms();
+        let Some(open_state) = self.open_state() else { return };
+        let placement_target = open_state.placement_target();
+        self.last_placement_target_rect.set(placement_target_rect_in_root(&placement_target));
+
+        let mut subscriptions = Vec::new();
+        let mut visual = Some(placement_target.upcast::<Visual>());
+        while let Some(current) = visual {
+            let weak = self.to_ref().downgrade();
+            subscriptions.push(current.property_changed(move |e| {
+                if let Some(this) = weak.upgrade() {
+                    this.placement_target_ancestor_property_changed(e);
+                }
+            }));
+            if let Some(mutable_transform) =
+                current.render_transform().as_ref().and_then(|render_transform| render_transform.as_mutable_transform())
+            {
+                let weak = self.to_ref().downgrade();
+                subscriptions.push(mutable_transform.changed(Rc::new(move || {
+                    if let Some(this) = weak.upgrade() {
+                        this.enqueue_for_placement_target_move();
+                    }
+                })));
+            }
+
+            visual = current.get_visual_parent();
+        }
+        *self.placement_target_transform_subscriptions.borrow_mut() = subscriptions;
+    }
+
+    fn unsubscribe_placement_target_transforms(&self) {
+        let subscriptions = std::mem::take(&mut *self.placement_target_transform_subscriptions.borrow_mut());
+        for subscription in subscriptions {
+            subscription.dispose();
+        }
+    }
+
+    fn placement_target_ancestor_property_changed(&self, e: &FerroPropertyChangedEventArgs<'_>) {
+        if !e.is_effective_value_change() {
+            return;
+        }
+        if e.property() == Visual::render_transform_property().as_property() {
+            // A mutable transform of the chain may have been replaced.
+            let last = self.last_placement_target_rect.get();
+            self.subscribe_placement_target_transforms();
+            self.last_placement_target_rect.set(last);
+            self.enqueue_for_placement_target_move();
+        } else if e.property() == Visual::render_transform_origin_property().as_property() {
+            self.enqueue_for_placement_target_move();
+        }
+    }
+
+    fn enqueue_for_placement_target_move(&self) {
+        if self.queued_for_placement_target_move.get() {
+            return;
+        }
+        self.queued_for_placement_target_move.set(true);
+        let this = self.to_ref();
+        Dispatcher::ui_thread().post_local(move || this.placement_target_moved(), DispatcherPriority::AFTER_RENDER);
+    }
+
+    fn placement_target_moved(&self) {
+        self.queued_for_placement_target_move.set(false);
+        let Some(open_state) = self.open_state() else { return };
+        let placement_target = open_state.placement_target();
+        let rect = placement_target_rect_in_root(&placement_target);
+        if rect == self.last_placement_target_rect.get() {
+            return;
+        }
+        self.last_placement_target_rect.set(rect);
+        self.update_host_position(&open_state.popup_host, &placement_target);
     }
 
     fn handle_position_change(&self) {
@@ -1278,6 +1398,15 @@ fn find_parent_popup(placement_target: &Visual) -> Option<Ref<Popup>> {
     }
 
     None
+}
+
+/// The rectangle of `placement_target` in its visual root, render
+/// transforms included; `None` when it is not in a tree.
+fn placement_target_rect_in_root(placement_target: &Ref<Control>) -> Option<Rect> {
+    let visual: Ref<Visual> = placement_target.clone().upcast();
+    let root = visual.visual_root()?;
+    let matrix = visual.transform_to_visual(&root)?;
+    Some(Rect::from_position_size(Point::default(), visual.bounds().size()).transform_to_aabb(matrix))
 }
 
 /// The state of an open popup.
