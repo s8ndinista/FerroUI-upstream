@@ -12,7 +12,7 @@ Generated from upstream commit `17350180c33b063f0e98abbfd19aa3cae63f5d56`. Back 
 | Phase / priority | 5 - desktop (Linux) / P2 |
 | Files | 30/30 (100.0%) |
 | Types | 61/76 (80.3%) |
-| Members | 324/529 (61.2%) |
+| Members | 350/529 (66.2%) |
 | Contracts (interfaces) | 4/4 |
 | Property registrations | 0/0 |
 | Routed events | 0/0 |
@@ -142,11 +142,11 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 |---|---|---|---|---|---|
 | `NullInputBackend.cs` | `input/null_input/null_input_backend.rs` | present | 1/1 | 2/2 |  |
 
-### `Output` - files 8/8, types 30/30, members 148/181
+### `Output` - files 8/8, types 30/30, members 174/181
 
 | Upstream file | Rust file | Status | Types | Members | Notes |
 |---|---|---|---|---|---|
-| `Drm.cs` | `output/drm.rs` | partial | 19/19 | 91/117 |  |
+| `Drm.cs` | `output/drm.rs` | present | 19/19 | 117/117 |  |
 | `DrmBindings.cs` | `output/drm_bindings.rs` | present | 5/5 | 28/28 |  |
 | `DrmOutput.cs` | `output/drm_output.rs` | present | 1/1 | 11/11 |  |
 | `FbDevBackBuffer.cs` | `output/fb_dev_back_buffer.rs` | partial | 1/1 | 4/7 |  |
@@ -154,38 +154,6 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 | `FbdevOutput.cs` | `output/fbdev_output.rs` | partial | 1/1 | 6/10 |  |
 | `IGlOutputBackend.cs` | `output/i_gl_output_backend.rs` | present | 1/1 | 1/1 |  |
 | `IOutputBackend.cs` | `output/i_output_backend.rs` | present | 1/1 | 2/2 |  |
-
-<details><summary><code>Drm.cs</code> - 26 missing</summary>
-
-- `LibDrm` (class): 26 missing
-  - `static drmModeRes* drmModeGetResources(int fd)`
-  - `static void drmModeFreeResources(drmModeRes* res)`
-  - `static drmModeConnector* drmModeGetConnector(int fd, uint connector)`
-  - `static drmModeConnector* drmModeGetConnectorCurrent(int fd, uint connector)`
-  - `static void drmModeFreeConnector(drmModeConnector* res)`
-  - `static drmModeEncoder* drmModeGetEncoder(int fd, uint id)`
-  - `static void drmModeFreeEncoder(drmModeEncoder* enc)`
-  - `static drmModeCrtc* drmModeGetCrtc(int fd, uint id)`
-  - `static void drmModeFreeCrtc(drmModeCrtc* enc)`
-  - `static int drmModeAddFB(int fd, uint width, uint height, byte depth, byte bpp, uint pitch, uint bo_handle, ...`
-  - `static int drmModeAddFB2(int fd, uint width, uint height, uint pixel_format, uint[] bo_handles, uint[] pitc...`
-  - `static int drmModeSetCrtc(int fd, uint crtcId, uint bufferId, uint x, uint y, uint *connectors, int count, ...`
-  - `static void drmModeRmFB(int fd, int id)`
-  - `static void drmModePageFlip(int fd, uint crtc_id, uint fb_id, DrmModePageFlip flags, void *user_data)`
-  - `static void drmHandleEvent(int fd, DrmEventContext* context)`
-  - `static IntPtr gbm_create_device(int fd)`
-  - `static IntPtr gbm_surface_create(IntPtr device, int width, int height, uint format, GbmBoFlags flags)`
-  - `static IntPtr gbm_surface_lock_front_buffer(IntPtr surface)`
-  - `static int gbm_surface_release_buffer(IntPtr surface, IntPtr bo)`
-  - `static IntPtr gbm_bo_get_user_data(IntPtr surface)`
-  - `static IntPtr gbm_bo_set_user_data(IntPtr bo, IntPtr userData, GbmBoUserDataDestroyCallbackDelegate onFree)`
-  - `static uint gbm_bo_get_width(IntPtr bo)`
-  - `static uint gbm_bo_get_height(IntPtr bo)`
-  - `static uint gbm_bo_get_stride(IntPtr bo)`
-  - `static uint gbm_bo_get_format(IntPtr bo)`
-  - `static GbmBoHandle gbm_bo_get_handle(IntPtr bo)`
-
-</details>
 
 <details><summary><code>FbDevBackBuffer.cs</code> - 3 missing</summary>
 
