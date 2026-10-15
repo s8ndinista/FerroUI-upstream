@@ -90,7 +90,7 @@ mod imp {
                 unique_id: format!("FerroUI.WinUI.Peer:{id}"),
             };
             let peer_factory = factory::<IAutomationPeerFactory>("Microsoft.UI.Xaml.Automation.Peers.AutomationPeer")?;
-            let outer = compose::<IAutomationPeerOverrides, FerroToXamlPeerProxy, 9>(
+            let composed = compose::<IAutomationPeerOverrides, FerroToXamlPeerProxy, 9>(
                 proxy,
                 [
                     InterfaceEntry::of::<IInvokeProvider>(),
@@ -109,11 +109,16 @@ mod imp {
                     unsafe { peer_factory.create_instance(Some(outer), inner) }.map(|_| ())
                 },
             )?;
-            let outer = outer.cast::<IAutomationPeer>()?;
-            // SAFETY: an interface of the object `compose` made with a
-            // `FerroToXamlPeerProxy`, alive through `outer`.
-            let value = unsafe { ferroui_microcom::ComObject::<FerroToXamlPeerProxy>::value(outer.as_ptr().cast()) };
+            // SAFETY: `composed` is the first interface of the outer object
+            // `compose` made with a `FerroToXamlPeerProxy` (the interface the
+            // runtime of the port made, not one of the inner object), alive
+            // through `composed`. The value is read before the query below:
+            // `IAutomationPeer` is an interface of the inner object, an object
+            // of XAML, whose memory is not a `ComObject`.
+            let value = unsafe { ferroui_microcom::ComObject::<FerroToXamlPeerProxy>::value(composed.as_ptr().cast()) };
+            let outer = composed.cast::<IAutomationPeer>()?;
             value.this.set(outer.as_ptr());
+            super::super::trace(&format!("proxy created for a peer of class {:?}", value.peer.get_class_name()));
             S_CACHE.with(|cache| cache.borrow_mut().insert(peer_key(peer), outer.as_ptr() as usize));
             Ok(outer)
         }
@@ -166,16 +171,19 @@ mod imp {
                 return Ok(Some(list));
             };
 
+            super::super::trace(&format!("proxy of {:?}: GetChildrenCore, {} children", self.peer.get_class_name(), children.len()));
             for child in children.iter() {
                 let child_proxy = Self::get_or_create(child, &host)?;
                 child_proxy.set_parent(Some(self.this_peer()))?;
                 list.append(Some(&child_proxy))?;
             }
 
+            super::super::trace(&format!("proxy of {:?}: GetChildrenCore returns", self.peer.get_class_name()));
             Ok(Some(list))
         }
 
         fn get_class_name_core(&self) -> Result<isize, HResult> {
+            super::super::trace(&format!("proxy: GetClassNameCore {:?}", self.peer.get_class_name()));
             new_string(&self.peer.get_class_name())
         }
 
@@ -285,6 +293,7 @@ mod imp {
 
     impl Drop for FerroToXamlPeerProxy {
         fn drop(&mut self) {
+            super::super::trace("proxy destroyed");
             let key = peer_key(&self.peer);
             let this = self.this.get() as usize;
             S_CACHE.with(|cache| {
