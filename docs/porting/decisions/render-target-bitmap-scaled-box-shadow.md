@@ -1,6 +1,6 @@
 # The children of a border with a box shadow in a render target bitmap of more than 96 DPI (October 2026)
 
-Prepared for a decision of the owner. On the branch `macos-render-fixes` nothing in the Skia backend is changed: the behaviour is upstream's, as described here, and the tests named below record it. The fix of section "The smallest correct fix" is the branch `macos-render-fixes-rtb-transform`, on top of it, with the deviation recorded and the acceptance test turned on.
+**Decided** (the owner's standing policy, 2026-10-15: a defect of upstream is fixed in the port and recorded as a deviation, as for the popup and the native control host). The fix of section "The smallest correct fix" is in the Skia backend (`restore_canvas` in `src/Skia/FerroUI.Skia/drawing_context_impl.rs`) and recorded in `DEVIATIONS.md` (Skia backend); the acceptance test below is turned on and the test that asserted upstream's behaviour is removed (pull request 195). The rest of this page is the analysis as it was prepared for the decision.
 
 ## What was seen
 
@@ -28,8 +28,8 @@ Pictures: `/Volumes/1TB-macOS/ferroui-screenshots/macos-render-fixes/before/` (`
 | Case | Where the red pixels are | Test |
 |---|---|---|
 | The frame the window renders at scaling 2 (`capture_rendered_frame`, the compositor) | (80, 60) to (120, 80): in place | `shadowed_border_child_is_in_place_in_the_frame_at_scaling_2` (passes) |
-| A render target bitmap of 192 DPI (400 by 200 pixels) | (160, 120) to (240, 160): twice as large, twice as far | `shadowed_border_child_is_scaled_twice_in_a_render_target_bitmap_of_192_dpi_known_difference` (passes: it asserts the behaviour as it is) |
-| The same, as a fix would have it | (80, 60) to (120, 80) | `shadowed_border_child_is_in_place_in_a_render_target_bitmap_of_192_dpi` (ignored, with the reason; run with `--include-ignored` it fails with the bounds above) |
+| A render target bitmap of 192 DPI (400 by 200 pixels) | (160, 120) to (240, 160): twice as large, twice as far | `shadowed_border_child_is_scaled_twice_in_a_render_target_bitmap_of_192_dpi_known_difference` (asserted upstream's behaviour before the fix; removed with it) |
+| The same, as a fix would have it | (80, 60) to (120, 80) | `shadowed_border_child_is_in_place_in_a_render_target_bitmap_of_192_dpi` (ignored before the fix, when it failed with the bounds above; passes with it) |
 
 ## The cause
 
@@ -78,6 +78,6 @@ What it costs, and why it is a decision:
 - It changes what `IDrawingContextImpl::transform` returns after a restore in a scaled context, which only code holding the platform context directly could observe (the lease of the Skia API restores the canvas matrix itself, not the transform).
 - The alternative that changes nothing in the framework: the screenshot run writes the compositor's picture (`-composed`) and is read from that. That is already there, but it leaves the fault to every application that renders a visual into a render target bitmap at a DPI other than 96 (a printout, an export at a higher resolution, the pictures of the catalog), which is how upstream behaves.
 
-## Recommendation
+## Recommendation (taken)
 
-Take the fix as a recorded deviation: a render target bitmap at the DPI of the screen is the ordinary way to capture a control on a high-density display, and its output is wrong with any box shadow in the tree. Until the decision, the `-composed` pictures of the screenshot run show what the window shows.
+Take the fix as a recorded deviation: a render target bitmap at the DPI of the screen is the ordinary way to capture a control on a high-density display, and its output is wrong with any box shadow in the tree. The `-composed` pictures of the screenshot run stay: they are what the window shows, whatever the bitmap does.
