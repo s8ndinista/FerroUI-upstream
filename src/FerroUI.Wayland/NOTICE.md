@@ -41,6 +41,7 @@ file).
 
 `libwayland-client.so.0` and `libwayland-egl.so.1` (MIT), `libxkbcommon.so.0`
 (MIT), `libEGL.so.1` (the EGL of the system: Mesa is MIT; a vendor driver has
-its own terms), and through the X11 crate `libglib-2.0.so.0` when the option
-`use_g_lib_main_loop` is set (LGPL-2.1-or-later). None of them is distributed
-with this crate.
+its own terms), `libgbm.so.1` (MIT, Mesa) and `libdrm.so.2` (MIT) for the
+dmabuf swapchain when the option `use_dmabuf_swapchain` is set, and through the
+X11 crate `libglib-2.0.so.0` when the option `use_g_lib_main_loop` is set
+(LGPL-2.1-or-later). None of them is distributed with this crate.
