@@ -1,5 +1,6 @@
 //! An application on the framebuffer platform that checks itself: the
-//! Skia renderer and the Simple theme, one view filled with one colour, on
+//! Skia renderer and the Simple theme, one view filled with one colour with
+//! a marker of another colour in its top-left corner, on
 //! a framebuffer that is a plain file or a (virtual) framebuffer device
 //! (drawn in software), or on a KMS output of a (virtual) card (drawn with
 //! OpenGL through EGL on GBM), with input from virtual devices it creates.
@@ -23,7 +24,9 @@
 //!   one given (`vkms` for the virtual KMS driver). The frame is read back
 //!   from the framebuffer the CRTC scans out (`output::drm_scanout`), so
 //!   the check sees what the card shows. With `--orientation=90|180|270`
-//!   the scene is drawn rotated (the rotation pass of the output).
+//!   the scene is drawn rotated (the rotation pass of the output), and the
+//!   check expects the marker in the corner of the card's frame that the
+//!   rotation turns the scene's top-left corner into.
 //! - `--direct`, `--async`: draw directly into the mapped memory; copy
 //!   frames on the blit thread.
 //! - `--uinput`: create a touch screen, a keyboard, a mouse and a
@@ -61,6 +64,7 @@ mod app {
     use ferroui_base::reactive::IDisposable;
     use ferroui_base::styling::Styles;
     use ferroui_base::threading::{DispatcherPriority, DispatcherTimer};
+    use ferroui_base::layout::{HorizontalAlignment, VerticalAlignment};
     use ferroui_base::{ferro_class, ferro_impl_classes, instantiate, FerroObjectImpl, Point, Ref};
     use ferroui_controls::application_lifetimes::IApplicationLifetime;
     use ferroui_controls::{
@@ -98,6 +102,13 @@ mod app {
 
     /// The colour the view is filled with.
     const FILL: (u8, u8, u8) = (0x33, 0x66, 0x99);
+    /// The colour of the marker in the top-left corner of the view, and its
+    /// size in device pixels (the runs use the scaling 1). The marker makes
+    /// the frame asymmetric, so that the checks see where the scene's
+    /// top-left corner was put (a rotation of the DRM output moves it).
+    const MARKER: (u8, u8, u8) = (0xCC, 0x33, 0x00);
+    const MARKER_WIDTH: f64 = 96.0;
+    const MARKER_HEIGHT: f64 = 64.0;
     const RUN_TIMEOUT: Duration = Duration::from_secs(60);
 
     /// Whether every check passed.
@@ -125,6 +136,9 @@ mod app {
     /// What the application needs of the command line and of `run`.
     struct Smoke {
         source: FrameSource,
+        /// How the output turns the scene (the DRM output's option; the
+        /// other outputs do not turn it).
+        orientation: SurfaceOrientation,
         /// The size of the frame in pixels.
         width: u32,
         height: u32,
@@ -180,6 +194,15 @@ mod app {
                 border.set_background(Some(Rc::new(ImmutableSolidColorBrush::new(Color::from_rgb(
                     FILL.0, FILL.1, FILL.2,
                 )))));
+                let marker = Border::new();
+                marker.set_background(Some(Rc::new(ImmutableSolidColorBrush::new(Color::from_rgb(
+                    MARKER.0, MARKER.1, MARKER.2,
+                )))));
+                marker.set_width(MARKER_WIDTH);
+                marker.set_height(MARKER_HEIGHT);
+                marker.set_horizontal_alignment(HorizontalAlignment::Left);
+                marker.set_vertical_alignment(VerticalAlignment::Top);
+                border.set_child(Some(marker.upcast::<Control>()));
                 single_view.set_main_view(Some(border.upcast::<Control>()));
             }
 
@@ -514,9 +537,45 @@ mod app {
         }
     }
 
-    fn is_fill(colour: Option<(u8, u8, u8)>) -> bool {
+    fn is_colour(colour: Option<(u8, u8, u8)>, expected: (u8, u8, u8)) -> bool {
         let close = |a: u8, b: u8| (a as i32 - b as i32).abs() <= 8;
-        colour.is_some_and(|(r, g, b)| close(r, FILL.0) && close(g, FILL.1) && close(b, FILL.2))
+        colour.is_some_and(|(r, g, b)| close(r, expected.0) && close(g, expected.1) && close(b, expected.2))
+    }
+
+    /// A corner of the frame as the device holds it.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    enum Corner {
+        TopLeft,
+        TopRight,
+        BottomRight,
+        BottomLeft,
+    }
+
+    /// The corner of the device's frame the scene's top-left corner is
+    /// shown in: the DRM output turns the scene clockwise by its
+    /// orientation (`rotation_vertices` of `drm_output.rs`); the other
+    /// outputs do not turn it.
+    fn marker_corner(orientation: SurfaceOrientation) -> Corner {
+        match orientation {
+            SurfaceOrientation::Rotation0 => Corner::TopLeft,
+            SurfaceOrientation::Rotation90 => Corner::TopRight,
+            SurfaceOrientation::Rotation180 => Corner::BottomRight,
+            SurfaceOrientation::Rotation270 => Corner::BottomLeft,
+        }
+    }
+
+    /// A pixel well inside the marker in a corner of a frame of `width` by
+    /// `height` (the marker is at least 64 pixels on each side, turned or
+    /// not), and the corner it is in.
+    fn corner_points(width: u32, height: u32) -> [(Corner, (u32, u32)); 4] {
+        let inset = 16;
+        let (right, bottom) = (width.saturating_sub(1 + inset), height.saturating_sub(1 + inset));
+        [
+            (Corner::TopLeft, (inset, inset)),
+            (Corner::TopRight, (right, inset)),
+            (Corner::BottomRight, (right, bottom)),
+            (Corner::BottomLeft, (inset, bottom)),
+        ]
     }
 
     /// The steps of the run, one per tick of a timer on the UI thread.
@@ -570,18 +629,21 @@ mod app {
                         // The frame: the middle and the corners have the colour of the view.
                         let frame = read_framebuffer(&smoke);
                         // The points of the frame as the device holds it (a rotated scene is
-                        // shown on a frame of the device's own size).
-                        let colours: Vec<_> = match &frame {
-                            Ok(frame) => {
-                                let (fw, fh) = (frame.width.max(1), frame.height.max(1));
-                                [(fw / 2, fh / 2), (0, 0), (fw - 1, fh - 1)]
-                                    .iter()
-                                    .map(|&(x, y)| pixel(frame, x, y))
-                                    .collect()
+                        // shown on a frame of the device's own size): the middle has the colour
+                        // of the view, the corner the orientation puts the scene's top-left
+                        // corner in has the marker, the three other corners the view's colour.
+                        let marker = marker_corner(smoke.orientation);
+                        let mut colours: Vec<(String, Option<(u8, u8, u8)>, (u8, u8, u8))> = Vec::new();
+                        if let Ok(frame) = &frame {
+                            let (fw, fh) = (frame.width.max(1), frame.height.max(1));
+                            colours.push(("middle".to_owned(), pixel(frame, fw / 2, fh / 2), FILL));
+                            for (corner, (x, y)) in corner_points(fw, fh) {
+                                let expected = if corner == marker { MARKER } else { FILL };
+                                colours.push((format!("{corner:?}"), pixel(frame, x, y), expected));
                             }
-                            Err(_) => vec![None; 3],
-                        };
-                        let arrived = colours.iter().all(|&colour| is_fill(colour));
+                        }
+                        let arrived = !colours.is_empty()
+                            && colours.iter().all(|(_, colour, expected)| is_colour(*colour, *expected));
                         // The DRM output creates its EGL objects with the first frame, which
                         // takes a while on a software renderer.
                         let limit = if matches!(smoke.source, FrameSource::Drm(_)) { 30 } else { 10 };
@@ -595,8 +657,9 @@ mod app {
                             "frame",
                             arrived,
                             format!(
-                                "the pixels at the middle and at two corners are {colours:?} after {} ms (the view is filled with {FILL:?})",
-                                started.elapsed().as_millis()
+                                "the pixels (where, read, expected) are {colours:?} after {} ms (the view is filled with {FILL:?}, its top-left marker {MARKER:?} is expected at {marker:?} for {:?})",
+                                started.elapsed().as_millis(),
+                                smoke.orientation
                             ),
                         );
                         if smoke.devices.is_none() {
@@ -772,7 +835,7 @@ mod app {
 
     /// What a run is drawn on: the output, where its frame is read back
     /// from, and the result of the check of the output.
-    type CreatedOutput = (Arc<dyn IOutputBackend>, FrameSource, (bool, String));
+    type CreatedOutput = (Arc<dyn IOutputBackend>, FrameSource, SurfaceOrientation, (bool, String));
 
     /// A file or a framebuffer device, drawn in software.
     fn fb_output() -> Result<CreatedOutput, String> {
@@ -837,7 +900,7 @@ mod app {
             ),
         );
         let output: Arc<dyn IOutputBackend> = output;
-        Ok((output, FrameSource::Fb { node, var_info, fixed_info }, check))
+        Ok((output, FrameSource::Fb { node, var_info, fixed_info }, SurfaceOrientation::Rotation0, check))
     }
 
     /// A KMS output of a card, drawn with OpenGL.
@@ -874,7 +937,7 @@ mod app {
             ),
         );
         let backend: Arc<dyn IOutputBackend> = output.clone();
-        Ok((backend, FrameSource::Drm(output), check))
+        Ok((backend, FrameSource::Drm(output), orientation, check))
     }
 
     pub fn run() -> ExitCode {
@@ -885,7 +948,7 @@ mod app {
         };
 
         println!("Phase: output");
-        let (output, source, output_check) = if let Some(card) = argument("--drm") {
+        let (output, source, orientation, output_check) = if let Some(card) = argument("--drm") {
             match drm_output(&card) {
                 Ok(created) => created,
                 Err(message) => return fail(message),
@@ -928,6 +991,7 @@ mod app {
 
         let smoke = Rc::new(Smoke {
             source,
+            orientation,
             width: size.width as u32,
             height: size.height as u32,
             dump: argument("--dump"),
