@@ -2,8 +2,10 @@
 //! `WaylandEglWsiSurface.cs`).
 
 use super::i_wayland_framebuffer_surface::{IWaylandSurfaceRenderTarget, WaylandRenderSurfaceTarget};
+use super::wayland_egl_dma_buf_platform_graphics::WaylandEglDmaBufPlatformGraphics;
 use super::wayland_framebuffer::target_state;
 use crate::server::persistent::w_surface::WSurfaceId;
+use crate::server::wayland_platform_graphics::WaylandPlatformGraphics;
 use crate::server::wayland_worker::with_worker_thread;
 use ferroui_base::platform::surfaces::{IPlatformRenderSurface, IPlatformRenderSurfaceRenderTarget};
 use ferroui_base::platform::{PlatformRenderTargetState, RenderTargetError, RenderTargetSceneInfo};
@@ -17,6 +19,7 @@ use ferroui_opengl::{IGlContext, OpenGlException};
 use std::any::{Any, TypeId};
 use std::cell::{Cell, RefCell};
 use std::rc::{Rc, Weak};
+use std::sync::Arc;
 use wayland_client::Proxy;
 use wayland_egl::WlEglSurface;
 
@@ -27,16 +30,20 @@ use wayland_egl::WlEglSurface;
 /// staging is delegated to `on_before_new_buffer_attached`
 /// and invoked immediately before the swap.
 ///
-/// The surface is a handle threads share: it names the worker's surface. Its
-/// render target is an object of the worker thread.
+/// The surface is a handle threads share: it names the worker's surface and holds the
+/// platform graphics, through which it declines to be an OpenGL surface while the backend of
+/// the worker is the dmabuf swapchain (the reference makes the render surfaces of the backend
+/// that is bound; the port makes the handles once, on the UI thread). Its render target is an
+/// object of the worker thread.
 #[derive(Clone)]
 pub struct WaylandEglWsiSurface {
     surface: WSurfaceId,
+    graphics: Arc<WaylandPlatformGraphics>,
 }
 
 impl WaylandEglWsiSurface {
-    pub fn new(surface: WSurfaceId) -> Self {
-        Self { surface }
+    pub fn new(surface: WSurfaceId, graphics: Arc<WaylandPlatformGraphics>) -> Self {
+        Self { surface, graphics }
     }
 }
 
@@ -46,7 +53,7 @@ impl IPlatformRenderSurface for WaylandEglWsiSurface {
     }
 
     fn try_get_surface_kind(&self, kind: TypeId) -> Option<Rc<dyn Any>> {
-        if kind == TypeId::of::<dyn IGlPlatformSurface>() {
+        if kind == TypeId::of::<dyn IGlPlatformSurface>() && !WaylandEglDmaBufPlatformGraphics::is_current(&self.graphics) {
             let this: Rc<dyn IGlPlatformSurface> = Rc::new(self.clone());
             return Some(Rc::new(this));
         }

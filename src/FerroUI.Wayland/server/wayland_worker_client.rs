@@ -17,6 +17,7 @@ use super::persistent::w_surface::{WSurfaceId, WXdgPopup, WXdgTopLevel};
 use super::persistent::wayland_bitmap_cursor::WaylandBitmapCursor;
 use super::persistent::wayland_cursor::{WaylandCursorId, WaylandStandardCursor};
 use super::transient::rendering::i_wayland_framebuffer_surface::WaylandRenderSurfaceTarget;
+use super::transient::rendering::wayland_egl_dma_buf_surface::WaylandEglDmaBufSurface;
 use super::transient::rendering::wayland_egl_wsi_surface::WaylandEglWsiSurface;
 use super::transient::rendering::wayland_framebuffer::WaylandFramebuffer;
 use super::wayland_dispatch_priority::WaylandDispatchPriority;
@@ -161,6 +162,17 @@ impl WaylandWorkerClient {
         WaylandCursorProxy::new(id, self.marshaller.clone())
     }
 
+    /// The render surfaces of a surface of the worker: the two surfaces of EGL (the window
+    /// system integration of the driver, the dmabuf swapchain), then the framebuffer.
+    fn render_surfaces(&self, id: WSurfaceId) -> Vec<Arc<dyn IPlatformRenderSurface>> {
+        let graphics = self.worker.platform_graphics().clone();
+        vec![
+            Arc::new(WaylandEglWsiSurface::new(id, graphics.clone())),
+            Arc::new(WaylandEglDmaBufSurface::new(id, graphics)),
+            Arc::new(WaylandFramebuffer::new(WaylandRenderSurfaceTarget::Surface(id))),
+        ]
+    }
+
     /// Creates a new xdg_toplevel surface and returns the bundle of UI-thread
     /// accessors needed to drive it. The underlying top-level
     /// is worker-thread state and is intentionally not exposed.
@@ -173,15 +185,13 @@ impl WaylandWorkerClient {
             worker.register_top_level(WXdgTopLevel::new(id, worker_handle, sink, basic_init_sender));
         });
 
-        // Render surfaces matching the platform graphics: the surface of EGL, which the
-        // renderer takes when the worker has a GPU backend, and the framebuffer surface,
-        // always included as a software fallback. The reference asks the worker's surface
-        // for the list on the thread that renders; the surfaces of the port are handles
-        // that name the worker's surface, so the list is made here.
-        let render_surfaces: Vec<Arc<dyn IPlatformRenderSurface>> = vec![
-            Arc::new(WaylandEglWsiSurface::new(id)),
-            Arc::new(WaylandFramebuffer::new(WaylandRenderSurfaceTarget::Surface(id))),
-        ];
+        // Render surfaces matching the platform graphics: the surfaces of EGL, of which the
+        // renderer takes the one of the GPU backend the worker has bound (each answers as an
+        // OpenGL surface only for its backend), and the framebuffer surface, always included
+        // as a software fallback. The reference asks the worker's surface for the list on the
+        // thread that renders, where it is made for the bound backend; the surfaces of the
+        // port are handles that name the worker's surface, so the list is made here.
+        let render_surfaces = self.render_surfaces(id);
 
         WaylandSurfaceCreateResult {
             proxy: WXdgTopLevelProxy::new(id, self.marshaller.clone()),
@@ -204,10 +214,7 @@ impl WaylandWorkerClient {
         let worker_handle = self.worker.clone();
         self.post_oob(move |worker| worker.register_popup(WXdgPopup::new(id, worker_handle, sink, parent)));
 
-        let render_surfaces: Vec<Arc<dyn IPlatformRenderSurface>> = vec![
-            Arc::new(WaylandEglWsiSurface::new(id)),
-            Arc::new(WaylandFramebuffer::new(WaylandRenderSurfaceTarget::Surface(id))),
-        ];
+        let render_surfaces = self.render_surfaces(id);
 
         // Popups don't currently surface a "basic init" task to the UI
         // side: the UI driver waits on the first OnPopupConfigure delivered
