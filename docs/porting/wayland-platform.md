@@ -366,9 +366,31 @@ The job runs the smoke mode in software and through EGL (Mesa's `llvmpipe`, `LIB
 | `cargo check -p ferroui-x11 --target x86_64-unknown-linux-gnu` | Clean with `native_functions!` exported **[M]** |
 | The tracking page | 79 of 79 files, 612 of 780 members (168 waived) **[M]** |
 | The CI jobs `wayland` and `wayland-next` | Extended (the dmabuf fallback under the software renderer in both; the render node of the runner, with the module `vgem` where it has none, informational); results with the pull request |
-| The virtual machine | `ferroui-vm-wayland/scripts/stage3.sh`: the regression runs with the phase `foreign`, the fallback, and the swapchain under a sway that renders with OpenGL ES on the machine's render node, where Mesa has a driver for it; results to be recorded here |
+| The virtual machine | `ferroui-vm-wayland/scripts/stage3.sh`, sources at `e7b4a2f4`: every step passed, the swapchain included (the next section) **[VM]** |
 
 What a run on the runner can and cannot show, from the sources rather than measured: wlroots announces `zwp_linux_dmabuf_v1` only when its renderer has a DRM device, which the software renderer (`WLR_RENDERER=pixman`, the one the tests use for want of a GPU) has not, so under it the smoke mode measures the fallback. `vgem` gives a render node without a driver of Mesa, on which the OpenGL ES renderer of wlroots most likely does not start; the step reports what happened.
+
+### Measured in the virtual machine for stage 3 (2026-10-15) **[VM]**
+
+Ubuntu 24.04.3 on ARM64, sway 1.9, GNOME Shell 46.0, `ferroui-vm-wayland/scripts/stage3.sh` (every step bounded with `timeout -k 10`), sources at commit `e7b4a2f4`; "checks of this script: ok 61, failed 0, not measured 10". The machine has a virtio GPU: `/dev/dri/card1` and the render node `/dev/dri/renderD128` (kernel driver `virtio-pci`), on which sway starts with its OpenGL ES renderer (`sway-run.sh --renderer gles2 --render-node /dev/dri/renderD128`) and then announces `zwp_linux_dmabuf_v1`. So the swapchain itself ran here.
+
+| Step | Result |
+|---|---|
+| Tests of the crate | 115 passed (the 3 new tests of the feedback among them; on Linux also the format codes, the layouts of `gbm_bo_handle` and `drmDevice`, the negotiation of formats and the attributes of a plane) |
+| Smoke through `wl_shm` buffers, sway on its software renderer, scale 1 | 103 of 103, with the phase `foreign` |
+| Smoke through EGL (`LIBGL_ALWAYS_SOFTWARE=1`), the same compositor | 103 of 103 |
+| `--mode=dmabuf` under the software renderer (the fallback) | 103 of 103: the warning "The dmabuf swapchain was requested, but the compositor has no zwp_linux_dmabuf_v1 (version 4 or later): rendering through a wl_egl_window", the "[not measured]" line of the swapchain, and the worker on `wl_egl_window` |
+| Smoke through `wl_shm` buffers at scale 1.5 | 99 of 99 |
+| **`--mode=dmabuf`, sway on OpenGL ES over the render node, scale 1** | **103 of 103**: "the GPU backend is dmabuf, with 1 format and modifier pairs"; every frame, the popups, the resize, the decorations and the screen copies drawn through the swapchain |
+| The same at scale 2 | 103 of 103 |
+| The same on 1200 by 720 at scale 1.5 | 99 of 99 |
+| `--mode=egl` on the same compositor (the window system integration, for comparison) | 103 of 103 |
+| The ControlCatalog through the swapchain (`FERROUI_CATALOG_WAYLAND=dmabuf`, `catalog-pictures.sh ... dmabuf`, `WAYLAND_DEBUG=1`), 1280 by 800 | 7 pictures of the compositor in `ferroui-screenshots/wayland/stage3/` (`dmabuf-01-Home.png` to `dmabuf-07-Slider.png`, the pages the right way up and as under the other modes) and the 7 frames of the framework. The trace: the default feedback asked once; 8 `create_params` and 8 `created` (two swapchains of four: the window was resized once), no `failed`; 502 buffers attached. Each buffer one plane, `ARGB8888` (875713089), a stride of 4400 for a width of 1100, the modifier 0 (linear) |
+| The catalog under a headless Mutter, asking for the swapchain | Mutter announces `zwp_linux_dmabuf_v1` version 5 and the backend binds version 4; the default feedback once with its `main_device`; 16 buffers created (four swapchains), none failed; no protocol error. The frame of the framework is in `stage3/mutter/01-home.png` (Mutter has no screen copy for a client) |
+
+What the logs also show: every smoke run has "Unable to initialize Wayland WSI EGL rendering: 'No suitable EGL config was found'", which is the second worker of the phase `foreign`, started with no OpenGL profile (it renders nothing), as the software mode of the main worker has always logged it. The phase passed in all eight smoke runs: the second worker on the `wl_display` of the other connection (the same pointer, not owned), `wl_compositor` version 6, its platform graphics ready, and a round trip of the owning connection afterwards.
+
+Not shown by these runs: a hardware GPU (the virtio GPU of the machine is the paravirtual one), a buffer of more than one plane or with a modifier other than linear, KWin.
 
 ### Measured by the CI job (run 38083641943, 2026-10-10) **[CI]**
 
@@ -596,7 +618,7 @@ Everything measured ran under sway 1.9 (wlroots 0.17) on its headless backend wi
 | A drag between two clients; a bitmap through the clipboard | The test client has no surface to drop on | A second surface in the test client of the example (code, no tooling): the first thing to add to the smoke mode |
 | A compositor restart with popups open or a text box focused | Never tried | `swaymsg exit` and a new sway on the same socket name while the example runs: a phase of the smoke mode, no tooling |
 | A popup with a grab | The backend takes none, as upstream | Nothing to verify until upstream changes |
-| The dmabuf swapchain on a hardware GPU (Intel, AMD; NVIDIA with GBM) and under Mutter and KWin with their own render nodes | The runners have no render node with a driver of Mesa; the virtual machine's is measured by `stage3.sh` (section 11) | `wayland_window --smoke --mode=dmabuf` under `scripts/wayland/sway-run.sh --renderer gles2 --render-node /dev/dri/renderD128` on any Linux machine with such a GPU; the catalog with `FERROUI_CATALOG_WAYLAND=dmabuf` in a desktop session |
+| The dmabuf swapchain on a hardware GPU (Intel, AMD; NVIDIA with GBM) and under KWin | **Verified on the virtio GPU of the virtual machine** under sway with OpenGL ES and under a headless Mutter (section 11); the runners have no render node with a driver of Mesa | `wayland_window --smoke --mode=dmabuf` under `scripts/wayland/sway-run.sh --renderer gles2 --render-node /dev/dri/renderD128` on any Linux machine with such a GPU; the catalog with `FERROUI_CATALOG_WAYLAND=dmabuf` in a desktop session |
 | The swapchain with explicit synchronization, fewer than four buffers, a format other than `ARGB8888`, a buffer of several planes | Upstream has none of it at the tracked commit (four slots, implicit synchronization, `ARGB8888` only); a multi-plane buffer needs a modifier that gives one, which only a hardware driver does | The hardware run above shows the plane count of the buffers in a trace (`WAYLAND_DEBUG=1`: the `add` requests per `create`) |
 | A display another library opened, with that library rendering beside the backend (GTK or SDL on the same `wl_display`) | The phase `foreign` checks a second worker of this backend beside a `wayland-client` connection that does nothing | An embedding example with another toolkit; upstream has no caller of the member either |
 
