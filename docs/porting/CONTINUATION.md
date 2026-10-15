@@ -296,12 +296,13 @@ Branch `vulkan-android-windows`. The two files of each platform, wired into its 
 - Without the feature of the platform crate a list that names `Vulkan` passes it over with a warning that names the feature, because the Skia backend would have no GPU for its graphics.
 - No new `thread_local!` (the base of this branch has no `ferro_thread_local!` yet; nothing of this work needs a thread-local variable).
 
-Runs: the emulator run of the package with the feature (`--modes "vulkan egl software"`) and of the default package, and the virtual machine run with `--vulkan-probe` (and whether the machine has a Vulkan driver at all) are recorded in `android-platform.md` 10.5 and `win32-platform.md` 10.5 when they have run.
+Runs: **the emulator, green** (2026-10-15, `android-platform.md` 10.5): the package with the feature passes the modes `vulkan` (64 checks), `egl` and `software`; the default package passes `egl` and `software`. The virtual machine run with `--vulkan-probe` (and whether the machine has a Vulkan driver at all) is recorded in `win32-platform.md` 10.5 when it has run.
 
 Open:
 
 1. The Windows feature with Skia from source has not been built anywhere. A CI job that builds it once (cached) would show the time and the ControlCatalog through Vulkan on a runner; the hosted Windows runners have no Vulkan driver, so a run there needs a software implementation (Mesa's lavapipe for Windows, or Microsoft's Dozen over WARP).
-2. Whether the Android default should move to the binary with OpenGL ES and Vulkan (one binary for both modes) once the emulator runs are green: the owner's decision; the package grows by about 2 MB.
+2. Whether the Android default should move to the binary with OpenGL ES and Vulkan (one binary for both modes): the emulator runs are green with it in all three modes; the owner's decision; the library grows by about 2 MB.
+3. **`VK_SUBOPTIMAL_KHR` on a rotated Android screen.** Every present while the screen is rotated answers it (the swap chain keeps the identity transform, as upstream), and upstream's `ThrowOnError` makes each such frame a failure, which the compositor logs; the frames are shown. Treating the result as a success at present (and recreating the swap chain only when the size changes) would be a deviation for the contracts crate; on the emulator it costs a logged panic per frame in landscape.
 
 ## Vulkan: the contracts crate, the Skia GPU and the X11 mode (2026-10-11)
 
