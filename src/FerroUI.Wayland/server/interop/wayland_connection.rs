@@ -29,6 +29,9 @@ pub struct WaylandConnection {
     queue: EventQueue<WaylandWorkerState>,
     queue_handle: QueueHandle<WaylandWorkerState>,
     is_connected: bool,
+    /// Whether the display was opened by the backend: a foreign one belongs to the library
+    /// that opened it and is never closed here.
+    owns_display: bool,
     id: u64,
 }
 
@@ -79,12 +82,47 @@ impl WaylandConnection {
         Connection::from_socket(stream).map_err(|error| FerroWaylandException::new(error.to_string()))
     }
 
-    /// The connection of a display, with a queue of its own for the objects of the backend.
+    /// The connection of a display the backend opened ([`connect`](Self::connect),
+    /// [`connect_to_fd`](Self::connect_to_fd)), with a queue of its own for the objects of the
+    /// backend.
     pub fn new(display: Connection) -> Self {
+        Self::with_display(display, true)
+    }
+
+    /// The connection of a display another library opened (`WaylandConnection(WlDisplay
+    /// foreignDisplay)`), with a queue of its own for the objects of the backend, so that the
+    /// events of the backend and those of the library do not mix.
+    ///
+    /// The display is that library's: the connection does not close it, and a `Connection`
+    /// made over a foreign `wl_display` (`Backend::from_foreign_display`) does not close it
+    /// when it is dropped either. [`from_foreign_display_ptr`](Self::from_foreign_display_ptr)
+    /// makes that `Connection` of the pointer.
+    pub fn from_foreign_display(foreign_display: Connection) -> Self {
+        Self::with_display(foreign_display, false)
+    }
+
+    /// The display of a `wl_display*` another library opened, as a `Connection` that never
+    /// closes it.
+    ///
+    /// # Safety
+    /// `display` is a live `wl_display` of `libwayland-client` that outlives every use of the
+    /// result (the backend's worker uses it for as long as the process runs).
+    pub unsafe fn from_foreign_display_ptr(display: *mut c_void) -> Connection {
+        // SAFETY: the caller guarantees that the pointer is a live display of the library.
+        let backend = unsafe { wayland_client::backend::Backend::from_foreign_display(display.cast()) };
+        Connection::from_backend(backend)
+    }
+
+    fn with_display(display: Connection, owns_display: bool) -> Self {
         static NEXT_ID: AtomicU64 = AtomicU64::new(1);
         let queue = display.new_event_queue();
         let queue_handle = queue.handle();
-        Self { display, queue, queue_handle, is_connected: true, id: NEXT_ID.fetch_add(1, Ordering::Relaxed) }
+        Self { display, queue, queue_handle, is_connected: true, owns_display, id: NEXT_ID.fetch_add(1, Ordering::Relaxed) }
+    }
+
+    /// Whether the display was opened by the backend (and is closed with the connection).
+    pub fn owns_display(&self) -> bool {
+        self.owns_display
     }
 
     pub fn display(&self) -> &Connection {
@@ -111,7 +149,8 @@ impl WaylandConnection {
         self.display.backend().display_ptr().cast()
     }
 
-    /// Marks the connection as gone. The display is closed when the value is dropped.
+    /// Marks the connection as gone. A display the backend opened is closed when the value is
+    /// dropped; a foreign one stays open (the `Connection` over it does not own it).
     pub fn dispose(&mut self) {
         self.is_connected = false;
     }

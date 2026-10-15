@@ -31,11 +31,22 @@
 //! - `--mode=software` (the default) renders through `wl_shm` buffers: the
 //!   list of OpenGL profiles is empty, so no display of EGL is created;
 //!   `--mode=egl` renders through EGL and fails when the worker has no GPU
-//!   backend.
+//!   backend; `--mode=dmabuf` asks for the dmabuf swapchain
+//!   (`use_dmabuf_swapchain`): where the compositor has
+//!   `zwp_linux_dmabuf_v1` the worker has to render through it, and where it
+//!   has not (sway on the software renderer of wlroots) the backend falls
+//!   back to a `wl_egl_window`, which the run reports as not measured.
 //! - `--expect-scale=N`: the scale of the output, which the window has to
 //!   take.
-//! - `--skip=a,b`: phases to leave out (`screens`, `frames`, `input`, `popup`, `clipboard`,
-//!   `dragdrop`, `textinput`, `export`, `decorations`, `cursor`, `resize`, `state`, `title`).
+//! - `--skip=a,b`: phases to leave out (`screens`, `foreign`, `frames`, `input`, `popup`,
+//!   `clipboard`, `dragdrop`, `textinput`, `export`, `decorations`, `cursor`, `resize`, `state`,
+//!   `title`).
+//!
+//! The phase `foreign` starts a second worker of the backend on a display
+//! another library opened (the `wl_display` of a connection the example
+//! makes with `wayland-client`, handed over as a foreign display) and checks
+//! that it binds its globals there and that the display stays the other
+//! library's.
 //!
 //! The phase `textinput` makes the test client the input method of the seat
 //! (`zwp_input_method_manager_v2`, which sway has): it is activated when a
@@ -308,10 +319,13 @@ mod app {
 
         let mut options = WaylandPlatformOptions::new();
         options.app_id = Some(APP_ID.to_string());
-        if mode() != "egl" {
+        match mode().as_str() {
+            "egl" => {}
+            // The swapchain the backend allocates with GBM and hands over as dma-bufs.
+            "dmabuf" => options.use_dmabuf_swapchain = Some(true),
             // No profile to make a context with: the display of EGL is not created, and the
             // worker renders through shared memory buffers.
-            options.gl_profiles = Vec::new();
+            _ => options.gl_profiles = Vec::new(),
         }
 
         let mut builder = AppBuilder::configure::<App>();
@@ -1464,6 +1478,11 @@ mod app {
                 screens_checks(&report);
             }
 
+            if options.runs("foreign") {
+                report.phase("foreign");
+                foreign_display_checks(&report).await;
+            }
+
             report.phase("window");
             let mut attempt = 0;
             loop {
@@ -1566,6 +1585,7 @@ mod app {
                 let uses_contexts =
                     client.invoke_oob(|worker| worker.state.worker.platform_graphics().uses_contexts()).recv_timeout(STEP_TIMEOUT);
                 match (mode.as_str(), uses_contexts) {
+                    ("dmabuf", Ok(_)) => dmabuf_checks(report, client),
                     ("egl", Ok(uses_contexts)) => report.check(
                         "platform graphics",
                         uses_contexts,
@@ -1580,6 +1600,138 @@ mod app {
                 }
             }
             client
+        }
+
+        /// What the worker renders with when the dmabuf swapchain is asked for.
+        fn dmabuf_checks(report: &Report, client: &WaylandWorkerClient) {
+            use ferroui_wayland::server::transient::rendering::wayland_egl_dma_buf_platform_graphics::WaylandEglDmaBufPlatformGraphics;
+            use ferroui_wayland::server::transient::rendering::wayland_egl_wsi_platform_graphics::WaylandEglWsiPlatformGraphics;
+            let answer = client
+                .invoke_oob(|worker| {
+                    let has_global = worker.state.globals.as_ref().is_some_and(|globals| globals.linux_dmabuf.is_some());
+                    let graphics = worker.state.worker.platform_graphics().current_graphics();
+                    let backend = match &graphics {
+                        Some(graphics) if graphics.as_any().is::<WaylandEglDmaBufPlatformGraphics>() => "dmabuf",
+                        Some(graphics) if graphics.as_any().is::<WaylandEglWsiPlatformGraphics>() => "wl_egl_window",
+                        Some(_) => "another",
+                        None => "none (software)",
+                    };
+                    let formats = graphics
+                        .as_ref()
+                        .and_then(|graphics| graphics.as_any().downcast_ref::<WaylandEglDmaBufPlatformGraphics>())
+                        .map(|graphics| graphics.display().supported_formats().len());
+                    (has_global, backend, formats)
+                })
+                .recv_timeout(STEP_TIMEOUT);
+            let Ok((has_global, backend, formats)) = answer else {
+                report.check("worker", false, "the worker did not answer".to_string());
+                return;
+            };
+            println!(
+                "Dmabuf swapchain: the compositor {} zwp_linux_dmabuf_v1 (version 4 or later); the GPU backend is {backend}{}",
+                if has_global { "has" } else { "has no" },
+                formats.map(|formats| format!(", with {formats} format and modifier pairs")).unwrap_or_default()
+            );
+            if has_global {
+                report.check(
+                    "dmabuf swapchain",
+                    backend == "dmabuf",
+                    format!("the compositor has zwp_linux_dmabuf_v1 and the worker renders through {backend}"),
+                );
+            } else {
+                println!(
+                    "  [not measured] dmabuf swapchain: the compositor has no zwp_linux_dmabuf_v1 (no render node: sway on the \
+                     software renderer of wlroots); the backend fell back to a wl_egl_window, as the reference does"
+                );
+                report.check(
+                    "platform graphics",
+                    backend == "wl_egl_window",
+                    format!("without zwp_linux_dmabuf_v1 the worker renders through {backend}"),
+                );
+            }
+        }
+
+        /// A second worker on a display another library opened (`Start` with a foreign
+        /// display): it binds its globals on a queue of its own, the display stays the other
+        /// library's, and both keep working.
+        async fn foreign_display_checks(report: &Report) {
+            use ferroui_wayland::server::interop::wayland_connection::WaylandConnection;
+            use ferroui_wayland::server::wayland_worker::WaylandWorker;
+            use wayland_client::{Connection, Proxy};
+
+            // The other library: wayland-client, which opens the display and owns it.
+            let display = match Connection::connect_to_env() {
+                Ok(display) => display,
+                Err(error) => {
+                    report.check("foreign display", false, format!("the display cannot be opened: {error}"));
+                    return;
+                }
+            };
+            let pointer = display.backend().display_ptr();
+            // SAFETY: the display of the connection above, which is never closed (it is
+            // forgotten at the end of the phase and lives as long as the process).
+            let foreign = unsafe { WaylandConnection::from_foreign_display_ptr(pointer.cast()) };
+            let worker = match WaylandWorker::new() {
+                Ok(worker) => worker,
+                Err(error) => {
+                    report.check("foreign display", false, format!("the worker cannot be made: {error}"));
+                    return;
+                }
+            };
+            let mut options = WaylandPlatformOptions::new();
+            options.gl_profiles = Vec::new();
+            if let Err(error) = worker.start_with_foreign_display(options.for_worker(), foreign, None) {
+                report.check("foreign display", false, format!("the worker cannot be started: {error}"));
+                return;
+            }
+
+            let mut answer = None;
+            for _ in 0..ATTEMPTS {
+                delay(INTERVAL).await;
+                let state = worker
+                    .invoke_oob(|worker| {
+                        let connection = worker.connection.as_ref()?;
+                        let globals = worker.state.globals.as_ref()?;
+                        Some((
+                            connection.owns_display(),
+                            connection.display_ptr() as usize,
+                            globals.wl_compositor.version(),
+                            worker.state.worker.platform_graphics().is_ready(),
+                        ))
+                    })
+                    .recv_timeout(STEP_TIMEOUT);
+                if let Ok(Some(state)) = state {
+                    answer = Some(state);
+                    break;
+                }
+            }
+            let Some((owns_display, worker_display, compositor_version, graphics_ready)) = answer else {
+                report.check("foreign display", false, "the worker bound no globals on the foreign display".to_string());
+                std::mem::forget(display);
+                return;
+            };
+            report.check(
+                "foreign display",
+                !owns_display && worker_display == pointer as usize,
+                format!(
+                    "the worker runs on the wl_display of the other library ({}) and does not own it",
+                    if worker_display == pointer as usize { "the same pointer" } else { "another pointer" }
+                ),
+            );
+            report.check(
+                "foreign globals",
+                compositor_version >= 4 && graphics_ready,
+                format!("wl_compositor version {compositor_version}, platform graphics ready: {graphics_ready}"),
+            );
+            // The other library's own queue still works beside the worker's.
+            let roundtrip = display.roundtrip();
+            report.check(
+                "foreign owner",
+                roundtrip.is_ok(),
+                format!("a round trip of the library that opened the display: {roundtrip:?}"),
+            );
+            // The display stays open for the worker, which runs until the process ends.
+            std::mem::forget(display);
         }
 
         /// The screens of the platform against the outputs the compositor reports.

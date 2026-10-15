@@ -234,6 +234,39 @@ impl WaylandWorker {
         outputs_sink: Option<WaylandOutputsSinkProxy>,
         init: Sender<Option<FerroWaylandException>>,
     ) -> Result<(), FerroWaylandException> {
+        self.start_core(options, outputs_sink, move |worker| worker.run(probed_connection, Some(init)))
+    }
+
+    /// Starts the worker on a display another library opened (`Start(options, WlDisplay
+    /// foreignDisplay, outputsSink)`): the objects of the backend are on a queue of their own
+    /// on that display ([`WaylandConnection::from_foreign_display`]). There is no reconnect:
+    /// the display is the other library's, so when it is lost, or its globals cannot be
+    /// bound, the worker cannot go on, which ends the process as the exception of the
+    /// reference does. Nothing waits for the globals; a caller that needs them asks the
+    /// worker (`invoke_oob`).
+    pub fn start_with_foreign_display(
+        self: &Arc<Self>,
+        options: WaylandWorkerOptions,
+        foreign_display: Connection,
+        outputs_sink: Option<WaylandOutputsSinkProxy>,
+    ) -> Result<(), FerroWaylandException> {
+        self.start_core(options, outputs_sink, move |worker| {
+            let connection = WaylandConnection::from_foreign_display(foreign_display);
+            match worker.run_connection(connection, &mut None) {
+                // This is fatal
+                Ok(()) => Self::fatal(&FerroWaylandException::new("Connection lost")),
+                Err(error) => Self::fatal(&error),
+            }
+        })
+    }
+
+    /// The thread of the worker with its state, running `run` (`StartCore`).
+    fn start_core(
+        self: &Arc<Self>,
+        options: WaylandWorkerOptions,
+        outputs_sink: Option<WaylandOutputsSinkProxy>,
+        run: impl FnOnce(&Arc<Self>) + Send + 'static,
+    ) -> Result<(), FerroWaylandException> {
         let worker = self.clone();
         std::thread::Builder::new()
             .name(THREAD_NAME.to_string())
@@ -251,7 +284,7 @@ impl WaylandWorker {
                     connected_objects: HashSet::new(),
                 };
                 WORKER_THREAD.with(|cell| *cell.borrow_mut() = Some(WaylandWorkerThread { connection: None, state }));
-                worker.run(probed_connection, Some(init));
+                run(&worker);
                 // The state holds objects of the connection: it goes with the thread.
                 WORKER_THREAD.with(|cell| cell.borrow_mut().take());
             })
@@ -281,7 +314,7 @@ impl WaylandWorker {
         let mut display = probed_connection;
         loop {
             let initial = init.is_some();
-            match self.run_connection(display, &mut init) {
+            match self.run_connection(WaylandConnection::new(display), &mut init) {
                 Ok(()) => {}
                 Err(error) if initial && init.is_some() => {
                     // Globals init failed on the initial connection: report to the waiting caller
@@ -333,12 +366,11 @@ impl WaylandWorker {
     /// are bound.
     fn run_connection(
         self: &Arc<Self>,
-        display: Connection,
+        mut connection: WaylandConnection,
         init: &mut Option<Sender<Option<FerroWaylandException>>>,
     ) -> Result<(), FerroWaylandException> {
         self.verify_access();
         let connected = with_worker_thread(|worker| {
-            let mut connection = WaylandConnection::new(display);
             let created = WaylandGlobals::create(&mut connection, &mut worker.state);
             worker.connection = Some(connection);
             created

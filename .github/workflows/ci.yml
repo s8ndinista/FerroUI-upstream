@@ -1073,6 +1073,55 @@ jobs:
         run: |
           scripts/wayland/sway-run.sh --size 1200x720 --scale 1.5 -- \
             timeout 300 target/debug/examples/wayland_window --smoke --mode=egl --expect-scale=1.5 --skip=resize
+      # The dmabuf swapchain (use_dmabuf_swapchain, stage 3): the backend allocates its buffers with
+      # GBM on the render node of the compositor's main device and hands them over through
+      # zwp_linux_dmabuf_v1. sway on its software renderer has no DRM device and announces no
+      # zwp_linux_dmabuf_v1, so the backend falls back to a wl_egl_window, as the original does: the
+      # step checks that the run says so and that everything renders through the fallback.
+      - name: The dmabuf swapchain asked for, under the software renderer (the fallback)
+        if: ${{ !cancelled() }}
+        env:
+          LIBGL_ALWAYS_SOFTWARE: 1
+        run: |
+          set -o pipefail
+          scripts/wayland/sway-run.sh -- \
+            timeout 300 target/debug/examples/wayland_window --smoke --mode=dmabuf 2>&1 | tee "$RUNNER_TEMP/dmabuf-fallback.log"
+          grep -q "the backend fell back to a wl_egl_window" "$RUNNER_TEMP/dmabuf-fallback.log"
+          grep -q "zwp_linux_dmabuf_v1 (version 4 or later): rendering through a wl_egl_window" "$RUNNER_TEMP/dmabuf-fallback.log"
+      # Where the runner has a DRM render node (or gets one from the module vgem of the extra modules
+      # of its kernel), the compositor is tried on OpenGL ES over it, which is the only way it
+      # announces zwp_linux_dmabuf_v1; then the smoke mode has to render through the swapchain.
+      # Informational: whether Mesa has a driver for the node of the runner is measured here, not
+      # assumed (docs/porting/wayland-platform.md, section 11).
+      - name: The dmabuf swapchain on a render node, where the runner has one
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        run: |
+          echo "kernel $(uname -r)"
+          ls -l /dev/dri 2>/dev/null || echo "no /dev/dri"
+          if ! ls /dev/dri/renderD* >/dev/null 2>&1; then
+            sudo apt-get install -y --no-install-recommends kmod "linux-modules-extra-$(uname -r)" \
+              || echo "::notice::no linux-modules-extra package for the kernel of the runner"
+            sudo modprobe vgem || echo "::notice::the module vgem could not be loaded"
+            ls -l /dev/dri 2>/dev/null || true
+          fi
+          node="$(ls /dev/dri/renderD* 2>/dev/null | head -n 1)"
+          if [ -z "$node" ]; then
+            echo "::notice::no DRM render node on this runner: the dmabuf swapchain was exercised through its fallback only"
+            exit 0
+          fi
+          sudo chmod a+rw "$node"
+          set +e
+          scripts/wayland/sway-run.sh --renderer gles2 --render-node "$node" -- \
+            timeout 300 target/debug/examples/wayland_window --smoke --mode=dmabuf > "$RUNNER_TEMP/dmabuf-node.log" 2>&1
+          status=$?
+          cat "$RUNNER_TEMP/dmabuf-node.log"
+          if grep -q "the compositor did not start" "$RUNNER_TEMP/dmabuf-node.log"; then
+            echo "::notice::sway cannot render with OpenGL ES on $node (no driver of Mesa for it): the dmabuf swapchain was exercised through its fallback only"
+            exit 0
+          fi
+          grep "Dmabuf swapchain:" "$RUNNER_TEMP/dmabuf-node.log" | sed 's/^/::notice::/'
+          exit $status
       # The ControlCatalog on the Wayland backend with a combo box and a menu open: the catalog
       # says where the compositor put each popup, and the step fails when that is not at the
       # control the popup belongs to. The pictures the compositor took are an artifact.
@@ -1191,6 +1240,13 @@ jobs:
         run: |
           runuser -u tester -- env LIBGL_ALWAYS_SOFTWARE=1 scripts/wayland/sway-run.sh -- \
             timeout 300 target/debug/examples/wayland_window --smoke --mode=egl
+      # The dmabuf swapchain asked for: the container has no render node, so the backend falls back
+      # to a wl_egl_window and the run says so.
+      - name: The dmabuf swapchain asked for (the fallback)
+        if: ${{ !cancelled() }}
+        run: |
+          runuser -u tester -- env LIBGL_ALWAYS_SOFTWARE=1 scripts/wayland/sway-run.sh -- \
+            timeout 300 target/debug/examples/wayland_window --smoke --mode=dmabuf
 
 
   # The Linux framebuffer platform (docs/porting/linux-framebuffer-platform.md, section 10). The crate

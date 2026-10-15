@@ -2,11 +2,17 @@
 # Runs a command as a client of a headless sway (the compositor of the tests of the Wayland
 # backend: docs/porting/wayland-platform.md, section 11.1).
 #
-#   scripts/wayland/sway-run.sh [--scale N] [--size WxH] [--log FILE] [--debug] -- command [arguments...]
+#   scripts/wayland/sway-run.sh [--scale N] [--size WxH] [--log FILE] [--debug]
+#                               [--renderer pixman|gles2] [--render-node PATH] -- command [arguments...]
 #
 # With --debug the compositor logs at its debug level (use it with --log: the log is long).
 #
-# The compositor runs on the headless backend of wlroots with its software renderer, on a
+# With --renderer gles2 the compositor renders with OpenGL ES on a DRM render node (--render-node,
+# or the one wlroots finds) instead of its software renderer; only then does it have a DRM device
+# and announce zwp_linux_dmabuf_v1, which the dmabuf swapchain of the backend needs. A machine
+# without a render node, or whose render node has no driver of Mesa, cannot start it that way.
+#
+# The compositor runs on the headless backend of wlroots with its software renderer (by default), on a
 # configuration without a bar and without borders, so that the one tiled window covers the output
 # exactly. The command gets WAYLAND_DISPLAY, SWAYSOCK and XDG_RUNTIME_DIR of that compositor, and
 # no DISPLAY. The exit status is the one of the command; the log of the compositor is printed when
@@ -19,12 +25,16 @@ scale=1
 size=1280x720
 log=""
 debug=""
+renderer=pixman
+render_node=""
 while [ $# -gt 0 ]; do
     case "$1" in
         --scale) scale="$2"; shift 2 ;;
         --size) size="$2"; shift 2 ;;
         --log) log="$2"; shift 2 ;;
         --debug) debug="-d"; shift ;;
+        --renderer) renderer="$2"; shift 2 ;;
+        --render-node) render_node="$2"; shift 2 ;;
         --) shift; break ;;
         *) echo "sway-run.sh: unknown option $1" >&2; exit 2 ;;
     esac
@@ -51,7 +61,10 @@ EOF
 export XDG_RUNTIME_DIR="$runtime"
 unset DISPLAY WAYLAND_DISPLAY SWAYSOCK
 
-WLR_BACKENDS=headless WLR_LIBINPUT_NO_DEVICES=1 WLR_RENDERER=pixman \
+if [ -n "$render_node" ]; then
+    export WLR_RENDER_DRM_DEVICE="$render_node"
+fi
+WLR_BACKENDS=headless WLR_LIBINPUT_NO_DEVICES=1 WLR_RENDERER="$renderer" \
     sway $debug --config "$config" > "$sway_log" 2>&1 &
 sway_pid=$!
 
@@ -82,7 +95,7 @@ fi
 
 export WAYLAND_DISPLAY="$socket"
 export SWAYSOCK="$ipc"
-echo "sway-run.sh: sway $(sway --version 2>/dev/null | head -n 1) on $WAYLAND_DISPLAY, output $size at scale $scale"
+echo "sway-run.sh: sway $(sway --version 2>/dev/null | head -n 1) on $WAYLAND_DISPLAY, output $size at scale $scale, renderer $renderer${render_node:+ on $render_node}"
 
 "$@"
 status=$?
