@@ -420,7 +420,7 @@ Open, in order:
 
 1. **The first required run of the WinUI step** (the pull request of `winui-leftovers`): that both processes end. If one stays, its `[step]` lines name the place.
 2. **The first run of the Skia Vulkan workflow** (dispatch it after the merge): the build time and whether the source build succeeds; the result goes to `vulkan.md`, section 8.1.
-3. `WinUIEmbedSample` in the virtual machine (`vm-smoke.ps1 -WinUI` builds and runs both samples), then by hand: the controls of both sides, focus, drag and drop between them, the clipboard, cursors, hover, ink.
+3. ~~`WinUIEmbedSample` in the virtual machine~~: passed (2026-10-15, `2e1b138f`, `vm-smoke.ps1 -WinUI -SkipTests`; `winui.md`, section 7.6): both samples, the merge of `XamlControlsResources` in `OnLaunched` step by step, every check of the second sample (the worker walk refused with `RPC_E_WRONG_THREAD`, as in the reference), and both processes ended with 0. Left: by hand, the controls of both sides, focus, drag and drop between them, the clipboard, cursors, hover, ink.
 4. Input, the input method and drag and drop by hand in the machine (without `--smoke` the samples stay open); the automation tree with a client of UI Automation; what is left is `winui.md`, section 9.
 
 ## Vulkan: the contracts crate, the Skia GPU and the X11 mode (2026-10-11)
