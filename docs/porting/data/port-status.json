@@ -7,18 +7,18 @@
    0
   ],
   "types": [
-   3923,
+   3935,
    4345,
-   394
+   410
   ],
   "members": [
-   30280,
+   30354,
    36210,
-   5661
+   5856
   ]
  },
  "allProjects": {
-  "membersPresent": 30280,
+  "membersPresent": 30354,
   "members": 37391,
   "membersNotApplicable": 1181,
   "membersOutOfScope": 0
@@ -499,14 +499,14 @@
     0
    ],
    "types": [
-    75,
+    86,
     88,
-    0
+    2
    ],
    "members": [
-    353,
+    394,
     447,
-    4
+    53
    ],
    "interfaces": [
     6,
@@ -522,12 +522,14 @@
    ],
    "notApplicableFiles": 0,
    "matchKinds": {
-    "field": 1,
-    "fn": 328,
+    "alias fn": 17,
+    "const": 1,
+    "field": 10,
+    "fn": 339,
     "free fn": 3,
     "free item": 3,
     "overload fn": 8,
-    "variant": 10
+    "variant": 13
    },
    "presentFiles": {
     "AndroidDispatcherImpl.cs": [
@@ -666,7 +668,8 @@
      "platform/platform_support.rs"
     ],
     "Platform/SkiaPlatform/AndroidFramebuffer.cs": [
-     "platform/skia_platform/android_framebuffer.rs"
+     "platform/skia_platform/android_framebuffer.rs",
+     "interop/ndk.rs"
     ],
     "Platform/SkiaPlatform/FramebufferManager.cs": [
      "platform/skia_platform/framebuffer_manager.rs"
@@ -712,7 +715,6 @@
     "interop/java.rs",
     "interop/listeners.rs",
     "interop/natives.rs",
-    "interop/ndk.rs",
     "interop/signature.rs",
     "log.rs"
    ]
@@ -9114,14 +9116,14 @@
     0
    ],
    "types": [
-    61,
+    62,
     76,
-    0
+    14
    ],
    "members": [
-    350,
+    383,
     529,
-    0
+    146
    ],
    "interfaces": [
     4,
@@ -9137,8 +9139,10 @@
    ],
    "notApplicableFiles": 0,
    "matchKinds": {
-    "field": 136,
-    "fn": 160,
+    "alias fn": 4,
+    "alias free fn": 1,
+    "field": 159,
+    "fn": 165,
     "free fn": 2,
     "free item": 1,
     "overload fn": 7,
