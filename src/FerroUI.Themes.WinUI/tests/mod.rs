@@ -1,0 +1,10 @@
+mod compiled_xaml_tests;
+mod control_templates;
+mod control_theme_tests;
+mod documents;
+mod load_time;
+mod public_api_tests;
+mod resource_dictionary_tests;
+mod support;
+mod theme_class_tests;
+mod winui_theme_tests;

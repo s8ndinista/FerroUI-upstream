@@ -1,0 +1,29 @@
+<!--
+  Not ported from a document: the outlines the port draws where the templates of microsoft-ui-xaml
+  (https://github.com/microsoft/microsoft-ui-xaml, commit 7e4b0c2096be402f51cc8f7d203ebf67cff183d0)
+  show a glyph of the symbol font (FontIcon, FontIconSource or a TextBlock in
+  SymbolThemeFontFamily, "Segoe Fluent Icons,Segoe MDL2 Assets"). The font is part of Windows,
+  is not redistributable and does not exist on the other platforms, so a template of the port
+  draws the glyph as a path of the geometry GlyphGeometry<code point> (docs/porting/winui-theme.md,
+  section 4.7), sized to the ink of the glyph at the font size of the source.
+
+  GlyphGeometryE73E (CheckMark) and GlyphGeometryE894 (Clear) are the outlines of the Fluent theme
+  of FerroUI (src/FerroUI.Themes.Fluent/Controls/CheckBox.xaml, TextBox.xaml). The others are drawn
+  for the port.
+-->
+<ResourceDictionary xmlns="https://github.com/ferroui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    x:ClassModifier="internal">
+  <!-- E73E CheckMark: the check of CheckBox (CheckBoxCheckedGlyph). -->
+  <StreamGeometry x:Key="GlyphGeometryE73E">M5.5 10.586 1.707 6.793A1 1 0 0 0 .293 8.207l4.5 4.5a1 1 0 0 0 1.414 0l11-11A1 1 0 0 0 15.793.293L5.5 10.586Z</StreamGeometry>
+  <!-- E9AE: the bar of an indeterminate CheckBox (CheckBoxIndeterminateGlyph). -->
+  <StreamGeometry x:Key="GlyphGeometryE9AE">M0.75 0h10.5a0.75 0.75 0 0 1 0 1.5H0.75a0.75 0.75 0 0 1 0-1.5Z</StreamGeometry>
+  <!-- E894 Clear: the delete button of TextBox. -->
+  <StreamGeometry x:Key="GlyphGeometryE894">M 11.416016,10 20,1.4160156 18.583984,0 10,8.5839846 1.4160156,0 0,1.4160156 8.5839844,10 0,18.583985 1.4160156,20 10,11.416015 18.583984,20 20,18.583985 Z</StreamGeometry>
+  <!-- EDD9 CaretLeftSolid8, EDDA CaretRightSolid8, EDDB CaretUpSolid8, EDDC CaretDownSolid8: the
+       arrows of the line buttons of ScrollBar. -->
+  <StreamGeometry x:Key="GlyphGeometryEDD9">M 5,0 L 5,8 L 1,4 Z</StreamGeometry>
+  <StreamGeometry x:Key="GlyphGeometryEDDA">M 0,0 L 4,4 L 0,8 Z</StreamGeometry>
+  <StreamGeometry x:Key="GlyphGeometryEDDB">M 0,5 L 4,1 L 8,5 Z</StreamGeometry>
+  <StreamGeometry x:Key="GlyphGeometryEDDC">M 0,0 L 8,0 L 4,4 Z</StreamGeometry>
+</ResourceDictionary>

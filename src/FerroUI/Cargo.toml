@@ -25,6 +25,7 @@ desktop = ["dep:ferroui-desktop", "dep:ferroui-skia", "dep:ferroui-harfbuzz", "d
 # The themes.
 fluent = ["dep:ferroui-themes-fluent"]
 simple = ["dep:ferroui-themes-simple"]
+winui-theme = ["dep:ferroui-themes-winui"]
 # The XAML run-time library and the run-time loader of markup.
 xaml = ["dep:ferroui-markup-xaml", "dep:ferroui-markup-xaml-loader"]
 # The libraries of controls beside the control set.
@@ -52,6 +53,7 @@ ferroui-skia = { workspace = true, optional = true }
 ferroui-harfbuzz = { workspace = true, optional = true }
 ferroui-themes-fluent = { workspace = true, optional = true }
 ferroui-themes-simple = { workspace = true, optional = true }
+ferroui-themes-winui = { workspace = true, optional = true }
 ferroui-markup-xaml = { workspace = true, optional = true }
 ferroui-markup-xaml-loader = { workspace = true, optional = true, features = ["runtime"] }
 ferroui-controls-color-picker = { workspace = true, optional = true }
@@ -81,7 +83,7 @@ required-features = ["desktop", "fluent"]
 # docs.rs documents the default features with the libraries that need no more than the host
 # (docs/release.md, section 7).
 [package.metadata.docs.rs]
-features = ["simple", "xaml", "color-picker", "dialogs", "headless", "opengl", "metal", "vulkan"]
+features = ["simple", "winui-theme", "xaml", "color-picker", "dialogs", "headless", "opengl", "metal", "vulkan"]
 
 # The group of the crate in the table of the README (docs/release.md).
 [package.metadata.release]

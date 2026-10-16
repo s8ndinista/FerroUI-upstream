@@ -1,0 +1,92 @@
+<!--
+  Ported from microsoft-ui-xaml (https://github.com/microsoft/microsoft-ui-xaml),
+  commit 7e4b0c2096be402f51cc8f7d203ebf67cff183d0:
+    controls/dev/CommonStyles/RepeatButton_themeresources.xaml (the styles; its resources are
+    Resources/RepeatButton_themeresources.xaml)
+  Copyright (c) Microsoft Corporation. Licensed under the MIT License (see NOTICE.md of the crate).
+
+  Translation notes as Button.xaml.
+-->
+<ResourceDictionary xmlns="https://github.com/ferroui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    x:ClassModifier="internal">
+  <Design.PreviewWith>
+    <Border Padding="20">
+      <StackPanel Spacing="20">
+        <RepeatButton Content="Repeat" />
+        <RepeatButton IsEnabled="False" Content="Disabled" />
+      </StackPanel>
+    </Border>
+  </Design.PreviewWith>
+
+  <ControlTheme x:Key="DefaultRepeatButtonStyle" TargetType="RepeatButton">
+    <Setter Property="Background" Value="{DynamicResource RepeatButtonBackground}" />
+    <Setter Property="BackgroundSizing" Value="InnerBorderEdge" />
+    <Setter Property="Foreground" Value="{DynamicResource RepeatButtonForeground}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource RepeatButtonBorderBrush}" />
+    <Setter Property="BorderThickness" Value="{DynamicResource ButtonBorderThemeThickness}" />
+    <Setter Property="Padding" Value="{StaticResource ButtonPadding}" />
+    <Setter Property="HorizontalAlignment" Value="Left" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="FontFamily" Value="{DynamicResource ContentControlThemeFontFamily}" />
+    <Setter Property="FontWeight" Value="Normal" />
+    <Setter Property="FontSize" Value="{DynamicResource ControlContentThemeFontSize}" />
+    <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}" />
+    <Setter Property="FocusAdorner">
+      <FocusAdornerTemplate>
+        <Border Margin="-3"
+                BorderThickness="2"
+                BorderBrush="{DynamicResource SystemControlFocusVisualPrimaryBrush}"
+                CornerRadius="{DynamicResource ControlCornerRadius}">
+          <Border BorderThickness="1"
+                  BorderBrush="{DynamicResource SystemControlFocusVisualSecondaryBrush}"
+                  CornerRadius="{DynamicResource ControlCornerRadius}" />
+        </Border>
+      </FocusAdornerTemplate>
+    </Setter>
+    <Setter Property="Template">
+      <ControlTemplate>
+        <ContentPresenter x:Name="PART_ContentPresenter"
+                          Background="{TemplateBinding Background}"
+                          Foreground="{TemplateBinding Foreground}"
+                          BackgroundSizing="{TemplateBinding BackgroundSizing}"
+                          BorderBrush="{TemplateBinding BorderBrush}"
+                          BorderThickness="{TemplateBinding BorderThickness}"
+                          Content="{TemplateBinding Content}"
+                          ContentTemplate="{TemplateBinding ContentTemplate}"
+                          CornerRadius="{TemplateBinding CornerRadius}"
+                          Padding="{TemplateBinding Padding}"
+                          HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                          VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                          RecognizesAccessKey="True">
+          <ContentPresenter.Transitions>
+            <Transitions>
+              <BrushTransition Property="Background" Duration="0:0:0.083" />
+            </Transitions>
+          </ContentPresenter.Transitions>
+        </ContentPresenter>
+      </ControlTemplate>
+    </Setter>
+
+    <!-- PointerOver -->
+    <Style Selector="^:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource RepeatButtonBackgroundPointerOver}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource RepeatButtonBorderBrushPointerOver}" />
+      <Setter Property="Foreground" Value="{DynamicResource RepeatButtonForegroundPointerOver}" />
+    </Style>
+    <!-- Pressed -->
+    <Style Selector="^:pressed /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource RepeatButtonBackgroundPressed}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource RepeatButtonBorderBrushPressed}" />
+      <Setter Property="Foreground" Value="{DynamicResource RepeatButtonForegroundPressed}" />
+    </Style>
+    <!-- Disabled -->
+    <Style Selector="^:disabled /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource RepeatButtonBackgroundDisabled}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource RepeatButtonBorderBrushDisabled}" />
+      <Setter Property="Foreground" Value="{DynamicResource RepeatButtonForegroundDisabled}" />
+    </Style>
+  </ControlTheme>
+
+  <ControlTheme x:Key="{x:Type RepeatButton}" TargetType="RepeatButton" BasedOn="{StaticResource DefaultRepeatButtonStyle}" />
+</ResourceDictionary>

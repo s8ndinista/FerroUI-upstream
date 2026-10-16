@@ -25,6 +25,7 @@
 //! | `desktop`, `skia`, `harfbuzz`; `native` on macOS, `win32` on Windows, `x11` on Linux | `ferroui-desktop` and the crates it selects among | `desktop` | yes |
 //! | `themes_fluent` | `ferroui-themes-fluent` | `fluent` | yes |
 //! | `themes_simple` | `ferroui-themes-simple` | `simple` | no |
+//! | `themes_winui` | `ferroui-themes-winui` | `winui-theme` | no |
 //! | `markup_xaml`, `markup_xaml_loader` | `ferroui-markup-xaml`, `ferroui-markup-xaml-loader` (run-time loading) | `xaml` | no |
 //! | `controls_color_picker` | `ferroui-controls-color-picker` | `color-picker` | no |
 //! | `dialogs` | `ferroui-dialogs` | `dialogs` | no |
@@ -138,6 +139,8 @@ pub use ferroui_skia as skia;
 pub use ferroui_themes_fluent as themes_fluent;
 #[cfg(feature = "simple")]
 pub use ferroui_themes_simple as themes_simple;
+#[cfg(feature = "winui-theme")]
+pub use ferroui_themes_winui as themes_winui;
 
 #[cfg(feature = "xaml")]
 pub use ferroui_markup_xaml as markup_xaml;
@@ -179,8 +182,8 @@ pub mod prelude {
     //! - The values a layout is written with: [`Thickness`], [`CornerRadius`],
     //!   [`HorizontalAlignment`], [`VerticalAlignment`], [`Orientation`] and
     //!   [`Color`].
-    //! - The theme of the features that are on: `FluentTheme` (`fluent`) and
-    //!   `SimpleTheme` (`simple`).
+    //! - The theme of the features that are on: `FluentTheme` (`fluent`),
+    //!   `SimpleTheme` (`simple`) and `WinUITheme` (`winui-theme`).
     //!
     //! Everything else is reached through the modules of the crate
     //! ([`crate::base`], [`crate::controls`], ...).
@@ -199,4 +202,6 @@ pub mod prelude {
     pub use ferroui_themes_fluent::FluentTheme;
     #[cfg(feature = "simple")]
     pub use ferroui_themes_simple::SimpleTheme;
+    #[cfg(feature = "winui-theme")]
+    pub use ferroui_themes_winui::WinUITheme;
 }
