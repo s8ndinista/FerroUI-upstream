@@ -90061,6 +90061,7 @@
   "Controls/Button.xaml",
   "Controls/CheckBox.xaml",
   "Controls/EmbeddableControlRoot.xaml",
+  "Controls/GridSplitter.xaml",
   "Controls/GroupBox.xaml",
   "Controls/HeaderedContentControl.xaml",
   "Controls/HyperlinkButton.xaml",
@@ -90074,9 +90075,11 @@
   "Controls/RepeatButton.xaml",
   "Controls/ScrollBar.xaml",
   "Controls/ScrollViewer.xaml",
+  "Controls/SelectableTextBlock.xaml",
   "Controls/Separator.xaml",
   "Controls/TextBlock.xaml",
   "Controls/TextBox.xaml",
+  "Controls/TextSelectionHandle.xaml",
   "Controls/ThemeVariantScope.xaml",
   "Controls/Thumb.xaml",
   "Controls/ToggleButton.xaml",
@@ -90433,10 +90436,10 @@
     "{GridSplitter}"
    ],
    "batch": "B1",
-   "winui": "No WinUI control in the merged theme: built from the control fill and stroke resources (ControlStrongFillColorDefaultBrush, ControlFillColorDefaultBrush).",
-   "status": "pending",
-   "deviations": 0,
-   "date": ""
+   "winui": "No WinUI control in the merged theme: built from the control fills of the palette (ControlStrongFillColorDefaultBrush, ControlStrongFillColorDisabledBrush) and the accent fill for the preview (AccentFillColorDefaultBrush).",
+   "status": "ported",
+   "deviations": 2,
+   "date": "not committed"
   },
   {
    "document": "GroupBox.xaml",
@@ -90447,7 +90450,7 @@
    "winui": "No WinUI control: an expanded Expander without its chevron (DefaultExpanderStyle, Expander.xaml; the header of ExpanderHeaderDownStyle, Expander_themeresources.xaml).",
    "status": "ported",
    "deviations": 4,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "HeaderedContentControl.xaml",
@@ -90458,7 +90461,7 @@
    "winui": "No WinUI style: the header presenter of the WinUI controls with a Header (TextBox: HeaderContentPresenter, TextBoxTopHeaderMargin, TextControlHeaderForeground).",
    "status": "ported",
    "deviations": 3,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "HyperlinkButton.xaml",
@@ -90480,7 +90483,7 @@
    "winui": "No WinUI style in the merged theme (ItemsControl has a built-in template): an ItemsPresenter of the ItemsPanel.",
    "status": "ported",
    "deviations": 1,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "Label.xaml",
@@ -90491,7 +90494,7 @@
    "winui": "No WinUI control: the implicit style of ContentControl ({ContentControl}, generic.xaml), which Controls/Label.xaml ports.",
    "status": "ported",
    "deviations": 3,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "ListBox.xaml",
@@ -90729,10 +90732,10 @@
     "{SelectableTextBlock}"
    ],
    "batch": "B1",
-   "winui": "No WinUI control (TextBlock.IsTextSelectionEnabled): the selection highlight of the text controls (TextControlSelectionHighlightColor).",
-   "status": "pending",
-   "deviations": 0,
-   "date": ""
+   "winui": "No WinUI control (TextBlock.IsTextSelectionEnabled): the selection colours of the text selection manager of WinUI (SystemControlHighlightAccentBrush, SystemColorHighlightTextColor).",
+   "status": "ported",
+   "deviations": 2,
+   "date": "not committed"
   },
   {
    "document": "Separator.xaml",
@@ -90894,10 +90897,10 @@
     "{TextSelectionHandle}"
    ],
    "batch": "B1",
-   "winui": "No WinUI style (the selection grippers are drawn by the text control): built from the accent fill (AccentFillColorDefaultBrush).",
-   "status": "pending",
-   "deviations": 0,
-   "date": ""
+   "winui": "No WinUI style (the selection grippers are drawn in code, Gripper.cpp): the gripper circles in SystemColorWindowColor outlined in TextControlSelectionHighlightColor.",
+   "status": "ported",
+   "deviations": 4,
+   "date": "not committed"
   },
   {
    "document": "ThemeVariantScope.xaml",
@@ -90964,7 +90967,7 @@
    "winui": "No WinUI style: the template of ContentControl ({ContentControl}, generic.xaml), twice, for the page transition of the control.",
    "status": "ported",
    "deviations": 4,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "TreeView.xaml",
@@ -91433,6 +91436,7 @@
   "Button": 6,
   "CheckBox": 5,
   "EmbeddableControlRoot": 1,
+  "GridSplitter": 2,
   "GroupBox": 4,
   "HeaderedContentControl": 3,
   "HyperlinkButton": 3,
@@ -91446,9 +91450,11 @@
   "RepeatButton": 1,
   "ScrollBar": 11,
   "ScrollViewer": 8,
+  "SelectableTextBlock": 2,
   "Separator": 1,
   "TextBlock": 3,
   "TextBox": 11,
+  "TextSelectionHandle": 4,
   "ThemeVariantScope": 1,
   "Thumb": 1,
   "ToggleButton": 3,

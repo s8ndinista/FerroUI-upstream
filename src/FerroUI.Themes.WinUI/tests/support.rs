@@ -380,9 +380,6 @@ pub fn is_instance_of(object: &Ref<FerroObject>, handle_type: &str) -> bool {
 pub const PENDING_CONTROLS: &[&str] = &[
     // B1: primitives and simple content
     "DataValidationErrors",
-    "GridSplitter",
-    "SelectableTextBlock",
-    "TextSelectionHandle",
     // B2: buttons, ranges and expanders
     "ButtonSpinner",
     "DropDownButton",
