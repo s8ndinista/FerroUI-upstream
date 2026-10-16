@@ -162,6 +162,7 @@ How to read it:
 - **Red everywhere** (a share near 100 %) is a page whose background, size or position differs: the page background resource of the theme, the size of the host, or a native page that did not load (the log says so). Look at the two pictures before the difference.
 - **Red at the edges of controls** is a difference of geometry: a corner radius, a border thickness, a padding or a minimum size of a control theme, or the compact density.
 - **Red text** with the same layout is a difference of fonts or of text rendering (the native side renders text with DirectWrite, the framework with its text stack), and is expected in small amounts.
+- **The quality of the text** (colour fringes, weight, solidity and vertical position of the rows) is measured with `scripts/text-quality.py <run>/compare`; `text-rendering.md` explains the numbers and what FerroUI's text should give.
 - **Red fills** of whole controls are a difference of the brushes of the theme resources in that variant or state.
 - **Entries the native page cannot force** (section 3.2) and **controls WinUI does not have** (the first comment of each native page) differ by design.
 - The capture of the panel side by side (`-ferroui-window.png`) and the framework's frame (`-ferroui.png`) should look the same; when they do not, the panel presents something else than the framework draws, which is a matter of `ferroui-winui`, not of the theme.

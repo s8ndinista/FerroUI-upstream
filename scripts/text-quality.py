@@ -43,6 +43,13 @@ import sys
 from PIL import Image, ImageFilter
 
 
+def pixels(image):
+    """The pixels of a picture as a flat list (Pillow 12 renamed `getdata`)."""
+    if hasattr(image, "get_flattened_data"):
+        return list(image.get_flattened_data())
+    return list(image.getdata())
+
+
 def load(path, crop):
     image = Image.open(path).convert("RGB")
     if crop:
@@ -76,11 +83,11 @@ class Analysis:
             bg_rgb = image.filter(ImageFilter.MaxFilter(size))
             ink_rgb = image.filter(ImageFilter.MinFilter(size))
 
-        self.lum = list(lum.getdata())
-        self.background = list(background.getdata())
-        self.rgb = list(image.getdata())
-        self.bg_rgb = list(bg_rgb.getdata())
-        self.ink_rgb = list(ink_rgb.getdata())
+        self.lum = pixels(lum)
+        self.background = pixels(background)
+        self.rgb = pixels(image)
+        self.bg_rgb = pixels(bg_rgb)
+        self.ink_rgb = pixels(ink_rgb)
 
         if text_level is None:
             text_level = self.estimate_text_level()
@@ -220,7 +227,7 @@ def compare(native_path, ferroui_path, scale, crop):
     if scale is None:
         scale = max(1.0, round(native_image.width / 720 * 4) / 4)
 
-    mean = sum(native_image.convert("L").getdata()) / (native_image.width * native_image.height)
+    mean = sum(pixels(native_image.convert("L"))) / (native_image.width * native_image.height)
     dark = mean < 128
 
     native = Analysis(native_image, scale, dark)
@@ -252,6 +259,10 @@ HEADER = (
 )
 
 
+def pair(native, ferroui):
+    return f"{native:.0f}%/{ferroui:.0f}%"
+
+
 def format_row(name, result):
     native, ferroui = result["native"], result["ferroui"]
     dy = "-" if result["dy"] is None else f"{result['dy']:+.2f}"
@@ -259,7 +270,7 @@ def format_row(name, result):
         f"{name:<28} {result['scale']:>5g} "
         f"{native['fringe']:>5.1f}/{ferroui['fringe']:<5.1f} "
         f"{result['ink_ratio']:>9.3f} "
-        f"{native['solid'] * 100:>4.0f}%/{ferroui['solid'] * 100:<4.0f}% "
+        f"{pair(native['solid'] * 100, ferroui['solid'] * 100):>11} "
         f"{dy:>6} {result['rows']:>4}"
     )
 
@@ -314,8 +325,7 @@ def main():
             f"{mean(r['native']['fringe'] for r in results):>5.1f}/"
             f"{mean(r['ferroui']['fringe'] for r in results):<5.1f} "
             f"{mean(r['ink_ratio'] for r in results):>9.3f} "
-            f"{mean(r['native']['solid'] for r in results) * 100:>4.0f}%/"
-            f"{mean(r['ferroui']['solid'] for r in results) * 100:<4.0f}% "
+            f"{pair(mean(r['native']['solid'] for r in results) * 100, mean(r['ferroui']['solid'] for r in results) * 100):>11} "
             f"{mean(r['dy'] for r in results):>+6.2f}"
         )
 
