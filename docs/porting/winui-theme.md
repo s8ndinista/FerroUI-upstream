@@ -484,11 +484,11 @@ ports a control updates its state by porting it, not by editing the table.
 | `Expander.xaml` | `{Expander}` | Expander: DefaultExpanderStyle (Expander.xaml), ExpanderHeaderDownStyle, ExpanderHeaderUpStyle (Expander_themeresources.xaml). | B2 | pending |
 | `FlyoutPresenter.xaml` | `{FlyoutPresenter}` | FlyoutPresenter: DefaultFlyoutPresenterStyle (FlyoutPresenter_themeresources.xaml). | B3 | pending |
 | `GridSplitter.xaml` | `{GridSplitter}` | No WinUI control in the merged theme: built from the control fill and stroke resources (ControlStrongFillColorDefaultBrush, ControlFillColorDefaultBrush). | B1 | pending |
-| `GroupBox.xaml` | `{GroupBox}` | No WinUI control: the card resources (CardBackgroundFillColorDefaultBrush, CardStrokeColorDefaultBrush, OverlayCornerRadius) and the header of Expander. | B1 | pending |
-| `HeaderedContentControl.xaml` | `{HeaderedContentControl}` | No WinUI style: the header presenter of the WinUI controls with a Header (TextBox: HeaderContentPresenter, TextBoxTopHeaderMargin, TextControlHeaderForeground). | B1 | pending |
+| `GroupBox.xaml` | `{GroupBox}` | No WinUI control: an expanded Expander without its chevron (DefaultExpanderStyle, Expander.xaml; the header of ExpanderHeaderDownStyle, Expander_themeresources.xaml). | B1 | ported |
+| `HeaderedContentControl.xaml` | `{HeaderedContentControl}` | No WinUI style: the header presenter of the WinUI controls with a Header (TextBox: HeaderContentPresenter, TextBoxTopHeaderMargin, TextControlHeaderForeground). | B1 | ported |
 | `HyperlinkButton.xaml` | `{HyperlinkButton}` | HyperlinkButton: DefaultHyperlinkButtonStyle (HyperlinkButton_themeresources.xaml). | F | ported |
-| `ItemsControl.xaml` | `{ItemsControl}` | No WinUI style in the merged theme (ItemsControl has a built-in template): an ItemsPresenter. | B1 | pending |
-| `Label.xaml` | `{Label}` | No WinUI control: the content presenter of a ContentControl ({ContentControl}, generic.xaml) with the body text resources. | B1 | pending |
+| `ItemsControl.xaml` | `{ItemsControl}` | No WinUI style in the merged theme (ItemsControl has a built-in template): an ItemsPresenter of the ItemsPanel. | B1 | ported |
+| `Label.xaml` | `{Label}` | No WinUI control: the implicit style of ContentControl ({ContentControl}, generic.xaml), which Controls/Label.xaml ports. | B1 | ported |
 | `ListBox.xaml` | `{ListBox}` | ListBox: DefaultListBoxStyle (ListBox_themeresources.xaml). | B3 | pending |
 | `ListBoxItem.xaml` | `{ListBoxItem}` | ListBoxItem: DefaultListBoxItemStyle (ListBox_themeresources.xaml). | B3 | pending |
 | `ManagedFileChooser.xaml` | `{ManagedFileChooser}`, `{ManagedFileChooserOverwritePrompt}` | No WinUI control: built from the ListViewItem (ListViewItem_themeresources.xaml), TextBox, Button and ContentDialog (DefaultContentDialogStyle) styles. | B6 | pending |
@@ -531,7 +531,7 @@ ports a control updates its state by porting it, not by editing the table.
 | `ToggleButton.xaml` | `{ToggleButton}` | ToggleButton: DefaultToggleButtonStyle (ToggleButton_themeresources.xaml). | F | ported |
 | `ToggleSwitch.xaml` | `{ToggleSwitch}` | ToggleSwitch: DefaultToggleSwitchStyle (ToggleSwitch_themeresources.xaml). | B2 | pending |
 | `ToolTip.xaml` | `{ToolTip}` | ToolTip: DefaultToolTipStyle (ToolTip_themeresources.xaml). | B1 | ported |
-| `TransitioningContentControl.xaml` | `{TransitioningContentControl}` | No WinUI style: ContentPresenter with content transitions ({ContentPresenter}, generic.xaml). | B1 | pending |
+| `TransitioningContentControl.xaml` | `{TransitioningContentControl}` | No WinUI style: the template of ContentControl ({ContentControl}, generic.xaml), twice, for the page transition of the control. | B1 | ported |
 | `TreeView.xaml` | `{TreeView}` | TreeView: DefaultTreeViewStyle (TreeView.xaml, TreeView_themeresources.xaml). | B3 | pending |
 | `TreeViewItem.xaml` | `{TreeViewItem}` | TreeViewItem: {TreeViewItem} (TreeView.xaml), MUX_TreeViewItemStyle (TreeViewItem.xaml). | B3 | pending |
 | `Window.xaml` | `{Window}` | No WinUI style (Window is not a control in WinUI 3): the Mica fallback background and text of a window (SolidBackgroundFillColorBaseBrush, TextFillColorPrimaryBrush, ContentControlThemeFontFamily, ControlContentThemeFontSize). | F | ported |
@@ -558,9 +558,9 @@ Every target type of a style of the merged WinUI theme, the FerroUI control its 
 | `ComboBoxItem` | `ComboBoxItem` | B3 |  |
 | `CommandBar` | `CommandBar` | B5 |  |
 | `CommandBarOverflowPresenter` | `CommandBar` | B5 | the overflow presenter is part of the CommandBar template in FerroUI |
-| `ContentControl` | `ContentControl` | B1 | ContentControl has a built-in template in FerroUI; Label is built from it |
+| `ContentControl` | `ContentControl` | B1 | ContentControl has a built-in template in FerroUI; Label is built from it and claims the implicit style |
 | `ContentDialog` | `ManagedFileChooserOverwritePrompt` | B6 |  |
-| `ContentPresenter` | no FerroUI control | B1 | FerroUI's ContentPresenter is not templated; the setters belong to TransitioningContentControl |
+| `ContentPresenter` | no FerroUI control | B1 | FerroUI's ContentPresenter is not templated; the implicit style is waived |
 | `DatePicker` | `DatePicker` | B4 |  |
 | `DatePickerFlyoutPresenter` | `DatePickerPresenter` | B4 |  |
 | `DropDownButton` | `DropDownButton` | B2 |  |

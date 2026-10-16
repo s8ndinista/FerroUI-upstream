@@ -78144,9 +78144,9 @@
    "key": "{ContentControl}",
    "kind": "Style",
    "target_type": "ContentControl",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B1"
+   "batch": null
   },
   {
    "document": "dxaml/xcp/dxaml/themes/generic.xaml",
@@ -78154,9 +78154,9 @@
    "key": "{ContentPresenter}",
    "kind": "Style",
    "target_type": "ContentPresenter",
-   "status": "pending",
-   "reason": null,
-   "batch": "B1"
+   "status": "waived",
+   "reason": "The implicit style of ContentPresenter (HorizontalAlignment Left, VerticalAlignment Top): FerroUI's ContentPresenter is not a templated control and has no default control theme; a style of every ContentPresenter would be a global style, which the theme does not have. The templates of the port set the alignments of their presenters, as the templates of WinUI bind them.",
+   "batch": null
   },
   {
    "document": "dxaml/xcp/dxaml/themes/generic.xaml",
@@ -90061,7 +90061,11 @@
   "Controls/Button.xaml",
   "Controls/CheckBox.xaml",
   "Controls/EmbeddableControlRoot.xaml",
+  "Controls/GroupBox.xaml",
+  "Controls/HeaderedContentControl.xaml",
   "Controls/HyperlinkButton.xaml",
+  "Controls/ItemsControl.xaml",
+  "Controls/Label.xaml",
   "Controls/OverlayPopupHost.xaml",
   "Controls/PathIcon.xaml",
   "Controls/PopupRoot.xaml",
@@ -90077,6 +90081,7 @@
   "Controls/Thumb.xaml",
   "Controls/ToggleButton.xaml",
   "Controls/ToolTip.xaml",
+  "Controls/TransitioningContentControl.xaml",
   "Controls/WinUIControls.xaml",
   "Controls/Window.xaml",
   "DensityStyles/Compact.xaml",
@@ -90439,10 +90444,10 @@
     "{GroupBox}"
    ],
    "batch": "B1",
-   "winui": "No WinUI control: the card resources (CardBackgroundFillColorDefaultBrush, CardStrokeColorDefaultBrush, OverlayCornerRadius) and the header of Expander.",
-   "status": "pending",
-   "deviations": 0,
-   "date": ""
+   "winui": "No WinUI control: an expanded Expander without its chevron (DefaultExpanderStyle, Expander.xaml; the header of ExpanderHeaderDownStyle, Expander_themeresources.xaml).",
+   "status": "ported",
+   "deviations": 4,
+   "date": "not committed"
   },
   {
    "document": "HeaderedContentControl.xaml",
@@ -90451,9 +90456,9 @@
    ],
    "batch": "B1",
    "winui": "No WinUI style: the header presenter of the WinUI controls with a Header (TextBox: HeaderContentPresenter, TextBoxTopHeaderMargin, TextControlHeaderForeground).",
-   "status": "pending",
-   "deviations": 0,
-   "date": ""
+   "status": "ported",
+   "deviations": 3,
+   "date": "not committed"
   },
   {
    "document": "HyperlinkButton.xaml",
@@ -90472,10 +90477,10 @@
     "{ItemsControl}"
    ],
    "batch": "B1",
-   "winui": "No WinUI style in the merged theme (ItemsControl has a built-in template): an ItemsPresenter.",
-   "status": "pending",
-   "deviations": 0,
-   "date": ""
+   "winui": "No WinUI style in the merged theme (ItemsControl has a built-in template): an ItemsPresenter of the ItemsPanel.",
+   "status": "ported",
+   "deviations": 1,
+   "date": "not committed"
   },
   {
    "document": "Label.xaml",
@@ -90483,10 +90488,10 @@
     "{Label}"
    ],
    "batch": "B1",
-   "winui": "No WinUI control: the content presenter of a ContentControl ({ContentControl}, generic.xaml) with the body text resources.",
-   "status": "pending",
-   "deviations": 0,
-   "date": ""
+   "winui": "No WinUI control: the implicit style of ContentControl ({ContentControl}, generic.xaml), which Controls/Label.xaml ports.",
+   "status": "ported",
+   "deviations": 3,
+   "date": "not committed"
   },
   {
    "document": "ListBox.xaml",
@@ -90617,7 +90622,7 @@
    "winui": "No WinUI style (IconElement has no template): the Path that WinUI's PathIcon builds in code (CPathIcon::ApplyTemplate, icon.cpp), unscaled and filled with the Foreground.",
    "status": "ported",
    "deviations": 2,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "PipsPager.xaml",
@@ -90650,7 +90655,7 @@
    "winui": "ProgressBar: {ProgressBar} (ProgressBar.xaml, ProgressBar_themeresources.xaml), DefaultProgressBarStyle (Deprecated_themeresources.xaml).",
    "status": "ported",
    "deviations": 10,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "RadioButton.xaml",
@@ -90738,7 +90743,7 @@
    "winui": "MenuFlyoutSeparator: {MenuFlyoutSeparator} (MenuFlyout_themeresources.xaml); AppBarSeparator for a separator in a command bar.",
    "status": "ported",
    "deviations": 1,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "Slider.xaml",
@@ -90948,7 +90953,7 @@
    "winui": "ToolTip: DefaultToolTipStyle (ToolTip_themeresources.xaml).",
    "status": "ported",
    "deviations": 3,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "TransitioningContentControl.xaml",
@@ -90956,10 +90961,10 @@
     "{TransitioningContentControl}"
    ],
    "batch": "B1",
-   "winui": "No WinUI style: ContentPresenter with content transitions ({ContentPresenter}, generic.xaml).",
-   "status": "pending",
-   "deviations": 0,
-   "date": ""
+   "winui": "No WinUI style: the template of ContentControl ({ContentControl}, generic.xaml), twice, for the page transition of the control.",
+   "status": "ported",
+   "deviations": 4,
+   "date": "not committed"
   },
   {
    "document": "TreeView.xaml",
@@ -91412,6 +91417,13 @@
    "variant": null,
    "reason": "Input validation of WinUI (IInputValidationControl): removed from WinUI 3 before release and inert; FerroUI's DataValidationErrors is built from the error brushes instead.",
    "items": 3
+  },
+  {
+   "document": "dxaml/xcp/dxaml/themes/generic.xaml",
+   "key": "{ContentPresenter}",
+   "variant": null,
+   "reason": "The implicit style of ContentPresenter (HorizontalAlignment Left, VerticalAlignment Top): FerroUI's ContentPresenter is not a templated control and has no default control theme; a style of every ContentPresenter would be a global style, which the theme does not have. The templates of the port set the alignments of their presenters, as the templates of WinUI bind them.",
+   "items": 1
   }
  ],
  "deviations": {
@@ -91421,7 +91433,11 @@
   "Button": 6,
   "CheckBox": 5,
   "EmbeddableControlRoot": 1,
+  "GroupBox": 4,
+  "HeaderedContentControl": 3,
   "HyperlinkButton": 3,
+  "ItemsControl": 1,
+  "Label": 3,
   "OverlayPopupHost": 1,
   "PathIcon": 2,
   "PopupRoot": 1,
@@ -91437,6 +91453,7 @@
   "Thumb": 1,
   "ToggleButton": 3,
   "ToolTip": 3,
+  "TransitioningContentControl": 4,
   "Window": 1
  },
  "winui_targets": {
@@ -91501,7 +91518,7 @@
   "ContentControl": {
    "ferroui": "ContentControl",
    "batch": "B1",
-   "note": "ContentControl has a built-in template in FerroUI; Label is built from it"
+   "note": "ContentControl has a built-in template in FerroUI; Label is built from it and claims the implicit style"
   },
   "ContentDialog": {
    "ferroui": "ManagedFileChooserOverwritePrompt",
@@ -91510,7 +91527,7 @@
   "ContentPresenter": {
    "ferroui": null,
    "batch": "B1",
-   "note": "FerroUI's ContentPresenter is not templated; the setters belong to TransitioningContentControl"
+   "note": "FerroUI's ContentPresenter is not templated; the implicit style is waived"
   },
   "DatePicker": {
    "ferroui": "DatePicker",

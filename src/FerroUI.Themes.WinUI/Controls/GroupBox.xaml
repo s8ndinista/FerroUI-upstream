@@ -1,0 +1,110 @@
+<!--
+  Ported from microsoft-ui-xaml (https://github.com/microsoft/microsoft-ui-xaml),
+  commit 7e4b0c2096be402f51cc8f7d203ebf67cff183d0:
+    controls/dev/Expander/Expander.xaml (DefaultExpanderStyle in its expanded state, without
+    its chevron)
+    controls/dev/Expander/Expander_themeresources.xaml (the header of ExpanderHeaderDownStyle:
+    its Normal and Disabled states; the resources of the document are
+    Resources/Expander_themeresources.xaml)
+  Copyright (c) Microsoft Corporation. Licensed under the MIT License (see NOTICE.md of the crate).
+
+  WinUI has no GroupBox. The WinUI control that shows a header over a group of content in a
+  card is the Expander, so this theme is an expanded Expander that cannot collapse: the header
+  bar of the Expander (ExpanderHeaderBackground, ExpanderHeaderBorderBrush,
+  ExpanderHeaderBorderThickness, ExpanderHeaderPadding, the minimum height ExpanderMinHeight,
+  the top corners of ControlCornerRadius, the header in ExpanderHeaderForeground with the
+  content alignments ExpanderHeaderHorizontalContentAlignment and
+  ExpanderHeaderVerticalContentAlignment) over the content of the Expander (its Background
+  ExpanderContentBackground, BorderBrush ExpanderContentBorderBrush, BorderThickness
+  ExpanderContentDownBorderThickness, Padding ExpanderContentPadding, the bottom corners). The
+  chevron of the Expander and its pointer and pressed states are left out: the header of a
+  group box does not toggle anything.
+
+  Translation notes (docs/porting/winui-theme.md, section 4):
+  - The header, a ToggleButton with ExpanderHeaderDownStyle in the source, is a Border
+    (ToggleButtonGrid of the style) around FerroUI's PART_HeaderPresenter; the content Border
+    (ExpanderContent) holds PART_ContentPresenter. The corner radii are the corner radius of
+    the control through TopCornerRadiusFilterConverter and BottomCornerRadiusFilterConverter, as
+    the expanded state of the source sets them.
+  - The content border takes the BorderThickness of the control (the source writes
+    ExpanderContentDownBorderThickness on the border and in the style). The Expander's own
+    setters that place the control (HorizontalAlignment Left, VerticalAlignment Center,
+    MinWidth FlyoutThemeMinWidth, IsTabStop) are not taken: a group box stretches in its
+    container, as in FerroUI's other themes.
+  - RecognizesAccessKey is FerroUI's access key support.
+-->
+<ResourceDictionary xmlns="https://github.com/ferroui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    x:ClassModifier="internal">
+  <Design.PreviewWith>
+    <Border Padding="20" Width="320">
+      <StackPanel Spacing="20">
+        <GroupBox Header="A group">
+          <TextBlock Text="The content of the group." />
+        </GroupBox>
+        <GroupBox Header="Disabled" IsEnabled="False">
+          <TextBlock Text="The content of the group." />
+        </GroupBox>
+      </StackPanel>
+    </Border>
+  </Design.PreviewWith>
+
+  <ControlTheme x:Key="{x:Type GroupBox}" TargetType="GroupBox">
+    <Setter Property="Background" Value="{DynamicResource ExpanderContentBackground}" />
+    <Setter Property="BackgroundSizing" Value="InnerBorderEdge" />
+    <Setter Property="MinHeight" Value="{StaticResource ExpanderMinHeight}" />
+    <Setter Property="BorderThickness" Value="{DynamicResource ExpanderContentDownBorderThickness}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource ExpanderContentBorderBrush}" />
+    <Setter Property="Padding" Value="{StaticResource ExpanderContentPadding}" />
+    <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Grid x:Name="RootGrid" RowDefinitions="Auto,*">
+          <Border x:Name="ToggleButtonGrid"
+                  Grid.Row="0"
+                  Background="{DynamicResource ExpanderHeaderBackground}"
+                  BackgroundSizing="{TemplateBinding BackgroundSizing}"
+                  BorderBrush="{DynamicResource ExpanderHeaderBorderBrush}"
+                  BorderThickness="{DynamicResource ExpanderHeaderBorderThickness}"
+                  CornerRadius="{TemplateBinding CornerRadius, Converter={StaticResource TopCornerRadiusFilterConverter}}"
+                  MinHeight="{TemplateBinding MinHeight}"
+                  Padding="{StaticResource ExpanderHeaderPadding}">
+            <ContentPresenter x:Name="PART_HeaderPresenter"
+                              Content="{TemplateBinding Header}"
+                              ContentTemplate="{TemplateBinding HeaderTemplate}"
+                              Foreground="{DynamicResource ExpanderHeaderForeground}"
+                              HorizontalContentAlignment="{StaticResource ExpanderHeaderHorizontalContentAlignment}"
+                              VerticalContentAlignment="{StaticResource ExpanderHeaderVerticalContentAlignment}"
+                              RecognizesAccessKey="True" />
+          </Border>
+          <Border x:Name="ExpanderContent"
+                  Grid.Row="1"
+                  Background="{TemplateBinding Background}"
+                  BackgroundSizing="{TemplateBinding BackgroundSizing}"
+                  CornerRadius="{TemplateBinding CornerRadius, Converter={StaticResource BottomCornerRadiusFilterConverter}}"
+                  BorderBrush="{TemplateBinding BorderBrush}"
+                  BorderThickness="{TemplateBinding BorderThickness}"
+                  MinHeight="{TemplateBinding MinHeight}"
+                  Padding="{TemplateBinding Padding}">
+            <ContentPresenter x:Name="PART_ContentPresenter"
+                              Content="{TemplateBinding Content}"
+                              ContentTemplate="{TemplateBinding ContentTemplate}"
+                              HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                              VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                              RecognizesAccessKey="True" />
+          </Border>
+        </Grid>
+      </ControlTemplate>
+    </Setter>
+
+    <!-- Disabled (ExpanderHeaderDownStyle) -->
+    <Style Selector="^:disabled">
+      <Style Selector="^ /template/ Border#ToggleButtonGrid">
+        <Setter Property="BorderBrush" Value="{DynamicResource ExpanderHeaderDisabledBorderBrush}" />
+      </Style>
+      <Style Selector="^ /template/ ContentPresenter#PART_HeaderPresenter">
+        <Setter Property="Foreground" Value="{DynamicResource ExpanderHeaderDisabledForeground}" />
+      </Style>
+    </Style>
+  </ControlTheme>
+</ResourceDictionary>
