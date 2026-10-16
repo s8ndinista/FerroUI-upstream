@@ -203,7 +203,14 @@ fn should_define_all_requested_template_parts() {
         if control_types_to_skip.contains(&target_type.name()) {
             continue;
         }
-        let requested = requested_parts(target_type);
+        let mut requested = requested_parts(target_type);
+        // AutoCompleteBox has the optional part PART_SelectionAdapter, which no template of
+        // FerroUI's themes defines (as the tests of the Fluent theme skip it).
+        if target_type.name() == "AutoCompleteBox" {
+            requested.retain(|part| {
+                !matches!(part.arguments.first(), Some(MarkupAttributeValue::Str(name)) if *name == "PART_SelectionAdapter")
+            });
+        }
         if requested.is_empty() {
             continue;
         }

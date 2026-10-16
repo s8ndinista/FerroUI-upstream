@@ -63,6 +63,19 @@ it. Abbreviations: CS = `controls/dev/CommonStyles/`, GX = `dxaml/xcp/dxaml/them
 |---|---|---|---|---|
 | ADL-1 | (no style) the system focus visual of WinUI; CS `Common_themeresources.xaml` `SystemControlFocusVisualPrimaryBrush`, `SystemControlFocusVisualSecondaryBrush` | The framework draws focus visuals. | The default focus adorner: a 2 px border in the primary brush around a 1 px border in the secondary brush, corner radius `ControlCornerRadius`. | FerroUI draws focus visuals in the adorner layer (G-14). |
 
+## AutoCompleteBox
+
+| ID | WinUI source | What WinUI does | What the port does | Why |
+|---|---|---|---|---|
+| ACB-1 | `controls/dev/AutoSuggestBox/AutoSuggestBox_themeresources.xaml`, `DefaultAutoSuggestBoxStyle`: `TextBox x:Name="TextBox"`, `Popup x:Name="SuggestionsPopup"`, `ListView x:Name="SuggestionsList"` | Parts of WinUI's AutoSuggestBox. | `PART_TextBox`, `PART_Popup`, and a `ListBox` `PART_SelectingItemsControl` whose items have the keyed theme `DefaultListViewItemStyle` (LBI-6), with no background and border of its own. | FerroUI's `AutoCompleteBox` is the counterpart; FerroUI has no `ListView`. |
+| ACB-2 | `PART_SelectionAdapter` (FerroUI's optional part) | (no counterpart) | Not in the template; the tests skip it as the tests of the Fluent theme. | No theme of FerroUI defines it. |
+| ACB-3 | (not in the source) the properties FerroUI's control passes to its text box | WinUI passes the placeholder text, the colours, the fonts and the corner radius. | Also `PlaceholderForeground`, `Padding` (`TextControlThemePadding`, the padding of WinUI's text box), `CaretIndex`, `ClearSelectionOnLostFocus`, `MaxLength`, the validation errors and the inner contents. | FerroUI's contract (its other themes). |
+| ACB-4 | `SuggestionsList`: `MaxHeight="{ThemeResource AutoSuggestListMaxHeight}"` | The maximum height of the list. | The `MaxDropDownHeight` of the control (setter `AutoSuggestListMaxHeight`) is the maximum height of the popup. | FerroUI's property of the drop-down height. |
+| ACB-5 | `AutoSuggestBoxTextBoxStyle` | The style of the text box. | The keyed theme `AutoSuggestBoxTextBoxStyle` of `TextBox`, based on `DefaultTextBoxStyle`, its template with FerroUI's parts (TXB-2), the `DataValidationErrors` wrapper, the inner contents (TXB-17) and the placeholder foreground of the control (TXB-3); the delete button is shown by the selector of the base theme (TXB-4). | G-15; FerroUI's contract. |
+| ACB-6 | `AutoSuggestBoxTextBoxStyle`: the template-local `DeleteButtonStyle` (glyph E894 at `AutoSuggestBoxIconFontSize`) | The delete button. | The keyed theme `AutoSuggestBoxDeleteButtonStyle`, `GlyphGeometryE894` 10 px. | G-18, G-9. |
+| ACB-7 | `QueryButton` with the template-local `QueryButtonStyle` (the `QueryIcon` of the box, `AnimatedIcon.State` setters) | A button with the query icon. | Left out. | FerroUI's auto-complete box has no query icon. |
+| ACB-8 | `Orientation` states, `UseSystemFocusVisuals` of `IsApplicationFocusVisualKindReveal`, `AutoSuggestBoxHelper.KeepInteriorCornersSquare`, `Header`, `Description`, `DesiredCandidateWindowAlignment`, `ItemContainerTransitions`, `ShouldConstrainToRootBounds` | Layout states, focus, corner squaring, header and description, input method window, item animations. | Left out; `FocusAdorner="{x:Null}"`. | G-14, G-19, G-22; FerroUI's control has no header or description. |
+
 ## Button
 
 | ID | WinUI source | What WinUI does | What the port does | Why |

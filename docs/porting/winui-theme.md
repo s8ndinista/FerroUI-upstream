@@ -459,7 +459,7 @@ ports a control updates its state by porting it, not by editing the table.
 | FerroUI control document | Default control themes | WinUI source | Batch | State |
 |---|---|---|---|---|
 | `AdornerLayer.xaml` | `{AdornerLayer}` | No WinUI style: the system focus visual of WinUI (FocusVisualPrimaryBrush/Thickness, FocusVisualSecondaryBrush/Thickness; the SystemControlFocusVisual* resources of Common_themeresources.xaml). | F | ported |
-| `AutoCompleteBox.xaml` | `{AutoCompleteBox}` | AutoSuggestBox: DefaultAutoSuggestBoxStyle, AutoSuggestBoxTextBoxStyle (AutoSuggestBox_themeresources.xaml). | B3 | pending |
+| `AutoCompleteBox.xaml` | `{AutoCompleteBox}` | AutoSuggestBox: DefaultAutoSuggestBoxStyle, AutoSuggestBoxTextBoxStyle (AutoSuggestBox_themeresources.xaml). | B3 | ported |
 | `Button.xaml` | `{Button}` | Button: DefaultButtonStyle, AccentButtonStyle, SubtleButtonStyle (Button_themeresources.xaml). | F | ported |
 | `ButtonSpinner.xaml` | `{ButtonSpinner}` | No WinUI control: the spin buttons of NumberBox (NumberBoxSpinButtonStyle, NumberBox.xaml) and the TextBox resources. | B2 | ported |
 | `Calendar.xaml` | `{Calendar}` | CalendarView: DefaultCalendarViewStyle (CalendarView_themeresources.xaml). | B4 | ported |
