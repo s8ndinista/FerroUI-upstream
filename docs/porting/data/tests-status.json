@@ -7,12 +7,12 @@
  },
  "totals": {
   "tests": 7392,
-  "found": 7217,
-  "inFile": 6784,
-  "elsewhere": 388,
+  "found": 7245,
+  "inFile": 6810,
+  "elsewhere": 390,
   "aliased": 45,
-  "waived": 144,
-  "missing": 31
+  "waived": 147,
+  "missing": 0
  },
  "projects": [
   {
@@ -132,47 +132,14 @@
    "applicable": true,
    "csFiles": 23,
    "tests": 127,
-   "found": 116,
-   "inFile": 54,
-   "elsewhere": 38,
+   "found": 121,
+   "inFile": 57,
+   "elsewhere": 40,
    "aliased": 24,
-   "waived": 3,
-   "missing": 8,
+   "waived": 6,
+   "missing": 0,
    "port": "`src/Markup/FerroUI.Markup.Xaml.Loader/runtime/interpreter/tests`, `external/XamlX/src/XamlX/tests`",
-   "missingTests": [
-    {
-     "file": "BasicCompilerTests.cs",
-     "test": "Compiler_Should_Populate_Xaml_Without_Public_Ctor"
-    },
-    {
-     "file": "BasicCompilerTests.cs",
-     "test": "Compiler_Should_Fail_To_Build_Xaml_Without_Public_Ctor"
-    },
-    {
-     "file": "DeferredContentTests.cs",
-     "test": "ConstantRootObjectProvider.DeferredContent_Pointer_Should_Be_Transformed_When_Configured"
-    },
-    {
-     "file": "DynamicSettersTests.cs",
-     "test": "Dynamic_Setter_For_Public_Property_Should_Be_Shared"
-    },
-    {
-     "file": "DynamicSettersTests.cs",
-     "test": "Dynamic_Setter_For_Non_Public_Property_Should_Be_Private"
-    },
-    {
-     "file": "MarkupExtensionTests.cs",
-     "test": "Same_Name_Extension_Should_Work_Without_Generics_XML_Syntax"
-    },
-    {
-     "file": "MarkupExtensionTests.cs",
-     "test": "Resolve_Single_Generic_Type_Argument_XML_Syntax"
-    },
-    {
-     "file": "MarkupExtensionTests.cs",
-     "test": "Resolve_Double_Generic_Type_Argument_XML_Syntax"
-    }
-   ]
+   "missingTests": []
   },
   {
    "path": "tests/Avalonia.Analyzers.Tests",
@@ -188,19 +155,14 @@
    "applicable": true,
    "csFiles": 277,
    "tests": 2402,
-   "found": 2290,
-   "inFile": 1987,
+   "found": 2291,
+   "inFile": 1988,
    "elsewhere": 283,
    "aliased": 20,
    "waived": 111,
-   "missing": 1,
+   "missing": 0,
    "port": "next to the code, mostly `src/FerroUI.Base`",
-   "missingTests": [
-    {
-     "file": "AvaloniaObjectTests_Direct.cs",
-     "test": "SetValue_Should_Not_Cause_StackOverflow_And_Have_Correct_Values"
-    }
-   ]
+   "missingTests": []
   },
   {
    "path": "tests/Avalonia.Benchmarks",
@@ -208,99 +170,14 @@
    "applicable": true,
    "csFiles": 60,
    "tests": 162,
-   "found": 141,
-   "inFile": 141,
+   "found": 162,
+   "inFile": 162,
    "elsewhere": 0,
    "aliased": 0,
    "waived": 0,
-   "missing": 21,
+   "missing": 0,
    "port": "`tests/FerroUI.Benchmarks`",
-   "missingTests": [
-    {
-     "file": "Compositor/CompositionTargetUpdate.cs",
-     "test": "TargetUpdate"
-    },
-    {
-     "file": "Layout/Measure.cs",
-     "test": "Remeasure"
-    },
-    {
-     "file": "Rendering/ShapeRendering.cs",
-     "test": "Render_Line_NoBrushes"
-    },
-    {
-     "file": "Rendering/ShapeRendering.cs",
-     "test": "Render_Line_WithStroke"
-    },
-    {
-     "file": "Rendering/ShapeRendering.cs",
-     "test": "Render_Line_WithFill"
-    },
-    {
-     "file": "Rendering/ShapeRendering.cs",
-     "test": "Render_Line_WithFillAndStroke"
-    },
-    {
-     "file": "Styling/SelectorBenchmark.cs",
-     "test": "OrSelector_One_Match"
-    },
-    {
-     "file": "Styling/SelectorBenchmark.cs",
-     "test": "OrSelector_Five_Match"
-    },
-    {
-     "file": "Styling/Style_Apply.cs",
-     "test": "Apply_Simple_Styles"
-    },
-    {
-     "file": "Styling/Style_ClassSelector.cs",
-     "test": "Apply"
-    },
-    {
-     "file": "Styling/Style_ClassSelector.cs",
-     "test": "Apply_Toggle"
-    },
-    {
-     "file": "Styling/Style_ClassSelector.cs",
-     "test": "Apply_Detach"
-    },
-    {
-     "file": "Text/GlyphBoundsBenchmark.cs",
-     "test": "Skia_BoundsOnly"
-    },
-    {
-     "file": "Text/GlyphBoundsBenchmark.cs",
-     "test": "Table_BoundsOnly"
-    },
-    {
-     "file": "Text/GlyphBoundsBenchmark.cs",
-     "test": "Skia_PerRun"
-    },
-    {
-     "file": "Text/GlyphBoundsBenchmark.cs",
-     "test": "Table_PerRun"
-    },
-    {
-     "file": "Text/UnicodeTrieBenchmark.cs",
-     "test": "Get_UnicodeData"
-    },
-    {
-     "file": "Text/UnicodeTrieBenchmark.cs",
-     "test": "Get_BiDi"
-    },
-    {
-     "file": "Text/UnicodeTrieBenchmark.cs",
-     "test": "Get_GraphemeBreak"
-    },
-    {
-     "file": "Text/UnicodeTrieBenchmark.cs",
-     "test": "Get_EastAsianWidth"
-    },
-    {
-     "file": "Text/UnicodeTrieBenchmark.cs",
-     "test": "Get_AllTriesPerCodepoint"
-    }
-   ]
+   "missingTests": []
   },
   {
    "path": "tests/Avalonia.Build.Tasks.UnitTest",
@@ -338,7 +215,7 @@
    "applicable": false,
    "csFiles": 3,
    "tests": 0,
-   "reason": "the application started by `Avalonia.DesignerSupport.Tests`; no tests"
+   "reason": "the application started by `Avalonia.DesignerSupport.Tests`; no tests (ported as `tests/FerroUI.DesignerSupport.Tests/test_app`)"
   },
   {
    "path": "tests/Avalonia.DesignerSupport.Tests",
@@ -346,19 +223,14 @@
    "applicable": true,
    "csFiles": 3,
    "tests": 4,
-   "found": 3,
-   "inFile": 3,
+   "found": 4,
+   "inFile": 4,
    "elsewhere": 0,
    "aliased": 0,
    "waived": 0,
-   "missing": 1,
-   "port": "`src/FerroUI.DesignerSupport`",
-   "missingTests": [
-    {
-     "file": "DesignerSupportTests.cs",
-     "test": "Designer_In_Win32_Mode_Should_Provide_Valid_Hwnd"
-    }
-   ]
+   "missing": 0,
+   "port": "`src/FerroUI.DesignerSupport`, `tests/FerroUI.DesignerSupport.Tests`",
+   "missingTests": []
   },
   {
    "path": "tests/Avalonia.Generators.Tests",

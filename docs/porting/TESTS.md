@@ -6,7 +6,7 @@ Upstream commit `17350180c33b063f0e98abbfd19aa3cae63f5d56` (`external/Avalonia.D
 
 How completely the upstream test suites are ported, per upstream test project: the upstream test methods, how many of them the port has by name, how many are waived with a reason, and the names of the missing ones. The member counts are in [TRACKING.md](TRACKING.md); what is left overall is in [REMAINING.md](REMAINING.md).
 
-**7217 of 7248 upstream tests that apply are found (99.5%)**: 7392 tests in 19 applicable projects, 144 waived, 31 missing. 697 more tests are in 29 projects that do not apply to the port.
+**7245 of 7245 upstream tests that apply are found (100.0%)**: 7392 tests in 19 applicable projects, 147 waived, 0 missing. 697 more tests are in 29 projects that do not apply to the port.
 
 ```sh
 python3 scripts/port-status/tests_audit.py            # regenerate this document and data/tests-status.json
@@ -20,25 +20,25 @@ python3 scripts/port-status/tests_audit.py --explain Avalonia.Base.UnitTests 'St
 | Upstream test project | Tests | Found | in its file | elsewhere | by alias | Waived | Missing | Coverage | Port |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---|
 | `tests/Avalonia.Controls.UnitTests` | 3074 | 3058 | 3014 | 43 | 1 | 16 | 0 | 100.0% | next to the code, mostly `src/FerroUI.Controls` |
-| [`tests/Avalonia.Base.UnitTests`](#avaloniabaseunittests) | 2402 | 2290 | 1987 | 283 | 20 | 111 | 1 | 99.9% | next to the code, mostly `src/FerroUI.Base` |
+| `tests/Avalonia.Base.UnitTests` | 2402 | 2291 | 1988 | 283 | 20 | 111 | 0 | 100.0% | next to the code, mostly `src/FerroUI.Base` |
 | `tests/Avalonia.Markup.Xaml.UnitTests` | 506 | 506 | 506 | 0 | 0 | 0 | 0 | 100.0% | `tests/FerroUI.Markup.Xaml.UnitTests`, `src/Markup` |
 | `tests/Avalonia.Skia.UnitTests` | 365 | 363 | 363 | 0 | 0 | 2 | 0 | 100.0% | `src/Skia/FerroUI.Skia` |
 | `tests/Avalonia.RenderTests` | 310 | 301 | 301 | 0 | 0 | 9 | 0 | 100.0% | `tests/FerroUI.RenderTests` |
 | `tests/Avalonia.Markup.UnitTests` | 218 | 216 | 194 | 22 | 0 | 2 | 0 | 100.0% | `src/Markup/FerroUI.Markup` |
-| [`tests/Avalonia.Benchmarks`](#avaloniabenchmarks) | 162 | 141 | 141 | 0 | 0 | 0 | 21 | 87.0% | `tests/FerroUI.Benchmarks` |
-| [`external/XamlX/tests/XamlParserTests`](#xamlparsertests) | 127 | 116 | 54 | 38 | 24 | 3 | 8 | 93.5% | `src/Markup/FerroUI.Markup.Xaml.Loader/runtime/interpreter/tests`, `external/XamlX/src/XamlX/tests` |
+| `tests/Avalonia.Benchmarks` | 162 | 162 | 162 | 0 | 0 | 0 | 0 | 100.0% | `tests/FerroUI.Benchmarks` |
+| `external/XamlX/tests/XamlParserTests` | 127 | 121 | 57 | 40 | 24 | 6 | 0 | 100.0% | `src/Markup/FerroUI.Markup.Xaml.Loader/runtime/interpreter/tests`, `external/XamlX/src/XamlX/tests` |
 | `tests/Avalonia.IntegrationTests.Appium` | 117 | 117 | 117 | 0 | 0 | 0 | 0 | 100.0% | `tests/FerroUI.IntegrationTests.Appium` |
 | `tests/Avalonia.LeakTests` | 41 | 41 | 41 | 0 | 0 | 0 | 0 | 100.0% | `tests/FerroUI.LeakTests` |
 | `tests/Avalonia.Headless.UnitTests` | 30 | 30 | 30 | 0 | 0 | 0 | 0 | 100.0% | `src/Headless/FerroUI.Headless/unit_tests` |
 | `tests/Avalonia.IntegrationTests.Win32` | 13 | 13 | 11 | 2 | 0 | 0 | 0 | 100.0% | `tests/FerroUI.IntegrationTests.Win32` |
 | `tests/Avalonia.Wayland.UnitTests` | 12 | 12 | 12 | 0 | 0 | 0 | 0 | 100.0% | `src/FerroUI.Wayland` |
 | `tests/Avalonia.Themes.UnitTests` | 10 | 10 | 10 | 0 | 0 | 0 | 0 | 100.0% | `src/FerroUI.Themes.Fluent`, `src/FerroUI.Themes.Simple` |
-| [`tests/Avalonia.DesignerSupport.Tests`](#avaloniadesignersupporttests) | 4 | 3 | 3 | 0 | 0 | 0 | 1 | 75.0% | `src/FerroUI.DesignerSupport` |
+| `tests/Avalonia.DesignerSupport.Tests` | 4 | 4 | 4 | 0 | 0 | 0 | 0 | 100.0% | `src/FerroUI.DesignerSupport`, `tests/FerroUI.DesignerSupport.Tests` |
 | `tests/Avalonia.Build.Tasks.UnitTest` | 1 | 0 | 0 | 0 | 0 | 1 | 0 | n/a | `src/FerroUI.Build.Tasks` |
 | `external/XamlX/tests/TestClasses` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | n/a | none |
 | `tests/Avalonia.Skia.RenderTests` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | n/a | `tests/FerroUI.RenderTests` |
 | `tests/Avalonia.UnitTests` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | n/a | `test_support` modules of the crates |
-| Total | 7392 | 7217 | 6784 | 388 | 45 | 144 | 31 | 99.5% | |
+| Total | 7392 | 7245 | 6810 | 390 | 45 | 147 | 0 | 100.0% | |
 
 Notes:
 
@@ -67,7 +67,7 @@ Notes:
 | `external/XamlX/tests/GuilabsParserTests` | 0 | 0 | the alternative parser `XamlX.Parser.GuiLabs`, not ported |
 | `external/XamlX/tests/TypeSystemTest` | 13 | 5 | runs one set of checks on the two type systems of XamlX over compiled .NET assemblies, System.Reflection and Mono.Cecil (generic instantiation, nested types of IL metadata); the port has neither: its type systems are over Rust metadata (the fake type system of the `xamlx` tests, the run-time and build-time ones of `src/Markup`) |
 | `tests/Avalonia.Analyzers.Tests` | 4 | 59 | Roslyn analyzers and code fixes for C# sources; the port has no .NET analyzers |
-| `tests/Avalonia.DesignerSupport.TestApp` | 3 | 0 | the application started by `Avalonia.DesignerSupport.Tests`; no tests |
+| `tests/Avalonia.DesignerSupport.TestApp` | 3 | 0 | the application started by `Avalonia.DesignerSupport.Tests`; no tests (ported as `tests/FerroUI.DesignerSupport.Tests/test_app`) |
 | `tests/Avalonia.Generators.Tests` | 12 | 48 | Roslyn source generators (named element accessors, `InitializeComponent`, generated properties) whose C# output is compared with snapshots; the port generates no C#: the XAML compiler emits the named elements (its tests are in `src/Markup`) and `ferro_property!` declares properties |
 | `tests/Avalonia.Headless.NUnit.PerAssembly.UnitTests` | 1 | 0 | runs the sources of `Avalonia.Headless.UnitTests` under the NUnit adapter; its own file only sets the isolation level. The tests are counted once, under that project (the port runs each per test and per assembly) |
 | `tests/Avalonia.Headless.NUnit.PerTest.UnitTests` | 1 | 0 | as the NUnit per-assembly project |
@@ -185,57 +185,3 @@ applicable project but the Appium tests and the benchmarks has at most eight).
 ## Missing tests by project
 
 Per project, the upstream files with tests the port does not have by name (`missing/tests of the file`), and the missing names. Waived tests are in the reports of `test_gaps.py` (`docs/porting/data/test-gaps-*.txt`).
-
-### Avalonia.Base.UnitTests
-
-1 missing of 2402 (`tests/Avalonia.Base.UnitTests`).
-
-<details>
-<summary>1 missing test in 1 file</summary>
-
-- `AvaloniaObjectTests_Direct.cs` (1/42): `SetValue_Should_Not_Cause_StackOverflow_And_Have_Correct_Values`
-
-</details>
-
-### Avalonia.Benchmarks
-
-21 missing of 162 (`tests/Avalonia.Benchmarks`).
-
-<details>
-<summary>21 missing tests in 8 files</summary>
-
-- `Text/UnicodeTrieBenchmark.cs` (5/5): `Get_UnicodeData`, `Get_BiDi`, `Get_GraphemeBreak`, `Get_EastAsianWidth`, `Get_AllTriesPerCodepoint`
-- `Rendering/ShapeRendering.cs` (4/4): `Render_Line_NoBrushes`, `Render_Line_WithStroke`, `Render_Line_WithFill`, `Render_Line_WithFillAndStroke`
-- `Text/GlyphBoundsBenchmark.cs` (4/4): `Skia_BoundsOnly`, `Table_BoundsOnly`, `Skia_PerRun`, `Table_PerRun`
-- `Styling/Style_ClassSelector.cs` (3/3): `Apply`, `Apply_Toggle`, `Apply_Detach`
-- `Styling/SelectorBenchmark.cs` (2/6): `OrSelector_One_Match`, `OrSelector_Five_Match`
-- `Compositor/CompositionTargetUpdate.cs` (1/1): `TargetUpdate`
-- `Layout/Measure.cs` (1/1): `Remeasure`
-- `Styling/Style_Apply.cs` (1/1): `Apply_Simple_Styles`
-
-</details>
-
-### XamlParserTests
-
-8 missing of 127 (`external/XamlX/tests/XamlParserTests`).
-
-<details>
-<summary>8 missing tests in 4 files</summary>
-
-- `MarkupExtensionTests.cs` (3/22): `Same_Name_Extension_Should_Work_Without_Generics_XML_Syntax`, `Resolve_Single_Generic_Type_Argument_XML_Syntax`, `Resolve_Double_Generic_Type_Argument_XML_Syntax`
-- `BasicCompilerTests.cs` (2/7): `Compiler_Should_Populate_Xaml_Without_Public_Ctor`, `Compiler_Should_Fail_To_Build_Xaml_Without_Public_Ctor`
-- `DynamicSettersTests.cs` (2/17): `Dynamic_Setter_For_Public_Property_Should_Be_Shared`, `Dynamic_Setter_For_Non_Public_Property_Should_Be_Private`
-- `DeferredContentTests.cs` (1/4): `ConstantRootObjectProvider.DeferredContent_Pointer_Should_Be_Transformed_When_Configured`
-
-</details>
-
-### Avalonia.DesignerSupport.Tests
-
-1 missing of 4 (`tests/Avalonia.DesignerSupport.Tests`).
-
-<details>
-<summary>1 missing test in 1 file</summary>
-
-- `DesignerSupportTests.cs` (1/1): `Designer_In_Win32_Mode_Should_Provide_Valid_Hwnd`
-
-</details>
