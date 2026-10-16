@@ -697,6 +697,8 @@ Stage 1 was written on macOS without ever running. Its first run was the first r
 
 The other backends: on macOS, iOS, Linux and Android a process ends through `exit`, which does not end the other threads before the destructors of the main thread run, so a lock is released by its holder (the hazard there is the reverse one, a thread that still runs while statics are destroyed, which is not this finding); in the browser there is no exit. The finding is of Windows alone.
 
+**A WinUI application** has more on its UI thread than this table (the objects of the Windows App SDK the integration holds, the threads of XAML that share locks with them), and its sample stayed inside `ExitProcess` on the CI runner after the release of its main view (run 38832399344). It does not destroy the values of its UI thread at all: `ferroui_winui::end_process` ends the process from a thread of its own through `exit` of the C runtime while the UI thread waits, as the runtime of the reference never finalizes them (`winui.md`, section 7.7). The open row of the dispatcher above is closed for such an application by the same means.
+
 ### 11.4 What the runs of the rest of stage 2c showed (2026-10-10)
 
 The Windows.UI.Composition mode and the DXGI swap chain mode were written on macOS and ran first in the Windows jobs.

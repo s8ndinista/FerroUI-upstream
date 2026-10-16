@@ -89,15 +89,17 @@ fn main() -> std::process::ExitCode {
     app::App::shutdown();
     smoke::end_step("MddBootstrapShutdown");
     drop(sdk);
-    if let Err(error) = started {
-        smoke::report(false, &format!("Application.Start failed: {error}"));
-        return std::process::ExitCode::FAILURE;
-    }
-
-    if smoke && !smoke::passed() {
-        smoke::end_step("main returns: failed");
-        return std::process::ExitCode::FAILURE;
-    }
-    smoke::end_step("main returns");
-    std::process::ExitCode::SUCCESS
+    let code = match started {
+        Err(error) => {
+            smoke::report(false, &format!("Application.Start failed: {error}"));
+            1
+        }
+        Ok(()) if smoke && !smoke::passed() => 1,
+        Ok(()) => 0,
+    };
+    // The end of the process of the generated `Main`, as the runtime of the reference ends it: the
+    // values of this thread (the framework, the objects of the Windows App SDK it holds) are not
+    // destroyed while the system ends the other threads (docs/porting/winui.md, section 7.7).
+    smoke::end_step(if code == 0 { "main ends the process" } else { "main ends the process: failed" });
+    ferroui_winui::end_process(code)
 }

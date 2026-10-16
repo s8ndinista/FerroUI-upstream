@@ -451,7 +451,7 @@ Branch `winui` (pull request 197, merged). [`winui.md`](winui.md) has the design
 
 Open, in order:
 
-1. **The first required run of the WinUI step** (the pull request of `winui-leftovers`): that both processes end. If one stays, its `[step]` lines name the place.
+1. **The WinUI step, run after run** (branch `winui-exit-hang`, 2026-10-16): the release of the main view in `Closed` was not enough (run 38832399344: `main returns`, then one thread in a lock wait inside `ExitProcess` until the limit). The samples now end through `ferroui_winui::end_process`, which ends the process from a thread of its own so that the values of the UI thread are never destroyed, as the reference's runtime never finalizes them; `[exit]` lines trace the end and `smoke-run.ps1` prints the stacks of a process that stays (`winui.md`, section 7.7). The check is several green runs of the required step.
 2. **The first run of the Skia Vulkan workflow** (dispatch it after the merge): the build time and whether the source build succeeds; the result goes to `vulkan.md`, section 8.1.
 3. ~~`WinUIEmbedSample` in the virtual machine~~: passed (2026-10-15, `2e1b138f`, `vm-smoke.ps1 -WinUI -SkipTests`; `winui.md`, section 7.6): both samples, the merge of `XamlControlsResources` in `OnLaunched` step by step, every check of the second sample (the worker walk refused with `RPC_E_WRONG_THREAD`, as in the reference), and both processes ended with 0. Left: by hand, the controls of both sides, focus, drag and drop between them, the clipboard, cursors, hover, ink.
 4. Input, the input method and drag and drop by hand in the machine (without `--smoke` the samples stay open); the automation tree with a client of UI Automation; what is left is `winui.md`, section 9.

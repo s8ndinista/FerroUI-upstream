@@ -16,6 +16,9 @@
 //! (the swap chain of the panel is created on ANGLE's Direct3D 11 device),
 //! runs the XAML application ([`XamlApplication::start`]) and, from its
 //! launch, puts a panel into a window of WinUI with the content it shows.
+//! Once `Application.Start` has returned and the bootstrap is shut down, it
+//! ends the process with [`end_process`], as the runtime of the reference
+//! ends it (docs/porting/winui.md, section 7.7).
 
 #![cfg_attr(not(windows), allow(dead_code))]
 
@@ -24,6 +27,7 @@ pub mod interop;
 
 mod automation;
 mod ferro_swap_chain_panel;
+mod process_end;
 mod win_ui_cursor_factory;
 mod win_ui_drag_source;
 mod win_ui_key_interop;
@@ -34,6 +38,8 @@ mod xaml_application;
 #[cfg(windows)]
 pub use ferro_swap_chain_panel::FerroSwapChainPanel;
 pub use windows_app_sdk::{parse_major_minor, WindowsAppSdkOptions};
+#[cfg(windows)]
+pub use process_end::{end_process, process_threads};
 #[cfg(windows)]
 pub use windows_app_sdk::WindowsAppSdk;
 #[cfg(windows)]
