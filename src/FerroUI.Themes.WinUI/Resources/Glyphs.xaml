@@ -109,7 +109,6 @@
        of FerroUI (src/FerroUI.Themes.Fluent/Controls/ComboBox.xaml), E76C the same outline
        turned to the right, E974 a chevron of a heavier stroke. -->
   <!-- E70D ChevronDown: the drop-down glyph of ComboBox, the expanded glyph of TreeViewItem. -->
-  <StreamGeometry x:Key="GlyphGeometryE70D">M1939 486L2029 576L1024 1581L19 576L109 486L1024 1401L1939 486Z</StreamGeometry>
   <!-- E76C ChevronRight: the collapsed glyph of TreeViewItem, the chevron of
        RadioMenuFlyoutSubItemStyle. -->
   <StreamGeometry x:Key="GlyphGeometryE76C">M486 1939L576 2029L1581 1024L576 19L486 109L1401 1024L486 1939Z</StreamGeometry>
