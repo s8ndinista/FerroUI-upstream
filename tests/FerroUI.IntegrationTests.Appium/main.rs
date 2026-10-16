@@ -183,7 +183,10 @@ fn main() -> ExitCode {
             }
         };
         for case in cases {
-            match catch_unwind(AssertUnwindSafe(|| case.run(&fixture))) {
+            let result = catch_unwind(AssertUnwindSafe(|| case.run(&fixture)));
+            // A test that failed with a button or a key down leaves it down otherwise.
+            let _ = catch_unwind(AssertUnwindSafe(|| fixture.session().release_input()));
+            match result {
                 Ok(()) => println!("test {} ... ok", case.name),
                 Err(_) => {
                     println!("test {} ... FAILED", case.name);
