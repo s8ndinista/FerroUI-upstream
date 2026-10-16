@@ -4,6 +4,10 @@ All notable changes to FerroUI are recorded in this file. The format follows [Ke
 
 ## [Unreleased]
 
+## [0.1.0-preview.4] - Unreleased
+
+The fourth preview. It adds a second complete theme, the WinUI 3 theme of microsoft-ui-xaml, validated against native WinUI 3 by a gallery, makes it the ControlCatalog's first theme, and draws text as sharp and as dark as the native text of the platforms.
+
 ### Added
 
 - **The WinUI 3 theme.** A second theme next to the Fluent theme, which is unchanged: the crate `ferroui-themes-winui` (`WinUITheme`), ported from the WinUI 3 theme of microsoft-ui-xaml (MIT). Every control has a WinUI 3 template, in light, dark and high contrast, with the compact density, the system accent colours and WinUI's popup shadows and scroll indicators. Every difference from WinUI is recorded with its reason in `docs/porting/winui-theme/DEVIATIONS.md`; `docs/porting/winui-theme/PROGRESS.md` tracks the port. The facade crate has the feature `winui-theme`, and the ControlCatalog offers the theme as a third choice (Settings, or `FERROUI_CATALOG_THEME=winui`).
@@ -126,7 +130,8 @@ The preview makes the framework available as crates so that it can be tried outs
 - **Documentation.** The API documentation is the documentation comments carried over by the port; there are no guides beyond the README and the documents under `docs/`. Not every crate is expected to build on docs.rs (see `docs/release.md`).
 - **Tests of the published crates.** The packages hold the sources of the tests but not the test fonts and images of the Skia backend; the test suites are run from the repository.
 
-[Unreleased]: https://github.com/wieslawsoltes/FerroUI/compare/v0.1.0-preview.3...main
+[Unreleased]: https://github.com/wieslawsoltes/FerroUI/compare/v0.1.0-preview.4...main
+[0.1.0-preview.4]: https://github.com/wieslawsoltes/FerroUI/compare/v0.1.0-preview.3...v0.1.0-preview.4
 [0.1.0-preview.3]: https://github.com/wieslawsoltes/FerroUI/releases/tag/v0.1.0-preview.3
 [0.1.0-preview.2]: https://github.com/wieslawsoltes/FerroUI/releases/tag/v0.1.0-preview.2
 [0.1.0-preview.1]: https://github.com/wieslawsoltes/FerroUI/releases/tag/v0.1.0-preview.1
