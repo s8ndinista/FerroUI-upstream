@@ -84,6 +84,13 @@ it. Abbreviations: CS = `controls/dev/CommonStyles/`, GX = `dxaml/xcp/dxaml/them
 | CHK-4 | `ContentPresenter x:Name="ContentPresenter"` | The content presenter. | `PART_ContentPresenter`. | Template part (BTN-2). |
 | CHK-5 | `FocusVisualMargin="{StaticResource CheckBoxFocusVisualMargin}"` (-7,-3,-7,-3) | Focus visual around box and label. | `FocusAdorner` with that margin. | G-14. |
 
+## DataValidationErrors
+
+| ID | WinUI source | What WinUI does | What the port does | Why |
+|---|---|---|---|---|
+| DVE-1 | GX `DefaultInputValidationErrorTemplate`, `DefaultCompactErrorIconTemplate` (waived, RES-7) | Input validation was removed from WinUI 3; an application shows the error of a field itself, with the critical fill of the palette. | The default theme shows the errors of the owner under its content, 4 px below it, in `SystemFillColorCriticalBrush`, wrapped; a control that wraps its template in `DataValidationErrors` draws its border in `SystemFillColorCriticalBrush` under `:error` (TXB-12). | FerroUI's controls report validation errors through `DataValidationErrors`; the values are those of an error of a field in a WinUI 3 application. |
+| DVE-2 | (no counterpart) the keyed theme `TooltipDataValidationErrors` of FerroUI | No compact error presentation. | The errors in the tool tip of an error icon at the right of the content: the error icon of InfoBar (`controls/dev/InfoBar/InfoBar.xaml`), `InfoBarIconBackgroundGlyph` (F136) in `InfoBarErrorSeverityIconBackground` under `InfoBarErrorIconGlyph` (F13D) in `InfoBarErrorSeverityIconForeground`, at `InfoBarIconFontSize` (16), 8 px from the content. | The icon WinUI shows for an error; G-9 for the glyphs, whose cross is estimated at 6 px. |
+
 ## EmbeddableControlRoot
 
 | ID | WinUI source | What WinUI does | What the port does | Why |
@@ -252,6 +259,7 @@ it. Abbreviations: CS = `controls/dev/CommonStyles/`, GX = `dxaml/xcp/dxaml/them
 | TXB-9 | `ContextFlyout="{StaticResource TextControlCommandBarContextFlyout}"`, `SelectionFlyout` | Context and selection command bar flyouts. | Pending: a menu flyout of the same commands with batch B3; no selection flyout. | RES-6. |
 | TXB-10 | `Control.IsTemplateFocusTarget`, `IsTabStop="False"` of the scroll viewer, `ZoomMode`, rail and scroll modes | WinUI-specific. | Left out (the scroll viewer is not focusable). | G-19. |
 | TXB-11 | (not in the source) | The I-beam cursor is the text view's. | A style of the scroll viewer sets the `IBeam` cursor on its presenter, as the Fluent theme. | FerroUI's text presenter does not set the cursor. |
+| TXB-12 | (not in the source) | WinUI 3's text box has no validation. | The template is wrapped in `DataValidationErrors` (the errors under the box, DVE-1); under `:error` the border is `SystemFillColorCriticalBrush`, after the states, so also when focused. | FerroUI's text box reports validation errors through `DataValidationErrors`. |
 
 ## TextSelectionHandle
 
@@ -319,7 +327,7 @@ their sections above).
 | ButtonSpinner | B2 | pending | No WinUI control: the spin buttons of NumberBox (NumberBoxSpinButtonStyle, NumberBox.xaml) and the TextBox resources. |
 | CarouselPage | B5 | pending | No WinUI control: built from FlipView (DefaultFlipViewStyle) and the page background (SolidBackgroundFillColorBaseBrush). |
 | ContentPage | B5 | pending | No WinUI style (Page has none): the page background and text of the window (SolidBackgroundFillColorBaseBrush, TextFillColorPrimaryBrush). |
-| DataValidationErrors | B1 | pending | No WinUI style (input validation was removed from WinUI 3): the error brushes (SystemControlErrorTextForegroundBrush, SystemFillColorCriticalBrush) and the info glyph of InfoBar. |
+| DataValidationErrors | B1 | ported | No WinUI style (input validation was removed from WinUI 3): the critical fill of the palette (SystemFillColorCriticalBrush) for the message and the border of the field, and the error icon of InfoBar (InfoBar.xaml, InfoBar_themeresources.xaml) for the tool tip variant. |
 | DrawerPage | B5 | pending | No WinUI control: the pane of NavigationView (NavigationView_themeresources.xaml) and SplitView (DefaultSplitViewStyle). |
 | EmbeddableControlRoot | F | ported | No WinUI style: the background and text of the window (SolidBackgroundFillColorBaseBrush, TextFillColorPrimaryBrush, ContentControlThemeFontFamily, ControlContentThemeFontSize). |
 | GridSplitter | B1 | ported | No WinUI control in the merged theme: built from the control fills of the palette (ControlStrongFillColorDefaultBrush, ControlStrongFillColorDisabledBrush) and the accent fill for the preview (AccentFillColorDefaultBrush). |

@@ -90060,6 +90060,7 @@
   "Controls/AdornerLayer.xaml",
   "Controls/Button.xaml",
   "Controls/CheckBox.xaml",
+  "Controls/DataValidationErrors.xaml",
   "Controls/EmbeddableControlRoot.xaml",
   "Controls/GridSplitter.xaml",
   "Controls/GroupBox.xaml",
@@ -90349,10 +90350,10 @@
     "{DataValidationErrors}"
    ],
    "batch": "B1",
-   "winui": "No WinUI style (input validation was removed from WinUI 3): the error brushes (SystemControlErrorTextForegroundBrush, SystemFillColorCriticalBrush) and the info glyph of InfoBar.",
-   "status": "pending",
-   "deviations": 0,
-   "date": ""
+   "winui": "No WinUI style (input validation was removed from WinUI 3): the critical fill of the palette (SystemFillColorCriticalBrush) for the message and the border of the field, and the error icon of InfoBar (InfoBar.xaml, InfoBar_themeresources.xaml) for the tool tip variant.",
+   "status": "ported",
+   "deviations": 2,
+   "date": "not committed"
   },
   {
    "document": "DatePicker.xaml",
@@ -90439,7 +90440,7 @@
    "winui": "No WinUI control in the merged theme: built from the control fills of the palette (ControlStrongFillColorDefaultBrush, ControlStrongFillColorDisabledBrush) and the accent fill for the preview (AccentFillColorDefaultBrush).",
    "status": "ported",
    "deviations": 2,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "GroupBox.xaml",
@@ -90735,7 +90736,7 @@
    "winui": "No WinUI control (TextBlock.IsTextSelectionEnabled): the selection colours of the text selection manager of WinUI (SystemControlHighlightAccentBrush, SystemColorHighlightTextColor).",
    "status": "ported",
    "deviations": 2,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "Separator.xaml",
@@ -90888,7 +90889,7 @@
    "batch": "F",
    "winui": "TextBox: DefaultTextBoxStyle and its DeleteButtonStyle (TextBox_themeresources.xaml); PasswordBox: DefaultPasswordBoxStyle (PasswordBox_themeresources.xaml) for the reveal button (pending, B3).",
    "status": "ported",
-   "deviations": 11,
+   "deviations": 12,
    "date": "2026-10-16"
   },
   {
@@ -90900,7 +90901,7 @@
    "winui": "No WinUI style (the selection grippers are drawn in code, Gripper.cpp): the gripper circles in SystemColorWindowColor outlined in TextControlSelectionHighlightColor.",
    "status": "ported",
    "deviations": 4,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "ThemeVariantScope.xaml",
@@ -91435,6 +91436,7 @@
   "AdornerLayer": 1,
   "Button": 6,
   "CheckBox": 5,
+  "DataValidationErrors": 2,
   "EmbeddableControlRoot": 1,
   "GridSplitter": 2,
   "GroupBox": 4,
@@ -91453,7 +91455,7 @@
   "SelectableTextBlock": 2,
   "Separator": 1,
   "TextBlock": 3,
-  "TextBox": 11,
+  "TextBox": 12,
   "TextSelectionHandle": 4,
   "ThemeVariantScope": 1,
   "Thumb": 1,

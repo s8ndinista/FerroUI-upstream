@@ -207,6 +207,7 @@ control_tests! {
     thumb => "Thumb";
     toggle_button => "ToggleButton";
     // B1: primitives and simple content
+    data_validation_errors => "DataValidationErrors";
     grid_splitter => "GridSplitter";
     group_box => "GroupBox";
     headered_content_control => "HeaderedContentControl";

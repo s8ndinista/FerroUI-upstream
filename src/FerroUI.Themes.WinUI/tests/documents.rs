@@ -98,6 +98,7 @@ document_tests! {
     controls_adorner_layer => "/Controls/AdornerLayer.xaml";
     controls_button => "/Controls/Button.xaml";
     controls_check_box => "/Controls/CheckBox.xaml";
+    controls_data_validation_errors => "/Controls/DataValidationErrors.xaml";
     controls_embeddable_control_root => "/Controls/EmbeddableControlRoot.xaml";
     controls_grid_splitter => "/Controls/GridSplitter.xaml";
     controls_group_box => "/Controls/GroupBox.xaml";
