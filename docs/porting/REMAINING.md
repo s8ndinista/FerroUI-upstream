@@ -176,7 +176,7 @@ From `docs/porting/data/samples.toml`; a sample counts as ported when the direct
 | `samples/ControlCatalog.tvOS` | 0 | not applicable | - | no sources of its own: a project file, Info.plist and Entitlements.plist that compile the sources of ControlCatalog.iOS for tvOS; its counterpart is control-catalog-ios built for a tvOS target, and tvOS is not a target of the iOS platform of the port (docs/porting/ios-platform.md) |
 | `samples/ControlGallery.WinUI` | 2 | ported | `samples/ControlGallery.WinUI` | the catalog in a WinUI 3 window through ferroui-winui, with a smoke mode (docs/porting/winui.md, section 7) |
 | `samples/Generators.Sandbox` | 6 | not applicable | - | exercises the source generators of tools/Avalonia.Generators, which the port replaces (docs/porting/xaml.md 3.8) |
-| `samples/GpuInterop` | 26 | not ported | - | not listed in samples.toml |
+| `samples/GpuInterop` | 26 | ported | `samples/GpuInterop` | Vulkan (ash), Direct3D 11 (MicroCom bindings) and dma-buf demos drawing into a drawing surface through the GPU interop of the compositor; a smoke mode; on macOS the Vulkan demo (MoltenVK) verified against the Metal and the OpenGL compositor (samples/GpuInterop/GAPS.md) |
 | `samples/IntegrationTestApp` | 38 | ported | `samples/IntegrationTestApp` | the application the integration tests drive |
 | `samples/MiniMvvm` | 3 | ported | `samples/MiniMvvm` | the view model library of the catalog |
 | `samples/PlatformSanityChecks` | 2 | ported | `samples/PlatformSanityChecks` | the threading checks of the X11 platform without a window; Linux only (GAPS.md) |
@@ -196,7 +196,7 @@ From `docs/porting/data/samples.toml`; a sample counts as ported when the direct
 | `samples/XEmbedSample` | 3 | ported | `samples/XEmbedSample` | a catalog page in a socket of a GTK 3 window through XEmbed of the X11 backend, with a smoke mode; Linux only (GAPS.md) |
 | `samples/interop/WindowsInteropTest` | 5 | not applicable | - | hosting in Windows Forms (Avalonia.Win32.Interoperability), which has no counterpart in Rust (docs/porting/winui.md, section 8) |
 
-23 of 30 samples are ported.
+24 of 30 samples are ported.
 
 ## Missing, by project
 

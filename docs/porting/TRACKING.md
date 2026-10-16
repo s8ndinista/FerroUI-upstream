@@ -246,7 +246,7 @@ Sample applications. Same directory names; binary crates. The state of a sample 
 | `samples/ControlCatalog.tvOS` | 0 | `samples/ControlCatalog.tvOS` | not applicable | not tracked |
 | `samples/ControlGallery.WinUI` | 2 | `samples/ControlGallery.WinUI` | workspace member | not tracked |
 | `samples/Generators.Sandbox` | 6 | `samples/Generators.Sandbox` | not applicable | not tracked |
-| `samples/GpuInterop` | 26 | `samples/GpuInterop` | not created | not tracked |
+| `samples/GpuInterop` | 26 | `samples/GpuInterop` | workspace member | not tracked |
 | `samples/IntegrationTestApp` | 38 | `samples/IntegrationTestApp` | workspace member | not tracked |
 | `samples/MiniMvvm` | 3 | `samples/MiniMvvm` | workspace member | not tracked |
 | `samples/PlatformSanityChecks` | 2 | `samples/PlatformSanityChecks` | workspace member | not tracked |
@@ -318,6 +318,7 @@ Upstream unit tests are ported next to the code (`#[cfg(test)] mod tests` or `<f
 | `samples/ControlCatalog.Desktop` | `samples/ControlCatalog.Desktop` (not tracked) |
 | `samples/ControlCatalog.iOS` | `samples/ControlCatalog.iOS` (not tracked) |
 | `samples/ControlGallery.WinUI` | `samples/ControlGallery.WinUI` (not tracked) |
+| `samples/GpuInterop` | `samples/GpuInterop` (not tracked) |
 | `samples/IntegrationTestApp` | `samples/IntegrationTestApp` (not tracked) |
 | `samples/MiniMvvm` | `samples/MiniMvvm` (not tracked) |
 | `samples/PlatformSanityChecks` | `samples/PlatformSanityChecks` (not tracked) |
