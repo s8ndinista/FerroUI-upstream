@@ -245,8 +245,9 @@ mod imp {
     use crate::i_windows_surface_factory::{IWindowsSurfaceFactory, WindowsSurface};
     use ferroui_base::input::{IInputRoot, PenDevice, PointerPressedEventArgs, TouchDevice};
     use ferroui_base::logging::{LogArea, LogEventLevel, Logger};
-    use ferroui_base::platform::surfaces::IPlatformRenderSurface;
+    use ferroui_base::platform::surfaces::{IPlatformRenderSurface, PlatformTextRenderingParameters};
     use ferroui_opengl::egl::{EglGlPlatformSurface, IEglWindowGlPlatformSurfaceInfo};
+    use crate::win32_text_rendering;
     use ferroui_base::platform::{
         ICursorImpl, IOptionalFeatureProvider, IPlatformGraphics, IPlatformSettings, PlatformThemeVariant,
     };
@@ -267,7 +268,7 @@ mod imp {
     use std::cell::{Cell, RefCell};
     use std::collections::HashMap;
     use std::rc::{Rc, Weak};
-    use std::sync::atomic::{AtomicIsize, AtomicU64, Ordering};
+    use std::sync::atomic::{AtomicBool, AtomicIsize, AtomicU64, Ordering};
     use std::sync::Arc;
 
     ferroui_base::ferro_thread_local! {
@@ -300,11 +301,15 @@ mod imp {
     /// The handle of a window as a platform handle and as a render surface.
     ///
     /// It is shared with the thread that renders, so it holds numbers: the
-    /// handle, and the scaling of the window as it was last set on the UI
-    /// thread.
+    /// handle, the scaling of the window as it was last set on the UI
+    /// thread, and whether the window is composed through a composition
+    /// mode (Windows.UI.Composition or DirectComposition: the surface
+    /// factories that need no redirection bitmap), which makes its text
+    /// greyscale by default as WinUI's (docs/porting/text-rendering.md).
     pub(crate) struct WindowImplPlatformHandle {
         hwnd: AtomicIsize,
         scaling_bits: AtomicU64,
+        composited: AtomicBool,
     }
 
     impl WindowImplPlatformHandle {
@@ -329,6 +334,12 @@ mod imp {
     }
 
     impl IPlatformRenderSurface for WindowImplPlatformHandle {
+        /// The text rendering settings of the system (ClearType, the
+        /// subpixel order, the tuned contrast and gamma) for this window.
+        fn text_rendering_parameters(&self) -> Option<PlatformTextRenderingParameters> {
+            Some(win32_text_rendering::system_parameters(self.composited.load(Ordering::Acquire)))
+        }
+
         fn as_any(&self) -> &dyn Any {
             self
         }
@@ -623,6 +634,7 @@ mod imp {
             if gl_platform.is_some() {
                 if let Some(handle) = this.handle.borrow().clone() {
                     if let Some(surface_factory) = &surface_factory {
+                        handle.composited.store(surface_factory.requires_no_redirection_bitmap(), Ordering::Release);
                         let WindowsSurface { surface, effects, dispose } = surface_factory.create_surface(handle);
                         *this.gl_surface.borrow_mut() = Some(surface);
                         *this.composition_effects_surface.borrow_mut() = effects;
@@ -1466,6 +1478,7 @@ mod imp {
             *self.handle.borrow_mut() = Some(Arc::new(WindowImplPlatformHandle {
                 hwnd: AtomicIsize::new(hwnd),
                 scaling_bits: AtomicU64::new(self.scaling.get().to_bits()),
+                composited: AtomicBool::new(false),
             }));
 
             register_touch_window(hwnd);

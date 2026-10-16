@@ -144,8 +144,11 @@ impl ITopLevelImpl for SwapChainTopLevelImpl {
         self.scaling.get()
     }
 
+    /// The surface of the host, then a surface that reports the text
+    /// rendering parameters of the system for a composited surface (a swap
+    /// chain panel is composed by WinUI; docs/porting/text-rendering.md).
     fn surfaces(&self) -> Vec<Arc<dyn IPlatformRenderSurface>> {
-        vec![self.gl_surface.clone()]
+        vec![self.gl_surface.clone(), Arc::new(crate::win32_text_rendering::CompositedTextRenderingSurface)]
     }
 
     fn compositor(&self) -> Option<Rc<Compositor>> {
@@ -301,8 +304,11 @@ mod tests {
         assert!(top_level.transparency_level() == WindowTransparencyLevel::none());
         assert!(top_level.compositor().is_some());
         let surfaces = top_level.surfaces();
-        assert_eq!(1, surfaces.len());
+        assert_eq!(2, surfaces.len());
         assert!(Arc::ptr_eq(&surfaces[0], &surface));
+        // The text of a hosted top-level renders as composited text.
+        assert!(surfaces[0].text_rendering_parameters().is_none());
+        assert!(surfaces[1].text_rendering_parameters().is_some_and(|parameters| parameters.composited));
 
         // The size and the scaling of the host are reported.
         let resized = Rc::new(RefCell::new(Vec::new()));
