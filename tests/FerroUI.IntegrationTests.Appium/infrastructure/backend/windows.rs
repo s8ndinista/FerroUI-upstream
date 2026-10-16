@@ -413,7 +413,17 @@ impl Backend {
         let control_view = self.client.control_view_condition()?;
         let condition = self.client.and_condition(&condition, &control_view)?;
         let scope = if include_root { TREE_SCOPE_SUBTREE } else { TREE_SCOPE_DESCENDANTS };
-        let found: Vec<NativeElement> = root.0.find_all(scope, &condition)?.into_iter().map(NativeElement).collect();
+        let mut found: Vec<NativeElement> = root.0.find_all(scope, &condition)?.into_iter().map(NativeElement).collect();
+        // A search from a window element finds the elements of that window, not those of the
+        // windows it owns, which UI Automation lists among its children (before its content)
+        // and which are top-level windows of their own (`WindowTests.Owned_Window_Should_
+        // Appear_Above_Topmost_Owner` reads `CurrentPosition` of the owner and of the owned
+        // window, which have the same automation ids, and passes against WinAppDriver). A
+        // search from the session finds them (`PopupsTests` finds the combo box of an owned
+        // window from the session), as WinAppDriver does.
+        if !include_root && self.is_top_level_window(root) {
+            found.retain(|element| self.owning_window_is(element, root));
+        }
         if !found.is_empty() || !thorough {
             return Ok(found);
         }
@@ -425,6 +435,27 @@ impl Backend {
         // button after the host). The walk of the control view, which goes from the host to its
         // next sibling, finds them, as WinAppDriver does in upstream's `EmbeddingTests`.
         Ok(self.walk_find(root, include_root, by))
+    }
+
+    /// Whether the element is a window with a native window of its own.
+    fn is_top_level_window(&self, element: &NativeElement) -> bool {
+        element.0.control_type().ok() == Some(CONTROL_TYPE_WINDOW)
+            && element.0.native_window_handle().is_ok_and(|hwnd| hwnd != 0)
+    }
+
+    /// Whether the nearest window with a native window of its own above the
+    /// element is `window`.
+    fn owning_window_is(&self, element: &NativeElement, window: &NativeElement) -> bool {
+        let mut current = element.0.clone();
+        for _ in 0..256 {
+            let Ok(Some(parent)) = self.client.control_view_parent(&current) else { return true };
+            let parent = NativeElement(parent);
+            if self.is_top_level_window(&parent) {
+                return self.same(&parent, window);
+            }
+            current = parent.0;
+        }
+        true
     }
 
     /// The elements below `root` (and `root` itself with `include_root`) that the locator
@@ -449,7 +480,15 @@ impl Backend {
                 found.push(element.clone());
             }
             let children = self.children(&element);
-            stack.extend(children.into_iter().rev().map(|child| (child, true)));
+            // From a window element, the windows it owns are not searched (`find_all`).
+            let skip_windows = !include_root && self.is_top_level_window(root);
+            stack.extend(
+                children
+                    .into_iter()
+                    .rev()
+                    .filter(|child| !(skip_windows && self.is_top_level_window(child)))
+                    .map(|child| (child, true)),
+            );
         }
         found
     }
