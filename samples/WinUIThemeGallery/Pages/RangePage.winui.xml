@@ -1,8 +1,8 @@
 <!-- The native WinUI 3 counterpart of RangePage.xaml. The pointer-over state of the slider
      cannot be shown in WinUI without input or VisualStateManager.GoToState (its template sets
      the brushes of that state on its parts): that slider is in the normal state here. The
-     scroll bars are the primitive ScrollBar with the mouse indicators, which is the scroll bar
-     shown in full, as the framework's with AllowAutoHide off. -->
+     scroll bars are the primitive ScrollBar with the mouse indicators, collapsed until the pointer
+     rests on them, as the framework's with AllowAutoHide on. -->
 <StackPanel xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
             xmlns:primitives="using:Microsoft.UI.Xaml.Controls.Primitives"

@@ -18,12 +18,20 @@
     ScrollBarVerticalThumbTemplate. Their arrows are glyphs of the symbol font (EDD9, EDDA,
     EDDB, EDDC), drawn as GlyphGeometry paths; the pressed arrow is scaled to
     ScrollBarButtonArrowScalePressed (0.875).
-  - ConsciousStates: Expanded is FerroUI's IsExpanded, which the control sets after its own
-    delay; the opacities animate over ScrollBarOpacityChangeDuration (83 ms) and the thumb grows
-    over ScrollBarExpandDuration (167 ms, spline 0,0,0,1) as transitions, without the begin
-    times of the source. ScrollingIndicatorStates (NoIndicator, TouchIndicator with the panning
-    roots, MouseIndicator) have no counterpart: FerroUI's scroll bar is always in the state of
-    MouseIndicator, so the thumb is shown and hit testing is on.
+  - ConsciousStates: Expanded is FerroUI's IsExpanded, which the control sets when the pointer
+    has rested over the bar for its ShowDelay and clears when it has been away for its HideDelay:
+    the setters ShowDelay 0.4 s and HideDelay 0.5 s are the begin times of the source
+    (ScrollBarExpandBeginTime, ScrollBarContractBeginTime). Collapsed is the thin thumb in
+    ScrollBarPanningThumbBackground. The opacities animate over ScrollBarOpacityChangeDuration
+    (83 ms) and the thumb grows over ScrollBarExpandDuration (167 ms, spline 0,0,0,1) as
+    transitions.
+  - ScrollingIndicatorStates: MouseIndicator is the state of the bar itself (the thumb shown, hit
+    testing on); NoIndicator, the bars hidden while the pointer is not over their scroll viewer,
+    is the opacity of the bars in the template of the scroll viewer (Controls/ScrollViewer.xaml),
+    which sets the indicator mode of its bars in WinUI too. A scroll bar outside a scroll viewer
+    stays in MouseIndicator (WinUI's IndicatorMode, None by default, has no counterpart).
+    TouchIndicator and the panning roots (HorizontalPanningRoot, VerticalPanningRoot) have no
+    counterpart: the collapsed bar of MouseIndicator is the thin indicator for any pointer.
   - The track rectangles (radius RadiusX/RadiusY of twice the corner radius) are borders with
     the corner radius scaled by ScrollBarTrackCornerRadiusConverter.
 -->
@@ -236,6 +244,9 @@
     <Setter Property="BorderBrush" Value="{DynamicResource ScrollBarBorderBrush}" />
     <Setter Property="IsTabStop" Value="False" />
     <Setter Property="CornerRadius" Value="{DynamicResource ScrollBarCornerRadius}" />
+    <!-- ScrollBarExpandBeginTime (00:00:00.40) and ScrollBarContractBeginTime (00:00:00.50). -->
+    <Setter Property="ShowDelay" Value="0:0:0.4" />
+    <Setter Property="HideDelay" Value="0:0:0.5" />
 
     <Style Selector="^:vertical">
       <Setter Property="Template">

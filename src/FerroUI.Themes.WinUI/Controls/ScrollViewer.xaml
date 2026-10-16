@@ -14,14 +14,23 @@
     Grid around each bar) are not in the template; ScrollViewerScrollBarMargin, the padding of that
     Grid, is the margin of the bar. The scroll gesture recognizer and the snap point bindings of
     the presenter are FerroUI's touch scrolling, which WinUI's presenter does in the platform.
-  - ScrollingIndicatorStates (NoIndicator, TouchIndicator, MouseIndicator) and their delays have
-    no counterpart: FerroUI's scroll bar always shows its indicator and expands on its own
-    (IsExpanded). ScrollBarSeparatorExpanded is the IsExpanded state of the scroll viewer, with
-    the opacity animated over ScrollViewerSeparatorExpandDuration (100 ms) and without the begin
+  - ScrollingIndicatorStates: WinUI's scroll viewer shows the mouse indicators (MouseIndicator,
+    the IndicatorMode of its bars) while the pointer moves over it, and goes to NoIndicator, which
+    fades the bars out over ScrollBarOpacityChangeDuration (83 ms), 2 s after the last move
+    (ScrollViewerSeparatorContractDelay); MouseIndicatorFull is a bar under the pointer. Here
+    NoIndicator is the opacity 0 of the scroll bars, MouseIndicator their opacity 1 while the
+    pointer is over the scroll viewer (:pointerover) or a bar is expanded (IsExpanded, which is
+    also the state of AllowAutoHide off), with a transition of 83 ms both ways. The bars hide
+    when the pointer leaves the scroll viewer, without the delay of 2 s, and stay shown while it
+    rests over it (FerroUI tells no pointer moves from rest); TouchIndicator (the panning
+    indicator of touch) has no counterpart, the collapsed bar of MouseIndicator is drawn for any
+    pointer. ScrollBarSeparatorExpanded is the IsExpanded state of the scroll viewer, with the
+    opacity animated over ScrollViewerSeparatorExpandDuration (100 ms) and without the begin
     delays.
-  - VerticalScrollBarVisibility="Visible" of the source is not set: WinUI hides a visible scroll
-    bar until the pointer moves (NoIndicator), which FerroUI's scroll bar cannot, so the default
-    Auto of the control is the nearest behaviour. The modes of the source that FerroUI's scroll
+  - VerticalScrollBarVisibility="Visible" of the source is not set: FerroUI's scroll viewer does
+    not disable a bar whose content does not scroll, so a visible bar would show a thumb of the
+    full length over such content under the pointer; the default Auto of the control shows the
+    same indicators wherever there is something to scroll. The modes of the source that FerroUI's scroll
     viewer does not have (HorizontalScrollMode, VerticalScrollMode, IsHorizontalRailEnabled,
     IsVerticalRailEnabled, ZoomMode) are left out.
   - ScrollViewerScrollBarlessTemplate, a template of the platform theme for the scroll viewers of
@@ -91,17 +100,32 @@
               </ScrollContentPresenter.GestureRecognizers>
             </ScrollContentPresenter>
             <Grid Grid.RowSpan="2" Grid.ColumnSpan="2" />
+            <!-- Opacity 0: NoIndicator; the opacity animates over ScrollBarOpacityChangeDuration. -->
             <ScrollBar x:Name="PART_VerticalScrollBar"
                        Grid.Column="1"
                        Margin="{DynamicResource ScrollViewerScrollBarMargin}"
                        IsTabStop="False"
                        Orientation="Vertical"
-                       HorizontalAlignment="Right" />
+                       HorizontalAlignment="Right"
+                       Opacity="0">
+              <ScrollBar.Transitions>
+                <Transitions>
+                  <DoubleTransition Property="Opacity" Duration="0:0:0.083" />
+                </Transitions>
+              </ScrollBar.Transitions>
+            </ScrollBar>
             <ScrollBar x:Name="PART_HorizontalScrollBar"
                        Grid.Row="1"
                        Margin="{DynamicResource ScrollViewerScrollBarMargin}"
                        IsTabStop="False"
-                       Orientation="Horizontal" />
+                       Orientation="Horizontal"
+                       Opacity="0">
+              <ScrollBar.Transitions>
+                <Transitions>
+                  <DoubleTransition Property="Opacity" Duration="0:0:0.083" />
+                </Transitions>
+              </ScrollBar.Transitions>
+            </ScrollBar>
             <Border x:Name="ScrollBarSeparator"
                     Grid.Row="1"
                     Grid.Column="1"
@@ -117,6 +141,15 @@
         </Border>
       </ControlTemplate>
     </Setter>
+
+    <!-- MouseIndicator (ScrollingIndicatorStates): the bars are shown while the pointer is over the
+         scroll viewer or a bar is expanded; NoIndicator otherwise (the opacity 0 of the template). -->
+    <Style Selector="^:pointerover /template/ ScrollBar#PART_VerticalScrollBar, ^:pointerover /template/ ScrollBar#PART_HorizontalScrollBar">
+      <Setter Property="Opacity" Value="1" />
+    </Style>
+    <Style Selector="^[IsExpanded=true] /template/ ScrollBar#PART_VerticalScrollBar, ^[IsExpanded=true] /template/ ScrollBar#PART_HorizontalScrollBar">
+      <Setter Property="Opacity" Value="1" />
+    </Style>
 
     <!-- ScrollBarSeparatorExpanded -->
     <Style Selector="^[IsExpanded=true] /template/ Border#ScrollBarSeparator">
