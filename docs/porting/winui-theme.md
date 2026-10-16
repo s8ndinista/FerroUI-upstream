@@ -482,7 +482,7 @@ ports a control updates its state by porting it, not by editing the table.
 | `DropDownButton.xaml` | `{DropDownButton}` | DropDownButton: DefaultDropDownButtonStyle (DropDownButton.xaml, DropDownButton_themeresources.xaml). | B2 | ported |
 | `EmbeddableControlRoot.xaml` | `{EmbeddableControlRoot}` | No WinUI style: the background and text of the window (SolidBackgroundFillColorBaseBrush, TextFillColorPrimaryBrush, ContentControlThemeFontFamily, ControlContentThemeFontSize). | F | ported |
 | `Expander.xaml` | `{Expander}` | Expander: DefaultExpanderStyle (Expander.xaml), ExpanderHeaderDownStyle, ExpanderHeaderUpStyle (Expander_themeresources.xaml). | B2 | ported |
-| `FlyoutPresenter.xaml` | `{FlyoutPresenter}` | FlyoutPresenter: DefaultFlyoutPresenterStyle (FlyoutPresenter_themeresources.xaml). | B3 | pending |
+| `FlyoutPresenter.xaml` | `{FlyoutPresenter}` | FlyoutPresenter: DefaultFlyoutPresenterStyle (FlyoutPresenter_themeresources.xaml). | B3 | ported |
 | `GridSplitter.xaml` | `{GridSplitter}` | No WinUI control in the merged theme: built from the control fills of the palette (ControlStrongFillColorDefaultBrush, ControlStrongFillColorDisabledBrush) and the accent fill for the preview (AccentFillColorDefaultBrush). | B1 | ported |
 | `GroupBox.xaml` | `{GroupBox}` | No WinUI control: an expanded Expander without its chevron (DefaultExpanderStyle, Expander.xaml; the header of ExpanderHeaderDownStyle, Expander_themeresources.xaml). | B1 | ported |
 | `HeaderedContentControl.xaml` | `{HeaderedContentControl}` | No WinUI style: the header presenter of the WinUI controls with a Header (TextBox: HeaderContentPresenter, TextBoxTopHeaderMargin, TextControlHeaderForeground). | B1 | ported |
