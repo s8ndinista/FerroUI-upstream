@@ -44,6 +44,12 @@
         <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/TextSelectionHandle.xaml" />
         <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/DataValidationErrors.xaml" />
         <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/GridSplitter.xaml" />
+        <!-- B4: calendar, date and time. -->
+        <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/CalendarDayButton.xaml" />
+        <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/CalendarButton.xaml" />
+        <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/CalendarItem.xaml" />
+        <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/Calendar.xaml" />
+        <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/CalendarDatePicker.xaml" />
       </ResourceDictionary.MergedDictionaries>
     </ResourceDictionary>
   </Styles.Resources>

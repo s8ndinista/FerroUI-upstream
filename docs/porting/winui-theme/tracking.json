@@ -11144,9 +11144,9 @@
    "key": "DefaultCalendarDatePicker",
    "kind": "Style",
    "target_type": "CalendarDatePicker",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B4"
+   "batch": null
   },
   {
    "document": "controls/dev/CommonStyles/CalendarDatePicker_themeresources.xaml",
@@ -11154,9 +11154,9 @@
    "key": "{CalendarDatePicker}",
    "kind": "Style",
    "target_type": "CalendarDatePicker",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B4"
+   "batch": null
   },
   {
    "document": "controls/dev/CommonStyles/CalendarDatePicker_themeresources.xaml",
@@ -11904,9 +11904,9 @@
    "key": "DefaultCalendarViewStyle",
    "kind": "Style",
    "target_type": "CalendarView",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B4"
+   "batch": null
   },
   {
    "document": "controls/dev/CommonStyles/CalendarView_themeresources.xaml",
@@ -11914,9 +11914,9 @@
    "key": "{CalendarViewDayItem}",
    "kind": "Style",
    "target_type": "CalendarViewDayItem",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B4"
+   "batch": null
   },
   {
    "document": "controls/dev/CommonStyles/CalendarView_themeresources.xaml",
@@ -11924,9 +11924,9 @@
    "key": "{CalendarView}",
    "kind": "Style",
    "target_type": "CalendarView",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B4"
+   "batch": null
   },
   {
    "document": "controls/dev/CommonStyles/CalendarView_themeresources.xaml",
@@ -90059,6 +90059,11 @@
   "WinUITheme.xaml",
   "Controls/AdornerLayer.xaml",
   "Controls/Button.xaml",
+  "Controls/Calendar.xaml",
+  "Controls/CalendarButton.xaml",
+  "Controls/CalendarDatePicker.xaml",
+  "Controls/CalendarDayButton.xaml",
+  "Controls/CalendarItem.xaml",
   "Controls/CheckBox.xaml",
   "Controls/DataValidationErrors.xaml",
   "Controls/EmbeddableControlRoot.xaml",
@@ -90205,9 +90210,9 @@
    ],
    "batch": "B4",
    "winui": "CalendarView: DefaultCalendarViewStyle (CalendarView_themeresources.xaml).",
-   "status": "pending",
-   "deviations": 0,
-   "date": ""
+   "status": "ported",
+   "deviations": 4,
+   "date": "not committed"
   },
   {
    "document": "CalendarButton.xaml",
@@ -90216,9 +90221,9 @@
    ],
    "batch": "B4",
    "winui": "The month and year items of CalendarView (CalendarViewBaseItem resources of CalendarView_themeresources.xaml).",
-   "status": "pending",
-   "deviations": 0,
-   "date": ""
+   "status": "ported",
+   "deviations": 7,
+   "date": "not committed"
   },
   {
    "document": "CalendarDatePicker.xaml",
@@ -90227,9 +90232,9 @@
    ],
    "batch": "B4",
    "winui": "CalendarDatePicker: DefaultCalendarDatePicker (CalendarDatePicker_themeresources.xaml).",
-   "status": "pending",
-   "deviations": 0,
-   "date": ""
+   "status": "ported",
+   "deviations": 11,
+   "date": "not committed"
   },
   {
    "document": "CalendarDayButton.xaml",
@@ -90238,9 +90243,9 @@
    ],
    "batch": "B4",
    "winui": "CalendarViewDayItem: {CalendarViewDayItem} (CalendarView_themeresources.xaml).",
-   "status": "pending",
-   "deviations": 0,
-   "date": ""
+   "status": "ported",
+   "deviations": 9,
+   "date": "not committed"
   },
   {
    "document": "CalendarItem.xaml",
@@ -90249,9 +90254,9 @@
    ],
    "batch": "B4",
    "winui": "The header, navigation buttons and views of the CalendarView template (DefaultCalendarViewStyle).",
-   "status": "pending",
-   "deviations": 0,
-   "date": ""
+   "status": "ported",
+   "deviations": 14,
+   "date": "not committed"
   },
   {
    "document": "Carousel.xaml",
@@ -91435,6 +91440,11 @@
   "Resources": 9,
   "AdornerLayer": 1,
   "Button": 6,
+  "Calendar": 4,
+  "CalendarButton": 7,
+  "CalendarDatePicker": 11,
+  "CalendarDayButton": 9,
+  "CalendarItem": 14,
   "CheckBox": 5,
   "DataValidationErrors": 2,
   "EmbeddableControlRoot": 1,

@@ -403,11 +403,6 @@ pub const PENDING_CONTROLS: &[&str] = &[
     "TreeView",
     "TreeViewItem",
     // B4: calendar, date and time
-    "Calendar",
-    "CalendarButton",
-    "CalendarDatePicker",
-    "CalendarDayButton",
-    "CalendarItem",
     "DatePicker",
     "DatePickerPresenter",
     "TimePicker",
