@@ -700,9 +700,17 @@ fn the_settings_page_switches_the_theme_variant_and_the_theme() {
         let bounds = combo_box.bounds();
         assert!(bounds.width >= 200.0 && bounds.height > 0.0, "a combo box of the settings page has the bounds {bounds:?}");
     }
-    assert_eq!(0, combo_boxes[1].selected_index(), "the Fluent theme is selected");
+    // The port starts the catalog in its WinUI theme (the original in the Fluent theme); the
+    // checks of the variants below are those of the original, in the Fluent theme.
+    assert_eq!(2, combo_boxes[1].selected_index(), "the WinUI theme is selected");
+    assert_eq!(CatalogTheme::WinUI, App::current_theme());
     assert_eq!(0, combo_boxes[2].selected_index(), "the default variant is selected");
     assert_eq!(Some(ThemeVariant::light()), shell.window.actual_theme_variant());
+    combo_boxes[1].set_selected_index(0);
+    shell.settle();
+    assert_eq!(CatalogTheme::Fluent, App::current_theme(), "the theme the page set");
+    let combo_boxes = descendants::<ComboBox>(&shell.show(&shell.view_model.settings_item()));
+    assert_eq!(0, combo_boxes[1].selected_index(), "the Fluent theme is selected");
 
     // The first section of the home page has its cards; the background of the first.
     let card_background = |shell: &Shell| {
@@ -738,18 +746,19 @@ fn the_settings_page_switches_the_theme_variant_and_the_theme() {
     card_background(&shell);
     let combo_boxes = settings_combo_boxes(&shell);
     assert_eq!(1, combo_boxes[1].selected_index(), "the settings page shows the theme it set");
-    // The WinUI theme of the port (not in the original), over the Fluent theme for the controls it
-    // does not style yet (docs/porting/winui-theme/PROGRESS.md).
+    // Back to the Fluent theme, and to the WinUI theme of the port, the catalog's default (not in
+    // the original), which themes every control alone (docs/porting/winui-theme/PROGRESS.md).
+    combo_boxes[1].set_selected_index(0);
+    shell.settle();
+    assert_eq!(CatalogTheme::Fluent, App::current_theme());
+    card_background(&shell);
+    let combo_boxes = settings_combo_boxes(&shell);
     combo_boxes[1].set_selected_index(2);
     shell.settle();
     assert_eq!(CatalogTheme::WinUI, App::current_theme(), "the theme the page set");
     card_background(&shell);
     let combo_boxes = settings_combo_boxes(&shell);
     assert_eq!(2, combo_boxes[1].selected_index(), "the settings page shows the theme it set");
-    combo_boxes[1].set_selected_index(0);
-    shell.settle();
-    assert_eq!(CatalogTheme::Fluent, App::current_theme());
-    card_background(&shell);
 }
 
 /// Below the wide breakpoint the drawer is compact: closed it shows the icons of its entries

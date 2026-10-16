@@ -6,14 +6,15 @@
 //! FERROUI_SMOKE_EXIT_MS=3000 cargo run -p control-catalog-desktop
 //! FERROUI_SMOKE_EXIT_MS=20000 FERROUI_SMOKE_PAGES=150 cargo run -p control-catalog-desktop
 //! FERROUI_SMOKE_SCREENSHOTS=target/screenshots cargo run -p control-catalog-desktop
+//! FERROUI_CATALOG_THEME=fluent cargo run -p control-catalog-desktop
 //! FERROUI_CATALOG_THEME=simple cargo run -p control-catalog-desktop
-//! FERROUI_CATALOG_THEME=winui cargo run -p control-catalog-desktop
 //! FERROUI_CATALOG_WAYLAND=0 cargo run -p control-catalog-desktop
 //! ```
 //!
-//! `FERROUI_CATALOG_THEME` selects the theme the catalog starts with: `fluent` (the default),
-//! `simple`, or `winui`, the WinUI theme of the port (docs/porting/winui-theme.md); the
-//! settings page switches between them as before. Not in the original.
+//! `FERROUI_CATALOG_THEME` selects the theme the catalog starts with: `winui`, the WinUI theme
+//! of the port (docs/porting/winui-theme.md) and the default of the port, `fluent` (the default
+//! of the original) or `simple`; the settings page switches between them as before. Not in the
+//! original.
 //!
 //! On Linux the catalog uses the Wayland backend when a compositor can be
 //! reached, with the backend of the platform detection (X11) as its
@@ -163,15 +164,15 @@ pub fn build_ferro_app() -> AppBuilder {
         .log_to_trace(LogEventLevel::Warning, &[])
 }
 
-/// The theme of the catalog asked for with `FERROUI_CATALOG_THEME` (`fluent`, `simple` or
-/// `winui`), selected after the application is set up and before its main window is created.
+/// The theme of the catalog asked for with `FERROUI_CATALOG_THEME` (`winui`, the default, `fluent`
+/// or `simple`), selected after the application is set up and before its main window is created.
 fn select_theme_of_the_environment() {
     use control_catalog::models::CatalogTheme;
 
     let theme = match std::env::var("FERROUI_CATALOG_THEME").ok().as_deref().map(str::to_ascii_lowercase).as_deref() {
-        None | Some("") | Some("fluent") => return,
+        None | Some("") | Some("winui") => return,
+        Some("fluent") => CatalogTheme::Fluent,
         Some("simple") => CatalogTheme::Simple,
-        Some("winui") => CatalogTheme::WinUI,
         Some(other) => panic!("FERROUI_CATALOG_THEME: unknown theme {other:?} (fluent, simple, winui)"),
     };
     println!("ControlCatalog: the theme {theme:?}");
