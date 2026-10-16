@@ -1,0 +1,54 @@
+<!-- The native WinUI 3 counterpart of TabsPage.xaml. WinUI has no TabControl: the tabs at the
+     top are a TabView (its items cannot be closed and it has no add button, as the framework's
+     tabs), the tabs at the left are a NavigationView with its pane at the left, open and
+     without its toggle, back and settings buttons, and TabStrip is a SelectorBar (Windows App
+     SDK 1.5 and later). The pointer-over tab and item have the brushes of that state as their
+     background. -->
+<StackPanel xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+            xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+            Margin="24" Spacing="12">
+  <TextBlock Text="Tabs" FontSize="28" FontWeight="SemiBold" />
+
+  <TextBlock Text="TabControl" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" />
+  <TabView Height="180" IsAddTabButtonVisible="False" SelectedIndex="0">
+    <TabViewItem Header="Selected" IsClosable="False">
+      <TextBlock Text="The content of the selected tab." Margin="12" />
+    </TabViewItem>
+    <TabViewItem Header="Normal" IsClosable="False">
+      <TextBlock Text="The content of the second tab." Margin="12" />
+    </TabViewItem>
+    <TabViewItem Header="Pointer over" IsClosable="False"
+                 Background="{ThemeResource TabViewItemHeaderBackgroundPointerOver}"
+                 Foreground="{ThemeResource TabViewItemHeaderForegroundPointerOver}">
+      <TextBlock Text="The content of the third tab." Margin="12" />
+    </TabViewItem>
+    <TabViewItem Header="Disabled" IsClosable="False" IsEnabled="False">
+      <TextBlock Text="The content of the fourth tab." Margin="12" />
+    </TabViewItem>
+  </TabView>
+
+  <TextBlock Text="TabControl with the tabs at the left" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" />
+  <NavigationView Height="180"
+                  PaneDisplayMode="Left"
+                  IsPaneOpen="True"
+                  OpenPaneLength="160"
+                  IsPaneToggleButtonVisible="False"
+                  IsBackButtonVisible="Collapsed"
+                  IsSettingsVisible="False">
+    <NavigationView.MenuItems>
+      <NavigationViewItem Content="General" IsSelected="True" />
+      <NavigationViewItem Content="Advanced" />
+      <NavigationViewItem Content="About" />
+    </NavigationView.MenuItems>
+    <TextBlock Text="The content of the general tab." Margin="12" />
+  </NavigationView>
+
+  <TextBlock Text="TabStrip" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" />
+  <SelectorBar HorizontalAlignment="Left">
+    <SelectorBarItem Text="Recent" IsSelected="True" />
+    <SelectorBarItem Text="Shared" />
+    <SelectorBarItem Text="Pointer over"
+                     Background="{ThemeResource SelectorBarItemBackgroundPointerOver}" />
+    <SelectorBarItem Text="Disabled" IsEnabled="False" />
+  </SelectorBar>
+</StackPanel>

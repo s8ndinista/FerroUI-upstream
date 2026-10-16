@@ -1,0 +1,78 @@
+<UserControl xmlns="https://github.com/ferroui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="WinUIThemeGallery.Pages.FlyoutsPage">
+  <!-- The content of a flyout (FlyoutPresenter) and of tool tips (ToolTip), shown in the page
+       because a picture of a page does not hold its popups (PopupRoot and OverlayPopupHost host
+       them in the window); the tool tips are opaque, as an open one is. NotificationCard of
+       each type. WindowNotificationManager is the host of such cards: it shows the cards an
+       application sends it, and is empty here. The native counterpart is
+       FlyoutsPage.winui.xml (FlyoutPresenter, ToolTip, InfoBar). -->
+  <StackPanel Margin="24" Spacing="12">
+    <TextBlock Text="Flyouts, tool tips and notifications" FontSize="28" FontWeight="SemiBold" />
+
+    <Grid ColumnSpacing="24">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="320" />
+        <ColumnDefinition Width="320" />
+      </Grid.ColumnDefinitions>
+
+      <StackPanel Grid.Column="0" Spacing="12">
+        <TextBlock Text="Flyout content" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" />
+        <FlyoutPresenter Width="300" HorizontalAlignment="Left">
+          <StackPanel Spacing="12">
+            <TextBlock Text="A flyout" FontWeight="SemiBold" />
+            <TextBlock Text="A flyout shows content over the page, next to the control that opened it."
+                       TextWrapping="Wrap" />
+            <Button Content="Got it" />
+          </StackPanel>
+        </FlyoutPresenter>
+      </StackPanel>
+
+      <StackPanel Grid.Column="1" Spacing="12">
+        <TextBlock Text="Tool tips" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" />
+        <ToolTip HorizontalAlignment="Left" Opacity="1" Content="A short tool tip" />
+        <ToolTip HorizontalAlignment="Left" Opacity="1" MaxWidth="300">
+          <TextBlock Text="A longer tool tip, whose text wraps onto a second line within its width."
+                     TextWrapping="Wrap" />
+        </ToolTip>
+      </StackPanel>
+    </Grid>
+
+    <TextBlock Text="Notifications" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" />
+    <Grid ColumnSpacing="16" RowSpacing="12">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="320" />
+        <ColumnDefinition Width="320" />
+      </Grid.ColumnDefinitions>
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="Auto" />
+      </Grid.RowDefinitions>
+      <NotificationCard Grid.Row="0" Grid.Column="0" Width="320" NotificationType="Information">
+        <StackPanel Margin="12" Spacing="4">
+          <TextBlock Text="Information" FontWeight="SemiBold" />
+          <TextBlock Text="A new version is available." TextWrapping="Wrap" />
+        </StackPanel>
+      </NotificationCard>
+      <NotificationCard Grid.Row="0" Grid.Column="1" Width="320" NotificationType="Success">
+        <StackPanel Margin="12" Spacing="4">
+          <TextBlock Text="Success" FontWeight="SemiBold" />
+          <TextBlock Text="The document was saved." TextWrapping="Wrap" />
+        </StackPanel>
+      </NotificationCard>
+      <NotificationCard Grid.Row="1" Grid.Column="0" Width="320" NotificationType="Warning">
+        <StackPanel Margin="12" Spacing="4">
+          <TextBlock Text="Warning" FontWeight="SemiBold" />
+          <TextBlock Text="The disk is almost full." TextWrapping="Wrap" />
+        </StackPanel>
+      </NotificationCard>
+      <NotificationCard Grid.Row="1" Grid.Column="1" Width="320" NotificationType="Error">
+        <StackPanel Margin="12" Spacing="4">
+          <TextBlock Text="Error" FontWeight="SemiBold" />
+          <TextBlock Text="The file could not be opened." TextWrapping="Wrap" />
+        </StackPanel>
+      </NotificationCard>
+    </Grid>
+    <WindowNotificationManager MaxItems="3" />
+  </StackPanel>
+</UserControl>

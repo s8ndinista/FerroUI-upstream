@@ -1,0 +1,71 @@
+<UserControl xmlns="https://github.com/ferroui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:data="using:FerroUI.Data"
+             x:Class="WinUIThemeGallery.Pages.TextInputPage">
+  <!-- TextBox in its states (a placeholder, a text, pointer over, disabled, read-only, a
+       password, several lines, a validation error shown by DataValidationErrors), Label,
+       TextBlock and SelectableTextBlock. The native counterpart is TextInputPage.winui.xml. -->
+  <StackPanel Margin="24" Spacing="12">
+    <TextBlock Text="Text input" FontSize="28" FontWeight="SemiBold" />
+
+    <TextBlock Text="TextBox" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" />
+    <Grid ColumnSpacing="16" RowSpacing="12">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="160" />
+        <ColumnDefinition Width="300" />
+      </Grid.ColumnDefinitions>
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="Auto" />
+      </Grid.RowDefinitions>
+
+      <TextBlock Grid.Row="0" Text="Placeholder" VerticalAlignment="Center" />
+      <TextBox Grid.Row="0" Grid.Column="1" PlaceholderText="Placeholder text" />
+
+      <TextBlock Grid.Row="1" Text="With text" VerticalAlignment="Center" />
+      <TextBox Grid.Row="1" Grid.Column="1" Text="Text content" />
+
+      <TextBlock Grid.Row="2" Text="Pointer over" VerticalAlignment="Center" />
+      <TextBox Grid.Row="2" Grid.Column="1" Text="Text content" Classes="force-pointerover" />
+
+      <TextBlock Grid.Row="3" Text="Disabled" VerticalAlignment="Center" />
+      <TextBox Grid.Row="3" Grid.Column="1" Text="Text content" IsEnabled="False" />
+
+      <TextBlock Grid.Row="4" Text="Read-only" VerticalAlignment="Center" />
+      <TextBox Grid.Row="4" Grid.Column="1" Text="Text content" IsReadOnly="True" />
+
+      <TextBlock Grid.Row="5" Text="Password" VerticalAlignment="Center" />
+      <TextBox Grid.Row="5" Grid.Column="1" Text="password" PasswordChar="&#x25CF;" />
+
+      <TextBlock Grid.Row="6" Text="Several lines" VerticalAlignment="Top" />
+      <TextBox Grid.Row="6" Grid.Column="1"
+               AcceptsReturn="True"
+               TextWrapping="Wrap"
+               Height="72"
+               Text="The first line of the text.&#xA;The second line of the text." />
+
+      <TextBlock Grid.Row="7" Text="Validation error" VerticalAlignment="Top" Margin="0,6,0,0" />
+      <TextBox Grid.Row="7" Grid.Column="1" Text="Not an address">
+        <DataValidationErrors.Error>
+          <data:DataValidationException>
+            <x:Arguments>
+              <x:String>Enter a valid email address.</x:String>
+            </x:Arguments>
+          </data:DataValidationException>
+        </DataValidationErrors.Error>
+      </TextBox>
+    </Grid>
+
+    <TextBlock Text="Label, TextBlock and SelectableTextBlock" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" />
+    <Label Content="A label for the box below" />
+    <TextBox Width="300" HorizontalAlignment="Left" PlaceholderText="A labelled box" />
+    <TextBlock Text="A text block with plain text." />
+    <SelectableTextBlock Text="A selectable text block: its text can be selected and copied." />
+  </StackPanel>
+</UserControl>

@@ -1,0 +1,94 @@
+<!-- The native WinUI 3 counterpart of NavigationSamplesPage.xaml, made of the navigation controls
+     of WinUI, which has no page controls of the framework's kind: TabbedPage is a NavigationView
+     with its items at the top; NavigationPage is a bar with the title of the page over its
+     content (what a Frame with a page and a title bar shows); DrawerPage is a NavigationView
+     with its pane open at the left; CarouselPage and Carousel are FlipView. PipsPager and
+     RefreshContainer have the same names. -->
+<StackPanel xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+            xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+            Margin="24" Spacing="12">
+  <TextBlock Text="Pages and navigation" FontSize="28" FontWeight="SemiBold" />
+
+  <Grid ColumnSpacing="24">
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="320" />
+      <ColumnDefinition Width="320" />
+    </Grid.ColumnDefinitions>
+
+    <StackPanel Grid.Column="0" Spacing="12">
+      <TextBlock Text="TabbedPage" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" />
+      <NavigationView Width="320" Height="170" HorizontalAlignment="Left"
+                      PaneDisplayMode="Top"
+                      IsBackButtonVisible="Collapsed"
+                      IsSettingsVisible="False">
+        <NavigationView.MenuItems>
+          <NavigationViewItem Content="Home" IsSelected="True" />
+          <NavigationViewItem Content="Search" />
+          <NavigationViewItem Content="Settings" />
+        </NavigationView.MenuItems>
+        <TextBlock Text="The home page." Margin="12" />
+      </NavigationView>
+
+      <TextBlock Text="NavigationPage" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" />
+      <Grid Width="320" Height="160" HorizontalAlignment="Left">
+        <Grid.RowDefinitions>
+          <RowDefinition Height="48" />
+          <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <TextBlock Grid.Row="0" Text="Inbox" FontSize="20" FontWeight="SemiBold"
+                   VerticalAlignment="Center" Margin="12,0" />
+        <TextBlock Grid.Row="1" Text="The first page of a navigation page." Margin="12" />
+      </Grid>
+
+      <TextBlock Text="PipsPager" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" />
+      <PipsPager HorizontalAlignment="Left" NumberOfPages="5" SelectedPageIndex="2" />
+    </StackPanel>
+
+    <StackPanel Grid.Column="1" Spacing="12">
+      <TextBlock Text="DrawerPage" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" />
+      <NavigationView Width="320" Height="170" HorizontalAlignment="Left"
+                      PaneDisplayMode="Left"
+                      IsPaneOpen="True"
+                      OpenPaneLength="130"
+                      IsPaneToggleButtonVisible="False"
+                      IsBackButtonVisible="Collapsed"
+                      IsSettingsVisible="False">
+        <NavigationView.MenuItems>
+          <NavigationViewItem Content="Home" IsSelected="True" />
+          <NavigationViewItem Content="Settings" />
+          <NavigationViewItem Content="About" />
+        </NavigationView.MenuItems>
+        <TextBlock Text="The content beside the drawer." Margin="12" TextWrapping="Wrap" />
+      </NavigationView>
+
+      <TextBlock Text="CarouselPage and Carousel" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" />
+      <FlipView Width="320" Height="100" HorizontalAlignment="Left">
+        <Grid>
+          <TextBlock Text="The first page of a carousel page." Margin="12" />
+        </Grid>
+        <Grid>
+          <TextBlock Text="The second page." Margin="12" />
+        </Grid>
+      </FlipView>
+      <FlipView Width="320" Height="80" HorizontalAlignment="Left">
+        <Border Background="{ThemeResource ControlFillColorSecondaryBrush}">
+          <TextBlock Text="The first item of a carousel" VerticalAlignment="Center" HorizontalAlignment="Center" />
+        </Border>
+        <Border Background="{ThemeResource ControlFillColorSecondaryBrush}">
+          <TextBlock Text="The second item" VerticalAlignment="Center" HorizontalAlignment="Center" />
+        </Border>
+      </FlipView>
+
+      <TextBlock Text="RefreshContainer" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" />
+      <RefreshContainer Width="320" Height="90" HorizontalAlignment="Left">
+        <ScrollViewer>
+          <StackPanel Spacing="4">
+            <TextBlock Text="Pull the content down to refresh it." />
+            <TextBlock Text="The second line" />
+            <TextBlock Text="The third line" />
+          </StackPanel>
+        </ScrollViewer>
+      </RefreshContainer>
+    </StackPanel>
+  </Grid>
+</StackPanel>

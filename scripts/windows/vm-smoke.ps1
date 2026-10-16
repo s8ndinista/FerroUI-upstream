@@ -86,6 +86,19 @@
   windowsappruntimeinstall-<arch>.exe of release 1.6.241114003, run quietly). Only with the
   owner's authorisation: it installs packages on the machine.
 
+.PARAMETER WinUIThemeGallery
+  Also build the WinUI theme gallery (samples\WinUIThemeGallery) and run its two modes
+  (docs/porting/winui-theme-gallery.md): the capture mode of winui-theme-gallery (every page of
+  the gallery in every theme variant and density, drawn by the framework in the WinUI theme), and
+  the comparison host winui-theme-compare (each page as native WinUI 3 controls beside the same
+  page of the framework, both captured, with the picture of their difference and the share of
+  the pixels that differ). The comparison host needs the Windows App Runtime 1.6, which the
+  script checks for and does not install (-WinUI -InstallWindowsAppRuntime installs it), and the
+  bootstrap library beside the executable, which it fetches as -WinUI does. Both runs need the
+  desktop of the logged-on user (-InteractiveUser). The pictures, compare.tsv and the HTML reports
+  (scripts\winui-theme\report.py, where the machine has Python) are copied to
+  vm-smoke-winui-theme beside the report.
+
 .PARAMETER AllowUnmarkedSource
   Run although the sources carry no mark of a completed sync. By default the script refuses a
   source tree without the file .vm-sync-commit (written last by scripts/windows/vm-sync.sh, with
@@ -128,6 +141,7 @@ param(
     [switch]$Automation,
     [string]$AutomationArguments = '',
     [switch]$InstallWindowsAppRuntime,
+    [switch]$WinUIThemeGallery,
     [int]$HelloRepeat = 1,
     [switch]$SkipBuild,
     [switch]$SkipTests,
@@ -694,6 +708,83 @@ if ($WinUI) {
                 Tail $name 80 '^\[(FAIL|info| ok |step)\]|panicked|error'
             }
         }
+    }
+}
+
+# ---- the WinUI theme gallery ------------------------------------------------------------------
+# The capture mode of the gallery (the framework's pages in the WinUI theme) and the comparison
+# host (each page beside native WinUI 3 controls); docs/porting/winui-theme-gallery.md.
+if ($WinUIThemeGallery) {
+    Say ""
+    Say "-- the WinUI theme gallery"
+    $debug = Join-Path $TargetDir 'debug'
+    $themeOut = Join-Path $TargetDir 'vm-smoke-winui-theme'
+    $captureDir = Join-Path $themeOut 'capture'
+    $compareDir = Join-Path $themeOut 'compare'
+    foreach ($directory in @($captureDir, $compareDir)) {
+        New-Item -ItemType Directory -Force -Path $directory | Out-Null
+        Get-ChildItem $directory -File -ErrorAction SilentlyContinue | Remove-Item -Force
+    }
+    if ((Run 'winui-theme-build' "cargo build --locked $jobsArgument -p winui-theme-gallery --bins") -ne 0) {
+        $failed.Add('WinUI theme gallery build')
+        Tail 'winui-theme-build' 40
+    } else {
+        # The capture mode: every page in every setting, drawn by the framework; the run exits
+        # with 1 when a page does not load, a control has no template or a binding reports an
+        # error.
+        $gallery = Join-Path $debug 'winui-theme-gallery.exe'
+        $commandLine = "set FERROUI_THEME_GALLERY_CAPTURE=$captureDir&& `"$gallery`""
+        $code = if ($InteractiveUser) { Run-Interactive 'winui-theme-capture' $commandLine 900 } else { Run 'winui-theme-capture' $commandLine }
+        if ($code -ne 0) { $failed.Add('WinUI theme gallery capture') }
+        $count = @(Get-ChildItem $captureDir -Filter '*.png' -ErrorAction SilentlyContinue).Count
+        Say "    $count picture(s) in $captureDir"
+        Tail 'winui-theme-capture' 80 '^capture|FAILED|panicked|^    '
+
+        # The comparison host: the Windows App Runtime 1.6 on the machine and the bootstrap
+        # library beside the executable, as the WinUI samples.
+        $fetch = Join-Path $Source 'scripts\winui\fetch-windows-app-sdk.ps1'
+        if (-not (Test-Path (Join-Path $debug 'Microsoft.WindowsAppRuntime.Bootstrap.dll'))) {
+            if ((Run 'winui-theme-bootstrap' "powershell -NoProfile -ExecutionPolicy Bypass -File `"$fetch`" -Destination `"$debug`"") -ne 0) {
+                $failed.Add('Windows App SDK bootstrap library (WinUI theme comparison)')
+            }
+            Tail 'winui-theme-bootstrap' 10
+        }
+        $runtime = @(Get-AppxPackage -AllUsers -Name 'Microsoft.WindowsAppRuntime.1.6*' -ErrorAction SilentlyContinue)
+        if ($runtime.Count -eq 0) {
+            Say "the Windows App Runtime 1.6 is not installed: the comparison host is not run (-WinUI -InstallWindowsAppRuntime installs it)"
+            $failed.Add('Windows App Runtime 1.6 missing (WinUI theme comparison)')
+        } else {
+            $compare = Join-Path $debug 'winui-theme-compare.exe'
+            $commandLine = "`"$compare`" --out `"$compareDir`""
+            $code = if ($InteractiveUser) { Run-Interactive 'winui-theme-compare' $commandLine 1800 } else { Run 'winui-theme-compare' $commandLine }
+            if ($code -ne 0) { $failed.Add('WinUI theme comparison') }
+            $count = @(Get-ChildItem $compareDir -Filter '*-diff.png' -ErrorAction SilentlyContinue).Count
+            Say "    $count comparison(s) in $compareDir"
+            Tail 'winui-theme-compare' 120 '^compare|FAILED|panicked|^    '
+        }
+
+        # The HTML reports, where the machine has Python (not the stub of the store, which only
+        # offers to install it); the host makes them from the copies otherwise.
+        $python = Get-Command python.exe, py.exe -ErrorAction SilentlyContinue |
+            Where-Object { $_.Source -notlike '*\WindowsApps\*' } | Select-Object -First 1
+        $reportScript = Join-Path $Source 'scripts\winui-theme\report.py'
+        if ($python) {
+            foreach ($directory in @($captureDir, $compareDir)) {
+                & $python.Source $reportScript $directory 2>&1 | ForEach-Object { Say "    $_" }
+            }
+        } else {
+            Say "    no Python on the machine: the reports are made on the host (python3 scripts/winui-theme/report.py <directory>)"
+        }
+
+        # Beside the report, as the pictures of the catalog are.
+        $copy = Join-Path (Split-Path -Parent $Report) 'vm-smoke-winui-theme'
+        foreach ($part in @('capture', 'compare')) {
+            $destination = Join-Path $copy $part
+            New-Item -ItemType Directory -Force -Path $destination | Out-Null
+            Get-ChildItem $destination -File -ErrorAction SilentlyContinue | Remove-Item -Force
+            Copy-Item (Join-Path (Join-Path $themeOut $part) '*') $destination -Force -ErrorAction SilentlyContinue
+        }
+        Say "    copied to $copy"
     }
 }
 

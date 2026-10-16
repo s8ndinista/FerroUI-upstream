@@ -1,0 +1,37 @@
+<!-- The native WinUI 3 counterpart of DateTimePage.xaml. Calendar is a CalendarView; the other
+     three controls have the same names. No date or time is set: WinUI XAML has no conversion of
+     a text to a date, so a page loaded from markup cannot set one, and the framework's page
+     leaves them unset too. Both calendars show the month of the day the page is shown. -->
+<StackPanel xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+            xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+            Margin="24" Spacing="12">
+  <TextBlock Text="Date and time" FontSize="28" FontWeight="SemiBold" />
+
+  <Grid ColumnSpacing="24">
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="320" />
+      <ColumnDefinition Width="320" />
+    </Grid.ColumnDefinitions>
+
+    <StackPanel Grid.Column="0" Spacing="12">
+      <TextBlock Text="Calendar" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" />
+      <CalendarView HorizontalAlignment="Left" IsTodayHighlighted="False" />
+      <TextBlock Text="Disabled calendar" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" />
+      <CalendarView HorizontalAlignment="Left" IsTodayHighlighted="False" IsEnabled="False" />
+    </StackPanel>
+
+    <StackPanel Grid.Column="1" Spacing="12">
+      <TextBlock Text="CalendarDatePicker" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" />
+      <CalendarDatePicker Width="240" HorizontalAlignment="Left" PlaceholderText="Pick a date" IsTodayHighlighted="False" />
+      <CalendarDatePicker Width="240" HorizontalAlignment="Left" PlaceholderText="Disabled" IsEnabled="False" />
+
+      <TextBlock Text="DatePicker" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" />
+      <DatePicker HorizontalAlignment="Left" />
+      <DatePicker HorizontalAlignment="Left" IsEnabled="False" />
+
+      <TextBlock Text="TimePicker" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" />
+      <TimePicker HorizontalAlignment="Left" />
+      <TimePicker HorizontalAlignment="Left" IsEnabled="False" />
+    </StackPanel>
+  </Grid>
+</StackPanel>

@@ -1,0 +1,70 @@
+<!-- The native WinUI 3 counterpart of TextInputPage.xaml. WinUI has no counterparts of three of
+     its parts, which are composed of what WinUI has: the password box is a PasswordBox; the
+     validation error (DataValidationErrors in the framework) is the box with the critical
+     border brush and the message under it, as WinUI apps show one; the label is a TextBlock,
+     and the selectable text block is a TextBlock with IsTextSelectionEnabled. The pointer-over
+     state is the brushes of that state as local values (the template of the text box binds its
+     background and border to the control). -->
+<StackPanel xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+            xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+            Margin="24" Spacing="12">
+  <TextBlock Text="Text input" FontSize="28" FontWeight="SemiBold" />
+
+  <TextBlock Text="TextBox" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" />
+  <Grid ColumnSpacing="16" RowSpacing="12">
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="160" />
+      <ColumnDefinition Width="300" />
+    </Grid.ColumnDefinitions>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+    </Grid.RowDefinitions>
+
+    <TextBlock Grid.Row="0" Text="Placeholder" VerticalAlignment="Center" />
+    <TextBox Grid.Row="0" Grid.Column="1" PlaceholderText="Placeholder text" />
+
+    <TextBlock Grid.Row="1" Text="With text" VerticalAlignment="Center" />
+    <TextBox Grid.Row="1" Grid.Column="1" Text="Text content" />
+
+    <TextBlock Grid.Row="2" Text="Pointer over" VerticalAlignment="Center" />
+    <TextBox Grid.Row="2" Grid.Column="1" Text="Text content"
+             Background="{ThemeResource TextControlBackgroundPointerOver}"
+             BorderBrush="{ThemeResource TextControlBorderBrushPointerOver}"
+             Foreground="{ThemeResource TextControlForegroundPointerOver}" />
+
+    <TextBlock Grid.Row="3" Text="Disabled" VerticalAlignment="Center" />
+    <TextBox Grid.Row="3" Grid.Column="1" Text="Text content" IsEnabled="False" />
+
+    <TextBlock Grid.Row="4" Text="Read-only" VerticalAlignment="Center" />
+    <TextBox Grid.Row="4" Grid.Column="1" Text="Text content" IsReadOnly="True" />
+
+    <TextBlock Grid.Row="5" Text="Password" VerticalAlignment="Center" />
+    <PasswordBox Grid.Row="5" Grid.Column="1" Password="password" />
+
+    <TextBlock Grid.Row="6" Text="Several lines" VerticalAlignment="Top" />
+    <TextBox Grid.Row="6" Grid.Column="1"
+             AcceptsReturn="True"
+             TextWrapping="Wrap"
+             Height="72"
+             Text="The first line of the text.&#xD;The second line of the text." />
+
+    <TextBlock Grid.Row="7" Text="Validation error" VerticalAlignment="Top" Margin="0,6,0,0" />
+    <StackPanel Grid.Row="7" Grid.Column="1" Spacing="4">
+      <TextBox Text="Not an address" BorderBrush="{ThemeResource SystemFillColorCriticalBrush}" />
+      <TextBlock Text="Enter a valid email address." Foreground="{ThemeResource SystemFillColorCriticalBrush}" />
+    </StackPanel>
+  </Grid>
+
+  <TextBlock Text="Label, TextBlock and SelectableTextBlock" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" />
+  <TextBlock Text="A label for the box below" />
+  <TextBox Width="300" HorizontalAlignment="Left" PlaceholderText="A labelled box" />
+  <TextBlock Text="A text block with plain text." />
+  <TextBlock IsTextSelectionEnabled="True" Text="A selectable text block: its text can be selected and copied." />
+</StackPanel>

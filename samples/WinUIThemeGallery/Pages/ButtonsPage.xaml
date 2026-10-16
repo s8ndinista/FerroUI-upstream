@@ -1,0 +1,67 @@
+<UserControl xmlns="https://github.com/ferroui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="WinUIThemeGallery.Pages.ButtonsPage">
+  <!-- Button, the accent button, RepeatButton, ToggleButton, HyperlinkButton, DropDownButton,
+       SplitButton and ToggleSplitButton in their states. The native counterpart, with the same
+       controls in the same layout, is ButtonsPage.winui.xml. The classes force-pointerover and
+       force-pressed ask the gallery to force those states (capture.rs). -->
+  <StackPanel Margin="24" Spacing="12">
+    <TextBlock Text="Buttons" FontSize="28" FontWeight="SemiBold" />
+
+    <TextBlock Text="Button" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" />
+    <StackPanel Orientation="Horizontal" Spacing="8">
+      <Button Content="Normal" />
+      <Button Content="Pointer over" Classes="force-pointerover" />
+      <Button Content="Pressed" Classes="force-pressed" />
+      <Button Content="Disabled" IsEnabled="False" />
+    </StackPanel>
+
+    <TextBlock Text="Accent button" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" />
+    <StackPanel Orientation="Horizontal" Spacing="8">
+      <Button Content="Normal" Classes="accent" />
+      <Button Content="Pointer over" Classes="accent force-pointerover" />
+      <Button Content="Pressed" Classes="accent force-pressed" />
+      <Button Content="Disabled" Classes="accent" IsEnabled="False" />
+    </StackPanel>
+
+    <TextBlock Text="RepeatButton" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" />
+    <StackPanel Orientation="Horizontal" Spacing="8">
+      <RepeatButton Content="Normal" />
+      <RepeatButton Content="Pointer over" Classes="force-pointerover" />
+      <RepeatButton Content="Pressed" Classes="force-pressed" />
+      <RepeatButton Content="Disabled" IsEnabled="False" />
+    </StackPanel>
+
+    <TextBlock Text="ToggleButton" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" />
+    <StackPanel Orientation="Horizontal" Spacing="8">
+      <ToggleButton Content="Off" />
+      <ToggleButton Content="On" IsChecked="True" />
+      <ToggleButton Content="Indeterminate" IsThreeState="True" IsChecked="{x:Null}" />
+      <ToggleButton Content="Pointer over" Classes="force-pointerover" />
+      <ToggleButton Content="Disabled" IsEnabled="False" />
+      <ToggleButton Content="On, disabled" IsChecked="True" IsEnabled="False" />
+    </StackPanel>
+
+    <TextBlock Text="HyperlinkButton" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" />
+    <StackPanel Orientation="Horizontal" Spacing="8">
+      <HyperlinkButton Content="Normal" />
+      <HyperlinkButton Content="Pointer over" Classes="force-pointerover" />
+      <HyperlinkButton Content="Disabled" IsEnabled="False" />
+    </StackPanel>
+
+    <TextBlock Text="DropDownButton" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" />
+    <StackPanel Orientation="Horizontal" Spacing="8">
+      <DropDownButton Content="Normal" />
+      <DropDownButton Content="Pointer over" Classes="force-pointerover" />
+      <DropDownButton Content="Disabled" IsEnabled="False" />
+    </StackPanel>
+
+    <TextBlock Text="SplitButton and ToggleSplitButton" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" />
+    <StackPanel Orientation="Horizontal" Spacing="8">
+      <SplitButton Content="Normal" />
+      <SplitButton Content="Disabled" IsEnabled="False" />
+      <ToggleSplitButton Content="Off" />
+      <ToggleSplitButton Content="On" IsChecked="True" />
+    </StackPanel>
+  </StackPanel>
+</UserControl>
