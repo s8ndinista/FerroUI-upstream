@@ -206,6 +206,11 @@ control_tests! {
     theme_variant_scope => "ThemeVariantScope";
     thumb => "Thumb";
     toggle_button => "ToggleButton";
+    // B1: primitives and simple content
+    path_icon => "PathIcon";
+    progress_bar => "ProgressBar";
+    separator => "Separator";
+    tool_tip => "ToolTip";
 }
 
 /// The window itself is themed: its template is applied when it is shown

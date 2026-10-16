@@ -385,12 +385,8 @@ pub const PENDING_CONTROLS: &[&str] = &[
     "HeaderedContentControl",
     "ItemsControl",
     "Label",
-    "PathIcon",
-    "ProgressBar",
     "SelectableTextBlock",
-    "Separator",
     "TextSelectionHandle",
-    "ToolTip",
     "TransitioningContentControl",
     // B2: buttons, ranges and expanders
     "ButtonSpinner",

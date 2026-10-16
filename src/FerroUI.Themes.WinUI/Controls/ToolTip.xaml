@@ -1,0 +1,73 @@
+<!--
+  Ported from microsoft-ui-xaml (https://github.com/microsoft/microsoft-ui-xaml),
+  commit 7e4b0c2096be402f51cc8f7d203ebf67cff183d0:
+    controls/dev/CommonStyles/ToolTip_themeresources.xaml (the styles; its resources are
+    Resources/ToolTip_themeresources.xaml)
+  Copyright (c) Microsoft Corporation. Licensed under the MIT License (see NOTICE.md of the crate).
+
+  Translation notes (docs/porting/winui-theme.md, section 4):
+  - Template part: the ContentPresenter LayoutRoot of the source is FerroUI's
+    PART_ContentPresenter, the presenter a content control hosts its content in.
+  - OpenStates: Opened runs FadeInThemeAnimation, Closed FadeOutThemeAnimation on LayoutRoot.
+    The fade is the opacity of the tool tip, 0 by default and 1 under FerroUI's :open, with a
+    linear transition of 250 ms, the duration of the fade-in animation of the Windows animation
+    library (the timing of the theme animations comes from the system, not from the sources).
+    The fade-out is not seen: FerroUI closes the popup of a tool tip at once.
+  - ContentTransitions has no counterpart. The drop shadow WinUI's ToolTip applies to LayoutRoot
+    in code when it opens (ThemeShadow, ToolTip_Partial.cpp) is not drawn: the popup of a tool
+    tip is the size of the tool tip and would clip it.
+-->
+<ResourceDictionary xmlns="https://github.com/ferroui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    x:ClassModifier="internal">
+  <Design.PreviewWith>
+    <Border Padding="20">
+      <StackPanel Spacing="20">
+        <ToolTip Opacity="1">Text content</ToolTip>
+        <ToolTip Opacity="1">A long text content that exceeds the maximum width of the tool tip and wraps.</ToolTip>
+      </StackPanel>
+    </Border>
+  </Design.PreviewWith>
+
+  <ControlTheme x:Key="DefaultToolTipStyle" TargetType="ToolTip">
+    <Setter Property="Foreground" Value="{DynamicResource ToolTipForegroundBrush}" />
+    <Setter Property="Background" Value="{DynamicResource ToolTipBackgroundBrush}" />
+    <Setter Property="BackgroundSizing" Value="InnerBorderEdge" />
+    <Setter Property="BorderBrush" Value="{DynamicResource ToolTipBorderBrush}" />
+    <Setter Property="BorderThickness" Value="{DynamicResource ToolTipBorderThemeThickness}" />
+    <Setter Property="FontFamily" Value="{DynamicResource ContentControlThemeFontFamily}" />
+    <Setter Property="FontSize" Value="{DynamicResource ToolTipContentThemeFontSize}" />
+    <Setter Property="Padding" Value="{StaticResource ToolTipBorderPadding}" />
+    <Setter Property="MaxWidth" Value="{StaticResource ToolTipMaxWidth}" />
+    <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}" />
+    <!-- Closed (FadeOutThemeAnimation) and Opened (FadeInThemeAnimation) of OpenStates. -->
+    <Setter Property="Opacity" Value="0" />
+    <Setter Property="Transitions">
+      <Transitions>
+        <DoubleTransition Property="Opacity" Duration="0:0:0.25" />
+      </Transitions>
+    </Setter>
+    <Setter Property="Template">
+      <ControlTemplate>
+        <ContentPresenter x:Name="PART_ContentPresenter"
+                          BorderThickness="{TemplateBinding BorderThickness}"
+                          Background="{TemplateBinding Background}"
+                          BackgroundSizing="{TemplateBinding BackgroundSizing}"
+                          BorderBrush="{TemplateBinding BorderBrush}"
+                          MaxWidth="{TemplateBinding MaxWidth}"
+                          Content="{TemplateBinding Content}"
+                          ContentTemplate="{TemplateBinding ContentTemplate}"
+                          Padding="{TemplateBinding Padding}"
+                          TextWrapping="Wrap"
+                          CornerRadius="{TemplateBinding CornerRadius}" />
+      </ControlTemplate>
+    </Setter>
+
+    <!-- Opened -->
+    <Style Selector="^:open">
+      <Setter Property="Opacity" Value="1" />
+    </Style>
+  </ControlTheme>
+
+  <ControlTheme x:Key="{x:Type ToolTip}" TargetType="ToolTip" BasedOn="{StaticResource DefaultToolTipStyle}" />
+</ResourceDictionary>

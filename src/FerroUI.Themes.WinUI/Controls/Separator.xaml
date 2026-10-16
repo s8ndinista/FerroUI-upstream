@@ -1,0 +1,40 @@
+<!--
+  Ported from microsoft-ui-xaml (https://github.com/microsoft/microsoft-ui-xaml),
+  commit 7e4b0c2096be402f51cc8f7d203ebf67cff183d0:
+    controls/dev/CommonStyles/MenuFlyout_themeresources.xaml (the implicit style of
+    MenuFlyoutSeparator; the resources of the document are
+    Resources/MenuFlyout_themeresources.xaml)
+  Copyright (c) Microsoft Corporation. Licensed under the MIT License (see NOTICE.md of the crate).
+
+  Translation notes (docs/porting/winui-theme.md, section 4):
+  - FerroUI has one Separator, in menus and anywhere else; WinUI's separator of a menu,
+    MenuFlyoutSeparator, is its style: a rectangle of MenuFlyoutSeparatorHeight (1) in the
+    background at the padding MenuFlyoutSeparatorThemePadding (-4,1,-4,1), whose negative
+    horizontal values reach over the padding of the items of a menu. A separator outside a menu
+    keeps them. The separator of a command bar (AppBarSeparator) is CommandBarSeparator.
+-->
+<ResourceDictionary xmlns="https://github.com/ferroui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    x:ClassModifier="internal">
+  <Design.PreviewWith>
+    <Border Padding="20" Width="200">
+      <StackPanel Spacing="8">
+        <TextBlock Text="Above" />
+        <Separator />
+        <TextBlock Text="Below" />
+      </StackPanel>
+    </Border>
+  </Design.PreviewWith>
+
+  <ControlTheme x:Key="{x:Type Separator}" TargetType="Separator">
+    <Setter Property="Background" Value="{DynamicResource MenuFlyoutSeparatorBackground}" />
+    <Setter Property="Padding" Value="{StaticResource MenuFlyoutSeparatorThemePadding}" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Rectangle Fill="{TemplateBinding Background}"
+                   Margin="{TemplateBinding Padding}"
+                   Height="{StaticResource MenuFlyoutSeparatorHeight}" />
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+</ResourceDictionary>
