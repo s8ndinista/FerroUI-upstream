@@ -90548,7 +90548,7 @@
    "winui": "No WinUI control: built from the ListViewItem (ListViewItem_themeresources.xaml), TextBox, Button and ContentDialog (DefaultContentDialogStyle) styles.",
    "status": "ported",
    "deviations": 15,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "Menu.xaml",
