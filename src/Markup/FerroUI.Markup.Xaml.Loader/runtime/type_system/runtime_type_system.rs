@@ -1329,6 +1329,23 @@ impl RuntimeTypeSystem {
                 }
             }
         }
+        if matches!(markup.kind, MarkupTypeKind::Class) && members.constructors.is_empty() {
+            // As for a class of the object model (`project_object_model`): every class of
+            // the managed original has a constructor, and the metadata declares the public
+            // ones, so a class that declares none has one that is not public (the
+            // `ObjectWithPrivateCtor` of the compiler tests). A document populates an
+            // existing root instance of it; it cannot build one.
+            members.constructors.push(Rc::new(RuntimeConstructor {
+                system: self.this.clone(),
+                declaring_type: Rc::downgrade(type_),
+                parameters: Vec::new(),
+                parameter_handles: Vec::new(),
+                invoker: RuntimeInvoker::None,
+                is_public: false,
+                parameter_attributes: Vec::new(),
+                declared: None,
+            }));
+        }
         members
     }
 

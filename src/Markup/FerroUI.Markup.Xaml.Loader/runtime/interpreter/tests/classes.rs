@@ -279,6 +279,33 @@ test_class!(ObjectWithoutMatchingCtor {
     ],
 });
 
+/// `ObjectWithPrivateCtor`: its one constructor is private, so markup sees
+/// none; [`ObjectWithPrivateCtor::factory`] is the public static factory.
+#[derive(Default)]
+pub(crate) struct ObjectWithPrivateCtor {
+    pub arg: RefCell<Str>,
+    pub prop: RefCell<Str>,
+}
+
+impl ObjectWithPrivateCtor {
+    /// `private ObjectWithPrivateCtor(string? param)`.
+    fn with_param(param: Str) -> Self {
+        Self { arg: RefCell::new(param), prop: RefCell::new(None) }
+    }
+
+    /// `public static ObjectWithPrivateCtor Factory(string? param)`.
+    pub fn factory(param: Str) -> Rc<Self> {
+        Rc::new(Self::with_param(param))
+    }
+}
+
+test_class!(ObjectWithPrivateCtor {
+    properties: [
+        Arg: Option<String> { get: g!(ObjectWithPrivateCtor, arg), set: s!(ObjectWithPrivateCtor, arg: Str) },
+        Prop: Option<String> { get: g!(ObjectWithPrivateCtor, prop), set: s!(ObjectWithPrivateCtor, prop: Str) },
+    ],
+});
+
 // --- ContentAttributeTests.cs, ListTests.cs, DictionaryTests.cs ------------
 
 #[derive(Default)]
@@ -1437,6 +1464,7 @@ pub(crate) fn register() {
             ObjectWithAddChild,
             ObjectWithGenericAddChild,
             ObjectWithoutMatchingCtor,
+            ObjectWithPrivateCtor,
             RtClassWithContentAttribute,
             RtSubClassWithContentAttributeOverride,
             EnumerableContentClass,

@@ -556,6 +556,24 @@ reason = "the context is the service provider, as upstream asserts; the members 
 
 [[waive]]
 project = "XamlParserTests"
+file = "DynamicSettersTests.cs"
+tests = ["Dynamic_Setter_For_Public_Property_Should_Be_Shared"]
+reason = "checks where the IL back end emits the method of a dynamic setter: a public static `<>XamlDynamicSetter_1` of the shared container type its `DynamicSetterContainerProvider` names, found by reflection over the emitted type. The port emits no methods for dynamic setters: the interpreter chooses the setter when it evaluates the assignment, and the Rust emitter writes the choice inline (`dynamic_assignment` of `rust_emitter/emitter.rs`); the choice itself is tested by the other dynamic setter tests"
+
+[[waive]]
+project = "XamlParserTests"
+file = "DynamicSettersTests.cs"
+tests = ["Dynamic_Setter_For_Non_Public_Property_Should_Be_Private"]
+reason = "inside `#if CECIL`: compiled only by the Cecil test project (not applicable), and it checks the visibility of the dynamic setter method the IL back end emits into the type of the document, which the port does not emit (as `Dynamic_Setter_For_Public_Property_Should_Be_Shared`)"
+
+[[waive]]
+project = "XamlParserTests"
+file = "DeferredContentTests.cs"
+tests = ["DeferredContent_Pointer_Should_Be_Transformed_When_Configured"]
+reason = "the IL back end hands the build method of deferred content to a customization whose first parameter is a function pointer or `IntPtr` as the address of the method (`ldftn`), not as a `Func<IServiceProvider, object>` delegate; the customizer of the test calls it through `delegate*`. The port has no function pointer type in its type systems: the interpreter hands the build as a closure (`DeferredContentFactory`) and the Rust emitter as a `fn` through `rt::defer`, and the customization of the framework (`DeferredTransformationFactoryV3`) takes a `DeferredContentBuilder` of either. The delegate form is tested by `DeferredContent_Delegate_Should_Be_Transformed_When_Configured`"
+
+[[waive]]
+project = "XamlParserTests"
 file = "UtilityTests.cs"
 tests = ["*"]
 reason = "the file is inside `#if GUILABS`: compiled only with the alternative parser `XamlX.Parser.GuiLabs` (`XmlNamespaces.GetPrefixFromName`), which is not ported"

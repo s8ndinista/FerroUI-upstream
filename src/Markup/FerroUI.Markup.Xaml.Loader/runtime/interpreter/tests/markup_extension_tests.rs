@@ -159,6 +159,11 @@ fn same_name_extension_should_work_without_generics() {
     let host = TestHost::new();
     let res = host.run::<Rc<MarkupExtensionTestsClass>>(&me("ObjectProperty='{GenericTestExtension Returned=test}'"));
     assert_eq!(get::<String>(&res.object_property.borrow()), "test");
+}
+
+#[test]
+fn same_name_extension_should_work_without_generics_xml_syntax() {
+    let host = TestHost::new();
     let res = host.run::<Rc<MarkupExtensionTestsClass>>(&format!(
         "
 <MarkupExtensionTestsClass xmlns='rt-test' xmlns:x='{X}'>
@@ -177,6 +182,11 @@ fn resolve_single_generic_type_argument() {
         "IntProperty='{GenericTestExtension Returned=5, x:TypeArguments=x:Int32}'",
     ));
     assert_eq!(*res.int_property.borrow(), 5);
+}
+
+#[test]
+fn resolve_single_generic_type_argument_xml_syntax() {
+    let host = TestHost::new();
     let res = host.run::<Rc<MarkupExtensionTestsClass>>(&format!(
         "
 <MarkupExtensionTestsClass xmlns='rt-test' xmlns:x='{X}'>
@@ -195,6 +205,11 @@ fn resolve_double_generic_type_argument() {
         "ObjectProperty='{GenericTestExtension Returned1=5, Returned2=0.4, x:TypeArguments=\"x:Int32,x:Single\"}'",
     ));
     assert_eq!(get::<(i32, f32)>(&res.object_property.borrow()), (5, 0.4));
+}
+
+#[test]
+fn resolve_double_generic_type_argument_xml_syntax() {
+    let host = TestHost::new();
     let res = host.run::<Rc<MarkupExtensionTestsClass>>(&format!(
         "
 <MarkupExtensionTestsClass xmlns='rt-test' xmlns:x='{X}'>
