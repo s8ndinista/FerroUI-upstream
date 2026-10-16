@@ -524,7 +524,7 @@ ports a control updates its state by porting it, not by editing the table.
 | `TableViewCell.xaml` | `{TableViewCell}` | As TableView: the cells of controls/dev/TableView. | B6 | ported |
 | `TableViewColumnHeader.xaml` | `{TableViewColumnHeader}` | As TableView: the column headers of controls/dev/TableView and SortIndicator. | B6 | ported |
 | `TableViewRow.xaml` | `{TableViewRow}` | As TableView: the rows of controls/dev/TableView; the ListViewItem resources. | B6 | ported |
-| `TextBox.xaml` | `{TextBox}` | TextBox: DefaultTextBoxStyle and its DeleteButtonStyle (TextBox_themeresources.xaml); PasswordBox: DefaultPasswordBoxStyle (PasswordBox_themeresources.xaml) for the reveal button (pending, B3). | F | ported |
+| `TextBox.xaml` | `{TextBox}` | TextBox: DefaultTextBoxStyle and its DeleteButtonStyle (TextBox_themeresources.xaml); PasswordBox: DefaultPasswordBoxStyle (PasswordBox_themeresources.xaml), a keyed theme with the reveal button; the context flyout of TextCommandBarFlyout as a menu flyout (B3). | F | ported |
 | `TextSelectionHandle.xaml` | `{TextSelectionHandle}` | No WinUI style (the selection grippers are drawn in code, Gripper.cpp): the gripper circles in SystemColorWindowColor outlined in TextControlSelectionHighlightColor. | B1 | ported |
 | `ThemeVariantScope.xaml` | `{ThemeVariantScope}` | No WinUI style: the text foreground (TextFillColorPrimaryBrush). | F | ported |
 | `TimePicker.xaml` | `{TimePicker}`, `{TimePickerPresenter}` | TimePicker: {TimePicker}; TimePickerFlyoutPresenter: {TimePickerFlyoutPresenter} (TimePicker_themeresources.xaml). | B4 | ported |

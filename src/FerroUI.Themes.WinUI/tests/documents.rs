@@ -232,6 +232,7 @@ document_tests! {
     resources_resize_gripper_themeresources => "/Resources/ResizeGripper_themeresources.xaml";
     resources_table_view_themeresources => "/Resources/TableView_themeresources.xaml";
     resources_tabular_surfaces_themeresources => "/Resources/TabularSurfaces_themeresources.xaml";
+    strings_invariant_resources => "/Strings/InvariantResources.xaml";
     winui_theme => "/WinUITheme.xaml";
     // B2: buttons, ranges and expanders
     controls_button_spinner => "/Controls/ButtonSpinner.xaml";

@@ -84,6 +84,10 @@
         <MergeResourceInclude Source="/Resources/ResizeGripper_themeresources.xaml" />
         <MergeResourceInclude Source="/Resources/Glyphs.xaml" />
         <!-- resources:end -->
+
+        <!-- The labels of the commands of the context flyout of the text controls (not part of the
+             WinUI theme: WinUI takes them from the resources of the framework). -->
+        <MergeResourceInclude Source="/Strings/InvariantResources.xaml" />
       </ResourceDictionary.MergedDictionaries>
 
       <!-- Not part of the merged dictionaries: the theme looks it up first when its density style is compact. -->

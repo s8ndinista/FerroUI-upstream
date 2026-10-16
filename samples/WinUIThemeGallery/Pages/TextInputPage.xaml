@@ -4,7 +4,9 @@
              x:Class="WinUIThemeGallery.Pages.TextInputPage">
   <!-- TextBox in its states (a placeholder, a text, pointer over, disabled, read-only, a
        password, several lines, a validation error shown by DataValidationErrors), Label,
-       TextBlock and SelectableTextBlock. The native counterpart is TextInputPage.winui.xml. -->
+       TextBlock and SelectableTextBlock. The password is a text box with the theme
+       DefaultPasswordBoxStyle, the WinUI password box. The native counterpart is
+       TextInputPage.winui.xml. -->
   <StackPanel Margin="24" Spacing="12">
     <TextBlock Text="Text input" FontSize="28" FontWeight="SemiBold" />
 
@@ -41,7 +43,7 @@
       <TextBox Grid.Row="4" Grid.Column="1" Text="Text content" IsReadOnly="True" />
 
       <TextBlock Grid.Row="5" Text="Password" VerticalAlignment="Center" />
-      <TextBox Grid.Row="5" Grid.Column="1" Text="password" PasswordChar="&#x25CF;" />
+      <TextBox Grid.Row="5" Grid.Column="1" Text="password" Theme="{StaticResource DefaultPasswordBoxStyle}" />
 
       <TextBlock Grid.Row="6" Text="Several lines" VerticalAlignment="Top" />
       <TextBox Grid.Row="6" Grid.Column="1"

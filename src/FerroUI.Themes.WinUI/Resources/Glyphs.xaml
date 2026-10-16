@@ -117,4 +117,21 @@
   <StreamGeometry x:Key="GlyphGeometryE974">M768 256L1536 1024L768 1792L598 1622L1196 1024L598 426Z</StreamGeometry>
   <!-- E915: the bullet of a checked radio menu item (RadioMenuFlyoutItem). -->
   <StreamGeometry x:Key="GlyphGeometryE915">M0,5 A5,5 0 1 1 10,5 A5,5 0 1 1 0,5 Z</StreamGeometry>
+  <!-- The icons of the standard commands of the context flyout of the text controls
+       (StandardUICommand Cut, Copy, Paste, Undo, Redo), drawn on a 16 px grid with strokes of 1 px:
+       outer contours clockwise, holes counterclockwise. -->
+  <!-- E8C6 Cut: two rings and two crossing blades. -->
+  <StreamGeometry x:Key="GlyphGeometryE8C6">M2,12 A2.5,2.5 0 1 1 7,12 A2.5,2.5 0 1 1 2,12 Z M3,12 A1.5,1.5 0 1 0 6,12 A1.5,1.5 0 1 0 3,12 Z M9,12 A2.5,2.5 0 1 1 14,12 A2.5,2.5 0 1 1 9,12 Z M10,12 A1.5,1.5 0 1 0 13,12 A1.5,1.5 0 1 0 10,12 Z M5.18,9.53 L10.58,0.93 L11.42,1.47 L6.02,10.07 Z M9.98,10.07 L4.58,1.47 L5.42,0.93 L10.82,9.53 Z</StreamGeometry>
+  <!-- E8C8 Copy: a sheet in front of another. -->
+  <StreamGeometry x:Key="GlyphGeometryE8C8">M5,4 L5,2.5 A1.5,1.5 0 0 1 6.5,1 L12.5,1 A1.5,1.5 0 0 1 14,2.5 L14,10.5 A1.5,1.5 0 0 1 12.5,12 L11,12 L11,11 L12.5,11 A0.5,0.5 0 0 0 13,10.5 L13,2.5 A0.5,0.5 0 0 0 12.5,2 L6.5,2 A0.5,0.5 0 0 0 6,2.5 L6,4 Z M3.5,4 L9.5,4 A1.5,1.5 0 0 1 11,5.5 L11,13.5 A1.5,1.5 0 0 1 9.5,15 L3.5,15 A1.5,1.5 0 0 1 2,13.5 L2,5.5 A1.5,1.5 0 0 1 3.5,4 Z M3.5,5 A0.5,0.5 0 0 0 3,5.5 L3,13.5 A0.5,0.5 0 0 0 3.5,14 L9.5,14 A0.5,0.5 0 0 0 10,13.5 L10,5.5 A0.5,0.5 0 0 0 9.5,5 Z</StreamGeometry>
+  <!-- E77F Paste: a clipboard with its clip. -->
+  <StreamGeometry x:Key="GlyphGeometryE77F">M3.5,2 L12.5,2 A1.5,1.5 0 0 1 14,3.5 L14,13.5 A1.5,1.5 0 0 1 12.5,15 L3.5,15 A1.5,1.5 0 0 1 2,13.5 L2,3.5 A1.5,1.5 0 0 1 3.5,2 Z M3.5,3 A0.5,0.5 0 0 0 3,3.5 L3,13.5 A0.5,0.5 0 0 0 3.5,14 L12.5,14 A0.5,0.5 0 0 0 13,13.5 L13,3.5 A0.5,0.5 0 0 0 12.5,3 Z M6.5,1 L9.5,1 A1,1 0 0 1 10.5,2 L10.5,3 A1,1 0 0 1 9.5,4 L6.5,4 A1,1 0 0 1 5.5,3 L5.5,2 A1,1 0 0 1 6.5,1 Z</StreamGeometry>
+  <!-- E7A7 Undo: an arrow to the left that turns back on the right. -->
+  <StreamGeometry x:Key="GlyphGeometryE7A7">M2.5,4.5 L9,4.5 A4.5,4.5 0 0 1 9,13.5 L6,13.5 L6,12.5 L9,12.5 A3.5,3.5 0 0 0 9,5.5 L2.5,5.5 Z M5.554,2.154 L2.708,5 L5.554,7.846 L4.846,8.554 L1.292,5 L4.846,1.446 Z</StreamGeometry>
+  <!-- E7A6 Redo: E7A7 mirrored. -->
+  <StreamGeometry x:Key="GlyphGeometryE7A6">M13.5,4.5 L7,4.5 A4.5,4.5 0 0 0 7,13.5 L10,13.5 L10,12.5 L7,12.5 A3.5,3.5 0 0 1 7,5.5 L13.5,5.5 Z M10.446,2.154 L13.292,5 L10.446,7.846 L11.154,8.554 L14.708,5 L11.154,1.446 Z</StreamGeometry>
+  <!-- F78D RevealPasswordMedium: the eye of the reveal button of PasswordBox; the outline of the
+       Fluent theme of FerroUI (PasswordBoxRevealButtonData of
+       src/FerroUI.Themes.Fluent/Controls/TextBox.xaml). -->
+  <StreamGeometry x:Key="GlyphGeometryF78D">m10.051 7.0032c2.215 0 4.0105 1.7901 4.0105 3.9984s-1.7956 3.9984-4.0105 3.9984c-2.215 0-4.0105-1.7901-4.0105-3.9984s1.7956-3.9984 4.0105-3.9984zm0 1.4994c-1.3844 0-2.5066 1.1188-2.5066 2.499s1.1222 2.499 2.5066 2.499 2.5066-1.1188 2.5066-2.499-1.1222-2.499-2.5066-2.499zm0-5.0026c4.6257 0 8.6188 3.1487 9.7267 7.5613 0.10085 0.40165-0.14399 0.80877-0.54686 0.90931-0.40288 0.10054-0.81122-0.14355-0.91208-0.54521-0.94136-3.7492-4.3361-6.4261-8.2678-6.4261-3.9334 0-7.3292 2.6792-8.2689 6.4306-0.10063 0.40171-0.50884 0.64603-0.91177 0.54571s-0.648-0.5073-0.54737-0.90901c1.106-4.4152 5.1003-7.5667 9.728-7.5667z</StreamGeometry>
 </ResourceDictionary>

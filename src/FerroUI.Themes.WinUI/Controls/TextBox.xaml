@@ -3,6 +3,9 @@
   commit 7e4b0c2096be402f51cc8f7d203ebf67cff183d0:
     controls/dev/CommonStyles/TextBox_themeresources.xaml (the styles; its resources are
     Resources/TextBox_themeresources.xaml)
+    controls/dev/CommonStyles/PasswordBox_themeresources.xaml (the style DefaultPasswordBoxStyle;
+    its resources are Resources/PasswordBox_themeresources.xaml)
+    controls/dev/CommandBarFlyout/TextCommandBarFlyout.cpp (the commands of the context flyout)
   Copyright (c) Microsoft Corporation. Licensed under the MIT License (see NOTICE.md of the crate).
 
   Translation notes (docs/porting/winui-theme.md, section 4):
@@ -26,8 +29,28 @@
   - The template is wrapped in DataValidationErrors, as FerroUI's text box requires for its
     validation errors (WinUI 3 has none): the errors are shown under the box by the theme of
     DataValidationErrors, and under :error the border is SystemFillColorCriticalBrush.
-  - Pending: the context flyout (WinUI's TextCommandBarFlyout, waived) is a menu flyout of the
-    same commands, added with the menu flyout of batch B3 (docs/porting/winui-theme.md, section 7).
+  - The context flyout: WinUI's TextCommandBarFlyout (TextControlCommandBarContextFlyout, waived:
+    FerroUI has no command bar flyout) is the menu flyout TextBoxContextFlyout of the commands it
+    shows for a text box opened with mouse or keyboard, in its order (TextCommandBarFlyout.cpp):
+    Cut, Copy, Paste, Undo, Redo, Select All, each shown when the text box can do it, with the
+    icons of the standard commands (glyphs E8C6, E8C8, E77F, E7A7, E7A6; Select All has none) and
+    the keyboard accelerators of Cut, Copy and Paste of the platform. The labels are the string
+    resources StringTextFlyout*Text of Strings/InvariantResources.xaml. The selection flyout
+    (TextControlCommandBarSelectionFlyout) and the horizontal command bar of touch input have no
+    counterpart.
+  - FerroUI's text box presents InnerLeftContent and InnerRightContent, which its other themes
+    show at the left and the right of the text: the template has a column for each, inside the
+    border, beside the delete and reveal buttons.
+  - The style classes of FerroUI's text box (its Fluent theme): clearButton shows the delete button
+    while the box is focused and not empty (also when the text wraps), revealPasswordButton shows
+    the reveal button of DefaultPasswordBoxStyle while the box is not empty.
+  - DefaultPasswordBoxStyle (controls/dev/CommonStyles/PasswordBox_themeresources.xaml) is a keyed
+    theme of TextBox, FerroUI's password box being a text box with a PasswordChar: it sets the
+    password character of WinUI's PasswordBox, has the reveal button RevealButton instead of the
+    delete button, and the context flyout PasswordBoxContextFlyout of the commands WinUI shows for
+    a password box (Paste, Select All). The reveal button (the template-local RevealButtonStyle,
+    the keyed theme PasswordBoxRevealButtonStyle) toggles RevealPassword; WinUI reveals the
+    password while the button is pressed (PasswordRevealMode Peek).
 -->
 <ResourceDictionary xmlns="https://github.com/ferroui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -92,6 +115,121 @@
     </Style>
   </ControlTheme>
 
+  <!-- RevealButtonStyle of the template of DefaultPasswordBoxStyle. -->
+  <ControlTheme x:Key="PasswordBoxRevealButtonStyle" TargetType="ToggleButton">
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border x:Name="ButtonLayoutGrid"
+                Margin="{DynamicResource TextBoxInnerButtonMargin}"
+                BorderBrush="{DynamicResource TextControlButtonBorderBrush}"
+                BorderThickness="{TemplateBinding BorderThickness}"
+                Background="{DynamicResource TextControlButtonBackground}"
+                CornerRadius="{TemplateBinding CornerRadius}">
+          <!-- F78D at PasswordBoxIconFontSize (12 px): the glyph is drawn at the size of its ink. -->
+          <Path x:Name="GlyphElement"
+                Fill="{DynamicResource TextControlButtonForeground}"
+                Data="{StaticResource GlyphGeometryF78D}"
+                Stretch="Uniform"
+                Width="11"
+                VerticalAlignment="Center"
+                HorizontalAlignment="Center" />
+        </Border>
+      </ControlTemplate>
+    </Setter>
+
+    <!-- PointerOver -->
+    <Style Selector="^:pointerover">
+      <Style Selector="^ /template/ Border#ButtonLayoutGrid">
+        <Setter Property="Background" Value="{DynamicResource TextControlButtonBackgroundPointerOver}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource TextControlButtonBorderBrushPointerOver}" />
+      </Style>
+      <Style Selector="^ /template/ Path#GlyphElement">
+        <Setter Property="Fill" Value="{DynamicResource TextControlButtonForegroundPointerOver}" />
+      </Style>
+    </Style>
+    <!-- Pressed, CheckedPressed, IndeterminatePressed -->
+    <Style Selector="^:pressed">
+      <Style Selector="^ /template/ Border#ButtonLayoutGrid">
+        <Setter Property="Background" Value="{DynamicResource TextControlButtonBackgroundPressed}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource TextControlButtonBorderBrushPressed}" />
+      </Style>
+      <Style Selector="^ /template/ Path#GlyphElement">
+        <Setter Property="Fill" Value="{DynamicResource TextControlButtonForegroundPressed}" />
+      </Style>
+    </Style>
+    <!-- Disabled -->
+    <Style Selector="^:disabled /template/ Border#ButtonLayoutGrid">
+      <Setter Property="Opacity" Value="0" />
+    </Style>
+  </ControlTheme>
+
+  <!-- The context flyout of a text box: the commands TextCommandBarFlyout shows for a TextBox
+       (TextCommandBarFlyout::GetTextBoxButtonsToAdd), each while the text box can do it. -->
+  <MenuFlyout x:Key="TextBoxContextFlyout">
+    <MenuItem Header="{DynamicResource StringTextFlyoutCutText}"
+              Command="{Binding $parent[TextBox].Cut}"
+              IsEnabled="{Binding $parent[TextBox].CanCut}"
+              IsVisible="{Binding $parent[TextBox].CanCut}"
+              InputGesture="{x:Static TextBox.CutGesture}">
+      <MenuItem.Icon>
+        <PathIcon Data="{StaticResource GlyphGeometryE8C6}" />
+      </MenuItem.Icon>
+    </MenuItem>
+    <MenuItem Header="{DynamicResource StringTextFlyoutCopyText}"
+              Command="{Binding $parent[TextBox].Copy}"
+              IsEnabled="{Binding $parent[TextBox].CanCopy}"
+              IsVisible="{Binding $parent[TextBox].CanCopy}"
+              InputGesture="{x:Static TextBox.CopyGesture}">
+      <MenuItem.Icon>
+        <PathIcon Data="{StaticResource GlyphGeometryE8C8}" />
+      </MenuItem.Icon>
+    </MenuItem>
+    <MenuItem Header="{DynamicResource StringTextFlyoutPasteText}"
+              Command="{Binding $parent[TextBox].Paste}"
+              IsEnabled="{Binding $parent[TextBox].CanPaste}"
+              IsVisible="{Binding $parent[TextBox].CanPaste}"
+              InputGesture="{x:Static TextBox.PasteGesture}">
+      <MenuItem.Icon>
+        <PathIcon Data="{StaticResource GlyphGeometryE77F}" />
+      </MenuItem.Icon>
+    </MenuItem>
+    <MenuItem Header="{DynamicResource StringTextFlyoutUndoText}"
+              Command="{Binding $parent[TextBox].Undo}"
+              IsEnabled="{Binding $parent[TextBox].CanUndo}"
+              IsVisible="{Binding $parent[TextBox].CanUndo}">
+      <MenuItem.Icon>
+        <PathIcon Data="{StaticResource GlyphGeometryE7A7}" />
+      </MenuItem.Icon>
+    </MenuItem>
+    <MenuItem Header="{DynamicResource StringTextFlyoutRedoText}"
+              Command="{Binding $parent[TextBox].Redo}"
+              IsEnabled="{Binding $parent[TextBox].CanRedo}"
+              IsVisible="{Binding $parent[TextBox].CanRedo}">
+      <MenuItem.Icon>
+        <PathIcon Data="{StaticResource GlyphGeometryE7A6}" />
+      </MenuItem.Icon>
+    </MenuItem>
+    <MenuItem Header="{DynamicResource StringTextFlyoutSelectAllText}"
+              Command="{Binding $parent[TextBox].SelectAll}"
+              IsVisible="{Binding $parent[TextBox].Text, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+  </MenuFlyout>
+
+  <!-- The context flyout of a password box (TextCommandBarFlyout::GetPasswordBoxButtonsToAdd). -->
+  <MenuFlyout x:Key="PasswordBoxContextFlyout">
+    <MenuItem Header="{DynamicResource StringTextFlyoutPasteText}"
+              Command="{Binding $parent[TextBox].Paste}"
+              IsEnabled="{Binding $parent[TextBox].CanPaste}"
+              IsVisible="{Binding $parent[TextBox].CanPaste}"
+              InputGesture="{x:Static TextBox.PasteGesture}">
+      <MenuItem.Icon>
+        <PathIcon Data="{StaticResource GlyphGeometryE77F}" />
+      </MenuItem.Icon>
+    </MenuItem>
+    <MenuItem Header="{DynamicResource StringTextFlyoutSelectAllText}"
+              Command="{Binding $parent[TextBox].SelectAll}"
+              IsVisible="{Binding $parent[TextBox].Text, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+  </MenuFlyout>
+
   <ControlTheme x:Key="DefaultTextBoxStyle" TargetType="TextBox">
     <Setter Property="Foreground" Value="{DynamicResource TextControlForeground}" />
     <Setter Property="Background" Value="{DynamicResource TextControlBackground}" />
@@ -111,13 +249,14 @@
     <Setter Property="FocusAdorner" Value="{x:Null}" />
     <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}" />
     <Setter Property="BackgroundSizing" Value="InnerBorderEdge" />
+    <Setter Property="ContextFlyout" Value="{StaticResource TextBoxContextFlyout}" />
     <Setter Property="Template">
       <ControlTemplate>
         <DataValidationErrors>
-          <Grid ColumnDefinitions="*,Auto">
+          <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto">
             <Border x:Name="BorderElement"
                     Grid.Column="0"
-                    Grid.ColumnSpan="2"
+                    Grid.ColumnSpan="5"
                     Background="{TemplateBinding Background}"
                     BackgroundSizing="{TemplateBinding BackgroundSizing}"
                     BorderBrush="{TemplateBinding BorderBrush}"
@@ -125,8 +264,14 @@
                     CornerRadius="{TemplateBinding CornerRadius}"
                     MinWidth="{TemplateBinding MinWidth}"
                     MinHeight="{TemplateBinding MinHeight}" />
+            <!-- InnerLeftContent of FerroUI's text box. -->
+            <ContentPresenter x:Name="InnerLeftContentPresenter"
+                              Grid.Column="0"
+                              Margin="{TemplateBinding BorderThickness}"
+                              Content="{TemplateBinding InnerLeftContent}"
+                              VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
             <ScrollViewer x:Name="PART_ScrollViewer"
-                          Grid.Column="0"
+                          Grid.Column="1"
                           HorizontalScrollBarVisibility="{TemplateBinding (ScrollViewer.HorizontalScrollBarVisibility)}"
                           VerticalScrollBarVisibility="{TemplateBinding (ScrollViewer.VerticalScrollBarVisibility)}"
                           IsDeferredScrollingEnabled="{TemplateBinding (ScrollViewer.IsDeferredScrollingEnabled)}"
@@ -158,7 +303,7 @@
               </ScrollViewer.Styles>
             </ScrollViewer>
             <TextBlock x:Name="PlaceholderTextContentPresenter"
-                       Grid.Column="0"
+                       Grid.Column="1"
                        Grid.ColumnSpan="2"
                        Foreground="{TemplateBinding PlaceholderForeground}"
                        Margin="{TemplateBinding BorderThickness}"
@@ -175,7 +320,7 @@
               </TextBlock.IsVisible>
             </TextBlock>
             <Button x:Name="DeleteButton"
-                    Grid.Column="1"
+                    Grid.Column="2"
                     Theme="{StaticResource TextBoxDeleteButtonStyle}"
                     Command="{Binding $parent[TextBox].Clear}"
                     BorderThickness="{TemplateBinding BorderThickness}"
@@ -186,6 +331,26 @@
                     FontSize="{TemplateBinding FontSize}"
                     Width="30"
                     VerticalAlignment="Stretch" />
+            <!-- RevealButton of DefaultPasswordBoxStyle, also shown by the style class
+                 revealPasswordButton. -->
+            <ToggleButton x:Name="RevealButton"
+                          Grid.Column="3"
+                          Theme="{StaticResource PasswordBoxRevealButtonStyle}"
+                          IsChecked="{TemplateBinding RevealPassword, Mode=TwoWay}"
+                          BorderThickness="{TemplateBinding BorderThickness}"
+                          CornerRadius="{TemplateBinding CornerRadius}"
+                          Padding="{DynamicResource HelperButtonThemePadding}"
+                          Focusable="False"
+                          IsVisible="False"
+                          FontSize="{TemplateBinding FontSize}"
+                          Width="30"
+                          VerticalAlignment="Stretch" />
+            <!-- InnerRightContent of FerroUI's text box. -->
+            <ContentPresenter x:Name="InnerRightContentPresenter"
+                              Grid.Column="4"
+                              Margin="{TemplateBinding BorderThickness}"
+                              Content="{TemplateBinding InnerRightContent}"
+                              VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
           </Grid>
         </DataValidationErrors>
       </ControlTemplate>
@@ -232,6 +397,33 @@
     </Style>
     <!-- ButtonVisible of the group ButtonStates. -->
     <Style Selector="^[AcceptsReturn=False][IsReadOnly=False][TextWrapping=NoWrap]:focus:not(TextBox:empty) /template/ Button#DeleteButton">
+      <Setter Property="IsVisible" Value="True" />
+    </Style>
+    <!-- The style class clearButton of FerroUI's text box: the delete button while the box is
+         focused and not empty, whether or not its text wraps. -->
+    <Style Selector="^.clearButton[AcceptsReturn=False][IsReadOnly=False]:focus:not(TextBox:empty) /template/ Button#DeleteButton">
+      <Setter Property="IsVisible" Value="True" />
+    </Style>
+    <!-- The style class revealPasswordButton of FerroUI's text box: the reveal button while the
+         box is not empty. -->
+    <Style Selector="^.revealPasswordButton[AcceptsReturn=False][IsReadOnly=False]:not(TextBox:empty) /template/ ToggleButton#RevealButton">
+      <Setter Property="IsVisible" Value="True" />
+    </Style>
+  </ControlTheme>
+
+  <!-- DefaultPasswordBoxStyle (PasswordBox_themeresources.xaml): a text box with the password
+       character of WinUI's PasswordBox, the reveal button instead of the delete button and the
+       context flyout of a password box. Its other setters and its states are those of
+       DefaultTextBoxStyle, as the source repeats them. -->
+  <ControlTheme x:Key="DefaultPasswordBoxStyle" TargetType="TextBox" BasedOn="{StaticResource DefaultTextBoxStyle}">
+    <Setter Property="PasswordChar" Value="&#x25CF;" />
+    <Setter Property="ContextFlyout" Value="{StaticResource PasswordBoxContextFlyout}" />
+    <!-- ButtonCollapsed: a password box has no delete button. -->
+    <Style Selector="^[AcceptsReturn=False][IsReadOnly=False][TextWrapping=NoWrap]:focus:not(TextBox:empty) /template/ Button#DeleteButton">
+      <Setter Property="IsVisible" Value="False" />
+    </Style>
+    <!-- ButtonVisible (PasswordBox::CanInvokeRevealButton: focused, not empty). -->
+    <Style Selector="^[AcceptsReturn=False][IsReadOnly=False]:focus:not(TextBox:empty) /template/ ToggleButton#RevealButton">
       <Setter Property="IsVisible" Value="True" />
     </Style>
   </ControlTheme>
