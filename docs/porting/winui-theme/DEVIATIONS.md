@@ -937,6 +937,7 @@ The section covers both control themes of the document: ManagedFileChooser and M
 | PPG-8 | `ToolTipService.ToolTip` (the automation name) and `ToolTipService.Placement` of the navigation buttons | Tooltips. | Left out. | The automation name of a button is not a bindable property in FerroUI. |
 | PPG-9 | `VerticalScrollMode`, `HorizontalScrollMode`, `IsHorizontalScrollChainingEnabled`, `IsVerticalScrollChainingEnabled` of the scroll viewer | Scroll modes and chaining. | `IsScrollChainingEnabled="False"`; the modes are left out. | G-19. |
 | PPG-10 | `UseSystemFocusVisuals`, `FocusVisualMargin="0"` | Focus visual. | `FocusAdorner` with `Margin="0"`. | G-14. |
+| PPG-11 | `PreviousButtonVisibility`, `NextButtonVisibility` (default `Collapsed`, PipsPager.idl) | A pager shows no navigation buttons unless the application asks for them. | The buttons are shown unless the application hides them: the theme binds `IsPreviousButtonVisible` and `IsNextButtonVisible`, whose defaults are true, and does not change them. | The defaults of the properties are the contract of FerroUI's control, not of the theme; the gallery's native page sets the WinUI properties to `Visible` to compare the same parts. |
 
 ## RefreshContainer
 
