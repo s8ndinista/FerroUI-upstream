@@ -2,7 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="WinUIThemeGallery.Pages.ListsPage">
   <!-- ListBox with its items in their states, ItemsControl, and TreeView with expanded and
-       collapsed items. The native counterpart is ListsPage.winui.xml (ListView, ItemsControl,
+       collapsed items. The native counterpart is ListsPage.winui.xml (ListBox, ItemsControl,
        TreeView). -->
   <StackPanel Margin="24" Spacing="12">
     <TextBlock Text="Lists and trees" FontSize="28" FontWeight="SemiBold" />

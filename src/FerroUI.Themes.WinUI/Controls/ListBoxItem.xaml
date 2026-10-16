@@ -1,0 +1,389 @@
+<!--
+  Ported from microsoft-ui-xaml (https://github.com/microsoft/microsoft-ui-xaml),
+  commit 7e4b0c2096be402f51cc8f7d203ebf67cff183d0:
+    controls/dev/CommonStyles/ListBox_themeresources.xaml (the style DefaultListBoxItemStyle; the
+    resources of the document are Resources/ListBox_themeresources.xaml)
+    controls/dev/CommonStyles/ListViewItem_themeresources.xaml (the keyed styles
+    DefaultListViewItemStyle and ListViewItemExpanded; the resources of the document are
+    Resources/ListViewItem_themeresources.xaml)
+    dxaml/xcp/core/core/elements/ListViewBaseItemChrome.cpp (the chrome that
+    ListViewItemPresenter draws for DefaultListViewItemStyle)
+  Copyright (c) Microsoft Corporation. Licensed under the MIT License (see NOTICE.md of the crate).
+
+  Translation notes (docs/porting/winui-theme.md, section 4):
+  - FerroUI's ListBoxItem is WinUI's ListBoxItem: the default theme is DefaultListBoxItemStyle.
+    The keyed styles of ListViewItem are keyed themes of ListBoxItem, for lists that look as a
+    WinUI ListView (the suggestions of AutoCompleteBox use DefaultListViewItemStyle).
+  - DefaultListBoxItemStyle: Grid LayoutRoot is a Border (it has a border thickness), which also
+    draws the border brush and corner radius of the item (FerroUI's ListBoxItem honours them in
+    its other themes; WinUI's template has no brush and no radius, so a WinUI item has none); the
+    ContentPresenter of the source is PART_ContentPresenter, with the setters of the
+    template-local styles BaseContentPresenterStyle and BodyContentPresenterStyle (the body font,
+    normal weight); LineStackingStrategy, TextLineBounds and OpticalMarginAlignment of those styles
+    have no counterpart. The states of the single group CommonStates are the pseudo-classes in the
+    order of the source; Disabled is written last, as ListBoxItem::ChangeVisualState chooses it
+    for a selected item too (there is no SelectedDisabled state in the template), and resets the
+    fill of PressedBackground. Selected and SelectedUnfocused have the same values: one style.
+  - DefaultListViewItemStyle: the template is a ListViewItemPresenter, chrome that WinUI draws in
+    native code. The port draws it with elements, with the values of ListViewBaseItemChrome.cpp: a
+    backplate with the margin 4,2,4,2 (s_backplateMargin) and the corner radius
+    ListViewItemCornerRadius in the background of the state; the selection indicator, a 3 by 16 px
+    bar (s_selectionIndicatorSize) at 4 px from the left edge (s_selectionIndicatorMargin), in
+    ListViewItemSelectionIndicatorCornerRadius, shown when the item is selected and shortened by
+    6 px (s_selectionIndicatorHeightShrinkage) while it is pressed; the content moved by the width
+    of the indicator and its margins (7 px, the inline indicator mode); the disabled opacity
+    ListViewItemDisabledThemeOpacity. The multi-select check box of the presenter (CheckMode),
+    drag and reorder visuals and the placeholder of data virtualization have no counterpart:
+    FerroUI's ListBox has none of these modes.
+  - ListViewItemExpanded: Grid ContentBorder is a Border; the states of CommonStates and
+    DisabledStates are ported. MultiSelectStates (the check box of a list in multiple selection
+    mode, which the list view sets), DataVirtualizationStates, ReorderHintStates and DragStates,
+    with the elements only they show (MultiSelectSquare, MultiSelectCheck, PlaceholderTextBlock,
+    PlaceholderRect, MultiArrangeOverlayTextBorder), have no counterpart, as for
+    DefaultListViewItemStyle.
+  - UseSystemFocusVisuals is the default focus adorner; DefaultListViewItemStyle has its own focus
+    brushes, thicknesses and margin (FocusVisualPrimaryBrush, FocusVisualSecondaryBrush,
+    FocusVisualMargin="1"), which are its FocusAdorner. IsHoldingEnabled, AllowDrop and
+    ContentTransitions have no counterpart.
+-->
+<ResourceDictionary xmlns="https://github.com/ferroui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    x:ClassModifier="internal">
+  <Design.PreviewWith>
+    <Border Padding="20" Width="300">
+      <StackPanel Spacing="20">
+        <ListBox>
+          <ListBoxItem>Normal</ListBoxItem>
+          <ListBoxItem IsSelected="True">Selected</ListBoxItem>
+          <ListBoxItem IsEnabled="False">Disabled</ListBoxItem>
+        </ListBox>
+        <ListBox ItemContainerTheme="{StaticResource DefaultListViewItemStyle}">
+          <ListBoxItem>Normal</ListBoxItem>
+          <ListBoxItem IsSelected="True">Selected</ListBoxItem>
+          <ListBoxItem IsEnabled="False">Disabled</ListBoxItem>
+        </ListBox>
+      </StackPanel>
+    </Border>
+  </Design.PreviewWith>
+
+  <ControlTheme x:Key="DefaultListBoxItemStyle" TargetType="ListBoxItem">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="KeyboardNavigation.TabNavigation" Value="Local" />
+    <Setter Property="Padding" Value="{StaticResource ListBoxItemPadding}" />
+    <Setter Property="HorizontalContentAlignment" Value="Left" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border x:Name="LayoutRoot"
+                Background="{TemplateBinding Background}"
+                BorderBrush="{TemplateBinding BorderBrush}"
+                BorderThickness="{TemplateBinding BorderThickness}"
+                CornerRadius="{TemplateBinding CornerRadius}">
+          <Panel>
+            <Rectangle x:Name="PressedBackground"
+                       Fill="Transparent"
+                       TemplatedControl.IsTemplateFocusTarget="True" />
+            <!-- BodyContentPresenterStyle (based on BaseContentPresenterStyle) with
+                 TextWrapping="NoWrap". -->
+            <ContentPresenter x:Name="PART_ContentPresenter"
+                              Content="{TemplateBinding Content}"
+                              ContentTemplate="{TemplateBinding ContentTemplate}"
+                              FontFamily="{DynamicResource ContentControlThemeFontFamily}"
+                              FontWeight="Normal"
+                              FontSize="{DynamicResource ControlContentThemeFontSize}"
+                              TextWrapping="NoWrap"
+                              HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                              Margin="{TemplateBinding Padding}" />
+          </Panel>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+
+    <!-- PointerOver -->
+    <Style Selector="^:pointerover">
+      <Style Selector="^ /template/ Rectangle#PressedBackground">
+        <Setter Property="Fill" Value="{DynamicResource ListBoxItemBackgroundPointerOver}" />
+      </Style>
+      <Style Selector="^ /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Foreground" Value="{DynamicResource ListBoxItemForeground}" />
+      </Style>
+    </Style>
+    <!-- Pressed -->
+    <Style Selector="^:pressed">
+      <Style Selector="^ /template/ Rectangle#PressedBackground">
+        <Setter Property="Fill" Value="{DynamicResource ListBoxItemBackgroundPressed}" />
+      </Style>
+      <Style Selector="^ /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Foreground" Value="{DynamicResource ListBoxItemForeground}" />
+      </Style>
+    </Style>
+    <!-- Selected, SelectedUnfocused -->
+    <Style Selector="^:selected">
+      <Style Selector="^ /template/ Rectangle#PressedBackground">
+        <Setter Property="Fill" Value="{DynamicResource ListBoxItemBackgroundSelected}" />
+      </Style>
+      <Style Selector="^ /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Foreground" Value="{DynamicResource ListBoxItemForeground}" />
+      </Style>
+    </Style>
+    <!-- SelectedPointerOver -->
+    <Style Selector="^:selected:pointerover">
+      <Style Selector="^ /template/ Rectangle#PressedBackground">
+        <Setter Property="Fill" Value="{DynamicResource ListBoxItemBackgroundSelectedPointerOver}" />
+      </Style>
+    </Style>
+    <!-- SelectedPressed -->
+    <Style Selector="^:selected:pressed">
+      <Style Selector="^ /template/ Rectangle#PressedBackground">
+        <Setter Property="Fill" Value="{DynamicResource ListBoxItemBackgroundSelectedPressed}" />
+      </Style>
+    </Style>
+    <!-- Disabled -->
+    <Style Selector="^:disabled">
+      <Style Selector="^ /template/ Rectangle#PressedBackground">
+        <Setter Property="Fill" Value="Transparent" />
+      </Style>
+      <Style Selector="^ /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Foreground" Value="{DynamicResource ListBoxItemForegroundDisabled}" />
+      </Style>
+    </Style>
+  </ControlTheme>
+
+  <ControlTheme x:Key="{x:Type ListBoxItem}" TargetType="ListBoxItem" BasedOn="{StaticResource DefaultListBoxItemStyle}" />
+
+  <!-- DefaultListViewItemStyle: the chrome of ListViewItemPresenter drawn with elements. WinUI
+       applies the default style of a control beneath an explicit style, so the keyed themes are
+       based on the default theme (docs/porting/winui-theme.md, section 4.2). -->
+  <ControlTheme x:Key="DefaultListViewItemStyle" TargetType="ListBoxItem" BasedOn="{StaticResource DefaultListBoxItemStyle}">
+    <Setter Property="FontFamily" Value="{DynamicResource ContentControlThemeFontFamily}" />
+    <Setter Property="FontSize" Value="{DynamicResource ControlContentThemeFontSize}" />
+    <Setter Property="Background" Value="{DynamicResource ListViewItemBackground}" />
+    <Setter Property="Foreground" Value="{DynamicResource ListViewItemForeground}" />
+    <Setter Property="KeyboardNavigation.TabNavigation" Value="Local" />
+    <Setter Property="Padding" Value="16,0,12,0" />
+    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Setter Property="MinWidth" Value="{DynamicResource ListViewItemMinWidth}" />
+    <Setter Property="MinHeight" Value="{DynamicResource ListViewItemMinHeight}" />
+    <Setter Property="FocusAdorner">
+      <FocusAdornerTemplate>
+        <Border Margin="1"
+                BorderThickness="2"
+                BorderBrush="{DynamicResource ListViewItemFocusVisualPrimaryBrush}"
+                CornerRadius="{DynamicResource ListViewItemCornerRadius}">
+          <Border BorderThickness="1"
+                  BorderBrush="{DynamicResource ListViewItemFocusVisualSecondaryBrush}"
+                  CornerRadius="{DynamicResource ListViewItemCornerRadius}" />
+        </Border>
+      </FocusAdornerTemplate>
+    </Setter>
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Panel x:Name="Root">
+          <!-- The backplate of the rounded chrome (s_backplateMargin). -->
+          <Border x:Name="Backplate"
+                  Margin="4,2,4,2"
+                  Background="{TemplateBinding Background}"
+                  BorderBrush="{TemplateBinding BorderBrush}"
+                  BorderThickness="{TemplateBinding BorderThickness}"
+                  CornerRadius="{DynamicResource ListViewItemCornerRadius}"
+                  IsHitTestVisible="False"
+                  TemplatedControl.IsTemplateFocusTarget="True" />
+          <!-- The selection indicator (s_selectionIndicatorSize, s_selectionIndicatorMargin). -->
+          <Border x:Name="SelectionIndicator"
+                  Margin="4,0,0,0"
+                  Width="3"
+                  Height="16"
+                  HorizontalAlignment="Left"
+                  VerticalAlignment="Center"
+                  CornerRadius="{DynamicResource ListViewItemSelectionIndicatorCornerRadius}"
+                  Background="{DynamicResource ListViewItemSelectionIndicatorBrush}"
+                  Opacity="0"
+                  IsHitTestVisible="False"
+                  RenderTransformOrigin="50%,50%">
+            <Border.Transitions>
+              <Transitions>
+                <!-- The shortening of the indicator while pressed; the duration is the one of
+                     ComboBoxItemScaleAnimationDuration (167 ms), the same animation of the pill of
+                     ComboBoxItem. -->
+                <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.167" Easing="0,0,0,1" />
+              </Transitions>
+            </Border.Transitions>
+          </Border>
+          <!-- The content, moved by the inline selection indicator (4 + 3 px). -->
+          <ContentPresenter x:Name="PART_ContentPresenter"
+                            Margin="7,0,0,0"
+                            Padding="{TemplateBinding Padding}"
+                            Content="{TemplateBinding Content}"
+                            ContentTemplate="{TemplateBinding ContentTemplate}"
+                            Foreground="{TemplateBinding Foreground}"
+                            HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                            VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
+        </Panel>
+      </ControlTemplate>
+    </Setter>
+
+    <!-- PointerOver -->
+    <Style Selector="^:pointerover">
+      <Style Selector="^ /template/ Border#Backplate">
+        <Setter Property="Background" Value="{DynamicResource ListViewItemBackgroundPointerOver}" />
+      </Style>
+      <Style Selector="^ /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Foreground" Value="{DynamicResource ListViewItemForegroundPointerOver}" />
+      </Style>
+    </Style>
+    <!-- Pressed -->
+    <Style Selector="^:pressed">
+      <Style Selector="^ /template/ Border#Backplate">
+        <Setter Property="Background" Value="{DynamicResource ListViewItemBackgroundPressed}" />
+      </Style>
+      <Style Selector="^ /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Foreground" Value="{DynamicResource ListViewItemForegroundPressed}" />
+      </Style>
+    </Style>
+    <!-- Selected -->
+    <Style Selector="^:selected">
+      <Style Selector="^ /template/ Border#Backplate">
+        <Setter Property="Background" Value="{DynamicResource ListViewItemBackgroundSelected}" />
+      </Style>
+      <Style Selector="^ /template/ Border#SelectionIndicator">
+        <Setter Property="Opacity" Value="1" />
+      </Style>
+      <Style Selector="^ /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Foreground" Value="{DynamicResource ListViewItemForegroundSelected}" />
+      </Style>
+    </Style>
+    <!-- SelectedPointerOver -->
+    <Style Selector="^:selected:pointerover">
+      <Style Selector="^ /template/ Border#Backplate">
+        <Setter Property="Background" Value="{DynamicResource ListViewItemBackgroundSelectedPointerOver}" />
+      </Style>
+      <Style Selector="^ /template/ Border#SelectionIndicator">
+        <Setter Property="Background" Value="{DynamicResource ListViewItemSelectionIndicatorPointerOverBrush}" />
+      </Style>
+      <Style Selector="^ /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Foreground" Value="{DynamicResource ListViewItemForegroundSelectedPointerOver}" />
+      </Style>
+    </Style>
+    <!-- SelectedPressed: the indicator 6 px shorter (10 of 16 px). -->
+    <Style Selector="^:selected:pressed">
+      <Style Selector="^ /template/ Border#Backplate">
+        <Setter Property="Background" Value="{DynamicResource ListViewItemBackgroundSelectedPressed}" />
+      </Style>
+      <Style Selector="^ /template/ Border#SelectionIndicator">
+        <Setter Property="Background" Value="{DynamicResource ListViewItemSelectionIndicatorPressedBrush}" />
+        <Setter Property="RenderTransform" Value="scaleY(0.625)" />
+      </Style>
+      <Style Selector="^ /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Foreground" Value="{DynamicResource ListViewItemForegroundSelectedPressed}" />
+      </Style>
+    </Style>
+    <!-- Disabled -->
+    <Style Selector="^:disabled /template/ Panel#Root">
+      <Setter Property="Opacity" Value="{DynamicResource ListViewItemDisabledThemeOpacity}" />
+    </Style>
+    <!-- SelectedDisabled -->
+    <Style Selector="^:selected:disabled">
+      <Style Selector="^ /template/ Border#Backplate">
+        <Setter Property="Background" Value="{DynamicResource ListViewItemBackgroundSelectedDisabled}" />
+      </Style>
+      <Style Selector="^ /template/ Border#SelectionIndicator">
+        <Setter Property="Background" Value="{DynamicResource ListViewItemSelectionIndicatorDisabledBrush}" />
+      </Style>
+    </Style>
+  </ControlTheme>
+
+  <ControlTheme x:Key="ListViewItemExpanded" TargetType="ListBoxItem" BasedOn="{StaticResource DefaultListBoxItemStyle}">
+    <Setter Property="FontFamily" Value="{DynamicResource ContentControlThemeFontFamily}" />
+    <Setter Property="FontSize" Value="{DynamicResource ControlContentThemeFontSize}" />
+    <Setter Property="BorderBrush" Value="{x:Null}" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{DynamicResource ListViewItemForeground}" />
+    <Setter Property="KeyboardNavigation.TabNavigation" Value="Local" />
+    <Setter Property="Padding" Value="12,0,12,0" />
+    <Setter Property="HorizontalContentAlignment" Value="Left" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Setter Property="MinWidth" Value="{DynamicResource ListViewItemMinWidth}" />
+    <Setter Property="MinHeight" Value="{DynamicResource ListViewItemMinHeight}" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border x:Name="ContentBorder"
+                Background="{TemplateBinding Background}"
+                BorderBrush="{TemplateBinding BorderBrush}"
+                BorderThickness="{TemplateBinding BorderThickness}"
+                CornerRadius="{TemplateBinding CornerRadius}"
+                RenderTransformOrigin="50%,50%">
+          <Panel>
+            <Rectangle x:Name="BorderBackground"
+                       IsHitTestVisible="False"
+                       Fill="{DynamicResource ListViewItemBorderBackground}"
+                       Opacity="0"
+                       TemplatedControl.IsTemplateFocusTarget="True" />
+            <Panel x:Name="ContentPresenterGrid" Background="Transparent">
+              <ContentPresenter x:Name="PART_ContentPresenter"
+                                Content="{TemplateBinding Content}"
+                                ContentTemplate="{TemplateBinding ContentTemplate}"
+                                HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                Margin="{TemplateBinding Padding}" />
+            </Panel>
+          </Panel>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+
+    <!-- PointerOver -->
+    <Style Selector="^:pointerover">
+      <Style Selector="^ /template/ Rectangle#BorderBackground">
+        <Setter Property="Opacity" Value="1" />
+        <Setter Property="Fill" Value="{DynamicResource ListViewItemBackgroundPointerOver}" />
+      </Style>
+      <Style Selector="^ /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Foreground" Value="{DynamicResource ListViewItemForegroundPointerOver}" />
+      </Style>
+    </Style>
+    <!-- Pressed -->
+    <Style Selector="^:pressed">
+      <Style Selector="^ /template/ Rectangle#BorderBackground">
+        <Setter Property="Opacity" Value="1" />
+        <Setter Property="Fill" Value="{DynamicResource ListViewItemBackgroundPressed}" />
+      </Style>
+      <Style Selector="^ /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Foreground" Value="{DynamicResource ListViewItemForegroundPressed}" />
+      </Style>
+    </Style>
+    <!-- Selected -->
+    <Style Selector="^:selected">
+      <Style Selector="^ /template/ Rectangle#BorderBackground">
+        <Setter Property="Opacity" Value="1" />
+        <Setter Property="Fill" Value="{DynamicResource ListViewItemBackgroundSelected}" />
+      </Style>
+      <Style Selector="^ /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Foreground" Value="{DynamicResource ListViewItemForegroundSelected}" />
+      </Style>
+    </Style>
+    <!-- PointerOverSelected -->
+    <Style Selector="^:selected:pointerover">
+      <Style Selector="^ /template/ Rectangle#BorderBackground">
+        <Setter Property="Fill" Value="{DynamicResource ListViewItemBackgroundSelectedPointerOver}" />
+      </Style>
+      <Style Selector="^ /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Foreground" Value="{DynamicResource ListViewItemForegroundSelectedPointerOver}" />
+      </Style>
+    </Style>
+    <!-- PressedSelected -->
+    <Style Selector="^:selected:pressed">
+      <Style Selector="^ /template/ Rectangle#BorderBackground">
+        <Setter Property="Fill" Value="{DynamicResource ListViewItemBackgroundSelectedPressed}" />
+      </Style>
+      <Style Selector="^ /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Foreground" Value="{DynamicResource ListViewItemForegroundSelectedPressed}" />
+      </Style>
+    </Style>
+    <!-- Disabled of DisabledStates -->
+    <Style Selector="^:disabled /template/ Border#ContentBorder">
+      <Setter Property="Opacity" Value="{DynamicResource ListViewItemDisabledThemeOpacity}" />
+    </Style>
+  </ControlTheme>
+</ResourceDictionary>

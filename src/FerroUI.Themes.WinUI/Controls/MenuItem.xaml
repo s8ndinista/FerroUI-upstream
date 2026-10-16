@@ -12,7 +12,7 @@
   - FerroUI has one class of menu item where WinUI has four: MenuFlyoutItem, ToggleMenuFlyoutItem,
     RadioMenuFlyoutItem and MenuFlyoutSubItem. A MenuItem is a toggle item when its ToggleType is
     CheckBox (:toggle), a radio item when it is Radio (:radio), and a sub item when it has items
-    (:not(:empty)). DefaultMenuFlyoutItemStyle holds one template with the parts of the four
+    (:not(MenuItem:empty)). DefaultMenuFlyoutItemStyle holds one template with the parts of the four
     templates (the check glyph of the toggle items, the icon, the text, the keyboard accelerator
     text and the chevron of the sub items) and the states of each kind, the states of a toggle or
     radio item and of a sub item after those of a plain item. The keyed themes of the other kinds
@@ -303,7 +303,7 @@
     </Style>
 
     <!-- MenuFlyoutSubItem: the setters of DefaultMenuFlyoutSubItemStyle and the chevron. -->
-    <Style Selector="^:not(:empty)">
+    <Style Selector="^:not(MenuItem:empty)">
       <Setter Property="Background" Value="{DynamicResource MenuFlyoutSubItemBackground}" />
       <Setter Property="BorderBrush" Value="{DynamicResource MenuFlyoutSubItemBackgroundBrush}" />
       <Setter Property="BorderThickness" Value="{DynamicResource MenuFlyoutSubItemBorderThickness}" />
@@ -313,7 +313,7 @@
       </Style>
     </Style>
     <!-- MenuFlyoutSubItem: PointerOver -->
-    <Style Selector="^:not(:empty):selected">
+    <Style Selector="^:selected:not(MenuItem:empty)">
       <Style Selector="^ /template/ Border#LayoutRoot">
         <Setter Property="Background" Value="{DynamicResource MenuFlyoutSubItemBackgroundPointerOver}" />
       </Style>
@@ -328,7 +328,7 @@
       </Style>
     </Style>
     <!-- MenuFlyoutSubItem: Pressed -->
-    <Style Selector="^:not(:empty):pressed /template/ Border#LayoutRoot:pointerover">
+    <Style Selector="^:pressed:not(MenuItem:empty) /template/ Border#LayoutRoot:pointerover">
       <Setter Property="Background" Value="{DynamicResource MenuFlyoutSubItemBackgroundPressed}" />
       <Style Selector="^ ContentPresenter#PART_HeaderPresenter">
         <Setter Property="Foreground" Value="{DynamicResource MenuFlyoutSubItemForegroundPressed}" />
@@ -341,7 +341,7 @@
       </Style>
     </Style>
     <!-- MenuFlyoutSubItem: SubMenuOpened -->
-    <Style Selector="^:not(:empty):open">
+    <Style Selector="^:open:not(MenuItem:empty)">
       <Style Selector="^ /template/ Border#LayoutRoot">
         <Setter Property="Background" Value="{DynamicResource MenuFlyoutSubItemBackgroundSubMenuOpened}" />
       </Style>
@@ -356,7 +356,7 @@
       </Style>
     </Style>
     <!-- MenuFlyoutSubItem: Disabled -->
-    <Style Selector="^:not(:empty):disabled">
+    <Style Selector="^:disabled:not(MenuItem:empty)">
       <Style Selector="^ /template/ Border#LayoutRoot">
         <Setter Property="Background" Value="{DynamicResource MenuFlyoutSubItemBackgroundDisabled}" />
       </Style>

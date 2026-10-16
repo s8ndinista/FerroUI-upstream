@@ -207,6 +207,8 @@ control_tests! {
     context_menu => "ContextMenu";
     flyout_presenter => "FlyoutPresenter";
     hyperlink_button => "HyperlinkButton";
+    list_box => "ListBox";
+    list_box_item => "ListBoxItem";
     menu => "Menu";
     menu_flyout_presenter => "MenuFlyoutPresenter";
     menu_item => "MenuItem";
