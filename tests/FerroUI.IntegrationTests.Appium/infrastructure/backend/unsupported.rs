@@ -16,6 +16,8 @@ pub enum NativeElement {}
 pub enum Backend {}
 
 impl Backend {
+    pub const CLICKS_WHEN_FOCUS_FAILS: bool = false;
+
     pub fn check() -> Result<(), String> {
         Err(UNSUPPORTED.to_owned())
     }
@@ -104,6 +106,10 @@ impl Backend {
         match *self {}
     }
 
+    pub fn scroll_into_view(&self, _element: &NativeElement) {
+        match *self {}
+    }
+
     pub fn focus(&self, _element: &NativeElement) {
         match *self {}
     }
@@ -112,7 +118,7 @@ impl Backend {
         match *self {}
     }
 
-    pub fn find_all(&self, _root: &NativeElement, _include_root: bool, _by: &By) -> Vec<NativeElement> {
+    pub fn find_all(&self, _root: &NativeElement, _include_root: bool, _by: &By) -> Result<Vec<NativeElement>, String> {
         match *self {}
     }
 

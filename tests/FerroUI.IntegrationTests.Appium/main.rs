@@ -106,6 +106,9 @@ fn ignored_because(case: &TestCase, include_ignored: bool) -> Option<String> {
 fn main() -> ExitCode {
     let arguments: Vec<String> = std::env::args().skip(1).collect();
     let include_ignored = arguments.iter().any(|a| a == "--include-ignored" || a == "--ignored");
+    // A diagnostic of the runs: a search for one element that does not find it prints the tree
+    // it searched.
+    infrastructure::session::set_dump_tree(arguments.iter().any(|a| a == "--dump-tree"));
     let filters: Vec<&String> = arguments.iter().filter(|a| !a.starts_with('-')).collect();
 
     let mut tests = Tests::default();
@@ -182,6 +185,12 @@ fn main() -> ExitCode {
                 continue;
             }
         };
+        // Where the main window is: whether it shows the whole list of pages depends on the size
+        // of the desktop.
+        if let Ok(main) = fixture.session().try_find_element_by_accessibility_id("MainWindow") {
+            let rect = main.rect();
+            println!("the main window: at {}, {}, {} by {}", rect.x, rect.y, rect.width, rect.height);
+        }
         for case in cases {
             let result = catch_unwind(AssertUnwindSafe(|| case.run(&fixture)));
             // A test that failed with a button or a key down leaves it down otherwise.
