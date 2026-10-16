@@ -11,7 +11,7 @@
 //! jobs reach it there, and this thread enters the lock for the few things
 //! it reads from it.
 
-use super::server::{LockBound, ServerCompositor};
+use super::server::{LockBound, LockedServerCompositor, ServerCompositor};
 use super::{
     CompositionGpuImportedImageSynchronizationCapabilities, Compositor, ICompositionGpuImportedObject,
     ICompositionGpuInterop, ICompositionImportableSharedGpuContextImage, ICompositionImportableSharedGpuContextSemaphore,
@@ -48,6 +48,16 @@ impl InteropState {
             import_result: RefCell::new(None),
         }
     }
+}
+
+/// The server part of an interop and what the interop reads from its
+/// feature when it is constructed: made inside the compositor lock, on the
+/// thread that reads the feature, and handed to the thread of the
+/// compositor ([`CompositionInterop::server_part`]).
+pub(crate) struct CompositionInteropServerPart {
+    state: LockBound<InteropState>,
+    device_luid: Option<Vec<u8>>,
+    device_uuid: Option<Vec<u8>>,
 }
 
 /// The interop of a compositor with the GPU objects of its render
@@ -92,25 +102,56 @@ impl CompositionInterop {
         compositor: &Rc<Compositor>,
         external_objects: Rc<dyn IExternalObjectsRenderInterfaceContextFeature>,
     ) -> Option<Rc<CompositionInterop>> {
-        compositor.with_server(|server| {
-            let context = if compositor.is_confined_to_render_thread() {
-                server.render_interface().existing_backend_context()?
-            } else {
-                server.render_interface().value()
-            };
-            let external_objects_with_handle_wrap = {
-                let features: &dyn crate::platform::IOptionalFeatureProvider = &*context;
-                features.try_get::<dyn IExternalObjectsHandleWrapRenderInterfaceContextFeature>()
-            };
-            Some(Rc::new(CompositionInterop {
-                compositor: compositor.clone(),
-                device_luid: RefCell::new(external_objects.device_luid()),
-                device_uuid: RefCell::new(external_objects.device_uuid()),
-                state: compositor.bind_to_lock(
-                    server,
-                    InteropState { context, external_objects, external_objects_with_handle_wrap },
-                ),
-            }))
+        let locked = compositor.locked_server();
+        let may_create_context = !compositor.is_confined_to_render_thread();
+        let part =
+            compositor.with_server(|server| Self::server_part(&locked, server, external_objects, may_create_context))?;
+        Some(Self::from_server_part(compositor, part))
+    }
+
+    /// The server part of the interop over `external_objects`, made inside
+    /// the compositor lock (`server` is the proof): what the constructor
+    /// reads from the render interface upstream. The context is
+    /// `RenderInterface.Value` where the calling thread may create it
+    /// (`may_create_context`: the render thread, and the thread of a
+    /// compositor that is not confined to its render thread), otherwise the
+    /// context the render thread has, and `None` without one.
+    ///
+    /// The part may cross to the thread of the compositor, which makes the
+    /// interop around it ([`from_server_part`](Self::from_server_part)).
+    pub(crate) fn server_part(
+        locked: &Arc<LockedServerCompositor>,
+        server: &ServerCompositor,
+        external_objects: Rc<dyn IExternalObjectsRenderInterfaceContextFeature>,
+        may_create_context: bool,
+    ) -> Option<CompositionInteropServerPart> {
+        let context = if may_create_context {
+            server.render_interface().value()
+        } else {
+            server.render_interface().existing_backend_context()?
+        };
+        let external_objects_with_handle_wrap = {
+            let features: &dyn crate::platform::IOptionalFeatureProvider = &*context;
+            features.try_get::<dyn IExternalObjectsHandleWrapRenderInterfaceContextFeature>()
+        };
+        Some(CompositionInteropServerPart {
+            device_luid: external_objects.device_luid(),
+            device_uuid: external_objects.device_uuid(),
+            state: LockBound::new(
+                locked,
+                server,
+                InteropState { context, external_objects, external_objects_with_handle_wrap },
+            ),
+        })
+    }
+
+    /// The interop of `compositor` around its server part.
+    pub(crate) fn from_server_part(compositor: &Rc<Compositor>, part: CompositionInteropServerPart) -> Rc<Self> {
+        Rc::new(CompositionInterop {
+            compositor: compositor.clone(),
+            device_luid: RefCell::new(part.device_luid),
+            device_uuid: RefCell::new(part.device_uuid),
+            state: part.state,
         })
     }
 

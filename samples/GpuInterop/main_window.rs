@@ -2,7 +2,8 @@
 
 use crate::d3d_demo::D3D11DemoControl;
 use crate::demo_type::DemoType;
-use crate::gpu_demo::GpuDemo;
+use crate::drawing_surface_demo_base::DrawingSurfaceDemoBase;
+use crate::gpu_demo::{GpuDemo, IGpuDemo};
 use crate::markup::xaml_class;
 use crate::vulkan_demo::{VulkanDemoControl, VulkanDmaBufDemoControl};
 use ferroui_base::input::InputElementImpl;
@@ -15,6 +16,7 @@ use ferroui_base::{
 use ferroui_controls::platform::PlatformManager;
 use ferroui_controls::primitives::TemplatedControlImpl;
 use ferroui_controls::{Control, ContentControlImpl, ControlImpl, TopLevelImpl, Window, WindowBaseImpl, WindowImpl};
+use std::rc::Rc;
 
 #[repr(C)]
 pub struct MainWindow {
@@ -56,10 +58,10 @@ impl MainWindow {
 
         this.set_title(Some(format!("{demo_type:?}")));
 
-        let demo: Ref<Control> = match demo_type {
-            DemoType::Vulkan => VulkanDemoControl::new().upcast(),
-            DemoType::D3D11 => D3D11DemoControl::new().upcast(),
-            DemoType::VulkanDmaBuf => VulkanDmaBufDemoControl::new().upcast(),
+        let demo: Rc<dyn IGpuDemo> = match demo_type {
+            DemoType::Vulkan => DrawingSurfaceDemoBase::as_gpu_demo(VulkanDemoControl::new()),
+            DemoType::D3D11 => DrawingSurfaceDemoBase::as_gpu_demo(D3D11DemoControl::new()),
+            DemoType::VulkanDmaBuf => DrawingSurfaceDemoBase::as_gpu_demo(VulkanDmaBufDemoControl::new()),
         };
         let content = GpuDemo::new();
         content.set_demo(Some(demo));

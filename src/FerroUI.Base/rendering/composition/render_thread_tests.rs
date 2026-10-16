@@ -7,11 +7,16 @@
 //! The last part is the third shape: a compositor that is confined to its
 //! render thread, whose own thread never renders.
 
-use super::{CompositionTarget, CompositionVisual, Compositor, RenderInterfaceFeature, RenderSurfaces};
+use super::{
+    CompositionGpuImportedImageSynchronizationCapabilities, CompositionTarget, CompositionVisual, Compositor,
+    ICompositionImportableSharedGpuContextImage, LocalFuture, RenderInterfaceFeature, RenderSurfaces,
+};
 use crate::media::MediaContext;
 use crate::platform::surfaces::IPlatformRenderSurface;
 use crate::platform::{
-    IDrawingContextImpl, IDrawingContextLayerImpl, IOptionalFeatureProvider, IPlatformGraphics,
+    IDrawingContextImpl, IDrawingContextLayerImpl, IExternalObjectsRenderInterfaceContextFeature, IOptionalFeatureProvider,
+    IPlatformGraphics, IPlatformHandle, IPlatformRenderInterfaceImportedImage, IPlatformRenderInterfaceImportedSemaphore,
+    PlatformGraphicsExternalImageProperties,
     IPlatformGraphicsContext, IPlatformGraphicsReadyStateFeature, IPlatformRenderInterfaceContext, IRenderTarget,
     RenderTargetDrawingContextProperties, RenderTargetError, RenderTargetProperties, RenderTargetSceneInfo,
 };
@@ -28,6 +33,7 @@ use std::rc::Rc;
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
 use std::thread::{self, ThreadId};
+use std::task::{Context, Poll, Waker};
 use std::time::{Duration, Instant};
 
 fn render_thread_compositor(
@@ -335,6 +341,57 @@ impl Drop for ConfinedGraphicsContext {
 /// A feature the backend context hands to callers.
 struct ConfinedFeature;
 
+/// The import of external GPU objects into the backend context: the
+/// feature the GPU interop of the compositor is made over. What the interop
+/// reads from it when it is made is read where the features are, by the
+/// thread that renders.
+struct ConfinedExternalObjects {
+    log: Arc<ConfinementLog>,
+}
+
+impl IExternalObjectsRenderInterfaceContextFeature for ConfinedExternalObjects {
+    fn supported_image_handle_types(&self) -> Vec<String> {
+        vec!["Confined".to_owned()]
+    }
+
+    fn supported_semaphore_types(&self) -> Vec<String> {
+        Vec::new()
+    }
+
+    fn import_image(
+        &self,
+        _handle: Rc<dyn IPlatformHandle>,
+        _properties: PlatformGraphicsExternalImageProperties,
+    ) -> Rc<dyn IPlatformRenderInterfaceImportedImage> {
+        panic!("Specified method is not supported.")
+    }
+
+    fn import_shared_image(
+        &self,
+        _image: Arc<dyn ICompositionImportableSharedGpuContextImage>,
+    ) -> Rc<dyn IPlatformRenderInterfaceImportedImage> {
+        panic!("Specified method is not supported.")
+    }
+
+    fn import_semaphore(&self, _handle: Rc<dyn IPlatformHandle>) -> Rc<dyn IPlatformRenderInterfaceImportedSemaphore> {
+        panic!("Specified method is not supported.")
+    }
+
+    fn get_synchronization_capabilities(&self, _image_handle_type: &str) -> CompositionGpuImportedImageSynchronizationCapabilities {
+        CompositionGpuImportedImageSynchronizationCapabilities::AUTOMATIC
+    }
+
+    fn device_uuid(&self) -> Option<Vec<u8>> {
+        self.log.touch("the external objects are asked for the device");
+        Some(vec![1, 2, 3])
+    }
+
+    fn device_luid(&self) -> Option<Vec<u8>> {
+        self.log.touch("the external objects are asked for the device");
+        Some(vec![4, 5])
+    }
+}
+
 /// The backend context: creates the render targets and holds the graphics
 /// context.
 struct ConfinedBackendContext {
@@ -381,7 +438,13 @@ impl IPlatformRenderInterfaceContext for ConfinedBackendContext {
     fn public_features(&self) -> HashMap<TypeId, Rc<dyn Any>> {
         self.log.touch("the backend context is asked for its public features");
         let feature: Rc<dyn Any> = Rc::new(ConfinedFeature);
-        HashMap::from([(TypeId::of::<ConfinedFeature>(), feature)])
+        let external_objects: Rc<dyn IExternalObjectsRenderInterfaceContextFeature> =
+            Rc::new(ConfinedExternalObjects { log: self.log.clone() });
+        let external_objects: Rc<dyn Any> = Rc::new(external_objects);
+        HashMap::from([
+            (TypeId::of::<ConfinedFeature>(), feature),
+            (TypeId::of::<dyn IExternalObjectsRenderInterfaceContextFeature>(), external_objects),
+        ])
     }
 
     fn is_ready_to_create_render_target(&self, surfaces: &[Arc<dyn IPlatformRenderSurface>]) -> bool {
@@ -532,6 +595,34 @@ fn wait_until(what: &str, condition: impl Fn() -> bool) {
     }
 }
 
+/// Polls `future` once, with a waker that does nothing.
+fn poll_once<T>(future: &mut LocalFuture<T>) -> Poll<T> {
+    future.as_mut().poll(&mut Context::from_waker(Waker::noop()))
+}
+
+/// The outcome of a future that completes at once: what an `await` of it
+/// gives without waiting.
+fn ready<T>(mut future: LocalFuture<T>) -> T {
+    match poll_once(&mut future) {
+        Poll::Ready(value) => value,
+        Poll::Pending => panic!("the answer is given at once"),
+    }
+}
+
+/// Runs the jobs of the dispatcher until `future` completes, as an `await`
+/// on the thread of the compositor does.
+fn wait_for<T>(what: &str, mut future: LocalFuture<T>) -> T {
+    let deadline = Instant::now() + Duration::from_secs(10);
+    loop {
+        Dispatcher::ui_thread().run_jobs(None);
+        if let Poll::Ready(value) = poll_once(&mut future) {
+            return value;
+        }
+        assert!(Instant::now() < deadline, "timed out waiting until {what}");
+        thread::sleep(Duration::from_millis(1));
+    }
+}
+
 #[test]
 fn a_confined_compositor_keeps_what_renders_on_the_render_thread() {
     let _dispatcher_scope = Dispatcher::unit_test_scope();
@@ -540,8 +631,10 @@ fn a_confined_compositor_keeps_what_renders_on_the_render_thread() {
     let test_thread = thread::current().id();
 
     // Nothing has rendered yet, so no feature is known: the answer is
-    // pending, and the backend context is not created here to give it.
-    assert!(confined.compositor.try_get_render_interface_feature(TypeId::of::<ConfinedFeature>()).is_none());
+    // awaited from a job of the render thread, and the backend context is
+    // not created here to give it.
+    let mut first = confined.compositor.try_get_render_interface_feature(TypeId::of::<ConfinedFeature>());
+    assert!(poll_once(&mut first).is_pending());
     assert_eq!(None, confined.log.owner());
 
     let render_thread = RenderThread::start(&confined.render_loop);
@@ -562,15 +655,17 @@ fn a_confined_compositor_keeps_what_renders_on_the_render_thread() {
     // Each wait asked the loop for a frame out of turn first.
     assert_eq!(2, confined.render_loop.frames_requested_out_of_turn());
 
-    // The job of the render thread has filled the cache by now.
-    let feature = confined
-        .compositor
-        .try_get_render_interface_feature(TypeId::of::<ConfinedFeature>())
+    // The job of the render thread has answered the first request.
+    let feature = wait_for("the first request is answered", first).expect("the render thread has the feature");
+    assert!(feature.is::<ConfinedFeature>());
+    drop(feature);
+    // And has filled the cache: a later request is answered at once.
+    let feature = ready(confined.compositor.try_get_render_interface_feature(TypeId::of::<ConfinedFeature>()))
         .expect("the render thread has told which features there are");
     assert!(feature.is::<ConfinedFeature>());
     drop(feature);
     // A feature the context does not have is absent, not pending.
-    assert!(confined.compositor.try_get_render_interface_feature(TypeId::of::<ConfinementLog>()).is_none());
+    assert!(ready(confined.compositor.try_get_render_interface_feature(TypeId::of::<ConfinementLog>())).is_none());
 
     // A snapshot of the root is rendered offscreen by a job.
     let snapshot = confined.compositor.create_composition_visual_snapshot(&root, 1.0);
@@ -595,6 +690,56 @@ fn a_confined_compositor_keeps_what_renders_on_the_render_thread() {
 
     assert_eq!(Vec::<String>::new(), log.violations());
     assert!(log.owner().is_some_and(|owner| owner != test_thread));
+}
+
+/// `TryGetCompositionGpuInterop` of a compositor confined to its render
+/// thread, asked before the render thread has rendered (a control that is
+/// attached to a window before its first frame): the answer is awaited, and
+/// the first request completes with the interop once the job of the render
+/// thread has run; it does not come back empty.
+#[test]
+fn the_first_request_for_the_gpu_interop_of_a_confined_compositor_is_answered() {
+    let _dispatcher_scope = Dispatcher::unit_test_scope();
+    let (_locator_scope, render_interface) = MockPlatformRenderInterface::install();
+    let confined = ConfinedCompositor::new(&render_interface);
+    let test_thread = thread::current().id();
+
+    let mut interop = confined.compositor.try_get_composition_gpu_interop();
+    assert!(poll_once(&mut interop).is_pending());
+    // The backend context is not created on this thread to answer.
+    assert_eq!(None, confined.log.owner());
+
+    let render_thread = RenderThread::start(&confined.render_loop);
+    let (target, root) = confined.show();
+
+    let interop = wait_for("the interop is answered", interop).expect("the backend context imports external objects");
+    assert_eq!(vec!["Confined".to_owned()], interop.supported_image_handle_types());
+    assert_eq!(Some(vec![4, 5]), interop.device_luid());
+    assert_eq!(Some(vec![1, 2, 3]), interop.device_uuid());
+    // The feature was read by the render thread, in its job.
+    assert!(confined.log.saw("the external objects are asked for the device"));
+    assert!(confined.log.owner().is_some_and(|owner| owner != test_thread));
+    assert_eq!(Vec::<String>::new(), confined.log.violations());
+
+    // A later request is answered at once, from the cache: this thread
+    // reads the feature and the context inside the compositor lock, as
+    // upstream's continuation reads them on the thread that awaits.
+    let again = ready(confined.compositor.try_get_composition_gpu_interop()).expect("the cache has the feature");
+    assert_eq!(vec!["Confined".to_owned()], again.supported_image_handle_types());
+    drop((interop, again));
+
+    confined.dispose(target, root);
+    let (render_loop, log) = confined.drop_compositor();
+    wait_until("the task of the compositor has left the loop", || render_loop.task_count() == 0);
+    drop(render_thread);
+    // Nothing else of the render thread was touched by this thread.
+    for violation in log.violations() {
+        assert!(
+            violation.starts_with("the backend context is asked for a feature on")
+                || violation.starts_with("the external objects are asked for the device on"),
+            "{violation}"
+        );
+    }
 }
 
 /// The compositor of the reference catches the two exceptions a render
@@ -981,7 +1126,7 @@ fn a_feature_is_asked_while_the_render_thread_renders_and_replaces_its_context()
     const ROUNDS: usize = 200;
     let mut kept = Vec::new();
     for round in 0..ROUNDS {
-        let feature = compositor.try_get_render_interface_feature(feature_type).expect("the context has the feature");
+        let feature = ready(compositor.try_get_render_interface_feature(feature_type)).expect("the context has the feature");
         assert!(feature.is::<Rc<dyn ILockedFeature>>());
         let context = feature
             .with::<dyn ILockedFeature, _>(|feature| {
@@ -1039,7 +1184,7 @@ fn a_feature_handle_is_used_and_dropped_by_another_thread() {
 
     const ROUNDS: usize = 400;
     for round in 0..ROUNDS {
-        let feature = compositor.try_get_render_interface_feature(feature_type).expect("the context has the feature");
+        let feature = ready(compositor.try_get_render_interface_feature(feature_type)).expect("the context has the feature");
         sender.send(feature).expect("the other thread takes the handles");
         if round % 10 == 9 {
             let contexts = world.contexts();
@@ -1063,8 +1208,7 @@ fn a_feature_is_lent_where_the_thread_of_the_compositor_renders() {
     assert!(!compositor.renders_on_render_thread());
 
     // The query creates the backend context on this thread, as before.
-    let feature = compositor
-        .try_get_render_interface_feature(TypeId::of::<dyn ILockedFeature>())
+    let feature = ready(compositor.try_get_render_interface_feature(TypeId::of::<dyn ILockedFeature>()))
         .expect("the context has the feature");
     assert_eq!(1, world.contexts());
     assert_eq!(Some(1), feature.with::<dyn ILockedFeature, _>(|feature| feature.context()));
@@ -1076,7 +1220,7 @@ fn a_feature_is_lent_where_the_thread_of_the_compositor_renders() {
     assert!(!feature.is::<ConfinedFeature>());
     assert!(feature.with::<ConfinedFeature, _>(|_| ()).is_none());
     // A feature the context does not have.
-    assert!(compositor.try_get_render_interface_feature(TypeId::of::<ConfinedFeature>()).is_none());
+    assert!(ready(compositor.try_get_render_interface_feature(TypeId::of::<ConfinedFeature>())).is_none());
 
     // The handle outlives the compositor: it lends nothing then, and the
     // feature goes with the handle.

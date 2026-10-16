@@ -26,7 +26,7 @@ use ferroui_base::threading::{DispatcherPriority, DispatcherTimer};
 use ferroui_base::{Point, Ref, Visual};
 use ferroui_controls::{AppBuilder, Application, Window};
 use gpu_interop::task_support::{start, ServerJobTaskFuture};
-use gpu_interop::{as_gpu_demo, DemoType, DrawingSurfaceDemoBase, GpuDemo};
+use gpu_interop::{DemoType, DrawingSurfaceDemoBase, GpuDemo};
 use std::cell::{Cell, RefCell};
 use std::future::Future;
 use std::path::PathBuf;
@@ -289,7 +289,7 @@ async fn snapshot(window: &Ref<Window>, name: &str) -> Option<Frame> {
 
 fn find_demo(window: &Ref<Window>) -> Option<(Ref<GpuDemo>, Ref<DrawingSurfaceDemoBase>)> {
     let gpu_demo = window.find_descendant_of_type::<GpuDemo>(false)?;
-    let demo = gpu_demo.demo().as_ref().and_then(as_gpu_demo)?;
+    let demo = gpu_demo.demo()?.as_object()?.cast::<DrawingSurfaceDemoBase>()?;
     Some((gpu_demo, demo))
 }
 

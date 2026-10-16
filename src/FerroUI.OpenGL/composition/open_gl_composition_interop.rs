@@ -1,12 +1,12 @@
 use super::composition_gl_context::CompositionGlContext;
 use super::{CompositionGlContextOptions, ICompositionGlContext};
 use crate::{
-    IGlContextExternalObjectsFeature, IOpenGlTextureSharingRenderInterfaceContextFeature,
+    GlVersion, IGlContextExternalObjectsFeature, IOpenGlTextureSharingRenderInterfaceContextFeature,
     IPlatformGraphicsOpenGlContextFactory,
 };
 use ferroui_base::logging::{LogEventLevel, Logger};
 use ferroui_base::platform::{IOptionalFeatureProvider, KnownPlatformGraphicsExternalImageHandleTypes};
-use ferroui_base::rendering::composition::{Compositor, RenderInterfaceFeature};
+use ferroui_base::rendering::composition::{Compositor, ICompositionGpuInterop, LocalFuture, RenderInterfaceFeature};
 use ferroui_base::{FerroLocator, LocatorExtensions};
 use std::any::{Any, TypeId};
 use std::rc::Rc;
@@ -16,35 +16,55 @@ pub struct OpenGlCompositionInterop;
 
 impl OpenGlCompositionInterop {
     /// Attempts to create an OpenGL context that is capable of drawing to a
-    /// `CompositionDrawingSurface` of the compositor (`TryCreateCompatibleGlContextAsync`).
-    /// The context is either shared with the compositor's rendering context or uses GPU
-    /// memory interop to transfer frames. Returns `None` if the current platform or
-    /// rendering backend does not support any compatible way of OpenGL interop.
+    /// `CompositionDrawingSurface` of the compositor (`TryCreateCompatibleGlContextAsync`):
+    /// a future awaited on the thread of the compositor. The context is either shared with
+    /// the compositor's rendering context or uses GPU memory interop to transfer frames.
+    /// Completes with `None` if the current platform or rendering backend does not support
+    /// any compatible way of OpenGL interop.
     ///
-    /// The original awaits the answers of the render thread; here this thread enters the
-    /// compositor lock for them, so the result is given directly. The sharing feature is an
-    /// object of the server side: it is asked inside the lock, through the handle the
-    /// compositor hands out, and the context it creates for this thread is what leaves it.
+    /// As the original, the answers of the compositor are awaited: a compositor confined to
+    /// its render thread gives them from a job of that thread. The sharing feature is an
+    /// object of the server side: it is asked inside the compositor lock, through the handle
+    /// the compositor hands out, and the context it creates for this thread is what leaves
+    /// it.
     ///
     /// `options` are optional parameters for the context creation.
     // A failure of the context factory or of the sharing feature is a panic of that call
     // here: the original catches it, logs it and returns null.
-    pub fn try_create_compatible_gl_context(
+    pub fn try_create_compatible_gl_context_async(
         compositor: &Rc<Compositor>,
         options: Option<&CompositionGlContextOptions>,
-    ) -> Option<Rc<dyn ICompositionGlContext>> {
+    ) -> LocalFuture<Option<Rc<dyn ICompositionGlContext>>> {
         compositor.dispatcher().verify_access();
 
-        let sharing_feature = compositor
-            .try_get_render_interface_feature(TypeId::of::<dyn IOpenGlTextureSharingRenderInterfaceContextFeature>())
-            .filter(|feature| feature.is::<Rc<dyn IOpenGlTextureSharingRenderInterfaceContextFeature>>());
-        let Some(interop) = compositor.try_get_composition_gpu_interop() else {
+        let gpu_interop_task = compositor.try_get_composition_gpu_interop();
+        let sharing_feature_task =
+            compositor.try_get_render_interface_feature(TypeId::of::<dyn IOpenGlTextureSharingRenderInterfaceContextFeature>());
+        let gl_profiles: Option<Vec<GlVersion>> = options.and_then(|options| options.gl_profiles()).map(<[GlVersion]>::to_vec);
+        let compositor = compositor.clone();
+        Box::pin(async move {
+            let sharing_feature = sharing_feature_task
+                .await
+                .filter(|feature| feature.is::<Rc<dyn IOpenGlTextureSharingRenderInterfaceContextFeature>>());
+            let interop = gpu_interop_task.await;
+            Self::create_compatible_gl_context(&compositor, gl_profiles.as_deref(), sharing_feature, interop)
+        })
+    }
+
+    /// The rest of `TryCreateCompatibleGlContextAsync`, once the answers of the compositor
+    /// are in.
+    fn create_compatible_gl_context(
+        compositor: &Rc<Compositor>,
+        gl_profiles: Option<&[GlVersion]>,
+        sharing_feature: Option<RenderInterfaceFeature>,
+        interop: Option<Rc<dyn ICompositionGpuInterop>>,
+    ) -> Option<Rc<dyn ICompositionGlContext>> {
+        let Some(interop) = interop else {
             // Expected on platforms without GPU interop support, so not an error
             log_unsupported("Compositor backend doesn't support GPU interop");
             return None;
         };
 
-        let gl_profiles = options.and_then(|options| options.gl_profiles());
         if let Some(sharing_feature) = sharing_feature.filter(can_create_shared_context) {
             let context = sharing_feature
                 .with::<dyn IOpenGlTextureSharingRenderInterfaceContextFeature, _>(|feature| {
