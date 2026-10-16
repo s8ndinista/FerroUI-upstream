@@ -106,6 +106,8 @@ document_tests! {
     controls_data_validation_errors => "/Controls/DataValidationErrors.xaml";
     controls_date_picker => "/Controls/DatePicker.xaml";
     controls_date_time_picker_shared => "/Controls/DateTimePickerShared.xaml";
+    controls_combo_box => "/Controls/ComboBox.xaml";
+    controls_combo_box_item => "/Controls/ComboBoxItem.xaml";
     controls_context_menu => "/Controls/ContextMenu.xaml";
     controls_embeddable_control_root => "/Controls/EmbeddableControlRoot.xaml";
     controls_grid_splitter => "/Controls/GridSplitter.xaml";

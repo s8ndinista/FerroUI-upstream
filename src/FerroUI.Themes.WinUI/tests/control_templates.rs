@@ -204,6 +204,8 @@ control_tests! {
     check_box => "CheckBox";
     date_picker => "DatePicker";
     date_picker_presenter => "DatePickerPresenter";
+    combo_box => "ComboBox";
+    combo_box_item => "ComboBoxItem";
     context_menu => "ContextMenu";
     flyout_presenter => "FlyoutPresenter";
     hyperlink_button => "HyperlinkButton";

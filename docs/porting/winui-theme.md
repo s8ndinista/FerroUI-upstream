@@ -470,8 +470,8 @@ ports a control updates its state by porting it, not by editing the table.
 | `Carousel.xaml` | `{Carousel}` | FlipView: DefaultFlipViewStyle (FlipView_themeresources.xaml) and FlipViewItem. | B5 | ported |
 | `CarouselPage.xaml` | `{CarouselPage}` | No WinUI control: built from FlipView (DefaultFlipViewStyle) and the page background (SolidBackgroundFillColorBaseBrush). | B5 | ported |
 | `CheckBox.xaml` | `{CheckBox}` | CheckBox: DefaultCheckBoxStyle (CheckBox_themeresources.xaml). | F | ported |
-| `ComboBox.xaml` | `{ComboBox}` | ComboBox: DefaultComboBoxStyle (ComboBox_themeresources.xaml). | B3 | pending |
-| `ComboBoxItem.xaml` | `{ComboBoxItem}` | ComboBoxItem: DefaultComboBoxItemStyle, ComboBoxItemPill (ComboBox_themeresources.xaml). | B3 | pending |
+| `ComboBox.xaml` | `{ComboBox}` | ComboBox: DefaultComboBoxStyle (ComboBox_themeresources.xaml). | B3 | ported |
+| `ComboBoxItem.xaml` | `{ComboBoxItem}` | ComboBoxItem: DefaultComboBoxItemStyle, ComboBoxItemPill (ComboBox_themeresources.xaml). | B3 | ported |
 | `CommandBar.xaml` | `{CommandBarButton}`, `{CommandBarToggleButton}`, `{CommandBarSeparator}`, `{CommandBar}` | CommandBar: DefaultCommandBarStyle, DefaultCommandBarOverflowPresenterStyle (CommandBar_themeresources.xaml); AppBarButton: DefaultAppBarButtonStyle, AppBarButtonOverflowStyle; AppBarToggleButton: DefaultAppBarToggleButtonStyle, AppBarToggleButtonOverflowStyle; AppBarSeparator: DefaultAppBarSeparatorStyle. | B5 | ported |
 | `ContentPage.xaml` | `{ContentPage}` | No WinUI style (Page has none): the page background and text of the window (SolidBackgroundFillColorBaseBrush, TextFillColorPrimaryBrush). | B5 | ported |
 | `ContextMenu.xaml` | `{ContextMenu}` | MenuFlyoutPresenter: DefaultMenuFlyoutPresenterStyle (MenuFlyout_themeresources.xaml). | B3 | ported |
