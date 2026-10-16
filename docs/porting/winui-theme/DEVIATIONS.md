@@ -879,7 +879,7 @@ The section covers both control themes of the document: ManagedFileChooser and M
 | ID | WinUI source | What WinUI does | What the port does | Why |
 |---|---|---|---|---|
 | BSP-1 | (no counterpart) controls/dev/NumberBox/NumberBox.xaml, the spin buttons of the NumberBox template; CS `TextBox_themeresources.xaml`, `DefaultTextBoxStyle` | WinUI 3 has no ButtonSpinner; a NumberBox with `SpinButtonPlacementMode="Inline"` shows a box with two spin buttons. | The look of that NumberBox: a box with the resources and the states of `BorderElement` of the text box (PointerOver, Focused as `:focus-within`, Disabled), the content, and the buttons `PART_IncreaseButton` and `PART_DecreaseButton` with `NumericUpDownSpinButtonStyle`, the margins 4 and 0,4,4,4 and the glyphs E70E and E70D (Paths, 12 px). | Built from WinUI resources and the NumberBox template. |
-| BSP-2 | (no counterpart) | No placement or visibility of spin buttons beside a NumberBox's `SpinButtonPlacementMode`. | The FerroUI contract: `:left` (`ButtonSpinnerLocation="Left"`) docks the buttons at the left, `ShowButtonSpinner` hides them, `AllowSpin` disables them (the control sets `IsEnabled`), `:error` gives the border `SystemFillColorCriticalBrush`. | Properties and pseudo-classes of FerroUI's ButtonSpinner that the Fluent theme honours. |
+| BSP-2 | (no counterpart) | No placement or visibility of spin buttons beside a NumberBox's `SpinButtonPlacementMode`. | The FerroUI contract: `:left` (`ButtonSpinnerLocation="Left"`) docks the buttons at the left, `ShowButtonSpinner` hides them, `AllowSpin` disables them (the control sets `IsEnabled`), `:error` gives the border `SystemFillColorCriticalBrush`, and the template is wrapped in `DataValidationErrors`, which shows the errors under the box (DVE-1). | Properties and pseudo-classes of FerroUI's ButtonSpinner that the Fluent theme honours. |
 | BSP-3 | `DefaultTextBoxStyle`: `UseSystemFocusVisuals="{ThemeResource IsApplicationFocusVisualKindReveal}"` | The text box shows no focus rectangle; its focused state is the border. | `FocusAdorner="{x:Null}"`; the focused state is `:focus-within` of the box. | As the text box (TXB-6). |
 
 ## DropDownButton
@@ -920,7 +920,7 @@ The section covers both control themes of the document: ManagedFileChooser and M
 | NUD-11 | `SelectionFlyout`, `SelectionHighlightColor`, `InputScope`, `TextReadingOrder`, `PreventKeyboardDisplayOnProgrammaticFocus` | Properties passed to the text box. | Left out. | FerroUI's NumericUpDown has no such properties. |
 | NUD-12 | (not in the style) `PlaceholderForeground` | The text box uses the brush of its state when NumberBox sets none. | A setter `PlaceholderForeground="{DynamicResource TextControlPlaceholderForeground}"`, passed to the text box (whose states set the brushes of the states). | FerroUI's NumericUpDown passes its own placeholder brush. |
 | NUD-13 | `UpSpinButtonEnabledStates`, `DownSpinButtonEnabledStates` | The control disables a button at the end of the range. | The `IsEnabled` the ButtonSpinner sets on its buttons. | FerroUI's spinner does it. |
-| NUD-14 | (not in WinUI) | No input validation. | `:error` gives the border of the text box `SystemFillColorCriticalBrush`. | The FerroUI contract (data validation). |
+| NUD-14 | (not in WinUI) | No input validation. | `:error` gives the border of the text box `SystemFillColorCriticalBrush`, and the template is wrapped in `DataValidationErrors`, which shows the errors under the box (DVE-1), as the Fluent theme and the text box (TXB-12) do. | The FerroUI contract (data validation). |
 | NUD-15 | `IsTabStop="False"` of the spin button styles | The buttons are not tab stops. | Also `Focusable="False"`. | A focusable button would take the focus from the text box. |
 
 ## PipsPager
@@ -968,7 +968,7 @@ The section covers both control themes of the document: ManagedFileChooser and M
 | SLD-8 | `FocusEngagementStates`, `IsFocusEngagementEnabled`, `ManipulationMode`, `FocusVisualMargin` of the thumbs, `AutomationProperties.AccessibilityView` | Focus engagement for game pads; manipulations. | Left out. | No counterpart (G-19); the thumbs are not focusable in FerroUI. |
 | SLD-9 | `Border x:Name="FocusBorder"` with `Control.IsTemplateFocusTarget="True"`, `FocusVisualMargin="-7,0,-7,0"` | The focus rectangle surrounds the slider area. | `TemplatedControl.IsTemplateFocusTarget="True"` and a `FocusAdorner` with that margin. | G-14. |
 | SLD-10 | `RowDefinition Height="{ThemeResource SliderPreContentMargin}"`, `SliderPostContentMargin` (and the columns of the vertical template) | Sizes of resources. | The values (14) are written. | A double resource does not convert to a `GridLength`. |
-| SLD-11 | (not in WinUI) | WinUI 3 has no input validation. | `:error` sets the foreground and the thumb background to `SystemControlErrorTextForegroundBrush`, as the Fluent theme. | The FerroUI contract (data validation). |
+| SLD-11 | (not in WinUI) | WinUI 3 has no input validation. | `:error` sets the foreground and the thumb background to `SystemControlErrorTextForegroundBrush`, as the Fluent theme, and both templates are wrapped in `DataValidationErrors`, which shows the errors under the slider (DVE-1), as the Fluent theme wraps them. | The FerroUI contract (data validation). |
 
 ## SplitButton
 

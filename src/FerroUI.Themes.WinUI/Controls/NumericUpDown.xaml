@@ -44,7 +44,9 @@
     the one of DefaultTextBoxStyle: TextBoxDeleteButtonStyle.
   - The FerroUI contract: InnerLeftContent and InnerRightContent of NumericUpDown (shown by the
     Fluent theme) are passed to the text box, whose NumberBoxTextBoxStyle shows them beside the
-    text; :error (data validation) gives the border the critical brush.
+    text; :error (data validation) gives the border the critical brush, and the template is
+    wrapped in DataValidationErrors, which shows the errors under the box (as the Fluent theme
+    wraps it, and as Controls/TextBox.xaml does).
   - IsTabStop="False" of the spin buttons is also Focusable="False"; the FontFamily setters of the
     symbol font are left out (the glyphs are paths).
 -->
@@ -306,37 +308,40 @@
     <Setter Property="PlaceholderForeground" Value="{DynamicResource TextControlPlaceholderForeground}" />
     <Setter Property="Template">
       <ControlTemplate>
-        <ButtonSpinner x:Name="PART_Spinner"
-                       Theme="{StaticResource NumericUpDownButtonSpinnerStyle}"
-                       CornerRadius="{TemplateBinding CornerRadius}"
-                       AllowSpin="{TemplateBinding AllowSpin}"
-                       ShowButtonSpinner="{TemplateBinding ShowButtonSpinner}"
-                       ButtonSpinnerLocation="{TemplateBinding ButtonSpinnerLocation}"
-                       HorizontalContentAlignment="Stretch"
-                       VerticalContentAlignment="Stretch">
-          <TextBox x:Name="PART_TextBox"
-                   Theme="{StaticResource NumberBoxTextBoxStyle}"
-                   FontSize="{TemplateBinding FontSize}"
-                   FontWeight="{TemplateBinding FontWeight}"
-                   FontFamily="{TemplateBinding FontFamily}"
-                   Background="{TemplateBinding Background}"
-                   BorderThickness="{TemplateBinding BorderThickness}"
-                   BorderBrush="{TemplateBinding BorderBrush}"
-                   Padding="{TemplateBinding Padding}"
-                   Foreground="{TemplateBinding Foreground}"
-                   TextAlignment="{TemplateBinding TextAlignment}"
-                   CornerRadius="{TemplateBinding CornerRadius}"
-                   PlaceholderText="{TemplateBinding PlaceholderText}"
-                   PlaceholderForeground="{TemplateBinding PlaceholderForeground}"
-                   IsReadOnly="{TemplateBinding IsReadOnly}"
-                   Text="{TemplateBinding Text}"
-                   HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
-                   VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
-                   AcceptsReturn="False"
-                   TextWrapping="NoWrap"
-                   InnerLeftContent="{Binding InnerLeftContent, RelativeSource={RelativeSource TemplatedParent}}"
-                   InnerRightContent="{Binding InnerRightContent, RelativeSource={RelativeSource TemplatedParent}}" />
-        </ButtonSpinner>
+        <!-- The errors of FerroUI's data validation under the box (DataValidationErrors.xaml). -->
+        <DataValidationErrors>
+          <ButtonSpinner x:Name="PART_Spinner"
+                         Theme="{StaticResource NumericUpDownButtonSpinnerStyle}"
+                         CornerRadius="{TemplateBinding CornerRadius}"
+                         AllowSpin="{TemplateBinding AllowSpin}"
+                         ShowButtonSpinner="{TemplateBinding ShowButtonSpinner}"
+                         ButtonSpinnerLocation="{TemplateBinding ButtonSpinnerLocation}"
+                         HorizontalContentAlignment="Stretch"
+                         VerticalContentAlignment="Stretch">
+            <TextBox x:Name="PART_TextBox"
+                     Theme="{StaticResource NumberBoxTextBoxStyle}"
+                     FontSize="{TemplateBinding FontSize}"
+                     FontWeight="{TemplateBinding FontWeight}"
+                     FontFamily="{TemplateBinding FontFamily}"
+                     Background="{TemplateBinding Background}"
+                     BorderThickness="{TemplateBinding BorderThickness}"
+                     BorderBrush="{TemplateBinding BorderBrush}"
+                     Padding="{TemplateBinding Padding}"
+                     Foreground="{TemplateBinding Foreground}"
+                     TextAlignment="{TemplateBinding TextAlignment}"
+                     CornerRadius="{TemplateBinding CornerRadius}"
+                     PlaceholderText="{TemplateBinding PlaceholderText}"
+                     PlaceholderForeground="{TemplateBinding PlaceholderForeground}"
+                     IsReadOnly="{TemplateBinding IsReadOnly}"
+                     Text="{TemplateBinding Text}"
+                     HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                     VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                     AcceptsReturn="False"
+                     TextWrapping="NoWrap"
+                     InnerLeftContent="{Binding InnerLeftContent, RelativeSource={RelativeSource TemplatedParent}}"
+                     InnerRightContent="{Binding InnerRightContent, RelativeSource={RelativeSource TemplatedParent}}" />
+          </ButtonSpinner>
+        </DataValidationErrors>
       </ControlTemplate>
     </Setter>
 

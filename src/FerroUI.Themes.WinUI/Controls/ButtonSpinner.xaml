@@ -15,7 +15,8 @@
   NumericUpDownButtonSpinnerStyle of NumericUpDown.xaml instead, in which the text box draws the
   box. The FerroUI contract: ButtonSpinnerLocation="Left" (:left) docks the buttons at the left,
   ShowButtonSpinner hides them, AllowSpin disables them (the control sets IsEnabled), and :error
-  (data validation) gives the border the critical brush. As the text box of WinUI, the spinner
+  (data validation) gives the border the critical brush; the template is wrapped in
+  DataValidationErrors, which shows the errors under the box, as the Fluent theme wraps it. As the text box of WinUI, the spinner
   shows no focus rectangle (its focused state is the border of the box).
 -->
 <ResourceDictionary xmlns="https://github.com/ferroui"
@@ -47,52 +48,55 @@
     <Setter Property="FocusAdorner" Value="{x:Null}" />
     <Setter Property="Template">
       <ControlTemplate>
-        <Grid>
-          <Border x:Name="BorderElement"
-                  Background="{TemplateBinding Background}"
-                  BorderBrush="{TemplateBinding BorderBrush}"
-                  BorderThickness="{TemplateBinding BorderThickness}"
-                  CornerRadius="{TemplateBinding CornerRadius}"
-                  BackgroundSizing="InnerBorderEdge"
-                  MinWidth="{TemplateBinding MinWidth}"
-                  MinHeight="{TemplateBinding MinHeight}" />
-          <DockPanel Margin="{TemplateBinding BorderThickness}">
-            <StackPanel x:Name="SpinButtons"
-                        DockPanel.Dock="Right"
-                        Orientation="Horizontal"
-                        IsVisible="{TemplateBinding ShowButtonSpinner}">
-              <RepeatButton x:Name="PART_IncreaseButton"
-                            Theme="{StaticResource NumericUpDownSpinButtonStyle}"
-                            Margin="4"
-                            CornerRadius="{TemplateBinding CornerRadius}">
-                <Path Data="{StaticResource GlyphGeometryE70E}"
-                      Fill="{Binding $parent[RepeatButton].Foreground}"
-                      Stretch="Uniform"
-                      Width="12"
-                      HorizontalAlignment="Center"
-                      VerticalAlignment="Center" />
-              </RepeatButton>
-              <RepeatButton x:Name="PART_DecreaseButton"
-                            Theme="{StaticResource NumericUpDownSpinButtonStyle}"
-                            Margin="0,4,4,4"
-                            CornerRadius="{TemplateBinding CornerRadius}">
-                <Path Data="{StaticResource GlyphGeometryE70D}"
-                      Fill="{Binding $parent[RepeatButton].Foreground}"
-                      Stretch="Uniform"
-                      Width="12"
-                      HorizontalAlignment="Center"
-                      VerticalAlignment="Center" />
-              </RepeatButton>
-            </StackPanel>
-            <ContentPresenter x:Name="PART_ContentPresenter"
-                              Content="{TemplateBinding Content}"
-                              ContentTemplate="{TemplateBinding ContentTemplate}"
-                              Foreground="{TemplateBinding Foreground}"
-                              Padding="{TemplateBinding Padding}"
-                              HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
-                              VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
-          </DockPanel>
-        </Grid>
+        <!-- The errors of FerroUI's data validation under the box (DataValidationErrors.xaml). -->
+        <DataValidationErrors>
+          <Grid>
+            <Border x:Name="BorderElement"
+                    Background="{TemplateBinding Background}"
+                    BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="{TemplateBinding BorderThickness}"
+                    CornerRadius="{TemplateBinding CornerRadius}"
+                    BackgroundSizing="InnerBorderEdge"
+                    MinWidth="{TemplateBinding MinWidth}"
+                    MinHeight="{TemplateBinding MinHeight}" />
+            <DockPanel Margin="{TemplateBinding BorderThickness}">
+              <StackPanel x:Name="SpinButtons"
+                          DockPanel.Dock="Right"
+                          Orientation="Horizontal"
+                          IsVisible="{TemplateBinding ShowButtonSpinner}">
+                <RepeatButton x:Name="PART_IncreaseButton"
+                              Theme="{StaticResource NumericUpDownSpinButtonStyle}"
+                              Margin="4"
+                              CornerRadius="{TemplateBinding CornerRadius}">
+                  <Path Data="{StaticResource GlyphGeometryE70E}"
+                        Fill="{Binding $parent[RepeatButton].Foreground}"
+                        Stretch="Uniform"
+                        Width="12"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center" />
+                </RepeatButton>
+                <RepeatButton x:Name="PART_DecreaseButton"
+                              Theme="{StaticResource NumericUpDownSpinButtonStyle}"
+                              Margin="0,4,4,4"
+                              CornerRadius="{TemplateBinding CornerRadius}">
+                  <Path Data="{StaticResource GlyphGeometryE70D}"
+                        Fill="{Binding $parent[RepeatButton].Foreground}"
+                        Stretch="Uniform"
+                        Width="12"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center" />
+                </RepeatButton>
+              </StackPanel>
+              <ContentPresenter x:Name="PART_ContentPresenter"
+                                Content="{TemplateBinding Content}"
+                                ContentTemplate="{TemplateBinding ContentTemplate}"
+                                Foreground="{TemplateBinding Foreground}"
+                                Padding="{TemplateBinding Padding}"
+                                HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
+            </DockPanel>
+          </Grid>
+        </DataValidationErrors>
       </ControlTemplate>
     </Setter>
 
