@@ -287,6 +287,44 @@ fn window_follows_the_theme_variants() {
     assert_ne!(dark, high_contrast);
 }
 
+/// The window decorations are themed (they are created by the framework, not put in a window as
+/// content): the template of the theme, or of the theme it is based on, builds the parts the class
+/// asks for, with the declared types.
+#[test]
+fn window_drawn_decorations() {
+    use ferroui_controls::chrome::{IWindowDrawnDecorationsTemplate, WindowDrawnDecorations};
+
+    let _app = start_themed_application();
+    let theme = control_theme(WindowDrawnDecorations::TYPE);
+    assert!(theme.target_type().is_some_and(|target| std::ptr::eq(target, WindowDrawnDecorations::TYPE)));
+    let template = setters_of_chain(&theme)
+        .into_iter()
+        .find(|(name, _)| *name == "Template")
+        .and_then(|(_, value)| match value {
+            SetterValue::Value(value) => value
+                .downcast_ref::<Option<Rc<dyn IWindowDrawnDecorationsTemplate>>>()
+                .cloned()
+                .flatten()
+                .or_else(|| from_markup_value::<Rc<dyn IWindowDrawnDecorationsTemplate>>(&Some(value.clone()))),
+            _ => None,
+        })
+        .expect("WindowDrawnDecorations: a decorations template");
+    let built = template.build_typed();
+    let name_scope = built.name_scope();
+    for (part, part_type) in expected_parts(WindowDrawnDecorations::TYPE) {
+        let found = name_scope
+            .find(part)
+            .unwrap_or_else(|| panic!("WindowDrawnDecorations: the part {part} is not in the template"));
+        if let Some(part_type) = part_type {
+            assert!(
+                is_instance_of(&found, part_type),
+                "WindowDrawnDecorations: the part {part} is a {}, not a {part_type}",
+                found.get_type().name()
+            );
+        }
+    }
+}
+
 /// Every control with a default control theme in the theme (a type-keyed
 /// control theme whose target can be created and put in a window) has a
 /// test above.

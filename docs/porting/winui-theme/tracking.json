@@ -75584,9 +75584,9 @@
    "key": "DefaultTitleBarStyle",
    "kind": "Style",
    "target_type": "TitleBar",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B6"
+   "batch": null
   },
   {
    "document": "controls/dev/TitleBar/TitleBar.xaml",
@@ -75594,9 +75594,9 @@
    "key": "{TitleBar}",
    "kind": "Style",
    "target_type": "TitleBar",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B6"
+   "batch": null
   },
   {
    "document": "controls/dev/TitleBar/TitleBar_themeresources.xaml",
@@ -75604,9 +75604,9 @@
    "key": "TitleBarBackButtonStyle",
    "kind": "Style",
    "target_type": "Button",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B6"
+   "batch": null
   },
   {
    "document": "controls/dev/TitleBar/TitleBar_themeresources.xaml",
@@ -75774,9 +75774,9 @@
    "key": "TitleBarPaneToggleButtonStyle",
    "kind": "Style",
    "target_type": "Button",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B6"
+   "batch": null
   },
   {
    "document": "controls/dev/TitleBar/TitleBar_themeresources.xaml",
@@ -78104,9 +78104,9 @@
    "key": "WindowCaptionButton",
    "kind": "Style",
    "target_type": "Button",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B6"
+   "batch": null
   },
   {
    "document": "dxaml/xcp/dxaml/themes/generic.xaml",
@@ -78114,9 +78114,9 @@
    "key": "WindowChromeStyle",
    "kind": "Style",
    "target_type": "ContentControl",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B6"
+   "batch": null
   },
   {
    "document": "dxaml/xcp/dxaml/themes/generic.xaml",
@@ -90101,6 +90101,7 @@
   "Controls/TransitioningContentControl.xaml",
   "Controls/WinUIControls.xaml",
   "Controls/Window.xaml",
+  "Controls/WindowDrawnDecorations.xaml",
   "Controls/WindowNotificationManager.xaml",
   "DensityStyles/Compact.xaml",
   "Resources/AcrylicBrush_themeresources.xaml",
@@ -90610,7 +90611,7 @@
    "winui": "InfoBar: {InfoBar} (InfoBar.xaml, InfoBar_themeresources.xaml).",
    "status": "ported",
    "deviations": 13,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "NumericUpDown.xaml",
@@ -91027,9 +91028,9 @@
    ],
    "batch": "B6",
    "winui": "TitleBar: DefaultTitleBarStyle (TitleBar.xaml, TitleBar_themeresources.xaml); WindowCaptionButton (generic.xaml) for the caption buttons.",
-   "status": "pending",
-   "deviations": 0,
-   "date": ""
+   "status": "ported",
+   "deviations": 15,
+   "date": "not committed"
   },
   {
    "document": "WindowNotificationManager.xaml",
@@ -91040,7 +91041,7 @@
    "winui": "No WinUI control: a host of InfoBar cards (InfoBar_themeresources.xaml).",
    "status": "ported",
    "deviations": 5,
-   "date": "not committed"
+   "date": "2026-10-16"
   }
  ],
  "unmapped_fluent_documents": [],
@@ -91493,6 +91494,7 @@
   "TableViewCell": 3,
   "TableViewColumnHeader": 7,
   "TableViewRow": 6,
+  "WindowDrawnDecorations": 15,
   "WindowNotificationManager": 5
  },
  "winui_targets": {

@@ -40,6 +40,22 @@
   <!-- E8FB Accept: the accept button of the date and time picker flyouts. -->
   <StreamGeometry x:Key="GlyphGeometryE8FB">M 0,7 0.7,6.3 5,10.6 15.3,0.3 16,1 5,12 Z</StreamGeometry>
 
+  <!-- E921 ChromeMinimize, E922 ChromeMaximize, E923 ChromeRestore, E8BB ChromeClose, E740
+       FullScreen, E73F BackToWindow: the caption buttons of WindowDrawnDecorations. The outlines of
+       the caption buttons of the Fluent theme of FerroUI
+       (src/FerroUI.Themes.Fluent/Controls/WindowDrawnDecorations.xaml), in the 2048 units of the em
+       of the symbol font, with the y axis of the font turned down. -->
+  <StreamGeometry x:Key="GlyphGeometryE921">M2048 819v205h-2048v-205h2048z</StreamGeometry>
+  <StreamGeometry x:Key="GlyphGeometryE922">M2048 2048v-2048h-2048v2048h2048zM1843 1843h-1638v-1638h1638v1638z</StreamGeometry>
+  <StreamGeometry x:Key="GlyphGeometryE923">M2048 1638h-410v410h-1638v-1638h410v-410h1638v1638zM1434 614h-1229v1229h1229v-1229zM1843 205h-1229v205h1024v1024h205v-1229z</StreamGeometry>
+  <StreamGeometry x:Key="GlyphGeometryE8BB">M1169 1024l879 -879l-145 -145l-879 879l-879 -879l-145 145l879 879l-879 879l145 145l879 -879l879 879l145 -145z</StreamGeometry>
+  <StreamGeometry x:Key="GlyphGeometryE740">M2048 0v819h-205v-469l-1493 1493h469v205h-819v-819h205v469l1493 -1493h-469v-205h819z</StreamGeometry>
+  <StreamGeometry x:Key="GlyphGeometryE73F">M205 1024h819v819h-205v-469l-674 674l-145 -145l674 -674h-469v-205zM1374 819h469v205h-819v-819h205v469l674 -674l145 145z</StreamGeometry>
+  <!-- E72B Back (TitleBarBackButtonStyle) and E74A Up (the up button of ManagedFileChooser):
+       arrows of 1 px strokes, 14 x 14. -->
+  <StreamGeometry x:Key="GlyphGeometryE72B">F1 M0,6 14,6 14,7 0,7Z M-0.207,6.5 6.5,-0.207 7.207,0.5 0.5,7.207Z M0.5,5.793 7.207,12.5 6.5,13.207 -0.207,6.5Z</StreamGeometry>
+  <!-- E700 GlobalNavigationButton (TitleBarPaneToggleButtonStyle): three bars, 14 x 10. -->
+  <StreamGeometry x:Key="GlyphGeometryE700">M0.5,0 H13.5 A0.5,0.5 0 0 1 13.5,1 H0.5 A0.5,0.5 0 0 1 0.5,0 Z M0.5,4.5 H13.5 A0.5,0.5 0 0 1 13.5,5.5 H0.5 A0.5,0.5 0 0 1 0.5,4.5 Z M0.5,9 H13.5 A0.5,0.5 0 0 1 13.5,10 H0.5 A0.5,0.5 0 0 1 0.5,9 Z</StreamGeometry>
   <!-- E711 Cancel (InfoBarCloseButtonSymbol, the close button of InfoBar): the outline of E894,
        which the symbol font draws the same. -->
   <StreamGeometry x:Key="GlyphGeometryE711">M 11.416016,10 20,1.4160156 18.583984,0 10,8.5839846 1.4160156,0 0,1.4160156 8.5839844,10 0,18.583985 1.4160156,20 10,11.416015 18.583984,20 20,18.583985 Z</StreamGeometry>
