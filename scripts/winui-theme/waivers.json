@@ -1,0 +1,280 @@
+{
+  "comment": "Items of the WinUI 3 theme (microsoft-ui-xaml, docs/porting/winui-theme.md) that the port does not carry, each with its reason. `document` is a path of microsoft-ui-xaml or \"*\"; `key` is a resource key, an implicit style as {TargetType}, \"*\" for every item of the document, or \"re:<regular expression>\" matched against the whole key; `variant` (optional) limits the waiver to one theme dictionary (Default, Light, HighContrast). Read by scripts/winui-theme/status.py and scripts/winui-theme/convert.py.",
+  "waivers": [
+    {
+      "document": "controls/dev/CommonStyles/ScrollBar_themeresources.xaml",
+      "key": "re:(TopLeft|BottomRight)CornerRadiusDoubleValueConverter(2x|8x)",
+      "reason": "Scaled corner radius values as doubles: FerroUI's CornerRadiusToDoubleConverter has no scale. The one use, the radii of the track rectangles of ScrollBar, is a border whose corner radius is scaled by a CornerRadiusFilterConverter (ScrollBarTrackCornerRadiusConverter in Controls/ScrollBar.xaml); the 8x converters have no use in the theme."
+    },
+    {
+      "document": "controls/dev/Materials/Reveal/RevealBrush_themeresources.xaml",
+      "key": "re:(?!(SystemControlTransparentRevealBackgroundBrush|SystemControlTransparentRevealBorderBrush|SystemControlHighlightAccentRevealBackgroundBrush|SystemControlHighlightListLowRevealBackgroundBrush|SystemControlHighlightListMediumRevealBackgroundBrush|SystemControlBackgroundTransparentRevealBorderBrush|SystemControlHighlightAltTransparentRevealBorderBrush)$).*",
+      "reason": "Reveal highlight (RevealBrush, the Reveal styles): deprecated in WinUI 3, where the brushes are plain fallbacks and the Reveal styles are kept for compatibility only; FerroUI has no Reveal lighting. The seven brushes that documents of the theme still name (MenuFlyout, CalendarView, NavigationView) are ported as the plain brushes they are."
+    },
+    {
+      "document": "*",
+      "key": "re:.*Reveal.*Style",
+      "reason": "Reveal styles (ButtonRevealStyle, ListViewItemRevealStyle, ...): deprecated in WinUI 3 (see the Reveal brushes); the default styles they duplicate are ported."
+    },
+    {
+      "document": "controls/dev/CommonStyles/Deprecated_themeresources.xaml",
+      "key": "re:MUX_NavigationViewItemPresenterStyle.*WithRevealFocus",
+      "reason": "Reveal focus variants of the NavigationView item presenter: deprecated (Reveal focus), and FerroUI has no NavigationView."
+    },
+    {
+      "document": "*",
+      "key": "IsApplicationFocusVisualKindReveal",
+      "reason": "Reveal focus visuals: deprecated in WinUI 3; the port reads UseSystemFocusVisuals=\"{ThemeResource IsApplicationFocusVisualKindReveal}\" (always False) as no focus visual (FocusAdorner = {x:Null})."
+    },
+    {
+      "document": "*",
+      "key": "re:AcrylicBackgroundFillColorDefaultBackdrop|MenuFlyoutSystemBackdrop",
+      "reason": "DesktopAcrylicBackdrop is a system backdrop of a window or popup (Windows composition), not a brush, and MenuFlyoutSystemBackdrop names it; FerroUI's counterpart is the transparency level of a top level, which an application chooses."
+    },
+    {
+      "document": "controls/dev/InkToolbar/InkToolbar.xaml",
+      "key": "*",
+      "reason": "InkToolbar: no FerroUI control (no inking)."
+    },
+    {
+      "document": "controls/dev/InkToolbar/InkToolbar_themeresources.xaml",
+      "key": "*",
+      "reason": "InkToolbar: no FerroUI control (no inking)."
+    },
+    {
+      "document": "controls/dev/CommonStyles/MediaTransportControls_themeresources.xaml",
+      "key": "*",
+      "reason": "MediaTransportControls: no FerroUI control (no media playback)."
+    },
+    {
+      "document": "dxaml/xcp/dxaml/themes/generic.xaml",
+      "key": "re:MTC.*|\\{MediaPlayerElement\\}",
+      "reason": "MediaTransportControls and MediaPlayerElement: no FerroUI control (no media playback)."
+    },
+    {
+      "document": "controls/dev/CommonStyles/Pivot_themeresources.xaml",
+      "key": "*",
+      "reason": "Pivot: no FerroUI control; FerroUI's TabControl is ported from TabView."
+    },
+    {
+      "document": "dxaml/xcp/dxaml/themes/generic.xaml",
+      "key": "re:Pivot.*",
+      "reason": "Pivot: no FerroUI control; FerroUI's TabControl is ported from TabView."
+    },
+    {
+      "document": "dxaml/xcp/dxaml/themes/generic.xaml",
+      "key": "re:\\{(Hub|HubSection|SemanticZoom|ListView|GridView|ListViewHeaderItem|GridViewHeaderItem|GroupItem|Frame|AppBar|AppBarElementContainer|ListPickerFlyoutPresenter|PickerFlyoutPresenter)\\}|GridViewItemExpanded|FlyoutPickerListViewItemContentPresenterStyle|FlyoutPickerTitleTextBlockStyle|ListPickerFlyoutPresenterContentTemplate|BaseRichTextBlockStyle|BodyRichTextBlockStyle|LanguageSwitcherMenuFlyoutItemStyle|LanguageSwitcherMenuFlyoutSettingsRowStyle",
+      "reason": "Styles of WinUI controls FerroUI does not have (Hub, SemanticZoom, ListView, GridView, group headers, Frame, AppBar, the list and picker flyouts, RichTextBlock, the language switcher of the input method menu)."
+    },
+    {
+      "document": "dxaml/xcp/dxaml/themes/generic.xaml",
+      "key": "re:(Hub|SemanticZoom|ListViewHeader|GridViewHeader|ListPickerFlyout|PickerFlyout|FlyoutPicker|RichTextBlock|LanguageSwitcher|IMECandidate|KeyTip|Phone|GridViewItem).*",
+      "reason": "Resources of WinUI controls FerroUI does not have (Hub, SemanticZoom, ListView and GridView headers, the picker flyouts, RichTextBlock, the input method candidate list, key tips, the phone resources of the platform theme, GridView items)."
+    },
+    {
+      "document": "controls/dev/CommonStyles/GridViewItem_themeresources.xaml",
+      "key": "*",
+      "reason": "GridViewItem: no FerroUI control (no GridView)."
+    },
+    {
+      "document": "controls/dev/CommonStyles/RichEditBox_themeresources.xaml",
+      "key": "*",
+      "reason": "RichEditBox: no FerroUI control (no rich text editing)."
+    },
+    {
+      "document": "controls/dev/RatingControl/RatingControl.xaml",
+      "key": "*",
+      "reason": "RatingControl: no FerroUI control."
+    },
+    {
+      "document": "controls/dev/RatingControl/RatingControl_themeresources.xaml",
+      "key": "*",
+      "reason": "RatingControl: no FerroUI control."
+    },
+    {
+      "document": "controls/dev/InfoBadge/InfoBadge.xaml",
+      "key": "*",
+      "reason": "InfoBadge: no FerroUI control."
+    },
+    {
+      "document": "controls/dev/InfoBadge/InfoBadge_themeresources.xaml",
+      "key": "*",
+      "reason": "InfoBadge: no FerroUI control."
+    },
+    {
+      "document": "controls/dev/PersonPicture/PersonPicture.xaml",
+      "key": "*",
+      "reason": "PersonPicture: no FerroUI control."
+    },
+    {
+      "document": "controls/dev/PersonPicture/PersonPicture_themeresources.xaml",
+      "key": "*",
+      "reason": "PersonPicture: no FerroUI control."
+    },
+    {
+      "document": "controls/dev/MapControl/MapControl.xaml",
+      "key": "*",
+      "reason": "MapControl: no FerroUI control."
+    },
+    {
+      "document": "controls/dev/TeachingTip/TeachingTip.xaml",
+      "key": "*",
+      "reason": "TeachingTip: no FerroUI control."
+    },
+    {
+      "document": "controls/dev/TeachingTip/TeachingTip_themeresources.xaml",
+      "key": "*",
+      "reason": "TeachingTip: no FerroUI control."
+    },
+    {
+      "document": "controls/dev/TwoPaneView/TwoPaneView.xaml",
+      "key": "*",
+      "reason": "TwoPaneView: no FerroUI control."
+    },
+    {
+      "document": "controls/dev/SwipeControl/SwipeControl.xaml",
+      "key": "*",
+      "reason": "SwipeControl: no FerroUI control."
+    },
+    {
+      "document": "controls/dev/SwipeControl/SwipeControl_themeresources.xaml",
+      "key": "*",
+      "reason": "SwipeControl: no FerroUI control."
+    },
+    {
+      "document": "controls/dev/AnnotatedScrollBar/AnnotatedScrollBar.xaml",
+      "key": "*",
+      "reason": "AnnotatedScrollBar: no FerroUI control."
+    },
+    {
+      "document": "controls/dev/AnnotatedScrollBar/AnnotatedScrollBar_themeresources.xaml",
+      "key": "*",
+      "reason": "AnnotatedScrollBar: no FerroUI control."
+    },
+    {
+      "document": "controls/dev/ItemsView/ItemsView.xaml",
+      "key": "*",
+      "reason": "ItemsView: no FerroUI control (FerroUI's ListBox is ported from WinUI's ListBox)."
+    },
+    {
+      "document": "controls/dev/ItemContainer/ItemContainer.xaml",
+      "key": "*",
+      "reason": "ItemContainer (the container of ItemsView): no FerroUI control."
+    },
+    {
+      "document": "controls/dev/ItemContainer/ItemContainer_themeresources.xaml",
+      "key": "*",
+      "reason": "ItemContainer (the container of ItemsView): no FerroUI control."
+    },
+    {
+      "document": "controls/dev/Breadcrumb/BreadcrumbBar.xaml",
+      "key": "*",
+      "reason": "BreadcrumbBar: no FerroUI control."
+    },
+    {
+      "document": "controls/dev/Breadcrumb/BreadcrumbBar_themeresources.xaml",
+      "key": "*",
+      "reason": "BreadcrumbBar: no FerroUI control."
+    },
+    {
+      "document": "controls/dev/PagerControl/PagerControl.xaml",
+      "key": "*",
+      "reason": "PagerControl: no FerroUI control (FerroUI's PipsPager is ported from WinUI's PipsPager)."
+    },
+    {
+      "document": "controls/dev/PagerControl/PagerControl_themeresources.xaml",
+      "key": "*",
+      "reason": "PagerControl: no FerroUI control (FerroUI's PipsPager is ported from WinUI's PipsPager)."
+    },
+    {
+      "document": "controls/dev/ColorPicker/ColorPicker.xaml",
+      "key": "*",
+      "reason": "ColorPicker: the colour picker library of FerroUI (ferroui-controls-color-picker) carries its own control themes; a WinUI variant of them belongs to that crate, not to the theme of the control set."
+    },
+    {
+      "document": "controls/dev/ColorPicker/ColorSpectrum.xaml",
+      "key": "*",
+      "reason": "ColorSpectrum: styled by the colour picker library of FerroUI (see ColorPicker)."
+    },
+    {
+      "document": "controls/dev/ColorPicker/ColorPicker_themeresources.xaml",
+      "key": "*",
+      "reason": "ColorPicker: styled by the colour picker library of FerroUI (see ColorPicker)."
+    },
+    {
+      "document": "controls/dev/CommandBarFlyout/CommandBarFlyout.xaml",
+      "key": "*",
+      "reason": "CommandBarFlyout: no FerroUI control (the context menus of FerroUI are menu flyouts, ported from MenuFlyout)."
+    },
+    {
+      "document": "controls/dev/CommandBarFlyout/CommandBarFlyout_themeresources.xaml",
+      "key": "*",
+      "reason": "CommandBarFlyout: no FerroUI control (the context menus of FerroUI are menu flyouts, ported from MenuFlyout)."
+    },
+    {
+      "document": "controls/dev/CommonStyles/Common_themeresources.xaml",
+      "key": "re:TextControlCommandBar(Context|Selection)Flyout",
+      "reason": "TextCommandBarFlyout (the default context and selection flyouts of WinUI's text controls): no FerroUI control; the text boxes of the port get a menu flyout of the same commands, built with the MenuFlyout batch."
+    },
+    {
+      "document": "controls/dev/RadioButtons/RadioButtons.xaml",
+      "key": "*",
+      "reason": "RadioButtons (the group control): no FerroUI control; FerroUI groups radio buttons by GroupName."
+    },
+    {
+      "document": "controls/dev/RadioButtons/RadioButtons_themeresources.xaml",
+      "key": "*",
+      "reason": "RadioButtons (the group control): no FerroUI control; FerroUI groups radio buttons by GroupName."
+    },
+    {
+      "document": "dxaml/xcp/dxaml/themes/generic.xaml",
+      "key": "RadioButtonsItemStyle",
+      "reason": "RadioButtons (the group control): no FerroUI control."
+    },
+    {
+      "document": "controls/dev/ProgressRing/ProgressRing.xaml",
+      "key": "*",
+      "reason": "ProgressRing: no FerroUI control (its animation is an animated visual, a Lottie composition)."
+    },
+    {
+      "document": "controls/dev/ProgressRing/ProgressRing_themeresources.xaml",
+      "key": "*",
+      "reason": "ProgressRing: no FerroUI control (its animation is an animated visual, a Lottie composition)."
+    },
+    {
+      "document": "controls/dev/ImageIcon/ImageIcon.xaml",
+      "key": "*",
+      "reason": "ImageIcon: no FerroUI control."
+    },
+    {
+      "document": "controls/dev/ScrollView/ScrollView.xaml",
+      "key": "*",
+      "reason": "ScrollView (the ScrollPresenter based scroller): no FerroUI control; FerroUI's ScrollViewer is ported from WinUI's ScrollViewer."
+    },
+    {
+      "document": "controls/dev/ScrollView/ScrollView_themeresources.xaml",
+      "key": "*",
+      "reason": "ScrollView (the ScrollPresenter based scroller): no FerroUI control; FerroUI's ScrollViewer is ported from WinUI's ScrollViewer."
+    },
+    {
+      "document": "*",
+      "key": "re:(GridView|ListView)ItemCheckMode",
+      "reason": "ListViewItemPresenterCheckMode: the check mode of WinUI's ListViewItemPresenter, a type FerroUI does not have."
+    },
+    {
+      "document": "*",
+      "key": "re:(CalendarViewBaseItem|ListViewBaseItem)RoundedChromeEnabled|(GridViewItem|ListViewItem)SelectionCheckMarkVisualEnabled|ListViewItemSelectionIndicatorVisualEnabled",
+      "reason": "Switches of the chrome that WinUI's ListViewItemPresenter and CalendarViewBaseItem draw in native code; the FerroUI templates draw that chrome with elements and have no such switch."
+    },
+    {
+      "document": "*",
+      "key": "re:ThemeShadowIsUsingDropShadows|IsDefaultShadowEnabled",
+      "reason": "Switches of WinUI's ThemeShadow; FerroUI has drop shadows (BoxShadows) but no ThemeShadow."
+    },
+    {
+      "document": "dxaml/xcp/dxaml/themes/generic.xaml",
+      "key": "re:DefaultInputValidationErrorTemplate|DefaultCompactErrorIconTemplate|RequiredHeaderContent",
+      "reason": "Input validation of WinUI (IInputValidationControl): removed from WinUI 3 before release and inert; FerroUI's DataValidationErrors is built from the error brushes instead."
+    }
+  ]
+}

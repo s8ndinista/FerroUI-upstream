@@ -1,0 +1,230 @@
+<!--
+  Ported from microsoft-ui-xaml (https://github.com/microsoft/microsoft-ui-xaml),
+  commit 7e4b0c2096be402f51cc8f7d203ebf67cff183d0:
+    controls/dev/CommonStyles/TextBox_themeresources.xaml (the styles; its resources are
+    Resources/TextBox_themeresources.xaml)
+  Copyright (c) Microsoft Corporation. Licensed under the MIT License (see NOTICE.md of the crate).
+
+  Translation notes (docs/porting/winui-theme.md, section 4):
+  - Template parts: ContentElement, the ScrollViewer of the text, is FerroUI's PART_ScrollViewer and
+    holds PART_TextPresenter, the text view that WinUI's ScrollViewer gets from the control.
+  - FerroUI's TextBox has no Header and no Description: HeaderContentPresenter,
+    DescriptionPresenter and their rows are left out.
+  - The placeholder: WinUI binds its foreground to PlaceholderForeground with the theme resource of
+    the state as TargetNullValue, and the control hides it while there is text. Here the state
+    styles set PlaceholderForeground of the control (a value the application sets wins, as with
+    TargetNullValue) and the placeholder is visible while the text and the text of the input
+    method are empty.
+  - The delete button: the template-local style DeleteButtonStyle is the keyed theme
+    TextBoxDeleteButtonStyle; the ButtonStates group (ButtonVisible, which the control selects in
+    CTextBox::CanInvokeDeleteButton) is the selector of its condition, without the width check of
+    the source; the button clears the text through the Clear method of the control. Its glyph
+    E894 is the geometry GlyphGeometryE894.
+  - UseSystemFocusVisuals="{ThemeResource IsApplicationFocusVisualKindReveal}" is False: no focus
+    adorner. CaretBrush is set because FerroUI's caret does not follow the foreground as WinUI's
+    does. SelectionHighlightColor is SelectionBrush.
+  - Pending: the context flyout (WinUI's TextCommandBarFlyout, waived) is a menu flyout of the
+    same commands, added with the menu flyout of batch B3 (docs/porting/winui-theme.md, section 7).
+-->
+<ResourceDictionary xmlns="https://github.com/ferroui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    x:ClassModifier="internal">
+  <Design.PreviewWith>
+    <Border Padding="20">
+      <StackPanel Spacing="20">
+        <TextBox>Text</TextBox>
+        <TextBox PlaceholderText="Placeholder" />
+        <TextBox IsEnabled="False">Disabled</TextBox>
+      </StackPanel>
+    </Border>
+  </Design.PreviewWith>
+
+  <!-- DeleteButtonStyle of the template of DefaultTextBoxStyle. -->
+  <ControlTheme x:Key="TextBoxDeleteButtonStyle" TargetType="Button">
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border x:Name="ButtonLayoutGrid"
+                Margin="{DynamicResource TextBoxInnerButtonMargin}"
+                BorderBrush="{DynamicResource TextControlButtonBorderBrush}"
+                BorderThickness="{TemplateBinding BorderThickness}"
+                Background="{DynamicResource TextControlButtonBackground}"
+                BackgroundSizing="{TemplateBinding BackgroundSizing}"
+                CornerRadius="{TemplateBinding CornerRadius}">
+          <!-- E894 at TextBoxIconFontSize: the glyph is drawn at the size of its ink. -->
+          <Path x:Name="GlyphElement"
+                Fill="{DynamicResource TextControlButtonForeground}"
+                Data="{StaticResource GlyphGeometryE894}"
+                Stretch="Uniform"
+                Width="10"
+                Height="10"
+                VerticalAlignment="Center"
+                HorizontalAlignment="Center" />
+        </Border>
+      </ControlTemplate>
+    </Setter>
+
+    <!-- PointerOver -->
+    <Style Selector="^:pointerover">
+      <Style Selector="^ /template/ Border#ButtonLayoutGrid">
+        <Setter Property="Background" Value="{DynamicResource TextControlButtonBackgroundPointerOver}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource TextControlButtonBorderBrushPointerOver}" />
+      </Style>
+      <Style Selector="^ /template/ Path#GlyphElement">
+        <Setter Property="Fill" Value="{DynamicResource TextControlButtonForegroundPointerOver}" />
+      </Style>
+    </Style>
+    <!-- Pressed -->
+    <Style Selector="^:pressed">
+      <Style Selector="^ /template/ Border#ButtonLayoutGrid">
+        <Setter Property="Background" Value="{DynamicResource TextControlButtonBackgroundPressed}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource TextControlButtonBorderBrushPressed}" />
+      </Style>
+      <Style Selector="^ /template/ Path#GlyphElement">
+        <Setter Property="Fill" Value="{DynamicResource TextControlButtonForegroundPressed}" />
+      </Style>
+    </Style>
+    <!-- Disabled -->
+    <Style Selector="^:disabled /template/ Border#ButtonLayoutGrid">
+      <Setter Property="Opacity" Value="0" />
+    </Style>
+  </ControlTheme>
+
+  <ControlTheme x:Key="DefaultTextBoxStyle" TargetType="TextBox">
+    <Setter Property="Foreground" Value="{DynamicResource TextControlForeground}" />
+    <Setter Property="Background" Value="{DynamicResource TextControlBackground}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource TextControlBorderBrush}" />
+    <Setter Property="SelectionBrush" Value="{DynamicResource TextControlSelectionHighlightColor}" />
+    <Setter Property="CaretBrush" Value="{DynamicResource TextControlForegroundFocused}" />
+    <Setter Property="PlaceholderForeground" Value="{DynamicResource TextControlPlaceholderForeground}" />
+    <Setter Property="BorderThickness" Value="{DynamicResource TextControlBorderThemeThickness}" />
+    <Setter Property="FontFamily" Value="{DynamicResource ContentControlThemeFontFamily}" />
+    <Setter Property="FontSize" Value="{DynamicResource ControlContentThemeFontSize}" />
+    <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Hidden" />
+    <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Hidden" />
+    <Setter Property="ScrollViewer.IsDeferredScrollingEnabled" Value="False" />
+    <Setter Property="MinHeight" Value="{DynamicResource TextControlThemeMinHeight}" />
+    <Setter Property="MinWidth" Value="{DynamicResource TextControlThemeMinWidth}" />
+    <Setter Property="Padding" Value="{DynamicResource TextControlThemePadding}" />
+    <Setter Property="FocusAdorner" Value="{x:Null}" />
+    <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}" />
+    <Setter Property="BackgroundSizing" Value="InnerBorderEdge" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Grid ColumnDefinitions="*,Auto">
+          <Border x:Name="BorderElement"
+                  Grid.Column="0"
+                  Grid.ColumnSpan="2"
+                  Background="{TemplateBinding Background}"
+                  BackgroundSizing="{TemplateBinding BackgroundSizing}"
+                  BorderBrush="{TemplateBinding BorderBrush}"
+                  BorderThickness="{TemplateBinding BorderThickness}"
+                  CornerRadius="{TemplateBinding CornerRadius}"
+                  MinWidth="{TemplateBinding MinWidth}"
+                  MinHeight="{TemplateBinding MinHeight}" />
+          <ScrollViewer x:Name="PART_ScrollViewer"
+                        Grid.Column="0"
+                        HorizontalScrollBarVisibility="{TemplateBinding (ScrollViewer.HorizontalScrollBarVisibility)}"
+                        VerticalScrollBarVisibility="{TemplateBinding (ScrollViewer.VerticalScrollBarVisibility)}"
+                        IsDeferredScrollingEnabled="{TemplateBinding (ScrollViewer.IsDeferredScrollingEnabled)}"
+                        Margin="{TemplateBinding BorderThickness}"
+                        Padding="{TemplateBinding Padding}"
+                        Foreground="{TemplateBinding Foreground}"
+                        Focusable="False">
+            <TextPresenter x:Name="PART_TextPresenter"
+                           Text="{TemplateBinding Text, Mode=TwoWay}"
+                           CaretBlinkInterval="{TemplateBinding CaretBlinkInterval}"
+                           CaretIndex="{TemplateBinding CaretIndex}"
+                           SelectionStart="{TemplateBinding SelectionStart}"
+                           SelectionEnd="{TemplateBinding SelectionEnd}"
+                           TextAlignment="{TemplateBinding TextAlignment}"
+                           TextWrapping="{TemplateBinding TextWrapping}"
+                           LineHeight="{TemplateBinding LineHeight}"
+                           LetterSpacing="{TemplateBinding LetterSpacing}"
+                           PasswordChar="{TemplateBinding PasswordChar}"
+                           RevealPassword="{TemplateBinding RevealPassword}"
+                           SelectionBrush="{TemplateBinding SelectionBrush}"
+                           SelectionForegroundBrush="{TemplateBinding SelectionForegroundBrush}"
+                           CaretBrush="{TemplateBinding CaretBrush}"
+                           HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                           VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+            <ScrollViewer.Styles>
+              <Style Selector="ScrollContentPresenter#PART_ContentPresenter">
+                <Setter Property="Cursor" Value="IBeam" />
+              </Style>
+            </ScrollViewer.Styles>
+          </ScrollViewer>
+          <TextBlock x:Name="PlaceholderTextContentPresenter"
+                     Grid.Column="0"
+                     Grid.ColumnSpan="2"
+                     Foreground="{TemplateBinding PlaceholderForeground}"
+                     Margin="{TemplateBinding BorderThickness}"
+                     Padding="{TemplateBinding Padding}"
+                     Text="{TemplateBinding PlaceholderText}"
+                     TextAlignment="{TemplateBinding TextAlignment}"
+                     TextWrapping="{TemplateBinding TextWrapping}"
+                     IsHitTestVisible="False">
+            <TextBlock.IsVisible>
+              <MultiBinding Converter="{x:Static BoolConverters.And}">
+                <Binding ElementName="PART_TextPresenter" Path="PreeditText" Converter="{x:Static StringConverters.IsNullOrEmpty}" />
+                <Binding RelativeSource="{RelativeSource TemplatedParent}" Path="Text" Converter="{x:Static StringConverters.IsNullOrEmpty}" />
+              </MultiBinding>
+            </TextBlock.IsVisible>
+          </TextBlock>
+          <Button x:Name="DeleteButton"
+                  Grid.Column="1"
+                  Theme="{StaticResource TextBoxDeleteButtonStyle}"
+                  Command="{Binding $parent[TextBox].Clear}"
+                  BorderThickness="{TemplateBinding BorderThickness}"
+                  CornerRadius="{TemplateBinding CornerRadius}"
+                  Padding="{DynamicResource HelperButtonThemePadding}"
+                  Focusable="False"
+                  IsVisible="False"
+                  FontSize="{TemplateBinding FontSize}"
+                  Width="30"
+                  VerticalAlignment="Stretch" />
+        </Grid>
+      </ControlTemplate>
+    </Setter>
+
+    <!-- PointerOver -->
+    <Style Selector="^:pointerover">
+      <Setter Property="PlaceholderForeground" Value="{DynamicResource TextControlPlaceholderForegroundPointerOver}" />
+      <Style Selector="^ /template/ Border#BorderElement">
+        <Setter Property="BorderBrush" Value="{DynamicResource TextControlBorderBrushPointerOver}" />
+        <Setter Property="Background" Value="{DynamicResource TextControlBackgroundPointerOver}" />
+      </Style>
+      <Style Selector="^ /template/ ScrollViewer#PART_ScrollViewer">
+        <Setter Property="Foreground" Value="{DynamicResource TextControlForegroundPointerOver}" />
+      </Style>
+    </Style>
+    <!-- Focused -->
+    <Style Selector="^:focus">
+      <Setter Property="PlaceholderForeground" Value="{DynamicResource TextControlPlaceholderForegroundFocused}" />
+      <Style Selector="^ /template/ Border#BorderElement">
+        <Setter Property="Background" Value="{DynamicResource TextControlBackgroundFocused}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource TextControlBorderBrushFocused}" />
+        <Setter Property="BorderThickness" Value="{DynamicResource TextControlBorderThemeThicknessFocused}" />
+      </Style>
+      <Style Selector="^ /template/ ScrollViewer#PART_ScrollViewer">
+        <Setter Property="Foreground" Value="{DynamicResource TextControlForegroundFocused}" />
+      </Style>
+    </Style>
+    <!-- Disabled -->
+    <Style Selector="^:disabled">
+      <Setter Property="PlaceholderForeground" Value="{DynamicResource TextControlPlaceholderForegroundDisabled}" />
+      <Style Selector="^ /template/ Border#BorderElement">
+        <Setter Property="Background" Value="{DynamicResource TextControlBackgroundDisabled}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource TextControlBorderBrushDisabled}" />
+      </Style>
+      <Style Selector="^ /template/ ScrollViewer#PART_ScrollViewer">
+        <Setter Property="Foreground" Value="{DynamicResource TextControlForegroundDisabled}" />
+      </Style>
+    </Style>
+    <!-- ButtonVisible of the group ButtonStates. -->
+    <Style Selector="^:focus:not(:empty)[AcceptsReturn=False][IsReadOnly=False][TextWrapping=NoWrap] /template/ Button#DeleteButton">
+      <Setter Property="IsVisible" Value="True" />
+    </Style>
+  </ControlTheme>
+
+  <ControlTheme x:Key="{x:Type TextBox}" TargetType="TextBox" BasedOn="{StaticResource DefaultTextBoxStyle}" />
+</ResourceDictionary>

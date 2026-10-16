@@ -90,6 +90,7 @@ RUST_PATH_CRATES = [
     "FerroUI.Dialogs",
     "FerroUI.Themes.Simple",
     "FerroUI.Themes.Fluent",
+    "FerroUI.Themes.WinUI",
     "FerroUI.OpenGL",
 ]
 UPSTREAM_PROJECTS = {

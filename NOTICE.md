@@ -53,6 +53,12 @@ Avalonia itself incorporates code from other projects (for example WPF-derived l
 - License: MIT, Copyright (c) .NET Foundation and Contributors
 - Used for: the masked text engine `src/FerroUI.Controls/utils/masked_text_provider.rs`, derived from `System.ComponentModel.MaskedTextProvider` (the class the upstream masked text box is built on).
 
+## microsoft-ui-xaml (WinUI 3)
+
+- Project: <https://github.com/microsoft/microsoft-ui-xaml> (branch `winui3/main`, commit `7e4b0c2096be402f51cc8f7d203ebf67cff183d0`)
+- License: MIT, Copyright (c) Microsoft Corporation
+- Used for: the WinUI theme `src/FerroUI.Themes.WinUI`, whose resource and control theme documents are ported from the theme of WinUI 3 (`generic.xaml` and the theme resources of the controls library; see `src/FerroUI.Themes.WinUI/NOTICE.md`, which holds the license text, and `docs/porting/winui-theme.md`).
+
 ## RemoteViewing
 
 - Project: <https://github.com/quamotion/remoteviewing> (package `Quamotion.RemoteViewing` 1.1.211)

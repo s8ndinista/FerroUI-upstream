@@ -1,0 +1,36 @@
+<!--
+  The control themes of the WinUI theme (docs/porting/winui-theme.md): one document per FerroUI
+  control, ported from the styles of microsoft-ui-xaml (https://github.com/microsoft/microsoft-ui-xaml,
+  commit 7e4b0c2096be402f51cc8f7d203ebf67cff183d0) that each document names in its header.
+  A document that is embedded but not ready to be part of the theme is listed in
+  Controls/excluded.txt and not included here.
+-->
+<Styles xmlns="https://github.com/ferroui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:ClassModifier="internal">
+  <Styles.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.MergedDictionaries>
+        <!-- Foundation: hosts of windows and popups, focus visuals. -->
+        <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/AdornerLayer.xaml" />
+        <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/EmbeddableControlRoot.xaml" />
+        <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/OverlayPopupHost.xaml" />
+        <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/PopupRoot.xaml" />
+        <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/ThemeVariantScope.xaml" />
+        <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/Window.xaml" />
+        <!-- Foundation: text, buttons, check box, radio button, text box, scrolling. -->
+        <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/TextBlock.xaml" />
+        <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/Button.xaml" />
+        <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/RepeatButton.xaml" />
+        <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/ToggleButton.xaml" />
+        <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/HyperlinkButton.xaml" />
+        <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/CheckBox.xaml" />
+        <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/RadioButton.xaml" />
+        <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/Thumb.xaml" />
+        <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/ScrollBar.xaml" />
+        <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/ScrollViewer.xaml" />
+        <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/TextBox.xaml" />
+      </ResourceDictionary.MergedDictionaries>
+    </ResourceDictionary>
+  </Styles.Resources>
+</Styles>
