@@ -84,6 +84,23 @@ fn compiler_should_fail_to_build_xaml_without_matching_ctor() {
     assert_eq!(error.type_name(), "InvalidOperationException", "{}", error.message());
 }
 
+#[test]
+fn compiler_should_populate_xaml_without_public_ctor() {
+    let host = TestHost::new();
+    let res = ObjectWithPrivateCtor::factory(Some("123".to_string()));
+    host.populate("<ObjectWithPrivateCtor xmlns='rt-test' Prop='321' />", None, &boxed(res.clone())).expect("populate");
+
+    assert_eq!(res.arg.borrow().as_deref(), Some("123"));
+    assert_eq!(res.prop.borrow().as_deref(), Some("321"));
+}
+
+#[test]
+fn compiler_should_fail_to_build_xaml_without_public_ctor() {
+    let host = TestHost::new();
+    let error = host.error("<ObjectWithPrivateCtor xmlns='rt-test' Prop='321' />", None);
+    assert_eq!(error.type_name(), "InvalidOperationException", "{}", error.message());
+}
+
 // --- ContentAttributeTests, ListTests, DictionaryTests -----------------------
 
 #[test]

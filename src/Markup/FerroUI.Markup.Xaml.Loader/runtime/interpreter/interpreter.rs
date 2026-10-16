@@ -390,7 +390,12 @@ impl Interpreter {
             }
             let parameter_names: Vec<String> =
                 new_object.constructor.parameters().iter().map(|p| p.get_full_name()).collect();
-            if parameter_names != argument_names {
+            // Deviation (DEVIATIONS.md, Run-time type system of markup): the metadata declares the
+            // public constructors only, so the parameters of a constructor that is not public
+            // are not known; a root whose only constructor is not public is refused as one
+            // whose constructor does not match (the original compares the parameters of the
+            // non-public constructor, which takes arguments in its tests).
+            if parameter_names != argument_names || !new_object.constructor.is_public() {
                 return Err(XamlError::invalid_operation(
                     "Cannot compile Build method. Parameters mismatch.\
                      Type needs to have a parameterless ctor or a ctor with a single IServiceProvider argument.\
