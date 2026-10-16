@@ -90473,7 +90473,7 @@
    "batch": "B2",
    "winui": "Expander: DefaultExpanderStyle (Expander.xaml), ExpanderHeaderDownStyle, ExpanderHeaderUpStyle (Expander_themeresources.xaml).",
    "status": "ported",
-   "deviations": 7,
+   "deviations": 8,
    "date": "2026-10-16"
   },
   {
@@ -91597,7 +91597,7 @@
   "TabbedPage": 8,
   "ButtonSpinner": 3,
   "DropDownButton": 4,
-  "Expander": 7,
+  "Expander": 8,
   "NumericUpDown": 15,
   "PipsPager": 11,
   "RefreshContainer": 2,
