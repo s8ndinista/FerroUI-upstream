@@ -98,7 +98,7 @@
     </Style>
 
     <!-- The style class `accent` of the framework's controls (a FerroUI addition, DEVIATIONS.md,
-         Button B-ACCENT-CLASS): a button with the class looks as one with AccentButtonStyle. -->
+         BTN-6): a button with the class looks as one with AccentButtonStyle. -->
     <Style Selector="^.accent">
       <Setter Property="BackgroundSizing" Value="OuterBorderEdge" />
       <Style Selector="^ /template/ ContentPresenter#PART_ContentPresenter">
