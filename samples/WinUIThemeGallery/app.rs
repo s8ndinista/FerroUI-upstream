@@ -6,6 +6,7 @@
 use crate::main_window::MainWindow;
 use crate::markup::xaml_class;
 use crate::theme::{self, GalleryTheme};
+use ferroui_base::utilities::{CultureInfo, DateTimeFormatInfo};
 use ferroui_base::{ferro_class, ferro_class_info, ferro_impl_classes, instantiate, FerroObjectImpl, Ref};
 use ferroui_controls::{Application, ApplicationImpl, ApplicationImplExt, NewApplication};
 use std::cell::RefCell;
@@ -31,6 +32,7 @@ impl ApplicationImpl for App {
     /// `Initialize()`: the theme, then the document of the application.
     fn initialize(this: &Self) {
         crate::register_types();
+        CultureInfo::set_current_culture(native_date_culture());
         let gallery_theme = theme::create();
         this.styles().add(theme::as_style(&gallery_theme));
         *this.theme.borrow_mut() = Some(gallery_theme);
@@ -45,6 +47,22 @@ impl ApplicationImpl for App {
 
         Self::parent_on_framework_initialization_completed(this);
     }
+}
+
+/// The culture of the pages: the invariant culture of the framework (which carries the data of no
+/// other culture) with the date patterns of en-US, the culture of the native side of the comparison
+/// (the system of the Windows runner and of the virtual machine), so that the header of the
+/// calendar shows "October 2026" as WinUI's CalendarView does there, where the invariant year
+/// and month pattern gives "2026 October". The names of the days and months and the designators
+/// of the two cultures are the same; the time patterns stay the invariant ones (the time pickers
+/// name their clock, `Pages/DateTimePage.xaml`).
+fn native_date_culture() -> CultureInfo {
+    let mut date_time_format = (*DateTimeFormatInfo::invariant_info()).clone();
+    date_time_format.set_short_date_pattern("M/d/yyyy");
+    date_time_format.set_long_date_pattern("dddd, MMMM d, yyyy");
+    date_time_format.set_month_day_pattern("MMMM d");
+    date_time_format.set_year_month_pattern("MMMM yyyy");
+    CultureInfo::invariant_culture().with_date_time_format(date_time_format)
 }
 
 impl App {

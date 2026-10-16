@@ -9,7 +9,9 @@
        pickers' popups (DatePickerPresenter, TimePickerPresenter) open in the window. The time
        pickers name their clock (12HourClock, the clock of the native side's en-US system), as
        the framework's TimePicker otherwise takes it from the culture of the process (a 24-hour
-       clock in the invariant culture) and would leave out the AM/PM column. -->
+       clock in the invariant culture) and would leave out the AM/PM column. The header of the
+       calendar is in the date patterns of en-US, the culture of the native side, which the
+       application sets (app.rs, native_date_culture). -->
   <StackPanel Margin="24" Spacing="12">
     <TextBlock Text="Date and time" FontSize="28" FontWeight="SemiBold" />
 
