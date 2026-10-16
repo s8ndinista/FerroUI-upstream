@@ -18,6 +18,28 @@ pub enum ColorContrastPreference {
     High = 1,
 }
 
+/// The six shades of the accent color that a system computes from it: three
+/// darker and three lighter ones, as Windows reports them
+/// (`UIColorType::AccentDark3` to `AccentLight3` of `UISettings`).
+///
+/// A FerroUI addition: platforms that compute no shades report none, and a
+/// theme computes its own from the accent color.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub struct AccentColorShades {
+    /// The first darker shade.
+    pub dark1: Color,
+    /// The second darker shade.
+    pub dark2: Color,
+    /// The darkest shade.
+    pub dark3: Color,
+    /// The first lighter shade.
+    pub light1: Color,
+    /// The second lighter shade.
+    pub light2: Color,
+    /// The lightest shade.
+    pub light3: Color,
+}
+
 /// Information about current system color values, including information
 /// about dark mode and accent colors.
 ///
@@ -30,6 +52,7 @@ pub struct PlatformColorValues {
     accent_color1: Color,
     accent_color2: Color,
     accent_color3: Color,
+    accent_shades: Option<AccentColorShades>,
 }
 
 impl PlatformColorValues {
@@ -45,6 +68,7 @@ impl PlatformColorValues {
             accent_color1: Self::DEFAULT_ACCENT,
             accent_color2: Self::UNSET,
             accent_color3: Self::UNSET,
+            accent_shades: None,
         }
     }
 
@@ -112,6 +136,20 @@ impl PlatformColorValues {
         self.accent_color3 = value;
         self
     }
+
+    /// The shades of the primary accent color as the system computes them,
+    /// if the platform reports them (Windows does); `None` otherwise, and by
+    /// default. A FerroUI addition.
+    pub const fn accent_shades(&self) -> Option<AccentColorShades> {
+        self.accent_shades
+    }
+
+    /// Returns the values with the given shades of the primary accent color,
+    /// or without shades for `None`.
+    pub const fn with_accent_shades(mut self, value: Option<AccentColorShades>) -> Self {
+        self.accent_shades = value;
+        self
+    }
 }
 
 impl Default for PlatformColorValues {
@@ -146,6 +184,27 @@ mod tests {
         assert_eq!(values.accent_color1(), primary);
         assert_eq!(values.accent_color2(), secondary);
         assert_eq!(values.accent_color3(), tertiary);
+    }
+
+    #[test]
+    fn accent_shades_are_reported_only_when_given() {
+        let values = PlatformColorValues::new();
+        assert_eq!(values.accent_shades(), None);
+
+        let shades = AccentColorShades {
+            dark1: Color::new(255, 0, 95, 184),
+            dark2: Color::new(255, 0, 72, 145),
+            dark3: Color::new(255, 0, 36, 82),
+            light1: Color::new(255, 0, 145, 248),
+            light2: Color::new(255, 76, 194, 255),
+            light3: Color::new(255, 153, 235, 255),
+        };
+        let with_shades = values.with_accent_shades(Some(shades));
+        assert_eq!(with_shades.accent_shades(), Some(shades));
+        assert_ne!(with_shades, values);
+        // The shades do not change the accent colors.
+        assert_eq!(with_shades.accent_color1(), values.accent_color1());
+        assert_eq!(with_shades.with_accent_shades(None), values);
     }
 
     #[test]

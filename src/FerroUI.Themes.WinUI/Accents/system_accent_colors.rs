@@ -6,15 +6,17 @@
 //! resources of microsoft-ui-xaml name them and define none of them. This class is the one of
 //! the Fluent theme of FerroUI (`ferroui_themes_fluent::accents::SystemAccentColors`, a port of
 //! `Accents/SystemAccentColors.cs` of the upstream project), in this crate so that the WinUI theme
-//! does not depend on the Fluent theme: the accent colour of the platform settings, and the
-//! shades computed from it with the steps of lightness of the Fluent theme.
+//! does not depend on the Fluent theme: the accent colour of the platform settings, and its
+//! shades as the platform reports them (the Windows backend reads them from `UISettings`, as
+//! WinUI does), or computed from the accent with the steps of lightness of the Fluent theme
+//! where the platform reports none.
 
 use ferroui_base::controls::{
     ResourceHostRef, ResourceKey, ResourceProvider, ResourceProviderImpl, ResourceValue, ResourcesChangedEventArgs,
 };
 use ferroui_base::media::{Color, HslColor};
 use ferroui_base::metadata::into_markup_value;
-use ferroui_base::platform::{IPlatformSettings, PlatformColorValues};
+use ferroui_base::platform::{AccentColorShades, IPlatformSettings, PlatformColorValues};
 use ferroui_base::reactive::IDisposable;
 use ferroui_base::styling::ThemeVariant;
 use ferroui_base::{ferro_class, ferro_class_info, ferro_impl_classes, instantiate, FerroObjectImpl, Ref, Visual};
@@ -123,19 +125,30 @@ impl SystemAccentColors {
             self.invalidate_colors.set(false);
 
             let platform_settings = Self::get_from_owner(self.owner().as_ref());
+            let color_values = platform_settings.map(|settings| settings.get_color_values());
 
-            let accent = platform_settings
-                .map(|settings| settings.get_color_values().accent_color1())
-                .unwrap_or(Self::DEFAULT_SYSTEM_ACCENT_COLOR);
+            let (accent, shades) = Self::accent_colors(color_values.as_ref());
             self.system_accent_color.set(accent);
-            let (dark1, dark2, dark3, light1, light2, light3) = Self::calculate_accent_shades(accent);
-            self.system_accent_color_dark1.set(dark1);
-            self.system_accent_color_dark2.set(dark2);
-            self.system_accent_color_dark3.set(dark3);
-            self.system_accent_color_light1.set(light1);
-            self.system_accent_color_light2.set(light2);
-            self.system_accent_color_light3.set(light3);
+            self.system_accent_color_dark1.set(shades.dark1);
+            self.system_accent_color_dark2.set(shades.dark2);
+            self.system_accent_color_dark3.set(shades.dark3);
+            self.system_accent_color_light1.set(shades.light1);
+            self.system_accent_color_light2.set(shades.light2);
+            self.system_accent_color_light3.set(shades.light3);
         }
+    }
+
+    /// The accent colour and its shades for the colour values of the
+    /// platform: the shades the system reports where it reports them (as
+    /// WinUI reads them from `UISettings`), the shades computed from the
+    /// accent otherwise; the default accent without platform settings.
+    pub fn accent_colors(color_values: Option<&PlatformColorValues>) -> (Color, AccentColorShades) {
+        let accent = color_values.map_or(Self::DEFAULT_SYSTEM_ACCENT_COLOR, PlatformColorValues::accent_color1);
+        let shades = color_values.and_then(PlatformColorValues::accent_shades).unwrap_or_else(|| {
+            let (dark1, dark2, dark3, light1, light2, light3) = Self::calculate_accent_shades(accent);
+            AccentColorShades { dark1, dark2, dark3, light1, light2, light3 }
+        });
+        (accent, shades)
     }
 
     /// The platform settings of the owner: those of the application when

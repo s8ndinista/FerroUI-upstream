@@ -1,9 +1,17 @@
 //! The settings of the system the toolkit reads: the sizes and times of
-//! mouse gestures, the colours (the theme variant, the accent colour, high
-//! contrast) and the preferred language of the user.
+//! mouse gestures, the colours (the theme variant, the accent colour and its
+//! shades, high contrast) and the preferred language of the user.
 
 use ferroui_base::media::Color;
-use ferroui_base::platform::{ColorContrastPreference, PlatformColorValues, PlatformThemeVariant};
+use ferroui_base::platform::{AccentColorShades, ColorContrastPreference, PlatformColorValues, PlatformThemeVariant};
+
+/// The shades of the accent colour from the colours `UISettings` reports
+/// for `UIColorType` `AccentDark3` to `AccentLight3`, in the order of the
+/// enumeration (FerroUI addition: the reference reads only the accent).
+pub(crate) fn accent_shades_from_ui_colors(colors: [Color; 6]) -> AccentColorShades {
+    let [dark3, dark2, dark1, light1, light2, light3] = colors;
+    AccentColorShades { dark1, dark2, dark3, light1, light2, light3 }
+}
 
 /// The colour values of a system in a high contrast mode, from the name of
 /// its high contrast scheme and its accent colour.
@@ -153,17 +161,39 @@ mod imp {
         fn read_color_values() -> Result<PlatformColorValues, HResult> {
             let ui_settings = NativeWinRTMethods::create_instance::<IUISettings3>("Windows.UI.ViewManagement.UISettings")?;
             let accent = ui_settings.get_color_value(UIColorType::Accent)?.to_ferro();
+            // The shades of the accent, which WinUI reads the same way
+            // (SystemThemingInterop::GetSystemVariantAccentColor). A system
+            // that fails to report them keeps the other values; the themes
+            // then compute the shades.
+            let accent_shades = Self::read_accent_shades(&ui_settings).ok();
 
             let accessibility_settings = NativeWinRTMethods::create_instance::<IAccessibilitySettings>(
                 "Windows.UI.ViewManagement.AccessibilitySettings",
             )?;
             if accessibility_settings.high_contrast()? == 1 {
                 let high_contrast_scheme = HStringInterop::from_handle(accessibility_settings.high_contrast_scheme()?, false);
-                Ok(high_contrast_color_values(high_contrast_scheme.value().as_deref(), accent))
+                Ok(high_contrast_color_values(high_contrast_scheme.value().as_deref(), accent)
+                    .with_accent_shades(accent_shades))
             } else {
                 let background = ui_settings.get_color_value(UIColorType::Background)?.to_ferro();
-                Ok(color_values_from_background(background, accent))
+                Ok(color_values_from_background(background, accent).with_accent_shades(accent_shades))
             }
+        }
+
+        fn read_accent_shades(ui_settings: &IUISettings3) -> Result<AccentColorShades, HResult> {
+            let mut colors = [Color::default(); 6];
+            let types = [
+                UIColorType::AccentDark3,
+                UIColorType::AccentDark2,
+                UIColorType::AccentDark1,
+                UIColorType::AccentLight1,
+                UIColorType::AccentLight2,
+                UIColorType::AccentLight3,
+            ];
+            for (color, color_type) in colors.iter_mut().zip(types) {
+                *color = ui_settings.get_color_value(color_type)?.to_ferro();
+            }
+            Ok(accent_shades_from_ui_colors(colors))
         }
 
         /// The system changed its colours: reads them again and raises the
@@ -318,6 +348,56 @@ mod tests {
 
         for scheme in [Some("High Contrast Black"), Some("High Contrast #1"), Some("High Contrast #2"), Some(""), None] {
             assert_eq!(high_contrast_color_values(scheme, ACCENT).theme_variant(), PlatformThemeVariant::Dark, "{scheme:?}");
+        }
+    }
+
+    #[test]
+    fn the_accent_shades_follow_the_order_of_the_ui_color_types() {
+        // AccentDark3, AccentDark2, AccentDark1, AccentLight1, AccentLight2,
+        // AccentLight3 (shades of the kind Windows 11 reports for its blue).
+        let colors = [
+            Color::new(255, 0, 36, 82),
+            Color::new(255, 0, 62, 146),
+            Color::new(255, 0, 103, 192),
+            Color::new(255, 0, 145, 248),
+            Color::new(255, 76, 194, 255),
+            Color::new(255, 153, 235, 255),
+        ];
+        let shades = accent_shades_from_ui_colors(colors);
+        assert_eq!(shades.dark3, colors[0]);
+        assert_eq!(shades.dark2, colors[1]);
+        assert_eq!(shades.dark1, colors[2]);
+        assert_eq!(shades.light1, colors[3]);
+        assert_eq!(shades.light2, colors[4]);
+        assert_eq!(shades.light3, colors[5]);
+
+        // The values of either mode carry the shades they are given.
+        let values = color_values_from_background(Color::new(255, 255, 255, 255), ACCENT).with_accent_shades(Some(shades));
+        assert_eq!(values.accent_shades(), Some(shades));
+        assert_eq!(values.accent_color1(), ACCENT);
+        let values = high_contrast_color_values(Some("High Contrast Black"), ACCENT).with_accent_shades(Some(shades));
+        assert_eq!(values.accent_shades(), Some(shades));
+        // Without shades, none are reported.
+        assert_eq!(color_values_from_background(Color::new(255, 0, 0, 0), ACCENT).accent_shades(), None);
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn the_platform_settings_report_the_accent_shades_of_the_system() {
+        use ferroui_base::platform::IPlatformSettings;
+
+        let settings = Win32PlatformSettings::new();
+        let values = settings.get_color_values();
+        println!("color values {values:?}");
+        if crate::win_rt::WinRTApiInformation::is_type_present("Windows.UI.ViewManagement.UISettings") {
+            let shades = values.accent_shades().expect("the shades of the accent");
+            let lightness = |color: Color| color.to_hsl().l;
+            assert!(lightness(shades.dark3) <= lightness(shades.dark1));
+            assert!(lightness(shades.dark1) <= lightness(values.accent_color1()));
+            assert!(lightness(values.accent_color1()) <= lightness(shades.light1));
+            assert!(lightness(shades.light1) <= lightness(shades.light3));
+        } else {
+            assert_eq!(values.accent_shades(), None);
         }
     }
 

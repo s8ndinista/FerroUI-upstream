@@ -7,6 +7,7 @@ use crate::{DensityStyle, WinUITheme};
 use ferroui_base::controls::ResourceKey;
 use ferroui_base::media::Color;
 use ferroui_base::metadata::from_markup_value;
+use ferroui_base::platform::{AccentColorShades, PlatformColorValues};
 use ferroui_base::styling::ThemeVariant;
 use ferroui_base::{Ref, Thickness};
 use ferroui_controls::{Application, Border, Button, ContentControl, Control, Window};
@@ -29,6 +30,45 @@ fn system_accent_colors_provide_the_default_accent_without_an_owner() {
         assert!(color_of(colors.try_get_resource(&key(&format!("SystemAccentColor{shade}")), None)).is_some());
     }
     assert!(colors.try_get_resource(&ResourceKey::Type(Button::TYPE), None).is_none());
+}
+
+#[test]
+fn system_accent_colors_take_the_shades_the_platform_reports() {
+    // An accent and shades of the kind UISettings reports (Dark1 and Light2 are the accent fills
+    // of native WinUI on the default blue of Windows 11: #0067C0 in light, #4CC2FF in dark).
+    let accent = Color::from_rgb(0, 120, 212);
+    let shades = AccentColorShades {
+        dark1: Color::from_rgb(0, 103, 192),
+        dark2: Color::from_rgb(0, 62, 146),
+        dark3: Color::from_rgb(0, 26, 104),
+        light1: Color::from_rgb(0, 145, 248),
+        light2: Color::from_rgb(76, 194, 255),
+        light3: Color::from_rgb(153, 235, 255),
+    };
+    let values = PlatformColorValues::new().with_accent_color1(accent).with_accent_shades(Some(shades));
+    assert_eq!((accent, shades), SystemAccentColors::accent_colors(Some(&values)));
+}
+
+#[test]
+fn system_accent_colors_compute_the_shades_the_platform_does_not_report() {
+    let accent = Color::from_rgb(0, 120, 212);
+    let computed = |accent: Color| {
+        let (dark1, dark2, dark3, light1, light2, light3) = SystemAccentColors::calculate_accent_shades(accent);
+        AccentColorShades { dark1, dark2, dark3, light1, light2, light3 }
+    };
+    let values = PlatformColorValues::new().with_accent_color1(accent);
+    assert_eq!((accent, computed(accent)), SystemAccentColors::accent_colors(Some(&values)));
+
+    // Without platform settings: the default accent and its computed shades.
+    let default_accent = Color::from_rgb(0, 120, 215);
+    assert_eq!((default_accent, computed(default_accent)), SystemAccentColors::accent_colors(None));
+
+    // The computed shades are ordered by lightness around the accent.
+    let (_, shades) = SystemAccentColors::accent_colors(Some(&values));
+    let lightness = |color: Color| color.to_hsl().l;
+    assert!(lightness(shades.dark3) < lightness(shades.dark2) && lightness(shades.dark2) < lightness(shades.dark1));
+    assert!(lightness(shades.dark1) < lightness(accent) && lightness(accent) < lightness(shades.light1));
+    assert!(lightness(shades.light1) < lightness(shades.light2) && lightness(shades.light2) < lightness(shades.light3));
 }
 
 #[test]

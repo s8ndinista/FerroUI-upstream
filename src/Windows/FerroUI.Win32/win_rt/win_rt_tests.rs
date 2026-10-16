@@ -73,6 +73,27 @@ fn the_settings_of_the_user_are_read_through_activation() {
         println!("UISettings: accent {accent:?}, background {background:?}");
         assert_eq!(accent.a, 255);
 
+        // The six shades of the accent, which the platform settings report
+        // (FerroUI addition): opaque, from the darkest to the lightest.
+        let shades = [
+            UIColorType::AccentDark3,
+            UIColorType::AccentDark2,
+            UIColorType::AccentDark1,
+            UIColorType::Accent,
+            UIColorType::AccentLight1,
+            UIColorType::AccentLight2,
+            UIColorType::AccentLight3,
+        ]
+        .map(|color_type| ui_settings.get_color_value(color_type).unwrap().to_ferro());
+        println!("UISettings: accent shades {shades:?}");
+        let lightness = shades.map(|color| color.to_hsl().l);
+        for (index, color) in shades.iter().enumerate() {
+            assert_eq!(color.a, 255, "shade {index}");
+        }
+        for pair in lightness.windows(2) {
+            assert!(pair[0] <= pair[1], "the shades are ordered by lightness: {lightness:?}");
+        }
+
         // An object of the Windows Runtime names its class.
         let class_name = HStringInterop::from_handle(ui_settings.get_runtime_class_name().unwrap(), true);
         assert_eq!(class_name.value().as_deref(), Some("Windows.UI.ViewManagement.UISettings"));
