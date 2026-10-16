@@ -90353,7 +90353,7 @@
    "winui": "No WinUI style (input validation was removed from WinUI 3): the critical fill of the palette (SystemFillColorCriticalBrush) for the message and the border of the field, and the error icon of InfoBar (InfoBar.xaml, InfoBar_themeresources.xaml) for the tool tip variant.",
    "status": "ported",
    "deviations": 2,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "DatePicker.xaml",
