@@ -78,6 +78,7 @@
           <ComboBox.Items>
             <models:CatalogTheme>Fluent</models:CatalogTheme>
             <models:CatalogTheme>Simple</models:CatalogTheme>
+            <models:CatalogTheme>WinUI</models:CatalogTheme>
           </ComboBox.Items>
         </ComboBox>
       </Grid>

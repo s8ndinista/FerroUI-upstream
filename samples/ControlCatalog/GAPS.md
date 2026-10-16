@@ -175,6 +175,26 @@ Three holders keep an element for a while after it left the tree, here as upstre
 | `Pages/NumericUpDownPage.xaml` | The combo box "CultureInfo" lists the specific cultures of the runtime with one of six names. The base library has the data of the invariant culture only; the cultures of the runtime are the ones the registered culture data provider enumerates (`CultureInfo::get_cultures`, `ICultureDataProvider::get_culture_names`). No platform registers a provider yet, so in the application the list is empty and the values are formatted with the invariant conventions, as upstream's page under invariant globalization (its comment: "Trimmed-mode friendly where we might not have cultures"). With a provider the page lists and uses its cultures (`tests/numeric_up_down_page.rs`). |
 | `Pages/ContentPage/ContentPagePerformancePage.xaml`, `Pages/CarouselPage/CarouselPagePerformancePage.xaml`, `Pages/DrawerPage/DrawerPagePerformancePage.xaml`, `Pages/NavigationPage/NavigationPagePerformancePage.xaml`, `Pages/TabbedPage/TabbedPagePerformancePage.xaml` | Upstream's pages measure the managed heap (`GC.GetTotalMemory`, `GC.GetTotalAllocatedBytes`) and force collections (`GC.Collect`). There is no garbage-collected heap, and the sample has no statistics of the allocator. The pages show what can be measured: the pages that are alive (weak references), the pages created, the depth of the stack, the time of the last operation and the log. The heap texts read "not available", the heap delta is empty, the entries of the log have no heap size, and "Force GC" refreshes the figures (a page is freed when the last reference to it is dropped, so there is nothing to collect). The texts the code-behind writes about the garbage collector, and the descriptions of the five gallery entries, say what happens here; the texts of the documents are upstream's and still name the heap and the collector. A heap figure needs a counting global allocator in the hosts (or the statistics of the platform allocator), which is a decision for the application, not for a page. |
 
+## The WinUI theme of the port
+
+Not in the original: the settings page offers a third theme, `WinUI`, the WinUI 3 theme of the
+port (`ferroui-themes-winui`, docs/porting/winui-theme.md; `FERROUI_CATALOG_THEME=winui` starts the
+desktop catalog in it). The lines the port adds to `App.xaml` and `Pages/SettingsPage.xaml` are
+the additions of `scripts/convert_catalog_xaml.py` (`ADDITIONS`), so the sync check still holds
+the documents to their upstream files; `docs/porting/DEVIATIONS.md` (ControlCatalog sample)
+records them.
+
+The WinUI theme does not style every control yet. While it is selected, the catalog puts it over
+the Fluent theme (`App::set_catalog_themes`): the controls it styles (Button, RepeatButton,
+ToggleButton, HyperlinkButton, CheckBox, RadioButton, TextBox, ScrollViewer, ScrollBar, Thumb,
+Window, the popup hosts, the focus adorner, the text styles) are drawn by the WinUI theme, and the
+others visibly fall back to the templates of the Fluent theme, drawn with the resources of the WinUI
+theme where both themes name the same key: DataValidationErrors, GridSplitter, GroupBox, HeaderedContentControl, ItemsControl, Label, PathIcon, ProgressBar, SelectableTextBlock, Separator, TextSelectionHandle, ToolTip, TransitioningContentControl (batch B1); ButtonSpinner, DropDownButton, Expander, NumericUpDown, PipsPager, RefreshContainer, RefreshVisualizer, Slider, SplitButton, ToggleSwitch (B2); AutoCompleteBox, ComboBox, ComboBoxItem, ContextMenu, FlyoutPresenter, ListBox, ListBoxItem, Menu, MenuFlyoutPresenter, MenuItem, TreeView, TreeViewItem (B3); Calendar, CalendarButton, CalendarDatePicker, CalendarDayButton, CalendarItem, DatePicker, DatePickerPresenter, TimePicker, TimePickerPresenter (B4); Carousel, CarouselPage, CommandBar, CommandBarButton, CommandBarSeparator, CommandBarToggleButton, ContentPage, DrawerPage, NavigationPage, SplitView, TabControl, TabItem, TabStrip, TabStripItem, TabbedPage (B5); ManagedFileChooser, ManagedFileChooserOverwritePrompt, NotificationCard, TableView, TableViewCell, TableViewColumnHeader, TableViewRow, WindowDrawnDecorations, WindowNotificationManager (B6). The list is the `PENDING_CONTROLS` of
+`src/FerroUI.Themes.WinUI/tests/support.rs` and shrinks with each batch
+(docs/porting/winui-theme/PROGRESS.md); when it is empty the WinUI theme is the only theme of the
+choice. The shell of the catalog (DrawerPage, NavigationPage, ContentPage, the drawer's list) is
+among the fallbacks.
+
 ## Classes of the sample that are not ported yet
 
 These documents load without their class (the survey test, `cargo test -p control-catalog -- --ignored survey`, with `CATALOG_SURVEY` set); their code-behind is sample work, not a framework gap:

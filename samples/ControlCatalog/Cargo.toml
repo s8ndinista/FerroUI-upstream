@@ -61,6 +61,8 @@ ferroui-markup-xaml-loader = { workspace = true, features = ["runtime"], optiona
 ferroui-opengl = { workspace = true }
 ferroui-themes-simple = { workspace = true }
 ferroui-themes-fluent = { workspace = true }
+# The WinUI theme of the port, the third theme of the catalog (not in the original).
+ferroui-themes-winui = { workspace = true }
 # The Skia lease of `Pages/TabbedPage/FluidNavBar` (custom drawing on the canvas of the backend).
 ferroui-skia = { workspace = true }
 skia-safe = { workspace = true }

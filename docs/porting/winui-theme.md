@@ -115,6 +115,11 @@ The crate is a member of the workspace and of `[workspace.dependencies]`, an opt
 of the facade crate `ferroui` (feature `winui-theme`, module `themes_winui`, `WinUITheme` in the
 prelude), in the crate table of the README and in `docs/release.md`.
 
+The ControlCatalog sample offers it as a third theme (`CatalogTheme::WinUI` on its settings page,
+`FERROUI_CATALOG_THEME=winui` for the desktop catalog). Until every batch is done the catalog puts
+it over the Fluent theme, so the controls it does not style yet are drawn by the Fluent templates
+(`samples/ControlCatalog/GAPS.md`, "The WinUI theme of the port").
+
 ### 3.2 The class and the theme variants
 
 ```rust

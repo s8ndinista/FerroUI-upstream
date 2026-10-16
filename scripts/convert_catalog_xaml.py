@@ -17,6 +17,13 @@ Everything else (elements, attributes, order, whitespace, byte order mark, line 
 kept byte for byte. A file that still contains the upstream name after the conversion is
 reported and fails the run.
 
+Additions of the port: `ADDITIONS` below lists the lines this project adds to converted
+documents (the WinUI theme of the port as a third theme of the catalog), each inserted after an
+anchor line of the converted text, with the reason; the conversion applies them, so `--check`
+compares a document with its conversion plus its additions, and fails when an anchor is gone.
+They are recorded in docs/porting/DEVIATIONS.md (ControlCatalog sample) and
+samples/ControlCatalog/GAPS.md.
+
 File names: `.axaml` becomes `.xaml`, and the upstream name in a file name is replaced as in
 rule 5 (`AvaloniaFlixAppPage.xaml` -> `FerroFlixAppPage.xaml`). Directories are kept.
 
@@ -33,6 +40,38 @@ from pathlib import Path
 REPOSITORY = b"https://github.com/wieslawsoltes/FerroUI"
 
 FORBIDDEN = re.compile(rb"avalonia|\bavn|axaml|avares", re.IGNORECASE)
+
+# The lines this project adds to converted documents: (path relative to the sample, anchor line of
+# the converted text, the lines inserted after it, why).
+ADDITIONS = [
+    (
+        "App.xaml",
+        b'      <SimpleTheme x:Key="SimpleTheme" />\n',
+        b'      <WinUITheme x:Key="WinUITheme" />\n',
+        "the WinUI theme of the port (ferroui-themes-winui) as a third theme of the catalog",
+    ),
+    (
+        "Pages/SettingsPage.xaml",
+        b"            <models:CatalogTheme>Simple</models:CatalogTheme>\n",
+        b"            <models:CatalogTheme>WinUI</models:CatalogTheme>\n",
+        "the WinUI theme of the port in the theme selector of the settings page",
+    ),
+]
+
+
+def add(relative: str, data: bytes) -> bytes:
+    """The converted text with the additions of the port to the document."""
+    for path, anchor, lines, _why in ADDITIONS:
+        if path != relative:
+            continue
+        # Line ends of the document: the anchors are written with `\n`.
+        crlf = b"\r\n" in data
+        anchor_text = anchor.replace(b"\n", b"\r\n") if crlf else anchor
+        lines_text = lines.replace(b"\n", b"\r\n") if crlf else lines
+        if data.count(anchor_text) != 1:
+            raise SystemExit(f"the anchor of an addition to {relative} is not in its conversion once: {anchor!r}")
+        data = data.replace(anchor_text, anchor_text + lines_text)
+    return data
 
 
 def convert(data: bytes) -> bytes:
@@ -79,7 +118,7 @@ def main() -> int:
             print(f"two upstream files convert to {destination}")
             failed = True
         destinations.add(destination)
-        converted = convert(source.read_bytes())
+        converted = add(destination.relative_to(target).as_posix(), convert(source.read_bytes()))
         if FORBIDDEN.search(converted) or FORBIDDEN.search(str(destination.relative_to(target)).encode()):
             print(f"upstream name left in {destination}: {FORBIDDEN.findall(converted)[:5]}")
             failed = True

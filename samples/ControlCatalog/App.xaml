@@ -33,6 +33,7 @@
       <!-- Styles attached dynamically depending on current theme (simple or fluent) -->
       <FluentTheme x:Key="FluentTheme" />
       <SimpleTheme x:Key="SimpleTheme" />
+      <WinUITheme x:Key="WinUITheme" />
       <StyleInclude x:Key="ColorPickerFluent" Source="ferres://FerroUI.Controls.ColorPicker/Themes/Fluent/Fluent.xaml" />
       <StyleInclude x:Key="ColorPickerSimple" Source="ferres://FerroUI.Controls.ColorPicker/Themes/Simple/Simple.xaml" />
     </ResourceDictionary>
