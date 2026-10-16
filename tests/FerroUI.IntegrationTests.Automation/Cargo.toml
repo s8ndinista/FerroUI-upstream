@@ -1,0 +1,39 @@
+[package]
+name = "ferroui-integration-tests-automation"
+description = "Test crate: upstream's user interface automation tests, which drive samples/IntegrationTestApp from another process through the accessibility API of the platform"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+
+# One test binary without the test harness: the tests share one running
+# application per fixture (upstream's collections), drive it with the input
+# of the desktop and so run one after the other. On a platform without an
+# automation backend (anything but Windows and macOS) the binary compiles and
+# reports that it has nothing to run. docs/porting/integration-tests.md has the
+# design.
+[[test]]
+name = "integration"
+path = "main.rs"
+harness = false
+
+[dependencies]
+# The value types the tests parse from the texts of the application (`Size`,
+# `PixelPoint`, `PixelRect`, `Rect`) and the enumerations they compare.
+ferroui-base.workspace = true
+ferroui-controls.workspace = true
+
+# UI Automation: the client of the Windows backend (`automation::testing`),
+# which this crate extends, and the input of the desktop.
+[target.'cfg(windows)'.dependencies]
+ferroui-win32.workspace = true
+windows-sys = { workspace = true, features = [
+    "Win32_Foundation",
+    "Win32_Graphics_Gdi",
+    "Win32_System_Threading",
+    "Win32_UI_HiDpi",
+    "Win32_UI_Input_KeyboardAndMouse",
+    "Win32_UI_WindowsAndMessaging",
+] }

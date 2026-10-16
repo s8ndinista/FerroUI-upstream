@@ -998,6 +998,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "ferroui-integration-tests-automation"
+version = "0.1.0-preview.3"
+dependencies = [
+ "ferroui-base",
+ "ferroui-controls",
+ "ferroui-win32",
+ "windows-sys",
+]
+
+[[package]]
 name = "ferroui-integration-tests-win32"
 version = "0.1.0-preview.3"
 dependencies = [
