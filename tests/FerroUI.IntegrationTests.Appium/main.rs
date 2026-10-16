@@ -195,15 +195,38 @@ fn main() -> ExitCode {
         // A diagnostic of `--dump-tree`: a test that fails prints the order of the windows of
         // the application at its panic, before the windows it opened are closed.
         infrastructure::session::set_panic_session(Some(fixture.session().clone()));
+        let mut fixture = Some(fixture);
         for case in cases {
-            let result = catch_unwind(AssertUnwindSafe(|| case.run(&fixture)));
+            let Some(current) = fixture.as_ref() else {
+                println!("test {} ... FAILED", case.name);
+                failed.push(case.name.as_str());
+                continue;
+            };
+            let result = catch_unwind(AssertUnwindSafe(|| case.run(current)));
             // A test that failed with a button or a key down leaves it down otherwise.
-            let _ = catch_unwind(AssertUnwindSafe(|| fixture.session().release_input()));
+            let _ = catch_unwind(AssertUnwindSafe(|| current.session().release_input()));
             match result {
                 Ok(()) => println!("test {} ... ok", case.name),
                 Err(_) => {
                     println!("test {} ... FAILED", case.name);
                     failed.push(case.name.as_str());
+                    // Not a step of upstream's runner: an application that stopped responding
+                    // (or ended) would fail every later test of the collection one timeout at
+                    // a time, so it is started again.
+                    if !current.session().backend().is_responsive() {
+                        println!("the application of the collection {collection:?} does not respond: started again");
+                        infrastructure::session::set_panic_session(None);
+                        drop(fixture.take());
+                        match DefaultAppFixture::new(collection) {
+                            Ok(restarted) => {
+                                infrastructure::session::set_panic_session(Some(restarted.session().clone()));
+                                fixture = Some(restarted);
+                            }
+                            Err(error) => {
+                                println!("the application of the collection {collection:?} did not start again: {error}")
+                            }
+                        }
+                    }
                 }
             }
         }

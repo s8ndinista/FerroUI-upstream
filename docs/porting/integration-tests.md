@@ -122,7 +122,7 @@ Where the configuration of upstream decides:
 ## 7. macOS
 
 - The crate, its tests and the sample build on the Mac **[V]**; the sample starts and ends on its own (`FERROUI_SMOKE_EXIT_MS`) **[V]**.
-- The run needs the Accessibility permission of the process that runs the tests: the accessibility API of another application and the posted input are refused without it. On the Mac of the port the agent's process does not have it (`AXIsProcessTrusted()` is false, a read of another application answers `kAXErrorAPIDisabled`, -25211), so the tests have not run against the sample yet **[P]**. The runner checks the permission first and stops with what is missing. The permission is given in System Settings, Privacy & Security, Accessibility, to the application that starts the run (the terminal, or the application of the agent).
+- The run needs the Accessibility permission of the process that runs the tests: the accessibility API of another application and the posted input are refused without it. The runner checks the permission first and stops with what is missing. The permission is given in System Settings, Privacy & Security, Accessibility, to the application that starts the run (the terminal, or the application of the agent). The owner gave it to the agent's process on 2026-10-16, and the suite has run on the Mac since (section 9).
 - What was found by reading for the run: the native layer exposes what the tests read (identifier, title, value, selected, enabled, frame, press, the role of every control type, the window's identifier from its automation peer); the nested window element upstream's comment mentions does not exist in the port (the view of a window lists the children of the window's peer), which the XPath of `GetCurrentSingleWindow` handles either way.
 
 ## 8. How to run
@@ -138,3 +138,30 @@ FERROUI_AUTOMATION_TESTS=1 cargo test -p ferroui-integration-tests-appium --test
 `--dump-tree` (or `FERROUI_AUTOMATION_DUMP_TREE=1`) is a diagnostic of the runs, not a command of the drivers: a search for one element that does not find it prints the tree it searched (the walk of the children with the tag, the identifier, the name and the bounds of every element) and, on Windows, what one search of UI Automation returns for the whole subtree. The runner also prints where the main window is when a collection starts.
 
 Nobody should use the mouse or the keyboard of the machine while the tests run.
+
+## 9. The first runs (2026-10-16)
+
+Windows: the Windows 11 ARM64 virtual machine (a work area of 1796 by 960 units at a scaling of 2), the whole suite through `vm-smoke.ps1 -Automation`. macOS: the Mac of the port, macOS 26.6, a display of 1800 by 1169 points.
+
+| Run | Windows | macOS |
+|---|---|---|
+| First (`7ba91269`) | 74 passed, 111 failed, 39 ignored | 127 passed, 24 failed, 65 ignored (`5e62bf14` plus the fixes of the peers) |
+| Last | WINDOWS_LAST | 130 passed, 21 failed, 65 ignored |
+
+What the failures were, and what was done:
+
+- **The list of pages of a lower main window (Windows, 101 tests).** `TestBase` clicks the item of its page in `Pager`. The list has 20 items of 35 units and needs about 754 units of height; the main window keeps the default size of the system (`CW_USEDEFAULT`, as upstream's), which on the virtual machine leaves the items from `Screens` on below the end of the list. A click at their centre went below the list, the page was not selected, and every lookup of the page failed ("no such element: ShowWindowSize", 87 times, `WindowExtendClientAreaToDecorationsHint`, `ScreenRefresh`, `ResetSliders`, `MyScrollBar`, ...). Upstream's agent has a desktop of 4K, where the whole list shows. The harness: a click brings its element into view first (section 3). The sample's test `a_lower_main_window_brings_the_last_pages_into_view` checks the scroll item pattern of the item's peer and that every page shows its controls inside a window of that height.
+- **`SendKeys` closed the menu (Windows, 4 tests: `MenuTests.Select_Child_With_Alt_Access_Keys`, `..._Grandchild_...`, both collections).** The harness clicked the centre of an element whose focus did not take before it typed; the window does not take the focus while its menu has it, so the click closed the menu the Alt key had opened and the access keys went nowhere ("None"). WinAppDriver sets the focus and types; the click is now done on macOS only.
+- **The embedding page (Windows, 4 tests).** The control view walk has `Reset`; one search of UI Automation does not (section 3 and `DEVIATIONS.md`, Automation tests): the search loops through the hosted `EDIT` (2717 elements for a tree of 66), because it continues from the window's holder (a pane the system also lists as a child of the main window) and never comes back to the host. The harness walks the control view when the search finds nothing, on the last attempt of the wait of a lookup. The providers of the port answer as upstream's; whether upstream's application shows the same loop was not checked (it needs upstream's application in the virtual machine).
+- **A peer of a page that was replaced (Windows, a panic in the sample).** UI Automation asked for the fragment root of a node whose ancestor's control was gone; fixed in the peers (`DEVIATIONS.md`, Automation peers).
+- **The frame size of a window that is not shown (macOS, framework).** `frame_size` of the macOS backend read the native result started at zero, so a window not yet shown had a frame of no size, and `WindowStartupLocation.CenterScreen` and `CenterOwner` placed it half its size away from the centre (450 for 225). Upstream starts the result at (-1, -1), which the native side leaves when there is no frame; the port does now (`DEVIATIONS.md`, Corrected divergences; `tests/accessibility_tree.rs` checks it).
+- **Lookups of menu items and combo box items (macOS).** XCTest's `matchingIdentifier:` matches the identifier, the title or the label; the harness matched the first non-empty of them, which for a native menu item is its action (`didSelectItem:`) and for an item of a combo box its name (section 3).
+- **The action of a native menu item (macOS).** It arrives after the 250 ms the harness waited; it waits 500 ms now.
+
+What remains:
+
+- **`WindowTests.StartupLocation` with `CenterScreen` and `CenterOwner` (macOS, 20 rows).** The window is placed 16 points below where the test expects it, against a tolerance of 15. The window is centred before it is shown, when its frame is not known, so the client size is centred (upstream does the same, `Window.SetWindowStartupLocation`); the test measures the frame. The difference is half the title bar: 32 points on macOS 26 (764 frame, 732 client), 28 on the macOS versions upstream's tolerance was chosen for. Not a difference of the port.
+- **`WindowTests_MacOS.WindowOrder_Owned_Dialog_Stays_InFront_Of_Parent` (macOS).** After the click on the main window the owned window's ordered index is 2 where the test expects 1. The native code is upstream's: the click reaches `sendEvent:` of the main window, which brings it to the front and its owned window after it (`ZOrderChildWindows`, the child registered by `SetParent`), as the native log of a run showed; why AppKit's order still has the main window first is open.
+- **`WindowTests.Owned_Window_Should_Appear_Above_Topmost_Owner` (Windows).** The click on the owned window's button moves the topmost owner: the owner is above its owned window. `SetParent`, `EnsureTopmost` and `SetTopmost` are upstream's line for line. `--dump-tree` prints the z-order of the windows at the failure (owner, topmost, visible, foreground) for the next run.
+- WINDOWS_REMAINING
+

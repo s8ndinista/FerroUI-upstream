@@ -30,6 +30,7 @@ use uia_client::{IUIAutomationFocusChangedEventHandler, IUIAutomationFocusChange
 
 const CLSID_CUI_AUTOMATION: Guid = Guid::from_u128(0xff48dba4_60ef_4201_aa87_54103eef594e);
 const IID_IUI_AUTOMATION: Guid = Guid::from_u128(0x30cbe57d_d9d0_452a_ab13_7ac5ac4825ee);
+const IID_IUI_AUTOMATION2: Guid = Guid::from_u128(0x34723aff_0c9d_49d0_9896_7ab52df8cd8a);
 
 /// The pattern identifiers the client asks for (`UIA_*PatternId`).
 pub const INVOKE_PATTERN: i32 = 10000;
@@ -74,6 +75,9 @@ mod slots {
     pub const CREATE_AND_CONDITION: usize = 25;
     pub const ADD_FOCUS_CHANGED_EVENT_HANDLER: usize = 39;
     pub const REMOVE_ALL_EVENT_HANDLERS: usize = 41;
+    // IUIAutomation2, after the 55 methods of IUIAutomation
+    pub const SET_CONNECTION_TIMEOUT: usize = 61;
+    pub const SET_TRANSACTION_TIMEOUT: usize = 63;
     // IUIAutomationElement
     pub const SET_FOCUS: usize = 3;
     pub const FIND_ALL: usize = 6;
@@ -568,6 +572,35 @@ impl UiaClient {
             "IUIAutomation::get_RawViewWalker",
         )?;
         Ok(UiaClient { automation, walker: Owned(walker), handlers: Vec::new() })
+    }
+
+    /// `IUIAutomation2::put_ConnectionTimeout` and `put_TransactionTimeout`:
+    /// how long a call of the client waits for a provider that does not
+    /// answer (the defaults are 2 and 20 seconds), so that an application
+    /// that stopped responding fails the calls of a test instead of holding
+    /// each of them.
+    pub fn set_timeouts(&self, connection_ms: u32, transaction_ms: u32) -> Result<(), String> {
+        type QueryInterface = unsafe extern "system" fn(*mut c_void, *const Guid, *mut *mut c_void) -> i32;
+        let mut automation2 = std::ptr::null_mut();
+        // SAFETY: `QueryInterface` of a live object, an identifier that lives
+        // through the call and a place for the result, which is owned.
+        check(
+            unsafe { slot::<QueryInterface>(self.automation.0, 0)(self.automation.0, &IID_IUI_AUTOMATION2, &mut automation2) },
+            "QueryInterface(IUIAutomation2)",
+        )?;
+        let automation2 = Owned(automation2);
+        type SetTimeout = unsafe extern "system" fn(*mut c_void, u32) -> i32;
+        // SAFETY: the slots of the two setters of `IUIAutomation2`.
+        unsafe {
+            check(
+                slot::<SetTimeout>(automation2.0, slots::SET_CONNECTION_TIMEOUT)(automation2.0, connection_ms),
+                "IUIAutomation2::put_ConnectionTimeout",
+            )?;
+            check(
+                slot::<SetTimeout>(automation2.0, slots::SET_TRANSACTION_TIMEOUT)(automation2.0, transaction_ms),
+                "IUIAutomation2::put_TransactionTimeout",
+            )
+        }
     }
 
     /// `IUIAutomation::ElementFromHandle`.
