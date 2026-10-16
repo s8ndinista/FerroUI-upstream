@@ -166,3 +166,30 @@ Not verified here:
 - on Windows: the values read from the system (`SystemParametersInfoW`, the tuning key, DirectWrite's parameters), the windows of the composition modes rendering greyscale text, ClearType on a window with a redirection surface, and the gallery comparison with the script, where the light pages should show a fringe of about 0, an ink ratio of about 1 and a solid share close to native's, and the dark pages should not change.
 
 One Windows behaviour is not followed: when font smoothing is off altogether (`SPI_GETFONTSMOOTHING` false) GDI renders aliased text; FerroUI keeps greyscale antialiasing there, as WinUI 3 does.
+
+### 9.1 Measured on Windows (2026-10-16)
+
+The WinUI theme gallery compared with native WinUI 3 in the Windows 11 ARM64 virtual machine at a
+render scaling of 2 (the composited swap chain panel of the comparison host, ClearType not tuned:
+contrast 1, sRGB gamma), `scripts/text-quality.py --pages text,buttons,lists,menus`, before
+(`e72b8415`) and after (`aae609da`) the change, native / FerroUI:
+
+| Pair | Fringe before | Fringe after | Ink ratio before | Ink ratio after | Solid before | Solid after |
+|---|---|---|---|---|---|---|
+| buttons-light | 0.0 / 38.1 | 0.0 / 0.0 | 0.923 | 0.950 | 34 % / 30 % | 34 % / 32 % |
+| buttons-dark | 0.0 / 36.3 | 0.0 / 0.0 | 1.020 | 1.027 | 39 % / 38 % | 39 % / 39 % |
+| lists-light | 0.0 / 44.6 | 0.0 / 0.0 | 0.900 | 0.933 | 54 % / 48 % | 54 % / 51 % |
+| lists-dark | 0.0 / 38.2 | 0.0 / 0.0 | 1.028 | 1.023 | 59 % / 58 % | 61 % / 61 % |
+| menus-light | 0.0 / 32.2 | 0.0 / 0.0 | 0.923 | 0.962 | 49 % / 45 % | 49 % / 47 % |
+| menus-dark | 0.0 / 28.2 | 0.0 / 0.0 | 1.028 | 1.034 | 54 % / 51 % | 54 % / 54 % |
+| text-light | 0.0 / 52.4 | 0.0 / 0.0 | 0.877 | 0.909 | 52 % / 45 % | 52 % / 47 % |
+| text-dark | 0.0 / 46.6 | 0.0 / 0.0 | 1.009 | 1.004 | 58 % / 55 % | 58 % / 58 % |
+| mean | 0.0 / 39.6 | 0.0 / 0.0 | 0.964 | 0.980 | 50 % / 46 % | 50 % / 49 % |
+
+The colour fringes are gone on every page, light text on dark backgrounds has the weight and
+solidity of native text, and dark text on light backgrounds is darker than before but still 4 to
+9 % lighter than DirectWrite's (Skia's contrast is at its maximum of 1). What is left of that gap
+is the gamma Skia corrects coverage with (sRGB here) against the gamma DirectWrite applies in its
+greyscale path; matching it needs the measurement of section 6's capture with the gamma as a
+variable, and is open, as the baseline offset of section 6 (still about 1 pixel at a scaling of
+2, `dy` of the script).
