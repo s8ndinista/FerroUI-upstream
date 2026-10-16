@@ -1,10 +1,13 @@
 //! Port of the upstream `Direct` object tests.
 
 use super::*;
-use crate::data::{BindingMode, BindingPriority, BindingValue};
+use crate::data::core::Value;
+use crate::data::model::{Event, INotifyPropertyChanged, Model};
+use crate::data::{BindingMode, BindingPriority, BindingValue, IndexerBinding, ReflectionBinding};
 use crate::reactive::ObservableExt;
 use crate::*;
 use std::cell::{Cell, RefCell};
+use std::rc::Rc;
 
 #[repr(C)]
 pub struct Class1 {
@@ -618,6 +621,88 @@ fn add_owner_can_override_default_binding_mode() {
     assert_eq!(BindingMode::TwoWay, bar.get_metadata(Class1::TYPE).default_binding_mode());
     assert_eq!(BindingMode::OneWayToSource, bar.get_metadata(Class2::TYPE).default_binding_mode());
 }
+
+#[test]
+fn set_value_should_not_cause_stack_overflow_and_have_correct_values() {
+    let view_model = TestStackOverflowViewModel::new();
+    view_model.set_value(50.0);
+
+    let target = Class1::new();
+
+    let binding = ReflectionBinding::new("Value").with_mode(BindingMode::TwoWay);
+    binding.set_source(Some(view_model.clone()));
+    target.bind_binding(Class1::double_value_property(), &binding);
+
+    let child = Class1::new();
+
+    // C# `child[!!Class1.DoubleValueProperty] = target[!!Class1.DoubleValueProperty]`.
+    child.bind_binding(
+        Class1::double_value_property(),
+        &IndexerBinding::new(target.clone().upcast(), Class1::double_value_property(), BindingMode::TwoWay),
+    );
+
+    assert_eq!(1, view_model.setter_invoked_count.get());
+
+    // Issues #855 and #824 were causing a stack overflow at this point.
+    target.set_double_value(51.001);
+
+    assert_eq!(2, view_model.setter_invoked_count.get());
+
+    let expected = 51.0;
+
+    assert_eq!(expected, view_model.value());
+    assert_eq!(expected, target.double_value());
+    assert_eq!(expected, child.double_value());
+}
+
+struct TestStackOverflowViewModel {
+    setter_invoked_count: Cell<i32>,
+    value: Cell<f64>,
+    property_changed: Event<str>,
+}
+
+impl TestStackOverflowViewModel {
+    const MAX_INVOKED_COUNT: i32 = 1000;
+
+    fn new() -> Rc<Self> {
+        Model::new_model(Self { setter_invoked_count: Cell::new(0), value: Cell::new(0.0), property_changed: Event::new() })
+    }
+
+    fn value(&self) -> f64 {
+        self.value.get()
+    }
+
+    fn set_value(&self, value: f64) {
+        if self.value.get() != value {
+            self.setter_invoked_count.set(self.setter_invoked_count.get() + 1);
+            if self.setter_invoked_count.get() < Self::MAX_INVOKED_COUNT {
+                // C# `(int)value`: truncation toward zero.
+                let mut new_value = value.trunc();
+                if new_value > 75.0 {
+                    new_value = 75.0;
+                }
+                if new_value < 25.0 {
+                    new_value = 25.0;
+                }
+                self.value.set(new_value);
+            } else {
+                self.value.set(value);
+            }
+
+            self.property_changed.raise("Value");
+        }
+    }
+}
+
+impl INotifyPropertyChanged for TestStackOverflowViewModel {
+    fn property_changed(&self) -> &Event<str> {
+        &self.property_changed
+    }
+}
+
+ferro_model!(TestStackOverflowViewModel, |b| b
+    .notify_property_changed()
+    .property::<Value<f64>>("Value", |o| o.value(), |o, v| o.set_value(v)));
 
 // Not from upstream: the untyped route of a direct property converts a value
 // implicitly, as `DirectPropertyBase<TValue>.RouteSetValue` does through
