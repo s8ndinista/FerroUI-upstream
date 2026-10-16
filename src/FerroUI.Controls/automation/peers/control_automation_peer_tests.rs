@@ -189,6 +189,26 @@ mod parent {
         assert!(parent_peer.is::<ControlAutomationPeer>());
         assert_eq!(root2.clone().upcast::<Visual>(), owner_of(&parent_peer));
     }
+
+    // Not a port: upstream's peer holds its control, so the control outlives every peer of
+    // it. Here the control owns its peer and the peer holds the control weakly, and a peer
+    // that a platform still has (the node of UI Automation of a page that was replaced, asked
+    // for its fragment root while the native control host of the page goes) asks for its
+    // parent after its control is gone.
+    #[test]
+    fn a_peer_whose_control_is_gone_has_no_parent() {
+        let _scope = test_scope();
+        let border = Border::new();
+        let tree = Decorator::new();
+        tree.set_child(border.clone());
+        let target = create_peer(&border);
+
+        drop(tree);
+        drop(border);
+
+        assert!(target.cast::<ControlAutomationPeer>().expect("a control automation peer").try_owner().is_none());
+        assert!(target.get_parent().is_none());
+    }
 }
 
 mod automation_id_notifications {

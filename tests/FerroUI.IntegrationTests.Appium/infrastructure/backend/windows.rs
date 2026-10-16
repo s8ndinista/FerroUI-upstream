@@ -408,6 +408,33 @@ impl Backend {
         Ok(root.0.find_all(scope, &condition)?.into_iter().map(NativeElement).collect())
     }
 
+    /// A diagnostic of `--dump-tree`: the elements one search of UI Automation
+    /// returns for the whole subtree of `root` (the control view, then the
+    /// raw view), in its order, to compare with the walk of the tree.
+    pub fn search_diagnostic(&self, root: &NativeElement) -> Option<String> {
+        let mut text = String::new();
+        let views = [("control view", self.client.control_view_condition()), ("raw view", self.client.true_condition())];
+        for (view, condition) in views {
+            let found = condition.and_then(|condition| root.0.find_all(TREE_SCOPE_SUBTREE, &condition));
+            match found {
+                Ok(found) => {
+                    text.push_str(&format!("   FindAll of the subtree, {view}: {} elements\n", found.len()));
+                    for element in found {
+                        let element = NativeElement(element);
+                        text.push_str(&format!(
+                            "     {} id={:?} name={:?}\n",
+                            self.tag_name(&element),
+                            self.automation_id(&element),
+                            self.name(&element)
+                        ));
+                    }
+                }
+                Err(error) => text.push_str(&format!("   FindAll of the subtree, {view}: {error}\n")),
+            }
+        }
+        Some(text)
+    }
+
     /// The pixels of the screen in the rectangle (`GetScreenshot` of
     /// WinAppDriver, which copies the screen too).
     pub fn screenshot(&self, rect: &ElementRect) -> Result<Screenshot, String> {

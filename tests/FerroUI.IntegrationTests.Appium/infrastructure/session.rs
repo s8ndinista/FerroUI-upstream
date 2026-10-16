@@ -278,6 +278,9 @@ impl Session {
             Scope::Element(element) => (*element).clone(),
         };
         eprintln!("-- the tree of the search for {by:?}:");
+        if let Some(text) = backend.search_diagnostic(&root) {
+            eprint!("{text}");
+        }
         let mut lines = 0usize;
         let mut stack: Vec<(NativeElement, usize)> = vec![(root, 0)];
         while let Some((element, depth)) = stack.pop() {
