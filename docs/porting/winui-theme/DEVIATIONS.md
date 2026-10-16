@@ -766,6 +766,21 @@ The section covers both control themes of the document: ManagedFileChooser and M
 | PPG-9 | `VerticalScrollMode`, `HorizontalScrollMode`, `IsHorizontalScrollChainingEnabled`, `IsVerticalScrollChainingEnabled` of the scroll viewer | Scroll modes and chaining. | `IsScrollChainingEnabled="False"`; the modes are left out. | G-19. |
 | PPG-10 | `UseSystemFocusVisuals`, `FocusVisualMargin="0"` | Focus visual. | `FocusAdorner` with `Margin="0"`. | G-14. |
 
+## RefreshContainer
+
+| ID | WinUI source | What WinUI does | What the port does | Why |
+|---|---|---|---|---|
+| RFC-1 | controls/dev/PullToRefresh/RefreshContainer/RefreshContainer.xaml, `DefaultRefreshContainerStyle`: `ContentPresenter x:Name="ContentPresenter"`, `Grid x:Name="RefreshVisualizerPresenter"` | The content and the host of the visualizer. | `PART_ContentPresenter`, `PART_RefreshVisualizerPresenter`. | The template parts of FerroUI's RefreshContainer. |
+| RFC-2 | The content presenter takes only `Content` | No template, padding, border or alignment of the content. | The presenter also takes `ContentTemplate`, `Padding`, `BorderBrush`, `BorderThickness`, `CornerRadius` and the content alignments of the control. | The FerroUI contract, as the Fluent theme. |
+
+## RefreshVisualizer
+
+| ID | WinUI source | What WinUI does | What the port does | Why |
+|---|---|---|---|---|
+| RFV-1 | controls/dev/PullToRefresh/RefreshVisualizer/RefreshVisualizer.xaml: `Grid x:Name="Root"` | The host of the content. | `PART_Root`. | The template part of FerroUI's RefreshVisualizer. |
+| RFV-2 | `RefreshVisualizer.cpp`: a `SymbolIcon(Symbol::Refresh)` of 30 x 30 created by the control when it has no content | The default indicator, the glyph E72C of the symbol font. | A `Content` setter of the theme: a 30 x 30 `Grid` with a `Path` of `GlyphGeometryE72C`, 16 px, filled with the `Foreground` of the visualizer. | FerroUI's control creates no content; G-9. |
+| RFV-3 | (not in the style) | The visualizer is hit-testable. | `IsHitTestVisible="False"`. | The FerroUI contract, as the Fluent theme: the visualizer must not take the input of the content it lies over. |
+
 ## Slider
 
 | ID | WinUI source | What WinUI does | What the port does | Why |

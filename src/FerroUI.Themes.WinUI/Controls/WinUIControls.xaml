@@ -84,6 +84,8 @@
         <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/ButtonSpinner.xaml" />
         <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/Expander.xaml" />
         <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/PipsPager.xaml" />
+        <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/RefreshContainer.xaml" />
+        <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/RefreshVisualizer.xaml" />
       </ResourceDictionary.MergedDictionaries>
     </ResourceDictionary>
   </Styles.Resources>

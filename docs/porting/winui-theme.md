@@ -505,8 +505,8 @@ ports a control updates its state by porting it, not by editing the table.
 | `PopupRoot.xaml` | `{PopupRoot}` | No WinUI style: the text of the window (TextFillColorPrimaryBrush, ContentControlThemeFontFamily, ControlContentThemeFontSize). | F | ported |
 | `ProgressBar.xaml` | `{ProgressBar}` | ProgressBar: {ProgressBar} (ProgressBar.xaml, ProgressBar_themeresources.xaml), DefaultProgressBarStyle (Deprecated_themeresources.xaml). | B1 | ported |
 | `RadioButton.xaml` | `{RadioButton}` | RadioButton: DefaultRadioButtonStyle (RadioButton_themeresources.xaml). | F | ported |
-| `RefreshContainer.xaml` | `{RefreshContainer}` | RefreshContainer: DefaultRefreshContainerStyle (RefreshContainer.xaml). | B2 | pending |
-| `RefreshVisualizer.xaml` | `{RefreshVisualizer}` | RefreshVisualizer: {RefreshVisualizer} (RefreshVisualizer.xaml). | B2 | pending |
+| `RefreshContainer.xaml` | `{RefreshContainer}` | RefreshContainer: DefaultRefreshContainerStyle (RefreshContainer.xaml). | B2 | ported |
+| `RefreshVisualizer.xaml` | `{RefreshVisualizer}` | RefreshVisualizer: {RefreshVisualizer} (RefreshVisualizer.xaml). | B2 | ported |
 | `RepeatButton.xaml` | `{RepeatButton}` | RepeatButton: DefaultRepeatButtonStyle (RepeatButton_themeresources.xaml). | F | ported |
 | `ScrollBar.xaml` | `{ScrollBar}` | ScrollBar: DefaultScrollBarStyle (ScrollBar_themeresources.xaml); {Thumb} (generic.xaml). | F | ported |
 | `ScrollViewer.xaml` | `{ScrollViewer}` | ScrollViewer: DefaultScrollViewerStyle (ScrollViewer_themeresources.xaml). | F | ported |
