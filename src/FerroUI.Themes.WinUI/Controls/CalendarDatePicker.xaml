@@ -1,0 +1,273 @@
+<!--
+  Ported from microsoft-ui-xaml (https://github.com/microsoft/microsoft-ui-xaml),
+  commit 7e4b0c2096be402f51cc8f7d203ebf67cff183d0:
+    controls/dev/CommonStyles/CalendarDatePicker_themeresources.xaml (DefaultCalendarDatePicker
+    and the implicit style of CalendarDatePicker; its resources are
+    Resources/CalendarDatePicker_themeresources.xaml)
+  Copyright (c) Microsoft Corporation. Licensed under the MIT License (see NOTICE.md of the crate).
+
+  Translation notes (docs/porting/winui-theme.md, section 4):
+  - WinUI's picker shows the date in a TextBlock (DateText) and opens its calendar when it is
+    clicked anywhere. FerroUI's CalendarDatePicker edits the date in a text box (PART_TextBox) and
+    opens the calendar with a button (PART_Button): DateText is the text box, with the keyed theme
+    CalendarDatePickerTextBoxStyle (a transparent text box without a border, the placeholder in its
+    foreground as the TextBlock of the source shows it, and the floating placeholder of FerroUI's
+    UseFloatingPlaceholder above the text), and the glyph is the content of the button,
+    with the keyed theme CalendarDatePickerButtonStyle (a transparent button of the 32 px column
+    of the glyph).
+  - The padding 12,0,0,2 of DateText is the Padding of the control (a setter), bound to the text
+    box, so that the Padding of FerroUI's control applies.
+  - The glyph E787 (Calendar) of FontIcon CalendarGlyph at 12 px is the geometry
+    GlyphGeometryE787, 12 px wide.
+  - The Flyout of FlyoutBase.AttachedFlyout is the Popup PART_Popup (light dismiss, below the
+    control) with the Calendar PART_Calendar, whose corner radius is OverlayCornerRadius as in the
+    source; the FlyoutPresenterStyle of the source (no padding, no border) leaves the calendar as
+    it is, so the popup has no presenter. CalendarViewStyle is the default theme of Calendar.
+  - The Border Background is the focus target (Control.IsTemplateFocusTarget) of the focus visual,
+    FocusVisualMargin -3: the FocusAdorner of the control, drawn around the border.
+  - HeaderContentPresenter, DescriptionPresenter, their rows and HeaderStates are left out:
+    FerroUI's CalendarDatePicker has no Header and no Description.
+  - SelectionStates (Selected: the date text and the glyph in CalendarDatePickerTextForegroundSelected
+    while a date is selected) is not ported: FerroUI's control has no state for a selected date;
+    the brush is TextFillColorPrimaryBrush, the one of the normal state.
+  - CalendarDatePickerLightDismissOverlayBackground is not used: FerroUI's popups have no light
+    dismiss overlay.
+-->
+<ResourceDictionary xmlns="https://github.com/ferroui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    x:ClassModifier="internal">
+  <Design.PreviewWith>
+    <Border Padding="20" Height="400">
+      <StackPanel Spacing="20">
+        <CalendarDatePicker PlaceholderText="Pick a date" />
+        <CalendarDatePicker PlaceholderText="Disabled" IsEnabled="False" />
+      </StackPanel>
+    </Border>
+  </Design.PreviewWith>
+
+  <!-- DateText of the template of DefaultCalendarDatePicker, as the text box FerroUI's picker edits. -->
+  <ControlTheme x:Key="CalendarDatePickerTextBoxStyle" TargetType="TextBox">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="SelectionBrush" Value="{DynamicResource TextControlSelectionHighlightColor}" />
+    <Setter Property="CaretBrush" Value="{DynamicResource TextControlForegroundFocused}" />
+    <Setter Property="FontFamily" Value="{DynamicResource ContentControlThemeFontFamily}" />
+    <Setter Property="FontSize" Value="{DynamicResource ControlContentThemeFontSize}" />
+    <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Hidden" />
+    <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Hidden" />
+    <Setter Property="FocusAdorner" Value="{x:Null}" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Grid Background="{TemplateBinding Background}">
+          <DockPanel Margin="{TemplateBinding Padding}">
+            <!-- FerroUI's floating placeholder, above the text while there is text. -->
+            <TextBlock x:Name="PART_FloatingPlaceholder"
+                       DockPanel.Dock="Top"
+                       Foreground="{TemplateBinding PlaceholderForeground}"
+                       Text="{TemplateBinding PlaceholderText}"
+                       IsVisible="False" />
+            <ScrollViewer x:Name="PART_ScrollViewer"
+                          HorizontalScrollBarVisibility="{TemplateBinding (ScrollViewer.HorizontalScrollBarVisibility)}"
+                          VerticalScrollBarVisibility="{TemplateBinding (ScrollViewer.VerticalScrollBarVisibility)}"
+                          Foreground="{TemplateBinding Foreground}"
+                          Focusable="False">
+              <Panel>
+                <TextBlock x:Name="PlaceholderTextContentPresenter"
+                           Foreground="{TemplateBinding PlaceholderForeground}"
+                           Text="{TemplateBinding PlaceholderText}"
+                           TextAlignment="{TemplateBinding TextAlignment}"
+                           TextWrapping="{TemplateBinding TextWrapping}"
+                           HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                           VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                           IsHitTestVisible="False">
+                  <TextBlock.IsVisible>
+                    <MultiBinding Converter="{x:Static BoolConverters.And}">
+                      <Binding ElementName="PART_TextPresenter" Path="PreeditText" Converter="{x:Static StringConverters.IsNullOrEmpty}" />
+                      <Binding RelativeSource="{RelativeSource TemplatedParent}" Path="Text" Converter="{x:Static StringConverters.IsNullOrEmpty}" />
+                    </MultiBinding>
+                  </TextBlock.IsVisible>
+                </TextBlock>
+                <TextPresenter x:Name="PART_TextPresenter"
+                               Text="{TemplateBinding Text, Mode=TwoWay}"
+                               CaretBlinkInterval="{TemplateBinding CaretBlinkInterval}"
+                               CaretIndex="{TemplateBinding CaretIndex}"
+                               SelectionStart="{TemplateBinding SelectionStart}"
+                               SelectionEnd="{TemplateBinding SelectionEnd}"
+                               TextAlignment="{TemplateBinding TextAlignment}"
+                               TextWrapping="{TemplateBinding TextWrapping}"
+                               LineHeight="{TemplateBinding LineHeight}"
+                               LetterSpacing="{TemplateBinding LetterSpacing}"
+                               PasswordChar="{TemplateBinding PasswordChar}"
+                               RevealPassword="{TemplateBinding RevealPassword}"
+                               SelectionBrush="{TemplateBinding SelectionBrush}"
+                               SelectionForegroundBrush="{TemplateBinding SelectionForegroundBrush}"
+                               CaretBrush="{TemplateBinding CaretBrush}"
+                               HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                               VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+              </Panel>
+              <ScrollViewer.Styles>
+                <Style Selector="ScrollContentPresenter#PART_ContentPresenter">
+                  <Setter Property="Cursor" Value="IBeam" />
+                </Style>
+              </ScrollViewer.Styles>
+            </ScrollViewer>
+          </DockPanel>
+        </Grid>
+      </ControlTemplate>
+    </Setter>
+
+    <Style Selector="^[UseFloatingPlaceholder=True]:not(TextBox:empty) /template/ TextBlock#PART_FloatingPlaceholder">
+      <Setter Property="IsVisible" Value="True" />
+    </Style>
+  </ControlTheme>
+
+  <!-- The column of CalendarGlyph of the template of DefaultCalendarDatePicker, as the button FerroUI's picker opens its calendar with. -->
+  <ControlTheme x:Key="CalendarDatePickerButtonStyle" TargetType="Button">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+    <Setter Property="VerticalAlignment" Value="Stretch" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Setter Property="Focusable" Value="False" />
+    <Setter Property="FocusAdorner" Value="{x:Null}" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <ContentPresenter x:Name="PART_ContentPresenter"
+                          Background="{TemplateBinding Background}"
+                          Content="{TemplateBinding Content}"
+                          ContentTemplate="{TemplateBinding ContentTemplate}"
+                          HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                          VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+
+  <ControlTheme x:Key="DefaultCalendarDatePicker" TargetType="CalendarDatePicker">
+    <Setter Property="Foreground" Value="{DynamicResource CalendarDatePickerTextForeground}" />
+    <Setter Property="Background" Value="{DynamicResource CalendarDatePickerBackground}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource CalendarDatePickerBorderBrush}" />
+    <Setter Property="BorderThickness" Value="{DynamicResource CalendarDatePickerBorderThemeThickness}" />
+    <!-- The placeholder is the text of DateText, in its foreground. -->
+    <Setter Property="PlaceholderForeground" Value="{DynamicResource CalendarDatePickerTextForeground}" />
+    <Setter Property="HorizontalAlignment" Value="Left" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="HorizontalContentAlignment" Value="Left" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+    <!-- The Padding of DateText. -->
+    <Setter Property="Padding" Value="12,0,0,2" />
+    <!-- UseSystemFocusVisuals with FocusVisualMargin="-3". -->
+    <Setter Property="FocusAdorner">
+      <FocusAdornerTemplate>
+        <Border Margin="-3"
+                BorderThickness="2"
+                BorderBrush="{DynamicResource SystemControlFocusVisualPrimaryBrush}"
+                CornerRadius="{DynamicResource ControlCornerRadius}">
+          <Border BorderThickness="1"
+                  BorderBrush="{DynamicResource SystemControlFocusVisualSecondaryBrush}"
+                  CornerRadius="{DynamicResource ControlCornerRadius}" />
+        </Border>
+      </FocusAdornerTemplate>
+    </Setter>
+    <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Grid x:Name="Root" ColumnDefinitions="*,32">
+          <Border x:Name="Background"
+                  Grid.ColumnSpan="2"
+                  BorderThickness="{TemplateBinding BorderThickness}"
+                  BorderBrush="{TemplateBinding BorderBrush}"
+                  Background="{TemplateBinding Background}"
+                  CornerRadius="{TemplateBinding CornerRadius}"
+                  TemplatedControl.IsTemplateFocusTarget="True"
+                  MinHeight="32" />
+          <TextBox x:Name="PART_TextBox"
+                   Grid.Column="0"
+                   Theme="{StaticResource CalendarDatePickerTextBoxStyle}"
+                   Foreground="{TemplateBinding Foreground}"
+                   Margin="{TemplateBinding BorderThickness}"
+                   Padding="{TemplateBinding Padding}"
+                   PlaceholderText="{TemplateBinding PlaceholderText}"
+                   PlaceholderForeground="{TemplateBinding PlaceholderForeground}"
+                   UseFloatingPlaceholder="{TemplateBinding UseFloatingPlaceholder}"
+                   HorizontalAlignment="Stretch"
+                   VerticalAlignment="Stretch"
+                   HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                   VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
+          <Button x:Name="PART_Button"
+                  Grid.Column="1"
+                  Theme="{StaticResource CalendarDatePickerButtonStyle}">
+            <!-- E787 at 12 px: the glyph is drawn at the size of its ink. -->
+            <Path x:Name="CalendarGlyph"
+                  Data="{StaticResource GlyphGeometryE787}"
+                  Fill="{DynamicResource CalendarDatePickerCalendarGlyphForeground}"
+                  Stretch="Uniform"
+                  Width="12"
+                  HorizontalAlignment="Center"
+                  VerticalAlignment="Center" />
+          </Button>
+          <Popup x:Name="PART_Popup"
+                 PlacementTarget="{TemplateBinding}"
+                 Placement="Bottom"
+                 IsLightDismissEnabled="True">
+            <Calendar x:Name="PART_Calendar"
+                      CornerRadius="{DynamicResource OverlayCornerRadius}"
+                      FirstDayOfWeek="{TemplateBinding FirstDayOfWeek}"
+                      IsTodayHighlighted="{TemplateBinding IsTodayHighlighted}"
+                      SelectedDate="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=SelectedDate, Mode=TwoWay}"
+                      DisplayDate="{TemplateBinding DisplayDate}"
+                      DisplayDateStart="{TemplateBinding DisplayDateStart}"
+                      DisplayDateEnd="{TemplateBinding DisplayDateEnd}"
+                      IsWeekNumberVisible="{TemplateBinding IsWeekNumberVisible}"
+                      WeekNumberRule="{TemplateBinding WeekNumberRule}" />
+          </Popup>
+        </Grid>
+      </ControlTemplate>
+    </Setter>
+
+    <!-- PointerOver -->
+    <Style Selector="^:pointerover">
+      <Style Selector="^ /template/ Border#Background">
+        <Setter Property="BorderBrush" Value="{DynamicResource CalendarDatePickerBorderBrushPointerOver}" />
+        <Setter Property="Background" Value="{DynamicResource CalendarDatePickerBackgroundPointerOver}" />
+      </Style>
+      <Style Selector="^ /template/ TextBox#PART_TextBox">
+        <Setter Property="Foreground" Value="{DynamicResource CalendarDatePickerTextForegroundPointerOver}" />
+        <Setter Property="PlaceholderForeground" Value="{DynamicResource CalendarDatePickerTextForegroundPointerOver}" />
+      </Style>
+      <Style Selector="^ /template/ Path#CalendarGlyph">
+        <Setter Property="Fill" Value="{DynamicResource CalendarDatePickerCalendarGlyphForegroundPointerOver}" />
+      </Style>
+    </Style>
+    <!-- Pressed -->
+    <Style Selector="^:pressed">
+      <Style Selector="^ /template/ Border#Background">
+        <Setter Property="Background" Value="{DynamicResource CalendarDatePickerBackgroundPressed}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource CalendarDatePickerBorderBrushPressed}" />
+      </Style>
+      <Style Selector="^ /template/ TextBox#PART_TextBox">
+        <Setter Property="Foreground" Value="{DynamicResource CalendarDatePickerTextForegroundPressed}" />
+        <Setter Property="PlaceholderForeground" Value="{DynamicResource CalendarDatePickerTextForegroundPressed}" />
+      </Style>
+      <Style Selector="^ /template/ Path#CalendarGlyph">
+        <Setter Property="Fill" Value="{DynamicResource CalendarDatePickerCalendarGlyphForegroundPressed}" />
+      </Style>
+    </Style>
+    <!-- Disabled -->
+    <Style Selector="^:disabled">
+      <Style Selector="^ /template/ Border#Background">
+        <Setter Property="Background" Value="{DynamicResource CalendarDatePickerBackgroundDisabled}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource CalendarDatePickerBorderBrushDisabled}" />
+      </Style>
+      <Style Selector="^ /template/ TextBox#PART_TextBox">
+        <Setter Property="Foreground" Value="{DynamicResource CalendarDatePickerTextForegroundDisabled}" />
+        <Setter Property="PlaceholderForeground" Value="{DynamicResource CalendarDatePickerTextForegroundDisabled}" />
+      </Style>
+      <Style Selector="^ /template/ Path#CalendarGlyph">
+        <Setter Property="Fill" Value="{DynamicResource CalendarDatePickerCalendarGlyphForegroundDisabled}" />
+      </Style>
+    </Style>
+  </ControlTheme>
+
+  <ControlTheme x:Key="{x:Type CalendarDatePicker}" TargetType="CalendarDatePicker" BasedOn="{StaticResource DefaultCalendarDatePicker}" />
+</ResourceDictionary>

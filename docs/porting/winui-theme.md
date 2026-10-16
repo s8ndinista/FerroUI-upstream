@@ -462,11 +462,11 @@ ports a control updates its state by porting it, not by editing the table.
 | `AutoCompleteBox.xaml` | `{AutoCompleteBox}` | AutoSuggestBox: DefaultAutoSuggestBoxStyle, AutoSuggestBoxTextBoxStyle (AutoSuggestBox_themeresources.xaml). | B3 | pending |
 | `Button.xaml` | `{Button}` | Button: DefaultButtonStyle, AccentButtonStyle, SubtleButtonStyle (Button_themeresources.xaml). | F | ported |
 | `ButtonSpinner.xaml` | `{ButtonSpinner}` | No WinUI control: the spin buttons of NumberBox (NumberBoxSpinButtonStyle, NumberBox.xaml) and the TextBox resources. | B2 | pending |
-| `Calendar.xaml` | `{Calendar}` | CalendarView: DefaultCalendarViewStyle (CalendarView_themeresources.xaml). | B4 | pending |
-| `CalendarButton.xaml` | `{CalendarButton}` | The month and year items of CalendarView (CalendarViewBaseItem resources of CalendarView_themeresources.xaml). | B4 | pending |
-| `CalendarDatePicker.xaml` | `{CalendarDatePicker}` | CalendarDatePicker: DefaultCalendarDatePicker (CalendarDatePicker_themeresources.xaml). | B4 | pending |
-| `CalendarDayButton.xaml` | `{CalendarDayButton}` | CalendarViewDayItem: {CalendarViewDayItem} (CalendarView_themeresources.xaml). | B4 | pending |
-| `CalendarItem.xaml` | `{CalendarItem}` | The header, navigation buttons and views of the CalendarView template (DefaultCalendarViewStyle). | B4 | pending |
+| `Calendar.xaml` | `{Calendar}` | CalendarView: DefaultCalendarViewStyle (CalendarView_themeresources.xaml). | B4 | ported |
+| `CalendarButton.xaml` | `{CalendarButton}` | The month and year items of CalendarView (CalendarViewBaseItem resources of CalendarView_themeresources.xaml). | B4 | ported |
+| `CalendarDatePicker.xaml` | `{CalendarDatePicker}` | CalendarDatePicker: DefaultCalendarDatePicker (CalendarDatePicker_themeresources.xaml). | B4 | ported |
+| `CalendarDayButton.xaml` | `{CalendarDayButton}` | CalendarViewDayItem: {CalendarViewDayItem} (CalendarView_themeresources.xaml). | B4 | ported |
+| `CalendarItem.xaml` | `{CalendarItem}` | The header, navigation buttons and views of the CalendarView template (DefaultCalendarViewStyle). | B4 | ported |
 | `Carousel.xaml` | `{Carousel}` | FlipView: DefaultFlipViewStyle (FlipView_themeresources.xaml) and FlipViewItem. | B5 | pending |
 | `CarouselPage.xaml` | `{CarouselPage}` | No WinUI control: built from FlipView (DefaultFlipViewStyle) and the page background (SolidBackgroundFillColorBaseBrush). | B5 | pending |
 | `CheckBox.xaml` | `{CheckBox}` | CheckBox: DefaultCheckBoxStyle (CheckBox_themeresources.xaml). | F | ported |

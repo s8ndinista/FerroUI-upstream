@@ -97,6 +97,11 @@ macro_rules! document_tests {
 document_tests! {
     controls_adorner_layer => "/Controls/AdornerLayer.xaml";
     controls_button => "/Controls/Button.xaml";
+    controls_calendar => "/Controls/Calendar.xaml";
+    controls_calendar_button => "/Controls/CalendarButton.xaml";
+    controls_calendar_date_picker => "/Controls/CalendarDatePicker.xaml";
+    controls_calendar_day_button => "/Controls/CalendarDayButton.xaml";
+    controls_calendar_item => "/Controls/CalendarItem.xaml";
     controls_check_box => "/Controls/CheckBox.xaml";
     controls_data_validation_errors => "/Controls/DataValidationErrors.xaml";
     controls_embeddable_control_root => "/Controls/EmbeddableControlRoot.xaml";

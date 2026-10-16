@@ -196,6 +196,11 @@ macro_rules! control_tests {
 
 control_tests! {
     button => "Button";
+    calendar => "Calendar";
+    calendar_button => "CalendarButton";
+    calendar_date_picker => "CalendarDatePicker";
+    calendar_day_button => "CalendarDayButton";
+    calendar_item => "CalendarItem";
     check_box => "CheckBox";
     hyperlink_button => "HyperlinkButton";
     radio_button => "RadioButton";
