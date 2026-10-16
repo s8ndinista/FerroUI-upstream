@@ -378,9 +378,6 @@ pub fn is_instance_of(object: &Ref<FerroObject>, handle_type: &str) -> bool {
 /// does not fail on them; it fails when a control of the list has a theme,
 /// so that the list is kept current.
 pub const PENDING_CONTROLS: &[&str] = &[
-    // B2: buttons, ranges and expanders
-    "RefreshContainer",
-    "RefreshVisualizer",
     // B3: flyouts, menus, lists and selection
     "AutoCompleteBox",
     "ComboBox",

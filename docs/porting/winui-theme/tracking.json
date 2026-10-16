@@ -69034,9 +69034,9 @@
    "key": "DefaultRefreshContainerStyle",
    "kind": "Style",
    "target_type": "RefreshContainer",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B2"
+   "batch": null
   },
   {
    "document": "controls/dev/PullToRefresh/RefreshContainer/RefreshContainer.xaml",
@@ -69044,9 +69044,9 @@
    "key": "{RefreshContainer}",
    "kind": "Style",
    "target_type": "RefreshContainer",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B2"
+   "batch": null
   },
   {
    "document": "controls/dev/PullToRefresh/RefreshContainer/RefreshContainer_themeresources.xaml",
@@ -69114,9 +69114,9 @@
    "key": "{RefreshVisualizer}",
    "kind": "Style",
    "target_type": "RefreshVisualizer",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B2"
+   "batch": null
   },
   {
    "document": "controls/dev/PullToRefresh/RefreshVisualizer/RefreshVisualizer_themeresources.xaml",
@@ -90093,6 +90093,8 @@
   "Controls/PopupRoot.xaml",
   "Controls/ProgressBar.xaml",
   "Controls/RadioButton.xaml",
+  "Controls/RefreshContainer.xaml",
+  "Controls/RefreshVisualizer.xaml",
   "Controls/RepeatButton.xaml",
   "Controls/ScrollBar.xaml",
   "Controls/ScrollViewer.xaml",
@@ -90676,7 +90678,7 @@
    "winui": "PipsPager: {PipsPager} (PipsPager.xaml), PipsPagerNavigationButtonBaseStyle, PipsPagerPreviousPageButtonStyle, PipsPagerNextPageButtonStyle, PipsPagerButtonBaseStyle, PipsPagerSelectedPipButtonStyle, PipsPagerNormalPipButtonStyle (PipsPager_themeresources.xaml).",
    "status": "ported",
    "deviations": 10,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "PopupRoot.xaml",
@@ -90718,9 +90720,9 @@
    ],
    "batch": "B2",
    "winui": "RefreshContainer: DefaultRefreshContainerStyle (RefreshContainer.xaml).",
-   "status": "pending",
-   "deviations": 0,
-   "date": ""
+   "status": "ported",
+   "deviations": 2,
+   "date": "not committed"
   },
   {
    "document": "RefreshVisualizer.xaml",
@@ -90729,9 +90731,9 @@
    ],
    "batch": "B2",
    "winui": "RefreshVisualizer: {RefreshVisualizer} (RefreshVisualizer.xaml).",
-   "status": "pending",
-   "deviations": 0,
-   "date": ""
+   "status": "ported",
+   "deviations": 3,
+   "date": "not committed"
   },
   {
    "document": "RepeatButton.xaml",
@@ -91549,6 +91551,8 @@
   "Expander": 7,
   "NumericUpDown": 15,
   "PipsPager": 10,
+  "RefreshContainer": 2,
+  "RefreshVisualizer": 3,
   "Slider": 11,
   "SplitButton": 14,
   "ToggleSwitch": 11

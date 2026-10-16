@@ -260,6 +260,8 @@ control_tests! {
     expander => "Expander";
     numeric_up_down => "NumericUpDown";
     pips_pager => "PipsPager";
+    refresh_container => "RefreshContainer";
+    refresh_visualizer => "RefreshVisualizer";
     slider => "Slider";
     split_button => "SplitButton";
     toggle_switch => "ToggleSwitch";
