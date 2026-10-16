@@ -224,6 +224,7 @@ document_tests! {
     // B2: buttons, ranges and expanders
     controls_button_spinner => "/Controls/ButtonSpinner.xaml";
     controls_drop_down_button => "/Controls/DropDownButton.xaml";
+    controls_expander => "/Controls/Expander.xaml";
     controls_numeric_up_down => "/Controls/NumericUpDown.xaml";
     controls_slider => "/Controls/Slider.xaml";
     controls_split_button => "/Controls/SplitButton.xaml";

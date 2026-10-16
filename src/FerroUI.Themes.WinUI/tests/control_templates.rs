@@ -257,6 +257,7 @@ control_tests! {
     // B2: buttons, ranges and expanders
     button_spinner => "ButtonSpinner";
     drop_down_button => "DropDownButton";
+    expander => "Expander";
     numeric_up_down => "NumericUpDown";
     slider => "Slider";
     split_button => "SplitButton";
