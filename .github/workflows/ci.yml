@@ -308,6 +308,20 @@ jobs:
       # it (the window alone, never the desktop), once with software rendering and once through
       # ANGLE. Required since its second green run (2026-10-10): the catalog has to start, show
       # its pages and end in both modes.
+      # The GpuInterop sample (samples/GpuInterop/GAPS.md): built, then its Direct3D 11 demo
+      # through ANGLE in its smoke mode, which checks that the frames Direct3D draws are in the
+      # snapshots of the compositor. The run is informative until it has passed on a runner.
+      - name: The GpuInterop sample builds
+        if: ${{ steps.skia.outputs.raster == 'true' }}
+        timeout-minutes: 60
+        run: cargo build --locked -p gpu-interop
+      - name: The Direct3D 11 demo of the GpuInterop sample (informative)
+        if: ${{ steps.skia.outputs.raster == 'true' }}
+        continue-on-error: true
+        timeout-minutes: 10
+        env:
+          RUST_BACKTRACE: 1
+        run: ./target/debug/gpu-interop.exe --smoke --d3d
       - name: Pictures of the catalog (software rendering and ANGLE)
         if: ${{ steps.skia.outputs.raster == 'true' }}
         timeout-minutes: 60
@@ -1009,6 +1023,11 @@ jobs:
       - name: The ControlCatalog host with the native control demo compiles
         if: ${{ !cancelled() }}
         run: cargo check --locked -p control-catalog-desktop
+      # The GpuInterop sample: its Vulkan and dma-buf demos and the Skia context over their
+      # device, which need Linux and Skia with Vulkan to compile (samples/GpuInterop/GAPS.md).
+      - name: The GpuInterop sample compiles
+        if: ${{ !cancelled() }}
+        run: cargo check --locked -p gpu-interop --all-targets
       - name: The same with two monitors (xrandr --setmonitor)
         if: ${{ !cancelled() }}
         run: |

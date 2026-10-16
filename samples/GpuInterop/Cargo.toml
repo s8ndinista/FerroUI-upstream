@@ -1,0 +1,83 @@
+[package]
+name = "gpu-interop"
+description = "The GpuInterop sample of FerroUI: a teapot drawn with Vulkan or a cube drawn with Direct3D 11 into a drawing surface of the compositor through the GPU interop contracts"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+build = "build.rs"
+
+# Unit tests live next to the code (`tests/` modules of the library), not as integration test
+# targets.
+autotests = false
+autobenches = false
+autoexamples = false
+autobins = false
+
+[lib]
+path = "lib.rs"
+
+# The desktop entry point: `Program.cs` of the upstream sample.
+[[bin]]
+name = "gpu-interop"
+path = "program.rs"
+
+[dependencies]
+# The compiled markup of the crate calls the typed functions of the declared members.
+ferroui-base = { workspace = true, features = ["markup-functions"] }
+ferroui-controls = { workspace = true }
+ferroui-markup = { workspace = true }
+ferroui-markup-xaml = { workspace = true }
+ferroui-themes-fluent = { workspace = true }
+# The entry point.
+ferroui-desktop = { workspace = true }
+sample-support = { path = "../SampleSupport" }
+# The options of the Vulkan platform graphics (`VulkanOptions` of `Program.cs`).
+ferroui-vulkan = { workspace = true }
+# Vulkan for the drawing of the Vulkan demos (Silk.NET.Vulkan upstream): the types and function
+# tables, with the loader of the system opened at run time.
+ash = { workspace = true }
+# The Skia context over the Vulkan device of the demo (`GRContext.CreateVulkan` upstream), which
+# `VulkanImage::save_texture` reads an image back with. Already in the tree through the Skia
+# backend; the features that give it Vulkan are named below, per target.
+skia-safe = { workspace = true }
+# `close` and `dup` of the C library (`NativeMethods.close`, `LibcDup` upstream).
+libc = { workspace = true }
+# The smoke run reads the pixels of the snapshots of the compositor from their PNG encoding.
+png = { workspace = true }
+
+# Skia with its Vulkan back end, which the Skia backend has on Linux anyway.
+[target.'cfg(target_os = "linux")'.dependencies]
+skia-safe = { workspace = true, features = ["vulkan"] }
+# `X11PlatformOptions` of `Program.cs`.
+ferroui-x11 = { workspace = true }
+
+# The rendering mode of a smoke run on macOS (`FERROUI_SMOKE_RENDERING`, `smoke.rs`).
+[target.'cfg(target_os = "macos")'.dependencies]
+ferroui-native = { workspace = true }
+
+[target.'cfg(windows)'.dependencies]
+# `Win32PlatformOptions` of `Program.cs`.
+ferroui-win32 = { workspace = true, features = ["angle"] }
+# The COM runtime of the bindings of Direct3D 11, DXGI and the shader compiler the build script
+# generates from `D3DDemo/d3d11.idl` (Silk.NET.Direct3D11, Silk.NET.DXGI and
+# Silk.NET.Direct3D.Compilers upstream); the functions of the system are linked by `raw-dylib`.
+ferroui-microcom = { workspace = true }
+
+[build-dependencies]
+sample-build = { path = "../SampleBuild" }
+# The bindings of `D3DDemo/d3d11.idl`.
+microcom-codegen = { workspace = true }
+
+[dev-dependencies]
+ferroui-base = { workspace = true, features = ["testing"] }
+ferroui-controls = { workspace = true, features = ["testing"] }
+sample-testing = { path = "../SampleTesting" }
+
+[features]
+# The Vulkan rendering mode on Windows, which the Vulkan demo draws for: the feature `vulkan` of
+# the Windows backend, with which Skia is compiled from source (docs/porting/vulkan.md, section 2);
+# Skia with Vulkan gives `VulkanContext` its Skia context too. Elsewhere it changes nothing.
+vulkan = ["ferroui-win32/vulkan"]

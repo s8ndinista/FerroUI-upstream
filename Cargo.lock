@@ -1520,6 +1520,31 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e4eba85ea1d0a966a983acd07deee566e67395d2d96b6fb39e62b5a833f1eb0b"
 
 [[package]]
+name = "gpu-interop"
+version = "0.1.0-preview.3"
+dependencies = [
+ "ash",
+ "ferroui-base",
+ "ferroui-controls",
+ "ferroui-desktop",
+ "ferroui-markup",
+ "ferroui-markup-xaml",
+ "ferroui-microcom",
+ "ferroui-native",
+ "ferroui-themes-fluent",
+ "ferroui-vulkan",
+ "ferroui-win32",
+ "ferroui-x11",
+ "libc",
+ "microcom-codegen",
+ "png",
+ "sample-build",
+ "sample-support",
+ "sample-testing",
+ "skia-safe",
+]
+
+[[package]]
 name = "guillotiere"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

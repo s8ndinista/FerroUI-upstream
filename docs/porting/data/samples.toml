@@ -93,6 +93,11 @@ rust = "samples/WinUIEmbedSample"
 note = "controls of WinUI beside the content in one WinUI 3 window through ferroui-winui, with a smoke mode (docs/porting/winui.md, section 7.6); the content (EmbeddedView) is tested on every host"
 
 [[sample]]
+upstream = "samples/GpuInterop"
+rust = "samples/GpuInterop"
+note = "Vulkan (ash), Direct3D 11 (MicroCom bindings) and dma-buf demos drawing into a drawing surface through the GPU interop of the compositor; a smoke mode; on macOS the Vulkan demo (MoltenVK) verified against the Metal and the OpenGL compositor (samples/GpuInterop/GAPS.md)"
+
+[[sample]]
 upstream = "samples/interop/WindowsInteropTest"
 state = "not applicable"
 note = "hosting in Windows Forms (Avalonia.Win32.Interoperability), which has no counterpart in Rust (docs/porting/winui.md, section 8)"
