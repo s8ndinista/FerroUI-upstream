@@ -519,6 +519,12 @@ fn text_options_select_the_glyph_rendering() {
     let antialias = render(Some(with_mode(TextRenderingMode::Antialias)), RenderOptions::default());
     assert!(is_gray(&antialias) && !is_bilevel(&antialias));
 
+    // Without a mode a render target bitmap, which shows on no display,
+    // gets greyscale text (the reference: subpixel text;
+    // docs/porting/text-rendering.md).
+    let unspecified = render(None, RenderOptions::default());
+    assert_eq!(antialias, unspecified);
+
     // Render target bitmaps keep subpixel rendering enabled; whether Skia
     // produces coloured fringes depends on the surface, but the mode is a
     // distinct blob.

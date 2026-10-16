@@ -3,8 +3,10 @@
 
 mod i_framebuffer_platform_surface;
 mod i_platform_render_surface;
+mod platform_text_rendering_parameters;
 
 pub use i_framebuffer_platform_surface::{
     FramebufferLockProperties, FuncFramebufferRenderTarget, IFramebufferPlatformSurface, IFramebufferRenderTarget,
 };
 pub use i_platform_render_surface::{IPlatformRenderSurface, IPlatformRenderSurfaceRenderTarget};
+pub use platform_text_rendering_parameters::{PlatformTextRenderingParameters, SubpixelGeometry};

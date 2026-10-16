@@ -323,6 +323,7 @@ impl ISkiaGpu for GlSkiaGpu {
         &self,
         size: PixelSize,
         session: Option<&Rc<dyn ISkiaGpuRenderSession>>,
+        surface_props: &skia_safe::SurfaceProps,
     ) -> Option<Rc<dyn ISkiaSurface>> {
         // Only windows platform needs our FBO trickery
         if !cfg!(target_os = "windows") {
@@ -345,6 +346,7 @@ impl ISkiaGpu for GlSkiaGpu {
             self.gl_context.clone(),
             size,
             session.map_or(SkiaSurfaceOrigin::TopLeft, |session| session.surface_origin()),
+            surface_props,
         ) {
             Ok(surface) => {
                 self.can_create_surfaces.set(Some(true));

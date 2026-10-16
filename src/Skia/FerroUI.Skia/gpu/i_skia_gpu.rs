@@ -3,7 +3,7 @@ use ferroui_base::platform::surfaces::IPlatformRenderSurface;
 use ferroui_base::platform::IPlatformGraphicsContext;
 use ferroui_base::reactive::IDisposable;
 use ferroui_base::PixelSize;
-use skia_safe::{Canvas, Surface};
+use skia_safe::{Canvas, Surface, SurfaceProps};
 use std::rc::Rc;
 
 /// Custom Skia GPU instance.
@@ -26,11 +26,13 @@ pub trait ISkiaGpu: IPlatformGraphicsContext {
     /// Creates an offscreen render target surface.
     ///
     /// `session` is an optional current render session that might be affected
-    /// by the surface creation.
+    /// by the surface creation; `surface_props` are the properties of the
+    /// surface (the text rendering of the surface it is a layer of).
     fn try_create_surface(
         &self,
         size: PixelSize,
         session: Option<&Rc<dyn ISkiaGpuRenderSession>>,
+        surface_props: &SurfaceProps,
     ) -> Option<Rc<dyn ISkiaSurface>>;
 
     /// The Skia GPU context, made current for as long as the result is not

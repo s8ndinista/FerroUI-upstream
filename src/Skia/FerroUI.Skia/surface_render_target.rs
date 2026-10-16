@@ -4,6 +4,7 @@ use crate::helpers::image_saving_helper;
 use crate::helpers::pixel_format_helper;
 use crate::i_drawable_bitmap_impl::IDrawableBitmapImpl;
 use crate::immutable_bitmap::ImmutableBitmap;
+use crate::text_rendering_settings::TextRenderingSettings;
 use ferroui_base::media::imaging::BitmapEncoderOptions;
 use ferroui_base::platform::{
     IBitmapImpl, IDrawingContextImpl, IDrawingContextLayerImpl, PixelFormat, RenderTargetProperties,
@@ -11,8 +12,7 @@ use ferroui_base::platform::{
 use ferroui_base::{PixelSize, Vector};
 use skia_safe::canvas::SrcRectConstraint;
 use skia_safe::{
-    images, surfaces, AlphaType, Canvas, Data, Image, ImageInfo, Paint, PixelGeometry, Rect, SamplingOptions,
-    Surface, SurfaceProps, SurfacePropsFlags,
+    images, surfaces, AlphaType, Canvas, Data, Image, ImageInfo, Paint, Rect, SamplingOptions, Surface, SurfaceProps,
 };
 use std::any::Any;
 use std::cell::{Cell, RefCell};
@@ -60,6 +60,11 @@ pub struct SurfaceRenderTargetCreateInfo {
     /// Render text without LCD (subpixel) rendering.
     pub disable_text_lcd_rendering: bool,
 
+    /// How text is rendered on the surface: its surface properties and the
+    /// default antialiasing of text. A layer takes the settings of the
+    /// surface it is created for; an offscreen surface the defaults.
+    pub text_rendering: TextRenderingSettings,
+
     /// GPU-accelerated context (optional).
     pub gr_context: Option<Rc<dyn ISkiaGrContext>>,
 
@@ -81,6 +86,7 @@ pub struct SurfaceRenderTarget {
     use_scaled_drawing: bool,
     surface: Rc<dyn ISkiaSurface>,
     disable_lcd_rendering: bool,
+    text_rendering: TextRenderingSettings,
     gr_context: Option<Rc<dyn ISkiaGrContext>>,
     gpu: Option<Rc<dyn ISkiaGpu>>,
     dpi: Vector,
@@ -95,12 +101,13 @@ impl SurfaceRenderTarget {
     /// Panics when the surface cannot be created.
     pub fn new(create_info: SurfaceRenderTargetCreateInfo) -> Self {
         let pixel_size = PixelSize::new(create_info.width, create_info.height);
+        let props = create_info.text_rendering.surface_props();
 
         let mut surface: Option<Rc<dyn ISkiaSurface>> = None;
 
         if !create_info.disable_manual_fbo {
             if let Some(gpu) = &create_info.gpu {
-                surface = gpu.try_create_surface(pixel_size, create_info.session.as_ref());
+                surface = gpu.try_create_surface(pixel_size, create_info.session.as_ref(), &props);
             }
         }
 
@@ -110,6 +117,7 @@ impl SurfaceRenderTarget {
                 pixel_size.width,
                 pixel_size.height,
                 create_info.format,
+                &props,
             ) {
                 surface = Some(Rc::new(SkiaSurfaceWrapper { surface: RefCell::new(Some(sk_surface)) }));
             }
@@ -121,6 +129,7 @@ impl SurfaceRenderTarget {
             use_scaled_drawing: create_info.use_scaled_drawing,
             surface,
             disable_lcd_rendering: create_info.disable_text_lcd_rendering,
+            text_rendering: create_info.text_rendering,
             gr_context: create_info.gr_context,
             gpu: create_info.gpu,
             dpi: create_info.dpi,
@@ -141,13 +150,13 @@ impl SurfaceRenderTarget {
         width: i32,
         height: i32,
         format: Option<PixelFormat>,
+        props: &SurfaceProps,
     ) -> Option<Surface> {
         let image_info = Self::make_image_info(width, height, format);
-        let props = SurfaceProps::new(SurfacePropsFlags::default(), PixelGeometry::RGBH);
 
         match gpu {
-            Some(gpu) => gpu.create_surface(&image_info, &props),
-            None => surfaces::raster(&image_info, None, Some(&props)),
+            Some(gpu) => gpu.create_surface(&image_info, props),
+            None => surfaces::raster(&image_info, None, Some(props)),
         }
     }
 
@@ -299,6 +308,7 @@ impl IDrawingContextLayerImpl for SurfaceRenderTarget {
             dpi: self.dpi,
             scale_drawing_to_dpi: self.use_scaled_drawing,
             disable_subpixel_text_rendering: self.disable_lcd_rendering,
+            text_rendering: self.text_rendering,
             gr_context: self.gr_context.clone(),
             gpu: self.gpu.clone(),
             ..CreateInfo::default()

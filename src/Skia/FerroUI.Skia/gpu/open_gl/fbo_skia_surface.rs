@@ -6,7 +6,7 @@ use ferroui_opengl::gl_consts::*;
 use ferroui_opengl::{GlProfileType, IGlContext, OpenGlException};
 use skia_safe::gpu::gl::FramebufferInfo;
 use skia_safe::gpu::{backend_render_targets, surfaces, SurfaceOrigin};
-use skia_safe::{Canvas, Color, ColorType, PixelGeometry, Surface, SurfaceProps, SurfacePropsFlags};
+use skia_safe::{Canvas, Color, ColorType, Surface, SurfaceProps};
 use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 
@@ -28,14 +28,15 @@ pub struct FboSkiaSurface {
 const TRUE_FALSE: [bool; 2] = [true, false];
 
 impl FboSkiaSurface {
-    /// Creates the framebuffer object and the Skia surface over it. The
-    /// context must be current.
+    /// Creates the framebuffer object and the Skia surface over it, with the
+    /// given surface properties. The context must be current.
     pub fn new(
         gpu: Rc<GlSkiaGpu>,
         gr_context: Rc<GaneshGrContext>,
         gl_context: Rc<dyn IGlContext>,
         pixel_size: PixelSize,
         surface_origin: SkiaSurfaceOrigin,
+        properties: &SurfaceProps,
     ) -> Result<Self, OpenGlException> {
         let internal_format = if gl_context.version().type_() == GlProfileType::OpenGLES { GL_RGBA } else { GL_RGBA8 };
         let gl = gl_context.gl_interface();
@@ -112,7 +113,6 @@ impl FboSkiaSurface {
             8,
             FramebufferInfo { fboid: fbo as u32, format: GL_RGBA8 as u32, ..Default::default() },
         );
-        let properties = SurfaceProps::new(SurfacePropsFlags::default(), PixelGeometry::RGBH);
         let surface = gr_context.with_context(|context| {
             surfaces::wrap_backend_render_target(
                 context,
@@ -123,7 +123,7 @@ impl FboSkiaSurface {
                 },
                 ColorType::RGBA8888,
                 None,
-                Some(&properties),
+                Some(properties),
             )
         });
         let can_blit = gl.is_blit_framebuffer_available();

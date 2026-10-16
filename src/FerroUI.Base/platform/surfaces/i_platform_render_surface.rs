@@ -22,6 +22,16 @@ pub trait IPlatformRenderSurface: Send + Sync {
         None
     }
 
+    /// The text rendering settings of the platform for this surface, when
+    /// the platform knows them: the render backend asks for them every
+    /// frame (they follow the settings of the system and the display the
+    /// surface is on). A backend asks every surface of a top-level and
+    /// takes the first answer; `None` from all of them gives the defaults
+    /// of the backend (docs/porting/text-rendering.md).
+    fn text_rendering_parameters(&self) -> Option<super::PlatformTextRenderingParameters> {
+        None
+    }
+
     /// Lets the backend recover the concrete surface type.
     fn as_any(&self) -> &dyn Any;
 }

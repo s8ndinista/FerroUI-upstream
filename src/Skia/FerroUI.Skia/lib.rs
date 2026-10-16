@@ -43,6 +43,7 @@ mod skia_typeface;
 pub mod skia_sharp_extensions;
 mod stream_geometry_impl;
 mod surface_render_target;
+mod text_rendering_settings;
 mod transformed_geometry_impl;
 mod two_level_cache;
 mod writeable_bitmap_impl;
@@ -71,6 +72,7 @@ pub use sk_text_blob_builder_cache::SkTextBlobBuilderCache;
 pub use skia_backend_context::SkiaContext;
 pub use skia_application_extensions::SkiaApplicationExtensions;
 pub use skia_options::SkiaOptions;
+pub use text_rendering_settings::{TextRenderingSettings, TextRenderingSource, GREYSCALE_TEXT_SCALING};
 pub use skia_platform::SkiaPlatform;
 pub use skia_region_impl::SkiaRegionImpl;
 pub use skia_typeface::SkiaTypeface;
@@ -84,5 +86,7 @@ pub use writeable_bitmap_impl::WriteableBitmapImpl;
 mod tests;
 #[cfg(test)]
 mod text_tests;
+#[cfg(test)]
+mod text_rendering_tests;
 #[cfg(test)]
 mod unit_tests;

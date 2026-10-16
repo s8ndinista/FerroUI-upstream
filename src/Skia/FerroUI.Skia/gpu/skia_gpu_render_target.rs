@@ -1,6 +1,7 @@
 use super::{ISkiaGpu, ISkiaGpuRenderTarget};
 use crate::drawing_context_impl::{CreateInfo, DrawingContextImpl};
 use crate::skia_platform::SkiaPlatform;
+use crate::text_rendering_settings::TextRenderingSource;
 use ferroui_base::platform::{
     IDrawingContextImpl, IRenderTarget, PlatformRenderTargetState, RenderTargetDrawingContextProperties,
     RenderTargetError, RenderTargetProperties, RenderTargetSceneInfo,
@@ -11,13 +12,25 @@ use std::rc::Rc;
 pub struct SkiaGpuRenderTarget {
     skia_gpu: Rc<dyn ISkiaGpu>,
     render_target: Rc<dyn ISkiaGpuRenderTarget>,
+    text_rendering: TextRenderingSource,
 }
 
 impl SkiaGpuRenderTarget {
     /// Creates a render target that renders with `skia_gpu` to
-    /// `render_target`.
+    /// `render_target`, with the default text rendering of the backend.
     pub fn new(skia_gpu: Rc<dyn ISkiaGpu>, render_target: Rc<dyn ISkiaGpuRenderTarget>) -> Self {
-        Self { skia_gpu, render_target }
+        Self::with_text_rendering(skia_gpu, render_target, TextRenderingSource::default())
+    }
+
+    /// Creates a render target that renders with `skia_gpu` to
+    /// `render_target` and reads the text rendering parameters of the
+    /// platform from `text_rendering` every frame.
+    pub fn with_text_rendering(
+        skia_gpu: Rc<dyn ISkiaGpu>,
+        render_target: Rc<dyn ISkiaGpuRenderTarget>,
+        text_rendering: TextRenderingSource,
+    ) -> Self {
+        Self { skia_gpu, render_target, text_rendering }
     }
 }
 
@@ -40,7 +53,8 @@ impl IRenderTarget for SkiaGpuRenderTarget {
         &self,
         scene_info: &RenderTargetSceneInfo,
     ) -> Result<(Box<dyn IDrawingContextImpl>, RenderTargetDrawingContextProperties), RenderTargetError> {
-        let session = self.render_target.try_begin_rendering_session(scene_info)?;
+        let text_rendering = self.text_rendering.settings(scene_info.scaling, scene_info.transparency_level);
+        let session = self.render_target.try_begin_rendering_session(scene_info, &text_rendering.surface_props())?;
 
         let nfo = CreateInfo {
             gr_context: Some(session.gr_context()),
@@ -49,6 +63,7 @@ impl IRenderTarget for SkiaGpuRenderTarget {
             scale_drawing_to_dpi: false,
             gpu: Some(self.skia_gpu.clone()),
             current_session: Some(session.clone()),
+            text_rendering,
             ..CreateInfo::default()
         };
 

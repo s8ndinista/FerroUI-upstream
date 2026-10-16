@@ -5,18 +5,16 @@ use ferroui_base::platform::{
     IDrawingContextImpl, ILockedFramebuffer, IRenderTarget, PlatformRenderTargetState,
     RenderTargetDrawingContextProperties, RenderTargetProperties, RenderTargetSceneInfo,
 };
-use skia_safe::{surfaces, Bitmap, ColorType, ImageInfo, PixelGeometry, Surface, SurfaceProps, SurfacePropsFlags};
+use crate::text_rendering_settings::TextRenderingSource;
+use skia_safe::{surfaces, Bitmap, ColorType, ImageInfo, Surface, SurfaceProps};
 use std::cell::{Cell, RefCell};
 use std::rc::Rc;
-
-fn surface_props() -> SurfaceProps {
-    SurfaceProps::new(SurfacePropsFlags::default(), PixelGeometry::RGBH)
-}
 
 /// The surface over the locked framebuffer, kept between frames while the
 /// framebuffer stays the same.
 struct SurfaceState {
     current_image_info: Option<ImageInfo>,
+    current_props: Option<SurfaceProps>,
     current_framebuffer_address: *mut u8,
     framebuffer_surface: Option<Surface>,
     conversion_shim: Option<Rc<PixelFormatConversionShim>>,
@@ -29,6 +27,7 @@ pub struct FramebufferRenderTarget {
     state: RefCell<SurfaceState>,
     render_target: RefCell<Option<Rc<dyn IFramebufferRenderTarget>>>,
     had_conversion_shim: Cell<bool>,
+    text_rendering: TextRenderingSource,
 }
 
 impl FramebufferRenderTarget {
@@ -44,13 +43,23 @@ impl FramebufferRenderTarget {
             use_scaled_drawing,
             state: RefCell::new(SurfaceState {
                 current_image_info: None,
+                current_props: None,
                 current_framebuffer_address: std::ptr::null_mut(),
                 framebuffer_surface: None,
                 conversion_shim: None,
             }),
             render_target: RefCell::new(Some(render_target)),
             had_conversion_shim: Cell::new(false),
+            text_rendering: TextRenderingSource::default(),
         }
+    }
+
+    /// The render target reading the text rendering parameters of the
+    /// platform from `text_rendering` every frame (the default: none, so
+    /// greyscale text; docs/porting/text-rendering.md).
+    pub fn with_text_rendering(mut self, text_rendering: TextRenderingSource) -> Self {
+        self.text_rendering = text_rendering;
+        self
     }
 
     /// Checks whether the given infos are compatible: a surface created for
@@ -62,8 +71,8 @@ impl FramebufferRenderTarget {
     }
 
     /// Creates the surface over the framebuffer if the current one is not
-    /// compatible.
-    fn create_surface(&self, desired_image_info: &ImageInfo, framebuffer: &dyn ILockedFramebuffer) {
+    /// compatible or has other surface properties.
+    fn create_surface(&self, desired_image_info: &ImageInfo, props: &SurfaceProps, framebuffer: &dyn ILockedFramebuffer) {
         let mut state = self.state.borrow_mut();
         let address = framebuffer.address();
 
@@ -72,6 +81,7 @@ impl FramebufferRenderTarget {
                 .current_image_info
                 .as_ref()
                 .is_some_and(|current| Self::are_image_infos_compatible(current, desired_image_info))
+            && state.current_props.as_ref() == Some(props)
             && state.current_framebuffer_address == address
         {
             return;
@@ -102,7 +112,7 @@ impl FramebufferRenderTarget {
             let pixels =
                 unsafe { std::slice::from_raw_parts_mut(address, row_bytes * desired_image_info.height() as usize) };
 
-            surface = surfaces::wrap_pixels(desired_image_info, pixels, row_bytes, Some(&surface_props()))
+            surface = surfaces::wrap_pixels(desired_image_info, pixels, row_bytes, Some(props))
                 // SAFETY: releasing the borrow turns the lifetime-bound
                 // surface into an owned one; the validity of the pixels is
                 // upheld as described above.
@@ -112,19 +122,21 @@ impl FramebufferRenderTarget {
         // If the surface cannot be created, try to create a compatibility
         // shim first.
         if surface.is_none() {
-            let shim = Rc::new(PixelFormatConversionShim::new(desired_image_info.clone(), address, row_bytes));
+            let shim = Rc::new(PixelFormatConversionShim::new(desired_image_info.clone(), address, row_bytes, props));
             surface = Some(shim.surface.clone());
             state.conversion_shim = Some(shim);
         }
 
         state.framebuffer_surface = surface;
         state.current_image_info = Some(desired_image_info.clone());
+        state.current_props = Some(*props);
     }
 
     /// Frees the surface over the framebuffer.
     fn free_surface(state: &mut SurfaceState) {
         state.conversion_shim = None;
         state.framebuffer_surface = None;
+        state.current_props = None;
         state.current_framebuffer_address = std::ptr::null_mut();
     }
 }
@@ -154,7 +166,8 @@ impl IRenderTarget for FramebufferRenderTarget {
             None,
         );
 
-        self.create_surface(&framebuffer_image_info, &*framebuffer);
+        let text_rendering = self.text_rendering.settings(scene_info.scaling, scene_info.transparency_level);
+        self.create_surface(&framebuffer_image_info, &text_rendering.surface_props(), &*framebuffer);
 
         let (mut surface, conversion_shim) = {
             let state = self.state.borrow();
@@ -174,6 +187,7 @@ impl IRenderTarget for FramebufferRenderTarget {
             surface: Some(surface),
             dpi: framebuffer.dpi(),
             scale_drawing_to_dpi: self.use_scaled_drawing,
+            text_rendering,
             ..CreateInfo::default()
         };
 
@@ -216,7 +230,12 @@ struct PixelFormatConversionShim {
 }
 
 impl PixelFormatConversionShim {
-    fn new(destination_info: ImageInfo, framebuffer_address: *mut u8, framebuffer_row_bytes: usize) -> Self {
+    fn new(
+        destination_info: ImageInfo,
+        framebuffer_address: *mut u8,
+        framebuffer_row_bytes: usize,
+        props: &SurfaceProps,
+    ) -> Self {
         // Create the surface using the default platform settings.
         if !Self::can_copy_to(destination_info.color_type()) {
             panic!(
@@ -227,7 +246,7 @@ impl PixelFormatConversionShim {
         }
 
         let info = ImageInfo::new_n32_premul(destination_info.dimensions(), None);
-        let surface = surfaces::raster(&info, None, Some(&surface_props())).unwrap_or_else(|| {
+        let surface = surfaces::raster(&info, None, Some(props)).unwrap_or_else(|| {
             panic!(
                 "Unable to create pixel format shim surface for conversion from {:?} to {:?}",
                 ColorType::N32,
@@ -283,7 +302,12 @@ mod tests {
         let row_bytes = 4 * 4 + 4;
         let mut framebuffer = vec![0u8; row_bytes * 4];
 
-        let shim = PixelFormatConversionShim::new(destination_info, framebuffer.as_mut_ptr(), row_bytes);
+        let shim = PixelFormatConversionShim::new(
+            destination_info,
+            framebuffer.as_mut_ptr(),
+            row_bytes,
+            &SurfaceProps::default(),
+        );
         shim.surface.clone().canvas().clear(Color::from_argb(128, 255, 0, 0));
         shim.copy_surface();
         drop(shim);
