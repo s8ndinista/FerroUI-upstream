@@ -30884,9 +30884,9 @@
    "key": "DefaultListBoxItemStyle",
    "kind": "Style",
    "target_type": "ListBoxItem",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B3"
+   "batch": null
   },
   {
    "document": "controls/dev/CommonStyles/ListBox_themeresources.xaml",
@@ -30894,9 +30894,9 @@
    "key": "DefaultListBoxStyle",
    "kind": "Style",
    "target_type": "ListBox",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B3"
+   "batch": null
   },
   {
    "document": "controls/dev/CommonStyles/ListBox_themeresources.xaml",
@@ -30914,9 +30914,9 @@
    "key": "{ListBoxItem}",
    "kind": "Style",
    "target_type": "ListBoxItem",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B3"
+   "batch": null
   },
   {
    "document": "controls/dev/CommonStyles/ListBox_themeresources.xaml",
@@ -30924,9 +30924,9 @@
    "key": "{ListBox}",
    "kind": "Style",
    "target_type": "ListBox",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B3"
+   "batch": null
   },
   {
    "document": "controls/dev/CommonStyles/ListBox_themeresources.xaml",
@@ -31714,9 +31714,9 @@
    "key": "DefaultListViewItemStyle",
    "kind": "Style",
    "target_type": "ListViewItem",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B3"
+   "batch": null
   },
   {
    "document": "controls/dev/CommonStyles/ListViewItem_themeresources.xaml",
@@ -31724,9 +31724,9 @@
    "key": "ListPickerFlyoutPresenterItemStyle",
    "kind": "Style",
    "target_type": "ListViewItem",
-   "status": "pending",
-   "reason": null,
-   "batch": "B3"
+   "status": "waived",
+   "reason": "The items of ListPickerFlyoutPresenter (the list of a ListPickerFlyout): FerroUI has no list picker flyout, whose other styles are waived with generic.xaml (batch B3).",
+   "batch": null
   },
   {
    "document": "controls/dev/CommonStyles/ListViewItem_themeresources.xaml",
@@ -31744,9 +31744,9 @@
    "key": "ListViewItemExpanded",
    "kind": "Style",
    "target_type": "ListViewItem",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B3"
+   "batch": null
   },
   {
    "document": "controls/dev/CommonStyles/ListViewItem_themeresources.xaml",
@@ -31754,9 +31754,9 @@
    "key": "{ListViewItem}",
    "kind": "Style",
    "target_type": "ListViewItem",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B3"
+   "batch": null
   },
   {
    "document": "controls/dev/CommonStyles/ListViewItem_themeresources.xaml",
@@ -90085,6 +90085,8 @@
   "Controls/HyperlinkButton.xaml",
   "Controls/ItemsControl.xaml",
   "Controls/Label.xaml",
+  "Controls/ListBox.xaml",
+  "Controls/ListBoxItem.xaml",
   "Controls/ManagedFileChooser.xaml",
   "Controls/Menu.xaml",
   "Controls/MenuFlyoutPresenter.xaml",
@@ -90389,7 +90391,7 @@
    "winui": "MenuFlyoutPresenter: DefaultMenuFlyoutPresenterStyle (MenuFlyout_themeresources.xaml).",
    "status": "ported",
    "deviations": 3,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "DataValidationErrors.xaml",
@@ -90551,9 +90553,9 @@
    ],
    "batch": "B3",
    "winui": "ListBox: DefaultListBoxStyle (ListBox_themeresources.xaml).",
-   "status": "pending",
-   "deviations": 0,
-   "date": ""
+   "status": "ported",
+   "deviations": 4,
+   "date": "not committed"
   },
   {
    "document": "ListBoxItem.xaml",
@@ -90562,9 +90564,9 @@
    ],
    "batch": "B3",
    "winui": "ListBoxItem: DefaultListBoxItemStyle (ListBox_themeresources.xaml).",
-   "status": "pending",
-   "deviations": 0,
-   "date": ""
+   "status": "ported",
+   "deviations": 11,
+   "date": "not committed"
   },
   {
    "document": "ManagedFileChooser.xaml",
@@ -90586,8 +90588,8 @@
    "batch": "B3",
    "winui": "MenuBar: DefaultMenuBarStyle (MenuBar.xaml); MenuBarItem (MenuBarItem.xaml).",
    "status": "ported",
-   "deviations": 7,
-   "date": "not committed"
+   "deviations": 8,
+   "date": "2026-10-16"
   },
   {
    "document": "MenuFlyoutPresenter.xaml",
@@ -90598,7 +90600,7 @@
    "winui": "MenuFlyoutPresenter: DefaultMenuFlyoutPresenterStyle (MenuFlyout_themeresources.xaml).",
    "status": "ported",
    "deviations": 6,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "MenuItem.xaml",
@@ -90609,7 +90611,7 @@
    "winui": "MenuFlyoutItem: DefaultMenuFlyoutItemStyle; MenuFlyoutSubItem: DefaultMenuFlyoutSubItemStyle; ToggleMenuFlyoutItem: DefaultToggleMenuFlyoutItemStyle (MenuFlyout_themeresources.xaml); RadioMenuFlyoutItem: DefaultRadioMenuFlyoutItemStyle (RadioMenuFlyoutItem_themeresources.xaml).",
    "status": "ported",
    "deviations": 14,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "MenuScrollViewer.xaml",
@@ -90618,7 +90620,7 @@
    "winui": "The ScrollViewer of the MenuFlyoutPresenter template (MenuFlyout_themeresources.xaml).",
    "status": "ported",
    "deviations": 2,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "NavigationPage.xaml",
@@ -91496,6 +91498,13 @@
    "variant": null,
    "reason": "SplitMenuFlyoutItem (a menu item with a primary and a secondary button): FerroUI's MenuItem has no split mode, so no FerroUI control would use the style (batch B3).",
    "items": 2
+  },
+  {
+   "document": "controls/dev/CommonStyles/ListViewItem_themeresources.xaml",
+   "key": "ListPickerFlyoutPresenterItemStyle",
+   "variant": null,
+   "reason": "The items of ListPickerFlyoutPresenter (the list of a ListPickerFlyout): FerroUI has no list picker flyout, whose other styles are waived with generic.xaml (batch B3).",
+   "items": 1
   }
  ],
  "deviations": {
@@ -91521,7 +91530,9 @@
   "HyperlinkButton": 3,
   "ItemsControl": 1,
   "Label": 3,
-  "Menu": 7,
+  "ListBox": 4,
+  "ListBoxItem": 11,
+  "Menu": 8,
   "MenuFlyoutPresenter": 6,
   "MenuItem": 14,
   "MenuScrollViewer": 2,

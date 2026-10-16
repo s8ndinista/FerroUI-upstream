@@ -1,7 +1,8 @@
-<!-- The native WinUI 3 counterpart of ListsPage.xaml. ListBox is a ListView with single
-     selection; the pointer-over and pressed items have the brushes of those states as their
-     background and foreground (the item presenter draws the background of the item). The tree
-     is a TreeView with its nodes in markup. -->
+<!-- The native WinUI 3 counterpart of ListsPage.xaml. ListBox is WinUI's ListBox, the control the
+     WinUI theme of FerroUI ports it from (DefaultListBoxStyle, DefaultListBoxItemStyle); the
+     pointer-over and pressed items have the brushes of those states as their background (the
+     template fills the item with its background) and foreground. The tree is a TreeView with its
+     nodes in markup. -->
 <StackPanel xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
             Margin="24" Spacing="12">
@@ -15,25 +16,25 @@
 
     <StackPanel Grid.Column="0" Spacing="12">
       <TextBlock Text="ListBox" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" />
-      <ListView Height="240" SelectionMode="Single">
-        <ListViewItem Content="Normal" />
-        <ListViewItem Content="Selected" IsSelected="True" />
-        <ListViewItem Content="Pointer over"
-                      Background="{ThemeResource ListViewItemBackgroundPointerOver}"
-                      Foreground="{ThemeResource ListViewItemForegroundPointerOver}" />
-        <ListViewItem Content="Pressed"
-                      Background="{ThemeResource ListViewItemBackgroundPressed}"
-                      Foreground="{ThemeResource ListViewItemForegroundPressed}" />
-        <ListViewItem Content="Disabled" IsEnabled="False" />
-        <ListViewItem Content="Another item" />
-      </ListView>
+      <ListBox Height="240" SelectionMode="Single">
+        <ListBoxItem Content="Normal" />
+        <ListBoxItem Content="Selected" IsSelected="True" />
+        <ListBoxItem Content="Pointer over"
+                     Background="{ThemeResource ListBoxItemBackgroundPointerOver}"
+                     Foreground="{ThemeResource ListBoxItemForeground}" />
+        <ListBoxItem Content="Pressed"
+                     Background="{ThemeResource ListBoxItemBackgroundPressed}"
+                     Foreground="{ThemeResource ListBoxItemForeground}" />
+        <ListBoxItem Content="Disabled" IsEnabled="False" />
+        <ListBoxItem Content="Another item" />
+      </ListBox>
 
       <TextBlock Text="Disabled ListBox" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" />
-      <ListView Height="120" SelectionMode="Single" IsEnabled="False">
-        <ListViewItem Content="First item" />
-        <ListViewItem Content="Selected item" IsSelected="True" />
-        <ListViewItem Content="Third item" />
-      </ListView>
+      <ListBox Height="120" SelectionMode="Single" IsEnabled="False">
+        <ListBoxItem Content="First item" />
+        <ListBoxItem Content="Selected item" IsSelected="True" />
+        <ListBoxItem Content="Third item" />
+      </ListBox>
     </StackPanel>
 
     <StackPanel Grid.Column="1" Spacing="12">

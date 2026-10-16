@@ -13,7 +13,9 @@
     (Controls/MenuItem.xaml).
   - MenuBar: the ItemsControl ContentRoot of the source is the items presenter PART_ItemsPresenter
     (FerroUI's menu hosts its items itself), left aligned in the layout root; the horizontal
-    StackPanel of the source is the default items panel of FerroUI's Menu.
+    StackPanel of the source is the default items panel of FerroUI's Menu. Grid LayoutRoot is a
+    Border that also draws the border, corner radius and padding of the menu, which FerroUI's
+    Menu honours in its other themes (WinUI's MenuBar template has none of them).
   - MenuBarItem: the Button ContentButton of the source, which shows the Title and opens the
     flyout, is the content presenter of the Header, PART_HeaderPresenter (the part a headered
     items control hosts its header in, with FerroUI's access keys): the menu item itself handles
@@ -132,11 +134,11 @@
       <Setter Property="BorderBrush" Value="{DynamicResource MenuBarItemBorderBrushSelected}" />
     </Style>
     <!-- PointerOver -->
-    <Style Selector="^:selected:not(:open) /template/ Border#Background, ^:open /template/ Border#ContentRoot:pointerover Border#Background">
+    <Style Selector="^:selected:not(MenuItem:open) /template/ Border#Background, ^:open /template/ Border#ContentRoot:pointerover Border#Background">
       <Setter Property="Background" Value="{DynamicResource MenuBarItemBackgroundPointerOver}" />
       <Setter Property="BorderBrush" Value="{DynamicResource MenuBarItemBorderBrushPointerOver}" />
     </Style>
-    <Style Selector="^:selected:not(:open) /template/ ContentPresenter#PART_HeaderPresenter, ^:open /template/ Border#ContentRoot:pointerover ContentPresenter#PART_HeaderPresenter">
+    <Style Selector="^:selected:not(MenuItem:open) /template/ ContentPresenter#PART_HeaderPresenter, ^:open /template/ Border#ContentRoot:pointerover ContentPresenter#PART_HeaderPresenter">
       <Setter Property="Foreground" Value="{DynamicResource ButtonForegroundPointerOver}" />
     </Style>
     <!-- Pressed -->
@@ -163,14 +165,19 @@
     <Setter Property="ItemContainerTheme" Value="{StaticResource DefaultMenuBarItemStyle}" />
     <Setter Property="Template">
       <ControlTemplate>
-        <Panel x:Name="LayoutRoot"
-               Background="{TemplateBinding Background}"
-               HorizontalAlignment="Stretch">
+        <Border x:Name="LayoutRoot"
+                Background="{TemplateBinding Background}"
+                BorderBrush="{TemplateBinding BorderBrush}"
+                BorderThickness="{TemplateBinding BorderThickness}"
+                CornerRadius="{TemplateBinding CornerRadius}"
+                Padding="{TemplateBinding Padding}"
+                HorizontalAlignment="Stretch">
           <ItemsPresenter x:Name="PART_ItemsPresenter"
                           ItemsPanel="{TemplateBinding ItemsPanel}"
                           VerticalAlignment="Stretch"
-                          HorizontalAlignment="Left" />
-        </Panel>
+                          HorizontalAlignment="Left"
+                          KeyboardNavigation.TabNavigation="Continue" />
+        </Border>
       </ControlTemplate>
     </Setter>
   </ControlTheme>

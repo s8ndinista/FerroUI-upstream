@@ -489,8 +489,8 @@ ports a control updates its state by porting it, not by editing the table.
 | `HyperlinkButton.xaml` | `{HyperlinkButton}` | HyperlinkButton: DefaultHyperlinkButtonStyle (HyperlinkButton_themeresources.xaml). | F | ported |
 | `ItemsControl.xaml` | `{ItemsControl}` | No WinUI style in the merged theme (ItemsControl has a built-in template): an ItemsPresenter of the ItemsPanel. | B1 | ported |
 | `Label.xaml` | `{Label}` | No WinUI control: the implicit style of ContentControl ({ContentControl}, generic.xaml), which Controls/Label.xaml ports. | B1 | ported |
-| `ListBox.xaml` | `{ListBox}` | ListBox: DefaultListBoxStyle (ListBox_themeresources.xaml). | B3 | pending |
-| `ListBoxItem.xaml` | `{ListBoxItem}` | ListBoxItem: DefaultListBoxItemStyle (ListBox_themeresources.xaml). | B3 | pending |
+| `ListBox.xaml` | `{ListBox}` | ListBox: DefaultListBoxStyle (ListBox_themeresources.xaml). | B3 | ported |
+| `ListBoxItem.xaml` | `{ListBoxItem}` | ListBoxItem: DefaultListBoxItemStyle (ListBox_themeresources.xaml). | B3 | ported |
 | `ManagedFileChooser.xaml` | `{ManagedFileChooser}`, `{ManagedFileChooserOverwritePrompt}` | No WinUI control: built from the ListViewItem (ListViewItem_themeresources.xaml), TextBox, Button and ContentDialog (DefaultContentDialogStyle) styles. | B6 | ported |
 | `Menu.xaml` | `{Menu}` | MenuBar: DefaultMenuBarStyle (MenuBar.xaml); MenuBarItem (MenuBarItem.xaml). | B3 | ported |
 | `MenuFlyoutPresenter.xaml` | `{MenuFlyoutPresenter}` | MenuFlyoutPresenter: DefaultMenuFlyoutPresenterStyle (MenuFlyout_themeresources.xaml). | B3 | ported |

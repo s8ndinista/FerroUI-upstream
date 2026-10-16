@@ -115,6 +115,8 @@ document_tests! {
     controls_hyperlink_button => "/Controls/HyperlinkButton.xaml";
     controls_items_control => "/Controls/ItemsControl.xaml";
     controls_label => "/Controls/Label.xaml";
+    controls_list_box => "/Controls/ListBox.xaml";
+    controls_list_box_item => "/Controls/ListBoxItem.xaml";
     controls_menu => "/Controls/Menu.xaml";
     controls_menu_flyout_presenter => "/Controls/MenuFlyoutPresenter.xaml";
     controls_menu_item => "/Controls/MenuItem.xaml";

@@ -295,6 +295,11 @@
       "document": "controls/dev/CommonStyles/MenuFlyout_themeresources.xaml",
       "key": "re:DefaultSplitMenuFlyoutItemStyle|\\{SplitMenuFlyoutItem\\}",
       "reason": "SplitMenuFlyoutItem (a menu item with a primary and a secondary button): FerroUI's MenuItem has no split mode, so no FerroUI control would use the style (batch B3)."
+    },
+    {
+      "document": "controls/dev/CommonStyles/ListViewItem_themeresources.xaml",
+      "key": "ListPickerFlyoutPresenterItemStyle",
+      "reason": "The items of ListPickerFlyoutPresenter (the list of a ListPickerFlyout): FerroUI has no list picker flyout, whose other styles are waived with generic.xaml (batch B3)."
     }
   ]
 }
