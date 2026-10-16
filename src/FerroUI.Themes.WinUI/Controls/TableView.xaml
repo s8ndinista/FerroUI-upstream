@@ -118,8 +118,6 @@
     <Setter Property="BorderThickness" Value="1" />
     <!-- The rounded border of WinUI clips the table to its corner radius. -->
     <Setter Property="ClipToBounds" Value="True" />
-    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-    <Setter Property="VerticalContentAlignment" Value="Stretch" />
     <!-- PART_BodyScroller: both scroll bars Auto. -->
     <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Auto" />
     <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto" />
