@@ -28,3 +28,5 @@ ferroui-themes-fluent = { workspace = true }
 ferroui-themes-simple = { workspace = true }
 ferroui-harfbuzz = { workspace = true }
 ferroui-skia = { workspace = true }
+# The font of Skia that the glyph bounds benchmark compares with the font tables.
+skia-safe = { workspace = true }

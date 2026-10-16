@@ -843,6 +843,7 @@ dependencies = [
  "ferroui-skia",
  "ferroui-themes-fluent",
  "ferroui-themes-simple",
+ "skia-safe",
 ]
 
 [[package]]

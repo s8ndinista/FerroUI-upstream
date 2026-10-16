@@ -1,7 +1,7 @@
 /// A glyph's bounding box in font design units, as stored in the 'glyf' glyph
 /// header. Y is up-positive, so `y_min` is the bottom edge and `y_max` the top.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
-pub(crate) struct GlyphBounds {
+pub struct GlyphBounds {
     pub x_min: i16,
     pub y_min: i16,
     pub x_max: i16,

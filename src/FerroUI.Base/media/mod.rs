@@ -292,6 +292,8 @@ mod font_style;
 mod font_variation_settings;
 mod font_weight;
 mod glyph_bounds;
+#[cfg(any(test, feature = "testing"))]
+pub mod testing;
 mod glyph_drawing_options;
 mod glyph_drawing_type;
 mod glyph_metrics;
