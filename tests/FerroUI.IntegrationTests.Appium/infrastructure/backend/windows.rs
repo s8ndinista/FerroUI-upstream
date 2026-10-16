@@ -388,7 +388,13 @@ impl Backend {
     /// The elements below `root` (and `root` itself with `include_root`)
     /// that the locator finds, in the order of the tree: one search of UI
     /// Automation in the control view.
-    pub fn find_all(&self, root: &NativeElement, include_root: bool, by: &By) -> Result<Vec<NativeElement>, String> {
+    pub fn find_all(
+        &self,
+        root: &NativeElement,
+        include_root: bool,
+        by: &By,
+        thorough: bool,
+    ) -> Result<Vec<NativeElement>, String> {
         let condition = match by {
             By::AccessibilityId(id) => self.condition(PROPERTY_AUTOMATION_ID, VariantValue::Bstr(id.clone())),
             By::Name(name) => self.condition(PROPERTY_NAME, VariantValue::Bstr(name.clone())),
@@ -405,7 +411,7 @@ impl Backend {
         let condition = self.client.and_condition(&condition, &control_view)?;
         let scope = if include_root { TREE_SCOPE_SUBTREE } else { TREE_SCOPE_DESCENDANTS };
         let found: Vec<NativeElement> = root.0.find_all(scope, &condition)?.into_iter().map(NativeElement).collect();
-        if !found.is_empty() {
+        if !found.is_empty() || !thorough {
             return Ok(found);
         }
         // One search of UI Automation does not reach the elements after a native window hosted
@@ -443,6 +449,47 @@ impl Backend {
             stack.extend(children.into_iter().rev().map(|child| (child, true)));
         }
         found
+    }
+
+    /// A diagnostic of `--dump-tree` after a test that failed: the top-level
+    /// windows of the application in the z-order of the desktop (front
+    /// first), with their owner, whether they are topmost and visible, the
+    /// foreground window, and the automation id of each.
+    pub fn windows_diagnostic(&self) -> Option<String> {
+        use windows_sys::Win32::UI::WindowsAndMessaging::{
+            GetForegroundWindow, GetTopWindow, GetWindow, GetWindowLongPtrW, GetWindowThreadProcessId, IsWindowVisible,
+            GWL_EXSTYLE, GW_HWNDNEXT, GW_OWNER, WS_EX_TOPMOST,
+        };
+        if self.process_id == 0 {
+            return None;
+        }
+        let mut text = String::new();
+        // SAFETY: queries of the window manager on handles it returned; a
+        // handle that went away makes a query answer zero.
+        unsafe {
+            text.push_str(&format!("   foreground window: {}\n", handle_text(GetForegroundWindow() as isize)));
+            let mut hwnd = GetTopWindow(std::ptr::null_mut());
+            let mut index = 0usize;
+            while !hwnd.is_null() && index < 10_000 {
+                let mut pid = 0u32;
+                GetWindowThreadProcessId(hwnd, &mut pid);
+                if pid == self.process_id {
+                    let ex_style = GetWindowLongPtrW(hwnd, GWL_EXSTYLE) as u32;
+                    let owner = GetWindow(hwnd, GW_OWNER) as isize;
+                    let id = self.client.element_from_handle(hwnd as isize).and_then(|e| e.automation_id()).unwrap_or_default();
+                    text.push_str(&format!(
+                        "   z {index}: {} id={id:?} owner={} topmost={} visible={}\n",
+                        handle_text(hwnd as isize),
+                        handle_text(owner),
+                        ex_style & WS_EX_TOPMOST != 0,
+                        IsWindowVisible(hwnd) != 0
+                    ));
+                }
+                hwnd = GetWindow(hwnd, GW_HWNDNEXT);
+                index += 1;
+            }
+        }
+        Some(text)
     }
 
     /// A diagnostic of `--dump-tree`: the elements one search of UI Automation
