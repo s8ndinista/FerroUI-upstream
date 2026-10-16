@@ -42,13 +42,14 @@ The sample is found by `FERROUI_INTEGRATION_TEST_APP`, else as `integration-test
 |---|---|---|
 | The root of a search from the session | the current window (`CurrentWindowHandle`) and the elements below it | the application and everything below it |
 | A search from an element | the elements below it | the elements below it |
-| Accessibility id | `AutomationId` | the identifier; the buttons of a title bar have XCTest's identifiers `_XCUI:CloseWindow`, `_XCUI:MinimizeWindow`, `_XCUI:ZoomWindow`, `_XCUI:FullScreenWindow` (from their subrole) |
-| Name | `Name` | the first non-empty of the identifier, the title and the label (the description) |
+| How a search is made | one search of UI Automation (`FindAll` in the control view); when it finds nothing, a walk of the control view (section 9) | a walk of the children of the accessibility API |
+| Accessibility id | `AutomationId` | an element whose identifier, title or label is the value: the Mac2 driver finds the accessibility id and the name alike with `matchingIdentifier:` of XCTest, which matches any of the three (a native menu item, whose identifier is its action `didSelectItem:`, is found by its title); the buttons of a title bar have XCTest's identifiers `_XCUI:CloseWindow`, `_XCUI:MinimizeWindow`, `_XCUI:ZoomWindow`, `_XCUI:FullScreenWindow` (from their subrole) |
+| Name | `Name` | as the accessibility id; the attribute `name` is the first non-empty of the identifier, the title and the label (the description) |
 | Class name, tag name | `ClassName`; the control type (`Window`, `Button`, `TitleBar`) | the `XCUIElementType` of the role (`XCUIElementTypeWindow`, `XCUIElementTypeStaticText`; a menu bar item of the menu extras is `XCUIElementTypeStatusItem`) |
 | The tree of XPath | the control view of UI Automation | the children of the accessibility API; the application also has its menu extras |
 | Text | the value of the value pattern, else the value of the range value pattern, else the name | the first non-empty of the value, the title and the label; a number is written as `NSNumber` writes it (`20`, `52.5`), a boolean as `0` or `1` |
 | Attributes | the properties by their names (`Name`, `AutomationId`, `HasKeyboardFocus`, `AcceleratorKey`, `Toggle.ToggleState`, ...): booleans `True`/`False`, enumerations as their number | `identifier`, `title`, `label`, `value`, `enabled`, `selected`, `hittable` (booleans `true`/`false`) |
-| `Click()` | a click of the mouse at the centre, after the element is brought into view (its scroll item pattern) where its centre is outside one of its ancestors up to the window or it is off the screen | the press action where the element has one (`AXPress`: buttons, check boxes, menu items, combo boxes), else a click of the mouse at the centre, after `AXScrollToVisible` where a click at the centre would not reach the element |
+| `Click()` | a click of the mouse at the centre, after the element is brought into view (its scroll item pattern) where its centre is outside one of its ancestors up to the window or it is off the screen | a click of the mouse at the centre (`click` of XCTest), after `AXScrollToVisible` where a click at the centre would not reach the element; a menu item and an item of the menu bar are pressed (`AXPress`), as XCTest selects a menu item through its menus whether or not its menu is open |
 | `SendKeys(text)` | the keyboard focus to the element (`SetFocus`), then the keys; no click, whether or not the element reports the focus afterwards | the same; where setting the focus does not take, a click at the centre first |
 | `Clear()` | the value pattern set to the empty text, else select all and delete | the value set to the empty text, else select all and delete |
 | `Selected`, `Enabled` | the selection item pattern; `IsEnabled` | `AXSelected`; `AXEnabled` |
@@ -64,7 +65,7 @@ The actions: `MoveToElement(element)` moves to the centre, `MoveToElement(elemen
 
 Bringing an element into view before a click is the "scroll into view" step of the element click of WebDriver, which XCTest does before a tap. Upstream's runs do not depend on it on Windows: their agent has a desktop of 4K, where the main window of the sample shows every item of its list of pages. On a smaller desktop the default size of the window (`CW_USEDEFAULT`) is lower than the list (20 items of 35 pixels and the bars of the window need about 754 units of height), and the last pages are below the end of the list (section 9).
 
-Timing: a search for one element waits up to one second for it to appear (the drivers wait for the application to be idle, XCTest more than WinAppDriver); every command that gives input waits a moment afterwards for the application to handle it (150 ms on Windows, 250 ms on macOS). A test that asserts that an element is gone (`Assert.Throws<WebDriverException>`) therefore takes the second of the wait.
+Timing: a search for one element waits up to one second for it to appear (the drivers wait for the application to be idle, XCTest more than WinAppDriver); every command that gives input waits a moment afterwards for the application to handle it (150 ms on Windows, 500 ms on macOS: 250 ms was too short for the action of a native menu item). A test that asserts that an element is gone (`Assert.Throws<WebDriverException>`) therefore takes the second of the wait.
 
 ## 4. The tests per class and platform
 
@@ -131,6 +132,9 @@ cargo build -p integration-test-app
 FERROUI_AUTOMATION_TESTS=1 cargo test -p ferroui-integration-tests-appium --test automation
 FERROUI_AUTOMATION_TESTS=1 cargo test -p ferroui-integration-tests-appium --test automation -- combo_box_tests
 cargo test -p ferroui-integration-tests-appium --test automation -- --list
+FERROUI_AUTOMATION_TESTS=1 cargo test -p ferroui-integration-tests-appium --test automation -- embedding_tests --dump-tree
 ```
+
+`--dump-tree` (or `FERROUI_AUTOMATION_DUMP_TREE=1`) is a diagnostic of the runs, not a command of the drivers: a search for one element that does not find it prints the tree it searched (the walk of the children with the tag, the identifier, the name and the bounds of every element) and, on Windows, what one search of UI Automation returns for the whole subtree. The runner also prints where the main window is when a collection starts.
 
 Nobody should use the mouse or the keyboard of the machine while the tests run.

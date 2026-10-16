@@ -553,12 +553,15 @@ impl Element {
     /// `Click()`: a click of the mouse at the centre of the element, after the
     /// element is brought into view, as both drivers do (WinAppDriver; the
     /// Mac2 driver calls `click` of XCTest, which synthesizes the events of
-    /// the mouse).
+    /// the mouse, and selects a menu item through its menus, which the
+    /// backend of macOS does with the press action).
     pub fn click(&self) {
         let session = &self.session;
-        self.backend().scroll_into_view(&self.native);
-        let (x, y) = self.rect().center();
-        session.click_at(x, y, MouseButton::Left);
+        if !self.backend().press(&self.native) {
+            self.backend().scroll_into_view(&self.native);
+            let (x, y) = self.rect().center();
+            session.click_at(x, y, MouseButton::Left);
+        }
         session.settle();
     }
 

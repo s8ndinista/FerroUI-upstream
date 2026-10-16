@@ -733,6 +733,18 @@ impl Backend {
         ElementRect { x, y, width, height }
     }
 
+    /// The click of XCTest on a menu item or an item of the menu bar: XCTest
+    /// opens the menus a menu item is in and selects it, whether or not its
+    /// menu is open (`IntegrationTestApp_ExitFullscreen`, an item of the
+    /// application menu, is clicked with its menu closed). The press action
+    /// does that; every other element is clicked with the mouse. Whether the
+    /// element was pressed.
+    pub fn press(&self, element: &NativeElement) -> bool {
+        matches!(element.role().as_str(), "AXMenuItem" | "AXMenuBarItem")
+            && element.actions().iter().any(|action| action == "AXPress")
+            && element.perform("AXPress")
+    }
+
     /// Brings the element into view before a click at its centre, as
     /// XCTest scrolls an element into view before it taps it: where a click
     /// at the centre would not reach the element and the element has the

@@ -319,6 +319,11 @@ impl Backend {
         }
     }
 
+    /// WinAppDriver clicks every element with the mouse: nothing is pressed.
+    pub fn press(&self, _element: &NativeElement) -> bool {
+        false
+    }
+
     /// Brings the element into view before a click at its centre (the
     /// "scroll into view" of the element click of WebDriver): where the
     /// centre is outside the bounds of one of the ancestors of the element
