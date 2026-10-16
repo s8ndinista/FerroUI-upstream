@@ -275,6 +275,11 @@
     <Setter Property="Padding" Value="{StaticResource ExpanderContentPadding}" />
     <Setter Property="HorizontalAlignment" Value="Left" />
     <Setter Property="VerticalAlignment" Value="Center" />
+    <!-- Not in the style: the defaults of a WinUI control (Control.HorizontalContentAlignment and
+         VerticalContentAlignment are Center), which the content presenter of ExpanderContent
+         binds; FerroUI's defaults differ. -->
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
     <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}" />
     <Setter Property="Template">
       <ControlTemplate>
