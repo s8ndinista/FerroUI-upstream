@@ -76,7 +76,9 @@ impl ApplicationImpl for App {
         *this.color_picker_fluent.borrow_mut() = from_markup_value::<Rc<dyn IStyle>>(&this.resource("ColorPickerFluent"));
         *this.color_picker_simple.borrow_mut() = from_markup_value::<Rc<dyn IStyle>>(&this.resource("ColorPickerSimple"));
 
-        Self::set_catalog_themes(CatalogTheme::Fluent);
+        // The port starts the catalog in its WinUI theme (not in the original, which starts in the
+        // Fluent theme); the settings page and `FERROUI_CATALOG_THEME` select the others.
+        Self::set_catalog_themes(CatalogTheme::WinUI);
     }
 
     fn on_framework_initialization_completed(this: &Self) {
@@ -114,7 +116,7 @@ impl App {
             color_picker_fluent: RefCell::new(None),
             color_picker_simple: RefCell::new(None),
             dock_menu_item_count: Cell::new(0),
-            prev_theme: Cell::new(CatalogTheme::Fluent),
+            prev_theme: Cell::new(CatalogTheme::WinUI),
         }
     }
 
@@ -255,19 +257,16 @@ impl App {
             app.theme_styles_container.set(1, color_picker_simple);
             app.theme_styles_container.set(2, Style::new());
         } else if theme == CatalogTheme::WinUI {
-            // Not in the original: the WinUI theme of the port, with the Fluent styles of the colour
-            // picker (the colour picker library has no WinUI styles; WinUI's ColorPicker is waived,
-            // docs/porting/winui-theme.md, section 5.1). The WinUI theme is the last of the three
-            // styles, so its control themes and resources come first; the Fluent theme under it
-            // themes the controls the WinUI theme does not style yet (the controls pending in
-            // docs/porting/winui-theme/PROGRESS.md), which keeps the catalog usable until every
-            // batch of the port is done. Then the WinUI theme takes the first style alone.
-            let fluent_theme = app.fluent_theme.borrow().clone().expect("the Fluent theme of App.xaml");
-            app.theme_styles_container.set(0, fluent_theme.as_style());
+            // Not in the original: the WinUI theme of the port (docs/porting/winui-theme.md), which
+            // themes every control, with the Fluent styles of the colour picker (the colour picker
+            // library has no WinUI styles; WinUI's ColorPicker is waived, docs/porting/winui-theme.md,
+            // section 5.1, and the Fluent styles take their brushes from the resources both themes
+            // define).
+            let winui_theme = app.winui_theme.borrow().clone().expect("the WinUI theme of App.xaml");
+            app.theme_styles_container.set(0, winui_theme.as_style());
             let color_picker_fluent = app.color_picker_fluent.borrow().clone().expect("the colour picker Fluent styles of App.xaml");
             app.theme_styles_container.set(1, color_picker_fluent);
-            let winui_theme = app.winui_theme.borrow().clone().expect("the WinUI theme of App.xaml");
-            app.theme_styles_container.set(2, winui_theme.as_style());
+            app.theme_styles_container.set(2, Style::new());
         }
 
         if should_reopen_window {

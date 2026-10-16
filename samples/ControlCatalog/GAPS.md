@@ -178,22 +178,20 @@ Three holders keep an element for a while after it left the tree, here as upstre
 ## The WinUI theme of the port
 
 Not in the original: the settings page offers a third theme, `WinUI`, the WinUI 3 theme of the
-port (`ferroui-themes-winui`, docs/porting/winui-theme.md; `FERROUI_CATALOG_THEME=winui` starts the
-desktop catalog in it). The lines the port adds to `App.xaml` and `Pages/SettingsPage.xaml` are
-the additions of `scripts/convert_catalog_xaml.py` (`ADDITIONS`), so the sync check still holds
-the documents to their upstream files; `docs/porting/DEVIATIONS.md` (ControlCatalog sample)
-records them.
+port (`ferroui-themes-winui`, docs/porting/winui-theme.md), and the catalog starts in it; the
+original starts in the Fluent theme. `FERROUI_CATALOG_THEME=fluent` (or `simple`) starts the
+desktop catalog in another theme, and the settings page switches between the three. The lines the
+port adds to `App.xaml` and `Pages/SettingsPage.xaml` are the additions of
+`scripts/convert_catalog_xaml.py` (`ADDITIONS`), so the sync check still holds the documents to
+their upstream files; the choice of the theme at start is in `App::initialize` (`app.rs`).
+`docs/porting/DEVIATIONS.md` (ControlCatalog sample) records them.
 
-The WinUI theme does not style every control yet. While it is selected, the catalog puts it over
-the Fluent theme (`App::set_catalog_themes`): the controls it styles (Button, RepeatButton,
-ToggleButton, HyperlinkButton, CheckBox, RadioButton, TextBox, ScrollViewer, ScrollBar, Thumb,
-Window, the popup hosts, the focus adorner, the text styles) are drawn by the WinUI theme, and the
-others visibly fall back to the templates of the Fluent theme, drawn with the resources of the WinUI
-theme where both themes name the same key: DataValidationErrors, GridSplitter, GroupBox, HeaderedContentControl, ItemsControl, Label, PathIcon, ProgressBar, SelectableTextBlock, Separator, TextSelectionHandle, ToolTip, TransitioningContentControl (batch B1); ButtonSpinner, DropDownButton, Expander, NumericUpDown, PipsPager, RefreshContainer, RefreshVisualizer, Slider, SplitButton, ToggleSwitch (B2); AutoCompleteBox, ComboBox, ComboBoxItem, ContextMenu, FlyoutPresenter, ListBox, ListBoxItem, Menu, MenuFlyoutPresenter, MenuItem, TreeView, TreeViewItem (B3); Calendar, CalendarButton, CalendarDatePicker, CalendarDayButton, CalendarItem, DatePicker, DatePickerPresenter, TimePicker, TimePickerPresenter (B4); Carousel, CarouselPage, CommandBar, CommandBarButton, CommandBarSeparator, CommandBarToggleButton, ContentPage, DrawerPage, NavigationPage, SplitView, TabControl, TabItem, TabStrip, TabStripItem, TabbedPage (B5); ManagedFileChooser, ManagedFileChooserOverwritePrompt, NotificationCard, TableView, TableViewCell, TableViewColumnHeader, TableViewRow, WindowDrawnDecorations, WindowNotificationManager (B6). The list is the `PENDING_CONTROLS` of
-`src/FerroUI.Themes.WinUI/tests/support.rs` and shrinks with each batch
-(docs/porting/winui-theme/PROGRESS.md); when it is empty the WinUI theme is the only theme of the
-choice. The shell of the catalog (DrawerPage, NavigationPage, ContentPage, the drawer's list) is
-among the fallbacks.
+The WinUI theme styles every control (docs/porting/winui-theme/PROGRESS.md), so it is the only
+theme while it is selected (`App::set_catalog_themes`), with the Fluent styles of the colour picker:
+the colour picker library has no WinUI styles (WinUI's ColorPicker is waived,
+docs/porting/winui-theme.md, section 5.1), and its Fluent styles take their brushes from resources
+both themes define. Every page of the catalog loads in it without a missing template or resource
+(a tour of the 75 pages with `FERROUI_SMOKE_PAGES`, 2026-10-16).
 
 ## Classes of the sample that are not ported yet
 
