@@ -315,7 +315,7 @@
                       Padding="4">
                 <!-- E8FB at 16 px. -->
                 <Path Data="{StaticResource GlyphGeometryE8FB}"
-                      Fill="{Binding $parent[ContentPresenter].Foreground}"
+                      Fill="{Binding $parent[Button].Foreground}"
                       Stretch="Uniform"
                       Width="14" />
               </Button>
@@ -331,7 +331,7 @@
                       Padding="4">
                 <!-- E711 at 16 px. -->
                 <Path Data="{StaticResource GlyphGeometryE711}"
-                      Fill="{Binding $parent[ContentPresenter].Foreground}"
+                      Fill="{Binding $parent[Button].Foreground}"
                       Stretch="Uniform"
                       Width="12" />
               </Button>
