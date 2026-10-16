@@ -300,6 +300,11 @@
       "document": "controls/dev/CommonStyles/ListViewItem_themeresources.xaml",
       "key": "ListPickerFlyoutPresenterItemStyle",
       "reason": "The items of ListPickerFlyoutPresenter (the list of a ListPickerFlyout): FerroUI has no list picker flyout, whose other styles are waived with generic.xaml (batch B3)."
+    },
+    {
+      "document": "controls/dev/TreeView/TreeView.xaml",
+      "key": "TreeViewItemDataTemplate",
+      "reason": "A data template of a TreeViewNode (it binds the Content of the node), for applications that show nodes: FerroUI's tree view has no TreeViewNode, its items are the data or TreeViewItems (batch B3)."
     }
   ]
 }

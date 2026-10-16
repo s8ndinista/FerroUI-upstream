@@ -76464,9 +76464,9 @@
    "key": "DefaultTreeViewStyle",
    "kind": "Style",
    "target_type": "TreeView",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B3"
+   "batch": null
   },
   {
    "document": "controls/dev/TreeView/TreeView.xaml",
@@ -76474,9 +76474,9 @@
    "key": "TreeViewItemDataTemplate",
    "kind": "DataTemplate",
    "target_type": "",
-   "status": "pending",
-   "reason": null,
-   "batch": "resources"
+   "status": "waived",
+   "reason": "A data template of a TreeViewNode (it binds the Content of the node), for applications that show nodes: FerroUI's tree view has no TreeViewNode, its items are the data or TreeViewItems (batch B3).",
+   "batch": null
   },
   {
    "document": "controls/dev/TreeView/TreeView.xaml",
@@ -76484,9 +76484,9 @@
    "key": "{TreeViewItem}",
    "kind": "Style",
    "target_type": "TreeViewItem",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B3"
+   "batch": null
   },
   {
    "document": "controls/dev/TreeView/TreeView.xaml",
@@ -76494,9 +76494,9 @@
    "key": "{TreeView}",
    "kind": "Style",
    "target_type": "TreeView",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B3"
+   "batch": null
   },
   {
    "document": "controls/dev/TreeView/TreeViewItem.xaml",
@@ -76504,9 +76504,9 @@
    "key": "MUX_TreeViewItemStyle",
    "kind": "Style",
    "target_type": "TreeViewItem",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B3"
+   "batch": null
   },
   {
    "document": "controls/dev/TreeView/TreeView_themeresources.xaml",
@@ -90132,6 +90132,8 @@
   "Controls/ToggleSwitch.xaml",
   "Controls/ToolTip.xaml",
   "Controls/TransitioningContentControl.xaml",
+  "Controls/TreeView.xaml",
+  "Controls/TreeViewItem.xaml",
   "Controls/WinUIControls.xaml",
   "Controls/Window.xaml",
   "Controls/WindowDrawnDecorations.xaml",
@@ -90346,7 +90348,7 @@
    "winui": "ComboBox: DefaultComboBoxStyle (ComboBox_themeresources.xaml).",
    "status": "ported",
    "deviations": 15,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "ComboBoxItem.xaml",
@@ -90357,7 +90359,7 @@
    "winui": "ComboBoxItem: DefaultComboBoxItemStyle, ComboBoxItemPill (ComboBox_themeresources.xaml).",
    "status": "ported",
    "deviations": 7,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "CommandBar.xaml",
@@ -91028,9 +91030,9 @@
    ],
    "batch": "B3",
    "winui": "TreeView: DefaultTreeViewStyle (TreeView.xaml, TreeView_themeresources.xaml).",
-   "status": "pending",
-   "deviations": 0,
-   "date": ""
+   "status": "ported",
+   "deviations": 4,
+   "date": "not committed"
   },
   {
    "document": "TreeViewItem.xaml",
@@ -91039,9 +91041,9 @@
    ],
    "batch": "B3",
    "winui": "TreeViewItem: {TreeViewItem} (TreeView.xaml), MUX_TreeViewItemStyle (TreeViewItem.xaml).",
-   "status": "pending",
-   "deviations": 0,
-   "date": ""
+   "status": "ported",
+   "deviations": 10,
+   "date": "not committed"
   },
   {
    "document": "Window.xaml",
@@ -91507,6 +91509,13 @@
    "variant": null,
    "reason": "The items of ListPickerFlyoutPresenter (the list of a ListPickerFlyout): FerroUI has no list picker flyout, whose other styles are waived with generic.xaml (batch B3).",
    "items": 1
+  },
+  {
+   "document": "controls/dev/TreeView/TreeView.xaml",
+   "key": "TreeViewItemDataTemplate",
+   "variant": null,
+   "reason": "A data template of a TreeViewNode (it binds the Content of the node), for applications that show nodes: FerroUI's tree view has no TreeViewNode, its items are the data or TreeViewItems (batch B3).",
+   "items": 1
   }
  ],
  "deviations": {
@@ -91559,6 +91568,8 @@
   "ToggleButton": 3,
   "ToolTip": 3,
   "TransitioningContentControl": 4,
+  "TreeView": 4,
+  "TreeViewItem": 10,
   "Window": 1,
   "ManagedFileChooser": 15,
   "NotificationCard": 13,

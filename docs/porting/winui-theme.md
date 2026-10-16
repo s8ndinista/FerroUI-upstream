@@ -532,8 +532,8 @@ ports a control updates its state by porting it, not by editing the table.
 | `ToggleSwitch.xaml` | `{ToggleSwitch}` | ToggleSwitch: DefaultToggleSwitchStyle (ToggleSwitch_themeresources.xaml). | B2 | ported |
 | `ToolTip.xaml` | `{ToolTip}` | ToolTip: DefaultToolTipStyle (ToolTip_themeresources.xaml). | B1 | ported |
 | `TransitioningContentControl.xaml` | `{TransitioningContentControl}` | No WinUI style: the template of ContentControl ({ContentControl}, generic.xaml), twice, for the page transition of the control. | B1 | ported |
-| `TreeView.xaml` | `{TreeView}` | TreeView: DefaultTreeViewStyle (TreeView.xaml, TreeView_themeresources.xaml). | B3 | pending |
-| `TreeViewItem.xaml` | `{TreeViewItem}` | TreeViewItem: {TreeViewItem} (TreeView.xaml), MUX_TreeViewItemStyle (TreeViewItem.xaml). | B3 | pending |
+| `TreeView.xaml` | `{TreeView}` | TreeView: DefaultTreeViewStyle (TreeView.xaml, TreeView_themeresources.xaml). | B3 | ported |
+| `TreeViewItem.xaml` | `{TreeViewItem}` | TreeViewItem: {TreeViewItem} (TreeView.xaml), MUX_TreeViewItemStyle (TreeViewItem.xaml). | B3 | ported |
 | `Window.xaml` | `{Window}` | No WinUI style (Window is not a control in WinUI 3): the Mica fallback background and text of a window (SolidBackgroundFillColorBaseBrush, TextFillColorPrimaryBrush, ContentControlThemeFontFamily, ControlContentThemeFontSize). | F | ported |
 | `WindowDrawnDecorations.xaml` | `{WindowDrawnDecorations}` | TitleBar: DefaultTitleBarStyle (TitleBar.xaml, TitleBar_themeresources.xaml); WindowCaptionButton (generic.xaml) for the caption buttons. | B6 | ported |
 | `WindowNotificationManager.xaml` | `{WindowNotificationManager}` | No WinUI control: a host of InfoBar cards (InfoBar_themeresources.xaml). | B6 | ported |

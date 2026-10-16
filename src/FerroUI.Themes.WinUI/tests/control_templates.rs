@@ -274,6 +274,8 @@ control_tests! {
     slider => "Slider";
     split_button => "SplitButton";
     toggle_switch => "ToggleSwitch";
+    tree_view => "TreeView";
+    tree_view_item => "TreeViewItem";
 }
 
 /// The window itself is themed: its template is applied when it is shown

@@ -380,8 +380,6 @@ pub fn is_instance_of(object: &Ref<FerroObject>, handle_type: &str) -> bool {
 pub const PENDING_CONTROLS: &[&str] = &[
     // B3: flyouts, menus, lists and selection
     "AutoCompleteBox",
-    "TreeView",
-    "TreeViewItem",
 ];
 
 /// Whether the control named `name` waits for a batch.
