@@ -15,8 +15,8 @@
 use super::super::keys::{Key, NamedKey};
 use super::super::session::{By, ElementRect, MouseButton, Screenshot, WebDriverError};
 use ferroui_win32::automation::testing::{
-    control_type_name, Condition, Element, UiaClient, VariantValue, RANGE_VALUE_PATTERN, TREE_SCOPE_CHILDREN,
-    TREE_SCOPE_DESCENDANTS, TREE_SCOPE_SUBTREE, VALUE_PATTERN,
+    control_type_name, Condition, Element, UiaClient, VariantValue, RANGE_VALUE_PATTERN, SCROLL_ITEM_PATTERN,
+    TREE_SCOPE_CHILDREN, TREE_SCOPE_DESCENDANTS, TREE_SCOPE_SUBTREE, VALUE_PATTERN,
 };
 use std::cell::RefCell;
 use std::path::Path;
@@ -131,6 +131,12 @@ pub struct Backend {
 const SETTLE: Duration = Duration::from_millis(150);
 
 impl Backend {
+    /// Whether `SendKeys` clicks an element whose focus could not be set.
+    /// WinAppDriver sets the focus and types: a click would close a menu
+    /// that has the keyboard (`MenuTests.Select_Child_With_Alt_Access_Keys`
+    /// sends the access keys to the window while its menu is open).
+    pub const CLICKS_WHEN_FOCUS_FAILS: bool = false;
+
     /// UI Automation and `SendInput` need the desktop of an interactive
     /// session, which the process has when it runs on Windows at all; there
     /// is no permission to ask for.
@@ -319,6 +325,51 @@ impl Backend {
         false
     }
 
+    /// Brings the element into view before a click at its centre (the
+    /// "scroll into view" of the element click of WebDriver): where the
+    /// centre is outside the bounds of one of the ancestors of the element
+    /// up to its window (a list scrolled away from it, a scroll viewer), or
+    /// the element says it is off the screen, the scroll item pattern
+    /// scrolls it into view. Upstream's runs need none (their desktop has a
+    /// resolution of 4K, where the main window shows every item of its list
+    /// of pages); a smaller desktop leaves the last pages below the end of
+    /// the list.
+    pub fn scroll_into_view(&self, element: &NativeElement) {
+        if self.is_in_view(element) {
+            return;
+        }
+        if element.0.has_pattern(SCROLL_ITEM_PATTERN).unwrap_or(false) && element.0.scroll_into_view().is_ok() {
+            self.settle();
+        }
+    }
+
+    /// Whether the centre of the element is inside every ancestor of it up
+    /// to its window, and the element is not off the screen.
+    fn is_in_view(&self, element: &NativeElement) -> bool {
+        if element.0.is_offscreen().unwrap_or(false) {
+            return false;
+        }
+        let (x, y) = self.rect(element).center();
+        let inside = |rect: &ElementRect| {
+            rect.width <= 0.0
+                || rect.height <= 0.0
+                || (x >= rect.x && x < rect.x + rect.width && y >= rect.y && y < rect.y + rect.height)
+        };
+        let mut current = element.0.clone();
+        for _ in 0..64 {
+            if current.control_type().ok() == Some(CONTROL_TYPE_WINDOW) {
+                break;
+            }
+            let Ok(Some(parent)) = self.client.control_view_parent(&current) else { break };
+            let parent_rect = self.rect(&NativeElement(parent.clone()));
+            if !inside(&parent_rect) {
+                return false;
+            }
+            current = parent;
+        }
+        true
+    }
+
     pub fn focus(&self, element: &NativeElement) {
         let _ = element.0.set_focus();
     }
@@ -338,23 +389,23 @@ impl Backend {
     /// The elements below `root` (and `root` itself with `include_root`)
     /// that the locator finds, in the order of the tree: one search of UI
     /// Automation in the control view.
-    pub fn find_all(&self, root: &NativeElement, include_root: bool, by: &By) -> Vec<NativeElement> {
+    pub fn find_all(&self, root: &NativeElement, include_root: bool, by: &By) -> Result<Vec<NativeElement>, String> {
         let condition = match by {
             By::AccessibilityId(id) => self.condition(PROPERTY_AUTOMATION_ID, VariantValue::Bstr(id.clone())),
             By::Name(name) => self.condition(PROPERTY_NAME, VariantValue::Bstr(name.clone())),
             By::ClassName(class) => self.condition(PROPERTY_CLASS_NAME, VariantValue::Bstr(class.clone())),
             By::TagName(tag) => {
                 let Some(control_type) = (50000..=50040).find(|id| control_type_name(*id) == *tag) else {
-                    return Vec::new();
+                    return Ok(Vec::new());
                 };
                 self.condition(PROPERTY_CONTROL_TYPE, VariantValue::I4(control_type))
             }
-            By::XPath(_) => return Vec::new(),
+            By::XPath(_) => return Ok(Vec::new()),
         };
-        let control_view = self.client.control_view_condition().unwrap_or_else(|error| panic!("{error}"));
-        let condition = self.client.and_condition(&condition, &control_view).unwrap_or_else(|error| panic!("{error}"));
+        let control_view = self.client.control_view_condition()?;
+        let condition = self.client.and_condition(&condition, &control_view)?;
         let scope = if include_root { TREE_SCOPE_SUBTREE } else { TREE_SCOPE_DESCENDANTS };
-        root.0.find_all(scope, &condition).unwrap_or_default().into_iter().map(NativeElement).collect()
+        Ok(root.0.find_all(scope, &condition)?.into_iter().map(NativeElement).collect())
     }
 
     /// The pixels of the screen in the rectangle (`GetScreenshot` of

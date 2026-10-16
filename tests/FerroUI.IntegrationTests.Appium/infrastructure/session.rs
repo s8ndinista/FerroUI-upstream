@@ -23,10 +23,23 @@ use super::xpath;
 use std::cell::{Cell, RefCell};
 use std::fmt;
 use std::rc::Rc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::{Duration, Instant};
 
 /// How long a search for one element waits for it to appear.
 pub const IMPLICIT_WAIT: Duration = Duration::from_millis(1000);
+
+static DUMP_TREE: AtomicBool = AtomicBool::new(false);
+
+/// Asks a search for one element that does not find it to print the tree it searched
+/// (`--dump-tree` of the runner).
+pub fn set_dump_tree(enabled: bool) {
+    DUMP_TREE.store(enabled, Ordering::Relaxed);
+}
+
+fn dump_tree_enabled() -> bool {
+    DUMP_TREE.load(Ordering::Relaxed) || std::env::var("FERROUI_AUTOMATION_DUMP_TREE").as_deref() == Ok("1")
+}
 
 /// What a command of the session failed with: the exceptions upstream's tests
 /// catch are `WebDriverException` and its `NoSuchElementException`.
@@ -213,7 +226,7 @@ impl Session {
             By::XPath(expression) => {
                 xpath::evaluate(&XPathTree(backend), &root, expression).map_err(WebDriverError::Other)
             }
-            _ => Ok(backend.find_all(&root, include_root, by)),
+            _ => backend.find_all(&root, include_root, by).map_err(|error| WebDriverError::Other(format!("{by:?}: {error}"))),
         }
     }
 
@@ -221,16 +234,75 @@ impl Session {
         let deadline = Instant::now() + IMPLICIT_WAIT;
         loop {
             let found = match &scope {
-                Scope::Session => self.find_all(Scope::Session, by)?,
-                Scope::Element(element) => self.find_all(Scope::Element(element), by)?,
+                Scope::Session => self.find_all(Scope::Session, by),
+                Scope::Element(element) => self.find_all(Scope::Element(element), by),
             };
-            if let Some(first) = found.into_iter().next() {
-                return Ok(first);
-            }
-            if Instant::now() >= deadline {
-                return Err(WebDriverError::NoSuchElement(format!("{by:?}")));
+            match found {
+                Ok(found) => {
+                    if let Some(first) = found.into_iter().next() {
+                        return Ok(first);
+                    }
+                    if Instant::now() >= deadline {
+                        self.dump_tree(&scope, by);
+                        return Err(WebDriverError::NoSuchElement(format!("{by:?}")));
+                    }
+                }
+                // The search itself failed (the session's window is gone, or the provider of
+                // the application answered an error): reported once the wait is over.
+                Err(error) => {
+                    if Instant::now() >= deadline {
+                        self.dump_tree(&scope, by);
+                        return Err(error);
+                    }
+                }
             }
             std::thread::sleep(Duration::from_millis(100));
+        }
+    }
+
+    /// With `--dump-tree` (or `FERROUI_AUTOMATION_DUMP_TREE=1`), prints the tree a search for
+    /// one element did not find it in: a diagnostic of the runs, no command of the drivers.
+    fn dump_tree(&self, scope: &Scope<'_>, by: &By) {
+        if !dump_tree_enabled() {
+            return;
+        }
+        let backend = self.backend();
+        let root = match scope {
+            Scope::Session => match self.root() {
+                Ok(root) => root,
+                Err(error) => {
+                    eprintln!("-- the tree of the search for {by:?}: {error}");
+                    return;
+                }
+            },
+            Scope::Element(element) => (*element).clone(),
+        };
+        eprintln!("-- the tree of the search for {by:?}:");
+        let mut lines = 0usize;
+        let mut stack: Vec<(NativeElement, usize)> = vec![(root, 0)];
+        while let Some((element, depth)) = stack.pop() {
+            lines += 1;
+            if lines > 600 {
+                eprintln!("   ...");
+                break;
+            }
+            let rect = backend.rect(&element);
+            eprintln!(
+                "   {:indent$}{} id={:?} name={:?} rect=({}, {}, {}, {})",
+                "",
+                backend.tag_name(&element),
+                backend.automation_id(&element),
+                backend.name(&element),
+                rect.x,
+                rect.y,
+                rect.width,
+                rect.height,
+                indent = depth * 2
+            );
+            if depth < 40 {
+                let children = backend.children(&element);
+                stack.extend(children.into_iter().rev().map(|child| (child, depth + 1)));
+            }
         }
     }
 
@@ -481,6 +553,7 @@ impl Element {
     pub fn click(&self) {
         let session = &self.session;
         if !self.backend().press(&self.native) {
+            self.backend().scroll_into_view(&self.native);
             let (x, y) = self.rect().center();
             session.click_at(x, y, MouseButton::Left);
         }
@@ -493,11 +566,12 @@ impl Element {
         self.session.settle();
     }
 
-    /// `SendKeys(text)`: gives the element the keyboard focus and types.
+    /// `SendKeys(text)`: gives the element the keyboard focus and types (on
+    /// macOS, where the focus does not take, after a click at its centre).
     pub fn send_keys(&self, text: &str) {
         let backend = self.backend();
         backend.focus(&self.native);
-        if !backend.has_focus(&self.native) {
+        if Backend::CLICKS_WHEN_FOCUS_FAILS && !backend.has_focus(&self.native) {
             let (x, y) = self.rect().center();
             self.session.click_at(x, y, MouseButton::Left);
         }

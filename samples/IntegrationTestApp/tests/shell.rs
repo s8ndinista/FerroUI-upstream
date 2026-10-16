@@ -415,3 +415,46 @@ fn the_items_of_the_list_box_page_have_their_names() {
     run.click_id("ListBoxSelectionClear");
     assert_eq!(list_box.selected_index(), -1);
 }
+
+/// The automation tests on a desktop smaller than the one of upstream's runs (a resolution of
+/// 4K): a main window lower than its list of pages leaves the last pages below the end of the
+/// list, and the click of a test on one of them (`TestBase`) brings it into view first, through
+/// the scroll item pattern of its automation peer (docs/porting/integration-tests.md, section
+/// 3). Every page shows the controls the tests look for inside the content of the window at
+/// that size.
+#[test]
+fn a_lower_main_window_brings_the_last_pages_into_view() {
+    const LOW: f64 = 560.0;
+    let shell = Shell::start(&SAMPLE, WIDTH, LOW, || App::new().upcast());
+    let window = MainWindow::new();
+    window.show();
+    shell.settle();
+    let run = Run { window, shell };
+
+    let pager = Shell::bounds_of(&run.window, &run.pager());
+    let in_view = |bounds: ferroui_base::Rect| {
+        let centre = bounds.center();
+        centre.y >= pager.y && centre.y < pager.y + pager.height
+    };
+    let last = run.pager().container_from_index(PAGES.len() as i32 - 1).expect("the container of the last page");
+    assert!(!in_view(Shell::bounds_of(&run.window, &last)), "the last page is out of view at a height of {LOW}");
+
+    ControlAutomationPeer::create_peer_for_element(&last).bring_into_view();
+    run.shell.settle();
+    let bounds = Shell::bounds_of(&run.window, &last);
+    assert!(in_view(bounds), "the last page is in view after the scroll item pattern: {bounds:?} in {pager:?}");
+    run.click(&last);
+    assert_eq!(run.view_model().selected_page().map(|page| page.name()).as_deref(), Some(PAGES[PAGES.len() - 1].0));
+
+    let content = Shell::bounds_of(&run.window, &run.pager_content());
+    for (name, ids) in PAGES {
+        run.select(name);
+        let elements = run.elements();
+        for id in ids.iter() {
+            let peer = find_by_id(&elements, id).unwrap_or_else(|| panic!("{name}: no element with the automation id {id}"));
+            let Some(control) = peer.cast::<ControlAutomationPeer>() else { continue };
+            let centre = Shell::bounds_of(&run.window, &control.owner()).center();
+            assert!(centre.y < content.y + content.height, "{name}: {id} is below the content of the window");
+        }
+    }
+}

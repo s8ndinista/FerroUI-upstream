@@ -39,6 +39,7 @@ pub const TOGGLE_PATTERN: i32 = 10015;
 pub const EXPAND_COLLAPSE_PATTERN: i32 = 10005;
 pub const WINDOW_PATTERN: i32 = 10009;
 pub const SELECTION_ITEM_PATTERN: i32 = 10010;
+pub const SCROLL_ITEM_PATTERN: i32 = 10017;
 
 /// The scopes of a search (`TreeScope`).
 pub const TREE_SCOPE_ELEMENT: i32 = 1;
@@ -53,6 +54,7 @@ const IID_RANGE_VALUE_PATTERN: Guid = Guid::from_u128(0x59213f4f_7346_49e5_b120_
 const IID_EXPAND_COLLAPSE_PATTERN: Guid = Guid::from_u128(0x619be086_1f4e_4ee4_bafa_210128738730);
 const IID_SELECTION_ITEM_PATTERN: Guid = Guid::from_u128(0xa8efa66a_0fda_421a_9194_38021f3578ea);
 const IID_WINDOW_PATTERN: Guid = Guid::from_u128(0x0faef453_9208_43ef_bbb2_3b485177864f);
+const IID_SCROLL_ITEM_PATTERN: Guid = Guid::from_u128(0xb488300f_d015_4f19_9c29_bb595e3645ef);
 
 // The slots of the methods the client calls, after the three of `IUnknown`.
 mod slots {
@@ -287,7 +289,7 @@ impl Element {
         self.pattern(pattern_id, iid, what)?.ok_or_else(|| format!("{what}: the element does not have the pattern"))
     }
 
-    /// Whether the element has the pattern (one of the four of this
+    /// Whether the element has the pattern (one of the patterns of this
     /// module).
     pub fn has_pattern(&self, pattern_id: i32) -> Result<bool, String> {
         let iid = match pattern_id {
@@ -298,6 +300,7 @@ impl Element {
             EXPAND_COLLAPSE_PATTERN => &IID_EXPAND_COLLAPSE_PATTERN,
             SELECTION_ITEM_PATTERN => &IID_SELECTION_ITEM_PATTERN,
             WINDOW_PATTERN => &IID_WINDOW_PATTERN,
+            SCROLL_ITEM_PATTERN => &IID_SCROLL_ITEM_PATTERN,
             other => return Err(format!("the pattern {other} is not one the client asks for")),
         };
         Ok(self.pattern(pattern_id, iid, "IUIAutomationElement::GetCurrentPatternAs")?.is_some())
@@ -474,6 +477,12 @@ impl Element {
             )? != 0),
             None => Ok(false),
         }
+    }
+
+    /// `IUIAutomationScrollItemPattern::ScrollIntoView`.
+    pub fn scroll_into_view(&self) -> Result<(), String> {
+        self.required_pattern(SCROLL_ITEM_PATTERN, &IID_SCROLL_ITEM_PATTERN, "the scroll item pattern")?
+            .call(slots::PATTERN_FIRST, "IUIAutomationScrollItemPattern::ScrollIntoView")
     }
 
     /// `IUIAutomationWindowPattern::Close`.

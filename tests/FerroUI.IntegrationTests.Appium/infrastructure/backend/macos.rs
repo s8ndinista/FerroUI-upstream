@@ -501,6 +501,10 @@ pub struct Backend {
 const SETTLE: Duration = Duration::from_millis(250);
 
 impl Backend {
+    /// Whether `SendKeys` clicks an element whose focus could not be set:
+    /// XCTest types into an element after a tap where it cannot focus it.
+    pub const CLICKS_WHEN_FOCUS_FAILS: bool = true;
+
     /// Whether the process may use the accessibility API of other
     /// applications and post input.
     pub fn check() -> Result<(), String> {
@@ -735,6 +739,19 @@ impl Backend {
         element.actions().iter().any(|action| action == "AXPress") && element.perform("AXPress")
     }
 
+    /// Brings the element into view before a click at its centre, as
+    /// XCTest scrolls an element into view before it taps it: where a click
+    /// at the centre would not reach the element and the element has the
+    /// action, `AXScrollToVisible`.
+    pub fn scroll_into_view(&self, element: &NativeElement) {
+        if !self.is_hittable(element)
+            && element.actions().iter().any(|action| action == "AXScrollToVisible")
+            && element.perform("AXScrollToVisible")
+        {
+            self.settle();
+        }
+    }
+
     pub fn focus(&self, element: &NativeElement) {
         // SAFETY: a live value.
         element.set("AXFocused", unsafe { kCFBooleanTrue });
@@ -756,7 +773,7 @@ impl Backend {
 
     /// The elements below `root` (and `root` itself with `include_root`)
     /// that the locator finds, in the order of the tree.
-    pub fn find_all(&self, root: &NativeElement, include_root: bool, by: &By) -> Vec<NativeElement> {
+    pub fn find_all(&self, root: &NativeElement, include_root: bool, by: &By) -> Result<Vec<NativeElement>, String> {
         let mut found = Vec::new();
         let mut stack: Vec<(NativeElement, bool)> = vec![(root.clone(), include_root)];
         let mut visited = 0usize;
@@ -771,7 +788,7 @@ impl Backend {
             let children = self.children(&element);
             stack.extend(children.into_iter().rev().map(|child| (child, true)));
         }
-        found
+        Ok(found)
     }
 
     fn matches(&self, element: &NativeElement, by: &By) -> bool {
