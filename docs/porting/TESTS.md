@@ -6,7 +6,7 @@ Upstream commit `17350180c33b063f0e98abbfd19aa3cae63f5d56` (`external/Avalonia.D
 
 How completely the upstream test suites are ported, per upstream test project: the upstream test methods, how many of them the port has by name, how many are waived with a reason, and the names of the missing ones. The member counts are in [TRACKING.md](TRACKING.md); what is left overall is in [REMAINING.md](REMAINING.md).
 
-**7100 of 7248 upstream tests that apply are found (97.9%)**: 7392 tests in 19 applicable projects, 144 waived, 148 missing. 697 more tests are in 29 projects that do not apply to the port.
+**7217 of 7248 upstream tests that apply are found (99.5%)**: 7392 tests in 19 applicable projects, 144 waived, 31 missing. 697 more tests are in 29 projects that do not apply to the port.
 
 ```sh
 python3 scripts/port-status/tests_audit.py            # regenerate this document and data/tests-status.json
@@ -27,7 +27,7 @@ python3 scripts/port-status/tests_audit.py --explain Avalonia.Base.UnitTests 'St
 | `tests/Avalonia.Markup.UnitTests` | 218 | 216 | 194 | 22 | 0 | 2 | 0 | 100.0% | `src/Markup/FerroUI.Markup` |
 | [`tests/Avalonia.Benchmarks`](#avaloniabenchmarks) | 162 | 141 | 141 | 0 | 0 | 0 | 21 | 87.0% | `tests/FerroUI.Benchmarks` |
 | [`external/XamlX/tests/XamlParserTests`](#xamlparsertests) | 127 | 116 | 54 | 38 | 24 | 3 | 8 | 93.5% | `src/Markup/FerroUI.Markup.Xaml.Loader/runtime/interpreter/tests`, `external/XamlX/src/XamlX/tests` |
-| [`tests/Avalonia.IntegrationTests.Appium`](#avaloniaintegrationtestsappium) | 117 | 0 | 0 | 0 | 0 | 0 | 117 | 0.0% | none |
+| `tests/Avalonia.IntegrationTests.Appium` | 117 | 117 | 117 | 0 | 0 | 0 | 0 | 100.0% | `tests/FerroUI.IntegrationTests.Appium` |
 | `tests/Avalonia.LeakTests` | 41 | 41 | 41 | 0 | 0 | 0 | 0 | 100.0% | `tests/FerroUI.LeakTests` |
 | `tests/Avalonia.Headless.UnitTests` | 30 | 30 | 30 | 0 | 0 | 0 | 0 | 100.0% | `src/Headless/FerroUI.Headless/unit_tests` |
 | `tests/Avalonia.IntegrationTests.Win32` | 13 | 13 | 11 | 2 | 0 | 0 | 0 | 100.0% | `tests/FerroUI.IntegrationTests.Win32` |
@@ -38,14 +38,14 @@ python3 scripts/port-status/tests_audit.py --explain Avalonia.Base.UnitTests 'St
 | `external/XamlX/tests/TestClasses` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | n/a | none |
 | `tests/Avalonia.Skia.RenderTests` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | n/a | `tests/FerroUI.RenderTests` |
 | `tests/Avalonia.UnitTests` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | n/a | `test_support` modules of the crates |
-| Total | 7392 | 7100 | 6667 | 388 | 45 | 144 | 148 | 97.9% | |
+| Total | 7392 | 7217 | 6784 | 388 | 45 | 144 | 31 | 99.5% | |
 
 Notes:
 
 - `Avalonia.RenderTests`: shared sources of `Avalonia.Skia.RenderTests`, counted here once.
 - `Avalonia.Benchmarks`: a benchmark counts as found when the port has a function of its name.
 - `XamlParserTests`: the XAML compiler library is ported as the crate `xamlx`.
-- `Avalonia.IntegrationTests.Appium`: counted although not started: the tests drive `samples/IntegrationTestApp`, which is ported, from outside through the platform accessibility API, and the port has no integration suite that replaces them (`tests/FerroUI.IntegrationTests.Win32` is the port of the other, in-process project). CONTINUATION.md, "Not ported", has what they wait for.
+- `Avalonia.IntegrationTests.Appium`: the tests drive `samples/IntegrationTestApp` from another process through the accessibility API of the platform, with the port's own automation layer in place of Appium (UI Automation on Windows, the accessibility API of macOS): `integration-tests.md`.
 - `TestClasses`: types used by the other XamlX tests; no tests.
 - `Avalonia.Skia.RenderTests`: compiles the sources of `tests/Avalonia.RenderTests`; no tests of its own.
 - `Avalonia.UnitTests`: the shared test library (`TestRoot`, `TestServices`, ...); no tests of its own.
@@ -226,38 +226,6 @@ Per project, the upstream files with tests the port does not have by name (`miss
 - `BasicCompilerTests.cs` (2/7): `Compiler_Should_Populate_Xaml_Without_Public_Ctor`, `Compiler_Should_Fail_To_Build_Xaml_Without_Public_Ctor`
 - `DynamicSettersTests.cs` (2/17): `Dynamic_Setter_For_Public_Property_Should_Be_Shared`, `Dynamic_Setter_For_Non_Public_Property_Should_Be_Private`
 - `DeferredContentTests.cs` (1/4): `ConstantRootObjectProvider.DeferredContent_Pointer_Should_Be_Transformed_When_Configured`
-
-</details>
-
-### Avalonia.IntegrationTests.Appium
-
-117 missing of 117 (`tests/Avalonia.IntegrationTests.Appium`).
-
-<details>
-<summary>117 missing tests in 22 files</summary>
-
-- `WindowTests_MacOS.cs` (17/17): `WindowOrder_Modal_Dialog_Stays_InFront_Of_Parent`, `WindowOrder_Modal_Dialog_Stays_InFront_Of_Parent_When_Clicking_Resize_Grip`, `WindowOrder_Modal_Dialog_Stays_InFront_Of_Parent_When_In_Fullscreen`, `WindowOrder_Owned_Dialog_Stays_InFront_Of_Parent`, `WindowOrder_Owned_Dialog_Stays_InFront_Of_FullScreen_Parent`, `WindowOrder_Owned_Dialog_Stays_InFront_Of_Parent_After_Modal_Closed`, `Does_Not_Switch_Space_From_FullScreen_To_Main_Desktop_When_FullScreen_Window_Clicked`, `WindowOrder_NonOwned_Window_Does_Not_Stay_InFront_Of_Parent`, `WindowOrder_Owned_Window_Stays_InFront_Of_Topmost_Owner`, `WindowOrder_Owned_Is_Correct_After_Closing_Window`, `Parent_Window_Has_Disabled_ChromeButtons_When_Modal_Dialog_Shown`, `Minimize_Button_Is_Disabled_On_Modal_Dialog`, `Minimize_Button_Disabled_Owned_Window`, `Minimize_Button_Minimizes_Window`, `Hidden_Child_Window_Is_Not_Reshown_When_Parent_Clicked`, `Toggling_SystemDecorations_Should_Preserve_ExtendClientArea`, `ExtendClientArea_SystemDecorations_Shows_Correct_Buttons`
-- `WindowTests.cs` (15/15): `StartupLocation`, `WindowState`, `OnWindows_Docked_Windows_Retain_Size_Position_When_Restored`, `Showing_Window_With_Size_Larger_Than_Screen_Measures_Content_With_Working_Area`, `ShowMode`, `Extended_Client_Window_Shows_With_Requested_Size`, `TransparentWindow`, `TransparentPopup`, `Owned_Window_Should_Appear_Above_Topmost_Owner`, `Window_Has_Disabled_Maximize_Button_When_CanResize_Is_False`, `Window_Minimize_Button_Enabled_Matches_CanMinimize`, `Window_Maximize_Button_Enabled_Matches_CanMaximize`, `Changing_SystemDecorations_Should_Not_Change_Frame_Size_And_Position`, `Changing_WindowState_Should_Not_Change_Frame_Size_And_Position`, `Changing_Size_Should_Not_Change_Position`
-- `GestureTests.cs` (10/10): `Tapped_Is_Raised`, `Tapped_Is_Raised_Slow`, `Tapped_Is_Not_Raised_For_Drag`, `DoubleTapped_Is_Raised`, `DoubleTapped_Is_Raised_2`, `DoubleTapped_Is_Raised_Not_Raised_If_Too_Slow`, `DoubleTapped_Is_Raised_After_Control_Changes`, `RightTapped_Is_Raised`, `RightTapped_Is_Raised_2`, `RightTapped_Is_Not_Raised_For_Drag`
-- `MenuTests.cs` (10/10): `Click_Child`, `Click_Grandchild`, `Select_Child_With_Alt_Arrow_Keys`, `Select_Grandchild_With_Alt_Arrow_Keys`, `Select_Child_With_Alt_Access_Keys`, `Select_Grandchild_With_Alt_Access_Keys`, `Select_Child_With_Click_Arrow_Keys`, `Select_Grandchild_With_Click_Arrow_Keys`, `Child_AcceleratorKey`, `PointerOver_Does_Not_Steal_Focus`
-- `ComboBoxTests.cs` (7/7): `Can_Change_Selection_Using_Mouse`, `Can_Change_Selection_From_Unselected_Using_Mouse`, `Can_Change_Selection_With_Keyboard_When_Closed`, `Can_Change_Wrapping_Selection_With_Keyboard_When_Closed`, `Can_Change_Selection_When_Open_With_Keyboard`, `Can_Change_Selection_When_Open_With_Keyboard_From_Unselected`, `Can_Cancel_Keyboard_Selection_With_Escape`
-- `KeyboardTests.cs` (6/6): `KeyBinding_Without_Modifier_Is_Raised_While_TextBox_Is_Focused`, `KeyBinding_On_Character_Key_Is_Raised_While_TextBox_Is_Focused`, `KeyBinding_With_Modifier_Is_Raised_While_TextBox_Is_Focused`, `Handled_KeyBinding_Does_Not_Insert_Text`, `Unhandled_Key_Still_Produces_Text`, `Unhandled_Space_Produces_Exactly_One_KeyDown_And_Text`
-- `NativeMenuTests.cs` (6/6): `NativeMenuTests.MacOS_View_Menu_Select_Button_Tab`, `NativeMenuTests.Win32_View_Menu_Select_Button_Tab`, `NativeMenuTests.MacOS_Sanitizes_Access_Key_Markers_When_Included_In_Menu_Title`, `NativeMenuTests.Win32_Avalonia_Menu_Has_ToolTip_If_Defined`, `NativeMenuTests.MacOS_Native_Menu_Has_ToolTip_If_Defined`, `DockMenuTests.MacOS_DockMenu_Can_Add_Items_Dynamically`
-- `WindowDecorationsTests.cs` (6/6): `Window_Size_Should_Be_Consistent_Between_Toggles`, `Can_Restore_To_Non_Extended_State`, `Should_Apply_Client_Chrome`, `Should_Apply_System_Chrome`, `Should_Apply_Client_Chrome_On_New_Window`, `Should_Apply_System_Chrome_On_New_Window`
-- `ButtonTests.cs` (5/5): `DisabledButton`, `EffectivelyDisabledButton`, `BasicButton`, `ButtonWithTextBlock`, `ButtonWithAcceleratorKey`
-- `PopupsTests.cs` (5/5): `LightDismiss_Popup_Should_Open_And_Close`, `StaysOpen_Popup_Should_Stay_Open`, `StaysOpen_Popup_TextBox_Should_Be_Editable`, `TopMost_Popup_Should_Stay_Above_Other_Windows`, `Non_TopMost_Popup_Does_Not_Stay_Above_Other_Windows`
-- `EmbeddingTests.cs` (4/4): `Can_Edit_Native_TextBox`, `Can_Edit_Native_TextBox_In_Popup`, `Showing_ToolTip_Does_Not_Steal_Focus_From_Native_TextBox`, `Showing_ContextMenu_Steals_Focus_From_Native_TextBox`
-- `ListBoxTests.cs` (4/4): `Can_Select_Item_By_Clicking`, `Can_Select_Items_By_Ctrl_Clicking`, `Can_Select_Range_By_Shift_Clicking`, `Is_Virtualized`
-- `SliderTests.cs` (4/4): `Horizontal_Changes_Value_Dragging_Thumb_Right`, `Horizontal_Changes_Value_Dragging_Thumb_Left`, `Horizontal_Changes_Value_When_Clicking_Increase_Button`, `Horizontal_Changes_Value_When_Clicking_Decrease_Button`
-- `CheckBoxTests.cs` (3/3): `UncheckedCheckBox`, `CheckedCheckBox`, `ThreeStateCheckBox`
-- `DragDropTests.cs` (3/3): `DragDrop_Coordinates_Correct_When_Controls_Offset_From_Origin`, `DragDrop_Position_Updates_During_DragOver`, `DragDrop_Can_Be_Cancelled`
-- `TrayIconTests.cs` (3/3): `Should_Handle_Left_Click`, `Should_Handle_Context_Menu_Item_Click`, `Can_Toggle_TrayIcon_Visibility`
-- `AutomationTests.cs` (2/2): `AutomationId`, `LabeledBy`
-- `RadioButtonTests.cs` (2/2): `RadioButton_IsChecked_True_When_Clicked`, `ThreeState_RadioButton_IsChecked_False_When_Other_ThreeState_RadioButton_Checked`
-- `ScreenTests.cs` (2/2): `Can_Read_Current_Screen_Info`, `Returns_The_Same_Screen_Instance`
-- `ContextMenuTests.cs` (1/1): `Select_First_Item_With_Down_Arrow_Key`
-- `PointerTests.cs` (1/1): `Pointer_Capture_Is_Released_When_Showing_Dialog`
-- `ScrollBarTests.cs` (1/1): `ScrollBar_Increases_Value_By_LargeChange_When_IncreaseButton_Is_Clicked`
 
 </details>
 

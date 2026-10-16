@@ -1,5 +1,5 @@
 [package]
-name = "ferroui-integration-tests-automation"
+name = "ferroui-integration-tests-appium"
 description = "Test crate: upstream's user interface automation tests, which drive samples/IntegrationTestApp from another process through the accessibility API of the platform"
 version.workspace = true
 edition.workspace = true
@@ -14,8 +14,10 @@ publish = false
 # automation backend (anything but Windows and macOS) the binary compiles and
 # reports that it has nothing to run. docs/porting/integration-tests.md has the
 # design.
+# The test binary is `automation-*`, apart from the `integration-*` of the integration tests of
+# the Windows backend, which scripts/windows/vm-smoke.ps1 finds by that name.
 [[test]]
-name = "integration"
+name = "automation"
 path = "main.rs"
 harness = false
 

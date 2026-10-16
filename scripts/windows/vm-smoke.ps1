@@ -60,6 +60,19 @@
   of the catalog (control-catalog-desktop with FERROUI_SMOKE_SCREENSHOTS) in both rendering modes;
   the pictures are copied to vm-smoke-screenshots beside the report.
 
+.PARAMETER Automation
+  Also build the IntegrationTestApp sample and run upstream's user interface automation tests
+  (tests\FerroUI.IntegrationTests.Appium, the port of tests/*.IntegrationTests.Appium of the
+  reference: the sample is started as a process of its own and driven through UI Automation and the
+  input of the desktop, as WinAppDriver drives it upstream; docs/porting/integration-tests.md).
+  The run needs the desktop of the logged-on user (-InteractiveUser) and Skia for the target, as
+  -Desktop. It moves the pointer and types on the keyboard of the machine: nobody should use the
+  machine while it runs. Each collection of tests starts the sample once.
+
+.PARAMETER AutomationArguments
+  Further arguments of the automation tests: a part of the name of the tests to run (for example
+  combo_box_tests), or --include-ignored to run the tests upstream skips as well.
+
 .PARAMETER WinUI
   Also run the tests of the WinUI integration (ferroui-winui) and the smoke runs of its two samples
   (control-gallery-winui --smoke: the catalog in a WinUI 3 window; winui-embed-sample --smoke:
@@ -112,6 +125,8 @@ param(
     [string]$LibclangPath = '',
     [switch]$Desktop,
     [switch]$WinUI,
+    [switch]$Automation,
+    [string]$AutomationArguments = '',
     [switch]$InstallWindowsAppRuntime,
     [int]$HelloRepeat = 1,
     [switch]$SkipBuild,
@@ -613,6 +628,34 @@ if ($Desktop) {
             $copy = Join-Path (Join-Path (Split-Path -Parent $Report) 'vm-smoke-screenshots') $mode
             New-Item -ItemType Directory -Force -Path $copy | Out-Null
             Copy-Item (Join-Path $directory '*.png') $copy -Force -ErrorAction SilentlyContinue
+        }
+    }
+}
+
+# ---- upstream's user interface automation tests ---------------------------------------------
+if ($Automation) {
+    Say ""
+    Say "-- automation tests of the IntegrationTestApp sample"
+    if ((Run 'automation-app-build' "cargo build --locked $jobsArgument -p integration-test-app") -ne 0) {
+        $failed.Add('IntegrationTestApp build')
+        Tail 'automation-app-build' 40
+    } elseif ((Run 'automation-build' "cargo test --locked $jobsArgument -p ferroui-integration-tests-appium --test automation --no-run") -ne 0) {
+        $failed.Add('automation tests build')
+        Tail 'automation-build' 40
+    } else {
+        $binary = Get-ChildItem (Join-Path $TargetDir 'debug\deps') -Filter 'automation-*.exe' |
+            Sort-Object LastWriteTime -Descending | Select-Object -First 1
+        $app = Join-Path $TargetDir 'debug\integration-test-app.exe'
+        if (-not $binary) {
+            Say "the test binary was not found under $TargetDir\debug\deps"
+            $failed.Add('automation tests (no binary)')
+        } else {
+            # The binary is told where the sample is; it has no test harness, prints every test
+            # with its result and the reason of every test it does not run.
+            $commandLine = "set FERROUI_AUTOMATION_TESTS=1&& set FERROUI_INTEGRATION_TEST_APP=$app&& `"$($binary.FullName)`" $AutomationArguments"
+            $code = if ($InteractiveUser) { Run-Interactive 'automation' $commandLine 3600 } else { Run 'automation' $commandLine }
+            if ($code -ne 0) { $failed.Add('automation tests') }
+            Tail 'automation' 400 '\.\.\. |^test result|^running|panicked|^failures|^    |^the |^-- '
         }
     }
 }
