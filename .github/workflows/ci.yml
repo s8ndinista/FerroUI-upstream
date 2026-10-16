@@ -446,6 +446,37 @@ jobs:
           name: control-catalog-windows-screenshots
           path: target/screenshots
           if-no-files-found: ignore
+      # The WinUI theme (docs/porting/winui-theme-gallery.md): the capture mode of its gallery
+      # (every page in every setting, drawn by the framework) and the comparison host (each page
+      # beside the same page of native WinUI 3 controls, with the difference), on the desktop of
+      # the runner, with the runtime and the bootstrap library of the step above. Informative
+      # until the comparison is calibrated: the pictures and the reports are the result.
+      - name: WinUI theme gallery (capture, comparison with native WinUI 3; informative)
+        if: ${{ !cancelled() && steps.skia.outputs.raster == 'true' }}
+        continue-on-error: true
+        timeout-minutes: 45
+        shell: pwsh
+        env:
+          RUST_BACKTRACE: 1
+        run: |
+          cargo build --locked -p winui-theme-gallery --bins
+          New-Item -ItemType Directory -Force -Path target/winui-theme/capture, target/winui-theme/compare | Out-Null
+          $env:FERROUI_THEME_GALLERY_CAPTURE = (Resolve-Path target/winui-theme/capture).Path
+          $capture = Start-Process -FilePath target/debug/winui-theme-gallery.exe -NoNewWindow -PassThru
+          if (-not $capture.WaitForExit(900000)) { $capture.Kill(); Write-Output "capture: timed out" }
+          Remove-Item Env:FERROUI_THEME_GALLERY_CAPTURE
+          $compare = Start-Process -FilePath target/debug/winui-theme-compare.exe -ArgumentList '--out', (Resolve-Path target/winui-theme/compare).Path -NoNewWindow -PassThru
+          if (-not $compare.WaitForExit(1500000)) { $compare.Kill(); Write-Output "compare: timed out" }
+          python scripts/winui-theme/report.py target/winui-theme/capture
+          python scripts/winui-theme/report.py target/winui-theme/compare
+          if ($capture.ExitCode -ne 0 -or $compare.ExitCode -ne 0) { Write-Output "capture exit $($capture.ExitCode), compare exit $($compare.ExitCode)"; exit 1 }
+      - name: Keep the pictures of the WinUI theme gallery
+        if: ${{ always() && steps.skia.outputs.raster == 'true' }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: winui-theme-gallery-windows
+          path: target/winui-theme
+          if-no-files-found: ignore
 
   # The same backend on Windows for ARM64 (the owner's test machine is one): whether ANGLE builds
   # for the target and runs there. Informative as a whole until its first green run.
