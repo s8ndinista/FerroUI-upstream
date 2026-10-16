@@ -74,6 +74,10 @@ struct Run {
     started: Instant,
     hwnd: Cell<isize>,
     side_by_side: Cell<bool>,
+    /// The height of the pages: the height of the options, or less where the work area of the
+    /// screen does not hold a page of that height (the bottom of each page is then left out of
+    /// both pictures).
+    page_height: Cell<f64>,
     /// Whether the native page of the job loaded.
     native_shown: Cell<bool>,
     page: RefCell<Option<Ref<Control>>>,
@@ -219,7 +223,6 @@ impl Run {
         self.hwnd.set(hwnd);
         let scale = window_capture::scale(hwnd);
         let width = (self.options.width * scale).ceil() as i32;
-        let height = (self.options.height * scale).ceil() as i32;
         let Some(work) = window_capture::work_area(hwnd) else {
             self.fail("the work area of the screen of the window could not be read");
             self.phase.set(Phase::Done);
@@ -227,21 +230,35 @@ impl Run {
         };
         // The frame of the window takes some of the height of the work area.
         let frame_allowance = (48.0 * scale).ceil() as i32;
+        // A page higher than the work area is compared at the height that fits, from its top.
+        let fitting = f64::from(work.height() - frame_allowance) / scale;
+        if self.options.height > fitting {
+            let height = fitting.floor();
+            if height < 200.0 || self.options.width * scale > f64::from(work.width()) {
+                self.fail(&format!(
+                    "a page of {} by {} at the scale {scale} does not fit the work area of the screen ({} by {} pixels): set FERROUI_WINUI_COMPARE_SIZE to a smaller size",
+                    self.options.width,
+                    self.options.height,
+                    work.width(),
+                    work.height()
+                ));
+                self.phase.set(Phase::Done);
+                return true;
+            }
+            println!(
+                "compare: the work area of the screen ({} by {} pixels) does not hold a page of {} by {} at the scale {scale}: the pages are compared at a height of {height}, from their top",
+                work.width(),
+                work.height(),
+                self.options.width,
+                self.options.height
+            );
+            self.page_height.set(height);
+        }
+        let height = (self.page_height.get() * scale).ceil() as i32;
         let fits = |columns: i32| columns * width <= work.width() && height + frame_allowance <= work.height();
         let side_by_side = fits(2);
-        if !side_by_side && !fits(1) {
-            self.fail(&format!(
-                "a page of {} by {} at the scale {scale} does not fit the work area of the screen ({} by {} pixels): set FERROUI_WINUI_COMPARE_SIZE to a smaller size",
-                self.options.width,
-                self.options.height,
-                work.width(),
-                work.height()
-            ));
-            self.phase.set(Phase::Done);
-            return true;
-        }
         self.side_by_side.set(side_by_side);
-        if let Err(error) = window.arrange(side_by_side, self.options.width, self.options.height) {
+        if let Err(error) = window.arrange(side_by_side, self.options.width, self.page_height.get()) {
             self.fail(&format!("the cells of the window could not be sized: {error}"));
             self.phase.set(Phase::Done);
             return true;
@@ -268,7 +285,7 @@ impl Run {
     /// Shows the native page and the framework's page of the job.
     fn show(&self, window: &CompareWindow) {
         let (page, setting) = self.job();
-        let Some(markup) = comparison::native_markup(page, setting, self.options.width, self.options.height) else {
+        let Some(markup) = comparison::native_markup(page, setting, self.options.width, self.page_height.get()) else {
             println!(
                 "compare {} {}: skipped: WinUI has no requested theme for the variant {} (high contrast is a setting of the system)",
                 page.id,
@@ -320,7 +337,7 @@ impl Run {
             problems.extend(capture::missing_templates(page));
             problems.extend(self.log.take());
             let pixel_size =
-                PixelSize::new((self.options.width * scale).round() as i32, (self.options.height * scale).round() as i32);
+                PixelSize::new((self.options.width * scale).round() as i32, (self.page_height.get() * scale).round() as i32);
             let bitmap = capture::render(&host.clone().upcast::<Visual>(), pixel_size, scale);
             let pixels = capture::bgra_pixels(&bitmap);
             let saved = capture::save_png(&bitmap, &file("ferroui"));
@@ -447,6 +464,7 @@ pub fn start(window: Rc<CompareWindow>, out: PathBuf) {
         };
     });
 
+    let page_height = options.height;
     let run = Rc::new(Run {
         window: Rc::downgrade(&window),
         out,
@@ -459,6 +477,7 @@ pub fn start(window: Rc<CompareWindow>, out: PathBuf) {
         started: Instant::now(),
         hwnd: Cell::new(0),
         side_by_side: Cell::new(false),
+        page_height: Cell::new(page_height),
         native_shown: Cell::new(false),
         page: RefCell::new(None),
         log: ProblemLog::install(),
