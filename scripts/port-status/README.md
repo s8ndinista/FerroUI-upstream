@@ -30,6 +30,23 @@ python3 scripts/port-status/test_gaps.py ../Avalonia tests/Avalonia.Base.UnitTes
 Its rules are at its top; `docs/porting/data/test-aliases.toml` holds the tests the port has under another name
 and the ones that are not ported for a stated reason, with a section per upstream test project.
 
+`tests_audit.py` measures every upstream test project at once, the ones that do not apply included (each with
+its reason), and writes `docs/porting/TESTS.md` (per project: tests, found, waived, missing, and the missing tests by
+name) and `docs/porting/data/tests-status.json`. It reads the upstream tests from an inventory,
+`docs/porting/data/upstream-tests.json`, which it re-reads from the checkout (`git archive` of the tracked commit
+and of the XamlX and D-Bus submodules) only when it names another commit or with `--extract`; `run.sh` runs it as
+step 3 and `run.sh --check` runs its `--check`, which needs neither the checkout nor git. Its match is stricter than
+that of `test_gaps.py` (one Rust function per upstream test, over all projects; a name of fewer than three words
+only in the Rust file named after the upstream file); the rules and the calibration by hand are at the top of
+`TESTS.md`.
+
+```sh
+python3 scripts/port-status/tests_audit.py                                    # TESTS.md and tests-status.json
+python3 scripts/port-status/tests_audit.py --check                            # exit 1 when out of date
+UPSTREAM=../Avalonia python3 scripts/port-status/tests_audit.py --extract     # re-read the upstream test projects
+python3 scripts/port-status/tests_audit.py --explain Avalonia.Base.UnitTests 'Styling/*'   # what matched each test
+```
+
 ## Pipeline
 
 1. `scripts/api-extract` (C#, Roslyn syntax trees, no compilation) reads the upstream projects listed in

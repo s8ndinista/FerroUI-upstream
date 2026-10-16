@@ -1,0 +1,1133 @@
+{
+ "generator": "scripts/port-status/tests_audit.py",
+ "upstreamCommit": "17350180c33b063f0e98abbfd19aa3cae63f5d56",
+ "submodules": {
+  "external/Avalonia.DBus": "cada3ecfc153a9efbc8d64f530136d737c1a7eec",
+  "external/XamlX": "d7e37ca63dc9b13cdc95ca165938d4904fa0eddf"
+ },
+ "totals": {
+  "tests": 7392,
+  "found": 7100,
+  "inFile": 6667,
+  "elsewhere": 388,
+  "aliased": 45,
+  "waived": 144,
+  "missing": 148
+ },
+ "projects": [
+  {
+   "path": "external/Avalonia.DBus/tests/Avalonia.DBus.Interop.Tests",
+   "name": "Avalonia.DBus.Interop.Tests",
+   "applicable": false,
+   "csFiles": 19,
+   "tests": 33,
+   "reason": "the D-Bus library of upstream is not ported: the port talks to D-Bus through the `zbus` crate (`x11-platform.md`, the D-Bus choice)"
+  },
+  {
+   "path": "external/Avalonia.DBus/tests/Avalonia.DBus.SourceGen.Tests",
+   "name": "Avalonia.DBus.SourceGen.Tests",
+   "applicable": false,
+   "csFiles": 15,
+   "tests": 51,
+   "reason": "as the D-Bus interop tests"
+  },
+  {
+   "path": "external/Avalonia.DBus/tests/Avalonia.DBus.Testing",
+   "name": "Avalonia.DBus.Testing",
+   "applicable": false,
+   "csFiles": 2,
+   "tests": 0,
+   "reason": "as the D-Bus interop tests"
+  },
+  {
+   "path": "external/Avalonia.DBus/tests/Avalonia.DBus.Tests",
+   "name": "Avalonia.DBus.Tests",
+   "applicable": false,
+   "csFiles": 36,
+   "tests": 277,
+   "reason": "as the D-Bus interop tests"
+  },
+  {
+   "path": "external/Avalonia.DBus/tests/Avalonia.DBus.WireMarshalling.Tests",
+   "name": "Avalonia.DBus.WireMarshalling.Tests",
+   "applicable": false,
+   "csFiles": 21,
+   "tests": 141,
+   "reason": "as the D-Bus interop tests"
+  },
+  {
+   "path": "external/Avalonia.DBus/tests/NDesk.DBus.Tests",
+   "name": "NDesk.DBus.Tests",
+   "applicable": false,
+   "csFiles": 17,
+   "tests": 72,
+   "reason": "as the D-Bus interop tests"
+  },
+  {
+   "path": "external/Avalonia.DBus/tests/external/ndesk-dbus-0.6.0/src",
+   "name": "ndesk-dbus-0.6.0",
+   "applicable": false,
+   "csFiles": 26,
+   "tests": 0,
+   "reason": "a D-Bus library vendored for the tests above"
+  },
+  {
+   "path": "external/Avalonia.DBus/tests/external/ndesk-dbus-glib-0.4.1/src",
+   "name": "ndesk-dbus-glib-0.4.1",
+   "applicable": false,
+   "csFiles": 3,
+   "tests": 0,
+   "reason": "as the vendored D-Bus library"
+  },
+  {
+   "path": "external/XamlX/tests/CecilNetstandardTests",
+   "name": "CecilNetstandardTests",
+   "applicable": false,
+   "csFiles": 0,
+   "tests": 0,
+   "reason": "as `CecilTests`"
+  },
+  {
+   "path": "external/XamlX/tests/CecilTests",
+   "name": "CecilTests",
+   "applicable": false,
+   "csFiles": 3,
+   "tests": 11,
+   "reason": "the IL backend of XamlX over Mono.Cecil (`XamlX.IL.Cecil`), which the port does not have: its XAML compiler emits Rust"
+  },
+  {
+   "path": "external/XamlX/tests/GuilabsParserTests",
+   "name": "GuilabsParserTests",
+   "applicable": false,
+   "csFiles": 0,
+   "tests": 0,
+   "reason": "the alternative parser `XamlX.Parser.GuiLabs`, not ported"
+  },
+  {
+   "path": "external/XamlX/tests/TestClasses",
+   "name": "TestClasses",
+   "applicable": true,
+   "csFiles": 1,
+   "tests": 0,
+   "found": 0,
+   "inFile": 0,
+   "elsewhere": 0,
+   "aliased": 0,
+   "waived": 0,
+   "missing": 0,
+   "port": "none",
+   "missingTests": []
+  },
+  {
+   "path": "external/XamlX/tests/TypeSystemTest",
+   "name": "TypeSystemTest",
+   "applicable": false,
+   "csFiles": 13,
+   "tests": 5,
+   "reason": "runs one set of checks on the two type systems of XamlX over compiled .NET assemblies, System.Reflection and Mono.Cecil (generic instantiation, nested types of IL metadata); the port has neither: its type systems are over Rust metadata (the fake type system of the `xamlx` tests, the run-time and build-time ones of `src/Markup`)"
+  },
+  {
+   "path": "external/XamlX/tests/XamlParserTests",
+   "name": "XamlParserTests",
+   "applicable": true,
+   "csFiles": 23,
+   "tests": 127,
+   "found": 116,
+   "inFile": 54,
+   "elsewhere": 38,
+   "aliased": 24,
+   "waived": 3,
+   "missing": 8,
+   "port": "`src/Markup/FerroUI.Markup.Xaml.Loader/runtime/interpreter/tests`, `external/XamlX/src/XamlX/tests`",
+   "missingTests": [
+    {
+     "file": "BasicCompilerTests.cs",
+     "test": "Compiler_Should_Populate_Xaml_Without_Public_Ctor"
+    },
+    {
+     "file": "BasicCompilerTests.cs",
+     "test": "Compiler_Should_Fail_To_Build_Xaml_Without_Public_Ctor"
+    },
+    {
+     "file": "DeferredContentTests.cs",
+     "test": "ConstantRootObjectProvider.DeferredContent_Pointer_Should_Be_Transformed_When_Configured"
+    },
+    {
+     "file": "DynamicSettersTests.cs",
+     "test": "Dynamic_Setter_For_Public_Property_Should_Be_Shared"
+    },
+    {
+     "file": "DynamicSettersTests.cs",
+     "test": "Dynamic_Setter_For_Non_Public_Property_Should_Be_Private"
+    },
+    {
+     "file": "MarkupExtensionTests.cs",
+     "test": "Same_Name_Extension_Should_Work_Without_Generics_XML_Syntax"
+    },
+    {
+     "file": "MarkupExtensionTests.cs",
+     "test": "Resolve_Single_Generic_Type_Argument_XML_Syntax"
+    },
+    {
+     "file": "MarkupExtensionTests.cs",
+     "test": "Resolve_Double_Generic_Type_Argument_XML_Syntax"
+    }
+   ]
+  },
+  {
+   "path": "tests/Avalonia.Analyzers.Tests",
+   "name": "Avalonia.Analyzers.Tests",
+   "applicable": false,
+   "csFiles": 4,
+   "tests": 59,
+   "reason": "Roslyn analyzers and code fixes for C# sources; the port has no .NET analyzers"
+  },
+  {
+   "path": "tests/Avalonia.Base.UnitTests",
+   "name": "Avalonia.Base.UnitTests",
+   "applicable": true,
+   "csFiles": 277,
+   "tests": 2402,
+   "found": 2290,
+   "inFile": 1987,
+   "elsewhere": 283,
+   "aliased": 20,
+   "waived": 111,
+   "missing": 1,
+   "port": "next to the code, mostly `src/FerroUI.Base`",
+   "missingTests": [
+    {
+     "file": "AvaloniaObjectTests_Direct.cs",
+     "test": "SetValue_Should_Not_Cause_StackOverflow_And_Have_Correct_Values"
+    }
+   ]
+  },
+  {
+   "path": "tests/Avalonia.Benchmarks",
+   "name": "Avalonia.Benchmarks",
+   "applicable": true,
+   "csFiles": 60,
+   "tests": 162,
+   "found": 141,
+   "inFile": 141,
+   "elsewhere": 0,
+   "aliased": 0,
+   "waived": 0,
+   "missing": 21,
+   "port": "`tests/FerroUI.Benchmarks`",
+   "missingTests": [
+    {
+     "file": "Compositor/CompositionTargetUpdate.cs",
+     "test": "TargetUpdate"
+    },
+    {
+     "file": "Layout/Measure.cs",
+     "test": "Remeasure"
+    },
+    {
+     "file": "Rendering/ShapeRendering.cs",
+     "test": "Render_Line_NoBrushes"
+    },
+    {
+     "file": "Rendering/ShapeRendering.cs",
+     "test": "Render_Line_WithStroke"
+    },
+    {
+     "file": "Rendering/ShapeRendering.cs",
+     "test": "Render_Line_WithFill"
+    },
+    {
+     "file": "Rendering/ShapeRendering.cs",
+     "test": "Render_Line_WithFillAndStroke"
+    },
+    {
+     "file": "Styling/SelectorBenchmark.cs",
+     "test": "OrSelector_One_Match"
+    },
+    {
+     "file": "Styling/SelectorBenchmark.cs",
+     "test": "OrSelector_Five_Match"
+    },
+    {
+     "file": "Styling/Style_Apply.cs",
+     "test": "Apply_Simple_Styles"
+    },
+    {
+     "file": "Styling/Style_ClassSelector.cs",
+     "test": "Apply"
+    },
+    {
+     "file": "Styling/Style_ClassSelector.cs",
+     "test": "Apply_Toggle"
+    },
+    {
+     "file": "Styling/Style_ClassSelector.cs",
+     "test": "Apply_Detach"
+    },
+    {
+     "file": "Text/GlyphBoundsBenchmark.cs",
+     "test": "Skia_BoundsOnly"
+    },
+    {
+     "file": "Text/GlyphBoundsBenchmark.cs",
+     "test": "Table_BoundsOnly"
+    },
+    {
+     "file": "Text/GlyphBoundsBenchmark.cs",
+     "test": "Skia_PerRun"
+    },
+    {
+     "file": "Text/GlyphBoundsBenchmark.cs",
+     "test": "Table_PerRun"
+    },
+    {
+     "file": "Text/UnicodeTrieBenchmark.cs",
+     "test": "Get_UnicodeData"
+    },
+    {
+     "file": "Text/UnicodeTrieBenchmark.cs",
+     "test": "Get_BiDi"
+    },
+    {
+     "file": "Text/UnicodeTrieBenchmark.cs",
+     "test": "Get_GraphemeBreak"
+    },
+    {
+     "file": "Text/UnicodeTrieBenchmark.cs",
+     "test": "Get_EastAsianWidth"
+    },
+    {
+     "file": "Text/UnicodeTrieBenchmark.cs",
+     "test": "Get_AllTriesPerCodepoint"
+    }
+   ]
+  },
+  {
+   "path": "tests/Avalonia.Build.Tasks.UnitTest",
+   "name": "Avalonia.Build.Tasks.UnitTest",
+   "applicable": true,
+   "csFiles": 3,
+   "tests": 1,
+   "found": 0,
+   "inFile": 0,
+   "elsewhere": 0,
+   "aliased": 0,
+   "waived": 1,
+   "missing": 0,
+   "port": "`src/FerroUI.Build.Tasks`",
+   "missingTests": []
+  },
+  {
+   "path": "tests/Avalonia.Controls.UnitTests",
+   "name": "Avalonia.Controls.UnitTests",
+   "applicable": true,
+   "csFiles": 157,
+   "tests": 3074,
+   "found": 3058,
+   "inFile": 3014,
+   "elsewhere": 43,
+   "aliased": 1,
+   "waived": 16,
+   "missing": 0,
+   "port": "next to the code, mostly `src/FerroUI.Controls`",
+   "missingTests": []
+  },
+  {
+   "path": "tests/Avalonia.DesignerSupport.TestApp",
+   "name": "Avalonia.DesignerSupport.TestApp",
+   "applicable": false,
+   "csFiles": 3,
+   "tests": 0,
+   "reason": "the application started by `Avalonia.DesignerSupport.Tests`; no tests"
+  },
+  {
+   "path": "tests/Avalonia.DesignerSupport.Tests",
+   "name": "Avalonia.DesignerSupport.Tests",
+   "applicable": true,
+   "csFiles": 3,
+   "tests": 4,
+   "found": 3,
+   "inFile": 3,
+   "elsewhere": 0,
+   "aliased": 0,
+   "waived": 0,
+   "missing": 1,
+   "port": "`src/FerroUI.DesignerSupport`",
+   "missingTests": [
+    {
+     "file": "DesignerSupportTests.cs",
+     "test": "Designer_In_Win32_Mode_Should_Provide_Valid_Hwnd"
+    }
+   ]
+  },
+  {
+   "path": "tests/Avalonia.Generators.Tests",
+   "name": "Avalonia.Generators.Tests",
+   "applicable": false,
+   "csFiles": 12,
+   "tests": 48,
+   "reason": "Roslyn source generators (named element accessors, `InitializeComponent`, generated properties) whose C# output is compared with snapshots; the port generates no C#: the XAML compiler emits the named elements (its tests are in `src/Markup`) and `ferro_property!` declares properties"
+  },
+  {
+   "path": "tests/Avalonia.Headless.NUnit.PerAssembly.UnitTests",
+   "name": "Avalonia.Headless.NUnit.PerAssembly.UnitTests",
+   "applicable": false,
+   "csFiles": 1,
+   "tests": 0,
+   "reason": "runs the sources of `Avalonia.Headless.UnitTests` under the NUnit adapter; its own file only sets the isolation level. The tests are counted once, under that project (the port runs each per test and per assembly)"
+  },
+  {
+   "path": "tests/Avalonia.Headless.NUnit.PerTest.UnitTests",
+   "name": "Avalonia.Headless.NUnit.PerTest.UnitTests",
+   "applicable": false,
+   "csFiles": 1,
+   "tests": 0,
+   "reason": "as the NUnit per-assembly project"
+  },
+  {
+   "path": "tests/Avalonia.Headless.UnitTests",
+   "name": "Avalonia.Headless.UnitTests",
+   "applicable": true,
+   "csFiles": 13,
+   "tests": 30,
+   "found": 30,
+   "inFile": 30,
+   "elsewhere": 0,
+   "aliased": 0,
+   "waived": 0,
+   "missing": 0,
+   "port": "`src/Headless/FerroUI.Headless/unit_tests`",
+   "missingTests": []
+  },
+  {
+   "path": "tests/Avalonia.Headless.XUnit.PerAssembly.UnitTests",
+   "name": "Avalonia.Headless.XUnit.PerAssembly.UnitTests",
+   "applicable": false,
+   "csFiles": 1,
+   "tests": 0,
+   "reason": "as the NUnit per-assembly project, for xUnit"
+  },
+  {
+   "path": "tests/Avalonia.Headless.XUnit.PerTest.UnitTests",
+   "name": "Avalonia.Headless.XUnit.PerTest.UnitTests",
+   "applicable": false,
+   "csFiles": 1,
+   "tests": 0,
+   "reason": "as the NUnit per-assembly project, for xUnit"
+  },
+  {
+   "path": "tests/Avalonia.IntegrationTests.Appium",
+   "name": "Avalonia.IntegrationTests.Appium",
+   "applicable": true,
+   "csFiles": 32,
+   "tests": 117,
+   "found": 0,
+   "inFile": 0,
+   "elsewhere": 0,
+   "aliased": 0,
+   "waived": 0,
+   "missing": 117,
+   "port": "none",
+   "missingTests": [
+    {
+     "file": "AutomationTests.cs",
+     "test": "AutomationId"
+    },
+    {
+     "file": "AutomationTests.cs",
+     "test": "LabeledBy"
+    },
+    {
+     "file": "ButtonTests.cs",
+     "test": "DisabledButton"
+    },
+    {
+     "file": "ButtonTests.cs",
+     "test": "EffectivelyDisabledButton"
+    },
+    {
+     "file": "ButtonTests.cs",
+     "test": "BasicButton"
+    },
+    {
+     "file": "ButtonTests.cs",
+     "test": "ButtonWithTextBlock"
+    },
+    {
+     "file": "ButtonTests.cs",
+     "test": "ButtonWithAcceleratorKey"
+    },
+    {
+     "file": "CheckBoxTests.cs",
+     "test": "UncheckedCheckBox"
+    },
+    {
+     "file": "CheckBoxTests.cs",
+     "test": "CheckedCheckBox"
+    },
+    {
+     "file": "CheckBoxTests.cs",
+     "test": "ThreeStateCheckBox"
+    },
+    {
+     "file": "ComboBoxTests.cs",
+     "test": "Can_Change_Selection_Using_Mouse"
+    },
+    {
+     "file": "ComboBoxTests.cs",
+     "test": "Can_Change_Selection_From_Unselected_Using_Mouse"
+    },
+    {
+     "file": "ComboBoxTests.cs",
+     "test": "Can_Change_Selection_With_Keyboard_When_Closed"
+    },
+    {
+     "file": "ComboBoxTests.cs",
+     "test": "Can_Change_Wrapping_Selection_With_Keyboard_When_Closed"
+    },
+    {
+     "file": "ComboBoxTests.cs",
+     "test": "Can_Change_Selection_When_Open_With_Keyboard"
+    },
+    {
+     "file": "ComboBoxTests.cs",
+     "test": "Can_Change_Selection_When_Open_With_Keyboard_From_Unselected"
+    },
+    {
+     "file": "ComboBoxTests.cs",
+     "test": "Can_Cancel_Keyboard_Selection_With_Escape"
+    },
+    {
+     "file": "ContextMenuTests.cs",
+     "test": "Select_First_Item_With_Down_Arrow_Key"
+    },
+    {
+     "file": "DragDropTests.cs",
+     "test": "DragDrop_Coordinates_Correct_When_Controls_Offset_From_Origin"
+    },
+    {
+     "file": "DragDropTests.cs",
+     "test": "DragDrop_Position_Updates_During_DragOver"
+    },
+    {
+     "file": "DragDropTests.cs",
+     "test": "DragDrop_Can_Be_Cancelled"
+    },
+    {
+     "file": "EmbeddingTests.cs",
+     "test": "Can_Edit_Native_TextBox"
+    },
+    {
+     "file": "EmbeddingTests.cs",
+     "test": "Can_Edit_Native_TextBox_In_Popup"
+    },
+    {
+     "file": "EmbeddingTests.cs",
+     "test": "Showing_ToolTip_Does_Not_Steal_Focus_From_Native_TextBox"
+    },
+    {
+     "file": "EmbeddingTests.cs",
+     "test": "Showing_ContextMenu_Steals_Focus_From_Native_TextBox"
+    },
+    {
+     "file": "GestureTests.cs",
+     "test": "Tapped_Is_Raised"
+    },
+    {
+     "file": "GestureTests.cs",
+     "test": "Tapped_Is_Raised_Slow"
+    },
+    {
+     "file": "GestureTests.cs",
+     "test": "Tapped_Is_Not_Raised_For_Drag"
+    },
+    {
+     "file": "GestureTests.cs",
+     "test": "DoubleTapped_Is_Raised"
+    },
+    {
+     "file": "GestureTests.cs",
+     "test": "DoubleTapped_Is_Raised_2"
+    },
+    {
+     "file": "GestureTests.cs",
+     "test": "DoubleTapped_Is_Raised_Not_Raised_If_Too_Slow"
+    },
+    {
+     "file": "GestureTests.cs",
+     "test": "DoubleTapped_Is_Raised_After_Control_Changes"
+    },
+    {
+     "file": "GestureTests.cs",
+     "test": "RightTapped_Is_Raised"
+    },
+    {
+     "file": "GestureTests.cs",
+     "test": "RightTapped_Is_Raised_2"
+    },
+    {
+     "file": "GestureTests.cs",
+     "test": "RightTapped_Is_Not_Raised_For_Drag"
+    },
+    {
+     "file": "KeyboardTests.cs",
+     "test": "KeyBinding_Without_Modifier_Is_Raised_While_TextBox_Is_Focused"
+    },
+    {
+     "file": "KeyboardTests.cs",
+     "test": "KeyBinding_On_Character_Key_Is_Raised_While_TextBox_Is_Focused"
+    },
+    {
+     "file": "KeyboardTests.cs",
+     "test": "KeyBinding_With_Modifier_Is_Raised_While_TextBox_Is_Focused"
+    },
+    {
+     "file": "KeyboardTests.cs",
+     "test": "Handled_KeyBinding_Does_Not_Insert_Text"
+    },
+    {
+     "file": "KeyboardTests.cs",
+     "test": "Unhandled_Key_Still_Produces_Text"
+    },
+    {
+     "file": "KeyboardTests.cs",
+     "test": "Unhandled_Space_Produces_Exactly_One_KeyDown_And_Text"
+    },
+    {
+     "file": "ListBoxTests.cs",
+     "test": "Can_Select_Item_By_Clicking"
+    },
+    {
+     "file": "ListBoxTests.cs",
+     "test": "Can_Select_Items_By_Ctrl_Clicking"
+    },
+    {
+     "file": "ListBoxTests.cs",
+     "test": "Can_Select_Range_By_Shift_Clicking"
+    },
+    {
+     "file": "ListBoxTests.cs",
+     "test": "Is_Virtualized"
+    },
+    {
+     "file": "MenuTests.cs",
+     "test": "Click_Child"
+    },
+    {
+     "file": "MenuTests.cs",
+     "test": "Click_Grandchild"
+    },
+    {
+     "file": "MenuTests.cs",
+     "test": "Select_Child_With_Alt_Arrow_Keys"
+    },
+    {
+     "file": "MenuTests.cs",
+     "test": "Select_Grandchild_With_Alt_Arrow_Keys"
+    },
+    {
+     "file": "MenuTests.cs",
+     "test": "Select_Child_With_Alt_Access_Keys"
+    },
+    {
+     "file": "MenuTests.cs",
+     "test": "Select_Grandchild_With_Alt_Access_Keys"
+    },
+    {
+     "file": "MenuTests.cs",
+     "test": "Select_Child_With_Click_Arrow_Keys"
+    },
+    {
+     "file": "MenuTests.cs",
+     "test": "Select_Grandchild_With_Click_Arrow_Keys"
+    },
+    {
+     "file": "MenuTests.cs",
+     "test": "Child_AcceleratorKey"
+    },
+    {
+     "file": "MenuTests.cs",
+     "test": "PointerOver_Does_Not_Steal_Focus"
+    },
+    {
+     "file": "NativeMenuTests.cs",
+     "test": "NativeMenuTests.MacOS_View_Menu_Select_Button_Tab"
+    },
+    {
+     "file": "NativeMenuTests.cs",
+     "test": "NativeMenuTests.Win32_View_Menu_Select_Button_Tab"
+    },
+    {
+     "file": "NativeMenuTests.cs",
+     "test": "NativeMenuTests.MacOS_Sanitizes_Access_Key_Markers_When_Included_In_Menu_Title"
+    },
+    {
+     "file": "NativeMenuTests.cs",
+     "test": "NativeMenuTests.Win32_Avalonia_Menu_Has_ToolTip_If_Defined"
+    },
+    {
+     "file": "NativeMenuTests.cs",
+     "test": "NativeMenuTests.MacOS_Native_Menu_Has_ToolTip_If_Defined"
+    },
+    {
+     "file": "NativeMenuTests.cs",
+     "test": "DockMenuTests.MacOS_DockMenu_Can_Add_Items_Dynamically"
+    },
+    {
+     "file": "PointerTests.cs",
+     "test": "Pointer_Capture_Is_Released_When_Showing_Dialog"
+    },
+    {
+     "file": "PopupsTests.cs",
+     "test": "LightDismiss_Popup_Should_Open_And_Close"
+    },
+    {
+     "file": "PopupsTests.cs",
+     "test": "StaysOpen_Popup_Should_Stay_Open"
+    },
+    {
+     "file": "PopupsTests.cs",
+     "test": "StaysOpen_Popup_TextBox_Should_Be_Editable"
+    },
+    {
+     "file": "PopupsTests.cs",
+     "test": "TopMost_Popup_Should_Stay_Above_Other_Windows"
+    },
+    {
+     "file": "PopupsTests.cs",
+     "test": "Non_TopMost_Popup_Does_Not_Stay_Above_Other_Windows"
+    },
+    {
+     "file": "RadioButtonTests.cs",
+     "test": "RadioButton_IsChecked_True_When_Clicked"
+    },
+    {
+     "file": "RadioButtonTests.cs",
+     "test": "ThreeState_RadioButton_IsChecked_False_When_Other_ThreeState_RadioButton_Checked"
+    },
+    {
+     "file": "ScreenTests.cs",
+     "test": "Can_Read_Current_Screen_Info"
+    },
+    {
+     "file": "ScreenTests.cs",
+     "test": "Returns_The_Same_Screen_Instance"
+    },
+    {
+     "file": "ScrollBarTests.cs",
+     "test": "ScrollBar_Increases_Value_By_LargeChange_When_IncreaseButton_Is_Clicked"
+    },
+    {
+     "file": "SliderTests.cs",
+     "test": "Horizontal_Changes_Value_Dragging_Thumb_Right"
+    },
+    {
+     "file": "SliderTests.cs",
+     "test": "Horizontal_Changes_Value_Dragging_Thumb_Left"
+    },
+    {
+     "file": "SliderTests.cs",
+     "test": "Horizontal_Changes_Value_When_Clicking_Increase_Button"
+    },
+    {
+     "file": "SliderTests.cs",
+     "test": "Horizontal_Changes_Value_When_Clicking_Decrease_Button"
+    },
+    {
+     "file": "TrayIconTests.cs",
+     "test": "Should_Handle_Left_Click"
+    },
+    {
+     "file": "TrayIconTests.cs",
+     "test": "Should_Handle_Context_Menu_Item_Click"
+    },
+    {
+     "file": "TrayIconTests.cs",
+     "test": "Can_Toggle_TrayIcon_Visibility"
+    },
+    {
+     "file": "WindowDecorationsTests.cs",
+     "test": "Window_Size_Should_Be_Consistent_Between_Toggles"
+    },
+    {
+     "file": "WindowDecorationsTests.cs",
+     "test": "Can_Restore_To_Non_Extended_State"
+    },
+    {
+     "file": "WindowDecorationsTests.cs",
+     "test": "Should_Apply_Client_Chrome"
+    },
+    {
+     "file": "WindowDecorationsTests.cs",
+     "test": "Should_Apply_System_Chrome"
+    },
+    {
+     "file": "WindowDecorationsTests.cs",
+     "test": "Should_Apply_Client_Chrome_On_New_Window"
+    },
+    {
+     "file": "WindowDecorationsTests.cs",
+     "test": "Should_Apply_System_Chrome_On_New_Window"
+    },
+    {
+     "file": "WindowTests.cs",
+     "test": "StartupLocation"
+    },
+    {
+     "file": "WindowTests.cs",
+     "test": "WindowState"
+    },
+    {
+     "file": "WindowTests.cs",
+     "test": "OnWindows_Docked_Windows_Retain_Size_Position_When_Restored"
+    },
+    {
+     "file": "WindowTests.cs",
+     "test": "Showing_Window_With_Size_Larger_Than_Screen_Measures_Content_With_Working_Area"
+    },
+    {
+     "file": "WindowTests.cs",
+     "test": "ShowMode"
+    },
+    {
+     "file": "WindowTests.cs",
+     "test": "Extended_Client_Window_Shows_With_Requested_Size"
+    },
+    {
+     "file": "WindowTests.cs",
+     "test": "TransparentWindow"
+    },
+    {
+     "file": "WindowTests.cs",
+     "test": "TransparentPopup"
+    },
+    {
+     "file": "WindowTests.cs",
+     "test": "Owned_Window_Should_Appear_Above_Topmost_Owner"
+    },
+    {
+     "file": "WindowTests.cs",
+     "test": "Window_Has_Disabled_Maximize_Button_When_CanResize_Is_False"
+    },
+    {
+     "file": "WindowTests.cs",
+     "test": "Window_Minimize_Button_Enabled_Matches_CanMinimize"
+    },
+    {
+     "file": "WindowTests.cs",
+     "test": "Window_Maximize_Button_Enabled_Matches_CanMaximize"
+    },
+    {
+     "file": "WindowTests.cs",
+     "test": "Changing_SystemDecorations_Should_Not_Change_Frame_Size_And_Position"
+    },
+    {
+     "file": "WindowTests.cs",
+     "test": "Changing_WindowState_Should_Not_Change_Frame_Size_And_Position"
+    },
+    {
+     "file": "WindowTests.cs",
+     "test": "Changing_Size_Should_Not_Change_Position"
+    },
+    {
+     "file": "WindowTests_MacOS.cs",
+     "test": "WindowOrder_Modal_Dialog_Stays_InFront_Of_Parent"
+    },
+    {
+     "file": "WindowTests_MacOS.cs",
+     "test": "WindowOrder_Modal_Dialog_Stays_InFront_Of_Parent_When_Clicking_Resize_Grip"
+    },
+    {
+     "file": "WindowTests_MacOS.cs",
+     "test": "WindowOrder_Modal_Dialog_Stays_InFront_Of_Parent_When_In_Fullscreen"
+    },
+    {
+     "file": "WindowTests_MacOS.cs",
+     "test": "WindowOrder_Owned_Dialog_Stays_InFront_Of_Parent"
+    },
+    {
+     "file": "WindowTests_MacOS.cs",
+     "test": "WindowOrder_Owned_Dialog_Stays_InFront_Of_FullScreen_Parent"
+    },
+    {
+     "file": "WindowTests_MacOS.cs",
+     "test": "WindowOrder_Owned_Dialog_Stays_InFront_Of_Parent_After_Modal_Closed"
+    },
+    {
+     "file": "WindowTests_MacOS.cs",
+     "test": "Does_Not_Switch_Space_From_FullScreen_To_Main_Desktop_When_FullScreen_Window_Clicked"
+    },
+    {
+     "file": "WindowTests_MacOS.cs",
+     "test": "WindowOrder_NonOwned_Window_Does_Not_Stay_InFront_Of_Parent"
+    },
+    {
+     "file": "WindowTests_MacOS.cs",
+     "test": "WindowOrder_Owned_Window_Stays_InFront_Of_Topmost_Owner"
+    },
+    {
+     "file": "WindowTests_MacOS.cs",
+     "test": "WindowOrder_Owned_Is_Correct_After_Closing_Window"
+    },
+    {
+     "file": "WindowTests_MacOS.cs",
+     "test": "Parent_Window_Has_Disabled_ChromeButtons_When_Modal_Dialog_Shown"
+    },
+    {
+     "file": "WindowTests_MacOS.cs",
+     "test": "Minimize_Button_Is_Disabled_On_Modal_Dialog"
+    },
+    {
+     "file": "WindowTests_MacOS.cs",
+     "test": "Minimize_Button_Disabled_Owned_Window"
+    },
+    {
+     "file": "WindowTests_MacOS.cs",
+     "test": "Minimize_Button_Minimizes_Window"
+    },
+    {
+     "file": "WindowTests_MacOS.cs",
+     "test": "Hidden_Child_Window_Is_Not_Reshown_When_Parent_Clicked"
+    },
+    {
+     "file": "WindowTests_MacOS.cs",
+     "test": "Toggling_SystemDecorations_Should_Preserve_ExtendClientArea"
+    },
+    {
+     "file": "WindowTests_MacOS.cs",
+     "test": "ExtendClientArea_SystemDecorations_Shows_Correct_Buttons"
+    }
+   ]
+  },
+  {
+   "path": "tests/Avalonia.IntegrationTests.Win32",
+   "name": "Avalonia.IntegrationTests.Win32",
+   "applicable": true,
+   "csFiles": 13,
+   "tests": 13,
+   "found": 13,
+   "inFile": 11,
+   "elsewhere": 2,
+   "aliased": 0,
+   "waived": 0,
+   "missing": 0,
+   "port": "`tests/FerroUI.IntegrationTests.Win32`",
+   "missingTests": []
+  },
+  {
+   "path": "tests/Avalonia.LeakTests",
+   "name": "Avalonia.LeakTests",
+   "applicable": true,
+   "csFiles": 8,
+   "tests": 41,
+   "found": 41,
+   "inFile": 41,
+   "elsewhere": 0,
+   "aliased": 0,
+   "waived": 0,
+   "missing": 0,
+   "port": "`tests/FerroUI.LeakTests`",
+   "missingTests": []
+  },
+  {
+   "path": "tests/Avalonia.Markup.UnitTests",
+   "name": "Avalonia.Markup.UnitTests",
+   "applicable": true,
+   "csFiles": 26,
+   "tests": 218,
+   "found": 216,
+   "inFile": 194,
+   "elsewhere": 22,
+   "aliased": 0,
+   "waived": 2,
+   "missing": 0,
+   "port": "`src/Markup/FerroUI.Markup`",
+   "missingTests": []
+  },
+  {
+   "path": "tests/Avalonia.Markup.Xaml.UnitTests",
+   "name": "Avalonia.Markup.Xaml.UnitTests",
+   "applicable": true,
+   "csFiles": 62,
+   "tests": 506,
+   "found": 506,
+   "inFile": 506,
+   "elsewhere": 0,
+   "aliased": 0,
+   "waived": 0,
+   "missing": 0,
+   "port": "`tests/FerroUI.Markup.Xaml.UnitTests`, `src/Markup`",
+   "missingTests": []
+  },
+  {
+   "path": "tests/Avalonia.RenderTests",
+   "name": "Avalonia.RenderTests",
+   "applicable": true,
+   "csFiles": 68,
+   "tests": 310,
+   "found": 301,
+   "inFile": 301,
+   "elsewhere": 0,
+   "aliased": 0,
+   "waived": 9,
+   "missing": 0,
+   "port": "`tests/FerroUI.RenderTests`",
+   "missingTests": []
+  },
+  {
+   "path": "tests/Avalonia.RenderTests.WpfCompare",
+   "name": "Avalonia.RenderTests.WpfCompare",
+   "applicable": false,
+   "csFiles": 4,
+   "tests": 0,
+   "reason": "renders the cross tests with WPF to compare; WPF is a Windows .NET toolkit"
+  },
+  {
+   "path": "tests/Avalonia.Skia.RenderTests",
+   "name": "Avalonia.Skia.RenderTests",
+   "applicable": true,
+   "csFiles": 1,
+   "tests": 0,
+   "found": 0,
+   "inFile": 0,
+   "elsewhere": 0,
+   "aliased": 0,
+   "waived": 0,
+   "missing": 0,
+   "port": "`tests/FerroUI.RenderTests`",
+   "missingTests": []
+  },
+  {
+   "path": "tests/Avalonia.Skia.UnitTests",
+   "name": "Avalonia.Skia.UnitTests",
+   "applicable": true,
+   "csFiles": 35,
+   "tests": 365,
+   "found": 363,
+   "inFile": 363,
+   "elsewhere": 0,
+   "aliased": 0,
+   "waived": 2,
+   "missing": 0,
+   "port": "`src/Skia/FerroUI.Skia`",
+   "missingTests": []
+  },
+  {
+   "path": "tests/Avalonia.Themes.UnitTests",
+   "name": "Avalonia.Themes.UnitTests",
+   "applicable": true,
+   "csFiles": 10,
+   "tests": 10,
+   "found": 10,
+   "inFile": 10,
+   "elsewhere": 0,
+   "aliased": 0,
+   "waived": 0,
+   "missing": 0,
+   "port": "`src/FerroUI.Themes.Fluent`, `src/FerroUI.Themes.Simple`",
+   "missingTests": []
+  },
+  {
+   "path": "tests/Avalonia.UnitTests",
+   "name": "Avalonia.UnitTests",
+   "applicable": true,
+   "csFiles": 32,
+   "tests": 0,
+   "found": 0,
+   "inFile": 0,
+   "elsewhere": 0,
+   "aliased": 0,
+   "waived": 0,
+   "missing": 0,
+   "port": "`test_support` modules of the crates",
+   "missingTests": []
+  },
+  {
+   "path": "tests/Avalonia.UnitTests.WpfCompare",
+   "name": "Avalonia.UnitTests.WpfCompare",
+   "applicable": false,
+   "csFiles": 1,
+   "tests": 0,
+   "reason": "runs unit tests against WPF to compare behaviour; WPF is a Windows .NET toolkit"
+  },
+  {
+   "path": "tests/Avalonia.Wayland.UnitTests",
+   "name": "Avalonia.Wayland.UnitTests",
+   "applicable": true,
+   "csFiles": 2,
+   "tests": 12,
+   "found": 12,
+   "inFile": 12,
+   "elsewhere": 0,
+   "aliased": 0,
+   "waived": 0,
+   "missing": 0,
+   "port": "`src/FerroUI.Wayland`",
+   "missingTests": []
+  },
+  {
+   "path": "tests/BuildTests/BuildTests",
+   "name": "BuildTests",
+   "applicable": false,
+   "csFiles": 4,
+   "tests": 0,
+   "reason": "builds .NET project formats (MSBuild heads, trimming, NativeAOT, WPF hybrid); the port builds with Cargo"
+  },
+  {
+   "path": "tests/BuildTests/BuildTests.Android",
+   "name": "BuildTests.Android",
+   "applicable": false,
+   "csFiles": 2,
+   "tests": 0,
+   "reason": "as `BuildTests`"
+  },
+  {
+   "path": "tests/BuildTests/BuildTests.Browser",
+   "name": "BuildTests.Browser",
+   "applicable": false,
+   "csFiles": 2,
+   "tests": 0,
+   "reason": "as `BuildTests`"
+  },
+  {
+   "path": "tests/BuildTests/BuildTests.Desktop",
+   "name": "BuildTests.Desktop",
+   "applicable": false,
+   "csFiles": 1,
+   "tests": 0,
+   "reason": "as `BuildTests`"
+  },
+  {
+   "path": "tests/BuildTests/BuildTests.NativeAot",
+   "name": "BuildTests.NativeAot",
+   "applicable": false,
+   "csFiles": 1,
+   "tests": 0,
+   "reason": "as `BuildTests`"
+  },
+  {
+   "path": "tests/BuildTests/BuildTests.WpfHybrid",
+   "name": "BuildTests.WpfHybrid",
+   "applicable": false,
+   "csFiles": 4,
+   "tests": 0,
+   "reason": "as `BuildTests`"
+  },
+  {
+   "path": "tests/BuildTests/BuildTests.iOS",
+   "name": "BuildTests.iOS",
+   "applicable": false,
+   "csFiles": 2,
+   "tests": 0,
+   "reason": "as `BuildTests`"
+  },
+  {
+   "path": "tests/TestFiles/BuildTasks/PInvoke",
+   "name": "PInvoke",
+   "applicable": false,
+   "csFiles": 3,
+   "tests": 0,
+   "reason": "an input assembly of the build task test (IL rewriting of P/Invoke); no tests"
+  }
+ ]
+}
