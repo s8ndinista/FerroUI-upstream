@@ -1,0 +1,93 @@
+<!-- The native WinUI 3 counterpart of ButtonsPage.xaml: the same controls in the same layout,
+     loaded by the comparison host with XamlReader.Load. A state the gallery forces through a
+     pseudo-class (pointer over, pressed) is shown here with the brushes WinUI gives the control
+     in that state, set as local values: the templates of these buttons bind their background,
+     border and foreground to the control, and the visual state of the normal state sets none. -->
+<StackPanel xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+            xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+            Margin="24" Spacing="12">
+  <TextBlock Text="Buttons" FontSize="28" FontWeight="SemiBold" />
+
+  <TextBlock Text="Button" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" />
+  <StackPanel Orientation="Horizontal" Spacing="8">
+    <Button Content="Normal" />
+    <Button Content="Pointer over"
+            Background="{ThemeResource ButtonBackgroundPointerOver}"
+            BorderBrush="{ThemeResource ButtonBorderBrushPointerOver}"
+            Foreground="{ThemeResource ButtonForegroundPointerOver}" />
+    <Button Content="Pressed"
+            Background="{ThemeResource ButtonBackgroundPressed}"
+            BorderBrush="{ThemeResource ButtonBorderBrushPressed}"
+            Foreground="{ThemeResource ButtonForegroundPressed}" />
+    <Button Content="Disabled" IsEnabled="False" />
+  </StackPanel>
+
+  <TextBlock Text="Accent button" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" />
+  <StackPanel Orientation="Horizontal" Spacing="8">
+    <Button Content="Normal" Style="{StaticResource AccentButtonStyle}" />
+    <Button Content="Pointer over" Style="{StaticResource AccentButtonStyle}"
+            Background="{ThemeResource AccentButtonBackgroundPointerOver}"
+            BorderBrush="{ThemeResource AccentButtonBorderBrushPointerOver}"
+            Foreground="{ThemeResource AccentButtonForegroundPointerOver}" />
+    <Button Content="Pressed" Style="{StaticResource AccentButtonStyle}"
+            Background="{ThemeResource AccentButtonBackgroundPressed}"
+            BorderBrush="{ThemeResource AccentButtonBorderBrushPressed}"
+            Foreground="{ThemeResource AccentButtonForegroundPressed}" />
+    <Button Content="Disabled" Style="{StaticResource AccentButtonStyle}" IsEnabled="False" />
+  </StackPanel>
+
+  <TextBlock Text="RepeatButton" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" />
+  <StackPanel Orientation="Horizontal" Spacing="8">
+    <RepeatButton Content="Normal" />
+    <RepeatButton Content="Pointer over"
+                  Background="{ThemeResource RepeatButtonBackgroundPointerOver}"
+                  BorderBrush="{ThemeResource RepeatButtonBorderBrushPointerOver}"
+                  Foreground="{ThemeResource RepeatButtonForegroundPointerOver}" />
+    <RepeatButton Content="Pressed"
+                  Background="{ThemeResource RepeatButtonBackgroundPressed}"
+                  BorderBrush="{ThemeResource RepeatButtonBorderBrushPressed}"
+                  Foreground="{ThemeResource RepeatButtonForegroundPressed}" />
+    <RepeatButton Content="Disabled" IsEnabled="False" />
+  </StackPanel>
+
+  <TextBlock Text="ToggleButton" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" />
+  <StackPanel Orientation="Horizontal" Spacing="8">
+    <ToggleButton Content="Off" />
+    <ToggleButton Content="On" IsChecked="True" />
+    <ToggleButton Content="Indeterminate" IsThreeState="True" IsChecked="{x:Null}" />
+    <ToggleButton Content="Pointer over"
+                  Background="{ThemeResource ToggleButtonBackgroundPointerOver}"
+                  BorderBrush="{ThemeResource ToggleButtonBorderBrushPointerOver}"
+                  Foreground="{ThemeResource ToggleButtonForegroundPointerOver}" />
+    <ToggleButton Content="Disabled" IsEnabled="False" />
+    <ToggleButton Content="On, disabled" IsChecked="True" IsEnabled="False" />
+  </StackPanel>
+
+  <TextBlock Text="HyperlinkButton" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" />
+  <StackPanel Orientation="Horizontal" Spacing="8">
+    <HyperlinkButton Content="Normal" />
+    <HyperlinkButton Content="Pointer over"
+                     Background="{ThemeResource HyperlinkButtonBackgroundPointerOver}"
+                     BorderBrush="{ThemeResource HyperlinkButtonBorderBrushPointerOver}"
+                     Foreground="{ThemeResource HyperlinkButtonForegroundPointerOver}" />
+    <HyperlinkButton Content="Disabled" IsEnabled="False" />
+  </StackPanel>
+
+  <TextBlock Text="DropDownButton" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" />
+  <StackPanel Orientation="Horizontal" Spacing="8">
+    <DropDownButton Content="Normal" />
+    <DropDownButton Content="Pointer over"
+                    Background="{ThemeResource ButtonBackgroundPointerOver}"
+                    BorderBrush="{ThemeResource ButtonBorderBrushPointerOver}"
+                    Foreground="{ThemeResource ButtonForegroundPointerOver}" />
+    <DropDownButton Content="Disabled" IsEnabled="False" />
+  </StackPanel>
+
+  <TextBlock Text="SplitButton and ToggleSplitButton" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" />
+  <StackPanel Orientation="Horizontal" Spacing="8">
+    <SplitButton Content="Normal" />
+    <SplitButton Content="Disabled" IsEnabled="False" />
+    <ToggleSplitButton Content="Off" />
+    <ToggleSplitButton Content="On" IsChecked="True" />
+  </StackPanel>
+</StackPanel>

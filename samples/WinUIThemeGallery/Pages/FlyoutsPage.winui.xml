@@ -1,0 +1,57 @@
+<!-- The native WinUI 3 counterpart of FlyoutsPage.xaml. The flyout content is a
+     FlyoutPresenter and the tool tips are ToolTip, in the page as the framework's are. A
+     notification card is an InfoBar of the same severity, open and without its close button;
+     WinUI has no counterpart of WindowNotificationManager, the host of the cards. -->
+<StackPanel xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+            xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+            Margin="24" Spacing="12">
+  <TextBlock Text="Flyouts, tool tips and notifications" FontSize="28" FontWeight="SemiBold" />
+
+  <Grid ColumnSpacing="24">
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="320" />
+      <ColumnDefinition Width="320" />
+    </Grid.ColumnDefinitions>
+
+    <StackPanel Grid.Column="0" Spacing="12">
+      <TextBlock Text="Flyout content" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" />
+      <FlyoutPresenter Width="300" HorizontalAlignment="Left">
+        <StackPanel Spacing="12">
+          <TextBlock Text="A flyout" FontWeight="SemiBold" />
+          <TextBlock Text="A flyout shows content over the page, next to the control that opened it."
+                     TextWrapping="Wrap" />
+          <Button Content="Got it" />
+        </StackPanel>
+      </FlyoutPresenter>
+    </StackPanel>
+
+    <StackPanel Grid.Column="1" Spacing="12">
+      <TextBlock Text="Tool tips" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" />
+      <ToolTip HorizontalAlignment="Left" Opacity="1" Content="A short tool tip" />
+      <ToolTip HorizontalAlignment="Left" Opacity="1" MaxWidth="300">
+        <TextBlock Text="A longer tool tip, whose text wraps onto a second line within its width."
+                   TextWrapping="Wrap" />
+      </ToolTip>
+    </StackPanel>
+  </Grid>
+
+  <TextBlock Text="Notifications" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" />
+  <Grid ColumnSpacing="16" RowSpacing="12">
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="320" />
+      <ColumnDefinition Width="320" />
+    </Grid.ColumnDefinitions>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+    </Grid.RowDefinitions>
+    <InfoBar Grid.Row="0" Grid.Column="0" Width="320" IsOpen="True" IsClosable="False"
+             Severity="Informational" Title="Information" Message="A new version is available." />
+    <InfoBar Grid.Row="0" Grid.Column="1" Width="320" IsOpen="True" IsClosable="False"
+             Severity="Success" Title="Success" Message="The document was saved." />
+    <InfoBar Grid.Row="1" Grid.Column="0" Width="320" IsOpen="True" IsClosable="False"
+             Severity="Warning" Title="Warning" Message="The disk is almost full." />
+    <InfoBar Grid.Row="1" Grid.Column="1" Width="320" IsOpen="True" IsClosable="False"
+             Severity="Error" Title="Error" Message="The file could not be opened." />
+  </Grid>
+</StackPanel>

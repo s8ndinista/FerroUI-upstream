@@ -187,6 +187,10 @@ cargo run -p ferroui-themes-simple --example themed_window
 
 # The ControlCatalog sample application
 cargo run -p control-catalog-desktop
+
+# The gallery of the WinUI theme (its capture mode and its comparison with WinUI 3 on Windows:
+# docs/porting/winui-theme-gallery.md)
+cargo run -p winui-theme-gallery --bin winui-theme-gallery
 ```
 
 The ControlCatalog runs on the other platforms too: on Linux it takes the Wayland backend when a compositor is reachable, as the original sample does (`FERROUI_CATALOG_WAYLAND=0` keeps X11), on the framebuffer with `--fbdev` or `--drm`, and on the headless platform behind a VNC server with `--vnc`; in the browser through `scripts/build-browser.sh control-catalog-browser`; on iOS through `scripts/ios/sim-catalog.sh` and on Android through `scripts/android/emu-catalog.sh`. The platform documents under [docs/porting](docs/porting) have the details.
@@ -291,7 +295,7 @@ The layout follows the upstream project so that files can be compared side by si
 | `src` | The crates of the framework, one directory per upstream project (`src/FerroUI.Base`, `src/FerroUI.Controls`, `src/Markup/...`, `src/Skia/...`, `src/Windows/...`, ...) |
 | `native/FerroUI.Native` | The Objective-C++ library of the macOS platform |
 | `external/XamlX` | The XAML compiler front end (`xamlx`) |
-| `samples` | The sample applications: the ControlCatalog with its hosts for the desktop, the browser, iOS and Android, the WinUI gallery, and the smaller samples |
+| `samples` | The sample applications: the ControlCatalog with its hosts for the desktop, the browser, iOS and Android, the WinUI gallery, the gallery of the WinUI theme with its comparison against WinUI 3, and the smaller samples |
 | `tests` | Test crates: the XAML suites, the render tests, the leak tests, the benchmarks, the Windows integration tests and the comparison of the render backends |
 | `docs/porting` | The porting guide, the design and verification documents of each platform, and the tracking |
 | `scripts` | Code generators, upstream synchronisation, the status tooling, the release scripts and the build and run scripts of each platform |

@@ -1,0 +1,94 @@
+<!-- The native WinUI 3 counterpart of ComboBoxPage.xaml. The pointer-over states (the combo box,
+     an item) are the brushes of that state as local values: the templates bind the background
+     and border to the control. The pressed state of an item is its pressed brushes. The
+     validation error is the critical border brush and the message under the box. -->
+<StackPanel xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+            xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+            Margin="24" Spacing="12">
+  <TextBlock Text="Combo box" FontSize="28" FontWeight="SemiBold" />
+
+  <TextBlock Text="ComboBox" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" />
+  <Grid ColumnSpacing="16" RowSpacing="12">
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="160" />
+      <ColumnDefinition Width="240" />
+    </Grid.ColumnDefinitions>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+    </Grid.RowDefinitions>
+
+    <TextBlock Grid.Row="0" Text="Placeholder" VerticalAlignment="Center" />
+    <ComboBox Grid.Row="0" Grid.Column="1" Width="240" PlaceholderText="Pick a colour">
+      <ComboBoxItem Content="Red" />
+      <ComboBoxItem Content="Green" />
+      <ComboBoxItem Content="Blue" />
+    </ComboBox>
+
+    <TextBlock Grid.Row="1" Text="Selected item" VerticalAlignment="Center" />
+    <ComboBox Grid.Row="1" Grid.Column="1" Width="240" SelectedIndex="1">
+      <ComboBoxItem Content="Red" />
+      <ComboBoxItem Content="Green" />
+      <ComboBoxItem Content="Blue" />
+    </ComboBox>
+
+    <TextBlock Grid.Row="2" Text="Pointer over" VerticalAlignment="Center" />
+    <ComboBox Grid.Row="2" Grid.Column="1" Width="240" SelectedIndex="1"
+              Background="{ThemeResource ComboBoxBackgroundPointerOver}"
+              BorderBrush="{ThemeResource ComboBoxBorderBrushPointerOver}"
+              Foreground="{ThemeResource ComboBoxForegroundPointerOver}">
+      <ComboBoxItem Content="Red" />
+      <ComboBoxItem Content="Green" />
+      <ComboBoxItem Content="Blue" />
+    </ComboBox>
+
+    <TextBlock Grid.Row="3" Text="Disabled" VerticalAlignment="Center" />
+    <ComboBox Grid.Row="3" Grid.Column="1" Width="240" SelectedIndex="1" IsEnabled="False">
+      <ComboBoxItem Content="Red" />
+      <ComboBoxItem Content="Green" />
+      <ComboBoxItem Content="Blue" />
+    </ComboBox>
+
+    <TextBlock Grid.Row="4" Text="Editable" VerticalAlignment="Center" />
+    <ComboBox Grid.Row="4" Grid.Column="1" Width="240" IsEditable="True" Text="Custom text">
+      <ComboBoxItem Content="Red" />
+      <ComboBoxItem Content="Green" />
+      <ComboBoxItem Content="Blue" />
+    </ComboBox>
+
+    <TextBlock Grid.Row="5" Text="Validation error" VerticalAlignment="Top" Margin="0,6,0,0" />
+    <StackPanel Grid.Row="5" Grid.Column="1" Spacing="4">
+      <ComboBox Width="240" PlaceholderText="Pick a colour" BorderBrush="{ThemeResource SystemFillColorCriticalBrush}">
+        <ComboBoxItem Content="Red" />
+        <ComboBoxItem Content="Green" />
+        <ComboBoxItem Content="Blue" />
+      </ComboBox>
+      <TextBlock Text="Pick a colour." Foreground="{ThemeResource SystemFillColorCriticalBrush}" />
+    </StackPanel>
+  </Grid>
+
+  <TextBlock Text="ComboBoxItem" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" />
+  <Border Width="240"
+          HorizontalAlignment="Left"
+          Padding="0,4"
+          CornerRadius="8"
+          BorderThickness="1"
+          Background="{ThemeResource ComboBoxDropDownBackground}"
+          BorderBrush="{ThemeResource ComboBoxDropDownBorderBrush}">
+    <StackPanel>
+      <ComboBoxItem Content="Normal" />
+      <ComboBoxItem Content="Selected" IsSelected="True" />
+      <ComboBoxItem Content="Pointer over"
+                    Background="{ThemeResource ComboBoxItemBackgroundPointerOver}"
+                    Foreground="{ThemeResource ComboBoxItemForegroundPointerOver}" />
+      <ComboBoxItem Content="Pressed"
+                    Background="{ThemeResource ComboBoxItemBackgroundPressed}"
+                    Foreground="{ThemeResource ComboBoxItemForegroundPressed}" />
+      <ComboBoxItem Content="Disabled" IsEnabled="False" />
+    </StackPanel>
+  </Border>
+</StackPanel>

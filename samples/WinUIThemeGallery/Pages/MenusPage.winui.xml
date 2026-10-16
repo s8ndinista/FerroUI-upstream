@@ -1,0 +1,89 @@
+<!-- The native WinUI 3 counterpart of MenusPage.xaml. Menu is a MenuBar; the content of an open
+     menu and of a context menu is a MenuFlyoutPresenter with MenuFlyoutItem, MenuFlyoutSeparator,
+     ToggleMenuFlyoutItem and MenuFlyoutSubItem (WinUI shows a context menu as a menu flyout);
+     the input gesture is the text of the keyboard accelerator. The pointer-over menu item has
+     the brushes of that state as local values; the pointer-over item of the menu bar is in the
+     normal state (its template sets that state on a part). CommandBar has AppBarButton,
+     AppBarSeparator and AppBarToggleButton, with the same path icons. -->
+<StackPanel xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+            xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+            Margin="24" Spacing="12">
+  <TextBlock Text="Menus and command bars" FontSize="28" FontWeight="SemiBold" />
+
+  <TextBlock Text="Menu" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" />
+  <MenuBar HorizontalAlignment="Left">
+    <MenuBarItem Title="File" />
+    <MenuBarItem Title="Edit" />
+    <MenuBarItem Title="View" />
+    <MenuBarItem Title="Help" IsEnabled="False" />
+  </MenuBar>
+
+  <Grid ColumnSpacing="24">
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="300" />
+      <ColumnDefinition Width="300" />
+    </Grid.ColumnDefinitions>
+
+    <StackPanel Grid.Column="0" Spacing="12">
+      <TextBlock Text="Menu items" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" />
+      <MenuFlyoutPresenter Width="280" HorizontalAlignment="Left">
+        <MenuFlyoutItem Text="New" KeyboardAcceleratorTextOverride="Ctrl+N">
+          <MenuFlyoutItem.Icon>
+            <PathIcon Data="M11,5H13V11H19V13H13V19H11V13H5V11H11Z" />
+          </MenuFlyoutItem.Icon>
+        </MenuFlyoutItem>
+        <MenuFlyoutItem Text="Open" KeyboardAcceleratorTextOverride="Ctrl+O" />
+        <MenuFlyoutItem Text="Pointer over"
+                        Background="{ThemeResource MenuFlyoutItemBackgroundPointerOver}"
+                        Foreground="{ThemeResource MenuFlyoutItemForegroundPointerOver}" />
+        <MenuFlyoutSeparator />
+        <ToggleMenuFlyoutItem Text="Show hidden files" IsChecked="True" />
+        <MenuFlyoutSubItem Text="Recent">
+          <MenuFlyoutItem Text="Report.docx" />
+        </MenuFlyoutSubItem>
+        <MenuFlyoutItem Text="Disabled" IsEnabled="False" />
+      </MenuFlyoutPresenter>
+    </StackPanel>
+
+    <StackPanel Grid.Column="1" Spacing="12">
+      <TextBlock Text="Context menu" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" />
+      <MenuFlyoutPresenter Width="280" HorizontalAlignment="Left">
+        <MenuFlyoutItem Text="Cut" KeyboardAcceleratorTextOverride="Ctrl+X" />
+        <MenuFlyoutItem Text="Copy" KeyboardAcceleratorTextOverride="Ctrl+C" />
+        <MenuFlyoutItem Text="Paste" KeyboardAcceleratorTextOverride="Ctrl+V" IsEnabled="False" />
+        <MenuFlyoutSeparator />
+        <MenuFlyoutItem Text="Select all" KeyboardAcceleratorTextOverride="Ctrl+A" />
+      </MenuFlyoutPresenter>
+    </StackPanel>
+  </Grid>
+
+  <TextBlock Text="CommandBar" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" />
+  <CommandBar>
+    <CommandBar.PrimaryCommands>
+      <AppBarButton Label="Add">
+        <AppBarButton.Icon>
+          <PathIcon Data="M11,5H13V11H19V13H13V19H11V13H5V11H11Z" />
+        </AppBarButton.Icon>
+      </AppBarButton>
+      <AppBarButton Label="Remove">
+        <AppBarButton.Icon>
+          <PathIcon Data="M5,11H19V13H5Z" />
+        </AppBarButton.Icon>
+      </AppBarButton>
+      <AppBarSeparator />
+      <AppBarToggleButton Label="Checked" IsChecked="True">
+        <AppBarToggleButton.Icon>
+          <PathIcon Data="M4,12.5L5.5,11L9.5,15L18.5,6L20,7.5L9.5,18Z" />
+        </AppBarToggleButton.Icon>
+      </AppBarToggleButton>
+      <AppBarButton Label="Disabled" IsEnabled="False">
+        <AppBarButton.Icon>
+          <PathIcon Data="M5,5H19V19H5Z M7,7V17H17V7Z" />
+        </AppBarButton.Icon>
+      </AppBarButton>
+    </CommandBar.PrimaryCommands>
+    <CommandBar.SecondaryCommands>
+      <AppBarButton Label="Settings" />
+    </CommandBar.SecondaryCommands>
+  </CommandBar>
+</StackPanel>

@@ -1,0 +1,87 @@
+<!-- The native WinUI 3 counterpart of NumberInputPage.xaml. NumericUpDown is a NumberBox with
+     the spin buttons inline; its validation error is the critical border brush and the message
+     under the box. WinUI has no ButtonSpinner: the spinner is composed of what a NumberBox
+     shows (a box with the text and two repeat buttons with chevrons); spinning that is not
+     allowed disables the buttons. AutoCompleteBox is an AutoSuggestBox. -->
+<StackPanel xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+            xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+            Margin="24" Spacing="12">
+  <TextBlock Text="Numbers and suggestions" FontSize="28" FontWeight="SemiBold" />
+
+  <TextBlock Text="NumericUpDown" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" />
+  <Grid ColumnSpacing="16" RowSpacing="12">
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="160" />
+      <ColumnDefinition Width="220" />
+    </Grid.ColumnDefinitions>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+    </Grid.RowDefinitions>
+
+    <TextBlock Grid.Row="0" Text="With a value" VerticalAlignment="Center" />
+    <NumberBox Grid.Row="0" Grid.Column="1" Value="42" Minimum="0" Maximum="100" SpinButtonPlacementMode="Inline" />
+
+    <TextBlock Grid.Row="1" Text="Placeholder" VerticalAlignment="Center" />
+    <NumberBox Grid.Row="1" Grid.Column="1" PlaceholderText="Enter a number" SpinButtonPlacementMode="Inline" />
+
+    <TextBlock Grid.Row="2" Text="Disabled" VerticalAlignment="Center" />
+    <NumberBox Grid.Row="2" Grid.Column="1" Value="42" IsEnabled="False" SpinButtonPlacementMode="Inline" />
+
+    <TextBlock Grid.Row="3" Text="Validation error" VerticalAlignment="Top" Margin="0,6,0,0" />
+    <StackPanel Grid.Row="3" Grid.Column="1" Spacing="4">
+      <NumberBox Value="420" SpinButtonPlacementMode="Inline"
+                 BorderBrush="{ThemeResource SystemFillColorCriticalBrush}" />
+      <TextBlock Text="Enter a number from 0 to 100." Foreground="{ThemeResource SystemFillColorCriticalBrush}" />
+    </StackPanel>
+  </Grid>
+
+  <TextBlock Text="ButtonSpinner" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" />
+  <StackPanel Orientation="Horizontal" Spacing="16">
+    <Grid Width="220" Height="32" CornerRadius="4" BorderThickness="1"
+          Background="{ThemeResource TextControlBackground}"
+          BorderBrush="{ThemeResource TextControlBorderBrush}">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="*" />
+        <ColumnDefinition Width="Auto" />
+        <ColumnDefinition Width="Auto" />
+      </Grid.ColumnDefinitions>
+      <TextBlock Text="Spinner content" VerticalAlignment="Center" Margin="10,0" />
+      <RepeatButton Grid.Column="1" Width="32" VerticalAlignment="Stretch" Padding="0"
+                    Background="Transparent" BorderThickness="0">
+        <PathIcon Width="12" Height="12" Data="M6,14.5L12,8.5L18,14.5L16.6,15.9L12,11.3L7.4,15.9Z" />
+      </RepeatButton>
+      <RepeatButton Grid.Column="2" Width="32" VerticalAlignment="Stretch" Padding="0"
+                    Background="Transparent" BorderThickness="0">
+        <PathIcon Width="12" Height="12" Data="M6,9.5L12,15.5L18,9.5L16.6,8.1L12,12.7L7.4,8.1Z" />
+      </RepeatButton>
+    </Grid>
+    <Grid Width="220" Height="32" CornerRadius="4" BorderThickness="1"
+          Background="{ThemeResource TextControlBackground}"
+          BorderBrush="{ThemeResource TextControlBorderBrush}">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="*" />
+        <ColumnDefinition Width="Auto" />
+        <ColumnDefinition Width="Auto" />
+      </Grid.ColumnDefinitions>
+      <TextBlock Text="Spinning not allowed" VerticalAlignment="Center" Margin="10,0" />
+      <RepeatButton Grid.Column="1" Width="32" VerticalAlignment="Stretch" Padding="0"
+                    Background="Transparent" BorderThickness="0" IsEnabled="False">
+        <PathIcon Width="12" Height="12" Data="M6,14.5L12,8.5L18,14.5L16.6,15.9L12,11.3L7.4,15.9Z" />
+      </RepeatButton>
+      <RepeatButton Grid.Column="2" Width="32" VerticalAlignment="Stretch" Padding="0"
+                    Background="Transparent" BorderThickness="0" IsEnabled="False">
+        <PathIcon Width="12" Height="12" Data="M6,9.5L12,15.5L18,9.5L16.6,8.1L12,12.7L7.4,8.1Z" />
+      </RepeatButton>
+    </Grid>
+  </StackPanel>
+
+  <TextBlock Text="AutoCompleteBox" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" />
+  <StackPanel Orientation="Horizontal" Spacing="16">
+    <AutoSuggestBox Width="220" PlaceholderText="Search" />
+    <AutoSuggestBox Width="220" Text="Search text" />
+    <AutoSuggestBox Width="180" Text="Disabled" IsEnabled="False" />
+  </StackPanel>
+</StackPanel>

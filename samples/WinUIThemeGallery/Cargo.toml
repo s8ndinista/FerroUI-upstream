@@ -1,0 +1,76 @@
+[package]
+name = "winui-theme-gallery"
+description = "The WinUI theme gallery of FerroUI: a page per control family in the WinUI theme, a capture mode that writes a picture of every page in every theme variant, and on Windows a host that shows each page beside the same page of native WinUI 3 controls"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+# The build script compiles the markup documents of the gallery (`sample-build`) and embeds the
+# application manifest (`app.manifest`) in the comparison host of Windows.
+build = "build.rs"
+
+# Unit tests live next to the code (`tests/` modules of the library), not as integration test
+# targets.
+autotests = false
+autobenches = false
+autoexamples = false
+autobins = false
+
+# The gallery: the application, its window, the pages and the capture mode. Built and tested on
+# every host.
+[lib]
+path = "lib.rs"
+
+# The desktop entry point: the gallery in a window of the platform (macOS, Linux, Windows), and
+# the capture mode (`FERROUI_THEME_GALLERY_CAPTURE`).
+[[bin]]
+name = "winui-theme-gallery"
+path = "program.rs"
+
+# The comparison host (Windows only): a WinUI 3 window that shows each page of native WinUI 3
+# controls beside the same page of the gallery and writes both pictures with their difference.
+# On another host the binary says so and exits with a failure.
+[[bin]]
+name = "winui-theme-compare"
+path = "compare/main.rs"
+
+[dependencies]
+# The compiled markup of the crate calls the typed functions of the declared members.
+ferroui-base = { workspace = true, features = ["markup-functions"] }
+ferroui-controls = { workspace = true }
+# The managed file chooser of the dialogs page.
+ferroui-dialogs = { workspace = true }
+ferroui-markup = { workspace = true }
+ferroui-markup-xaml = { workspace = true }
+# The theme under test. Its use is in one place, `theme.rs`.
+ferroui-themes-winui = { workspace = true }
+# The entry point.
+ferroui-desktop = { workspace = true }
+sample-support = { path = "../SampleSupport" }
+
+# The comparison host: WinUI 3 of the Windows App SDK, the Windows backend with ANGLE (the swap
+# chain of the panel is created on ANGLE's Direct3D 11 device), Skia and HarfBuzz, as the WinUI
+# samples set the application up.
+[target.'cfg(windows)'.dependencies]
+ferroui-winui = { workspace = true }
+ferroui-win32 = { workspace = true, features = ["angle"] }
+ferroui-skia = { workspace = true }
+ferroui-harfbuzz = { workspace = true }
+ferroui-microcom = { workspace = true }
+# The end of a run that does not end. The functions of the window and of its capture
+# (`compare/window_capture.rs`) are declared by the host itself, as the desktop catalog declares
+# its own.
+windows-sys = { workspace = true, features = ["Win32_Foundation", "Win32_System_Threading"] }
+
+[build-dependencies]
+sample-build = { path = "../SampleBuild" }
+
+[dev-dependencies]
+ferroui-base = { workspace = true, features = ["testing"] }
+ferroui-controls = { workspace = true, features = ["testing"] }
+sample-testing = { path = "../SampleTesting" }
+# The native pages are parsed as XML by the tests: one per page of the gallery, each a document of
+# the WinUI XAML namespace.
+roxmltree = { workspace = true }

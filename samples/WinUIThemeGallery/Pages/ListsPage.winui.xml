@@ -1,0 +1,71 @@
+<!-- The native WinUI 3 counterpart of ListsPage.xaml. ListBox is a ListView with single
+     selection; the pointer-over and pressed items have the brushes of those states as their
+     background and foreground (the item presenter draws the background of the item). The tree
+     is a TreeView with its nodes in markup. -->
+<StackPanel xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+            xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+            Margin="24" Spacing="12">
+  <TextBlock Text="Lists and trees" FontSize="28" FontWeight="SemiBold" />
+
+  <Grid ColumnSpacing="24">
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="300" />
+      <ColumnDefinition Width="300" />
+    </Grid.ColumnDefinitions>
+
+    <StackPanel Grid.Column="0" Spacing="12">
+      <TextBlock Text="ListBox" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" />
+      <ListView Height="240" SelectionMode="Single">
+        <ListViewItem Content="Normal" />
+        <ListViewItem Content="Selected" IsSelected="True" />
+        <ListViewItem Content="Pointer over"
+                      Background="{ThemeResource ListViewItemBackgroundPointerOver}"
+                      Foreground="{ThemeResource ListViewItemForegroundPointerOver}" />
+        <ListViewItem Content="Pressed"
+                      Background="{ThemeResource ListViewItemBackgroundPressed}"
+                      Foreground="{ThemeResource ListViewItemForegroundPressed}" />
+        <ListViewItem Content="Disabled" IsEnabled="False" />
+        <ListViewItem Content="Another item" />
+      </ListView>
+
+      <TextBlock Text="Disabled ListBox" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" />
+      <ListView Height="120" SelectionMode="Single" IsEnabled="False">
+        <ListViewItem Content="First item" />
+        <ListViewItem Content="Selected item" IsSelected="True" />
+        <ListViewItem Content="Third item" />
+      </ListView>
+    </StackPanel>
+
+    <StackPanel Grid.Column="1" Spacing="12">
+      <TextBlock Text="ItemsControl" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" />
+      <ItemsControl>
+        <x:String>The first item of an items control</x:String>
+        <x:String>The second item</x:String>
+        <x:String>The third item</x:String>
+      </ItemsControl>
+
+      <TextBlock Text="TreeView" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" />
+      <TreeView Height="260">
+        <TreeView.RootNodes>
+          <TreeViewNode Content="Documents" IsExpanded="True">
+            <TreeViewNode.Children>
+              <TreeViewNode Content="Report.docx" />
+              <TreeViewNode Content="Notes.txt" />
+              <TreeViewNode Content="Archive" IsExpanded="True">
+                <TreeViewNode.Children>
+                  <TreeViewNode Content="2025.zip" />
+                </TreeViewNode.Children>
+              </TreeViewNode>
+            </TreeViewNode.Children>
+          </TreeViewNode>
+          <TreeViewNode Content="Pictures">
+            <TreeViewNode.Children>
+              <TreeViewNode Content="Holiday.jpg" />
+            </TreeViewNode.Children>
+          </TreeViewNode>
+          <TreeViewNode Content="Music" />
+        </TreeView.RootNodes>
+      </TreeView>
+    </StackPanel>
+  </Grid>
+</StackPanel>

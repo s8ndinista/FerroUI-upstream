@@ -1,0 +1,50 @@
+<!-- The native WinUI 3 counterpart of TogglesPage.xaml. The pointer-over and pressed states of
+     CheckBox, RadioButton and ToggleSwitch cannot be shown in WinUI without input or a call of
+     VisualStateManager.GoToState: their templates set the brushes of those states on parts of
+     the template, not through properties of the control. Those entries are the normal state
+     here, and their difference in the report is expected. The header of a ToggleSwitch is its
+     Content in the framework and its Header in WinUI. -->
+<StackPanel xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+            xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+            Margin="24" Spacing="12">
+  <TextBlock Text="Check boxes and toggles" FontSize="28" FontWeight="SemiBold" />
+
+  <TextBlock Text="CheckBox" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" />
+  <StackPanel Orientation="Horizontal" Spacing="16">
+    <CheckBox Content="Unchecked" />
+    <CheckBox Content="Checked" IsChecked="True" />
+    <CheckBox Content="Indeterminate" IsThreeState="True" IsChecked="{x:Null}" />
+    <CheckBox Content="Pointer over" />
+    <CheckBox Content="Pressed" />
+  </StackPanel>
+  <StackPanel Orientation="Horizontal" Spacing="16">
+    <CheckBox Content="Disabled" IsEnabled="False" />
+    <CheckBox Content="Checked, disabled" IsChecked="True" IsEnabled="False" />
+    <CheckBox Content="Indeterminate, disabled" IsThreeState="True" IsChecked="{x:Null}" IsEnabled="False" />
+  </StackPanel>
+
+  <TextBlock Text="RadioButton" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" />
+  <StackPanel Orientation="Horizontal" Spacing="16">
+    <RadioButton Content="Unchecked" GroupName="Radio1" />
+    <RadioButton Content="Checked" GroupName="Radio2" IsChecked="True" />
+    <RadioButton Content="Pointer over" GroupName="Radio3" />
+    <RadioButton Content="Pressed" GroupName="Radio4" />
+  </StackPanel>
+  <StackPanel Orientation="Horizontal" Spacing="16">
+    <RadioButton Content="Disabled" GroupName="Radio5" IsEnabled="False" />
+    <RadioButton Content="Checked, disabled" GroupName="Radio6" IsChecked="True" IsEnabled="False" />
+  </StackPanel>
+
+  <TextBlock Text="ToggleSwitch" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" />
+  <StackPanel Orientation="Horizontal" Spacing="24">
+    <ToggleSwitch />
+    <ToggleSwitch IsOn="True" />
+    <ToggleSwitch />
+    <ToggleSwitch IsEnabled="False" />
+    <ToggleSwitch IsOn="True" IsEnabled="False" />
+  </StackPanel>
+  <StackPanel Orientation="Horizontal" Spacing="24">
+    <ToggleSwitch Header="With a header" />
+    <ToggleSwitch Header="Custom texts" OnContent="Enabled" OffContent="Disabled" IsOn="True" />
+  </StackPanel>
+</StackPanel>
