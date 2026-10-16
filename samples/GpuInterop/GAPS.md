@@ -97,6 +97,7 @@ the same text.
   an alpha of 0.1 over the window), and the snapshots change with the yaw and with the disco mode.
   The Vulkan loader and MoltenVK were the ones the Android emulator of the SDK ships
   (`DYLD_LIBRARY_PATH` and `VK_DRIVER_FILES` pointed at `emulator/lib64/vulkan`).
+- After the framework fixes of G002 and G003 (the property `Demo` of the interface type, the interop awaited without the retry), the smoke run passes again against both compositors with the same results.
 - Type-checked for `x86_64-pc-windows-msvc` and `x86_64-unknown-linux-gnu` against a stand-in of
   the desktop entry point (for Linux with the real Skia and its Vulkan back end).
 - Not run: the Direct3D 11 demo and the Vulkan demo on Windows, the Vulkan and dma-buf demos on
