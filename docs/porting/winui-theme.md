@@ -500,10 +500,10 @@ ports a control updates its state by porting it, not by editing the table.
 | `NotificationCard.xaml` | `{NotificationCard}` | InfoBar: {InfoBar} (InfoBar.xaml, InfoBar_themeresources.xaml). | B6 | pending |
 | `NumericUpDown.xaml` | `{NumericUpDown}` | NumberBox: {NumberBox}, NumberBoxTextBoxStyle, NumberBoxSpinButtonStyle (NumberBox.xaml, NumberBox_themeresources.xaml). | B2 | pending |
 | `OverlayPopupHost.xaml` | `{OverlayPopupHost}` | No WinUI style: the text of the window (TextFillColorPrimaryBrush, ContentControlThemeFontFamily, ControlContentThemeFontSize). | F | ported |
-| `PathIcon.xaml` | `{PathIcon}` | No WinUI style (IconElement has no template): the icon size and foreground (IconElementThemeHeight/Width of the platform theme, TextFillColorPrimaryBrush). | B1 | pending |
+| `PathIcon.xaml` | `{PathIcon}` | No WinUI style (IconElement has no template): the Path that WinUI's PathIcon builds in code (CPathIcon::ApplyTemplate, icon.cpp), unscaled and filled with the Foreground. | B1 | ported |
 | `PipsPager.xaml` | `{PipsPager}` | PipsPager: {PipsPager} (PipsPager.xaml), PipsPagerNavigationButtonBaseStyle, PipsPagerPreviousPageButtonStyle, PipsPagerNextPageButtonStyle, PipsPagerButtonBaseStyle, PipsPagerSelectedPipButtonStyle, PipsPagerNormalPipButtonStyle (PipsPager_themeresources.xaml). | B2 | pending |
 | `PopupRoot.xaml` | `{PopupRoot}` | No WinUI style: the text of the window (TextFillColorPrimaryBrush, ContentControlThemeFontFamily, ControlContentThemeFontSize). | F | ported |
-| `ProgressBar.xaml` | `{ProgressBar}` | ProgressBar: {ProgressBar} (ProgressBar.xaml, ProgressBar_themeresources.xaml). | B1 | pending |
+| `ProgressBar.xaml` | `{ProgressBar}` | ProgressBar: {ProgressBar} (ProgressBar.xaml, ProgressBar_themeresources.xaml), DefaultProgressBarStyle (Deprecated_themeresources.xaml). | B1 | ported |
 | `RadioButton.xaml` | `{RadioButton}` | RadioButton: DefaultRadioButtonStyle (RadioButton_themeresources.xaml). | F | ported |
 | `RefreshContainer.xaml` | `{RefreshContainer}` | RefreshContainer: DefaultRefreshContainerStyle (RefreshContainer.xaml). | B2 | pending |
 | `RefreshVisualizer.xaml` | `{RefreshVisualizer}` | RefreshVisualizer: {RefreshVisualizer} (RefreshVisualizer.xaml). | B2 | pending |
@@ -511,7 +511,7 @@ ports a control updates its state by porting it, not by editing the table.
 | `ScrollBar.xaml` | `{ScrollBar}` | ScrollBar: DefaultScrollBarStyle (ScrollBar_themeresources.xaml); {Thumb} (generic.xaml). | F | ported |
 | `ScrollViewer.xaml` | `{ScrollViewer}` | ScrollViewer: DefaultScrollViewerStyle (ScrollViewer_themeresources.xaml). | F | ported |
 | `SelectableTextBlock.xaml` | `{SelectableTextBlock}` | No WinUI control (TextBlock.IsTextSelectionEnabled): the selection highlight of the text controls (TextControlSelectionHighlightColor). | B1 | pending |
-| `Separator.xaml` | `{Separator}` | MenuFlyoutSeparator: {MenuFlyoutSeparator} (MenuFlyout_themeresources.xaml); AppBarSeparator for a separator in a command bar. | B1 | pending |
+| `Separator.xaml` | `{Separator}` | MenuFlyoutSeparator: {MenuFlyoutSeparator} (MenuFlyout_themeresources.xaml); AppBarSeparator for a separator in a command bar. | B1 | ported |
 | `Slider.xaml` | `{Slider}` | Slider: DefaultSliderStyle (Slider_themeresources.xaml). | B2 | pending |
 | `SplitButton.xaml` | `{SplitButton}` | SplitButton: SplitButtonStyle (SplitButton.xaml), SplitButtonCommandBarStyle (SplitButton_themeresources.xaml); ToggleSplitButton. | B2 | pending |
 | `SplitView.xaml` | `{SplitView}` | SplitView: DefaultSplitViewStyle (SplitView_themeresources.xaml). | B5 | pending |
@@ -530,7 +530,7 @@ ports a control updates its state by porting it, not by editing the table.
 | `TimePicker.xaml` | `{TimePicker}`, `{TimePickerPresenter}` | TimePicker: {TimePicker}; TimePickerFlyoutPresenter: {TimePickerFlyoutPresenter} (TimePicker_themeresources.xaml). | B4 | pending |
 | `ToggleButton.xaml` | `{ToggleButton}` | ToggleButton: DefaultToggleButtonStyle (ToggleButton_themeresources.xaml). | F | ported |
 | `ToggleSwitch.xaml` | `{ToggleSwitch}` | ToggleSwitch: DefaultToggleSwitchStyle (ToggleSwitch_themeresources.xaml). | B2 | pending |
-| `ToolTip.xaml` | `{ToolTip}` | ToolTip: DefaultToolTipStyle (ToolTip_themeresources.xaml). | B1 | pending |
+| `ToolTip.xaml` | `{ToolTip}` | ToolTip: DefaultToolTipStyle (ToolTip_themeresources.xaml). | B1 | ported |
 | `TransitioningContentControl.xaml` | `{TransitioningContentControl}` | No WinUI style: ContentPresenter with content transitions ({ContentPresenter}, generic.xaml). | B1 | pending |
 | `TreeView.xaml` | `{TreeView}` | TreeView: DefaultTreeViewStyle (TreeView.xaml, TreeView_themeresources.xaml). | B3 | pending |
 | `TreeViewItem.xaml` | `{TreeViewItem}` | TreeViewItem: {TreeViewItem} (TreeView.xaml), MUX_TreeViewItemStyle (TreeViewItem.xaml). | B3 | pending |

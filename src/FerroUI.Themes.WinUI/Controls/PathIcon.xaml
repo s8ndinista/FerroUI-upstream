@@ -1,0 +1,37 @@
+<!--
+  Not ported from a style: WinUI's PathIcon has no template in microsoft-ui-xaml
+  (https://github.com/microsoft/microsoft-ui-xaml, commit
+  7e4b0c2096be402f51cc8f7d203ebf67cff183d0). The control builds its visual in code
+  (CPathIcon::ApplyTemplate, dxaml/xcp/core/core/elements/icon.cpp): one Path, stretched over
+  the icon by its alignments, whose Fill is the Foreground of the icon and whose Data is the Data
+  of the icon. The Path keeps its own Stretch (None), so the geometry is drawn in its own
+  coordinates, not scaled to the size of the icon; IconElement has no default size and no theme
+  resource. This is that visual as the template FerroUI's PathIcon requires, inside a border of
+  the Background of the control (null by default, so nothing more is drawn).
+-->
+<ResourceDictionary xmlns="https://github.com/ferroui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    x:ClassModifier="internal">
+  <Design.PreviewWith>
+    <Border Padding="20">
+      <StackPanel Orientation="Horizontal" Spacing="16">
+        <PathIcon Width="20" Height="20" Data="M11,5H13V11H19V13H13V19H11V13H5V11H11Z" />
+        <PathIcon Width="20" Height="20" Data="M4,12.5L5.5,11L9.5,15L18.5,6L20,7.5L9.5,18Z" />
+      </StackPanel>
+    </Border>
+  </Design.PreviewWith>
+
+  <ControlTheme x:Key="{x:Type PathIcon}" TargetType="PathIcon">
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border Background="{TemplateBinding Background}">
+          <Path x:Name="Path"
+                Data="{TemplateBinding Data}"
+                Fill="{TemplateBinding Foreground}"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch" />
+        </Border>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+</ResourceDictionary>

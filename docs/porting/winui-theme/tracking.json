@@ -26054,9 +26054,9 @@
    "key": "DefaultProgressBarStyle",
    "kind": "Style",
    "target_type": "ProgressBar",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B1"
+   "batch": null
   },
   {
    "document": "controls/dev/CommonStyles/Deprecated_themeresources.xaml",
@@ -34724,9 +34724,9 @@
    "key": "{MenuFlyoutSeparator}",
    "kind": "Style",
    "target_type": "MenuFlyoutSeparator",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B3"
+   "batch": null
   },
   {
    "document": "controls/dev/CommonStyles/MenuFlyout_themeresources.xaml",
@@ -51374,9 +51374,9 @@
    "key": "DefaultToolTipStyle",
    "kind": "Style",
    "target_type": "ToolTip",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B1"
+   "batch": null
   },
   {
    "document": "controls/dev/CommonStyles/ToolTip_themeresources.xaml",
@@ -51404,9 +51404,9 @@
    "key": "{ToolTip}",
    "kind": "Style",
    "target_type": "ToolTip",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B1"
+   "batch": null
   },
   {
    "document": "controls/dev/CommonStyles/ToolTip_themeresources.xaml",
@@ -68724,9 +68724,9 @@
    "key": "{ProgressBar}",
    "kind": "Style",
    "target_type": "ProgressBar",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B1"
+   "batch": null
   },
   {
    "document": "controls/dev/ProgressBar/ProgressBar_themeresources.xaml",
@@ -90063,16 +90063,20 @@
   "Controls/EmbeddableControlRoot.xaml",
   "Controls/HyperlinkButton.xaml",
   "Controls/OverlayPopupHost.xaml",
+  "Controls/PathIcon.xaml",
   "Controls/PopupRoot.xaml",
+  "Controls/ProgressBar.xaml",
   "Controls/RadioButton.xaml",
   "Controls/RepeatButton.xaml",
   "Controls/ScrollBar.xaml",
   "Controls/ScrollViewer.xaml",
+  "Controls/Separator.xaml",
   "Controls/TextBlock.xaml",
   "Controls/TextBox.xaml",
   "Controls/ThemeVariantScope.xaml",
   "Controls/Thumb.xaml",
   "Controls/ToggleButton.xaml",
+  "Controls/ToolTip.xaml",
   "Controls/WinUIControls.xaml",
   "Controls/Window.xaml",
   "DensityStyles/Compact.xaml",
@@ -90610,10 +90614,10 @@
     "{PathIcon}"
    ],
    "batch": "B1",
-   "winui": "No WinUI style (IconElement has no template): the icon size and foreground (IconElementThemeHeight/Width of the platform theme, TextFillColorPrimaryBrush).",
-   "status": "pending",
-   "deviations": 0,
-   "date": ""
+   "winui": "No WinUI style (IconElement has no template): the Path that WinUI's PathIcon builds in code (CPathIcon::ApplyTemplate, icon.cpp), unscaled and filled with the Foreground.",
+   "status": "ported",
+   "deviations": 2,
+   "date": "not committed"
   },
   {
    "document": "PipsPager.xaml",
@@ -90643,10 +90647,10 @@
     "{ProgressBar}"
    ],
    "batch": "B1",
-   "winui": "ProgressBar: {ProgressBar} (ProgressBar.xaml, ProgressBar_themeresources.xaml).",
-   "status": "pending",
-   "deviations": 0,
-   "date": ""
+   "winui": "ProgressBar: {ProgressBar} (ProgressBar.xaml, ProgressBar_themeresources.xaml), DefaultProgressBarStyle (Deprecated_themeresources.xaml).",
+   "status": "ported",
+   "deviations": 10,
+   "date": "not committed"
   },
   {
    "document": "RadioButton.xaml",
@@ -90732,9 +90736,9 @@
    ],
    "batch": "B1",
    "winui": "MenuFlyoutSeparator: {MenuFlyoutSeparator} (MenuFlyout_themeresources.xaml); AppBarSeparator for a separator in a command bar.",
-   "status": "pending",
-   "deviations": 0,
-   "date": ""
+   "status": "ported",
+   "deviations": 1,
+   "date": "not committed"
   },
   {
    "document": "Slider.xaml",
@@ -90942,9 +90946,9 @@
    ],
    "batch": "B1",
    "winui": "ToolTip: DefaultToolTipStyle (ToolTip_themeresources.xaml).",
-   "status": "pending",
-   "deviations": 0,
-   "date": ""
+   "status": "ported",
+   "deviations": 3,
+   "date": "not committed"
   },
   {
    "document": "TransitioningContentControl.xaml",
@@ -91419,16 +91423,20 @@
   "EmbeddableControlRoot": 1,
   "HyperlinkButton": 3,
   "OverlayPopupHost": 1,
+  "PathIcon": 2,
   "PopupRoot": 1,
+  "ProgressBar": 10,
   "RadioButton": 6,
   "RepeatButton": 1,
   "ScrollBar": 11,
   "ScrollViewer": 8,
+  "Separator": 1,
   "TextBlock": 3,
   "TextBox": 11,
   "ThemeVariantScope": 1,
   "Thumb": 1,
   "ToggleButton": 3,
+  "ToolTip": 3,
   "Window": 1
  },
  "winui_targets": {

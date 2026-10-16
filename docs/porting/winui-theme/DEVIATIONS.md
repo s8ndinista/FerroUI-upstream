@@ -104,11 +104,33 @@ it. Abbreviations: CS = `controls/dev/CommonStyles/`, GX = `dxaml/xcp/dxaml/them
 |---|---|---|---|---|
 | OPH-1 | (no counterpart) | The popup host of WinUI is part of the framework. | The template FerroUI's control requires, with the text resources of a WinUI window. | Built from WinUI resources. |
 
+## PathIcon
+
+| ID | WinUI source | What WinUI does | What the port does | Why |
+|---|---|---|---|---|
+| PI-1 | `dxaml/xcp/core/core/elements/icon.cpp` `CPathIcon::ApplyTemplate` | The control creates a Path in code: alignments Stretch, `Fill` linked to `Foreground`, `Data` linked to `Data`. | The same Path as the template, inside a Border of the `Background` of the control. | FerroUI's PathIcon is a templated control. |
+| PI-2 | (no size) IconElement | No default size; the Path keeps `Stretch` None, so the geometry is drawn in its own coordinates. | The same: no `Width` or `Height`, the geometry not scaled. | Faithful; recorded because FerroUI's other themes size a PathIcon to `IconElementThemeWidth`/`IconElementThemeHeight` (20) and scale the geometry uniformly, which this theme does not. |
+
 ## PopupRoot
 
 | ID | WinUI source | What WinUI does | What the port does | Why |
 |---|---|---|---|---|
 | PPR-1 | (no counterpart) | The popup host of WinUI is part of the framework. | The template FerroUI's control requires, with the text resources of a WinUI window; the presenter of the popup draws the background. | Built from WinUI resources. |
+
+## ProgressBar
+
+| ID | WinUI source | What WinUI does | What the port does | Why |
+|---|---|---|---|---|
+| PB-1 | `controls/dev/ProgressBar/ProgressBar.xaml` `{ProgressBar}`; CS `Deprecated_themeresources.xaml` `DefaultProgressBarStyle` (no setters) | The implicit style is the default style; the keyed style is empty and applied over it. | The keyed theme `DefaultProgressBarStyle` holds the implicit style; `{x:Type ProgressBar}` is based on it. | Keeps the key of WinUI with the look an application gets from it (G-15). |
+| PB-2 | `ProgressBarTrack`, `DeterminateProgressBarIndicator`, `IndeterminateProgressBarIndicator`, `IndeterminateProgressBarIndicator2` (Rectangle) | Rectangles with `RadiusX`/`RadiusY` from the corner radius converters. | Borders with corner radii (`ProgressBarTrackCornerRadius` for the track, the corner radius of the control for the indicators); `DeterminateProgressBarIndicator` is `PART_Indicator`. | FerroUI's ProgressBar requires `PART_Indicator` as a Border and sets its width. |
+| PB-3 | Inner `Border Clip="{Binding TemplateSettings.ClipRect}"` | Clips to the rectangle inside the padding that the control computes. | `ClipToBounds` of that border. | FerroUI's template settings have no clip rectangle; the bounds of the border are that area. |
+| PB-4 | `controls/dev/ProgressBar/ProgressBar.cpp` (`UpdateWidthBasedTemplateSettings`, `SetProgressBarIndicatorWidth`) | `ContainerAnimationStartPosition` is -1.0 times 40 % of the width; the indeterminate widths are 40 % and 60 % of the width inside the padding and border. | FerroUI's control computes -1.8 times 40 % of the width, and the widths of the whole track. | The template settings are computed by FerroUI's control, not by the template. |
+| PB-5 | `CommonStates` `Indeterminate` | Shows the indeterminate indicators, hides the track, runs the storyboard forever; the code sets the width of the determinate indicator to 0. | The nested style of `:indeterminate`: the opacities, the keyframe animations of the translation with the key times and the spline of the source; `PART_Indicator` hidden by its opacity. | G-2, section 4.5; FerroUI's control keeps the width of `PART_Indicator`. |
+| PB-6 | `Error`, `Paused`, `UpdatingError`, `IndeterminateError`, `IndeterminatePaused`, `Updating` | The error and paused colours (`ProgressBarErrorForegroundColor`, `ProgressBarPausedForegroundColor`) and the moves of the indicators between those states. | Left out. | FerroUI's ProgressBar has no `ShowError` and no `ShowPaused`. |
+| PB-7 | `VisualStateGroup.Transitions`: `RepositionThemeAnimation` of the indicator when the value changes, `FadeInThemeAnimation` from `Indeterminate` to `Determinate`, the colour animations from `Error` and `Paused` | Animates the changes of the bar. | Not ported: the indicator takes its new width at once. | The timing of the theme animations comes from the system (G-22). |
+| PB-8 | (no counterpart) `Orientation` of FerroUI's ProgressBar | WinUI's progress bar is horizontal. | `:vertical`: the horizontal template turned (the track 1 px wide and centred, `PART_Indicator` from the bottom, the indeterminate indicators along the height with the same animations of the vertical translation), `MinWidth` `ProgressBarMinHeight`, the bar centred horizontally and stretched vertically. | FerroUI's ProgressBar has an orientation. |
+| PB-9 | (no counterpart) `ShowProgressText` of FerroUI's ProgressBar | No text. | The text of `ProgressTextFormat` 8 px after the bar (under a vertical bar), in `TextFillColorPrimaryBrush`. | FerroUI's contract; the bar of WinUI is too thin to hold a text. |
+| PB-10 | `ProgressBarTrack Width="{TemplateBinding Width}"` | The track is as wide as the `Width` of the control. | The track stretches. | The same width inside the bar, also without a `Width`. |
 
 ## RadioButton
 
@@ -156,6 +178,12 @@ it. Abbreviations: CS = `controls/dev/CommonStyles/`, GX = `dxaml/xcp/dxaml/them
 | SCV-7 | (not in the source) | Touch scrolling is done by the platform. | `ScrollGestureRecognizer` and the snap point bindings on the presenter, as the Fluent theme. | FerroUI's touch scrolling needs them. |
 | SCV-8 | `ScrollContentPresenter Margin="{TemplateBinding Padding}"` | The padding of the scroll viewer is a margin around the presenter, outside the scrolled area. | `Padding="{TemplateBinding Padding}"` of the presenter, as the Fluent theme. | FerroUI's presenter takes the padding itself and counts it in the extent, so content laid out to the edge of the padding stays inside the extent (the ControlCatalog's home page test checks it); with a margin the content ends outside the extent. |
 
+## Separator
+
+| ID | WinUI source | What WinUI does | What the port does | Why |
+|---|---|---|---|---|
+| SEP-1 | CS `MenuFlyout_themeresources.xaml` `{MenuFlyoutSeparator}` | The separator of a menu: a rectangle of `MenuFlyoutSeparatorHeight` in `MenuFlyoutSeparatorBackground` at `MenuFlyoutSeparatorThemePadding` (-4,1,-4,1). | The default theme of FerroUI's Separator, in menus and anywhere else; outside a menu the negative horizontal padding draws the line 4 px past each side of the separator. | FerroUI has one Separator; WinUI separates content outside menus with plain rectangles (and AppBarSeparator in command bars, CommandBarSeparator). |
+
 ## TextBlock
 
 | ID | WinUI source | What WinUI does | What the port does | Why |
@@ -200,6 +228,14 @@ it. Abbreviations: CS = `controls/dev/CommonStyles/`, GX = `dxaml/xcp/dxaml/them
 | TGB-2 | `CheckedDisabled` does not set `BackgroundSizing` (which `Checked` sets to `ToggleButtonCheckedStateBackgroundSizing`) | The base value applies when checked and disabled. | `^:checked:disabled` sets `BackgroundSizing` back to `{TemplateBinding BackgroundSizing}`. | Both `:checked` and `:checked:disabled` match. |
 | TGB-3 | `ContentPresenter x:Name="ContentPresenter"`, `BackgroundTransition`, `FocusVisualMargin="-3"` | As Button. | As BTN-2, BTN-3, BTN-5. | As Button. |
 
+## ToolTip
+
+| ID | WinUI source | What WinUI does | What the port does | Why |
+|---|---|---|---|---|
+| TT-1 | CS `ToolTip_themeresources.xaml` `DefaultToolTipStyle`: `ContentPresenter x:Name="LayoutRoot"` | The presenter of the template. | `PART_ContentPresenter`. | The part a content control hosts its content in. |
+| TT-2 | `OpenStates`: `FadeInThemeAnimation` (Opened), `FadeOutThemeAnimation` (Closed) of `LayoutRoot` | Fades the presenter in and out. | The `Opacity` of the tool tip is 0, and 1 under `:open`, with a linear transition of 250 ms (the fade-in of the Windows animation library); the fade-out is not seen. | G-22; FerroUI closes the popup of a tool tip at once. The opacity is the control's, so that a tool tip shown in a page with `Opacity="1"` is visible. |
+| TT-3 | `dxaml/xcp/dxaml/lib/ToolTip_Partial.cpp` (`ApplyElevationEffect` on `LayoutRoot`) | A ThemeShadow under the open tool tip. | No shadow. | The popup of a tool tip is the size of the tool tip and would clip a shadow. |
+
 ## Window
 
 | ID | WinUI source | What WinUI does | What the port does | Why |
@@ -231,7 +267,7 @@ their sections above).
 | ManagedFileChooser | B6 | pending | No WinUI control: built from the ListViewItem (ListViewItem_themeresources.xaml), TextBox, Button and ContentDialog (DefaultContentDialogStyle) styles. |
 | NavigationPage | B5 | pending | No WinUI control: NavigationBackButtonNormalStyle, NavigationBackButtonSmallStyle (NavigationBackButton.xaml) and the page background. |
 | OverlayPopupHost | F | ported | No WinUI style: the text of the window (TextFillColorPrimaryBrush, ContentControlThemeFontFamily, ControlContentThemeFontSize). |
-| PathIcon | B1 | pending | No WinUI style (IconElement has no template): the icon size and foreground (IconElementThemeHeight/Width of the platform theme, TextFillColorPrimaryBrush). |
+| PathIcon | B1 | ported | No WinUI style (IconElement has no template): the Path that WinUI's PathIcon builds in code (CPathIcon::ApplyTemplate, icon.cpp), unscaled and filled with the Foreground. |
 | PopupRoot | F | ported | No WinUI style: the text of the window (TextFillColorPrimaryBrush, ContentControlThemeFontFamily, ControlContentThemeFontSize). |
 | SelectableTextBlock | B1 | pending | No WinUI control (TextBlock.IsTextSelectionEnabled): the selection highlight of the text controls (TextControlSelectionHighlightColor). |
 | TabbedPage | B5 | pending | No WinUI control: TabView (DefaultTabViewStyle) and the page background. |
