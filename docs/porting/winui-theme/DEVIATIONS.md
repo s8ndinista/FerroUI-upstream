@@ -767,7 +767,7 @@ The section covers both control themes of the document: ManagedFileChooser and M
 
 | ID | WinUI source | What WinUI does | What the port does | Why |
 |---|---|---|---|---|
-| CTP-1 | (no counterpart) `Page` has no style | A page is a UserControl; the page templates of WinUI set `Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"`. | The template FerroUI's ContentPage requires (content and command bar presenters) with `ApplicationPageBackgroundThemeBrush` and `TextFillColorPrimaryBrush`. | Built from WinUI resources. |
+| CTP-1 | (no counterpart) `Page` has no style | A page is a UserControl without a background of its own: it shows the window, or the content layer of the NavigationView it is in (`NavigationViewContentBackground`); the page templates of Visual Studio set `ApplicationPageBackgroundThemeBrush`. | The template FerroUI's ContentPage requires (content and command bar presenters) with the opaque `ApplicationPageBackgroundThemeBrush` and `TextFillColorPrimaryBrush`. A page in TabbedPage or DrawerPage therefore covers the content layer those controls draw; an application that wants WinUI's look there sets the page's `Background` to `Transparent` (the gallery does). | FerroUI's pages are opaque in its other themes and its applications rely on it: NavigationPage and the page transitions slide one page over another, and a transparent page would show the page under it. |
 
 ## DrawerPage
 

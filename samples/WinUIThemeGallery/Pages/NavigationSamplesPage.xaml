@@ -16,14 +16,17 @@
 
       <StackPanel Grid.Column="0" Spacing="12">
         <TextBlock Text="TabbedPage" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" />
+        <!-- The pages of TabbedPage and DrawerPage are transparent here, as WinUI's pages, so that
+             they show the content layer of the NavigationView these controls are drawn as; the
+             theme keeps FerroUI's opaque page (ApplicationPageBackgroundThemeBrush, CTP-1). -->
         <TabbedPage Width="320" Height="170" HorizontalAlignment="Left">
-          <ContentPage Header="Home">
+          <ContentPage Header="Home" Background="Transparent">
             <TextBlock Text="The home page." Margin="12" />
           </ContentPage>
-          <ContentPage Header="Search">
+          <ContentPage Header="Search" Background="Transparent">
             <TextBlock Text="The search page." Margin="12" />
           </ContentPage>
-          <ContentPage Header="Settings">
+          <ContentPage Header="Settings" Background="Transparent">
             <TextBlock Text="The settings page." Margin="12" />
           </ContentPage>
         </TabbedPage>
@@ -55,7 +58,7 @@
             </ListBox>
           </DrawerPage.Drawer>
           <DrawerPage.Content>
-            <ContentPage Header="Home">
+            <ContentPage Header="Home" Background="Transparent">
               <TextBlock Text="The content beside the drawer." Margin="12" TextWrapping="Wrap" />
             </ContentPage>
           </DrawerPage.Content>
