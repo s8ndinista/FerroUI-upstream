@@ -86,6 +86,8 @@
         <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/PipsPager.xaml" />
         <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/RefreshContainer.xaml" />
         <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/RefreshVisualizer.xaml" />
+        <!-- B3: flyouts, menus, lists and selection. -->
+        <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/FlyoutPresenter.xaml" />
       </ResourceDictionary.MergedDictionaries>
     </ResourceDictionary>
   </Styles.Resources>

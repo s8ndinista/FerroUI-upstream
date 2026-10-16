@@ -226,6 +226,13 @@ it. Abbreviations: CS = `controls/dev/CommonStyles/`, GX = `dxaml/xcp/dxaml/them
 | HCC-1 | CS `TextBox_themeresources.xaml` `DefaultTextBoxStyle`: `HeaderContentPresenter` | WinUI has no headered content control; its controls with a `Header` show it above the control. | That presenter above the content: `TextControlHeaderForeground`, `FontWeight` Normal, the margin `TextBoxTopHeaderMargin`, wrapping, aligned to the top, `TextControlHeaderForegroundDisabled` when disabled. | The header of WinUI's controls. |
 | HCC-2 | `HeaderContentPresenter Visibility="Collapsed" x:DeferLoadStrategy="Lazy"`, shown by the code of the control | Collapsed without a header. | `IsVisible` bound to `Header` through `ObjectConverters.IsNotNull`. | The same condition in markup. |
 | HCC-3 | (not in the source) | No border, background or padding around a header and its control. | A border of the `Background`, `BorderBrush`, `BorderThickness`, `CornerRadius` and `Padding` of the control (none set by the theme) around both; the header takes the content alignments of the control. | The contract of FerroUI's control in its other themes. |
+## FlyoutPresenter
+
+| ID | WinUI source | What WinUI does | What the port does | Why |
+|---|---|---|---|---|
+| FLP-1 | CS `FlyoutPresenter_themeresources.xaml`, `DefaultFlyoutPresenterStyle`: the unnamed `ContentPresenter` | The presenter of the content. | `PART_ContentPresenter`. | The template part FerroUI's content controls host their content in (BTN-2). |
+| FLP-2 | `ScrollViewer.HorizontalScrollMode`, `ScrollViewer.VerticalScrollMode`, `ScrollViewer.ZoomMode` setters and their bindings in the template, `ContentTransitions` | Scroll and zoom modes of the scroll viewer; transitions of the content. | Left out; the scroll bar visibilities are kept. | G-19. |
+| FLP-3 | (framework) `FlyoutBase` gives the presenter a `ThemeShadow` (elevation 32) and plays the popup opening animation (`PopupThemeTransition`, slide and fade from the placement side) | The open flyout floats above the page with a shadow and animates in. | No shadow and no opening animation. | FerroUI's flyouts have neither; a `BoxShadow` on the border would be clipped by the bounds of the popup window, which are the bounds of the presenter. |
 
 ## HyperlinkButton
 

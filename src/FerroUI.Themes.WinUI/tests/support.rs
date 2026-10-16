@@ -383,7 +383,6 @@ pub const PENDING_CONTROLS: &[&str] = &[
     "ComboBox",
     "ComboBoxItem",
     "ContextMenu",
-    "FlyoutPresenter",
     "ListBox",
     "ListBoxItem",
     "Menu",

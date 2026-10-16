@@ -29004,9 +29004,9 @@
    "key": "DefaultFlyoutPresenterStyle",
    "kind": "Style",
    "target_type": "FlyoutPresenter",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B3"
+   "batch": null
   },
   {
    "document": "controls/dev/CommonStyles/FlyoutPresenter_themeresources.xaml",
@@ -29024,9 +29024,9 @@
    "key": "{FlyoutPresenter}",
    "kind": "Style",
    "target_type": "FlyoutPresenter",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B3"
+   "batch": null
   },
   {
    "document": "controls/dev/CommonStyles/FlyoutPresenter_themeresources.xaml",
@@ -90077,6 +90077,7 @@
   "Controls/DropDownButton.xaml",
   "Controls/EmbeddableControlRoot.xaml",
   "Controls/Expander.xaml",
+  "Controls/FlyoutPresenter.xaml",
   "Controls/GridSplitter.xaml",
   "Controls/GroupBox.xaml",
   "Controls/HeaderedContentControl.xaml",
@@ -90468,9 +90469,9 @@
    ],
    "batch": "B3",
    "winui": "FlyoutPresenter: DefaultFlyoutPresenterStyle (FlyoutPresenter_themeresources.xaml).",
-   "status": "pending",
-   "deviations": 0,
-   "date": ""
+   "status": "ported",
+   "deviations": 3,
+   "date": "not committed"
   },
   {
    "document": "GridSplitter.xaml",
@@ -91503,6 +91504,7 @@
   "GridSplitter": 2,
   "GroupBox": 4,
   "HeaderedContentControl": 3,
+  "FlyoutPresenter": 3,
   "HyperlinkButton": 3,
   "ItemsControl": 1,
   "Label": 3,
