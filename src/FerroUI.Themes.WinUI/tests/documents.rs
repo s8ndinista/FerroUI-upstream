@@ -96,6 +96,7 @@ macro_rules! document_tests {
 
 document_tests! {
     controls_adorner_layer => "/Controls/AdornerLayer.xaml";
+    controls_auto_complete_box => "/Controls/AutoCompleteBox.xaml";
     controls_button => "/Controls/Button.xaml";
     controls_calendar => "/Controls/Calendar.xaml";
     controls_calendar_button => "/Controls/CalendarButton.xaml";

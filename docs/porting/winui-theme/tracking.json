@@ -514,9 +514,9 @@
    "key": "AutoSuggestBoxTextBoxStyle",
    "kind": "Style",
    "target_type": "TextBox",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B3"
+   "batch": null
   },
   {
    "document": "controls/dev/AutoSuggestBox/AutoSuggestBox_themeresources.xaml",
@@ -534,9 +534,9 @@
    "key": "DefaultAutoSuggestBoxStyle",
    "kind": "Style",
    "target_type": "AutoSuggestBox",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B3"
+   "batch": null
   },
   {
    "document": "controls/dev/AutoSuggestBox/AutoSuggestBox_themeresources.xaml",
@@ -544,9 +544,9 @@
    "key": "{AutoSuggestBox}",
    "kind": "Style",
    "target_type": "AutoSuggestBox",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B3"
+   "batch": null
   },
   {
    "document": "controls/dev/AutoSuggestBox/AutoSuggestBox_themeresources.xaml",
@@ -90058,6 +90058,7 @@
  "port_documents": [
   "WinUITheme.xaml",
   "Controls/AdornerLayer.xaml",
+  "Controls/AutoCompleteBox.xaml",
   "Controls/Button.xaml",
   "Controls/ButtonSpinner.xaml",
   "Controls/Calendar.xaml",
@@ -90226,9 +90227,9 @@
    ],
    "batch": "B3",
    "winui": "AutoSuggestBox: DefaultAutoSuggestBoxStyle, AutoSuggestBoxTextBoxStyle (AutoSuggestBox_themeresources.xaml).",
-   "status": "pending",
-   "deviations": 0,
-   "date": ""
+   "status": "ported",
+   "deviations": 8,
+   "date": "not committed"
   },
   {
    "document": "Button.xaml",
@@ -91523,6 +91524,7 @@
   "General": 23,
   "Resources": 9,
   "AdornerLayer": 1,
+  "AutoCompleteBox": 8,
   "Button": 8,
   "Calendar": 4,
   "CalendarButton": 7,

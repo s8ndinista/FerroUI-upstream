@@ -49,15 +49,18 @@ fn control_theme(type_: &'static TypeInfo) -> Ref<ControlTheme> {
 
 /// The parts of `type_` the theme must define.
 fn expected_parts(type_: &'static TypeInfo) -> Vec<(&'static str, Option<&'static str>)> {
+    // AutoCompleteBox has the optional part PART_SelectionAdapter, which no template of FerroUI's
+    // themes defines (as the tests of the Fluent theme skip it).
+    let skipped: &[&str] = if type_.name() == "AutoCompleteBox" { &["PART_SelectionAdapter"] } else { &[] };
     requested_parts(type_)
         .into_iter()
-        .map(|part| {
+        .filter_map(|part| {
             let Some(MarkupAttributeValue::Str(name)) = part.arguments.first() else { panic!("a part without a name") };
             let type_name = match part.arguments.get(1) {
                 Some(MarkupAttributeValue::Type(part_type)) => Some(part_type().name()),
                 _ => None,
             };
-            (*name, type_name)
+            (!skipped.contains(name)).then_some((*name, type_name))
         })
         .collect()
 }
@@ -195,6 +198,7 @@ macro_rules! control_tests {
 }
 
 control_tests! {
+    auto_complete_box => "AutoCompleteBox";
     button => "Button";
     calendar => "Calendar";
     calendar_button => "CalendarButton";
