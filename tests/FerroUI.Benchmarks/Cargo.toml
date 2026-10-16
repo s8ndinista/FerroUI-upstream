@@ -27,6 +27,8 @@ ferroui-markup = { workspace = true }
 ferroui-themes-fluent = { workspace = true }
 ferroui-themes-simple = { workspace = true }
 ferroui-harfbuzz = { workspace = true }
+# The render interface of the headless platform and its drawing context stub (the shape rendering benchmark).
+ferroui-headless = { workspace = true, features = ["testing"] }
 ferroui-skia = { workspace = true }
 # The font of Skia that the glyph bounds benchmark compares with the font tables.
 skia-safe = { workspace = true }

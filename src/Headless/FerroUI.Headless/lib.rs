@@ -36,6 +36,9 @@ pub use headless_unit_test_session::{FerroTestAssembly, HeadlessUnitTestSession,
 pub use headless_window_extensions::HeadlessWindowExtensions;
 pub use i_headless_touch_pointer::IHeadlessTouchPointer;
 
+#[cfg(feature = "testing")]
+pub mod testing;
+
 #[cfg(test)]
 mod tests;
 #[cfg(test)]
