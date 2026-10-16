@@ -64,22 +64,31 @@
     <Setter Property="BorderBrush" Value="{DynamicResource AppBarButtonBorderBrush}" />
 
     <!-- PointerOver -->
-    <Style Selector="^:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-      <Setter Property="Background" Value="{DynamicResource AppBarButtonBackgroundPointerOver}" />
-      <Setter Property="BorderBrush" Value="{DynamicResource AppBarButtonBorderBrushPointerOver}" />
+    <Style Selector="^:pointerover">
       <Setter Property="Foreground" Value="{DynamicResource AppBarButtonForegroundPointerOver}" />
+      <Style Selector="^ /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource AppBarButtonBackgroundPointerOver}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource AppBarButtonBorderBrushPointerOver}" />
+        <Setter Property="Foreground" Value="{DynamicResource AppBarButtonForegroundPointerOver}" />
+      </Style>
     </Style>
     <!-- Pressed -->
-    <Style Selector="^:pressed /template/ ContentPresenter#PART_ContentPresenter">
-      <Setter Property="Background" Value="{DynamicResource AppBarButtonBackgroundPressed}" />
-      <Setter Property="BorderBrush" Value="{DynamicResource AppBarButtonBorderBrushPressed}" />
+    <Style Selector="^:pressed">
       <Setter Property="Foreground" Value="{DynamicResource AppBarButtonForegroundPressed}" />
+      <Style Selector="^ /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource AppBarButtonBackgroundPressed}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource AppBarButtonBorderBrushPressed}" />
+        <Setter Property="Foreground" Value="{DynamicResource AppBarButtonForegroundPressed}" />
+      </Style>
     </Style>
     <!-- Disabled -->
-    <Style Selector="^:disabled /template/ ContentPresenter#PART_ContentPresenter">
-      <Setter Property="Background" Value="{DynamicResource AppBarButtonBackgroundDisabled}" />
-      <Setter Property="BorderBrush" Value="{DynamicResource AppBarButtonBorderBrushDisabled}" />
+    <Style Selector="^:disabled">
       <Setter Property="Foreground" Value="{DynamicResource AppBarButtonForegroundDisabled}" />
+      <Style Selector="^ /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource AppBarButtonBackgroundDisabled}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource AppBarButtonBorderBrushDisabled}" />
+        <Setter Property="Foreground" Value="{DynamicResource AppBarButtonForegroundDisabled}" />
+      </Style>
     </Style>
   </ControlTheme>
 
