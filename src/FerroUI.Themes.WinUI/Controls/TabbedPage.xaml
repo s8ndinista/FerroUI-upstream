@@ -14,9 +14,7 @@
   NavigationView: the TabControl PART_TabControl it requires has the keyed theme
   TabbedPageTabControlTheme (the top pane over the content grid) and its tabs the keyed theme
   TabbedPageTabItemTheme (the items of the top pane). The page background is
-  ApplicationPageBackgroundThemeBrush (the background the page templates of WinUI give a page);
-  the pages of its tabs, transparent (Controls/ContentPage.xaml), show the content layer of
-  NavigationView (NavigationViewContentBackground of the content grid).
+  ApplicationPageBackgroundThemeBrush (as Controls/ContentPage.xaml).
 
   Translation notes (docs/porting/winui-theme.md, section 4):
   - The ItemsRepeater TopNavMenuItemsHost with a horizontal StackLayout is the ItemsPresenter of

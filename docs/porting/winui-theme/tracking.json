@@ -90384,7 +90384,7 @@
     "{ContentPage}"
    ],
    "batch": "B5",
-   "winui": "No WinUI style (Page has none): no background of its own (a page shows its host: the window or the content layer of NavigationView) and the text of the window (TextFillColorPrimaryBrush).",
+   "winui": "No WinUI style (Page has none): the page background and text of the window (SolidBackgroundFillColorBaseBrush, TextFillColorPrimaryBrush).",
    "status": "ported",
    "deviations": 1,
    "date": "2026-10-16"
