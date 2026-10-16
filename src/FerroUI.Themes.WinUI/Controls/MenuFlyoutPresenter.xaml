@@ -1,0 +1,71 @@
+<!--
+  Ported from microsoft-ui-xaml (https://github.com/microsoft/microsoft-ui-xaml),
+  commit 7e4b0c2096be402f51cc8f7d203ebf67cff183d0:
+    controls/dev/CommonStyles/MenuFlyout_themeresources.xaml (the style
+    DefaultMenuFlyoutPresenterStyle; the resources of the document are
+    Resources/MenuFlyout_themeresources.xaml)
+  Copyright (c) Microsoft Corporation. Licensed under the MIT License (see NOTICE.md of the crate).
+
+  Translation notes (docs/porting/winui-theme.md, section 4):
+  - Template parts: the ItemsPresenter of the source is FerroUI's PART_ItemsPresenter. The scroll
+    viewer MenuFlyoutPresenterScrollViewer keeps its name and has the keyed theme of the same
+    name (Controls/MenuScrollViewer.xaml).
+  - The items presenter is a scope of shared sizes (Grid.IsSharedSizeScope): WinUI aligns the
+    text of the items with the check placeholder and the icon placeholder states that the
+    presenter computes from all of its items; the templates of MenuItem align them with shared
+    column sizes instead (Controls/MenuItem.xaml).
+  - The SystemBackdrop setter (the resource MenuFlyoutSystemBackdrop, the desktop acrylic backdrop)
+    is waived: the presenter draws MenuFlyoutPresenterBackground, the fallback colour of the
+    acrylic.
+  - The MinWidth of the scroll viewer, bound to TemplateSettings.FlyoutContentMinWidth (the width
+    of the target of a flyout opened with a minimum width), has no counterpart.
+  - The scroll and rail modes and ZoomMode of the source are left out.
+-->
+<ResourceDictionary xmlns="https://github.com/ferroui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    x:ClassModifier="internal">
+  <Design.PreviewWith>
+    <Border Padding="20">
+      <MenuFlyoutPresenter Width="240">
+        <MenuItem Header="Open" InputGesture="Ctrl+O" />
+        <MenuItem Header="Save" InputGesture="Ctrl+S" />
+        <Separator />
+        <MenuItem Header="Disabled" IsEnabled="False" />
+      </MenuFlyoutPresenter>
+    </Border>
+  </Design.PreviewWith>
+
+  <ControlTheme x:Key="DefaultMenuFlyoutPresenterStyle" TargetType="MenuFlyoutPresenter">
+    <Setter Property="Background" Value="{DynamicResource MenuFlyoutPresenterBackground}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource MenuFlyoutPresenterBorderBrush}" />
+    <Setter Property="BorderThickness" Value="{DynamicResource MenuFlyoutPresenterBorderThemeThickness}" />
+    <Setter Property="Padding" Value="{StaticResource MenuFlyoutPresenterThemePadding}" />
+    <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
+    <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto" />
+    <Setter Property="MinWidth" Value="{DynamicResource FlyoutThemeMinWidth}" />
+    <Setter Property="MinHeight" Value="{StaticResource MenuFlyoutThemeMinHeight}" />
+    <Setter Property="CornerRadius" Value="{DynamicResource OverlayCornerRadius}" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border Background="{TemplateBinding Background}"
+                BorderBrush="{TemplateBinding BorderBrush}"
+                BorderThickness="{TemplateBinding BorderThickness}"
+                CornerRadius="{TemplateBinding CornerRadius}"
+                BackgroundSizing="InnerBorderEdge">
+          <ScrollViewer x:Name="MenuFlyoutPresenterScrollViewer"
+                        Theme="{StaticResource MenuFlyoutPresenterScrollViewer}"
+                        Margin="{TemplateBinding Padding}"
+                        HorizontalScrollBarVisibility="{TemplateBinding (ScrollViewer.HorizontalScrollBarVisibility)}"
+                        VerticalScrollBarVisibility="{TemplateBinding (ScrollViewer.VerticalScrollBarVisibility)}">
+            <ItemsPresenter x:Name="PART_ItemsPresenter"
+                            ItemsPanel="{TemplateBinding ItemsPanel}"
+                            KeyboardNavigation.TabNavigation="Continue"
+                            Grid.IsSharedSizeScope="True" />
+          </ScrollViewer>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+
+  <ControlTheme x:Key="{x:Type MenuFlyoutPresenter}" TargetType="MenuFlyoutPresenter" BasedOn="{StaticResource DefaultMenuFlyoutPresenterStyle}" />
+</ResourceDictionary>

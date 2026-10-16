@@ -2,10 +2,11 @@
      menu and of a context menu is a MenuFlyoutPresenter with MenuFlyoutItem, MenuFlyoutSeparator,
      ToggleMenuFlyoutItem and MenuFlyoutSubItem (WinUI shows a context menu as a menu flyout);
      the input gesture is the text of the keyboard accelerator. The pointer-over menu item has
-     the brushes of that state as local values; the pointer-over item of the menu bar is in the
-     normal state (its template sets that state on a part). CommandBar has AppBarButton,
-     AppBarSeparator and AppBarToggleButton, with the same path icons and the labels at the right
-     (DefaultLabelPosition="Right", shown while the bar is closed). -->
+     the brushes of that state as local values, and so has the pointer-over item of the menu bar
+     (its template binds the background of its parts to the background of the item; its text
+     keeps its colour, as ButtonForegroundPointerOver is MenuBarItemForeground). CommandBar has
+     AppBarButton, AppBarSeparator and AppBarToggleButton, with the same path icons and the labels
+     at the right (DefaultLabelPosition="Right", shown while the bar is closed). -->
 <StackPanel xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
             Margin="24" Spacing="12">
@@ -15,7 +16,7 @@
   <MenuBar HorizontalAlignment="Left">
     <MenuBarItem Title="File" />
     <MenuBarItem Title="Edit" />
-    <MenuBarItem Title="View" />
+    <MenuBarItem Title="View" Background="{ThemeResource MenuBarItemBackgroundPointerOver}" />
     <MenuBarItem Title="Help" IsEnabled="False" />
   </MenuBar>
 

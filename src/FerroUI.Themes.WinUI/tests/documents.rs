@@ -106,6 +106,7 @@ document_tests! {
     controls_data_validation_errors => "/Controls/DataValidationErrors.xaml";
     controls_date_picker => "/Controls/DatePicker.xaml";
     controls_date_time_picker_shared => "/Controls/DateTimePickerShared.xaml";
+    controls_context_menu => "/Controls/ContextMenu.xaml";
     controls_embeddable_control_root => "/Controls/EmbeddableControlRoot.xaml";
     controls_grid_splitter => "/Controls/GridSplitter.xaml";
     controls_group_box => "/Controls/GroupBox.xaml";
@@ -114,6 +115,10 @@ document_tests! {
     controls_hyperlink_button => "/Controls/HyperlinkButton.xaml";
     controls_items_control => "/Controls/ItemsControl.xaml";
     controls_label => "/Controls/Label.xaml";
+    controls_menu => "/Controls/Menu.xaml";
+    controls_menu_flyout_presenter => "/Controls/MenuFlyoutPresenter.xaml";
+    controls_menu_item => "/Controls/MenuItem.xaml";
+    controls_menu_scroll_viewer => "/Controls/MenuScrollViewer.xaml";
     controls_overlay_popup_host => "/Controls/OverlayPopupHost.xaml";
     controls_path_icon => "/Controls/PathIcon.xaml";
     controls_popup_root => "/Controls/PopupRoot.xaml";

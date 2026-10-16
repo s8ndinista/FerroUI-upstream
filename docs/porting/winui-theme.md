@@ -474,7 +474,7 @@ ports a control updates its state by porting it, not by editing the table.
 | `ComboBoxItem.xaml` | `{ComboBoxItem}` | ComboBoxItem: DefaultComboBoxItemStyle, ComboBoxItemPill (ComboBox_themeresources.xaml). | B3 | pending |
 | `CommandBar.xaml` | `{CommandBarButton}`, `{CommandBarToggleButton}`, `{CommandBarSeparator}`, `{CommandBar}` | CommandBar: DefaultCommandBarStyle, DefaultCommandBarOverflowPresenterStyle (CommandBar_themeresources.xaml); AppBarButton: DefaultAppBarButtonStyle, AppBarButtonOverflowStyle; AppBarToggleButton: DefaultAppBarToggleButtonStyle, AppBarToggleButtonOverflowStyle; AppBarSeparator: DefaultAppBarSeparatorStyle. | B5 | ported |
 | `ContentPage.xaml` | `{ContentPage}` | No WinUI style (Page has none): the page background and text of the window (SolidBackgroundFillColorBaseBrush, TextFillColorPrimaryBrush). | B5 | ported |
-| `ContextMenu.xaml` | `{ContextMenu}` | MenuFlyoutPresenter: DefaultMenuFlyoutPresenterStyle (MenuFlyout_themeresources.xaml). | B3 | pending |
+| `ContextMenu.xaml` | `{ContextMenu}` | MenuFlyoutPresenter: DefaultMenuFlyoutPresenterStyle (MenuFlyout_themeresources.xaml). | B3 | ported |
 | `DataValidationErrors.xaml` | `{DataValidationErrors}` | No WinUI style (input validation was removed from WinUI 3): the critical fill of the palette (SystemFillColorCriticalBrush) for the message and the border of the field, and the error icon of InfoBar (InfoBar.xaml, InfoBar_themeresources.xaml) for the tool tip variant. | B1 | ported |
 | `DatePicker.xaml` | `{DatePicker}`, `{DatePickerPresenter}` | DatePicker: DefaultDatePickerStyle; DatePickerFlyoutPresenter: DefaultDatePickerFlyoutPresenterStyle (DatePicker_themeresources.xaml). | B4 | ported |
 | `DateTimePickerShared.xaml` | (keyed themes only) | LoopingSelector: DefaultLoopingSelectorStyle, LoopingSelectorItem; DateTimePickerFlyoutButtonStyle, DateTimePickerFlyoutLoopingSelectorNavigationButtonStyle (DateTimePickerFlyout_themeresources.xaml). | B4 | ported |
@@ -492,10 +492,10 @@ ports a control updates its state by porting it, not by editing the table.
 | `ListBox.xaml` | `{ListBox}` | ListBox: DefaultListBoxStyle (ListBox_themeresources.xaml). | B3 | pending |
 | `ListBoxItem.xaml` | `{ListBoxItem}` | ListBoxItem: DefaultListBoxItemStyle (ListBox_themeresources.xaml). | B3 | pending |
 | `ManagedFileChooser.xaml` | `{ManagedFileChooser}`, `{ManagedFileChooserOverwritePrompt}` | No WinUI control: built from the ListViewItem (ListViewItem_themeresources.xaml), TextBox, Button and ContentDialog (DefaultContentDialogStyle) styles. | B6 | ported |
-| `Menu.xaml` | `{Menu}` | MenuBar: DefaultMenuBarStyle (MenuBar.xaml); MenuBarItem (MenuBarItem.xaml). | B3 | pending |
-| `MenuFlyoutPresenter.xaml` | `{MenuFlyoutPresenter}` | MenuFlyoutPresenter: DefaultMenuFlyoutPresenterStyle (MenuFlyout_themeresources.xaml). | B3 | pending |
-| `MenuItem.xaml` | `{MenuItem}` | MenuFlyoutItem: DefaultMenuFlyoutItemStyle; MenuFlyoutSubItem: DefaultMenuFlyoutSubItemStyle; ToggleMenuFlyoutItem: DefaultToggleMenuFlyoutItemStyle (MenuFlyout_themeresources.xaml); RadioMenuFlyoutItem: DefaultRadioMenuFlyoutItemStyle (RadioMenuFlyoutItem_themeresources.xaml). | B3 | pending |
-| `MenuScrollViewer.xaml` | (keyed themes only) | The ScrollViewer of the MenuFlyoutPresenter template (MenuFlyout_themeresources.xaml). | B3 | pending |
+| `Menu.xaml` | `{Menu}` | MenuBar: DefaultMenuBarStyle (MenuBar.xaml); MenuBarItem (MenuBarItem.xaml). | B3 | ported |
+| `MenuFlyoutPresenter.xaml` | `{MenuFlyoutPresenter}` | MenuFlyoutPresenter: DefaultMenuFlyoutPresenterStyle (MenuFlyout_themeresources.xaml). | B3 | ported |
+| `MenuItem.xaml` | `{MenuItem}` | MenuFlyoutItem: DefaultMenuFlyoutItemStyle; MenuFlyoutSubItem: DefaultMenuFlyoutSubItemStyle; ToggleMenuFlyoutItem: DefaultToggleMenuFlyoutItemStyle (MenuFlyout_themeresources.xaml); RadioMenuFlyoutItem: DefaultRadioMenuFlyoutItemStyle (RadioMenuFlyoutItem_themeresources.xaml). | B3 | ported |
+| `MenuScrollViewer.xaml` | (keyed themes only) | The ScrollViewer of the MenuFlyoutPresenter template (MenuFlyout_themeresources.xaml). | B3 | ported |
 | `NavigationPage.xaml` | `{NavigationPage}` | No WinUI control: NavigationBackButtonNormalStyle, NavigationBackButtonSmallStyle (NavigationBackButton.xaml) and the page background. | B5 | ported |
 | `NotificationCard.xaml` | `{NotificationCard}` | InfoBar: {InfoBar} (InfoBar.xaml, InfoBar_themeresources.xaml). | B6 | ported |
 | `NumericUpDown.xaml` | `{NumericUpDown}` | NumberBox: {NumberBox}, NumberBoxTextBoxStyle, NumberBoxSpinButtonStyle (NumberBox.xaml, NumberBox_themeresources.xaml). | B2 | ported |
@@ -603,7 +603,7 @@ Every target type of a style of the merged WinUI theme, the FerroUI control its 
 | `Shape` | no FerroUI control | B3 | ColorPickerBorderStyle (waived with ColorPicker) |
 | `Slider` | `Slider` | B2 |  |
 | `SplitButton` | `SplitButton` | B2 |  |
-| `SplitMenuFlyoutItem` | `MenuItem` | B3 |  |
+| `SplitMenuFlyoutItem` | no FerroUI control | B3 | no FerroUI counterpart: MenuItem has no split mode (waived) |
 | `SplitView` | `SplitView` | B5 |  |
 | `TabView` | `TabControl` | B5 |  |
 | `TabViewItem` | `TabItem` | B5 |  |

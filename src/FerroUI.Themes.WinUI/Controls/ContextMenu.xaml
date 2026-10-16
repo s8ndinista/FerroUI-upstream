@@ -1,0 +1,71 @@
+<!--
+  Ported from microsoft-ui-xaml (https://github.com/microsoft/microsoft-ui-xaml),
+  commit 7e4b0c2096be402f51cc8f7d203ebf67cff183d0:
+    controls/dev/CommonStyles/MenuFlyout_themeresources.xaml (the style
+    DefaultMenuFlyoutPresenterStyle; the resources of the document are
+    Resources/MenuFlyout_themeresources.xaml)
+  Copyright (c) Microsoft Corporation. Licensed under the MIT License (see NOTICE.md of the crate).
+
+  Translation notes (docs/porting/winui-theme.md, section 4):
+  - WinUI has no context menu control: the context menu of an element (ContextFlyout) is a
+    MenuFlyout, shown by a MenuFlyoutPresenter. FerroUI's ContextMenu is a menu in a popup of its
+    own, so its theme is the theme of the menu presenter (Controls/MenuFlyoutPresenter.xaml): the
+    same setters and template, with the items presenter as PART_ItemsPresenter and the scroll
+    viewer MenuFlyoutPresenterScrollViewer.
+  - Focusable is set, as the other themes of FerroUI do, so that the open menu takes the
+    keyboard. WindowManagerAddShadowHint is off: the shadow a window manager adds to a popup
+    window does not follow the rounded corners of the presenter (the WinUI shadow is not drawn,
+    see FlyoutPresenter).
+  - SystemBackdrop, the MinWidth bound to TemplateSettings.FlyoutContentMinWidth, and the scroll,
+    rail and zoom modes are left out, as for MenuFlyoutPresenter.
+-->
+<ResourceDictionary xmlns="https://github.com/ferroui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    x:ClassModifier="internal">
+  <Design.PreviewWith>
+    <Border Padding="48" Width="400" Height="200">
+      <Border.ContextMenu>
+        <ContextMenu>
+          <MenuItem Header="Cut" InputGesture="Ctrl+X" />
+          <MenuItem Header="Copy" InputGesture="Ctrl+C" />
+          <MenuItem Header="Paste" InputGesture="Ctrl+V" IsEnabled="False" />
+        </ContextMenu>
+      </Border.ContextMenu>
+      <TextBlock Text="Right-click here" />
+    </Border>
+  </Design.PreviewWith>
+
+  <ControlTheme x:Key="{x:Type ContextMenu}" TargetType="ContextMenu">
+    <Setter Property="Background" Value="{DynamicResource MenuFlyoutPresenterBackground}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource MenuFlyoutPresenterBorderBrush}" />
+    <Setter Property="BorderThickness" Value="{DynamicResource MenuFlyoutPresenterBorderThemeThickness}" />
+    <Setter Property="Padding" Value="{StaticResource MenuFlyoutPresenterThemePadding}" />
+    <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
+    <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto" />
+    <Setter Property="MinWidth" Value="{DynamicResource FlyoutThemeMinWidth}" />
+    <Setter Property="MinHeight" Value="{StaticResource MenuFlyoutThemeMinHeight}" />
+    <Setter Property="CornerRadius" Value="{DynamicResource OverlayCornerRadius}" />
+    <Setter Property="Focusable" Value="True" />
+    <Setter Property="WindowManagerAddShadowHint" Value="False" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border Background="{TemplateBinding Background}"
+                BorderBrush="{TemplateBinding BorderBrush}"
+                BorderThickness="{TemplateBinding BorderThickness}"
+                CornerRadius="{TemplateBinding CornerRadius}"
+                BackgroundSizing="InnerBorderEdge">
+          <ScrollViewer x:Name="MenuFlyoutPresenterScrollViewer"
+                        Theme="{StaticResource MenuFlyoutPresenterScrollViewer}"
+                        Margin="{TemplateBinding Padding}"
+                        HorizontalScrollBarVisibility="{TemplateBinding (ScrollViewer.HorizontalScrollBarVisibility)}"
+                        VerticalScrollBarVisibility="{TemplateBinding (ScrollViewer.VerticalScrollBarVisibility)}">
+            <ItemsPresenter x:Name="PART_ItemsPresenter"
+                            ItemsPanel="{TemplateBinding ItemsPanel}"
+                            KeyboardNavigation.TabNavigation="Continue"
+                            Grid.IsSharedSizeScope="True" />
+          </ScrollViewer>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+</ResourceDictionary>

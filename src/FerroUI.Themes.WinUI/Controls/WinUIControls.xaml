@@ -88,6 +88,11 @@
         <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/RefreshVisualizer.xaml" />
         <!-- B3: flyouts, menus, lists and selection. -->
         <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/FlyoutPresenter.xaml" />
+        <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/MenuScrollViewer.xaml" />
+        <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/MenuFlyoutPresenter.xaml" />
+        <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/ContextMenu.xaml" />
+        <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/MenuItem.xaml" />
+        <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/Menu.xaml" />
       </ResourceDictionary.MergedDictionaries>
     </ResourceDictionary>
   </Styles.Resources>

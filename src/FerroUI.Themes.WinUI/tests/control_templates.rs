@@ -204,8 +204,12 @@ control_tests! {
     check_box => "CheckBox";
     date_picker => "DatePicker";
     date_picker_presenter => "DatePickerPresenter";
+    context_menu => "ContextMenu";
     flyout_presenter => "FlyoutPresenter";
     hyperlink_button => "HyperlinkButton";
+    menu => "Menu";
+    menu_flyout_presenter => "MenuFlyoutPresenter";
+    menu_item => "MenuItem";
     radio_button => "RadioButton";
     repeat_button => "RepeatButton";
     scroll_bar => "ScrollBar";
