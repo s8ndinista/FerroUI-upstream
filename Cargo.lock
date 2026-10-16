@@ -446,6 +446,7 @@ dependencies = [
  "ferroui-skia",
  "ferroui-themes-fluent",
  "ferroui-themes-simple",
+ "ferroui-themes-winui",
  "ferroui-vello",
  "mini-mvvm",
  "skia-safe",
@@ -799,6 +800,7 @@ dependencies = [
  "ferroui-skia",
  "ferroui-themes-fluent",
  "ferroui-themes-simple",
+ "ferroui-themes-winui",
  "ferroui-vello",
  "ferroui-vulkan",
  "ferroui-win32",
@@ -1236,6 +1238,18 @@ dependencies = [
  "ferroui-markup-xaml",
  "ferroui-markup-xaml-loader",
  "ferroui-themes-fluent",
+]
+
+[[package]]
+name = "ferroui-themes-winui"
+version = "0.1.0-preview.4"
+dependencies = [
+ "ferroui-base",
+ "ferroui-build",
+ "ferroui-controls",
+ "ferroui-dialogs",
+ "ferroui-markup-xaml",
+ "ferroui-markup-xaml-loader",
 ]
 
 [[package]]
@@ -4027,6 +4041,29 @@ dependencies = [
  "ferroui-themes-fluent",
  "ferroui-win32",
  "ferroui-winui",
+ "sample-build",
+ "sample-support",
+ "sample-testing",
+ "windows-sys",
+]
+
+[[package]]
+name = "winui-theme-gallery"
+version = "0.1.0-preview.4"
+dependencies = [
+ "ferroui-base",
+ "ferroui-controls",
+ "ferroui-desktop",
+ "ferroui-dialogs",
+ "ferroui-harfbuzz",
+ "ferroui-markup",
+ "ferroui-markup-xaml",
+ "ferroui-microcom",
+ "ferroui-skia",
+ "ferroui-themes-winui",
+ "ferroui-win32",
+ "ferroui-winui",
+ "roxmltree 0.20.0",
  "sample-build",
  "sample-support",
  "sample-testing",

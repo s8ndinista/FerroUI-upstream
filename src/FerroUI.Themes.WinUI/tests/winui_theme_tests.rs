@@ -4,7 +4,7 @@
 use super::support::*;
 use crate::accents::SystemAccentColors;
 use crate::{DensityStyle, WinUITheme};
-use ferroui_base::controls::{IResourceProvider, ResourceKey};
+use ferroui_base::controls::ResourceKey;
 use ferroui_base::media::Color;
 use ferroui_base::metadata::from_markup_value;
 use ferroui_base::styling::ThemeVariant;

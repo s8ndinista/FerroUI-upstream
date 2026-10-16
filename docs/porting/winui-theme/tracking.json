@@ -90171,7 +90171,7 @@
    "batch": "F",
    "winui": "Button: DefaultButtonStyle, AccentButtonStyle, SubtleButtonStyle (Button_themeresources.xaml).",
    "status": "ported",
-   "deviations": 5,
+   "deviations": 6,
    "date": "2026-10-16"
   },
   {
@@ -90711,7 +90711,7 @@
    "batch": "F",
    "winui": "ScrollViewer: DefaultScrollViewerStyle (ScrollViewer_themeresources.xaml).",
    "status": "ported",
-   "deviations": 7,
+   "deviations": 8,
    "date": "2026-10-16"
   },
   {
@@ -91414,7 +91414,7 @@
   "General": 23,
   "Resources": 9,
   "AdornerLayer": 1,
-  "Button": 5,
+  "Button": 6,
   "CheckBox": 5,
   "EmbeddableControlRoot": 1,
   "HyperlinkButton": 3,
@@ -91423,7 +91423,7 @@
   "RadioButton": 6,
   "RepeatButton": 1,
   "ScrollBar": 11,
-  "ScrollViewer": 7,
+  "ScrollViewer": 8,
   "TextBlock": 3,
   "TextBox": 11,
   "ThemeVariantScope": 1,

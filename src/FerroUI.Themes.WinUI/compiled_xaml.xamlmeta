@@ -1,0 +1,31 @@
+{
+  "name": "FerroUI.Themes.WinUI",
+  "crate_name": "ferroui_themes_winui",
+  "documents": [
+    {
+      "uri": "ferres://ferroui.themes.winui/WinUITheme.xaml",
+      "root_type": "FerroUI.Themes.WinUI.WinUITheme",
+      "class_rust_path": "::ferroui_themes_winui::WinUITheme",
+      "build_path": null,
+      "populate_path": "::ferroui_themes_winui::compiled_xaml::populate",
+      "public": true
+    },
+    {
+      "uri": "ferres://ferroui.themes.winui/DensityStyles/Compact.xaml",
+      "root_type": "FerroUI.Controls.ResourceDictionary",
+      "class_rust_path": null,
+      "build_path": "::ferroui_themes_winui::compiled_xaml::build_densitystyles_compact_xaml",
+      "populate_path": null,
+      "public": false
+    },
+    {
+      "uri": "ferres://ferroui.themes.winui/Controls/WinUIControls.xaml",
+      "root_type": "FerroUI.Styling.Styles",
+      "class_rust_path": null,
+      "build_path": "::ferroui_themes_winui::compiled_xaml::build_controls_winuicontrols_xaml",
+      "populate_path": null,
+      "public": false
+    }
+  ],
+  "dependencies": []
+}

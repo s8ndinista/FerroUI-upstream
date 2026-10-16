@@ -72,6 +72,7 @@ it. Abbreviations: CS = `controls/dev/CommonStyles/`, GX = `dxaml/xcp/dxaml/them
 | BTN-3 | `ContentPresenter.BackgroundTransition` (`BrushTransition Duration="0:0:0.083"`) | Animates background changes. | `BrushTransition Property="Background"` in `ContentPresenter.Transitions`. | FerroUI's transitions are a list on the element. |
 | BTN-4 | `AccentButtonStyle`, `SubtleButtonStyle` (no `BasedOn`) | Applied over the default style. | Based on `DefaultButtonStyle`; `SubtleButtonStyle`, whose template is the one of `DefaultButtonStyle` in the source, takes it from its base. | G-15. |
 | BTN-5 | `FocusVisualMargin="-3"`, `UseSystemFocusVisuals` | Focus visual 3 px outside the button. | `FocusAdorner` with `Margin="-3"`. | G-14. |
+| BTN-6 | (not in the source) | An accent button is a button with `Style="{StaticResource AccentButtonStyle}"`. | Also the style class `accent` (`Classes="accent"`) of the default theme: the brushes and states of `AccentButtonStyle`. | The framework's applications and samples (the ControlCatalog) mark accent buttons with the class, as the Fluent theme defines it; without it they would show as default buttons. |
 
 ## CheckBox
 
@@ -153,6 +154,7 @@ it. Abbreviations: CS = `controls/dev/CommonStyles/`, GX = `dxaml/xcp/dxaml/them
 | SCV-5 | `VerticalScrollBarVisibility="Visible"` | Visible bars that hide until the pointer moves. | Not set (FerroUI's default `Auto`). | Without the indicator modes a visible bar would show on every scroll viewer. |
 | SCV-6 | `HorizontalScrollMode`, `VerticalScrollMode`, `IsHorizontalRailEnabled`, `IsVerticalRailEnabled`, `ZoomMode`, `UseSystemFocusVisuals` | Modes of WinUI's scroll viewer. | Left out. | G-19. |
 | SCV-7 | (not in the source) | Touch scrolling is done by the platform. | `ScrollGestureRecognizer` and the snap point bindings on the presenter, as the Fluent theme. | FerroUI's touch scrolling needs them. |
+| SCV-8 | `ScrollContentPresenter Margin="{TemplateBinding Padding}"` | The padding of the scroll viewer is a margin around the presenter, outside the scrolled area. | `Padding="{TemplateBinding Padding}"` of the presenter, as the Fluent theme. | FerroUI's presenter takes the padding itself and counts it in the extent, so content laid out to the edge of the padding stays inside the extent (the ControlCatalog's home page test checks it); with a margin the content ends outside the extent. |
 
 ## TextBlock
 
