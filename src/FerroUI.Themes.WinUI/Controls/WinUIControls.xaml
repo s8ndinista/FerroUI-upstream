@@ -75,6 +75,9 @@
         <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/Carousel.xaml" />
         <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/CarouselPage.xaml" />
         <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/CommandBar.xaml" />
+        <!-- B2: buttons, ranges and expanders. -->
+        <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/DropDownButton.xaml" />
+        <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/SplitButton.xaml" />
       </ResourceDictionary.MergedDictionaries>
     </ResourceDictionary>
   </Styles.Resources>

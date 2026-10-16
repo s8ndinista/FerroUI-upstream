@@ -254,6 +254,9 @@ control_tests! {
     tab_strip => "TabStrip";
     tab_strip_item => "TabStripItem";
     tabbed_page => "TabbedPage";
+    // B2: buttons, ranges and expanders
+    drop_down_button => "DropDownButton";
+    split_button => "SplitButton";
 }
 
 /// The window itself is themed: its template is applied when it is shown
