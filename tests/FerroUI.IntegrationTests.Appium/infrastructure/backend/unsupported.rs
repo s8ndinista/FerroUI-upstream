@@ -102,10 +102,6 @@ impl Backend {
         match *self {}
     }
 
-    pub fn press(&self, _element: &NativeElement) -> bool {
-        match *self {}
-    }
-
     pub fn scroll_into_view(&self, _element: &NativeElement) {
         match *self {}
     }

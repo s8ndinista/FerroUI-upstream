@@ -498,7 +498,7 @@ pub struct Backend {
 
 /// How long the input of a command is given to arrive and be handled before
 /// the command returns.
-const SETTLE: Duration = Duration::from_millis(250);
+const SETTLE: Duration = Duration::from_millis(500);
 
 impl Backend {
     /// Whether `SendKeys` clicks an element whose focus could not be set:
@@ -733,12 +733,6 @@ impl Backend {
         ElementRect { x, y, width, height }
     }
 
-    /// The press action of the element (`accessibilityPerformPress`), where
-    /// it has one.
-    pub fn press(&self, element: &NativeElement) -> bool {
-        element.actions().iter().any(|action| action == "AXPress") && element.perform("AXPress")
-    }
-
     /// Brings the element into view before a click at its centre, as
     /// XCTest scrolls an element into view before it taps it: where a click
     /// at the centre would not reach the element and the element has the
@@ -793,8 +787,12 @@ impl Backend {
 
     fn matches(&self, element: &NativeElement, by: &By) -> bool {
         match by {
-            By::AccessibilityId(id) => self.automation_id(element) == *id,
-            By::Name(name) => self.name(element) == *name,
+            // The Mac2 driver finds both with `matchingIdentifier:` of XCTest, which matches the
+            // identifier, the title or the label: a native menu item whose identifier is its
+            // action (`didSelectItem:`) is found by its title.
+            By::AccessibilityId(id) | By::Name(id) => {
+                self.automation_id(element) == *id || self.title(element) == *id || self.label(element) == *id
+            }
             By::ClassName(class) => self.class_name(element) == *class,
             By::TagName(tag) => self.tag_name(element) == *tag,
             By::XPath(_) => false,

@@ -78,7 +78,7 @@ impl WindowBaseImpl {
         let native = self.native()?;
         // The native side leaves the size at (-1, -1) when the window has
         // no frame.
-        let s = native.get_frame_size().check();
+        let s = native.get_frame_size_from(FrnSize { width: -1.0, height: -1.0 }).check();
         if s.width < 0.0 && s.height < 0.0 {
             None
         } else {

@@ -550,16 +550,15 @@ impl Element {
         self.backend().attribute(&self.native, name)
     }
 
-    /// `Click()`: what the driver of the platform does for it (a click of the
-    /// mouse at the centre on Windows; the press action of the element on
-    /// macOS where the element has one, else a click at the centre).
+    /// `Click()`: a click of the mouse at the centre of the element, after the
+    /// element is brought into view, as both drivers do (WinAppDriver; the
+    /// Mac2 driver calls `click` of XCTest, which synthesizes the events of
+    /// the mouse).
     pub fn click(&self) {
         let session = &self.session;
-        if !self.backend().press(&self.native) {
-            self.backend().scroll_into_view(&self.native);
-            let (x, y) = self.rect().center();
-            session.click_at(x, y, MouseButton::Left);
-        }
+        self.backend().scroll_into_view(&self.native);
+        let (x, y) = self.rect().center();
+        session.click_at(x, y, MouseButton::Left);
         session.settle();
     }
 
