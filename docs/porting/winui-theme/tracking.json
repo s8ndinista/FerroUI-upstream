@@ -90306,7 +90306,7 @@
    "batch": "B4",
    "winui": "The header, navigation buttons and views of the CalendarView template (DefaultCalendarViewStyle).",
    "status": "ported",
-   "deviations": 15,
+   "deviations": 17,
    "date": "2026-10-16"
   },
   {
@@ -91531,7 +91531,7 @@
   "CalendarButton": 7,
   "CalendarDatePicker": 11,
   "CalendarDayButton": 9,
-  "CalendarItem": 15,
+  "CalendarItem": 17,
   "CheckBox": 5,
   "DataValidationErrors": 2,
   "DatePicker": 15,
