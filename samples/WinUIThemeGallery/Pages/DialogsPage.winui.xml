@@ -1,9 +1,11 @@
 <!-- The native WinUI 3 counterpart of DialogsPage.xaml. WinUI has no file chooser of its own (an
      application shows the one of the system), so the page is the layout of the managed file
      chooser composed of WinUI controls: an empty list of quick links at the left, a bar with the
-     up button, the location and the refresh button, the column headers over an empty list of
-     entries, and the file name, the check box of hidden files and the two buttons at the
-     bottom. What is compared is the look of those controls in the two themes, not a dialog. -->
+     up button (glyph E74A), the location and the refresh button (glyph E72C), the column headers
+     with their splitters (the columns of the managed file chooser of the WinUI theme, aligned with
+     the padding of a list view item) over an empty list of entries, and the file name, the check
+     box of hidden files and the two buttons at the bottom. What is compared is the look of those
+     controls in the two themes, not a dialog. -->
 <StackPanel xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
             Margin="24" Spacing="12">
@@ -32,24 +34,34 @@
         <ColumnDefinition Width="Auto" />
       </Grid.ColumnDefinitions>
       <Button Grid.Column="0">
-        <PathIcon Width="14" Height="14" Data="M11,20V8.8L6.4,13.4L5,12L12,5L19,12L17.6,13.4L13,8.8V20Z" />
+        <FontIcon Glyph="&#xE74A;" FontSize="16" />
       </Button>
       <TextBox Grid.Column="1" />
       <Button Grid.Column="2">
-        <PathIcon Width="14" Height="14" Data="M12,4A8,8 0 1,0 20,12H18A6,6 0 1,1 12,6V9L16,5L12,1Z" />
+        <FontIcon Glyph="&#xE72C;" FontSize="16" />
       </Button>
     </Grid>
 
-    <Grid Grid.Column="1" Grid.Row="1" Margin="27,5,0,0">
+    <Grid Grid.Column="1" Grid.Row="1" Margin="16,5,0,0">
       <Grid.ColumnDefinitions>
-        <ColumnDefinition Width="20" />
+        <ColumnDefinition Width="28" />
+        <ColumnDefinition Width="275" />
+        <ColumnDefinition Width="16" />
         <ColumnDefinition Width="200" />
-        <ColumnDefinition Width="140" />
-        <ColumnDefinition Width="*" />
+        <ColumnDefinition Width="16" />
+        <ColumnDefinition Width="150" />
+        <ColumnDefinition Width="16" />
+        <ColumnDefinition Width="200" />
+        <ColumnDefinition Width="16" />
       </Grid.ColumnDefinitions>
       <TextBlock Grid.Column="1" Text="Name" />
-      <TextBlock Grid.Column="2" Text="Date Modified" />
-      <TextBlock Grid.Column="3" Text="Type" />
+      <Rectangle Grid.Column="2" Width="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}" />
+      <TextBlock Grid.Column="3" Text="Date Modified" />
+      <Rectangle Grid.Column="4" Width="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}" />
+      <TextBlock Grid.Column="5" Text="Type" />
+      <Rectangle Grid.Column="6" Width="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}" />
+      <TextBlock Grid.Column="7" Text="Size" />
+      <Rectangle Grid.Column="8" Width="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}" />
     </Grid>
 
     <ListView Grid.Column="1" Grid.Row="2" />

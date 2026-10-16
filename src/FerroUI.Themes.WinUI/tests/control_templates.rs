@@ -230,6 +230,8 @@ control_tests! {
     tool_tip => "ToolTip";
     transitioning_content_control => "TransitioningContentControl";
     // B6: window decorations, notifications, tables and dialogs
+    managed_file_chooser => "ManagedFileChooser";
+    managed_file_chooser_overwrite_prompt => "ManagedFileChooserOverwritePrompt";
     notification_card => "NotificationCard";
     table_view => "TableView";
     table_view_cell => "TableViewCell";
@@ -323,6 +325,163 @@ fn window_drawn_decorations() {
             );
         }
     }
+}
+
+/// Not from upstream: the file chooser of the theme presents its view model:
+/// the quick links, the entries of the folder and the selection.
+#[test]
+fn managed_file_chooser_presents_its_view_model() {
+    use ferroui_base::metadata::from_markup_value;
+    use ferroui_base::threading::Dispatcher;
+    use ferroui_controls::{ListBox, TextBox};
+    use ferroui_dialogs::internal::{ManagedFileChooserItemViewModel, ManagedFileChooserViewModel};
+    use ferroui_dialogs::{ManagedFileChooser, ManagedFileDialogOptions};
+
+    let _app = start_themed_application();
+    let root = std::env::temp_dir().join(format!("ferroui-theme-chooser-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&root);
+    std::fs::create_dir_all(root.join("folder")).unwrap();
+    std::fs::write(root.join("file.txt"), b"text").unwrap();
+
+    let model = ManagedFileChooserViewModel::new(ManagedFileDialogOptions::new());
+    model.navigate(Some(&root.to_string_lossy()), None);
+    let chooser = ManagedFileChooser::new();
+    chooser.set_data_context(Some(model.clone() as ferroui_base::BoxedValue));
+    let applied: Rc<RefCell<Option<NameScopeRef>>> = Rc::new(RefCell::new(None));
+    {
+        let applied = applied.clone();
+        let _ = chooser.template_applied(move |_, e| *applied.borrow_mut() = Some(e.name_scope().clone()));
+    }
+    let window = Window::new();
+    window.set_content(Some(Control::boxed(&chooser)));
+    window.show();
+    window.update_layout();
+
+    let name_scope = applied.borrow().clone().expect("TemplateApplied was raised");
+    let find = |name: &str| -> Ref<FerroObject> {
+        name_scope.find(name).unwrap_or_else(|| panic!("the part {name} is not in the template"))
+    };
+
+    let files = find("PART_Files").cast::<ListBox>().expect("a list box");
+    let entries: Vec<String> = files
+        .items()
+        .to_vec()
+        .iter()
+        .filter_map(|item| from_markup_value::<Rc<ManagedFileChooserItemViewModel>>(item))
+        .map(|item| item.display_name().unwrap())
+        .collect();
+    assert_eq!(vec!["folder", "file.txt"], entries);
+
+    let quick_links = find("PART_QuickLinks").cast::<ListBox>().expect("a list box");
+    assert_eq!(model.quick_links().count(), quick_links.items().count());
+
+    let location = find("Location").cast::<TextBox>().expect("a text box");
+    assert_eq!(Some(root.to_string_lossy().into_owned()), location.text());
+
+    // A selection of the list box is the selection of the view model.
+    files.set_selected_index(1);
+    Dispatcher::ui_thread().run_jobs(None);
+    assert_eq!(Some("file.txt".to_string()), model.file_name());
+
+    window.close();
+    let _ = std::fs::remove_dir_all(&root);
+}
+
+/// Not from upstream: a press on a quick link navigates to it, a double press
+/// on an entry of the folder opens it (a folder) or completes with it (a
+/// file), and a single press on an entry only selects it.
+#[test]
+fn managed_file_chooser_opens_quick_links_and_double_pressed_entries() {
+    use ferroui_base::input::{
+        KeyModifiers, Pointer, PointerPointProperties, PointerPressedEventArgs, PointerType,
+        PointerUpdateKind, RawInputModifiers,
+    };
+    use ferroui_base::{FerroLocator, Point};
+    use ferroui_controls::ListBox;
+    use ferroui_dialogs::internal::{
+        ManagedFileChooserItemType, ManagedFileChooserNavigationItem, ManagedFileChooserSources,
+        ManagedFileChooserViewModel,
+    };
+    use ferroui_dialogs::{ManagedFileChooser, ManagedFileDialogOptions};
+
+    let _app = start_themed_application();
+    let root = std::env::temp_dir().join(format!("ferroui-theme-chooser-press-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&root);
+    std::fs::create_dir_all(root.join("folder").join("inner")).unwrap();
+    std::fs::write(root.join("file.txt"), b"text").unwrap();
+    let path = |name: &str| root.join(name).to_string_lossy().into_owned();
+
+    let sources = ManagedFileChooserSources::new();
+    let quick_link = path("folder");
+    sources.set_get_all_items_delegate(Rc::new(move |_| {
+        vec![ManagedFileChooserNavigationItem {
+            display_name: Some("Folder".to_string()),
+            path: Some(quick_link.clone()),
+            item_type: ManagedFileChooserItemType::Folder,
+        }]
+    }));
+    FerroLocator::current_mutable().bind::<ManagedFileChooserSources>().to_constant(Rc::new(sources));
+
+    let model = ManagedFileChooserViewModel::new(ManagedFileDialogOptions::new());
+    let completed = Rc::new(RefCell::new(Vec::new()));
+    {
+        let completed = completed.clone();
+        let _ = model.complete_requested(move |items| completed.borrow_mut().push(items.to_vec()));
+    }
+    model.navigate(Some(&root.to_string_lossy()), None);
+    let chooser = ManagedFileChooser::new();
+    chooser.set_data_context(Some(model.clone() as ferroui_base::BoxedValue));
+    let applied: Rc<RefCell<Option<NameScopeRef>>> = Rc::new(RefCell::new(None));
+    {
+        let applied = applied.clone();
+        let _ = chooser.template_applied(move |_, e| *applied.borrow_mut() = Some(e.name_scope().clone()));
+    }
+    let window = Window::new();
+    window.set_content(Some(Control::boxed(&chooser)));
+    window.show();
+    window.update_layout();
+    let name_scope = applied.borrow().clone().expect("TemplateApplied was raised");
+    let list = |name: &str| name_scope.find(name).and_then(|part| part.cast::<ListBox>()).expect("a list box");
+
+    let pointer = Pointer::new(Pointer::get_next_free_id(), PointerType::Mouse, true);
+    let press = |target: &Ref<Control>, click_count: i32| {
+        let args = PointerPressedEventArgs::new(
+            target.clone(),
+            pointer.clone(),
+            &window,
+            Point::default(),
+            1,
+            PointerPointProperties::new(RawInputModifiers::LEFT_MOUSE_BUTTON, PointerUpdateKind::LeftButtonPressed),
+            KeyModifiers::NONE,
+            click_count,
+        );
+        target.raise_event(&args);
+        args.handled()
+    };
+
+    // A single press on an entry of the folder is left to the list box.
+    let file = list("PART_Files").container_from_index(1).expect("the container of file.txt");
+    assert!(!press(&file, 1));
+    assert!(completed.borrow().is_empty());
+
+    // A double press on a file completes with it.
+    assert!(press(&file, 2));
+    assert_eq!(vec![vec![path("file.txt")]], *completed.borrow());
+
+    // A double press on a folder opens it.
+    let folder = list("PART_Files").container_from_index(0).expect("the container of the folder");
+    assert!(press(&folder, 2));
+    assert_eq!(Some(path("folder")), model.location());
+
+    // A single press on a quick link navigates to it.
+    model.navigate(Some(&root.to_string_lossy()), None);
+    window.update_layout();
+    let link = list("PART_QuickLinks").container_from_index(0).expect("the container of the quick link");
+    assert!(press(&link, 1));
+    assert_eq!(Some(path("folder")), model.location());
+
+    window.close();
+    let _ = std::fs::remove_dir_all(&root);
 }
 
 /// Every control with a default control theme in the theme (a type-keyed

@@ -436,6 +436,28 @@ it. Abbreviations: CS = `controls/dev/CommonStyles/`, GX = `dxaml/xcp/dxaml/them
 |---|---|---|---|---|
 | WIN-1 | (no counterpart) WinUI 3's `Window` is not a control and has no style | The system draws the window with Mica (or the theme background). | The template FerroUI's window requires (from the Fluent theme) with `SolidBackgroundFillColorBaseBrush` (the Mica fallback), `TextFillColorPrimaryBrush` and the control font. | Built from WinUI resources; G-13. |
 
+## ManagedFileChooser
+
+The section covers both control themes of the document: ManagedFileChooser and ManagedFileChooserOverwritePrompt.
+
+| ID | WinUI source | What WinUI does | What the port does | Why |
+|---|---|---|---|---|
+| MFC-1 | (no counterpart) | WinUI 3 has no file chooser; an application shows the file picker of the system. | The template FerroUI's control requires (the parts `PART_QuickLinks` and `PART_Files`, the bindings of its view model, the layout of the Fluent theme) composed of the WinUI controls of the theme, on the background of a window (`SolidBackgroundFillColorBaseBrush`). | Built from WinUI styles and resources (section 6). |
+| MFC-2 | CS `ListViewItem_themeresources.xaml`, `DefaultListViewItemStyle`: `ListViewItemPresenter` (chrome drawn in native code, `ListViewBaseItemChrome.cpp`) | The presenter draws the backplate, the selection indicator, the multi-select check box, the drag and reorder visuals and the focus visual. | Keyed themes `ManagedFileChooserListViewStyle` (ListBox) and `ManagedFileChooserListViewItemStyle` (ListBoxItem) with elements: the backplate inset by 4,2,4,2 (`s_backplateMargin`) with `ListViewItemCornerRadius`, the selection indicator of 3 x 16 with a left margin of 4 (`s_selectionIndicatorSize`), 6 px shorter while pressed, the content at `ListViewItemDisabledThemeOpacity` when disabled; the check boxes, drag and reorder states are not drawn. | FerroUI has no `ListViewItemPresenter` (RES-8); the lists of the chooser are ListBox controls. |
+| MFC-3 | `ListViewItemPresenter` `PointerOverForeground`, `SelectedForeground`, ... | The presenter sets the foreground of the content per state. | The states set the `Foreground` of the item, which the text inherits and the icons bind to. | The icons are paths of the item template. |
+| MFC-4 | (not in the source) the icons of the entries | - | Paths of `GlyphGeometryE8B7` (Folder), `GlyphGeometryE7C3` (Page), `GlyphGeometryEDA2` (HardDrive) chosen by the `IconKey` of the entry (`ObjectConverters.Equal`), in the foreground of the item; the coloured drawings of the Fluent theme are not used. | Monochrome icons of the symbol font are the look of WinUI; G-9. |
+| MFC-5 | (not in the source) the up and refresh buttons | - | Default buttons with paths of `GlyphGeometryE74A` (Up) and `GlyphGeometryE72C` (Refresh), 14 px wide. | G-9. |
+| MFC-6 | (not in the source) the texts | - | The strings of FerroUI (`StringManagedFileChooser*`) are defined in the control document and named as dynamic resources. | The WinUI theme has no document of strings; an application can replace them by its own resources. |
+| MFC-7 | (not in the source) the column splitters of the header | - | A style of the header grid in the template gives its `GridSplitter` elements a line of 1 px in `DividerStrokeColorDefaultBrush` on a transparent area. | The splitters of the chooser are thin lines; the GridSplitter theme of the port (B1) is a different control look. |
+| MFC-8 | (not in the source) the columns | - | An icon column of 28 (16 for the icon and the 12 of spacing) and a left margin of the header of 16, the padding of the items. | The headers align with the content of the items. |
+| MFC-9 | CS `ContentDialog_themeresources.xaml`, `DefaultContentDialogStyle`: `LayoutRoot`, `SmokeLayerBackground` | A modal dialog over a smoke layer. | `BackgroundElement` is the root of the template; there is no smoke layer. | FerroUI shows the overwrite prompt in a flyout over the chooser. |
+| MFC-10 | `DialogShowingStates` transitions: `ScaleTransform` from 1.05 to 1 over `ControlNormalAnimationDuration` with `ControlFastOutSlowInKeySpline`, opacity from 0 to 1 over `ControlFasterAnimationDuration`; `DialogHidden` | The dialog scales and fades in when shown and out when hidden. | Two animations of `BackgroundElement` when the template is applied: opacity over 83 ms, scale over 250 ms with the spline 0,0,0,1; nothing when hidden. | G-22; the flyout closes the prompt. |
+| MFC-11 | `Title` (ContentControl), `ContentScrollViewer`, `Content` (ContentPresenter) | A title and scrolling content. | No title and no scroll viewer; the question is a text block in `ControlContentThemeFontSize` and `ContentControlThemeFontFamily`, wrapped. | The prompt has no title and a short text. |
+| MFC-12 | `ButtonsVisibilityStates`, `DefaultButtonStates`, the five columns of `CommandSpace` | The visible buttons and the default button choose the columns and the accent style. | The layout of `PrimaryAndCloseVisible` and `PrimaryAsDefaultButton`: columns `*,8,*` (`ContentDialogButtonSpacing` written as a value), the confirmation with `AccentButtonStyle` and `IsDefault`, the cancellation with `IsCancel`. | The prompt always has these two buttons. |
+| MFC-13 | `Grid x:Name="DialogSpace"` (corner radius), `Grid x:Name="CommandSpace"` (padding, background) | Panels with a corner radius and a padding. | Borders of the same names; `DialogSpace` clips to its corner radius. | G-17. |
+| MFC-14 | `FullDialogSizing`, `AccentColorBorder`, `PrimaryButtonStyle`, `SecondaryButtonStyle`, `CloseButtonStyle`, `IsPrimaryButtonEnabled`, `TabFocusNavigation` | Properties and states of ContentDialog. | Left out. | ManagedFileChooserOverwritePrompt has no such properties. |
+| MFC-15 | (not in the source) the padding of the dialog | `BackgroundElement` has no padding. | `BackgroundElement` honours the `Padding` of the prompt (0 by default). | The contract of FerroUI's template (the Fluent theme's root border takes the padding). |
+
 ## NotificationCard
 
 | ID | WinUI source | What WinUI does | What the port does | Why |
@@ -550,7 +572,7 @@ their sections above).
 | HeaderedContentControl | B1 | ported | No WinUI style: the header presenter of the WinUI controls with a Header (TextBox: HeaderContentPresenter, TextBoxTopHeaderMargin, TextControlHeaderForeground). |
 | ItemsControl | B1 | ported | No WinUI style in the merged theme (ItemsControl has a built-in template): an ItemsPresenter of the ItemsPanel. |
 | Label | B1 | ported | No WinUI control: the implicit style of ContentControl ({ContentControl}, generic.xaml), which Controls/Label.xaml ports. |
-| ManagedFileChooser | B6 | pending | No WinUI control: built from the ListViewItem (ListViewItem_themeresources.xaml), TextBox, Button and ContentDialog (DefaultContentDialogStyle) styles. |
+| ManagedFileChooser | B6 | ported | No WinUI control: built from the ListViewItem (ListViewItem_themeresources.xaml), TextBox, Button and ContentDialog (DefaultContentDialogStyle) styles. |
 | NavigationPage | B5 | pending | No WinUI control: NavigationBackButtonNormalStyle, NavigationBackButtonSmallStyle (NavigationBackButton.xaml) and the page background. |
 | OverlayPopupHost | F | ported | No WinUI style: the text of the window (TextFillColorPrimaryBrush, ContentControlThemeFontFamily, ControlContentThemeFontSize). |
 | PathIcon | B1 | ported | No WinUI style (IconElement has no template): the Path that WinUI's PathIcon builds in code (CPathIcon::ApplyTemplate, icon.cpp), unscaled and filled with the Foreground. |

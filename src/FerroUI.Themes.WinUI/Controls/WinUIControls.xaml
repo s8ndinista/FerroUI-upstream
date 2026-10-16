@@ -61,6 +61,7 @@
         <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/TableViewCell.xaml" />
         <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/TableViewColumnHeader.xaml" />
         <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/TableViewRow.xaml" />
+        <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/ManagedFileChooser.xaml" />
       </ResourceDictionary.MergedDictionaries>
     </ResourceDictionary>
   </Styles.Resources>

@@ -23504,9 +23504,9 @@
    "key": "DefaultContentDialogStyle",
    "kind": "Style",
    "target_type": "ContentDialog",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B6"
+   "batch": null
   },
   {
    "document": "controls/dev/CommonStyles/ContentDialog_themeresources.xaml",
@@ -23514,9 +23514,9 @@
    "key": "{ContentDialog}",
    "kind": "Style",
    "target_type": "ContentDialog",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B6"
+   "batch": null
   },
   {
    "document": "controls/dev/CommonStyles/ContentDialog_themeresources.xaml",
@@ -90075,6 +90075,7 @@
   "Controls/HyperlinkButton.xaml",
   "Controls/ItemsControl.xaml",
   "Controls/Label.xaml",
+  "Controls/ManagedFileChooser.xaml",
   "Controls/NotificationCard.xaml",
   "Controls/OverlayPopupHost.xaml",
   "Controls/PathIcon.xaml",
@@ -90545,9 +90546,9 @@
    ],
    "batch": "B6",
    "winui": "No WinUI control: built from the ListViewItem (ListViewItem_themeresources.xaml), TextBox, Button and ContentDialog (DefaultContentDialogStyle) styles.",
-   "status": "pending",
-   "deviations": 0,
-   "date": ""
+   "status": "ported",
+   "deviations": 15,
+   "date": "not committed"
   },
   {
    "document": "Menu.xaml",
@@ -91030,7 +91031,7 @@
    "winui": "TitleBar: DefaultTitleBarStyle (TitleBar.xaml, TitleBar_themeresources.xaml); WindowCaptionButton (generic.xaml) for the caption buttons.",
    "status": "ported",
    "deviations": 15,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "WindowNotificationManager.xaml",
@@ -91489,6 +91490,7 @@
   "ToolTip": 3,
   "TransitioningContentControl": 4,
   "Window": 1,
+  "ManagedFileChooser": 15,
   "NotificationCard": 13,
   "TableView": 8,
   "TableViewCell": 3,
