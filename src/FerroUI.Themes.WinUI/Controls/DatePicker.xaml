@@ -48,8 +48,11 @@
     (Controls/DateTimePickerShared.xaml).
   - The glyphs of the buttons (E8FB Accept, E711 Cancel at 16 px) are GlyphGeometryE8FB (14 px
     wide) and GlyphGeometryE711 (12 px wide).
-  - The ThemeShadow of the flyout is not ported (a popup of FerroUI has no shadow of its own, and
-    WindowManagerAddShadowHint is off as in the Fluent theme).
+  - The ThemeShadow of the flyout (ApplyElevationEffect of DatePickerFlyoutPresenter at a
+    Translation.Z of 32) is the BoxShadow ThemeShadowFlyoutBoxShadow of the border Background of
+    the presenter, and the margin ThemeShadowFlyoutMargin of PART_PickerPresenter is the room for
+    it in the popup (Resources/ThemeShadows.xaml; DEVIATIONS.md, G-24); WindowManagerAddShadowHint
+    is off, as in the Fluent theme.
 -->
 <ResourceDictionary xmlns="https://github.com/ferroui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -184,7 +187,7 @@
                  IsLightDismissEnabled="True"
                  PlacementTarget="{TemplateBinding}"
                  Placement="Bottom">
-            <DatePickerPresenter x:Name="PART_PickerPresenter" />
+            <DatePickerPresenter x:Name="PART_PickerPresenter" Margin="{StaticResource ThemeShadowFlyoutMargin}" />
           </Popup>
         </Grid>
       </ControlTemplate>
@@ -226,6 +229,7 @@
     <Setter Property="Template">
       <ControlTemplate>
         <Border x:Name="Background"
+                BoxShadow="{DynamicResource ThemeShadowFlyoutBoxShadow}"
                 Background="{TemplateBinding Background}"
                 BorderBrush="{TemplateBinding BorderBrush}"
                 BorderThickness="{TemplateBinding BorderThickness}"

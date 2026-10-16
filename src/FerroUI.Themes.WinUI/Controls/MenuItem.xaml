@@ -23,7 +23,11 @@
     of the header (FerroUI's header is content, with access keys); the popup of a sub item is
     PART_Popup with the items presenter PART_ItemsPresenter. The popup content is the template of
     MenuFlyoutPresenter (WinUI opens a MenuFlyoutPresenter for a sub item); it opens at the right
-    edge of the item, 4 px over it (CascadingMenuHelper::m_subMenuOverlapPixels).
+    edge of the item, 4 px over it (CascadingMenuHelper::m_subMenuOverlapPixels). The shadow of
+    the presenter of a sub item (ApplyElevationEffect at the depth 1 of a submenu: a ThemeShadow at
+    a Translation.Z of 40) is the BoxShadow ThemeShadowSubMenuBoxShadow of the border of the
+    popup, with the margin ThemeShadowSubMenuMargin as the room for it in the popup; deeper
+    submenus have the same shadow (Resources/ThemeShadows.xaml; DEVIATIONS.md, G-24).
   - CheckPlaceholderStates, which the presenter computes from all of its items (the text of every
     item moves by MenuFlyoutItemPlaceholderThemeThickness when one item is a toggle item or has an
     icon), are columns of shared size: the check glyph column (12 px glyph and 16 px margin) and
@@ -157,7 +161,9 @@
                  HorizontalOffset="-4"
                  IsLightDismissEnabled="False"
                  IsOpen="{TemplateBinding IsSubMenuOpen, Mode=TwoWay}">
-            <Border Background="{DynamicResource MenuFlyoutPresenterBackground}"
+            <Border BoxShadow="{DynamicResource ThemeShadowSubMenuBoxShadow}"
+                    Margin="{StaticResource ThemeShadowSubMenuMargin}"
+                    Background="{DynamicResource MenuFlyoutPresenterBackground}"
                     BorderBrush="{DynamicResource MenuFlyoutPresenterBorderBrush}"
                     BorderThickness="{DynamicResource MenuFlyoutPresenterBorderThemeThickness}"
                     CornerRadius="{DynamicResource OverlayCornerRadius}"

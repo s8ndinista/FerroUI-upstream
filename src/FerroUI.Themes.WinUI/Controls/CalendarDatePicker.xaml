@@ -23,6 +23,10 @@
     control) with the Calendar PART_Calendar, whose corner radius is OverlayCornerRadius as in the
     source; the FlyoutPresenterStyle of the source (no padding, no border) leaves the calendar as
     it is, so the popup has no presenter. CalendarViewStyle is the default theme of Calendar.
+    The shadow of that style (IsDefaultShadowEnabled: a ThemeShadow at a Translation.Z of 32) is
+    the BoxShadow ThemeShadowFlyoutBoxShadow of the Border CalendarShadow around the calendar,
+    with the margin ThemeShadowFlyoutMargin as the room for it in the popup
+    (Resources/ThemeShadows.xaml; DEVIATIONS.md, G-24).
   - The Border Background is the focus target (Control.IsTemplateFocusTarget) of the focus visual,
     FocusVisualMargin -3: the FocusAdorner of the control, drawn around the border.
   - HeaderContentPresenter, DescriptionPresenter, their rows and HeaderStates are left out:
@@ -207,19 +211,25 @@
                   VerticalAlignment="Center" />
           </Button>
           <Popup x:Name="PART_Popup"
+                 WindowManagerAddShadowHint="False"
                  PlacementTarget="{TemplateBinding}"
                  Placement="Bottom"
                  IsLightDismissEnabled="True">
-            <Calendar x:Name="PART_Calendar"
-                      CornerRadius="{DynamicResource OverlayCornerRadius}"
-                      FirstDayOfWeek="{TemplateBinding FirstDayOfWeek}"
-                      IsTodayHighlighted="{TemplateBinding IsTodayHighlighted}"
-                      SelectedDate="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=SelectedDate, Mode=TwoWay}"
-                      DisplayDate="{TemplateBinding DisplayDate}"
-                      DisplayDateStart="{TemplateBinding DisplayDateStart}"
-                      DisplayDateEnd="{TemplateBinding DisplayDateEnd}"
-                      IsWeekNumberVisible="{TemplateBinding IsWeekNumberVisible}"
-                      WeekNumberRule="{TemplateBinding WeekNumberRule}" />
+            <Border x:Name="CalendarShadow"
+                    BoxShadow="{DynamicResource ThemeShadowFlyoutBoxShadow}"
+                    CornerRadius="{DynamicResource OverlayCornerRadius}"
+                    Margin="{StaticResource ThemeShadowFlyoutMargin}">
+              <Calendar x:Name="PART_Calendar"
+                        CornerRadius="{DynamicResource OverlayCornerRadius}"
+                        FirstDayOfWeek="{TemplateBinding FirstDayOfWeek}"
+                        IsTodayHighlighted="{TemplateBinding IsTodayHighlighted}"
+                        SelectedDate="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=SelectedDate, Mode=TwoWay}"
+                        DisplayDate="{TemplateBinding DisplayDate}"
+                        DisplayDateStart="{TemplateBinding DisplayDateStart}"
+                        DisplayDateEnd="{TemplateBinding DisplayDateEnd}"
+                        IsWeekNumberVisible="{TemplateBinding IsWeekNumberVisible}"
+                        WeekNumberRule="{TemplateBinding WeekNumberRule}" />
+            </Border>
           </Popup>
         </Grid>
       </ControlTemplate>

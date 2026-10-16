@@ -443,11 +443,11 @@ def convert(root):
     )
 
     # The includes of the theme document: the system resources, the converted documents in the
-    # order of the merge of WinUI, and the outlines of the glyphs.
+    # order of the merge of WinUI, the theme shadows and the outlines of the glyphs.
     order = ["Resources/SystemResources.xaml"]
     order += [port_path(source) for source, _ in theme.documents if port_path(source) in documents]
     order += [port_path(source) for source in OUTSIDE_THE_MERGE]
-    order += ["Resources/Glyphs.xaml"]
+    order += ["Resources/ThemeShadows.xaml", "Resources/Glyphs.xaml"]
     theme_path = os.path.join(CRATE, THEME_DOCUMENT)
     text = open(theme_path, encoding="utf-8").read()
     begin, end = text.find(INCLUDES_BEGIN), text.find(INCLUDES_END)

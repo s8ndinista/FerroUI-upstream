@@ -90198,6 +90198,7 @@
   "Resources/TextBlock_themeresources.xaml",
   "Resources/TextBlock_themeresources_v2.5.xaml",
   "Resources/TextBox_themeresources.xaml",
+  "Resources/ThemeShadows.xaml",
   "Resources/TimePicker_themeresources.xaml",
   "Resources/TitleBar_themeresources.xaml",
   "Resources/ToggleButton_themeresources.xaml",
@@ -91521,7 +91522,7 @@
   }
  ],
  "deviations": {
-  "General": 23,
+  "General": 24,
   "Resources": 9,
   "AdornerLayer": 1,
   "AutoCompleteBox": 9,

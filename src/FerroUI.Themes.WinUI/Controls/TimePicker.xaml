@@ -43,6 +43,10 @@
     column) that draw the selected items again in TimePickerFlyoutPresenterHighlightForegroundColor
     are the selected state of the items (Controls/DateTimePickerShared.xaml).
   - The accept button has the margin DatePickerFlyoutPresenterDismissMargin, as in the source.
+  - The ThemeShadow of the flyout (a Translation.Z of 32, as DatePickerFlyoutPresenter) is the
+    BoxShadow ThemeShadowFlyoutBoxShadow of the border Background of the presenter, and the margin
+    ThemeShadowFlyoutMargin of PART_PickerPresenter is the room for it in the popup
+    (Resources/ThemeShadows.xaml; DEVIATIONS.md, G-24).
 -->
 <ResourceDictionary xmlns="https://github.com/ferroui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -196,7 +200,7 @@
                  IsLightDismissEnabled="True"
                  PlacementTarget="{TemplateBinding}"
                  Placement="Bottom">
-            <TimePickerPresenter x:Name="PART_PickerPresenter" />
+            <TimePickerPresenter x:Name="PART_PickerPresenter" Margin="{StaticResource ThemeShadowFlyoutMargin}" />
           </Popup>
         </Grid>
       </ControlTemplate>
@@ -238,6 +242,7 @@
     <Setter Property="Template">
       <ControlTemplate>
         <Border x:Name="Background"
+                BoxShadow="{DynamicResource ThemeShadowFlyoutBoxShadow}"
                 Background="{TemplateBinding Background}"
                 BorderBrush="{TemplateBinding BorderBrush}"
                 BorderThickness="{TemplateBinding BorderThickness}"

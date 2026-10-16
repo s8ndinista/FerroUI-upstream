@@ -8,7 +8,10 @@
        application sends it, and is empty here. The content of a card is a title and a message
        laid out as InfoBar lays out its own (the vertical layout of its InfoBarPanel: 14 above,
        4 between, 18 below), as WindowNotificationManager presents a notification. The native
-       counterpart is FlyoutsPage.winui.xml (FlyoutPresenter, ToolTip, InfoBar). -->
+       counterpart is FlyoutsPage.winui.xml (FlyoutPresenter, ToolTip, InfoBar). The flyout
+       content has no margin: the theme gives the presenter the margin of its shadow, the room
+       for the shadow in a popup, which in the page would move it (WinUI draws its shadow outside
+       the bounds of the element). -->
   <StackPanel Margin="24" Spacing="12">
     <TextBlock Text="Flyouts, tool tips and notifications" FontSize="28" FontWeight="SemiBold" />
 
@@ -20,7 +23,7 @@
 
       <StackPanel Grid.Column="0" Spacing="12">
         <TextBlock Text="Flyout content" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" />
-        <FlyoutPresenter Width="300" HorizontalAlignment="Left">
+        <FlyoutPresenter Width="300" HorizontalAlignment="Left" Margin="0">
           <StackPanel Spacing="12">
             <TextBlock Text="A flyout" FontWeight="SemiBold" />
             <TextBlock Text="A flyout shows content over the page, next to the control that opened it."

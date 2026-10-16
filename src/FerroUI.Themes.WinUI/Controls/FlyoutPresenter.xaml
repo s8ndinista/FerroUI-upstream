@@ -11,9 +11,11 @@
   - The setters of the scroll and zoom modes (ScrollViewer.HorizontalScrollMode,
     ScrollViewer.VerticalScrollMode, ScrollViewer.ZoomMode) and the ContentTransitions binding
     have no counterpart and are left out.
-  - The shadow and the opening animation of a WinUI flyout are drawn by the framework
-    (FlyoutBase, ThemeShadow, PopupThemeTransition), not by this style; FerroUI draws neither
-    (docs/porting/winui-theme/DEVIATIONS.md, FlyoutPresenter).
+  - The shadow WinUI's FlyoutPresenter gives its child in code (ApplyElevationEffect,
+    FlyoutPresenter_partial.cpp: a ThemeShadow at a Translation.Z of 32) is the BoxShadow
+    ThemeShadowFlyoutBoxShadow of the border, and the margin ThemeShadowFlyoutMargin is the room
+    for it in the popup (Resources/ThemeShadows.xaml; DEVIATIONS.md, G-24). The opening animation
+    (PopupThemeTransition) is drawn by neither (DEVIATIONS.md, FlyoutPresenter).
 -->
 <ResourceDictionary xmlns="https://github.com/ferroui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -45,9 +47,12 @@
     <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Auto" />
     <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto" />
     <Setter Property="CornerRadius" Value="{DynamicResource OverlayCornerRadius}" />
+    <!-- The room for the shadow in the popup (G-24). -->
+    <Setter Property="Margin" Value="{StaticResource ThemeShadowFlyoutMargin}" />
     <Setter Property="Template">
       <ControlTemplate>
-        <Border Background="{TemplateBinding Background}"
+        <Border BoxShadow="{DynamicResource ThemeShadowFlyoutBoxShadow}"
+                Background="{TemplateBinding Background}"
                 BorderBrush="{TemplateBinding BorderBrush}"
                 BorderThickness="{TemplateBinding BorderThickness}"
                 CornerRadius="{TemplateBinding CornerRadius}"

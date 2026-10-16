@@ -82,6 +82,7 @@
         <MergeResourceInclude Source="/Resources/TabularSurfaces_themeresources.xaml" />
         <MergeResourceInclude Source="/Resources/TableView_themeresources.xaml" />
         <MergeResourceInclude Source="/Resources/ResizeGripper_themeresources.xaml" />
+        <MergeResourceInclude Source="/Resources/ThemeShadows.xaml" />
         <MergeResourceInclude Source="/Resources/Glyphs.xaml" />
         <!-- resources:end -->
 
