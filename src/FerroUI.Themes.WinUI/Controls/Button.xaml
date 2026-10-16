@@ -3,6 +3,7 @@
   commit 7e4b0c2096be402f51cc8f7d203ebf67cff183d0:
     controls/dev/CommonStyles/Button_themeresources.xaml (the styles; its resources are
     Resources/Button_themeresources.xaml)
+    dxaml/xcp/dxaml/themes/generic.xaml (TextBlockButtonStyle, of ButtonBase)
   Copyright (c) Microsoft Corporation. Licensed under the MIT License (see NOTICE.md of the crate).
 
   Translation notes (docs/porting/winui-theme.md, section 4): the AnimatedIcon.State setters of
@@ -10,6 +11,9 @@
   either. The focus visual of UseSystemFocusVisuals with FocusVisualMargin="-3" is the
   FocusAdorner. RecognizesAccessKey is FerroUI's access key support (WinUI's AccessKey is a
   property of the control and needs nothing in the template).
+  TextBlockButtonStyle (target type ButtonBase) is a keyed theme of Button, based on
+  DefaultButtonStyle; its ContentPresenter "Text" is PART_ContentPresenter and its Grid, which has
+  only a background and a margin, is a Panel.
 -->
 <ResourceDictionary xmlns="https://github.com/ferroui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -205,6 +209,45 @@
       <Setter Property="Background" Value="{DynamicResource SubtleButtonBackgroundDisabled}" />
       <Setter Property="BorderBrush" Value="{DynamicResource SubtleButtonBorderBrushDisabled}" />
       <Setter Property="Foreground" Value="{DynamicResource SubtleButtonForegroundDisabled}" />
+    </Style>
+  </ControlTheme>
+
+  <!-- TextBlockButtonStyle of generic.xaml: a button that looks like a hyperlink without an underline. -->
+  <ControlTheme x:Key="TextBlockButtonStyle" TargetType="Button" BasedOn="{StaticResource DefaultButtonStyle}">
+    <Setter Property="Background" Value="{DynamicResource HyperlinkButtonBackground}" />
+    <Setter Property="Foreground" Value="{DynamicResource HyperlinkButtonForeground}" />
+    <Setter Property="MinWidth" Value="0" />
+    <Setter Property="MinHeight" Value="0" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Panel Margin="{TemplateBinding Padding}" Background="{TemplateBinding Background}">
+          <ContentPresenter x:Name="PART_ContentPresenter"
+                            Content="{TemplateBinding Content}"
+                            ContentTemplate="{TemplateBinding ContentTemplate}"
+                            HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                            VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                            RecognizesAccessKey="True" />
+        </Panel>
+      </ControlTemplate>
+    </Setter>
+
+    <!-- PointerOver -->
+    <Style Selector="^:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Foreground" Value="{DynamicResource HyperlinkButtonForegroundPointerOver}" />
+      <Setter Property="Background" Value="{DynamicResource HyperlinkButtonBackgroundPointerOver}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource HyperlinkButtonBorderBrushPointerOver}" />
+    </Style>
+    <!-- Pressed -->
+    <Style Selector="^:pressed /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Foreground" Value="{DynamicResource HyperlinkButtonForegroundPressed}" />
+      <Setter Property="Background" Value="{DynamicResource HyperlinkButtonBackgroundPressed}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource HyperlinkButtonBorderBrushPressed}" />
+    </Style>
+    <!-- Disabled -->
+    <Style Selector="^:disabled /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Foreground" Value="{DynamicResource HyperlinkButtonForegroundDisabled}" />
+      <Setter Property="Background" Value="{DynamicResource HyperlinkButtonBackgroundDisabled}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource HyperlinkButtonBorderBrushDisabled}" />
     </Style>
   </ControlTheme>
 

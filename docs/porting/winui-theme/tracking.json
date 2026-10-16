@@ -24274,9 +24274,9 @@
    "key": "DefaultDatePickerFlyoutPresenterStyle",
    "kind": "Style",
    "target_type": "DatePickerFlyoutPresenter",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B4"
+   "batch": null
   },
   {
    "document": "controls/dev/CommonStyles/DatePicker_themeresources.xaml",
@@ -24284,9 +24284,9 @@
    "key": "DefaultDatePickerStyle",
    "kind": "Style",
    "target_type": "DatePicker",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B4"
+   "batch": null
   },
   {
    "document": "controls/dev/CommonStyles/DatePicker_themeresources.xaml",
@@ -24294,9 +24294,9 @@
    "key": "{DatePickerFlyoutPresenter}",
    "kind": "Style",
    "target_type": "DatePickerFlyoutPresenter",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B4"
+   "batch": null
   },
   {
    "document": "controls/dev/CommonStyles/DatePicker_themeresources.xaml",
@@ -24304,9 +24304,9 @@
    "key": "{DatePicker}",
    "kind": "Style",
    "target_type": "DatePicker",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B4"
+   "batch": null
   },
   {
    "document": "controls/dev/CommonStyles/DatePicker_themeresources.xaml",
@@ -25334,9 +25334,9 @@
    "key": "DateTimePickerFlyoutButtonStyle",
    "kind": "Style",
    "target_type": "ButtonBase",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B4"
+   "batch": null
   },
   {
    "document": "controls/dev/CommonStyles/DateTimePickerFlyout_themeresources.xaml",
@@ -25344,9 +25344,9 @@
    "key": "DateTimePickerFlyoutLoopingSelectorNavigationButtonStyle",
    "kind": "Style",
    "target_type": "ButtonBase",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B4"
+   "batch": null
   },
   {
    "document": "controls/dev/CommonStyles/DateTimePickerFlyout_themeresources.xaml",
@@ -25354,9 +25354,9 @@
    "key": "DefaultLoopingSelectorStyle",
    "kind": "Style",
    "target_type": "LoopingSelector",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B4"
+   "batch": null
   },
   {
    "document": "controls/dev/CommonStyles/DateTimePickerFlyout_themeresources.xaml",
@@ -25404,9 +25404,9 @@
    "key": "{LoopingSelectorItem}",
    "kind": "Style",
    "target_type": "LoopingSelectorItem",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B4"
+   "batch": null
   },
   {
    "document": "controls/dev/CommonStyles/DateTimePickerFlyout_themeresources.xaml",
@@ -25414,9 +25414,9 @@
    "key": "{LoopingSelector}",
    "kind": "Style",
    "target_type": "LoopingSelector",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B4"
+   "batch": null
   },
   {
    "document": "controls/dev/CommonStyles/DateTimePickerFlyout_themeresources.xaml",
@@ -46834,9 +46834,9 @@
    "key": "{TimePickerFlyoutPresenter}",
    "kind": "Style",
    "target_type": "TimePickerFlyoutPresenter",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B4"
+   "batch": null
   },
   {
    "document": "controls/dev/CommonStyles/TimePicker_themeresources.xaml",
@@ -46844,9 +46844,9 @@
    "key": "{TimePicker}",
    "kind": "Style",
    "target_type": "TimePicker",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B4"
+   "batch": null
   },
   {
    "document": "controls/dev/CommonStyles/TimePicker_themeresources.xaml",
@@ -78024,9 +78024,9 @@
    "key": "TextBlockButtonStyle",
    "kind": "Style",
    "target_type": "ButtonBase",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B4"
+   "batch": null
   },
   {
    "document": "dxaml/xcp/dxaml/themes/generic.xaml",
@@ -90066,6 +90066,8 @@
   "Controls/CalendarItem.xaml",
   "Controls/CheckBox.xaml",
   "Controls/DataValidationErrors.xaml",
+  "Controls/DatePicker.xaml",
+  "Controls/DateTimePickerShared.xaml",
   "Controls/EmbeddableControlRoot.xaml",
   "Controls/GridSplitter.xaml",
   "Controls/GroupBox.xaml",
@@ -90088,6 +90090,7 @@
   "Controls/TextSelectionHandle.xaml",
   "Controls/ThemeVariantScope.xaml",
   "Controls/Thumb.xaml",
+  "Controls/TimePicker.xaml",
   "Controls/ToggleButton.xaml",
   "Controls/ToolTip.xaml",
   "Controls/TransitioningContentControl.xaml",
@@ -90189,7 +90192,7 @@
    "batch": "F",
    "winui": "Button: DefaultButtonStyle, AccentButtonStyle, SubtleButtonStyle (Button_themeresources.xaml).",
    "status": "ported",
-   "deviations": 6,
+   "deviations": 8,
    "date": "2026-10-16"
   },
   {
@@ -90212,7 +90215,7 @@
    "winui": "CalendarView: DefaultCalendarViewStyle (CalendarView_themeresources.xaml).",
    "status": "ported",
    "deviations": 4,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "CalendarButton.xaml",
@@ -90223,7 +90226,7 @@
    "winui": "The month and year items of CalendarView (CalendarViewBaseItem resources of CalendarView_themeresources.xaml).",
    "status": "ported",
    "deviations": 7,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "CalendarDatePicker.xaml",
@@ -90234,7 +90237,7 @@
    "winui": "CalendarDatePicker: DefaultCalendarDatePicker (CalendarDatePicker_themeresources.xaml).",
    "status": "ported",
    "deviations": 11,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "CalendarDayButton.xaml",
@@ -90245,7 +90248,7 @@
    "winui": "CalendarViewDayItem: {CalendarViewDayItem} (CalendarView_themeresources.xaml).",
    "status": "ported",
    "deviations": 9,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "CalendarItem.xaml",
@@ -90256,7 +90259,7 @@
    "winui": "The header, navigation buttons and views of the CalendarView template (DefaultCalendarViewStyle).",
    "status": "ported",
    "deviations": 14,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "Carousel.xaml",
@@ -90368,18 +90371,18 @@
    ],
    "batch": "B4",
    "winui": "DatePicker: DefaultDatePickerStyle; DatePickerFlyoutPresenter: DefaultDatePickerFlyoutPresenterStyle (DatePicker_themeresources.xaml).",
-   "status": "pending",
-   "deviations": 0,
-   "date": ""
+   "status": "ported",
+   "deviations": 15,
+   "date": "not committed"
   },
   {
    "document": "DateTimePickerShared.xaml",
    "themes": [],
    "batch": "B4",
    "winui": "LoopingSelector: DefaultLoopingSelectorStyle, LoopingSelectorItem; DateTimePickerFlyoutButtonStyle, DateTimePickerFlyoutLoopingSelectorNavigationButtonStyle (DateTimePickerFlyout_themeresources.xaml).",
-   "status": "pending",
-   "deviations": 0,
-   "date": ""
+   "status": "ported",
+   "deviations": 10,
+   "date": "not committed"
   },
   {
    "document": "DrawerPage.xaml",
@@ -90927,9 +90930,9 @@
    ],
    "batch": "B4",
    "winui": "TimePicker: {TimePicker}; TimePickerFlyoutPresenter: {TimePickerFlyoutPresenter} (TimePicker_themeresources.xaml).",
-   "status": "pending",
-   "deviations": 0,
-   "date": ""
+   "status": "ported",
+   "deviations": 12,
+   "date": "not committed"
   },
   {
    "document": "ToggleButton.xaml",
@@ -91439,7 +91442,7 @@
   "General": 23,
   "Resources": 9,
   "AdornerLayer": 1,
-  "Button": 6,
+  "Button": 8,
   "Calendar": 4,
   "CalendarButton": 7,
   "CalendarDatePicker": 11,
@@ -91447,6 +91450,8 @@
   "CalendarItem": 14,
   "CheckBox": 5,
   "DataValidationErrors": 2,
+  "DatePicker": 15,
+  "DateTimePickerShared": 10,
   "EmbeddableControlRoot": 1,
   "GridSplitter": 2,
   "GroupBox": 4,
@@ -91469,6 +91474,7 @@
   "TextSelectionHandle": 4,
   "ThemeVariantScope": 1,
   "Thumb": 1,
+  "TimePicker": 12,
   "ToggleButton": 3,
   "ToolTip": 3,
   "TransitioningContentControl": 4,

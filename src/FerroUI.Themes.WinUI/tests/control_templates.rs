@@ -202,6 +202,8 @@ control_tests! {
     calendar_day_button => "CalendarDayButton";
     calendar_item => "CalendarItem";
     check_box => "CheckBox";
+    date_picker => "DatePicker";
+    date_picker_presenter => "DatePickerPresenter";
     hyperlink_button => "HyperlinkButton";
     radio_button => "RadioButton";
     repeat_button => "RepeatButton";
@@ -210,6 +212,8 @@ control_tests! {
     text_box => "TextBox";
     theme_variant_scope => "ThemeVariantScope";
     thumb => "Thumb";
+    time_picker => "TimePicker";
+    time_picker_presenter => "TimePickerPresenter";
     toggle_button => "ToggleButton";
     // B1: primitives and simple content
     data_validation_errors => "DataValidationErrors";

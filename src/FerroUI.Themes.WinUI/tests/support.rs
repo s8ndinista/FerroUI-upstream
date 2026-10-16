@@ -402,11 +402,6 @@ pub const PENDING_CONTROLS: &[&str] = &[
     "MenuItem",
     "TreeView",
     "TreeViewItem",
-    // B4: calendar, date and time
-    "DatePicker",
-    "DatePickerPresenter",
-    "TimePicker",
-    "TimePickerPresenter",
     // B5: navigation, pages, tabs and command bar
     "Carousel",
     "CarouselPage",

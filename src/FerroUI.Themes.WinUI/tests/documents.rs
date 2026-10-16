@@ -104,6 +104,8 @@ document_tests! {
     controls_calendar_item => "/Controls/CalendarItem.xaml";
     controls_check_box => "/Controls/CheckBox.xaml";
     controls_data_validation_errors => "/Controls/DataValidationErrors.xaml";
+    controls_date_picker => "/Controls/DatePicker.xaml";
+    controls_date_time_picker_shared => "/Controls/DateTimePickerShared.xaml";
     controls_embeddable_control_root => "/Controls/EmbeddableControlRoot.xaml";
     controls_grid_splitter => "/Controls/GridSplitter.xaml";
     controls_group_box => "/Controls/GroupBox.xaml";
@@ -126,6 +128,7 @@ document_tests! {
     controls_text_selection_handle => "/Controls/TextSelectionHandle.xaml";
     controls_theme_variant_scope => "/Controls/ThemeVariantScope.xaml";
     controls_thumb => "/Controls/Thumb.xaml";
+    controls_time_picker => "/Controls/TimePicker.xaml";
     controls_toggle_button => "/Controls/ToggleButton.xaml";
     controls_tool_tip => "/Controls/ToolTip.xaml";
     controls_transitioning_content_control => "/Controls/TransitioningContentControl.xaml";
