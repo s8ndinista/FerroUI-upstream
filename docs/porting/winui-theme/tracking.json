@@ -90150,7 +90150,7 @@
    "winui": "No WinUI style: the system focus visual of WinUI (FocusVisualPrimaryBrush/Thickness, FocusVisualSecondaryBrush/Thickness; the SystemControlFocusVisual* resources of Common_themeresources.xaml).",
    "status": "ported",
    "deviations": 1,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "AutoCompleteBox.xaml",
@@ -90172,7 +90172,7 @@
    "winui": "Button: DefaultButtonStyle, AccentButtonStyle, SubtleButtonStyle (Button_themeresources.xaml).",
    "status": "ported",
    "deviations": 5,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "ButtonSpinner.xaml",
@@ -90271,7 +90271,7 @@
    "winui": "CheckBox: DefaultCheckBoxStyle (CheckBox_themeresources.xaml).",
    "status": "ported",
    "deviations": 5,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "ComboBox.xaml",
@@ -90394,7 +90394,7 @@
    "winui": "No WinUI style: the background and text of the window (SolidBackgroundFillColorBaseBrush, TextFillColorPrimaryBrush, ContentControlThemeFontFamily, ControlContentThemeFontSize).",
    "status": "ported",
    "deviations": 1,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "Expander.xaml",
@@ -90460,7 +90460,7 @@
    "winui": "HyperlinkButton: DefaultHyperlinkButtonStyle (HyperlinkButton_themeresources.xaml).",
    "status": "ported",
    "deviations": 3,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "ItemsControl.xaml",
@@ -90602,7 +90602,7 @@
    "winui": "No WinUI style: the text of the window (TextFillColorPrimaryBrush, ContentControlThemeFontFamily, ControlContentThemeFontSize).",
    "status": "ported",
    "deviations": 1,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "PathIcon.xaml",
@@ -90635,7 +90635,7 @@
    "winui": "No WinUI style: the text of the window (TextFillColorPrimaryBrush, ContentControlThemeFontFamily, ControlContentThemeFontSize).",
    "status": "ported",
    "deviations": 1,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "ProgressBar.xaml",
@@ -90657,7 +90657,7 @@
    "winui": "RadioButton: DefaultRadioButtonStyle (RadioButton_themeresources.xaml).",
    "status": "ported",
    "deviations": 6,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "RefreshContainer.xaml",
@@ -90690,7 +90690,7 @@
    "winui": "RepeatButton: DefaultRepeatButtonStyle (RepeatButton_themeresources.xaml).",
    "status": "ported",
    "deviations": 1,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "ScrollBar.xaml",
@@ -90701,7 +90701,7 @@
    "winui": "ScrollBar: DefaultScrollBarStyle (ScrollBar_themeresources.xaml); {Thumb} (generic.xaml).",
    "status": "ported",
    "deviations": 11,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "ScrollViewer.xaml",
@@ -90712,7 +90712,7 @@
    "winui": "ScrollViewer: DefaultScrollViewerStyle (ScrollViewer_themeresources.xaml).",
    "status": "ported",
    "deviations": 7,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "SelectableTextBlock.xaml",
@@ -90877,7 +90877,7 @@
    "winui": "TextBox: DefaultTextBoxStyle and its DeleteButtonStyle (TextBox_themeresources.xaml); PasswordBox: DefaultPasswordBoxStyle (PasswordBox_themeresources.xaml) for the reveal button (pending, B3).",
    "status": "ported",
    "deviations": 11,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "TextSelectionHandle.xaml",
@@ -90899,7 +90899,7 @@
    "winui": "No WinUI style: the text foreground (TextFillColorPrimaryBrush).",
    "status": "ported",
    "deviations": 1,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "TimePicker.xaml",
@@ -90922,7 +90922,7 @@
    "winui": "ToggleButton: DefaultToggleButtonStyle (ToggleButton_themeresources.xaml).",
    "status": "ported",
    "deviations": 3,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "ToggleSwitch.xaml",
@@ -90988,7 +90988,7 @@
    "winui": "No WinUI style (Window is not a control in WinUI 3): the Mica fallback background and text of a window (SolidBackgroundFillColorBaseBrush, TextFillColorPrimaryBrush, ContentControlThemeFontFamily, ControlContentThemeFontSize).",
    "status": "ported",
    "deviations": 1,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "WindowDrawnDecorations.xaml",

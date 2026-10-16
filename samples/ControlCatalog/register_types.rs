@@ -72,6 +72,7 @@ pub fn register_types() {
         ferroui_markup_xaml::register_types();
         ferroui_themes_simple::register_types();
         ferroui_themes_fluent::register_types();
+        ferroui_themes_winui::register_types();
         ferroui_controls_color_picker::register_types();
         ferroui_opengl::register_types();
         TypeInfo::register_namespaces(NAMESPACES);
