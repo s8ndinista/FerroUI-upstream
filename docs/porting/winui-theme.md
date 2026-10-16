@@ -507,7 +507,7 @@ ports a control updates its state by porting it, not by editing the table.
 | `MenuItem.xaml` | `{MenuItem}` | MenuFlyoutItem: DefaultMenuFlyoutItemStyle; MenuFlyoutSubItem: DefaultMenuFlyoutSubItemStyle; ToggleMenuFlyoutItem: DefaultToggleMenuFlyoutItemStyle (MenuFlyout_themeresources.xaml); RadioMenuFlyoutItem: DefaultRadioMenuFlyoutItemStyle (RadioMenuFlyoutItem_themeresources.xaml). | B3 | pending |
 | `MenuScrollViewer.xaml` | (keyed themes only) | The ScrollViewer of the MenuFlyoutPresenter template (MenuFlyout_themeresources.xaml). | B3 | pending |
 | `NavigationPage.xaml` | `{NavigationPage}` | No WinUI control: NavigationBackButtonNormalStyle, NavigationBackButtonSmallStyle (NavigationBackButton.xaml) and the page background. | B5 | pending |
-| `NotificationCard.xaml` | `{NotificationCard}` | InfoBar: {InfoBar} (InfoBar.xaml, InfoBar_themeresources.xaml). | B6 | pending |
+| `NotificationCard.xaml` | `{NotificationCard}` | InfoBar: {InfoBar} (InfoBar.xaml, InfoBar_themeresources.xaml). | B6 | ported |
 | `NumericUpDown.xaml` | `{NumericUpDown}` | NumberBox: {NumberBox}, NumberBoxTextBoxStyle, NumberBoxSpinButtonStyle (NumberBox.xaml, NumberBox_themeresources.xaml). | B2 | pending |
 | `OverlayPopupHost.xaml` | `{OverlayPopupHost}` | No WinUI style: the text of the window (TextFillColorPrimaryBrush, ContentControlThemeFontFamily, ControlContentThemeFontSize). | F | ported |
 | `PathIcon.xaml` | `{PathIcon}` | No WinUI style (IconElement has no template): the Path that WinUI's PathIcon builds in code (CPathIcon::ApplyTemplate, icon.cpp), unscaled and filled with the Foreground. | B1 | ported |
@@ -546,7 +546,7 @@ ports a control updates its state by porting it, not by editing the table.
 | `TreeViewItem.xaml` | `{TreeViewItem}` | TreeViewItem: {TreeViewItem} (TreeView.xaml), MUX_TreeViewItemStyle (TreeViewItem.xaml). | B3 | pending |
 | `Window.xaml` | `{Window}` | No WinUI style (Window is not a control in WinUI 3): the Mica fallback background and text of a window (SolidBackgroundFillColorBaseBrush, TextFillColorPrimaryBrush, ContentControlThemeFontFamily, ControlContentThemeFontSize). | F | ported |
 | `WindowDrawnDecorations.xaml` | `{WindowDrawnDecorations}` | TitleBar: DefaultTitleBarStyle (TitleBar.xaml, TitleBar_themeresources.xaml); WindowCaptionButton (generic.xaml) for the caption buttons. | B6 | pending |
-| `WindowNotificationManager.xaml` | `{WindowNotificationManager}` | No WinUI control: a host of InfoBar cards (InfoBar_themeresources.xaml). | B6 | pending |
+| `WindowNotificationManager.xaml` | `{WindowNotificationManager}` | No WinUI control: a host of InfoBar cards (InfoBar_themeresources.xaml). | B6 | ported |
 
 #### WinUI styles
 

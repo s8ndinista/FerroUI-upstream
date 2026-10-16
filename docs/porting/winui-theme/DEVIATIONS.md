@@ -436,6 +436,24 @@ it. Abbreviations: CS = `controls/dev/CommonStyles/`, GX = `dxaml/xcp/dxaml/them
 |---|---|---|---|---|
 | WIN-1 | (no counterpart) WinUI 3's `Window` is not a control and has no style | The system draws the window with Mica (or the theme background). | The template FerroUI's window requires (from the Fluent theme) with `SolidBackgroundFillColorBaseBrush` (the Mica fallback), `TextFillColorPrimaryBrush` and the control font. | Built from WinUI resources; G-13. |
 
+## NotificationCard
+
+| ID | WinUI source | What WinUI does | What the port does | Why |
+|---|---|---|---|---|
+| NC-1 | `controls/dev/InfoBar/InfoBar.xaml`, `{InfoBar}` | InfoBar has `Title`, `Message`, `ActionButton`, `Content`, `Severity`, `IconSource`, `IsClosable` and `IsOpen`. | NotificationCard is a content control: its content takes the place of the `InfoBarPanel` (title, message, action); `NotificationType` is the severity. | The contract of FerroUI's control. |
+| NC-2 | `SeverityLevels` (`Informational`, `Error`, `Warning`, `Success`) | One state per severity. | `:information` is the base; `:error`, `:warning`, `:success` nested styles. | G-1. |
+| NC-3 | `StandardIconArea`: `TextBlock` `IconBackground` and `StandardIcon` in `SymbolThemeFontFamily` at `InfoBarIconFontSize`; the states set `StandardIcon.Text` | Two glyphs on top of each other. | Paths of `GlyphGeometryF136` (16 x 16) and of the symbol of the severity (F13F, F13D, F13C, F13E) at the size of its ink, centred in a box of 16 x 16; the states set `Data` and the height of the symbol. | G-9. |
+| NC-4 | `IconStates` (`UserIconVisible`, `NoIconVisible`), `UserIconBox` | A user icon, or no icon. | Left out: the standard icon is always shown. | NotificationCard has no `IconSource` or `IsIconVisible`. |
+| NC-5 | `CloseButtonVisible`/`CloseButtonCollapsed` (`IsClosable`) | The close button is hidden when the bar is not closable. | The close button is always shown. | NotificationCard has no `IsClosable`. |
+| NC-6 | `CloseButton` `Command="{TemplateBinding CloseButtonCommand}"` | The button closes the bar (and runs the command of the application). | `NotificationCard.CloseOnClick="True"` closes the card. | FerroUI's mechanism to close a card from a button. |
+| NC-7 | `CloseButton` `Button.Resources`: theme dictionaries that map `ButtonBackground*`, `ButtonForeground*`, `ButtonBorderBrush*` to `AppBarButton*` | The template gives the close button the brushes of an app bar button. | The AppBarButton brushes are the setters and states of `InfoBarCloseButtonStyle`, so the style gives them to any button it is applied to. | Theme dictionaries in the resources of an element of a template are avoided; the result for the close button is the same. |
+| NC-8 | `SymbolIcon Symbol="{StaticResource InfoBarCloseButtonSymbol}"` (Cancel) in a `Viewbox` of `InfoBarCloseButtonGlyphSize` | The Cancel symbol scaled to 16 px. | A path of `GlyphGeometryE711` 16 px wide; the resource `InfoBarCloseButtonSymbol` is claimed by the document. | FerroUI has no `Symbol` type; G-9. |
+| NC-9 | `InfoBarVisibility`: `InfoBarCollapsed` (`ContentRoot.Visibility` collapsed) | The bar disappears at once when it closes. | A closing card (`IsClosing`) fades out over 83 ms (`ControlFasterAnimationDuration`) and an animation of the same length then sets `IsClosed`. | A card is removed from WindowNotificationManager when it sets `IsClosed`; the fade avoids a removal inside the style system. |
+| NC-10 | `ForegroundSet`/`ForegroundNotSet`; `Title` in `InfoBarTitleForeground`, `Message` in `InfoBarMessageForeground` and `InfoBarMessageFontSize` | The title and the message have their own brushes unless the application sets a foreground. | The card sets `Foreground` to `InfoBarMessageForeground` and `FontSize` to `InfoBarMessageFontSize`, which its content inherits; a foreground of the application wins. | The content of a card is any content; WindowNotificationManager presents title and message with their own brushes. |
+| NC-11 | The inner `Grid` with `Background`, `CornerRadius` and `Padding` | A panel that draws. | A `Border` around a `Grid`. | G-17. |
+| NC-12 | `ContentArea` (the second row for `Content`), `BannerContent`/`NoBannerContent` | Content below the message. | Left out (`NoBannerContent`). | The content of the card takes the place of the title and message. |
+| NC-13 | `AutomationProperties.LandmarkType`, `AutomationProperties.IsDialog` | Automation of the bar. | Left out. | G-19. |
+
 ## TableView
 
 | ID | WinUI source | What WinUI does | What the port does | Why |
@@ -480,6 +498,16 @@ it. Abbreviations: CS = `controls/dev/CommonStyles/`, GX = `dxaml/xcp/dxaml/them
 | TVR-5 | `HighContrastAdjustment` setters of the states | Turns off the backplate of high contrast text. | Left out. | FerroUI has no such property. |
 | TVR-6 | `RowExpansionStates`, `RowExpandabilityStates`, `RowHierarchyStates`, `PART_RowExpanderGutter`, `PART_RowExpanderIcon` | The hierarchy of tree rows. | Left out. | FerroUI's TableView has no hierarchy. |
 
+## WindowNotificationManager
+
+| ID | WinUI source | What WinUI does | What the port does | Why |
+|---|---|---|---|---|
+| WNM-1 | (no counterpart) | WinUI has no host of notifications. | The template FerroUI's control requires (`PART_Items` and the pseudo-classes of the position); the cards are NotificationCard (InfoBar). | Built from InfoBar. |
+| WNM-2 | `InfoBarPanel` (`InfoBarPanel.cpp`) | Title, message and action on one line when they fit, below each other otherwise. | The template of a notification (INotification) always uses the vertical layout: `InfoBarPanelVerticalOrientationPadding`, the message `InfoBarMessageVerticalOrientationMargin` below the title. | No panel of FerroUI measures both layouts; cards in a corner of a window are narrow. |
+| WNM-3 | `InfoBarPanel` leaves out an element without size | An empty title or message takes no space. | The title and the message are hidden when empty (`StringConverters.IsNotNullOrEmpty`). | A text block without text keeps the height of a line. |
+| WNM-4 | (no source) the width of a card, the spacing of the cards, the margin of the host | An InfoBar takes the width of its container. | A card in the host is 350 wide (the `NotificationCardWidth` of the Fluent theme), the cards are 8 apart and the host has a margin of 12. | Notifications in a corner of a window need a width and a spacing. |
+| WNM-5 | (no source) text content | - | Presented as the message of InfoBar. | The content of a notification may be text. |
+
 ## FerroUI controls without a WinUI counterpart
 
 What each FerroUI control the WinUI theme styles, or will style, is built from when WinUI 3 has no
@@ -514,6 +542,6 @@ their sections above).
 | ThemeVariantScope | F | ported | No WinUI style: the text foreground (TextFillColorPrimaryBrush). |
 | TransitioningContentControl | B1 | ported | No WinUI style: the template of ContentControl ({ContentControl}, generic.xaml), twice, for the page transition of the control. |
 | Window | F | ported | No WinUI style (Window is not a control in WinUI 3): the Mica fallback background and text of a window (SolidBackgroundFillColorBaseBrush, TextFillColorPrimaryBrush, ContentControlThemeFontFamily, ControlContentThemeFontSize). |
-| WindowNotificationManager | B6 | pending | No WinUI control: a host of InfoBar cards (InfoBar_themeresources.xaml). |
+| WindowNotificationManager | B6 | ported | No WinUI control: a host of InfoBar cards (InfoBar_themeresources.xaml). |
 
 <!-- counterparts:end -->

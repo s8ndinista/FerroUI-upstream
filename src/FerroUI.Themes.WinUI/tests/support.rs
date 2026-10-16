@@ -421,9 +421,7 @@ pub const PENDING_CONTROLS: &[&str] = &[
     // B6: window decorations, notifications, tables and dialogs
     "ManagedFileChooser",
     "ManagedFileChooserOverwritePrompt",
-    "NotificationCard",
     "WindowDrawnDecorations",
-    "WindowNotificationManager",
 ];
 
 /// Whether the control named `name` waits for a batch.

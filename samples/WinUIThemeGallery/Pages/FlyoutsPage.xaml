@@ -5,8 +5,10 @@
        because a picture of a page does not hold its popups (PopupRoot and OverlayPopupHost host
        them in the window); the tool tips are opaque, as an open one is. NotificationCard of
        each type. WindowNotificationManager is the host of such cards: it shows the cards an
-       application sends it, and is empty here. The native counterpart is
-       FlyoutsPage.winui.xml (FlyoutPresenter, ToolTip, InfoBar). -->
+       application sends it, and is empty here. The content of a card is a title and a message
+       laid out as InfoBar lays out its own (the vertical layout of its InfoBarPanel: 14 above,
+       4 between, 18 below), as WindowNotificationManager presents a notification. The native
+       counterpart is FlyoutsPage.winui.xml (FlyoutPresenter, ToolTip, InfoBar). -->
   <StackPanel Margin="24" Spacing="12">
     <TextBlock Text="Flyouts, tool tips and notifications" FontSize="28" FontWeight="SemiBold" />
 
@@ -49,25 +51,25 @@
         <RowDefinition Height="Auto" />
       </Grid.RowDefinitions>
       <NotificationCard Grid.Row="0" Grid.Column="0" Width="320" NotificationType="Information">
-        <StackPanel Margin="12" Spacing="4">
+        <StackPanel Margin="0,14,0,18" Spacing="4">
           <TextBlock Text="Information" FontWeight="SemiBold" />
           <TextBlock Text="A new version is available." TextWrapping="Wrap" />
         </StackPanel>
       </NotificationCard>
       <NotificationCard Grid.Row="0" Grid.Column="1" Width="320" NotificationType="Success">
-        <StackPanel Margin="12" Spacing="4">
+        <StackPanel Margin="0,14,0,18" Spacing="4">
           <TextBlock Text="Success" FontWeight="SemiBold" />
           <TextBlock Text="The document was saved." TextWrapping="Wrap" />
         </StackPanel>
       </NotificationCard>
       <NotificationCard Grid.Row="1" Grid.Column="0" Width="320" NotificationType="Warning">
-        <StackPanel Margin="12" Spacing="4">
+        <StackPanel Margin="0,14,0,18" Spacing="4">
           <TextBlock Text="Warning" FontWeight="SemiBold" />
           <TextBlock Text="The disk is almost full." TextWrapping="Wrap" />
         </StackPanel>
       </NotificationCard>
       <NotificationCard Grid.Row="1" Grid.Column="1" Width="320" NotificationType="Error">
-        <StackPanel Margin="12" Spacing="4">
+        <StackPanel Margin="0,14,0,18" Spacing="4">
           <TextBlock Text="Error" FontWeight="SemiBold" />
           <TextBlock Text="The file could not be opened." TextWrapping="Wrap" />
         </StackPanel>

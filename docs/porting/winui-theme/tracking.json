@@ -53174,9 +53174,9 @@
    "key": "{InfoBar}",
    "kind": "Style",
    "target_type": "InfoBar",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B6"
+   "batch": null
   },
   {
    "document": "controls/dev/InfoBar/InfoBar_themeresources.xaml",
@@ -53224,9 +53224,9 @@
    "key": "InfoBarCloseButtonStyle",
    "kind": "Style",
    "target_type": "Button",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B6"
+   "batch": null
   },
   {
    "document": "controls/dev/InfoBar/InfoBar_themeresources.xaml",
@@ -53234,9 +53234,9 @@
    "key": "InfoBarCloseButtonSymbol",
    "kind": "Symbol",
    "target_type": "",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "resources"
+   "batch": null
   },
   {
    "document": "controls/dev/InfoBar/InfoBar_themeresources.xaml",
@@ -90075,6 +90075,7 @@
   "Controls/HyperlinkButton.xaml",
   "Controls/ItemsControl.xaml",
   "Controls/Label.xaml",
+  "Controls/NotificationCard.xaml",
   "Controls/OverlayPopupHost.xaml",
   "Controls/PathIcon.xaml",
   "Controls/PopupRoot.xaml",
@@ -90100,6 +90101,7 @@
   "Controls/TransitioningContentControl.xaml",
   "Controls/WinUIControls.xaml",
   "Controls/Window.xaml",
+  "Controls/WindowNotificationManager.xaml",
   "DensityStyles/Compact.xaml",
   "Resources/AcrylicBrush_themeresources.xaml",
   "Resources/AppBarButton_themeresources.xaml",
@@ -90606,9 +90608,9 @@
    ],
    "batch": "B6",
    "winui": "InfoBar: {InfoBar} (InfoBar.xaml, InfoBar_themeresources.xaml).",
-   "status": "pending",
-   "deviations": 0,
-   "date": ""
+   "status": "ported",
+   "deviations": 13,
+   "date": "not committed"
   },
   {
    "document": "NumericUpDown.xaml",
@@ -90861,7 +90863,7 @@
    "winui": "No control of the merged theme: WinUI's TableView of the tabular library (controls/dev/TableView, TableView_themeresources.xaml, not part of XamlControlsResources) is the closest source; the ListViewItem resources otherwise.",
    "status": "ported",
    "deviations": 8,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "TableViewCell.xaml",
@@ -90872,7 +90874,7 @@
    "winui": "As TableView: the cells of controls/dev/TableView.",
    "status": "ported",
    "deviations": 3,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "TableViewColumnHeader.xaml",
@@ -90883,7 +90885,7 @@
    "winui": "As TableView: the column headers of controls/dev/TableView and SortIndicator.",
    "status": "ported",
    "deviations": 7,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "TableViewRow.xaml",
@@ -90894,7 +90896,7 @@
    "winui": "As TableView: the rows of controls/dev/TableView; the ListViewItem resources.",
    "status": "ported",
    "deviations": 6,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "TextBox.xaml",
@@ -91036,9 +91038,9 @@
    ],
    "batch": "B6",
    "winui": "No WinUI control: a host of InfoBar cards (InfoBar_themeresources.xaml).",
-   "status": "pending",
-   "deviations": 0,
-   "date": ""
+   "status": "ported",
+   "deviations": 5,
+   "date": "not committed"
   }
  ],
  "unmapped_fluent_documents": [],
@@ -91486,10 +91488,12 @@
   "ToolTip": 3,
   "TransitioningContentControl": 4,
   "Window": 1,
+  "NotificationCard": 13,
   "TableView": 8,
   "TableViewCell": 3,
   "TableViewColumnHeader": 7,
-  "TableViewRow": 6
+  "TableViewRow": 6,
+  "WindowNotificationManager": 5
  },
  "winui_targets": {
   "AppBarButton": {
