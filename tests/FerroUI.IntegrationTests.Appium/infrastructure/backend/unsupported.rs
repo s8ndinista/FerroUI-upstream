@@ -122,6 +122,10 @@ impl Backend {
         match *self {}
     }
 
+    pub fn search_diagnostic(&self, _root: &NativeElement) -> Option<String> {
+        match *self {}
+    }
+
     pub fn screenshot(&self, _rect: &ElementRect) -> Result<Screenshot, String> {
         match *self {}
     }

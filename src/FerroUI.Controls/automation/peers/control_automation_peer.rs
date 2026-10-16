@@ -70,7 +70,9 @@ impl ControlAutomationPeerImpl for ControlAutomationPeer {
     }
 
     fn get_visual_parent(this: &Self) -> Option<Ref<Visual>> {
-        this.owner().get_visual_parent()
+        // Deviation (DEVIATIONS.md, Automation peers): the peer holds its control weakly, and a
+        // peer whose control is gone has no visual parent (upstream's peer holds the control).
+        this.try_owner()?.get_visual_parent()
     }
 }
 

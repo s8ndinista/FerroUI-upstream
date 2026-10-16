@@ -801,6 +801,10 @@ impl Backend {
         }
     }
 
+    pub fn search_diagnostic(&self, _root: &NativeElement) -> Option<String> {
+        None
+    }
+
     pub fn screenshot(&self, _rect: &ElementRect) -> Result<Screenshot, String> {
         Err(SCREENSHOT_NOT_PROVIDED_ON_MAC_OS.to_owned())
     }
