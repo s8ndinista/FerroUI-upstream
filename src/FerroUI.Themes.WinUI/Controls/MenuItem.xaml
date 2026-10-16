@@ -25,9 +25,11 @@
     MenuFlyoutPresenter (WinUI opens a MenuFlyoutPresenter for a sub item); it opens at the right
     edge of the item, 4 px over it (CascadingMenuHelper::m_subMenuOverlapPixels). The shadow of
     the presenter of a sub item (ApplyElevationEffect at the depth 1 of a submenu: a ThemeShadow at
-    a Translation.Z of 40) is the BoxShadow ThemeShadowSubMenuBoxShadow of the border of the
-    popup, with the margin ThemeShadowSubMenuMargin as the room for it in the popup; deeper
-    submenus have the same shadow (Resources/ThemeShadows.xaml; DEVIATIONS.md, G-24).
+    a Translation.Z of 40) is the BoxShadow ThemeShadowSubMenuBoxShadow of the border
+    ThemeShadowWrapper around the border of the popup (a border of its own: a border whose
+    background is sized to the inner edge of its border draws no box shadow), with the margin
+    ThemeShadowSubMenuMargin as the room for it in the popup; deeper submenus have the same
+    shadow (Resources/ThemeShadows.xaml; DEVIATIONS.md, G-24).
   - CheckPlaceholderStates, which the presenter computes from all of its items (the text of every
     item moves by MenuFlyoutItemPlaceholderThemeThickness when one item is a toggle item or has an
     icon), are columns of shared size: the check glyph column (12 px glyph and 16 px margin) and
@@ -165,23 +167,27 @@
                  HorizontalOffset="-4"
                  IsLightDismissEnabled="False"
                  IsOpen="{TemplateBinding IsSubMenuOpen, Mode=TwoWay}">
-            <Border BoxShadow="{DynamicResource ThemeShadowSubMenuBoxShadow}"
+            <!-- The shadow on a border of its own (G-24). -->
+            <Border x:Name="ThemeShadowWrapper"
+                    BoxShadow="{DynamicResource ThemeShadowSubMenuBoxShadow}"
                     Margin="{StaticResource ThemeShadowSubMenuMargin}"
-                    Background="{DynamicResource MenuFlyoutPresenterBackground}"
-                    BorderBrush="{DynamicResource MenuFlyoutPresenterBorderBrush}"
-                    BorderThickness="{DynamicResource MenuFlyoutPresenterBorderThemeThickness}"
-                    CornerRadius="{DynamicResource OverlayCornerRadius}"
-                    MinWidth="{DynamicResource FlyoutThemeMinWidth}"
-                    MinHeight="{StaticResource MenuFlyoutThemeMinHeight}"
-                    BackgroundSizing="InnerBorderEdge">
-              <ScrollViewer x:Name="MenuFlyoutPresenterScrollViewer"
-                            Theme="{StaticResource MenuFlyoutPresenterScrollViewer}"
-                            Margin="{StaticResource MenuFlyoutPresenterThemePadding}">
-                <ItemsPresenter x:Name="PART_ItemsPresenter"
-                                ItemsPanel="{TemplateBinding ItemsPanel}"
-                                KeyboardNavigation.TabNavigation="Continue"
-                                Grid.IsSharedSizeScope="True" />
-              </ScrollViewer>
+                    CornerRadius="{DynamicResource OverlayCornerRadius}">
+              <Border Background="{DynamicResource MenuFlyoutPresenterBackground}"
+                      BorderBrush="{DynamicResource MenuFlyoutPresenterBorderBrush}"
+                      BorderThickness="{DynamicResource MenuFlyoutPresenterBorderThemeThickness}"
+                      CornerRadius="{DynamicResource OverlayCornerRadius}"
+                      MinWidth="{DynamicResource FlyoutThemeMinWidth}"
+                      MinHeight="{StaticResource MenuFlyoutThemeMinHeight}"
+                      BackgroundSizing="InnerBorderEdge">
+                <ScrollViewer x:Name="MenuFlyoutPresenterScrollViewer"
+                              Theme="{StaticResource MenuFlyoutPresenterScrollViewer}"
+                              Margin="{StaticResource MenuFlyoutPresenterThemePadding}">
+                  <ItemsPresenter x:Name="PART_ItemsPresenter"
+                                  ItemsPanel="{TemplateBinding ItemsPanel}"
+                                  KeyboardNavigation.TabNavigation="Continue"
+                                  Grid.IsSharedSizeScope="True" />
+                </ScrollViewer>
+              </Border>
             </Border>
           </Popup>
         </Panel>

@@ -16,8 +16,10 @@
     flyout (the indicator states of Controls/ScrollViewer.xaml), as WinUI's NoIndicator.
   - The shadow WinUI's FlyoutPresenter gives its child in code (ApplyElevationEffect,
     FlyoutPresenter_partial.cpp: a ThemeShadow at a Translation.Z of 32) is the BoxShadow
-    ThemeShadowFlyoutBoxShadow of the border, and the margin ThemeShadowFlyoutMargin is the room
-    for it in the popup (Resources/ThemeShadows.xaml; DEVIATIONS.md, G-24). The opening animation
+    ThemeShadowFlyoutBoxShadow of the border ThemeShadowWrapper around the border of the
+    presenter (a border of its own: a border whose background is sized to the inner edge of its
+    border draws no box shadow), and the margin ThemeShadowFlyoutMargin is the room for it in the
+    popup (Resources/ThemeShadows.xaml; DEVIATIONS.md, G-24). The opening animation
     (PopupThemeTransition) is drawn by neither (DEVIATIONS.md, FlyoutPresenter).
 -->
 <ResourceDictionary xmlns="https://github.com/ferroui"
@@ -54,22 +56,27 @@
     <Setter Property="Margin" Value="{StaticResource ThemeShadowFlyoutMargin}" />
     <Setter Property="Template">
       <ControlTemplate>
-        <Border BoxShadow="{DynamicResource ThemeShadowFlyoutBoxShadow}"
-                Background="{TemplateBinding Background}"
-                BorderBrush="{TemplateBinding BorderBrush}"
-                BorderThickness="{TemplateBinding BorderThickness}"
-                CornerRadius="{TemplateBinding CornerRadius}"
-                BackgroundSizing="InnerBorderEdge">
-          <ScrollViewer x:Name="ScrollViewer"
-                        HorizontalScrollBarVisibility="{TemplateBinding (ScrollViewer.HorizontalScrollBarVisibility)}"
-                        VerticalScrollBarVisibility="{TemplateBinding (ScrollViewer.VerticalScrollBarVisibility)}">
-            <ContentPresenter x:Name="PART_ContentPresenter"
-                              Content="{TemplateBinding Content}"
-                              ContentTemplate="{TemplateBinding ContentTemplate}"
-                              Margin="{TemplateBinding Padding}"
-                              HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
-          </ScrollViewer>
+        <!-- The shadow on a border of its own: a border whose background is sized to the inner
+             edge of its border is drawn as geometries, without its box shadows (G-24). -->
+        <Border x:Name="ThemeShadowWrapper"
+                BoxShadow="{DynamicResource ThemeShadowFlyoutBoxShadow}"
+                CornerRadius="{TemplateBinding CornerRadius}">
+          <Border Background="{TemplateBinding Background}"
+                  BorderBrush="{TemplateBinding BorderBrush}"
+                  BorderThickness="{TemplateBinding BorderThickness}"
+                  CornerRadius="{TemplateBinding CornerRadius}"
+                  BackgroundSizing="InnerBorderEdge">
+            <ScrollViewer x:Name="ScrollViewer"
+                          HorizontalScrollBarVisibility="{TemplateBinding (ScrollViewer.HorizontalScrollBarVisibility)}"
+                          VerticalScrollBarVisibility="{TemplateBinding (ScrollViewer.VerticalScrollBarVisibility)}">
+              <ContentPresenter x:Name="PART_ContentPresenter"
+                                Content="{TemplateBinding Content}"
+                                ContentTemplate="{TemplateBinding ContentTemplate}"
+                                Margin="{TemplateBinding Padding}"
+                                HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+            </ScrollViewer>
+          </Border>
         </Border>
       </ControlTemplate>
     </Setter>
