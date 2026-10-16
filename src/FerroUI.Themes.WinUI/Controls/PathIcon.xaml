@@ -21,6 +21,22 @@
     </Border>
   </Design.PreviewWith>
 
+  <!-- The path icon of WinUI (CPathIcon::ApplyTemplate: a Path with Stretch None, its geometry in
+       its own coordinates, the size of the icon the extent of the geometry from its origin), for
+       the templates of WinUI that size the icon in a Viewbox (AppBarButton and
+       AppBarToggleButton: ContentViewbox of AppBarButtonContentHeight; MenuFlyoutItem: IconRoot
+       of 16; NavigationViewItem: IconBox of NavigationViewItemOnLeftIconBoxHeight; TabViewItem:
+       IconBox of TabViewItemHeaderIconSize): there the Viewbox scales the geometry as WinUI's does
+       (PI-3), where the default theme below scales the bounds of the geometry to 20 by 20 (PI-2).
+       Set with Width and Height NaN by a style of the icon presenter of those templates. -->
+  <ControlTemplate x:Key="PathIconUnscaledTemplate" TargetType="PathIcon">
+    <Border Background="{TemplateBinding Background}">
+      <Path x:Name="Path"
+            Data="{TemplateBinding Data}"
+            Fill="{TemplateBinding Foreground}" />
+    </Border>
+  </ControlTemplate>
+
   <ControlTheme x:Key="{x:Type PathIcon}" TargetType="PathIcon">
     <!-- The size and the uniform scaling of the framework's path icons (PI-2): 20 by 20, the
          IconElementThemeWidth and IconElementThemeHeight of its other themes. -->

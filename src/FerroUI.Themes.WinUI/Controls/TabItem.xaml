@@ -20,7 +20,8 @@
     PART_ContentPresenter of the header (Content bound to Header, ContentTemplate to
     HeaderTemplate). The icon: IconControl shows the IconElement TabViewItem makes from its
     IconSource; FerroUI's TabItem has an Icon and an IconTemplate, shown by a content presenter
-    of the same name in the Viewbox IconBox, which is hidden without an icon (IconStates).
+    of the same name in the Viewbox IconBox, which is hidden without an icon (IconStates); a path
+    icon there is unscaled as WinUI's (PathIconUnscaledTemplate, DEVIATIONS.md PI-3).
   - SelectedBackgroundPath is a Path in a Canvas whose geometry TabViewItem computes in code from
     its size (TabViewTemplateSettings.TabGeometry: a rectangle with the top corners of
     OverlayCornerRadius and two 4 px feet curving out at the bottom). It is a Grid of the same
@@ -145,7 +146,16 @@
                   <ContentPresenter x:Name="IconControl"
                                     Content="{TemplateBinding Icon}"
                                     ContentTemplate="{TemplateBinding IconTemplate}"
-                                    Foreground="{DynamicResource TabViewItemIconForeground}" />
+                                    Foreground="{DynamicResource TabViewItemIconForeground}">
+                    <ContentPresenter.Styles>
+                      <!-- A path icon as WinUI's, unscaled, so that the Viewbox scales its geometry as WinUI's does (PI-3). -->
+                      <Style Selector="PathIcon">
+                        <Setter Property="Width" Value="NaN" />
+                        <Setter Property="Height" Value="NaN" />
+                        <Setter Property="Template" Value="{StaticResource PathIconUnscaledTemplate}" />
+                      </Style>
+                    </ContentPresenter.Styles>
+                  </ContentPresenter>
                 </Viewbox>
                 <ContentPresenter x:Name="PART_ContentPresenter"
                                   Grid.Column="1"
@@ -289,7 +299,16 @@
                                       Content="{TemplateBinding Icon}"
                                       ContentTemplate="{TemplateBinding IconTemplate}"
                                       Foreground="{TemplateBinding Foreground}"
-                                      Background="{DynamicResource NavigationViewItemIconBackground}" />
+                                      Background="{DynamicResource NavigationViewItemIconBackground}">
+                      <ContentPresenter.Styles>
+                        <!-- A path icon as WinUI's, unscaled, so that the Viewbox scales its geometry as WinUI's does (PI-3). -->
+                        <Style Selector="PathIcon">
+                          <Setter Property="Width" Value="NaN" />
+                          <Setter Property="Height" Value="NaN" />
+                          <Setter Property="Template" Value="{StaticResource PathIconUnscaledTemplate}" />
+                        </Style>
+                      </ContentPresenter.Styles>
+                    </ContentPresenter>
                   </Viewbox>
                 </Border>
                 <Border x:Name="IconColumnCollapsed"
@@ -409,7 +428,16 @@
                                       Content="{TemplateBinding Icon}"
                                       ContentTemplate="{TemplateBinding IconTemplate}"
                                       Foreground="{TemplateBinding Foreground}"
-                                      Background="{DynamicResource NavigationViewItemIconBackground}" />
+                                      Background="{DynamicResource NavigationViewItemIconBackground}">
+                      <ContentPresenter.Styles>
+                        <!-- A path icon as WinUI's, unscaled, so that the Viewbox scales its geometry as WinUI's does (PI-3). -->
+                        <Style Selector="PathIcon">
+                          <Setter Property="Width" Value="NaN" />
+                          <Setter Property="Height" Value="NaN" />
+                          <Setter Property="Template" Value="{StaticResource PathIconUnscaledTemplate}" />
+                        </Style>
+                      </ContentPresenter.Styles>
+                    </ContentPresenter>
                   </Viewbox>
                 </Border>
                 <Border x:Name="IconColumnCollapsed"

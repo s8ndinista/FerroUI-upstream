@@ -90681,7 +90681,7 @@
    "batch": "B1",
    "winui": "No WinUI style (IconElement has no template): the Path that WinUI's PathIcon builds in code (CPathIcon::ApplyTemplate, icon.cpp), unscaled and filled with the Foreground.",
    "status": "ported",
-   "deviations": 2,
+   "deviations": 3,
    "date": "2026-10-16"
   },
   {
@@ -91554,7 +91554,7 @@
   "MenuItem": 15,
   "MenuScrollViewer": 2,
   "OverlayPopupHost": 1,
-  "PathIcon": 2,
+  "PathIcon": 3,
   "PopupRoot": 1,
   "ProgressBar": 10,
   "RadioButton": 6,

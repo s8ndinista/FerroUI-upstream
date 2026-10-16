@@ -37,7 +37,8 @@
     and OverflowPressed of AppBarButton set what PointerOver and Pressed set; the Overflow*
     states of AppBarToggleButton are the nested styles of ^[IsInOverflow=True] after the
     others.
-  - The icon is FerroUI's Icon in the Viewbox ContentViewbox (AppBarButtonContentHeight). The
+  - The icon is FerroUI's Icon in the Viewbox ContentViewbox (AppBarButtonContentHeight), a path
+    icon there unscaled as WinUI's (PathIconUnscaledTemplate, DEVIATIONS.md PI-3). The
     KeyboardAcceleratorTextLabel, the flyout chevrons (SubItemChevronPanel, hidden in a command
     bar by AppBarButtonHasFlyoutChevronVisibility), InputModeStates and
     KeyboardAcceleratorTextVisibility are left out (FerroUI's command bar buttons have no
@@ -150,7 +151,16 @@
                      HorizontalAlignment="Stretch">
               <ContentPresenter x:Name="Content"
                                 Content="{TemplateBinding Icon}"
-                                Foreground="{TemplateBinding Foreground}" />
+                                Foreground="{TemplateBinding Foreground}">
+                <ContentPresenter.Styles>
+                  <!-- A path icon as WinUI's, unscaled, so that the Viewbox scales its geometry as WinUI's does (PI-3). -->
+                  <Style Selector="PathIcon">
+                    <Setter Property="Width" Value="NaN" />
+                    <Setter Property="Height" Value="NaN" />
+                    <Setter Property="Template" Value="{StaticResource PathIconUnscaledTemplate}" />
+                  </Style>
+                </ContentPresenter.Styles>
+              </ContentPresenter>
             </Viewbox>
             <TextBlock x:Name="TextLabel"
                        Grid.Row="1"
@@ -348,7 +358,16 @@
                      HorizontalAlignment="Stretch">
               <ContentPresenter x:Name="Content"
                                 Content="{TemplateBinding Icon}"
-                                Foreground="{TemplateBinding Foreground}" />
+                                Foreground="{TemplateBinding Foreground}">
+                <ContentPresenter.Styles>
+                  <!-- A path icon as WinUI's, unscaled, so that the Viewbox scales its geometry as WinUI's does (PI-3). -->
+                  <Style Selector="PathIcon">
+                    <Setter Property="Width" Value="NaN" />
+                    <Setter Property="Height" Value="NaN" />
+                    <Setter Property="Template" Value="{StaticResource PathIconUnscaledTemplate}" />
+                  </Style>
+                </ContentPresenter.Styles>
+              </ContentPresenter>
             </Viewbox>
             <TextBlock x:Name="TextLabel"
                        Grid.Row="1"
