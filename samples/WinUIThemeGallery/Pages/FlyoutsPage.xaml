@@ -6,8 +6,12 @@
        them in the window); the tool tips are opaque, as an open one is. NotificationCard of
        each type. WindowNotificationManager is the host of such cards: it shows the cards an
        application sends it, and is empty here. The content of a card is a title and a message
-       laid out as InfoBar lays out its own (the vertical layout of its InfoBarPanel: 14 above,
-       4 between, 18 below), as WindowNotificationManager presents a notification. The native
+       laid out as InfoBar's InfoBarPanel lays out its own, as WindowNotificationManager presents a
+       notification: a wrap panel with the title and the message on one line when they fit (the
+       message 12 after the title, InfoBarMessageHorizontalOrientationMargin), else the message
+       4 below the title (InfoBarMessageVerticalOrientationMargin); 14 above and 18 below
+       (InfoBarPanelVerticalOrientationPadding). A card of one line is therefore 52 high where
+       InfoBar is 48 (docs/porting/winui-theme/DEVIATIONS.md, WNM-2). The native
        counterpart is FlyoutsPage.winui.xml (FlyoutPresenter, ToolTip, InfoBar). The flyout
        content has no margin: the theme gives the presenter the margin of its shadow, the room
        for the shadow in a popup, which in the page would move it (WinUI draws its shadow outside
@@ -54,28 +58,28 @@
         <RowDefinition Height="Auto" />
       </Grid.RowDefinitions>
       <NotificationCard Grid.Row="0" Grid.Column="0" Width="320" NotificationType="Information">
-        <StackPanel Margin="0,14,0,18" Spacing="4">
-          <TextBlock Text="Information" FontWeight="SemiBold" />
+        <WrapPanel Margin="0,14,0,18" LineSpacing="4">
+          <TextBlock Text="Information" FontWeight="SemiBold" Margin="0,0,12,0" />
           <TextBlock Text="A new version is available." TextWrapping="Wrap" />
-        </StackPanel>
+        </WrapPanel>
       </NotificationCard>
       <NotificationCard Grid.Row="0" Grid.Column="1" Width="320" NotificationType="Success">
-        <StackPanel Margin="0,14,0,18" Spacing="4">
-          <TextBlock Text="Success" FontWeight="SemiBold" />
+        <WrapPanel Margin="0,14,0,18" LineSpacing="4">
+          <TextBlock Text="Success" FontWeight="SemiBold" Margin="0,0,12,0" />
           <TextBlock Text="The document was saved." TextWrapping="Wrap" />
-        </StackPanel>
+        </WrapPanel>
       </NotificationCard>
       <NotificationCard Grid.Row="1" Grid.Column="0" Width="320" NotificationType="Warning">
-        <StackPanel Margin="0,14,0,18" Spacing="4">
-          <TextBlock Text="Warning" FontWeight="SemiBold" />
+        <WrapPanel Margin="0,14,0,18" LineSpacing="4">
+          <TextBlock Text="Warning" FontWeight="SemiBold" Margin="0,0,12,0" />
           <TextBlock Text="The disk is almost full." TextWrapping="Wrap" />
-        </StackPanel>
+        </WrapPanel>
       </NotificationCard>
       <NotificationCard Grid.Row="1" Grid.Column="1" Width="320" NotificationType="Error">
-        <StackPanel Margin="0,14,0,18" Spacing="4">
-          <TextBlock Text="Error" FontWeight="SemiBold" />
+        <WrapPanel Margin="0,14,0,18" LineSpacing="4">
+          <TextBlock Text="Error" FontWeight="SemiBold" Margin="0,0,12,0" />
           <TextBlock Text="The file could not be opened." TextWrapping="Wrap" />
-        </StackPanel>
+        </WrapPanel>
       </NotificationCard>
     </Grid>
     <WindowNotificationManager MaxItems="3" />

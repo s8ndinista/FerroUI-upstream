@@ -20,12 +20,16 @@
   - The title, the message and the action button of InfoBar (the InfoBarPanel) are the content of
     the card, presented where InfoBar has its InfoBarPanel (InfoBarPanelMargin). A notification
     shown by WindowNotificationManager is presented with the title and the message of InfoBar in
-    the vertical layout of InfoBarPanel (WindowNotificationManager.xaml). ContentArea, the second
+    a wrap panel that lays them out as InfoBarPanel does, on one line when they fit
+    (WindowNotificationManager.xaml). ContentArea, the second
     row for the Content of InfoBar, has no counterpart (NoBannerContent).
   - The close button is the CloseButton of InfoBar with InfoBarCloseButtonStyle; it closes the card
     with NotificationCard.CloseOnClick (CloseButtonCommand). IsClosable has no counterpart: the
     button is always shown (CloseButtonVisible). The SymbolIcon of InfoBarCloseButtonSymbol (Cancel)
-    in a Viewbox of InfoBarCloseButtonGlyphSize is the path of GlyphGeometryE711. The AppBarButton
+    in a Viewbox of InfoBarCloseButtonGlyphSize is the path of GlyphGeometryE711 at the size of the
+    ink WinUI draws: the SymbolIcon is 20 x 20 (font size 20), the Viewbox of 16 scales it by 0.8,
+    and the ink of the Cancel glyph, 12.5 wide at 20, is 10 wide (measured against native WinUI 3,
+    which also gives its strokes the width of one pixel). The AppBarButton
     brushes the template gives the close button through Button.Resources are the brushes of
     InfoBarCloseButtonStyle.
   - InfoBarVisibility (IsOpen) is the closing of the card: a closing card (IsClosing) fades out over
@@ -142,7 +146,7 @@
                 <Path Data="{StaticResource GlyphGeometryE711}"
                       Fill="{Binding $parent[Button].Foreground}"
                       Stretch="Uniform"
-                      Width="{StaticResource InfoBarCloseButtonGlyphSize}"
+                      Width="10"
                       HorizontalAlignment="Center"
                       VerticalAlignment="Center" />
               </Button>
