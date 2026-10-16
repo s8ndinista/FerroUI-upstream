@@ -14,8 +14,8 @@
        InfoBar is 48 (docs/porting/winui-theme/DEVIATIONS.md, WNM-2). The native
        counterpart is FlyoutsPage.winui.xml (FlyoutPresenter, ToolTip, InfoBar). The flyout
        content has no margin: the theme gives the presenter the margin of its shadow, the room
-       for the shadow in a popup, which in the page would move it (WinUI draws its shadow outside
-       the bounds of the element). -->
+       for the shadow in a popup, which in the page would move it; its shadow is drawn outside its
+       bounds, as WinUI draws the shadow of a presenter in a page. -->
   <StackPanel Margin="24" Spacing="12">
     <TextBlock Text="Flyouts, tool tips and notifications" FontSize="28" FontWeight="SemiBold" />
 

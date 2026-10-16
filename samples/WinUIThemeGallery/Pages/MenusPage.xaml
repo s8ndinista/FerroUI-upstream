@@ -11,7 +11,8 @@
        pointer-over state of a menu item on its selection. The native counterpart is
        MenusPage.winui.xml. The menu presenter and the context menu have no margin: the theme
        gives them the margin of their shadow, the room for the shadow in a popup, which in the
-       page would move them. -->
+       page would move them; their shadows are drawn outside their bounds, as WinUI draws
+       them. -->
   <StackPanel Margin="24" Spacing="12">
     <TextBlock Text="Menus and command bars" FontSize="28" FontWeight="SemiBold" />
 

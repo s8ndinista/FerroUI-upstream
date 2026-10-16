@@ -27,8 +27,10 @@
   - The flyout of a MenuBarItem (a MenuFlyout) is the popup PART_Popup with the template of
     MenuFlyoutPresenter, below the item and aligned to its left edge (MenuBarItem::ShowMenuFlyout
     shows it at the bottom left corner of the button). The shadow of the menu flyout (a ThemeShadow
-    at a Translation.Z of 32) is the BoxShadow ThemeShadowFlyoutBoxShadow of the border of the
-    popup, with the margin ThemeShadowFlyoutMargin as the room for it in the popup
+    at a Translation.Z of 32) is the BoxShadow ThemeShadowFlyoutBoxShadow of the border
+    ThemeShadowWrapper around the border of the popup (a border of its own: a border whose
+    background is sized to the inner edge of its border draws no box shadow), with the margin
+    ThemeShadowFlyoutMargin as the room for it in the popup
     (Resources/ThemeShadows.xaml; DEVIATIONS.md, G-24).
   - States: PointerOver is the :selected state of FerroUI's menus (the item under the pointer or
     reached with the keyboard), Selected (the flyout is open) is :open, Pressed is :pressed. As
@@ -110,23 +112,27 @@
                  IsLightDismissEnabled="True"
                  IsOpen="{TemplateBinding IsSubMenuOpen, Mode=TwoWay}"
                  OverlayInputPassThroughElement="{Binding $parent[Menu]}">
-            <Border BoxShadow="{DynamicResource ThemeShadowFlyoutBoxShadow}"
+            <!-- The shadow on a border of its own (G-24). -->
+            <Border x:Name="ThemeShadowWrapper"
+                    BoxShadow="{DynamicResource ThemeShadowFlyoutBoxShadow}"
                     Margin="{StaticResource ThemeShadowFlyoutMargin}"
-                    Background="{DynamicResource MenuFlyoutPresenterBackground}"
-                    BorderBrush="{DynamicResource MenuFlyoutPresenterBorderBrush}"
-                    BorderThickness="{DynamicResource MenuFlyoutPresenterBorderThemeThickness}"
-                    CornerRadius="{DynamicResource OverlayCornerRadius}"
-                    MinWidth="{DynamicResource FlyoutThemeMinWidth}"
-                    MinHeight="{StaticResource MenuFlyoutThemeMinHeight}"
-                    BackgroundSizing="InnerBorderEdge">
-              <ScrollViewer x:Name="MenuFlyoutPresenterScrollViewer"
-                            Theme="{StaticResource MenuFlyoutPresenterScrollViewer}"
-                            Margin="{StaticResource MenuFlyoutPresenterThemePadding}">
-                <ItemsPresenter x:Name="PART_ItemsPresenter"
-                                ItemsPanel="{TemplateBinding ItemsPanel}"
-                                KeyboardNavigation.TabNavigation="Continue"
-                                Grid.IsSharedSizeScope="True" />
-              </ScrollViewer>
+                    CornerRadius="{DynamicResource OverlayCornerRadius}">
+              <Border Background="{DynamicResource MenuFlyoutPresenterBackground}"
+                      BorderBrush="{DynamicResource MenuFlyoutPresenterBorderBrush}"
+                      BorderThickness="{DynamicResource MenuFlyoutPresenterBorderThemeThickness}"
+                      CornerRadius="{DynamicResource OverlayCornerRadius}"
+                      MinWidth="{DynamicResource FlyoutThemeMinWidth}"
+                      MinHeight="{StaticResource MenuFlyoutThemeMinHeight}"
+                      BackgroundSizing="InnerBorderEdge">
+                <ScrollViewer x:Name="MenuFlyoutPresenterScrollViewer"
+                              Theme="{StaticResource MenuFlyoutPresenterScrollViewer}"
+                              Margin="{StaticResource MenuFlyoutPresenterThemePadding}">
+                  <ItemsPresenter x:Name="PART_ItemsPresenter"
+                                  ItemsPanel="{TemplateBinding ItemsPanel}"
+                                  KeyboardNavigation.TabNavigation="Continue"
+                                  Grid.IsSharedSizeScope="True" />
+                </ScrollViewer>
+              </Border>
             </Border>
           </Popup>
         </Panel>
