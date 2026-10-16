@@ -40,8 +40,11 @@
   <!-- E711 Cancel: the dismiss button of the date and time picker flyouts (DatePickerFlyoutPresenter,
        TimePickerFlyoutPresenter) and InfoBarCloseButtonSymbol, the close button of InfoBar (NotificationCard). -->
   <StreamGeometry x:Key="GlyphGeometryE711">M 0.7,0 6,5.3 11.3,0 12,0.7 6.7,6 12,11.3 11.3,12 6,6.7 0.7,12 0,11.3 5.3,6 0,0.7 Z</StreamGeometry>
-  <!-- E787 Calendar: the glyph of CalendarDatePicker. -->
-  <StreamGeometry x:Key="GlyphGeometryE787">M 0,0 H 16 V 16 H 0 Z M 1,1 V 3 H 15 V 1 Z M 1,4 V 15 H 15 V 4 Z M 3,6 V 8 H 5 V 6 Z M 7,6 V 8 H 9 V 6 Z M 11,6 V 8 H 13 V 6 Z M 3,10 V 12 H 5 V 10 Z M 7,10 V 12 H 9 V 10 Z M 11,10 V 12 H 13 V 10 Z</StreamGeometry>
+  <!-- E787 Calendar: the glyph of CalendarDatePicker, drawn after the ink of the glyph at 12 px
+       measured against native WinUI 3 (a 16 unit box is 12 px): a frame with rounded corners
+       (2 px radius outside, 1 px stroke), the line under its header 3 px below its top, and the
+       dates, three over two, 1 px squares 2.5 px apart. Filled even-odd. -->
+  <StreamGeometry x:Key="GlyphGeometryE787">F0 M 2.67,0 H 13.33 A 2.67,2.67 0 0 1 16,2.67 V 13.33 A 2.67,2.67 0 0 1 13.33,16 H 2.67 A 2.67,2.67 0 0 1 0,13.33 V 2.67 A 2.67,2.67 0 0 1 2.67,0 Z M 2.67,1.33 A 1.33,1.33 0 0 0 1.33,2.67 V 13.33 A 1.33,1.33 0 0 0 2.67,14.67 H 13.33 A 1.33,1.33 0 0 0 14.67,13.33 V 2.67 A 1.33,1.33 0 0 0 13.33,1.33 Z M 1.33,4 H 14.67 V 5.33 H 1.33 Z M 4,6.67 H 5.33 V 8 H 4 Z M 7.33,6.67 H 8.67 V 8 H 7.33 Z M 10.67,6.67 H 12 V 8 H 10.67 Z M 4,10 H 5.33 V 11.33 H 4 Z M 7.33,10 H 8.67 V 11.33 H 7.33 Z</StreamGeometry>
   <!-- E8FB Accept: the accept button of the date and time picker flyouts. -->
   <StreamGeometry x:Key="GlyphGeometryE8FB">M 0,7 0.7,6.3 5,10.6 15.3,0.3 16,1 5,12 Z</StreamGeometry>
 
