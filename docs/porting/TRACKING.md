@@ -268,7 +268,7 @@ Sample applications. Same directory names; binary crates. The state of a sample 
 
 ### `tests/`
 
-Upstream unit tests are ported next to the code (`#[cfg(test)] mod tests` or `<file>_tests.rs`, porting guide rule 1); cross-crate, render and integration test projects get a crate under `tests/`.
+Upstream unit tests are ported next to the code (`#[cfg(test)] mod tests` or `<file>_tests.rs`, porting guide rule 1); cross-crate, render and integration test projects get a crate under `tests/`. How completely the upstream test suites are ported, per project, with the missing tests by name: [TESTS.md](TESTS.md) (`scripts/port-status/tests_audit.py`).
 
 | Upstream project | C# files | FerroUI path | State | Tracking |
 |---|---:|---|---|---|

@@ -114,7 +114,7 @@ Directories of `src`, `native` and `external` that hold a project and are not in
 
 ## Upstream test projects
 
-Counted by `scripts/port-status/test_gaps.py --all` (its rules are at its top), read here from the totals of its reports in `docs/porting/data/`. A test is present when the port has a test function of its name.
+Counted by `scripts/port-status/test_gaps.py --all` (its rules are at its top), read here from the totals of its reports in `docs/porting/data/`. A test is present when the port has a test function of its name. [TESTS.md](TESTS.md) counts every upstream test project, the ones that do not apply included, with a stricter match (one Rust function per upstream test) and lists the missing tests by name.
 
 | Upstream test project | Tests | Present | Missing | Waived | Report |
 |---|---:|---:|---:|---:|---|
