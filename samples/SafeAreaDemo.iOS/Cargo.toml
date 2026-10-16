@@ -1,0 +1,22 @@
+[package]
+name = "safe-area-demo-ios"
+description = "The iOS entry point of the SafeAreaDemo sample of FerroUI"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+autotests = false
+autobenches = false
+autoexamples = false
+
+[[bin]]
+name = "safe-area-demo-ios"
+path = "main.rs"
+
+[dependencies]
+ferroui-base = { workspace = true }
+ferroui-controls = { workspace = true }
+ferroui-ios = { workspace = true }
+safe-area-demo = { path = "../SafeAreaDemo" }

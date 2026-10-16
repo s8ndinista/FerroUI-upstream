@@ -5,8 +5,8 @@
 //! table of the classes of a sample that have a document ([`XamlClass`], declared with
 //! [`xaml_class!`]), what a sample states about its documents and assets ([`Sample`]), the
 //! load of a class from the compiled markup of its document ([`Sample::load_component`];
-//! docs/porting/xaml.md, 9.5.22) and the smoke option of the desktop entry points
-//! ([`close_main_window_after`]).
+//! docs/porting/xaml.md, 9.5.22) and the smoke options of the desktop entry points
+//! ([`smoke_run`]: [`close_main_window_after`] and [`save_main_window_frame`]).
 //!
 //! A sample declares one [`Sample`] as `crate::SAMPLE`; the macros name it.
 
@@ -175,11 +175,59 @@ macro_rules! xaml_class {
 /// `FERROUI_SMOKE_EXIT_MS=<n>` the main window of the application is closed after `n`
 /// milliseconds, which ends the main loop. Called once the application is set up
 /// (`AppBuilder::after_setup`).
+///
+/// With `FERROUI_SMOKE_SCREENSHOT=<file.png>` a picture of the main window is written to the
+/// file after `FERROUI_SMOKE_SCREENSHOT_MS` milliseconds (1000 without it): the window drawn by
+/// the framework into a bitmap of the size of its client area ([`save_main_window_frame`]),
+/// not a capture of the screen.
 pub fn smoke_run() {
+    if let Some(path) = std::env::var_os("FERROUI_SMOKE_SCREENSHOT").filter(|path| !path.is_empty()) {
+        let ms = std::env::var("FERROUI_SMOKE_SCREENSHOT_MS").ok().and_then(|value| value.parse::<u64>().ok()).unwrap_or(1000);
+        println!("Will write a picture of the main window to {} after {ms} ms", path.to_string_lossy());
+        let path = std::path::PathBuf::from(path);
+        let _timer = DispatcherTimer::run_once(
+            move || match save_main_window_frame(&path) {
+                Ok(size) => println!("Screenshot: {} ({} by {}, the frame of the framework)", path.display(), size.width, size.height),
+                Err(error) => println!("Screenshot: {} could not be written: {error}", path.display()),
+            },
+            Duration::from_millis(ms),
+            DispatcherPriority::NORMAL,
+        );
+    }
     if let Some(ms) = std::env::var("FERROUI_SMOKE_EXIT_MS").ok().and_then(|value| value.parse::<u64>().ok()) {
         println!("Will close the main window after {ms} ms");
         close_main_window_after(Duration::from_millis(ms));
     }
+}
+
+/// The main window of the application with the classic desktop lifetime.
+fn main_window() -> Option<Ref<ferroui_controls::Window>> {
+    let lifetime = Application::current().and_then(|application| application.application_lifetime());
+    lifetime.as_ref().and_then(|l| l.as_classic_desktop_style_application_lifetime()).and_then(|l| l.main_window())
+}
+
+/// Draws the main window into a bitmap of the size of its client area (in pixels, at the
+/// render scaling of the window) through the render target of the framework and writes it as
+/// a PNG file. Returns the size of the picture.
+pub fn save_main_window_frame(path: &std::path::Path) -> std::io::Result<ferroui_base::PixelSize> {
+    use ferroui_base::media::imaging::{BitmapEncoderOptions, PngBitmapEncoderOptions, RenderTargetBitmap};
+    use ferroui_base::{PixelSize, Vector, Visual};
+
+    let window = main_window().ok_or_else(|| std::io::Error::other("there is no main window"))?;
+    let scaling = window.render_scaling();
+    let size = window.client_size();
+    let pixel_size = PixelSize::new((size.width * scaling).ceil() as i32, (size.height * scaling).ceil() as i32);
+    if pixel_size.width < 1 || pixel_size.height < 1 {
+        return Err(std::io::Error::other(format!("the client area of the window is empty: {pixel_size:?}")));
+    }
+    if let Some(parent) = path.parent().filter(|parent| !parent.as_os_str().is_empty()) {
+        std::fs::create_dir_all(parent)?;
+    }
+    let bitmap = RenderTargetBitmap::with_dpi(pixel_size, Vector::new(96.0 * scaling, 96.0 * scaling));
+    bitmap.render(&window.clone().upcast::<Visual>());
+    let result = bitmap.save_to_file(&path.to_string_lossy(), &BitmapEncoderOptions::Png(PngBitmapEncoderOptions::DEFAULT));
+    bitmap.dispose();
+    result.map(|()| pixel_size)
 }
 
 /// Closes the main window of the application after `interval`.

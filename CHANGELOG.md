@@ -4,6 +4,14 @@ All notable changes to FerroUI are recorded in this file. The format follows [Ke
 
 ## [Unreleased]
 
+### Added
+
+- **Samples**: `SafeAreaDemo` (the safe area, the system bars and the input pane of a top-level) with its desktop, Android and iOS hosts; `XEmbedSample` (a page of the catalog in a socket of a GTK 3 window through XEmbed, Linux); `PlatformSanityChecks` (the threading of the X11 platform, Linux); `SingleProjectSandbox` (one package with the application and its desktop, macOS, Android and iOS entry points). `scripts/android/apk.sh` builds the Android hosts (`safearea`, `sandbox`). The small samples take `FERROUI_SMOKE_SCREENSHOT=<file.png>`, a picture of the main window drawn by the framework.
+
+### Fixed
+
+- **Tracking of the samples**: `TRACKING.md` lists every ported sample as a member of the workspace (`WinUIEmbedSample` was listed as not created because the documents had not been regenerated), and a sample that is not applicable with the state `docs/porting/data/samples.toml` records (the catalog heads for Mac Catalyst and tvOS, which have no sources).
+
 ## [0.1.0-preview.2] - 2026-10-16
 
 The second preview.

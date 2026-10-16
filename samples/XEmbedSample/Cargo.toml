@@ -1,0 +1,27 @@
+[package]
+name = "xembed-sample"
+description = "The XEmbedSample sample of FerroUI: a page of the ControlCatalog embedded through XEmbed in a socket of a GTK 3 window, beside controls of GTK"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+autotests = false
+autobenches = false
+autoexamples = false
+
+[[bin]]
+name = "xembed-sample"
+path = "program.rs"
+
+# XEmbed is a protocol of the X server, and the plug is a window of the X11 platform: Linux only.
+# GTK 3 (libgtk-3.so.0, libgdk-3.so.0, libgobject-2.0.so.0) is opened at run time (`gtk.rs`), as
+# the platform opens it for its dialogs; nothing is linked.
+[target.'cfg(target_os = "linux")'.dependencies]
+ferroui-base = { workspace = true }
+ferroui-controls = { workspace = true }
+ferroui-skia = { workspace = true }
+ferroui-harfbuzz = { workspace = true }
+ferroui-x11 = { workspace = true }
+control-catalog = { path = "../ControlCatalog" }

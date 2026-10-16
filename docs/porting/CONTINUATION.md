@@ -18,12 +18,30 @@ The checks that need real hardware or a person at the screen are listed per plat
 4. **The ControlCatalog** (`samples/ControlCatalog/GAPS.md`): the OpenGL lease page (its code-behind needs a Ganesh surface on OpenGL in the desktop build), and gap C101 (a reflection binding to `$parent` of a prefixed type).
 5. **The browser** (`browser-render-worker.md`, `browser-platform.md`): the memory a page visit keeps in the module, browsers other than Chrome, the published site checked by hand, the size of the module.
 6. **The Vello backend** (`vello-backend.md`, section 13): the open work in one list; the owner supplies the patches, and nothing is tuned meanwhile.
-7. **Samples and tests not ported** (`REMAINING.md`): the samples `WinUIEmbedSample`, `XEmbedSample`, `GpuInterop`, `SafeAreaDemo` and its heads, `PlatformSanityChecks`, `SingleProjectSandbox` and the catalog heads for Mac Catalyst and tvOS; the test `Designer_In_Win32_Mode_Should_Provide_Valid_Hwnd` of designer support; the test projects that are not counted (Appium integration tests, the build tests, the Wayland unit tests).
+7. **Samples and tests not ported** (`REMAINING.md`): the sample `GpuInterop` (the samples of 2026-10-16 are ported, below; their runs on the emulator, the simulator and in the Linux virtual machine are open); the test `Designer_In_Win32_Mode_Should_Provide_Valid_Hwnd` of designer support; the test projects that are not counted (Appium integration tests, the build tests, the Wayland unit tests).
 8. **Smaller items**: the X11 backend loads `libEGL` with its own loader (moving it to `EglInterface::new_default` waits for a run in the virtual machine; "What the tracking listed as missing in the X11 backend", below); the performance designs have their gains to measure (`performance/README.md`); the documentation build of `ferroui-ios` failed on docs.rs (`docs/release.md`, section 7).
 9. **Decisions for the owner**: the four differences of `decisions/2026-10-open-differences.md`; bindings from expression trees (`xaml.md` 3.6.1); the CI speed-up ("Decisions waiting for the owner", below).
 10. **The release of `0.1.0-preview.2`**: the checklist of `docs/release.md`, section 9; the changelog has its entry.
 
 The sections below are the record of the periods before this hand-over, newest first. Where they say that something is open or in flight and this hand-over does not list it, it is done.
+
+## The remaining samples (2026-10-16)
+
+Branch `samples-remaining`. Ported, each with its `NOTICE.md` and `GAPS.md`; `REMAINING.md` has 23 of 30 samples ported, the rest not applicable but `GpuInterop`:
+
+| Sample | Crates | Tests | Verified |
+|---|---|---:|---|
+| `samples/SafeAreaDemo` and `.Desktop`, `.Android`, `.iOS` | `safe-area-demo` (the shared content), `safe-area-demo-desktop`, `safe-area-demo-android`, `safe-area-demo-ios` | 16 | the desktop host on macOS with `FERROUI_SMOKE_STEPS_MS` (every option and theme variant, a picture after each in `ferroui-screenshots/samples/safe-area-demo`); the APK (`scripts/android/apk.sh safearea`) and the simulator bundle built |
+| `samples/XEmbedSample` | `xembed-sample` | none | `cargo check --bins` for `x86_64-unknown-linux-gnu` from the Mac (without HarfBuzz, whose bundled C++ needs a compiler for that target) |
+| `samples/PlatformSanityChecks` | `platform-sanity-checks` | 3 | the tests on macOS; the checks need X11 |
+| `samples/SingleProjectSandbox` | `single-project-sandbox` (one package: the application as its library, the Android entry point as its shared library, the desktop, macOS and iOS entry points as binaries) | 12 | the desktop and macOS entry points on macOS with pictures; the APK (`scripts/android/apk.sh sandbox`) and the simulator bundle built |
+
+- The smoke option `FERROUI_SMOKE_SCREENSHOT=<file.png>` of `sample-support` writes a picture of the main window, drawn by the framework, for every small sample.
+- Two upstream entry points are out of date and fail at start: `PlatformSanityChecks` calls a runtime platform initializer the builder does not set, and the macOS entry point of `SingleProjectSandbox` configures no text shaping system. The ports select what the statements mean and run (`GAPS.md` PSC001 and SPS002).
+- Not ported: the browser entry point of `SingleProjectSandbox` (SPS001: an Emscripten site of its own).
+- `ControlCatalog.MacCatalyst` and `ControlCatalog.tvOS` are not applicable: they have no sources, only project files that compile the iOS host for targets the port does not have. The structure table of `TRACKING.md` takes the state of a sample from `samples.toml` now; `WinUIEmbedSample` was listed as not created because the tracking documents had not been regenerated after it was merged.
+- Resolved on the way: merge markers left in `CRITICAL-PATH.md` (rows 26 to 32) and `winui.md` (section 9) on `main`.
+- Open: the runs of the Android and iOS hosts on the emulator and the simulator, and of `XEmbedSample` and `PlatformSanityChecks` in the Ubuntu virtual machine (`/Volumes/1TB-macOS/ferroui-vm-samples/scripts/stage.sh`).
 
 ## The EGL library of the X11 backend loaded as upstream does (2026-10-15)
 
@@ -944,11 +962,11 @@ Not ported, with what each waits for:
 | Upstream | Why not | Waits for |
 |---|---|---|
 | `tests/Avalonia.IntegrationTests.Appium` | The tests drive the application from outside through a platform automation backend. | On macOS: an Appium server with the `mac2` driver (XCTest, Xcode, the accessibility permission for the helper and the terminal); the application as a registered bundle launched by its bundle identifier (the upstream `bundle.sh`: an `Info.plist` with the identifier, the binary under `Contents/MacOS`, an ad-hoc signature); the automation bridge to AppKit accessibility proven from outside the process for what the tests use (identifier, title, value, selected, enabled, frame, press: the bridge has them, `src/FerroUI.Native/tests/accessibility_tree.rs` proves a button and a check box in process), and for what is not proven yet: typed keys reaching the focused view through the text input client, popups, menus and context menus as accessibility children of their own windows, the native menu bar, dock menu and tray, the embedded native text view as a child of its host, real drag sessions, the ordered index and the buttons of the title bar of a window, pixels of transparent windows. The identifiers of the window chrome of an extended client area differ from upstream's by the name of the project. Then either the upstream tests as they are (the .NET SDK, two constants changed) or a harness in Rust over the WebDriver protocol; a cheaper first step is to walk the accessibility tree of this application in process as that test does. |
-| `samples/SafeAreaDemo` and its hosts | Its hosts are the mobile platforms and a desktop host that only frames the mobile view. | A mobile platform. |
+| `samples/SafeAreaDemo` and its hosts | Its hosts are the mobile platforms and a desktop host that only frames the mobile view. | Ported on 2026-10-16 (above). |
 | `samples/GpuInterop` | OpenGL, Vulkan and Direct3D textures shared with the compositor. | The platform graphics of Vulkan and Direct3D, and shared textures in a backend (no backend creates them yet). |
-| `samples/SingleProjectSandbox` | One project for the desktop, the browser and the mobile platforms. | The mobile platforms; the desktop part is `Sandbox`. |
+| `samples/SingleProjectSandbox` | One project for the desktop, the browser and the mobile platforms. | Ported on 2026-10-16 (above), but the browser entry point. |
 | `samples/Generators.Sandbox` | A sample of the source generators of named elements. | Nothing: the port has no source generators, the build compiles markup instead. |
-| `samples/PlatformSanityChecks` | A console program of checks of a .NET runtime (threading, the dispatcher of the platform). | Not planned: a .NET concept. |
+| `samples/PlatformSanityChecks` | A console program of checks of a .NET runtime (threading, the dispatcher of the platform). | Ported on 2026-10-16 (above): the checks are of the dispatcher of the X11 platform. |
 | `samples/UnloadableAssemblyLoadContext` | Unloading an assembly load context. | Not planned: a .NET concept. |
 | `samples/ControlGallery.WinUI`, `samples/interop/WinUIEmbedSample`, `samples/interop/WindowsInteropTest`, `samples/XEmbedSample` | Embedding in or of the windows of other platforms and toolkits. | The embedding interfaces of the Windows and Linux platform crates. |
 | `samples/ControlCatalog.Android`, `.iOS`, `.MacCatalyst`, `.tvOS` | Mobile hosts of the catalog. | A mobile platform. |

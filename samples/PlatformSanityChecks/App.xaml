@@ -1,0 +1,5 @@
+<Application xmlns="https://github.com/ferroui">
+    <Application.Styles>
+        <SimpleTheme />
+    </Application.Styles>
+</Application>

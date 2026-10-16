@@ -171,32 +171,32 @@ From `docs/porting/data/samples.toml`; a sample counts as ported when the direct
 | `samples/ControlCatalog.Android` | 3 | ported | `samples/ControlCatalog.Android` | the head of the catalog for Avalonia.Android |
 | `samples/ControlCatalog.Browser` | 2 | ported | `samples/ControlCatalog.Browser` |  |
 | `samples/ControlCatalog.Desktop` | 7 | ported | `samples/ControlCatalog.Desktop` |  |
-| `samples/ControlCatalog.MacCatalyst` | 0 | not ported | - | the head of the catalog for Mac Catalyst (Avalonia.iOS); no C# sources of its own |
+| `samples/ControlCatalog.MacCatalyst` | 0 | not applicable | - | no sources of its own: a project file, Info.plist and Entitlements.plist that compile the sources of ControlCatalog.iOS for Mac Catalyst; its counterpart is control-catalog-ios built for aarch64-apple-ios-macabi, and Mac Catalyst is not a target of the iOS platform of the port (docs/porting/ios-platform.md) |
 | `samples/ControlCatalog.iOS` | 3 | ported | `samples/ControlCatalog.iOS` | the head of the catalog for Avalonia.iOS |
-| `samples/ControlCatalog.tvOS` | 0 | not ported | - | the head of the catalog for tvOS (Avalonia.iOS); no C# sources of its own |
+| `samples/ControlCatalog.tvOS` | 0 | not applicable | - | no sources of its own: a project file, Info.plist and Entitlements.plist that compile the sources of ControlCatalog.iOS for tvOS; its counterpart is control-catalog-ios built for a tvOS target, and tvOS is not a target of the iOS platform of the port (docs/porting/ios-platform.md) |
 | `samples/ControlGallery.WinUI` | 2 | ported | `samples/ControlGallery.WinUI` | the catalog in a WinUI 3 window through ferroui-winui, with a smoke mode (docs/porting/winui.md, section 7) |
 | `samples/Generators.Sandbox` | 6 | not applicable | - | exercises the source generators of tools/Avalonia.Generators, which the port replaces (docs/porting/xaml.md 3.8) |
 | `samples/GpuInterop` | 26 | not ported | - | not listed in samples.toml |
 | `samples/IntegrationTestApp` | 38 | ported | `samples/IntegrationTestApp` | the application the integration tests drive |
 | `samples/MiniMvvm` | 3 | ported | `samples/MiniMvvm` | the view model library of the catalog |
-| `samples/PlatformSanityChecks` | 2 | not ported | - | not listed in samples.toml |
+| `samples/PlatformSanityChecks` | 2 | ported | `samples/PlatformSanityChecks` | the threading checks of the X11 platform without a window; Linux only (GAPS.md) |
 | `samples/RenderDemo` | 29 | ported | `samples/RenderDemo` |  |
-| `samples/SafeAreaDemo` | 5 | not ported | - | not listed in samples.toml |
-| `samples/SafeAreaDemo.Android` | 2 | not ported | - | the head of the safe area demo for Avalonia.Android, which is out of scope |
-| `samples/SafeAreaDemo.Desktop` | 1 | not ported | - | not listed in samples.toml |
-| `samples/SafeAreaDemo.iOS` | 2 | not ported | - | the head of the safe area demo for Avalonia.iOS |
+| `samples/SafeAreaDemo` | 5 | ported | `samples/SafeAreaDemo` | the shared content of the safe area demo (the insets manager and the input pane), with 16 host tests and the smoke run of the hosts (GAPS.md) |
+| `samples/SafeAreaDemo.Android` | 2 | ported | `samples/SafeAreaDemo.Android` | the Android head of the safe area demo (scripts/android/apk.sh safearea) |
+| `samples/SafeAreaDemo.Desktop` | 1 | ported | `samples/SafeAreaDemo.Desktop` | the desktop head of the safe area demo, with a smoke mode and pictures |
+| `samples/SafeAreaDemo.iOS` | 2 | ported | `samples/SafeAreaDemo.iOS` | the iOS head of the safe area demo (scripts/ios/bundle.sh --package safe-area-demo-ios) |
 | `samples/SampleControls` | 1 | ported | `samples/SampleControls` | the controls the samples share |
 | `samples/Sandbox` | 3 | ported | `samples/Sandbox` |  |
-| `samples/SingleProjectSandbox` | 9 | not ported | - | not listed in samples.toml |
+| `samples/SingleProjectSandbox` | 9 | ported | `samples/SingleProjectSandbox` | one package with the application and its desktop, macOS, Android and iOS entry points; the browser entry point is not ported (GAPS.md) |
 | `samples/TextTestApp` | 7 | ported | `samples/TextTestApp` |  |
 | `samples/UnloadableAssemblyLoadContext/UnloadableAssemblyLoadContext` | 5 | not applicable | - | unloading of a collectible AssemblyLoadContext of the .NET runtime |
 | `samples/UnloadableAssemblyLoadContext/UnloadableAssemblyLoadContextPlug` | 3 | not applicable | - | the plug-in assembly of the sample above |
 | `samples/VirtualizationDemo` | 13 | ported | `samples/VirtualizationDemo` |  |
-| `samples/WinUIEmbedSample` | 4 | not ported | - | not ported yet: controls of WinUI beside the embedded content; the integration it needs is ferroui-winui |
-| `samples/XEmbedSample` | 3 | not ported | - | embedding through XEmbed of the X11 backend |
+| `samples/WinUIEmbedSample` | 4 | ported | `samples/WinUIEmbedSample` | controls of WinUI beside the content in one WinUI 3 window through ferroui-winui, with a smoke mode (docs/porting/winui.md, section 7.6); the content (EmbeddedView) is tested on every host |
+| `samples/XEmbedSample` | 3 | ported | `samples/XEmbedSample` | a catalog page in a socket of a GTK 3 window through XEmbed of the X11 backend, with a smoke mode; Linux only (GAPS.md) |
 | `samples/interop/WindowsInteropTest` | 5 | not applicable | - | hosting in Windows Forms (Avalonia.Win32.Interoperability), which has no counterpart in Rust (docs/porting/winui.md, section 8) |
 
-15 of 30 samples are ported.
+23 of 30 samples are ported.
 
 ## Missing, by project
 

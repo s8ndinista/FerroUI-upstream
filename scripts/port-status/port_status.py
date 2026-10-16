@@ -1389,10 +1389,13 @@ def render_tracking(index: dict, projects: list, counts: dict, repo: str, worksp
         "src": "Libraries.",
         "native": "Objective-C++ sources of the macOS backend, re-imported with `scripts/sync-native.sh`.",
         "external": "Third-party code ported in place (same relative paths as upstream).",
-        "samples": "Sample applications. Same directory names; binary crates.",
+        "samples": "Sample applications. Same directory names; binary crates. The state of a sample that is not ported is the one "
+                   "`docs/porting/data/samples.toml` records.",
         "tests": "Upstream unit tests are ported next to the code (`#[cfg(test)] mod tests` or `<file>_tests.rs`, porting guide rule 1); "
                  "cross-crate, render and integration test projects get a crate under `tests/`.",
     }
+    samples_toml = os.path.join(repo, "docs", "porting", "data", "samples.toml")
+    samples_listed = {s["upstream"]: s for s in load_toml(samples_toml).get("sample", [])} if os.path.exists(samples_toml) else {}
     for top in ("src", "native", "external", "samples", "tests"):
         entries = layout.get(top, [])
         if not entries:
@@ -1414,6 +1417,14 @@ def render_tracking(index: dict, projects: list, counts: dict, repo: str, worksp
                 tracking = "not tracked"
             if top == "tests" and not exists(rust):
                 st = "not created"
+            elif top == "samples" and path in samples_listed:
+                # A sample is where `samples.toml` says it is ported, or what the file says it is.
+                sample = samples_listed[path]
+                if sample.get("rust"):
+                    rust = sample["rust"]
+                    st = state(rust)
+                else:
+                    st = sample.get("state", "not ported")
             else:
                 st = state(rust)
             w(f"| `{path}` | {e['csFiles']} | `{rust}` | {st} | {tracking} |")

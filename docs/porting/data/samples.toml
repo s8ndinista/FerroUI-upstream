@@ -74,11 +74,13 @@ note = "the head of the catalog for Avalonia.iOS"
 
 [[sample]]
 upstream = "samples/ControlCatalog.MacCatalyst"
-note = "the head of the catalog for Mac Catalyst (Avalonia.iOS); no C# sources of its own"
+state = "not applicable"
+note = "no sources of its own: a project file, Info.plist and Entitlements.plist that compile the sources of ControlCatalog.iOS for Mac Catalyst; its counterpart is control-catalog-ios built for aarch64-apple-ios-macabi, and Mac Catalyst is not a target of the iOS platform of the port (docs/porting/ios-platform.md)"
 
 [[sample]]
 upstream = "samples/ControlCatalog.tvOS"
-note = "the head of the catalog for tvOS (Avalonia.iOS); no C# sources of its own"
+state = "not applicable"
+note = "no sources of its own: a project file, Info.plist and Entitlements.plist that compile the sources of ControlCatalog.iOS for tvOS; its counterpart is control-catalog-ios built for a tvOS target, and tvOS is not a target of the iOS platform of the port (docs/porting/ios-platform.md)"
 
 [[sample]]
 upstream = "samples/ControlGallery.WinUI"
@@ -97,15 +99,38 @@ note = "hosting in Windows Forms (Avalonia.Win32.Interoperability), which has no
 
 [[sample]]
 upstream = "samples/XEmbedSample"
-note = "embedding through XEmbed of the X11 backend"
+rust = "samples/XEmbedSample"
+note = "a catalog page in a socket of a GTK 3 window through XEmbed of the X11 backend, with a smoke mode; Linux only (GAPS.md)"
+
+[[sample]]
+upstream = "samples/SafeAreaDemo"
+rust = "samples/SafeAreaDemo"
+note = "the shared content of the safe area demo (the insets manager and the input pane), with 16 host tests and the smoke run of the hosts (GAPS.md)"
+
+[[sample]]
+upstream = "samples/SafeAreaDemo.Desktop"
+rust = "samples/SafeAreaDemo.Desktop"
+note = "the desktop head of the safe area demo, with a smoke mode and pictures"
 
 [[sample]]
 upstream = "samples/SafeAreaDemo.Android"
-note = "the head of the safe area demo for Avalonia.Android, which is out of scope"
+rust = "samples/SafeAreaDemo.Android"
+note = "the Android head of the safe area demo (scripts/android/apk.sh safearea)"
 
 [[sample]]
 upstream = "samples/SafeAreaDemo.iOS"
-note = "the head of the safe area demo for Avalonia.iOS"
+rust = "samples/SafeAreaDemo.iOS"
+note = "the iOS head of the safe area demo (scripts/ios/bundle.sh --package safe-area-demo-ios)"
+
+[[sample]]
+upstream = "samples/PlatformSanityChecks"
+rust = "samples/PlatformSanityChecks"
+note = "the threading checks of the X11 platform without a window; Linux only (GAPS.md)"
+
+[[sample]]
+upstream = "samples/SingleProjectSandbox"
+rust = "samples/SingleProjectSandbox"
+note = "one package with the application and its desktop, macOS, Android and iOS entry points; the browser entry point is not ported (GAPS.md)"
 
 [[sample]]
 upstream = "samples/Generators.Sandbox"

@@ -2318,6 +2318,21 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f6b464fbc74e149a392436b17d523f769e057cb6877f6a5c4618bc6f11800548"
 
 [[package]]
+name = "platform-sanity-checks"
+version = "0.1.0-preview.3"
+dependencies = [
+ "ferroui-base",
+ "ferroui-controls",
+ "ferroui-markup",
+ "ferroui-markup-xaml",
+ "ferroui-themes-simple",
+ "ferroui-x11",
+ "sample-build",
+ "sample-support",
+ "sample-testing",
+]
+
+[[package]]
 name = "png"
 version = "0.18.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2596,6 +2611,52 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf54715a573b99ac80df0bc206da022bcd442c974952c7b9720069370852e21f"
 
 [[package]]
+name = "safe-area-demo"
+version = "0.1.0-preview.3"
+dependencies = [
+ "ferroui-base",
+ "ferroui-controls",
+ "ferroui-markup",
+ "ferroui-markup-xaml",
+ "ferroui-themes-fluent",
+ "mini-mvvm",
+ "sample-build",
+ "sample-support",
+ "sample-testing",
+]
+
+[[package]]
+name = "safe-area-demo-android"
+version = "0.1.0-preview.3"
+dependencies = [
+ "ferroui-android",
+ "ferroui-base",
+ "ferroui-controls",
+ "safe-area-demo",
+]
+
+[[package]]
+name = "safe-area-demo-desktop"
+version = "0.1.0-preview.3"
+dependencies = [
+ "ferroui-base",
+ "ferroui-controls",
+ "ferroui-desktop",
+ "safe-area-demo",
+ "sample-support",
+]
+
+[[package]]
+name = "safe-area-demo-ios"
+version = "0.1.0-preview.3"
+dependencies = [
+ "ferroui-base",
+ "ferroui-controls",
+ "ferroui-ios",
+ "safe-area-demo",
+]
+
+[[package]]
 name = "same-file"
 version = "1.0.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2766,6 +2827,26 @@ name = "simd-adler32"
 version = "0.3.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3a219298ac11a56ea9a6d2120044824d6f01aeb034955e7af7bc16858527deea"
+
+[[package]]
+name = "single-project-sandbox"
+version = "0.1.0-preview.3"
+dependencies = [
+ "ferroui-android",
+ "ferroui-base",
+ "ferroui-controls",
+ "ferroui-desktop",
+ "ferroui-harfbuzz",
+ "ferroui-ios",
+ "ferroui-markup",
+ "ferroui-markup-xaml",
+ "ferroui-native",
+ "ferroui-skia",
+ "ferroui-themes-fluent",
+ "sample-build",
+ "sample-support",
+ "sample-testing",
+]
 
 [[package]]
 name = "siphasher"
@@ -3955,6 +4036,18 @@ name = "xcursor"
 version = "0.3.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "163b33ed8786455e2fa5d72f554057ce3f3182425434f756cd39c99839d88e23"
+
+[[package]]
+name = "xembed-sample"
+version = "0.1.0-preview.3"
+dependencies = [
+ "control-catalog",
+ "ferroui-base",
+ "ferroui-controls",
+ "ferroui-harfbuzz",
+ "ferroui-skia",
+ "ferroui-x11",
+]
 
 [[package]]
 name = "xkbcommon-dl"
