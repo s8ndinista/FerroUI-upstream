@@ -2024,9 +2024,9 @@
    "key": "ComboBoxItemPill",
    "kind": "Style",
    "target_type": "Rectangle",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B3"
+   "batch": null
   },
   {
    "document": "controls/dev/ComboBox/ComboBox_themeresources.xaml",
@@ -2194,9 +2194,9 @@
    "key": "ComboBoxTextBoxStyle",
    "kind": "Style",
    "target_type": "TextBox",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B3"
+   "batch": null
   },
   {
    "document": "controls/dev/ComboBox/ComboBox_themeresources.xaml",
@@ -2224,9 +2224,9 @@
    "key": "DefaultComboBoxItemStyle",
    "kind": "Style",
    "target_type": "ComboBoxItem",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B3"
+   "batch": null
   },
   {
    "document": "controls/dev/ComboBox/ComboBox_themeresources.xaml",
@@ -2234,9 +2234,9 @@
    "key": "DefaultComboBoxStyle",
    "kind": "Style",
    "target_type": "ComboBox",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B3"
+   "batch": null
   },
   {
    "document": "controls/dev/ComboBox/ComboBox_themeresources.xaml",
@@ -2244,9 +2244,9 @@
    "key": "{ComboBoxItem}",
    "kind": "Style",
    "target_type": "ComboBoxItem",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B3"
+   "batch": null
   },
   {
    "document": "controls/dev/ComboBox/ComboBox_themeresources.xaml",
@@ -2254,9 +2254,9 @@
    "key": "{ComboBox}",
    "kind": "Style",
    "target_type": "ComboBox",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B3"
+   "batch": null
   },
   {
    "document": "controls/dev/ComboBox/ComboBox_themeresources.xaml",
@@ -90068,6 +90068,8 @@
   "Controls/Carousel.xaml",
   "Controls/CarouselPage.xaml",
   "Controls/CheckBox.xaml",
+  "Controls/ComboBox.xaml",
+  "Controls/ComboBoxItem.xaml",
   "Controls/CommandBar.xaml",
   "Controls/ContentPage.xaml",
   "Controls/ContextMenu.xaml",
@@ -90342,9 +90344,9 @@
    ],
    "batch": "B3",
    "winui": "ComboBox: DefaultComboBoxStyle (ComboBox_themeresources.xaml).",
-   "status": "pending",
-   "deviations": 0,
-   "date": ""
+   "status": "ported",
+   "deviations": 15,
+   "date": "not committed"
   },
   {
    "document": "ComboBoxItem.xaml",
@@ -90353,9 +90355,9 @@
    ],
    "batch": "B3",
    "winui": "ComboBoxItem: DefaultComboBoxItemStyle, ComboBoxItemPill (ComboBox_themeresources.xaml).",
-   "status": "pending",
-   "deviations": 0,
-   "date": ""
+   "status": "ported",
+   "deviations": 7,
+   "date": "not committed"
   },
   {
    "document": "CommandBar.xaml",
@@ -90555,7 +90557,7 @@
    "winui": "ListBox: DefaultListBoxStyle (ListBox_themeresources.xaml).",
    "status": "ported",
    "deviations": 4,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "ListBoxItem.xaml",
@@ -90566,7 +90568,7 @@
    "winui": "ListBoxItem: DefaultListBoxItemStyle (ListBox_themeresources.xaml).",
    "status": "ported",
    "deviations": 11,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "ManagedFileChooser.xaml",
@@ -91521,6 +91523,8 @@
   "DataValidationErrors": 2,
   "DatePicker": 15,
   "DateTimePickerShared": 10,
+  "ComboBox": 15,
+  "ComboBoxItem": 7,
   "ContextMenu": 3,
   "EmbeddableControlRoot": 1,
   "GridSplitter": 2,
