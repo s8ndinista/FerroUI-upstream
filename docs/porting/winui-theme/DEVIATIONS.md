@@ -702,6 +702,14 @@ The section covers both control themes of the document: ManagedFileChooser and M
 | TBP-6 | `PointerRectangle` | Collapsed in every state of the top pane style. | Left out. | No effect. |
 | TBP-7 | (no counterpart) the pane at the bottom, left and right | | At the bottom the content grid's border at its bottom edge and the indicator at the top of the item; at the left and the right the left pane of NavigationView (`NavigationViewExpandedPaneBackground`, `NavigationViewPaneContentGridMargin`, the content grid values of the left pane, mirrored at the right) with the tabs of TabItem for those placements. | FerroUI's placements. |
 | TBP-8 | (no counterpart) the page background | | `ApplicationPageBackgroundThemeBrush` (as ContentPage). | Built from WinUI resources. |
+## ButtonSpinner
+
+| ID | WinUI source | What WinUI does | What the port does | Why |
+|---|---|---|---|---|
+| BSP-1 | (no counterpart) controls/dev/NumberBox/NumberBox.xaml, the spin buttons of the NumberBox template; CS `TextBox_themeresources.xaml`, `DefaultTextBoxStyle` | WinUI 3 has no ButtonSpinner; a NumberBox with `SpinButtonPlacementMode="Inline"` shows a box with two spin buttons. | The look of that NumberBox: a box with the resources and the states of `BorderElement` of the text box (PointerOver, Focused as `:focus-within`, Disabled), the content, and the buttons `PART_IncreaseButton` and `PART_DecreaseButton` with `NumericUpDownSpinButtonStyle`, the margins 4 and 0,4,4,4 and the glyphs E70E and E70D (Paths, 12 px). | Built from WinUI resources and the NumberBox template. |
+| BSP-2 | (no counterpart) | No placement or visibility of spin buttons beside a NumberBox's `SpinButtonPlacementMode`. | The FerroUI contract: `:left` (`ButtonSpinnerLocation="Left"`) docks the buttons at the left, `ShowButtonSpinner` hides them, `AllowSpin` disables them (the control sets `IsEnabled`), `:error` gives the border `SystemFillColorCriticalBrush`. | Properties and pseudo-classes of FerroUI's ButtonSpinner that the Fluent theme honours. |
+| BSP-3 | `DefaultTextBoxStyle`: `UseSystemFocusVisuals="{ThemeResource IsApplicationFocusVisualKindReveal}"` | The text box shows no focus rectangle; its focused state is the border. | `FocusAdorner="{x:Null}"`; the focused state is `:focus-within` of the box. | As the text box (TXB-6). |
+
 ## DropDownButton
 
 | ID | WinUI source | What WinUI does | What the port does | Why |
@@ -710,6 +718,26 @@ The section covers both control themes of the document: ManagedFileChooser and M
 | DDB-2 | `ContentPresenter x:Name="ContentPresenter"` | The content presenter. | `PART_ContentPresenter`, with `RecognizesAccessKey="True"`. | BTN-2, G-20. |
 | DDB-3 | `controls:AnimatedIcon x:Name="ChevronIcon"` (12 x 12, `AnimatedChevronDownSmallVisualSource`, fallback `FontIconSource` E96E at 8 px) and its `AnimatedIcon.State` setters | An animated chevron; the fallback glyph of the symbol font. | A `Path` named `ChevronIcon` of `GlyphGeometryE96E`, 8 px wide, centred in a 12 x 12 grid; its `Fill` is the foreground the states set; the icon states are left out. | G-9, G-10. |
 | DDB-4 | `FocusVisualMargin="-3"`, `UseSystemFocusVisuals` | Focus visual 3 px outside the button. | `FocusAdorner` with `Margin="-3"`. | G-14. |
+
+## NumericUpDown
+
+| ID | WinUI source | What WinUI does | What the port does | Why |
+|---|---|---|---|---|
+| NUD-1 | controls/dev/NumberBox/NumberBox.xaml, the implicit style of NumberBox: `InputBox`, `UpSpinButton`, `DownSpinButton` in one grid | The text box spans the control; the spin buttons lie over its end. | The parts of FerroUI's NumericUpDown: the ButtonSpinner `PART_Spinner` (keyed theme `NumericUpDownButtonSpinnerStyle`, the layout of the NumberBox grid) holding the TextBox `PART_TextBox`; the buttons are `PART_IncreaseButton` and `PART_DecreaseButton` of the spinner, with the margins of the source. | The spinner raises the spins of FerroUI's control. |
+| NUD-2 | `SpinButtonPlacementMode` (`Hidden` by default, `Compact`, `Inline`): `SpinButtonsCollapsed`, `SpinButtonsPopup`, `SpinButtonsVisible`; the `Popup UpDownPopup`, `PopupUpSpinButton`, `PopupDownSpinButton`, `Button x:Name="InputEater"` | Spin buttons hidden, in a popup, or inline. | `ShowButtonSpinner` (true by default) is `SpinButtonsVisible`; the popup mode, its popup and the input eater are left out; `NumberBoxPopupSpinButtonStyle` is ported as a keyed theme. | FerroUI's NumericUpDown shows its buttons inline or not at all. |
+| NUD-3 | `Grid.Resources` of the template: `RepeatButtonBackground`, ... set to the `TextControlButton*` brushes | The spin buttons take the brushes of the buttons of a text box. | The keyed theme `NumericUpDownSpinButtonStyle`, based on `NumberBoxSpinButtonStyle`, sets those brushes in its states. | Control documents define no resources of the theme (section 4.1). |
+| NUD-4 | `Content="&#xE70E;"`, `"&#xE70D;"` of the spin buttons, `FontFamily` `SymbolThemeFontFamily` of the spin button styles, `FontSize="{TemplateBinding FontSize}"` | Glyphs of the symbol font at the font size of the control. | `Path`s of `GlyphGeometryE70E` and `GlyphGeometryE70D`, 12 px wide, filled with the `Foreground` of the button, which the states of `NumericUpDownSpinButtonStyle` set with the foreground of the presenter; the `FontFamily` setters are left out. | G-9; a path does not inherit the foreground. |
+| NUD-5 | `SpinButtonStates` of `NumberBoxTextBoxStyle` (`SpinButtonsColumn` 72 px, `PopupIndicator`), set by NumberBox on its text box; `InputBox.MinWidth` to `NumberBoxMinWidth` | The text box reserves the column of the buttons. | The NumericUpDown theme sets `MinWidth` and the `Tag` of its text box (`SpinButtonsVisible`); `NumberBoxTextBoxStyle` shows the reserved column for that tag and the popup indicator for `SpinButtonsPopup`. | A control theme cannot set the visual state of another control; the tag is the state. |
+| NUD-6 | (not in WinUI) | The spin buttons are always at the right. | `ButtonSpinnerLocation="Left"` puts them at the left; the text box reserves its column at the left (`Tag` `SpinButtonsVisibleLeft`). | The FerroUI contract. |
+| NUD-7 | `HeaderContentPresenter`, `DescriptionPresenter` and their rows; the `Disabled` state (the header foreground) | Header and description. | Left out. | FerroUI's NumericUpDown has neither. |
+| NUD-8 | (not in WinUI) | No content beside the text. | `InnerLeftContent` and `InnerRightContent` of the control are shown by `NumberBoxTextBoxStyle` beside the text. | The FerroUI contract, as the Fluent theme. |
+| NUD-9 | `NumberBoxTextBoxStyle`: its visual states, `Focused` with `ContentElement.RequestedTheme="Light"`, its `DeleteButtonStyle` | The states of the text box, repeated in the style. | The states of `DefaultTextBoxStyle`, which the theme is based on (same element names); `RequestedTheme` is left out; the delete button has `TextBoxDeleteButtonStyle`. | The same states; the delete button style is identical. |
+| NUD-10 | `PopupIndicator`: a `TextBlock` of EC8F at 12 px | A glyph. | A `Path` of `GlyphGeometryEC8F`, 10 px wide. | G-9. |
+| NUD-11 | `SelectionFlyout`, `SelectionHighlightColor`, `InputScope`, `TextReadingOrder`, `PreventKeyboardDisplayOnProgrammaticFocus` | Properties passed to the text box. | Left out. | FerroUI's NumericUpDown has no such properties. |
+| NUD-12 | (not in the style) `PlaceholderForeground` | The text box uses the brush of its state when NumberBox sets none. | A setter `PlaceholderForeground="{DynamicResource TextControlPlaceholderForeground}"`, passed to the text box (whose states set the brushes of the states). | FerroUI's NumericUpDown passes its own placeholder brush. |
+| NUD-13 | `UpSpinButtonEnabledStates`, `DownSpinButtonEnabledStates` | The control disables a button at the end of the range. | The `IsEnabled` the ButtonSpinner sets on its buttons. | FerroUI's spinner does it. |
+| NUD-14 | (not in WinUI) | No input validation. | `:error` gives the border of the text box `SystemFillColorCriticalBrush`. | The FerroUI contract (data validation). |
+| NUD-15 | `IsTabStop="False"` of the spin button styles | The buttons are not tab stops. | Also `Focusable="False"`. | A focusable button would take the focus from the text box. |
 
 ## Slider
 
@@ -773,7 +801,7 @@ their sections above).
 | FerroUI control | Batch | State | Built from |
 |---|---|---|---|
 | AdornerLayer | F | ported | No WinUI style: the system focus visual of WinUI (FocusVisualPrimaryBrush/Thickness, FocusVisualSecondaryBrush/Thickness; the SystemControlFocusVisual* resources of Common_themeresources.xaml). |
-| ButtonSpinner | B2 | pending | No WinUI control: the spin buttons of NumberBox (NumberBoxSpinButtonStyle, NumberBox.xaml) and the TextBox resources. |
+| ButtonSpinner | B2 | ported | No WinUI control: the spin buttons of NumberBox (NumberBoxSpinButtonStyle, NumberBox.xaml) and the TextBox resources. |
 | CarouselPage | B5 | ported | No WinUI control: built from FlipView (DefaultFlipViewStyle) and the page background (SolidBackgroundFillColorBaseBrush). |
 | ContentPage | B5 | ported | No WinUI style (Page has none): the page background and text of the window (SolidBackgroundFillColorBaseBrush, TextFillColorPrimaryBrush). |
 | DataValidationErrors | B1 | ported | No WinUI style (input validation was removed from WinUI 3): the critical fill of the palette (SystemFillColorCriticalBrush) for the message and the border of the field, and the error icon of InfoBar (InfoBar.xaml, InfoBar_themeresources.xaml) for the tool tip variant. |

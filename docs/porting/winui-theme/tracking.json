@@ -66774,9 +66774,9 @@
    "key": "NumberBoxPopupSpinButtonStyle",
    "kind": "Style",
    "target_type": "RepeatButton",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B2"
+   "batch": null
   },
   {
    "document": "controls/dev/NumberBox/NumberBox.xaml",
@@ -66784,9 +66784,9 @@
    "key": "NumberBoxSpinButtonStyle",
    "kind": "Style",
    "target_type": "RepeatButton",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B2"
+   "batch": null
   },
   {
    "document": "controls/dev/NumberBox/NumberBox.xaml",
@@ -66794,9 +66794,9 @@
    "key": "NumberBoxTextBoxStyle",
    "kind": "Style",
    "target_type": "TextBox",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B2"
+   "batch": null
   },
   {
    "document": "controls/dev/NumberBox/NumberBox.xaml",
@@ -66804,9 +66804,9 @@
    "key": "{NumberBox}",
    "kind": "Style",
    "target_type": "NumberBox",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B2"
+   "batch": null
   },
   {
    "document": "controls/dev/NumberBox/NumberBox_themeresources.xaml",
@@ -90059,6 +90059,7 @@
   "WinUITheme.xaml",
   "Controls/AdornerLayer.xaml",
   "Controls/Button.xaml",
+  "Controls/ButtonSpinner.xaml",
   "Controls/Calendar.xaml",
   "Controls/CalendarButton.xaml",
   "Controls/CalendarDatePicker.xaml",
@@ -90084,6 +90085,7 @@
   "Controls/ManagedFileChooser.xaml",
   "Controls/NavigationPage.xaml",
   "Controls/NotificationCard.xaml",
+  "Controls/NumericUpDown.xaml",
   "Controls/OverlayPopupHost.xaml",
   "Controls/PathIcon.xaml",
   "Controls/PopupRoot.xaml",
@@ -90229,9 +90231,9 @@
    ],
    "batch": "B2",
    "winui": "No WinUI control: the spin buttons of NumberBox (NumberBoxSpinButtonStyle, NumberBox.xaml) and the TextBox resources.",
-   "status": "pending",
-   "deviations": 0,
-   "date": ""
+   "status": "ported",
+   "deviations": 3,
+   "date": "not committed"
   },
   {
    "document": "Calendar.xaml",
@@ -90637,9 +90639,9 @@
    ],
    "batch": "B2",
    "winui": "NumberBox: {NumberBox}, NumberBoxTextBoxStyle, NumberBoxSpinButtonStyle (NumberBox.xaml, NumberBox_themeresources.xaml).",
-   "status": "pending",
-   "deviations": 0,
-   "date": ""
+   "status": "ported",
+   "deviations": 15,
+   "date": "not committed"
   },
   {
    "document": "OverlayPopupHost.xaml",
@@ -90793,7 +90795,7 @@
    "winui": "Slider: DefaultSliderStyle (Slider_themeresources.xaml).",
    "status": "ported",
    "deviations": 11,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "SplitButton.xaml",
@@ -90981,7 +90983,7 @@
    "winui": "ToggleSwitch: DefaultToggleSwitchStyle (ToggleSwitch_themeresources.xaml).",
    "status": "ported",
    "deviations": 11,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "ToolTip.xaml",
@@ -91540,7 +91542,9 @@
   "TabStrip": 3,
   "TabStripItem": 8,
   "TabbedPage": 8,
+  "ButtonSpinner": 3,
   "DropDownButton": 4,
+  "NumericUpDown": 15,
   "Slider": 11,
   "SplitButton": 14,
   "ToggleSwitch": 11
