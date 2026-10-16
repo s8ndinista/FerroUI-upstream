@@ -90293,7 +90293,7 @@
    "winui": "FlipView: DefaultFlipViewStyle (FlipView_themeresources.xaml) and FlipViewItem.",
    "status": "ported",
    "deviations": 7,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "CarouselPage.xaml",
@@ -90304,7 +90304,7 @@
    "winui": "No WinUI control: built from FlipView (DefaultFlipViewStyle) and the page background (SolidBackgroundFillColorBaseBrush).",
    "status": "ported",
    "deviations": 1,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "CheckBox.xaml",
@@ -90351,7 +90351,7 @@
    "winui": "CommandBar: DefaultCommandBarStyle, DefaultCommandBarOverflowPresenterStyle (CommandBar_themeresources.xaml); AppBarButton: DefaultAppBarButtonStyle, AppBarButtonOverflowStyle; AppBarToggleButton: DefaultAppBarToggleButtonStyle, AppBarToggleButtonOverflowStyle; AppBarSeparator: DefaultAppBarSeparatorStyle.",
    "status": "ported",
    "deviations": 20,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "ContentPage.xaml",
@@ -90362,7 +90362,7 @@
    "winui": "No WinUI style (Page has none): the page background and text of the window (SolidBackgroundFillColorBaseBrush, TextFillColorPrimaryBrush).",
    "status": "ported",
    "deviations": 1,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "ContextMenu.xaml",
@@ -90416,7 +90416,7 @@
    "winui": "No WinUI control: the pane of NavigationView (NavigationView_themeresources.xaml) and SplitView (DefaultSplitViewStyle).",
    "status": "ported",
    "deviations": 12,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "DropDownButton.xaml",
@@ -90613,7 +90613,7 @@
    "winui": "No WinUI control: NavigationBackButtonNormalStyle, NavigationBackButtonSmallStyle (NavigationBackButton.xaml) and the page background.",
    "status": "ported",
    "deviations": 7,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "NotificationCard.xaml",
@@ -90811,7 +90811,7 @@
    "winui": "SplitView: DefaultSplitViewStyle (SplitView_themeresources.xaml).",
    "status": "ported",
    "deviations": 6,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "TabControl.xaml",
@@ -90822,7 +90822,7 @@
    "winui": "TabView: DefaultTabViewStyle (TabView.xaml, TabView_themeresources.xaml).",
    "status": "ported",
    "deviations": 8,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "TabItem.xaml",
@@ -90833,7 +90833,7 @@
    "winui": "TabViewItem: {TabViewItem} (TabView.xaml).",
    "status": "ported",
    "deviations": 13,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "TabStrip.xaml",
@@ -90844,7 +90844,7 @@
    "winui": "SelectorBar: DefaultSelectorBarStyle (SelectorBar.xaml, SelectorBar_themeresources.xaml).",
    "status": "ported",
    "deviations": 3,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "TabStripItem.xaml",
@@ -90855,7 +90855,7 @@
    "winui": "SelectorBarItem: DefaultSelectorBarItemStyle, SelectorBarItemPill (SelectorBar.xaml, SelectorBar_themeresources.xaml).",
    "status": "ported",
    "deviations": 8,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "TabbedPage.xaml",
@@ -90866,7 +90866,7 @@
    "winui": "No WinUI control: NavigationView with its pane at the top (TopNavArea of NavigationView.xaml, MUX_NavigationViewItemPresenterStyleWhenOnTopPane of NavigationView_themeresources.xaml) and the page background.",
    "status": "ported",
    "deviations": 8,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "TableView.xaml",
