@@ -161,12 +161,16 @@ the merged theme of WinUI has that property).
 ### 3.3 The accent colour
 
 WinUI reads `SystemAccentColor` and its shades `SystemAccentColorDark1..3` and
-`SystemAccentColorLight1..3` from the system (`UISettings.GetColorValue`); no document defines
-them. The crate carries the class `SystemAccentColors` of the Fluent theme (merged into the
-dictionary of the theme in `WinUITheme.xaml`): the accent colour of the platform settings, the
-default `#0078D7` without platform settings, and the shades computed with the steps of lightness
-of the Fluent theme. The shades Windows computes differ slightly; the comparison with native
-WinUI (section 8.3) will show by how much.
+`SystemAccentColorLight1..3` from the system (`UISettings.GetColorValue`,
+`SystemThemingInterop::GetSystemVariantAccentColor`); no document defines them. The crate carries
+the class `SystemAccentColors` of the Fluent theme (merged into the dictionary of the theme in
+`WinUITheme.xaml`): the accent colour of the platform settings, the default `#0078D7` without
+platform settings, and the shades the platform reports (`PlatformColorValues::accent_shades`, a
+FerroUI addition the Windows backend fills from `UISettings`). Where the platform reports no
+shades (every backend but Windows), they are computed with the steps of lightness of the Fluent
+theme; the comparison with native WinUI (section 8.3) showed the computed shades of the default
+blue darker than the system's (Dark1 `#00589B` against `#0067C0`, Light2 `#61BAFF` against
+`#4CC2FF`), which is why Windows reports its own.
 
 ### 3.4 The system colours
 
@@ -382,7 +386,7 @@ comparison (section 8.3) checks.
 | Missing in FerroUI | Instead |
 |---|---|
 | a high contrast theme variant | `WinUITheme.HighContrast` (section 3.2) |
-| system colours, system accent shades | fixed colours, computed shades (sections 3.3, 3.4) |
+| system colours; system accent shades outside Windows | fixed colours; computed shades (sections 3.3, 3.4) |
 | the symbol font | glyph geometries |
 | `AnimatedIcon`, Lottie | the static fallback glyph |
 | visual state transitions with begin times | transitions without delays |
