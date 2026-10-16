@@ -10,6 +10,11 @@ All notable changes to FerroUI are recorded in this file. The format follows [Ke
 - **The WinUI theme gallery** (`samples/WinUIThemeGallery`): a page per control family, a capture mode, and on Windows a host that compares each page with the same page of native WinUI 3 controls; it runs in the Windows job of CI (`docs/porting/winui-theme-gallery.md`).
 - **Accent shades of the system.** The platform colour values can carry the six accent shades of the system (`PlatformColorValues::accent_shades`); the Windows backend reports them from `UISettings`, as WinUI reads them.
 
+### Changed
+
+- **Text rendering defaults.** Text without an explicit rendering mode is drawn with greyscale anti-aliasing, as WinUI 3, macOS and the browsers draw it, and with subpixel (ClearType) anti-aliasing only where the platform reports it on for the display, the subpixel order is known, the surface is opaque and not composited, and the render scaling is below 1.5. The Windows backend reports ClearType, its subpixel order and the contrast and gamma of DirectWrite; the X11 backend the subpixel order of `Xft.rgba`. Before, every surface asked for subpixel text with an assumed RGB order and Skia's default contrast, which drew colour fringes and lighter text than native (`docs/porting/text-rendering.md`; `RenderOptions.TextRenderingMode` still selects subpixel text explicitly).
+- **The ControlCatalog starts in the WinUI 3 theme**; the Fluent and Simple themes stay on its settings page (`FERROUI_CATALOG_THEME=fluent` or `simple`).
+
 ## [0.1.0-preview.3] - 2026-10-16
 
 The third preview. It completes the port of upstream's samples and tests: every applicable sample, every applicable unit test and the integration tests are ported, and the defects they found are fixed.
