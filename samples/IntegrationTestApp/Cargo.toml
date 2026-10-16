@@ -41,6 +41,17 @@ sample-support = { path = "../SampleSupport" }
 [target.'cfg(target_os = "macos")'.dependencies]
 ferroui-native = { workspace = true }
 
+# The options of the Windows backend the entry point sets (`OverlayPopups`), and the calls of the
+# native text box of that platform (`Embedding/WinApi.cs`).
+[target.'cfg(windows)'.dependencies]
+ferroui-win32 = { workspace = true }
+windows-sys = { workspace = true, features = [
+    "Win32_Foundation",
+    "Win32_System_LibraryLoader",
+    "Win32_UI_Input_KeyboardAndMouse",
+    "Win32_UI_WindowsAndMessaging",
+] }
+
 [build-dependencies]
 sample-build = { path = "../SampleBuild" }
 
