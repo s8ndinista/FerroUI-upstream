@@ -6,7 +6,10 @@
        context menu (ContextMenu), shown in the page because a picture of a page does not hold
        its popups, and CommandBar with its buttons, a toggle button, a separator and the overflow
        button, its labels at the right of the icons (a closed WinUI CommandBar hides labels at
-       the bottom, FerroUI's has no closed state). The native counterpart is MenusPage.winui.xml. -->
+       the bottom, FerroUI's has no closed state). The pointer-over menu items are selected items
+       (IsSelected): a menu selects the item under the pointer, and the WinUI theme draws the
+       pointer-over state of a menu item on its selection. The native counterpart is
+       MenusPage.winui.xml. -->
   <StackPanel Margin="24" Spacing="12">
     <TextBlock Text="Menus and command bars" FontSize="28" FontWeight="SemiBold" />
 
@@ -14,7 +17,7 @@
     <Menu HorizontalAlignment="Left">
       <MenuItem Header="File" />
       <MenuItem Header="Edit" />
-      <MenuItem Header="View" Classes="force-pointerover" />
+      <MenuItem Header="View" IsSelected="True" />
       <MenuItem Header="Help" IsEnabled="False" />
     </Menu>
 
@@ -33,7 +36,7 @@
             </MenuItem.Icon>
           </MenuItem>
           <MenuItem Header="Open" InputGesture="Ctrl+O" />
-          <MenuItem Header="Pointer over" Classes="force-pointerover" />
+          <MenuItem Header="Pointer over" IsSelected="True" />
           <Separator />
           <MenuItem Header="Show hidden files" ToggleType="CheckBox" IsChecked="True" />
           <MenuItem Header="Recent">

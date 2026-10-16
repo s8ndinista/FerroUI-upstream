@@ -34514,9 +34514,9 @@
    "key": "DefaultMenuFlyoutItemStyle",
    "kind": "Style",
    "target_type": "MenuFlyoutItem",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B3"
+   "batch": null
   },
   {
    "document": "controls/dev/CommonStyles/MenuFlyout_themeresources.xaml",
@@ -34524,9 +34524,9 @@
    "key": "DefaultMenuFlyoutPresenterStyle",
    "kind": "Style",
    "target_type": "MenuFlyoutPresenter",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B3"
+   "batch": null
   },
   {
    "document": "controls/dev/CommonStyles/MenuFlyout_themeresources.xaml",
@@ -34534,9 +34534,9 @@
    "key": "DefaultMenuFlyoutSubItemStyle",
    "kind": "Style",
    "target_type": "MenuFlyoutSubItem",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B3"
+   "batch": null
   },
   {
    "document": "controls/dev/CommonStyles/MenuFlyout_themeresources.xaml",
@@ -34544,9 +34544,9 @@
    "key": "DefaultSplitMenuFlyoutItemStyle",
    "kind": "Style",
    "target_type": "SplitMenuFlyoutItem",
-   "status": "pending",
-   "reason": null,
-   "batch": "B3"
+   "status": "waived",
+   "reason": "SplitMenuFlyoutItem (a menu item with a primary and a secondary button): FerroUI's MenuItem has no split mode, so no FerroUI control would use the style (batch B3).",
+   "batch": null
   },
   {
    "document": "controls/dev/CommonStyles/MenuFlyout_themeresources.xaml",
@@ -34554,9 +34554,9 @@
    "key": "DefaultToggleMenuFlyoutItemStyle",
    "kind": "Style",
    "target_type": "ToggleMenuFlyoutItem",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B3"
+   "batch": null
   },
   {
    "document": "controls/dev/CommonStyles/MenuFlyout_themeresources.xaml",
@@ -34704,9 +34704,9 @@
    "key": "{MenuFlyoutItem}",
    "kind": "Style",
    "target_type": "MenuFlyoutItem",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B3"
+   "batch": null
   },
   {
    "document": "controls/dev/CommonStyles/MenuFlyout_themeresources.xaml",
@@ -34714,9 +34714,9 @@
    "key": "{MenuFlyoutPresenter}",
    "kind": "Style",
    "target_type": "MenuFlyoutPresenter",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B3"
+   "batch": null
   },
   {
    "document": "controls/dev/CommonStyles/MenuFlyout_themeresources.xaml",
@@ -34734,9 +34734,9 @@
    "key": "{MenuFlyoutSubItem}",
    "kind": "Style",
    "target_type": "MenuFlyoutSubItem",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B3"
+   "batch": null
   },
   {
    "document": "controls/dev/CommonStyles/MenuFlyout_themeresources.xaml",
@@ -34744,9 +34744,9 @@
    "key": "{SplitMenuFlyoutItem}",
    "kind": "Style",
    "target_type": "SplitMenuFlyoutItem",
-   "status": "pending",
-   "reason": null,
-   "batch": "B3"
+   "status": "waived",
+   "reason": "SplitMenuFlyoutItem (a menu item with a primary and a secondary button): FerroUI's MenuItem has no split mode, so no FerroUI control would use the style (batch B3).",
+   "batch": null
   },
   {
    "document": "controls/dev/CommonStyles/MenuFlyout_themeresources.xaml",
@@ -34754,9 +34754,9 @@
    "key": "{ToggleMenuFlyoutItem}",
    "kind": "Style",
    "target_type": "ToggleMenuFlyoutItem",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B3"
+   "batch": null
   },
   {
    "document": "controls/dev/CommonStyles/MenuFlyout_themeresources.xaml",
@@ -35084,9 +35084,9 @@
    "key": "MenuFlyoutItemTextTrimming",
    "kind": "TextTrimming",
    "target_type": "",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "resources"
+   "batch": null
   },
   {
    "document": "controls/dev/CommonStyles/MenuFlyout_themeresources.xaml",
@@ -35894,9 +35894,9 @@
    "key": "MenuFlyoutItemTextTrimming",
    "kind": "TextTrimming",
    "target_type": "",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "resources"
+   "batch": null
   },
   {
    "document": "controls/dev/CommonStyles/MenuFlyout_themeresources.xaml",
@@ -36704,9 +36704,9 @@
    "key": "MenuFlyoutItemTextTrimming",
    "kind": "TextTrimming",
    "target_type": "",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "resources"
+   "batch": null
   },
   {
    "document": "controls/dev/CommonStyles/MenuFlyout_themeresources.xaml",
@@ -63584,9 +63584,9 @@
    "key": "DefaultMenuBarStyle",
    "kind": "Style",
    "target_type": "MenuBar",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B3"
+   "batch": null
   },
   {
    "document": "controls/dev/MenuBar/MenuBar.xaml",
@@ -63594,9 +63594,9 @@
    "key": "{MenuBar}",
    "kind": "Style",
    "target_type": "MenuBar",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B3"
+   "batch": null
   },
   {
    "document": "controls/dev/MenuBar/MenuBarItem.xaml",
@@ -63604,9 +63604,9 @@
    "key": "{MenuBarItem}",
    "kind": "Style",
    "target_type": "MenuBarItem",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B3"
+   "batch": null
   },
   {
    "document": "controls/dev/MenuBar/MenuBar_themeresources.xaml",
@@ -69294,9 +69294,9 @@
    "key": "DefaultRadioMenuFlyoutItemStyle",
    "kind": "Style",
    "target_type": "RadioMenuFlyoutItem",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B3"
+   "batch": null
   },
   {
    "document": "controls/dev/RadioMenuFlyoutItem/RadioMenuFlyoutItem_themeresources.xaml",
@@ -69304,9 +69304,9 @@
    "key": "RadioMenuFlyoutSubItemStyle",
    "kind": "Style",
    "target_type": "MenuFlyoutSubItem",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B3"
+   "batch": null
   },
   {
    "document": "controls/dev/RadioMenuFlyoutItem/RadioMenuFlyoutItem_themeresources.xaml",
@@ -69314,9 +69314,9 @@
    "key": "{RadioMenuFlyoutItem}",
    "kind": "Style",
    "target_type": "RadioMenuFlyoutItem",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B3"
+   "batch": null
   },
   {
    "document": "controls/dev/RatingControl/RatingControl.xaml",
@@ -90070,6 +90070,7 @@
   "Controls/CheckBox.xaml",
   "Controls/CommandBar.xaml",
   "Controls/ContentPage.xaml",
+  "Controls/ContextMenu.xaml",
   "Controls/DataValidationErrors.xaml",
   "Controls/DatePicker.xaml",
   "Controls/DateTimePickerShared.xaml",
@@ -90085,6 +90086,10 @@
   "Controls/ItemsControl.xaml",
   "Controls/Label.xaml",
   "Controls/ManagedFileChooser.xaml",
+  "Controls/Menu.xaml",
+  "Controls/MenuFlyoutPresenter.xaml",
+  "Controls/MenuItem.xaml",
+  "Controls/MenuScrollViewer.xaml",
   "Controls/NavigationPage.xaml",
   "Controls/NotificationCard.xaml",
   "Controls/NumericUpDown.xaml",
@@ -90382,9 +90387,9 @@
    ],
    "batch": "B3",
    "winui": "MenuFlyoutPresenter: DefaultMenuFlyoutPresenterStyle (MenuFlyout_themeresources.xaml).",
-   "status": "pending",
-   "deviations": 0,
-   "date": ""
+   "status": "ported",
+   "deviations": 3,
+   "date": "not committed"
   },
   {
    "document": "DataValidationErrors.xaml",
@@ -90471,7 +90476,7 @@
    "winui": "FlyoutPresenter: DefaultFlyoutPresenterStyle (FlyoutPresenter_themeresources.xaml).",
    "status": "ported",
    "deviations": 3,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "GridSplitter.xaml",
@@ -90580,9 +90585,9 @@
    ],
    "batch": "B3",
    "winui": "MenuBar: DefaultMenuBarStyle (MenuBar.xaml); MenuBarItem (MenuBarItem.xaml).",
-   "status": "pending",
-   "deviations": 0,
-   "date": ""
+   "status": "ported",
+   "deviations": 7,
+   "date": "not committed"
   },
   {
    "document": "MenuFlyoutPresenter.xaml",
@@ -90591,9 +90596,9 @@
    ],
    "batch": "B3",
    "winui": "MenuFlyoutPresenter: DefaultMenuFlyoutPresenterStyle (MenuFlyout_themeresources.xaml).",
-   "status": "pending",
-   "deviations": 0,
-   "date": ""
+   "status": "ported",
+   "deviations": 6,
+   "date": "not committed"
   },
   {
    "document": "MenuItem.xaml",
@@ -90602,18 +90607,18 @@
    ],
    "batch": "B3",
    "winui": "MenuFlyoutItem: DefaultMenuFlyoutItemStyle; MenuFlyoutSubItem: DefaultMenuFlyoutSubItemStyle; ToggleMenuFlyoutItem: DefaultToggleMenuFlyoutItemStyle (MenuFlyout_themeresources.xaml); RadioMenuFlyoutItem: DefaultRadioMenuFlyoutItemStyle (RadioMenuFlyoutItem_themeresources.xaml).",
-   "status": "pending",
-   "deviations": 0,
-   "date": ""
+   "status": "ported",
+   "deviations": 14,
+   "date": "not committed"
   },
   {
    "document": "MenuScrollViewer.xaml",
    "themes": [],
    "batch": "B3",
    "winui": "The ScrollViewer of the MenuFlyoutPresenter template (MenuFlyout_themeresources.xaml).",
-   "status": "pending",
-   "deviations": 0,
-   "date": ""
+   "status": "ported",
+   "deviations": 2,
+   "date": "not committed"
   },
   {
    "document": "NavigationPage.xaml",
@@ -91484,6 +91489,13 @@
    "variant": null,
    "reason": "NavigationView: no FerroUI control (batch B5). The item presenter styles of the left and the top pane are written into the tab themes built from them (Controls/TabItem.xaml for the tabs at the left and the right, TabbedPageTabItemTheme of Controls/TabbedPage.xaml for the top pane); the settings item, the overflow button of the top pane and the search button of the pane have no counterpart in FerroUI's pages.",
    "items": 7
+  },
+  {
+   "document": "controls/dev/CommonStyles/MenuFlyout_themeresources.xaml",
+   "key": "re:DefaultSplitMenuFlyoutItemStyle|\\{SplitMenuFlyoutItem\\}",
+   "variant": null,
+   "reason": "SplitMenuFlyoutItem (a menu item with a primary and a secondary button): FerroUI's MenuItem has no split mode, so no FerroUI control would use the style (batch B3).",
+   "items": 2
   }
  ],
  "deviations": {
@@ -91500,6 +91512,7 @@
   "DataValidationErrors": 2,
   "DatePicker": 15,
   "DateTimePickerShared": 10,
+  "ContextMenu": 3,
   "EmbeddableControlRoot": 1,
   "GridSplitter": 2,
   "GroupBox": 4,
@@ -91508,6 +91521,10 @@
   "HyperlinkButton": 3,
   "ItemsControl": 1,
   "Label": 3,
+  "Menu": 7,
+  "MenuFlyoutPresenter": 6,
+  "MenuItem": 14,
+  "MenuScrollViewer": 2,
   "OverlayPopupHost": 1,
   "PathIcon": 2,
   "PopupRoot": 1,
@@ -91807,8 +91824,9 @@
    "batch": "B2"
   },
   "SplitMenuFlyoutItem": {
-   "ferroui": "MenuItem",
-   "batch": "B3"
+   "ferroui": null,
+   "batch": "B3",
+   "note": "no FerroUI counterpart: MenuItem has no split mode (waived)"
   },
   "SplitView": {
    "ferroui": "SplitView",

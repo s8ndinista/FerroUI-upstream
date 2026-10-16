@@ -104,4 +104,17 @@
   <StreamGeometry x:Key="GlyphGeometryEA3B">M 0,8 A 8,8 0 1 1 16,8 A 8,8 0 1 1 0,8 Z</StreamGeometry>
   <!-- EC8F: the popup indicator of NumberBoxTextBoxStyle (an up and a down chevron). -->
   <StreamGeometry x:Key="GlyphGeometryEC8F">M 4,6.5 L 8,2.5 L 12,6.5 L 11,7.5 L 8,4.5 L 5,7.5 Z M 4,9.5 L 5,8.5 L 8,11.5 L 11,8.5 L 12,9.5 L 8,13.5 Z</StreamGeometry>
+  <!-- Batch B3 (flyouts, menus, lists and selection). The chevrons are drawn in the units of the
+       em square of the font (2048): E70D is the outline of the drop-down glyph of the Fluent theme
+       of FerroUI (src/FerroUI.Themes.Fluent/Controls/ComboBox.xaml), E76C the same outline
+       turned to the right, E974 a chevron of a heavier stroke. -->
+  <!-- E70D ChevronDown: the drop-down glyph of ComboBox, the expanded glyph of TreeViewItem. -->
+  <StreamGeometry x:Key="GlyphGeometryE70D">M1939 486L2029 576L1024 1581L19 576L109 486L1024 1401L1939 486Z</StreamGeometry>
+  <!-- E76C ChevronRight: the collapsed glyph of TreeViewItem, the chevron of
+       RadioMenuFlyoutSubItemStyle. -->
+  <StreamGeometry x:Key="GlyphGeometryE76C">M486 1939L576 2029L1581 1024L576 19L486 109L1401 1024L486 1939Z</StreamGeometry>
+  <!-- E974 ChevronRightMed: the chevron of a menu item with a submenu (MenuFlyoutSubItem). -->
+  <StreamGeometry x:Key="GlyphGeometryE974">M768 256L1536 1024L768 1792L598 1622L1196 1024L598 426Z</StreamGeometry>
+  <!-- E915: the bullet of a checked radio menu item (RadioMenuFlyoutItem). -->
+  <StreamGeometry x:Key="GlyphGeometryE915">M0,5 A5,5 0 1 1 10,5 A5,5 0 1 1 0,5 Z</StreamGeometry>
 </ResourceDictionary>

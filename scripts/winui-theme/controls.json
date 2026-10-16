@@ -180,7 +180,7 @@
     "SelectorBarItem": {"ferroui": "TabStripItem", "batch": "B5"},
     "Slider": {"ferroui": "Slider", "batch": "B2"},
     "SplitButton": {"ferroui": "SplitButton", "batch": "B2"},
-    "SplitMenuFlyoutItem": {"ferroui": "MenuItem", "batch": "B3"},
+    "SplitMenuFlyoutItem": {"ferroui": null, "batch": "B3", "note": "no FerroUI counterpart: MenuItem has no split mode (waived)"},
     "SplitView": {"ferroui": "SplitView", "batch": "B5"},
     "TabView": {"ferroui": "TabControl", "batch": "B5"},
     "TabViewItem": {"ferroui": "TabItem", "batch": "B5"},
