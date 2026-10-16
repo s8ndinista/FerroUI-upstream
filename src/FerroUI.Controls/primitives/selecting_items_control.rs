@@ -1357,12 +1357,16 @@ impl SelectingItemsControl {
             let Some(item) = item else { continue };
 
             let value: &dyn AnyValue = &*item;
-            if let Some(c) = value.downcast_ref::<Ref<Control>>() {
-                if c.is_visible() && c.is_enabled() {
-                    return (i, true);
-                }
-            } else if let Some(v) = value.downcast_ref::<Ref<Visual>>() {
-                if v.is_visible() {
+            // `item is Visual`, held by any handle.
+            let visual = match value.downcast_ref::<Ref<Control>>() {
+                Some(c) => Some(c.clone().upcast::<Visual>()),
+                None => match value.downcast_ref::<Ref<Visual>>() {
+                    Some(v) => Some(v.clone()),
+                    None => ferroui_base::data::core::ValueTypes::as_object(value).and_then(|o| o.cast::<Visual>()),
+                },
+            };
+            if let Some(v) = visual {
+                if v.is_visible() && v.downcast_ref::<Control>().is_none_or(|c| c.is_enabled()) {
                     return (i, true);
                 }
             } else {

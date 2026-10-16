@@ -375,3 +375,129 @@ fn indexer_binding_of_content_gives_text_its_string() {
     target.set_content(None);
     assert_eq!(None, text.text());
 }
+
+use crate::{ControlImpl, Decorator};
+use ferroui_base::input::InputElementImpl;
+use ferroui_base::interactivity::InteractiveImpl;
+use ferroui_base::layout::LayoutableImpl;
+use ferroui_base::{FerroObjectImpl, StyledElementImpl, VisualImpl};
+
+/// A contract that controls implement, as `IGpuDemo` of upstream's GpuInterop sample is: the
+/// type of [`DemoSource::demo_property`]. Not from upstream's unit tests.
+trait ITestDemo {
+    fn as_object(&self) -> Option<Ref<FerroObject>>;
+}
+
+impl PartialEq for dyn ITestDemo {
+    fn eq(&self, other: &Self) -> bool {
+        self.as_object() == other.as_object()
+    }
+}
+
+/// The handle of the contract for a border that implements it.
+struct BorderDemo(Ref<Border>);
+
+impl ITestDemo for BorderDemo {
+    fn as_object(&self) -> Option<Ref<FerroObject>> {
+        Some(self.0.clone().upcast())
+    }
+}
+
+/// A decorator with a property of the type of a subclass of `Control` and one of the type of
+/// a contract that controls implement, as `GpuDemo.Demo` of upstream's GpuInterop sample.
+#[repr(C)]
+struct DemoSource {
+    base: Decorator,
+}
+
+ferroui_base::ferro_class!(DemoSource: Decorator);
+ferroui_base::ferro_impl_classes!(
+    DemoSource: FerroObjectImpl,
+    StyledElementImpl,
+    VisualImpl,
+    LayoutableImpl,
+    InteractiveImpl,
+    InputElementImpl,
+    ControlImpl
+);
+
+impl DemoSource {
+    ferroui_base::ferro_property!(
+        fn border_property() -> ferroui_base::StyledProperty<Option<Ref<Border>>> {
+            ferroui_base::FerroProperty::register::<DemoSource, _>("Border", None)
+        }
+    );
+
+    ferroui_base::ferro_property!(
+        fn demo_property() -> ferroui_base::StyledProperty<Option<Rc<dyn ITestDemo>>> {
+            ferroui_base::data::core::ValueTypes::register_interface_object::<Rc<dyn ITestDemo>>(|demo| demo.as_object());
+            ferroui_base::FerroProperty::register::<DemoSource, _>("Demo", None)
+        }
+    );
+
+    fn new() -> Ref<Self> {
+        ferroui_base::instantiate(Self { base: Decorator::construct() })
+    }
+}
+
+/// A content control in a [`DemoSource`] whose content is bound to `property` of the source,
+/// the way `GpuDemo.xaml` binds it (`{Binding $parent[local:GpuDemo].Demo}`, a compiled
+/// binding of the property of the ancestor).
+fn content_bound_to_source(property: &'static ferroui_base::FerroProperty) -> (Ref<TestRoot>, Ref<DemoSource>, Ref<ContentControl>) {
+    use ferroui_base::data::{CompiledBinding, CompiledBindingPathBuilder};
+    use ferroui_base::StaticType;
+
+    let source = DemoSource::new();
+    let target = ContentControl::new();
+    target.set_template(get_template());
+    source.set_child(&target);
+    let root = TestRoot::with_child(&source);
+
+    let path = CompiledBindingPathBuilder::new().ancestor(Some(DemoSource::TYPE), 0).ferro_property(property).build();
+    target.bind_binding(ContentControl::content_property().as_property(), &*CompiledBinding::new(path));
+    (root, source, target)
+}
+
+/// Not from upstream's unit tests: a binding passes on the value of its source with the type
+/// of the source property. A control held by a property of the type of a subclass of
+/// `Control` is presented as the control itself (`content as Control` in
+/// `ContentPresenter.CreateChild`), not as its text.
+#[test]
+fn control_of_a_property_of_a_subclass_type_bound_to_content_is_presented_as_the_control() {
+    let _scope = test_scope();
+    use_test_text_block();
+    let (_root, source, target) = content_bound_to_source(DemoSource::border_property().as_property());
+    let border = Border::new();
+    source.set_value(DemoSource::border_property(), Some(border.clone()));
+
+    target.apply_template();
+    let presenter = target.presenter().unwrap();
+    presenter.update_child();
+
+    assert_eq!(presenter.child().unwrap(), border);
+    assert_eq!(border.parent().unwrap(), target);
+    assert_eq!(StyledElement::logical_children(&target).to_vec(), logical(&[&border.clone().upcast()]));
+}
+
+/// Not from upstream's unit tests: as the test above, with a property of the type of a
+/// contract that controls implement (`GpuDemo.Demo`, of the type `IGpuDemo`).
+#[test]
+fn control_of_a_property_of_an_interface_type_bound_to_content_is_presented_as_the_control() {
+    let _scope = test_scope();
+    use_test_text_block();
+    let (_root, source, target) = content_bound_to_source(DemoSource::demo_property().as_property());
+    let border = Border::new();
+    let demo: Rc<dyn ITestDemo> = Rc::new(BorderDemo(border.clone()));
+    source.set_value(DemoSource::demo_property(), Some(demo));
+
+    target.apply_template();
+    let presenter = target.presenter().unwrap();
+    presenter.update_child();
+
+    assert_eq!(presenter.child().unwrap(), border);
+    assert_eq!(border.parent().unwrap(), target);
+
+    source.set_value(DemoSource::demo_property(), None);
+    assert!(presenter.child().is_none());
+    assert!(border.parent().is_none());
+}
