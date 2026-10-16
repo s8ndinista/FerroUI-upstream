@@ -2706,6 +2706,12 @@ impl IPlatformHandle for SurfacePlatformHandle {
 }
 
 impl IPlatformRenderSurface for SurfacePlatformHandle {
+    /// The subpixel order of the desktop (`Xft.rgba`), when it is set
+    /// (docs/porting/text-rendering.md).
+    fn text_rendering_parameters(&self) -> Option<ferroui_base::platform::surfaces::PlatformTextRenderingParameters> {
+        crate::x_resources::text_rendering_parameters()
+    }
+
     fn as_any(&self) -> &dyn Any {
         self
     }
