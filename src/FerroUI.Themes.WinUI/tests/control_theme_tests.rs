@@ -191,10 +191,10 @@ fn should_define_all_requested_template_parts() {
     let theme = create_attached_theme();
     let default_control_themes = default_control_themes(&theme);
 
-    // ScrollBar defines its templates per pseudo-class (:vertical, :horizontal), as in the Fluent
-    // theme, which makes them harder to test here; tests/control_templates.rs checks its parts in
-    // a window.
-    let control_types_to_skip: [&str; 1] = ["ScrollBar"];
+    // ScrollBar and Slider define their templates per pseudo-class (:vertical, :horizontal), as in
+    // the Fluent theme, which makes them harder to test here; tests/control_templates.rs checks
+    // their parts in a window.
+    let control_types_to_skip: [&str; 2] = ["ScrollBar", "Slider"];
 
     assert!(!default_control_themes.is_empty());
     let mut checked = 0;

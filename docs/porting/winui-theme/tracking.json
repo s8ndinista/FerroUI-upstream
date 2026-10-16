@@ -43724,9 +43724,9 @@
    "key": "DefaultSliderStyle",
    "kind": "Style",
    "target_type": "Slider",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B2"
+   "batch": null
   },
   {
    "document": "controls/dev/CommonStyles/Slider_themeresources.xaml",
@@ -43864,9 +43864,9 @@
    "key": "{Slider}",
    "kind": "Style",
    "target_type": "Slider",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B2"
+   "batch": null
   },
   {
    "document": "controls/dev/CommonStyles/Slider_themeresources.xaml",
@@ -49574,9 +49574,9 @@
    "key": "DefaultToggleSwitchStyle",
    "kind": "Style",
    "target_type": "ToggleSwitch",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B2"
+   "batch": null
   },
   {
    "document": "controls/dev/CommonStyles/ToggleSwitch_themeresources.xaml",
@@ -49624,9 +49624,9 @@
    "key": "{ToggleSwitch}",
    "kind": "Style",
    "target_type": "ToggleSwitch",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B2"
+   "batch": null
   },
   {
    "document": "controls/dev/CommonStyles/ToggleSwitch_themeresources.xaml",
@@ -90094,6 +90094,7 @@
   "Controls/ScrollViewer.xaml",
   "Controls/SelectableTextBlock.xaml",
   "Controls/Separator.xaml",
+  "Controls/Slider.xaml",
   "Controls/SplitButton.xaml",
   "Controls/SplitView.xaml",
   "Controls/TabControl.xaml",
@@ -90112,6 +90113,7 @@
   "Controls/Thumb.xaml",
   "Controls/TimePicker.xaml",
   "Controls/ToggleButton.xaml",
+  "Controls/ToggleSwitch.xaml",
   "Controls/ToolTip.xaml",
   "Controls/TransitioningContentControl.xaml",
   "Controls/WinUIControls.xaml",
@@ -90429,7 +90431,7 @@
    "winui": "DropDownButton: DefaultDropDownButtonStyle (DropDownButton.xaml, DropDownButton_themeresources.xaml).",
    "status": "ported",
    "deviations": 4,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "EmbeddableControlRoot.xaml",
@@ -90789,9 +90791,9 @@
    ],
    "batch": "B2",
    "winui": "Slider: DefaultSliderStyle (Slider_themeresources.xaml).",
-   "status": "pending",
-   "deviations": 0,
-   "date": ""
+   "status": "ported",
+   "deviations": 11,
+   "date": "not committed"
   },
   {
    "document": "SplitButton.xaml",
@@ -90802,7 +90804,7 @@
    "winui": "SplitButton: SplitButtonStyle (SplitButton.xaml), SplitButtonCommandBarStyle (SplitButton_themeresources.xaml); ToggleSplitButton.",
    "status": "ported",
    "deviations": 14,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "SplitView.xaml",
@@ -90977,9 +90979,9 @@
    ],
    "batch": "B2",
    "winui": "ToggleSwitch: DefaultToggleSwitchStyle (ToggleSwitch_themeresources.xaml).",
-   "status": "pending",
-   "deviations": 0,
-   "date": ""
+   "status": "ported",
+   "deviations": 11,
+   "date": "not committed"
   },
   {
    "document": "ToolTip.xaml",
@@ -91539,7 +91541,9 @@
   "TabStripItem": 8,
   "TabbedPage": 8,
   "DropDownButton": 4,
-  "SplitButton": 14
+  "Slider": 11,
+  "SplitButton": 14,
+  "ToggleSwitch": 11
  },
  "winui_targets": {
   "AppBarButton": {

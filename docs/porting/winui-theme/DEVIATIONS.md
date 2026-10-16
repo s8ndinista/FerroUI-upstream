@@ -711,6 +711,22 @@ The section covers both control themes of the document: ManagedFileChooser and M
 | DDB-3 | `controls:AnimatedIcon x:Name="ChevronIcon"` (12 x 12, `AnimatedChevronDownSmallVisualSource`, fallback `FontIconSource` E96E at 8 px) and its `AnimatedIcon.State` setters | An animated chevron; the fallback glyph of the symbol font. | A `Path` named `ChevronIcon` of `GlyphGeometryE96E`, 8 px wide, centred in a 12 x 12 grid; its `Fill` is the foreground the states set; the icon states are left out. | G-9, G-10. |
 | DDB-4 | `FocusVisualMargin="-3"`, `UseSystemFocusVisuals` | Focus visual 3 px outside the button. | `FocusAdorner` with `Margin="-3"`. | G-14. |
 
+## Slider
+
+| ID | WinUI source | What WinUI does | What the port does | Why |
+|---|---|---|---|---|
+| SLD-1 | CS `Slider_themeresources.xaml`, `DefaultSliderStyle`: `HorizontalTemplate` and `VerticalTemplate` in one template, shown by the control by orientation | One template with both roots. | One template per orientation, in the nested styles `^:horizontal` and `^:vertical`. | FerroUI's parts must exist once per template (SB-1). |
+| SLD-2 | `HorizontalDecreaseRect`, `VerticalDecreaseRect` in grid columns and rows the control sizes to the value; `HorizontalThumb`, `VerticalThumb` | The control arranges the value fill and the thumb. | A `Track` `PART_Track` whose decrease button `PART_DecreaseButton` (keyed themes `SliderHorizontalDecreaseButtonStyle`, `SliderVerticalDecreaseButtonStyle`) draws the rectangle with its `Background` and whose increase button `PART_IncreaseButton` (`SliderIncreaseButtonStyle`) draws nothing; the track rectangles stay behind the track. | FerroUI's slider arranges with a `Track` and requires these parts. |
+| SLD-3 | `Style TargetType="Thumb" x:Key="SliderThumbStyle"` of `Grid.Resources` | The style of the thumbs, over the default Thumb style. | The keyed Thumb theme `SliderThumbStyle`, not based on the default Thumb theme. | G-18, as the template-local themes of the foundation. |
+| SLD-4 | `SliderInnerThumb`: `ScaleX`/`ScaleY` to 0.86 (`Normal`, 167 ms), 1.167 (`PointerOver`, 250 ms), 0.71 (`Pressed`, 250 ms), 1.167 (`Disabled`, 167 ms), spline `ControlFastOutSlowInKeySpline` | The inner dot of the thumb grows and shrinks. | `RenderTransform` setters (`scale(0.86)` as the base value of `Normal`) and one `TransformOperationsTransition` of 250 ms with the spline 0,0,0,1. | G-3; a transition has one duration per property. |
+| SLD-5 | `HeaderContentPresenter` and its row | The header of the slider. | Left out. | FerroUI's Slider has no `Header`. |
+| SLD-6 | `HorizontalInlineTickBar`, `VerticalInlineTickBar` | Tick marks on the track for `TickPlacement="Inline"`. | Left out. | FerroUI's `TickPlacement` has no `Inline`. |
+| SLD-7 | The visibility of `TopTickBar`, `BottomTickBar`, `LeftTickBar`, `RightTickBar`, set by the control | Tick bars of the placement. | Selectors of `TickPlacement`; the tick bars take the bounds of the thumb as `ReservedSpace` and bind the range of the slider. | FerroUI's TickBar draws from these properties (as in the Fluent theme). |
+| SLD-8 | `FocusEngagementStates`, `IsFocusEngagementEnabled`, `ManipulationMode`, `FocusVisualMargin` of the thumbs, `AutomationProperties.AccessibilityView` | Focus engagement for game pads; manipulations. | Left out. | No counterpart (G-19); the thumbs are not focusable in FerroUI. |
+| SLD-9 | `Border x:Name="FocusBorder"` with `Control.IsTemplateFocusTarget="True"`, `FocusVisualMargin="-7,0,-7,0"` | The focus rectangle surrounds the slider area. | `TemplatedControl.IsTemplateFocusTarget="True"` and a `FocusAdorner` with that margin. | G-14. |
+| SLD-10 | `RowDefinition Height="{ThemeResource SliderPreContentMargin}"`, `SliderPostContentMargin` (and the columns of the vertical template) | Sizes of resources. | The values (14) are written. | A double resource does not convert to a `GridLength`. |
+| SLD-11 | (not in WinUI) | WinUI 3 has no input validation. | `:error` sets the foreground and the thumb background to `SystemControlErrorTextForegroundBrush`, as the Fluent theme. | The FerroUI contract (data validation). |
+
 ## SplitButton
 
 | ID | WinUI source | What WinUI does | What the port does | Why |
@@ -729,6 +745,22 @@ The section covers both control themes of the document: ManagedFileChooser and M
 | SPB-12 | `SplitButtonCommandBarStyle`: `CornerRadius="{Binding Source={ThemeResource ControlCornerRadius}, Converter={StaticResource LeftCornerRadiusFilterConverter}}"` of the background grids | The halves have the filtered `ControlCornerRadius`. | The filtered `CornerRadius` of the control (which the style sets to `ControlCornerRadius`), and the grids are `Border`s. | A converter cannot be applied to a dynamic resource; G-17. |
 | SPB-13 | `UseSystemFocusVisuals`, `FocusVisualMargin="-1"` (`-3` for the command bar style and the inner buttons), `IsTabStop` | Focus visual; the inner buttons are not tab stops. | `FocusAdorner` with that margin; `IsTabStop="True"` with `Focusable="True"`, the inner buttons `IsTabStop="False"` with `Focusable="False"`. | G-14; a FerroUI control takes the focus only when focusable. |
 | SPB-14 | `<Style TargetType="controls:ToggleSplitButton" BasedOn="{StaticResource SplitButtonStyle}" />` | ToggleSplitButton has its own implicit style, the one of SplitButton. | No control theme of its own: FerroUI's ToggleSplitButton takes the style of SplitButton (its style key), whose `:checked` styles are the checked states. | The two controls share one default control theme. |
+
+## ToggleSwitch
+
+| ID | WinUI source | What WinUI does | What the port does | Why |
+|---|---|---|---|---|
+| TSW-1 | CS `ToggleSwitch_themeresources.xaml`, `DefaultToggleSwitchStyle`: `HeaderContentPresenter` (`Visibility="Collapsed"`, shown by the control for a `Header`) | The header of the switch. | `PART_ContentPresenter` of the `Content` of FerroUI's switch, hidden in `:empty`. | FerroUI's ToggleSwitch has no `Header`; its content is the header. |
+| TSW-2 | `OffContentPresenter`, `OnContentPresenter` | The texts of the states. | `PART_OffContentPresenter`, `PART_OnContentPresenter`. | The template parts of FerroUI's switch. |
+| TSW-3 | `Grid x:Name="SwitchKnob"` with `TranslateTransform x:Name="KnobTranslateTransform"` (X = 20 in `On`) and `RepositionThemeAnimation` in the visual transitions of `ToggleStates` | The knob moves with a reposition theme animation. | The `Canvas` `PART_SwitchKnob` holding the panel `PART_MovingKnobs`, which FerroUI's switch moves with `Canvas.Left`; the animation is the `KnobTransitions` of the control, a `DoubleTransition` of 367 ms with the spline 0.1,0.9,0.2,1. | FerroUI's switch moves and drags the knob itself; the timing of the reposition animation is the one of Windows (not in the source), to be calibrated against native WinUI. |
+| TSW-4 | `ColorAnimationUsingKeyFrames` of `OuterBorder` and `SwitchAreaGrid`, the opacity animations of `On` and the visual transitions (`ControlFasterAnimationDuration`, 83 ms) | The brushes and the opacities animate. | `BrushTransition`s of 83 ms of the fill and the stroke of `OuterBorder` and of the background of `SwitchAreaGrid`, `DoubleTransition`s of 83 ms of the opacities. | G-3. |
+| TSW-5 | The sizes of `SwitchKnobOn` and `SwitchKnobOff` (`ControlFasterAnimationDuration`, 83 ms, and `ControlNormalAnimationDuration`, 250 ms, for `Disabled`; `ControlFastOutSlowInKeySpline`) | The knob grows under the pointer and stretches when pressed. | `DoubleTransition`s of width and height of 83 ms with the spline 0,0,0,1, also for `Disabled`. | G-3; a transition has one duration per property. |
+| TSW-6 | The state `Dragging` and the visual transitions `OnToDragging`, `DraggingToOn`, `DraggingToOff` | The look while the knob is dragged. | Left out: while FerroUI's switch drags (`:dragging`) it keeps the look of its toggle state. | The transitions between visual states have no counterpart (G-3). |
+| TSW-7 | The root `Grid` with background, border and corner radius; `Grid x:Name="SwitchAreaGrid"` with `CornerRadius` | Panels with borders and corner radii. | `Border`s. | G-17. |
+| TSW-8 | `RowDefinition Height="{ThemeResource ToggleSwitchPreContentMargin}"`, `ToggleSwitchPostContentMargin` | Row heights of resources. | The values (10) are written. | A double resource does not convert to a `GridLength`. |
+| TSW-9 | `Control.IsTemplateFocusTarget="True"` of `SwitchAreaGrid`, `FocusVisualMargin="-7,-3,-7,-3"` | The focus visual surrounds the switch area. | `TemplatedControl.IsTemplateFocusTarget="True"` and a `FocusAdorner` with that margin. | G-14; FerroUI places the focus adorner on the template focus target. |
+| TSW-10 | (not in the style) `VerticalContentAlignment` | The default of a WinUI control is `Center`. | A setter `VerticalContentAlignment="Center"`. | FerroUI's default is `Stretch`. |
+| TSW-11 | `ManipulationMode="System,TranslateX"`, the `CompositeTransform`s of the knobs, the `Thumb x:Name="SwitchThumb"` | The control drags the knob through a thumb. | Left out. | FerroUI's switch handles the drag on `PART_MovingKnobs`. |
 
 ## FerroUI controls without a WinUI counterpart
 

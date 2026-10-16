@@ -223,7 +223,9 @@ document_tests! {
     winui_theme => "/WinUITheme.xaml";
     // B2: buttons, ranges and expanders
     controls_drop_down_button => "/Controls/DropDownButton.xaml";
+    controls_slider => "/Controls/Slider.xaml";
     controls_split_button => "/Controls/SplitButton.xaml";
+    controls_toggle_switch => "/Controls/ToggleSwitch.xaml";
 }
 
 #[test]
