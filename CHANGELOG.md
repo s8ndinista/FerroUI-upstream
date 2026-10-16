@@ -6,6 +6,8 @@ All notable changes to FerroUI are recorded in this file. The format follows [Ke
 
 ### Added
 
+- **The GpuInterop sample** (`samples/GpuInterop`, not published): drawing with a graphics API of the platform into a drawing surface of the compositor through its GPU interop, as the upstream sample does. The Vulkan demo (the teapot, over `ash`) shares its images as opaque handles with semaphores (Linux, Windows), Direct3D 11 textures (Windows) or IOSurfaces with a Metal shared event (macOS, MoltenVK); the Direct3D 11 demo (`--d3d`, Windows) shares textures by their DXGI handles with keyed mutexes; the dma-buf demo (`--dmabuf`, Linux) hands Linux dma-bufs to the EGL compositor. `--smoke` checks that the frames of the GPU API are in the snapshots of the compositor. Verified on macOS against the Metal and the OpenGL compositor; the Windows and Linux paths are compiled by CI and not run yet.
+
 - **Samples**: `SafeAreaDemo` (the safe area, the system bars and the input pane of a top-level) with its desktop, Android and iOS hosts; `XEmbedSample` (a page of the catalog in a socket of a GTK 3 window through XEmbed, Linux); `PlatformSanityChecks` (the threading of the X11 platform, Linux); `SingleProjectSandbox` (one package with the application and its desktop, macOS, Android and iOS entry points). `scripts/android/apk.sh` builds the Android hosts (`safearea`, `sandbox`). The small samples take `FERROUI_SMOKE_SCREENSHOT=<file.png>`, a picture of the main window drawn by the framework.
 
 ### Fixed

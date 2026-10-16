@@ -1,0 +1,263 @@
+// The COM interfaces of Direct3D 11, DXGI and the shader compiler the Direct3D demo and the
+// Direct3D helper of the Vulkan demo call, for the MicroCom generator
+// (src/tools/MicroCom.CodeGenerator), which the build script of the sample runs. Upstream calls
+// them through the bindings of Silk.NET (Silk.NET.Direct3D11, Silk.NET.DXGI,
+// Silk.NET.Direct3D.Compilers).
+//
+// The tables are those of the system headers (d3d11.h, dxgi.h, dxgi1_2.h, d3dcommon.h), in their
+// order, up to the last method the sample calls; a method the sample does not call is declared
+// with raw pointers, which only keeps its slot. The structures and constants are declared in
+// Rust beside this file (`d3d11_types.rs`).
+@rust-types-from super
+@rust-map HANDLE isize
+@rust-map BOOL i32
+@rust-map DWORD u32
+@rust-map SIZE_T usize
+@rust-map UINT u32
+@rust-map UINT64 u64
+@rust-map UINT8 u8
+@rust-map INT i32
+@rust-map FLOAT f32
+@rust-map REFGUID *const Guid
+@rust-map REFIID *const Guid
+@rust-map LPCWSTR *const u16
+
+[uuid(aec22fb8-76f3-4639-9be0-28eb43a67a2e)]
+interface IDXGIObject : IUnknown
+{
+    HRESULT SetPrivateData(REFGUID Name, UINT DataSize, void* pData);
+    HRESULT SetPrivateDataInterface(REFGUID Name, IUnknown* pUnknown);
+    HRESULT GetPrivateData(REFGUID Name, UINT* pDataSize, void* pData);
+    HRESULT GetParent(REFIID riid, void** ppParent);
+}
+
+[uuid(7b7166ec-21c7-44ae-b21a-c9ae321ae369)]
+interface IDXGIFactory : IDXGIObject
+{
+    HRESULT EnumAdapters(UINT Adapter, [out] IDXGIAdapter** ppAdapter);
+    HRESULT MakeWindowAssociation(HANDLE WindowHandle, UINT Flags);
+    HRESULT GetWindowAssociation(HANDLE* pWindowHandle);
+    HRESULT CreateSwapChain(IUnknown* pDevice, void* pDesc, void** ppSwapChain);
+    HRESULT CreateSoftwareAdapter(HANDLE Module, void** ppAdapter);
+}
+
+[uuid(770aae78-f26f-4dba-a829-253c83d1b387)]
+interface IDXGIFactory1 : IDXGIFactory
+{
+    HRESULT EnumAdapters1(UINT Adapter, void** ppAdapter);
+    BOOL IsCurrent();
+}
+
+[uuid(2411e7e1-12ac-4ccf-bd14-9798e8534dc0)]
+interface IDXGIAdapter : IDXGIObject
+{
+    HRESULT EnumOutputs(UINT Output, void** ppOutput);
+    HRESULT GetDesc([out] DXGI_ADAPTER_DESC* pDesc);
+    HRESULT CheckInterfaceSupport(REFGUID InterfaceName, UINT64* pUMDVersion);
+}
+
+[uuid(3d3e0379-f9de-4d58-bb6c-18d62992f1a6)]
+interface IDXGIDeviceSubObject : IDXGIObject
+{
+    HRESULT GetDevice(REFIID riid, void** ppDevice);
+}
+
+[uuid(035f3ab4-482e-4e50-b41f-8a7f8bd8960b)]
+interface IDXGIResource : IDXGIDeviceSubObject
+{
+    HRESULT GetSharedHandle([out] HANDLE* pSharedHandle);
+    HRESULT GetUsage(UINT* pUsage);
+    HRESULT SetEvictionPriority(UINT EvictionPriority);
+    HRESULT GetEvictionPriority(UINT* pEvictionPriority);
+}
+
+[uuid(30961379-4609-4a41-998e-54fe567ee0c1)]
+interface IDXGIResource1 : IDXGIResource
+{
+    HRESULT CreateSubresourceSurface(UINT index, void** ppSurface);
+    HRESULT CreateSharedHandle(void* pAttributes, DWORD dwAccess, LPCWSTR lpName, [out] HANDLE* pHandle);
+}
+
+[uuid(9d8e1289-d7b3-465f-8126-250e349af85d)]
+interface IDXGIKeyedMutex : IDXGIDeviceSubObject
+{
+    HRESULT AcquireSync(UINT64 Key, DWORD dwMilliseconds);
+    HRESULT ReleaseSync(UINT64 Key);
+}
+
+[uuid(8ba5fb08-5195-40e2-ac58-0d989c3a0102)]
+interface ID3D10Blob : IUnknown
+{
+    void* GetBufferPointer();
+    SIZE_T GetBufferSize();
+}
+
+[uuid(db6f6ddb-ac77-4e88-8253-819df9bbf140)]
+interface ID3D11Device : IUnknown
+{
+    HRESULT CreateBuffer(D3D11_BUFFER_DESC* pDesc, D3D11_SUBRESOURCE_DATA* pInitialData, [out] IUnknown** ppBuffer);
+    HRESULT CreateTexture1D(void* pDesc, void* pInitialData, void** ppTexture1D);
+    HRESULT CreateTexture2D(D3D11_TEXTURE2D_DESC* pDesc, D3D11_SUBRESOURCE_DATA* pInitialData, [out] ID3D11Texture2D** ppTexture2D);
+    HRESULT CreateTexture3D(void* pDesc, void* pInitialData, void** ppTexture3D);
+    HRESULT CreateShaderResourceView(void* pResource, void* pDesc, void** ppSRView);
+    HRESULT CreateUnorderedAccessView(void* pResource, void* pDesc, void** ppUAView);
+    HRESULT CreateRenderTargetView(IUnknown* pResource, void* pDesc, [out] IUnknown** ppRTView);
+    HRESULT CreateDepthStencilView(IUnknown* pResource, void* pDesc, [out] IUnknown** ppDepthStencilView);
+    HRESULT CreateInputLayout(D3D11_INPUT_ELEMENT_DESC* pInputElementDescs, UINT NumElements, void* pShaderBytecodeWithInputSignature, SIZE_T BytecodeLength, [out] IUnknown** ppInputLayout);
+    HRESULT CreateVertexShader(void* pShaderBytecode, SIZE_T BytecodeLength, void* pClassLinkage, [out] IUnknown** ppVertexShader);
+    HRESULT CreateGeometryShader(void* pShaderBytecode, SIZE_T BytecodeLength, void* pClassLinkage, void** ppGeometryShader);
+    HRESULT CreateGeometryShaderWithStreamOutput(void* pShaderBytecode, SIZE_T BytecodeLength, void* pSODeclaration, UINT NumEntries, UINT* pBufferStrides, UINT NumStrides, UINT RasterizedStream, void* pClassLinkage, void** ppGeometryShader);
+    HRESULT CreatePixelShader(void* pShaderBytecode, SIZE_T BytecodeLength, void* pClassLinkage, [out] IUnknown** ppPixelShader);
+    HRESULT CreateHullShader(void* pShaderBytecode, SIZE_T BytecodeLength, void* pClassLinkage, void** ppHullShader);
+    HRESULT CreateDomainShader(void* pShaderBytecode, SIZE_T BytecodeLength, void* pClassLinkage, void** ppDomainShader);
+    HRESULT CreateComputeShader(void* pShaderBytecode, SIZE_T BytecodeLength, void* pClassLinkage, void** ppComputeShader);
+    HRESULT CreateClassLinkage(void** ppLinkage);
+    HRESULT CreateBlendState(void* pBlendStateDesc, void** ppBlendState);
+    HRESULT CreateDepthStencilState(void* pDepthStencilDesc, void** ppDepthStencilState);
+    HRESULT CreateRasterizerState(void* pRasterizerDesc, void** ppRasterizerState);
+    HRESULT CreateSamplerState(void* pSamplerDesc, void** ppSamplerState);
+    HRESULT CreateQuery(void* pQueryDesc, void** ppQuery);
+    HRESULT CreatePredicate(void* pPredicateDesc, void** ppPredicate);
+    HRESULT CreateCounter(void* pCounterDesc, void** ppCounter);
+    HRESULT CreateDeferredContext(UINT ContextFlags, void** ppDeferredContext);
+    HRESULT OpenSharedResource(HANDLE hResource, REFIID ReturnedInterface, void** ppResource);
+    HRESULT CheckFormatSupport(UINT Format, UINT* pFormatSupport);
+    HRESULT CheckMultisampleQualityLevels(UINT Format, UINT SampleCount, UINT* pNumQualityLevels);
+    void CheckCounterInfo(void* pCounterInfo);
+    HRESULT CheckCounter(void* pDesc, void* pType, void* pActiveCounters, void* szName, UINT* pNameLength, void* szUnits, UINT* pUnitsLength, void* szDescription, UINT* pDescriptionLength);
+    HRESULT CheckFeatureSupport(UINT Feature, void* pFeatureSupportData, UINT FeatureSupportDataSize);
+    HRESULT GetPrivateData(REFGUID guid, UINT* pDataSize, void* pData);
+    HRESULT SetPrivateData(REFGUID guid, UINT DataSize, void* pData);
+    HRESULT SetPrivateDataInterface(REFGUID guid, IUnknown* pData);
+    INT GetFeatureLevel();
+    UINT GetCreationFlags();
+    HRESULT GetDeviceRemovedReason();
+    void GetImmediateContext(void** ppImmediateContext);
+    HRESULT SetExceptionMode(UINT RaiseFlags);
+    UINT GetExceptionMode();
+}
+
+[uuid(1841e5c8-16b0-489b-bcc8-44cfb0d5deae)]
+interface ID3D11DeviceChild : IUnknown
+{
+    void GetDevice(void** ppDevice);
+    HRESULT GetPrivateData(REFGUID guid, UINT* pDataSize, void* pData);
+    HRESULT SetPrivateData(REFGUID guid, UINT DataSize, void* pData);
+    HRESULT SetPrivateDataInterface(REFGUID guid, IUnknown* pData);
+}
+
+// A marker interface for the texture the sample creates, shares and draws into.
+[uuid(6f15aaf2-d208-4e89-9ab4-489535d34f9c)]
+interface ID3D11Texture2D : IUnknown
+{
+}
+
+[uuid(c0bfa96c-e089-44fb-8eaf-26f8796190da)]
+interface ID3D11DeviceContext : ID3D11DeviceChild
+{
+    void VSSetConstantBuffers(UINT StartSlot, UINT NumBuffers, void** ppConstantBuffers);
+    void PSSetShaderResources(UINT StartSlot, UINT NumViews, void** ppShaderResourceViews);
+    void PSSetShader(void* pPixelShader, void** ppClassInstances, UINT NumClassInstances);
+    void PSSetSamplers(UINT StartSlot, UINT NumSamplers, void** ppSamplers);
+    void VSSetShader(void* pVertexShader, void** ppClassInstances, UINT NumClassInstances);
+    void DrawIndexed(UINT IndexCount, UINT StartIndexLocation, INT BaseVertexLocation);
+    void Draw(UINT VertexCount, UINT StartVertexLocation);
+    HRESULT Map(void* pResource, UINT Subresource, UINT MapType, UINT MapFlags, void* pMappedResource);
+    void Unmap(void* pResource, UINT Subresource);
+    void PSSetConstantBuffers(UINT StartSlot, UINT NumBuffers, void** ppConstantBuffers);
+    void IASetInputLayout(void* pInputLayout);
+    void IASetVertexBuffers(UINT StartSlot, UINT NumBuffers, void** ppVertexBuffers, UINT* pStrides, UINT* pOffsets);
+    void IASetIndexBuffer(void* pIndexBuffer, UINT Format, UINT Offset);
+    void DrawIndexedInstanced(UINT IndexCountPerInstance, UINT InstanceCount, UINT StartIndexLocation, INT BaseVertexLocation, UINT StartInstanceLocation);
+    void DrawInstanced(UINT VertexCountPerInstance, UINT InstanceCount, UINT StartVertexLocation, UINT StartInstanceLocation);
+    void GSSetConstantBuffers(UINT StartSlot, UINT NumBuffers, void** ppConstantBuffers);
+    void GSSetShader(void* pShader, void** ppClassInstances, UINT NumClassInstances);
+    void IASetPrimitiveTopology(UINT Topology);
+    void VSSetShaderResources(UINT StartSlot, UINT NumViews, void** ppShaderResourceViews);
+    void VSSetSamplers(UINT StartSlot, UINT NumSamplers, void** ppSamplers);
+    void Begin(void* pAsync);
+    void End(void* pAsync);
+    HRESULT GetData(void* pAsync, void* pData, UINT DataSize, UINT GetDataFlags);
+    void SetPredication(void* pPredicate, BOOL PredicateValue);
+    void GSSetShaderResources(UINT StartSlot, UINT NumViews, void** ppShaderResourceViews);
+    void GSSetSamplers(UINT StartSlot, UINT NumSamplers, void** ppSamplers);
+    void OMSetRenderTargets(UINT NumViews, void** ppRenderTargetViews, void* pDepthStencilView);
+    void OMSetRenderTargetsAndUnorderedAccessViews(UINT NumRTVs, void** ppRenderTargetViews, void* pDepthStencilView, UINT UAVStartSlot, UINT NumUAVs, void** ppUnorderedAccessViews, UINT* pUAVInitialCounts);
+    void OMSetBlendState(void* pBlendState, FLOAT* BlendFactor, UINT SampleMask);
+    void OMSetDepthStencilState(void* pDepthStencilState, UINT StencilRef);
+    void SOSetTargets(UINT NumBuffers, void** ppSOTargets, UINT* pOffsets);
+    void DrawAuto();
+    void DrawIndexedInstancedIndirect(void* pBufferForArgs, UINT AlignedByteOffsetForArgs);
+    void DrawInstancedIndirect(void* pBufferForArgs, UINT AlignedByteOffsetForArgs);
+    void Dispatch(UINT ThreadGroupCountX, UINT ThreadGroupCountY, UINT ThreadGroupCountZ);
+    void DispatchIndirect(void* pBufferForArgs, UINT AlignedByteOffsetForArgs);
+    void RSSetState(void* pRasterizerState);
+    void RSSetViewports(UINT NumViewports, D3D11_VIEWPORT* pViewports);
+    void RSSetScissorRects(UINT NumRects, void* pRects);
+    void CopySubresourceRegion(void* pDstResource, UINT DstSubresource, UINT DstX, UINT DstY, UINT DstZ, void* pSrcResource, UINT SrcSubresource, void* pSrcBox);
+    void CopyResource(void* pDstResource, void* pSrcResource);
+    void UpdateSubresource(void* pDstResource, UINT DstSubresource, void* pDstBox, void* pSrcData, UINT SrcRowPitch, UINT SrcDepthPitch);
+    void CopyStructureCount(void* pDstBuffer, UINT DstAlignedByteOffset, void* pSrcView);
+    void ClearRenderTargetView(void* pRenderTargetView, FLOAT* ColorRGBA);
+    void ClearUnorderedAccessViewUint(void* pUnorderedAccessView, UINT* Values);
+    void ClearUnorderedAccessViewFloat(void* pUnorderedAccessView, FLOAT* Values);
+    void ClearDepthStencilView(void* pDepthStencilView, UINT ClearFlags, FLOAT Depth, UINT8 Stencil);
+    void GenerateMips(void* pShaderResourceView);
+    void SetResourceMinLOD(void* pResource, FLOAT MinLOD);
+    FLOAT GetResourceMinLOD(void* pResource);
+    void ResolveSubresource(void* pDstResource, UINT DstSubresource, void* pSrcResource, UINT SrcSubresource, UINT Format);
+    void ExecuteCommandList(void* pCommandList, BOOL RestoreContextState);
+    void HSSetShaderResources(UINT StartSlot, UINT NumViews, void** ppShaderResourceViews);
+    void HSSetShader(void* pHullShader, void** ppClassInstances, UINT NumClassInstances);
+    void HSSetSamplers(UINT StartSlot, UINT NumSamplers, void** ppSamplers);
+    void HSSetConstantBuffers(UINT StartSlot, UINT NumBuffers, void** ppConstantBuffers);
+    void DSSetShaderResources(UINT StartSlot, UINT NumViews, void** ppShaderResourceViews);
+    void DSSetShader(void* pDomainShader, void** ppClassInstances, UINT NumClassInstances);
+    void DSSetSamplers(UINT StartSlot, UINT NumSamplers, void** ppSamplers);
+    void DSSetConstantBuffers(UINT StartSlot, UINT NumBuffers, void** ppConstantBuffers);
+    void CSSetShaderResources(UINT StartSlot, UINT NumViews, void** ppShaderResourceViews);
+    void CSSetUnorderedAccessViews(UINT StartSlot, UINT NumUAVs, void** ppUnorderedAccessViews, UINT* pUAVInitialCounts);
+    void CSSetShader(void* pComputeShader, void** ppClassInstances, UINT NumClassInstances);
+    void CSSetSamplers(UINT StartSlot, UINT NumSamplers, void** ppSamplers);
+    void CSSetConstantBuffers(UINT StartSlot, UINT NumBuffers, void** ppConstantBuffers);
+    void VSGetConstantBuffers(UINT StartSlot, UINT NumBuffers, void** ppConstantBuffers);
+    void PSGetShaderResources(UINT StartSlot, UINT NumViews, void** ppShaderResourceViews);
+    void PSGetShader(void** ppPixelShader, void** ppClassInstances, UINT* pNumClassInstances);
+    void PSGetSamplers(UINT StartSlot, UINT NumSamplers, void** ppSamplers);
+    void VSGetShader(void** ppVertexShader, void** ppClassInstances, UINT* pNumClassInstances);
+    void PSGetConstantBuffers(UINT StartSlot, UINT NumBuffers, void** ppConstantBuffers);
+    void IAGetInputLayout(void** ppInputLayout);
+    void IAGetVertexBuffers(UINT StartSlot, UINT NumBuffers, void** ppVertexBuffers, UINT* pStrides, UINT* pOffsets);
+    void IAGetIndexBuffer(void** pIndexBuffer, UINT* Format, UINT* Offset);
+    void GSGetConstantBuffers(UINT StartSlot, UINT NumBuffers, void** ppConstantBuffers);
+    void GSGetShader(void** ppGeometryShader, void** ppClassInstances, UINT* pNumClassInstances);
+    void IAGetPrimitiveTopology(UINT* pTopology);
+    void VSGetShaderResources(UINT StartSlot, UINT NumViews, void** ppShaderResourceViews);
+    void VSGetSamplers(UINT StartSlot, UINT NumSamplers, void** ppSamplers);
+    void GetPredication(void** ppPredicate, BOOL* pPredicateValue);
+    void GSGetShaderResources(UINT StartSlot, UINT NumViews, void** ppShaderResourceViews);
+    void GSGetSamplers(UINT StartSlot, UINT NumSamplers, void** ppSamplers);
+    void OMGetRenderTargets(UINT NumViews, void** ppRenderTargetViews, void** ppDepthStencilView);
+    void OMGetRenderTargetsAndUnorderedAccessViews(UINT NumRTVs, void** ppRenderTargetViews, void** ppDepthStencilView, UINT UAVStartSlot, UINT NumUAVs, void** ppUnorderedAccessViews);
+    void OMGetBlendState(void** ppBlendState, FLOAT* BlendFactor, UINT* pSampleMask);
+    void OMGetDepthStencilState(void** ppDepthStencilState, UINT* pStencilRef);
+    void SOGetTargets(UINT NumBuffers, void** ppSOTargets);
+    void RSGetState(void** ppRasterizerState);
+    void RSGetViewports(UINT* pNumViewports, void* pViewports);
+    void RSGetScissorRects(UINT* pNumRects, void* pRects);
+    void HSGetShaderResources(UINT StartSlot, UINT NumViews, void** ppShaderResourceViews);
+    void HSGetShader(void** ppHullShader, void** ppClassInstances, UINT* pNumClassInstances);
+    void HSGetSamplers(UINT StartSlot, UINT NumSamplers, void** ppSamplers);
+    void HSGetConstantBuffers(UINT StartSlot, UINT NumBuffers, void** ppConstantBuffers);
+    void DSGetShaderResources(UINT StartSlot, UINT NumViews, void** ppShaderResourceViews);
+    void DSGetShader(void** ppDomainShader, void** ppClassInstances, UINT* pNumClassInstances);
+    void DSGetSamplers(UINT StartSlot, UINT NumSamplers, void** ppSamplers);
+    void DSGetConstantBuffers(UINT StartSlot, UINT NumBuffers, void** ppConstantBuffers);
+    void CSGetShaderResources(UINT StartSlot, UINT NumViews, void** ppShaderResourceViews);
+    void CSGetUnorderedAccessViews(UINT StartSlot, UINT NumUAVs, void** ppUnorderedAccessViews);
+    void CSGetShader(void** ppComputeShader, void** ppClassInstances, UINT* pNumClassInstances);
+    void CSGetSamplers(UINT StartSlot, UINT NumSamplers, void** ppSamplers);
+    void CSGetConstantBuffers(UINT StartSlot, UINT NumBuffers, void** ppConstantBuffers);
+    void ClearState();
+    void Flush();
+}
