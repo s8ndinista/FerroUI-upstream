@@ -168,6 +168,40 @@ How to read it:
 
 For a directory of the capture mode the report shows every page in every setting, for review by eye.
 
+## 5.1 Results
+
+The comparison on the Windows runner of CI (x64, Windows App SDK 1.6, a work area of 1024 by
+768, so the pages are compared at 720 by 660 from their top), share of differing pixels per page
+in the light and dark variant:
+
+| Page | First run (run 38928537418) | After the calibration (run 38938301589) |
+|---|---|---|
+| buttons | 4.46 / 2.36 | 2.43 / 2.35 |
+| toggles | 2.52 / 2.10 | 2.10 / 2.10 |
+| text | 2.84 / 2.95 | 2.71 / 2.79 |
+| numbers | 3.02 / 3.20 | 2.09 / 2.10 |
+| combobox | 1.95 / 2.00 | 1.94 / 1.99 |
+| lists | 2.09 / 2.12 | 2.09 / 2.12 |
+| range | 3.18 / 2.54 | 2.35 / 2.39 |
+| datetime | 3.13 / 3.18 | 3.09 / 3.12 |
+| menus | 3.54 / 2.63 | 2.98 / 2.45 |
+| flyouts | 5.11 / 4.83 | 3.40 / 3.15 |
+| tabs | 1.62 / 1.65 | 1.57 / 1.59 |
+| containers | 2.78 / 2.80 | 2.61 / 2.63 |
+| navigation | 4.16 / 4.20 | 3.13 / 3.17 |
+| table | 14.05 / 14.24 | 13.49 / 13.64 |
+| dialogs | 0.76 / 0.76 | 0.69 / 0.68 |
+
+About 2 % is the floor of text: the native side draws text with DirectWrite, the framework with
+Skia, and the edges of every glyph differ. The table compares the port of WinUI's TableView with
+a stand-in (the release 1.6 has no TableView), whose header fill and grid lines differ by design.
+The calibration between the two runs: the accent shades of the system, the shadows of popups,
+the scroll indicator states, the layout and glyph of InfoBar, the selected item of DrawerPage,
+the padding of menu items, the validation errors of NumericUpDown, ButtonSpinner and Slider, the
+margins of the inner contents of text boxes, the chevron of ComboBox, the disabled navigation
+glyphs of the calendar, and the native pages where they did not show what the framework's did.
+The differences that remain are recorded in `winui-theme/DEVIATIONS.md`.
+
 ## 6. Files
 
 | File | What |

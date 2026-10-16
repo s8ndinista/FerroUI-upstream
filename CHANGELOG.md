@@ -4,6 +4,12 @@ All notable changes to FerroUI are recorded in this file. The format follows [Ke
 
 ## [Unreleased]
 
+### Added
+
+- **The WinUI 3 theme.** A second theme next to the Fluent theme, which is unchanged: the crate `ferroui-themes-winui` (`WinUITheme`), ported from the WinUI 3 theme of microsoft-ui-xaml (MIT). Every control has a WinUI 3 template, in light, dark and high contrast, with the compact density, the system accent colours and WinUI's popup shadows and scroll indicators. Every difference from WinUI is recorded with its reason in `docs/porting/winui-theme/DEVIATIONS.md`; `docs/porting/winui-theme/PROGRESS.md` tracks the port. The facade crate has the feature `winui-theme`, and the ControlCatalog offers the theme as a third choice (Settings, or `FERROUI_CATALOG_THEME=winui`).
+- **The WinUI theme gallery** (`samples/WinUIThemeGallery`): a page per control family, a capture mode, and on Windows a host that compares each page with the same page of native WinUI 3 controls; it runs in the Windows job of CI (`docs/porting/winui-theme-gallery.md`).
+- **Accent shades of the system.** The platform colour values can carry the six accent shades of the system (`PlatformColorValues::accent_shades`); the Windows backend reports them from `UISettings`, as WinUI reads them.
+
 ## [0.1.0-preview.3] - 2026-10-16
 
 The third preview. It completes the port of upstream's samples and tests: every applicable sample, every applicable unit test and the integration tests are ported, and the defects they found are fixed.
