@@ -1451,7 +1451,27 @@ reason = "classes shared by the styling tests: the control library is a separate
 
 [[rust_only]]
 path = "src/FerroUI.Base/styling/testing.rs"
-reason = "the port of `StyleHelpers` of the upstream test projects, for this crate and the crates built on it"
+reason = "the port of `StyleHelpers` of the upstream test projects, for this crate and the crates built on it, and the members of styling the benchmarks reach (the trait of the kinds of selectors, the styling pass of the value store), which upstream's benchmark project reaches through its access to the internals"
+
+[[rust_only]]
+path = "src/FerroUI.Base/layout/testing.rs"
+reason = "the private setters of the layout flags of a layoutable, for the benchmarks (the `testing` feature): upstream's layout benchmark reaches them with `UnsafeAccessor`"
+
+[[rust_only]]
+path = "src/FerroUI.Base/media/testing.rs"
+reason = "the glyph bounds of the font tables (`GlyphTypeface.TryGetGlyphBounds`, `GlyphBounds`), for the benchmarks (the `testing` feature): internal upstream, reached by upstream's benchmark project through its access to the internals"
+
+[[rust_only]]
+path = "src/FerroUI.Base/media/text_formatting/unicode/testing.rs"
+reason = "the generated Unicode tries, for the benchmarks (the `testing` feature): internal upstream, reached by upstream's benchmark project through its access to the internals"
+
+[[rust_only]]
+path = "src/FerroUI.Base/rendering/composition/testing.rs"
+reason = "a draw list visual without a visual of the tree, for the benchmarks (the `testing` feature): the internal constructor of `CompositionDrawListVisual` that upstream's benchmark project calls through its access to the internals"
+
+[[rust_only]]
+path = "src/Headless/FerroUI.Headless/testing.rs"
+reason = "the render interface of the headless platform and its drawing context stub, for the benchmarks (the `testing` feature): internal upstream, created by upstream's benchmark project through its access to the internals"
 
 [[rust_only]]
 path = "src/FerroUI.Base/rendering/composition/test_compositor.rs"
