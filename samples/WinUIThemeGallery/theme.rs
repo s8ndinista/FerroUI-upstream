@@ -3,15 +3,18 @@
 //!
 //! The theme has the surface of the Fluent theme of the framework: a `Styles` that is created
 //! with `new()`, added to the styles of the application (`as_style()`), with a density style
-//! (normal, compact) and the colour palettes of the light and the dark variant, whose accent
-//! colour can be set.
+//! (normal, compact). The accent colour is set as a WinUI application sets it: the resources
+//! `SystemAccentColor` and its six shades in the resources of the theme, which take precedence
+//! over the colours the theme reads from the platform.
 
 use ferroui_base::media::Color;
 use ferroui_base::styling::{IStyle, ThemeVariant};
 use ferroui_base::Ref;
 use std::rc::Rc;
 
-use ferroui_themes_winui::{ColorPaletteResources, DensityStyle, WinUITheme as Theme};
+use ferroui_base::controls::ResourceKey;
+use ferroui_themes_winui::accents::SystemAccentColors;
+use ferroui_themes_winui::{DensityStyle, WinUITheme as Theme};
 
 /// The theme of the gallery.
 pub type GalleryTheme = Theme;
@@ -60,22 +63,32 @@ pub fn set_density(theme: &GalleryTheme, density: Density) {
     });
 }
 
-/// Sets the accent colour of the light and the dark palette of the theme; `None` leaves the
-/// accent to the platform (the accent colour of the system).
+/// Sets the accent colour of the theme; `None` leaves the accent to the platform (the accent
+/// colour of the system). The shades are the ones the theme computes from the accent of the
+/// platform (`SystemAccentColors::calculate_accent_shades`).
 pub fn set_accent(theme: &GalleryTheme, accent: Option<Color>) {
-    let palettes = theme.palettes();
-    for variant in [ThemeVariant::light(), ThemeVariant::dark()] {
-        let palette = match palettes.try_get_value(&variant) {
-            Some(palette) => palette,
-            None => {
-                let palette = ColorPaletteResources::new();
-                palettes.add(variant.clone(), palette.clone());
-                palette
+    let keys = [
+        SystemAccentColors::ACCENT_KEY,
+        SystemAccentColors::ACCENT_DARK1_KEY,
+        SystemAccentColors::ACCENT_DARK2_KEY,
+        SystemAccentColors::ACCENT_DARK3_KEY,
+        SystemAccentColors::ACCENT_LIGHT1_KEY,
+        SystemAccentColors::ACCENT_LIGHT2_KEY,
+        SystemAccentColors::ACCENT_LIGHT3_KEY,
+    ];
+    let resources = theme.resources();
+    match accent {
+        Some(accent) => {
+            let (dark1, dark2, dark3, light1, light2, light3) = SystemAccentColors::calculate_accent_shades(accent);
+            for (key, color) in keys.into_iter().zip([accent, dark1, dark2, dark3, light1, light2, light3]) {
+                resources.set(key, Some(Rc::new(color)));
             }
-        };
-        // The default colour is no accent: the palette then has none, and the accent of the
-        // platform is used.
-        palette.set_accent(accent.unwrap_or_default());
+        }
+        None => {
+            for key in keys {
+                resources.remove(&ResourceKey::from(key));
+            }
+        }
     }
 }
 
@@ -113,7 +126,7 @@ impl Variant {
         match self {
             Variant::Light => ThemeVariant::light(),
             Variant::Dark => ThemeVariant::dark(),
-            Variant::HighContrast => ThemeVariant::new("HighContrast", None),
+            Variant::HighContrast => Theme::high_contrast(),
         }
     }
 }

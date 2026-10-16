@@ -221,7 +221,7 @@
       </Style>
     </Style>
     <!-- ButtonVisible of the group ButtonStates. -->
-    <Style Selector="^:focus:not(:empty)[AcceptsReturn=False][IsReadOnly=False][TextWrapping=NoWrap] /template/ Button#DeleteButton">
+    <Style Selector="^[AcceptsReturn=False][IsReadOnly=False][TextWrapping=NoWrap]:focus:not(TextBox:empty) /template/ Button#DeleteButton">
       <Setter Property="IsVisible" Value="True" />
     </Style>
   </ControlTheme>

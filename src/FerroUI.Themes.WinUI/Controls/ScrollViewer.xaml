@@ -64,7 +64,7 @@
                                     Grid.RowSpan="2"
                                     Grid.ColumnSpan="2"
                                     ContentTemplate="{TemplateBinding ContentTemplate}"
-                                    Margin="{TemplateBinding Padding}"
+                                    Padding="{TemplateBinding Padding}"
                                     HorizontalSnapPointsType="{TemplateBinding HorizontalSnapPointsType}"
                                     VerticalSnapPointsType="{TemplateBinding VerticalSnapPointsType}"
                                     HorizontalSnapPointsAlignment="{TemplateBinding HorizontalSnapPointsAlignment}"
