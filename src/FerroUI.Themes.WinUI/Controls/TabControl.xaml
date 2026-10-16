@@ -45,7 +45,11 @@
   - The placements of FerroUI that TabView has not: at the bottom the strip is the strip of the
     top turned upside down (its tabs turn their header back, Controls/TabItem.xaml); at the left
     and at the right the tabs are stacked vertically without the bottom border lines, and the
-    tabs are drawn as the items of the left pane of NavigationView (Controls/TabItem.xaml).
+    tabs are drawn as the items of the left pane of NavigationView (Controls/TabItem.xaml), 4 px
+    under the top of the strip (the border of RootSplitView and NavigationViewPaneContentGridMargin),
+    beside the content grid of NavigationView (NavigationViewContentBackground,
+    NavigationViewContentGridBorderBrush, NavigationViewContentGridBorderThickness and
+    NavigationViewContentGridCornerRadius, mirrored at the right).
   - KeyboardAcceleratorPlacementMode has no counterpart.
 -->
 <ResourceDictionary xmlns="https://github.com/ferroui"
@@ -431,6 +435,17 @@
     <!-- The strip at the left or the right: the tabs stacked vertically, scrolled vertically,
          without the bottom border lines. -->
     <Style Selector="^[TabStripPlacement=Left]">
+      <!-- The pane of NavigationView: its items 3 px under the top of the pane
+           (NavigationViewPaneContentGridMargin) and the 1 px border of RootSplitView. -->
+      <Setter Property="Padding" Value="0,4,0,0" />
+      <!-- The content is the content grid of NavigationView beside its pane
+           (NavigationViewContentBackground, the border and the corner of ContentGrid). -->
+      <Style Selector="^ /template/ Border#TabContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource NavigationViewContentBackground}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource NavigationViewContentGridBorderBrush}" />
+        <Setter Property="BorderThickness" Value="{DynamicResource NavigationViewContentGridBorderThickness}" />
+        <Setter Property="CornerRadius" Value="{DynamicResource NavigationViewContentGridCornerRadius}" />
+      </Style>
       <Style Selector="^ /template/ ItemsPresenter#PART_ItemsPresenter > StackPanel">
         <Setter Property="Orientation" Value="Vertical" />
       </Style>
@@ -446,6 +461,17 @@
       </Style>
     </Style>
     <Style Selector="^[TabStripPlacement=Right]">
+      <!-- The pane of NavigationView: its items 3 px under the top of the pane
+           (NavigationViewPaneContentGridMargin) and the 1 px border of RootSplitView. -->
+      <Setter Property="Padding" Value="0,4,0,0" />
+      <!-- The content is the content grid of NavigationView beside its pane
+           (NavigationViewContentBackground, the border and the corner of ContentGrid, mirrored). -->
+      <Style Selector="^ /template/ Border#TabContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource NavigationViewContentBackground}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource NavigationViewContentGridBorderBrush}" />
+        <Setter Property="BorderThickness" Value="0,1,1,0" />
+        <Setter Property="CornerRadius" Value="0,8,0,0" />
+      </Style>
       <Style Selector="^ /template/ ItemsPresenter#PART_ItemsPresenter > StackPanel">
         <Setter Property="Orientation" Value="Vertical" />
       </Style>
