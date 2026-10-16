@@ -3,6 +3,7 @@
   commit 7e4b0c2096be402f51cc8f7d203ebf67cff183d0:
     controls/dev/CommonStyles/ScrollViewer_themeresources.xaml (the styles; its resources are
     Resources/ScrollViewer_themeresources.xaml)
+    dxaml/xcp/dxaml/themes/generic.xaml (the ControlTemplate ScrollViewerScrollBarlessTemplate)
   Copyright (c) Microsoft Corporation. Licensed under the MIT License (see NOTICE.md of the crate).
 
   Translation notes (docs/porting/winui-theme.md, section 4):
@@ -23,6 +24,16 @@
     Auto of the control is the nearest behaviour. The modes of the source that FerroUI's scroll
     viewer does not have (HorizontalScrollMode, VerticalScrollMode, IsHorizontalRailEnabled,
     IsVerticalRailEnabled, ZoomMode) are left out.
+  - ScrollViewerScrollBarlessTemplate, a template of the platform theme for the scroll viewers of
+    templates that scroll without scroll bars (the looping lists of the date and time pickers,
+    Pivot, CalendarView), is a keyed ControlTemplate of the same key: a WinUI application writes
+    Template="{StaticResource ScrollViewerScrollBarlessTemplate}" on a ScrollViewer, and so does a
+    FerroUI one. ScrollContentPresenter is PART_ContentPresenter; FerroUI's scroll viewer runs
+    without its optional parts PART_HorizontalScrollBar and PART_VerticalScrollBar (it scrolls by
+    the wheel, the keyboard and its methods). The padding of the scroll viewer is the padding of
+    the presenter, not its margin, and the snap point bindings and the scroll gesture recognizer of
+    the presenter are the ones of DefaultScrollViewerStyle (touch scrolling, which WinUI's
+    presenter does in the platform), as in the default template.
 -->
 <ResourceDictionary xmlns="https://github.com/ferroui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -114,4 +125,26 @@
   </ControlTheme>
 
   <ControlTheme x:Key="{x:Type ScrollViewer}" TargetType="ScrollViewer" BasedOn="{StaticResource DefaultScrollViewerStyle}" />
+
+  <ControlTemplate x:Key="ScrollViewerScrollBarlessTemplate" TargetType="ScrollViewer">
+    <Grid Background="{TemplateBinding Background}">
+      <ScrollContentPresenter x:Name="PART_ContentPresenter"
+                              ContentTemplate="{TemplateBinding ContentTemplate}"
+                              Padding="{TemplateBinding Padding}"
+                              HorizontalSnapPointsType="{TemplateBinding HorizontalSnapPointsType}"
+                              VerticalSnapPointsType="{TemplateBinding VerticalSnapPointsType}"
+                              HorizontalSnapPointsAlignment="{TemplateBinding HorizontalSnapPointsAlignment}"
+                              VerticalSnapPointsAlignment="{TemplateBinding VerticalSnapPointsAlignment}"
+                              ScrollViewer.IsScrollInertiaEnabled="{TemplateBinding IsScrollInertiaEnabled}">
+        <ScrollContentPresenter.GestureRecognizers>
+          <ScrollGestureRecognizer CanHorizontallyScroll="{Binding CanHorizontallyScroll, ElementName=PART_ContentPresenter}"
+                                   CanVerticallyScroll="{Binding CanVerticallyScroll, ElementName=PART_ContentPresenter}"
+                                   IsScrollInertiaEnabled="{Binding (ScrollViewer.IsScrollInertiaEnabled), ElementName=PART_ContentPresenter}"
+                                   Offset="{Binding Offset, ElementName=PART_ContentPresenter}"
+                                   Viewport="{Binding Viewport, ElementName=PART_ContentPresenter}"
+                                   Extent="{Binding Extent, ElementName=PART_ContentPresenter}" />
+        </ScrollContentPresenter.GestureRecognizers>
+      </ScrollContentPresenter>
+    </Grid>
+  </ControlTemplate>
 </ResourceDictionary>

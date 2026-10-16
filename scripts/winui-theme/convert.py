@@ -33,7 +33,14 @@ The rules:
 * `CornerRadiusFilterConverter` becomes FerroUI's `CornerRadiusFilterConverter` (the filters
   `Top`, `Bottom`, `Left`, `Right`) or `CornerRadiusToDoubleConverter` (`TopLeftValue`,
   `BottomRightValue` without a scale);
+* `CornerRadiusToThicknessConverter` becomes the converter of the same name of the theme crate
+  (`FerroUI.Themes.WinUI.Converters`), with its `ConversionKind` and `Multiplier`;
 * the font family `XamlAutoFontFamily` becomes `Segoe UI Variable Text, Segoe UI, $Default`.
+
+The compact density layer has one style besides its resources, the implicit `TextBlock` style
+of `Compact.xaml`: a style of the density layer whose setters are plain values becomes the default
+control theme of its type (`<ControlTheme x:Key="{x:Type T}" TargetType="T">` with the same
+setters), the counterpart of an implicit style (docs/porting/winui-theme.md, section 4.2).
 
 usage: convert.py [--reference <microsoft-ui-xaml>] [--check] [--report]
 
@@ -274,12 +281,44 @@ def convert_item(item, indent):
         if filter_ in CORNER_VALUES and scale == "1":
             return [f'{indent}<converters:CornerRadiusToDoubleConverter{key} Corner="{CORNER_VALUES[filter_]}" />'], {"converters"}
         raise Unconvertible(f"CornerRadiusFilterConverter Filter={filter_} Scale={scale}")
+    if kind == "CornerRadiusToThicknessConverter":
+        pairs = attributes(element, {"ConversionKind", "Multiplier"})
+        if any(value.startswith("{") for _, value in pairs):
+            raise Unconvertible("CornerRadiusToThicknessConverter with a markup extension")
+        return [f"{indent}<winuiconverters:CornerRadiusToThicknessConverter{key}{format_attributes(pairs)} />"], {"winuiconverters"}
     raise Unconvertible(f"type {kind}")
+
+
+def convert_density_style(item, indent):
+    """An implicit style of the density layer as the default control theme of its type: only a
+    style without a key, a base or a template, whose setters set plain values, is converted."""
+    element = item.element
+    target = element.get("TargetType")
+    if not target or element.get(w.x("Key")) is not None or element.get("BasedOn") is not None:
+        raise Unconvertible("density style that is not a plain implicit style")
+    attributes(element, {"TargetType"})
+    setters = []
+    for child in element:
+        if not isinstance(child.tag, str):
+            continue
+        if w.local_name(child.tag) != "Setter":
+            raise Unconvertible(f"child {w.local_name(child.tag)} of a density style")
+        pairs = attributes(child, {"Property", "Value"})
+        if any(name == "Value" and value.startswith("{") for name, value in pairs) or len(pairs) != 2:
+            raise Unconvertible("density style setter that is not a plain value")
+        setters.append(f"{indent}  <Setter{format_attributes(pairs)} />")
+    if not setters:
+        raise Unconvertible("density style without setters")
+    lines = [f'{indent}<ControlTheme x:Key="{{x:Type {target}}}" TargetType="{escape(target, True)}">']
+    lines += setters
+    lines.append(f"{indent}</ControlTheme>")
+    return lines, set()
 
 
 NAMESPACES = {
     "winui": 'xmlns:winui="using:FerroUI.Themes.WinUI"',
     "converters": 'xmlns:converters="using:FerroUI.Controls.Converters"',
+    "winuiconverters": 'xmlns:winuiconverters="using:FerroUI.Themes.WinUI.Converters"',
 }
 
 
@@ -382,13 +421,17 @@ def convert(root):
             raise SystemExit(f"error: two source documents map to {path}")
         documents[path] = render([source], converted, OUTSIDE_THE_MERGE_NOTE)
 
-    # The density layer: the resources of the compact dictionary of WinUI.
+    # The density layer: the resources of the compact dictionary of WinUI, and its implicit
+    # styles as default control themes.
     converted = []
     for key, item in theme.compact.items():
-        if item.kind in CONTROL_KINDS or w.waiver_for(waivers, item):
+        if w.waiver_for(waivers, item) or (item.kind in CONTROL_KINDS and item.kind != "Style"):
             continue
         try:
-            lines, needed = convert_item(item, "  ")
+            if item.kind == "Style":
+                lines, needed = convert_density_style(item, "  ")
+            else:
+                lines, needed = convert_item(item, "  ")
         except Unconvertible as error:
             left_out.append((item, str(error)))
             continue
@@ -396,7 +439,7 @@ def convert(root):
     documents["DensityStyles/Compact.xaml"] = render(
         w.DENSITY,
         converted,
-        "The resources of WinUI's compact density (compact_themeresources.xaml: the theme resources with these documents merged last); WinUITheme looks them up first when its DensityStyle is Compact.",
+        "The resources of WinUI's compact density (compact_themeresources.xaml: the theme resources with these documents merged last), with its implicit TextBlock style as the default control theme of TextBlock; WinUITheme looks them up first when its DensityStyle is Compact.",
     )
 
     # The includes of the theme document: the system resources, the converted documents in the

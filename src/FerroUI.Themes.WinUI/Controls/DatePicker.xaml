@@ -36,11 +36,12 @@
   - Template parts of DatePickerPresenter: PickerHostGrid is PART_PickerContainer; the
     LoopingSelectors the WinUI presenter creates in code are the hosts PART_DayHost, PART_MonthHost
     and PART_YearHost, each with the template of DefaultLoopingSelectorStyle (a ScrollViewer with
-    the DateTimePickerPanel PART_DaySelector, ... and the up and down RepeatButtons PART_DayUpButton,
-    PART_DayDownButton, ..., shown while the pointer is over the host); AcceptButton and
-    DismissButton are PART_AcceptButton and PART_DismissButton; FirstPickerSpacing and
-    SecondPickerSpacing are PART_FirstSpacer and PART_SecondSpacer. The presenter sets the columns
-    in code (78*, 138* for the month), the month column is 138* in FerroUI where WinUI's is 132*.
+    ScrollViewerScrollBarlessTemplate around the DateTimePickerPanel PART_DaySelector, ... and the
+    up and down RepeatButtons PART_DayUpButton, PART_DayDownButton, ..., shown while the pointer is
+    over the host); AcceptButton and DismissButton are PART_AcceptButton and PART_DismissButton;
+    FirstPickerSpacing and SecondPickerSpacing are PART_FirstSpacer and PART_SecondSpacer. The
+    presenter sets the columns in code (78*, 138* for the month), the month column is 138* in
+    FerroUI where WinUI's is 132*.
   - HighlightRect (a Grid with a background and a corner radius) is a Border, under the items; the
     three MonochromaticOverlayPresenters that draw the selected items again in
     DatePickerFlyoutPresenterHighlightForegroundColor are the selected state of the items
@@ -251,7 +252,8 @@
                       IsHitTestVisible="False" />
               <Grid x:Name="PART_MonthHost">
                 <ScrollViewer HorizontalScrollBarVisibility="Disabled"
-                              VerticalScrollBarVisibility="Hidden">
+                              VerticalScrollBarVisibility="Hidden"
+                              Template="{StaticResource ScrollViewerScrollBarlessTemplate}">
                   <DateTimePickerPanel x:Name="PART_MonthSelector"
                                        PanelType="Month"
                                        ItemHeight="{DynamicResource DatePickerFlyoutPresenterItemHeight}"
@@ -262,7 +264,8 @@
               </Grid>
               <Grid x:Name="PART_DayHost">
                 <ScrollViewer HorizontalScrollBarVisibility="Disabled"
-                              VerticalScrollBarVisibility="Hidden">
+                              VerticalScrollBarVisibility="Hidden"
+                              Template="{StaticResource ScrollViewerScrollBarlessTemplate}">
                   <DateTimePickerPanel x:Name="PART_DaySelector"
                                        PanelType="Day"
                                        ItemHeight="{DynamicResource DatePickerFlyoutPresenterItemHeight}"
@@ -273,7 +276,8 @@
               </Grid>
               <Grid x:Name="PART_YearHost">
                 <ScrollViewer HorizontalScrollBarVisibility="Disabled"
-                              VerticalScrollBarVisibility="Hidden">
+                              VerticalScrollBarVisibility="Hidden"
+                              Template="{StaticResource ScrollViewerScrollBarlessTemplate}">
                   <DateTimePickerPanel x:Name="PART_YearSelector"
                                        PanelType="Year"
                                        ItemHeight="{DynamicResource DatePickerFlyoutPresenterItemHeight}"

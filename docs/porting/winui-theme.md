@@ -100,6 +100,7 @@ The crate mirrors `src/FerroUI.Themes.Fluent`:
 | `lib.rs`, `assets.rs`, `register_types.rs`, `rust_paths.rs` | as in the Fluent theme; `rust_paths.rs` is written by `scripts/generate_markup_types.py --target rust-paths` |
 | `winui_theme.rs` | the class `WinUITheme` and the enum `DensityStyle` |
 | `Accents/system_accent_colors.rs` | the accent colour provider (section 3.3) |
+| `Converters/corner_radius_to_thickness_converter.rs` | `CornerRadiusToThicknessConverter` of WinUI, which the theme resources name and FerroUI's control set lacks (section 5) |
 | `WinUITheme.xaml` | the document of the class: the resources and the include of the control themes |
 | `Resources/*.xaml` | the resources: one generated document per source document, `SystemResources.xaml`, `Glyphs.xaml` |
 | `DensityStyles/Compact.xaml` | the compact resources (generated) |
@@ -190,9 +191,10 @@ Assets`) is kept as a resource, but the templates do not use it (section 4.7).
 `DensityStyle` is `Normal` or `Compact`. As in the Fluent theme, the compact dictionary
 (`DensityStyles/Compact.xaml`, included under the key `CompactStyles` and taken out of the
 resources by the constructor) is looked up first when the density is compact. Its only style,
-the implicit `TextBlock` style of `Compact.xaml` (font size 14 for every text block), is pending:
-a default control theme of `TextBlock` would apply to the text blocks of every template and
-override their inherited font size, which the batches have to weigh.
+the implicit `TextBlock` style of `Compact.xaml` (font size 14 for every text block), is the
+default control theme of `TextBlock` there: as in WinUI it applies to the text blocks of
+templates too and replaces their inherited font size; the text of access keys (`AccessText`) is
+not a `TextBlock` by its style key (DEVIATIONS.md, RES-9).
 
 ## 4. Translating WinUI markup
 
@@ -203,7 +205,8 @@ override their inherited font size, which the batches have to weigh.
 - The root is `<ResourceDictionary xmlns="https://github.com/ferroui"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" x:ClassModifier="internal">`, with
   `xmlns:winui="using:FerroUI.Themes.WinUI"` where the high contrast key is used and
-  `xmlns:converters="using:FerroUI.Controls.Converters"` for the converters of the controls.
+  `xmlns:converters="using:FerroUI.Controls.Converters"` for the converters of the controls, and
+  `xmlns:winuiconverters="using:FerroUI.Themes.WinUI.Converters"` for the converters of the crate.
 - A `*_themeresources.xaml` document of WinUI holds resources and styles. The port splits it:
   the resources go to `Resources/<same name>.xaml` (generated, section 5), the styles to the
   document of the FerroUI control, `Controls/<FerroUI control>.xaml`. `Controls/` documents
@@ -387,7 +390,8 @@ comparison (section 8.3) checks.
 | `TextCommandBarFlyout`, `CommandBarFlyout` | menu flyouts |
 | `DesktopAcrylicBackdrop`, Mica | the fallback colours; the window background is `SolidBackgroundFillColorBaseBrush` |
 | `ListViewItemPresenter` (native chrome of list items) | templates with elements (batch B3) |
-| `CornerRadiusToThicknessConverter`, `TextTrimming` resources, scaled double corner converters | pending in the tracking until a batch needs them; a batch adds a converter to the controls library or adapts the template |
+| `CornerRadiusToThicknessConverter` | the converter of the crate (`FerroUI.Themes.WinUI.Converters`, section 5) |
+| `TextTrimming` resources, scaled double corner converters | the template writes the value or is adapted (MNI-5, SB-8) |
 
 ## 5. Resources
 
@@ -418,7 +422,11 @@ percentages, `RelativeTransform` becomes `Transform` with the centre as `Transfo
 `Visibility` to `x:Boolean`; `CornerRadiusFilterConverter` to FerroUI's
 `CornerRadiusFilterConverter` (`Top`, `Bottom`, `Left`, `Right`) or
 `CornerRadiusToDoubleConverter` (`TopLeftValue`, `BottomRightValue` without scale);
-`XamlAutoFontFamily` to `Segoe UI Variable Text, Segoe UI, $Default`.
+`CornerRadiusToThicknessConverter` to the converter of the same name of the crate
+(`winuiconverters:`, `Converters/corner_radius_to_thickness_converter.rs`, a port of
+`controls/dev/Common/CornerRadiusToThicknessConverter.cpp`); `XamlAutoFontFamily` to
+`Segoe UI Variable Text, Segoe UI, $Default`; and in the density layer, an implicit style of plain
+setters to the default control theme of its type.
 
 Two resource documents are written by hand: `Resources/SystemResources.xaml` (section 3.4) and
 `Resources/Glyphs.xaml` (the glyph geometries; a batch that needs a glyph adds its geometry

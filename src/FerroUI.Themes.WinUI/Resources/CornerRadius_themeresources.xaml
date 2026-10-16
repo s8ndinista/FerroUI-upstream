@@ -10,6 +10,7 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:converters="using:FerroUI.Controls.Converters"
                     xmlns:winui="using:FerroUI.Themes.WinUI"
+                    xmlns:winuiconverters="using:FerroUI.Themes.WinUI.Converters"
                     x:ClassModifier="internal">
   <ResourceDictionary.ThemeDictionaries>
     <ResourceDictionary x:Key="Default">
@@ -31,4 +32,10 @@
   <converters:CornerRadiusFilterConverter x:Key="LeftCornerRadiusFilterConverter" Filter="TopLeft, BottomLeft" />
   <converters:CornerRadiusToDoubleConverter x:Key="TopLeftCornerRadiusDoubleValueConverter" Corner="TopLeft" />
   <converters:CornerRadiusToDoubleConverter x:Key="BottomRightCornerRadiusDoubleValueConverter" Corner="BottomRight" />
+  <winuiconverters:CornerRadiusToThicknessConverter x:Key="TopThicknessFilterConverter" ConversionKind="FilterLeftAndRightFromTop" />
+  <winuiconverters:CornerRadiusToThicknessConverter x:Key="BottomThicknessFilterConverter" ConversionKind="FilterLeftAndRightFromBottom" />
+  <winuiconverters:CornerRadiusToThicknessConverter x:Key="LeftThicknessFilterConverter" ConversionKind="FilterTopAndBottomFromLeft" />
+  <winuiconverters:CornerRadiusToThicknessConverter x:Key="RightThicknessFilterConverter" ConversionKind="FilterTopAndBottomFromRight" />
+  <winuiconverters:CornerRadiusToThicknessConverter x:Key="TabViewLeftInsetCornerConverter" ConversionKind="FilterLeftFromBottomLeft" Multiplier="-1" />
+  <winuiconverters:CornerRadiusToThicknessConverter x:Key="TabViewRightInsetCornerConverter" ConversionKind="FilterRightFromBottomRight" Multiplier="-1" />
 </ResourceDictionary>

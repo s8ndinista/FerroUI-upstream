@@ -9,7 +9,9 @@ the default style documents of `controls/dev`, and the density documents of
 in its header comment; `docs/porting/winui-theme.md` at the root of the repository
 describes the port. The resource documents under `Resources/` are converted by
 `scripts/winui-theme/convert.py`; the control documents under `Controls/` are
-ported by hand.
+ported by hand. `Converters/corner_radius_to_thickness_converter.rs` is a Rust port
+of the class `CornerRadiusToThicknessConverter` of the same repository
+(`controls/dev/Common/CornerRadiusToThicknessConverter.idl`, `.h` and `.cpp`).
 
 ## microsoft-ui-xaml
 
