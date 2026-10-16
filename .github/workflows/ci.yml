@@ -302,6 +302,21 @@ jobs:
               cargo test --locked -p ferroui-integration-tests-win32 --test integration -- presented_frame_tests || result=1
           done
           exit $result
+      # Upstream's user interface automation tests (tests/FerroUI.IntegrationTests.Appium, the
+      # port of tests/*.IntegrationTests.Appium): the IntegrationTestApp sample started as a process
+      # of its own and driven through UI Automation and the input of the runner's desktop, as
+      # WinAppDriver drives it upstream (docs/porting/integration-tests.md). One binary without the
+      # test harness; it prints every test with its result and the reason of every test it does not
+      # run. Not required until it has a green run on the runners.
+      - name: Automation tests of the IntegrationTestApp sample
+        if: ${{ steps.skia.outputs.raster == 'true' }}
+        continue-on-error: true
+        timeout-minutes: 60
+        env:
+          FERROUI_AUTOMATION_TESTS: 1
+        run: |
+          cargo build --locked -p integration-test-app
+          cargo test --locked -p ferroui-integration-tests-appium --test automation
       # The catalog on Windows, for a person to look at: its desktop host shows the home page and
       # a handful of others and writes two pictures of each, the frame the framework draws
       # through its own render target and the client area of its window as the system composed

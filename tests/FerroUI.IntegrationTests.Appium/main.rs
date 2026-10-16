@@ -5,9 +5,9 @@
 //!
 //! ```text
 //! cargo build -p integration-test-app
-//! cargo test -p ferroui-integration-tests-automation --test integration
-//! cargo test -p ferroui-integration-tests-automation --test integration -- combo_box
-//! cargo test -p ferroui-integration-tests-automation --test integration -- --include-ignored
+//! FERROUI_AUTOMATION_TESTS=1 cargo test -p ferroui-integration-tests-appium --test automation
+//! FERROUI_AUTOMATION_TESTS=1 cargo test -p ferroui-integration-tests-appium --test automation -- combo_box
+//! FERROUI_AUTOMATION_TESTS=1 cargo test -p ferroui-integration-tests-appium --test automation -- --include-ignored
 //! ```
 //!
 //! Upstream drives the application through an Appium server (WinAppDriver on
@@ -22,8 +22,11 @@
 //! row.
 //!
 //! The tests need a desktop the run may give input to, and on macOS the
-//! Accessibility permission of the process that runs them. On a platform
-//! without an automation backend the binary compiles and runs nothing.
+//! Accessibility permission of the process that runs them. They move the
+//! pointer and type on the keyboard of the machine, so they run only when
+//! `FERROUI_AUTOMATION_TESTS=1` asks for them: a `cargo test` of the whole
+//! workspace says so and runs nothing. On a platform without an automation
+//! backend the binary compiles and runs nothing.
 
 // Without an automation backend the elements are of a type with no values: the code after one is
 // unreachable.
@@ -114,14 +117,27 @@ fn main() -> ExitCode {
         .collect();
 
     if arguments.iter().any(|a| a == "--list") {
+        // The tests of the platform of the run, and the reason of every test that does not run.
         for case in &selected {
-            println!("{}: test", case.name);
+            match ignored_because(case, include_ignored) {
+                None => println!("{}: test", case.name),
+                Some(reason) => println!("{}: test, ignored, {reason}", case.name),
+            }
         }
         return ExitCode::SUCCESS;
     }
 
     let runnable: Vec<&TestCase> =
         selected.iter().copied().filter(|case| ignored_because(case, include_ignored).is_none()).collect();
+
+    if std::env::var("FERROUI_AUTOMATION_TESTS").as_deref() != Ok("1") {
+        println!(
+            "the automation tests drive the desktop of the machine (they move the pointer and type on the keyboard): \
+             set FERROUI_AUTOMATION_TESTS=1 to run them; nothing run ({} tests selected)",
+            selected.len()
+        );
+        return ExitCode::SUCCESS;
+    }
 
     if !cfg!(any(windows, target_os = "macos")) {
         println!(

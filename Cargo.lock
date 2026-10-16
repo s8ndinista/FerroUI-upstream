@@ -998,7 +998,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "ferroui-integration-tests-automation"
+name = "ferroui-integration-tests-appium"
 version = "0.1.0-preview.3"
 dependencies = [
  "ferroui-base",

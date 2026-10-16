@@ -142,7 +142,7 @@ Test projects that are not counted (no report; `CONTINUATION.md` has the reasons
 | `tests/Avalonia.Headless.NUnit.PerTest.UnitTests` | 1 | none |
 | `tests/Avalonia.Headless.XUnit.PerAssembly.UnitTests` | 1 | none |
 | `tests/Avalonia.Headless.XUnit.PerTest.UnitTests` | 1 | none |
-| `tests/Avalonia.IntegrationTests.Appium` | 32 | none |
+| `tests/Avalonia.IntegrationTests.Appium` | 32 | `tests/FerroUI.IntegrationTests.Appium` |
 | `tests/Avalonia.IntegrationTests.Win32` | 13 | `tests/FerroUI.IntegrationTests.Win32` |
 | `tests/Avalonia.LeakTests` | 8 | `tests/FerroUI.LeakTests` |
 | `tests/Avalonia.RenderTests.WpfCompare` | 4 | none |

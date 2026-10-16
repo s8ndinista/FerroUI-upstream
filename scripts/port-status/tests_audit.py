@@ -97,11 +97,10 @@ PROJECTS: dict[str, dict] = {
                                   "note": "a benchmark counts as found when the port has a function of its name"},
     "tests/Avalonia.IntegrationTests.Win32": {"rust": "`tests/FerroUI.IntegrationTests.Win32`"},
     "tests/Avalonia.IntegrationTests.Appium": {
-        "rust": "none",
-        "note": "counted although not started: the tests drive `samples/IntegrationTestApp`, which is ported, from "
-                "outside through the platform accessibility API, and the port has no integration suite that replaces "
-                "them (`tests/FerroUI.IntegrationTests.Win32` is the port of the other, in-process project). "
-                "CONTINUATION.md, \"Not ported\", has what they wait for",
+        "rust": "`tests/FerroUI.IntegrationTests.Appium`",
+        "note": "the tests drive `samples/IntegrationTestApp` from another process through the accessibility API of "
+                "the platform, with the port's own automation layer in place of Appium (UI Automation on Windows, "
+                "the accessibility API of macOS): `integration-tests.md`",
     },
     "tests/Avalonia.Wayland.UnitTests": {"rust": "`src/FerroUI.Wayland`"},
     "tests/Avalonia.UnitTests": {"rust": "`test_support` modules of the crates",

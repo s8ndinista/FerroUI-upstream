@@ -284,7 +284,7 @@ Upstream unit tests are ported next to the code (`#[cfg(test)] mod tests` or `<f
 | `tests/Avalonia.Headless.NUnit.PerTest.UnitTests` | 1 | `tests/FerroUI.Headless.NUnit.PerTest.UnitTests` | not created | not tracked |
 | `tests/Avalonia.Headless.XUnit.PerAssembly.UnitTests` | 1 | `tests/FerroUI.Headless.XUnit.PerAssembly.UnitTests` | not created | not tracked |
 | `tests/Avalonia.Headless.XUnit.PerTest.UnitTests` | 1 | `tests/FerroUI.Headless.XUnit.PerTest.UnitTests` | not created | not tracked |
-| `tests/Avalonia.IntegrationTests.Appium` | 32 | `tests/FerroUI.IntegrationTests.Appium` | not created | not tracked |
+| `tests/Avalonia.IntegrationTests.Appium` | 32 | `tests/FerroUI.IntegrationTests.Appium` | workspace member | not tracked |
 | `tests/Avalonia.IntegrationTests.Win32` | 13 | `tests/FerroUI.IntegrationTests.Win32` | workspace member | not tracked |
 | `tests/Avalonia.LeakTests` | 8 | `tests/FerroUI.LeakTests` | workspace member | not tracked |
 | `tests/Avalonia.Markup.UnitTests` | 26 | `tests/FerroUI.Markup.UnitTests` | not created | not tracked |
@@ -374,6 +374,7 @@ Upstream unit tests are ported next to the code (`#[cfg(test)] mod tests` or `<f
 | `src/iOS/FerroUI.iOS` | `src/iOS/Avalonia.iOS` |
 | `src/tools/MicroCom.CodeGenerator` | none (FerroUI only) |
 | `tests/FerroUI.Benchmarks` | `tests/Avalonia.Benchmarks` (not tracked) |
+| `tests/FerroUI.IntegrationTests.Appium` | `tests/Avalonia.IntegrationTests.Appium` (not tracked) |
 | `tests/FerroUI.IntegrationTests.Win32` | `tests/Avalonia.IntegrationTests.Win32` (not tracked) |
 | `tests/FerroUI.LeakTests` | `tests/Avalonia.LeakTests` (not tracked) |
 | `tests/FerroUI.Markup.Xaml.UnitTests` | `tests/Avalonia.Markup.Xaml.UnitTests` (not tracked) |
