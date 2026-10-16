@@ -4,6 +4,7 @@
 
 use crate::accents::SystemAccentColors;
 use crate::converters::{CornerRadiusToThicknessConverter, CornerRadiusToThicknessConverterKind};
+use crate::primitives::InfoBarPanel;
 use crate::winui_theme::{DensityStyle, WinUITheme};
 use ferroui_base::data::converters::IValueConverter;
 use ferroui_base::data::core::ValueTypes;
@@ -17,6 +18,7 @@ const NAMESPACES: &[(&str, &str)] = &[
     ("ferroui_themes_winui", "FerroUI.Themes.WinUI"),
     ("ferroui_themes_winui::accents", "FerroUI.Themes.WinUI.Accents"),
     ("ferroui_themes_winui::converters", "FerroUI.Themes.WinUI.Converters"),
+    ("ferroui_themes_winui::primitives", "FerroUI.Themes.WinUI.Primitives"),
 ];
 
 /// What this crate states about itself for markup: its assembly name and
@@ -29,7 +31,7 @@ pub static ASSEMBLY: MarkupAssembly = MarkupAssembly {
     metadata: &[],
 };
 
-const TYPES: &[&TypeInfo] = &[WinUITheme::TYPE, SystemAccentColors::TYPE];
+const TYPES: &[&TypeInfo] = &[WinUITheme::TYPE, SystemAccentColors::TYPE, InfoBarPanel::TYPE];
 
 const MARKUP_TYPES: &[&MarkupType] = &[
     <DensityStyle as MarkupTyped>::MARKUP,

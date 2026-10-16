@@ -11,7 +11,9 @@ describes the port. The resource documents under `Resources/` are converted by
 `scripts/winui-theme/convert.py`; the control documents under `Controls/` are
 ported by hand. `Converters/corner_radius_to_thickness_converter.rs` is a Rust port
 of the class `CornerRadiusToThicknessConverter` of the same repository
-(`controls/dev/Common/CornerRadiusToThicknessConverter.idl`, `.h` and `.cpp`).
+(`controls/dev/Common/CornerRadiusToThicknessConverter.idl`, `.h` and `.cpp`), and
+`Primitives/info_bar_panel.rs` a Rust port of the class `InfoBarPanel`
+(`controls/dev/InfoBar/InfoBarPanel.cpp`, `.h` and `InfoBar.idl`).
 
 ## microsoft-ui-xaml
 

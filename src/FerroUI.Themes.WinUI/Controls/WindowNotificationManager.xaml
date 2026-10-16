@@ -4,25 +4,24 @@
   The template is the one FerroUI's WindowNotificationManager requires (the panel PART_Items and
   the pseudo-classes of its position, src/FerroUI.Themes.Fluent/Controls/WindowNotificationManager.xaml);
   its cards are NotificationCard, the InfoBar of the theme (NotificationCard.xaml). A notification
-  (INotification) is presented as InfoBar presents its title and message in its InfoBarPanel
-  (controls/dev/InfoBar/InfoBar.xaml, InfoBarPanel.cpp; the resources of
-  Resources/InfoBar_themeresources.xaml), with a WrapPanel: the title and the message on one line
-  when they fit, the message 12 after the title (the left of InfoBarMessageHorizontalOrientationMargin,
-  written as the right margin of the title, so that the panel wraps where InfoBarPanel changes to
-  its vertical layout), else the message 4 below the title (the top of
-  InfoBarMessageVerticalOrientationMargin, the line spacing); the panel padded by
-  InfoBarPanelVerticalOrientationPadding in both layouts (InfoBarPanel pads the horizontal layout
-  by InfoBarPanelHorizontalOrientationPadding, 0, and places its texts 14 down by their
-  InfoBar*HorizontalOrientationMargin, so a line is 4 higher than InfoBar's, DEVIATIONS.md, WNM-2);
-  the title in InfoBarTitleFontSize, InfoBarTitleFontWeight and InfoBarTitleForeground, the message
-  in InfoBarMessageFontSize, InfoBarMessageFontWeight and InfoBarMessageForeground, a title or
-  message that is empty left out as InfoBarPanel leaves out an element without size. Text content
-  is presented as the message.
+  (INotification) is presented as InfoBar presents its title and message, in the InfoBarPanel of
+  the theme (Primitives/info_bar_panel.rs, the port of InfoBarPanel.cpp) with the paddings and the
+  margins of controls/dev/InfoBar/InfoBar.xaml (the resources of
+  Resources/InfoBar_themeresources.xaml): the title and the message on one line when they fit
+  (both 14 down, the message 12 after the title, the panel without padding, so that a card of one
+  line is the 48 of InfoBarMinHeight), else below each other (the message 4 below the title, the
+  panel padded by InfoBarPanelVerticalOrientationPadding); the title in InfoBarTitleFontSize,
+  InfoBarTitleFontWeight and InfoBarTitleForeground, the message in InfoBarMessageFontSize,
+  InfoBarMessageFontWeight and InfoBarMessageForeground, a title or message that is empty left out
+  as InfoBarPanel leaves out an element without size. TextWrapping WrapWholeWords is Wrap. Text
+  content is presented as the message with InfoBarPanelVerticalOrientationPadding (InfoBarPanel
+  lays out one item below the padding of its vertical layout).
   The width of a card in the host, the spacing between the cards and the margin of the host have
   no WinUI source (DEVIATIONS.md, WindowNotificationManager).
 -->
 <ResourceDictionary xmlns="https://github.com/ferroui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:primitives="using:FerroUI.Themes.WinUI.Primitives"
                     x:DataType="WindowNotificationManager"
                     x:ClassModifier="internal">
   <ControlTheme x:Key="{x:Type WindowNotificationManager}" TargetType="WindowNotificationManager">
@@ -33,22 +32,25 @@
                               Spacing="8">
           <ReversibleStackPanel.DataTemplates>
             <DataTemplate DataType="INotification">
-              <WrapPanel Margin="{StaticResource InfoBarPanelVerticalOrientationPadding}"
-                         LineSpacing="4">
+              <primitives:InfoBarPanel HorizontalOrientationPadding="{StaticResource InfoBarPanelHorizontalOrientationPadding}"
+                                       VerticalOrientationPadding="{StaticResource InfoBarPanelVerticalOrientationPadding}">
                 <TextBlock Text="{Binding Title}"
                            IsVisible="{Binding Title, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
-                           Margin="0,0,12,0"
+                           primitives:InfoBarPanel.HorizontalOrientationMargin="{StaticResource InfoBarTitleHorizontalOrientationMargin}"
+                           primitives:InfoBarPanel.VerticalOrientationMargin="{StaticResource InfoBarTitleVerticalOrientationMargin}"
                            Foreground="{DynamicResource InfoBarTitleForeground}"
                            FontSize="{StaticResource InfoBarTitleFontSize}"
                            FontWeight="{StaticResource InfoBarTitleFontWeight}"
                            TextWrapping="Wrap" />
                 <TextBlock Text="{Binding Message}"
                            IsVisible="{Binding Message, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                           primitives:InfoBarPanel.HorizontalOrientationMargin="{StaticResource InfoBarMessageHorizontalOrientationMargin}"
+                           primitives:InfoBarPanel.VerticalOrientationMargin="{StaticResource InfoBarMessageVerticalOrientationMargin}"
                            Foreground="{DynamicResource InfoBarMessageForeground}"
                            FontSize="{StaticResource InfoBarMessageFontSize}"
                            FontWeight="{StaticResource InfoBarMessageFontWeight}"
                            TextWrapping="Wrap" />
-              </WrapPanel>
+              </primitives:InfoBarPanel>
             </DataTemplate>
             <DataTemplate DataType="x:String">
               <TextBlock Margin="{StaticResource InfoBarPanelVerticalOrientationPadding}"
