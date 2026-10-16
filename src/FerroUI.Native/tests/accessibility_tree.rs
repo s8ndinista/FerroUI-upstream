@@ -268,8 +268,21 @@ mod macos {
         window.set_width(320.0);
         window.set_height(200.0);
         window.set_content(Some(Control::boxed(panel)));
+
+        // A window that is not shown has no frame: the size of its frame is unknown, not empty
+        // (`Window.SetWindowStartupLocation` then centres the client size; with an empty frame
+        // a centred window was placed half its size off the centre).
+        let platform_impl = window.platform_impl().expect("the platform implementation of the window");
+        checks.check(platform_impl.frame_size().is_none(), "a window that is not shown has no frame size");
+
         window.show();
         Dispatcher::ui_thread().run_jobs(None);
+
+        let frame = platform_impl.frame_size();
+        checks.check(
+            frame.is_some_and(|frame| frame.width >= 320.0 && frame.height > 200.0),
+            &format!("a shown window has the size of its frame: {frame:?}"),
+        );
 
         let handle = window.try_get_platform_handle().expect("the platform handle of the window");
         let handle = handle.as_any().downcast_ref::<MacOSTopLevelHandle>().expect("a handle of this backend");

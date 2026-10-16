@@ -319,12 +319,6 @@ impl Backend {
         }
     }
 
-    /// WinAppDriver clicks an element with the mouse: there is no press
-    /// action.
-    pub fn press(&self, _element: &NativeElement) -> bool {
-        false
-    }
-
     /// Brings the element into view before a click at its centre (the
     /// "scroll into view" of the element click of WebDriver): where the
     /// centre is outside the bounds of one of the ancestors of the element
@@ -405,7 +399,45 @@ impl Backend {
         let control_view = self.client.control_view_condition()?;
         let condition = self.client.and_condition(&condition, &control_view)?;
         let scope = if include_root { TREE_SCOPE_SUBTREE } else { TREE_SCOPE_DESCENDANTS };
-        Ok(root.0.find_all(scope, &condition)?.into_iter().map(NativeElement).collect())
+        let found: Vec<NativeElement> = root.0.find_all(scope, &condition)?.into_iter().map(NativeElement).collect();
+        if !found.is_empty() {
+            return Ok(found);
+        }
+        // One search of UI Automation does not reach the elements after a native window hosted
+        // in the tree (the native text box of the embedding page): having visited the window of
+        // the native control below its host, it goes on from the parent that window has among
+        // the windows of the system, a holder window that is a child of the main window, and
+        // so through the window again and again (2717 elements for a tree of 66, and not the
+        // button after the host). The walk of the control view, which goes from the host to its
+        // next sibling, finds them, as WinAppDriver does in upstream's `EmbeddingTests`.
+        Ok(self.walk_find(root, include_root, by))
+    }
+
+    /// The elements below `root` (and `root` itself with `include_root`) that the locator
+    /// finds, in the order of a walk of the control view.
+    fn walk_find(&self, root: &NativeElement, include_root: bool, by: &By) -> Vec<NativeElement> {
+        let matches = |element: &NativeElement| match by {
+            By::AccessibilityId(id) => self.automation_id(element) == *id,
+            By::Name(name) => self.name(element) == *name,
+            By::ClassName(class) => self.class_name(element) == *class,
+            By::TagName(tag) => self.tag_name(element) == *tag,
+            By::XPath(_) => false,
+        };
+        let mut found = Vec::new();
+        let mut stack: Vec<(NativeElement, bool)> = vec![(root.clone(), include_root)];
+        let mut visited = 0usize;
+        while let Some((element, check)) = stack.pop() {
+            visited += 1;
+            if visited > 20_000 {
+                break;
+            }
+            if check && matches(&element) {
+                found.push(element.clone());
+            }
+            let children = self.children(&element);
+            stack.extend(children.into_iter().rev().map(|child| (child, true)));
+        }
+        found
     }
 
     /// A diagnostic of `--dump-tree`: the elements one search of UI Automation

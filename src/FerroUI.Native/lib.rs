@@ -159,6 +159,27 @@ pub mod interop {
         pub fn CreateFerroNative() -> *mut IFerroNativeFactory;
     }
 
+    impl IFrnWindowBase {
+        /// `GetFrameSize` with the value the caller starts the result with:
+        /// the native side leaves the result as it is when the window has no
+        /// frame yet (it is not shown), and the reference starts it at
+        /// (-1, -1) to tell that apart (`WindowImplBase.FrameSize`). The
+        /// generated [`get_frame_size`](Self::get_frame_size) starts it at
+        /// zero, which reads as a frame of no size.
+        pub fn get_frame_size_from(&self, initial: FrnSize) -> Result<FrnSize, ferroui_microcom::HResult> {
+            let mut result = initial;
+            // SAFETY: the slot of `GetFrameSize` of the table of this live
+            // interface, with a place for the result that outlives the call.
+            unsafe {
+                ferroui_microcom::HResult::check(((*self.vtbl).GetFrameSize)(
+                    self as *const Self as *mut ::core::ffi::c_void,
+                    &mut result,
+                ))?;
+            }
+            Ok(result)
+        }
+    }
+
     /// Creates the native factory, the root object of the backend.
     pub fn create_ferro_native() -> Option<ComPtr<IFerroNativeFactory>> {
         // SAFETY: the function returns null or an owned factory reference.
