@@ -10,7 +10,10 @@
     hosts the content of the flyout. The ScrollViewer keeps its name.
   - The setters of the scroll and zoom modes (ScrollViewer.HorizontalScrollMode,
     ScrollViewer.VerticalScrollMode, ScrollViewer.ZoomMode) and the ContentTransitions binding
-    have no counterpart and are left out.
+    have no counterpart and are left out. The scroll bar visibilities are Auto both ways, as in the
+    source: content wider than the flyout (text that does not wrap in the unbounded width of the
+    scroll viewer) scrolls horizontally, and the bar is hidden until the pointer is over the
+    flyout (the indicator states of Controls/ScrollViewer.xaml), as WinUI's NoIndicator.
   - The shadow WinUI's FlyoutPresenter gives its child in code (ApplyElevationEffect,
     FlyoutPresenter_partial.cpp: a ThemeShadow at a Translation.Z of 32) is the BoxShadow
     ThemeShadowFlyoutBoxShadow of the border, and the margin ThemeShadowFlyoutMargin is the room

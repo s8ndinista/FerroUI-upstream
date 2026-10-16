@@ -390,7 +390,7 @@ comparison (section 8.3) checks.
 | the symbol font | glyph geometries |
 | `AnimatedIcon`, Lottie | the static fallback glyph |
 | visual state transitions with begin times | transitions without delays |
-| scroll indicator modes (NoIndicator, TouchIndicator) | the scroll bar is always in the mouse indicator mode; FerroUI expands it on its own |
+| scroll indicator modes (`IndicatorMode`; NoIndicator, TouchIndicator) | the bar is in the mouse indicator mode, collapsed (the thin thumb) or expanded (`IsExpanded`, with the begin times of WinUI as `ShowDelay` and `HideDelay`); the scroll viewer hides its bars (NoIndicator) while the pointer is not over it; no touch indicator |
 | `TextCommandBarFlyout`, `CommandBarFlyout` | menu flyouts |
 | `DesktopAcrylicBackdrop`, Mica | the fallback colours; the window background is `SolidBackgroundFillColorBaseBrush` |
 | `ListViewItemPresenter` (native chrome of list items) | templates with elements (batch B3) |
