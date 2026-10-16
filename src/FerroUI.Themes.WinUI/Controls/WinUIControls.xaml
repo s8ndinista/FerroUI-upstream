@@ -54,6 +54,7 @@
         <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/DatePicker.xaml" />
         <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/TimePicker.xaml" />
         <!-- B6: window decorations, notifications, tables and dialogs. -->
+        <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/WindowDrawnDecorations.xaml" />
         <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/NotificationCard.xaml" />
         <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/WindowNotificationManager.xaml" />
         <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/TableView.xaml" />

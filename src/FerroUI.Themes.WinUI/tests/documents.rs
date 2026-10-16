@@ -201,6 +201,7 @@ document_tests! {
     controls_table_view_cell => "/Controls/TableViewCell.xaml";
     controls_table_view_column_header => "/Controls/TableViewColumnHeader.xaml";
     controls_table_view_row => "/Controls/TableViewRow.xaml";
+    controls_window_drawn_decorations => "/Controls/WindowDrawnDecorations.xaml";
     controls_window_notification_manager => "/Controls/WindowNotificationManager.xaml";
     resources_resize_gripper_themeresources => "/Resources/ResizeGripper_themeresources.xaml";
     resources_table_view_themeresources => "/Resources/TableView_themeresources.xaml";
