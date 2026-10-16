@@ -25,6 +25,10 @@
 //! Accessibility permission of the process that runs them. On a platform
 //! without an automation backend the binary compiles and runs nothing.
 
+// Without an automation backend the elements are of a type with no values: the code after one is
+// unreachable.
+#![cfg_attr(not(any(windows, target_os = "macos")), allow(unreachable_code))]
+
 mod infrastructure;
 
 mod automation_tests;

@@ -14,7 +14,8 @@
 #![allow(missing_docs)]
 
 use crate::automation::interop::UiaControlTypeId;
-use crate::automation::marshalling::{free_bstr, ptr_to_string_bstr, string_to_bstr};
+use crate::automation::marshalling::{free_bstr, ptr_to_string_bstr, string_to_bstr, ComVariant};
+pub use crate::automation::marshalling::VariantValue;
 use ferroui_microcom::{ComPtr, Guid, HResult};
 use std::ffi::c_void;
 use std::sync::{Arc, Mutex};
@@ -35,38 +36,74 @@ pub const INVOKE_PATTERN: i32 = 10000;
 pub const VALUE_PATTERN: i32 = 10002;
 pub const RANGE_VALUE_PATTERN: i32 = 10003;
 pub const TOGGLE_PATTERN: i32 = 10015;
+pub const EXPAND_COLLAPSE_PATTERN: i32 = 10005;
+pub const WINDOW_PATTERN: i32 = 10009;
+pub const SELECTION_ITEM_PATTERN: i32 = 10010;
+
+/// The scopes of a search (`TreeScope`).
+pub const TREE_SCOPE_ELEMENT: i32 = 1;
+pub const TREE_SCOPE_CHILDREN: i32 = 2;
+pub const TREE_SCOPE_DESCENDANTS: i32 = 4;
+pub const TREE_SCOPE_SUBTREE: i32 = 7;
 
 const IID_INVOKE_PATTERN: Guid = Guid::from_u128(0xfb377fbe_8ea6_46d5_9c73_6499642d3059);
 const IID_TOGGLE_PATTERN: Guid = Guid::from_u128(0x94cf8058_9b8d_4ab9_8bfd_4cd0a33c8c70);
 const IID_VALUE_PATTERN: Guid = Guid::from_u128(0xa94cd8b1_0844_4cd6_9d2d_640537ab39e9);
 const IID_RANGE_VALUE_PATTERN: Guid = Guid::from_u128(0x59213f4f_7346_49e5_b120_80555987a148);
+const IID_EXPAND_COLLAPSE_PATTERN: Guid = Guid::from_u128(0x619be086_1f4e_4ee4_bafa_210128738730);
+const IID_SELECTION_ITEM_PATTERN: Guid = Guid::from_u128(0xa8efa66a_0fda_421a_9194_38021f3578ea);
+const IID_WINDOW_PATTERN: Guid = Guid::from_u128(0x0faef453_9208_43ef_bbb2_3b485177864f);
 
 // The slots of the methods the client calls, after the three of `IUnknown`.
 mod slots {
+    pub const ADD_REF: usize = 1;
     pub const RELEASE: usize = 2;
     // IUIAutomation
+    pub const COMPARE_ELEMENTS: usize = 3;
+    pub const GET_ROOT_ELEMENT: usize = 5;
     pub const ELEMENT_FROM_HANDLE: usize = 6;
+    pub const ELEMENT_FROM_POINT: usize = 7;
     pub const GET_FOCUSED_ELEMENT: usize = 8;
+    pub const CONTROL_VIEW_WALKER: usize = 14;
     pub const RAW_VIEW_WALKER: usize = 16;
+    pub const CONTROL_VIEW_CONDITION: usize = 18;
+    pub const CREATE_TRUE_CONDITION: usize = 21;
+    pub const CREATE_PROPERTY_CONDITION: usize = 23;
+    pub const CREATE_AND_CONDITION: usize = 25;
     pub const ADD_FOCUS_CHANGED_EVENT_HANDLER: usize = 39;
     pub const REMOVE_ALL_EVENT_HANDLERS: usize = 41;
     // IUIAutomationElement
     pub const SET_FOCUS: usize = 3;
+    pub const FIND_ALL: usize = 6;
+    pub const GET_CURRENT_PROPERTY_VALUE: usize = 10;
     pub const GET_CURRENT_PATTERN_AS: usize = 14;
+    pub const CURRENT_PROCESS_ID: usize = 20;
     pub const CURRENT_CONTROL_TYPE: usize = 21;
     pub const CURRENT_NAME: usize = 23;
+    pub const CURRENT_ACCELERATOR_KEY: usize = 24;
     pub const CURRENT_HAS_KEYBOARD_FOCUS: usize = 26;
     pub const CURRENT_IS_KEYBOARD_FOCUSABLE: usize = 27;
     pub const CURRENT_IS_ENABLED: usize = 28;
+    pub const CURRENT_AUTOMATION_ID: usize = 29;
     pub const CURRENT_CLASS_NAME: usize = 30;
+    pub const CURRENT_NATIVE_WINDOW_HANDLE: usize = 36;
+    pub const CURRENT_IS_OFFSCREEN: usize = 38;
     pub const CURRENT_FRAMEWORK_ID: usize = 40;
     pub const CURRENT_BOUNDING_RECTANGLE: usize = 43;
     // IUIAutomationTreeWalker
+    pub const GET_PARENT_ELEMENT: usize = 3;
     pub const GET_FIRST_CHILD_ELEMENT: usize = 4;
     pub const GET_NEXT_SIBLING_ELEMENT: usize = 6;
+    // IUIAutomationElementArray
+    pub const ARRAY_LENGTH: usize = 3;
+    pub const ARRAY_GET_ELEMENT: usize = 4;
     // The patterns: the first method, and the first property.
     pub const PATTERN_FIRST: usize = 3;
     pub const PATTERN_SECOND: usize = 4;
+    // IUIAutomationExpandCollapsePattern
+    pub const EXPAND_COLLAPSE_STATE: usize = 5;
+    // IUIAutomationSelectionItemPattern
+    pub const SELECTION_ITEM_IS_SELECTED: usize = 6;
 }
 
 /// The function in a slot of the table of a COM object.
@@ -105,6 +142,15 @@ impl Drop for Owned {
     }
 }
 
+impl Clone for Owned {
+    fn clone(&self) -> Owned {
+        // SAFETY: a live interface pointer; the new value owns the reference
+        // `AddRef` takes.
+        unsafe { slot::<unsafe extern "system" fn(*mut c_void) -> u32>(self.0, slots::ADD_REF)(self.0) };
+        Owned(self.0)
+    }
+}
+
 impl Owned {
     /// A property of the object that is a number.
     fn number<T: Copy + Default>(&self, index: usize, what: &str) -> Result<T, String> {
@@ -134,7 +180,11 @@ impl Owned {
 }
 
 /// An element of the tree, as the client holds it.
+#[derive(Clone)]
 pub struct Element(Owned);
+
+/// A condition of a search (`IUIAutomationCondition`).
+pub struct Condition(Owned);
 
 /// What the client reads of an element.
 #[derive(Clone, Debug, PartialEq)]
@@ -245,6 +295,9 @@ impl Element {
             VALUE_PATTERN => &IID_VALUE_PATTERN,
             RANGE_VALUE_PATTERN => &IID_RANGE_VALUE_PATTERN,
             TOGGLE_PATTERN => &IID_TOGGLE_PATTERN,
+            EXPAND_COLLAPSE_PATTERN => &IID_EXPAND_COLLAPSE_PATTERN,
+            SELECTION_ITEM_PATTERN => &IID_SELECTION_ITEM_PATTERN,
+            WINDOW_PATTERN => &IID_WINDOW_PATTERN,
             other => return Err(format!("the pattern {other} is not one the client asks for")),
         };
         Ok(self.pattern(pattern_id, iid, "IUIAutomationElement::GetCurrentPatternAs")?.is_some())
@@ -302,6 +355,131 @@ impl Element {
     pub fn range_value(&self) -> Result<f64, String> {
         self.required_pattern(RANGE_VALUE_PATTERN, &IID_RANGE_VALUE_PATTERN, "the range value pattern")?
             .number(slots::PATTERN_SECOND, "IUIAutomationRangeValuePattern::get_CurrentValue")
+    }
+
+    pub fn automation_id(&self) -> Result<String, String> {
+        self.0.text(slots::CURRENT_AUTOMATION_ID, "IUIAutomationElement::get_CurrentAutomationId")
+    }
+
+    pub fn accelerator_key(&self) -> Result<String, String> {
+        self.0.text(slots::CURRENT_ACCELERATOR_KEY, "IUIAutomationElement::get_CurrentAcceleratorKey")
+    }
+
+    pub fn process_id(&self) -> Result<i32, String> {
+        self.0.number(slots::CURRENT_PROCESS_ID, "IUIAutomationElement::get_CurrentProcessId")
+    }
+
+    /// The window handle of the element, 0 for an element that is no window.
+    pub fn native_window_handle(&self) -> Result<isize, String> {
+        self.0.number(slots::CURRENT_NATIVE_WINDOW_HANDLE, "IUIAutomationElement::get_CurrentNativeWindowHandle")
+    }
+
+    pub fn is_offscreen(&self) -> Result<bool, String> {
+        Ok(self.0.number::<i32>(slots::CURRENT_IS_OFFSCREEN, "IUIAutomationElement::get_CurrentIsOffscreen")? != 0)
+    }
+
+    /// `GetCurrentPropertyValue`: the value of any property, `None` for an
+    /// empty value.
+    pub fn property_value(&self, property_id: i32) -> Result<Option<VariantValue>, String> {
+        let mut variant = ComVariant::null();
+        // SAFETY: the slot of `GetCurrentPropertyValue`, an identifier and a
+        // place for a variant the caller owns and frees.
+        unsafe {
+            check(
+                slot::<unsafe extern "system" fn(*mut c_void, i32, *mut ComVariant) -> i32>(
+                    self.0 .0,
+                    slots::GET_CURRENT_PROPERTY_VALUE,
+                )(self.0 .0, property_id, &mut variant),
+                "IUIAutomationElement::GetCurrentPropertyValue",
+            )?;
+            let value = variant.as_object().map_err(|error| format!("the property {property_id}: {error}"));
+            variant.dispose();
+            value
+        }
+    }
+
+    /// `FindAll`: the elements of the scope (`TREE_SCOPE_*`) that meet the
+    /// condition, in the order of the tree.
+    pub fn find_all(&self, scope: i32, condition: &Condition) -> Result<Vec<Element>, String> {
+        let mut array = std::ptr::null_mut();
+        // SAFETY: the slot of `FindAll`, a scope, a live condition and a
+        // place for the array the caller owns.
+        check(
+            unsafe {
+                slot::<unsafe extern "system" fn(*mut c_void, i32, *mut c_void, *mut *mut c_void) -> i32>(
+                    self.0 .0,
+                    slots::FIND_ALL,
+                )(self.0 .0, scope, condition.0 .0, &mut array)
+            },
+            "IUIAutomationElement::FindAll",
+        )?;
+        if array.is_null() {
+            return Ok(Vec::new());
+        }
+        let array = Owned(array);
+        let length: i32 = array.number(slots::ARRAY_LENGTH, "IUIAutomationElementArray::get_Length")?;
+        let mut elements = Vec::with_capacity(length.max(0) as usize);
+        for index in 0..length {
+            let mut element = std::ptr::null_mut();
+            // SAFETY: the slot of `GetElement`, an index below the length and
+            // a place for an element the caller owns.
+            check(
+                unsafe {
+                    slot::<unsafe extern "system" fn(*mut c_void, i32, *mut *mut c_void) -> i32>(
+                        array.0,
+                        slots::ARRAY_GET_ELEMENT,
+                    )(array.0, index, &mut element)
+                },
+                "IUIAutomationElementArray::GetElement",
+            )?;
+            if !element.is_null() {
+                elements.push(Element(Owned(element)));
+            }
+        }
+        Ok(elements)
+    }
+
+    /// `IUIAutomationExpandCollapsePattern::Expand`.
+    pub fn expand(&self) -> Result<(), String> {
+        self.required_pattern(EXPAND_COLLAPSE_PATTERN, &IID_EXPAND_COLLAPSE_PATTERN, "the expand collapse pattern")?
+            .call(slots::PATTERN_FIRST, "IUIAutomationExpandCollapsePattern::Expand")
+    }
+
+    /// `IUIAutomationExpandCollapsePattern::Collapse`.
+    pub fn collapse(&self) -> Result<(), String> {
+        self.required_pattern(EXPAND_COLLAPSE_PATTERN, &IID_EXPAND_COLLAPSE_PATTERN, "the expand collapse pattern")?
+            .call(slots::PATTERN_SECOND, "IUIAutomationExpandCollapsePattern::Collapse")
+    }
+
+    /// The state of the expand collapse pattern: 0 collapsed, 1 expanded,
+    /// 2 partially expanded, 3 a leaf.
+    pub fn expand_collapse_state(&self) -> Result<i32, String> {
+        self.required_pattern(EXPAND_COLLAPSE_PATTERN, &IID_EXPAND_COLLAPSE_PATTERN, "the expand collapse pattern")?
+            .number(slots::EXPAND_COLLAPSE_STATE, "IUIAutomationExpandCollapsePattern::get_CurrentExpandCollapseState")
+    }
+
+    /// `IUIAutomationSelectionItemPattern::Select`.
+    pub fn select(&self) -> Result<(), String> {
+        self.required_pattern(SELECTION_ITEM_PATTERN, &IID_SELECTION_ITEM_PATTERN, "the selection item pattern")?
+            .call(slots::PATTERN_FIRST, "IUIAutomationSelectionItemPattern::Select")
+    }
+
+    /// Whether the element is selected; false for an element without the
+    /// selection item pattern.
+    pub fn is_selected(&self) -> Result<bool, String> {
+        match self.pattern(SELECTION_ITEM_PATTERN, &IID_SELECTION_ITEM_PATTERN, "the selection item pattern")? {
+            Some(pattern) => Ok(pattern.number::<i32>(
+                slots::SELECTION_ITEM_IS_SELECTED,
+                "IUIAutomationSelectionItemPattern::get_CurrentIsSelected",
+            )? != 0),
+            None => Ok(false),
+        }
+    }
+
+    /// `IUIAutomationWindowPattern::Close`.
+    pub fn close(&self) -> Result<(), String> {
+        self.required_pattern(WINDOW_PATTERN, &IID_WINDOW_PATTERN, "the window pattern")?
+            .call(slots::PATTERN_FIRST, "IUIAutomationWindowPattern::Close")
     }
 }
 
@@ -401,6 +579,174 @@ impl UiaClient {
             return Err("IUIAutomation::ElementFromHandle: no element".to_owned());
         }
         Ok(Element(Owned(element)))
+    }
+
+    fn element_out(&self, index: usize, what: &str) -> Result<Option<Element>, String> {
+        let mut element = std::ptr::null_mut();
+        // SAFETY: a slot of the automation object that returns an element.
+        check(unsafe { slot::<Getter<*mut c_void>>(self.automation.0, index)(self.automation.0, &mut element) }, what)?;
+        Ok((!element.is_null()).then(|| Element(Owned(element))))
+    }
+
+    /// `IUIAutomation::GetRootElement`: the desktop.
+    pub fn root_element(&self) -> Result<Element, String> {
+        self.element_out(slots::GET_ROOT_ELEMENT, "IUIAutomation::GetRootElement")?
+            .ok_or_else(|| "IUIAutomation::GetRootElement: no element".to_owned())
+    }
+
+    /// `IUIAutomation::ElementFromPoint`, in pixels of the screen.
+    pub fn element_from_point(&self, x: i32, y: i32) -> Result<Option<Element>, String> {
+        #[repr(C)]
+        #[derive(Clone, Copy)]
+        struct Point {
+            x: i32,
+            y: i32,
+        }
+        let mut element = std::ptr::null_mut();
+        // SAFETY: the slot of `ElementFromPoint`, a point by value and a
+        // place for the result.
+        check(
+            unsafe {
+                slot::<unsafe extern "system" fn(*mut c_void, Point, *mut *mut c_void) -> i32>(
+                    self.automation.0,
+                    slots::ELEMENT_FROM_POINT,
+                )(self.automation.0, Point { x, y }, &mut element)
+            },
+            "IUIAutomation::ElementFromPoint",
+        )?;
+        Ok((!element.is_null()).then(|| Element(Owned(element))))
+    }
+
+    /// `IUIAutomation::CompareElements`: whether the two are the same
+    /// element of the user interface.
+    pub fn compare_elements(&self, a: &Element, b: &Element) -> Result<bool, String> {
+        let mut same = 0i32;
+        // SAFETY: the slot of `CompareElements`, two live elements and a
+        // place for the result.
+        check(
+            unsafe {
+                slot::<unsafe extern "system" fn(*mut c_void, *mut c_void, *mut c_void, *mut i32) -> i32>(
+                    self.automation.0,
+                    slots::COMPARE_ELEMENTS,
+                )(self.automation.0, a.0 .0, b.0 .0, &mut same)
+            },
+            "IUIAutomation::CompareElements",
+        )?;
+        Ok(same != 0)
+    }
+
+    fn condition_out(&self, result: i32, condition: *mut c_void, what: &str) -> Result<Condition, String> {
+        check(result, what)?;
+        if condition.is_null() {
+            return Err(format!("{what}: no condition"));
+        }
+        Ok(Condition(Owned(condition)))
+    }
+
+    /// `IUIAutomation::CreateTrueCondition`.
+    pub fn true_condition(&self) -> Result<Condition, String> {
+        let mut condition = std::ptr::null_mut();
+        // SAFETY: the slot of `CreateTrueCondition`.
+        let result = unsafe {
+            slot::<Getter<*mut c_void>>(self.automation.0, slots::CREATE_TRUE_CONDITION)(self.automation.0, &mut condition)
+        };
+        self.condition_out(result, condition, "IUIAutomation::CreateTrueCondition")
+    }
+
+    /// `IUIAutomation::get_ControlViewCondition`: the elements of the control
+    /// view.
+    pub fn control_view_condition(&self) -> Result<Condition, String> {
+        let mut condition = std::ptr::null_mut();
+        // SAFETY: the slot of `get_ControlViewCondition`.
+        let result = unsafe {
+            slot::<Getter<*mut c_void>>(self.automation.0, slots::CONTROL_VIEW_CONDITION)(self.automation.0, &mut condition)
+        };
+        self.condition_out(result, condition, "IUIAutomation::get_ControlViewCondition")
+    }
+
+    /// `IUIAutomation::CreatePropertyCondition`.
+    pub fn property_condition(&self, property_id: i32, value: &VariantValue) -> Result<Condition, String> {
+        let mut variant = ComVariant::create(Some(value)).map_err(|error| error.to_string())?;
+        let mut condition = std::ptr::null_mut();
+        // SAFETY: the slot of `CreatePropertyCondition`, which takes the
+        // variant by value and copies it; the variant is freed after the call.
+        let result = unsafe {
+            let result = slot::<unsafe extern "system" fn(*mut c_void, i32, ComVariant, *mut *mut c_void) -> i32>(
+                self.automation.0,
+                slots::CREATE_PROPERTY_CONDITION,
+            )(self.automation.0, property_id, variant, &mut condition);
+            variant.dispose();
+            result
+        };
+        self.condition_out(result, condition, "IUIAutomation::CreatePropertyCondition")
+    }
+
+    /// `IUIAutomation::CreateAndCondition`.
+    pub fn and_condition(&self, a: &Condition, b: &Condition) -> Result<Condition, String> {
+        let mut condition = std::ptr::null_mut();
+        // SAFETY: the slot of `CreateAndCondition`, two live conditions and a
+        // place for the result.
+        let result = unsafe {
+            slot::<unsafe extern "system" fn(*mut c_void, *mut c_void, *mut c_void, *mut *mut c_void) -> i32>(
+                self.automation.0,
+                slots::CREATE_AND_CONDITION,
+            )(self.automation.0, a.0 .0, b.0 .0, &mut condition)
+        };
+        self.condition_out(result, condition, "IUIAutomation::CreateAndCondition")
+    }
+
+    fn walker_step(&self, walker: &Owned, element: &Element, index: usize, what: &str) -> Result<Option<Element>, String> {
+        let mut found = std::ptr::null_mut();
+        // SAFETY: a slot of the walker that takes an element and a place for
+        // the element it leads to.
+        check(
+            unsafe {
+                slot::<unsafe extern "system" fn(*mut c_void, *mut c_void, *mut *mut c_void) -> i32>(walker.0, index)(
+                    walker.0,
+                    element.0 .0,
+                    &mut found,
+                )
+            },
+            what,
+        )?;
+        Ok((!found.is_null()).then(|| Element(Owned(found))))
+    }
+
+    fn control_view_walker(&self) -> Result<Owned, String> {
+        let mut walker = std::ptr::null_mut();
+        // SAFETY: the slot of `get_ControlViewWalker`.
+        check(
+            unsafe {
+                slot::<Getter<*mut c_void>>(self.automation.0, slots::CONTROL_VIEW_WALKER)(self.automation.0, &mut walker)
+            },
+            "IUIAutomation::get_ControlViewWalker",
+        )?;
+        Ok(Owned(walker))
+    }
+
+    /// The children of an element in the control view, the view of a test
+    /// tool.
+    pub fn control_view_children(&self, element: &Element) -> Result<Vec<Element>, String> {
+        let walker = self.control_view_walker()?;
+        let mut result = Vec::new();
+        let mut child =
+            self.walker_step(&walker, element, slots::GET_FIRST_CHILD_ELEMENT, "IUIAutomationTreeWalker::GetFirstChildElement")?;
+        while let Some(current) = child {
+            child = self.walker_step(
+                &walker,
+                &current,
+                slots::GET_NEXT_SIBLING_ELEMENT,
+                "IUIAutomationTreeWalker::GetNextSiblingElement",
+            )?;
+            result.push(current);
+        }
+        Ok(result)
+    }
+
+    /// The parent of an element in the control view.
+    pub fn control_view_parent(&self, element: &Element) -> Result<Option<Element>, String> {
+        let walker = self.control_view_walker()?;
+        self.walker_step(&walker, element, slots::GET_PARENT_ELEMENT, "IUIAutomationTreeWalker::GetParentElement")
     }
 
     /// `IUIAutomation::GetFocusedElement`.

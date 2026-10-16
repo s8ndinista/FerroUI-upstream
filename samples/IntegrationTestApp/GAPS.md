@@ -27,15 +27,15 @@ The 24 documents of the sample are converted from the upstream documents by `scr
 | `Pages/window_page.rs` | `(WindowStartupLocation)ShowWindowLocation.SelectedIndex` and the two other casts of a selected index | An index that is no member of the enumeration (no item selected) leaves the property as it is, where the managed original stores the number. |
 | `Pages/screens_page.rs` | `private Window? _lastWindow;` | The page is in the tree of the window: it holds the window weakly. |
 | `Pages/embedding_page.rs` | The native window and its `WillClose` handler are left to the collector. | The page releases the native window and the object that listens to it when the modal session has ended. On a platform other than macOS the handler of the button does nothing. |
+| `Embedding/win32_text_box_factory.rs` | The window procedure of the text box is a delegate that captures the text box. | The procedure is a function, which finds the text box of its window in a table of the thread by the handle of the window. |
 | `show_window_test.rs`, `topmost_window_test.rs` | `MacOSIntegration.GetOrderedIndex(this)` every 250 ms on macOS | The same, and it panics for a window without a native window (a null reference in the managed original): a window of a headless test that stays open for 250 ms of dispatcher time would end its test that way. The generated tests close their window at once. |
 
 ## Not ported
 
 | Upstream file | Why |
 |---|---|
-| `Embedding/Win32TextBoxFactory.cs`, `Embedding/Win32WindowControlHandle.cs`, `Embedding/WinApi.cs` | The native text box of the Windows platform, which is not a platform of the port. |
-| `Program.cs`: the options of the Windows platform and the developer tools of a debug build | The platform and the tools do not exist in the port. |
-| `bundle.sh`, `app.manifest`, the bundle properties of the project file (the bundle name, the bundle identifier, the version) | Packaging: the application bundle the automation driver of macOS launches by its bundle identifier, and the manifest of the Windows executable. The port has no bundling step for a sample yet. |
+| `Program.cs`: the developer tools of a debug build | The tools do not exist in the port. |
+| `bundle.sh`, `app.manifest`, the bundle properties of the project file (the bundle name, the bundle identifier, the version) | Packaging: the application bundle the automation driver of macOS launches by its bundle identifier, and the manifest of the Windows executable. The port has no bundling step for a sample yet; the automation tests of the port start the executable itself (`docs/porting/integration-tests.md`). |
 | The Inter font package the project file references | The entry point of the upstream sample does not use it. |
 
 ## Assets
@@ -69,3 +69,7 @@ The table above was written by reading; this is what the build and the tests fou
 - Tests: 87 pass (24 documents load and construct, 24 classes compare, the shell selects every
   page and finds the controls the automation tests look for, with the accepted binding report of
   the button page).
+
+## The Windows platform (2026-10-16)
+
+The Windows backend exists now, so the parts of the upstream sample that were left out as the code of a platform the port did not have are ported: the native text box of the Windows platform (`Embedding/win32_text_box_factory.rs`, `win32_window_control_handle.rs`, `win_api.rs`: an `EDIT` control whose window procedure the sample replaces) and the options of the Windows platform the entry point sets (`OverlayPopups`). They are compiled for Windows only and checked from the Mac for the two Windows targets; the automation tests of the embedding page are their run (`tests/FerroUI.IntegrationTests.Automation`, `embedding_tests.rs`).

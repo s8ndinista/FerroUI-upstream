@@ -2,13 +2,11 @@
 //! one module per upstream file.
 //!
 //! Ported: the control ([`NativeTextBox`]), the contract of its platform specific part
-//! ([`INativeTextBoxFactory`], [`INativeTextBoxImpl`]) and the AppKit part
-//! (`MacOSTextBoxFactory`, `MacOSViewHandle`, `MacHelper`). The managed original reaches AppKit
-//! through a binding package; here the few Objective-C runtime calls the text box needs are in
-//! `objc.rs`, which is not a port.
-//!
-//! Not ported, because their platform is not a platform of the port: `Win32TextBoxFactory.cs`,
-//! `Win32WindowControlHandle.cs` and `WinApi.cs`.
+//! ([`INativeTextBoxFactory`], [`INativeTextBoxImpl`]), the AppKit part
+//! (`MacOSTextBoxFactory`, `MacOSViewHandle`, `MacHelper`) and the part of the Windows platform
+//! (`Win32TextBoxFactory`, `Win32WindowControlHandle`, `WinApi`). The managed original reaches
+//! AppKit through a binding package; here the few Objective-C runtime calls the text box needs are
+//! in `objc.rs`, which is not a port. The calls of the Windows API are the ones of `windows-sys`.
 
 use crate::markup::XamlClass;
 use ferroui_base::metadata::MarkupType;
@@ -26,6 +24,13 @@ mod mac_os_view_handle;
 #[cfg(target_os = "macos")]
 pub(crate) mod objc;
 
+#[cfg(windows)]
+mod win32_text_box_factory;
+#[cfg(windows)]
+mod win32_window_control_handle;
+#[cfg(windows)]
+mod win_api;
+
 pub use i_native_text_box_factory::{INativeTextBoxFactory, INativeTextBoxImpl};
 pub use native_text_box::NativeTextBox;
 
@@ -35,6 +40,11 @@ pub use mac_helper::MacHelper;
 pub use mac_os_text_box_factory::MacOSTextBoxFactory;
 #[cfg(target_os = "macos")]
 pub use mac_os_view_handle::MacOSViewHandle;
+
+#[cfg(windows)]
+pub use win32_text_box_factory::Win32TextBoxFactory;
+#[cfg(windows)]
+pub use win32_window_control_handle::Win32WindowControlHandle;
 
 /// The classes of this namespace (`X::TYPE`).
 pub(crate) const TYPES: &[&TypeInfo] = &[NativeTextBox::TYPE];

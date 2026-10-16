@@ -10,9 +10,7 @@
 //! `FERROUI_SMOKE_EXIT_MS=<n>` the main window is closed after `n` milliseconds, which ends
 //! the main loop; the process exits with the exit code the lifetime returns.
 //!
-//! Not ported, because the platform and the tools they name do not exist in the port: the
-//! options of the Windows platform (`OverlayPopups`), the native text box of that platform
-//! (`Win32TextBoxFactory`) and the developer tools of a debug build.
+//! Not ported, because the tools do not exist in the port: the developer tools of a debug build.
 
 use ferroui_base::logging::LogEventLevel;
 use ferroui_controls::AppBuilder;
@@ -27,6 +25,11 @@ fn main() -> std::process::ExitCode {
     integration_test_app::set_overlay_popups(args.iter().any(|arg| arg == "--overlayPopups"));
 
     let builder = build_ferro_app();
+    #[cfg(windows)]
+    let builder = builder.with(std::rc::Rc::new(ferroui_win32::Win32PlatformOptions {
+        overlay_popups: integration_test_app::overlay_popups(),
+        ..Default::default()
+    }));
     #[cfg(target_os = "macos")]
     let builder = builder.with(std::rc::Rc::new(ferroui_native::FerroNativePlatformOptions {
         overlay_popups: integration_test_app::overlay_popups(),
@@ -41,6 +44,10 @@ fn build_ferro_app() -> AppBuilder {
     AppBuilder::configure::<App>()
         .use_platform_detect()
         .after_setup(|_| {
+            #[cfg(windows)]
+            integration_test_app::embedding::NativeTextBox::set_factory(Some(std::rc::Rc::new(
+                integration_test_app::embedding::Win32TextBoxFactory,
+            )));
             #[cfg(target_os = "macos")]
             integration_test_app::embedding::NativeTextBox::set_factory(Some(std::rc::Rc::new(
                 integration_test_app::embedding::MacOSTextBoxFactory,

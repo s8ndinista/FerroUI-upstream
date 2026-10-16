@@ -1652,10 +1652,12 @@ dependencies = [
  "ferroui-markup-xaml",
  "ferroui-native",
  "ferroui-themes-fluent",
+ "ferroui-win32",
  "mini-mvvm",
  "sample-build",
  "sample-support",
  "sample-testing",
+ "windows-sys",
 ]
 
 [[package]]
