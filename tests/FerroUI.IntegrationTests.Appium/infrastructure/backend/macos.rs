@@ -733,16 +733,17 @@ impl Backend {
         ElementRect { x, y, width, height }
     }
 
-    /// The click of XCTest on a menu item or an item of the menu bar: XCTest
-    /// opens the menus a menu item is in and selects it, whether or not its
-    /// menu is open (`IntegrationTestApp_ExitFullscreen`, an item of the
-    /// application menu, is clicked with its menu closed). The press action
-    /// does that; every other element is clicked with the mouse. Whether the
-    /// element was pressed.
+    /// The press action of the element (`accessibilityPerformPress`), where
+    /// it has one: buttons, check boxes, menu items, items of the menu bar,
+    /// combo boxes. XCTest clicks with the events of the mouse and selects a
+    /// menu item through its menus; the press is what that does for these
+    /// elements without the windows of the system in between (a run that
+    /// clicked every element but the menu items with the mouse lost the
+    /// windows the tests open while the main window was in full screen, and
+    /// every test of `WindowTests_MacOS` after it). Whether the element was
+    /// pressed.
     pub fn press(&self, element: &NativeElement) -> bool {
-        matches!(element.role().as_str(), "AXMenuItem" | "AXMenuBarItem")
-            && element.actions().iter().any(|action| action == "AXPress")
-            && element.perform("AXPress")
+        element.actions().iter().any(|action| action == "AXPress") && element.perform("AXPress")
     }
 
     /// Brings the element into view before a click at its centre, as
@@ -779,7 +780,7 @@ impl Backend {
 
     /// The elements below `root` (and `root` itself with `include_root`)
     /// that the locator finds, in the order of the tree.
-    pub fn find_all(&self, root: &NativeElement, include_root: bool, by: &By) -> Result<Vec<NativeElement>, String> {
+    pub fn find_all(&self, root: &NativeElement, include_root: bool, by: &By, _thorough: bool) -> Result<Vec<NativeElement>, String> {
         let mut found = Vec::new();
         let mut stack: Vec<(NativeElement, bool)> = vec![(root.clone(), include_root)];
         let mut visited = 0usize;
@@ -809,6 +810,10 @@ impl Backend {
             By::TagName(tag) => self.tag_name(element) == *tag,
             By::XPath(_) => false,
         }
+    }
+
+    pub fn windows_diagnostic(&self) -> Option<String> {
+        None
     }
 
     pub fn search_diagnostic(&self, _root: &NativeElement) -> Option<String> {

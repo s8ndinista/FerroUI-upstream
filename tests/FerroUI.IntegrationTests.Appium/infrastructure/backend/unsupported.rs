@@ -118,7 +118,11 @@ impl Backend {
         match *self {}
     }
 
-    pub fn find_all(&self, _root: &NativeElement, _include_root: bool, _by: &By) -> Result<Vec<NativeElement>, String> {
+    pub fn find_all(&self, _root: &NativeElement, _include_root: bool, _by: &By, _thorough: bool) -> Result<Vec<NativeElement>, String> {
+        match *self {}
+    }
+
+    pub fn windows_diagnostic(&self) -> Option<String> {
         match *self {}
     }
 

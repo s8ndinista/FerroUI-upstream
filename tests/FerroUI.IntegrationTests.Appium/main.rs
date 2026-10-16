@@ -109,6 +109,7 @@ fn main() -> ExitCode {
     // A diagnostic of the runs: a search for one element that does not find it prints the tree
     // it searched.
     infrastructure::session::set_dump_tree(arguments.iter().any(|a| a == "--dump-tree"));
+    infrastructure::session::install_panic_dump();
     let filters: Vec<&String> = arguments.iter().filter(|a| !a.starts_with('-')).collect();
 
     let mut tests = Tests::default();
@@ -191,6 +192,9 @@ fn main() -> ExitCode {
             let rect = main.rect();
             println!("the main window: at {}, {}, {} by {}", rect.x, rect.y, rect.width, rect.height);
         }
+        // A diagnostic of `--dump-tree`: a test that fails prints the order of the windows of
+        // the application at its panic, before the windows it opened are closed.
+        infrastructure::session::set_panic_session(Some(fixture.session().clone()));
         for case in cases {
             let result = catch_unwind(AssertUnwindSafe(|| case.run(&fixture)));
             // A test that failed with a button or a key down leaves it down otherwise.
@@ -203,6 +207,7 @@ fn main() -> ExitCode {
                 }
             }
         }
+        infrastructure::session::set_panic_session(None);
         drop(fixture);
     }
 

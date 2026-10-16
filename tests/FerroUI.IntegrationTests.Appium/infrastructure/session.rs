@@ -37,6 +37,33 @@ pub fn set_dump_tree(enabled: bool) {
     DUMP_TREE.store(enabled, Ordering::Relaxed);
 }
 
+ferroui_base::ferro_thread_local! {
+    /// The session whose windows a panic of a test prints with `--dump-tree`.
+    static PANIC_SESSION: RefCell<Option<Session>> = RefCell::new(None);
+}
+
+/// The session whose windows a panic of a test prints (`--dump-tree`).
+pub fn set_panic_session(session: Option<Session>) {
+    PANIC_SESSION.with(|current| *current.borrow_mut() = session);
+}
+
+/// With `--dump-tree`, a panic of a test on the thread of the runner also prints the windows
+/// of the application in the order of the desktop, while the windows the test opened are
+/// still open.
+pub fn install_panic_dump() {
+    if !dump_tree_enabled() {
+        return;
+    }
+    let default = std::panic::take_hook();
+    std::panic::set_hook(Box::new(move |info| {
+        default(info);
+        let session = PANIC_SESSION.try_with(|current| current.try_borrow().ok().and_then(|s| s.clone())).ok().flatten();
+        if let Some(session) = session {
+            session.dump_windows();
+        }
+    }));
+}
+
 fn dump_tree_enabled() -> bool {
     DUMP_TREE.load(Ordering::Relaxed) || std::env::var("FERROUI_AUTOMATION_DUMP_TREE").as_deref() == Ok("1")
 }
@@ -217,6 +244,13 @@ impl Session {
     }
 
     fn find_all(&self, scope: Scope<'_>, by: &By) -> Result<Vec<NativeElement>, WebDriverError> {
+        self.search(scope, by, true)
+    }
+
+    /// The elements the locator finds below the scope. `thorough` lets the backend of Windows
+    /// walk the tree when its search finds nothing (a search for one element does that only
+    /// once its wait is over, so that it searches as often as before while it waits).
+    fn search(&self, scope: Scope<'_>, by: &By, thorough: bool) -> Result<Vec<NativeElement>, WebDriverError> {
         let backend = self.backend();
         let (root, include_root) = match scope {
             Scope::Session => (self.root()?, true),
@@ -226,23 +260,26 @@ impl Session {
             By::XPath(expression) => {
                 xpath::evaluate(&XPathTree(backend), &root, expression).map_err(WebDriverError::Other)
             }
-            _ => backend.find_all(&root, include_root, by).map_err(|error| WebDriverError::Other(format!("{by:?}: {error}"))),
+            _ => backend
+                .find_all(&root, include_root, by, thorough)
+                .map_err(|error| WebDriverError::Other(format!("{by:?}: {error}"))),
         }
     }
 
     fn find_one(&self, scope: Scope<'_>, by: &By) -> Result<NativeElement, WebDriverError> {
         let deadline = Instant::now() + IMPLICIT_WAIT;
         loop {
+            let last = Instant::now() >= deadline;
             let found = match &scope {
-                Scope::Session => self.find_all(Scope::Session, by),
-                Scope::Element(element) => self.find_all(Scope::Element(element), by),
+                Scope::Session => self.search(Scope::Session, by, last),
+                Scope::Element(element) => self.search(Scope::Element(element), by, last),
             };
             match found {
                 Ok(found) => {
                     if let Some(first) = found.into_iter().next() {
                         return Ok(first);
                     }
-                    if Instant::now() >= deadline {
+                    if last {
                         self.dump_tree(&scope, by);
                         return Err(WebDriverError::NoSuchElement(format!("{by:?}")));
                     }
@@ -250,7 +287,7 @@ impl Session {
                 // The search itself failed (the session's window is gone, or the provider of
                 // the application answered an error): reported once the wait is over.
                 Err(error) => {
-                    if Instant::now() >= deadline {
+                    if last {
                         self.dump_tree(&scope, by);
                         return Err(error);
                     }
@@ -471,6 +508,18 @@ impl Session {
         }
         if release_modifiers {
             self.release_modifiers();
+        }
+    }
+
+    /// With `--dump-tree`, prints the top-level windows of the application in
+    /// the order of the desktop (Windows): a diagnostic the runner prints after
+    /// a test that failed.
+    pub fn dump_windows(&self) {
+        if dump_tree_enabled() {
+            if let Some(text) = self.backend().windows_diagnostic() {
+                eprintln!("-- the windows of the application, front first:");
+                eprint!("{text}");
+            }
         }
     }
 
