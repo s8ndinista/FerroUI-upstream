@@ -5,7 +5,8 @@
        their states, a separator, a check item, a submenu, an input gesture and an icon) and of a
        context menu (ContextMenu), shown in the page because a picture of a page does not hold
        its popups, and CommandBar with its buttons, a toggle button, a separator and the overflow
-       button. The native counterpart is MenusPage.winui.xml. -->
+       button, its labels at the right of the icons (a closed WinUI CommandBar hides labels at
+       the bottom, FerroUI's has no closed state). The native counterpart is MenusPage.winui.xml. -->
   <StackPanel Margin="24" Spacing="12">
     <TextBlock Text="Menus and command bars" FontSize="28" FontWeight="SemiBold" />
 
@@ -55,7 +56,7 @@
     </Grid>
 
     <TextBlock Text="CommandBar" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" />
-    <CommandBar>
+    <CommandBar DefaultLabelPosition="Right">
       <CommandBar.PrimaryCommands>
         <CommandBarButton Label="Add">
           <CommandBarButton.Icon>
