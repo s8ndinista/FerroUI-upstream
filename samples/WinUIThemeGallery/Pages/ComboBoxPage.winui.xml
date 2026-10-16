@@ -1,7 +1,10 @@
 <!-- The native WinUI 3 counterpart of ComboBoxPage.xaml. The pointer-over states (the combo box,
      an item) are the brushes of that state as local values: the templates bind the background
      and border to the control. The pressed state of an item is its pressed brushes. The
-     validation error is the critical border brush and the message under the box. -->
+     validation error is the critical border brush and the message under the box. The items
+     outside a combo box do not go to their selected and disabled states (the combo box drives
+     them), so the selected and the disabled item have the brushes of those states as local
+     values too; the pill of the selected item cannot be shown that way. -->
 <StackPanel xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
             Margin="24" Spacing="12">
@@ -81,14 +84,17 @@
           BorderBrush="{ThemeResource ComboBoxDropDownBorderBrush}">
     <StackPanel>
       <ComboBoxItem Content="Normal" />
-      <ComboBoxItem Content="Selected" IsSelected="True" />
+      <ComboBoxItem Content="Selected" IsSelected="True"
+                    Background="{ThemeResource ComboBoxItemBackgroundSelected}"
+                    Foreground="{ThemeResource ComboBoxItemForegroundSelected}" />
       <ComboBoxItem Content="Pointer over"
                     Background="{ThemeResource ComboBoxItemBackgroundPointerOver}"
                     Foreground="{ThemeResource ComboBoxItemForegroundPointerOver}" />
       <ComboBoxItem Content="Pressed"
                     Background="{ThemeResource ComboBoxItemBackgroundPressed}"
                     Foreground="{ThemeResource ComboBoxItemForegroundPressed}" />
-      <ComboBoxItem Content="Disabled" IsEnabled="False" />
+      <ComboBoxItem Content="Disabled" IsEnabled="False"
+                    Foreground="{ThemeResource ComboBoxItemForegroundDisabled}" />
     </StackPanel>
   </Border>
 </StackPanel>

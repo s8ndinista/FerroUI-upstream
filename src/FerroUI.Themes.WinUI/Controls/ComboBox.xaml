@@ -28,9 +28,11 @@
   - EditableModeStates: the overlay of the drop-down button of an editable box shows on
     [IsEditable=true]; TextBoxFocused is the keyboard focus within the box (:focus-within), the
     overlay states the pointer over the overlay and the pressed box.
-  - The drop-down glyph is an AnimatedIcon with the fallback glyph E70D at 12 px: the path of
-    GlyphGeometryE70D (G-10); its MinHeight ComboBoxMinHeight, which makes the box at least 32 px
-    high, is the MinHeight of the Border Background. The pill is the keyed theme ComboBoxItemPill
+  - The drop-down glyph is an AnimatedIcon (AnimatedChevronDownSmallVisualSource, 12 x 12) with the
+    fallback glyph E70D at 12 px: the path of GlyphGeometryE96E 8 px wide in a box of 12 x 12, the
+    chevron the animated visual draws (measured against native WinUI 3; G-10); its MinHeight
+    ComboBoxMinHeight, which makes the box at least 32 px high, is the MinHeight of the Border
+    Background. The pill is the keyed theme ComboBoxItemPill
     of a Border (Controls/ComboBoxItem.xaml).
   - The drop-down opens below the box at its width (FerroUI's placement of PART_Popup); WinUI
     places it so that the selected item covers the box, animates it open (SplitOpenThemeAnimation
@@ -263,17 +265,25 @@
                     Width="30"
                     HorizontalAlignment="Right"
                     IsVisible="False" />
-            <!-- E70D at 12 px: the fallback glyph of the AnimatedIcon DropDownGlyph. -->
-            <Path x:Name="DropDownGlyph"
-                  Grid.Column="1"
-                  Data="{StaticResource GlyphGeometryE70D}"
-                  Fill="{DynamicResource ComboBoxDropDownGlyphForeground}"
-                  Stretch="Uniform"
-                  Width="12"
-                  Margin="0,0,14,0"
-                  HorizontalAlignment="Right"
-                  VerticalAlignment="Center"
-                  IsHitTestVisible="False" />
+            <!-- The AnimatedIcon DropDownGlyph (12 x 12, AnimatedChevronDownSmallVisualSource): the
+                 chevron of its animated visual, which WinUI draws, is the ChevronDownSmall glyph
+                 E96E 8 px wide (as the chevron of DropDownButton), not its fallback glyph E70D
+                 at 12 px. -->
+            <Panel Grid.Column="1"
+                   Width="12"
+                   Height="12"
+                   Margin="0,0,14,0"
+                   HorizontalAlignment="Right"
+                   VerticalAlignment="Center"
+                   IsHitTestVisible="False">
+              <Path x:Name="DropDownGlyph"
+                    Data="{StaticResource GlyphGeometryE96E}"
+                    Fill="{DynamicResource ComboBoxDropDownGlyphForeground}"
+                    Stretch="Uniform"
+                    Width="8"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center" />
+            </Panel>
             <Popup x:Name="PART_Popup"
                    WindowManagerAddShadowHint="False"
                    IsOpen="{TemplateBinding IsDropDownOpen, Mode=TwoWay}"
