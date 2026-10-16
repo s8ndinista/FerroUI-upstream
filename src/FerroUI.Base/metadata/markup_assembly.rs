@@ -54,6 +54,13 @@ impl MarkupAssembly {
     /// assembly records source information by default (`"true"`/`"false"`).
     pub const CREATE_SOURCE_INFO: &'static str = "FerroXamlCreateSourceInfo";
 
+    /// The metadata key that states whether `{Binding}` in markup of the
+    /// assembly is a compiled binding by default (`"True"`/`"False"`): the
+    /// `FerroUseCompiledBindingsByDefault` entry the build task of upstream writes
+    /// into every assembly it compiles markup for, with the value of its
+    /// `DefaultCompileBindings`. The previewer of the designer reads it.
+    pub const USE_COMPILED_BINDINGS_BY_DEFAULT: &'static str = "FerroUseCompiledBindingsByDefault";
+
     /// The value of the metadata entry `key`.
     pub fn metadata_value(&self, key: &str) -> Option<&'static str> {
         self.metadata.iter().find(|(k, _)| *k == key).map(|(_, value)| *value)

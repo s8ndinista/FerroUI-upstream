@@ -1,0 +1,6 @@
+<Window xmlns="https://github.com/ferroui"
+        Title="TESTAPP"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="FerroUI.DesignerSupport.TestApp.MainWindow">
+    <Button/>
+</Window>

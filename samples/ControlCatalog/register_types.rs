@@ -28,7 +28,10 @@ pub static ASSEMBLY: MarkupAssembly = MarkupAssembly {
     crate_name: "control_catalog",
     xmlns_definitions: &[],
     xmlns_prefixes: &[],
-    metadata: &[],
+    // What the build task of upstream writes into the assembly: its documents are compiled
+    // with compiled bindings by default (`build.rs`), and the previewer of the designer loads
+    // a document of the assembly the same way.
+    metadata: &[(MarkupAssembly::USE_COMPILED_BINDINGS_BY_DEFAULT, "True")],
 };
 
 /// The classes of the crate, per namespace (and per directory of the pages).

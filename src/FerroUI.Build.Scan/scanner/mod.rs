@@ -1103,6 +1103,9 @@ impl Builder {
                         match last.as_slice() {
                             ["FERRO_XML_NAMESPACE", ..] => Some(crate::FERRO_XML_NAMESPACE.to_string()),
                             ["CREATE_SOURCE_INFO", "MarkupAssembly"] => Some(crate::CREATE_SOURCE_INFO.to_string()),
+                            ["USE_COMPILED_BINDINGS_BY_DEFAULT", "MarkupAssembly"] => {
+                                Some(crate::USE_COMPILED_BINDINGS_BY_DEFAULT.to_string())
+                            }
                             _ => None,
                         }
                     }
