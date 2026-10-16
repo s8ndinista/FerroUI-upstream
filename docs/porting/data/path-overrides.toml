@@ -2452,6 +2452,10 @@ path = "src/Windows/FerroUI.WinUI/xaml_application.rs"
 reason = "Application.Start with a composed Application that overrides OnLaunched, and the window and the grid of the sample's markup: what the XAML compiler generates for a C# application (docs/porting/winui.md, section 3.4)"
 
 [[rust_only]]
+path = "src/Windows/FerroUI.WinUI/process_end.rs"
+reason = "The end of the process of a WinUI application as the runtime of the original ends it once Main has returned from Application.Start: exit of the C runtime from a thread of its own, so that the values of the UI thread are never destroyed while ExitProcess ends the other threads, with the diagnostics of the end (docs/porting/winui.md, section 7.7)"
+
+[[rust_only]]
 path = "src/Windows/FerroUI.WinUI/automation/mod.rs"
 reason = "The module of the automation files, with the result code of an element that is not enabled (the exception of the original reaches the client as that code)"
 

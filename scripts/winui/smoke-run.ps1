@@ -9,8 +9,10 @@
     and 38769434562): the limit of `timeout` did not end the process, and the step ran until its own
     limit of 45 minutes. This script starts the executable with its output in two files, waits for
     it at most -TimeoutSeconds, and then prints the output. A process that has not ended by then is
-    ended (Stop-Process -Force, which is TerminateProcess) after its threads are listed, and the
-    script exits with 124. Otherwise it exits with the exit code of the process.
+    ended (Stop-Process -Force, which is TerminateProcess) after its threads are listed (each with
+    its state and the module and offset where it started) and their stacks are printed through the
+    console debugger of the image (cdb, a non-invasive attach), and the script exits with 124.
+    Otherwise it exits with the exit code of the process.
 
 .EXAMPLE
     pwsh -NoProfile -File scripts/winui/smoke-run.ps1 -Executable target/debug/control-gallery-winui.exe
@@ -47,13 +49,58 @@ function Show-Output {
     }
 }
 
+# Where an address of the process is: the module that holds it and the offset in it.
+function Format-Address([System.Diagnostics.Process]$Target, [long]$Address) {
+    try {
+        foreach ($module in $Target.Modules) {
+            $base = $module.BaseAddress.ToInt64()
+            if ($Address -ge $base -and $Address -lt $base + $module.ModuleMemorySize) {
+                return ("{0}+0x{1:x}" -f $module.ModuleName, ($Address - $base))
+            }
+        }
+    } catch {
+        # The list of modules of a process that is ending may not be readable.
+    }
+    return ("0x{0:x}" -f $Address)
+}
+
+# The stacks of every thread of the process, through the console debugger of the Debugging Tools
+# for Windows when the image has it: a non-invasive attach (the threads are suspended and read,
+# nothing is injected, which works in a process inside ExitProcess), with the symbols of the
+# executable beside it and those of the system from Microsoft's symbol server.
+function Show-Stacks([System.Diagnostics.Process]$Target) {
+    $architecture = if ($env:PROCESSOR_ARCHITECTURE -eq "ARM64") { "arm64" } else { "x64" }
+    $cdb = Join-Path ${env:ProgramFiles(x86)} "Windows Kits\10\Debuggers\$architecture\cdb.exe"
+    if (-not (Test-Path $cdb)) {
+        Write-Output "---- no console debugger at $cdb`: the stacks are not printed"
+        return
+    }
+    $symbols = Join-Path $directory "symbols"
+    $symbolPath = "$([System.IO.Path]::GetDirectoryName($executablePath));srv*$symbols*https://msdl.microsoft.com/download/symbols"
+    $stacks = Join-Path $directory "$name.stacks.log"
+    Remove-Item $stacks -ErrorAction SilentlyContinue
+    Write-Output "---- the stacks of the threads of $name (cdb -pv)"
+    $debugger = Start-Process -FilePath $cdb -NoNewWindow -PassThru -RedirectStandardOutput $stacks `
+        -ArgumentList @("-pv", "-p", $Target.Id, "-y", "`"$symbolPath`"", "-c", "`"~*kn 60; qd`"")
+    if (-not $debugger.WaitForExit(240000)) {
+        Stop-Process -Id $debugger.Id -Force -ErrorAction SilentlyContinue
+        Write-Output "(the debugger did not finish within 240 s)"
+    }
+    if (Test-Path $stacks) { Get-Content $stacks }
+}
+
 if (-not $ended) {
     Show-Output
+    $process.Refresh()
     $threads = @($process.Threads)
     Write-Output "---- $name did not end within $TimeoutSeconds s: $($threads.Count) thread(s)"
     foreach ($thread in $threads) {
-        Write-Output ("    thread {0}: {1}, {2}" -f $thread.Id, $thread.ThreadState, $thread.WaitReason)
+        $start = "an unknown address"
+        try { $start = Format-Address $process $thread.StartAddress.ToInt64() } catch { }
+        $reason = if ("$($thread.ThreadState)" -eq "Wait") { " ($($thread.WaitReason))" } else { "" }
+        Write-Output ("    thread {0}: {1}{2}, started in {3}" -f $thread.Id, $thread.ThreadState, $reason, $start)
     }
+    Show-Stacks $process
     Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
     $null = $process.WaitForExit(30000)
     Write-Output "::error::$name did not end within $TimeoutSeconds s and was ended"
