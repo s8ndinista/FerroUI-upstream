@@ -50,7 +50,11 @@ impl ISkiaGpuRenderTarget for VulkanSkiaRenderTarget {
         self.target.dispose();
     }
 
-    fn begin_rendering_session(&self, _scene_info: &RenderTargetSceneInfo) -> Rc<dyn ISkiaGpuRenderSession> {
+    fn begin_rendering_session(
+        &self,
+        _scene_info: &RenderTargetSceneInfo,
+        surface_props: &skia_safe::SurfaceProps,
+    ) -> Rc<dyn ISkiaGpuRenderSession> {
         // TODO: use expectedPixelSize
         let session = self.target.begin_draw();
         let guard = SessionGuard { session: session.clone(), success: Cell::new(false) };
@@ -72,7 +76,7 @@ impl ISkiaGpuRenderTarget for VulkanSkiaRenderTarget {
                 if session.is_y_flipped() { SurfaceOrigin::TopLeft } else { SurfaceOrigin::BottomLeft },
                 if session.is_rgba() { ColorType::RGBA8888 } else { ColorType::BGRA8888 },
                 ColorSpace::new_srgb(),
-                None,
+                Some(surface_props),
             )
         });
         drop(render_target);

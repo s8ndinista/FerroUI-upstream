@@ -1,6 +1,7 @@
 use crate::framebuffer_render_target::FramebufferRenderTarget;
 use crate::gpu::{ISkiaGpu, SkiaGpuRenderTarget};
 use crate::surface_render_target::{SurfaceRenderTarget, SurfaceRenderTargetCreateInfo};
+use crate::text_rendering_settings::{TextRenderingSettings, TextRenderingSource};
 use ferroui_base::platform::surfaces::IPlatformRenderSurface;
 use ferroui_base::platform::{
     IDrawingContextLayerImpl, IExternalObjectsRenderInterfaceContextFeature, IOptionalFeatureProvider,
@@ -62,15 +63,21 @@ impl IOptionalFeatureProvider for SkiaContext {
 
 impl IPlatformRenderInterfaceContext for SkiaContext {
     fn create_render_target(&self, surfaces: &[std::sync::Arc<dyn IPlatformRenderSurface>]) -> Rc<dyn IRenderTarget> {
+        // The text rendering parameters of the platform are read from the
+        // surfaces of the top-level every frame (docs/porting/text-rendering.md).
+        let text_rendering = TextRenderingSource::new(surfaces);
+
         if let Some(gpu) = self.gpu() {
             if let Some(gpu_render_target) = gpu.try_create_render_target(surfaces) {
-                return Rc::new(SkiaGpuRenderTarget::new(gpu, gpu_render_target));
+                return Rc::new(SkiaGpuRenderTarget::with_text_rendering(gpu, gpu_render_target, text_rendering));
             }
         }
 
         for surface in surfaces {
             if let Some(framebuffer_surface) = surface.as_framebuffer_surface() {
-                return Rc::new(FramebufferRenderTarget::new(framebuffer_surface, false));
+                return Rc::new(
+                    FramebufferRenderTarget::new(framebuffer_surface, false).with_text_rendering(text_rendering),
+                );
             }
         }
 
@@ -92,6 +99,8 @@ impl IPlatformRenderInterfaceContext for SkiaContext {
             dpi: scaling * 96.0,
             format: None,
             disable_text_lcd_rendering: !enable_text_antialiasing,
+            // An offscreen target knows no display: greyscale text by default.
+            text_rendering: TextRenderingSettings::default(),
             gr_context: gr.as_ref().map(|gr| gr.value().clone()),
             gpu,
             disable_manual_fbo: true,

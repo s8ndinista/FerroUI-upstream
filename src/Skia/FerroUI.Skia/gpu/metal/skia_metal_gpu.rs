@@ -201,6 +201,7 @@ impl ISkiaGpu for SkiaMetalGpu {
         &self,
         _size: PixelSize,
         _session: Option<&Rc<dyn ISkiaGpuRenderSession>>,
+        _surface_props: &skia_safe::SurfaceProps,
     ) -> Option<Rc<dyn ISkiaSurface>> {
         None
     }
@@ -225,7 +226,11 @@ impl SkiaMetalRenderTarget {
 
 impl ISkiaGpuRenderTarget for SkiaMetalRenderTarget {
     #[cfg(not(ferro_skia_apple_ganesh))]
-    fn begin_rendering_session(&self, _scene_info: &RenderTargetSceneInfo) -> Rc<dyn ISkiaGpuRenderSession> {
+    fn begin_rendering_session(
+        &self,
+        _scene_info: &RenderTargetSceneInfo,
+        surface_props: &skia_safe::SurfaceProps,
+    ) -> Rc<dyn ISkiaGpuRenderSession> {
         let target = self.target.borrow().clone().expect("SkiaMetalRenderTarget has been disposed");
         let context = self.context.borrow().clone().expect("SkiaMetalGpu has been disposed");
 
@@ -238,7 +243,7 @@ impl ISkiaGpuRenderTarget for SkiaMetalRenderTarget {
         let backend_texture = unsafe { backend_textures::make_metal((size.width, size.height), session.texture()) };
 
         let surface = context.with_recorder(|recorder| {
-            surfaces::wrap_backend_texture(recorder, &backend_texture, ColorType::BGRA8888, None, None)
+            surfaces::wrap_backend_texture(recorder, &backend_texture, ColorType::BGRA8888, None, Some(surface_props))
         });
 
         let Some(surface) = surface else {
@@ -253,7 +258,11 @@ impl ISkiaGpuRenderTarget for SkiaMetalRenderTarget {
     /// the session reports (the configuration `ferro_skia_apple_ganesh`), as
     /// the original does.
     #[cfg(ferro_skia_apple_ganesh)]
-    fn begin_rendering_session(&self, _scene_info: &RenderTargetSceneInfo) -> Rc<dyn ISkiaGpuRenderSession> {
+    fn begin_rendering_session(
+        &self,
+        _scene_info: &RenderTargetSceneInfo,
+        surface_props: &skia_safe::SurfaceProps,
+    ) -> Rc<dyn ISkiaGpuRenderSession> {
         // The original: "TODO: use expectedPixelSize".
         let target = self.target.borrow().clone().expect("SkiaMetalRenderTarget has been disposed");
         let context = self.context.borrow().clone().expect("SkiaMetalGpu has been disposed");
@@ -270,7 +279,14 @@ impl ISkiaGpuRenderTarget for SkiaMetalRenderTarget {
 
         let origin = if session.is_y_flipped() { SurfaceOrigin::BottomLeft } else { SurfaceOrigin::TopLeft };
         let surface = context.with_context(|context| {
-            surfaces::wrap_backend_render_target(context, &backend_target, origin, ColorType::BGRA8888, None, None)
+            surfaces::wrap_backend_render_target(
+                context,
+                &backend_target,
+                origin,
+                ColorType::BGRA8888,
+                None,
+                Some(surface_props),
+            )
         });
 
         let Some(surface) = surface else {

@@ -8,7 +8,7 @@ use ferroui_opengl::surfaces::{
 use ferroui_opengl::IGlContext;
 use skia_safe::gpu::gl::FramebufferInfo;
 use skia_safe::gpu::{backend_render_targets, surfaces, BackendRenderTarget, SurfaceOrigin};
-use skia_safe::{ColorType, PixelGeometry, Surface, SurfaceProps, SurfacePropsFlags};
+use skia_safe::{ColorType, Surface, SurfaceProps};
 use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 
@@ -109,8 +109,12 @@ impl Drop for SessionGuard {
 }
 
 impl ISkiaGpuRenderTarget for GlRenderTarget {
-    fn begin_rendering_session(&self, scene_info: &RenderTargetSceneInfo) -> Rc<dyn ISkiaGpuRenderSession> {
-        match self.try_begin_rendering_session(scene_info) {
+    fn begin_rendering_session(
+        &self,
+        scene_info: &RenderTargetSceneInfo,
+        surface_props: &SurfaceProps,
+    ) -> Rc<dyn ISkiaGpuRenderSession> {
+        match self.try_begin_rendering_session(scene_info, surface_props) {
             Ok(session) => session,
             Err(error) => panic!("{error}"),
         }
@@ -119,6 +123,7 @@ impl ISkiaGpuRenderTarget for GlRenderTarget {
     fn try_begin_rendering_session(
         &self,
         scene_info: &RenderTargetSceneInfo,
+        surface_props: &SurfaceProps,
     ) -> Result<Rc<dyn ISkiaGpuRenderSession>, RenderTargetError> {
         let gl_session = self.surface.try_begin_draw(scene_info)?;
 
@@ -152,14 +157,13 @@ impl ISkiaGpuRenderTarget for GlRenderTarget {
                 disp.stencil_size().max(0) as usize,
                 gl_info,
             );
-            let surface_properties = SurfaceProps::new(SurfacePropsFlags::default(), PixelGeometry::RGBH);
             let surface = surfaces::wrap_backend_render_target(
                 context,
                 &render_target,
                 if gl_session.is_y_flipped() { SurfaceOrigin::TopLeft } else { SurfaceOrigin::BottomLeft },
                 color_type,
                 None,
-                Some(&surface_properties),
+                Some(surface_props),
             );
             (render_target, surface)
         });

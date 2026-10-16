@@ -159,7 +159,7 @@ fn skia_draws_a_frame_into_the_image_of_a_vulkan_session_and_presents_it() {
 
     let scene_info = RenderTargetSceneInfo::new(PixelSize::new(200, 120), 2.0, Default::default());
     for color in [Color::RED, Color::from_argb(255, 0, 128, 255)] {
-        let session = target.begin_rendering_session(&scene_info);
+        let session = target.begin_rendering_session(&scene_info, &skia_safe::SurfaceProps::default());
         assert_eq!(session.scale_factor(), 2.0);
         let mut surface = session.sk_surface();
         assert_eq!((surface.width(), surface.height()), (200, 120));

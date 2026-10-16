@@ -36,7 +36,7 @@ use std::sync::Arc;
 
 const DPI: Vector = Vector::new(96.0, 96.0);
 
-fn render_interface() -> PlatformRenderInterface {
+pub(crate) fn render_interface() -> PlatformRenderInterface {
     PlatformRenderInterface::default()
 }
 

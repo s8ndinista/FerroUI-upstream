@@ -20,7 +20,9 @@ fn create_font(font: &Font, text_options: TextOptions) -> Font {
         TextRenderingMode::Alias => Edging::Alias,
         TextRenderingMode::Antialias => Edging::AntiAlias,
         TextRenderingMode::SubpixelAntialias => Edging::SubpixelAntiAlias,
-        _ => Edging::SubpixelAntiAlias,
+        // Resolved by the drawing context before a blob is made; greyscale
+        // is the default of the backend.
+        _ => Edging::AntiAlias,
     };
 
     // Determine hinting.
@@ -151,7 +153,10 @@ impl GlyphRunImpl {
 
     /// The text blob of the run for the given text options. An unspecified
     /// text rendering mode is derived from the edge mode of the render
-    /// options.
+    /// options: aliased edges give aliased text, anything else greyscale
+    /// antialiasing. The drawing context resolves the mode from the text
+    /// rendering of its surface before it asks; the reference takes
+    /// subpixel antialiasing here (docs/porting/text-rendering.md).
     ///
     /// Returns `None` for an empty run.
     pub fn get_text_blob(&self, text_options: TextOptions, render_options: RenderOptions) -> Option<TextBlob> {
@@ -161,7 +166,7 @@ impl GlyphRunImpl {
             text_options.text_rendering_mode = if render_options.edge_mode == EdgeMode::Aliased {
                 TextRenderingMode::Alias
             } else {
-                TextRenderingMode::SubpixelAntialias
+                TextRenderingMode::Antialias
             };
         }
 

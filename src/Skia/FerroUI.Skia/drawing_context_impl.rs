@@ -14,6 +14,7 @@ use crate::skia_sharp_extensions::{
     to_sk_sampling_options_scaled, to_sk_shader_tile_mode, to_sk_stroke_cap, to_sk_stroke_join,
 };
 use crate::surface_render_target::{SurfaceRenderTarget, SurfaceRenderTargetCreateInfo};
+use crate::text_rendering_settings::TextRenderingSettings;
 use crate::picture_render_target::PictureRenderTarget;
 use ferroui_base::media::effects::IEffect;
 use ferroui_base::media::{
@@ -81,6 +82,11 @@ pub struct CreateInfo {
 
     /// Render text without subpixel antialiasing.
     pub disable_subpixel_text_rendering: bool,
+
+    /// How text is rendered on the surface: the default antialiasing of
+    /// text and the surface properties of the layers the context creates
+    /// (docs/porting/text-rendering.md).
+    pub text_rendering: TextRenderingSettings,
 
     /// GPU-accelerated context (optional).
     pub gr_context: Option<Rc<dyn ISkiaGrContext>>,
@@ -207,6 +213,55 @@ impl ISkiaPlatformGraphicsApiLease for PlatformApiLease {
     }
 }
 
+/// The text options a glyph run is drawn with: the pushed text options,
+/// with the text rendering mode resolved.
+///
+/// As the reference: a context that disables subpixel text maps subpixel
+/// (and unspecified, unless the edges are aliased) to greyscale, and an
+/// unspecified mode takes the one of the render options. What is still
+/// unspecified then takes the default of the surface (`text_rendering`),
+/// where the reference takes subpixel antialiasing; aliased edges keep
+/// giving aliased text (docs/porting/text-rendering.md).
+pub(crate) fn effective_text_options(
+    text_options: TextOptions,
+    render_options: RenderOptions,
+    disable_subpixel_text_rendering: bool,
+    text_rendering: &TextRenderingSettings,
+) -> TextOptions {
+    let mut effective_text_options = text_options;
+
+    // If subpixel rendering is disabled globally, map subpixel modes to
+    // grayscale.
+    if disable_subpixel_text_rendering {
+        let mode = effective_text_options.text_rendering_mode;
+
+        if mode == TextRenderingMode::SubpixelAntialias
+            || (mode == TextRenderingMode::Unspecified
+                && (render_options.edge_mode == EdgeMode::Antialias
+                    || render_options.edge_mode == EdgeMode::Unspecified))
+        {
+            effective_text_options.text_rendering_mode = TextRenderingMode::Antialias;
+        }
+    }
+
+    // If the text rendering mode is unspecified in the text options, use
+    // the one from the render options.
+    if effective_text_options.text_rendering_mode == TextRenderingMode::Unspecified
+        && render_options.text_rendering_mode != TextRenderingMode::Unspecified
+    {
+        effective_text_options.text_rendering_mode = render_options.text_rendering_mode;
+    }
+
+    // Nothing asked for a mode: the surface decides.
+    if effective_text_options.text_rendering_mode == TextRenderingMode::Unspecified
+        && render_options.edge_mode != EdgeMode::Aliased
+    {
+        effective_text_options.text_rendering_mode = text_rendering.default_text_rendering_mode;
+    }
+
+    effective_text_options
+}
+
 /// Skia based drawing context.
 pub struct DrawingContextImpl {
     disposables: Vec<Box<dyn FnOnce()>>,
@@ -221,6 +276,7 @@ pub struct DrawingContextImpl {
     post_transform: Option<Matrix>,
     current_opacity: f64,
     disable_subpixel_text_rendering: bool,
+    text_rendering: TextRenderingSettings,
     current_transform: Option<Matrix>,
     disposed: bool,
     gr_context: Option<Rc<dyn ISkiaGrContext>>,
@@ -277,6 +333,7 @@ impl DrawingContextImpl {
             post_transform,
             current_opacity: 1.0,
             disable_subpixel_text_rendering: create_info.disable_subpixel_text_rendering,
+            text_rendering: create_info.text_rendering,
             current_transform: None,
             disposed: false,
             gr_context: create_info.gr_context,
@@ -1113,6 +1170,7 @@ impl DrawingContextImpl {
             dpi: self.intermediate_surface_dpi,
             format,
             disable_text_lcd_rendering: if is_layer { self.disable_subpixel_text_rendering } else { true },
+            text_rendering: self.text_rendering,
             gr_context: self.gr_context.clone(),
             gpu: self.gpu.clone(),
             session: self.session.clone(),
@@ -1433,31 +1491,12 @@ impl IDrawingContextImpl for DrawingContextImpl {
 
         let paint_wrapper = self.create_fill(foreground, glyph_run.bounds());
 
-        // Determine the effective text options for text rendering. Start
-        // with the current pushed text options.
-        let mut effective_text_options = self.text_options;
-
-        // If subpixel rendering is disabled globally, map subpixel modes to
-        // grayscale.
-        if self.disable_subpixel_text_rendering {
-            let mode = effective_text_options.text_rendering_mode;
-
-            if mode == TextRenderingMode::SubpixelAntialias
-                || (mode == TextRenderingMode::Unspecified
-                    && (self.render_options.edge_mode == EdgeMode::Antialias
-                        || self.render_options.edge_mode == EdgeMode::Unspecified))
-            {
-                effective_text_options.text_rendering_mode = TextRenderingMode::Antialias;
-            }
-        }
-
-        // If the text rendering mode is unspecified in the text options, use
-        // the one from the render options.
-        if effective_text_options.text_rendering_mode == TextRenderingMode::Unspecified
-            && self.render_options.text_rendering_mode != TextRenderingMode::Unspecified
-        {
-            effective_text_options.text_rendering_mode = self.render_options.text_rendering_mode;
-        }
+        let effective_text_options = effective_text_options(
+            self.text_options,
+            self.render_options,
+            self.disable_subpixel_text_rendering,
+            &self.text_rendering,
+        );
 
         let text_blob = glyph_run_impl.get_text_blob(effective_text_options, self.render_options);
 

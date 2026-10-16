@@ -201,6 +201,7 @@ impl ISkiaGpu for VulkanSkiaGpu {
         &self,
         _size: PixelSize,
         _session: Option<&Rc<dyn ISkiaGpuRenderSession>>,
+        _surface_props: &skia_safe::SurfaceProps,
     ) -> Option<Rc<dyn ISkiaSurface>> {
         None
     }
