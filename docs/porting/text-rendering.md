@@ -152,4 +152,17 @@ Coverage is measured against the local background (the lightest pixel around, th
 
 ## 9. Verification
 
-Verified on macOS: the Skia crate's tests (the rule, the clamping, the per-frame parameters, the surface properties of frames and layers, the resolution of the mode), the render tests (370 pass, unchanged: CoreText renders LCD requests as greyscale on current macOS), the Windows backend's tests of the parameters and `cargo check` of the Windows backend for x64 and ARM64 Windows, the X11 tests of `Xft.rgba`. Not verified here and left to the Windows CI and the Windows VM: the values read from the system (`SystemParametersInfoW`, the tuning key, DirectWrite's parameters), the surfaces of the composition modes being greyscale, and the gallery comparison with the script (fringe about 0, ink ratio about 1 on light pages, unchanged dark pages).
+Verified on macOS:
+
+- the Skia crate's tests in the default configuration (Graphite on Metal) and with `RUSTFLAGS="--cfg ferro_skia_apple_ganesh"` (Ganesh on OpenGL and Metal, which compiles the OpenGL render target and the framebuffer object surface that Windows (ANGLE) and the browser (WebGL) use): the rule, the clamping, the parameters read every frame, the surface properties of frames and of layers, the resolution of the mode, greyscale text on a render target bitmap by default;
+- the render tests (370 pass, unchanged: CoreText renders LCD requests as greyscale on current macOS);
+- `cargo check --workspace --all-targets`;
+- the Windows backend: its tests of the parameters on the Mac host and `cargo check -p ferroui-win32 --no-default-features --all-targets` for x64 and ARM64 Windows;
+- the X11 tests of `Xft.rgba`.
+
+Not verified here:
+
+- the Vulkan render target of the Skia backend (compiled on Linux and with the feature `vulkan` only; the change passes the surface properties as the OpenGL target does) and the browser build (no code of its own changed; its text becomes greyscale by default, as on every surface without parameters);
+- on Windows: the values read from the system (`SystemParametersInfoW`, the tuning key, DirectWrite's parameters), the windows of the composition modes rendering greyscale text, ClearType on a window with a redirection surface, and the gallery comparison with the script, where the light pages should show a fringe of about 0, an ink ratio of about 1 and a solid share close to native's, and the dark pages should not change.
+
+One Windows behaviour is not followed: when font smoothing is off altogether (`SPI_GETFONTSMOOTHING` false) GDI renders aliased text; FerroUI keeps greyscale antialiasing there, as WinUI 3 does.
