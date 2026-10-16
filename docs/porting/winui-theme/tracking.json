@@ -23994,9 +23994,9 @@
    "key": "BottomThicknessFilterConverter",
    "kind": "CornerRadiusToThicknessConverter",
    "target_type": "",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "resources"
+   "batch": null
   },
   {
    "document": "controls/dev/CommonStyles/CornerRadius_themeresources.xaml",
@@ -24014,9 +24014,9 @@
    "key": "LeftThicknessFilterConverter",
    "kind": "CornerRadiusToThicknessConverter",
    "target_type": "",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "resources"
+   "batch": null
   },
   {
    "document": "controls/dev/CommonStyles/CornerRadius_themeresources.xaml",
@@ -24034,9 +24034,9 @@
    "key": "RightThicknessFilterConverter",
    "kind": "CornerRadiusToThicknessConverter",
    "target_type": "",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "resources"
+   "batch": null
   },
   {
    "document": "controls/dev/CommonStyles/CornerRadius_themeresources.xaml",
@@ -24044,9 +24044,9 @@
    "key": "TabViewLeftInsetCornerConverter",
    "kind": "CornerRadiusToThicknessConverter",
    "target_type": "",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "resources"
+   "batch": null
   },
   {
    "document": "controls/dev/CommonStyles/CornerRadius_themeresources.xaml",
@@ -24054,9 +24054,9 @@
    "key": "TabViewRightInsetCornerConverter",
    "kind": "CornerRadiusToThicknessConverter",
    "target_type": "",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "resources"
+   "batch": null
   },
   {
    "document": "controls/dev/CommonStyles/CornerRadius_themeresources.xaml",
@@ -24084,9 +24084,9 @@
    "key": "TopThicknessFilterConverter",
    "kind": "CornerRadiusToThicknessConverter",
    "target_type": "",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "resources"
+   "batch": null
   },
   {
    "document": "controls/dev/CommonStyles/CornerRadius_themeresources.xaml",
@@ -77984,9 +77984,9 @@
    "key": "ScrollViewerScrollBarlessTemplate",
    "kind": "ControlTemplate",
    "target_type": "ScrollViewer",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "resources"
+   "batch": null
   },
   {
    "document": "dxaml/xcp/dxaml/themes/generic.xaml",
@@ -89864,7 +89864,7 @@
    "document": "controls/dev/dll/DensityStyles/Compact.xaml",
    "key": "{TextBlock}",
    "kind": "Style",
-   "status": "pending",
+   "status": "ported",
    "reason": null
   },
   {
@@ -90779,7 +90779,7 @@
    "batch": "F",
    "winui": "ScrollViewer: DefaultScrollViewerStyle (ScrollViewer_themeresources.xaml).",
    "status": "ported",
-   "deviations": 8,
+   "deviations": 9,
    "date": "2026-10-16"
   },
   {
@@ -91559,7 +91559,7 @@
   "RadioButton": 6,
   "RepeatButton": 1,
   "ScrollBar": 11,
-  "ScrollViewer": 8,
+  "ScrollViewer": 9,
   "SelectableTextBlock": 2,
   "Separator": 1,
   "TextBlock": 3,

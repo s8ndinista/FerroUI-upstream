@@ -21,11 +21,13 @@
   - LoopingSelector: WinUI's looping list of a column of the flyouts (a ScrollViewer and the up and
     down RepeatButtons, shown while the pointer is over the list, in a Grid). FerroUI's
     DateTimePickerPanel is a panel that the presenters put in a ScrollViewer of a host panel
-    (PART_DayHost, PART_HourHost, ...) with the up and down buttons, so the template of
-    DefaultLoopingSelectorStyle is written into the hosts of the presenter templates; the up and
-    down buttons are the keyed themes DateTimePickerLoopingSelectorUpButtonStyle and
-    DateTimePickerLoopingSelectorDownButtonStyle (the RepeatButtons UpButton and DownButton of the
-    template, with their glyphs EDDB and EDDC at 8 px as GlyphGeometryEDDB and GlyphGeometryEDDC).
+    (PART_DayHost, PART_HourHost, ...) with the up and down buttons; the ScrollViewer has the
+    template of the source, ScrollViewerScrollBarlessTemplate (Controls/ScrollViewer.xaml), and
+    hidden bars, so the template of DefaultLoopingSelectorStyle is written into the hosts of the
+    presenter templates; the up and down buttons are the keyed themes
+    DateTimePickerLoopingSelectorUpButtonStyle and DateTimePickerLoopingSelectorDownButtonStyle
+    (the RepeatButtons UpButton and DownButton of the template, with their glyphs EDDB and EDDC at
+    8 px as GlyphGeometryEDDB and GlyphGeometryEDDC).
     WinUI: DefaultLoopingSelectorStyle, {LoopingSelector}
   - LoopingSelectorItem: the items of FerroUI's DateTimePickerPanel are ListBoxItems with a class
     of their column (MonthItem, DayItem, YearItem, HourItem, MinuteItem, SecondItem,

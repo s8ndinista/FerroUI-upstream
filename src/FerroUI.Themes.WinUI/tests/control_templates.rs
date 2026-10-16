@@ -331,6 +331,53 @@ fn window_follows_the_theme_variants() {
     assert_ne!(dark, high_contrast);
 }
 
+/// The keyed template `ScrollViewerScrollBarlessTemplate` (generic.xaml) of `Controls/ScrollViewer.xaml`:
+/// a scroll viewer that an application gives it is built with its content presenter and without the
+/// scroll bars, which FerroUI's scroll viewer takes as optional parts.
+#[test]
+fn scroll_viewer_with_the_scroll_bar_less_template() {
+    use ferroui_controls::presenters::ScrollContentPresenter;
+    use ferroui_controls::templates::IControlTemplate;
+    use ferroui_controls::ScrollViewer;
+
+    let _app = start_themed_application();
+    let application = Application::current().expect("an application");
+    let value = application
+        .try_get_resource(&ResourceKey::from("ScrollViewerScrollBarlessTemplate"), None)
+        .expect("ScrollViewerScrollBarlessTemplate is a resource of the theme")
+        .expect("a template");
+    let template = value
+        .downcast_ref::<Option<Rc<dyn IControlTemplate>>>()
+        .cloned()
+        .flatten()
+        .or_else(|| from_markup_value::<Rc<dyn IControlTemplate>>(&Some(value.clone())))
+        .expect("a control template");
+
+    let scroll_viewer = ScrollViewer::new();
+    scroll_viewer.set_template(Some(template));
+    let name_scope: Rc<RefCell<Option<NameScopeRef>>> = Rc::new(RefCell::new(None));
+    let _ = scroll_viewer.template_applied({
+        let name_scope = name_scope.clone();
+        move |_, e| *name_scope.borrow_mut() = Some(e.name_scope().clone())
+    });
+    let content = Border::new();
+    scroll_viewer.set_content(Some(Control::boxed(&content)));
+    let window = Window::new();
+    window.set_content(Some(Control::boxed(&scroll_viewer)));
+    window.show();
+
+    assert_eq!(1, scroll_viewer.visual_children_count());
+    let name_scope = name_scope.borrow();
+    let name_scope = name_scope.as_ref().expect("TemplateApplied was raised");
+    let presenter: Ref<FerroObject> = name_scope.find("PART_ContentPresenter").expect("the content presenter");
+    assert!(presenter.cast::<ScrollContentPresenter>().is_some(), "PART_ContentPresenter is a {}", presenter.get_type().name());
+    assert!(content.get_visual_ancestors().any(|ancestor| ancestor.upcast::<FerroObject>().ptr_eq(&presenter)));
+    for part in ["PART_HorizontalScrollBar", "PART_VerticalScrollBar"] {
+        let found: Option<Ref<FerroObject>> = name_scope.find(part);
+        assert!(found.is_none(), "{part} is in the scroll-bar-less template");
+    }
+}
+
 /// The window decorations are themed (they are created by the framework, not put in a window as
 /// content): the template of the theme, or of the theme it is based on, builds the parts the class
 /// asks for, with the declared types.

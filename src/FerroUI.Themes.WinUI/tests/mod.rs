@@ -1,6 +1,7 @@
 mod compiled_xaml_tests;
 mod control_templates;
 mod control_theme_tests;
+mod converter_tests;
 mod documents;
 mod load_time;
 mod public_api_tests;

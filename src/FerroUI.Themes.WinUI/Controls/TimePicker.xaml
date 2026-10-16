@@ -264,7 +264,8 @@
                       IsHitTestVisible="False" />
               <Grid x:Name="PART_HourHost" Grid.Column="0">
                 <ScrollViewer HorizontalScrollBarVisibility="Disabled"
-                              VerticalScrollBarVisibility="Hidden">
+                              VerticalScrollBarVisibility="Hidden"
+                              Template="{StaticResource ScrollViewerScrollBarlessTemplate}">
                   <DateTimePickerPanel x:Name="PART_HourSelector"
                                        PanelType="Hour"
                                        ShouldLoop="True"
@@ -281,7 +282,8 @@
                          Grid.Column="1" />
               <Grid x:Name="PART_MinuteHost" Grid.Column="2">
                 <ScrollViewer HorizontalScrollBarVisibility="Disabled"
-                              VerticalScrollBarVisibility="Hidden">
+                              VerticalScrollBarVisibility="Hidden"
+                              Template="{StaticResource ScrollViewerScrollBarlessTemplate}">
                   <DateTimePickerPanel x:Name="PART_MinuteSelector"
                                        PanelType="Minute"
                                        ShouldLoop="True"
@@ -298,7 +300,8 @@
                          Grid.Column="3" />
               <Grid x:Name="PART_SecondHost" Grid.Column="4">
                 <ScrollViewer HorizontalScrollBarVisibility="Disabled"
-                              VerticalScrollBarVisibility="Hidden">
+                              VerticalScrollBarVisibility="Hidden"
+                              Template="{StaticResource ScrollViewerScrollBarlessTemplate}">
                   <DateTimePickerPanel x:Name="PART_SecondSelector"
                                        PanelType="Second"
                                        ShouldLoop="True"
@@ -315,7 +318,8 @@
                          Grid.Column="5" />
               <Grid x:Name="PART_PeriodHost" Grid.Column="6">
                 <ScrollViewer HorizontalScrollBarVisibility="Disabled"
-                              VerticalScrollBarVisibility="Hidden">
+                              VerticalScrollBarVisibility="Hidden"
+                              Template="{StaticResource ScrollViewerScrollBarlessTemplate}">
                   <DateTimePickerPanel x:Name="PART_PeriodSelector"
                                        PanelType="TimePeriod"
                                        ShouldLoop="False"
