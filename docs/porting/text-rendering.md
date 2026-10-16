@@ -186,6 +186,11 @@ contrast 1, sRGB gamma), `scripts/text-quality.py --pages text,buttons,lists,men
 | text-dark | 0.0 / 46.6 | 0.0 / 0.0 | 1.009 | 1.004 | 58 % / 55 % | 58 % / 58 % |
 | mean | 0.0 / 39.6 | 0.0 / 0.0 | 0.964 | 0.980 | 50 % / 46 % | 50 % / 49 % |
 
+At a render scaling of 1, on the Windows runner of CI (x64, the same comparison, run 38938301589
+before and 38961004687 after), the mean of the same pages, native / FerroUI: colour fringe 0.0 /
+71.6 before and 0.0 / 0.0 after, ink ratio 0.966 before and 1.000 after, solid share 35 % / 32 %
+before and 35 % / 35 % after: at that scaling the text has the weight and solidity of DirectWrite's.
+
 The colour fringes are gone on every page, light text on dark backgrounds has the weight and
 solidity of native text, and dark text on light backgrounds is darker than before but still 4 to
 9 % lighter than DirectWrite's (Skia's contrast is at its maximum of 1). What is left of that gap
