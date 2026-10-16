@@ -418,9 +418,6 @@ pub const PENDING_CONTROLS: &[&str] = &[
     "TabStrip",
     "TabStripItem",
     "TabbedPage",
-    // B6: window decorations, notifications, tables and dialogs
-    "ManagedFileChooser",
-    "ManagedFileChooserOverwritePrompt",
 ];
 
 /// Whether the control named `name` waits for a batch.

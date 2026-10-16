@@ -196,6 +196,7 @@ document_tests! {
     resources_toggle_switch_themeresources => "/Resources/ToggleSwitch_themeresources.xaml";
     resources_tool_tip_themeresources => "/Resources/ToolTip_themeresources.xaml";
     resources_tree_view_themeresources => "/Resources/TreeView_themeresources.xaml";
+    controls_managed_file_chooser => "/Controls/ManagedFileChooser.xaml";
     controls_notification_card => "/Controls/NotificationCard.xaml";
     controls_table_view => "/Controls/TableView.xaml";
     controls_table_view_cell => "/Controls/TableViewCell.xaml";
