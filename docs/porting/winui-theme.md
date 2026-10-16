@@ -101,6 +101,7 @@ The crate mirrors `src/FerroUI.Themes.Fluent`:
 | `winui_theme.rs` | the class `WinUITheme` and the enum `DensityStyle` |
 | `Accents/system_accent_colors.rs` | the accent colour provider (section 3.3) |
 | `Converters/corner_radius_to_thickness_converter.rs` | `CornerRadiusToThicknessConverter` of WinUI, which the theme resources name and FerroUI's control set lacks (section 5) |
+| `Primitives/info_bar_panel.rs` | `InfoBarPanel` of WinUI (`Microsoft.UI.Xaml.Controls.Primitives`), the panel of InfoBar, with which the template of WindowNotificationManager presents a notification (FerroUI's control set has no counterpart) |
 | `WinUITheme.xaml` | the document of the class: the resources and the include of the control themes |
 | `Resources/*.xaml` | the resources: one generated document per source document, `SystemResources.xaml`, `ThemeShadows.xaml`, `Glyphs.xaml` |
 | `DensityStyles/Compact.xaml` | the compact resources (generated) |
@@ -210,7 +211,8 @@ not a `TextBlock` by its style key (DEVIATIONS.md, RES-9).
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" x:ClassModifier="internal">`, with
   `xmlns:winui="using:FerroUI.Themes.WinUI"` where the high contrast key is used and
   `xmlns:converters="using:FerroUI.Controls.Converters"` for the converters of the controls, and
-  `xmlns:winuiconverters="using:FerroUI.Themes.WinUI.Converters"` for the converters of the crate.
+  `xmlns:winuiconverters="using:FerroUI.Themes.WinUI.Converters"` for the converters of the crate,
+  and `xmlns:primitives="using:FerroUI.Themes.WinUI.Primitives"` for its primitives (`InfoBarPanel`).
 - A `*_themeresources.xaml` document of WinUI holds resources and styles. The port splits it:
   the resources go to `Resources/<same name>.xaml` (generated, section 5), the styles to the
   document of the FerroUI control, `Controls/<FerroUI control>.xaml`. `Controls/` documents

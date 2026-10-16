@@ -20,7 +20,7 @@
   - The title, the message and the action button of InfoBar (the InfoBarPanel) are the content of
     the card, presented where InfoBar has its InfoBarPanel (InfoBarPanelMargin). A notification
     shown by WindowNotificationManager is presented with the title and the message of InfoBar in
-    a wrap panel that lays them out as InfoBarPanel does, on one line when they fit
+    the InfoBarPanel of the theme (Primitives/info_bar_panel.rs), on one line when they fit
     (WindowNotificationManager.xaml). ContentArea, the second
     row for the Content of InfoBar, has no counterpart (NoBannerContent).
   - The close button is the CloseButton of InfoBar with InfoBarCloseButtonStyle; it closes the card
