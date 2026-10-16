@@ -767,7 +767,7 @@ The section covers both control themes of the document: ManagedFileChooser and M
 
 | ID | WinUI source | What WinUI does | What the port does | Why |
 |---|---|---|---|---|
-| CTP-1 | (no counterpart) `Page` has no style | A page is a UserControl without a background of its own (`Background` is null): it shows the window, or the content layer of the NavigationView it is shown in (`NavigationViewContentBackground`); the page templates of Visual Studio set `ApplicationPageBackgroundThemeBrush` in the markup of the application. | The template FerroUI's ContentPage requires (content and command bar presenters), with a `Transparent` background and `TextFillColorPrimaryBrush`. | Built from WinUI resources; transparent rather than null keeps the page hit-testable for the gestures of FerroUI's pages. |
+| CTP-1 | (no counterpart) `Page` has no style | A page is a UserControl; the page templates of WinUI set `Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"`. | The template FerroUI's ContentPage requires (content and command bar presenters) with `ApplicationPageBackgroundThemeBrush` and `TextFillColorPrimaryBrush`. | Built from WinUI resources. |
 
 ## DrawerPage
 
@@ -873,7 +873,7 @@ The section covers both control themes of the document: ManagedFileChooser and M
 | TBP-5 | `NavigationViewIconPositionStates` (`IconOnLeft`, `IconOnly`, `ContentOnly`) | Margins by the presence of icon and content. | The 12 px before the icon box and 8 px after it show with the icon; the header margin `0,0,12,0` in both cases (the -1 px vertical margins of `TopNavigationViewItemContentPresenterMargin` left out); the indicator margin of `ContentOnly`; `IconOnly` left out. | No selector on a null icon; visibility bindings instead. |
 | TBP-6 | `PointerRectangle` | Collapsed in every state of the top pane style. | Left out. | No effect. |
 | TBP-7 | (no counterpart) the pane at the bottom, left and right | | At the bottom the content grid's border at its bottom edge and the indicator at the top of the item; at the left and the right the left pane of NavigationView (`NavigationViewExpandedPaneBackground`, `NavigationViewPaneContentGridMargin`, the content grid values of the left pane, mirrored at the right) with the tabs of TabItem for those placements. | FerroUI's placements. |
-| TBP-8 | (no counterpart) the page background | | `ApplicationPageBackgroundThemeBrush` (the background the page templates of WinUI give a page). | Built from WinUI resources. |
+| TBP-8 | (no counterpart) the page background | | `ApplicationPageBackgroundThemeBrush` (as ContentPage). | Built from WinUI resources. |
 ## ButtonSpinner
 
 | ID | WinUI source | What WinUI does | What the port does | Why |
@@ -1019,7 +1019,7 @@ their sections above).
 | AdornerLayer | F | ported | No WinUI style: the system focus visual of WinUI (FocusVisualPrimaryBrush/Thickness, FocusVisualSecondaryBrush/Thickness; the SystemControlFocusVisual* resources of Common_themeresources.xaml). |
 | ButtonSpinner | B2 | ported | No WinUI control: the spin buttons of NumberBox (NumberBoxSpinButtonStyle, NumberBox.xaml) and the TextBox resources. |
 | CarouselPage | B5 | ported | No WinUI control: built from FlipView (DefaultFlipViewStyle) and the page background (SolidBackgroundFillColorBaseBrush). |
-| ContentPage | B5 | ported | No WinUI style (Page has none): no background of its own (a page shows its host: the window or the content layer of NavigationView) and the text of the window (TextFillColorPrimaryBrush). |
+| ContentPage | B5 | ported | No WinUI style (Page has none): the page background and text of the window (SolidBackgroundFillColorBaseBrush, TextFillColorPrimaryBrush). |
 | DataValidationErrors | B1 | ported | No WinUI style (input validation was removed from WinUI 3): the critical fill of the palette (SystemFillColorCriticalBrush) for the message and the border of the field, and the error icon of InfoBar (InfoBar.xaml, InfoBar_themeresources.xaml) for the tool tip variant. |
 | DrawerPage | B5 | ported | No WinUI control: the pane of NavigationView (NavigationView_themeresources.xaml) and SplitView (DefaultSplitViewStyle). |
 | EmbeddableControlRoot | F | ported | No WinUI style: the background and text of the window (SolidBackgroundFillColorBaseBrush, TextFillColorPrimaryBrush, ContentControlThemeFontFamily, ControlContentThemeFontSize). |
