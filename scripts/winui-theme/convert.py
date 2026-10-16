@@ -76,6 +76,20 @@ FONT_FAMILIES = {"XamlAutoFontFamily": "Segoe UI Variable Text, Segoe UI, $Defau
 
 VARIANT_ORDER = ["Default", "Light", "HighContrast"]
 
+# Documents of microsoft-ui-xaml outside the merged theme whose resources FerroUI controls are built
+# from (docs/porting/winui-theme.md, section 5): the tabular resources of WinUI's TableView and of
+# the resize gripper of its column headers, which an application gets from the tabular library
+# (TabularControlsResources), not from XamlControlsResources. They are converted whole (their keys
+# are not keys of the merged theme), written after the documents of the merge and not tracked.
+OUTSIDE_THE_MERGE = [
+    "controls/dev/CommonStyles/TabularSurfaces_themeresources.xaml",
+    "controls/dev/TableView/TableView_themeresources.xaml",
+    "controls/dev/ResizeGripper/ResizeGripper_themeresources.xaml",
+]
+OUTSIDE_THE_MERGE_NOTE = (
+    "Not part of the merged theme of WinUI (the tabular library); converted for TableView and its parts."
+)
+
 
 class Unconvertible(Exception):
     pass
@@ -349,6 +363,25 @@ def convert(root):
                 raise SystemExit(f"error: two source documents map to {path}")
             documents[path] = render([source], converted)
 
+    # The documents outside the merged theme that FerroUI controls are built from (every item of
+    # them; they define no key of the merged theme).
+    for source in OUTSIDE_THE_MERGE:
+        converted = []
+        for item in w.document_items(root, source):
+            if item.kind in CONTROL_KINDS or w.waiver_for(waivers, item):
+                continue
+            indent = "      " if item.variant else "  "
+            try:
+                lines, needed = convert_item(item, indent)
+            except Unconvertible as error:
+                left_out.append((item, str(error)))
+                continue
+            converted.append((item, lines, needed))
+        path = port_path(source)
+        if path in documents:
+            raise SystemExit(f"error: two source documents map to {path}")
+        documents[path] = render([source], converted, OUTSIDE_THE_MERGE_NOTE)
+
     # The density layer: the resources of the compact dictionary of WinUI.
     converted = []
     for key, item in theme.compact.items():
@@ -370,6 +403,7 @@ def convert(root):
     # order of the merge of WinUI, and the outlines of the glyphs.
     order = ["Resources/SystemResources.xaml"]
     order += [port_path(source) for source, _ in theme.documents if port_path(source) in documents]
+    order += [port_path(source) for source in OUTSIDE_THE_MERGE]
     order += ["Resources/Glyphs.xaml"]
     theme_path = os.path.join(CRATE, THEME_DOCUMENT)
     text = open(theme_path, encoding="utf-8").read()

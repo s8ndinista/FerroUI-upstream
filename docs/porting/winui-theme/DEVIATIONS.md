@@ -436,6 +436,50 @@ it. Abbreviations: CS = `controls/dev/CommonStyles/`, GX = `dxaml/xcp/dxaml/them
 |---|---|---|---|---|
 | WIN-1 | (no counterpart) WinUI 3's `Window` is not a control and has no style | The system draws the window with Mica (or the theme background). | The template FerroUI's window requires (from the Fluent theme) with `SolidBackgroundFillColorBaseBrush` (the Mica fallback), `TextFillColorPrimaryBrush` and the control font. | Built from WinUI resources; G-13. |
 
+## TableView
+
+| ID | WinUI source | What WinUI does | What the port does | Why |
+|---|---|---|---|---|
+| TV-1 | `controls/dev/TableView`, `controls/dev/CommonStyles/TabularSurfaces_themeresources.xaml`, `controls/dev/ResizeGripper` | The tabular library, with resources of its own (`TabularControlsResources`), not part of the merged theme of XamlControlsResources. | `scripts/winui-theme/convert.py` converts `TabularSurfaces_themeresources.xaml`, `TableView_themeresources.xaml` and `ResizeGripper_themeresources.xaml` whole (`OUTSIDE_THE_MERGE`) into resource documents of the same names, merged after the documents of the merge; they are not items of the tracking. | The templates use the resources by their WinUI keys. |
+| TV-2 | `PART_HeaderRow`, `PART_HeaderScroller`, `PART_HeaderHost` (TableViewCellsPanel), `PART_BodyScroller` | The header band above the body scroll viewer; the header scroller follows the horizontal offset of the body. | The header band is the first row of the template of the scroll viewer of the table (`TableViewScrollViewerStyle`, based on `DefaultScrollViewerStyle`), above the rows and the vertical scroll bar; `PART_HeaderHost` is FerroUI's `TableViewColumnHeadersPresenter`, which follows the offset itself; there is no header scroller. | FerroUI's header presenter finds the scroll viewer of the table when it is attached, so it is in the template of the scroll viewer (as in the Fluent theme). |
+| TV-3 | The `Border` of the template with `CornerRadius` | The rounded border clips its content. | `ClipToBounds` is set to `True` by the theme and honoured by the border. | FerroUI's border clips only with `ClipToBounds`; the Fluent template honours `ClipToBounds`. |
+| TV-4 | `PART_RowsRepeater` (ItemsRepeater, StackLayout, `VerticalCacheLength`) | The rows are realised by a repeater. | `PART_ItemsPresenter` of the ListBox with its items panel; the padding of the table is the margin of the presenter. | FerroUI's TableView is a ListBox. |
+| TV-5 | `PART_EmptyStatePresenter`, sorting, grouping, frozen columns, density, `GridLinesVisibility` | Features of WinUI's TableView. | Left out; the grid lines are the default `All`. | FerroUI's TableView has none of them. |
+| TV-6 | `IsTabStop="False"` | The table is a focus scope with two tab stops. | Left out. | FerroUI's ListBox keeps its own keyboard handling. |
+| TV-7 | (not in the template) the text blocks TableView creates trim with `CharacterEllipsis` | Trimmed header and cell text. | The inherited `TextBlock.TextTrimming` of the table is `CharacterEllipsis`. | The text of the cells is presented by FerroUI's content presenters. |
+| TV-8 | `HorizontalScrollMode`, `VerticalScrollMode` of the body scroller | Modes of WinUI's scroll viewer. | The scroll bar visibilities (`Auto`), scroll chaining and inertia of the table as attached properties, as in the Fluent theme. | G-19. |
+
+## TableViewCell
+
+| ID | WinUI source | What WinUI does | What the port does | Why |
+|---|---|---|---|---|
+| TVC-1 | `TableViewRow.cpp`: the cell wrapper (a Grid built in code) | TableViewRow pads the content with `TableViewCellPadding`, sets `TableViewRowMinHeight` and `TableViewCellFontSize`. | A control theme of TableViewCell: a `Border` with the padding and a content presenter centred vertically; `MinHeight`, `FontSize` and `Padding` setters of those resources. | FerroUI's cell is a control. |
+| TVC-2 | `RefreshGridLines`: the vertical grid line of the cells, without a brush on the last visible cell when it meets the border of the table | A line at the trailing edge of every cell but the last. | A trailing border of 1 px in `TabularSurfaceGridLineBrush`; `:nth-last-child(1)` sets a transparent brush. | The selector does not know whether the last cell meets the border, and counts hidden columns. |
+| TVC-3 | Editing, focus and automation of the cells | Editable, focusable cells. | Left out. | FerroUI's TableView is read-only. |
+
+## TableViewColumnHeader
+
+| ID | WinUI source | What WinUI does | What the port does | Why |
+|---|---|---|---|---|
+| TVH-1 | `TableView.cpp` `RebuildHeaders`: the header cell (a Grid built in code) | A content presenter with `TableViewHeaderCellPadding`, `TableViewHeaderFontSize`, `TableViewHeaderFontWeight`, `TableViewRowMinHeight`, on a transparent fill. | A control theme of TableViewColumnHeader with those resources as setters and a content presenter in its template. | FerroUI's header is a control. |
+| TVH-2 | The `HeaderGridLine` Border (1 px wide, the grid line brush), collapsed on the last header that meets the border | A vertical line at the trailing edge. | The trailing border of the content presenter (`BorderThickness` 0,0,1,0, `TabularSurfaceGridLineBrush`); the last header (`:nth-last-child(1)`) keeps its width with a transparent brush. | The presenter honours the background, the border, the corner radius and the padding of the header, as the Fluent template does. |
+| TVH-3 | `TableViewHeaderCell`: the PointerOver and Pressed fills (`TabularSurfaceHeader*PointerOver`, `*Pressed`) of a sortable header | A sortable header reacts to the pointer. | Only the Normal state. | FerroUI's TableView does not sort. |
+| TVH-4 | `ResizeGripper` (`ResizeGripper.xaml`), added only for a resizable column | A gripper of `TableViewResizeGripperWidth` at the trailing edge. | The part `PART_Resizer`, a Thumb with the keyed theme `TableViewColumnHeaderResizerStyle` (the template of ResizeGripper), always present, enabled when the column can be resized. | FerroUI's header requires the part. |
+| TVH-5 | `ResizeGripper` `OrientationStates` (`Horizontal`, `Vertical`) | The separator on the right or at the bottom. | The horizontal separator (`ResizeGripperSeparatorThickness`) only. | The gripper of a column header resizes horizontally. |
+| TVH-6 | (not in the template) the cursor of the gripper | - | `Cursor="SizeWestEast"` on the part, as in the Fluent theme. | FerroUI's Thumb sets no cursor. |
+| TVH-7 | The sort indicator, the tool tip of the header, the text block of a plain header with `CharacterEllipsis` | - | Left out; the text is trimmed by the inherited `TextTrimming` of the table (TV-7). | No sorting; no tool tips in FerroUI's headers. |
+
+## TableViewRow
+
+| ID | WinUI source | What WinUI does | What the port does | Why |
+|---|---|---|---|---|
+| TVR-1 | `PART_CellsHost` (TableViewCellsPanel) | The panel the row fills with its cells. | `PART_CellsPresenter` (TableViewCellsPresenter), left aligned. | FerroUI's part. |
+| TVR-2 | `PART_CellForegroundPresenter` (a ContentPresenter whose `Foreground` the states set) | The states set the foreground of the text of the cells. | A Panel whose inherited `TextElement.Foreground` the states set. | The element only carries the foreground. |
+| TVR-3 | `PART_SelectionIndicator` opacity: `LinearDoubleKeyFrame` to 1 at 83 ms in the Selected states | Fades the indicator in. | A setter of the opacity and a `DoubleTransition` of 83 ms; the return to 0 animates too. | G-3. |
+| TVR-4 | The `CornerRadius` setter (`ControlCornerRadius`), which the template does not use; `HorizontalContentAlignment` | The row has square corners. | The `CornerRadius` setter is left out and the template honours `CornerRadius`, `Padding`, `HorizontalContentAlignment` and `VerticalContentAlignment` of the row on `PART_RootBorder` (`VerticalContentAlignment` set to `Stretch`). | The contract of FerroUI's template (the Fluent theme honours them). |
+| TVR-5 | `HighContrastAdjustment` setters of the states | Turns off the backplate of high contrast text. | Left out. | FerroUI has no such property. |
+| TVR-6 | `RowExpansionStates`, `RowExpandabilityStates`, `RowHierarchyStates`, `PART_RowExpanderGutter`, `PART_RowExpanderIcon` | The hierarchy of tree rows. | Left out. | FerroUI's TableView has no hierarchy. |
+
 ## FerroUI controls without a WinUI counterpart
 
 What each FerroUI control the WinUI theme styles, or will style, is built from when WinUI 3 has no
@@ -465,7 +509,7 @@ their sections above).
 | PopupRoot | F | ported | No WinUI style: the text of the window (TextFillColorPrimaryBrush, ContentControlThemeFontFamily, ControlContentThemeFontSize). |
 | SelectableTextBlock | B1 | ported | No WinUI control (TextBlock.IsTextSelectionEnabled): the selection colours of the text selection manager of WinUI (SystemControlHighlightAccentBrush, SystemColorHighlightTextColor). |
 | TabbedPage | B5 | pending | No WinUI control: TabView (DefaultTabViewStyle) and the page background. |
-| TableView | B6 | pending | No control of the merged theme: WinUI's TableView of the tabular library (controls/dev/TableView, TableView_themeresources.xaml, not part of XamlControlsResources) is the closest source; the ListViewItem resources otherwise. |
+| TableView | B6 | ported | No control of the merged theme: WinUI's TableView of the tabular library (controls/dev/TableView, TableView_themeresources.xaml, not part of XamlControlsResources) is the closest source; the ListViewItem resources otherwise. |
 | TextSelectionHandle | B1 | ported | No WinUI style (the selection grippers are drawn in code, Gripper.cpp): the gripper circles in SystemColorWindowColor outlined in TextControlSelectionHighlightColor. |
 | ThemeVariantScope | F | ported | No WinUI style: the text foreground (TextFillColorPrimaryBrush). |
 | TransitioningContentControl | B1 | ported | No WinUI style: the template of ContentControl ({ContentControl}, generic.xaml), twice, for the page transition of the control. |

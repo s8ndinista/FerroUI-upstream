@@ -424,6 +424,16 @@ Two resource documents are written by hand: `Resources/SystemResources.xaml` (se
 `Resources/Glyphs.xaml` (the glyph geometries; a batch that needs a glyph adds its geometry
 there, with the code point and the name of the glyph in a comment).
 
+Three generated documents are not part of the merged theme: WinUI's TableView belongs to the
+tabular library of microsoft-ui-xaml, whose resources an application gets from
+TabularControlsResources, not from XamlControlsResources. The converter converts them whole
+(`OUTSIDE_THE_MERGE` in `convert.py`: `controls/dev/CommonStyles/TabularSurfaces_themeresources.xaml`,
+`controls/dev/TableView/TableView_themeresources.xaml`,
+`controls/dev/ResizeGripper/ResizeGripper_themeresources.xaml`) into documents of the same names,
+merged after the documents of the merge, so that the TableView controls of the port use the
+resources by their WinUI keys. Their keys are not keys of the merged theme and the tracking does
+not list them.
+
 ### 5.1 Waivers
 
 `scripts/winui-theme/waivers.json` lists what the port does not carry, each entry with a
@@ -520,10 +530,10 @@ ports a control updates its state by porting it, not by editing the table.
 | `TabStrip.xaml` | `{TabStrip}` | SelectorBar: DefaultSelectorBarStyle (SelectorBar.xaml, SelectorBar_themeresources.xaml). | B5 | pending |
 | `TabStripItem.xaml` | `{TabStripItem}` | SelectorBarItem: DefaultSelectorBarItemStyle, SelectorBarItemPill (SelectorBar.xaml, SelectorBar_themeresources.xaml). | B5 | pending |
 | `TabbedPage.xaml` | `{TabbedPage}` | No WinUI control: TabView (DefaultTabViewStyle) and the page background. | B5 | pending |
-| `TableView.xaml` | `{TableView}` | No control of the merged theme: WinUI's TableView of the tabular library (controls/dev/TableView, TableView_themeresources.xaml, not part of XamlControlsResources) is the closest source; the ListViewItem resources otherwise. | B6 | pending |
-| `TableViewCell.xaml` | `{TableViewCell}` | As TableView: the cells of controls/dev/TableView. | B6 | pending |
-| `TableViewColumnHeader.xaml` | `{TableViewColumnHeader}` | As TableView: the column headers of controls/dev/TableView and SortIndicator. | B6 | pending |
-| `TableViewRow.xaml` | `{TableViewRow}` | As TableView: the rows of controls/dev/TableView; the ListViewItem resources. | B6 | pending |
+| `TableView.xaml` | `{TableView}` | No control of the merged theme: WinUI's TableView of the tabular library (controls/dev/TableView, TableView_themeresources.xaml, not part of XamlControlsResources) is the closest source; the ListViewItem resources otherwise. | B6 | ported |
+| `TableViewCell.xaml` | `{TableViewCell}` | As TableView: the cells of controls/dev/TableView. | B6 | ported |
+| `TableViewColumnHeader.xaml` | `{TableViewColumnHeader}` | As TableView: the column headers of controls/dev/TableView and SortIndicator. | B6 | ported |
+| `TableViewRow.xaml` | `{TableViewRow}` | As TableView: the rows of controls/dev/TableView; the ListViewItem resources. | B6 | ported |
 | `TextBox.xaml` | `{TextBox}` | TextBox: DefaultTextBoxStyle and its DeleteButtonStyle (TextBox_themeresources.xaml); PasswordBox: DefaultPasswordBoxStyle (PasswordBox_themeresources.xaml) for the reveal button (pending, B3). | F | ported |
 | `TextSelectionHandle.xaml` | `{TextSelectionHandle}` | No WinUI style (the selection grippers are drawn in code, Gripper.cpp): the gripper circles in SystemColorWindowColor outlined in TextControlSelectionHighlightColor. | B1 | ported |
 | `ThemeVariantScope.xaml` | `{ThemeVariantScope}` | No WinUI style: the text foreground (TextFillColorPrimaryBrush). | F | ported |

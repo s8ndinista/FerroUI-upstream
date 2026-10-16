@@ -229,6 +229,11 @@ control_tests! {
     text_selection_handle => "TextSelectionHandle";
     tool_tip => "ToolTip";
     transitioning_content_control => "TransitioningContentControl";
+    // B6: window decorations, notifications, tables and dialogs
+    table_view => "TableView";
+    table_view_cell => "TableViewCell";
+    table_view_column_header => "TableViewColumnHeader";
+    table_view_row => "TableViewRow";
 }
 
 /// The window itself is themed: its template is applied when it is shown
