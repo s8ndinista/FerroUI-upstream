@@ -751,6 +751,21 @@ The section covers both control themes of the document: ManagedFileChooser and M
 | NUD-14 | (not in WinUI) | No input validation. | `:error` gives the border of the text box `SystemFillColorCriticalBrush`. | The FerroUI contract (data validation). |
 | NUD-15 | `IsTabStop="False"` of the spin button styles | The buttons are not tab stops. | Also `Focusable="False"`. | A focusable button would take the focus from the text box. |
 
+## PipsPager
+
+| ID | WinUI source | What WinUI does | What the port does | Why |
+|---|---|---|---|---|
+| PPG-1 | controls/dev/PipsPager/PipsPager.xaml: `ScrollViewer x:Name="PipsPagerScrollViewer"` with an `ItemsRepeater` of `Button`s, styled by the control with `SelectedPipStyle` and `NormalPipStyle` | The pips are buttons. | The ListBox `PART_PipsPagerList` of FerroUI's pager, with the keyed theme `PipsPagerListStyle` (a scroll viewer `PART_ScrollViewer` with hidden bars around the items) and the item theme `PipsPagerPipItemStyle`: the template and the states of `PipsPagerButtonBaseStyle` with the values of `PipsPagerSelectedPipButtonStyle` in `:selected`; the pip button styles are ported as keyed Button themes. | FerroUI's pager selects a page through its list. |
+| PPG-2 | `PreviousPageButton`, `NextPageButton`; `PreviousButtonStyle`, `NextButtonStyle`, `SelectedPipStyle`, `NormalPipStyle` | The navigation buttons and the styles the control applies. | `PART_PreviousButton`, `PART_NextButton` with `PreviousButtonTheme` and `NextButtonTheme` (defaults `PipsPagerPreviousPageButtonStyle`, `PipsPagerNextPageButtonStyle`); the pip styles have no counterpart property. | The parts and properties of FerroUI's pager. |
+| PPG-3 | `FontIcon x:Name="Content" Glyph="{TemplateBinding Content}"` of the button templates; the `Content` setters (`PipsPagerPreviousPageButtonGlyph` EDDB, `PipsPagerNextPageButtonGlyph` EDDC, `PipsPagerNormalGlyph`/`PipsPagerSelectedGlyph` EA3B) | The glyph of the content, at the font size of the button. | A `Path` named `Content`, as wide as the font size, with the geometry the keyed themes set (`GlyphGeometryEDDB`, `GlyphGeometryEDDC`, `GlyphGeometryEA3B`); the `Content` setters are left out. | G-9. |
+| PPG-4 | `PipsPagerNormalGlyphFontSize` (4), `PipsPagerSelectedGlyphFontSize` (6) | `x:String` resources used as font sizes. | The values are written. | A string resource does not convert to a double. |
+| PPG-5 | `Grid x:Name="RootGrid"` with border and corner radius; the pressed `ScaleTransform` (`PipsPagerNavigationButtonScalePressed`, 0.875, a key frame at 16 ms repeated forever) | The button panel; the glyph shrinks while pressed. | `Border`s; `RenderTransform="scale(0.875)"` of the inner `Border` named `ScaleTransform` in `:pressed`. | G-17; G-2. |
+| PPG-6 | `PreviousPageButtonVisibilityStates`, `NextPageButtonVisibilityStates` (`Visible`, `Hidden` at the first or last page, `Collapsed`; `VisibleOnPointerHover`), the `IsEnabledStates` | The control shows, hides and disables the buttons. | `Hidden` is `:first-page` and `:last-page` (opacity 0); `Collapsed` is `IsPreviousButtonVisible`/`IsNextButtonVisible`; the control sets `IsEnabled`; `VisibleOnPointerHover` has no counterpart. | FerroUI's pager has boolean visibilities. |
+| PPG-7 | `RootPanelOrientationStates` (`HorizontalOrientationView`: the buttons turned by -90 degrees); `OrientationStates` of the pips (24 x 12 when vertical) | The layout of the orientation. | `:horizontal` turns the navigation buttons; the pips take the vertical size in `:vertical` (the size of the item). | G-1. |
+| PPG-8 | `ToolTipService.ToolTip` (the automation name) and `ToolTipService.Placement` of the navigation buttons | Tooltips. | Left out. | The automation name of a button is not a bindable property in FerroUI. |
+| PPG-9 | `VerticalScrollMode`, `HorizontalScrollMode`, `IsHorizontalScrollChainingEnabled`, `IsVerticalScrollChainingEnabled` of the scroll viewer | Scroll modes and chaining. | `IsScrollChainingEnabled="False"`; the modes are left out. | G-19. |
+| PPG-10 | `UseSystemFocusVisuals`, `FocusVisualMargin="0"` | Focus visual. | `FocusAdorner` with `Margin="0"`. | G-14. |
+
 ## Slider
 
 | ID | WinUI source | What WinUI does | What the port does | Why |
