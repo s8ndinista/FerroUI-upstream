@@ -139,6 +139,17 @@ python3 scripts/winui-theme/report.py <share>/ferroui-vm-windows/vm-smoke-winui-
 python3 scripts/winui-theme/report.py <share>/ferroui-vm-windows/vm-smoke-winui-theme/capture
 ```
 
+### 4.1 In continuous integration
+
+The Windows job of `.github/workflows/ci.yml` runs both modes on the desktop of its runner after
+the WinUI step (which installs the Windows App Runtime 1.6 and puts the bootstrap library beside
+the executables): the step "WinUI theme gallery (capture, comparison with native WinUI 3;
+informative)" builds the two binaries, runs the capture mode into `target/winui-theme/capture`
+and the comparison host into `target/winui-theme/compare`, makes both HTML reports, and the
+artifact `winui-theme-gallery-windows` keeps the directory. The step does not fail the job while
+the comparison is calibrated. It is the path that does not need the virtual machine (the runner
+is x64; the virtual machine is ARM64).
+
 ## 5. Reading the report
 
 `scripts/winui-theme/report.py <directory>` writes `report.html` into the directory (standard library only; the report names the pictures by their file names, so the directory can be copied with it). For a comparison directory it has:
