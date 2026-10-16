@@ -90440,7 +90440,7 @@
    "batch": "B5",
    "winui": "No WinUI control: the pane of NavigationView (NavigationView_themeresources.xaml) and SplitView (DefaultSplitViewStyle).",
    "status": "ported",
-   "deviations": 12,
+   "deviations": 13,
    "date": "2026-10-16"
   },
   {
@@ -91587,7 +91587,7 @@
   "CarouselPage": 1,
   "CommandBar": 20,
   "ContentPage": 1,
-  "DrawerPage": 12,
+  "DrawerPage": 13,
   "NavigationPage": 7,
   "SplitView": 6,
   "TabControl": 8,

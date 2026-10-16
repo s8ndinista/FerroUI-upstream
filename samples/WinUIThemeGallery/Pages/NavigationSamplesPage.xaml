@@ -47,7 +47,8 @@
                     DrawerLayoutBehavior="Split"
                     DrawerLength="130">
           <DrawerPage.Drawer>
-            <ListBox>
+            <!-- The items of the pane of NavigationView (the native side's NavigationViewItems). -->
+            <ListBox Theme="{StaticResource DrawerPageNavigationViewMenu}">
               <ListBoxItem Content="Home" IsSelected="True" />
               <ListBoxItem Content="Settings" />
               <ListBoxItem Content="About" />
