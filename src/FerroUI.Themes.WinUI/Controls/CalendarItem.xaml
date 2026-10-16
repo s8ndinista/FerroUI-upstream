@@ -54,7 +54,12 @@
     <!-- CalendarViewWeekDayMargin (1); the bottom margin adds the 2 px between the day names and
          the days of the source (the top margin of MonthViewScrollViewer). -->
     <Setter Property="Margin" Value="1,1,1,3" />
-    <Setter Property="Padding" Value="{DynamicResource CalendarViewWeekDayPadding}" />
+    <!-- CalendarViewWeekDayPadding (12) above and below only: in WinUI the columns of the day
+         names are the 42 px of the day items (40 and a margin of 1), and a name with its padding
+         of 12 at both sides (44 px for "We") does not widen them; in FerroUI's grid it would widen
+         every column, and the calendar by 5 px. The names are centred, so the horizontal padding
+         does not move them. -->
+    <Setter Property="Padding" Value="0,12" />
   </ControlTheme>
 
   <!-- HeaderNavigationButtonStyle of the template of DefaultCalendarViewStyle. -->
