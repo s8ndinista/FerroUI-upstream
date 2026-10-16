@@ -78,6 +78,8 @@
         <!-- B2: buttons, ranges and expanders. -->
         <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/DropDownButton.xaml" />
         <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/SplitButton.xaml" />
+        <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/ToggleSwitch.xaml" />
+        <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/Slider.xaml" />
       </ResourceDictionary.MergedDictionaries>
     </ResourceDictionary>
   </Styles.Resources>

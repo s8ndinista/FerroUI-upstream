@@ -256,7 +256,9 @@ control_tests! {
     tabbed_page => "TabbedPage";
     // B2: buttons, ranges and expanders
     drop_down_button => "DropDownButton";
+    slider => "Slider";
     split_button => "SplitButton";
+    toggle_switch => "ToggleSwitch";
 }
 
 /// The window itself is themed: its template is applied when it is shown

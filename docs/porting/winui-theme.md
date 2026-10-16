@@ -512,7 +512,7 @@ ports a control updates its state by porting it, not by editing the table.
 | `ScrollViewer.xaml` | `{ScrollViewer}` | ScrollViewer: DefaultScrollViewerStyle (ScrollViewer_themeresources.xaml). | F | ported |
 | `SelectableTextBlock.xaml` | `{SelectableTextBlock}` | No WinUI control (TextBlock.IsTextSelectionEnabled): the selection colours of the text selection manager of WinUI (SystemControlHighlightAccentBrush, SystemColorHighlightTextColor). | B1 | ported |
 | `Separator.xaml` | `{Separator}` | MenuFlyoutSeparator: {MenuFlyoutSeparator} (MenuFlyout_themeresources.xaml); AppBarSeparator for a separator in a command bar. | B1 | ported |
-| `Slider.xaml` | `{Slider}` | Slider: DefaultSliderStyle (Slider_themeresources.xaml). | B2 | pending |
+| `Slider.xaml` | `{Slider}` | Slider: DefaultSliderStyle (Slider_themeresources.xaml). | B2 | ported |
 | `SplitButton.xaml` | `{SplitButton}` | SplitButton: SplitButtonStyle (SplitButton.xaml), SplitButtonCommandBarStyle (SplitButton_themeresources.xaml); ToggleSplitButton. | B2 | ported |
 | `SplitView.xaml` | `{SplitView}` | SplitView: DefaultSplitViewStyle (SplitView_themeresources.xaml). | B5 | ported |
 | `TabControl.xaml` | `{TabControl}` | TabView: DefaultTabViewStyle (TabView.xaml, TabView_themeresources.xaml). | B5 | ported |
@@ -529,7 +529,7 @@ ports a control updates its state by porting it, not by editing the table.
 | `ThemeVariantScope.xaml` | `{ThemeVariantScope}` | No WinUI style: the text foreground (TextFillColorPrimaryBrush). | F | ported |
 | `TimePicker.xaml` | `{TimePicker}`, `{TimePickerPresenter}` | TimePicker: {TimePicker}; TimePickerFlyoutPresenter: {TimePickerFlyoutPresenter} (TimePicker_themeresources.xaml). | B4 | ported |
 | `ToggleButton.xaml` | `{ToggleButton}` | ToggleButton: DefaultToggleButtonStyle (ToggleButton_themeresources.xaml). | F | ported |
-| `ToggleSwitch.xaml` | `{ToggleSwitch}` | ToggleSwitch: DefaultToggleSwitchStyle (ToggleSwitch_themeresources.xaml). | B2 | pending |
+| `ToggleSwitch.xaml` | `{ToggleSwitch}` | ToggleSwitch: DefaultToggleSwitchStyle (ToggleSwitch_themeresources.xaml). | B2 | ported |
 | `ToolTip.xaml` | `{ToolTip}` | ToolTip: DefaultToolTipStyle (ToolTip_themeresources.xaml). | B1 | ported |
 | `TransitioningContentControl.xaml` | `{TransitioningContentControl}` | No WinUI style: the template of ContentControl ({ContentControl}, generic.xaml), twice, for the page transition of the control. | B1 | ported |
 | `TreeView.xaml` | `{TreeView}` | TreeView: DefaultTreeViewStyle (TreeView.xaml, TreeView_themeresources.xaml). | B3 | pending |

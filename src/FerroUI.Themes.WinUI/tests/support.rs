@@ -385,8 +385,6 @@ pub const PENDING_CONTROLS: &[&str] = &[
     "PipsPager",
     "RefreshContainer",
     "RefreshVisualizer",
-    "Slider",
-    "ToggleSwitch",
     // B3: flyouts, menus, lists and selection
     "AutoCompleteBox",
     "ComboBox",
