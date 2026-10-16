@@ -396,7 +396,7 @@ it. Abbreviations: CS = `controls/dev/CommonStyles/`, GX = `dxaml/xcp/dxaml/them
 | ID | WinUI source | What WinUI does | What the port does | Why |
 |---|---|---|---|---|
 | PI-1 | `dxaml/xcp/core/core/elements/icon.cpp` `CPathIcon::ApplyTemplate` | The control creates a Path in code: alignments Stretch, `Fill` linked to `Foreground`, `Data` linked to `Data`. | The same Path as the template, inside a Border of the `Background` of the control. | FerroUI's PathIcon is a templated control. |
-| PI-2 | (no size) IconElement | No default size; the Path keeps `Stretch` None, so the geometry is drawn in its own coordinates. | The same: no `Width` or `Height`, the geometry not scaled. | Faithful; recorded because FerroUI's other themes size a PathIcon to `IconElementThemeWidth`/`IconElementThemeHeight` (20) and scale the geometry uniformly, which this theme does not. |
+| PI-2 | (no size) IconElement | No default size; the Path keeps `Stretch` None, so the geometry is drawn in its own coordinates and an icon whose geometry is larger than its box is cut. | 20 by 20 (`Width`, `Height`), the geometry scaled uniformly in a `Viewbox`, as the Fluent and Simple themes of the framework. | The framework's applications (the ControlCatalog's navigation) give path icons geometries of other sizes (24 units) and rely on the scaling; drawn unscaled they were cut in the catalog. |
 
 ## PopupRoot
 
