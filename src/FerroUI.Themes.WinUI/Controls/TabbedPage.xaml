@@ -162,7 +162,16 @@
                   <ContentPresenter x:Name="Icon"
                                     Content="{TemplateBinding Icon}"
                                     ContentTemplate="{TemplateBinding IconTemplate}"
-                                    Foreground="{TemplateBinding Foreground}" />
+                                    Foreground="{TemplateBinding Foreground}">
+                    <ContentPresenter.Styles>
+                      <!-- A path icon as WinUI's, unscaled, so that the Viewbox scales its geometry as WinUI's does (PI-3). -->
+                      <Style Selector="PathIcon">
+                        <Setter Property="Width" Value="NaN" />
+                        <Setter Property="Height" Value="NaN" />
+                        <Setter Property="Template" Value="{StaticResource PathIconUnscaledTemplate}" />
+                      </Style>
+                    </ContentPresenter.Styles>
+                  </ContentPresenter>
                 </Viewbox>
                 <Border Width="8"
                         IsVisible="{TemplateBinding Icon, Converter={x:Static ObjectConverters.IsNotNull}}" />
