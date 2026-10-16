@@ -3,7 +3,9 @@
      with its items at the top; NavigationPage is a bar with the title of the page over its
      content (what a Frame with a page and a title bar shows); DrawerPage is a NavigationView
      with its pane open at the left; CarouselPage and Carousel are FlipView. PipsPager and
-     RefreshContainer have the same names. -->
+     RefreshContainer have the same names; the PipsPager shows its previous and next buttons,
+     which WinUI collapses by default and the framework's PipsPager shows by default
+     (IsPreviousButtonVisible, IsNextButtonVisible), so that both sides show the same parts. -->
 <StackPanel xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
             Margin="24" Spacing="12">
@@ -41,7 +43,8 @@
       </Grid>
 
       <TextBlock Text="PipsPager" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" />
-      <PipsPager HorizontalAlignment="Left" NumberOfPages="5" SelectedPageIndex="2" />
+      <PipsPager HorizontalAlignment="Left" NumberOfPages="5" SelectedPageIndex="2"
+                 PreviousButtonVisibility="Visible" NextButtonVisibility="Visible" />
     </StackPanel>
 
     <StackPanel Grid.Column="1" Spacing="12">

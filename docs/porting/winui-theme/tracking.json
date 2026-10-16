@@ -90692,7 +90692,7 @@
    "batch": "B2",
    "winui": "PipsPager: {PipsPager} (PipsPager.xaml), PipsPagerNavigationButtonBaseStyle, PipsPagerPreviousPageButtonStyle, PipsPagerNextPageButtonStyle, PipsPagerButtonBaseStyle, PipsPagerSelectedPipButtonStyle, PipsPagerNormalPipButtonStyle (PipsPager_themeresources.xaml).",
    "status": "ported",
-   "deviations": 10,
+   "deviations": 11,
    "date": "2026-10-16"
   },
   {
@@ -91599,7 +91599,7 @@
   "DropDownButton": 4,
   "Expander": 7,
   "NumericUpDown": 15,
-  "PipsPager": 10,
+  "PipsPager": 11,
   "RefreshContainer": 2,
   "RefreshVisualizer": 3,
   "Slider": 11,
