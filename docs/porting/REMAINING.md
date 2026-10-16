@@ -126,9 +126,9 @@ Counted by `scripts/port-status/test_gaps.py --all` (its rules are at its top), 
 | `tests/Avalonia.Headless.UnitTests` | 30 | 30 | 0 | 0 | `data/test-gaps-headless.txt` |
 | `tests/Avalonia.Themes.UnitTests` | 10 | 10 | 0 | 0 | `data/test-gaps-themes.txt` |
 | `tests/Avalonia.Build.Tasks.UnitTest` | 1 | 0 | 0 | 1 | `data/test-gaps-build-tasks.txt` |
-| `tests/Avalonia.DesignerSupport.Tests` | 4 | 3 | 1 | 0 | `data/test-gaps-designer-support.txt` |
+| `tests/Avalonia.DesignerSupport.Tests` | 4 | 4 | 0 | 0 | `data/test-gaps-designer-support.txt` |
 | `tests/Avalonia.RenderTests` | 310 | 301 | 0 | 9 | `data/test-gaps-render.txt` |
-| Total | 6920 | 6778 | 1 | 141 | |
+| Total | 6920 | 6779 | 0 | 141 | |
 
 Test projects that are not counted (no report; `CONTINUATION.md` has the reasons for those that were looked at):
 
