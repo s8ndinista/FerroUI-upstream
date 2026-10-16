@@ -37194,9 +37194,9 @@
    "key": "DefaultPasswordBoxStyle",
    "kind": "Style",
    "target_type": "PasswordBox",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B3"
+   "batch": null
   },
   {
    "document": "controls/dev/CommonStyles/PasswordBox_themeresources.xaml",
@@ -90202,7 +90202,8 @@
   "Resources/ToggleButton_themeresources.xaml",
   "Resources/ToggleSwitch_themeresources.xaml",
   "Resources/ToolTip_themeresources.xaml",
-  "Resources/TreeView_themeresources.xaml"
+  "Resources/TreeView_themeresources.xaml",
+  "Strings/InvariantResources.xaml"
  ],
  "unresolved_references": [],
  "duplicate_keys": [],
@@ -90940,9 +90941,9 @@
     "{TextBox}"
    ],
    "batch": "F",
-   "winui": "TextBox: DefaultTextBoxStyle and its DeleteButtonStyle (TextBox_themeresources.xaml); PasswordBox: DefaultPasswordBoxStyle (PasswordBox_themeresources.xaml) for the reveal button (pending, B3).",
+   "winui": "TextBox: DefaultTextBoxStyle and its DeleteButtonStyle (TextBox_themeresources.xaml); PasswordBox: DefaultPasswordBoxStyle (PasswordBox_themeresources.xaml), a keyed theme with the reveal button; the context flyout of TextCommandBarFlyout as a menu flyout (B3).",
    "status": "ported",
-   "deviations": 12,
+   "deviations": 21,
    "date": "2026-10-16"
   },
   {
@@ -91032,7 +91033,7 @@
    "winui": "TreeView: DefaultTreeViewStyle (TreeView.xaml, TreeView_themeresources.xaml).",
    "status": "ported",
    "deviations": 4,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "TreeViewItem.xaml",
@@ -91043,7 +91044,7 @@
    "winui": "TreeViewItem: {TreeViewItem} (TreeView.xaml), MUX_TreeViewItemStyle (TreeViewItem.xaml).",
    "status": "ported",
    "deviations": 10,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "Window.xaml",
@@ -91560,7 +91561,7 @@
   "SelectableTextBlock": 2,
   "Separator": 1,
   "TextBlock": 3,
-  "TextBox": 12,
+  "TextBox": 21,
   "TextSelectionHandle": 4,
   "ThemeVariantScope": 1,
   "Thumb": 1,
