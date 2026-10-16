@@ -133,6 +133,19 @@ document_tests! {
     controls_tool_tip => "/Controls/ToolTip.xaml";
     controls_transitioning_content_control => "/Controls/TransitioningContentControl.xaml";
     controls_winui_controls => "/Controls/WinUIControls.xaml";
+    // B5: navigation, pages, tabs and command bar
+    controls_carousel => "/Controls/Carousel.xaml";
+    controls_carousel_page => "/Controls/CarouselPage.xaml";
+    controls_command_bar => "/Controls/CommandBar.xaml";
+    controls_content_page => "/Controls/ContentPage.xaml";
+    controls_drawer_page => "/Controls/DrawerPage.xaml";
+    controls_navigation_page => "/Controls/NavigationPage.xaml";
+    controls_split_view => "/Controls/SplitView.xaml";
+    controls_tab_control => "/Controls/TabControl.xaml";
+    controls_tab_item => "/Controls/TabItem.xaml";
+    controls_tab_strip => "/Controls/TabStrip.xaml";
+    controls_tab_strip_item => "/Controls/TabStripItem.xaml";
+    controls_tabbed_page => "/Controls/TabbedPage.xaml";
     controls_window => "/Controls/Window.xaml";
     density_styles_compact => "/DensityStyles/Compact.xaml";
     resources_acrylic_brush_themeresources => "/Resources/AcrylicBrush_themeresources.xaml";

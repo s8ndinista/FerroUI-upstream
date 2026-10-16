@@ -424,16 +424,6 @@ Two resource documents are written by hand: `Resources/SystemResources.xaml` (se
 `Resources/Glyphs.xaml` (the glyph geometries; a batch that needs a glyph adds its geometry
 there, with the code point and the name of the glyph in a comment).
 
-Three generated documents are not part of the merged theme: WinUI's TableView belongs to the
-tabular library of microsoft-ui-xaml, whose resources an application gets from
-TabularControlsResources, not from XamlControlsResources. The converter converts them whole
-(`OUTSIDE_THE_MERGE` in `convert.py`: `controls/dev/CommonStyles/TabularSurfaces_themeresources.xaml`,
-`controls/dev/TableView/TableView_themeresources.xaml`,
-`controls/dev/ResizeGripper/ResizeGripper_themeresources.xaml`) into documents of the same names,
-merged after the documents of the merge, so that the TableView controls of the port use the
-resources by their WinUI keys. Their keys are not keys of the merged theme and the tracking does
-not list them.
-
 ### 5.1 Waivers
 
 `scripts/winui-theme/waivers.json` lists what the port does not carry, each entry with a
@@ -477,18 +467,18 @@ ports a control updates its state by porting it, not by editing the table.
 | `CalendarDatePicker.xaml` | `{CalendarDatePicker}` | CalendarDatePicker: DefaultCalendarDatePicker (CalendarDatePicker_themeresources.xaml). | B4 | ported |
 | `CalendarDayButton.xaml` | `{CalendarDayButton}` | CalendarViewDayItem: {CalendarViewDayItem} (CalendarView_themeresources.xaml). | B4 | ported |
 | `CalendarItem.xaml` | `{CalendarItem}` | The header, navigation buttons and views of the CalendarView template (DefaultCalendarViewStyle). | B4 | ported |
-| `Carousel.xaml` | `{Carousel}` | FlipView: DefaultFlipViewStyle (FlipView_themeresources.xaml) and FlipViewItem. | B5 | pending |
-| `CarouselPage.xaml` | `{CarouselPage}` | No WinUI control: built from FlipView (DefaultFlipViewStyle) and the page background (SolidBackgroundFillColorBaseBrush). | B5 | pending |
+| `Carousel.xaml` | `{Carousel}` | FlipView: DefaultFlipViewStyle (FlipView_themeresources.xaml) and FlipViewItem. | B5 | ported |
+| `CarouselPage.xaml` | `{CarouselPage}` | No WinUI control: built from FlipView (DefaultFlipViewStyle) and the page background (SolidBackgroundFillColorBaseBrush). | B5 | ported |
 | `CheckBox.xaml` | `{CheckBox}` | CheckBox: DefaultCheckBoxStyle (CheckBox_themeresources.xaml). | F | ported |
 | `ComboBox.xaml` | `{ComboBox}` | ComboBox: DefaultComboBoxStyle (ComboBox_themeresources.xaml). | B3 | pending |
 | `ComboBoxItem.xaml` | `{ComboBoxItem}` | ComboBoxItem: DefaultComboBoxItemStyle, ComboBoxItemPill (ComboBox_themeresources.xaml). | B3 | pending |
-| `CommandBar.xaml` | `{CommandBarButton}`, `{CommandBarToggleButton}`, `{CommandBarSeparator}`, `{CommandBar}` | CommandBar: DefaultCommandBarStyle, DefaultCommandBarOverflowPresenterStyle (CommandBar_themeresources.xaml); AppBarButton: DefaultAppBarButtonStyle, AppBarButtonOverflowStyle; AppBarToggleButton: DefaultAppBarToggleButtonStyle, AppBarToggleButtonOverflowStyle; AppBarSeparator: DefaultAppBarSeparatorStyle. | B5 | pending |
-| `ContentPage.xaml` | `{ContentPage}` | No WinUI style (Page has none): the page background and text of the window (SolidBackgroundFillColorBaseBrush, TextFillColorPrimaryBrush). | B5 | pending |
+| `CommandBar.xaml` | `{CommandBarButton}`, `{CommandBarToggleButton}`, `{CommandBarSeparator}`, `{CommandBar}` | CommandBar: DefaultCommandBarStyle, DefaultCommandBarOverflowPresenterStyle (CommandBar_themeresources.xaml); AppBarButton: DefaultAppBarButtonStyle, AppBarButtonOverflowStyle; AppBarToggleButton: DefaultAppBarToggleButtonStyle, AppBarToggleButtonOverflowStyle; AppBarSeparator: DefaultAppBarSeparatorStyle. | B5 | ported |
+| `ContentPage.xaml` | `{ContentPage}` | No WinUI style (Page has none): the page background and text of the window (SolidBackgroundFillColorBaseBrush, TextFillColorPrimaryBrush). | B5 | ported |
 | `ContextMenu.xaml` | `{ContextMenu}` | MenuFlyoutPresenter: DefaultMenuFlyoutPresenterStyle (MenuFlyout_themeresources.xaml). | B3 | pending |
 | `DataValidationErrors.xaml` | `{DataValidationErrors}` | No WinUI style (input validation was removed from WinUI 3): the critical fill of the palette (SystemFillColorCriticalBrush) for the message and the border of the field, and the error icon of InfoBar (InfoBar.xaml, InfoBar_themeresources.xaml) for the tool tip variant. | B1 | ported |
 | `DatePicker.xaml` | `{DatePicker}`, `{DatePickerPresenter}` | DatePicker: DefaultDatePickerStyle; DatePickerFlyoutPresenter: DefaultDatePickerFlyoutPresenterStyle (DatePicker_themeresources.xaml). | B4 | ported |
 | `DateTimePickerShared.xaml` | (keyed themes only) | LoopingSelector: DefaultLoopingSelectorStyle, LoopingSelectorItem; DateTimePickerFlyoutButtonStyle, DateTimePickerFlyoutLoopingSelectorNavigationButtonStyle (DateTimePickerFlyout_themeresources.xaml). | B4 | ported |
-| `DrawerPage.xaml` | `{DrawerPage}` | No WinUI control: the pane of NavigationView (NavigationView_themeresources.xaml) and SplitView (DefaultSplitViewStyle). | B5 | pending |
+| `DrawerPage.xaml` | `{DrawerPage}` | No WinUI control: the pane of NavigationView (NavigationView_themeresources.xaml) and SplitView (DefaultSplitViewStyle). | B5 | ported |
 | `DropDownButton.xaml` | `{DropDownButton}` | DropDownButton: DefaultDropDownButtonStyle (DropDownButton.xaml, DropDownButton_themeresources.xaml). | B2 | pending |
 | `EmbeddableControlRoot.xaml` | `{EmbeddableControlRoot}` | No WinUI style: the background and text of the window (SolidBackgroundFillColorBaseBrush, TextFillColorPrimaryBrush, ContentControlThemeFontFamily, ControlContentThemeFontSize). | F | ported |
 | `Expander.xaml` | `{Expander}` | Expander: DefaultExpanderStyle (Expander.xaml), ExpanderHeaderDownStyle, ExpanderHeaderUpStyle (Expander_themeresources.xaml). | B2 | pending |
@@ -506,7 +496,7 @@ ports a control updates its state by porting it, not by editing the table.
 | `MenuFlyoutPresenter.xaml` | `{MenuFlyoutPresenter}` | MenuFlyoutPresenter: DefaultMenuFlyoutPresenterStyle (MenuFlyout_themeresources.xaml). | B3 | pending |
 | `MenuItem.xaml` | `{MenuItem}` | MenuFlyoutItem: DefaultMenuFlyoutItemStyle; MenuFlyoutSubItem: DefaultMenuFlyoutSubItemStyle; ToggleMenuFlyoutItem: DefaultToggleMenuFlyoutItemStyle (MenuFlyout_themeresources.xaml); RadioMenuFlyoutItem: DefaultRadioMenuFlyoutItemStyle (RadioMenuFlyoutItem_themeresources.xaml). | B3 | pending |
 | `MenuScrollViewer.xaml` | (keyed themes only) | The ScrollViewer of the MenuFlyoutPresenter template (MenuFlyout_themeresources.xaml). | B3 | pending |
-| `NavigationPage.xaml` | `{NavigationPage}` | No WinUI control: NavigationBackButtonNormalStyle, NavigationBackButtonSmallStyle (NavigationBackButton.xaml) and the page background. | B5 | pending |
+| `NavigationPage.xaml` | `{NavigationPage}` | No WinUI control: NavigationBackButtonNormalStyle, NavigationBackButtonSmallStyle (NavigationBackButton.xaml) and the page background. | B5 | ported |
 | `NotificationCard.xaml` | `{NotificationCard}` | InfoBar: {InfoBar} (InfoBar.xaml, InfoBar_themeresources.xaml). | B6 | ported |
 | `NumericUpDown.xaml` | `{NumericUpDown}` | NumberBox: {NumberBox}, NumberBoxTextBoxStyle, NumberBoxSpinButtonStyle (NumberBox.xaml, NumberBox_themeresources.xaml). | B2 | pending |
 | `OverlayPopupHost.xaml` | `{OverlayPopupHost}` | No WinUI style: the text of the window (TextFillColorPrimaryBrush, ContentControlThemeFontFamily, ControlContentThemeFontSize). | F | ported |
@@ -524,12 +514,12 @@ ports a control updates its state by porting it, not by editing the table.
 | `Separator.xaml` | `{Separator}` | MenuFlyoutSeparator: {MenuFlyoutSeparator} (MenuFlyout_themeresources.xaml); AppBarSeparator for a separator in a command bar. | B1 | ported |
 | `Slider.xaml` | `{Slider}` | Slider: DefaultSliderStyle (Slider_themeresources.xaml). | B2 | pending |
 | `SplitButton.xaml` | `{SplitButton}` | SplitButton: SplitButtonStyle (SplitButton.xaml), SplitButtonCommandBarStyle (SplitButton_themeresources.xaml); ToggleSplitButton. | B2 | pending |
-| `SplitView.xaml` | `{SplitView}` | SplitView: DefaultSplitViewStyle (SplitView_themeresources.xaml). | B5 | pending |
-| `TabControl.xaml` | `{TabControl}` | TabView: DefaultTabViewStyle (TabView.xaml, TabView_themeresources.xaml). | B5 | pending |
-| `TabItem.xaml` | `{TabItem}` | TabViewItem: {TabViewItem} (TabView.xaml). | B5 | pending |
-| `TabStrip.xaml` | `{TabStrip}` | SelectorBar: DefaultSelectorBarStyle (SelectorBar.xaml, SelectorBar_themeresources.xaml). | B5 | pending |
-| `TabStripItem.xaml` | `{TabStripItem}` | SelectorBarItem: DefaultSelectorBarItemStyle, SelectorBarItemPill (SelectorBar.xaml, SelectorBar_themeresources.xaml). | B5 | pending |
-| `TabbedPage.xaml` | `{TabbedPage}` | No WinUI control: TabView (DefaultTabViewStyle) and the page background. | B5 | pending |
+| `SplitView.xaml` | `{SplitView}` | SplitView: DefaultSplitViewStyle (SplitView_themeresources.xaml). | B5 | ported |
+| `TabControl.xaml` | `{TabControl}` | TabView: DefaultTabViewStyle (TabView.xaml, TabView_themeresources.xaml). | B5 | ported |
+| `TabItem.xaml` | `{TabItem}` | TabViewItem: {TabViewItem} (TabView.xaml). | B5 | ported |
+| `TabStrip.xaml` | `{TabStrip}` | SelectorBar: DefaultSelectorBarStyle (SelectorBar.xaml, SelectorBar_themeresources.xaml). | B5 | ported |
+| `TabStripItem.xaml` | `{TabStripItem}` | SelectorBarItem: DefaultSelectorBarItemStyle, SelectorBarItemPill (SelectorBar.xaml, SelectorBar_themeresources.xaml). | B5 | ported |
+| `TabbedPage.xaml` | `{TabbedPage}` | No WinUI control: NavigationView with its pane at the top (TopNavArea of NavigationView.xaml, MUX_NavigationViewItemPresenterStyleWhenOnTopPane of NavigationView_themeresources.xaml) and the page background. | B5 | ported |
 | `TableView.xaml` | `{TableView}` | No control of the merged theme: WinUI's TableView of the tabular library (controls/dev/TableView, TableView_themeresources.xaml, not part of XamlControlsResources) is the closest source; the ListViewItem resources otherwise. | B6 | ported |
 | `TableViewCell.xaml` | `{TableViewCell}` | As TableView: the cells of controls/dev/TableView. | B6 | ported |
 | `TableViewColumnHeader.xaml` | `{TableViewColumnHeader}` | As TableView: the column headers of controls/dev/TableView and SortIndicator. | B6 | ported |

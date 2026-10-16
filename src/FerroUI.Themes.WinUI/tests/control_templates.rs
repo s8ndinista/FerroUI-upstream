@@ -238,6 +238,22 @@ control_tests! {
     table_view_column_header => "TableViewColumnHeader";
     table_view_row => "TableViewRow";
     window_notification_manager => "WindowNotificationManager";
+    // B5: navigation, pages, tabs and command bar
+    carousel => "Carousel";
+    carousel_page => "CarouselPage";
+    command_bar => "CommandBar";
+    command_bar_button => "CommandBarButton";
+    command_bar_separator => "CommandBarSeparator";
+    command_bar_toggle_button => "CommandBarToggleButton";
+    content_page => "ContentPage";
+    drawer_page => "DrawerPage";
+    navigation_page => "NavigationPage";
+    split_view => "SplitView";
+    tab_control => "TabControl";
+    tab_item => "TabItem";
+    tab_strip => "TabStrip";
+    tab_strip_item => "TabStripItem";
+    tabbed_page => "TabbedPage";
 }
 
 /// The window itself is themed: its template is applied when it is shown

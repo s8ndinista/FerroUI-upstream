@@ -402,22 +402,6 @@ pub const PENDING_CONTROLS: &[&str] = &[
     "MenuItem",
     "TreeView",
     "TreeViewItem",
-    // B5: navigation, pages, tabs and command bar
-    "Carousel",
-    "CarouselPage",
-    "CommandBar",
-    "CommandBarButton",
-    "CommandBarSeparator",
-    "CommandBarToggleButton",
-    "ContentPage",
-    "DrawerPage",
-    "NavigationPage",
-    "SplitView",
-    "TabControl",
-    "TabItem",
-    "TabStrip",
-    "TabStripItem",
-    "TabbedPage",
 ];
 
 /// Whether the control named `name` waits for a batch.

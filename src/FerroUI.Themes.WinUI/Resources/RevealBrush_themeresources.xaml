@@ -39,4 +39,6 @@
       <SolidColorBrush x:Key="SystemControlHighlightAltTransparentRevealBorderBrush" Color="{DynamicResource SystemColorHighlightTextColor}" />
     </ResourceDictionary>
   </ResourceDictionary.ThemeDictionaries>
+  <Thickness x:Key="CommandBarMoreButtonMargin">14,19,14,0</Thickness>
+  <x:Double x:Key="AppBarButtonContentHeight">16</x:Double>
 </ResourceDictionary>

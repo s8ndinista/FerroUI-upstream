@@ -8,8 +8,13 @@
   section 4.7), sized to the ink of the glyph at the font size of the source.
 
   GlyphGeometryE73E (CheckMark) and GlyphGeometryE894 (Clear) are the outlines of the Fluent theme
-  of FerroUI (src/FerroUI.Themes.Fluent/Controls/CheckBox.xaml, TextBox.xaml). The others are drawn
-  for the port.
+  of FerroUI (src/FerroUI.Themes.Fluent/Controls/CheckBox.xaml, TextBox.xaml), and so are
+  GlyphGeometryE700 (GlobalNavigationButton) and GlyphGeometryE72B (Back)
+  (src/FerroUI.Themes.Fluent/Controls/NavigationPage.xaml). The others are drawn for the port.
+
+  NavigationPageMenuIcon is not a glyph of WinUI: it is the key FerroUI's NavigationPage looks up
+  in code for the icon of its drawer toggle, here the GlobalNavigationButton glyph that WinUI's
+  pane toggle button shows (PaneToggleButtonStyle).
 -->
 <ResourceDictionary xmlns="https://github.com/ferroui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -74,4 +79,15 @@
   <StreamGeometry x:Key="GlyphGeometryE8B7">M1.5,2 H5.293 A1,1 0 0 1 6,2.293 L7.707,4 H14.5 A1.5,1.5 0 0 1 16,5.5 V12.5 A1.5,1.5 0 0 1 14.5,14 H1.5 A1.5,1.5 0 0 1 0,12.5 V3.5 A1.5,1.5 0 0 1 1.5,2 Z M1,3.5 A0.5,0.5 0 0 1 1.5,3 H5.086 L6.586,4.5 L6.086,5 H1 Z M1,6 H6.5 L7.5,5 H14.5 A0.5,0.5 0 0 1 15,5.5 V12.5 A0.5,0.5 0 0 1 14.5,13 H1.5 A0.5,0.5 0 0 1 1,12.5 Z</StreamGeometry>
   <StreamGeometry x:Key="GlyphGeometryE7C3">M2.5,0 H9.586 A1.5,1.5 0 0 1 10.646,0.44 L13.56,3.354 A1.5,1.5 0 0 1 14,4.414 V14.5 A1.5,1.5 0 0 1 12.5,16 H2.5 A1.5,1.5 0 0 1 1,14.5 V1.5 A1.5,1.5 0 0 1 2.5,0 Z M2.5,1 A0.5,0.5 0 0 0 2,1.5 V14.5 A0.5,0.5 0 0 0 2.5,15 H12.5 A0.5,0.5 0 0 0 13,14.5 V5 H10.5 A1.5,1.5 0 0 1 9,3.5 V1 Z M10,1.207 V3.5 A0.5,0.5 0 0 0 10.5,4 H12.793 Z</StreamGeometry>
   <StreamGeometry x:Key="GlyphGeometryEDA2">M2,4 H14 A2,2 0 0 1 16,6 V10 A2,2 0 0 1 14,12 H2 A2,2 0 0 1 0,10 V6 A2,2 0 0 1 2,4 Z M2,5 A1,1 0 0 0 1,6 V10 A1,1 0 0 0 2,11 H14 A1,1 0 0 0 15,10 V6 A1,1 0 0 0 14,5 Z M12,7.25 A0.75,0.75 0 1 1 12,8.75 A0.75,0.75 0 1 1 12,7.25 Z</StreamGeometry>
+  <!-- E700 GlobalNavigationButton: the pane toggle button of NavigationView (PaneToggleButtonStyle),
+       the drawer toggle of DrawerPage and NavigationPage. -->
+  <StreamGeometry x:Key="GlyphGeometryE700">M3 17h18a1 1 0 0 1 .117 1.993L21 19H3a1 1 0 0 1-.117-1.993L3 17h18H3Zm0-6 18-.002a1 1 0 0 1 .117 1.993l-.117.007L3 13a1 1 0 0 1-.117-1.993L3 11l18-.002L3 11Zm0-6h18a1 1 0 0 1 .117 1.993L21 7H3a1 1 0 0 1-.117-1.993L3 5h18H3Z</StreamGeometry>
+  <!-- E72B Back: the back button of NavigationView (NavigationBackButtonNormalStyle) and of
+       NavigationPage. -->
+  <StreamGeometry x:Key="GlyphGeometryE72B">M12.7347,4.20949 C13.0332,3.92233 13.508,3.93153 13.7952,4.23005 C14.0823,4.52857 14.0731,5.00335 13.7746,5.29051 L5.50039,13.25 L24.2532,13.25 C24.6674,13.25 25.0032,13.5858 25.0032,13.9999982 C25.0032,14.4142 24.6674,14.75 24.2532,14.75 L5.50137,14.75 L13.7746,22.7085 C14.0731,22.9957 14.0823,23.4705 13.7952,23.769 C13.508,24.0675 13.0332,24.0767 12.7347,23.7896 L3.30673,14.7202 C2.89776,14.3268 2.89776,13.6723 3.30673,13.2788 L12.7347,4.20949 Z</StreamGeometry>
+  <!-- E712 More: the ellipsis of the More button of CommandBar (EllipsisIcon), three dots. -->
+  <StreamGeometry x:Key="GlyphGeometryE712">M1.5,0 A1.5,1.5 0 1 1 1.5,3 A1.5,1.5 0 1 1 1.5,0 Z M7.5,0 A1.5,1.5 0 1 1 7.5,3 A1.5,1.5 0 1 1 7.5,0 Z M13.5,0 A1.5,1.5 0 1 1 13.5,3 A1.5,1.5 0 1 1 13.5,0 Z</StreamGeometry>
+  <!-- The icon of the drawer toggle FerroUI's NavigationPage looks up in code and casts to a
+       StreamGeometry (not a key of WinUI): the outline of E700. -->
+  <StreamGeometry x:Key="NavigationPageMenuIcon">M3 17h18a1 1 0 0 1 .117 1.993L21 19H3a1 1 0 0 1-.117-1.993L3 17h18H3Zm0-6 18-.002a1 1 0 0 1 .117 1.993l-.117.007L3 13a1 1 0 0 1-.117-1.993L3 11l18-.002L3 11Zm0-6h18a1 1 0 0 1 .117 1.993L21 7H3a1 1 0 0 1-.117-1.993L3 5h18H3Z</StreamGeometry>
 </ResourceDictionary>

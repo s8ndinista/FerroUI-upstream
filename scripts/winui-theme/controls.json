@@ -102,7 +102,7 @@
     {"document": "TabItem.xaml", "themes": ["{TabItem}"], "batch": "B5", "winui": "TabViewItem: {TabViewItem} (TabView.xaml)."},
     {"document": "TabStrip.xaml", "themes": ["{TabStrip}"], "batch": "B5", "winui": "SelectorBar: DefaultSelectorBarStyle (SelectorBar.xaml, SelectorBar_themeresources.xaml)."},
     {"document": "TabStripItem.xaml", "themes": ["{TabStripItem}"], "batch": "B5", "winui": "SelectorBarItem: DefaultSelectorBarItemStyle, SelectorBarItemPill (SelectorBar.xaml, SelectorBar_themeresources.xaml)."},
-    {"document": "TabbedPage.xaml", "themes": ["{TabbedPage}"], "batch": "B5", "winui": "No WinUI control: TabView (DefaultTabViewStyle) and the page background."},
+    {"document": "TabbedPage.xaml", "themes": ["{TabbedPage}"], "batch": "B5", "winui": "No WinUI control: NavigationView with its pane at the top (TopNavArea of NavigationView.xaml, MUX_NavigationViewItemPresenterStyleWhenOnTopPane of NavigationView_themeresources.xaml) and the page background."},
     {"document": "TableView.xaml", "themes": ["{TableView}"], "batch": "B6", "winui": "No control of the merged theme: WinUI's TableView of the tabular library (controls/dev/TableView, TableView_themeresources.xaml, not part of XamlControlsResources) is the closest source; the ListViewItem resources otherwise."},
     {"document": "TableViewCell.xaml", "themes": ["{TableViewCell}"], "batch": "B6", "winui": "As TableView: the cells of controls/dev/TableView."},
     {"document": "TableViewColumnHeader.xaml", "themes": ["{TableViewColumnHeader}"], "batch": "B6", "winui": "As TableView: the column headers of controls/dev/TableView and SortIndicator."},
