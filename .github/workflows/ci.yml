@@ -465,6 +465,14 @@ jobs:
           $capture = Start-Process -FilePath target/debug/winui-theme-gallery.exe -NoNewWindow -PassThru
           if (-not $capture.WaitForExit(900000)) { $capture.Kill(); Write-Output "capture: timed out" }
           Remove-Item Env:FERROUI_THEME_GALLERY_CAPTURE
+          # The comparison host shows the native page and the page of the framework at the page
+          # size (720 by 960): the runner's screen (1024 by 768) is made larger where Windows
+          # Server allows it, and otherwise the pages are compared at the height that fits.
+          try { Set-DisplayResolution -Width 1920 -Height 1200 -Force -ErrorAction Stop } catch { Write-Output "the display resolution was not changed: $_" }
+          Add-Type -AssemblyName System.Windows.Forms
+          $work = [System.Windows.Forms.Screen]::PrimaryScreen.WorkingArea
+          Write-Output "work area: $($work.Width) by $($work.Height)"
+          if ($work.Height -lt 1010) { $env:FERROUI_WINUI_COMPARE_SIZE = "720x$([Math]::Min(960, $work.Height - 60))" }
           $compare = Start-Process -FilePath target/debug/winui-theme-compare.exe -ArgumentList '--out', (Resolve-Path target/winui-theme/compare).Path -NoNewWindow -PassThru
           if (-not $compare.WaitForExit(1500000)) { $compare.Kill(); Write-Output "compare: timed out" }
           python scripts/winui-theme/report.py target/winui-theme/capture
