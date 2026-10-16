@@ -399,6 +399,18 @@ impl Session {
         }
     }
 
+    /// Releases every mouse button and modifier key the actions hold down.
+    /// Not a command of upstream's sessions: the runner calls it after every
+    /// test, so that a test that fails with a button or a key down does not
+    /// leave it down for the next tests and for the desktop after the run.
+    pub fn release_input(&self) {
+        let buttons: Vec<MouseButton> = self.0.buttons.borrow().clone();
+        for button in buttons {
+            self.button_up(button, 1);
+        }
+        self.release_modifiers();
+    }
+
     fn release_modifiers(&self) {
         let held: Vec<NamedKey> = self.0.modifiers.borrow().clone();
         for key in held.into_iter().rev() {
