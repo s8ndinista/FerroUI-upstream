@@ -67664,9 +67664,9 @@
    "key": "{PipsPager}",
    "kind": "Style",
    "target_type": "PipsPager",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B2"
+   "batch": null
   },
   {
    "document": "controls/dev/PipsPager/PipsPager_themeresources.xaml",
@@ -67674,9 +67674,9 @@
    "key": "PipsPagerButtonBaseStyle",
    "kind": "Style",
    "target_type": "Button",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B2"
+   "batch": null
   },
   {
    "document": "controls/dev/PipsPager/PipsPager_themeresources.xaml",
@@ -67734,9 +67734,9 @@
    "key": "PipsPagerNavigationButtonBaseStyle",
    "kind": "Style",
    "target_type": "Button",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B2"
+   "batch": null
   },
   {
    "document": "controls/dev/PipsPager/PipsPager_themeresources.xaml",
@@ -67804,9 +67804,9 @@
    "key": "PipsPagerNextPageButtonStyle",
    "kind": "Style",
    "target_type": "Button",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B2"
+   "batch": null
   },
   {
    "document": "controls/dev/PipsPager/PipsPager_themeresources.xaml",
@@ -67834,9 +67834,9 @@
    "key": "PipsPagerNormalPipButtonStyle",
    "kind": "Style",
    "target_type": "Button",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B2"
+   "batch": null
   },
   {
    "document": "controls/dev/PipsPager/PipsPager_themeresources.xaml",
@@ -67854,9 +67854,9 @@
    "key": "PipsPagerPreviousPageButtonStyle",
    "kind": "Style",
    "target_type": "Button",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B2"
+   "batch": null
   },
   {
    "document": "controls/dev/PipsPager/PipsPager_themeresources.xaml",
@@ -67884,9 +67884,9 @@
    "key": "PipsPagerSelectedPipButtonStyle",
    "kind": "Style",
    "target_type": "Button",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B2"
+   "batch": null
   },
   {
    "document": "controls/dev/PipsPager/PipsPager_themeresources.xaml",
@@ -90089,6 +90089,7 @@
   "Controls/NumericUpDown.xaml",
   "Controls/OverlayPopupHost.xaml",
   "Controls/PathIcon.xaml",
+  "Controls/PipsPager.xaml",
   "Controls/PopupRoot.xaml",
   "Controls/ProgressBar.xaml",
   "Controls/RadioButton.xaml",
@@ -90456,7 +90457,7 @@
    "winui": "Expander: DefaultExpanderStyle (Expander.xaml), ExpanderHeaderDownStyle, ExpanderHeaderUpStyle (Expander_themeresources.xaml).",
    "status": "ported",
    "deviations": 7,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "FlyoutPresenter.xaml",
@@ -90673,9 +90674,9 @@
    ],
    "batch": "B2",
    "winui": "PipsPager: {PipsPager} (PipsPager.xaml), PipsPagerNavigationButtonBaseStyle, PipsPagerPreviousPageButtonStyle, PipsPagerNextPageButtonStyle, PipsPagerButtonBaseStyle, PipsPagerSelectedPipButtonStyle, PipsPagerNormalPipButtonStyle (PipsPager_themeresources.xaml).",
-   "status": "pending",
-   "deviations": 0,
-   "date": ""
+   "status": "ported",
+   "deviations": 10,
+   "date": "not committed"
   },
   {
    "document": "PopupRoot.xaml",
@@ -91547,6 +91548,7 @@
   "DropDownButton": 4,
   "Expander": 7,
   "NumericUpDown": 15,
+  "PipsPager": 10,
   "Slider": 11,
   "SplitButton": 14,
   "ToggleSwitch": 11

@@ -259,6 +259,7 @@ control_tests! {
     drop_down_button => "DropDownButton";
     expander => "Expander";
     numeric_up_down => "NumericUpDown";
+    pips_pager => "PipsPager";
     slider => "Slider";
     split_button => "SplitButton";
     toggle_switch => "ToggleSwitch";

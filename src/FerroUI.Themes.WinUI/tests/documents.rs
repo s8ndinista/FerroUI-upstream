@@ -226,6 +226,7 @@ document_tests! {
     controls_drop_down_button => "/Controls/DropDownButton.xaml";
     controls_expander => "/Controls/Expander.xaml";
     controls_numeric_up_down => "/Controls/NumericUpDown.xaml";
+    controls_pips_pager => "/Controls/PipsPager.xaml";
     controls_slider => "/Controls/Slider.xaml";
     controls_split_button => "/Controls/SplitButton.xaml";
     controls_toggle_switch => "/Controls/ToggleSwitch.xaml";
