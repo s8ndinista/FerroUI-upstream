@@ -5,9 +5,11 @@ use crate::event::Event;
 use crate::x11_info::X11Info;
 use crate::x11_platform::FerroX11Platform;
 use crate::xlib;
+use ferroui_base::platform::surfaces::{PlatformTextRenderingParameters, SubpixelGeometry};
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
+use std::sync::atomic::{AtomicU8, Ordering};
 
 /// The resources of the server, with a notification per resource that
 /// changed.
@@ -68,6 +70,7 @@ impl XResources {
     fn update_resources(&self) {
         let res = self.read_resources_string().unwrap_or_default();
         let new_resources = parse_resources(&res);
+        set_subpixel_order(new_resources.get("Xft.rgba").map(String::as_str));
         let changed = changed_resources(&self.resources.borrow(), &new_resources);
         *self.resources.borrow_mut() = new_resources;
         for key in changed {
@@ -106,10 +109,76 @@ impl XResources {
     }
 }
 
+/// The subpixel order of `Xft.rgba` as the resources last said, for the
+/// thread that renders: 0 when the resource is not set, else 1 plus the
+/// index of the order in [`SUBPIXEL_ORDERS`].
+///
+/// FerroUI's own addition (docs/porting/text-rendering.md): the desktop
+/// (GNOME, KDE, Xfce) writes the font settings of the user to `Xft.rgba`,
+/// which fontconfig and the toolkits of the desktop follow.
+static SUBPIXEL_ORDER: AtomicU8 = AtomicU8::new(0);
+
+/// The values of `Xft.rgba` and the geometry each means; `none` is
+/// greyscale text.
+const SUBPIXEL_ORDERS: [(&str, SubpixelGeometry); 5] = [
+    ("none", SubpixelGeometry::Unknown),
+    ("rgb", SubpixelGeometry::RgbHorizontal),
+    ("bgr", SubpixelGeometry::BgrHorizontal),
+    ("vrgb", SubpixelGeometry::RgbVertical),
+    ("vbgr", SubpixelGeometry::BgrVertical),
+];
+
+fn set_subpixel_order(value: Option<&str>) {
+    let index = value
+        .and_then(|value| SUBPIXEL_ORDERS.iter().position(|(name, _)| value.trim().eq_ignore_ascii_case(name)))
+        .map_or(0, |index| index as u8 + 1);
+    SUBPIXEL_ORDER.store(index, Ordering::Release);
+}
+
+/// The text rendering parameters of the desktop: subpixel text for the
+/// subpixel order of `Xft.rgba`, greyscale for `none`, and nothing (the
+/// defaults of the render backend: greyscale) when the resource is not set
+/// or has a value that is not known. Contrast and gamma are left to the
+/// backend.
+pub fn text_rendering_parameters() -> Option<PlatformTextRenderingParameters> {
+    let index = SUBPIXEL_ORDER.load(Ordering::Acquire);
+    let (_, geometry) = SUBPIXEL_ORDERS.get(usize::from(index).checked_sub(1)?)?;
+    Some(PlatformTextRenderingParameters {
+        subpixel_antialiasing: *geometry != SubpixelGeometry::Unknown,
+        subpixel_geometry: *geometry,
+        ..PlatformTextRenderingParameters::default()
+    })
+}
+
 #[cfg(test)]
 mod tests {
     // Not from the reference, which has no tests for this file.
     use super::*;
+
+    #[test]
+    fn xft_rgba_gives_the_text_rendering_parameters() {
+        // One test owns the value of the process.
+        set_subpixel_order(None);
+        assert_eq!(None, text_rendering_parameters());
+
+        set_subpixel_order(Some("rgb"));
+        let parameters = text_rendering_parameters().unwrap();
+        assert!(parameters.subpixel_antialiasing);
+        assert_eq!(SubpixelGeometry::RgbHorizontal, parameters.subpixel_geometry);
+        assert!(!parameters.composited);
+        assert_eq!(None, parameters.text_contrast);
+
+        set_subpixel_order(Some("VBGR"));
+        assert_eq!(SubpixelGeometry::BgrVertical, text_rendering_parameters().unwrap().subpixel_geometry);
+
+        set_subpixel_order(Some("none"));
+        let parameters = text_rendering_parameters().unwrap();
+        assert!(!parameters.subpixel_antialiasing);
+
+        set_subpixel_order(Some("unknown"));
+        assert_eq!(None, text_rendering_parameters());
+        set_subpixel_order(None);
+    }
 
     #[test]
     fn resources_are_lines_of_name_and_value() {
