@@ -111,8 +111,6 @@
     <Setter Property="FontSize" Value="{DynamicResource ControlContentThemeFontSize}" />
     <Setter Property="Foreground" Value="{DynamicResource ListViewItemForeground}" />
     <Setter Property="KeyboardNavigation.TabNavigation" Value="Local" />
-    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-    <Setter Property="VerticalContentAlignment" Value="Center" />
     <Setter Property="MinWidth" Value="{DynamicResource ListViewItemMinWidth}" />
     <!-- The setters of MUX_TreeViewItemStyle. -->
     <Setter Property="Padding" Value="0" />
@@ -171,8 +169,8 @@
                                     Content="{TemplateBinding Header}"
                                     ContentTemplate="{TemplateBinding HeaderTemplate}"
                                     Foreground="{TemplateBinding Foreground}"
-                                    HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                    VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                    HorizontalAlignment="Stretch"
+                                    VerticalAlignment="Center"
                                     MinHeight="{DynamicResource TreeViewItemContentHeight}"
                                     Margin="{TemplateBinding Padding}"
                                     Focusable="False" />

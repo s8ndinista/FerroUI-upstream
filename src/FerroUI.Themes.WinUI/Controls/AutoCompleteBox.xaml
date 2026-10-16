@@ -236,8 +236,6 @@
 
   <ControlTheme x:Key="DefaultAutoSuggestBoxStyle" TargetType="AutoCompleteBox">
     <Setter Property="VerticalAlignment" Value="Stretch" />
-    <Setter Property="VerticalContentAlignment" Value="Stretch" />
-    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
     <Setter Property="IsTabStop" Value="False" />
     <Setter Property="Foreground" Value="{DynamicResource TextControlForeground}" />
     <Setter Property="Background" Value="{DynamicResource TextControlBackground}" />
@@ -266,8 +264,8 @@
                    FontFamily="{TemplateBinding FontFamily}"
                    FontWeight="{TemplateBinding FontWeight}"
                    FontStretch="{TemplateBinding FontStretch}"
-                   VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
-                   HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                   VerticalContentAlignment="Stretch"
+                   HorizontalContentAlignment="Stretch"
                    ScrollViewer.BringIntoViewOnFocusChange="False"
                    Margin="0"
                    CornerRadius="{TemplateBinding CornerRadius}"

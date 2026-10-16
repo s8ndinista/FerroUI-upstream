@@ -90228,7 +90228,7 @@
    "batch": "B3",
    "winui": "AutoSuggestBox: DefaultAutoSuggestBoxStyle, AutoSuggestBoxTextBoxStyle (AutoSuggestBox_themeresources.xaml).",
    "status": "ported",
-   "deviations": 8,
+   "deviations": 9,
    "date": "2026-10-16"
   },
   {
@@ -90616,7 +90616,7 @@
    "batch": "B3",
    "winui": "MenuFlyoutItem: DefaultMenuFlyoutItemStyle; MenuFlyoutSubItem: DefaultMenuFlyoutSubItemStyle; ToggleMenuFlyoutItem: DefaultToggleMenuFlyoutItemStyle (MenuFlyout_themeresources.xaml); RadioMenuFlyoutItem: DefaultRadioMenuFlyoutItemStyle (RadioMenuFlyoutItem_themeresources.xaml).",
    "status": "ported",
-   "deviations": 14,
+   "deviations": 15,
    "date": "2026-10-16"
   },
   {
@@ -91044,7 +91044,7 @@
    "batch": "B3",
    "winui": "TreeViewItem: {TreeViewItem} (TreeView.xaml), MUX_TreeViewItemStyle (TreeViewItem.xaml).",
    "status": "ported",
-   "deviations": 10,
+   "deviations": 11,
    "date": "2026-10-16"
   },
   {
@@ -91524,7 +91524,7 @@
   "General": 23,
   "Resources": 9,
   "AdornerLayer": 1,
-  "AutoCompleteBox": 8,
+  "AutoCompleteBox": 9,
   "Button": 8,
   "Calendar": 4,
   "CalendarButton": 7,
@@ -91550,7 +91550,7 @@
   "ListBoxItem": 11,
   "Menu": 8,
   "MenuFlyoutPresenter": 6,
-  "MenuItem": 14,
+  "MenuItem": 15,
   "MenuScrollViewer": 2,
   "OverlayPopupHost": 1,
   "PathIcon": 2,
@@ -91572,7 +91572,7 @@
   "ToolTip": 3,
   "TransitioningContentControl": 4,
   "TreeView": 4,
-  "TreeViewItem": 10,
+  "TreeViewItem": 11,
   "Window": 1,
   "ManagedFileChooser": 15,
   "NotificationCard": 13,

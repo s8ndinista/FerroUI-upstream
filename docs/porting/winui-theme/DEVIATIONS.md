@@ -75,6 +75,7 @@ it. Abbreviations: CS = `controls/dev/CommonStyles/`, GX = `dxaml/xcp/dxaml/them
 | ACB-6 | `AutoSuggestBoxTextBoxStyle`: the template-local `DeleteButtonStyle` (glyph E894 at `AutoSuggestBoxIconFontSize`) | The delete button. | The keyed theme `AutoSuggestBoxDeleteButtonStyle`, `GlyphGeometryE894` 10 px. | G-18, G-9. |
 | ACB-7 | `QueryButton` with the template-local `QueryButtonStyle` (the `QueryIcon` of the box, `AnimatedIcon.State` setters) | A button with the query icon. | Left out. | FerroUI's auto-complete box has no query icon. |
 | ACB-8 | `Orientation` states, `UseSystemFocusVisuals` of `IsApplicationFocusVisualKindReveal`, `AutoSuggestBoxHelper.KeepInteriorCornersSquare`, `Header`, `Description`, `DesiredCandidateWindowAlignment`, `ItemContainerTransitions`, `ShouldConstrainToRootBounds` | Layout states, focus, corner squaring, header and description, input method window, item animations. | Left out; `FocusAdorner="{x:Null}"`. | G-14, G-19, G-22; FerroUI's control has no header or description. |
+| ACB-9 | `DefaultAutoSuggestBoxStyle`: `HorizontalContentAlignment`, `VerticalContentAlignment` (`Stretch`) and their template bindings | The content alignments of the control, bound into the template. | Not set; the text box of the template is stretched. | FerroUI's `AutoCompleteBox` has no content alignment properties. |
 
 ## Button
 
@@ -375,6 +376,7 @@ it. Abbreviations: CS = `controls/dev/CommonStyles/`, GX = `dxaml/xcp/dxaml/them
 | MNI-12 | `MenuFlyoutSeparator` (implicit style in the same document) | A separator item of a menu flyout. | A `MenuItem` whose `Header` is `-` (`:separator`) has the template of `MenuFlyoutSeparator`; FerroUI's `Separator` control is themed by its own document. | FerroUI's menus make a separator of such an item. |
 | MNI-13 | `RadioMenuFlyoutSubItemStyle`: `RadioMenuFlyoutItem.AreCheckStatesEnabled`, `CheckedStates` | A sub item shows a bullet when one of its radio items is checked. | The keyed theme shows the bullet when the item itself is checked (`IsChecked`). | FerroUI does not compute the check state of a sub item from its items. |
 | MNI-14 | `UseSystemFocusVisuals`, `KeyboardAcceleratorPlacementMode="Hidden"`, `AccessibilityView`, `IsTextScaleFactorEnabled` | Focus visual and automation of WinUI. | The default focus adorner; the others are left out. | G-14, G-19. |
+| MNI-15 | `DefaultMenuFlyoutItemStyle`: `HorizontalContentAlignment` (`Stretch`), `VerticalContentAlignment` (`Center`) and their template bindings | The content alignments of the item, bound into the template. | Not set; the text and the input gesture are stretched horizontally and centred vertically in the template. | FerroUI's `MenuItem` has no content alignment properties. |
 
 ## MenuScrollViewer
 
@@ -595,6 +597,7 @@ it. Abbreviations: CS = `controls/dev/CommonStyles/`, GX = `dxaml/xcp/dxaml/them
 | TVI-8 | `Rectangle x:Name="SelectionIndicator"` with `RadiusX`/`RadiusY` 2 | The accent bar of the selected node. | A `Border` with a corner radius of 2. | A border draws the rounded bar. |
 | TVI-9 | `TreeViewMultiSelectStates`, `DragStates`, `ReorderedPlaceholder`, `MultiSelectCheckBox`, `MultiArrangeOverlayTextBorder` | Check boxes of multiple selection, drag visuals. | Left out. | FerroUI's tree view has no check mode and no drag reordering. |
 | TVI-10 | `FocusVisualMargin="0,-1,0,-1"`, `FocusVisualPrimaryBrush`/`SecondaryBrush` of `DefaultListViewItemStyle` | Focus visual of the row. | A `FocusAdorner` with that margin and those brushes on the row (`IsTemplateFocusTarget`). | G-14. |
+| TVI-11 | `MUX_TreeViewItemStyle`: `HorizontalContentAlignment` (`Stretch`), `VerticalContentAlignment` (`Center`) and their template bindings | The content alignments of the item, bound into the template. | Not set; the content is stretched horizontally and centred vertically in the template. | FerroUI's `TreeViewItem` has no content alignment properties. |
 
 ## Window
 

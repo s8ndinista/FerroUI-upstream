@@ -76,8 +76,6 @@
     <Setter Property="Foreground" Value="{DynamicResource MenuFlyoutItemForeground}" />
     <Setter Property="Padding" Value="{StaticResource MenuFlyoutItemThemePadding}" />
     <Setter Property="FontSize" Value="{DynamicResource ControlContentThemeFontSize}" />
-    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-    <Setter Property="VerticalContentAlignment" Value="Center" />
     <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}" />
     <Setter Property="Template">
       <ControlTemplate>
@@ -126,8 +124,8 @@
                                 ContentTemplate="{TemplateBinding HeaderTemplate}"
                                 Foreground="{TemplateBinding Foreground}"
                                 TextTrimming="None"
-                                HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                HorizontalAlignment="Stretch"
+                                VerticalAlignment="Center"
                                 RecognizesAccessKey="True" />
               <TextBlock x:Name="KeyboardAcceleratorTextBlock"
                          Grid.Column="3"
@@ -137,7 +135,7 @@
                          Foreground="{DynamicResource MenuFlyoutItemKeyboardAcceleratorTextForeground}"
                          TextAlignment="Right"
                          HorizontalAlignment="Right"
-                         VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                         VerticalAlignment="Center"
                          IsVisible="{TemplateBinding InputGesture, Converter={x:Static ObjectConverters.IsNotNull}}" />
               <!-- E974 at 12 px in a cell of 12 px, with the margin MenuFlyoutItemChevronMargin
                    (24,0,0,-1) of the source. -->
@@ -286,7 +284,10 @@
     </Style>
     <!-- ToggleMenuFlyoutItem, RadioMenuFlyoutItem: Disabled (which does not set the background
          of the layout root) -->
-    <Style Selector="^:toggle:disabled /template/ Border#LayoutRoot, ^:radio:disabled /template/ Border#LayoutRoot">
+    <Style Selector="^:toggle:disabled /template/ Border#LayoutRoot">
+      <Setter Property="Background" Value="{TemplateBinding Background}" />
+    </Style>
+    <Style Selector="^:radio:disabled /template/ Border#LayoutRoot">
       <Setter Property="Background" Value="{TemplateBinding Background}" />
     </Style>
     <Style Selector="^:toggle:disabled /template/ ContentPresenter#PART_HeaderPresenter, ^:radio:disabled /template/ ContentPresenter#PART_HeaderPresenter">
