@@ -211,6 +211,15 @@ margins of the inner contents of text boxes, the chevron of ComboBox, the disabl
 glyphs of the calendar, and the native pages where they did not show what the framework's did.
 The differences that remain are recorded in `winui-theme/DEVIATIONS.md`.
 
+A third calibration, from that run and a run at a scaling of 2 in the Windows virtual machine,
+awaits its run: the popup shadows drawn (the borders of the presenters, menus, drop-downs and
+tool tips drew none, their backgrounds being sized to the inner edge of their borders), the
+validation errors of the date and time pickers, the width of the calendar (300) and the rows of
+its days, InfoBarPanel for notifications (a card of one line 48 high), path icons unscaled in the
+icon boxes of the command bar, menu and tab templates, the carets of the symbol font, the date
+patterns of en-US, the grids of the pages aligned to the left, and the native spinner in the
+compact density.
+
 ## 6. Files
 
 | File | What |
