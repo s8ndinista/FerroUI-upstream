@@ -422,10 +422,6 @@ pub const PENDING_CONTROLS: &[&str] = &[
     "ManagedFileChooser",
     "ManagedFileChooserOverwritePrompt",
     "NotificationCard",
-    "TableView",
-    "TableViewCell",
-    "TableViewColumnHeader",
-    "TableViewRow",
     "WindowDrawnDecorations",
     "WindowNotificationManager",
 ];

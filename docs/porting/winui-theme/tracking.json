@@ -90085,6 +90085,10 @@
   "Controls/ScrollViewer.xaml",
   "Controls/SelectableTextBlock.xaml",
   "Controls/Separator.xaml",
+  "Controls/TableView.xaml",
+  "Controls/TableViewCell.xaml",
+  "Controls/TableViewColumnHeader.xaml",
+  "Controls/TableViewRow.xaml",
   "Controls/TextBlock.xaml",
   "Controls/TextBox.xaml",
   "Controls/TextSelectionHandle.xaml",
@@ -90140,6 +90144,7 @@
   "Resources/RefreshContainer_themeresources.xaml",
   "Resources/RefreshVisualizer_themeresources.xaml",
   "Resources/RepeatButton_themeresources.xaml",
+  "Resources/ResizeGripper_themeresources.xaml",
   "Resources/RevealBrush_themeresources.xaml",
   "Resources/ScrollBar_themeresources.xaml",
   "Resources/ScrollViewer_themeresources.xaml",
@@ -90149,6 +90154,8 @@
   "Resources/SplitView_themeresources.xaml",
   "Resources/SystemResources.xaml",
   "Resources/TabView_themeresources.xaml",
+  "Resources/TableView_themeresources.xaml",
+  "Resources/TabularSurfaces_themeresources.xaml",
   "Resources/TextBlock_themeresources.xaml",
   "Resources/TextBlock_themeresources_v2.5.xaml",
   "Resources/TextBox_themeresources.xaml",
@@ -90852,9 +90859,9 @@
    ],
    "batch": "B6",
    "winui": "No control of the merged theme: WinUI's TableView of the tabular library (controls/dev/TableView, TableView_themeresources.xaml, not part of XamlControlsResources) is the closest source; the ListViewItem resources otherwise.",
-   "status": "pending",
-   "deviations": 0,
-   "date": ""
+   "status": "ported",
+   "deviations": 8,
+   "date": "not committed"
   },
   {
    "document": "TableViewCell.xaml",
@@ -90863,9 +90870,9 @@
    ],
    "batch": "B6",
    "winui": "As TableView: the cells of controls/dev/TableView.",
-   "status": "pending",
-   "deviations": 0,
-   "date": ""
+   "status": "ported",
+   "deviations": 3,
+   "date": "not committed"
   },
   {
    "document": "TableViewColumnHeader.xaml",
@@ -90874,9 +90881,9 @@
    ],
    "batch": "B6",
    "winui": "As TableView: the column headers of controls/dev/TableView and SortIndicator.",
-   "status": "pending",
-   "deviations": 0,
-   "date": ""
+   "status": "ported",
+   "deviations": 7,
+   "date": "not committed"
   },
   {
    "document": "TableViewRow.xaml",
@@ -90885,9 +90892,9 @@
    ],
    "batch": "B6",
    "winui": "As TableView: the rows of controls/dev/TableView; the ListViewItem resources.",
-   "status": "pending",
-   "deviations": 0,
-   "date": ""
+   "status": "ported",
+   "deviations": 6,
+   "date": "not committed"
   },
   {
    "document": "TextBox.xaml",
@@ -91478,7 +91485,11 @@
   "ToggleButton": 3,
   "ToolTip": 3,
   "TransitioningContentControl": 4,
-  "Window": 1
+  "Window": 1,
+  "TableView": 8,
+  "TableViewCell": 3,
+  "TableViewColumnHeader": 7,
+  "TableViewRow": 6
  },
  "winui_targets": {
   "AppBarButton": {
