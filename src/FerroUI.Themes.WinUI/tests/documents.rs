@@ -221,6 +221,9 @@ document_tests! {
     resources_table_view_themeresources => "/Resources/TableView_themeresources.xaml";
     resources_tabular_surfaces_themeresources => "/Resources/TabularSurfaces_themeresources.xaml";
     winui_theme => "/WinUITheme.xaml";
+    // B2: buttons, ranges and expanders
+    controls_drop_down_button => "/Controls/DropDownButton.xaml";
+    controls_split_button => "/Controls/SplitButton.xaml";
 }
 
 #[test]

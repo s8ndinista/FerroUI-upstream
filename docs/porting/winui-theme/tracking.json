@@ -51714,9 +51714,9 @@
    "key": "DefaultDropDownButtonStyle",
    "kind": "Style",
    "target_type": "DropDownButton",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B2"
+   "batch": null
   },
   {
    "document": "controls/dev/DropDownButton/DropDownButton.xaml",
@@ -51724,9 +51724,9 @@
    "key": "{DropDownButton}",
    "kind": "Style",
    "target_type": "DropDownButton",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B2"
+   "batch": null
   },
   {
    "document": "controls/dev/DropDownButton/DropDownButton_themeresources.xaml",
@@ -70724,9 +70724,9 @@
    "key": "SplitButtonStyle",
    "kind": "Style",
    "target_type": "SplitButton",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B2"
+   "batch": null
   },
   {
    "document": "controls/dev/SplitButton/SplitButton.xaml",
@@ -70734,9 +70734,9 @@
    "key": "{SplitButton}",
    "kind": "Style",
    "target_type": "SplitButton",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B2"
+   "batch": null
   },
   {
    "document": "controls/dev/SplitButton/SplitButton.xaml",
@@ -70744,9 +70744,9 @@
    "key": "{ToggleSplitButton}",
    "kind": "Style",
    "target_type": "ToggleSplitButton",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B2"
+   "batch": null
   },
   {
    "document": "controls/dev/SplitButton/SplitButton_themeresources.xaml",
@@ -70754,9 +70754,9 @@
    "key": "SplitButtonCommandBarStyle",
    "kind": "Style",
    "target_type": "SplitButton",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B2"
+   "batch": null
   },
   {
    "document": "controls/dev/SplitButton/SplitButton_themeresources.xaml",
@@ -90073,6 +90073,7 @@
   "Controls/DatePicker.xaml",
   "Controls/DateTimePickerShared.xaml",
   "Controls/DrawerPage.xaml",
+  "Controls/DropDownButton.xaml",
   "Controls/EmbeddableControlRoot.xaml",
   "Controls/GridSplitter.xaml",
   "Controls/GroupBox.xaml",
@@ -90093,6 +90094,7 @@
   "Controls/ScrollViewer.xaml",
   "Controls/SelectableTextBlock.xaml",
   "Controls/Separator.xaml",
+  "Controls/SplitButton.xaml",
   "Controls/SplitView.xaml",
   "Controls/TabControl.xaml",
   "Controls/TabItem.xaml",
@@ -90425,9 +90427,9 @@
    ],
    "batch": "B2",
    "winui": "DropDownButton: DefaultDropDownButtonStyle (DropDownButton.xaml, DropDownButton_themeresources.xaml).",
-   "status": "pending",
-   "deviations": 0,
-   "date": ""
+   "status": "ported",
+   "deviations": 4,
+   "date": "not committed"
   },
   {
    "document": "EmbeddableControlRoot.xaml",
@@ -90798,9 +90800,9 @@
    ],
    "batch": "B2",
    "winui": "SplitButton: SplitButtonStyle (SplitButton.xaml), SplitButtonCommandBarStyle (SplitButton_themeresources.xaml); ToggleSplitButton.",
-   "status": "pending",
-   "deviations": 0,
-   "date": ""
+   "status": "ported",
+   "deviations": 14,
+   "date": "not committed"
   },
   {
    "document": "SplitView.xaml",
@@ -91535,7 +91537,9 @@
   "TabItem": 13,
   "TabStrip": 3,
   "TabStripItem": 8,
-  "TabbedPage": 8
+  "TabbedPage": 8,
+  "DropDownButton": 4,
+  "SplitButton": 14
  },
  "winui_targets": {
   "AppBarButton": {

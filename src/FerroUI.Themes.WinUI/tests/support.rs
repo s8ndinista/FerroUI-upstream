@@ -380,14 +380,12 @@ pub fn is_instance_of(object: &Ref<FerroObject>, handle_type: &str) -> bool {
 pub const PENDING_CONTROLS: &[&str] = &[
     // B2: buttons, ranges and expanders
     "ButtonSpinner",
-    "DropDownButton",
     "Expander",
     "NumericUpDown",
     "PipsPager",
     "RefreshContainer",
     "RefreshVisualizer",
     "Slider",
-    "SplitButton",
     "ToggleSwitch",
     // B3: flyouts, menus, lists and selection
     "AutoCompleteBox",

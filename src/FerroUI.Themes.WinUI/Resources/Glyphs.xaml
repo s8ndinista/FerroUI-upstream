@@ -87,4 +87,12 @@
   <!-- The icon of the drawer toggle FerroUI's NavigationPage looks up in code and casts to a
        StreamGeometry (not a key of WinUI): the outline of E700. -->
   <StreamGeometry x:Key="NavigationPageMenuIcon">M3 17h18a1 1 0 0 1 .117 1.993L21 19H3a1 1 0 0 1-.117-1.993L3 17h18H3Zm0-6 18-.002a1 1 0 0 1 .117 1.993l-.117.007L3 13a1 1 0 0 1-.117-1.993L3 11l18-.002L3 11Zm0-6h18a1 1 0 0 1 .117 1.993L21 7H3a1 1 0 0 1-.117-1.993L3 5h18H3Z</StreamGeometry>
+
+  <!-- Batch B2 (buttons, ranges and expanders). E70D is the outline of the chevron of the Fluent
+       theme of FerroUI (src/FerroUI.Themes.Fluent/Controls/DropDownButton.xaml), E70E the same
+       outline mirrored; the others are drawn for the port. -->
+  <!-- E96E ChevronDownSmall: the chevron of DropDownButton and of SplitButton. -->
+  <StreamGeometry x:Key="GlyphGeometryE96E">M 1.4,4.6 L 8,11.2 L 14.6,4.6 L 16,6 L 8,14 L 0,6 Z</StreamGeometry>
+  <!-- E972 ChevronDownMed: the chevron of SplitButtonCommandBarStyle. -->
+  <StreamGeometry x:Key="GlyphGeometryE972">M 1.06,4.94 L 8,11.88 L 14.94,4.94 L 16,6 L 8,14 L 0,6 Z</StreamGeometry>
 </ResourceDictionary>
