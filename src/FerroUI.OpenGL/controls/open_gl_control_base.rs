@@ -1,5 +1,6 @@
 use super::open_gl_control_resources::OpenGlControlBaseResources;
-use crate::composition::OpenGlCompositionInterop;
+use crate::composition::task_support::start;
+use crate::composition::{ICompositionGlContext, OpenGlCompositionInterop};
 use crate::{GlInterface, GlVersion};
 use ferroui_base::input::InputElementImpl;
 use ferroui_base::interactivity::InteractiveImpl;
@@ -31,10 +32,10 @@ use std::rc::Rc;
 /// undefined behavior, crashes, or rendering corruption.
 ///
 /// The class is abstract: a deriving class implements `on_open_gl_render`.
-// The original creates the OpenGL context with an asynchronous method, because the
-// compositor answers from the render thread; the compositor of this crate answers at once
-// (`OpenGlCompositionInterop::try_create_compatible_gl_context`), so the initialization has
-// completed when `initialize` returns and its task is the result it returned.
+// The initialization is an asynchronous method, as in the original: it awaits the OpenGL
+// context (`OpenGlCompositionInterop::try_create_compatible_gl_context_async`), which a
+// compositor confined to its render thread gives from a job of that thread. It is started on
+// the dispatcher, and its task is the cell of its outcome (`initialization`).
 //
 // The failures the original catches and logs (the deinitialization of the user and the
 // creation of the resources throwing) are panics of those calls here, and are not caught.
@@ -43,8 +44,9 @@ pub struct OpenGlControlBase {
     base: Control,
     visual: RefCell<Option<CompositionSurfaceVisual>>,
     update_queued: Cell<bool>,
-    /// The result of the initialization, once it has run (`_initialization`).
-    initialization: Cell<Option<bool>>,
+    /// The initialization (`_initialization`, a `Task<bool>` in the original): `None`
+    /// before it is started, then its outcome, which is `None` while it runs.
+    initialization: RefCell<Option<Rc<Cell<Option<bool>>>>>,
     resources: RefCell<Option<Rc<OpenGlControlBaseResources>>>,
     compositor: RefCell<Option<Rc<Compositor>>>,
     generation: Cell<i32>,
@@ -127,7 +129,7 @@ impl OpenGlControlBase {
             base: Control::construct(),
             visual: RefCell::new(None),
             update_queued: Cell::new(false),
-            initialization: Cell::new(None),
+            initialization: RefCell::new(None),
             resources: RefCell::new(None),
             compositor: RefCell::new(None),
             generation: Cell::new(0),
@@ -135,7 +137,7 @@ impl OpenGlControlBase {
     }
 
     fn is_initialized_successfully(&self) -> bool {
-        self.initialization.get() == Some(true)
+        self.initialization.borrow().as_ref().is_some_and(|initialization| initialization.get() == Some(true))
     }
 
     fn resources(&self) -> Option<Rc<OpenGlControlBaseResources>> {
@@ -168,11 +170,11 @@ impl OpenGlControlBase {
         if let Some(resources) = resources {
             drop(resources.dispose_async());
         }
-        self.initialization.set(None);
+        *self.initialization.borrow_mut() = None;
     }
 
     fn context_lost(&self) {
-        self.initialization.set(None);
+        *self.initialization.borrow_mut() = None;
         let resources = self.resources.borrow_mut().take();
         if let Some(resources) = resources {
             drop(resources.dispose_async());
@@ -183,7 +185,7 @@ impl OpenGlControlBase {
     /// The resources to draw with, once the control is initialized and its context is not
     /// lost; otherwise the initialization is started (again) and nothing is returned.
     fn ensure_initialized(&self) -> Option<Rc<OpenGlControlBaseResources>> {
-        if self.initialization.get().is_some() {
+        if self.initialization.borrow().is_some() {
             // Check if we've previously failed to initialize OpenGL on this platform
             // or if we are still waiting for init to complete
             if !self.is_initialized_successfully() {
@@ -196,13 +198,18 @@ impl OpenGlControlBase {
             }
         }
 
-        let initialized = self.initialize();
-        self.initialization.set(Some(initialized));
-
-        // `ContinueOnInitialization` of the original.
-        if initialized {
-            self.request_next_frame_rendering();
-        }
+        let initialization = Rc::new(Cell::new(None));
+        *self.initialization.borrow_mut() = Some(initialization.clone());
+        let this = self.to_ref();
+        // `InitializeAsync()` and `ContinueOnInitialization` of the original: the method runs
+        // up to its first await here.
+        drop(start(async move {
+            let initialized = Self::initialize_async(&this).await;
+            initialization.set(Some(initialized));
+            if initialized {
+                this.request_next_frame_rendering();
+            }
+        }));
         None
     }
 
@@ -223,24 +230,29 @@ impl OpenGlControlBase {
     }
 
     /// `InitializeAsync` of the original; see the note of the class.
-    fn initialize(&self) -> bool {
-        let Some(compositor) = self.compositor.borrow().clone() else {
+    async fn initialize_async(this: &Ref<Self>) -> bool {
+        let Some(compositor) = this.compositor.borrow().clone() else {
             log_error("Unable to obtain Compositor instance");
             return false;
         };
 
-        let generation = self.generation.get();
-        let Some(context) = OpenGlCompositionInterop::try_create_compatible_gl_context(&compositor, None) else {
+        let generation = this.generation.get();
+        let Some(context) = OpenGlCompositionInterop::try_create_compatible_gl_context_async(&compositor, None).await
+        else {
             log_error("Unable to initialize OpenGL: current platform doesn't support OpenGL interop with the compositor");
             return false;
         };
 
-        if generation != self.generation.get() {
+        if generation != this.generation.get() {
             // The control was detached while we were awaiting
-            drop(context.dispose_async());
+            let _ = context.dispose_async().await;
             return false;
         }
+        this.create_resources(&compositor, context)
+    }
 
+    /// The part of `InitializeAsync` after the context is created.
+    fn create_resources(&self, compositor: &Rc<Compositor>, context: Rc<dyn ICompositionGlContext>) -> bool {
         let surface = compositor.create_drawing_surface();
         let resources = Rc::new(OpenGlControlBaseResources::new(context, surface));
         *self.resources.borrow_mut() = Some(resources.clone());
@@ -270,7 +282,7 @@ impl OpenGlControlBase {
 
     /// Requests that the control be rendered on the next frame.
     pub fn request_next_frame_rendering(&self) {
-        if (self.initialization.get().is_none() || self.is_initialized_successfully()) && !self.update_queued.get() {
+        if (self.initialization.borrow().is_none() || self.is_initialized_successfully()) && !self.update_queued.get() {
             let compositor = self.compositor.borrow().clone();
             if let Some(compositor) = compositor {
                 self.update_queued.set(true);

@@ -413,8 +413,8 @@ impl IRenderer for TestRenderer {
     fn try_get_render_interface_feature(
         &self,
         _feature_type: std::any::TypeId,
-    ) -> Option<ferroui_base::rendering::composition::RenderInterfaceFeature> {
-        None
+    ) -> ferroui_base::rendering::composition::LocalFuture<Option<ferroui_base::rendering::composition::RenderInterfaceFeature>> {
+        Box::pin(std::future::ready(None))
     }
     fn add_dirty(&self, _visual: &Visual) {}
     fn recalculate_children(&self, _visual: &Visual) {}

@@ -43,7 +43,7 @@ ferroui_markup_xaml::include_compiled_xaml!();
 pub use app::App;
 pub use demo_type::DemoType;
 pub use drawing_surface_demo_base::{DrawingSurfaceDemoBase, DrawingSurfaceDemoBaseImpl};
-pub use gpu_demo::{as_gpu_demo, GpuDemo, IGpuDemo};
+pub use gpu_demo::{GpuDemo, IGpuDemo};
 pub use main_window::MainWindow;
 pub use markup::SAMPLE;
 pub use register_types::{register_types, ASSEMBLY};

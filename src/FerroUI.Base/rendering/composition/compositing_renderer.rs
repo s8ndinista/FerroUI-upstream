@@ -408,7 +408,10 @@ impl IRenderer for CompositingRenderer {
         self.composition_target.set_is_enabled(false);
     }
 
-    fn try_get_render_interface_feature(&self, feature_type: TypeId) -> Option<super::RenderInterfaceFeature> {
+    fn try_get_render_interface_feature(
+        &self,
+        feature_type: TypeId,
+    ) -> super::LocalFuture<Option<super::RenderInterfaceFeature>> {
         self.compositor.try_get_render_interface_feature(feature_type)
     }
 

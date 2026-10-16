@@ -220,8 +220,8 @@ impl IRenderer for TestRenderer {
     ) -> Rc<dyn IDisposable> {
         Disposable::empty()
     }
-    fn try_get_render_interface_feature(&self, _feature_type: std::any::TypeId) -> Option<crate::rendering::composition::RenderInterfaceFeature> {
-        None
+    fn try_get_render_interface_feature(&self, _feature_type: std::any::TypeId) -> crate::rendering::composition::LocalFuture<Option<crate::rendering::composition::RenderInterfaceFeature>> {
+        Box::pin(std::future::ready(None))
     }
     fn add_dirty(&self, _visual: &Visual) {}
     fn recalculate_children(&self, _visual: &Visual) {}

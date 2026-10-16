@@ -47,8 +47,8 @@ impl IRenderer for TestRenderer {
     fn scene_invalidated(&self, _handler: Rc<dyn Fn(&SceneInvalidatedEventArgs)>) -> Rc<dyn IDisposable> {
         Disposable::empty()
     }
-    fn try_get_render_interface_feature(&self, _feature_type: TypeId) -> Option<ferroui_base::rendering::composition::RenderInterfaceFeature> {
-        None
+    fn try_get_render_interface_feature(&self, _feature_type: TypeId) -> ferroui_base::rendering::composition::LocalFuture<Option<ferroui_base::rendering::composition::RenderInterfaceFeature>> {
+        Box::pin(std::future::ready(None))
     }
     fn add_dirty(&self, _visual: &Visual) {}
     fn recalculate_children(&self, _visual: &Visual) {}

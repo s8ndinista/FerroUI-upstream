@@ -1,18 +1,20 @@
 //! Port of `GpuDemo.xaml.cs`: the class of the document `GpuDemo.xaml` (the demo with the
 //! sliders that turn and colour what it draws) and the contract of a demo.
 
-use crate::drawing_surface_demo_base::DrawingSurfaceDemoBase;
 use crate::markup::xaml_class;
+use ferroui_base::data::core::ValueTypes;
 use ferroui_base::input::InputElementImpl;
 use ferroui_base::interactivity::InteractiveImpl;
 use ferroui_base::layout::LayoutableImpl;
 use ferroui_base::{
-    ferro_class, ferro_class_info, ferro_impl_classes, ferro_properties, instantiate, DirectProperty, FerroObjectImpl,
-    FerroObjectImplExt, FerroProperty, FerroPropertyChangedEventArgs, Ref, StyledElementImpl, VisualImpl,
+    ferro_class, ferro_class_info, ferro_impl_classes, ferro_properties, instantiate, DirectProperty, FerroObject,
+    FerroObjectImpl, FerroObjectImplExt, FerroProperty, FerroPropertyChangedEventArgs, Ref, StyledElementImpl,
+    VisualImpl,
 };
 use ferroui_controls::primitives::TemplatedControlImpl;
-use ferroui_controls::{ContentControlImpl, Control, ControlImpl, UserControl};
+use ferroui_controls::{ContentControlImpl, ControlImpl, UserControl};
 use std::cell::{Cell, RefCell};
+use std::rc::Rc;
 
 #[repr(C)]
 pub struct GpuDemo {
@@ -23,7 +25,7 @@ pub struct GpuDemo {
     disco: Cell<f32>,
     info: RefCell<String>,
     disco_visible: Cell<bool>,
-    demo: RefCell<Option<Ref<Control>>>,
+    demo: RefCell<Option<Rc<dyn IGpuDemo>>>,
 }
 
 ferro_class!(GpuDemo: UserControl);
@@ -95,7 +97,10 @@ ferro_properties! {
 
         // The setter of the registration writes the field without raising the change, as the
         // original's does.
-        pub fn demo_property() -> DirectProperty<GpuDemo, Option<Ref<Control>>> {
+        pub fn demo_property() -> DirectProperty<GpuDemo, Option<Rc<dyn IGpuDemo>>> {
+            // A demo is a control: the content control of the document, whose content is
+            // bound to this property, shows the control the handle holds.
+            ValueTypes::register_interface_object::<Rc<dyn IGpuDemo>>(|demo| demo.as_object());
             FerroProperty::register_direct::<GpuDemo, _>(
                 "Demo",
                 |o| o.demo(),
@@ -116,11 +121,11 @@ impl FerroObjectImpl for GpuDemo {
             || property == Self::demo_property().as_property()
         {
             if property == Self::demo_property().as_property() {
-                if let Some(old) = change.get_old_value::<Option<Ref<Control>>>().flatten().and_then(|old| as_gpu_demo(&old)) {
+                if let Some(old) = change.get_old_value::<Option<Rc<dyn IGpuDemo>>>().flatten() {
                     old.update(None, 0.0, 0.0, 0.0, 0.0);
                 }
             }
-            let demo = this.demo.borrow().as_ref().and_then(as_gpu_demo);
+            let demo = this.demo.borrow().clone();
             if let Some(demo) = demo {
                 demo.update(Some(&this.to_ref()), this.yaw(), this.pitch(), this.roll(), this.disco());
             }
@@ -198,28 +203,33 @@ impl GpuDemo {
         self.set_and_raise_cell(Self::disco_visible_property(), &self.disco_visible, value);
     }
 
-    /// The demo the control shows (`IGpuDemo` upstream; see [`IGpuDemo`]).
-    pub fn demo(&self) -> Option<Ref<Control>> {
+    /// The demo the control shows.
+    pub fn demo(&self) -> Option<Rc<dyn IGpuDemo>> {
         self.demo.borrow().clone()
     }
 
-    pub fn set_demo(&self, value: Option<Ref<Control>>) {
+    pub fn set_demo(&self, value: Option<Rc<dyn IGpuDemo>>) {
         self.set_and_raise(Self::demo_property(), &self.demo, value);
     }
 }
 
-/// The demo `control` is, as its contract (`IGpuDemo`): every demo of the sample derives from
-/// [`DrawingSurfaceDemoBase`], which implements it.
-pub fn as_gpu_demo(control: &Ref<Control>) -> Option<Ref<DrawingSurfaceDemoBase>> {
-    control.cast::<DrawingSurfaceDemoBase>()
-}
-
-/// A demo that [`GpuDemo`] shows and passes the values of its sliders to.
-///
-/// Upstream the property `Demo` has the type of this interface and holds the control that
-/// implements it, which the content control of `GpuDemo.xaml` shows. Here the property holds the
-/// control (`Option<Ref<Control>>`, the type a content control shows a control of), and the
-/// contract is reached through [`as_gpu_demo`].
+/// A demo that [`GpuDemo`] shows and passes the values of its sliders to. The demos of the
+/// sample are controls that implement it ([`DrawingSurfaceDemoBase`](crate::DrawingSurfaceDemoBase),
+/// whose handle of the contract is `DrawingSurfaceDemoBase::as_gpu_demo`).
 pub trait IGpuDemo {
     fn update(&self, parent: Option<&Ref<GpuDemo>>, yaw: f32, pitch: f32, roll: f32, disco: f32);
+
+    /// The object that implements the contract, if one does: `is`/`as` on the interface
+    /// (`as_object()?.cast::<T>()`).
+    fn as_object(&self) -> Option<Ref<FerroObject>>;
+}
+
+/// Handles of the contract compare by the object behind them.
+impl PartialEq for dyn IGpuDemo {
+    fn eq(&self, other: &Self) -> bool {
+        match (self.as_object(), other.as_object()) {
+            (Some(a), Some(b)) => a == b,
+            _ => std::ptr::addr_eq(self, other),
+        }
+    }
 }

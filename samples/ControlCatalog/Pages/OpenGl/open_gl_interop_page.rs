@@ -1,18 +1,19 @@
 //! Port of `Pages/OpenGl/OpenGlInteropPage.xaml.cs`: the class of the document
 //! `Pages/OpenGl/OpenGlInteropPage.xaml`.
 //!
-//! The original creates the OpenGL context with an asynchronous method, because the
-//! compositor answers from the render thread; the compositor of the port answers at once
-//! (`OpenGlCompositionInterop::try_create_compatible_gl_context`), so `initialize` has
-//! completed when it returns. The disposals the original awaits last (`DisposeAsync` of
-//! the context) are started and their tasks dropped: nothing follows them.
+//! `Initialize` is an asynchronous method, as in the original: it awaits the OpenGL context
+//! (`OpenGlCompositionInterop::try_create_compatible_gl_context_async`), which a compositor
+//! confined to its render thread gives from a job of that thread. The disposals the original
+//! awaits last (`DisposeAsync` of the context) are started and their tasks dropped: nothing
+//! follows them.
 
 use super::open_gl::{GlPageKnobs, OpenGlContent};
 use crate::markup::{content_page_class, xaml_class};
 use ferroui_base::interactivity::RoutedEventHandlerToken;
 use ferroui_base::reactive::IDisposable;
+use ferroui_base::threading::Dispatcher;
 use ferroui_base::rendering::composition::{
-    CompositionDrawingSurface, CompositionSurfaceVisual, ElementComposition, ServerJobTask,
+    CompositionDrawingSurface, CompositionSurfaceVisual, Compositor, ElementComposition, ServerJobTask,
 };
 use ferroui_base::{
     ferro_class_info, instantiate, BoxedValue, OwnedFerroPropertyChangedEventArgs, PixelSize, Ref, Vector,
@@ -120,6 +121,9 @@ impl OpenGlInteropPage {
         self.cleanup();
     }
 
+    /// `async void Initialize()` of the original: runs up to its first await here, and on
+    /// from the dispatcher.
+    ///
     /// # Panics
     /// Panics if the model of the content cannot be read or its shaders do not build (an
     /// exception of the asynchronous method in the managed original).
@@ -132,7 +136,23 @@ impl OpenGlInteropPage {
         };
         let compositor = element_visual.compositor().clone();
 
-        let Some(context) = OpenGlCompositionInterop::try_create_compatible_gl_context(&compositor, None) else {
+        let context = OpenGlCompositionInterop::try_create_compatible_gl_context_async(&compositor, None);
+        let this = self.to_ref();
+        drop(Dispatcher::current_dispatcher().to_task_scheduler().start_local(async move {
+            let context = context.await;
+            this.initialize_with_context(generation, &viewport, &compositor, context);
+        }));
+    }
+
+    /// The rest of `Initialize`, once the context is awaited.
+    fn initialize_with_context(
+        &self,
+        generation: i32,
+        viewport: &Ref<Control>,
+        compositor: &Rc<Compositor>,
+        context: Option<Rc<dyn ICompositionGlContext>>,
+    ) {
+        let Some(context) = context else {
             self.knobs().set_info("Compositor OpenGL interop is not available on this platform".to_string());
             return;
         };
@@ -149,7 +169,7 @@ impl OpenGlInteropPage {
         visual.set_surface(Some((*surface).clone()));
         *self.surface.borrow_mut() = Some(surface);
         *self.visual.borrow_mut() = Some(visual.clone());
-        ElementComposition::set_element_child_visual(&viewport, Some((*visual).clone()));
+        ElementComposition::set_element_child_visual(viewport, Some((*visual).clone()));
 
         let gl_context = context.gl_context();
         let current = gl_context.make_current();

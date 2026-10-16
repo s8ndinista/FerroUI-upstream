@@ -140,8 +140,8 @@ impl IRenderer for NullRenderer {
         self.is_started.set(false);
     }
 
-    fn try_get_render_interface_feature(&self, _feature_type: TypeId) -> Option<ferroui_base::rendering::composition::RenderInterfaceFeature> {
-        None
+    fn try_get_render_interface_feature(&self, _feature_type: TypeId) -> ferroui_base::rendering::composition::LocalFuture<Option<ferroui_base::rendering::composition::RenderInterfaceFeature>> {
+        Box::pin(std::future::ready(None))
     }
 
     fn dispose(&self) {

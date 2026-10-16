@@ -6,7 +6,7 @@
 //! the demo shows why it does not draw, as upstream does where the backend has none.
 
 use crate::vulkan_demo::VulkanDemoControl;
-use crate::{as_gpu_demo, App, DemoType, DrawingSurfaceDemoBase, GpuDemo, MainWindow, SAMPLE};
+use crate::{App, DemoType, DrawingSurfaceDemoBase, GpuDemo, MainWindow, SAMPLE};
 use ferroui_base::Ref;
 use ferroui_controls::primitives::RangeBase;
 use ferroui_controls::{Application, Control, Slider, TextBlock};
@@ -54,8 +54,9 @@ fn the_main_window_shows_the_vulkan_demo_in_the_demo_control() {
     assert_eq!(window.title().as_deref(), Some("Vulkan"), "the title names the demo");
     let gpu_demo = gpu_demo(&window);
     let demo = gpu_demo.demo().expect("the demo of the demo control");
+    let demo = demo.as_object().expect("the demo is an object");
     assert!(demo.cast::<VulkanDemoControl>().is_some(), "the demo is the Vulkan demo");
-    let demo = as_gpu_demo(&demo).expect("the demo is a demo of the sample");
+    let demo = demo.cast::<DrawingSurfaceDemoBase>().expect("the demo is a demo of the sample");
 
     // The content control of `GpuDemo.xaml` shows the demo through its binding.
     let shown = gpu_demo.find_descendant_of_type::<DrawingSurfaceDemoBase>(false).expect("the demo is in the visual tree");
@@ -89,7 +90,7 @@ fn a_slider_passes_its_value_to_the_demo() {
     let (shell, window) = start(DemoType::Vulkan);
 
     let gpu_demo = gpu_demo(&window);
-    let demo = gpu_demo.demo().as_ref().and_then(as_gpu_demo).expect("the demo of the demo control");
+    let demo = demo_of(&gpu_demo).expect("the demo of the demo control");
     gpu_demo.set_yaw(2.5);
     gpu_demo.set_disco(0.5);
     assert_eq!((demo.yaw(), demo.disco()), (2.5, 0.5));
@@ -109,9 +110,14 @@ fn the_other_demos_say_why_they_do_not_draw_here() {
     for (demo_type, title) in [(DemoType::D3D11, "D3D11"), (DemoType::VulkanDmaBuf, "VulkanDmaBuf")] {
         let (shell, window) = start(demo_type);
         assert_eq!(window.title().as_deref(), Some(title));
-        let demo = gpu_demo(&window).demo().as_ref().and_then(as_gpu_demo).expect("the demo of the demo control");
+        let demo = demo_of(&gpu_demo(&window)).expect("the demo of the demo control");
         assert_eq!(demo.info(), "Compositor doesn't support interop for the current backend");
         window.close();
         drop(shell);
     }
+}
+
+/// The demo of the demo control, as the class of the demos (`Demo as DrawingSurfaceDemoBase`).
+fn demo_of(gpu_demo: &GpuDemo) -> Option<Ref<DrawingSurfaceDemoBase>> {
+    gpu_demo.demo()?.as_object()?.cast::<DrawingSurfaceDemoBase>()
 }

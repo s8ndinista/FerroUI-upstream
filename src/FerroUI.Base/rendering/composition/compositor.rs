@@ -59,7 +59,6 @@ pub struct Compositor {
     confined_loop_task: Option<Arc<RenderThreadLoopTask>>,
     /// Whether a job of the render thread is on its way to fill the cache
     /// of the features of the render interface.
-    render_interface_features_requested: Arc<AtomicBool>,
     /// The readback of the server: what the two threads share besides the
     /// queue of batches.
     readback: Arc<super::server::ReadbackIndices>,
@@ -397,7 +396,6 @@ impl Compositor {
             server,
             render_thread,
             confined_loop_task,
-            render_interface_features_requested: Arc::new(AtomicBool::new(false)),
             batches,
             clock,
             next_commit: RefCell::new(None),
@@ -1006,42 +1004,73 @@ impl Compositor {
         )
     }
 
-    /// The interop with GPU objects created outside of the framework, when
-    /// the render interface supports it (`TryGetCompositionGpuInterop`).
+    /// `GetRenderInterfacePublicFeatures`: the public features of the
+    /// render interface, handed to `f` inside the compositor lock; what `f`
+    /// takes from them is the outcome.
     ///
-    /// Upstream the answer is awaited from a job of the render thread; here
-    /// this thread enters the compositor lock and gives it directly. The
-    /// feature is an object of the server side: its handle is cloned from
-    /// the map of features and handed to the interop inside the lock, and
-    /// the interop keeps it there.
-    pub fn try_get_composition_gpu_interop(&self) -> Option<Rc<dyn super::ICompositionGpuInterop>> {
+    /// As upstream: the features that are cached are the answer at once; a
+    /// compositor whose loop does not run in the background asks the server
+    /// on this thread (which creates the backend context when needed); a
+    /// compositor confined to its render thread without a cache asks with a
+    /// job of the render thread (`InvokeServerJobAsync(Server.RT_GetRenderInterfaceFeatures)`)
+    /// and the outcome comes with the job, so the caller awaits it. `f` then
+    /// runs in the job, on the render thread.
+    ///
+    /// Upstream hands the dictionary itself to the caller, and the caller
+    /// takes the feature from it; here a feature is an `Rc` of the server
+    /// side, so `f` takes what it needs inside the lock, where the features
+    /// are, and only what it returns leaves. Its third argument tells
+    /// whether the calling thread may create the backend context: `false`
+    /// only on the thread of a confined compositor, which answers from the
+    /// cache. Without a backend context a compositor that is not confined
+    /// and whose render interface is not ready has no features (`None`).
+    fn get_render_interface_public_features<R: Send + 'static>(
+        &self,
+        f: impl FnOnce(&ServerCompositor, &HashMap<std::any::TypeId, Rc<dyn std::any::Any>>, bool) -> R + Send + 'static,
+    ) -> LocalFuture<Option<R>> {
         self.dispatcher.verify_access();
-        let feature_type = std::any::TypeId::of::<dyn crate::platform::IExternalObjectsRenderInterfaceContextFeature>();
-        self.with_render_interface_feature(feature_type, |_, feature| {
-            let external_objects = feature
-                .downcast_ref::<Rc<dyn crate::platform::IExternalObjectsRenderInterfaceContextFeature>>()?
-                .clone();
-            // `None` where this thread may not create the context of the
-            // render interface and the render thread has none at present.
-            let interop: Rc<dyn super::ICompositionGpuInterop> =
-                super::CompositionInterop::try_new(&self.this(), external_objects)?;
-            Some(interop)
-        })
-        .flatten()
+        if self.is_confined_to_render_thread() {
+            // The features are objects of the server side: they are read
+            // under the lock, and `f` runs there; it is only taken out of
+            // its cell when there is a cache to give it.
+            let f = Cell::new(Some(f));
+            let cached = self.server.with(|server| {
+                let features = server.at_try_get_cached_render_interface_features()?;
+                let f = f.take().expect("taken once");
+                Some(f(server, &features, false))
+            });
+            if let Some(result) = cached {
+                return Box::pin(std::future::ready(Some(result)));
+            }
+            let f = f.take().expect("taken once");
+            let task = self.invoke_server_job_async(
+                move |server| {
+                    let features = server.rt_get_render_interface_features();
+                    Ok(f(server, &features, true))
+                },
+                false,
+            );
+            return Box::pin(ServerJobResult::new(task));
+        }
+        let result = self.server.with(|server| {
+            if let Some(features) = server.at_try_get_cached_render_interface_features() {
+                return Some(f(server, &features, true));
+            }
+            if !server.render_interface().is_ready() {
+                return None;
+            }
+            let features = server.rt_get_render_interface_features();
+            Some(f(server, &features, true))
+        });
+        Box::pin(std::future::ready(result))
     }
 
-    /// Attempts to query for a feature from the platform render interface.
-    ///
-    /// Upstream the answer comes from a job on the render thread when it is
-    /// not cached; the server compositor runs on this thread, so it is
-    /// asked directly.
-    ///
-    /// A compositor that is confined to its render thread answers from the
-    /// cache alone, as upstream with a background loop: without a cache the
-    /// answer is `None` for now, and a job of the render thread fills the
-    /// cache (`InvokeServerJobAsync(Server.RT_GetRenderInterfaceFeatures)`),
-    /// so that a later call has the answer. This thread never creates the
-    /// backend context there.
+    /// Attempts to query for a feature from the platform render interface
+    /// (`TryGetRenderInterfaceFeature`): a future that completes with the
+    /// feature, or `None` when the render interface has none. Awaited on the
+    /// thread of the compositor; see
+    /// [`get_render_interface_public_features`](Self::get_render_interface_public_features)
+    /// for when it completes.
     ///
     /// Upstream hands out the feature object itself, which the two threads
     /// then share. Here the feature is an `Rc` of the server side, so what
@@ -1049,67 +1078,51 @@ impl Compositor {
     /// a handle to the same feature that stays inside the compositor lock
     /// and lends the feature there. It keeps the feature alive as the
     /// object upstream does.
-    pub fn try_get_render_interface_feature(&self, feature_type: std::any::TypeId) -> Option<super::RenderInterfaceFeature> {
-        self.dispatcher.verify_access();
-        // The handle is cloned from the map and bound to the lock inside
-        // the lock: no count of the server side is touched outside it.
-        self.with_render_interface_feature(feature_type, |server, feature| {
-            super::RenderInterfaceFeature::new(self.bind_to_lock(server, feature.clone()))
-        })
-    }
-
-    /// Runs `f` inside the compositor lock with the feature of the render
-    /// interface registered under `feature_type`, as the map of features
-    /// holds it; `None` without one, see
-    /// [`try_get_render_interface_feature`](Self::try_get_render_interface_feature).
-    fn with_render_interface_feature<R>(
+    pub fn try_get_render_interface_feature(
         &self,
         feature_type: std::any::TypeId,
-        f: impl FnOnce(&ServerCompositor, &Rc<dyn std::any::Any>) -> R,
-    ) -> Option<R> {
-        if self.is_confined_to_render_thread() {
-            let cached = self.server.with(|server| {
-                server
-                    .at_try_get_cached_render_interface_features()
-                    .map(|features| features.get(&feature_type).map(|feature| f(server, feature)))
-            });
-            return match cached {
-                Some(result) => result,
-                None => {
-                    self.request_render_interface_features();
-                    None
-                }
-            };
-        }
-        // The features are objects of the server side: they are read under
-        // the lock.
-        self.server.with(|server| {
-            if let Some(features) = server.at_try_get_cached_render_interface_features() {
-                return features.get(&feature_type).map(|feature| f(server, feature));
-            }
-            if !server.render_interface().is_ready() {
-                return None;
-            }
-            server.rt_get_render_interface_features().get(&feature_type).map(|feature| f(server, feature))
-        })
+    ) -> LocalFuture<Option<super::RenderInterfaceFeature>> {
+        // The handle is cloned from the map and bound to the lock inside
+        // the lock: no count of the server side is touched outside it.
+        let locked = self.server.clone();
+        let features = self.get_render_interface_public_features(move |server, features, _| {
+            let feature = features.get(&feature_type)?;
+            Some(super::RenderInterfaceFeature::new(super::server::LockBound::new(&locked, server, feature.clone())))
+        });
+        Box::pin(async move { features.await.flatten() })
     }
 
-    /// Posts the job of the render thread that fills the cache of the
-    /// features of the render interface, unless one is on its way.
-    fn request_render_interface_features(&self) {
-        if self.render_interface_features_requested.swap(true, Ordering::SeqCst) {
-            return;
-        }
-        let requested = self.render_interface_features_requested.clone();
-        self.post_server_job(
-            move |server| {
-                // A job runs in a frame that has a backend context: the
-                // cache is there, or is filled from it here.
-                server.rt_get_render_interface_features();
-                requested.store(false, Ordering::SeqCst);
-            },
-            false,
-        );
+    /// Attempts to query for the GPU interop feature from the platform
+    /// render interface (`TryGetCompositionGpuInterop`): a future that
+    /// completes with the interop with GPU objects created outside of the
+    /// framework, or `None` when the render interface does not support it.
+    /// Awaited on the thread of the compositor.
+    ///
+    /// Upstream awaits the feature (`TryGetRenderInterfaceFeature`) and
+    /// constructs the interop where the await continues: on the render
+    /// thread, when a job of the render thread gave the feature. Here the
+    /// feature is an object of the server side: the server part of the
+    /// interop is made from it inside the lock, where the feature is read
+    /// (in that job, for a confined compositor without a cache), and this
+    /// thread makes the interop around it.
+    pub fn try_get_composition_gpu_interop(&self) -> LocalFuture<Option<Rc<dyn super::ICompositionGpuInterop>>> {
+        let feature_type = std::any::TypeId::of::<dyn crate::platform::IExternalObjectsRenderInterfaceContextFeature>();
+        let locked = self.server.clone();
+        let parts = self.get_render_interface_public_features(move |server, features, may_create_context| {
+            let external_objects = features
+                .get(&feature_type)?
+                .downcast_ref::<Rc<dyn crate::platform::IExternalObjectsRenderInterfaceContextFeature>>()?
+                .clone();
+            // `None` where this thread may not create the context of the
+            // render interface and the render thread has none at present.
+            super::CompositionInterop::server_part(&locked, server, external_objects, may_create_context)
+        });
+        let this = self.this();
+        Box::pin(async move {
+            let part = parts.await.flatten()?;
+            let interop: Rc<dyn super::ICompositionGpuInterop> = super::CompositionInterop::from_server_part(&this, part);
+            Some(interop)
+        })
     }
 
     /// Whether an object is queued for serialization (for unit tests).
@@ -1335,5 +1348,41 @@ impl<T: Send + 'static> ServerJobTask<T> {
             }
         }
         continuation();
+    }
+}
+
+/// A future of the thread of the compositor: what its asynchronous members
+/// return (a `ValueTask` upstream), awaited on that thread.
+pub type LocalFuture<T> = std::pin::Pin<Box<dyn std::future::Future<Output = T>>>;
+
+/// `await` of the task of a job of the render thread: the result of the
+/// job. A job that fails ends the awaiting method with its error, as the
+/// exception that `await` rethrows upstream.
+struct ServerJobResult<T> {
+    task: ServerJobTask<T>,
+    registered: bool,
+}
+
+impl<T: Send + 'static> ServerJobResult<T> {
+    fn new(task: ServerJobTask<T>) -> Self {
+        Self { task, registered: false }
+    }
+}
+
+impl<T: Send + 'static> std::future::Future for ServerJobResult<T> {
+    type Output = Option<T>;
+
+    fn poll(mut self: std::pin::Pin<&mut Self>, cx: &mut std::task::Context<'_>) -> std::task::Poll<Self::Output> {
+        match self.task.take_result() {
+            Some(Ok(result)) => return std::task::Poll::Ready(Some(result)),
+            Some(Err(error)) => panic!("{error}"),
+            None => {}
+        }
+        if !self.registered {
+            self.registered = true;
+            let waker = cx.waker().clone();
+            self.task.on_completed(move || waker.wake());
+        }
+        std::task::Poll::Pending
     }
 }

@@ -4,12 +4,11 @@
 //! whenever the size or the values of the sliders change (every frame while the demo is in its
 //! disco mode).
 //!
-//! Upstream awaits the interop (`TryGetCompositionGpuInterop`), whose answer comes from the
-//! render thread. The compositor of the port answers at once; when it is confined to its render
-//! thread and that thread has not told it yet, the answer comes after the next job of the render
-//! thread, which is what the initialization awaits here (`try_get_composition_gpu_interop_async`).
+//! The initialization is an asynchronous method, as upstream: it awaits the interop of the
+//! compositor (`TryGetCompositionGpuInterop`), whose answer comes from the render thread.
 
 use crate::gpu_demo::{GpuDemo, IGpuDemo};
+use crate::task_support::start;
 use ferroui_base::input::InputElementImpl;
 use ferroui_base::interactivity::InteractiveImpl;
 use ferroui_base::layout::LayoutableImpl;
@@ -18,9 +17,9 @@ use ferroui_base::rendering::composition::{
     CompositionDrawingSurface, CompositionSurfaceVisual, Compositor, ElementComposition, ICompositionGpuInterop,
 };
 use ferroui_base::{
-    ferro_class, ferro_class_info, ferro_impl_classes, FerroObjectImpl, FerroObjectImplExt, FerroPropertyChangedEventArgs,
-    PixelSize, Ref, StyledElementImpl, StyledElementImplExt, Vector, Visual, VisualImpl,
-    VisualImplExt, VisualTreeAttachmentEventArgs, WeakRef,
+    ferro_class, ferro_class_info, ferro_impl_classes, FerroObject, FerroObjectImpl, FerroObjectImplExt,
+    FerroPropertyChangedEventArgs, ObjectType, PixelSize, Ref, StyledElementImpl, StyledElementImplExt, Upcast, Vector,
+    Visual, VisualImpl, VisualImplExt, VisualTreeAttachmentEventArgs, WeakRef,
 };
 use ferroui_controls::{Control, ControlImpl};
 use std::cell::{Cell, RefCell};
@@ -65,7 +64,7 @@ ferro_class! {
         fn supports_disco(this) -> bool;
     }
 }
-ferro_class_info!(DrawingSurfaceDemoBase {});
+ferro_class_info!(DrawingSurfaceDemoBase { interfaces: [Rc<dyn IGpuDemo> => DrawingSurfaceDemoBase::as_gpu_demo] });
 
 ferro_impl_classes!(DrawingSurfaceDemoBase: LayoutableImpl, InteractiveImpl, InputElementImpl, ControlImpl);
 
@@ -122,8 +121,27 @@ impl FerroObjectImpl for DrawingSurfaceDemoBase {
     }
 }
 
-impl IGpuDemo for DrawingSurfaceDemoBase {
+/// The handle of the contract a demo implements (`IGpuDemo`).
+struct GpuDemoRef(Ref<DrawingSurfaceDemoBase>);
+
+impl IGpuDemo for GpuDemoRef {
     fn update(&self, parent: Option<&Ref<GpuDemo>>, yaw: f32, pitch: f32, roll: f32, disco: f32) {
+        self.0.update(parent, yaw, pitch, roll, disco)
+    }
+
+    fn as_object(&self) -> Option<Ref<FerroObject>> {
+        Some(self.0.clone().upcast())
+    }
+}
+
+impl DrawingSurfaceDemoBase {
+    /// The demo as the contract it implements: what the demo control holds (`Demo`).
+    pub fn as_gpu_demo<T: ObjectType + Upcast<DrawingSurfaceDemoBase>>(this: Ref<T>) -> Rc<dyn IGpuDemo> {
+        Rc::new(GpuDemoRef(this.upcast()))
+    }
+
+    /// `Update` of `IGpuDemo`.
+    pub fn update(&self, parent: Option<&Ref<GpuDemo>>, yaw: f32, pitch: f32, roll: f32, disco: f32) {
         *self.parent_control.borrow_mut() = parent.map(Ref::downgrade);
         if let Some(parent_control) = self.parent_control() {
             parent_control.set_info(self.info.borrow().clone());
@@ -221,14 +239,15 @@ impl DrawingSurfaceDemoBase {
         ElementComposition::set_element_child_visual(&this, Some((*visual).clone()));
 
         let this = self.to_ref();
-        self.do_initialize(&compositor, &surface, move |(res, info)| {
+        drop(start(async move {
+            let (res, info) = this.do_initialize(&compositor, &surface).await;
             *this.info.borrow_mut() = info.clone();
             if let Some(parent_control) = this.parent_control() {
                 parent_control.set_info(info);
             }
             this.initialized.set(res);
             this.queue_next_frame();
-        });
+        }));
     }
 
     fn update_frame(&self) {
@@ -259,46 +278,15 @@ impl DrawingSurfaceDemoBase {
         }
     }
 
-    /// `DoInitialize`: the interop of the compositor, then the resources of the demo for it;
-    /// `continuation` receives the outcome.
-    fn do_initialize(
+    /// `DoInitialize`: the interop of the compositor, then the resources of the demo for it.
+    async fn do_initialize(
         &self,
         compositor: &Rc<Compositor>,
         composition_drawing_surface: &CompositionDrawingSurface,
-        continuation: impl FnOnce((bool, String)) + 'static,
-    ) {
-        let this = self.to_ref();
-        let compositor_for_resources = compositor.clone();
-        let surface = composition_drawing_surface.clone();
-        try_get_composition_gpu_interop_async(compositor, move |interop| {
-            let Some(interop) = interop else {
-                continuation((false, "Compositor doesn't support interop for the current backend".to_string()));
-                return;
-            };
-            continuation(this.initialize_graphics_resources(&compositor_for_resources, &surface, &interop));
-        });
+    ) -> (bool, String) {
+        let Some(interop) = compositor.try_get_composition_gpu_interop().await else {
+            return (false, "Compositor doesn't support interop for the current backend".to_string());
+        };
+        self.initialize_graphics_resources(compositor, composition_drawing_surface, &interop)
     }
-}
-
-/// `await compositor.TryGetCompositionGpuInterop()`: `continuation` receives the interop of the
-/// compositor, or `None` when its render interface has none.
-///
-/// A compositor that is confined to its render thread answers from what the render thread told
-/// it: the first question posts the job that asks the render thread, and the answer after a job
-/// posted behind it has run is the answer of the render thread.
-fn try_get_composition_gpu_interop_async(
-    compositor: &Rc<Compositor>,
-    continuation: impl FnOnce(Option<Rc<dyn ICompositionGpuInterop>>) + 'static,
-) {
-    if let Some(interop) = compositor.try_get_composition_gpu_interop() {
-        continuation(Some(interop));
-        return;
-    }
-    if !compositor.is_confined_to_render_thread() {
-        continuation(None);
-        return;
-    }
-    let task = compositor.invoke_server_job_async(|_| Ok(()), false);
-    let compositor = compositor.clone();
-    task.on_completed(move || continuation(compositor.try_get_composition_gpu_interop()));
 }

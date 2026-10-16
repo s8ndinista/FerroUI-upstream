@@ -1,4 +1,4 @@
-use super::composition::{Compositor, RenderInterfaceFeature};
+use super::composition::{Compositor, LocalFuture, RenderInterfaceFeature};
 use super::{RendererDiagnostics, SceneInvalidatedEventArgs};
 use crate::reactive::IDisposable;
 use crate::{Rect, Size, Visual};
@@ -39,14 +39,13 @@ pub trait IRenderer {
     /// Stops the renderer.
     fn stop(&self);
 
-    /// Attempts to query for a feature from the platform render interface.
-    ///
-    /// Upstream this is asynchronous because the render interface lives on
-    /// the render thread; here the answer is given at once, from inside the
-    /// compositor lock (see `Compositor::try_get_render_interface_feature`).
-    /// The feature is an object of the server side: what is handed out
-    /// lends it inside the lock.
-    fn try_get_render_interface_feature(&self, feature_type: TypeId) -> Option<RenderInterfaceFeature>;
+    /// Attempts to query for a feature from the platform render interface:
+    /// a future awaited on the thread of the renderer, which completes with
+    /// the feature or `None` (see `Compositor::try_get_render_interface_feature`:
+    /// asynchronous because the render interface may live on the render
+    /// thread). The feature is an object of the server side: what is handed
+    /// out lends it inside the compositor lock.
+    fn try_get_render_interface_feature(&self, feature_type: TypeId) -> LocalFuture<Option<RenderInterfaceFeature>>;
 
     /// The compositor of the renderer, if it renders through one
     /// (upstream: the `IRendererWithCompositor` interface).
