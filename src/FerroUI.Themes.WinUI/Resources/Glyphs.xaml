@@ -26,11 +26,15 @@
   <!-- E894 Clear: the delete button of TextBox. -->
   <StreamGeometry x:Key="GlyphGeometryE894">M 11.416016,10 20,1.4160156 18.583984,0 10,8.5839846 1.4160156,0 0,1.4160156 8.5839844,10 0,18.583985 1.4160156,20 10,11.416015 18.583984,20 20,18.583985 Z</StreamGeometry>
   <!-- EDD9 CaretLeftSolid8, EDDA CaretRightSolid8, EDDB CaretUpSolid8, EDDC CaretDownSolid8: the
-       arrows of the line buttons of ScrollBar. -->
-  <StreamGeometry x:Key="GlyphGeometryEDD9">M 5,0 L 5,8 L 1,4 Z</StreamGeometry>
-  <StreamGeometry x:Key="GlyphGeometryEDDA">M 0,0 L 4,4 L 0,8 Z</StreamGeometry>
-  <StreamGeometry x:Key="GlyphGeometryEDDB">M 0,5 L 4,1 L 8,5 Z</StreamGeometry>
-  <StreamGeometry x:Key="GlyphGeometryEDDC">M 0,0 L 8,0 L 4,4 Z</StreamGeometry>
+       arrows of the line buttons of ScrollBar, of the navigation buttons of the calendar, of the
+       looping selectors of the pickers, of the scroll buttons of TabView and of PipsPager. A solid
+       triangle with rounded corners whose ink at the font size 8 is 8 wide and 6 high (up and
+       down; 6 wide and 8 high to the sides), as native WinUI 3 draws it (measured at a scaling of
+       2: 16 by 12 device pixels). -->
+  <StreamGeometry x:Key="GlyphGeometryEDD9">M 0.6,4.4 L 5.28,7.52 Q 6,8 6,7.2 L 6,0.8 Q 6,0 5.28,0.48 L 0.6,3.6 Q 0,4 0.6,4.4 Z</StreamGeometry>
+  <StreamGeometry x:Key="GlyphGeometryEDDA">M 5.4,4.4 L 0.72,7.52 Q 0,8 0,7.2 L 0,0.8 Q 0,0 0.72,0.48 L 5.4,3.6 Q 6,4 5.4,4.4 Z</StreamGeometry>
+  <StreamGeometry x:Key="GlyphGeometryEDDB">M 4.4,0.6 L 7.52,5.28 Q 8,6 7.2,6 L 0.8,6 Q 0,6 0.48,5.28 L 3.6,0.6 Q 4,0 4.4,0.6 Z</StreamGeometry>
+  <StreamGeometry x:Key="GlyphGeometryEDDC">M 4.4,5.4 L 7.52,0.72 Q 8,0 7.2,0 L 0.8,0 Q 0,0 0.48,0.72 L 3.6,5.4 Q 4,6 4.4,5.4 Z</StreamGeometry>
   <!-- F136 StatusCircleOuter and F13D StatusCircleErrorX: the error icon of InfoBar
        (InfoBarIconBackgroundGlyph under InfoBarErrorIconGlyph), the icon of the keyed theme
        TooltipDataValidationErrors. F136 is the whole circle of the icon; F13D is the cross inside
