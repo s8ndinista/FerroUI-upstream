@@ -812,6 +812,15 @@ impl Backend {
         }
     }
 
+    /// Whether the application answers: it is running and its accessibility
+    /// API answers a read within the messaging timeout.
+    pub fn is_responsive(&self) -> bool {
+        if self.child.borrow_mut().as_mut().is_some_and(|child| child.try_wait().ok().flatten().is_some()) {
+            return false;
+        }
+        self.application.string("AXRole").is_some()
+    }
+
     pub fn windows_diagnostic(&self) -> Option<String> {
         None
     }

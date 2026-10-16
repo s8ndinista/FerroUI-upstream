@@ -122,6 +122,10 @@ impl Backend {
         match *self {}
     }
 
+    pub fn is_responsive(&self) -> bool {
+        match *self {}
+    }
+
     pub fn windows_diagnostic(&self) -> Option<String> {
         match *self {}
     }

@@ -149,7 +149,10 @@ impl Backend {
         // the awareness of the process is set already.
         unsafe { SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2) };
         let process_id = child.as_ref().map_or(0, Child::id);
-        Ok(Backend { client: UiaClient::new()?, child: RefCell::new(child), process_id })
+        let client = UiaClient::new()?;
+        // A call to an application that stopped responding fails after 5 s instead of 20.
+        let _ = client.set_timeouts(2000, 5000);
+        Ok(Backend { client, child: RefCell::new(child), process_id })
     }
 
     /// Starts the application and waits for its main window, which it brings
@@ -451,14 +454,33 @@ impl Backend {
         found
     }
 
+    /// Whether the application answers: its main window handles a message
+    /// within 5 s (`SendMessageTimeout` of `WM_NULL`, which gives up at once
+    /// for a window the system reports as hung). The runner starts the
+    /// application again when it does not.
+    pub fn is_responsive(&self) -> bool {
+        use windows_sys::Win32::UI::WindowsAndMessaging::{SendMessageTimeoutW, SMTO_ABORTIFHUNG, WM_NULL};
+        if self.child.borrow_mut().as_mut().is_some_and(|child| child.try_wait().ok().flatten().is_some()) {
+            return false;
+        }
+        let Some(main) = self.top_level_windows().into_iter().find(|w| w.automation_id().as_deref() == Ok("MainWindow"))
+        else {
+            return false;
+        };
+        let Ok(hwnd) = main.native_window_handle() else { return false };
+        let mut result = 0usize;
+        // SAFETY: a window handle the system reported and a place for the result.
+        unsafe { SendMessageTimeoutW(hwnd as HWND, WM_NULL, 0, 0, SMTO_ABORTIFHUNG, 5000, &mut result) != 0 }
+    }
+
     /// A diagnostic of `--dump-tree` after a test that failed: the top-level
     /// windows of the application in the z-order of the desktop (front
     /// first), with their owner, whether they are topmost and visible, the
-    /// foreground window, and the automation id of each.
+    /// foreground window, and the title of each.
     pub fn windows_diagnostic(&self) -> Option<String> {
         use windows_sys::Win32::UI::WindowsAndMessaging::{
-            GetForegroundWindow, GetTopWindow, GetWindow, GetWindowLongPtrW, GetWindowThreadProcessId, IsWindowVisible,
-            GWL_EXSTYLE, GW_HWNDNEXT, GW_OWNER, WS_EX_TOPMOST,
+            GetForegroundWindow, GetTopWindow, GetWindow, GetWindowLongPtrW, GetWindowThreadProcessId,
+            InternalGetWindowText, IsWindowVisible, GWL_EXSTYLE, GW_HWNDNEXT, GW_OWNER, WS_EX_TOPMOST,
         };
         if self.process_id == 0 {
             return None;
@@ -476,9 +498,13 @@ impl Backend {
                 if pid == self.process_id {
                     let ex_style = GetWindowLongPtrW(hwnd, GWL_EXSTYLE) as u32;
                     let owner = GetWindow(hwnd, GW_OWNER) as isize;
-                    let id = self.client.element_from_handle(hwnd as isize).and_then(|e| e.automation_id()).unwrap_or_default();
+                    // The title without a message to the window (a window that does not
+                    // respond would hold `GetWindowText`).
+                    let mut title = [0u16; 128];
+                    let length = InternalGetWindowText(hwnd, title.as_mut_ptr(), title.len() as i32).max(0) as usize;
+                    let id = String::from_utf16_lossy(&title[..length.min(title.len())]);
                     text.push_str(&format!(
-                        "   z {index}: {} id={id:?} owner={} topmost={} visible={}\n",
+                        "   z {index}: {} title={id:?} owner={} topmost={} visible={}\n",
                         handle_text(hwnd as isize),
                         handle_text(owner),
                         ex_style & WS_EX_TOPMOST != 0,
