@@ -51824,9 +51824,9 @@
    "key": "DefaultExpanderStyle",
    "kind": "Style",
    "target_type": "Expander",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B2"
+   "batch": null
   },
   {
    "document": "controls/dev/Expander/Expander.xaml",
@@ -51834,9 +51834,9 @@
    "key": "{Expander}",
    "kind": "Style",
    "target_type": "Expander",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B2"
+   "batch": null
   },
   {
    "document": "controls/dev/Expander/Expander_themeresources.xaml",
@@ -51924,9 +51924,9 @@
    "key": "ExpanderHeaderDownStyle",
    "kind": "Style",
    "target_type": "ToggleButton",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B2"
+   "batch": null
   },
   {
    "document": "controls/dev/Expander/Expander_themeresources.xaml",
@@ -51954,9 +51954,9 @@
    "key": "ExpanderHeaderUpStyle",
    "kind": "Style",
    "target_type": "ToggleButton",
-   "status": "pending",
+   "status": "ported",
    "reason": null,
-   "batch": "B2"
+   "batch": null
   },
   {
    "document": "controls/dev/Expander/Expander_themeresources.xaml",
@@ -90076,6 +90076,7 @@
   "Controls/DrawerPage.xaml",
   "Controls/DropDownButton.xaml",
   "Controls/EmbeddableControlRoot.xaml",
+  "Controls/Expander.xaml",
   "Controls/GridSplitter.xaml",
   "Controls/GroupBox.xaml",
   "Controls/HeaderedContentControl.xaml",
@@ -90233,7 +90234,7 @@
    "winui": "No WinUI control: the spin buttons of NumberBox (NumberBoxSpinButtonStyle, NumberBox.xaml) and the TextBox resources.",
    "status": "ported",
    "deviations": 3,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "Calendar.xaml",
@@ -90453,9 +90454,9 @@
    ],
    "batch": "B2",
    "winui": "Expander: DefaultExpanderStyle (Expander.xaml), ExpanderHeaderDownStyle, ExpanderHeaderUpStyle (Expander_themeresources.xaml).",
-   "status": "pending",
-   "deviations": 0,
-   "date": ""
+   "status": "ported",
+   "deviations": 7,
+   "date": "not committed"
   },
   {
    "document": "FlyoutPresenter.xaml",
@@ -90641,7 +90642,7 @@
    "winui": "NumberBox: {NumberBox}, NumberBoxTextBoxStyle, NumberBoxSpinButtonStyle (NumberBox.xaml, NumberBox_themeresources.xaml).",
    "status": "ported",
    "deviations": 15,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "OverlayPopupHost.xaml",
@@ -91544,6 +91545,7 @@
   "TabbedPage": 8,
   "ButtonSpinner": 3,
   "DropDownButton": 4,
+  "Expander": 7,
   "NumericUpDown": 15,
   "Slider": 11,
   "SplitButton": 14,
