@@ -40,7 +40,8 @@
     so that pressing an item of an open submenu does not press its parent.
   - NarrowPadding (PaddingSizeStates) applies always: WinUI uses it when the menu was opened with
     the mouse, the pen or the keyboard and MenuFlyoutItemThemePadding for touch; FerroUI does not
-    report the input device that opened a menu.
+    report the input device that opened a menu. The narrow padding is the Padding of the item
+    (the template binds LayoutRoot's padding to it).
   - The glyphs E73E (check), E915 (radio bullet), E974 and E76C (sub item chevrons) are the
     geometries of Resources/Glyphs.xaml at the ink size of the 12 px glyphs.
   - MenuFlyoutItemTextTrimming (Clip) is TextTrimming="None" of the header presenter, which
@@ -78,7 +79,10 @@
     <Setter Property="BorderBrush" Value="{DynamicResource MenuFlyoutItemBackgroundBrush}" />
     <Setter Property="BorderThickness" Value="{DynamicResource MenuFlyoutItemBorderThickness}" />
     <Setter Property="Foreground" Value="{DynamicResource MenuFlyoutItemForeground}" />
-    <Setter Property="Padding" Value="{StaticResource MenuFlyoutItemThemePadding}" />
+    <!-- MenuFlyoutItemThemePadding, replaced by NarrowPadding of PaddingSizeStates
+         (MenuFlyoutItemThemePaddingNarrow), which applies always: set on the item, as a style of
+         the template's LayoutRoot would not override its template binding of the padding. -->
+    <Setter Property="Padding" Value="{StaticResource MenuFlyoutItemThemePaddingNarrow}" />
     <Setter Property="FontSize" Value="{DynamicResource ControlContentThemeFontSize}" />
     <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}" />
     <Setter Property="Template">
@@ -183,11 +187,6 @@
         </Panel>
       </ControlTemplate>
     </Setter>
-
-    <!-- NarrowPadding of PaddingSizeStates. -->
-    <Style Selector="^ /template/ Border#LayoutRoot">
-      <Setter Property="Padding" Value="{StaticResource MenuFlyoutItemThemePaddingNarrow}" />
-    </Style>
 
     <!-- MenuFlyoutItem: PointerOver -->
     <Style Selector="^:selected">
