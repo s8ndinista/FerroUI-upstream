@@ -127,6 +127,7 @@
                     CornerRadius="{TemplateBinding CornerRadius}" />
             <!-- InnerLeftContent of FerroUI's text box. -->
             <ContentPresenter x:Name="InnerLeftContentPresenter"
+                              IsVisible="{TemplateBinding InnerLeftContent, Converter={x:Static ObjectConverters.IsNotNull}}"
                               Grid.Column="0"
                               Margin="{TemplateBinding BorderThickness}"
                               Content="{TemplateBinding InnerLeftContent}"
@@ -194,6 +195,7 @@
                     VerticalAlignment="Stretch" />
             <!-- InnerRightContent of FerroUI's text box. -->
             <ContentPresenter x:Name="InnerRightContentPresenter"
+                              IsVisible="{TemplateBinding InnerRightContent, Converter={x:Static ObjectConverters.IsNotNull}}"
                               Grid.Column="4"
                               Margin="{TemplateBinding BorderThickness}"
                               Content="{TemplateBinding InnerRightContent}"

@@ -141,6 +141,7 @@
                   Width="72"
                   IsVisible="False" />
           <ContentPresenter x:Name="InnerLeftContentPresenter"
+                            IsVisible="{TemplateBinding InnerLeftContent, Converter={x:Static ObjectConverters.IsNotNull}}"
                             Grid.Column="1"
                             Margin="{TemplateBinding BorderThickness}"
                             VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
@@ -195,6 +196,7 @@
             </TextBlock.IsVisible>
           </TextBlock>
           <ContentPresenter x:Name="InnerRightContentPresenter"
+                            IsVisible="{TemplateBinding InnerRightContent, Converter={x:Static ObjectConverters.IsNotNull}}"
                             Grid.Column="3"
                             Margin="{TemplateBinding BorderThickness}"
                             VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
