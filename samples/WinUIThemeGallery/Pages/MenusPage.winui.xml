@@ -56,7 +56,7 @@
     <MenuBarItem Title="Help" IsEnabled="False" />
   </MenuBar>
 
-  <Grid ColumnSpacing="24">
+  <Grid ColumnSpacing="24" HorizontalAlignment="Left">
     <Grid.ColumnDefinitions>
       <ColumnDefinition Width="300" />
       <ColumnDefinition Width="300" />

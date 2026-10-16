@@ -8,7 +8,7 @@
     <TextBlock Text="Numbers and suggestions" FontSize="28" FontWeight="SemiBold" />
 
     <TextBlock Text="NumericUpDown" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" />
-    <Grid ColumnSpacing="16" RowSpacing="12">
+    <Grid ColumnSpacing="16" RowSpacing="12" HorizontalAlignment="Left">
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="160" />
         <ColumnDefinition Width="220" />

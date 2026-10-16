@@ -24,7 +24,7 @@
       <MenuItem Header="Help" IsEnabled="False" />
     </Menu>
 
-    <Grid ColumnSpacing="24">
+    <Grid ColumnSpacing="24" HorizontalAlignment="Left">
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="300" />
         <ColumnDefinition Width="300" />
