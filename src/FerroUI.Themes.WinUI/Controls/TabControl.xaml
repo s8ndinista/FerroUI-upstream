@@ -1,0 +1,466 @@
+<!--
+  Ported from microsoft-ui-xaml (https://github.com/microsoft/microsoft-ui-xaml),
+  commit 7e4b0c2096be402f51cc8f7d203ebf67cff183d0:
+    controls/dev/TabView/TabView.xaml (DefaultTabViewStyle and the implicit style of TabView, the
+    implicit style of TabViewListView, TabScrollViewerStyle, TabViewScrollButtonStyle,
+    TabViewButtonStyle and TabViewCloseButtonStyle; the resources of
+    controls/dev/TabView/TabView_themeresources.xaml are Resources/TabView_themeresources.xaml)
+  Copyright (c) Microsoft Corporation. Licensed under the MIT License (see NOTICE.md of the crate).
+
+  FerroUI's TabControl is WinUI's TabView: a strip of tabs over the content of the selected one
+  (TabItem is TabViewItem, Controls/TabItem.xaml). FerroUI's tabs cannot be closed, added,
+  dragged or reordered, and the TabControl has no strip header or footer.
+
+  Translation notes (docs/porting/winui-theme.md, section 4):
+  - The template of TabView is a Grid of the tab strip (TabContainerGrid) over the content
+    (TabContentPresenter): a DockPanel with the strip docked at TabStripPlacement. The strip keeps
+    the columns of the left content, the tabs and the right content and the bottom border lines
+    under them; the column of the add tab button, the button (AddButton with TabViewButtonStyle)
+    and the presenters of TabStripHeader and TabStripFooter are left out (FerroUI's TabControl has
+    none). The content is the PART_SelectedContentHost FerroUI's TabControl requires, with the
+    PART_SelectedContentHost2 of its page transitions, in a Border of the border brush, border
+    thickness and corner radius the source binds on TabContentPresenter.
+  - TabViewListView (the implicit style of the strip) is not a control of its own: its template
+    (a Border, the ScrollViewer with TabScrollViewerStyle, the ItemsPresenter with a 4 px wide
+    header and footer that hold the bottom border lines beside the first and the last tab) is
+    written into the template, and its ItemsStackPanel is a horizontal StackPanel. The bottom
+    border lines of the header and footer are named HeaderBottomBorderLine and
+    FooterBottomBorderLine (one name scope holds them with the lines of TabView). The setters of
+    the list view are written on its elements (VerticalAlignment, IsTabStop, the scroll bar
+    visibilities, BringIntoViewOnFocusChange); its TabNavigation="Once" is the tab navigation
+    FerroUI's TabControl sets on its panel. ItemContainerTransitions (AddDeleteThemeTransition,
+    ContentThemeTransition, ReorderThemeTransition, EntranceThemeTransition) have no counterpart.
+  - The visual states that TabView sets from code (SingleBottomBorderLine of TabView,
+    LeftBottomBorderLineShort, RightBottomBorderLineShort and NoBottomBorderLine of the list
+    view and of TabScrollViewerStyle) are left out: the lines keep the normal state.
+  - TabScrollViewerStyle is a control theme of ScrollViewer. Its scroll buttons are shown by
+    ComputedHorizontalScrollBarVisibility in the source and enabled by the code of TabView at the
+    ends of the scroll range: here both are MenuScrollingVisibilityConverter of the offset, extent
+    and viewport (shown while the tabs overflow, enabled until the end of the range). The
+    buttons scroll with the LineLeft and LineRight commands of the scroll viewer (TabView scrolls
+    50 px per click in code). The FontIcon glyphs EDD9 and EDDA of the buttons are paths of the
+    glyph geometries (G-9), 8 px high (TabViewItemScrollButonFontSize), filled with the foreground
+    of the button, which the states of TabViewScrollButtonStyle set with the one of its content
+    presenter.
+  - The placements of FerroUI that TabView has not: at the bottom the strip is the strip of the
+    top turned upside down (its tabs turn their header back, Controls/TabItem.xaml); at the left
+    and at the right the tabs are stacked vertically without the bottom border lines, and the
+    tabs are drawn as the items of the left pane of NavigationView (Controls/TabItem.xaml).
+  - KeyboardAcceleratorPlacementMode has no counterpart.
+-->
+<ResourceDictionary xmlns="https://github.com/ferroui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:converters="using:FerroUI.Controls.Converters"
+                    x:ClassModifier="internal">
+  <Design.PreviewWith>
+    <Border Width="480" Padding="20">
+      <TabControl Height="180">
+        <TabItem Header="Selected">
+          <TextBlock Text="The content of the selected tab." Margin="12" />
+        </TabItem>
+        <TabItem Header="Normal" />
+        <TabItem Header="Disabled" IsEnabled="False" />
+      </TabControl>
+    </Border>
+  </Design.PreviewWith>
+
+  <ControlTheme x:Key="TabViewScrollButtonStyle" TargetType="RepeatButton" BasedOn="{StaticResource DefaultRepeatButtonStyle}">
+    <Setter Property="Background" Value="{DynamicResource TabViewScrollButtonBackground}" />
+    <Setter Property="Foreground" Value="{DynamicResource TabViewScrollButtonForeground}" />
+    <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}" />
+    <Setter Property="FontSize" Value="{DynamicResource TabViewItemScrollButonFontSize}" />
+    <Setter Property="FontFamily" Value="{DynamicResource SymbolThemeFontFamily}" />
+    <Setter Property="Width" Value="{DynamicResource TabViewItemScrollButtonWidth}" />
+    <Setter Property="Height" Value="{DynamicResource TabViewItemScrollButtonHeight}" />
+    <Setter Property="BorderThickness" Value="{DynamicResource TabViewButtonBorderThickness}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource TabViewScrollButtonBorderBrush}" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+    <!-- FocusVisualMargin="-3": the focus adorner of DefaultRepeatButtonStyle. -->
+    <Setter Property="Template">
+      <ControlTemplate>
+        <ContentPresenter x:Name="PART_ContentPresenter"
+                          Background="{TemplateBinding Background}"
+                          BorderBrush="{TemplateBinding BorderBrush}"
+                          BorderThickness="{TemplateBinding BorderThickness}"
+                          BackgroundSizing="{TemplateBinding BackgroundSizing}"
+                          Foreground="{TemplateBinding Foreground}"
+                          Content="{TemplateBinding Content}"
+                          ContentTemplate="{TemplateBinding ContentTemplate}"
+                          CornerRadius="{TemplateBinding CornerRadius}"
+                          FontSize="{TemplateBinding FontSize}"
+                          FontFamily="{TemplateBinding FontFamily}"
+                          FontWeight="{TemplateBinding FontWeight}"
+                          HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                          VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
+      </ControlTemplate>
+    </Setter>
+    <!-- The foreground of the states is also the foreground of the button, which the glyph of
+         its content follows. -->
+    <Style Selector="^:pointerover">
+      <Setter Property="Foreground" Value="{DynamicResource TabViewScrollButtonForegroundPointerOver}" />
+    </Style>
+    <Style Selector="^:pressed">
+      <Setter Property="Foreground" Value="{DynamicResource TabViewScrollButtonForegroundPressed}" />
+    </Style>
+    <Style Selector="^:disabled">
+      <Setter Property="Foreground" Value="{DynamicResource TabViewScrollButtonForegroundDisabled}" />
+    </Style>
+    <!-- PointerOver -->
+    <Style Selector="^:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource TabViewScrollButtonBackgroundPointerOver}" />
+      <Setter Property="Foreground" Value="{DynamicResource TabViewScrollButtonForegroundPointerOver}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource TabViewScrollButtonBorderBrushPointerOver}" />
+    </Style>
+    <!-- Pressed -->
+    <Style Selector="^:pressed /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource TabViewScrollButtonBackgroundPressed}" />
+      <Setter Property="Foreground" Value="{DynamicResource TabViewScrollButtonForegroundPressed}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource TabViewScrollButtonBorderBrushPressed}" />
+    </Style>
+    <!-- Disabled -->
+    <Style Selector="^:disabled /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource TabViewScrollButtonBackgroundDisabled}" />
+      <Setter Property="Foreground" Value="{DynamicResource TabViewScrollButtonForegroundDisabled}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource TabViewScrollButtonBorderBrushDisabled}" />
+    </Style>
+  </ControlTheme>
+
+  <!-- The style of the add tab button (FerroUI's TabControl has none). -->
+  <ControlTheme x:Key="TabViewButtonStyle" TargetType="Button" BasedOn="{StaticResource DefaultButtonStyle}">
+    <Setter Property="Background" Value="{DynamicResource TabViewButtonBackground}" />
+    <Setter Property="Foreground" Value="{DynamicResource TabViewButtonForeground}" />
+    <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}" />
+    <Setter Property="FontSize" Value="{DynamicResource TabViewItemAddButtonFontSize}" />
+    <Setter Property="FontFamily" Value="{DynamicResource SymbolThemeFontFamily}" />
+    <Setter Property="Width" Value="{DynamicResource TabViewItemAddButtonWidth}" />
+    <Setter Property="Height" Value="{DynamicResource TabViewItemAddButtonHeight}" />
+    <Setter Property="BorderThickness" Value="{DynamicResource TabViewButtonBorderThickness}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource TabViewButtonBorderBrush}" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+    <!-- FocusVisualMargin="-3": the focus adorner of DefaultButtonStyle. -->
+    <Setter Property="Template">
+      <ControlTemplate>
+        <ContentPresenter x:Name="PART_ContentPresenter"
+                          Background="{TemplateBinding Background}"
+                          BackgroundSizing="{TemplateBinding BackgroundSizing}"
+                          BorderBrush="{TemplateBinding BorderBrush}"
+                          BorderThickness="{TemplateBinding BorderThickness}"
+                          Foreground="{TemplateBinding Foreground}"
+                          Content="{TemplateBinding Content}"
+                          ContentTemplate="{TemplateBinding ContentTemplate}"
+                          CornerRadius="{TemplateBinding CornerRadius}"
+                          FontSize="{TemplateBinding FontSize}"
+                          FontFamily="{TemplateBinding FontFamily}"
+                          FontWeight="{TemplateBinding FontWeight}"
+                          HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                          VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
+      </ControlTemplate>
+    </Setter>
+    <!-- PointerOver -->
+    <Style Selector="^:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource TabViewButtonBackgroundPointerOver}" />
+      <Setter Property="Foreground" Value="{DynamicResource TabViewButtonForegroundPointerOver}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource TabViewButtonBorderBrushPointerOver}" />
+    </Style>
+    <!-- Pressed -->
+    <Style Selector="^:pressed /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource TabViewButtonBackgroundPressed}" />
+      <Setter Property="Foreground" Value="{DynamicResource TabViewButtonForegroundPressed}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource TabViewButtonBorderBrushPressed}" />
+    </Style>
+    <!-- Disabled -->
+    <Style Selector="^:disabled /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource TabViewButtonBackgroundDisabled}" />
+      <Setter Property="Foreground" Value="{DynamicResource TabViewButtonForegroundDisabled}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource TabViewButtonBorderBrushDisabled}" />
+    </Style>
+  </ControlTheme>
+
+  <!-- The style of the close button of a tab (FerroUI's tabs cannot be closed). -->
+  <ControlTheme x:Key="TabViewCloseButtonStyle" TargetType="Button" BasedOn="{StaticResource DefaultButtonStyle}">
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Setter Property="FontFamily" Value="{DynamicResource SymbolThemeFontFamily}" />
+    <Setter Property="FontSize" Value="{DynamicResource TabViewItemHeaderCloseFontSize}" />
+    <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}" />
+    <Setter Property="Width" Value="{DynamicResource TabViewItemHeaderCloseButtonWidth}" />
+    <Setter Property="Height" Value="{DynamicResource TabViewItemHeaderCloseButtonHeight}" />
+    <Setter Property="Background" Value="{DynamicResource TabViewItemHeaderCloseButtonBackground}" />
+    <Setter Property="Foreground" Value="{DynamicResource TabViewItemHeaderCloseButtonForeground}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource TabViewItemHeaderCloseButtonBorderBrush}" />
+    <Setter Property="BorderThickness" Value="{DynamicResource TabViewItemHeaderCloseButtonBorderThickness}" />
+    <Setter Property="Padding" Value="0" />
+    <!-- FocusVisualMargin="-3": the focus adorner of DefaultButtonStyle. -->
+    <Setter Property="Template">
+      <ControlTemplate>
+        <ContentPresenter x:Name="PART_ContentPresenter"
+                          BackgroundSizing="{TemplateBinding BackgroundSizing}"
+                          Background="{TemplateBinding Background}"
+                          BorderBrush="{TemplateBinding BorderBrush}"
+                          BorderThickness="{TemplateBinding BorderThickness}"
+                          Foreground="{TemplateBinding Foreground}"
+                          ContentTemplate="{TemplateBinding ContentTemplate}"
+                          Content="{TemplateBinding Content}"
+                          CornerRadius="{TemplateBinding CornerRadius}"
+                          HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                          VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
+      </ControlTemplate>
+    </Setter>
+    <!-- PointerOver -->
+    <Style Selector="^:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource TabViewItemHeaderCloseButtonBackgroundPointerOver}" />
+      <Setter Property="Foreground" Value="{DynamicResource TabViewItemHeaderCloseButtonForegroundPointerOver}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource TabViewItemHeaderCloseButtonBorderBrushPointerOver}" />
+    </Style>
+    <!-- Pressed -->
+    <Style Selector="^:pressed /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource TabViewItemHeaderCloseButtonBackgroundPressed}" />
+      <Setter Property="Foreground" Value="{DynamicResource TabViewItemHeaderCloseButtonForegroundPressed}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource TabViewItemHeaderCloseButtonBorderBrushPressed}" />
+    </Style>
+    <!-- The source has no Disabled state: the brushes of the control stay. -->
+    <Style Selector="^:disabled /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{TemplateBinding Background}" />
+      <Setter Property="Foreground" Value="{TemplateBinding Foreground}" />
+      <Setter Property="BorderBrush" Value="{TemplateBinding BorderBrush}" />
+    </Style>
+  </ControlTheme>
+
+  <ControlTheme x:Key="TabScrollViewerStyle" TargetType="ScrollViewer">
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border x:Name="Root"
+                Background="{TemplateBinding Background}"
+                BorderBrush="{TemplateBinding BorderBrush}"
+                BorderThickness="{TemplateBinding BorderThickness}">
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="Auto" MinWidth="2" />
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Border x:Name="LeftBottomBorderLine"
+                    Background="{DynamicResource TabViewBorderBrush}"
+                    Height="1"
+                    VerticalAlignment="Bottom" />
+            <Border x:Name="RightBottomBorderLine"
+                    Grid.Column="2"
+                    Background="{DynamicResource TabViewBorderBrush}"
+                    Height="1"
+                    VerticalAlignment="Bottom" />
+            <Border x:Name="ScrollDecreaseButtonContainer"
+                    Padding="{DynamicResource TabViewItemLeftScrollButtonContainerPadding}"
+                    VerticalAlignment="Bottom">
+              <Border.IsVisible>
+                <MultiBinding Converter="{x:Static converters:MenuScrollingVisibilityConverter.Instance}"
+                              ConverterParameter="-1">
+                  <Binding RelativeSource="{RelativeSource TemplatedParent}" Path="HorizontalScrollBarVisibility" />
+                  <Binding RelativeSource="{RelativeSource TemplatedParent}" Path="Offset.X" />
+                  <Binding RelativeSource="{RelativeSource TemplatedParent}" Path="Extent.Width" />
+                  <Binding RelativeSource="{RelativeSource TemplatedParent}" Path="Viewport.Width" />
+                </MultiBinding>
+              </Border.IsVisible>
+              <RepeatButton x:Name="ScrollDecreaseButton"
+                            Theme="{StaticResource TabViewScrollButtonStyle}"
+                            IsTabStop="False"
+                            Delay="50"
+                            Interval="100"
+                            Command="{Binding LineLeft, RelativeSource={RelativeSource TemplatedParent}}">
+                <RepeatButton.IsEnabled>
+                  <MultiBinding Converter="{x:Static converters:MenuScrollingVisibilityConverter.Instance}"
+                                ConverterParameter="0">
+                    <Binding RelativeSource="{RelativeSource TemplatedParent}" Path="HorizontalScrollBarVisibility" />
+                    <Binding RelativeSource="{RelativeSource TemplatedParent}" Path="Offset.X" />
+                    <Binding RelativeSource="{RelativeSource TemplatedParent}" Path="Extent.Width" />
+                    <Binding RelativeSource="{RelativeSource TemplatedParent}" Path="Viewport.Width" />
+                  </MultiBinding>
+                </RepeatButton.IsEnabled>
+                <Path Data="{StaticResource GlyphGeometryEDD9}"
+                      Fill="{Binding $parent[RepeatButton].Foreground}"
+                      Stretch="Uniform"
+                      Height="{StaticResource TabViewItemScrollButonFontSize}" />
+              </RepeatButton>
+            </Border>
+            <ScrollContentPresenter x:Name="PART_ContentPresenter"
+                                    Grid.Column="1"
+                                    Padding="1,0,0,0"
+                                    ContentTemplate="{TemplateBinding ContentTemplate}">
+              <ScrollContentPresenter.GestureRecognizers>
+                <ScrollGestureRecognizer CanHorizontallyScroll="{Binding CanHorizontallyScroll, ElementName=PART_ContentPresenter}"
+                                         CanVerticallyScroll="{Binding CanVerticallyScroll, ElementName=PART_ContentPresenter}"
+                                         Offset="{Binding Offset, ElementName=PART_ContentPresenter}"
+                                         Viewport="{Binding Viewport, ElementName=PART_ContentPresenter}"
+                                         Extent="{Binding Extent, ElementName=PART_ContentPresenter}" />
+              </ScrollContentPresenter.GestureRecognizers>
+            </ScrollContentPresenter>
+            <Border x:Name="ScrollIncreaseButtonContainer"
+                    Grid.Column="2"
+                    Padding="{DynamicResource TabViewItemRightScrollButtonContainerPadding}"
+                    VerticalAlignment="Bottom">
+              <Border.IsVisible>
+                <MultiBinding Converter="{x:Static converters:MenuScrollingVisibilityConverter.Instance}"
+                              ConverterParameter="-1">
+                  <Binding RelativeSource="{RelativeSource TemplatedParent}" Path="HorizontalScrollBarVisibility" />
+                  <Binding RelativeSource="{RelativeSource TemplatedParent}" Path="Offset.X" />
+                  <Binding RelativeSource="{RelativeSource TemplatedParent}" Path="Extent.Width" />
+                  <Binding RelativeSource="{RelativeSource TemplatedParent}" Path="Viewport.Width" />
+                </MultiBinding>
+              </Border.IsVisible>
+              <RepeatButton x:Name="ScrollIncreaseButton"
+                            Theme="{StaticResource TabViewScrollButtonStyle}"
+                            IsTabStop="False"
+                            Delay="50"
+                            Interval="100"
+                            Command="{Binding LineRight, RelativeSource={RelativeSource TemplatedParent}}">
+                <RepeatButton.IsEnabled>
+                  <MultiBinding Converter="{x:Static converters:MenuScrollingVisibilityConverter.Instance}"
+                                ConverterParameter="100">
+                    <Binding RelativeSource="{RelativeSource TemplatedParent}" Path="HorizontalScrollBarVisibility" />
+                    <Binding RelativeSource="{RelativeSource TemplatedParent}" Path="Offset.X" />
+                    <Binding RelativeSource="{RelativeSource TemplatedParent}" Path="Extent.Width" />
+                    <Binding RelativeSource="{RelativeSource TemplatedParent}" Path="Viewport.Width" />
+                  </MultiBinding>
+                </RepeatButton.IsEnabled>
+                <Path Data="{StaticResource GlyphGeometryEDDA}"
+                      Fill="{Binding $parent[RepeatButton].Foreground}"
+                      Stretch="Uniform"
+                      Height="{StaticResource TabViewItemScrollButonFontSize}" />
+              </RepeatButton>
+            </Border>
+          </Grid>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+
+  <ControlTheme x:Key="DefaultTabViewStyle" TargetType="TabControl">
+    <Setter Property="VerticalAlignment" Value="Top" />
+    <Setter Property="Padding" Value="{DynamicResource TabViewHeaderPadding}" />
+    <Setter Property="IsTabStop" Value="False" />
+    <Setter Property="Background" Value="{DynamicResource TabViewBackground}" />
+    <!-- The ItemsStackPanel of TabViewListView. -->
+    <Setter Property="ItemsPanel">
+      <ItemsPanelTemplate>
+        <StackPanel Orientation="Horizontal" />
+      </ItemsPanelTemplate>
+    </Setter>
+    <Setter Property="Template">
+      <ControlTemplate>
+        <DockPanel>
+          <Border x:Name="TabContainerGrid"
+                  DockPanel.Dock="{TemplateBinding TabStripPlacement}"
+                  Background="{TemplateBinding Background}"
+                  RenderTransformOrigin="50%,50%">
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" MinWidth="2" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+              </Grid.ColumnDefinitions>
+              <Border x:Name="LeftBottomBorderLine"
+                      Background="{DynamicResource TabViewBorderBrush}"
+                      Height="1"
+                      VerticalAlignment="Bottom" />
+              <Border x:Name="RightBottomBorderLine"
+                      Grid.Column="2"
+                      Background="{DynamicResource TabViewBorderBrush}"
+                      Height="1"
+                      VerticalAlignment="Bottom" />
+              <!-- TabViewListView -->
+              <Border x:Name="TabListView"
+                      Grid.Column="1"
+                      HorizontalAlignment="Stretch"
+                      VerticalAlignment="Top">
+                <ScrollViewer x:Name="ScrollViewer"
+                              Theme="{StaticResource TabScrollViewerStyle}"
+                              HorizontalScrollBarVisibility="Auto"
+                              VerticalScrollBarVisibility="Disabled"
+                              BringIntoViewOnFocusChange="True"
+                              IsTabStop="False">
+                  <DockPanel x:Name="TabsItemsPresenter" Margin="{TemplateBinding Padding}">
+                    <Panel x:Name="TabsItemsPresenterHeader" DockPanel.Dock="Left" Width="4">
+                      <Border x:Name="HeaderBottomBorderLine"
+                              Background="{DynamicResource TabViewBorderBrush}"
+                              Width="4"
+                              Height="1"
+                              VerticalAlignment="Bottom"
+                              HorizontalAlignment="Left" />
+                    </Panel>
+                    <Panel x:Name="TabsItemsPresenterFooter" DockPanel.Dock="Right" Width="4">
+                      <Border x:Name="FooterBottomBorderLine"
+                              Background="{DynamicResource TabViewBorderBrush}"
+                              Width="4"
+                              Height="1"
+                              VerticalAlignment="Bottom"
+                              HorizontalAlignment="Right" />
+                    </Panel>
+                    <ItemsPresenter Name="PART_ItemsPresenter"
+                                    ItemsPanel="{TemplateBinding ItemsPanel}" />
+                  </DockPanel>
+                </ScrollViewer>
+              </Border>
+            </Grid>
+          </Border>
+          <Border x:Name="TabContentPresenter"
+                  BorderBrush="{TemplateBinding BorderBrush}"
+                  BorderThickness="{TemplateBinding BorderThickness}"
+                  CornerRadius="{TemplateBinding CornerRadius}">
+            <Panel ClipToBounds="True">
+              <ContentPresenter Name="PART_SelectedContentHost2"
+                                HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                                IsVisible="False" />
+              <ContentPresenter Name="PART_SelectedContentHost"
+                                HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
+            </Panel>
+          </Border>
+        </DockPanel>
+      </ControlTemplate>
+    </Setter>
+
+    <!-- The strip at the bottom: the strip of the top turned upside down. -->
+    <Style Selector="^[TabStripPlacement=Bottom] /template/ Border#TabContainerGrid">
+      <Setter Property="RenderTransform" Value="scaleY(-1)" />
+    </Style>
+
+    <!-- The strip at the left or the right: the tabs stacked vertically, scrolled vertically,
+         without the bottom border lines. -->
+    <Style Selector="^[TabStripPlacement=Left]">
+      <Style Selector="^ /template/ ItemsPresenter#PART_ItemsPresenter > StackPanel">
+        <Setter Property="Orientation" Value="Vertical" />
+      </Style>
+      <Style Selector="^ /template/ ScrollViewer#ScrollViewer">
+        <Setter Property="HorizontalScrollBarVisibility" Value="Disabled" />
+        <Setter Property="VerticalScrollBarVisibility" Value="Auto" />
+      </Style>
+      <Style Selector="^ /template/ Border#TabListView">
+        <Setter Property="VerticalAlignment" Value="Stretch" />
+      </Style>
+      <Style Selector="^ /template/ Border#LeftBottomBorderLine, ^ /template/ Border#RightBottomBorderLine, ^ /template/ Panel#TabsItemsPresenterHeader, ^ /template/ Panel#TabsItemsPresenterFooter">
+        <Setter Property="IsVisible" Value="False" />
+      </Style>
+    </Style>
+    <Style Selector="^[TabStripPlacement=Right]">
+      <Style Selector="^ /template/ ItemsPresenter#PART_ItemsPresenter > StackPanel">
+        <Setter Property="Orientation" Value="Vertical" />
+      </Style>
+      <Style Selector="^ /template/ ScrollViewer#ScrollViewer">
+        <Setter Property="HorizontalScrollBarVisibility" Value="Disabled" />
+        <Setter Property="VerticalScrollBarVisibility" Value="Auto" />
+      </Style>
+      <Style Selector="^ /template/ Border#TabListView">
+        <Setter Property="VerticalAlignment" Value="Stretch" />
+      </Style>
+      <Style Selector="^ /template/ Border#LeftBottomBorderLine, ^ /template/ Border#RightBottomBorderLine, ^ /template/ Panel#TabsItemsPresenterHeader, ^ /template/ Panel#TabsItemsPresenterFooter">
+        <Setter Property="IsVisible" Value="False" />
+      </Style>
+    </Style>
+  </ControlTheme>
+
+  <ControlTheme x:Key="{x:Type TabControl}" TargetType="TabControl" BasedOn="{StaticResource DefaultTabViewStyle}" />
+</ResourceDictionary>

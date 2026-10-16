@@ -1,0 +1,206 @@
+<!--
+  Ported from microsoft-ui-xaml (https://github.com/microsoft/microsoft-ui-xaml),
+  commit 7e4b0c2096be402f51cc8f7d203ebf67cff183d0:
+    controls/dev/SelectorBar/SelectorBar.xaml (DefaultSelectorBarItemStyle and the implicit style
+    of SelectorBarItem)
+    controls/dev/SelectorBar/SelectorBar_themeresources.xaml (SelectorBarItemPill, a style of the
+    selection rectangle, based on ComboBoxItemPill of
+    controls/dev/ComboBox/ComboBox_themeresources.xaml; the resources are
+    Resources/SelectorBar_themeresources.xaml)
+  Copyright (c) Microsoft Corporation. Licensed under the MIT License (see NOTICE.md of the crate).
+
+  FerroUI's TabStripItem is SelectorBarItem: an item of the strip WinUI calls SelectorBar.
+
+  WinUI: SelectorBarItemPill
+
+  Translation notes (docs/porting/winui-theme.md, section 4):
+  - The Grid PART_ContainerRoot has a background and a corner radius: it is a Border of the same
+    name around the Grid.
+  - SelectorBarItem shows its Icon in PART_IconVisual and its Text in the TextBlock
+    PART_TextVisual; FerroUI's TabStripItem is a content control without an icon, so the text
+    block is the content presenter PART_ContentPresenter (with the margin and the wrapping of the
+    text block) and the icon presenter is left out. The foreground the states set on the text and
+    the icon is the foreground of the content presenter.
+  - The style SelectorBarItemPill of the Rectangle PART_SelectionVisual (and the
+    ComboBoxItemPill it is based on) is written on the rectangle: a FerroUI shape has no styles
+    of its own. Its values are those of the styles where the rectangle does not set them itself
+    (Width 4, Height 3, the fill, RenderTransformOrigin 0.5,0.5; RadiusX, RadiusY and
+    HorizontalAlignment are the rectangle's).
+  - The selected states animate the ScaleX of the CompositeTransform PillTransform to 4 and the
+    opacity of the pill to 1 over ComboBoxItemScaleAnimationDuration (167 ms, key spline 0,0,0,1):
+    a RenderTransform setter scaleX(4) and an Opacity setter with transitions of that duration and
+    easing on the rectangle.
+  - The Rectangle PART_CommonVisual (fill, stroke and stroke thickness of the theme resources,
+    radii of the corner radius) is a Border with the background, border brush, border thickness
+    and corner radius of the same resources.
+  - PointerUpThemeAnimation of the pointer-over and selected states has no counterpart (FerroUI
+    has no theme animations, and no pointer-down animation that it would undo).
+  - SelectedPointerOver and SelectedPressed do not set the background of PART_ContainerRoot,
+    which the pointer-over, pressed and selected states set: ^:selected:pointerover and
+    ^:selected:pressed set it back to the background of the control.
+  - UseSystemFocusVisuals with FocusVisualMargin="{ThemeResource SelectorBarItemFocusVisualMargin}"
+    (-2) is the FocusAdorner.
+-->
+<ResourceDictionary xmlns="https://github.com/ferroui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    x:ClassModifier="internal">
+  <Design.PreviewWith>
+    <Border Padding="20">
+      <StackPanel Orientation="Horizontal" Spacing="4">
+        <TabStripItem>Normal</TabStripItem>
+        <TabStripItem IsSelected="True">Selected</TabStripItem>
+        <TabStripItem IsEnabled="False">Disabled</TabStripItem>
+      </StackPanel>
+    </Border>
+  </Design.PreviewWith>
+
+  <ControlTheme x:Key="DefaultSelectorBarItemStyle" TargetType="TabStripItem">
+    <Setter Property="BackgroundSizing" Value="OuterBorderEdge" />
+    <Setter Property="Foreground" Value="{DynamicResource SelectorBarItemForeground}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource SelectorBarItemBorderBrush}" />
+    <Setter Property="BorderThickness" Value="{DynamicResource SelectorBarItemBorderThickness}" />
+    <Setter Property="Padding" Value="{StaticResource SelectorBarItemPadding}" />
+    <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}" />
+    <Setter Property="HorizontalAlignment" Value="Left" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="FontFamily" Value="{DynamicResource ContentControlThemeFontFamily}" />
+    <Setter Property="FontWeight" Value="Normal" />
+    <Setter Property="FontSize" Value="{DynamicResource ControlContentThemeFontSize}" />
+    <Setter Property="FocusAdorner">
+      <FocusAdornerTemplate>
+        <Border Margin="-2"
+                BorderThickness="2"
+                BorderBrush="{DynamicResource SystemControlFocusVisualPrimaryBrush}"
+                CornerRadius="{DynamicResource ControlCornerRadius}">
+          <Border BorderThickness="1"
+                  BorderBrush="{DynamicResource SystemControlFocusVisualSecondaryBrush}"
+                  CornerRadius="{DynamicResource ControlCornerRadius}" />
+        </Border>
+      </FocusAdornerTemplate>
+    </Setter>
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border x:Name="PART_ContainerRoot"
+                Background="{TemplateBinding Background}"
+                CornerRadius="{TemplateBinding CornerRadius}">
+          <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="Auto,Auto">
+            <ContentPresenter x:Name="PART_ContentPresenter"
+                              Grid.Column="1"
+                              Content="{TemplateBinding Content}"
+                              ContentTemplate="{TemplateBinding ContentTemplate}"
+                              Foreground="{TemplateBinding Foreground}"
+                              FontFamily="{TemplateBinding FontFamily}"
+                              FontWeight="{TemplateBinding FontWeight}"
+                              FontSize="{TemplateBinding FontSize}"
+                              Margin="{TemplateBinding Padding}"
+                              Padding="{DynamicResource SelectorBarItemTextVisualMargin}"
+                              HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                              TextWrapping="Wrap"
+                              RecognizesAccessKey="True" />
+
+            <Rectangle x:Name="PART_SelectionVisual"
+                       Grid.Row="1"
+                       Grid.ColumnSpan="2"
+                       Fill="{DynamicResource SelectorBarItemPillFill}"
+                       Height="{StaticResource SelectorBarItemPillHeight}"
+                       Width="{StaticResource SelectorBarItemPillWidth}"
+                       RadiusX="0.5"
+                       RadiusY="1"
+                       Margin="{DynamicResource SelectorBarItemSelectionVisualMargin}"
+                       HorizontalAlignment="Stretch"
+                       VerticalAlignment="Bottom"
+                       IsHitTestVisible="False"
+                       Opacity="0"
+                       RenderTransformOrigin="50%,50%"
+                       RenderTransform="scaleX(1)">
+              <Rectangle.Transitions>
+                <Transitions>
+                  <!-- ComboBoxItemScaleAnimationDuration, KeySpline 0,0,0,1. -->
+                  <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.167" Easing="0,0,0,1" />
+                  <DoubleTransition Property="Opacity" Duration="0:0:0.167" Easing="0,0,0,1" />
+                </Transitions>
+              </Rectangle.Transitions>
+            </Rectangle>
+
+            <Border x:Name="PART_CommonVisual"
+                    Grid.RowSpan="2"
+                    Grid.ColumnSpan="2"
+                    Background="{DynamicResource SelectorBarItemBackground}"
+                    BorderBrush="{DynamicResource SelectorBarItemBorderBrush}"
+                    BorderThickness="{DynamicResource SelectorBarSelectedInnerThickness}"
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch"
+                    IsHitTestVisible="False"
+                    CornerRadius="{TemplateBinding CornerRadius}" />
+          </Grid>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+
+    <!-- CombinedStates: UnselectedPointerOver -->
+    <Style Selector="^:pointerover">
+      <Style Selector="^ /template/ Border#PART_ContainerRoot">
+        <Setter Property="Background" Value="{DynamicResource SelectorBarItemBackgroundPointerOver}" />
+      </Style>
+      <Style Selector="^ /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Foreground" Value="{DynamicResource SelectorBarItemForegroundPointerOver}" />
+      </Style>
+    </Style>
+    <!-- UnselectedPressed -->
+    <Style Selector="^:pressed">
+      <Style Selector="^ /template/ Border#PART_ContainerRoot">
+        <Setter Property="Background" Value="{DynamicResource SelectorBarItemBackgroundPressed}" />
+      </Style>
+      <Style Selector="^ /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Foreground" Value="{DynamicResource SelectorBarItemForegroundPressed}" />
+      </Style>
+    </Style>
+    <!-- SelectedNormal -->
+    <Style Selector="^:selected">
+      <Style Selector="^ /template/ Border#PART_ContainerRoot">
+        <Setter Property="Background" Value="{DynamicResource SelectorBarItemBackgroundSelected}" />
+      </Style>
+      <Style Selector="^ /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Foreground" Value="{DynamicResource SelectorBarItemForegroundSelected}" />
+      </Style>
+      <Style Selector="^ /template/ Rectangle#PART_SelectionVisual">
+        <Setter Property="RenderTransform" Value="scaleX(4)" />
+        <Setter Property="Opacity" Value="1" />
+      </Style>
+    </Style>
+    <!-- SelectedPointerOver: the background of the container is not set by the state. -->
+    <Style Selector="^:selected:pointerover">
+      <Style Selector="^ /template/ Border#PART_ContainerRoot">
+        <Setter Property="Background" Value="{TemplateBinding Background}" />
+      </Style>
+      <Style Selector="^ /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Foreground" Value="{DynamicResource SelectorBarItemForegroundPointerOver}" />
+      </Style>
+    </Style>
+    <!-- SelectedPressed (the foreground of the pointer-over state, as in the source) -->
+    <Style Selector="^:selected:pressed">
+      <Style Selector="^ /template/ Border#PART_ContainerRoot">
+        <Setter Property="Background" Value="{TemplateBinding Background}" />
+      </Style>
+      <Style Selector="^ /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Foreground" Value="{DynamicResource SelectorBarItemForegroundPointerOver}" />
+      </Style>
+    </Style>
+
+    <!-- DisabledStates: Disabled -->
+    <Style Selector="^:disabled">
+      <Style Selector="^ /template/ Border#PART_ContainerRoot">
+        <Setter Property="Background" Value="{DynamicResource SelectorBarItemBackgroundDisabled}" />
+      </Style>
+      <Style Selector="^ /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Foreground" Value="{DynamicResource SelectorBarItemForegroundDisabled}" />
+      </Style>
+      <Style Selector="^ /template/ Rectangle#PART_SelectionVisual">
+        <Setter Property="Fill" Value="{DynamicResource SelectorBarItemDisabledPillFill}" />
+      </Style>
+    </Style>
+  </ControlTheme>
+
+  <ControlTheme x:Key="{x:Type TabStripItem}" TargetType="TabStripItem" BasedOn="{StaticResource DefaultSelectorBarItemStyle}" />
+</ResourceDictionary>

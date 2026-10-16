@@ -1,0 +1,60 @@
+<!--
+  Ported from microsoft-ui-xaml (https://github.com/microsoft/microsoft-ui-xaml),
+  commit 7e4b0c2096be402f51cc8f7d203ebf67cff183d0:
+    controls/dev/SelectorBar/SelectorBar.xaml (DefaultSelectorBarStyle and the implicit style of
+    SelectorBar; the resources of controls/dev/SelectorBar/SelectorBar_themeresources.xaml are
+    Resources/SelectorBar_themeresources.xaml)
+  Copyright (c) Microsoft Corporation. Licensed under the MIT License (see NOTICE.md of the crate).
+
+  FerroUI's TabStrip is the strip of selectable items WinUI calls SelectorBar (TabStripItem is
+  SelectorBarItem, Controls/TabStripItem.xaml).
+
+  Translation notes (docs/porting/winui-theme.md, section 4):
+  - The Grid of the template has a border brush, a background and a corner radius: it is a
+    Border (without a border thickness, as the Grid of the source has none).
+  - The ItemsView PART_ItemsView with a horizontal StackLayout is the ItemsPresenter
+    PART_ItemsPresenter of FerroUI's items controls with a horizontal StackPanel as the items
+    panel; the padding of the items view is the margin of the presenter. Its MaxWidth and
+    MaxHeight bindings are left out (the control's own limits constrain it).
+  - The RepositionThemeTransition of the children of the Grid has no counterpart.
+  - TabNavigation="Once" is KeyboardNavigation.TabNavigation; IsTabStop is kept.
+-->
+<ResourceDictionary xmlns="https://github.com/ferroui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    x:ClassModifier="internal">
+  <Design.PreviewWith>
+    <Border Padding="20">
+      <TabStrip>
+        <TabStripItem>Recent</TabStripItem>
+        <TabStripItem>Shared</TabStripItem>
+        <TabStripItem IsEnabled="False">Disabled</TabStripItem>
+      </TabStrip>
+    </Border>
+  </Design.PreviewWith>
+
+  <ControlTheme x:Key="DefaultSelectorBarStyle" TargetType="TabStrip">
+    <Setter Property="HorizontalAlignment" Value="Left" />
+    <Setter Property="VerticalAlignment" Value="Top" />
+    <Setter Property="IsTabStop" Value="False" />
+    <Setter Property="KeyboardNavigation.TabNavigation" Value="Once" />
+    <Setter Property="Padding" Value="{DynamicResource SelectorBarPadding}" />
+    <Setter Property="ItemsPanel">
+      <ItemsPanelTemplate>
+        <StackPanel Orientation="Horizontal" />
+      </ItemsPanelTemplate>
+    </Setter>
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border BorderBrush="{TemplateBinding BorderBrush}"
+                Background="{TemplateBinding Background}"
+                CornerRadius="{TemplateBinding CornerRadius}">
+          <ItemsPresenter Name="PART_ItemsPresenter"
+                          ItemsPanel="{TemplateBinding ItemsPanel}"
+                          Margin="{TemplateBinding Padding}" />
+        </Border>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+
+  <ControlTheme x:Key="{x:Type TabStrip}" TargetType="TabStrip" BasedOn="{StaticResource DefaultSelectorBarStyle}" />
+</ResourceDictionary>

@@ -1,0 +1,488 @@
+<!--
+  Ported from microsoft-ui-xaml (https://github.com/microsoft/microsoft-ui-xaml),
+  commit 7e4b0c2096be402f51cc8f7d203ebf67cff183d0:
+    controls/dev/TabView/TabView.xaml (the implicit style of TabViewItem; the resources of
+    controls/dev/TabView/TabView_themeresources.xaml are Resources/TabView_themeresources.xaml)
+    controls/dev/NavigationView/NavigationView_themeresources.xaml
+    (MUX_NavigationViewItemPresenterStyleWhenOnLeftPane, the look of the tabs at the left and at
+    the right; the resources are Resources/NavigationView_themeresources.xaml)
+  Copyright (c) Microsoft Corporation. Licensed under the MIT License (see NOTICE.md of the crate).
+
+  FerroUI's TabItem is WinUI's TabViewItem, a tab of TabView (Controls/TabControl.xaml). Its tabs
+  cannot be closed or dragged: the close button (CloseButton with TabViewCloseButtonStyle, the
+  state CloseButtonCollapsed applies), the drag visual TabDragVisualContainer and the states of
+  dragging and reordering (DragStates, ReorderHintStates, DragDropVisualStates) are left out.
+
+  Translation notes (docs/porting/winui-theme.md, section 4):
+  - The Grids LayoutRoot (padding) and TabContainer (background, border, padding, corner radius)
+    are Borders of the same names around the Grids.
+  - The header: ContentPresenter (whose content TabViewItem sets to its Header in code) is the
+    PART_ContentPresenter of the header (Content bound to Header, ContentTemplate to
+    HeaderTemplate). The icon: IconControl shows the IconElement TabViewItem makes from its
+    IconSource; FerroUI's TabItem has an Icon and an IconTemplate, shown by a content presenter
+    of the same name in the Viewbox IconBox, which is hidden without an icon (IconStates).
+  - SelectedBackgroundPath is a Path in a Canvas whose geometry TabViewItem computes in code from
+    its size (TabViewTemplateSettings.TabGeometry: a rectangle with the top corners of
+    OverlayCornerRadius and two 4 px feet curving out at the bottom). It is a Grid of the same
+    name with the same margins: the left foot, a Border with the top corners of the corner radius
+    of the tab and the right foot, filled with TabViewItemHeaderBackgroundSelected. The paths
+    LeftRadiusRenderArc and RightRadiusRenderArc keep their data.
+  - The states TabView sets from code are written as selectors where FerroUI has the condition:
+    the selected tab is drawn above its neighbours (Canvas.ZIndex 20 of the code, ZIndex) and
+    hides its separator (SetTabSeparatorOpacity of TabView); the separator of the tab left of the
+    selected one, the margins of the bottom line beside the selected tab (LeftOfSelectedTab,
+    RightOfSelectedTab) and the compact width mode are left out. ForegroundSet (an application's
+    Foreground on the tab replaces the brushes of the states) is left out: FerroUI's TabItem
+    passes its foreground to an icon element in code, the states set the header presenter.
+  - TabViewItem's width is computed by TabView (TabWidthMode Equal, between TabViewItemMinWidth
+    and TabViewItemMaxWidth): the tab is as wide as its header, within those limits.
+  - The states PointerOverSelected and PressedSelected set what Selected sets: ^:selected,
+    written after the pointer states, applies to them. LayoutRoot.Background="Transparent" of
+    the selected states is left out (the tab container's background makes the tab hit-testable).
+  - The tabs at the bottom are the tabs of the top turned upside down by the strip
+    (Controls/TabControl.xaml); the header and the icon are turned back. The tabs at the left and
+    at the right are the items of the left pane of NavigationView: the template of
+    MUX_NavigationViewItemPresenterStyleWhenOnLeftPane with the values of the implicit style of
+    NavigationViewItem (font, corner radius), its pointer states, the selection indicator and
+    the disabled opacity; the expand chevron, the info badge and the compact pane states are left
+    out.
+-->
+<ResourceDictionary xmlns="https://github.com/ferroui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    x:ClassModifier="internal">
+  <Design.PreviewWith>
+    <Border Padding="20">
+      <StackPanel Orientation="Horizontal">
+        <TabItem Header="Normal" />
+        <TabItem Header="Selected" IsSelected="True" />
+        <TabItem Header="Disabled" IsEnabled="False" />
+      </StackPanel>
+    </Border>
+  </Design.PreviewWith>
+
+  <ControlTheme x:Key="{x:Type TabItem}" TargetType="TabItem">
+    <Setter Property="Background" Value="{DynamicResource TabViewItemHeaderBackground}" />
+    <Setter Property="HorizontalContentAlignment" Value="Left" />
+    <!-- The default of a WinUI control (FerroUI's default is Top). -->
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Setter Property="MinHeight" Value="{DynamicResource TabViewItemMinHeight}" />
+    <Setter Property="CornerRadius" Value="{DynamicResource OverlayCornerRadius}" />
+    <Setter Property="BorderThickness" Value="{DynamicResource TabViewItemBorderThickness}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource TabViewItemBorderBrush}" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border x:Name="LayoutRoot"
+                Padding="{TemplateBinding Padding}"
+                UseLayoutRounding="False"
+                MinWidth="{DynamicResource TabViewItemMinWidth}"
+                MaxWidth="{DynamicResource TabViewItemMaxWidth}">
+          <Grid ColumnDefinitions="Auto,*,Auto">
+            <Border x:Name="BottomBorderLine"
+                    Grid.ColumnSpan="3"
+                    Background="{DynamicResource TabViewBorderBrush}"
+                    Height="1"
+                    VerticalAlignment="Bottom" />
+            <Path x:Name="LeftRadiusRenderArc"
+                  IsVisible="False"
+                  Fill="{DynamicResource TabViewBorderBrush}"
+                  VerticalAlignment="Bottom"
+                  Margin="-4,0,0,0"
+                  Height="4"
+                  Width="4"
+                  Data="M4 0C4 1.19469 3.47624 2.26706 2.64582 3H0C1.65685 3 3 1.65685 3 0H4Z" />
+            <Path x:Name="RightRadiusRenderArc"
+                  Grid.Column="2"
+                  IsVisible="False"
+                  Fill="{DynamicResource TabViewBorderBrush}"
+                  VerticalAlignment="Bottom"
+                  Margin="0,0,-4,0"
+                  Height="4"
+                  Width="4"
+                  Data="M0 0C0 1.19469 0.523755 2.26706 1.35418 3H4C2.34315 3 1 1.65685 1 0H0Z" />
+            <!-- The tab shape of TabViewTemplateSettings.TabGeometry. -->
+            <Grid x:Name="SelectedBackgroundPath"
+                  Grid.ColumnSpan="3"
+                  Margin="-4,0"
+                  IsVisible="False"
+                  ColumnDefinitions="4,*,4">
+              <Path Width="4"
+                    Height="4"
+                    VerticalAlignment="Bottom"
+                    Fill="{DynamicResource TabViewItemHeaderBackgroundSelected}"
+                    Data="M0,4 A4,4 0 0 0 4,0 L4,4 Z" />
+              <Border Grid.Column="1"
+                      Background="{DynamicResource TabViewItemHeaderBackgroundSelected}"
+                      CornerRadius="{TemplateBinding CornerRadius, Converter={StaticResource TopCornerRadiusFilterConverter}}" />
+              <Path Grid.Column="2"
+                    Width="4"
+                    Height="4"
+                    VerticalAlignment="Bottom"
+                    Fill="{DynamicResource TabViewItemHeaderBackgroundSelected}"
+                    Data="M0,0 A4,4 0 0 0 4,4 L0,4 Z" />
+            </Grid>
+            <Border x:Name="TabSeparator"
+                    Grid.Column="1"
+                    HorizontalAlignment="Right"
+                    Width="1"
+                    Background="{DynamicResource TabViewItemSeparator}"
+                    Margin="{DynamicResource TabViewItemSeparatorMargin}" />
+            <!-- CloseIconStates: CloseButtonCollapsed (TabViewItemHeaderPaddingWithoutCloseButton). -->
+            <Border x:Name="TabContainer"
+                    Grid.Column="1"
+                    Background="{TemplateBinding Background}"
+                    BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="{TemplateBinding BorderThickness}"
+                    Padding="{StaticResource TabViewItemHeaderPaddingWithoutCloseButton}"
+                    CornerRadius="{TemplateBinding CornerRadius, Converter={StaticResource TopCornerRadiusFilterConverter}}">
+              <Grid x:Name="TabContentGrid"
+                    ColumnDefinitions="Auto,*"
+                    RenderTransformOrigin="50%,50%">
+                <Viewbox x:Name="IconBox"
+                         MaxWidth="{DynamicResource TabViewItemHeaderIconSize}"
+                         MaxHeight="{DynamicResource TabViewItemHeaderIconSize}"
+                         Margin="{DynamicResource TabViewItemHeaderIconMargin}"
+                         IsVisible="{TemplateBinding Icon, Converter={x:Static ObjectConverters.IsNotNull}}">
+                  <ContentPresenter x:Name="IconControl"
+                                    Content="{TemplateBinding Icon}"
+                                    ContentTemplate="{TemplateBinding IconTemplate}"
+                                    Foreground="{DynamicResource TabViewItemIconForeground}" />
+                </Viewbox>
+                <ContentPresenter x:Name="PART_ContentPresenter"
+                                  Grid.Column="1"
+                                  HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                  VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                  Content="{TemplateBinding Header}"
+                                  ContentTemplate="{TemplateBinding HeaderTemplate}"
+                                  FontWeight="{TemplateBinding FontWeight}"
+                                  FontSize="{DynamicResource TabViewItemHeaderFontSize}"
+                                  Foreground="{DynamicResource TabViewItemHeaderForeground}"
+                                  RecognizesAccessKey="True" />
+              </Grid>
+            </Border>
+          </Grid>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+
+    <!-- CommonStates: PointerOver -->
+    <Style Selector="^:pointerover">
+      <Style Selector="^ /template/ Border#TabContainer">
+        <Setter Property="Background" Value="{DynamicResource TabViewItemHeaderBackgroundPointerOver}" />
+      </Style>
+      <Style Selector="^ /template/ Border#TabContainer ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Foreground" Value="{DynamicResource TabViewItemHeaderForegroundPointerOver}" />
+      </Style>
+      <Style Selector="^ /template/ ContentPresenter#IconControl">
+        <Setter Property="Foreground" Value="{DynamicResource TabViewItemIconForegroundPointerOver}" />
+      </Style>
+      <Style Selector="^ /template/ Border#TabSeparator">
+        <Setter Property="Opacity" Value="0" />
+      </Style>
+    </Style>
+    <!-- Pressed -->
+    <Style Selector="^:pressed">
+      <Style Selector="^ /template/ Border#TabContainer">
+        <Setter Property="Background" Value="{DynamicResource TabViewItemHeaderBackgroundPressed}" />
+      </Style>
+      <Style Selector="^ /template/ Border#TabContainer ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Foreground" Value="{DynamicResource TabViewItemHeaderForegroundPressed}" />
+      </Style>
+      <Style Selector="^ /template/ ContentPresenter#IconControl">
+        <Setter Property="Foreground" Value="{DynamicResource TabViewItemIconForegroundPressed}" />
+      </Style>
+      <Style Selector="^ /template/ Border#TabSeparator">
+        <Setter Property="Opacity" Value="0" />
+      </Style>
+    </Style>
+    <!-- Selected (also PointerOverSelected and PressedSelected, which set the same values) -->
+    <Style Selector="^:selected">
+      <!-- Canvas.ZIndex 20 of TabViewItem::OnIsSelectedPropertyChanged. -->
+      <Setter Property="ZIndex" Value="20" />
+      <Style Selector="^ /template/ Border#BottomBorderLine">
+        <Setter Property="IsVisible" Value="False" />
+      </Style>
+      <Style Selector="^ /template/ Path#RightRadiusRenderArc, ^ /template/ Path#LeftRadiusRenderArc, ^ /template/ Grid#SelectedBackgroundPath">
+        <Setter Property="IsVisible" Value="True" />
+      </Style>
+      <Style Selector="^ /template/ Border#TabContainer">
+        <Setter Property="Background" Value="{DynamicResource TabViewItemHeaderBackground}" />
+        <Setter Property="Margin" Value="{DynamicResource TabViewSelectedItemHeaderMargin}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource TabViewSelectedItemBorderBrush}" />
+        <Setter Property="BorderThickness" Value="{DynamicResource TabViewSelectedItemBorderThickness}" />
+      </Style>
+      <Style Selector="^ /template/ Border#TabContainer ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Foreground" Value="{DynamicResource TabViewItemHeaderForegroundSelected}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+      </Style>
+      <Style Selector="^ /template/ ContentPresenter#IconControl">
+        <Setter Property="Foreground" Value="{DynamicResource TabViewItemIconForegroundSelected}" />
+      </Style>
+      <!-- TabView::SetTabSeparatorOpacity hides the separator of the selected tab. -->
+      <Style Selector="^ /template/ Border#TabSeparator">
+        <Setter Property="Opacity" Value="0" />
+      </Style>
+    </Style>
+    <!-- DisabledStates: Disabled (IconControl.Foreground is set twice in the source; the second
+         value, TabViewButtonForegroundDisabled, is the one in effect) -->
+    <Style Selector="^:disabled">
+      <Style Selector="^ /template/ Border#TabContainer">
+        <Setter Property="Background" Value="{DynamicResource TabViewItemHeaderBackgroundDisabled}" />
+      </Style>
+      <Style Selector="^ /template/ ContentPresenter#IconControl">
+        <Setter Property="Foreground" Value="{DynamicResource TabViewButtonForegroundDisabled}" />
+      </Style>
+      <Style Selector="^ /template/ Border#TabContainer ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Foreground" Value="{DynamicResource TabViewItemHeaderForegroundDisabled}" />
+      </Style>
+    </Style>
+
+    <!-- The tabs at the bottom: the strip turns them upside down; the header and the icon are
+         turned back. -->
+    <Style Selector="^[TabStripPlacement=Bottom] /template/ Grid#TabContentGrid">
+      <Setter Property="RenderTransform" Value="scaleY(-1)" />
+    </Style>
+
+    <!-- The tabs at the left and at the right: the items of the left pane of NavigationView
+         (MUX_NavigationViewItemPresenterStyleWhenOnLeftPane, NavigationViewItem). -->
+    <Style Selector="^[TabStripPlacement=Left]">
+      <Setter Property="Foreground" Value="{DynamicResource NavigationViewItemForeground}" />
+      <Setter Property="Background" Value="{DynamicResource NavigationViewItemBackground}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource NavigationViewItemBorderBrush}" />
+      <Setter Property="BorderThickness" Value="{StaticResource NavigationViewItemBorderThickness}" />
+      <Setter Property="FontFamily" Value="{DynamicResource ContentControlThemeFontFamily}" />
+      <Setter Property="FontWeight" Value="Normal" />
+      <Setter Property="FontSize" Value="{DynamicResource ControlContentThemeFontSize}" />
+      <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+      <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}" />
+      <Setter Property="Template">
+        <ControlTemplate>
+          <Border x:Name="LayoutRoot"
+                  MinHeight="{DynamicResource NavigationViewItemOnLeftMinHeight}"
+                  Background="{TemplateBinding Background}"
+                  CornerRadius="{TemplateBinding CornerRadius}"
+                  Margin="{DynamicResource NavigationViewItemButtonMargin}">
+            <Panel x:Name="PresenterContentRootGrid">
+              <Panel HorizontalAlignment="Left" VerticalAlignment="Center">
+                <Rectangle x:Name="SelectionIndicator"
+                           Width="{DynamicResource NavigationViewSelectionIndicatorWidth}"
+                           Height="{DynamicResource NavigationViewSelectionIndicatorHeight}"
+                           Fill="{DynamicResource NavigationViewSelectionIndicatorForeground}"
+                           Opacity="0"
+                           RadiusX="{StaticResource NavigationViewSelectionIndicatorRadius}"
+                           RadiusY="{StaticResource NavigationViewSelectionIndicatorRadius}" />
+              </Panel>
+              <Grid x:Name="ContentGrid"
+                    MinHeight="{DynamicResource NavigationViewItemOnLeftMinHeight}"
+                    Margin="0,0,14,0"
+                    HorizontalAlignment="Stretch"
+                    ColumnDefinitions="Auto,*">
+                <!-- IconColumn: the icon box in the compact pane length less 8 (40), or 8 wide
+                     without an icon (IconCollapsed). -->
+                <Border x:Name="IconColumn"
+                        Width="40"
+                        IsVisible="{TemplateBinding Icon, Converter={x:Static ObjectConverters.IsNotNull}}">
+                  <Viewbox x:Name="IconBox"
+                           Height="{DynamicResource NavigationViewItemOnLeftIconBoxHeight}"
+                           HorizontalAlignment="Center"
+                           Margin="{DynamicResource NavigationViewItemOnLeftIconBoxMargin}">
+                    <ContentPresenter x:Name="Icon"
+                                      Content="{TemplateBinding Icon}"
+                                      ContentTemplate="{TemplateBinding IconTemplate}"
+                                      Foreground="{TemplateBinding Foreground}"
+                                      Background="{DynamicResource NavigationViewItemIconBackground}" />
+                  </Viewbox>
+                </Border>
+                <Border x:Name="IconColumnCollapsed"
+                        Width="8"
+                        IsVisible="{TemplateBinding Icon, Converter={x:Static ObjectConverters.IsNull}}" />
+                <ContentPresenter x:Name="PART_ContentPresenter"
+                                  Grid.Column="1"
+                                  Margin="{DynamicResource NavigationViewItemContentPresenterMargin}"
+                                  Content="{TemplateBinding Header}"
+                                  ContentTemplate="{TemplateBinding HeaderTemplate}"
+                                  Foreground="{TemplateBinding Foreground}"
+                                  HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                  VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                  Padding="{TemplateBinding Padding}"
+                                  RecognizesAccessKey="True" />
+              </Grid>
+            </Panel>
+          </Border>
+        </ControlTemplate>
+      </Setter>
+
+      <!-- PointerStates: PointerOver -->
+      <Style Selector="^:pointerover">
+        <Style Selector="^ /template/ Border#LayoutRoot">
+          <Setter Property="Background" Value="{DynamicResource NavigationViewItemBackgroundPointerOver}" />
+        </Style>
+        <Style Selector="^ /template/ ContentPresenter#Icon, ^ /template/ ContentPresenter#PART_ContentPresenter">
+          <Setter Property="Foreground" Value="{DynamicResource NavigationViewItemForegroundPointerOver}" />
+        </Style>
+      </Style>
+      <!-- Pressed -->
+      <Style Selector="^:pressed">
+        <Style Selector="^ /template/ Border#LayoutRoot">
+          <Setter Property="Background" Value="{DynamicResource NavigationViewItemBackgroundPressed}" />
+        </Style>
+        <Style Selector="^ /template/ ContentPresenter#Icon, ^ /template/ ContentPresenter#PART_ContentPresenter">
+          <Setter Property="Foreground" Value="{DynamicResource NavigationViewItemForegroundPressed}" />
+        </Style>
+      </Style>
+      <!-- Selected, with the selection indicator NavigationView shows on its selected item -->
+      <Style Selector="^:selected">
+        <Style Selector="^ /template/ Border#LayoutRoot">
+          <Setter Property="Background" Value="{DynamicResource NavigationViewItemBackgroundSelected}" />
+        </Style>
+        <Style Selector="^ /template/ ContentPresenter#Icon, ^ /template/ ContentPresenter#PART_ContentPresenter">
+          <Setter Property="Foreground" Value="{DynamicResource NavigationViewItemForegroundSelected}" />
+        </Style>
+        <Style Selector="^ /template/ Rectangle#SelectionIndicator">
+          <Setter Property="Opacity" Value="1" />
+        </Style>
+      </Style>
+      <!-- PointerOverSelected -->
+      <Style Selector="^:selected:pointerover">
+        <Style Selector="^ /template/ Border#LayoutRoot">
+          <Setter Property="Background" Value="{DynamicResource NavigationViewItemBackgroundSelectedPointerOver}" />
+        </Style>
+        <Style Selector="^ /template/ ContentPresenter#Icon, ^ /template/ ContentPresenter#PART_ContentPresenter">
+          <Setter Property="Foreground" Value="{DynamicResource NavigationViewItemForegroundSelectedPointerOver}" />
+        </Style>
+      </Style>
+      <!-- PressedSelected -->
+      <Style Selector="^:selected:pressed">
+        <Style Selector="^ /template/ Border#LayoutRoot">
+          <Setter Property="Background" Value="{DynamicResource NavigationViewItemBackgroundSelectedPressed}" />
+        </Style>
+        <Style Selector="^ /template/ ContentPresenter#Icon, ^ /template/ ContentPresenter#PART_ContentPresenter">
+          <Setter Property="Foreground" Value="{DynamicResource NavigationViewItemForegroundSelectedPressed}" />
+        </Style>
+      </Style>
+      <!-- DisabledStates: Disabled -->
+      <Style Selector="^:disabled /template/ Border#LayoutRoot">
+        <Setter Property="Opacity" Value="{DynamicResource ListViewItemDisabledThemeOpacity}" />
+      </Style>
+    </Style>
+    <Style Selector="^[TabStripPlacement=Right]">
+      <Setter Property="Foreground" Value="{DynamicResource NavigationViewItemForeground}" />
+      <Setter Property="Background" Value="{DynamicResource NavigationViewItemBackground}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource NavigationViewItemBorderBrush}" />
+      <Setter Property="BorderThickness" Value="{StaticResource NavigationViewItemBorderThickness}" />
+      <Setter Property="FontFamily" Value="{DynamicResource ContentControlThemeFontFamily}" />
+      <Setter Property="FontWeight" Value="Normal" />
+      <Setter Property="FontSize" Value="{DynamicResource ControlContentThemeFontSize}" />
+      <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+      <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}" />
+      <Setter Property="Template">
+        <ControlTemplate>
+          <Border x:Name="LayoutRoot"
+                  MinHeight="{DynamicResource NavigationViewItemOnLeftMinHeight}"
+                  Background="{TemplateBinding Background}"
+                  CornerRadius="{TemplateBinding CornerRadius}"
+                  Margin="{DynamicResource NavigationViewItemButtonMargin}">
+            <Panel x:Name="PresenterContentRootGrid">
+              <Panel HorizontalAlignment="Left" VerticalAlignment="Center">
+                <Rectangle x:Name="SelectionIndicator"
+                           Width="{DynamicResource NavigationViewSelectionIndicatorWidth}"
+                           Height="{DynamicResource NavigationViewSelectionIndicatorHeight}"
+                           Fill="{DynamicResource NavigationViewSelectionIndicatorForeground}"
+                           Opacity="0"
+                           RadiusX="{StaticResource NavigationViewSelectionIndicatorRadius}"
+                           RadiusY="{StaticResource NavigationViewSelectionIndicatorRadius}" />
+              </Panel>
+              <Grid x:Name="ContentGrid"
+                    MinHeight="{DynamicResource NavigationViewItemOnLeftMinHeight}"
+                    Margin="0,0,14,0"
+                    HorizontalAlignment="Stretch"
+                    ColumnDefinitions="Auto,*">
+                <!-- IconColumn: the icon box in the compact pane length less 8 (40), or 8 wide
+                     without an icon (IconCollapsed). -->
+                <Border x:Name="IconColumn"
+                        Width="40"
+                        IsVisible="{TemplateBinding Icon, Converter={x:Static ObjectConverters.IsNotNull}}">
+                  <Viewbox x:Name="IconBox"
+                           Height="{DynamicResource NavigationViewItemOnLeftIconBoxHeight}"
+                           HorizontalAlignment="Center"
+                           Margin="{DynamicResource NavigationViewItemOnLeftIconBoxMargin}">
+                    <ContentPresenter x:Name="Icon"
+                                      Content="{TemplateBinding Icon}"
+                                      ContentTemplate="{TemplateBinding IconTemplate}"
+                                      Foreground="{TemplateBinding Foreground}"
+                                      Background="{DynamicResource NavigationViewItemIconBackground}" />
+                  </Viewbox>
+                </Border>
+                <Border x:Name="IconColumnCollapsed"
+                        Width="8"
+                        IsVisible="{TemplateBinding Icon, Converter={x:Static ObjectConverters.IsNull}}" />
+                <ContentPresenter x:Name="PART_ContentPresenter"
+                                  Grid.Column="1"
+                                  Margin="{DynamicResource NavigationViewItemContentPresenterMargin}"
+                                  Content="{TemplateBinding Header}"
+                                  ContentTemplate="{TemplateBinding HeaderTemplate}"
+                                  Foreground="{TemplateBinding Foreground}"
+                                  HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                  VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                  Padding="{TemplateBinding Padding}"
+                                  RecognizesAccessKey="True" />
+              </Grid>
+            </Panel>
+          </Border>
+        </ControlTemplate>
+      </Setter>
+
+      <!-- PointerStates: PointerOver -->
+      <Style Selector="^:pointerover">
+        <Style Selector="^ /template/ Border#LayoutRoot">
+          <Setter Property="Background" Value="{DynamicResource NavigationViewItemBackgroundPointerOver}" />
+        </Style>
+        <Style Selector="^ /template/ ContentPresenter#Icon, ^ /template/ ContentPresenter#PART_ContentPresenter">
+          <Setter Property="Foreground" Value="{DynamicResource NavigationViewItemForegroundPointerOver}" />
+        </Style>
+      </Style>
+      <!-- Pressed -->
+      <Style Selector="^:pressed">
+        <Style Selector="^ /template/ Border#LayoutRoot">
+          <Setter Property="Background" Value="{DynamicResource NavigationViewItemBackgroundPressed}" />
+        </Style>
+        <Style Selector="^ /template/ ContentPresenter#Icon, ^ /template/ ContentPresenter#PART_ContentPresenter">
+          <Setter Property="Foreground" Value="{DynamicResource NavigationViewItemForegroundPressed}" />
+        </Style>
+      </Style>
+      <!-- Selected, with the selection indicator NavigationView shows on its selected item -->
+      <Style Selector="^:selected">
+        <Style Selector="^ /template/ Border#LayoutRoot">
+          <Setter Property="Background" Value="{DynamicResource NavigationViewItemBackgroundSelected}" />
+        </Style>
+        <Style Selector="^ /template/ ContentPresenter#Icon, ^ /template/ ContentPresenter#PART_ContentPresenter">
+          <Setter Property="Foreground" Value="{DynamicResource NavigationViewItemForegroundSelected}" />
+        </Style>
+        <Style Selector="^ /template/ Rectangle#SelectionIndicator">
+          <Setter Property="Opacity" Value="1" />
+        </Style>
+      </Style>
+      <!-- PointerOverSelected -->
+      <Style Selector="^:selected:pointerover">
+        <Style Selector="^ /template/ Border#LayoutRoot">
+          <Setter Property="Background" Value="{DynamicResource NavigationViewItemBackgroundSelectedPointerOver}" />
+        </Style>
+        <Style Selector="^ /template/ ContentPresenter#Icon, ^ /template/ ContentPresenter#PART_ContentPresenter">
+          <Setter Property="Foreground" Value="{DynamicResource NavigationViewItemForegroundSelectedPointerOver}" />
+        </Style>
+      </Style>
+      <!-- PressedSelected -->
+      <Style Selector="^:selected:pressed">
+        <Style Selector="^ /template/ Border#LayoutRoot">
+          <Setter Property="Background" Value="{DynamicResource NavigationViewItemBackgroundSelectedPressed}" />
+        </Style>
+        <Style Selector="^ /template/ ContentPresenter#Icon, ^ /template/ ContentPresenter#PART_ContentPresenter">
+          <Setter Property="Foreground" Value="{DynamicResource NavigationViewItemForegroundSelectedPressed}" />
+        </Style>
+      </Style>
+      <!-- DisabledStates: Disabled -->
+      <Style Selector="^:disabled /template/ Border#LayoutRoot">
+        <Setter Property="Opacity" Value="{DynamicResource ListViewItemDisabledThemeOpacity}" />
+      </Style>
+    </Style>
+  </ControlTheme>
+</ResourceDictionary>
