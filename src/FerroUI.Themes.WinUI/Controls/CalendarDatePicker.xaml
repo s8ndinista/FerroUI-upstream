@@ -36,6 +36,9 @@
     the brush is TextFillColorPrimaryBrush, the one of the normal state.
   - CalendarDatePickerLightDismissOverlayBackground is not used: FerroUI's popups have no light
     dismiss overlay.
+  - The FerroUI contract: the template is wrapped in DataValidationErrors, which shows the errors
+    of FerroUI's data validation under the control, and :error gives the border the critical brush
+    (SystemFillColorCriticalBrush), as the Fluent theme does and as Controls/TextBox.xaml does.
 -->
 <ResourceDictionary xmlns="https://github.com/ferroui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -176,62 +179,65 @@
     <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}" />
     <Setter Property="Template">
       <ControlTemplate>
-        <Grid x:Name="Root" ColumnDefinitions="*,32">
-          <Border x:Name="Background"
-                  Grid.ColumnSpan="2"
-                  BorderThickness="{TemplateBinding BorderThickness}"
-                  BorderBrush="{TemplateBinding BorderBrush}"
-                  Background="{TemplateBinding Background}"
-                  CornerRadius="{TemplateBinding CornerRadius}"
-                  TemplatedControl.IsTemplateFocusTarget="True"
-                  MinHeight="32" />
-          <TextBox x:Name="PART_TextBox"
-                   Grid.Column="0"
-                   Theme="{StaticResource CalendarDatePickerTextBoxStyle}"
-                   Foreground="{TemplateBinding Foreground}"
-                   Margin="{TemplateBinding BorderThickness}"
-                   Padding="{TemplateBinding Padding}"
-                   PlaceholderText="{TemplateBinding PlaceholderText}"
-                   PlaceholderForeground="{TemplateBinding PlaceholderForeground}"
-                   UseFloatingPlaceholder="{TemplateBinding UseFloatingPlaceholder}"
-                   HorizontalAlignment="Stretch"
-                   VerticalAlignment="Stretch"
-                   HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
-                   VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
-          <Button x:Name="PART_Button"
-                  Grid.Column="1"
-                  Theme="{StaticResource CalendarDatePickerButtonStyle}">
-            <!-- E787 at 12 px: the glyph is drawn at the size of its ink. -->
-            <Path x:Name="CalendarGlyph"
-                  Data="{StaticResource GlyphGeometryE787}"
-                  Fill="{DynamicResource CalendarDatePickerCalendarGlyphForeground}"
-                  Stretch="Uniform"
-                  Width="12"
-                  HorizontalAlignment="Center"
-                  VerticalAlignment="Center" />
-          </Button>
-          <Popup x:Name="PART_Popup"
-                 WindowManagerAddShadowHint="False"
-                 PlacementTarget="{TemplateBinding}"
-                 Placement="Bottom"
-                 IsLightDismissEnabled="True">
-            <Border x:Name="CalendarShadow"
-                    BoxShadow="{DynamicResource ThemeShadowFlyoutBoxShadow}"
-                    CornerRadius="{DynamicResource OverlayCornerRadius}"
-                    Margin="{StaticResource ThemeShadowFlyoutMargin}">
-              <Calendar x:Name="PART_Calendar"
-                        CornerRadius="{DynamicResource OverlayCornerRadius}"
-                        FirstDayOfWeek="{TemplateBinding FirstDayOfWeek}"
-                        IsTodayHighlighted="{TemplateBinding IsTodayHighlighted}"
-                        SelectedDate="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=SelectedDate, Mode=TwoWay}"
-                        DisplayDate="{TemplateBinding DisplayDate}"
-                        DisplayDateStart="{TemplateBinding DisplayDateStart}"
-                        DisplayDateEnd="{TemplateBinding DisplayDateEnd}"
-                        IsWeekNumberVisible="{TemplateBinding IsWeekNumberVisible}"
-                        WeekNumberRule="{TemplateBinding WeekNumberRule}" />
-            </Border>
-          </Popup>
-        </Grid>
+        <!-- The errors of FerroUI's data validation under the control (DataValidationErrors.xaml). -->
+        <DataValidationErrors>
+          <Grid x:Name="Root" ColumnDefinitions="*,32">
+            <Border x:Name="Background"
+                    Grid.ColumnSpan="2"
+                    BorderThickness="{TemplateBinding BorderThickness}"
+                    BorderBrush="{TemplateBinding BorderBrush}"
+                    Background="{TemplateBinding Background}"
+                    CornerRadius="{TemplateBinding CornerRadius}"
+                    TemplatedControl.IsTemplateFocusTarget="True"
+                    MinHeight="32" />
+            <TextBox x:Name="PART_TextBox"
+                     Grid.Column="0"
+                     Theme="{StaticResource CalendarDatePickerTextBoxStyle}"
+                     Foreground="{TemplateBinding Foreground}"
+                     Margin="{TemplateBinding BorderThickness}"
+                     Padding="{TemplateBinding Padding}"
+                     PlaceholderText="{TemplateBinding PlaceholderText}"
+                     PlaceholderForeground="{TemplateBinding PlaceholderForeground}"
+                     UseFloatingPlaceholder="{TemplateBinding UseFloatingPlaceholder}"
+                     HorizontalAlignment="Stretch"
+                     VerticalAlignment="Stretch"
+                     HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                     VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
+            <Button x:Name="PART_Button"
+                    Grid.Column="1"
+                    Theme="{StaticResource CalendarDatePickerButtonStyle}">
+              <!-- E787 at 12 px: the glyph is drawn at the size of its ink. -->
+              <Path x:Name="CalendarGlyph"
+                    Data="{StaticResource GlyphGeometryE787}"
+                    Fill="{DynamicResource CalendarDatePickerCalendarGlyphForeground}"
+                    Stretch="Uniform"
+                    Width="12"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center" />
+            </Button>
+            <Popup x:Name="PART_Popup"
+                   WindowManagerAddShadowHint="False"
+                   PlacementTarget="{TemplateBinding}"
+                   Placement="Bottom"
+                   IsLightDismissEnabled="True">
+              <Border x:Name="CalendarShadow"
+                      BoxShadow="{DynamicResource ThemeShadowFlyoutBoxShadow}"
+                      CornerRadius="{DynamicResource OverlayCornerRadius}"
+                      Margin="{StaticResource ThemeShadowFlyoutMargin}">
+                <Calendar x:Name="PART_Calendar"
+                          CornerRadius="{DynamicResource OverlayCornerRadius}"
+                          FirstDayOfWeek="{TemplateBinding FirstDayOfWeek}"
+                          IsTodayHighlighted="{TemplateBinding IsTodayHighlighted}"
+                          SelectedDate="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=SelectedDate, Mode=TwoWay}"
+                          DisplayDate="{TemplateBinding DisplayDate}"
+                          DisplayDateStart="{TemplateBinding DisplayDateStart}"
+                          DisplayDateEnd="{TemplateBinding DisplayDateEnd}"
+                          IsWeekNumberVisible="{TemplateBinding IsWeekNumberVisible}"
+                          WeekNumberRule="{TemplateBinding WeekNumberRule}" />
+              </Border>
+            </Popup>
+          </Grid>
+        </DataValidationErrors>
       </ControlTemplate>
     </Setter>
 
@@ -276,6 +282,10 @@
       <Style Selector="^ /template/ Path#CalendarGlyph">
         <Setter Property="Fill" Value="{DynamicResource CalendarDatePickerCalendarGlyphForegroundDisabled}" />
       </Style>
+    </Style>
+    <!-- Not in WinUI: the :error of FerroUI's data validation (as the text box). -->
+    <Style Selector="^:error /template/ Border#Background">
+      <Setter Property="BorderBrush" Value="{DynamicResource SystemFillColorCriticalBrush}" />
     </Style>
   </ControlTheme>
 
