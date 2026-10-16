@@ -90373,7 +90373,7 @@
    "winui": "DatePicker: DefaultDatePickerStyle; DatePickerFlyoutPresenter: DefaultDatePickerFlyoutPresenterStyle (DatePicker_themeresources.xaml).",
    "status": "ported",
    "deviations": 15,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "DateTimePickerShared.xaml",
@@ -90382,7 +90382,7 @@
    "winui": "LoopingSelector: DefaultLoopingSelectorStyle, LoopingSelectorItem; DateTimePickerFlyoutButtonStyle, DateTimePickerFlyoutLoopingSelectorNavigationButtonStyle (DateTimePickerFlyout_themeresources.xaml).",
    "status": "ported",
    "deviations": 10,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "DrawerPage.xaml",
@@ -90932,7 +90932,7 @@
    "winui": "TimePicker: {TimePicker}; TimePickerFlyoutPresenter: {TimePickerFlyoutPresenter} (TimePicker_themeresources.xaml).",
    "status": "ported",
    "deviations": 12,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "ToggleButton.xaml",

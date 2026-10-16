@@ -73,8 +73,8 @@ it. Abbreviations: CS = `controls/dev/CommonStyles/`, GX = `dxaml/xcp/dxaml/them
 | BTN-4 | `AccentButtonStyle`, `SubtleButtonStyle` (no `BasedOn`) | Applied over the default style. | Based on `DefaultButtonStyle`; `SubtleButtonStyle`, whose template is the one of `DefaultButtonStyle` in the source, takes it from its base. | G-15. |
 | BTN-5 | `FocusVisualMargin="-3"`, `UseSystemFocusVisuals` | Focus visual 3 px outside the button. | `FocusAdorner` with `Margin="-3"`. | G-14. |
 | BTN-6 | (not in the source) | An accent button is a button with `Style="{StaticResource AccentButtonStyle}"`. | Also the style class `accent` (`Classes="accent"`) of the default theme: the brushes and states of `AccentButtonStyle`. | The framework's applications and samples (the ControlCatalog) mark accent buttons with the class, as the Fluent theme defines it; without it they would show as default buttons. |
-| BTN-6 | GX `TextBlockButtonStyle` (target type `ButtonBase`) | A keyed style of any button, applied over its default style. | A keyed control theme of `Button` based on `DefaultButtonStyle`; it applies to Button and the classes derived from it. | ButtonBase maps to Button (section 6); G-15. |
-| BTN-7 | `TextBlockButtonStyle` template: `Grid` with margin and background, `ContentPresenter x:Name="Text"` | The template. | `Panel` with margin and background; `PART_ContentPresenter` with `RecognizesAccessKey`. | FerroUI panels have a background; template part (BTN-2); G-20. |
+| BTN-7 | GX `TextBlockButtonStyle` (target type `ButtonBase`) | A keyed style of any button, applied over its default style. | A keyed control theme of `Button` based on `DefaultButtonStyle`; it applies to Button and the classes derived from it. | ButtonBase maps to Button (section 6); G-15. |
+| BTN-8 | `TextBlockButtonStyle` template: `Grid` with margin and background, `ContentPresenter x:Name="Text"` | The template. | `Panel` with margin and background; `PART_ContentPresenter` with `RecognizesAccessKey`. | FerroUI panels have a background; template part (BTN-2); G-20. |
 
 ## Calendar
 
