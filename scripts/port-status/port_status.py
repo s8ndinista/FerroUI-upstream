@@ -1391,7 +1391,9 @@ def render_tracking(index: dict, projects: list, counts: dict, repo: str, worksp
         "external": "Third-party code ported in place (same relative paths as upstream).",
         "samples": "Sample applications. Same directory names; binary crates.",
         "tests": "Upstream unit tests are ported next to the code (`#[cfg(test)] mod tests` or `<file>_tests.rs`, porting guide rule 1); "
-                 "cross-crate, render and integration test projects get a crate under `tests/`.",
+                 "cross-crate, render and integration test projects get a crate under `tests/`. "
+                 "How completely the upstream test suites are ported, per project, with the missing tests by name: [TESTS.md](TESTS.md) "
+                 "(`scripts/port-status/tests_audit.py`).",
     }
     for top in ("src", "native", "external", "samples", "tests"):
         entries = layout.get(top, [])
@@ -1659,7 +1661,9 @@ def render_remaining(index: dict, projects: list, counts: dict, repo: str, data_
     w("## Upstream test projects")
     w("")
     w("Counted by `scripts/port-status/test_gaps.py --all` (its rules are at its top), read here from the totals of its reports in `docs/porting/data/`. "
-      "A test is present when the port has a test function of its name.")
+      "A test is present when the port has a test function of its name. "
+      "[TESTS.md](TESTS.md) counts every upstream test project, the ones that do not apply included, with a stricter match "
+      "(one Rust function per upstream test) and lists the missing tests by name.")
     w("")
     w("| Upstream test project | Tests | Present | Missing | Waived | Report |")
     w("|---|---:|---:|---:|---:|---|")

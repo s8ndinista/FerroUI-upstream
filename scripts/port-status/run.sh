@@ -4,11 +4,13 @@
 #   scripts/port-status/run.sh            # upstream checkout at ../Avalonia (or $UPSTREAM)
 #   scripts/port-status/run.sh --force    # always re-run the upstream extractor
 #   scripts/port-status/run.sh --check    # exit 1 when the generated documents are out of date (TRACKING.md,
-#                                         # REMAINING.md, the pages, port-status.json); runs no extraction
+#                                         # REMAINING.md, the pages, port-status.json, TESTS.md, tests-status.json);
+#                                         # runs no extraction
 #
 # Step 1 (only when stale): scripts/api-extract -> docs/porting/data/upstream-api.json
 # Step 2: scripts/port-status/port_status.py -> docs/porting/TRACKING.md, docs/porting/REMAINING.md,
 #         docs/porting/tracking/*.md, docs/porting/data/port-status.json
+# Step 3: scripts/port-status/tests_audit.py -> docs/porting/TESTS.md, docs/porting/data/tests-status.json
 #
 # The extractor reads the TRACKED commit of upstream, not the HEAD of the checkout (which is usually ahead):
 # the commit recorded in upstream-api.json, or $TRACKED_COMMIT to move the port to another one. The tree of
@@ -121,4 +123,15 @@ else
     echo "api-extract: upstream-api.json is up to date" >&2
 fi
 
-"$python" "$here/port_status.py" --repo "$repo" ${pass[@]+"${pass[@]}"}
+status=0
+"$python" "$here/port_status.py" --repo "$repo" ${pass[@]+"${pass[@]}"} || status=$?
+
+# Step 3: the upstream tests (docs/porting/TESTS.md, docs/porting/data/tests-status.json). The upstream test
+# inventory (docs/porting/data/upstream-tests.json) is re-read from the checkout only when it names another commit
+# than TRACKING.md; --check reads neither the checkout nor git.
+if [[ $check -eq 1 ]]; then
+    "$python" "$here/tests_audit.py" --check || status=$?
+else
+    "$python" "$here/tests_audit.py" --upstream "$upstream" || status=$?
+fi
+exit $status

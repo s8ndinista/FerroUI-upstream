@@ -114,7 +114,7 @@ Directories of `src`, `native` and `external` that hold a project and are not in
 
 ## Upstream test projects
 
-Counted by `scripts/port-status/test_gaps.py --all` (its rules are at its top), read here from the totals of its reports in `docs/porting/data/`. A test is present when the port has a test function of its name.
+Counted by `scripts/port-status/test_gaps.py --all` (its rules are at its top), read here from the totals of its reports in `docs/porting/data/`. A test is present when the port has a test function of its name. [TESTS.md](TESTS.md) counts every upstream test project, the ones that do not apply included, with a stricter match (one Rust function per upstream test) and lists the missing tests by name.
 
 | Upstream test project | Tests | Present | Missing | Waived | Report |
 |---|---:|---:|---:|---:|---|
@@ -192,11 +192,11 @@ From `docs/porting/data/samples.toml`; a sample counts as ported when the direct
 | `samples/UnloadableAssemblyLoadContext/UnloadableAssemblyLoadContext` | 5 | not applicable | - | unloading of a collectible AssemblyLoadContext of the .NET runtime |
 | `samples/UnloadableAssemblyLoadContext/UnloadableAssemblyLoadContextPlug` | 3 | not applicable | - | the plug-in assembly of the sample above |
 | `samples/VirtualizationDemo` | 13 | ported | `samples/VirtualizationDemo` |  |
-| `samples/WinUIEmbedSample` | 4 | not ported | - | not ported yet: controls of WinUI beside the embedded content; the integration it needs is ferroui-winui |
+| `samples/WinUIEmbedSample` | 4 | ported | `samples/WinUIEmbedSample` | controls of WinUI beside the content in one WinUI 3 window through ferroui-winui, with a smoke mode (docs/porting/winui.md, section 7.6); the content (EmbeddedView) is tested on every host |
 | `samples/XEmbedSample` | 3 | not ported | - | embedding through XEmbed of the X11 backend |
 | `samples/interop/WindowsInteropTest` | 5 | not applicable | - | hosting in Windows Forms (Avalonia.Win32.Interoperability), which has no counterpart in Rust (docs/porting/winui.md, section 8) |
 
-15 of 30 samples are ported.
+16 of 30 samples are ported.
 
 ## Missing, by project
 

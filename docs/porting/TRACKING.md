@@ -262,13 +262,13 @@ Sample applications. Same directory names; binary crates.
 | `samples/UnloadableAssemblyLoadContext/UnloadableAssemblyLoadContext` | 5 | `samples/UnloadableAssemblyLoadContext/UnloadableAssemblyLoadContext` | not created | not tracked |
 | `samples/UnloadableAssemblyLoadContext/UnloadableAssemblyLoadContextPlug` | 3 | `samples/UnloadableAssemblyLoadContext/UnloadableAssemblyLoadContextPlug` | not created | not tracked |
 | `samples/VirtualizationDemo` | 13 | `samples/VirtualizationDemo` | workspace member | not tracked |
-| `samples/WinUIEmbedSample` | 4 | `samples/WinUIEmbedSample` | not created | not tracked |
+| `samples/WinUIEmbedSample` | 4 | `samples/WinUIEmbedSample` | workspace member | not tracked |
 | `samples/XEmbedSample` | 3 | `samples/XEmbedSample` | not created | not tracked |
 | `samples/interop/WindowsInteropTest` | 5 | `samples/interop/WindowsInteropTest` | not created | not tracked |
 
 ### `tests/`
 
-Upstream unit tests are ported next to the code (`#[cfg(test)] mod tests` or `<file>_tests.rs`, porting guide rule 1); cross-crate, render and integration test projects get a crate under `tests/`.
+Upstream unit tests are ported next to the code (`#[cfg(test)] mod tests` or `<file>_tests.rs`, porting guide rule 1); cross-crate, render and integration test projects get a crate under `tests/`. How completely the upstream test suites are ported, per project, with the missing tests by name: [TESTS.md](TESTS.md) (`scripts/port-status/tests_audit.py`).
 
 | Upstream project | C# files | FerroUI path | State | Tracking |
 |---|---:|---|---|---|
@@ -328,6 +328,7 @@ Upstream unit tests are ported next to the code (`#[cfg(test)] mod tests` or `<f
 | `samples/Sandbox` | `samples/Sandbox` (not tracked) |
 | `samples/TextTestApp` | `samples/TextTestApp` (not tracked) |
 | `samples/VirtualizationDemo` | `samples/VirtualizationDemo` (not tracked) |
+| `samples/WinUIEmbedSample` | `samples/WinUIEmbedSample` (not tracked) |
 | `src/Android/FerroUI.Android` | `src/Android/Avalonia.Android` |
 | `src/Browser/FerroUI.Browser` | `src/Browser/Avalonia.Browser` |
 | `src/FerroUI` | none (FerroUI only) |
