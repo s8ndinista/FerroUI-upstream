@@ -87,7 +87,7 @@ PROJECTS: dict[str, dict] = {
     "tests/Avalonia.Headless.UnitTests": {"rust": "`src/Headless/FerroUI.Headless/unit_tests`"},
     "tests/Avalonia.Themes.UnitTests": {"rust": "`src/FerroUI.Themes.Fluent`, `src/FerroUI.Themes.Simple`"},
     "tests/Avalonia.Build.Tasks.UnitTest": {"rust": "`src/FerroUI.Build.Tasks`"},
-    "tests/Avalonia.DesignerSupport.Tests": {"rust": "`src/FerroUI.DesignerSupport`"},
+    "tests/Avalonia.DesignerSupport.Tests": {"rust": "`src/FerroUI.DesignerSupport`, `tests/FerroUI.DesignerSupport.Tests`"},
     "tests/Avalonia.RenderTests": {"rust": "`tests/FerroUI.RenderTests`",
                                    "note": "shared sources of `Avalonia.Skia.RenderTests`, counted here once"},
     "tests/Avalonia.Skia.RenderTests": {"rust": "`tests/FerroUI.RenderTests`",
@@ -129,7 +129,8 @@ PROJECTS: dict[str, dict] = {
     "tests/Avalonia.UnitTests.WpfCompare": {
         "status": NA, "reason": "runs unit tests against WPF to compare behaviour; WPF is a Windows .NET toolkit"},
     "tests/Avalonia.DesignerSupport.TestApp": {
-        "status": NA, "reason": "the application started by `Avalonia.DesignerSupport.Tests`; no tests"},
+        "status": NA, "reason": "the application started by `Avalonia.DesignerSupport.Tests`; no tests (ported as "
+                                "`tests/FerroUI.DesignerSupport.Tests/test_app`)"},
     "tests/BuildTests/BuildTests": {"status": NA, "reason": "builds .NET project formats (MSBuild heads, trimming, "
                                                             "NativeAOT, WPF hybrid); the port builds with Cargo"},
     "tests/BuildTests/BuildTests.Android": {"status": NA, "reason": "as `BuildTests`"},
