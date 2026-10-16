@@ -1242,12 +1242,6 @@ reason = "`Compositor::invoke_server_job_async` is generic over the result, so t
 
 [[waive]]
 project = "Avalonia.Base"
-type = "Avalonia.Rendering.Composition.Compositor"
-member = "GetRenderInterfacePublicFeatures"
-reason = "part of `Compositor::try_get_render_interface_feature` (`with_render_interface_feature`): the features are read from the map of the server compositor inside the compositor lock; a compositor confined to a render thread answers from the cached features alone, which a job of that thread fills, as upstream with a background loop (render-thread.md, R5.8)"
-
-[[waive]]
-project = "Avalonia.Base"
 type = "Avalonia.Rendering.Composition.Composition*Visual"
 member = "OnRootChangedCore"
 reason = "ported as `CompositionVisualHooks::on_root_changed` of `CompositionVisual`, which does the work of the override of the container visual (the root of the children) and of the base class"

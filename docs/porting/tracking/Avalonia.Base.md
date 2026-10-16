@@ -12,7 +12,7 @@ Generated from upstream commit `17350180c33b063f0e98abbfd19aa3cae63f5d56`. Back 
 | Phase / priority | 0 - core / P0 |
 | Files | 1248/1248 (100.0%), 51 not applicable |
 | Types | 1524/1659 (135 waived) (100.0%) |
-| Members | 10398/11433 (1035 waived) (100.0%) |
+| Members | 10399/11433 (1034 waived) (100.0%) |
 | Contracts (interfaces) | 247/260 |
 | Property registrations | 224/239 |
 | Routed events | 41/41 |
@@ -1595,7 +1595,7 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 | `UiThreadRenderTimer.cs` | `rendering/ui_thread_render_timer.rs` | present | 1/1 | 3/3 |  |
 | `ZIndexComparer.cs` | `rendering/z_index_comparer.rs` | present | 1/1 | 1/3 (2 waived) |  |
 
-### `Rendering/Composition` - files 26/26, types 41/41, members 253/274 (21 waived)
+### `Rendering/Composition` - files 26/26, types 41/41, members 254/274 (20 waived)
 
 | Upstream file | Rust file | Status | Types | Members | Notes |
 |---|---|---|---|---|---|
@@ -1616,7 +1616,7 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 | `CompositionTransform.cs` | `rendering/composition/server/server_composition_simple_transform.rs` | present | 1/1 | 0/0 | merged: the file only adds `ITransform` to the generated `ServerCompositionSimpleTransform`, which is implemented next to the class |
 | `CompositionTransparencyLevel.cs` | `rendering/composition/composition_transparency_level.rs` | present | 1/1 | 5/5 |  |
 | `Compositor.Factories.cs` | `rendering/composition/compositor_factories.rs` | present | 1/1 | 17/17 |  |
-| `Compositor.cs` | `rendering/composition/compositor.rs` | present | 2/2 | 24/26 (2 waived) |  |
+| `Compositor.cs` | `rendering/composition/compositor.rs` | present | 2/2 | 25/26 (1 waived) |  |
 | `ContainerVisual.cs` | `rendering/composition/container_visual.rs`, `rendering/composition/visual.rs` | present | 1/1 | 7/8 (1 waived) | merged: every visual has children, so `CompositionContainerVisual` is an alias of `CompositionVisual` and its members are members of that class |
 | `ElementCompositionPreview.cs` | `rendering/composition/element_composition_preview.rs` | present | 1/1 | 3/3 |  |
 | `Enums.cs` | `rendering/composition/enums.rs` | present | 4/4 | 41/41 |  |
