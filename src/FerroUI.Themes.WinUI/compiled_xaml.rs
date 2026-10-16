@@ -107925,7 +107925,7 @@ fn build_controls_winuicontrols_xaml_deferred_124(
         return ::core::result::Result::Err(rt::no_setter("Data", &value_0, 177, 17));
     }
     // Controls/WinUIControls.xaml(178,17) Fill
-    let reflection_binding_extension_0 = ::ferroui_markup_xaml::markup_extensions::ReflectionBindingExtension::__markup_new_1(::std::string::String::from("$parent[ContentPresenter].Foreground"));
+    let reflection_binding_extension_0 = ::ferroui_markup_xaml::markup_extensions::ReflectionBindingExtension::__markup_new_1(::std::string::String::from("$parent[RepeatButton].Foreground"));
     let provided_1 = rt::provide_value(&context, rt::property_value(::ferroui_controls::shapes::Shape::fill_property()), &reflection_binding_extension_0, ::ferroui_markup_xaml::markup_extensions::ReflectionBindingExtension::__markup_ProvideValue_0);
     rt::bind(path_0.upcast_ref::<::ferroui_base::FerroObject>(), ::ferroui_controls::shapes::Shape::fill_property(), provided_1, 178, 17)?;
     // Controls/WinUIControls.xaml(177,12) Stretch
@@ -108047,7 +108047,7 @@ fn build_controls_winuicontrols_xaml_deferred_126(
         return ::core::result::Result::Err(rt::no_setter("Data", &value_0, 205, 17));
     }
     // Controls/WinUIControls.xaml(206,17) Fill
-    let reflection_binding_extension_0 = ::ferroui_markup_xaml::markup_extensions::ReflectionBindingExtension::__markup_new_1(::std::string::String::from("$parent[ContentPresenter].Foreground"));
+    let reflection_binding_extension_0 = ::ferroui_markup_xaml::markup_extensions::ReflectionBindingExtension::__markup_new_1(::std::string::String::from("$parent[RepeatButton].Foreground"));
     let provided_1 = rt::provide_value(&context, rt::property_value(::ferroui_controls::shapes::Shape::fill_property()), &reflection_binding_extension_0, ::ferroui_markup_xaml::markup_extensions::ReflectionBindingExtension::__markup_ProvideValue_0);
     rt::bind(path_0.upcast_ref::<::ferroui_base::FerroObject>(), ::ferroui_controls::shapes::Shape::fill_property(), provided_1, 206, 17)?;
     // Controls/WinUIControls.xaml(205,12) Stretch
@@ -109266,7 +109266,7 @@ fn build_controls_winuicontrols_xaml_deferred_138(
         return ::core::result::Result::Err(rt::no_setter("Data", &value_2, 204, 25));
     }
     // Controls/WinUIControls.xaml(205,25) Fill
-    let reflection_binding_extension_0 = ::ferroui_markup_xaml::markup_extensions::ReflectionBindingExtension::__markup_new_1(::std::string::String::from("$parent[ContentPresenter].Foreground"));
+    let reflection_binding_extension_0 = ::ferroui_markup_xaml::markup_extensions::ReflectionBindingExtension::__markup_new_1(::std::string::String::from("$parent[Button].Foreground"));
     let provided_11 = rt::provide_value(&context, rt::property_value(::ferroui_controls::shapes::Shape::fill_property()), &reflection_binding_extension_0, ::ferroui_markup_xaml::markup_extensions::ReflectionBindingExtension::__markup_ProvideValue_0);
     rt::bind(path_0.upcast_ref::<::ferroui_base::FerroObject>(), ::ferroui_controls::shapes::Shape::fill_property(), provided_11, 205, 25)?;
     // Controls/WinUIControls.xaml(204,20) Stretch
@@ -109359,7 +109359,7 @@ fn build_controls_winuicontrols_xaml_deferred_138(
         return ::core::result::Result::Err(rt::no_setter("Data", &value_4, 220, 25));
     }
     // Controls/WinUIControls.xaml(221,25) Fill
-    let reflection_binding_extension_1 = ::ferroui_markup_xaml::markup_extensions::ReflectionBindingExtension::__markup_new_1(::std::string::String::from("$parent[ContentPresenter].Foreground"));
+    let reflection_binding_extension_1 = ::ferroui_markup_xaml::markup_extensions::ReflectionBindingExtension::__markup_new_1(::std::string::String::from("$parent[Button].Foreground"));
     let provided_16 = rt::provide_value(&context, rt::property_value(::ferroui_controls::shapes::Shape::fill_property()), &reflection_binding_extension_1, ::ferroui_markup_xaml::markup_extensions::ReflectionBindingExtension::__markup_ProvideValue_0);
     rt::bind(path_1.upcast_ref::<::ferroui_base::FerroObject>(), ::ferroui_controls::shapes::Shape::fill_property(), provided_16, 221, 25)?;
     // Controls/WinUIControls.xaml(220,20) Stretch
@@ -112413,7 +112413,7 @@ fn build_controls_winuicontrols_xaml_deferred_157(
         return ::core::result::Result::Err(rt::no_setter("Data", &value_8, 317, 23));
     }
     // Controls/WinUIControls.xaml(318,23) Fill
-    let reflection_binding_extension_0 = ::ferroui_markup_xaml::markup_extensions::ReflectionBindingExtension::__markup_new_1(::std::string::String::from("$parent[ContentPresenter].Foreground"));
+    let reflection_binding_extension_0 = ::ferroui_markup_xaml::markup_extensions::ReflectionBindingExtension::__markup_new_1(::std::string::String::from("$parent[Button].Foreground"));
     let provided_28 = rt::provide_value(&context, rt::property_value(::ferroui_controls::shapes::Shape::fill_property()), &reflection_binding_extension_0, ::ferroui_markup_xaml::markup_extensions::ReflectionBindingExtension::__markup_ProvideValue_0);
     rt::bind(path_0.upcast_ref::<::ferroui_base::FerroObject>(), ::ferroui_controls::shapes::Shape::fill_property(), provided_28, 318, 23)?;
     // Controls/WinUIControls.xaml(317,18) Stretch
@@ -112504,7 +112504,7 @@ fn build_controls_winuicontrols_xaml_deferred_157(
         return ::core::result::Result::Err(rt::no_setter("Data", &value_11, 333, 23));
     }
     // Controls/WinUIControls.xaml(334,23) Fill
-    let reflection_binding_extension_1 = ::ferroui_markup_xaml::markup_extensions::ReflectionBindingExtension::__markup_new_1(::std::string::String::from("$parent[ContentPresenter].Foreground"));
+    let reflection_binding_extension_1 = ::ferroui_markup_xaml::markup_extensions::ReflectionBindingExtension::__markup_new_1(::std::string::String::from("$parent[Button].Foreground"));
     let provided_32 = rt::provide_value(&context, rt::property_value(::ferroui_controls::shapes::Shape::fill_property()), &reflection_binding_extension_1, ::ferroui_markup_xaml::markup_extensions::ReflectionBindingExtension::__markup_ProvideValue_0);
     rt::bind(path_1.upcast_ref::<::ferroui_base::FerroObject>(), ::ferroui_controls::shapes::Shape::fill_property(), provided_32, 334, 23)?;
     // Controls/WinUIControls.xaml(333,18) Stretch
@@ -114242,7 +114242,7 @@ fn build_controls_winuicontrols_xaml_deferred_165(
         return ::core::result::Result::Err(rt::no_setter("Data", &value_10, 347, 23));
     }
     // Controls/WinUIControls.xaml(348,23) Fill
-    let reflection_binding_extension_0 = ::ferroui_markup_xaml::markup_extensions::ReflectionBindingExtension::__markup_new_1(::std::string::String::from("$parent[ContentPresenter].Foreground"));
+    let reflection_binding_extension_0 = ::ferroui_markup_xaml::markup_extensions::ReflectionBindingExtension::__markup_new_1(::std::string::String::from("$parent[Button].Foreground"));
     let provided_33 = rt::provide_value(&context, rt::property_value(::ferroui_controls::shapes::Shape::fill_property()), &reflection_binding_extension_0, ::ferroui_markup_xaml::markup_extensions::ReflectionBindingExtension::__markup_ProvideValue_0);
     rt::bind(path_0.upcast_ref::<::ferroui_base::FerroObject>(), ::ferroui_controls::shapes::Shape::fill_property(), provided_33, 348, 23)?;
     // Controls/WinUIControls.xaml(347,18) Stretch
@@ -114333,7 +114333,7 @@ fn build_controls_winuicontrols_xaml_deferred_165(
         return ::core::result::Result::Err(rt::no_setter("Data", &value_13, 363, 23));
     }
     // Controls/WinUIControls.xaml(364,23) Fill
-    let reflection_binding_extension_1 = ::ferroui_markup_xaml::markup_extensions::ReflectionBindingExtension::__markup_new_1(::std::string::String::from("$parent[ContentPresenter].Foreground"));
+    let reflection_binding_extension_1 = ::ferroui_markup_xaml::markup_extensions::ReflectionBindingExtension::__markup_new_1(::std::string::String::from("$parent[Button].Foreground"));
     let provided_37 = rt::provide_value(&context, rt::property_value(::ferroui_controls::shapes::Shape::fill_property()), &reflection_binding_extension_1, ::ferroui_markup_xaml::markup_extensions::ReflectionBindingExtension::__markup_ProvideValue_0);
     rt::bind(path_1.upcast_ref::<::ferroui_base::FerroObject>(), ::ferroui_controls::shapes::Shape::fill_property(), provided_37, 364, 23)?;
     // Controls/WinUIControls.xaml(363,18) Stretch

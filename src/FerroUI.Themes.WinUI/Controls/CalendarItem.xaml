@@ -202,7 +202,7 @@
                 <!-- EDDB at CalendarViewNavigationButtonFontSize (8). -->
                 <Panel Width="8" Height="8">
                   <Path Data="{StaticResource GlyphGeometryEDDB}"
-                        Fill="{Binding $parent[ContentPresenter].Foreground}"
+                        Fill="{Binding $parent[Button].Foreground}"
                         Stretch="Uniform"
                         Width="8"
                         HorizontalAlignment="Center"
@@ -218,7 +218,7 @@
                 <!-- EDDC at CalendarViewNavigationButtonFontSize (8). -->
                 <Panel Width="8" Height="8">
                   <Path Data="{StaticResource GlyphGeometryEDDC}"
-                        Fill="{Binding $parent[ContentPresenter].Foreground}"
+                        Fill="{Binding $parent[Button].Foreground}"
                         Stretch="Uniform"
                         Width="8"
                         HorizontalAlignment="Center"

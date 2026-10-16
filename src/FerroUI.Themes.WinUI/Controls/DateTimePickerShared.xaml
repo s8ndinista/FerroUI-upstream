@@ -175,7 +175,7 @@
         <!-- EDDB at 8 px. -->
         <Panel Width="8" Height="8">
           <Path Data="{StaticResource GlyphGeometryEDDB}"
-                Fill="{Binding $parent[ContentPresenter].Foreground}"
+                Fill="{Binding $parent[RepeatButton].Foreground}"
                 Stretch="Uniform"
                 Width="8"
                 HorizontalAlignment="Center"
@@ -203,7 +203,7 @@
         <!-- EDDC at 8 px. -->
         <Panel Width="8" Height="8">
           <Path Data="{StaticResource GlyphGeometryEDDC}"
-                Fill="{Binding $parent[ContentPresenter].Foreground}"
+                Fill="{Binding $parent[RepeatButton].Foreground}"
                 Stretch="Uniform"
                 Width="8"
                 HorizontalAlignment="Center"
