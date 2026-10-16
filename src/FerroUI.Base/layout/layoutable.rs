@@ -701,6 +701,20 @@ impl Layoutable {
         self.is_arrange_valid.get()
     }
 
+    /// The private setter of `IsMeasureValid`, which nothing of the
+    /// framework calls; the benchmarks reach it (`layout::testing`).
+    #[cfg(any(test, feature = "testing"))]
+    pub(crate) fn set_is_measure_valid(&self, value: bool) {
+        self.is_measure_valid.set(value);
+    }
+
+    /// The private setter of `IsArrangeValid` (see
+    /// [`set_is_measure_valid`](Self::set_is_measure_valid)).
+    #[cfg(any(test, feature = "testing"))]
+    pub(crate) fn set_is_arrange_valid(&self, value: bool) {
+        self.is_arrange_valid.set(value);
+    }
+
     /// Whether the control's layout should be snapped to pixel boundaries.
     pub fn use_layout_rounding(&self) -> bool {
         self.get_value(Self::use_layout_rounding_property())

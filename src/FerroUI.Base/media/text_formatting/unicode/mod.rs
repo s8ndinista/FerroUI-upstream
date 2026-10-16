@@ -77,6 +77,9 @@ pub(crate) use {
     utf16_utils::Utf16Utils,
 };
 
+#[cfg(any(test, feature = "testing"))]
+pub mod testing;
+
 #[cfg(test)]
 mod bidi_algorithm_tests;
 #[cfg(test)]
