@@ -339,6 +339,10 @@ impl Win32Platform {
         }
 
         if msg == WindowsMessage::WM_SETTINGCHANGE {
+            // Font smoothing, ClearType or its tuning may have changed: the
+            // next frame reads the text rendering parameters again.
+            crate::win32_text_rendering::invalidate();
+
             let win32_platform_settings = self.win32_platform_settings.borrow().clone();
             if let Some(win32_platform_settings) = win32_platform_settings {
                 // SAFETY: the second parameter of this message names the
