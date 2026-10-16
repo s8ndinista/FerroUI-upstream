@@ -1,0 +1,302 @@
+<!--
+  Ported from microsoft-ui-xaml (https://github.com/microsoft/microsoft-ui-xaml),
+  commit 7e4b0c2096be402f51cc8f7d203ebf67cff183d0:
+    controls/dev/TreeView/TreeViewItem.xaml (the style MUX_TreeViewItemStyle, the implicit style of
+    TreeViewItem of controls/dev/TreeView/TreeView.xaml; the resources are
+    Resources/TreeView_themeresources.xaml)
+    controls/dev/CommonStyles/ListViewItem_themeresources.xaml (DefaultListViewItemStyle, the base
+    of MUX_TreeViewItemStyle)
+    controls/dev/TreeView/TreeView.idl, TreeViewItem.cpp (the default glyphs, their size and the
+    indentation of a level)
+  Copyright (c) Microsoft Corporation. Licensed under the MIT License (see NOTICE.md of the crate).
+
+  Translation notes (docs/porting/winui-theme.md, section 4):
+  - WinUI's tree item is a row of a flat list; FerroUI's TreeViewItem holds its header and its
+    child items. The template is the row of the source (Grid ContentPresenterGrid, a Border named
+    PART_Header, the part FerroUI's item brings into view) above the items presenter
+    PART_ItemsPresenter, shown while the item is expanded. The ContentPresenter of the header is
+    PART_HeaderPresenter (the part that expands the item on a double tap).
+  - MUX_TreeViewItemStyle is based on DefaultListViewItemStyle, a style of ListViewItem; FerroUI's
+    TreeViewItem is not a list box item, so the setters it takes from that style (font, foreground,
+    navigation, alignments, minimum width, focus brushes) are written in the theme.
+  - The pointer states are those of the row: PointerOver is the pointer over PART_Header, Pressed
+    the pressed item with the pointer over its row, so that the states of a child do not show on
+    its parents.
+  - The indentation (TreeViewItemTemplateSettings.Indentation, 16 px per level in
+    TreeViewItem::UpdateIndentation) is the padding of MultiSelectGrid, from the Level of the item
+    with a MarginMultiplierConverter of an indent of 16.
+  - ExpandCollapseChevron (a Grid that expands and collapses the item when tapped) is a ToggleButton
+    bound to IsExpanded with the keyed theme TreeViewItemExpandCollapseChevron; its glyphs
+    CollapsedGlyph (E76C) and ExpandedGlyph (E70D), TextBlocks of 12 by 12 px with a padding of
+    2 px in GlyphSize 8, are paths of the glyph geometries at the ink size of the 8 px glyphs, and
+    show as the toggle is checked (CollapsedGlyphVisibility, ExpandedGlyphVisibility). GlyphOpacity
+    (0 when the item has no children) is the opacity 0 of the chevron of an item without items
+    (:empty); GlyphBrush is the foreground of the chevron.
+  - The selection indicator (a Rectangle with the radii 2) is a Border with a corner radius of 2.
+  - TreeViewMultiSelectStates (the check box of a tree in multiple selection mode), DragStates and
+    ReorderedPlaceholder, with MultiSelectCheckBox and MultiArrangeOverlayTextBorder, have no
+    counterpart: FerroUI's tree view has no check mode and no drag reordering.
+  - FocusVisualMargin="0,-1,0,-1" with the focus brushes of DefaultListViewItemStyle is the
+    FocusAdorner of the row (the template focus target).
+-->
+<ResourceDictionary xmlns="https://github.com/ferroui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:converters="using:FerroUI.Controls.Converters"
+                    x:ClassModifier="internal">
+  <Design.PreviewWith>
+    <Border Padding="20" MinWidth="300">
+      <TreeView>
+        <TreeViewItem Header="Level 1" IsExpanded="True">
+          <TreeViewItem Header="Level 2.1" IsSelected="True" IsExpanded="True">
+            <TreeViewItem Header="Level 3.1" />
+          </TreeViewItem>
+          <TreeViewItem Header="Level 2.2" IsEnabled="False" />
+        </TreeViewItem>
+      </TreeView>
+    </Border>
+  </Design.PreviewWith>
+
+  <!-- TreeViewItemTemplateSettings.Indentation: 16 px per level. -->
+  <converters:MarginMultiplierConverter x:Key="TreeViewItemIndentationConverter" Left="True" Indent="16" />
+
+  <!-- ExpandCollapseChevron of the template of MUX_TreeViewItemStyle. -->
+  <ControlTheme x:Key="TreeViewItemExpandCollapseChevron" TargetType="ToggleButton">
+    <Setter Property="Padding" Value="14,0" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{DynamicResource TreeViewItemForeground}" />
+    <Setter Property="Focusable" Value="False" />
+    <Setter Property="VerticalAlignment" Value="Stretch" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border Background="{TemplateBinding Background}"
+                Padding="{TemplateBinding Padding}">
+          <!-- The 12 by 12 px glyph TextBlocks with a padding of 2 px. -->
+          <Panel Width="12" Height="12" VerticalAlignment="Center">
+            <!-- E76C at GlyphSize 8. -->
+            <Path x:Name="CollapsedGlyph"
+                  Data="{StaticResource GlyphGeometryE76C}"
+                  Fill="{TemplateBinding Foreground}"
+                  Stretch="Uniform"
+                  Width="4.3"
+                  HorizontalAlignment="Center"
+                  VerticalAlignment="Center" />
+            <!-- E70D at GlyphSize 8. -->
+            <Path x:Name="ExpandedGlyph"
+                  Data="{StaticResource GlyphGeometryE70D}"
+                  Fill="{TemplateBinding Foreground}"
+                  Stretch="Uniform"
+                  Width="7.9"
+                  HorizontalAlignment="Center"
+                  VerticalAlignment="Center"
+                  IsVisible="False" />
+          </Panel>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+
+    <!-- ExpandedGlyphVisibility, CollapsedGlyphVisibility -->
+    <Style Selector="^:checked">
+      <Style Selector="^ /template/ Path#CollapsedGlyph">
+        <Setter Property="IsVisible" Value="False" />
+      </Style>
+      <Style Selector="^ /template/ Path#ExpandedGlyph">
+        <Setter Property="IsVisible" Value="True" />
+      </Style>
+    </Style>
+  </ControlTheme>
+
+  <ControlTheme x:Key="MUX_TreeViewItemStyle" TargetType="TreeViewItem">
+    <!-- The setters of DefaultListViewItemStyle. -->
+    <Setter Property="FontFamily" Value="{DynamicResource ContentControlThemeFontFamily}" />
+    <Setter Property="FontSize" Value="{DynamicResource ControlContentThemeFontSize}" />
+    <Setter Property="Foreground" Value="{DynamicResource ListViewItemForeground}" />
+    <Setter Property="KeyboardNavigation.TabNavigation" Value="Local" />
+    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Setter Property="MinWidth" Value="{DynamicResource ListViewItemMinWidth}" />
+    <!-- The setters of MUX_TreeViewItemStyle. -->
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="Background" Value="{DynamicResource TreeViewItemBackground}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource TreeViewItemBorderBrush}" />
+    <Setter Property="BorderThickness" Value="{DynamicResource TreeViewItemBorderThemeThickness}" />
+    <Setter Property="MinHeight" Value="{DynamicResource TreeViewItemMinHeight}" />
+    <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}" />
+    <Setter Property="FocusAdorner">
+      <FocusAdornerTemplate>
+        <Border Margin="0,-1,0,-1"
+                BorderThickness="2"
+                BorderBrush="{DynamicResource ListViewItemFocusVisualPrimaryBrush}"
+                CornerRadius="{DynamicResource ControlCornerRadius}">
+          <Border BorderThickness="1"
+                  BorderBrush="{DynamicResource ListViewItemFocusVisualSecondaryBrush}"
+                  CornerRadius="{DynamicResource ControlCornerRadius}" />
+        </Border>
+      </FocusAdornerTemplate>
+    </Setter>
+    <Setter Property="Template">
+      <ControlTemplate>
+        <StackPanel>
+          <!-- ContentPresenterGrid -->
+          <Border x:Name="PART_Header"
+                  Background="{TemplateBinding Background}"
+                  BorderBrush="{TemplateBinding BorderBrush}"
+                  BorderThickness="{TemplateBinding BorderThickness}"
+                  Margin="{DynamicResource TreeViewItemPresenterMargin}"
+                  Padding="{DynamicResource TreeViewItemPresenterPadding}"
+                  CornerRadius="{TemplateBinding CornerRadius}"
+                  MinHeight="{TemplateBinding MinHeight}"
+                  TemplatedControl.IsTemplateFocusTarget="True">
+            <Panel>
+              <Border x:Name="SelectionIndicator"
+                      Width="3"
+                      Height="16"
+                      Background="{DynamicResource TreeViewItemSelectionIndicatorForeground}"
+                      Opacity="0"
+                      HorizontalAlignment="Left"
+                      VerticalAlignment="Center"
+                      CornerRadius="2" />
+              <Border x:Name="MultiSelectGrid"
+                      Margin="{DynamicResource TreeViewItemMultiSelectSelectedItemBorderMargin}"
+                      Padding="{TemplateBinding Level, Converter={StaticResource TreeViewItemIndentationConverter}}"
+                      BorderBrush="Transparent"
+                      BorderThickness="{DynamicResource TreeViewItemBorderThemeThickness}"
+                      CornerRadius="{DynamicResource ControlCornerRadius}">
+                <Grid ColumnDefinitions="Auto,*">
+                  <ToggleButton x:Name="ExpandCollapseChevron"
+                                Grid.Column="0"
+                                Theme="{StaticResource TreeViewItemExpandCollapseChevron}"
+                                IsChecked="{TemplateBinding IsExpanded, Mode=TwoWay}" />
+                  <ContentPresenter x:Name="PART_HeaderPresenter"
+                                    Grid.Column="1"
+                                    Content="{TemplateBinding Header}"
+                                    ContentTemplate="{TemplateBinding HeaderTemplate}"
+                                    Foreground="{TemplateBinding Foreground}"
+                                    HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                    VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                    MinHeight="{DynamicResource TreeViewItemContentHeight}"
+                                    Margin="{TemplateBinding Padding}"
+                                    Focusable="False" />
+                </Grid>
+              </Border>
+            </Panel>
+          </Border>
+          <ItemsPresenter x:Name="PART_ItemsPresenter"
+                          IsVisible="{TemplateBinding IsExpanded}"
+                          ItemsPanel="{TemplateBinding ItemsPanel}" />
+        </StackPanel>
+      </ControlTemplate>
+    </Setter>
+
+    <!-- PointerOver -->
+    <Style Selector="^ /template/ Border#PART_Header:pointerover">
+      <Setter Property="Background" Value="{DynamicResource TreeViewItemBackgroundPointerOver}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource TreeViewItemBorderBrushPointerOver}" />
+      <Style Selector="^ ContentPresenter#PART_HeaderPresenter">
+        <Setter Property="Foreground" Value="{DynamicResource TreeViewItemForegroundPointerOver}" />
+      </Style>
+      <Style Selector="^ Border#SelectionIndicator">
+        <Setter Property="Background" Value="{DynamicResource TreeViewItemSelectionIndicatorForegroundPointerOver}" />
+        <Setter Property="Opacity" Value="0" />
+      </Style>
+      <Style Selector="^ ToggleButton#ExpandCollapseChevron">
+        <Setter Property="Foreground" Value="{DynamicResource TreeViewItemForegroundPointerOver}" />
+      </Style>
+    </Style>
+    <!-- Pressed -->
+    <Style Selector="^:pressed /template/ Border#PART_Header:pointerover">
+      <Setter Property="Background" Value="{DynamicResource TreeViewItemBackgroundPressed}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource TreeViewItemBorderBrushPressed}" />
+      <Style Selector="^ ContentPresenter#PART_HeaderPresenter">
+        <Setter Property="Foreground" Value="{DynamicResource TreeViewItemForegroundPressed}" />
+      </Style>
+      <Style Selector="^ Border#SelectionIndicator">
+        <Setter Property="Background" Value="{DynamicResource TreeViewItemSelectionIndicatorForegroundPressed}" />
+        <Setter Property="Opacity" Value="0" />
+      </Style>
+      <Style Selector="^ ToggleButton#ExpandCollapseChevron">
+        <Setter Property="Foreground" Value="{DynamicResource TreeViewItemForegroundPressed}" />
+      </Style>
+    </Style>
+    <!-- Selected -->
+    <Style Selector="^:selected /template/ Border#PART_Header">
+      <Setter Property="Background" Value="{DynamicResource TreeViewItemBackgroundSelected}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource TreeViewItemBorderBrushSelected}" />
+      <Style Selector="^ ContentPresenter#PART_HeaderPresenter">
+        <Setter Property="Foreground" Value="{DynamicResource TreeViewItemForegroundSelected}" />
+      </Style>
+      <Style Selector="^ Border#SelectionIndicator">
+        <Setter Property="Background" Value="{DynamicResource TreeViewItemSelectionIndicatorForeground}" />
+        <Setter Property="Opacity" Value="1" />
+      </Style>
+      <Style Selector="^ ToggleButton#ExpandCollapseChevron">
+        <Setter Property="Foreground" Value="{DynamicResource TreeViewItemForegroundSelected}" />
+      </Style>
+    </Style>
+    <!-- Disabled -->
+    <Style Selector="^:disabled /template/ Border#PART_Header">
+      <Setter Property="Background" Value="{DynamicResource TreeViewItemBackgroundDisabled}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource TreeViewItemBorderBrushDisabled}" />
+      <Style Selector="^ ContentPresenter#PART_HeaderPresenter">
+        <Setter Property="Foreground" Value="{DynamicResource TreeViewItemForegroundDisabled}" />
+      </Style>
+      <Style Selector="^ Border#SelectionIndicator">
+        <Setter Property="Background" Value="{DynamicResource TreeViewItemSelectionIndicatorForegroundDisabled}" />
+      </Style>
+      <Style Selector="^ ToggleButton#ExpandCollapseChevron">
+        <Setter Property="Foreground" Value="{DynamicResource TreeViewItemForegroundDisabled}" />
+      </Style>
+    </Style>
+    <!-- PointerOverSelected -->
+    <Style Selector="^:selected /template/ Border#PART_Header:pointerover">
+      <Setter Property="Background" Value="{DynamicResource TreeViewItemBackgroundSelectedPointerOver}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource TreeViewItemBorderBrushSelectedPointerOver}" />
+      <Style Selector="^ ContentPresenter#PART_HeaderPresenter">
+        <Setter Property="Foreground" Value="{DynamicResource TreeViewItemForegroundSelectedPointerOver}" />
+      </Style>
+      <Style Selector="^ Border#SelectionIndicator">
+        <Setter Property="Background" Value="{DynamicResource TreeViewItemSelectionIndicatorForegroundPointerOver}" />
+        <Setter Property="Opacity" Value="1" />
+      </Style>
+      <Style Selector="^ ToggleButton#ExpandCollapseChevron">
+        <Setter Property="Foreground" Value="{DynamicResource TreeViewItemForegroundSelectedPointerOver}" />
+      </Style>
+    </Style>
+    <!-- PressedSelected -->
+    <Style Selector="^:selected:pressed /template/ Border#PART_Header:pointerover">
+      <Setter Property="Background" Value="{DynamicResource TreeViewItemBackgroundSelectedPressed}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource TreeViewItemBorderBrushSelectedPressed}" />
+      <Style Selector="^ ContentPresenter#PART_HeaderPresenter">
+        <Setter Property="Foreground" Value="{DynamicResource TreeViewItemForegroundSelectedPressed}" />
+      </Style>
+      <Style Selector="^ Border#SelectionIndicator">
+        <Setter Property="Background" Value="{DynamicResource TreeViewItemSelectionIndicatorForegroundPressed}" />
+        <Setter Property="Opacity" Value="1" />
+      </Style>
+      <Style Selector="^ ToggleButton#ExpandCollapseChevron">
+        <Setter Property="Foreground" Value="{DynamicResource TreeViewItemForegroundSelectedPressed}" />
+      </Style>
+    </Style>
+    <!-- SelectedDisabled -->
+    <Style Selector="^:selected:disabled /template/ Border#PART_Header">
+      <Setter Property="Background" Value="{DynamicResource TreeViewItemBackgroundSelectedDisabled}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource TreeViewItemBorderBrushSelectedDisabled}" />
+      <Style Selector="^ ContentPresenter#PART_HeaderPresenter">
+        <Setter Property="Foreground" Value="{DynamicResource TreeViewItemForegroundSelectedDisabled}" />
+      </Style>
+      <Style Selector="^ Border#SelectionIndicator">
+        <Setter Property="Background" Value="{DynamicResource TreeViewItemSelectionIndicatorForegroundDisabled}" />
+        <Setter Property="Opacity" Value="1" />
+      </Style>
+      <Style Selector="^ ToggleButton#ExpandCollapseChevron">
+        <Setter Property="Foreground" Value="{DynamicResource TreeViewItemForegroundSelectedDisabled}" />
+      </Style>
+    </Style>
+
+    <!-- GlyphOpacity: 0 for an item without children. -->
+    <Style Selector="^:empty /template/ ToggleButton#ExpandCollapseChevron">
+      <Setter Property="Opacity" Value="0" />
+    </Style>
+  </ControlTheme>
+
+  <ControlTheme x:Key="{x:Type TreeViewItem}" TargetType="TreeViewItem" BasedOn="{StaticResource MUX_TreeViewItemStyle}" />
+</ResourceDictionary>

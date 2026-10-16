@@ -142,6 +142,8 @@ document_tests! {
     controls_toggle_button => "/Controls/ToggleButton.xaml";
     controls_tool_tip => "/Controls/ToolTip.xaml";
     controls_transitioning_content_control => "/Controls/TransitioningContentControl.xaml";
+    controls_tree_view => "/Controls/TreeView.xaml";
+    controls_tree_view_item => "/Controls/TreeViewItem.xaml";
     controls_winui_controls => "/Controls/WinUIControls.xaml";
     // B5: navigation, pages, tabs and command bar
     controls_carousel => "/Controls/Carousel.xaml";

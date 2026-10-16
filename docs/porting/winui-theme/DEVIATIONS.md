@@ -549,6 +549,29 @@ it. Abbreviations: CS = `controls/dev/CommonStyles/`, GX = `dxaml/xcp/dxaml/them
 | TCC-2 | GX `{ContentControl}`: `HorizontalContentAlignment` Left, `VerticalContentAlignment` Top | A content control does not stretch its content. | Not set: the content stretches (FerroUI's default). | The control hosts pages and views that fill it, as WinUI's Frame does. |
 | TCC-3 | GX `{ContentControl}` template | The presenter at the padding; no background or border. | The presenters take the padding, the content alignments, the background and the border. | As LBL-2. |
 | TCC-4 | GX `{ContentPresenter}` (`HorizontalAlignment` Left, `VerticalAlignment` Top) | The default alignments of every ContentPresenter. | Waived. | FerroUI's ContentPresenter is not templated; a style of every presenter would be a global style. The templates of the port set the alignments of their presenters. |
+## TreeView
+
+| ID | WinUI source | What WinUI does | What the port does | Why |
+|---|---|---|---|---|
+| TRV-1 | `controls/dev/TreeView/TreeView.xaml`, `DefaultTreeViewStyle`: `TreeViewList x:Name="ListControl"` (a `ListView` of the implicit style of GX) | The tree is a flat list of the visible nodes. | The template of that list: a `Border` around `ScrollViewer` and `PART_ItemsPresenter`, with the setters of the list (`IsTabStop` false, `TabNavigation` once, no horizontal scrolling, scroll bar `Auto`). | FerroUI's tree view hosts its items, which host their children. |
+| TRV-2 | `CanDragItems`, `CanReorderItems`, `AllowDrop`, `ItemContainerTransitions` (content, reorder, entrance theme transitions), the scroll modes of the list | Drag reordering, item animations, scroll modes. | Left out. | FerroUI's tree view has no drag reordering; G-19, G-22. |
+| TRV-3 | (not in the source) | The tree draws no border and has no padding of its own. | The border, corner radius and padding of the tree view are drawn, the scroll chaining and automatic hiding of the bars passed to the scroll viewer. | FerroUI's contract (its other themes); the defaults draw nothing, as WinUI. |
+| TRV-4 | `TreeViewItemDataTemplate` | A data template of a `TreeViewNode`. | Waived. | FerroUI has no `TreeViewNode`. |
+
+## TreeViewItem
+
+| ID | WinUI source | What WinUI does | What the port does | Why |
+|---|---|---|---|---|
+| TVI-1 | `controls/dev/TreeView/TreeViewItem.xaml`, `MUX_TreeViewItemStyle`: a row of the flat list, `Grid x:Name="ContentPresenterGrid"` | One row per node. | The row as `Border` `PART_Header` above `PART_ItemsPresenter` (the children, visible while expanded). | FerroUI's tree item holds its children; `PART_Header` is its part. G-17. |
+| TVI-2 | `BasedOn="{StaticResource DefaultListViewItemStyle}"` | Inherits the setters and template of a list view item. | The setters it uses (font, foreground, navigation, alignments, minimum width, focus brushes) are written in the theme, which is not based on another. | FerroUI's `TreeViewItem` is not a `ListBoxItem`. |
+| TVI-3 | `ContentPresenter x:Name="ContentPresenter"` | The content of the node. | `ContentPresenter` `PART_HeaderPresenter` of the `Header`. | The part FerroUI's item expands on a double tap. |
+| TVI-4 | `CommonStates` set by the list on the row | Pointer and pressed states of the row. | `PointerOver` is the pointer over `PART_Header`, `Pressed` the pressed item with the pointer over its row; `Selected` and `Disabled` on the item. | The states of a child must not show on its parents. |
+| TVI-5 | `TreeViewItemTemplateSettings.Indentation` (`TreeViewItem::UpdateIndentation`: 16 px per depth) | The padding of `MultiSelectGrid`. | `MarginMultiplierConverter` of `Level` with an indent of 16 (`Grid MultiSelectGrid` is a `Border`). | FerroUI's item exposes its `Level`; G-17. |
+| TVI-6 | `Grid x:Name="ExpandCollapseChevron"`, tapped by the control code; `GlyphOpacity`, `GlyphBrush`, `CollapsedGlyphVisibility`, `ExpandedGlyphVisibility` | The chevron expands and collapses the node; it is transparent when the node has no children. | A `ToggleButton` bound to `IsExpanded` with the keyed theme `TreeViewItemExpandCollapseChevron` (padding 14,0, transparent background); opacity 0 under `:empty`; its foreground is the glyph brush. | FerroUI's item has no glyph properties; the toggle does what the control code does. |
+| TVI-7 | `TextBlock`s `CollapsedGlyph` (E76C), `ExpandedGlyph` (E70D), 12 by 12 px with padding 2, `GlyphSize` 8 | Glyphs of the symbol font. | Paths of `GlyphGeometryE76C` (4.3 px wide) and `GlyphGeometryE70D` (7.9 px wide) centred in 12 by 12 px. | G-9. |
+| TVI-8 | `Rectangle x:Name="SelectionIndicator"` with `RadiusX`/`RadiusY` 2 | The accent bar of the selected node. | A `Border` with a corner radius of 2. | A border draws the rounded bar. |
+| TVI-9 | `TreeViewMultiSelectStates`, `DragStates`, `ReorderedPlaceholder`, `MultiSelectCheckBox`, `MultiArrangeOverlayTextBorder` | Check boxes of multiple selection, drag visuals. | Left out. | FerroUI's tree view has no check mode and no drag reordering. |
+| TVI-10 | `FocusVisualMargin="0,-1,0,-1"`, `FocusVisualPrimaryBrush`/`SecondaryBrush` of `DefaultListViewItemStyle` | Focus visual of the row. | A `FocusAdorner` with that margin and those brushes on the row (`IsTemplateFocusTarget`). | G-14. |
 
 ## Window
 
