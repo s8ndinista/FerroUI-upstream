@@ -47,6 +47,7 @@ members = [
     "tests/FerroUI.LeakTests",
     "tests/FerroUI.IntegrationTests.Appium",
     "tests/FerroUI.IntegrationTests.Win32",
+    "tests/FerroUI.DesignerSupport.Tests",
     "samples/MiniMvvm",
     "samples/ControlCatalog",
     "samples/ControlCatalog.Desktop",

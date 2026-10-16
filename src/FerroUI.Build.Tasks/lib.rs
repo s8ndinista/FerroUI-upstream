@@ -1136,6 +1136,7 @@ mod tests {
     fn texts_the_scanner_states_are_the_ones_of_the_base_crate() {
         assert_eq!(ferroui_build_scan::FERRO_XML_NAMESPACE, ferroui_base::metadata::FERRO_XML_NAMESPACE);
         assert_eq!(ferroui_build_scan::CREATE_SOURCE_INFO, MarkupAssembly::CREATE_SOURCE_INFO);
+        assert_eq!(ferroui_build_scan::USE_COMPILED_BINDINGS_BY_DEFAULT, MarkupAssembly::USE_COMPILED_BINDINGS_BY_DEFAULT);
     }
 
     /// Not from upstream: against the type models a build reads the assembly from the

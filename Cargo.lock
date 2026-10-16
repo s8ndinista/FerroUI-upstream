@@ -915,7 +915,23 @@ dependencies = [
  "ferroui-markup-xaml-loader",
  "ferroui-remote-protocol",
  "ferroui-skia",
+ "ferroui-win32",
  "xamlx",
+]
+
+[[package]]
+name = "ferroui-designer-support-tests"
+version = "0.1.0-preview.3"
+dependencies = [
+ "control-catalog",
+ "ferroui-base",
+ "ferroui-controls",
+ "ferroui-designer-support",
+ "ferroui-desktop",
+ "ferroui-markup-xaml",
+ "ferroui-markup-xaml-loader",
+ "ferroui-remote-protocol",
+ "ferroui-themes-simple",
 ]
 
 [[package]]

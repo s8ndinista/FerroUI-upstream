@@ -15,10 +15,6 @@ use ferroui_markup_xaml::{
 use std::path::Path;
 use std::rc::Rc;
 
-/// The metadata entry of an assembly that says whether its bindings are
-/// compiled by default.
-const USE_COMPILED_BINDINGS_BY_DEFAULT: &str = "FerroUseCompiledBindingsByDefault";
-
 /// `using (PlatformManager.DesignerMode())`.
 struct DesignerMode(Rc<dyn IDisposable>);
 
@@ -86,7 +82,7 @@ impl DesignWindowLoader {
             let local_asm =
                 assembly_path.and_then(|assembly_path| MarkupAssembly::find(get_file_name_without_extension(assembly_path)));
             let use_compiled_bindings =
-                local_asm.and_then(|local_asm| local_asm.metadata_value(USE_COMPILED_BINDINGS_BY_DEFAULT));
+                local_asm.and_then(|local_asm| local_asm.metadata_value(MarkupAssembly::USE_COMPILED_BINDINGS_BY_DEFAULT));
 
             let mut configuration = RuntimeXamlLoaderConfiguration::new();
             configuration.local_assembly = local_asm;

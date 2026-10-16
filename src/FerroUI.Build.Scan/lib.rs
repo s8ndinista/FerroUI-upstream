@@ -84,3 +84,8 @@ pub const FERRO_XML_NAMESPACE: &str = "https://github.com/ferroui";
 /// (`ferroui_base::metadata::MarkupAssembly::CREATE_SOURCE_INFO`), stated here for the
 /// reason [`FERRO_XML_NAMESPACE`] is.
 pub const CREATE_SOURCE_INFO: &str = "FerroXamlCreateSourceInfo";
+
+/// The key of the assembly metadata that makes `{Binding}` a compiled binding by default
+/// (`ferroui_base::metadata::MarkupAssembly::USE_COMPILED_BINDINGS_BY_DEFAULT`), stated here
+/// for the reason [`FERRO_XML_NAMESPACE`] is.
+pub const USE_COMPILED_BINDINGS_BY_DEFAULT: &str = "FerroUseCompiledBindingsByDefault";

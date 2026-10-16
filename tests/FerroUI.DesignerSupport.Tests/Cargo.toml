@@ -1,0 +1,45 @@
+[package]
+name = "ferroui-designer-support-tests"
+description = "Test crate: upstream's designer support test, which starts the previewer of an application and previews its main window over the remote protocol"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+autotests = false
+autobenches = false
+autoexamples = false
+autobins = false
+
+# The application the test previews (upstream's `DesignerSupport.TestApp`), the host of its own
+# previewer.
+[[bin]]
+name = "designer-support-test-app"
+path = "test_app/program.rs"
+test = false
+
+# The previewer of the ControlCatalog sample.
+[[bin]]
+name = "control-catalog-designer"
+path = "catalog_host.rs"
+test = false
+
+[[test]]
+name = "designer_support_tests"
+path = "designer_support_tests.rs"
+
+[dependencies]
+ferroui-base.workspace = true
+ferroui-controls.workspace = true
+ferroui-desktop.workspace = true
+ferroui-designer-support.workspace = true
+ferroui-markup-xaml.workspace = true
+# The run-time XAML loader, which loads the documents of the test application and the documents the
+# previewer is sent.
+ferroui-markup-xaml-loader = { workspace = true, features = ["runtime"] }
+ferroui-themes-simple.workspace = true
+control-catalog = { path = "../../samples/ControlCatalog" }
+
+[dev-dependencies]
+ferroui-remote-protocol.workspace = true

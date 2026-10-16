@@ -249,10 +249,27 @@ impl RemoteDesignerEntryPoint {
             drop(builder.use_windowing_subsystem(move || PreviewerWindowingPlatform::initialize(transport.clone()), ""));
         }
 
-        // Left out: the win32 method initializes the Win32 platform, which
-        // the port does not have.
         if args.method == methods::WIN32 {
-            return Err("The 'win32' method is not available: there is no Win32 windowing platform.".to_string());
+            // `GetInitializer("FerroUI.Win32")`: the original loads the
+            // assembly of the Windows platform and calls its parameterless
+            // `Win32Platform.Initialize()`, which takes the options the
+            // service locator has. The platform is linked on Windows only:
+            // elsewhere the method fails as the initializer of the original
+            // does where the platform cannot start.
+            #[cfg(windows)]
+            {
+                use ferroui_base::LocatorExtensions;
+                drop(builder.use_windowing_subsystem(
+                    || {
+                        let options = ferroui_base::FerroLocator::current()
+                            .get_service::<ferroui_win32::Win32PlatformOptions>();
+                        ferroui_win32::Win32Platform::initialize(options.as_deref().cloned().unwrap_or_default());
+                    },
+                    "Win32",
+                ));
+            }
+            #[cfg(not(windows))]
+            return Err("The 'win32' method is not available: the Win32 platform runs on Windows only.".to_string());
         }
         drop(builder.setup_without_starting());
         Ok(transport)
