@@ -10658,6 +10658,7 @@
     "interop/composable.rs",
     "interop/event_handlers.rs",
     "interop/win_rt.rs",
+    "process_end.rs",
     "windows_app_sdk.rs",
     "xaml_application.rs"
    ]
