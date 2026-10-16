@@ -160,6 +160,7 @@ it. Abbreviations: CS = `controls/dev/CommonStyles/`, GX = `dxaml/xcp/dxaml/them
 | CLI-12 | (not in the source) | WinUI's calendar has no week numbers. | `PART_ElementWeekNumberLabels`: a column of the week numbers at `CaptionTextBlockFontSize` in `TextFillColorSecondaryBrush`, shown while `IsWeekNumberVisible`. | A template part of FerroUI's item. |
 | CLI-13 | (not in the source) | No header background. | `HeaderBackground` of the item (null by default) is the background of the header grid. | A property of FerroUI's item. |
 | CLI-14 | `HeaderNavigationButtonStyle`, `NavigationButtonStyle`: `IsTabStop`, `UseSystemFocusVisuals`, `FocusVisualMargin` -2 | The buttons are tab stops with focus visuals. | The focus adorners (margin -2) are kept; FerroUI's item makes the buttons not focusable. | FerroUI's calendar handles the keyboard itself. |
+| CLI-15 | `WeekDayNameStyle`: `Padding="{ThemeResource CalendarViewWeekDayPadding}"` (12) | The day names have a padding of 12 at every side; the columns of `WeekDayNames` stay the 42 px of the day items of the month view (40 and a margin of 1), also where a name and its padding are wider (44 px for "We"), so the calendar is 300 px wide. | `CalendarItemWeekDayNameStyle` has the padding 0,12: 12 above and below, none at the sides. | In FerroUI's grid of the month view the widest day name and its padding would widen every column (the calendar was 305 px wide); the names are centred, so the side padding only adds width. |
 
 ## CheckBox
 
