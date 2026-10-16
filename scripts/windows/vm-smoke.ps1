@@ -99,6 +99,11 @@
   (scripts\winui-theme\report.py, where the machine has Python) are copied to
   vm-smoke-winui-theme beside the report.
 
+.PARAMETER WinUIThemeGalleryPages
+  With -WinUIThemeGallery: the ids of the gallery pages to capture and compare, separated by
+  commas (buttons,datetime,...); all pages when empty. Passed to both modes as
+  FERROUI_THEME_GALLERY_PAGES and FERROUI_WINUI_COMPARE_PAGES.
+
 .PARAMETER AllowUnmarkedSource
   Run although the sources carry no mark of a completed sync. By default the script refuses a
   source tree without the file .vm-sync-commit (written last by scripts/windows/vm-sync.sh, with
@@ -142,6 +147,7 @@ param(
     [string]$AutomationArguments = '',
     [switch]$InstallWindowsAppRuntime,
     [switch]$WinUIThemeGallery,
+    [string]$WinUIThemeGalleryPages = '',
     [int]$HelloRepeat = 1,
     [switch]$SkipBuild,
     [switch]$SkipTests,
@@ -733,7 +739,8 @@ if ($WinUIThemeGallery) {
         # with 1 when a page does not load, a control has no template or a binding reports an
         # error.
         $gallery = Join-Path $debug 'winui-theme-gallery.exe'
-        $commandLine = "set FERROUI_THEME_GALLERY_CAPTURE=$captureDir&& `"$gallery`""
+        $pages = if ($WinUIThemeGalleryPages) { "set FERROUI_THEME_GALLERY_PAGES=$WinUIThemeGalleryPages&& " } else { '' }
+        $commandLine = "${pages}set FERROUI_THEME_GALLERY_CAPTURE=$captureDir&& `"$gallery`""
         $code = if ($InteractiveUser) { Run-Interactive 'winui-theme-capture' $commandLine 900 } else { Run 'winui-theme-capture' $commandLine }
         if ($code -ne 0) { $failed.Add('WinUI theme gallery capture') }
         $count = @(Get-ChildItem $captureDir -Filter '*.png' -ErrorAction SilentlyContinue).Count
@@ -755,7 +762,8 @@ if ($WinUIThemeGallery) {
             $failed.Add('Windows App Runtime 1.6 missing (WinUI theme comparison)')
         } else {
             $compare = Join-Path $debug 'winui-theme-compare.exe'
-            $commandLine = "`"$compare`" --out `"$compareDir`""
+            $pages = if ($WinUIThemeGalleryPages) { "set FERROUI_WINUI_COMPARE_PAGES=$WinUIThemeGalleryPages&& " } else { '' }
+            $commandLine = "$pages`"$compare`" --out `"$compareDir`""
             $code = if ($InteractiveUser) { Run-Interactive 'winui-theme-compare' $commandLine 1800 } else { Run 'winui-theme-compare' $commandLine }
             if ($code -ne 0) { $failed.Add('WinUI theme comparison') }
             $count = @(Get-ChildItem $compareDir -Filter '*-diff.png' -ErrorAction SilentlyContinue).Count
