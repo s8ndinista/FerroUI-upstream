@@ -476,8 +476,8 @@ ports a control updates its state by porting it, not by editing the table.
 | `ContentPage.xaml` | `{ContentPage}` | No WinUI style (Page has none): the page background and text of the window (SolidBackgroundFillColorBaseBrush, TextFillColorPrimaryBrush). | B5 | pending |
 | `ContextMenu.xaml` | `{ContextMenu}` | MenuFlyoutPresenter: DefaultMenuFlyoutPresenterStyle (MenuFlyout_themeresources.xaml). | B3 | pending |
 | `DataValidationErrors.xaml` | `{DataValidationErrors}` | No WinUI style (input validation was removed from WinUI 3): the critical fill of the palette (SystemFillColorCriticalBrush) for the message and the border of the field, and the error icon of InfoBar (InfoBar.xaml, InfoBar_themeresources.xaml) for the tool tip variant. | B1 | ported |
-| `DatePicker.xaml` | `{DatePicker}`, `{DatePickerPresenter}` | DatePicker: DefaultDatePickerStyle; DatePickerFlyoutPresenter: DefaultDatePickerFlyoutPresenterStyle (DatePicker_themeresources.xaml). | B4 | pending |
-| `DateTimePickerShared.xaml` | (keyed themes only) | LoopingSelector: DefaultLoopingSelectorStyle, LoopingSelectorItem; DateTimePickerFlyoutButtonStyle, DateTimePickerFlyoutLoopingSelectorNavigationButtonStyle (DateTimePickerFlyout_themeresources.xaml). | B4 | pending |
+| `DatePicker.xaml` | `{DatePicker}`, `{DatePickerPresenter}` | DatePicker: DefaultDatePickerStyle; DatePickerFlyoutPresenter: DefaultDatePickerFlyoutPresenterStyle (DatePicker_themeresources.xaml). | B4 | ported |
+| `DateTimePickerShared.xaml` | (keyed themes only) | LoopingSelector: DefaultLoopingSelectorStyle, LoopingSelectorItem; DateTimePickerFlyoutButtonStyle, DateTimePickerFlyoutLoopingSelectorNavigationButtonStyle (DateTimePickerFlyout_themeresources.xaml). | B4 | ported |
 | `DrawerPage.xaml` | `{DrawerPage}` | No WinUI control: the pane of NavigationView (NavigationView_themeresources.xaml) and SplitView (DefaultSplitViewStyle). | B5 | pending |
 | `DropDownButton.xaml` | `{DropDownButton}` | DropDownButton: DefaultDropDownButtonStyle (DropDownButton.xaml, DropDownButton_themeresources.xaml). | B2 | pending |
 | `EmbeddableControlRoot.xaml` | `{EmbeddableControlRoot}` | No WinUI style: the background and text of the window (SolidBackgroundFillColorBaseBrush, TextFillColorPrimaryBrush, ContentControlThemeFontFamily, ControlContentThemeFontSize). | F | ported |
@@ -527,7 +527,7 @@ ports a control updates its state by porting it, not by editing the table.
 | `TextBox.xaml` | `{TextBox}` | TextBox: DefaultTextBoxStyle and its DeleteButtonStyle (TextBox_themeresources.xaml); PasswordBox: DefaultPasswordBoxStyle (PasswordBox_themeresources.xaml) for the reveal button (pending, B3). | F | ported |
 | `TextSelectionHandle.xaml` | `{TextSelectionHandle}` | No WinUI style (the selection grippers are drawn in code, Gripper.cpp): the gripper circles in SystemColorWindowColor outlined in TextControlSelectionHighlightColor. | B1 | ported |
 | `ThemeVariantScope.xaml` | `{ThemeVariantScope}` | No WinUI style: the text foreground (TextFillColorPrimaryBrush). | F | ported |
-| `TimePicker.xaml` | `{TimePicker}`, `{TimePickerPresenter}` | TimePicker: {TimePicker}; TimePickerFlyoutPresenter: {TimePickerFlyoutPresenter} (TimePicker_themeresources.xaml). | B4 | pending |
+| `TimePicker.xaml` | `{TimePicker}`, `{TimePickerPresenter}` | TimePicker: {TimePicker}; TimePickerFlyoutPresenter: {TimePickerFlyoutPresenter} (TimePicker_themeresources.xaml). | B4 | ported |
 | `ToggleButton.xaml` | `{ToggleButton}` | ToggleButton: DefaultToggleButtonStyle (ToggleButton_themeresources.xaml). | F | ported |
 | `ToggleSwitch.xaml` | `{ToggleSwitch}` | ToggleSwitch: DefaultToggleSwitchStyle (ToggleSwitch_themeresources.xaml). | B2 | pending |
 | `ToolTip.xaml` | `{ToolTip}` | ToolTip: DefaultToolTipStyle (ToolTip_themeresources.xaml). | B1 | ported |
