@@ -28,7 +28,10 @@ pub trait ICompositionDrawListVisualExtension: 'static {
 /// renders, and what that visual drew.
 pub(crate) struct DrawListData {
     props: CompositionContainerVisualProps,
-    visual: WeakRef<Visual>,
+    /// `None` for a draw list visual of no visual of the tree, which only
+    /// the benchmarks create (`composition::testing`), as upstream's
+    /// benchmark passes `null` for the visual.
+    visual: Option<WeakRef<Visual>>,
     draw_list_changed: Cell<bool>,
     draw_list: RefCell<Option<Rc<CompositionRenderData>>>,
     /// The properties of the acrylic visual, when the visual is one.
@@ -73,7 +76,7 @@ impl DrawListData {
     }
 
     pub(super) fn hit_test(&self, pt: Point) -> bool {
-        let custom = self.visual.upgrade().and_then(|visual| visual.custom_hit_test(pt));
+        let custom = self.visual.as_ref().and_then(WeakRef::upgrade).and_then(|visual| visual.custom_hit_test(pt));
         let draw_list = self.draw_list.borrow().clone();
         if draw_list.is_none() && custom.is_none() {
             return false;
@@ -85,7 +88,8 @@ impl DrawListData {
     }
 
     pub(super) fn hit_test_geometry(&self, geometry: &Ref<Geometry>) -> IntersectionResult {
-        let custom = self.visual.upgrade().and_then(|visual| visual.custom_hit_test_geometry(geometry));
+        let custom =
+            self.visual.as_ref().and_then(WeakRef::upgrade).and_then(|visual| visual.custom_hit_test_geometry(geometry));
         let draw_list = self.draw_list.borrow().clone();
         if draw_list.is_none() && custom.is_none() {
             return IntersectionResult::Empty;
@@ -134,11 +138,11 @@ impl CompositionDrawListVisual {
         server_content: impl FnOnce() -> Box<dyn IServerVisualContent> + Send + 'static,
         extension: Rc<dyn ICompositionDrawListVisualExtension>,
     ) -> CompositionDrawListVisual {
-        Self::create_core(compositor, visual, false, Some(extension), server_content)
+        Self::create_core(compositor, Some(visual), false, Some(extension), server_content)
     }
 
     pub(super) fn create(compositor: &Rc<Compositor>, visual: &Visual, acrylic: bool) -> CompositionDrawListVisual {
-        Self::create_core(compositor, visual, acrylic, None, move || {
+        Self::create_core(compositor, Some(visual), acrylic, None, move || {
             if acrylic {
                 Box::new(ServerCompositionExperimentalAcrylicVisual::new())
             } else {
@@ -147,16 +151,26 @@ impl CompositionDrawListVisual {
         })
     }
 
+    /// `new CompositionDrawListVisual(compositor, new
+    /// ServerCompositionDrawListVisual(compositor.Server, null), null)`: a
+    /// draw list visual of no visual of the tree, which draws its draw list
+    /// and has no custom hit test. For the benchmarks
+    /// (`composition::testing`).
+    #[cfg(any(test, feature = "testing"))]
+    pub(crate) fn without_visual(compositor: &Rc<Compositor>) -> CompositionDrawListVisual {
+        Self::create_core(compositor, None, false, None, || Box::new(ServerCompositionDrawListVisual::new()))
+    }
+
     fn create_core(
         compositor: &Rc<Compositor>,
-        visual: &Visual,
+        visual: Option<&Visual>,
         acrylic: bool,
         extension: Option<Rc<dyn ICompositionDrawListVisualExtension>>,
         server_content: impl FnOnce() -> Box<dyn IServerVisualContent> + Send + 'static,
     ) -> CompositionDrawListVisual {
         let data = DrawListData {
             props: CompositionContainerVisualProps::new(),
-            visual: visual.to_ref().downgrade(),
+            visual: visual.map(|visual| visual.to_ref().downgrade()),
             draw_list_changed: Cell::new(false),
             draw_list: RefCell::new(None),
             acrylic: acrylic.then(CompositionExperimentalAcrylicVisualProps::new),
@@ -165,7 +179,7 @@ impl CompositionDrawListVisual {
         let result = CompositionVisual::create(compositor, CompositionVisualKind::DrawList(data), server_content);
         // A visual with a custom hit test decides for itself whether it is
         // hit, whatever its bounds are.
-        let has_custom_hit_test = visual.custom_hit_test(Point::default()).is_some();
+        let has_custom_hit_test = visual.is_some_and(|visual| visual.custom_hit_test(Point::default()).is_some());
         result.custom_hit_test_count_in_sub_tree.set(i32::from(has_custom_hit_test));
         CompositionDrawListVisual(result)
     }
@@ -185,7 +199,7 @@ impl CompositionDrawListVisual {
     /// The visual of the visual tree this composition visual renders, if
     /// it is alive.
     pub fn visual(&self) -> Option<Ref<Visual>> {
-        self.data().visual.upgrade()
+        self.data().visual.as_ref().and_then(WeakRef::upgrade)
     }
 
     pub fn draw_list(&self) -> Option<Rc<CompositionRenderData>> {
