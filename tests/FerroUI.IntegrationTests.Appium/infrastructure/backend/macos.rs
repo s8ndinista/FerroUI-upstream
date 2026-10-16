@@ -793,7 +793,18 @@ impl Backend {
                 found.push(element.clone());
             }
             let children = self.children(&element);
-            stack.extend(children.into_iter().rev().map(|child| (child, true)));
+            // A search from a window element finds the elements of that window, not those of
+            // a window below it (the accessibility API lists the windows of the application
+            // side by side, so this holds already; the backend of Windows prunes the owned
+            // windows UI Automation lists below their owner).
+            let from_window = !include_root && root.role() == "AXWindow";
+            stack.extend(
+                children
+                    .into_iter()
+                    .rev()
+                    .filter(|child| !(from_window && child.role() == "AXWindow"))
+                    .map(|child| (child, true)),
+            );
         }
         Ok(found)
     }
