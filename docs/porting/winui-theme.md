@@ -102,7 +102,7 @@ The crate mirrors `src/FerroUI.Themes.Fluent`:
 | `Accents/system_accent_colors.rs` | the accent colour provider (section 3.3) |
 | `Converters/corner_radius_to_thickness_converter.rs` | `CornerRadiusToThicknessConverter` of WinUI, which the theme resources name and FerroUI's control set lacks (section 5) |
 | `WinUITheme.xaml` | the document of the class: the resources and the include of the control themes |
-| `Resources/*.xaml` | the resources: one generated document per source document, `SystemResources.xaml`, `Glyphs.xaml` |
+| `Resources/*.xaml` | the resources: one generated document per source document, `SystemResources.xaml`, `ThemeShadows.xaml`, `Glyphs.xaml` |
 | `DensityStyles/Compact.xaml` | the compact resources (generated) |
 | `Controls/WinUIControls.xaml` | merges the control documents |
 | `Controls/<Control>.xaml` | the control themes of one FerroUI control |
@@ -375,7 +375,7 @@ comparison (section 8.3) checks.
 | `Control.IsTemplateFocusTarget`, `x:DeferLoadStrategy`, `x:Load`, `AutomationProperties.AccessibilityView` | left out |
 | `Header`/`HeaderTemplate`/`Description` presenters of controls whose FerroUI class has none (TextBox) | left out with their rows |
 | `ScrollViewer.*` attached properties of a control | `{TemplateBinding (ScrollViewer.HorizontalScrollBarVisibility)}` as in the Fluent theme; the modes FerroUI lacks are left out |
-| `ThemeShadow`, `Translation` (elevation) | pending per batch: `BoxShadow` of a `Border`, as the Fluent theme does for flyouts |
+| `ThemeShadow`, `Translation` (elevation) of popups (`ApplyElevationEffect`) | the `BoxShadow` of the outer border of the popup content, from `Resources/ThemeShadows.xaml` (the drop shadow recipe of WinUI per elevation), and the margin of its insets on the child of the popup, which the popup positioner leaves out of the placement (DEVIATIONS.md, G-24) |
 | `AcrylicBrush` (resource) | the `FallbackColor` as a `SolidColorBrush` (section 5) |
 | `TextCommandBarFlyout` (context menu of the text controls) | a `MenuFlyout` of the same commands (batch B3) |
 | `RecognizesAccessKey` | `True` on the content presenters of buttons and toggles, FerroUI's access keys (WinUI's `AccessKey` needs nothing in the template) |
@@ -432,8 +432,9 @@ percentages, `RelativeTransform` becomes `Transform` with the centre as `Transfo
 `Segoe UI Variable Text, Segoe UI, $Default`; and in the density layer, an implicit style of plain
 setters to the default control theme of its type.
 
-Two resource documents are written by hand: `Resources/SystemResources.xaml` (section 3.4) and
-`Resources/Glyphs.xaml` (the glyph geometries; a batch that needs a glyph adds its geometry
+Three resource documents are written by hand: `Resources/SystemResources.xaml` (section 3.4),
+`Resources/ThemeShadows.xaml` (the shadows WinUI draws in code under elevated popups, section 4.7)
+and `Resources/Glyphs.xaml` (the glyph geometries; a batch that needs a glyph adds its geometry
 there, with the code point and the name of the glyph in a comment).
 
 ### 5.1 Waivers

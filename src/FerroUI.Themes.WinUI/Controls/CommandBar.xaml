@@ -56,8 +56,11 @@
     of the open bar (CompactOpenUp, CompactOpenDown) are ^[IsOpen=True]; the clip and the
     translations of the bar and of the overflow content, their transitions and the Minimal and
     Hidden display modes are left out (FerroUI's CommandBar has no closed display modes). The
-    drop shadow of the overflow content (SecondaryItemsControlShadowWrapper) is the shadow the
-    window manager gives the popup. AvailableCommandsStates and DynamicOverflowStates are left
+    drop shadow of the overflow content (ApplyElevationEffect on SecondaryItemsControlShadowWrapper,
+    CommandBar_Partial.cpp: a ThemeShadow at a Translation.Z of 32) is the BoxShadow
+    ThemeShadowFlyoutBoxShadow of SecondaryItemsControlShadowWrapper, with the margin
+    ThemeShadowFlyoutMargin as its room in the popup (Resources/ThemeShadows.xaml; DEVIATIONS.md,
+    G-24). AvailableCommandsStates and DynamicOverflowStates are left
     out: FerroUI's CommandBar computes its visible and overflow items in code.
   - FerroUI's CommandBar has no ContentTemplate, HorizontalContentAlignment and
     VerticalContentAlignment: the setters of the content alignments are left out and the content
@@ -886,8 +889,11 @@
                  PlacementTarget="{Binding #ContentRoot}"
                  Placement="BottomEdgeAlignedRight"
                  IsLightDismissEnabled="True"
-                 WindowManagerAddShadowHint="True">
-            <Border x:Name="SecondaryItemsControlShadowWrapper" CornerRadius="{DynamicResource OverlayCornerRadius}">
+                 WindowManagerAddShadowHint="False">
+            <Border x:Name="SecondaryItemsControlShadowWrapper"
+                    BoxShadow="{DynamicResource ThemeShadowFlyoutBoxShadow}"
+                    Margin="{StaticResource ThemeShadowFlyoutMargin}"
+                    CornerRadius="{DynamicResource OverlayCornerRadius}">
               <ItemsControl x:Name="PART_OverflowPresenter"
                             Theme="{StaticResource DefaultCommandBarOverflowPresenterStyle}"
                             IsTabStop="False"

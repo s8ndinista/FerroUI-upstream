@@ -26,7 +26,10 @@
     ContentRoot is a Border (it has a corner radius).
   - The flyout of a MenuBarItem (a MenuFlyout) is the popup PART_Popup with the template of
     MenuFlyoutPresenter, below the item and aligned to its left edge (MenuBarItem::ShowMenuFlyout
-    shows it at the bottom left corner of the button).
+    shows it at the bottom left corner of the button). The shadow of the menu flyout (a ThemeShadow
+    at a Translation.Z of 32) is the BoxShadow ThemeShadowFlyoutBoxShadow of the border of the
+    popup, with the margin ThemeShadowFlyoutMargin as the room for it in the popup
+    (Resources/ThemeShadows.xaml; DEVIATIONS.md, G-24).
   - States: PointerOver is the :selected state of FerroUI's menus (the item under the pointer or
     reached with the keyboard), Selected (the flyout is open) is :open, Pressed is :pressed. As
     MenuBarItem::UpdateVisualStates, pressed comes before pointer over and pointer over before
@@ -107,7 +110,9 @@
                  IsLightDismissEnabled="True"
                  IsOpen="{TemplateBinding IsSubMenuOpen, Mode=TwoWay}"
                  OverlayInputPassThroughElement="{Binding $parent[Menu]}">
-            <Border Background="{DynamicResource MenuFlyoutPresenterBackground}"
+            <Border BoxShadow="{DynamicResource ThemeShadowFlyoutBoxShadow}"
+                    Margin="{StaticResource ThemeShadowFlyoutMargin}"
+                    Background="{DynamicResource MenuFlyoutPresenterBackground}"
                     BorderBrush="{DynamicResource MenuFlyoutPresenterBorderBrush}"
                     BorderThickness="{DynamicResource MenuFlyoutPresenterBorderThemeThickness}"
                     CornerRadius="{DynamicResource OverlayCornerRadius}"

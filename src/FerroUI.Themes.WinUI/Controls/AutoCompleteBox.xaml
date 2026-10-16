@@ -18,7 +18,12 @@
     themes: the placeholder text and foreground, the padding (TextControlThemePadding, the padding
     of the text box of the source), the caret index, the maximum length, the validation errors and
     the inner contents. The maximum height of the suggestion list, AutoSuggestListMaxHeight, is the
-    MaxDropDownHeight of the control, the maximum height of the popup.
+    MaxDropDownHeight of the control, the maximum height of SuggestionsContainer (whose MinWidth
+    is the width of the control).
+  - The shadow of the suggestion list (ApplyElevationEffect on the popup, AutoSuggestBox_Partial.cpp:
+    a ThemeShadow at a Translation.Z of 32) is the BoxShadow ThemeShadowFlyoutBoxShadow of
+    SuggestionsContainer, with the margin ThemeShadowFlyoutMargin as the room for it in the popup
+    (Resources/ThemeShadows.xaml; DEVIATIONS.md, G-24).
   - AutoSuggestBoxTextBoxStyle: the template of the source with FerroUI's parts (as
     Controls/TextBox.xaml, with its wrapper DataValidationErrors, its inner contents and its
     placeholder foreground); the template-local DeleteButtonStyle is the keyed theme
@@ -278,11 +283,13 @@
                    InnerRightContent="{TemplateBinding InnerRightContent}" />
           <Popup x:Name="PART_Popup"
                  WindowManagerAddShadowHint="False"
-                 MinWidth="{Binding Bounds.Width, RelativeSource={RelativeSource TemplatedParent}}"
-                 MaxHeight="{TemplateBinding MaxDropDownHeight}"
                  IsLightDismissEnabled="True"
                  PlacementTarget="{TemplateBinding}">
             <Border x:Name="SuggestionsContainer"
+                    BoxShadow="{DynamicResource ThemeShadowFlyoutBoxShadow}"
+                    Margin="{StaticResource ThemeShadowFlyoutMargin}"
+                    MinWidth="{Binding Bounds.Width, RelativeSource={RelativeSource TemplatedParent}}"
+                    MaxHeight="{TemplateBinding MaxDropDownHeight}"
                     Padding="{DynamicResource AutoSuggestListMargin}"
                     BorderThickness="{DynamicResource AutoSuggestListBorderThemeThickness}"
                     BorderBrush="{DynamicResource AutoSuggestBoxSuggestionsListBorderBrush}"

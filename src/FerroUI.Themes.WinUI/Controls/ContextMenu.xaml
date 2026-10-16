@@ -14,8 +14,10 @@
     viewer MenuFlyoutPresenterScrollViewer.
   - Focusable is set, as the other themes of FerroUI do, so that the open menu takes the
     keyboard. WindowManagerAddShadowHint is off: the shadow a window manager adds to a popup
-    window does not follow the rounded corners of the presenter (the WinUI shadow is not drawn,
-    see FlyoutPresenter).
+    window does not follow the rounded corners of the presenter; the shadow of the menu flyout
+    (a ThemeShadow at a Translation.Z of 32) is the BoxShadow ThemeShadowFlyoutBoxShadow of the
+    border, with the margin ThemeShadowFlyoutMargin as the room for it in the popup
+    (Resources/ThemeShadows.xaml; DEVIATIONS.md, G-24).
   - SystemBackdrop, the MinWidth bound to TemplateSettings.FlyoutContentMinWidth, and the scroll,
     rail and zoom modes are left out, as for MenuFlyoutPresenter.
 -->
@@ -45,11 +47,14 @@
     <Setter Property="MinWidth" Value="{DynamicResource FlyoutThemeMinWidth}" />
     <Setter Property="MinHeight" Value="{StaticResource MenuFlyoutThemeMinHeight}" />
     <Setter Property="CornerRadius" Value="{DynamicResource OverlayCornerRadius}" />
+    <!-- The room for the shadow in the popup (G-24). -->
+    <Setter Property="Margin" Value="{StaticResource ThemeShadowFlyoutMargin}" />
     <Setter Property="Focusable" Value="True" />
     <Setter Property="WindowManagerAddShadowHint" Value="False" />
     <Setter Property="Template">
       <ControlTemplate>
-        <Border Background="{TemplateBinding Background}"
+        <Border BoxShadow="{DynamicResource ThemeShadowFlyoutBoxShadow}"
+                Background="{TemplateBinding Background}"
                 BorderBrush="{TemplateBinding BorderBrush}"
                 BorderThickness="{TemplateBinding BorderThickness}"
                 CornerRadius="{TemplateBinding CornerRadius}"

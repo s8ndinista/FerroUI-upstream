@@ -9,7 +9,9 @@
        the bottom, FerroUI's has no closed state). The pointer-over menu items are selected items
        (IsSelected): a menu selects the item under the pointer, and the WinUI theme draws the
        pointer-over state of a menu item on its selection. The native counterpart is
-       MenusPage.winui.xml. -->
+       MenusPage.winui.xml. The menu presenter and the context menu have no margin: the theme
+       gives them the margin of their shadow, the room for the shadow in a popup, which in the
+       page would move them. -->
   <StackPanel Margin="24" Spacing="12">
     <TextBlock Text="Menus and command bars" FontSize="28" FontWeight="SemiBold" />
 
@@ -29,7 +31,7 @@
 
       <StackPanel Grid.Column="0" Spacing="12">
         <TextBlock Text="Menu items" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" />
-        <MenuFlyoutPresenter Width="280" HorizontalAlignment="Left">
+        <MenuFlyoutPresenter Width="280" HorizontalAlignment="Left" Margin="0">
           <MenuItem Header="New" InputGesture="Ctrl+N">
             <MenuItem.Icon>
               <PathIcon Data="M11,5H13V11H19V13H13V19H11V13H5V11H11Z" />
@@ -48,7 +50,7 @@
 
       <StackPanel Grid.Column="1" Spacing="12">
         <TextBlock Text="Context menu" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" />
-        <ContextMenu Width="280" HorizontalAlignment="Left">
+        <ContextMenu Width="280" HorizontalAlignment="Left" Margin="0">
           <MenuItem Header="Cut" InputGesture="Ctrl+X" />
           <MenuItem Header="Copy" InputGesture="Ctrl+C" />
           <MenuItem Header="Paste" InputGesture="Ctrl+V" IsEnabled="False" />

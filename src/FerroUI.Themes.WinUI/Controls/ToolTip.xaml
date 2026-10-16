@@ -14,8 +14,10 @@
     library (the timing of the theme animations comes from the system, not from the sources).
     The fade-out is not seen: FerroUI closes the popup of a tool tip at once.
   - ContentTransitions has no counterpart. The drop shadow WinUI's ToolTip applies to LayoutRoot
-    in code when it opens (ThemeShadow, ToolTip_Partial.cpp) is not drawn: the popup of a tool
-    tip is the size of the tool tip and would clip it.
+    in code when it opens (ApplyElevationEffect with a base elevation of 16 under drop shadows,
+    ToolTip_Partial.cpp) is the BoxShadow ThemeShadowToolTipBoxShadow of PART_ContentPresenter
+    under :open, with the margin ThemeShadowToolTipMargin as the room for it in the popup
+    (Resources/ThemeShadows.xaml; DEVIATIONS.md, G-24).
 -->
 <ResourceDictionary xmlns="https://github.com/ferroui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -63,9 +65,13 @@
       </ControlTemplate>
     </Setter>
 
-    <!-- Opened -->
+    <!-- Opened; the shadow of the open tool tip and the room for it in the popup (G-24). -->
     <Style Selector="^:open">
       <Setter Property="Opacity" Value="1" />
+      <Setter Property="Margin" Value="{StaticResource ThemeShadowToolTipMargin}" />
+    </Style>
+    <Style Selector="^:open /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="BoxShadow" Value="{DynamicResource ThemeShadowToolTipBoxShadow}" />
     </Style>
   </ControlTheme>
 

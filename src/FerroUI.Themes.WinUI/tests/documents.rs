@@ -216,6 +216,7 @@ document_tests! {
     resources_text_block_themeresources => "/Resources/TextBlock_themeresources.xaml";
     resources_text_block_themeresources_v2_5 => "/Resources/TextBlock_themeresources_v2.5.xaml";
     resources_text_box_themeresources => "/Resources/TextBox_themeresources.xaml";
+    resources_theme_shadows => "/Resources/ThemeShadows.xaml";
     resources_time_picker_themeresources => "/Resources/TimePicker_themeresources.xaml";
     resources_title_bar_themeresources => "/Resources/TitleBar_themeresources.xaml";
     resources_toggle_button_themeresources => "/Resources/ToggleButton_themeresources.xaml";

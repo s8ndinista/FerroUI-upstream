@@ -37,7 +37,14 @@
     of DropDownStates, OverlayOpeningAnimation) and squares the corners the box and the drop-down
     share (ComboBoxHelper.KeepInteriorCornersSquare). The ItemsPanel CarouselPanel (a looping
     panel of touch) is the default panel of FerroUI's combo box. The MinWidth of the scroll viewer
-    (TemplateSettings.DropDownContentMinWidth) is the MinWidth of the popup, the width of the box.
+    (TemplateSettings.DropDownContentMinWidth) is the MinWidth of PopupBorder, the width of the
+    box.
+  - The shadow of the drop-down (ApplyElevationEffect on the child of the popup,
+    ComboBox_Partial.cpp: a ThemeShadow at a Translation.Z of 32) is the BoxShadow
+    ThemeShadowFlyoutBoxShadow of PopupBorder; its margin is the room for the shadow in the popup
+    (ThemeShadowFlyoutMargin, 16,8,16,24) added to the margin of the source (0,-0.5,0,-1), and the
+    maximum height of the drop-down is the MaxHeight of PopupBorder, so that neither takes the
+    room of the shadow (Resources/ThemeShadows.xaml; DEVIATIONS.md, G-24).
   - ComboBoxTextBoxStyle: the template of the source with FerroUI's parts (as Controls/TextBox.xaml);
     the RequestedTheme="Light" of its Focused state, which draws the text of the focused box in the
     light theme, has no counterpart in a template.
@@ -270,17 +277,19 @@
             <Popup x:Name="PART_Popup"
                    WindowManagerAddShadowHint="False"
                    IsOpen="{TemplateBinding IsDropDownOpen, Mode=TwoWay}"
-                   MinWidth="{Binding Bounds.Width, RelativeSource={RelativeSource TemplatedParent}}"
-                   MaxHeight="{TemplateBinding MaxDropDownHeight}"
                    PlacementTarget="Background"
                    IsLightDismissEnabled="True"
                    InheritsTransform="True">
+              <!-- Margin: ThemeShadowFlyoutMargin (16,8,16,24) and the 0,-0.5,0,-1 of the source. -->
               <Border x:Name="PopupBorder"
+                      BoxShadow="{DynamicResource ThemeShadowFlyoutBoxShadow}"
+                      MinWidth="{Binding Bounds.Width, RelativeSource={RelativeSource TemplatedParent}}"
+                      MaxHeight="{TemplateBinding MaxDropDownHeight}"
                       Background="{DynamicResource ComboBoxDropDownBackground}"
                       BackgroundSizing="InnerBorderEdge"
                       BorderBrush="{DynamicResource ComboBoxDropDownBorderBrush}"
                       BorderThickness="{DynamicResource ComboBoxDropdownBorderThickness}"
-                      Margin="0,-0.5,0,-1"
+                      Margin="16,7.5,16,23"
                       Padding="{DynamicResource ComboBoxDropdownBorderPadding}"
                       HorizontalAlignment="Stretch"
                       CornerRadius="{DynamicResource OverlayCornerRadius}">
