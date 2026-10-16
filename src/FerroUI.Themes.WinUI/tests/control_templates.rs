@@ -230,10 +230,12 @@ control_tests! {
     tool_tip => "ToolTip";
     transitioning_content_control => "TransitioningContentControl";
     // B6: window decorations, notifications, tables and dialogs
+    notification_card => "NotificationCard";
     table_view => "TableView";
     table_view_cell => "TableViewCell";
     table_view_column_header => "TableViewColumnHeader";
     table_view_row => "TableViewRow";
+    window_notification_manager => "WindowNotificationManager";
 }
 
 /// The window itself is themed: its template is applied when it is shown

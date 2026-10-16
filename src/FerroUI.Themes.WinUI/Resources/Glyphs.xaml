@@ -39,4 +39,19 @@
   <StreamGeometry x:Key="GlyphGeometryE787">M 0,0 H 16 V 16 H 0 Z M 1,1 V 3 H 15 V 1 Z M 1,4 V 15 H 15 V 4 Z M 3,6 V 8 H 5 V 6 Z M 7,6 V 8 H 9 V 6 Z M 11,6 V 8 H 13 V 6 Z M 3,10 V 12 H 5 V 10 Z M 7,10 V 12 H 9 V 10 Z M 11,10 V 12 H 13 V 10 Z</StreamGeometry>
   <!-- E8FB Accept: the accept button of the date and time picker flyouts. -->
   <StreamGeometry x:Key="GlyphGeometryE8FB">M 0,7 0.7,6.3 5,10.6 15.3,0.3 16,1 5,12 Z</StreamGeometry>
+
+  <!-- E711 Cancel (InfoBarCloseButtonSymbol, the close button of InfoBar): the outline of E894,
+       which the symbol font draws the same. -->
+  <StreamGeometry x:Key="GlyphGeometryE711">M 11.416016,10 20,1.4160156 18.583984,0 10,8.5839846 1.4160156,0 0,1.4160156 8.5839844,10 0,18.583985 1.4160156,20 10,11.416015 18.583984,20 20,18.583985 Z</StreamGeometry>
+  <!-- F136 StatusCircleOuter and the symbols InfoBar draws over it: F13F StatusCircleInfo, F13D
+       StatusCircleErrorX, F13C StatusCircleExclamation, F13E StatusCircleCheckmark
+       (InfoBarIconBackgroundGlyph, InfoBarInformationalIconGlyph, InfoBarErrorIconGlyph,
+       InfoBarWarningIconGlyph, InfoBarSuccessIconGlyph). The circle is 16 x 16; the symbols are
+       drawn at the size of their ink and centred on it. The check mark is the check mark polygon
+       of the item chrome of WinUI (CListViewBaseItemChrome::s_checkMarkPoints, 15 x 13). -->
+  <StreamGeometry x:Key="GlyphGeometryF136">M8,0 A8,8 0 1 1 8,16 A8,8 0 1 1 8,0 Z</StreamGeometry>
+  <StreamGeometry x:Key="GlyphGeometryF13F">M0.75,0 A0.75,0.75 0 1 1 0.75,1.5 A0.75,0.75 0 1 1 0.75,0 Z M0.75,2.75 A0.625,0.625 0 0 1 1.375,3.375 V7.375 A0.625,0.625 0 0 1 0.125,7.375 V3.375 A0.625,0.625 0 0 1 0.75,2.75 Z</StreamGeometry>
+  <StreamGeometry x:Key="GlyphGeometryF13D">M0.884,0 3,2.116 5.116,0 6,0.884 3.884,3 6,5.116 5.116,6 3,3.884 0.884,6 0,5.116 2.116,3 0,0.884Z</StreamGeometry>
+  <StreamGeometry x:Key="GlyphGeometryF13C">M0.75,0 A0.625,0.625 0 0 1 1.375,0.625 V4.625 A0.625,0.625 0 0 1 0.125,4.625 V0.625 A0.625,0.625 0 0 1 0.75,0 Z M0.75,6.5 A0.75,0.75 0 1 1 0.75,8 A0.75,0.75 0 1 1 0.75,6.5 Z</StreamGeometry>
+  <StreamGeometry x:Key="GlyphGeometryF13E">M0,7 L2.2,4.3 L6.1,7.9 L12.4,0 L15,2.4 L6.6,13 Z</StreamGeometry>
 </ResourceDictionary>

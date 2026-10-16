@@ -1,6 +1,7 @@
 <!-- The native WinUI 3 counterpart of FlyoutsPage.xaml. The flyout content is a
      FlyoutPresenter and the tool tips are ToolTip, in the page as the framework's are. A
-     notification card is an InfoBar of the same severity, open and without its close button;
+     notification card is an InfoBar of the same severity, open, with its close button (the
+     close button of a card of the WinUI theme);
      WinUI has no counterpart of WindowNotificationManager, the host of the cards. -->
 <StackPanel xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -45,13 +46,13 @@
       <RowDefinition Height="Auto" />
       <RowDefinition Height="Auto" />
     </Grid.RowDefinitions>
-    <InfoBar Grid.Row="0" Grid.Column="0" Width="320" IsOpen="True" IsClosable="False"
+    <InfoBar Grid.Row="0" Grid.Column="0" Width="320" IsOpen="True"
              Severity="Informational" Title="Information" Message="A new version is available." />
-    <InfoBar Grid.Row="0" Grid.Column="1" Width="320" IsOpen="True" IsClosable="False"
+    <InfoBar Grid.Row="0" Grid.Column="1" Width="320" IsOpen="True"
              Severity="Success" Title="Success" Message="The document was saved." />
-    <InfoBar Grid.Row="1" Grid.Column="0" Width="320" IsOpen="True" IsClosable="False"
+    <InfoBar Grid.Row="1" Grid.Column="0" Width="320" IsOpen="True"
              Severity="Warning" Title="Warning" Message="The disk is almost full." />
-    <InfoBar Grid.Row="1" Grid.Column="1" Width="320" IsOpen="True" IsClosable="False"
+    <InfoBar Grid.Row="1" Grid.Column="1" Width="320" IsOpen="True"
              Severity="Error" Title="Error" Message="The file could not be opened." />
   </Grid>
 </StackPanel>
