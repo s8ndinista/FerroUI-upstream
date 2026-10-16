@@ -95,8 +95,7 @@
   <StreamGeometry x:Key="GlyphGeometryE70D">M 1939,486 L 2029,576 L 1024,1581 L 19,576 L 109,486 L 1024,1401 Z</StreamGeometry>
   <!-- E70E ChevronUp: the spin up button of NumberBox, the chevron of an Expander that expands up. -->
   <StreamGeometry x:Key="GlyphGeometryE70E">M 1939,1581 L 2029,1491 L 1024,486 L 19,1491 L 109,1581 L 1024,666 Z</StreamGeometry>
-  <!-- E72C Refresh: the default content of RefreshVisualizer (SymbolIcon Symbol.Refresh). -->
-  <StreamGeometry x:Key="GlyphGeometryE72C">M 16.364,4.636 A 9,9 0 1 1 10,2 L 10,0 L 13.5,2.75 L 10,5.5 L 10,3.5 A 7.5,7.5 0 1 0 15.303,5.697 Z</StreamGeometry>
+  <!-- E72C Refresh, the default content of RefreshVisualizer (SymbolIcon Symbol.Refresh): defined above with the refresh button of ManagedFileChooser. -->
   <!-- E96E ChevronDownSmall: the chevron of DropDownButton and of SplitButton. -->
   <StreamGeometry x:Key="GlyphGeometryE96E">M 1.4,4.6 L 8,11.2 L 14.6,4.6 L 16,6 L 8,14 L 0,6 Z</StreamGeometry>
   <!-- E972 ChevronDownMed: the chevron of SplitButtonCommandBarStyle. -->
