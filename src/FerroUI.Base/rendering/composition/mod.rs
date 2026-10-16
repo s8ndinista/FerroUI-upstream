@@ -51,6 +51,8 @@ pub mod expressions;
 pub mod generated;
 pub mod hit_testing;
 pub mod server;
+#[cfg(any(test, feature = "testing"))]
+pub mod testing;
 pub mod transport;
 
 mod composition_cache_mode;

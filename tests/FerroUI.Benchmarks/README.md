@@ -110,26 +110,24 @@ benchmark in the message. The smoke tests measure nothing.
 - Where an upstream benchmark shuffles or generates its input with the random number generator of
   its platform and a fixed seed, the port uses a small deterministic generator of its own: the
   input is the same on every run, but it is not the upstream sequence.
-- A benchmark that needs a member the framework does not have is left out rather than approximated.
-  The `mod.rs` of each folder and the files themselves say what is left out and what it needs.
+- Every upstream benchmark of the tracked commit is ported. A benchmark that needs a member the
+  framework does not have is left out rather than approximated, and its file says what it needs.
 
-## Not ported
+## Internal members
 
-Seven upstream files and two benchmarks of an eighth are not here.
-Each reaches a member that is internal or private upstream; the port has the member inside its
-crate and no public form of it. Six of them wait for the member to be exposed through the
-`testing` feature of the crate that has it, as upstream's benchmark project reaches it through its
-access to the internals of the framework; one cannot be ported that way.
+Some benchmarks reach members that are internal or private upstream, which upstream's benchmark
+project reaches through its access to the internals of the framework. The crate that has such a
+member exposes it through its `testing` feature, which this crate turns on:
 
-| Upstream file | Benchmarks | What it needs |
+| Upstream file | Member | Where the port exposes it |
 |---|---|---|
-| `Layout/Measure.cs` | `Remeasure` | It clears the measure and arrange flags of every control through accessors of private setters, so that invalidating is not measured. Not portable as it is: the framework has no member that sets the flags, and upstream reaches them only by going around their visibility. |
-| `Styling/Style_Apply.cs`, `Styling/Style_ClassSelector.cs` | `Apply_Simple_Styles`, `Apply`, `Apply_Detach` and their rows | The styling pass of the value store of an object (`BeginStyling`, `EndStyling`): `property_store/value_store.rs` of the base crate, not public. |
-| `Styling/SelectorBenchmark.cs` | `OrSelector_One_Match`, `OrSelector_Five_Match` (the other benchmarks of the file are ported) | A selector class of the benchmark's own: the trait of the kinds of selectors is private to the base crate. |
-| `Text/GlyphBoundsBenchmark.cs` | all | The glyph bounds of a glyph typeface over the font tables, internal to the base crate. |
-| `Text/UnicodeTrieBenchmark.cs` | all | The Unicode trie and its data, internal to the base crate. |
-| `Compositor/CompositionTargetUpdate.cs` | `TargetUpdate` of both classes | Draw list visuals made without a visual of the tree and a locked framebuffer over memory of the caller (`compositor/mod.rs` says which members). |
-| `Rendering/ShapeRendering.cs` | the four `Render_Line_*` | The drawing context stub and the render interface of the headless platform, private to the headless crate (`rendering/mod.rs`). |
+| `Layout/Measure.cs` | the private setters of `IsMeasureValid` and `IsArrangeValid` (reached with `UnsafeAccessor`) | `ferroui_base::layout::testing` |
+| `Styling/Style_Apply.cs`, `Styling/Style_ClassSelector.cs` | the styling pass of the value store (`GetValueStore().BeginStyling()`, `EndStyling()`) | `ferroui_base::styling::testing` |
+| `Styling/SelectorBenchmark.cs` | a selector class of the benchmark (`AlwaysMatchSelector`): the abstract members of `Selector` | `ferroui_base::styling::testing::SelectorNode` |
+| `Text/GlyphBoundsBenchmark.cs` | `GlyphTypeface.TryGetGlyphBounds` and `GlyphBounds` | `ferroui_base::media::testing` |
+| `Text/UnicodeTrieBenchmark.cs` | the generated Unicode tries | `ferroui_base::media::text_formatting::unicode::testing` |
+| `Compositor/CompositionTargetUpdate.cs` | a draw list visual without a visual of the tree | `ferroui_base::rendering::composition::testing` |
+| `Rendering/ShapeRendering.cs` | the render interface of the headless platform and its drawing context stub | `ferroui_headless::testing` |
 
 One ported benchmark fails in its setup, as upstream's does at the tracked commit:
 `ApplyStyling` checks that the border of a text box is two units thick under the Simple theme,

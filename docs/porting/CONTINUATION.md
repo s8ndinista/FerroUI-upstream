@@ -968,7 +968,7 @@ Ported, each as one crate with its documents compiled by its build, its desktop 
 | `samples/AppWithoutLifetime` | 13 | none |
 | `samples/IntegrationTestApp` | 87 | I001, I008 fixed; the application only (below) |
 
-`tests/FerroUI.LeakTests` (45 tests, 2 ignored with the open findings L001 and L002 of its README) and `tests/FerroUI.Benchmarks` (65 tests: every benchmark class runs once; its README lists the seven upstream files that are not ported, which wait for internals of the framework to be exposed through the `testing` features) are ported.
+`tests/FerroUI.LeakTests` (45 tests, 2 ignored with the open findings L001 and L002 of its README) and `tests/FerroUI.Benchmarks` (73 tests: every benchmark class runs once; every upstream benchmark is ported, and its README lists the internal members the benchmarks reach through the `testing` features) are ported.
 
 `tests/FerroUI.IntegrationTests.Appium` (2026-10-16) is the port of upstream's Appium tests, all 117 of them, onto the port's own automation layer instead of Appium: UI Automation on Windows, the accessibility API of macOS, the input of the desktop (`integration-tests.md`). It compiles for macOS and for both Windows targets; the runs wait for the Accessibility permission of the process that runs them on the Mac, for the step of the Windows job of CI and for the virtual machine (`vm-smoke.ps1 -Automation`).
 
