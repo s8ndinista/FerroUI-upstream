@@ -126,7 +126,7 @@ it. Abbreviations: CS = `controls/dev/CommonStyles/`, GX = `dxaml/xcp/dxaml/them
 | CDP-8 | `HeaderContentPresenter`, `DescriptionPresenter`, their rows, `HeaderStates` | Header and description. | Left out. | FerroUI's CalendarDatePicker has no `Header` or `Description`. |
 | CDP-9 | `UseSystemFocusVisuals`, `FocusVisualMargin="-3"`, `Control.IsTemplateFocusTarget` on `Border Background` | The focus visual around the border. | `FocusAdorner` with margin -3 and `TemplatedControl.IsTemplateFocusTarget` on `Border Background`; the text box has no focus visual. | G-14; while the text box has the focus, FerroUI shows its caret, WinUI has no text box. |
 | CDP-10 | `CalendarDatePickerLightDismissOverlayBackground` | The overlay of a light dismiss flyout. | Not used. | FerroUI's popups have no light dismiss overlay. |
-| CDP-11 | (not in the source) the error state and `DataValidationErrors` of the Fluent theme | WinUI 3 has no input validation. | No error state and no `DataValidationErrors` wrapper. | As the text box (TXB-1); the wrapper comes with the theme of DataValidationErrors (batch B1). |
+| CDP-11 | (not in the source) the error state and `DataValidationErrors` of the Fluent theme | WinUI 3 has no input validation. | The template is wrapped in `DataValidationErrors`, which shows the errors under the picker (DVE-1); under `:error` the border `Background` is `SystemFillColorCriticalBrush`. | The FerroUI contract (data validation), as the Fluent theme wraps the picker and as the text box (TXB-12). |
 
 ## CalendarDayButton
 
@@ -195,7 +195,7 @@ it. Abbreviations: CS = `controls/dev/CommonStyles/`, GX = `dxaml/xcp/dxaml/them
 | DP-12 | The `ThemeShadow` of the flyout (`ApplyElevationEffect` of `DatePickerFlyoutPresenter`) | A shadow under the flyout. | The `BoxShadow` `ThemeShadowFlyoutBoxShadow` of the border `Background` of the presenter, and the margin `ThemeShadowFlyoutMargin` of `PART_PickerPresenter` as its room in the popup (G-24); `WindowManagerAddShadowHint` off, as in the Fluent theme. | FerroUI has no `ThemeShadow` (G-24). |
 | DP-13 | `DatePickerFlyoutPresenter` `AutomationProperties.AutomationId`, `DatePickerLightDismissOverlayBackground` | Automation id; the light dismiss overlay. | Left out. | G-19; FerroUI's popups have no light dismiss overlay. |
 | DP-14 | `MinWidth="{StaticResource DatePickerThemeMinWidth}"`, `MaxWidth="{StaticResource DatePickerThemeMaxWidth}"` on the flyout button | The sizes of the button, which an application cannot change. | Setters `MinWidth` and `MaxWidth` of the control (the same resources), bound to the button. | FerroUI's DatePicker honours its own `MinWidth` and `MaxWidth`, as the Fluent theme. |
-| DP-15 | (not in the source) the error state and `DataValidationErrors` of the Fluent theme | WinUI 3 has no input validation. | No error state and no `DataValidationErrors` wrapper. | As CDP-11. |
+| DP-15 | (not in the source) the error state and `DataValidationErrors` of the Fluent theme | WinUI 3 has no input validation. | The template is wrapped in `DataValidationErrors`, which shows the errors under the picker (DVE-1); under `:error` the border of `PART_FlyoutButton` is `SystemFillColorCriticalBrush`. | As CDP-11. |
 
 ## DateTimePickerShared
 
@@ -550,7 +550,7 @@ it. Abbreviations: CS = `controls/dev/CommonStyles/`, GX = `dxaml/xcp/dxaml/them
 | TP-9 | `HighlightRect` above the items and three `MonochromaticOverlayPresenter`s (margin 3,0, with the background of the highlight) | The highlight covers the selected items, drawn again in `TimePickerFlyoutPresenterHighlightForegroundColor`. | `Border HighlightRect` under the items; the selected items in `TextOnAccentAAFillColorPrimaryBrush` (DTP-8). | As DP-10. |
 | TP-10 | `AcceptButton`, `DismissButton` glyphs E8FB, E711 at 16 px | Glyphs of the symbol font. | Paths of `GlyphGeometryE8FB` (14 px) and `GlyphGeometryE711` (12 px). | G-9. |
 | TP-11 | The `ThemeShadow` of the flyout, `AutomationProperties.AutomationId`, `TimePickerLightDismissOverlayBackground` | Shadow, automation id, overlay. | The shadow as DP-12 (G-24); the automation id and the overlay are left out. | As DP-12, DP-13. |
-| TP-12 | (not in the source) the error state and `DataValidationErrors` of the Fluent theme | WinUI 3 has no input validation. | No error state and no `DataValidationErrors` wrapper. | As CDP-11. |
+| TP-12 | (not in the source) the error state and `DataValidationErrors` of the Fluent theme | WinUI 3 has no input validation. | The template is wrapped in `DataValidationErrors`, which shows the errors under the picker (DVE-1); under `:error` the border of `PART_FlyoutButton` is `SystemFillColorCriticalBrush`. | As CDP-11. |
 
 ## ToggleButton
 
