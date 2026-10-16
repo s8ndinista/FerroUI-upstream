@@ -1247,6 +1247,19 @@ impl ModelTypeSystem {
                 }
             }
         }
+        if declared.kind == TypeKind::Class && members.constructors.is_empty() {
+            // As the run-time type system (`project_markup_type`): every class of the managed
+            // original has a constructor, and the metadata declares the public ones, so a class
+            // that declares none has one that is not public.
+            members.constructors.push(Rc::new(ModelConstructor {
+                declaring_type: Rc::downgrade(type_),
+                parameters: Vec::new(),
+                is_public: false,
+                parameter_attributes: Vec::new(),
+                source: MemberSource::TypeSystem,
+                rust: MemberRust::default(),
+            }));
+        }
         members
     }
 
