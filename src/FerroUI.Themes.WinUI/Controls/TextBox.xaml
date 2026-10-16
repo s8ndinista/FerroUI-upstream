@@ -23,6 +23,9 @@
   - UseSystemFocusVisuals="{ThemeResource IsApplicationFocusVisualKindReveal}" is False: no focus
     adorner. CaretBrush is set because FerroUI's caret does not follow the foreground as WinUI's
     does. SelectionHighlightColor is SelectionBrush.
+  - The template is wrapped in DataValidationErrors, as FerroUI's text box requires for its
+    validation errors (WinUI 3 has none): the errors are shown under the box by the theme of
+    DataValidationErrors, and under :error the border is SystemFillColorCriticalBrush.
   - Pending: the context flyout (WinUI's TextCommandBarFlyout, waived) is a menu flyout of the
     same commands, added with the menu flyout of batch B3 (docs/porting/winui-theme.md, section 7).
 -->
@@ -110,79 +113,81 @@
     <Setter Property="BackgroundSizing" Value="InnerBorderEdge" />
     <Setter Property="Template">
       <ControlTemplate>
-        <Grid ColumnDefinitions="*,Auto">
-          <Border x:Name="BorderElement"
-                  Grid.Column="0"
-                  Grid.ColumnSpan="2"
-                  Background="{TemplateBinding Background}"
-                  BackgroundSizing="{TemplateBinding BackgroundSizing}"
-                  BorderBrush="{TemplateBinding BorderBrush}"
-                  BorderThickness="{TemplateBinding BorderThickness}"
-                  CornerRadius="{TemplateBinding CornerRadius}"
-                  MinWidth="{TemplateBinding MinWidth}"
-                  MinHeight="{TemplateBinding MinHeight}" />
-          <ScrollViewer x:Name="PART_ScrollViewer"
-                        Grid.Column="0"
-                        HorizontalScrollBarVisibility="{TemplateBinding (ScrollViewer.HorizontalScrollBarVisibility)}"
-                        VerticalScrollBarVisibility="{TemplateBinding (ScrollViewer.VerticalScrollBarVisibility)}"
-                        IsDeferredScrollingEnabled="{TemplateBinding (ScrollViewer.IsDeferredScrollingEnabled)}"
-                        Margin="{TemplateBinding BorderThickness}"
-                        Padding="{TemplateBinding Padding}"
-                        Foreground="{TemplateBinding Foreground}"
-                        Focusable="False">
-            <TextPresenter x:Name="PART_TextPresenter"
-                           Text="{TemplateBinding Text, Mode=TwoWay}"
-                           CaretBlinkInterval="{TemplateBinding CaretBlinkInterval}"
-                           CaretIndex="{TemplateBinding CaretIndex}"
-                           SelectionStart="{TemplateBinding SelectionStart}"
-                           SelectionEnd="{TemplateBinding SelectionEnd}"
-                           TextAlignment="{TemplateBinding TextAlignment}"
-                           TextWrapping="{TemplateBinding TextWrapping}"
-                           LineHeight="{TemplateBinding LineHeight}"
-                           LetterSpacing="{TemplateBinding LetterSpacing}"
-                           PasswordChar="{TemplateBinding PasswordChar}"
-                           RevealPassword="{TemplateBinding RevealPassword}"
-                           SelectionBrush="{TemplateBinding SelectionBrush}"
-                           SelectionForegroundBrush="{TemplateBinding SelectionForegroundBrush}"
-                           CaretBrush="{TemplateBinding CaretBrush}"
-                           HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                           VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
-            <ScrollViewer.Styles>
-              <Style Selector="ScrollContentPresenter#PART_ContentPresenter">
-                <Setter Property="Cursor" Value="IBeam" />
-              </Style>
-            </ScrollViewer.Styles>
-          </ScrollViewer>
-          <TextBlock x:Name="PlaceholderTextContentPresenter"
-                     Grid.Column="0"
-                     Grid.ColumnSpan="2"
-                     Foreground="{TemplateBinding PlaceholderForeground}"
-                     Margin="{TemplateBinding BorderThickness}"
-                     Padding="{TemplateBinding Padding}"
-                     Text="{TemplateBinding PlaceholderText}"
-                     TextAlignment="{TemplateBinding TextAlignment}"
-                     TextWrapping="{TemplateBinding TextWrapping}"
-                     IsHitTestVisible="False">
-            <TextBlock.IsVisible>
-              <MultiBinding Converter="{x:Static BoolConverters.And}">
-                <Binding ElementName="PART_TextPresenter" Path="PreeditText" Converter="{x:Static StringConverters.IsNullOrEmpty}" />
-                <Binding RelativeSource="{RelativeSource TemplatedParent}" Path="Text" Converter="{x:Static StringConverters.IsNullOrEmpty}" />
-              </MultiBinding>
-            </TextBlock.IsVisible>
-          </TextBlock>
-          <Button x:Name="DeleteButton"
-                  Grid.Column="1"
-                  Theme="{StaticResource TextBoxDeleteButtonStyle}"
-                  Command="{Binding $parent[TextBox].Clear}"
-                  BorderThickness="{TemplateBinding BorderThickness}"
-                  CornerRadius="{TemplateBinding CornerRadius}"
-                  Padding="{DynamicResource HelperButtonThemePadding}"
-                  Focusable="False"
-                  IsVisible="False"
-                  FontSize="{TemplateBinding FontSize}"
-                  Width="30"
-                  VerticalAlignment="Stretch" />
-        </Grid>
+        <DataValidationErrors>
+          <Grid ColumnDefinitions="*,Auto">
+            <Border x:Name="BorderElement"
+                    Grid.Column="0"
+                    Grid.ColumnSpan="2"
+                    Background="{TemplateBinding Background}"
+                    BackgroundSizing="{TemplateBinding BackgroundSizing}"
+                    BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="{TemplateBinding BorderThickness}"
+                    CornerRadius="{TemplateBinding CornerRadius}"
+                    MinWidth="{TemplateBinding MinWidth}"
+                    MinHeight="{TemplateBinding MinHeight}" />
+            <ScrollViewer x:Name="PART_ScrollViewer"
+                          Grid.Column="0"
+                          HorizontalScrollBarVisibility="{TemplateBinding (ScrollViewer.HorizontalScrollBarVisibility)}"
+                          VerticalScrollBarVisibility="{TemplateBinding (ScrollViewer.VerticalScrollBarVisibility)}"
+                          IsDeferredScrollingEnabled="{TemplateBinding (ScrollViewer.IsDeferredScrollingEnabled)}"
+                          Margin="{TemplateBinding BorderThickness}"
+                          Padding="{TemplateBinding Padding}"
+                          Foreground="{TemplateBinding Foreground}"
+                          Focusable="False">
+              <TextPresenter x:Name="PART_TextPresenter"
+                             Text="{TemplateBinding Text, Mode=TwoWay}"
+                             CaretBlinkInterval="{TemplateBinding CaretBlinkInterval}"
+                             CaretIndex="{TemplateBinding CaretIndex}"
+                             SelectionStart="{TemplateBinding SelectionStart}"
+                             SelectionEnd="{TemplateBinding SelectionEnd}"
+                             TextAlignment="{TemplateBinding TextAlignment}"
+                             TextWrapping="{TemplateBinding TextWrapping}"
+                             LineHeight="{TemplateBinding LineHeight}"
+                             LetterSpacing="{TemplateBinding LetterSpacing}"
+                             PasswordChar="{TemplateBinding PasswordChar}"
+                             RevealPassword="{TemplateBinding RevealPassword}"
+                             SelectionBrush="{TemplateBinding SelectionBrush}"
+                             SelectionForegroundBrush="{TemplateBinding SelectionForegroundBrush}"
+                             CaretBrush="{TemplateBinding CaretBrush}"
+                             HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                             VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+              <ScrollViewer.Styles>
+                <Style Selector="ScrollContentPresenter#PART_ContentPresenter">
+                  <Setter Property="Cursor" Value="IBeam" />
+                </Style>
+              </ScrollViewer.Styles>
+            </ScrollViewer>
+            <TextBlock x:Name="PlaceholderTextContentPresenter"
+                       Grid.Column="0"
+                       Grid.ColumnSpan="2"
+                       Foreground="{TemplateBinding PlaceholderForeground}"
+                       Margin="{TemplateBinding BorderThickness}"
+                       Padding="{TemplateBinding Padding}"
+                       Text="{TemplateBinding PlaceholderText}"
+                       TextAlignment="{TemplateBinding TextAlignment}"
+                       TextWrapping="{TemplateBinding TextWrapping}"
+                       IsHitTestVisible="False">
+              <TextBlock.IsVisible>
+                <MultiBinding Converter="{x:Static BoolConverters.And}">
+                  <Binding ElementName="PART_TextPresenter" Path="PreeditText" Converter="{x:Static StringConverters.IsNullOrEmpty}" />
+                  <Binding RelativeSource="{RelativeSource TemplatedParent}" Path="Text" Converter="{x:Static StringConverters.IsNullOrEmpty}" />
+                </MultiBinding>
+              </TextBlock.IsVisible>
+            </TextBlock>
+            <Button x:Name="DeleteButton"
+                    Grid.Column="1"
+                    Theme="{StaticResource TextBoxDeleteButtonStyle}"
+                    Command="{Binding $parent[TextBox].Clear}"
+                    BorderThickness="{TemplateBinding BorderThickness}"
+                    CornerRadius="{TemplateBinding CornerRadius}"
+                    Padding="{DynamicResource HelperButtonThemePadding}"
+                    Focusable="False"
+                    IsVisible="False"
+                    FontSize="{TemplateBinding FontSize}"
+                    Width="30"
+                    VerticalAlignment="Stretch" />
+          </Grid>
+        </DataValidationErrors>
       </ControlTemplate>
     </Setter>
 
@@ -219,6 +224,11 @@
       <Style Selector="^ /template/ ScrollViewer#PART_ScrollViewer">
         <Setter Property="Foreground" Value="{DynamicResource TextControlForegroundDisabled}" />
       </Style>
+    </Style>
+    <!-- A validation error (FerroUI's DataValidationErrors, which WinUI 3 does not have): the
+         border in the critical fill, as a WinUI application shows an error of a field. -->
+    <Style Selector="^:error /template/ Border#BorderElement">
+      <Setter Property="BorderBrush" Value="{DynamicResource SystemFillColorCriticalBrush}" />
     </Style>
     <!-- ButtonVisible of the group ButtonStates. -->
     <Style Selector="^[AcceptsReturn=False][IsReadOnly=False][TextWrapping=NoWrap]:focus:not(TextBox:empty) /template/ Button#DeleteButton">

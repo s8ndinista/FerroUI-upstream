@@ -42,6 +42,7 @@
         <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/SelectableTextBlock.xaml" />
         <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/TransitioningContentControl.xaml" />
         <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/TextSelectionHandle.xaml" />
+        <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/DataValidationErrors.xaml" />
         <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/GridSplitter.xaml" />
       </ResourceDictionary.MergedDictionaries>
     </ResourceDictionary>
