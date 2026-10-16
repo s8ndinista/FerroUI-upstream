@@ -255,7 +255,9 @@ control_tests! {
     tab_strip_item => "TabStripItem";
     tabbed_page => "TabbedPage";
     // B2: buttons, ranges and expanders
+    button_spinner => "ButtonSpinner";
     drop_down_button => "DropDownButton";
+    numeric_up_down => "NumericUpDown";
     slider => "Slider";
     split_button => "SplitButton";
     toggle_switch => "ToggleSwitch";

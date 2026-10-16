@@ -80,6 +80,8 @@
         <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/SplitButton.xaml" />
         <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/ToggleSwitch.xaml" />
         <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/Slider.xaml" />
+        <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/NumericUpDown.xaml" />
+        <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/ButtonSpinner.xaml" />
       </ResourceDictionary.MergedDictionaries>
     </ResourceDictionary>
   </Styles.Resources>

@@ -379,9 +379,7 @@ pub fn is_instance_of(object: &Ref<FerroObject>, handle_type: &str) -> bool {
 /// so that the list is kept current.
 pub const PENDING_CONTROLS: &[&str] = &[
     // B2: buttons, ranges and expanders
-    "ButtonSpinner",
     "Expander",
-    "NumericUpDown",
     "PipsPager",
     "RefreshContainer",
     "RefreshVisualizer",

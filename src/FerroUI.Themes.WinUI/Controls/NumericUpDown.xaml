@@ -1,0 +1,358 @@
+<!--
+  Ported from microsoft-ui-xaml (https://github.com/microsoft/microsoft-ui-xaml),
+  commit 7e4b0c2096be402f51cc8f7d203ebf67cff183d0:
+    controls/dev/NumberBox/NumberBox.xaml (the implicit style of NumberBox,
+    NumberBoxSpinButtonStyle, NumberBoxPopupSpinButtonStyle, NumberBoxTextBoxStyle; the resources
+    of controls/dev/NumberBox/NumberBox_themeresources.xaml are
+    Resources/NumberBox_themeresources.xaml)
+  Copyright (c) Microsoft Corporation. Licensed under the MIT License (see NOTICE.md of the crate).
+
+  Translation notes (docs/porting/winui-theme.md, section 4):
+  - FerroUI's NumericUpDown is WinUI's NumberBox with the spin buttons inline
+    (SpinButtonPlacementMode="Inline"). Its parts are a ButtonSpinner PART_Spinner, which raises
+    the spins, holding the TextBox PART_TextBox. The layout of the NumberBox template (the text box
+    InputBox over the whole width, the buttons UpSpinButton and DownSpinButton over its right end)
+    is the keyed ButtonSpinner theme NumericUpDownButtonSpinnerStyle: its content spans the
+    control and the buttons, PART_IncreaseButton (UpSpinButton) and PART_DecreaseButton
+    (DownSpinButton), are laid over it with the margins of the source.
+  - The Grid.Resources of the template set the RepeatButton brushes to the TextControlButton
+    brushes for the spin buttons: the keyed theme NumericUpDownSpinButtonStyle, based on
+    NumberBoxSpinButtonStyle, sets those brushes in its states.
+  - The spin buttons show the glyphs E70E and E70D of the symbol font (their content, at the font
+    size of the control, 14 px): Paths of GlyphGeometryE70E and GlyphGeometryE70D, 12 px wide,
+    filled with the Foreground of the button, which the states of NumericUpDownSpinButtonStyle set
+    as they set the foreground of its content presenter.
+  - SpinButtonStates: SpinButtonsVisible (ShowButtonSpinner) shows the buttons, sets MinWidth of
+    the text box to NumberBoxMinWidth and reserves the column of the buttons in the text box
+    (SpinButtonsColumn, 72 px), which NumberBox sets as a visual state of the text box; here the
+    NumericUpDown theme sets the Tag of the text box to SpinButtonsVisible and
+    NumberBoxTextBoxStyle selects it (SpinButtonsPopup likewise shows the popup indicator).
+    SpinButtonsPopup (the buttons in a popup) has no counterpart in FerroUI's NumericUpDown;
+    NumberBoxPopupSpinButtonStyle is ported for applications. ButtonSpinnerLocation="Left", which
+    WinUI does not have, puts the buttons at the left and reserves their column there (the Tag
+    SpinButtonsVisibleLeft).
+  - UpSpinButtonEnabledStates and DownSpinButtonEnabledStates are the IsEnabled the ButtonSpinner
+    sets on its buttons.
+  - Header, HeaderContentPresenter, Description and DescriptionPresenter: FerroUI's NumericUpDown
+    has none; they are left out with their rows. SelectionFlyout and SelectionHighlightColor have
+    no counterpart on NumericUpDown.
+  - NumberBoxTextBoxStyle: its template is the one of DefaultTextBoxStyle (ported in TextBox.xaml)
+    with the column of the spin buttons and the popup indicator (glyph EC8F at 12 px, the Path of
+    GlyphGeometryEC8F). Its visual states are those of DefaultTextBoxStyle, which this theme is
+    based on and whose styles select the same element names; the Focused state of the source also
+    sets RequestedTheme="Light" on the scroll viewer, which is left out. Its DeleteButtonStyle is
+    the one of DefaultTextBoxStyle: TextBoxDeleteButtonStyle.
+  - The FerroUI contract: InnerLeftContent and InnerRightContent of NumericUpDown (shown by the
+    Fluent theme) are passed to the text box, whose NumberBoxTextBoxStyle shows them beside the
+    text; :error (data validation) gives the border the critical brush.
+  - IsTabStop="False" of the spin buttons is also Focusable="False"; the FontFamily setters of the
+    symbol font are left out (the glyphs are paths).
+-->
+<ResourceDictionary xmlns="https://github.com/ferroui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    x:ClassModifier="internal">
+  <Design.PreviewWith>
+    <Border Padding="20">
+      <StackPanel Spacing="20" Width="220">
+        <NumericUpDown Value="42" Minimum="0" Maximum="100" />
+        <NumericUpDown PlaceholderText="Enter a number" />
+        <NumericUpDown ButtonSpinnerLocation="Left" Value="1" />
+        <NumericUpDown Value="42" IsEnabled="False" />
+      </StackPanel>
+    </Border>
+  </Design.PreviewWith>
+
+  <ControlTheme x:Key="NumberBoxSpinButtonStyle" TargetType="RepeatButton" BasedOn="{StaticResource DefaultRepeatButtonStyle}">
+    <Setter Property="IsTabStop" Value="False" />
+    <Setter Property="Focusable" Value="False" />
+    <Setter Property="MinWidth" Value="32" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="VerticalAlignment" Value="Stretch" />
+    <Setter Property="BorderThickness" Value="{DynamicResource NumberBoxSpinButtonBorderThickness}" />
+    <Setter Property="FontSize" Value="12" />
+  </ControlTheme>
+
+  <!-- WinUI applies the default style beneath a keyed style without BasedOn
+       (docs/porting/winui-theme.md, section 4.2). -->
+  <ControlTheme x:Key="NumberBoxPopupSpinButtonStyle" TargetType="RepeatButton" BasedOn="{StaticResource DefaultRepeatButtonStyle}">
+    <Setter Property="IsTabStop" Value="False" />
+    <Setter Property="Focusable" Value="False" />
+    <Setter Property="Width" Value="36" />
+    <Setter Property="Height" Value="36" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="BorderThickness" Value="{DynamicResource NumberBoxPopupSpinButtonBorderThickness}" />
+    <Setter Property="FontSize" Value="16" />
+    <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}" />
+  </ControlTheme>
+
+  <!-- The spin buttons of the template, with the RepeatButton brushes the Grid.Resources of the
+       template set to the TextControlButton brushes (RepeatButtonBorderBrushDisabled to
+       TextControlButtonBorderBrush; the other disabled brushes are not overridden). -->
+  <ControlTheme x:Key="NumericUpDownSpinButtonStyle" TargetType="RepeatButton" BasedOn="{StaticResource NumberBoxSpinButtonStyle}">
+    <Setter Property="Background" Value="{DynamicResource TextControlButtonBackground}" />
+    <Setter Property="Foreground" Value="{DynamicResource TextControlButtonForeground}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource TextControlButtonBorderBrush}" />
+    <!-- The states also set the Foreground of the button itself, which the glyph paths in the
+         content of the spin buttons take (a path does not inherit the foreground of the content
+         presenter as the glyph of a FontIcon does). -->
+    <Style Selector="^:pointerover">
+      <Setter Property="Foreground" Value="{DynamicResource TextControlButtonForegroundPointerOver}" />
+      <Style Selector="^ /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource TextControlButtonBackgroundPointerOver}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource TextControlButtonBorderBrushPointerOver}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextControlButtonForegroundPointerOver}" />
+      </Style>
+    </Style>
+    <Style Selector="^:pressed">
+      <Setter Property="Foreground" Value="{DynamicResource TextControlButtonForegroundPressed}" />
+      <Style Selector="^ /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource TextControlButtonBackgroundPressed}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource TextControlButtonBorderBrushPressed}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextControlButtonForegroundPressed}" />
+      </Style>
+    </Style>
+    <Style Selector="^:disabled">
+      <Setter Property="Foreground" Value="{DynamicResource RepeatButtonForegroundDisabled}" />
+      <Style Selector="^ /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="BorderBrush" Value="{DynamicResource TextControlButtonBorderBrush}" />
+      </Style>
+    </Style>
+  </ControlTheme>
+
+  <ControlTheme x:Key="NumberBoxTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource DefaultTextBoxStyle}">
+    <Setter Property="Template">
+      <ControlTemplate>
+        <!-- Columns: the spin buttons at the left (FerroUI), InnerLeftContent (FerroUI), the text
+             (ContentElement), InnerRightContent (FerroUI), DeleteButton, SpinButtonsColumn. -->
+        <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto,Auto">
+          <Border x:Name="BorderElement"
+                  Grid.Column="0"
+                  Grid.ColumnSpan="6"
+                  Background="{TemplateBinding Background}"
+                  BorderBrush="{TemplateBinding BorderBrush}"
+                  BorderThickness="{TemplateBinding BorderThickness}"
+                  CornerRadius="{TemplateBinding CornerRadius}"
+                  MinWidth="{TemplateBinding MinWidth}"
+                  MinHeight="{TemplateBinding MinHeight}" />
+          <Border x:Name="SpinButtonsSpaceLeft"
+                  Grid.Column="0"
+                  Width="72"
+                  IsVisible="False" />
+          <ContentPresenter x:Name="InnerLeftContentPresenter"
+                            Grid.Column="1"
+                            Margin="{TemplateBinding BorderThickness}"
+                            VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                            Content="{TemplateBinding InnerLeftContent}" />
+          <ScrollViewer x:Name="PART_ScrollViewer"
+                        Grid.Column="2"
+                        HorizontalScrollBarVisibility="{TemplateBinding (ScrollViewer.HorizontalScrollBarVisibility)}"
+                        VerticalScrollBarVisibility="{TemplateBinding (ScrollViewer.VerticalScrollBarVisibility)}"
+                        IsDeferredScrollingEnabled="{TemplateBinding (ScrollViewer.IsDeferredScrollingEnabled)}"
+                        Margin="{TemplateBinding BorderThickness}"
+                        Padding="{TemplateBinding Padding}"
+                        Foreground="{TemplateBinding Foreground}"
+                        Focusable="False">
+            <TextPresenter x:Name="PART_TextPresenter"
+                           Text="{TemplateBinding Text, Mode=TwoWay}"
+                           CaretBlinkInterval="{TemplateBinding CaretBlinkInterval}"
+                           CaretIndex="{TemplateBinding CaretIndex}"
+                           SelectionStart="{TemplateBinding SelectionStart}"
+                           SelectionEnd="{TemplateBinding SelectionEnd}"
+                           TextAlignment="{TemplateBinding TextAlignment}"
+                           TextWrapping="{TemplateBinding TextWrapping}"
+                           LineHeight="{TemplateBinding LineHeight}"
+                           LetterSpacing="{TemplateBinding LetterSpacing}"
+                           PasswordChar="{TemplateBinding PasswordChar}"
+                           RevealPassword="{TemplateBinding RevealPassword}"
+                           SelectionBrush="{TemplateBinding SelectionBrush}"
+                           SelectionForegroundBrush="{TemplateBinding SelectionForegroundBrush}"
+                           CaretBrush="{TemplateBinding CaretBrush}"
+                           HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                           VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+            <ScrollViewer.Styles>
+              <Style Selector="ScrollContentPresenter#PART_ContentPresenter">
+                <Setter Property="Cursor" Value="IBeam" />
+              </Style>
+            </ScrollViewer.Styles>
+          </ScrollViewer>
+          <TextBlock x:Name="PlaceholderTextContentPresenter"
+                     Grid.Column="2"
+                     Grid.ColumnSpan="3"
+                     Foreground="{TemplateBinding PlaceholderForeground}"
+                     Margin="{TemplateBinding BorderThickness}"
+                     Padding="{TemplateBinding Padding}"
+                     Text="{TemplateBinding PlaceholderText}"
+                     TextAlignment="{TemplateBinding TextAlignment}"
+                     TextWrapping="{TemplateBinding TextWrapping}"
+                     IsHitTestVisible="False">
+            <TextBlock.IsVisible>
+              <MultiBinding Converter="{x:Static BoolConverters.And}">
+                <Binding ElementName="PART_TextPresenter" Path="PreeditText" Converter="{x:Static StringConverters.IsNullOrEmpty}" />
+                <Binding RelativeSource="{RelativeSource TemplatedParent}" Path="Text" Converter="{x:Static StringConverters.IsNullOrEmpty}" />
+              </MultiBinding>
+            </TextBlock.IsVisible>
+          </TextBlock>
+          <ContentPresenter x:Name="InnerRightContentPresenter"
+                            Grid.Column="3"
+                            Margin="{TemplateBinding BorderThickness}"
+                            VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                            Content="{TemplateBinding InnerRightContent}" />
+          <Button x:Name="DeleteButton"
+                  Grid.Column="4"
+                  Theme="{StaticResource TextBoxDeleteButtonStyle}"
+                  Command="{Binding $parent[TextBox].Clear}"
+                  BorderThickness="{TemplateBinding BorderThickness}"
+                  CornerRadius="{TemplateBinding CornerRadius}"
+                  Padding="{DynamicResource HelperButtonThemePadding}"
+                  Focusable="False"
+                  IsVisible="False"
+                  FontSize="{TemplateBinding FontSize}"
+                  HorizontalAlignment="Right"
+                  MinWidth="40"
+                  VerticalAlignment="Stretch" />
+          <!-- SpinButtonsColumn (Width 72 in SpinButtonsVisible) -->
+          <Border x:Name="SpinButtonsSpace"
+                  Grid.Column="5"
+                  Width="72"
+                  IsVisible="False" />
+          <!-- The glyph EC8F at 12 px. -->
+          <Path x:Name="PopupIndicator"
+                Grid.Column="5"
+                IsVisible="False"
+                Margin="{StaticResource NumberBoxPopupIndicatorMargin}"
+                Data="{StaticResource GlyphGeometryEC8F}"
+                Fill="{DynamicResource NumberBoxPopupIndicatorForeground}"
+                Stretch="Uniform"
+                Width="10"
+                VerticalAlignment="Center"
+                HorizontalAlignment="Center" />
+        </Grid>
+      </ControlTemplate>
+    </Setter>
+
+    <!-- SpinButtonStates, set by the NumericUpDown theme on its text box (SpinButtonsCollapsed
+         sets the base values). -->
+    <Style Selector="^[Tag=SpinButtonsVisible] /template/ Border#SpinButtonsSpace">
+      <Setter Property="IsVisible" Value="True" />
+    </Style>
+    <Style Selector="^[Tag=SpinButtonsVisibleLeft] /template/ Border#SpinButtonsSpaceLeft">
+      <Setter Property="IsVisible" Value="True" />
+    </Style>
+    <Style Selector="^[Tag=SpinButtonsPopup] /template/ Path#PopupIndicator">
+      <Setter Property="IsVisible" Value="True" />
+    </Style>
+  </ControlTheme>
+
+  <!-- The layout of the NumberBox template: the text box over the whole control, the spin buttons
+       over its end. -->
+  <ControlTheme x:Key="NumericUpDownButtonSpinnerStyle" TargetType="ButtonSpinner">
+    <Setter Property="Focusable" Value="False" />
+    <Setter Property="IsTabStop" Value="False" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Grid>
+          <ContentPresenter x:Name="PART_ContentPresenter"
+                            Content="{TemplateBinding Content}"
+                            ContentTemplate="{TemplateBinding ContentTemplate}"
+                            HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                            VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
+          <StackPanel x:Name="SpinButtons"
+                      Orientation="Horizontal"
+                      HorizontalAlignment="Right"
+                      IsVisible="{TemplateBinding ShowButtonSpinner}">
+            <RepeatButton x:Name="PART_IncreaseButton"
+                          Theme="{StaticResource NumericUpDownSpinButtonStyle}"
+                          Margin="4"
+                          CornerRadius="{TemplateBinding CornerRadius}">
+              <Path Data="{StaticResource GlyphGeometryE70E}"
+                    Fill="{Binding $parent[RepeatButton].Foreground}"
+                    Stretch="Uniform"
+                    Width="12"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center" />
+            </RepeatButton>
+            <RepeatButton x:Name="PART_DecreaseButton"
+                          Theme="{StaticResource NumericUpDownSpinButtonStyle}"
+                          Margin="0,4,4,4"
+                          CornerRadius="{TemplateBinding CornerRadius}">
+              <Path Data="{StaticResource GlyphGeometryE70D}"
+                    Fill="{Binding $parent[RepeatButton].Foreground}"
+                    Stretch="Uniform"
+                    Width="12"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center" />
+            </RepeatButton>
+          </StackPanel>
+        </Grid>
+      </ControlTemplate>
+    </Setter>
+    <!-- No WinUI counterpart: the buttons at the left. -->
+    <Style Selector="^:left /template/ StackPanel#SpinButtons">
+      <Setter Property="HorizontalAlignment" Value="Left" />
+    </Style>
+  </ControlTheme>
+
+  <!-- The implicit style of NumberBox (it has no key in WinUI). -->
+  <ControlTheme x:Key="{x:Type NumericUpDown}" TargetType="NumericUpDown">
+    <Setter Property="IsTabStop" Value="False" />
+    <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}" />
+    <Setter Property="Background" Value="{DynamicResource TextControlBackground}" />
+    <Setter Property="BorderThickness" Value="{DynamicResource TextControlBorderThemeThickness}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource TextControlBorderBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource TextControlForeground}" />
+    <Setter Property="Padding" Value="{DynamicResource TextControlThemePadding}" />
+    <!-- Not in the style: the placeholder brush the text box of WinUI uses when NumberBox sets
+         none (FerroUI's NumericUpDown passes its own to the text box). -->
+    <Setter Property="PlaceholderForeground" Value="{DynamicResource TextControlPlaceholderForeground}" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <ButtonSpinner x:Name="PART_Spinner"
+                       Theme="{StaticResource NumericUpDownButtonSpinnerStyle}"
+                       CornerRadius="{TemplateBinding CornerRadius}"
+                       AllowSpin="{TemplateBinding AllowSpin}"
+                       ShowButtonSpinner="{TemplateBinding ShowButtonSpinner}"
+                       ButtonSpinnerLocation="{TemplateBinding ButtonSpinnerLocation}"
+                       HorizontalContentAlignment="Stretch"
+                       VerticalContentAlignment="Stretch">
+          <TextBox x:Name="PART_TextBox"
+                   Theme="{StaticResource NumberBoxTextBoxStyle}"
+                   FontSize="{TemplateBinding FontSize}"
+                   FontWeight="{TemplateBinding FontWeight}"
+                   FontFamily="{TemplateBinding FontFamily}"
+                   Background="{TemplateBinding Background}"
+                   BorderThickness="{TemplateBinding BorderThickness}"
+                   BorderBrush="{TemplateBinding BorderBrush}"
+                   Padding="{TemplateBinding Padding}"
+                   Foreground="{TemplateBinding Foreground}"
+                   TextAlignment="{TemplateBinding TextAlignment}"
+                   CornerRadius="{TemplateBinding CornerRadius}"
+                   PlaceholderText="{TemplateBinding PlaceholderText}"
+                   PlaceholderForeground="{TemplateBinding PlaceholderForeground}"
+                   IsReadOnly="{TemplateBinding IsReadOnly}"
+                   Text="{TemplateBinding Text}"
+                   HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                   VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                   AcceptsReturn="False"
+                   TextWrapping="NoWrap"
+                   InnerLeftContent="{Binding InnerLeftContent, RelativeSource={RelativeSource TemplatedParent}}"
+                   InnerRightContent="{Binding InnerRightContent, RelativeSource={RelativeSource TemplatedParent}}" />
+        </ButtonSpinner>
+      </ControlTemplate>
+    </Setter>
+
+    <!-- SpinButtonsVisible (the buttons are shown by the binding of ShowButtonSpinner). -->
+    <Style Selector="^[ShowButtonSpinner=True] /template/ TextBox#PART_TextBox">
+      <Setter Property="MinWidth" Value="{StaticResource NumberBoxMinWidth}" />
+      <Setter Property="Tag" Value="SpinButtonsVisible" />
+    </Style>
+    <!-- No WinUI counterpart: the buttons at the left. -->
+    <Style Selector="^[ShowButtonSpinner=True][ButtonSpinnerLocation=Left] /template/ TextBox#PART_TextBox">
+      <Setter Property="Tag" Value="SpinButtonsVisibleLeft" />
+    </Style>
+    <!-- Not in WinUI: the :error of FerroUI's data validation. -->
+    <Style Selector="^:error /template/ TextBox#PART_TextBox">
+      <Setter Property="BorderBrush" Value="{DynamicResource SystemFillColorCriticalBrush}" />
+    </Style>
+  </ControlTheme>
+
+</ResourceDictionary>

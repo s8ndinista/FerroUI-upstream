@@ -461,7 +461,7 @@ ports a control updates its state by porting it, not by editing the table.
 | `AdornerLayer.xaml` | `{AdornerLayer}` | No WinUI style: the system focus visual of WinUI (FocusVisualPrimaryBrush/Thickness, FocusVisualSecondaryBrush/Thickness; the SystemControlFocusVisual* resources of Common_themeresources.xaml). | F | ported |
 | `AutoCompleteBox.xaml` | `{AutoCompleteBox}` | AutoSuggestBox: DefaultAutoSuggestBoxStyle, AutoSuggestBoxTextBoxStyle (AutoSuggestBox_themeresources.xaml). | B3 | pending |
 | `Button.xaml` | `{Button}` | Button: DefaultButtonStyle, AccentButtonStyle, SubtleButtonStyle (Button_themeresources.xaml). | F | ported |
-| `ButtonSpinner.xaml` | `{ButtonSpinner}` | No WinUI control: the spin buttons of NumberBox (NumberBoxSpinButtonStyle, NumberBox.xaml) and the TextBox resources. | B2 | pending |
+| `ButtonSpinner.xaml` | `{ButtonSpinner}` | No WinUI control: the spin buttons of NumberBox (NumberBoxSpinButtonStyle, NumberBox.xaml) and the TextBox resources. | B2 | ported |
 | `Calendar.xaml` | `{Calendar}` | CalendarView: DefaultCalendarViewStyle (CalendarView_themeresources.xaml). | B4 | ported |
 | `CalendarButton.xaml` | `{CalendarButton}` | The month and year items of CalendarView (CalendarViewBaseItem resources of CalendarView_themeresources.xaml). | B4 | ported |
 | `CalendarDatePicker.xaml` | `{CalendarDatePicker}` | CalendarDatePicker: DefaultCalendarDatePicker (CalendarDatePicker_themeresources.xaml). | B4 | ported |
@@ -498,7 +498,7 @@ ports a control updates its state by porting it, not by editing the table.
 | `MenuScrollViewer.xaml` | (keyed themes only) | The ScrollViewer of the MenuFlyoutPresenter template (MenuFlyout_themeresources.xaml). | B3 | pending |
 | `NavigationPage.xaml` | `{NavigationPage}` | No WinUI control: NavigationBackButtonNormalStyle, NavigationBackButtonSmallStyle (NavigationBackButton.xaml) and the page background. | B5 | ported |
 | `NotificationCard.xaml` | `{NotificationCard}` | InfoBar: {InfoBar} (InfoBar.xaml, InfoBar_themeresources.xaml). | B6 | ported |
-| `NumericUpDown.xaml` | `{NumericUpDown}` | NumberBox: {NumberBox}, NumberBoxTextBoxStyle, NumberBoxSpinButtonStyle (NumberBox.xaml, NumberBox_themeresources.xaml). | B2 | pending |
+| `NumericUpDown.xaml` | `{NumericUpDown}` | NumberBox: {NumberBox}, NumberBoxTextBoxStyle, NumberBoxSpinButtonStyle (NumberBox.xaml, NumberBox_themeresources.xaml). | B2 | ported |
 | `OverlayPopupHost.xaml` | `{OverlayPopupHost}` | No WinUI style: the text of the window (TextFillColorPrimaryBrush, ContentControlThemeFontFamily, ControlContentThemeFontSize). | F | ported |
 | `PathIcon.xaml` | `{PathIcon}` | No WinUI style (IconElement has no template): the Path that WinUI's PathIcon builds in code (CPathIcon::ApplyTemplate, icon.cpp), unscaled and filled with the Foreground. | B1 | ported |
 | `PipsPager.xaml` | `{PipsPager}` | PipsPager: {PipsPager} (PipsPager.xaml), PipsPagerNavigationButtonBaseStyle, PipsPagerPreviousPageButtonStyle, PipsPagerNextPageButtonStyle, PipsPagerButtonBaseStyle, PipsPagerSelectedPipButtonStyle, PipsPagerNormalPipButtonStyle (PipsPager_themeresources.xaml). | B2 | pending |
