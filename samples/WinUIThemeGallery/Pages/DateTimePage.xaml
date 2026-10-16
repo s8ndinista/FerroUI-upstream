@@ -6,7 +6,10 @@
        the day the page is shown, without the highlight of today, and nothing is selected: the
        native counterpart (DateTimePage.winui.xml) cannot set a date in markup (WinUI XAML has
        no conversion of a text to a date), so both sides show what they show without one. The
-       pickers' popups (DatePickerPresenter, TimePickerPresenter) open in the window. -->
+       pickers' popups (DatePickerPresenter, TimePickerPresenter) open in the window. The time
+       pickers name their clock (12HourClock, the clock of the native side's en-US system), as
+       the framework's TimePicker otherwise takes it from the culture of the process (a 24-hour
+       clock in the invariant culture) and would leave out the AM/PM column. -->
   <StackPanel Margin="24" Spacing="12">
     <TextBlock Text="Date and time" FontSize="28" FontWeight="SemiBold" />
 
@@ -33,8 +36,8 @@
         <DatePicker HorizontalAlignment="Left" IsEnabled="False" />
 
         <TextBlock Text="TimePicker" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" />
-        <TimePicker HorizontalAlignment="Left" />
-        <TimePicker HorizontalAlignment="Left" IsEnabled="False" />
+        <TimePicker HorizontalAlignment="Left" ClockIdentifier="12HourClock" />
+        <TimePicker HorizontalAlignment="Left" ClockIdentifier="12HourClock" IsEnabled="False" />
       </StackPanel>
     </Grid>
   </StackPanel>

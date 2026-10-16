@@ -156,20 +156,32 @@
       </ControlTemplate>
     </Setter>
 
+    <!-- The states also set the Foreground of the button itself, which the glyph paths of its
+         content take (a path does not inherit the foreground of the content presenter as the
+         glyph of a FontIcon does), over the foreground the CalendarItem template binds. -->
     <!-- PointerOver -->
-    <Style Selector="^:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-      <Setter Property="Background" Value="{DynamicResource CalendarViewNavigationButtonBackgroundPointerOver}" />
-      <Setter Property="BorderBrush" Value="{DynamicResource CalendarViewNavigationButtonBorderBrushPointerOver}" />
+    <Style Selector="^:pointerover">
       <Setter Property="Foreground" Value="{DynamicResource CalendarViewNavigationButtonForegroundPointerOver}" />
+      <Style Selector="^ /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource CalendarViewNavigationButtonBackgroundPointerOver}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource CalendarViewNavigationButtonBorderBrushPointerOver}" />
+        <Setter Property="Foreground" Value="{DynamicResource CalendarViewNavigationButtonForegroundPointerOver}" />
+      </Style>
     </Style>
     <!-- Pressed -->
-    <Style Selector="^:pressed /template/ ContentPresenter#PART_ContentPresenter">
-      <Setter Property="Background" Value="{DynamicResource CalendarViewNavigationButtonBackgroundPressed}" />
+    <Style Selector="^:pressed">
       <Setter Property="Foreground" Value="{DynamicResource CalendarViewNavigationButtonForegroundPressed}" />
+      <Style Selector="^ /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource CalendarViewNavigationButtonBackgroundPressed}" />
+        <Setter Property="Foreground" Value="{DynamicResource CalendarViewNavigationButtonForegroundPressed}" />
+      </Style>
     </Style>
     <!-- Disabled -->
-    <Style Selector="^:disabled /template/ ContentPresenter#PART_ContentPresenter">
+    <Style Selector="^:disabled">
       <Setter Property="Foreground" Value="{DynamicResource CalendarViewNavigationButtonForegroundDisabled}" />
+      <Style Selector="^ /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Foreground" Value="{DynamicResource CalendarViewNavigationButtonForegroundDisabled}" />
+      </Style>
     </Style>
   </ControlTheme>
 
