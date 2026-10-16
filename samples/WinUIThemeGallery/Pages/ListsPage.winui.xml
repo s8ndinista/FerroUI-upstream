@@ -8,7 +8,7 @@
             Margin="24" Spacing="12">
   <TextBlock Text="Lists and trees" FontSize="28" FontWeight="SemiBold" />
 
-  <Grid ColumnSpacing="24">
+  <Grid ColumnSpacing="24" HorizontalAlignment="Left">
     <Grid.ColumnDefinitions>
       <ColumnDefinition Width="300" />
       <ColumnDefinition Width="300" />

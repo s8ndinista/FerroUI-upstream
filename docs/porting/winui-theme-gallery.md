@@ -42,6 +42,15 @@ The pages, with the theme documents (`src/FerroUI.Themes.Fluent/Controls/*.xaml`
 
 The other theme documents are shown by the gallery's window and popups rather than as elements of a page: `Window` (the window of the gallery), `AdornerLayer` (in every top level), `PopupRoot` and `OverlayPopupHost` (the popups of the drop-downs, flyouts and tool tips the window opens; a picture of a page does not hold its popups, which is why the menus, the flyout and the tool tips are shown in the pages through their presenters), `DatePickerPresenter`, `TimePickerPresenter` and `DateTimePickerShared` (the popups of the pickers), `TextSelectionHandle` (the selection handles of touch input), `EmbeddableControlRoot` (the root of the framework's page in the comparison host) and `WindowDrawnDecorations` (the decorations the framework draws for a window when the platform asks for them, on Wayland without decorations of the compositor).
 
+### Layout
+
+The grids of the pages, whose columns have fixed widths, are aligned to the left on both sides
+(`HorizontalAlignment="Left"`). A grid of the framework that is wider than its fixed columns
+gives each column one more pixel under layout rounding (phase 5 of its column allocation, as
+upstream's and WPF's grid do), which moved the second column of every page 1 px to the right of
+WinUI's and widened what it stretches by 1 px; a grid as wide as its columns allocates them
+exactly. Aligning a WinUI grid of fixed columns to the left does not change it.
+
 ### States
 
 Each page shows its controls normal and disabled, and, where the control has them, checked, unchecked, indeterminate, selected, expanded, with content, with a placeholder and with a validation error. The pointer-over and pressed states are forced: an element with the class `force-pointerover` gets the pseudo-class `:pointerover`, one with `force-pressed` gets `:pointerover` and `:pressed` (`capture::force_states`), once the page is laid out and its templates are applied, as the control sets them under a pointer. The framework lets any code set a pseudo-class (`pseudo_classes().set(..)`), so the forced states are the states the theme's selectors style. A control resets them on the next pointer event that reaches it, and a button resets `:pressed` when its template is applied again; the capture mode forces them after the layout and draws the page before anything else happens to it.

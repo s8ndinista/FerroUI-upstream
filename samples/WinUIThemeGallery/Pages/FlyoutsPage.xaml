@@ -18,7 +18,7 @@
   <StackPanel Margin="24" Spacing="12">
     <TextBlock Text="Flyouts, tool tips and notifications" FontSize="28" FontWeight="SemiBold" />
 
-    <Grid ColumnSpacing="24">
+    <Grid ColumnSpacing="24" HorizontalAlignment="Left">
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="320" />
         <ColumnDefinition Width="320" />
@@ -47,7 +47,7 @@
     </Grid>
 
     <TextBlock Text="Notifications" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" />
-    <Grid ColumnSpacing="16" RowSpacing="12">
+    <Grid ColumnSpacing="16" RowSpacing="12" HorizontalAlignment="Left">
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="320" />
         <ColumnDefinition Width="320" />
