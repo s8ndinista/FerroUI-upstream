@@ -8,7 +8,7 @@ use std::fmt;
 use std::rc::Rc;
 
 /// The behaviour of one kind of selector.
-pub(crate) trait SelectorNode: 'static {
+pub trait SelectorNode: 'static {
     /// Whether this selector is in a template.
     fn in_template(&self) -> bool;
 

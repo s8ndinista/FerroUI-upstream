@@ -29,6 +29,9 @@ pub use layoutable::{
 pub use min_max::MinMax;
 pub use orientation::Orientation;
 
+#[cfg(any(test, feature = "testing"))]
+pub mod testing;
+
 #[cfg(test)]
 mod layout_helper_tests;
 #[cfg(test)]

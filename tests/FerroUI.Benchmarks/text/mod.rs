@@ -9,6 +9,7 @@ pub mod text_layout_profile;
 pub mod text_run_cache_benchmark;
 pub mod unicode_break_enumerator_benchmark;
 pub mod unicode_segmentation_scaling_benchmark;
+pub mod unicode_trie_benchmark;
 
 mod random;
 
@@ -20,4 +21,5 @@ pub fn register(registry: &mut Registry) {
     shaped_buffer_ops::register(registry);
     text_layout_profile::register(registry);
     codepoint_benchmark::register(registry);
+    unicode_trie_benchmark::register(registry);
 }
