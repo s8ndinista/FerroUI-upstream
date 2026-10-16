@@ -3,6 +3,7 @@ use crate::primitives::{AdornerLayer, FlyoutBase};
 use crate::templates::{DataTemplates, IDataTemplateHost, ITemplateOf};
 use crate::Panel;
 use crate::ContextMenu;
+use ferroui_base::data::core::ValueTypes;
 use ferroui_base::reactive::IDisposable;
 use crate::{RequestBringIntoViewEventArgs, SizeChangedEventArgs};
 use ferroui_base::input::{
@@ -453,22 +454,35 @@ impl Control {
         Rc::new(control.into_ref())
     }
 
-    /// The control held by an untyped value, if it holds one. See
-    /// [`boxed`](Self::boxed).
+    /// The control held by an untyped value, if it holds one (`value as
+    /// Control` upstream). See [`boxed`](Self::boxed).
+    ///
+    /// The value is a control whatever handle it holds it by: the
+    /// `Ref<Control>` of the boxing convention, the handle of another class
+    /// of the object model (a `Ref<Border>`, a `Ref<FerroObject>`), or an
+    /// interface handle that holds an object
+    /// ([`ValueTypes::register_interface_object`]); a value that a binding
+    /// passes on keeps the static type of its source.
     pub fn from_boxed(value: &BoxedValue) -> Option<Ref<Control>> {
         let value: &dyn AnyValue = &**value;
-        value.downcast_ref::<Ref<Control>>().cloned()
+        if let Some(control) = value.downcast_ref::<Ref<Control>>() {
+            return Some(control.clone());
+        }
+        ValueTypes::as_object(value)?.cast::<Control>()
     }
 
-    /// The logical element held by an untyped value, if it holds one: a
-    /// `Ref<Control>` (see [`boxed`](Self::boxed)) or a
-    /// `Ref<StyledElement>`.
+    /// The logical element held by an untyped value, if it holds one
+    /// (`value as ILogical` upstream): an element held by any handle, as
+    /// [`from_boxed`](Self::from_boxed) takes it.
     pub fn logical_from_boxed(value: &BoxedValue) -> Option<Ref<StyledElement>> {
         let value: &dyn AnyValue = &**value;
         if let Some(control) = value.downcast_ref::<Ref<Control>>() {
             return Some(control.clone().upcast());
         }
-        value.downcast_ref::<Ref<StyledElement>>().cloned()
+        if let Some(element) = value.downcast_ref::<Ref<StyledElement>>() {
+            return Some(element.clone());
+        }
+        ValueTypes::as_object(value)?.cast::<StyledElement>()
     }
 
     /// Ensures that the control is initialized and laid out when it is used

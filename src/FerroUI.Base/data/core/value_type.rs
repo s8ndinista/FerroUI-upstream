@@ -136,6 +136,7 @@ type NullFn = fn() -> BoxedValue;
 type ObjectFn = fn(&dyn AnyValue) -> Option<Ref<FerroObject>>;
 type FromObjectFn = fn(Ref<FerroObject>) -> Option<BoxedValue>;
 type InterfaceFn = Rc<dyn Fn(&Ref<FerroObject>) -> Option<BoxedValue>>;
+type InterfaceObjectFn = Rc<dyn Fn(&dyn AnyValue) -> Option<Ref<FerroObject>>>;
 
 #[derive(Default)]
 struct Registry {
@@ -175,6 +176,9 @@ struct Registry {
     any_conversions: IdMap<(TypeId, TypeId), AnyConvertFn>,
     /// Interface handle type → the classes whose handles convert to it.
     interfaces: IdMap<TypeId, Vec<(&'static TypeInfo, InterfaceFn)>>,
+    /// Interface handle type → the object of the object model behind a
+    /// handle ([`ValueTypes::register_interface_object`]).
+    interface_objects: IdMap<TypeId, InterfaceObjectFn>,
 }
 
 /// A registered cast of a reference type that applies to another form of
@@ -718,9 +722,37 @@ impl ValueTypes {
             return Some(o.clone());
         }
         let id = value_type_id(&*value);
-        let (f, element) =
-            with_registry(|r| (r.objects.get(&id).map(|o| o.0), r.element_ref_objects.get(&id).map(|e| e.0)));
-        f.or(element).and_then(|f| f(value))
+        let (f, element, interface) = with_registry(|r| {
+            (
+                r.objects.get(&id).map(|o| o.0),
+                r.element_ref_objects.get(&id).map(|e| e.0),
+                r.interface_objects.get(&id).cloned(),
+            )
+        });
+        match f.or(element) {
+            Some(f) => f(value),
+            None => interface.and_then(|f| f(value)),
+        }
+    }
+
+    /// Registers the interface handle type `I` (for example
+    /// `Rc<dyn IFoo>`, the handle of a contract that classes of the object
+    /// model implement) as one that holds an object: `as_object` gives the
+    /// object behind a handle, `None` for a handle of an implementation that
+    /// is not one. Untyped code then sees the object through the handle, as
+    /// upstream sees the object whatever the static type of the reference:
+    /// [`as_object`](Self::as_object) answers it, so that a content that is
+    /// a handle of a control is that control, and a binding converts the
+    /// handle to the handles of the class of the object.
+    ///
+    /// The class states which handles it converts to (`ferro_class_info!`,
+    /// `interfaces:`); this is the reverse, stated once by the contract.
+    pub fn register_interface_object<I: PropertyValue>(as_object: fn(&I) -> Option<Ref<FerroObject>>) {
+        let f: InterfaceObjectFn = Rc::new(move |value: &dyn AnyValue| value.downcast_ref::<I>().and_then(as_object));
+        with_registry(|r| {
+            r.interface_objects.insert(TypeId::of::<I>(), f);
+        });
+        Self::register_nullable::<I>();
     }
 
     /// Registers `T` as a reference (model) type: a type whose instances are

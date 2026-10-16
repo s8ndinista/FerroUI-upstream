@@ -171,9 +171,13 @@ impl RelativePanel {
         let dependency = child.get_value(property)?;
         let dependency = &*dependency;
 
+        // `dependency is Layoutable`: held by any handle.
         let layoutable = match dependency.downcast_ref::<Ref<Control>>() {
             Some(control) => control.clone().upcast::<Layoutable>(),
-            None => dependency.downcast_ref::<Ref<Layoutable>>()?.clone(),
+            None => match dependency.downcast_ref::<Ref<Layoutable>>() {
+                Some(layoutable) => layoutable.clone(),
+                None => ferroui_base::data::core::ValueTypes::as_object(dependency)?.cast::<Layoutable>()?,
+            },
         };
 
         if self.children().snapshot().iter().any(|c| *c == layoutable) {

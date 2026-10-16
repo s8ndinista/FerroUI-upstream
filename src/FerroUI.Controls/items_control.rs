@@ -901,12 +901,14 @@ impl ItemsControl {
     }
 
     /// Whether an item is a visual: a control (see `Control::boxed`) or a
-    /// visual handle.
+    /// visual, held by any handle.
     fn is_visual(item: &Option<BoxedValue>) -> bool {
         match item {
             Some(item) => {
                 let value: &dyn AnyValue = &**item;
-                value.is::<Ref<Control>>() || value.is::<Ref<Visual>>()
+                value.is::<Ref<Control>>()
+                    || value.is::<Ref<Visual>>()
+                    || ferroui_base::data::core::ValueTypes::as_object(value).is_some_and(|o| o.is::<Visual>())
             }
             None => false,
         }
