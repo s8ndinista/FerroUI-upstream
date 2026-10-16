@@ -1,6 +1,6 @@
 # Upstream tests that the port has under another name (`[[alias]]`), and upstream tests that are not ported
-# for a stated reason (`[[waive]]`). Read by scripts/port-status/test_gaps.py; the format is described at its
-# top. One section per upstream test project; every entry names its project and applies to that project only,
+# for a stated reason (`[[waive]]`). Read by scripts/port-status/test_gaps.py and tests_audit.py; the format is
+# described at the top of test_gaps.py. One section per upstream test project; every entry names its project and applies to that project only,
 # and only to a test that is not present by name. A waived test is listed with its reason in the output of the
 # project and is not counted as missing.
 #
@@ -470,3 +470,92 @@ project = "Avalonia.RenderTests"
 file = "CrossTests/CrossGeometryTests.cs"
 test = "Should_Properly_CloseFigure"
 reason = "inside `#if !AVALONIA_SKIA` upstream (\"Skip the test for now\"): not compiled into the Skia render tests, which are the configuration the port has; its expected images are in `TestFiles/CrossTests/Media/Geometry`"
+
+# === XamlParserTests (external/XamlX/tests, counted by tests_audit.py only) ===================================
+#
+# The run-time tests of the compiler library are ported in
+# src/Markup/FerroUI.Markup.Xaml.Loader/runtime/interpreter/tests, where several theories of one subject are one
+# test that runs each row.
+
+[[alias]]
+project = "XamlParserTests"
+file = "BasicCompilerTests.cs"
+test = "Compiler_Should_Compile_Simple_Xaml"
+rust = ["compiler_should_compile_simple_xaml_build", "compiler_should_compile_simple_xaml_populate"]
+reason = "the theory over building and populating is one test per row"
+
+[[alias]]
+project = "XamlParserTests"
+file = "ConvertersTests.cs"
+test = "Converters_Are_Operational2"
+rust = ["converters_are_operational"]
+reason = "its one row (`IntPropertyWithNegativeConverter`, 5 to -5) is the last assertion of the port of `Converters_Are_Operational`"
+
+[[alias]]
+project = "XamlParserTests"
+file = "DynamicSettersTests.cs"
+test = "Dynamic_Setter_With_Reference_Types_*"
+rust = ["dynamic_setter_with_reference_types"]
+reason = "the three arguments (null, typed 1, typed 2) of one pair of setters are one test"
+
+[[alias]]
+project = "XamlParserTests"
+file = "DynamicSettersTests.cs"
+test = "Dynamic_Setter_With_Value_Types_*"
+rust = ["dynamic_setter_with_value_types"]
+reason = "the three arguments of one pair of setters are one test"
+
+[[alias]]
+project = "XamlParserTests"
+file = "DynamicSettersTests.cs"
+test = "Dynamic_Setter_With_Nullable_Value_Types_*"
+rust = ["dynamic_setter_with_nullable_value_types"]
+reason = "the three arguments of one pair of setters are one test"
+
+[[alias]]
+project = "XamlParserTests"
+file = "DynamicSettersTests.cs"
+test = "Dynamic_Setter_With_Value_Type_And_Reference_Type_*"
+rust = ["dynamic_setter_with_value_type_and_reference_type"]
+reason = "the two arguments of one pair of setters are one test"
+
+[[alias]]
+project = "XamlParserTests"
+file = "DynamicSettersTests.cs"
+test = "Dynamic_Setter_With_Nullable_Value_Type_And_Reference_Type_*"
+rust = ["dynamic_setter_with_nullable_value_type_and_reference_type"]
+reason = "the three arguments of one pair of setters are one test"
+
+[[alias]]
+project = "XamlParserTests"
+file = "GenericTypeWithPropertyElement.cs"
+test = "GenericTypewithPropertyElementTest"
+rust = ["generic_type_with_property_element"]
+reason = "named after the file; upstream's method name repeats it with `Test`"
+
+[[alias]]
+project = "XamlParserTests"
+file = "IntrinsicsTests.cs"
+tests = ["Boolean_Extension_Can_Be_Set_To_*", "Boolean_Extension_Can_Be_Used_As_Markup_Ext"]
+rust = ["boolean_extension_can_be_set"]
+reason = "one test sets `x:True` and `x:False` to the object, bool and nullable bool properties and uses each as a markup extension"
+
+[[alias]]
+project = "XamlParserTests"
+file = "MarkupExtensionTests.cs"
+test = "Non_Boxed_Value_Type_Should_Be_Convertable_To_*"
+rust = ["non_boxed_value_type_should_be_convertable_to_nullable_and_object"]
+reason = "the two targets are one test"
+
+[[alias]]
+project = "XamlParserTests"
+file = "ServiceProviderTests.cs"
+test = "TypeDescriptor_Stubs_Are_Somewhat_Usable"
+rust = ["type_descriptor_context_is_the_context"]
+reason = "the context is the service provider, as upstream asserts; the members of .NET's `ITypeDescriptorContext` that upstream checks are stubs (`Instance`, `Container`, `PropertyDescriptor`, `OnComponentChanging`) do not exist in the port's context"
+
+[[waive]]
+project = "XamlParserTests"
+file = "UtilityTests.cs"
+tests = ["*"]
+reason = "the file is inside `#if GUILABS`: compiled only with the alternative parser `XamlX.Parser.GuiLabs` (`XmlNamespaces.GetPrefixFromName`), which is not ported"
