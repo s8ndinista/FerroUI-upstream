@@ -65,6 +65,13 @@ members = [
     "samples/ControlCatalog.Android",
     "samples/ControlGallery.WinUI",
     "samples/WinUIEmbedSample",
+    "samples/SafeAreaDemo",
+    "samples/SafeAreaDemo.Desktop",
+    "samples/SafeAreaDemo.Android",
+    "samples/SafeAreaDemo.iOS",
+    "samples/XEmbedSample",
+    "samples/PlatformSanityChecks",
+    "samples/SingleProjectSandbox",
 ]
 
 [workspace.package]

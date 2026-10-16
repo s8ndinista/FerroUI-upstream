@@ -1,0 +1,23 @@
+[package]
+name = "safe-area-demo-desktop"
+description = "The desktop entry point of the SafeAreaDemo sample of FerroUI"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+autotests = false
+autobenches = false
+autoexamples = false
+
+[[bin]]
+name = "safe-area-demo-desktop"
+path = "program.rs"
+
+[dependencies]
+ferroui-base = { workspace = true }
+ferroui-controls = { workspace = true }
+ferroui-desktop = { workspace = true }
+safe-area-demo = { path = "../SafeAreaDemo" }
+sample-support = { path = "../SampleSupport" }

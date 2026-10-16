@@ -231,7 +231,7 @@ Third-party code ported in place (same relative paths as upstream).
 
 ### `samples/`
 
-Sample applications. Same directory names; binary crates.
+Sample applications. Same directory names; binary crates. The state of a sample that is not ported is the one `docs/porting/data/samples.toml` records.
 
 | Upstream project | C# files | FerroUI path | State | Tracking |
 |---|---:|---|---|---|
@@ -241,30 +241,30 @@ Sample applications. Same directory names; binary crates.
 | `samples/ControlCatalog.Android` | 3 | `samples/ControlCatalog.Android` | workspace member | not tracked |
 | `samples/ControlCatalog.Browser` | 2 | `samples/ControlCatalog.Browser` | workspace member | not tracked |
 | `samples/ControlCatalog.Desktop` | 7 | `samples/ControlCatalog.Desktop` | workspace member | not tracked |
-| `samples/ControlCatalog.MacCatalyst` | 0 | `samples/ControlCatalog.MacCatalyst` | not created | not tracked |
+| `samples/ControlCatalog.MacCatalyst` | 0 | `samples/ControlCatalog.MacCatalyst` | not applicable | not tracked |
 | `samples/ControlCatalog.iOS` | 3 | `samples/ControlCatalog.iOS` | workspace member | not tracked |
-| `samples/ControlCatalog.tvOS` | 0 | `samples/ControlCatalog.tvOS` | not created | not tracked |
+| `samples/ControlCatalog.tvOS` | 0 | `samples/ControlCatalog.tvOS` | not applicable | not tracked |
 | `samples/ControlGallery.WinUI` | 2 | `samples/ControlGallery.WinUI` | workspace member | not tracked |
-| `samples/Generators.Sandbox` | 6 | `samples/Generators.Sandbox` | not created | not tracked |
+| `samples/Generators.Sandbox` | 6 | `samples/Generators.Sandbox` | not applicable | not tracked |
 | `samples/GpuInterop` | 26 | `samples/GpuInterop` | not created | not tracked |
 | `samples/IntegrationTestApp` | 38 | `samples/IntegrationTestApp` | workspace member | not tracked |
 | `samples/MiniMvvm` | 3 | `samples/MiniMvvm` | workspace member | not tracked |
-| `samples/PlatformSanityChecks` | 2 | `samples/PlatformSanityChecks` | not created | not tracked |
+| `samples/PlatformSanityChecks` | 2 | `samples/PlatformSanityChecks` | workspace member | not tracked |
 | `samples/RenderDemo` | 29 | `samples/RenderDemo` | workspace member | not tracked |
-| `samples/SafeAreaDemo` | 5 | `samples/SafeAreaDemo` | not created | not tracked |
-| `samples/SafeAreaDemo.Android` | 2 | `samples/SafeAreaDemo.Android` | not created | not tracked |
-| `samples/SafeAreaDemo.Desktop` | 1 | `samples/SafeAreaDemo.Desktop` | not created | not tracked |
-| `samples/SafeAreaDemo.iOS` | 2 | `samples/SafeAreaDemo.iOS` | not created | not tracked |
+| `samples/SafeAreaDemo` | 5 | `samples/SafeAreaDemo` | workspace member | not tracked |
+| `samples/SafeAreaDemo.Android` | 2 | `samples/SafeAreaDemo.Android` | workspace member | not tracked |
+| `samples/SafeAreaDemo.Desktop` | 1 | `samples/SafeAreaDemo.Desktop` | workspace member | not tracked |
+| `samples/SafeAreaDemo.iOS` | 2 | `samples/SafeAreaDemo.iOS` | workspace member | not tracked |
 | `samples/SampleControls` | 1 | `samples/SampleControls` | workspace member | not tracked |
 | `samples/Sandbox` | 3 | `samples/Sandbox` | workspace member | not tracked |
-| `samples/SingleProjectSandbox` | 9 | `samples/SingleProjectSandbox` | not created | not tracked |
+| `samples/SingleProjectSandbox` | 9 | `samples/SingleProjectSandbox` | workspace member | not tracked |
 | `samples/TextTestApp` | 7 | `samples/TextTestApp` | workspace member | not tracked |
-| `samples/UnloadableAssemblyLoadContext/UnloadableAssemblyLoadContext` | 5 | `samples/UnloadableAssemblyLoadContext/UnloadableAssemblyLoadContext` | not created | not tracked |
-| `samples/UnloadableAssemblyLoadContext/UnloadableAssemblyLoadContextPlug` | 3 | `samples/UnloadableAssemblyLoadContext/UnloadableAssemblyLoadContextPlug` | not created | not tracked |
+| `samples/UnloadableAssemblyLoadContext/UnloadableAssemblyLoadContext` | 5 | `samples/UnloadableAssemblyLoadContext/UnloadableAssemblyLoadContext` | not applicable | not tracked |
+| `samples/UnloadableAssemblyLoadContext/UnloadableAssemblyLoadContextPlug` | 3 | `samples/UnloadableAssemblyLoadContext/UnloadableAssemblyLoadContextPlug` | not applicable | not tracked |
 | `samples/VirtualizationDemo` | 13 | `samples/VirtualizationDemo` | workspace member | not tracked |
-| `samples/WinUIEmbedSample` | 4 | `samples/WinUIEmbedSample` | not created | not tracked |
-| `samples/XEmbedSample` | 3 | `samples/XEmbedSample` | not created | not tracked |
-| `samples/interop/WindowsInteropTest` | 5 | `samples/interop/WindowsInteropTest` | not created | not tracked |
+| `samples/WinUIEmbedSample` | 4 | `samples/WinUIEmbedSample` | workspace member | not tracked |
+| `samples/XEmbedSample` | 3 | `samples/XEmbedSample` | workspace member | not tracked |
+| `samples/interop/WindowsInteropTest` | 5 | `samples/interop/WindowsInteropTest` | not applicable | not tracked |
 
 ### `tests/`
 
@@ -320,14 +320,22 @@ Upstream unit tests are ported next to the code (`#[cfg(test)] mod tests` or `<f
 | `samples/ControlGallery.WinUI` | `samples/ControlGallery.WinUI` (not tracked) |
 | `samples/IntegrationTestApp` | `samples/IntegrationTestApp` (not tracked) |
 | `samples/MiniMvvm` | `samples/MiniMvvm` (not tracked) |
+| `samples/PlatformSanityChecks` | `samples/PlatformSanityChecks` (not tracked) |
 | `samples/RenderDemo` | `samples/RenderDemo` (not tracked) |
+| `samples/SafeAreaDemo` | `samples/SafeAreaDemo` (not tracked) |
+| `samples/SafeAreaDemo.Android` | `samples/SafeAreaDemo.Android` (not tracked) |
+| `samples/SafeAreaDemo.Desktop` | `samples/SafeAreaDemo.Desktop` (not tracked) |
+| `samples/SafeAreaDemo.iOS` | `samples/SafeAreaDemo.iOS` (not tracked) |
 | `samples/SampleBuild` | none (FerroUI only) |
 | `samples/SampleControls` | `samples/SampleControls` (not tracked) |
 | `samples/SampleSupport` | none (FerroUI only) |
 | `samples/SampleTesting` | none (FerroUI only) |
 | `samples/Sandbox` | `samples/Sandbox` (not tracked) |
+| `samples/SingleProjectSandbox` | `samples/SingleProjectSandbox` (not tracked) |
 | `samples/TextTestApp` | `samples/TextTestApp` (not tracked) |
 | `samples/VirtualizationDemo` | `samples/VirtualizationDemo` (not tracked) |
+| `samples/WinUIEmbedSample` | `samples/WinUIEmbedSample` (not tracked) |
+| `samples/XEmbedSample` | `samples/XEmbedSample` (not tracked) |
 | `src/Android/FerroUI.Android` | `src/Android/Avalonia.Android` |
 | `src/Browser/FerroUI.Browser` | `src/Browser/Avalonia.Browser` |
 | `src/FerroUI` | none (FerroUI only) |

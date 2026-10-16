@@ -5,6 +5,8 @@
 #
 #   scripts/android/apk.sh smoke   [options]    the smoke application of ferroui-android
 #   scripts/android/apk.sh catalog [options]    the ControlCatalog (samples/ControlCatalog.Android)
+#   scripts/android/apk.sh safearea [options]   the SafeAreaDemo (samples/SafeAreaDemo.Android)
+#   scripts/android/apk.sh sandbox [options]    the SingleProjectSandbox (samples/SingleProjectSandbox)
 #
 # Options:
 #   --release           build with the release profile of cargo (default: the dev profile)
@@ -24,7 +26,7 @@
 set -euo pipefail
 
 usage() {
-    sed -n '2,22p' "$0" | sed 's/^# \{0,1\}//'
+    sed -n '2,24p' "$0" | sed 's/^# \{0,1\}//'
 }
 
 app=""
@@ -36,7 +38,7 @@ run_cargo=1
 features=""
 while [ $# -gt 0 ]; do
     case "$1" in
-        smoke|catalog) app="$1" ;;
+        smoke|catalog|safearea|sandbox) app="$1" ;;
         --release) profile="release" ;;
         --abi) abi="${2:?--abi needs a value}"; shift ;;
         --out) out="${2:?--out needs a value}"; shift ;;
@@ -81,6 +83,27 @@ case "$app" in
         label="ControlCatalog"
         # The web view of the embed page loads a page of the network.
         permissions='    <uses-permission android:name="android.permission.INTERNET" />'
+        ;;
+    safearea)
+        cargo_args=(-p safe-area-demo-android --lib)
+        library="safe_area_demo_android"
+        library_dir=""
+        # `ApplicationId` and the label of the manifest of the reference's project.
+        application_id="org.ferroui.safeareademo"
+        label="SafeAreaDemo"
+        # The permission the manifest of the reference states.
+        permissions='    <uses-permission android:name="android.permission.INTERNET" />'
+        ;;
+    sandbox)
+        # The package of the sample is the application and every entry point; its shared library
+        # is the Android one.
+        cargo_args=(-p single-project-sandbox --lib)
+        library="single_project_sandbox"
+        library_dir=""
+        application_id="org.ferroui.singleprojectsandbox"
+        label="SingleProjectSandbox.Android"
+        # The permission the manifest of the reference states.
+        permissions='    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />'
         ;;
 esac
 min_sdk="$FERROUI_ANDROID_API"

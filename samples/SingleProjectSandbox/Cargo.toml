@@ -1,0 +1,74 @@
+[package]
+name = "single-project-sandbox"
+description = "The SingleProjectSandbox sample of FerroUI: one package with the application and its desktop, macOS, Android and iOS entry points"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+build = "build.rs"
+
+# Unit tests live next to the code (`tests/` modules of the library), not as integration test
+# targets.
+autotests = false
+autobenches = false
+autoexamples = false
+autobins = false
+
+# The application (`App.xaml`, `MainView.xaml`, `MainWindow.xaml` with their classes), shared by
+# every entry point. The shared library is the Android entry point (`Platforms/Android`): the
+# application class of the Java layer of the Android backend loads it, and
+# `scripts/android/apk.sh sandbox` builds and packages it; on another system it holds the
+# application alone.
+[lib]
+name = "single_project_sandbox"
+path = "lib.rs"
+crate-type = ["lib", "cdylib"]
+
+# The desktop entry point (`Platforms/Desktop/Program.cs`).
+[[bin]]
+name = "single-project-sandbox"
+path = "Platforms/Desktop/program.rs"
+
+# The macOS entry point (`Platforms/macOS/Program.cs`): the native platform of macOS with Skia.
+[[bin]]
+name = "single-project-sandbox-macos"
+path = "Platforms/macOS/program.rs"
+
+# The iOS entry point (`Platforms/iOS/AppDelegate.cs`), put into an application bundle by
+# `scripts/ios/bundle.sh --package single-project-sandbox --bin single-project-sandbox-ios`.
+[[bin]]
+name = "single-project-sandbox-ios"
+path = "Platforms/iOS/app_delegate.rs"
+
+[dependencies]
+# The compiled markup of the crate calls the typed functions of the declared members.
+ferroui-base = { workspace = true, features = ["markup-functions"] }
+ferroui-controls = { workspace = true }
+ferroui-markup = { workspace = true }
+ferroui-markup-xaml = { workspace = true }
+ferroui-themes-fluent = { workspace = true }
+sample-support = { path = "../SampleSupport" }
+
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+ferroui-desktop = { workspace = true }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+ferroui-native = { workspace = true }
+ferroui-skia = { workspace = true }
+ferroui-harfbuzz = { workspace = true }
+
+[target.'cfg(target_os = "android")'.dependencies]
+ferroui-android = { workspace = true }
+
+[target.'cfg(target_os = "ios")'.dependencies]
+ferroui-ios = { workspace = true }
+
+[build-dependencies]
+sample-build = { path = "../SampleBuild" }
+
+[dev-dependencies]
+ferroui-base = { workspace = true, features = ["testing"] }
+ferroui-controls = { workspace = true, features = ["testing"] }
+sample-testing = { path = "../SampleTesting" }
