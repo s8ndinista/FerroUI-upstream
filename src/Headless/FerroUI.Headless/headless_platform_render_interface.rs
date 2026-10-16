@@ -57,10 +57,16 @@ impl HeadlessPlatformRenderInterface {
         })
     }
 
-    pub(crate) fn initialize() {
+    /// `new HeadlessPlatformRenderInterface()`: an instance that
+    /// [`is_current`](Self::is_current) recognises once it is the service.
+    pub(crate) fn create() -> Rc<HeadlessPlatformRenderInterface> {
         let instance = HeadlessPlatformRenderInterface::new();
         INSTANCES.with(|instances| instances.borrow_mut().push(Rc::downgrade(&instance)));
-        let render_interface: Rc<dyn IPlatformRenderInterface> = instance;
+        instance
+    }
+
+    pub(crate) fn initialize() {
+        let render_interface: Rc<dyn IPlatformRenderInterface> = HeadlessPlatformRenderInterface::create();
         let font_manager: Rc<dyn IFontManagerImpl> = Rc::new(HeadlessFontManagerStub::new());
         FerroLocator::current_mutable()
             .bind::<dyn IPlatformRenderInterface>()

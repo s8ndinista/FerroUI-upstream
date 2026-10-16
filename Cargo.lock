@@ -839,6 +839,7 @@ dependencies = [
  "ferroui-base",
  "ferroui-controls",
  "ferroui-harfbuzz",
+ "ferroui-headless",
  "ferroui-markup",
  "ferroui-skia",
  "ferroui-themes-fluent",

@@ -14,6 +14,12 @@ categories.workspace = true
 [lib]
 path = "lib.rs"
 
+[features]
+# Exposes the render interface of the platform and its drawing context stub (`testing`) to other crates:
+# the benchmarks render shapes into them, as upstream's benchmark project does through its access to the
+# internals of the platform.
+testing = []
+
 [dependencies]
 ferroui-base.workspace = true
 ferroui-controls.workspace = true
