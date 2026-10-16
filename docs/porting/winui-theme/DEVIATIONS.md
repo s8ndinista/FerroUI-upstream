@@ -228,6 +228,7 @@ it. Abbreviations: CS = `controls/dev/CommonStyles/`, GX = `dxaml/xcp/dxaml/them
 | CMB-13 | `TextBoxStyle`, `ComboBoxTextBoxStyle` | A style for the editable text box. | The keyed theme `ComboBoxTextBoxStyle` of `TextBox`, based on `DefaultTextBoxStyle`, set on `PART_EditableTextBox`; its template has the parts of FerroUI's text box (TXB-2). | FerroUI's combo box has no `TextBoxStyle`; G-15. |
 | CMB-14 | `ComboBoxTextBoxStyle`, `Focused`: `Setter Target="ContentElement.RequestedTheme" Value="Light"` | The text of a focused editable box is drawn in the light theme. | Left out. | A theme variant scope cannot be switched by a state of a template in FerroUI. |
 | CMB-15 | `TabNavigation="Once"`, the scroll, rail and zoom modes | Navigation and scroll settings. | `KeyboardNavigation.TabNavigation="Once"`; an editable box is no tab stop of its own and navigates locally (its text box is), as FerroUI's other themes; the modes are left out. | FerroUI's contract; G-19. |
+| CMB-16 | `ScrollViewer x:Name="ScrollViewer"` of the drop-down: `VerticalSnapPointsType="OptionalSingle"`, `VerticalSnapPointsAlignment="Near"` | Scrolling stops at an item when it ends near one. | No snap points. | FerroUI's snap points are mandatory or none; mandatory snapping would change the scrolling. |
 
 ## ComboBoxItem
 

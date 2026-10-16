@@ -90229,7 +90229,7 @@
    "winui": "AutoSuggestBox: DefaultAutoSuggestBoxStyle, AutoSuggestBoxTextBoxStyle (AutoSuggestBox_themeresources.xaml).",
    "status": "ported",
    "deviations": 8,
-   "date": "not committed"
+   "date": "2026-10-16"
   },
   {
    "document": "Button.xaml",
@@ -90349,7 +90349,7 @@
    "batch": "B3",
    "winui": "ComboBox: DefaultComboBoxStyle (ComboBox_themeresources.xaml).",
    "status": "ported",
-   "deviations": 15,
+   "deviations": 16,
    "date": "2026-10-16"
   },
   {
@@ -91535,7 +91535,7 @@
   "DataValidationErrors": 2,
   "DatePicker": 15,
   "DateTimePickerShared": 10,
-  "ComboBox": 15,
+  "ComboBox": 16,
   "ComboBoxItem": 7,
   "ContextMenu": 3,
   "EmbeddableControlRoot": 1,

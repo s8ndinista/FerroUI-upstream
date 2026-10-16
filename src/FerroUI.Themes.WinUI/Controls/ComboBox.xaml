@@ -41,6 +41,9 @@
   - ComboBoxTextBoxStyle: the template of the source with FerroUI's parts (as Controls/TextBox.xaml);
     the RequestedTheme="Light" of its Focused state, which draws the text of the focused box in the
     light theme, has no counterpart in a template.
+  - VerticalSnapPointsType="OptionalSingle" of the scroll viewer of the drop-down (snapping to an
+    item only when the scrolling stops near one) has no counterpart: FerroUI's snap points are
+    mandatory or none; the drop-down does not snap.
   - The scroll, rail and zoom modes and TabNavigation are left out or are
     KeyboardNavigation.TabNavigation.
 -->
@@ -283,8 +286,6 @@
                       CornerRadius="{DynamicResource OverlayCornerRadius}">
                 <ScrollViewer x:Name="ScrollViewer"
                               Foreground="{DynamicResource ComboBoxDropDownForeground}"
-                              VerticalSnapPointsType="OptionalSingle"
-                              VerticalSnapPointsAlignment="Near"
                               HorizontalScrollBarVisibility="{TemplateBinding (ScrollViewer.HorizontalScrollBarVisibility)}"
                               VerticalScrollBarVisibility="{TemplateBinding (ScrollViewer.VerticalScrollBarVisibility)}"
                               IsDeferredScrollingEnabled="{TemplateBinding (ScrollViewer.IsDeferredScrollingEnabled)}"
