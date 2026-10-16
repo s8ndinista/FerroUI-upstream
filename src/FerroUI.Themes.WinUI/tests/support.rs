@@ -381,13 +381,8 @@ pub const PENDING_CONTROLS: &[&str] = &[
     // B1: primitives and simple content
     "DataValidationErrors",
     "GridSplitter",
-    "GroupBox",
-    "HeaderedContentControl",
-    "ItemsControl",
-    "Label",
     "SelectableTextBlock",
     "TextSelectionHandle",
-    "TransitioningContentControl",
     // B2: buttons, ranges and expanders
     "ButtonSpinner",
     "DropDownButton",

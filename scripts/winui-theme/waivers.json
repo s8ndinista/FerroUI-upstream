@@ -275,6 +275,11 @@
       "document": "dxaml/xcp/dxaml/themes/generic.xaml",
       "key": "re:DefaultInputValidationErrorTemplate|DefaultCompactErrorIconTemplate|RequiredHeaderContent",
       "reason": "Input validation of WinUI (IInputValidationControl): removed from WinUI 3 before release and inert; FerroUI's DataValidationErrors is built from the error brushes instead."
+    },
+    {
+      "document": "dxaml/xcp/dxaml/themes/generic.xaml",
+      "key": "{ContentPresenter}",
+      "reason": "The implicit style of ContentPresenter (HorizontalAlignment Left, VerticalAlignment Top): FerroUI's ContentPresenter is not a templated control and has no default control theme; a style of every ContentPresenter would be a global style, which the theme does not have. The templates of the port set the alignments of their presenters, as the templates of WinUI bind them."
     }
   ]
 }

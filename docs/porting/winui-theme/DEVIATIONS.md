@@ -90,6 +90,23 @@ it. Abbreviations: CS = `controls/dev/CommonStyles/`, GX = `dxaml/xcp/dxaml/them
 |---|---|---|---|---|
 | ECR-1 | (no counterpart) | WinUI 3 has no root of content hosted in another UI with a style. | The template FerroUI's control requires (from the Fluent theme), with `SolidBackgroundFillColorBaseBrush`, `TextFillColorPrimaryBrush`, `ContentControlThemeFontFamily`, `ControlContentThemeFontSize`. | Built from the resources of a WinUI window. |
 
+## GroupBox
+
+| ID | WinUI source | What WinUI does | What the port does | Why |
+|---|---|---|---|---|
+| GB-1 | `controls/dev/Expander/Expander.xaml` `DefaultExpanderStyle` in its expanded state | WinUI has no group box. | An expanded Expander without its chevron: the header bar (`ToggleButtonGrid` of `ExpanderHeaderDownStyle`, a Border) with `PART_HeaderPresenter` over the content border (`ExpanderContent`) with `PART_ContentPresenter`, their corners the corner radius through `TopCornerRadiusFilterConverter` and `BottomCornerRadiusFilterConverter`. | The WinUI control that shows a header over a card of content. |
+| GB-2 | `controls/dev/Expander/Expander_themeresources.xaml` `ExpanderHeaderDownStyle`: `CommonStates`, `ExpandCollapseChevron` (AnimatedIcon) | The header is a toggle button with pointer, pressed and checked states and a chevron. | Only `Disabled` (`ExpanderHeaderDisabledForeground`, `ExpanderHeaderDisabledBorderBrush`); no chevron, no pointer or pressed state. | The header of a group box toggles nothing. |
+| GB-3 | `DefaultExpanderStyle`: `HorizontalAlignment` Left, `VerticalAlignment` Center, `MinWidth` `FlyoutThemeMinWidth`, `IsTabStop` False | Places the expander and keeps it out of the tab order. | Not set: the group box stretches in its container. | A group box fills its container, as in FerroUI's other themes. |
+| GB-4 | `ExpanderContent BorderThickness="{StaticResource ExpanderContentDownBorderThickness}"` | The content border has a fixed thickness. | `{TemplateBinding BorderThickness}`, which the theme sets to the same resource. | An application can change the border of the control. |
+
+## HeaderedContentControl
+
+| ID | WinUI source | What WinUI does | What the port does | Why |
+|---|---|---|---|---|
+| HCC-1 | CS `TextBox_themeresources.xaml` `DefaultTextBoxStyle`: `HeaderContentPresenter` | WinUI has no headered content control; its controls with a `Header` show it above the control. | That presenter above the content: `TextControlHeaderForeground`, `FontWeight` Normal, the margin `TextBoxTopHeaderMargin`, wrapping, aligned to the top, `TextControlHeaderForegroundDisabled` when disabled. | The header of WinUI's controls. |
+| HCC-2 | `HeaderContentPresenter Visibility="Collapsed" x:DeferLoadStrategy="Lazy"`, shown by the code of the control | Collapsed without a header. | `IsVisible` bound to `Header` through `ObjectConverters.IsNotNull`. | The same condition in markup. |
+| HCC-3 | (not in the source) | No border, background or padding around a header and its control. | A border of the `Background`, `BorderBrush`, `BorderThickness`, `CornerRadius` and `Padding` of the control (none set by the theme) around both; the header takes the content alignments of the control. | The contract of FerroUI's control in its other themes. |
+
 ## HyperlinkButton
 
 | ID | WinUI source | What WinUI does | What the port does | Why |
@@ -97,6 +114,20 @@ it. Abbreviations: CS = `controls/dev/CommonStyles/`, GX = `dxaml/xcp/dxaml/them
 | HLB-1 | `dxaml/xcp/dxaml/lib/HyperlinkButton_Partial.cpp` (`SetCursor(MouseCursorHand)`) | The control sets the hand cursor in code. | `Cursor="Hand"` setter in `DefaultHyperlinkButtonStyle`. | FerroUI's hyperlink button does not set a cursor itself. |
 | HLB-2 | CS `HyperlinkButton_themeresources.xaml` (no visited state) | A visited hyperlink button looks the same. | No style for FerroUI's `:visited`. | Faithful; noted because the Fluent theme styles `:visited`. |
 | HLB-3 | `ContentPresenter x:Name="ContentPresenter"`, `BackgroundTransition`, `FocusVisualMargin="-3"` | As Button. | As BTN-2, BTN-3, BTN-5. | As Button. |
+
+## ItemsControl
+
+| ID | WinUI source | What WinUI does | What the port does | Why |
+|---|---|---|---|---|
+| IC-1 | The built-in template of ItemsControl (no style in the merged theme) | An ItemsPresenter of the items in the `ItemsPanel`; no background or border. | `PART_ItemsPresenter` with the `ItemsPanel` of the control, in a border of its `Background`, `BorderBrush`, `BorderThickness`, `CornerRadius` and `Padding`. | FerroUI's ItemsControl draws them in its other themes; the theme sets none of them, so the control looks the same. |
+
+## Label
+
+| ID | WinUI source | What WinUI does | What the port does | Why |
+|---|---|---|---|---|
+| LBL-1 | GX `{ContentControl}` | WinUI has no Label; a ContentControl aligns its content to the left and the top. | The implicit style of ContentControl is the default theme of Label (`HorizontalContentAlignment` Left, `VerticalContentAlignment` Top), and the document claims `{ContentControl}`. | FerroUI's ContentControl has a built-in template; Label is the content control the theme styles. |
+| LBL-2 | GX `{ContentControl}`: `ContentPresenter Margin="{TemplateBinding Padding}"` with the content alignments as its alignments | The presenter at the padding; no background or border. | `PART_ContentPresenter` with the `Padding`, the content alignments, `Background`, `BackgroundSizing`, `BorderBrush`, `BorderThickness` and `CornerRadius` of the control. | The template of FerroUI's ContentControl: the same layout, and the background a FerroUI application may set. |
+| LBL-3 | (not in the source) | A label is a TextBlock. | `RecognizesAccessKey="True"`. | FerroUI's label focuses its target by its access key (G-20). |
 
 ## OverlayPopupHost
 
@@ -236,6 +267,15 @@ it. Abbreviations: CS = `controls/dev/CommonStyles/`, GX = `dxaml/xcp/dxaml/them
 | TT-2 | `OpenStates`: `FadeInThemeAnimation` (Opened), `FadeOutThemeAnimation` (Closed) of `LayoutRoot` | Fades the presenter in and out. | The `Opacity` of the tool tip is 0, and 1 under `:open`, with a linear transition of 250 ms (the fade-in of the Windows animation library); the fade-out is not seen. | G-22; FerroUI closes the popup of a tool tip at once. The opacity is the control's, so that a tool tip shown in a page with `Opacity="1"` is visible. |
 | TT-3 | `dxaml/xcp/dxaml/lib/ToolTip_Partial.cpp` (`ApplyElevationEffect` on `LayoutRoot`) | A ThemeShadow under the open tool tip. | No shadow. | The popup of a tool tip is the size of the tool tip and would clip a shadow. |
 
+## TransitioningContentControl
+
+| ID | WinUI source | What WinUI does | What the port does | Why |
+|---|---|---|---|---|
+| TCC-1 | GX `{ContentControl}` | WinUI has no transitioning content control; a ContentControl animates a change of content with its `ContentTransitions`. | The template of ContentControl twice in a panel, `PART_ContentPresenter` and `PART_ContentPresenter2`, which FerroUI's control swaps; its `PageTransition` keeps the default of the control (a cross-fade). | FerroUI's control runs its page transition between two presenters. |
+| TCC-2 | GX `{ContentControl}`: `HorizontalContentAlignment` Left, `VerticalContentAlignment` Top | A content control does not stretch its content. | Not set: the content stretches (FerroUI's default). | The control hosts pages and views that fill it, as WinUI's Frame does. |
+| TCC-3 | GX `{ContentControl}` template | The presenter at the padding; no background or border. | The presenters take the padding, the content alignments, the background and the border. | As LBL-2. |
+| TCC-4 | GX `{ContentPresenter}` (`HorizontalAlignment` Left, `VerticalAlignment` Top) | The default alignments of every ContentPresenter. | Waived. | FerroUI's ContentPresenter is not templated; a style of every presenter would be a global style. The templates of the port set the alignments of their presenters. |
+
 ## Window
 
 | ID | WinUI source | What WinUI does | What the port does | Why |
@@ -260,10 +300,10 @@ their sections above).
 | DrawerPage | B5 | pending | No WinUI control: the pane of NavigationView (NavigationView_themeresources.xaml) and SplitView (DefaultSplitViewStyle). |
 | EmbeddableControlRoot | F | ported | No WinUI style: the background and text of the window (SolidBackgroundFillColorBaseBrush, TextFillColorPrimaryBrush, ContentControlThemeFontFamily, ControlContentThemeFontSize). |
 | GridSplitter | B1 | pending | No WinUI control in the merged theme: built from the control fill and stroke resources (ControlStrongFillColorDefaultBrush, ControlFillColorDefaultBrush). |
-| GroupBox | B1 | pending | No WinUI control: the card resources (CardBackgroundFillColorDefaultBrush, CardStrokeColorDefaultBrush, OverlayCornerRadius) and the header of Expander. |
-| HeaderedContentControl | B1 | pending | No WinUI style: the header presenter of the WinUI controls with a Header (TextBox: HeaderContentPresenter, TextBoxTopHeaderMargin, TextControlHeaderForeground). |
-| ItemsControl | B1 | pending | No WinUI style in the merged theme (ItemsControl has a built-in template): an ItemsPresenter. |
-| Label | B1 | pending | No WinUI control: the content presenter of a ContentControl ({ContentControl}, generic.xaml) with the body text resources. |
+| GroupBox | B1 | ported | No WinUI control: an expanded Expander without its chevron (DefaultExpanderStyle, Expander.xaml; the header of ExpanderHeaderDownStyle, Expander_themeresources.xaml). |
+| HeaderedContentControl | B1 | ported | No WinUI style: the header presenter of the WinUI controls with a Header (TextBox: HeaderContentPresenter, TextBoxTopHeaderMargin, TextControlHeaderForeground). |
+| ItemsControl | B1 | ported | No WinUI style in the merged theme (ItemsControl has a built-in template): an ItemsPresenter of the ItemsPanel. |
+| Label | B1 | ported | No WinUI control: the implicit style of ContentControl ({ContentControl}, generic.xaml), which Controls/Label.xaml ports. |
 | ManagedFileChooser | B6 | pending | No WinUI control: built from the ListViewItem (ListViewItem_themeresources.xaml), TextBox, Button and ContentDialog (DefaultContentDialogStyle) styles. |
 | NavigationPage | B5 | pending | No WinUI control: NavigationBackButtonNormalStyle, NavigationBackButtonSmallStyle (NavigationBackButton.xaml) and the page background. |
 | OverlayPopupHost | F | ported | No WinUI style: the text of the window (TextFillColorPrimaryBrush, ContentControlThemeFontFamily, ControlContentThemeFontSize). |
@@ -274,7 +314,7 @@ their sections above).
 | TableView | B6 | pending | No control of the merged theme: WinUI's TableView of the tabular library (controls/dev/TableView, TableView_themeresources.xaml, not part of XamlControlsResources) is the closest source; the ListViewItem resources otherwise. |
 | TextSelectionHandle | B1 | pending | No WinUI style (the selection grippers are drawn by the text control): built from the accent fill (AccentFillColorDefaultBrush). |
 | ThemeVariantScope | F | ported | No WinUI style: the text foreground (TextFillColorPrimaryBrush). |
-| TransitioningContentControl | B1 | pending | No WinUI style: ContentPresenter with content transitions ({ContentPresenter}, generic.xaml). |
+| TransitioningContentControl | B1 | ported | No WinUI style: the template of ContentControl ({ContentControl}, generic.xaml), twice, for the page transition of the control. |
 | Window | F | ported | No WinUI style (Window is not a control in WinUI 3): the Mica fallback background and text of a window (SolidBackgroundFillColorBaseBrush, TextFillColorPrimaryBrush, ContentControlThemeFontFamily, ControlContentThemeFontSize). |
 | WindowNotificationManager | B6 | pending | No WinUI control: a host of InfoBar cards (InfoBar_themeresources.xaml). |
 

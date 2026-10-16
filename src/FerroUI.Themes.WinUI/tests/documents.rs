@@ -99,7 +99,11 @@ document_tests! {
     controls_button => "/Controls/Button.xaml";
     controls_check_box => "/Controls/CheckBox.xaml";
     controls_embeddable_control_root => "/Controls/EmbeddableControlRoot.xaml";
+    controls_group_box => "/Controls/GroupBox.xaml";
+    controls_headered_content_control => "/Controls/HeaderedContentControl.xaml";
     controls_hyperlink_button => "/Controls/HyperlinkButton.xaml";
+    controls_items_control => "/Controls/ItemsControl.xaml";
+    controls_label => "/Controls/Label.xaml";
     controls_overlay_popup_host => "/Controls/OverlayPopupHost.xaml";
     controls_path_icon => "/Controls/PathIcon.xaml";
     controls_popup_root => "/Controls/PopupRoot.xaml";
@@ -115,6 +119,7 @@ document_tests! {
     controls_thumb => "/Controls/Thumb.xaml";
     controls_toggle_button => "/Controls/ToggleButton.xaml";
     controls_tool_tip => "/Controls/ToolTip.xaml";
+    controls_transitioning_content_control => "/Controls/TransitioningContentControl.xaml";
     controls_winui_controls => "/Controls/WinUIControls.xaml";
     controls_window => "/Controls/Window.xaml";
     density_styles_compact => "/DensityStyles/Compact.xaml";

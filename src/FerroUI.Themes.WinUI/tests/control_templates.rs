@@ -207,10 +207,15 @@ control_tests! {
     thumb => "Thumb";
     toggle_button => "ToggleButton";
     // B1: primitives and simple content
+    group_box => "GroupBox";
+    headered_content_control => "HeaderedContentControl";
+    items_control => "ItemsControl";
+    label => "Label";
     path_icon => "PathIcon";
     progress_bar => "ProgressBar";
     separator => "Separator";
     tool_tip => "ToolTip";
+    transitioning_content_control => "TransitioningContentControl";
 }
 
 /// The window itself is themed: its template is applied when it is shown
