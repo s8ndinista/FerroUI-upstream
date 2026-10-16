@@ -281,12 +281,16 @@ impl InfoBarPanel {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use ferroui_base::layout::HorizontalAlignment;
     use ferroui_controls::Border;
 
     fn child(width: f64, height: f64, horizontal: Thickness, vertical: Thickness) -> Ref<Border> {
         let border = Border::new();
         border.set_width(width);
         border.set_height(height);
+        // Left-aligned, as the title and message text blocks of InfoBar's template: a fixed-width
+        // child is otherwise centred in the rest of the width the panel gives the last child.
+        border.set_horizontal_alignment(HorizontalAlignment::Left);
         InfoBarPanel::set_horizontal_orientation_margin(&border, horizontal);
         InfoBarPanel::set_vertical_orientation_margin(&border, vertical);
         border
@@ -313,7 +317,7 @@ mod tests {
         assert_eq!(Size::new(172.0, 20.0), panel.desired_size());
         panel.arrange(Rect::new(0.0, 0.0, 300.0, 48.0));
         assert_eq!(Rect::new(0.0, 14.0, 60.0, 20.0), title.bounds());
-        assert_eq!(Rect::new(72.0, 14.0, 228.0, 20.0), message.bounds());
+        assert_eq!(Rect::new(72.0, 14.0, 100.0, 20.0), message.bounds());
     }
 
     #[test]
