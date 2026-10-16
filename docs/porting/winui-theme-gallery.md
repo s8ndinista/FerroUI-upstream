@@ -211,14 +211,38 @@ margins of the inner contents of text boxes, the chevron of ComboBox, the disabl
 glyphs of the calendar, and the native pages where they did not show what the framework's did.
 The differences that remain are recorded in `winui-theme/DEVIATIONS.md`.
 
-A third calibration, from that run and a run at a scaling of 2 in the Windows virtual machine,
-awaits its run: the popup shadows drawn (the borders of the presenters, menus, drop-downs and
-tool tips drew none, their backgrounds being sized to the inner edge of their borders), the
-validation errors of the date and time pickers, the width of the calendar (300) and the rows of
-its days, InfoBarPanel for notifications (a card of one line 48 high), path icons unscaled in the
-icon boxes of the command bar, menu and tab templates, the carets of the symbol font, the date
-patterns of en-US, the grids of the pages aligned to the left, and the native spinner in the
-compact density.
+A third calibration followed, from that run and a run at a scaling of 2 in the Windows virtual
+machine: the popup shadows drawn (the borders of the presenters, menus, drop-downs and tool tips
+drew none, their backgrounds being sized to the inner edge of their borders), the validation
+errors of the date and time pickers, the width of the calendar (300) and the rows of its days,
+InfoBarPanel for notifications (a card of one line 48 high), path icons unscaled in the icon boxes
+of the command bar, menu and tab templates, the carets of the symbol font, the date patterns of
+en-US, the grids of the pages aligned to the left, and the native spinner in the compact density.
+
+The comparison in the Windows 11 ARM64 virtual machine (Windows App SDK 1.6, a scaling of 2, the
+pages compared at 720 by 912 from their top, pictures of 1440 by 1824 pixels), share of differing
+pixels per page in the light and dark variant, before and after the third calibration:
+
+| Page | Before (`b3a3ea90`) | After (`e72b8415`) |
+|---|---|---|
+| buttons | 1.33 / 1.29 | 1.33 / 1.29 |
+| toggles | 1.19 / 1.19 | 1.19 / 1.19 |
+| text | 1.71 / 1.72 | 1.67 / 1.68 |
+| numbers | 1.06 / 1.06 | 1.00 / 1.00 |
+| combobox | 1.04 / 1.06 | 0.99 / 1.00 |
+| lists | 1.17 / 1.17 | 1.05 / 1.08 |
+| range | 1.28 / 1.25 | 1.12 / 1.19 |
+| datetime | 2.10 / 2.10 | 1.87 / 1.81 |
+| menus | 1.62 / 1.27 | 1.52 / 1.18 |
+| flyouts | 1.87 / 1.81 | 1.60 / 1.53 |
+| tabs | 0.90 / 0.93 | 0.91 / 0.93 |
+| containers | 1.71 / 1.70 | 1.57 / 1.55 |
+| navigation | 1.65 / 1.63 | 1.48 / 1.46 |
+| table | 9.45 / 9.53 | 9.45 / 9.53 |
+| dialogs | 0.37 / 0.35 | 0.37 / 0.35 |
+
+At a scaling of 2 the edges of glyphs are a smaller share of the picture, so the floor of text is
+about 1 %.
 
 ## 6. Files
 
