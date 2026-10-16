@@ -483,7 +483,7 @@ ports a control updates its state by porting it, not by editing the table.
 | `EmbeddableControlRoot.xaml` | `{EmbeddableControlRoot}` | No WinUI style: the background and text of the window (SolidBackgroundFillColorBaseBrush, TextFillColorPrimaryBrush, ContentControlThemeFontFamily, ControlContentThemeFontSize). | F | ported |
 | `Expander.xaml` | `{Expander}` | Expander: DefaultExpanderStyle (Expander.xaml), ExpanderHeaderDownStyle, ExpanderHeaderUpStyle (Expander_themeresources.xaml). | B2 | pending |
 | `FlyoutPresenter.xaml` | `{FlyoutPresenter}` | FlyoutPresenter: DefaultFlyoutPresenterStyle (FlyoutPresenter_themeresources.xaml). | B3 | pending |
-| `GridSplitter.xaml` | `{GridSplitter}` | No WinUI control in the merged theme: built from the control fill and stroke resources (ControlStrongFillColorDefaultBrush, ControlFillColorDefaultBrush). | B1 | pending |
+| `GridSplitter.xaml` | `{GridSplitter}` | No WinUI control in the merged theme: built from the control fills of the palette (ControlStrongFillColorDefaultBrush, ControlStrongFillColorDisabledBrush) and the accent fill for the preview (AccentFillColorDefaultBrush). | B1 | ported |
 | `GroupBox.xaml` | `{GroupBox}` | No WinUI control: an expanded Expander without its chevron (DefaultExpanderStyle, Expander.xaml; the header of ExpanderHeaderDownStyle, Expander_themeresources.xaml). | B1 | ported |
 | `HeaderedContentControl.xaml` | `{HeaderedContentControl}` | No WinUI style: the header presenter of the WinUI controls with a Header (TextBox: HeaderContentPresenter, TextBoxTopHeaderMargin, TextControlHeaderForeground). | B1 | ported |
 | `HyperlinkButton.xaml` | `{HyperlinkButton}` | HyperlinkButton: DefaultHyperlinkButtonStyle (HyperlinkButton_themeresources.xaml). | F | ported |
@@ -510,7 +510,7 @@ ports a control updates its state by porting it, not by editing the table.
 | `RepeatButton.xaml` | `{RepeatButton}` | RepeatButton: DefaultRepeatButtonStyle (RepeatButton_themeresources.xaml). | F | ported |
 | `ScrollBar.xaml` | `{ScrollBar}` | ScrollBar: DefaultScrollBarStyle (ScrollBar_themeresources.xaml); {Thumb} (generic.xaml). | F | ported |
 | `ScrollViewer.xaml` | `{ScrollViewer}` | ScrollViewer: DefaultScrollViewerStyle (ScrollViewer_themeresources.xaml). | F | ported |
-| `SelectableTextBlock.xaml` | `{SelectableTextBlock}` | No WinUI control (TextBlock.IsTextSelectionEnabled): the selection highlight of the text controls (TextControlSelectionHighlightColor). | B1 | pending |
+| `SelectableTextBlock.xaml` | `{SelectableTextBlock}` | No WinUI control (TextBlock.IsTextSelectionEnabled): the selection colours of the text selection manager of WinUI (SystemControlHighlightAccentBrush, SystemColorHighlightTextColor). | B1 | ported |
 | `Separator.xaml` | `{Separator}` | MenuFlyoutSeparator: {MenuFlyoutSeparator} (MenuFlyout_themeresources.xaml); AppBarSeparator for a separator in a command bar. | B1 | ported |
 | `Slider.xaml` | `{Slider}` | Slider: DefaultSliderStyle (Slider_themeresources.xaml). | B2 | pending |
 | `SplitButton.xaml` | `{SplitButton}` | SplitButton: SplitButtonStyle (SplitButton.xaml), SplitButtonCommandBarStyle (SplitButton_themeresources.xaml); ToggleSplitButton. | B2 | pending |
@@ -525,7 +525,7 @@ ports a control updates its state by porting it, not by editing the table.
 | `TableViewColumnHeader.xaml` | `{TableViewColumnHeader}` | As TableView: the column headers of controls/dev/TableView and SortIndicator. | B6 | pending |
 | `TableViewRow.xaml` | `{TableViewRow}` | As TableView: the rows of controls/dev/TableView; the ListViewItem resources. | B6 | pending |
 | `TextBox.xaml` | `{TextBox}` | TextBox: DefaultTextBoxStyle and its DeleteButtonStyle (TextBox_themeresources.xaml); PasswordBox: DefaultPasswordBoxStyle (PasswordBox_themeresources.xaml) for the reveal button (pending, B3). | F | ported |
-| `TextSelectionHandle.xaml` | `{TextSelectionHandle}` | No WinUI style (the selection grippers are drawn by the text control): built from the accent fill (AccentFillColorDefaultBrush). | B1 | pending |
+| `TextSelectionHandle.xaml` | `{TextSelectionHandle}` | No WinUI style (the selection grippers are drawn in code, Gripper.cpp): the gripper circles in SystemColorWindowColor outlined in TextControlSelectionHighlightColor. | B1 | ported |
 | `ThemeVariantScope.xaml` | `{ThemeVariantScope}` | No WinUI style: the text foreground (TextFillColorPrimaryBrush). | F | ported |
 | `TimePicker.xaml` | `{TimePicker}`, `{TimePickerPresenter}` | TimePicker: {TimePicker}; TimePickerFlyoutPresenter: {TimePickerFlyoutPresenter} (TimePicker_themeresources.xaml). | B4 | pending |
 | `ToggleButton.xaml` | `{ToggleButton}` | ToggleButton: DefaultToggleButtonStyle (ToggleButton_themeresources.xaml). | F | ported |

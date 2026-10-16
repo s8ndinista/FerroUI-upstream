@@ -90,6 +90,13 @@ it. Abbreviations: CS = `controls/dev/CommonStyles/`, GX = `dxaml/xcp/dxaml/them
 |---|---|---|---|---|
 | ECR-1 | (no counterpart) | WinUI 3 has no root of content hosted in another UI with a style. | The template FerroUI's control requires (from the Fluent theme), with `SolidBackgroundFillColorBaseBrush`, `TextFillColorPrimaryBrush`, `ContentControlThemeFontFamily`, `ControlContentThemeFontSize`. | Built from the resources of a WinUI window. |
 
+## GridSplitter
+
+| ID | WinUI source | What WinUI does | What the port does | Why |
+|---|---|---|---|---|
+| GS-1 | (no counterpart in the merged theme) | WinUI 3 has no grid splitter (the splitters of the Windows Community Toolkit are not part of WinUI). | A bar of `ControlStrongFillColorDefaultBrush`, 4 px thick (`MinWidth`, `MinHeight`), `ControlStrongFillColorDisabledBrush` when disabled, without pointer-over or pressed states; the preview of a drag a rectangle of `AccentFillColorDefaultBrush`. | Built from the fills WinUI gives the strong parts of its controls (the thumb of a scroll bar, the knob of a toggle switch) and from the accent. |
+| GS-2 | (no counterpart) | No focus. | Focusable, with the default focus adorner of the theme. | FerroUI's splitter is moved with the keyboard when it has the focus. |
+
 ## GroupBox
 
 | ID | WinUI source | What WinUI does | What the port does | Why |
@@ -209,6 +216,13 @@ it. Abbreviations: CS = `controls/dev/CommonStyles/`, GX = `dxaml/xcp/dxaml/them
 | SCV-7 | (not in the source) | Touch scrolling is done by the platform. | `ScrollGestureRecognizer` and the snap point bindings on the presenter, as the Fluent theme. | FerroUI's touch scrolling needs them. |
 | SCV-8 | `ScrollContentPresenter Margin="{TemplateBinding Padding}"` | The padding of the scroll viewer is a margin around the presenter, outside the scrolled area. | `Padding="{TemplateBinding Padding}"` of the presenter, as the Fluent theme. | FerroUI's presenter takes the padding itself and counts it in the extent, so content laid out to the edge of the padding stays inside the extent (the ControlCatalog's home page test checks it); with a margin the content ends outside the extent. |
 
+## SelectableTextBlock
+
+| ID | WinUI source | What WinUI does | What the port does | Why |
+|---|---|---|---|---|
+| STB-1 | `dxaml/xcp/core/text/common/TextSelectionManager.cpp` (TextBlock with `IsTextSelectionEnabled`) | The selection is drawn in the `SelectionHighlightColor` of the TextBlock, the accent colour of the system by default and the highlight colour of the system in high contrast, with the text in the highlight text colour of the system. | `SelectionBrush` `SystemControlHighlightAccentBrush` (`SystemAccentColor`, `SystemColorHighlightColor` in `HighContrast`), `SelectionForegroundBrush` `SystemColorHighlightTextColor`, the `IBeam` cursor while enabled. | The same colours from the resources of the theme (G-6, G-7). |
+| STB-2 | `TextControlCommandBarContextFlyout` (the context flyout of a selectable TextBlock) | Copy and Select All in a command bar flyout. | Pending: a menu flyout of the same commands with batch B3, as for the text box (TXB-9). | RES-6. |
+
 ## Separator
 
 | ID | WinUI source | What WinUI does | What the port does | Why |
@@ -238,6 +252,15 @@ it. Abbreviations: CS = `controls/dev/CommonStyles/`, GX = `dxaml/xcp/dxaml/them
 | TXB-9 | `ContextFlyout="{StaticResource TextControlCommandBarContextFlyout}"`, `SelectionFlyout` | Context and selection command bar flyouts. | Pending: a menu flyout of the same commands with batch B3; no selection flyout. | RES-6. |
 | TXB-10 | `Control.IsTemplateFocusTarget`, `IsTabStop="False"` of the scroll viewer, `ZoomMode`, rail and scroll modes | WinUI-specific. | Left out (the scroll viewer is not focusable). | G-19. |
 | TXB-11 | (not in the source) | The I-beam cursor is the text view's. | A style of the scroll viewer sets the `IBeam` cursor on its presenter, as the Fluent theme. | FerroUI's text presenter does not set the cursor. |
+
+## TextSelectionHandle
+
+| ID | WinUI source | What WinUI does | What the port does | Why |
+|---|---|---|---|---|
+| TSH-1 | `dxaml/xcp/core/text/common/Gripper.cpp`, `TextSelectionSettings.cpp` | The grippers are drawn in code: an outer circle of 4.8 mm, an inner circle of 3.7 mm outlined 0.4 mm, a pole of 0.6 mm, a hit area of 8 mm by 9.3 mm. | A template of the same shapes at 96 dots per inch: circles of 18.14 px and 13.98 px, an outline of 1.51 px, a hit area of 30.24 px by 35.15 px, `PART_Indicator` at the top centre. | FerroUI's TextSelectionHandle is a templated control. |
+| TSH-2 | `CTextSelectionGripper::CheckAndRepositionShapesForPoleHeightChange` | The pole runs from the top of the text line down into the circles. | Left out. | FerroUI places the top of the handle at the bottom of the text line and does not give it the height of the line. |
+| TSH-3 | `CTextSelectionGripper::CheckAndAdjustStrokeColor`, `CCoreServices::GetTextSelectionGripperBrush` | The outline is the selection colour of the text control made opaque; the fill is white, or `SystemColorWindowBrush` in high contrast. | The outline is `TextControlSelectionHighlightColor` as it is; the fill is `SystemColorWindowColor`. | Markup cannot remove the alpha of a brush; `SystemColorWindowColor` is white in the light and dark dictionaries and the window colour in the high contrast one (G-6). |
+| TSH-4 | The selection grippers of WinUI | Start, end and caret grippers are the same circle under the selection point. | The same template for `:caret`, `:start` and `:end`. | Faithful; recorded because FerroUI's other themes draw different start and end handles. |
 
 ## ThemeVariantScope
 
@@ -299,7 +322,7 @@ their sections above).
 | DataValidationErrors | B1 | pending | No WinUI style (input validation was removed from WinUI 3): the error brushes (SystemControlErrorTextForegroundBrush, SystemFillColorCriticalBrush) and the info glyph of InfoBar. |
 | DrawerPage | B5 | pending | No WinUI control: the pane of NavigationView (NavigationView_themeresources.xaml) and SplitView (DefaultSplitViewStyle). |
 | EmbeddableControlRoot | F | ported | No WinUI style: the background and text of the window (SolidBackgroundFillColorBaseBrush, TextFillColorPrimaryBrush, ContentControlThemeFontFamily, ControlContentThemeFontSize). |
-| GridSplitter | B1 | pending | No WinUI control in the merged theme: built from the control fill and stroke resources (ControlStrongFillColorDefaultBrush, ControlFillColorDefaultBrush). |
+| GridSplitter | B1 | ported | No WinUI control in the merged theme: built from the control fills of the palette (ControlStrongFillColorDefaultBrush, ControlStrongFillColorDisabledBrush) and the accent fill for the preview (AccentFillColorDefaultBrush). |
 | GroupBox | B1 | ported | No WinUI control: an expanded Expander without its chevron (DefaultExpanderStyle, Expander.xaml; the header of ExpanderHeaderDownStyle, Expander_themeresources.xaml). |
 | HeaderedContentControl | B1 | ported | No WinUI style: the header presenter of the WinUI controls with a Header (TextBox: HeaderContentPresenter, TextBoxTopHeaderMargin, TextControlHeaderForeground). |
 | ItemsControl | B1 | ported | No WinUI style in the merged theme (ItemsControl has a built-in template): an ItemsPresenter of the ItemsPanel. |
@@ -309,10 +332,10 @@ their sections above).
 | OverlayPopupHost | F | ported | No WinUI style: the text of the window (TextFillColorPrimaryBrush, ContentControlThemeFontFamily, ControlContentThemeFontSize). |
 | PathIcon | B1 | ported | No WinUI style (IconElement has no template): the Path that WinUI's PathIcon builds in code (CPathIcon::ApplyTemplate, icon.cpp), unscaled and filled with the Foreground. |
 | PopupRoot | F | ported | No WinUI style: the text of the window (TextFillColorPrimaryBrush, ContentControlThemeFontFamily, ControlContentThemeFontSize). |
-| SelectableTextBlock | B1 | pending | No WinUI control (TextBlock.IsTextSelectionEnabled): the selection highlight of the text controls (TextControlSelectionHighlightColor). |
+| SelectableTextBlock | B1 | ported | No WinUI control (TextBlock.IsTextSelectionEnabled): the selection colours of the text selection manager of WinUI (SystemControlHighlightAccentBrush, SystemColorHighlightTextColor). |
 | TabbedPage | B5 | pending | No WinUI control: TabView (DefaultTabViewStyle) and the page background. |
 | TableView | B6 | pending | No control of the merged theme: WinUI's TableView of the tabular library (controls/dev/TableView, TableView_themeresources.xaml, not part of XamlControlsResources) is the closest source; the ListViewItem resources otherwise. |
-| TextSelectionHandle | B1 | pending | No WinUI style (the selection grippers are drawn by the text control): built from the accent fill (AccentFillColorDefaultBrush). |
+| TextSelectionHandle | B1 | ported | No WinUI style (the selection grippers are drawn in code, Gripper.cpp): the gripper circles in SystemColorWindowColor outlined in TextControlSelectionHighlightColor. |
 | ThemeVariantScope | F | ported | No WinUI style: the text foreground (TextFillColorPrimaryBrush). |
 | TransitioningContentControl | B1 | ported | No WinUI style: the template of ContentControl ({ContentControl}, generic.xaml), twice, for the page transition of the control. |
 | Window | F | ported | No WinUI style (Window is not a control in WinUI 3): the Mica fallback background and text of a window (SolidBackgroundFillColorBaseBrush, TextFillColorPrimaryBrush, ContentControlThemeFontFamily, ControlContentThemeFontSize). |

@@ -207,13 +207,16 @@ control_tests! {
     thumb => "Thumb";
     toggle_button => "ToggleButton";
     // B1: primitives and simple content
+    grid_splitter => "GridSplitter";
     group_box => "GroupBox";
     headered_content_control => "HeaderedContentControl";
     items_control => "ItemsControl";
     label => "Label";
     path_icon => "PathIcon";
     progress_bar => "ProgressBar";
+    selectable_text_block => "SelectableTextBlock";
     separator => "Separator";
+    text_selection_handle => "TextSelectionHandle";
     tool_tip => "ToolTip";
     transitioning_content_control => "TransitioningContentControl";
 }

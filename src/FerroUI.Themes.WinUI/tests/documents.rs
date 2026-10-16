@@ -99,6 +99,7 @@ document_tests! {
     controls_button => "/Controls/Button.xaml";
     controls_check_box => "/Controls/CheckBox.xaml";
     controls_embeddable_control_root => "/Controls/EmbeddableControlRoot.xaml";
+    controls_grid_splitter => "/Controls/GridSplitter.xaml";
     controls_group_box => "/Controls/GroupBox.xaml";
     controls_headered_content_control => "/Controls/HeaderedContentControl.xaml";
     controls_hyperlink_button => "/Controls/HyperlinkButton.xaml";
@@ -112,9 +113,11 @@ document_tests! {
     controls_repeat_button => "/Controls/RepeatButton.xaml";
     controls_scroll_bar => "/Controls/ScrollBar.xaml";
     controls_scroll_viewer => "/Controls/ScrollViewer.xaml";
+    controls_selectable_text_block => "/Controls/SelectableTextBlock.xaml";
     controls_separator => "/Controls/Separator.xaml";
     controls_text_block => "/Controls/TextBlock.xaml";
     controls_text_box => "/Controls/TextBox.xaml";
+    controls_text_selection_handle => "/Controls/TextSelectionHandle.xaml";
     controls_theme_variant_scope => "/Controls/ThemeVariantScope.xaml";
     controls_thumb => "/Controls/Thumb.xaml";
     controls_toggle_button => "/Controls/ToggleButton.xaml";

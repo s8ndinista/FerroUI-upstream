@@ -39,7 +39,10 @@
         <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/ItemsControl.xaml" />
         <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/HeaderedContentControl.xaml" />
         <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/GroupBox.xaml" />
+        <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/SelectableTextBlock.xaml" />
         <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/TransitioningContentControl.xaml" />
+        <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/TextSelectionHandle.xaml" />
+        <MergeResourceInclude Source="ferres://FerroUI.Themes.WinUI/Controls/GridSplitter.xaml" />
       </ResourceDictionary.MergedDictionaries>
     </ResourceDictionary>
   </Styles.Resources>
