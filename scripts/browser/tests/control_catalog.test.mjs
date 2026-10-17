@@ -385,22 +385,32 @@ check("text typed into a text box becomes its text", async (page) => {
 
 // --- a phone ---------------------------------------------------------------------------------------
 
-/** One contact of a touch screen at (x, y) in CSS pixels: "touchStart", "touchMove" or "touchEnd". */
-const touch = (page, type, x, y) => page.send("Input.dispatchTouchEvent",
-    { type, touchPoints: type === "touchEnd" ? [] : [{ x, y, id: 1, radiusX: 4, radiusY: 4, force: 1 }] });
+/**
+ * One contact of a touch screen at (x, y) in CSS pixels: "touchStart", "touchMove" or "touchEnd";
+ * `time` is when the browser raises the event, in ms since the epoch (now when absent).
+ */
+const touch = (page, type, x, y, time) => page.send("Input.dispatchTouchEvent",
+    { type, touchPoints: type === "touchEnd" ? [] : [{ x, y, id: 1, radiusX: 4, radiusY: 4, force: 1 }], ...(time === undefined ? {} : { timestamp: time / 1000 }) });
 
 /**
  * Drags a finger up by `distance` pixels from (x, y) in steps of `step` pixels, `pause` ms apart,
- * holds it still for `hold` ms and lifts it.
+ * holds it still for `hold` ms and lifts it. The events are raised at those times, as a touch
+ * screen raises them (a finger that moves is sampled every 16 ms), however long the page takes to
+ * handle each: the view handles input between the frames it draws, which take long on a CI runner
+ * without a GPU, and the time a pointer event was raised is its time stamp.
  */
 async function swipeUp(page, x, y, distance, { step = 20, pause = 0, hold = 0 } = {}) {
-    await touch(page, "touchStart", x, y);
+    let time = Date.now();
+    await touch(page, "touchStart", x, y, time);
     for (let moved = step; moved <= distance; moved += step) {
-        if (pause) { await sleep(pause); }
-        await touch(page, "touchMove", x, y - moved);
+        // Not before the time of the event: a time stamp ahead of the clock of the page is no time.
+        await sleep(Math.max(pause, 16));
+        time += Math.max(pause, 16);
+        await touch(page, "touchMove", x, y - moved, time);
     }
-    if (hold) { await sleep(hold); }
-    await touch(page, "touchEnd");
+    await sleep(Math.max(hold, 16));
+    time += Math.max(hold, 16);
+    await touch(page, "touchEnd", undefined, undefined, time);
 }
 
 /** The vertical position of the text blocks of the content that are shown, by their text. */

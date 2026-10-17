@@ -78,6 +78,11 @@ type ReadableDataValue = {
     value: StorageItem;
 };
 
+// Not in the original, which stamps a pointer event with the time the framework handles it: the
+// milliseconds since the browser raised the event. The page handles input between the frames it
+// draws, and a frame that takes long made a moving finger look as if it had stopped.
+const eventAge = (args: Event): number => performance.now() - args.timeStamp;
+
 export class InputHelper {
     static clipboardState: ClipboardState = ClipboardState.None;
     static resolveClipboard?: (value: ClipboardResult) => void;
@@ -541,7 +546,7 @@ export class InputHelper {
             }
             FerroExports.InputHelper?.OnPointerMove(
                 topLevelId, args.pointerType, args.pointerId, args.offsetX, args.offsetY,
-                args.pressure, args.tiltX, args.tiltY, args.twist ?? 0, this.getModifiers(args), args);
+                args.pressure, args.tiltX, args.tiltY, args.twist ?? 0, this.getModifiers(args), eventAge(args), args);
             args.preventDefault();
         };
 
@@ -551,7 +556,7 @@ export class InputHelper {
             }
             FerroExports.InputHelper?.OnPointerDown(
                 topLevelId, args.pointerType, args.pointerId, args.button, args.offsetX, args.offsetY,
-                args.pressure, args.tiltX, args.tiltY, args.twist ?? 0, this.getModifiers(args));
+                args.pressure, args.tiltX, args.tiltY, args.twist ?? 0, this.getModifiers(args), eventAge(args));
             args.preventDefault();
         };
 
@@ -561,7 +566,7 @@ export class InputHelper {
             }
             FerroExports.InputHelper?.OnPointerUp(
                 topLevelId, args.pointerType, args.pointerId, args.button, args.offsetX, args.offsetY,
-                args.pressure, args.tiltX, args.tiltY, args.twist ?? 0, this.getModifiers(args));
+                args.pressure, args.tiltX, args.tiltY, args.twist ?? 0, this.getModifiers(args), eventAge(args));
             args.preventDefault();
         };
 
@@ -571,7 +576,7 @@ export class InputHelper {
             }
             FerroExports.InputHelper?.OnPointerCancel(
                 topLevelId, args.pointerType, args.pointerId, args.offsetX, args.offsetY,
-                args.pressure, args.tiltX, args.tiltY, args.twist ?? 0, this.getModifiers(args));
+                args.pressure, args.tiltX, args.tiltY, args.twist ?? 0, this.getModifiers(args), eventAge(args));
         };
 
         // Differs from the original, which does not pass the unit of the deltas: a browser reports
