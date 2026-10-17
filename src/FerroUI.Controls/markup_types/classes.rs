@@ -706,6 +706,12 @@ ferro_class_info!(TextBlock {
         namespace: "FerroUI.Controls",
         content: Inlines,
         properties: [
+            LayoutRoundingPlacement: TextLayoutRoundingPlacement {
+                get: |this: &Ref<TextBlock>| this.get_value(TextBlock::layout_rounding_placement_property()),
+                set: |this: &Ref<TextBlock>, value: TextLayoutRoundingPlacement| {
+                    this.set_value(TextBlock::layout_rounding_placement_property(), value)
+                }
+            },
             LineHeight: f64 {
                 get: |this: &Ref<TextBlock>| this.get_value(TextBlock::line_height_property()),
                 set: |this: &Ref<TextBlock>, value: f64| this.set_value(TextBlock::line_height_property(), value)

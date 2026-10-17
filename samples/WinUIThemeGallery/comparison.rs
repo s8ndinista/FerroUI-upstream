@@ -6,6 +6,7 @@
 use crate::capture::Setting;
 use crate::pages::PageInfo;
 use crate::theme::{Density, Variant};
+use ferroui_controls::TextLayoutRoundingPlacement;
 
 /// The resource dictionary of WinUI that gives the controls their compact sizes (what the
 /// compact density of the theme does in the framework).
@@ -128,13 +129,38 @@ pub fn crop(pixels: &[u8], size: (i32, i32), x: i32, y: i32, width: i32, height:
 pub const TEXT_VARIANTS_ENV: &str = "FERROUI_WINUI_COMPARE_TEXT_VARIANTS";
 
 /// The keys of a text setting: those of the development override of the text rendering of the
-/// Skia backend (`ferroui_skia::TEXT_OVERRIDE_KEYS`) and `baseline`, the override of where a
-/// text block puts its text (`ferroui_base::media::text_formatting::TextBaselineRounding`).
+/// Skia backend (`ferroui_skia::TEXT_OVERRIDE_KEYS`) and `baseline`, where the text blocks of the
+/// page put the height layout rounding adds to them (`TextBlock.LayoutRoundingPlacement`, set on
+/// the page; [`parse_baseline`]).
 pub const TEXT_VARIANT_KEYS: &[&str] = &["contrast", "gamma", "edging", "hinting", "baseline_snap", "baseline"];
+
+/// Parses the value of the key `baseline` of a text setting: `below` (or `top`) and `above` (or
+/// `winui`) set `TextBlock.LayoutRoundingPlacement` on the page of the framework, `theme` (or
+/// `default`, or empty) leaves it to the theme (the WinUI theme sets `Above` on its top-levels).
+///
+/// # Errors
+/// The value is none of those.
+pub fn parse_baseline(value: &str) -> Result<Option<TextLayoutRoundingPlacement>, String> {
+    match value.trim().to_ascii_lowercase().as_str() {
+        "" | "default" | "theme" => Ok(None),
+        "below" | "top" => Ok(Some(TextLayoutRoundingPlacement::Below)),
+        "above" | "winui" => Ok(Some(TextLayoutRoundingPlacement::Above)),
+        other => Err(format!("the baseline {other:?} is not below, above or theme")),
+    }
+}
+
+/// The name of a value of the key `baseline`, as [`parse_baseline`] reads it.
+pub fn baseline_name(placement: Option<TextLayoutRoundingPlacement>) -> &'static str {
+    match placement {
+        None => "theme",
+        Some(TextLayoutRoundingPlacement::Below) => "below",
+        Some(TextLayoutRoundingPlacement::Above) => "above",
+    }
+}
 
 /// One text setting of a calibration run: a name (the directory of its pictures) and the values
 /// of the development overrides it sets; the others keep the values of the environment of the
-/// process (`FERROUI_TEXT_*`).
+/// process (`FERROUI_TEXT_*`), and the placement of the baseline that of the theme.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct TextVariant {
     pub name: String,
@@ -226,6 +252,18 @@ mod tests {
         assert!(parse_text_variants("contrast").is_err());
         assert!(parse_text_variants("a b:contrast=1").is_err());
         assert!(parse_text_variants("x:contrast=1;x:gamma=0").is_err());
+    }
+
+    #[test]
+    fn the_baseline_of_a_text_setting_parses() {
+        assert_eq!(Ok(None), parse_baseline(""));
+        assert_eq!(Ok(None), parse_baseline(" Theme "));
+        assert_eq!(Ok(Some(TextLayoutRoundingPlacement::Below)), parse_baseline("top"));
+        assert_eq!(Ok(Some(TextLayoutRoundingPlacement::Above)), parse_baseline("WinUI"));
+        for placement in [None, Some(TextLayoutRoundingPlacement::Below), Some(TextLayoutRoundingPlacement::Above)] {
+            assert_eq!(Ok(placement), parse_baseline(baseline_name(placement)));
+        }
+        assert!(parse_baseline("ceil").is_err());
     }
 
     #[test]

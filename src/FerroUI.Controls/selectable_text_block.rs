@@ -166,7 +166,10 @@ impl InputElementImpl for SelectableTextBlock {
             let text: Vec<u16> = text.encode_utf16().collect();
             let padding = this.padding();
 
-            let point = e.get_position(Some(this)) - Point::new(padding.left, padding.top);
+            // A FerroUI addition: the text is lower by the height layout rounding adds above it
+            // (`TextBlock.LayoutRoundingPlacement`).
+            let point = e.get_position(Some(this))
+                - Point::new(padding.left, padding.top + this.layout_rounding_offset());
 
             let click_to_select = e.key_modifiers().contains(KeyModifiers::SHIFT);
 
@@ -233,7 +236,10 @@ impl InputElementImpl for SelectableTextBlock {
             let text = this.content_text();
             let padding = this.padding();
 
-            let point = e.get_position(Some(this)) - Point::new(padding.left, padding.top);
+            // A FerroUI addition: the text is lower by the height layout rounding adds above it
+            // (`TextBlock.LayoutRoundingPlacement`).
+            let point = e.get_position(Some(this))
+                - Point::new(padding.left, padding.top + this.layout_rounding_offset());
 
             let hit = this.text_layout().hit_test_point(point);
             let text_position = hit.text_position();
@@ -274,7 +280,10 @@ impl InputElementImpl for SelectableTextBlock {
         if e.initial_press_mouse_button() == MouseButton::Right {
             let padding = this.padding();
 
-            let point = e.get_position(Some(this)) - Point::new(padding.left, padding.top);
+            // A FerroUI addition: the text is lower by the height layout rounding adds above it
+            // (`TextBlock.LayoutRoundingPlacement`).
+            let point = e.get_position(Some(this))
+                - Point::new(padding.left, padding.top + this.layout_rounding_offset());
 
             let hit = this.text_layout().hit_test_point(point);
 
