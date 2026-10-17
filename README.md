@@ -5,7 +5,7 @@
 
 FerroUI is a cross-platform UI framework for Rust: a retained-mode control library with a styled property system, data binding, XAML markup, control themes and a composition-based renderer. It is a port of the Avalonia UI framework to Rust that keeps the original architecture, contracts and behaviour, so that applications, themes and markup written against that model carry over with their structure intact.
 
-> **Status: preview.** `0.1.0-preview.4` is published on crates.io ([CHANGELOG.md](CHANGELOG.md)). Every upstream file and member in scope is ported or waived with a recorded reason. The framework runs on macOS, Windows, Linux (X11, Wayland and the framebuffer), iOS, Android and in the browser. It was verified in continuous integration, in virtual machines, in the iOS simulator and on the Android emulator, not on a range of real devices; the public API is not stable. See [Project status](#project-status).
+> **Status: 0.1.0.** `0.1.0`, the first release that is not a preview, is published on crates.io ([CHANGELOG.md](CHANGELOG.md)). Every upstream file and member in scope is ported or waived with a recorded reason. The framework runs on macOS, Windows, Linux (X11, Wayland and the framebuffer), iOS, Android and in the browser. It was verified in continuous integration, in virtual machines, in the iOS simulator and on the Android emulator, not on a range of real devices. Within 0.1 the public API is kept; 0.2.0 may change it. See [Project status](#project-status).
 
 ![Fluent theme rendered by FerroUI](docs/porting/images/themed_window_fluent.png)
 
@@ -75,17 +75,17 @@ FerroUI is a set of crates that are released together at one version. A desktop 
 
 ```toml
 [dependencies]
-ferroui-base = "=0.1.0-preview.4"
-ferroui-controls = "=0.1.0-preview.4"
-ferroui-desktop = "=0.1.0-preview.4"
-ferroui-themes-fluent = "=0.1.0-preview.4"
+ferroui-base = "=0.1.0"
+ferroui-controls = "=0.1.0"
+ferroui-desktop = "=0.1.0"
+ferroui-themes-fluent = "=0.1.0"
 ```
 
 The WinUI 3 theme is the crate `ferroui-themes-winui` (`WinUITheme`), used in place of `ferroui-themes-fluent` or beside it; the facade crate has it as the feature `winui-theme`.
 
 An application can also name one dependency instead: the facade crate `ferroui`. It re-exports the common crates under short names (`ferroui::base`, `ferroui::controls`, ...) with a prelude of the types of a minimal application; its default features are the desktop platforms and the Fluent theme, and further features add the Simple theme, XAML loading at run time, the colour picker, the dialogs, the browser platform, the WinUI 3 theme, the Vello backend, the headless platform and the graphics contracts ([docs/release.md](docs/release.md), section 2.1). In the repository it is used already: `cargo run -p ferroui --example hello`.
 
-A preview is a pre-release in the sense of semantic versioning (`0.1.0-preview.1`, `0.1.0-preview.2`, ... before `0.1.0`). Cargo selects a pre-release only when it is named, and the crates of one preview depend on one another at exactly that version, so name the same version for every FerroUI crate, as above. A preview may change any part of the public API. The release process is described in [docs/release.md](docs/release.md) and the changes of each release in [CHANGELOG.md](CHANGELOG.md).
+The crates of a release depend on one another at exactly its version, so name the same version for every FerroUI crate, as above. `0.1.0` follows four previews (`0.1.0-preview.1` to `0.1.0-preview.4`), pre-releases in the sense of semantic versioning, which Cargo selects only when they are named. The work towards the next minor version is published as previews of it (`0.2.0-preview.1`, ...), which may change any part of the public API. The release process is described in [docs/release.md](docs/release.md) and the changes of each release in [CHANGELOG.md](CHANGELOG.md).
 
 The platforms that are not part of platform detection are named by their own crates beside the others: `ferroui-wayland`, `ferroui-linuxframebuffer`, `ferroui-ios`, `ferroui-android`, `ferroui-browser`, `ferroui-winui` and `ferroui-headless-vnc`.
 

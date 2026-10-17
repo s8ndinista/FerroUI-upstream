@@ -4,6 +4,10 @@ All notable changes to FerroUI are recorded in this file. The format follows [Ke
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-10-17
+
+The first release that is not a preview. It is the fourth preview with the work that followed it: the port at upstream 66b7273b9a, the WinUI 3 theme placing text on the baseline of native WinUI 3, and touch scrolling that coasts after a flick, in the browser on a phone too. The crates of 0.1.0 depend on one another at exactly that version, as the previews did; within 0.1 a later release keeps the public API, and the work towards 0.2.0 is published as previews of it (`0.2.0-preview.N`).
+
 ### Added
 
 - **`TextBlock.LayoutRoundingPlacement`** (`TextLayoutRoundingPlacement`: `Below`, the default, or `Above`), an inherited attached property of `TextBlock` and a FerroUI addition: where a text block puts the height that layout rounding adds to it. With `Above` the text, the selection and hit testing of `SelectableTextBlock`, the access key underline of `AccessText` and the embedded controls move down by that height, as WinUI's TextBlock places its text (`docs/porting/text-rendering.md`, section 6).
@@ -23,6 +27,13 @@ All notable changes to FerroUI are recorded in this file. The format follows [Ke
 - **A window follows a change of its text rendering from the next frame** (Skia backend): the layer the composition target keeps for a window whose frames are not kept (every GPU swap chain) kept the text contrast, gamma and subpixel order of the frame it was created in until the window was resized; it is now created again when they change, so a change of the system's ClearType settings, or a calibration override, reaches the window at once.
 - **The WinUI 3 theme after the last comparison with native WinUI 3** (`docs/porting/winui-theme/DEVIATIONS.md`): the calendar is as tall as WinUI's, with its days where WinUI draws them (CDB-10); the text of CalendarDatePicker starts where WinUI's does and its calendar glyph has the size and the shape of the native one (CDP-2, CDP-3); the shadows of menus, context menus, flyouts, tool tips and the date and time picker flyouts are drawn, which the presenters clipped away as templated controls (G-24); the path icons of menu items are as large as WinUI's (12 px of a 24-unit geometry where they were 16, PI-3); the elements of the templates that draw a background and a border draw the background inside the border, WinUI's default, so that translucent strokes such as the borders of the notification cards are drawn over the page (G-25).
 - **The text calibration page of the WinUI theme gallery** has the layout of its native twin: its grid is aligned to the top, as tall as its rows, where the stretched grid gave each row one more device pixel under layout rounding and moved the lower rows by up to 11 px at 200 %.
+
+### Known limitations
+
+- **Verification.** Every platform was verified in continuous integration, in virtual machines, in the iOS simulator and on the Android emulator; not on a range of real devices.
+- **The Vello backend** is experimental (`docs/porting/vello-backend.md`, section 13).
+- **XAML**: hot reload and parts of the build integration are open.
+- **The browser platform**: the scripts that assemble a site are in the repository and not in a package (`docs/release.md`, section 6.1).
 
 ## [0.1.0-preview.4] - 2026-10-17
 
@@ -150,7 +161,8 @@ The preview makes the framework available as crates so that it can be tried outs
 - **Documentation.** The API documentation is the documentation comments carried over by the port; there are no guides beyond the README and the documents under `docs/`. Not every crate is expected to build on docs.rs (see `docs/release.md`).
 - **Tests of the published crates.** The packages hold the sources of the tests but not the test fonts and images of the Skia backend; the test suites are run from the repository.
 
-[Unreleased]: https://github.com/wieslawsoltes/FerroUI/compare/v0.1.0-preview.4...main
+[Unreleased]: https://github.com/wieslawsoltes/FerroUI/compare/v0.1.0...main
+[0.1.0]: https://github.com/wieslawsoltes/FerroUI/releases/tag/v0.1.0
 [0.1.0-preview.4]: https://github.com/wieslawsoltes/FerroUI/releases/tag/v0.1.0-preview.4
 [0.1.0-preview.3]: https://github.com/wieslawsoltes/FerroUI/releases/tag/v0.1.0-preview.3
 [0.1.0-preview.2]: https://github.com/wieslawsoltes/FerroUI/releases/tag/v0.1.0-preview.2

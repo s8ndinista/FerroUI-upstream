@@ -1,6 +1,6 @@
 # Releasing FerroUI
 
-How the crates of the workspace are published to crates.io: which crates, in which order, at which version, what each package holds, how the release workflow runs and what has to be true before it is run. The first preview, `0.1.0-preview.1`, is published (tag `v0.1.0-preview.1`, 37 crates); the workspace carries the next version, `0.1.0-preview.2`. Section 12 records the decisions the owner made before the first release.
+How the crates of the workspace are published to crates.io: which crates, in which order, at which version, what each package holds, how the release workflow runs and what has to be true before it is run. Four previews (`0.1.0-preview.1` to `0.1.0-preview.4`) and the first release that is not a preview, `0.1.0` (tag `v0.1.0`, 38 crates), are published; the workspace carries the next version. Section 12 records the decisions the owner made before the first release.
 
 Publishing cannot be taken back. A version of a crate can be yanked (Cargo then no longer selects it for new builds) but never removed or replaced, and the name of a crate belongs to the account that published it first. Everything below is arranged so that a release is rehearsed completely before anything is uploaded.
 
@@ -166,6 +166,8 @@ Why pre-release identifiers and not `0.1.0`, `0.1.1`, ...: Cargo treats `0.1.x` 
 
 **The crates of the workspace are pinned to one another exactly.** A requirement that names a pre-release without `=` (`"0.1.0-preview.1"`) is a caret requirement: it matches that preview, every later preview of `0.1.0`, and `0.1.x` releases. Cargo would then be free to build `ferroui-controls 0.1.0-preview.1` against `ferroui-base 0.1.0-preview.3`, which was never built or tested together and, between previews, will not compile. So every dependency between crates of the workspace is `version = "=<the version of the workspace>"`: the crates of a release resolve only as the set they were released as. An application does the same and names one version for every FerroUI crate (README, "Installation").
 
+After `0.1.0` the scheme repeats for the next minor version: its previews are `0.2.0-preview.1`, `0.2.0-preview.2`, ... and then `0.2.0`; a fix of `0.1.0` that keeps its public API would be `0.1.1`.
+
 The exact pins stay when `0.1.0` is released. They can be relaxed to caret requirements once the crates keep semantic versioning towards one another individually, which is a later decision.
 
 **One place.** The version is stated in `[workspace.package]` of the root manifest, which every member inherits (`version.workspace = true`), and in the `version` keys of the path dependencies in `[workspace.dependencies]`, which every member uses (`workspace = true`). One script writes both and verifies the result:
@@ -294,13 +296,13 @@ The job `packaging` of `ci.yml` runs `publish.sh --dry-run --no-verify` on Linux
 
 **If a crate cannot be published.** The crates before it in the order are on crates.io at that version and stay there. Fix the cause and run again if the fix does not change a crate that was already uploaded; otherwise yank the uploaded crates of that version (`cargo yank`, by the owner) and release the next preview number.
 
-## 9. What "ready" means: the checklist of a preview
+## 9. What "ready" means: the checklist of a release
 
 Before the release:
 
 - [ ] The CI is green on `main`, including a run of the macOS job on the merged state (dispatch the CI workflow by hand on `main`; it does not run for a push).
 - [ ] The tracking pages are current: `docs/porting/CRITICAL-PATH.md` and the generated `docs/porting/TRACKING.md`.
-- [ ] The README states the status honestly: what works on which platform, how each was verified (CI, a virtual machine, a simulator or an emulator) and what was not, that the Vello backend is experimental, and that the release is a preview.
+- [ ] The README states the status honestly: what works on which platform, how each was verified (CI, a virtual machine, a simulator or an emulator) and what was not, that the Vello backend is experimental, and whether the release is a preview.
 - [ ] `CHANGELOG.md` has the entry of the version, with what it contains and its known limitations, and the date.
 - [ ] `scripts/release/set-version.sh <version>` was run if the version changed, and the installation section of the README names the version.
 - [ ] `scripts/release/readme-crates-table.sh --check` passes.
@@ -317,7 +319,7 @@ After the release:
 - [ ] At the first release only: remove the note between the `release-note` markers of the README ("Upcoming"), and the sentence of its status paragraph that says nothing has been published.
 - [ ] Set the date of the entry in `CHANGELOG.md` and point its link at the tag.
 - [ ] Look at the docs.rs badges of the README table after an hour (section 7) and note the failures for the next preview.
-- [ ] Set the next version (`scripts/release/set-version.sh 0.1.0-preview.<N+1>`), so that `main` never carries a version that is on crates.io with other contents.
+- [ ] Set the next version (`scripts/release/set-version.sh 0.1.0-preview.<N+1>` after a preview, the first preview of the next minor version, such as `0.2.0-preview.1`, after a release), so that `main` never carries a version that is on crates.io with other contents.
 
 ## 10. A preview that turns out broken
 
