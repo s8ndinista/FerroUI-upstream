@@ -284,6 +284,54 @@ fn should_reset_bidi_levels_of_trailing_whitespaces_after_text_wrapping() {
 }
 
 #[test]
+fn should_resolve_explicit_formatting_after_another_paragraph() {
+    let rows: [(&str, i8); 3] = [
+        ("\u{202E}abc\u{202C}", 1), // RLO ... PDF
+        ("\u{202B}abc\u{202C}", 2), // RLE ... PDF
+        ("\u{2067}abc\u{2069}", 2), // RLI ... PDI
+    ];
+
+    for (text, expected_level) in rows {
+        let _scope = start();
+
+        let default_properties = run_properties_with_foreground(Typeface::default_typeface(), 12.0, Brushes::black());
+
+        let paragraph_properties: Rc<dyn TextParagraphProperties> =
+            Rc::new(GenericTextParagraphProperties::new(default_properties.clone()));
+
+        let formatter = TextFormatterImpl::new();
+
+        let _ = formatter.format_line(
+            &SingleBufferTextSource::new("abc", default_properties.clone(), false),
+            0,
+            f64::INFINITY,
+            &paragraph_properties,
+            None,
+        );
+
+        let text_line = formatter.format_line(
+            &SingleBufferTextSource::new(text, default_properties.clone(), false),
+            0,
+            f64::INFINITY,
+            &paragraph_properties,
+            None,
+        );
+
+        let text_line = text_line.expect("a text line");
+
+        let text_runs = text_line.text_runs();
+        let mut runs_with_a = text_runs
+            .iter()
+            .filter_map(|run| run.downcast_ref::<ShapedTextRun>())
+            .filter(|run| run.text().to_string_lossy().contains('a'));
+        let text_run = runs_with_a.next().expect("a shaped run with the text");
+        assert!(runs_with_a.next().is_none(), "a single shaped run with the text");
+
+        assert_eq!(expected_level, text_run.bidi_level(), "{text:?}");
+    }
+}
+
+#[test]
 fn should_reset_bidi_levels_of_trailing_whitespaces_after_text_wrapping_2() {
     let _scope = start();
 
