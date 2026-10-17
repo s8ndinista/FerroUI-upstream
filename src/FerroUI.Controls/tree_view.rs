@@ -30,6 +30,8 @@ pub struct TreeView {
     selected_items: RefCell<Option<SelectedItemsList>>,
     selected_items_subscription: Cell<Option<u64>>,
     syncing_selected_items: Cell<bool>,
+    suppress_selection_changed: Cell<bool>,
+    reported_selection: RefCell<Vec<Option<BoxedValue>>>,
 }
 
 ferro_class! {
@@ -297,6 +299,8 @@ impl TreeView {
             selected_items: RefCell::new(None),
             selected_items_subscription: Cell::new(None),
             syncing_selected_items: Cell::new(false),
+            suppress_selection_changed: Cell::new(false),
+            reported_selection: RefCell::new(Vec::new()),
         }
     }
 
@@ -430,7 +434,12 @@ impl TreeView {
 
         let mut all_items = Vec::new();
         add_items(self, &mut all_items);
+
+        self.suppress_selection_changed.set(true);
         Self::synchronize_items(&self.selected_items(), &all_items);
+        self.suppress_selection_changed.set(false);
+
+        self.raise_pending_selection_changed();
     }
 
     /// Deselects all items in the [`TreeView`].
@@ -520,10 +529,16 @@ impl TreeView {
     fn select_single_item(&self, item: Option<BoxedValue>) {
         let old_value = self.selected_item.borrow().clone();
         self.syncing_selected_items.set(true);
+        self.suppress_selection_changed.set(true);
+
         self.selected_items().clear();
         *self.selected_item.borrow_mut() = item.clone();
         self.selected_items().add(item);
+
         self.syncing_selected_items.set(false);
+        self.suppress_selection_changed.set(false);
+
+        self.raise_pending_selection_changed();
 
         let new_value = self.selected_item.borrow().clone();
         self.raise_direct_property_changed(Self::selected_item_property(), &old_value, &new_value);
@@ -581,11 +596,14 @@ impl TreeView {
                     self.mark_container_selected(&container, false);
                 }
 
+                // A reset carries no item lists, so the delta comes from the last reported selection.
+                let (reset_removed, reset_added) = self.get_selection_delta();
+                removed = Some(reset_removed);
+                added = Some(reset_added);
+
                 if self.selected_items().count() > 0 {
                     let selected_items = self.selected_items().to_vec();
                     self.selected_items_added(ItemsView::from_slice(&selected_items));
-
-                    added = Some(selected_items);
                 } else if !self.syncing_selected_items.get() {
                     self.set_selected_item(None);
                 }
@@ -612,15 +630,45 @@ impl TreeView {
             _ => {}
         }
 
+        // Suppressed changes keep accumulating until the caller raises the event itself.
+        if !self.suppress_selection_changed.get() {
+            self.raise_selection_changed(removed, added);
+        }
+    }
+
+    /// Compares the current selection against the last reported selection:
+    /// the items deselected since and the items selected since.
+    fn get_selection_delta(&self) -> (Vec<Option<BoxedValue>>, Vec<Option<BoxedValue>>) {
+        let selected: Vec<Option<BoxedValue>> =
+            self.selected_items().to_vec().into_iter().filter(Option::is_some).collect();
+        let reported = self.reported_selection.borrow();
+        let contains = |list: &[Option<BoxedValue>], item: &Option<BoxedValue>| list.iter().any(|x| items_equal(x, item));
+
+        let removed = reported.iter().filter(|x| !contains(&selected[..], *x)).cloned().collect();
+        let added = selected.iter().filter(|x| !contains(&reported[..], *x)).cloned().collect();
+        (removed, added)
+    }
+
+    /// Raises the selection changed event for everything that has changed
+    /// since the event was last raised.
+    fn raise_pending_selection_changed(&self) {
+        let (removed, added) = self.get_selection_delta();
+        self.raise_selection_changed(Some(removed), Some(added));
+    }
+
+    fn raise_selection_changed(&self, removed: Option<Vec<Option<BoxedValue>>>, added: Option<Vec<Option<BoxedValue>>>) {
+        let reported: Vec<Option<BoxedValue>> =
+            self.selected_items().to_vec().into_iter().filter(Option::is_some).collect();
+        *self.reported_selection.borrow_mut() = reported;
+
         if added.as_ref().is_some_and(|added| !added.is_empty())
             || removed.as_ref().is_some_and(|removed| !removed.is_empty())
         {
-            let changed = SelectionChangedEventArgs::new(
+            self.raise_event(&SelectionChangedEventArgs::new(
                 Some(SelectingItemsControl::selection_changed_event()),
                 removed.unwrap_or_default(),
                 added.unwrap_or_default(),
-            );
-            self.raise_event(&changed);
+            ));
         }
     }
 
