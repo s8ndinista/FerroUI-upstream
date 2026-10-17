@@ -4,7 +4,7 @@ All notable changes to FerroUI are recorded in this file. The format follows [Ke
 
 ## [Unreleased]
 
-## [0.1.0-preview.4] - Unreleased
+## [0.1.0-preview.4] - 2026-10-17
 
 The fourth preview. It adds a second complete theme, the WinUI 3 theme of microsoft-ui-xaml, validated against native WinUI 3 by a gallery, makes it the ControlCatalog's first theme, and draws text as sharp and as dark as the native text of the platforms.
 
@@ -131,7 +131,7 @@ The preview makes the framework available as crates so that it can be tried outs
 - **Tests of the published crates.** The packages hold the sources of the tests but not the test fonts and images of the Skia backend; the test suites are run from the repository.
 
 [Unreleased]: https://github.com/wieslawsoltes/FerroUI/compare/v0.1.0-preview.4...main
-[0.1.0-preview.4]: https://github.com/wieslawsoltes/FerroUI/compare/v0.1.0-preview.3...v0.1.0-preview.4
+[0.1.0-preview.4]: https://github.com/wieslawsoltes/FerroUI/releases/tag/v0.1.0-preview.4
 [0.1.0-preview.3]: https://github.com/wieslawsoltes/FerroUI/releases/tag/v0.1.0-preview.3
 [0.1.0-preview.2]: https://github.com/wieslawsoltes/FerroUI/releases/tag/v0.1.0-preview.2
 [0.1.0-preview.1]: https://github.com/wieslawsoltes/FerroUI/releases/tag/v0.1.0-preview.1
