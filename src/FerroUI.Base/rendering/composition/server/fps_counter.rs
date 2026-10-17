@@ -25,10 +25,10 @@ const VISUAL_DIGITS: i32 = 5;
 pub struct FpsCounter {
     start: Duration,
     text_renderer: Rc<DiagnosticTextRenderer>,
-    frame_label: ShapedText,
-    fps_label: ShapedText,
-    visited_label: ShapedText,
-    rendered_label: ShapedText,
+    frame_label: Rc<ShapedText>,
+    fps_label: Rc<ShapedText>,
+    visited_label: Rc<ShapedText>,
+    rendered_label: Rc<ShapedText>,
     digits_width: f64,
     line_height: f64,
 
@@ -44,15 +44,22 @@ pub struct FpsCounter {
 }
 
 impl FpsCounter {
+    /// The fixed labels of the counter. The compositor shapes them with the text renderer on
+    /// the UI thread (`ServerCompositor::diagnostic_text_renderer`), so that a counter created
+    /// by the first frame of the render thread finds them shaped: shaping creates glyph runs,
+    /// whose platform implementation comes from the services of the UI thread (the render
+    /// thread of the browser has none). Upstream shapes them in the constructor.
+    pub const LABELS: [&'static str; 4] = ["Frame #", " FPS: ", " V:", " R:"];
+
     /// `now` is the current reading of the monotonic clock that is also
     /// passed to [`render_fps`](Self::render_fps).
     pub fn new(text_renderer: Rc<DiagnosticTextRenderer>, now: Duration) -> Self {
         let counter = Self {
             start: now,
-            frame_label: text_renderer.shape("Frame #"),
-            fps_label: text_renderer.shape(" FPS: "),
-            visited_label: text_renderer.shape(" V:"),
-            rendered_label: text_renderer.shape(" R:"),
+            frame_label: text_renderer.shape_label(Self::LABELS[0]),
+            fps_label: text_renderer.shape_label(Self::LABELS[1]),
+            visited_label: text_renderer.shape_label(Self::LABELS[2]),
+            rendered_label: text_renderer.shape_label(Self::LABELS[3]),
             digits_width: (FRAME_DIGITS + FPS_DIGITS + 2 * VISUAL_DIGITS) as f64 * text_renderer.digit_cell_width(),
             line_height: text_renderer.get_max_height(),
             text_renderer,
@@ -124,16 +131,16 @@ impl FpsCounter {
         context.draw_rectangle(Some(background), None, rect.into(), &BoxShadows::default());
 
         let mut x = 0.0;
-        self.draw_label(context, &self.frame_label, &mut x);
+        self.draw_label(context, &*self.frame_label, &mut x);
         self.draw_number(context, self.total_frames.get(), FRAME_DIGITS, &mut x);
-        self.draw_label(context, &self.fps_label, &mut x);
+        self.draw_label(context, &*self.fps_label, &mut x);
         self.draw_number(context, self.fps.get(), FPS_DIGITS, &mut x);
         if let Some(memory_text) = &*self.memory_text.borrow() {
             self.draw_label(context, memory_text, &mut x);
         }
-        self.draw_label(context, &self.visited_label, &mut x);
+        self.draw_label(context, &*self.visited_label, &mut x);
         self.draw_number(context, visited_visuals, VISUAL_DIGITS, &mut x);
-        self.draw_label(context, &self.rendered_label, &mut x);
+        self.draw_label(context, &*self.rendered_label, &mut x);
         self.draw_number(context, rendered_visuals, VISUAL_DIGITS, &mut x);
 
         rect
