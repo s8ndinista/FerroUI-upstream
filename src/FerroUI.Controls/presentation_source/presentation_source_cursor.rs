@@ -27,7 +27,10 @@ impl PresentationSource {
 
 impl IInputRoot for PresentationSource {
     fn hit_test_chrome_element(&self, point: Point) -> Option<ferroui_base::input::WindowDecorationsElementRole> {
-        let visual = self.root_visual()?.get_visual_at_filtered(point, &PresentationSource::chrome_hit_test_filter);
+        // The root visual is cleared when the top level closes, but the platform can still
+        // hit-test the window.
+        let root_visual = self.root_visual()?;
+        let visual = root_visual.get_visual_at_filtered(point, &PresentationSource::chrome_hit_test_filter);
         PresentationSource::get_chrome_role_from_visual(visual)
     }
 

@@ -37,6 +37,19 @@ fn closing_should_detach_platform_input_handler() {
 }
 
 #[test]
+fn chrome_hit_test_should_return_null_after_closing() {
+    let _app = UnitTestApplication::start(TestServices::styled_window());
+    let window_impl = MockWindowingPlatform::create_window_mock();
+    let window = Window::with_impl(window_impl.clone());
+    let source = window.presentation_source();
+    let input_root: &dyn IInputRoot = &**source;
+
+    ITopLevelImpl::closed(&*window_impl).expect("the closed callback is set")();
+
+    assert_eq!(None, input_root.hit_test_chrome_element(Point::new(10.0, 10.0)));
+}
+
+#[test]
 fn chrome_hit_test_prefers_overlay_over_content() {
     let overlay = Border::new();
     overlay.set_background(Some(Brushes::red()));
