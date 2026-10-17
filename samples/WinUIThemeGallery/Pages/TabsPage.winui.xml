@@ -48,7 +48,8 @@
     <SelectorBarItem Text="Recent" IsSelected="True" />
     <SelectorBarItem Text="Shared" />
     <SelectorBarItem Text="Pointer over"
-                     Background="{ThemeResource SelectorBarItemBackgroundPointerOver}" />
+                     Background="{ThemeResource SelectorBarItemBackgroundPointerOver}"
+                     Foreground="{ThemeResource SelectorBarItemForegroundPointerOver}" />
     <SelectorBarItem Text="Disabled" IsEnabled="False" />
   </SelectorBar>
 </StackPanel>
