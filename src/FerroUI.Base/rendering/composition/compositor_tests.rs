@@ -71,7 +71,7 @@ impl TestBorder {
         self.invalidate_visual();
     }
 
-    fn add(&self, child: &Ref<TestBorder>) {
+    fn add<T: ObjectType + Upcast<Visual>>(&self, child: &Ref<T>) {
         self.visual_children().add(child.clone().upcast());
         // Panels report child changes through their logical children.
         self.invalidate_visual();
@@ -80,7 +80,7 @@ impl TestBorder {
         }
     }
 
-    fn remove(&self, child: &Ref<TestBorder>) {
+    fn remove<T: ObjectType + Upcast<Visual>>(&self, child: &Ref<T>) {
         self.visual_children().remove(&child.clone().upcast());
         if let Some(source) = self.presentation_source() {
             source.renderer().recalculate_children(self);
@@ -443,6 +443,54 @@ fn invalidate_visual_does_not_update_rendering_target_when_rendering_stopped() {
     services.renderer.start();
     services.run_jobs();
     assert_eq!(Size::new(300.0, 300.0), composition_target.size());
+}
+
+// --- CompositionChildVisualTests --------------------------------------------------
+
+/// Clears its child visual when it leaves the tree, the usual counterpart to
+/// setting one on attach.
+#[repr(C)]
+struct ClearingHost {
+    base: Visual,
+}
+
+ferro_class!(ClearingHost: Visual);
+ferro_impl_classes!(ClearingHost: FerroObjectImpl, StyledElementImpl);
+
+impl VisualImpl for ClearingHost {
+    fn on_detached_from_visual_tree(this: &Self, _e: &VisualTreeAttachmentEventArgs) {
+        ElementComposition::set_element_child_visual(this, None);
+    }
+}
+
+impl ClearingHost {
+    fn new() -> Ref<Self> {
+        instantiate(Self { base: Visual::construct() })
+    }
+}
+
+#[test]
+fn child_visual_cleared_during_detach_can_reattach() {
+    let s = CompositorCanvas::new();
+    let child = s.compositor.create_container_visual();
+    let host = ClearingHost::new();
+    host.set_bounds(Rect::new(0.0, 0.0, 100.0, 100.0));
+    s.canvas.add(&host);
+    s.run_jobs();
+    ElementComposition::set_element_child_visual(&host, Some(child.clone()));
+    s.run_jobs();
+
+    s.canvas.remove(&host);
+    s.run_jobs();
+    assert!(child.parent().is_none());
+
+    s.canvas.add(&host);
+    s.run_jobs();
+    ElementComposition::set_element_child_visual(&host, Some(child.clone()));
+    s.run_jobs();
+
+    let element_visual = ElementComposition::get_element_visual(&host).expect("the host is attached");
+    assert!(element_visual.children().contains(&child));
 }
 
 // --- hit testing (CompositorHitTestingTests, without controls) ----------------------
