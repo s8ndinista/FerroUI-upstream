@@ -320,6 +320,40 @@ fn is_item(value: &Option<BoxedValue>, expected: &Rc<Item>) -> bool {
 /// available: it is run with the test theme and the control themes of
 /// [`add_theme`] instead.
 #[test]
+fn item_marked_as_selected_is_selected_before_the_drop_down_is_opened() {
+    let _app = start_styled_window();
+    let target = ComboBox::new();
+    let item1 = combo_box_item("Item 1");
+    item1.set_is_selected(true);
+    target.items().add(Some(Control::boxed(item1.clone())));
+    target.items().add(Some(Control::boxed(combo_box_item("Item 2"))));
+
+    let _window = show_window(&target);
+
+    assert_eq!(0, target.selected_index());
+    assert!(is_control(&target.selected_item(), &item1.upcast()));
+}
+
+#[test]
+fn item_marked_as_selected_stays_selected_when_the_drop_down_is_opened() {
+    let _app = start_styled_window();
+    let target = ComboBox::new();
+    let item1 = combo_box_item("Item 1");
+    item1.set_is_selected(true);
+    target.items().add(Some(Control::boxed(item1)));
+    target.items().add(Some(Control::boxed(combo_box_item("Item 2"))));
+
+    let window = show_window(&target);
+
+    target.set_is_drop_down_open(true);
+    window.layout_manager().execute_layout_pass();
+    target.set_is_drop_down_open(false);
+    window.layout_manager().execute_layout_pass();
+
+    assert_eq!(0, target.selected_index());
+}
+
+#[test]
 fn can_open_drop_down_after_replacing_application_theme() {
     fn create_theme() -> Rc<dyn IStyle> {
         let styles = Styles::new();
