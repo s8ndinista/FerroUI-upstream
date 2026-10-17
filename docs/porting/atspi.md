@@ -88,7 +88,7 @@ A node subscribes to its peer when it is attached and translates:
 
 | Peer event | Signal of `org.a11y.atspi.Event.Object` (`siiva{sv}`) |
 |---|---|
-| children changed | `ChildrenChanged` `add`, 0, a reference to the node itself (upstream's form: clients re-read the children) |
+| children changed | for a node whose children a client has read: one `ChildrenChanged` `remove` per child that leaves, with its old index, highest first and before the child is detached, then one `add` per child that arrives, with its new index, lowest first; a moved child is removed and added (`AtSpiNode::diff_children`, the longest run of children that keep their order is kept; upstream 66b7273b9a, #22398). Nothing for a node whose children no client has read |
 | the name property | `PropertyChange` `accessible-name` with the name |
 | the help text property | `PropertyChange` `accessible-description` |
 | the value property of the value pattern | `PropertyChange` `accessible-value` with the text |

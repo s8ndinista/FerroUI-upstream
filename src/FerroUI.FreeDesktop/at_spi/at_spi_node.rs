@@ -11,6 +11,7 @@ use super::handlers::at_spi_action_handler::AtSpiActionHandler;
 use super::handlers::at_spi_component_handler::AtSpiComponentHandler;
 use super::handlers::at_spi_editable_text_handler::AtSpiEditableTextHandler;
 use super::handlers::at_spi_event_object_handler::AtSpiEventObjectHandler;
+use super::handlers::to_i32;
 use super::handlers::at_spi_event_window_handler::AtSpiEventWindowHandler;
 use super::handlers::at_spi_image_handler::AtSpiImageHandler;
 use super::handlers::at_spi_selection_handler::AtSpiSelectionHandler;
@@ -30,7 +31,8 @@ use ferroui_controls::automation::{
     ExpandCollapseState, SelectionPatternIdentifiers, TogglePatternIdentifiers, ValuePatternIdentifiers,
 };
 use std::cell::{Cell, RefCell};
-use std::collections::BTreeSet;
+use std::collections::{BTreeSet, HashMap, HashSet};
+use std::hash::Hash;
 use std::rc::{Rc, Weak};
 use zbus::zvariant::Value;
 
@@ -377,32 +379,143 @@ impl AtSpiNode {
             return Vec::new();
         }
 
-        if !self.children_dirty.get() {
-            return self.attached_children.borrow().clone();
+        if self.children_dirty.get() {
+            Self::update_children(&server, &this, None);
         }
 
-        let child_peers = self.get_child_peers();
-        let mut next_children: Vec<Rc<AtSpiNode>> = Vec::with_capacity(child_peers.len());
+        self.attached_children.borrow().clone()
+    }
 
+    /// Lists the removals and additions that turn one child list into another: each removed
+    /// child with its index in `old_children`, highest index first, into `removed`, and each
+    /// added child with its index in `new_children`, lowest index first, into `added`.
+    ///
+    /// Applying the removals and then the additions in the order given turns the old list into
+    /// the new one. A child that changed position is reported as removed and added. `key` is the
+    /// identity of a child (the reference identity of upstream's class constraint).
+    pub(crate) fn diff_children<T: Clone, K: Eq + Hash>(
+        old_children: &[T],
+        new_children: &[T],
+        key: impl Fn(&T) -> K,
+        removed: &mut Vec<(usize, T)>,
+        added: &mut Vec<(usize, T)>,
+    ) {
+        let mut old_indices: HashMap<K, usize> = HashMap::with_capacity(old_children.len());
+        for (i, child) in old_children.iter().enumerate() {
+            old_indices.insert(key(child), i);
+        }
+
+        // Children that keep their place must stay in the same order in both lists. Keeping the
+        // longest increasing run of old indices, taken in new order, reports the fewest moves.
+        let mut common: Vec<&T> = Vec::new();
+        let mut common_old_indices: Vec<usize> = Vec::new();
+        for child in new_children {
+            if let Some(old_index) = old_indices.get(&key(child)) {
+                common.push(child);
+                common_old_indices.push(*old_index);
+            }
+        }
+
+        let mut kept: HashSet<K> = HashSet::new();
+        for position in Self::longest_increasing_run(&common_old_indices) {
+            kept.insert(key(common[position]));
+        }
+
+        for i in (0..old_children.len()).rev() {
+            if !kept.contains(&key(&old_children[i])) {
+                removed.push((i, old_children[i].clone()));
+            }
+        }
+
+        for (i, child) in new_children.iter().enumerate() {
+            if !kept.contains(&key(child)) {
+                added.push((i, child.clone()));
+            }
+        }
+    }
+
+    // Returns the positions of a longest strictly increasing subsequence of the values.
+    fn longest_increasing_run(values: &[usize]) -> Vec<usize> {
+        // tails[k] is the position of the smallest value that ends an increasing run of length k + 1.
+        let mut tails: Vec<usize> = Vec::new();
+        let mut previous: Vec<Option<usize>> = vec![None; values.len()];
+        for i in 0..values.len() {
+            let (mut low, mut high) = (0, tails.len());
+            while low < high {
+                let middle = (low + high) / 2;
+                if values[tails[middle]] < values[i] {
+                    low = middle + 1;
+                } else {
+                    high = middle;
+                }
+            }
+
+            previous[i] = if low > 0 { Some(tails[low - 1]) } else { None };
+            if low == tails.len() {
+                tails.push(i);
+            } else {
+                tails[low] = i;
+            }
+        }
+
+        let mut run = Vec::with_capacity(tails.len());
+        let mut i = tails.last().copied();
+        while let Some(position) = i {
+            run.push(position);
+            i = previous[position];
+        }
+        run
+    }
+
+    // Rebuilds the child list. With an event handler, reports each change to clients as AT-SPI
+    // specifies.
+    fn update_children(server: &Rc<AtSpiServer>, this: &Rc<AtSpiNode>, event_handler: Option<Rc<AtSpiEventObjectHandler>>) {
+        let old_children = this.attached_children.borrow().clone();
+        let child_peers = this.get_child_peers();
+        let mut new_children: Vec<Rc<AtSpiNode>> = Vec::with_capacity(child_peers.len());
         for child_peer in &child_peers {
             let child_node = server.get_or_create_node(child_peer);
-            if !server.attach_node(&child_node, Some(&this)) {
-                continue;
-            }
-
-            next_children.push(child_node);
-        }
-
-        let previous = self.attached_children.borrow().clone();
-        for removed_node in previous.iter().filter(|child| !next_children.iter().any(|next| Rc::ptr_eq(next, child))) {
-            if removed_node.parent().is_some_and(|parent| Rc::ptr_eq(&parent, &this)) {
-                server.detach_subtree_recursive(removed_node);
+            if server.attach_node(&child_node, Some(this)) {
+                new_children.push(child_node);
             }
         }
 
-        *self.attached_children.borrow_mut() = next_children.clone();
-        self.children_dirty.set(false);
-        next_children
+        *this.attached_children.borrow_mut() = new_children.clone();
+        this.children_dirty.set(false);
+
+        if old_children.is_empty() && event_handler.is_none() {
+            return;
+        }
+
+        let mut removed = Vec::new();
+        let mut added = Vec::new();
+        Self::diff_children(&old_children, &new_children, |child| Rc::as_ptr(child), &mut removed, &mut added);
+
+        if !removed.is_empty() {
+            let remaining: HashSet<*const AtSpiNode> = new_children.iter().map(Rc::as_ptr).collect();
+            for (index, child) in &removed {
+                // The reference must be sent before the child is detached, when it becomes the null reference.
+                if let Some(event_handler) = &event_handler {
+                    event_handler.emit_children_changed_signal("remove", to_i32(*index), Self::get_child_variant(server, child));
+                }
+
+                if !remaining.contains(&Rc::as_ptr(child)) && child.parent().is_some_and(|parent| Rc::ptr_eq(&parent, this)) {
+                    server.detach_subtree_recursive(child);
+                }
+            }
+        }
+
+        let Some(event_handler) = event_handler else {
+            return;
+        };
+
+        for (index, child) in &added {
+            event_handler.emit_children_changed_signal("add", to_i32(*index), Self::get_child_variant(server, child));
+        }
+    }
+
+    fn get_child_variant(server: &AtSpiServer, child: &Rc<AtSpiNode>) -> Value<'static> {
+        server.get_reference(Some(child)).to_dbus_struct()
     }
 
     pub(crate) fn detach(&self) {
@@ -437,35 +550,13 @@ impl AtSpiNode {
             return;
         }
 
-        self.children_dirty.set(true);
-
-        let child_peers = self.get_child_peers();
-
-        let attached = self.attached_children.borrow().clone();
-        if !attached.is_empty() {
-            let removed_children: Vec<Rc<AtSpiNode>> =
-                attached.iter().filter(|child_node| !child_peers.contains(child_node.peer())).cloned().collect();
-
-            for old_child in &removed_children {
-                if old_child.parent().is_some_and(|parent| Rc::ptr_eq(&parent, &this)) {
-                    server.detach_subtree_recursive(old_child);
-                }
-            }
-
-            if !removed_children.is_empty() {
-                self.attached_children
-                    .borrow_mut()
-                    .retain(|child_node| !removed_children.iter().any(|removed| Rc::ptr_eq(removed, child_node)));
-            }
-        }
-
-        let Some(event_handler) = self.event_object_handler() else { return };
-        if !server.has_event_listeners() {
+        // No client has read these children, so there is nothing to report. The next read builds them.
+        if self.children_dirty.get() {
             return;
         }
 
-        let reference = server.get_reference(Some(&this));
-        event_handler.emit_children_changed_signal("add", 0, reference.to_dbus_struct());
+        let event_handler = if server.has_event_listeners() { self.event_object_handler() } else { None };
+        Self::update_children(&server, &this, event_handler);
     }
 
     fn on_peer_property_changed(&self, e: &AutomationPropertyChangedEventArgs) {
