@@ -16,7 +16,7 @@ use crate::window_impl_base_keyboard::KeyRepeat;
 use ferroui_base::input::raw::{IRawInputEventArgs, RawKeyEventArgs, RawKeyEventType, RawTextInputEventArgs};
 use ferroui_base::input::{IInputDevice, IInputRoot, KeyboardDevice, MouseDevice, TouchDevice};
 use ferroui_base::platform::ICursorImpl;
-use ferroui_base::{PixelPoint, Rect, Size};
+use ferroui_base::{PixelPoint, Point, Rect, Size};
 use ferroui_controls::{WindowResizeReason, WindowTransparencyLevel};
 use ferroui_x11::raw_event_grouping::RawEventGrouper;
 use std::cell::{Cell, RefCell};
@@ -49,6 +49,8 @@ pub struct WindowBaseImpl {
     is_disposed: Cell<bool>,
     current_output_ids: RefCell<Vec<WaylandOutputId>>,
     client_size: Cell<Size>,
+    position: Cell<PixelPoint>,
+    child_positions_invalidated: RefCell<Vec<Rc<dyn Fn()>>>,
 
     pub(crate) closed: Callback<dyn Fn()>,
     pub(crate) lost_focus: Callback<dyn Fn()>,
@@ -76,6 +78,8 @@ impl WindowBaseImpl {
             is_disposed: Cell::new(false),
             current_output_ids: RefCell::new(Vec::new()),
             client_size: Cell::new(Size::default()),
+            position: Cell::new(PixelPoint::default()),
+            child_positions_invalidated: RefCell::new(Vec::new()),
             closed: RefCell::new(None),
             lost_focus: RefCell::new(None),
             position_changed: RefCell::new(None),
@@ -157,6 +161,53 @@ impl WindowBaseImpl {
     pub(crate) fn set_client_size(&self, value: Size) {
         self.client_size.set(value);
         self.client.any_thread_wakeup_render_loop();
+    }
+
+    // Wayland doesn't expose toplevel positions, so the "screen" space is the
+    // toplevel's buffer-relative logical space (DesktopScaling is 1). Popups
+    // report their offset within that space.
+    pub fn position(&self) -> PixelPoint {
+        self.position.get()
+    }
+
+    /// Sets the position a popup derived from its last configure (the override of
+    /// `Position` of the reference: a top-level keeps the default).
+    pub(crate) fn set_position(&self, value: PixelPoint) {
+        self.position.set(value);
+    }
+
+    pub(crate) fn point_to_client(&self, point: PixelPoint) -> Point {
+        let position = self.position();
+        Point::new(f64::from(point.x - position.x), f64::from(point.y - position.y))
+    }
+
+    pub(crate) fn point_to_screen(&self, point: Point) -> PixelPoint {
+        let position = self.position();
+        PixelPoint::new(point.x as i32 + position.x, point.y as i32 + position.y)
+    }
+
+    /// Subscribes to `ChildPositionsInvalidated`: raised when the position or the
+    /// origin of the window geometry (`IPopupParent::window_geometry_origin`) changed.
+    /// Child popups re-derive their own position from it, since the compositor doesn't
+    /// send them a configure when only the parent moved.
+    pub(crate) fn add_child_positions_invalidated(&self, handler: Rc<dyn Fn()>) {
+        self.child_positions_invalidated.borrow_mut().push(handler);
+    }
+
+    /// Unsubscribes a handler given to [`Self::add_child_positions_invalidated`].
+    pub(crate) fn remove_child_positions_invalidated(&self, handler: &Rc<dyn Fn()>) {
+        let mut handlers = self.child_positions_invalidated.borrow_mut();
+        if let Some(index) = handlers.iter().position(|h| Rc::ptr_eq(h, handler)) {
+            handlers.remove(index);
+        }
+    }
+
+    pub(crate) fn invalidate_child_positions(&self) {
+        // A handler may subscribe or unsubscribe while it runs.
+        let handlers = self.child_positions_invalidated.borrow().clone();
+        for handler in handlers {
+            handler();
+        }
     }
 
     /// The cursor the window asked for, when it is one of this backend.
