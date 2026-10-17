@@ -40,3 +40,5 @@ pub use at_spi_server::AtSpiServer;
 
 #[cfg(test)]
 mod tests;
+#[cfg(test)]
+mod at_spi_children_diff_tests;
