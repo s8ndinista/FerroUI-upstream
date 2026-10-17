@@ -274,7 +274,7 @@ impl TextSelectionHandleCanvas {
             text_box.set_current_value(TextBox::selection_start_property(), caret_index);
             text_box.set_current_value(TextBox::selection_end_property(), caret_index);
 
-            let caret_bound = presenter.get_cursor_rectangle();
+            let caret_bound = presenter.cursor_rectangle();
             self.caret_handle.set_top_left(self.to_layer(caret_bound.bottom_left()));
         }
     }
@@ -391,7 +391,7 @@ impl TextSelectionHandleCanvas {
             return Point::default();
         };
 
-        let caret_bounds = presenter.get_cursor_rectangle();
+        let caret_bounds = presenter.cursor_rectangle();
         let search_offset = caret_bounds.height / 2.0;
         let indicator = handle.indicator_position();
         indicator.with_y(indicator.y - search_offset)
@@ -501,7 +501,7 @@ impl TextSelectionHandleCanvas {
         }
 
         presenter.move_caret_to_text_position(position, false);
-        let caret_bound = presenter.get_cursor_rectangle();
+        let caret_bound = presenter.cursor_rectangle();
         handle.set_top_left(self.to_layer(caret_bound.bottom_left()));
 
         self.move_handles_to_selection();

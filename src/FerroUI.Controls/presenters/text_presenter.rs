@@ -712,6 +712,16 @@ impl TextPresenter {
         self.set_value(Self::caret_index_property(), value)
     }
 
+    /// The caret rectangle relative to this presenter.
+    ///
+    /// The rectangle has zero width. Its X/Y position and height describe the
+    /// caret location within the presenter's text layout coordinates.
+    pub fn cursor_rectangle(&self) -> Rect {
+        self.ensure_caret_bounds();
+
+        self.caret_bounds.get()
+    }
+
     /// The character displayed in place of every character of the text
     /// (`'\0'`: none).
     pub fn password_char(&self) -> char {
@@ -1352,13 +1362,6 @@ impl TextPresenter {
                 handler();
             }
         }
-    }
-
-    #[allow(dead_code)] // called by the input method client of the text box
-    pub(crate) fn get_cursor_rectangle(&self) -> Rect {
-        self.ensure_caret_bounds();
-
-        self.caret_bounds.get()
     }
 
     fn on_preedit_changed(&self, preedit_text: Option<&str>, cursor_position: Option<i32>) {

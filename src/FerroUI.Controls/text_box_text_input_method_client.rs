@@ -84,7 +84,7 @@ impl TextInputMethodClient for TextBoxTextInputMethodClient {
             return Rect::default();
         };
 
-        presenter.get_cursor_rectangle().transform_to_aabb(transform)
+        presenter.cursor_rectangle().transform_to_aabb(transform)
     }
 
     fn selection(&self) -> TextSelection {
