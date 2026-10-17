@@ -34,6 +34,7 @@ struct PresenterSubscriptions {
     tapped: RoutedEventHandlerToken,
     pointer_pressed: RoutedEventHandlerToken,
     got_focus: RoutedEventHandlerToken,
+    is_effectively_visible_changed: Rc<dyn IDisposable>,
     text_box: Option<(Rc<dyn IDisposable>, RoutedEventHandlerToken)>,
 }
 
@@ -621,6 +622,7 @@ impl TextSelectionHandleCanvas {
                     presenter.remove_handler(InputElement::pointer_pressed_event(), subscriptions.pointer_pressed);
                     presenter.remove_handler(InputElement::got_focus_event(), subscriptions.got_focus);
                 }
+                subscriptions.is_effectively_visible_changed.dispose();
 
                 if let Some((property_changed, scroll_gesture)) = subscriptions.text_box {
                     property_changed.dispose();
@@ -687,6 +689,15 @@ impl TextSelectionHandleCanvas {
                 )
             };
 
+            let is_effectively_visible_changed = {
+                let weak = weak.clone();
+                presenter.is_effectively_visible_changed(move || {
+                    if let Some(this) = weak.upgrade() {
+                        this.presenter_is_effectively_visible_changed();
+                    }
+                })
+            };
+
             let text_box = presenter.find_ancestor_of_type::<TextBox>(false);
             *self.text_box.borrow_mut() = text_box.as_ref().map(Ref::downgrade);
 
@@ -712,9 +723,22 @@ impl TextSelectionHandleCanvas {
                 (property_changed, scroll_gesture)
             });
 
-            *self.subscriptions.borrow_mut() =
-                Some(PresenterSubscriptions { key_down, tapped, pointer_pressed, got_focus, text_box });
+            *self.subscriptions.borrow_mut() = Some(PresenterSubscriptions {
+                key_down,
+                tapped,
+                pointer_pressed,
+                got_focus,
+                is_effectively_visible_changed,
+                text_box,
+            });
         }
+    }
+
+    fn presenter_is_effectively_visible_changed(&self) {
+        // If visibility changes, reset the canvas visibility states.
+        self.close_flyout();
+        self.set_show_handles(false);
+        self.ensure_visible();
     }
 
     fn text_box_scrolling(&self) {

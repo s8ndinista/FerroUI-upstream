@@ -261,6 +261,25 @@ fn handles_are_shown_on_touch_selection_and_hidden_on_key_input() {
     assert!(canvas.handles().iter().all(|handle| !handle.is_visible()));
 }
 
+/// Port of upstream's `TextBoxTests.Changing_Visibility_Hides_Text_Selection_Handles`,
+/// on the tree of the canvas tests: hiding the text box hides the handles.
+#[test]
+fn changing_visibility_hides_text_selection_handles() {
+    let _app = start();
+    let tree = create_tree("0123", true);
+
+    let _touch = touch_double_tap(&tree, Point::new(10.0, 0.0));
+
+    let _ = tree.first.focus();
+    let canvas = tree.canvas();
+
+    assert!(canvas.show_handles());
+
+    tree.first.set_is_visible(false);
+
+    assert!(!canvas.show_handles());
+}
+
 /// Additional: a press of the left mouse button hides the handles and
 /// leaves the touch mode.
 #[test]
