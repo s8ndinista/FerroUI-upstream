@@ -90230,7 +90230,7 @@
    "winui": "AutoSuggestBox: DefaultAutoSuggestBoxStyle, AutoSuggestBoxTextBoxStyle (AutoSuggestBox_themeresources.xaml).",
    "status": "ported",
    "deviations": 9,
-   "date": "2026-10-16"
+   "date": "2026-10-17"
   },
   {
    "document": "Button.xaml",
@@ -90274,7 +90274,7 @@
    "winui": "The month and year items of CalendarView (CalendarViewBaseItem resources of CalendarView_themeresources.xaml).",
    "status": "ported",
    "deviations": 7,
-   "date": "2026-10-16"
+   "date": "2026-10-17"
   },
   {
    "document": "CalendarDatePicker.xaml",
@@ -90318,7 +90318,7 @@
    "winui": "FlipView: DefaultFlipViewStyle (FlipView_themeresources.xaml) and FlipViewItem.",
    "status": "ported",
    "deviations": 7,
-   "date": "2026-10-16"
+   "date": "2026-10-17"
   },
   {
    "document": "CarouselPage.xaml",
@@ -90340,7 +90340,7 @@
    "winui": "CheckBox: DefaultCheckBoxStyle (CheckBox_themeresources.xaml).",
    "status": "ported",
    "deviations": 5,
-   "date": "2026-10-16"
+   "date": "2026-10-17"
   },
   {
    "document": "ComboBox.xaml",
@@ -90351,7 +90351,7 @@
    "winui": "ComboBox: DefaultComboBoxStyle (ComboBox_themeresources.xaml).",
    "status": "ported",
    "deviations": 16,
-   "date": "2026-10-16"
+   "date": "2026-10-17"
   },
   {
    "document": "ComboBoxItem.xaml",
@@ -90362,7 +90362,7 @@
    "winui": "ComboBoxItem: DefaultComboBoxItemStyle, ComboBoxItemPill (ComboBox_themeresources.xaml).",
    "status": "ported",
    "deviations": 7,
-   "date": "2026-10-16"
+   "date": "2026-10-17"
   },
   {
    "document": "CommandBar.xaml",
@@ -90376,7 +90376,7 @@
    "winui": "CommandBar: DefaultCommandBarStyle, DefaultCommandBarOverflowPresenterStyle (CommandBar_themeresources.xaml); AppBarButton: DefaultAppBarButtonStyle, AppBarButtonOverflowStyle; AppBarToggleButton: DefaultAppBarToggleButtonStyle, AppBarToggleButtonOverflowStyle; AppBarSeparator: DefaultAppBarSeparatorStyle.",
    "status": "ported",
    "deviations": 20,
-   "date": "2026-10-16"
+   "date": "2026-10-17"
   },
   {
    "document": "ContentPage.xaml",
@@ -90387,7 +90387,7 @@
    "winui": "No WinUI style (Page has none): the page background and text of the window (SolidBackgroundFillColorBaseBrush, TextFillColorPrimaryBrush).",
    "status": "ported",
    "deviations": 1,
-   "date": "2026-10-16"
+   "date": "2026-10-17"
   },
   {
    "document": "ContextMenu.xaml",
@@ -90409,7 +90409,7 @@
    "winui": "No WinUI style (input validation was removed from WinUI 3): the critical fill of the palette (SystemFillColorCriticalBrush) for the message and the border of the field, and the error icon of InfoBar (InfoBar.xaml, InfoBar_themeresources.xaml) for the tool tip variant.",
    "status": "ported",
    "deviations": 2,
-   "date": "2026-10-16"
+   "date": "2026-10-17"
   },
   {
    "document": "DatePicker.xaml",
@@ -90441,7 +90441,7 @@
    "winui": "No WinUI control: the pane of NavigationView (NavigationView_themeresources.xaml) and SplitView (DefaultSplitViewStyle).",
    "status": "ported",
    "deviations": 13,
-   "date": "2026-10-16"
+   "date": "2026-10-17"
   },
   {
    "document": "DropDownButton.xaml",
@@ -90474,7 +90474,7 @@
    "winui": "Expander: DefaultExpanderStyle (Expander.xaml), ExpanderHeaderDownStyle, ExpanderHeaderUpStyle (Expander_themeresources.xaml).",
    "status": "ported",
    "deviations": 8,
-   "date": "2026-10-16"
+   "date": "2026-10-17"
   },
   {
    "document": "FlyoutPresenter.xaml",
@@ -90496,7 +90496,7 @@
    "winui": "No WinUI control in the merged theme: built from the control fills of the palette (ControlStrongFillColorDefaultBrush, ControlStrongFillColorDisabledBrush) and the accent fill for the preview (AccentFillColorDefaultBrush).",
    "status": "ported",
    "deviations": 2,
-   "date": "2026-10-16"
+   "date": "2026-10-17"
   },
   {
    "document": "GroupBox.xaml",
@@ -90540,7 +90540,7 @@
    "winui": "No WinUI style in the merged theme (ItemsControl has a built-in template): an ItemsPresenter of the ItemsPanel.",
    "status": "ported",
    "deviations": 1,
-   "date": "2026-10-16"
+   "date": "2026-10-17"
   },
   {
    "document": "Label.xaml",
@@ -90562,7 +90562,7 @@
    "winui": "ListBox: DefaultListBoxStyle (ListBox_themeresources.xaml).",
    "status": "ported",
    "deviations": 4,
-   "date": "2026-10-16"
+   "date": "2026-10-17"
   },
   {
    "document": "ListBoxItem.xaml",
@@ -90573,7 +90573,7 @@
    "winui": "ListBoxItem: DefaultListBoxItemStyle (ListBox_themeresources.xaml).",
    "status": "ported",
    "deviations": 11,
-   "date": "2026-10-16"
+   "date": "2026-10-17"
   },
   {
    "document": "ManagedFileChooser.xaml",
@@ -90585,7 +90585,7 @@
    "winui": "No WinUI control: built from the ListViewItem (ListViewItem_themeresources.xaml), TextBox, Button and ContentDialog (DefaultContentDialogStyle) styles.",
    "status": "ported",
    "deviations": 15,
-   "date": "2026-10-16"
+   "date": "2026-10-17"
   },
   {
    "document": "Menu.xaml",
@@ -90596,7 +90596,7 @@
    "winui": "MenuBar: DefaultMenuBarStyle (MenuBar.xaml); MenuBarItem (MenuBarItem.xaml).",
    "status": "ported",
    "deviations": 8,
-   "date": "2026-10-16"
+   "date": "2026-10-17"
   },
   {
    "document": "MenuFlyoutPresenter.xaml",
@@ -90617,7 +90617,7 @@
    "batch": "B3",
    "winui": "MenuFlyoutItem: DefaultMenuFlyoutItemStyle; MenuFlyoutSubItem: DefaultMenuFlyoutSubItemStyle; ToggleMenuFlyoutItem: DefaultToggleMenuFlyoutItemStyle (MenuFlyout_themeresources.xaml); RadioMenuFlyoutItem: DefaultRadioMenuFlyoutItemStyle (RadioMenuFlyoutItem_themeresources.xaml).",
    "status": "ported",
-   "deviations": 15,
+   "deviations": 16,
    "date": "2026-10-17"
   },
   {
@@ -90649,7 +90649,7 @@
    "winui": "InfoBar: {InfoBar} (InfoBar.xaml, InfoBar_themeresources.xaml).",
    "status": "ported",
    "deviations": 13,
-   "date": "2026-10-16"
+   "date": "2026-10-17"
   },
   {
    "document": "NumericUpDown.xaml",
@@ -90660,7 +90660,7 @@
    "winui": "NumberBox: {NumberBox}, NumberBoxTextBoxStyle, NumberBoxSpinButtonStyle (NumberBox.xaml, NumberBox_themeresources.xaml).",
    "status": "ported",
    "deviations": 15,
-   "date": "2026-10-16"
+   "date": "2026-10-17"
   },
   {
    "document": "OverlayPopupHost.xaml",
@@ -90692,8 +90692,8 @@
    "batch": "B2",
    "winui": "PipsPager: {PipsPager} (PipsPager.xaml), PipsPagerNavigationButtonBaseStyle, PipsPagerPreviousPageButtonStyle, PipsPagerNextPageButtonStyle, PipsPagerButtonBaseStyle, PipsPagerSelectedPipButtonStyle, PipsPagerNormalPipButtonStyle (PipsPager_themeresources.xaml).",
    "status": "ported",
-   "deviations": 11,
-   "date": "2026-10-16"
+   "deviations": 12,
+   "date": "2026-10-17"
   },
   {
    "document": "PopupRoot.xaml",
@@ -90726,7 +90726,7 @@
    "winui": "RadioButton: DefaultRadioButtonStyle (RadioButton_themeresources.xaml).",
    "status": "ported",
    "deviations": 6,
-   "date": "2026-10-16"
+   "date": "2026-10-17"
   },
   {
    "document": "RefreshContainer.xaml",
@@ -90737,7 +90737,7 @@
    "winui": "RefreshContainer: DefaultRefreshContainerStyle (RefreshContainer.xaml).",
    "status": "ported",
    "deviations": 2,
-   "date": "2026-10-16"
+   "date": "2026-10-17"
   },
   {
    "document": "RefreshVisualizer.xaml",
@@ -90770,7 +90770,7 @@
    "winui": "ScrollBar: DefaultScrollBarStyle (ScrollBar_themeresources.xaml); {Thumb} (generic.xaml).",
    "status": "ported",
    "deviations": 11,
-   "date": "2026-10-16"
+   "date": "2026-10-17"
   },
   {
    "document": "ScrollViewer.xaml",
@@ -90813,8 +90813,8 @@
    "batch": "B2",
    "winui": "Slider: DefaultSliderStyle (Slider_themeresources.xaml).",
    "status": "ported",
-   "deviations": 11,
-   "date": "2026-10-16"
+   "deviations": 12,
+   "date": "2026-10-17"
   },
   {
    "document": "SplitButton.xaml",
@@ -90824,7 +90824,7 @@
    "batch": "B2",
    "winui": "SplitButton: SplitButtonStyle (SplitButton.xaml), SplitButtonCommandBarStyle (SplitButton_themeresources.xaml); ToggleSplitButton.",
    "status": "ported",
-   "deviations": 14,
+   "deviations": 15,
    "date": "2026-10-16"
   },
   {
@@ -90836,7 +90836,7 @@
    "winui": "SplitView: DefaultSplitViewStyle (SplitView_themeresources.xaml).",
    "status": "ported",
    "deviations": 6,
-   "date": "2026-10-16"
+   "date": "2026-10-17"
   },
   {
    "document": "TabControl.xaml",
@@ -90902,7 +90902,7 @@
    "winui": "No control of the merged theme: WinUI's TableView of the tabular library (controls/dev/TableView, TableView_themeresources.xaml, not part of XamlControlsResources) is the closest source; the ListViewItem resources otherwise.",
    "status": "ported",
    "deviations": 8,
-   "date": "2026-10-16"
+   "date": "2026-10-17"
   },
   {
    "document": "TableViewCell.xaml",
@@ -90913,7 +90913,7 @@
    "winui": "As TableView: the cells of controls/dev/TableView.",
    "status": "ported",
    "deviations": 3,
-   "date": "2026-10-16"
+   "date": "2026-10-17"
   },
   {
    "document": "TableViewColumnHeader.xaml",
@@ -90924,7 +90924,7 @@
    "winui": "As TableView: the column headers of controls/dev/TableView and SortIndicator.",
    "status": "ported",
    "deviations": 7,
-   "date": "2026-10-16"
+   "date": "2026-10-17"
   },
   {
    "document": "TableViewRow.xaml",
@@ -90946,7 +90946,7 @@
    "winui": "TextBox: DefaultTextBoxStyle and its DeleteButtonStyle (TextBox_themeresources.xaml); PasswordBox: DefaultPasswordBoxStyle (PasswordBox_themeresources.xaml), a keyed theme with the reveal button; the context flyout of TextCommandBarFlyout as a menu flyout (B3).",
    "status": "ported",
    "deviations": 21,
-   "date": "2026-10-16"
+   "date": "2026-10-17"
   },
   {
    "document": "TextSelectionHandle.xaml",
@@ -91002,7 +91002,7 @@
    "winui": "ToggleSwitch: DefaultToggleSwitchStyle (ToggleSwitch_themeresources.xaml).",
    "status": "ported",
    "deviations": 11,
-   "date": "2026-10-16"
+   "date": "2026-10-17"
   },
   {
    "document": "ToolTip.xaml",
@@ -91035,7 +91035,7 @@
    "winui": "TreeView: DefaultTreeViewStyle (TreeView.xaml, TreeView_themeresources.xaml).",
    "status": "ported",
    "deviations": 4,
-   "date": "2026-10-16"
+   "date": "2026-10-17"
   },
   {
    "document": "TreeViewItem.xaml",
@@ -91046,7 +91046,7 @@
    "winui": "TreeViewItem: {TreeViewItem} (TreeView.xaml), MUX_TreeViewItemStyle (TreeViewItem.xaml).",
    "status": "ported",
    "deviations": 11,
-   "date": "2026-10-16"
+   "date": "2026-10-17"
   },
   {
    "document": "Window.xaml",
@@ -91522,7 +91522,7 @@
   }
  ],
  "deviations": {
-  "General": 25,
+  "General": 26,
   "Resources": 9,
   "AdornerLayer": 1,
   "AutoCompleteBox": 9,
@@ -91551,7 +91551,7 @@
   "ListBoxItem": 11,
   "Menu": 8,
   "MenuFlyoutPresenter": 6,
-  "MenuItem": 15,
+  "MenuItem": 16,
   "MenuScrollViewer": 2,
   "OverlayPopupHost": 1,
   "PathIcon": 3,
@@ -91599,11 +91599,11 @@
   "DropDownButton": 4,
   "Expander": 8,
   "NumericUpDown": 15,
-  "PipsPager": 11,
+  "PipsPager": 12,
   "RefreshContainer": 2,
   "RefreshVisualizer": 3,
-  "Slider": 11,
-  "SplitButton": 14,
+  "Slider": 12,
+  "SplitButton": 15,
   "ToggleSwitch": 11
  },
  "winui_targets": {
