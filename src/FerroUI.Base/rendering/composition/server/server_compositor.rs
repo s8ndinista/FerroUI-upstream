@@ -240,7 +240,14 @@ impl ServerCompositor {
                 use crate::LocatorExtensions as _;
                 crate::FerroLocator::current().get_service::<dyn crate::platform::IFontManagerImpl>()?;
             }
-            *self.diagnostic_text_renderer.borrow_mut() = Some(Rc::new(super::DiagnosticTextRenderer::create_default()));
+            let renderer = Rc::new(super::DiagnosticTextRenderer::create_default());
+            // The labels of the FPS counter, shaped here on the UI thread: the counter is
+            // created by the first frame of the render thread, which cannot create glyph runs
+            // where it has no services (the render thread of the browser).
+            for label in super::FpsCounter::LABELS {
+                renderer.shape_label(label);
+            }
+            *self.diagnostic_text_renderer.borrow_mut() = Some(renderer);
         }
         self.diagnostic_text_renderer.borrow().clone()
     }

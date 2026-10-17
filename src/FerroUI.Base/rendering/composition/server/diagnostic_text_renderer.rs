@@ -101,6 +101,8 @@ impl IDiagnosticGlyphRunSource for GlyphTypefaceDiagnosticGlyphRunSource {
 /// A class used to render diagnostic strings (only!), with caching of ASCII glyph runs.
 /// Digits are laid out in equal-width cells so rapidly changing values do not make the text jump around.
 pub struct DiagnosticTextRenderer {
+    /// Labels shaped once and shared, by text ([`shape_label`](Self::shape_label)).
+    shaped_labels: std::cell::RefCell<Vec<(&'static str, Rc<ShapedText>)>>,
     glyph_run_source: Rc<dyn IDiagnosticGlyphRunSource>,
     runs: Vec<DiagnosticGlyphRun>,
     digit_offsets: [f64; 10],
@@ -137,7 +139,7 @@ impl DiagnosticTextRenderer {
             *offset = (digit_cell_width - runs[(b'0' as u16 + digit as u16 - FIRST_CHAR) as usize].bounds.width) / 2.0;
         }
 
-        Self { glyph_run_source, runs, digit_offsets, line_height, digit_cell_width }
+        Self { glyph_run_source, runs, digit_offsets, line_height, digit_cell_width, shaped_labels: Default::default() }
     }
 
     /// Creates a renderer whose glyph runs are built from `glyph_typeface`
@@ -182,6 +184,19 @@ impl DiagnosticTextRenderer {
         }
 
         ShapedText::new(self.glyph_run_source.create_text_glyph_run(&chars))
+    }
+
+    /// The label `text` shaped by [`shape`](Self::shape), shaped the first
+    /// time and shared after that. Not in the reference: the port shapes the
+    /// fixed labels of the FPS counter on the UI thread with this, where the
+    /// glyph runs can be created (`ServerCompositor::diagnostic_text_renderer`).
+    pub fn shape_label(&self, text: &'static str) -> Rc<ShapedText> {
+        if let Some((_, shaped)) = self.shaped_labels.borrow().iter().find(|(label, _)| *label == text) {
+            return shaped.clone();
+        }
+        let shaped = Rc::new(self.shape(text));
+        self.shaped_labels.borrow_mut().push((text, shaped.clone()));
+        shaped
     }
 
     /// Draws text shaped by [`shape`](Self::shape) at the origin of the
