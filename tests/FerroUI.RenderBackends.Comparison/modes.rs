@@ -15,11 +15,23 @@
 //!
 //! A machine without a graphics adapter runs the CPU mode alone and says
 //! so: `skipped: no adapter`.
+//!
+//! A frame of the hybrid or the GPU mode that the device did not deliver (the
+//! backend logged that it could not render it, the device was lost, or it came
+//! back transparent or entirely different from the CPU mode) is drawn once more
+//! and reported on the standard error, outside the capture of the harness; a
+//! scene with no frame in both draws fails with a message of its own
+//! ([`failures`]), apart from the scenes that are over their bounds.
 
 use crate::scenes::{Scene, SCENE_SIZE};
 use crate::{compare, render, Backend, Difference, Pixels};
+use ferroui_base::logging::{LogEventLevel, Logger, StringLogSink};
+use ferroui_vello::gpu::VelloWgpuDevice;
 use ferroui_vello::VelloRenderingMode;
+use std::io::Write as _;
 use std::panic::{catch_unwind, AssertUnwindSafe};
+use std::rc::Rc;
+use std::sync::{Arc, Mutex};
 
 /// The share of pixels (in percent) that may differ from the CPU mode by
 /// more than the tolerance in a scene of a mode that has no bound of its
@@ -117,6 +129,123 @@ pub struct ModeResult {
     /// The difference from the Skia backend and from the CPU mode, or why
     /// the mode did not draw the scene.
     pub drawn: Result<(Difference, Difference), String>,
+    /// Why a frame of a mode on the graphics device was not a frame the mode
+    /// drew, for each draw that was not ([`failed_frame`]): empty when the
+    /// first draw was a frame, one reason when the scene was drawn again and
+    /// the second draw was one, two when neither was.
+    pub failed_frames: Vec<String>,
+}
+
+/// The share of pixels (in percent) from which a frame of a mode on the
+/// graphics device that differs from the CPU mode counts as no frame of the
+/// scene at all: the largest bound of a scene against the CPU mode is below
+/// 4 %, and a frame that is drawn shares at least the background with it.
+const FAILED_FRAME_SHARE: f64 = 99.0;
+
+/// Why the frame a mode on the graphics device (the hybrid or the GPU mode)
+/// gave for a scene is not a frame the mode drew, or `None` when it is one.
+///
+/// The backend does not tell its caller that a frame failed: when the
+/// renderer returns an error it logs it (an error of the area `Visual`) and
+/// leaves the pixels as they were, and when the device is lost while the
+/// frame is drawn or read back the device is marked lost and the pixels are
+/// left as they were too. The bitmap of a scene starts transparent, so such
+/// a frame comes back transparent: 100 % of the pixels differ from Skia and
+/// from the CPU mode on the white background of a scene. A device that is
+/// lost or wedged is the machine (on the macOS runner of CI a paravirtual
+/// device, shared by the tests that run at once), not the mode; a mode that
+/// draws nothing for a scene is a regression, and draws nothing the second
+/// time too.
+pub fn failed_frame(pixels: &Pixels, cpu: Option<&Pixels>, logged: &[String], device_lost: bool) -> Option<String> {
+    let mut reasons = Vec::new();
+    if !logged.is_empty() {
+        reasons.push(format!("the backend logged: {}", logged.join(" / ")));
+    }
+    if device_lost {
+        reasons.push("the graphics device was lost".to_string());
+    }
+    if let Some(cpu) = cpu {
+        let drawn_by_cpu = cpu.rgba.chunks_exact(4).any(|pixel| pixel[3] != 0);
+        if drawn_by_cpu && pixels.rgba.chunks_exact(4).all(|pixel| pixel[3] == 0) {
+            reasons.push("every pixel is transparent".to_string());
+        } else {
+            let against_cpu = compare(cpu, pixels);
+            if against_cpu.share >= FAILED_FRAME_SHARE {
+                reasons.push(format!("{:.3} % of the pixels differ from the CPU mode", against_cpu.share));
+            }
+        }
+    }
+    (!reasons.is_empty()).then(|| reasons.join("; "))
+}
+
+/// Draws a scene in a mode on the graphics device and says whether the
+/// frame failed ([`failed_frame`]): the errors the backend logs on this
+/// thread while it draws are collected, and the device is watched for a
+/// loss.
+fn render_watched(mode: VelloRenderingMode, scene: &Scene, cpu: Option<&Pixels>) -> Result<(Pixels, Option<String>), String> {
+    let logged = Arc::new(Mutex::new(Vec::new()));
+    let sink = {
+        let logged = logged.clone();
+        StringLogSink::new(
+            move |line| logged.lock().unwrap_or_else(|e| e.into_inner()).push(line.to_string()),
+            LogEventLevel::Error,
+            &[],
+        )
+    };
+    let device = VelloWgpuDevice::shared().ok();
+    let previous = Logger::set_thread_sink(Some(Rc::new(sink)));
+    let rendered = render_in_mode(mode, scene);
+    Logger::set_thread_sink(previous);
+
+    let pixels = rendered?;
+    let device_lost = device.is_some_and(|device| device.is_lost());
+    let logged = std::mem::take(&mut *logged.lock().unwrap_or_else(|e| e.into_inner()));
+    let failed = failed_frame(&pixels, cpu, &logged, device_lost);
+    Ok((pixels, failed))
+}
+
+/// Prints a line that the test harness does not capture: what is printed
+/// here is in the log of every run, a run that passes included (and is an
+/// annotation of the run on GitHub Actions).
+fn report_infrastructure(line: &str) {
+    let prefix = if std::env::var_os("GITHUB_ACTIONS").is_some() { "::warning::" } else { "" };
+    let _ = writeln!(std::io::stderr(), "{prefix}{line}");
+}
+
+/// Draws a scene in a mode on the graphics device; a frame that failed
+/// ([`failed_frame`]) is drawn once more, and the reason is reported. The
+/// pixels are those of the last draw, with the reasons of the draws that
+/// failed.
+fn render_on_device(mode: VelloRenderingMode, scene: &Scene, cpu: Option<&Pixels>) -> (Result<Pixels, String>, Vec<String>) {
+    let mut failed_frames = Vec::new();
+    for attempt in 1..=2 {
+        match render_watched(mode, scene, cpu) {
+            Ok((pixels, None)) => {
+                if attempt == 2 {
+                    report_infrastructure(&format!(
+                        "{}: the second draw in the {} mode is a frame and is the one measured",
+                        scene.name,
+                        mode_name(mode)
+                    ));
+                }
+                return (Ok(pixels), failed_frames);
+            }
+            Ok((pixels, Some(reason))) => {
+                report_infrastructure(&format!(
+                    "{}: draw {attempt} in the {} mode gave no frame of the scene ({reason}){}",
+                    scene.name,
+                    mode_name(mode),
+                    if attempt == 1 { "; drawn again" } else { "" }
+                ));
+                failed_frames.push(reason);
+                if attempt == 2 {
+                    return (Ok(pixels), failed_frames);
+                }
+            }
+            Err(error) => return (Err(error), failed_frames),
+        }
+    }
+    unreachable!("the second attempt returns")
 }
 
 /// Draws a scene in a mode. A mode that panics on a scene (what it does
@@ -152,15 +281,20 @@ pub fn measure(modes: &[VelloRenderingMode]) -> Vec<ModeResult> {
         let cpu = render_in_mode(VelloRenderingMode::Cpu, &scene);
 
         for mode in modes {
+            let mut failed_frames = Vec::new();
             let drawn = match (*mode, &cpu) {
                 (VelloRenderingMode::Cpu, Ok(cpu)) => Ok((compare(&reference, cpu), compare(cpu, cpu))),
                 (VelloRenderingMode::Cpu, Err(error)) => Err(error.clone()),
-                (_, cpu) => render_in_mode(*mode, &scene).and_then(|pixels| match cpu {
-                    Ok(cpu) => Ok((compare(&reference, &pixels), compare(cpu, &pixels))),
-                    Err(error) => Err(format!("the CPU mode did not draw it: {error}")),
-                }),
+                (_, cpu) => {
+                    let (rendered, failed) = render_on_device(*mode, &scene, cpu.as_ref().ok());
+                    failed_frames = failed;
+                    rendered.and_then(|pixels| match cpu {
+                        Ok(cpu) => Ok((compare(&reference, &pixels), compare(cpu, &pixels))),
+                        Err(error) => Err(format!("the CPU mode did not draw it: {error}")),
+                    })
+                }
             };
-            results.push(ModeResult { scene: scene.name, mode: *mode, drawn });
+            results.push(ModeResult { scene: scene.name, mode: *mode, drawn, failed_frames });
         }
     }
 
@@ -219,6 +353,11 @@ pub fn table(modes: &[VelloRenderingMode], results: &[ModeResult]) -> String {
             if let Some(how) = fallback(scene, *mode) {
                 notes.push(format!("{}: {how}", mode_name(*mode)));
             }
+            match result.map_or(0, |result| result.failed_frames.len()) {
+                0 => {}
+                1 => notes.push(format!("{}: drawn twice, the first draw gave no frame", mode_name(*mode))),
+                _ => notes.push(format!("{}: no frame in two draws", mode_name(*mode))),
+            }
         }
 
         text += &format!(" {} |\n", notes.join("; "));
@@ -249,6 +388,18 @@ pub fn failures(results: &[ModeResult]) -> Vec<String> {
             continue;
         };
         let name = mode_name(result.mode);
+
+        // No frame from the device in either draw: reported as that, and not as
+        // a scene over its bounds (it is 100 % from everything). A mode that
+        // draws nothing for the scene ends here as well, so it still fails.
+        if result.failed_frames.len() >= 2 {
+            failures.push(format!(
+                "{}: the {name} mode gave no frame of the scene in two draws (a failure of the graphics device, or a mode that draws nothing): {}",
+                scene.name,
+                result.failed_frames.join("; then: ")
+            ));
+            continue;
+        }
 
         match &result.drawn {
             Ok((against_skia, against_cpu)) => {
@@ -316,6 +467,63 @@ mod tests {
             println!("{reason}");
         }
         assert!(!demanded || unavailable.is_empty(), "FERROUI_VELLO_REQUIRE_GPU is set: {}", unavailable.join("; "));
+    }
+
+    fn filled(rgba: [u8; 4]) -> Pixels {
+        Pixels { width: 4, height: 4, rgba: rgba.repeat(16) }
+    }
+
+    /// What tells a frame the device did not deliver from one that was drawn,
+    /// however far that one is from the CPU mode within reason.
+    #[test]
+    fn a_failed_frame_is_told_from_a_drawn_one() {
+        let cpu = filled([255, 255, 255, 255]);
+        let mut drawn = cpu.clone();
+        // A quarter of the pixels another color: drawn, and measured as it is.
+        drawn.rgba[..16].copy_from_slice(&[0, 0, 128, 255].repeat(4));
+        assert_eq!(failed_frame(&drawn, Some(&cpu), &[], false), None);
+
+        let transparent = filled([0, 0, 0, 0]);
+        let reason = failed_frame(&transparent, Some(&cpu), &[], false).expect("a failed frame");
+        assert!(reason.contains("every pixel is transparent"), "{reason}");
+
+        let other = filled([0, 0, 0, 255]);
+        let reason = failed_frame(&other, Some(&cpu), &[], false).expect("a failed frame");
+        assert!(reason.contains("100.000 % of the pixels differ from the CPU mode"), "{reason}");
+
+        let logged = vec!["[Visual]The 'GPU' mode of the Vello backend could not render a scene".to_string()];
+        let reason = failed_frame(&cpu, Some(&cpu), &logged, true).expect("a failed frame");
+        assert!(reason.contains("the backend logged") && reason.contains("the graphics device was lost"), "{reason}");
+
+        // A scene the CPU mode leaves transparent is no evidence.
+        assert_eq!(failed_frame(&transparent, Some(&transparent), &[], false), None);
+    }
+
+    /// A scene drawn again after a failed frame is measured by the second
+    /// draw; a scene without a frame in both draws fails as that alone.
+    #[test]
+    fn failed_frames_are_reported_apart_from_regressions() {
+        let scene = scenes().into_iter().next().expect("a scene").name;
+        let within = Difference { share: 0.0, largest: 0, mean: 0.0 };
+        let all = Difference { share: 100.0, largest: 255, mean: 200.0 };
+        let result = |drawn, failed_frames: &[&str]| ModeResult {
+            scene,
+            mode: VelloRenderingMode::Gpu,
+            drawn: Ok(drawn),
+            failed_frames: failed_frames.iter().map(|reason| reason.to_string()).collect(),
+        };
+
+        assert!(failures(&[result((within, within), &["every pixel is transparent"])]).is_empty());
+
+        let failed = failures(&[result((all, all), &["every pixel is transparent", "the graphics device was lost"])]);
+        assert_eq!(failed.len(), 1, "{failed:?}");
+        assert!(failed[0].contains("gave no frame of the scene in two draws"), "{failed:?}");
+        assert!(failed[0].contains("every pixel is transparent; then: the graphics device was lost"), "{failed:?}");
+
+        // A frame that was drawn and is far from Skia is a regression, as before.
+        let failed = failures(&[result((all, all), &[])]);
+        assert_eq!(failed.len(), 2, "{failed:?}");
+        assert!(failed.iter().all(|failure| failure.contains("more than its bound")), "{failed:?}");
     }
 
     /// The tables of this module name scenes that exist.
