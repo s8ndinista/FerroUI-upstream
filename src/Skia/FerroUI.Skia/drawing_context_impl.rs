@@ -18,9 +18,9 @@ use crate::text_rendering_settings::TextRenderingSettings;
 use crate::picture_render_target::PictureRenderTarget;
 use ferroui_base::media::effects::IEffect;
 use ferroui_base::media::{
-    AcrylicBackgroundSource, BoxShadow, BoxShadows, Color, Colors, EdgeMode, IBrush, IExperimentalAcrylicMaterial,
-    IGradientBrush, IPen, ISceneBrushContent, ITileBrush, MediaExtensions, RenderOptions, StretchDirection,
-    TextOptions, TextRenderingMode, TileMode,
+    AcrylicBackgroundSource, BaselinePixelAlignment, BoxShadow, BoxShadows, Color, Colors, EdgeMode, IBrush,
+    IExperimentalAcrylicMaterial, IGradientBrush, IPen, ISceneBrushContent, ITileBrush, MediaExtensions, RenderOptions,
+    StretchDirection, TextHintingMode, TextOptions, TextRenderingMode, TileMode,
 };
 use ferroui_base::platform::{
     IBitmapImpl, IDrawingContextImpl, IDrawingContextImplWithEffects, IDrawingContextLayerImpl,
@@ -257,6 +257,16 @@ pub(crate) fn effective_text_options(
         && render_options.edge_mode != EdgeMode::Aliased
     {
         effective_text_options.text_rendering_mode = text_rendering.default_text_rendering_mode;
+    }
+
+    // The hinting and the baseline alignment nothing asked for: those of
+    // the surface, unspecified (strong hinting, snapped baselines) unless
+    // the development override sets them.
+    if effective_text_options.text_hinting_mode == TextHintingMode::Unspecified {
+        effective_text_options.text_hinting_mode = text_rendering.default_text_hinting_mode;
+    }
+    if effective_text_options.baseline_pixel_alignment == BaselinePixelAlignment::Unspecified {
+        effective_text_options.baseline_pixel_alignment = text_rendering.default_baseline_pixel_alignment;
     }
 
     effective_text_options

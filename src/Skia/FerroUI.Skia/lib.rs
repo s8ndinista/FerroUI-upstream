@@ -43,6 +43,7 @@ mod skia_typeface;
 pub mod skia_sharp_extensions;
 mod stream_geometry_impl;
 mod surface_render_target;
+mod text_rendering_override;
 mod text_rendering_settings;
 mod transformed_geometry_impl;
 mod two_level_cache;
@@ -72,6 +73,10 @@ pub use sk_text_blob_builder_cache::SkTextBlobBuilderCache;
 pub use skia_backend_context::SkiaContext;
 pub use skia_application_extensions::SkiaApplicationExtensions;
 pub use skia_options::SkiaOptions;
+pub use text_rendering_override::{
+    set_text_rendering_override, startup_text_rendering_override, text_rendering_override, TextRenderingOverride,
+    TEXT_OVERRIDE_ENV_PREFIX, TEXT_OVERRIDE_KEYS,
+};
 pub use text_rendering_settings::{TextRenderingSettings, TextRenderingSource, GREYSCALE_TEXT_SCALING};
 pub use skia_platform::SkiaPlatform;
 pub use skia_region_impl::SkiaRegionImpl;
