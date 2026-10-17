@@ -90398,7 +90398,7 @@
    "winui": "MenuFlyoutPresenter: DefaultMenuFlyoutPresenterStyle (MenuFlyout_themeresources.xaml).",
    "status": "ported",
    "deviations": 3,
-   "date": "2026-10-16"
+   "date": "2026-10-17"
   },
   {
    "document": "DataValidationErrors.xaml",
@@ -90421,7 +90421,7 @@
    "winui": "DatePicker: DefaultDatePickerStyle; DatePickerFlyoutPresenter: DefaultDatePickerFlyoutPresenterStyle (DatePicker_themeresources.xaml).",
    "status": "ported",
    "deviations": 15,
-   "date": "2026-10-16"
+   "date": "2026-10-17"
   },
   {
    "document": "DateTimePickerShared.xaml",
@@ -90485,7 +90485,7 @@
    "winui": "FlyoutPresenter: DefaultFlyoutPresenterStyle (FlyoutPresenter_themeresources.xaml).",
    "status": "ported",
    "deviations": 3,
-   "date": "2026-10-16"
+   "date": "2026-10-17"
   },
   {
    "document": "GridSplitter.xaml",
@@ -90607,7 +90607,7 @@
    "winui": "MenuFlyoutPresenter: DefaultMenuFlyoutPresenterStyle (MenuFlyout_themeresources.xaml).",
    "status": "ported",
    "deviations": 6,
-   "date": "2026-10-16"
+   "date": "2026-10-17"
   },
   {
    "document": "MenuItem.xaml",
@@ -90980,7 +90980,7 @@
    "winui": "TimePicker: {TimePicker}; TimePickerFlyoutPresenter: {TimePickerFlyoutPresenter} (TimePicker_themeresources.xaml).",
    "status": "ported",
    "deviations": 12,
-   "date": "2026-10-16"
+   "date": "2026-10-17"
   },
   {
    "document": "ToggleButton.xaml",
@@ -91013,7 +91013,7 @@
    "winui": "ToolTip: DefaultToolTipStyle (ToolTip_themeresources.xaml).",
    "status": "ported",
    "deviations": 3,
-   "date": "2026-10-16"
+   "date": "2026-10-17"
   },
   {
    "document": "TransitioningContentControl.xaml",

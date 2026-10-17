@@ -28,7 +28,9 @@
        of 16; NavigationViewItem: IconBox of NavigationViewItemOnLeftIconBoxHeight; TabViewItem:
        IconBox of TabViewItemHeaderIconSize): there the Viewbox scales the geometry as WinUI's does
        (PI-3), where the default theme below scales the bounds of the geometry to 20 by 20 (PI-2).
-       Set with Width and Height NaN by a style of the icon presenter of those templates. -->
+       Set with Width and Height NaN by a style of the icon presenter of those templates, and for
+       the icon of a menu item, a logical child of the item that no style of its template reaches,
+       by the style MenuItem > ^ of the theme below. -->
   <ControlTemplate x:Key="PathIconUnscaledTemplate" TargetType="PathIcon">
     <Border Background="{TemplateBinding Background}">
       <Path x:Name="Path"
@@ -54,5 +56,13 @@
         </Border>
       </ControlTemplate>
     </Setter>
+
+    <!-- The icon of a menu item (MenuItem.Icon, a logical child of the item): unscaled, in the
+         IconRoot Viewbox of 16 of the template of MenuFlyoutItem (PI-3). -->
+    <Style Selector="MenuItem > ^">
+      <Setter Property="Width" Value="NaN" />
+      <Setter Property="Height" Value="NaN" />
+      <Setter Property="Template" Value="{StaticResource PathIconUnscaledTemplate}" />
+    </Style>
   </ControlTheme>
 </ResourceDictionary>

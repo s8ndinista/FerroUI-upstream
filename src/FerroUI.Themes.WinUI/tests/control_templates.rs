@@ -347,6 +347,30 @@ fn the_presenters_with_a_theme_shadow_do_not_clip_it() {
     }
 }
 
+/// The path icon of a menu item, a logical child of the item, is unscaled as WinUI's (PI-3): its
+/// size is the extent of its geometry from the origin, which the Viewbox of the item scales to 16.
+#[test]
+fn the_path_icon_of_a_menu_item_is_unscaled() {
+    use ferroui_base::media::StreamGeometry;
+    use ferroui_controls::{MenuItem, PathIcon};
+
+    let _app = start_themed_application();
+    let icon = PathIcon::new();
+    icon.set_data(StreamGeometry::parse("M11,5H13V11H19V13H13V19H11V13H5V11H11Z").expect("a geometry"));
+    let item = MenuItem::new();
+    item.set_header(Some(Rc::new("New".to_string())));
+    item.set_icon(Some(Control::boxed(&icon)));
+    let window = Window::new();
+    window.set_content(Some(Control::boxed(&item)));
+    window.show();
+    window.update_layout();
+
+    let layoutable: &Layoutable = &icon;
+    assert!(layoutable.width().is_nan() && layoutable.height().is_nan(), "the icon keeps the size of the theme of PathIcon");
+    assert_eq!((19.0, 19.0), (icon.bounds().width, icon.bounds().height));
+    window.close();
+}
+
 /// The keyed template `ScrollViewerScrollBarlessTemplate` (generic.xaml) of `Controls/ScrollViewer.xaml`:
 /// a scroll viewer that an application gives it is built with its content presenter and without the
 /// scroll bars, which FerroUI's scroll viewer takes as optional parts.
