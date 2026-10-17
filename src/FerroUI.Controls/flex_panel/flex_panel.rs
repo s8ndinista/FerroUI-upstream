@@ -459,7 +459,7 @@ impl LayoutableImpl for FlexPanel {
             let (_items_count, free_u) = Self::get_line_measure_u(flex_line, max.u, spacing.u);
             let (line_mult, _auto_margins, remaining_free_u) = Self::get_line_mult_info(flex_line, free_u);
 
-            if line_mult != 0.0 && remaining_free_u != 0.0 {
+            if max.u.is_finite() && line_mult != 0.0 && remaining_free_u != 0.0 {
                 let mut max_v: f64 = 0.0;
                 for element in &children[flex_line.range()] {
                     let base_length = Flex::get_base_length(element);

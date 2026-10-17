@@ -315,6 +315,55 @@ fn applies_relative_flex_basis_properties() {
 }
 
 #[test]
+fn growing_items_can_be_measured_with_infinite_main_axis() {
+    for direction in [FlexDirection::Row, FlexDirection::Column] {
+        let is_column = direction == FlexDirection::Column;
+        let target = FlexPanel::new();
+        target.set_direction(direction);
+        target.set_row_spacing(10.0);
+        target.set_column_spacing(10.0);
+        let first = Border::new();
+        first.set_min_width(50.0);
+        first.set_min_height(50.0);
+        let second = Border::new();
+        second.set_min_width(50.0);
+        second.set_min_height(50.0);
+        Flex::set_grow(&second, 1.0);
+        target.children().add(first);
+        target.children().add(second);
+
+        let presenter = ScrollContentPresenter::new();
+        presenter.set_can_horizontally_scroll(!is_column);
+        presenter.set_can_vertically_scroll(is_column);
+        presenter.set_content(Some(Control::boxed(target.clone())));
+        let viewport = if is_column { Size::new(100.0, 300.0) } else { Size::new(300.0, 100.0) };
+
+        presenter.update_child();
+        presenter.measure(viewport);
+
+        assert_eq!(
+            target.desired_size(),
+            if is_column { Size::new(50.0, 110.0) } else { Size::new(110.0, 50.0) },
+            "{direction:?}"
+        );
+
+        presenter.arrange(Rect::from_size(viewport));
+
+        assert_eq!(target.bounds().size(), viewport, "{direction:?}");
+        assert_eq!(
+            bounds(&target, 0),
+            if is_column { Rect::new(0.0, 0.0, 100.0, 50.0) } else { Rect::new(0.0, 0.0, 50.0, 100.0) },
+            "{direction:?}"
+        );
+        assert_eq!(
+            bounds(&target, 1),
+            if is_column { Rect::new(0.0, 60.0, 100.0, 240.0) } else { Rect::new(60.0, 0.0, 240.0, 100.0) },
+            "{direction:?}"
+        );
+    }
+}
+
+#[test]
 fn empty_panel_does_not_take_up_available_space() {
     let target = FlexPanel::new();
     let stack = StackPanel::new();
