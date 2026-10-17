@@ -18,13 +18,14 @@ use crate::testing::{
     MockWindowImpl, MockWindowingPlatform, TestServices, UnitTestApplication, UnitTestApplicationScope,
 };
 use crate::test_support::boxed_str;
-use crate::{Border, Button, ClickMode, ContentControl, Control, MenuItem, Panel, StackPanel, TextBlock, Window};
+use crate::{Border, Button, ClickMode, ContentControl, Control, MenuItem, Panel, StackPanel, TextBlock, TopLevel, Window};
 use ferroui_base::data::core::Value;
 use ferroui_base::data::model::{Event, INotifyPropertyChanged, Model};
 use ferroui_base::data::{BindingMode, ReflectionBinding};
+use ferroui_base::input::raw::{RawPointerEventArgs, RawPointerEventType};
 use ferroui_base::input::{
     ContextRequestedEventArgs, IKeyboardDevice, InputElement, Key, KeyEventArgs, KeyModifiers, KeyboardDevice,
-    MouseButton, Pointer, PointerPointProperties, PointerPressedEventArgs, PointerType, PointerUpdateKind, RawInputModifiers,
+    MouseButton, MouseDevice, Pointer, PointerPointProperties, PointerPressedEventArgs, PointerType, PointerUpdateKind, RawInputModifiers,
 };
 use ferroui_base::interactivity::RoutingStrategies;
 use ferroui_base::layout::{HorizontalAlignment, VerticalAlignment};
@@ -32,13 +33,13 @@ use ferroui_base::media::{Brushes, Colors, Geometry, GeometryHitTestResult, IBru
 use ferroui_base::rendering::IHitTester;
 use ferroui_base::styling::{Selectors, Setter, Style};
 use ferroui_base::threading::Dispatcher;
-use ferroui_base::{ferro_model, BoxedValue, Point, Ref, Visual};
+use ferroui_base::{ferro_model, BoxedValue, PixelPoint, Point, Rect, Ref, Size, Visual};
 use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 
 fn create_services_with_focus(use_overlay_popups: bool) -> UnitTestApplicationScope {
     UnitTestApplication::start(
-        TestServices::styled_window()
+        TestServices::focusable_window()
             .with_windowing_platform(MockWindowingPlatform::with_window_impl(move || {
                 create_window_impl(use_overlay_popups)
             }))
@@ -615,6 +616,55 @@ fn key_up_raised_on_flyout_closes_opened_context_flyout(use_overlay_popups: bool
     assert!(!flyout.is_open());
 }
 
+fn flyout_with_pointer_placement_keeps_position_on_resize(use_overlay_popups: bool) {
+    let _app = create_services_with_focus(use_overlay_popups);
+    let flyout_content = Button::new();
+    flyout_content.set_width(100.0);
+    flyout_content.set_height(20.0);
+    let flyout = Flyout::new();
+    flyout.set_content(Some(Control::boxed(flyout_content.clone())));
+    let target = Border::new();
+    target.set_width(200.0);
+    target.set_height(200.0);
+    target.set_context_flyout(&flyout);
+
+    let window = prepared_window(Some(target.clone().upcast()));
+    window.show();
+
+    let mouse_helper = MouseTestHelper::new();
+    mouse_helper.click_with(&target, &target, MouseButton::Right, None, KeyModifiers::NONE);
+
+    let host = flyout.popup().host().expect("the flyout is open").as_control();
+    // The position of the platform implementation of the host's top-level:
+    // the popup itself, or the window for a host in the overlay layer.
+    let position = || {
+        let visual: &Visual = &host;
+        let top_level = TopLevel::get_top_level(Some(visual)).expect("the host is in a top-level");
+        let platform_impl = top_level.platform_impl().expect("the top-level is open");
+        platform_impl.as_window_base_impl().expect("the top-level is a window base").position()
+    };
+    assert!(flyout.is_open());
+    assert_eq!(position(), PixelPoint::default());
+
+    let mouse = MouseDevice::new();
+    let window_impl = window.platform_impl().expect("the window is open");
+    ITopLevelImpl::input(&*window_impl).expect("the window handles input")(Rc::new(RawPointerEventArgs::new(
+        mouse,
+        0,
+        window.input_root(),
+        RawPointerEventType::Move,
+        Point::new(120.0, 50.0),
+        RawInputModifiers::LEFT_MOUSE_BUTTON,
+    )));
+
+    host.set_height(40.0);
+    host.invalidate_measure();
+    host.measure(Size::INFINITY);
+    host.arrange(Rect::from_size(host.desired_size()));
+
+    assert_eq!(position(), PixelPoint::default());
+}
+
 /// A content control stands in for the user control of the reference test.
 fn should_reset_popup_parent_on_target_detached(use_overlay_popups: bool) {
     let _app = create_services_with_focus(use_overlay_popups);
@@ -926,6 +976,7 @@ flyout_tests! {
     key_up_raised_on_target_opens_context_flyout,
     key_up_raised_on_target_closes_opened_context_flyout,
     key_up_raised_on_flyout_closes_opened_context_flyout,
+    flyout_with_pointer_placement_keeps_position_on_resize,
     should_reset_popup_parent_on_target_detached,
     should_reset_popup_parent_on_target_attach_following_detach,
     context_flyout_can_be_set_in_styles,
