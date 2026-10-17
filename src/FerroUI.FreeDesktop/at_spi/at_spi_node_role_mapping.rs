@@ -7,6 +7,10 @@ use ferroui_controls::automation::provider::IToggleProvider;
 
 impl AtSpiNode {
     pub(crate) fn to_at_spi_role(control_type: AutomationControlType, peer: Option<&AutomationPeer>) -> AtSpiRole {
+        if peer.is_some_and(|peer| peer.get_heading_level() > 0) {
+            return AtSpiRole::Heading;
+        }
+
         Self::to_at_spi_role_with(control_type, || {
             peer.is_some_and(|peer| peer.get_provider::<dyn IToggleProvider>().is_some())
         })
@@ -80,6 +84,7 @@ impl AtSpiNode {
             AtSpiRole::ComboBox => "combo box",
             AtSpiRole::Entry => "entry",
             AtSpiRole::Label => "label",
+            AtSpiRole::Heading => "heading",
             AtSpiRole::Image => "image",
             AtSpiRole::List => "list",
             AtSpiRole::ListItem => "list item",

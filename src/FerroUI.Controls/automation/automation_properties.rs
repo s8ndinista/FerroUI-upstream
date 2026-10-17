@@ -174,7 +174,7 @@ ferro_properties! {
 
         /// Defines the AutomationProperties.PositionInSet attached property.
         ///
-        /// NOTE: This property currently has no effect.
+        /// Linux AT-SPI exposes positive values as the posinset attribute.
         ///
         /// The PositionInSet property describes the ordinal location of the element within a set
         /// of elements which are considered to be siblings. PositionInSet works in coordination
@@ -185,7 +185,7 @@ ferro_properties! {
 
         /// Defines the AutomationProperties.SizeOfSet attached property.
         ///
-        /// NOTE: This property currently has no effect.
+        /// Linux AT-SPI exposes positive values as the setsize attribute.
         ///
         /// The SizeOfSet property describes the count of automation elements in a group or set
         /// that are considered to be siblings. SizeOfSet works in coordination with the PositionInSet

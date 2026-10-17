@@ -19,13 +19,14 @@ use super::handlers::at_spi_value_handler::AtSpiValueHandler;
 use super::root_at_spi_node::RootAtSpiNode;
 use ferroui_base::reactive::IDisposable;
 use ferroui_base::{BoxedValue, Ref};
-use ferroui_controls::automation::peers::{AutomationControlType, AutomationPeer};
+use super::dbus::types::AtSpiAttributeSet;
+use ferroui_controls::automation::peers::{AutomationControlType, AutomationPeer, ControlAutomationPeer};
 use ferroui_controls::automation::provider::{
     IExpandCollapseProvider, IInvokeProvider, IRangeValueProvider, IRootProvider, IScrollProvider,
     ISelectionItemProvider, ISelectionProvider, IToggleProvider, IValueProvider, ToggleState,
 };
 use ferroui_controls::automation::{
-    AutomationElementIdentifiers, AutomationPropertyChangedEventArgs, ExpandCollapsePatternIdentifiers,
+    AutomationElementIdentifiers, AutomationProperties, AutomationPropertyChangedEventArgs, ExpandCollapsePatternIdentifiers,
     ExpandCollapseState, SelectionPatternIdentifiers, TogglePatternIdentifiers, ValuePatternIdentifiers,
 };
 use std::cell::{Cell, RefCell};
@@ -249,6 +250,50 @@ impl AtSpiNode {
         } else {
             visual_type_name
         }
+    }
+
+    /// Builds the AT-SPI object attributes reported for a peer: the attributes shared by
+    /// `Accessible.GetAttributes` and Collection matching.
+    pub(crate) fn get_attributes(peer: &Ref<AutomationPeer>) -> AtSpiAttributeSet {
+        let mut attrs = AtSpiAttributeSet::new();
+        attrs.insert("toolkit".to_string(), TOOLKIT_NAME.to_string());
+
+        if !peer.get_name().is_empty() {
+            attrs.insert("explicit-name".to_string(), "true".to_string());
+        }
+
+        if let Some(accelerator_key) = peer.get_accelerator_key().filter(|key| !key.is_empty()) {
+            attrs.insert("accelerator-key".to_string(), accelerator_key);
+        }
+
+        if let Some(access_key) = peer.get_access_key().filter(|key| !key.is_empty()) {
+            attrs.insert("access-key".to_string(), access_key);
+        }
+
+        let placeholder_text = peer.get_placeholder_text();
+        if !placeholder_text.is_empty() {
+            attrs.insert("placeholder-text".to_string(), placeholder_text);
+        }
+
+        let heading_level = peer.get_heading_level();
+        if heading_level > 0 {
+            attrs.insert("level".to_string(), heading_level.to_string());
+        }
+
+        if let Some(control_peer) = peer.cast::<ControlAutomationPeer>() {
+            let owner = control_peer.owner();
+            let position = AutomationProperties::get_position_in_set(&owner);
+            if position > 0 {
+                attrs.insert("posinset".to_string(), position.to_string());
+            }
+
+            let size = AutomationProperties::get_size_of_set(&owner);
+            if size > 0 {
+                attrs.insert("setsize".to_string(), size.to_string());
+            }
+        }
+
+        attrs
     }
 
     pub(crate) fn attach(&self, parent: Option<&Rc<AtSpiNode>>) {
