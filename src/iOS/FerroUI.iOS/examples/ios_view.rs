@@ -133,7 +133,7 @@ mod app {
 
         fn customize_app_builder(&self, builder: AppBuilder) -> AppBuilder {
             match requested_rendering_modes() {
-                Some(rendering_mode) => builder.with(Rc::new(IosPlatformOptions { rendering_mode })),
+                Some(rendering_mode) => builder.with(Rc::new(IosPlatformOptions { rendering_mode, ..IosPlatformOptions::default() })),
                 None => builder,
             }
         }

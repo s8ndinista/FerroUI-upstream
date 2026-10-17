@@ -112,12 +112,17 @@ cp "$binary" "$app/$executable"
 # application delegate for the configuration of each scene, which is where the platform names its
 # scene delegate. `UILaunchScreen` (an empty dictionary) stands for a launch storyboard: without
 # one of the two the system runs the application in a letterboxed compatibility size.
+# `CADisableMinimumFrameDurationOnPhone` lets an iPhone with a ProMotion display render above
+# 60 Hz, which the render timer asks for by default (`IosPlatformOptions::enable_high_refresh_rate`;
+# the catalog of the reference sets it in its Info.plist).
 plist="$app/Info.plist"
 cat > "$plist" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>CADisableMinimumFrameDurationOnPhone</key>
+	<true/>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
