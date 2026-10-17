@@ -719,6 +719,50 @@ fn nested_presenters_should_scroll_outer_when_viewports_are_close() {
     assert_eq!(Vector::new(0.0, 0.0), inner_presenter.offset());
 }
 
+/// Not upstream: a touch flick on a presenter that chains scrolling (the
+/// default) coasts on after the release, as the scroll gesture recognizer of
+/// the themes of the scroll viewer makes it. The first frame of the inertia
+/// used to scroll by nothing, the presenter left that event unhandled and the
+/// gesture ended: the content moved only as far as the finger (seen on phones
+/// in the browser).
+#[test]
+fn touch_flick_scrolls_on_with_inertia() {
+    use crate::text_box_tests_input::TouchTestHelper;
+    use ferroui_base::input::gesture_recognizers::ScrollGestureRecognizer;
+    use ferroui_base::Point;
+
+    let _scope = test_scope();
+    let dispatcher = ferroui_base::threading::Dispatcher::current_dispatcher();
+    let target = scrolling_presenter();
+    target.set_width(100.0);
+    target.set_height(100.0);
+    target.set_content(Some(Control::boxed(&border(100.0, 300.0))));
+    let recognizer = ScrollGestureRecognizer::new();
+    recognizer.set_can_vertically_scroll(true);
+    recognizer.set_is_scroll_inertia_enabled(true);
+    recognizer.set_scroll_start_distance(5);
+    target.gesture_recognizers().add(&recognizer);
+    let root = TestRoot::with_child(target.clone());
+    root.layout_manager().execute_initial_layout_pass();
+    assert!(target.is_scroll_chaining_enabled());
+
+    // A flick up by 40 pixels: the drag scrolls by the distance less the
+    // start distance.
+    let touch = TouchTestHelper::new();
+    touch.down(&target, Point::new(50.0, 90.0));
+    for y in [80.0, 70.0, 60.0, 50.0] {
+        touch.move_(&target, Point::new(50.0, y));
+    }
+    touch.up(&target, Point::new(50.0, 50.0));
+    assert_eq!(Vector::new(0.0, 35.0), target.offset());
+
+    // The inertia runs on the frames of the media context, from the
+    // dispatcher, until the content is at its end.
+    std::thread::sleep(std::time::Duration::from_millis(5));
+    dispatcher.run_jobs(None);
+    assert_eq!(Vector::new(0.0, 200.0), target.offset());
+}
+
 /// The object as its root class, for calls that would otherwise resolve to
 /// a member of an intermediate class.
 fn fo(object: &ferroui_base::FerroObject) -> &ferroui_base::FerroObject {

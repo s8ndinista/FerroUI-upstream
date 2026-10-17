@@ -13,7 +13,7 @@ use crate::{
 };
 use std::cell::{Cell, RefCell};
 use std::rc::Rc;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 fn default_scroll_start_distance() -> i32 {
     let height = FerroLocator::current()
@@ -38,9 +38,9 @@ pub struct ScrollGestureRecognizer {
     scrolling: Cell<bool>,
     tracked_root_point: Cell<Point>,
     tracking: RefCell<Option<Rc<dyn IPointer>>>,
-    /// Whether an inertia animation is running, and the frame time it
-    /// started at (set by the first frame).
-    inertia_running: Cell<bool>,
+    /// The clock of the inertia (upstream's `_stopWatch`): started when the
+    /// pointer is released, present while the inertia runs.
+    stop_watch: Cell<Option<Instant>>,
     gesture_id: Cell<i32>,
     pointer_pressed_point: Cell<Point>,
     velocity_tracker: RefCell<Option<VelocityTracker>>,
@@ -48,8 +48,8 @@ pub struct ScrollGestureRecognizer {
     /// Movement per second.
     inertia: Cell<Option<Vector>>,
     last_move_timestamp: Cell<Option<u64>>,
-    last_time: Cell<Option<Duration>>,
-    inertia_start_time: Cell<Option<Duration>>,
+    last_time: Cell<Duration>,
+    inertia_start_time: Cell<Duration>,
     current_inertia_gesture_id: Cell<i32>,
     delta: Cell<Point>,
 }
@@ -208,9 +208,15 @@ impl GestureRecognizerImpl for ScrollGestureRecognizer {
             this.end_gesture();
         } else {
             drop(this.tracking.replace(None));
-            this.inertia_running.set(true);
-            this.last_time.set(None);
-            this.inertia_start_time.set(None);
+            // The first frame of the inertia scrolls by the time since the
+            // release, as upstream: an inertia clock that started with the
+            // first frame made that frame scroll by nothing, and a scroll
+            // content presenter that chains scrolling (its default) leaves
+            // such an event unhandled, which ended the gesture at once.
+            let stop_watch = Instant::now();
+            this.stop_watch.set(Some(stop_watch));
+            this.last_time.set(stop_watch.elapsed());
+            this.inertia_start_time.set(this.last_time.get());
             this.current_inertia_gesture_id.set(this.gesture_id.get());
 
             if let Some(target) = this.target() {
@@ -332,14 +338,14 @@ impl ScrollGestureRecognizer {
             scrolling: Cell::new(false),
             tracked_root_point: Cell::new(Point::default()),
             tracking: RefCell::new(None),
-            inertia_running: Cell::new(false),
+            stop_watch: Cell::new(None),
             gesture_id: Cell::new(0),
             pointer_pressed_point: Cell::new(Point::default()),
             velocity_tracker: RefCell::new(None),
             inertia: Cell::new(None),
             last_move_timestamp: Cell::new(None),
-            last_time: Cell::new(None),
-            inertia_start_time: Cell::new(None),
+            last_time: Cell::new(Duration::ZERO),
+            inertia_start_time: Cell::new(Duration::ZERO),
             current_inertia_gesture_id: Cell::new(0),
             delta: Cell::new(Point::default()),
         })
@@ -415,7 +421,7 @@ impl ScrollGestureRecognizer {
     fn end_gesture(&self) {
         drop(self.tracking.replace(None));
         if self.scrolling.get() {
-            self.inertia_running.set(false);
+            self.stop_watch.set(None);
             self.inertia.set(Some(Vector::default()));
             self.delta.set(Point::default());
             self.scrolling.set(false);
@@ -432,14 +438,14 @@ impl ScrollGestureRecognizer {
         // The animation frames of the top level are not available in the
         // base library, so the global media context is used.
         let weak = self.to_ref().downgrade();
-        MediaContext::instance().request_animation_frame(move |frame_time| {
+        MediaContext::instance().request_animation_frame(move |_| {
             if let Some(this) = weak.upgrade() {
-                this.on_animation_requested(frame_time.to_duration().unwrap_or_default());
+                this.on_animation_requested();
             }
         });
     }
 
-    fn on_animation_requested(&self, frame_time: Duration) {
+    fn on_animation_requested(&self) {
         // Calculate the current speed and dispatch the next inertia event.
         // This is done asynchronously so the events run with input
         // priority.
@@ -447,30 +453,27 @@ impl ScrollGestureRecognizer {
         drop(Dispatcher::current_dispatcher().invoke_async_local_with_priority(
             move || {
                 if let Some(this) = weak.upgrade() {
-                    this.inertia_tick(frame_time);
+                    this.inertia_tick();
                 }
             },
             DispatcherPriority::INPUT,
         ));
     }
 
-    fn inertia_tick(&self, frame_time: Duration) {
+    fn inertia_tick(&self) {
         // Another gesture has started, finish the current one
         let Some(inertia) = self.inertia.get() else { return };
-        if self.gesture_id.get() != self.current_inertia_gesture_id.get() || !self.inertia_running.get() {
+        let Some(stop_watch) = self.stop_watch.get() else { return };
+        if self.gesture_id.get() != self.current_inertia_gesture_id.get() {
             return;
         }
 
-        // The inertia clock starts with the first frame.
-        let start = *self.inertia_start_time.get().get_or_insert(frame_time);
-        self.inertia_start_time.set(Some(start));
-        let last_time = self.last_time.get().unwrap_or(start);
+        let time_span = stop_watch.elapsed();
+        let elapsed_since_last_tick = time_span.saturating_sub(self.last_time.get());
+        self.last_time.set(time_span);
 
-        let elapsed_since_last_tick = frame_time.saturating_sub(last_time);
-        self.last_time.set(Some(frame_time));
-
-        let speed =
-            inertia * Self::INERTIAL_RESISTANCE.powf(frame_time.saturating_sub(start).as_secs_f64());
+        let speed = inertia
+            * Self::INERTIAL_RESISTANCE.powf(time_span.saturating_sub(self.inertia_start_time.get()).as_secs_f64());
         let distance = speed * elapsed_since_last_tick.as_secs_f64();
         let scroll_gesture_event_args = ScrollGestureEventArgs::new(self.gesture_id.get(), distance);
         if let Some(target) = self.target() {

@@ -18,6 +18,9 @@
 //   button, three pages are reached through the drawer and show their content, the home page and the
 //   page of a section show the cards of their pages and a card opens its page, a click on a button
 //   has its effect, and text typed into a text box becomes its text;
+// - at the viewport of a phone with touch input (`start({ phone: true })`): a drag scrolls the home
+//   page with the finger, and a flick scrolls it on after the finger is lifted (the inertia of the
+//   scroll gesture);
 // - the native control demo (samples/ControlCatalog.Browser/embed_sample_browser.rs): the Native Embed
 //   page shows its two native controls, elements of the page over the view (a button of the page that
 //   counts the clicks it gets from real pointer events, and an iframe), and a check box of the page hides
@@ -68,7 +71,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { SPLASH_PROBE, open, run, assert, sleep, splashFrames } from "../harness.mjs";
 import {
-    DRAWER_EDGE, STATE_TIMEOUT, TOUR, TOUR_SIZE, describe, drive, inContent, inDrawer, navigate, pairs, visit,
+    DRAWER_EDGE, STATE_TIMEOUT, TOUR, TOUR_SIZE, describe, drive, inContent, inDrawer, navigate, pairs, settled, visit,
     waitUntilReady
 } from "../catalog-pages.mjs";
 
@@ -108,11 +111,22 @@ const LARGER_SIZE = { width: 1440, height: 900 };
 const SMALLER_SIZE = { width: 800, height: 600 };
 // Below 640 pixels the drawer of the main view is an overlay that starts closed.
 const NARROW_SIZE = { width: 600, height: 700 };
+// The viewport of a phone, in CSS pixels (`start({ phone: true })`).
+const PHONE_SIZE = { width: 400, height: 800 };
 
-/** Opens the site in a page of `size` and waits until the application has started and drawn. */
-async function start({ mode = "WebGL2", size = FIRST_SIZE, query = "" } = {}) {
+/**
+ * Opens the site in a page of `size` and waits until the application has started and drawn. With
+ * `phone` the page is opened as on a phone: the viewport of a mobile browser (the viewport element of
+ * the page applies and the page can be zoomed) and touch input.
+ */
+async function start({ mode = "WebGL2", size = FIRST_SIZE, query = "", phone = false } = {}) {
     query += always;
-    const page = await open(site, { query: `?RenderingMode=${mode}${query}`, width: size.width, height: size.height, isolated: threaded, initScript: SPLASH_PROBE });
+    const page = await open(site, { query: `?RenderingMode=${mode}${query}`, width: size.width, height: size.height, isolated: threaded, initScript: SPLASH_PROBE, navigate: !phone });
+    if (phone) {
+        await page.send("Emulation.setDeviceMetricsOverride", { width: size.width, height: size.height, deviceScaleFactor: 1, mobile: true });
+        await page.send("Emulation.setTouchEmulationEnabled", { enabled: true, maxTouchPoints: 5 });
+        await page.navigate();
+    }
     const started = Date.now();
     // Whether a render thread draws the view: a module built with threads, unless the page keeps it
     // on its own thread.
@@ -367,6 +381,72 @@ check("text typed into a text box becomes its text", async (page) => {
     await page.find("Text: Ferro ", inContent);
     assert(page.errors.length === 0, `errors were logged:\n${page.errors.join("\n")}`);
 });
+
+// --- a phone ---------------------------------------------------------------------------------------
+
+/** One contact of a touch screen at (x, y) in CSS pixels: "touchStart", "touchMove" or "touchEnd". */
+const touch = (page, type, x, y) => page.send("Input.dispatchTouchEvent",
+    { type, touchPoints: type === "touchEnd" ? [] : [{ x, y, id: 1, radiusX: 4, radiusY: 4, force: 1 }] });
+
+/**
+ * Drags a finger up by `distance` pixels from (x, y) in steps of `step` pixels, `pause` ms apart,
+ * holds it still for `hold` ms and lifts it.
+ */
+async function swipeUp(page, x, y, distance, { step = 20, pause = 0, hold = 0 } = {}) {
+    await touch(page, "touchStart", x, y);
+    for (let moved = step; moved <= distance; moved += step) {
+        if (pause) { await sleep(pause); }
+        await touch(page, "touchMove", x, y - moved);
+    }
+    if (hold) { await sleep(hold); }
+    await touch(page, "touchEnd");
+}
+
+/** The vertical position of the text blocks of the content that are shown, by their text. */
+async function textPositions(page) {
+    const state = await page.state();
+    return new Map(state.elements.filter((e) => e.type === "TextBlock" && e.text && e.hit).map((e) => [e.text, e.y]));
+}
+
+check("a touch swipe scrolls the content with the finger and a flick scrolls it on after the release", async (page) => {
+    // The scroll gesture of the scroll viewer (the scroll gesture recognizer of its template) moves
+    // the content with the finger, less the distance the finger has to move before the gesture
+    // starts (half the tap size of the platform settings: 5 pixels). A finger that is lifted while it
+    // moves leaves the content moving on, slower and slower (the inertia of the gesture), as on the
+    // other touch platforms. The first frame of that inertia used to scroll by nothing, which ended
+    // the gesture: on a phone a swipe moved the content only as far as the finger.
+    const { width, height } = PHONE_SIZE;
+    const x = Math.round(width / 2), y = height - 150, distance = 200, startDistance = 5;
+    await page.until("the home page is shown", (s) => s.page === "Home" && !s.navigating && !s.drawerOpen);
+    await page.find("Basic Input", (e) => e.hit);
+    // A text near the bottom of the view, that the swipe keeps in it.
+    const lowest = (positions) => [...positions].filter(([, top]) => top > height / 2 && top < height - 60).sort((a, b) => b[1] - a[1])[0];
+
+    // A finger that stops before it is lifted: the content follows the finger and stops with it.
+    await settled(page);
+    let before = await textPositions(page);
+    let [marker, top] = lowest(before);
+    await swipeUp(page, x, y, distance, { pause: 30, hold: 300 });
+    await settled(page);
+    let after = await textPositions(page);
+    assert(after.has(marker), `"${marker}" left the view after a drag of ${distance} pixels`);
+    const dragged = top - after.get(marker);
+    measured(`a drag of ${distance} pixels scrolled the content by ${dragged.toFixed(1)} pixels`);
+    assert(Math.abs(dragged - (distance - startDistance)) <= 2, `a drag of ${distance} pixels scrolled the content by ${dragged} pixels, expected ${distance - startDistance}`);
+
+    // A flick: the finger is lifted while it moves, and the content goes on.
+    before = after;
+    [marker, top] = lowest(before);
+    await swipeUp(page, x, y, distance, { step: 25 });
+    const end = await settled(page, 500, 15000);
+    assert(end, "the content was still moving 15 s after the flick");
+    after = await textPositions(page);
+    const flicked = after.has(marker) ? top - after.get(marker) : null;
+    measured(`a flick of ${distance} pixels scrolled the content by ${flicked === null ? `more than ${top.toFixed(0)} pixels ("${marker}" left the view)` : `${flicked.toFixed(1)} pixels`}`);
+    assert(flicked === null || flicked > distance - startDistance + 50,
+        `a flick of ${distance} pixels scrolled the content by ${flicked} pixels: it stopped with the finger`);
+    assert(page.errors.length === 0, `errors were logged:\n${page.errors.join("\n")}`);
+}, { size: PHONE_SIZE, phone: true });
 
 check("the native controls of the Native Embed page are elements of the page over the view", async (page) => {
     await navigate(page, "Window & Platform");
