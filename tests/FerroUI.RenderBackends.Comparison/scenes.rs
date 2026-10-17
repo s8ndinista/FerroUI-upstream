@@ -15,7 +15,7 @@ use ferroui_base::media::{
     AlignmentX, AlignmentY, BoxShadows, Color, Colors, EdgeMode, FillRule, GeometryCombineMode, GradientSpreadMethod,
     PenLineCap, PenLineJoin, RenderOptions, Stretch, SweepDirection, TileMode,
 };
-use ferroui_base::platform::{AlphaFormat, IDrawingContextImpl, IGeometryImpl, IStreamGeometryImpl, PixelFormat};
+use ferroui_base::platform::{AlphaFormat, IDrawingContextImpl, IGeometryImpl, PixelFormat};
 use ferroui_base::{
     CornerRadius, Matrix, PixelSize, Point, Rect, RelativePoint, RelativeRect, RelativeScalar, RelativeUnit,
     RoundedRect, Size, Vector,
@@ -74,24 +74,23 @@ fn relative(x: f64, y: f64) -> Option<RelativePoint> {
 }
 
 /// A figure with a line, a quadratic and a cubic Bézier and an arc.
-fn curved_geometry(backend: &Backend) -> Arc<dyn IStreamGeometryImpl> {
-    let geometry = backend.interface.create_stream_geometry();
-    let mut context = geometry.open();
+fn curved_geometry(backend: &Backend) -> Arc<dyn IGeometryImpl> {
+    let mut context = backend.interface.create_stream_geometry_builder(None);
     context.begin_figure(Point::new(30.0, 40.0), true);
     context.line_to(Point::new(120.0, 25.0), true);
     context.quadratic_bezier_to(Point::new(185.0, 60.0), Point::new(150.0, 110.0), true);
     context.cubic_bezier_to(Point::new(120.0, 150.0), Point::new(190.0, 160.0), Point::new(140.0, 185.0), true);
     context.arc_to(Point::new(40.0, 150.0), Size::new(70.0, 45.0), 20.0, false, SweepDirection::Clockwise, true);
     context.end_figure(true);
+    let geometry = context.to_geometry();
     context.dispose();
     geometry
 }
 
 /// A five-pointed star whose lines cross: its middle is filled by the
 /// non-zero rule and left out by the even-odd rule.
-fn star_geometry(backend: &Backend, fill_rule: FillRule) -> Arc<dyn IStreamGeometryImpl> {
-    let geometry = backend.interface.create_stream_geometry();
-    let mut context = geometry.open();
+fn star_geometry(backend: &Backend, fill_rule: FillRule) -> Arc<dyn IGeometryImpl> {
+    let mut context = backend.interface.create_stream_geometry_builder(None);
     context.set_fill_rule(fill_rule);
     let point = |index: usize| {
         let angle = -std::f64::consts::FRAC_PI_2 + index as f64 * 4.0 * std::f64::consts::PI / 5.0;
@@ -102,19 +101,20 @@ fn star_geometry(backend: &Backend, fill_rule: FillRule) -> Arc<dyn IStreamGeome
         context.line_to(point(index), true);
     }
     context.end_figure(true);
+    let geometry = context.to_geometry();
     context.dispose();
     geometry
 }
 
 /// An open figure of three lines with two sharp corners.
-fn zigzag_geometry(backend: &Backend) -> Arc<dyn IStreamGeometryImpl> {
-    let geometry = backend.interface.create_stream_geometry();
-    let mut context = geometry.open();
+fn zigzag_geometry(backend: &Backend) -> Arc<dyn IGeometryImpl> {
+    let mut context = backend.interface.create_stream_geometry_builder(None);
     context.begin_figure(Point::new(30.0, 150.0), false);
     context.line_to(Point::new(80.0, 45.0), true);
     context.line_to(Point::new(120.0, 150.0), true);
     context.line_to(Point::new(170.0, 45.0), true);
     context.end_figure(false);
+    let geometry = context.to_geometry();
     context.dispose();
     geometry
 }

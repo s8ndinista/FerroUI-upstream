@@ -274,16 +274,19 @@ pub(crate) mod tests {
         }
     }
 
-    /// A stream geometry that records the figure commands it receives.
+    /// A stream geometry built by a [`MockStreamGeometryBuilder`], with the
+    /// log of the figure commands it was built from.
     pub(crate) struct MockStreamGeometry {
         pub log: Arc<std::sync::Mutex<Vec<String>>>,
     }
 
-    struct MockStreamGeometryContext {
+    /// A stream geometry builder that records the figure commands it
+    /// receives.
+    struct MockStreamGeometryBuilder {
         log: Arc<std::sync::Mutex<Vec<String>>>,
     }
 
-    impl crate::platform::IGeometryContext for MockStreamGeometryContext {
+    impl crate::platform::IGeometryContext for MockStreamGeometryBuilder {
         fn arc_to(&mut self, _: Point, _: crate::Size, _: f64, _: bool, _: crate::media::SweepDirection, _: bool) {
             self.log.lock().unwrap().push("arc".to_string());
         }
@@ -310,7 +313,11 @@ pub(crate) mod tests {
         }
     }
 
-    impl crate::platform::IStreamGeometryContextImpl for MockStreamGeometryContext {}
+    impl crate::platform::IStreamGeometryBuilder for MockStreamGeometryBuilder {
+        fn to_geometry(&mut self) -> Arc<dyn IGeometryImpl> {
+            Arc::new(MockStreamGeometry { log: self.log.clone() })
+        }
+    }
 
     impl IGeometryImpl for MockStreamGeometry {
         fn as_any(&self) -> &dyn std::any::Any {
@@ -352,18 +359,6 @@ pub(crate) mod tests {
         fn with_transform(&self, _: Matrix) -> Arc<dyn crate::platform::ITransformedGeometryImpl> {
             unimplemented!()
         }
-        fn as_stream_geometry(&self) -> Option<&dyn crate::platform::IStreamGeometryImpl> {
-            Some(self)
-        }
-    }
-
-    impl crate::platform::IStreamGeometryImpl for MockStreamGeometry {
-        fn clone_geometry(&self) -> Arc<dyn crate::platform::IStreamGeometryImpl> {
-            Arc::new(MockStreamGeometry { log: Arc::new(std::sync::Mutex::new(self.log.lock().unwrap().clone())) })
-        }
-        fn open(&self) -> Box<dyn crate::platform::IStreamGeometryContextImpl> {
-            Box::new(MockStreamGeometryContext { log: self.log.clone() })
-        }
     }
 
     /// A render interface that creates [`MockRegion`]s and
@@ -396,10 +391,13 @@ pub(crate) mod tests {
         fn create_rectangle_geometry(&self, _: Rect) -> Arc<dyn IGeometryImpl> {
             unimplemented!()
         }
-        fn create_stream_geometry(&self) -> Arc<dyn crate::platform::IStreamGeometryImpl> {
+        fn create_stream_geometry_builder(
+            &self,
+            _source: Option<&dyn IGeometryImpl>,
+        ) -> Box<dyn crate::platform::IStreamGeometryBuilder> {
             let log = Arc::new(std::sync::Mutex::new(Vec::new()));
             self.streams.borrow_mut().push(log.clone());
-            Arc::new(MockStreamGeometry { log })
+            Box::new(MockStreamGeometryBuilder { log })
         }
         fn create_geometry_group(&self, _: crate::media::FillRule, _: &[Arc<dyn IGeometryImpl>]) -> Arc<dyn IGeometryImpl> {
             unimplemented!()

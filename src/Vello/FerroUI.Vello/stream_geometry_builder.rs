@@ -1,82 +1,11 @@
-use crate::geometry_impl::{impl_geometry_impl, register, FillPath, GeometryImpl, GeometryImplBase, Shared, VelloPath};
+use crate::geometry_impl::{try_get_geometry_impl, FillPath, VelloPath};
+use crate::simple_geometry_impl::SimpleGeometryImpl;
 use crate::vello_extensions::{to_kurbo_point, PATH_TOLERANCE};
 use ferroui_base::media::{FillRule, SweepDirection};
-use ferroui_base::platform::{IGeometryContext, IStreamGeometryContextImpl, IStreamGeometryImpl};
-use ferroui_base::{Point, Rect, Size};
+use ferroui_base::platform::{IGeometryContext, IGeometryImpl, IStreamGeometryBuilder};
+use ferroui_base::{Point, Size};
 use kurbo::{BezPath, SvgArc, Vec2};
 use std::sync::Arc;
-
-/// The paths of a stream geometry, shared with the contexts that define it.
-struct StreamGeometryState {
-    base: GeometryImplBase,
-    bounds: Shared<Rect>,
-    stroke_path: Shared<VelloPath>,
-    fill: Shared<FillPath>,
-}
-
-/// A kurbo implementation of a stream geometry.
-pub struct StreamGeometryImpl {
-    state: Arc<StreamGeometryState>,
-}
-
-impl StreamGeometryImpl {
-    /// Creates a geometry from a stroke path and a fill. `bounds` defaults to
-    /// the tight bounds of the stroke path.
-    pub fn from_paths(stroke: VelloPath, fill: FillPath, bounds: Option<Rect>) -> Arc<Self> {
-        let bounds = bounds.unwrap_or_else(|| stroke.tight_bounds());
-
-        register(Self {
-            state: Arc::new(StreamGeometryState {
-                base: GeometryImplBase::new(),
-                bounds: Shared::new(bounds),
-                stroke_path: Shared::new(stroke),
-                fill: Shared::new(fill),
-            }),
-        })
-    }
-
-    /// Creates an empty geometry.
-    pub fn new() -> Arc<Self> {
-        Self::from_paths(VelloPath::empty(), FillPath::SameAsStroke, Some(Rect::default()))
-    }
-
-    fn geometry_bounds(&self) -> Rect {
-        self.state.bounds.get()
-    }
-}
-
-impl GeometryImpl for StreamGeometryImpl {
-    fn base(&self) -> &GeometryImplBase {
-        &self.state.base
-    }
-
-    fn stroke_path(&self) -> Option<VelloPath> {
-        Some(self.state.stroke_path.get())
-    }
-
-    fn fill(&self) -> FillPath {
-        self.state.fill.get()
-    }
-}
-
-impl IStreamGeometryImpl for StreamGeometryImpl {
-    fn clone_geometry(&self) -> Arc<dyn IStreamGeometryImpl> {
-        let stroke = self.state.stroke_path.get();
-        let fill = self.state.fill.get();
-
-        StreamGeometryImpl::from_paths(stroke, fill, Some(self.geometry_bounds()))
-    }
-
-    fn open(&self) -> Box<dyn IStreamGeometryContextImpl> {
-        Box::new(StreamContext::new(self.state.clone()))
-    }
-}
-
-impl_geometry_impl!(StreamGeometryImpl, {
-    fn as_stream_geometry(&self) -> Option<&dyn IStreamGeometryImpl> {
-        Some(self)
-    }
-});
 
 /// A path under construction with the rule it will be filled by.
 ///
@@ -174,7 +103,7 @@ impl PathBuilder {
     }
 }
 
-/// The fill being built by a stream context.
+/// The fill being built by a [`StreamGeometryBuilder`].
 enum FillBuilder {
     /// No fill path exists yet.
     None,
@@ -184,39 +113,45 @@ enum FillBuilder {
     Separate(PathBuilder),
 }
 
-/// A simple implementation of a stream geometry context.
+/// Builds a kurbo geometry from drawing commands.
 ///
-/// The paths of a geometry are immutable, so the context builds on path
-/// builders seeded from the geometry's current paths and writes the result
-/// back when it is disposed (or dropped).
-struct StreamContext {
-    geometry_impl: Arc<StreamGeometryState>,
+/// The paths of a geometry are immutable, so the builder works on path
+/// builders seeded from the paths of its source geometry, and creates the
+/// geometry from their snapshots.
+pub struct StreamGeometryBuilder {
     stroke: PathBuilder,
     fill: FillBuilder,
     is_filled: bool,
     start_point: Point,
     is_figure_broken: bool,
-    is_disposed: bool,
+    built: bool,
 }
 
-impl StreamContext {
-    fn new(geometry_impl: Arc<StreamGeometryState>) -> Self {
-        let stroke = PathBuilder::from_path(&geometry_impl.stroke_path.get());
-        let fill = match &geometry_impl.fill.get() {
-            FillPath::None => FillBuilder::None,
-            FillPath::SameAsStroke => FillBuilder::SameAsStroke,
-            FillPath::Separate(path) => FillBuilder::Separate(PathBuilder::from_path(path)),
+impl StreamGeometryBuilder {
+    /// Creates a builder that starts with the figures of `source`, a geometry
+    /// of this backend, or with an empty geometry when `source` is `None`.
+    ///
+    /// Panics if `source` was not created by the Vello render interface.
+    pub fn new(source: Option<&dyn IGeometryImpl>) -> Self {
+        let (stroke, fill) = match source {
+            None => (PathBuilder::from_path(&VelloPath::empty()), FillBuilder::SameAsStroke),
+            Some(source) => {
+                let geometry = try_get_geometry_impl(source)
+                    .unwrap_or_else(|| panic!("The geometry wasn't created by the Vello render interface."));
+                let stroke_path = geometry.stroke_path();
+                let fill = match geometry.fill() {
+                    FillPath::SameAsStroke => FillBuilder::SameAsStroke,
+                    FillPath::Separate(fill_path) => FillBuilder::Separate(PathBuilder::from_path(&fill_path)),
+                    // Without a stroke path either, the fill is the (empty) stroke.
+                    FillPath::None if stroke_path.is_none() => FillBuilder::SameAsStroke,
+                    FillPath::None => FillBuilder::None,
+                };
+                let stroke = PathBuilder::from_path(&stroke_path.unwrap_or_else(VelloPath::empty));
+                (stroke, fill)
+            }
         };
 
-        Self {
-            geometry_impl,
-            stroke,
-            fill,
-            is_filled: false,
-            start_point: Point::default(),
-            is_figure_broken: false,
-            is_disposed: false,
-        }
+        Self { stroke, fill, is_filled: false, start_point: Point::default(), is_figure_broken: false, built: false }
     }
 
     /// The fill builder, created on first use.
@@ -238,14 +173,8 @@ impl StreamContext {
     }
 
     fn ensure_separate_fill_path(&mut self) {
-        match self.fill {
-            FillBuilder::SameAsStroke => {
-                self.fill = FillBuilder::Separate(self.stroke.clone());
-            }
-            FillBuilder::None => {
-                self.fill = FillBuilder::Separate(PathBuilder::new());
-            }
-            FillBuilder::Separate(_) => {}
+        if matches!(self.fill, FillBuilder::SameAsStroke) {
+            self.fill = FillBuilder::Separate(self.stroke.clone());
         }
     }
 
@@ -255,13 +184,15 @@ impl StreamContext {
             self.ensure_separate_fill_path();
         }
     }
+}
 
-    /// Writes the built paths back to the geometry.
-    fn commit(&mut self) {
-        if self.is_disposed {
-            return;
+impl IStreamGeometryBuilder for StreamGeometryBuilder {
+    fn to_geometry(&mut self) -> Arc<dyn IGeometryImpl> {
+        if self.built {
+            panic!("The geometry has already been built.");
         }
-        self.is_disposed = true;
+
+        self.built = true;
 
         let stroke = self.stroke.snapshot();
         let fill = match &self.fill {
@@ -270,20 +201,11 @@ impl StreamContext {
             FillBuilder::Separate(fill) => FillPath::Separate(fill.snapshot()),
         };
 
-        self.geometry_impl.bounds.set(stroke.tight_bounds());
-        self.geometry_impl.stroke_path.set(stroke);
-        self.geometry_impl.fill.set(fill);
-        self.geometry_impl.base.invalidate_caches();
+        SimpleGeometryImpl::new(stroke, fill, None)
     }
 }
 
-impl Drop for StreamContext {
-    fn drop(&mut self) {
-        self.commit();
-    }
-}
-
-impl IGeometryContext for StreamContext {
+impl IGeometryContext for StreamGeometryBuilder {
     fn arc_to(
         &mut self,
         point: Point,
@@ -389,9 +311,5 @@ impl IGeometryContext for StreamContext {
         self.fill().fill_rule = fill_rule;
     }
 
-    fn dispose(&mut self) {
-        self.commit();
-    }
+    fn dispose(&mut self) {}
 }
-
-impl IStreamGeometryContextImpl for StreamContext {}

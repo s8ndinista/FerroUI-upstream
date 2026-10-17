@@ -11,6 +11,7 @@ mod font_manager_tests;
 mod glyph_run_tests;
 mod glyph_typeface_shaping_tests;
 mod immutable_bitmap_tests;
+mod stream_geometry_tests;
 mod text_formatting;
 
 pub(crate) use custom_font_manager_impl::CustomFontManagerImpl;

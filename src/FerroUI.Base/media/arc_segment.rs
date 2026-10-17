@@ -1,4 +1,4 @@
-use crate::media::{PathSegment, PathSegmentImpl, StreamGeometryContext, SweepDirection};
+use crate::media::{PathSegment, PathSegmentImpl, SweepDirection};
 use crate::platform::IGeometryContext;
 use crate::utilities::span_helpers::write_double;
 use crate::{
@@ -17,7 +17,7 @@ crate::ferro_class_info!(ArcSegment { new: ArcSegment::new });
 ferro_impl_classes!(ArcSegment: FerroObjectImpl);
 
 impl PathSegmentImpl for ArcSegment {
-    fn apply_to(this: &Self, ctx: &mut StreamGeometryContext) {
+    fn apply_to(this: &Self, ctx: &mut dyn IGeometryContext) {
         ctx.arc_to(
             this.point(),
             this.size(),

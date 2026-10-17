@@ -118,7 +118,7 @@ impl GeometryBuilder {
     /// * `rect` - The existing rectangle dimensions without corner radii.
     /// * `radius_x` - The radius on the X-axis used to round the corners of the rectangle.
     /// * `radius_y` - The radius on the Y-axis used to round the corners of the rectangle.
-    pub fn draw_rounded_corners_rectangle(context: &mut StreamGeometryContext, rect: Rect, radius_x: f64, radius_y: f64) {
+    pub fn draw_rounded_corners_rectangle(context: &mut dyn IGeometryContext, rect: Rect, radius_x: f64, radius_y: f64) {
         let arc_size = Size::new(radius_x, radius_y);
 
         // The rectangle is constructed as follows:
@@ -502,7 +502,6 @@ impl RoundedRectKeypoints {
 mod tests {
     use super::*;
     use crate::media::FillRule;
-    use crate::platform::IStreamGeometryContextImpl;
     use std::cell::RefCell;
     use std::rc::Rc;
 
@@ -599,11 +598,9 @@ mod tests {
         fn dispose(&mut self) {}
     }
 
-    impl IStreamGeometryContextImpl for Recorder {}
-
     fn record(draw: impl FnOnce(&mut StreamGeometryContext)) -> Vec<String> {
         let log = Rc::new(RefCell::new(Vec::new()));
-        let mut context = StreamGeometryContext::new(Box::new(Recorder { log: log.clone() }));
+        let mut context = StreamGeometryContext::from_context(Box::new(Recorder { log: log.clone() }));
         draw(&mut context);
         drop(context);
         let result = log.borrow().clone();

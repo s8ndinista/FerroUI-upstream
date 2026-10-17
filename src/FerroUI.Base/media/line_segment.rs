@@ -1,4 +1,4 @@
-use crate::media::{PathSegment, PathSegmentImpl, StreamGeometryContext};
+use crate::media::{PathSegment, PathSegmentImpl};
 use crate::platform::IGeometryContext;
 use crate::{
     ferro_class, ferro_impl_classes, ferro_property, instantiate, FerroObjectImpl, FerroProperty, Point, Ref,
@@ -16,7 +16,7 @@ crate::ferro_class_info!(LineSegment { new: LineSegment::new });
 ferro_impl_classes!(LineSegment: FerroObjectImpl);
 
 impl PathSegmentImpl for LineSegment {
-    fn apply_to(this: &Self, ctx: &mut StreamGeometryContext) {
+    fn apply_to(this: &Self, ctx: &mut dyn IGeometryContext) {
         ctx.line_to(this.point(), this.is_stroked());
     }
 

@@ -1046,7 +1046,6 @@ impl EllipticalArc {
 mod tests {
     use super::*;
     use crate::media::FillRule;
-    use crate::platform::IStreamGeometryContextImpl;
     use std::cell::RefCell;
     use std::rc::Rc;
 
@@ -1090,11 +1089,9 @@ mod tests {
         fn dispose(&mut self) {}
     }
 
-    impl IStreamGeometryContextImpl for Recorder {}
-
     fn record(start: Point, draw: impl FnOnce(&mut StreamGeometryContext)) -> Vec<Actual> {
         let log = Rc::new(RefCell::new(Vec::new()));
-        let mut context = StreamGeometryContext::new(Box::new(Recorder { log: log.clone() }));
+        let mut context = StreamGeometryContext::from_context(Box::new(Recorder { log: log.clone() }));
         context.begin_figure(start, true);
         draw(&mut context);
         drop(context);

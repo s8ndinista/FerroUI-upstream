@@ -1,7 +1,6 @@
 use crate::media::media_collection::track_item_property_changed;
 use crate::media::{
-    FillRule, GeometryImpl, PathFigure, PathFigures, PathMarkupParser, StreamGeometry,
-    StreamGeometryContext,
+    FillRule, GeometryImpl, PathFigure, PathFigures, PathMarkupParser, StreamGeometry, StreamGeometryImpl,
 };
 use crate::platform::{self, IGeometryContext, IGeometryImpl, PathGeometryContext};
 use crate::reactive::IDisposable;
@@ -43,17 +42,22 @@ impl GeometryImpl for PathGeometry {
         let figures = this.figures()?;
 
         let factory = platform::render_interface();
-        let geometry = factory.create_stream_geometry();
+        let mut builder = factory.create_stream_geometry_builder(None);
 
-        {
-            let mut ctx = StreamGeometryContext::new(geometry.open());
-            ctx.set_fill_rule(this.fill_rule());
-            for f in figures.iter() {
-                f.apply_to(&mut ctx);
-            }
+        builder.set_fill_rule(this.fill_rule());
+        for f in figures.iter() {
+            f.apply_to(&mut *builder);
         }
 
+        let geometry = builder.to_geometry();
+        builder.dispose();
         Some(geometry)
+    }
+}
+
+impl StreamGeometryImpl for PathGeometry {
+    fn open_core(this: &Self) -> Box<dyn IGeometryContext> {
+        Box::new(PathGeometryContext::new(this.to_ref()))
     }
 }
 

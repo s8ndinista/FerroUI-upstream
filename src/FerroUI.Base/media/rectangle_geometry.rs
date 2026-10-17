@@ -1,4 +1,4 @@
-use crate::media::{Geometry, GeometryImpl, GeometryBuilder, StreamGeometryContext};
+use crate::media::{Geometry, GeometryImpl, GeometryBuilder};
 use crate::platform::{self, IGeometryImpl};
 use crate::{
     ferro_class, ferro_property, instantiate, FerroObjectImpl, FerroProperty, Rect, Ref,
@@ -31,11 +31,10 @@ impl GeometryImpl for RectangleGeometry {
             // Optimization when there are no corner radii
             Some(factory.create_rectangle_geometry(this.rect()))
         } else {
-            let geometry = factory.create_stream_geometry();
-            {
-                let mut ctx = StreamGeometryContext::new(geometry.open());
-                GeometryBuilder::draw_rounded_corners_rectangle(&mut ctx, this.rect(), radius_x, radius_y);
-            }
+            let mut builder = factory.create_stream_geometry_builder(None);
+            GeometryBuilder::draw_rounded_corners_rectangle(&mut *builder, this.rect(), radius_x, radius_y);
+            let geometry = builder.to_geometry();
+            builder.dispose();
             Some(geometry)
         }
     }

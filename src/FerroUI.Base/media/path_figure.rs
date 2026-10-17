@@ -1,5 +1,5 @@
 use crate::media::media_collection::track_item_property_changed;
-use crate::media::{PathSegments, StreamGeometryContext};
+use crate::media::PathSegments;
 use crate::platform::IGeometryContext;
 use crate::reactive::{Disposable, IDisposable};
 use crate::utilities::HandlerList;
@@ -160,7 +160,7 @@ impl PathFigure {
     }
 
     /// Draws the figure into `ctx`.
-    pub(crate) fn apply_to(&self, ctx: &mut StreamGeometryContext) {
+    pub(crate) fn apply_to(&self, ctx: &mut dyn IGeometryContext) {
         ctx.begin_figure(self.start_point(), self.is_filled());
 
         if let Some(segments) = self.segments() {

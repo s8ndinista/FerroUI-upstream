@@ -8,7 +8,8 @@ use crate::immutable_bitmap::ImmutableBitmap;
 use crate::line_geometry_impl::LineGeometryImpl;
 use crate::rectangle_geometry_impl::RectangleGeometryImpl;
 use crate::render_target_bitmap_impl::RenderTargetBitmapImpl;
-use crate::stream_geometry_impl::StreamGeometryImpl;
+use crate::simple_geometry_impl::SimpleGeometryImpl;
+use crate::stream_geometry_builder::StreamGeometryBuilder;
 use crate::vello_backend_context::VelloContext;
 use crate::vello_options::{VelloOptions, VelloRenderingMode};
 use crate::vello_region_impl::VelloRegionImpl;
@@ -19,7 +20,7 @@ use ferroui_base::media::text_formatting::GlyphInfo;
 use ferroui_base::media::{FillRule, GeometryCombineMode, GlyphRun, GlyphTypeface};
 use ferroui_base::platform::{
     AlphaFormat, IBitmapImpl, IGeometryImpl, IGlyphRunImpl, IPlatformGraphicsContext, IPlatformRenderInterface,
-    IPlatformRenderInterfaceContext, IPlatformRenderInterfaceRegion, IRenderTargetBitmapImpl, IStreamGeometryImpl,
+    IPlatformRenderInterfaceContext, IPlatformRenderInterfaceRegion, IRenderTargetBitmapImpl, IStreamGeometryBuilder,
     IWriteableBitmapImpl, PixelFormat,
 };
 use ferroui_base::{PixelSize, Point, Rect, Vector};
@@ -66,8 +67,8 @@ impl IPlatformRenderInterface for PlatformRenderInterface {
         RectangleGeometryImpl::new(rect)
     }
 
-    fn create_stream_geometry(&self) -> Arc<dyn IStreamGeometryImpl> {
-        StreamGeometryImpl::new()
+    fn create_stream_geometry_builder(&self, source: Option<&dyn IGeometryImpl>) -> Box<dyn IStreamGeometryBuilder> {
+        Box::new(StreamGeometryBuilder::new(source))
     }
 
     fn create_geometry_group(&self, fill_rule: FillRule, children: &[Arc<dyn IGeometryImpl>]) -> Arc<dyn IGeometryImpl> {
@@ -108,7 +109,7 @@ impl IPlatformRenderInterface for PlatformRenderInterface {
             current_x += glyph_info.glyph_advance;
         }
 
-        StreamGeometryImpl::from_paths(VelloPath::new(path, FillRule::NonZero), FillPath::SameAsStroke, None)
+        SimpleGeometryImpl::new(VelloPath::new(path, FillRule::NonZero), FillPath::SameAsStroke, None)
     }
 
     fn create_glyph_run(

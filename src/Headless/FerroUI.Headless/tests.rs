@@ -168,17 +168,26 @@ fn a_stream_geometry_has_the_bounds_of_its_points() {
     HeadlessPlatformRenderInterface::initialize();
     let render_interface = FerroLocator::current().get_required_service::<dyn IPlatformRenderInterface>();
 
-    let geometry = render_interface.create_stream_geometry();
-    let mut context = geometry.open();
+    let mut context = render_interface.create_stream_geometry_builder(None);
     context.begin_figure(Point::new(10.0, 20.0), true);
     context.line_to(Point::new(50.0, 20.0), true);
     context.line_to(Point::new(50.0, 80.0), true);
     context.end_figure(true);
+    let geometry = context.to_geometry();
     context.dispose();
 
     assert_eq!(Rect::new(10.0, 20.0, 40.0, 60.0), geometry.bounds());
     assert!(geometry.fill_contains(Point::new(45.0, 30.0)));
     assert!(!geometry.fill_contains(Point::new(500.0, 500.0)));
+
+    // A builder over the geometry starts with its points and leaves it as it is.
+    let mut context = render_interface.create_stream_geometry_builder(Some(&*geometry));
+    context.line_to(Point::new(90.0, 100.0), true);
+    let extended = context.to_geometry();
+    context.dispose();
+
+    assert_eq!(Rect::new(10.0, 20.0, 80.0, 80.0), extended.bounds());
+    assert_eq!(Rect::new(10.0, 20.0, 40.0, 60.0), geometry.bounds());
 
     scope.dispose();
 }

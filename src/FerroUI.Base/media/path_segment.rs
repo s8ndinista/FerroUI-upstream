@@ -1,4 +1,4 @@
-use crate::media::StreamGeometryContext;
+use crate::platform::IGeometryContext;
 use crate::{ferro_class, ferro_property, FerroObject, FerroObjectImpl, FerroProperty, StyledProperty};
 
 /// Represents a segment of a [`PathFigure`](crate::media::PathFigure).
@@ -10,7 +10,7 @@ pub struct PathSegment {
 ferro_class! {
     PathSegment: FerroObject, virtuals PathSegmentImpl: FerroObjectImpl {
         /// Draws the segment into `ctx`.
-        fn apply_to(this, ctx: &mut StreamGeometryContext);
+        fn apply_to(this, ctx: &mut dyn IGeometryContext);
 
         /// The path markup of the segment.
         fn to_string(this) -> String;
@@ -20,7 +20,7 @@ ferro_class! {
 crate::ferro_impl_classes!(PathSegment: FerroObjectImpl);
 
 impl PathSegmentImpl for PathSegment {
-    fn apply_to(_this: &Self, _ctx: &mut StreamGeometryContext) {
+    fn apply_to(_this: &Self, _ctx: &mut dyn IGeometryContext) {
         panic!("PathSegment is abstract: 'apply_to' must be implemented by the deriving class")
     }
 

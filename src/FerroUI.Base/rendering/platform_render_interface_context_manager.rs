@@ -248,7 +248,7 @@ mod tests {
     use crate::media::{FillRule, GeometryCombineMode};
     use crate::platform::{
         AlphaFormat, IBitmapImpl, IDrawingContextLayerImpl, IGeometryImpl, IOptionalFeatureProvider,
-        IPlatformRenderInterfaceRegion, IRenderTargetBitmapImpl, IStreamGeometryImpl, IWriteableBitmapImpl,
+        IPlatformRenderInterfaceRegion, IRenderTargetBitmapImpl, IStreamGeometryBuilder, IWriteableBitmapImpl,
         PixelFormat,
     };
     use crate::{PixelSize, Point, Rect, Vector};
@@ -501,7 +501,7 @@ mod tests {
             unimplemented!()
         }
 
-        fn create_stream_geometry(&self) -> Arc<dyn IStreamGeometryImpl> {
+        fn create_stream_geometry_builder(&self, _source: Option<&dyn IGeometryImpl>) -> Box<dyn IStreamGeometryBuilder> {
             unimplemented!()
         }
 

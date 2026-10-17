@@ -731,16 +731,17 @@ fn ellipse_is_filled_and_stroked() {
 #[test]
 fn geometry_is_filled_and_stroked() {
     let render_interface = render_interface();
-    let geometry = render_interface.create_stream_geometry();
-    {
-        let mut context = geometry.open();
+    let geometry = {
+        let mut context = render_interface.create_stream_geometry_builder(None);
         context.begin_figure(Point::new(20.0, 20.0), true);
         context.line_to(Point::new(80.0, 20.0), true);
         context.line_to(Point::new(80.0, 80.0), true);
         context.line_to(Point::new(20.0, 80.0), true);
         context.end_figure(true);
+        let geometry = context.to_geometry();
         context.dispose();
-    }
+        geometry
+    };
 
     let target = Target::new();
     target.draw(|context| {
@@ -1155,24 +1156,37 @@ fn line_geometry_has_a_stroke_but_no_fill() {
     assert!(geometry.try_get_point_at_distance(1000.0).is_some());
 }
 
+/// Builds a geometry with the stream geometry builder of the backend,
+/// starting with the figures of `source`.
+fn build_stream_geometry(
+    source: Option<&dyn IGeometryImpl>,
+    commands: impl FnOnce(&mut dyn ferroui_base::platform::IStreamGeometryBuilder),
+) -> Arc<dyn IGeometryImpl> {
+    let mut builder = render_interface().create_stream_geometry_builder(source);
+    commands(&mut *builder);
+    let geometry = builder.to_geometry();
+    builder.dispose();
+    geometry
+}
+
 #[test]
 fn stream_geometry_context_builds_paths() {
-    let geometry = StreamGeometryImpl::new();
-    assert_eq!(Rect::default(), geometry.bounds());
+    let empty = build_stream_geometry(None, |_| {});
+    assert_eq!(Rect::default(), empty.bounds());
 
-    use ferroui_base::platform::IStreamGeometryImpl;
-    let mut context = geometry.open();
-    context.set_fill_rule(FillRule::NonZero);
-    context.begin_figure(Point::new(10.0, 10.0), true);
-    context.line_to(Point::new(90.0, 10.0), true);
-    context.quadratic_bezier_to(Point::new(100.0, 50.0), Point::new(90.0, 90.0), true);
-    context.cubic_bezier_to(Point::new(70.0, 100.0), Point::new(30.0, 100.0), Point::new(10.0, 90.0), true);
-    context.end_figure(true);
-    context.dispose();
+    let geometry = build_stream_geometry(None, |context| {
+        context.set_fill_rule(FillRule::NonZero);
+        context.begin_figure(Point::new(10.0, 10.0), true);
+        context.line_to(Point::new(90.0, 10.0), true);
+        context.quadratic_bezier_to(Point::new(100.0, 50.0), Point::new(90.0, 90.0), true);
+        context.cubic_bezier_to(Point::new(70.0, 100.0), Point::new(30.0, 100.0), Point::new(10.0, 90.0), true);
+        context.end_figure(true);
+    });
 
-    let stroke = geometry.stroke_path().unwrap();
+    let skia_geometry = try_get_geometry_impl(&*geometry).unwrap();
+    let stroke = skia_geometry.stroke_path().unwrap();
     assert_eq!(skia_safe::PathFillType::Winding, stroke.fill_type());
-    assert!(geometry.is_fill_same_as_stroke());
+    assert!(skia_geometry.is_fill_same_as_stroke());
     use skia_safe::PathVerb;
     assert_eq!(
         &[PathVerb::Move, PathVerb::Line, PathVerb::Quad, PathVerb::Cubic, PathVerb::Close],
@@ -1188,13 +1202,18 @@ fn stream_geometry_context_builds_paths() {
 
 #[test]
 fn stream_geometry_arc_is_added_as_an_elliptical_arc() {
-    let geometry = StreamGeometryImpl::new();
-    use ferroui_base::platform::IStreamGeometryImpl;
-    let mut context = geometry.open();
-    context.begin_figure(Point::new(0.0, 0.0), true);
-    context.arc_to(Point::new(128.0, 0.0), Size::new(128.0, 128.0), 0.0, false, SweepDirection::CounterClockwise, true);
-    context.end_figure(false);
-    context.dispose();
+    let geometry = build_stream_geometry(None, |context| {
+        context.begin_figure(Point::new(0.0, 0.0), true);
+        context.arc_to(
+            Point::new(128.0, 0.0),
+            Size::new(128.0, 128.0),
+            0.0,
+            false,
+            SweepDirection::CounterClockwise,
+            true,
+        );
+        context.end_figure(false);
+    });
 
     // The chord is 128 wide on a circle of radius 128: the sagitta is
     // 128 - sqrt(128^2 - 64^2) = 17.1487...
@@ -1205,24 +1224,22 @@ fn stream_geometry_arc_is_added_as_an_elliptical_arc() {
 
 #[test]
 fn stream_geometry_unfilled_figures_are_stroked_only() {
-    let geometry = StreamGeometryImpl::new();
-    use ferroui_base::platform::IStreamGeometryImpl;
-    let mut context = geometry.open();
-    // A filled square...
-    context.begin_figure(Point::new(0.0, 0.0), true);
-    context.line_to(Point::new(40.0, 0.0), true);
-    context.line_to(Point::new(40.0, 40.0), true);
-    context.line_to(Point::new(0.0, 40.0), true);
-    context.end_figure(true);
-    // ...and an unfilled one.
-    context.begin_figure(Point::new(60.0, 0.0), false);
-    context.line_to(Point::new(100.0, 0.0), true);
-    context.line_to(Point::new(100.0, 40.0), true);
-    context.line_to(Point::new(60.0, 40.0), true);
-    context.end_figure(true);
-    context.dispose();
+    let geometry = build_stream_geometry(None, |context| {
+        // A filled square...
+        context.begin_figure(Point::new(0.0, 0.0), true);
+        context.line_to(Point::new(40.0, 0.0), true);
+        context.line_to(Point::new(40.0, 40.0), true);
+        context.line_to(Point::new(0.0, 40.0), true);
+        context.end_figure(true);
+        // ...and an unfilled one.
+        context.begin_figure(Point::new(60.0, 0.0), false);
+        context.line_to(Point::new(100.0, 0.0), true);
+        context.line_to(Point::new(100.0, 40.0), true);
+        context.line_to(Point::new(60.0, 40.0), true);
+        context.end_figure(true);
+    });
 
-    assert!(!geometry.is_fill_same_as_stroke());
+    assert!(!try_get_geometry_impl(&*geometry).unwrap().is_fill_same_as_stroke());
     assert!(geometry.fill_contains(Point::new(20.0, 20.0)));
     assert!(!geometry.fill_contains(Point::new(80.0, 20.0)));
 
@@ -1234,16 +1251,14 @@ fn stream_geometry_unfilled_figures_are_stroked_only() {
 
 #[test]
 fn stream_geometry_unstroked_segments_break_the_stroke() {
-    let geometry = StreamGeometryImpl::new();
-    use ferroui_base::platform::IStreamGeometryImpl;
-    let mut context = geometry.open();
-    context.begin_figure(Point::new(0.0, 0.0), true);
-    context.line_to(Point::new(50.0, 0.0), true);
-    // Not stroked: the fill still gets the edge.
-    context.line_to(Point::new(50.0, 50.0), false);
-    context.line_to(Point::new(0.0, 50.0), true);
-    context.end_figure(true);
-    context.dispose();
+    let geometry = build_stream_geometry(None, |context| {
+        context.begin_figure(Point::new(0.0, 0.0), true);
+        context.line_to(Point::new(50.0, 0.0), true);
+        // Not stroked: the fill still gets the edge.
+        context.line_to(Point::new(50.0, 50.0), false);
+        context.line_to(Point::new(0.0, 50.0), true);
+        context.end_figure(true);
+    });
 
     let pen = pen(Colors::BLACK, 2.0);
     assert!(geometry.stroke_contains(Some(&pen), Point::new(25.0, 0.0)));
@@ -1255,52 +1270,53 @@ fn stream_geometry_unstroked_segments_break_the_stroke() {
 }
 
 #[test]
-fn stream_geometry_clone_is_independent() {
-    let geometry = StreamGeometryImpl::new();
-    use ferroui_base::platform::IStreamGeometryImpl;
-    let mut context = geometry.open();
-    context.begin_figure(Point::new(0.0, 0.0), true);
-    context.line_to(Point::new(10.0, 0.0), true);
-    context.line_to(Point::new(10.0, 10.0), true);
-    context.end_figure(true);
-    context.dispose();
+fn stream_geometry_builder_does_not_change_its_source() {
+    let geometry = build_stream_geometry(None, |context| {
+        context.begin_figure(Point::new(0.0, 0.0), true);
+        context.line_to(Point::new(10.0, 0.0), true);
+        context.line_to(Point::new(10.0, 10.0), true);
+        context.end_figure(true);
+    });
 
-    let clone = geometry.clone_geometry();
-    assert_eq!(geometry.bounds(), clone.bounds());
-
-    let mut context = clone.open();
-    context.begin_figure(Point::new(50.0, 50.0), true);
-    context.line_to(Point::new(60.0, 50.0), true);
-    context.line_to(Point::new(60.0, 60.0), true);
-    context.end_figure(true);
-    context.dispose();
+    let extended = build_stream_geometry(Some(&*geometry), |context| {
+        context.begin_figure(Point::new(50.0, 50.0), true);
+        context.line_to(Point::new(60.0, 50.0), true);
+        context.line_to(Point::new(60.0, 60.0), true);
+        context.end_figure(true);
+    });
 
     assert_eq!(Rect::new(0.0, 0.0, 10.0, 10.0), geometry.bounds());
-    assert_eq!(Rect::new(0.0, 0.0, 60.0, 60.0), clone.bounds());
-    assert!(clone.as_stream_geometry().is_some());
+    assert_eq!(Rect::new(0.0, 0.0, 60.0, 60.0), extended.bounds());
 }
 
 #[test]
-fn stream_geometry_caches_are_invalidated_when_reopened() {
-    let geometry = StreamGeometryImpl::new();
-    use ferroui_base::platform::IStreamGeometryImpl;
+fn stream_geometry_builder_continues_the_figures_of_its_source() {
     let pen = pen(Colors::BLACK, 2.0);
 
-    let mut context = geometry.open();
-    context.begin_figure(Point::new(0.0, 0.0), false);
-    context.line_to(Point::new(10.0, 0.0), true);
-    context.end_figure(false);
-    context.dispose();
+    let geometry = build_stream_geometry(None, |context| {
+        context.begin_figure(Point::new(0.0, 0.0), false);
+        context.line_to(Point::new(10.0, 0.0), true);
+        context.end_figure(false);
+    });
 
     assert_eq!(Rect::new(0.0, -1.0, 10.0, 2.0), geometry.get_render_bounds(Some(&pen)));
     assert!((geometry.contour_length() - 10.0).abs() < 0.001);
 
-    let mut context = geometry.open();
-    context.line_to(Point::new(30.0, 0.0), true);
-    context.dispose();
+    let extended = build_stream_geometry(Some(&*geometry), |context| {
+        context.line_to(Point::new(30.0, 0.0), true);
+    });
 
-    assert_eq!(Rect::new(0.0, -1.0, 30.0, 2.0), geometry.get_render_bounds(Some(&pen)));
-    assert!((geometry.contour_length() - 30.0).abs() < 0.001);
+    assert_eq!(Rect::new(0.0, -1.0, 30.0, 2.0), extended.get_render_bounds(Some(&pen)));
+    assert!((extended.contour_length() - 30.0).abs() < 0.001);
+    assert_eq!(Rect::new(0.0, -1.0, 10.0, 2.0), geometry.get_render_bounds(Some(&pen)));
+}
+
+#[test]
+#[should_panic(expected = "The geometry has already been built.")]
+fn stream_geometry_builder_builds_once() {
+    let mut builder = render_interface().create_stream_geometry_builder(None);
+    builder.to_geometry();
+    builder.to_geometry();
 }
 
 #[test]

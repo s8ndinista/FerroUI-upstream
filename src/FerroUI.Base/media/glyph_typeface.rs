@@ -21,7 +21,6 @@ use crate::media::{
     FontMetrics, FontSimulations, FontStretch, FontStyle, FontWeight, GlyphBounds, GlyphMetrics, IFontMemory,
     IPlatformTypeface, ITextShaperTypeface, UnicodeRange, UnicodeRangeSegment,
 };
-use crate::media::immutable_geometry_impl::ImmutableGeometryImpl;
 use crate::platform::{self, IGeometryImpl, ITextShaperImpl};
 use crate::utilities::CultureInfo;
 use crate::{FerroLocator, LocatorExtensions, Matrix};
@@ -717,21 +716,18 @@ impl GlyphTypeface {
 
         let glyf_table = self.glyf_table.as_ref()?;
 
-        let geometry = platform::render_interface().create_stream_geometry();
-
-        let mut ctx = geometry.open();
+        let mut builder = platform::render_interface().create_stream_geometry_builder(None);
 
         // Build the outline in font design-unit space (identity transform); callers apply
-        // the scale / position. Wrapped so the shared, cacheable result is immutable.
-        let built = glyf_table.try_build_glyph_geometry(i32::from(glyph_index), Matrix::IDENTITY, &mut *ctx);
+        // the scale / position. The resulting geometry is immutable, so it can be cached and shared.
+        let result = if glyf_table.try_build_glyph_geometry(i32::from(glyph_index), Matrix::IDENTITY, &mut *builder) {
+            Some(builder.to_geometry())
+        } else {
+            None
+        };
 
-        ctx.dispose();
-
-        if built {
-            return Some(std::sync::Arc::new(ImmutableGeometryImpl::new(geometry)));
-        }
-
-        None
+        builder.dispose();
+        result
     }
 
     /// Releases the platform typeface. Idempotent.

@@ -1,7 +1,7 @@
 use crate::combined_geometry_impl::CombinedGeometryImpl;
 use crate::helpers::{pen_helper, sk_path_helper};
 use crate::skia_sharp_extensions::{to_rect, to_sk_point};
-use crate::stream_geometry_impl::StreamGeometryImpl;
+use crate::simple_geometry_impl::SimpleGeometryImpl;
 use crate::transformed_geometry_impl::TransformedGeometryImpl;
 use ferroui_base::media::{GeometryCombineMode, IPen, IntersectionResult};
 use ferroui_base::platform::{IGeometryImpl, ITransformedGeometryImpl};
@@ -140,7 +140,7 @@ pub fn try_get_geometry_impl(geometry: &dyn IGeometryImpl) -> Option<&dyn Geomet
 
     let any = geometry.as_any();
 
-    if let Some(geometry) = any.downcast_ref::<StreamGeometryImpl>() {
+    if let Some(geometry) = any.downcast_ref::<SimpleGeometryImpl>() {
         return Some(geometry);
     }
     if let Some(geometry) = any.downcast_ref::<TransformedGeometryImpl>() {
@@ -214,11 +214,11 @@ pub(crate) fn get_widened_geometry(geometry: &dyn GeometryImpl, pen: &dyn IPen) 
             // The path returned by Skia here does not have closed figures.
             // Fix that by re-creating it closed.
             let closed = sk_path_helper::create_closed_path(&path);
-            return StreamGeometryImpl::from_paths(closed, FillPath::SameAsStroke, None);
+            return SimpleGeometryImpl::new(closed, FillPath::SameAsStroke, None);
         }
     }
 
-    StreamGeometryImpl::from_paths(Path::new(), FillPath::None, None)
+    SimpleGeometryImpl::new(Path::new(), FillPath::None, None)
 }
 
 pub(crate) fn with_transform(geometry: &dyn GeometryImpl, transform: Matrix) -> Arc<dyn ITransformedGeometryImpl> {
@@ -249,7 +249,7 @@ pub(crate) fn try_get_segment(
     })?;
 
     if res {
-        Some(StreamGeometryImpl::from_paths(segment.detach(), FillPath::None, None))
+        Some(SimpleGeometryImpl::new(segment.detach(), FillPath::None, None))
     } else {
         None
     }

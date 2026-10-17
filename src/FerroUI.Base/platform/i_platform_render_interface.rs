@@ -2,7 +2,7 @@ use super::surfaces::IPlatformRenderSurface;
 use super::{
     AlphaFormat, IBitmapImpl, IDrawingContextLayerImpl, IGeometryImpl, IOptionalFeatureProvider,
     IPlatformGraphicsContext, IPlatformRenderInterfaceRegion, IRenderTarget, IRenderTargetBitmapImpl,
-    IStreamGeometryImpl, IWriteableBitmapImpl, PixelFormat,
+    IStreamGeometryBuilder, IWriteableBitmapImpl, PixelFormat,
 };
 use crate::media::imaging::BitmapInterpolationMode;
 use crate::media::{FillRule, GeometryCombineMode};
@@ -26,8 +26,12 @@ pub trait IPlatformRenderInterface: 'static {
     /// Creates a rectangle geometry implementation.
     fn create_rectangle_geometry(&self, rect: Rect) -> Arc<dyn IGeometryImpl>;
 
-    /// Creates a stream geometry implementation.
-    fn create_stream_geometry(&self) -> Arc<dyn IStreamGeometryImpl>;
+    /// Creates a builder used to define a stream geometry.
+    ///
+    /// `source` is a geometry created by this render interface whose figures
+    /// the new geometry starts with, or `None` to start with an empty
+    /// geometry. `source` itself isn't modified.
+    fn create_stream_geometry_builder(&self, source: Option<&dyn IGeometryImpl>) -> Box<dyn IStreamGeometryBuilder>;
 
     /// Creates a geometry group implementation.
     fn create_geometry_group(&self, fill_rule: FillRule, children: &[Arc<dyn IGeometryImpl>]) -> Arc<dyn IGeometryImpl>;

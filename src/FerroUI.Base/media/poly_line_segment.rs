@@ -1,4 +1,4 @@
-use crate::media::{PathSegment, PathSegmentImpl, Points, StreamGeometryContext};
+use crate::media::{PathSegment, PathSegmentImpl, Points};
 use crate::platform::IGeometryContext;
 use crate::{
     ferro_class, ferro_property, instantiate, FerroObjectImpl, FerroObjectImplExt, FerroProperty, Point, Ref,
@@ -23,7 +23,7 @@ impl FerroObjectImpl for PolyLineSegment {
 }
 
 impl PathSegmentImpl for PolyLineSegment {
-    fn apply_to(this: &Self, ctx: &mut StreamGeometryContext) {
+    fn apply_to(this: &Self, ctx: &mut dyn IGeometryContext) {
         let is_stroked = this.is_stroked();
         for point in this.points().iter() {
             ctx.line_to(point, is_stroked);
