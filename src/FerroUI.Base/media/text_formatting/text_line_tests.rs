@@ -775,13 +775,64 @@ fn hidden(length: i32) -> Rc<dyn TextRun> {
 }
 
 #[test]
-#[should_panic(expected = "textLength ('0') must be a non-zero value.")]
-fn should_throw_argument_out_of_range_exception_for_zero_text_length() {
-    let _scope = TextTestScope::new();
+fn should_get_text_bounds_for_zero_text_length() {
+    let rows: [(&str, i32, i32); 8] = [
+        ("abc", 0, 0),
+        ("abc", 0, 1),
+        ("abc", 0, 3),
+        ("a\r\nb\r\n", 0, 2),
+        ("a\r\nb\r\n", 0, 3),
+        ("a\r\nb\r\n", 3, 3),
+        ("a\r\nb\r\n", 3, 6),
+        ("\r\n", 0, 0),
+    ];
 
-    let text_line = format_runs(vec![characters("1234")]);
+    for (text, line_start, range_start) in rows {
+        let _scope = TextTestScope::new();
 
-    text_line.get_text_bounds(0, 0);
+        let default_properties = default_properties();
+        let text_source = SingleBufferTextSource::new(text, default_properties.clone());
+
+        let text_line = format_line(&text_source, line_start, f64::INFINITY, &no_wrap(&default_properties), None)
+            .expect("a text line");
+
+        assert_eq!(line_start, text_line.first_text_source_index(), "{text:?} {line_start} {range_start}");
+
+        assert!(text_line.get_text_bounds(range_start, 0).is_empty(), "{text:?} {line_start} {range_start}");
+    }
+}
+
+#[test]
+fn should_get_text_bounds_for_non_empty_text_length() {
+    let rows: [(&str, i32, i32, i32); 3] = [("abc", 0, 0, 3), ("abc", 0, 1, 1), ("a\r\nb\r\n", 3, 3, 1)];
+
+    for (text, line_start, range_start, range_length) in rows {
+        let _scope = TextTestScope::new();
+
+        let default_properties = default_properties();
+        let text_source = SingleBufferTextSource::new(text, default_properties.clone());
+
+        let text_line = format_line(&text_source, line_start, f64::INFINITY, &no_wrap(&default_properties), None)
+            .expect("a text line");
+
+        let all_bounds = text_line.get_text_bounds(range_start, range_length);
+        assert_eq!(1, all_bounds.len(), "{text:?} {line_start} {range_start} {range_length}");
+        let bounds = &all_bounds[0];
+        let start = text_line.get_distance_from_character_hit(CharacterHit::new(range_start));
+        let end = text_line.get_distance_from_character_hit(CharacterHit::new(range_start + range_length));
+
+        assert!((start - bounds.rectangle().left()).abs() < 0.001);
+        assert!((end - start - bounds.rectangle().width).abs() < 0.001);
+        assert_eq!(0.0, bounds.rectangle().top());
+        assert_eq!(text_line.height(), bounds.rectangle().height);
+        assert_eq!(FlowDirection::LeftToRight, bounds.flow_direction());
+
+        assert_eq!(1, bounds.text_run_bounds().len());
+        let run_bounds = &bounds.text_run_bounds()[0];
+
+        assert_eq!(range_start, run_bounds.text_source_character_index());
+        assert_eq!(range_length, run_bounds.length());
+    }
 }
 
 #[test]

@@ -96,6 +96,8 @@ pub trait TextLine: 'static {
     fn get_backspace_caret_character_hit(&self, character_hit: CharacterHit) -> CharacterHit;
 
     /// Get an array of bounding rectangles of a range of characters within a text line.
+    ///
+    /// Returns a list of bounding rectangles, or an empty list for an empty range.
     fn get_text_bounds(&self, first_text_source_character_index: i32, text_length: i32) -> Vec<TextBounds>;
 
     /// Releases the resources of the line.
