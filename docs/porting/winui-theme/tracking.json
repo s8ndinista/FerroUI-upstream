@@ -90296,7 +90296,7 @@
    "winui": "CalendarViewDayItem: {CalendarViewDayItem} (CalendarView_themeresources.xaml).",
    "status": "ported",
    "deviations": 10,
-   "date": "2026-10-16"
+   "date": "2026-10-17"
   },
   {
    "document": "CalendarItem.xaml",
@@ -90307,7 +90307,7 @@
    "winui": "The header, navigation buttons and views of the CalendarView template (DefaultCalendarViewStyle).",
    "status": "ported",
    "deviations": 16,
-   "date": "2026-10-16"
+   "date": "2026-10-17"
   },
   {
    "document": "Carousel.xaml",

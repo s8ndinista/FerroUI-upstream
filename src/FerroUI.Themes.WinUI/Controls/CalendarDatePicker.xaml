@@ -18,7 +18,9 @@
   - The padding 12,0,0,2 of DateText is the Padding of the control (a setter), bound to the text
     box, so that the Padding of FerroUI's control applies.
   - The glyph E787 (Calendar) of FontIcon CalendarGlyph at 12 px is the geometry
-    GlyphGeometryE787, 12 px wide.
+    GlyphGeometryE787, 10.5 px wide (the ink of the glyph at 12 px).
+  - DateText lies in the column of the border, not inside it: the text box has no margin of the
+    border thickness, so its text starts 12 px from the edge of the control, as WinUI's.
   - The Flyout of FlyoutBase.AttachedFlyout is the Popup PART_Popup (light dismiss, below the
     control) with the Calendar PART_Calendar, whose corner radius is OverlayCornerRadius as in the
     source; the FlyoutPresenterStyle of the source (no padding, no border) leaves the calendar as
@@ -194,7 +196,6 @@
                      Grid.Column="0"
                      Theme="{StaticResource CalendarDatePickerTextBoxStyle}"
                      Foreground="{TemplateBinding Foreground}"
-                     Margin="{TemplateBinding BorderThickness}"
                      Padding="{TemplateBinding Padding}"
                      PlaceholderText="{TemplateBinding PlaceholderText}"
                      PlaceholderForeground="{TemplateBinding PlaceholderForeground}"
@@ -211,7 +212,7 @@
                     Data="{StaticResource GlyphGeometryE787}"
                     Fill="{DynamicResource CalendarDatePickerCalendarGlyphForeground}"
                     Stretch="Uniform"
-                    Width="12"
+                    Width="10.5"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center" />
             </Button>
