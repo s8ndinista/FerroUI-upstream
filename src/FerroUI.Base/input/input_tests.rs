@@ -4322,6 +4322,67 @@ fn scroll_inertia_runs_on_animation_frames() {
     assert!(!crate::media::MediaContext::instance().media_context_clock().has_subscriptions());
 }
 
+/// Not upstream: the first frame of the inertia scrolls by the time since the
+/// release. A scroll content presenter that chains scrolling (its default)
+/// leaves a scroll event that moves nothing unhandled, which ends the
+/// gesture; the handler here does the same. The inertia of the port used to
+/// start its clock with the first frame, so that frame scrolled by nothing
+/// and a touch swipe never coasted (the browser report: a swipe moved the
+/// content only as far as the finger).
+#[test]
+fn the_first_frame_of_scroll_inertia_scrolls() {
+    let _scope = crate::threading::Dispatcher::unit_test_scope();
+    let dispatcher = crate::threading::Dispatcher::current_dispatcher();
+
+    let recognizer = ScrollGestureRecognizer::new();
+    recognizer.set_can_vertically_scroll(true);
+    recognizer.set_is_scroll_inertia_enabled(true);
+    recognizer.set_scroll_start_distance(1);
+
+    let (border, root) = recognizer_target(&recognizer);
+    let deltas = Rc::new(RefCell::new(Vec::new()));
+    let events = log();
+    // Three inertia events at most, so that the test does not wait for the
+    // inertia to slow down.
+    let inertia_budget = Rc::new(Cell::new(None::<usize>));
+    let recorded = deltas.clone();
+    let budget = inertia_budget.clone();
+    root.root.scroll_gesture(move |_, e| {
+        recorded.borrow_mut().push(e.delta());
+        let within_budget = match budget.get() {
+            Some(0) => false,
+            Some(left) => {
+                budget.set(Some(left - 1));
+                true
+            }
+            None => true,
+        };
+        e.set_handled(e.delta() != Vector::default() && within_budget);
+    });
+    let recorded = events.clone();
+    root.root.scroll_gesture_inertia_starting(move |_, _| recorded.borrow_mut().push("inertia".to_string()));
+    let recorded = events.clone();
+    root.root.scroll_gesture_ended(move |_, _| recorded.borrow_mut().push("ended".to_string()));
+
+    let touch = TouchTestHelper::new();
+    touch.down(&border, Point::new(50.0, 90.0));
+    for y in [80.0, 70.0, 60.0, 50.0] {
+        touch.move_to(&border, Point::new(50.0, y));
+    }
+    touch.up(&border, Point::new(50.0, 50.0));
+    assert_eq!(*events.borrow(), ["inertia"]);
+    let moves = deltas.borrow().len();
+
+    inertia_budget.set(Some(3));
+    std::thread::sleep(std::time::Duration::from_millis(5));
+    dispatcher.run_jobs(None);
+
+    let inertia = deltas.borrow()[moves..].to_vec();
+    assert!(inertia.first().is_some_and(|delta| delta.y > 0.0), "the first inertia event scrolls: {inertia:?}");
+    assert_eq!(inertia.len(), 4, "the inertia goes on until its events are not handled: {inertia:?}");
+    assert_eq!(*events.borrow(), ["inertia", "ended"]);
+}
+
 #[test]
 fn pull_gesture_is_raised_from_the_edge() {
     let recognizer = PullGestureRecognizer::with_direction(PullDirection::TopToBottom);
