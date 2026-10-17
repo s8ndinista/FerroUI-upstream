@@ -924,11 +924,13 @@ fn report_popup_placement(window: &Ref<Window>, control: &Ref<Visual>) {
     }
     for placement in placements {
         let (left, top) = placement.parent_geometry.map_or((0, 0), |(left, top, _, _)| (left, top));
-        let verdict = match placement.configure {
-            Some(configure) => {
-                let x = f64::from(configure.x + left);
-                let y = f64::from(configure.y + top);
-                let width = f64::from(configure.width);
+        // The popup's window geometry of the last xdg_popup.configure (none for a bare
+        // xdg_surface.configure).
+        let verdict = match placement.configure.as_ref().and_then(|configure| configure.geometry) {
+            Some(geometry) => {
+                let x = f64::from(geometry.x + left);
+                let y = f64::from(geometry.y + top);
+                let width = f64::from(geometry.width);
                 let below = (y - (origin.y + size.height)).abs() <= 12.0;
                 let centred = (x + width / 2.0 - (origin.x + size.width / 2.0)).abs() <= 12.0;
                 let left_aligned = (x - origin.x).abs() <= 12.0;
