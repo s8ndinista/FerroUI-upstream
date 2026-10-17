@@ -80,7 +80,7 @@ rm -f "$console" "$shots"/catalog-*.png "$out"/catalog-screenshot-*.log
 
 # Build and bundle first: nothing is booted for a build that fails.
 app="$("$root/scripts/ios/bundle.sh" --package control-catalog-ios --bin control-catalog-ios \
-  --bundle-id "$bundle_id" --name ControlCatalog ${build_args[@]+"${build_args[@]}"} | tail -n 1)"
+  --bundle-id "$bundle_id" --name ControlCatalog --high-refresh-rate ${build_args[@]+"${build_args[@]}"} | tail -n 1)"
 if [ -z "$app" ] || [ ! -d "$app" ]; then
   echo "sim-catalog.sh: the application was not bundled" >&2
   exit 2
