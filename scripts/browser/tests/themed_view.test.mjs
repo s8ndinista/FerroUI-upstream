@@ -368,7 +368,8 @@ check("the barrel button of a pen is reported as such, the right button of a mou
         const module = await import("./ferroui.js");
         const seen = [];
         const original = themedView.InputHelper_OnPointerDown;
-        themedView.InputHelper_OnPointerDown = (...args) => { seen.push(args[args.length - 1]); return original(...args); };
+        // The modifiers are the argument before the last, the age of the event.
+        themedView.InputHelper_OnPointerDown = (...args) => { seen.push(args[args.length - 2]); return original(...args); };
         module.FerroExports.attach(themedView);
         const host = document.getElementById("out");
         for (const pointerType of ["pen", "mouse"]) {
