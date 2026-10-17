@@ -304,7 +304,8 @@ pub fn on_composition_end(top_level_id: i32, data: Option<String>) {
 }
 
 /// A pointer moved. `args_obj` is the event of the page, kept for the
-/// coalesced points of the move.
+/// coalesced points of the move. `event_age` (each pointer event) is the
+/// milliseconds since the page raised the event.
 #[wasm_bindgen(js_name = InputHelper_OnPointerMove)]
 #[allow(clippy::too_many_arguments)]
 pub fn on_pointer_move(
@@ -318,6 +319,7 @@ pub fn on_pointer_move(
     tilt_y: f64,
     twist: f64,
     modifier: i32,
+    event_age: f64,
     args_obj: JsObject,
 ) {
     if let Some(top_level) = BrowserTopLevelImpl::try_get_top_level(top_level_id) {
@@ -331,6 +333,7 @@ pub fn on_pointer_move(
             tilt_y,
             twist,
             modifier,
+            event_age,
             args_obj,
         );
     }
@@ -352,6 +355,7 @@ pub fn on_pointer_down(
     tilt_y: f64,
     twist: f64,
     modifier: i32,
+    event_age: f64,
 ) {
     if let Some(top_level) = BrowserTopLevelImpl::try_get_top_level(top_level_id) {
         top_level.input_handler().on_pointer_down(
@@ -365,6 +369,7 @@ pub fn on_pointer_down(
             tilt_y,
             twist,
             modifier,
+            event_age,
         );
     }
 }
@@ -385,6 +390,7 @@ pub fn on_pointer_up(
     tilt_y: f64,
     twist: f64,
     modifier: i32,
+    event_age: f64,
 ) {
     if let Some(top_level) = BrowserTopLevelImpl::try_get_top_level(top_level_id) {
         top_level.input_handler().on_pointer_up(
@@ -398,6 +404,7 @@ pub fn on_pointer_up(
             tilt_y,
             twist,
             modifier,
+            event_age,
         );
     }
 }
@@ -415,6 +422,7 @@ pub fn on_pointer_cancel(
     tilt_y: f64,
     twist: f64,
     modifier: i32,
+    event_age: f64,
 ) {
     if let Some(top_level) = BrowserTopLevelImpl::try_get_top_level(top_level_id) {
         top_level.input_handler().on_pointer_cancel(
@@ -427,6 +435,7 @@ pub fn on_pointer_cancel(
             tilt_y,
             twist,
             modifier,
+            event_age,
         );
     }
 }

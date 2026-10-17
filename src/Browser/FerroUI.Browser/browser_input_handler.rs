@@ -72,6 +72,10 @@ const DOM_DELTA_LINE: i32 = 1;
 /// `deltaMode` of a wheel event: the deltas are pages.
 const DOM_DELTA_PAGE: i32 = 2;
 
+/// The oldest a pointer event of the page can be when it is handled; an
+/// older one has a time stamp of another origin.
+const MAX_EVENT_AGE_MILLISECONDS: f64 = 5000.0;
+
 /// The pixels the wheel delta of the framework stands for: the scroll
 /// content presenter scrolls 50 units per delta of 1, and the reference
 /// implementation of this backend divides the pixel deltas by 50.
@@ -99,6 +103,9 @@ pub struct BrowserInputHandler {
     page: Box<dyn IInputPage>,
     container: Rc<dyn IPointerCapture>,
     sw: Instant,
+    /// The time stamp of the last pointer event: the time stamps of the
+    /// events of the page do not go back.
+    last_pointer_timestamp: Cell<u64>,
     touch_device: Rc<TouchDevice>,
     pen_device: Rc<PenDevice>,
     wheel_mouse_device: Rc<MouseDevice>,
@@ -147,6 +154,7 @@ impl BrowserInputHandler {
             page,
             container,
             sw: Instant::now(),
+            last_pointer_timestamp: Cell::new(0),
             touch_device: TouchDevice::new(),
             pen_device: PenDevice::new(false),
             wheel_mouse_device: MouseDevice::new(),
@@ -188,6 +196,26 @@ impl BrowserInputHandler {
     /// the raw input events.
     pub fn timestamp(&self) -> u64 {
         self.sw.elapsed().as_millis() as u64
+    }
+
+    /// The time stamp of a pointer event that the page raised `event_age`
+    /// milliseconds ago (`performance.now() - event.timeStamp`).
+    ///
+    /// Not in the original, which stamps a pointer event with the time it is
+    /// handled. The page handles input between the frames it draws: with a
+    /// frame that takes longer than the 40 ms after which the velocity
+    /// tracker takes the pointer for stopped (a page that draws on its own
+    /// thread, on a slow phone), a finger lifted while it moves was stamped
+    /// as if it had rested before, and a flick did not scroll on. The time
+    /// the browser raised the event is when the finger was there. An age
+    /// that is negative, not a number or older than a few seconds (a browser
+    /// whose time stamps have another origin) stands for an event raised now.
+    fn event_timestamp(&self, event_age: f64) -> u64 {
+        let now = self.sw.elapsed().as_secs_f64() * 1000.0;
+        let age = if (0.0..=MAX_EVENT_AGE_MILLISECONDS).contains(&event_age) { event_age } else { 0.0 };
+        let timestamp = ((now - age).max(0.0) as u64).max(self.last_pointer_timestamp.get());
+        self.last_pointer_timestamp.set(timestamp);
+        timestamp
     }
 
     pub(crate) fn set_input_root(&self, input_root: Rc<dyn IInputRoot>) {
@@ -317,6 +345,7 @@ impl BrowserInputHandler {
         tilt_y: f64,
         twist: f64,
         modifier: i32,
+        event_age: f64,
         args_obj: JsObject,
     ) -> bool {
         let point = Self::create_raw_pointer(offset_x, offset_y, pressure, tilt_x, tilt_y, twist);
@@ -349,6 +378,7 @@ impl BrowserInputHandler {
             Self::to_raw_input_modifiers(modifier),
             pointer_id,
             Some(coalesced_events),
+            event_age,
         );
 
         // Release the handle of the event after processing it.
@@ -372,11 +402,12 @@ impl BrowserInputHandler {
         tilt_y: f64,
         twist: f64,
         modifier: i32,
+        event_age: f64,
     ) -> bool {
         let type_ = Self::pointer_down_type(pointer_type, buttons);
 
         let point = Self::create_raw_pointer(offset_x, offset_y, pressure, tilt_x, tilt_y, twist);
-        self.raw_pointer_event(type_, pointer_type, point, Self::to_raw_input_modifiers(modifier), pointer_id, None)
+        self.raw_pointer_event(type_, pointer_type, point, Self::to_raw_input_modifiers(modifier), pointer_id, None, event_age)
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -392,11 +423,12 @@ impl BrowserInputHandler {
         tilt_y: f64,
         twist: f64,
         modifier: i32,
+        event_age: f64,
     ) -> bool {
         let type_ = Self::pointer_up_type(pointer_type, buttons);
 
         let point = Self::create_raw_pointer(offset_x, offset_y, pressure, tilt_x, tilt_y, twist);
-        self.raw_pointer_event(type_, pointer_type, point, Self::to_raw_input_modifiers(modifier), pointer_id, None)
+        self.raw_pointer_event(type_, pointer_type, point, Self::to_raw_input_modifiers(modifier), pointer_id, None, event_age)
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -411,6 +443,7 @@ impl BrowserInputHandler {
         tilt_y: f64,
         twist: f64,
         modifier: i32,
+        event_age: f64,
     ) -> bool {
         if pointer_type == "touch" {
             let point = Self::create_raw_pointer(offset_x, offset_y, pressure, tilt_x, tilt_y, twist);
@@ -421,6 +454,7 @@ impl BrowserInputHandler {
                 Self::to_raw_input_modifiers(modifier),
                 pointer_id,
                 None,
+                event_age,
             );
         }
 
@@ -611,10 +645,11 @@ impl BrowserInputHandler {
         modifiers: RawInputModifiers,
         touch_point_id: i64,
         intermediate_points: Option<IntermediatePoints>,
+        event_age: f64,
     ) -> bool {
         if let Some(input_root) = self.input_root() {
             let device = self.get_pointer_device(pointer_type, touch_point_id);
-            let timestamp = self.timestamp();
+            let timestamp = self.event_timestamp(event_age);
 
             if device.as_any().is::<TouchDevice>() {
                 let args = Rc::new(RawTouchEventArgs::with_point(
@@ -1161,10 +1196,10 @@ mod tests {
         let fixture = Fixture::without_root();
         fixture.top_level.handle.set(true);
 
-        assert!(!fixture.handler.on_pointer_down("mouse", 1, 0, 1.0, 2.0, 0.5, 0.0, 0.0, 0.0, 16));
-        assert!(!fixture.handler.on_pointer_up("mouse", 1, 0, 1.0, 2.0, 0.5, 0.0, 0.0, 0.0, 0));
-        assert!(!fixture.handler.on_pointer_move("mouse", 1, 1.0, 2.0, 0.5, 0.0, 0.0, 0.0, 0, JsObject::UNDEFINED));
-        assert!(!fixture.handler.on_pointer_cancel("touch", 1, 1.0, 2.0, 0.5, 0.0, 0.0, 0.0, 0));
+        assert!(!fixture.handler.on_pointer_down("mouse", 1, 0, 1.0, 2.0, 0.5, 0.0, 0.0, 0.0, 16, 0.0));
+        assert!(!fixture.handler.on_pointer_up("mouse", 1, 0, 1.0, 2.0, 0.5, 0.0, 0.0, 0.0, 0, 0.0));
+        assert!(!fixture.handler.on_pointer_move("mouse", 1, 1.0, 2.0, 0.5, 0.0, 0.0, 0.0, 0, 0.0, JsObject::UNDEFINED));
+        assert!(!fixture.handler.on_pointer_cancel("touch", 1, 1.0, 2.0, 0.5, 0.0, 0.0, 0.0, 0, 0.0));
         assert!(!fixture.handler.on_wheel(1.0, 2.0, 0.0, 100.0, DOM_DELTA_PIXEL, 0));
         assert!(!fixture.handler.on_key_down(Some("KeyA"), Some("a"), 0));
         assert!(!fixture.handler.on_key_up(Some("KeyA"), Some("a"), 0));
@@ -1178,9 +1213,9 @@ mod tests {
         let _scope = Dispatcher::unit_test_scope();
         let fixture = Fixture::new();
 
-        assert!(!fixture.handler.on_pointer_down("mouse", 7, 2, 10.0, 20.0, 0.5, 1.0, 2.0, 3.0, 32 | 4));
+        assert!(!fixture.handler.on_pointer_down("mouse", 7, 2, 10.0, 20.0, 0.5, 1.0, 2.0, 3.0, 32 | 4, 0.0));
         fixture.top_level.handle.set(true);
-        assert!(fixture.handler.on_pointer_up("mouse", 7, 2, 11.0, 21.0, 0.0, 0.0, 0.0, 0.0, 4));
+        assert!(fixture.handler.on_pointer_up("mouse", 7, 2, 11.0, 21.0, 0.0, 0.0, 0.0, 0.0, 4, 0.0));
 
         assert_eq!(2, fixture.event_count());
         let down = fixture.event(0);
@@ -1201,11 +1236,11 @@ mod tests {
         let _scope = Dispatcher::unit_test_scope();
         let fixture = Fixture::new();
 
-        fixture.handler.on_pointer_down("mouse", 1, 0, 0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 16);
-        fixture.handler.on_pointer_up("mouse", 1, 0, 0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 0);
-        fixture.handler.on_pointer_down("mouse", 2, 0, 0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 16);
+        fixture.handler.on_pointer_down("mouse", 1, 0, 0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 16, 0.0);
+        fixture.handler.on_pointer_up("mouse", 1, 0, 0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 0, 0.0);
+        fixture.handler.on_pointer_down("mouse", 2, 0, 0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 16, 0.0);
         // An unknown kind of pointer is a mouse.
-        fixture.handler.on_pointer_down("", 1, 0, 0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 16);
+        fixture.handler.on_pointer_down("", 1, 0, 0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 16, 0.0);
 
         let device = |index: usize| Rc::as_ptr(fixture.event(index).device()) as *const ();
         assert_eq!(device(0), device(1));
@@ -1219,10 +1254,10 @@ mod tests {
         let _scope = Dispatcher::unit_test_scope();
         let fixture = Fixture::new();
 
-        fixture.handler.on_pointer_down("touch", 11, 0, 1.0, 2.0, 0.5, 0.0, 0.0, 0.0, 0);
-        fixture.handler.on_pointer_move("touch", 11, 3.0, 4.0, 0.5, 0.0, 0.0, 0.0, 0, JsObject::UNDEFINED);
-        fixture.handler.on_pointer_up("touch", 11, 0, 5.0, 6.0, 0.5, 0.0, 0.0, 0.0, 0);
-        assert!(!fixture.handler.on_pointer_cancel("touch", 12, 7.0, 8.0, 0.5, 0.0, 0.0, 0.0, 0));
+        fixture.handler.on_pointer_down("touch", 11, 0, 1.0, 2.0, 0.5, 0.0, 0.0, 0.0, 0, 0.0);
+        fixture.handler.on_pointer_move("touch", 11, 3.0, 4.0, 0.5, 0.0, 0.0, 0.0, 0, 0.0, JsObject::UNDEFINED);
+        fixture.handler.on_pointer_up("touch", 11, 0, 5.0, 6.0, 0.5, 0.0, 0.0, 0.0, 0, 0.0);
+        assert!(!fixture.handler.on_pointer_cancel("touch", 12, 7.0, 8.0, 0.5, 0.0, 0.0, 0.0, 0, 0.0));
 
         assert_eq!(4, fixture.event_count());
         for (index, expected) in [
@@ -1253,12 +1288,12 @@ mod tests {
         let fixture = Fixture::new();
         fixture.top_level.handle.set(true);
 
-        assert!(!fixture.handler.on_pointer_cancel("mouse", 1, 0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 0));
-        assert!(!fixture.handler.on_pointer_cancel("pen", 1, 0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 0));
+        assert!(!fixture.handler.on_pointer_cancel("mouse", 1, 0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 0, 0.0));
+        assert!(!fixture.handler.on_pointer_cancel("pen", 1, 0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 0, 0.0));
         assert_eq!(0, fixture.event_count());
 
         // A cancelled touch is raised, and still reported as not handled.
-        assert!(!fixture.handler.on_pointer_cancel("touch", 1, 0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 0));
+        assert!(!fixture.handler.on_pointer_cancel("touch", 1, 0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 0, 0.0));
         assert_eq!(1, fixture.event_count());
     }
 
@@ -1267,8 +1302,8 @@ mod tests {
         let _scope = Dispatcher::unit_test_scope();
         let fixture = Fixture::new();
 
-        fixture.handler.on_pointer_down("pen", 5, 0, 1.0, 2.0, 0.8, 10.0, 20.0, 30.0, 16);
-        fixture.handler.on_pointer_down("pen", 5, 5, 1.0, 2.0, 0.8, 10.0, 20.0, 30.0, 1024);
+        fixture.handler.on_pointer_down("pen", 5, 0, 1.0, 2.0, 0.8, 10.0, 20.0, 30.0, 16, 0.0);
+        fixture.handler.on_pointer_down("pen", 5, 5, 1.0, 2.0, 0.8, 10.0, 20.0, 30.0, 1024, 0.0);
 
         let down = fixture.event(0);
         let down = down.downcast_ref::<RawPointerEventArgs>().expect("a pointer event");
@@ -1289,11 +1324,11 @@ mod tests {
             vec![1.0, 2.0, 0.5, 0.0, 0.0, 0.0, 3.0, 4.0, 0.5, 0.0, 0.0, 0.0, 5.0, 6.0, 0.5, 0.0, 0.0, 0.0];
         fixture.page.calls.borrow_mut().clear();
 
-        fixture.handler.on_pointer_move("mouse", 1, 5.0, 6.0, 0.5, 0.0, 0.0, 0.0, 0, JsObject::UNDEFINED);
+        fixture.handler.on_pointer_move("mouse", 1, 5.0, 6.0, 0.5, 0.0, 0.0, 0.0, 0, 0.0, JsObject::UNDEFINED);
         assert!(fixture.page.calls.borrow().is_empty());
 
         fixture.top_level.read_points.set(true);
-        fixture.handler.on_pointer_move("mouse", 1, 5.0, 6.0, 0.5, 0.0, 0.0, 0.0, 0, JsObject::UNDEFINED);
+        fixture.handler.on_pointer_move("mouse", 1, 5.0, 6.0, 0.5, 0.0, 0.0, 0.0, 0, 0.0, JsObject::UNDEFINED);
 
         assert_eq!(vec!["coalesced"], *fixture.page.calls.borrow());
         assert_eq!(
@@ -1310,7 +1345,7 @@ mod tests {
         *fixture.page.coalesced.borrow_mut() = vec![1.0, 2.0, 0.5, 0.0, 0.0, 0.0, 3.0, 4.0, 0.5, 0.0, 0.0, 0.0];
         fixture.page.calls.borrow_mut().clear();
 
-        fixture.handler.on_pointer_move("mouse", 1, 3.0, 4.0, 0.5, 0.0, 0.0, 0.0, 0, JsObject::UNDEFINED);
+        fixture.handler.on_pointer_move("mouse", 1, 3.0, 4.0, 0.5, 0.0, 0.0, 0.0, 0, 0.0, JsObject::UNDEFINED);
 
         let event = fixture.event(0);
         let points = event
@@ -1556,11 +1591,33 @@ mod tests {
         let _scope = Dispatcher::unit_test_scope();
         let fixture = Fixture::new();
 
-        fixture.handler.on_pointer_down("mouse", 1, 0, 0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 16);
-        fixture.handler.on_pointer_up("mouse", 1, 0, 0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 0);
+        fixture.handler.on_pointer_down("mouse", 1, 0, 0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 16, 0.0);
+        fixture.handler.on_pointer_up("mouse", 1, 0, 0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 0, 0.0);
 
         assert!(fixture.event(0).timestamp() <= fixture.event(1).timestamp());
         assert!(fixture.event(1).timestamp() <= fixture.handler.timestamp());
+    }
+
+    #[test]
+    fn a_pointer_event_is_stamped_with_the_time_the_page_raised_it() {
+        let _scope = Dispatcher::unit_test_scope();
+        let fixture = Fixture::new();
+        std::thread::sleep(std::time::Duration::from_millis(120));
+
+        // An event raised 100 ms before it is handled.
+        fixture.handler.on_pointer_down("touch", 1, 0, 0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 0, 100.0);
+        let now = fixture.handler.timestamp();
+        let stamped = fixture.event(0).timestamp();
+        assert!(stamped + 100 <= now + 1 && stamped + 100 + 50 >= now, "stamped {stamped} at {now}");
+
+        // An age that is not one (another origin, not a number) stands for now; and the time
+        // stamps do not go back.
+        fixture.handler.on_pointer_move("touch", 1, 1.0, 1.0, 0.5, 0.0, 0.0, 0.0, 0, 1.0e12, JsObject::UNDEFINED);
+        fixture.handler.on_pointer_move("touch", 1, 2.0, 2.0, 0.5, 0.0, 0.0, 0.0, 0, f64::NAN, JsObject::UNDEFINED);
+        fixture.handler.on_pointer_up("touch", 1, 0, 2.0, 2.0, 0.5, 0.0, 0.0, 0.0, 0, 110.0);
+        assert!(fixture.event(1).timestamp() >= now);
+        assert!(fixture.event(2).timestamp() >= fixture.event(1).timestamp());
+        assert_eq!(fixture.event(2).timestamp(), fixture.event(3).timestamp());
     }
 
     #[test]
