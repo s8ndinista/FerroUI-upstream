@@ -13,7 +13,7 @@ use crate::animation::IAnimation;
 use crate::collections::FerroList;
 use crate::utilities::HandlerList;
 use crate::{ferro_class, BoxedValue, FerroObject, FerroObjectImpl, ObjectType, Ref, StyledElement, Upcast, WeakRef};
-use std::cell::{OnceCell, RefCell};
+use std::cell::{Cell, OnceCell, RefCell};
 use std::rc::Rc;
 
 /// Base class for [`Style`](super::Style), [`ControlTheme`](super::ControlTheme)
@@ -26,7 +26,11 @@ pub struct StyleBase {
     resources: RefCell<Option<Ref<ResourceDictionary>>>,
     setters: OnceCell<FerroList<Rc<dyn SetterBase>>>,
     animations: OnceCell<FerroList<Rc<dyn IAnimation>>>,
+    // Shared style instances are cached per frame type. Most styles only ever have a single shared instance,
+    // so a plain field serves that case, upgraded lazily to an array indexed by frame type when a second type is shared.
     shared_instance: RefCell<Option<Rc<StyleInstance>>>,
+    shared_instance_type: Cell<FrameType>,
+    shared_instances: RefCell<Option<Box<[Option<Rc<StyleInstance>>; 3]>>>,
     parent: RefCell<Option<WeakRef<StyleBase>>>,
     owner_changed: HandlerList<dyn Fn()>,
 }
@@ -90,6 +94,8 @@ impl StyleBase {
             setters: OnceCell::new(),
             animations: OnceCell::new(),
             shared_instance: RefCell::new(None),
+            shared_instance_type: Cell::new(FrameType::Style),
+            shared_instances: RefCell::new(None),
             parent: RefCell::new(None),
             owner_changed: HandlerList::new(),
         }
@@ -288,7 +294,7 @@ impl StyleBase {
         type_: FrameType,
         mut can_share_instance: bool,
     ) -> Result<Rc<dyn ValueFrame>, DuplicateSetterError> {
-        let shared = if can_share_instance { self.shared_instance.borrow().clone() } else { None };
+        let shared = if can_share_instance { self.get_shared_instance(type_) } else { None };
 
         let instance = match shared {
             Some(instance) => instance,
@@ -312,7 +318,7 @@ impl StyleBase {
 
                 if can_share_instance {
                     instance.make_shared();
-                    *self.shared_instance.borrow_mut() = Some(instance.clone());
+                    self.set_shared_instance(type_, instance.clone());
                 }
 
                 instance
@@ -323,6 +329,39 @@ impl StyleBase {
         target.values().add_frame(target, instance.clone());
         instance.apply_animations(target);
         Ok(instance)
+    }
+
+    fn get_shared_instance(&self, type_: FrameType) -> Option<Rc<StyleInstance>> {
+        if let Some(instances) = &*self.shared_instances.borrow() {
+            return instances[type_ as usize].clone();
+        }
+
+        if self.shared_instance_type.get() == type_ {
+            self.shared_instance.borrow().clone()
+        } else {
+            None
+        }
+    }
+
+    fn set_shared_instance(&self, type_: FrameType, instance: Rc<StyleInstance>) {
+        if let Some(instances) = &mut *self.shared_instances.borrow_mut() {
+            instances[type_ as usize] = Some(instance);
+            return;
+        }
+
+        let mut shared = self.shared_instance.borrow_mut();
+        match shared.take() {
+            None => {
+                *shared = Some(instance);
+                self.shared_instance_type.set(type_);
+            }
+            Some(existing) => {
+                let mut instances: Box<[Option<Rc<StyleInstance>>; 3]> = Box::new([None, None, None]);
+                instances[self.shared_instance_type.get() as usize] = Some(existing);
+                instances[type_ as usize] = Some(instance);
+                *self.shared_instances.borrow_mut() = Some(instances);
+            }
+        }
     }
 
     /// Adds an owner to the style.

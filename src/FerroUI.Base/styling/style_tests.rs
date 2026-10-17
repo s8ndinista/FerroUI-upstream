@@ -1033,6 +1033,68 @@ fn styles_collection_operations() {
 
 // --- ControlTheme ------------------------------------------------------------
 
+fn style_instances(target: &Class1) -> Vec<Rc<dyn crate::property_store::ValueFrame>> {
+    target.values().frames().into_iter().filter(|frame| frame.as_any().is::<StyleInstance>()).collect()
+}
+
+#[test]
+fn control_theme_attached_as_theme_and_templated_parent_theme_creates_distinct_instances() {
+    // The same control theme can legitimately be attached to a control twice:
+    // once as its own theme and once via the templated parent's theme. Each
+    // attach must produce a distinct style instance so that the same object is
+    // never inserted twice into the same value store.
+    let theme = ControlTheme::with_setters(Class1::TYPE, [foo_setter("Foo")]);
+
+    let target = Class1::new();
+    let element: Ref<StyledElement> = target.clone().upcast();
+
+    assert_eq!(theme.try_attach(&element, FrameType::Theme), SelectorMatchResult::AlwaysThisType);
+    assert_eq!(theme.try_attach(&element, FrameType::TemplatedParentTheme), SelectorMatchResult::AlwaysThisType);
+
+    let instances = style_instances(&target);
+    assert_eq!(instances.len(), 2);
+    assert!(!Rc::ptr_eq(&instances[0], &instances[1]));
+}
+
+#[test]
+fn control_theme_reattach_after_remove_frames_does_not_duplicate_instance() {
+    let theme = ControlTheme::with_setters(Class1::TYPE, [foo_setter("Foo")]);
+
+    let target = Class1::new();
+    let element: Ref<StyledElement> = target.clone().upcast();
+
+    assert_eq!(theme.try_attach(&element, FrameType::Theme), SelectorMatchResult::AlwaysThisType);
+
+    let store = target.values();
+    store.begin_styling();
+    store.remove_frames(&target, FrameType::Theme);
+    store.end_styling(&target);
+
+    assert_eq!(theme.try_attach(&element, FrameType::Theme), SelectorMatchResult::AlwaysThisType);
+
+    let instances = style_instances(&target);
+    assert_eq!(instances.len(), 1);
+}
+
+#[test]
+fn control_theme_shares_instance_between_controls_for_same_frame_type() {
+    let theme = ControlTheme::with_setters(Class1::TYPE, [foo_setter("Foo")]);
+
+    let target1 = Class1::new();
+    let target2 = Class1::new();
+    let element1: Ref<StyledElement> = target1.clone().upcast();
+    let element2: Ref<StyledElement> = target2.clone().upcast();
+
+    assert_eq!(theme.try_attach(&element1, FrameType::Theme), SelectorMatchResult::AlwaysThisType);
+    assert_eq!(theme.try_attach(&element2, FrameType::Theme), SelectorMatchResult::AlwaysThisType);
+
+    let instances1 = style_instances(&target1);
+    let instances2 = style_instances(&target2);
+    assert_eq!(instances1.len(), 1);
+    assert_eq!(instances2.len(), 1);
+    assert!(Rc::ptr_eq(&instances1[0], &instances2[0]));
+}
+
 #[test]
 #[should_panic(expected = "ControlTheme (for Class1) cannot be added to a Styles collection.")]
 fn control_theme_cannot_be_added_to_styles() {
