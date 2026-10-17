@@ -194,11 +194,15 @@ impl IWXdgPopupEventSink for PopupImplSink {
         // The compositor's suggested size is intentionally IGNORED
         // for now: per xdg_surface.configure, this is a *suggested*
         // surface change, and the framework's positioner-supplied
-        // size is the authoritative one we use for layout. The
-        // worker→UI plumbing is kept because we may want to revisit
-        // this for compositor-driven shrink-to-fit behaviour.
-        let _ = batch.width;
-        let _ = batch.height;
+        // size is the authoritative one we use for layout. We may
+        // want to revisit this for compositor-driven shrink-to-fit
+        // behaviour.
+        if let Some(g) = batch.geometry {
+            if let Some(parent) = self.parent() {
+                parent.set_configured_geometry(g);
+                parent.update_position();
+            }
+        }
 
         // Ack the configure on next commit.
         if let Some(proxy) = &*self.surface_proxy.borrow() {

@@ -423,6 +423,11 @@ impl IPopupParent for WindowImpl {
     fn shell_surface_proxy(&self) -> Option<WXdgShellSurfaceProxy> {
         self.surface_proxy.borrow().as_ref().map(|proxy| proxy.as_shell_surface().clone())
     }
+
+    fn window_geometry_origin(&self) -> PixelPoint {
+        let shadow_extents = self.shadow_extents.get();
+        PixelPoint::new(shadow_extents.left as i32, shadow_extents.top as i32)
+    }
 }
 
 impl ISinkOwner for WindowImpl {
@@ -604,13 +609,12 @@ impl ITopLevelImpl for WindowImpl {
         self.base.set_input_root(input_root);
     }
 
-    // Not supported by Wayland.
     fn point_to_client(&self, point: PixelPoint) -> Point {
-        Point::new(f64::from(point.x), f64::from(point.y))
+        self.base.point_to_client(point)
     }
 
     fn point_to_screen(&self, point: Point) -> PixelPoint {
-        PixelPoint::new(point.x as i32, point.y as i32)
+        self.base.point_to_screen(point)
     }
 
     fn set_cursor(&self, cursor: Option<Rc<dyn ICursorImpl>>) {
@@ -692,9 +696,9 @@ impl IWindowBaseImpl for WindowImpl {
         self.dispose_sink();
     }
 
-    // Not supported by Wayland.
+    // Not supported by Wayland: a top-level is the origin of the "screen" space.
     fn position(&self) -> PixelPoint {
-        PixelPoint::default()
+        self.base.position()
     }
 
     fn position_changed(&self) -> Option<Rc<dyn Fn(PixelPoint)>> {
@@ -958,6 +962,7 @@ impl IWindowImpl for WindowImpl {
         if let Some(proxy) = self.surface_proxy() {
             proxy.set_shadow_extents(extents);
         }
+        self.base.invalidate_child_positions();
     }
 }
 

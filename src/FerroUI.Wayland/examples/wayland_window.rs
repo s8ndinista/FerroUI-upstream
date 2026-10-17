@@ -3035,8 +3035,8 @@ mod app {
                     popups.sort_by_key(|(id, _)| **id);
                     popups
                         .into_iter()
-                        .filter_map(|(_, popup)| popup.placement().configure)
-                        .map(|configure| (configure.x, configure.y, configure.width, configure.height))
+                        .filter_map(|(_, popup)| popup.placement().configure.and_then(|configure| configure.geometry))
+                        .map(|geometry| (geometry.x, geometry.y, geometry.width, geometry.height))
                         .collect::<Vec<_>>()
                 })
                 .recv_timeout(STEP_TIMEOUT)

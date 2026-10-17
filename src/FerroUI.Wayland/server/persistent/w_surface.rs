@@ -300,7 +300,7 @@ mod imp {
     use crate::server::wayland_worker::{WaylandWorker, WaylandWorkerState};
     use crate::ferro_wayland_exception::FerroWaylandException;
     use crate::text_input_options_converter::{ContentHint, ContentPurpose};
-    use ferroui_base::Rect;
+    use ferroui_base::{PixelRect, Rect};
     use ferroui_base::platform::{PlatformRenderTargetState, RenderTargetSceneInfo};
     use std::rc::{Rc, Weak};
     use std::sync::mpsc::Sender;
@@ -1585,10 +1585,7 @@ mod imp {
             }
             match event {
                 xdg_popup::Event::Configure { x, y, width, height } => {
-                    popup.pending_batch.x = x;
-                    popup.pending_batch.y = y;
-                    popup.pending_batch.width = width;
-                    popup.pending_batch.height = height;
+                    popup.pending_batch.geometry = Some(PixelRect::new(x, y, width, height));
                 }
                 xdg_popup::Event::PopupDone => popup.popup_event_sink.on_popup_done(),
                 // Repositioned(token) acks a previous Reposition request. We don't

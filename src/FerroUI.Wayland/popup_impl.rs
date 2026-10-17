@@ -18,7 +18,7 @@ use ferroui_base::platform::surfaces::IPlatformRenderSurface;
 use ferroui_base::platform::{ICursorImpl, IOptionalFeatureProvider, PlatformThemeVariant};
 use ferroui_base::reactive::IDisposable;
 use ferroui_base::rendering::composition::Compositor;
-use ferroui_base::{FerroLocator, LocatorExtensions, PixelPoint, Point, Rect, Size};
+use ferroui_base::{FerroLocator, LocatorExtensions, PixelPoint, PixelRect, Point, Rect, Size, Thickness};
 use ferroui_controls::platform::{IPlatformHandle, IPopupImpl, IScreenImpl, ITopLevelImpl, IWindowBaseImpl};
 use ferroui_controls::primitives::popup_positioning::{IPopupPositioner, PopupPositionerParameters};
 use ferroui_controls::{AcrylicPlatformCompensationLevels, WindowResizeReason, WindowTransparencyLevel};
@@ -42,6 +42,13 @@ pub(crate) trait IPopupParent {
     /// this top-level / popup, or `None` when no surface is
     /// currently created.
     fn shell_surface_proxy(&self) -> Option<WXdgShellSurfaceProxy>;
+
+    /// Top-left of the window geometry within the buffer, in logical pixels, as the UI
+    /// currently intends it. The worker may not have committed it yet; popup positions
+    /// derived from it converge once it is.
+    fn window_geometry_origin(&self) -> PixelPoint {
+        PixelPoint::default()
+    }
 }
 
 /// Wayland xdg_popup window implementation. Created via
@@ -68,6 +75,10 @@ pub struct PopupImpl {
     last_positioner: Cell<Option<XdgPopupPositionerParams>>,
     is_hit_test_visible: Cell<bool>,
     popup_positioner: RefCell<Option<Rc<dyn IPopupPositioner>>>,
+    configured_geometry: Cell<Option<PixelRect>>,
+    shadow_extents: Cell<Thickness>,
+    /// The handler of `ChildPositionsInvalidated` of the parent, kept to unsubscribe it.
+    child_positions_handler: RefCell<Option<Rc<dyn Fn()>>>,
 }
 
 impl PopupImpl {
@@ -84,6 +95,9 @@ impl PopupImpl {
             last_positioner: Cell::new(None),
             is_hit_test_visible: Cell::new(true),
             popup_positioner: RefCell::new(None),
+            configured_geometry: Cell::new(None),
+            shadow_extents: Cell::new(Thickness::default()),
+            child_positions_handler: RefCell::new(None),
         });
         // Inherit the parent's render scale at construction time so the
         // first layout pass uses something sensible. The compositor will
@@ -93,6 +107,15 @@ impl PopupImpl {
 
         let positioner: Rc<dyn IPopupPositioner> = Rc::new(WaylandPopupPositioner { owner: popup.this.clone() });
         *popup.popup_positioner.borrow_mut() = Some(positioner);
+
+        let this = popup.this.clone();
+        let handler: Rc<dyn Fn()> = Rc::new(move || {
+            if let Some(popup) = this.upgrade() {
+                popup.update_position();
+            }
+        });
+        popup.parent.window_base().add_child_positions_invalidated(handler.clone());
+        *popup.child_positions_handler.borrow_mut() = Some(handler);
         popup
     }
 
@@ -118,6 +141,36 @@ impl PopupImpl {
     pub(crate) fn set_surface(&self, proxy: WXdgPopupProxy, render_surfaces: Vec<Arc<dyn IPlatformRenderSurface>>) {
         *self.surfaces.lock().unwrap_or_else(PoisonError::into_inner) = render_surfaces;
         *self.surface_proxy.borrow_mut() = Some(proxy);
+    }
+
+    /// Takes the geometry of the last configure of the compositor (the sink sets
+    /// `_configuredGeometry` of its parent).
+    pub(crate) fn set_configured_geometry(&self, geometry: PixelRect) {
+        self.configured_geometry.set(Some(geometry));
+    }
+
+    /// Derives the buffer-relative position from the last configure (parent
+    /// window-geometry-relative) and both sides' geometry origins, chaining
+    /// through the parent so nested popups end up in the toplevel's space.
+    pub(crate) fn update_position(&self) {
+        let Some(g) = self.configured_geometry.get() else {
+            return;
+        };
+        let parent_pos = self.parent.window_base().position();
+        let parent_origin = self.parent.window_geometry_origin();
+        let own_origin = IPopupParent::window_geometry_origin(self);
+        let position = PixelPoint::new(
+            parent_pos.x + parent_origin.x + g.x - own_origin.x,
+            parent_pos.y + parent_origin.y + g.y - own_origin.y,
+        );
+        if self.base.position() == position {
+            return;
+        }
+        self.base.set_position(position);
+        if let Some(position_changed) = get(&self.base.position_changed) {
+            position_changed(position);
+        }
+        self.base.invalidate_child_positions();
     }
 
     pub(crate) fn last_positioner(&self) -> Option<XdgPopupPositionerParams> {
@@ -146,9 +199,14 @@ impl PopupImpl {
                 resized(translated.size, WindowResizeReason::Layout);
             }
         }
+        // Mirrors the worker: a default Deflate leaves the previously set extents in place.
+        if translated.deflate != Thickness::default() {
+            self.shadow_extents.set(translated.deflate);
+        }
         if let Some(proxy) = self.surface_proxy() {
             proxy.update_positioner(translated);
         }
+        self.update_position();
     }
 
     fn dispose_sink(&self) {
@@ -170,6 +228,11 @@ impl IPopupParent for PopupImpl {
 
     fn shell_surface_proxy(&self) -> Option<WXdgShellSurfaceProxy> {
         self.surface_proxy.borrow().as_ref().map(|proxy| proxy.as_shell_surface().clone())
+    }
+
+    fn window_geometry_origin(&self) -> PixelPoint {
+        let shadow_extents = self.shadow_extents.get();
+        PixelPoint::new(shadow_extents.left as i32, shadow_extents.top as i32)
     }
 }
 
@@ -206,6 +269,10 @@ impl IOptionalFeatureProvider for PopupImpl {
 
 impl IDisposable for PopupImpl {
     fn dispose(&self) {
+        let handler = self.child_positions_handler.borrow_mut().take();
+        if let Some(handler) = handler {
+            self.parent.window_base().remove_child_positions_invalidated(&handler);
+        }
         if self.base.mark_disposed() {
             return;
         }
@@ -292,13 +359,12 @@ impl ITopLevelImpl for PopupImpl {
         self.base.set_input_root(input_root);
     }
 
-    // Not supported by Wayland.
     fn point_to_client(&self, point: PixelPoint) -> Point {
-        Point::new(f64::from(point.x), f64::from(point.y))
+        self.base.point_to_client(point)
     }
 
     fn point_to_screen(&self, point: Point) -> PixelPoint {
-        PixelPoint::new(point.x as i32, point.y as i32)
+        self.base.point_to_screen(point)
     }
 
     fn set_cursor(&self, cursor: Option<Rc<dyn ICursorImpl>>) {
@@ -379,9 +445,10 @@ impl IWindowBaseImpl for PopupImpl {
         self.dispose_sink();
     }
 
-    // Not supported by Wayland.
+    /// The offset of the popup within the buffer-relative logical space of its top-level,
+    /// derived from the last configure of the compositor.
     fn position(&self) -> PixelPoint {
-        PixelPoint::default()
+        self.base.position()
     }
 
     fn position_changed(&self) -> Option<Rc<dyn Fn(PixelPoint)>> {
