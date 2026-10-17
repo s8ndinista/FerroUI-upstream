@@ -466,7 +466,6 @@ mod imp {
     use crate::automation::AutomationNode;
     use crate::input::{Imm32InputMethod, KeyInterop, WindowsKeyboardDevice};
     use crate::interop::unmanaged_methods::*;
-    use crate::win32_platform::Win32Platform;
     use crate::win32_type_extensions::Win32TypeExtensions;
     use crate::window_impl::WindowImpl;
     use ferroui_base::input::raw::{
@@ -1248,12 +1247,11 @@ mod imp {
                 }
 
                 WindowsMessage::WM_DISPLAYCHANGE => {
+                    // `_maxAutoSize = null` of the window procedure of a popup, which then goes to
+                    // the default handling. The screens and the render timer follow the display
+                    // change in the window procedure of the platform's message window, which
+                    // receives the broadcast with or without a window.
                     self.on_display_change();
-                    self.screen().on_changed();
-
-                    Win32Platform::update_timer_fps();
-
-                    return 0;
                 }
 
                 WindowsMessage::WM_KILLFOCUS => {

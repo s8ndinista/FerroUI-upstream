@@ -72,7 +72,7 @@ impl WinScreen {
     }
 
     /// The refresh rate of the screen, in hertz.
-    pub(crate) fn frequency(&self) -> i32 {
+    pub fn frequency(&self) -> i32 {
         self.frequency.get()
     }
 
