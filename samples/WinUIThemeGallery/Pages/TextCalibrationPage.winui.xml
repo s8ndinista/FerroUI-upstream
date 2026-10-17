@@ -1,9 +1,10 @@
 <!-- The native WinUI 3 counterpart of TextCalibrationPage.xaml: the same grid of plain TextBlocks
      of the default font, one line per size and weight at the top of a row of a whole number of
-     device-independent pixels (docs/porting/text-rendering.md, section 10). -->
+     device-independent pixels (docs/porting/text-rendering.md, section 10), aligned to the top as
+     the framework's page is (which does not change WinUI's grid). -->
 <Grid xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-      Margin="24,24,24,0">
+      Margin="24,24,24,0" VerticalAlignment="Top">
   <Grid.RowDefinitions>
     <RowDefinition Height="30" />
     <RowDefinition Height="32" />
