@@ -118,28 +118,7 @@ impl AtSpiAccessibleHandler {
     }
 
     pub(crate) fn get_attributes_async(node: &AtSpiNode) -> AtSpiAttributeSet {
-        let peer = node.peer();
-        let mut attrs = AtSpiAttributeSet::new();
-        attrs.insert("toolkit".to_string(), TOOLKIT_NAME.to_string());
-
-        if !peer.get_name().is_empty() {
-            attrs.insert("explicit-name".to_string(), "true".to_string());
-        }
-
-        if let Some(accelerator_key) = peer.get_accelerator_key().filter(|key| !key.is_empty()) {
-            attrs.insert("accelerator-key".to_string(), accelerator_key);
-        }
-
-        if let Some(access_key) = peer.get_access_key().filter(|key| !key.is_empty()) {
-            attrs.insert("access-key".to_string(), access_key);
-        }
-
-        let placeholder_text = peer.get_placeholder_text();
-        if !placeholder_text.is_empty() {
-            attrs.insert("placeholder-text".to_string(), placeholder_text);
-        }
-
-        attrs
+        AtSpiNode::get_attributes(node.peer())
     }
 
     pub(crate) fn get_interfaces_async(node: &AtSpiNode) -> Vec<String> {

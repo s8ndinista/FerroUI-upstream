@@ -8,7 +8,9 @@
 #![allow(dead_code)]
 
 use super::{node_of, server_of};
-use crate::at_spi::at_spi_constants::{COLLECTION_VERSION, TOOLKIT_NAME};
+use crate::at_spi::at_spi_constants::COLLECTION_VERSION;
+#[cfg(test)]
+use crate::at_spi::at_spi_constants::TOOLKIT_NAME;
 use crate::at_spi::at_spi_node::AtSpiNode;
 use crate::at_spi::at_spi_server::AtSpiServer;
 use crate::at_spi::dbus::descriptions::COLLECTION;
@@ -35,18 +37,12 @@ pub(crate) struct MatchSubject {
 }
 
 impl MatchSubject {
-    fn of(node: &AtSpiNode) -> Self {
-        // Build node attributes (same as AccessibleHandler.GetAttributesAsync)
-        let mut attributes = HashMap::from([("toolkit".to_string(), TOOLKIT_NAME.to_string())]);
-        if !node.peer().get_name().is_empty() {
-            attributes.insert("explicit-name".to_string(), "true".to_string());
-        }
-
+    pub(crate) fn of(node: &AtSpiNode) -> Self {
         Self {
             states: node.compute_states(),
             role: AtSpiNode::to_at_spi_role(node.peer().get_automation_control_type(), Some(node.peer())) as u32,
             interfaces: node.get_supported_interfaces(),
-            attributes,
+            attributes: AtSpiNode::get_attributes(node.peer()),
         }
     }
 }

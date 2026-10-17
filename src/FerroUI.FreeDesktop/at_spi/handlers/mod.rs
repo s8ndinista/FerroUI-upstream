@@ -13,6 +13,9 @@ pub(crate) mod at_spi_selection_handler;
 pub(crate) mod at_spi_text_handler;
 pub(crate) mod at_spi_value_handler;
 
+#[cfg(test)]
+mod at_spi_accessible_handler_tests;
+
 use super::at_spi_node::AtSpiNode;
 use super::at_spi_server::AtSpiServer;
 use super::dbus::interface::{DBusError, ERROR_UNKNOWN_OBJECT};
