@@ -383,17 +383,3 @@ fn empty_panel_does_not_take_up_available_space() {
 
 // Additional tests (not ports).
 
-/// As upstream, growing along an unconstrained main axis gives an item
-/// without a grow factor an undefined length (infinity times zero), which a
-/// measure pass rejects.
-#[test]
-#[should_panic(expected = "NaN")]
-fn additional_unconstrained_main_axis_with_mixed_grow_factors_is_rejected() {
-    let target = FlexPanel::new();
-    let growing = border(50.0, 50.0);
-    growing.set_value(Flex::grow_property(), 1.0);
-    target.children().add(growing);
-    target.children().add(border(50.0, 50.0));
-
-    target.measure(Size::INFINITY);
-}

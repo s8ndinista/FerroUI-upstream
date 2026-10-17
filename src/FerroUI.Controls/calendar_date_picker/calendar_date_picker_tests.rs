@@ -1064,7 +1064,11 @@ mod additional {
         assert!(tb.is_focused());
         click(&button);
         assert!(!popup.is_open());
-        assert!(tb.is_focused());
+        // Upstream #22354: focus that returns to the date picker while its drop-down is open, or by
+        // the pointer, stays on the date picker (only keyboard focus on a closed picker goes on to
+        // the text box).
+        assert!(date_picker.is_focused());
+        assert!(!tb.is_focused());
 
         // A focusable calendar gets the focus once the popup is open ...
         calendar.set_focusable(true);
@@ -1073,18 +1077,18 @@ mod additional {
         assert!(calendar.is_focused());
         assert!(!tb.is_focused());
 
-        // ... and closing gives the focus to the date picker, which hands
-        // it to the text box.
+        // ... and closing gives the focus back to the date picker, which keeps it: the focus
+        // returns while the drop-down is still open (upstream #22354).
         raise_key(&calendar, Key::Enter, KeyModifiers::NONE, false);
         assert!(!popup.is_open());
         assert!(!calendar.is_focused());
-        assert!(tb.is_focused());
+        assert!(date_picker.is_focused());
 
         click(&button);
         assert!(calendar.is_focused());
         click(&button);
         assert!(!popup.is_open());
-        assert!(tb.is_focused());
+        assert!(date_picker.is_focused(), "a pointer close keeps the focus on the date picker (upstream #22354)");
 
         Dispatcher::ui_thread().run_jobs(None);
         window.close();
