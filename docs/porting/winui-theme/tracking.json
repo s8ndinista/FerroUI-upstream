@@ -90463,7 +90463,7 @@
    "winui": "No WinUI style: the background and text of the window (SolidBackgroundFillColorBaseBrush, TextFillColorPrimaryBrush, ContentControlThemeFontFamily, ControlContentThemeFontSize).",
    "status": "ported",
    "deviations": 1,
-   "date": "2026-10-16"
+   "date": "2026-10-17"
   },
   {
    "document": "Expander.xaml",
@@ -90671,7 +90671,7 @@
    "winui": "No WinUI style: the text of the window (TextFillColorPrimaryBrush, ContentControlThemeFontFamily, ControlContentThemeFontSize).",
    "status": "ported",
    "deviations": 1,
-   "date": "2026-10-16"
+   "date": "2026-10-17"
   },
   {
    "document": "PathIcon.xaml",
@@ -90704,7 +90704,7 @@
    "winui": "No WinUI style: the text of the window (TextFillColorPrimaryBrush, ContentControlThemeFontFamily, ControlContentThemeFontSize).",
    "status": "ported",
    "deviations": 1,
-   "date": "2026-10-16"
+   "date": "2026-10-17"
   },
   {
    "document": "ProgressBar.xaml",
@@ -91057,7 +91057,7 @@
    "winui": "No WinUI style (Window is not a control in WinUI 3): the Mica fallback background and text of a window (SolidBackgroundFillColorBaseBrush, TextFillColorPrimaryBrush, ContentControlThemeFontFamily, ControlContentThemeFontSize).",
    "status": "ported",
    "deviations": 1,
-   "date": "2026-10-16"
+   "date": "2026-10-17"
   },
   {
    "document": "WindowDrawnDecorations.xaml",
@@ -91563,7 +91563,7 @@
   "ScrollViewer": 9,
   "SelectableTextBlock": 2,
   "Separator": 1,
-  "TextBlock": 3,
+  "TextBlock": 4,
   "TextBox": 21,
   "TextSelectionHandle": 4,
   "ThemeVariantScope": 1,

@@ -4,6 +4,20 @@ All notable changes to FerroUI are recorded in this file. The format follows [Ke
 
 ## [Unreleased]
 
+### Added
+
+- **`TextBlock.LayoutRoundingPlacement`** (`TextLayoutRoundingPlacement`: `Below`, the default, or `Above`), an inherited attached property of `TextBlock` and a FerroUI addition: where a text block puts the height that layout rounding adds to it. With `Above` the text, the selection and hit testing of `SelectableTextBlock`, the access key underline of `AccessText` and the embedded controls move down by that height, as WinUI's TextBlock places its text (`docs/porting/text-rendering.md`, section 6).
+
+### Changed
+
+- **The WinUI 3 theme places text as WinUI 3 does**: its top-levels set `TextBlock.LayoutRoundingPlacement` to `Above`, which moves the text of the theme by up to one device pixel down to the baseline of native WinUI 3 (measured at 200 %: from 0.99 px above to 0.01 px). The Fluent and Simple themes keep the reference's placement and their pictures are unchanged.
+- **The development variable `FERROUI_TEXT_BASELINE_ROUNDING` is removed**; the property above replaces it, and a calibration run of the WinUI theme gallery sets the property with its key `baseline` (`below`, `above`, `theme`).
+
+### Fixed
+
+- **A window follows a change of its text rendering from the next frame** (Skia backend): the layer the composition target keeps for a window whose frames are not kept (every GPU swap chain) kept the text contrast, gamma and subpixel order of the frame it was created in until the window was resized; it is now created again when they change, so a change of the system's ClearType settings, or a calibration override, reaches the window at once.
+- **The text calibration page of the WinUI theme gallery** has the layout of its native twin: its grid is aligned to the top, as tall as its rows, where the stretched grid gave each row one more device pixel under layout rounding and moved the lower rows by up to 11 px at 200 %.
+
 ## [0.1.0-preview.4] - 2026-10-17
 
 The fourth preview. It adds a second complete theme, the WinUI 3 theme of microsoft-ui-xaml, validated against native WinUI 3 by a gallery, makes it the ControlCatalog's first theme, and draws text as sharp and as dark as the native text of the platforms.
