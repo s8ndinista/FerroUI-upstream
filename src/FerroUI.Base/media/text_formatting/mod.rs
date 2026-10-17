@@ -99,6 +99,9 @@ pub use i_text_source::ITextSource;
 pub use formatted_text_source::FormattedTextSource;
 // Internal upstream; public so the Skia unit tests reach it.
 pub use formatting_object_pool::{FormattingObjectPool, ListPool, RentedList};
+// Internal upstream; public so the Skia unit tests reach them.
+pub use bidi_reorderer::BidiReorderer;
+pub use indexed_text_run::IndexedTextRun;
 pub use logical_text_run_enumerator::LogicalTextRunEnumerator;
 pub use inter_word_justification::InterWordJustification;
 pub use justification_properties::JustificationProperties;

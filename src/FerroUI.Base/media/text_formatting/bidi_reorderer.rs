@@ -15,7 +15,7 @@ crate::ferro_thread_local! {
 ///
 /// To avoid allocations, the scratch buffers of this type are kept per thread
 /// and reused.
-pub(crate) struct BidiReorderer {
+pub struct BidiReorderer {
     runs: ArrayBuilder<OrderedBidiRun>,
     ranges: ArrayBuilder<BidiRange>,
 }
@@ -106,9 +106,9 @@ impl BidiReorderer {
                 text_runs[index] = run;
             }
 
-            let indexed_run = &indexed_text_runs[index];
+            let indexed_run = &indexed_text_runs[current.run_index as usize];
 
-            indexed_run.run_index.set(current.run_index);
+            indexed_run.run_index.set(index as i32);
 
             indexed_run.next_run_index.set(current.next_run_index);
 

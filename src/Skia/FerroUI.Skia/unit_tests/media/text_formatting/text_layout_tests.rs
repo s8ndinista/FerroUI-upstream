@@ -758,6 +758,117 @@ fn should_hit_test_text_range_bi_di() {
     assert_eq!(end, expected.right());
 }
 
+/// LINQ's `Single()` over the rectangles of a hit test.
+fn single(rects: Vec<Rect>) -> Rect {
+    assert_eq!(1, rects.len(), "a single rectangle: {rects:?}");
+    rects[0]
+}
+
+#[test]
+fn should_hit_test_text_range_split_left_to_right_runs_in_right_to_left() {
+    const TEXT: &str = "אבגד abc";
+
+    let _app = start();
+
+    let foreground = red_immutable();
+
+    let layout = layout(
+        TEXT,
+        TextLayoutOptions {
+            flow_direction: FlowDirection::RightToLeft,
+            text_style_overrides: spans(6, 2, &foreground),
+            ..options(black())
+        },
+    );
+
+    let abc = single(layout.hit_test_text_range(5, 3));
+    let a = single(layout.hit_test_text_range(5, 1));
+    let c = single(layout.hit_test_text_range(7, 1));
+
+    assert_equal_precision(abc.left(), a.left(), 5);
+    assert_equal_precision(abc.right(), c.right(), 5);
+}
+
+/// Hebrew and Latin letters only: a space in its own run falls back to a different font, which changes
+/// the line width independent of run order.
+fn split_run_texts() -> Vec<(&'static str, FlowDirection, i32)> {
+    let texts = [
+        "אבגדabc",
+        "abcאבגד",
+        "אבגדabcdefאבגד",
+        "abcאבגדdefghi",
+        "אבגדabc123def",
+        "abcאבגדdefאבגghijkl",
+        "אבגדabcאבגdefghiאבגjklmno",
+        "אבabcגדdefהוghiזח",
+    ];
+
+    let mut cases = Vec::new();
+
+    for text in texts {
+        for flow_direction in [FlowDirection::LeftToRight, FlowDirection::RightToLeft] {
+            for step in [1, 2, 3, 4] {
+                cases.push((text, flow_direction, step));
+            }
+        }
+    }
+
+    cases
+}
+
+#[test]
+fn should_not_change_geometry_when_style_spans_split_runs() {
+    for (text, flow_direction, step) in split_run_texts() {
+        let _app = start();
+
+        let foreground = red_immutable();
+        let text_length = text.encode_utf16().count() as i32;
+        let mut spans: Vec<ValueSpan<Rc<dyn TextRunProperties>>> = Vec::new();
+
+        // Every other chunk gets a different foreground, which splits the shaped runs without changing metrics.
+        let mut i = step;
+        while i < text_length {
+            spans.push(ValueSpan::new(
+                i,
+                step.min(text_length - i),
+                run_properties(Typeface::default_typeface(), 12.0, Some(foreground.clone())),
+            ));
+            i += 2 * step;
+        }
+
+        let plain = layout(text, TextLayoutOptions { flow_direction, ..options(black()) });
+
+        let split = layout(
+            text,
+            TextLayoutOptions { flow_direction, text_style_overrides: Some(Rc::from(spans)), ..options(black()) },
+        );
+
+        let case = format!("{text:?} {flow_direction:?} {step}");
+
+        assert_equal_precision(plain.width(), split.width(), 5);
+
+        for i in 0..text_length {
+            let expected = single(plain.hit_test_text_range(i, 1));
+            let actual = single(split.hit_test_text_range(i, 1));
+
+            assert_equal_precision(expected.left(), actual.left(), 5);
+            assert_equal_precision(expected.right(), actual.right(), 5);
+        }
+
+        let mut x = 0.5;
+        while x < plain.width() {
+            let expected = plain.hit_test_point(Point::new(x, 5.0));
+            let actual = split.hit_test_point(Point::new(x, 5.0));
+
+            assert_eq!(expected.text_position(), actual.text_position(), "{case} at {x}");
+            assert_eq!(expected.is_inside(), actual.is_inside(), "{case} at {x}");
+            assert_eq!(expected.is_trailing(), actual.is_trailing(), "{case} at {x}");
+
+            x += 2.5;
+        }
+    }
+}
+
 #[test]
 fn should_hit_test_text_range() {
     let _app = start();
