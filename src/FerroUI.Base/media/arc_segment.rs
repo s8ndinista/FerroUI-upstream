@@ -74,7 +74,10 @@ impl ArcSegment {
         instantiate(Self::construct())
     }
 
-    /// Whether the arc is the large arc (greater than 180 degrees).
+    /// Whether the arc should follow the longer path around an ellipse
+    /// rather than the shorter one.
+    ///
+    /// `true` to draw the arc greater than 180 degrees; otherwise, `false`.
     pub fn is_large_arc(&self) -> bool {
         self.get_value(Self::is_large_arc_property())
     }
@@ -83,7 +86,7 @@ impl ArcSegment {
         self.set_value(Self::is_large_arc_property(), value)
     }
 
-    /// The end point of the arc.
+    /// The destination point where the arc ends.
     pub fn point(&self) -> Point {
         self.get_value(Self::point_property())
     }
@@ -92,7 +95,11 @@ impl ArcSegment {
         self.set_value(Self::point_property(), value)
     }
 
-    /// The rotation angle of the ellipse, in degrees.
+    /// The rotation angle (in degrees) of the ellipse that specifies the
+    /// path of the arc; positive values are clockwise.
+    ///
+    /// This will rotate the entire arc relative to the X-axis and is not
+    /// commonly used.
     pub fn rotation_angle(&self) -> f64 {
         self.get_value(Self::rotation_angle_property())
     }
@@ -110,7 +117,8 @@ impl ArcSegment {
         self.set_value(Self::size_property(), value)
     }
 
-    /// The direction in which the arc is drawn.
+    /// The sweep direction which indicates whether the arc is drawn in the
+    /// Clockwise or Counterclockwise direction.
     pub fn sweep_direction(&self) -> SweepDirection {
         self.get_value(Self::sweep_direction_property())
     }
