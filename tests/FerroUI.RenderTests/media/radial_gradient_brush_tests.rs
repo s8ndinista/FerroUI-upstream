@@ -6,8 +6,8 @@ use ferroui_base::input::InputElementImpl;
 use ferroui_base::interactivity::InteractiveImpl;
 use ferroui_base::layout::LayoutableImpl;
 use ferroui_base::media::{
-    BoxShadows, Color, Colors, DrawingContext, GradientSpreadMethod, GradientStop, IBrush, RadialGradientBrush,
-    RotateTransform,
+    BoxShadows, Brushes, Color, Colors, DrawingContext, GradientSpreadMethod, GradientStop, IBrush,
+    RadialGradientBrush, RotateTransform,
 };
 use ferroui_base::{
     ferro_class, ferro_impl_classes, instantiate, FerroObjectImpl, Matrix, Rect, Ref, RelativePoint, RelativeScalar,
@@ -83,6 +83,56 @@ fn radial_gradient_brush_red_blue_offset_inside() {
 
     t.render_to_file(&target, "RadialGradientBrush_RedBlue_Offset_Inside");
     t.compare_images("RadialGradientBrush_RedBlue_Offset_Inside");
+}
+
+/// Tests a transparent gradient stop with a GradientOrigin inside the circle described by
+/// Center/Radius: what is behind the brush must show through the transparent part.
+#[test]
+fn radial_gradient_brush_transparent_stop_offset_inside() {
+    let t = base();
+    let target = Decorator::new();
+    target.set_padding(Thickness::uniform(8.0));
+    target.set_width(200.0);
+    target.set_height(200.0);
+    let child = Border::new();
+    child.set_background(Some(Brushes::dark_red()));
+    let inner = Border::new();
+    let background = RadialGradientBrush::new();
+    background.gradient_stops().add(gradient_stop(Color::from_argb(0, 0, 128, 0), 0.0));
+    background.gradient_stops().add(gradient_stop(Colors::GREEN, 1.0));
+    background.set_gradient_origin(RelativePoint::new(0.8, 0.5, RelativeUnit::Relative));
+    inner.set_background(Some(background.into()));
+    child.set_child(inner);
+    target.set_child(child);
+
+    t.render_to_file(&target, "RadialGradientBrush_Transparent_Stop_Offset_Inside");
+    t.compare_images("RadialGradientBrush_Transparent_Stop_Offset_Inside");
+}
+
+/// Tests a GradientOrigin lying exactly on the circle described by Center/Radius:
+/// the area past the tangent at the origin must be filled with the final stop color.
+#[test]
+fn radial_gradient_brush_red_blue_offset_on_circle() {
+    let t = base();
+    let target = Decorator::new();
+    target.set_padding(Thickness::uniform(8.0));
+    target.set_width(200.0);
+    target.set_height(200.0);
+    let child = Border::new();
+    child.set_background(Some(Brushes::dark_red()));
+    let inner = Border::new();
+    let background = RadialGradientBrush::new();
+    background.gradient_stops().add(gradient_stop(Colors::RED, 0.0));
+    background.gradient_stops().add(gradient_stop(Colors::BLUE, 1.0));
+    background.set_radius_x(RelativeScalar::new(0.25, RelativeUnit::Relative));
+    background.set_radius_y(RelativeScalar::new(0.25, RelativeUnit::Relative));
+    background.set_gradient_origin(RelativePoint::new(0.75, 0.5, RelativeUnit::Relative));
+    inner.set_background(Some(background.into()));
+    child.set_child(inner);
+    target.set_child(child);
+
+    t.render_to_file(&target, "RadialGradientBrush_RedBlue_Offset_On_Circle");
+    t.compare_images("RadialGradientBrush_RedBlue_Offset_On_Circle");
 }
 
 /// Tests using a GradientOrigin that falls outside of the circle described by Center/Radius.
