@@ -1834,7 +1834,12 @@ mod tests {
         }
     }
 
+    /// Registers the types of these tests, and the namespaces of the crate first: the full
+    /// name of a class of the crate (`FerroUI.StyledElement`, `StyledElement` before they are
+    /// known) is read for the expected value and again by the code under test, and a test of
+    /// another thread may register them between the two.
     fn register_named() {
+        crate::register_types();
         MarkupType::register_all(&[
             <NamedVm as MarkupTyped>::MARKUP,
             <NamedSize as MarkupTyped>::MARKUP,

@@ -11,6 +11,16 @@ use std::sync::Mutex;
 use std::thread;
 
 /// The panic message of a closure, as a string.
+///
+/// Two tests below panic on purpose in the destructor of a variable of the
+/// table, on a thread that is ending. The panic is caught here, but the panic
+/// hook has printed it to the standard error first, and what a thread prints
+/// while its table is destroyed is not captured by the test harness (nor is
+/// the name of the thread known any more): every run of the tests of this
+/// crate, with `--cfg ferro_tls_table` or without, prints two messages
+/// `thread '<unnamed>' panicked at src/FerroUI.Base/ferro_thread_local/table.rs:..:
+/// cannot access a Thread Local Storage value during or after destruction: AccessError`.
+/// They are expected, and say nothing about a test that fails at the same time.
 fn panic_message(f: impl FnOnce()) -> String {
     let payload = catch_unwind(AssertUnwindSafe(f)).expect_err("expected a panic");
     if let Some(message) = payload.downcast_ref::<String>() {
