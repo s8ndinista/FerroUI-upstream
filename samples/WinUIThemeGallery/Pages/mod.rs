@@ -26,6 +26,7 @@ mod containers_page;
 mod navigation_samples_page;
 mod table_page;
 mod dialogs_page;
+mod text_calibration_page;
 
 pub use buttons_page::ButtonsPage;
 pub use toggles_page::TogglesPage;
@@ -42,6 +43,7 @@ pub use containers_page::ContainersPage;
 pub use navigation_samples_page::NavigationSamplesPage;
 pub use table_page::TablePage;
 pub use dialogs_page::DialogsPage;
+pub use text_calibration_page::TextCalibrationPage;
 pub use table_page::TableRow;
 
 /// A page of the gallery.
@@ -191,6 +193,14 @@ pub static PAGES: &[PageInfo] = &[
         native: include_str!("DialogsPage.winui.xml"),
         create: dialogs_page::create,
     },
+    PageInfo {
+        id: "textcal",
+        title: "Text calibration",
+        document: TextCalibrationPage::DOCUMENT_PATH,
+        native_file: "Pages/TextCalibrationPage.winui.xml",
+        native: include_str!("TextCalibrationPage.winui.xml"),
+        create: text_calibration_page::create,
+    },
 ];
 
 /// The classes of the namespace `WinUIThemeGallery.Pages` (`X::TYPE`).
@@ -210,6 +220,7 @@ pub(crate) const TYPES: &[&TypeInfo] = &[
     NavigationSamplesPage::TYPE,
     TablePage::TYPE,
     DialogsPage::TYPE,
+    TextCalibrationPage::TYPE,
 ];
 
 /// The classes of the namespace that have a document (`&X::XAML_CLASS`).
@@ -229,6 +240,7 @@ pub(crate) const CLASSES: &[&XamlClass] = &[
     &NavigationSamplesPage::XAML_CLASS,
     &TablePage::XAML_CLASS,
     &DialogsPage::XAML_CLASS,
+    &TextCalibrationPage::XAML_CLASS,
 ];
 
 /// The types of the namespace declared with `ferro_markup_type!` (`<X as MarkupTyped>::MARKUP`).
