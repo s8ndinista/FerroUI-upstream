@@ -77,7 +77,7 @@ mod host {
                 .after_setup(|_| smoke_run())
                 .log_to_trace(LogEventLevel::Warning, &[]);
             match rendering_modes() {
-                Some(rendering_mode) => builder.with(Rc::new(IosPlatformOptions { rendering_mode })),
+                Some(rendering_mode) => builder.with(Rc::new(IosPlatformOptions { rendering_mode, ..IosPlatformOptions::default() })),
                 None => builder,
             }
         }

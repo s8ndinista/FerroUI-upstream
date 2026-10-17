@@ -1,6 +1,7 @@
 //! The functions of Core Foundation and of libdispatch the dispatcher
 //! calls: the run loop of the main thread, an observer and a timer on it,
-//! and the main dispatch queue.
+//! and the main dispatch queue; and the block the render timer gives the
+//! run loop of its thread.
 //!
 //! The declarations are the C declarations of the system headers
 //! (`CFRunLoop.h`, `CFDate.h`, `dispatch/queue.h`).
@@ -39,11 +40,18 @@ extern "C" {
     /// The default mode of a run loop (a `CFStringRef`).
     pub static kCFRunLoopDefaultMode: *const c_void;
 
+    /// The common modes of a run loop (a `CFStringRef`).
+    pub static kCFRunLoopCommonModes: *const c_void;
+
     pub fn CFRunLoopGetMain() -> *mut c_void;
 
     pub fn CFRunLoopGetCurrent() -> *mut c_void;
 
     pub fn CFRunLoopWakeUp(rl: *mut c_void);
+
+    /// `block` is a block that takes no argument and returns nothing (`void (^)(void)`), which
+    /// the function copies.
+    pub fn CFRunLoopPerformBlock(rl: *mut c_void, mode: *const c_void, block: *const c_void);
 
     pub fn CFRunLoopObserverCreate(
         allocator: *const c_void,

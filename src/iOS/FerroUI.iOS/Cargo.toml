@@ -51,6 +51,7 @@ objc2-foundation = { version = "=0.3.2", default-features = false, features = [
     "objc2-core-foundation",
     "NSArray",
     "NSAttributedString",
+    "NSBundle",
     "NSData",
     "NSDictionary",
     "NSEnumerator",
@@ -83,6 +84,7 @@ objc2-quartz-core = { version = "=0.3.2", default-features = false, features = [
     "objc2-core-foundation",
     "objc2-metal",
     "CADisplayLink",
+    "CAFrameRateRange",
     "CALayer",
     "CAMetalLayer",
 ] }

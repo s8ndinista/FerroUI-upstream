@@ -49,11 +49,19 @@ pub struct IosPlatformOptions {
     ///
     /// The platform fails to start when no value could be applied.
     pub rendering_mode: Vec<IosRenderingMode>,
+
+    /// Gets or sets whether rendering follows the display refresh rate, up to 120 Hz on ProMotion
+    /// displays. The default value is true.
+    ///
+    /// On iPhone, rates above 60 Hz also need CADisableMinimumFrameDurationOnPhone set to true in
+    /// the app's Info.plist. Set this to false to keep the system's default rate, for example if
+    /// the app can't sustain high frame rates.
+    pub enable_high_refresh_rate: bool,
 }
 
 impl Default for IosPlatformOptions {
     fn default() -> Self {
-        Self { rendering_mode: vec![IosRenderingMode::Metal, IosRenderingMode::OpenGl] }
+        Self { rendering_mode: vec![IosRenderingMode::Metal, IosRenderingMode::OpenGl], enable_high_refresh_rate: true }
     }
 }
 
@@ -232,6 +240,8 @@ mod uikit {
                 FerroLocator::current().get_service::<IosPlatformOptions>().unwrap_or_default();
 
             let (graphics, eagl_graphics, rendering_mode) = Self::initialize_graphics(&options);
+            // The timer reads the options of the platform.
+            STATE.with(|state| state.borrow_mut().options = Some(options.clone()));
             let timer = match Self::timer() {
                 Some(timer) => timer,
                 None => DisplayLinkTimer::new(),
@@ -351,7 +361,10 @@ mod tests {
 
     #[test]
     fn the_first_mode_that_can_be_created_is_used() {
-        let options = IosPlatformOptions { rendering_mode: vec![IosRenderingMode::OpenGl, IosRenderingMode::Metal] };
+        let options = IosPlatformOptions {
+            rendering_mode: vec![IosRenderingMode::OpenGl, IosRenderingMode::Metal],
+            ..IosPlatformOptions::default()
+        };
         let graphics =
             initialize_graphics_with(&options, |mode| (mode == IosRenderingMode::Metal).then_some("metal"));
         assert_eq!(Ok("metal"), graphics);
@@ -373,7 +386,7 @@ mod tests {
 
     #[test]
     fn no_mode_is_an_error() {
-        let options = IosPlatformOptions { rendering_mode: Vec::new() };
+        let options = IosPlatformOptions { rendering_mode: Vec::new(), ..IosPlatformOptions::default() };
         let graphics = initialize_graphics_with(&options, |_| Some(()));
         assert_eq!(Err("IosPlatformOptions.rendering_mode must not be empty or null".to_string()), graphics);
     }
