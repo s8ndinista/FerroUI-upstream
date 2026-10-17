@@ -220,6 +220,183 @@ fn width_container_takes_the_available_width() {
     assert_eq!(container.desired_size(), Size::new(120.0, 0.0));
 }
 
+/// A styled element that is not a visual, with a styled number property.
+#[repr(C)]
+struct NonVisualStyledElement {
+    base: StyledElement,
+}
+
+ferro_class!(NonVisualStyledElement: StyledElement);
+ferro_impl_classes!(NonVisualStyledElement: FerroObjectImpl, StyledElementImpl);
+
+impl NonVisualStyledElement {
+    ferro_property!(pub fn value_property() -> StyledProperty<i32> {
+        FerroProperty::register::<NonVisualStyledElement, _>("Value", 0)
+    });
+
+    fn new() -> Ref<Self> {
+        Self::value_property();
+        instantiate(Self { base: StyledElement::construct() })
+    }
+
+    fn value(&self) -> i32 {
+        self.get_value(Self::value_property())
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+enum ContainerQueryType {
+    Width,
+    Height,
+    And,
+    Or,
+}
+
+fn non_visual_query(query: StyleQuery, name: Option<&str>) -> Ref<ContainerQuery> {
+    let container_query = ContainerQuery::with_query(query, name.map(str::to_string));
+    container_query.children().add(Style::with_setters(
+        Selectors::is::<NonVisualStyledElement>(),
+        [Setter::new(NonVisualStyledElement::value_property(), 42)],
+    ));
+    container_query
+}
+
+#[test]
+fn container_does_not_query_itself() {
+    let root = TestRoot::new();
+    let container_query = ContainerQuery::with_query(
+        StyleQueries::width(None, StyleQueryComparisonOperator::LessThanOrEquals, 500.0),
+        None,
+    );
+    container_query
+        .children()
+        .add(Style::with_setters(Selectors::is::<Class3>(), [Setter::new(Visual::opacity_property(), 0.5)]));
+    root.styles().add(&container_query);
+    let container = Class3::new();
+    Container::set_sizing(&container, ContainerSizing::Width);
+    set_child(&root, &container);
+
+    root.measure(Size::new(400.0, 400.0));
+
+    assert_eq!(container.opacity(), 1.0);
+}
+
+#[test]
+fn container_query_tracks_non_visual_target_after_logical_reparenting() {
+    // Upstream styles a text run, a non-visual element, through its theme and
+    // reparents it between two text blocks; here a non-visual element with a
+    // styled property stands in for the run and its data context.
+    let root = TestRoot::new();
+    let container_query = non_visual_query(
+        StyleQueries::width(None, StyleQueryComparisonOperator::LessThanOrEquals, 500.0),
+        None,
+    );
+    let theme = ControlTheme::for_type::<NonVisualStyledElement>();
+    theme.children().add(&container_query);
+    let target = NonVisualStyledElement::new();
+    target.set_theme(&theme);
+    target.apply_styling();
+    let small_container = Class3::new();
+    small_container.set_width(400.0);
+    let large_container = Class3::new();
+    large_container.set_width(600.0);
+    Container::set_sizing(&small_container, ContainerSizing::Width);
+    Container::set_sizing(&large_container, ContainerSizing::Width);
+    let panel = TestPanel::new();
+    panel.add_child(&small_container);
+    panel.add_child(&large_container);
+    set_child(&root, &panel);
+
+    root.measure(Size::new(1000.0, 400.0));
+
+    target.set_parent(&small_container);
+    assert_eq!(target.value(), 42);
+
+    target.set_parent(None);
+    target.set_parent(&large_container);
+    assert_eq!(target.value(), 0);
+
+    large_container.set_width(400.0);
+    root.invalidate_measure();
+    panel.invalidate_measure();
+    large_container.invalidate_measure();
+    root.measure(Size::new(1000.0, 400.0));
+    assert_eq!(target.value(), 42);
+}
+
+#[test]
+fn container_query_matches_non_visual_styled_element() {
+    for query_type in [ContainerQueryType::Width, ContainerQueryType::Height, ContainerQueryType::And, ContainerQueryType::Or]
+    {
+        let root = TestRoot::new();
+        let client_size =
+            if matches!(query_type, ContainerQueryType::Or) { Size::new(400.0, 600.0) } else { Size::new(400.0, 400.0) };
+        let width_query = || StyleQueries::width(None, StyleQueryComparisonOperator::LessThanOrEquals, 500.0);
+        let height_query = || StyleQueries::height(None, StyleQueryComparisonOperator::LessThanOrEquals, 500.0);
+        let query = match query_type {
+            ContainerQueryType::Width => width_query(),
+            ContainerQueryType::Height => height_query(),
+            ContainerQueryType::And => StyleQueries::and([width_query(), height_query()]),
+            ContainerQueryType::Or => StyleQueries::or([width_query(), height_query()]),
+        };
+        root.styles().add(&non_visual_query(query, None));
+        let container = Class3::new();
+        Container::set_sizing(
+            &container,
+            match query_type {
+                ContainerQueryType::Width => ContainerSizing::Width,
+                ContainerQueryType::Height => ContainerSizing::Height,
+                _ => ContainerSizing::WidthAndHeight,
+            },
+        );
+        set_child(&root, &container);
+        let target = NonVisualStyledElement::new();
+        target.set_parent(&container);
+
+        root.measure(client_size);
+        assert_eq!(target.value(), 42, "{query_type:?}");
+
+        let client_size = match query_type {
+            ContainerQueryType::Width | ContainerQueryType::And => Size::new(600.0, 400.0),
+            ContainerQueryType::Height => Size::new(400.0, 600.0),
+            ContainerQueryType::Or => Size::new(600.0, 600.0),
+        };
+        root.invalidate_measure();
+        root.measure(client_size);
+        assert_eq!(target.value(), 0, "{query_type:?}");
+    }
+}
+
+#[test]
+fn container_query_uses_named_visual_ancestor_for_non_visual_target() {
+    let root = TestRoot::new();
+    root.styles().add(&non_visual_query(
+        StyleQueries::width(None, StyleQueryComparisonOperator::LessThanOrEquals, 500.0),
+        Some("target"),
+    ));
+    let inner_container = Class3::new();
+    inner_container.set_width(400.0);
+    Container::set_name(&inner_container, Some("other".to_string()));
+    Container::set_sizing(&inner_container, ContainerSizing::Width);
+    let named_container = Class3::new();
+    named_container.set_width(600.0);
+    set_child(&named_container, &inner_container);
+    Container::set_name(&named_container, Some("target".to_string()));
+    Container::set_sizing(&named_container, ContainerSizing::Width);
+    set_child(&root, &named_container);
+    let target = NonVisualStyledElement::new();
+    target.set_parent(&inner_container);
+
+    root.measure(Size::new(1000.0, 400.0));
+    assert_eq!(target.value(), 0);
+
+    named_container.set_width(400.0);
+    root.invalidate_measure();
+    named_container.invalidate_measure();
+    root.measure(Size::new(1000.0, 400.0));
+    assert_eq!(target.value(), 42);
+}
+
 // --- theme variant -----------------------------------------------------------
 
 #[test]

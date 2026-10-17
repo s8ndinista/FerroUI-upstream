@@ -3,7 +3,7 @@ use super::{
     Container, ContainerQuery, ContainerSizing, SelectorMatch, StyleBase, StyleQuery,
     StyleQueryComparisonOperator, StyleQueryNode, ValueStyleQuery, VisualQueryProvider,
 };
-use crate::{StyledElement, Visual};
+use crate::StyledElement;
 
 /// The argument of a size query: the comparison and the size to compare
 /// with.
@@ -33,11 +33,11 @@ fn evaluate_size(size: f64, argument: SizeQueryArgument) -> SelectorMatch {
 }
 
 fn evaluate_unsubscribed(
-    visual: &Visual,
+    control: &StyledElement,
     container_name: Option<&str>,
     evaluate: impl FnOnce(&VisualQueryProvider) -> SelectorMatch,
 ) -> SelectorMatch {
-    if let Some(container) = get_container(visual, container_name) {
+    if let Some(container) = get_container(control, container_name) {
         if let Some(query_provider) = Container::get_query_provider(&container) {
             if Container::get_sizing(&container) == ContainerSizing::WidthAndHeight {
                 return evaluate(&query_provider);
@@ -73,17 +73,13 @@ impl StyleQueryNode for WidthQuery {
         subscribe: bool,
         container_name: Option<&str>,
     ) -> SelectorMatch {
-        let Some(visual) = control.downcast_ref::<Visual>() else {
-            return SelectorMatch::NEVER_THIS_TYPE;
-        };
-
         let argument = *self.0.argument();
 
         if subscribe {
-            return SelectorMatch::sometimes(WidthActivator::new(visual, argument, container_name));
+            return SelectorMatch::sometimes(WidthActivator::new(control, argument, container_name));
         }
 
-        evaluate_unsubscribed(visual, container_name, |provider| Self::evaluate_provider(provider, argument))
+        evaluate_unsubscribed(control, container_name, |provider| Self::evaluate_provider(provider, argument))
     }
 
     fn to_string(&self, _owner: Option<&ContainerQuery>) -> String {
@@ -134,17 +130,13 @@ impl StyleQueryNode for HeightQuery {
         subscribe: bool,
         container_name: Option<&str>,
     ) -> SelectorMatch {
-        let Some(visual) = control.downcast_ref::<Visual>() else {
-            return SelectorMatch::NEVER_THIS_TYPE;
-        };
-
         let argument = *self.0.argument();
 
         if subscribe {
-            return SelectorMatch::sometimes(HeightActivator::new(visual, argument, container_name));
+            return SelectorMatch::sometimes(HeightActivator::new(control, argument, container_name));
         }
 
-        evaluate_unsubscribed(visual, container_name, |provider| Self::evaluate_provider(provider, argument))
+        evaluate_unsubscribed(control, container_name, |provider| Self::evaluate_provider(provider, argument))
     }
 
     fn to_string(&self, _owner: Option<&ContainerQuery>) -> String {
