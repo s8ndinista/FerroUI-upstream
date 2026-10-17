@@ -303,6 +303,8 @@ fn rich_hyperlink_hit_testing_keyboard_focus_and_cancellation_use_the_host() {
     assert!(key(&view, Key::Tab, false).handled());
     assert!(link.is_focused());
     assert!(key(&view, Key::Enter, false).handled());
+    assert_eq!(invocations.get(), 0);
+    assert!(key(&view, Key::Enter, true).handled());
     assert_eq!(invocations.get(), 1);
     assert_eq!(view.document().revision(), revision);
     assert!(!key(&view, Key::Tab, false).handled());
