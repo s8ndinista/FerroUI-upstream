@@ -18,7 +18,7 @@ use ferroui_base::utilities::{ReadOnlyMemory, ValueSpan};
 use ferroui_base::{
     ferro_class, ferro_property, instantiate, AttachedProperty, DirectProperty, FerroObjectImpl, FerroObjectImplExt,
     FerroProperty, FerroPropertyChangedEventArgs, Point, Rect, Ref, Size, StyledElementImpl, StyledProperty,
-    StyledPropertyOptions, Thickness, Visual, VisualImpl, WeakRef,
+    StyledPropertyOptions, Thickness, Visual, VisualImpl, VisualImplExt, VisualTreeAttachmentEventArgs, WeakRef,
 };
 use std::cell::{Cell, OnceCell, RefCell};
 use std::rc::Rc;
@@ -124,6 +124,12 @@ impl VisualImpl for TextBlock {
 
     fn bypass_flow_direction_policies(_this: &Self) -> bool {
         true
+    }
+
+    fn on_detached_from_visual_tree(this: &Self, e: &VisualTreeAttachmentEventArgs) {
+        Self::parent_on_detached_from_visual_tree(this, e);
+
+        this.dispose_text_layout();
     }
 }
 
@@ -965,6 +971,11 @@ impl TextBlock {
         self.dispose_text_layout();
         self.invalidate_visual();
         self.invalidate_measure();
+    }
+
+    #[allow(dead_code)] // read by the tests
+    pub(crate) fn has_text_layout(&self) -> bool {
+        self.text_layout.borrow().is_some()
     }
 
     fn dispose_text_layout(&self) {

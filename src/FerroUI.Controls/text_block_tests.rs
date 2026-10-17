@@ -9,7 +9,7 @@ use crate::templates::{FuncControlTemplate, FuncTemplateNameScopeExtensions};
 use crate::test_support::{boxed_str, test_scope, TestRoot};
 use crate::test_support_buttons::focus_scope;
 use crate::text_box_tests::templated_text_box;
-use crate::{Border, Button, ContentControl, Control, Image, TextBlock, TextBox};
+use crate::{Border, Button, ContentControl, Control, Image, StackPanel, TextBlock, TextBox};
 use ferroui_base::input::InputElement;
 use ferroui_base::data::{BindingMode, TemplateBinding};
 use ferroui_base::layout::{HorizontalAlignment, LayoutHelper, VerticalAlignment};
@@ -97,6 +97,70 @@ fn should_measure_min_text_with() {
     let constraint = LayoutHelper::round_layout_size_up(Size::new(text_layout.width(), text_layout.height()), 1.0);
 
     assert_eq!(text_block.desired_size(), constraint);
+}
+
+/// A text block of "Hello World" in a stack panel of a measured and
+/// arranged test root.
+fn attached_text_block() -> (Ref<StackPanel>, Ref<TextBlock>, Ref<TestRoot>) {
+    let panel = StackPanel::new();
+    let target = text_block("Hello World");
+    panel.children().add(&target);
+    let root = TestRoot::with_child(panel.clone());
+
+    root.measure(infinity());
+    root.arrange(Rect::from_size(root.desired_size()));
+
+    (panel, target, root)
+}
+
+#[test]
+fn detaching_should_release_text_layout() {
+    let _scope = test_scope();
+    let (panel, target, _root) = attached_text_block();
+
+    assert!(target.has_text_layout());
+
+    panel.children().remove(&target);
+
+    assert!(!target.has_text_layout());
+}
+
+#[test]
+fn detaching_should_release_text_layout_built_while_measure_is_invalid() {
+    let _scope = test_scope();
+    let (panel, target, _root) = attached_text_block();
+
+    // Reading the layout back is what a render pass does, and it can happen after
+    // the measure has been invalidated but before the next measure pass runs.
+    target.set_font_size(target.font_size() + 1.0);
+    let _ = target.text_layout();
+
+    assert!(!target.is_measure_valid());
+    assert!(target.has_text_layout());
+
+    panel.children().remove(&target);
+
+    assert!(!target.has_text_layout());
+}
+
+#[test]
+fn reattaching_should_rebuild_text_layout() {
+    let _scope = test_scope();
+    let (panel, target, root) = attached_text_block();
+
+    let expected = target.desired_size();
+    assert!(expected.width > 0.0, "DesiredSize was {expected:?}");
+
+    panel.children().remove(&target);
+    panel.children().add(&target);
+
+    root.measure(infinity());
+    root.arrange(Rect::from_size(root.desired_size()));
+
+    assert_eq!(expected, target.desired_size());
+    let text_layout = target.text_layout();
+    let text_runs = text_layout.text_lines()[0].text_runs();
+    assert_eq!("Hello World", text_runs[0].text().to_string_lossy());
 }
 
 #[test]
