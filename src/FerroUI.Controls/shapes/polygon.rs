@@ -37,8 +37,17 @@ impl FerroObjectImpl for Polygon {
 
 impl ShapeImpl for Polygon {
     fn create_defining_geometry(this: &Self) -> Option<Ref<Geometry>> {
-        let points = this.points().map(|p| p.to_vec()).unwrap_or_default();
-        Some(PolylineGeometry::with_points_and_fill_rule(points, true, this.fill_rule()).upcast())
+        let points = this.points();
+        let geometry = PolylineGeometry::with_points_and_fill_rule(
+            points.as_ref().map(|p| p.to_vec()).unwrap_or_default(),
+            true,
+            this.fill_rule(),
+        );
+        // Re-assign the live collection so the geometry observes changes to it (#20565).
+        if let Some(points) = points {
+            geometry.set_points(points);
+        }
+        Some(geometry.upcast())
     }
 }
 
