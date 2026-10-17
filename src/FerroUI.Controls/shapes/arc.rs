@@ -72,7 +72,7 @@ impl ShapeImpl for Arc {
                 context.arc_to(
                     end_point,
                     Size::new(radius_x, radius_y),
-                    angle_gap,
+                    0.0,
                     angle_gap >= PI,
                     SweepDirection::Clockwise,
                     true,
