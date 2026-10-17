@@ -1,0 +1,44 @@
+# Text document implementation notices
+
+The block, paragraph, block collection, hyperlink and text-position contracts
+are derived from Microsoft WinUI, pinned at commit
+`fe244ca6ac4d482712b234a9de3cf771cc6481de`:
+
+- `dxaml/xcp/core/inc/BlockTextElement.h`
+- `dxaml/xcp/core/text/common/BlockCollection.cpp`
+- `dxaml/xcp/core/text/RichTextArea/paragraph.cpp`
+- `dxaml/xcp/core/text/TextBlock/Hyperlink.cpp`
+- `dxaml/xcp/core/inc/Hyperlink.h`
+- `dxaml/xcp/core/text/Inc/TextPosition.h`
+- `dxaml/xcp/core/text/common/TextPosition.cpp`
+- `dxaml/xcp/core/text/Inc/PlainTextPosition.h`
+
+Copyright (c) Microsoft Corporation. All rights reserved.
+
+The shared Rust document, snapshot, format-patch, transaction and ownership
+representations integrate these contracts with the existing FerroUI property,
+inline, text-formatting and Unicode services. Structural element markers are
+not exposed as character positions; the public offset coordinate system is
+the UTF-16 text coordinate system used by the FerroUI formatter. The explicit
+source/member inventory and the platform service boundary report live in
+`docs/porting/winui-rich-text/`.
+
+## MIT License
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

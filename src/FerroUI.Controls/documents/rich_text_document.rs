@@ -1,0 +1,1252 @@
+use super::document_snapshot::{normalize_paragraph_breaks, slice_inlines, utf16_to_byte};
+use super::{
+    BlockCollection, Bold, CharacterFormat, DocumentSnapshot, Hyperlink, IInlineHost, Inline,
+    InlineCollection, InlineSnapshot, InlineSnapshotKind, InlineUIContainer, Italic, LineBreak,
+    Paragraph, ParagraphFormat, ParagraphSnapshot, Run, Span, TextElement, TextGravity,
+    TextPointer, TextPosition, Underline,
+};
+use crate::Control;
+use ferroui_base::media::text_formatting::unicode::{GraphemeEnumerator, WordBreakEnumerator};
+use ferroui_base::reactive::{Disposable, IDisposable};
+use ferroui_base::utilities::HandlerList;
+use ferroui_base::{Ref, StyledElement};
+use std::cell::{Cell, RefCell};
+use std::collections::{HashSet, VecDeque};
+use std::ops::Range;
+use std::rc::{Rc, Weak};
+
+/// Validation failure. Every public ranged mutation validates before touching
+/// the document, so an error leaves both content and revision unchanged.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum DocumentError {
+    OffsetOutOfRange { offset: usize, length: usize },
+    ReversedRange { start: usize, end: usize },
+    InvalidUtf16Boundary { offset: usize },
+    InvalidFormat(&'static str),
+    ContentTooDeep,
+    DuplicateEmbeddedControl,
+    EmbeddedControlAlreadyParented,
+    DocumentDropped,
+    EditInProgress,
+}
+
+impl std::fmt::Display for DocumentError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::OffsetOutOfRange { offset, length } => {
+                write!(f, "Text offset {offset} exceeds document length {length}")
+            }
+            Self::ReversedRange { start, end } => {
+                write!(f, "Range start {start} exceeds end {end}")
+            }
+            Self::InvalidUtf16Boundary { offset } => {
+                write!(f, "Text offset {offset} splits a UTF-16 surrogate pair")
+            }
+            Self::InvalidFormat(message) => f.write_str(message),
+            Self::ContentTooDeep => f.write_str("Inline nesting exceeds 256 levels"),
+            Self::DuplicateEmbeddedControl => {
+                f.write_str("An embedded control cannot occur twice in one document")
+            }
+            Self::EmbeddedControlAlreadyParented => {
+                f.write_str("An embedded control already belongs to another content tree")
+            }
+            Self::DocumentDropped => f.write_str("The text document no longer exists"),
+            Self::EditInProgress => {
+                f.write_str("A structured document edit is already in progress")
+            }
+        }
+    }
+}
+impl std::error::Error for DocumentError {}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum DocumentChangeKind {
+    Content,
+    Formatting,
+    Structure,
+}
+
+/// A replacement in the coordinates immediately before that replacement.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct DocumentTextChange {
+    pub range: Range<usize>,
+    pub inserted_length: usize,
+}
+
+impl DocumentTextChange {
+    pub fn map_position(&self, position: TextPosition) -> TextPosition {
+        let offset = if position.offset < self.range.start {
+            position.offset
+        } else if position.offset > self.range.end {
+            position
+                .offset
+                .saturating_sub(self.range.len())
+                .saturating_add(self.inserted_length)
+        } else if position.offset == self.range.end && self.range.start != self.range.end {
+            self.range.start + self.inserted_length
+        } else {
+            self.range.start
+                + if position.gravity == TextGravity::Forward {
+                    self.inserted_length
+                } else {
+                    0
+                }
+        };
+        TextPosition { offset, ..position }
+    }
+}
+
+/// One committed, coalesced document update. `range` addresses the old version;
+/// the replacement's length is measured in UTF-16 code units.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct DocumentChangedEventArgs {
+    pub revision: u64,
+    pub range: Range<usize>,
+    pub removed_length: usize,
+    pub inserted_length: usize,
+    pub old_length: usize,
+    pub new_length: usize,
+    pub kind: DocumentChangeKind,
+    /// Sequential replacements inside an edit batch, retaining interior anchors.
+    pub changes: Vec<DocumentTextChange>,
+}
+
+impl DocumentChangedEventArgs {
+    pub fn map_position(&self, position: TextPosition) -> TextPosition {
+        let mapped = self
+            .changes
+            .iter()
+            .fold(position, |position, change| change.map_position(position));
+        TextPosition {
+            offset: mapped.offset.min(self.new_length),
+            ..mapped
+        }
+    }
+}
+
+/// Authoritative structured content shared by read-only and editable text controls.
+/// Its plain string is a derived read cache; every mutation changes the block tree.
+#[derive(Clone)]
+pub struct RichTextDocument(Rc<RichTextDocumentData>);
+
+struct RichTextDocumentData {
+    blocks: BlockCollection,
+    revision: Cell<u64>,
+    changed: Rc<HandlerList<dyn Fn(&DocumentChangedEventArgs)>>,
+    cached_text: RefCell<Rc<str>>,
+    observed_text: RefCell<Rc<str>>,
+    text_changes: RefCell<Vec<DocumentTextChange>>,
+    installing: Cell<bool>,
+    delivering: Cell<bool>,
+    pending_events: RefCell<VecDeque<DocumentChangedEventArgs>>,
+    edit_depth: Cell<usize>,
+    silent_depth: Cell<usize>,
+    dirty: Cell<bool>,
+    change_kind: Cell<Option<DocumentChangeKind>>,
+    subscription: RefCell<Option<Rc<dyn IDisposable>>>,
+}
+
+impl Drop for RichTextDocumentData {
+    fn drop(&mut self) {
+        if let Some(subscription) = self.subscription.get_mut().take() {
+            subscription.dispose();
+        }
+    }
+}
+
+#[derive(Clone)]
+pub struct WeakRichTextDocument(Weak<RichTextDocumentData>);
+impl WeakRichTextDocument {
+    pub fn upgrade(&self) -> Option<RichTextDocument> {
+        self.0.upgrade().map(RichTextDocument)
+    }
+}
+
+impl PartialEq for RichTextDocument {
+    fn eq(&self, other: &Self) -> bool {
+        Rc::ptr_eq(&self.0, &other.0)
+    }
+}
+
+impl std::fmt::Debug for RichTextDocument {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("RichTextDocument")
+            .field("revision", &self.revision())
+            .field("paragraph_count", &self.0.blocks.count())
+            .field("text_length", &self.text_length())
+            .finish()
+    }
+}
+
+impl Default for RichTextDocument {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+ferroui_base::ferro_markup_type!(class RichTextDocument {
+    namespace: "FerroUI.Controls.Documents",
+    handles: [RichTextDocument, Option<RichTextDocument>],
+    constructors: [() => RichTextDocument::new],
+    properties: [Blocks: BlockCollection { get: RichTextDocument::blocks }],
+});
+
+impl RichTextDocument {
+    pub fn new() -> Self {
+        Self::with_blocks(BlockCollection::new())
+    }
+
+    pub fn with_blocks(blocks: BlockCollection) -> Self {
+        let text: Rc<str> = Rc::from(blocks.text());
+        let document = Self(Rc::new(RichTextDocumentData {
+            blocks,
+            revision: Cell::new(0),
+            changed: Rc::new(HandlerList::new()),
+            cached_text: RefCell::new(text.clone()),
+            observed_text: RefCell::new(text),
+            text_changes: RefCell::new(Vec::new()),
+            installing: Cell::new(false),
+            delivering: Cell::new(false),
+            pending_events: RefCell::new(VecDeque::new()),
+            edit_depth: Cell::new(0),
+            silent_depth: Cell::new(0),
+            dirty: Cell::new(false),
+            change_kind: Cell::new(None),
+            subscription: RefCell::new(None),
+        }));
+        let weak = document.downgrade();
+        let subscription = document.blocks().invalidated(move || {
+            if let Some(document) = weak.upgrade() {
+                document.on_invalidated();
+            }
+        });
+        *document.0.subscription.borrow_mut() = Some(subscription);
+        document
+    }
+
+    pub fn from_text(text: &str) -> Self {
+        let blocks = BlockCollection::new();
+        for paragraph in normalize_paragraph_breaks(text).split('\n') {
+            blocks.add(Paragraph::with_text(paragraph));
+        }
+        Self::with_blocks(blocks)
+    }
+
+    pub fn blocks(&self) -> BlockCollection {
+        self.0.blocks.clone()
+    }
+    pub fn revision(&self) -> u64 {
+        self.0.revision.get()
+    }
+    pub fn downgrade(&self) -> WeakRichTextDocument {
+        WeakRichTextDocument(Rc::downgrade(&self.0))
+    }
+    pub fn paragraphs(&self) -> Vec<Ref<Paragraph>> {
+        self.0
+            .blocks
+            .snapshot()
+            .iter()
+            .filter_map(|block| block.cast::<Paragraph>())
+            .collect()
+    }
+
+    pub fn text(&self) -> String {
+        if self.0.dirty.get() {
+            self.0.blocks.text()
+        } else {
+            self.0.cached_text.borrow().to_string()
+        }
+    }
+
+    pub fn text_length(&self) -> usize {
+        if self.0.dirty.get() {
+            self.0.blocks.text_length()
+        } else {
+            self.0.cached_text.borrow().encode_utf16().count()
+        }
+    }
+
+    pub fn changed(
+        &self,
+        handler: impl Fn(&DocumentChangedEventArgs) + 'static,
+    ) -> Rc<dyn IDisposable> {
+        let token = self.0.changed.add(Rc::new(handler));
+        let weak = Rc::downgrade(&self.0.changed);
+        Disposable::create(move || {
+            if let Some(handlers) = weak.upgrade() {
+                handlers.remove(token);
+            }
+        })
+    }
+
+    /// Nested batches publish one revision and one Changed event at the outer end.
+    pub fn begin_edit(&self) -> DocumentEditBatch {
+        self.0.edit_depth.set(self.0.edit_depth.get() + 1);
+        DocumentEditBatch {
+            document: Some(self.clone()),
+        }
+    }
+
+    pub fn snapshot(&self) -> DocumentSnapshot {
+        DocumentSnapshot {
+            paragraphs: self
+                .0
+                .blocks
+                .snapshot()
+                .iter()
+                .map(|block| {
+                    if let Some(paragraph) = block.cast::<Paragraph>() {
+                        ParagraphSnapshot::from_paragraph(&paragraph)
+                    } else {
+                        ParagraphSnapshot {
+                            format: ParagraphFormat {
+                                character: CharacterFormat::from_element(block),
+                                ..Default::default()
+                            },
+                            inlines: vec![InlineSnapshot::run(block.text())],
+                        }
+                    }
+                })
+                .collect(),
+        }
+    }
+
+    pub fn restore(&self, snapshot: &DocumentSnapshot) -> Result<(), DocumentError> {
+        self.install(snapshot, DocumentChangeKind::Structure)
+    }
+
+    pub fn validate_range(&self, range: Range<usize>) -> Result<(), DocumentError> {
+        validate_text_range(&self.text(), range)
+    }
+
+    pub fn get_text(&self, range: Range<usize>) -> Result<String, DocumentError> {
+        let text = self.text();
+        validate_text_range(&text, range.clone())?;
+        let start =
+            utf16_to_byte(&text, range.start).ok_or(DocumentError::InvalidUtf16Boundary {
+                offset: range.start,
+            })?;
+        let end = utf16_to_byte(&text, range.end)
+            .ok_or(DocumentError::InvalidUtf16Boundary { offset: range.end })?;
+        Ok(text[start..end].to_owned())
+    }
+
+    pub fn slice(&self, range: Range<usize>) -> Result<DocumentSnapshot, DocumentError> {
+        self.validate_range(range.clone())?;
+        Ok(self.snapshot().slice_unchecked(range))
+    }
+
+    pub fn replace_text(&self, range: Range<usize>, text: &str) -> Result<(), DocumentError> {
+        self.ensure_available()?;
+        self.validate_range(range.clone())?;
+        if range.is_empty() && text.is_empty() {
+            return Ok(());
+        }
+        let normalized = normalize_paragraph_breaks(text);
+        if !normalized.contains('\n') {
+            if let Some(found) = self.find_splice_run(range.clone()) {
+                let mut value = found.run.text().unwrap_or_default();
+                let start = utf16_to_byte(&value, range.start - found.offset).ok_or(
+                    DocumentError::InvalidUtf16Boundary {
+                        offset: range.start,
+                    },
+                )?;
+                let end = utf16_to_byte(&value, range.end - found.offset)
+                    .ok_or(DocumentError::InvalidUtf16Boundary { offset: range.end })?;
+                if value[start..end] == normalized {
+                    return Ok(());
+                }
+                value.replace_range(start..end, &normalized);
+                let _batch = self.begin_edit();
+                self.0.change_kind.set(Some(DocumentChangeKind::Content));
+                found.run.set_text(Some(&value));
+                return Ok(());
+            }
+        }
+        let snapshot = self.snapshot();
+        let (paragraph_index, offset) = snapshot.locate(range.start);
+        let format = self
+            .element_at(range.start, TextGravity::Backward)
+            .map(|element| CharacterFormat::from_element(&element))
+            .unwrap_or_default();
+        let mut replacement = DocumentSnapshot::from_text(text);
+        for paragraph in &mut replacement.paragraphs {
+            if paragraph.inlines.is_empty() {
+                paragraph.inlines.push(InlineSnapshot {
+                    format: format.clone(),
+                    kind: InlineSnapshotKind::Run(String::new()),
+                });
+            }
+        }
+        if let Some(paragraph) = snapshot.paragraphs.get(paragraph_index) {
+            let context = insertion_context(&paragraph.inlines, offset);
+            for replacement_paragraph in &mut replacement.paragraphs {
+                replacement_paragraph.format = paragraph.format.clone();
+                for inline in &mut replacement_paragraph.inlines {
+                    inline.format = format.clone();
+                }
+                for mut container in context.iter().rev().cloned() {
+                    if let Some(children) = container.children_mut() {
+                        *children = std::mem::take(&mut replacement_paragraph.inlines);
+                    }
+                    replacement_paragraph.inlines = vec![container];
+                }
+            }
+        } else {
+            for paragraph in &mut replacement.paragraphs {
+                for inline in &mut paragraph.inlines {
+                    inline.format = format.clone();
+                }
+            }
+        }
+        self.replace_range(range, &replacement)
+    }
+
+    pub fn replace_range(
+        &self,
+        range: Range<usize>,
+        fragment: &DocumentSnapshot,
+    ) -> Result<(), DocumentError> {
+        self.ensure_available()?;
+        self.validate_range(range.clone())?;
+        fragment.validate()?;
+        if range.is_empty() && fragment.text_length() == 0 {
+            return Ok(());
+        }
+        let mut snapshot = self.snapshot();
+        if snapshot.paragraphs.is_empty() {
+            snapshot.paragraphs.push(ParagraphSnapshot::default());
+        }
+        let (start_index, start_offset) = snapshot.locate(range.start);
+        let (end_index, end_offset) = snapshot.locate(range.end);
+        let first = &snapshot.paragraphs[start_index];
+        let last = &snapshot.paragraphs[end_index];
+        let prefix = slice_inlines(&first.inlines, 0..start_offset);
+        let mut suffix = slice_inlines(&last.inlines, end_offset..last.text_length());
+        if start_index != end_index && first.format.character != last.format.character {
+            suffix = wrap_with_format(suffix, &last.format.character);
+        }
+        let mut inserted = if fragment.paragraphs.is_empty() {
+            vec![ParagraphSnapshot::default()]
+        } else {
+            fragment.paragraphs.clone()
+        };
+        if inserted.len() == 1 {
+            let mut middle = wrap_with_format(
+                std::mem::take(&mut inserted[0].inlines),
+                &inserted[0].format.character,
+            );
+            let mut inlines = prefix;
+            inlines.append(&mut middle);
+            inlines.append(&mut suffix);
+            inserted[0].inlines = inlines;
+            inserted[0].format = first.format.clone();
+        } else {
+            let mut middle = wrap_with_format(
+                std::mem::take(&mut inserted[0].inlines),
+                &inserted[0].format.character,
+            );
+            inserted[0].inlines = prefix;
+            inserted[0].inlines.append(&mut middle);
+            inserted[0].format = first.format.clone();
+            let inserted_last = inserted.len() - 1;
+            inserted[inserted_last].inlines.append(&mut suffix);
+        }
+        snapshot
+            .paragraphs
+            .splice(start_index..=end_index, inserted);
+        self.install(&snapshot, DocumentChangeKind::Content)
+    }
+
+    pub fn apply_format(
+        &self,
+        range: Range<usize>,
+        format: &CharacterFormat,
+    ) -> Result<(), DocumentError> {
+        self.ensure_available()?;
+        self.validate_range(range.clone())?;
+        format.validate()?;
+        if range.is_empty() || *format == CharacterFormat::default() {
+            return Ok(());
+        }
+        if let Some(found) = self.find_splice_run(range.clone()) {
+            self.format_run(found, range, format)?;
+            return Ok(());
+        }
+        let mut snapshot = self.snapshot();
+        let mut offset = 0;
+        for paragraph in &mut snapshot.paragraphs {
+            let length = paragraph.text_length();
+            if range.start < offset + length && range.end > offset {
+                paragraph.inlines = format_inlines(
+                    &paragraph.inlines,
+                    range.start.saturating_sub(offset)..range.end.min(offset + length) - offset,
+                    format,
+                );
+            } else if length == 0 && range.start <= offset && range.end > offset {
+                paragraph.format.character = paragraph.format.character.overlay(format);
+            }
+            offset += length + 1;
+        }
+        self.install(&snapshot, DocumentChangeKind::Formatting)
+    }
+
+    pub fn apply_paragraph_format(
+        &self,
+        range: Range<usize>,
+        format: &ParagraphFormat,
+    ) -> Result<(), DocumentError> {
+        self.ensure_available()?;
+        self.validate_range(range.clone())?;
+        format.validate()?;
+        let mut snapshot = self.snapshot();
+        if snapshot.paragraphs.is_empty() {
+            snapshot.paragraphs.push(ParagraphSnapshot::default());
+        }
+        let (start, _) = snapshot.locate(range.start);
+        let (mut end, end_offset) = snapshot.locate(range.end);
+        if end > start && end_offset == 0 && !range.is_empty() {
+            end -= 1;
+        }
+        for paragraph in &mut snapshot.paragraphs[start..=end] {
+            paragraph.format = paragraph.format.overlay(format);
+        }
+        self.install(&snapshot, DocumentChangeKind::Formatting)
+    }
+
+    pub fn character_format_at(&self, offset: usize) -> Result<CharacterFormat, DocumentError> {
+        self.validate_range(offset..offset)?;
+        if let Some(element) = self.element_at(offset, TextGravity::Backward) {
+            return Ok(CharacterFormat::effective(&element));
+        }
+        Ok(CharacterFormat::default())
+    }
+
+    pub fn element_at(&self, offset: usize, gravity: TextGravity) -> Option<Ref<TextElement>> {
+        if offset > self.text_length() {
+            return None;
+        }
+        let mut remaining = offset;
+        let blocks = self.blocks().snapshot();
+        for (index, block) in blocks.iter().enumerate() {
+            let length = block.text_length();
+            if remaining <= length || index + 1 == blocks.len() {
+                if let Some(paragraph) = block.cast::<Paragraph>() {
+                    return find_inline(&paragraph.inlines(), remaining.min(length), gravity)
+                        .map(|inline| inline.upcast())
+                        .or_else(|| Some(paragraph.upcast()));
+                }
+                return Some(block.clone().upcast());
+            }
+            remaining = remaining.saturating_sub(length + 1);
+        }
+        None
+    }
+
+    pub fn create_pointer(
+        &self,
+        offset: usize,
+        gravity: TextGravity,
+    ) -> Result<TextPointer, DocumentError> {
+        TextPointer::new(self, offset, gravity)
+    }
+
+    pub fn is_grapheme_boundary(&self, offset: usize) -> bool {
+        let text: Vec<u16> = self.text().encode_utf16().collect();
+        offset == text.len() || GraphemeEnumerator::new(&text).any(|g| g.offset() == offset)
+    }
+
+    pub fn previous_grapheme(&self, offset: usize) -> usize {
+        let text: Vec<u16> = self.text().encode_utf16().collect();
+        GraphemeEnumerator::new(&text)
+            .map(|g| g.offset())
+            .take_while(|v| *v < offset.min(text.len()))
+            .last()
+            .unwrap_or(0)
+    }
+
+    pub fn next_grapheme(&self, offset: usize) -> usize {
+        let text: Vec<u16> = self.text().encode_utf16().collect();
+        GraphemeEnumerator::new(&text)
+            .map(|g| g.offset() + g.length())
+            .find(|v| *v > offset)
+            .unwrap_or(text.len())
+    }
+
+    pub fn previous_word(&self, offset: usize) -> usize {
+        let text: Vec<u16> = self.text().encode_utf16().collect();
+        let mut previous = 0;
+        for word in WordBreakEnumerator::new(&text) {
+            if word.offset() >= offset.min(text.len()) {
+                break;
+            }
+            if !segment_is_whitespace(word.text()) {
+                previous = word.offset();
+            }
+        }
+        previous
+    }
+
+    pub fn next_word(&self, offset: usize) -> usize {
+        let text: Vec<u16> = self.text().encode_utf16().collect();
+        let mut consumed_current = false;
+        for word in WordBreakEnumerator::new(&text) {
+            if word.offset() + word.length() <= offset {
+                continue;
+            }
+            if !consumed_current {
+                consumed_current = true;
+                continue;
+            }
+            if !segment_is_whitespace(word.text()) {
+                return word.offset();
+            }
+        }
+        text.len()
+    }
+
+    pub(crate) fn set_inline_host(&self, host: Option<Rc<dyn IInlineHost>>) {
+        self.0.silent_depth.set(self.0.silent_depth.get() + 1);
+        self.0.blocks.set_inline_host(host);
+        self.0.silent_depth.set(self.0.silent_depth.get() - 1);
+    }
+
+    pub(crate) fn set_logical_parent(&self, parent: Option<&StyledElement>) {
+        self.0.silent_depth.set(self.0.silent_depth.get() + 1);
+        self.0.blocks.set_logical_parent(parent);
+        self.0.silent_depth.set(self.0.silent_depth.get() - 1);
+    }
+
+    fn install(
+        &self,
+        snapshot: &DocumentSnapshot,
+        kind: DocumentChangeKind,
+    ) -> Result<(), DocumentError> {
+        self.ensure_available()?;
+        snapshot.validate()?;
+        let old = self.snapshot();
+        if old == *snapshot {
+            return Ok(());
+        }
+        let mut pool = ContentPool::capture(&self.blocks());
+        let current_controls: HashSet<usize> = pool
+            .inlines
+            .iter()
+            .filter_map(|entry| {
+                if let InlineSnapshotKind::Embedded(Some(control)) = &entry.snapshot.kind {
+                    Some(&**control as *const Control as usize)
+                } else {
+                    None
+                }
+            })
+            .collect();
+        validate_control_parents(snapshot, &current_controls)?;
+        let _batch = self.begin_edit();
+        self.0.installing.set(true);
+        self.0.change_kind.set(Some(kind));
+        self.blocks().clear();
+        pool.detach_contents();
+        for paragraph in &snapshot.paragraphs {
+            let value = pool.build_paragraph(paragraph);
+            self.blocks().add(value);
+        }
+        self.0.installing.set(false);
+        self.on_invalidated();
+        Ok(())
+    }
+
+    fn find_splice_run(&self, range: Range<usize>) -> Option<RunLocation> {
+        let mut offset = 0;
+        for block in self.0.blocks.snapshot().iter() {
+            if let Some(paragraph) = block.cast::<Paragraph>() {
+                if range.start >= offset && range.end <= offset + paragraph.text_length() {
+                    if let Some(found) =
+                        find_run_in_collection(&paragraph.inlines(), &range, offset)
+                    {
+                        return Some(found);
+                    }
+                }
+            }
+            offset += block.text_length() + 1;
+        }
+        None
+    }
+
+    fn format_run(
+        &self,
+        found: RunLocation,
+        range: Range<usize>,
+        format: &CharacterFormat,
+    ) -> Result<(), DocumentError> {
+        let source = found.run.text().unwrap_or_default();
+        let length = source.encode_utf16().count();
+        let local = range.start - found.offset..range.end - found.offset;
+        let before = CharacterFormat::from_element(&found.run);
+        let after = before.overlay(format);
+        if before == after {
+            return Ok(());
+        }
+        let _batch = self.begin_edit();
+        self.0.change_kind.set(Some(DocumentChangeKind::Formatting));
+        if local.start == 0 && local.end == length {
+            self.0.installing.set(true);
+            format.apply_to(&found.run);
+            self.0.installing.set(false);
+            self.on_invalidated();
+            return Ok(());
+        }
+        let start =
+            utf16_to_byte(&source, local.start).ok_or(DocumentError::InvalidUtf16Boundary {
+                offset: range.start,
+            })?;
+        let end = utf16_to_byte(&source, local.end)
+            .ok_or(DocumentError::InvalidUtf16Boundary { offset: range.end })?;
+        let mut pieces: Vec<Ref<Inline>> = Vec::with_capacity(3);
+        if start != 0 {
+            let run = Run::with_text(Some(&source[..start]));
+            before.apply_to(&run);
+            pieces.push(run.upcast());
+        }
+        let middle = Run::with_text(Some(&source[start..end]));
+        after.apply_to(&middle);
+        pieces.push(middle.upcast());
+        if end != source.len() {
+            let run = Run::with_text(Some(&source[end..]));
+            before.apply_to(&run);
+            pieces.push(run.upcast());
+        }
+        self.0.installing.set(true);
+        found.collection.remove_at(found.index);
+        found.collection.insert_range(found.index, pieces);
+        self.0.installing.set(false);
+        self.on_invalidated();
+        Ok(())
+    }
+
+    fn ensure_available(&self) -> Result<(), DocumentError> {
+        if self.0.installing.get() {
+            Err(DocumentError::EditInProgress)
+        } else {
+            Ok(())
+        }
+    }
+
+    fn on_invalidated(&self) {
+        if self.0.silent_depth.get() != 0 {
+            return;
+        }
+        self.0.dirty.set(true);
+        if !self.0.installing.get() {
+            self.observe_text_change();
+        }
+        if self.0.edit_depth.get() == 0 {
+            self.publish_change();
+        }
+    }
+
+    fn observe_text_change(&self) {
+        let text = self.0.blocks.text();
+        let previous = self.0.observed_text.replace(Rc::from(text.as_str()));
+        if previous.as_ref() != text {
+            let (range, inserted_length) = changed_range(&previous, &text);
+            self.0.text_changes.borrow_mut().push(DocumentTextChange {
+                range,
+                inserted_length,
+            });
+        }
+    }
+
+    fn publish_change(&self) {
+        if !self.0.dirty.replace(false) {
+            return;
+        }
+        let new_text = self.0.blocks.text();
+        let old_text = self.0.cached_text.replace(Rc::from(new_text.as_str()));
+        let old_length = old_text.encode_utf16().count();
+        let new_length = new_text.encode_utf16().count();
+        let (range, inserted_length) = changed_range(&old_text, &new_text);
+        let requested_kind = self.0.change_kind.take();
+        let kind = if old_text.as_ref() != new_text {
+            DocumentChangeKind::Content
+        } else {
+            requested_kind.unwrap_or(DocumentChangeKind::Formatting)
+        };
+        let revision = self.revision().wrapping_add(1);
+        self.0.revision.set(revision);
+        let change = DocumentChangedEventArgs {
+            revision,
+            removed_length: range.len(),
+            range,
+            inserted_length,
+            old_length,
+            new_length,
+            kind,
+            changes: std::mem::take(&mut *self.0.text_changes.borrow_mut()),
+        };
+        self.0.pending_events.borrow_mut().push_back(change);
+        if self.0.delivering.replace(true) {
+            return;
+        }
+        loop {
+            let change = self.0.pending_events.borrow_mut().pop_front();
+            let Some(change) = change else { break };
+            for (_, handler) in self.0.changed.snapshot().iter() {
+                handler(&change);
+            }
+        }
+        self.0.delivering.set(false);
+    }
+}
+
+/// An edit scope. Dropping or explicitly finishing it ends its nesting level.
+pub struct DocumentEditBatch {
+    document: Option<RichTextDocument>,
+}
+impl DocumentEditBatch {
+    pub fn finish(mut self) {
+        self.close();
+    }
+    fn close(&mut self) {
+        let Some(document) = self.document.take() else {
+            return;
+        };
+        let depth = document.0.edit_depth.get().saturating_sub(1);
+        document.0.edit_depth.set(depth);
+        if depth == 0 {
+            document.publish_change();
+        }
+    }
+}
+impl Drop for DocumentEditBatch {
+    fn drop(&mut self) {
+        self.close();
+    }
+}
+
+fn validate_text_range(text: &str, range: Range<usize>) -> Result<(), DocumentError> {
+    if range.start > range.end {
+        return Err(DocumentError::ReversedRange {
+            start: range.start,
+            end: range.end,
+        });
+    }
+    let length = text.encode_utf16().count();
+    if range.end > length {
+        return Err(DocumentError::OffsetOutOfRange {
+            offset: range.end,
+            length,
+        });
+    }
+    for offset in [range.start, range.end] {
+        if utf16_to_byte(text, offset).is_none() {
+            return Err(DocumentError::InvalidUtf16Boundary { offset });
+        }
+    }
+    Ok(())
+}
+
+fn segment_is_whitespace(text: &[u16]) -> bool {
+    char::decode_utf16(text.iter().copied()).all(|value| value.is_ok_and(char::is_whitespace))
+}
+
+fn changed_range(before: &str, after: &str) -> (Range<usize>, usize) {
+    let prefix = before
+        .chars()
+        .zip(after.chars())
+        .take_while(|(a, b)| a == b)
+        .map(|(c, _)| c.len_utf16())
+        .sum::<usize>();
+    let old_len = before.encode_utf16().count();
+    let new_len = after.encode_utf16().count();
+    let max_suffix = old_len.min(new_len).saturating_sub(prefix);
+    let mut suffix = 0;
+    for (a, b) in before.chars().rev().zip(after.chars().rev()) {
+        if a != b || suffix + a.len_utf16() > max_suffix {
+            break;
+        }
+        suffix += a.len_utf16();
+    }
+    (prefix..old_len - suffix, new_len - prefix - suffix)
+}
+
+fn wrap_with_format(inlines: Vec<InlineSnapshot>, format: &CharacterFormat) -> Vec<InlineSnapshot> {
+    if inlines.is_empty() || *format == CharacterFormat::default() {
+        inlines
+    } else {
+        vec![InlineSnapshot {
+            format: format.clone(),
+            kind: InlineSnapshotKind::Span(inlines),
+        }]
+    }
+}
+
+fn insertion_context(inlines: &[InlineSnapshot], offset: usize) -> Vec<InlineSnapshot> {
+    let mut position = 0;
+    for inline in inlines {
+        let end = position + inline.text_length();
+        if offset <= end && (end > position || offset == position) {
+            if let Some(children) = inline.children() {
+                let inner = insertion_context(children, offset.saturating_sub(position));
+                let mut result = vec![inline.clone()];
+                if let Some(children) = result[0].children_mut() {
+                    children.clear();
+                }
+                result.extend(inner);
+                return result;
+            }
+            return Vec::new();
+        }
+        position = end;
+    }
+    Vec::new()
+}
+
+fn format_inlines(
+    inlines: &[InlineSnapshot],
+    range: Range<usize>,
+    format: &CharacterFormat,
+) -> Vec<InlineSnapshot> {
+    let mut result = Vec::new();
+    let mut offset = 0;
+    for inline in inlines {
+        let length = inline.text_length();
+        let end = offset + length;
+        if range.start >= end || range.end <= offset {
+            result.push(inline.clone());
+        } else {
+            let selected = range.start.saturating_sub(offset)..range.end.min(end) - offset;
+            if let Some(children) = inline.children() {
+                let mut container = inline.clone();
+                if selected.start == 0 && selected.end == length {
+                    container.format = container.format.overlay(format);
+                }
+                if let Some(target) = container.children_mut() {
+                    *target = format_inlines(children, selected, format);
+                }
+                result.push(container);
+            } else {
+                if let Some(before) = inline.slice(0..selected.start) {
+                    result.push(before);
+                }
+                if let Some(mut middle) = inline.slice(selected.clone()) {
+                    middle.format = middle.format.overlay(format);
+                    result.push(middle);
+                }
+                if let Some(after) = inline.slice(selected.end..length) {
+                    result.push(after);
+                }
+            }
+        }
+        offset = end;
+    }
+    result
+}
+
+fn find_inline(
+    collection: &InlineCollection,
+    offset: usize,
+    gravity: TextGravity,
+) -> Option<Ref<Inline>> {
+    let inlines = collection.snapshot();
+    let mut position = 0;
+    for (index, inline) in inlines.iter().enumerate() {
+        let length = InlineSnapshot::from_inline(inline).text_length();
+        let end = position + length;
+        if offset < end
+            || (offset == end && gravity == TextGravity::Backward)
+            || index + 1 == inlines.len()
+        {
+            if let Some(span) = inline.cast::<Span>() {
+                return find_inline(
+                    &span.inlines(),
+                    offset.saturating_sub(position).min(length),
+                    gravity,
+                )
+                .or_else(|| Some(inline.clone()));
+            }
+            return Some(inline.clone());
+        }
+        position = end;
+    }
+    None
+}
+
+fn validate_control_parents(
+    snapshot: &DocumentSnapshot,
+    current: &HashSet<usize>,
+) -> Result<(), DocumentError> {
+    let mut pending: Vec<&InlineSnapshot> = snapshot
+        .paragraphs
+        .iter()
+        .flat_map(|p| p.inlines.iter())
+        .collect();
+    while let Some(inline) = pending.pop() {
+        if let InlineSnapshotKind::Embedded(Some(control)) = &inline.kind {
+            if control.parent().is_some()
+                && !current.contains(&(&**control as *const Control as usize))
+            {
+                return Err(DocumentError::EmbeddedControlAlreadyParented);
+            }
+        }
+        if let Some(children) = inline.children() {
+            pending.extend(children);
+        }
+    }
+    Ok(())
+}
+
+struct RunLocation {
+    run: Ref<Run>,
+    collection: InlineCollection,
+    index: usize,
+    offset: usize,
+}
+
+fn find_run_in_collection(
+    collection: &InlineCollection,
+    range: &Range<usize>,
+    mut offset: usize,
+) -> Option<RunLocation> {
+    for (index, inline) in collection.snapshot().iter().enumerate() {
+        let length = if let Some(run) = inline.cast::<Run>() {
+            let length = run.text().unwrap_or_default().encode_utf16().count();
+            if offset <= range.start && range.end <= offset + length {
+                return Some(RunLocation {
+                    run,
+                    collection: collection.clone(),
+                    index,
+                    offset,
+                });
+            }
+            length
+        } else if let Some(span) = inline.cast::<Span>() {
+            if let Some(found) = find_run_in_collection(&span.inlines(), range, offset) {
+                return Some(found);
+            }
+            span.inlines()
+                .text()
+                .unwrap_or_default()
+                .encode_utf16()
+                .count()
+        } else {
+            let mut text = String::new();
+            inline.append_text(&mut text);
+            text.encode_utf16().count()
+        };
+        offset += length;
+    }
+    None
+}
+
+struct InlineEntry {
+    value: Ref<Inline>,
+    snapshot: InlineSnapshot,
+    used: bool,
+}
+struct ParagraphEntry {
+    value: Ref<Paragraph>,
+    snapshot: ParagraphSnapshot,
+    used: bool,
+}
+struct ContentPool {
+    paragraphs: Vec<ParagraphEntry>,
+    inlines: Vec<InlineEntry>,
+}
+
+impl ContentPool {
+    fn capture(blocks: &BlockCollection) -> Self {
+        let mut pool = Self {
+            paragraphs: Vec::new(),
+            inlines: Vec::new(),
+        };
+        for paragraph in blocks
+            .snapshot()
+            .iter()
+            .filter_map(|block| block.cast::<Paragraph>())
+        {
+            pool.capture_inlines(&paragraph.inlines());
+            let snapshot = ParagraphSnapshot::from_paragraph(&paragraph);
+            pool.paragraphs.push(ParagraphEntry {
+                value: paragraph,
+                snapshot,
+                used: false,
+            });
+        }
+        pool
+    }
+
+    fn capture_inlines(&mut self, collection: &InlineCollection) {
+        for inline in collection.snapshot().iter() {
+            let snapshot = InlineSnapshot::from_inline(inline);
+            self.inlines.push(InlineEntry {
+                value: inline.clone(),
+                snapshot,
+                used: false,
+            });
+            if let Some(span) = inline.cast::<Span>() {
+                self.capture_inlines(&span.inlines());
+            }
+        }
+    }
+
+    fn detach_contents(&self) {
+        for paragraph in &self.paragraphs {
+            paragraph.value.inlines().clear();
+        }
+        for inline in &self.inlines {
+            if let Some(span) = inline.value.cast::<Span>() {
+                span.inlines().clear();
+            }
+            if let Some(container) = inline.value.cast::<InlineUIContainer>() {
+                container.set_child(None::<Ref<Control>>);
+            }
+        }
+    }
+
+    fn build_paragraph(&mut self, snapshot: &ParagraphSnapshot) -> Ref<Paragraph> {
+        let index = self
+            .paragraphs
+            .iter()
+            .position(|entry| !entry.used && entry.snapshot == *snapshot)
+            .or_else(|| self.paragraphs.iter().position(|entry| !entry.used));
+        let paragraph = if let Some(index) = index {
+            self.paragraphs[index].used = true;
+            self.paragraphs[index].value.clone()
+        } else {
+            Paragraph::new()
+        };
+        snapshot.format.replace_on(&paragraph);
+        for inline in &snapshot.inlines {
+            paragraph.inlines().add(self.build_inline(inline));
+        }
+        paragraph
+    }
+
+    fn build_inline(&mut self, snapshot: &InlineSnapshot) -> Ref<Inline> {
+        let index = self
+            .inlines
+            .iter()
+            .position(|entry| !entry.used && entry.snapshot == *snapshot)
+            .or_else(|| {
+                self.inlines.iter().position(|entry| {
+                    !entry.used && compatible(&entry.snapshot.kind, &snapshot.kind)
+                })
+            });
+        let inline = if let Some(index) = index {
+            self.inlines[index].used = true;
+            self.inlines[index].value.clone()
+        } else {
+            match &snapshot.kind {
+                InlineSnapshotKind::Run(_) => Run::new().upcast(),
+                InlineSnapshotKind::Span(_) => Span::new().upcast(),
+                InlineSnapshotKind::Bold(_) => Bold::new().upcast(),
+                InlineSnapshotKind::Italic(_) => Italic::new().upcast(),
+                InlineSnapshotKind::Underline(_) => Underline::new().upcast(),
+                InlineSnapshotKind::Hyperlink {
+                    navigate_uri,
+                    target_name,
+                    ..
+                } => {
+                    let source = self.inlines.iter().find_map(|entry| {
+                        let link = entry.value.cast::<Hyperlink>()?;
+                        (link.navigate_uri() == *navigate_uri && link.target_name() == *target_name)
+                            .then_some(link)
+                    });
+                    source
+                        .map(|source| Hyperlink::with_behavior_from(&source))
+                        .unwrap_or_else(Hyperlink::new)
+                        .upcast()
+                }
+                InlineSnapshotKind::LineBreak => LineBreak::new().upcast(),
+                InlineSnapshotKind::Embedded(_) => InlineUIContainer::new().upcast(),
+            }
+        };
+        match &snapshot.kind {
+            InlineSnapshotKind::Run(text) => {
+                if let Some(run) = inline.cast::<Run>() {
+                    run.set_text(Some(text));
+                }
+            }
+            InlineSnapshotKind::Embedded(control) => {
+                if let Some(container) = inline.cast::<InlineUIContainer>() {
+                    container.set_child(control.clone());
+                }
+            }
+            InlineSnapshotKind::Hyperlink {
+                navigate_uri,
+                target_name,
+                is_enabled,
+                is_tab_stop,
+                tab_index,
+                is_visited,
+                underline_style,
+                ..
+            } => {
+                if let Some(link) = inline.cast::<Hyperlink>() {
+                    link.set_navigate_uri(navigate_uri.clone());
+                    link.set_target_name(target_name.clone());
+                    link.set_is_enabled(*is_enabled);
+                    link.set_is_tab_stop(*is_tab_stop);
+                    link.set_tab_index(*tab_index);
+                    link.set_is_visited(*is_visited);
+                    link.set_underline_style(*underline_style);
+                }
+            }
+            _ => {}
+        }
+        // Semantic containers carry constructor formatting, even when their
+        // snapshot leaves the corresponding property unspecified. Clearing a
+        // constructor's current value would let the parent's inherited value
+        // hide the container's type default after it joins the logical tree.
+        let mut format = snapshot.format.clone();
+        match &snapshot.kind {
+            InlineSnapshotKind::Bold(_) if format.font_weight.is_none() => {
+                format.font_weight = Some(ferroui_base::media::FontWeight::Bold);
+            }
+            InlineSnapshotKind::Italic(_) if format.font_style.is_none() => {
+                format.font_style = Some(ferroui_base::media::FontStyle::Italic);
+            }
+            InlineSnapshotKind::Underline(_) if format.text_decorations.is_none() => {
+                format.text_decorations =
+                    Some(Some(ferroui_base::media::TextDecorations::underline()));
+            }
+            InlineSnapshotKind::Hyperlink {
+                underline_style, ..
+            } if format.text_decorations.is_none() => {
+                format.text_decorations = Some(
+                    (*underline_style != super::UnderlineStyle::None)
+                        .then(ferroui_base::media::TextDecorations::underline),
+                );
+            }
+            _ => {}
+        }
+        format.replace_on(&inline);
+        if let Some(children) = snapshot.children() {
+            if let Some(span) = inline.cast::<Span>() {
+                for child in children {
+                    span.inlines().add(self.build_inline(child));
+                }
+            }
+        }
+        inline
+    }
+}
+
+fn compatible(a: &InlineSnapshotKind, b: &InlineSnapshotKind) -> bool {
+    match (a, b) {
+        (
+            InlineSnapshotKind::Hyperlink {
+                navigate_uri: a,
+                target_name: at,
+                ..
+            },
+            InlineSnapshotKind::Hyperlink {
+                navigate_uri: b,
+                target_name: bt,
+                ..
+            },
+        ) => a == b && at == bt,
+        (InlineSnapshotKind::Embedded(a), InlineSnapshotKind::Embedded(b)) => a == b,
+        _ => std::mem::discriminant(a) == std::mem::discriminant(b),
+    }
+}

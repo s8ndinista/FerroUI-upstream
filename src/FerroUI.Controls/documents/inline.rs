@@ -1,11 +1,16 @@
 use super::{TextElement, TextElementImpl};
 use crate::Control;
 use ferroui_base::media::text_formatting::{GenericTextRunProperties, TextRun, TextRunProperties};
-use ferroui_base::media::{BaselineAlignment, IBrush, TextDecorationCollection, Typeface};
-use ferroui_base::{
-    ferro_class, ferro_property, AttachedProperty, FerroObjectImpl, FerroObjectImplExt, FerroProperty,
-    FerroPropertyChangedEventArgs, Size, StyledElementImpl, StyledProperty, StyledPropertyOptions,
+use ferroui_base::media::{
+    BaselineAlignment, IBrush, TextDecorationCollection, Typeface, subscribe_invalidated,
 };
+use ferroui_base::reactive::IDisposable;
+use ferroui_base::{
+    AttachedProperty, FerroObjectImpl, FerroObjectImplExt, FerroProperty,
+    FerroPropertyChangedEventArgs, Size, StyledElementImpl, StyledProperty, StyledPropertyOptions,
+    ferro_class, ferro_property,
+};
+use std::cell::RefCell;
 use std::rc::Rc;
 
 /// `Inline` is the base class for inline text elements.
@@ -14,6 +19,7 @@ use std::rc::Rc;
 #[repr(C)]
 pub struct Inline {
     base: TextElement,
+    decoration_subscriptions: RefCell<Vec<Rc<dyn IDisposable>>>,
 }
 
 ferro_class! {
@@ -35,8 +41,17 @@ ferroui_base::ferro_impl_classes!(Inline: StyledElementImpl);
 ferroui_base::ferro_impl_classes!(Inline: TextElementImpl);
 
 impl FerroObjectImpl for Inline {
+    fn constructed(this: &Self) {
+        Self::parent_constructed(this);
+        this.refresh_decoration_subscriptions();
+    }
+
     fn on_property_changed(this: &Self, change: &FerroPropertyChangedEventArgs<'_>) {
         Self::parent_on_property_changed(this, change);
+
+        if change.property() == Self::text_decorations_property().as_property() {
+            this.refresh_decoration_subscriptions();
+        }
 
         match change.property().name() {
             "TextDecorations" | "BaselineAlignment" => {
@@ -45,6 +60,14 @@ impl FerroObjectImpl for Inline {
                 }
             }
             _ => {}
+        }
+    }
+}
+
+impl Drop for Inline {
+    fn drop(&mut self) {
+        for subscription in self.decoration_subscriptions.get_mut().drain(..) {
+            subscription.dispose();
         }
     }
 }
@@ -85,7 +108,67 @@ ferroui_base::ferro_properties! { impl Inline {
 impl Inline {
     /// Creates the class data; see [`ferroui_base::FerroObject::construct`].
     pub fn construct() -> Self {
-        Self { base: TextElement::construct() }
+        Self {
+            base: TextElement::construct(),
+            decoration_subscriptions: RefCell::new(Vec::new()),
+        }
+    }
+
+    fn refresh_decoration_subscriptions(&self) {
+        let old = std::mem::take(&mut *self.decoration_subscriptions.borrow_mut());
+        for subscription in old {
+            subscription.dispose();
+        }
+        let Some(decorations) = self.text_decorations() else {
+            return;
+        };
+        let mut subscriptions = Vec::new();
+        let weak = self.to_ref().downgrade();
+        subscriptions.push(decorations.collection_changed(move |_| {
+            if let Some(inline) = weak.upgrade() {
+                inline.refresh_decoration_subscriptions();
+                if let Some(host) = inline.inline_host() {
+                    host.invalidate();
+                }
+            }
+        }));
+        for decoration in decorations.iter() {
+            let weak = self.to_ref().downgrade();
+            subscriptions.push(decoration.property_changed(move |_| {
+                if let Some(inline) = weak.upgrade() {
+                    inline.refresh_decoration_subscriptions();
+                    if let Some(host) = inline.inline_host() {
+                        host.invalidate();
+                    }
+                }
+            }));
+            if let Some(dashes) = decoration.stroke_dash_array() {
+                let weak = self.to_ref().downgrade();
+                subscriptions.push(dashes.collection_changed(move |_| {
+                    if let Some(host) = weak.upgrade().and_then(|inline| inline.inline_host()) {
+                        host.invalidate();
+                    }
+                }));
+            }
+            if decoration
+                .stroke()
+                .as_ref()
+                .and_then(|brush| brush.as_object())
+                .is_none()
+            {
+                continue;
+            }
+            let weak = self.to_ref().downgrade();
+            let changed: Rc<dyn Fn()> = Rc::new(move || {
+                if let Some(host) = weak.upgrade().and_then(|inline| inline.inline_host()) {
+                    host.invalidate_render();
+                }
+            });
+            if let Some(subscription) = subscribe_invalidated(&decoration.stroke(), changed) {
+                subscriptions.push(subscription);
+            }
+        }
+        *self.decoration_subscriptions.borrow_mut() = subscriptions;
     }
 
     /// The `TextDecorations` property specifies decorations that are added
@@ -124,8 +207,12 @@ impl Inline {
     pub fn create_text_run_properties(&self) -> Rc<dyn TextRunProperties> {
         let parent_or_self_background = self.background().or_else(|| self.find_parent_background());
 
-        let typeface =
-            Typeface::with_style(self.font_family(), self.font_style(), self.font_weight(), self.font_stretch());
+        let typeface = Typeface::with_style(
+            self.font_family(),
+            self.font_style(),
+            self.font_weight(),
+            self.font_stretch(),
+        );
 
         Rc::new(GenericTextRunProperties::with_all(
             typeface,

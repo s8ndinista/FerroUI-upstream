@@ -420,6 +420,20 @@ pub mod documents;
 mod pasting_from_clipboard_event_args;
 mod selectable_text_block;
 mod text_block;
+mod rich_text_layout;
+mod rich_text_block;
+mod rich_text_block_overflow;
+mod rich_edit_box;
+mod rich_edit_box_text_input_method_client;
+pub mod rich_text;
+pub use rich_text_block::{RichTextBlock, RichTextBlockImpl, RichTextBlockImplExt, RichTextBlockVTable, RichTextSelectionChangedEventArgs};
+pub use rich_text_block_overflow::RichTextBlockOverflow;
+pub use rich_text_layout::RichTextLineMetrics;
+pub use rich_edit_box::{RichEditBox, RichEditCharacterCasing, DisabledFormattingAccelerators, RichEditCompositionEventArgs};
+#[cfg(test)]
+mod rich_edit_box_tests;
+#[cfg(test)]
+mod rich_text_block_tests;
 mod text_changed_event_args;
 mod text_changing_event_args;
 mod text_layout_rounding_placement;

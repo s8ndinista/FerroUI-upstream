@@ -13,7 +13,7 @@
 
 use crate::assigned_binding::AssignedBinding;
 use ferroui_base::data::core::ValueTypes;
-use ferroui_base::metadata::MarkupType;
+use ferroui_base::metadata::{MarkupType, MarkupTyped};
 
 mod classes;
 mod contracts;
@@ -33,7 +33,22 @@ mod markup_types_tests;
 
 /// The lists of the types declared in this module, by area.
 pub(crate) const TYPE_LISTS: &[&[&MarkupType]] =
-    &[enums::TYPES, values::TYPES, contracts::TYPES, plain::TYPES, classes::TYPES, converters::TYPES];
+    &[enums::TYPES, values::TYPES, contracts::TYPES, plain::TYPES, classes::TYPES, converters::TYPES, RICH_TEXT_TYPES];
+
+/// Rich text metadata is defined alongside the WinUI-derived Rust types. Keep a
+/// normal type table so the public Rust path generator sees the same registry.
+const RICH_TEXT_TYPES: &[&MarkupType] = &[
+    <crate::documents::BlockCollection as MarkupTyped>::MARKUP,
+    <crate::documents::RichTextDocument as MarkupTyped>::MARKUP,
+    <crate::documents::LineStackingStrategy as MarkupTyped>::MARKUP,
+    <crate::documents::TextGravity as MarkupTyped>::MARKUP,
+    <crate::documents::UnderlineStyle as MarkupTyped>::MARKUP,
+    <crate::documents::HyperlinkClickEventArgs as MarkupTyped>::MARKUP,
+    <crate::RichEditCharacterCasing as MarkupTyped>::MARKUP,
+    <crate::DisabledFormattingAccelerators as MarkupTyped>::MARKUP,
+    <crate::RichEditCompositionEventArgs as MarkupTyped>::MARKUP,
+    <crate::rich_text::RichEditClipboardFormat as MarkupTyped>::MARKUP,
+];
 
 /// Adds the types declared in this module to the process-wide table of
 /// types with markup metadata. Called once by `register_types()`.

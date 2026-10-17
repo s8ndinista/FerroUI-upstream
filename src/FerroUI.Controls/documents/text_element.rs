@@ -2,10 +2,13 @@ use super::IInlineHost;
 use crate::{Border, Control};
 use ferroui_base::media::{
     Brushes, FontFamily, FontFeatureCollection, FontStretch, FontStyle, FontWeight, IBrush,
+    subscribe_invalidated,
 };
+use ferroui_base::reactive::IDisposable;
 use ferroui_base::{
-    ferro_class, ferro_property, AttachedProperty, FerroObjectImpl, FerroObjectImplExt, FerroProperty,
-    FerroPropertyChangedEventArgs, StyledElement, StyledElementImpl, StyledProperty, StyledPropertyOptions,
+    AttachedProperty, FerroObjectImpl, FerroObjectImplExt, FerroProperty,
+    FerroPropertyChangedEventArgs, StyledElement, StyledElementImpl, StyledProperty,
+    StyledPropertyOptions, ferro_class, ferro_property,
 };
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -19,6 +22,7 @@ use std::rc::Rc;
 pub struct TextElement {
     base: StyledElement,
     inline_host: RefCell<Option<Rc<dyn IInlineHost>>>,
+    media_subscriptions: RefCell<Vec<Rc<dyn IDisposable>>>,
 }
 
 ferro_class! {
@@ -32,17 +36,37 @@ ferro_class! {
 ferroui_base::ferro_impl_classes!(TextElement: StyledElementImpl);
 
 impl FerroObjectImpl for TextElement {
+    fn constructed(this: &Self) {
+        Self::parent_constructed(this);
+        this.refresh_media_subscriptions();
+    }
+
     fn on_property_changed(this: &Self, change: &FerroPropertyChangedEventArgs<'_>) {
         Self::parent_on_property_changed(this, change);
 
+        if matches!(
+            change.property().name(),
+            "FontFeatures" | "Foreground" | "Background"
+        ) {
+            this.refresh_media_subscriptions();
+        }
+
         match change.property().name() {
-            "Background" | "FontFamily" | "FontSize" | "FontStyle" | "FontWeight" | "FontStretch"
-            | "Foreground" => {
+            "Background" | "FontFamily" | "FontSize" | "FontStyle" | "FontWeight"
+            | "FontStretch" | "Foreground" | "FontFeatures" | "LetterSpacing" => {
                 if let Some(host) = this.inline_host() {
                     host.invalidate();
                 }
             }
             _ => {}
+        }
+    }
+}
+
+impl Drop for TextElement {
+    fn drop(&mut self) {
+        for subscription in self.media_subscriptions.get_mut().drain(..) {
+            subscription.dispose();
         }
     }
 }
@@ -150,7 +174,42 @@ ferroui_base::ferro_properties! { impl TextElement {
 impl TextElement {
     /// Creates the class data; see [`ferroui_base::FerroObject::construct`].
     pub fn construct() -> Self {
-        Self { base: StyledElement::construct(), inline_host: RefCell::new(None) }
+        Self {
+            base: StyledElement::construct(),
+            inline_host: RefCell::new(None),
+            media_subscriptions: RefCell::new(Vec::new()),
+        }
+    }
+
+    fn refresh_media_subscriptions(&self) {
+        let old = std::mem::take(&mut *self.media_subscriptions.borrow_mut());
+        for subscription in old {
+            subscription.dispose();
+        }
+        let mut subscriptions = Vec::new();
+        if let Some(features) = self.font_features() {
+            let weak = self.to_ref().downgrade();
+            subscriptions.push(features.collection_changed(move |_| {
+                if let Some(host) = weak.upgrade().and_then(|element| element.inline_host()) {
+                    host.invalidate();
+                }
+            }));
+        }
+        for brush in [self.foreground(), self.background()] {
+            if brush.as_ref().and_then(|brush| brush.as_object()).is_none() {
+                continue;
+            }
+            let weak = self.to_ref().downgrade();
+            let changed: Rc<dyn Fn()> = Rc::new(move || {
+                if let Some(host) = weak.upgrade().and_then(|element| element.inline_host()) {
+                    host.invalidate_render();
+                }
+            });
+            if let Some(subscription) = subscribe_invalidated(&brush, changed) {
+                subscriptions.push(subscription);
+            }
+        }
+        *self.media_subscriptions.borrow_mut() = subscriptions;
     }
 
     /// A brush used to paint the control's background.

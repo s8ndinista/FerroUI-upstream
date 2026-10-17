@@ -97,12 +97,14 @@ impl InlineImpl for InlineUIContainer {
         child.desired_size() != previous_size
     }
 
-    fn append_text(_this: &Self, string_builder: &mut String) {
+    fn append_text(this: &Self, string_builder: &mut String) {
         // The embedded control run occupies one position in the text layout
         // (the default text source length). Append the Unicode Object
         // Replacement Character so that the text of the inlines stays in
         // sync with the character offsets returned by text hit testing.
-        string_builder.push('\u{FFFC}');
+        if this.child().is_some() {
+            string_builder.push('\u{FFFC}');
+        }
     }
 }
 
