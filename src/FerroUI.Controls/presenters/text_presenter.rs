@@ -261,6 +261,11 @@ impl LayoutableImpl for TextPresenter {
             this.constraint.set(Size::new(final_width.ceil(), f64::INFINITY));
 
             this.dispose_text_layout();
+
+            // Recreate the layout using the arranged width and update the caret
+            // against exactly the same layout that will be rendered.
+            let _ = this.text_layout();
+            this.ensure_caret_bounds();
         }
 
         final_size
