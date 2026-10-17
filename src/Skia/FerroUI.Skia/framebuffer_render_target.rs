@@ -5,7 +5,7 @@ use ferroui_base::platform::{
     IDrawingContextImpl, ILockedFramebuffer, IRenderTarget, PlatformRenderTargetState,
     RenderTargetDrawingContextProperties, RenderTargetProperties, RenderTargetSceneInfo,
 };
-use crate::text_rendering_settings::TextRenderingSource;
+use crate::text_rendering_settings::{TextRenderingSettings, TextRenderingSource};
 use skia_safe::{surfaces, Bitmap, ColorType, ImageInfo, Surface, SurfaceProps};
 use std::cell::{Cell, RefCell};
 use std::rc::Rc;
@@ -28,6 +28,8 @@ pub struct FramebufferRenderTarget {
     render_target: RefCell<Option<Rc<dyn IFramebufferRenderTarget>>>,
     had_conversion_shim: Cell<bool>,
     text_rendering: TextRenderingSource,
+    /// The text rendering of the frame drawn last, shared with the layers created for it.
+    frame_text_rendering: Rc<Cell<TextRenderingSettings>>,
 }
 
 impl FramebufferRenderTarget {
@@ -51,6 +53,7 @@ impl FramebufferRenderTarget {
             render_target: RefCell::new(Some(render_target)),
             had_conversion_shim: Cell::new(false),
             text_rendering: TextRenderingSource::default(),
+            frame_text_rendering: Rc::default(),
         }
     }
 
@@ -167,6 +170,7 @@ impl IRenderTarget for FramebufferRenderTarget {
         );
 
         let text_rendering = self.text_rendering.settings(scene_info.scaling, scene_info.transparency_level);
+        self.frame_text_rendering.set(text_rendering);
         self.create_surface(&framebuffer_image_info, &text_rendering.surface_props(), &*framebuffer);
 
         let (mut surface, conversion_shim) = {
@@ -188,6 +192,7 @@ impl IRenderTarget for FramebufferRenderTarget {
             dpi: framebuffer.dpi(),
             scale_drawing_to_dpi: self.use_scaled_drawing,
             text_rendering,
+            frame_text_rendering: Some(self.frame_text_rendering.clone()),
             ..CreateInfo::default()
         };
 

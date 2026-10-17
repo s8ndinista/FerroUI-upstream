@@ -71,6 +71,12 @@ pub struct SurfaceRenderTargetCreateInfo {
     /// The GPU that owns the context (optional).
     pub gpu: Option<Rc<dyn ISkiaGpu>>,
 
+    /// The text rendering of the frame the render target of a window draws now, for a layer
+    /// created for that render target (optional): the layer reports itself corrupted once the
+    /// frame's settings are not the ones it was created with, so that the composition target
+    /// creates it again (a FerroUI addition, docs/porting/text-rendering.md, section 7).
+    pub frame_text_rendering: Option<Rc<Cell<TextRenderingSettings>>>,
+
     /// The render session the target is created during (optional).
     pub session: Option<Rc<dyn ISkiaGpuRenderSession>>,
 
@@ -87,6 +93,7 @@ pub struct SurfaceRenderTarget {
     surface: Rc<dyn ISkiaSurface>,
     disable_lcd_rendering: bool,
     text_rendering: TextRenderingSettings,
+    frame_text_rendering: Option<Rc<Cell<TextRenderingSettings>>>,
     gr_context: Option<Rc<dyn ISkiaGrContext>>,
     gpu: Option<Rc<dyn ISkiaGpu>>,
     dpi: Vector,
@@ -130,6 +137,7 @@ impl SurfaceRenderTarget {
             surface,
             disable_lcd_rendering: create_info.disable_text_lcd_rendering,
             text_rendering: create_info.text_rendering,
+            frame_text_rendering: create_info.frame_text_rendering,
             gr_context: create_info.gr_context,
             gpu: create_info.gpu,
             dpi: create_info.dpi,
@@ -280,7 +288,14 @@ impl IDrawingContextLayerImpl for SurfaceRenderTarget {
     }
 
     fn is_corrupted(&self) -> bool {
+        // Deviation (DEVIATIONS.md, Skia backend): a layer of the render target of a window is
+        // also stale when the text rendering of the window's frames is no longer the one its
+        // surface was created with (the surface properties of a Skia surface are fixed): the
+        // platform's parameters changed, or a calibration host replaced the development
+        // override. The composition target then creates the layer again, so the change shows
+        // in the window from the next frame.
         self.gpu.as_ref().is_some_and(|gpu| gpu.is_lost())
+            || self.frame_text_rendering.as_ref().is_some_and(|frame| frame.get() != self.text_rendering)
     }
 
     fn create_shared_snapshot(&self) -> std::sync::Arc<ferroui_base::platform::SharedBitmapImpl> {
@@ -309,6 +324,7 @@ impl IDrawingContextLayerImpl for SurfaceRenderTarget {
             scale_drawing_to_dpi: self.use_scaled_drawing,
             disable_subpixel_text_rendering: self.disable_lcd_rendering,
             text_rendering: self.text_rendering,
+            frame_text_rendering: self.frame_text_rendering.clone(),
             gr_context: self.gr_context.clone(),
             gpu: self.gpu.clone(),
             ..CreateInfo::default()

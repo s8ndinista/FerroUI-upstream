@@ -1,11 +1,12 @@
 use super::{ISkiaGpu, ISkiaGpuRenderTarget};
 use crate::drawing_context_impl::{CreateInfo, DrawingContextImpl};
 use crate::skia_platform::SkiaPlatform;
-use crate::text_rendering_settings::TextRenderingSource;
+use crate::text_rendering_settings::{TextRenderingSettings, TextRenderingSource};
 use ferroui_base::platform::{
     IDrawingContextImpl, IRenderTarget, PlatformRenderTargetState, RenderTargetDrawingContextProperties,
     RenderTargetError, RenderTargetProperties, RenderTargetSceneInfo,
 };
+use std::cell::Cell;
 use std::rc::Rc;
 
 /// Adapts a GPU render target to the platform render target contract.
@@ -13,6 +14,10 @@ pub struct SkiaGpuRenderTarget {
     skia_gpu: Rc<dyn ISkiaGpu>,
     render_target: Rc<dyn ISkiaGpuRenderTarget>,
     text_rendering: TextRenderingSource,
+    /// The text rendering of the frame drawn last, shared with the layers created for it: the
+    /// composition target keeps a layer between frames, whose surface properties are those of
+    /// the frame it was created in, and creates it again once they differ.
+    frame_text_rendering: Rc<Cell<TextRenderingSettings>>,
 }
 
 impl SkiaGpuRenderTarget {
@@ -30,7 +35,7 @@ impl SkiaGpuRenderTarget {
         render_target: Rc<dyn ISkiaGpuRenderTarget>,
         text_rendering: TextRenderingSource,
     ) -> Self {
-        Self { skia_gpu, render_target, text_rendering }
+        Self { skia_gpu, render_target, text_rendering, frame_text_rendering: Rc::default() }
     }
 }
 
@@ -54,6 +59,7 @@ impl IRenderTarget for SkiaGpuRenderTarget {
         scene_info: &RenderTargetSceneInfo,
     ) -> Result<(Box<dyn IDrawingContextImpl>, RenderTargetDrawingContextProperties), RenderTargetError> {
         let text_rendering = self.text_rendering.settings(scene_info.scaling, scene_info.transparency_level);
+        self.frame_text_rendering.set(text_rendering);
         let session = self.render_target.try_begin_rendering_session(scene_info, &text_rendering.surface_props())?;
 
         let nfo = CreateInfo {
@@ -64,6 +70,7 @@ impl IRenderTarget for SkiaGpuRenderTarget {
             gpu: Some(self.skia_gpu.clone()),
             current_session: Some(session.clone()),
             text_rendering,
+            frame_text_rendering: Some(self.frame_text_rendering.clone()),
             ..CreateInfo::default()
         };
 

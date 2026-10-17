@@ -105,6 +105,7 @@ impl IPlatformRenderInterfaceContext for SkiaContext {
             text_rendering: text_rendering_override().apply(TextRenderingSettings::default()),
             gr_context: gr.as_ref().map(|gr| gr.value().clone()),
             gpu,
+            frame_text_rendering: None,
             disable_manual_fbo: true,
             session: None,
             use_scaled_drawing: false,

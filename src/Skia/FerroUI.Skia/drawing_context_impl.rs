@@ -88,6 +88,11 @@ pub struct CreateInfo {
     /// (docs/porting/text-rendering.md).
     pub text_rendering: TextRenderingSettings,
 
+    /// The text rendering of the frame of the render target of a window, which the layers the
+    /// context creates compare theirs with (`SurfaceRenderTargetCreateInfo::frame_text_rendering`;
+    /// optional).
+    pub frame_text_rendering: Option<Rc<Cell<TextRenderingSettings>>>,
+
     /// GPU-accelerated context (optional).
     pub gr_context: Option<Rc<dyn ISkiaGrContext>>,
 
@@ -287,6 +292,7 @@ pub struct DrawingContextImpl {
     current_opacity: f64,
     disable_subpixel_text_rendering: bool,
     text_rendering: TextRenderingSettings,
+    frame_text_rendering: Option<Rc<Cell<TextRenderingSettings>>>,
     current_transform: Option<Matrix>,
     disposed: bool,
     gr_context: Option<Rc<dyn ISkiaGrContext>>,
@@ -344,6 +350,7 @@ impl DrawingContextImpl {
             current_opacity: 1.0,
             disable_subpixel_text_rendering: create_info.disable_subpixel_text_rendering,
             text_rendering: create_info.text_rendering,
+            frame_text_rendering: create_info.frame_text_rendering,
             current_transform: None,
             disposed: false,
             gr_context: create_info.gr_context,
@@ -1181,6 +1188,7 @@ impl DrawingContextImpl {
             format,
             disable_text_lcd_rendering: if is_layer { self.disable_subpixel_text_rendering } else { true },
             text_rendering: self.text_rendering,
+            frame_text_rendering: self.frame_text_rendering.clone(),
             gr_context: self.gr_context.clone(),
             gpu: self.gpu.clone(),
             session: self.session.clone(),
