@@ -136,7 +136,7 @@ pub(super) fn page_sections() -> (Vec<Rc<HomeSection>>, Vec<UnavailablePage>) {
             s.add("/Pages/DragAndDropPage.xaml", "Drag+Drop", Icons::DRAG_DROP, "Drag data within and between applications");
             s.add("/Pages/FocusPage.xaml", "Focus", Icons::TARGET, "Track and control keyboard focus");
             s.add("/Pages/GesturePage.xaml", "Gestures", Icons::GESTURE, "Tap, scroll and pinch gesture recognition");
-            s.add("/Pages/PointersPage.xaml", "Pointers", Icons::CURSOR, "Raw pointer input and capture");
+            s.add("/Pages/PointersPage.xaml", "Pointers", Icons::CURSOR, "Raw pointer input");
         }),
         section("Window & Platform", Icons::DESKTOP_MOBILE, &mut unavailable, |s| {
             s.add("/Pages/NativeEmbedPage.xaml", "Native Embed", Icons::PUZZLE, "Host native platform controls");

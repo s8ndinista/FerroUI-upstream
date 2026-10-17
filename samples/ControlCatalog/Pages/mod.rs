@@ -53,7 +53,6 @@ mod open_gl_page;
 mod platform_info_page;
 mod platform_settings_page;
 mod pointer_canvas;
-mod pointer_contacts_tab;
 mod progress_bar_page;
 mod radio_button_page;
 mod relative_panel_page;
@@ -190,7 +189,6 @@ pub use pips_pager_page::PipsPagerPage;
 pub use platform_info_page::PlatformInfoPage;
 pub use platform_settings_page::PlatformSettingsPage;
 pub use pointer_canvas::PointerCanvas;
-pub use pointer_contacts_tab::PointerContactsTab;
 pub use pointers_page::PointersPage;
 pub use composition_page::{CompositionPage, CompositionPageColorItem};
 pub use progress_bar_page::ProgressBarPage;
@@ -319,7 +317,6 @@ const ROOT_TYPES: &[&TypeInfo] = &[
     PlatformInfoPage::TYPE,
     PlatformSettingsPage::TYPE,
     PointerCanvas::TYPE,
-    PointerContactsTab::TYPE,
     ProgressBarPage::TYPE,
     RadioButtonPage::TYPE,
     RelativePanelPage::TYPE,
