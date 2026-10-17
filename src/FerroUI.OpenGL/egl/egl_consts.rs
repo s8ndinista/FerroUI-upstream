@@ -41,6 +41,7 @@ pub const EGL_STENCIL_SIZE: i32 = 0x3026;
 pub const EGL_SUCCESS: i32 = 0x3000;
 pub const EGL_SURFACE_TYPE: i32 = 0x3033;
 pub const EGL_TRUE: i32 = 1;
+pub const EGL_VENDOR: i32 = 0x3053;
 pub const EGL_WIDTH: i32 = 0x3057;
 pub const EGL_WINDOW_BIT: i32 = 0x0004;
 pub const EGL_BACK_BUFFER: i32 = 0x3084;

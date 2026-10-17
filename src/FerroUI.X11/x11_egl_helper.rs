@@ -9,38 +9,86 @@ use crate::xlib::{self, VisualInfo, XDisplay, XID};
 use ferroui_base::logging::{LogEventLevel, Logger};
 use ferroui_base::platform::{IPlatformGraphics, IPlatformGraphicsContext};
 use ferroui_base::utilities::ThreadBound;
-use ferroui_opengl::egl::egl_consts::{EGL_EXTENSIONS, EGL_NATIVE_VISUAL_ID, EGL_NONE, EGL_PLATFORM_X11_EXT};
+use ferroui_opengl::egl::egl_consts::{
+    EGL_ALPHA_SIZE, EGL_EXTENSIONS, EGL_NATIVE_VISUAL_ID, EGL_NONE, EGL_PLATFORM_X11_EXT, EGL_VENDOR,
+};
 use ferroui_opengl::egl::{EglDisplay, EglDisplayCreationOptions, EglDisplayOptions, EglInterface};
 use ferroui_opengl::{GlVersion, OpenGlException};
 use std::cell::RefCell;
 use std::rc::Rc;
 
-/// What the helper needs of a connection: the connection that renders and
-/// the root window (`X11Info.DeferredDisplay`, `X11Info.RootWindow`). The
-/// reference passes the whole `X11Info`, which is an object of the UI
-/// thread here; the two values are what both threads may hold.
+/// What the helper needs of a connection: the connection that renders, the
+/// root window and the identifier of the 32-bit visual of the server
+/// (`X11Info.DeferredDisplay`, `X11Info.RootWindow`,
+/// `X11Info.TransparentVisualInfo`). The reference passes the whole
+/// `X11Info`, which is an object of the UI thread here; the values are what
+/// both threads may hold.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct X11EglTarget {
     pub deferred_display: XDisplay,
     pub root_window: XID,
+    pub transparent_visual_id: Option<std::os::raw::c_ulong>,
 }
 
 impl X11EglTarget {
     pub fn new(x11: &X11Info) -> Self {
-        Self { deferred_display: x11.deferred_display(), root_window: x11.root_window() }
+        Self {
+            deferred_display: x11.deferred_display(),
+            root_window: x11.root_window(),
+            transparent_visual_id: x11.transparent_visual_info().map(|visual| visual.visual_id),
+        }
     }
 }
 
-/// Resolves the visual that matches the EGL config's native visual id.
+/// Resolves the visual to create windows with for the EGL config.
 /// nvidia's driver requires the X11 window visual to match the config used to create the surface,
-/// otherwise eglCreateWindowSurface fails. Returns `None` when the config doesn't advertise a visual id
-/// (e.g. mesa, where any visual works).
+/// otherwise eglCreateWindowSurface fails, so the config's native visual id is used. Returns `None` when
+/// the config doesn't advertise a visual id. On Mesa builds that report stale visual ids for alpha
+/// configs the server's 32-bit visual is used instead, see [`has_stale_alpha_visual_ids`].
 pub fn get_visual_info(x11: X11EglTarget, egl: &EglInterface, display: isize, config: isize) -> Option<VisualInfo> {
     let mut visual_id = 0;
     if !egl.get_config_attrib(display, config, EGL_NATIVE_VISUAL_ID, &mut visual_id) || visual_id == 0 {
         return None;
     }
-    xlib::x_get_visual_info_by_id(x11.deferred_display, visual_id as u32 as _)
+    let visual = xlib::x_get_visual_info_by_id(x11.deferred_display, visual_id as u32 as _);
+    if let (Some(native), Some(transparent_visual_id)) = (visual, x11.transparent_visual_id) {
+        let mut alpha_size = 0;
+        if native.depth != 32
+            && egl.get_config_attrib(display, config, EGL_ALPHA_SIZE, &mut alpha_size)
+            && alpha_size > 0
+            && has_stale_alpha_visual_ids(egl, display)
+        {
+            if let Some(logger) = Logger::try_get(LogEventLevel::Verbose, "OpenGL") {
+                logger.log_with_values(
+                    None,
+                    "EGL config {Config}: using 32-bit visual {Visual} instead of native visual {Native}",
+                    &[&config, &transparent_visual_id, &visual_id],
+                );
+            }
+            return xlib::x_get_visual_info_by_id(x11.deferred_display, transparent_visual_id);
+        }
+    }
+
+    visual
+}
+
+// Mesa before 24.1 merges the alpha configs of the 32-bit X visual into the ones registered for the
+// 24-bit default visual, so EGL_NATIVE_VISUAL_ID of every alpha config points at a 24-bit visual and
+// windows created with it are never alpha-blended by the compositor. Mesa fixed that together with
+// introducing EGL_MESA_x11_native_visual_id, so its absence on a Mesa display identifies the bug.
+fn has_stale_alpha_visual_ids(egl: &EglInterface, display: isize) -> bool {
+    let vendor = egl.query_string(display, EGL_VENDOR);
+    if !vendor.as_deref().is_some_and(|vendor| vendor.contains("Mesa")) {
+        return false;
+    }
+    let extensions = egl.query_string(display, EGL_EXTENSIONS);
+    lacks_native_visual_id_extension(extensions.as_deref())
+}
+
+/// Whether the display extensions lack `EGL_MESA_x11_native_visual_id` (the second half of
+/// `HasStaleAlphaVisualIds`, apart so that it is tested without a display).
+fn lacks_native_visual_id_extension(extensions: Option<&str>) -> bool {
+    extensions.map(|extensions| extensions.contains("EGL_MESA_x11_native_visual_id")) != Some(true)
 }
 
 /// The visual of the configuration of a display
@@ -282,6 +330,13 @@ mod tests {
         assert_eq!(probe_order(&[24, 24, 32, 24, 32]), [2, 4, 0, 1, 3]);
         assert_eq!(probe_order(&[32, 24]), [0, 1]);
         assert_eq!(probe_order(&[24, 30]), [0, 1]);
+    }
+
+    #[test]
+    fn a_mesa_display_without_the_native_visual_id_extension_has_stale_alpha_visual_ids() {
+        assert!(lacks_native_visual_id_extension(None));
+        assert!(lacks_native_visual_id_extension(Some("EGL_EXT_buffer_age EGL_KHR_image_base")));
+        assert!(!lacks_native_visual_id_extension(Some("EGL_EXT_buffer_age EGL_MESA_x11_native_visual_id")));
     }
 
     #[test]
