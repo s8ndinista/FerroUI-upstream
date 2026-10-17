@@ -720,6 +720,9 @@ impl CalendarDatePicker {
 
     fn static_constructor() {
         InputElement::focusable_property().override_default_value::<CalendarDatePicker>(true);
+
+        // The picker forwards focus to its text box, so as a tab stop it would trap Shift+Tab.
+        InputElement::is_tab_stop_property().override_default_value::<CalendarDatePicker>(false);
     }
 
     /// Creates the class data; see [`ferroui_base::FerroObject::construct`].

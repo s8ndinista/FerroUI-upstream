@@ -8,11 +8,11 @@ use crate::test_support::TestRoot;
 use crate::test_support_buttons::{focus_scope, FocusScope};
 use crate::testing::{TestServices, UnitTestApplication, UnitTestApplicationScope};
 use crate::text_box_tests::{raise_key_event, raise_text_event};
-use crate::{Button, Panel, TextBox};
+use crate::{Button, Panel, StackPanel, TextBox};
 use ferroui_base::data::converters::IValueConverter;
 use ferroui_base::data::core::ValueType;
 use ferroui_base::data::BindingError;
-use ferroui_base::input::{Key, KeyModifiers, NavigationMethod};
+use ferroui_base::input::{InputElement, Key, KeyModifiers, KeyboardNavigationHandler, NavigationDirection, NavigationMethod};
 use ferroui_base::media::text_formatting::testing::TextTestScope;
 use ferroui_base::media::{Brushes, IBrush};
 use ferroui_base::threading::Dispatcher;
@@ -277,6 +277,83 @@ fn setting_date_string_manually_can_accept_multiple_formats() {
 }
 
 #[test]
+fn shift_tab_from_text_box_should_move_focus_to_previous_control() {
+    let _services = start_focus_services();
+
+    let before = Button::new();
+    let date_picker = CalendarDatePicker::new();
+    date_picker.set_template(Some(create_template()));
+    let panel = StackPanel::new();
+    panel.children().add(before.clone());
+    panel.children().add(date_picker.clone());
+    panel.children().add(Button::new());
+    let root = TestRoot::with_child(panel);
+    root.execute_initial_layout_pass();
+    let text_box = get_text_box(&date_picker);
+    text_box.focus();
+
+    let previous = KeyboardNavigationHandler::get_next(&text_box.upcast::<InputElement>(), NavigationDirection::Previous);
+    if let Some(previous) = previous {
+        previous.focus_with(NavigationMethod::Tab, KeyModifiers::SHIFT);
+    }
+
+    let focused = root.focus_manager().get_focused_element();
+    assert!(focused.is_some_and(|focused| focused.ptr_eq(&before)));
+}
+
+#[test]
+fn tab_into_calendar_date_picker_should_focus_text_box_and_select_text() {
+    let _services = start_focus_services();
+
+    let before = Button::new();
+    let after = Button::new();
+    let date_picker = CalendarDatePicker::new();
+    date_picker.set_template(Some(create_template()));
+    date_picker.set_selected_date(Some(DateTime::new(2026, 4, 22)));
+    let panel = StackPanel::new();
+    panel.children().add(before.clone());
+    panel.children().add(date_picker.clone());
+    panel.children().add(after);
+    let root = TestRoot::with_child(panel);
+    root.execute_initial_layout_pass();
+    let text_box = get_text_box(&date_picker);
+    assert!(text_box.text().is_some_and(|text| !text.is_empty()));
+
+    let next = KeyboardNavigationHandler::get_next(&before.upcast::<InputElement>(), NavigationDirection::Next);
+    if let Some(next) = next {
+        next.focus_with(NavigationMethod::Tab, KeyModifiers::NONE);
+    }
+
+    let focused = root.focus_manager().get_focused_element();
+    assert!(focused.is_some_and(|focused| focused.ptr_eq(&text_box)));
+    assert_eq!(text_box.text().unwrap_or_default(), text_box.selected_text());
+}
+
+#[test]
+fn shift_tab_into_calendar_date_picker_should_focus_text_box() {
+    let _services = start_focus_services();
+
+    let after = Button::new();
+    let date_picker = CalendarDatePicker::new();
+    date_picker.set_template(Some(create_template()));
+    let panel = StackPanel::new();
+    panel.children().add(Button::new());
+    panel.children().add(date_picker.clone());
+    panel.children().add(after.clone());
+    let root = TestRoot::with_child(panel);
+    root.execute_initial_layout_pass();
+    after.focus();
+
+    let previous = KeyboardNavigationHandler::get_next(&after.upcast::<InputElement>(), NavigationDirection::Previous);
+    if let Some(previous) = previous {
+        previous.focus_with(NavigationMethod::Tab, KeyModifiers::SHIFT);
+    }
+
+    let focused = root.focus_manager().get_focused_element();
+    assert!(focused.is_some_and(|focused| focused.ptr_eq(&get_text_box(&date_picker))));
+}
+
+#[test]
 fn tab_focus_should_move_focus_to_text_box() {
     let _services = start_focus_services();
 
@@ -352,6 +429,7 @@ fn create_template() -> Rc<dyn IControlTemplate> {
 
         let button = Button::new();
         button.set_name(Some("PART_Button".to_string()));
+        button.set_focusable(false);
         let button = button.register_in_name_scope(&**scope);
 
         let calendar = Calendar::new();
