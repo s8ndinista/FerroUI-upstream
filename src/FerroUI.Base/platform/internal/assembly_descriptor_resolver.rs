@@ -48,8 +48,10 @@ impl IAssemblyDescriptorResolver for AssemblyDescriptorResolver {
             }
         }
 
-        let (key, rv): (String, Rc<dyn IAssemblyDescriptor>) = match matched {
-            Some(matched) => (name.to_owned(), Rc::new(AssemblyDescriptor::new(&AssetAssembly::new(matched)))),
+        // The descriptor is cached under the requested name, also when the
+        // assembly is found by its unescaped name.
+        let rv: Rc<dyn IAssemblyDescriptor> = match matched {
+            Some(matched) => Rc::new(AssemblyDescriptor::new(&AssetAssembly::new(matched))),
             None => {
                 let name = UriExtensions::unescape_data_string(name);
                 if !loaded_assemblies.iter().any(|candidate| *candidate == name) {
@@ -57,12 +59,11 @@ impl IAssemblyDescriptorResolver for AssemblyDescriptorResolver {
                         "Assembly {name} needs to be referenced and explicitly loaded before loading resources"
                     ));
                 }
-                let descriptor = Rc::new(AssemblyDescriptor::new(&AssetAssembly::new(&name)));
-                (name, descriptor)
+                Rc::new(AssemblyDescriptor::new(&AssetAssembly::new(&name)))
             }
         };
 
-        self.assembly_name_cache.borrow_mut().insert(key, rv.clone());
+        self.assembly_name_cache.borrow_mut().insert(name.to_owned(), rv.clone());
         Ok(rv)
     }
 
