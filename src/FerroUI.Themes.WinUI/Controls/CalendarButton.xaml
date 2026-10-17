@@ -62,6 +62,7 @@
           <Border x:Name="OuterBorder"
                   Background="{TemplateBinding Background}"
                   BorderBrush="{TemplateBinding BorderBrush}"
+                  BackgroundSizing="InnerBorderEdge"
                   BorderThickness="{TemplateBinding BorderThickness}"
                   CornerRadius="{TemplateBinding CornerRadius}"
                   IsHitTestVisible="False" />

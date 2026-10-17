@@ -107,6 +107,7 @@
                 VerticalAlignment="Top"
                 Background="{DynamicResource InfoBarInformationalSeverityBackgroundBrush}"
                 BorderBrush="{TemplateBinding BorderBrush}"
+                BackgroundSizing="InnerBorderEdge"
                 BorderThickness="{TemplateBinding BorderThickness}"
                 CornerRadius="{TemplateBinding CornerRadius}">
           <Border.Transitions>

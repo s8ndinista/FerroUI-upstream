@@ -27,6 +27,7 @@
                             ContentTemplate="{TemplateBinding ContentTemplate}"
                             Padding="{TemplateBinding Padding}"
                             BorderBrush="{TemplateBinding BorderBrush}"
+                            BackgroundSizing="InnerBorderEdge"
                             BorderThickness="{TemplateBinding BorderThickness}"
                             CornerRadius="{TemplateBinding CornerRadius}"
                             HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"

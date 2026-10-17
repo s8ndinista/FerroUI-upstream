@@ -87,6 +87,7 @@
           <Border x:Name="BorderElement"
                   Background="{TemplateBinding Background}"
                   BorderBrush="{TemplateBinding BorderBrush}"
+                  BackgroundSizing="InnerBorderEdge"
                   BorderThickness="{TemplateBinding BorderThickness}"
                   CornerRadius="{TemplateBinding CornerRadius}"
                   TemplatedControl.IsTemplateFocusTarget="True" />
@@ -206,6 +207,7 @@
                     Margin="-4"
                     Background="{DynamicResource ComboBoxBackgroundFocused}"
                     BorderBrush="{DynamicResource ComboBoxBackgroundBorderBrushFocused}"
+                    BackgroundSizing="InnerBorderEdge"
                     BorderThickness="{StaticResource ComboBoxBackgroundBorderThicknessFocused}"
                     CornerRadius="{StaticResource ComboBoxHiglightBorderCornerRadius}"
                     Opacity="0" />
@@ -214,6 +216,7 @@
                     Grid.ColumnSpan="2"
                     Background="{TemplateBinding Background}"
                     BorderBrush="{TemplateBinding BorderBrush}"
+                    BackgroundSizing="InnerBorderEdge"
                     BorderThickness="{TemplateBinding BorderThickness}"
                     CornerRadius="{TemplateBinding CornerRadius}"
                     MinWidth="{DynamicResource ComboBoxThemeMinWidth}"

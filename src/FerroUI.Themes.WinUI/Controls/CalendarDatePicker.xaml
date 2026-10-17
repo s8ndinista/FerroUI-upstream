@@ -188,6 +188,7 @@
                     Grid.ColumnSpan="2"
                     BorderThickness="{TemplateBinding BorderThickness}"
                     BorderBrush="{TemplateBinding BorderBrush}"
+                    BackgroundSizing="InnerBorderEdge"
                     Background="{TemplateBinding Background}"
                     CornerRadius="{TemplateBinding CornerRadius}"
                     TemplatedControl.IsTemplateFocusTarget="True"

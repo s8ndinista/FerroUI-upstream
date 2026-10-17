@@ -55,6 +55,7 @@
       <ControlTemplate>
         <Border x:Name="ButtonLayoutGrid"
                 BorderBrush="{DynamicResource TextControlButtonBorderBrush}"
+                BackgroundSizing="InnerBorderEdge"
                 BorderThickness="{TemplateBinding BorderThickness}"
                 Background="{DynamicResource TextControlButtonBackground}"
                 Margin="{StaticResource AutoSuggestBoxDeleteButtonMargin}"
@@ -123,6 +124,7 @@
                     Grid.ColumnSpan="5"
                     Background="{TemplateBinding Background}"
                     BorderBrush="{TemplateBinding BorderBrush}"
+                    BackgroundSizing="InnerBorderEdge"
                     BorderThickness="{TemplateBinding BorderThickness}"
                     CornerRadius="{TemplateBinding CornerRadius}" />
             <!-- InnerLeftContent of FerroUI's text box. -->

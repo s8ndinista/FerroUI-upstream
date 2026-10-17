@@ -36,6 +36,7 @@
         <Border x:Name="SplitterBorder"
                 Background="{TemplateBinding Background}"
                 BorderBrush="{TemplateBinding BorderBrush}"
+                BackgroundSizing="InnerBorderEdge"
                 BorderThickness="{TemplateBinding BorderThickness}"
                 CornerRadius="{TemplateBinding CornerRadius}" />
       </ControlTemplate>

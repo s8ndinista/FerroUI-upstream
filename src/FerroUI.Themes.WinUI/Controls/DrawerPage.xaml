@@ -355,6 +355,7 @@
       <ControlTemplate>
         <Border Background="{TemplateBinding Background}"
                 BorderBrush="{TemplateBinding BorderBrush}"
+                BackgroundSizing="InnerBorderEdge"
                 BorderThickness="{TemplateBinding BorderThickness}"
                 CornerRadius="{TemplateBinding CornerRadius}">
           <!-- MenuItemsScrollViewer -->
@@ -429,6 +430,7 @@
             <!-- ContentGrid -->
             <Border x:Name="ContentGrid"
                     BorderBrush="{DynamicResource NavigationViewContentGridBorderBrush}"
+                    BackgroundSizing="InnerBorderEdge"
                     BorderThickness="{DynamicResource NavigationViewContentGridBorderThickness}"
                     Background="{DynamicResource NavigationViewContentBackground}"
                     Margin="{DynamicResource NavigationViewContentMargin}"
@@ -488,6 +490,7 @@
                                   VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
                                   Background="{TemplateBinding Background}"
                                   BorderBrush="{TemplateBinding BorderBrush}"
+                                  BackgroundSizing="InnerBorderEdge"
                                   BorderThickness="{TemplateBinding BorderThickness}"
                                   Content="{TemplateBinding Content}"
                                   ContentTemplate="{TemplateBinding ContentTemplate}" />

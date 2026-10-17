@@ -40,6 +40,7 @@
                             VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
                             Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
+                            BackgroundSizing="InnerBorderEdge"
                             BorderThickness="{TemplateBinding BorderThickness}"
                             Content="{TemplateBinding Content}"
                             ContentTemplate="{TemplateBinding ContentTemplate}"

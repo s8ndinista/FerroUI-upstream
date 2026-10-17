@@ -58,6 +58,7 @@
                     ClipToBounds="True"
                     Background="{DynamicResource TabularSurfaceHeaderBackgroundBrush}"
                     BorderBrush="{DynamicResource TabularSurfaceGridLineBrush}"
+                    BackgroundSizing="InnerBorderEdge"
                     BorderThickness="0,0,0,1">
               <TableViewColumnHeadersPresenter x:Name="PART_HeaderHost" />
             </Border>
@@ -148,6 +149,7 @@
                 ClipToBounds="{TemplateBinding ClipToBounds}"
                 Background="{TemplateBinding Background}"
                 BorderBrush="{TemplateBinding BorderBrush}"
+                BackgroundSizing="InnerBorderEdge"
                 BorderThickness="{TemplateBinding BorderThickness}"
                 CornerRadius="{TemplateBinding CornerRadius}">
           <ScrollViewer x:Name="PART_ScrollViewer"

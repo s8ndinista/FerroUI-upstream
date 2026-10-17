@@ -85,6 +85,7 @@
         <Border x:Name="RootGrid"
                 Background="{TemplateBinding Background}"
                 BorderBrush="{TemplateBinding BorderBrush}"
+                BackgroundSizing="InnerBorderEdge"
                 BorderThickness="{TemplateBinding BorderThickness}"
                 CornerRadius="{TemplateBinding CornerRadius}">
           <Border x:Name="ScaleTransform" RenderTransformOrigin="50%,50%">
@@ -176,6 +177,7 @@
         <Border x:Name="RootGrid"
                 Background="{TemplateBinding Background}"
                 BorderBrush="{TemplateBinding BorderBrush}"
+                BackgroundSizing="InnerBorderEdge"
                 BorderThickness="{TemplateBinding BorderThickness}"
                 Width="{StaticResource PipsPagerHorizontalOrientationButtonWidth}"
                 Height="{StaticResource PipsPagerHorizontalOrientationButtonHeight}"
@@ -278,6 +280,7 @@
         <Border x:Name="RootGrid"
                 Background="{TemplateBinding Background}"
                 BorderBrush="{TemplateBinding BorderBrush}"
+                BackgroundSizing="InnerBorderEdge"
                 BorderThickness="{TemplateBinding BorderThickness}"
                 CornerRadius="{TemplateBinding CornerRadius}">
           <Path x:Name="Content"

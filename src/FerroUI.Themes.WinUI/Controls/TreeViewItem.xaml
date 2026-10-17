@@ -138,6 +138,7 @@
           <Border x:Name="PART_Header"
                   Background="{TemplateBinding Background}"
                   BorderBrush="{TemplateBinding BorderBrush}"
+                  BackgroundSizing="InnerBorderEdge"
                   BorderThickness="{TemplateBinding BorderThickness}"
                   Margin="{DynamicResource TreeViewItemPresenterMargin}"
                   Padding="{DynamicResource TreeViewItemPresenterPadding}"
