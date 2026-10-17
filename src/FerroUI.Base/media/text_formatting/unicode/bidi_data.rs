@@ -189,11 +189,11 @@ impl BidiData {
 
             let dir_bit = 1u32 << dir as i32;
 
-            if self.has_embeddings.is_none() && (dir_bit & EMBEDDING_MASK) != 0 {
+            if (dir_bit & EMBEDDING_MASK) != 0 {
                 self.has_embeddings = Some(true);
             }
 
-            if self.has_isolates.is_none() && (dir_bit & ISOLATE_MASK) != 0 {
+            if (dir_bit & ISOLATE_MASK) != 0 {
                 self.has_isolates = Some(true);
             }
 

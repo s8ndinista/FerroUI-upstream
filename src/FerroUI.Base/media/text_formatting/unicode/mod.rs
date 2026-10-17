@@ -83,6 +83,8 @@ pub mod testing;
 #[cfg(test)]
 mod bidi_algorithm_tests;
 #[cfg(test)]
+mod bidi_data_tests;
+#[cfg(test)]
 mod bidi_class_tests;
 #[cfg(test)]
 mod codepoint_has_script_extension_tests;
