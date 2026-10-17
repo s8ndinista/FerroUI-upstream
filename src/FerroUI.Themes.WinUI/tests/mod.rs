@@ -6,6 +6,7 @@ mod documents;
 mod load_time;
 mod public_api_tests;
 mod resource_dictionary_tests;
-mod support;
+pub(crate) mod support;
+mod tab_control_layout_tests;
 mod theme_class_tests;
 mod winui_theme_tests;
