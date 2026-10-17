@@ -2179,7 +2179,7 @@ fn backspace_should_delete_last_character_in_line_and_keep_caret_on_same_line() 
 
     let text_presenter = text_box.find_descendant_of_type::<TextPresenter>(false).expect("the presenter");
 
-    let old_caret_y = text_presenter.get_cursor_rectangle().y;
+    let old_caret_y = text_presenter.cursor_rectangle().y;
     assert_ne!(0.0, old_caret_y);
 
     raise_key_event(&text_box, Key::Back, KeyModifiers::NONE);
@@ -2188,7 +2188,7 @@ fn backspace_should_delete_last_character_in_line_and_keep_caret_on_same_line() 
     assert_eq!(2, text_box.caret_index());
     assert_eq!(2, text_presenter.caret_index());
 
-    let caret_y = text_presenter.get_cursor_rectangle().y;
+    let caret_y = text_presenter.cursor_rectangle().y;
     assert_eq!(old_caret_y, caret_y);
 }
 

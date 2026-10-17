@@ -123,6 +123,23 @@ fn measure_and_arrange_should_use_width_including_trailing_whitespace_for_bounds
 }
 
 #[test]
+fn cursor_rectangle_should_reflect_caret_position() {
+    let _scope = test_scope();
+    let presenter = presenter("Hello");
+    presenter.set_caret_index(2);
+
+    presenter.measure(infinity());
+    presenter.arrange(Rect::from_position_size(Point::default(), presenter.desired_size()));
+    presenter.update_layout();
+
+    let cursor = presenter.cursor_rectangle();
+
+    assert!(cursor.height > 0.0);
+    assert_eq!(0.0, cursor.width);
+    assert!(cursor.x > 0.0);
+}
+
+#[test]
 fn hide_caret_should_keep_the_text_layout() {
     let _scope = test_scope();
     let presenter = presenter("hello");
@@ -198,7 +215,7 @@ fn caret_index_moves_the_caret_and_raises_caret_bounds_changed() {
     presenter.set_caret_index(2);
 
     // Two glyphs of 6 at the default size of 12; a line is 13.2 high.
-    assert_eq!(presenter.get_cursor_rectangle(), Rect::new(12.0, 0.0, 0.0, 13.2));
+    assert_eq!(presenter.cursor_rectangle(), Rect::new(12.0, 0.0, 0.0, 13.2));
     assert_eq!(raised.get(), 1);
 
     // The same position again: the bounds do not change.
@@ -253,12 +270,12 @@ fn move_caret_vertical_keeps_the_horizontal_position() {
     presenter.measure(infinity());
 
     presenter.move_caret_to_text_position(3, false);
-    assert_eq!(presenter.get_cursor_rectangle().x, 18.0);
+    assert_eq!(presenter.cursor_rectangle().x, 18.0);
 
     presenter.move_caret_vertical(LogicalDirection::Forward);
     // The second line is shorter: the caret goes to its end.
     assert_eq!(presenter.caret_index(), 7);
-    assert_eq!(presenter.get_cursor_rectangle().y, 13.2);
+    assert_eq!(presenter.cursor_rectangle().y, 13.2);
 
     presenter.move_caret_vertical(LogicalDirection::Forward);
     // The navigation position is remembered across the short line.
@@ -306,11 +323,11 @@ fn preedit_text_is_inserted_at_the_caret() {
 
     presenter.measure(infinity());
     // The caret is at the end of the pre-edit text.
-    assert_eq!(presenter.get_cursor_rectangle().x, 24.0);
+    assert_eq!(presenter.cursor_rectangle().x, 24.0);
 
     presenter.set_preedit_text_cursor_position(Some(1));
     presenter.measure(infinity());
-    assert_eq!(presenter.get_cursor_rectangle().x, 18.0);
+    assert_eq!(presenter.cursor_rectangle().x, 18.0);
 
     // Changing the text ends the composition.
     presenter.set_text(Some("abcde"));
