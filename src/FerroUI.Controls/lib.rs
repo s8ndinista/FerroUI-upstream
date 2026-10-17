@@ -461,6 +461,8 @@ pub use masked_text_box::MaskedTextBox;
 mod masked_text_box_tests;
 #[cfg(test)]
 mod text_box_tests_input;
+#[cfg(test)]
+mod text_box_selection_notification_tests;
 mod data_validation_errors;
 pub use data_validation_errors::{DataValidationErrors, ErrorConverter};
 #[cfg(test)]

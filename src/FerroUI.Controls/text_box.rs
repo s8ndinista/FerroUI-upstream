@@ -222,6 +222,9 @@ impl FerroObjectImpl for TextBox {
         let property = change.property();
 
         if property == Self::text_property().as_property() {
+            // Do not expose a selection with only one endpoint coerced to the new text.
+            let _change = this.im_client.begin_change();
+
             if this.needs_undo_redo_snapshot_after_text_change.get() {
                 this.needs_undo_redo_snapshot_after_text_change.set(false);
                 this.snapshot_undo_redo(true);

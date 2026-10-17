@@ -100,10 +100,9 @@ impl TextInputMethodClient for TextBoxTextInputMethodClient {
             return;
         };
 
+        let _change = self.begin_change();
         parent.set_selection_start(value.start);
         parent.set_selection_end(value.end);
-
-        self.raise_selection_changed();
     }
 
     fn supports_preedit(&self) -> bool {
