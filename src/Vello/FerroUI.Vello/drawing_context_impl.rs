@@ -720,6 +720,15 @@ impl DrawingContextImpl {
 
                 let origin = to_kurbo_point(origin_point);
 
+                // The gradient leaves the area that no gradient circle reaches unpainted, which
+                // only happens when the origin is outside the circle. Everywhere else the
+                // gradient covers the whole area, and a backdrop would show through its
+                // transparent parts.
+                let origin_offset_x = origin_point.x - center_point.x;
+                let origin_offset_y = origin_point.y - center_point.y;
+                let origin_is_outside =
+                    origin_offset_x * origin_offset_x + origin_offset_y * origin_offset_y >= radius_x * radius_x;
+
                 let end_offset = stop_offsets[stop_offsets.len() - 1];
 
                 let mut start = origin;
@@ -756,10 +765,11 @@ impl DrawingContextImpl {
                     stop_offsets = reversed_stops;
                 }
 
-                // Compose with a background colour of the final stop to match
-                // D2D's behaviour of filling with the final color: the
-                // gradient is drawn over that color.
-                underlay = Some(stop_colors[0]);
+                // Fill that unpainted area with the colour the gradient clamps to, like D2D
+                // does: the gradient is drawn over that color.
+                if origin_is_outside {
+                    underlay = Some(stop_colors[0]);
+                }
 
                 let gradient = Gradient::new_two_point_radial(start, radius_start, end, radius_end)
                     .with_stops(&stops(&stop_colors, &stop_offsets)[..]);
