@@ -30,12 +30,18 @@ impl StreamGeometryContext {
     }
 
     /// Draws an arc to the specified point using polylines, quadratic or cubic Bezier curves.
-    /// Significantly more precise when drawing elliptic arcs with extreme width:height ratios.
+    /// This is significantly more precise when drawing elliptic arcs with extreme width:height ratios.
     ///
-    /// * `point` - The destination point.
-    /// * `size` - The radii of an oval whose perimeter is used to draw the angle.
-    /// * `rotation_angle` - The rotation angle (in degrees) of the oval that specifies the curve.
-    /// * `is_large_arc` - true to draw the arc greater than 180 degrees; otherwise, false.
+    /// The parameters are those of [`IGeometryContext::arc_to`]:
+    ///
+    /// * `point` - The destination point where the arc ends.
+    /// * `size` - The radii of an ellipse whose path is used to draw the arc.
+    /// * `rotation_angle` - The rotation angle (in degrees) of the ellipse that specifies the path of
+    ///   the arc; positive values are clockwise. This will rotate the entire arc relative to the
+    ///   X-axis and is not commonly used.
+    /// * `is_large_arc` - Specifies whether the arc should follow the longer path around an ellipse
+    ///   rather than the shorter one. `true` to draw the arc greater than 180 degrees; otherwise,
+    ///   `false`.
     /// * `sweep_direction` - A value that indicates whether the arc is drawn in the Clockwise or
     ///   Counterclockwise direction.
     pub fn precise_arc_to(

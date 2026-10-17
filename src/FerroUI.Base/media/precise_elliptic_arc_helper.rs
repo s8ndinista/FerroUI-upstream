@@ -127,9 +127,20 @@ const SAFETY_3: [f64; 4] = [0.0010, 4.98, 0.207, 0.0067];
 pub(crate) struct PreciseEllipticArcHelper;
 
 impl PreciseEllipticArcHelper {
-    /// Draws an arc from `current_point` to `point` into the context.
+    /// Builds a precise elliptical arc from the current to destination point within the geometry context.
     ///
-    /// `rotation_angle` is in degrees.
+    /// * `stream_geometry_context_impl` - The geometry context to build the arc within.
+    /// * `current_point` - The starting point.
+    /// * `point` - The destination point where the arc ends.
+    /// * `size` - The radii of an ellipse whose path is used to draw the arc.
+    /// * `rotation_angle` - The rotation angle (in degrees) of the ellipse that specifies the path of
+    ///   the arc; positive values are clockwise. This will rotate the entire arc relative to the
+    ///   X-axis and is not commonly used.
+    /// * `is_large_arc` - Specifies whether the arc should follow the longer path around an ellipse
+    ///   rather than the shorter one. `true` to draw the arc greater than 180 degrees; otherwise,
+    ///   `false`.
+    /// * `sweep_direction` - A value that indicates whether the arc is drawn in the Clockwise or
+    ///   Counterclockwise direction.
     pub(crate) fn arc_to(
         stream_geometry_context_impl: &mut StreamGeometryContext,
         current_point: Point,
@@ -172,7 +183,7 @@ impl PreciseEllipticArcHelper {
 // The upstream type exposes more members than the arc drawing path uses.
 #[allow(dead_code)]
 #[derive(Clone, Debug)]
-pub(crate) struct EllipticalArc {
+struct EllipticalArc {
     /// Abscissa of the center of the ellipse
     pub(crate) cx: f64,
     /// Ordinate of the center of the ellipse
@@ -923,7 +934,7 @@ impl EllipticalArc {
     /// * `p1` - Start point
     /// * `p2` - End point
     /// * `size` - Ellipse radii
-    /// * `theta` - Ellipse theta (angle measured from the abscissa)
+    /// * `theta` - Ellipse theta in radians (angle measured from the abscissa).
     /// * `is_large_arc` - Large Arc Indicator
     /// * `clockwise` - Clockwise direction flag
     pub(crate) fn build_arc_between(
