@@ -250,6 +250,7 @@
     <Setter Property="Template">
       <ControlTemplate>
         <Border x:Name="Root"
+                BackgroundSizing="InnerBorderEdge"
                 Background="{TemplateBinding Background}"
                 BorderBrush="{TemplateBinding BorderBrush}"
                 BorderThickness="{TemplateBinding BorderThickness}">

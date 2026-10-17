@@ -130,6 +130,7 @@
                     Margin="{DynamicResource TabViewItemSeparatorMargin}" />
             <!-- CloseIconStates: CloseButtonCollapsed (TabViewItemHeaderPaddingWithoutCloseButton). -->
             <Border x:Name="TabContainer"
+                    BackgroundSizing="InnerBorderEdge"
                     Grid.Column="1"
                     Background="{TemplateBinding Background}"
                     BorderBrush="{TemplateBinding BorderBrush}"
