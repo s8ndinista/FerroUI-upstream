@@ -340,7 +340,12 @@ impl InputElementImpl for CalendarDatePicker {
 
         let text_box = this.text_box();
         if let Some(text_box) = text_box {
-            if this.is_enabled() && e.source().is_some_and(|source| source.ptr_eq(&this.to_ref())) {
+            // Only keyboard focus on a closed picker goes to the text box, because that closes the drop-down.
+            if this.is_enabled()
+                && e.source().is_some_and(|source| source.ptr_eq(&this.to_ref()))
+                && e.navigation_method != NavigationMethod::Pointer
+                && !this.is_drop_down_open()
+            {
                 text_box.focus_with(e.navigation_method, KeyModifiers::NONE);
 
                 if e.navigation_method == NavigationMethod::Tab {
