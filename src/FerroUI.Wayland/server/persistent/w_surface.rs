@@ -899,6 +899,7 @@ mod imp {
         min_size: Option<Size>,
         max_size: Option<Size>,
         title: Option<String>,
+        app_id: Option<String>,
         decoration: Option<ZxdgToplevelDecorationV1>,
         // Disable SSD support completely and don't allow re-enabling it because we can't
         csd_sticky: bool,
@@ -925,6 +926,7 @@ mod imp {
                 min_size: None,
                 max_size: None,
                 title: None,
+                app_id: None,
                 decoration: None,
                 csd_sticky: false,
                 active_exports: Vec::new(),
@@ -1034,6 +1036,16 @@ mod imp {
                 top_level.set_title(title.clone().unwrap_or_default());
             }
             self.title = title;
+        }
+
+        /// `default_app_id` is the identifier of the options (`Globals?.AppId` of the
+        /// reference), which the caller reads of the globals of the current connection.
+        pub fn set_app_id(&mut self, app_id: Option<String>, default_app_id: Option<String>) {
+            let effective_app_id = app_id.clone().or(default_app_id);
+            if let (Some(top_level), Some(effective_app_id)) = (&self.xdg_top_level, effective_app_id) {
+                top_level.set_app_id(effective_app_id);
+            }
+            self.app_id = app_id;
         }
 
         pub fn set_min_max_size(&mut self, min_size: Option<Size>, max_size: Option<Size>) {
@@ -1159,9 +1171,9 @@ mod imp {
                 top_level.set_title(title.clone());
             }
 
-            // The application identifier of the options: an addition (see the options).
-            if let Some(app_id) = &cx.globals.app_id {
-                top_level.set_app_id(app_id.clone());
+            // Re-apply cached app id on reconnect (or default to the app id of the globals).
+            if let Some(effective_app_id) = self.app_id.as_ref().or(cx.globals.app_id.as_ref()) {
+                top_level.set_app_id(effective_app_id.clone());
             }
 
             self.xdg_top_level = Some(top_level);

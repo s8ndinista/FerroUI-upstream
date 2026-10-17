@@ -9,6 +9,11 @@ use std::rc::Rc;
 /// with the application builder before `use_wayland`.
 #[derive(Clone)]
 pub struct WaylandPlatformOptions {
+    /// The default AppId for Wayland windows (`xdg_toplevel.set_app_id`).
+    /// If `None`, no application identifier is sent. Defaults to the file name of the executable
+    /// (the reference: the name of the entry assembly).
+    pub app_id: Option<String>,
+
     /// The name of the Wayland display to connect to (e.g. `wayland-0`). When `None`,
     /// the `WAYLAND_DISPLAY` environment variable is used. Ignored when [`display_fd`](Self::display_fd) is set.
     pub wl_display_name: Option<String>,
@@ -55,17 +60,12 @@ pub struct WaylandPlatformOptions {
     /// This property allows to inspect such exceptions before they will be ignored.
     /// Only used when [`use_g_lib_main_loop`](Self::use_g_lib_main_loop) is enabled.
     pub external_g_lib_main_loop_exception_logger: Option<Rc<dyn Fn(&(dyn Any + Send))>>,
-
-    /// The application identifier of the top-levels (`xdg_toplevel.set_app_id`), which a
-    /// compositor matches to a desktop entry. `None` is the file name of the executable.
-    ///
-    /// Not in the reference at the tracked commit, which never sets an identifier.
-    pub app_id: Option<String>,
 }
 
 impl WaylandPlatformOptions {
     pub fn new() -> Self {
         Self {
+            app_id: Self::entry_app_id(),
             wl_display_name: None,
             display_fd: None,
             enable_reconnects: None,
@@ -81,7 +81,6 @@ impl WaylandPlatformOptions {
             use_dmabuf_swapchain: None,
             use_g_lib_main_loop: false,
             external_g_lib_main_loop_exception_logger: None,
-            app_id: None,
         }
     }
 
@@ -89,13 +88,11 @@ impl WaylandPlatformOptions {
         self.force_drawn_decorations
     }
 
-    /// The application identifier the top-levels get: the option, or the file name of the
-    /// executable.
-    pub(crate) fn effective_app_id(&self) -> Option<String> {
-        self.app_id.clone().or_else(|| {
-            let executable = std::env::current_exe().ok()?;
-            Some(executable.file_stem()?.to_string_lossy().into_owned())
-        })
+    /// The default of [`app_id`](Self::app_id): the file name of the executable, where the
+    /// reference takes the name of the entry assembly (and ignores a failure to get it).
+    fn entry_app_id() -> Option<String> {
+        let executable = std::env::current_exe().ok()?;
+        Some(executable.file_stem()?.to_string_lossy().into_owned())
     }
 
     /// What the worker thread needs of the options, as values.
@@ -107,7 +104,7 @@ impl WaylandPlatformOptions {
             force_drawn_decorations: self.force_drawn_decorations_internal(),
             gl_profiles: self.gl_profiles.clone(),
             use_dmabuf_swapchain: self.use_dmabuf_swapchain,
-            app_id: self.effective_app_id(),
+            app_id: self.app_id.clone(),
         }
     }
 }
@@ -172,12 +169,21 @@ mod tests {
     }
 
     #[test]
-    fn the_application_identifier_is_the_option_or_the_name_of_the_executable() {
+    fn the_application_identifier_defaults_to_the_name_of_the_executable() {
         let mut options = WaylandPlatformOptions::default();
-        let default = options.effective_app_id().expect("a test has an executable");
+        let default = options.app_id.clone().expect("a test has an executable");
         assert!(!default.is_empty());
         assert!(!default.contains('/'));
-        options.app_id = Some("org.example.App".to_string());
-        assert_eq!(options.effective_app_id().as_deref(), Some("org.example.App"));
+        assert_eq!(options.for_worker().app_id.as_deref(), Some(default.as_str()));
+        options.app_id = None;
+        assert_eq!(options.for_worker().app_id, None);
+    }
+
+    // WaylandAppIdTests.cs
+    #[test]
+    fn wayland_platform_options_can_set_app_id() {
+        let options = WaylandPlatformOptions { app_id: Some("org.ferroui.test".to_string()), ..WaylandPlatformOptions::new() };
+
+        assert_eq!(Some("org.ferroui.test"), options.app_id.as_deref());
     }
 }

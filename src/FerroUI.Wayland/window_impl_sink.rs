@@ -81,6 +81,11 @@ impl WindowImplSink {
             surface_proxy.set_title(Some(&title));
         }
 
+        // Re-send cached app id to the new surface
+        if let Some(app_id) = parent.app_id_value() {
+            surface_proxy.set_app_id(Some(&app_id));
+        }
+
         // Re-apply cached min/max size constraints after a fresh worker
         // surface is created. None on both sides means set_min_max_size was
         // never called (or both bounds are unconstrained) — nothing to push.

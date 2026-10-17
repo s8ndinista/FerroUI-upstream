@@ -73,7 +73,7 @@ pub struct WaylandGlobals {
     pub worker: Arc<WaylandWorker>,
     pub input_dispatcher: WaylandInputDispatcher,
     pub cursor_manager: WaylandCursorManager,
-    /// The application identifier of the top-levels (an addition, see the options).
+    /// The default application identifier of the top-levels (`WaylandPlatformOptions::app_id`).
     pub app_id: Option<String>,
 }
 
