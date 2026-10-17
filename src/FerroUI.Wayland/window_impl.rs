@@ -32,8 +32,8 @@ use ferroui_base::reactive::IDisposable;
 use ferroui_base::rendering::composition::Compositor;
 use ferroui_base::{FerroLocator, LocatorExtensions, PixelPoint, Point, Rect, Size, Thickness};
 use ferroui_controls::platform::{
-    IPlatformHandle, IPopupImpl, IScreenImpl, ITopLevelImpl, IWindowBaseImpl, IWindowIconImpl, IWindowImpl,
-    PlatformRequestedDrawnDecoration,
+    IPlatformHandle, IPopupImpl, IScreenImpl, ITopLevelImpl, IWaylandOptionsToplevelImplFeature, IWindowBaseImpl,
+    IWindowIconImpl, IWindowImpl, PlatformRequestedDrawnDecoration,
 };
 use ferroui_controls::{
     AcrylicPlatformCompensationLevels, TopLevel, WindowCloseReason, WindowDecorations, WindowEdge, WindowResizeReason,
@@ -69,6 +69,7 @@ pub struct WindowImpl {
     // This is a limitation of V1 of the protocol that's supported in the wild
     csd_sticky: Cell<bool>,
     title: RefCell<Option<String>>,
+    app_id: RefCell<Option<String>>,
     text_input_method: RefCell<Option<Rc<WaylandTextInputMethod>>>,
     storage_provider: RefCell<Option<Rc<FallbackStorageProvider>>>,
     server_reported_mode: Cell<DecorationMode>,
@@ -205,6 +206,7 @@ impl WindowImpl {
             max_size: Cell::new(None),
             csd_sticky: Cell::new(false),
             title: RefCell::new(None),
+            app_id: RefCell::new(None),
             text_input_method: RefCell::new(None),
             storage_provider: RefCell::new(None),
             server_reported_mode: Cell::new(DecorationMode::ClientSide),
@@ -247,6 +249,10 @@ impl WindowImpl {
 
     pub(crate) fn title_value(&self) -> Option<String> {
         self.title.borrow().clone()
+    }
+
+    pub(crate) fn app_id_value(&self) -> Option<String> {
+        self.app_id.borrow().clone()
     }
 
     pub(crate) fn size_limits(&self) -> (Option<Size>, Option<Size>) {
@@ -507,6 +513,11 @@ impl IOptionalFeatureProvider for WindowImpl {
             return Some(Rc::new(storage_provider));
         }
 
+        if feature_type == TypeId::of::<dyn IWaylandOptionsToplevelImplFeature>() {
+            let this: Rc<dyn IWaylandOptionsToplevelImplFeature> = self.this.upgrade()?;
+            return Some(Rc::new(this));
+        }
+
         if feature_type == TypeId::of::<dyn IScreenImpl>() {
             let screens = FerroLocator::current().get_service::<dyn IScreenImpl>()?;
             return Some(Rc::new(screens));
@@ -518,6 +529,15 @@ impl IOptionalFeatureProvider for WindowImpl {
         }
 
         None
+    }
+}
+
+impl IWaylandOptionsToplevelImplFeature for WindowImpl {
+    fn set_app_id(&self, app_id: Option<&str>) {
+        *self.app_id.borrow_mut() = app_id.map(str::to_string);
+        if let Some(proxy) = self.surface_proxy() {
+            proxy.set_app_id(app_id);
+        }
     }
 }
 

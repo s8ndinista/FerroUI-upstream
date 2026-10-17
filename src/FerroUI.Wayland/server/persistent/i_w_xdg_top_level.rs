@@ -53,6 +53,12 @@ pub trait IWXdgTopLevel: IWXdgShellSurface {
     /// Cached on the worker so it is re-applied on reconnect.
     fn set_title(&self, title: Option<&str>);
 
+    /// Sets the toplevel's application ID (xdg_toplevel.set_app_id). The compositor
+    /// may use this to group windows, match desktop files, display window icons, etc.
+    /// A `None` or empty value clears the app ID. The worker caches the value so it
+    /// survives compositor reconnects.
+    fn set_app_id(&self, app_id: Option<&str>);
+
     /// Destroys the decoration object and disables its creation completely.
     fn destroy_decoration(&self);
 
@@ -224,6 +230,16 @@ impl IWXdgTopLevel for WXdgTopLevelProxy {
         self.post(move |worker, id| {
             if let Some(top_level) = worker.state.top_levels.get_mut(&id) {
                 top_level.set_title(title);
+            }
+        });
+    }
+
+    fn set_app_id(&self, app_id: Option<&str>) {
+        let app_id = app_id.map(str::to_string);
+        self.post(move |worker, id| {
+            let default_app_id = worker.state.globals.as_ref().and_then(|globals| globals.app_id.clone());
+            if let Some(top_level) = worker.state.top_levels.get_mut(&id) {
+                top_level.set_app_id(app_id, default_app_id);
             }
         });
     }

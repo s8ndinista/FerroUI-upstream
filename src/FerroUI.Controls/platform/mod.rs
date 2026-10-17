@@ -23,6 +23,7 @@ mod i_window_base_impl;
 mod i_window_icon_impl;
 mod i_window_impl;
 mod i_windowing_platform;
+mod i_wayland_options_toplevel_impl_feature;
 mod i_x11_options_toplevel_impl_feature;
 mod platform_allowed_window_actions;
 mod platform_feedback;
@@ -31,6 +32,7 @@ mod platform_manager;
 mod platform_requested_drawn_decoration;
 mod screen;
 mod screen_helper;
+mod wayland_properties;
 mod win32_properties;
 
 // --- storage-misc ---
@@ -70,6 +72,7 @@ pub use i_window_base_impl::IWindowBaseImpl;
 pub use i_window_icon_impl::IWindowIconImpl;
 pub use i_window_impl::IWindowImpl;
 pub use i_windowing_platform::IWindowingPlatform;
+pub use i_wayland_options_toplevel_impl_feature::IWaylandOptionsToplevelImplFeature;
 pub use i_x11_options_toplevel_impl_feature::{IX11OptionsToplevelImplFeature, X11NetWmWindowType};
 pub use platform_allowed_window_actions::PlatformAllowedWindowActions;
 pub use platform_feedback::{PlatformFeedback, PlatformFeedbackExtensions};
@@ -79,6 +82,7 @@ pub use platform_manager::PlatformManager;
 pub use platform_requested_drawn_decoration::PlatformRequestedDrawnDecoration;
 pub use screen::{Screen, ScreenOrientation};
 pub use screen_helper::ScreenHelper;
+pub use wayland_properties::WaylandProperties;
 pub use win32_properties::{
     CustomWindowStylesCallback, CustomWndProcHookCallback, Win32HitTestValue, Win32Properties, WindowCornerPreference,
 };
@@ -91,3 +95,5 @@ mod i_screen_impl_tests;
 mod platform_manager_tests;
 #[cfg(test)]
 mod input_pane_tests;
+#[cfg(test)]
+mod wayland_properties_tests;
