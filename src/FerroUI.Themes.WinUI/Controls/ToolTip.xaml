@@ -34,6 +34,9 @@
   </Design.PreviewWith>
 
   <ControlTheme x:Key="DefaultToolTipStyle" TargetType="ToolTip">
+    <!-- The shadow is drawn outside the bounds of the control: a templated control clips to its
+         bounds unless its theme says otherwise (G-24). -->
+    <Setter Property="ClipToBounds" Value="False" />
     <Setter Property="Foreground" Value="{DynamicResource ToolTipForegroundBrush}" />
     <Setter Property="Background" Value="{DynamicResource ToolTipBackgroundBrush}" />
     <Setter Property="BackgroundSizing" Value="InnerBorderEdge" />

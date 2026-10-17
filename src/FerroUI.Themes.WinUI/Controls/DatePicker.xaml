@@ -225,6 +225,9 @@
   <ControlTheme x:Key="{x:Type DatePicker}" TargetType="DatePicker" BasedOn="{StaticResource DefaultDatePickerStyle}" />
 
   <ControlTheme x:Key="DefaultDatePickerFlyoutPresenterStyle" TargetType="DatePickerPresenter">
+    <!-- The shadow is drawn outside the bounds of the control: a templated control clips to its
+         bounds unless its theme says otherwise (G-24). -->
+    <Setter Property="ClipToBounds" Value="False" />
     <Setter Property="Width" Value="296" />
     <Setter Property="MinWidth" Value="296" />
     <Setter Property="MaxHeight" Value="398" />

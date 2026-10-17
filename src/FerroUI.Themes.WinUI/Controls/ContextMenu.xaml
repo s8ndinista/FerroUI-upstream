@@ -40,6 +40,9 @@
   </Design.PreviewWith>
 
   <ControlTheme x:Key="{x:Type ContextMenu}" TargetType="ContextMenu">
+    <!-- The shadow is drawn outside the bounds of the control: a templated control clips to its
+         bounds unless its theme says otherwise (G-24). -->
+    <Setter Property="ClipToBounds" Value="False" />
     <Setter Property="Background" Value="{DynamicResource MenuFlyoutPresenterBackground}" />
     <Setter Property="BorderBrush" Value="{DynamicResource MenuFlyoutPresenterBorderBrush}" />
     <Setter Property="BorderThickness" Value="{DynamicResource MenuFlyoutPresenterBorderThemeThickness}" />

@@ -90285,7 +90285,7 @@
    "winui": "CalendarDatePicker: DefaultCalendarDatePicker (CalendarDatePicker_themeresources.xaml).",
    "status": "ported",
    "deviations": 11,
-   "date": "2026-10-16"
+   "date": "2026-10-17"
   },
   {
    "document": "CalendarDayButton.xaml",
@@ -90847,7 +90847,7 @@
    "winui": "TabView: DefaultTabViewStyle (TabView.xaml, TabView_themeresources.xaml).",
    "status": "ported",
    "deviations": 9,
-   "date": "2026-10-16"
+   "date": "2026-10-17"
   },
   {
    "document": "TabItem.xaml",
@@ -90858,7 +90858,7 @@
    "winui": "TabViewItem: {TabViewItem} (TabView.xaml).",
    "status": "ported",
    "deviations": 13,
-   "date": "2026-10-16"
+   "date": "2026-10-17"
   },
   {
    "document": "TabStrip.xaml",
@@ -90891,7 +90891,7 @@
    "winui": "No WinUI control: NavigationView with its pane at the top (TopNavArea of NavigationView.xaml, MUX_NavigationViewItemPresenterStyleWhenOnTopPane of NavigationView_themeresources.xaml) and the page background.",
    "status": "ported",
    "deviations": 8,
-   "date": "2026-10-16"
+   "date": "2026-10-17"
   },
   {
    "document": "TableView.xaml",
