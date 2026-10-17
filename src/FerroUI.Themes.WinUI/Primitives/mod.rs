@@ -3,5 +3,7 @@
 //! with `xmlns:primitives="using:FerroUI.Themes.WinUI.Primitives"`.
 
 mod info_bar_panel;
+mod tab_view_equal_width_panel;
 
 pub use info_bar_panel::InfoBarPanel;
+pub use tab_view_equal_width_panel::TabViewEqualWidthPanel;

@@ -60,6 +60,14 @@
     <Setter Property="Background" Value="{DynamicResource NavigationViewTopPaneBackground}" />
     <Setter Property="Padding" Value="0" />
     <Setter Property="VerticalAlignment" Value="Stretch" />
+    <!-- The items of the top pane are as wide as their content (the horizontal StackLayout of
+         TopNavMenuItemsHost), not as wide as each other as the tabs of the base theme; at the left
+         and at the right the base theme stacks them vertically. -->
+    <Setter Property="ItemsPanel">
+      <ItemsPanelTemplate>
+        <StackPanel Orientation="Horizontal" />
+      </ItemsPanelTemplate>
+    </Setter>
     <Setter Property="Template">
       <ControlTemplate>
         <DockPanel>

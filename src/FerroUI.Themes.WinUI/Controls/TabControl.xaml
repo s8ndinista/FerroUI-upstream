@@ -14,18 +14,29 @@
   Translation notes (docs/porting/winui-theme.md, section 4):
   - The template of TabView is a Grid of the tab strip (TabContainerGrid) over the content
     (TabContentPresenter): a DockPanel with the strip docked at TabStripPlacement. The strip keeps
-    the columns of the left content, the tabs and the right content and the bottom border lines
-    under them; the column of the add tab button, the button (AddButton with TabViewButtonStyle)
-    and the presenters of TabStripHeader and TabStripFooter are left out (FerroUI's TabControl has
-    none). The content is the PART_SelectedContentHost FerroUI's TabControl requires, with the
-    PART_SelectedContentHost2 of its page transitions, in a Border of the border brush, border
-    thickness and corner radius the source binds on TabContentPresenter.
+    the column of the left content with its bottom border line and the column of the tabs; the
+    column of the add tab button, the button (AddButton with TabViewButtonStyle), the presenters of
+    TabStripHeader and TabStripFooter and the column of the right content with its bottom border
+    line are left out (FerroUI's TabControl has none). The column of the tabs takes the rest of the
+    strip (TabView sizes its Auto column in code, as wide as its tabs and at most the width of the
+    strip): the tabs share the viewport of its scroll viewer, and the footer of the items presenter
+    fills the rest of the viewport after the last tab with its bottom border line, the line the
+    right content column of TabView draws there. The content is the PART_SelectedContentHost
+    FerroUI's TabControl requires, with the PART_SelectedContentHost2 of its page transitions, in a
+    Border of the border brush, border thickness and corner radius the source binds on
+    TabContentPresenter.
   - TabViewListView (the implicit style of the strip) is not a control of its own: its template
     (a Border, the ScrollViewer with TabScrollViewerStyle, the ItemsPresenter with a 4 px wide
     header and footer that hold the bottom border lines beside the first and the last tab) is
-    written into the template, and its ItemsStackPanel is a horizontal StackPanel. The bottom
-    border lines of the header and footer are named HeaderBottomBorderLine and
-    FooterBottomBorderLine (one name scope holds them with the lines of TabView). The setters of
+    written into the template, and its ItemsStackPanel is TabViewEqualWidthPanel, a primitive of
+    the theme (Primitives/tab_view_equal_width_panel.rs), which gives every tab the width TabView
+    computes in its default TabWidthMode Equal (TabView::UpdateTabWidths: the width of the strip
+    for its tabs divided by their number, between TabViewItemMinWidth and TabViewItemMaxWidth; tabs
+    that do not fit at the minimum width scroll) and which TabView sets as the Width of every
+    TabViewItem in code. The ItemsPresenter is docked left of the footer, which fills the rest of
+    the viewport. The bottom border lines of the header and footer are named
+    HeaderBottomBorderLine and FooterBottomBorderLine (one name scope holds them with the lines of
+    TabView). The setters of
     the list view are written on its elements (VerticalAlignment, IsTabStop, the scroll bar
     visibilities, BringIntoViewOnFocusChange); its TabNavigation="Once" is the tab navigation
     FerroUI's TabControl sets on its panel. ItemContainerTransitions (AddDeleteThemeTransition,
@@ -55,6 +66,7 @@
 <ResourceDictionary xmlns="https://github.com/ferroui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:converters="using:FerroUI.Controls.Converters"
+                    xmlns:primitives="using:FerroUI.Themes.WinUI.Primitives"
                     x:ClassModifier="internal">
   <Design.PreviewWith>
     <Border Width="480" Padding="20">
@@ -346,10 +358,12 @@
     <Setter Property="Padding" Value="{DynamicResource TabViewHeaderPadding}" />
     <Setter Property="IsTabStop" Value="False" />
     <Setter Property="Background" Value="{DynamicResource TabViewBackground}" />
-    <!-- The ItemsStackPanel of TabViewListView. -->
+    <!-- The ItemsStackPanel of TabViewListView, with the width TabView gives every tab in its
+         TabWidthMode Equal (the default). -->
     <Setter Property="ItemsPanel">
       <ItemsPanelTemplate>
-        <StackPanel Orientation="Horizontal" />
+        <primitives:TabViewEqualWidthPanel MinItemWidth="{DynamicResource TabViewItemMinWidth}"
+                                           MaxItemWidth="{DynamicResource TabViewItemMaxWidth}" />
       </ItemsPanelTemplate>
     </Setter>
     <Setter Property="Template">
@@ -360,17 +374,12 @@
                   Background="{TemplateBinding Background}"
                   RenderTransformOrigin="50%,50%">
             <Grid>
+              <!-- The columns LeftContentColumn and TabColumn; the tabs take the rest of the strip. -->
               <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" MinWidth="2" />
-                <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
               </Grid.ColumnDefinitions>
               <Border x:Name="LeftBottomBorderLine"
-                      Background="{DynamicResource TabViewBorderBrush}"
-                      Height="1"
-                      VerticalAlignment="Bottom" />
-              <Border x:Name="RightBottomBorderLine"
-                      Grid.Column="2"
                       Background="{DynamicResource TabViewBorderBrush}"
                       Height="1"
                       VerticalAlignment="Bottom" />
@@ -394,16 +403,17 @@
                               VerticalAlignment="Bottom"
                               HorizontalAlignment="Left" />
                     </Panel>
-                    <Panel x:Name="TabsItemsPresenterFooter" DockPanel.Dock="Right" Width="4">
+                    <ItemsPresenter Name="PART_ItemsPresenter"
+                                    DockPanel.Dock="Left"
+                                    ItemsPanel="{TemplateBinding ItemsPanel}" />
+                    <!-- The footer, 4 px after the last tab, and the bottom border line of the right
+                         content column of TabView in the rest of the viewport. -->
+                    <Panel x:Name="TabsItemsPresenterFooter" MinWidth="4">
                       <Border x:Name="FooterBottomBorderLine"
                               Background="{DynamicResource TabViewBorderBrush}"
-                              Width="4"
                               Height="1"
-                              VerticalAlignment="Bottom"
-                              HorizontalAlignment="Right" />
+                              VerticalAlignment="Bottom" />
                     </Panel>
-                    <ItemsPresenter Name="PART_ItemsPresenter"
-                                    ItemsPanel="{TemplateBinding ItemsPanel}" />
                   </DockPanel>
                 </ScrollViewer>
               </Border>
@@ -435,6 +445,13 @@
     <!-- The strip at the left or the right: the tabs stacked vertically, scrolled vertically,
          without the bottom border lines. -->
     <Style Selector="^[TabStripPlacement=Left]">
+      <!-- The tabs stacked vertically (a StackPanel as the items panel of the strip, which the
+           style below turns vertical also when a derived theme sets a horizontal one). -->
+      <Setter Property="ItemsPanel">
+        <ItemsPanelTemplate>
+          <StackPanel Orientation="Vertical" />
+        </ItemsPanelTemplate>
+      </Setter>
       <!-- The pane of NavigationView: its items 3 px under the top of the pane
            (NavigationViewPaneContentGridMargin) and the 1 px border of RootSplitView. -->
       <Setter Property="Padding" Value="0,4,0,0" />
@@ -456,11 +473,17 @@
       <Style Selector="^ /template/ Border#TabListView">
         <Setter Property="VerticalAlignment" Value="Stretch" />
       </Style>
-      <Style Selector="^ /template/ Border#LeftBottomBorderLine, ^ /template/ Border#RightBottomBorderLine, ^ /template/ Panel#TabsItemsPresenterHeader, ^ /template/ Panel#TabsItemsPresenterFooter">
+      <Style Selector="^ /template/ Border#LeftBottomBorderLine, ^ /template/ Panel#TabsItemsPresenterHeader, ^ /template/ Panel#TabsItemsPresenterFooter">
         <Setter Property="IsVisible" Value="False" />
       </Style>
     </Style>
     <Style Selector="^[TabStripPlacement=Right]">
+      <!-- The tabs stacked vertically, as at the left. -->
+      <Setter Property="ItemsPanel">
+        <ItemsPanelTemplate>
+          <StackPanel Orientation="Vertical" />
+        </ItemsPanelTemplate>
+      </Setter>
       <!-- The pane of NavigationView: its items 3 px under the top of the pane
            (NavigationViewPaneContentGridMargin) and the 1 px border of RootSplitView. -->
       <Setter Property="Padding" Value="0,4,0,0" />
@@ -482,7 +505,7 @@
       <Style Selector="^ /template/ Border#TabListView">
         <Setter Property="VerticalAlignment" Value="Stretch" />
       </Style>
-      <Style Selector="^ /template/ Border#LeftBottomBorderLine, ^ /template/ Border#RightBottomBorderLine, ^ /template/ Panel#TabsItemsPresenterHeader, ^ /template/ Panel#TabsItemsPresenterFooter">
+      <Style Selector="^ /template/ Border#LeftBottomBorderLine, ^ /template/ Panel#TabsItemsPresenterHeader, ^ /template/ Panel#TabsItemsPresenterFooter">
         <Setter Property="IsVisible" Value="False" />
       </Style>
     </Style>

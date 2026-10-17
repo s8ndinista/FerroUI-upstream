@@ -13,7 +13,10 @@ ported by hand. `Converters/corner_radius_to_thickness_converter.rs` is a Rust p
 of the class `CornerRadiusToThicknessConverter` of the same repository
 (`controls/dev/Common/CornerRadiusToThicknessConverter.idl`, `.h` and `.cpp`), and
 `Primitives/info_bar_panel.rs` a Rust port of the class `InfoBarPanel`
-(`controls/dev/InfoBar/InfoBarPanel.cpp`, `.h` and `InfoBar.idl`).
+(`controls/dev/InfoBar/InfoBarPanel.cpp`, `.h` and `InfoBar.idl`), and
+`Primitives/tab_view_equal_width_panel.rs` a Rust port of the sizing of the tabs of
+`TabView` in its `Equal` width mode (`TabView::UpdateTabWidths` of
+`controls/dev/TabView/TabView.cpp`, `.h` and `TabView.idl`).
 
 ## microsoft-ui-xaml
 

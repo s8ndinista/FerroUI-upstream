@@ -36,7 +36,10 @@
     Foreground on the tab replaces the brushes of the states) is left out: FerroUI's TabItem
     passes its foreground to an icon element in code, the states set the header presenter.
   - TabViewItem's width is computed by TabView (TabWidthMode Equal, between TabViewItemMinWidth
-    and TabViewItemMaxWidth): the tab is as wide as its header, within those limits.
+    and TabViewItemMaxWidth) and set as its Width in code: the items panel of the strip of the
+    TabControl (TabViewEqualWidthPanel, Controls/TabControl.xaml) gives the tab that width, as it
+    gives every tab of the strip. A tab outside such a strip is as wide as its header, as a
+    TabViewItem without a width.
   - The states PointerOverSelected and PressedSelected set what Selected sets: ^:selected,
     written after the pointer states, applies to them. LayoutRoot.Background="Transparent" of
     the selected states is left out (the tab container's background makes the tab hit-testable).
@@ -74,9 +77,7 @@
       <ControlTemplate>
         <Border x:Name="LayoutRoot"
                 Padding="{TemplateBinding Padding}"
-                UseLayoutRounding="False"
-                MinWidth="{DynamicResource TabViewItemMinWidth}"
-                MaxWidth="{DynamicResource TabViewItemMaxWidth}">
+                UseLayoutRounding="False">
           <Grid ColumnDefinitions="Auto,*,Auto">
             <Border x:Name="BottomBorderLine"
                     Grid.ColumnSpan="3"

@@ -29,7 +29,7 @@
 //! are instances of and FerroUI's control set has no counterpart of
 //! ([`converters::CornerRadiusToThicknessConverter`]); [`primitives`] has the primitives of WinUI
 //! that its templates use and FerroUI's control set has no counterpart of
-//! ([`primitives::InfoBarPanel`]).
+//! ([`primitives::InfoBarPanel`], [`primitives::TabViewEqualWidthPanel`]).
 
 #[path = "Accents/mod.rs"]
 pub mod accents;

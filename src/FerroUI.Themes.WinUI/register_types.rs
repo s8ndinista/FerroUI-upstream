@@ -4,7 +4,7 @@
 
 use crate::accents::SystemAccentColors;
 use crate::converters::{CornerRadiusToThicknessConverter, CornerRadiusToThicknessConverterKind};
-use crate::primitives::InfoBarPanel;
+use crate::primitives::{InfoBarPanel, TabViewEqualWidthPanel};
 use crate::winui_theme::{DensityStyle, WinUITheme};
 use ferroui_base::data::converters::IValueConverter;
 use ferroui_base::data::core::ValueTypes;
@@ -31,7 +31,8 @@ pub static ASSEMBLY: MarkupAssembly = MarkupAssembly {
     metadata: &[],
 };
 
-const TYPES: &[&TypeInfo] = &[WinUITheme::TYPE, SystemAccentColors::TYPE, InfoBarPanel::TYPE];
+const TYPES: &[&TypeInfo] =
+    &[WinUITheme::TYPE, SystemAccentColors::TYPE, InfoBarPanel::TYPE, TabViewEqualWidthPanel::TYPE];
 
 const MARKUP_TYPES: &[&MarkupType] = &[
     <DensityStyle as MarkupTyped>::MARKUP,
