@@ -4,6 +4,11 @@ All notable changes to FerroUI are recorded in this file. The format follows [Ke
 
 ## [Unreleased]
 
+### Changed
+
+- **Upstream 66b7273b9a.** The port follows upstream's 49 commits since 17350180 (`docs/porting/CONTINUATION.md`, hand-over of 2026-10-17): among them the immutable stream geometry builder (`IStreamGeometryBuilder`; the mutable stream geometry implementation is removed, its interfaces deprecated), text fixes (bidi after a reset and the run index of the reorderer, the ellipsis of wrapped text cut by a height or a line limit, the caret of centred text, empty text ranges, the text layout released on detach), styling and focus fixes, Wayland popup positions and application id, the 120 Hz display link on iOS, the headless window positioning options, AT-SPI headings, lists and children changes, and the rewritten pointers page of the ControlCatalog.
+- **TextBlock.LayoutRoundingPlacement** (the WinUI theme places the height of layout rounding above its text, as WinUI), and windows take changed text rendering settings without a resize.
+
 ### Added
 
 - **`TextBlock.LayoutRoundingPlacement`** (`TextLayoutRoundingPlacement`: `Below`, the default, or `Above`), an inherited attached property of `TextBlock` and a FerroUI addition: where a text block puts the height that layout rounding adds to it. With `Above` the text, the selection and hit testing of `SelectableTextBlock`, the access key underline of `AccessText` and the embedded controls move down by that height, as WinUI's TextBlock places its text (`docs/porting/text-rendering.md`, section 6).

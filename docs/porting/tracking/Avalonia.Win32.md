@@ -12,7 +12,7 @@ Generated from upstream commit `66b7273b9a2b5ba8416feb4376b9cdc3078b8573`. Back 
 | Phase / priority | 1 - desktop (Windows) / P0 |
 | Files | 94/94 (100.0%), 1 not applicable |
 | Types | 251/275 (24 waived) (100.0%) |
-| Members | 2348/2603 (254 waived) (100.0%) |
+| Members | 2349/2603 (254 waived) (100.0%) |
 | Contracts (interfaces) | 7/7 |
 | Property registrations | 0/0 |
 | Routed events | 0/0 |
@@ -115,80 +115,13 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 | `WindowsKeyboardDevice.cs` | `input/windows_keyboard_device.rs` | present | 1/1 | 2/2 |  |
 | `WindowsMouseDevice.cs` | `input/windows_mouse_device.rs` | present | 2/2 | 4/4 |  |
 
-### `Interop` - files 3/3, types 95/119 (24 waived), members 1353/1564 (210 waived)
+### `Interop` - files 3/3, types 95/119 (24 waived), members 1354/1564 (210 waived)
 
 | Upstream file | Rust file | Status | Types | Members | Notes |
 |---|---|---|---|---|---|
 | `TaskBarList.cs` | `interop/task_bar_list.rs` | present | 1/1 | 2/2 |  |
-| `UnmanagedMethods.cs` | `interop/unmanaged_methods.rs` | partial | 91/115 (24 waived) | 1331/1542 (210 waived) |  |
+| `UnmanagedMethods.cs` | `interop/unmanaged_methods.rs` | present | 91/115 (24 waived) | 1332/1542 (210 waived) |  |
 | `Win32Icon.cs` | `interop/win32_icon.rs` | present | 3/3 | 20/20 |  |
-
-<details><summary><code>UnmanagedMethods.cs</code> - 1 missing</summary>
-
-- `UnmanagedMethods` (class) (ported as module-level items): 1 missing
-  - `static bool GetDpiForMonitorAvailable { get; }`
-  - waived (`begin_paint` returns a `PaintScope`, whose `Drop` calls `EndPaint` with the structure `BeginPaint` filled): `EndPaint`
-  - waived (`drag_query_file_names` asks for the count and then for each name, the calls the reference makes in a loop): `DragQueryFile`
-  - waived (`hbitmap_to_bgra` copies a bitmap handle into a section whose rows run from the top with `BitBlt`, where the reference copies it mirrored into a section whose rows run from the bottom; the pixels are the same): `StretchBlt`
-  - waived (both overloads (a version 3 and a version 5 header) are the call of `ScreenContexts::section`, which takes the bytes of the header): `CreateDIBSection`, `CreateDIBSection`
-  - waived (both overloads are the call of `draw_bitmap_to_window`, which draws the pixels of a framebuffer into the device context of the window): `SetDIBitsToDevice`, `SetDIBitsToDevice`
-  - waived (called only by `NonPumpingWaitHelperImpl`, which is not applicable (path-overrides.toml)): `WaitForMultipleObjectsEx`
-  - waived (declared by the reference and called by none of its files: the module `native` declares the calls the backend makes (win32-platform.md, section 3.2)): `EnableMouseInPointer`, `GetPointerCursorId`, `SetDIBits`, `GetCaretBlinkTime`, `GetUpdateRect`, `ValidateRect`, `IsWindowEnabled`, `IsWindowUnicode`, `GetParent`, `CreateTimerQueue`, `DeleteTimerQueueEx`, `CreateTimerQueueTimer`, `DeleteTimerQueueTimer`, `LoadLibraryEx`, `GetSaveFileName`, `GetOpenFileName`, `CommDlgExtendedError`, `GetScaleFactorForMonitor`, `CloseHandle`, `CreateDIBitmap`, `GetBitmapDimensionEx`, `CreateFileMapping`, `CopyMemory`, `DwmGetWindowAttribute`, `ImmSetOpenStatus`, `ImmSetActiveContext`, `ImmSetStatusWindowPos`, `LCIDToLocaleName`, `MAKELCID`
-  - waived (made inside `get_clipboard_unicode_text` and `set_clipboard_unicode_text`, which own the global memory of the text while the clipboard is open): `GetClipboardData`, `SetClipboardData`
-  - waived (made inside the conversions of bitmaps of the module `native` (`hbitmap_to_bgra`, `dib_to_bgra`, `pixels_to_hbitmap`, with the contexts of `ScreenContexts`), which own the contexts and the bitmaps they create): `GdiFlush`, `BitBlt`, `CreateCompatibleBitmap`, `GetObject`, `CreateCompatibleDC`, `SelectObject`, `StretchDIBits`
-  - waived (made inside the functions that read and write a block of global memory (`read_global`, `write_global`, and the text of the clipboard), which lock and unlock it around the copy): `GlobalLock`, `GlobalUnlock`
-  - waived (one function, `describe_pixel_format`, for both overloads: it describes the format of an index into a descriptor it returns): `DescribePixelFormat`
-  - waived (one function, `send_message`, for both overloads (the result as a number)): `SendMessage`
-  - waived (the 32-bit half of `GetClassLongPtr` of the reference: `get_class_long_ptr` calls the function of the system for the target): `GetClassLongPtr32`
-  - waived (the 32-bit half of `GetWindowLong` of the reference: `get_window_long` calls the function of the system for the target): `GetWindowLong32b`
-  - waived (the 64-bit half of `GetClassLongPtr` of the reference: `get_class_long_ptr` calls the function of the system for the target): `GetClassLongPtr64`
-  - waived (the 64-bit half of `GetWindowLong` of the reference: `get_window_long` calls the function of the system for the target): `GetWindowLongPtr`
-  - waived (the overload with a pointer to a rectangle is called with null by the reference, for the whole window: `invalidate_window`; the overload with a rectangle is `invalidate_rect`): `InvalidateRect`
-  - waived (the region of the blur is created, used and deleted inside `dwm_enable_blur_behind_window`): `CreateRectRgn`
-  - waived (the two overloads are two functions: `imm_get_composition_string` (the text of the composition) and `imm_get_composition_value` (a number of it, the call without a buffer)): `ImmGetCompositionString`
-- `UnmanagedMethods.TimerProc` (delegate): waived - `SetTimer` is called without a procedure (`set_timer`): the timer posts `WM_TIMER` to the window, as in every call the reference makes
-- `UnmanagedMethods.TimeCallback` (delegate): waived - the callback of a declaration that the reference calls from none of its files (the multimedia timer)
-- `UnmanagedMethods.WaitOrTimerCallback` (delegate): waived - the callback of a declaration that the reference calls from none of its files (`CreateTimerQueueTimer`)
-- `UnmanagedMethods.POINTER_TOUCH_INFO` (struct): complete
-  - waived (the structure of the port holds the members of `POINTER_TOUCH_INFO` the backend reads, copied from the structure of windows-sys that `get_pointer_touch_info` fills): `touchFlags`, `rcContactRawLeft`, `rcContactRawTop`, `rcContactRawRight`, `rcContactRawBottom`, `orientation`
-- `UnmanagedMethods.POINTER_PEN_INFO` (struct): complete
-  - waived (the structure of the port holds the members of `POINTER_PEN_INFO` the backend reads, copied from the structure of windows-sys that `get_pointer_pen_info` fills): `penMask`
-- `UnmanagedMethods.POINTER_INFO` (struct): complete
-  - waived (the structure of the port holds the members of `POINTER_INFO` the backend reads, copied from the structure of windows-sys that `get_pointer_info` fills): `frameId`, `hwndTarget`, `ptHimetricLocationX`, `ptHimetricLocationY`, `ptPixelLocationRawX`, `ptPixelLocationRawY`, `inputData`, `dwKeyStates`, `PerformanceCount`
-- `UnmanagedMethods.RGBQUAD` (struct): waived - declared by the reference and used by none of its files: the colour table of a bitmap is read and written as bytes (`ole_data_object_helper.rs`)
-- `UnmanagedMethods.BITMAP` (struct): waived - the structure of windows-sys (`gdi::BITMAP`) is filled and read inside the function of `native` that makes the call (win32-platform.md, section 2.1)
-- `UnmanagedMethods.BITMAPV5HEADER` (struct): complete
-  - waived (`BITMAPV5HEADER::to_bytes` writes the size of the structure as its first member): `Init`
-  - waived (the members the reference leaves zero: `BITMAPV5HEADER::to_bytes` lays the structure out as the system does, with its size first and zeros in their place): `bV5Size`, `bV5XPelsPerMeter`, `bV5YPelsPerMeter`, `bV5ClrUsed`, `bV5ClrImportant`, `bV5Endpoints`, `bV5GammaRed`, `bV5GammaGreen`, `bV5GammaBlue`, `bV5ProfileData`, `bV5ProfileSize`, `bV5Reserved`
-- `UnmanagedMethods.CIEXYZTRIPLE` (struct): waived - the end points of a version 5 bitmap header, which the reference leaves zero: `BITMAPV5HEADER::to_bytes` writes zeros in their place
-- `UnmanagedMethods.CIEXYZ` (struct): waived - the end points of a version 5 bitmap header, which the reference leaves zero: `BITMAPV5HEADER::to_bytes` writes zeros in their place
-- `UnmanagedMethods.EnumWindowsProc` (delegate): waived - the procedure of `EnumChildWindows` is the `extern "system"` function `thunk` of `enum_windows`, which calls the closure it is given
-- `UnmanagedMethods.DWM_BLURBEHIND` (struct): waived - the structure of windows-sys (`dwm::DWM_BLURBEHIND`) is filled and read inside the function of `native` that makes the call (win32-platform.md, section 2.1)
-- `UnmanagedMethods.RTL_OSVERSIONINFOEX` (struct): waived - the structure of windows-sys (`si::OSVERSIONINFOW`) is filled and read inside the function of `native` that makes the call (win32-platform.md, section 2.1)
-- `UnmanagedMethods.LOGFONT` (struct): waived - the structure of windows-sys (`gdi::LOGFONTW`) is filled and read inside the function of `native` that makes the call (win32-platform.md, section 2.1)
-- `UnmanagedMethods.WindowCompositionAttributeData` (struct): waived - the argument of `SetWindowCompositionAttribute`, which the reference calls from none of its files
-- `UnmanagedMethods.AccentPolicy` (struct): waived - the argument of `SetWindowCompositionAttribute`, which the reference calls from none of its files
-- `UnmanagedMethods.MONITORINFOEX` (struct): complete
-  - waived (`get_monitor_info` fills the structure of windows-sys (`MONITORINFOEXW`) with its size set and returns its members as a value of the port): `Base`, `Create`
-- `UnmanagedMethods.MSG` (struct): waived - the structure of windows-sys (`wm::MSG`) is filled and read inside the function of `native` that makes the call (win32-platform.md, section 2.1)
-- `UnmanagedMethods.PAINTSTRUCT` (struct): waived - the structure of windows-sys (`gdi::PAINTSTRUCT`) is filled and read inside the function of `native` that makes the call (win32-platform.md, section 2.1)
-- `UnmanagedMethods.NCCALCSIZE_PARAMS` (struct): waived - the structure of windows-sys (`wm::NCCALCSIZE_PARAMS`) is filled and read inside the function of `native` that makes the call (win32-platform.md, section 2.1)
-- `UnmanagedMethods.TRACKMOUSEEVENT` (struct): waived - the structure of windows-sys (`kbm::TRACKMOUSEEVENT`) is filled and read inside the function of `native` that makes the call (win32-platform.md, section 2.1)
-- `UnmanagedMethods.WINDOWPLACEMENT` (struct): complete
-  - waived (`WINDOWPLACEMENT::default()`; the length is set by `get_window_placement` and `set_window_placement`, which pass the structure to the system): `Default`
-- `UnmanagedMethods.WNDCLASSEX` (struct): waived - the structure of windows-sys (`wm::WNDCLASSEXW`) is filled and read inside the function of `native` that makes the call (win32-platform.md, section 2.1)
-- `UnmanagedMethods.TOUCHINPUT` (struct): complete
-  - waived (the structure of the port holds the members of `TOUCHINPUT` the backend reads, copied from the structures of windows-sys that `get_touch_input_info` fills): `Source`, `ExtraInfo`
-- `UnmanagedMethods.ICONINFO` (struct): waived - the structure of windows-sys (`wm::ICONINFO`) is filled and read inside the function of `native` that makes the call (win32-platform.md, section 2.1)
-- `UnmanagedMethods.MarkFullscreenWindow` (delegate): waived - the function types of the slots of the task bar list are declared beside the list in `interop/task_bar_list.rs` (`ITaskBarList3VTable`)
-- `UnmanagedMethods.SetOverlayIcon` (delegate): waived - the function types of the slots of the task bar list are declared beside the list in `interop/task_bar_list.rs` (`ITaskBarList3VTable`)
-- `UnmanagedMethods.HrInit` (delegate): waived - the function types of the slots of the task bar list are declared beside the list in `interop/task_bar_list.rs` (`ITaskBarList3VTable`)
-- `UnmanagedMethods.ITaskBarList3VTable` (struct): waived - declared beside the list in `interop/task_bar_list.rs`, whose tests check its size and the places of the three slots the backend calls
-- `UnmanagedMethods.DROPFILES` (struct): waived - the header of a block of file names is written as bytes by `ole_data_object_helper.rs` (`SIZE_OF_DROPFILES`, the offset of the names and the flag of wide characters)
-- `UnmanagedMethods.FILEDESCRIPTORW` (struct): complete
-  - waived (a descriptor is read from the bytes of a `FileGroupDescriptorW` block at the offsets of the structure (`FILEDESCRIPTORW::SIZE`, `OFFSET_OF_*`; `read_descriptors_from_bytes`), which reads the flags, the size and the name): `dwFlags`, `clsid`, `sizel`, `pointl`, `dwFileAttributes`, `ftCreationTime`, `ftLastAccessTime`, `ftLastWriteTime`, `nFileSizeHigh`, `nFileSizeLow`, `cFileName`
-
-</details>
 
 ### `OpenGl` - files 7/7, types 7/7, members 89/90 (1 waived)
 

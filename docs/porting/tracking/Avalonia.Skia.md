@@ -10,9 +10,9 @@ Generated from upstream commit `66b7273b9a2b5ba8416feb4376b9cdc3078b8573`. Back 
 | FerroUI | `src/Skia/FerroUI.Skia` (exists) |
 | Crate | `ferroui-skia` |
 | Phase / priority | 1 - rendering / P0 |
-| Files | 53/55 (96.4%) |
-| Types | 65/67 (97.0%) |
-| Members | 424/457 (20 waived) (97.0%) |
+| Files | 55/55 (100.0%) |
+| Types | 67/67 (100.0%) |
+| Members | 438/457 (19 waived) (100.0%) |
 | Contracts (interfaces) | 10/10 |
 | Property registrations | 0/0 |
 | Routed events | 0/0 |
@@ -36,7 +36,7 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 
 ## Files
 
-### `(project root)` - files 32/34, types 37/39, members 278/306 (15 waived)
+### `(project root)` - files 34/34, types 39/39, members 292/306 (14 waived)
 
 | Upstream file | Rust file | Status | Types | Members | Notes |
 |---|---|---|---|---|---|
@@ -54,14 +54,14 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 | `ImmutableBitmap.cs` | `immutable_bitmap.rs` | present | 1/1 | 14/14 |  |
 | `LineGeometryImpl.cs` | `line_geometry_impl.rs` | present | 1/1 | 3/4 (1 waived) |  |
 | `PictureRenderTarget.cs` | `picture_render_target.rs` | present | 1/1 | 4/4 |  |
-| `PlatformRenderInterface.cs` | `platform_render_interface.rs` | partial | 1/1 | 27/28 |  |
+| `PlatformRenderInterface.cs` | `platform_render_interface.rs` | present | 1/1 | 28/28 |  |
 | `RectangleGeometryImpl.cs` | `rectangle_geometry_impl.rs` | present | 1/1 | 3/4 (1 waived) |  |
 | `RenderTargetBitmapImpl.cs` | `render_target_bitmap_impl.rs` | present | 1/1 | 5/5 |  |
 | `SKCacheBase.cs` | `sk_cache_base.rs` | present | 1/1 | 5/6 (1 waived) | renamed: Rust spelling of the acronym: `SkCacheBase&lt;TCachedItem&gt;` of `sk_cache_base.rs`; the second type parameter of upstream (the cache itself, for its static instance) is not needed, since each cache keeps its own instance |
 | `SKPaintCache.cs` | `sk_paint_cache.rs` | present | 1/1 | 1/1 | renamed: Rust spelling of the acronym: `SkPaintCache` of `sk_paint_cache.rs` |
 | `SKRoundRectCache.cs` | `sk_round_rect_cache.rs` | present | 1/1 | 4/4 | renamed: Rust spelling of the acronym: `SkRoundRectCache` of `sk_round_rect_cache.rs` |
 | `SKTextBlobBuilderCache.cs` | `sk_text_blob_builder_cache.rs` | present | 1/1 | 0/0 | renamed: Rust spelling of the acronym: `SkTextBlobBuilderCache` of `sk_text_blob_builder_cache.rs` |
-| `SimpleGeometryImpl.cs` | `simple_geometry_impl.rs` | missing | 0/1 | 0/4 (2 waived) |  |
+| `SimpleGeometryImpl.cs` | `simple_geometry_impl.rs` | present | 1/1 | 3/4 (1 waived) |  |
 | `SkiaApplicationExtensions.cs` | `skia_application_extensions.rs` | present | 1/1 | 1/1 |  |
 | `SkiaBackendContext.cs` | `skia_backend_context.rs` | present | 1/1 | 9/9 |  |
 | `SkiaOptions.cs` | `skia_options.rs` | present | 1/1 | 4/4 |  |
@@ -69,18 +69,11 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 | `SkiaRegionImpl.cs` | `skia_region_impl.rs` | present | 1/1 | 9/9 |  |
 | `SkiaSharpExtensions.cs` | `skia_sharp_extensions.rs` | present | 1/1 | 26/31 (5 waived) |  |
 | `SkiaTypeface.cs` | `skia_typeface.rs` | present | 1/1 | 11/11 |  |
-| `StreamGeometryBuilder.cs` | `stream_geometry_builder.rs` | missing | 0/1 | 0/10 |  |
+| `StreamGeometryBuilder.cs` | `stream_geometry_builder.rs` | present | 1/1 | 10/10 |  |
 | `SurfaceRenderTarget.cs` | `surface_render_target.rs` | present | 2/2 | 25/25 |  |
 | `TransformedGeometryImpl.cs` | `transformed_geometry_impl.rs` | present | 1/1 | 5/6 (1 waived) |  |
 | `TwoLevelCache.cs` | `two_level_cache.rs` | present | 1/1 | 4/4 |  |
 | `WriteableBitmapImpl.cs` | `writeable_bitmap_impl.rs` | present | 1/1 | 13/13 |  |
-
-<details><summary><code>PlatformRenderInterface.cs</code> - 1 missing</summary>
-
-- `PlatformRenderInterface` (class): 1 missing
-  - `IStreamGeometryBuilder CreateStreamGeometryBuilder(IGeometryImpl? source)`
-
-</details>
 
 ### `Gpu` - files 4/4, types 5/5, members 19/20 (1 waived)
 
@@ -141,7 +134,6 @@ Rust sources of this crate that no upstream file maps to. Give each a reason in 
 | `gpu/vulkan/frames_test.rs` | **unmapped** | `HeadlessSurface`, `HeadlessSurfaceFactory`, `TestSurface` |
 | `gpu/vulkan/tests.rs` | the unit tests of the module |  |
 | `locked_framebuffer.rs` | a locked framebuffer described by plain values: the `Platform/LockedFramebuffer.cs` of Avalonia.Base, which the base crate cannot hold without unsafe code, for the surfaces of the backend | `LockedFramebuffer` |
-| `stream_geometry_impl.rs` | **unmapped** | `FillBuilder`, `StreamContext`, `StreamGeometryImpl`, `StreamGeometryState` |
 | `tests.rs` | the unit tests of the module | `BrushSpec`, `Material`, `MockFramebuffer`, `MockSurface`, `Target`, `TwoSquares`, `TwoSquaresBrush` |
 | `text_rendering_override.rs` | **unmapped** | `TextRenderingOverride` |
 | `text_rendering_settings.rs` | **unmapped** | `TextRenderingSettings`, `TextRenderingSource` |
@@ -151,4 +143,4 @@ Rust sources of this crate that no upstream file maps to. Give each a reason in 
 | `unit_tests/media/text_formatting/single_buffer_text_source.rs` | the port of upstream's Skia unit test project (tests/Avalonia.Skia.UnitTests) and its test doubles, not of the library | `SingleBufferTextSource` |
 | `unit_tests/test_font_manager.rs` | the port of upstream's Skia unit test project (tests/Avalonia.Skia.UnitTests) and its test doubles, not of the library | `TestFontManager` |
 
-Tests, examples and build scripts (not scanned): `build.rs`, `text_rendering_tests.rs`, `text_tests.rs`, `unit_tests/combined_geometry_impl_tests.rs`, `unit_tests/drawing_context_helper_tests.rs`, `unit_tests/drawing_context_impl_tests.rs`, `unit_tests/media/bitmap_save_tests.rs`, `unit_tests/media/custom_font_collection_tests.rs`, `unit_tests/media/embedded_font_collection_tests.rs`, `unit_tests/media/font_collection_determinism_tests.rs`, `unit_tests/media/font_collection_tests.rs`, `unit_tests/media/font_collection_try_match_character_tests.rs`, `unit_tests/media/font_manager_tests.rs`, `unit_tests/media/glyph_run_tests.rs`, `unit_tests/media/glyph_typeface_shaping_tests.rs`, `unit_tests/media/immutable_bitmap_tests.rs`, `unit_tests/media/text_formatting/empty_shaped_buffer_tests.rs`, `unit_tests/media/text_formatting/shaped_buffer_shared_storage_tests.rs`, `unit_tests/media/text_formatting/shaping_capability_fallback_tests.rs`, `unit_tests/media/text_formatting/split_text_runs_tests.rs`, `unit_tests/media/text_formatting/tables/cmap_table_tests.rs`, `unit_tests/media/text_formatting/text_characters_tests.rs`, `unit_tests/media/text_formatting/text_collapsing_bidi_tests.rs`, `unit_tests/media/text_formatting/text_formatter_tests.rs`, `unit_tests/media/text_formatting/text_formatter_wrap_characterization_tests.rs`, `unit_tests/media/text_formatting/text_layout_tests.rs`, `unit_tests/media/text_formatting/text_line_tests.rs`, `unit_tests/media/text_formatting/text_run_cache_tests.rs`, `unit_tests/media/text_formatting/text_shaper_tests.rs`, `unit_tests/render_bounds_tests.rs`, `unit_tests/skia_options_tests.rs`, `unit_tests/two_level_cache_tests.rs`.
+Tests, examples and build scripts (not scanned): `build.rs`, `text_rendering_tests.rs`, `text_tests.rs`, `unit_tests/combined_geometry_impl_tests.rs`, `unit_tests/drawing_context_helper_tests.rs`, `unit_tests/drawing_context_impl_tests.rs`, `unit_tests/media/bitmap_save_tests.rs`, `unit_tests/media/custom_font_collection_tests.rs`, `unit_tests/media/embedded_font_collection_tests.rs`, `unit_tests/media/font_collection_determinism_tests.rs`, `unit_tests/media/font_collection_tests.rs`, `unit_tests/media/font_collection_try_match_character_tests.rs`, `unit_tests/media/font_manager_tests.rs`, `unit_tests/media/glyph_run_tests.rs`, `unit_tests/media/glyph_typeface_shaping_tests.rs`, `unit_tests/media/immutable_bitmap_tests.rs`, `unit_tests/media/stream_geometry_tests.rs`, `unit_tests/media/text_formatting/bidi_reorderer_tests.rs`, `unit_tests/media/text_formatting/empty_shaped_buffer_tests.rs`, `unit_tests/media/text_formatting/shaped_buffer_shared_storage_tests.rs`, `unit_tests/media/text_formatting/shaping_capability_fallback_tests.rs`, `unit_tests/media/text_formatting/split_text_runs_tests.rs`, `unit_tests/media/text_formatting/tables/cmap_table_tests.rs`, `unit_tests/media/text_formatting/text_characters_tests.rs`, `unit_tests/media/text_formatting/text_collapsing_bidi_tests.rs`, `unit_tests/media/text_formatting/text_formatter_tests.rs`, `unit_tests/media/text_formatting/text_formatter_wrap_characterization_tests.rs`, `unit_tests/media/text_formatting/text_layout_range_contract_tests.rs`, `unit_tests/media/text_formatting/text_layout_tests.rs`, `unit_tests/media/text_formatting/text_line_tests.rs`, `unit_tests/media/text_formatting/text_run_cache_tests.rs`, `unit_tests/media/text_formatting/text_shaper_tests.rs`, `unit_tests/path_geometry_tests.rs`, `unit_tests/render_bounds_tests.rs`, `unit_tests/skia_options_tests.rs`, `unit_tests/two_level_cache_tests.rs`.

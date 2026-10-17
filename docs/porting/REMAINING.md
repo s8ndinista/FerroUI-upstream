@@ -8,8 +8,8 @@ Generated from upstream commit `66b7273b9a2b5ba8416feb4376b9cdc3078b8573`. The s
 
 | | Present | Total | Missing | Waived | Not applicable | Out of scope | Share |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| Members of the projects in scope | 30298 | 36201 | 49 | 5854 | - | - | 99.8% of total less waived |
-| Members of every upstream source project of the extraction | 30298 | 37382 | 49 | 5854 | 1181 | 0 | 81.0% of total |
+| Members of the projects in scope | 30353 | 36201 | 0 | 5848 | - | - | 100.0% of total less waived |
+| Members of every upstream source project of the extraction | 30353 | 37382 | 0 | 5848 | 1181 | 0 | 81.2% of total |
 
 The first row is the headline of the tracking: it leaves out the waived members and everything out of scope. The second row leaves out nothing: every member of every C# project the extraction reads, whether or not the port will ever have it. A member is *present* when an item of the mapped name exists; names are matched, not behaviour.
 
@@ -21,29 +21,29 @@ Files, types and members as present / missing / waived. *n/a* counts the files m
 |---|---|---:|---:|---:|---:|---:|
 | [XamlX](tracking/XamlX.md) | in | 62 / 0 / 0 | 172 / 0 / 5 | 722 / 0 / 156 | 26 (194) | 67.4% |
 | [Avalonia.Android](tracking/Avalonia.Android.md) | in | 58 / 0 / 0 | 86 / 0 / 2 | 394 / 0 / 53 | 0 (0) | 88.1% |
-| [Avalonia.Base](tracking/Avalonia.Base.md) | in | 1247 / 1 / 0 | 1522 / 2 / 135 | 10346 / 14 / 1033 | 51 (620) | 86.1% |
+| [Avalonia.Base](tracking/Avalonia.Base.md) | in | 1248 / 0 / 0 | 1524 / 0 / 135 | 10360 / 0 / 1033 | 51 (620) | 86.2% |
 | [Avalonia.Build.Tasks](tracking/Avalonia.Build.Tasks.md) | in | 6 / 0 / 0 | 6 / 0 / 1 | 7 / 0 / 28 | 4 (9) | 15.9% |
-| [Avalonia.Controls](tracking/Avalonia.Controls.md) | in | 538 / 2 / 0 | 621 / 2 / 7 | 6255 / 7 / 150 | 1 (0) | 97.6% |
+| [Avalonia.Controls](tracking/Avalonia.Controls.md) | in | 540 / 0 / 0 | 623 / 0 / 7 | 6262 / 0 / 150 | 1 (0) | 97.7% |
 | [Avalonia.Controls.ColorPicker](tracking/Avalonia.Controls.ColorPicker.md) | in | 39 / 0 / 0 | 41 / 0 / 0 | 726 / 0 / 0 | 1 (0) | 100.0% |
 | [Avalonia.DesignerSupport](tracking/Avalonia.DesignerSupport.md) | in | 9 / 0 / 0 | 18 / 0 / 0 | 174 / 0 / 2 | 0 (0) | 98.9% |
 | [Avalonia.Desktop](tracking/Avalonia.Desktop.md) | in | 1 / 0 / 0 | 1 / 0 / 0 | 1 / 0 / 0 | 0 (0) | 100.0% |
 | [Avalonia.Dialogs](tracking/Avalonia.Dialogs.md) | in | 17 / 0 / 0 | 18 / 0 / 0 | 94 / 0 / 0 | 0 (0) | 100.0% |
 | [Avalonia.Fonts.Inter](tracking/Avalonia.Fonts.Inter.md) | in | 2 / 0 / 0 | 2 / 0 / 0 | 2 / 0 / 0 | 1 (0) | 100.0% |
 | [Avalonia.FreeDesktop](tracking/Avalonia.FreeDesktop.md) | in | 18 / 0 / 0 | 26 / 0 / 0 | 213 / 0 / 3 | 0 (0) | 98.6% |
-| [Avalonia.FreeDesktop.AtSpi](tracking/Avalonia.FreeDesktop.AtSpi.md) | in | 27 / 0 / 0 | 27 / 0 / 0 | 424 / 2 / 11 | 0 (0) | 97.0% |
+| [Avalonia.FreeDesktop.AtSpi](tracking/Avalonia.FreeDesktop.AtSpi.md) | in | 27 / 0 / 0 | 27 / 0 / 0 | 426 / 0 / 11 | 0 (0) | 97.5% |
 | [Avalonia.Metal](tracking/Avalonia.Metal.md) | in | 2 / 0 / 0 | 7 / 0 / 0 | 21 / 0 / 0 | 0 (0) | 100.0% |
 | [Avalonia.MicroCom](tracking/Avalonia.MicroCom.md) | in | 1 / 0 / 0 | 1 / 0 / 0 | 1 / 0 / 5 | 0 (0) | 16.7% |
 | [Avalonia.Native](tracking/Avalonia.Native.md) | in | 49 / 0 / 0 | 75 / 0 / 10 | 542 / 0 / 59 | 0 (0) | 90.2% |
-| [Avalonia.OpenGL](tracking/Avalonia.OpenGL.md) | in | 39 / 0 / 0 | 61 / 0 / 2 | 607 / 1 / 32 | 0 (0) | 94.8% |
+| [Avalonia.OpenGL](tracking/Avalonia.OpenGL.md) | in | 39 / 0 / 0 | 61 / 0 / 2 | 608 / 0 / 32 | 0 (0) | 95.0% |
 | [Avalonia.Remote.Protocol](tracking/Avalonia.Remote.Protocol.md) | in | 14 / 0 / 0 | 54 / 0 / 1 | 198 / 0 / 4 | 0 (0) | 98.0% |
 | [Avalonia.Themes.Fluent](tracking/Avalonia.Themes.Fluent.md) | in | 5 / 0 / 0 | 6 / 0 / 0 | 68 / 0 / 5 | 1 (0) | 93.2% |
 | [Avalonia.Themes.Simple](tracking/Avalonia.Themes.Simple.md) | in | 1 / 0 / 0 | 1 / 0 / 0 | 1 / 0 / 0 | 1 (0) | 100.0% |
 | [Avalonia.Vulkan](tracking/Avalonia.Vulkan.md) | in | 30 / 0 / 0 | 151 / 0 / 0 | 283 / 0 / 1751 | 0 (0) | 13.9% |
-| [Avalonia.Wayland](tracking/Avalonia.Wayland.md) | in | 79 / 0 / 0 | 108 / 0 / 13 | 613 / 6 / 171 | 2 (36) | 74.2% |
+| [Avalonia.Wayland](tracking/Avalonia.Wayland.md) | in | 79 / 0 / 0 | 108 / 0 / 13 | 624 / 0 / 166 | 2 (36) | 75.5% |
 | [Avalonia.X11](tracking/Avalonia.X11.md) | in | 88 / 0 / 0 | 183 / 0 / 108 | 3691 / 0 / 1206 | 0 (0) | 75.4% |
 | [Avalonia.Browser](tracking/Avalonia.Browser.md) | in | 50 / 0 / 0 | 60 / 0 / 2 | 340 / 0 / 88 | 2 (13) | 77.1% |
 | [Avalonia.HarfBuzz](tracking/Avalonia.HarfBuzz.md) | in | 3 / 0 / 0 | 3 / 0 / 0 | 5 / 0 / 3 | 0 (0) | 62.5% |
-| [Avalonia.Headless](tracking/Avalonia.Headless.md) | in | 11 / 0 / 0 | 22 / 0 / 2 | 238 / 3 / 12 | 0 (0) | 94.1% |
+| [Avalonia.Headless](tracking/Avalonia.Headless.md) | in | 11 / 0 / 0 | 22 / 0 / 2 | 241 / 0 / 12 | 0 (0) | 95.3% |
 | [Avalonia.Headless.NUnit](tracking/Avalonia.Headless.NUnit.md) | in: every file not applicable | 0 / 0 / 0 | 0 / 0 / 0 | 0 / 0 / 0 | 4 (4) | 0.0% |
 | [Avalonia.Headless.Vnc](tracking/Avalonia.Headless.Vnc.md) | in | 3 / 0 / 0 | 3 / 0 / 0 | 11 / 0 / 0 | 0 (0) | 100.0% |
 | [Avalonia.Headless.XUnit](tracking/Avalonia.Headless.XUnit.md) | in: every file not applicable | 0 / 0 / 0 | 0 / 0 / 0 | 0 / 0 / 0 | 14 (26) | 0.0% |
@@ -51,12 +51,12 @@ Files, types and members as present / missing / waived. *n/a* counts the files m
 | [Avalonia.Markup](tracking/Avalonia.Markup.md) | in | 7 / 0 / 0 | 7 / 0 / 30 | 12 / 0 / 55 | 1 (0) | 17.9% |
 | [Avalonia.Markup.Xaml](tracking/Avalonia.Markup.Xaml.md) | in | 46 / 0 / 0 | 61 / 0 / 2 | 208 / 0 / 31 | 2 (1) | 86.7% |
 | [Avalonia.Markup.Xaml.Loader](tracking/Avalonia.Markup.Xaml.Loader.md) | in | 66 / 0 / 0 | 120 / 0 / 6 | 422 / 0 / 83 | 1 (1) | 83.4% |
-| [Avalonia.Skia](tracking/Avalonia.Skia.md) | in | 53 / 2 / 0 | 65 / 2 / 0 | 424 / 13 / 20 | 0 (0) | 92.8% |
-| [Avalonia.Win32](tracking/Avalonia.Win32.md) | in | 94 / 0 / 0 | 251 / 0 / 24 | 2348 / 1 / 254 | 1 (2) | 90.1% |
+| [Avalonia.Skia](tracking/Avalonia.Skia.md) | in | 55 / 0 / 0 | 67 / 0 / 0 | 438 / 0 / 19 | 0 (0) | 95.8% |
+| [Avalonia.Win32](tracking/Avalonia.Win32.md) | in | 94 / 0 / 0 | 251 / 0 / 24 | 2349 / 0 / 254 | 1 (2) | 90.2% |
 | [Avalonia.Win32.Automation](tracking/Avalonia.Win32.Automation.md) | in | 40 / 0 / 0 | 19 / 0 / 45 | 124 / 0 / 474 | 1 (0) | 20.7% |
 | [Avalonia.Win32.Interoperability](tracking/Avalonia.Win32.Interoperability.md) | in: every file not applicable | 0 / 0 / 0 | 0 / 0 / 0 | 0 / 0 / 0 | 2 (11) | 0.0% |
 | [Avalonia.WinUI](tracking/Avalonia.WinUI.md) | in | 15 / 0 / 0 | 16 / 0 / 0 | 88 / 0 / 0 | 0 (0) | 100.0% |
-| [Avalonia.iOS](tracking/Avalonia.iOS.md) | in | 40 / 0 / 0 | 56 / 0 / 1 | 312 / 2 / 19 | 1 (0) | 93.7% |
+| [Avalonia.iOS](tracking/Avalonia.iOS.md) | in | 40 / 0 / 0 | 56 / 0 / 1 | 314 / 0 / 19 | 1 (0) | 94.3% |
 | [Avalonia.Generators](tracking/Avalonia.Generators.md) | in: every file not applicable | 0 / 0 / 0 | 0 / 0 / 0 | 0 / 0 / 0 | 31 (264) | 0.0% |
 
 Files that are not C#:
@@ -204,62 +204,4 @@ From `docs/porting/data/samples.toml`; a sample counts as ported when the direct
 
 Files without a Rust file, types without a Rust type, and members without a Rust item, for the projects in scope. Names only: the page of each project has the signatures and, for files that exist in part, the members by file.
 
-### [Avalonia.Base](tracking/Avalonia.Base.md)
-
-1 files, 2 types and 14 members missing (5 members of the missing types, 9 members of types that exist).
-
-- **Files (1):** `Platform/IStreamGeometryBuilder.cs`
-- **Types (2):** `DiagnosticTextRenderer.ShapedText`, `IStreamGeometryBuilder`
-- **Members of types that exist (9):** `CompositingRenderer.HasPendingUpdateForUnitTests`, `DiagnosticTextRenderer.DigitCellWidth`, `DiagnosticTextRenderer.Shape`, `DiagnosticTextRenderer.DrawShapedText`, `DiagnosticTextRenderer.DrawDigits`, `IPlatformRenderInterface.CreateStreamGeometryBuilder`, `PathGeometry.OpenCore`, `StreamGeometry.OpenCore`, `StreamGeometryContext..ctor`
-
-### [Avalonia.Controls](tracking/Avalonia.Controls.md)
-
-2 files, 2 types and 7 members missing (5 members of the missing types, 2 members of types that exist).
-
-- **Files (2):** `Platform/IWaylandOptionsToplevelImplFeature.cs`, `Platform/WaylandProperties.cs`
-- **Types (2):** `IWaylandOptionsToplevelImplFeature`, `WaylandProperties`
-- **Members of types that exist (2):** `TextBlock.HasTextLayout`, `TextBlock.OnDetachedFromVisualTree`
-
-### [Avalonia.FreeDesktop.AtSpi](tracking/Avalonia.FreeDesktop.AtSpi.md)
-
-0 files, 0 types and 2 members missing (0 members of the missing types, 2 members of types that exist).
-
-- **Members of types that exist (2):** `AtSpiNode.GetAttributes`, `AtSpiNode.DiffChildren`
-
-### [Avalonia.OpenGL](tracking/Avalonia.OpenGL.md)
-
-0 files, 0 types and 1 members missing (0 members of the missing types, 1 members of types that exist).
-
-- **Members of types that exist (1):** `EglConsts.EGL_VENDOR`
-
-### [Avalonia.Wayland](tracking/Avalonia.Wayland.md)
-
-0 files, 0 types and 6 members missing (0 members of the missing types, 6 members of types that exist).
-
-- **Members of types that exist (6):** `IWXdgTopLevel.SetAppId`, `PopupImpl.WindowGeometryOrigin`, `WXdgTopLevel.SetAppId`, `WindowImpl.SetAppId`, `WindowImpl.WindowGeometryOrigin`, `XdgPopupConfigureBatch.Geometry`
-
-### [Avalonia.Headless](tracking/Avalonia.Headless.md)
-
-0 files, 0 types and 3 members missing (0 members of the missing types, 3 members of types that exist).
-
-- **Members of types that exist (3):** `AvaloniaHeadlessPlatformOptions.SupportsWindowPositioning`, `AvaloniaHeadlessPlatformOptions.UseLogicalDesktopCoordinates`, `HeadlessPlatformRenderInterface.CreateStreamGeometryBuilder`
-
-### [Avalonia.Skia](tracking/Avalonia.Skia.md)
-
-2 files, 2 types and 15 members missing (14 members of the missing types, 1 members of types that exist).
-
-- **Files (2):** `SimpleGeometryImpl.cs`, `StreamGeometryBuilder.cs`
-- **Types (2):** `SimpleGeometryImpl`, `StreamGeometryBuilder`
-- **Members of types that exist (1):** `PlatformRenderInterface.CreateStreamGeometryBuilder`
-
-### [Avalonia.Win32](tracking/Avalonia.Win32.md)
-
-0 files, 0 types and 1 members missing (0 members of the missing types, 1 members of types that exist).
-
-- **Members of types that exist (1):** `UnmanagedMethods.GetDpiForMonitorAvailable`
-
-### [Avalonia.iOS](tracking/Avalonia.iOS.md)
-
-0 files, 0 types and 2 members missing (0 members of the missing types, 2 members of types that exist).
-
-- **Members of types that exist (2):** `DisplayLinkTimer.SetPreferredFrameRateRange`, `iOSPlatformOptions.EnableHighRefreshRate`
+Nothing is missing in the projects in scope.

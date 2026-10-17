@@ -7,12 +7,12 @@
  },
  "totals": {
   "tests": 7510,
-  "found": 7244,
-  "inFile": 6809,
-  "elsewhere": 390,
+  "found": 7363,
+  "inFile": 6922,
+  "elsewhere": 396,
   "aliased": 45,
   "waived": 147,
-  "missing": 119
+  "missing": 0
  },
  "projects": [
   {
@@ -155,103 +155,14 @@
    "applicable": true,
    "csFiles": 281,
    "tests": 2424,
-   "found": 2291,
-   "inFile": 1988,
-   "elsewhere": 283,
+   "found": 2313,
+   "inFile": 2006,
+   "elsewhere": 287,
    "aliased": 20,
    "waived": 111,
-   "missing": 22,
+   "missing": 0,
    "port": "next to the code, mostly `src/FerroUI.Base`",
-   "missingTests": [
-    {
-     "file": "Composition/CompositionChildVisualTests.cs",
-     "test": "Child_Visual_Cleared_During_Detach_Can_Reattach"
-    },
-    {
-     "file": "Input/InputElement_Focus.cs",
-     "test": "Removing_Or_Hiding_Focus_Scope_Clears_Focus_When_Root_Focus_Scope_Element_Is_Disabled"
-    },
-    {
-     "file": "Media/PathGeometryTests.cs",
-     "test": "Open_Adds_To_Figures"
-    },
-    {
-     "file": "Media/PathGeometryTests.cs",
-     "test": "Open_Adds_To_Figures_When_A_Transform_Is_Set"
-    },
-    {
-     "file": "Media/StreamGeometryTests.cs",
-     "test": "Changed_Is_Raised_When_The_Drawing_Is_Finished"
-    },
-    {
-     "file": "Media/StreamGeometryTests.cs",
-     "test": "Changed_Is_Raised_When_The_Drawing_Is_Finished_And_A_Transform_Is_Set"
-    },
-    {
-     "file": "Media/TextFormatting/BiDiDataTests.cs",
-     "test": "Explicit_Formatting_Should_Be_Resolved_After_Reset"
-    },
-    {
-     "file": "Rendering/CompositorLifetimeTests.cs",
-     "test": "Visuals_Removed_While_Rendering_Stopped_Are_Not_Kept_By_Renderer"
-    },
-    {
-     "file": "Rendering/DiagnosticTextRendererTests.cs",
-     "test": "Digits_Measure_To_The_Same_Width"
-    },
-    {
-     "file": "Rendering/DiagnosticTextRendererTests.cs",
-     "test": "Height_Is_The_Scaled_Line_Spacing"
-    },
-    {
-     "file": "Rendering/DiagnosticTextRendererTests.cs",
-     "test": "Digits_Are_Centered_Inside_The_Digit_Cell"
-    },
-    {
-     "file": "Rendering/DiagnosticTextRendererTests.cs",
-     "test": "Text_After_Digits_Does_Not_Depend_On_The_Digit_Values"
-    },
-    {
-     "file": "Rendering/DiagnosticTextRendererTests.cs",
-     "test": "DrawDigits_Matches_Drawing_The_Padded_Text"
-    },
-    {
-     "file": "Rendering/DiagnosticTextRendererTests.cs",
-     "test": "ShapedText_Is_Measured_Once_And_Drawn_As_A_Single_Run"
-    },
-    {
-     "file": "Rendering/DiagnosticTextRendererTests.cs",
-     "test": "FpsCounter_Layout_Does_Not_Depend_On_The_Numbers"
-    },
-    {
-     "file": "Styling/ContainerTests.cs",
-     "test": "Container_Does_Not_Query_Itself"
-    },
-    {
-     "file": "Styling/ContainerTests.cs",
-     "test": "Container_Query_Tracks_Non_Visual_Target_After_Logical_Reparenting"
-    },
-    {
-     "file": "Styling/ContainerTests.cs",
-     "test": "Container_Query_Matches_Non_Visual_StyledElement"
-    },
-    {
-     "file": "Styling/ContainerTests.cs",
-     "test": "Container_Query_Uses_Named_Visual_Ancestor_For_Non_Visual_Target"
-    },
-    {
-     "file": "Styling/ControlThemeTests.cs",
-     "test": "ControlTheme_Attached_As_Theme_And_TemplatedParentTheme_Creates_Distinct_Instances"
-    },
-    {
-     "file": "Styling/ControlThemeTests.cs",
-     "test": "ControlTheme_Reattach_After_RemoveFrames_Does_Not_Duplicate_Instance"
-    },
-    {
-     "file": "Styling/ControlThemeTests.cs",
-     "test": "ControlTheme_Shares_Instance_Between_Controls_For_Same_FrameType"
-    }
-   ]
+   "missingTests": []
   },
   {
    "path": "tests/Avalonia.Benchmarks",
@@ -289,267 +200,14 @@
    "applicable": true,
    "csFiles": 162,
    "tests": 3137,
-   "found": 3058,
-   "inFile": 3014,
-   "elsewhere": 43,
+   "found": 3121,
+   "inFile": 3076,
+   "elsewhere": 44,
    "aliased": 1,
    "waived": 16,
-   "missing": 63,
+   "missing": 0,
    "port": "next to the code, mostly `src/FerroUI.Controls`",
-   "missingTests": [
-    {
-     "file": "Automation/AtSpiAccessibleHandlerTests.cs",
-     "test": "Exposes_Heading_Role_And_Level"
-    },
-    {
-     "file": "Automation/AtSpiAccessibleHandlerTests.cs",
-     "test": "Unset_Heading_Preserves_Label_Role"
-    },
-    {
-     "file": "Automation/AtSpiAccessibleHandlerTests.cs",
-     "test": "Exposes_List_Position_And_Size"
-    },
-    {
-     "file": "Automation/AtSpiAccessibleHandlerTests.cs",
-     "test": "Uses_AtSpi_Role_Ids"
-    },
-    {
-     "file": "Automation/AtSpiAccessibleHandlerTests.cs",
-     "test": "Omits_Unset_List_Position_And_Size"
-    },
-    {
-     "file": "Automation/AtSpiAccessibleHandlerTests.cs",
-     "test": "Exposes_List_Position_And_Size_Independently"
-    },
-    {
-     "file": "Automation/AtSpiAccessibleHandlerTests.cs",
-     "test": "Reads_Updated_Metadata"
-    },
-    {
-     "file": "Automation/AtSpiAccessibleHandlerTests.cs",
-     "test": "Collection_Matches_Heading_And_List_Attributes"
-    },
-    {
-     "file": "Automation/AtSpiChildrenDiffTests.cs",
-     "test": "Replaced_Child_Is_Removed_Then_Added_At_Index_0"
-    },
-    {
-     "file": "Automation/AtSpiChildrenDiffTests.cs",
-     "test": "Unchanged_Children_Report_Nothing"
-    },
-    {
-     "file": "Automation/AtSpiChildrenDiffTests.cs",
-     "test": "Removed_Children_Use_Old_Indices_Highest_First"
-    },
-    {
-     "file": "Automation/AtSpiChildrenDiffTests.cs",
-     "test": "Added_Children_Use_New_Indices_Lowest_First"
-    },
-    {
-     "file": "Automation/AtSpiChildrenDiffTests.cs",
-     "test": "First_Children_Are_All_Added"
-    },
-    {
-     "file": "Automation/AtSpiChildrenDiffTests.cs",
-     "test": "Moved_Child_Is_Removed_And_Added"
-    },
-    {
-     "file": "Automation/AtSpiChildrenDiffTests.cs",
-     "test": "Applying_Changes_In_Order_Produces_New_Children"
-    },
-    {
-     "file": "ButtonTests.cs",
-     "test": "Button_Subscribes_Once_To_Style_Set_Command_CanExecuteChanged_When_Added_To_Logical_Tree"
-    },
-    {
-     "file": "ButtonTests.cs",
-     "test": "Button_Unsubscribes_From_Style_Set_Command_CanExecuteChanged_When_Removed_From_Logical_Tree"
-    },
-    {
-     "file": "CalendarDatePickerTests.cs",
-     "test": "CalendarDatePickerTextConverter.Shift_Tab_From_TextBox_Should_Move_Focus_To_Previous_Control"
-    },
-    {
-     "file": "CalendarDatePickerTests.cs",
-     "test": "CalendarDatePickerTextConverter.Tab_Into_CalendarDatePicker_Should_Focus_TextBox_And_Select_Text"
-    },
-    {
-     "file": "CalendarDatePickerTests.cs",
-     "test": "CalendarDatePickerTextConverter.Shift_Tab_Into_CalendarDatePicker_Should_Focus_TextBox"
-    },
-    {
-     "file": "CalendarDatePickerTests.cs",
-     "test": "CalendarDatePickerTextConverter.Pointer_Focus_Should_Not_Move_Focus_To_TextBox"
-    },
-    {
-     "file": "CalendarDatePickerTests.cs",
-     "test": "CalendarDatePickerTextConverter.Focus_Should_Not_Close_An_Open_DropDown"
-    },
-    {
-     "file": "ComboBoxTests.cs",
-     "test": "ComboBoxTests.Item_Marked_As_Selected_Is_Selected_Before_The_DropDown_Is_Opened"
-    },
-    {
-     "file": "ComboBoxTests.cs",
-     "test": "ComboBoxTests.Item_Marked_As_Selected_Stays_Selected_When_The_DropDown_Is_Opened"
-    },
-    {
-     "file": "FlexPanelTests.cs",
-     "test": "Growing_Items_Can_Be_Measured_With_Infinite_Main_Axis"
-    },
-    {
-     "file": "FlyoutTests.cs",
-     "test": "Flyout_With_Pointer_Placement_Keeps_Position_On_Resize"
-    },
-    {
-     "file": "MenuItemTests.cs",
-     "test": "MenuItem_Subscribes_Once_To_Style_Set_Command_CanExecuteChanged_When_Added_To_Logical_Tree"
-    },
-    {
-     "file": "MenuItemTests.cs",
-     "test": "MenuItem_Unsubscribes_From_Style_Set_Command_CanExecuteChanged_When_Removed_From_Logical_Tree"
-    },
-    {
-     "file": "NativeMenuItemTests.cs",
-     "test": "Setting_CommandParameter_After_Command_Should_Enable_Item"
-    },
-    {
-     "file": "NativeMenuItemTests.cs",
-     "test": "Clearing_CommandParameter_Should_Disable_Item"
-    },
-    {
-     "file": "NativeMenuItemTests.cs",
-     "test": "Setting_CommandParameter_Without_Command_Should_Not_Enable_Item"
-    },
-    {
-     "file": "Platform/WaylandPropertiesTests.cs",
-     "test": "WaylandProperties_AppId_AttachedProperty_Works"
-    },
-    {
-     "file": "Platform/WaylandPropertiesTests.cs",
-     "test": "WaylandProperties_AppId_NotifiesFeature"
-    },
-    {
-     "file": "PresentationSourceTests.cs",
-     "test": "ChromeHitTest_Should_Return_Null_After_Closing"
-    },
-    {
-     "file": "Presenters/TextPresenter_Tests.cs",
-     "test": "CursorRectangle_Should_Reflect_Caret_Position"
-    },
-    {
-     "file": "Presenters/TextPresenter_Tests.cs",
-     "test": "Caret_Points_Should_Be_Recalculated_When_Centered_TextLayout_Is_Recreated"
-    },
-    {
-     "file": "Primitives/PopupTests.cs",
-     "test": "Closing_Popup_Clears_Focus_When_Previously_Focused_Element_Is_Disabled"
-    },
-    {
-     "file": "Shapes/PolygonTests.cs",
-     "test": "Polygon_Should_Invalidate_Geometry_When_Points_Collection_Changes"
-    },
-    {
-     "file": "Shapes/PolylineTests.cs",
-     "test": "Polyline_Should_Invalidate_Geometry_When_Points_Collection_Changes"
-    },
-    {
-     "file": "SplitButtonTests.cs",
-     "test": "SplitButton_Subscribes_Once_To_Style_Set_Command_CanExecuteChanged_While_In_Logical_Tree"
-    },
-    {
-     "file": "TextBlockTests.cs",
-     "test": "Detaching_Should_Release_TextLayout"
-    },
-    {
-     "file": "TextBlockTests.cs",
-     "test": "Detaching_Should_Release_TextLayout_Built_While_Measure_Is_Invalid"
-    },
-    {
-     "file": "TextBlockTests.cs",
-     "test": "Reattaching_Should_Rebuild_TextLayout"
-    },
-    {
-     "file": "TextBlockTests.cs",
-     "test": "TextBlock_With_Wrap_MaxLines_CharacterEllipsis_Should_Show_Ellipsis_On_Last_Line"
-    },
-    {
-     "file": "TextBlockTests.cs",
-     "test": "TextBlock_With_Wrap_CharacterEllipsis_And_Height_Limit_Should_Show_Ellipsis_On_Last_Line"
-    },
-    {
-     "file": "TextBlockTests.cs",
-     "test": "TextBlock_With_Wrap_MaxLines_WordEllipsis_Should_Show_Ellipsis_On_Last_Line"
-    },
-    {
-     "file": "TextBlockTests.cs",
-     "test": "TextBlock_With_Wrap_WordEllipsis_And_Height_Limit_Should_Show_Ellipsis_On_Last_Line"
-    },
-    {
-     "file": "TextBlockTests.cs",
-     "test": "TextBlock_With_MaxLines_When_Text_Fully_Fits_Should_Not_Show_Ellipsis"
-    },
-    {
-     "file": "TextBlockTests.cs",
-     "test": "TextBlock_With_Overflow_And_MaxLines_Should_Not_Produce_Double_Ellipsis"
-    },
-    {
-     "file": "TextBlockTests.cs",
-     "test": "TextBlock_With_Overflow_And_MaxHeight_Should_Not_Produce_Double_Ellipsis"
-    },
-    {
-     "file": "TextBlockTests.cs",
-     "test": "TextBlock_With_MaxHeight_And_Hidden_Content_After_NewLine_Should_Not_Show_Ellipsis"
-    },
-    {
-     "file": "TextBlockTests.cs",
-     "test": "TextBlock_With_Rtl_Wrap_MaxLines_CharacterEllipsis_Should_Show_Ellipsis_On_Last_Line"
-    },
-    {
-     "file": "TextBlockTests.cs",
-     "test": "Should_Render_Embedded_Control_In_Hidden_Subtree"
-    },
-    {
-     "file": "TextBlockTests.cs",
-     "test": "Should_Render_Embedded_Control_Shown_Later_In_Hidden_Subtree"
-    },
-    {
-     "file": "TextBlockTests.cs",
-     "test": "Should_Render_Embedded_Control_Shown_After_Its_Page_Was_Hidden"
-    },
-    {
-     "file": "TextBoxSelectionNotificationTests.cs",
-     "test": "Setting_Input_Method_Selection_Notifies_After_Both_Endpoints_Are_Assigned"
-    },
-    {
-     "file": "TextBoxSelectionNotificationTests.cs",
-     "test": "Setting_Input_Method_Selection_Allows_Reentrant_Input_From_Selection_Changed"
-    },
-    {
-     "file": "TextBoxSelectionNotificationTests.cs",
-     "test": "Replacing_Text_Notifies_Input_Method_After_Both_Selection_Endpoints_Are_Coerced"
-    },
-    {
-     "file": "TextBoxSelectionNotificationTests.cs",
-     "test": "Replacing_Text_Allows_Reentrant_Input_From_Input_Method_Selection_Changed"
-    },
-    {
-     "file": "TextBoxSelectionNotificationTests.cs",
-     "test": "Replacing_Text_Preserves_Valid_Partial_Selection_Without_Notifying_Input_Method"
-    },
-    {
-     "file": "TextBoxTests.cs",
-     "test": "Changing_Visibility_Hides_Text_Selection_Handles"
-    },
-    {
-     "file": "TreeViewTests.cs",
-     "test": "Changing_SelectedItem_Should_Report_Deselected_Item"
-    },
-    {
-     "file": "TreeViewTests.cs",
-     "test": "SelectAll_Should_Raise_A_Single_SelectionChanged_Event"
-    }
-   ]
+   "missingTests": []
   },
   {
    "path": "tests/Avalonia.DesignerSupport.TestApp",
@@ -604,35 +262,14 @@
    "applicable": true,
    "csFiles": 13,
    "tests": 35,
-   "found": 30,
-   "inFile": 30,
+   "found": 35,
+   "inFile": 35,
    "elsewhere": 0,
    "aliased": 0,
    "waived": 0,
-   "missing": 5,
+   "missing": 0,
    "port": "`src/Headless/FerroUI.Headless/unit_tests`",
-   "missingTests": [
-    {
-     "file": "PopupTests.cs",
-     "test": "Nested_Popup_Placement_Respects_Parent_Popup_Position"
-    },
-    {
-     "file": "PopupTests.cs",
-     "test": "Popup_Placement_Respects_Render_Scaling"
-    },
-    {
-     "file": "PopupTests.cs",
-     "test": "Popup_Follows_Window_Move"
-    },
-    {
-     "file": "PopupTests.cs",
-     "test": "Window_Position_Is_Fixed_When_Positioning_Is_Not_Supported"
-    },
-    {
-     "file": "PopupTests.cs",
-     "test": "Desktop_Coordinates_Are_Logical_When_Enabled"
-    }
-   ]
+   "missingTests": []
   },
   {
    "path": "tests/Avalonia.Headless.XUnit.PerAssembly.UnitTests",
@@ -671,23 +308,14 @@
    "applicable": true,
    "csFiles": 14,
    "tests": 15,
-   "found": 13,
-   "inFile": 11,
+   "found": 15,
+   "inFile": 13,
    "elsewhere": 2,
    "aliased": 0,
    "waived": 0,
-   "missing": 2,
+   "missing": 0,
    "port": "`tests/FerroUI.IntegrationTests.Win32`",
-   "missingTests": [
-    {
-     "file": "ScreenTests.cs",
-     "test": "Display_Changes_Refresh_Screens_With_Or_Without_A_Window"
-    },
-    {
-     "file": "ScreenTests.cs",
-     "test": "Display_Changes_Update_Render_Timer_Without_A_Window"
-    }
-   ]
+   "missingTests": []
   },
   {
    "path": "tests/Avalonia.LeakTests",
@@ -740,43 +368,14 @@
    "applicable": true,
    "csFiles": 68,
    "tests": 317,
-   "found": 301,
-   "inFile": 301,
+   "found": 308,
+   "inFile": 308,
    "elsewhere": 0,
    "aliased": 0,
    "waived": 9,
-   "missing": 7,
+   "missing": 0,
    "port": "`tests/FerroUI.RenderTests`",
-   "missingTests": [
-    {
-     "file": "Media/RadialGradientBrushTests.cs",
-     "test": "RadialGradientBrushTests.RadialGradientBrush_Transparent_Stop_Offset_Inside"
-    },
-    {
-     "file": "Media/RadialGradientBrushTests.cs",
-     "test": "RadialGradientBrushTests.RadialGradientBrush_RedBlue_Offset_On_Circle"
-    },
-    {
-     "file": "Media/StreamGeometryTests.cs",
-     "test": "Stretched_Path_With_Transformed_Geometry"
-    },
-    {
-     "file": "Media/StreamGeometryTests.cs",
-     "test": "Transformed_Geometry_Can_Be_Reopened"
-    },
-    {
-     "file": "Media/StreamGeometryTests.cs",
-     "test": "PathGeometry_Can_Be_Opened_With_A_Transform"
-    },
-    {
-     "file": "Media/StreamGeometryTests.cs",
-     "test": "PathGeometry_Can_Be_Opened"
-    },
-    {
-     "file": "Media/StreamGeometryTests.cs",
-     "test": "Stretched_Path_With_PathGeometry_Data"
-    }
-   ]
+   "missingTests": []
   },
   {
    "path": "tests/Avalonia.RenderTests.WpfCompare",
@@ -807,91 +406,14 @@
    "applicable": true,
    "csFiles": 39,
    "tests": 383,
-   "found": 362,
-   "inFile": 362,
+   "found": 381,
+   "inFile": 381,
    "elsewhere": 0,
    "aliased": 0,
    "waived": 2,
-   "missing": 19,
+   "missing": 0,
    "port": "`src/Skia/FerroUI.Skia`",
-   "missingTests": [
-    {
-     "file": "Media/StreamGeometryTests.cs",
-     "test": "Open_Should_Append_To_Existing_Figures"
-    },
-    {
-     "file": "Media/StreamGeometryTests.cs",
-     "test": "Open_Should_Raise_Changed"
-    },
-    {
-     "file": "Media/StreamGeometryTests.cs",
-     "test": "Open_Should_Update_Transformed_Geometry"
-    },
-    {
-     "file": "Media/StreamGeometryTests.cs",
-     "test": "Open_Should_Update_ContourLength"
-    },
-    {
-     "file": "Media/StreamGeometryTests.cs",
-     "test": "Open_Should_Not_Affect_Clone"
-    },
-    {
-     "file": "Media/StreamGeometryTests.cs",
-     "test": "Clone_Should_Keep_Transform"
-    },
-    {
-     "file": "Media/TextFormatting/BidiReordererTests.cs",
-     "test": "Should_Map_Logical_Runs_To_Visual_RunIndex"
-    },
-    {
-     "file": "Media/TextFormatting/TextFormatterTests.cs",
-     "test": "DummyRun.Should_Resolve_Explicit_Formatting_After_Another_Paragraph"
-    },
-    {
-     "file": "Media/TextFormatting/TextLayoutRangeContractTests.cs",
-     "test": "Empty_Range_Returns_No_Geometry"
-    },
-    {
-     "file": "Media/TextFormatting/TextLayoutRangeContractTests.cs",
-     "test": "Completed_Range_Does_Not_Add_Geometry_From_Following_Lines"
-    },
-    {
-     "file": "Media/TextFormatting/TextLayoutRangeContractTests.cs",
-     "test": "Negative_Range_Length_Preserves_Line_Geometry"
-    },
-    {
-     "file": "Media/TextFormatting/TextLayoutTests.cs",
-     "test": "TextLayoutTests.Should_Add_Ellipsis_When_MaxLines_Cuts_At_Hard_Break"
-    },
-    {
-     "file": "Media/TextFormatting/TextLayoutTests.cs",
-     "test": "TextLayoutTests.Should_Not_Add_Ellipsis_When_MaxHeight_Cuts_At_Hard_Break"
-    },
-    {
-     "file": "Media/TextFormatting/TextLayoutTests.cs",
-     "test": "TextLayoutTests.Should_Add_Ellipsis_When_MaxHeight_Cuts_Wrapped_Line"
-    },
-    {
-     "file": "Media/TextFormatting/TextLayoutTests.cs",
-     "test": "TextLayoutTests.Should_HitTestTextRange_Split_LeftToRight_Runs_In_RightToLeft"
-    },
-    {
-     "file": "Media/TextFormatting/TextLayoutTests.cs",
-     "test": "TextLayoutTests.Should_Not_Change_Geometry_When_Style_Spans_Split_Runs"
-    },
-    {
-     "file": "Media/TextFormatting/TextLineTests.cs",
-     "test": "TextLineTests.Should_GetTextBounds_For_Zero_TextLength"
-    },
-    {
-     "file": "Media/TextFormatting/TextLineTests.cs",
-     "test": "TextLineTests.Should_GetTextBounds_For_Non_Empty_TextLength"
-    },
-    {
-     "file": "PathGeometryTests.cs",
-     "test": "Open_Keeps_Content_When_Transform_Is_Set"
-    }
-   ]
+   "missingTests": []
   },
   {
    "path": "tests/Avalonia.Themes.UnitTests",
@@ -937,19 +459,14 @@
    "applicable": true,
    "csFiles": 3,
    "tests": 13,
-   "found": 12,
+   "found": 13,
    "inFile": 12,
-   "elsewhere": 0,
+   "elsewhere": 1,
    "aliased": 0,
    "waived": 0,
-   "missing": 1,
+   "missing": 0,
    "port": "`src/FerroUI.Wayland`",
-   "missingTests": [
-    {
-     "file": "WaylandAppIdTests.cs",
-     "test": "WaylandPlatformOptions_CanSetAppId"
-    }
-   ]
+   "missingTests": []
   },
   {
    "path": "tests/BuildTests/BuildTests",

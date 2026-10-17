@@ -181,8 +181,7 @@ impl DiagnosticTextRenderer {
             return ShapedText { glyph_run: None, width: 0.0 };
         }
 
-        let glyph_run = self.glyph_run_source.create_text_glyph_run(&chars);
-        ShapedText { width: glyph_run.bounds.width, glyph_run: Some(glyph_run) }
+        ShapedText::new(self.glyph_run_source.create_text_glyph_run(&chars))
     }
 
     /// Draws text shaped by [`shape`](Self::shape) at the origin of the
@@ -281,6 +280,12 @@ pub struct ShapedText {
 }
 
 impl ShapedText {
+    /// `ShapedText(GlyphRun glyphRun)`: the text of `glyph_run`, as wide as
+    /// its bounds.
+    pub(crate) fn new(glyph_run: DiagnosticGlyphRun) -> Self {
+        Self { width: glyph_run.bounds.width, glyph_run: Some(glyph_run) }
+    }
+
     pub fn width(&self) -> f64 {
         self.width
     }

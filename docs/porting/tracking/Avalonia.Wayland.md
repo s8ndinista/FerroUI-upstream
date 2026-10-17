@@ -12,7 +12,7 @@ Generated from upstream commit `66b7273b9a2b5ba8416feb4376b9cdc3078b8573`. Back 
 | Phase / priority | 5 - desktop (Linux) / P1 |
 | Files | 79/79 (100.0%), 2 not applicable |
 | Types | 108/121 (13 waived) (100.0%) |
-| Members | 613/790 (171 waived) (99.0%) |
+| Members | 624/790 (166 waived) (100.0%) |
 | Contracts (interfaces) | 14/14 |
 | Property registrations | 0/0 |
 | Routed events | 0/0 |
@@ -31,7 +31,7 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 | `Avalonia.Wayland.Server.Persistent.IWXdgPopup` | internal | `Server/Persistent/IWXdgTopLevel.cs` | 1/1 | present |
 | `Avalonia.Wayland.Server.Persistent.IWXdgPopupEventSink` | internal | `Server/Persistent/IWSurfaceEventSink.cs` | 2/2 | present |
 | `Avalonia.Wayland.Server.Persistent.IWXdgShellSurface` | internal | `Server/Persistent/IWXdgTopLevel.cs` | 2/2 | present |
-| `Avalonia.Wayland.Server.Persistent.IWXdgTopLevel` | internal | `Server/Persistent/IWXdgTopLevel.cs` | 12/13 | partial |
+| `Avalonia.Wayland.Server.Persistent.IWXdgTopLevel` | internal | `Server/Persistent/IWXdgTopLevel.cs` | 13/13 | present |
 | `Avalonia.Wayland.Server.Persistent.IWXdgTopLevelEventSink` | internal | `Server/Persistent/IWSurfaceEventSink.cs` | 3/3 | present |
 | `Avalonia.Wayland.Server.Persistent.IWaylandCursor` | internal | `Server/Persistent/IWaylandCursor.cs` | 1/1 | present |
 | `Avalonia.Wayland.Server.Transient.IWaylandTextInputV3Events` | internal | `Server/Transient/IWaylandTextInputV3Events.cs` | 1/1 | present |
@@ -40,7 +40,7 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 
 ## Files
 
-### `(project root)` - files 26/26, types 32/33 (1 waived), members 153/206 (50 waived)
+### `(project root)` - files 26/26, types 32/33 (1 waived), members 161/206 (45 waived)
 
 | Upstream file | Rust file | Status | Types | Members | Notes |
 |---|---|---|---|---|---|
@@ -48,7 +48,7 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 | `AvaloniaWaylandPlatformExtensions.cs` | `ferro_wayland_platform_extensions.rs` | present | 1/1 | 2/2 |  |
 | `IWaylandXdgTopLevelExport.cs` | `i_wayland_xdg_top_level_export.rs` | present | 1/1 | 1/1 |  |
 | `PopupImpl.Sink.cs` | `popup_impl_sink.rs` | present | 1/1 | 0/0 |  |
-| `PopupImpl.cs` | `popup_impl.rs` | partial | 1/1 | 13/14 |  |
+| `PopupImpl.cs` | `popup_impl.rs` | present | 1/1 | 14/14 |  |
 | `TextInputOptionsConverter.cs` | `text_input_options_converter.rs` | present | 1/1 | 1/1 |  |
 | `WaylandConversionExtensions.cs` | `wayland_conversion_extensions.rs` | present | 0/1 (1 waived) | 0/4 (4 waived) |  |
 | `WaylandCursorFactory.cs` | `wayland_cursor_factory.rs` | present | 2/2 | 6/6 |  |
@@ -60,31 +60,16 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 | `WaylandTopLevelFactory.cs` | `wayland_top_level_factory.rs` | present | 1/1 | 6/6 |  |
 | `WindowImpl.Sink.cs` | `window_impl_sink.rs` | present | 1/1 | 0/0 |  |
 | `WindowImpl.TextInput.cs` | `window_impl_text_input.rs` | present | 1/1 | 0/0 |  |
-| `WindowImpl.cs` | `window_impl.rs` | partial | 1/1 | 38/40 |  |
+| `WindowImpl.cs` | `window_impl.rs` | present | 1/1 | 40/40 |  |
 | `WindowImplBase.DragDrop.cs` | `window_impl_base_drag_drop.rs` | present | 1/1 | 0/0 |  |
 | `WindowImplBase.Keyboard.cs` | `window_impl_base_keyboard.rs` | present | 1/1 | 0/0 |  |
 | `WindowImplBase.Pointer.cs` | `window_impl_base_pointer.rs` | present | 1/1 | 0/0 |  |
-| `WindowImplBase.cs` | `window_impl_base.rs` | present | 2/2 | 38/68 (30 waived) |  |
+| `WindowImplBase.cs` | `window_impl_base.rs` | present | 2/2 | 43/68 (25 waived) |  |
 | `XkbCommonKeymap.cs` | `xkb_common_keymap.rs` | present | 1/1 | 6/6 |  |
 | `XkbComposeState.cs` | `xkb_compose_state.rs` | present | 1/1 | 6/6 |  |
 | `XkbComposeTable.cs` | `xkb_compose_table.rs` | present | 1/1 | 3/3 |  |
 | `XkbContext.cs` | `xkb_context.rs` | present | 1/1 | 3/3 |  |
 | `XkbKeyTransform.cs` | `xkb_key_transform.rs` | present | 1/1 | 5/5 |  |
-
-<details><summary><code>PopupImpl.cs</code> - 1 missing</summary>
-
-- `PopupImpl` (class): 1 missing
-  - `override PixelPoint WindowGeometryOrigin { get; }` *(internal)*
-
-</details>
-
-<details><summary><code>WindowImpl.cs</code> - 2 missing</summary>
-
-- `WindowImpl` (class): 2 missing
-  - `void SetAppId(string? appId)`
-  - `override PixelPoint WindowGeometryOrigin { get; }` *(internal)*
-
-</details>
 
 ### `Clipboard` - files 5/5, types 6/6, members 34/34
 
@@ -128,7 +113,7 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 | `WaylandEglNativeMethods.cs` | - | n/a | - | - | not-applicable: the three platform invokes of `libwayland-egl` (`wl_egl_window_create`, `_resize`, `_destroy`): the declarations are those of the crate `wayland-egl`, used by `server/transient/rendering/wayland_egl_wsi_surface.rs` (docs/porting/wayland-platform.md, section 2.1) |
 | `XkbCommonNativeMethods.cs` | - | n/a | - | - | not-applicable: the platform invokes of `libxkbcommon` and their constants: the declarations are those of the crate `xkbcommon-dl`, which opens the library at run time; the four classes over them (`XkbContext`, `XkbCommonKeymap`, `XkbComposeTable`, `XkbComposeState`) are ported (docs/porting/wayland-platform.md, section 2.2) |
 
-### `Server/Persistent` - files 13/13, types 23/26 (3 waived), members 148/189 (38 waived)
+### `Server/Persistent` - files 13/13, types 23/26 (3 waived), members 151/189 (38 waived)
 
 | Upstream file | Rust file | Status | Types | Members | Notes |
 |---|---|---|---|---|---|
@@ -136,46 +121,15 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 | `IPersistentObject.cs` | `server/persistent/i_persistent_object.rs` | present | 1/1 | 2/2 |  |
 | `IWSurface.cs` | `server/persistent/i_w_surface.rs` | present | 1/1 | 10/10 |  |
 | `IWSurfaceEventSink.cs` | `server/persistent/i_w_surface_event_sink.rs` | present | 3/3 | 24/24 |  |
-| `IWXdgTopLevel.cs` | `server/persistent/i_w_xdg_top_level.rs` | partial | 3/3 | 15/16 |  |
+| `IWXdgTopLevel.cs` | `server/persistent/i_w_xdg_top_level.rs` | present | 3/3 | 16/16 |  |
 | `IWaylandCursor.cs` | `server/persistent/i_wayland_cursor.rs` | present | 1/1 | 1/1 |  |
-| `WSurface.cs` | `server/persistent/w_surface.rs` | partial | 4/7 (3 waived) | 61/93 (31 waived) |  |
+| `WSurface.cs` | `server/persistent/w_surface.rs` | present | 4/7 (3 waived) | 62/93 (31 waived) |  |
 | `WaylandBitmapCursor.cs` | `server/persistent/wayland_bitmap_cursor.rs` | present | 1/1 | 10/12 (2 waived) |  |
 | `WaylandCursor.cs` | `server/persistent/wayland_cursor.rs` | present | 3/3 | 3/6 (3 waived) |  |
 | `WaylandInputEventCookie.cs` | `server/persistent/wayland_input_event_cookie.rs` | present | 1/1 | 3/3 |  |
 | `XdgConfigureBatch.cs` | `server/persistent/xdg_configure_batch.rs` | present | 2/2 | 16/17 (1 waived) |  |
-| `XdgPopupConfigureBatch.cs` | `server/persistent/xdg_popup_configure_batch.rs` | partial | 1/1 | 1/2 |  |
+| `XdgPopupConfigureBatch.cs` | `server/persistent/xdg_popup_configure_batch.rs` | present | 1/1 | 2/2 |  |
 | `XdgPopupPositionerParams.cs` | `server/persistent/xdg_popup_positioner_params.rs` | present | 1/1 | 0/1 (1 waived) |  |
-
-<details><summary><code>IWXdgTopLevel.cs</code> - 1 missing</summary>
-
-- `IWXdgTopLevel` (interface): 1 missing
-  - `void SetAppId(string? appId)`
-
-</details>
-
-<details><summary><code>WSurface.cs</code> - 1 missing</summary>
-
-- `WSurface` (class): complete
-  - waived (members that are written differently, because the surfaces of the worker are entries of its state found by number and not objects that hold the worker, the connection and the globals: the connection and the globals are given to a method that needs them (`ConnectionContext`, an argument) and the surface keeps the number of its connection (`current_connection_id`); `Disconnect` is `WaylandWorkerThread::unregister_surface`; the seven text input members are methods of `WaylandWorkerState` (`register_text_input_sink`, `set_text_input_active`, `abort_text_input_composition`, `set_text_input_cursor_rect`, `set_text_input_options`, `set_text_input_surrounding_text`, `reset_text_input`), which has the surface and the facade of the connection at once; `CanCommitOutOfBand` is `WXdgShellSurface::can_commit_out_of_band`; the render surfaces are made by the worker client (`create_top_level_handle`, `create_popup_handle`); `EnforceBufferCreationRoundtrip` is the member of `IWaylandFramebufferSurface` each kind of surface implements; `OnOutputsChanged` and `OnScaleChanged` are the value an event handler returns (`SurfaceChange`), which the shell surface applies (`apply_change`)): `Connection`, `Globals`, `CurrentDisplay`, `Disconnect`, `RegisterTextInputSink`, `SetTextInputActive`, `AbortTextInputComposition`, `SetTextInputCursorRect`, `SetTextInputOptions`, `SetTextInputSurroundingText`, `ResetTextInput`, `CanCommitOutOfBand`, `RenderSurfaces`, `EnforceBufferCreationRoundtrip`, `OnOutputsChanged`, `OnScaleChanged`
-- `WXdgShellSurface` (class): complete
-  - waived (a virtual method without a body of its own: `on_configure_batch_complete` of `WXdgTopLevel` and of `WXdgPopup`, called by the `Dispatch` implementation of `xdg_surface`): `OnConfigureBatchComplete`
-  - waived (the overrides are `WXdgShellSurface::apply_change`, which is given what an event of the surface changed (`SurfaceChange`)): `OnScaleChanged`, `OnOutputsChanged`
-- `WXdgShellSurface.XdgSurfaceListener` (class): waived - a listener class of the generated bindings of the original; the bindings of the port dispatch the events of a protocol object to the state of the worker, so the listener is the `Dispatch` implementation of the protocol object beside the object it belongs to (docs/porting/wayland-platform.md, section 2.1); in `server/persistent/w_surface.rs`
-- `WXdgTopLevel` (class): 1 missing
-  - `void SetAppId(string? appId)`
-  - waived (`WXdgTopLevel::dispose_export`, which destroys the export and removes it): `RemoveExport`
-  - waived (the sender of a channel (`basic_init_completed`), on which the worker sends the first sealed configure): `BasicInitCompletedTcs`
-- `WXdgTopLevel.TopLevelListener` (class): waived - a listener class of the generated bindings of the original; the bindings of the port dispatch the events of a protocol object to the state of the worker, so the listener is the `Dispatch` implementation of the protocol object beside the object it belongs to (docs/porting/wayland-platform.md, section 2.1); in `server/persistent/w_surface.rs`
-- `WXdgPopup.PopupListener` (class): waived - a listener class of the generated bindings of the original; the bindings of the port dispatch the events of a protocol object to the state of the worker, so the listener is the `Dispatch` implementation of the protocol object beside the object it belongs to (docs/porting/wayland-platform.md, section 2.1); in `server/persistent/w_surface.rs`
-
-</details>
-
-<details><summary><code>XdgPopupConfigureBatch.cs</code> - 1 missing</summary>
-
-- `XdgPopupConfigureBatch` (class): 1 missing
-  - `PixelRect? Geometry { get; set; }`
-
-</details>
 
 ### `Server/Transient` - files 8/8, types 10/10, members 80/85 (5 waived)
 

@@ -12,7 +12,7 @@ Generated from upstream commit `66b7273b9a2b5ba8416feb4376b9cdc3078b8573`. Back 
 | Phase / priority | 1 - test infrastructure / P1 |
 | Files | 11/11 (100.0%) |
 | Types | 22/24 (2 waived) (100.0%) |
-| Members | 238/253 (12 waived) (98.8%) |
+| Members | 241/253 (12 waived) (100.0%) |
 | Contracts (interfaces) | 2/3 |
 | Property registrations | 0/0 |
 | Routed events | 0/0 |
@@ -29,13 +29,13 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 
 ## Files
 
-### `(project root)` - files 11/11, types 22/24 (2 waived), members 238/253 (12 waived)
+### `(project root)` - files 11/11, types 22/24 (2 waived), members 241/253 (12 waived)
 
 | Upstream file | Rust file | Status | Types | Members | Notes |
 |---|---|---|---|---|---|
-| `AvaloniaHeadlessPlatform.cs` | `ferro_headless_platform.rs` | partial | 3/3 | 10/12 |  |
+| `AvaloniaHeadlessPlatform.cs` | `ferro_headless_platform.rs` | present | 3/3 | 12/12 |  |
 | `AvaloniaTestApplicationAttribute.cs` | `ferro_test_application_attribute.rs` | present | 1/1 | 2/2 |  |
-| `HeadlessPlatformRenderInterface.cs` | `headless_platform_render_interface.rs` | partial | 3/4 (1 waived) | 68/74 (5 waived) |  |
+| `HeadlessPlatformRenderInterface.cs` | `headless_platform_render_interface.rs` | present | 3/4 (1 waived) | 69/74 (5 waived) |  |
 | `HeadlessPlatformStubs.cs` | `headless_platform_stubs.rs` | present | 7/8 (1 waived) | 35/36 (1 waived) |  |
 | `HeadlessRenderTimer.cs` | `headless_render_timer.rs` | present | 1/1 | 4/4 |  |
 | `HeadlessUnitTestIsolationAttribute.cs` | `headless_unit_test_isolation_attribute.rs` | present | 2/2 | 4/4 |  |
@@ -44,25 +44,6 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 | `HeadlessWindowImpl.cs` | `headless_window_impl.rs` | present | 1/1 | 79/84 (5 waived) |  |
 | `IHeadlessTouchPointer.cs` | `i_headless_touch_pointer.rs` | present | 1/1 | 0/0 |  |
 | `IHeadlessWindow.cs` | `i_headless_window.rs` | present | 1/1 | 11/11 |  |
-
-<details><summary><code>AvaloniaHeadlessPlatform.cs</code> - 2 missing</summary>
-
-- `AvaloniaHeadlessPlatformOptions` (class): 2 missing
-  - `bool SupportsWindowPositioning { get; set; }`
-  - `bool UseLogicalDesktopCoordinates { get; set; }`
-
-</details>
-
-<details><summary><code>HeadlessPlatformRenderInterface.cs</code> - 1 missing</summary>
-
-- `HeadlessPlatformRenderInterface` (class): 1 missing
-  - `IStreamGeometryBuilder CreateStreamGeometryBuilder(IGeometryImpl? source = null)`
-  - waived (an empty dictionary: the default of `IPlatformRenderInterfaceContext::public_features`, which the headless interface does not override): `PublicFeatures`
-- `HeadlessPlatformRenderInterface.HeadlessGlyphRunStub` (class): complete
-  - waived (not kept (DEVIATIONS.md, Headless platform): the property is no member of `IGlyphRunImpl` and nothing reads it upstream; the glyph typeface is an object of the UI thread (`Rc&lt;GlyphTypeface&gt;`) and a glyph run is shared with the render thread (`IGlyphRunImpl: Send + Sync`), so the stub is created without it (`HeadlessGlyphRunStub::new`)): `GlyphTypeface`
-- `HeadlessPlatformRenderInterface.IHeadlessGeometryWithEdges` (interface): waived - interface with default members, tested with `is`: the free functions `edge_points_of` (the test and `Points`), `projection_on_axis` and `get_axes` of `headless_platform_render_interface.rs`
-
-</details>
 
 ## Rust-only files
 
@@ -74,6 +55,6 @@ Rust sources of this crate that no upstream file maps to. Give each a reason in 
 | `testing.rs` | the render interface of the headless platform and its drawing context stub, for the benchmarks (the `testing` feature): internal upstream, created by upstream's benchmark project through its access to the internals |  |
 | `tests.rs` | the unit tests of the module | `HeadlessApplication` |
 | `unit_tests/headless_unit_test_application.rs` | test support: `HeadlessUnitTestApplication.cs` of the upstream test library (`tests/Avalonia.UnitTests`), the application on the headless platform with the Simple theme that the headless probe tests of the controls run with; the headless platform and the theme are built on the controls, so the tests are in this crate | `HeadlessUnitTestApplication`, `Scope`, `ScopeState` |
-| `unit_tests/test_application.rs` | test support: `TestApplication.cs` of the upstream unit test project of the headless platform, the two test assemblies that stand for the upstream test projects that compile its files, and the facts and theories that dispatch a test to the session of its assembly (what the xUnit integration does, which is not ported) | `TestApplication` |
+| `unit_tests/test_application.rs` | test support: `TestApplication.cs` of the upstream unit test project of the headless platform, the two test assemblies that stand for the upstream test projects that compile its files, and the facts and theories that dispatch a test to the session of its assembly (what the xUnit integration does, which is not ported) | `HeadlessRuntimeOptions`, `RestoreScope`, `TestApplication` |
 
 Tests, examples and build scripts (not scanned): `unit_tests/async_setup_tests.rs`, `unit_tests/headless_probe_tests.rs`, `unit_tests/headless_unit_test_session_tests.rs`, `unit_tests/input_tests.rs`, `unit_tests/isolation_tests.rs`, `unit_tests/leak_tests.rs`, `unit_tests/mouse_device_tests.rs`, `unit_tests/popup_tests.rs`, `unit_tests/render_scaling_tests.rs`, `unit_tests/rendering_tests.rs`, `unit_tests/second_window_tests.rs`, `unit_tests/services_tests.rs`, `unit_tests/setup_tests.rs`, `unit_tests/shared_session_tests.rs`, `unit_tests/threading_tests.rs`.

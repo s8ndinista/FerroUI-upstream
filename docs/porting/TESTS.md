@@ -6,7 +6,7 @@ Upstream commit `66b7273b9a2b5ba8416feb4376b9cdc3078b8573` (`external/Avalonia.D
 
 How completely the upstream test suites are ported, per upstream test project: the upstream test methods, how many of them the port has by name, how many are waived with a reason, and the names of the missing ones. The member counts are in [TRACKING.md](TRACKING.md); what is left overall is in [REMAINING.md](REMAINING.md).
 
-**7244 of 7363 upstream tests that apply are found (98.3%)**: 7510 tests in 19 applicable projects, 147 waived, 119 missing. 697 more tests are in 29 projects that do not apply to the port.
+**7363 of 7363 upstream tests that apply are found (100.0%)**: 7510 tests in 19 applicable projects, 147 waived, 0 missing. 697 more tests are in 29 projects that do not apply to the port.
 
 ```sh
 python3 scripts/port-status/tests_audit.py            # regenerate this document and data/tests-status.json
@@ -19,26 +19,26 @@ python3 scripts/port-status/tests_audit.py --explain Avalonia.Base.UnitTests 'St
 
 | Upstream test project | Tests | Found | in its file | elsewhere | by alias | Waived | Missing | Coverage | Port |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---|
-| [`tests/Avalonia.Controls.UnitTests`](#avaloniacontrolsunittests) | 3137 | 3058 | 3014 | 43 | 1 | 16 | 63 | 97.9% | next to the code, mostly `src/FerroUI.Controls` |
-| [`tests/Avalonia.Base.UnitTests`](#avaloniabaseunittests) | 2424 | 2291 | 1988 | 283 | 20 | 111 | 22 | 99.0% | next to the code, mostly `src/FerroUI.Base` |
+| `tests/Avalonia.Controls.UnitTests` | 3137 | 3121 | 3076 | 44 | 1 | 16 | 0 | 100.0% | next to the code, mostly `src/FerroUI.Controls` |
+| `tests/Avalonia.Base.UnitTests` | 2424 | 2313 | 2006 | 287 | 20 | 111 | 0 | 100.0% | next to the code, mostly `src/FerroUI.Base` |
 | `tests/Avalonia.Markup.Xaml.UnitTests` | 506 | 506 | 506 | 0 | 0 | 0 | 0 | 100.0% | `tests/FerroUI.Markup.Xaml.UnitTests`, `src/Markup` |
-| [`tests/Avalonia.Skia.UnitTests`](#avaloniaskiaunittests) | 383 | 362 | 362 | 0 | 0 | 2 | 19 | 95.0% | `src/Skia/FerroUI.Skia` |
-| [`tests/Avalonia.RenderTests`](#avaloniarendertests) | 317 | 301 | 301 | 0 | 0 | 9 | 7 | 97.7% | `tests/FerroUI.RenderTests` |
+| `tests/Avalonia.Skia.UnitTests` | 383 | 381 | 381 | 0 | 0 | 2 | 0 | 100.0% | `src/Skia/FerroUI.Skia` |
+| `tests/Avalonia.RenderTests` | 317 | 308 | 308 | 0 | 0 | 9 | 0 | 100.0% | `tests/FerroUI.RenderTests` |
 | `tests/Avalonia.Markup.UnitTests` | 218 | 216 | 194 | 22 | 0 | 2 | 0 | 100.0% | `src/Markup/FerroUI.Markup` |
 | `tests/Avalonia.Benchmarks` | 162 | 162 | 162 | 0 | 0 | 0 | 0 | 100.0% | `tests/FerroUI.Benchmarks` |
 | `external/XamlX/tests/XamlParserTests` | 127 | 121 | 57 | 40 | 24 | 6 | 0 | 100.0% | `src/Markup/FerroUI.Markup.Xaml.Loader/runtime/interpreter/tests`, `external/XamlX/src/XamlX/tests` |
 | `tests/Avalonia.IntegrationTests.Appium` | 117 | 117 | 117 | 0 | 0 | 0 | 0 | 100.0% | `tests/FerroUI.IntegrationTests.Appium` |
 | `tests/Avalonia.LeakTests` | 41 | 41 | 41 | 0 | 0 | 0 | 0 | 100.0% | `tests/FerroUI.LeakTests` |
-| [`tests/Avalonia.Headless.UnitTests`](#avaloniaheadlessunittests) | 35 | 30 | 30 | 0 | 0 | 0 | 5 | 85.7% | `src/Headless/FerroUI.Headless/unit_tests` |
-| [`tests/Avalonia.IntegrationTests.Win32`](#avaloniaintegrationtestswin32) | 15 | 13 | 11 | 2 | 0 | 0 | 2 | 86.6% | `tests/FerroUI.IntegrationTests.Win32` |
-| [`tests/Avalonia.Wayland.UnitTests`](#avaloniawaylandunittests) | 13 | 12 | 12 | 0 | 0 | 0 | 1 | 92.3% | `src/FerroUI.Wayland` |
+| `tests/Avalonia.Headless.UnitTests` | 35 | 35 | 35 | 0 | 0 | 0 | 0 | 100.0% | `src/Headless/FerroUI.Headless/unit_tests` |
+| `tests/Avalonia.IntegrationTests.Win32` | 15 | 15 | 13 | 2 | 0 | 0 | 0 | 100.0% | `tests/FerroUI.IntegrationTests.Win32` |
+| `tests/Avalonia.Wayland.UnitTests` | 13 | 13 | 12 | 1 | 0 | 0 | 0 | 100.0% | `src/FerroUI.Wayland` |
 | `tests/Avalonia.Themes.UnitTests` | 10 | 10 | 10 | 0 | 0 | 0 | 0 | 100.0% | `src/FerroUI.Themes.Fluent`, `src/FerroUI.Themes.Simple` |
 | `tests/Avalonia.DesignerSupport.Tests` | 4 | 4 | 4 | 0 | 0 | 0 | 0 | 100.0% | `src/FerroUI.DesignerSupport`, `tests/FerroUI.DesignerSupport.Tests` |
 | `tests/Avalonia.Build.Tasks.UnitTest` | 1 | 0 | 0 | 0 | 0 | 1 | 0 | n/a | `src/FerroUI.Build.Tasks` |
 | `external/XamlX/tests/TestClasses` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | n/a | none |
 | `tests/Avalonia.Skia.RenderTests` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | n/a | `tests/FerroUI.RenderTests` |
 | `tests/Avalonia.UnitTests` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | n/a | `test_support` modules of the crates |
-| Total | 7510 | 7244 | 6809 | 390 | 45 | 147 | 119 | 98.3% | |
+| Total | 7510 | 7363 | 6922 | 396 | 45 | 147 | 0 | 100.0% | |
 
 Notes:
 
@@ -185,114 +185,3 @@ applicable project but the Appium tests and the benchmarks has at most eight).
 ## Missing tests by project
 
 Per project, the upstream files with tests the port does not have by name (`missing/tests of the file`), and the missing names. Waived tests are in the reports of `test_gaps.py` (`docs/porting/data/test-gaps-*.txt`).
-
-### Avalonia.Controls.UnitTests
-
-63 missing of 3137 (`tests/Avalonia.Controls.UnitTests`).
-
-<details>
-<summary>63 missing tests in 20 files</summary>
-
-- `TextBlockTests.cs` (15/55): `Detaching_Should_Release_TextLayout`, `Detaching_Should_Release_TextLayout_Built_While_Measure_Is_Invalid`, `Reattaching_Should_Rebuild_TextLayout`, `TextBlock_With_Wrap_MaxLines_CharacterEllipsis_Should_Show_Ellipsis_On_Last_Line`, `TextBlock_With_Wrap_CharacterEllipsis_And_Height_Limit_Should_Show_Ellipsis_On_Last_Line`, `TextBlock_With_Wrap_MaxLines_WordEllipsis_Should_Show_Ellipsis_On_Last_Line`, `TextBlock_With_Wrap_WordEllipsis_And_Height_Limit_Should_Show_Ellipsis_On_Last_Line`, `TextBlock_With_MaxLines_When_Text_Fully_Fits_Should_Not_Show_Ellipsis`, `TextBlock_With_Overflow_And_MaxLines_Should_Not_Produce_Double_Ellipsis`, `TextBlock_With_Overflow_And_MaxHeight_Should_Not_Produce_Double_Ellipsis`, `TextBlock_With_MaxHeight_And_Hidden_Content_After_NewLine_Should_Not_Show_Ellipsis`, `TextBlock_With_Rtl_Wrap_MaxLines_CharacterEllipsis_Should_Show_Ellipsis_On_Last_Line`, `Should_Render_Embedded_Control_In_Hidden_Subtree`, `Should_Render_Embedded_Control_Shown_Later_In_Hidden_Subtree`, `Should_Render_Embedded_Control_Shown_After_Its_Page_Was_Hidden`
-- `Automation/AtSpiAccessibleHandlerTests.cs` (8/8): `Exposes_Heading_Role_And_Level`, `Unset_Heading_Preserves_Label_Role`, `Exposes_List_Position_And_Size`, `Uses_AtSpi_Role_Ids`, `Omits_Unset_List_Position_And_Size`, `Exposes_List_Position_And_Size_Independently`, `Reads_Updated_Metadata`, `Collection_Matches_Heading_And_List_Attributes`
-- `Automation/AtSpiChildrenDiffTests.cs` (7/7): `Replaced_Child_Is_Removed_Then_Added_At_Index_0`, `Unchanged_Children_Report_Nothing`, `Removed_Children_Use_Old_Indices_Highest_First`, `Added_Children_Use_New_Indices_Lowest_First`, `First_Children_Are_All_Added`, `Moved_Child_Is_Removed_And_Added`, `Applying_Changes_In_Order_Produces_New_Children`
-- `CalendarDatePickerTests.cs` (5/14): `CalendarDatePickerTextConverter.Shift_Tab_From_TextBox_Should_Move_Focus_To_Previous_Control`, `CalendarDatePickerTextConverter.Tab_Into_CalendarDatePicker_Should_Focus_TextBox_And_Select_Text`, `CalendarDatePickerTextConverter.Shift_Tab_Into_CalendarDatePicker_Should_Focus_TextBox`, `CalendarDatePickerTextConverter.Pointer_Focus_Should_Not_Move_Focus_To_TextBox`, `CalendarDatePickerTextConverter.Focus_Should_Not_Close_An_Open_DropDown`
-- `TextBoxSelectionNotificationTests.cs` (5/5): `Setting_Input_Method_Selection_Notifies_After_Both_Endpoints_Are_Assigned`, `Setting_Input_Method_Selection_Allows_Reentrant_Input_From_Selection_Changed`, `Replacing_Text_Notifies_Input_Method_After_Both_Selection_Endpoints_Are_Coerced`, `Replacing_Text_Allows_Reentrant_Input_From_Input_Method_Selection_Changed`, `Replacing_Text_Preserves_Valid_Partial_Selection_Without_Notifying_Input_Method`
-- `NativeMenuItemTests.cs` (3/3): `Setting_CommandParameter_After_Command_Should_Enable_Item`, `Clearing_CommandParameter_Should_Disable_Item`, `Setting_CommandParameter_Without_Command_Should_Not_Enable_Item`
-- `ButtonTests.cs` (2/34): `Button_Subscribes_Once_To_Style_Set_Command_CanExecuteChanged_When_Added_To_Logical_Tree`, `Button_Unsubscribes_From_Style_Set_Command_CanExecuteChanged_When_Removed_From_Logical_Tree`
-- `ComboBoxTests.cs` (2/39): `ComboBoxTests.Item_Marked_As_Selected_Is_Selected_Before_The_DropDown_Is_Opened`, `ComboBoxTests.Item_Marked_As_Selected_Stays_Selected_When_The_DropDown_Is_Opened`
-- `MenuItemTests.cs` (2/29): `MenuItem_Subscribes_Once_To_Style_Set_Command_CanExecuteChanged_When_Added_To_Logical_Tree`, `MenuItem_Unsubscribes_From_Style_Set_Command_CanExecuteChanged_When_Removed_From_Logical_Tree`
-- `Platform/WaylandPropertiesTests.cs` (2/2): `WaylandProperties_AppId_AttachedProperty_Works`, `WaylandProperties_AppId_NotifiesFeature`
-- `Presenters/TextPresenter_Tests.cs` (2/8): `CursorRectangle_Should_Reflect_Caret_Position`, `Caret_Points_Should_Be_Recalculated_When_Centered_TextLayout_Is_Recreated`
-- `TreeViewTests.cs` (2/68): `Changing_SelectedItem_Should_Report_Deselected_Item`, `SelectAll_Should_Raise_A_Single_SelectionChanged_Event`
-- `FlexPanelTests.cs` (1/15): `Growing_Items_Can_Be_Measured_With_Infinite_Main_Axis`
-- `FlyoutTests.cs` (1/31): `Flyout_With_Pointer_Placement_Keeps_Position_On_Resize`
-- `PresentationSourceTests.cs` (1/5): `ChromeHitTest_Should_Return_Null_After_Closing`
-- `Primitives/PopupTests.cs` (1/51): `Closing_Popup_Clears_Focus_When_Previously_Focused_Element_Is_Disabled`
-- `Shapes/PolygonTests.cs` (1/4): `Polygon_Should_Invalidate_Geometry_When_Points_Collection_Changes`
-- `Shapes/PolylineTests.cs` (1/5): `Polyline_Should_Invalidate_Geometry_When_Points_Collection_Changes`
-- `SplitButtonTests.cs` (1/3): `SplitButton_Subscribes_Once_To_Style_Set_Command_CanExecuteChanged_While_In_Logical_Tree`
-- `TextBoxTests.cs` (1/101): `Changing_Visibility_Hides_Text_Selection_Handles`
-
-</details>
-
-### Avalonia.Base.UnitTests
-
-22 missing of 2424 (`tests/Avalonia.Base.UnitTests`).
-
-<details>
-<summary>22 missing tests in 9 files</summary>
-
-- `Rendering/DiagnosticTextRendererTests.cs` (7/7): `Digits_Measure_To_The_Same_Width`, `Height_Is_The_Scaled_Line_Spacing`, `Digits_Are_Centered_Inside_The_Digit_Cell`, `Text_After_Digits_Does_Not_Depend_On_The_Digit_Values`, `DrawDigits_Matches_Drawing_The_Padded_Text`, `ShapedText_Is_Measured_Once_And_Drawn_As_A_Single_Run`, `FpsCounter_Layout_Does_Not_Depend_On_The_Numbers`
-- `Styling/ContainerTests.cs` (4/9): `Container_Does_Not_Query_Itself`, `Container_Query_Tracks_Non_Visual_Target_After_Logical_Reparenting`, `Container_Query_Matches_Non_Visual_StyledElement`, `Container_Query_Uses_Named_Visual_Ancestor_For_Non_Visual_Target`
-- `Styling/ControlThemeTests.cs` (3/12): `ControlTheme_Attached_As_Theme_And_TemplatedParentTheme_Creates_Distinct_Instances`, `ControlTheme_Reattach_After_RemoveFrames_Does_Not_Duplicate_Instance`, `ControlTheme_Shares_Instance_Between_Controls_For_Same_FrameType`
-- `Media/PathGeometryTests.cs` (2/3): `Open_Adds_To_Figures`, `Open_Adds_To_Figures_When_A_Transform_Is_Set`
-- `Media/StreamGeometryTests.cs` (2/2): `Changed_Is_Raised_When_The_Drawing_Is_Finished`, `Changed_Is_Raised_When_The_Drawing_Is_Finished_And_A_Transform_Is_Set`
-- `Composition/CompositionChildVisualTests.cs` (1/1): `Child_Visual_Cleared_During_Detach_Can_Reattach`
-- `Input/InputElement_Focus.cs` (1/47): `Removing_Or_Hiding_Focus_Scope_Clears_Focus_When_Root_Focus_Scope_Element_Is_Disabled`
-- `Media/TextFormatting/BiDiDataTests.cs` (1/1): `Explicit_Formatting_Should_Be_Resolved_After_Reset`
-- `Rendering/CompositorLifetimeTests.cs` (1/2): `Visuals_Removed_While_Rendering_Stopped_Are_Not_Kept_By_Renderer`
-
-</details>
-
-### Avalonia.Skia.UnitTests
-
-19 missing of 383 (`tests/Avalonia.Skia.UnitTests`).
-
-<details>
-<summary>19 missing tests in 7 files</summary>
-
-- `Media/StreamGeometryTests.cs` (6/6): `Open_Should_Append_To_Existing_Figures`, `Open_Should_Raise_Changed`, `Open_Should_Update_Transformed_Geometry`, `Open_Should_Update_ContourLength`, `Open_Should_Not_Affect_Clone`, `Clone_Should_Keep_Transform`
-- `Media/TextFormatting/TextLayoutTests.cs` (5/59): `TextLayoutTests.Should_Add_Ellipsis_When_MaxLines_Cuts_At_Hard_Break`, `TextLayoutTests.Should_Not_Add_Ellipsis_When_MaxHeight_Cuts_At_Hard_Break`, `TextLayoutTests.Should_Add_Ellipsis_When_MaxHeight_Cuts_Wrapped_Line`, `TextLayoutTests.Should_HitTestTextRange_Split_LeftToRight_Runs_In_RightToLeft`, `TextLayoutTests.Should_Not_Change_Geometry_When_Style_Spans_Split_Runs`
-- `Media/TextFormatting/TextLayoutRangeContractTests.cs` (3/3): `Empty_Range_Returns_No_Geometry`, `Completed_Range_Does_Not_Add_Geometry_From_Following_Lines`, `Negative_Range_Length_Preserves_Line_Geometry`
-- `Media/TextFormatting/TextLineTests.cs` (2/61): `TextLineTests.Should_GetTextBounds_For_Zero_TextLength`, `TextLineTests.Should_GetTextBounds_For_Non_Empty_TextLength`
-- `Media/TextFormatting/BidiReordererTests.cs` (1/1): `Should_Map_Logical_Runs_To_Visual_RunIndex`
-- `Media/TextFormatting/TextFormatterTests.cs` (1/35): `DummyRun.Should_Resolve_Explicit_Formatting_After_Another_Paragraph`
-- `PathGeometryTests.cs` (1/1): `Open_Keeps_Content_When_Transform_Is_Set`
-
-</details>
-
-### Avalonia.RenderTests
-
-7 missing of 317 (`tests/Avalonia.RenderTests`).
-
-<details>
-<summary>7 missing tests in 2 files</summary>
-
-- `Media/StreamGeometryTests.cs` (5/6): `Stretched_Path_With_Transformed_Geometry`, `Transformed_Geometry_Can_Be_Reopened`, `PathGeometry_Can_Be_Opened_With_A_Transform`, `PathGeometry_Can_Be_Opened`, `Stretched_Path_With_PathGeometry_Data`
-- `Media/RadialGradientBrushTests.cs` (2/11): `RadialGradientBrushTests.RadialGradientBrush_Transparent_Stop_Offset_Inside`, `RadialGradientBrushTests.RadialGradientBrush_RedBlue_Offset_On_Circle`
-
-</details>
-
-### Avalonia.Headless.UnitTests
-
-5 missing of 35 (`tests/Avalonia.Headless.UnitTests`).
-
-<details>
-<summary>5 missing tests in 1 file</summary>
-
-- `PopupTests.cs` (5/10): `Nested_Popup_Placement_Respects_Parent_Popup_Position`, `Popup_Placement_Respects_Render_Scaling`, `Popup_Follows_Window_Move`, `Window_Position_Is_Fixed_When_Positioning_Is_Not_Supported`, `Desktop_Coordinates_Are_Logical_When_Enabled`
-
-</details>
-
-### Avalonia.IntegrationTests.Win32
-
-2 missing of 15 (`tests/Avalonia.IntegrationTests.Win32`).
-
-<details>
-<summary>2 missing tests in 1 file</summary>
-
-- `ScreenTests.cs` (2/2): `Display_Changes_Refresh_Screens_With_Or_Without_A_Window`, `Display_Changes_Update_Render_Timer_Without_A_Window`
-
-</details>
-
-### Avalonia.Wayland.UnitTests
-
-1 missing of 13 (`tests/Avalonia.Wayland.UnitTests`).
-
-<details>
-<summary>1 missing test in 1 file</summary>
-
-- `WaylandAppIdTests.cs` (1/1): `WaylandPlatformOptions_CanSetAppId`
-
-</details>

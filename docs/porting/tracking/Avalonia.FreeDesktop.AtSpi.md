@@ -12,14 +12,14 @@ Generated from upstream commit `66b7273b9a2b5ba8416feb4376b9cdc3078b8573`. Back 
 | Phase / priority | 5 - desktop (Linux) / P1 |
 | Files | 27/27 (100.0%) |
 | Types | 27/27 (100.0%) |
-| Members | 424/437 (11 waived) (99.5%) |
+| Members | 426/437 (11 waived) (100.0%) |
 | Contracts (interfaces) | 0/0 |
 | Property registrations | 0/0 |
 | Routed events | 0/0 |
 
 ## Files
 
-### `(project root)` - files 15/15, types 15/15, members 299/312 (11 waived)
+### `(project root)` - files 15/15, types 15/15, members 301/312 (11 waived)
 
 | Upstream file | Rust file | Status | Types | Members | Notes |
 |---|---|---|---|---|---|
@@ -32,22 +32,12 @@ Generated from upstream commit `66b7273b9a2b5ba8416feb4376b9cdc3078b8573`. Back 
 | `AtSpiCoordType.cs` | `at_spi_coord_type.rs` | present | 1/1 | 3/3 |  |
 | `AtSpiNode.RoleMapping.cs` | `at_spi_node_role_mapping.rs` | present | 1/1 | 2/2 |  |
 | `AtSpiNode.StateMapping.cs` | `at_spi_node_state_mapping.rs` | present | 1/1 | 1/1 |  |
-| `AtSpiNode.cs` | `at_spi_node.rs` | partial | 1/1 | 21/33 (10 waived) |  |
+| `AtSpiNode.cs` | `at_spi_node.rs` | present | 1/1 | 23/33 (10 waived) |  |
 | `AtSpiRegistryEventTracker.cs` | `at_spi_registry_event_tracker.rs` | present | 1/1 | 4/4 |  |
 | `AtSpiRole.cs` | `at_spi_role.rs` | present | 1/1 | 118/118 |  |
 | `AtSpiServer.cs` | `at_spi_server.rs` | present | 1/1 | 18/19 (1 waived) |  |
 | `AtSpiState.cs` | `at_spi_state.rs` | present | 1/1 | 44/44 |  |
 | `RootAtSpiNode.cs` | `root_at_spi_node.rs` | present | 1/1 | 7/7 |  |
-
-<details><summary><code>AtSpiNode.cs</code> - 2 missing</summary>
-
-- `AtSpiNode` (class): 2 missing
-  - `static AtSpiAttributeSet GetAttributes(AutomationPeer peer)` *(internal)*
-  - `static void DiffChildren<T>(IReadOnlyList<T> oldChildren, IReadOnlyList<T> newChildren, List<(int Index, T ...` *(internal)*
-  - waived (registration is synchronous: the node holds the registration itself (`path_registration`), not a task of it): `PathRegistrationTask`
-  - waived (the handlers of a node are the fields of `NodeHandlers`, which the node holds; the two that are read from outside have accessors): `AccessibleHandler`, `ApplicationHandler`, `ComponentHandler`, `ActionHandler`, `ValueHandler`, `SelectionHandler`, `TextHandler`, `EditableTextHandler`, `ImageHandler`
-
-</details>
 
 ### `Handlers` - files 12/12, types 12/12, members 125/125
 
@@ -80,3 +70,5 @@ Rust sources of this crate that no upstream file maps to. Give each a reason in 
 | `dbus/proxies.rs` | What accessibility needs of the D-Bus library the original compiles into its AT-SPI project (external/Avalonia.DBus) and of the code its generator makes from DBusXml: the object table and dispatch of a connection, the built-in properties and introspection handlers, the handler shape, the types, descriptions and proxies of the interfaces (atspi.md, section 5) | `OrgA11yAtspiRegistry`, `OrgA11yAtspiSocket`, `OrgA11yBus` |
 | `dbus/types.rs` | What accessibility needs of the D-Bus library the original compiles into its AT-SPI project (external/Avalonia.DBus) and of the code its generator makes from DBusXml: the object table and dispatch of a connection, the built-in properties and introspection handlers, the handler shape, the types, descriptions and proxies of the interfaces (atspi.md, section 5) | `AtSpiAccessibleCacheItem`, `AtSpiAction`, `AtSpiAttributeSet`, `AtSpiEventListener`, `AtSpiMatchRule`, `AtSpiMatchRuleWire`, `AtSpiObjectReference`, `AtSpiRect`, `AtSpiRelationEntry`, `AtSpiTextRange`, `ObjectReferenceWire` |
 | `tests.rs` | the unit tests of the module | `Fixture`, `Listeners`, `RegistryDouble`, `SocketDouble`, `Ui` |
+
+Tests, examples and build scripts (not scanned): `at_spi_children_diff_tests.rs`, `handlers/at_spi_accessible_handler_tests.rs`.
