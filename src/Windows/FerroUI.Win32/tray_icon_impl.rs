@@ -45,12 +45,11 @@ mod imp {
     use super::*;
     use crate::icon_impl::IconImpl;
     use crate::interop::unmanaged_methods::{
-        change_window_message_filter_ex, get_cursor_pos, get_dpi_for_monitor, has_get_dpi_for_monitor, monitor_from_point,
+        change_window_message_filter_ex, get_cursor_pos, get_dpi_for_monitor, get_dpi_for_monitor_available, monitor_from_point,
         register_window_message, sh_app_bar_message, shell_notify_icon, AppBarMessage, MessageFilterFlag, APPBARDATA, MONITOR,
         MONITOR_DPI_TYPE, NIF, NIM, NOTIFYICONDATA, POINT,
     };
     use crate::interop::win32_icon::Win32Icon;
-    use crate::platform_constants::PlatformConstants;
     use crate::win32_native_to_managed_menu_exporter::Win32NativeToManagedMenuExporter;
     use crate::win32_platform::Win32Platform;
     use ferroui_base::input::InputElementImpl;
@@ -249,7 +248,7 @@ mod imp {
         }
 
         fn get_task_bar_mon_scaling_or_default() -> f64 {
-            if has_get_dpi_for_monitor() && Win32Platform::windows_version() > PlatformConstants::WINDOWS8_1 {
+            if get_dpi_for_monitor_available() {
                 if let Some((dpi_x, dpi_y)) =
                     get_dpi_for_monitor(TASK_BAR_MONITOR.with(Cell::get), MONITOR_DPI_TYPE::MDT_EFFECTIVE_DPI)
                 {

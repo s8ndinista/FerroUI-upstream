@@ -2689,9 +2689,11 @@ mod native {
         unsafe { wm::SetProcessDPIAware() != 0 }
     }
 
-    /// Whether shcore.dll has `GetDpiForMonitor`.
-    pub fn has_get_dpi_for_monitor() -> bool {
-        get_proc_address(load_library("shcore.dll"), c"GetDpiForMonitor").is_some()
+    /// Whether shcore.dll has `GetDpiForMonitor`, asked once.
+    pub fn get_dpi_for_monitor_available() -> bool {
+        static GET_DPI_FOR_MONITOR_AVAILABLE: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+        *GET_DPI_FOR_MONITOR_AVAILABLE
+            .get_or_init(|| get_proc_address(load_library("shcore.dll"), c"GetDpiForMonitor").is_some())
     }
 
     /// The DPI of a monitor (`GetDpiForMonitor`), horizontal and vertical;
