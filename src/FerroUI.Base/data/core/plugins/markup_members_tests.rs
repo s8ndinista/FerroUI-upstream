@@ -199,7 +199,15 @@ ferro_markup_type!(class MemberVm {
 
 /// What the declaring crate registers once (`ValueTypes::register_global`):
 /// the view models are reference types, and the derived one is its base.
+///
+/// The namespaces of the crate are registered first. The full name of a view
+/// model of this file reads them (`FerroUI.Data.MemberVm` once they are known,
+/// `MemberVm` before), and any test of another thread may register them at a
+/// time of its own: a test that compared an error logged before that moment
+/// with a name read after it failed. Registered here, before anything is bound
+/// or named, every test reads one state.
 fn register() {
+    crate::register_types();
     MarkupType::register_all(&[<MemberBaseVm as MarkupTyped>::MARKUP, <MemberVm as MarkupTyped>::MARKUP]);
     ValueTypes::register_reference::<MemberBaseVm>();
     ValueTypes::register_reference::<MemberVm>();
@@ -675,10 +683,6 @@ fn a_command_of_a_method_of_the_object_that_owns_its_control_keeps_neither_alive
 
 #[test]
 fn overloads_that_cannot_be_chosen_are_binding_errors() {
-    // The namespaces of the crate, which the full name of a type reads: registered here, so
-    // that the name the test expects and the name of the error are read in one state (a
-    // test of another thread registers them at a time of its own).
-    crate::register_types();
     let vm = MemberVm::new("Ann");
     register();
     let source: BoxedValue = vm.clone();
