@@ -307,3 +307,55 @@ fn layers_take_the_text_rendering_of_their_surface() {
     render_target.dispose();
     backend.dispose();
 }
+
+/// The composition target keeps the layer of a window between frames and creates it again only
+/// when it is corrupted (`ServerCompositionTarget::render`): a layer whose surface properties are
+/// not those of the window's frame any more reports itself corrupted, so that a change of the
+/// parameters of the platform (or of the development override of a calibration host) reaches the
+/// text of the window from the next frame.
+#[test]
+fn a_layer_of_a_window_is_stale_once_the_text_rendering_of_the_frames_changes() {
+    let render_interface = crate::tests::render_interface();
+    let backend = render_interface.create_backend_context(None);
+
+    let surface = TextSurface::new(Some(clear_type()));
+    let surfaces: Vec<Arc<dyn IPlatformRenderSurface>> = vec![surface.clone()];
+    let render_target = backend.create_render_target(&surfaces);
+    let scene_info = RenderTargetSceneInfo::new(surface.size, 1.0, CompositionTransparencyLevel::None);
+
+    let (mut context, _) = render_target.create_drawing_context(&scene_info);
+    let layer = context.create_layer(PixelSize::new(4, 4));
+    // A layer of a layer follows the frames of the window as well.
+    let mut layer_context = layer.create_drawing_context();
+    let inner = layer_context.create_layer(PixelSize::new(2, 2));
+    layer_context.dispose();
+    context.dispose();
+    assert!(!layer.is_corrupted() && !inner.is_corrupted());
+
+    // A frame with the same parameters keeps the layer.
+    let (mut context, _) = render_target.create_drawing_context(&scene_info);
+    context.dispose();
+    assert!(!layer.is_corrupted());
+
+    // The user tuned the text: the layer is stale from the next frame on.
+    *surface.parameters.lock().unwrap() = Some(PlatformTextRenderingParameters { text_contrast: Some(0.25), ..clear_type() });
+    let (mut context, _) = render_target.create_drawing_context(&scene_info);
+    assert!(layer.is_corrupted() && inner.is_corrupted());
+    // The layer created again has the new properties and is not stale.
+    let fresh = context.create_layer(PixelSize::new(4, 4));
+    let mut fresh_context = fresh.create_drawing_context();
+    assert_eq!(0.25, surface_props(&mut *fresh_context).text_contrast());
+    fresh_context.dispose();
+    context.dispose();
+    assert!(!fresh.is_corrupted());
+
+    // An offscreen layer (no window) is never stale for its text.
+    let offscreen = backend.create_offscreen_render_target(PixelSize::new(4, 4), Vector::new(1.0, 1.0), true);
+    assert!(!offscreen.is_corrupted());
+
+    for layer in [layer, inner, fresh, offscreen] {
+        layer.dispose();
+    }
+    render_target.dispose();
+    backend.dispose();
+}
