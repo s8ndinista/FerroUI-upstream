@@ -38,6 +38,9 @@
   </Design.PreviewWith>
 
   <ControlTheme x:Key="DefaultFlyoutPresenterStyle" TargetType="FlyoutPresenter">
+    <!-- The shadow is drawn outside the bounds of the control: a templated control clips to its
+         bounds unless its theme says otherwise (G-24). -->
+    <Setter Property="ClipToBounds" Value="False" />
     <Setter Property="HorizontalContentAlignment" Value="Stretch" />
     <Setter Property="VerticalContentAlignment" Value="Stretch" />
     <Setter Property="IsTabStop" Value="False" />

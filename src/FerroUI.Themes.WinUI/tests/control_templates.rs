@@ -331,6 +331,22 @@ fn window_follows_the_theme_variants() {
     assert_ne!(dark, high_contrast);
 }
 
+/// The presenters whose template draws the shadow of a popup (DEVIATIONS.md, G-24) do not clip to
+/// their bounds, as a templated control does by default: the shadow lies outside them.
+#[test]
+fn the_presenters_with_a_theme_shadow_do_not_clip_it() {
+    let _app = start_themed_application();
+    for name in ["MenuFlyoutPresenter", "ContextMenu", "FlyoutPresenter", "ToolTip", "DatePickerPresenter", "TimePickerPresenter"] {
+        let instance = control_type(name).create_instance().unwrap_or_else(|| panic!("{name} has no default constructor"));
+        let control = instance.cast::<Control>().unwrap_or_else(|| panic!("{name} is not a control"));
+        let window = Window::new();
+        window.set_content(Some(Control::boxed(&control)));
+        window.show();
+        assert!(!control.clip_to_bounds(), "{name} clips its shadow");
+        window.close();
+    }
+}
+
 /// The keyed template `ScrollViewerScrollBarlessTemplate` (generic.xaml) of `Controls/ScrollViewer.xaml`:
 /// a scroll viewer that an application gives it is built with its content presenter and without the
 /// scroll bars, which FerroUI's scroll viewer takes as optional parts.
