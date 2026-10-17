@@ -310,6 +310,7 @@ ferroui_base::ferro_rust_paths! {
         crate::TabPlacement,
         crate::TextChangedEventArgs,
         crate::TextChangingEventArgs,
+        crate::TextLayoutRoundingPlacement,
         crate::TickBarPlacement,
         crate::TickList,
         crate::TickPlacement,

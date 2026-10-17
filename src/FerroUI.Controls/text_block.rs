@@ -1,14 +1,13 @@
 use crate::utils::debug_display::{append_optional_value, build_base_debug_display};
 use crate::documents::{EmbeddedControlRun, IInlineHost, Inline, InlineCollection, TextElement};
-use crate::{Border, Control, ControlImpl, Decorator};
+use crate::{Border, Control, ControlImpl, Decorator, TextLayoutRoundingPlacement};
 use ferroui_base::collections::FerroList;
 use ferroui_base::input::InputElementImpl;
 use ferroui_base::interactivity::InteractiveImpl;
 use ferroui_base::layout::{LayoutHelper, LayoutableImpl, LayoutableImplExt, VerticalAlignment};
 use ferroui_base::media::text_formatting::{
-    text_baseline_rounding, FormattedTextSource, GenericTextParagraphProperties, GenericTextRunProperties,
-    ITextSource, TextCharacters, TextEndOfParagraph, TextLayout, TextLineImpl, TextRun, TextRunCache,
-    TextRunProperties,
+    FormattedTextSource, GenericTextParagraphProperties, GenericTextRunProperties, ITextSource, TextCharacters,
+    TextEndOfParagraph, TextLayout, TextLineImpl, TextRun, TextRunCache, TextRunProperties,
 };
 use ferroui_base::media::{
     DrawingContext, FlowDirection, FontFamily, FontFeatureCollection, FontStretch, FontStyle, FontWeight, IBrush, TextAlignment,
@@ -99,6 +98,12 @@ ferroui_base::ferro_overrides! { impl FerroObjectImpl for TextBlock {
             | "MaxLines" => {
                 this.invalidate_text_layout_keep_cache();
             }
+            // A FerroUI addition: where the text goes in the height layout rounding adds. It
+            // moves the text and the embedded controls, not the size.
+            "LayoutRoundingPlacement" => {
+                this.invalidate_visual();
+                this.invalidate_arrange();
+            }
             "Inlines" => {
                 let (old_value, new_value) = change.get_old_and_new_value::<Option<InlineCollection>>();
                 this.on_inlines_changed(old_value, new_value);
@@ -168,10 +173,12 @@ impl LayoutableImpl for TextBlock {
 
     fn arrange_override(this: &Self, final_size: Size) -> Size {
         let mut padding = this.padding();
+        let mut layout_scale = None;
 
         if this.use_layout_rounding() {
             let scale = LayoutHelper::get_layout_scale(this);
             padding = LayoutHelper::round_layout_thickness(padding, scale);
+            layout_scale = Some(scale);
         }
 
         let available_size = final_size.deflate(padding);
@@ -198,7 +205,9 @@ impl LayoutableImpl for TextBlock {
             // Clear visual children before complex run arrangement.
             this.visual_children().clear();
 
-            let mut current_y = padding.top;
+            // A FerroUI addition: the embedded controls move with the text when the height
+            // layout rounding adds is above it (`LayoutRoundingPlacement`).
+            let mut current_y = padding.top + this.layout_rounding_offset_of(&text_layout, padding, layout_scale);
 
             for text_line in text_layout.text_lines() {
                 let mut current_x = padding.left + text_line.start();
@@ -257,14 +266,11 @@ impl TextBlockImpl for TextBlock {
             }
         }
 
-        // A development override (FERROUI_TEXT_BASELINE_ROUNDING, not a
-        // supported API; docs/porting/text-rendering.md, section 6): the
-        // height layout rounding adds to the block above the text, as WinUI's
-        // TextBlock puts it. Unset, the text starts at the top as the
-        // reference draws it.
-        if let Some(scale) = layout_scale {
-            top += text_baseline_rounding().offset(text_height + padding.top + padding.bottom, scale);
-        }
+        // A FerroUI addition (DEVIATIONS.md, Text block): with `LayoutRoundingPlacement` set to
+        // `Above` the height layout rounding adds to the block goes above the text, as WinUI's
+        // TextBlock puts it (docs/porting/text-rendering.md, section 6). With the default,
+        // `Below`, the text starts at the top as the reference draws it.
+        top += this.layout_rounding_offset_of(&this.text_layout(), padding, layout_scale);
 
         this.render_text_layout(context, Point::new(padding.left, top));
     }
@@ -411,6 +417,18 @@ ferroui_base::ferro_properties! { impl TextBlock {
             FerroProperty::register_attached_with::<TextBlock, Control, _>(
                 "BaselineOffset",
                 StyledPropertyOptions::new(0.0).inherits(true),
+            )
+        }
+    );
+
+    ferro_property!(
+        /// Defines the `LayoutRoundingPlacement` attached property: where a text block puts
+        /// the height layout rounding adds to it (a FerroUI addition). Inherited, so that a
+        /// theme sets it once on the top-level.
+        pub fn layout_rounding_placement_property() -> AttachedProperty<TextLayoutRoundingPlacement> {
+            FerroProperty::register_attached_with::<TextBlock, Control, _>(
+                "LayoutRoundingPlacement",
+                StyledPropertyOptions::new(TextLayoutRoundingPlacement::Below).inherits(true),
             )
         }
     );
@@ -806,6 +824,55 @@ impl TextBlock {
     /// Writes the attached `BaselineOffset` property to the given control.
     pub fn set_baseline_offset_on(control: &Control, value: f64) {
         control.set_value(Self::baseline_offset_property(), value)
+    }
+
+    /// Where the text block puts the height layout rounding adds to it: below its text (the
+    /// default, as the reference) or above it (as WinUI). A FerroUI addition.
+    pub fn layout_rounding_placement(&self) -> TextLayoutRoundingPlacement {
+        self.get_value(Self::layout_rounding_placement_property())
+    }
+
+    pub fn set_layout_rounding_placement(&self, value: TextLayoutRoundingPlacement) {
+        self.set_value(Self::layout_rounding_placement_property(), value)
+    }
+
+    /// Reads the attached `LayoutRoundingPlacement` property from the given control.
+    pub fn get_layout_rounding_placement(control: &Control) -> TextLayoutRoundingPlacement {
+        control.get_value(Self::layout_rounding_placement_property())
+    }
+
+    /// Writes the attached `LayoutRoundingPlacement` property to the given control.
+    pub fn set_layout_rounding_placement_on(control: &Control, value: TextLayoutRoundingPlacement) {
+        control.set_value(Self::layout_rounding_placement_property(), value)
+    }
+
+    /// How far down the text is drawn from the top of the content (the top padding) because
+    /// layout rounding added height to the block: the height of the text and the vertical
+    /// padding rounded up to whole device pixels, minus that height, when
+    /// [`layout_rounding_placement`](Self::layout_rounding_placement) is
+    /// [`Above`](TextLayoutRoundingPlacement::Above) and the block uses layout rounding; zero
+    /// otherwise. Rendering, hit testing and the access key underline add it to the top padding
+    /// (WinUI's `CTextBlock::GetContentRenderingOffset`). A FerroUI addition.
+    pub fn layout_rounding_offset(&self) -> f64 {
+        if !self.use_layout_rounding() {
+            return 0.0;
+        }
+        let scale = LayoutHelper::get_layout_scale(self);
+        let padding = LayoutHelper::round_layout_thickness(self.padding(), scale);
+        self.layout_rounding_offset_of(&self.text_layout(), padding, Some(scale))
+    }
+
+    /// The offset of [`layout_rounding_offset`](Self::layout_rounding_offset) for a text layout,
+    /// the rounded padding and the layout scale (`None` without layout rounding).
+    fn layout_rounding_offset_of(&self, text_layout: &TextLayout, padding: Thickness, layout_scale: Option<f64>) -> f64 {
+        let Some(scale) = layout_scale else {
+            return 0.0;
+        };
+        let placement = self.layout_rounding_placement();
+        if placement == TextLayoutRoundingPlacement::Below {
+            return 0.0;
+        }
+        placement.offset(text_layout.height() + padding.top + padding.bottom, scale)
     }
 
     /// Reads the attached `TextAlignment` property from the given control.

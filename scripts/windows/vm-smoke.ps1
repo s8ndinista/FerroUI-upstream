@@ -108,8 +108,9 @@
   With -WinUIThemeGallery: a calibration run of the text rendering (docs/porting/text-rendering.md,
   section 10). The text settings the comparison host compares every page with, in one run of the
   process: settings separated by ';', each '[name:]key=value,key=value' or '[name:]default', the
-  keys contrast, gamma, edging, hinting, baseline_snap and baseline (for example
-  'default;c1:contrast=1,gamma=0;c1g14:contrast=1,gamma=1.4;winui:contrast=1,gamma=0,baseline=above').
+  keys contrast, gamma, edging, hinting, baseline_snap and baseline (below, above or theme: the
+  TextBlock.LayoutRoundingPlacement of the pages; for example
+  'default;c1:contrast=1,gamma=0;c1g14:contrast=1,gamma=1.4;below:contrast=1,gamma=0,baseline=below').
   Passed to the comparison host as FERROUI_WINUI_COMPARE_TEXT_VARIANTS, with
   FERROUI_WINUI_COMPARE_DENSITIES=normal; the pictures of each setting are in a directory of its
   name under the comparison directory, and scripts\text-quality.py --variants makes one table of

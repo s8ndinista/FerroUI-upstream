@@ -360,6 +360,19 @@ CONTROLS = {
             "fn Show() => |window: &Ref<WindowBase>| window.show()",
         ],
     },
+    'TextBlock': {
+        # A FerroUI addition (docs/porting/DEVIATIONS.md, Text block): an attached property that
+        # a text block also exposes as a property of its own, as `LineHeight` and the other
+        # attached text properties of the managed original.
+        'properties': [
+            """LayoutRoundingPlacement: TextLayoutRoundingPlacement {
+                get: |this: &Ref<TextBlock>| this.get_value(TextBlock::layout_rounding_placement_property()),
+                set: |this: &Ref<TextBlock>, value: TextLayoutRoundingPlacement| {
+                    this.set_value(TextBlock::layout_rounding_placement_property(), value)
+                }
+            }""",
+        ],
+    },
     'TextBox': {
         'properties': [
             """SelectedText: String {

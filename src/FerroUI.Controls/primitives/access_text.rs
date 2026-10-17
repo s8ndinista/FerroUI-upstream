@@ -88,7 +88,9 @@ impl TextBlockImpl for AccessText {
 
                 let x1 = rect.left().round();
                 let x2 = rect.right().round();
-                let y = rect.bottom().round() - 1.5;
+                // A FerroUI addition: the underline moves with the text when the height layout
+                // rounding adds is above it (`TextBlock.LayoutRoundingPlacement`).
+                let y = (rect.bottom() + this.layout_rounding_offset()).round() - 1.5;
 
                 let pen: Rc<dyn IPen> = Pen::with_brush(this.foreground(), 1.0).into();
 

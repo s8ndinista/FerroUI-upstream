@@ -17,22 +17,20 @@
 //!
 //! A calibration run (`FERROUI_WINUI_COMPARE_TEXT_VARIANTS`, docs/porting/text-rendering.md,
 //! section 10) compares every page and setting once per text setting of the list: before the
-//! pages of a text setting are shown, the run sets the development overrides of the text
-//! rendering of the process (`ferroui_skia::set_text_rendering_override`,
-//! `set_text_baseline_rounding`), and it writes the pictures and `compare.tsv` of each text setting
+//! pages of a text setting are shown, the run sets the development override of the text
+//! rendering of the process (`ferroui_skia::set_text_rendering_override`), and a text setting
+//! with a `baseline` sets `TextBlock.LayoutRoundingPlacement` on each framework's page it shows
+//! (over the value of the theme); it writes the pictures and `compare.tsv` of each text setting
 //! into a directory of its name below the output directory, with `text-variants.tsv` listing them
 //! (`scripts/text-quality.py <out> --variants` makes one table of them).
 
 use crate::compare_window::CompareWindow;
 use crate::window_capture;
 use ferroui_base::media::imaging::Bitmap;
-use ferroui_base::media::text_formatting::{
-    set_text_baseline_rounding, startup_text_baseline_rounding, TextBaselineRounding,
-};
 use ferroui_base::platform::{AlphaFormat, PixelFormat};
 use ferroui_base::threading::{DispatcherPriority, DispatcherTimer};
 use ferroui_base::{PixelSize, Ref, Vector, Visual};
-use ferroui_controls::Control;
+use ferroui_controls::{Control, TextBlock, TextLayoutRoundingPlacement};
 use std::cell::{Cell, RefCell};
 use std::io::Write;
 use std::path::{Path, PathBuf};
@@ -85,6 +83,8 @@ struct Run {
     jobs: Vec<(Option<usize>, &'static PageInfo, Setting)>,
     /// The text setting the overrides of the process are set to.
     applied_variant: Cell<Option<usize>>,
+    /// The placement of the baseline the text setting sets on the pages (`None`: the theme's).
+    baseline: Cell<Option<TextLayoutRoundingPlacement>>,
     next: Cell<usize>,
     phase: Cell<Phase>,
     since: Cell<Instant>,
@@ -131,14 +131,17 @@ fn in_pixels(bounds: ferroui_winui::interop::Rect, scale: f64) -> (i32, i32, i32
     (x, y, width, height)
 }
 
-/// The development overrides of the text rendering a text setting gives: those of the
-/// environment of the process with the values of the setting.
-fn text_overrides(variant: &TextVariant) -> Result<(ferroui_skia::TextRenderingOverride, TextBaselineRounding), String> {
+/// The development override of the text rendering a text setting gives (those of the
+/// environment of the process with the values of the setting), and the placement of the
+/// baseline it sets on the pages (`None`: the theme's).
+fn text_overrides(
+    variant: &TextVariant,
+) -> Result<(ferroui_skia::TextRenderingOverride, Option<TextLayoutRoundingPlacement>), String> {
     let mut rendering = ferroui_skia::startup_text_rendering_override();
-    let mut baseline = startup_text_baseline_rounding();
+    let mut baseline = None;
     for (key, value) in &variant.values {
         if key == "baseline" {
-            baseline = TextBaselineRounding::parse(value)?;
+            baseline = comparison::parse_baseline(value)?;
         } else {
             rendering.set(key, value)?;
         }
@@ -190,12 +193,12 @@ impl Run {
         match text_overrides(variant) {
             Ok((rendering, baseline)) => {
                 ferroui_skia::set_text_rendering_override(rendering);
-                set_text_baseline_rounding(baseline);
+                self.baseline.set(baseline);
                 println!(
                     "compare: text setting {} ({}): the text rendering {rendering}, the baseline {}",
                     variant.name,
                     variant.specification(),
-                    baseline.name()
+                    comparison::baseline_name(baseline)
                 );
             }
             // Checked when the run started.
@@ -246,7 +249,7 @@ impl Run {
             writeln!(file, "name\ttext_rendering\tbaseline\tspecification")?;
             for variant in &self.variants {
                 let (rendering, baseline) = match text_overrides(variant) {
-                    Ok((rendering, baseline)) => (rendering.to_string(), baseline.name().to_string()),
+                    Ok((rendering, baseline)) => (rendering.to_string(), comparison::baseline_name(baseline).to_string()),
                     Err(error) => (error, String::new()),
                 };
                 writeln!(file, "{}\t{rendering}\t{baseline}\t{}", variant.name, variant.specification())?;
@@ -298,9 +301,9 @@ impl Run {
                         self.write_table_of(Some(index));
                     }
                     self.write_variants();
-                    // The overrides of the environment again.
+                    // The override of the environment again.
                     ferroui_skia::set_text_rendering_override(ferroui_skia::startup_text_rendering_override());
-                    set_text_baseline_rounding(startup_text_baseline_rounding());
+                    self.baseline.set(None);
                 }
                 let failures = self.failures.borrow();
                 println!(
@@ -429,6 +432,11 @@ impl Run {
         window.host().set_page(None);
         match capture::create_page(page) {
             Ok(control) => {
+                // The placement of the baseline of the text setting, over the theme's: a local
+                // value of the page, which its text blocks inherit.
+                if let Some(placement) = self.baseline.get() {
+                    TextBlock::set_layout_rounding_placement_on(&control, placement);
+                }
                 capture::show(window.host(), Some(control.clone()), setting);
                 *self.page.borrow_mut() = Some(control);
             }
@@ -634,6 +642,7 @@ pub fn start(window: Rc<CompareWindow>, out: PathBuf) {
         variants,
         jobs,
         applied_variant: Cell::new(None),
+        baseline: Cell::new(None),
         next: Cell::new(0),
         phase: Cell::new(Phase::Start),
         since: Cell::new(Instant::now()),

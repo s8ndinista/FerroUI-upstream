@@ -93,7 +93,9 @@ fn every_declaration_of_this_module_is_registered() {
         .filter(|line| line.starts_with("ferro_markup_type!(") || line.starts_with("ferro_markup_enum!("))
         .count();
     let types = declared_types();
-    assert_eq!(types.len(), declared);
+    // `TextLayoutRoundingPlacement` declares its metadata next to the type and is registered
+    // with the values.
+    assert_eq!(types.len(), declared + 1);
 
     for type_ in &types {
         // The collection handle of the items controls is published as the enumerable of
@@ -197,7 +199,8 @@ fn template_parts_name_classes() {
 #[test]
 fn enumeration_members_are_found_by_name() {
     let enums: Vec<_> = declared_types().into_iter().filter(|t| t.kind == MarkupTypeKind::Enum).collect();
-    assert_eq!(enums.len(), super::enums::TYPES.len());
+    // `TextLayoutRoundingPlacement` is declared next to the type.
+    assert_eq!(enums.len(), super::enums::TYPES.len() + 1);
     for type_ in enums {
         assert!(!type_.enum_members.is_empty(), "{type_:?}");
         for member in type_.enum_members {

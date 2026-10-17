@@ -55,7 +55,6 @@ mod text_leading_prefix_character_ellipsis;
 mod text_line;
 mod text_line_break;
 mod text_line_impl;
-mod text_baseline_rounding;
 mod text_line_metrics;
 mod text_metrics;
 mod text_paragraph_properties;
@@ -120,10 +119,6 @@ pub use text_leading_prefix_character_ellipsis::TextLeadingPrefixCharacterEllips
 pub use text_line::TextLine;
 pub use text_line_impl::TextLineImpl;
 pub use text_line_break::TextLineBreak;
-pub use text_baseline_rounding::{
-    set_text_baseline_rounding, startup_text_baseline_rounding, text_baseline_rounding, TextBaselineRounding,
-    TEXT_BASELINE_ROUNDING_ENV,
-};
 pub use text_line_metrics::TextLineMetrics;
 pub use text_metrics::TextMetrics;
 pub use text_paragraph_properties::TextParagraphProperties;

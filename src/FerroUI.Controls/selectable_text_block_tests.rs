@@ -970,3 +970,39 @@ fn pointer_press_captures_the_pointer_and_release_frees_it() {
 
     assert!(released.get());
 }
+
+/// With `TextBlock.LayoutRoundingPlacement` set to `Above` (a FerroUI addition) the text is drawn
+/// lower by what layout rounding adds to the block, and the pointer hits the text where it is
+/// drawn: a press just below the end of the first line, inside that offset, is on the first line
+/// with `Above` and on the second with `Below`.
+#[test]
+fn hit_testing_follows_the_text_with_the_layout_rounding_above() {
+    use crate::TextLayoutRoundingPlacement;
+
+    let press = |placement| {
+        let _scope = test_scope();
+        let target = text_block("first\nsecond");
+        target.set_layout_rounding_placement(placement);
+        let root = root_with(&target, Size::new(300.0, 200.0));
+
+        // Two lines of 13.2 are 26.4 high, 27 with layout rounding: 0.6 above the text.
+        let line_height = target.text_layout().text_lines()[0].height();
+        let offset = target.layout_rounding_offset();
+        let position = Point::new(1.0, line_height + 0.3);
+
+        let mouse = Mouse::new();
+        let at = target.translate_point(position, &root).unwrap_or_default();
+        mouse.down(&target, MouseButton::Left, at);
+        mouse.up(&target, MouseButton::Left, at);
+        (offset, target.selection_start())
+    };
+
+    let (offset, below) = press(TextLayoutRoundingPlacement::Below);
+    assert_eq!(0.0, offset);
+    // "first\n" is 6 code units: the press is at the start of the second line.
+    assert_eq!(6, below);
+
+    let (offset, above) = press(TextLayoutRoundingPlacement::Above);
+    assert!((offset - 0.6).abs() < 1e-9, "{offset}");
+    assert_eq!(0, above);
+}
