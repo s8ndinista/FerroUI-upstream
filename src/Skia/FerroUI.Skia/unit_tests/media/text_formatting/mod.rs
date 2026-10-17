@@ -1,5 +1,6 @@
 //! Upstream's `Media/TextFormatting` folder of the Skia unit tests.
 
+mod bidi_reorderer_tests;
 mod empty_shaped_buffer_tests;
 mod multi_buffer_text_source;
 mod shaped_buffer_shared_storage_tests;
