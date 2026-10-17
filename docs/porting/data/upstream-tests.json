@@ -1,6 +1,6 @@
 {
  "generator": "scripts/port-status/tests_audit.py --extract",
- "upstreamCommit": "17350180c33b063f0e98abbfd19aa3cae63f5d56",
+ "upstreamCommit": "66b7273b9a2b5ba8416feb4376b9cdc3078b8573",
  "submodules": {
   "external/Avalonia.DBus": "cada3ecfc153a9efbc8d64f530136d737c1a7eec",
   "external/XamlX": "d7e37ca63dc9b13cdc95ca165938d4904fa0eddf"
@@ -1024,7 +1024,7 @@
    }
   },
   "tests/Avalonia.Base.UnitTests": {
-   "csFiles": 277,
+   "csFiles": 281,
    "files": {
     "Animation/AnimatableTests.cs": [
      "AnimatableTests.Transition_Is_Not_Applied_When_Not_Attached_To_Visual_Tree",
@@ -1521,6 +1521,9 @@
      "CompositionBrushTests.Changing_SpreadMethod_After_A_Commit_Should_Reach_The_Server",
      "CompositionBrushTests.Mutable_Gradient_Stops_Should_Be_Snapshotted_For_The_Server",
      "CompositionBrushTests.Using_A_Composition_Brush_With_A_Foreign_Compositor_Should_Throw"
+    ],
+    "Composition/CompositionChildVisualTests.cs": [
+     "ClearingHost.Child_Visual_Cleared_During_Detach_Can_Reattach"
     ],
     "Composition/CompositionDrawingSurfaceTests.cs": [
      "FakeExternalObjectsFeature.Update_Processed_After_Dispose_Should_Dispose_Snapshot_Instead_Of_Orphaning_It",
@@ -2072,6 +2075,7 @@
      "InputElement_Focus.Can_Clear_Focus",
      "InputElement_Focus.Removing_Focused_Element_Inside_Focus_Scope_Activates_Root_Focus_Scope",
      "InputElement_Focus.Removing_Focus_Scope_Activates_Root_Focus_Scope",
+     "InputElement_Focus.Removing_Or_Hiding_Focus_Scope_Clears_Focus_When_Root_Focus_Scope_Element_Is_Disabled",
      "InputElement_Focus.Switching_Focus_Scope_Changes_Focus",
      "InputElement_Focus.SetFocusScope_On_Non_Focusable_Scope_Changes_Scope",
      "InputElement_Focus.Can_Get_First_Focusable_Element",
@@ -2905,7 +2909,9 @@
      "NormalizedVariationPositionTests.NormalizedVariationCoordinate_Has_Structural_Equality"
     ],
     "Media/PathGeometryTests.cs": [
-     "PathGeometryTests.PathGeometry_Triggers_Invalidation_On_Figures_Add"
+     "PathGeometryTests.PathGeometry_Triggers_Invalidation_On_Figures_Add",
+     "PathGeometryTests.Open_Adds_To_Figures",
+     "PathGeometryTests.Open_Adds_To_Figures_When_A_Transform_Is_Set"
     ],
     "Media/PathMarkupParserTests.cs": [
      "PathMarkupParserTests.Parses_Move",
@@ -2966,6 +2972,10 @@
     "Media/SolidColorBrushTests.cs": [
      "SolidColorBrushTests.Changing_Color_Raises_Invalidated"
     ],
+    "Media/StreamGeometryTests.cs": [
+     "StreamGeometryTests.Changed_Is_Raised_When_The_Drawing_Is_Finished",
+     "StreamGeometryTests.Changed_Is_Raised_When_The_Drawing_Is_Finished_And_A_Transform_Is_Set"
+    ],
     "Media/TextDecorationTests.cs": [
      "TextDecorationTests.Should_Parse_TextDecorations"
     ],
@@ -2974,6 +2984,9 @@
     ],
     "Media/TextFormatting/BiDiClassTests.cs": [
      "BiDiClassTests.Should_Resolve"
+    ],
+    "Media/TextFormatting/BiDiDataTests.cs": [
+     "BiDiDataTests.Explicit_Formatting_Should_Be_Resolved_After_Reset"
     ],
     "Media/TextFormatting/CodepointTests.cs": [
      "CodepointTests.ReadAt_BmpScalar_ReturnsCharAndAdvancesByOne",
@@ -3262,7 +3275,17 @@
      "CompositorInvalidationTests.Control_Should_Invalidate_Child_Rects_When_Becomes_Invisible"
     ],
     "Rendering/CompositorLifetimeTests.cs": [
-     "CompositorLifetimeTests.InvalidateVisual_Does_Not_Update_RenderingTarget_When_Rendering_Stopped"
+     "CompositorLifetimeTests.InvalidateVisual_Does_Not_Update_RenderingTarget_When_Rendering_Stopped",
+     "CompositorLifetimeTests.Visuals_Removed_While_Rendering_Stopped_Are_Not_Kept_By_Renderer"
+    ],
+    "Rendering/DiagnosticTextRendererTests.cs": [
+     "DiagnosticTextRendererTests.Digits_Measure_To_The_Same_Width",
+     "DiagnosticTextRendererTests.Height_Is_The_Scaled_Line_Spacing",
+     "DiagnosticTextRendererTests.Digits_Are_Centered_Inside_The_Digit_Cell",
+     "DiagnosticTextRendererTests.Text_After_Digits_Does_Not_Depend_On_The_Digit_Values",
+     "DiagnosticTextRendererTests.DrawDigits_Matches_Drawing_The_Padded_Text",
+     "DiagnosticTextRendererTests.ShapedText_Is_Measured_Once_And_Drawn_As_A_Single_Run",
+     "DiagnosticTextRendererTests.FpsCounter_Layout_Does_Not_Depend_On_The_Numbers"
     ],
     "Rendering/DrawingBrushPropagationTests.cs": [
      "DrawingBrushPropagationTests.Mutating_Geometry_Inside_DrawingBrush_Invalidates_Consumer",
@@ -3427,9 +3450,16 @@
      "ContainerTests.Container_Width_Queries_Matches",
      "ContainerTests.Container_Height_Queries_Matches",
      "ContainerTests.Container_Width_Queries_Matches_Name",
-     "ContainerTests.Container_Height_Queries_Matches_Name"
+     "ContainerTests.Container_Height_Queries_Matches_Name",
+     "ContainerTests.Container_Does_Not_Query_Itself",
+     "ContainerTests.Container_Query_Tracks_Non_Visual_Target_After_Logical_Reparenting",
+     "ContainerTests.Container_Query_Matches_Non_Visual_StyledElement",
+     "ContainerTests.Container_Query_Uses_Named_Visual_Ancestor_For_Non_Visual_Target"
     ],
     "Styling/ControlThemeTests.cs": [
+     "ControlThemeTests.ControlTheme_Attached_As_Theme_And_TemplatedParentTheme_Creates_Distinct_Instances",
+     "ControlThemeTests.ControlTheme_Reattach_After_RemoveFrames_Does_Not_Duplicate_Instance",
+     "ControlThemeTests.ControlTheme_Shares_Instance_Between_Controls_For_Same_FrameType",
      "ControlThemeTests.ControlTheme_Cannot_Be_Added_To_Styles",
      "ControlThemeTests.ControlTheme_Cannot_Be_Added_To_Style_Children",
      "ControlThemeTests.ControlTheme_Cannot_Be_Added_To_ControlTheme_Children",
@@ -4214,7 +4244,7 @@
    }
   },
   "tests/Avalonia.Controls.UnitTests": {
-   "csFiles": 157,
+   "csFiles": 162,
    "files": {
     "ApplicationTests.cs": [
      "ApplicationTests.Throws_ArgumentNullException_On_Run_If_MainWindow_Is_Null",
@@ -4250,6 +4280,25 @@
      "TestContextMenu.PlaceholderForeground_Can_Be_Set",
      "TestContextMenu.Bound_Text_Will_Update_Always",
      "TestContextMenu.Bound_Text_Will_Update_From_Bar_To_Bar_Via_Foo"
+    ],
+    "Automation/AtSpiAccessibleHandlerTests.cs": [
+     "AtSpiAccessibleHandlerTests.Exposes_Heading_Role_And_Level",
+     "AtSpiAccessibleHandlerTests.Unset_Heading_Preserves_Label_Role",
+     "AtSpiAccessibleHandlerTests.Exposes_List_Position_And_Size",
+     "AtSpiAccessibleHandlerTests.Uses_AtSpi_Role_Ids",
+     "AtSpiAccessibleHandlerTests.Omits_Unset_List_Position_And_Size",
+     "AtSpiAccessibleHandlerTests.Exposes_List_Position_And_Size_Independently",
+     "AtSpiAccessibleHandlerTests.Reads_Updated_Metadata",
+     "AtSpiAccessibleHandlerTests.Collection_Matches_Heading_And_List_Attributes"
+    ],
+    "Automation/AtSpiChildrenDiffTests.cs": [
+     "AtSpiChildrenDiffTests.Replaced_Child_Is_Removed_Then_Added_At_Index_0",
+     "AtSpiChildrenDiffTests.Unchanged_Children_Report_Nothing",
+     "AtSpiChildrenDiffTests.Removed_Children_Use_Old_Indices_Highest_First",
+     "AtSpiChildrenDiffTests.Added_Children_Use_New_Indices_Lowest_First",
+     "AtSpiChildrenDiffTests.First_Children_Are_All_Added",
+     "AtSpiChildrenDiffTests.Moved_Child_Is_Removed_And_Added",
+     "AtSpiChildrenDiffTests.Applying_Changes_In_Order_Produces_New_Children"
     ],
     "Automation/CalendarDayButtonAutomationPeerTests.cs": [
      "CalendarDayButtonAutomationPeerTests.Creates_CalendarDayButtonAutomationPeer",
@@ -4455,6 +4504,8 @@
      "ButtonTests.Button_Does_Not_Subscribe_To_Command_CanExecuteChanged_Until_Added_To_Logical_Tree",
      "ButtonTests.Button_Subscribes_To_Command_CanExecuteChanged_When_Added_To_Logical_Tree",
      "ButtonTests.Button_Unsubscribes_From_Command_CanExecuteChanged_When_Removed_From_Logical_Tree",
+     "ButtonTests.Button_Subscribes_Once_To_Style_Set_Command_CanExecuteChanged_When_Added_To_Logical_Tree",
+     "ButtonTests.Button_Unsubscribes_From_Style_Set_Command_CanExecuteChanged_When_Removed_From_Logical_Tree",
      "ButtonTests.Button_Invokes_CanExecute_When_CommandParameter_Changed",
      "ButtonTests.Raises_Click_When_AccessKey_Raised",
      "ButtonTests.Button_Invokes_Doesnt_Execute_When_Button_Disabled",
@@ -4483,8 +4534,13 @@
      "CalendarDatePickerTests.Setting_Date_Manually_With_CustomDateFormatString_Should_Be_Accepted",
      "CalendarDatePickerTextConverter.Setting_Date_Manually_Uses_Text_Converter",
      "CalendarDatePickerTextConverter.Setting_Date_String_Manually_Can_Accept_Multiple_Formats",
+     "CalendarDatePickerTextConverter.Shift_Tab_From_TextBox_Should_Move_Focus_To_Previous_Control",
+     "CalendarDatePickerTextConverter.Tab_Into_CalendarDatePicker_Should_Focus_TextBox_And_Select_Text",
+     "CalendarDatePickerTextConverter.Shift_Tab_Into_CalendarDatePicker_Should_Focus_TextBox",
      "CalendarDatePickerTextConverter.Tab_Focus_Should_Move_Focus_To_TextBox",
      "CalendarDatePickerTextConverter.Programmatic_Focus_Should_Move_Focus_To_TextBox",
+     "CalendarDatePickerTextConverter.Pointer_Focus_Should_Not_Move_Focus_To_TextBox",
+     "CalendarDatePickerTextConverter.Focus_Should_Not_Close_An_Open_DropDown",
      "CalendarDatePickerTextConverter.PlaceholderForeground_Can_Be_Set"
     ],
     "CalendarTests.cs": [
@@ -4657,6 +4713,8 @@
      "ClassesTests.Listeners_Can_Be_Removed_By_Listener"
     ],
     "ComboBoxTests.cs": [
+     "ComboBoxTests.Item_Marked_As_Selected_Is_Selected_Before_The_DropDown_Is_Opened",
+     "ComboBoxTests.Item_Marked_As_Selected_Stays_Selected_When_The_DropDown_Is_Opened",
      "ComboBoxTests.Can_Open_DropDown_After_Replacing_Application_Theme",
      "ComboBoxTests.Clicking_On_Control_Toggles_IsDropDownOpen",
      "ComboBoxTests.Clicking_On_Control_PseudoClass",
@@ -5188,6 +5246,7 @@
      "FlexPanelTests.Can_Wrap_Items_Into_Next_Column_With_Spacing",
      "FlexPanelTests.Applies_Absolute_FlexBasis_Properties",
      "FlexPanelTests.Applies_Relative_FlexBasis_Properties",
+     "FlexPanelTests.Growing_Items_Can_Be_Measured_With_Infinite_Main_Axis",
      "FlexPanelTests.Empty_Panel_Does_Not_Take_Up_Available_Space"
     ],
     "FlyoutTests.cs": [
@@ -5208,6 +5267,7 @@
      "FlyoutTests.KeyUp_Raised_On_Target_Opens_ContextFlyout",
      "FlyoutTests.KeyUp_Raised_On_Target_Closes_Opened_ContextFlyout",
      "FlyoutTests.KeyUp_Raised_On_Flyout_Closes_Opened_ContextFlyout",
+     "FlyoutTests.Flyout_With_Pointer_Placement_Keeps_Position_On_Resize",
      "FlyoutTests.Should_Reset_Popup_Parent_On_Target_Detached",
      "FlyoutTests.Should_Reset_Popup_Parent_On_Target_Attach_Following_Detach",
      "FlyoutTests.ContextFlyout_Can_Be_Set_In_Styles",
@@ -5623,6 +5683,8 @@
      "MenuItemTests.MenuItem_Does_Not_Subscribe_To_Command_CanExecuteChanged_Until_Added_To_Logical_Tree",
      "MenuItemTests.MenuItem_Subscribes_To_Command_CanExecuteChanged_When_Added_To_Logical_Tree",
      "MenuItemTests.MenuItem_Unsubscribes_From_Command_CanExecuteChanged_When_Removed_From_Logical_Tree",
+     "MenuItemTests.MenuItem_Subscribes_Once_To_Style_Set_Command_CanExecuteChanged_When_Added_To_Logical_Tree",
+     "MenuItemTests.MenuItem_Unsubscribes_From_Style_Set_Command_CanExecuteChanged_When_Removed_From_Logical_Tree",
      "MenuItemTests.MenuItem_Invokes_CanExecute_When_Added_To_Logical_Tree_And_CommandParameter_Changed",
      "MenuItemTests.MenuItem_Does_Not_Invoke_CanExecute_When_ContextMenu_Closed",
      "MenuItemTests.MenuItem_Does_Not_Invoke_CanExecute_When_MenuFlyout_Closed",
@@ -5662,6 +5724,11 @@
      "NameScopeTests.Child_Scope_Should_Prefer_Own_Elements",
      "NameScopeTests.Child_Scope_FindAsync_Should_Find_Elements_In_Parent_Scope_When_Child_Is_Completed",
      "NameScopeTests.Child_Scope_FindAsync_Should_Prefer_Own_Elements"
+    ],
+    "NativeMenuItemTests.cs": [
+     "NativeMenuItemTests.Setting_CommandParameter_After_Command_Should_Enable_Item",
+     "NativeMenuItemTests.Clearing_CommandParameter_Should_Disable_Item",
+     "NativeMenuItemTests.Setting_CommandParameter_Without_Command_Should_Not_Enable_Item"
     ],
     "NavigationEventArgsTests.cs": [
      "NavigatedToEventArgsTests.Properties_RoundTrip",
@@ -5971,8 +6038,13 @@
      "StorageProviderHelperTests.Can_Decode_Bcl_Bookmarks",
      "StorageProviderHelperTests.Fails_To_Decode_Invalid_Bcl_Bookmarks"
     ],
+    "Platform/WaylandPropertiesTests.cs": [
+     "WaylandPropertiesTests.WaylandProperties_AppId_AttachedProperty_Works",
+     "WaylandPropertiesTests.WaylandProperties_AppId_NotifiesFeature"
+    ],
     "PresentationSourceTests.cs": [
      "PresentationSourceTests.Closing_Should_Detach_Platform_Input_Handler",
+     "PresentationSourceTests.ChromeHitTest_Should_Return_Null_After_Closing",
      "PresentationSourceTests.ChromeHitTest_Prefers_Overlay_Over_Content",
      "PresentationSourceTests.ChromeHitTest_Prefers_Content_Over_Underlay",
      "PresentationSourceTests.Cursor_Should_Follow_Captured_Element"
@@ -6133,7 +6205,9 @@
      "TextPresenter_Tests.Text_Presenter_Replaces_Formatted_Text_With_Password_Char",
      "TextPresenter_Tests.TextPresenter_Should_Use_FontStretch_Property",
      "TextPresenter_Tests.Measure_And_Arrange_Should_Use_WidthIncludingTrailingWhitespace_For_Bounds",
-     "TextPresenter_Tests.HideCaret_Should_Keep_The_Text_Layout"
+     "TextPresenter_Tests.CursorRectangle_Should_Reflect_Caret_Position",
+     "TextPresenter_Tests.HideCaret_Should_Keep_The_Text_Layout",
+     "TextPresenter_Tests.Caret_Points_Should_Be_Recalculated_When_Centered_TextLayout_Is_Recreated"
     ],
     "Primitives/ManagedPopupPositionerTests.cs": [
      "ManagedPopupPositionerTests.Uses_Screen_Containing_The_Anchor_Point"
@@ -6186,6 +6260,7 @@
      "PopupTests.Focusable_Controls_In_Popup_Should_Get_Focus",
      "PopupTests.Popup_Should_Clear_Keyboard_Focus_From_Children_When_Closed",
      "PopupTests.Closing_Popup_Sets_Focus_On_PlacementTarget",
+     "PopupTests.Closing_Popup_Clears_Focus_When_Previously_Focused_Element_Is_Disabled",
      "PopupTests.Prog_Close_Popup_NoLightDismiss_Doesnt_Move_Focus_To_PlacementTarget",
      "PopupTests.Popup_Should_Not_Follow_Placement_Target_On_Window_Move_If_Pointer",
      "PopupTests.Popup_Should_Follow_Placement_Target_On_Window_Resize",
@@ -6755,13 +6830,15 @@
     "Shapes/PolygonTests.cs": [
      "PolygonTests.Polygon_Will_Update_Geometry_On_Shapes_Collection_Content_Change",
      "PolygonTests.FillRule_On_Polygon_Is_Applied_To_DefiningGeometry",
-     "PolygonTests.Polygon_Equals_Closed_Polyline_Bounds"
+     "PolygonTests.Polygon_Equals_Closed_Polyline_Bounds",
+     "PolygonTests.Polygon_Should_Invalidate_Geometry_When_Points_Collection_Changes"
     ],
     "Shapes/PolylineTests.cs": [
      "PolylineTests.Polyline_Will_Update_Geometry_On_Shapes_Collection_Content_Change",
      "PolylineTests.FillRule_On_Polyline_Is_Applied_To_DefiningGeometry",
      "PolylineTests.FillRule_Differs_Between_EvenOdd_And_NonZero",
-     "PolylineTests.When_Fill_Is_Null_Polyline_Geometry_Is_Not_Filled"
+     "PolylineTests.When_Fill_Is_Null_Polyline_Geometry_Is_Not_Filled",
+     "PolylineTests.Polyline_Should_Invalidate_Geometry_When_Points_Collection_Changes"
     ],
     "Shapes/RectangleTests.cs": [
      "RectangleTests.Measure_Does_Not_Set_RenderedGeometry_Rect",
@@ -6783,6 +6860,7 @@
     ],
     "SplitButtonTests.cs": [
      "SplitButtonTests.SplitButton_CommandParameter_Does_Not_Change_While_Execution",
+     "SplitButtonTests.SplitButton_Subscribes_Once_To_Style_Set_Command_CanExecuteChanged_While_In_Logical_Tree",
      "SplitButtonTests.Should_Not_Fire_Click_Event_On_Space_Key_When_It_Is_Not_Focus"
     ],
     "SplitViewTests.cs": [
@@ -6999,6 +7077,9 @@
      "TextBlockTests.LetterSpacing_Property_Uses_TextElement_Definition",
      "TextBlockTests.Calling_Measure_Should_Update_TextLayout",
      "TextBlockTests.Should_Measure_MinTextWith",
+     "TextBlockTests.Detaching_Should_Release_TextLayout",
+     "TextBlockTests.Detaching_Should_Release_TextLayout_Built_While_Measure_Is_Invalid",
+     "TextBlockTests.Reattaching_Should_Rebuild_TextLayout",
      "TextBlockTests.Calling_Arrange_With_Different_Size_Should_Update_Constraint_And_TextLayout",
      "TextBlockTests.Calling_Measure_With_Infinite_Space_Should_Set_DesiredSize",
      "TextBlockTests.Changing_InlinesCollection_Should_Invalidate_Measure",
@@ -7025,6 +7106,15 @@
      "TextBlockTests.TextBlock_With_UseLayoutRounding_False_Should_Not_Round_Padding_In_MeasureOverride",
      "TextBlockTests.TextBlock_With_UseLayoutRounding_False_Should_Not_Round_Padding_In_ArrangeOverride",
      "TextBlockTests.Measure_And_Arrange_Should_Use_WidthIncludingTrailingWhitespace_For_Bounds",
+     "TextBlockTests.TextBlock_With_Wrap_MaxLines_CharacterEllipsis_Should_Show_Ellipsis_On_Last_Line",
+     "TextBlockTests.TextBlock_With_Wrap_CharacterEllipsis_And_Height_Limit_Should_Show_Ellipsis_On_Last_Line",
+     "TextBlockTests.TextBlock_With_Wrap_MaxLines_WordEllipsis_Should_Show_Ellipsis_On_Last_Line",
+     "TextBlockTests.TextBlock_With_Wrap_WordEllipsis_And_Height_Limit_Should_Show_Ellipsis_On_Last_Line",
+     "TextBlockTests.TextBlock_With_MaxLines_When_Text_Fully_Fits_Should_Not_Show_Ellipsis",
+     "TextBlockTests.TextBlock_With_Overflow_And_MaxLines_Should_Not_Produce_Double_Ellipsis",
+     "TextBlockTests.TextBlock_With_Overflow_And_MaxHeight_Should_Not_Produce_Double_Ellipsis",
+     "TextBlockTests.TextBlock_With_MaxHeight_And_Hidden_Content_After_NewLine_Should_Not_Show_Ellipsis",
+     "TextBlockTests.TextBlock_With_Rtl_Wrap_MaxLines_CharacterEllipsis_Should_Show_Ellipsis_On_Last_Line",
      "TextBlockTests.Should_Shape_Inlines_When_TextLayout_Is_Created_Before_Measure",
      "TextBlockTests.Should_Shape_Inlines_When_TextLayout_Is_Created_Between_Content_Change_And_Measure",
      "TextBlockTests.Should_Not_Cache_Shaped_Runs_Built_Outside_Of_Measure_From_Text",
@@ -7033,7 +7123,17 @@
      "TextBlockTests.Should_Remeasure_Embedded_Controls_When_The_Child_Invalidates_Its_Measure",
      "TextBlockTests.Changing_LineSpacing_Should_Invalidate_Measure",
      "TextBlockTests.Should_Shape_The_Latest_Inlines_When_Content_Changes_Twice_Before_Measure",
-     "TextBlockTests.Should_Remeasure_Embedded_Controls_When_The_Child_Changes_While_Measure_Is_Invalid"
+     "TextBlockTests.Should_Remeasure_Embedded_Controls_When_The_Child_Changes_While_Measure_Is_Invalid",
+     "TextBlockTests.Should_Render_Embedded_Control_In_Hidden_Subtree",
+     "TextBlockTests.Should_Render_Embedded_Control_Shown_Later_In_Hidden_Subtree",
+     "TextBlockTests.Should_Render_Embedded_Control_Shown_After_Its_Page_Was_Hidden"
+    ],
+    "TextBoxSelectionNotificationTests.cs": [
+     "TextBoxSelectionNotificationTests.Setting_Input_Method_Selection_Notifies_After_Both_Endpoints_Are_Assigned",
+     "TextBoxSelectionNotificationTests.Setting_Input_Method_Selection_Allows_Reentrant_Input_From_Selection_Changed",
+     "TextBoxSelectionNotificationTests.Replacing_Text_Notifies_Input_Method_After_Both_Selection_Endpoints_Are_Coerced",
+     "TextBoxSelectionNotificationTests.Replacing_Text_Allows_Reentrant_Input_From_Input_Method_Selection_Changed",
+     "TextBoxSelectionNotificationTests.Replacing_Text_Preserves_Valid_Partial_Selection_Without_Notifying_Input_Method"
     ],
     "TextBoxTests.cs": [
      "TextBoxTests.Opening_Context_Menu_Does_not_Lose_Selection",
@@ -7135,6 +7235,7 @@
      "TextBoxTests.Middle_Click_Pastes_Primary_Selection_At_Click_Position",
      "TextBoxTests.Middle_Click_Does_Not_Paste_When_ReadOnly",
      "TextBoxTests.Middle_Click_Does_Nothing_Without_Primary_Selection",
+     "TextBoxTests.Changing_Visibility_Hides_Text_Selection_Handles",
      "TextBoxTests.Paste_Raises_Event_When_No_Clipboard_Is_Available"
     ],
     "TextBoxTests_DataValidation.cs": [
@@ -7285,6 +7386,8 @@
      "TreeViewTests.Numpad_Slash_Should_Collapse_All_Children_Recursively",
      "TreeViewTests.Setting_SelectedItem_Should_Set_Container_Selected",
      "TreeViewTests.Setting_SelectedItem_Should_Raise_SelectedItemChanged_Event",
+     "TreeViewTests.Changing_SelectedItem_Should_Report_Deselected_Item",
+     "TreeViewTests.SelectAll_Should_Raise_A_Single_SelectionChanged_Event",
      "TreeViewTests.Removing_Selected_Root_Item_Should_Clear_Selection",
      "TreeViewTests.Resetting_Root_Items_Should_Clear_Selection",
      "TreeViewTests.Removing_Selected_Child_Item_Should_Clear_Selection",
@@ -7717,7 +7820,12 @@
      "PopupTests.Popup_Uses_Dedicated_TopLevel",
      "PopupTests.Popup_Placement_Respects_Window_Position",
      "PopupTests.Can_Click_Button_Inside_Platform_Popup",
-     "PopupTests.Nested_Popup_Is_Owned_By_Parent_Popup"
+     "PopupTests.Nested_Popup_Is_Owned_By_Parent_Popup",
+     "PopupTests.Nested_Popup_Placement_Respects_Parent_Popup_Position",
+     "PopupTests.Popup_Placement_Respects_Render_Scaling",
+     "PopupTests.Popup_Follows_Window_Move",
+     "PopupTests.Window_Position_Is_Fixed_When_Positioning_Is_Not_Supported",
+     "PopupTests.Desktop_Coordinates_Are_Logical_When_Enabled"
     ],
     "RenderingTests.cs": [
      "RenderingTests.Should_Render_Last_Frame_To_Bitmap",
@@ -7916,7 +8024,7 @@
    }
   },
   "tests/Avalonia.IntegrationTests.Win32": {
-   "csFiles": 13,
+   "csFiles": 14,
    "files": {
     "Automation/AutomationNodeTests.cs": [
      "AutomationNodeTests.Toggle_Pattern_Is_Available_For_Checkable_MenuItem_From_Another_Thread",
@@ -7938,6 +8046,10 @@
     "OleVirtualFileDataTests.cs": [
      "OleVirtualFileDataTests.Exposes_Virtual_File_As_StorageFile",
      "OleVirtualFileDataTests.Rejects_Truncated_FileGroupDescriptorW"
+    ],
+    "ScreenTests.cs": [
+     "ScreenTests.Display_Changes_Refresh_Screens_With_Or_Without_A_Window",
+     "ScreenTests.Display_Changes_Update_Render_Timer_Without_A_Window"
     ],
     "StandardWindowTests.cs": [
      "StandardWindowTests.Maximized_State_Fills_Screen_Working_Area",
@@ -9187,6 +9299,8 @@
      "RadialGradientBrushTests.RadialGradientBrush_Partial_Cover",
      "RadialGradientBrushTests.RadialGradientBrush_RedBlue",
      "RadialGradientBrushTests.RadialGradientBrush_RedBlue_Offset_Inside",
+     "RadialGradientBrushTests.RadialGradientBrush_Transparent_Stop_Offset_Inside",
+     "RadialGradientBrushTests.RadialGradientBrush_RedBlue_Offset_On_Circle",
      "RadialGradientBrushTests.RadialGradientBrush_RedBlue_Offset_Outside",
      "RadialGradientBrushTests.RadialGradientBrush_RedGreenBlue_Offset_Inside",
      "RadialGradientBrushTests.RadialGradientBrush_RedGreenBlue_Offset_Outside",
@@ -9205,7 +9319,12 @@
      "RenderTargetBitmapTests.RenderTargetBitmap_DropShadowEffect"
     ],
     "Media/StreamGeometryTests.cs": [
-     "StreamGeometryTests.PreciseEllipticArc_Produces_Valid_Arcs_In_All_Directions"
+     "StreamGeometryTests.PreciseEllipticArc_Produces_Valid_Arcs_In_All_Directions",
+     "StreamGeometryTests.Stretched_Path_With_Transformed_Geometry",
+     "StreamGeometryTests.Transformed_Geometry_Can_Be_Reopened",
+     "StreamGeometryTests.PathGeometry_Can_Be_Opened_With_A_Transform",
+     "StreamGeometryTests.PathGeometry_Can_Be_Opened",
+     "StreamGeometryTests.Stretched_Path_With_PathGeometry_Data"
     ],
     "Media/TextFormatting/TextLayoutTests.cs": [
      "TextLayoutTests.Should_Measure_String_Correctly",
@@ -9315,7 +9434,7 @@
    "files": {}
   },
   "tests/Avalonia.Skia.UnitTests": {
-   "csFiles": 35,
+   "csFiles": 39,
    "files": {
     "CombinedGeometryImplTests.cs": [
      "CombinedGeometryImplTests.Combining_Fill_With_Empty_Stroke_Returns_Fill_Bounds"
@@ -9441,6 +9560,17 @@
     "Media/ImmutableBitmapTests.cs": [
      "ImmutableBitmapTests.Constructor_From_Pixels_Copies_Source_Data"
     ],
+    "Media/StreamGeometryTests.cs": [
+     "StreamGeometryTests.Open_Should_Append_To_Existing_Figures",
+     "StreamGeometryTests.Open_Should_Raise_Changed",
+     "StreamGeometryTests.Open_Should_Update_Transformed_Geometry",
+     "StreamGeometryTests.Open_Should_Update_ContourLength",
+     "StreamGeometryTests.Open_Should_Not_Affect_Clone",
+     "StreamGeometryTests.Clone_Should_Keep_Transform"
+    ],
+    "Media/TextFormatting/BidiReordererTests.cs": [
+     "BidiReordererTests.Should_Map_Logical_Runs_To_Visual_RunIndex"
+    ],
     "Media/TextFormatting/EmptyShapedBufferTests.cs": [
      "EmptyShapedBufferTests.Line_Break_That_Shapes_To_No_Glyphs_Keeps_Its_Characters",
      "EmptyShapedBufferTests.Should_Wrap_Text_That_Starts_With_A_Line_Break"
@@ -9521,6 +9651,7 @@
      "DummyRun.Should_Format_TextLine_With_Non_Text_TextRuns_RightToLeft",
      "DummyRun.Should_Reset_Bidi_Levels_Of_Trailing_Whitespaces_After_TextWrapping",
      "DummyRun.Should_Reset_Bidi_Levels_Of_Trailing_Whitespaces_After_TextWrapping_2",
+     "DummyRun.Should_Resolve_Explicit_Formatting_After_Another_Paragraph",
      "DummyRun.Should_Format_TextRuns_With_TextRunStyles",
      "DummyRun.Should_Produce_Unique_Runs",
      "DummyRun.Should_Not_Absorb_Whitespace_Into_A_Fallback_Run",
@@ -9565,6 +9696,11 @@
      "TextFormatterWrapCharacterizationTests.Wrap_With_LTR_Text_Does_Not_Touch_Trailing_Whitespace_Bidi",
      "TextFormatterWrapCharacterizationTests.Wrap_Empty_Text_Yields_Null"
     ],
+    "Media/TextFormatting/TextLayoutRangeContractTests.cs": [
+     "TextLayoutRangeContractTests.Empty_Range_Returns_No_Geometry",
+     "TextLayoutRangeContractTests.Completed_Range_Does_Not_Add_Geometry_From_Following_Lines",
+     "TextLayoutRangeContractTests.Negative_Range_Length_Preserves_Line_Geometry"
+    ],
     "Media/TextFormatting/TextLayoutTests.cs": [
      "TextLayoutTests.Should_Break_Lines",
      "TextLayoutTests.Should_Apply_TextStyleSpan_To_Text_In_Between",
@@ -9586,12 +9722,17 @@
      "TextLayoutTests.Should_Include_First_Line_When_Constraint_Is_Surpassed",
      "TextLayoutTests.Should_Not_Exceed_MaxLines",
      "TextLayoutTests.Should_Add_Ellipsis_When_MaxLines_Cuts_Short_Wrapped_Line",
+     "TextLayoutTests.Should_Add_Ellipsis_When_MaxLines_Cuts_At_Hard_Break",
+     "TextLayoutTests.Should_Not_Add_Ellipsis_When_MaxHeight_Cuts_At_Hard_Break",
+     "TextLayoutTests.Should_Add_Ellipsis_When_MaxHeight_Cuts_Wrapped_Line",
      "TextLayoutTests.Should_Produce_Fixed_Height_Lines",
      "TextLayoutTests.Should_Wrap",
      "TextLayoutTests.Should_Process_Multiple_NewLines_Properly",
      "TextLayoutTests.Should_Wrap_Min_OneCharacter_EveryLine",
      "TextLayoutTests.Should_HitTestTextRange_RightToLeft",
      "TextLayoutTests.Should_HitTestTextRange_BiDi",
+     "TextLayoutTests.Should_HitTestTextRange_Split_LeftToRight_Runs_In_RightToLeft",
+     "TextLayoutTests.Should_Not_Change_Geometry_When_Style_Spans_Split_Runs",
      "TextLayoutTests.Should_HitTestTextRange",
      "TextLayoutTests.Should_Wrap_RightToLeft",
      "TextLayoutTests.Should_Layout_Empty_String",
@@ -9643,7 +9784,8 @@
      "TextLineTests.Should_GetNextCaretCharacterHit_From_Mixed_TextBuffer",
      "TextLineTests.Should_GetPreviousCaretCharacterHit_From_Mixed_TextBuffer",
      "TextLineTests.Should_GetCharacterHitFromDistance_From_Mixed_TextBuffer",
-     "TextLineTests.Should_Throw_ArgumentOutOfRangeException_For_Zero_TextLength",
+     "TextLineTests.Should_GetTextBounds_For_Zero_TextLength",
+     "TextLineTests.Should_GetTextBounds_For_Non_Empty_TextLength",
      "TextLineTests.Should_GetTextBounds_For_Negative_TextLength",
      "TextLineTests.Should_GetTextBounds_For_Exceeding_TextLength",
      "TextLineTests.Should_GetTextBounds_For_Mixed_Hidden_Runs_With_Ligature",
@@ -9712,6 +9854,9 @@
      "TextShaperTests.ClusterCache_SimpleMode_TrimmingHelpers_Are_Correct",
      "TextShaperTests.ClusterCache_SimpleMode_TrimmingHelpers_Survive_Split"
     ],
+    "PathGeometryTests.cs": [
+     "PathGeometryTests.Open_Keeps_Content_When_Transform_Is_Set"
+    ],
     "RenderBoundsTests.cs": [
      "RenderBoundsTests.RenderBoundsAreCorrectlyCalculated"
     ],
@@ -9774,7 +9919,7 @@
    "files": {}
   },
   "tests/Avalonia.Wayland.UnitTests": {
-   "csFiles": 2,
+   "csFiles": 3,
    "files": {
     "TextInputOptionsConverterTests.cs": [
      "TextInputOptionsConverterTests.Default_IsNoneNormal",
@@ -9783,6 +9928,9 @@
      "TextInputOptionsConverterTests.Password_ForcesHiddenAndSensitive_EvenWithShowSuggestions",
      "TextInputOptionsConverterTests.Flags_ComposeIntoHint",
      "TextInputOptionsConverterTests.ShowSuggestionsFalse_OmitsCompletion"
+    ],
+    "WaylandAppIdTests.cs": [
+     "WaylandAppIdTests.WaylandPlatformOptions_CanSetAppId"
     ],
     "WaylandTextUtilsTests.cs": [
      "WaylandTextUtilsTests.CharIndexFromUtf8Offset_Cases",

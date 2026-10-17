@@ -1,25 +1,25 @@
 {
- "upstreamCommit": "17350180c33b063f0e98abbfd19aa3cae63f5d56",
+ "upstreamCommit": "66b7273b9a2b5ba8416feb4376b9cdc3078b8573",
  "inScope": {
   "files": [
-   2792,
-   2792,
+   2790,
+   2795,
    0
   ],
   "types": [
-   3935,
-   4345,
+   3932,
+   4348,
    410
   ],
   "members": [
-   30355,
-   36210,
-   5855
+   30298,
+   36201,
+   5854
   ]
  },
  "allProjects": {
-  "membersPresent": 30355,
-  "members": 37391,
+  "membersPresent": 30298,
+  "members": 37382,
   "membersNotApplicable": 1181,
   "membersOutOfScope": 0
  },
@@ -726,23 +726,23 @@
    "scope": "in",
    "detail": "full",
    "files": [
-    1248,
+    1247,
     1248,
     0
    ],
    "types": [
-    1524,
+    1522,
     1659,
     135
    ],
    "members": [
-    10399,
-    11433,
-    1034
+    10346,
+    11393,
+    1033
    ],
    "interfaces": [
     247,
-    260
+    261
    ],
    "propertyRegistrations": [
     224,
@@ -759,12 +759,12 @@
     "alias free fn": 5,
     "const": 381,
     "derive": 62,
-    "field": 638,
-    "fn": 6572,
+    "field": 618,
+    "fn": 6545,
     "free fn": 15,
     "free item": 16,
     "getter fn": 4,
-    "overload fn": 313,
+    "overload fn": 307,
     "trait": 360,
     "trait fn": 75,
     "variant": 1793
@@ -2724,9 +2724,6 @@
     "Media/ImmutableGeometry.cs": [
      "media/immutable_geometry.rs"
     ],
-    "Media/ImmutableGeometryImpl.cs": [
-     "media/immutable_geometry_impl.rs"
-    ],
     "Media/IntersectionResult.cs": [
      "media/intersection_result.rs"
     ],
@@ -4568,6 +4565,7 @@
     "media/fonts/testing/test_font_scope.rs",
     "media/fonts/testing/test_fonts.rs",
     "media/fonts/testing/test_platform_typeface.rs",
+    "media/immutable_geometry_impl.rs",
     "media/known_color_brushes.rs",
     "media/media_collection.rs",
     "media/ref_adapter.rs",
@@ -4603,6 +4601,7 @@
     "platform/native_library.rs",
     "platform/render_interface_access.rs",
     "platform/storage/file_io/path.rs",
+    "platform/surfaces/platform_text_rendering_parameters.rs",
     "register_types.rs",
     "rendering/auto_reset_event.rs",
     "rendering/composition/composition_cache_mode.rs",
@@ -4756,26 +4755,26 @@
    "detail": "full",
    "files": [
     538,
-    538,
+    540,
     0
    ],
    "types": [
     621,
-    628,
+    630,
     7
    ],
    "members": [
     6255,
-    6405,
+    6412,
     150
    ],
    "interfaces": [
     83,
-    83
+    84
    ],
    "propertyRegistrations": [
     938,
-    938
+    939
    ],
    "routedEvents": [
     67,
@@ -6490,6 +6489,7 @@
     "testing/unit_test_application.rs",
     "text_box_tests_data_validation.rs",
     "text_box_tests_input.rs",
+    "text_layout_rounding_placement.rs",
     "top_level_tests_platform_features.rs",
     "utils/debug_display.rs",
     "utils/masked_text_provider.rs",
@@ -7064,8 +7064,8 @@
     0
    ],
    "members": [
-    423,
-    434,
+    424,
+    437,
     11
    ],
    "interfaces": [
@@ -7085,7 +7085,7 @@
     "alias fn": 5,
     "field": 7,
     "fn": 207,
-    "free fn": 3,
+    "free fn": 4,
     "free item": 36,
     "variant": 165
    },
@@ -7494,7 +7494,7 @@
    ],
    "members": [
     607,
-    639,
+    640,
     32
    ],
    "interfaces": [
@@ -8006,9 +8006,9 @@
     13
    ],
    "members": [
-    612,
-    780,
-    168
+    613,
+    790,
+    171
    ],
    "interfaces": [
     14,
@@ -8025,8 +8025,8 @@
    "notApplicableFiles": 2,
    "matchKinds": {
     "const": 5,
-    "field": 95,
-    "fn": 464,
+    "field": 93,
+    "fn": 467,
     "free fn": 12,
     "free item": 6,
     "overload fn": 1,
@@ -8875,8 +8875,8 @@
    ],
    "members": [
     238,
-    251,
-    13
+    253,
+    12
    ],
    "interfaces": [
     2,
@@ -9808,19 +9808,19 @@
    "scope": "in",
    "detail": "full",
    "files": [
-    54,
-    54,
+    53,
+    55,
     0
    ],
    "types": [
-    66,
-    66,
+    65,
+    67,
     0
    ],
    "members": [
-    430,
-    451,
-    21
+    424,
+    457,
+    20
    ],
    "interfaces": [
     10,
@@ -9839,10 +9839,10 @@
     "alias fn": 6,
     "alias free fn": 12,
     "field": 29,
-    "fn": 335,
+    "fn": 330,
     "free fn": 34,
     "free item": 1,
-    "overload fn": 12,
+    "overload fn": 11,
     "trait": 1
    },
    "presentFiles": {
@@ -9993,9 +9993,6 @@
     "SkiaTypeface.cs": [
      "skia_typeface.rs"
     ],
-    "StreamGeometryImpl.cs": [
-     "stream_geometry_impl.rs"
-    ],
     "SurfaceRenderTarget.cs": [
      "surface_render_target.rs"
     ],
@@ -10017,7 +10014,10 @@
     "gpu/vulkan/frames_test.rs",
     "gpu/vulkan/tests.rs",
     "locked_framebuffer.rs",
+    "stream_geometry_impl.rs",
     "tests.rs",
+    "text_rendering_override.rs",
+    "text_rendering_settings.rs",
     "unit_tests/hit_testing.rs",
     "unit_tests/media/custom_font_manager_impl.rs",
     "unit_tests/media/text_formatting/multi_buffer_text_source.rs",
@@ -10044,7 +10044,7 @@
    "members": [
     2348,
     2603,
-    255
+    254
    ],
    "interfaces": [
     7,
@@ -10358,6 +10358,7 @@
    },
    "rustOnly": [
     "sync_root.rs",
+    "win32_text_rendering.rs",
     "win_rt/numerics.rs",
     "wnd_proc_guard.rs"
    ]
@@ -10681,7 +10682,7 @@
    ],
    "members": [
     312,
-    331,
+    333,
     19
    ],
    "interfaces": [
@@ -10878,10 +10879,34 @@
  "unusedPathOverrides": [],
  "unusedWaivers": [
   {
+   "project": "Avalonia.Headless",
+   "type": "*HeadlessWindowImpl",
+   "member": "Position",
+   "reason": "the public setter of the auto-property is only used by the class itself: the field `position`, set by `move_` and by the popup positioner"
+  },
+  {
+   "project": "Avalonia.Base",
+   "type": "Avalonia.Media.PreciseEllipticArcHelper.EllipticalArc",
+   "member": "EllipticalArc(*",
+   "reason": "five constructors, four functions (`new`, `from_center_and_angles`, `from_angles`, `from_center`): the constructor that takes the centre as two numbers and no angles only serves the one that takes it as a point, which is `from_center`"
+  },
+  {
+   "project": "Avalonia.Skia",
+   "type": "Avalonia.Skia.GeometryImpl",
+   "member": "InvalidateCaches",
+   "reason": "`GeometryImplBase::invalidate_caches` in the same file: the state of the abstract class is the struct a geometry returns from `GeometryImpl::base`"
+  },
+  {
    "project": "Avalonia.Wayland",
    "type": "Avalonia.Wayland.Server.Interop.WaylandConnection",
    "member": "WaylandConnection(int fd)",
    "reason": "`WaylandConnection::connect_to_fd`"
+  },
+  {
+   "project": "Avalonia.Win32",
+   "type": "Avalonia.Win32.Interop.UnmanagedMethods",
+   "member": "ShCoreAvailable",
+   "reason": "`has_get_dpi_for_monitor`: the callers ask whether shcore.dll has `GetDpiForMonitor`, the function they call next, where the reference asks whether the library loads"
   }
  ]
 }
