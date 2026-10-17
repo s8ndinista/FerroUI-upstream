@@ -49,6 +49,7 @@ const PC_FLYOUT_OPEN: &str = ":flyout-open";
 pub struct Button {
     base: ContentControl,
     can_execute_change_subscription: RefCell<Option<Rc<dyn IDisposable>>>,
+    is_subscribed_to_command: Cell<bool>,
     default_key_down_handlers: RefCell<Vec<RoutedEventHandlerToken>>,
     cancel_key_down_handlers: RefCell<Vec<RoutedEventHandlerToken>>,
     command_can_execute: Cell<bool>,
@@ -91,7 +92,7 @@ impl FerroObjectImpl for Button {
 
         if property == Self::command_property().as_property() {
             let (old_value, new_value) = change.get_old_and_new_value::<Option<Rc<dyn ICommand>>>();
-            if this.is_attached_to_logical_tree() {
+            if this.is_subscribed_to_command.get() {
                 if old_value.is_some() {
                     this.unsubscribe_can_execute_changed();
                 }
@@ -189,6 +190,8 @@ impl StyledElementImpl for Button {
             this.subscribe_can_execute_changed(command);
             this.can_execute_changed(Some(command), parameter.as_ref());
         }
+
+        this.is_subscribed_to_command.set(true);
     }
 
     fn on_detached_from_logical_tree(this: &Self, e: &LogicalTreeAttachmentEventArgs) {
@@ -204,6 +207,8 @@ impl StyledElementImpl for Button {
         if this.command().is_some() {
             this.unsubscribe_can_execute_changed();
         }
+
+        this.is_subscribed_to_command.set(false);
     }
 }
 
@@ -536,6 +541,7 @@ impl Button {
         Self {
             base: ContentControl::construct(),
             can_execute_change_subscription: RefCell::new(None),
+            is_subscribed_to_command: Cell::new(false),
             default_key_down_handlers: RefCell::new(Vec::new()),
             cancel_key_down_handlers: RefCell::new(Vec::new()),
             command_can_execute: Cell::new(true),

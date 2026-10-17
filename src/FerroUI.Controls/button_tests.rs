@@ -6,6 +6,7 @@ use crate::testing::{TestServices, UnitTestApplication};
 use crate::{Button, Control, Panel, StackPanel, Window};
 use ferroui_base::media::{Geometry, GeometryHitTestResult};
 use ferroui_base::rendering::IHitTester;
+use ferroui_base::styling::{Selectors, Setter, Style};
 use ferroui_base::Visual;
 use ferroui_base::data::core::Value;
 use ferroui_base::data::model::Model;
@@ -333,6 +334,39 @@ fn button_unsubscribes_from_command_can_execute_changed_when_removed_from_logica
     let root = TestRoot::with_child(&target);
 
     root.set_child(None);
+    assert_eq!(0, command.subscription_count());
+}
+
+#[test]
+fn button_subscribes_once_to_style_set_command_can_execute_changed_when_added_to_logical_tree() {
+    let _scope = test_scope();
+    let command = TestCommand::new(true);
+    let target = Button::new();
+    let root = TestRoot::new();
+    root.styles().add(Style::with_setters(
+        Selectors::of_type::<Button>(),
+        [Setter::new(Button::command_property(), command.as_command())],
+    ));
+    root.set_child(&target);
+
+    assert!(Rc::ptr_eq(&target.command().expect("the style sets the command"), &command.as_command().unwrap()));
+    assert_eq!(1, command.subscription_count());
+}
+
+#[test]
+fn button_unsubscribes_from_style_set_command_can_execute_changed_when_removed_from_logical_tree() {
+    let _scope = test_scope();
+    let command = TestCommand::new(true);
+    let target = Button::new();
+    let root = TestRoot::new();
+    root.styles().add(Style::with_setters(
+        Selectors::of_type::<Button>(),
+        [Setter::new(Button::command_property(), command.as_command())],
+    ));
+    root.set_child(&target);
+
+    root.set_child(None);
+
     assert_eq!(0, command.subscription_count());
 }
 
