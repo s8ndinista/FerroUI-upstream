@@ -110,6 +110,7 @@
                     Margin="{DynamicResource ExpanderChevronMargin}"
                     CornerRadius="{DynamicResource ControlCornerRadius}"
                     BorderBrush="{DynamicResource ExpanderChevronBorderBrush}"
+                    BackgroundSizing="InnerBorderEdge"
                     BorderThickness="{DynamicResource ExpanderChevronBorderThickness}"
                     Background="{DynamicResource ExpanderChevronBackground}">
               <!-- The AnimatedIcon (ExpanderChevronGlyphSize) with the fallback glyph E70D at 12 px. -->
@@ -220,6 +221,7 @@
                     Margin="{DynamicResource ExpanderChevronMargin}"
                     CornerRadius="{DynamicResource ControlCornerRadius}"
                     BorderBrush="{DynamicResource ExpanderChevronBorderBrush}"
+                    BackgroundSizing="InnerBorderEdge"
                     BorderThickness="{DynamicResource ExpanderChevronBorderThickness}"
                     Background="{DynamicResource ExpanderChevronBackground}">
               <!-- The AnimatedIcon (ExpanderChevronGlyphSize) with the fallback glyph E70E at 12 px. -->

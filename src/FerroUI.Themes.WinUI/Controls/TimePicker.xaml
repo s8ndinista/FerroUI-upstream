@@ -72,6 +72,7 @@
                             Background="{TemplateBinding Background}"
                             Foreground="{TemplateBinding Foreground}"
                             BorderBrush="{TemplateBinding BorderBrush}"
+                            BackgroundSizing="InnerBorderEdge"
                             BorderThickness="{TemplateBinding BorderThickness}"
                             Content="{TemplateBinding Content}"
                             HorizontalContentAlignment="Stretch"

@@ -80,6 +80,7 @@
                 ClipToBounds="{TemplateBinding ClipToBounds}"
                 Background="{TemplateBinding Background}"
                 BorderBrush="{TemplateBinding BorderBrush}"
+                BackgroundSizing="InnerBorderEdge"
                 BorderThickness="{TemplateBinding BorderThickness}"
                 CornerRadius="{TemplateBinding CornerRadius}">
           <ScrollViewer x:Name="PART_ScrollViewer"
@@ -136,6 +137,7 @@
                   Margin="4,2,4,2"
                   Background="{TemplateBinding Background}"
                   BorderBrush="{TemplateBinding BorderBrush}"
+                  BackgroundSizing="InnerBorderEdge"
                   BorderThickness="{TemplateBinding BorderThickness}"
                   CornerRadius="{TemplateBinding CornerRadius}" />
           <ContentPresenter x:Name="PART_ContentPresenter"
@@ -224,6 +226,7 @@
       <ControlTemplate>
         <Border Background="{TemplateBinding Background}"
                 BorderBrush="{TemplateBinding BorderBrush}"
+                BackgroundSizing="InnerBorderEdge"
                 BorderThickness="{TemplateBinding BorderThickness}"
                 CornerRadius="{TemplateBinding CornerRadius}"
                 Padding="{TemplateBinding Padding}">
@@ -459,7 +462,8 @@
               <Border Background="{DynamicResource ContentDialogTopOverlay}"
                       Padding="{DynamicResource ContentDialogPadding}"
                       BorderThickness="{DynamicResource ContentDialogSeparatorThickness}"
-                      BorderBrush="{DynamicResource ContentDialogSeparatorBorderBrush}">
+                      BorderBrush="{DynamicResource ContentDialogSeparatorBorderBrush}"
+                      BackgroundSizing="InnerBorderEdge">
                 <TextBlock x:Name="Content"
                            FontSize="{StaticResource ControlContentThemeFontSize}"
                            FontFamily="{StaticResource ContentControlThemeFontFamily}"

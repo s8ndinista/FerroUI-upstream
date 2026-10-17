@@ -85,6 +85,7 @@
           </Border>
           <Border x:Name="ContentGrid"
                   BorderBrush="{DynamicResource NavigationViewContentGridBorderBrush}"
+                  BackgroundSizing="InnerBorderEdge"
                   BorderThickness="{DynamicResource TopNavigationViewContentGridBorderThickness}"
                   Background="{DynamicResource NavigationViewContentBackground}"
                   CornerRadius="{DynamicResource TopNavigationViewContentGridCornerRadius}"

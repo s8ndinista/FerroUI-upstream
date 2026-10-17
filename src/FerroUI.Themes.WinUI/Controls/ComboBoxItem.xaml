@@ -70,6 +70,7 @@
         <Border x:Name="LayoutRoot"
                 Background="{TemplateBinding Background}"
                 BorderBrush="{TemplateBinding BorderBrush}"
+                BackgroundSizing="InnerBorderEdge"
                 BorderThickness="{TemplateBinding BorderThickness}"
                 Margin="5,2,5,2"
                 CornerRadius="{TemplateBinding CornerRadius}"

@@ -90618,7 +90618,7 @@
    "winui": "MenuFlyoutItem: DefaultMenuFlyoutItemStyle; MenuFlyoutSubItem: DefaultMenuFlyoutSubItemStyle; ToggleMenuFlyoutItem: DefaultToggleMenuFlyoutItemStyle (MenuFlyout_themeresources.xaml); RadioMenuFlyoutItem: DefaultRadioMenuFlyoutItemStyle (RadioMenuFlyoutItem_themeresources.xaml).",
    "status": "ported",
    "deviations": 15,
-   "date": "2026-10-16"
+   "date": "2026-10-17"
   },
   {
    "document": "MenuScrollViewer.xaml",
@@ -90682,7 +90682,7 @@
    "winui": "No WinUI style (IconElement has no template): the Path that WinUI's PathIcon builds in code (CPathIcon::ApplyTemplate, icon.cpp), unscaled and filled with the Foreground.",
    "status": "ported",
    "deviations": 3,
-   "date": "2026-10-16"
+   "date": "2026-10-17"
   },
   {
    "document": "PipsPager.xaml",
@@ -91522,7 +91522,7 @@
   }
  ],
  "deviations": {
-  "General": 24,
+  "General": 25,
   "Resources": 9,
   "AdornerLayer": 1,
   "AutoCompleteBox": 9,

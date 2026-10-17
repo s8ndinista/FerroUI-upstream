@@ -86,7 +86,8 @@
                       Background="{TemplateBinding Background}"
                       CornerRadius="{TemplateBinding CornerRadius}"
                       BorderThickness="{TemplateBinding BorderThickness}"
-                      BorderBrush="{TemplateBinding BorderBrush}" />
+                      BorderBrush="{TemplateBinding BorderBrush}"
+                      BackgroundSizing="InnerBorderEdge" />
               <!-- ContentButton: a Button of DefaultButtonStyle with a transparent background, no
                    border and the padding MenuBarItemButtonPadding. -->
               <ContentPresenter x:Name="PART_HeaderPresenter"
@@ -179,6 +180,7 @@
         <Border x:Name="LayoutRoot"
                 Background="{TemplateBinding Background}"
                 BorderBrush="{TemplateBinding BorderBrush}"
+                BackgroundSizing="InnerBorderEdge"
                 BorderThickness="{TemplateBinding BorderThickness}"
                 CornerRadius="{TemplateBinding CornerRadius}"
                 Padding="{TemplateBinding Padding}"

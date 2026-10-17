@@ -94,6 +94,7 @@
                   Padding="{TemplateBinding Padding}"
                   Background="{TemplateBinding Background}"
                   BorderBrush="{TemplateBinding BorderBrush}"
+                  BackgroundSizing="InnerBorderEdge"
                   BorderThickness="{TemplateBinding BorderThickness}"
                   Margin="{StaticResource MenuFlyoutItemMargin}"
                   CornerRadius="{TemplateBinding CornerRadius}">

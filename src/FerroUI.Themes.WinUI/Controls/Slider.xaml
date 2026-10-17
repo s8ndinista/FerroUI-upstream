@@ -64,6 +64,7 @@
         <Border Margin="-2"
                 Background="{DynamicResource SliderOuterThumbBackground}"
                 BorderBrush="{DynamicResource SliderThumbBorderBrush}"
+                BackgroundSizing="InnerBorderEdge"
                 BorderThickness="{TemplateBinding BorderThickness}"
                 CornerRadius="{DynamicResource SliderThumbCornerRadius}">
           <Ellipse x:Name="SliderInnerThumb"
