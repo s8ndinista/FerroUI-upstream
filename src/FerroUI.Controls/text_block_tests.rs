@@ -4,7 +4,9 @@
 //! measures 24 x 13.2 where the reference tests, which run on a real font,
 //! expect 27.95 x 14.52.
 
+use crate::compositor_hit_testing_tests::CompositorTestServices;
 use crate::documents::{InlineCollection, InlineUIContainer, Run, Span, TextElement};
+use ferroui_base::media::text_formatting::testing::TextTestScope;
 use crate::templates::{FuncControlTemplate, FuncTemplateNameScopeExtensions};
 use crate::test_support::{boxed_str, test_scope, TestRoot};
 use crate::test_support_buttons::focus_scope;
@@ -1115,6 +1117,104 @@ fn should_remeasure_embedded_controls_when_the_child_changes_while_measure_is_in
     expected.measure(Size::new(1000.0, 1000.0));
 
     assert_eq!(target.desired_size(), expected.desired_size());
+}
+
+fn create_templated_child() -> Ref<Button> {
+    let button = Button::new();
+    button.set_template(Some(FuncControlTemplate::new(|_, _| sized_border(20.0, 10.0).upcast())));
+    button
+}
+
+/// `new StackPanel { IsVisible = .., Children = { .. } }`.
+fn stack_panel_of(children: &[Ref<Control>], is_visible: bool) -> Ref<StackPanel> {
+    let panel = StackPanel::new();
+    panel.set_is_visible(is_visible);
+    for child in children {
+        panel.children().add(child);
+    }
+    panel
+}
+
+fn shown_text_block() -> Ref<Control> {
+    text_block("Shown").upcast()
+}
+
+#[test]
+fn should_render_embedded_control_in_hidden_subtree() {
+    let _text = TextTestScope::new();
+    let services = CompositorTestServices::new(Size::new(1000.0, 1000.0));
+
+    let child = create_templated_child();
+    let target = TextBlock::new();
+    target.set_inlines(Some(inlines_of([
+        Run::with_text(Some("Text ")).upcast(),
+        InlineUIContainer::with_child(child.clone()).upcast(),
+    ])));
+    let page = stack_panel_of(&[target.clone().upcast()], false);
+
+    services.set_content(&stack_panel_of(&[shown_text_block(), page.clone().upcast()], true));
+    services.run_jobs();
+
+    page.set_is_visible(true);
+    services.run_jobs();
+
+    assert!(!child.get_visual_children().is_empty());
+    assert_eq!(Size::new(20.0, 10.0), child.desired_size());
+}
+
+#[test]
+fn should_render_embedded_control_shown_later_in_hidden_subtree() {
+    let _text = TextTestScope::new();
+    let services = CompositorTestServices::new(Size::new(1000.0, 1000.0));
+
+    let child = create_templated_child();
+    child.set_is_visible(false);
+    let title = Run::with_text(Some("Text "));
+    let target = TextBlock::new();
+    target.set_inlines(Some(inlines_of([
+        title.clone().upcast(),
+        InlineUIContainer::with_child(child.clone()).upcast(),
+    ])));
+    let page = stack_panel_of(&[target.clone().upcast()], false);
+
+    services.set_content(&stack_panel_of(&[shown_text_block(), page.clone().upcast()], true));
+    services.run_jobs();
+
+    child.set_is_visible(true);
+    title.set_text(Some("Other text "));
+    services.run_jobs();
+
+    page.set_is_visible(true);
+    services.run_jobs();
+
+    assert!(!child.get_visual_children().is_empty());
+}
+
+#[test]
+fn should_render_embedded_control_shown_after_its_page_was_hidden() {
+    let _text = TextTestScope::new();
+    let services = CompositorTestServices::new(Size::new(1000.0, 1000.0));
+
+    let child = create_templated_child();
+    child.set_is_visible(false);
+    let target = TextBlock::new();
+    target.set_inlines(Some(inlines_of([
+        Run::with_text(Some("Text ")).upcast(),
+        InlineUIContainer::with_child(child.clone()).upcast(),
+    ])));
+    let page = stack_panel_of(&[target.clone().upcast()], true);
+
+    services.set_content(&page);
+    services.run_jobs();
+
+    page.set_is_visible(false);
+    child.set_is_visible(true);
+    services.run_jobs();
+
+    page.set_is_visible(true);
+    services.run_jobs();
+
+    assert!(!child.get_visual_children().is_empty());
 }
 
 #[test]
