@@ -60,6 +60,9 @@ impl FerroObjectImpl for NativeMenuItem {
                 }
             }
             this.can_execute_changed();
+        } else if property == Self::command_parameter_property().as_property() && this.command().is_some() {
+            // The parameter can be assigned after the command, which makes the first query stale.
+            this.can_execute_changed();
         }
     }
 }
