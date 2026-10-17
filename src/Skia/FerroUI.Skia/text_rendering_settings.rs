@@ -9,7 +9,8 @@
 //! the render scaling and the transparency of the scene: a FerroUI
 //! deviation (docs/porting/DEVIATIONS.md, area `Text rendering`).
 
-use ferroui_base::media::TextRenderingMode;
+use crate::text_rendering_override::text_rendering_override;
+use ferroui_base::media::{BaselinePixelAlignment, TextHintingMode, TextRenderingMode};
 use ferroui_base::platform::surfaces::{IPlatformRenderSurface, PlatformTextRenderingParameters, SubpixelGeometry};
 use ferroui_base::rendering::composition::CompositionTransparencyLevel;
 use skia_safe::{PixelGeometry, SurfaceProps, SurfacePropsFlags};
@@ -40,6 +41,16 @@ pub struct TextRenderingSettings {
     /// the mode unspecified: [`TextRenderingMode::Antialias`] or
     /// [`TextRenderingMode::SubpixelAntialias`].
     pub default_text_rendering_mode: TextRenderingMode,
+
+    /// The hinting of text whose text options leave it unspecified:
+    /// [`TextHintingMode::Unspecified`] (strong hinting) unless the
+    /// development override sets one (`text_rendering_override.rs`).
+    pub default_text_hinting_mode: TextHintingMode,
+
+    /// The baseline pixel alignment of text whose text options leave it
+    /// unspecified: [`BaselinePixelAlignment::Unspecified`] (snapped to the
+    /// pixel grid) unless the development override sets one.
+    pub default_baseline_pixel_alignment: BaselinePixelAlignment,
 }
 
 impl Default for TextRenderingSettings {
@@ -54,6 +65,8 @@ impl Default for TextRenderingSettings {
             text_contrast: defaults.text_contrast(),
             text_gamma: defaults.text_gamma(),
             default_text_rendering_mode: TextRenderingMode::Antialias,
+            default_text_hinting_mode: TextHintingMode::Unspecified,
+            default_baseline_pixel_alignment: BaselinePixelAlignment::Unspecified,
         }
     }
 }
@@ -140,9 +153,11 @@ impl TextRenderingSource {
         self.surfaces.iter().find_map(|surface| surface.text_rendering_parameters())
     }
 
-    /// The settings of a frame at a render scaling and a transparency level.
+    /// The settings of a frame at a render scaling and a transparency level,
+    /// with the development override of the process applied (none unless
+    /// its environment variables are set; `text_rendering_override.rs`).
     pub fn settings(&self, scaling: f64, transparency_level: CompositionTransparencyLevel) -> TextRenderingSettings {
-        TextRenderingSettings::for_scene(self.parameters(), scaling, transparency_level)
+        text_rendering_override().apply(TextRenderingSettings::for_scene(self.parameters(), scaling, transparency_level))
     }
 }
 
@@ -158,7 +173,7 @@ fn to_pixel_geometry(geometry: SubpixelGeometry) -> PixelGeometry {
 
 /// The contrast Skia accepts: 0 to 1 (`SkSurfaceProps::kMinContrastInclusive`
 /// and `kMaxContrastInclusive`), as Chromium clamps it.
-fn clamp_contrast(contrast: f32) -> f32 {
+pub(crate) fn clamp_contrast(contrast: f32) -> f32 {
     if contrast.is_nan() {
         return SurfaceProps::default().text_contrast();
     }
@@ -168,7 +183,7 @@ fn clamp_contrast(contrast: f32) -> f32 {
 /// The gamma Skia accepts: from 0 up to 4 exclusive
 /// (`SkSurfaceProps::kMinGammaInclusive` and `kMaxGammaExclusive`), as
 /// Chromium clamps it.
-fn clamp_gamma(gamma: f32) -> f32 {
+pub(crate) fn clamp_gamma(gamma: f32) -> f32 {
     if gamma.is_nan() {
         return SurfaceProps::default().text_gamma();
     }

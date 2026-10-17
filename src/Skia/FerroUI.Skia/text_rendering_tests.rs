@@ -96,6 +96,36 @@ fn a_context_without_subpixel_text_maps_subpixel_to_greyscale() {
     assert_eq!(TextRenderingMode::Alias, mode(with_mode(TextRenderingMode::Alias), none, true, &subpixel));
 }
 
+#[test]
+fn unspecified_hinting_and_baseline_alignment_take_the_defaults_of_the_surface() {
+    let none = RenderOptions::default();
+
+    // Without an override the surface leaves them unspecified: strong
+    // hinting and snapped baselines when the blob is made.
+    let effective = effective_text_options(TextOptions::default(), none, false, &TextRenderingSettings::default());
+    assert_eq!(TextHintingMode::Unspecified, effective.text_hinting_mode);
+    assert_eq!(BaselinePixelAlignment::Unspecified, effective.baseline_pixel_alignment);
+
+    // The development override sets the defaults of the surface; text that
+    // asks for its own keeps it.
+    let mut value = TextRenderingOverride::default();
+    value.set("hinting", "none").unwrap();
+    value.set("baseline_snap", "off").unwrap();
+    let settings = value.apply(TextRenderingSettings::default());
+    let effective = effective_text_options(TextOptions::default(), none, false, &settings);
+    assert_eq!(TextHintingMode::None, effective.text_hinting_mode);
+    assert_eq!(BaselinePixelAlignment::Unaligned, effective.baseline_pixel_alignment);
+
+    let explicit = TextOptions {
+        text_hinting_mode: TextHintingMode::Strong,
+        baseline_pixel_alignment: BaselinePixelAlignment::Aligned,
+        ..TextOptions::default()
+    };
+    let effective = effective_text_options(explicit, none, false, &settings);
+    assert_eq!(TextHintingMode::Strong, effective.text_hinting_mode);
+    assert_eq!(BaselinePixelAlignment::Aligned, effective.baseline_pixel_alignment);
+}
+
 /// A framebuffer surface whose platform reports text rendering parameters
 /// that a test changes.
 struct TextSurface {

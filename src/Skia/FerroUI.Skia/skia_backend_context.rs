@@ -1,6 +1,7 @@
 use crate::framebuffer_render_target::FramebufferRenderTarget;
 use crate::gpu::{ISkiaGpu, SkiaGpuRenderTarget};
 use crate::surface_render_target::{SurfaceRenderTarget, SurfaceRenderTargetCreateInfo};
+use crate::text_rendering_override::text_rendering_override;
 use crate::text_rendering_settings::{TextRenderingSettings, TextRenderingSource};
 use ferroui_base::platform::surfaces::IPlatformRenderSurface;
 use ferroui_base::platform::{
@@ -99,8 +100,9 @@ impl IPlatformRenderInterfaceContext for SkiaContext {
             dpi: scaling * 96.0,
             format: None,
             disable_text_lcd_rendering: !enable_text_antialiasing,
-            // An offscreen target knows no display: greyscale text by default.
-            text_rendering: TextRenderingSettings::default(),
+            // An offscreen target knows no display: greyscale text by default
+            // (and the development override of the process, if any).
+            text_rendering: text_rendering_override().apply(TextRenderingSettings::default()),
             gr_context: gr.as_ref().map(|gr| gr.value().clone()),
             gpu,
             disable_manual_fbo: true,
