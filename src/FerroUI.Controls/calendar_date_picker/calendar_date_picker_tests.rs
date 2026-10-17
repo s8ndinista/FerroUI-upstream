@@ -306,6 +306,36 @@ fn programmatic_focus_should_move_focus_to_text_box() {
     assert!(focused.is_some_and(|focused| focused.ptr_eq(&get_text_box(&date_picker))));
 }
 
+#[test]
+fn pointer_focus_should_not_move_focus_to_text_box() {
+    let _services = start_focus_services();
+
+    let date_picker = CalendarDatePicker::new();
+    date_picker.set_template(Some(create_template()));
+    let root = TestRoot::with_child(date_picker.clone());
+    root.execute_initial_layout_pass();
+
+    date_picker.focus_with(NavigationMethod::Pointer, KeyModifiers::NONE);
+
+    let focused = root.focus_manager().get_focused_element();
+    assert!(focused.is_some_and(|focused| focused.ptr_eq(&date_picker)));
+}
+
+#[test]
+fn focus_should_not_close_an_open_drop_down() {
+    let _services = start_focus_services();
+
+    let date_picker = CalendarDatePicker::new();
+    date_picker.set_template(Some(create_template()));
+    let root = TestRoot::with_child(date_picker.clone());
+    root.execute_initial_layout_pass();
+
+    date_picker.set_is_drop_down_open(true);
+    date_picker.focus();
+
+    assert!(date_picker.is_drop_down_open());
+}
+
 fn create_control() -> Ref<CalendarDatePicker> {
     let date_picker = CalendarDatePicker::new();
     date_picker.set_template(Some(create_template()));
