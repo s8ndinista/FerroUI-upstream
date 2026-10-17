@@ -168,10 +168,12 @@ impl CompositionTargetOverlays {
         let debug_overlays = self.debug_overlays.get();
         if debug_overlays.contains(RendererDebugOverlays::FPS) {
             if let Some(counter) = self.fps_counter(target) {
-                let aux = format!("V:{:04} R:{:04}", target.visited_visuals(), target.rendered_visuals());
+                // The compositor has no batch pools to report the memory of.
                 let rect = counter.render_fps(
                     target_context,
-                    &aux,
+                    None,
+                    target.visited_visuals(),
+                    target.rendered_visuals(),
                     has_layer,
                     self.old_fps_counter_rect.get(),
                     Self::now(target),

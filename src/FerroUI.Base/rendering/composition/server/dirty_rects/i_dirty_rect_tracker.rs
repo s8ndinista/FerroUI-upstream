@@ -191,6 +191,20 @@ pub(crate) mod tests {
             self.log.push("ellipse".to_string());
         }
         fn draw_glyph_run(&mut self, foreground: Option<&dyn IBrush>, glyph_run: &dyn IGlyphRunImpl) {
+            use crate::rendering::composition::server::diagnostic_text_renderer::tests::MockTextGlyphRunImpl;
+
+            // A run of shaped diagnostic text is logged with its text.
+            if let Some(text) = glyph_run.as_any().downcast_ref::<MockTextGlyphRunImpl>() {
+                self.log.push(format!(
+                    "text {} {} at {},{}",
+                    text.0,
+                    describe_brush(foreground),
+                    self.transform.m31,
+                    self.transform.m32
+                ));
+                return;
+            }
+
             self.log.push(format!(
                 "glyph {} {} at {},{}",
                 glyph_run.font_rendering_em_size(),

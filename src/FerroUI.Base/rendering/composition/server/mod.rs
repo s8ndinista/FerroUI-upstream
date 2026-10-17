@@ -42,7 +42,10 @@ mod server_property_host;
 mod server_render_resource;
 
 pub use composition_property::{props_of, CompositionProperty, CompositionPropertyOf};
-pub use diagnostic_text_renderer::{DiagnosticGlyphRun, DiagnosticTextRenderer, IDiagnosticGlyphRunSource};
+pub use diagnostic_text_renderer::{
+    DiagnosticGlyphRun, DiagnosticTextRenderer, GlyphTypefaceDiagnosticGlyphRunSource, IDiagnosticGlyphRunSource,
+    ShapedText,
+};
 pub use dirty_rects::{
     DebugEventsDirtyRectCollectorProxy, IDirtyRectCollector, IDirtyRectTracker, MultiDirtyRectTracker,
     RegionDirtyRectTracker, SingleDirtyRectTracker,
