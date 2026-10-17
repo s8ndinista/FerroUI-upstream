@@ -271,6 +271,7 @@ impl StyledElementImpl for SelectingItemsControl {
 
         let selection = this.selection.borrow().clone();
         this.try_initialize_selection_source(selection.as_ref(), this.update_state.borrow().is_none());
+        this.select_inline_items_marked_as_selected();
     }
 }
 
@@ -369,7 +370,10 @@ impl ItemsControlImpl for SelectingItemsControl {
             // Update our selection based on the selection state of the
             // container.
             let container_is_selected = Self::get_is_selected(container);
-            this.update_selection(index, container_is_selected, false, true, false, false);
+
+            if container_is_selected != this.selection().is_selected(index) {
+                this.update_selection(index, container_is_selected, false, true, false, false);
+            }
         }
 
         if this.selection().anchor_index() == index {
@@ -830,6 +834,30 @@ impl SelectingItemsControl {
     }
 
     /// Gets the value of the `IsSelected` attached property on a control.
+    // Inline items are their own containers, but a container is only read when it's realized, and a
+    // ComboBox doesn't realize its items until the drop-down is first opened.
+    fn select_inline_items_marked_as_selected(&self) {
+        if self.items_source().is_some() || self.selection().count() > 0 {
+            return;
+        }
+
+        let multiple = self.selection_mode().contains(SelectionMode::MULTIPLE);
+        let items_view = self.items_view().clone();
+
+        for i in 0..items_view.count() {
+            let container = items_view.get_at(i).as_ref().and_then(Control::from_boxed);
+            if let Some(container) = container {
+                if container.is_set(Self::is_selected_property().as_property()) && Self::get_is_selected(&container) {
+                    self.selection().select(i as i32);
+
+                    if !multiple {
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
     pub fn get_is_selected(control: &Control) -> bool {
         control.get_value(Self::is_selected_property())
     }
