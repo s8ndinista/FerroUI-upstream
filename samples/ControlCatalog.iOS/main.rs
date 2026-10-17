@@ -6,8 +6,10 @@
 //! ```
 //!
 //! The executable is put into an application bundle by
-//! `scripts/ios/bundle.sh --package control-catalog-ios --bin control-catalog-ios`,
-//! which writes the property list the reference keeps as `Info.plist`.
+//! `scripts/ios/bundle.sh --package control-catalog-ios --bin control-catalog-ios --high-refresh-rate`,
+//! which writes the property list the reference keeps as `Info.plist` (`--high-refresh-rate`
+//! states `CADisableMinimumFrameDurationOnPhone`, as the reference's does, so that the
+//! catalog renders above 60 Hz on a ProMotion iPhone).
 //!
 //! As the desktop entry point, the host has a smoke run for looking at
 //! the catalog without a person: with `FERROUI_SMOKE_PAGES=<n>` pages are
