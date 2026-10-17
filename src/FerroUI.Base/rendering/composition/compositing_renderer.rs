@@ -44,6 +44,13 @@ impl VisualSet {
         self.keys.contains(&(visual as *const Visual))
     }
 
+    fn remove(&mut self, visual: &Visual) {
+        let key = visual as *const Visual;
+        if self.keys.remove(&key) {
+            self.items.retain(|item| !std::ptr::eq(&**item, key));
+        }
+    }
+
     fn is_empty(&self) -> bool {
         self.items.is_empty()
     }
@@ -319,6 +326,12 @@ impl CompositingRenderer {
         self.raise_scene_invalidated(&SceneInvalidatedEventArgs::new(rect));
     }
 
+    /// Whether the renderer holds `visual` for its next update pass. For
+    /// tests only.
+    pub fn has_pending_update_for_unit_tests(&self, visual: &Visual) -> bool {
+        self.dirty.borrow().contains(visual) || self.recalculate_children.borrow().contains(visual)
+    }
+
     fn update(&self) {
         if self.updating.get() {
             return;
@@ -366,7 +379,15 @@ impl IRenderer for CompositingRenderer {
         if self.updating.get() {
             panic!("Visual was invalidated during the render pass");
         }
-        self.dirty.borrow_mut().add(visual);
+
+        if visual.composition_visual().is_none() {
+            // Queuing a detached visual would keep it alive for as long as rendering is stopped.
+            self.dirty.borrow_mut().remove(visual);
+            self.recalculate_children.borrow_mut().remove(visual);
+        } else {
+            self.dirty.borrow_mut().add(visual);
+        }
+
         self.queue_update();
     }
 
