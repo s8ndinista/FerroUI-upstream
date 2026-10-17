@@ -103,7 +103,20 @@ jobs:
       # The tests of the workspace, as the CI job of a pull request runs them: that job does not
       # run for a push to main, so the commit of a release was not necessarily tested as it is.
       - name: Test
-        run: cargo test --workspace --locked --no-fail-fast --lib --tests
+        run: cargo test --workspace --locked --no-fail-fast --lib --tests --exclude ferroui-render-backends-comparison --exclude ferroui-vello
+      # The Vello backend and its comparison with the Skia backend apart, tried again twice at most, as
+      # the CI job runs them: a scene of a GPU mode on the runner now and then comes out wholly
+      # different (docs/porting/vello-backend.md, section 13 and C9); a scene that fails three
+      # times in a row fails the release.
+      - name: Test (the Vello backend and the render backends compared)
+        run: |
+          for attempt in 1 2 3; do
+            if cargo test --locked -p ferroui-vello -p ferroui-render-backends-comparison --no-fail-fast --lib --tests; then
+              exit 0
+            fi
+            echo "::warning::the tests of the Vello backend or the comparison of the render backends failed in attempt $attempt"
+          done
+          exit 1
       - name: Package every crate and build each from its package
         run: scripts/release/publish.sh --dry-run
 
