@@ -372,7 +372,7 @@ impl ICompositorSerializable for RefAdapter<Geometry> {
 pub(crate) mod tests {
     use super::*;
     use crate::media::{RotateTransform, GeometryImplExt};
-    use crate::platform::{IStreamGeometryImpl, ITransformedGeometryImpl};
+    use crate::platform::{IStreamGeometryBuilder, ITransformedGeometryImpl};
     use crate::{ferro_impl_classes, instantiate};
 
     /// A platform geometry that does nothing but track transforms.
@@ -439,10 +439,6 @@ pub(crate) mod tests {
             // only look at the kind of the implementation.
             Arc::new(MockTransformedGeometryImpl { source: MockGeometryImpl::create(), transform })
         }
-
-        fn as_stream_geometry(&self) -> Option<&dyn IStreamGeometryImpl> {
-            None
-        }
     }
 
     impl IGeometryImpl for MockTransformedGeometryImpl {
@@ -469,16 +465,13 @@ pub(crate) mod tests {
 
     pub(crate) type CommandLog = Arc<std::sync::Mutex<Vec<String>>>;
 
-    /// A stream geometry that records the drawing commands it receives.
-    pub(crate) struct MockStreamGeometryImpl {
-        pub log: CommandLog,
-    }
-
-    struct MockStreamGeometryContext {
+    /// A stream geometry builder that records the drawing commands it
+    /// receives.
+    struct MockStreamGeometryBuilder {
         log: CommandLog,
     }
 
-    impl crate::platform::IGeometryContext for MockStreamGeometryContext {
+    impl crate::platform::IGeometryContext for MockStreamGeometryBuilder {
         fn arc_to(
             &mut self,
             point: Point,
@@ -515,27 +508,9 @@ pub(crate) mod tests {
         }
     }
 
-    impl crate::platform::IStreamGeometryContextImpl for MockStreamGeometryContext {}
-
-    impl IGeometryImpl for MockStreamGeometryImpl {
-        mock_geometry_members!();
-
-        fn with_transform(&self, transform: Matrix) -> Arc<dyn ITransformedGeometryImpl> {
-            Arc::new(MockTransformedGeometryImpl { source: MockGeometryImpl::create(), transform })
-        }
-
-        fn as_stream_geometry(&self) -> Option<&dyn IStreamGeometryImpl> {
-            Some(self)
-        }
-    }
-
-    impl IStreamGeometryImpl for MockStreamGeometryImpl {
-        fn clone_geometry(&self) -> Arc<dyn IStreamGeometryImpl> {
-            Arc::new(MockStreamGeometryImpl { log: Arc::new(std::sync::Mutex::new(self.log.lock().unwrap().clone())) })
-        }
-
-        fn open(&self) -> Box<dyn crate::platform::IStreamGeometryContextImpl> {
-            Box::new(MockStreamGeometryContext { log: self.log.clone() })
+    impl IStreamGeometryBuilder for MockStreamGeometryBuilder {
+        fn to_geometry(&mut self) -> Arc<dyn IGeometryImpl> {
+            MockGeometryImpl::create()
         }
     }
 
@@ -571,11 +546,11 @@ pub(crate) mod tests {
             self.created.borrow_mut().push(format!("rectangle {rect}"));
             MockGeometryImpl::create()
         }
-        fn create_stream_geometry(&self) -> Arc<dyn IStreamGeometryImpl> {
+        fn create_stream_geometry_builder(&self, _source: Option<&dyn IGeometryImpl>) -> Box<dyn IStreamGeometryBuilder> {
             self.created.borrow_mut().push("stream".to_string());
             let log = Arc::new(std::sync::Mutex::new(Vec::new()));
             self.streams.borrow_mut().push(log.clone());
-            Arc::new(MockStreamGeometryImpl { log })
+            Box::new(MockStreamGeometryBuilder { log })
         }
         fn create_geometry_group(
             &self,
@@ -926,7 +901,8 @@ pub(crate) mod tests {
                 *streams[1].lock().unwrap()
             );
             assert_eq!(vec!["begin 1, 1 true", "line 2, 2 true", "end false", "dispose"], *streams[2].lock().unwrap());
-            assert_eq!(vec!["begin 1, 1 true", "line 2, 2 true", "end false", "dispose"], *streams[3].lock().unwrap());
+            // As upstream, parsing does not dispose its builder.
+            assert_eq!(vec!["begin 1, 1 true", "line 2, 2 true", "end false"], *streams[3].lock().unwrap());
         });
     }
 

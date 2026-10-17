@@ -1,4 +1,4 @@
-use crate::media::{PathSegment, PathSegmentImpl, Points, StreamGeometryContext};
+use crate::media::{PathSegment, PathSegmentImpl, Points};
 use crate::platform::IGeometryContext;
 use crate::{
     ferro_class, ferro_impl_classes, ferro_property, instantiate, DirectProperty, FerroObjectImpl, FerroProperty,
@@ -19,7 +19,7 @@ crate::ferro_class_info!(PolyBezierSegment { new: PolyBezierSegment::new });
 ferro_impl_classes!(PolyBezierSegment: FerroObjectImpl);
 
 impl PathSegmentImpl for PolyBezierSegment {
-    fn apply_to(this: &Self, ctx: &mut StreamGeometryContext) {
+    fn apply_to(this: &Self, ctx: &mut dyn IGeometryContext) {
         let is_stroked = this.is_stroked();
         if let Some(points) = this.points() {
             let points = points.to_vec();

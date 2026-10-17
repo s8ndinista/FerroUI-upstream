@@ -1,5 +1,5 @@
 use crate::media::{IPen, IntersectionResult};
-use crate::platform::{IStreamGeometryImpl, ITransformedGeometryImpl};
+use crate::platform::ITransformedGeometryImpl;
 use crate::{Matrix, Point, Rect};
 use std::sync::Arc;
 
@@ -62,11 +62,6 @@ pub trait IGeometryImpl: Send + Sync + 'static {
 
     /// The geometry viewed as [`ITransformedGeometryImpl`], when it is one.
     fn as_transformed_geometry(&self) -> Option<&dyn ITransformedGeometryImpl> {
-        None
-    }
-
-    /// The geometry viewed as [`IStreamGeometryImpl`], when it is one.
-    fn as_stream_geometry(&self) -> Option<&dyn IStreamGeometryImpl> {
         None
     }
 }

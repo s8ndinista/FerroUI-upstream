@@ -10,7 +10,7 @@ use crate::media::{Color, FillRule, GeometryCombineMode, IBrush, IImage, IImageB
 use crate::platform::{
     AlphaFormat, IBitmapImpl, IDrawingContextImpl, IDrawingContextLayerImpl, IGeometryImpl, IGlyphRunImpl,
     ILockedFramebuffer, IPlatformGraphicsContext, IPlatformRenderInterface, IPlatformRenderInterfaceContext,
-    IPlatformRenderInterfaceRegion, IReadableBitmapImpl, IRenderTargetBitmapImpl, IStreamGeometryImpl,
+    IPlatformRenderInterfaceRegion, IReadableBitmapImpl, IRenderTargetBitmapImpl, IStreamGeometryBuilder,
     IWriteableBitmapImpl, PixelFormat, PixelFormats,
 };
 use crate::{
@@ -266,7 +266,7 @@ impl IPlatformRenderInterface for MockBackend {
     fn create_rectangle_geometry(&self, _: Rect) -> Arc<dyn IGeometryImpl> {
         unimplemented!()
     }
-    fn create_stream_geometry(&self) -> Arc<dyn IStreamGeometryImpl> {
+    fn create_stream_geometry_builder(&self, _source: Option<&dyn IGeometryImpl>) -> Box<dyn IStreamGeometryBuilder> {
         unimplemented!()
     }
     fn create_geometry_group(&self, _: FillRule, _: &[Arc<dyn IGeometryImpl>]) -> Arc<dyn IGeometryImpl> {

@@ -32,23 +32,21 @@ impl GeometryImpl for PolylineGeometry {
 
     fn create_defining_geometry(this: &Self) -> Option<Arc<dyn IGeometryImpl>> {
         let factory = platform::render_interface();
-        let geometry = factory.create_stream_geometry();
+        let mut builder = factory.create_stream_geometry_builder(None);
 
-        let mut context = geometry.open();
-        context.set_fill_rule(this.fill_rule);
-
+        builder.set_fill_rule(this.fill_rule);
         let points = this.points().to_vec();
         let is_filled = this.is_filled();
-
         if !points.is_empty() {
-            context.begin_figure(points[0], is_filled);
+            builder.begin_figure(points[0], is_filled);
             for point in &points[1..] {
-                context.line_to(*point, true);
+                builder.line_to(*point, true);
             }
-            context.end_figure(is_filled);
+            builder.end_figure(is_filled);
         }
-        context.dispose();
 
+        let geometry = builder.to_geometry();
+        builder.dispose();
         Some(geometry)
     }
 }

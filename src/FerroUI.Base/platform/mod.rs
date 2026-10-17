@@ -72,6 +72,7 @@ pub use managed_dispatcher_impl::{IManagedDispatcherInputProvider, ManagedDispat
 
 mod i_geometry_context;
 mod i_geometry_impl;
+mod i_stream_geometry_builder;
 mod i_stream_geometry_context_impl;
 mod i_stream_geometry_impl;
 mod i_transformed_geometry_impl;
@@ -80,7 +81,10 @@ mod render_interface_access;
 
 pub use i_geometry_context::IGeometryContext;
 pub use i_geometry_impl::IGeometryImpl;
+pub use i_stream_geometry_builder::IStreamGeometryBuilder;
+#[allow(deprecated)]
 pub use i_stream_geometry_context_impl::IStreamGeometryContextImpl;
+#[allow(deprecated)]
 pub use i_stream_geometry_impl::IStreamGeometryImpl;
 pub use i_transformed_geometry_impl::ITransformedGeometryImpl;
 pub use path_geometry_context::PathGeometryContext;

@@ -1,4 +1,4 @@
-use crate::media::{PathSegment, PathSegmentImpl, StreamGeometryContext};
+use crate::media::{PathSegment, PathSegmentImpl};
 use crate::platform::IGeometryContext;
 use crate::{
     ferro_class, ferro_impl_classes, ferro_property, instantiate, FerroObjectImpl, FerroProperty, Point, Ref,
@@ -16,7 +16,7 @@ crate::ferro_class_info!(QuadraticBezierSegment { new: QuadraticBezierSegment::n
 ferro_impl_classes!(QuadraticBezierSegment: FerroObjectImpl);
 
 impl PathSegmentImpl for QuadraticBezierSegment {
-    fn apply_to(this: &Self, ctx: &mut StreamGeometryContext) {
+    fn apply_to(this: &Self, ctx: &mut dyn IGeometryContext) {
         ctx.quadratic_bezier_to(this.point1(), this.point2(), this.is_stroked());
     }
 

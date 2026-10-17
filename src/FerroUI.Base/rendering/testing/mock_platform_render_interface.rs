@@ -5,8 +5,8 @@ use crate::platform::surfaces::IPlatformRenderSurface;
 use crate::platform::{
     AlphaFormat, IBitmapImpl, IDrawingContextImpl, IDrawingContextLayerImpl, IGeometryContext, IGeometryImpl,
     IOptionalFeatureProvider, IPlatformGraphicsContext, IPlatformRenderInterface, IPlatformRenderInterfaceContext,
-    IPlatformRenderInterfaceRegion, IRenderTarget, IRenderTargetBitmapImpl, IStreamGeometryContextImpl,
-    IStreamGeometryImpl, ITransformedGeometryImpl, IWriteableBitmapImpl, LtrbPixelRect, LtrbRect, PixelFormat,
+    IPlatformRenderInterfaceRegion, IRenderTarget, IRenderTargetBitmapImpl, IStreamGeometryBuilder,
+    ITransformedGeometryImpl, IWriteableBitmapImpl, LtrbPixelRect, LtrbRect, PixelFormat,
     PixelFormats, RenderTargetDrawingContextProperties, RenderTargetProperties, RenderTargetSceneInfo,
 };
 use crate::reactive::IDisposable;
@@ -15,7 +15,7 @@ use std::any::{Any, TypeId};
 use std::cell::{Cell, RefCell};
 use std::io::Read;
 use std::rc::Rc;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
 /// A platform geometry that behaves like its bounding rectangle.
 ///
@@ -237,18 +237,23 @@ impl ITransformedGeometryImpl for MockGeometryImpl {
 
 /// A stream geometry whose bounds are the bounding box of the points
 /// written to it; a point is in its fill when it is in one of the triangles
-/// of consecutive points.
+/// of consecutive points. It is immutable: [`MockStreamGeometryBuilder`]
+/// builds it.
 pub struct MockStreamGeometryImpl {
-    points: Arc<Mutex<Vec<Point>>>,
+    points: Vec<Point>,
 }
 
 impl MockStreamGeometryImpl {
     pub fn new() -> Arc<MockStreamGeometryImpl> {
-        Arc::new(MockStreamGeometryImpl { points: Arc::new(Mutex::new(Vec::new())) })
+        Self::with_points(Vec::new())
+    }
+
+    fn with_points(points: Vec<Point>) -> Arc<MockStreamGeometryImpl> {
+        Arc::new(MockStreamGeometryImpl { points })
     }
 
     fn as_rect(&self) -> Arc<MockGeometryImpl> {
-        let points = self.points.lock().unwrap();
+        let points = &self.points;
         let mut bounds: Option<Rect> = None;
         for p in points.iter() {
             let r = Rect::new(p.x, p.y, 0.0, 0.0);
@@ -283,7 +288,7 @@ impl IGeometryImpl for MockStreamGeometryImpl {
         // tested against the triangles of consecutive points (the geometry
         // is assumed to be convex), with the algorithm from
         // https://www.blackpawn.com/texts/pointinpoly/default.html.
-        let points = self.points.lock().unwrap();
+        let points = &self.points;
         let count = points.len();
         for i in 0..count {
             let a = points[i];
@@ -313,8 +318,7 @@ impl IGeometryImpl for MockStreamGeometryImpl {
         // As the headless stream geometry of the reference: against a
         // geometry with edges, a separating axis test on the points.
         if let Some(other) = edge_points_of(geometry) {
-            let points = self.points.lock().unwrap();
-            return if separated(&points, &other) { IntersectionResult::Empty } else { IntersectionResult::Intersects };
+            return if separated(&self.points, &other) { IntersectionResult::Empty } else { IntersectionResult::Intersects };
         }
         self.as_rect().get_fill_intersection_result(geometry)
     }
@@ -336,50 +340,63 @@ impl IGeometryImpl for MockStreamGeometryImpl {
     fn try_get_segment(&self, _start: f64, _stop: f64, _begin: bool) -> Option<Arc<dyn IGeometryImpl>> {
         None
     }
-    fn as_stream_geometry(&self) -> Option<&dyn IStreamGeometryImpl> {
-        Some(self)
-    }
     fn as_any(&self) -> &dyn Any {
         self
     }
 }
 
-impl IStreamGeometryImpl for MockStreamGeometryImpl {
-    fn clone_geometry(&self) -> Arc<dyn IStreamGeometryImpl> {
-        Arc::new(MockStreamGeometryImpl { points: Arc::new(Mutex::new(self.points.lock().unwrap().clone())) })
-    }
-    fn open(&self) -> Box<dyn IStreamGeometryContextImpl> {
-        self.points.lock().unwrap().clear();
-        Box::new(MockStreamGeometryContext { points: self.points.clone() })
+/// Builds a [`MockStreamGeometryImpl`] from the points of its source
+/// geometry and the points written to it, as the headless stream geometry
+/// builder of the reference.
+pub struct MockStreamGeometryBuilder {
+    points: Vec<Point>,
+    built: bool,
+}
+
+impl MockStreamGeometryBuilder {
+    /// Creates a builder that starts with the points of `source`: a stream
+    /// geometry or a geometry with edges of this render interface.
+    pub fn new(source: Option<&dyn IGeometryImpl>) -> MockStreamGeometryBuilder {
+        let points = match source {
+            None => Vec::new(),
+            Some(source) => match source.as_any().downcast_ref::<MockStreamGeometryImpl>() {
+                Some(stream) => stream.points.clone(),
+                None => edge_points_of(source).expect("the source isn't a geometry of the mock render interface"),
+            },
+        };
+
+        MockStreamGeometryBuilder { points, built: false }
     }
 }
 
-struct MockStreamGeometryContext {
-    points: Arc<Mutex<Vec<Point>>>,
-}
-
-impl IGeometryContext for MockStreamGeometryContext {
+impl IGeometryContext for MockStreamGeometryBuilder {
     fn arc_to(&mut self, point: Point, _: Size, _: f64, _: bool, _: SweepDirection, _: bool) {
-        self.points.lock().unwrap().push(point);
+        self.points.push(point);
     }
     fn begin_figure(&mut self, start_point: Point, _is_filled: bool) {
-        self.points.lock().unwrap().push(start_point);
+        self.points.push(start_point);
     }
     fn cubic_bezier_to(&mut self, p1: Point, p2: Point, p3: Point, _is_stroked: bool) {
-        self.points.lock().unwrap().extend([p1, p2, p3]);
+        self.points.extend([p1, p2, p3]);
     }
     fn quadratic_bezier_to(&mut self, p1: Point, p2: Point, _is_stroked: bool) {
-        self.points.lock().unwrap().extend([p1, p2]);
+        self.points.extend([p1, p2]);
     }
     fn line_to(&mut self, point: Point, _is_stroked: bool) {
-        self.points.lock().unwrap().push(point);
+        self.points.push(point);
     }
     fn end_figure(&mut self, _is_closed: bool) {}
     fn set_fill_rule(&mut self, _fill_rule: FillRule) {}
     fn dispose(&mut self) {}
 }
 
-impl IStreamGeometryContextImpl for MockStreamGeometryContext {}
+impl IStreamGeometryBuilder for MockStreamGeometryBuilder {
+    fn to_geometry(&mut self) -> Arc<dyn IGeometryImpl> {
+        assert!(!self.built, "The geometry has already been built.");
+        self.built = true;
+        MockStreamGeometryImpl::with_points(std::mem::take(&mut self.points))
+    }
+}
 
 /// A region that keeps its rectangles in a list.
 #[derive(Default)]
@@ -618,8 +635,8 @@ impl IPlatformRenderInterface for MockPlatformRenderInterface {
     fn create_rectangle_geometry(&self, rect: Rect) -> Arc<dyn IGeometryImpl> {
         MockGeometryImpl::rectangle(rect)
     }
-    fn create_stream_geometry(&self) -> Arc<dyn IStreamGeometryImpl> {
-        MockStreamGeometryImpl::new()
+    fn create_stream_geometry_builder(&self, source: Option<&dyn IGeometryImpl>) -> Box<dyn IStreamGeometryBuilder> {
+        Box::new(MockStreamGeometryBuilder::new(source))
     }
     fn create_geometry_group(&self, _fill_rule: FillRule, children: &[Arc<dyn IGeometryImpl>]) -> Arc<dyn IGeometryImpl> {
         let bounds = children.iter().fold(None, |acc, g| Rect::union_optional(acc, Some(g.bounds())));

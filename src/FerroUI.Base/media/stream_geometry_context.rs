@@ -1,6 +1,8 @@
 use crate::media::precise_elliptic_arc_helper::PreciseEllipticArcHelper;
 use crate::media::{FillRule, SweepDirection};
-use crate::platform::{IGeometryContext, IStreamGeometryContextImpl};
+#[allow(deprecated)]
+use crate::platform::IStreamGeometryContextImpl;
+use crate::platform::IGeometryContext;
 use crate::{Point, Size};
 
 /// Describes a geometry using drawing commands.
@@ -9,15 +11,22 @@ use crate::{Point, Size};
 /// [`StreamGeometry::open`](crate::media::StreamGeometry::open). The context
 /// is completed when it is disposed or dropped.
 pub struct StreamGeometryContext {
-    impl_: Box<dyn IStreamGeometryContextImpl>,
+    context: Box<dyn IGeometryContext>,
     current_point: Point,
     is_disposed: bool,
 }
 
 impl StreamGeometryContext {
     /// Creates a context over a platform implementation.
+    #[deprecated(note = "Use StreamGeometry::open instead.")]
+    #[allow(deprecated)]
     pub fn new(impl_: Box<dyn IStreamGeometryContextImpl>) -> Self {
-        Self { impl_, current_point: Point::default(), is_disposed: false }
+        Self::from_context(impl_)
+    }
+
+    /// Creates a context that forwards the drawing commands to `context`.
+    pub(crate) fn from_context(context: Box<dyn IGeometryContext>) -> Self {
+        Self { context, current_point: Point::default(), is_disposed: false }
     }
 
     /// Draws an arc to the specified point using polylines, quadratic or cubic Bezier curves.
@@ -44,7 +53,7 @@ impl StreamGeometryContext {
 
 impl IGeometryContext for StreamGeometryContext {
     fn set_fill_rule(&mut self, fill_rule: FillRule) {
-        self.impl_.set_fill_rule(fill_rule);
+        self.context.set_fill_rule(fill_rule);
     }
 
     fn arc_to(
@@ -56,39 +65,39 @@ impl IGeometryContext for StreamGeometryContext {
         sweep_direction: SweepDirection,
         is_stroked: bool,
     ) {
-        self.impl_.arc_to(point, size, rotation_angle, is_large_arc, sweep_direction, is_stroked);
+        self.context.arc_to(point, size, rotation_angle, is_large_arc, sweep_direction, is_stroked);
         self.current_point = point;
     }
 
     fn begin_figure(&mut self, start_point: Point, is_filled: bool) {
-        self.impl_.begin_figure(start_point, is_filled);
+        self.context.begin_figure(start_point, is_filled);
         self.current_point = start_point;
     }
 
     fn cubic_bezier_to(&mut self, control_point1: Point, control_point2: Point, end_point: Point, is_stroked: bool) {
-        self.impl_.cubic_bezier_to(control_point1, control_point2, end_point, is_stroked);
+        self.context.cubic_bezier_to(control_point1, control_point2, end_point, is_stroked);
         self.current_point = end_point;
     }
 
     fn quadratic_bezier_to(&mut self, control_point: Point, end_point: Point, is_stroked: bool) {
-        self.impl_.quadratic_bezier_to(control_point, end_point, is_stroked);
+        self.context.quadratic_bezier_to(control_point, end_point, is_stroked);
         self.current_point = end_point;
     }
 
     fn line_to(&mut self, point: Point, is_stroked: bool) {
-        self.impl_.line_to(point, is_stroked);
+        self.context.line_to(point, is_stroked);
         self.current_point = point;
     }
 
     fn end_figure(&mut self, is_closed: bool) {
-        self.impl_.end_figure(is_closed);
+        self.context.end_figure(is_closed);
     }
 
     /// Finishes the drawing session.
     fn dispose(&mut self) {
         if !self.is_disposed {
             self.is_disposed = true;
-            self.impl_.dispose();
+            self.context.dispose();
         }
     }
 }

@@ -1,7 +1,7 @@
 use super::DiagnosticTextRenderer;
 use crate::media::immutable::{ImmutablePen, ImmutableSolidColorBrush};
 use crate::media::{BoxShadows, Brushes};
-use crate::platform::{self, IDrawingContextImpl, IGeometryImpl, IPlatformRenderInterface, IStreamGeometryImpl};
+use crate::platform::{self, IDrawingContextImpl, IGeometryImpl, IPlatformRenderInterface, IStreamGeometryBuilder};
 use crate::{Matrix, Point, Rect, Size};
 use std::cell::{Cell, RefCell};
 use std::rc::Rc;
@@ -44,15 +44,15 @@ impl From<Rc<dyn IPlatformRenderInterface>> for GraphRenderInterface {
 }
 
 impl GraphRenderInterface {
-    fn create_stream_geometry(&self) -> Arc<dyn IStreamGeometryImpl> {
+    fn create_stream_geometry_builder(&self) -> Box<dyn IStreamGeometryBuilder> {
         match self {
-            GraphRenderInterface::Owned(render_interface) => render_interface.create_stream_geometry(),
+            GraphRenderInterface::Owned(render_interface) => render_interface.create_stream_geometry_builder(None),
             GraphRenderInterface::Compositor(compositor) => compositor
                 .upgrade()
                 .and_then(|compositor| {
-                    compositor
-                        .render_interface()
-                        .with_platform_render_interface(|render_interface| render_interface.create_stream_geometry())
+                    compositor.render_interface().with_platform_render_interface(|render_interface| {
+                        render_interface.create_stream_geometry_builder(None)
+                    })
                 })
                 .expect("a time graph is drawn by a compositor that has a render interface"),
         }
@@ -182,11 +182,10 @@ impl FrameTimeGraph {
         context.set_transform(old_transform);
     }
 
-    fn build_graph_geometry(&self, max_y: f64) -> Arc<dyn IStreamGeometryImpl> {
+    fn build_graph_geometry(&self, max_y: f64) -> Arc<dyn IGeometryImpl> {
         debug_assert!(self.frame_count.get() > 0);
 
-        let graph_geometry = self.render_interface.create_stream_geometry();
-        let mut geometry_context = graph_geometry.open();
+        let mut geometry_context = self.render_interface.create_stream_geometry_builder();
 
         let frame_values = self.frame_values.borrow();
         let x_ratio = self.graph_size.width / frame_values.len() as f64;
@@ -202,6 +201,7 @@ impl FrameTimeGraph {
         }
 
         geometry_context.end_figure(false);
+        let graph_geometry = geometry_context.to_geometry();
         geometry_context.dispose();
         graph_geometry
     }

@@ -41,23 +41,23 @@ fn line(backend: &Backend) -> Arc<dyn IGeometryImpl> {
 }
 
 fn curves(backend: &Backend) -> Arc<dyn IGeometryImpl> {
-    let geometry = backend.interface.create_stream_geometry();
-    let mut context = geometry.open();
+    let mut context = backend.interface.create_stream_geometry_builder(None);
     context.begin_figure(Point::new(30.0, 40.0), true);
     context.line_to(Point::new(120.0, 25.0), true);
     context.quadratic_bezier_to(Point::new(185.0, 60.0), Point::new(150.0, 110.0), true);
     context.cubic_bezier_to(Point::new(120.0, 150.0), Point::new(190.0, 160.0), Point::new(140.0, 185.0), true);
     context.end_figure(true);
+    let geometry = context.to_geometry();
     context.dispose();
     geometry
 }
 
 fn arc(backend: &Backend, is_large_arc: bool, sweep_direction: SweepDirection, rotation: f64) -> Arc<dyn IGeometryImpl> {
-    let geometry = backend.interface.create_stream_geometry();
-    let mut context = geometry.open();
+    let mut context = backend.interface.create_stream_geometry_builder(None);
     context.begin_figure(Point::new(60.0, 110.0), true);
     context.arc_to(Point::new(140.0, 90.0), Size::new(70.0, 45.0), rotation, is_large_arc, sweep_direction, true);
     context.end_figure(false);
+    let geometry = context.to_geometry();
     context.dispose();
     geometry
 }
@@ -81,18 +81,17 @@ fn arc_large_rotated(backend: &Backend) -> Arc<dyn IGeometryImpl> {
 /// An arc whose radii are too small to reach its end point: they are scaled
 /// up.
 fn arc_radii_too_small(backend: &Backend) -> Arc<dyn IGeometryImpl> {
-    let geometry = backend.interface.create_stream_geometry();
-    let mut context = geometry.open();
+    let mut context = backend.interface.create_stream_geometry_builder(None);
     context.begin_figure(Point::new(40.0, 100.0), true);
     context.arc_to(Point::new(160.0, 100.0), Size::new(20.0, 10.0), 0.0, false, SweepDirection::Clockwise, true);
     context.end_figure(false);
+    let geometry = context.to_geometry();
     context.dispose();
     geometry
 }
 
 fn star_even_odd(backend: &Backend) -> Arc<dyn IGeometryImpl> {
-    let geometry = backend.interface.create_stream_geometry();
-    let mut context = geometry.open();
+    let mut context = backend.interface.create_stream_geometry_builder(None);
     context.set_fill_rule(FillRule::EvenOdd);
     let point = |index: usize| {
         let angle = -std::f64::consts::FRAC_PI_2 + index as f64 * 4.0 * std::f64::consts::PI / 5.0;
@@ -103,6 +102,7 @@ fn star_even_odd(backend: &Backend) -> Arc<dyn IGeometryImpl> {
         context.line_to(point(index), true);
     }
     context.end_figure(true);
+    let geometry = context.to_geometry();
     context.dispose();
     geometry
 }

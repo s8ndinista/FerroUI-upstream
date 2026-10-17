@@ -1,7 +1,7 @@
 use crate::combined_geometry_impl::CombinedGeometryImpl;
 use crate::helpers::path_measure::PathMeasure;
 use crate::helpers::{path_helper, pen_helper};
-use crate::stream_geometry_impl::StreamGeometryImpl;
+use crate::simple_geometry_impl::SimpleGeometryImpl;
 use crate::transformed_geometry_impl::TransformedGeometryImpl;
 use crate::vello_extensions::{closed_path, to_kurbo_point, to_point, to_rect};
 use ferroui_base::media::{FillRule, GeometryCombineMode, IPen, IntersectionResult};
@@ -216,7 +216,7 @@ pub fn try_get_geometry_impl(geometry: &dyn IGeometryImpl) -> Option<&dyn Geomet
 
     let any = geometry.as_any();
 
-    if let Some(geometry) = any.downcast_ref::<StreamGeometryImpl>() {
+    if let Some(geometry) = any.downcast_ref::<SimpleGeometryImpl>() {
         return Some(geometry);
     }
     if let Some(geometry) = any.downcast_ref::<TransformedGeometryImpl>() {
@@ -285,7 +285,7 @@ pub(crate) fn get_widened_geometry(geometry: &dyn GeometryImpl, pen: &dyn IPen) 
         if let Some(path) = path_helper::create_stroked_path(stroke_path.path(), pen) {
             // The outline of a stroke is filled by the non-zero rule: where
             // the stroke crosses itself its figures overlap.
-            return StreamGeometryImpl::from_paths(
+            return SimpleGeometryImpl::new(
                 VelloPath::new(path, FillRule::NonZero),
                 FillPath::SameAsStroke,
                 None,
@@ -293,7 +293,7 @@ pub(crate) fn get_widened_geometry(geometry: &dyn GeometryImpl, pen: &dyn IPen) 
         }
     }
 
-    StreamGeometryImpl::from_paths(VelloPath::empty(), FillPath::None, None)
+    SimpleGeometryImpl::new(VelloPath::empty(), FillPath::None, None)
 }
 
 pub(crate) fn with_transform(geometry: &dyn GeometryImpl, transform: Matrix) -> Arc<dyn ITransformedGeometryImpl> {
@@ -322,7 +322,7 @@ pub(crate) fn try_get_segment(
         measure.get_segment(start_distance, stop_distance, start_on_begin_figure)
     })??;
 
-    Some(StreamGeometryImpl::from_paths(VelloPath::new(segment, FillRule::EvenOdd), FillPath::None, None))
+    Some(SimpleGeometryImpl::new(VelloPath::new(segment, FillRule::EvenOdd), FillPath::None, None))
 }
 
 pub(crate) fn get_fill_intersection_result(

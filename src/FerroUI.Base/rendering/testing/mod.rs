@@ -11,7 +11,7 @@ pub use mock_drawing_context_impl::{
 };
 pub use mock_platform_render_interface::{
     MockGeometryImpl, MockGlyphRunImpl, MockPlatformRenderInterface, MockPlatformRenderInterfaceContext, MockRegion,
-    MockRenderTarget, MockStreamGeometryImpl,
+    MockRenderTarget, MockStreamGeometryBuilder, MockStreamGeometryImpl,
 };
 
 use crate::media::BoxShadow;

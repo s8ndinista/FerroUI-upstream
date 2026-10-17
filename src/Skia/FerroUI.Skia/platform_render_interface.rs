@@ -10,14 +10,15 @@ use crate::render_target_bitmap_impl::RenderTargetBitmapImpl;
 use crate::skia_backend_context::SkiaContext;
 use crate::skia_region_impl::SkiaRegionImpl;
 use crate::skia_sharp_extensions::to_pixel_format;
-use crate::stream_geometry_impl::StreamGeometryImpl;
+use crate::simple_geometry_impl::SimpleGeometryImpl;
+use crate::stream_geometry_builder::StreamGeometryBuilder;
 use crate::writeable_bitmap_impl::WriteableBitmapImpl;
 use ferroui_base::media::imaging::BitmapInterpolationMode;
 use ferroui_base::media::{FillRule, GeometryCombineMode};
 use ferroui_base::platform::{
     AlphaFormat, IBitmapImpl, IGeometryImpl, IOptionalFeatureProvider, IPlatformGraphicsContext,
     IPlatformRenderInterface, IPlatformRenderInterfaceContext, IPlatformRenderInterfaceRegion,
-    IRenderTargetBitmapImpl, IStreamGeometryImpl, IWriteableBitmapImpl, PixelFormat, PixelFormats,
+    IRenderTargetBitmapImpl, IStreamGeometryBuilder, IWriteableBitmapImpl, PixelFormat, PixelFormats,
 };
 use ferroui_base::{PixelSize, Point, Rect, Vector};
 use crate::geometry_impl::FillPath;
@@ -152,8 +153,8 @@ impl IPlatformRenderInterface for PlatformRenderInterface {
         RectangleGeometryImpl::new(rect)
     }
 
-    fn create_stream_geometry(&self) -> Arc<dyn IStreamGeometryImpl> {
-        StreamGeometryImpl::new()
+    fn create_stream_geometry_builder(&self, source: Option<&dyn IGeometryImpl>) -> Box<dyn IStreamGeometryBuilder> {
+        Box::new(StreamGeometryBuilder::new(source))
     }
 
     fn create_geometry_group(&self, fill_rule: FillRule, children: &[Arc<dyn IGeometryImpl>]) -> Arc<dyn IGeometryImpl> {
@@ -195,7 +196,7 @@ impl IPlatformRenderInterface for PlatformRenderInterface {
             current_x += glyph_info.glyph_advance;
         }
 
-        StreamGeometryImpl::from_paths(path.detach(), FillPath::SameAsStroke, None)
+        SimpleGeometryImpl::new(path.detach(), FillPath::SameAsStroke, None)
     }
 
     fn create_glyph_run(
