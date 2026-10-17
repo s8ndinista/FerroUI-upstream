@@ -664,6 +664,84 @@ fn should_add_ellipsis_when_max_lines_cuts_short_wrapped_line() {
     }
 }
 
+fn get_line_height() -> f64 {
+    let layout = layout("0", options(black()));
+
+    let height = layout.height();
+    layout.dispose();
+    height
+}
+
+const HARD_BREAK_TEXT: &str = "0123456789\r\n0123456789\r\n0123456789\r\n0123456789";
+
+const WRAPPED_TEXT: &str = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.";
+
+#[test]
+fn should_add_ellipsis_when_max_lines_cuts_at_hard_break() {
+    let _app = start();
+
+    let layout = layout(
+        HARD_BREAK_TEXT,
+        TextLayoutOptions {
+            text_trimming: Some(<dyn TextTrimming>::character_ellipsis()),
+            max_width: 180.0,
+            max_lines: 2,
+            ..options(black())
+        },
+    );
+
+    assert_eq!(2, layout.text_lines().len());
+    assert!(layout.text_lines()[1].has_collapsed());
+
+    layout.dispose();
+}
+
+#[test]
+fn should_not_add_ellipsis_when_max_height_cuts_at_hard_break() {
+    let _app = start();
+
+    let line_height = get_line_height();
+
+    let layout = layout(
+        HARD_BREAK_TEXT,
+        TextLayoutOptions {
+            text_trimming: Some(<dyn TextTrimming>::character_ellipsis()),
+            max_width: 180.0,
+            max_height: line_height * 2.2,
+            ..options(black())
+        },
+    );
+
+    assert_eq!(2, layout.text_lines().len());
+    assert!(layout.text_lines().iter().all(|line| !line.has_collapsed()));
+
+    layout.dispose();
+}
+
+#[test]
+fn should_add_ellipsis_when_max_height_cuts_wrapped_line() {
+    let _app = start();
+
+    let line_height = get_line_height();
+
+    let layout = layout(
+        WRAPPED_TEXT,
+        TextLayoutOptions {
+            text_wrapping: TextWrapping::Wrap,
+            text_trimming: Some(<dyn TextTrimming>::character_ellipsis()),
+            max_width: 180.0,
+            max_height: line_height * 2.2,
+            ..options(black())
+        },
+    );
+
+    assert_eq!(2, layout.text_lines().len());
+    assert!(!layout.text_lines()[0].has_collapsed());
+    assert!(layout.text_lines()[1].has_collapsed());
+
+    layout.dispose();
+}
+
 #[test]
 fn should_produce_fixed_height_lines() {
     let _app = start();

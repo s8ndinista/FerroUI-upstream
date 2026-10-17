@@ -571,20 +571,42 @@ impl TextLayout {
 
             self.text_source_length += text_line.length();
 
-            // Fulfill max height constraint
+            // Whether this freshly fetched candidate line represents real, visible content rather
+            // than just a trailing line-break sentinel (some text sources emit an explicit
+            // TextEndOfLine/TextEndOfParagraph run object at end-of-text with no visible content).
+            let has_real_content = text_line.length() > text_line.new_line_length();
+
+            // Fulfill max height constraint. The mere existence of this next candidate line (which
+            // hasn't been added yet) proves there is more content than fits. Only add an ellipsis
+            // if the last visible line was cut by word-wrap (is_split). If it ended at a hard break
+            // the line itself was not trimmed, and hiding the following paragraph is clipped
+            // silently like CSS max-height with overflow:hidden.
             if !text_lines.is_empty()
                 && self.max_height != f64::INFINITY
                 && MathUtilities::greater_than(self.height() + text_line.height(), self.max_height)
             {
-                if let Some(previous_line) = &previous_line {
-                    if previous_line.text_line_break().is_some() && !self.is_trimming_none() {
-                        let collapsed_line =
-                            previous_line.clone().collapse(&[self.get_collapsing_properties(self.max_width)]);
+                let last = text_lines.len() - 1;
+                let last_line = text_lines[last].clone();
 
-                        let last = text_lines.len() - 1;
+                if !self.is_trimming_none()
+                    && has_real_content
+                    && last_line.text_line_break().is_some_and(|text_line_break| text_line_break.is_split())
+                {
+                    text_lines[last] = self.collapse_for_truncation(last_line);
+                }
 
-                        text_lines[last] = collapsed_line;
-                    }
+                break;
+            }
+
+            // Fulfill max lines constraint. The next candidate line's existence proves the previously
+            // added (Max-th) line hides real content. Unlike the height limit this ellipsizes after a
+            // hard break too, like CSS line-clamp.
+            if self.max_lines > 0 && text_lines.len() as i32 >= self.max_lines {
+                if !self.is_trimming_none() && has_real_content {
+                    let last = text_lines.len() - 1;
+                    let last_line = text_lines[last].clone();
+
+                    text_lines[last] = self.collapse_for_truncation(last_line);
                 }
 
                 break;
@@ -601,21 +623,6 @@ impl TextLayout {
             self.update_metrics(&*text_line, &mut first);
 
             previous_line = Some(text_line.clone());
-
-            // Fulfill max lines constraint
-            if self.max_lines > 0 && text_lines.len() as i32 >= self.max_lines {
-                if text_line.text_line_break().is_some_and(|text_line_break| text_line_break.is_split()) {
-                    let collapsed_line = text_line.clone().collapse(&[
-                        self.get_collapsing_properties(text_line.width_including_trailing_whitespace())
-                    ]);
-
-                    let last = text_lines.len() - 1;
-
-                    text_lines[last] = collapsed_line;
-                }
-
-                break;
-            }
 
             let is_end_of_paragraph = text_line.text_line_break().is_some_and(|text_line_break| {
                 text_line_break
@@ -729,6 +736,19 @@ impl TextLayout {
             self.paragraph_properties.default_text_run_properties().clone(),
             self.paragraph_properties.flow_direction(),
         )))
+    }
+
+    fn collapse_for_truncation(&self, line: Rc<dyn TextLine>) -> Rc<dyn TextLine> {
+        // Collapse against the line's own rendered width rather than max_width, so there's
+        // always room reserved for the ellipsis symbol and a trailing ellipsis is reliably
+        // produced, even if the line already fits within max_width on its own.
+        let collapsing_properties = self.get_collapsing_properties(line.width_including_trailing_whitespace());
+
+        if collapsing_properties.is_none() {
+            return line;
+        }
+
+        line.collapse(&[collapsing_properties])
     }
 
     /// Releases the text lines.

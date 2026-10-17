@@ -14,8 +14,8 @@ use ferroui_base::input::InputElement;
 use ferroui_base::data::{BindingMode, TemplateBinding};
 use ferroui_base::layout::{HorizontalAlignment, LayoutHelper, VerticalAlignment};
 use ferroui_base::media::{
-    Brushes, DrawingImage, FontStyle, GeometryDrawing, IImage, RectangleGeometry, TextAlignment, TextDecorations,
-    TextWrapping,
+    Brushes, DrawingImage, FlowDirection, FontStyle, GeometryDrawing, IImage, RectangleGeometry, TextAlignment,
+    TextDecorations, TextTrimming, TextWrapping,
 };
 use ferroui_base::{Rect, Ref, Size, StyledElement, Thickness, Visual};
 use std::rc::Rc;
@@ -586,6 +586,266 @@ fn measure_and_arrange_should_use_width_including_trailing_whitespace_for_bounds
 
     assert_eq!(target.bounds(), Rect::from_size(expected_size));
 }
+
+/// A text block of `text` with the given wrapping and width.
+fn wrapped_text_block(text: &str, text_wrapping: TextWrapping, width: f64) -> Ref<TextBlock> {
+    let target = text_block(text);
+    target.set_text_wrapping(text_wrapping);
+    target.set_width(width);
+    target
+}
+
+fn measure_and_arrange(target: &TextBlock, width: f64, height: f64) {
+    target.measure(infinity());
+    target.arrange(Rect::new(0.0, 0.0, width, height));
+}
+
+#[test]
+fn text_block_with_wrap_max_lines_character_ellipsis_should_show_ellipsis_on_last_line() {
+    let _scope = test_scope();
+
+    const WIDTH: f64 = 106.0;
+    let unbounded = wrapped_text_block(LONG_LOREM_TEXT, TextWrapping::Wrap, WIDTH);
+    unbounded.set_horizontal_alignment(HorizontalAlignment::Left);
+    unbounded.set_vertical_alignment(VerticalAlignment::Top);
+
+    unbounded.measure(infinity());
+    unbounded.arrange(Rect::new(0.0, 0.0, WIDTH, unbounded.desired_size().height));
+
+    assert!(unbounded.text_layout().text_lines().len() > 2);
+
+    let truncated = wrapped_text_block(LONG_LOREM_TEXT, TextWrapping::Wrap, WIDTH);
+    truncated.set_text_trimming(<dyn TextTrimming>::character_ellipsis());
+    truncated.set_max_lines(2);
+    truncated.set_horizontal_alignment(HorizontalAlignment::Left);
+    truncated.set_vertical_alignment(VerticalAlignment::Top);
+
+    truncated.measure(infinity());
+    truncated.arrange(Rect::new(0.0, 0.0, WIDTH, truncated.desired_size().height));
+
+    assert_eq!(2, truncated.text_layout().text_lines().len());
+    assert!(get_line_text(&truncated, 1).contains('\u{2026}'));
+}
+
+#[test]
+fn text_block_with_wrap_character_ellipsis_and_height_limit_should_show_ellipsis_on_last_line() {
+    let _scope = test_scope();
+
+    const WIDTH: f64 = 180.0;
+
+    let unbounded = wrapped_text_block(LONG_LOREM_TEXT, TextWrapping::Wrap, WIDTH);
+    unbounded.set_horizontal_alignment(HorizontalAlignment::Left);
+    unbounded.set_vertical_alignment(VerticalAlignment::Top);
+
+    unbounded.measure(infinity());
+    unbounded.arrange(Rect::new(0.0, 0.0, WIDTH, unbounded.desired_size().height));
+
+    assert!(unbounded.text_layout().text_lines().len() > 3);
+
+    let line_height = unbounded.text_layout().text_lines()[0].height();
+    let constrained_height = line_height * 1.25;
+    let target = wrapped_text_block(LONG_LOREM_TEXT, TextWrapping::Wrap, WIDTH);
+    target.set_text_trimming(<dyn TextTrimming>::character_ellipsis());
+    target.set_height(constrained_height);
+    target.set_horizontal_alignment(HorizontalAlignment::Left);
+    target.set_vertical_alignment(VerticalAlignment::Top);
+
+    measure_and_arrange(&target, WIDTH, constrained_height);
+
+    let line_count = target.text_layout().text_lines().len();
+    assert!(line_count < unbounded.text_layout().text_lines().len());
+    assert!(get_line_text(&target, line_count - 1).contains('\u{2026}'));
+}
+
+#[test]
+fn text_block_with_wrap_max_lines_word_ellipsis_should_show_ellipsis_on_last_line() {
+    let _scope = test_scope();
+
+    const WIDTH: f64 = 106.0;
+    let unbounded = wrapped_text_block(LONG_LOREM_TEXT, TextWrapping::Wrap, WIDTH);
+
+    unbounded.measure(infinity());
+    unbounded.arrange(Rect::new(0.0, 0.0, WIDTH, unbounded.desired_size().height));
+
+    assert!(unbounded.text_layout().text_lines().len() > 2);
+
+    let truncated = wrapped_text_block(LONG_LOREM_TEXT, TextWrapping::Wrap, WIDTH);
+    truncated.set_text_trimming(<dyn TextTrimming>::word_ellipsis());
+    truncated.set_max_lines(2);
+
+    truncated.measure(infinity());
+    truncated.arrange(Rect::new(0.0, 0.0, WIDTH, truncated.desired_size().height));
+
+    assert_eq!(2, truncated.text_layout().text_lines().len());
+    assert!(get_line_text(&truncated, 1).contains('\u{2026}'));
+}
+
+#[test]
+fn text_block_with_wrap_word_ellipsis_and_height_limit_should_show_ellipsis_on_last_line() {
+    let _scope = test_scope();
+
+    const WIDTH: f64 = 180.0;
+    let unbounded = wrapped_text_block(LONG_LOREM_TEXT, TextWrapping::Wrap, WIDTH);
+
+    unbounded.measure(infinity());
+    unbounded.arrange(Rect::new(0.0, 0.0, WIDTH, unbounded.desired_size().height));
+
+    assert!(unbounded.text_layout().text_lines().len() > 3);
+
+    let line_height = unbounded.text_layout().text_lines()[0].height();
+    let constrained_height = line_height * 1.25;
+    let target = wrapped_text_block(LONG_LOREM_TEXT, TextWrapping::Wrap, WIDTH);
+    target.set_text_trimming(<dyn TextTrimming>::word_ellipsis());
+    target.set_height(constrained_height);
+
+    measure_and_arrange(&target, WIDTH, constrained_height);
+
+    let line_count = target.text_layout().text_lines().len();
+    assert!(line_count < unbounded.text_layout().text_lines().len());
+    assert!(get_line_text(&target, line_count - 1).contains('\u{2026}'));
+}
+
+#[test]
+fn text_block_with_max_lines_when_text_fully_fits_should_not_show_ellipsis() {
+    let _scope = test_scope();
+
+    let target = wrapped_text_block("first line\r\nsecond line", TextWrapping::Wrap, 200.0);
+    target.set_text_trimming(<dyn TextTrimming>::character_ellipsis());
+    target.set_max_lines(2);
+
+    target.measure(infinity());
+    target.arrange(Rect::new(0.0, 0.0, 200.0, target.desired_size().height));
+
+    assert_eq!(2, target.text_layout().text_lines().len());
+    assert!(!get_line_text(&target, 1).contains('\u{2026}'));
+}
+
+#[test]
+fn text_block_with_overflow_and_max_lines_should_not_produce_double_ellipsis() {
+    // A single very long word that overflows the width on line 1, which is also MaxLines = 1.
+    // The overflow path collapses the line first; the MaxLines path must not re-collapse it.
+    let _scope = test_scope();
+
+    const WIDTH: f64 = 80.0;
+    let target = wrapped_text_block(
+        "AAAAAAAAAAAAAAAAAAAAAAAAA BBBBBBBBBBBBBBBBBBBBBBBBB CCCCCCCCCCCCCCCCCCCCC",
+        TextWrapping::NoWrap,
+        WIDTH,
+    );
+    target.set_text_trimming(<dyn TextTrimming>::character_ellipsis());
+    target.set_max_lines(1);
+
+    target.measure(infinity());
+    target.arrange(Rect::new(0.0, 0.0, WIDTH, target.desired_size().height));
+
+    let last_line_text = get_line_text(&target, 0);
+
+    // Must contain exactly one ellipsis, not two.
+    assert!(last_line_text.contains('\u{2026}'));
+    assert!(!last_line_text.contains("\u{2026}\u{2026}"), "Double ellipsis found in: {last_line_text}");
+}
+
+#[test]
+fn text_block_with_overflow_and_max_height_should_not_produce_double_ellipsis() {
+    // When a line overflows its width and is collapsed by the overflow handler, and then the
+    // MaxHeight gate is hit, no second ellipsis must appear. With the is_split guard on the
+    // MaxHeight path, collapse_for_truncation is not called here at all (the overflowed line
+    // ends at a hard paragraph break, so is_split is false). The single ellipsis comes from the
+    // overflow handler only.
+    let _scope = test_scope();
+
+    const WIDTH: f64 = 20.0;
+    let target =
+        wrapped_text_block("AAAAAAAAAAAAAAAAAAAAAAAAA\r\nsecond line\r\nthird line", TextWrapping::NoWrap, WIDTH);
+    target.set_text_trimming(<dyn TextTrimming>::character_ellipsis());
+
+    target.measure(infinity());
+    target.arrange(Rect::new(0.0, 0.0, WIDTH, target.desired_size().height));
+
+    let line_height = target.text_layout().text_lines()[0].height();
+
+    target.set_height(line_height * 1.25);
+
+    measure_and_arrange(&target, WIDTH, target.height());
+
+    let line_count = target.text_layout().text_lines().len();
+    let last_line_text = get_line_text(&target, line_count - 1);
+
+    // Must contain exactly one ellipsis, not two.
+    assert!(last_line_text.contains('\u{2026}'));
+    assert!(!last_line_text.contains("\u{2026}\u{2026}"), "Double ellipsis found in: {last_line_text}");
+}
+
+#[test]
+fn text_block_with_max_height_and_hidden_content_after_new_line_should_not_show_ellipsis() {
+    // When a Height limit hides content that follows a hard paragraph break, no ellipsis is shown
+    // on the last visible line, matching WPF and CSS max-height+overflow:hidden behavior.
+    // The last visible line ("second line") was not itself trimmed, so no ellipsis is added.
+    // Contrast with MaxLines, where the behavior is intentionally different (see the MaxLines tests).
+    let _scope = test_scope();
+
+    let unbounded = text_block("first line\r\nsecond line\r\nthird line");
+    unbounded.set_width(200.0);
+
+    unbounded.measure(infinity());
+    unbounded.arrange(Rect::new(0.0, 0.0, 200.0, unbounded.desired_size().height));
+
+    assert!(unbounded.text_layout().text_lines().len() >= 3);
+
+    let line_height = unbounded.text_layout().text_lines()[0].height();
+
+    let target = text_block("first line\r\nsecond line\r\nthird line");
+    target.set_text_trimming(<dyn TextTrimming>::character_ellipsis());
+    target.set_width(200.0);
+    target.set_height(line_height * 2.0);
+
+    measure_and_arrange(&target, 200.0, target.height());
+
+    assert_eq!(2, target.text_layout().text_lines().len());
+    assert!(!get_line_text(&target, 1).contains('\u{2026}'));
+}
+
+#[test]
+fn text_block_with_rtl_wrap_max_lines_character_ellipsis_should_show_ellipsis_on_last_line() {
+    let _scope = test_scope();
+
+    const WIDTH: f64 = 120.0;
+    let unbounded = wrapped_text_block(LONG_ARABIC_TEXT, TextWrapping::Wrap, WIDTH);
+    unbounded.set_flow_direction(FlowDirection::RightToLeft);
+
+    unbounded.measure(infinity());
+    unbounded.arrange(Rect::new(0.0, 0.0, WIDTH, unbounded.desired_size().height));
+
+    assert!(unbounded.text_layout().text_lines().len() > 2);
+
+    let target = wrapped_text_block(LONG_ARABIC_TEXT, TextWrapping::Wrap, WIDTH);
+    target.set_flow_direction(FlowDirection::RightToLeft);
+    target.set_text_trimming(<dyn TextTrimming>::character_ellipsis());
+    target.set_max_lines(2);
+
+    target.measure(infinity());
+    target.arrange(Rect::new(0.0, 0.0, WIDTH, target.desired_size().height));
+
+    assert_eq!(2, target.text_layout().text_lines().len());
+    assert!(get_line_text(&target, 1).contains('\u{2026}'));
+}
+
+fn get_line_text(text_block: &TextBlock, line_index: usize) -> String {
+    let text_layout = text_block.text_layout();
+    let line = &text_layout.text_lines()[line_index];
+    let text_runs = line.text_runs();
+
+    text_runs.iter().map(|run| run.text().to_string_lossy()).collect()
+}
+
+const LONG_LOREM_TEXT: &str = concat!(
+    "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. ",
+    "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. ",
+    "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur."
+);
+
+const LONG_ARABIC_TEXT: &str =
+    "مرحبا بكم في اختبار التخطيط للنصوص الطويلة التي تلتف عبر عدة أسطر للتحقق من سلوك علامة الحذف عند الاقتصاص.";
 
 #[test]
 fn should_shape_inlines_when_text_layout_is_created_before_measure() {
