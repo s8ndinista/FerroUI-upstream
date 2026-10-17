@@ -855,6 +855,43 @@ fn closing_popup_sets_focus_on_placement_target(use_popup_host: bool) {
     assert_eq!(Some(window.upcast::<InputElement>()), focus);
 }
 
+fn closing_popup_clears_focus_when_previously_focused_element_is_disabled(use_popup_host: bool) {
+    let _app = create_services_with_focus(use_popup_host);
+    let target = focusable();
+    let other_button = focusable();
+    let popup_button = focusable();
+    let popup = Popup::new();
+    popup.set_placement_target(target.clone());
+    popup.set_child(popup_button.clone());
+
+    let stack_panel = StackPanel::new();
+    stack_panel.children().add(target.clone());
+    stack_panel.children().add(other_button.clone());
+    stack_panel.children().add(popup.clone());
+    let window = prepared_window(Some(stack_panel.upcast()));
+
+    target.focus();
+    popup.open();
+
+    if let Some(host) = popup.host().unwrap().as_overlay_popup_host() {
+        host.measure(Size::INFINITY);
+        host.arrange(Rect::from_size(host.desired_size()));
+    }
+
+    assert!(popup_button.focus());
+
+    target.set_is_enabled(false);
+
+    popup.close();
+
+    assert!(!popup_button.is_focused());
+    assert_eq!(None, KeyboardDevice::instance().unwrap().focused_element());
+    assert_eq!(None, window.focus_manager().get_focused_element());
+
+    assert!(other_button.focus());
+    assert_eq!(Some(other_button.upcast::<InputElement>()), KeyboardDevice::instance().unwrap().focused_element());
+}
+
 fn prog_close_popup_no_light_dismiss_doesnt_move_focus_to_placement_target(use_popup_host: bool) {
     let _app = create_services_with_focus(use_popup_host);
     let window = prepared_window(None);
@@ -1562,6 +1599,7 @@ popup_tests! {
     focusable_controls_in_popup_should_get_focus,
     popup_should_clear_keyboard_focus_from_children_when_closed,
     closing_popup_sets_focus_on_placement_target,
+    closing_popup_clears_focus_when_previously_focused_element_is_disabled,
     prog_close_popup_no_light_dismiss_doesnt_move_focus_to_placement_target,
     popup_should_not_follow_placement_target_on_window_move_if_pointer,
     popup_should_follow_placement_target_on_window_resize,

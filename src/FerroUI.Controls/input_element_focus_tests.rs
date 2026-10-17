@@ -585,6 +585,35 @@ fn removing_focus_scope_activates_root_focus_scope() {
 }
 
 #[test]
+fn removing_or_hiding_focus_scope_clears_focus_when_root_focus_scope_element_is_disabled() {
+    for remove in [true, false] {
+        let _app = UnitTestApplication::start(real_focus());
+        let inner_button = Button::new();
+        let outer_button = Button::new();
+        let inner_scope = TestFocusScope::new();
+        inner_scope.children().add(inner_button.clone());
+        let root = TestRoot::with_child(&stack_panel(&[&inner_scope, &outer_button]));
+
+        // e.g. a button whose command is running while it waits for a choice in a popup.
+        outer_button.focus();
+        inner_button.focus();
+        outer_button.set_is_enabled(false);
+
+        if remove {
+            inner_scope.parent().unwrap().cast::<Panel>().unwrap().children().remove(inner_scope.clone());
+        } else {
+            inner_scope.set_is_visible(false);
+        }
+
+        // Focus can't return to the disabled button, but must not stay on the removed/hidden control.
+        let focus_manager = root.focus_manager();
+        assert!(!inner_button.is_focused(), "remove: {remove}");
+        assert_eq!(None, focus_manager.get_focused_element(), "remove: {remove}");
+        assert_eq!(None, keyboard_focused_element(), "remove: {remove}");
+    }
+}
+
+#[test]
 fn switching_focus_scope_changes_focus() {
     let _app = UnitTestApplication::start(real_focus());
     let inner_button = Button::new();

@@ -139,8 +139,9 @@ impl FocusManager {
                     // element.
                     focus_root.clear_value(Self::focused_element_property());
 
+                    // Keep focus in another scope (e.g. window), unless the focused element was removed or hidden.
                     if let Some(current) = &current {
-                        if Self::get_focus_scope(current) != Some(focus_root.clone()) {
+                        if Self::is_visible(current) && Self::get_focus_scope(current) != Some(focus_root.clone()) {
                             self.set_focus_root(None);
                             return false;
                         }
