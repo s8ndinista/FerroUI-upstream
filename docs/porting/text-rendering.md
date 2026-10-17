@@ -12,8 +12,9 @@ The Vello backend (`src/Vello/FerroUI.Vello`) draws glyphs itself and is not aff
   - lighter text: 11 to 12 % less ink than native on light themes, and fewer solid stem pixels (34 % against 48 % at 200 %): Skia's contrast of 0.5 with sRGB gamma thins dark-on-light text; light-on-dark text is not affected (section 3.3), which the measurements confirm (ink ratio 1.0 to 1.1 on dark themes);
   - the shapes, hinting and advances are the same: Skia's Windows port renders the glyphs with DirectWrite itself, in the same rendering mode WinUI uses (section 3.4).
 - **WinUI's text is better than FerroUI's was**: sharper (no fringes) and darker. With the new defaults (section 5) FerroUI renders greyscale text with the contrast Chromium uses on Windows, which on the measured pictures brings the ink to 0.98 to 1.06 of native and the solid share to native's or slightly above (section 4.2).
-- **The text of FerroUI sits 1 px higher than WinUI's at 200 % (0.5 dip), not at 100 %; a 28 px title is 1 px higher at both.** The cause is in WinUI's TextBlock (section 6): with layout rounding the height of a text block is rounded up to whole device pixels, and WinUI puts the added height above the text (`m_layoutRoundingHeightAdjustment`), where FerroUI, as the reference, leaves it below. The baselines are then snapped to the nearest pixel on both sides. The fix is implemented behind a development override (`FERROUI_TEXT_BASELINE_ROUNDING=above`) so that the comparison measures both before it becomes the default; the default is unchanged.
-- **Most of the gap in weight that was left at 200 % is the comparison, not the window.** The comparison host's `-ferroui.png` is a render target bitmap, which has no display and renders with Skia's default contrast (0.5); the window renders with the platform's (1.0). Measured on the window itself (`-ferroui-window.png`), dark text on light backgrounds has 0.97 to 1.01 of native's ink and native's solid share at 200 % (section 9.1).
+- **The text of FerroUI sat 1 px higher than WinUI's at 200 % (0.5 dip), not at 100 %; a 28 px title 1 px higher at both.** The cause is in WinUI's TextBlock (section 6): with layout rounding the height of a text block is rounded up to whole device pixels, and WinUI puts the added height above the text (`m_layoutRoundingHeightAdjustment`), where FerroUI, as the reference, leaves it below. The baselines are then snapped to the nearest pixel on both sides. Where a text block puts that height is now a property, `TextBlock.LayoutRoundingPlacement` (`Below`, the reference's placement and the default; `Above`, WinUI's), which the WinUI theme sets to `Above`: measured at 200 %, the text and buttons pages moved from a `dy` of -0.99 px to +0.01 px (section 9.1). The Fluent and Simple themes keep the reference's placement.
+- **The gap in weight that was left at 200 % was the comparison, not the window.** The comparison host's `-ferroui.png` is a render target bitmap, which has no display and renders with Skia's default contrast (0.5); the window renders with the platform's (1.0). Measured on the window itself (`-ferroui-window.png`), dark text on light backgrounds has 0.97 to 1.01 of native's ink and native's solid share at 200 %, and a calibration run with one build confirmed it: the window, at contrast 1.0 and sRGB, has 0.991 of native's ink for dark text on light backgrounds and 1.023 for light text on dark, with native's solid share, and so has a bitmap with those values (section 9.1). Contrast 1.0 and sRGB stay the values of Windows.
+- **A window kept the text rendering of its first frame.** The composition target draws a window whose frames are not kept (every GPU swap chain) into a layer that it keeps between frames, and the layer had the surface properties of the frame it was created in until the size of the window changed: neither a change of the platform's parameters nor the development override of a calibration run reached the window. The layer is now created again when they change (section 7).
 
 ## 2. What the native platforms do
 
@@ -144,11 +145,44 @@ So WinUI's baseline, from the top of a text block on a whole device pixel, is `r
 
 All four measured cases (section 1, `dy` of the script) follow. The rounding of the glyph runs is the same on both sides; the cause is where the height that layout rounding adds goes, which is a decision of WinUI's TextBlock that the reference does not make.
 
-### 6.3 The fix, behind a development override
+### 6.3 The property `TextBlock.LayoutRoundingPlacement`
 
-`FERROUI_TEXT_BASELINE_ROUNDING=above` (or `winui`) makes `TextBlock::render_core` move its text down by what layout rounding adds to its content (`TextBaselineRounding::Above.offset`: the height of the text and the vertical padding rounded up to whole device pixels at the layout scale, minus that height), as WinUI does; `top` (the default, also when the variable is unset) keeps the reference's placement. It applies only with layout rounding, as in WinUI, and to every text block, so also to the text of buttons, labels and items (their content presenters create text blocks); the text boxes (`TextPresenter`) are not affected (WinUI renders them through RichEdit, which stacks its lines at whole pixels, section 1). The comparison host can switch it per text setting of a calibration run (section 10).
+Where a text block puts the height layout rounding adds to it is an inherited attached property of
+`TextBlock`, `LayoutRoundingPlacement`, of the type `TextLayoutRoundingPlacement`
+(`src/FerroUI.Controls/text_layout_rounding_placement.rs`), a FerroUI addition
+(`DEVIATIONS.md`, Text block):
 
-Before it becomes the default it should be measured: the calibration page (`textcal`, section 10) at 100 % and 200 % with the text settings `top` and `above`, where every row should then have a `dy` of 0. The formula above predicts these offsets of FerroUI's rows (device pixels) with `top`, for Segoe UI Variable (the semibold rows as the regular ones of their size):
+- `Below`, the default, keeps the reference's placement: the text starts at the top padding and
+  the added height is below it.
+- `Above` moves the text down by what layout rounding adds to the content of the block
+  (`TextLayoutRoundingPlacement::offset`: the height of the text and the vertical padding rounded
+  up to whole device pixels at the layout scale, minus that height; `TextBlock::layout_rounding_offset`),
+  as WinUI's `GetContentRenderingOffset` does.
+
+It applies only with layout rounding, as in WinUI, and it moves everything a text block places
+from the origin of its text: the text (`TextBlock::render_core`), the selection of
+`SelectableTextBlock` (drawn from the same origin) and its hit testing (the pointer handlers take
+the offset off with the padding), the underline of the access key of `AccessText`, and the
+controls embedded in the inlines (`arrange_override`). The size of the block does not change. The
+text boxes (`TextPresenter`) are not affected (WinUI renders them through RichEdit, which stacks
+its lines at whole pixels, section 1).
+
+The property is inherited so that a theme sets it once. The WinUI theme sets `Above` in the control
+themes of `Window`, `EmbeddableControlRoot`, `PopupRoot` and `OverlayPopupHost`, where it sets the
+font of the text, so every text block of a window or a popup of the theme, those of control
+templates (the text of buttons, labels and items) included, places its text as WinUI does. It does
+not set it on `ThemeVariantScope`: the placement does not depend on the theme variant, and a scope
+that set it would hide a value set above it. The Fluent and Simple themes do not set it: their
+text, and the expected pictures of the render tests, are unchanged. An application can set it on
+any element (`TextBlock.LayoutRoundingPlacement="Above"`), and on a text block itself.
+
+The development variable of the first implementation, `FERROUI_TEXT_BASELINE_ROUNDING`, is gone:
+a global default can be neither set by a theme nor undone by one, and the property does what it
+did. A calibration run sets the property on the pages it compares instead (section 10.3).
+
+With `Below` the formula of section 6.2 predicts these offsets of FerroUI's rows from WinUI's
+(device pixels), for Segoe UI Variable (the semibold rows as the regular ones of their size); with
+`Above` they are all 0:
 
 | Scale | 12 | 13 | 14 | 15 | 16 | 18 | 20 | 24 | 28 | 32 |
 |---|---|---|---|---|---|---|---|---|---|---|
@@ -157,7 +191,11 @@ Before it becomes the default it should be measured: the calibration page (`text
 | 1.5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | 2 | 0 | 0 | -1 | 0 | 0 | 0 | -1 | 0 | -1 | -1 |
 
-A row that measures otherwise points at a second cause. Making it the default changes the place of the text of every text block by up to one device pixel on every backend (a deviation from the reference for `docs/porting/DEVIATIONS.md` and new expected pictures of the render tests), and two places would follow it then: the underline of the access key of `AccessText` (drawn from the text layout without the offset) and the hit testing of `SelectableTextBlock` (from the top padding), which are both off by the offset (less than one device pixel) while the override is on.
+Measured at 200 % (section 9.1): the text and buttons pages, 17 and 15 rows of text, at a `dy` of
+-0.99 px with `Below` and +0.01 px with `Above`. The calibration page could not confirm the table
+row by row in that run, because its rows drifted apart by a difference of layout between the
+page and its native twin, which is corrected (section 10.2); the rows at 100 % and 200 % remain to
+be measured.
 
 ## 7. How the platform values reach the backend
 
@@ -165,6 +203,7 @@ A row that measures otherwise points at a second cause. Making it the default ch
 - The Skia backend (`text_rendering_settings.rs`): `TextRenderingSource` keeps the surfaces of a top-level that report parameters and asks them every frame; `TextRenderingSettings::for_scene` applies the rule of section 5.1 to the parameters, the render scaling and the transparency level of the scene (`RenderTargetSceneInfo`) and gives the surface properties (pixel geometry, contrast, gamma) and the default mode. The GPU render targets (OpenGL, Vulkan, Metal) create the Skia surface of each frame with those properties (`ISkiaGpuRenderTarget::begin_rendering_session` takes them), the framebuffer render target recreates its surface when they change, the drawing context resolves unspecified text with the default mode (`effective_text_options`) and hands the settings to the layers it creates (`SurfaceRenderTargetCreateInfo::text_rendering`, `ISkiaGpu::try_create_surface`).
 - Windows (`win32_text_rendering.rs`): the platform handle of a window, the first surface of the window, reports the system's parameters, composited when the window uses a composition mode; the swap chain top-level of a WinUI host adds a surface that reports them as composited. The values are read once (`SystemParametersInfoW`, `EnumDisplayDevicesW` and `RegOpenKeyExW` for the tuning key, `DWriteCreateFactory` and `IDWriteFactory::CreateRenderingParams` for the tuned values) and read again after `WM_SETTINGCHANGE`; a change shows from the next frame that is rendered.
 - X11 (`x_resources.rs`): the surface handle of a window reports `Xft.rgba`, which the resource database updates when the desktop changes it.
+- A window whose render target does not keep its frames (every GPU swap chain) is drawn by the composition target into a layer that it keeps between frames (`ServerCompositionTarget::render`), and the surface properties of a Skia surface are fixed when it is created. The render targets of windows (`SkiaGpuRenderTarget`, `FramebufferRenderTarget`) share the settings of their last frame with the layers created for them (`frame_text_rendering`), and such a layer reports itself corrupted once they are not its own, so that the composition target creates it again: a change of the parameters of the platform or of the development override (section 10) shows in the window from the next frame. Before, the layer kept the text rendering of the frame it was created in until the size of the window changed, which the calibration run of section 9.1 found (no contrast or gamma changed the window).
 - Nothing else is a global of the backend (apart from the development override of section 10, empty unless its variables are set); a platform that reports nothing gets greyscale text with Skia's contrast and gamma.
 
 ## 8. Measuring: `scripts/text-quality.py`
@@ -184,7 +223,7 @@ The second form reads a compare directory of the WinUI theme gallery (`<page>-<s
 | fringe n/f | mean colour (max − min of R, G, B) of the ink pixels on a neutral background with neutral text | 0 | about 0 (greyscale text) |
 | ink ratio | FerroUI's ink mass over native's (coverage against the local background and native's text colour) | 1 | 0.95 to 1.05 |
 | solid n/f | share of ink pixels more than 85 % covered: how solid the stems are | measured | within a few points of native |
-| dy px | median vertical offset of FerroUI's text rows from native's, in device pixels (negative: FerroUI higher) | 0 | 0 (section 6: about -1 px at 200 % and for large text until the baseline override is the default) |
+| dy px | median vertical offset of FerroUI's text rows from native's, in device pixels (negative: FerroUI higher) | 0 | 0 (section 6: about -1 px at 200 % and for large text with the reference's placement of the baseline, 0 with the WinUI theme's) |
 
 Coverage is measured against the local background (the lightest pixel around, the darkest in a dark theme) and pixels in straight runs longer than 24 device pixels at 100 % (borders, rules) are left out, so the numbers are about text; they compare two renderings of the same page and are not absolute.
 
@@ -261,6 +300,52 @@ native at 100 % (section 4.2 estimated 1.06). Both are measured with one build b
 (section 10) whose text settings set the contrast explicitly, which applies to the bitmap as well.
 The baseline offset of section 6 is the same in the bitmap and in the window (`dy` -0.98 to -0.99).
 
+#### A calibration run (2026-10-17)
+
+One build, in the same virtual machine at 200 %, with the list of text settings of section 10.3
+(`default`; the contrasts 0.5, 0.75 and 1 with sRGB; contrast 1 with the gammas 1.4, 1.8 and 2.2;
+`above`: contrast 1, sRGB and the baseline above) on the pages `textcal`, `text` and `buttons`,
+light and dark (`vm-smoke.ps1 -WinUIThemeGalleryTextVariants`, built with the development variable
+that the property of section 6.3 replaced), measured with `scripts/text-quality.py --variants`
+on the render target bitmaps and with `--window` on the window. The means of the six pairs of each
+text setting, the ink ratio of dark text on light backgrounds and of light text on dark, the solid
+shares (native / FerroUI) and the median `dy` of the text and buttons pages:
+
+| Text setting | Ink light, bitmap | Ink dark, bitmap | Solid light, bitmap | Ink light, window | Ink dark, window | Solid light / dark, window | `dy`, text and buttons |
+|---|---|---|---|---|---|---|---|
+| default (contrast 0.5 on the bitmap) | 0.939 | 1.022 | 51 % / 48 % | 0.991 | 1.023 | 51 % / 51 %, 57 % / 57 % | -0.98 to -0.99 |
+| contrast 0.5, sRGB | 0.939 | 1.023 | 51 % / 48 % | 0.991 | 1.023 | the same | -0.98 to -0.99 |
+| contrast 0.75, sRGB | 0.964 | 1.022 | 51 % / 49 % | 0.991 | 1.023 | the same | -0.98 to -0.99 |
+| contrast 1, sRGB | 0.993 | 1.021 | 51 % / 51 % | 0.991 | 1.023 | the same | -0.98 to -0.99 |
+| contrast 1, gamma 1.4 | 1.056 | 0.966 | 51 % / 58 % | 0.991 | 1.023 | the same | -0.98 to -0.99 |
+| contrast 1, gamma 1.8 | 1.021 | 0.997 | 51 % / 51 % | 0.991 | 1.023 | the same | -0.98 to -0.99 |
+| contrast 1, gamma 2.2 | 0.992 | 1.020 | 51 % / 51 % | 0.991 | 1.023 | the same | -0.98 to -0.99 |
+| above (contrast 1, sRGB) | 0.993 | 1.021 | 51 % / 51 % | 0.991 | 1.023 | the same | +0.01 to +0.02 |
+
+What it shows:
+
+- **The weight.** The bitmap follows the contrast and the gamma; with contrast 1 and sRGB its text
+  has 0.993 of native's ink on light backgrounds and 1.021 on dark, with native's solid share,
+  which is what the window has at the platform's values (0.991 and 1.023). A gamma of 1.4 makes
+  dark text on light 6 % heavier and too solid (58 % against 51 %) and light text on dark 3 %
+  lighter; 1.8 and 2.2 give nothing over sRGB. Contrast 1.0 and sRGB stay the values of Windows
+  (section 5.2).
+- **The window did not follow the text settings**: every setting gave it the same numbers, those
+  of the platform's contrast 1 and sRGB. The composition target kept the layer of the window,
+  created in the first frame with the text rendering of that frame, for the whole run; the layer
+  is now created again when the text rendering of the frames changes (section 7). A calibration
+  run of the window measures each setting from now on.
+- **The baseline.** With the height layout rounding adds above the text, the text and buttons
+  pages moved from a `dy` of -0.99 px to +0.01 px, in the bitmap and in the window, with no
+  change of the weight: the WinUI theme now places its text so (section 6.3).
+- **The calibration page** measured a `dy` of +6 px in every setting, a difference of layout of the
+  page and its native twin and not of text: its rows drifted apart from 0 px at the first to
+  +11 px at the last (section 10.2, corrected).
+
+Not measured yet: the same list at 100 % on the Windows runner of CI, the calibration page row by
+row, and the window with a contrast or gamma other than the platform's (each needs a run on
+Windows with this branch).
+
 ## 10. Calibration aids (development only)
 
 Each experiment on Windows costs a build and a run in the virtual machine or on CI. These aids let
@@ -270,8 +355,7 @@ values may change or go, and nothing in FerroUI sets them. With none of them set
 ### 10.1 The development overrides
 
 Read once from the environment when they are first needed, and replaceable at run time by a
-calibration host (`ferroui_skia::set_text_rendering_override`,
-`ferroui_base::media::text_formatting::set_text_baseline_rounding`):
+calibration host (`ferroui_skia::set_text_rendering_override`):
 
 | Variable | Values | What it replaces | Where |
 |---|---|---|---|
@@ -280,13 +364,13 @@ calibration host (`ferroui_skia::set_text_rendering_override`,
 | `FERROUI_TEXT_EDGING` | `alias`, `antialias`, `subpixel` | the mode of text that asks for none (the default of the surface, section 5.1) | the same; the drawing context resolves unspecified text with it |
 | `FERROUI_TEXT_HINTING` | `none`, `light`, `strong` | the hinting of text whose text options leave it unspecified (`strong` otherwise) | the same |
 | `FERROUI_TEXT_BASELINE_SNAP` | `on`, `off` | the baseline pixel alignment of text that leaves it unspecified (`on` otherwise) | the same |
-| `FERROUI_TEXT_BASELINE_ROUNDING` | `top`, `above` | where a text block puts the height layout rounding adds (section 6.3) | `TextBlock::render_core` (`text_baseline_rounding.rs`) |
 
-A value that does not parse is reported on the error stream and left out. The first five apply to
-the Skia backend only (the Vello backend draws its own glyphs); the baseline rounding is a matter
-of the text block and applies on every backend. Explicit text options of an element
-(`TextOptions`, `RenderOptions.TextRenderingMode`) still win over the edging, hinting and snap
-overrides; the contrast and gamma apply to all text of a surface.
+A value that does not parse is reported on the error stream and left out. They apply to the Skia
+backend only (the Vello backend draws its own glyphs), to windows from the next frame (section 7).
+Explicit text options of an element (`TextOptions`, `RenderOptions.TextRenderingMode`) still win
+over the edging, hinting and snap overrides; the contrast and gamma apply to all text of a
+surface. Where a text block puts its baseline is not an override but the property
+`TextBlock.LayoutRoundingPlacement` (section 6.3), which applies on every backend.
 
 ### 10.2 The text calibration page
 
@@ -296,17 +380,27 @@ weight (12, 13, 14, 14 semibold, 15, 16, 18, 20, 20 semibold, 24, 28, 28 semibol
 the top of a grid row of a whole number of device-independent pixels, so that every row is measured
 on its own. It is one page of the gallery: the theme variants give light and dark.
 
+Both grids are aligned to the top, as tall as their rows. In the first calibration run (section
+9.1) the framework's grid was stretched to the height of the page, and a grid of the framework
+that is larger than its fixed rows gives each row one more device pixel under layout rounding, as
+it does with columns (`winui-theme-gallery.md`, "Layout"): every row was lower than the one before
+it, from 0 px at the first row to +11 px at the last at 200 % (a median `dy` of +6 px), which had
+nothing to do with text. The test `the_lines_of_the_text_calibration_page_are_at_the_tops_of_their_rows`
+of the gallery holds every line to the top of its row at 100 % and 200 %.
+
 ### 10.3 A calibration run of the comparison host
 
 `FERROUI_WINUI_COMPARE_TEXT_VARIANTS` lists text settings separated by `;`, each
 `[name:]key=value,key=value` or `[name:]default`, with the keys `contrast`, `gamma`, `edging`,
-`hinting`, `baseline_snap` (the Skia overrides) and `baseline` (the text block override). The host
+`hinting`, `baseline_snap` (the Skia overrides) and `baseline` (`below`, `above` or `theme`: the
+placement of section 6.3, set as a local value on each page of the framework the text setting
+shows; `theme`, the default, leaves the theme's, which is `Above` in the WinUI theme). The host
 compares every page and setting once per text setting in one process: before the pages of a text
 setting it sets the overrides (those of the environment with the values of the setting), and it
 writes the pictures and `compare.tsv` of each text setting into a directory of its name, with
-`text-variants.tsv` listing them. Because the overrides apply to render target bitmaps too, the
-`-ferroui.png` of a text setting that sets the contrast and the gamma has the text rendering the
-window has with those values. Then
+`text-variants.tsv` listing them. Because the overrides apply to render target bitmaps and to the
+window alike (section 7), the `-ferroui.png` and the `-ferroui-window.png` of a text setting that
+sets the contrast and the gamma have the text rendering of those values. Then
 
 ```sh
 python3 scripts/text-quality.py <compare directory> --variants --rows [--pages textcal] [--settings light,dark]
@@ -318,10 +412,10 @@ text (on `textcal` named by size and weight) and a column per text setting (ink 
 `--window` measures `-ferroui-window.png` instead (side by side only), `--rows` works on a plain
 compare directory and on two pictures as well.
 
-A list that answers both open questions, the weight at 100 % and 200 % and the baseline:
+A list that measures the weight at 100 % and 200 % and both placements of the baseline:
 
 ```
-default;c050:contrast=0.5,gamma=0;c075:contrast=0.75,gamma=0;c100:contrast=1,gamma=0;c100g14:contrast=1,gamma=1.4;c100g18:contrast=1,gamma=1.8;c100g22:contrast=1,gamma=2.2;above:contrast=1,gamma=0,baseline=above
+default;c050:contrast=0.5,gamma=0;c075:contrast=0.75,gamma=0;c100:contrast=1,gamma=0;c100g14:contrast=1,gamma=1.4;c100g18:contrast=1,gamma=1.8;c100g22:contrast=1,gamma=2.2;below:contrast=1,gamma=0,baseline=below
 ```
 
 In the Windows virtual machine (`scripts/windows/vm-smoke.ps1`, which then runs the comparison only,
@@ -341,14 +435,17 @@ the artifact `winui-theme-gallery-windows` then holds `compare/<setting>/` and
 ### 10.4 Verification of the aids
 
 Verified on macOS: the unit tests of the overrides (parsing, clamping, an empty override changes
-nothing, the resolution of unspecified hinting and baseline alignment, the baseline formula against
-the four measured cases), the tests of the Skia text rendering, of `TextBlock` and of the gallery
-(the new page loads, has its native twin and passes the checks of the capture mode), and the
-override end to end in the capture mode: with `FERROUI_TEXT_BASELINE_ROUNDING=above` a row whose
-line height is not a whole number of device pixels moves down by one pixel, the others do not move
-(the fallback font of the gallery on macOS has line heights of whole pixels at 14 px and the other
-sizes of the page, so there the page itself does not move). `scripts/text-quality.py --variants`,
-`--rows` and `--window` were run on the pictures of section 9.1.
+nothing, the resolution of unspecified hinting and baseline alignment), the tests of the Skia text
+rendering (a layer of a window is created again when the text rendering of the frames changes), of
+`TextBlock` and of the gallery (the page loads, has its native twin, passes the checks of the
+capture mode, and puts every line at the top of its row). The property of section 6.3: the
+baseline formula against the four measured cases, the offset at the scalings 1, 1.25, 1.5 and 2
+(`Below` draws the text at the top padding, `Above` lower by what layout rounding adds, the text
+ending at the bottom of the rounded box), the selection, the hit testing of `SelectableTextBlock`,
+the access key underline and the embedded controls moving with the text, the inheritance, and the
+WinUI theme setting `Above` on its top-levels. `scripts/text-quality.py --variants`, `--rows` and
+`--window` were run on the pictures of section 9.1.
 
-Not verified here: the comparison host (`compare/run.rs`, Windows only, not compiled on macOS),
-`vm-smoke.ps1 -WinUIThemeGalleryTextVariants` and the inputs of the CI workflow.
+Not verified here: the comparison host (`compare/run.rs`, Windows only, not compiled on macOS; its
+calibration run was verified in the virtual machine before the property replaced the baseline
+override), `vm-smoke.ps1 -WinUIThemeGalleryTextVariants` and the inputs of the CI workflow.

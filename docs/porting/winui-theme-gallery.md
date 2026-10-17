@@ -50,7 +50,11 @@ The grids of the pages, whose columns have fixed widths, are aligned to the left
 gives each column one more pixel under layout rounding (phase 5 of its column allocation, as
 upstream's and WPF's grid do), which moved the second column of every page 1 px to the right of
 WinUI's and widened what it stretches by 1 px; a grid as wide as its columns allocates them
-exactly. Aligning a WinUI grid of fixed columns to the left does not change it.
+exactly. Aligning a WinUI grid of fixed columns to the left does not change it. The same holds
+for rows: the text calibration page, whose grid has rows of fixed heights, aligns it to the top on
+both sides (`VerticalAlignment="Top"`); stretched to the height of the page, the framework's grid
+gave each row one more device pixel, and its last row was 11 px lower than WinUI's at 200 %
+(`text-rendering.md`, section 10.2).
 
 ### States
 
