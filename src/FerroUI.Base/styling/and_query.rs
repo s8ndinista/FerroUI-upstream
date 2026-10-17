@@ -1,6 +1,6 @@
 use super::activators::AndQueryActivatorBuilder;
 use super::{ContainerQuery, SelectorMatch, SelectorMatchResult, StyleBase, StyleQuery, StyleQueryNode};
-use crate::{StyledElement, Visual};
+use crate::StyledElement;
 use std::cell::OnceCell;
 
 /// The AND style query.
@@ -39,10 +39,6 @@ impl StyleQueryNode for AndQuery {
         subscribe: bool,
         container_name: Option<&str>,
     ) -> SelectorMatch {
-        if !control.is::<Visual>() {
-            return SelectorMatch::NEVER_THIS_TYPE;
-        }
-
         let mut activators = AndQueryActivatorBuilder::new();
         let mut always_this_instance = false;
 

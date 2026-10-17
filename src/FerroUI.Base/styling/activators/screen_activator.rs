@@ -1,11 +1,11 @@
 use super::{ContainerQueryActivator, ContainerQueryActivatorBase, StyleActivator, StyleActivatorBase};
 use crate::styling::screen_queries::SizeQueryArgument;
 use crate::styling::{ContainerSizing, HeightQuery, WidthQuery};
-use crate::Visual;
+use crate::StyledElement;
 use std::rc::{Rc, Weak};
 
-/// An activator which is active while the width of the container of a visual
-/// satisfies a comparison.
+/// An activator which is active while the width of the container of an
+/// element satisfies a comparison.
 pub(crate) struct WidthActivator {
     inner: ContainerQueryActivatorBase,
     this: Weak<WidthActivator>,
@@ -13,9 +13,9 @@ pub(crate) struct WidthActivator {
 }
 
 impl WidthActivator {
-    pub fn new(visual: &Visual, argument: SizeQueryArgument, container_name: Option<&str>) -> Rc<Self> {
+    pub fn new(target: &StyledElement, argument: SizeQueryArgument, container_name: Option<&str>) -> Rc<Self> {
         Rc::new_cyclic(|this| Self {
-            inner: ContainerQueryActivatorBase::new(visual, container_name),
+            inner: ContainerQueryActivatorBase::new(target, container_name),
             this: this.clone(),
             argument,
         })
@@ -56,8 +56,8 @@ impl StyleActivator for WidthActivator {
     }
 }
 
-/// An activator which is active while the height of the container of a
-/// visual satisfies a comparison.
+/// An activator which is active while the height of the container of an
+/// element satisfies a comparison.
 pub(crate) struct HeightActivator {
     inner: ContainerQueryActivatorBase,
     this: Weak<HeightActivator>,
@@ -65,9 +65,9 @@ pub(crate) struct HeightActivator {
 }
 
 impl HeightActivator {
-    pub fn new(visual: &Visual, argument: SizeQueryArgument, container_name: Option<&str>) -> Rc<Self> {
+    pub fn new(target: &StyledElement, argument: SizeQueryArgument, container_name: Option<&str>) -> Rc<Self> {
         Rc::new_cyclic(|this| Self {
-            inner: ContainerQueryActivatorBase::new(visual, container_name),
+            inner: ContainerQueryActivatorBase::new(target, container_name),
             this: this.clone(),
             argument,
         })

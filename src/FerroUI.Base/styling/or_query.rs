@@ -1,6 +1,6 @@
 use super::activators::OrQueryActivatorBuilder;
 use super::{ContainerQuery, SelectorMatch, SelectorMatchResult, StyleBase, StyleQuery, StyleQueryNode};
-use crate::{StyledElement, Visual};
+use crate::StyledElement;
 use std::cell::OnceCell;
 
 /// The OR style query.
@@ -37,10 +37,6 @@ impl StyleQueryNode for OrQuery {
         subscribe: bool,
         container_name: Option<&str>,
     ) -> SelectorMatch {
-        if !control.is::<Visual>() {
-            return SelectorMatch::NEVER_THIS_TYPE;
-        }
-
         let mut activators = OrQueryActivatorBuilder::new();
         let mut never_this_instance = false;
 
