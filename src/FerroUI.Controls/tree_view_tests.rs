@@ -1331,6 +1331,56 @@ fn setting_selected_item_should_raise_selected_item_changed_event() {
 }
 
 #[test]
+fn changing_selected_item_should_report_deselected_item() {
+    let _app = start();
+    let data = create_test_tree_data();
+    let target = create_target(|o| o.data = Some(source(&data)));
+    let first = node_at(&data, 0).child(0);
+    let second = node_at(&data, 0).child(1);
+
+    target.set_selected_item(item(&first));
+
+    let events: Rc<RefCell<Vec<(Vec<Option<BoxedValue>>, Vec<Option<BoxedValue>>)>>> = Rc::new(RefCell::new(Vec::new()));
+    let recorded = events.clone();
+    target.selection_changed(move |_, e| {
+        recorded.borrow_mut().push((e.removed_items().to_vec(), e.added_items().to_vec()));
+    });
+
+    target.set_selected_item(item(&second));
+
+    let events = events.borrow();
+    assert_eq!(1, events.len());
+    let (removed, added) = &events[0];
+    assert_eq!(1, added.len());
+    assert!(is_node(&added[0], &second));
+    assert_eq!(1, removed.len());
+    assert!(is_node(&removed[0], &first));
+}
+
+#[test]
+fn select_all_should_raise_a_single_selection_changed_event() {
+    let _app = start();
+    let data = create_test_tree_data();
+    let target = create_target(|o| o.data = Some(source(&data)));
+    target.set_selection_mode(SelectionMode::MULTIPLE);
+
+    let events: Rc<RefCell<Vec<(Vec<Option<BoxedValue>>, Vec<Option<BoxedValue>>)>>> = Rc::new(RefCell::new(Vec::new()));
+    let recorded = events.clone();
+    target.selection_changed(move |_, e| {
+        recorded.borrow_mut().push((e.removed_items().to_vec(), e.added_items().to_vec()));
+    });
+
+    target.select_all();
+
+    let events = events.borrow();
+    assert_eq!(1, events.len());
+    let (removed, added) = &events[0];
+    assert!(removed.is_empty());
+    assert_eq!(target.selected_items().count(), added.len());
+    assert!(added.len() > 1);
+}
+
+#[test]
 fn removing_selected_root_item_should_clear_selection() {
     let _app = start();
     let data = create_test_tree_data();
