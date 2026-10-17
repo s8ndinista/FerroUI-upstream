@@ -104,6 +104,18 @@
   commas (buttons,datetime,...); all pages when empty. Passed to both modes as
   FERROUI_THEME_GALLERY_PAGES and FERROUI_WINUI_COMPARE_PAGES.
 
+.PARAMETER WinUIThemeGalleryTextVariants
+  With -WinUIThemeGallery: a calibration run of the text rendering (docs/porting/text-rendering.md,
+  section 10). The text settings the comparison host compares every page with, in one run of the
+  process: settings separated by ';', each '[name:]key=value,key=value' or '[name:]default', the
+  keys contrast, gamma, edging, hinting, baseline_snap and baseline (for example
+  'default;c1:contrast=1,gamma=0;c1g14:contrast=1,gamma=1.4;winui:contrast=1,gamma=0,baseline=above').
+  Passed to the comparison host as FERROUI_WINUI_COMPARE_TEXT_VARIANTS, with
+  FERROUI_WINUI_COMPARE_DENSITIES=normal; the pictures of each setting are in a directory of its
+  name under the comparison directory, and scripts\text-quality.py --variants makes one table of
+  them (here, where the machine has Python with Pillow, into text-calibration.txt; on the host
+  otherwise). The capture mode is not run.
+
 .PARAMETER AllowUnmarkedSource
   Run although the sources carry no mark of a completed sync. By default the script refuses a
   source tree without the file .vm-sync-commit (written last by scripts/windows/vm-sync.sh, with
@@ -148,6 +160,7 @@ param(
     [switch]$InstallWindowsAppRuntime,
     [switch]$WinUIThemeGallery,
     [string]$WinUIThemeGalleryPages = '',
+    [string]$WinUIThemeGalleryTextVariants = '',
     [int]$HelloRepeat = 1,
     [switch]$SkipBuild,
     [switch]$SkipTests,
@@ -729,7 +742,8 @@ if ($WinUIThemeGallery) {
     $compareDir = Join-Path $themeOut 'compare'
     foreach ($directory in @($captureDir, $compareDir)) {
         New-Item -ItemType Directory -Force -Path $directory | Out-Null
-        Get-ChildItem $directory -File -ErrorAction SilentlyContinue | Remove-Item -Force
+        # The directories of the text settings of a calibration run too.
+        Get-ChildItem $directory -ErrorAction SilentlyContinue | Remove-Item -Recurse -Force
     }
     if ((Run 'winui-theme-build' "cargo build --locked $jobsArgument -p winui-theme-gallery --bins") -ne 0) {
         $failed.Add('WinUI theme gallery build')
@@ -738,14 +752,18 @@ if ($WinUIThemeGallery) {
         # The capture mode: every page in every setting, drawn by the framework; the run exits
         # with 1 when a page does not load, a control has no template or a binding reports an
         # error.
-        $gallery = Join-Path $debug 'winui-theme-gallery.exe'
-        $pages = if ($WinUIThemeGalleryPages) { "set FERROUI_THEME_GALLERY_PAGES=$WinUIThemeGalleryPages&& " } else { '' }
-        $commandLine = "${pages}set FERROUI_THEME_GALLERY_CAPTURE=$captureDir&& `"$gallery`""
-        $code = if ($InteractiveUser) { Run-Interactive 'winui-theme-capture' $commandLine 900 } else { Run 'winui-theme-capture' $commandLine }
-        if ($code -ne 0) { $failed.Add('WinUI theme gallery capture') }
-        $count = @(Get-ChildItem $captureDir -Filter '*.png' -ErrorAction SilentlyContinue).Count
-        Say "    $count picture(s) in $captureDir"
-        Tail 'winui-theme-capture' 80 '^capture|FAILED|panicked|^    '
+        # A calibration run of the text rendering compares only; the capture mode draws with the
+        # text rendering of a surface without a display and has nothing to calibrate.
+        if (-not $WinUIThemeGalleryTextVariants) {
+            $gallery = Join-Path $debug 'winui-theme-gallery.exe'
+            $pages = if ($WinUIThemeGalleryPages) { "set FERROUI_THEME_GALLERY_PAGES=$WinUIThemeGalleryPages&& " } else { '' }
+            $commandLine = "${pages}set FERROUI_THEME_GALLERY_CAPTURE=$captureDir&& `"$gallery`""
+            $code = if ($InteractiveUser) { Run-Interactive 'winui-theme-capture' $commandLine 900 } else { Run 'winui-theme-capture' $commandLine }
+            if ($code -ne 0) { $failed.Add('WinUI theme gallery capture') }
+            $count = @(Get-ChildItem $captureDir -Filter '*.png' -ErrorAction SilentlyContinue).Count
+            Say "    $count picture(s) in $captureDir"
+            Tail 'winui-theme-capture' 80 '^capture|FAILED|panicked|^    '
+        }
 
         # The comparison host: the Windows App Runtime 1.6 on the machine and the bootstrap
         # library beside the executable, as the WinUI samples.
@@ -763,10 +781,14 @@ if ($WinUIThemeGallery) {
         } else {
             $compare = Join-Path $debug 'winui-theme-compare.exe'
             $pages = if ($WinUIThemeGalleryPages) { "set FERROUI_WINUI_COMPARE_PAGES=$WinUIThemeGalleryPages&& " } else { '' }
-            $commandLine = "$pages`"$compare`" --out `"$compareDir`""
+            # The list is quoted for cmd: it has ';' and ','.
+            $variants = if ($WinUIThemeGalleryTextVariants) {
+                "set `"FERROUI_WINUI_COMPARE_TEXT_VARIANTS=$WinUIThemeGalleryTextVariants`"&& set FERROUI_WINUI_COMPARE_DENSITIES=normal&& "
+            } else { '' }
+            $commandLine = "$pages$variants`"$compare`" --out `"$compareDir`""
             $code = if ($InteractiveUser) { Run-Interactive 'winui-theme-compare' $commandLine 1800 } else { Run 'winui-theme-compare' $commandLine }
             if ($code -ne 0) { $failed.Add('WinUI theme comparison') }
-            $count = @(Get-ChildItem $compareDir -Filter '*-diff.png' -ErrorAction SilentlyContinue).Count
+            $count = @(Get-ChildItem $compareDir -Filter '*-diff.png' -Recurse -ErrorAction SilentlyContinue).Count
             Say "    $count comparison(s) in $compareDir"
             Tail 'winui-theme-compare' 120 '^compare|FAILED|panicked|^    '
         }
@@ -776,7 +798,23 @@ if ($WinUIThemeGallery) {
         $python = Get-Command python.exe, py.exe -ErrorAction SilentlyContinue |
             Where-Object { $_.Source -notlike '*\WindowsApps\*' } | Select-Object -First 1
         $reportScript = Join-Path $Source 'scripts\winui-theme\report.py'
-        if ($python) {
+        if ($WinUIThemeGalleryTextVariants) {
+            # The table of the calibration run, where the machine has Python with Pillow.
+            $quality = Join-Path $Source 'scripts\text-quality.py'
+            $table = Join-Path $compareDir 'text-calibration.txt'
+            $pillow = $false
+            if ($python) {
+                & $python.Source -c 'import PIL' 2>&1 | Out-Null
+                $pillow = ($LASTEXITCODE -eq 0)
+            }
+            if ($pillow) {
+                & $python.Source $quality $compareDir --variants --rows 2>&1 | Out-File -FilePath $table -Encoding utf8
+                Say "    the table of the text settings: $table"
+                Get-Content $table | Where-Object { $_ -notmatch '^\S+-(light|dark)' } | Select-Object -First 60 | ForEach-Object { Say "    $_" }
+            } else {
+                Say "    no Python with Pillow on the machine: the table is made on the host (python3 scripts/text-quality.py <compare directory> --variants --rows)"
+            }
+        } elseif ($python) {
             foreach ($directory in @($captureDir, $compareDir)) {
                 & $python.Source $reportScript $directory 2>&1 | ForEach-Object { Say "    $_" }
             }
@@ -789,8 +827,8 @@ if ($WinUIThemeGallery) {
         foreach ($part in @('capture', 'compare')) {
             $destination = Join-Path $copy $part
             New-Item -ItemType Directory -Force -Path $destination | Out-Null
-            Get-ChildItem $destination -File -ErrorAction SilentlyContinue | Remove-Item -Force
-            Copy-Item (Join-Path (Join-Path $themeOut $part) '*') $destination -Force -ErrorAction SilentlyContinue
+            Get-ChildItem $destination -ErrorAction SilentlyContinue | Remove-Item -Recurse -Force
+            Copy-Item (Join-Path (Join-Path $themeOut $part) '*') $destination -Recurse -Force -ErrorAction SilentlyContinue
         }
         Say "    copied to $copy"
     }
