@@ -18,6 +18,7 @@ All notable changes to FerroUI are recorded in this file. The format follows [Ke
 ### Fixed
 
 - **A window follows a change of its text rendering from the next frame** (Skia backend): the layer the composition target keeps for a window whose frames are not kept (every GPU swap chain) kept the text contrast, gamma and subpixel order of the frame it was created in until the window was resized; it is now created again when they change, so a change of the system's ClearType settings, or a calibration override, reaches the window at once.
+- **The WinUI 3 theme after the last comparison with native WinUI 3** (`docs/porting/winui-theme/DEVIATIONS.md`): the calendar is as tall as WinUI's, with its days where WinUI draws them (CDB-10).
 - **The text calibration page of the WinUI theme gallery** has the layout of its native twin: its grid is aligned to the top, as tall as its rows, where the stretched grid gave each row one more device pixel under layout rounding and moved the lower rows by up to 11 px at 200 %.
 
 ## [0.1.0-preview.4] - 2026-10-17

@@ -52,11 +52,10 @@
     <Setter Property="VerticalAlignment" Value="Center" />
     <Setter Property="FontWeight" Value="{DynamicResource CalendarViewWeekDayFontWeight}" />
     <!-- CalendarViewWeekDayMargin (1); the bottom margin adds the 2 px between the day names and
-         the days of the source (the top margin of MonthViewScrollViewer), and 2 px for the line
-         of the 12 px caption, which DirectWrite makes 16 high (the row of the day names is the
-         2 + 42 of WinUI's) and the framework's text about 2 lower, so that the days are where
-         WinUI draws them (CLI-17). -->
-    <Setter Property="Margin" Value="1,1,1,5" />
+         the days of the source (the top margin of MonthViewScrollViewer). With the 16 px line of
+         the 12 px caption the row of the day names is the 2 + 42 of WinUI's, and the views are
+         the 300 px of WinUI's. -->
+    <Setter Property="Margin" Value="1,1,1,3" />
     <!-- CalendarViewWeekDayPadding (12) above and below only: in WinUI the columns of the day
          names are the 42 px of the day items (40 and a margin of 1), and a name with its padding
          of 12 at both sides (44 px for "We") does not widen them; in FerroUI's grid it would widen
