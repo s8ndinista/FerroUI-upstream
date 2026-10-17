@@ -125,8 +125,10 @@ impl Win32Platform {
     }
 
     /// The platform of the calling thread, which becomes the UI thread: the
-    /// message window is created on first use.
-    pub(crate) fn instance() -> Rc<Win32Platform> {
+    /// message window is created on first use. Public for the integration
+    /// tests of the backend, as the internals of the reference are visible to
+    /// its test projects.
+    pub fn instance() -> Rc<Win32Platform> {
         if let Some(instance) = INSTANCE.with(|instance| instance.borrow().clone()) {
             return instance;
         }
@@ -148,7 +150,7 @@ impl Win32Platform {
     ///
     /// # Panics
     /// Panics when the platform has not been initialized.
-    pub(crate) fn screen(&self) -> Rc<ScreenImpl> {
+    pub fn screen(&self) -> Rc<ScreenImpl> {
         match self.screen.borrow().clone() {
             Some(screen) => screen,
             None => panic!("Win32Platform hasn't been initialized"),
@@ -156,8 +158,16 @@ impl Win32Platform {
     }
 
     /// The handle of the message window.
-    pub(crate) fn handle(&self) -> isize {
+    pub fn handle(&self) -> isize {
         self.hwnd.get()
+    }
+
+    /// The render timer of the sleep loop, whose rate follows the displays
+    /// (`update_timer_fps`); `None` when the platform renders on the UI thread.
+    /// The reference finds it as the timer of the render loop of the services;
+    /// its integration tests read it there.
+    pub fn sleep_loop_render_timer(&self) -> Option<Arc<SleepLoopRenderTimer>> {
+        self.sleep_loop_render_timer.borrow().clone()
     }
 
     /// The handle of the message window of the platform of the calling
@@ -336,6 +346,14 @@ impl Win32Platform {
             if e.cancel() {
                 return 0;
             }
+        }
+
+        if msg == WindowsMessage::WM_DISPLAYCHANGE {
+            let screen = self.screen.borrow().clone();
+            if let Some(screen) = screen {
+                screen.on_changed();
+            }
+            Self::update_timer_fps();
         }
 
         if msg == WindowsMessage::WM_SETTINGCHANGE {
