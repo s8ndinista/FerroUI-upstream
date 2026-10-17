@@ -210,7 +210,12 @@ fn pre_setup_browser(builder: &AppBuilder, options: Option<BrowserPlatformOption
     };
 
     match renderer {
-        BrowserRenderer::Skia => use_skia_renderer(&builder),
+        BrowserRenderer::Skia => {
+            if !BrowserRenderer::Skia.is_available() {
+                panic!("The browser module was built without the `skia` feature; select BrowserRenderer::Vello");
+            }
+            builder
+        }
         BrowserRenderer::Vello => use_vello_renderer(&builder),
     }
 }

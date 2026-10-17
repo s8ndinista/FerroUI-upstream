@@ -1,0 +1,137 @@
+name: FerroDesign browser
+
+on:
+  push:
+    branches: [feat/ferrodesign-editor]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ferrodesign-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    env:
+      CARGO_BUILD_JOBS: 1
+      CARGO_TERM_COLOR: always
+      FERRODESIGN_BUILD_JOBS: 1
+      CARGO_TARGET_DIR: ${{ github.workspace }}/samples/FerroDesign/target
+    defaults:
+      run:
+        shell: bash
+        working-directory: samples/FerroDesign
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+
+      - name: Restore pinned toolchain
+        id: tools
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: |
+            ${{ runner.temp }}/ferrodesign-tools/rustup
+            ${{ runner.temp }}/ferrodesign-tools/cargo/bin
+            ${{ runner.temp }}/ferrodesign-tools/bin
+            ${{ runner.temp }}/ferrodesign-tools/emsdk
+          key: ferrodesign-tools-${{ runner.os }}-rust1.99.0-em6.0.10-bindgen0.2.129
+
+      - name: Restore dependencies and compiled framework
+        id: build-cache
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: |
+            ${{ runner.temp }}/ferrodesign-tools/cargo/registry
+            ${{ runner.temp }}/ferrodesign-tools/cargo/git
+            samples/FerroDesign/target
+          key: ferrodesign-build-${{ runner.os }}-v2-${{ hashFiles('samples/FerroDesign/**/Cargo.toml', 'samples/FerroDesign/Cargo.lock') }}-${{ github.sha }}
+          restore-keys: |
+            ferrodesign-build-${{ runner.os }}-v2-${{ hashFiles('samples/FerroDesign/**/Cargo.toml', 'samples/FerroDesign/Cargo.lock') }}-
+            ferrodesign-build-${{ runner.os }}-v2-
+
+      - name: Install pinned Rust, Emscripten and wasm-bindgen
+        run: |
+          set -o pipefail
+          mkdir -p browser-report
+          scripts/setup.sh "$RUNNER_TEMP/ferrodesign-tools" 2>&1 | tee browser-report/toolchain.log
+          free -h
+
+      - name: Check source and test document engine
+        run: |
+          set -o pipefail
+          source "$RUNNER_TEMP/ferrodesign-tools/env.sh"
+          bash -n scripts/setup.sh scripts/build-browser.sh
+          node --check web/main.js
+          node --check tests/browser.mjs
+          cargo metadata --locked --no-deps --format-version 1 > browser-report/cargo-metadata.json
+          cargo test --locked -p ferrodesign-core --jobs 1 2>&1 | tee browser-report/core-tests.log
+
+      - name: Build actual FerroUI Vello WebAssembly application
+        run: |
+          set -o pipefail
+          source "$RUNNER_TEMP/ferrodesign-tools/env.sh"
+          scripts/build-browser.sh 2>&1 | tee browser-report/build.log
+
+      - name: Install Chromium for browser validation
+        run: |
+          npm ci --no-audit --no-fund
+          npx playwright install --with-deps chromium
+
+      - name: Validate pixels, pointer editing, keyboard history and serialization
+        run: |
+          set -o pipefail
+          npm run test:browser 2>&1 | tee browser-report/browser-tests.log
+
+      - name: Check native launcher and shared UI compilation
+        run: |
+          set -o pipefail
+          source "$RUNNER_TEMP/ferrodesign-tools/env.sh"
+          cargo check --locked -p ferrodesign-app --lib --jobs 1 2>&1 | tee browser-report/native-check.log
+
+      - name: Upload complete browser build
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: FerroDesign-browser-${{ github.sha }}
+          path: samples/FerroDesign/dist
+          if-no-files-found: ignore
+          retention-days: 30
+
+      - name: Upload validation screenshots, traces, reports and lockfiles
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: FerroDesign-validation-${{ github.sha }}
+          path: |
+            samples/FerroDesign/browser-report
+            samples/FerroDesign/Cargo.lock
+            samples/FerroDesign/package-lock.json
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Cache pinned toolchain
+        if: always() && steps.tools.outputs.cache-hit != 'true'
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: |
+            ${{ runner.temp }}/ferrodesign-tools/rustup
+            ${{ runner.temp }}/ferrodesign-tools/cargo/bin
+            ${{ runner.temp }}/ferrodesign-tools/bin
+            ${{ runner.temp }}/ferrodesign-tools/emsdk
+          key: ${{ steps.tools.outputs.cache-primary-key }}
+
+      - name: Cache partial build for subsequent fixes
+        if: always() && steps.build-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: |
+            ${{ runner.temp }}/ferrodesign-tools/cargo/registry
+            ${{ runner.temp }}/ferrodesign-tools/cargo/git
+            samples/FerroDesign/target
+          key: ${{ steps.build-cache.outputs.cache-primary-key }}

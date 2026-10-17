@@ -37,6 +37,7 @@ pub struct EditorShell {
     prototype_targets: RefCell<Vec<NodeId>>,
     prototype_history: RefCell<Vec<NodeId>>,
     prototype: RefCell<core::PrototypePlayer>,
+    prototype_original: RefCell<Option<core::Document>>,
 }
 impl EditorShell {
     pub fn new() -> Rc<Self> {
@@ -72,6 +73,7 @@ impl EditorShell {
             prototype_targets: RefCell::new(Vec::new()),
             prototype_history: RefCell::new(Vec::new()),
             prototype: RefCell::new(core::PrototypePlayer::default()),
+            prototype_original: RefCell::new(None),
         });
         this.wire();
         this.refresh();
@@ -1750,6 +1752,18 @@ impl EditorShell {
     }
     fn set_presentation(self: &Rc<Self>, root: Option<NodeId>) {
         self.close_modal();
+        let was_presenting = self.canvas.presentation.get().is_some();
+        if root.is_some() && !was_presenting {
+            *self.prototype_original.borrow_mut() = Some(self.editor.borrow().document.clone());
+            self.prototype.borrow_mut().history.clear();
+            self.prototype_history.borrow_mut().clear();
+        } else if root.is_none() && was_presenting {
+            if let Some(document) = self.prototype_original.borrow_mut().take() {
+                let mut editor = self.editor.borrow_mut();
+                editor.document = document;
+                editor.refresh();
+            }
+        }
         self.canvas.presentation.set(root);
         self.prototype.borrow_mut().current = root;
         if root.is_none() {
