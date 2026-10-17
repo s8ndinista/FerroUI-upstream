@@ -1,8 +1,10 @@
 <!-- The native WinUI 3 counterpart of NumberInputPage.xaml. NumericUpDown is a NumberBox with
      the spin buttons inline; its validation error is the critical border brush and the message
      under the box. WinUI has no ButtonSpinner: the spinner is composed of what a NumberBox
-     shows (a box of the minimum height of a text box, TextControlThemeMinHeight, which the compact
-     density lowers, with the text and its two spin buttons: repeat buttons with the brushes of the
+     shows (a box of the height of a text box, TextControlThemeMinHeight, which the compact
+     density lowers: as a minimum height, the spin buttons, their margins and their glyphs made the
+     box 26 high in the compact density, where a NumberBox is 24; with the text and its two spin
+     buttons: repeat buttons with the brushes of the
      text control buttons, the margins of UpSpinButton and DownSpinButton and the chevron glyphs
      E70E and E70D at the font size of the box); spinning that is not allowed disables the
      buttons. AutoCompleteBox is an AutoSuggestBox. -->
@@ -43,7 +45,7 @@
 
   <TextBlock Text="ButtonSpinner" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" />
   <StackPanel Orientation="Horizontal" Spacing="16">
-    <Grid Width="220" MinHeight="{ThemeResource TextControlThemeMinHeight}" CornerRadius="4" BorderThickness="1"
+    <Grid Width="220" Height="{ThemeResource TextControlThemeMinHeight}" CornerRadius="4" BorderThickness="1"
           Background="{ThemeResource TextControlBackground}"
           BorderBrush="{ThemeResource TextControlBorderBrush}">
       <Grid.ColumnDefinitions>
@@ -67,7 +69,7 @@
         <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" FontSize="14" Glyph="&#xE70D;" />
       </RepeatButton>
     </Grid>
-    <Grid Width="220" MinHeight="{ThemeResource TextControlThemeMinHeight}" CornerRadius="4" BorderThickness="1"
+    <Grid Width="220" Height="{ThemeResource TextControlThemeMinHeight}" CornerRadius="4" BorderThickness="1"
           Background="{ThemeResource TextControlBackground}"
           BorderBrush="{ThemeResource TextControlBorderBrush}">
       <Grid.ColumnDefinitions>
