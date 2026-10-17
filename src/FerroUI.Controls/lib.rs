@@ -142,6 +142,8 @@ mod native_menu_item;
 mod native_menu_item_base;
 mod native_menu_item_separator;
 #[cfg(test)]
+mod native_menu_item_tests;
+#[cfg(test)]
 mod native_menu_tests;
 mod tray_icon;
 #[cfg(test)]
