@@ -91,6 +91,12 @@ export class FerroDOM {
         inputElement.style.color = "transparent";
         inputElement.style.display = "none";
         inputElement.style.height = "20px";
+        // Not in the original, whose element has the default font of an input (13.33 pixels): a
+        // mobile browser zooms the page into a focused input whose text is smaller than 16 pixels
+        // (Safari on iOS always, Chrome on Android to a legible size), and the view, which takes
+        // every touch (`touch-action: none`), then cannot be pinched back to scale 1 when the
+        // keyboard hides. The text of the element is transparent, so the size shows nowhere.
+        inputElement.style.fontSize = "16px";
         inputElement.style.zIndex = "-1";
         inputElement.onpaste = function () { return false; };
         inputElement.oncopy = function () { return false; };
@@ -142,6 +148,28 @@ export class FerroDOM {
         globalThis.addEventListener("languagechange", () => {
             FerroExports.DomHelper?.LanguageChanged(globalThis.navigator.language);
         });
+
+        // Not in the original: a mobile browser scrolls the document to bring a focused input into
+        // the part of the page the on-screen keyboard leaves (Safari on iOS even when the page
+        // cannot scroll), and does not always scroll it back when the keyboard hides, which leaves
+        // the view shifted with nothing to scroll it back with. When the keyboard has gone (the
+        // visual viewport grows back to the height of the layout viewport) and the document has no
+        // content to scroll, any offset it is left at is such a leftover and is undone. A page
+        // that scrolls (a view embedded in a longer document) is left alone.
+        const visualViewport = globalThis.visualViewport;
+        if (visualViewport) {
+            let lastHeight = visualViewport.height;
+            visualViewport.addEventListener("resize", () => {
+                const root = globalThis.document.scrollingElement ?? globalThis.document.documentElement;
+                const grown = visualViewport.height > lastHeight;
+                lastHeight = visualViewport.height;
+                const keyboardHidden = grown && visualViewport.height >= globalThis.innerHeight - 1;
+                const nothingToScroll = root.scrollHeight <= root.clientHeight && root.scrollWidth <= root.clientWidth;
+                if (keyboardHidden && nothingToScroll && (globalThis.scrollX !== 0 || globalThis.scrollY !== 0)) {
+                    globalThis.scrollTo(0, 0);
+                }
+            });
+        }
 
         globalThis.document.addEventListener("visibilitychange", () => {
             FerroExports.DomHelper?.DocumentVisibilityChanged(globalThis.document.visibilityState);

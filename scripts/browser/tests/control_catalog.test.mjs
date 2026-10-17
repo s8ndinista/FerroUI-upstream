@@ -19,8 +19,9 @@
 //   page of a section show the cards of their pages and a card opens its page, a click on a button
 //   has its effect, and text typed into a text box becomes its text;
 // - at the viewport of a phone with touch input (`start({ phone: true })`): a drag scrolls the home
-//   page with the finger, and a flick scrolls it on after the finger is lifted (the inertia of the
-//   scroll gesture);
+//   page with the finger, a flick scrolls it on after the finger is lifted (the inertia of the
+//   scroll gesture), and a text box focused by touch leaves the page at scale 1 (the input element of
+//   the text input method has text no mobile browser zooms into);
 // - the native control demo (samples/ControlCatalog.Browser/embed_sample_browser.rs): the Native Embed
 //   page shows its two native controls, elements of the page over the view (a button of the page that
 //   counts the clicks it gets from real pointer events, and an iframe), and a check box of the page hides
@@ -445,6 +446,42 @@ check("a touch swipe scrolls the content with the finger and a flick scrolls it 
     measured(`a flick of ${distance} pixels scrolled the content by ${flicked === null ? `more than ${top.toFixed(0)} pixels ("${marker}" left the view)` : `${flicked.toFixed(1)} pixels`}`);
     assert(flicked === null || flicked > distance - startDistance + 50,
         `a flick of ${distance} pixels scrolled the content by ${flicked} pixels: it stopped with the finger`);
+    assert(page.errors.length === 0, `errors were logged:\n${page.errors.join("\n")}`);
+}, { size: PHONE_SIZE, phone: true });
+
+check("a text box focused by touch on a phone leaves the page at scale 1", async (page) => {
+    // The text box hands the text input to a hidden input element of the page (the text input
+    // method), which takes the focus. A mobile browser zooms the page into a focused input whose
+    // text is smaller than 16 pixels (Safari on iOS always, Chrome on Android to a legible size), and
+    // the view takes every touch (`touch-action: none`), so the page cannot be pinched back to scale
+    // 1 when the keyboard hides. Headless Chrome shows no on-screen keyboard and so does not zoom
+    // itself: the check is that the input element has the size of text no mobile browser zooms into,
+    // that the page is at scale 1, and that the viewport element of the page asks the browser to
+    // resize the page for the keyboard, so that the view is laid out in what the keyboard leaves.
+    const viewport = await page.evaluate(`document.querySelector('meta[name="viewport"]').content`);
+    assert(/interactive-widget=resizes-content/.test(viewport), `the viewport element of the page is "${viewport}"`);
+    await page.clickElement(await page.element("the toggle button of the drawer is shown", (e) => e.name === "PART_BackButton" && e.hit));
+    await page.until("the drawer is open", (s) => s.drawerOpen === true);
+    await page.clickElement(await page.find("Text", inDrawer));
+    await page.until(`the page "Text" is shown`, (s) => s.page === "Text" && !s.navigating && !s.drawerOpen);
+    await page.clickElement(await page.find("TextBox", (e) => e.hit));
+    await page.until(`the page "TextBox" is shown`, (s) => s.page === "TextBox" && !s.navigating);
+    await page.clickElement(await page.find("First Look", (e) => e.hit));
+    const box = await page.element("the text box of the sample is shown", (e) => e.name === "FirstLookBox" && e.hit);
+    const [cx, cy] = [Math.round(box.x + box.width / 2), Math.round(box.y + box.height / 2)];
+    await touch(page, "touchStart", cx, cy);
+    await touch(page, "touchEnd");
+    await page.until("the text box has the focus", (s) => s.focus?.type === "TextBox");
+    await page.waitFor(`document.activeElement?.classList.contains("ferroui-input-element")`, STATE_TIMEOUT);
+    await sleep(500);
+    const shown = JSON.parse(await page.evaluate(`JSON.stringify({ font: parseFloat(getComputedStyle(document.activeElement).fontSize),
+        scale: visualViewport.scale, x: scrollX, y: scrollY })`));
+    measured(`the focused input element has text of ${shown.font} pixels; the page is at scale ${shown.scale}, scrolled by ${shown.x}, ${shown.y}`);
+    assert(shown.font >= 16, `the focused input element has text of ${shown.font} pixels: a mobile browser zooms into it`);
+    assert(shown.scale === 1 && shown.x === 0 && shown.y === 0, `the page is at scale ${shown.scale}, scrolled by ${shown.x}, ${shown.y}`);
+    // The input element takes the text that is typed.
+    await page.type("Ferro");
+    await page.until(`the text box holds "Ferro"`, (s) => s.focus?.text === "Ferro");
     assert(page.errors.length === 0, `errors were logged:\n${page.errors.join("\n")}`);
 }, { size: PHONE_SIZE, phone: true });
 
