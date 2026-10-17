@@ -10,7 +10,13 @@ use ferroui_base::metadata::from_markup_value;
 use ferroui_base::platform::{AccentColorShades, PlatformColorValues};
 use ferroui_base::styling::ThemeVariant;
 use ferroui_base::{Ref, Thickness};
-use ferroui_controls::{Application, Border, Button, ContentControl, Control, Window};
+use ferroui_base::styling::{ControlTheme, Setter, SetterValue};
+use ferroui_base::{StaticType, TypeInfo};
+use ferroui_controls::embedding::EmbeddableControlRoot;
+use ferroui_controls::primitives::{OverlayPopupHost, PopupRoot};
+use ferroui_controls::{
+    Application, Border, Button, ContentControl, Control, StackPanel, TextBlock, TextLayoutRoundingPlacement, Window,
+};
 
 fn color_of(value: Option<Option<ferroui_base::BoxedValue>>) -> Option<Color> {
     from_markup_value::<Color>(&value?)
@@ -177,4 +183,54 @@ fn theme_and_high_contrast_are_written_in_markup() {
         Some(Color::parse("#FF1AEBFF").unwrap()),
         color_of(style.try_get_resource(&key("SystemColorHighlightColor"), Some(&WinUITheme::high_contrast())))
     );
+}
+
+#[test]
+fn text_blocks_put_the_layout_rounding_above_their_text_as_winui() {
+    let _app = start_themed_application();
+    let application = Application::current().expect("an application");
+
+    // The window sets it, and the text blocks of its content inherit it, those of templates too
+    // (the text of a button is a text block of its content presenter).
+    let text = TextBlock::new();
+    text.set_text(Some("Text"));
+    let button = Button::new();
+    button.set_content(Some(std::rc::Rc::new("Button".to_string()) as ferroui_base::BoxedValue));
+    let panel = StackPanel::new();
+    panel.children().add(text.clone().upcast::<Control>());
+    panel.children().add(button.clone().upcast::<Control>());
+    let window = Window::new();
+    window.set_content(Some(Control::boxed(&panel)));
+    window.show();
+
+    assert_eq!(TextLayoutRoundingPlacement::Above, text.layout_rounding_placement());
+    let button_text = button
+        .get_visual_descendants()
+        .into_iter()
+        .find_map(|visual| visual.cast::<TextBlock>())
+        .expect("the text block of the button");
+    assert_eq!(TextLayoutRoundingPlacement::Above, button_text.layout_rounding_placement());
+    // Outside the theme's top-levels a text block keeps the default of the reference.
+    assert_eq!(TextLayoutRoundingPlacement::Below, TextBlock::new().layout_rounding_placement());
+
+    // The control themes of the other roots of text set it as the window does.
+    let sets_above = |type_: &'static TypeInfo| {
+        let theme = application.try_get_resource(&ResourceKey::Type(type_), None).flatten();
+        let theme = from_markup_value::<Ref<ControlTheme>>(&theme).unwrap_or_else(|| panic!("{}: a control theme", type_.name()));
+        theme.setters().snapshot().iter().any(|setter| {
+            let Some(setter) = setter.as_any().and_then(|any| any.downcast_ref::<Setter>()) else { return false };
+            let is_placement = setter.property().is_some_and(|property| {
+                std::ptr::eq(property, TextBlock::layout_rounding_placement_property().as_property())
+            });
+            let value = match setter.value() {
+                Some(SetterValue::Value(value)) => from_markup_value::<TextLayoutRoundingPlacement>(&Some(value)),
+                _ => None,
+            };
+            is_placement && value == Some(TextLayoutRoundingPlacement::Above)
+        })
+    };
+    for type_ in [Window::TYPE, EmbeddableControlRoot::TYPE, PopupRoot::TYPE, OverlayPopupHost::TYPE] {
+        assert!(sets_above(type_), "{}: TextBlock.LayoutRoundingPlacement is Above", type_.name());
+    }
+    window.close();
 }

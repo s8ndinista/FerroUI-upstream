@@ -4,7 +4,8 @@
   7e4b0c2096be402f51cc8f7d203ebf67cff183d0). The template is the one FerroUI's PopupRoot requires
   (src/FerroUI.Themes.Fluent/Controls/PopupRoot.xaml); the text values are the resources of a
   WinUI 3 window, so that a popup shows text as the window does (docs/porting/winui-theme.md,
-  section 6). The presenter of the popup (FlyoutPresenter, MenuFlyoutPresenter, ToolTip) draws
+  section 6), with the placement of the text of text blocks in the height layout rounding adds of
+  Window.xaml. The presenter of the popup (FlyoutPresenter, MenuFlyoutPresenter, ToolTip) draws
   its background.
 -->
 <ResourceDictionary xmlns="https://github.com/ferroui"
@@ -16,6 +17,7 @@
     <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
     <Setter Property="FontSize" Value="{DynamicResource ControlContentThemeFontSize}" />
     <Setter Property="FontFamily" Value="{DynamicResource ContentControlThemeFontFamily}" />
+    <Setter Property="TextBlock.LayoutRoundingPlacement" Value="Above" />
     <Setter Property="FontWeight" Value="Normal" />
     <Setter Property="FontStyle" Value="Normal" />
     <Setter Property="Inline.TextDecorations" Value="" />

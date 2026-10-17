@@ -4,7 +4,8 @@
   (src/FerroUI.Themes.Fluent/Controls/EmbeddableControlRoot.xaml); the values are the resources of
   a window of microsoft-ui-xaml (https://github.com/microsoft/microsoft-ui-xaml, commit
   7e4b0c2096be402f51cc8f7d203ebf67cff183d0), as Window.xaml (docs/porting/winui-theme.md,
-  section 6).
+  section 6), and the placement of the text of text blocks in the height layout rounding adds,
+  as Window.xaml.
 -->
 <ResourceDictionary xmlns="https://github.com/ferroui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -15,6 +16,7 @@
     <Setter Property="TopLevel.SystemBarColor" Value="{DynamicResource SolidBackgroundFillColorBaseBrush}" />
     <Setter Property="FontSize" Value="{DynamicResource ControlContentThemeFontSize}" />
     <Setter Property="FontFamily" Value="{DynamicResource ContentControlThemeFontFamily}" />
+    <Setter Property="TextBlock.LayoutRoundingPlacement" Value="Above" />
     <Setter Property="Template">
       <ControlTemplate>
         <Panel>
