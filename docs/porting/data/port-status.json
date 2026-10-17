@@ -2,23 +2,23 @@
  "upstreamCommit": "66b7273b9a2b5ba8416feb4376b9cdc3078b8573",
  "inScope": {
   "files": [
-   2790,
+   2795,
    2795,
    0
   ],
   "types": [
-   3932,
+   3938,
    4348,
    410
   ],
   "members": [
-   30298,
+   30353,
    36201,
-   5854
+   5848
   ]
  },
  "allProjects": {
-  "membersPresent": 30298,
+  "membersPresent": 30353,
   "members": 37382,
   "membersNotApplicable": 1181,
   "membersOutOfScope": 0
@@ -726,22 +726,22 @@
    "scope": "in",
    "detail": "full",
    "files": [
-    1247,
+    1248,
     1248,
     0
    ],
    "types": [
-    1522,
+    1524,
     1659,
     135
    ],
    "members": [
-    10346,
+    10360,
     11393,
     1033
    ],
    "interfaces": [
-    247,
+    248,
     261
    ],
    "propertyRegistrations": [
@@ -759,8 +759,8 @@
     "alias free fn": 5,
     "const": 381,
     "derive": 62,
-    "field": 618,
-    "fn": 6545,
+    "field": 619,
+    "fn": 6558,
     "free fn": 15,
     "free item": 16,
     "getter fn": 4,
@@ -3312,6 +3312,9 @@
     "Platform/IScopedResource.cs": [
      "platform/i_scoped_resource.rs"
     ],
+    "Platform/IStreamGeometryBuilder.cs": [
+     "platform/i_stream_geometry_builder.rs"
+    ],
     "Platform/IStreamGeometryContextImpl.cs": [
      "platform/i_stream_geometry_context_impl.rs"
     ],
@@ -4565,7 +4568,6 @@
     "media/fonts/testing/test_font_scope.rs",
     "media/fonts/testing/test_fonts.rs",
     "media/fonts/testing/test_platform_typeface.rs",
-    "media/immutable_geometry_impl.rs",
     "media/known_color_brushes.rs",
     "media/media_collection.rs",
     "media/ref_adapter.rs",
@@ -4754,26 +4756,26 @@
    "scope": "in",
    "detail": "full",
    "files": [
-    538,
+    540,
     540,
     0
    ],
    "types": [
-    621,
+    623,
     630,
     7
    ],
    "members": [
-    6255,
+    6262,
     6412,
     150
    ],
    "interfaces": [
-    83,
+    84,
     84
    ],
    "propertyRegistrations": [
-    938,
+    939,
     939
    ],
    "routedEvents": [
@@ -4786,7 +4788,7 @@
     "const": 33,
     "derive": 2,
     "field": 29,
-    "fn": 5598,
+    "fn": 5605,
     "free item": 4,
     "overload fn": 82,
     "trait": 34,
@@ -5768,6 +5770,9 @@
     "Platform/ITrayIconImpl.cs": [
      "platform/i_tray_icon_impl.rs"
     ],
+    "Platform/IWaylandOptionsToplevelImplFeature.cs": [
+     "platform/i_wayland_options_toplevel_impl_feature.rs"
+    ],
     "Platform/IWin32OptionsTopLevelImpl.cs": [
      "platform/i_win32_options_top_level_impl.rs"
     ],
@@ -5809,6 +5814,9 @@
     ],
     "Platform/ScreenHelper.cs": [
      "platform/screen_helper.rs"
+    ],
+    "Platform/WaylandProperties.cs": [
+     "platform/wayland_properties.rs"
     ],
     "Platform/Win32Properties.cs": [
      "platform/win32_properties.rs"
@@ -7064,7 +7072,7 @@
     0
    ],
    "members": [
-    424,
+    426,
     437,
     11
    ],
@@ -7084,7 +7092,7 @@
    "matchKinds": {
     "alias fn": 5,
     "field": 7,
-    "fn": 207,
+    "fn": 209,
     "free fn": 4,
     "free item": 36,
     "variant": 165
@@ -7493,7 +7501,7 @@
     2
    ],
    "members": [
-    607,
+    608,
     640,
     32
    ],
@@ -7515,7 +7523,7 @@
     "field": 24,
     "fn": 274,
     "free fn": 92,
-    "free item": 181,
+    "free item": 182,
     "overload fn": 5,
     "trait fn": 3,
     "variant": 26
@@ -8006,9 +8014,9 @@
     13
    ],
    "members": [
-    613,
+    624,
     790,
-    171
+    166
    ],
    "interfaces": [
     14,
@@ -8025,8 +8033,8 @@
    "notApplicableFiles": 2,
    "matchKinds": {
     "const": 5,
-    "field": 93,
-    "fn": 467,
+    "field": 94,
+    "fn": 477,
     "free fn": 12,
     "free item": 6,
     "overload fn": 1,
@@ -8874,7 +8882,7 @@
     2
    ],
    "members": [
-    238,
+    241,
     253,
     12
    ],
@@ -8892,8 +8900,8 @@
    ],
    "notApplicableFiles": 0,
    "matchKinds": {
-    "field": 6,
-    "fn": 216,
+    "field": 8,
+    "fn": 217,
     "overload fn": 14,
     "variant": 2
    },
@@ -9808,19 +9816,19 @@
    "scope": "in",
    "detail": "full",
    "files": [
-    53,
+    55,
     55,
     0
    ],
    "types": [
-    65,
+    67,
     67,
     0
    ],
    "members": [
-    424,
+    438,
     457,
-    20
+    19
    ],
    "interfaces": [
     10,
@@ -9838,8 +9846,8 @@
    "matchKinds": {
     "alias fn": 6,
     "alias free fn": 12,
-    "field": 29,
-    "fn": 330,
+    "field": 30,
+    "fn": 343,
     "free fn": 34,
     "free item": 1,
     "overload fn": 11,
@@ -9972,6 +9980,9 @@
     "SKTextBlobBuilderCache.cs": [
      "sk_text_blob_builder_cache.rs"
     ],
+    "SimpleGeometryImpl.cs": [
+     "simple_geometry_impl.rs"
+    ],
     "SkiaApplicationExtensions.cs": [
      "skia_application_extensions.rs"
     ],
@@ -9992,6 +10003,9 @@
     ],
     "SkiaTypeface.cs": [
      "skia_typeface.rs"
+    ],
+    "StreamGeometryBuilder.cs": [
+     "stream_geometry_builder.rs"
     ],
     "SurfaceRenderTarget.cs": [
      "surface_render_target.rs"
@@ -10014,7 +10028,6 @@
     "gpu/vulkan/frames_test.rs",
     "gpu/vulkan/tests.rs",
     "locked_framebuffer.rs",
-    "stream_geometry_impl.rs",
     "tests.rs",
     "text_rendering_override.rs",
     "text_rendering_settings.rs",
@@ -10042,7 +10055,7 @@
     24
    ],
    "members": [
-    2348,
+    2349,
     2603,
     254
    ],
@@ -10067,7 +10080,7 @@
     "field": 313,
     "fn": 581,
     "free fn": 158,
-    "free item": 53,
+    "free item": 54,
     "overload fn": 10,
     "trait": 14,
     "variant": 1095
@@ -10681,7 +10694,7 @@
     1
    ],
    "members": [
-    312,
+    314,
     333,
     19
    ],
@@ -10702,8 +10715,8 @@
     "alias fn": 1,
     "alias free fn": 2,
     "const": 1,
-    "field": 5,
-    "fn": 283,
+    "field": 6,
+    "fn": 284,
     "free fn": 5,
     "free item": 5,
     "overload fn": 5,
@@ -10901,12 +10914,6 @@
    "type": "Avalonia.Wayland.Server.Interop.WaylandConnection",
    "member": "WaylandConnection(int fd)",
    "reason": "`WaylandConnection::connect_to_fd`"
-  },
-  {
-   "project": "Avalonia.Win32",
-   "type": "Avalonia.Win32.Interop.UnmanagedMethods",
-   "member": "ShCoreAvailable",
-   "reason": "`has_get_dpi_for_monitor`: the callers ask whether shcore.dll has `GetDpiForMonitor`, the function they call next, where the reference asks whether the library loads"
   }
  ]
 }

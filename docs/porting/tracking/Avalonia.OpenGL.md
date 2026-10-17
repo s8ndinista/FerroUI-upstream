@@ -12,7 +12,7 @@ Generated from upstream commit `66b7273b9a2b5ba8416feb4376b9cdc3078b8573`. Back 
 | Phase / priority | 2 - rendering backends / P2 |
 | Files | 39/39 (100.0%) |
 | Types | 61/63 (2 waived) (100.0%) |
-| Members | 607/640 (32 waived) (99.8%) |
+| Members | 608/640 (32 waived) (100.0%) |
 | Contracts (interfaces) | 18/18 |
 | Property registrations | 0/0 |
 | Routed events | 0/0 |
@@ -79,11 +79,11 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 | `OpenGlControlBase.cs` | `controls/open_gl_control_base.rs` | present | 1/1 | 11/11 |  |
 | `OpenGlControlResources.cs` | `controls/open_gl_control_resources.rs` | present | 1/1 | 7/7 |  |
 
-### `Egl` - files 15/15, types 23/23, members 259/272 (12 waived)
+### `Egl` - files 15/15, types 23/23, members 260/272 (12 waived)
 
 | Upstream file | Rust file | Status | Types | Members | Notes |
 |---|---|---|---|---|---|
-| `EglConsts.cs` | `egl/egl_consts.rs` | partial | 1/1 | 97/98 |  |
+| `EglConsts.cs` | `egl/egl_consts.rs` | present | 1/1 | 98/98 |  |
 | `EglContext.cs` | `egl/egl_context.rs` | present | 1/1 | 21/21 |  |
 | `EglDisplay.cs` | `egl/egl_display.rs` | present | 1/1 | 17/20 (3 waived) |  |
 | `EglDisplayOptions.cs` | `egl/egl_display_options.rs` | present | 4/4 | 16/16 |  |
@@ -98,13 +98,6 @@ Every interface of the project. Each becomes a `pub trait` with the same name (t
 | `EglInterface.cs` | `egl/egl_interface.rs` | present | 1/1 | 39/39 |  |
 | `EglPlatformGraphics.cs` | `egl/egl_platform_graphics.rs` | present | 1/1 | 7/7 |  |
 | `EglSurface.cs` | `egl/egl_surface.rs` | present | 1/1 | 4/4 |  |
-
-<details><summary><code>EglConsts.cs</code> - 1 missing</summary>
-
-- `EglConsts` (class) (ported as module-level items): 1 missing
-  - `const int EGL_VENDOR`
-
-</details>
 
 ### `Features` - files 1/1, types 2/2, members 25/25
 

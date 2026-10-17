@@ -10,8 +10,8 @@ The master status of the port: every upstream project, file, type and member (pu
 
 Two numbers, because one hides what the other shows.
 
-1. **Of what is in scope: 99.8%.** The 39 upstream projects that are in scope have 36201 members (public, protected and internal) in files that apply to the port. 30298 have a counterpart, 49 are missing and 5854 are waived: declared not ported, each with a reason ([waiver-audit.md](waiver-audit.md)). The percentage is `present / (total - waived)`. It says nothing about projects that are out of scope, and it counts a waived member as if it did not exist.
-2. **Of everything upstream has: 81.0%.** Every C# source project of the extraction, in scope or not, has 37382 members; the port has a counterpart for 30298. The total includes the 5854 waived members, the 1181 members of files marked not applicable and the 0 members of projects that are out of scope or not started. The rest of that distance is what [REMAINING.md](REMAINING.md) lists; part of it is never ported by design (the waived and not applicable members), so this number does not reach 100.
+1. **Of what is in scope: 100.0%.** The 39 upstream projects that are in scope have 36201 members (public, protected and internal) in files that apply to the port. 30353 have a counterpart, 0 are missing and 5848 are waived: declared not ported, each with a reason ([waiver-audit.md](waiver-audit.md)). The percentage is `present / (total - waived)`. It says nothing about projects that are out of scope, and it counts a waived member as if it did not exist.
+2. **Of everything upstream has: 81.2%.** Every C# source project of the extraction, in scope or not, has 37382 members; the port has a counterpart for 30353. The total includes the 5848 waived members, the 1181 members of files marked not applicable and the 0 members of projects that are out of scope or not started. The rest of that distance is what [REMAINING.md](REMAINING.md) lists; part of it is never ported by design (the waived and not applicable members), so this number does not reach 100.
 
 Both numbers match names, not behaviour (Legend, below). Projects the extraction does not read (analyzers, generators of upstream's own build, the D-Bus library) are listed in REMAINING.md with their size in files.
 
@@ -55,11 +55,11 @@ Percentages are `present / (total - waived)`. Member matching is by name with re
 
 | | Ported | Total | Waived | % |
 |---|---:|---:|---:|---:|
-| C# files | 2790 | 2795 | 0 | 99.8% |
-| Types | 3932 | 4348 | 410 | 99.8% |
-| Members | 30298 | 36201 | 5854 | 99.8% |
-| Contracts (interfaces) | 492 | 543 | - | 90.6% |
-| Property registrations | 1218 | 1234 | - | 98.7% |
+| C# files | 2795 | 2795 | 0 | 100.0% |
+| Types | 3938 | 4348 | 410 | 100.0% |
+| Members | 30353 | 36201 | 5848 | 100.0% |
+| Contracts (interfaces) | 494 | 543 | - | 91.0% |
+| Property registrations | 1219 | 1234 | - | 98.8% |
 | Routed events | 108 | 108 | - | 100.0% |
 | Other files (native sources, XAML, TypeScript, fonts) | 243 | 265 | - | 91.7% |
 
@@ -74,29 +74,29 @@ The % column is member coverage (file coverage for plain file lists).
 | [XamlX](tracking/XamlX.md) | `external/XamlX/src/XamlX` | `external/XamlX/src/XamlX` | `xamlx` | 62/62 | 172/177 (5 waived) | 722/878 (156 waived) | 100.0% | 2 - xaml + themes | P1 |
 | [Avalonia.Native (native sources)](tracking/Avalonia.Native_native_sources.md) | `native/Avalonia.Native` | `native/FerroUI.Native` | (Objective-C++ sources built by ferroui-native) | 62/62 | - | - | 100.0% | 1 - desktop (macOS) | P0 |
 | [Avalonia.Android](tracking/Avalonia.Android.md) | `src/Android/Avalonia.Android` | `src/Android/FerroUI.Android` | `ferroui-android` | 58/58 | 86/88 (2 waived) | 394/447 (53 waived) | 100.0% | 6 - mobile (Android) | P1 |
-| [Avalonia.Base](tracking/Avalonia.Base.md) | `src/Avalonia.Base` | `src/FerroUI.Base` | `ferroui-base` | 1247/1248 | 1522/1659 (135 waived) | 10346/11393 (1033 waived) | 99.9% | 0 - core | P0 |
+| [Avalonia.Base](tracking/Avalonia.Base.md) | `src/Avalonia.Base` | `src/FerroUI.Base` | `ferroui-base` | 1248/1248 | 1524/1659 (135 waived) | 10360/11393 (1033 waived) | 100.0% | 0 - core | P0 |
 | [Avalonia.Build.Tasks](tracking/Avalonia.Build.Tasks.md) | `src/Avalonia.Build.Tasks` | `src/FerroUI.Build.Tasks` | `ferroui-build` | 6/6 | 6/7 (1 waived) | 7/35 (28 waived) | 100.0% | 2 - xaml + themes | P1 |
-| [Avalonia.Controls](tracking/Avalonia.Controls.md) | `src/Avalonia.Controls` | `src/FerroUI.Controls` | `ferroui-controls` | 538/540 | 621/630 (7 waived) | 6255/6412 (150 waived) | 99.9% | 1 - controls | P0 |
+| [Avalonia.Controls](tracking/Avalonia.Controls.md) | `src/Avalonia.Controls` | `src/FerroUI.Controls` | `ferroui-controls` | 540/540 | 623/630 (7 waived) | 6262/6412 (150 waived) | 100.0% | 1 - controls | P0 |
 | [Avalonia.Controls.ColorPicker](tracking/Avalonia.Controls.ColorPicker.md) | `src/Avalonia.Controls.ColorPicker` | `src/FerroUI.Controls.ColorPicker` | `ferroui-controls-color-picker` | 39/39 | 41/41 | 726/726 | 100.0% | 3 - extras | P2 |
 | [Avalonia.DesignerSupport](tracking/Avalonia.DesignerSupport.md) | `src/Avalonia.DesignerSupport` | `src/FerroUI.DesignerSupport` | `ferroui-designer-support` | 9/9 | 18/18 | 174/176 (2 waived) | 100.0% | 4 - tooling | P3 |
 | [Avalonia.Desktop](tracking/Avalonia.Desktop.md) | `src/Avalonia.Desktop` | `src/FerroUI.Desktop` | `ferroui-desktop` | 1/1 | 1/1 | 1/1 | 100.0% | 1 - desktop (macOS) | P0 |
 | [Avalonia.Dialogs](tracking/Avalonia.Dialogs.md) | `src/Avalonia.Dialogs` | `src/FerroUI.Dialogs` | `ferroui-dialogs` | 17/17 | 18/18 | 94/94 | 100.0% | 3 - extras | P3 |
 | [Avalonia.Fonts.Inter](tracking/Avalonia.Fonts.Inter.md) | `src/Avalonia.Fonts.Inter` | `src/FerroUI.Fonts.Inter` | `ferroui-fonts-inter` | 2/2 | 2/2 | 2/2 | 100.0% | 3 - browser | P2 |
 | [Avalonia.FreeDesktop](tracking/Avalonia.FreeDesktop.md) | `src/Avalonia.FreeDesktop` | `src/FerroUI.FreeDesktop` | `ferroui-freedesktop` | 18/18 | 26/26 | 213/216 (3 waived) | 100.0% | 5 - desktop (Linux) | P1 |
-| [Avalonia.FreeDesktop.AtSpi](tracking/Avalonia.FreeDesktop.AtSpi.md) | `src/Avalonia.FreeDesktop.AtSpi` | `src/FerroUI.FreeDesktop/at_spi` | `ferroui-freedesktop` | 27/27 | 27/27 | 424/437 (11 waived) | 99.5% | 5 - desktop (Linux) | P1 |
+| [Avalonia.FreeDesktop.AtSpi](tracking/Avalonia.FreeDesktop.AtSpi.md) | `src/Avalonia.FreeDesktop.AtSpi` | `src/FerroUI.FreeDesktop/at_spi` | `ferroui-freedesktop` | 27/27 | 27/27 | 426/437 (11 waived) | 100.0% | 5 - desktop (Linux) | P1 |
 | [Avalonia.Metal](tracking/Avalonia.Metal.md) | `src/Avalonia.Metal` | `src/FerroUI.Metal` | `ferroui-metal` | 2/2 | 7/7 | 21/21 | 100.0% | 1 - desktop (macOS) | P1 |
 | [Avalonia.MicroCom](tracking/Avalonia.MicroCom.md) | `src/Avalonia.MicroCom` | `src/FerroUI.MicroCom` | `ferroui-microcom` | 1/1 | 1/1 | 1/6 (5 waived) | 100.0% | 0 - core | P0 |
 | [Avalonia.Native](tracking/Avalonia.Native.md) | `src/Avalonia.Native` | `src/FerroUI.Native` | `ferroui-native` | 49/49 | 75/85 (10 waived) | 542/601 (59 waived) | 100.0% | 1 - desktop (macOS) | P0 |
-| [Avalonia.OpenGL](tracking/Avalonia.OpenGL.md) | `src/Avalonia.OpenGL` | `src/FerroUI.OpenGL` | `ferroui-opengl` | 39/39 | 61/63 (2 waived) | 607/640 (32 waived) | 99.8% | 2 - rendering backends | P2 |
+| [Avalonia.OpenGL](tracking/Avalonia.OpenGL.md) | `src/Avalonia.OpenGL` | `src/FerroUI.OpenGL` | `ferroui-opengl` | 39/39 | 61/63 (2 waived) | 608/640 (32 waived) | 100.0% | 2 - rendering backends | P2 |
 | [Avalonia.Remote.Protocol](tracking/Avalonia.Remote.Protocol.md) | `src/Avalonia.Remote.Protocol` | `src/FerroUI.Remote.Protocol` | `ferroui-remote-protocol` | 14/14 | 54/55 (1 waived) | 198/202 (4 waived) | 100.0% | 4 - tooling | P3 |
 | [Avalonia.Themes.Fluent](tracking/Avalonia.Themes.Fluent.md) | `src/Avalonia.Themes.Fluent` | `src/FerroUI.Themes.Fluent` | `ferroui-themes-fluent` | 5/5 | 6/6 | 68/73 (5 waived) | 100.0% | 2 - xaml + themes | P1 |
 | [Avalonia.Themes.Simple](tracking/Avalonia.Themes.Simple.md) | `src/Avalonia.Themes.Simple` | `src/FerroUI.Themes.Simple` | `ferroui-themes-simple` | 1/1 | 1/1 | 1/1 | 100.0% | 2 - xaml + themes | P2 |
 | [Avalonia.Vulkan](tracking/Avalonia.Vulkan.md) | `src/Avalonia.Vulkan` | `src/FerroUI.Vulkan` | `ferroui-vulkan` | 30/30 | 151/151 | 283/2034 (1751 waived) | 100.0% | 2 - rendering backends | P2 |
-| [Avalonia.Wayland](tracking/Avalonia.Wayland.md) | `src/Avalonia.Wayland` | `src/FerroUI.Wayland` | `ferroui-wayland` | 79/79 | 108/121 (13 waived) | 613/790 (171 waived) | 99.0% | 5 - desktop (Linux) | P1 |
+| [Avalonia.Wayland](tracking/Avalonia.Wayland.md) | `src/Avalonia.Wayland` | `src/FerroUI.Wayland` | `ferroui-wayland` | 79/79 | 108/121 (13 waived) | 624/790 (166 waived) | 100.0% | 5 - desktop (Linux) | P1 |
 | [Avalonia.X11](tracking/Avalonia.X11.md) | `src/Avalonia.X11` | `src/FerroUI.X11` | `ferroui-x11` | 88/88 | 183/291 (108 waived) | 3691/4897 (1206 waived) | 100.0% | 5 - desktop (Linux) | P1 |
 | [Avalonia.Browser](tracking/Avalonia.Browser.md) | `src/Browser/Avalonia.Browser` | `src/Browser/FerroUI.Browser` | `ferroui-browser` | 50/50 | 60/62 (2 waived) | 340/428 (88 waived) | 100.0% | 3 - browser | P2 |
 | [Avalonia.HarfBuzz](tracking/Avalonia.HarfBuzz.md) | `src/HarfBuzz/Avalonia.HarfBuzz` | `src/HarfBuzz/FerroUI.HarfBuzz` | `ferroui-harfbuzz` | 3/3 | 3/3 | 5/8 (3 waived) | 100.0% | 1 - rendering | P0 |
-| [Avalonia.Headless](tracking/Avalonia.Headless.md) | `src/Headless/Avalonia.Headless` | `src/Headless/FerroUI.Headless` | `ferroui-headless` | 11/11 | 22/24 (2 waived) | 238/253 (12 waived) | 98.8% | 1 - test infrastructure | P1 |
+| [Avalonia.Headless](tracking/Avalonia.Headless.md) | `src/Headless/Avalonia.Headless` | `src/Headless/FerroUI.Headless` | `ferroui-headless` | 11/11 | 22/24 (2 waived) | 241/253 (12 waived) | 100.0% | 1 - test infrastructure | P1 |
 | [Avalonia.Headless.NUnit](tracking/Avalonia.Headless.NUnit.md) | `src/Headless/Avalonia.Headless.NUnit` | `src/Headless/FerroUI.Headless.NUnit` | `ferroui-headless-nunit` | 0/0 | 0/0 | 0/0 | - | 1 - test infrastructure | P1 |
 | [Avalonia.Headless.Vnc](tracking/Avalonia.Headless.Vnc.md) | `src/Headless/Avalonia.Headless.Vnc` | `src/Headless/FerroUI.Headless.Vnc` | `ferroui-headless-vnc` | 3/3 | 3/3 | 11/11 | 100.0% | 1 - test infrastructure | P1 |
 | [Avalonia.Headless.XUnit](tracking/Avalonia.Headless.XUnit.md) | `src/Headless/Avalonia.Headless.XUnit` | `src/Headless/FerroUI.Headless.XUnit` | `ferroui-headless-xunit` | 0/0 | 0/0 | 0/0 | - | 1 - test infrastructure | P1 |
@@ -104,12 +104,12 @@ The % column is member coverage (file coverage for plain file lists).
 | [Avalonia.Markup](tracking/Avalonia.Markup.md) | `src/Markup/Avalonia.Markup` | `src/Markup/FerroUI.Markup` | `ferroui-markup` | 7/7 | 7/37 (30 waived) | 12/67 (55 waived) | 100.0% | 2 - xaml + themes | P1 |
 | [Avalonia.Markup.Xaml](tracking/Avalonia.Markup.Xaml.md) | `src/Markup/Avalonia.Markup.Xaml` | `src/Markup/FerroUI.Markup.Xaml` | `ferroui-markup-xaml` | 46/46 | 61/63 (2 waived) | 208/239 (31 waived) | 100.0% | 2 - xaml + themes | P1 |
 | [Avalonia.Markup.Xaml.Loader](tracking/Avalonia.Markup.Xaml.Loader.md) | `src/Markup/Avalonia.Markup.Xaml.Loader` | `src/Markup/FerroUI.Markup.Xaml.Loader` | `ferroui-markup-xaml-loader` | 66/66 | 120/126 (6 waived) | 422/505 (83 waived) | 100.0% | 2 - xaml + themes | P1 |
-| [Avalonia.Skia](tracking/Avalonia.Skia.md) | `src/Skia/Avalonia.Skia` | `src/Skia/FerroUI.Skia` | `ferroui-skia` | 53/55 | 65/67 | 424/457 (20 waived) | 97.0% | 1 - rendering | P0 |
-| [Avalonia.Win32](tracking/Avalonia.Win32.md) | `src/Windows/Avalonia.Win32` | `src/Windows/FerroUI.Win32` | `ferroui-win32` | 94/94 | 251/275 (24 waived) | 2348/2603 (254 waived) | 100.0% | 1 - desktop (Windows) | P0 |
+| [Avalonia.Skia](tracking/Avalonia.Skia.md) | `src/Skia/Avalonia.Skia` | `src/Skia/FerroUI.Skia` | `ferroui-skia` | 55/55 | 67/67 | 438/457 (19 waived) | 100.0% | 1 - rendering | P0 |
+| [Avalonia.Win32](tracking/Avalonia.Win32.md) | `src/Windows/Avalonia.Win32` | `src/Windows/FerroUI.Win32` | `ferroui-win32` | 94/94 | 251/275 (24 waived) | 2349/2603 (254 waived) | 100.0% | 1 - desktop (Windows) | P0 |
 | [Avalonia.Win32.Automation](tracking/Avalonia.Win32.Automation.md) | `src/Windows/Avalonia.Win32.Automation` | `src/Windows/FerroUI.Win32/automation` | `ferroui-win32` | 40/40 | 19/64 (45 waived) | 124/598 (474 waived) | 100.0% | 1 - desktop (Windows) | P0 |
 | [Avalonia.Win32.Interoperability](tracking/Avalonia.Win32.Interoperability.md) | `src/Windows/Avalonia.Win32.Interoperability` | `src/Windows/FerroUI.Win32.Interoperability` | (none: hosting in Windows Forms, which has no counterpart in Rust; docs/porting/winui.md, section 8) | 0/0 | 0/0 | 0/0 | - | 1 - desktop (Windows) | - |
 | [Avalonia.WinUI](tracking/Avalonia.WinUI.md) | `src/Windows/Avalonia.WinUI` | `src/Windows/FerroUI.WinUI` | `ferroui-winui` | 15/15 | 16/16 | 88/88 | 100.0% | 1 - desktop (Windows) | P2 |
-| [Avalonia.iOS](tracking/Avalonia.iOS.md) | `src/iOS/Avalonia.iOS` | `src/iOS/FerroUI.iOS` | `ferroui-ios` | 40/40 | 56/57 (1 waived) | 312/333 (19 waived) | 99.4% | 6 - mobile (iOS) | P2 |
+| [Avalonia.iOS](tracking/Avalonia.iOS.md) | `src/iOS/Avalonia.iOS` | `src/iOS/FerroUI.iOS` | `ferroui-ios` | 40/40 | 56/57 (1 waived) | 314/333 (19 waived) | 100.0% | 6 - mobile (iOS) | P2 |
 | [Avalonia.Generators](tracking/Avalonia.Generators.md) | `src/tools/Avalonia.Generators` | `src/tools/FerroUI.Generators` | (merged into ferroui-build, see docs/porting/xaml.md) | 0/0 | 0/0 | 0/0 | - | 2 - xaml + themes | P2 |
 
 Non-C# files that belong to these projects:
@@ -390,7 +390,7 @@ FerroUI-only crates have no upstream source directory (for example the MicroCom 
 
 ## Rust-only files
 
-446 Rust source files have no upstream counterpart (37 without a recorded reason). They are listed at the end of each project page.
+444 Rust source files have no upstream counterpart (35 without a recorded reason). They are listed at the end of each project page.
 
 | Project | Rust file | Reason |
 |---|---|---|
@@ -442,7 +442,6 @@ FerroUI-only crates have no upstream source directory (for example the MicroCom 
 | [Avalonia.Base](tracking/Avalonia.Base.md) | `src/FerroUI.Base/media/fonts/testing/test_font_scope.rs` | test support shared by the test suites of this crate and of the crates built on it: mocks, test services, fixtures and helpers, among them the ports of the ones of the upstream test projects (`tests/Avalonia.UnitTests` and the helpers next to the suites) |
 | [Avalonia.Base](tracking/Avalonia.Base.md) | `src/FerroUI.Base/media/fonts/testing/test_fonts.rs` | test support shared by the test suites of this crate and of the crates built on it: mocks, test services, fixtures and helpers, among them the ports of the ones of the upstream test projects (`tests/Avalonia.UnitTests` and the helpers next to the suites) |
 | [Avalonia.Base](tracking/Avalonia.Base.md) | `src/FerroUI.Base/media/fonts/testing/test_platform_typeface.rs` | test support shared by the test suites of this crate and of the crates built on it: mocks, test services, fixtures and helpers, among them the ports of the ones of the upstream test projects (`tests/Avalonia.UnitTests` and the helpers next to the suites) |
-| [Avalonia.Base](tracking/Avalonia.Base.md) | `src/FerroUI.Base/media/immutable_geometry_impl.rs` | **unmapped** |
 | [Avalonia.Base](tracking/Avalonia.Base.md) | `src/FerroUI.Base/media/known_color_brushes.rs` | the brush lookups of the known colours, a part of `Media/KnownColors.cs` upstream |
 | [Avalonia.Base](tracking/Avalonia.Base.md) | `src/FerroUI.Base/media/media_collection.rs` | a reference-counted handle to an observable list that compares by identity, as the media object model shares its collections: object references upstream |
 | [Avalonia.Base](tracking/Avalonia.Base.md) | `src/FerroUI.Base/media/ref_adapter.rs` | the bridge between class handles and the media interfaces (`IBrush`, `IPen`, `ITransform`), which immutable values and mutable classes both implement: an interface cast upstream |
@@ -817,7 +816,6 @@ FerroUI-only crates have no upstream source directory (for example the MicroCom 
 | [Avalonia.Skia](tracking/Avalonia.Skia.md) | `src/Skia/FerroUI.Skia/gpu/vulkan/frames_test.rs` | **unmapped** |
 | [Avalonia.Skia](tracking/Avalonia.Skia.md) | `src/Skia/FerroUI.Skia/gpu/vulkan/tests.rs` | the unit tests of the module |
 | [Avalonia.Skia](tracking/Avalonia.Skia.md) | `src/Skia/FerroUI.Skia/locked_framebuffer.rs` | a locked framebuffer described by plain values: the `Platform/LockedFramebuffer.cs` of Avalonia.Base, which the base crate cannot hold without unsafe code, for the surfaces of the backend |
-| [Avalonia.Skia](tracking/Avalonia.Skia.md) | `src/Skia/FerroUI.Skia/stream_geometry_impl.rs` | **unmapped** |
 | [Avalonia.Skia](tracking/Avalonia.Skia.md) | `src/Skia/FerroUI.Skia/tests.rs` | the unit tests of the module |
 | [Avalonia.Skia](tracking/Avalonia.Skia.md) | `src/Skia/FerroUI.Skia/text_rendering_override.rs` | **unmapped** |
 | [Avalonia.Skia](tracking/Avalonia.Skia.md) | `src/Skia/FerroUI.Skia/text_rendering_settings.rs` | **unmapped** |
