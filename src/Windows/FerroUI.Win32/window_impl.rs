@@ -1150,9 +1150,9 @@ mod imp {
         }
 
         /// Reads the DPI of the monitor the window is on, where the system
-        /// reports one for a monitor (Windows 8.1 and later).
+        /// reports one for a monitor (shcore.dll has `GetDpiForMonitor`).
         fn read_monitor_dpi(&self) {
-            if Win32Platform::windows_version() >= PlatformConstants::WINDOWS8_1 {
+            if get_dpi_for_monitor_available() {
                 let monitor = monitor_from_window(self.hwnd.get(), MONITOR::MONITOR_DEFAULTTONEAREST);
 
                 if let Some((dpi, _)) = get_dpi_for_monitor(monitor, MONITOR_DPI_TYPE::MDT_EFFECTIVE_DPI) {

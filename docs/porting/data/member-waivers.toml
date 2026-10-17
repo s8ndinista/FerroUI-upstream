@@ -5980,12 +5980,6 @@ reason = "made inside the functions that read and write a block of global memory
 [[waive]]
 project = "Avalonia.Win32"
 type = "Avalonia.Win32.Interop.UnmanagedMethods"
-member = "ShCoreAvailable"
-reason = "`has_get_dpi_for_monitor`: the callers ask whether shcore.dll has `GetDpiForMonitor`, the function they call next, where the reference asks whether the library loads"
-
-[[waive]]
-project = "Avalonia.Win32"
-type = "Avalonia.Win32.Interop.UnmanagedMethods"
 member = "SendMessage"
 reason = "one function, `send_message`, for both overloads (the result as a number)"
 

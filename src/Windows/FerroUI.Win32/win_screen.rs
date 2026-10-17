@@ -2,7 +2,7 @@
 
 use crate::interop::unmanaged_methods::{
     display_config_source_name, display_config_target_name, enum_current_display_settings, get_dpi_for_monitor,
-    get_monitor_info, has_get_dpi_for_monitor, query_active_display_paths,
+    get_monitor_info, get_dpi_for_monitor_available, query_active_display_paths,
     screen_dpi_from_device_caps, MONITOR_DPI_TYPE,
 };
 use crate::win32_type_extensions::Win32TypeExtensions;
@@ -109,7 +109,7 @@ impl WinScreen {
     }
 
     fn get_scaling(&self) -> f64 {
-        let dpi = if has_get_dpi_for_monitor() {
+        let dpi = if get_dpi_for_monitor_available() {
             get_dpi_for_monitor(self.h_monitor, MONITOR_DPI_TYPE::MDT_EFFECTIVE_DPI).map_or(0.0, |(x, _)| f64::from(x))
         } else {
             screen_dpi_from_device_caps()
