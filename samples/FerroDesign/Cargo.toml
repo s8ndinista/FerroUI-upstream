@@ -1,0 +1,69 @@
+[workspace]
+resolver = "2"
+members = ["crates/ferrodesign-core", "crates/ferrodesign-app"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.99"
+license = "MIT"
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 8
+
+# The framework has large generated metadata and monomorphized control code.
+# Split code generation and avoid whole-program LTO to fit ordinary CI runners.
+[profile.browser]
+inherits = "release"
+opt-level = 2
+lto = false
+codegen-units = 16
+debug = false
+strip = "debuginfo"
+
+[profile.browser.package.ferroui-base]
+opt-level = 1
+codegen-units = 16
+
+[profile.browser.package.ferroui-controls]
+opt-level = 1
+codegen-units = 16
+
+[profile.browser.package.ferroui-vello]
+opt-level = 3
+
+[profile.browser.package.vello_cpu]
+opt-level = 3
+
+[profile.browser.package.vello_common]
+opt-level = 3
+
+[profile.browser.package.vello_gpu]
+opt-level = 3
+
+[profile.browser.package.glifo]
+opt-level = 3
+
+[profile.browser.package.kurbo]
+opt-level = 3
+
+[profile.browser.package.fearless_simd]
+opt-level = 3
+
+[profile.browser.package.skrifa]
+opt-level = 3
+
+[profile.browser.package.read-fonts]
+opt-level = 3
+
+[profile.dev]
+debug = 0
+codegen-units = 16
+
+[profile.dev.package.ferroui-base]
+opt-level = 1
+
+[profile.dev.package.ferroui-controls]
+opt-level = 1
