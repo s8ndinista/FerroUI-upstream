@@ -6,7 +6,8 @@ use crate::presenters::TextPresenter;
 use crate::test_support::{test_scope, TestRoot};
 use ferroui_base::media::text_formatting::LogicalDirection;
 use ferroui_base::media::{
-    Brushes, CharacterHit, DrawingContext, FontStretch, FontStyle, IBrush, PlatformDrawingContext, TextWrapping,
+    Brushes, CharacterHit, DrawingContext, FontStretch, FontStyle, IBrush, PlatformDrawingContext, TextAlignment,
+    TextWrapping,
 };
 use ferroui_base::rendering::testing::{DrawingLog, MockDrawingContextImpl};
 use ferroui_base::{Point, Rect, Ref, Size};
@@ -136,6 +137,27 @@ fn hide_caret_should_keep_the_text_layout() {
     // hiding it repaints; rebuilding the layout would reshape the text for
     // nothing, and would dispose a layout its callers may still be holding.
     assert!(Rc::ptr_eq(&text_layout, &presenter.text_layout()));
+}
+
+#[test]
+fn caret_points_should_be_recalculated_when_centered_text_layout_is_recreated() {
+    let _scope = test_scope();
+    let presenter = presenter("hello");
+    presenter.set_caret_index(5);
+    presenter.set_text_alignment(TextAlignment::Center);
+    presenter.set_use_layout_rounding(false);
+
+    presenter.measure(infinity());
+
+    let initial_caret = presenter.get_caret_points();
+
+    // Changing the width during arrange recreates the TextLayout. Center alignment
+    // moves the text, so the caret position needs to be recalculated as well.
+    presenter.arrange(Rect::new(0.0, 0.0, 300.0, presenter.desired_size().height));
+
+    let arranged_caret = presenter.get_caret_points();
+
+    assert!(arranged_caret.0.x > initial_caret.0.x, "{arranged_caret:?} {initial_caret:?}");
 }
 
 // The tests below are not part of the reference suite: they pin the caret,
