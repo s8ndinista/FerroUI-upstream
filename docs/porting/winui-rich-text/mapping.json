@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "reference": {
+    "repository": "https://github.com/microsoft/microsoft-ui-xaml",
+    "commit": "fe244ca6ac4d482712b234a9de3cf771cc6481de"
+  },
+  "files": {},
+  "api_members": {},
+  "capabilities": {},
+  "validation": []
+}
