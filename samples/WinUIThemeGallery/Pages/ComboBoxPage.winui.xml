@@ -4,7 +4,9 @@
      validation error is the critical border brush and the message under the box. The items
      outside a combo box do not go to their selected and disabled states (the combo box drives
      them), so the selected and the disabled item have the brushes of those states as local
-     values too; the pill of the selected item cannot be shown that way. -->
+     values too; the pill of the selected item cannot be shown that way. The editable combo box has
+     no text: a Text set in markup is not shown (measured: the box stayed empty where the framework's
+     showed the text), so neither side sets one. -->
 <StackPanel xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
             Margin="24" Spacing="12">
@@ -57,7 +59,7 @@
     </ComboBox>
 
     <TextBlock Grid.Row="4" Text="Editable" VerticalAlignment="Center" />
-    <ComboBox Grid.Row="4" Grid.Column="1" Width="240" IsEditable="True" Text="Custom text">
+    <ComboBox Grid.Row="4" Grid.Column="1" Width="240" IsEditable="True">
       <ComboBoxItem Content="Red" />
       <ComboBoxItem Content="Green" />
       <ComboBoxItem Content="Blue" />
