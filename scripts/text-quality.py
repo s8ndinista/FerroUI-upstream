@@ -2,12 +2,29 @@
 """Measures how FerroUI's text compares with native text in two screenshots.
 
 Usage:
-    text-quality.py NATIVE.png FERROUI.png [--scale S] [--crop X,Y,W,H]
+    text-quality.py NATIVE.png FERROUI.png [--scale S] [--crop X,Y,W,H] [--rows]
     text-quality.py COMPARE_DIR [--scale S] [--crop X,Y,W,H] [--pages text,buttons] [--settings light,dark]
+                    [--window] [--rows]
+    text-quality.py CALIBRATION_DIR --variants [--pages textcal] [--settings light,dark] [--window] [--rows]
 
 The second form reads the comparison directory of the WinUI theme gallery
 (`<page>-<setting>-winui.png` beside `<page>-<setting>-ferroui.png`, as the
-Windows comparison writes them) and reports every pair it finds.
+Windows comparison writes them) and reports every pair it finds. With
+--window the framework's side is `<page>-<setting>-ferroui-window.png`, the
+panel cut out of the picture of the window (side by side only): what the
+window shows, with the text rendering of the window, where `-ferroui.png` is
+a render target bitmap with the text rendering of a surface without a display.
+
+The third form reads the output of a calibration run of the comparison host
+(`FERROUI_WINUI_COMPARE_TEXT_VARIANTS`: a directory per text setting, listed
+in `text-variants.tsv`) and prints the pairs of every text setting and one
+table of the means per text setting (docs/porting/text-rendering.md, section 10).
+
+--rows adds a line per row of text (a band of ink of the native picture): its
+top and height in device pixels, the ink ratio, the solid shares and the
+vertical offset of that row alone. On the text calibration page of the gallery
+(`textcal`) the rows are named by their size and weight; with --variants the
+rows are printed as one table per page and setting, a column per text setting.
 
 What is reported per pair (docs/porting/text-rendering.md, section 7):
 
@@ -217,6 +234,54 @@ def best_shift(native, ferroui, band, max_shift):
     return float(best)
 
 
+# The rows of the text calibration page of the gallery, in their order
+# (samples/WinUIThemeGallery/Pages/TextCalibrationPage.xaml).
+CALIBRATION_ROWS = [
+    "12", "13", "14", "14 semibold", "15", "16", "18", "20", "20 semibold", "24", "28", "28 semibold", "32",
+]
+
+
+def band_stats(coverage, width, start, end):
+    """The ink and the solid share of the rows start..end of a coverage."""
+    ink = 0.0
+    count = 0
+    solid = 0
+    for c in coverage[start * width:end * width]:
+        if c > 0:
+            ink += c
+            count += 1
+            if c > 0.85:
+                solid += 1
+    return ink, (solid / count if count else 0.0)
+
+
+def row_results(native, ferroui, native_bands, shifts, scale):
+    """Per band of the native picture: its top, height, ink ratio, solid
+    shares and offset. The ink of a band is summed over the band widened by a
+    margin (half the gap to the next band at most), so that a row of FerroUI
+    that is a pixel off is measured whole."""
+    rows = []
+    height = native.height
+    for index, (band, shift) in enumerate(zip(native_bands, shifts)):
+        start, end = band
+        margin = round(2 * scale)
+        if index > 0:
+            margin = min(margin, (start - native_bands[index - 1][1]) // 2)
+        if index + 1 < len(native_bands):
+            margin = min(margin, (native_bands[index + 1][0] - end) // 2)
+        top, bottom = max(0, start - margin), min(height, end + margin)
+        native_ink, native_solid = band_stats(native.coverage, native.width, top, bottom)
+        ferroui_ink, ferroui_solid = band_stats(ferroui.coverage, ferroui.width, top, bottom)
+        rows.append({
+            "top": start,
+            "height": end - start,
+            "ink_ratio": ferroui_ink / native_ink if native_ink else 0.0,
+            "solid": (native_solid, ferroui_solid),
+            "dy": shift,
+        })
+    return rows
+
+
 def compare(native_path, ferroui_path, scale, crop):
     native_image = load(native_path, crop)
     ferroui_image = load(ferroui_path, crop)
@@ -238,12 +303,16 @@ def compare(native_path, ferroui_path, scale, crop):
     native_profile = native.row_profile()
     ferroui_profile = ferroui.row_profile()
     shifts = []
-    for band in bands(native_profile, scale):
+    native_bands = bands(native_profile, scale)
+    band_shifts = []
+    for band in native_bands:
         shift = best_shift(native_profile, ferroui_profile, band, round(6 * scale))
+        band_shifts.append(shift)
         if shift is not None:
             shifts.append(shift)
 
     return {
+        "rows_detail": row_results(native, ferroui, native_bands, band_shifts, scale),
         "scale": scale,
         "dark": dark,
         "native": native_stats,
@@ -275,6 +344,147 @@ def format_row(name, result):
     )
 
 
+def row_name(page, index, count):
+    """The name of a row: its size and weight on the calibration page."""
+    if page == "textcal" and count == len(CALIBRATION_ROWS):
+        return CALIBRATION_ROWS[index]
+    return str(index + 1)
+
+
+def format_rows(page, result):
+    rows = result["rows_detail"]
+    lines = [f"    {'row':<12} {'top':>5} {'h':>3} {'ink ratio':>9} {'solid n/f':>11} {'dy px':>6}"]
+    for index, row in enumerate(rows):
+        dy = "-" if row["dy"] is None else f"{row['dy']:+.2f}"
+        native_solid, ferroui_solid = row["solid"]
+        lines.append(
+            f"    {row_name(page, index, len(rows)):<12} {row['top']:>5} {row['height']:>3} {row['ink_ratio']:>9.3f} "
+            f"{pair(native_solid * 100, ferroui_solid * 100):>11} {dy:>6}"
+        )
+    return "\n".join(lines)
+
+
+def find_pairs(directory, pages, settings, window):
+    """The pairs of a compare directory: (name, page, native, ferroui)."""
+    suffix = "ferroui-window" if window else "ferroui"
+    pairs = []
+    for name in sorted(os.listdir(directory)):
+        match = re.fullmatch(r"(.+?)-((?:light|dark)(?:-compact)?)-winui\.png", name)
+        if not match:
+            continue
+        page, setting = match.groups()
+        if pages and page not in pages or settings and setting not in settings:
+            continue
+        ferroui = os.path.join(directory, f"{page}-{setting}-{suffix}.png")
+        if os.path.isfile(ferroui):
+            pairs.append((f"{page}-{setting}", page, os.path.join(directory, name), ferroui))
+    return pairs
+
+
+def mean(values):
+    values = [v for v in values if v is not None]
+    return sum(values) / len(values) if values else 0.0
+
+
+def print_mean(results):
+    print(
+        f"{'mean':<28} {'':>5} "
+        f"{mean(r['native']['fringe'] for r in results):>5.1f}/"
+        f"{mean(r['ferroui']['fringe'] for r in results):<5.1f} "
+        f"{mean(r['ink_ratio'] for r in results):>9.3f} "
+        f"{pair(mean(r['native']['solid'] for r in results) * 100, mean(r['ferroui']['solid'] for r in results) * 100):>11} "
+        f"{mean(r['dy'] for r in results):>+6.2f}"
+    )
+
+
+def read_variants(directory):
+    """The text settings of a calibration run: (name, text rendering,
+    baseline) from text-variants.tsv, else the subdirectories."""
+    listing = os.path.join(directory, "text-variants.tsv")
+    if os.path.isfile(listing):
+        variants = []
+        with open(listing, encoding="utf-8") as file:
+            header = file.readline().rstrip("\n").split("\t")
+            for line in file:
+                fields = dict(zip(header, line.rstrip("\n").split("\t")))
+                if fields.get("name"):
+                    variants.append((fields["name"], fields.get("text_rendering", ""), fields.get("baseline", "")))
+        return variants
+    return [(name, "", "") for name in sorted(os.listdir(directory)) if os.path.isdir(os.path.join(directory, name))]
+
+
+def main_variants(args, crop):
+    directory = args.inputs[0]
+    pages = set(args.pages.split(",")) if args.pages else None
+    settings = set(args.settings.split(",")) if args.settings else None
+    variants = read_variants(directory)
+    if not variants:
+        sys.exit(f"no text settings in {directory} (text-variants.tsv or a directory per setting)")
+
+    # results[variant][pair name] = result
+    results = {}
+    names = []
+    for variant, rendering, baseline in variants:
+        pairs = find_pairs(os.path.join(directory, variant), pages, settings, args.window)
+        print(f"== {variant}: text rendering {rendering or '?'}, baseline {baseline or '?'}")
+        if not pairs:
+            print("   no pairs")
+            continue
+        print(HEADER)
+        results[variant] = {}
+        for name, page, native, ferroui in pairs:
+            result = compare(native, ferroui, args.scale, crop)
+            result["page"] = page
+            results[variant][name] = result
+            if name not in names:
+                names.append(name)
+            print(format_row(name, result), flush=True)
+        if len(pairs) > 1:
+            print_mean(list(results[variant].values()))
+        print()
+
+    measured = [variant for variant, _, _ in variants if variant in results]
+    print("== the text settings, the means of their pairs (light: dark text on a light background)")
+    print(f"{'setting':<24} {'ink light':>9} {'ink dark':>9} {'solid light n/f':>15} {'solid dark n/f':>15} {'dy px':>6} {'pairs':>5}")
+    for variant in measured:
+        values = list(results[variant].values())
+        light = [r for r in values if not r["dark"]]
+        dark = [r for r in values if r["dark"]]
+
+        def solid(rs):
+            if not rs:
+                return "-"
+            return pair(mean(r["native"]["solid"] for r in rs) * 100, mean(r["ferroui"]["solid"] for r in rs) * 100)
+
+        ink_light = f"{mean(r['ink_ratio'] for r in light):.3f}" if light else "-"
+        ink_dark = f"{mean(r['ink_ratio'] for r in dark):.3f}" if dark else "-"
+        print(
+            f"{variant:<24} {ink_light:>9} {ink_dark:>9} {solid(light):>15} {solid(dark):>15} "
+            f"{mean(r['dy'] for r in values):>+6.2f} {len(values):>5}"
+        )
+
+    if args.rows:
+        for name in names:
+            print()
+            print(f"== {name}: per row, ink ratio / dy px, a column per text setting")
+            columns = [variant for variant in measured if name in results[variant]]
+            first = results[columns[0]][name]
+            count = len(first["rows_detail"])
+            print(f"{'row':<12} {'top':>5} " + " ".join(f"{variant[:17]:>17}" for variant in columns))
+            for index in range(count):
+                cells = []
+                for variant in columns:
+                    rows = results[variant][name]["rows_detail"]
+                    if index >= len(rows):
+                        cells.append(f"{'-':>17}")
+                        continue
+                    row = rows[index]
+                    dy = "-" if row["dy"] is None else f"{row['dy']:+.2f}"
+                    cells.append(f"{row['ink_ratio']:>9.3f} {dy:>7}")
+                top = first["rows_detail"][index]["top"]
+                print(f"{row_name(first['page'], index, count):<12} {top:>5} " + " ".join(cells))
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("inputs", nargs="+", help="NATIVE FERROUI pictures, or a compare directory")
@@ -282,52 +492,43 @@ def main():
     parser.add_argument("--crop", help="X,Y,W,H: measure only this rectangle of both pictures")
     parser.add_argument("--pages", help="comma-separated pages of a compare directory")
     parser.add_argument("--settings", help="comma-separated settings of a compare directory (light, dark-compact...)")
+    parser.add_argument("--window", action="store_true", help="compare with <page>-<setting>-ferroui-window.png")
+    parser.add_argument("--rows", action="store_true", help="a line per row of text")
+    parser.add_argument("--variants", action="store_true", help="the directory is the output of a calibration run")
     args = parser.parse_args()
 
     crop = tuple(int(v) for v in args.crop.split(",")) if args.crop else None
 
+    if args.variants:
+        if len(args.inputs) != 1 or not os.path.isdir(args.inputs[0]):
+            parser.error("--variants takes one directory")
+        main_variants(args, crop)
+        return
+
     if len(args.inputs) == 2 and os.path.isfile(args.inputs[0]):
-        pairs = [(os.path.basename(args.inputs[1]), args.inputs[0], args.inputs[1])]
+        pairs = [(os.path.basename(args.inputs[1]), "", args.inputs[0], args.inputs[1])]
     elif len(args.inputs) == 1 and os.path.isdir(args.inputs[0]):
         directory = args.inputs[0]
         pages = set(args.pages.split(",")) if args.pages else None
         settings = set(args.settings.split(",")) if args.settings else None
-        pairs = []
-        for name in sorted(os.listdir(directory)):
-            match = re.fullmatch(r"(.+?)-((?:light|dark)(?:-compact)?)-winui\.png", name)
-            if not match:
-                continue
-            page, setting = match.groups()
-            if pages and page not in pages or settings and setting not in settings:
-                continue
-            ferroui = os.path.join(directory, f"{page}-{setting}-ferroui.png")
-            if os.path.isfile(ferroui):
-                pairs.append((f"{page}-{setting}", os.path.join(directory, name), ferroui))
+        pairs = find_pairs(directory, pages, settings, args.window)
         if not pairs:
-            sys.exit(f"no <page>-<setting>-winui.png / -ferroui.png pairs in {directory}")
+            suffix = "-ferroui-window.png" if args.window else "-ferroui.png"
+            sys.exit(f"no <page>-<setting>-winui.png / {suffix} pairs in {directory}")
     else:
         parser.error("give two pictures or one compare directory")
 
     print(HEADER)
     results = []
-    for name, native, ferroui in pairs:
+    for name, page, native, ferroui in pairs:
         result = compare(native, ferroui, args.scale, crop)
         results.append(result)
         print(format_row(name, result), flush=True)
+        if args.rows:
+            print(format_rows(page, result), flush=True)
 
     if len(results) > 1:
-        def mean(values):
-            values = [v for v in values if v is not None]
-            return sum(values) / len(values) if values else 0.0
-
-        print(
-            f"{'mean':<28} {'':>5} "
-            f"{mean(r['native']['fringe'] for r in results):>5.1f}/"
-            f"{mean(r['ferroui']['fringe'] for r in results):<5.1f} "
-            f"{mean(r['ink_ratio'] for r in results):>9.3f} "
-            f"{pair(mean(r['native']['solid'] for r in results) * 100, mean(r['ferroui']['solid'] for r in results) * 100):>11} "
-            f"{mean(r['dy'] for r in results):>+6.2f}"
-        )
+        print_mean(results)
 
 
 if __name__ == "__main__":

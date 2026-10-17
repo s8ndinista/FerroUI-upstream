@@ -8,6 +8,18 @@ on:
   pull_request:
     paths-ignore: ['docs/**', '**/*.md']
   workflow_dispatch:
+    inputs:
+      # A calibration run of the text rendering in the comparison of the WinUI theme gallery
+      # (docs/porting/text-rendering.md, section 10): the pages and the list of text settings of
+      # the comparison host. Empty on every other run.
+      winui_compare_pages:
+        description: 'WinUI theme comparison: the pages (ids separated by commas; all when empty)'
+        required: false
+        default: ''
+      winui_text_variants:
+        description: 'WinUI theme comparison: the text settings of a calibration run (FERROUI_WINUI_COMPARE_TEXT_VARIANTS; none when empty)'
+        required: false
+        default: ''
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -458,6 +470,10 @@ jobs:
         shell: pwsh
         env:
           RUST_BACKTRACE: 1
+          # Empty unless the run was started by hand with the inputs of a calibration run.
+          FERROUI_WINUI_COMPARE_PAGES: ${{ inputs.winui_compare_pages }}
+          FERROUI_WINUI_COMPARE_TEXT_VARIANTS: ${{ inputs.winui_text_variants }}
+          FERROUI_WINUI_COMPARE_DENSITIES: ${{ inputs.winui_text_variants && 'normal' || '' }}
         run: |
           cargo build --locked -p winui-theme-gallery --bins
           New-Item -ItemType Directory -Force -Path target/winui-theme/capture, target/winui-theme/compare | Out-Null
@@ -476,7 +492,13 @@ jobs:
           $compare = Start-Process -FilePath target/debug/winui-theme-compare.exe -ArgumentList '--out', (Resolve-Path target/winui-theme/compare).Path -NoNewWindow -PassThru
           if (-not $compare.WaitForExit(1500000)) { $compare.Kill(); Write-Output "compare: timed out" }
           python scripts/winui-theme/report.py target/winui-theme/capture
-          python scripts/winui-theme/report.py target/winui-theme/compare
+          if ($env:FERROUI_WINUI_COMPARE_TEXT_VARIANTS) {
+            # A calibration run: a directory per text setting, and one table of them.
+            python -m pip install --quiet pillow
+            python scripts/text-quality.py target/winui-theme/compare --variants --rows | Tee-Object -FilePath target/winui-theme/compare/text-calibration.txt
+          } else {
+            python scripts/winui-theme/report.py target/winui-theme/compare
+          }
           if ($capture.ExitCode -ne 0 -or $compare.ExitCode -ne 0) { Write-Output "capture exit $($capture.ExitCode), compare exit $($compare.ExitCode)"; exit 1 }
       - name: Keep the pictures of the WinUI theme gallery
         if: ${{ always() && steps.skia.outputs.raster == 'true' }}
