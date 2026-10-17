@@ -150,3 +150,62 @@ impl IGeometryContext for BuilderWrapper {
         self.builder.dispose();
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::media::geometry::tests::with_mock_render_interface;
+    use crate::media::TranslateTransform;
+    use std::cell::Cell;
+    use std::rc::Rc;
+
+    fn count_changed(target: &StreamGeometry) -> Rc<Cell<i32>> {
+        let changed = Rc::new(Cell::new(0));
+        let c = changed.clone();
+        target.changed(move || c.set(c.get() + 1));
+        changed
+    }
+
+    #[test]
+    fn changed_is_raised_when_the_drawing_is_finished() {
+        with_mock_render_interface(|_| {
+            let target = StreamGeometry::new();
+            let changed = count_changed(&target);
+
+            {
+                let mut context = target.open();
+                assert_eq!(0, changed.get());
+
+                context.begin_figure(Point::new(0.0, 0.0), true);
+                context.line_to(Point::new(10.0, 0.0), true);
+                context.end_figure(true);
+
+                assert_eq!(0, changed.get());
+            }
+
+            assert_eq!(1, changed.get());
+        });
+    }
+
+    #[test]
+    fn changed_is_raised_when_the_drawing_is_finished_and_a_transform_is_set() {
+        with_mock_render_interface(|_| {
+            let target = StreamGeometry::new();
+            target.set_transform(TranslateTransform::with_offset(10.0, 20.0));
+            let changed = count_changed(&target);
+
+            {
+                let mut context = target.open();
+                assert_eq!(0, changed.get());
+
+                context.begin_figure(Point::new(0.0, 0.0), true);
+                context.line_to(Point::new(10.0, 0.0), true);
+                context.end_figure(true);
+
+                assert_eq!(0, changed.get());
+            }
+
+            assert_eq!(1, changed.get());
+        });
+    }
+}

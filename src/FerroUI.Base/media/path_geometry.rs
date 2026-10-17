@@ -214,6 +214,39 @@ mod tests {
     }
 
     #[test]
+    fn open_adds_to_figures() {
+        crate::media::geometry::tests::with_mock_render_interface(|_| {
+            let target = PathGeometry::new();
+
+            {
+                let mut context = target.open();
+                context.begin_figure(Point::new(0.0, 0.0), true);
+                context.line_to(Point::new(10.0, 0.0), true);
+                context.end_figure(true);
+            }
+
+            assert_eq!(1, target.figures().unwrap().len());
+        });
+    }
+
+    #[test]
+    fn open_adds_to_figures_when_a_transform_is_set() {
+        crate::media::geometry::tests::with_mock_render_interface(|_| {
+            let target = PathGeometry::new();
+            target.set_transform(crate::media::TranslateTransform::with_offset(10.0, 20.0));
+
+            {
+                let mut context = target.open();
+                context.begin_figure(Point::new(0.0, 0.0), true);
+                context.line_to(Point::new(10.0, 0.0), true);
+                context.end_figure(true);
+            }
+
+            assert_eq!(1, target.figures().unwrap().len());
+        });
+    }
+
+    #[test]
     fn path_segment_triggers_invalidation_on_property_change() {
         let target_segment = ArcSegment::new();
         target_segment.set_size(Size::new(10.0, 10.0));
