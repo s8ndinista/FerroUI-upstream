@@ -445,6 +445,47 @@ fn invalidate_visual_does_not_update_rendering_target_when_rendering_stopped() {
     assert_eq!(Size::new(300.0, 300.0), composition_target.size());
 }
 
+#[test]
+fn visuals_removed_while_rendering_stopped_are_not_kept_by_renderer() {
+    let services = CompositorCanvas::new();
+
+    let kept = TestBorder::filled(30.0, 50.0, 20.0, 10.0);
+    services.canvas.add(&kept);
+    services.run_jobs();
+
+    services.renderer.stop();
+
+    let removed_child = TestBorder::new();
+    removed_child.set_background(Some(Brushes::blue()));
+    removed_child.set_bounds(Rect::new(0.0, 0.0, 20.0, 10.0));
+    let removed = TestBorder::new();
+    removed.set_bounds(Rect::new(100.0, 50.0, 20.0, 10.0));
+    removed.add(&removed_child);
+    services.canvas.add(&removed);
+    kept.set_background(Some(Brushes::green()));
+    services.run_jobs();
+
+    assert!(services.renderer.has_pending_update_for_unit_tests(&removed));
+    assert!(services.renderer.has_pending_update_for_unit_tests(&removed_child));
+
+    services.canvas.remove(&removed);
+    services.run_jobs();
+
+    assert!(!services.renderer.has_pending_update_for_unit_tests(&removed));
+    assert!(!services.renderer.has_pending_update_for_unit_tests(&removed_child));
+
+    assert!(services.renderer.has_pending_update_for_unit_tests(&kept));
+    assert!(services.renderer.has_pending_update_for_unit_tests(&services.canvas));
+
+    services.renderer.start();
+    services.run_jobs();
+
+    assert!(!services.renderer.has_pending_update_for_unit_tests(&kept));
+    assert!(!services.renderer.has_pending_update_for_unit_tests(&services.canvas));
+    services.assert_hit_test(35.0, 55.0, None, &[&kept]);
+    services.assert_hit_test(105.0, 55.0, None, &[]);
+}
+
 // --- CompositionChildVisualTests --------------------------------------------------
 
 /// Clears its child visual when it leaves the tree, the usual counterpart to
