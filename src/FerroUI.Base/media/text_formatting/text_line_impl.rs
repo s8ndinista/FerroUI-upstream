@@ -1392,10 +1392,10 @@ impl TextLine for TextLineImpl {
         self.get_previous_character_hit(character_hit, true)
     }
 
-    /// Panics when `text_length` is zero.
+    /// Returns no bounds for an empty range.
     fn get_text_bounds(&self, first_text_source_index: i32, text_length: i32) -> Vec<TextBounds> {
         if text_length == 0 {
-            panic!("textLength ('0') must be a non-zero value. (Parameter 'textLength')");
+            return Vec::new();
         }
 
         let indexed_text_runs = match self.indexed_text_runs() {

@@ -12,6 +12,7 @@ mod text_characters_tests;
 mod text_collapsing_bidi_tests;
 mod text_formatter_tests;
 mod text_formatter_wrap_characterization_tests;
+mod text_layout_range_contract_tests;
 mod text_layout_tests;
 mod text_line_tests;
 mod text_run_cache_tests;
