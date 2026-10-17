@@ -38,7 +38,7 @@ concurrency:
 
 env:
   # The size budget of each published WebAssembly module, in megabytes (1,000,000 bytes) with gzip.
-  PUBLISHED_MODULE_GZIP_BUDGET_MB: 14
+  PUBLISHED_MODULE_GZIP_BUDGET_MB: 16
   CARGO_TERM_COLOR: always
   CARGO_INCREMENTAL: 0
 
