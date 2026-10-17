@@ -14,10 +14,21 @@
 //!
 //! and prints a line with the share of the pixels that differ. `compare.tsv` in the directory
 //! has one line per comparison (`scripts/winui-theme/report.py` makes the report of it).
+//!
+//! A calibration run (`FERROUI_WINUI_COMPARE_TEXT_VARIANTS`, docs/porting/text-rendering.md,
+//! section 10) compares every page and setting once per text setting of the list: before the
+//! pages of a text setting are shown, the run sets the development overrides of the text
+//! rendering of the process (`ferroui_skia::set_text_rendering_override`,
+//! `set_text_baseline_rounding`), and it writes the pictures and `compare.tsv` of each text setting
+//! into a directory of its name below the output directory, with `text-variants.tsv` listing them
+//! (`scripts/text-quality.py <out> --variants` makes one table of them).
 
 use crate::compare_window::CompareWindow;
 use crate::window_capture;
 use ferroui_base::media::imaging::Bitmap;
+use ferroui_base::media::text_formatting::{
+    set_text_baseline_rounding, startup_text_baseline_rounding, TextBaselineRounding,
+};
 use ferroui_base::platform::{AlphaFormat, PixelFormat};
 use ferroui_base::threading::{DispatcherPriority, DispatcherTimer};
 use ferroui_base::{PixelSize, Ref, Vector, Visual};
@@ -29,7 +40,7 @@ use std::rc::{Rc, Weak};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::{Duration, Instant};
 use winui_theme_gallery::capture::{self, Options, ProblemLog, Setting};
-use winui_theme_gallery::comparison;
+use winui_theme_gallery::comparison::{self, TextVariant, TEXT_VARIANTS_ENV};
 use winui_theme_gallery::PageInfo;
 
 /// Whether the run failed (the exit code of the process).
@@ -67,7 +78,13 @@ struct Run {
     out: PathBuf,
     options: Options,
     threshold: u8,
-    jobs: Vec<(&'static PageInfo, Setting)>,
+    /// The text settings of a calibration run, empty otherwise.
+    variants: Vec<TextVariant>,
+    /// The jobs: the text setting (an index into `variants`; `None` outside a calibration run),
+    /// the page and the setting.
+    jobs: Vec<(Option<usize>, &'static PageInfo, Setting)>,
+    /// The text setting the overrides of the process are set to.
+    applied_variant: Cell<Option<usize>>,
     next: Cell<usize>,
     phase: Cell<Phase>,
     since: Cell<Instant>,
@@ -82,7 +99,8 @@ struct Run {
     native_shown: Cell<bool>,
     page: RefCell<Option<Ref<Control>>>,
     log: Rc<ProblemLog>,
-    lines: RefCell<Vec<String>>,
+    /// The lines of `compare.tsv`, with the text setting of each.
+    lines: RefCell<Vec<(Option<usize>, String)>>,
     failures: RefCell<Vec<String>>,
 }
 
@@ -113,14 +131,77 @@ fn in_pixels(bounds: ferroui_winui::interop::Rect, scale: f64) -> (i32, i32, i32
     (x, y, width, height)
 }
 
+/// The development overrides of the text rendering a text setting gives: those of the
+/// environment of the process with the values of the setting.
+fn text_overrides(variant: &TextVariant) -> Result<(ferroui_skia::TextRenderingOverride, TextBaselineRounding), String> {
+    let mut rendering = ferroui_skia::startup_text_rendering_override();
+    let mut baseline = startup_text_baseline_rounding();
+    for (key, value) in &variant.values {
+        if key == "baseline" {
+            baseline = TextBaselineRounding::parse(value)?;
+        } else {
+            rendering.set(key, value)?;
+        }
+    }
+    Ok((rendering, baseline))
+}
+
 impl Run {
     fn job(&self) -> (&'static PageInfo, Setting) {
-        self.jobs[self.next.get()]
+        let (_, page, setting) = self.jobs[self.next.get()];
+        (page, setting)
+    }
+
+    fn job_variant(&self) -> Option<usize> {
+        self.jobs[self.next.get()].0
+    }
+
+    /// The directory of the pictures of a text setting.
+    fn directory(&self, variant: Option<usize>) -> PathBuf {
+        match variant {
+            Some(index) => self.out.join(&self.variants[index].name),
+            None => self.out.clone(),
+        }
     }
 
     fn name(&self) -> String {
         let (page, setting) = self.job();
         format!("{}-{}", page.id, setting.name())
+    }
+
+    /// The name of the job in the lines the run prints: with its text setting in a calibration
+    /// run.
+    fn label(&self) -> String {
+        match self.job_variant() {
+            Some(index) => format!("{}/{}", self.variants[index].name, self.name()),
+            None => self.name(),
+        }
+    }
+
+    /// Sets the overrides of the process to the text setting of the job, if it is another one.
+    fn apply_text_variant(&self) {
+        let Some(index) = self.job_variant() else {
+            return;
+        };
+        if self.applied_variant.get() == Some(index) {
+            return;
+        }
+        let variant = &self.variants[index];
+        match text_overrides(variant) {
+            Ok((rendering, baseline)) => {
+                ferroui_skia::set_text_rendering_override(rendering);
+                set_text_baseline_rounding(baseline);
+                println!(
+                    "compare: text setting {} ({}): the text rendering {rendering}, the baseline {}",
+                    variant.name,
+                    variant.specification(),
+                    baseline.name()
+                );
+            }
+            // Checked when the run started.
+            Err(error) => self.fail(&format!("the text setting {}: {error}", variant.name)),
+        }
+        self.applied_variant.set(Some(index));
     }
 
     fn fail(&self, what: &str) {
@@ -134,13 +215,41 @@ impl Run {
         self.phase.set(if self.next.get() < self.jobs.len() { Phase::Show } else { Phase::Done });
     }
 
-    /// Writes `compare.tsv` with the lines so far.
+    /// Writes `compare.tsv` of the text setting of the job with its lines so far.
     fn write_table(&self) {
-        let path = self.out.join("compare.tsv");
+        let variant = if self.next.get() < self.jobs.len() { self.job_variant() } else { None };
+        self.write_table_of(variant);
+    }
+
+    fn write_table_of(&self, variant: Option<usize>) {
+        let path = self.directory(variant).join("compare.tsv");
         let written = std::fs::File::create(&path).and_then(|mut file| {
             writeln!(file, "{TSV_HEADER}")?;
-            for line in self.lines.borrow().iter() {
+            for (_, line) in self.lines.borrow().iter().filter(|(of, _)| *of == variant) {
                 writeln!(file, "{line}")?;
+            }
+            Ok(())
+        });
+        if let Err(error) = written {
+            self.fail(&format!("{} could not be written: {error}", path.display()));
+        }
+    }
+
+    /// Writes `text-variants.tsv` of a calibration run: a line per text setting with its
+    /// directory, its specification and the overrides it gave.
+    fn write_variants(&self) {
+        if self.variants.is_empty() {
+            return;
+        }
+        let path = self.out.join("text-variants.tsv");
+        let written = std::fs::File::create(&path).and_then(|mut file| {
+            writeln!(file, "name\ttext_rendering\tbaseline\tspecification")?;
+            for variant in &self.variants {
+                let (rendering, baseline) = match text_overrides(variant) {
+                    Ok((rendering, baseline)) => (rendering.to_string(), baseline.name().to_string()),
+                    Err(error) => (error, String::new()),
+                };
+                writeln!(file, "{}\t{rendering}\t{baseline}\t{}", variant.name, variant.specification())?;
             }
             Ok(())
         });
@@ -182,7 +291,17 @@ impl Run {
                 true
             }
             Phase::Done => {
-                self.write_table();
+                if self.variants.is_empty() {
+                    self.write_table_of(None);
+                } else {
+                    for index in 0..self.variants.len() {
+                        self.write_table_of(Some(index));
+                    }
+                    self.write_variants();
+                    // The overrides of the environment again.
+                    ferroui_skia::set_text_rendering_override(ferroui_skia::startup_text_rendering_override());
+                    set_text_baseline_rounding(startup_text_baseline_rounding());
+                }
                 let failures = self.failures.borrow();
                 println!(
                     "compare: {} comparison(s) of {} written to {}, {} failure(s)",
@@ -284,6 +403,7 @@ impl Run {
 
     /// Shows the native page and the framework's page of the job.
     fn show(&self, window: &CompareWindow) {
+        self.apply_text_variant();
         let (page, setting) = self.job();
         let Some(markup) = comparison::native_markup(page, setting, self.options.width, self.page_height.get()) else {
             println!(
@@ -300,7 +420,7 @@ impl Run {
             Err(error) => {
                 self.native_shown.set(false);
                 let _ = window.clear_native();
-                self.fail(&format!("{}: the native page ({}) does not load in WinUI: {error}", self.name(), page.native_file));
+                self.fail(&format!("{}: the native page ({}) does not load in WinUI: {error}", self.label(), page.native_file));
             }
         }
 
@@ -314,7 +434,7 @@ impl Run {
             }
             Err(error) => {
                 *self.page.borrow_mut() = None;
-                self.fail(&format!("{}: the page of the framework does not load: {error}", self.name()));
+                self.fail(&format!("{}: the page of the framework does not load: {error}", self.label()));
             }
         }
         self.since.set(Instant::now());
@@ -323,10 +443,13 @@ impl Run {
 
     /// Takes the pictures of the job, compares them and writes them.
     fn shoot(&self, window: &CompareWindow) {
-        let name = self.name();
+        let file_name = self.name();
+        // The name in the lines the run prints (with the text setting in a calibration run).
+        let name = self.label();
+        let directory = self.directory(self.job_variant());
         let hwnd = self.hwnd.get();
         let scale = window.rasterization_scale().unwrap_or_else(|| window_capture::scale(hwnd));
-        let file = |suffix: &str| self.out.join(format!("{name}-{suffix}.png"));
+        let file = |suffix: &str| directory.join(format!("{file_name}-{suffix}.png"));
 
         // The framework's page, drawn by the framework.
         let mut problems = Vec::new();
@@ -379,7 +502,7 @@ impl Run {
                         let (x, y, width, height) = in_pixels(bounds, scale);
                         let (pixels, cropped) = comparison::crop(&picture.pixels, size, x, y, width, height);
                         if save_bgra(&pixels, cropped, scale, &file("ferroui-window")).is_ok() {
-                            ferro_window_file = format!("{name}-ferroui-window.png");
+                            ferro_window_file = format!("{file_name}-ferroui-window.png");
                         }
                     }
                 }
@@ -409,15 +532,18 @@ impl Run {
             difference.height
         );
         let (page, setting) = self.job();
-        self.lines.borrow_mut().push(format!(
-            "{}\t{}\t{:.4}\t{}\t{}\t{}\t{name}-winui.png\t{name}-ferroui.png\t{name}-diff.png\t{ferro_window_file}\t{}",
-            page.id,
-            setting.name(),
-            difference.percent(),
-            difference.differing,
-            difference.width,
-            difference.height,
-            problems.len()
+        self.lines.borrow_mut().push((
+            self.job_variant(),
+            format!(
+                "{}\t{}\t{:.4}\t{}\t{}\t{}\t{file_name}-winui.png\t{file_name}-ferroui.png\t{file_name}-diff.png\t{ferro_window_file}\t{}",
+                page.id,
+                setting.name(),
+                difference.percent(),
+                difference.differing,
+                difference.width,
+                difference.height,
+                problems.len()
+            ),
         ));
         self.write_table();
     }
@@ -448,8 +574,43 @@ pub fn start(window: Rc<CompareWindow>, out: PathBuf) {
         let _ = window.window().close();
         return;
     }
-    let jobs: Vec<(&'static PageInfo, Setting)> =
-        options.pages.iter().flat_map(|&page| options.settings.iter().map(move |&setting| (page, setting))).collect();
+    // The text settings of a calibration run, each checked before anything is shown.
+    let variants = match comparison::parse_text_variants(&std::env::var(TEXT_VARIANTS_ENV).unwrap_or_default()) {
+        Ok(variants) => variants,
+        Err(error) => {
+            println!("compare: FAILED: {TEXT_VARIANTS_ENV}: {error}");
+            FAILED.store(true, Ordering::SeqCst);
+            let _ = window.window().close();
+            return;
+        }
+    };
+    for variant in &variants {
+        let directory = out.join(&variant.name);
+        let checked = text_overrides(variant)
+            .and_then(|_| std::fs::create_dir_all(&directory).map_err(|error| format!("{}: {error}", directory.display())));
+        if let Err(error) = checked {
+            println!("compare: FAILED: {TEXT_VARIANTS_ENV}: the text setting {}: {error}", variant.name);
+            FAILED.store(true, Ordering::SeqCst);
+            let _ = window.window().close();
+            return;
+        }
+    }
+    if !variants.is_empty() {
+        println!(
+            "compare: a calibration run of {} text setting(s): {}",
+            variants.len(),
+            variants.iter().map(TextVariant::specification).collect::<Vec<_>>().join("; ")
+        );
+    }
+    let variant_indices: Vec<Option<usize>> =
+        if variants.is_empty() { vec![None] } else { (0..variants.len()).map(Some).collect() };
+    let (pages, settings) = (&options.pages, &options.settings);
+    let jobs: Vec<(Option<usize>, &'static PageInfo, Setting)> = variant_indices
+        .iter()
+        .flat_map(|&variant| {
+            pages.iter().flat_map(move |&page| settings.iter().map(move |&setting| (variant, page, setting)))
+        })
+        .collect();
 
     // A run that does not end is ended with the exit code 3.
     let timeout = options.timeout;
@@ -470,7 +631,9 @@ pub fn start(window: Rc<CompareWindow>, out: PathBuf) {
         out,
         options,
         threshold,
+        variants,
         jobs,
+        applied_variant: Cell::new(None),
         next: Cell::new(0),
         phase: Cell::new(Phase::Start),
         since: Cell::new(Instant::now()),

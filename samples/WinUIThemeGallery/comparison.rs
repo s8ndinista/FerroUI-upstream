@@ -123,10 +123,110 @@ pub fn crop(pixels: &[u8], size: (i32, i32), x: i32, y: i32, width: i32, height:
     (cropped, (x1 - x0, y1 - y0))
 }
 
+/// The environment variable of the comparison host with the list of text settings to compare
+/// with (docs/porting/text-rendering.md, section 10).
+pub const TEXT_VARIANTS_ENV: &str = "FERROUI_WINUI_COMPARE_TEXT_VARIANTS";
+
+/// The keys of a text setting: those of the development override of the text rendering of the
+/// Skia backend (`ferroui_skia::TEXT_OVERRIDE_KEYS`) and `baseline`, the override of where a
+/// text block puts its text (`ferroui_base::media::text_formatting::TextBaselineRounding`).
+pub const TEXT_VARIANT_KEYS: &[&str] = &["contrast", "gamma", "edging", "hinting", "baseline_snap", "baseline"];
+
+/// One text setting of a calibration run: a name (the directory of its pictures) and the values
+/// of the development overrides it sets; the others keep the values of the environment of the
+/// process (`FERROUI_TEXT_*`).
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct TextVariant {
+    pub name: String,
+    /// `(key, value)`, keys in lower case with `_` (one of [`TEXT_VARIANT_KEYS`]).
+    pub values: Vec<(String, String)>,
+}
+
+impl TextVariant {
+    /// The value of `key`, if the setting sets it.
+    pub fn value(&self, key: &str) -> Option<&str> {
+        self.values.iter().rev().find(|(name, _)| name == key).map(|(_, value)| value.as_str())
+    }
+
+    /// The setting as it is written in the list (`name:key=value,...`).
+    pub fn specification(&self) -> String {
+        if self.values.is_empty() {
+            return format!("{}:default", self.name);
+        }
+        let values: Vec<String> = self.values.iter().map(|(key, value)| format!("{key}={value}")).collect();
+        format!("{}:{}", self.name, values.join(","))
+    }
+}
+
+/// Parses the list of text settings of a calibration run: settings separated by `;`, each
+/// `[name:]key=value,key=value` or `[name:]default` (no override), for example
+/// `default;c05:contrast=0.5;c1g18:contrast=1,gamma=1.8;winui:baseline=above`. A setting without
+/// a name is named after its values (`contrast-1_gamma-1.8`). An empty list gives no setting.
+///
+/// # Errors
+/// A key that is not one of [`TEXT_VARIANT_KEYS`], a setting without `=` that is not `default`,
+/// a name that is not letters, digits, `-`, `_` and `.`, or two settings of the same name.
+pub fn parse_text_variants(list: &str) -> Result<Vec<TextVariant>, String> {
+    let mut variants: Vec<TextVariant> = Vec::new();
+    for item in list.split(';').map(str::trim).filter(|item| !item.is_empty()) {
+        let (name, body) = match item.split_once(':') {
+            Some((name, body)) => (Some(name.trim()), body.trim()),
+            None => (None, item),
+        };
+        let mut values = Vec::new();
+        if !body.eq_ignore_ascii_case("default") {
+            for assignment in body.split(',').map(str::trim).filter(|assignment| !assignment.is_empty()) {
+                let Some((key, value)) = assignment.split_once('=') else {
+                    return Err(format!("{item:?}: {assignment:?} is not key=value"));
+                };
+                let key = key.trim().to_ascii_lowercase().replace('-', "_");
+                if !TEXT_VARIANT_KEYS.contains(&key.as_str()) {
+                    return Err(format!("{item:?}: {key:?} is not one of {}", TEXT_VARIANT_KEYS.join(", ")));
+                }
+                values.push((key, value.trim().to_string()));
+            }
+        }
+        let name = match name {
+            Some(name) if !name.is_empty() => name.to_string(),
+            _ if values.is_empty() => "default".to_string(),
+            _ => values.iter().map(|(key, value)| format!("{key}-{value}")).collect::<Vec<_>>().join("_"),
+        };
+        if !name.chars().all(|c| c.is_ascii_alphanumeric() || matches!(c, '-' | '_' | '.')) {
+            return Err(format!("{item:?}: the name {name:?} is not letters, digits, '-', '_' and '.' (it names a directory)"));
+        }
+        if variants.iter().any(|variant| variant.name == name) {
+            return Err(format!("{item:?}: a setting named {name:?} is in the list twice"));
+        }
+        variants.push(TextVariant { name, values });
+    }
+    Ok(variants)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::PAGES;
+
+    #[test]
+    fn the_text_variants_of_a_calibration_run_parse() {
+        assert_eq!(Ok(Vec::new()), parse_text_variants(" ; "));
+        let variants =
+            parse_text_variants("default; c1g18: contrast=1, gamma=1.8 ;Baseline=above;hinting=none,edging=antialias")
+                .expect("a list");
+        let names: Vec<&str> = variants.iter().map(|variant| variant.name.as_str()).collect();
+        assert_eq!(names, ["default", "c1g18", "baseline-above", "hinting-none_edging-antialias"]);
+        assert!(variants[0].values.is_empty());
+        assert_eq!(variants[1].value("gamma"), Some("1.8"));
+        assert_eq!(variants[1].value("edging"), None);
+        assert_eq!(variants[2].value("baseline"), Some("above"));
+        assert_eq!(variants[0].specification(), "default:default");
+        assert_eq!(variants[1].specification(), "c1g18:contrast=1,gamma=1.8");
+
+        assert!(parse_text_variants("weight=1").is_err());
+        assert!(parse_text_variants("contrast").is_err());
+        assert!(parse_text_variants("a b:contrast=1").is_err());
+        assert!(parse_text_variants("x:contrast=1;x:gamma=0").is_err());
+    }
 
     #[test]
     fn equal_pictures_do_not_differ() {
