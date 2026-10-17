@@ -6,7 +6,9 @@
   shows (docs/porting/winui-theme.md, section 6): the background of a window without its Mica
   backdrop (SolidBackgroundFillColorBaseBrush, which WinUI's MicaBackdrop falls back to), the
   primary text colour, and the font of the controls (ContentControlThemeFontFamily,
-  ControlContentThemeFontSize of dxaml/xcp/dxaml/themes/generic.xaml).
+  ControlContentThemeFontSize of dxaml/xcp/dxaml/themes/generic.xaml). The text blocks of the window
+  put the height layout rounding adds to them above their text, as WinUI's TextBlock does
+  (TextBlock.LayoutRoundingPlacement, inherited; docs/porting/text-rendering.md, section 6).
 -->
 <ResourceDictionary xmlns="https://github.com/ferroui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -18,6 +20,7 @@
     <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
     <Setter Property="FontSize" Value="{DynamicResource ControlContentThemeFontSize}" />
     <Setter Property="FontFamily" Value="{DynamicResource ContentControlThemeFontFamily}" />
+    <Setter Property="TextBlock.LayoutRoundingPlacement" Value="Above" />
     <Setter Property="Template">
       <ControlTemplate>
         <Panel>
