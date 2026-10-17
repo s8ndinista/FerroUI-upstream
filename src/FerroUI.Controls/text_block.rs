@@ -6,8 +6,9 @@ use ferroui_base::input::InputElementImpl;
 use ferroui_base::interactivity::InteractiveImpl;
 use ferroui_base::layout::{LayoutHelper, LayoutableImpl, LayoutableImplExt, VerticalAlignment};
 use ferroui_base::media::text_formatting::{
-    FormattedTextSource, GenericTextParagraphProperties, GenericTextRunProperties, ITextSource, TextCharacters,
-    TextEndOfParagraph, TextLayout, TextLineImpl, TextRun, TextRunCache, TextRunProperties,
+    text_baseline_rounding, FormattedTextSource, GenericTextParagraphProperties, GenericTextRunProperties,
+    ITextSource, TextCharacters, TextEndOfParagraph, TextLayout, TextLineImpl, TextRun, TextRunCache,
+    TextRunProperties,
 };
 use ferroui_base::media::{
     DrawingContext, FlowDirection, FontFamily, FontFeatureCollection, FontStretch, FontStyle, FontWeight, IBrush, TextAlignment,
@@ -237,9 +238,11 @@ impl TextBlockImpl for TextBlock {
         }
 
         let mut padding = this.padding();
+        let mut layout_scale = None;
         if this.use_layout_rounding() {
             let scale = LayoutHelper::get_layout_scale(this);
             padding = LayoutHelper::round_layout_thickness(padding, scale);
+            layout_scale = Some(scale);
         }
 
         let mut top = padding.top;
@@ -252,6 +255,15 @@ impl TextBlockImpl for TextBlock {
                 VerticalAlignment::Bottom => top += bounds_height - text_height,
                 _ => {}
             }
+        }
+
+        // A development override (FERROUI_TEXT_BASELINE_ROUNDING, not a
+        // supported API; docs/porting/text-rendering.md, section 6): the
+        // height layout rounding adds to the block above the text, as WinUI's
+        // TextBlock puts it. Unset, the text starts at the top as the
+        // reference draws it.
+        if let Some(scale) = layout_scale {
+            top += text_baseline_rounding().offset(text_height + padding.top + padding.bottom, scale);
         }
 
         this.render_text_layout(context, Point::new(padding.left, top));
