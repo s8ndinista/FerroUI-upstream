@@ -70,3 +70,23 @@ fn polygon_equals_closed_polyline_bounds() {
 
     assert_eq!(polygon.defining_geometry().unwrap().bounds(), polyline.defining_geometry().unwrap().bounds());
 }
+
+#[test]
+fn polygon_should_invalidate_geometry_when_points_collection_changes() {
+    let _app = MockRenderInterfaceScope::install();
+
+    let points = Points::from_items([Point::new(0.0, 0.0)]);
+    let target = Polygon::new();
+    target.set_points(Some(points.clone()));
+    target.measure(Size::INFINITY);
+
+    let geometry = target.defining_geometry();
+    assert!(geometry.is_some());
+    let invalidated = std::rc::Rc::new(std::cell::Cell::new(false));
+    let i = invalidated.clone();
+    geometry.unwrap().changed(move || i.set(true));
+
+    points.add(Point::new(10.0, 10.0));
+
+    assert!(invalidated.get());
+}

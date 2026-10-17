@@ -80,3 +80,23 @@ fn when_fill_is_null_polyline_geometry_is_not_filled() {
     let geometry = target.defining_geometry().unwrap().cast::<PolylineGeometry>().expect("a polyline geometry");
     assert!(!geometry.is_filled());
 }
+
+#[test]
+fn polyline_should_invalidate_geometry_when_points_collection_changes() {
+    let _app = MockRenderInterfaceScope::install();
+
+    let points = Points::from_items([Point::new(0.0, 0.0)]);
+    let target = Polyline::new();
+    target.set_points(Some(points.clone()));
+    target.measure(Size::INFINITY);
+
+    let geometry = target.defining_geometry();
+    assert!(geometry.is_some());
+    let invalidated = Rc::new(std::cell::Cell::new(false));
+    let i = invalidated.clone();
+    geometry.unwrap().changed(move || i.set(true));
+
+    points.add(Point::new(10.0, 10.0));
+
+    assert!(invalidated.get());
+}
