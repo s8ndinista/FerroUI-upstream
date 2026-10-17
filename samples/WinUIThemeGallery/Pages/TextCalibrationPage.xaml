@@ -6,8 +6,12 @@
        of a whole number of device-independent pixels, so that the comparison with the native
        counterpart (TextCalibrationPage.winui.xml, the same grid) measures the weight and the
        baseline of every size on its own (the rows option of scripts/text-quality.py). The rows are far
-       enough apart that the ink of two lines never touches. -->
-  <Grid Margin="24,24,24,0">
+       enough apart that the ink of two lines never touches. The grid is aligned to the top, as tall
+       as its rows: a grid of the framework that is taller than its fixed rows gives each row one
+       more device pixel under layout rounding (docs/porting/winui-theme-gallery.md, "Layout"),
+       which moved every row of the page lower than the one before it (by 11 px at the last row at
+       a scaling of 2). -->
+  <Grid Margin="24,24,24,0" VerticalAlignment="Top">
     <Grid.RowDefinitions>
       <RowDefinition Height="30" />
       <RowDefinition Height="32" />

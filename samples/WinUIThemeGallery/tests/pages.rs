@@ -1,8 +1,12 @@
 //! The table of the pages and the native pages beside the documents.
 
+use super::support::start_application;
 use crate::capture::{Options, Setting};
 use crate::theme::{Density, Variant};
-use crate::{PAGES, SAMPLE};
+use crate::{PageInfo, PAGES, SAMPLE};
+use ferroui_base::Point;
+use ferroui_controls::testing::MockWindowingPlatform;
+use ferroui_controls::{Control, TextBlock, TextLayoutRoundingPlacement, Window};
 use std::collections::BTreeSet;
 use std::path::Path;
 
@@ -76,4 +80,36 @@ fn the_default_options_show_every_page_in_light_and_dark_in_both_densities() {
     assert_eq!(options.settings.len(), 4);
     assert_eq!((options.width, options.height, options.scale), (720.0, 960.0, 1.0));
     assert_eq!((options.pixel_size().width, options.pixel_size().height), (720, 960));
+}
+
+/// The text calibration page puts every line at the top of its grid row: the rows have the
+/// heights the document gives them, as WinUI's grid has (the comparison measures the baseline of
+/// each row against the same row of the native page), and its text blocks have the placement of
+/// the baseline of the WinUI theme. At the scalings of the comparisons, 1 (CI) and 2 (the virtual
+/// machine), every row is a whole number of device pixels; at others both grids round them.
+#[test]
+fn the_lines_of_the_text_calibration_page_are_at_the_tops_of_their_rows() {
+    let _app = start_application();
+    let page = PageInfo::find("textcal").expect("the text calibration page");
+    let rows = [30.0, 32.0, 33.0, 33.0, 34.0, 36.0, 38.0, 41.0, 41.0, 46.0, 52.0, 52.0, 57.0];
+    for scaling in [1.0, 2.0] {
+        let window_impl = MockWindowingPlatform::create_window_mock();
+        window_impl.render_scaling.set(scaling);
+        let window = Window::with_impl(window_impl);
+        let control = (page.create)();
+        window.set_content(Some(Control::boxed(&control)));
+        window.show();
+        window.update_layout();
+
+        let lines: Vec<_> = control.get_visual_descendants().filter_map(|visual| visual.cast::<TextBlock>()).collect();
+        assert_eq!(rows.len(), lines.len(), "the lines of the page");
+        let mut top = 24.0;
+        for (line, height) in lines.iter().zip(rows) {
+            let y = line.translate_point(Point::default(), &control).expect("the line is in the page").y;
+            assert!((y - top).abs() < 1e-6, "{:?} at {scaling}: at {y}, its row at {top}", line.text());
+            assert_eq!(TextLayoutRoundingPlacement::Above, line.layout_rounding_placement());
+            top += height;
+        }
+        window.close();
+    }
 }
