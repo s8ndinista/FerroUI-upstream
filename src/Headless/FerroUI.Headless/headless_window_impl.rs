@@ -1,7 +1,7 @@
 //! Port of `HeadlessWindowImpl.cs`: the platform implementation of the
 //! windows and popups of the headless platform.
 
-use crate::ferro_headless_platform::{FerroHeadlessPlatform, FerroHeadlessPlatformOptions};
+use crate::ferro_headless_platform::{FerroHeadlessPlatform, SharedOptions};
 use crate::headless_platform_stubs::HeadlessScreensStub;
 use crate::headless_window_surface::HeadlessWindowSurface;
 use crate::i_headless_window::IHeadlessWindow;
@@ -73,7 +73,7 @@ pub(crate) struct HeadlessWindowImpl {
     // and the last rendered frame under its lock): upstream keeps it in the window, which is its
     // own surface; here it is an object the thread that renders shares with the window.
     surface: Arc<HeadlessWindowSurface>,
-    options: FerroHeadlessPlatformOptions,
+    options: SharedOptions,
     popup_parent: Option<Rc<HeadlessWindowImpl>>,
     popup_positioner: RefCell<Option<Rc<dyn IPopupPositioner>>>,
     is_popup: bool,
@@ -103,7 +103,7 @@ pub(crate) struct HeadlessWindowImpl {
 }
 
 impl HeadlessWindowImpl {
-    pub(crate) fn new(options: &FerroHeadlessPlatformOptions) -> Rc<HeadlessWindowImpl> {
+    pub(crate) fn new(options: &SharedOptions) -> Rc<HeadlessWindowImpl> {
         Self::create(options, None)
     }
 
@@ -127,13 +127,16 @@ impl HeadlessWindowImpl {
         popup
     }
 
-    fn create(
-        options: &FerroHeadlessPlatformOptions,
-        popup_parent: Option<Rc<HeadlessWindowImpl>>,
-    ) -> Rc<HeadlessWindowImpl> {
+    fn create(options: &SharedOptions, popup_parent: Option<Rc<HeadlessWindowImpl>>) -> Rc<HeadlessWindowImpl> {
         let keyboard = FerroLocator::current().get_required_service::<dyn IKeyboardDevice>();
         let screen: Rc<dyn IScreenImpl> = HeadlessScreensStub::new();
-        let mouse_device = if options.use_shared_mouse_device == Some(true) {
+        let (use_shared_mouse_device, frame_buffer_format) = {
+            let options = options.borrow();
+            (options.use_shared_mouse_device, options.frame_buffer_format)
+        };
+        // A popup starts with the render scaling of its parent.
+        let render_scaling = popup_parent.as_ref().map_or(1.0, |popup_parent| popup_parent.surface.render_scaling());
+        let mouse_device = if use_shared_mouse_device == Some(true) {
             MouseDevice::primary()
         } else {
             MouseDevice::with_pointer(Pointer::new(Pointer::get_next_free_id(), PointerType::Mouse, true))
@@ -146,7 +149,7 @@ impl HeadlessWindowImpl {
             screen,
             st: Instant::now(),
             touch_device: TouchDevice::new(),
-            surface: HeadlessWindowSurface::new(options.frame_buffer_format, Size::new(1024.0, 768.0), 1.0),
+            surface: HeadlessWindowSurface::new(frame_buffer_format, Size::new(1024.0, 768.0), render_scaling),
             options: options.clone(),
             popup_parent,
             popup_positioner: RefCell::new(None),
@@ -203,10 +206,13 @@ impl HeadlessWindowImpl {
         &self.mouse_device
     }
 
-    fn popup_move_resize(&self, position: PixelPoint, size: Size, _scaling: f64) {
+    fn popup_move_resize(&self, position: PixelPoint, size: Size, scaling: f64) {
         self.position.set(position);
         if let Some(position_changed) = get(&self.position_changed) {
             position_changed(position);
+        }
+        if self.surface.render_scaling() != scaling {
+            IHeadlessWindow::set_render_scaling(self, scaling);
         }
         self.do_resize(size, WindowResizeReason::Unspecified);
     }
@@ -293,7 +299,11 @@ impl IDisposable for HeadlessWindowImpl {
 
 impl ITopLevelImpl for HeadlessWindowImpl {
     fn desktop_scaling(&self) -> f64 {
-        self.surface.render_scaling()
+        if self.options.borrow().use_logical_desktop_coordinates {
+            1.0
+        } else {
+            self.surface.render_scaling()
+        }
     }
 
     fn handle(&self) -> Option<Rc<dyn IPlatformHandle>> {
@@ -373,11 +383,11 @@ impl ITopLevelImpl for HeadlessWindowImpl {
     }
 
     fn point_to_client(&self, point: PixelPoint) -> Point {
-        (point - self.position.get()).to_point(self.surface.render_scaling())
+        (point - IWindowBaseImpl::position(self)).to_point(ITopLevelImpl::desktop_scaling(self))
     }
 
     fn point_to_screen(&self, point: Point) -> PixelPoint {
-        PixelPoint::from_point(point, self.surface.render_scaling()) + self.position.get()
+        PixelPoint::from_point(point, ITopLevelImpl::desktop_scaling(self)) + IWindowBaseImpl::position(self)
     }
 
     fn set_cursor(&self, _cursor: Option<Rc<dyn ICursorImpl>>) {}
@@ -399,7 +409,7 @@ impl ITopLevelImpl for HeadlessWindowImpl {
     }
 
     fn create_popup(&self) -> Option<Rc<dyn IPopupImpl>> {
-        if self.options.overlay_popups {
+        if self.options.borrow().overlay_popups {
             None
         } else {
             let popup: Rc<dyn IPopupImpl> = HeadlessWindowImpl::new_popup(self.rc());
@@ -471,7 +481,11 @@ impl IWindowBaseImpl for HeadlessWindowImpl {
     }
 
     fn position(&self) -> PixelPoint {
-        self.position.get()
+        if self.is_popup || self.options.borrow().supports_window_positioning {
+            self.position.get()
+        } else {
+            PixelPoint::default()
+        }
     }
 
     fn position_changed(&self) -> Option<Rc<dyn Fn(PixelPoint)>> {
@@ -619,6 +633,9 @@ impl IWindowImpl for HeadlessWindowImpl {
     }
 
     fn move_(&self, point: PixelPoint) {
+        if !self.options.borrow().supports_window_positioning {
+            return;
+        }
         self.position.set(point);
         if let Some(position_changed) = get(&self.position_changed) {
             position_changed(point);

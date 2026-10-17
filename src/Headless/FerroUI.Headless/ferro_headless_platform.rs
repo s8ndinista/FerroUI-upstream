@@ -30,13 +30,19 @@ ferroui_base::ferro_thread_local! {
     /// The render timer when it is the headless one (the UI thread timer
     /// that can be ticked by force); `None` for the sleep loop timer.
     static HEADLESS_RENDER_TIMER: RefCell<Option<Arc<HeadlessRenderTimer>>> = const { RefCell::new(None) };
+    /// The options the platform was initialised with, which its windows share and read on
+    /// every use (the options object of the original, which the windows hold by reference).
+    static OPTIONS: RefCell<Option<SharedOptions>> = const { RefCell::new(None) };
 }
+
+/// The options of the platform as its windows hold them.
+pub(crate) type SharedOptions = Rc<RefCell<FerroHeadlessPlatformOptions>>;
 
 /// The headless platform.
 pub struct FerroHeadlessPlatform;
 
 struct HeadlessWindowingPlatform {
-    options: FerroHeadlessPlatformOptions,
+    options: SharedOptions,
 }
 
 impl IWindowingPlatform for HeadlessWindowingPlatform {
@@ -84,6 +90,14 @@ impl FerroHeadlessPlatform {
     /// dispatcher. Left to the destructors of the thread, the compositor is
     /// dropped after the dispatcher is gone, and its removal from the render
     /// loop, which asserts the UI thread, panics there.
+    /// The options of the platform of the calling thread, which its windows read on every use;
+    /// `None` before the platform is initialised. A test changes them for its own duration (the
+    /// `Reconfigure` of the tests of the original changes the object the platform was given).
+    #[allow(dead_code)] // read by the tests of the crate
+    pub(crate) fn options() -> Option<SharedOptions> {
+        OPTIONS.with(|options| options.borrow().clone())
+    }
+
     pub(crate) fn release_compositor() {
         let compositor = COMPOSITOR.with(|slot| slot.borrow_mut().take());
         drop(compositor);
@@ -108,8 +122,9 @@ impl FerroHeadlessPlatform {
 
         let keyboard_device: Rc<dyn IKeyboardDevice> = KeyboardDevice::new();
         let render_loop: Arc<dyn IRenderLoop> = RenderLoop::from_timer(render_timer);
-        let windowing_platform: Rc<dyn IWindowingPlatform> =
-            Rc::new(HeadlessWindowingPlatform { options: opts.clone() });
+        let options: SharedOptions = Rc::new(RefCell::new(opts.clone()));
+        OPTIONS.with(|slot| *slot.borrow_mut() = Some(options.clone()));
+        let windowing_platform: Rc<dyn IWindowingPlatform> = Rc::new(HeadlessWindowingPlatform { options });
 
         FerroLocator::current_mutable()
             .bind::<dyn IClipboardImpl>()
@@ -194,6 +209,18 @@ pub struct FerroHeadlessPlatformOptions {
     /// capture and click counting are global rather than per-window, as they are on the other
     /// platforms. When `None` or false, every top-level gets its own mouse device.
     pub use_shared_mouse_device: Option<bool>,
+
+    /// When false, top-level windows always report a [`PixelPoint`](ferroui_base::PixelPoint)
+    /// origin position and ignore moves, as on Wayland where the compositor owns window
+    /// placement. Popups still report their position relative to their parent. The default value
+    /// is true.
+    pub supports_window_positioning: bool,
+
+    /// When true, desktop scaling is always 1 and screen coordinates (window position,
+    /// `point_to_screen`, `point_to_client`) are logical units regardless of render scaling, as on
+    /// macOS and Wayland. The default value is false: screen coordinates are physical pixels, as
+    /// on Windows and X11.
+    pub use_logical_desktop_coordinates: bool,
 }
 
 impl Default for FerroHeadlessPlatformOptions {
@@ -205,6 +232,8 @@ impl Default for FerroHeadlessPlatformOptions {
             frame_buffer_format: PixelFormats::RGBA8888,
             overlay_popups: true,
             use_shared_mouse_device: None,
+            supports_window_positioning: true,
+            use_logical_desktop_coordinates: false,
         }
     }
 }

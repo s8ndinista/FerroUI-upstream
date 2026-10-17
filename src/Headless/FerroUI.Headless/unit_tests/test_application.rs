@@ -15,6 +15,7 @@
 //! framework to integrate with: [`run`] and [`run_async`] do what the test
 //! runner of the xUnit integration does.
 
+use crate::ferro_headless_platform::FerroHeadlessPlatform;
 use crate::{
     FerroHeadlessPlatformExtensions, FerroHeadlessPlatformOptions, FerroTestApplicationAttribute, FerroTestAssembly,
     FerroTestIsolationAttribute, FerroTestIsolationLevel, HeadlessUnitTestSession, HeadlessUnitTestTask,
@@ -75,6 +76,63 @@ impl TestApplication {
             use_shared_mouse_device: Some(Self::uses_shared_mouse_device()),
             ..FerroHeadlessPlatformOptions::default()
         })
+    }
+}
+
+/// Headless options that are re-read on every use rather than captured during platform
+/// initialization, so a test can change them for its own duration via
+/// [`TestApplication::reconfigure`]. `None` leaves the current value untouched.
+#[derive(Clone, Copy, Debug, Default)]
+pub(crate) struct HeadlessRuntimeOptions {
+    pub(crate) supports_window_positioning: Option<bool>,
+    pub(crate) use_logical_desktop_coordinates: Option<bool>,
+}
+
+impl TestApplication {
+    /// Applies the options that are not `None` for the lifetime of the returned scope, then
+    /// restores the previous values. The options are those of the platform of the session that
+    /// runs the test (the static options object of the original).
+    ///
+    /// # Panics
+    /// Panics when the platform of the calling thread is not initialised.
+    pub(crate) fn reconfigure(options: HeadlessRuntimeOptions) -> RestoreScope {
+        let current = FerroHeadlessPlatform::options().expect("the headless platform is initialised");
+        let previous = {
+            let current = current.borrow();
+            HeadlessRuntimeOptions {
+                supports_window_positioning: Some(current.supports_window_positioning),
+                use_logical_desktop_coordinates: Some(current.use_logical_desktop_coordinates),
+            }
+        };
+        Self::apply(options);
+        RestoreScope { previous: Cell::new(Some(previous)) }
+    }
+
+    fn apply(options: HeadlessRuntimeOptions) {
+        let Some(current) = FerroHeadlessPlatform::options() else {
+            return;
+        };
+        let mut current = current.borrow_mut();
+        if let Some(supports_window_positioning) = options.supports_window_positioning {
+            current.supports_window_positioning = supports_window_positioning;
+        }
+        if let Some(use_logical_desktop_coordinates) = options.use_logical_desktop_coordinates {
+            current.use_logical_desktop_coordinates = use_logical_desktop_coordinates;
+        }
+    }
+}
+
+/// Restores the options [`TestApplication::reconfigure`] changed when it is dropped (the
+/// `IDisposable` of the original).
+pub(crate) struct RestoreScope {
+    previous: Cell<Option<HeadlessRuntimeOptions>>,
+}
+
+impl Drop for RestoreScope {
+    fn drop(&mut self) {
+        if let Some(previous) = self.previous.take() {
+            TestApplication::apply(previous);
+        }
     }
 }
 

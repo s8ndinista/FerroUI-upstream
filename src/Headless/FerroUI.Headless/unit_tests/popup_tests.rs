@@ -1,13 +1,13 @@
 //! Port of `PopupTests.cs` of the upstream unit test project of the
 //! headless platform.
 
-use super::test_application::ferro_fact;
+use super::test_application::{ferro_fact, HeadlessRuntimeOptions, TestApplication};
 use crate::HeadlessWindowExtensions;
 use ferroui_base::input::{MouseButton, RawInputModifiers};
 use ferroui_base::layout::{HorizontalAlignment, VerticalAlignment};
-use ferroui_base::media::Brushes;
+use ferroui_base::media::{Brushes, IBrush};
 use ferroui_base::threading::Dispatcher;
-use ferroui_base::{PixelPoint, Point, Ref, Visual};
+use ferroui_base::{PixelPoint, Point, Ref, Thickness, Visual};
 use ferroui_controls::primitives::{Popup, PopupRoot};
 use ferroui_controls::{Border, Button, Control, Panel, PlacementMode, TopLevel, Window};
 use std::cell::Cell;
@@ -38,6 +38,25 @@ fn sized_border(width: f64, height: f64) -> Ref<Border> {
     border.set_width(width);
     border.set_height(height);
     border
+}
+
+/// A border of 20 by 20 at the top left of its parent, moved by a margin.
+fn placed_border(left: f64, top: f64, background: std::rc::Rc<dyn IBrush>) -> Ref<Border> {
+    let border = sized_border(20.0, 20.0);
+    border.set_horizontal_alignment(HorizontalAlignment::Left);
+    border.set_vertical_alignment(VerticalAlignment::Top);
+    border.set_margin(Thickness::new(left, top, 0.0, 0.0));
+    border.set_background(Some(background));
+    border
+}
+
+/// A popup of 20 by 20 below `target`.
+fn popup_below(target: &Ref<Border>) -> Ref<Popup> {
+    let popup = Popup::new();
+    popup.set_placement_target(target.clone());
+    popup.set_placement(PlacementMode::Bottom);
+    popup.set_child(sized_border(20.0, 20.0));
+    popup
 }
 
 fn point_to_screen_respects_window_position() {
@@ -195,6 +214,135 @@ fn nested_popup_is_owned_by_parent_popup() {
     window.close();
 }
 ferro_fact!(nested_popup_is_owned_by_parent_popup);
+
+fn nested_popup_placement_respects_parent_popup_position() {
+    let nested_target = placed_border(10.0, 5.0, Brushes::green());
+    let nested_popup = popup_below(&nested_target);
+    let target = placed_border(30.0, 40.0, Brushes::red());
+    let popup = Popup::new();
+    popup.set_placement_target(target.clone());
+    popup.set_placement(PlacementMode::Bottom);
+    let popup_panel = Panel::new();
+    popup_panel.set_width(20.0);
+    popup_panel.set_height(50.0);
+    popup_panel.children().add(&nested_target);
+    popup_panel.children().add(&nested_popup);
+    popup.set_child(popup_panel);
+    let window = window_with(&target, &popup);
+    window.set_position(PixelPoint::new(100, 200));
+    window.show();
+    Dispatcher::ui_thread().run_jobs(None);
+
+    popup.open();
+    Dispatcher::ui_thread().run_jobs(None);
+    nested_popup.open();
+    Dispatcher::ui_thread().run_jobs(None);
+
+    let popup_root = get_popup_top_level(&popup).expect("the popup has a top level");
+    let nested_root = get_popup_top_level(&nested_popup).expect("the nested popup has a top level");
+    assert_eq!(target.point_to_screen(Point::new(0.0, 20.0)), popup_root.point_to_screen(Point::default()));
+    assert_eq!(nested_target.point_to_screen(Point::new(0.0, 20.0)), nested_root.point_to_screen(Point::default()));
+
+    window.close();
+}
+ferro_fact!(nested_popup_placement_respects_parent_popup_position);
+
+fn popup_placement_respects_render_scaling() {
+    let target = placed_border(30.0, 40.0, Brushes::red());
+    let popup = popup_below(&target);
+    let window = window_with(&target, &popup);
+    window.set_position(PixelPoint::new(100, 200));
+    window.show();
+    window.set_render_scaling(2.0);
+    Dispatcher::ui_thread().run_jobs(None);
+
+    popup.open();
+    Dispatcher::ui_thread().run_jobs(None);
+
+    let popup_root = get_popup_top_level(&popup).expect("the popup has a top level");
+    assert_eq!(target.point_to_screen(Point::new(0.0, 20.0)), popup_root.point_to_screen(Point::default()));
+    assert_eq!(2.0, popup_root.render_scaling());
+
+    window.close();
+}
+ferro_fact!(popup_placement_respects_render_scaling);
+
+fn popup_follows_window_move() {
+    let target = placed_border(30.0, 40.0, Brushes::red());
+    let popup = popup_below(&target);
+    let window = window_with(&target, &popup);
+    window.set_position(PixelPoint::new(100, 200));
+    window.show();
+    Dispatcher::ui_thread().run_jobs(None);
+
+    popup.open();
+    Dispatcher::ui_thread().run_jobs(None);
+
+    window.set_position(PixelPoint::new(300, 400));
+    Dispatcher::ui_thread().run_jobs(None);
+
+    let popup_root = get_popup_top_level(&popup).expect("the popup has a top level");
+    assert_eq!(PixelPoint::new(330, 460), popup_root.point_to_screen(Point::default()));
+
+    window.close();
+}
+ferro_fact!(popup_follows_window_move);
+
+fn window_position_is_fixed_when_positioning_is_not_supported() {
+    let _scope = TestApplication::reconfigure(HeadlessRuntimeOptions {
+        supports_window_positioning: Some(false),
+        ..HeadlessRuntimeOptions::default()
+    });
+
+    let target = placed_border(30.0, 40.0, Brushes::red());
+    let popup = popup_below(&target);
+    let window = window_with(&target, &popup);
+    window.set_position(PixelPoint::new(100, 200));
+    window.show();
+    Dispatcher::ui_thread().run_jobs(None);
+
+    assert_eq!(PixelPoint::ORIGIN, window.position());
+    assert_eq!(PixelPoint::new(10, 20), window.point_to_screen(Point::new(10.0, 20.0)));
+
+    popup.open();
+    Dispatcher::ui_thread().run_jobs(None);
+
+    let popup_root = get_popup_top_level(&popup).expect("the popup has a top level");
+    assert_eq!(PixelPoint::new(30, 60), popup_root.point_to_screen(Point::default()));
+
+    window.close();
+}
+ferro_fact!(window_position_is_fixed_when_positioning_is_not_supported);
+
+fn desktop_coordinates_are_logical_when_enabled() {
+    let _scope = TestApplication::reconfigure(HeadlessRuntimeOptions {
+        use_logical_desktop_coordinates: Some(true),
+        ..HeadlessRuntimeOptions::default()
+    });
+
+    let target = placed_border(30.0, 40.0, Brushes::red());
+    let popup = popup_below(&target);
+    let window = window_with(&target, &popup);
+    window.set_position(PixelPoint::new(100, 200));
+    window.show();
+    window.set_render_scaling(2.0);
+    Dispatcher::ui_thread().run_jobs(None);
+
+    assert_eq!(2.0, window.render_scaling());
+    assert_eq!(1.0, window.desktop_scaling());
+    assert_eq!(PixelPoint::new(110, 220), window.point_to_screen(Point::new(10.0, 20.0)));
+    assert_eq!(Point::new(10.0, 20.0), window.point_to_client(PixelPoint::new(110, 220)));
+
+    popup.open();
+    Dispatcher::ui_thread().run_jobs(None);
+
+    let popup_root = get_popup_top_level(&popup).expect("the popup has a top level");
+    assert_eq!(2.0, popup_root.render_scaling());
+    assert_eq!(PixelPoint::new(130, 260), popup_root.point_to_screen(Point::default()));
+
+    window.close();
+}
+ferro_fact!(desktop_coordinates_are_logical_when_enabled);
 
 pub(crate) fn get_popup_top_level(popup: &Popup) -> Option<Ref<TopLevel>> {
     let child = popup.child();
