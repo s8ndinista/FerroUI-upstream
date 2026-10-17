@@ -309,6 +309,39 @@ fn menu_item_unsubscribes_from_command_can_execute_changed_when_removed_from_log
 }
 
 #[test]
+fn menu_item_subscribes_once_to_style_set_command_can_execute_changed_when_added_to_logical_tree() {
+    let _scope = test_scope();
+    let command = TestCommand::new(true);
+    let target = MenuItem::new();
+    let root = TestRoot::new();
+    root.styles().add(Style::with_setters(
+        Selectors::of_type::<MenuItem>(),
+        [Setter::new(MenuItem::command_property(), command.as_command())],
+    ));
+    root.set_child(&target);
+
+    assert!(Rc::ptr_eq(&target.command().expect("the style sets the command"), &command.as_command().unwrap()));
+    assert_eq!(1, command.subscription_count());
+}
+
+#[test]
+fn menu_item_unsubscribes_from_style_set_command_can_execute_changed_when_removed_from_logical_tree() {
+    let _scope = test_scope();
+    let command = TestCommand::new(true);
+    let target = MenuItem::new();
+    let root = TestRoot::new();
+    root.styles().add(Style::with_setters(
+        Selectors::of_type::<MenuItem>(),
+        [Setter::new(MenuItem::command_property(), command.as_command())],
+    ));
+    root.set_child(&target);
+
+    root.set_child(None);
+
+    assert_eq!(0, command.subscription_count());
+}
+
+#[test]
 fn menu_item_invokes_can_execute_when_added_to_logical_tree_and_command_parameter_changed() {
     let _scope = test_scope();
     let command = TestCommand::with_can_execute(|p| {

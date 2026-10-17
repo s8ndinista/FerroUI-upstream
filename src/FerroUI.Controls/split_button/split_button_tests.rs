@@ -4,6 +4,7 @@ use crate::test_support::{test_scope, TestRoot};
 use crate::test_support_buttons::focus_scope;
 use crate::{Control, SplitButton};
 use ferroui_base::input::{InputElement, Key, KeyEventArgs};
+use ferroui_base::styling::{Selectors, Setter, Style};
 use ferroui_base::BoxedValue;
 use std::cell::{Cell, RefCell};
 use std::rc::Rc;
@@ -50,6 +51,26 @@ fn split_button_command_parameter_does_not_change_while_execution() {
 }
 
 /// A focusable control stands in for the text box of the reference test.
+#[test]
+fn split_button_subscribes_once_to_style_set_command_can_execute_changed_while_in_logical_tree() {
+    let _scope = test_scope();
+    let command = TestCommand::new(true);
+    let target = SplitButton::new();
+    let root = TestRoot::new();
+    root.styles().add(Style::with_setters(
+        Selectors::of_type::<SplitButton>(),
+        [Setter::new(SplitButton::command_property(), command.as_command())],
+    ));
+    root.set_child(&target);
+
+    assert!(Rc::ptr_eq(&target.command().expect("the style sets the command"), &command.as_command().unwrap()));
+    assert_eq!(1, command.subscription_count());
+
+    root.set_child(None);
+
+    assert_eq!(0, command.subscription_count());
+}
+
 #[test]
 fn should_not_fire_click_event_on_space_key_when_it_is_not_focus() {
     let _scope = test_scope();

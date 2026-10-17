@@ -49,6 +49,7 @@ use std::rc::Rc;
 pub struct MenuItem {
     base: HeaderedSelectingItemsControl,
     can_execute_change_subscription: RefCell<Option<Rc<dyn IDisposable>>>,
+    is_subscribed_to_command: Cell<bool>,
     command_can_execute: Cell<bool>,
     command_binding_error: Cell<bool>,
     popup: RefCell<Option<Ref<Popup>>>,
@@ -186,6 +187,8 @@ impl StyledElementImpl for MenuItem {
             this.subscribe_can_execute_changed(command);
         }
 
+        this.is_subscribed_to_command.set(true);
+
         this.try_update_can_execute_with(command.as_ref(), parameter.as_ref());
 
         let mut parent = this.parent();
@@ -219,6 +222,8 @@ impl StyledElementImpl for MenuItem {
         if this.command().is_some() {
             this.unsubscribe_can_execute_changed();
         }
+
+        this.is_subscribed_to_command.set(false);
     }
 }
 
@@ -677,6 +682,7 @@ impl MenuItem {
         Self {
             base: HeaderedSelectingItemsControl::construct(),
             can_execute_change_subscription: RefCell::new(None),
+            is_subscribed_to_command: Cell::new(false),
             command_can_execute: Cell::new(true),
             command_binding_error: Cell::new(false),
             popup: RefCell::new(None),
@@ -905,7 +911,7 @@ impl MenuItem {
     fn command_changed(&self, e: &FerroPropertyChangedEventArgs<'_>) {
         let (old_command, new_command) = e.get_old_and_new_value::<Option<Rc<dyn ICommand>>>();
 
-        if self.is_attached_to_logical_tree() {
+        if self.is_subscribed_to_command.get() {
             if old_command.is_some() {
                 self.unsubscribe_can_execute_changed();
             }
