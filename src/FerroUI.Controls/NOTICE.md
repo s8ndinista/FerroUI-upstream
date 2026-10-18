@@ -99,6 +99,49 @@ project adapted from the WinUI project
 (<https://github.com/microsoft/microsoft-ui-xaml>), MIT License,
 Copyright (c) Microsoft Corporation.
 
+### Rich text document, view, editor and accessibility
+
+The rich text implementation adapts source and public contracts from
+`microsoft/microsoft-ui-xaml`, pinned at
+`fe244ca6ac4d482712b234a9de3cf771cc6481de`.
+
+| FerroUI files | Pinned source and contract families |
+|---|---|
+| `rich_text_block.rs`, `rich_text_block_overflow.rs`, `rich_text_layout.rs`, and their tests | `dxaml/xcp/core/text/RichTextBlock/`, `BlockLayout/`, selection/view contracts under `core/inc` and `core/text/Inc`, and `dxaml/xcp/components/text/TextHighlightRenderer.*`. |
+| `rich_edit_box.rs`, `rich_edit_box_text_input_method_client.rs`, `rich_text/`, and editor tests | `dxaml/xcp/core/native/text/Controls/RichEditBox.*`, `TextBoxBase.*`, `TextBoxView.*`, `TextServicesHost.*`, and the external text-object contracts documented by `packaging/Intellisense/generated/Microsoft.UI.Text.xml`. |
+| Rich text/edit automation peers and `automation/provider/{i_text_provider,i_text_range_provider,rich_text_automation}.rs` with their tests | Native rich control automation peers, text provider declarations, `dxaml/xcp/win/shared/UIAPatternProviderWrapper.cpp`, its header under `win/inc`, and the generated public text/range provider contracts. |
+| Document modules | The block/paragraph/inline/hyperlink/position/highlighter sources recorded in [documents/NOTICE.md](documents/NOTICE.md). |
+
+The Rust document/editor/RTF implementation uses the existing FerroUI services.
+It does not incorporate the unavailable implementations of WinUIEdit, LineServices
+or the Windows text engines. The complete file/member map and remaining behavior
+differences are in [the rich text port record](../../docs/porting/winui-rich-text/README.md).
+The Windows native text bridge carries its related notice in the Win32 crate.
+
+```
+MIT License
+
+Copyright (c) Microsoft Corporation. All rights reserved.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE
+```
+
 ## Silverlight Toolkit
 
 The files under `auto_complete_box/` (`auto_complete_box.rs`,

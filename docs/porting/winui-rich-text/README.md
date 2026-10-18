@@ -25,6 +25,8 @@ inventory does not establish rich text implementation parity at this reference.
 
 - [PLAN.md](PLAN.md): dependency decisions, Rust/FerroUI mapping, work batches,
   and the acceptance requirements for each subsystem.
+- [IMPLEMENTATION.md](IMPLEMENTATION.md): document, overflow, editor, RTF/clipboard,
+  input-method and accessibility architecture with Rust and XAML examples.
 - [API-MAP.md](API-MAP.md): a destination/review plan for every public API owner,
   with exact member, Rust target, test and deviation evidence for reviewed entries.
 - [JOURNAL.md](JOURNAL.md): implementation/checkpoint history and the distinction

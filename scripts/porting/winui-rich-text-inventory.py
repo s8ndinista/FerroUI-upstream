@@ -317,7 +317,7 @@ def api_type_plan(owner: str) -> dict:
         return {"batch": "R2/R7", "candidate_paths": ["src/FerroUI.Controls/rich_text_block.rs", "src/FerroUI.Controls/rich_text_block_overflow.rs", "src/FerroUI.Controls/rich_text_layout.rs"], "remaining_review": "Review document ownership, line/overflow continuation, selection, rendering, input, property notifications and accessibility. Existing formatter output is not exact native engine or pixel parity."}
     if ".Controls." in owner:
         return {"batch": "R5/R7", "candidate_paths": ["src/FerroUI.Controls/rich_edit_box.rs", "src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs"], "remaining_review": "Review editable control members, native event timing, IME/clipboard capabilities, templates, accelerators and automation. Missing members are omitted, not stubbed."}
-    if name in {"ITextDocument", "ITextRange", "ITextSelection"}:
+    if name in {"RichEditTextDocument", "RichEditTextRange", "ITextRange", "ITextSelection"}:
         return {"batch": "R3/R8", "candidate_paths": ["src/FerroUI.Controls/rich_text/rich_edit_text_document.rs"], "remaining_review": "Audit the external TOM contract member by member. The Rust facade uses typed errors, UTF-16 text ranges and shared editor services; native option flags, ABI, streams and additional units are not inferred from similarly named methods."}
     if name in {"ITextCharacterFormat", "ITextParagraphFormat"}:
         return {"batch": "R3/R8", "candidate_paths": [DOCUMENT_ROOT + "character_format.rs"], "remaining_review": "Audit native formatting units, mixed values, font/brush representation, tabs, lists, language and formatting flags. Rust patches cover only explicitly mapped fields."}

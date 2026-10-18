@@ -47,49 +47,49 @@ Every file in the three primary roots is retained, including build and data file
 
 | Upstream file | State | Reviewed Rust target |
 |---|---|---|
-| `dxaml/xcp/core/inc/BlockTextElement.h` | pending | — |
+| `dxaml/xcp/core/inc/BlockTextElement.h` | partial | `src/FerroUI.Controls/documents/paragraph.rs`, `src/FerroUI.Controls/documents/paragraph.rs`, `src/FerroUI.Controls/documents/paragraph.rs`, `src/FerroUI.Controls/documents/block.rs` |
 | `dxaml/xcp/core/inc/RichTextServicesHelper.h` | pending | — |
 | `dxaml/xcp/core/inc/TextElementCollection.h` | pending | — |
-| `dxaml/xcp/core/text/Inc/TextSchema.h` | pending | — |
+| `dxaml/xcp/core/text/Inc/TextSchema.h` | partial | `src/FerroUI.Controls/documents/rich_text_document.rs`, `src/FerroUI.Controls/documents/rich_text_document.rs`, `src/FerroUI.Controls/documents/rich_text_document.rs` |
 | `dxaml/xcp/core/text/RichTextArea/RichTextServicesHelper.cpp` | pending | — |
 | `dxaml/xcp/core/text/RichTextArea/TextElementCollection.cpp` | pending | — |
-| `dxaml/xcp/core/text/RichTextArea/TextSchema.cpp` | pending | — |
-| `dxaml/xcp/core/text/RichTextArea/paragraph.cpp` | pending | — |
-| `dxaml/xcp/core/text/common/BlockCollection.cpp` | pending | — |
+| `dxaml/xcp/core/text/RichTextArea/TextSchema.cpp` | partial | `src/FerroUI.Controls/documents/rich_text_document.rs`, `src/FerroUI.Controls/documents/rich_text_document.rs`, `src/FerroUI.Controls/documents/rich_text_document.rs` |
+| `dxaml/xcp/core/text/RichTextArea/paragraph.cpp` | partial | `src/FerroUI.Controls/documents/paragraph.rs`, `src/FerroUI.Controls/documents/paragraph.rs`, `src/FerroUI.Controls/documents/paragraph.rs`, `src/FerroUI.Controls/documents/block.rs` |
+| `dxaml/xcp/core/text/common/BlockCollection.cpp` | partial | `src/FerroUI.Controls/documents/block_collection.rs`, `src/FerroUI.Controls/documents/block_collection.rs` |
 
 ## Block layout
 
 | Upstream file | State | Reviewed Rust target |
 |---|---|---|
-| `dxaml/xcp/core/text/BlockLayout/BlockLayoutEngine.cpp` | pending | — |
-| `dxaml/xcp/core/text/BlockLayout/BlockLayoutEngine.h` | pending | — |
+| `dxaml/xcp/core/text/BlockLayout/BlockLayoutEngine.cpp` | partial | `src/FerroUI.Controls/rich_text_layout.rs`, `src/FerroUI.Controls/rich_text_layout.rs` |
+| `dxaml/xcp/core/text/BlockLayout/BlockLayoutEngine.h` | partial | `src/FerroUI.Controls/rich_text_layout.rs`, `src/FerroUI.Controls/rich_text_layout.rs` |
 | `dxaml/xcp/core/text/BlockLayout/BlockLayoutHelpers.cpp` | pending | — |
 | `dxaml/xcp/core/text/BlockLayout/BlockLayoutHelpers.h` | pending | — |
-| `dxaml/xcp/core/text/BlockLayout/BlockNode.cpp` | pending | — |
-| `dxaml/xcp/core/text/BlockLayout/BlockNode.h` | pending | — |
-| `dxaml/xcp/core/text/BlockLayout/BlockNodeBreak.cpp` | pending | — |
-| `dxaml/xcp/core/text/BlockLayout/BlockNodeBreak.h` | pending | — |
-| `dxaml/xcp/core/text/BlockLayout/ContainerDrawingContext.cpp` | pending | — |
-| `dxaml/xcp/core/text/BlockLayout/ContainerDrawingContext.h` | pending | — |
-| `dxaml/xcp/core/text/BlockLayout/ContainerNode.cpp` | pending | — |
-| `dxaml/xcp/core/text/BlockLayout/ContainerNode.h` | pending | — |
-| `dxaml/xcp/core/text/BlockLayout/DrawingContext.cpp` | pending | — |
-| `dxaml/xcp/core/text/BlockLayout/DrawingContext.h` | pending | — |
-| `dxaml/xcp/core/text/BlockLayout/LineMetrics.h` | pending | — |
-| `dxaml/xcp/core/text/BlockLayout/PageHostedObjectRun.cpp` | pending | — |
-| `dxaml/xcp/core/text/BlockLayout/PageHostedObjectRun.h` | pending | — |
-| `dxaml/xcp/core/text/BlockLayout/PageNode.cpp` | pending | — |
-| `dxaml/xcp/core/text/BlockLayout/PageNode.h` | pending | — |
-| `dxaml/xcp/core/text/BlockLayout/PageNodeBreak.cpp` | pending | — |
-| `dxaml/xcp/core/text/BlockLayout/PageNodeBreak.h` | pending | — |
-| `dxaml/xcp/core/text/BlockLayout/ParagraphDrawingContext.cpp` | pending | — |
-| `dxaml/xcp/core/text/BlockLayout/ParagraphDrawingContext.h` | pending | — |
-| `dxaml/xcp/core/text/BlockLayout/ParagraphNode.cpp` | pending | — |
-| `dxaml/xcp/core/text/BlockLayout/ParagraphNode.h` | pending | — |
-| `dxaml/xcp/core/text/BlockLayout/ParagraphNodeBreak.cpp` | pending | — |
-| `dxaml/xcp/core/text/BlockLayout/ParagraphNodeBreak.h` | pending | — |
-| `dxaml/xcp/core/text/BlockLayout/ParagraphTextSource.cpp` | pending | — |
-| `dxaml/xcp/core/text/BlockLayout/ParagraphTextSource.h` | pending | — |
+| `dxaml/xcp/core/text/BlockLayout/BlockNode.cpp` | partial | `src/FerroUI.Controls/rich_text_layout.rs`, `src/FerroUI.Controls/rich_text_layout.rs` |
+| `dxaml/xcp/core/text/BlockLayout/BlockNode.h` | partial | `src/FerroUI.Controls/rich_text_layout.rs`, `src/FerroUI.Controls/rich_text_layout.rs` |
+| `dxaml/xcp/core/text/BlockLayout/BlockNodeBreak.cpp` | partial | `src/FerroUI.Controls/rich_text_layout.rs` |
+| `dxaml/xcp/core/text/BlockLayout/BlockNodeBreak.h` | partial | `src/FerroUI.Controls/rich_text_layout.rs` |
+| `dxaml/xcp/core/text/BlockLayout/ContainerDrawingContext.cpp` | partial | `src/FerroUI.Controls/rich_text_layout.rs` |
+| `dxaml/xcp/core/text/BlockLayout/ContainerDrawingContext.h` | partial | `src/FerroUI.Controls/rich_text_layout.rs` |
+| `dxaml/xcp/core/text/BlockLayout/ContainerNode.cpp` | partial | `src/FerroUI.Controls/rich_text_layout.rs`, `src/FerroUI.Controls/rich_text_layout.rs` |
+| `dxaml/xcp/core/text/BlockLayout/ContainerNode.h` | partial | `src/FerroUI.Controls/rich_text_layout.rs`, `src/FerroUI.Controls/rich_text_layout.rs` |
+| `dxaml/xcp/core/text/BlockLayout/DrawingContext.cpp` | partial | `src/FerroUI.Controls/rich_text_layout.rs` |
+| `dxaml/xcp/core/text/BlockLayout/DrawingContext.h` | partial | `src/FerroUI.Controls/rich_text_layout.rs` |
+| `dxaml/xcp/core/text/BlockLayout/LineMetrics.h` | partial | `src/FerroUI.Controls/rich_text_layout.rs` |
+| `dxaml/xcp/core/text/BlockLayout/PageHostedObjectRun.cpp` | partial | `src/FerroUI.Controls/rich_text_layout.rs` |
+| `dxaml/xcp/core/text/BlockLayout/PageHostedObjectRun.h` | partial | `src/FerroUI.Controls/rich_text_layout.rs` |
+| `dxaml/xcp/core/text/BlockLayout/PageNode.cpp` | partial | `src/FerroUI.Controls/rich_text_layout.rs`, `src/FerroUI.Controls/rich_text_layout.rs` |
+| `dxaml/xcp/core/text/BlockLayout/PageNode.h` | partial | `src/FerroUI.Controls/rich_text_layout.rs`, `src/FerroUI.Controls/rich_text_layout.rs` |
+| `dxaml/xcp/core/text/BlockLayout/PageNodeBreak.cpp` | partial | `src/FerroUI.Controls/rich_text_layout.rs` |
+| `dxaml/xcp/core/text/BlockLayout/PageNodeBreak.h` | partial | `src/FerroUI.Controls/rich_text_layout.rs` |
+| `dxaml/xcp/core/text/BlockLayout/ParagraphDrawingContext.cpp` | partial | `src/FerroUI.Controls/rich_text_layout.rs` |
+| `dxaml/xcp/core/text/BlockLayout/ParagraphDrawingContext.h` | partial | `src/FerroUI.Controls/rich_text_layout.rs` |
+| `dxaml/xcp/core/text/BlockLayout/ParagraphNode.cpp` | partial | `src/FerroUI.Controls/rich_text_layout.rs`, `src/FerroUI.Controls/rich_text_layout.rs` |
+| `dxaml/xcp/core/text/BlockLayout/ParagraphNode.h` | partial | `src/FerroUI.Controls/rich_text_layout.rs`, `src/FerroUI.Controls/rich_text_layout.rs` |
+| `dxaml/xcp/core/text/BlockLayout/ParagraphNodeBreak.cpp` | partial | `src/FerroUI.Controls/rich_text_layout.rs` |
+| `dxaml/xcp/core/text/BlockLayout/ParagraphNodeBreak.h` | partial | `src/FerroUI.Controls/rich_text_layout.rs` |
+| `dxaml/xcp/core/text/BlockLayout/ParagraphTextSource.cpp` | partial | `src/FerroUI.Controls/rich_text_layout.rs`, `src/FerroUI.Controls/rich_text_layout.rs` |
+| `dxaml/xcp/core/text/BlockLayout/ParagraphTextSource.h` | partial | `src/FerroUI.Controls/rich_text_layout.rs`, `src/FerroUI.Controls/rich_text_layout.rs` |
 
 ## Build, tooling and attribution
 
@@ -115,21 +115,21 @@ Every file in the three primary roots is retained, including build and data file
 
 | Upstream file | State | Reviewed Rust target |
 |---|---|---|
-| `dxaml/xcp/dxaml/lib/BlockCollection_Partial.cpp` | pending | — |
-| `dxaml/xcp/dxaml/lib/BlockCollection_Partial.h` | pending | — |
+| `dxaml/xcp/dxaml/lib/BlockCollection_Partial.cpp` | partial | `src/FerroUI.Controls/documents/block_collection.rs`, `src/FerroUI.Controls/documents/block_collection.rs` |
+| `dxaml/xcp/dxaml/lib/BlockCollection_Partial.h` | partial | `src/FerroUI.Controls/documents/block_collection.rs`, `src/FerroUI.Controls/documents/block_collection.rs` |
 | `dxaml/xcp/dxaml/lib/CaretBrowsingDialog.cpp` | pending | — |
 | `dxaml/xcp/dxaml/lib/CaretBrowsingDialog.h` | pending | — |
-| `dxaml/xcp/dxaml/lib/HyperLink_Partial.cpp` | pending | — |
-| `dxaml/xcp/dxaml/lib/HyperLink_Partial.h` | pending | — |
-| `dxaml/xcp/dxaml/lib/InlineCollection_Partial.cpp` | pending | — |
-| `dxaml/xcp/dxaml/lib/InlineCollection_Partial.h` | pending | — |
+| `dxaml/xcp/dxaml/lib/HyperLink_Partial.cpp` | partial | `src/FerroUI.Controls/documents/hyperlink.rs`, `src/FerroUI.Controls/documents/hyperlink.rs`, `src/FerroUI.Controls/documents/hyperlink.rs` |
+| `dxaml/xcp/dxaml/lib/HyperLink_Partial.h` | partial | `src/FerroUI.Controls/documents/hyperlink.rs`, `src/FerroUI.Controls/documents/hyperlink.rs`, `src/FerroUI.Controls/documents/hyperlink.rs` |
+| `dxaml/xcp/dxaml/lib/InlineCollection_Partial.cpp` | partial | `src/FerroUI.Controls/documents/inline_collection.rs`, `src/FerroUI.Controls/documents/inline_collection.rs` |
+| `dxaml/xcp/dxaml/lib/InlineCollection_Partial.h` | partial | `src/FerroUI.Controls/documents/inline_collection.rs`, `src/FerroUI.Controls/documents/inline_collection.rs` |
 | `dxaml/xcp/dxaml/lib/InlineUIContainer_Partial.cpp` | pending | — |
 | `dxaml/xcp/dxaml/lib/InlineUIContainer_Partial.h` | pending | — |
 | `dxaml/xcp/dxaml/lib/InputScopeNameFactory.cpp` | pending | — |
-| `dxaml/xcp/dxaml/lib/Paragraph_Partial.cpp` | pending | — |
-| `dxaml/xcp/dxaml/lib/Paragraph_Partial.h` | pending | — |
-| `dxaml/xcp/dxaml/lib/RichEditBox_Partial.cpp` | pending | — |
-| `dxaml/xcp/dxaml/lib/RichEditBox_Partial.h` | pending | — |
+| `dxaml/xcp/dxaml/lib/Paragraph_Partial.cpp` | partial | `src/FerroUI.Controls/documents/paragraph.rs`, `src/FerroUI.Controls/documents/paragraph.rs`, `src/FerroUI.Controls/documents/paragraph.rs`, `src/FerroUI.Controls/documents/block.rs` |
+| `dxaml/xcp/dxaml/lib/Paragraph_Partial.h` | partial | `src/FerroUI.Controls/documents/paragraph.rs`, `src/FerroUI.Controls/documents/paragraph.rs`, `src/FerroUI.Controls/documents/paragraph.rs`, `src/FerroUI.Controls/documents/block.rs` |
+| `dxaml/xcp/dxaml/lib/RichEditBox_Partial.cpp` | partial | `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box.rs` |
+| `dxaml/xcp/dxaml/lib/RichEditBox_Partial.h` | partial | `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box.rs` |
 | `dxaml/xcp/dxaml/lib/Span_Partial.cpp` | pending | — |
 | `dxaml/xcp/dxaml/lib/Span_Partial.h` | pending | — |
 | `dxaml/xcp/dxaml/lib/TextAlternativesAsyncOperation.cpp` | pending | — |
@@ -138,8 +138,8 @@ Every file in the three primary roots is retained, including build and data file
 | `dxaml/xcp/dxaml/lib/TextBlock_Partial.h` | pending | — |
 | `dxaml/xcp/dxaml/lib/TextBoxPlaceholderTextHelper.cpp` | pending | — |
 | `dxaml/xcp/dxaml/lib/TextBoxPlaceholderTextHelper.h` | pending | — |
-| `dxaml/xcp/dxaml/lib/TextBoxView_Partial.cpp` | pending | — |
-| `dxaml/xcp/dxaml/lib/TextBoxView_Partial.h` | pending | — |
+| `dxaml/xcp/dxaml/lib/TextBoxView_Partial.cpp` | partial | `src/FerroUI.Controls/rich_text_block.rs`, `src/FerroUI.Controls/rich_text_block.rs` |
+| `dxaml/xcp/dxaml/lib/TextBoxView_Partial.h` | partial | `src/FerroUI.Controls/rich_text_block.rs`, `src/FerroUI.Controls/rich_text_block.rs` |
 | `dxaml/xcp/dxaml/lib/TextBox_Partial.cpp` | pending | — |
 | `dxaml/xcp/dxaml/lib/TextBox_Partial.h` | pending | — |
 | `dxaml/xcp/dxaml/lib/TextControlFlyoutHelper.cpp` | pending | — |
@@ -152,18 +152,18 @@ Every file in the three primary roots is retained, including build and data file
 
 | Upstream file | State | Reviewed Rust target |
 |---|---|---|
-| `dxaml/xcp/core/inc/Hyperlink.h` | reuse_candidate | — |
-| `dxaml/xcp/core/inc/TextElement.h` | reuse_candidate | — |
-| `dxaml/xcp/core/inc/inline.h` | reuse_candidate | — |
-| `dxaml/xcp/core/text/Inc/InlineUIContainer.h` | reuse_candidate | — |
-| `dxaml/xcp/core/text/Inc/Span.h` | reuse_candidate | — |
-| `dxaml/xcp/core/text/RichTextArea/TextElement.cpp` | reuse_candidate | — |
-| `dxaml/xcp/core/text/TextBlock/CRun.cpp` | reuse_candidate | — |
-| `dxaml/xcp/core/text/TextBlock/Hyperlink.cpp` | reuse_candidate | — |
-| `dxaml/xcp/core/text/TextBlock/Inline.cpp` | reuse_candidate | — |
-| `dxaml/xcp/core/text/TextBlock/InlineCollection.cpp` | reuse_candidate | — |
-| `dxaml/xcp/core/text/TextBlock/LineBreak.cpp` | reuse_candidate | — |
-| `dxaml/xcp/core/text/TextLayout/InlineUIContainer.cpp` | reuse_candidate | — |
+| `dxaml/xcp/core/inc/Hyperlink.h` | partial | `src/FerroUI.Controls/documents/hyperlink.rs`, `src/FerroUI.Controls/documents/hyperlink.rs`, `src/FerroUI.Controls/documents/hyperlink.rs` |
+| `dxaml/xcp/core/inc/TextElement.h` | partial | `src/FerroUI.Controls/documents/text_element.rs`, `src/FerroUI.Controls/documents/text_element.rs`, `src/FerroUI.Controls/documents/text_element.rs` |
+| `dxaml/xcp/core/inc/inline.h` | partial | `src/FerroUI.Controls/documents/inline.rs`, `src/FerroUI.Controls/documents/inline.rs`, `src/FerroUI.Controls/documents/span.rs` |
+| `dxaml/xcp/core/text/Inc/InlineUIContainer.h` | partial | `src/FerroUI.Controls/documents/inline_ui_container.rs`, `src/FerroUI.Controls/documents/inline_ui_container.rs` |
+| `dxaml/xcp/core/text/Inc/Span.h` | partial | `src/FerroUI.Controls/documents/inline.rs`, `src/FerroUI.Controls/documents/inline.rs`, `src/FerroUI.Controls/documents/span.rs` |
+| `dxaml/xcp/core/text/RichTextArea/TextElement.cpp` | partial | `src/FerroUI.Controls/documents/text_element.rs`, `src/FerroUI.Controls/documents/text_element.rs`, `src/FerroUI.Controls/documents/text_element.rs` |
+| `dxaml/xcp/core/text/TextBlock/CRun.cpp` | partial | `src/FerroUI.Controls/documents/run.rs`, `src/FerroUI.Controls/documents/run.rs` |
+| `dxaml/xcp/core/text/TextBlock/Hyperlink.cpp` | partial | `src/FerroUI.Controls/documents/hyperlink.rs`, `src/FerroUI.Controls/documents/hyperlink.rs`, `src/FerroUI.Controls/documents/hyperlink.rs` |
+| `dxaml/xcp/core/text/TextBlock/Inline.cpp` | partial | `src/FerroUI.Controls/documents/inline.rs`, `src/FerroUI.Controls/documents/inline.rs`, `src/FerroUI.Controls/documents/span.rs` |
+| `dxaml/xcp/core/text/TextBlock/InlineCollection.cpp` | partial | `src/FerroUI.Controls/documents/inline_collection.rs`, `src/FerroUI.Controls/documents/inline_collection.rs` |
+| `dxaml/xcp/core/text/TextBlock/LineBreak.cpp` | partial | `src/FerroUI.Controls/documents/line_break.rs` |
+| `dxaml/xcp/core/text/TextLayout/InlineUIContainer.cpp` | partial | `src/FerroUI.Controls/documents/inline_ui_container.rs`, `src/FerroUI.Controls/documents/inline_ui_container.rs` |
 | `dxaml/xcp/core/text/common/Typography.cpp` | reuse_candidate | — |
 
 ## Editable controls and text host
@@ -176,8 +176,8 @@ Every file in the three primary roots is retained, including build and data file
 | `dxaml/xcp/core/native/text/Controls/PasswordBox.h` | pending | — |
 | `dxaml/xcp/core/native/text/Controls/PrivateTextInputSettings.cpp` | pending | — |
 | `dxaml/xcp/core/native/text/Controls/PrivateTextInputSettings.h` | pending | — |
-| `dxaml/xcp/core/native/text/Controls/RichEditBox.cpp` | pending | — |
-| `dxaml/xcp/core/native/text/Controls/RichEditBox.h` | pending | — |
+| `dxaml/xcp/core/native/text/Controls/RichEditBox.cpp` | partial | `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box.rs` |
+| `dxaml/xcp/core/native/text/Controls/RichEditBox.h` | partial | `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box.rs` |
 | `dxaml/xcp/core/native/text/Controls/RichEditOleCallback.cpp` | pending | — |
 | `dxaml/xcp/core/native/text/Controls/RichEditOleCallback.h` | pending | — |
 | `dxaml/xcp/core/native/text/Controls/RichEditPal.h` | pending | — |
@@ -187,21 +187,21 @@ Every file in the three primary roots is retained, including build and data file
 | `dxaml/xcp/core/native/text/Controls/TextBlockCommandHandler.h` | pending | — |
 | `dxaml/xcp/core/native/text/Controls/TextBox.cpp` | pending | — |
 | `dxaml/xcp/core/native/text/Controls/TextBox.h` | pending | — |
-| `dxaml/xcp/core/native/text/Controls/TextBoxBase.cpp` | pending | — |
-| `dxaml/xcp/core/native/text/Controls/TextBoxBase.h` | pending | — |
+| `dxaml/xcp/core/native/text/Controls/TextBoxBase.cpp` | partial | `src/FerroUI.Controls/rich_text/rich_text_editor.rs`, `src/FerroUI.Controls/rich_text/rich_text_editor.rs`, `src/FerroUI.Controls/rich_text/rich_text_editor.rs` |
+| `dxaml/xcp/core/native/text/Controls/TextBoxBase.h` | partial | `src/FerroUI.Controls/rich_text/rich_text_editor.rs`, `src/FerroUI.Controls/rich_text/rich_text_editor.rs`, `src/FerroUI.Controls/rich_text/rich_text_editor.rs` |
 | `dxaml/xcp/core/native/text/Controls/TextBoxCommandHandler.cpp` | pending | — |
 | `dxaml/xcp/core/native/text/Controls/TextBoxCommandHandler.h` | pending | — |
 | `dxaml/xcp/core/native/text/Controls/TextBoxUIManagerEventSink.cpp` | pending | — |
 | `dxaml/xcp/core/native/text/Controls/TextBoxUIManagerEventSink.h` | pending | — |
-| `dxaml/xcp/core/native/text/Controls/TextBoxView.cpp` | pending | — |
-| `dxaml/xcp/core/native/text/Controls/TextBoxView.h` | pending | — |
+| `dxaml/xcp/core/native/text/Controls/TextBoxView.cpp` | partial | `src/FerroUI.Controls/rich_text_block.rs`, `src/FerroUI.Controls/rich_text_block.rs` |
+| `dxaml/xcp/core/native/text/Controls/TextBoxView.h` | partial | `src/FerroUI.Controls/rich_text_block.rs`, `src/FerroUI.Controls/rich_text_block.rs` |
 | `dxaml/xcp/core/native/text/Controls/TextContextMenu.cpp` | pending | — |
 | `dxaml/xcp/core/native/text/Controls/TextContextMenu.h` | pending | — |
 | `dxaml/xcp/core/native/text/Controls/TextContextMenuCommandHandler.cpp` | pending | — |
 | `dxaml/xcp/core/native/text/Controls/TextContextMenuCommandHandler.h` | pending | — |
 | `dxaml/xcp/core/native/text/Controls/TextControlsPinvokes.cpp` | pending | — |
-| `dxaml/xcp/core/native/text/Controls/TextServicesHost.cpp` | pending | — |
-| `dxaml/xcp/core/native/text/Controls/TextServicesHost.h` | pending | — |
+| `dxaml/xcp/core/native/text/Controls/TextServicesHost.cpp` | partial | `src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs` |
+| `dxaml/xcp/core/native/text/Controls/TextServicesHost.h` | partial | `src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs` |
 | `dxaml/xcp/core/native/text/Controls/Util.cpp` | pending | — |
 | `dxaml/xcp/core/native/text/Controls/Util.h` | pending | — |
 | `dxaml/xcp/core/native/text/Controls/precomp.h` | pending | — |
@@ -355,27 +355,27 @@ Every file in the three primary roots is retained, including build and data file
 |---|---|---|
 | `dxaml/xcp/components/text/FocusableHelper.cpp` | pending | — |
 | `dxaml/xcp/components/text/TextBlockViewHelpers.cpp` | pending | — |
-| `dxaml/xcp/components/text/TextHighlightMerge.cpp` | pending | — |
+| `dxaml/xcp/components/text/TextHighlightMerge.cpp` | partial | `src/FerroUI.Controls/documents/text_highlight_merge.rs`, `src/FerroUI.Controls/documents/text_highlight_merge.rs` |
 | `dxaml/xcp/components/text/TextHighlightRenderer.cpp` | pending | — |
-| `dxaml/xcp/components/text/TextHighlighter.cpp` | pending | — |
-| `dxaml/xcp/components/text/TextHighlighterCollection.cpp` | pending | — |
-| `dxaml/xcp/components/text/TextRangeCollection.cpp` | pending | — |
+| `dxaml/xcp/components/text/TextHighlighter.cpp` | partial | `src/FerroUI.Controls/documents/text_highlighter.rs`, `src/FerroUI.Controls/documents/text_highlighter.rs` |
+| `dxaml/xcp/components/text/TextHighlighterCollection.cpp` | partial | `src/FerroUI.Controls/documents/text_highlighter_collection.rs`, `src/FerroUI.Controls/documents/text_highlighter_collection.rs` |
+| `dxaml/xcp/components/text/TextRangeCollection.cpp` | partial | `src/FerroUI.Controls/documents/text_highlight_range.rs`, `src/FerroUI.Controls/documents/text_highlight_range.rs` |
 | `dxaml/xcp/components/text/inc/FocusableHelper.h` | pending | — |
-| `dxaml/xcp/components/text/inc/HighlightRegion.h` | pending | — |
+| `dxaml/xcp/components/text/inc/HighlightRegion.h` | partial | `src/FerroUI.Controls/documents/text_highlight_merge.rs`, `src/FerroUI.Controls/documents/text_highlight_merge.rs` |
 | `dxaml/xcp/components/text/inc/IFocusable.h` | pending | — |
 | `dxaml/xcp/components/text/inc/TextBlockViewHelpers.h` | pending | — |
 | `dxaml/xcp/components/text/inc/TextCommon.h` | pending | — |
-| `dxaml/xcp/components/text/inc/TextHighlightMerge.h` | pending | — |
+| `dxaml/xcp/components/text/inc/TextHighlightMerge.h` | partial | `src/FerroUI.Controls/documents/text_highlight_merge.rs`, `src/FerroUI.Controls/documents/text_highlight_merge.rs` |
 | `dxaml/xcp/components/text/inc/TextHighlightRenderer.h` | pending | — |
-| `dxaml/xcp/components/text/inc/TextHighlighter.h` | pending | — |
-| `dxaml/xcp/components/text/inc/TextHighlighterCollection.h` | pending | — |
-| `dxaml/xcp/components/text/inc/TextRangeCollection.h` | pending | — |
-| `dxaml/xcp/dxaml/lib/TextHighlighterCollection_Partial.cpp` | pending | — |
-| `dxaml/xcp/dxaml/lib/TextHighlighterCollection_Partial.h` | pending | — |
-| `dxaml/xcp/dxaml/lib/TextHighlighter_Partial.cpp` | pending | — |
-| `dxaml/xcp/dxaml/lib/TextHighlighter_Partial.h` | pending | — |
-| `dxaml/xcp/dxaml/lib/TextRangeCollection_Partial.cpp` | pending | — |
-| `dxaml/xcp/dxaml/lib/TextRangeCollection_Partial.h` | pending | — |
+| `dxaml/xcp/components/text/inc/TextHighlighter.h` | partial | `src/FerroUI.Controls/documents/text_highlighter.rs`, `src/FerroUI.Controls/documents/text_highlighter.rs` |
+| `dxaml/xcp/components/text/inc/TextHighlighterCollection.h` | partial | `src/FerroUI.Controls/documents/text_highlighter_collection.rs`, `src/FerroUI.Controls/documents/text_highlighter_collection.rs` |
+| `dxaml/xcp/components/text/inc/TextRangeCollection.h` | partial | `src/FerroUI.Controls/documents/text_highlight_range.rs`, `src/FerroUI.Controls/documents/text_highlight_range.rs` |
+| `dxaml/xcp/dxaml/lib/TextHighlighterCollection_Partial.cpp` | partial | `src/FerroUI.Controls/documents/text_highlighter_collection.rs`, `src/FerroUI.Controls/documents/text_highlighter_collection.rs` |
+| `dxaml/xcp/dxaml/lib/TextHighlighterCollection_Partial.h` | partial | `src/FerroUI.Controls/documents/text_highlighter_collection.rs`, `src/FerroUI.Controls/documents/text_highlighter_collection.rs` |
+| `dxaml/xcp/dxaml/lib/TextHighlighter_Partial.cpp` | partial | `src/FerroUI.Controls/documents/text_highlighter.rs`, `src/FerroUI.Controls/documents/text_highlighter.rs` |
+| `dxaml/xcp/dxaml/lib/TextHighlighter_Partial.h` | partial | `src/FerroUI.Controls/documents/text_highlighter.rs`, `src/FerroUI.Controls/documents/text_highlighter.rs` |
+| `dxaml/xcp/dxaml/lib/TextRangeCollection_Partial.cpp` | partial | `src/FerroUI.Controls/documents/text_highlight_range.rs`, `src/FerroUI.Controls/documents/text_highlight_range.rs` |
+| `dxaml/xcp/dxaml/lib/TextRangeCollection_Partial.h` | partial | `src/FerroUI.Controls/documents/text_highlight_range.rs`, `src/FerroUI.Controls/documents/text_highlight_range.rs` |
 
 ## Native rendering adapters
 
@@ -415,7 +415,7 @@ Every file in the three primary roots is retained, including build and data file
 
 | Upstream file | State | Reviewed Rust target |
 |---|---|---|
-| `dxaml/xcp/components/metadata/inc/EnumDefs.g.h` | reference | — |
+| `dxaml/xcp/components/metadata/inc/EnumDefs.g.h` | reference | `src/Windows/FerroUI.Win32/automation/text_pattern_marshalling.rs`, `src/Windows/FerroUI.Win32/automation/text_pattern_marshalling.rs` |
 | `dxaml/xcp/dxaml/idl/winrt/main/microsoft.ui.xaml.idl` | reference | — |
 | `dxaml/xcp/tools/XCPTypesAutoGen/XamlOM/Model/Microsoft.UI.Xaml.Automation.Peers.cs` | reference | — |
 | `dxaml/xcp/tools/XCPTypesAutoGen/XamlOM/Model/Microsoft.UI.Xaml.Automation.Provider.cs` | reference | — |
@@ -520,20 +520,20 @@ Every file in the three primary roots is retained, including build and data file
 
 | Upstream file | State | Reviewed Rust target |
 |---|---|---|
-| `dxaml/xcp/core/inc/RichTextBlock.h` | pending | — |
-| `dxaml/xcp/core/inc/RichTextBlockOverflow.h` | pending | — |
-| `dxaml/xcp/core/text/Inc/LinkedRichTextBlockView.h` | pending | — |
-| `dxaml/xcp/core/text/Inc/RichTextBlockBreak.h` | pending | — |
-| `dxaml/xcp/core/text/Inc/RichTextBlockView.h` | pending | — |
-| `dxaml/xcp/core/text/RichTextBlock/LinkedRichTextBlockView.cpp` | pending | — |
-| `dxaml/xcp/core/text/RichTextBlock/RichTextBlock.cpp` | pending | — |
-| `dxaml/xcp/core/text/RichTextBlock/RichTextBlockBreak.cpp` | pending | — |
-| `dxaml/xcp/core/text/RichTextBlock/RichTextBlockOverflow.cpp` | pending | — |
-| `dxaml/xcp/core/text/RichTextBlock/RichTextBlockView.cpp` | pending | — |
-| `dxaml/xcp/dxaml/lib/RichTextBlockOverflow_Partial.cpp` | pending | — |
-| `dxaml/xcp/dxaml/lib/RichTextBlockOverflow_Partial.h` | pending | — |
-| `dxaml/xcp/dxaml/lib/RichTextBlock_Partial.cpp` | pending | — |
-| `dxaml/xcp/dxaml/lib/RichTextBlock_Partial.h` | pending | — |
+| `dxaml/xcp/core/inc/RichTextBlock.h` | partial | `src/FerroUI.Controls/rich_text_block.rs`, `src/FerroUI.Controls/rich_text_block.rs`, `src/FerroUI.Controls/rich_text_block.rs` |
+| `dxaml/xcp/core/inc/RichTextBlockOverflow.h` | partial | `src/FerroUI.Controls/rich_text_block_overflow.rs` |
+| `dxaml/xcp/core/text/Inc/LinkedRichTextBlockView.h` | partial | `src/FerroUI.Controls/rich_text_block.rs`, `src/FerroUI.Controls/rich_text_block.rs`, `src/FerroUI.Controls/rich_text_block.rs` |
+| `dxaml/xcp/core/text/Inc/RichTextBlockBreak.h` | partial | `src/FerroUI.Controls/rich_text_layout.rs` |
+| `dxaml/xcp/core/text/Inc/RichTextBlockView.h` | partial | `src/FerroUI.Controls/rich_text_block.rs`, `src/FerroUI.Controls/rich_text_block.rs`, `src/FerroUI.Controls/rich_text_block.rs` |
+| `dxaml/xcp/core/text/RichTextBlock/LinkedRichTextBlockView.cpp` | partial | `src/FerroUI.Controls/rich_text_block.rs`, `src/FerroUI.Controls/rich_text_block.rs`, `src/FerroUI.Controls/rich_text_block.rs` |
+| `dxaml/xcp/core/text/RichTextBlock/RichTextBlock.cpp` | partial | `src/FerroUI.Controls/rich_text_block.rs`, `src/FerroUI.Controls/rich_text_block.rs`, `src/FerroUI.Controls/rich_text_block.rs` |
+| `dxaml/xcp/core/text/RichTextBlock/RichTextBlockBreak.cpp` | partial | `src/FerroUI.Controls/rich_text_layout.rs` |
+| `dxaml/xcp/core/text/RichTextBlock/RichTextBlockOverflow.cpp` | partial | `src/FerroUI.Controls/rich_text_block_overflow.rs` |
+| `dxaml/xcp/core/text/RichTextBlock/RichTextBlockView.cpp` | partial | `src/FerroUI.Controls/rich_text_block.rs`, `src/FerroUI.Controls/rich_text_block.rs`, `src/FerroUI.Controls/rich_text_block.rs` |
+| `dxaml/xcp/dxaml/lib/RichTextBlockOverflow_Partial.cpp` | partial | `src/FerroUI.Controls/rich_text_block_overflow.rs` |
+| `dxaml/xcp/dxaml/lib/RichTextBlockOverflow_Partial.h` | partial | `src/FerroUI.Controls/rich_text_block_overflow.rs` |
+| `dxaml/xcp/dxaml/lib/RichTextBlock_Partial.cpp` | partial | `src/FerroUI.Controls/rich_text_block.rs`, `src/FerroUI.Controls/rich_text_block.rs`, `src/FerroUI.Controls/rich_text_block.rs` |
+| `dxaml/xcp/dxaml/lib/RichTextBlock_Partial.h` | partial | `src/FerroUI.Controls/rich_text_block.rs`, `src/FerroUI.Controls/rich_text_block.rs`, `src/FerroUI.Controls/rich_text_block.rs` |
 | `dxaml/xcp/tools/XCPTypesAutoGen/Modules/Controls/RichTextBlock.cs` | pending | — |
 | `dxaml/xcp/tools/XCPTypesAutoGen/Modules/Controls/RichTextBlockOverflow.cs` | pending | — |
 
@@ -542,46 +542,46 @@ Every file in the three primary roots is retained, including build and data file
 | Upstream file | State | Reviewed Rust target |
 |---|---|---|
 | `dxaml/xcp/core/inc/GripperPopup.h` | pending | — |
-| `dxaml/xcp/core/inc/TextContainer.h` | pending | — |
-| `dxaml/xcp/core/inc/TextNavigationHelper.h` | pending | — |
-| `dxaml/xcp/core/inc/TextPointerWrapper.h` | pending | — |
-| `dxaml/xcp/core/inc/TextSelection.h` | pending | — |
-| `dxaml/xcp/core/inc/TextSelectionNotify.h` | pending | — |
-| `dxaml/xcp/core/inc/TextView.h` | pending | — |
+| `dxaml/xcp/core/inc/TextContainer.h` | partial | `src/FerroUI.Controls/documents/rich_text_document.rs`, `src/FerroUI.Controls/documents/rich_text_document.rs`, `src/FerroUI.Controls/documents/rich_text_document.rs` |
+| `dxaml/xcp/core/inc/TextNavigationHelper.h` | partial | `src/FerroUI.Controls/documents/rich_text_document.rs`, `src/FerroUI.Controls/documents/rich_text_document.rs` |
+| `dxaml/xcp/core/inc/TextPointerWrapper.h` | partial | `src/FerroUI.Controls/documents/text_position.rs`, `src/FerroUI.Controls/documents/text_position.rs`, `src/FerroUI.Controls/documents/text_position.rs` |
+| `dxaml/xcp/core/inc/TextSelection.h` | partial | `src/FerroUI.Controls/rich_text_block.rs`, `src/FerroUI.Controls/rich_text_block.rs` |
+| `dxaml/xcp/core/inc/TextSelectionNotify.h` | partial | `src/FerroUI.Controls/rich_text_block.rs`, `src/FerroUI.Controls/rich_text_block.rs` |
+| `dxaml/xcp/core/inc/TextView.h` | partial | `src/FerroUI.Controls/rich_text_block.rs`, `src/FerroUI.Controls/rich_text_block.rs`, `src/FerroUI.Controls/rich_text_block.rs` |
 | `dxaml/xcp/core/text/Inc/Gripper.h` | pending | — |
-| `dxaml/xcp/core/text/Inc/ITextSelection.h` | pending | — |
+| `dxaml/xcp/core/text/Inc/ITextSelection.h` | partial | `src/FerroUI.Controls/rich_text_block.rs`, `src/FerroUI.Controls/rich_text_block.rs` |
 | `dxaml/xcp/core/text/Inc/InputProcessor.h` | pending | — |
-| `dxaml/xcp/core/text/Inc/PlainTextPosition.h` | pending | — |
+| `dxaml/xcp/core/text/Inc/PlainTextPosition.h` | partial | `src/FerroUI.Controls/documents/text_position.rs`, `src/FerroUI.Controls/documents/text_position.rs`, `src/FerroUI.Controls/documents/text_position.rs` |
 | `dxaml/xcp/core/text/Inc/RichEditGripper.h` | pending | — |
 | `dxaml/xcp/core/text/Inc/RichEditGripperChild.h` | pending | — |
 | `dxaml/xcp/core/text/Inc/RichEditGripperCommon.h` | pending | — |
 | `dxaml/xcp/core/text/Inc/SelectionWordBreaker.h` | pending | — |
 | `dxaml/xcp/core/text/Inc/TextAdapter.h` | pending | — |
-| `dxaml/xcp/core/text/Inc/TextPosition.h` | pending | — |
+| `dxaml/xcp/core/text/Inc/TextPosition.h` | partial | `src/FerroUI.Controls/documents/text_position.rs`, `src/FerroUI.Controls/documents/text_position.rs`, `src/FerroUI.Controls/documents/text_position.rs` |
 | `dxaml/xcp/core/text/Inc/TextRangeAdapter.h` | pending | — |
-| `dxaml/xcp/core/text/Inc/TextSelectionManager.h` | pending | — |
+| `dxaml/xcp/core/text/Inc/TextSelectionManager.h` | partial | `src/FerroUI.Controls/rich_text_block.rs`, `src/FerroUI.Controls/rich_text_block.rs` |
 | `dxaml/xcp/core/text/Inc/TextSelectionSettings.h` | pending | — |
 | `dxaml/xcp/core/text/Inc/TouchSelectionSnappingCalculator.h` | pending | — |
 | `dxaml/xcp/core/text/Inc/XcpTextGripperInputProcessor.h` | pending | — |
-| `dxaml/xcp/core/text/RichTextArea/TextPointerWrapper.cpp` | pending | — |
-| `dxaml/xcp/core/text/TextBox/PlainTextPosition.cpp` | pending | — |
-| `dxaml/xcp/core/text/TextBox/TextSelection.cpp` | pending | — |
+| `dxaml/xcp/core/text/RichTextArea/TextPointerWrapper.cpp` | partial | `src/FerroUI.Controls/documents/text_position.rs`, `src/FerroUI.Controls/documents/text_position.rs`, `src/FerroUI.Controls/documents/text_position.rs` |
+| `dxaml/xcp/core/text/TextBox/PlainTextPosition.cpp` | partial | `src/FerroUI.Controls/documents/text_position.rs`, `src/FerroUI.Controls/documents/text_position.rs`, `src/FerroUI.Controls/documents/text_position.rs` |
+| `dxaml/xcp/core/text/TextBox/TextSelection.cpp` | partial | `src/FerroUI.Controls/rich_text_block.rs`, `src/FerroUI.Controls/rich_text_block.rs` |
 | `dxaml/xcp/core/text/common/Gripper.cpp` | pending | — |
 | `dxaml/xcp/core/text/common/InputProcessor.cpp` | pending | — |
 | `dxaml/xcp/core/text/common/RichEditGripper.cpp` | pending | — |
 | `dxaml/xcp/core/text/common/RichEditGripperChild.cpp` | pending | — |
 | `dxaml/xcp/core/text/common/SelectionWordBreaker.cpp` | pending | — |
-| `dxaml/xcp/core/text/common/TextNavigationHelper.cpp` | pending | — |
-| `dxaml/xcp/core/text/common/TextPosition.cpp` | pending | — |
-| `dxaml/xcp/core/text/common/TextSelectionManager.cpp` | pending | — |
+| `dxaml/xcp/core/text/common/TextNavigationHelper.cpp` | partial | `src/FerroUI.Controls/documents/rich_text_document.rs`, `src/FerroUI.Controls/documents/rich_text_document.rs` |
+| `dxaml/xcp/core/text/common/TextPosition.cpp` | partial | `src/FerroUI.Controls/documents/text_position.rs`, `src/FerroUI.Controls/documents/text_position.rs`, `src/FerroUI.Controls/documents/text_position.rs` |
+| `dxaml/xcp/core/text/common/TextSelectionManager.cpp` | partial | `src/FerroUI.Controls/rich_text_block.rs`, `src/FerroUI.Controls/rich_text_block.rs` |
 | `dxaml/xcp/core/text/common/TextSelectionSettings.cpp` | pending | — |
 | `dxaml/xcp/core/text/common/XcpTextGripperInputProcessor.cpp` | pending | — |
 | `dxaml/xcp/core/text/common/textadapter.cpp` | pending | — |
 | `dxaml/xcp/core/text/common/textrangeadapter.cpp` | pending | — |
 | `dxaml/xcp/dxaml/lib/TextAdapter_Partial.h` | pending | — |
 | `dxaml/xcp/dxaml/lib/TextAdapter_partial.cpp` | pending | — |
-| `dxaml/xcp/dxaml/lib/TextPointer_Partial.cpp` | pending | — |
-| `dxaml/xcp/dxaml/lib/TextPointer_Partial.h` | pending | — |
+| `dxaml/xcp/dxaml/lib/TextPointer_Partial.cpp` | partial | `src/FerroUI.Controls/documents/text_position.rs`, `src/FerroUI.Controls/documents/text_position.rs`, `src/FerroUI.Controls/documents/text_position.rs` |
+| `dxaml/xcp/dxaml/lib/TextPointer_Partial.h` | partial | `src/FerroUI.Controls/documents/text_position.rs`, `src/FerroUI.Controls/documents/text_position.rs`, `src/FerroUI.Controls/documents/text_position.rs` |
 | `dxaml/xcp/dxaml/lib/TextRangeAdapter_Partial.h` | pending | — |
 | `dxaml/xcp/dxaml/lib/TextRangeAdapter_partial.cpp` | pending | — |
 
@@ -589,15 +589,15 @@ Every file in the three primary roots is retained, including build and data file
 
 | Upstream file | State | Reviewed Rust target |
 |---|---|---|
-| `dxaml/xcp/components/primitiveDependencyObjects/TextRange.cpp` | pending | — |
-| `dxaml/xcp/components/primitiveDependencyObjects/inc/TextRange.h` | pending | — |
+| `dxaml/xcp/components/primitiveDependencyObjects/TextRange.cpp` | partial | `src/FerroUI.Controls/documents/text_highlight_range.rs`, `src/FerroUI.Controls/documents/text_highlight_range.rs` |
+| `dxaml/xcp/components/primitiveDependencyObjects/inc/TextRange.h` | partial | `src/FerroUI.Controls/documents/text_highlight_range.rs`, `src/FerroUI.Controls/documents/text_highlight_range.rs` |
 | `dxaml/xcp/core/core/elements/Glyphs.cpp` | pending | — |
 | `dxaml/xcp/core/core/elements/InputScope.cpp` | pending | — |
 | `dxaml/xcp/core/inc/CandidateWindowBoundsChangedEventArgs.h` | pending | — |
 | `dxaml/xcp/core/inc/CaretBrowsingCaret.h` | pending | — |
 | `dxaml/xcp/core/inc/CaretBrowsingGlobal.h` | pending | — |
 | `dxaml/xcp/core/inc/Glyphs.h` | pending | — |
-| `dxaml/xcp/core/inc/HyperlinkClickEventArgs.h` | pending | — |
+| `dxaml/xcp/core/inc/HyperlinkClickEventArgs.h` | partial | `src/FerroUI.Controls/documents/hyperlink.rs`, `src/FerroUI.Controls/documents/hyperlink.rs`, `src/FerroUI.Controls/documents/hyperlink.rs` |
 | `dxaml/xcp/core/inc/InheritedProperties.h` | pending | — |
 | `dxaml/xcp/core/inc/TextChangedEventArgs.h` | pending | — |
 | `dxaml/xcp/core/inc/TextControlCopyingToClipboardEventArgs.h` | pending | — |
@@ -632,37 +632,37 @@ Every file in the three primary roots is retained, including build and data file
 
 | Upstream file | State | Reviewed Rust target |
 |---|---|---|
-| `dxaml/xcp/core/core/elements/RichTextBlockAutomationPeer.cpp` | pending | — |
-| `dxaml/xcp/core/core/elements/RichTextBlockOverflowAutomationPeer.cpp` | pending | — |
+| `dxaml/xcp/core/core/elements/RichTextBlockAutomationPeer.cpp` | partial | `src/FerroUI.Controls/automation/peers/rich_text_block_automation_peer.rs` |
+| `dxaml/xcp/core/core/elements/RichTextBlockOverflowAutomationPeer.cpp` | partial | `src/FerroUI.Controls/automation/peers/rich_text_block_automation_peer.rs` |
 | `dxaml/xcp/core/core/elements/TextBlockAutomationPeer.cpp` | pending | — |
 | `dxaml/xcp/core/inc/HyperLinkAutomationPeer.h` | pending | — |
-| `dxaml/xcp/core/inc/RichTextBlockAutomationPeer.h` | pending | — |
-| `dxaml/xcp/core/inc/RichTextBlockOverflowAutomationPeer.h` | pending | — |
+| `dxaml/xcp/core/inc/RichTextBlockAutomationPeer.h` | partial | `src/FerroUI.Controls/automation/peers/rich_text_block_automation_peer.rs` |
+| `dxaml/xcp/core/inc/RichTextBlockOverflowAutomationPeer.h` | partial | `src/FerroUI.Controls/automation/peers/rich_text_block_automation_peer.rs` |
 | `dxaml/xcp/core/inc/TextBlockAutomationPeer.h` | pending | — |
-| `dxaml/xcp/core/inc/TextProvider.h` | pending | — |
-| `dxaml/xcp/core/inc/TextRangeProvider.h` | pending | — |
+| `dxaml/xcp/core/inc/TextProvider.h` | reference | `src/FerroUI.Controls/automation/provider/i_text_provider.rs` |
+| `dxaml/xcp/core/inc/TextRangeProvider.h` | reference | `src/FerroUI.Controls/automation/provider/i_text_provider.rs` |
 | `dxaml/xcp/core/native/text/Controls/PasswordBoxAutomationPeer.cpp` | pending | — |
 | `dxaml/xcp/core/native/text/Controls/PasswordBoxAutomationPeer.h` | pending | — |
-| `dxaml/xcp/core/native/text/Controls/RichEditBoxAutomationPeer.cpp` | pending | — |
-| `dxaml/xcp/core/native/text/Controls/RichEditBoxAutomationPeer.h` | pending | — |
+| `dxaml/xcp/core/native/text/Controls/RichEditBoxAutomationPeer.cpp` | partial | `src/FerroUI.Controls/automation/peers/rich_edit_box_automation_peer.rs` |
+| `dxaml/xcp/core/native/text/Controls/RichEditBoxAutomationPeer.h` | partial | `src/FerroUI.Controls/automation/peers/rich_edit_box_automation_peer.rs` |
 | `dxaml/xcp/core/native/text/Controls/TextBoxAutomationPeer.cpp` | pending | — |
 | `dxaml/xcp/core/native/text/Controls/TextBoxAutomationPeer.h` | pending | — |
 | `dxaml/xcp/core/native/text/Controls/TextBoxBaseAutomationPeer.cpp` | pending | — |
 | `dxaml/xcp/core/native/text/Controls/TextBoxBaseAutomationPeer.h` | pending | — |
 | `dxaml/xcp/dxaml/lib/HyperlinkAutomationPeer_Partial.cpp` | pending | — |
 | `dxaml/xcp/dxaml/lib/HyperlinkAutomationPeer_Partial.h` | pending | — |
-| `dxaml/xcp/dxaml/lib/RichEditBoxAutomationPeer_Partial.cpp` | pending | — |
-| `dxaml/xcp/dxaml/lib/RichEditBoxAutomationPeer_Partial.h` | pending | — |
-| `dxaml/xcp/dxaml/lib/RichTextBlockAutomationPeer_Partial.cpp` | pending | — |
-| `dxaml/xcp/dxaml/lib/RichTextBlockAutomationPeer_Partial.h` | pending | — |
-| `dxaml/xcp/dxaml/lib/RichTextBlockOverflowAutomationPeer_Partial.cpp` | pending | — |
-| `dxaml/xcp/dxaml/lib/RichTextBlockOverflowAutomationPeer_Partial.h` | pending | — |
+| `dxaml/xcp/dxaml/lib/RichEditBoxAutomationPeer_Partial.cpp` | partial | `src/FerroUI.Controls/automation/peers/rich_edit_box_automation_peer.rs` |
+| `dxaml/xcp/dxaml/lib/RichEditBoxAutomationPeer_Partial.h` | partial | `src/FerroUI.Controls/automation/peers/rich_edit_box_automation_peer.rs` |
+| `dxaml/xcp/dxaml/lib/RichTextBlockAutomationPeer_Partial.cpp` | partial | `src/FerroUI.Controls/automation/peers/rich_text_block_automation_peer.rs` |
+| `dxaml/xcp/dxaml/lib/RichTextBlockAutomationPeer_Partial.h` | partial | `src/FerroUI.Controls/automation/peers/rich_text_block_automation_peer.rs` |
+| `dxaml/xcp/dxaml/lib/RichTextBlockOverflowAutomationPeer_Partial.cpp` | partial | `src/FerroUI.Controls/automation/peers/rich_text_block_automation_peer.rs` |
+| `dxaml/xcp/dxaml/lib/RichTextBlockOverflowAutomationPeer_Partial.h` | partial | `src/FerroUI.Controls/automation/peers/rich_text_block_automation_peer.rs` |
 | `dxaml/xcp/dxaml/lib/TextBlockAutomationPeer_Partial.cpp` | pending | — |
 | `dxaml/xcp/dxaml/lib/TextBlockAutomationPeer_Partial.h` | pending | — |
 | `dxaml/xcp/dxaml/lib/TextBoxAutomationPeer_Partial.cpp` | pending | — |
 | `dxaml/xcp/dxaml/lib/TextBoxAutomationPeer_Partial.h` | pending | — |
-| `dxaml/xcp/win/inc/UIAPatternProviderWrapper.h` | pending | — |
-| `dxaml/xcp/win/shared/UIAPatternProviderWrapper.cpp` | pending | — |
+| `dxaml/xcp/win/inc/UIAPatternProviderWrapper.h` | partial | `src/Windows/FerroUI.Win32/automation/automation_node_text.rs`, `src/Windows/FerroUI.Win32/automation/text_range_node.rs`, `src/Windows/FerroUI.Win32/automation/text_pattern_marshalling.rs`, `src/FerroUI.Controls/automation/provider/rich_text_automation.rs` |
+| `dxaml/xcp/win/shared/UIAPatternProviderWrapper.cpp` | partial | `src/Windows/FerroUI.Win32/automation/automation_node_text.rs`, `src/Windows/FerroUI.Win32/automation/text_range_node.rs`, `src/Windows/FerroUI.Win32/automation/text_pattern_marshalling.rs`, `src/FerroUI.Controls/automation/provider/rich_text_automation.rs` |
 
 ## Theme reference
 
@@ -732,5 +732,5 @@ Every file in the three primary roots is retained, including build and data file
 | `dxaml/xcp/components/text/unittests/Microsoft.UI.Xaml.Tests.Isolated.Text.vcxproj` | reference | — |
 | `dxaml/xcp/components/text/unittests/TextBoxHelpersUnitTests.cpp` | reference | — |
 | `dxaml/xcp/components/text/unittests/TextBoxHelpersUnitTests.h` | reference | — |
-| `dxaml/xcp/components/text/unittests/TextHighlightMergeUnitTests.cpp` | reference | — |
-| `dxaml/xcp/components/text/unittests/TextHighlightMergeUnitTests.h` | reference | — |
+| `dxaml/xcp/components/text/unittests/TextHighlightMergeUnitTests.cpp` | reference | `src/FerroUI.Controls/documents/text_highlight_merge.rs` |
+| `dxaml/xcp/components/text/unittests/TextHighlightMergeUnitTests.h` | reference | `src/FerroUI.Controls/documents/text_highlight_merge.rs` |

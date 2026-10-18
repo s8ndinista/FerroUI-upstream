@@ -64,8 +64,43 @@ insufficient rich-text accessibility coverage.
 ## Recorded runs
 
 Authoritative command/result records are stored in `mapping.json` under
-`validation`. The initial inventory contains no runtime-test success claim.
-Update this section with the verified model/control test summary when those
-implementations have been built; record build failures and untested platforms
-explicitly. The implementation's own test names are linked by the reviewed file
-and API mappings.
+`validation`, including the checkpoint they cover. Generated [PROGRESS.md](PROGRESS.md)
+shows those records. A later test definition or source change is not implicitly
+covered by an earlier successful run.
+
+The restored core checkpoint
+[`38c934480ca20192746a363670c12eac47d67edf`](https://github.com/wieslawsoltes/FerroUI/commit/38c934480ca20192746a363670c12eac47d67edf)
+passed `cargo test --locked --offline -p ferroui-controls --lib rich_ --no-fail-fast`:
+**97 passed; 0 failed; 0 ignored; 0 measured; 4426 filtered out**. That run includes
+21 document, 45 editor, 16 view and 15 portable automation tests. The subsequently
+added view/highlighter tests, four portable follow-ups, native bridge tests and
+markup/catalog tests need their own later records.
+
+## Implementation test map
+
+| Rust family | Concrete evidence and current limits |
+|---|---|
+| [Document tests](../../../src/FerroUI.Controls/documents/rich_text_document_tests.rs) | UTF-16 surrogate rejection, grapheme/word boundaries, nested semantic containers, snapshot formatting, paragraph splicing, batched revisions, reentrancy, pointer gravity, weak ownership, hyperlink cancellation/release semantics and embedded controls. Native synthetic element markers and every upstream element type are not represented by this suite. |
+| [Rich view tests](../../../src/FerroUI.Controls/rich_text_block_tests.rs) | Measure/wrap, inherited formatting invalidation, selection geometry/direction, linked reflow and ownership, embedded controls, text-pointer insertion geometry, hyperlink host integration, and later real-ellipsis/finite-height/paragraph-indent/visible-range regressions. Check the validation record to determine which additions were executed in a particular run. |
+| [Editor tests](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) | Rich undo/redo, typing coalescing, read-only/max-length policy, failed transaction rollback, IME preview/cancel/commit and surrounding text, stale async clipboard guards, native transfer policies, bounded RTF fixtures, live ranges/search, mixed formatting, shared control geometry and caret blinking. These do not constitute execution of a real platform IME or unavailable native TOM engine. |
+| [Highlighter tests](../../../src/FerroUI.Controls/documents/text_highlighter_tests.rs) | All ten literal upstream overlap fixtures plus an independent per-character layering oracle, signed range value copies, markup boxing, empty/invalid clipping, brush defaults, mutable brush invalidation and weak/reentrant subscriptions. Native raster/high-contrast comparisons remain separate. |
+| [Portable text automation tests](../../../src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs) | Six Text/eighteen TextRange operations over the live model, scalar-safe text, range identity/rebasing/lifetime, selection policies, format and text search, unit normalization, sixteen typed attributes/sentinels, children, events and shaped/clipped geometry. Later tests cover collapsed source geometry, line separators and scroll alignment. |
+| [Native text pattern tests](../../../src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs) and [range identity lifetime test](../../../src/Windows/FerroUI.Win32/automation/text_range_node.rs) | Native provider slots, worker-to-UI dispatch, BSTR/SAFEARRAY/VARIANT/HRESULT values, correct reserved sentinels/COLORREFs, geometry/children, document replacement, foreign ranges, text/selection events and delayed COM release. Test definitions and a cross-compile are not evidence of an actual Windows UI Automation client or screen-reader run. |
+
+The source overlap fixtures preserved by
+`text_highlight_merge_matches_all_source_overlap_cases` are **NonOverlapped,
+OverlapNextPartial, OverlapPrevPartial, OverlapNextFull, OverlapEqualFull,
+OverlapEqualPartial, OverlapEqualMultiple, OverlapInner, Overlap1 and
+OverlapMultiple**. Their source test files remain `reference` entries with
+`adapted_test_cases`; they are not counted as completed runtime source ports.
+
+The `rich_` filter includes document, rich view/editor and portable automation
+modules, but does not select the `text_highlighter_tests` module. Use a
+`text_highlight` filter or the full controls suite for those tests. Native text
+tests live in the Win32 crate and require their own command/result record.
+
+Runtime/compiled XAML, catalog interactions, native Windows/macOS/Linux/browser
+input and accessibility, exact font/DPI rendering comparisons, large-document
+performance and externally implemented service conformance are additional gates
+in [PLAN.md](PLAN.md). They remain unverified until recorded with their actual
+commands or platform procedure and result.
