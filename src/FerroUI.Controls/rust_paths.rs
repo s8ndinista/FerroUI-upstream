@@ -307,6 +307,7 @@ ferroui_base::ferro_rust_paths! {
         crate::RequestBringIntoViewEventArgs,
         crate::RichEditCharacterCasing,
         crate::RichEditCompositionEventArgs,
+        crate::RichEditCompositionRoutedEvent,
         crate::RowDefinitions,
         crate::ScrollChangedEventArgs,
         crate::SelectionChangedEventArgs,

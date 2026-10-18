@@ -1,0 +1,481 @@
+//! Integration tests call the native COM text pattern over actual FerroUI rich
+//! controls. Attribute cases mirror WinUI's native TextBlock/RichTextBlock UIA
+//! tests; threading, identity, lifetime, and Unicode cases exercise this bridge.
+
+use super::automation_node::{AutomationNode, ELEMENT_NOT_AVAILABLE, SendProvider};
+use super::interop::{
+    IRawElementProviderSimple, ITextProvider, ITextRangeProvider, IUiaCoreProviderApi,
+    StructureChangeType, SupportedTextSelection, TextPatternRangeEndpoint, TextUnit,
+    UiaCoreProviderApi, UiaCoreTypesApi, UiaEventId, UiaPatternId, UiaPoint, UiaPropertyId,
+};
+use super::marshalling::{
+    ComVariant, SafeArrayElement, SafeArrayMarshaller, SafeArrayRef, VariantValue, free_bstr,
+    ptr_to_string_bstr, string_to_bstr,
+};
+use super::text_range_node::TextRangeNode;
+use ferroui_base::layout::ILayoutManager;
+use ferroui_base::media::immutable::ImmutableSolidColorBrush;
+use ferroui_base::media::text_formatting::testing::TextTestScope;
+use ferroui_base::media::{Color, FontFamily, FontWeight, IBrush};
+use ferroui_base::threading::Dispatcher;
+use ferroui_controls::automation::peers::ControlAutomationPeer;
+use ferroui_controls::documents::{
+    CharacterFormat, InlineUIContainer, Paragraph, RichTextDocument,
+};
+use ferroui_controls::testing::{TestServices, UnitTestApplication};
+use ferroui_controls::{Button, Control, RichEditBox, RichTextBlock, Window};
+use ferroui_microcom::{ComPtr, HResult, IUnknown};
+use std::cell::RefCell;
+use std::rc::Rc;
+use std::time::{Duration, Instant};
+
+#[derive(Default)]
+struct Recorder {
+    events: RefCell<Vec<i32>>,
+}
+
+impl IUiaCoreProviderApi for Recorder {
+    fn uia_clients_are_listening(&self) -> bool {
+        true
+    }
+    fn uia_return_raw_element_provider(
+        &self,
+        _: isize,
+        _: usize,
+        _: isize,
+        _: Option<&IRawElementProviderSimple>,
+    ) -> isize {
+        0
+    }
+    fn uia_host_provider_from_hwnd(
+        &self,
+        _: isize,
+    ) -> Result<Option<ComPtr<IRawElementProviderSimple>>, HResult> {
+        Ok(None)
+    }
+    fn uia_raise_automation_event(&self, _: Option<&IRawElementProviderSimple>, event: i32) -> i32 {
+        self.events.borrow_mut().push(event);
+        0
+    }
+    fn uia_raise_automation_property_changed_event(
+        &self,
+        _: Option<&IRawElementProviderSimple>,
+        _: i32,
+        _: Option<&VariantValue>,
+        _: Option<&VariantValue>,
+    ) -> i32 {
+        0
+    }
+    fn uia_raise_structure_changed_event(
+        &self,
+        _: Option<&IRawElementProviderSimple>,
+        _: StructureChangeType,
+        _: Option<&[i32]>,
+    ) -> i32 {
+        0
+    }
+    fn uia_disconnect_provider(&self, _: Option<&IRawElementProviderSimple>) -> i32 {
+        0
+    }
+}
+
+struct RecordingScope(Rc<Recorder>);
+impl RecordingScope {
+    fn new() -> Self {
+        let recorder = Rc::new(Recorder::default());
+        UiaCoreProviderApi::set_for_thread(Some(recorder.clone()));
+        Self(recorder)
+    }
+    fn take(&self) -> Vec<i32> {
+        self.0.events.take()
+    }
+}
+impl Drop for RecordingScope {
+    fn drop(&mut self) {
+        UiaCoreProviderApi::set_for_thread(None);
+    }
+}
+
+fn native_node(control: &Control) -> ComPtr<IRawElementProviderSimple> {
+    let peer = ControlAutomationPeer::create_peer_for_element(control);
+    AutomationNode::get_or_create(Some(&peer)).unwrap()
+}
+
+fn on_worker<R: Send + 'static>(call: impl FnOnce() -> R + Send + 'static) -> R {
+    let worker = std::thread::spawn(call);
+    let deadline = Instant::now() + Duration::from_secs(20);
+    while !worker.is_finished() {
+        Dispatcher::ui_thread().run_jobs(None);
+        assert!(Instant::now() < deadline, "native text call did not return");
+        std::thread::sleep(Duration::from_millis(1));
+    }
+    let result = worker.join().expect("native text call on worker thread");
+    // Final COM release on the worker queues disposal of its portable ranges.
+    Dispatcher::ui_thread().run_jobs(None);
+    result
+}
+
+fn text(range: &ITextRangeProvider, maximum: i32) -> String {
+    let value = range.get_text(maximum).unwrap();
+    // SAFETY: the native range returned an owned BSTR, released exactly once.
+    unsafe {
+        let result = ptr_to_string_bstr(value).unwrap();
+        free_bstr(value);
+        result
+    }
+}
+
+fn attribute(range: &ITextRangeProvider, id: i32) -> VariantValue {
+    let mut value = range.get_attribute_value(id).unwrap();
+    // SAFETY: the native range returned an owned VARIANT. `as_object` copies
+    // its value before the original's native allocation is released.
+    unsafe {
+        let result = value.as_object().unwrap().unwrap();
+        value.dispose();
+        result
+    }
+}
+
+fn array<T: SafeArrayElement>(value: SafeArrayRef) -> Vec<T> {
+    // SAFETY: each caller provides the array of the element type returned by
+    // that UIA method, then releases the owned array once after copying it.
+    unsafe {
+        let result = SafeArrayMarshaller::<T>::convert_to_managed(value)
+            .unwrap()
+            .unwrap();
+        SafeArrayMarshaller::<T>::free(value);
+        result
+    }
+}
+
+#[test]
+fn native_text_pattern_marshals_unicode_ranges_and_selection_from_worker_thread() {
+    let _app = UnitTestApplication::start(TestServices::styled_window());
+    let _recording = RecordingScope::new();
+    let editor = RichEditBox::new();
+    editor.set_text("a😀 b\0c\nlast").unwrap();
+    let node = native_node(&editor);
+    let identity = node.cast::<IUnknown>().unwrap().as_ptr() as usize;
+    let before = TextRangeNode::count();
+    let node = SendProvider(node);
+    on_worker(move || {
+        let advertised = node
+            .get()
+            .get_pattern_provider(UiaPatternId::Text.0)
+            .unwrap()
+            .unwrap();
+        assert_eq!(advertised.as_ptr() as usize, identity);
+        let provider = advertised.cast::<ITextProvider>().unwrap();
+        assert_eq!(
+            provider.get_supported_text_selection(),
+            Ok(SupportedTextSelection::Single)
+        );
+        let document = provider.get_document_range().unwrap().unwrap();
+        assert_eq!(text(&document, -1), "a😀 b\0c\nlast");
+        assert_eq!(text(&document, 2), "a");
+        assert_eq!(text(&document, 3), "a😀");
+        assert_eq!(document.get_text(-2).map(|_| ()), Err(HResult::INVALIDARG));
+        let clone = ITextRangeProvider::clone(&document).unwrap().unwrap();
+        assert_eq!(document.compare(Some(&clone)), Ok(1));
+        assert_eq!(document.compare(None), Err(HResult::INVALIDARG));
+        assert_eq!(
+            document.expand_to_enclosing_unit(TextUnit(9)),
+            Err(HResult::INVALIDARG)
+        );
+
+        let needle = string_to_bstr("😀 b\0c");
+        let found = document.find_text(needle, 0, 0).unwrap().unwrap();
+        // SAFETY: this test owns the BSTR passed as a borrowed search input.
+        unsafe { free_bstr(needle) };
+        assert_eq!(text(&found, -1), "😀 b\0c");
+        assert_eq!(
+            found.compare_endpoints(
+                TextPatternRangeEndpoint::Start,
+                Some(&document),
+                TextPatternRangeEndpoint::Start
+            ),
+            Ok(1)
+        );
+        found.select().unwrap();
+        let selected = array::<ComPtr<ITextRangeProvider>>(provider.get_selection().unwrap());
+        assert_eq!(selected.len(), 1);
+        assert_eq!(text(&selected[0], -1), "😀 b\0c");
+        found.add_to_selection().unwrap();
+        assert_eq!(
+            found.move_endpoint_by_unit(TextPatternRangeEndpoint::Start, TextUnit::Character, 1),
+            Ok(1)
+        );
+        assert_eq!(text(&found, -1), " b\0c");
+        found
+            .move_endpoint_by_range(
+                TextPatternRangeEndpoint::Start,
+                Some(&document),
+                TextPatternRangeEndpoint::Start,
+            )
+            .unwrap();
+        found.expand_to_enclosing_unit(TextUnit::Character).unwrap();
+        assert_eq!(text(&found, -1), "a");
+        assert_eq!(found.move_(TextUnit::Character, 1), Ok(1));
+        assert_eq!(text(&found, -1), "😀");
+        found.select().unwrap();
+    });
+    assert_eq!(editor.selected_text(), "😀");
+    assert_eq!(TextRangeNode::count(), before);
+}
+
+#[test]
+fn native_text_attributes_use_native_reserved_values_and_colorref() {
+    let _app = UnitTestApplication::start(TestServices::styled_window());
+    let _recording = RecordingScope::new();
+    let editor = RichEditBox::new();
+    editor.set_text("plain bold").unwrap();
+    editor
+        .document()
+        .apply_format(
+            6..10,
+            &CharacterFormat {
+                font_weight: Some(FontWeight::Bold),
+                foreground: Some(Some(Rc::new(ImmutableSolidColorBrush::new(Color::from_rgb(
+                    0x12, 0x34, 0x56,
+                ))) as Rc<dyn IBrush>)),
+                ..CharacterFormat::default()
+            },
+        )
+        .unwrap();
+    let provider = native_node(&editor).cast::<ITextProvider>().unwrap();
+    let document = provider.get_document_range().unwrap().unwrap();
+    let VariantValue::Unknown(mixed) = attribute(&document, 40007) else {
+        panic!("mixed font weight")
+    };
+    assert_eq!(
+        mixed.cast::<IUnknown>().unwrap(),
+        UiaCoreTypesApi::reserved_mixed_attribute_value()
+            .unwrap()
+            .cast::<IUnknown>()
+            .unwrap()
+    );
+    let VariantValue::Unknown(unsupported) = attribute(&document, 49999) else {
+        panic!("unsupported attribute")
+    };
+    assert_eq!(
+        unsupported.cast::<IUnknown>().unwrap(),
+        UiaCoreTypesApi::reserved_not_supported_value()
+            .unwrap()
+            .cast::<IUnknown>()
+            .unwrap()
+    );
+    assert_ne!(mixed, unsupported);
+    let mut weight = ComVariant::create(Some(&VariantValue::I4(700))).unwrap();
+    let bold = document.find_attribute(40007, weight, 0).unwrap().unwrap();
+    // SAFETY: the input VARIANT belongs to this test, not to the callee.
+    unsafe { weight.dispose() };
+    assert_eq!(text(&bold, -1), "bold");
+    assert_eq!(attribute(&bold, 40008), VariantValue::I4(0x0056_3412));
+    assert_eq!(attribute(&document, 40015), VariantValue::Bool(false));
+    editor.set_is_read_only(true);
+    assert_eq!(attribute(&document, 40015), VariantValue::Bool(true));
+    let mut color = ComVariant::create(Some(&VariantValue::I4(0x0056_3412))).unwrap();
+    let colored = document.find_attribute(40008, color, 0).unwrap().unwrap();
+    unsafe { color.dispose() };
+    assert_eq!(text(&colored, -1), "bold");
+}
+
+#[test]
+fn native_text_geometry_children_and_hit_testing_use_real_document_layout() {
+    let _app = UnitTestApplication::start(TestServices::styled_window());
+    let _text = TextTestScope::new();
+    let _recording = RecordingScope::new();
+    let view = RichTextBlock::new();
+    view.set_font_family(FontFamily::new("Test Sans"));
+    view.set_font_size(16.0);
+    let paragraph = Paragraph::with_text("Hello ");
+    let child = Button::new();
+    child.set_width(40.0);
+    child.set_height(20.0);
+    paragraph
+        .inlines()
+        .add(InlineUIContainer::with_child(&child));
+    paragraph.inlines().add_text(" world");
+    view.blocks().add(paragraph);
+    let window = Window::new();
+    window.set_width(320.0);
+    window.set_height(200.0);
+    window.set_content(Some(Control::boxed(&view)));
+    window.show();
+    window.layout_manager().execute_initial_layout_pass();
+    let child_node = native_node(&child);
+    let provider = native_node(&view).cast::<ITextProvider>().unwrap();
+    let document = provider.get_document_range().unwrap().unwrap();
+    let children = array::<ComPtr<IRawElementProviderSimple>>(document.get_children().unwrap());
+    assert_eq!(children.len(), 1);
+    assert_eq!(
+        children[0].cast::<IUnknown>().unwrap(),
+        child_node.cast::<IUnknown>().unwrap()
+    );
+    let embedded = provider
+        .range_from_child(Some(&child_node))
+        .unwrap()
+        .unwrap();
+    assert_eq!(text(&embedded, -1), "\u{fffc}");
+    assert_eq!(
+        embedded
+            .get_enclosing_element()
+            .unwrap()
+            .unwrap()
+            .cast::<IUnknown>()
+            .unwrap(),
+        child_node.cast::<IUnknown>().unwrap()
+    );
+    assert_eq!(
+        provider.range_from_child(None).map(|_| ()),
+        Err(HResult::INVALIDARG)
+    );
+
+    let rectangles = array::<f64>(document.get_bounding_rectangles().unwrap());
+    assert!(!rectangles.is_empty());
+    assert_eq!(rectangles.len() % 4, 0);
+    assert!(
+        rectangles
+            .chunks_exact(4)
+            .all(|rect| rect[2] > 0.0 && rect[3] > 0.0)
+    );
+    let peer = ControlAutomationPeer::create_peer_for_element(&view);
+    let portable = peer
+        .get_provider::<dyn ferroui_controls::automation::provider::ITextProvider>()
+        .unwrap();
+    let expected = portable
+        .document_range()
+        .unwrap()
+        .get_bounding_rectangles()
+        .unwrap()
+        .into_iter()
+        .map(|rect| peer.to_screen(rect).unwrap())
+        .flat_map(|rect| [rect.x, rect.y, rect.width, rect.height])
+        .collect::<Vec<_>>();
+    assert_eq!(rectangles, expected);
+    let hit = provider
+        .range_from_point(UiaPoint {
+            x: rectangles[0] + 1.0,
+            y: rectangles[1] + 1.0,
+        })
+        .unwrap()
+        .unwrap();
+    hit.expand_to_enclosing_unit(TextUnit::Character).unwrap();
+    assert_eq!(text(&hit, -1), "H");
+    assert!(
+        provider
+            .range_from_point(UiaPoint {
+                x: f64::NAN,
+                y: 0.0
+            })
+            .is_err()
+    );
+    let visible = array::<ComPtr<ITextRangeProvider>>(provider.get_visible_ranges().unwrap());
+    assert!(!visible.is_empty());
+    assert_eq!(text(&visible[0], -1), view.text());
+    document.scroll_into_view(1).unwrap();
+    window.close();
+}
+
+#[test]
+fn native_text_ranges_follow_edits_and_reject_replacement_disconnection_and_foreign_owner() {
+    let _app = UnitTestApplication::start(TestServices::styled_window());
+    let _recording = RecordingScope::new();
+    let editor = RichEditBox::new();
+    editor.set_text("old document").unwrap();
+    let node = native_node(&editor);
+    let provider = node.cast::<ITextProvider>().unwrap();
+    let original = provider.get_document_range().unwrap().unwrap();
+    editor.document().replace_text(0..0, "new ").unwrap();
+    assert_eq!(text(&original, -1), "new old document");
+
+    let foreign_owner = RichEditBox::new();
+    foreign_owner.set_text("elsewhere").unwrap();
+    let foreign = native_node(&foreign_owner)
+        .cast::<ITextProvider>()
+        .unwrap()
+        .get_document_range()
+        .unwrap()
+        .unwrap();
+    assert_eq!(original.compare(Some(&foreign)), Err(HResult::INVALIDARG));
+    assert_eq!(
+        original.move_endpoint_by_range(
+            TextPatternRangeEndpoint::Start,
+            Some(&foreign),
+            TextPatternRangeEndpoint::End
+        ),
+        Err(HResult::INVALIDARG)
+    );
+    editor.set_document(RichTextDocument::from_text("replacement"));
+    assert_eq!(
+        original.get_text(-1).map(|_| ()),
+        Err(ELEMENT_NOT_AVAILABLE)
+    );
+    let fresh = provider.get_document_range().unwrap().unwrap();
+    let peer = ControlAutomationPeer::create_peer_for_element(&editor);
+    AutomationNode::release(&peer);
+    assert_eq!(fresh.get_text(-1).map(|_| ()), Err(ELEMENT_NOT_AVAILABLE));
+
+    let next = native_node(&editor)
+        .cast::<ITextProvider>()
+        .unwrap()
+        .get_document_range()
+        .unwrap()
+        .unwrap();
+    let weak = editor.downgrade();
+    drop(editor);
+    assert!(weak.upgrade().is_none());
+    assert_eq!(next.get_text(-1).map(|_| ()), Err(ELEMENT_NOT_AVAILABLE));
+}
+
+#[test]
+fn native_text_events_observe_edits_formatting_selection_and_document_replacement() {
+    let _app = UnitTestApplication::start(TestServices::styled_window());
+    let recording = RecordingScope::new();
+    let editor = RichEditBox::new();
+    editor.set_text("text").unwrap();
+    let node = native_node(&editor);
+    recording.take();
+    editor.document().replace_text(0..1, "T").unwrap();
+    assert!(recording.take().contains(&UiaEventId::Text_TextChanged.0));
+    editor
+        .document()
+        .apply_format(
+            0..4,
+            &CharacterFormat {
+                font_weight: Some(FontWeight::Bold),
+                ..CharacterFormat::default()
+            },
+        )
+        .unwrap();
+    assert!(recording.take().contains(&UiaEventId::Text_TextChanged.0));
+    editor.select(1, 3);
+    assert!(
+        recording
+            .take()
+            .contains(&UiaEventId::Text_TextSelectionChanged.0)
+    );
+    let old = editor.document();
+    editor.set_document(RichTextDocument::from_text("other"));
+    assert!(recording.take().contains(&UiaEventId::Text_TextChanged.0));
+    old.replace_text(0..1, "t").unwrap();
+    assert!(!recording.take().contains(&UiaEventId::Text_TextChanged.0));
+    let mut available = node
+        .get_property_value(UiaPropertyId::IsTextPatternAvailable.0)
+        .unwrap();
+    unsafe {
+        assert_eq!(
+            available.as_object().unwrap(),
+            Some(VariantValue::Bool(true))
+        );
+        available.dispose();
+    }
+    let selection = node
+        .cast::<ITextProvider>()
+        .unwrap()
+        .get_selection()
+        .unwrap();
+    let selected = array::<ComPtr<ITextRangeProvider>>(selection);
+    selected[0].remove_from_selection().unwrap();
+    assert_eq!(editor.selection_start(), editor.selection_end());
+}

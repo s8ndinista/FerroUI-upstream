@@ -32,7 +32,7 @@ use super::interop::{
     IExpandCollapseProvider, IInvokeProvider, IInvokeProviderImpl, IRangeValueProvider, IRawElementProviderFragment,
     IRawElementProviderFragmentImpl, IRawElementProviderFragmentRoot, IRawElementProviderFragmentRootImpl,
     IRawElementProviderSimple, IRawElementProviderSimple2, IRawElementProviderSimple2Impl, IRawElementProviderSimpleImpl,
-    IScrollItemProvider, IScrollProvider, ISelectionItemProvider, ISelectionProvider, IToggleProvider, IValueProvider,
+    IScrollItemProvider, IScrollProvider, ISelectionItemProvider, ISelectionProvider, ITextProvider, IToggleProvider, IValueProvider,
     NavigateDirection, ProviderOptions, StructureChangeType, UiaControlTypeId, UiaCoreProviderApi, UiaCoreTypesApi,
     UiaEventId, UiaHeadingLevel, UiaLandmarkType, UiaLiveSetting, UiaPatternId, UiaPropertyId, UiaRect,
 };
@@ -210,6 +210,7 @@ impl AutomationNode {
                     InterfaceEntry::of::<ISelectionItemProvider>(),
                     InterfaceEntry::of::<IToggleProvider>(),
                     InterfaceEntry::of::<IValueProvider>(),
+                    InterfaceEntry::of::<ITextProvider>(),
                 ]
             };
         }
@@ -218,10 +219,10 @@ impl AutomationNode {
         let provider: ComPtr<IRawElementProviderSimple2> = match kind {
             NodeKind::Node => make_com_with(node, patterns!()),
             NodeKind::Root | NodeKind::Interop { .. } => {
-                let [a, b, c, d, e, f, g, h, i, j] = patterns!();
+                let [a, b, c, d, e, f, g, h, i, j, k] = patterns!();
                 make_com_with(
                     node,
-                    [a, b, c, d, e, f, g, h, i, j, InterfaceEntry::of::<IRawElementProviderFragmentRoot>()],
+                    [a, b, c, d, e, f, g, h, i, j, k, InterfaceEntry::of::<IRawElementProviderFragmentRoot>()],
                 )
             }
         };
@@ -242,6 +243,7 @@ impl AutomationNode {
             peer.children_changed(move || Self::on_peer_children_changed(id)),
             peer.property_changed(move |e| Self::on_peer_property_changed(id, e)),
         ];
+        subscriptions.extend(Self::text_subscriptions(peer, id));
         if let Some(embedded_root) = peer.get_provider::<dyn aap::IEmbeddedRootProvider>() {
             subscriptions.push(embedded_root.focus_changed(Rc::new(move || Self::on_embedded_root_focus_changed(id))));
         }
@@ -265,6 +267,16 @@ impl AutomationNode {
     /// The provider of the node with the number `id`, on the UI thread.
     pub(crate) fn provider_of(id: i32) -> Option<ComPtr<IRawElementProviderSimple>> {
         Self::entry(id).map(|entry| entry.provider.clone())
+    }
+
+    /// Resolves a canonical native identity without dereferencing an arbitrary
+    /// client's COM object as a Rust node. Every entry's first interface is its
+    /// canonical IUnknown, including its inherited simple-provider interface.
+    pub(crate) fn peer_from_identity(identity: usize) -> Option<Ref<AutomationPeer>> {
+        S_NODES.with(|nodes| {
+            nodes.borrow().by_id.values().find(|entry| entry.provider.as_ptr() as usize == identity)
+                .and_then(|entry| entry.peer.upgrade())
+        })
     }
 
     /// The number of nodes the table of the calling thread holds.
@@ -352,6 +364,7 @@ impl AutomationNode {
             UiaPatternId::ScrollItem => true,
             UiaPatternId::Selection => has::<dyn aap::ISelectionProvider>(self)?,
             UiaPatternId::SelectionItem => has::<dyn aap::ISelectionItemProvider>(self)?,
+            UiaPatternId::Text => has::<dyn aap::ITextProvider>(self)?,
             UiaPatternId::Toggle => has::<dyn aap::IToggleProvider>(self)?,
             UiaPatternId::Value => has::<dyn aap::IValueProvider>(self)?,
             _ => false,
@@ -398,6 +411,7 @@ impl AutomationNode {
             UiaPropertyId::IsEnabled => Plain::Bool(peer.is_enabled()),
             UiaPropertyId::IsKeyboardFocusable => Plain::Bool(peer.is_keyboard_focusable()),
             UiaPropertyId::IsOffscreen => Plain::Bool(peer.is_offscreen()),
+            UiaPropertyId::IsTextPatternAvailable => Plain::Bool(peer.get_provider::<dyn aap::ITextProvider>().is_some()),
             UiaPropertyId::ItemType => Plain::Text(peer.get_item_type()),
             UiaPropertyId::ItemStatus => Plain::Text(peer.get_item_status()),
             UiaPropertyId::LocalizedControlType => Plain::Text(Some(peer.get_localized_control_type())),
