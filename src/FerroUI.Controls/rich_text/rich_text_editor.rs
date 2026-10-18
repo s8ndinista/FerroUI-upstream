@@ -401,6 +401,12 @@ impl RichTextEditor {
 
     /// Replaces the selection and applies the current insertion format in one undo unit.
     pub fn insert_text(&self, text: &str, kind: EditKind) -> Result<bool, EditError> {
+        let composing = self.prepare_edit()?;
+        let kind = if composing && kind == EditKind::Typing {
+            EditKind::Composition
+        } else {
+            kind
+        };
         let _operation = self.enter(true)?;
         self.synchronize();
         let range = self.selection().range();
@@ -437,12 +443,28 @@ impl RichTextEditor {
         Ok(true)
     }
 
+    pub(super) fn prepare_edit(&self) -> Result<bool, EditError> {
+        if self.is_read_only() {
+            return Err(EditError::ReadOnly);
+        }
+        if self.in_operation.get() {
+            return Err(EditError::ReentrantEdit);
+        }
+        let composing = self.is_composing();
+        if composing {
+            self.cancel_composition()?;
+            self.checkpoint();
+        }
+        Ok(composing)
+    }
+
     /// Replaces the selection with a structured fragment, retaining all supported inline kinds.
     pub fn insert_fragment(
         &self,
         fragment: &DocumentSnapshot,
         kind: EditKind,
     ) -> Result<bool, EditError> {
+        self.prepare_edit()?;
         let _operation = self.enter(true)?;
         self.synchronize();
         let range = self.selection().range();
@@ -482,6 +504,7 @@ impl RichTextEditor {
     }
 
     pub fn delete_selection(&self) -> Result<bool, EditError> {
+        self.prepare_edit()?;
         if self.selection().is_empty() {
             return Ok(false);
         }
@@ -489,6 +512,7 @@ impl RichTextEditor {
     }
 
     pub fn delete_backward(&self, whole_word: bool) -> Result<bool, EditError> {
+        self.prepare_edit()?;
         let _operation = self.enter(true)?;
         self.synchronize();
         let range = if self.selection().is_empty() {
@@ -506,6 +530,7 @@ impl RichTextEditor {
     }
 
     pub fn delete_forward(&self, whole_word: bool) -> Result<bool, EditError> {
+        self.prepare_edit()?;
         let _operation = self.enter(true)?;
         self.synchronize();
         let range = if self.selection().is_empty() {
@@ -523,6 +548,7 @@ impl RichTextEditor {
     }
 
     pub fn apply_format(&self, format: &CharacterFormat) -> Result<(), EditError> {
+        self.prepare_edit()?;
         let _operation = self.enter(true)?;
         self.synchronize();
         let before = self.capture();
@@ -542,6 +568,7 @@ impl RichTextEditor {
     }
 
     pub fn apply_paragraph_format(&self, format: &ParagraphFormat) -> Result<(), EditError> {
+        self.prepare_edit()?;
         let _operation = self.enter(true)?;
         self.synchronize();
         let before = self.capture();
@@ -557,6 +584,7 @@ impl RichTextEditor {
         &self,
         action: impl FnOnce(&Self) -> Result<T, EditError>,
     ) -> Result<T, EditError> {
+        self.prepare_edit()?;
         if self.is_read_only() {
             return Err(EditError::ReadOnly);
         }
@@ -586,6 +614,7 @@ impl RichTextEditor {
     }
 
     pub fn undo(&self) -> Result<bool, EditError> {
+        self.prepare_edit()?;
         let _operation = self.enter(true)?;
         self.synchronize();
         let unit = self.history.borrow_mut().undo.pop();
@@ -603,6 +632,7 @@ impl RichTextEditor {
     }
 
     pub fn redo(&self) -> Result<bool, EditError> {
+        self.prepare_edit()?;
         let _operation = self.enter(true)?;
         self.synchronize();
         let unit = self.history.borrow_mut().redo.pop();

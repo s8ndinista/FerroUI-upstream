@@ -2,8 +2,8 @@
 //! formatter, drawing context, input routing and overflow continuations.
 
 use crate::documents::{
-    Block, BlockCollection, Hyperlink, IInlineHost, RichTextDocument, Span, TextElement,
-    TextGravity, TextPosition,
+    Block, BlockCollection, Hyperlink, IInlineHost, LineStackingStrategy, Paragraph,
+    RichTextDocument, Span, TextElement, TextGravity, TextPosition,
 };
 use crate::rich_text_layout::{RichTextBreak, RichTextLayout, RichTextLineMetrics, RichTextSource};
 use crate::{Border, Control, ControlImpl, RichTextBlockOverflow, TextBlock, TopLevel};
@@ -13,21 +13,22 @@ use ferroui_base::input::{
     FocusChangedEventArgs, InputElement, InputElementImpl, InputElementImplExt, Key, KeyEventArgs,
     KeyModifiers, PointerEventArgs, PointerPressedEventArgs, PointerReleasedEventArgs,
 };
-use ferroui_base::interactivity::InteractiveImpl;
+use ferroui_base::interactivity::{
+    InteractiveImpl, RoutedEvent, RoutedEventArgs, RoutingStrategies,
+};
 use ferroui_base::layout::{LayoutableImpl, LayoutableImplExt};
 use ferroui_base::media::text_formatting::unicode::GraphemeEnumerator;
-use ferroui_base::media::text_formatting::{GenericTextRunProperties, TextRunProperties};
 use ferroui_base::media::{
-    BaselineAlignment, Brushes, DrawingContext, FontFamily, FontFeatureCollection, FontStretch,
-    FontStyle, FontWeight, IBrush, TextAlignment, TextWrapping, Typeface,
+    Brushes, DrawingContext, FontFamily, FontFeatureCollection, FontStretch, FontStyle, FontWeight,
+    IBrush, TextAlignment, TextDecorationCollection, TextTrimming, TextWrapping,
 };
 use ferroui_base::reactive::{Disposable, IDisposable};
 use ferroui_base::utilities::HandlerList;
 use ferroui_base::{
-    ferro_class, instantiate, DirectProperty, ElementRef, FerroObjectImpl, FerroObjectImplExt,
-    FerroProperty, FerroPropertyChangedEventArgs, IntoRef, Point, Rect, Ref, Size,
-    StyledElementImpl, StyledProperty, StyledPropertyOptions, Thickness, Vector, Visual,
-    VisualImpl, VisualImplExt, WeakRef,
+    DirectProperty, ElementRef, FerroObjectImpl, FerroObjectImplExt, FerroProperty,
+    FerroPropertyChangedEventArgs, IntoRef, Point, Rect, Ref, Size, StyledElementImpl,
+    StyledProperty, StyledPropertyOptions, Thickness, Vector, Visual, VisualImpl, VisualImplExt,
+    WeakRef, ferro_class, instantiate,
 };
 use std::cell::{Cell, RefCell};
 use std::ops::Range;
@@ -61,6 +62,9 @@ pub struct RichTextBlock {
     focused_link: RefCell<Option<WeakRef<Hyperlink>>>,
     flow_parent: RefCell<Option<WeakRef<RichTextBlock>>>,
     updating_document: Cell<bool>,
+    reported_overflow: Cell<bool>,
+    reported_trimmed: Cell<bool>,
+    reported_baseline: Cell<f64>,
 }
 
 ferro_class! {
@@ -78,11 +82,18 @@ ferroui_base::ferro_class_info!(RichTextBlock {
     new: RichTextBlock::new,
     markup: {
         content: Blocks,
-        properties: [Blocks: BlockCollection { get: RichTextBlock::blocks }],
+        properties: [
+            Blocks: BlockCollection { get: RichTextBlock::blocks },
+            HorizontalTextAlignment: TextAlignment { get: RichTextBlock::horizontal_text_alignment, set: RichTextBlock::set_horizontal_text_alignment },
+        ],
         methods: [
             fn SelectAll() => RichTextBlock::select_all,
             fn ClearSelection() => RichTextBlock::clear_selection,
             fn Copy() => RichTextBlock::copy,
+        ],
+        fields: [
+            SelectionChangedEvent: RoutedEvent<RoutedEventArgs> => || RichTextBlock::selection_changed_event().clone(),
+            IsTextTrimmedChangedEvent: RoutedEvent<RoutedEventArgs> => || RichTextBlock::is_text_trimmed_changed_event().clone(),
         ],
     },
 });
@@ -98,12 +109,24 @@ impl FerroObjectImpl for RichTextBlock {
     fn on_property_changed(this: &Self, change: &FerroPropertyChangedEventArgs<'_>) {
         Self::parent_on_property_changed(this, change);
         match change.property().name() {
-            "FontFamily" | "FontSize" | "FontStyle" | "FontWeight" | "FontStretch"
-            | "FontFeatures" | "Foreground" | "FlowDirection" | "LetterSpacing"
-            | "TextAlignment" | "LineHeight" => {
+            "FontFamily"
+            | "FontSize"
+            | "FontStyle"
+            | "FontWeight"
+            | "FontStretch"
+            | "FontFeatures"
+            | "Foreground"
+            | "FlowDirection"
+            | "LetterSpacing"
+            | "TextAlignment"
+            | "LineHeight"
+            | "LineStackingStrategy"
+            | "TextIndent"
+            | "TextDecorations"
+            | "SelectionForegroundBrush" => {
                 this.invalidate_document_layout();
             }
-            "TextWrapping" | "Padding" | "MaxLines" => this.invalidate_layout(),
+            "TextWrapping" | "TextTrimming" | "Padding" | "MaxLines" => this.invalidate_layout(),
             "Background" | "SelectionHighlightColor" | "CaretBrush" | "IsTextSelectionEnabled" => {
                 this.invalidate_visual()
             }
@@ -484,13 +507,13 @@ ferroui_base::ferro_properties! {
             FerroProperty::register_direct::<RichTextBlock, _>("Document", Self::document,
                 Some(|this: &RichTextBlock, value| this.set_document(value)), RichTextDocument::new())
         }
-        pub fn selection_start_property() -> DirectProperty<RichTextBlock, usize> {
-            FerroProperty::register_direct::<RichTextBlock, _>("SelectionStart", Self::selection_start,
-                Some(|this: &RichTextBlock, value| this.set_selection_start(value)), 0)
+        pub fn selection_start_property() -> DirectProperty<RichTextBlock, i32> {
+            FerroProperty::register_direct::<RichTextBlock, _>("SelectionStart", |this| this.selection_start().min(i32::MAX as usize) as i32,
+                Some(|this: &RichTextBlock, value: i32| this.set_selection_start(value.max(0) as usize)), 0)
         }
-        pub fn selection_end_property() -> DirectProperty<RichTextBlock, usize> {
-            FerroProperty::register_direct::<RichTextBlock, _>("SelectionEnd", Self::selection_end,
-                Some(|this: &RichTextBlock, value| this.set_selection_end(value)), 0)
+        pub fn selection_end_property() -> DirectProperty<RichTextBlock, i32> {
+            FerroProperty::register_direct::<RichTextBlock, _>("SelectionEnd", |this| this.selection_end().min(i32::MAX as usize) as i32,
+                Some(|this: &RichTextBlock, value: i32| this.set_selection_end(value.max(0) as usize)), 0)
         }
         pub fn selected_text_property() -> DirectProperty<RichTextBlock, String> {
             FerroProperty::register_direct::<RichTextBlock, _>("SelectedText", Self::selected_text, None, String::new())
@@ -500,6 +523,9 @@ ferroui_base::ferro_properties! {
         }
         pub fn selection_highlight_color_property() -> StyledProperty<Option<Rc<dyn IBrush>>> {
             FerroProperty::register::<RichTextBlock, _>("SelectionHighlightColor", Some(Brushes::light_blue()))
+        }
+        pub fn selection_foreground_brush_property() -> StyledProperty<Option<Rc<dyn IBrush>>> {
+            crate::SelectableTextBlock::selection_foreground_brush_property().add_owner::<RichTextBlock>()
         }
         pub fn caret_brush_property() -> StyledProperty<Option<Rc<dyn IBrush>>> {
             FerroProperty::register::<RichTextBlock, _>("CaretBrush", None)
@@ -516,10 +542,16 @@ ferroui_base::ferro_properties! {
         pub fn letter_spacing_property() -> StyledProperty<f64> { TextElement::letter_spacing_property().add_owner::<RichTextBlock>() }
         pub fn text_alignment_property() -> StyledProperty<TextAlignment> { TextBlock::text_alignment_property().add_owner::<RichTextBlock>() }
         pub fn line_height_property() -> StyledProperty<f64> { TextBlock::line_height_property().add_owner::<RichTextBlock>() }
+        pub fn text_indent_property() -> StyledProperty<f64> { Paragraph::text_indent_property().add_owner::<RichTextBlock>() }
+        pub fn line_stacking_strategy_property() -> StyledProperty<LineStackingStrategy> { Block::line_stacking_strategy_property().add_owner::<RichTextBlock>() }
+        pub fn text_decorations_property() -> StyledProperty<Option<TextDecorationCollection>> { TextBlock::text_decorations_property().add_owner::<RichTextBlock>() }
+        pub fn text_trimming_property() -> StyledProperty<Rc<dyn TextTrimming>> { TextBlock::text_trimming_property().add_owner::<RichTextBlock>() }
         pub fn text_wrapping_property() -> StyledProperty<TextWrapping> {
             FerroProperty::register::<RichTextBlock, _>("TextWrapping", TextWrapping::Wrap)
         }
-        pub fn max_lines_property() -> StyledProperty<usize> { FerroProperty::register::<RichTextBlock, _>("MaxLines", 0) }
+        pub fn max_lines_property() -> StyledProperty<i32> {
+            FerroProperty::register_with::<RichTextBlock, _>("MaxLines", StyledPropertyOptions::new(0).validate(|value| *value >= 0))
+        }
         pub fn overflow_content_target_property() -> StyledProperty<Option<ElementRef<RichTextBlockOverflow>>> {
             ferroui_base::data::core::ValueTypes::register_element_ref::<RichTextBlockOverflow>();
             FerroProperty::register_with::<RichTextBlock, _>("OverflowContentTarget", StyledPropertyOptions::new(None))
@@ -530,13 +562,40 @@ ferroui_base::ferro_properties! {
         pub fn baseline_offset_property() -> DirectProperty<RichTextBlock, f64> {
             FerroProperty::register_direct::<RichTextBlock, _>("BaselineOffset", Self::baseline_offset, None, 0.0)
         }
+        pub fn is_text_trimmed_property() -> DirectProperty<RichTextBlock, bool> {
+            FerroProperty::register_direct::<RichTextBlock, _>("IsTextTrimmed", Self::is_text_trimmed, None, false)
+        }
     }
 }
 
 impl RichTextBlock {
+    ferroui_base::ferro_routed_event!(
+        pub fn selection_changed_event() -> RoutedEvent<RoutedEventArgs> {
+            RoutedEvent::register::<RichTextBlock, RoutedEventArgs>(
+                "SelectionChanged",
+                RoutingStrategies::BUBBLE,
+            )
+        }
+    );
+    ferroui_base::ferro_routed_event!(
+        pub fn is_text_trimmed_changed_event() -> RoutedEvent<RoutedEventArgs> {
+            RoutedEvent::register::<RichTextBlock, RoutedEventArgs>(
+                "IsTextTrimmedChanged",
+                RoutingStrategies::BUBBLE,
+            )
+        }
+    );
+
     fn static_constructor() {
         InputElement::focusable_property().override_default_value::<RichTextBlock>(true);
         Visual::clip_to_bounds_property().override_default_value::<RichTextBlock>(true);
+        Visual::affects_render::<RichTextBlock>(&[
+            Self::background_property().as_property(),
+            Self::foreground_property().as_property(),
+            Self::selection_foreground_brush_property().as_property(),
+            Self::selection_highlight_color_property().as_property(),
+            Self::caret_brush_property().as_property(),
+        ]);
     }
 
     pub fn construct() -> Self {
@@ -556,6 +615,9 @@ impl RichTextBlock {
             focused_link: RefCell::new(None),
             flow_parent: RefCell::new(None),
             updating_document: Cell::new(false),
+            reported_overflow: Cell::new(false),
+            reported_trimmed: Cell::new(false),
+            reported_baseline: Cell::new(0.0),
         }
     }
 
@@ -589,10 +651,9 @@ impl RichTextBlock {
             .as_ref()
             .and_then(WeakRef::upgrade)
             .is_some()
-            || value
-                .blocks()
-                .logical_parent()
-                .is_some_and(|parent| parent != self.to_ref().upcast::<ferroui_base::StyledElement>())
+            || value.blocks().logical_parent().is_some_and(|parent| {
+                parent != self.to_ref().upcast::<ferroui_base::StyledElement>()
+            })
         {
             return false;
         }
@@ -725,23 +786,28 @@ impl RichTextBlock {
     fn notify_selection_changed(&self, args: &RichTextSelectionChangedEventArgs) {
         self.raise_direct_property_changed(
             Self::selection_start_property(),
-            &args.old_start,
-            &args.start,
+            &(args.old_start.min(i32::MAX as usize) as i32),
+            &(args.start.min(i32::MAX as usize) as i32),
         );
         self.raise_direct_property_changed(
             Self::selection_end_property(),
-            &args.old_end,
-            &args.end,
+            &(args.old_end.min(i32::MAX as usize) as i32),
+            &(args.end.min(i32::MAX as usize) as i32),
         );
         self.raise_direct_property_changed(
             Self::selected_text_property(),
             &String::new(),
             &self.selected_text(),
         );
-        self.invalidate_visual();
+        if self.selection_foreground_brush().is_some() {
+            self.invalidate_document_layout();
+        } else {
+            self.invalidate_visual();
+        }
         for (_, handler) in self.selection_changed.snapshot().iter() {
             handler(args);
         }
+        self.raise_event(&RoutedEventArgs::with_event(Self::selection_changed_event()));
         if let Some(target) = self.overflow_content_target() {
             target.notify_selection_changed(args);
         }
@@ -942,6 +1008,14 @@ impl RichTextBlock {
     pub fn line_metrics(&self) -> Vec<RichTextLineMetrics> {
         self.page_layout().metrics(self.text_origin())
     }
+    /// Source ranges retained in this formatted page, excluding collapsed text
+    /// represented by an ellipsis. Ancestor viewports may clip these further.
+    pub fn visible_text_ranges(&self) -> Vec<Range<usize>> {
+        self.page_layout().visible_text_ranges()
+    }
+    pub fn is_text_trimmed(&self) -> bool {
+        self.page_layout().is_trimmed
+    }
     pub fn baseline_offset(&self) -> f64 {
         self.line_metrics()
             .first()
@@ -972,6 +1046,12 @@ impl RichTextBlock {
     }
     pub fn set_selection_highlight_color(&self, value: Option<Rc<dyn IBrush>>) {
         self.set_value(Self::selection_highlight_color_property(), value);
+    }
+    pub fn selection_foreground_brush(&self) -> Option<Rc<dyn IBrush>> {
+        self.get_value(Self::selection_foreground_brush_property())
+    }
+    pub fn set_selection_foreground_brush(&self, value: Option<Rc<dyn IBrush>>) {
+        self.set_value(Self::selection_foreground_brush_property(), value);
     }
     pub fn caret_brush(&self) -> Option<Rc<dyn IBrush>> {
         self.get_value(Self::caret_brush_property())
@@ -1045,6 +1125,36 @@ impl RichTextBlock {
     pub fn set_text_alignment(&self, value: TextAlignment) {
         self.set_value(Self::text_alignment_property(), value);
     }
+    pub fn horizontal_text_alignment(&self) -> TextAlignment {
+        self.text_alignment()
+    }
+    pub fn set_horizontal_text_alignment(&self, value: TextAlignment) {
+        self.set_text_alignment(value);
+    }
+    pub fn text_indent(&self) -> f64 {
+        self.get_value(Self::text_indent_property())
+    }
+    pub fn set_text_indent(&self, value: f64) {
+        self.set_value(Self::text_indent_property(), value);
+    }
+    pub fn line_stacking_strategy(&self) -> LineStackingStrategy {
+        self.get_value(Self::line_stacking_strategy_property())
+    }
+    pub fn set_line_stacking_strategy(&self, value: LineStackingStrategy) {
+        self.set_value(Self::line_stacking_strategy_property(), value);
+    }
+    pub fn text_decorations(&self) -> Option<TextDecorationCollection> {
+        self.get_value(Self::text_decorations_property())
+    }
+    pub fn set_text_decorations(&self, value: Option<TextDecorationCollection>) {
+        self.set_value(Self::text_decorations_property(), value);
+    }
+    pub fn text_trimming(&self) -> Rc<dyn TextTrimming> {
+        self.get_value(Self::text_trimming_property())
+    }
+    pub fn set_text_trimming(&self, value: Rc<dyn TextTrimming>) {
+        self.set_value(Self::text_trimming_property(), value);
+    }
     pub fn line_height(&self) -> f64 {
         self.get_value(Self::line_height_property())
     }
@@ -1058,10 +1168,13 @@ impl RichTextBlock {
         self.set_value(Self::text_wrapping_property(), value);
     }
     pub fn max_lines(&self) -> usize {
-        self.get_value(Self::max_lines_property())
+        self.get_value(Self::max_lines_property()).max(0) as usize
     }
     pub fn set_max_lines(&self, value: usize) {
-        self.set_value(Self::max_lines_property(), value);
+        self.set_value(
+            Self::max_lines_property(),
+            value.min(i32::MAX as usize) as i32,
+        );
     }
 
     pub fn overflow_content_target(&self) -> Option<Ref<RichTextBlockOverflow>> {
@@ -1115,8 +1228,28 @@ impl RichTextBlock {
         true
     }
     pub(crate) fn set_flow_parent(&self, parent: Option<WeakRef<RichTextBlock>>) {
+        let old_source = self.content_source();
+        let old_document = self.document();
         *self.flow_parent.borrow_mut() = parent;
         self.invalidate_layout();
+        if let Some(overflow) = self.to_ref().cast::<RichTextBlockOverflow>() {
+            overflow.raise_direct_property_changed(
+                RichTextBlockOverflow::content_source_property(),
+                &old_source,
+                &self.content_source(),
+            );
+        }
+        self.raise_direct_property_changed(
+            Self::document_property(),
+            &old_document,
+            &self.document(),
+        );
+    }
+    pub(crate) fn content_source(&self) -> Option<Ref<RichTextBlock>> {
+        self.flow_parent
+            .borrow()
+            .as_ref()
+            .and_then(WeakRef::upgrade)
     }
     fn text_origin(&self) -> Point {
         let padding = self.padding();
@@ -1148,44 +1281,60 @@ impl RichTextBlock {
             let layout = parent.page_layout();
             (layout.source.clone(), layout.next.clone())
         } else {
-            let source = self.source.borrow().clone().unwrap_or_else(|| {
-                let properties: Rc<dyn TextRunProperties> =
-                    Rc::new(GenericTextRunProperties::with_all(
-                        Typeface::with_style(
-                            self.font_family(),
-                            self.font_style(),
-                            self.font_weight(),
-                            self.font_stretch(),
-                        ),
-                        self.font_size(),
-                        None,
-                        self.foreground(),
-                        None,
-                        BaselineAlignment::Baseline,
-                        None,
-                        self.font_features(),
-                    ));
-                RichTextSource::new(&self.document(), properties)
-            });
+            let source = self
+                .source
+                .borrow()
+                .clone()
+                .unwrap_or_else(|| RichTextSource::new(&self.document(), self));
             *self.source.borrow_mut() = Some(source.clone());
             (source, RichTextBreak::default())
         };
-        let mut constraint = self.constraint.get();
-        // In a scrolling editor an unconstrained document reports its full
-        // extent. Linked columns have the height of their individual views.
-        if self.overflow_content_target().is_none() && self.flow_parent.borrow().is_none() {
-            constraint.height = f64::INFINITY;
-        }
+        let constraint = self.constraint.get();
         let layout = RichTextLayout::new(
             source,
             constraint,
             self.text_wrapping(),
             self.max_lines(),
+            &self.text_trimming(),
+            self.overflow_content_target().is_none(),
             &start,
         );
+        let old_overflow = self.reported_overflow.replace(layout.has_overflow);
+        let old_trimmed = self.reported_trimmed.replace(layout.is_trimmed);
+        let baseline = layout
+            .metrics(self.text_origin())
+            .first()
+            .map_or(0.0, |line| line.baseline);
+        let old_baseline = self.reported_baseline.replace(baseline);
+        // Publish the complete cache before invoking property or routed-event
+        // handlers; they may immediately ask for layout or trimming state.
         *self.layout.borrow_mut() = Some(layout.clone());
         if let Some(target) = self.overflow_content_target() {
             target.invalidate_layout();
+        }
+        if old_overflow != layout.has_overflow {
+            self.raise_direct_property_changed(
+                Self::has_overflow_content_property(),
+                &old_overflow,
+                &layout.has_overflow,
+            );
+        }
+        if old_baseline != baseline {
+            self.raise_direct_property_changed(
+                Self::baseline_offset_property(),
+                &old_baseline,
+                &baseline,
+            );
+        }
+        if old_trimmed != layout.is_trimmed {
+            self.raise_direct_property_changed(
+                Self::is_text_trimmed_property(),
+                &old_trimmed,
+                &layout.is_trimmed,
+            );
+            self.raise_event(&RoutedEventArgs::with_event(
+                Self::is_text_trimmed_changed_event(),
+            ));
         }
         layout
     }

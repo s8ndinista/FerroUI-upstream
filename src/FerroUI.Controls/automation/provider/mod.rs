@@ -15,8 +15,13 @@ mod i_root_provider;
 mod i_scroll_provider;
 mod i_selection_item_provider;
 mod i_selection_provider;
+mod i_text_provider;
+mod i_text_range_provider;
 mod i_toggle_provider;
 mod i_value_provider;
+mod rich_text_automation;
+#[cfg(test)]
+mod rich_text_automation_tests;
 
 pub use i_embedded_root_provider::IEmbeddedRootProvider;
 pub use i_expand_collapse_provider::IExpandCollapseProvider;
@@ -26,8 +31,14 @@ pub use i_root_provider::IRootProvider;
 pub use i_scroll_provider::{IScrollProvider, ScrollAmount};
 pub use i_selection_item_provider::ISelectionItemProvider;
 pub use i_selection_provider::ISelectionProvider;
+pub use i_text_provider::{ITextProvider, SupportedTextSelection};
+pub use i_text_range_provider::{
+    ITextRangeProvider, TextAttribute, TextAttributeValue, TextPatternRangeEndpoint,
+    TextProviderError, TextUnit,
+};
 pub use i_toggle_provider::{IToggleProvider, ToggleState};
 pub use i_value_provider::{IValueProvider, ProviderError};
+pub(crate) use rich_text_automation::RichTextAutomationPeer;
 
 use ferroui_base::{ObjectType, Ref};
 use std::rc::Rc;
@@ -66,6 +77,7 @@ conversions! {
     as_scroll_provider: IScrollProvider,
     as_selection_item_provider: ISelectionItemProvider,
     as_selection_provider: ISelectionProvider,
+    as_text_provider: ITextProvider,
     as_toggle_provider: IToggleProvider,
     as_value_provider: IValueProvider,
 }

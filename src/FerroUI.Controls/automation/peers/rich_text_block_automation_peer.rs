@@ -1,17 +1,22 @@
 use super::{
-    AutomationControlType, AutomationPeerImpl, ControlAutomationPeer, ControlAutomationPeerImpl,
+    AutomationControlType, AutomationPeer, AutomationPeerImpl, ControlAutomationPeer,
+    ControlAutomationPeerImpl,
 };
 use crate::RichTextBlock;
-use ferroui_base::{ferro_class, instantiate, FerroObjectImpl, Ref};
+use crate::automation::provider::{ITextProvider, ProviderAdapter, RichTextAutomationPeer};
+use ferroui_base::{FerroObjectImpl, Ref, ferro_class, instantiate};
+use std::rc::Rc;
 
-/// The rich document's accessible name and text control identity. Text range
-/// geometry remains in document coordinates through the owning view.
+/// Accessibility projection of the rich view, with live document ranges,
+/// selection, effective formatting, embedded children, and shaped geometry.
 #[repr(C)]
 pub struct RichTextBlockAutomationPeer {
     base: ControlAutomationPeer,
 }
 ferro_class!(RichTextBlockAutomationPeer: ControlAutomationPeer);
-ferroui_base::ferro_class_info!(RichTextBlockAutomationPeer {});
+ferroui_base::ferro_class_info!(RichTextBlockAutomationPeer {
+    interfaces: [Rc<dyn ITextProvider> => ProviderAdapter::as_text_provider]
+});
 impl FerroObjectImpl for RichTextBlockAutomationPeer {}
 impl ControlAutomationPeerImpl for RichTextBlockAutomationPeer {}
 impl AutomationPeerImpl for RichTextBlockAutomationPeer {
@@ -20,6 +25,14 @@ impl AutomationPeerImpl for RichTextBlockAutomationPeer {
     }
     fn get_name_core(this: &Self) -> Option<String> {
         Some(this.owner().document().text())
+    }
+}
+impl RichTextAutomationPeer for RichTextBlockAutomationPeer {
+    fn text_owner(&self) -> Option<Ref<RichTextBlock>> {
+        ControlAutomationPeer::try_owner(self).and_then(|owner| owner.cast())
+    }
+    fn text_peer(&self) -> Ref<AutomationPeer> {
+        self.to_ref().upcast()
     }
 }
 impl RichTextBlockAutomationPeer {

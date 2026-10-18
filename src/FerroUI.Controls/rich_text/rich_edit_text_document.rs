@@ -216,6 +216,7 @@ impl RichEditTextRange {
     /// Replaces the range while preserving and rebasing the editor's independent selection.
     /// The change, formatting, and selection are one undoable transaction.
     pub fn set_text(&self, text: &str) -> Result<(), EditError> {
+        self.editor.prepare_edit()?;
         let range = self.range();
         let before_length = self.document().text_length();
         let selection = self.editor.selection();
@@ -242,6 +243,7 @@ impl RichEditTextRange {
     }
 
     pub fn set_snapshot(&self, snapshot: &DocumentSnapshot) -> Result<(), EditError> {
+        self.editor.prepare_edit()?;
         if snapshot.text_length() == 0 {
             return self.set_text("");
         }
@@ -274,6 +276,7 @@ impl RichEditTextRange {
         &self,
         action: impl FnOnce(&RichTextEditor) -> Result<(), EditError>,
     ) -> Result<(), EditError> {
+        self.editor.prepare_edit()?;
         let range = self.range();
         let selection = self.editor.selection();
         let typing_format = self.editor.typing_format();
@@ -418,17 +421,12 @@ impl RichEditTextRange {
         let (haystack, boundaries) = searchable(&source, case_sensitive);
         let (needle, _) = searchable(text, case_sensitive);
         let words = if options.contains(TextFindOptions::WHOLE_WORD) {
-            unit_ranges(&source, TextRangeUnit::Word)
+            unit_ranges(&self.document().text(), TextRangeUnit::Word)
         } else {
             Vec::new()
         };
-        let matches: Box<dyn Iterator<Item = (usize, &str)> + '_> =
-            if options.contains(TextFindOptions::BACKWARDS) {
-                Box::new(haystack.rmatch_indices(needle.as_str()))
-            } else {
-                Box::new(haystack.match_indices(needle.as_str()))
-            };
-        for (byte_start, _) in matches {
+        let mut found = None;
+        for byte_start in SubstringMatches::new(&haystack, &needle) {
             let byte_end = byte_start + needle.len();
             let start = boundaries
                 .binary_search_by_key(&byte_start, |(byte, _)| *byte)
@@ -441,20 +439,24 @@ impl RichEditTextRange {
             let (Some(start), Some(end)) = (start, end) else {
                 continue;
             };
+            let start = self.start_position() + start;
+            let end = self.start_position() + end;
             if options.contains(TextFindOptions::WHOLE_WORD)
-                && !words
+                && (words
                     .binary_search_by_key(&start, |word| word.start)
-                    .ok()
-                    .is_some_and(|index| words[index].end == end)
+                    .is_err()
+                    || words.binary_search_by_key(&end, |word| word.end).is_err())
             {
                 continue;
             }
-            return Ok(Some(Self::new(
-                self.editor.clone(),
-                self.start_position() + start..self.start_position() + end,
-            )?));
+            found = Some(start..end);
+            if !options.contains(TextFindOptions::BACKWARDS) {
+                break;
+            }
         }
-        Ok(None)
+        found
+            .map(|range| Self::new(self.editor.clone(), range))
+            .transpose()
     }
     pub fn find_text(&self, text: &str, options: TextFindOptions) -> Result<bool, EditError> {
         let Some(found) = self.find(text, options)? else {
@@ -462,6 +464,61 @@ impl RichEditTextRange {
         };
         self.set_range(found.start_position(), found.end_position())?;
         Ok(true)
+    }
+}
+
+/// Linear-time substring matching includes overlaps, including when an earlier match
+/// is rejected by document word boundaries or a Unicode lowercase expansion boundary.
+struct SubstringMatches<'a> {
+    text: &'a [u8],
+    pattern: &'a [u8],
+    prefix: Vec<usize>,
+    position: usize,
+    matched: usize,
+}
+impl<'a> SubstringMatches<'a> {
+    fn new(text: &'a str, pattern: &'a str) -> Self {
+        let pattern = pattern.as_bytes();
+        let mut prefix = vec![0; pattern.len()];
+        let mut matched = 0;
+        for position in 1..pattern.len() {
+            while matched > 0 && pattern[position] != pattern[matched] {
+                matched = prefix[matched - 1];
+            }
+            if pattern[position] == pattern[matched] {
+                matched += 1;
+            }
+            prefix[position] = matched;
+        }
+        Self {
+            text: text.as_bytes(),
+            pattern,
+            prefix,
+            position: 0,
+            matched: 0,
+        }
+    }
+}
+impl Iterator for SubstringMatches<'_> {
+    type Item = usize;
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.pattern.is_empty() {
+            return None;
+        }
+        while let Some(byte) = self.text.get(self.position) {
+            while self.matched > 0 && *byte != self.pattern[self.matched] {
+                self.matched = self.prefix[self.matched - 1];
+            }
+            if *byte == self.pattern[self.matched] {
+                self.matched += 1;
+            }
+            self.position += 1;
+            if self.matched == self.pattern.len() {
+                self.matched = self.prefix[self.matched - 1];
+                return Some(self.position - self.pattern.len());
+            }
+        }
+        None
     }
 }
 
@@ -551,7 +608,7 @@ fn rebase_selection(
     };
     EditorSelection::new(map(selection.anchor), map(selection.active))
 }
-fn unit_ranges(text: &str, unit: TextRangeUnit) -> Vec<Range<usize>> {
+pub(crate) fn unit_ranges(text: &str, unit: TextRangeUnit) -> Vec<Range<usize>> {
     let utf16: Vec<u16> = text.encode_utf16().collect();
     match unit {
         TextRangeUnit::Character => GraphemeEnumerator::new(&utf16)

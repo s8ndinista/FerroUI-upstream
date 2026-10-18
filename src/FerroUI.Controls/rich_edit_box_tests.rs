@@ -929,3 +929,211 @@ fn rich_edit_ime_notifications_expose_committed_text_during_preview_publication(
     control.commit_composition("日本").unwrap();
     assert_eq!(input.surrounding_text(), "o日本inal");
 }
+
+#[test]
+fn rich_edit_whole_word_search_accepts_phrases_and_rechecks_overlapping_matches() {
+    let _scope = Dispatcher::unit_test_scope();
+    let service = RichEditTextDocument::new(RichTextDocument::from_text(
+        "new york, new yorker; new york.",
+    ));
+    let all = service.document_range().unwrap();
+    let phrase = all
+        .find("new york", TextFindOptions::WHOLE_WORD)
+        .unwrap()
+        .unwrap();
+    assert_eq!(phrase.range(), 0..8);
+    let last = all
+        .find(
+            "new york",
+            TextFindOptions::WHOLE_WORD | TextFindOptions::BACKWARDS,
+        )
+        .unwrap()
+        .unwrap();
+    assert_eq!(last.text().unwrap(), "new york");
+    assert!(last.start_position() > 8);
+    assert!(
+        service
+            .get_range(1, 8)
+            .unwrap()
+            .find("ew", TextFindOptions::WHOLE_WORD)
+            .unwrap()
+            .is_none()
+    );
+    let overlap = RichEditTextDocument::new(RichTextDocument::from_text("xa a a"));
+    let matched = overlap
+        .document_range()
+        .unwrap()
+        .find("a a", TextFindOptions::WHOLE_WORD)
+        .unwrap()
+        .unwrap();
+    assert_eq!(matched.range(), 3..6);
+}
+
+#[test]
+fn rich_edit_service_typing_resolves_ime_as_one_independent_undo_unit() {
+    let _scope = Dispatcher::unit_test_scope();
+    let document = RichTextDocument::from_text("base");
+    let editor = RichTextEditor::new(document.clone());
+    editor.set_selection(EditorSelection::caret(4)).unwrap();
+    editor.insert_text("a", EditKind::Typing).unwrap();
+    editor.set_preedit("preview", Some(7)).unwrap();
+    assert_eq!(document.text(), "baseapreview");
+    editor.insert_text("x", EditKind::Typing).unwrap();
+    assert_eq!(document.text(), "baseax");
+    assert!(!editor.is_composing());
+    assert!(editor.undo().unwrap());
+    assert_eq!(document.text(), "basea");
+    assert!(editor.undo().unwrap());
+    assert_eq!(document.text(), "base");
+    assert!(editor.redo().unwrap());
+    assert_eq!(document.text(), "basea");
+}
+
+#[test]
+fn rich_edit_live_range_mutation_rebases_after_canceling_ime_preview() {
+    let _scope = Dispatcher::unit_test_scope();
+    let document = RichTextDocument::from_text("left right");
+    let service = RichEditTextDocument::new(document.clone());
+    let editor = service.editor();
+    editor.set_selection(EditorSelection::new(0, 4)).unwrap();
+    editor.set_preedit("long preview", Some(12)).unwrap();
+    let range = service
+        .document_range()
+        .unwrap()
+        .find("right", TextFindOptions::MATCH_CASE)
+        .unwrap()
+        .unwrap();
+    range.set_text("R").unwrap();
+    assert_eq!(document.text(), "left R");
+    assert!(!editor.is_composing());
+    assert_eq!(range.text().unwrap(), "R");
+    assert!(editor.undo().unwrap());
+    assert_eq!(document.text(), "left right");
+}
+
+#[test]
+fn rich_edit_service_format_delete_and_undo_never_store_ime_preview_snapshots() {
+    let _scope = Dispatcher::unit_test_scope();
+    let document = RichTextDocument::from_text("abc");
+    let editor = RichTextEditor::new(document.clone());
+    editor.set_selection(EditorSelection::new(1, 2)).unwrap();
+    editor.set_preedit("preview", Some(7)).unwrap();
+    editor
+        .apply_format(&CharacterFormat {
+            font_weight: Some(FontWeight::Bold),
+            ..Default::default()
+        })
+        .unwrap();
+    assert_eq!(document.text(), "abc");
+    assert!(!editor.is_composing());
+    assert!(editor.undo().unwrap());
+    assert_eq!(document.text(), "abc");
+
+    editor.set_selection(EditorSelection::new(1, 2)).unwrap();
+    editor.set_preedit("preview", Some(7)).unwrap();
+    editor.delete_backward(false).unwrap();
+    assert_eq!(document.text(), "ac");
+    assert!(editor.undo().unwrap());
+    assert_eq!(document.text(), "abc");
+
+    editor.set_selection(EditorSelection::caret(3)).unwrap();
+    editor.insert_text("z", EditKind::Typing).unwrap();
+    editor.set_preedit("preview", Some(7)).unwrap();
+    assert!(editor.undo().unwrap());
+    assert_eq!(document.text(), "abc");
+    assert!(!editor.is_composing());
+    assert!(editor.redo().unwrap());
+    assert_eq!(document.text(), "abcz");
+}
+
+#[test]
+fn rich_edit_read_only_service_rejects_edit_without_canceling_the_active_preview() {
+    let _scope = Dispatcher::unit_test_scope();
+    let document = RichTextDocument::from_text("text");
+    let editor = RichTextEditor::new(document.clone());
+    editor.set_selection(EditorSelection::caret(4)).unwrap();
+    editor.set_preedit("preview", Some(7)).unwrap();
+    let preview = document.snapshot();
+    editor.set_is_read_only(true);
+    assert!(matches!(
+        editor.insert_text("replacement", EditKind::Typing),
+        Err(EditError::ReadOnly)
+    ));
+    assert!(matches!(
+        editor.delete_selection(),
+        Err(EditError::ReadOnly)
+    ));
+    assert_eq!(document.snapshot(), preview);
+    assert!(editor.is_composing());
+    editor.cancel_composition().unwrap();
+    assert_eq!(document.text(), "text");
+}
+
+#[test]
+fn rich_edit_markup_integer_properties_saturate_public_usize_setters() {
+    let _scope = Dispatcher::unit_test_scope();
+    let editor = RichEditBox::new();
+    editor.set_max_length(usize::MAX);
+    editor.set_undo_limit(usize::MAX);
+    assert_eq!(editor.max_length(), i32::MAX as usize);
+    assert_eq!(editor.undo_limit(), i32::MAX as usize);
+    assert!(!RichEditBox::max_length_property().is_valid_value(&-1));
+    assert!(!RichEditBox::undo_limit_property().is_valid_value(&-1));
+}
+
+#[test]
+fn rich_edit_caret_timer_blinks_resets_after_input_and_stops_for_selection_or_blur() {
+    use ferroui_base::input::{FocusChangedEventArgs, InputElement};
+    let _scope = crate::test_support::test_scope();
+    let editor = RichEditBox::new();
+    editor.set_text("text").unwrap();
+    let root = crate::test_support::TestRoot::with_child(editor.clone());
+    root.measure(Size::new(200.0, 80.0));
+    root.arrange(Rect::new(0.0, 0.0, 200.0, 80.0));
+    editor.raise_event(&FocusChangedEventArgs::new(InputElement::got_focus_event()));
+    assert!(editor.is_focused());
+    assert!(editor.caret_visible());
+    let timer = Dispatcher::timers_for_unit_tests()
+        .into_iter()
+        .find(|timer| timer.interval() == std::time::Duration::from_millis(500))
+        .expect("Focused editable text schedules the framework caret timer");
+    Dispatcher::force_fire_timer_for_unit_tests(&timer);
+    assert!(!editor.caret_visible());
+    editor.insert_text("x").unwrap();
+    assert!(editor.caret_visible());
+    assert!(timer.is_enabled());
+    editor.select(0, 2);
+    assert!(!editor.caret_visible());
+    assert!(!timer.is_enabled());
+    editor.select(2, 2);
+    assert!(editor.caret_visible());
+    assert!(timer.is_enabled());
+    editor.raise_event(&FocusChangedEventArgs::new(InputElement::lost_focus_event()));
+    assert!(!editor.caret_visible());
+    assert!(!timer.is_enabled());
+}
+
+#[test]
+fn rich_edit_zero_caret_interval_is_steady_and_detaching_stops_the_timer() {
+    use ferroui_base::animation::TimeSpan;
+    use ferroui_base::input::{FocusChangedEventArgs, InputElement};
+    let _scope = crate::test_support::test_scope();
+    let editor = RichEditBox::new();
+    editor.set_caret_blink_interval(TimeSpan::ZERO);
+    let root = crate::test_support::TestRoot::with_child(editor.clone());
+    root.measure(Size::new(200.0, 80.0));
+    root.arrange(Rect::new(0.0, 0.0, 200.0, 80.0));
+    let before = Dispatcher::timers_for_unit_tests().len();
+    editor.raise_event(&FocusChangedEventArgs::new(InputElement::got_focus_event()));
+    assert!(editor.caret_visible());
+    assert_eq!(Dispatcher::timers_for_unit_tests().len(), before);
+    editor.set_caret_blink_interval(TimeSpan::from_milliseconds(750.0));
+    let timer = Dispatcher::timers_for_unit_tests()
+        .into_iter()
+        .find(|timer| timer.interval() == std::time::Duration::from_millis(750))
+        .unwrap();
+    assert!(timer.is_enabled());
+    root.set_child(None::<ferroui_base::Ref<crate::Control>>);
+    assert!(!timer.is_enabled());
+    assert!(!editor.caret_visible());
+}

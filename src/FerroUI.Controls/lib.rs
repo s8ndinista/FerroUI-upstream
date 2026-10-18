@@ -429,7 +429,7 @@ pub mod rich_text;
 pub use rich_text_block::{RichTextBlock, RichTextBlockImpl, RichTextBlockImplExt, RichTextBlockVTable, RichTextSelectionChangedEventArgs};
 pub use rich_text_block_overflow::RichTextBlockOverflow;
 pub use rich_text_layout::RichTextLineMetrics;
-pub use rich_edit_box::{RichEditBox, RichEditCharacterCasing, DisabledFormattingAccelerators, RichEditCompositionEventArgs};
+pub use rich_edit_box::{RichEditBox, RichEditCharacterCasing, DisabledFormattingAccelerators, RichEditCompositionEventArgs, RichEditCompositionRoutedEvent};
 #[cfg(test)]
 mod rich_edit_box_tests;
 #[cfg(test)]

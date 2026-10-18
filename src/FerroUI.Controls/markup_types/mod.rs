@@ -47,6 +47,7 @@ const RICH_TEXT_TYPES: &[&MarkupType] = &[
     <crate::RichEditCharacterCasing as MarkupTyped>::MARKUP,
     <crate::DisabledFormattingAccelerators as MarkupTyped>::MARKUP,
     <crate::RichEditCompositionEventArgs as MarkupTyped>::MARKUP,
+    <crate::RichEditCompositionRoutedEvent as MarkupTyped>::MARKUP,
     <crate::rich_text::RichEditClipboardFormat as MarkupTyped>::MARKUP,
 ];
 

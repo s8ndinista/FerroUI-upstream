@@ -9,9 +9,10 @@ use crate::rich_text::{
 };
 use crate::utils::ClipboardHelper;
 use crate::{
-    Application, ControlImpl, RichTextBlock, RichTextBlockImpl, RichTextBlockImplExt,
+    Application, ControlImpl, RichTextBlock, RichTextBlockImpl, RichTextBlockImplExt, TextBox,
     TextChangedEventArgs, TextChangingEventArgs, TopLevel,
 };
+use ferroui_base::animation::TimeSpan;
 use ferroui_base::input::platform::{
     ClipboardError, ClipboardErrorKind, IClipboard, PlatformHotkeyConfiguration,
 };
@@ -33,11 +34,12 @@ use ferroui_base::media::{
     Typeface,
 };
 use ferroui_base::reactive::{Disposable, IDisposable};
-use ferroui_base::threading::{Dispatcher, DispatcherPriority};
+use ferroui_base::threading::{Dispatcher, DispatcherPriority, DispatcherTimer};
 use ferroui_base::utilities::HandlerList;
 use ferroui_base::{
     DirectProperty, FerroObjectImpl, FerroObjectImplExt, FerroProperty,
-    FerroPropertyChangedEventArgs, Point, Ref, StyledElementImpl, StyledProperty, VisualImpl,
+    FerroPropertyChangedEventArgs, Point, Ref, StyledElementImpl, StyledProperty,
+    StyledPropertyOptions, Visual, VisualImpl, VisualImplExt, VisualTreeAttachmentEventArgs,
     ferro_class, ferro_impl_classes, ferro_routed_event, ferro_routed_event_args, instantiate,
 };
 use std::cell::{Cell, RefCell};
@@ -86,11 +88,21 @@ ferroui_base::ferro_markup_type!(class RichEditCompositionEventArgs {
     handles: [RichEditCompositionEventArgs],
     properties: [
         Text: String { get: |args: &RichEditCompositionEventArgs| args.text.clone() },
-        SelectionStart: usize { get: |args: &RichEditCompositionEventArgs| args.selection.anchor },
-        SelectionEnd: usize { get: |args: &RichEditCompositionEventArgs| args.selection.active },
+        SelectionStart: i32 { get: |args: &RichEditCompositionEventArgs| args.selection.anchor.min(i32::MAX as usize) as i32 },
+        SelectionEnd: i32 { get: |args: &RichEditCompositionEventArgs| args.selection.active.min(i32::MAX as usize) as i32 },
         Committed: bool { get: |args: &RichEditCompositionEventArgs| args.committed },
         Handled: bool { get: |args: &RichEditCompositionEventArgs| args.handled(), set: |args: &RichEditCompositionEventArgs, value: bool| args.set_handled(value) },
     ],
+});
+
+/// Metadata carrier for the closed composition-event routed-event type.
+#[doc(hidden)]
+pub struct RichEditCompositionRoutedEvent;
+ferroui_base::ferro_markup_type!(class RichEditCompositionRoutedEvent as "RoutedEvent`1" {
+    namespace: "FerroUI.Interactivity",
+    handles: [RoutedEvent<RichEditCompositionEventArgs>, Option<RoutedEvent<RichEditCompositionEventArgs>>],
+    base: RoutedEvent,
+    generic: "RoutedEvent`1" [RichEditCompositionEventArgs],
 });
 
 /// A structured rich-text editor rendered by FerroUI's text layout, drawing, and input APIs.
@@ -116,12 +128,32 @@ pub struct RichEditBox {
     errors: Rc<HandlerList<dyn Fn(&EditError)>>,
     clipboard_errors: Rc<HandlerList<dyn Fn(&ClipboardError)>>,
     caret_scroll_pending: Cell<bool>,
+    caret_timer: RefCell<Option<Rc<DispatcherTimer>>>,
+    caret_phase: Cell<bool>,
 }
 
 ferro_class!(RichEditBox: RichTextBlock);
+
+impl Drop for RichEditBox {
+    fn drop(&mut self) {
+        if let Some(timer) = self.caret_timer.get_mut().take() {
+            timer.stop();
+        }
+    }
+}
 ferroui_base::ferro_class_info!(RichEditBox {
     new: RichEditBox::new,
     markup: {
+        fields: [
+            CopyingToClipboardEvent: RoutedEvent<RoutedEventArgs> => || *RichEditBox::copying_to_clipboard_event(),
+            CuttingToClipboardEvent: RoutedEvent<RoutedEventArgs> => || *RichEditBox::cutting_to_clipboard_event(),
+            PastingFromClipboardEvent: RoutedEvent<RoutedEventArgs> => || *RichEditBox::pasting_from_clipboard_event(),
+            TextChangedEvent: RoutedEvent<TextChangedEventArgs> => || *RichEditBox::text_changed_event(),
+            TextChangingEvent: RoutedEvent<TextChangingEventArgs> => || *RichEditBox::text_changing_event(),
+            TextCompositionStartedEvent: RoutedEvent<RichEditCompositionEventArgs> => || *RichEditBox::text_composition_started_event(),
+            TextCompositionChangedEvent: RoutedEvent<RichEditCompositionEventArgs> => || *RichEditBox::text_composition_changed_event(),
+            TextCompositionEndedEvent: RoutedEvent<RichEditCompositionEventArgs> => || *RichEditBox::text_composition_ended_event(),
+        ],
         methods: [
             fn Copy() => RichEditBox::copy,
             fn Cut() => RichEditBox::cut,
@@ -132,7 +164,7 @@ ferroui_base::ferro_class_info!(RichEditBox {
         ],
     },
 });
-ferro_impl_classes!(RichEditBox: StyledElementImpl, VisualImpl, LayoutableImpl, InteractiveImpl);
+ferro_impl_classes!(RichEditBox: StyledElementImpl, LayoutableImpl, InteractiveImpl);
 
 impl RichTextBlockImpl for RichEditBox {
     fn allow_hyperlink_navigation(
@@ -146,7 +178,7 @@ impl RichTextBlockImpl for RichEditBox {
             )
     }
     fn caret_visible(this: &Self) -> bool {
-        this.is_focused() && this.is_enabled() && !this.is_read_only()
+        this.caret_is_active() && this.caret_phase.get()
     }
 
     fn render_text(this: &Self, context: &mut DrawingContext) {
@@ -197,6 +229,8 @@ impl FerroObjectImpl for RichEditBox {
                 this.im_client.raise_selection_changed();
                 this.im_client.raise_cursor_rectangle_changed();
                 this.update_command_states();
+                this.reset_caret_blink();
+                this.ensure_caret_visible();
             }
         });
         *this.selection_subscription.borrow_mut() = Some(selection_subscription);
@@ -242,6 +276,25 @@ impl FerroObjectImpl for RichEditBox {
         {
             this.invalidate_visual();
         }
+        if property == Self::caret_blink_interval_property().as_property()
+            || property == Self::is_read_only_property().as_property()
+            || property == InputElement::is_effectively_enabled_property().as_property()
+            || property == Visual::is_visible_property().as_property()
+        {
+            this.reset_caret_blink();
+        }
+    }
+}
+
+impl VisualImpl for RichEditBox {
+    fn on_attached_to_visual_tree(this: &Self, event: &VisualTreeAttachmentEventArgs) {
+        Self::parent_on_attached_to_visual_tree(this, event);
+        this.reset_caret_blink();
+    }
+
+    fn on_detached_from_visual_tree(this: &Self, event: &VisualTreeAttachmentEventArgs) {
+        Self::parent_on_detached_from_visual_tree(this, event);
+        this.stop_caret_blink();
     }
 }
 
@@ -250,6 +303,7 @@ impl InputElementImpl for RichEditBox {
         Self::parent_on_got_focus(this, event);
         this.im_client.raise_text_view_visual_changed();
         this.im_client.raise_cursor_rectangle_changed();
+        this.reset_caret_blink();
         this.invalidate_visual();
     }
     fn on_lost_focus(this: &Self, event: &FocusChangedEventArgs) {
@@ -257,6 +311,7 @@ impl InputElementImpl for RichEditBox {
         this.handle_edit(this.cancel_composition());
         this.editor().checkpoint();
         this.im_client.request_reset();
+        this.stop_caret_blink();
         this.invalidate_visual();
     }
     fn on_text_input(this: &Self, event: &TextInputEventArgs) {
@@ -344,7 +399,8 @@ ferroui_base::ferro_properties! { impl RichEditBox {
     pub fn is_read_only_property() -> StyledProperty<bool> { FerroProperty::register::<RichEditBox, _>("IsReadOnly", false) }
     pub fn accepts_return_property() -> StyledProperty<bool> { FerroProperty::register::<RichEditBox, _>("AcceptsReturn", true) }
     pub fn accepts_tab_property() -> StyledProperty<bool> { FerroProperty::register::<RichEditBox, _>("AcceptsTab", false) }
-    pub fn max_length_property() -> StyledProperty<usize> { FerroProperty::register::<RichEditBox, _>("MaxLength", 0) }
+    pub fn caret_blink_interval_property() -> StyledProperty<TimeSpan> { TextBox::caret_blink_interval_property().add_owner::<RichEditBox>() }
+    pub fn max_length_property() -> StyledProperty<i32> { FerroProperty::register_with::<RichEditBox, _>("MaxLength", StyledPropertyOptions::new(0).validate(|value| *value >= 0)) }
     pub fn clipboard_copy_format_property() -> StyledProperty<RichEditClipboardFormat> { FerroProperty::register::<RichEditBox, _>("ClipboardCopyFormat", RichEditClipboardFormat::AllFormats) }
     pub fn disabled_formatting_accelerators_property() -> StyledProperty<DisabledFormattingAccelerators> { FerroProperty::register::<RichEditBox, _>("DisabledFormattingAccelerators", DisabledFormattingAccelerators::NONE) }
     pub fn character_casing_property() -> StyledProperty<RichEditCharacterCasing> { FerroProperty::register::<RichEditBox, _>("CharacterCasing", RichEditCharacterCasing::Normal) }
@@ -353,7 +409,7 @@ ferroui_base::ferro_properties! { impl RichEditBox {
     pub fn placeholder_text_property() -> StyledProperty<String> { FerroProperty::register::<RichEditBox, _>("PlaceholderText", String::new()) }
     pub fn placeholder_foreground_property() -> StyledProperty<Option<Rc<dyn IBrush>>> { FerroProperty::register::<RichEditBox, _>("PlaceholderForeground", None) }
     pub fn is_undo_enabled_property() -> StyledProperty<bool> { FerroProperty::register::<RichEditBox, _>("IsUndoEnabled", true) }
-    pub fn undo_limit_property() -> StyledProperty<usize> { FerroProperty::register::<RichEditBox, _>("UndoLimit", 100) }
+    pub fn undo_limit_property() -> StyledProperty<i32> { FerroProperty::register_with::<RichEditBox, _>("UndoLimit", StyledPropertyOptions::new(100).validate(|value| *value >= 0)) }
     pub fn can_undo_property() -> DirectProperty<RichEditBox, bool> { FerroProperty::register_direct::<RichEditBox, _>("CanUndo", |this| this.can_undo.get(), None, false) }
     pub fn can_redo_property() -> DirectProperty<RichEditBox, bool> { FerroProperty::register_direct::<RichEditBox, _>("CanRedo", |this| this.can_redo.get(), None, false) }
     pub fn can_copy_property() -> DirectProperty<RichEditBox, bool> { FerroProperty::register_direct::<RichEditBox, _>("CanCopy", |this| this.can_copy.get(), None, false) }
@@ -392,6 +448,8 @@ impl RichEditBox {
             errors: Rc::new(HandlerList::new()),
             clipboard_errors: Rc::new(HandlerList::new()),
             caret_scroll_pending: Cell::new(false),
+            caret_timer: RefCell::new(None),
+            caret_phase: Cell::new(false),
         }
     }
     pub fn new() -> Ref<Self> {
@@ -402,6 +460,13 @@ impl RichEditBox {
     }
     pub fn set_is_read_only(&self, value: bool) {
         self.set_value(Self::is_read_only_property(), value);
+    }
+    /// The framework caret period. Zero or a negative interval keeps the caret steady.
+    pub fn caret_blink_interval(&self) -> TimeSpan {
+        self.get_value(Self::caret_blink_interval_property())
+    }
+    pub fn set_caret_blink_interval(&self, value: TimeSpan) {
+        self.set_value(Self::caret_blink_interval_property(), value);
     }
     pub fn accepts_return(&self) -> bool {
         self.get_value(Self::accepts_return_property())
@@ -416,10 +481,13 @@ impl RichEditBox {
         self.set_value(Self::accepts_tab_property(), value);
     }
     pub fn max_length(&self) -> usize {
-        self.get_value(Self::max_length_property())
+        self.get_value(Self::max_length_property()) as usize
     }
     pub fn set_max_length(&self, value: usize) {
-        self.set_value(Self::max_length_property(), value);
+        self.set_value(
+            Self::max_length_property(),
+            value.min(i32::MAX as usize) as i32,
+        );
     }
     pub fn clipboard_copy_format(&self) -> RichEditClipboardFormat {
         self.get_value(Self::clipboard_copy_format_property())
@@ -470,10 +538,13 @@ impl RichEditBox {
         self.set_value(Self::is_undo_enabled_property(), value);
     }
     pub fn undo_limit(&self) -> usize {
-        self.get_value(Self::undo_limit_property())
+        self.get_value(Self::undo_limit_property()) as usize
     }
     pub fn set_undo_limit(&self, value: usize) {
-        self.set_value(Self::undo_limit_property(), value);
+        self.set_value(
+            Self::undo_limit_property(),
+            value.min(i32::MAX as usize) as i32,
+        );
     }
     pub fn can_undo(&self) -> bool {
         self.editor().can_undo()
@@ -607,6 +678,7 @@ impl RichEditBox {
         self.im_client.raise_selection_changed();
         self.im_client.raise_cursor_rectangle_changed();
         self.update_command_states();
+        self.reset_caret_blink();
         self.invalidate_visual();
         self.ensure_caret_visible();
     }
@@ -631,6 +703,66 @@ impl RichEditBox {
             );
         }
     }
+    fn caret_is_active(&self) -> bool {
+        self.is_focused()
+            && self.is_effectively_enabled()
+            && self.is_effectively_visible()
+            && !self.is_read_only()
+            && self.selection_start() == self.selection_end()
+            && self.visual_parent().is_some()
+    }
+
+    fn stop_caret_blink(&self) {
+        let timer = self.caret_timer.borrow().clone();
+        if let Some(timer) = timer {
+            timer.stop();
+        }
+        if self.caret_phase.replace(false) {
+            self.invalidate_visual();
+        }
+    }
+
+    fn reset_caret_blink(&self) {
+        let timer = self.caret_timer.borrow().clone();
+        if let Some(timer) = &timer {
+            timer.stop();
+        }
+        let active = self.caret_is_active();
+        self.caret_phase.set(active);
+        self.invalidate_visual();
+        let interval = self.caret_blink_interval();
+        if !active || interval <= TimeSpan::ZERO || self.editor().is_composing() {
+            return;
+        }
+        let timer = timer.unwrap_or_else(|| {
+            let timer = DispatcherTimer::with_priority(DispatcherPriority::BACKGROUND);
+            let weak = self.to_ref().downgrade();
+            timer.tick(move |timer| {
+                let Some(this) = weak.upgrade() else {
+                    timer.stop();
+                    return;
+                };
+                if this.caret_is_active() {
+                    this.caret_phase.set(!this.caret_phase.get());
+                    this.invalidate_visual();
+                } else {
+                    this.caret_phase.set(false);
+                    timer.stop();
+                }
+            });
+            *self.caret_timer.borrow_mut() = Some(timer.clone());
+            timer
+        });
+        // The dispatcher uses signed millisecond due times. Keep submillisecond
+        // values from spinning the UI queue and bound unusually long intervals.
+        let duration = interval.to_duration().unwrap_or_default();
+        timer.set_interval(duration.clamp(
+            std::time::Duration::from_millis(1),
+            std::time::Duration::from_millis(i32::MAX as u64),
+        ));
+        timer.start();
+    }
+
     fn filter_input(&self, text: &str) -> String {
         let text: String = text
             .chars()
@@ -1059,7 +1191,10 @@ impl RichEditBox {
     );
     ferro_routed_event!(
         pub fn pasting_from_clipboard_event() -> RoutedEvent<RoutedEventArgs> {
-            RoutedEvent::register::<RichEditBox, _>("Paste", RoutingStrategies::BUBBLE)
+            RoutedEvent::register::<RichEditBox, _>(
+                "PastingFromClipboard",
+                RoutingStrategies::BUBBLE,
+            )
         }
     );
     ferro_routed_event!(

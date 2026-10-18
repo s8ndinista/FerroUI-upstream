@@ -2,16 +2,21 @@
 //! Source/dependency mapping and validation: docs/porting/winui-rich-text.
 
 use crate::documents::{
-    Block, EmbeddedControlRun, LineStackingStrategy, Paragraph, RichTextDocument,
+    Block, EmbeddedControlRun, Inline, LineStackingStrategy, Paragraph, RichTextDocument,
 };
 use crate::text_block::InlinesTextSource;
 use ferroui_base::media::text_formatting::{
     GenericTextParagraphProperties, GenericTextRunProperties, ITextDrawingSink,
-    InterWordJustification, TextEndOfParagraph, TextFormatter, TextFormatterImpl, TextLine,
-    TextLineBreak, TextLineImpl, TextParagraphProperties, TextRunCache, TextRunProperties,
+    InterWordJustification, LogicalTextRunEnumerator, TextCollapsingProperties, TextEndOfParagraph,
+    TextFormatter, TextFormatterImpl, TextLine, TextLineBreak, TextLineImpl,
+    TextParagraphProperties, TextRunCache, TextRunProperties,
 };
-use ferroui_base::media::{BaselineAlignment, CharacterHit, TextAlignment, TextWrapping, Typeface};
-use ferroui_base::{Point, Rect, Ref, Size, Vector};
+use ferroui_base::media::{
+    BaselineAlignment, CharacterHit, TextAlignment, TextCollapsingCreateInfo, TextTrimming,
+    TextWrapping, Typeface,
+};
+use ferroui_base::{FerroObjectImplExt, Point, Rect, Ref, Size, Vector};
+use std::ops::Range;
 use std::rc::Rc;
 
 pub(crate) struct RichParagraphSource {
@@ -27,18 +32,22 @@ pub(crate) struct RichParagraphSource {
 pub(crate) struct RichTextSource {
     pub paragraphs: Vec<RichParagraphSource>,
     pub length: usize,
+    pub default_indent: f64,
 }
 
 impl RichTextSource {
-    pub fn new(
-        document: &RichTextDocument,
-        empty_properties: Rc<dyn TextRunProperties>,
-    ) -> Rc<Self> {
+    pub fn new(document: &RichTextDocument, view: &crate::RichTextBlock) -> Rc<Self> {
         let mut blocks = document.blocks().snapshot().to_vec();
         // The empty editor still has a line with a measurable caret.
         let empty = blocks.is_empty();
         if empty {
-            blocks.push(Paragraph::new().upcast());
+            let paragraph = Paragraph::new();
+            paragraph.set_flow_direction(view.flow_direction());
+            paragraph.set_text_alignment(view.text_alignment());
+            paragraph.set_line_height(view.line_height());
+            paragraph.set_line_stacking_strategy(view.line_stacking_strategy());
+            paragraph.set_letter_spacing(view.letter_spacing());
+            blocks.push(paragraph.upcast());
         }
         let mut offset = 0;
         let mut paragraphs = Vec::with_capacity(blocks.len());
@@ -47,7 +56,21 @@ impl RichTextSource {
             block.build_text_runs(&mut runs);
             let length = block.text_length();
             let properties: Rc<dyn TextRunProperties> = if empty {
-                empty_properties.clone()
+                Rc::new(GenericTextRunProperties::with_all(
+                    Typeface::with_style(
+                        view.font_family(),
+                        view.font_style(),
+                        view.font_weight(),
+                        view.font_stretch(),
+                    ),
+                    view.font_size(),
+                    view.text_decorations(),
+                    view.foreground(),
+                    None,
+                    BaselineAlignment::Baseline,
+                    None,
+                    view.font_features(),
+                ))
             } else {
                 Rc::new(GenericTextRunProperties::with_all(
                     Typeface::with_style(
@@ -57,7 +80,7 @@ impl RichTextSource {
                         block.font_stretch(),
                     ),
                     block.font_size(),
-                    None,
+                    block.get_value(Inline::text_decorations_property()),
                     block.foreground(),
                     block.background(),
                     BaselineAlignment::Baseline,
@@ -78,6 +101,7 @@ impl RichTextSource {
         Rc::new(Self {
             paragraphs,
             length: document.text_length(),
+            default_indent: view.text_indent(),
         })
     }
 }
@@ -115,6 +139,14 @@ pub(crate) struct RichTextLine {
     pub paragraph_length: usize,
     pub origin: Point,
     pub advance: f64,
+    source_spans: Option<Vec<LineSourceSpan>>,
+}
+
+/// Retained source positions and their compacted formatter indices. The
+/// synthetic ellipsis is deliberately absent from these spans.
+struct LineSourceSpan {
+    source: Range<usize>,
+    display: Range<usize>,
 }
 
 impl RichTextLine {
@@ -126,6 +158,109 @@ impl RichTextLine {
         (self.start() + self.line.length().max(0) as usize)
             .min(self.paragraph_offset + self.paragraph_length)
     }
+
+    fn visible_ranges(&self) -> Vec<Range<usize>> {
+        match &self.source_spans {
+            None => vec![self.start()..self.end()],
+            Some(spans) => spans
+                .iter()
+                .filter_map(|span| {
+                    let start = (self.paragraph_offset + span.source.start).max(self.start());
+                    let end = (self.paragraph_offset + span.source.end).min(self.end());
+                    (start < end).then_some(start..end)
+                })
+                .collect(),
+        }
+    }
+
+    fn source_position(&self, display: usize) -> usize {
+        let Some(spans) = &self.source_spans else {
+            return display;
+        };
+        for span in spans {
+            if display >= span.display.start && display <= span.display.end {
+                return span.source.start + display - span.display.start;
+            }
+        }
+        spans
+            .iter()
+            .rev()
+            .find(|span| span.display.end <= display)
+            .map(|span| span.source.end)
+            .or_else(|| spans.first().map(|span| span.source.start))
+            .unwrap_or(self.line.first_text_source_index().max(0) as usize)
+    }
+
+    fn display_position(&self, source: usize) -> usize {
+        let Some(spans) = &self.source_spans else {
+            return source;
+        };
+        for span in spans {
+            if source >= span.source.start && source <= span.source.end {
+                return span.display.start + source - span.source.start;
+            }
+        }
+        spans
+            .iter()
+            .rev()
+            .find(|span| span.source.end <= source)
+            .map(|span| span.display.end)
+            .or_else(|| spans.first().map(|span| span.display.start))
+            .unwrap_or(self.line.first_text_source_index().max(0) as usize)
+    }
+}
+
+fn collapse_line(
+    line: Rc<dyn TextLine>,
+    properties: Rc<dyn TextCollapsingProperties>,
+) -> (Rc<dyn TextLine>, Option<Vec<LineSourceSpan>>) {
+    let mut originals = Vec::new();
+    let mut cursor = line.first_text_source_index().max(0) as usize;
+    let mut enumerator = LogicalTextRunEnumerator::new(&*line);
+    while let Some(run) = enumerator.move_next() {
+        let end = cursor + run.length().max(0) as usize;
+        originals.push((cursor..end, run.text().clone(), run));
+        cursor = end;
+    }
+    drop(enumerator);
+    // The formatter transfers retained shaped-run ownership during collapse,
+    // just as BaseTextLayout does. Disposing the old line would release it twice.
+    let collapsed = line.collapse(&[Some(properties)]);
+    if !collapsed.has_collapsed() {
+        return (collapsed, None);
+    }
+    let mut spans = Vec::new();
+    let mut cursor = collapsed.first_text_source_index().max(0) as usize;
+    let mut enumerator = LogicalTextRunEnumerator::new(&*collapsed);
+    while let Some(run) = enumerator.move_next() {
+        let length = run.length().max(0) as usize;
+        let text = run.text();
+        let original = originals.iter().find_map(|(range, memory, original)| {
+            if Rc::ptr_eq(original, &run) {
+                return Some(range.start..range.start + length);
+            }
+            if length > 0
+                && !text.is_empty()
+                && memory.shares_owner_with(&text)
+                && text.offset_in_owner() >= memory.offset_in_owner()
+            {
+                let skip = text.offset_in_owner() - memory.offset_in_owner();
+                if skip + length <= range.len() {
+                    return Some(range.start + skip..range.start + skip + length);
+                }
+            }
+            None
+        });
+        if let Some(source) = original {
+            spans.push(LineSourceSpan {
+                source,
+                display: cursor..cursor + length,
+            });
+        }
+        cursor += length;
+    }
+    drop(enumerator);
+    (collapsed, Some(spans))
 }
 
 impl Drop for RichTextLine {
@@ -141,6 +276,7 @@ pub(crate) struct RichTextLayout {
     pub size: Size,
     pub next: RichTextBreak,
     pub has_overflow: bool,
+    pub is_trimmed: bool,
 }
 
 impl RichTextLayout {
@@ -149,6 +285,8 @@ impl RichTextLayout {
         constraint: Size,
         wrapping: TextWrapping,
         max_lines: usize,
+        trimming: &Rc<dyn TextTrimming>,
+        terminal: bool,
         start: &RichTextBreak,
     ) -> Rc<Self> {
         let formatter = <dyn TextFormatter>::current();
@@ -158,6 +296,7 @@ impl RichTextLayout {
             size: Size::default(),
             next: start.clone(),
             has_overflow: false,
+            is_trimmed: false,
         };
         let width = if constraint.width.is_nan() {
             f64::INFINITY
@@ -200,7 +339,8 @@ impl RichTextLayout {
                     block
                         .to_ref()
                         .cast::<Paragraph>()
-                        .map_or(0.0, |p| p.text_indent())
+                        .filter(|p| p.is_set(Paragraph::text_indent_property().as_property()))
+                        .map_or(result.source.default_indent, |p| p.text_indent())
                 } else {
                     0.0
                 };
@@ -237,7 +377,7 @@ impl RichTextLayout {
                     Some(&paragraph.cache),
                 );
                 let empty_line = formatted.is_none();
-                let line = formatted.unwrap_or_else(|| {
+                let mut line = formatted.unwrap_or_else(|| {
                     TextFormatterImpl::create_empty_text_line(index, line_width, &properties)
                 });
                 let advance = match strategy {
@@ -294,6 +434,16 @@ impl RichTextLayout {
                     line.justify(&InterWordJustification::new(line_width));
                 }
                 let consumed = line.length().max(0) as usize;
+                let mut source_spans = None;
+                if line.has_overflowed() && !Rc::ptr_eq(trimming, &<dyn TextTrimming>::none()) {
+                    let collapsing =
+                        trimming.create_collapsing_properties(&TextCollapsingCreateInfo::new(
+                            line_width,
+                            paragraph.properties.clone(),
+                            block.flow_direction(),
+                        ));
+                    (line, source_spans) = collapse_line(line, collapsing);
+                }
                 widest = widest.max(
                     margin.left
                         + indent
@@ -308,6 +458,7 @@ impl RichTextLayout {
                     paragraph_length: paragraph.length,
                     origin: Point::new(margin.left + indent, origin_y),
                     advance,
+                    source_spans,
                 });
                 y = origin_y + advance;
                 local = local.saturating_add(consumed).min(paragraph.length);
@@ -326,6 +477,43 @@ impl RichTextLayout {
                 }
             }
         }
+        if result.has_overflow && terminal && !Rc::ptr_eq(trimming, &<dyn TextTrimming>::none()) {
+            if let Some(entry) = result.lines.last_mut() {
+                if !entry.line.has_collapsed() {
+                    let paragraph = result
+                        .source
+                        .paragraphs
+                        .iter()
+                        .find(|paragraph| paragraph.offset == entry.paragraph_offset)
+                        .unwrap();
+                    let collapsing =
+                        trimming.create_collapsing_properties(&TextCollapsingCreateInfo::new(
+                            entry.line.width_including_trailing_whitespace(),
+                            paragraph.properties.clone(),
+                            paragraph.block.flow_direction(),
+                        ));
+                    let (line, spans) = collapse_line(entry.line.clone(), collapsing);
+                    entry.line = line;
+                    entry.source_spans = spans;
+                }
+            }
+        }
+        result.is_trimmed = result.lines.iter().any(|entry| entry.line.has_collapsed());
+        widest = result
+            .lines
+            .iter()
+            .map(|entry| {
+                entry.origin.x
+                    + entry.line.start()
+                    + entry.line.width_including_trailing_whitespace()
+                    + result
+                        .source
+                        .paragraphs
+                        .iter()
+                        .find(|p| p.offset == entry.paragraph_offset)
+                        .map_or(0.0, |p| p.block.margin().right)
+            })
+            .fold(0.0_f64, f64::max);
         result.size = Size::new(widest.max(0.0), y.max(0.0));
         Rc::new(result)
     }
@@ -372,7 +560,7 @@ impl RichTextLayout {
             .first_character_index()
             .saturating_add(hit.trailing_length())
             .max(0) as usize;
-        (entry.paragraph_offset + position)
+        (entry.paragraph_offset + entry.source_position(position))
             .min(entry.end())
             .min(self.source.length)
     }
@@ -403,7 +591,7 @@ impl RichTextLayout {
         let local = position
             .saturating_sub(entry.paragraph_offset)
             .min(entry.paragraph_length);
-        let local = local.min(i32::MAX as usize) as i32;
+        let local = entry.display_position(local).min(i32::MAX as usize) as i32;
         let leading = CharacterHit::new(local);
         let hit = if gravity == crate::documents::TextGravity::Backward && position > entry.start()
         {
@@ -422,27 +610,56 @@ impl RichTextLayout {
     pub fn selection_rects(&self, start: usize, end: usize) -> Vec<Rect> {
         let mut result = Vec::new();
         for entry in &self.lines {
-            let a = start.max(entry.start());
-            let b = end.min(entry.end());
-            if a < b {
-                for bounds in entry
-                    .line
-                    .get_text_bounds((a - entry.paragraph_offset) as i32, (b - a) as i32)
-                {
-                    result.push(
-                        bounds
-                            .rectangle()
-                            .translate(Vector::new(entry.origin.x, entry.origin.y)),
-                    );
+            for visible in entry.visible_ranges() {
+                let a = start.max(visible.start);
+                let b = end.min(visible.end);
+                if a < b {
+                    let a = entry.display_position(a - entry.paragraph_offset);
+                    let b = entry.display_position(b - entry.paragraph_offset);
+                    for bounds in entry.line.get_text_bounds(a as i32, (b - a) as i32) {
+                        result.push(
+                            bounds
+                                .rectangle()
+                                .translate(Vector::new(entry.origin.x, entry.origin.y)),
+                        );
+                    }
                 }
             }
             let paragraph_end = entry.paragraph_offset + entry.paragraph_length;
-            if start <= paragraph_end && end > paragraph_end && entry.end() == paragraph_end {
+            if start <= paragraph_end
+                && end > paragraph_end
+                && entry.end() == paragraph_end
+                && (entry.source_spans.is_none()
+                    || entry
+                        .visible_ranges()
+                        .iter()
+                        .any(|range| range.end == paragraph_end))
+            {
                 let caret = self.caret_rect(paragraph_end);
                 result.push(Rect::new(caret.x, caret.y, 4.0, caret.height));
             }
         }
         result
+    }
+
+    pub fn visible_text_ranges(&self) -> Vec<Range<usize>> {
+        let mut ranges: Vec<_> = self
+            .lines
+            .iter()
+            .flat_map(RichTextLine::visible_ranges)
+            .collect();
+        ranges.sort_by_key(|range| range.start);
+        let mut merged: Vec<Range<usize>> = Vec::new();
+        for range in ranges {
+            if let Some(last) = merged.last_mut() {
+                if range.start <= last.end {
+                    last.end = last.end.max(range.end);
+                    continue;
+                }
+            }
+            merged.push(range);
+        }
+        merged
     }
 
     pub fn embedded_controls(&self, origin: Point) -> Vec<(Ref<crate::Control>, Rect)> {
