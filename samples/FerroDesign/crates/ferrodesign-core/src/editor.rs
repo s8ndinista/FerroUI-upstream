@@ -457,6 +457,11 @@ impl Editor {
     pub fn hit_test(&self, p: Point, tolerance: f64) -> Option<NodeId> {
         self.scene.hit_test(&self.document, p, tolerance, false)
     }
+    /// Presentation hit testing filters the active frame/overlay before
+    /// choosing the topmost shape. Locked authored layers remain interactive.
+    pub fn prototype_hit_test(&self, root: NodeId, p: Point, tolerance: f64) -> Option<NodeId> {
+        self.scene.hit_test_in_subtree(&self.document, root, p, tolerance, true)
+    }
     pub fn visible_nodes(&self, r: Rect) -> Vec<NodeId> {
         self.scene.visible_nodes(r)
     }
@@ -1342,6 +1347,80 @@ impl Editor {
             Some(id)
         })
     }
+    /// Updates a vector anchor or handle from an absolute document-space
+    /// position. Wrap repeated calls in begin_transaction/commit_transaction
+    /// for one undo record per pointer gesture. Bounds are rebased after each
+    /// update while preserving every unaffected point's world position.
+    pub fn move_vector_point(
+        &mut self,
+        id: NodeId,
+        point: PathPointId,
+        world_position: Point,
+    ) -> bool {
+        let Some(inverse) = self
+            .document
+            .world_transform(id)
+            .and_then(Transform::inverse)
+        else {
+            return false;
+        };
+        let local = inverse.apply(world_position);
+        self.edit_vector_path(id, "Move vector point", |path| {
+            path.move_edit_point(point, local).then_some(())
+        })
+        .is_some()
+    }
+
+    /// Subdivides a segment without changing the curve's geometry or fill rule.
+    /// The new anchor ID is valid in the resulting command stream.
+    pub fn split_vector_segment(
+        &mut self,
+        id: NodeId,
+        segment: usize,
+        t: f64,
+    ) -> Option<PathPointId> {
+        self.edit_vector_path(id, "Insert vector point", |path| {
+            path.split_segment(segment, t)
+        })
+    }
+
+    pub fn delete_vector_anchor(&mut self, id: NodeId, segment: usize) -> bool {
+        self.edit_vector_path(id, "Delete vector point", |path| {
+            path.delete_anchor(segment).then_some(())
+        })
+        .is_some()
+    }
+
+    pub fn convert_vector_anchor(&mut self, id: NodeId, segment: usize, mode: AnchorMode) -> bool {
+        self.edit_vector_path(id, "Convert vector point", |path| {
+            path.convert_anchor(segment, mode).then_some(())
+        })
+        .is_some()
+    }
+
+    fn edit_vector_path<R>(
+        &mut self,
+        id: NodeId,
+        label: &str,
+        operation: impl FnOnce(&mut VectorPath) -> Option<R>,
+    ) -> Option<R> {
+        if self.document.effective_locked(id) {
+            return None;
+        }
+        let mut node = self.document.nodes.get(&id)?.clone();
+        if node.kind != NodeKind::Vector {
+            return None;
+        }
+        let result = operation(&mut node.path)?;
+        if !normalize_vector_bounds(&mut node) {
+            return None;
+        }
+        self.edit(label, |editor| {
+            editor.document.nodes.insert(id, node);
+        });
+        Some(result)
+    }
+
     pub fn flatten_selection(&mut self) -> Option<NodeId> {
         self.edit("Flatten selection", |e| {
             let roots = e.root_selection();
@@ -1606,81 +1685,4 @@ pub fn sync_component_instances(d: &mut Document, component: NodeId) -> usize {
         sync(d, &source, *id, component, true)
     }
     instances.len()
-}
-/// Deterministic local prototype state. The host owns timers, animation and URL
-/// launching; this engine owns navigation, overlays, history and variables.
-#[derive(Clone, Debug, Default)]
-pub struct PrototypePlayer {
-    pub current: Option<NodeId>,
-    pub overlays: Vec<(NodeId, Point)>,
-    pub history: Vec<NodeId>,
-    pub last_transition: Transition,
-    pub pending_url: Option<String>,
-    pub scroll_target: Option<NodeId>,
-}
-impl PrototypePlayer {
-    pub fn start(&mut self, d: &Document, page: NodeId) -> bool {
-        self.current = d.page(page).and_then(|p| {
-            p.prototype_start.or_else(|| {
-                p.children
-                    .iter()
-                    .find(|id| d.nodes.get(id).is_some_and(|n| n.kind == NodeKind::Frame))
-                    .copied()
-            })
-        });
-        self.overlays.clear();
-        self.history.clear();
-        self.current.is_some()
-    }
-    pub fn trigger(&mut self, d: &mut Document, node: NodeId, trigger: Trigger) -> bool {
-        let Some(i) = d
-            .nodes
-            .get(&node)
-            .and_then(|n| n.interactions.iter().find(|i| i.trigger == trigger))
-            .cloned()
-        else {
-            return false;
-        };
-        self.last_transition = i.transition;
-        match i.action {
-            PrototypeAction::NavigateTo { target } => {
-                if !d.nodes.contains_key(&target) {
-                    return false;
-                }
-                if let Some(current) = self.current {
-                    self.history.push(current)
-                }
-                self.current = Some(target);
-                self.overlays.clear()
-            }
-            PrototypeAction::OpenOverlay { target, position } => {
-                if !d.nodes.contains_key(&target) {
-                    return false;
-                }
-                self.overlays.push((target, position))
-            }
-            PrototypeAction::CloseOverlay => {
-                self.overlays.pop();
-            }
-            PrototypeAction::Back => {
-                if let Some(previous) = self.history.pop() {
-                    self.current = Some(previous)
-                }
-            }
-            PrototypeAction::SetVariable { variable, value } => {
-                if let Some(v) = d.variables.get_mut(&variable) {
-                    v.values.insert(d.variable_mode.clone(), value);
-                    d.apply_variables();
-                }
-            }
-            PrototypeAction::OpenUrl { url } => self.pending_url = Some(url),
-            PrototypeAction::ScrollTo { target } => {
-                if !d.nodes.contains_key(&target) {
-                    return false;
-                }
-                self.scroll_target = Some(target)
-            }
-        }
-        true
-    }
 }

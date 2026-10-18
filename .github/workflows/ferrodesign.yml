@@ -69,6 +69,7 @@ jobs:
           bash -n scripts/setup.sh scripts/build-browser.sh
           node --check web/main.js
           node --check tests/browser.mjs
+          node --test tests/document-store.test.mjs
           cargo metadata --locked --no-deps --format-version 1 > browser-report/cargo-metadata.json
           cargo test --locked -p ferrodesign-core --jobs 1 2>&1 | tee browser-report/core-tests.log
 
@@ -86,6 +87,7 @@ jobs:
       - name: Validate pixels, pointer editing, keyboard history and serialization
         run: |
           set -o pipefail
+          node tests/document-store-browser.mjs 2>&1 | tee browser-report/indexeddb-tests.log
           npm run test:browser 2>&1 | tee browser-report/browser-tests.log
 
       - name: Install native Fontconfig development files
@@ -98,7 +100,7 @@ jobs:
         run: |
           set -o pipefail
           source "$RUNNER_TEMP/ferrodesign-tools/env.sh"
-          cargo check --locked -p ferrodesign-app --lib --jobs 1 2>&1 | tee browser-report/native-check.log
+          cargo check --locked -p ferrodesign-app --lib --tests --jobs 1 2>&1 | tee browser-report/native-check.log
 
       - name: Upload complete browser build
         if: always()

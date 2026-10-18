@@ -1,0 +1,572 @@
+//! Deterministic prototype state, event matching and activation-scoped delays.
+//! The host owns its clock and external actions. Timer tokens are capabilities
+//! for one active frame/overlay instance and cannot fire after that instance
+//! exits, even when a native timer callback was already queued.
+
+use crate::*;
+use std::collections::{BTreeMap, BTreeSet};
+
+const MAX_PROTOTYPE_HISTORY: usize = 1000;
+const MAX_PROTOTYPE_OVERLAYS: usize = 64;
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub struct PrototypeTimer {
+    pub activation: u64,
+    pub root: NodeId,
+    pub node: NodeId,
+    pub interaction: usize,
+    pub delay_ms: u32,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+struct Activation {
+    id: u64,
+    root: NodeId,
+}
+
+/// A player's variable overrides belong to its preview session; authored
+/// variable definitions are never changed. The host should render a disposable
+/// document copy because applying an override updates the copy's bound nodes.
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct PrototypePlayer {
+    pub current: Option<NodeId>,
+    pub overlays: Vec<(NodeId, Point)>,
+    pub history: Vec<NodeId>,
+    pub last_transition: Transition,
+    pub last_action: Option<PrototypeAction>,
+    pub pending_url: Option<String>,
+    pub scroll_target: Option<NodeId>,
+    variable_overrides: BTreeMap<VariableId, VariableValue>,
+    activations: Vec<Activation>,
+    next_activation: u64,
+    fired_timers: BTreeSet<(u64, NodeId, usize)>,
+}
+
+impl PrototypePlayer {
+    pub fn start(&mut self, document: &Document, page: NodeId) -> bool {
+        let root = document.page(page).and_then(|page| {
+            page.prototype_start.or_else(|| {
+                page.children
+                    .iter()
+                    .find(|id| {
+                        document
+                            .nodes
+                            .get(id)
+                            .is_some_and(|node| node.kind == NodeKind::Frame && node.visible)
+                    })
+                    .copied()
+            })
+        });
+        root.is_some_and(|root| self.start_at(document, root))
+    }
+
+    pub fn start_at(&mut self, document: &Document, root: NodeId) -> bool {
+        if !document.nodes.contains_key(&root) || !document.effective_visible(root) {
+            return false;
+        }
+        self.stop();
+        self.current = Some(root);
+        self.reconcile_activations();
+        true
+    }
+
+    pub fn stop(&mut self) {
+        self.current = None;
+        self.overlays.clear();
+        self.history.clear();
+        self.last_transition = Transition::default();
+        self.last_action = None;
+        self.pending_url = None;
+        self.scroll_target = None;
+        self.variable_overrides.clear();
+        self.activations.clear();
+        self.fired_timers.clear();
+        // Do not reuse activation IDs after restarting this player.
+        self.next_activation = self.next_activation.wrapping_add(1);
+    }
+
+    /// The top overlay is modal. Design-time locking does not disable prototype
+    /// interactions, but hidden nodes and nodes outside this root cannot fire.
+    pub fn interaction_root(&self) -> Option<NodeId> {
+        self.overlays
+            .last()
+            .map(|overlay| overlay.0)
+            .or(self.current)
+    }
+
+    pub fn variable_overrides(&self) -> &BTreeMap<VariableId, VariableValue> {
+        &self.variable_overrides
+    }
+
+    pub fn trigger(&mut self, document: &mut Document, node: NodeId, trigger: Trigger) -> bool {
+        if matches!(trigger, Trigger::Key | Trigger::AfterDelay) {
+            return false;
+        }
+        self.trigger_matching(document, node, |interaction| interaction.trigger == trigger)
+    }
+
+    pub fn trigger_key(&mut self, document: &mut Document, node: NodeId, key: &str) -> bool {
+        let Some(key) = normalize_prototype_key(key) else {
+            return false;
+        };
+        self.trigger_matching(document, node, |interaction| {
+            interaction.trigger == Trigger::Key
+                && interaction
+                    .key
+                    .as_deref()
+                    .and_then(normalize_prototype_key)
+                    .is_some_and(|expected| expected == key)
+        })
+    }
+
+    fn trigger_matching(
+        &mut self,
+        document: &mut Document,
+        node: NodeId,
+        matches: impl Fn(&Interaction) -> bool,
+    ) -> bool {
+        self.reconcile_activations();
+        let Some(root) = self.interaction_root() else {
+            return false;
+        };
+        if !is_within(document, node, root) || !document.effective_visible(node) {
+            return false;
+        }
+        let interaction = document
+            .nodes
+            .get(&node)
+            .and_then(|node| {
+                node.interactions
+                    .iter()
+                    .find(|interaction| matches(interaction))
+            })
+            .cloned();
+        interaction.is_some_and(|interaction| self.execute(document, interaction))
+    }
+
+    /// All not-yet-fired delays for visible nodes of active frame/overlay
+    /// instances, sorted by delay and stable document traversal. Opening an
+    /// overlay preserves the underlying frame's elapsed timers; reopening a
+    /// closed overlay gives that new instance fresh timer identities.
+    pub fn pending_timers(&mut self, document: &Document) -> Vec<PrototypeTimer> {
+        self.reconcile_activations();
+        let mut timers = Vec::new();
+        for activation in &self.activations {
+            for node in document.descendants(activation.root) {
+                if !document.effective_visible(node) {
+                    continue;
+                }
+                for (index, interaction) in document.nodes[&node].interactions.iter().enumerate() {
+                    if interaction.trigger != Trigger::AfterDelay
+                        || self.fired_timers.contains(&(activation.id, node, index))
+                    {
+                        continue;
+                    }
+                    timers.push(PrototypeTimer {
+                        activation: activation.id,
+                        root: activation.root,
+                        node,
+                        interaction: index,
+                        delay_ms: interaction.delay_ms,
+                    });
+                }
+            }
+        }
+        timers.sort_by_key(|timer| timer.delay_ms);
+        timers
+    }
+
+    /// Fires an identified delay after the host reports its elapsed time. Early,
+    /// duplicate, edited, hidden and exited-instance callbacks are ignored.
+    /// Invalid authored actions are consumed once, avoiding a retry timer loop.
+    pub fn fire_timer(
+        &mut self,
+        document: &mut Document,
+        timer: PrototypeTimer,
+        elapsed_ms: u64,
+    ) -> bool {
+        if elapsed_ms < timer.delay_ms as u64 {
+            return false;
+        }
+        self.reconcile_activations();
+        if !self
+            .activations
+            .iter()
+            .any(|activation| activation.id == timer.activation && activation.root == timer.root)
+            || !is_within(document, timer.node, timer.root)
+            || !document.effective_visible(timer.node)
+        {
+            return false;
+        }
+        let Some(interaction) = document
+            .nodes
+            .get(&timer.node)
+            .and_then(|node| node.interactions.get(timer.interaction))
+            .filter(|interaction| {
+                interaction.trigger == Trigger::AfterDelay && interaction.delay_ms == timer.delay_ms
+            })
+            .cloned()
+        else {
+            return false;
+        };
+        if !self
+            .fired_timers
+            .insert((timer.activation, timer.node, timer.interaction))
+        {
+            return false;
+        }
+        self.execute(document, interaction)
+    }
+
+    pub fn back(&mut self, document: &Document) -> bool {
+        if self.overlays.pop().is_some() {
+            self.reconcile_activations();
+            self.pending_url = None;
+            self.scroll_target = None;
+            self.last_action = Some(PrototypeAction::Back);
+            return true;
+        }
+        let Some(index) = self
+            .history
+            .iter()
+            .rposition(|id| document.nodes.contains_key(id))
+        else {
+            return false;
+        };
+        let previous = self.history[index];
+        self.history.truncate(index);
+        self.current = Some(previous);
+        self.pending_url = None;
+        self.scroll_target = None;
+        self.activations.clear();
+        self.fired_timers.clear();
+        self.reconcile_activations();
+        self.last_action = Some(PrototypeAction::Back);
+        true
+    }
+
+    fn execute(&mut self, document: &mut Document, interaction: Interaction) -> bool {
+        let transition = interaction.transition;
+        let action = interaction.action.clone();
+        match interaction.action {
+            PrototypeAction::NavigateTo { target } => {
+                if !document.nodes.contains_key(&target) || !document.effective_visible(target) {
+                    return false;
+                }
+                if let Some(current) = self.current.filter(|current| *current != target) {
+                    self.history.push(current);
+                    if self.history.len() > MAX_PROTOTYPE_HISTORY {
+                        self.history.remove(0);
+                    }
+                }
+                self.current = Some(target);
+                self.overlays.clear();
+                self.activations.clear();
+                self.fired_timers.clear();
+                self.pending_url = None;
+                self.scroll_target = None;
+                self.reconcile_activations();
+            }
+            PrototypeAction::OpenOverlay { target, position } => {
+                if !document.nodes.contains_key(&target)
+                    || !document.effective_visible(target)
+                    || !position.x.is_finite()
+                    || !position.y.is_finite()
+                    || self.overlays.len() >= MAX_PROTOTYPE_OVERLAYS
+                {
+                    return false;
+                }
+                self.overlays.push((target, position));
+                self.reconcile_activations();
+            }
+            PrototypeAction::CloseOverlay => {
+                if self.overlays.pop().is_none() {
+                    return false;
+                }
+                self.reconcile_activations();
+            }
+            PrototypeAction::Back => {
+                if !self.back(document) {
+                    return false;
+                }
+            }
+            PrototypeAction::SetVariable { variable, value } => {
+                if !document.variables.contains_key(&variable)
+                    || !valid_variable_value(document, variable, &value, &self.variable_overrides)
+                {
+                    return false;
+                }
+                self.variable_overrides.insert(variable, value);
+                self.apply_variable_overrides(document);
+            }
+            PrototypeAction::OpenUrl { url } => {
+                let Some(url) = prototype_external_url(&url) else {
+                    return false;
+                };
+                self.pending_url = Some(url);
+            }
+            PrototypeAction::ScrollTo { target } => {
+                if !document.nodes.contains_key(&target)
+                    || !document.effective_visible(target)
+                    || !self
+                        .activations
+                        .iter()
+                        .any(|scope| is_within(document, target, scope.root))
+                {
+                    return false;
+                }
+                self.scroll_target = Some(target);
+            }
+        }
+        self.last_transition = transition;
+        self.last_action = Some(action);
+        true
+    }
+
+    fn reconcile_activations(&mut self) {
+        let roots: Vec<_> = self
+            .current
+            .into_iter()
+            .chain(self.overlays.iter().map(|overlay| overlay.0))
+            .collect();
+        let prefix = self
+            .activations
+            .iter()
+            .zip(&roots)
+            .take_while(|(activation, root)| activation.root == **root)
+            .count();
+        self.activations.truncate(prefix);
+        for root in roots.into_iter().skip(prefix) {
+            self.next_activation = self.next_activation.wrapping_add(1);
+            self.activations.push(Activation {
+                id: self.next_activation,
+                root,
+            });
+        }
+        self.fired_timers
+            .retain(|(id, _, _)| self.activations.iter().any(|scope| scope.id == *id));
+    }
+
+    fn apply_variable_overrides(&self, document: &mut Document) {
+        let mode = document.variable_mode.clone();
+        let mut authored = Vec::with_capacity(self.variable_overrides.len());
+        for (id, value) in &self.variable_overrides {
+            if let Some(variable) = document.variables.get_mut(id) {
+                authored.push((*id, variable.values.insert(mode.clone(), value.clone())));
+            }
+        }
+        document.apply_variables();
+        for (id, value) in authored {
+            if let Some(variable) = document.variables.get_mut(&id) {
+                if let Some(value) = value {
+                    variable.values.insert(mode.clone(), value);
+                } else {
+                    variable.values.remove(&mode);
+                }
+            }
+        }
+    }
+}
+
+fn is_within(document: &Document, mut node: NodeId, root: NodeId) -> bool {
+    for _ in 0..MAX_DOCUMENT_DEPTH {
+        if node == root {
+            return true;
+        }
+        let Some(parent) = document.nodes.get(&node).and_then(|node| node.parent) else {
+            return false;
+        };
+        node = parent;
+    }
+    false
+}
+
+fn valid_variable_value(
+    document: &Document,
+    variable: VariableId,
+    value: &VariableValue,
+    overrides: &BTreeMap<VariableId, VariableValue>,
+) -> bool {
+    let mut value = value;
+    let mut seen = BTreeSet::from([variable]);
+    loop {
+        match value {
+            VariableValue::Number(number) => return number.is_finite(),
+            VariableValue::Alias(id) => {
+                if !seen.insert(*id) {
+                    return false;
+                }
+                value = if let Some(value) = overrides.get(id) {
+                    value
+                } else {
+                    let Some(variable) = document.variables.get(id) else {
+                        return false;
+                    };
+                    let Some(value) = variable
+                        .values
+                        .get(&document.variable_mode)
+                        .or_else(|| variable.values.get("Default"))
+                        .or_else(|| variable.values.values().next())
+                    else {
+                        return false;
+                    };
+                    value
+                };
+            }
+            _ => return true,
+        }
+    }
+}
+
+/// Normalizes key chords independently of a browser/native key enum.
+pub fn normalize_prototype_key(key: &str) -> Option<String> {
+    let key = if key == " " { "space" } else { key.trim() };
+    if key.is_empty() {
+        return None;
+    }
+    let plus_key = key.ends_with('+');
+    let mut modifiers = [false; 4];
+    let mut primary: Option<String> = None;
+    for token in key
+        .split('+')
+        .map(str::trim)
+        .filter(|token| !token.is_empty())
+    {
+        let token = token.to_lowercase();
+        match token.as_str() {
+            "ctrl" | "control" => modifiers[0] = true,
+            "alt" | "option" => modifiers[1] = true,
+            "shift" => modifiers[2] = true,
+            "meta" | "cmd" | "command" | "super" | "win" | "windows" => modifiers[3] = true,
+            _ => {
+                if primary.is_some() {
+                    return None;
+                }
+                primary = Some(
+                    match token.as_str() {
+                        "return" => "enter",
+                        "esc" => "escape",
+                        "spacebar" => "space",
+                        "arrowup" => "up",
+                        "arrowdown" => "down",
+                        "arrowleft" => "left",
+                        "arrowright" => "right",
+                        "back" => "backspace",
+                        "del" => "delete",
+                        "pgup" | "page up" => "pageup",
+                        "pgdn" | "page down" => "pagedown",
+                        _ => &token,
+                    }
+                    .to_string(),
+                );
+            }
+        }
+    }
+    if plus_key {
+        if primary.is_some() {
+            return None;
+        }
+        primary = Some("+".to_string());
+    }
+    let primary = primary?;
+    // A printable symbol already includes the layout's Shift transformation
+    // (for example '+' instead of '='). Keep Shift for named and letter keys,
+    // while matching Ctrl+Shift+'+' to the authored Ctrl+'+' chord.
+    if primary.chars().count() == 1
+        && primary.chars().next().is_some_and(|symbol| {
+            !symbol.is_alphanumeric() && !symbol.is_whitespace() && !symbol.is_control()
+        })
+    {
+        modifiers[2] = false;
+    }
+    let mut normalized = String::new();
+    for (index, modifier) in ["ctrl", "alt", "shift", "meta"].iter().enumerate() {
+        if modifiers[index] {
+            normalized.push_str(modifier);
+            normalized.push('+');
+        }
+    }
+    normalized.push_str(&primary);
+    Some(normalized)
+}
+
+/// Allowed external-navigation requests; emitting one does not imply that a
+/// host opened it. Script/data schemes and control characters are rejected.
+pub fn prototype_external_url(url: &str) -> Option<String> {
+    let url = url.trim();
+    if url.is_empty() || url.chars().any(char::is_control) {
+        return None;
+    }
+    let (scheme, rest) = url.split_once(':')?;
+    match scheme.to_ascii_lowercase().as_str() {
+        "http" | "https" => {
+            let authority = rest.strip_prefix("//")?.split(['/', '?', '#']).next()?;
+            if authority.is_empty() || authority.chars().any(char::is_whitespace) {
+                return None;
+            }
+        }
+        "mailto" | "tel" if !rest.is_empty() => {}
+        _ => return None,
+    }
+    Some(url.to_string())
+}
+
+/// Validates an authored rule without requiring a running presentation. Runtime
+/// execution additionally checks the active frame/overlay and available history.
+pub fn validate_prototype_interaction(
+    document: &Document,
+    source: NodeId,
+    interaction: &Interaction,
+) -> Result<(), String> {
+    if !document.nodes.contains_key(&source) {
+        return Err("The source layer no longer exists.".into());
+    }
+    if document.effective_locked(source) {
+        return Err("Unlock the source layer before editing its interactions.".into());
+    }
+    if interaction.trigger == Trigger::Key
+        && interaction
+            .key
+            .as_deref()
+            .and_then(normalize_prototype_key)
+            .is_none()
+    {
+        return Err("Enter a key or chord, such as Enter, Escape, or Ctrl+Shift+A.".into());
+    }
+    match &interaction.action {
+        PrototypeAction::NavigateTo { target } | PrototypeAction::ScrollTo { target } => {
+            if !document.nodes.contains_key(target) {
+                return Err("Choose an existing destination layer.".into());
+            }
+        }
+        PrototypeAction::OpenOverlay { target, position } => {
+            if !document.nodes.contains_key(target) {
+                return Err("Choose an existing overlay layer.".into());
+            }
+            if !position.x.is_finite() || !position.y.is_finite() {
+                return Err("Overlay coordinates must be finite numbers.".into());
+            }
+        }
+        PrototypeAction::SetVariable { variable, value } => {
+            if !document.variables.contains_key(variable) {
+                return Err("Choose an existing variable.".into());
+            }
+            if !valid_variable_value(document, *variable, value, &BTreeMap::new()) {
+                return Err(
+                    "Use a finite variable value or an existing alias without a cycle.".into(),
+                );
+            }
+        }
+        PrototypeAction::OpenUrl { url } => {
+            if prototype_external_url(url).is_none() {
+                return Err("Enter a complete http, https, mailto, or tel URL.".into());
+            }
+        }
+        PrototypeAction::CloseOverlay | PrototypeAction::Back => {}
+    }
+    Ok(())
+}
+
+#[cfg(test)]
+#[path = "prototype_tests.rs"]
+mod tests;

@@ -77,13 +77,17 @@ The initial document contains editable Orbit mobile banking screens, a component
 | Save / open | `Ctrl`/`Cmd+S` / `Ctrl`/`Cmd+O` |
 | Cancel gesture / leave presentation | `Escape` |
 
-Shortcuts are handled when the canvas has focus; text fields retain their normal text-editing keys. Shift constrains drawing and resizing, locks a move to an axis, and snaps rotation to 15-degree increments. Dragging snaps to pixels and nearby object edges/centers; quick actions can toggle snapping. The pen creates editable vector paths; finish with Enter or close the path by clicking its first point.
+In presentation, an authored Escape key rule takes priority; otherwise Escape returns to the editor.
 
-Use the property sidebar for geometry, fills, strokes, typography and layout. Quick actions also expose grouping, layer order, alignment/distribution, boolean combinations, components, pages, comments, prototype presentation and export. `Layer data…` exposes validated structured properties that do not yet have a dedicated visual control, including path segments, rich text runs and component metadata.
+Shortcuts are handled when the canvas has focus; text fields retain their normal text-editing keys. Shift constrains drawing and resizing, locks a move to an axis, and snaps rotation to 15-degree increments. Dragging snaps to pixels and nearby object edges/centers; quick actions can toggle snapping. The pen creates editable vector paths: click for corners, drag to create Bézier tangents, and finish with Enter or by clicking the first point. Select a vector and press Enter or double-click it to edit anchors. Drag anchors or control handles, double-click a curve to split it, and use Corner/Smooth/Mirror in the sidebar. An entire drag is one undo step.
+
+Double-click a text layer to edit directly on the canvas with a native FerroUI caret, selection, clipboard and IME. Ctrl/Cmd+Enter or moving focus commits one text transaction; Escape restores the original content. Rich-text ranges remain valid UTF-8 byte ranges across edits. The editing control currently displays the base layer style; individual rich-run styling is retained in the document and renderer.
+
+Use the property sidebar for geometry, fills, strokes, typography and layout. The paint-stack dialog edits fill order, visibility/opacity, gradients and stops. In the Prototype tab, Edit interactions adds or updates trigger/action rules; the dialog also preserves transition definitions, while the current player switches frames instantly. Quick actions also expose grouping, layer order, alignment/distribution, boolean combinations, components, pages, comments, prototype presentation and export. `Layer data…` exposes validated structured properties that do not yet have a dedicated visual control, including path segments, rich text runs and component metadata.
 
 ## Files and local persistence
 
-The native editable format is a versioned `.ferrodesign` JSON document. It stores the complete document graph, paints, layout, components, variable collections, comments and prototype links. Browser edits are autosaved in local storage; the native launcher uses `ferrodesign-autosave.json` in its working directory. Export a document to make a portable copy.
+The native editable format is a versioned `.ferrodesign` JSON document. It stores the complete document graph, paints, layout, components, variable collections, comments and prototype links. Browser edits are queued and autosaved in IndexedDB. A completed transaction updates the current and previous versions together; the status changes to saved only after completion. Legacy localStorage documents migrate on a successful write. Conflicting saves from another tab are reported instead of overwritten, and a failed save leaves the document available for export. The native launcher atomically replaces `ferrodesign-autosave.json` in its working directory. Export a document to make a portable copy.
 
 `Open` also imports SVG into a selected editable frame. `Place image` accepts PNG, JPEG, GIF or BMP; FerroUI decodes the image and its data is embedded in the portable document. The native Import dialog accepts JSON, SVG markup or a raster image data URI.
 
@@ -97,10 +101,12 @@ cargo check --locked -p ferrodesign-app
 cargo run --release -p ferrodesign-core --example performance -- 10000
 npm ci
 npx playwright install chromium
+node --test tests/document-store.test.mjs
+node tests/document-store-browser.mjs
 npm run test:browser
 ```
 
-`tests/browser.mjs` serves the actual `dist` build and exercises both requested browser rendering modes. It checks nonblank native pixels, performs a real pointer drag to create a rectangle, uses keyboard undo/redo, deletes and reimports the document, compares JSON, and checks startup errors and render-thread panics. It writes PNG screenshots, traces and JSON/HTML reports to `browser-report`.
+`tests/browser.mjs` serves the actual `dist` build and exercises both requested browser rendering modes. It checks native pixels, pointer drawing, vector-point and pen-handle gestures, on-canvas Unicode text editing, paint controls, prototype pointer/key/delay interactions, keyboard history, document import/export, durable reload, and a 10,000-layer document larger than the usual localStorage allowance. It also checks startup exceptions and render-thread panics, and writes PNG screenshots, traces and JSON/HTML reports to `browser-report`. The separate IndexedDB test verifies real transaction rollback, migration and conflicting tab writes.
 
 The GitHub Actions workflow `.github/workflows/ferrodesign.yml` runs the locked core tests, the real WebAssembly build, browser interaction validation and native compilation. Build and validation artifacts are attached to each workflow run. See [validation and measurements](docs/VALIDATION.md) for observed results and the distinction between document-engine timings and browser rendering performance.
 
@@ -110,12 +116,17 @@ The GitHub Actions workflow `.github/workflows/ferrodesign.yml` runs the locked 
 | --- | --- |
 | `crates/ferrodesign-core/src/model.rs` | Document graph, paints, text, components, variables and validated serialization |
 | `crates/ferrodesign-core/src/editor.rs` | Transactions, history and editing operations |
+| `crates/ferrodesign-core/src/vector_edit.rs` | Bézier editing, exact curve picking/splitting and affine bounds normalization |
+| `crates/ferrodesign-core/src/text_edit.rs` | Unicode-safe rich-text range preservation |
+| `crates/ferrodesign-core/src/prototype.rs` | Trigger rules, activation tokens, overlays and variable overrides |
 | `crates/ferrodesign-core/src/geometry.rs` | Affine geometry, vector paths and viewport math |
 | `crates/ferrodesign-core/src/layout.rs` | Constraints and row/column/wrapped/grid auto layout |
 | `crates/ferrodesign-core/src/spatial.rs` | Spatial index, clipping and geometry-aware hit testing |
 | `crates/ferrodesign-app/ui/Editor.xaml` | Compiled FerroUI editor shell and control styling |
 | `crates/ferrodesign-app/src/shell.rs` | Control events, property editing and document commands |
 | `crates/ferrodesign-app/src/canvas.rs` | FerroUI canvas control, input gestures and selection overlays |
+| `crates/ferrodesign-app/src/shell/` | Native text, paint and interaction editors |
+| `crates/ferrodesign-app/src/prototype.rs` | Presentation snapshots and cancellable FerroUI dispatcher timers |
 | `crates/ferrodesign-app/src/renderer.rs` | Cached public-API scene renderer |
 | `crates/ferrodesign-app/src/platform.rs` | Browser/native storage, clipboard and downloads |
 | `crates/ferrodesign-app/src/desktop.rs` | Vello native configuration and headless rendering |

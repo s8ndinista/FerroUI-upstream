@@ -36,6 +36,8 @@ The renderer caches immutable geometries, brushes, pens, shaped text and image a
 
 `DesignCanvas` owns the camera. World/screen conversion and zoom anchoring live in the core `Viewport` type. The canvas adds selection bounds, resize/rotate handles, hover outlines, alignment guides, frame labels, rulers and local comment pins after the artwork pass.
 
+The layer sidebar is an ItemsControl with a VirtualizingStackPanel and a flattened hierarchy of lightweight row values. Native control containers are realized for the viewport. Selection-only updates reuse the item source; metadata changes rebuild it. The shell keeps weak row references so scrolling can release offscreen controls.
+
 The benchmark in `ferrodesign-core/examples/performance.rs` measures document creation, indexing, hit tests, viewport queries, drag refresh and undo/redo for a synthetic grid. It does not measure the canvas renderer, the layout of the sidebar control tree, GPU time or display frame rate.
 
 ## Editing and history
@@ -46,11 +48,17 @@ History records changed nodes and document metadata. Unchanged nodes are compare
 
 Constraint resizing updates children relative to the old and new container extent. Auto layout implements row, column, wrapping, fixed/fill/hug sizing, padding, spacing, alignment, min/max limits, absolute children and grid placement. The visual property panel exposes common settings; the structured layer editor exposes the remaining stored settings.
 
+Interactive vector editing uses stable path-command/point identifiers within a gesture. Curve splitting preserves cubic and quadratic shape; nearest-point queries isolate polynomial stationary points instead of using display tessellation. Recomputing tight bounds compensates the node transform, including the center-of-rotation change and reflected/sheared parents.
+
+The on-canvas text editor is a FerroUI TextBox transformed into the selected layer coordinate system. The scene temporarily omits that text layer without changing its authored visibility. Synchronous text-changing events update the open transaction, and focus loss/Ctrl+Enter commits it; Escape cancels it. A minimal Unicode character diff remaps rich-run UTF-8 byte ranges. The native control owns caret navigation, selection, IME and text clipboard handling.
+
 ## Prototypes and local services
 
-The core prototype player is a deterministic state machine for navigation history, overlays, variables, pending URLs and scroll targets. The shell hosts click navigation, presentation, overlays and return to editing. Presentation keeps an original document snapshot so runtime variable mutations do not overwrite authored values. Stored transition data is richer than the current presentation host; see the feature matrix before relying on animation or non-click triggers.
+The core prototype player is a deterministic state machine for navigation history, modal overlays, session variable overrides and external requests. Pointer events and normalized key chords dispatch through the active root; after-delay rules use native FerroUI DispatcherTimer subscriptions. Activation tokens prevent stale timers from firing after navigation or overlay closure, and unrelated overlay changes do not rearm an existing timer. Long delays are split into cancellable chunks; zero delays yield a UI turn.
 
-All persistence is local. JSON is validated before replacing a document. The browser host stores an autosave and downloads portable files. Comments, components, variables and history are local concepts; no authentication, collaboration transport or hosted sharing service is implied by their presence in the UI.
+The runtime snapshots the authored document, selection, active page, camera and tool. Presentation works on a disposable document and restores the snapshot on exit. Serialization during presentation reads the authored snapshot, so variable bindings cannot autosave preview values into the design. Stored transition definitions are preserved; animated transition interpolation and Smart Animate are still absent. External links are validated before the platform opener is invoked. Content-scroll requests are reported rather than silently substituted with camera movement.
+
+All persistence is local. JSON is validated before replacing a document. The browser host uses a coalescing IndexedDB save queue and downloads portable files. Current/previous records commit atomically, failure status remains visible, and revision comparisons prevent a stale tab from overwriting another tab. Status notifications are posted asynchronously to avoid JavaScript-to-Rust reentry while a shell callback is active. Visibility/page lifecycle events flush pending work; unsaved changes use a before-unload indication. A storage failure never reports a successful save. Native saves use a temporary file and atomic replacement. Comments, components, variables and history are local concepts; no authentication, collaboration transport or hosted sharing service is implied by their presence in the UI.
 
 ## Extending the editor
 

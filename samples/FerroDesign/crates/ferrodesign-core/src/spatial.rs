@@ -301,22 +301,96 @@ impl SceneIndex {
         ids.sort_unstable_by_key(|id| {
             std::cmp::Reverse(self.z_order.get(id).copied().unwrap_or(0))
         });
+        self.hit_test_ordered(d, p, tolerance, include_locked, None, ids)
+    }
+    /// Limit the broadphase before z-order selection so overlapping unrelated
+    /// page frames cannot swallow presentation input. Presentation roots are
+    /// rendered in isolation: retain their inherited transform, but disregard
+    /// clipping and Boolean ownership above them. Cross-page roots and roots
+    /// excluded by an authored ancestor clip need an independent subtree query.
+    pub fn hit_test_in_subtree(
+        &self,
+        d: &Document,
+        root: NodeId,
+        p: Point,
+        tolerance: f64,
+        include_locked: bool,
+    ) -> Option<NodeId> {
+        let mut parent = d.nodes.get(&root).and_then(|node| node.parent);
+        let mut externally_clipped = false;
+        for _ in 0..MAX_DOCUMENT_DEPTH {
+            let Some(id) = parent else { break };
+            let Some(node) = d.nodes.get(&id) else { break };
+            if node.clip_content || node.kind == NodeKind::Boolean {
+                externally_clipped = true;
+                break;
+            }
+            parent = node.parent;
+        }
+        let ids = if self.transforms.contains_key(&root) && !externally_clipped {
+            let mut ids = self.spatial.query(Rect::new(
+                p.x - tolerance,
+                p.y - tolerance,
+                tolerance * 2.0,
+                tolerance * 2.0,
+            ));
+            ids.retain(|id| *id == root || d.is_ancestor(root, *id));
+            ids.sort_unstable_by_key(|id| {
+                std::cmp::Reverse(self.z_order.get(id).copied().unwrap_or(0))
+            });
+            ids
+        } else {
+            let mut ids = d.descendants(root);
+            ids.reverse();
+            ids
+        };
+        self.hit_test_ordered(d, p, tolerance, include_locked, Some(root), ids)
+    }
+    fn hit_test_ordered(
+        &self,
+        d: &Document,
+        p: Point,
+        tolerance: f64,
+        include_locked: bool,
+        root: Option<NodeId>,
+        ids: Vec<NodeId>,
+    ) -> Option<NodeId> {
+        if !p.x.is_finite() || !p.y.is_finite() || !tolerance.is_finite() || tolerance < 0.0 {
+            return None;
+        }
         for id in ids {
             let Some(n) = d.nodes.get(&id) else { continue };
-            if !include_locked && d.effective_locked(id) {
+            if !d.effective_visible(id) || (!include_locked && d.effective_locked(id)) {
                 continue;
             }
             let mut clipped = false;
-            let mut parent = n.parent;
-            while let Some(pid) = parent {
+            let mut parent = if root == Some(id) { None } else { n.parent };
+            for _ in 0..MAX_DOCUMENT_DEPTH {
+                let Some(pid) = parent else { break };
                 let Some(n) = d.nodes.get(&pid) else { break };
+                if n.kind == NodeKind::Boolean {
+                    clipped = true;
+                    break;
+                }
                 if n.clip_content {
-                    if let Some(inv) = self.transforms.get(&pid).and_then(|t| t.inverse()) {
+                    if let Some(inv) = self
+                        .transforms
+                        .get(&pid)
+                        .copied()
+                        .or_else(|| d.world_transform(pid))
+                        .and_then(Transform::inverse)
+                    {
                         if !n.hit_test_local(inv.apply(p), 0.0) {
                             clipped = true;
                             break;
                         }
+                    } else {
+                        clipped = true;
+                        break;
                     }
+                }
+                if root == Some(pid) {
+                    break;
                 }
                 parent = n.parent
             }

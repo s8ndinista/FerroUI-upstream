@@ -1,7 +1,11 @@
 //! The XAML shell binds real FerroUI controls to the document command layer.
+mod paints;
+mod prototyping;
+mod text;
 use crate::{
     canvas::{CanvasEvent, DesignCanvas, Tool},
     icons, platform,
+    prototype::{PrototypeRuntime, PrototypeRuntimeEvent},
 };
 use ferrodesign_core::{
     self as core, Align, Arrange, AutoLayout, BooleanOperation, Color, Distribution, Editor,
@@ -13,10 +17,11 @@ use ferroui_base::layout::{Orientation, VerticalAlignment};
 use ferroui_base::media::{FontWeight, TextWrapping};
 use ferroui_base::metadata::from_markup_value;
 use ferroui_base::utilities::{Uri, UriKind};
-use ferroui_base::{ObjectType, Ref, Thickness};
+use ferroui_base::{BoxedValue, ObjectType, Ref, Thickness, WeakRef};
+use ferroui_controls::templates::FuncDataTemplate;
 use ferroui_controls::{
-    Border, Button, CheckBox, ColumnDefinitions, ComboBox, Control, Grid, StackPanel, TextBlock,
-    TextBox, UserControl,
+    Border, Button, CheckBox, ColumnDefinitions, ComboBox, Control, Grid, ItemsControl,
+    ItemsSource, StackPanel, TextBlock, TextBox, UserControl,
 };
 use ferroui_markup_xaml::FerroXamlLoader;
 use serde_json::json;
@@ -26,19 +31,34 @@ use std::{
     rc::Rc,
 };
 
+#[derive(Clone, Debug, PartialEq)]
+struct LayerRow {
+    id: NodeId,
+    name: String,
+    kind: NodeKind,
+    depth: usize,
+    expanded: bool,
+    has_children: bool,
+    visible: bool,
+    locked: bool,
+    assets: bool,
+}
+
 pub struct EditorShell {
     pub root: Ref<UserControl>,
     pub canvas: Ref<DesignCanvas>,
     pub editor: Rc<RefCell<Editor>>,
     updating: Cell<bool>,
+    inline_text: Cell<Option<NodeId>>,
+    inline_updating: Cell<bool>,
     expanded: RefCell<BTreeSet<NodeId>>,
-    layer_buttons: RefCell<BTreeMap<NodeId, Ref<Button>>>,
+    layer_buttons: RefCell<BTreeMap<NodeId, WeakRef<Button>>>,
+    layer_rows: RefCell<Vec<LayerRow>>,
+    page_rows: RefCell<Vec<(NodeId, String)>>,
     assets: Cell<bool>,
     inspector_tab: Cell<u8>,
     prototype_targets: RefCell<Vec<NodeId>>,
-    prototype_history: RefCell<Vec<NodeId>>,
-    prototype: RefCell<core::PrototypePlayer>,
-    prototype_original: RefCell<Option<core::Document>>,
+    prototype: Rc<PrototypeRuntime>,
 }
 impl EditorShell {
     pub fn new() -> Rc<Self> {
@@ -61,21 +81,25 @@ impl EditorShell {
             .collect();
         let editor = Rc::new(RefCell::new(editor));
         let canvas = DesignCanvas::new(editor.clone());
-        root.get_control::<Border>("CanvasHost")
-            .set_child(canvas.clone());
+        let prototype = PrototypeRuntime::new(editor.clone(), canvas.clone());
+        root.get_control::<Grid>("CanvasHost")
+            .children()
+            .insert(0, canvas.clone());
         let this = Rc::new(Self {
             root,
             canvas,
             editor,
             updating: Cell::new(false),
+            inline_text: Cell::new(None),
+            inline_updating: Cell::new(false),
             expanded: RefCell::new(expanded),
             layer_buttons: RefCell::new(BTreeMap::new()),
+            layer_rows: RefCell::new(Vec::new()),
+            page_rows: RefCell::new(Vec::new()),
             assets: Cell::new(false),
             inspector_tab: Cell::new(0),
             prototype_targets: RefCell::new(Vec::new()),
-            prototype_history: RefCell::new(Vec::new()),
-            prototype: RefCell::new(core::PrototypePlayer::default()),
-            prototype_original: RefCell::new(None),
+            prototype,
         });
         this.wire();
         this.refresh();
@@ -108,7 +132,184 @@ impl EditorShell {
         self.button(name)
             .set_content(Some(Control::boxed(icons::icon(glyph, "#303030", 17.0))));
     }
+    fn choice(self: &Rc<Self>, name: &'static str, labels: &[&str], apply: fn(&mut Node, usize)) {
+        let control = self.control::<ComboBox>(name);
+        for label in labels {
+            control.items().add(Some(Rc::new(label.to_string())));
+        }
+        let weak = Rc::downgrade(self);
+        control.selection_changed(move |_, _| {
+            if let Some(shell) = weak.upgrade() {
+                if shell.updating.get() {
+                    return;
+                }
+                let index = shell.control::<ComboBox>(name).selected_index();
+                if index >= 0 {
+                    shell.modify("Edit layer property", |node| apply(node, index as usize));
+                    shell.changed();
+                }
+            }
+        });
+    }
     fn wire(self: &Rc<Self>) {
+        self.wire_inline_text();
+        self.hook("EditPaintsButton", "paints");
+        self.hook("EditInteractionsButton", "interactions");
+        let weak = Rc::downgrade(self);
+        self.prototype.set_callback(move |event| {
+            if let Some(shell) = weak.upgrade() {
+                shell.prototype_event(event);
+            }
+        });
+        let weak = Rc::downgrade(self);
+        self.control::<ItemsControl>("LayersHost")
+            .set_item_template(Some(FuncDataTemplate::for_type::<LayerRow>(
+                move |row, _| weak.upgrade().map(|shell| shell.layer_row(row).upcast()),
+                false,
+            )));
+        self.choice(
+            "HorizontalConstraint",
+            &["Left", "Right", "Center", "Left and right", "Scale"],
+            |n, i| {
+                n.constraints.horizontal = [
+                    core::Constraint::Start,
+                    core::Constraint::End,
+                    core::Constraint::Center,
+                    core::Constraint::Stretch,
+                    core::Constraint::Scale,
+                ][i];
+            },
+        );
+        self.choice(
+            "VerticalConstraint",
+            &["Top", "Bottom", "Center", "Top and bottom", "Scale"],
+            |n, i| {
+                n.constraints.vertical = [
+                    core::Constraint::Start,
+                    core::Constraint::End,
+                    core::Constraint::Center,
+                    core::Constraint::Stretch,
+                    core::Constraint::Scale,
+                ][i];
+            },
+        );
+        self.choice(
+            "StrokeAlignChoice",
+            &["Inside", "Center", "Outside"],
+            |n, i| {
+                if let Some(stroke) = n.strokes.first_mut() {
+                    stroke.align = [
+                        core::StrokeAlign::Inside,
+                        core::StrokeAlign::Center,
+                        core::StrokeAlign::Outside,
+                    ][i];
+                }
+            },
+        );
+        self.choice(
+            "StrokeCapChoice",
+            &["Butt", "Round", "Square", "Arrow"],
+            |n, i| {
+                if let Some(stroke) = n.strokes.first_mut() {
+                    stroke.cap = [
+                        core::StrokeCap::Butt,
+                        core::StrokeCap::Round,
+                        core::StrokeCap::Square,
+                        core::StrokeCap::Arrow,
+                    ][i];
+                }
+            },
+        );
+        self.choice("StrokeJoinChoice", &["Miter", "Round", "Bevel"], |n, i| {
+            if let Some(stroke) = n.strokes.first_mut() {
+                stroke.join = [
+                    core::StrokeJoin::Miter,
+                    core::StrokeJoin::Round,
+                    core::StrokeJoin::Bevel,
+                ][i];
+            }
+        });
+        self.choice(
+            "TextVerticalChoice",
+            &["Top", "Center", "Bottom"],
+            |n, i| {
+                n.text_vertical_align = [
+                    core::TextVerticalAlign::Top,
+                    core::TextVerticalAlign::Center,
+                    core::TextVerticalAlign::Bottom,
+                ][i];
+            },
+        );
+        self.choice(
+            "TextResizeChoice",
+            &["Fixed size", "Auto height", "Auto width and height"],
+            |n, i| {
+                n.text_auto_resize = [
+                    core::TextAutoResize::Fixed,
+                    core::TextAutoResize::Height,
+                    core::TextAutoResize::WidthAndHeight,
+                ][i];
+            },
+        );
+        self.choice(
+            "TextDecorationChoice",
+            &["None", "Underline", "Strikethrough"],
+            |n, i| {
+                n.text_decoration = [
+                    core::TextDecoration::None,
+                    core::TextDecoration::Underline,
+                    core::TextDecoration::Strikethrough,
+                ][i];
+            },
+        );
+        self.choice(
+            "LayoutMainChoice",
+            &["Start", "Center", "End", "Space between", "Stretch"],
+            |n, i| {
+                if let Some(layout) = &mut n.layout {
+                    layout.main_align = layout_alignment(i);
+                }
+            },
+        );
+        self.choice(
+            "LayoutCrossChoice",
+            &["Start", "Center", "End", "Space between", "Stretch"],
+            |n, i| {
+                if let Some(layout) = &mut n.layout {
+                    layout.cross_align = layout_alignment(i);
+                }
+            },
+        );
+        self.choice(
+            "WidthSizingChoice",
+            &["Fixed", "Hug contents", "Fill container"],
+            |n, i| {
+                let mode = [
+                    core::SizingMode::Fixed,
+                    core::SizingMode::Hug,
+                    core::SizingMode::Fill,
+                ][i];
+                n.layout_child.width = mode;
+                if let Some(layout) = &mut n.layout {
+                    layout.width = mode;
+                }
+            },
+        );
+        self.choice(
+            "HeightSizingChoice",
+            &["Fixed", "Hug contents", "Fill container"],
+            |n, i| {
+                let mode = [
+                    core::SizingMode::Fixed,
+                    core::SizingMode::Hug,
+                    core::SizingMode::Fill,
+                ][i];
+                n.layout_child.height = mode;
+                if let Some(layout) = &mut n.layout {
+                    layout.height = mode;
+                }
+            },
+        );
         for (name, icon) in [
             ("MenuButton", "logo"),
             ("FileRailButton", "file"),
@@ -204,6 +405,16 @@ impl EditorShell {
             ("ZoomValueButton", "fit"),
             ("ZoomInButton", "zoom-in"),
             ("CloseModalButton", "close-modal"),
+            ("EditVectorButton", "edit-vector"),
+            ("DoneVectorButton", "done-vector"),
+            ("CornerPointButton", "vector-corner"),
+            ("SmoothPointButton", "vector-smooth"),
+            ("SymmetricPointButton", "vector-symmetric"),
+            ("ItalicButton", "italic"),
+            ("TextJustifyButton", "text-justify"),
+            ("IndependentCornersButton", "independent-corners"),
+            ("LayoutWrapButton", "layout-wrap"),
+            ("LayoutReverseButton", "layout-reverse"),
         ] {
             self.hook(name, command);
         }
@@ -238,6 +449,16 @@ impl EditorShell {
             "TextField",
             "FontFamilyField",
             "FontSizeField",
+            "FontWeightField",
+            "LineHeightField",
+            "LetterSpacingField",
+            "DashField",
+            "CornerTLField",
+            "CornerTRField",
+            "CornerBRField",
+            "CornerBLField",
+            "CrossGapField",
+            "LayoutColumnsField",
         ] {
             let weak = Rc::downgrade(self);
             self.field(name)
@@ -307,14 +528,13 @@ impl EditorShell {
         match event {
             CanvasEvent::Document => self.changed(),
             CanvasEvent::Selection => self.refresh_selection(),
-            CanvasEvent::Camera => self.sync_zoom(),
+            CanvasEvent::Camera => {
+                self.sync_zoom();
+                self.position_inline_text();
+            }
             CanvasEvent::Tool => self.sync_tools(),
             CanvasEvent::EditText(id) => {
-                self.editor.borrow_mut().selection = vec![id];
-                self.inspector_tab.set(0);
-                self.refresh_selection();
-                self.field("TextField").focus();
-                self.field("TextField").select_all();
+                self.begin_inline_text(id);
             }
             CanvasEvent::Comment(position) => self.comment_dialog(position),
             CanvasEvent::ContextMenu => self.action_dialog(
@@ -322,7 +542,14 @@ impl EditorShell {
                 "Edit, arrange, and organize the selected layers.",
                 LAYER_ACTIONS,
             ),
-            CanvasEvent::PrototypeClick(id) => self.prototype_click(id),
+            CanvasEvent::PrototypeTrigger(id, trigger) => {
+                self.prototype.dispatch(id, trigger);
+            }
+            CanvasEvent::PrototypeKey(key) => {
+                if !self.prototype.key(&key) && key == "Escape" {
+                    self.prototype.stop();
+                }
+            }
             CanvasEvent::ExitPresentation => self.set_presentation(None),
             CanvasEvent::Action(command) => {
                 self.command(command);
@@ -330,7 +557,7 @@ impl EditorShell {
         }
     }
     pub fn document_json(&self) -> String {
-        self.editor.borrow().to_json().unwrap_or_default()
+        self.prototype.document_json().unwrap_or_default()
     }
     pub fn state_json(&self) -> String {
         let editor = self.editor.borrow();
@@ -349,18 +576,68 @@ impl EditorShell {
             let origin = control
                 .translate_point(ferroui_base::Point::new(0.0, 0.0), &self.root)
                 .unwrap_or_default();
-            json!({"x":origin.x,"y":origin.y,"width":bounds.width,"height":bounds.height})
+            json!({"x":origin.x,"y":origin.y,"width":bounds.width,"height":bounds.height,
+                "visible":control.is_effectively_visible()})
         };
         let mut chrome: serde_json::Map<String, serde_json::Value> = [
-            "CanvasHost", "Toolbar", "SelectTool", "FrameTool", "RectTool", "EllipseTool",
-            "PenTool", "TextTool", "HandTool", "CommentTool", "ActionsButton",
-            "PagesViewport", "LayersViewport", "AddPageButton",
+            "CanvasHost",
+            "Toolbar",
+            "SelectTool",
+            "FrameTool",
+            "RectTool",
+            "EllipseTool",
+            "PenTool",
+            "TextTool",
+            "HandTool",
+            "CommentTool",
+            "ActionsButton",
+            "PagesViewport",
+            "LayersViewport",
+            "InspectorViewport",
+            "AddPageButton",
+            "EditVectorButton",
+            "DoneVectorButton",
+            "VectorPointOptions",
+            "InlineTextBox",
+            "EditPaintsButton",
+            "EditInteractionsButton",
+            "ModalBackdrop",
+            "ModalContent",
+            "ModalActions",
         ]
         .into_iter()
-        .map(|name| (name.to_string(), native_bounds(&self.control::<Control>(name))))
+        .map(|name| {
+            (
+                name.to_string(),
+                native_bounds(&self.control::<Control>(name)),
+            )
+        })
         .collect();
-        if let Some(index) = editor.document.pages.iter().position(|p| p.id == editor.active_page) {
-            let button = self.control::<StackPanel>("PagesHost").children().get(index);
+        if self.control::<Control>("ModalBackdrop").is_visible() {
+            for visual in self
+                .control::<Control>("ModalBackdrop")
+                .get_visual_descendants()
+            {
+                if let Some(control) = visual.cast::<Control>() {
+                    if let Some(name) = control
+                        .name()
+                        .filter(|name| name.starts_with("Paint") || name.starts_with("Interaction"))
+                    {
+                        chrome.insert(name, native_bounds(&control));
+                    }
+                }
+            }
+        }
+        if let Some(index) = editor
+            .document
+            .pages
+            .iter()
+            .position(|p| p.id == editor.active_page)
+        {
+            let button = self
+                .control::<StackPanel>("PagesHost")
+                .children()
+                .get(index);
             chrome.insert("ActivePage".into(), native_bounds(&button));
         }
         json!({
@@ -370,6 +647,13 @@ impl EditorShell {
             "zoomLabel":self.button("ZoomValueButton").content().and_then(|value| value.downcast_ref::<String>().cloned()),
             "canvas":{"x":canvas.x,"y":canvas.y,"width":canvas.width,"height":canvas.height},
             "chrome":chrome,
+            "layerRowCount":self.layer_rows.borrow().len(),
+            "realizedLayerRows":self.layer_buttons.borrow().values().filter(|row| row.upgrade().is_some()).count(),
+            "vectorNode":self.canvas.vector_node.get(),
+            "editingText":self.inline_text.get(),
+            "prototypeOverlays":*self.canvas.overlays.borrow(),
+            "vectorPoint":self.canvas.vector_point.get().map(|point| json!({"segment":point.segment,"kind":format!("{:?}",point.kind)})),
+            "saveStatus":platform::document_save_status(),
             "renderer":"FerroUI Vello","pageCount":editor.document.pages.len(),"activePage":editor.active_page,
             "renderedFrames":self.canvas.frames.get(),"visibleNodes":stats.visible_nodes,"culledNodes":stats.culled_nodes,
             "cachedNodes":stats.cached_nodes,"missingImages":stats.missing_images,"unsupportedEffects":stats.unsupported_effects,
@@ -381,6 +665,8 @@ impl EditorShell {
         self.toast(message);
     }
     pub fn import_document(self: &Rc<Self>, text: &str, name: &str) -> bool {
+        self.finish_inline_text(true);
+        self.prototype.stop();
         self.canvas.cancel();
         let text = text.trim_start_matches('\u{feff}').trim_start();
         if text.starts_with("data:image/") {
@@ -467,15 +753,8 @@ impl EditorShell {
         }
     }
     fn changed(self: &Rc<Self>) {
-        let saved = platform::save_document(&self.document_json());
-        self.text(
-            "DocumentStatus",
-            if saved {
-                "All changes saved locally"
-            } else {
-                "Storage full · Export to save your work"
-            },
-        );
+        platform::save_document(&self.document_json());
+        self.text("DocumentStatus", &platform::document_save_status());
         self.refresh();
         self.canvas.invalidate_visual();
     }
@@ -506,6 +785,7 @@ impl EditorShell {
         if self.updating.replace(true) {
             return;
         }
+        self.canvas.reconcile_vector_edit();
         self.sync_tools();
         self.refresh_pages();
         self.refresh_layers();
@@ -518,18 +798,51 @@ impl EditorShell {
         }
         // Selection does not change the layer tree. Reuse native control rows so
         // clicking artwork never recreates every page, icon and layer control.
+        self.canvas.reconcile_vector_edit();
         let selection = self.editor.borrow().selection.clone();
-        for (id, button) in self.layer_buttons.borrow().iter() {
-            button.classes().set("active", selection.contains(id));
-        }
+        self.layer_buttons.borrow_mut().retain(|id, weak| {
+            if let Some(button) = weak.upgrade() {
+                button.classes().set("active", selection.contains(id));
+                true
+            } else {
+                false
+            }
+        });
         self.refresh_inspector();
         self.updating.set(false);
     }
     fn refresh_pages(self: &Rc<Self>) {
         let host = self.control::<StackPanel>("PagesHost");
-        host.children().clear();
         let editor = self.editor.borrow();
         self.text("FileTitle", &editor.document.name);
+        let rows: Vec<_> = editor
+            .document
+            .pages
+            .iter()
+            .map(|p| (p.id, p.name.clone()))
+            .collect();
+        if *self.page_rows.borrow() == rows {
+            for (index, (id, name)) in rows.iter().enumerate() {
+                let button = host
+                    .children()
+                    .get(index)
+                    .cast::<Button>()
+                    .expect("page button");
+                button.classes().set("active", *id == editor.active_page);
+                button.set_content(Some(Rc::new(format!(
+                    "{}  {}",
+                    if *id == editor.active_page {
+                        "✓"
+                    } else {
+                        " "
+                    },
+                    name
+                ))));
+            }
+            return;
+        }
+        *self.page_rows.borrow_mut() = rows;
+        host.children().clear();
         for page in &editor.document.pages {
             let id = page.id;
             let button = Button::new();
@@ -561,9 +874,7 @@ impl EditorShell {
         }
     }
     fn refresh_layers(self: &Rc<Self>) {
-        let host = self.control::<StackPanel>("LayersHost");
-        self.layer_buttons.borrow_mut().clear();
-        host.children().clear();
+        let host = self.control::<ItemsControl>("LayersHost");
         self.text(
             "LeftTitle",
             if self.assets.get() {
@@ -599,55 +910,107 @@ impl EditorShell {
                 .map(|p| p.children.clone())
                 .unwrap_or_default()
         };
-        for &id in roots.iter().rev() {
-            self.layer_row(&host, &editor, id, 0, &filter);
+        // Compute a flat projection of the expanded tree, without realizing controls.
+        // Search collects ancestor IDs once instead of walking every subtree per row.
+        let mut included = BTreeSet::new();
+        if !filter.is_empty() {
+            for node in editor
+                .document
+                .nodes
+                .values()
+                .filter(|n| n.name.to_lowercase().contains(&filter))
+            {
+                let mut id = Some(node.id);
+                while let Some(current) = id {
+                    if !included.insert(current) {
+                        break;
+                    }
+                    id = editor.document.nodes.get(&current).and_then(|n| n.parent);
+                }
+            }
         }
-        if roots.is_empty() {
-            let text = TextBlock::new();
-            text.set_text(Some(if self.assets.get() {
+        let expanded = self.expanded.borrow();
+        let assets = self.assets.get();
+        let mut pending: Vec<_> = roots.into_iter().map(|id| (id, 0)).collect();
+        let mut rows = Vec::new();
+        while let Some((id, depth)) = pending.pop() {
+            if !filter.is_empty() && !included.contains(&id) {
+                continue;
+            }
+            let Some(node) = editor.document.nodes.get(&id) else {
+                continue;
+            };
+            let open = expanded.contains(&id) || !filter.is_empty();
+            rows.push(LayerRow {
+                id,
+                name: node.name.clone(),
+                kind: node.kind,
+                depth,
+                expanded: open,
+                has_children: !node.children.is_empty(),
+                visible: node.visible,
+                locked: node.locked,
+                assets,
+            });
+            if open && !assets {
+                pending.extend(node.children.iter().map(|&child| (child, depth + 1)));
+            }
+        }
+        drop(expanded);
+        drop(editor);
+        self.visible("EmptyLayers", rows.is_empty());
+        self.text(
+            "EmptyLayers",
+            if !filter.is_empty() {
+                "No layers match your search."
+            } else if assets {
                 "Create a component to reuse it here."
             } else {
                 "Draw a frame or shape to get started."
-            }));
-            text.set_text_wrapping(TextWrapping::Wrap);
-            text.set_margin(Thickness::uniform(12.0));
-            text.set_foreground(Some(icons::brush("#888888")));
-            host.children().add(text);
+            },
+        );
+        if *self.layer_rows.borrow() != rows {
+            self.layer_buttons.borrow_mut().clear();
+            let items = ItemsSource::from_items(
+                rows.iter()
+                    .cloned()
+                    .map(|row| Some(Rc::new(row) as BoxedValue)),
+            );
+            *self.layer_rows.borrow_mut() = rows;
+            host.set_items_source(Some(items));
+        } else {
+            let selection = self.editor.borrow().selection.clone();
+            self.layer_buttons.borrow_mut().retain(|id, weak| {
+                if let Some(button) = weak.upgrade() {
+                    button.classes().set("active", selection.contains(id));
+                    true
+                } else {
+                    false
+                }
+            });
         }
     }
-    fn layer_row(
-        self: &Rc<Self>,
-        host: &Ref<StackPanel>,
-        editor: &Editor,
-        id: NodeId,
-        depth: usize,
-        filter: &str,
-    ) {
-        let Some(node) = editor.document.nodes.get(&id) else {
-            return;
-        };
-        let matches = filter.is_empty() || node.name.to_lowercase().contains(filter);
-        let descendant_matches = !filter.is_empty()
-            && editor.document.descendants(id).iter().any(|id| {
-                editor
-                    .document
-                    .nodes
-                    .get(id)
-                    .is_some_and(|n| n.name.to_lowercase().contains(filter))
-            });
-        if !matches && !descendant_matches {
-            return;
-        }
+    fn layer_row(self: &Rc<Self>, row: &LayerRow) -> Ref<Grid> {
+        let id = row.id;
         let grid = Grid::new();
         grid.set_column_definitions(ColumnDefinitions::parse("20,*,24").unwrap());
-        grid.set_margin(Thickness::new((depth.min(10) * 12) as f64, 0.0, 0.0, 0.0));
-        let expanded = self.expanded.borrow().contains(&id) || !filter.is_empty();
-        if !node.children.is_empty() {
+        grid.set_height(30.0);
+        grid.set_margin(Thickness::new(
+            (row.depth.min(10) * 12) as f64,
+            0.0,
+            0.0,
+            0.0,
+        ));
+        if row.has_children {
             let collapse = Button::new();
             collapse.set_min_width(20.0);
             collapse.set_padding(Thickness::uniform(0.0));
             collapse.set_content(Some(Control::boxed(icons::icon(
-                if expanded { "chevron-down" } else { "chevron-right" },
+                if row.expanded {
+                    "chevron-down"
+                } else {
+                    "chevron-right"
+                },
                 "#777777",
                 8.0,
             ))));
@@ -669,14 +1032,14 @@ impl EditorShell {
         button.classes().add("layer");
         button
             .classes()
-            .set("active", editor.selection.contains(&id));
-        if !node.visible {
+            .set("active", self.editor.borrow().selection.contains(&id));
+        if !row.visible {
             button.set_opacity(0.4);
         }
         let content = StackPanel::new();
         content.set_orientation(Orientation::Horizontal);
         content.set_spacing(7.0);
-        let glyph = match node.kind {
+        let glyph = match row.kind {
             NodeKind::Frame => "frame",
             NodeKind::Group => "group",
             NodeKind::Text => "text",
@@ -691,7 +1054,7 @@ impl EditorShell {
         };
         content.children().add(icons::icon(
             glyph,
-            if matches!(node.kind, NodeKind::Component | NodeKind::Instance) {
+            if matches!(row.kind, NodeKind::Component | NodeKind::Instance) {
                 "#9747FF"
             } else {
                 "#777777"
@@ -699,14 +1062,14 @@ impl EditorShell {
             12.0,
         ));
         let name = TextBlock::new();
-        name.set_text(Some(&node.name));
+        name.set_text(Some(&row.name));
         name.set_vertical_alignment(VerticalAlignment::Center);
         name.set_font_size(11.0);
         content.children().add(name);
         button.set_content(Some(Control::boxed(content)));
         Grid::set_column(&button, 1);
         let weak = Rc::downgrade(self);
-        let assets = self.assets.get();
+        let assets = row.assets;
         button.click(move |_, _| {
             if let Some(s) = weak.upgrade() {
                 if assets {
@@ -725,12 +1088,15 @@ impl EditorShell {
                 s.canvas.focus();
             }
         });
-        self.layer_buttons.borrow_mut().insert(id, button.clone());
+        // Weak handles must not keep scrolled-out item controls alive.
+        self.layer_buttons
+            .borrow_mut()
+            .insert(id, button.downgrade());
         grid.children().add(button);
         let eye = Button::new();
         eye.set_padding(Thickness::uniform(5.0));
         eye.set_content(Some(Control::boxed(icons::icon(
-            if node.locked { "lock" } else { "eye" },
+            if row.locked { "lock" } else { "eye" },
             "#999999",
             11.0,
         ))));
@@ -743,12 +1109,7 @@ impl EditorShell {
             }
         });
         grid.children().add(eye);
-        host.children().add(grid);
-        if expanded && !self.assets.get() {
-            for &child in node.children.iter().rev() {
-                self.layer_row(host, editor, child, depth + 1, filter);
-            }
-        }
+        grid
     }
     fn refresh_inspector(&self) {
         let editor = self.editor.borrow();
@@ -759,6 +1120,14 @@ impl EditorShell {
         self.visible("DesignInspector", self.inspector_tab.get() == 0);
         self.visible("PrototypeInspector", self.inspector_tab.get() == 1);
         self.visible("InspectInspector", self.inspector_tab.get() == 2);
+        let vector_edit = self.canvas.vector_node.get().is_some();
+        self.visible(
+            "VectorOptions",
+            node.is_some_and(|n| n.kind == NodeKind::Vector),
+        );
+        self.visible("VectorPointOptions", vector_edit);
+        self.visible("EditVectorButton", !vector_edit);
+        self.visible("DoneVectorButton", vector_edit);
         for (name, index) in [("DesignTab", 0), ("PrototypeTab", 1), ("InspectTab", 2)] {
             self.button(name)
                 .classes()
@@ -793,6 +1162,33 @@ impl EditorShell {
             ("RadiusField", node.map(|n| n.corner_radius)),
             ("OpacityField", node.map(|n| n.opacity * 100.0)),
             ("FontSizeField", node.map(|n| n.font_size)),
+            ("FontWeightField", node.map(|n| n.font_weight as f64)),
+            ("LineHeightField", node.map(|n| n.line_height * 100.0)),
+            ("LetterSpacingField", node.map(|n| n.letter_spacing)),
+            (
+                "CornerTLField",
+                node.map(|n| n.corner_radii.unwrap_or([n.corner_radius; 4])[0]),
+            ),
+            (
+                "CornerTRField",
+                node.map(|n| n.corner_radii.unwrap_or([n.corner_radius; 4])[1]),
+            ),
+            (
+                "CornerBRField",
+                node.map(|n| n.corner_radii.unwrap_or([n.corner_radius; 4])[2]),
+            ),
+            (
+                "CornerBLField",
+                node.map(|n| n.corner_radii.unwrap_or([n.corner_radius; 4])[3]),
+            ),
+            (
+                "CrossGapField",
+                node.and_then(|n| n.layout.as_ref().map(|l| l.cross_gap)),
+            ),
+            (
+                "LayoutColumnsField",
+                node.and_then(|n| n.layout.as_ref().map(|l| l.columns as f64)),
+            ),
             (
                 "StrokeWidthField",
                 node.map(|n| n.strokes.first().map_or(0.0, |s| s.width)),
@@ -824,6 +1220,123 @@ impl EditorShell {
                 .map(|s| s.paint.representative_color().hex())
                 .unwrap_or_else(|| "000000".into()),
         );
+        set(
+            "DashField",
+            node.and_then(|n| n.strokes.first())
+                .map(|s| {
+                    s.dash
+                        .iter()
+                        .map(|v| number(*v))
+                        .collect::<Vec<_>>()
+                        .join(", ")
+                })
+                .unwrap_or_default(),
+        );
+        self.visible("StrokeOptions", node.is_some_and(|n| !n.strokes.is_empty()));
+        self.visible(
+            "CornerOptions",
+            node.is_some_and(|n| n.corner_radii.is_some()),
+        );
+        self.button("IndependentCornersButton")
+            .classes()
+            .set("active", node.is_some_and(|n| n.corner_radii.is_some()));
+        self.button("ItalicButton")
+            .classes()
+            .set("active", node.is_some_and(|n| n.italic));
+        self.button("LayoutWrapButton").classes().set(
+            "active",
+            node.is_some_and(|n| n.layout.as_ref().is_some_and(|l| l.wrap)),
+        );
+        self.button("LayoutReverseButton").classes().set(
+            "active",
+            node.is_some_and(|n| n.layout.as_ref().is_some_and(|l| l.reverse)),
+        );
+        for (name, index) in [
+            (
+                "HorizontalConstraint",
+                node.map(|n| constraint_index(n.constraints.horizontal)),
+            ),
+            (
+                "VerticalConstraint",
+                node.map(|n| constraint_index(n.constraints.vertical)),
+            ),
+            (
+                "WidthSizingChoice",
+                node.map(|n| {
+                    sizing_index(n.layout.as_ref().map_or(n.layout_child.width, |l| l.width))
+                }),
+            ),
+            (
+                "HeightSizingChoice",
+                node.map(|n| {
+                    sizing_index(
+                        n.layout
+                            .as_ref()
+                            .map_or(n.layout_child.height, |l| l.height),
+                    )
+                }),
+            ),
+            (
+                "LayoutMainChoice",
+                node.and_then(|n| n.layout.as_ref().map(|l| alignment_index(l.main_align))),
+            ),
+            (
+                "LayoutCrossChoice",
+                node.and_then(|n| n.layout.as_ref().map(|l| alignment_index(l.cross_align))),
+            ),
+            (
+                "StrokeAlignChoice",
+                node.and_then(|n| n.strokes.first()).map(|s| match s.align {
+                    core::StrokeAlign::Inside => 0,
+                    core::StrokeAlign::Center => 1,
+                    core::StrokeAlign::Outside => 2,
+                }),
+            ),
+            (
+                "StrokeCapChoice",
+                node.and_then(|n| n.strokes.first()).map(|s| match s.cap {
+                    core::StrokeCap::Butt => 0,
+                    core::StrokeCap::Round => 1,
+                    core::StrokeCap::Square => 2,
+                    core::StrokeCap::Arrow => 3,
+                }),
+            ),
+            (
+                "StrokeJoinChoice",
+                node.and_then(|n| n.strokes.first()).map(|s| match s.join {
+                    core::StrokeJoin::Miter => 0,
+                    core::StrokeJoin::Round => 1,
+                    core::StrokeJoin::Bevel => 2,
+                }),
+            ),
+            (
+                "TextVerticalChoice",
+                node.map(|n| match n.text_vertical_align {
+                    core::TextVerticalAlign::Top => 0,
+                    core::TextVerticalAlign::Center => 1,
+                    core::TextVerticalAlign::Bottom => 2,
+                }),
+            ),
+            (
+                "TextResizeChoice",
+                node.map(|n| match n.text_auto_resize {
+                    core::TextAutoResize::Fixed => 0,
+                    core::TextAutoResize::Height => 1,
+                    core::TextAutoResize::WidthAndHeight => 2,
+                }),
+            ),
+            (
+                "TextDecorationChoice",
+                node.map(|n| match n.text_decoration {
+                    core::TextDecoration::None => 0,
+                    core::TextDecoration::Underline => 1,
+                    core::TextDecoration::Strikethrough => 2,
+                }),
+            ),
+        ] {
+            self.control::<ComboBox>(name)
+                .set_selected_index(index.unwrap_or(-1));
+        }
         set(
             "TextField",
             node.map(|n| n.text.clone()).unwrap_or_default(),
@@ -937,8 +1450,36 @@ impl EditorShell {
             .filter(|v| v.is_finite() && v.abs() <= 1.0e7);
         match name {
             "NameField" => self.modify("Rename layer", |n| n.name = text.clone()),
-            "TextField" => self.modify("Edit text", |n| n.text = text.clone()),
+            "TextField" => self.modify("Edit text", |n| {
+                n.replace_text_preserving_runs(text.clone());
+            }),
             "FontFamilyField" => self.modify("Font family", |n| n.font_family = text.clone()),
+            "DashField" => {
+                let dash = text
+                    .split(|c: char| c == ',' || c.is_whitespace())
+                    .filter(|s| !s.is_empty())
+                    .map(str::parse::<f64>)
+                    .collect::<Result<Vec<_>, _>>();
+                let Ok(dash) = dash else {
+                    self.toast("Enter nonnegative dash lengths, separated by commas.");
+                    return;
+                };
+                if dash
+                    .iter()
+                    .any(|v| !v.is_finite() || *v < 0.0 || *v > 100000.0)
+                    || (!dash.is_empty() && dash.iter().all(|v| *v == 0.0))
+                {
+                    self.toast(
+                        "A dash pattern needs a positive length and finite nonnegative values.",
+                    );
+                    return;
+                }
+                self.modify("Stroke dash pattern", |n| {
+                    if let Some(stroke) = n.strokes.first_mut() {
+                        stroke.dash = dash.clone();
+                    }
+                });
+            }
             "FillField" => {
                 if let Some(color) = Color::from_hex(&text) {
                     self.editor.borrow_mut().set_selection_fill(color);
@@ -987,8 +1528,36 @@ impl EditorShell {
                         "YField" => n.y = value,
                         "RotationField" => n.rotation = value,
                         "OpacityField" => n.opacity = (value / 100.0).clamp(0.0, 1.0),
-                        "RadiusField" => n.corner_radius = value.max(0.0),
+                        "RadiusField" => {
+                            n.corner_radius = value.max(0.0);
+                            n.corner_radii = None;
+                        }
                         "FontSizeField" => n.font_size = value.clamp(1.0, 4096.0),
+                        "FontWeightField" => {
+                            n.font_weight = value.round().clamp(1.0, 1000.0) as u16
+                        }
+                        "LineHeightField" => n.line_height = (value / 100.0).clamp(0.1, 100.0),
+                        "LetterSpacingField" => n.letter_spacing = value.clamp(-4096.0, 4096.0),
+                        "CornerTLField" | "CornerTRField" | "CornerBRField" | "CornerBLField" => {
+                            let index = match name {
+                                "CornerTLField" => 0,
+                                "CornerTRField" => 1,
+                                "CornerBRField" => 2,
+                                _ => 3,
+                            };
+                            n.corner_radii.get_or_insert([n.corner_radius; 4])[index] =
+                                value.max(0.0);
+                        }
+                        "CrossGapField" => {
+                            if let Some(layout) = &mut n.layout {
+                                layout.cross_gap = value.max(0.0);
+                            }
+                        }
+                        "LayoutColumnsField" => {
+                            if let Some(layout) = &mut n.layout {
+                                layout.columns = value.round().clamp(1.0, 1000.0) as usize;
+                            }
+                        }
                         "StrokeWidthField" => {
                             if n.strokes.is_empty() {
                                 n.strokes.push(Stroke::new(Color::BLACK, value.max(0.0)));
@@ -1015,6 +1584,26 @@ impl EditorShell {
     }
 
     pub fn command(self: &Rc<Self>, command: &str) -> bool {
+        if command == "commit-edit" {
+            self.finish_inline_text(true);
+            return true;
+        }
+        if command == "storage-status" {
+            self.text("DocumentStatus", &platform::document_save_status());
+            return true;
+        }
+        self.finish_inline_text(true);
+        if matches!(command, "undo" | "redo") && self.canvas.cancel_active_edit() {
+            return true;
+        }
+        if self.prototype.is_active()
+            && !matches!(
+                command,
+                "present" | "prototype-back" | "save" | "export-json"
+            )
+        {
+            self.prototype.stop();
+        }
         self.visible("Toast", false);
         let tool = match command {
             "select" => Some(Tool::Select),
@@ -1038,6 +1627,31 @@ impl EditorShell {
             return true;
         }
         match command {
+            "interactions" => {
+                self.interactions_dialog();
+                return true;
+            }
+            "paints" => {
+                self.paints_dialog();
+                return true;
+            }
+            "edit-vector" => return self.canvas.edit_vector(),
+            "done-vector" => {
+                self.canvas.leave_vector_edit();
+                self.refresh_selection();
+                self.canvas.focus();
+                return true;
+            }
+            "vector-corner" | "vector-smooth" | "vector-symmetric" => {
+                let mode = match command {
+                    "vector-corner" => core::AnchorMode::Corner,
+                    "vector-smooth" => core::AnchorMode::Smooth,
+                    _ => core::AnchorMode::Symmetric,
+                };
+                let changed = self.canvas.convert_vector_point(mode);
+                self.canvas.focus();
+                return changed;
+            }
             "menu" => {
                 self.action_dialog(
                     "FerroDesign",
@@ -1196,11 +1810,7 @@ impl EditorShell {
                 return root.is_some();
             }
             "prototype-back" => {
-                let previous = self.prototype_history.borrow_mut().pop();
-                if previous.is_some() {
-                    self.set_presentation(previous);
-                }
-                return true;
+                return self.prototype.back();
             }
             "connect" => {
                 return self.connect_prototype();
@@ -1423,6 +2033,23 @@ impl EditorShell {
                     }
                 });
             }
+            "layout-wrap" => self.modify("Toggle layout wrapping", |n| {
+                if let Some(layout) = &mut n.layout {
+                    layout.wrap = !layout.wrap;
+                }
+            }),
+            "layout-reverse" => self.modify("Reverse layout order", |n| {
+                if let Some(layout) = &mut n.layout {
+                    layout.reverse = !layout.reverse;
+                }
+            }),
+            "independent-corners" => self.modify("Toggle independent corners", |n| {
+                n.corner_radii = if n.corner_radii.is_some() {
+                    None
+                } else {
+                    Some([n.corner_radius; 4])
+                };
+            }),
             "add-fill" => self.modify("Add fill", |n| {
                 n.fills.push(Fill::solid(Color::rgb(217, 217, 217)))
             }),
@@ -1465,13 +2092,17 @@ impl EditorShell {
             "bold" => self.modify("Text weight", |n| {
                 n.font_weight = if n.font_weight >= 600 { 400 } else { 700 }
             }),
-            "text-left" | "text-center" | "text-right" => self.modify("Text alignment", |n| {
-                n.text_align = match command {
-                    "text-center" => TextAlign::Center,
-                    "text-right" => TextAlign::Right,
-                    _ => TextAlign::Left,
-                }
-            }),
+            "italic" => self.modify("Text italic", |n| n.italic = !n.italic),
+            "text-left" | "text-center" | "text-right" | "text-justify" => {
+                self.modify("Text alignment", |n| {
+                    n.text_align = match command {
+                        "text-center" => TextAlign::Center,
+                        "text-justify" => TextAlign::Justify,
+                        "text-right" => TextAlign::Right,
+                        _ => TextAlign::Left,
+                    }
+                })
+            }
             "component" => {
                 self.editor.borrow_mut().create_component();
             }
@@ -1992,71 +2623,48 @@ impl EditorShell {
         }
     }
     fn set_presentation(self: &Rc<Self>, root: Option<NodeId>) {
+        self.finish_inline_text(true);
         self.close_modal();
-        let was_presenting = self.canvas.presentation.get().is_some();
-        if root.is_some() && !was_presenting {
-            *self.prototype_original.borrow_mut() = Some(self.editor.borrow().document.clone());
-            self.prototype.borrow_mut().history.clear();
-            self.prototype_history.borrow_mut().clear();
-        } else if root.is_none() && was_presenting {
-            if let Some(document) = self.prototype_original.borrow_mut().take() {
-                let mut editor = self.editor.borrow_mut();
-                editor.document = document;
-                editor.refresh();
-            }
+        if let Some(root) = root {
+            self.prototype.start(root);
+        } else {
+            self.prototype.stop();
         }
-        self.canvas.presentation.set(root);
-        self.prototype.borrow_mut().current = root;
-        if root.is_none() {
-            self.prototype.borrow_mut().overlays.clear();
-        }
-        *self.canvas.overlays.borrow_mut() = self.prototype.borrow().overlays.clone();
-        let present = root.is_some();
-        for name in [
-            "NavigationRail",
-            "LeftPanel",
-            "RightPanel",
-            "Toolbar",
-            "ZoomPanel",
-            "CanvasCaption",
-        ] {
-            self.visible(name, !present);
-        }
-        self.control::<Grid>("Workspace").set_column_definitions(
-            ColumnDefinitions::parse(if present { "0,0,*,0" } else { "48,248,*,288" }).unwrap(),
-        );
-        self.canvas.reset_fit();
-        self.canvas.focus();
     }
-    fn prototype_click(self: &Rc<Self>, id: NodeId) {
-        let mut editor = self.editor.borrow_mut();
-        let mut player = self.prototype.borrow_mut();
-        let previous = player.current;
-        let mut source = Some(id);
-        let mut triggered = false;
-        while let Some(id) = source {
-            if player.trigger(&mut editor.document, id, core::Trigger::Click) {
-                triggered = true;
-                break;
-            }
-            source = editor.document.nodes.get(&id).and_then(|n| n.parent);
-        }
-        let current = player.current;
-        let overlays = player.overlays.clone();
-        if triggered {
-            editor.refresh();
-        }
-        drop(player);
-        drop(editor);
-        if triggered {
-            if current != previous {
-                if let Some(previous) = previous {
-                    self.prototype_history.borrow_mut().push(previous);
+    fn prototype_event(self: &Rc<Self>, event: PrototypeRuntimeEvent) {
+        match event {
+            PrototypeRuntimeEvent::Started(_) | PrototypeRuntimeEvent::Stopped => {
+                let present = self.prototype.is_active();
+                for name in [
+                    "NavigationRail",
+                    "LeftPanel",
+                    "RightPanel",
+                    "Toolbar",
+                    "ZoomPanel",
+                    "CanvasCaption",
+                ] {
+                    self.visible(name, !present);
                 }
-                self.set_presentation(current);
+                self.control::<Grid>("Workspace").set_column_definitions(
+                    ColumnDefinitions::parse(if present { "0,0,*,0" } else { "48,248,*,288" })
+                        .unwrap(),
+                );
+                if !present {
+                    self.refresh();
+                }
+                self.canvas.focus();
             }
-            *self.canvas.overlays.borrow_mut() = overlays;
-            self.canvas.invalidate_visual();
+            PrototypeRuntimeEvent::Changed => self.canvas.invalidate_visual(),
+            PrototypeRuntimeEvent::OpenUrl(url) => {
+                if !platform::open_url(&url) {
+                    self.toast("The link could not be opened by this host.");
+                }
+                self.prototype.take_pending_url();
+            }
+            PrototypeRuntimeEvent::ScrollTo(_) => {
+                self.toast("This prototype requests content scrolling; scroll containers are not implemented yet.");
+                self.prototype.take_scroll_target();
+            }
         }
     }
 }
@@ -2066,6 +2674,40 @@ fn number(value: f64) -> String {
         format!("{value:.0}")
     } else {
         format!("{value:.2}")
+    }
+}
+fn layout_alignment(index: usize) -> core::LayoutAlign {
+    [
+        core::LayoutAlign::Start,
+        core::LayoutAlign::Center,
+        core::LayoutAlign::End,
+        core::LayoutAlign::SpaceBetween,
+        core::LayoutAlign::Stretch,
+    ][index]
+}
+fn sizing_index(mode: core::SizingMode) -> i32 {
+    match mode {
+        core::SizingMode::Fixed => 0,
+        core::SizingMode::Hug => 1,
+        core::SizingMode::Fill => 2,
+    }
+}
+fn constraint_index(value: core::Constraint) -> i32 {
+    match value {
+        core::Constraint::Start => 0,
+        core::Constraint::End => 1,
+        core::Constraint::Center => 2,
+        core::Constraint::Stretch => 3,
+        core::Constraint::Scale => 4,
+    }
+}
+fn alignment_index(value: core::LayoutAlign) -> i32 {
+    match value {
+        core::LayoutAlign::Start => 0,
+        core::LayoutAlign::Center => 1,
+        core::LayoutAlign::End => 2,
+        core::LayoutAlign::SpaceBetween => 3,
+        core::LayoutAlign::Stretch => 4,
     }
 }
 fn css(n: &Node) -> String {

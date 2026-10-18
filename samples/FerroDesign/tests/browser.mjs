@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { createServer } from "node:http";
 import { readFile, writeFile, mkdir, stat } from "node:fs/promises";
 import { resolve, dirname, extname, sep } from "node:path";
@@ -88,6 +89,363 @@ function assertInside(child, parent, name) {
         child.x + child.width <= parent.x + parent.width + 1 &&
         child.y + child.height <= parent.y + parent.height + 1,
         name + " must remain inside its native container: " + JSON.stringify({ child, parent }));
+}
+async function flushStorage(page) {
+    return page.evaluate(async () => {
+        if (!globalThis.ferroDesignStorage) throw new Error("The browser persistence host was not initialized.");
+        let timeout;
+        try {
+            const saved = await Promise.race([
+                globalThis.ferroDesignStorage.flush(),
+                new Promise((_, reject) => { timeout = setTimeout(() => reject(new Error("The autosave transaction did not finish within 30 seconds.")), 30000); }),
+            ]);
+            return { saved, ...globalThis.ferroDesignStorage.status() };
+        } finally { clearTimeout(timeout); }
+    });
+}
+async function waitForReload(page) {
+    await page.waitForFunction(() => {
+        if (!globalThis.ferroDesignReady || !globalThis.ferroDesign?.ferroDesignState) return false;
+        const data = JSON.parse(globalThis.ferroDesign.ferroDesignState());
+        return data?.renderedFrames > 0;
+    }, undefined, { timeout: 120000 });
+    await page.locator(".ferroui-splash").waitFor({ state: "hidden", timeout: 120000 });
+    await frames(page);
+}
+function largeDocument(reference, count = 10000) {
+    const node = Object.values(reference.nodes).find((item) => item.metadata?.svg_id === "qa-chip");
+    assert.ok(node, "The stress fixture uses a valid exported rectangle");
+    const result = {
+        ...structuredClone(reference), name: "10,000-layer browser fixture", nodes: {},
+        pages: [{ ...structuredClone(reference.pages[0]), id: 1, name: "Large canvas", children: [], prototype_start: null }],
+        styles: {}, variables: {}, comments: [], guides: {}, variable_mode: "Default", next_id: count + 2,
+    };
+    const columns = Math.ceil(Math.sqrt(count));
+    for (let index = 0; index < count; index++) {
+        const id = index + 2;
+        result.nodes[id] = {
+            ...structuredClone(node), id, parent: 1, children: [], name: "Shape " + index,
+            x: index % columns * 64, y: Math.floor(index / columns) * 64,
+            width: 48, height: 48, corner_radius: 6, metadata: { fixture: "large-browser-document" },
+        };
+        result.pages[0].children.push(id);
+    }
+    return result;
+}
+const digest = (text) => createHash("sha256").update(text).digest("hex");
+const documentState = (page) => page.evaluate(() => JSON.parse(globalThis.ferroDesign.ferroDesignExportJson()));
+const documentNode = (page, id) => page.evaluate((id) => JSON.parse(globalThis.ferroDesign.ferroDesignExportJson()).nodes[id], id);
+function worldPoint(view, x, y) {
+    return { x: view.chrome.CanvasHost.x + view.pan.x + x * view.zoom, y: view.chrome.CanvasHost.y + view.pan.y + y * view.zoom };
+}
+async function moveWorld(page, x, y) {
+    const point = worldPoint(await state(page), x, y);
+    await page.mouse.move(point.x, point.y);
+    return point;
+}
+async function clickWorld(page, x, y, options) {
+    const point = worldPoint(await state(page), x, y);
+    await page.mouse.click(point.x, point.y, options);
+}
+async function clickNative(page, name, scrollContainer) {
+    for (let attempt = 0; attempt < 16; attempt++) {
+        const view = await state(page), bounds = view.chrome[name];
+        assert.ok(bounds && bounds.visible !== false && bounds.width > 0 && bounds.height > 0, name + " must exist in the native visual tree");
+        const clip = scrollContainer ? view.chrome[scrollContainer] : { x: 0, y: 0, width: 1600, height: 1000 };
+        assert.ok(clip, "Native scroll bounds must exist: " + scrollContainer);
+        const x = bounds.x + bounds.width / 2, y = bounds.y + bounds.height / 2;
+        if (x >= clip.x && x <= clip.x + clip.width && y >= clip.y + 3 && y <= clip.y + clip.height - 3) {
+            await page.mouse.click(x, y);
+            await frames(page);
+            return;
+        }
+        assert.ok(scrollContainer, name + " must be on screen: " + JSON.stringify(bounds));
+        await page.mouse.move(clip.x + clip.width / 2, clip.y + clip.height / 2);
+        const delta = y - (clip.y + clip.height / 2);
+        await page.mouse.wheel(0, Math.sign(delta) * Math.min(240, Math.max(80, Math.abs(delta))));
+        await frames(page);
+    }
+    assert.fail("Could not scroll the native " + scrollContainer + " to " + name);
+}
+async function typeNative(page, name, value) {
+    await clickNative(page, name);
+    await page.keyboard.press("Control+a");
+    await page.keyboard.insertText(value);
+    await page.keyboard.press("Enter");
+    await frames(page);
+}
+function isolatedDocument(reference, nodes, name) {
+    return {
+        ...structuredClone(reference), name, nodes: Object.fromEntries(nodes.map((node) => [node.id, node])),
+        pages: [{ ...structuredClone(reference.pages[0]), id: 1, name: "Native input", children: nodes.filter((node) => node.parent === 1).map((node) => node.id), prototype_start: null }],
+        styles: {}, variables: {}, comments: [], guides: {}, next_id: Math.max(1, ...nodes.map((node) => node.id)) + 1,
+    };
+}
+function fixtureNode(reference, id, properties = {}) {
+    const template = Object.values(reference.nodes).find((node) => node.metadata?.svg_id === "qa-chip");
+    assert.ok(template);
+    return {
+        ...structuredClone(template), id, name: "Native input " + id, parent: 1, children: [],
+        x: 0, y: 0, width: 240, height: 180, rotation: 0, flip_x: false, flip_y: false,
+        affine_transform: null, visible: true, locked: false, opacity: 1, clip_content: false,
+        layout: null, effects: [], strokes: [], metadata: {}, interactions: [],
+        fill_style: null, text_style: null, effect_style: null, component_id: null, component_source: null,
+        variable_bindings: {}, overridden_properties: [],
+        path: { segments: [], fill_rule: "non_zero" }, ...properties,
+    };
+}
+async function importFixture(page, fixture) {
+    const previous = await state(page);
+    assert.equal(await page.evaluate((json) => globalThis.ferroDesign.ferroDesignImportJson(json), JSON.stringify(fixture)), true);
+    await page.waitForFunction(({ frames, count }) => {
+        const view = JSON.parse(globalThis.ferroDesign.ferroDesignState());
+        return view.nodeCount === count && view.renderedFrames > frames;
+    }, { frames: previous.renderedFrames, count: Object.keys(fixture.nodes).length });
+    await frames(page);
+}
+async function nativeEditingRegressions(page, canvas, reference, result, check, mode) {
+    const vector = fixtureNode(reference, 2, {
+        kind: "vector", name: "Editable curve", x: 20, y: 20, width: 240, height: 160,
+        path: { fill_rule: "non_zero", segments: [
+            { type: "move_to", point: { x: 20, y: 100 } },
+            { type: "cubic_to", control1: { x: 50, y: 10 }, control2: { x: 170, y: 10 }, point: { x: 200, y: 100 } },
+            { type: "line_to", point: { x: 220, y: 140 } },
+            { type: "line_to", point: { x: 20, y: 140 } }, { type: "close" },
+        ] },
+    });
+    const originalText = "Orbit · café Ω";
+    const text = fixtureNode(reference, 3, {
+        kind: "text", name: "Editable Unicode", x: 320, y: 60, width: 270, height: 110,
+        text: originalText, font_family: "Inter", font_size: 24, font_weight: 400, text_auto_resize: "fixed",
+        text_runs: [{ start: 0, end: Buffer.byteLength(originalText), font_family: null, font_size: null, font_weight: 600, color: null, italic: null, decoration: null }],
+    });
+    const fixture = isolatedDocument(reference, [vector, text], "Vector and text input fixture");
+    await importFixture(page, fixture);
+    await clickWorld(page, 130, 142);
+    await page.waitForFunction(() => JSON.parse(globalThis.ferroDesign.ferroDesignState()).selection[0] === 2);
+    await page.keyboard.press("Enter");
+    await page.waitForFunction(() => JSON.parse(globalThis.ferroDesign.ferroDesignState()).vectorNode === 2);
+    const beforeDrag = await documentNode(page, 2);
+    const view = await state(page), start = worldPoint(view, 40, 120), end = worldPoint(view, 62, 94);
+    await page.mouse.move(start.x, start.y);
+    await page.mouse.down();
+    await page.mouse.move(end.x, end.y, { steps: 18 });
+    await page.mouse.up();
+    await frames(page);
+    const moved = await documentNode(page, 2), point = moved.path.segments[0].point;
+    assert.ok(Math.abs(moved.x + point.x - 62) < 0.6 && Math.abs(moved.y + point.y - 94) < 0.6,
+        "Native pointer dragging must move the selected vector anchor to document coordinates");
+    const untouched = moved.path.segments[1].point;
+    assert.ok(Math.abs(moved.x + untouched.x - 220) < 0.001 && Math.abs(moved.y + untouched.y - 120) < 0.001,
+        "Rebasing vector bounds must preserve unrelated anchors in world coordinates");
+    assert.deepEqual((await state(page)).vectorPoint, { segment: 0, kind: "Anchor" });
+    await canvas.screenshot({ path: resolve(output, mode + "-vector-edit.png") });
+    await page.keyboard.press("Control+z");
+    assert.deepEqual(await documentNode(page, 2), beforeDrag, "One undo must restore the complete vector before its multi-event drag");
+    await page.keyboard.press("Control+Shift+z");
+    assert.deepEqual(await documentNode(page, 2), moved, "One redo must restore the complete vector gesture");
+    await page.keyboard.press("Enter");
+    assert.equal((await state(page)).vectorNode, null);
+    check("Enter enters native vector editing; an anchor drag rebases bounds without moving other anchors and forms one undo/redo step");
+
+    await clickNative(page, "PenTool");
+    const penView = await state(page);
+    for (const [x, y, dx, dy] of [[70, 230, 40, -30], [215, 235, 35, 35]]) {
+        const anchor = worldPoint(penView, x, y), handle = worldPoint(penView, x + dx, y + dy);
+        await page.mouse.move(anchor.x, anchor.y);
+        await page.mouse.down();
+        await page.mouse.move(handle.x, handle.y, { steps: 12 });
+        await page.mouse.up();
+    }
+    await page.keyboard.press("Enter");
+    await frames(page);
+    const afterPen = await state(page), penId = afterPen.selection[0], pen = await documentNode(page, penId);
+    assert.equal(afterPen.nodeCount, 3);
+    assert.equal(pen.kind, "vector");
+    const curve = pen.path.segments.find((segment) => segment.type === "cubic_to");
+    assert.ok(curve && (curve.control2.x !== curve.point.x || curve.control2.y !== curve.point.y), "Dragging with Pen must create actual cubic control handles");
+    await page.keyboard.press("Control+z");
+    assert.equal((await state(page)).nodeCount, 2, "One undo must remove the entire completed Pen path");
+    await page.keyboard.press("Control+Shift+z");
+    assert.deepEqual(await documentNode(page, penId), pen);
+    check("Native Pen pointer drags create a cubic curve and the complete path is one undo/redo step");
+
+    await clickNative(page, "PenTool");
+    await clickWorld(page, 340, 230);
+    const heldView = await state(page), heldStart = worldPoint(heldView, 440, 235), heldEnd = worldPoint(heldView, 465, 260);
+    await page.mouse.move(heldStart.x, heldStart.y);
+    await page.mouse.down();
+    await page.mouse.move(heldEnd.x, heldEnd.y, { steps: 6 });
+    await page.keyboard.press("Enter");
+    const heldId = (await state(page)).selection[0], finalizedHeldPen = await documentNode(page, heldId);
+    await page.mouse.move(heldEnd.x + 30, heldEnd.y + 20, { steps: 4 });
+    await page.mouse.up();
+    assert.deepEqual(await documentNode(page, heldId), finalizedHeldPen, "Mouse movement after held-pointer Enter must not mutate the finalized Pen curve");
+    await page.keyboard.press("Control+z");
+    assert.equal((await state(page)).nodeCount, 3, "Held-pointer Pen finalization must still produce one undo entry");
+    check("Enter while the Pen pointer is held finalizes the gesture and ignores later handle movement until release");
+
+    await importFixture(page, fixture);
+    await clickWorld(page, 420, 88, { clickCount: 2, delay: 80 });
+    await page.waitForFunction(() => JSON.parse(globalThis.ferroDesign.ferroDesignState()).editingText === 3);
+    const inline = (await state(page)).chrome.InlineTextBox;
+    assert.ok(inline?.visible && inline.width > 0 && inline.height > 0, "Double-click must open an arranged native FerroUI TextBox");
+    const editedText = "FerroUI · café Ω 🚀\nEditable text";
+    await page.keyboard.press("Control+a");
+    await page.keyboard.insertText("FerroUI · café Ω 🚀");
+    await page.keyboard.press("Enter");
+    await page.keyboard.insertText("Editable text");
+    await page.waitForFunction((expected) => JSON.parse(globalThis.ferroDesign.ferroDesignExportJson()).nodes[3].text === expected, editedText);
+    await canvas.screenshot({ path: resolve(output, mode + "-inline-text.png") });
+    await page.keyboard.press("Control+Enter");
+    await page.waitForFunction(() => JSON.parse(globalThis.ferroDesign.ferroDesignState()).editingText === null);
+    const committedText = await documentNode(page, 3), bytes = Buffer.from(editedText);
+    assert.equal(committedText.text, editedText);
+    assert.ok(committedText.text_runs.length > 0, "Typing must retain inherited rich-text formatting");
+    for (const run of committedText.text_runs) {
+        assert.ok(run.start < run.end && run.end <= bytes.length, "Rich-text ranges must be valid UTF-8 byte offsets");
+        assert.doesNotThrow(() => new TextDecoder("utf-8", { fatal: true }).decode(bytes.subarray(0, run.start)));
+        assert.doesNotThrow(() => new TextDecoder("utf-8", { fatal: true }).decode(bytes.subarray(0, run.end)));
+    }
+    await page.keyboard.press("Control+z");
+    assert.equal((await documentNode(page, 3)).text, originalText, "A complete native text edit must be one document undo");
+    await page.keyboard.press("Control+Shift+z");
+    assert.deepEqual(await documentNode(page, 3), committedText);
+    await clickWorld(page, 420, 88, { clickCount: 2, delay: 80 });
+    await page.waitForFunction(() => JSON.parse(globalThis.ferroDesign.ferroDesignState()).editingText === 3);
+    await page.keyboard.press("Control+a");
+    await page.keyboard.insertText("Discard this draft");
+    await page.keyboard.press("Escape");
+    await page.waitForFunction(() => JSON.parse(globalThis.ferroDesign.ferroDesignState()).editingText === null);
+    assert.deepEqual(await documentNode(page, 3), committedText, "Escape must restore the original text and every formatting run");
+    await page.keyboard.press("Control+z");
+    assert.equal((await documentNode(page, 3)).text, originalText, "A canceled draft must not add an undo entry");
+    await page.keyboard.press("Control+Shift+z");
+    assert.equal((await flushStorage(page)).saved, true);
+    const persistedText = await page.evaluate(() => JSON.parse(globalThis.ferroDesignStorage.load()).nodes[3]);
+    assert.deepEqual(persistedText, committedText, "Committed Unicode text and formatting must reach durable storage");
+    result.nativeEditing = { vectorAnchor: { x: moved.x + point.x, y: moved.y + point.y }, penSegments: pen.path.segments.length, unicodeBytes: bytes.length, textRuns: committedText.text_runs.length };
+    check("Native on-canvas TextBox handles multiline Unicode, UTF-8 rich-text ranges, Ctrl+Enter commit, Escape cancel, one-step history, and autosave");
+
+    const paintFixture = isolatedDocument(reference, [fixtureNode(reference, 2)], "Paint stack input fixture");
+    await importFixture(page, paintFixture);
+    await clickWorld(page, 120, 90);
+    await clickNative(page, "EditPaintsButton", "InspectorViewport");
+    await page.waitForFunction(() => JSON.parse(globalThis.ferroDesign.ferroDesignState()).chrome.ModalBackdrop.visible);
+    await clickNative(page, "PaintType0");
+    await page.keyboard.press("ArrowDown");
+    await page.keyboard.press("Enter");
+    await page.waitForFunction(() => JSON.parse(globalThis.ferroDesign.ferroDesignExportJson()).nodes[2].fills[0].paint.type === "linear_gradient");
+    await typeNative(page, "PaintStopColor0_0", "#FF3B6B80");
+    let fill = (await documentNode(page, 2)).fills[0];
+    assert.deepEqual(fill.paint.stops[0].color, { r: 255, g: 59, b: 107, a: 128 });
+    await typeNative(page, "PaintOpacity0", "42");
+    assert.equal((await documentNode(page, 2)).fills[0].opacity, 0.42);
+    await typeNative(page, "PaintOpacity0", "NaN");
+    assert.equal((await documentNode(page, 2)).fills[0].opacity, 0.42, "Invalid native field input must not alter the model");
+    await typeNative(page, "PaintOpacity0", "65");
+    await typeNative(page, "PaintStopOffset0_0", "12.5");
+    assert.equal((await documentNode(page, 2)).fills[0].paint.stops[0].offset, 0.125);
+    await clickNative(page, "PaintStopAdd0");
+    await page.waitForFunction(() => JSON.parse(globalThis.ferroDesign.ferroDesignExportJson()).nodes[2].fills[0].paint.stops.length === 3);
+    fill = (await documentNode(page, 2)).fills[0];
+    assert.equal(fill.opacity, 0.65);
+    await canvas.screenshot({ path: resolve(output, mode + "-paint-stack.png") });
+    await clickNative(page, "PaintDone");
+    assert.equal((await state(page)).chrome.ModalBackdrop.visible, false);
+    await page.keyboard.press("Control+z");
+    assert.equal((await documentNode(page, 2)).fills[0].paint.stops.length, 2, "Adding a stop must form one undo entry");
+    await page.keyboard.press("Control+Shift+z");
+    assert.deepEqual((await documentNode(page, 2)).fills[0], fill);
+    check("Native paint dialog pointer/keyboard input converts a fill to a gradient, edits alpha/opacity/stop positions, rejects NaN, and supports one-step stop undo");
+}
+
+async function prototypeInputRegressions(page, reference, check) {
+    const transition = { kind: "instant", duration_ms: 0, easing: "linear" };
+    const interaction = (trigger, target, key = null) => ({ trigger, action: { type: "navigate_to", target }, transition, delay_ms: 0, key });
+    const framesAndButtons = [];
+    for (const [index, id] of [10, 20, 30, 40, 50].entries()) {
+        framesAndButtons.push(fixtureNode(reference, id, { kind: "frame", name: "Prototype " + id, x: index * 400, y: 0, width: 320, height: 220, clip_content: true, children: [id + 1] }));
+        const interactions = id === 10 ? [interaction("hover", 20)]
+            : id === 20 ? [interaction("press", 30)]
+            : id === 30 ? [interaction("drag", 40), interaction("click", 50)]
+            : id === 40 ? [interaction("key", 50, "Ctrl+K")] : [];
+        framesAndButtons.push(fixtureNode(reference, id + 1, { parent: id, x: 40, y: 60, width: 120, height: 60, locked: id === 10, interactions }));
+    }
+    const fixture = isolatedDocument(reference, framesAndButtons, "Prototype input fixture");
+    fixture.pages[0].prototype_start = 10;
+    await importFixture(page, fixture);
+    const authored = await documentState(page);
+    // The same sanctioned command as the Present button initializes playback;
+    // every interaction below is dispatched by actual native pointer/key events.
+    assert.equal(await page.evaluate(() => globalThis.ferroDesign.ferroDesignCommand("present")), true);
+    await page.waitForFunction(() => JSON.parse(globalThis.ferroDesign.ferroDesignState()).presentation === 10);
+    await frames(page);
+    await moveWorld(page, 100, 90);
+    await page.waitForFunction(() => JSON.parse(globalThis.ferroDesign.ferroDesignState()).presentation === 20);
+    await frames(page);
+    await moveWorld(page, 500, 90);
+    await page.mouse.down();
+    await page.waitForFunction(() => JSON.parse(globalThis.ferroDesign.ferroDesignState()).presentation === 30);
+    await page.mouse.up();
+    await frames(page);
+    assert.equal((await state(page)).presentation, 30, "Press must navigate before mouse release");
+    const dragStart = await moveWorld(page, 900, 90);
+    await page.mouse.down();
+    await page.mouse.move(dragStart.x + 45, dragStart.y + 12, { steps: 8 });
+    await page.waitForFunction(() => JSON.parse(globalThis.ferroDesign.ferroDesignState()).presentation === 40);
+    await page.mouse.up();
+    await frames(page);
+    assert.equal((await state(page)).presentation, 40, "A drag gesture must suppress its competing click navigation");
+    await page.keyboard.press("Control+k");
+    await page.waitForFunction(() => JSON.parse(globalThis.ferroDesign.ferroDesignState()).presentation === 50);
+    await page.keyboard.press("Escape");
+    await page.waitForFunction(() => JSON.parse(globalThis.ferroDesign.ferroDesignState()).presentation === null);
+    assert.deepEqual(await documentState(page), authored, "Stopping prototype playback must preserve the authored document exactly");
+    check("Real prototype hover (including locked layers), press, drag and key chord navigate frames; drag suppresses click and Escape restores authored state");
+
+    const timed = structuredClone(fixture);
+    timed.name = "Prototype delayed event fixture";
+    for (const node of Object.values(timed.nodes)) node.interactions = [];
+    timed.nodes[10].interactions = [{ ...interaction("after_delay", 20), delay_ms: 80 }];
+    await importFixture(page, timed);
+    assert.equal(await page.evaluate(() => globalThis.ferroDesign.ferroDesignCommand("present")), true);
+    await page.waitForFunction(() => JSON.parse(globalThis.ferroDesign.ferroDesignState()).presentation === 20, undefined, { timeout: 10000 });
+    await page.keyboard.press("Escape");
+    assert.equal((await state(page)).presentation, null);
+    check("The actual native dispatcher timer fires an authored After delay prototype interaction");
+
+    const boundaries = structuredClone(fixture);
+    boundaries.name = "Prototype transaction boundaries";
+    for (const node of Object.values(boundaries.nodes)) node.interactions = [];
+    boundaries.nodes[11].interactions = [interaction("press", 10), interaction("click", 20)];
+    boundaries.nodes[10].interactions = [interaction("key", 20, "Escape")];
+    await importFixture(page, boundaries);
+    assert.equal(await page.evaluate(() => globalThis.ferroDesign.ferroDesignCommand("present")), true);
+    await frames(page);
+    await moveWorld(page, 100, 90);
+    await page.mouse.down();
+    await page.mouse.up();
+    await frames(page);
+    assert.equal((await state(page)).presentation, 10, "Same-frame Press navigation must clear the old press so release cannot dispatch its competing Click");
+    check("Same-frame Press navigation suppresses a stale Click on mouse release");
+    await page.keyboard.press("Escape");
+    await page.waitForFunction(() => JSON.parse(globalThis.ferroDesign.ferroDesignState()).presentation === 20);
+    await page.keyboard.press("Escape");
+    await page.waitForFunction(() => JSON.parse(globalThis.ferroDesign.ferroDesignState()).presentation === null);
+    check("An authored Escape key interaction runs first; an unhandled Escape exits presentation");
+
+    assert.equal(await page.evaluate(() => globalThis.ferroDesign.ferroDesignCommand("present")), true);
+    assert.equal((await state(page)).presentation, 10);
+    const replacement = isolatedDocument(reference, [fixtureNode(reference, 2, { name: "Imported replacement" })], "Imported while preview was active");
+    await importFixture(page, replacement);
+    assert.equal((await state(page)).presentation, null, "A direct import bridge call must stop preview before replacing the authored document");
+    const imported = await documentState(page);
+    assert.equal(imported.name, replacement.name);
+    assert.deepEqual(Object.keys(imported.nodes), ["2"]);
+    await page.keyboard.press("Escape");
+    assert.deepEqual(await documentState(page), imported, "Escape must not restore the old preview snapshot over a successful direct import");
+    check("Direct bridge import during presentation becomes the authored document and survives Escape");
 }
 try {
     browser = await chromium.launch({
@@ -245,6 +603,11 @@ try {
             assert.equal(afterSvgRoundTrip.missingImages, 0, "Reopened SVG must not introduce missing resources");
             check("JSON round-trip preserves the complete imported SVG hierarchy and visual properties");
 
+            await nativeEditingRegressions(page, canvas, svgDocument, result, check, mode);
+            await prototypeInputRegressions(page, svgDocument, check);
+            assert.equal(await page.evaluate((json) => globalThis.ferroDesign.ferroDesignImportJson(json), svgJson), true);
+            await frames(page);
+
             // Validate the desktop minimum with the actual native layout. These
             // rectangles come from FerroUI's visual tree, not HTML stand-ins.
             await page.setViewportSize({ width: 980, height: 650 });
@@ -288,6 +651,93 @@ try {
             assert.deepEqual(JSON.parse(await page.evaluate(() => globalThis.ferroDesign.ferroDesignExportJson())), svgDocument);
             await page.setViewportSize({ width: 1600, height: 1000 });
             await frames(page);
+
+            const saveStarted = performance.now();
+            const persisted = await flushStorage(page);
+            assert.equal(persisted.saved, true, "Autosave must finish its storage transaction");
+            assert.equal(persisted.backend, "indexedDB");
+            assert.equal(persisted.dirty, false);
+            const beforeReload = await page.evaluate(() => globalThis.ferroDesign.ferroDesignExportJson());
+            const reloadStarted = performance.now();
+            await page.reload({ waitUntil: "domcontentloaded", timeout: 120000 });
+            await waitForReload(page);
+            const afterReload = await page.evaluate(() => globalThis.ferroDesign.ferroDesignExportJson());
+            assert.deepEqual(JSON.parse(afterReload), JSON.parse(beforeReload), "Reload must restore the complete authored document from IndexedDB before Rust creates the shell");
+            assert.equal((await state(page)).saveStatus, "All changes saved locally");
+            result.persistence = { backend: persisted.backend, revision: persisted.revision, saveMs: Math.round(reloadStarted - saveStarted), reloadMs: Math.round(performance.now() - reloadStarted), documentBytes: Buffer.byteLength(beforeReload) };
+            await canvas.screenshot({ path: resolve(output, mode + "-reloaded.png") });
+            check("A committed IndexedDB autosave restores the exact document after a real browser reload");
+
+            // Exercise the actual Rust model, 10,000 native layer rows, renderer,
+            // pointer editing, history and persistence together. Time figures
+            // describe this machine; correctness and bounded control realization
+            // are the gates, not an invented device-independent frame rate.
+            if (mode === "Software2D") {
+                const fixture = largeDocument(svgDocument);
+                const fixtureJson = JSON.stringify(fixture);
+                assert.ok(Buffer.byteLength(fixtureJson) > 5 * 1024 * 1024, "The stress document must exceed common localStorage capacity");
+                const beforeLarge = await state(page);
+                const importedAt = performance.now();
+                assert.equal(await page.evaluate((json) => globalThis.ferroDesign.ferroDesignImportJson(json), fixtureJson), true);
+                await page.waitForFunction((before) => {
+                    const data = JSON.parse(globalThis.ferroDesign.ferroDesignState());
+                    return data.nodeCount === 10000 && data.renderedFrames > before;
+                }, beforeLarge.renderedFrames, { timeout: 120000 });
+                await frames(page);
+                const large = await state(page);
+                assert.equal(large.layerRowCount, 10000, "Every stress layer must be present in the native row model");
+                assert.ok(large.realizedLayerRows > 0 && large.realizedLayerRows <= 200,
+                    "The native layer list must realize a bounded viewport of controls: " + large.realizedLayerRows);
+                assert.equal(large.invalidNodes, 0);
+                assert.ok(large.visibleNodes >= 9000, "Fit page must render the dense 10,000-node fixture");
+                result.largeDocument = { nodeCount: large.nodeCount, documentBytes: Buffer.byteLength(fixtureJson), importAndFirstFrameMs: Math.round(performance.now() - importedAt), layerRows: large.layerRowCount, realizedRows: large.realizedLayerRows, visibleNodes: large.visibleNodes };
+                await canvas.screenshot({ path: resolve(output, mode + "-large-document.png") });
+                const layers = large.chrome.LayersViewport;
+                await page.mouse.move(layers.x + layers.width / 2, layers.y + layers.height / 2);
+                await page.mouse.wheel(0, 5000);
+                await frames(page);
+                const scrolled = await state(page);
+                assert.ok(scrolled.realizedLayerRows > 0 && scrolled.realizedLayerRows <= 200,
+                    "Scrolling 10,000 layers must recycle native rows");
+                result.largeDocument.realizedAfterScroll = scrolled.realizedLayerRows;
+
+                const selectedId = 5052, selected = fixture.nodes[selectedId];
+                const view = await state(page);
+                const x = view.chrome.CanvasHost.x + view.pan.x + (selected.x + selected.width / 2) * view.zoom;
+                const y = view.chrome.CanvasHost.y + view.pan.y + (selected.y + selected.height / 2) * view.zoom;
+                await page.mouse.click(x, y);
+                await page.waitForFunction((id) => JSON.parse(globalThis.ferroDesign.ferroDesignState()).selection[0] === id, selectedId);
+                const nudgedAt = performance.now();
+                await page.keyboard.press("ArrowRight");
+                await page.waitForFunction((x) => JSON.parse(globalThis.ferroDesign.ferroDesignState()).selectionBounds.x === x + 1, selected.x);
+                result.largeDocument.nudgeMs = Math.round(performance.now() - nudgedAt);
+                await page.keyboard.press("Control+z");
+                await page.waitForFunction((x) => JSON.parse(globalThis.ferroDesign.ferroDesignState()).selectionBounds.x === x, selected.x);
+                await page.keyboard.press("Control+Shift+z");
+                await page.waitForFunction((x) => JSON.parse(globalThis.ferroDesign.ferroDesignState()).selectionBounds.x === x + 1, selected.x);
+                const largeSaved = await page.evaluate(() => globalThis.ferroDesign.ferroDesignExportJson());
+                const persistedAt = performance.now();
+                const largePersistence = await flushStorage(page);
+                assert.equal(largePersistence.saved, true);
+                assert.equal(largePersistence.dirty, false);
+                result.largeDocument.commitMs = Math.round(performance.now() - persistedAt);
+                const largeReloadAt = performance.now();
+                await page.reload({ waitUntil: "domcontentloaded", timeout: 120000 });
+                await waitForReload(page);
+                const largeReopened = await page.evaluate(() => globalThis.ferroDesign.ferroDesignExportJson());
+                assert.equal(digest(largeReopened), digest(largeSaved), "Every field of the edited 10,000-node design must survive browser reload");
+                const restoredLarge = await state(page);
+                assert.equal(restoredLarge.nodeCount, 10000);
+                assert.equal(restoredLarge.layerRowCount, 10000);
+                assert.ok(restoredLarge.realizedLayerRows > 0 && restoredLarge.realizedLayerRows <= 200);
+                result.largeDocument.reloadMs = Math.round(performance.now() - largeReloadAt);
+                result.largeDocument.savedBytes = Buffer.byteLength(largeSaved);
+                result.largeDocument.sha256 = digest(largeSaved);
+                check("10,000 rendered layers retain bounded native row realization, real pointer/nudge/undo/redo, and exact durable reload");
+                assert.equal(await page.evaluate((json) => globalThis.ferroDesign.ferroDesignImportJson(json), svgJson), true);
+                assert.equal((await flushStorage(page)).saved, true);
+                await frames(page);
+            }
             result.final = await state(page);
             assert.deepEqual(result.pageErrors, [], "No uncaught browser exceptions");
             const panics = await page.evaluate(() => ({

@@ -6,10 +6,12 @@ This file distinguishes commands that have passed from checks that are still in 
 
 | Check | Result |
 | --- | --- |
-| Core unit tests | 39 passed, including 12 SVG import/affine/atomicity regressions |
-| Native full application check | Passed on Linux, Rust 1.99.1; compiled the XAML shell and shared renderer |
+| Core unit tests | 79 passed: existing document/SVG/layout coverage plus vector-edit, Unicode text-range, prototype timing/key/overlay, isolated-root hit testing and interaction-authoring regressions |
+| Native full application check | Passed on Linux, Rust 1.99.0, with `--lib --tests`; compiled the XAML shell, native text/paint editors, prototype runtime and test targets |
 | FerroUI browser bridge TypeScript check/build | Passed |
 | Browser host JavaScript and shell syntax | Passed |
+| Browser persistence host tests | 13 passed with Node |
+| Native atomic-save tests | 2 passed in the standalone host harness |
 | Active browser dependency graph | No `ferroui-skia`, `skia-safe` or `skia-bindings` |
 | Actual WebAssembly application build | In progress |
 | Browser pixels and editing interactions | Pending the WebAssembly build |
@@ -22,15 +24,15 @@ The release benchmark creates 10,000 editable nodes, builds the spatial scene, i
 
 | Operation | Measured result |
 | --- | ---: |
-| Point hit query, average over 10,000 queries | 2.32 microseconds |
-| Viewport query, average | 44.18 microseconds |
-| Incremental drag refresh, median | 3.56 milliseconds |
-| Incremental drag refresh, p95 | 4.04 milliseconds |
-| Transaction commit | 9.52 milliseconds |
-| Undo | 3.91 milliseconds |
-| Redo | 3.62 milliseconds |
+| Point hit query, average over 10,000 queries | 3.192 microseconds |
+| Viewport query, average | 76.997 microseconds |
+| Incremental drag refresh, median | 5.658 milliseconds |
+| Incremental drag refresh, p95 | 7.623 milliseconds |
+| Transaction commit | 11.944 milliseconds |
+| Undo | 4.707 milliseconds |
+| Redo | 5.251 milliseconds |
 
-The initial full-index refresh took 8.87 ms median and 10.53 ms p95 for the same drag workload. Updating affected subtrees reduced median refresh time by approximately 2.49 times. The associated correctness tests cover clipped transformed subtrees, stacking invalidation and undo, so the optimization is not based only on a timing result.
+This run created 10,000 nodes in 12.354 ms and built the initial index in 21.735 ms. It ran concurrently with the WebAssembly compiler. These are current container CPU/model timings; there is no same-run baseline for calculating a speedup and no browser-FPS claim. Correctness tests compare incremental state against full rebuilds, including clipped transformed subtrees, stacking changes and history.
 
 Reproduce the workload from the sample directory:
 
@@ -42,6 +44,10 @@ cargo run --release -p ferrodesign-core --example performance -- 10000
 
 `tests/browser.mjs` launches the actual application at a 1600 by 1000 viewport in two contexts, requesting Software2D and WebGL2. It records the observed canvas context and allows the documented WebGL2-to-Software2D fallback. The CI browser may use SwiftShader; its results establish functional rendering, not real GPU throughput.
 
-The test waits for a completed native frame and dismissal of the loading surface, inspects native canvas pixel diversity, draws a rectangle with mouse input, verifies the document count and changed pixels, performs keyboard undo/redo, then deletes and reimports exported JSON and checks exact document equality. It collects console exceptions, startup failures and FerroUI render-thread panics. Screenshots, Playwright traces and the report are written under `browser-report` and uploaded by GitHub Actions.
+The test waits for a completed native frame and dismissal of the loading surface, inspects native pixel diversity, draws a rectangle, edits vector anchors and pen tangents, edits multiline Unicode in the native on-canvas TextBox, changes paints through the native dialog, and dispatches prototype hover/press/drag/key/delay actions. It checks one-transaction history, canceled text edits, UTF-8 rich-run ranges, JSON import/export equality, durable reload, and bounded virtualized rows with a 10,000-layer document larger than 5 MiB. The separate IndexedDB browser test uses actual transactions for migration, rollback, stale-tab conflicts and a document larger than 10 MiB. The application browser test also collects console exceptions, startup failures and FerroUI render-thread panics. Its screenshots, Playwright traces and report are written under `browser-report` and uploaded by GitHub Actions.
 
 An interaction test is evidence for those paths, not for every item in the feature inventory. There is no same-document image comparison to a Figma reference screenshot. Browser rendering timings and memory should be measured on the intended deployment devices before establishing a frame-rate or capacity target.
+
+## Browser QA environment
+
+The connected local browser cannot reach the build container loopback server. The supported managed preview supervisor also fails during its process-mount setup (`bwrap: Cannot mount proc`), including the permitted escalated attempt. No replacement browser-control mechanism is used. Browser interaction evidence for this revision must come from the repository CI workflow and its rendered screenshots/reports; a successful native compile does not establish browser interaction success.

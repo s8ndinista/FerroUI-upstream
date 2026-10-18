@@ -1,0 +1,982 @@
+//! Native paint-stack controls. Every accepted edit is one document transaction.
+use super::*;
+use ferroui_base::media::immutable::{
+    ImmutableGradientStop, ImmutableLinearGradientBrush, ImmutableRadialGradientBrush,
+    ImmutableSolidColorBrush,
+};
+use ferroui_base::media::{GradientSpreadMethod, IBrush};
+use ferroui_base::{CornerRadius, RelativePoint, RelativeUnit};
+
+/// Clearing a focused modal can raise LostFocus while its old controls still exist.
+/// Keep their callbacks inert until the replacement tree is complete.
+struct UpdatingPaints<'a>(&'a Cell<bool>, bool);
+impl Drop for UpdatingPaints<'_> {
+    fn drop(&mut self) {
+        self.0.set(self.1);
+    }
+}
+
+#[derive(Clone, Copy)]
+enum Coordinate {
+    StartX,
+    StartY,
+    EndX,
+    EndY,
+    CenterX,
+    CenterY,
+    Radius,
+}
+
+#[derive(Clone, Copy)]
+enum PaintEdit {
+    Visible(bool),
+    Opacity(f64),
+    Kind(usize),
+    Solid(Color),
+    Coordinate(Coordinate, f64),
+    StopColor(usize, Color),
+    StopOffset(usize, f64),
+    AddStop,
+    RemoveStop(usize),
+    ReverseStops,
+    ImageScale(core::ImageScale),
+}
+
+#[derive(Clone, Copy)]
+enum StackEdit {
+    Add,
+    Remove(usize),
+    Duplicate(usize),
+    Move(usize, isize),
+    Paint(usize, PaintEdit),
+}
+
+impl EditorShell {
+    pub(super) fn paints_dialog(self: &Rc<Self>) {
+        let snapshot = {
+            let editor = self.editor.borrow();
+            editor.selection.first().and_then(|id| {
+                editor.document.nodes.get(id).map(|node| {
+                    (
+                        node.name.clone(),
+                        node.fills.clone(),
+                        editor.selection.len(),
+                    )
+                })
+            })
+        };
+        let Some((name, fills, selected)) = snapshot else {
+            self.toast("Select a layer to edit its fills.");
+            return;
+        };
+        let _updating = UpdatingPaints(&self.updating, self.updating.replace(true));
+        let description = if selected == 1 {
+            format!("{name} · Front paint first. Changes apply immediately and support undo.")
+        } else {
+            format!(
+                "Showing {name}. Edits apply to matching paint rows on {selected} selected layers."
+            )
+        };
+        self.modal("Fill paints", &description);
+        let host = self.control::<StackPanel>("ModalContent");
+        host.set_spacing(12.0);
+        if fills.is_empty() {
+            host.children().add(paint_text(
+                "This layer has no fills. Add a paint to give it a color or gradient.",
+                true,
+            ));
+        }
+        // DrawingContext paints in vector order; the last paint is nearest the viewer.
+        for (index, fill) in fills.iter().enumerate().rev() {
+            host.children()
+                .add(self.paint_card(index, fill, fills.len()));
+        }
+        let actions = self.control::<StackPanel>("ModalActions");
+        actions
+            .children()
+            .add(self.paint_button("Add fill", "PaintAdd", true, |shell| {
+                shell.edit_paints("Add fill paint", StackEdit::Add, true);
+            }));
+        let done = self.paint_button("Done", "PaintDone", true, |shell| shell.close_modal());
+        done.classes().add("primary");
+        actions.children().add(done);
+    }
+
+    fn paint_card(self: &Rc<Self>, index: usize, fill: &Fill, count: usize) -> Ref<Border> {
+        let card = Border::new();
+        card.set_name(Some(format!("PaintCard{index}")));
+        card.set_padding(Thickness::uniform(12.0));
+        card.set_corner_radius(CornerRadius::uniform(8.0));
+        card.set_background(Some(icons::brush("#F7F7F7")));
+        card.set_border_brush(Some(icons::brush("#E5E5E5")));
+        card.set_border_thickness(Thickness::uniform(1.0));
+        let content = StackPanel::new();
+        content.set_spacing(9.0);
+        card.set_child(content.clone());
+
+        let preview = Border::new();
+        preview.set_height(34.0);
+        preview.set_corner_radius(CornerRadius::uniform(4.0));
+        preview.set_background(Some(paint_preview(fill)));
+
+        let header = paint_grid("*,54,54,78,74", 5.0);
+        let visible = CheckBox::new();
+        visible.set_name(Some(format!("PaintVisible{index}")));
+        visible.set_content(Some(Rc::new(format!("Paint {}", index + 1))));
+        visible.set_is_checked(Some(fill.visible));
+        let weak_shell = Rc::downgrade(self);
+        let weak_check = visible.downgrade();
+        let weak_preview = preview.downgrade();
+        visible.is_checked_changed(move |_, _| {
+            if let (Some(shell), Some(check)) = (weak_shell.upgrade(), weak_check.upgrade()) {
+                shell.edit_paints(
+                    "Toggle fill paint",
+                    StackEdit::Paint(index, PaintEdit::Visible(check.is_checked() == Some(true))),
+                    false,
+                );
+                shell.refresh_paint_preview(index, &weak_preview);
+            }
+        });
+        header.children().add(visible);
+        for (column, label, suffix, enabled, edit) in [
+            (1, "Up", "Up", index + 1 < count, StackEdit::Move(index, 1)),
+            (2, "Down", "Down", index > 0, StackEdit::Move(index, -1)),
+            (
+                3,
+                "Duplicate",
+                "Duplicate",
+                true,
+                StackEdit::Duplicate(index),
+            ),
+            (4, "Remove", "Remove", true, StackEdit::Remove(index)),
+        ] {
+            let button = self.paint_button(
+                label,
+                &format!("Paint{suffix}{index}"),
+                enabled,
+                move |shell| {
+                    shell.edit_paints("Edit fill stack", edit, true);
+                },
+            );
+            Grid::set_column(&button, column);
+            header.children().add(button);
+        }
+        content.children().add(header);
+        content.children().add(preview.clone());
+
+        let properties = paint_grid("*,132", 10.0);
+        let kind = match fill.paint {
+            Paint::Solid(_) => 0,
+            Paint::LinearGradient { .. } => 1,
+            Paint::RadialGradient { .. } => 2,
+            Paint::Image { .. } => 3,
+        };
+        let kinds: &[&str] = if kind == 3 {
+            &[
+                "Solid",
+                "Linear gradient",
+                "Radial gradient",
+                "Embedded image",
+            ]
+        } else {
+            &["Solid", "Linear gradient", "Radial gradient"]
+        };
+        let choice = self.paint_choice(
+            "Type",
+            &format!("PaintType{index}"),
+            kinds,
+            kind,
+            move |shell, kind| {
+                shell.edit_paints(
+                    "Change fill type",
+                    StackEdit::Paint(index, PaintEdit::Kind(kind)),
+                    true,
+                );
+            },
+        );
+        properties.children().add(choice);
+        let weak_preview = preview.downgrade();
+        let opacity = self.paint_field(
+            "Opacity %",
+            &format!("PaintOpacity{index}"),
+            &(fill.opacity * 100.0).to_string(),
+            move |shell, value| {
+                let value = paint_percent(value)?;
+                shell.edit_paints(
+                    "Change fill opacity",
+                    StackEdit::Paint(index, PaintEdit::Opacity(value)),
+                    false,
+                );
+                shell.refresh_paint_preview(index, &weak_preview);
+                Ok(())
+            },
+        );
+        Grid::set_column(&opacity, 1);
+        properties.children().add(opacity);
+        content.children().add(properties);
+
+        match &fill.paint {
+            Paint::Solid(color) => {
+                let weak_preview = preview.downgrade();
+                content.children().add(self.paint_field(
+                    "Hex color · RGB or RGBA",
+                    &format!("PaintColor{index}"),
+                    &color.hex(),
+                    move |shell, value| {
+                        let color = paint_color(value)?;
+                        shell.edit_paints(
+                            "Change fill color",
+                            StackEdit::Paint(index, PaintEdit::Solid(color)),
+                            false,
+                        );
+                        shell.refresh_paint_preview(index, &weak_preview);
+                        Ok(())
+                    },
+                ));
+            }
+            Paint::LinearGradient { start, end, stops } => {
+                self.paint_stops(&content, &preview, index, stops);
+                content.children().add(paint_text(
+                    "Gradient geometry · relative to layer bounds (0 to 1).",
+                    true,
+                ));
+                let row = paint_grid("*,*,*,*", 8.0);
+                for (column, label, coordinate, value) in [
+                    (0, "Start X", Coordinate::StartX, start.x),
+                    (1, "Start Y", Coordinate::StartY, start.y),
+                    (2, "End X", Coordinate::EndX, end.x),
+                    (3, "End Y", Coordinate::EndY, end.y),
+                ] {
+                    let field = self.paint_coordinate(index, label, coordinate, value, &preview);
+                    Grid::set_column(&field, column);
+                    row.children().add(field);
+                }
+                content.children().add(row);
+            }
+            Paint::RadialGradient {
+                center,
+                radius,
+                stops,
+            } => {
+                self.paint_stops(&content, &preview, index, stops);
+                content.children().add(paint_text(
+                    "Gradient geometry · relative to layer bounds (0 to 1).",
+                    true,
+                ));
+                let row = paint_grid("*,*,*", 8.0);
+                for (column, label, coordinate, value) in [
+                    (0, "Center X", Coordinate::CenterX, center.x),
+                    (1, "Center Y", Coordinate::CenterY, center.y),
+                    (2, "Radius", Coordinate::Radius, *radius),
+                ] {
+                    let field = self.paint_coordinate(index, label, coordinate, value, &preview);
+                    Grid::set_column(&field, column);
+                    row.children().add(field);
+                }
+                content.children().add(row);
+            }
+            Paint::Image { scale, .. } => {
+                content.children().add(paint_text(
+                    "Image data stays embedded in the document. Changing this paint to a color or gradient can be undone.",
+                    true,
+                ));
+                let selected = match scale {
+                    core::ImageScale::Fill => 0,
+                    core::ImageScale::Fit => 1,
+                    core::ImageScale::Stretch => 2,
+                    core::ImageScale::Tile => 3,
+                };
+                content.children().add(self.paint_choice(
+                    "Image scaling",
+                    &format!("PaintImageScale{index}"),
+                    &["Fill", "Fit", "Stretch", "Tile"],
+                    selected,
+                    move |shell, scale| {
+                        let scale = [
+                            core::ImageScale::Fill,
+                            core::ImageScale::Fit,
+                            core::ImageScale::Stretch,
+                            core::ImageScale::Tile,
+                        ][scale];
+                        shell.edit_paints(
+                            "Change image scaling",
+                            StackEdit::Paint(index, PaintEdit::ImageScale(scale)),
+                            false,
+                        );
+                    },
+                ));
+            }
+        }
+        card
+    }
+
+    fn paint_stops(
+        self: &Rc<Self>,
+        content: &Ref<StackPanel>,
+        preview: &Ref<Border>,
+        index: usize,
+        stops: &[GradientStop],
+    ) {
+        let heading = paint_text("Gradient stops", false);
+        heading.set_font_weight(FontWeight::SemiBold);
+        content.children().add(heading);
+        for (stop, value) in stops.iter().enumerate() {
+            let row = paint_grid("*,110,74", 8.0);
+            let weak_preview = preview.downgrade();
+            row.children().add(self.paint_field(
+                &format!("Stop {} color", stop + 1),
+                &format!("PaintStopColor{index}_{stop}"),
+                &value.color.hex(),
+                move |shell, value| {
+                    let color = paint_color(value)?;
+                    shell.edit_paints(
+                        "Change gradient stop color",
+                        StackEdit::Paint(index, PaintEdit::StopColor(stop, color)),
+                        false,
+                    );
+                    shell.refresh_paint_preview(index, &weak_preview);
+                    Ok(())
+                },
+            ));
+            let weak_preview = preview.downgrade();
+            let offset = self.paint_field(
+                "Position %",
+                &format!("PaintStopOffset{index}_{stop}"),
+                &(value.offset * 100.0).to_string(),
+                move |shell, value| {
+                    let offset = paint_percent(value)?;
+                    shell.edit_paints(
+                        "Move gradient stop",
+                        StackEdit::Paint(index, PaintEdit::StopOffset(stop, offset)),
+                        false,
+                    );
+                    shell.refresh_paint_preview(index, &weak_preview);
+                    Ok(())
+                },
+            );
+            Grid::set_column(&offset, 1);
+            row.children().add(offset);
+            let remove = self.paint_button(
+                "Remove",
+                &format!("PaintStopRemove{index}_{stop}"),
+                stops.len() > 2,
+                move |shell| {
+                    shell.edit_paints(
+                        "Remove gradient stop",
+                        StackEdit::Paint(index, PaintEdit::RemoveStop(stop)),
+                        true,
+                    );
+                },
+            );
+            remove.set_vertical_alignment(VerticalAlignment::Bottom);
+            Grid::set_column(&remove, 2);
+            row.children().add(remove);
+            content.children().add(row);
+        }
+        let buttons = StackPanel::new();
+        buttons.set_orientation(Orientation::Horizontal);
+        buttons.set_spacing(8.0);
+        buttons.children().add(self.paint_button(
+            "Add stop",
+            &format!("PaintStopAdd{index}"),
+            true,
+            move |shell| {
+                shell.edit_paints(
+                    "Add gradient stop",
+                    StackEdit::Paint(index, PaintEdit::AddStop),
+                    true,
+                );
+            },
+        ));
+        buttons.children().add(self.paint_button(
+            "Reverse gradient",
+            &format!("PaintReverse{index}"),
+            stops.len() > 1,
+            move |shell| {
+                shell.edit_paints(
+                    "Reverse gradient",
+                    StackEdit::Paint(index, PaintEdit::ReverseStops),
+                    true,
+                );
+            },
+        ));
+        content.children().add(buttons);
+    }
+
+    fn paint_coordinate(
+        self: &Rc<Self>,
+        index: usize,
+        label: &str,
+        coordinate: Coordinate,
+        value: f64,
+        preview: &Ref<Border>,
+    ) -> Ref<StackPanel> {
+        let weak_preview = preview.downgrade();
+        self.paint_field(
+            label,
+            &format!("Paint{}{}", label.replace(' ', ""), index),
+            &value.to_string(),
+            move |shell, text| {
+                let value = text
+                    .trim()
+                    .parse::<f64>()
+                    .map_err(|_| "Enter a finite number.")?;
+                if !value.is_finite() || value.abs() > 1000.0 {
+                    return Err("Enter a finite value between −1000 and 1000.");
+                }
+                if matches!(coordinate, Coordinate::Radius) && value <= 0.0 {
+                    return Err("Radius must be greater than zero.");
+                }
+                shell.edit_paints(
+                    "Change gradient geometry",
+                    StackEdit::Paint(index, PaintEdit::Coordinate(coordinate, value)),
+                    false,
+                );
+                shell.refresh_paint_preview(index, &weak_preview);
+                Ok(())
+            },
+        )
+    }
+
+    fn paint_field(
+        self: &Rc<Self>,
+        label: &str,
+        name: &str,
+        value: &str,
+        apply: impl Fn(&Rc<Self>, &str) -> Result<(), &'static str> + 'static,
+    ) -> Ref<StackPanel> {
+        let panel = StackPanel::new();
+        panel.set_spacing(4.0);
+        panel.children().add(paint_text(label, true));
+        let field = TextBox::new();
+        field.set_name(Some(name.to_string()));
+        field.set_text(Some(value));
+        panel.children().add(field.clone());
+        let error = paint_text("", true);
+        error.set_foreground(Some(icons::brush("#C8372B")));
+        error.set_is_visible(false);
+        panel.children().add(error.clone());
+        let weak_shell = Rc::downgrade(self);
+        let weak_field = field.downgrade();
+        let weak_error = error.downgrade();
+        let committed = RefCell::new(value.to_string());
+        let commit = Rc::new(move || {
+            let (Some(shell), Some(field), Some(error)) = (
+                weak_shell.upgrade(),
+                weak_field.upgrade(),
+                weak_error.upgrade(),
+            ) else {
+                return;
+            };
+            if shell.updating.get() {
+                return;
+            }
+            let text = field.text().unwrap_or_default();
+            // Enter followed by blur must not produce a second undo entry. This also
+            // avoids silently rounding an untouched imported fractional coordinate.
+            if *committed.borrow() == text {
+                return;
+            }
+            match apply(&shell, &text) {
+                Ok(()) => {
+                    *committed.borrow_mut() = text;
+                    error.set_is_visible(false);
+                    field.set_border_brush(Some(icons::brush("#E5E5E5")));
+                }
+                Err(message) => {
+                    error.set_text(Some(message));
+                    error.set_is_visible(true);
+                    field.set_border_brush(Some(icons::brush("#C8372B")));
+                }
+            }
+        });
+        let blur = commit.clone();
+        field.add_handler(InputElement::lost_focus_event(), move |_, _| blur());
+        field.add_handler(InputElement::key_down_event(), move |_, event| {
+            if event.key == Key::Enter {
+                commit();
+                event.set_handled(true);
+            }
+        });
+        panel
+    }
+
+    fn paint_choice(
+        self: &Rc<Self>,
+        label: &str,
+        name: &str,
+        labels: &[&str],
+        selected: usize,
+        apply: impl Fn(&Rc<Self>, usize) + 'static,
+    ) -> Ref<StackPanel> {
+        let panel = StackPanel::new();
+        panel.set_spacing(4.0);
+        panel.children().add(paint_text(label, true));
+        let choice = ComboBox::new();
+        choice.set_name(Some(name.to_string()));
+        for label in labels {
+            choice.items().add(Some(Rc::new(label.to_string())));
+        }
+        choice.set_selected_index(selected as i32);
+        let weak_shell = Rc::downgrade(self);
+        let weak_choice = choice.downgrade();
+        let count = labels.len();
+        choice.selection_changed(move |_, _| {
+            if let (Some(shell), Some(choice)) = (weak_shell.upgrade(), weak_choice.upgrade()) {
+                let selected = choice.selected_index();
+                if !shell.updating.get() && selected >= 0 && (selected as usize) < count {
+                    apply(&shell, selected as usize);
+                }
+            }
+        });
+        panel.children().add(choice);
+        panel
+    }
+
+    fn paint_button(
+        self: &Rc<Self>,
+        caption: &str,
+        name: &str,
+        enabled: bool,
+        apply: impl Fn(&Rc<Self>) + 'static,
+    ) -> Ref<Button> {
+        let button = Button::new();
+        button.set_name(Some(name.to_string()));
+        button.set_content(Some(Rc::new(caption.to_string())));
+        button.set_is_enabled(enabled);
+        button.set_height(30.0);
+        let weak_shell = Rc::downgrade(self);
+        button.click(move |_, _| {
+            if let Some(shell) = weak_shell.upgrade() {
+                if !shell.updating.get() {
+                    apply(&shell);
+                }
+            }
+        });
+        button
+    }
+
+    fn edit_paints(self: &Rc<Self>, label: &str, edit: StackEdit, rebuild: bool) {
+        if self.updating.get() {
+            return;
+        }
+        let mut changed = false;
+        self.modify(label, |node| {
+            if apply_stack_edit(&mut node.fills, edit) {
+                node.fill_style = None;
+                node.variable_bindings.remove("fill");
+                node.overridden_properties.insert("fills".into());
+                changed = true;
+            }
+        });
+        if changed {
+            self.changed();
+            if rebuild {
+                self.paints_dialog();
+            }
+        }
+    }
+
+    fn refresh_paint_preview(&self, index: usize, preview: &WeakRef<Border>) {
+        let Some(preview) = preview.upgrade() else {
+            return;
+        };
+        let editor = self.editor.borrow();
+        if let Some(fill) = editor
+            .selection
+            .first()
+            .and_then(|id| editor.document.nodes.get(id))
+            .and_then(|node| node.fills.get(index))
+        {
+            preview.set_background(Some(paint_preview(fill)));
+        }
+    }
+}
+
+fn paint_text(value: &str, muted: bool) -> Ref<TextBlock> {
+    let text = TextBlock::new();
+    text.set_text(Some(value));
+    text.set_font_size(if muted { 11.0 } else { 12.0 });
+    text.set_foreground(Some(icons::brush(if muted {
+        "#737373"
+    } else {
+        "#242424"
+    })));
+    text.set_text_wrapping(TextWrapping::Wrap);
+    text
+}
+
+fn paint_grid(columns: &str, spacing: f64) -> Ref<Grid> {
+    let grid = Grid::new();
+    grid.set_column_definitions(ColumnDefinitions::parse(columns).expect("paint columns"));
+    grid.set_column_spacing(spacing);
+    grid
+}
+
+fn paint_color(value: &str) -> Result<Color, &'static str> {
+    Color::from_hex(value).ok_or("Use 3, 4, 6, or 8 hexadecimal digits; alpha comes last.")
+}
+
+fn paint_percent(value: &str) -> Result<f64, &'static str> {
+    let value = value
+        .trim()
+        .trim_end_matches('%')
+        .trim()
+        .parse::<f64>()
+        .map_err(|_| "Enter a percentage from 0 to 100.")?;
+    if value.is_finite() && (0.0..=100.0).contains(&value) {
+        Ok(value / 100.0)
+    } else {
+        Err("Enter a percentage from 0 to 100.")
+    }
+}
+
+fn replace_paint_value<T: PartialEq>(target: &mut T, value: T) -> bool {
+    if *target == value {
+        false
+    } else {
+        *target = value;
+        true
+    }
+}
+
+fn apply_stack_edit(fills: &mut Vec<Fill>, edit: StackEdit) -> bool {
+    match edit {
+        StackEdit::Add => {
+            fills.push(Fill::solid(Color::rgb(217, 217, 217)));
+            true
+        }
+        StackEdit::Remove(index) if index < fills.len() => {
+            fills.remove(index);
+            true
+        }
+        StackEdit::Duplicate(index) if index < fills.len() => {
+            fills.insert(index + 1, fills[index].clone());
+            true
+        }
+        StackEdit::Move(index, offset) => {
+            let Some(other) = index
+                .checked_add_signed(offset)
+                .filter(|other| *other < fills.len())
+            else {
+                return false;
+            };
+            if index >= fills.len() || index == other {
+                return false;
+            }
+            fills.swap(index, other);
+            true
+        }
+        StackEdit::Paint(index, edit) => fills
+            .get_mut(index)
+            .is_some_and(|fill| apply_paint_edit(fill, edit)),
+        _ => false,
+    }
+}
+
+fn apply_paint_edit(fill: &mut Fill, edit: PaintEdit) -> bool {
+    match edit {
+        PaintEdit::Visible(value) => replace_paint_value(&mut fill.visible, value),
+        PaintEdit::Opacity(value) => replace_paint_value(&mut fill.opacity, value),
+        PaintEdit::Kind(kind) => {
+            if matches!(
+                (&fill.paint, kind),
+                (Paint::Solid(_), 0)
+                    | (Paint::LinearGradient { .. }, 1)
+                    | (Paint::RadialGradient { .. }, 2)
+                    | (Paint::Image { .. }, 3)
+            ) {
+                return false;
+            }
+            let color = fill.paint.representative_color();
+            let stops = match &fill.paint {
+                Paint::LinearGradient { stops, .. } | Paint::RadialGradient { stops, .. } => {
+                    stops.clone()
+                }
+                _ => vec![
+                    GradientStop { offset: 0.0, color },
+                    GradientStop {
+                        offset: 1.0,
+                        color: color.lerp(Color::BLACK, 0.35),
+                    },
+                ],
+            };
+            let paint = match kind {
+                0 => Paint::Solid(color),
+                1 => Paint::LinearGradient {
+                    start: Point::new(0.0, 0.0),
+                    end: Point::new(1.0, 1.0),
+                    stops,
+                },
+                2 => Paint::RadialGradient {
+                    center: Point::new(0.5, 0.5),
+                    radius: 0.5,
+                    stops,
+                },
+                // Creating an image requires imported bytes, never an empty href.
+                _ => return false,
+            };
+            replace_paint_value(&mut fill.paint, paint)
+        }
+        PaintEdit::Solid(value) => match &mut fill.paint {
+            Paint::Solid(color) => replace_paint_value(color, value),
+            _ => false,
+        },
+        PaintEdit::ImageScale(value) => match &mut fill.paint {
+            Paint::Image { scale, .. } => replace_paint_value(scale, value),
+            _ => false,
+        },
+        PaintEdit::Coordinate(coordinate, value) => {
+            let target = match (&mut fill.paint, coordinate) {
+                (Paint::LinearGradient { start, .. }, Coordinate::StartX) => &mut start.x,
+                (Paint::LinearGradient { start, .. }, Coordinate::StartY) => &mut start.y,
+                (Paint::LinearGradient { end, .. }, Coordinate::EndX) => &mut end.x,
+                (Paint::LinearGradient { end, .. }, Coordinate::EndY) => &mut end.y,
+                (Paint::RadialGradient { center, .. }, Coordinate::CenterX) => &mut center.x,
+                (Paint::RadialGradient { center, .. }, Coordinate::CenterY) => &mut center.y,
+                (Paint::RadialGradient { radius, .. }, Coordinate::Radius) => radius,
+                _ => return false,
+            };
+            replace_paint_value(target, value)
+        }
+        edit => {
+            let stops = match &mut fill.paint {
+                Paint::LinearGradient { stops, .. } | Paint::RadialGradient { stops, .. } => stops,
+                _ => return false,
+            };
+            match edit {
+                PaintEdit::StopColor(index, value) => stops
+                    .get_mut(index)
+                    .is_some_and(|stop| replace_paint_value(&mut stop.color, value)),
+                // Keep indices stable while a field has focus. The renderer sorts a
+                // copy by offset; structural edits rebuild controls with new indices.
+                PaintEdit::StopOffset(index, value) => stops
+                    .get_mut(index)
+                    .is_some_and(|stop| replace_paint_value(&mut stop.offset, value)),
+                PaintEdit::AddStop => {
+                    add_gradient_stop(stops);
+                    true
+                }
+                PaintEdit::RemoveStop(index) if stops.len() > 2 && index < stops.len() => {
+                    stops.remove(index);
+                    true
+                }
+                PaintEdit::ReverseStops if stops.len() > 1 => {
+                    for stop in stops.iter_mut() {
+                        stop.offset = 1.0 - stop.offset;
+                    }
+                    stops.reverse();
+                    true
+                }
+                _ => false,
+            }
+        }
+    }
+}
+
+fn add_gradient_stop(stops: &mut Vec<GradientStop>) {
+    stops.sort_by(|a, b| a.offset.total_cmp(&b.offset));
+    if stops.is_empty() {
+        stops.extend([
+            GradientStop {
+                offset: 0.0,
+                color: Color::BLACK,
+            },
+            GradientStop {
+                offset: 1.0,
+                color: Color::WHITE,
+            },
+        ]);
+        return;
+    }
+    let first = &stops[0];
+    let last = &stops[stops.len() - 1];
+    let mut gap = first.offset;
+    let mut new = GradientStop {
+        offset: first.offset / 2.0,
+        color: first.color,
+    };
+    for pair in stops.windows(2) {
+        let width = pair[1].offset - pair[0].offset;
+        if width > gap {
+            gap = width;
+            new = GradientStop {
+                offset: (pair[0].offset + pair[1].offset) / 2.0,
+                color: pair[0].color.lerp(pair[1].color, 0.5),
+            };
+        }
+    }
+    if 1.0 - last.offset > gap {
+        new = GradientStop {
+            offset: (last.offset + 1.0) / 2.0,
+            color: last.color,
+        };
+    }
+    stops.push(new);
+    stops.sort_by(|a, b| a.offset.total_cmp(&b.offset));
+}
+
+fn paint_preview(fill: &Fill) -> Rc<dyn IBrush> {
+    let color =
+        |color: Color| ferroui_base::media::Color::from_argb(color.a, color.r, color.g, color.b);
+    let relative = |point: Point| RelativePoint::new(point.x, point.y, RelativeUnit::Relative);
+    let opacity = if fill.visible {
+        fill.opacity.clamp(0.0, 1.0)
+    } else {
+        0.15
+    };
+    let gradient = |stops: &[GradientStop]| {
+        let mut result: Vec<_> = stops
+            .iter()
+            .map(|stop| ImmutableGradientStop::new(stop.offset, color(stop.color)))
+            .collect();
+        result.sort_by(|a, b| a.offset().total_cmp(&b.offset()));
+        if result.is_empty() {
+            result.push(ImmutableGradientStop::new(0.0, color(Color::TRANSPARENT)));
+        }
+        if result.len() == 1 {
+            result.push(ImmutableGradientStop::new(1.0, result[0].color()));
+        }
+        result
+    };
+    match &fill.paint {
+        Paint::Solid(value) => Rc::new(ImmutableSolidColorBrush::with_opacity(
+            color(*value),
+            opacity,
+        )),
+        Paint::LinearGradient { start, end, stops } => Rc::new(ImmutableLinearGradientBrush::new(
+            &gradient(stops),
+            opacity,
+            None,
+            None,
+            GradientSpreadMethod::Pad,
+            Some(relative(*start)),
+            Some(relative(*end)),
+            None,
+        )),
+        Paint::RadialGradient {
+            center,
+            radius,
+            stops,
+        } => Rc::new(ImmutableRadialGradientBrush::with_radius(
+            &gradient(stops),
+            opacity,
+            None,
+            None,
+            GradientSpreadMethod::Pad,
+            Some(relative(*center)),
+            Some(relative(*center)),
+            *radius,
+        )),
+        Paint::Image { .. } => Rc::new(ImmutableSolidColorBrush::with_opacity(
+            color(fill.paint.representative_color()),
+            opacity,
+        )),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn paint_reorder_and_non_image_edits_preserve_embedded_bytes() {
+        let image = Fill {
+            paint: Paint::Image {
+                href: "data:image/png;base64,exact-bytes".into(),
+                scale: core::ImageScale::Fill,
+            },
+            opacity: 1.0,
+            visible: true,
+        };
+        let mut fills = vec![image, Fill::solid(Color::BLACK)];
+        assert!(apply_stack_edit(&mut fills, StackEdit::Move(0, 1)));
+        assert!(apply_stack_edit(
+            &mut fills,
+            StackEdit::Paint(1, PaintEdit::Opacity(0.4))
+        ));
+        assert!(apply_stack_edit(
+            &mut fills,
+            StackEdit::Paint(1, PaintEdit::ImageScale(core::ImageScale::Fit))
+        ));
+        assert!(
+            matches!(&fills[1].paint, Paint::Image { href, scale: core::ImageScale::Fit } if href == "data:image/png;base64,exact-bytes")
+        );
+        assert_eq!(fills[1].opacity, 0.4);
+        assert!(!apply_stack_edit(
+            &mut fills,
+            StackEdit::Paint(0, PaintEdit::Kind(3))
+        ));
+        assert!(!apply_stack_edit(
+            &mut fills,
+            StackEdit::Paint(99, PaintEdit::Solid(Color::WHITE))
+        ));
+    }
+
+    #[test]
+    fn gradient_conversion_preserves_stops_and_live_offset_indices() {
+        let stops = vec![
+            GradientStop {
+                offset: 0.0,
+                color: Color::BLACK,
+            },
+            GradientStop {
+                offset: 1.0,
+                color: Color::WHITE,
+            },
+        ];
+        let mut fill = Fill {
+            paint: Paint::LinearGradient {
+                start: Point::new(0.0, 0.0),
+                end: Point::new(1.0, 1.0),
+                stops: stops.clone(),
+            },
+            opacity: 0.75,
+            visible: false,
+        };
+        assert!(apply_paint_edit(&mut fill, PaintEdit::Kind(2)));
+        assert!(
+            matches!(&fill.paint, Paint::RadialGradient { stops: actual, .. } if *actual == stops)
+        );
+        assert!(!apply_paint_edit(&mut fill, PaintEdit::RemoveStop(0)));
+        assert!(apply_paint_edit(&mut fill, PaintEdit::StopOffset(0, 0.9)));
+        assert!(apply_paint_edit(&mut fill, PaintEdit::StopOffset(1, 0.1)));
+        assert!(apply_paint_edit(
+            &mut fill,
+            PaintEdit::StopColor(0, Color::rgb(1, 2, 3))
+        ));
+        assert!(
+            matches!(&fill.paint, Paint::RadialGradient { stops, .. } if stops[0].color == Color::rgb(1, 2, 3) && stops[0].offset == 0.9)
+        );
+        assert_eq!(fill.opacity, 0.75);
+        assert!(!fill.visible);
+    }
+
+    #[test]
+    fn adding_a_stop_interpolates_the_largest_gap() {
+        let mut stops = vec![
+            GradientStop {
+                offset: 1.0,
+                color: Color::WHITE,
+            },
+            GradientStop {
+                offset: 0.0,
+                color: Color::BLACK,
+            },
+        ];
+        add_gradient_stop(&mut stops);
+        assert_eq!(stops.len(), 3);
+        assert_eq!(stops[1].offset, 0.5);
+        assert_eq!(stops[1].color, Color::rgb(128, 128, 128));
+    }
+
+    #[test]
+    fn invalid_numbers_and_colors_never_enter_the_document() {
+        for invalid in ["NaN", "inf", "-1", "100.01", "hello"] {
+            assert!(paint_percent(invalid).is_err());
+        }
+        assert_eq!(paint_percent("25 %"), Ok(0.25));
+        assert!(paint_color("💜💜💜").is_err());
+        assert_eq!(paint_color("#1234"), Ok(Color::rgba(17, 34, 51, 68)));
+    }
+}

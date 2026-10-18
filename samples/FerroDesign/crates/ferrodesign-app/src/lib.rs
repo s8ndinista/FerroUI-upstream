@@ -6,6 +6,7 @@ pub mod canvas;
 pub mod desktop;
 pub mod icons;
 pub mod platform;
+pub mod prototype;
 pub mod renderer;
 pub mod shell;
 

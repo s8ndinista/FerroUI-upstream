@@ -1477,7 +1477,9 @@ impl Document {
                 ("corner_radius", VariableValue::Number(v)) => n.corner_radius = v.max(0.0),
                 ("font_size", VariableValue::Number(v)) => n.font_size = v.max(1.0),
                 ("visible", VariableValue::Boolean(v)) => n.visible = v,
-                ("text", VariableValue::String(v)) => n.text = v,
+                ("text", VariableValue::String(v)) => {
+                    n.replace_text_preserving_runs(v);
+                }
                 _ => {}
             }
         }

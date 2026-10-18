@@ -151,6 +151,7 @@ pub struct ScenePainter {
     asset_revision: u64,
     prepare_invalid_nodes: usize,
     stats: RenderStats,
+    editing_text: Option<NodeId>,
 }
 
 impl ScenePainter {
@@ -160,6 +161,15 @@ impl ScenePainter {
 
     pub fn invalidate(&mut self) {
         self.scene_key = None;
+    }
+
+    /// The active native text editor paints this layer while its caret is open.
+    /// This is presentation state; the authored document remains unchanged.
+    pub fn set_editing_text(&mut self, node: Option<NodeId>) {
+        if self.editing_text != node {
+            self.editing_text = node;
+            self.invalidate();
+        }
     }
 
     pub fn clear(&mut self) {
@@ -311,7 +321,7 @@ impl ScenePainter {
             self.prepare_invalid_nodes += 1;
             return None;
         };
-        if !node.visible || node.opacity <= 0.0 {
+        if !node.visible || node.opacity <= 0.0 || self.editing_text == Some(id) {
             return None;
         }
         if depth >= MAX_RENDER_DEPTH || !valid_node_bounds(node) || !self.visiting.insert(id) {
