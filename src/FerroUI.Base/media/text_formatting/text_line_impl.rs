@@ -610,7 +610,10 @@ impl TextLineImpl {
         // Current position is a text source index and first cluster is relative to the GlyphRun's buffer.
         let text_source_offset = current_position - first_cluster;
 
-        debug_assert!(text_source_offset >= 0);
+        // A leading or middle ellipsis retains a suffix of the original glyph
+        // buffer. Its first cluster can be greater than its compacted position
+        // in the collapsed line, so this translation is legitimately negative.
+        debug_assert!(text_source_offset >= 0 || self.has_collapsed);
 
         let mut cluster_offset = 0;
 
