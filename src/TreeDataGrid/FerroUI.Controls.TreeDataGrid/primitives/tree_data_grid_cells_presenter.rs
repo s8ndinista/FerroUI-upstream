@@ -41,6 +41,10 @@ pub struct TreeDataGridCellsPresenter {
     row_index: Cell<i32>,
     child_index_changed: Rc<ChildIndexChangedHandlers>,
     child_index_provider: OnceCell<Rc<CellsPresenterChildIndexProvider>>,
+    // The selection of the grid while the presenter measures (`GetSelection` per realized cell in
+    // the reference): the grid and its selection do not change during a measure, so it is found
+    // once rather than by a walk up the tree for every cell.
+    measure_selection: RefCell<Option<Option<Rc<dyn ITreeDataGridSelectionInteraction>>>>,
 }
 
 ferro_class! {
@@ -138,6 +142,15 @@ impl LayoutableImpl for TreeDataGridCellsPresenter {
         if this.row_index.get() == -1 {
             Size::default()
         } else {
+            struct EndMeasure<'a>(&'a TreeDataGridCellsPresenter);
+            impl Drop for EndMeasure<'_> {
+                fn drop(&mut self) {
+                    *self.0.measure_selection.borrow_mut() = None;
+                }
+            }
+            let selection = this.find_selection();
+            *this.measure_selection.borrow_mut() = Some(selection);
+            let _end = EndMeasure(this);
             this.presenter.measure_override(this, available_size)
         }
     }
@@ -353,6 +366,7 @@ impl TreeDataGridCellsPresenter {
             row_index: Cell::new(-1),
             child_index_changed: Rc::new(HandlerList::new()),
             child_index_provider: OnceCell::new(),
+            measure_selection: RefCell::new(None),
         }
     }
 
@@ -638,6 +652,13 @@ impl TreeDataGridCellsPresenter {
     }
 
     fn get_selection(&self) -> Option<Rc<dyn ITreeDataGridSelectionInteraction>> {
+        if let Some(selection) = self.measure_selection.borrow().as_ref() {
+            return selection.clone();
+        }
+        self.find_selection()
+    }
+
+    fn find_selection(&self) -> Option<Rc<dyn ITreeDataGridSelectionInteraction>> {
         self.find_ancestor_of_type::<crate::TreeDataGrid>(false)
             .and_then(|tree_data_grid| tree_data_grid.selection_interaction())
     }
