@@ -376,7 +376,7 @@ impl RichTextEditor {
     }
 
     fn permitted_text(&self, text: &str, replacing: Range<usize>) -> String {
-        let normalized = text.replace("\r\n", "\n").replace('\r', "\n");
+        let normalized = normalize_text(text);
         if self.max_length() == 0 {
             return normalized;
         }
@@ -653,6 +653,9 @@ impl RichTextEditor {
     /// entire pre-composition selection and structure; later updates replace that preview.
     pub fn set_preedit(&self, text: &str, cursor: Option<usize>) -> Result<(), EditError> {
         let _operation = self.enter(true)?;
+        let cursor = cursor.map(|offset| {
+            normalize_text(utf16_prefix(text, offset)).encode_utf16().count()
+        });
         self.synchronize();
         let composition = self.history.borrow_mut().composition.take();
         let before = composition.map_or_else(|| self.capture(), |composition| composition.before);
@@ -716,6 +719,21 @@ impl RichTextEditor {
         self.checkpoint();
         self.insert_text(text, EditKind::Composition)
     }
+}
+
+/// Gets the prefix at or before a UTF-16 position without splitting a scalar.
+pub(crate) fn utf16_prefix(text: &str, mut length: usize) -> &str {
+    for (index, ch) in text.char_indices() {
+        if ch.len_utf16() > length {
+            return &text[..index];
+        }
+        length -= ch.len_utf16();
+    }
+    text
+}
+
+fn normalize_text(text: &str) -> String {
+    text.replace("\r\n", "\n").replace('\r', "\n")
 }
 
 fn text_is_deletion(kind: EditKind) -> bool {

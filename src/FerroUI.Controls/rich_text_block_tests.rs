@@ -6,7 +6,7 @@ use crate::test_support::test_scope;
 use crate::{Border, RichTextBlock, RichTextBlockOverflow};
 use ferroui_base::input::{InputElement, Key, KeyEventArgs, KeyModifiers};
 use ferroui_base::media::text_formatting::testing::TextTestScope;
-use ferroui_base::media::{FontWeight, TextWrapping};
+use ferroui_base::media::{FontWeight, TextTrimming, TextWrapping};
 use ferroui_base::{Point, Rect, Ref, Size};
 use std::cell::Cell;
 use std::rc::Rc;
@@ -19,6 +19,180 @@ fn rich(text: &str) -> Ref<RichTextBlock> {
 fn measure(view: &RichTextBlock, width: f64, height: f64) {
     view.measure(Size::new(width, height));
     view.arrange(Rect::new(0.0, 0.0, width, height));
+}
+
+fn rich_source_properties(
+    view: &RichTextBlock,
+    index: i32,
+) -> Rc<dyn ferroui_base::media::text_formatting::TextRunProperties> {
+    use ferroui_base::media::text_formatting::ITextSource;
+    view.page_layout().source.paragraphs[0]
+        .source
+        .get_text_run(index)
+        .unwrap()
+        .properties()
+        .unwrap()
+        .clone()
+}
+
+fn rich_brush_color(
+    brush: Option<&Rc<dyn ferroui_base::media::IBrush>>,
+) -> Option<ferroui_base::media::Color> {
+    brush
+        .and_then(|brush| brush.as_solid_color_brush())
+        .map(|brush| brush.color())
+}
+
+#[test]
+fn rich_highlights_preserve_inline_format_and_selection_has_foreground_priority() {
+    use crate::documents::{TextHighlightRange, TextHighlighter};
+    use ferroui_base::media::{Brushes, Colors, FontStyle, TextDecorations};
+
+    let _scope = test_scope();
+    let _text = TextTestScope::new();
+    let view = RichTextBlock::new();
+    let paragraph = Paragraph::new();
+    let run = Run::with_text(Some("a😀bc"));
+    run.set_font_size(19.0);
+    run.set_font_weight(FontWeight::Bold);
+    run.set_font_style(FontStyle::Italic);
+    run.set_text_decorations(Some(TextDecorations::underline()));
+    run.set_foreground(Some(Brushes::green()));
+    run.set_background(Some(Brushes::aqua()));
+    paragraph.add_child(run.clone());
+    view.blocks().add(paragraph);
+    let revision = view.document().revision();
+    for (start, foreground) in [(1, Brushes::red()), (2, Brushes::blue())] {
+        let layer = TextHighlighter::new();
+        layer.ranges().add(TextHighlightRange::new(start, 1));
+        layer.set_foreground(Some(foreground)).unwrap();
+        layer.set_background(Some(Brushes::yellow())).unwrap();
+        view.text_highlighters().add(layer);
+    }
+    measure(&view, 400.0, 100.0);
+    let regions = view.page_layout().source.highlights.clone();
+    assert_eq!(regions.len(), 1);
+    assert_eq!(
+        regions[0].range,
+        1..3,
+        "each layer expands to the complete scalar before priority merging"
+    );
+    assert_eq!(
+        rich_brush_color(regions[0].foreground.as_ref()),
+        Some(Colors::BLUE)
+    );
+    let highlighted = rich_source_properties(&view, 1);
+    assert_eq!(highlighted.typeface().weight(), FontWeight::Bold);
+    assert_eq!(highlighted.typeface().style(), FontStyle::Italic);
+    assert_eq!(highlighted.font_rendering_em_size(), 19.0);
+    assert_eq!(highlighted.text_decorations().unwrap().list().count(), 1);
+    assert_eq!(
+        rich_brush_color(highlighted.foreground_brush()),
+        Some(Colors::BLUE)
+    );
+    assert!(
+        highlighted.background_brush().is_none(),
+        "the run must not cover the highlight background"
+    );
+
+    view.set_selection_foreground_brush(Some(Brushes::white()));
+    view.select(1, 3);
+    assert_eq!(
+        rich_brush_color(rich_source_properties(&view, 1).foreground_brush()),
+        Some(Colors::WHITE)
+    );
+    view.set_selection_foreground_brush(None);
+    assert_eq!(
+        rich_brush_color(rich_source_properties(&view, 1).foreground_brush()),
+        Some(Colors::BLUE)
+    );
+    view.select(3, 4);
+    assert!(
+        rich_source_properties(&view, 3)
+            .background_brush()
+            .is_none()
+    );
+    view.set_is_text_selection_enabled(false);
+    assert_eq!(
+        rich_brush_color(rich_source_properties(&view, 3).background_brush()),
+        Some(Colors::AQUA)
+    );
+    view.set_is_text_selection_enabled(true);
+    view.set_selection_highlight_color(None);
+    assert_eq!(
+        rich_brush_color(rich_source_properties(&view, 3).background_brush()),
+        Some(Colors::AQUA)
+    );
+    assert_eq!(view.document().revision(), revision);
+    assert_eq!(
+        rich_brush_color(run.foreground().as_ref()),
+        Some(Colors::GREEN)
+    );
+}
+
+#[test]
+fn rich_highlight_theme_resources_and_overflow_changes_rebuild_only_visual_input() {
+    use crate::documents::{TextHighlightRange, TextHighlighter};
+    use ferroui_base::media::{Brushes, Colors, IBrush, SolidColorBrush};
+
+    let _scope = test_scope();
+    let _text = TextTestScope::new();
+    crate::register_types();
+    let view = rich("one two three four five six seven eight");
+    let overflow = RichTextBlockOverflow::new();
+    view.set_overflow_content_target(Some(overflow.clone()));
+    view.set_max_lines(1);
+    let foreground = SolidColorBrush::with_color(Colors::RED);
+    let brush: Rc<dyn IBrush> = foreground.clone().into();
+    view.resources()
+        .add_value("TextControlHighlighterForeground", brush);
+    view.resources()
+        .add_value("TextControlHighlighterBackground", Brushes::aqua());
+    let highlighter = TextHighlighter::new();
+    highlighter
+        .ranges()
+        .add(TextHighlightRange::new(0, i32::MAX));
+    view.text_highlighters().add(highlighter.clone());
+    let revision = view.document().revision();
+    measure(&view, 75.0, 25.0);
+    measure(&overflow, 75.0, 300.0);
+    let first = view.page_layout();
+    let second = overflow.page_layout();
+    assert!(Rc::ptr_eq(&first.source, &second.source));
+    assert_eq!(
+        rich_brush_color(first.source.highlights[0].foreground.as_ref()),
+        Some(Colors::RED)
+    );
+    assert_eq!(
+        rich_brush_color(first.source.highlights[0].background.as_ref()),
+        Some(Colors::AQUA)
+    );
+    assert_eq!(overflow.text_highlighters(), view.text_highlighters());
+
+    foreground.set_color(Colors::BLUE);
+    let changed = overflow.page_layout();
+    assert!(!Rc::ptr_eq(&second.source, &changed.source));
+    assert_eq!(
+        rich_brush_color(changed.source.highlights[0].foreground.as_ref()),
+        Some(Colors::BLUE)
+    );
+    highlighter.ranges().set(0, TextHighlightRange::new(4, 3));
+    assert_eq!(overflow.page_layout().source.highlights[0].range, 4..7);
+    view.resources().set(
+        "TextControlHighlighterForeground",
+        Some(Rc::new(Brushes::green())),
+    );
+    assert_eq!(
+        rich_brush_color(
+            overflow.page_layout().source.highlights[0]
+                .foreground
+                .as_ref()
+        ),
+        Some(Colors::GREEN)
+    );
+    view.text_highlighters().clear();
+    assert!(overflow.page_layout().source.highlights.is_empty());
+    assert_eq!(view.document().revision(), revision);
 }
 
 #[test]
@@ -314,4 +488,126 @@ fn rich_hyperlink_hit_testing_keyboard_focus_and_cancellation_use_the_host() {
     assert_eq!(invocations.get(), 1);
     assert!(key(&view, Key::Space, true).handled());
     assert_eq!(invocations.get(), 2);
+}
+
+fn formatted_text(view: &RichTextBlock) -> String {
+    let mut text = Vec::new();
+    for entry in &view.page_layout().lines {
+        for run in entry.line.text_runs().iter() {
+            text.extend_from_slice(run.text().span());
+        }
+    }
+    String::from_utf16_lossy(&text)
+}
+
+#[test]
+fn rich_trimming_uses_real_ellipsis_and_remains_reflowable() {
+    let _scope = test_scope();
+    let _text = TextTestScope::new();
+    let view = rich("alpha beta gamma delta epsilon");
+    view.set_text_wrapping(TextWrapping::NoWrap);
+    view.set_text_trimming(<dyn TextTrimming>::character_ellipsis());
+    for _ in 0..3 {
+        measure(&view, 65.0, 100.0);
+        assert!(view.is_text_trimmed());
+        assert!(formatted_text(&view).contains('…'));
+        measure(&view, 1000.0, 100.0);
+        assert!(!view.is_text_trimmed());
+        assert!(formatted_text(&view).starts_with(&view.text()));
+        assert_eq!(
+            view.visible_text_ranges(),
+            vec![0..view.document().text_length()]
+        );
+    }
+}
+
+#[test]
+fn rich_terminal_truncation_and_linked_overflow_retain_distinct_layout_states() {
+    let _scope = test_scope();
+    let _text = TextTestScope::new();
+    let view = rich("first paragraph");
+    view.blocks().add(Paragraph::with_text("second paragraph"));
+    view.blocks().add(Paragraph::with_text("third paragraph"));
+    view.set_max_lines(1);
+    view.set_text_trimming(<dyn TextTrimming>::character_ellipsis());
+    measure(&view, 300.0, 100.0);
+    assert!(view.has_overflow_content());
+    assert!(view.is_text_trimmed());
+    assert!(formatted_text(&view).contains('…'));
+    let overflow = RichTextBlockOverflow::new();
+    view.set_overflow_content_target(Some(overflow.clone()));
+    measure(&view, 300.0, 100.0);
+    measure(&overflow, 300.0, 100.0);
+    assert!(!view.is_text_trimmed());
+    assert_eq!(overflow.content_source(), Some(view.clone()));
+    assert_eq!(overflow.content_start(), view.content_end());
+    assert_eq!(overflow.content_end(), view.document().text_length());
+    view.set_overflow_content_target(None);
+    measure(&view, 300.0, 100.0);
+    assert!(overflow.content_source().is_none());
+    assert!(view.is_text_trimmed());
+}
+
+#[test]
+fn rich_finite_height_trims_and_indentation_respects_paragraph_local_values() {
+    let _scope = test_scope();
+    let _text = TextTestScope::new();
+    let view = rich("first line");
+    let second = Paragraph::with_text("second line");
+    second.set_text_indent(0.0);
+    view.blocks().add(second);
+    view.set_text_indent(20.0);
+    view.set_line_stacking_strategy(crate::documents::LineStackingStrategy::BlockLineHeight);
+    view.set_line_height(24.0);
+    measure(&view, 300.0, 100.0);
+    assert_eq!(view.line_metrics()[0].bounds.x, 20.0);
+    assert_eq!(view.line_metrics()[1].bounds.x, 0.0);
+    assert_eq!(view.line_metrics()[1].bounds.y, 24.0);
+    view.set_text_trimming(<dyn TextTrimming>::word_ellipsis());
+    measure(&view, 300.0, 25.0);
+    assert_eq!(view.line_metrics().len(), 1);
+    assert!(view.is_text_trimmed());
+    assert!(view.has_overflow_content());
+}
+
+#[test]
+fn rich_collapsed_source_ranges_and_geometry_follow_retained_prefixes_and_suffixes() {
+    let _scope = test_scope();
+    let _text = TextTestScope::new();
+    let view = rich("prefix 😀 … abcdefghijklmnopqrstuvwxyz suffix");
+    view.set_text_wrapping(TextWrapping::NoWrap);
+    for trimming in [
+        <dyn TextTrimming>::character_ellipsis(),
+        <dyn TextTrimming>::leading_character_ellipsis(),
+        <dyn TextTrimming>::prefix_character_ellipsis(),
+    ] {
+        view.set_text_trimming(trimming);
+        measure(&view, 110.0, 100.0);
+        assert!(view.is_text_trimmed());
+        let ranges = view.visible_text_ranges();
+        assert!(!ranges.is_empty());
+        let mut previous = 0;
+        let mut visible_length = 0;
+        for range in ranges {
+            assert!(view.document().validate_range(range.clone()).is_ok());
+            if previous < range.start {
+                assert!(view.get_rects_for_range(previous..range.start).is_empty());
+            }
+            assert!(!view.get_rects_for_range(range.clone()).is_empty());
+            let caret = view.get_rect_from_character_index(range.start);
+            assert_eq!(
+                view.hit_test_text_position(Point::new(caret.x, caret.y + caret.height / 2.0)),
+                range.start
+            );
+            visible_length += range.len();
+            previous = range.end;
+        }
+        let length = view.document().text_length();
+        if previous < length {
+            assert!(view.get_rects_for_range(previous..length).is_empty());
+        }
+        assert!(visible_length < length);
+        measure(&view, 1000.0, 100.0);
+        assert_eq!(view.visible_text_ranges(), vec![0..length]);
+    }
 }

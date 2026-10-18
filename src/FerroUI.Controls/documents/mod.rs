@@ -18,14 +18,20 @@ mod rich_text_document;
 mod run;
 mod span;
 mod text_element;
+mod text_highlight_merge;
+mod text_highlight_range;
+mod text_highlighter;
+mod text_highlighter_collection;
 mod text_position;
 mod underline;
 
-pub use bold::Bold;
 pub use block::{Block, BlockImpl, BlockImplExt, BlockVTable, LineStackingStrategy};
 pub use block_collection::BlockCollection;
+pub use bold::Bold;
 pub use character_format::{CharacterFormat, ParagraphFormat};
-pub use document_snapshot::{DocumentSnapshot, InlineSnapshot, InlineSnapshotKind, ParagraphSnapshot};
+pub use document_snapshot::{
+    DocumentSnapshot, InlineSnapshot, InlineSnapshotKind, ParagraphSnapshot,
+};
 pub use hyperlink::{Hyperlink, HyperlinkClickEventArgs, UnderlineStyle};
 pub use i_inline_host::IInlineHost;
 pub use inline::{Inline, InlineImpl, InlineImplExt, InlineVTable};
@@ -36,12 +42,16 @@ pub use italic::Italic;
 pub use line_break::LineBreak;
 pub use paragraph::Paragraph;
 pub use rich_text_document::{
-    DocumentChangedEventArgs, DocumentChangeKind, DocumentEditBatch, DocumentError, DocumentTextChange,
-    RichTextDocument, WeakRichTextDocument,
+    DocumentChangeKind, DocumentChangedEventArgs, DocumentEditBatch, DocumentError,
+    DocumentTextChange, RichTextDocument, WeakRichTextDocument,
 };
 pub use run::Run;
 pub use span::Span;
 pub use text_element::{TextElement, TextElementImpl, TextElementImplExt, TextElementVTable};
+pub use text_highlight_merge::{TextHighlightMerge, TextHighlightRegion};
+pub use text_highlight_range::{TextHighlightError, TextHighlightRange, TextRangeCollection};
+pub use text_highlighter::TextHighlighter;
+pub use text_highlighter_collection::{TextHighlighterCollection, WeakTextHighlighterCollection};
 pub use text_position::{LogicalDirection, TextGravity, TextPointer, TextPosition, TextRange};
 pub use underline::Underline;
 
@@ -50,3 +60,6 @@ mod inline_tests;
 
 #[cfg(test)]
 mod rich_text_document_tests;
+
+#[cfg(test)]
+mod text_highlighter_tests;

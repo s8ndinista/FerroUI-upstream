@@ -953,6 +953,11 @@ impl RichEditBox {
         if started {
             self.raise_composition(Self::text_composition_started_event(), text, false);
         }
+        let cursor = cursor.map(|offset| {
+            self.filter_input(crate::rich_text::utf16_prefix(text, offset))
+                .encode_utf16()
+                .count()
+        });
         let result = editor.set_preedit(&self.filter_input(text), cursor);
         self.after_edit(&editor);
         if result.is_ok() {

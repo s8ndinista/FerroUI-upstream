@@ -12,6 +12,15 @@ are derived from Microsoft WinUI, pinned at commit
 - `dxaml/xcp/core/text/Inc/TextPosition.h`
 - `dxaml/xcp/core/text/common/TextPosition.cpp`
 - `dxaml/xcp/core/text/Inc/PlainTextPosition.h`
+- `dxaml/xcp/components/primitiveDependencyObjects/TextRange.cpp`
+- `dxaml/xcp/components/primitiveDependencyObjects/inc/TextRange.h`
+- `dxaml/xcp/components/text/TextRangeCollection.cpp`
+- `dxaml/xcp/components/text/TextHighlighter.cpp`
+- `dxaml/xcp/components/text/TextHighlighterCollection.cpp`
+- `dxaml/xcp/components/text/TextHighlightMerge.cpp`
+- `dxaml/xcp/components/text/TextHighlightRenderer.cpp`
+- `dxaml/xcp/components/text/inc/HighlightRegion.h`
+- `dxaml/xcp/components/text/unittests/TextHighlightMergeUnitTests.cpp`
 
 Copyright (c) Microsoft Corporation. All rights reserved.
 
@@ -22,6 +31,13 @@ not exposed as character positions; the public offset coordinate system is
 the UTF-16 text coordinate system used by the FerroUI formatter. The explicit
 source/member inventory and the platform service boundary report live in
 `docs/porting/winui-rich-text/`.
+
+Text highlight ranges retain the signed start/length value contract while the
+merge algorithm uses half-open UTF-16 endpoints. Markup initializes a shared box
+and the observable range collection copies its values. Highlighter collections
+retain their items; item, range and mutable-brush subscriptions retain owners
+weakly. These layers affect rendering without changing document revisions or
+editing history. The merge tests retain all ten named source overlap fixtures.
 
 ## MIT License
 

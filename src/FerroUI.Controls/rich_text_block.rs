@@ -3,11 +3,14 @@
 
 use crate::documents::{
     Block, BlockCollection, Hyperlink, IInlineHost, LineStackingStrategy, Paragraph,
-    RichTextDocument, Span, TextElement, TextGravity, TextPosition,
+    RichTextDocument, Span, TextElement, TextGravity, TextHighlightRegion,
+    TextHighlighterCollection, TextPosition,
 };
 use crate::rich_text_layout::{RichTextBreak, RichTextLayout, RichTextLineMetrics, RichTextSource};
 use crate::{Border, Control, ControlImpl, RichTextBlockOverflow, TextBlock, TopLevel};
 use ferroui_base::collections::FerroList;
+use ferroui_base::controls::ResourceKey;
+use ferroui_base::data::core::{ValueType, ValueTypes};
 use ferroui_base::input::platform::ClipboardExtensions;
 use ferroui_base::input::{
     FocusChangedEventArgs, InputElement, InputElementImpl, InputElementImplExt, Key, KeyEventArgs,
@@ -21,14 +24,15 @@ use ferroui_base::media::text_formatting::unicode::GraphemeEnumerator;
 use ferroui_base::media::{
     Brushes, DrawingContext, FontFamily, FontFeatureCollection, FontStretch, FontStyle, FontWeight,
     IBrush, TextAlignment, TextDecorationCollection, TextTrimming, TextWrapping,
+    subscribe_invalidated,
 };
 use ferroui_base::reactive::{Disposable, IDisposable};
 use ferroui_base::utilities::HandlerList;
 use ferroui_base::{
     DirectProperty, ElementRef, FerroObjectImpl, FerroObjectImplExt, FerroProperty,
     FerroPropertyChangedEventArgs, IntoRef, Point, Rect, Ref, Size, StyledElementImpl,
-    StyledProperty, StyledPropertyOptions, Thickness, Vector, Visual, VisualImpl, VisualImplExt,
-    WeakRef, ferro_class, instantiate,
+    StyledProperty, StyledPropertyOptions, Thickness, Vector, Visual, VisualImpl, WeakRef,
+    ferro_class, instantiate,
 };
 use std::cell::{Cell, RefCell};
 use std::ops::Range;
@@ -65,6 +69,9 @@ pub struct RichTextBlock {
     reported_overflow: Cell<bool>,
     reported_trimmed: Cell<bool>,
     reported_baseline: Cell<f64>,
+    highlighters: TextHighlighterCollection,
+    view_subscriptions: RefCell<Vec<Rc<dyn IDisposable>>>,
+    default_highlight_brush_subscriptions: RefCell<Vec<Rc<dyn IDisposable>>>,
 }
 
 ferro_class! {
@@ -84,6 +91,7 @@ ferroui_base::ferro_class_info!(RichTextBlock {
         content: Blocks,
         properties: [
             Blocks: BlockCollection { get: RichTextBlock::blocks },
+            TextHighlighters: TextHighlighterCollection { get: RichTextBlock::text_highlighters },
             HorizontalTextAlignment: TextAlignment { get: RichTextBlock::horizontal_text_alignment, set: RichTextBlock::set_horizontal_text_alignment },
         ],
         methods: [
@@ -104,6 +112,7 @@ impl FerroObjectImpl for RichTextBlock {
     fn constructed(this: &Self) {
         Self::parent_constructed(this);
         this.attach_document();
+        this.attach_view_observers();
     }
 
     fn on_property_changed(this: &Self, change: &FerroPropertyChangedEventArgs<'_>) {
@@ -123,13 +132,13 @@ impl FerroObjectImpl for RichTextBlock {
             | "LineStackingStrategy"
             | "TextIndent"
             | "TextDecorations"
-            | "SelectionForegroundBrush" => {
+            | "SelectionForegroundBrush"
+            | "SelectionHighlightColor"
+            | "IsTextSelectionEnabled" => {
                 this.invalidate_document_layout();
             }
             "TextWrapping" | "TextTrimming" | "Padding" | "MaxLines" => this.invalidate_layout(),
-            "Background" | "SelectionHighlightColor" | "CaretBrush" | "IsTextSelectionEnabled" => {
-                this.invalidate_visual()
-            }
+            "Background" | "CaretBrush" => this.invalidate_visual(),
             "OverflowContentTarget" => {
                 let (old, new) =
                     change.get_old_and_new_value::<Option<ElementRef<RichTextBlockOverflow>>>();
@@ -161,6 +170,14 @@ impl VisualImpl for RichTextBlock {
     fn render(this: &Self, context: &mut DrawingContext) {
         if let Some(background) = this.background() {
             context.fill_rectangle(&background, Rect::from_size(this.bounds().size()), 0.0);
+        }
+        let layout = this.page_layout();
+        for highlight in &layout.source.highlights {
+            if let Some(brush) = &highlight.background {
+                for rect in this.get_rects_for_range(highlight.range.clone()) {
+                    context.fill_rectangle(brush, rect, 0.0);
+                }
+            }
         }
         if this.is_text_selection_enabled() {
             if let Some(brush) = this.selection_highlight_color() {
@@ -618,6 +635,9 @@ impl RichTextBlock {
             reported_overflow: Cell::new(false),
             reported_trimmed: Cell::new(false),
             reported_baseline: Cell::new(0.0),
+            highlighters: TextHighlighterCollection::new(),
+            view_subscriptions: RefCell::new(Vec::new()),
+            default_highlight_brush_subscriptions: RefCell::new(Vec::new()),
         }
     }
 
@@ -721,6 +741,102 @@ impl RichTextBlock {
     pub fn blocks(&self) -> BlockCollection {
         self.document().blocks()
     }
+    pub fn text_highlighters(&self) -> TextHighlighterCollection {
+        self.content_source().map_or_else(
+            || self.highlighters.clone(),
+            |parent| parent.text_highlighters(),
+        )
+    }
+
+    fn attach_view_observers(&self) {
+        let weak = self.to_ref().downgrade();
+        let highlighters = self.highlighters.invalidated(move || {
+            if let Some(this) = weak.upgrade() {
+                this.invalidate_document_layout();
+            }
+        });
+        let weak = self.to_ref().downgrade();
+        let resources = self.resources_changed(move |_| {
+            if let Some(this) = weak.upgrade() {
+                this.refresh_default_highlight_brush_subscriptions();
+                this.invalidate_document_layout();
+            }
+        });
+        let weak = self.to_ref().downgrade();
+        let theme = self.actual_theme_variant_changed(move || {
+            if let Some(this) = weak.upgrade() {
+                this.refresh_default_highlight_brush_subscriptions();
+                this.invalidate_document_layout();
+            }
+        });
+        *self.view_subscriptions.borrow_mut() = vec![highlighters, resources, theme];
+        self.refresh_default_highlight_brush_subscriptions();
+    }
+
+    fn default_highlight_brush(&self, foreground: bool) -> Option<Rc<dyn IBrush>> {
+        let key = ResourceKey::from(if foreground {
+            "TextControlHighlighterForeground"
+        } else {
+            "TextControlHighlighterBackground"
+        });
+        self.try_find_resource(&key, self.actual_theme_variant().as_ref())
+            .flatten()
+            .and_then(|value| {
+                let converted =
+                    ValueTypes::try_cast(&value, ValueType::of::<Option<Rc<dyn IBrush>>>())?;
+                converted
+                    .downcast_ref::<Option<Rc<dyn IBrush>>>()
+                    .cloned()
+                    .flatten()
+            })
+            .filter(|brush| brush.as_solid_color_brush().is_some())
+            .or_else(|| {
+                Some(if foreground {
+                    Brushes::black()
+                } else {
+                    Brushes::yellow()
+                })
+            })
+    }
+
+    fn refresh_default_highlight_brush_subscriptions(&self) {
+        let old = std::mem::take(&mut *self.default_highlight_brush_subscriptions.borrow_mut());
+        for subscription in old {
+            subscription.dispose();
+        }
+        let mut subscriptions = Vec::new();
+        for foreground in [true, false] {
+            let brush = self.default_highlight_brush(foreground);
+            let weak = self.to_ref().downgrade();
+            let handler: Rc<dyn Fn()> = Rc::new(move || {
+                if let Some(this) = weak.upgrade() {
+                    this.invalidate_document_layout();
+                }
+            });
+            if let Some(subscription) = subscribe_invalidated(&brush, handler) {
+                subscriptions.push(subscription);
+            }
+        }
+        *self.default_highlight_brush_subscriptions.borrow_mut() = subscriptions;
+    }
+
+    pub(crate) fn highlight_regions(&self) -> Vec<TextHighlightRegion> {
+        let text: Vec<u16> = self.document().text().encode_utf16().collect();
+        self.text_highlighters().merged_regions_with(
+            text.len(),
+            self.default_highlight_brush(true),
+            self.default_highlight_brush(false),
+            |range| {
+                let start = scalar_boundary(&text, range.start);
+                let end = if scalar_boundary(&text, range.end) < range.end {
+                    range.end + 1
+                } else {
+                    range.end
+                };
+                start..end
+            },
+        )
+    }
     pub fn add_child(&self, block: impl IntoRef<Block>) {
         self.blocks().add(block);
     }
@@ -799,7 +915,10 @@ impl RichTextBlock {
             &String::new(),
             &self.selected_text(),
         );
-        if self.selection_foreground_brush().is_some() {
+        if self.selection_foreground_brush().is_some()
+            || args.start != args.end
+            || args.old_start != args.old_end
+        {
             self.invalidate_document_layout();
         } else {
             self.invalidate_visual();
@@ -974,6 +1093,10 @@ impl RichTextBlock {
             if index >= start
                 && !layout.lines.is_empty()
                 && (index < end || index == end && !layout.has_overflow)
+                && layout
+                    .visible_text_ranges()
+                    .iter()
+                    .any(|range| index >= range.start && index <= range.end)
             {
                 return Some(current);
             }
@@ -1342,6 +1465,16 @@ impl RichTextBlock {
 
 impl Drop for RichTextBlock {
     fn drop(&mut self) {
+        for subscription in self.view_subscriptions.get_mut().drain(..) {
+            subscription.dispose();
+        }
+        for subscription in self
+            .default_highlight_brush_subscriptions
+            .get_mut()
+            .drain(..)
+        {
+            subscription.dispose();
+        }
         if let Some(subscription) = self.document_subscription.get_mut().take() {
             subscription.dispose();
         }

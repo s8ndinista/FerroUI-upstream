@@ -1137,3 +1137,191 @@ fn rich_edit_zero_caret_interval_is_steady_and_detaching_stops_the_timer() {
     assert!(!timer.is_enabled());
     assert!(!editor.caret_visible());
 }
+
+
+#[test]
+fn rich_edit_rtf_unicode_fallback_consumes_control_words_symbols_and_binary_tokens() {
+    let _scope = Dispatcher::unit_test_scope();
+    let snapshot = RtfReader::read(
+        br"{\rtf1\uc1 \u945\par x\u946\b y\u947\bin3 abcz\u948\%q}",
+    ).unwrap();
+    assert_eq!(snapshot.text(), "αxβyγzδq");
+    assert_eq!(snapshot.paragraphs.len(), 1);
+    let document = RichTextDocument::new();
+    document.restore(&snapshot).unwrap();
+    assert_ne!(document.character_format_at(3).unwrap().font_weight, Some(FontWeight::Bold));
+}
+
+#[test]
+fn rich_edit_rtf_unicode_fallback_ends_at_every_group_boundary() {
+    let _scope = Dispatcher::unit_test_scope();
+    let snapshot = RtfReader::read(
+        br"{\rtf1\uc3 \u945{\*\unknown ignored}x{\uc2\u946?}y\u947{\b z}q}",
+    ).unwrap();
+    assert_eq!(snapshot.text(), "αxβyγzq");
+    let document = RichTextDocument::new();
+    document.restore(&snapshot).unwrap();
+    assert_eq!(document.character_format_at(6).unwrap().font_weight, Some(FontWeight::Bold));
+    assert_ne!(document.character_format_at(7).unwrap().font_weight, Some(FontWeight::Bold));
+}
+
+#[test]
+fn rich_edit_rtf_prefers_unicode_alternatives_over_ansi_destinations() {
+    let _scope = Dispatcher::unit_test_scope();
+    let snapshot = RtfReader::read(
+        br"{\rtf1 A{\upr{wrong}{\*\ud \uc0\u945}}Z}",
+    ).unwrap();
+    assert_eq!(snapshot.text(), "AαZ");
+    assert!(matches!(
+        RtfReader::read(br"{\rtf1{\upr{missing Unicode alternative}}}"),
+        Err(RtfError::InvalidParameter("Unicode alternative destination")),
+    ));
+}
+
+#[test]
+fn rich_edit_rtf_unicode_rules_apply_to_font_names_and_hyperlink_instructions() {
+    let _scope = Dispatcher::unit_test_scope();
+    let snapshot = RtfReader::read(
+        br#"{\rtf1{\fonttbl{\f0 {\upr{wrong}{\*\ud \u915\unknown amma}};}}\f0 x{\field{\*\fldinst HYPERLINK "https://example/\u945\unknown x"}{\fldrslt link}}}"#,
+    ).unwrap();
+    assert_eq!(snapshot.text(), "xlink");
+    let document = RichTextDocument::new();
+    document.restore(&snapshot).unwrap();
+    assert_eq!(document.character_format_at(1).unwrap().font_family, Some(FontFamily::new("Γamma")));
+    assert!(snapshot.paragraphs[0].inlines.iter().any(|inline| {
+        matches!(&inline.kind, InlineSnapshotKind::Hyperlink { navigate_uri: Some(uri), .. } if uri == "https://example/αx")
+    }));
+}
+
+#[test]
+fn rich_edit_rtf_character_spacing_units_and_plain_resets_roundtrip() {
+    use ferroui_base::media::FontStretch;
+    let _scope = Dispatcher::unit_test_scope();
+    let snapshot = RtfReader::read(br"{\rtf1\expnd6 a{\expndtw-15 b}\plain c}").unwrap();
+    let document = RichTextDocument::new();
+    document.restore(&snapshot).unwrap();
+    assert_eq!(document.character_format_at(1).unwrap().letter_spacing, Some(2.0));
+    assert_eq!(document.character_format_at(2).unwrap().letter_spacing, Some(-1.0));
+    assert_eq!(document.character_format_at(3).unwrap().letter_spacing, Some(0.0));
+    assert_eq!(document.character_format_at(3).unwrap().font_stretch, Some(FontStretch::Normal));
+
+    document.apply_format(0..1, &CharacterFormat {
+        letter_spacing: Some(1.4),
+        font_stretch: Some(FontStretch::Normal),
+        ..Default::default()
+    }).unwrap();
+    let rtf = RtfWriter::write(&document.snapshot()).unwrap();
+    assert!(rtf.contains("\\expnd4\\expndtw21"));
+    assert!(rtf.contains("\\charscalex100"));
+    let copy = RichTextDocument::new();
+    copy.restore(&RtfReader::read(rtf.as_bytes()).unwrap()).unwrap();
+    assert_eq!(copy.character_format_at(1).unwrap().letter_spacing, Some(1.4));
+    assert_eq!(copy.character_format_at(1).unwrap().font_stretch, Some(FontStretch::Normal));
+}
+
+#[test]
+fn rich_edit_rtf_rejects_unrepresented_scaling_and_font_encodings() {
+    let _scope = Dispatcher::unit_test_scope();
+    for input in [
+        br"{\rtf1\charscalex80 x}".as_slice(),
+        br"{\rtf1\charscalex120 x}".as_slice(),
+    ] {
+        assert!(matches!(RtfReader::read(input), Err(RtfError::UnsupportedFeature("character scaling"))));
+    }
+    for input in [
+        br"{\rtf1\charscalex0 x}".as_slice(),
+        br"{\rtf1\charscalex x}".as_slice(),
+    ] {
+        assert!(matches!(RtfReader::read(input), Err(RtfError::InvalidParameter("character scaling"))));
+    }
+    assert!(matches!(
+        RtfReader::read(br"{\rtf1{\fonttbl{\f0\fcharset2 Symbol;}}\f0 A}"),
+        Err(RtfError::UnsupportedFeature("font character set")),
+    ));
+    assert!(matches!(
+        RtfReader::read(br"{\rtf1{\fonttbl{\f0\cpg932 Example;}}\f0 A}"),
+        Err(RtfError::UnsupportedCodePage(932)),
+    ));
+}
+
+#[test]
+fn rich_edit_rtf_font_names_with_semicolons_are_escaped_losslessly() {
+    let _scope = Dispatcher::unit_test_scope();
+    let document = RichTextDocument::from_text("text");
+    document.apply_format(0..4, &CharacterFormat {
+        font_family: Some(FontFamily::new("Example; Family")),
+        ..Default::default()
+    }).unwrap();
+    let rtf = RtfWriter::write(&document.snapshot()).unwrap();
+    assert!(rtf.contains("Example\\u59? Family"));
+    let copy = RichTextDocument::new();
+    copy.restore(&RtfReader::read(rtf.as_bytes()).unwrap()).unwrap();
+    assert_eq!(copy.character_format_at(1).unwrap().font_family, Some(FontFamily::new("Example; Family")));
+}
+
+#[test]
+fn rich_edit_rtf_export_rejects_metrics_that_cannot_fit_native_parameters() {
+    let _scope = Dispatcher::unit_test_scope();
+    for character in [
+        CharacterFormat { font_size: Some(f64::MAX), ..Default::default() },
+        CharacterFormat { font_size: Some(0.1), ..Default::default() },
+        CharacterFormat { letter_spacing: Some(f64::MAX), ..Default::default() },
+    ] {
+        let snapshot = DocumentSnapshot {
+            paragraphs: vec![ParagraphSnapshot {
+                inlines: vec![run("text", character)],
+                ..Default::default()
+            }],
+        };
+        assert!(matches!(RtfWriter::write(&snapshot), Err(RtfError::InvalidParameter(_))));
+    }
+    for format in [
+        ParagraphFormat { text_indent: Some(f64::MAX), ..Default::default() },
+        ParagraphFormat { line_height: Some(f64::MAX), ..Default::default() },
+    ] {
+        let snapshot = DocumentSnapshot {
+            paragraphs: vec![ParagraphSnapshot { format, inlines: vec![run("text", CharacterFormat::default())] }],
+        };
+        assert!(matches!(RtfWriter::write(&snapshot), Err(RtfError::InvalidParameter(_))));
+    }
+}
+
+#[test]
+fn rich_edit_ime_service_maps_preedit_cursor_through_crlf_normalization() {
+    let _scope = Dispatcher::unit_test_scope();
+    let document = RichTextDocument::from_text("x");
+    let editor = RichTextEditor::new(document.clone());
+    editor.set_selection(EditorSelection::caret(1)).unwrap();
+    for (native_cursor, expected_caret) in [(3, 3), (4, 3), (5, 5)] {
+        editor.set_preedit("a\r\n😀b", Some(native_cursor)).unwrap();
+        assert_eq!(document.text(), "xa\n😀b");
+        assert_eq!(editor.selection(), EditorSelection::caret(expected_caret));
+        assert_eq!(editor.surrounding_text(), "x");
+    }
+    editor.cancel_composition().unwrap();
+    assert_eq!(document.text(), "x");
+    assert_eq!(editor.selection(), EditorSelection::caret(1));
+}
+
+#[test]
+fn rich_edit_native_ime_cursor_follows_filtered_and_case_expanded_text() {
+    let _scope = Dispatcher::unit_test_scope();
+    let control = RichEditBox::new();
+    control.set_text("x").unwrap();
+    control.select(1, 1);
+    control.set_accepts_tab(false);
+    control.set_character_casing(RichEditCharacterCasing::Upper);
+    let input = control.text_input_method_client();
+    input.set_preedit_text_with_cursor(Some("ß\tz"), Some(2));
+    assert_eq!(control.text(), "xSSZ");
+    assert_eq!(control.caret_index(), 3);
+    assert_eq!(input.surrounding_text(), "x");
+    input.set_preedit_text(None);
+
+    control.set_character_casing(RichEditCharacterCasing::Lower);
+    input.set_preedit_text_with_cursor(Some("İZ"), Some(1));
+    assert_eq!(control.text(), "xi\u{307}z");
+    assert_eq!(control.caret_index(), 3);
+    input.set_preedit_text(None);
+    assert_eq!(control.text(), "x");
+}

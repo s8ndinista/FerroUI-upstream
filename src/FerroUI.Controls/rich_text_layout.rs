@@ -3,8 +3,10 @@
 
 use crate::documents::{
     Block, EmbeddedControlRun, Inline, LineStackingStrategy, Paragraph, RichTextDocument,
+    TextHighlightRegion,
 };
 use crate::text_block::InlinesTextSource;
+use ferroui_base::media::text_formatting::TextRun;
 use ferroui_base::media::text_formatting::{
     GenericTextParagraphProperties, GenericTextRunProperties, ITextDrawingSink,
     InterWordJustification, LogicalTextRunEnumerator, TextCollapsingProperties, TextEndOfParagraph,
@@ -15,7 +17,8 @@ use ferroui_base::media::{
     BaselineAlignment, CharacterHit, TextAlignment, TextCollapsingCreateInfo, TextTrimming,
     TextWrapping, Typeface,
 };
-use ferroui_base::{FerroObjectImplExt, Point, Rect, Ref, Size, Vector};
+use ferroui_base::utilities::ValueSpan;
+use ferroui_base::{Point, Rect, Ref, Size, Vector};
 use std::ops::Range;
 use std::rc::Rc;
 
@@ -33,6 +36,7 @@ pub(crate) struct RichTextSource {
     pub paragraphs: Vec<RichParagraphSource>,
     pub length: usize,
     pub default_indent: f64,
+    pub highlights: Vec<TextHighlightRegion>,
 }
 
 impl RichTextSource {
@@ -50,6 +54,7 @@ impl RichTextSource {
             blocks.push(paragraph.upcast());
         }
         let mut offset = 0;
+        let highlights = view.highlight_regions();
         let mut paragraphs = Vec::with_capacity(blocks.len());
         for block in blocks {
             let mut runs = Vec::new();
@@ -88,9 +93,10 @@ impl RichTextSource {
                     block.font_features(),
                 ))
             };
+            let modifiers = formatting_overrides(&runs, offset, &highlights, view);
             paragraphs.push(RichParagraphSource {
                 block,
-                source: InlinesTextSource::new(Rc::new(runs), None),
+                source: InlinesTextSource::new(Rc::new(runs), modifiers),
                 offset,
                 length,
                 properties,
@@ -102,8 +108,90 @@ impl RichTextSource {
             paragraphs,
             length: document.text_length(),
             default_indent: view.text_indent(),
+            highlights,
         })
     }
+}
+
+fn formatting_overrides(
+    runs: &[Rc<dyn TextRun>],
+    paragraph_offset: usize,
+    highlights: &[TextHighlightRegion],
+    view: &crate::RichTextBlock,
+) -> Option<Rc<[ValueSpan<Rc<dyn TextRunProperties>>]>> {
+    let selected = view.selection_start().min(view.selection_end())
+        ..view.selection_start().max(view.selection_end());
+    let selection = view.is_text_selection_enabled() && !selected.is_empty();
+    if highlights.is_empty() && !selection {
+        return None;
+    }
+    let mut modifiers = Vec::new();
+    let mut position = paragraph_offset;
+    for run in runs {
+        let end = position + run.length().max(0) as usize;
+        if let Some(properties) = run.properties() {
+            let mut boundaries = vec![position, end];
+            let regions: Vec<_> = highlights
+                .iter()
+                .filter(|region| region.range.start < end && region.range.end > position)
+                .collect();
+            for region in &regions {
+                boundaries.push(region.range.start.max(position));
+                boundaries.push(region.range.end.min(end));
+            }
+            if selection && selected.start < end && selected.end > position {
+                boundaries.push(selected.start.max(position));
+                boundaries.push(selected.end.min(end));
+            }
+            boundaries.sort_unstable();
+            boundaries.dedup();
+            for boundary in boundaries.windows(2) {
+                let start = boundary[0];
+                let end = boundary[1];
+                let highlight = regions
+                    .iter()
+                    .find(|region| region.range.start <= start && region.range.end >= end);
+                let selected = selection && start >= selected.start && end <= selected.end;
+                if highlight.is_none() && !selected {
+                    continue;
+                }
+                let foreground = if selected {
+                    view.selection_foreground_brush()
+                } else {
+                    None
+                }
+                .or_else(|| highlight.and_then(|region| region.foreground.clone()))
+                .or_else(|| properties.foreground_brush().cloned());
+                let background = if highlight.is_some()
+                    || selected && view.selection_highlight_color().is_some()
+                {
+                    None
+                } else {
+                    properties.background_brush().cloned()
+                };
+                let override_properties: Rc<dyn TextRunProperties> =
+                    Rc::new(GenericTextRunProperties::with_all(
+                        properties.typeface().clone(),
+                        properties.font_rendering_em_size(),
+                        properties.text_decorations().cloned(),
+                        foreground,
+                        background,
+                        properties.baseline_alignment(),
+                        properties.culture_info().cloned(),
+                        properties.font_features().cloned(),
+                    ));
+                let (Ok(start), Ok(length)) = (
+                    i32::try_from(start - paragraph_offset),
+                    i32::try_from(end - start),
+                ) else {
+                    continue;
+                };
+                modifiers.push(ValueSpan::new(start, length, override_properties));
+            }
+        }
+        position = end;
+    }
+    (!modifiers.is_empty()).then(|| modifiers.into())
 }
 
 impl Drop for RichTextSource {
@@ -139,6 +227,7 @@ pub(crate) struct RichTextLine {
     pub paragraph_length: usize,
     pub origin: Point,
     pub advance: f64,
+    right_margin: f64,
     source_spans: Option<Vec<LineSourceSpan>>,
 }
 
@@ -458,6 +547,7 @@ impl RichTextLayout {
                     paragraph_length: paragraph.length,
                     origin: Point::new(margin.left + indent, origin_y),
                     advance,
+                    right_margin: margin.right,
                     source_spans,
                 });
                 y = origin_y + advance;
@@ -506,12 +596,7 @@ impl RichTextLayout {
                 entry.origin.x
                     + entry.line.start()
                     + entry.line.width_including_trailing_whitespace()
-                    + result
-                        .source
-                        .paragraphs
-                        .iter()
-                        .find(|p| p.offset == entry.paragraph_offset)
-                        .map_or(0.0, |p| p.block.margin().right)
+                    + entry.right_margin
             })
             .fold(0.0_f64, f64::max);
         result.size = Size::new(widest.max(0.0), y.max(0.0));

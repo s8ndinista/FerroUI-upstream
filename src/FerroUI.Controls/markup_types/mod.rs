@@ -44,6 +44,9 @@ const RICH_TEXT_TYPES: &[&MarkupType] = &[
     <crate::documents::TextGravity as MarkupTyped>::MARKUP,
     <crate::documents::UnderlineStyle as MarkupTyped>::MARKUP,
     <crate::documents::HyperlinkClickEventArgs as MarkupTyped>::MARKUP,
+    <crate::documents::TextHighlightRange as MarkupTyped>::MARKUP,
+    <crate::documents::TextRangeCollection as MarkupTyped>::MARKUP,
+    <crate::documents::TextHighlighterCollection as MarkupTyped>::MARKUP,
     <crate::RichEditCharacterCasing as MarkupTyped>::MARKUP,
     <crate::DisabledFormattingAccelerators as MarkupTyped>::MARKUP,
     <crate::RichEditCompositionEventArgs as MarkupTyped>::MARKUP,
@@ -78,9 +81,26 @@ fn register_value_types() {
     classes::register_value_types();
     converters::register_value_types();
     register_assigned_binding();
+    register_rich_text_value_types();
     // The delegate of `DataValidationErrors.ErrorConverter` (`Func<object, object>?`): a binding
     // delivers a converter, and the property holds the nullable form.
     ValueTypes::register_nullable::<crate::ErrorConverter>();
+}
+
+fn register_rich_text_value_types() {
+    ValueTypes::register_nullable::<crate::documents::BlockCollection>();
+    ValueTypes::register_nullable::<crate::documents::RichTextDocument>();
+    ValueTypes::register_nullable::<crate::documents::LineStackingStrategy>();
+    ValueTypes::register_nullable::<crate::documents::TextGravity>();
+    ValueTypes::register_nullable::<crate::documents::UnderlineStyle>();
+    ValueTypes::register_nullable::<crate::documents::TextHighlightRange>();
+    ValueTypes::register_reference::<crate::documents::TextHighlightRange>();
+    ValueTypes::register_nullable::<crate::documents::TextRangeCollection>();
+    ValueTypes::register_nullable::<crate::documents::TextHighlighterCollection>();
+    ValueTypes::register_nullable::<crate::RichEditCharacterCasing>();
+    ValueTypes::register_nullable::<crate::DisabledFormattingAccelerators>();
+    ValueTypes::register_nullable::<crate::rich_text::RichEditClipboardFormat>();
+    ValueTypes::register_nullable::<ferroui_base::interactivity::RoutedEvent<crate::RichEditCompositionEventArgs>>();
 }
 
 /// The casts between a binding and the value of a property that is assigned a binding.

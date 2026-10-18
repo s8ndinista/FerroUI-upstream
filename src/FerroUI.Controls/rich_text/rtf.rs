@@ -258,9 +258,14 @@ struct Decoder {
 /// A bounded RTF 1 reader for the formatting represented by FerroUI documents.
 ///
 /// Supports scoped character/paragraph properties, font/color tables, signed Unicode
-/// escapes and fallback counts, Windows-1252 byte escapes, and hyperlink fields. Ignorable
-/// destinations are skipped without interpreting their content. Native OLE, pictures,
-/// tables, and unsupported code pages return explicit errors instead of corrupting content.
+/// escapes, fallback tokens, Unicode alternative destinations, Windows-1252 byte escapes,
+/// character spacing in quarter-points or twips, and hyperlink fields. Ignorable destinations
+/// are skipped without interpreting their content. Native OLE, pictures, tables, unsupported
+/// font encodings, and horizontal glyph scaling return explicit errors.
+///
+/// Unicode group/fallback rules and character metrics follow Microsoft's RTF specification,
+/// sections "Unicode RTF" and "Font (character) Formatting Properties". This codec implements
+/// that exchange grammar independently of the external WinUIEdit engine.
 pub struct RtfReader;
 
 impl RtfReader {
@@ -363,6 +368,14 @@ impl Decoder {
     }
     fn decode(&mut self, nodes: &[Node<'_>], state: &mut State) -> Result<(), RtfError> {
         for node in nodes {
+            // RTF Unicode fallback counts every control word, symbol or binary
+            // token as one character. A scope delimiter ends the fallback run.
+            if matches!(node, Node::Group(_)) {
+                state.skip = 0;
+            } else if state.skip > 0 && !matches!(node, Node::Text(_)) {
+                state.skip -= 1;
+                continue;
+            }
             match node {
                 Node::Text(bytes) => {
                     for byte in *bytes {
@@ -385,6 +398,10 @@ impl Decoder {
                         Some(("fonttbl", _)) => self.read_fonts(children, state.uc)?,
                         Some(("colortbl", _)) => self.read_colors(children)?,
                         Some(("field", _)) => self.read_field(children, state)?,
+                        Some(("upr", _)) => {
+                            let unicode = unicode_alternative(children)?;
+                            self.decode(unicode, &mut state.clone())?;
+                        }
                         Some(("pict" | "object" | "shppict" | "nonshppict", _)) => {
                             return Err(RtfError::UnsupportedFeature("images or embedded objects"));
                         }
@@ -443,6 +460,8 @@ impl Decoder {
                             state.character.font_weight = Some(FontWeight::Normal);
                             state.character.font_style = Some(FontStyle::Normal);
                             state.character.font_size = Some(16.0);
+                            state.character.font_stretch = Some(FontStretch::Normal);
+                            state.character.letter_spacing = Some(0.0);
                             state.character.foreground = Some(None);
                             state.character.background = Some(None);
                             state.character.baseline_alignment = Some(BaselineAlignment::Baseline);
@@ -523,11 +542,22 @@ impl Decoder {
                         "nosupersub" => {
                             state.character.baseline_alignment = Some(BaselineAlignment::Baseline)
                         }
-                        "expndtw" => {
+                        "charscalex" => {
+                            let scale = number
+                                .filter(|value| *value > 0)
+                                .ok_or(RtfError::InvalidParameter("character scaling"))?;
+                            if scale != 100 {
+                                // Horizontal glyph scaling is not a font-face
+                                // stretch selection and cannot be substituted.
+                                return Err(RtfError::UnsupportedFeature("character scaling"));
+                            }
+                            state.character.font_stretch = Some(FontStretch::Normal);
+                        }
+                        "expnd" | "expndtw" => {
                             state.character.letter_spacing = Some(
                                 number.ok_or(RtfError::InvalidParameter("character spacing"))?
                                     as f64
-                                    / 15.0,
+                                    / if *word == "expnd" { 3.0 } else { 15.0 },
                             )
                         }
                         "pard" => {
@@ -653,6 +683,12 @@ impl Decoder {
             let mut id = None;
             let mut name = DestinationText::new(uc, limit);
             for node in nodes {
+                if matches!(node, Node::Group(_)) {
+                    name.skip = 0;
+                } else if name.skip > 0 && !matches!(node, Node::Text(_)) {
+                    name.node(node)?;
+                    continue;
+                }
                 match node {
                     Node::Control("f", Some(number)) => {
                         if *number < 0 {
@@ -661,8 +697,14 @@ impl Decoder {
                         id = Some(*number);
                         name.text.clear();
                     }
-                    Node::Control("fcharset", Some(value)) if !matches!(value, 0 | 1 | 2) => {
+                    Node::Control("fcharset", Some(value)) if !matches!(value, 0 | 1) => {
                         return Err(RtfError::UnsupportedFeature("font character set"));
+                    }
+                    Node::Control("cpg", Some(value)) if *value != 1252 => {
+                        return Err(RtfError::UnsupportedCodePage(*value));
+                    }
+                    Node::Group(children) if destination(children).is_some_and(|(word, _)| word == "upr") => {
+                        name.node(node)?;
                     }
                     Node::Group(children) => {
                         if !destination(children).is_some_and(|(_, starred)| starred) {
@@ -781,6 +823,15 @@ fn destination<'a>(nodes: &'a [Node<'a>]) -> Option<(&'a str, bool)> {
         _ => None,
     }
 }
+
+fn unicode_alternative<'a>(nodes: &'a [Node<'a>]) -> Result<&'a [Node<'a>], RtfError> {
+    nodes.iter().find_map(|node| match node {
+        Node::Group(children) if destination(children).is_some_and(|(word, _)| word == "ud") => {
+            Some(children.as_slice())
+        }
+        _ => None,
+    }).ok_or(RtfError::InvalidParameter("Unicode alternative destination"))
+}
 /// Decodes text destinations without interpreting their font/field control words as
 /// document formatting. The Unicode fallback and group scope rules are identical to body text.
 struct DestinationText {
@@ -819,6 +870,12 @@ impl DestinationText {
         Ok(())
     }
     fn node(&mut self, node: &Node<'_>) -> Result<(), RtfError> {
+        if matches!(node, Node::Group(_)) {
+            self.skip = 0;
+        } else if self.skip > 0 && !matches!(node, Node::Text(_)) {
+            self.skip -= 1;
+            return Ok(());
+        }
         match node {
             Node::Text(bytes) => {
                 for byte in *bytes {
@@ -848,7 +905,11 @@ impl DestinationText {
             Node::Group(children) => {
                 let uc = self.uc;
                 self.skip = 0;
-                self.nodes(children)?;
+                if destination(children).is_some_and(|(word, _)| word == "upr") {
+                    self.nodes(unicode_alternative(children)?)?;
+                } else {
+                    self.nodes(children)?;
+                }
                 self.uc = uc;
                 self.skip = 0;
             }
@@ -963,7 +1024,12 @@ impl RtfWriter {
             encoder.output.push_str("{\\fonttbl");
             for (index, font) in encoder.fonts.iter().enumerate() {
                 let _ = write!(encoder.output, "{{\\f{index}\\fnil ");
-                escape(font.name(), &mut encoder.output);
+                for (part, segment) in font.name().split(';').enumerate() {
+                    if part > 0 {
+                        encoder.output.push_str("\\u59?");
+                    }
+                    escape(segment, &mut encoder.output);
+                }
                 encoder.output.push_str(";}");
             }
             encoder.output.push('}');
@@ -1063,7 +1129,14 @@ impl Encoder {
             if !size.is_finite() || size <= 0.0 {
                 return Err(RtfError::InvalidParameter("font size"));
             }
-            let _ = write!(self.output, "\\fs{}", (size * 1.5).round() as i32);
+            let size = rtf_measure(size, 1.5, "font size")?;
+            if size <= 0 {
+                return Err(RtfError::InvalidParameter("font size"));
+            }
+            let _ = write!(self.output, "\\fs{size}");
+        }
+        if format.font_stretch == Some(FontStretch::Normal) {
+            self.output.push_str("\\charscalex100");
         }
         if let Some(weight) = format.font_weight {
             if !matches!(weight, FontWeight::Normal | FontWeight::Bold) {
@@ -1129,10 +1202,9 @@ impl Encoder {
             });
         }
         if let Some(spacing) = format.letter_spacing {
-            if !spacing.is_finite() {
-                return Err(RtfError::InvalidParameter("character spacing"));
-            }
-            let _ = write!(self.output, "\\expndtw{}", (spacing * 15.0).round() as i32);
+            let quarters = rtf_measure(spacing, 3.0, "character spacing")?;
+            let twips = rtf_measure(spacing, 15.0, "character spacing")?;
+            let _ = write!(self.output, "\\expnd{quarters}\\expndtw{twips}");
         }
         Ok(())
     }
@@ -1166,7 +1238,8 @@ impl Encoder {
                 return Err(RtfError::InvalidParameter("paragraph metric"));
             }
             if value != 0.0 {
-                let _ = write!(self.output, "\\{word}{}", (value * 15.0).round() as i32);
+                let value = rtf_measure(value, 15.0, "paragraph metric")?;
+                let _ = write!(self.output, "\\{word}{value}");
             }
         }
         if let Some(height) = format.line_height {
@@ -1183,7 +1256,10 @@ impl Encoder {
                     "baseline-to-baseline line stacking",
                 ));
             }
-            let height = (height * 15.0).round() as i32;
+            let height = rtf_measure(height, 15.0, "line height")?;
+            if height <= 0 {
+                return Err(RtfError::InvalidParameter("line height"));
+            }
             let _ = write!(
                 self.output,
                 "\\sl{}\\slmult0",
@@ -1253,6 +1329,14 @@ impl Encoder {
         }
         Ok(())
     }
+}
+
+fn rtf_measure(value: f64, scale: f64, parameter: &'static str) -> Result<i32, RtfError> {
+    let value = (value * scale).round();
+    if !value.is_finite() || value < i32::MIN as f64 || value > i32::MAX as f64 {
+        return Err(RtfError::InvalidParameter(parameter));
+    }
+    Ok(value as i32)
 }
 
 fn escape(text: &str, output: &mut String) {
