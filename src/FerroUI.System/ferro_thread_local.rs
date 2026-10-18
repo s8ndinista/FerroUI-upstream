@@ -63,7 +63,7 @@ pub use std::thread::{AccessError, LocalKey};
 /// ```
 /// use std::cell::{Cell, RefCell};
 ///
-/// ferroui_base::ferro_thread_local! {
+/// ferroui_system::ferro_thread_local! {
 ///     static COUNT: Cell<u32> = const { Cell::new(0) };
 ///     static NAMES: RefCell<Vec<String>> = RefCell::new(Vec::new());
 /// }

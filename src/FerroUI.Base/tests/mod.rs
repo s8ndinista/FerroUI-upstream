@@ -40,7 +40,6 @@ mod class_registration_tests;
 mod compiled_binding_tests_create;
 mod direct_property_tests;
 #[cfg(any(target_os = "linux", target_os = "macos"))]
-mod ferro_thread_local_tests;
 mod ferro_object_tests_add_owner;
 mod ferro_object_tests_attached;
 mod ferro_object_tests_binding;

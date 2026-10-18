@@ -8,8 +8,8 @@ Generated from upstream commit `66b7273b9a2b5ba8416feb4376b9cdc3078b8573`. The s
 
 | | Present | Total | Missing | Waived | Not applicable | Out of scope | Share |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| Members of the projects in scope | 30353 | 36201 | 0 | 5848 | - | - | 100.0% of total less waived |
-| Members of every upstream source project of the extraction | 30353 | 37382 | 0 | 5848 | 1181 | 0 | 81.2% of total |
+| Members of the projects in scope | 30351 | 36188 | 0 | 5837 | - | - | 100.0% of total less waived |
+| Members of every upstream source project of the extraction | 30351 | 37382 | 0 | 5837 | 1194 | 0 | 81.2% of total |
 
 The first row is the headline of the tracking: it leaves out the waived members and everything out of scope. The second row leaves out nothing: every member of every C# project the extraction reads, whether or not the port will ever have it. A member is *present* when an item of the mapped name exists; names are matched, not behaviour.
 
@@ -21,7 +21,7 @@ Files, types and members as present / missing / waived. *n/a* counts the files m
 |---|---|---:|---:|---:|---:|---:|
 | [XamlX](tracking/XamlX.md) | in | 62 / 0 / 0 | 172 / 0 / 5 | 722 / 0 / 156 | 26 (194) | 67.4% |
 | [Avalonia.Android](tracking/Avalonia.Android.md) | in | 58 / 0 / 0 | 86 / 0 / 2 | 394 / 0 / 53 | 0 (0) | 88.1% |
-| [Avalonia.Base](tracking/Avalonia.Base.md) | in | 1248 / 0 / 0 | 1524 / 0 / 135 | 10360 / 0 / 1033 | 51 (620) | 86.2% |
+| [Avalonia.Base](tracking/Avalonia.Base.md) | in | 1247 / 0 / 0 | 1523 / 0 / 134 | 10358 / 0 / 1022 | 52 (633) | 86.2% |
 | [Avalonia.Build.Tasks](tracking/Avalonia.Build.Tasks.md) | in | 6 / 0 / 0 | 6 / 0 / 1 | 7 / 0 / 28 | 4 (9) | 15.9% |
 | [Avalonia.Controls](tracking/Avalonia.Controls.md) | in | 540 / 0 / 0 | 623 / 0 / 7 | 6262 / 0 / 150 | 1 (0) | 97.7% |
 | [Avalonia.Controls.ColorPicker](tracking/Avalonia.Controls.ColorPicker.md) | in | 39 / 0 / 0 | 41 / 0 / 0 | 726 / 0 / 0 | 1 (0) | 100.0% |

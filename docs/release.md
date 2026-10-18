@@ -60,6 +60,8 @@ The first preview added the five other names of section 2.2 as placeholders (37 
 
 `ferroui-themes-winui` (`src/FerroUI.Themes.WinUI`, Controls and themes; the WinUI 3 theme, docs/porting/winui-theme.md) joined on 2026-10-16: 38 crates. It is an optional theme of the facade (`winui-theme`).
 
+`ferroui-system` (`src/FerroUI.System`, Core; the parts of the .NET base class library that FerroUI and its reusable libraries share, docs/porting/reactive.md) joined on 2026-10-18 for `0.3.0-preview.1`: it has no dependency on the framework, `ferroui-base` depends on it and re-exports its items at the paths they had in the base library. It holds `ferro_thread_local!`, so it is published before every crate that declares thread-local variables.
+
 Every crate was checked in the same way: packaged, and built from its package, by `scripts/release/publish.sh --dry-run` (section 8). `cargo publish --dry-run -p <crate>` cannot be used for this before the first release: it resolves the dependencies of the package in the registry, where the other crates of the workspace are not yet. `cargo package --workspace` (Cargo 1.90 and later) resolves them among the packages it has just assembled instead, which is what the dry run uses, and so every crate got the full check, not only the ones without dependencies in the workspace.
 
 ### 1.2 The crates that are never published

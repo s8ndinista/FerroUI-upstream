@@ -1,6 +1,7 @@
 [workspace]
 resolver = "2"
 members = [
+    "src/FerroUI.System",
     "src/FerroUI.Base",
     "src/FerroUI.Controls",
     "src/FerroUI.Controls.ColorPicker",
@@ -100,6 +101,7 @@ categories = ["gui"]
 # that the crates of a release are only ever resolved together (docs/release.md, "Version scheme").
 # `scripts/release/set-version.sh <version>` writes the version above and these keys.
 [workspace.dependencies]
+ferroui-system = { version = "=0.3.0-preview.1", path = "src/FerroUI.System" }
 ferroui-base = { version = "=0.3.0-preview.1", path = "src/FerroUI.Base" }
 ferroui-controls = { version = "=0.3.0-preview.1", path = "src/FerroUI.Controls" }
 ferroui-controls-color-picker = { version = "=0.3.0-preview.1", path = "src/FerroUI.Controls.ColorPicker" }

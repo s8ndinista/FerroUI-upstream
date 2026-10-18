@@ -1,4 +1,4 @@
-use super::Event;
+use crate::events::Event;
 
 /// Notifies clients that a property value of a model object (an object that
 /// is not part of the class hierarchy, such as a view model) has changed.

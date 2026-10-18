@@ -1,4 +1,4 @@
-use crate::utilities::{HandlerList, HandlerSnapshot};
+use super::{HandlerList, HandlerSnapshot};
 use std::rc::Rc;
 
 /// A multicast event of a model object: the equivalent of a managed `event`
