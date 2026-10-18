@@ -9,7 +9,7 @@ use ferrodesign_core::{
     TextAlign,
 };
 use ferroui_base::input::{InputElement, Key};
-use ferroui_base::layout::{HorizontalAlignment, Orientation, VerticalAlignment};
+use ferroui_base::layout::{Orientation, VerticalAlignment};
 use ferroui_base::media::{FontWeight, TextWrapping};
 use ferroui_base::metadata::from_markup_value;
 use ferroui_base::utilities::{Uri, UriKind};
@@ -22,7 +22,7 @@ use ferroui_markup_xaml::FerroXamlLoader;
 use serde_json::json;
 use std::{
     cell::{Cell, RefCell},
-    collections::BTreeSet,
+    collections::{BTreeMap, BTreeSet},
     rc::Rc,
 };
 
@@ -32,6 +32,7 @@ pub struct EditorShell {
     pub editor: Rc<RefCell<Editor>>,
     updating: Cell<bool>,
     expanded: RefCell<BTreeSet<NodeId>>,
+    layer_buttons: RefCell<BTreeMap<NodeId, Ref<Button>>>,
     assets: Cell<bool>,
     inspector_tab: Cell<u8>,
     prototype_targets: RefCell<Vec<NodeId>>,
@@ -68,6 +69,7 @@ impl EditorShell {
             editor,
             updating: Cell::new(false),
             expanded: RefCell::new(expanded),
+            layer_buttons: RefCell::new(BTreeMap::new()),
             assets: Cell::new(false),
             inspector_tab: Cell::new(0),
             prototype_targets: RefCell::new(Vec::new()),
@@ -303,13 +305,13 @@ impl EditorShell {
     fn canvas_event(self: &Rc<Self>, event: CanvasEvent) {
         match event {
             CanvasEvent::Document => self.changed(),
-            CanvasEvent::Selection => self.refresh(),
+            CanvasEvent::Selection => self.refresh_selection(),
             CanvasEvent::Camera => self.sync_zoom(),
             CanvasEvent::Tool => self.sync_tools(),
             CanvasEvent::EditText(id) => {
                 self.editor.borrow_mut().selection = vec![id];
                 self.inspector_tab.set(0);
-                self.refresh();
+                self.refresh_selection();
                 self.field("TextField").focus();
                 self.field("TextField").select_all();
             }
@@ -347,23 +349,95 @@ impl EditorShell {
             "renderer":"FerroUI Vello","pageCount":editor.document.pages.len(),"activePage":editor.active_page,
             "renderedFrames":self.canvas.frames.get(),"visibleNodes":stats.visible_nodes,"culledNodes":stats.culled_nodes,
             "cachedNodes":stats.cached_nodes,"missingImages":stats.missing_images,"unsupportedEffects":stats.unsupported_effects,
+            "invalidNodes":stats.invalid_nodes,
             "canUndo":editor.undo_label().is_some(),"canRedo":editor.redo_label().is_some(),"presentation":self.canvas.presentation.get(),
         }).to_string()
     }
-    pub fn import_document(self: &Rc<Self>, text: &str, _name: &str) -> bool {
+    pub fn notify(&self, message: &str) {
+        self.toast(message);
+    }
+    pub fn import_document(self: &Rc<Self>, text: &str, name: &str) -> bool {
         self.canvas.cancel();
-        let result = self.editor.borrow_mut().load_json(text);
+        let text = text.trim_start_matches('\u{feff}').trim_start();
+        if text.starts_with("data:image/") {
+            return self.import_image(text, name);
+        }
+        let is_svg = text.starts_with('<');
+        let result = if is_svg {
+            self.editor.borrow_mut().import_svg(text, name).map(|_| ())
+        } else {
+            self.editor.borrow_mut().load_json(text)
+        };
         match result {
             Ok(_) => {
                 self.expanded.borrow_mut().clear();
-                self.canvas.reset_fit();
+                if !is_svg {
+                    self.canvas.reset_fit();
+                }
                 self.canvas.invalidate_scene();
                 self.changed();
                 self.close_modal();
+                if is_svg {
+                    self.canvas.zoom_to_selection();
+                }
                 true
             }
             Err(error) => {
                 self.toast(&format!("Could not open design: {error}"));
+                false
+            }
+        }
+    }
+    fn import_image(self: &Rc<Self>, href: &str, name: &str) -> bool {
+        let mime = href.split_once(';').map(|(mime, _)| mime).unwrap_or("");
+        if !matches!(
+            mime,
+            "data:image/png" | "data:image/jpeg" | "data:image/gif" | "data:image/bmp"
+        ) {
+            self.toast("Choose a PNG, JPEG, GIF, or BMP image.");
+            return false;
+        }
+        let (width, height) = match self.canvas.register_image_data(href) {
+            Ok(size) => size,
+            Err(error) => {
+                self.toast(&format!("Could not decode image: {error}"));
+                return false;
+            }
+        };
+        if !width.is_finite() || !height.is_finite() || width <= 0.0 || height <= 0.0 {
+            self.toast("The image has invalid dimensions.");
+            return false;
+        }
+        let view = self.canvas.viewport.get();
+        let center = view.screen_to_world(Point::new(view.width / 2.0, view.height / 2.0));
+        let mut node = Node::new(
+            NodeKind::Rectangle,
+            name,
+            center.x - width / 2.0,
+            center.y - height / 2.0,
+            width,
+            height,
+        );
+        let mut fill = Fill::solid(Color::WHITE);
+        fill.paint = Paint::Image {
+            href: href.to_owned(),
+            scale: ferrodesign_core::ImageScale::Fill,
+        };
+        node.fills = vec![fill];
+        let result = {
+            let mut editor = self.editor.borrow_mut();
+            let parent = editor.active_page;
+            editor.insert_node(parent, node)
+        };
+        match result {
+            Ok(_) => {
+                self.changed();
+                self.close_modal();
+                self.canvas.zoom_to_selection();
+                true
+            }
+            Err(error) => {
+                self.toast(&format!("Could not place image: {error}"));
                 false
             }
         }
@@ -414,6 +488,19 @@ impl EditorShell {
         self.refresh_inspector();
         self.updating.set(false);
     }
+    fn refresh_selection(&self) {
+        if self.updating.replace(true) {
+            return;
+        }
+        // Selection does not change the layer tree. Reuse native control rows so
+        // clicking artwork never recreates every page, icon and layer control.
+        let selection = self.editor.borrow().selection.clone();
+        for (id, button) in self.layer_buttons.borrow().iter() {
+            button.classes().set("active", selection.contains(id));
+        }
+        self.refresh_inspector();
+        self.updating.set(false);
+    }
     fn refresh_pages(self: &Rc<Self>) {
         let host = self.control::<StackPanel>("PagesHost");
         host.children().clear();
@@ -448,6 +535,7 @@ impl EditorShell {
     }
     fn refresh_layers(self: &Rc<Self>) {
         let host = self.control::<StackPanel>("LayersHost");
+        self.layer_buttons.borrow_mut().clear();
         host.children().clear();
         self.text(
             "LeftTitle",
@@ -603,12 +691,13 @@ impl EditorShell {
                     s.changed();
                 } else {
                     s.editor.borrow_mut().selection = vec![id];
-                    s.refresh();
+                    s.refresh_selection();
                     s.canvas.invalidate_visual();
                 }
                 s.canvas.focus();
             }
         });
+        self.layer_buttons.borrow_mut().insert(id, button.clone());
         grid.children().add(button);
         let eye = Button::new();
         eye.set_padding(Thickness::uniform(5.0));
@@ -700,7 +789,7 @@ impl EditorShell {
         });
         set("FillField", fill.hex().trim_start_matches('#').to_string());
         self.button("FillSwatch")
-            .set_background(Some(icons::brush(&fill.hex())));
+            .set_background(Some(icons::brush(&xaml_color(fill))));
         set(
             "StrokeField",
             node.and_then(|n| n.strokes.first())
@@ -937,7 +1026,7 @@ impl EditorShell {
                 self.close_modal();
                 return true;
             }
-            "layers" | "assets" => {
+            "file" | "layers" | "assets" => {
                 self.assets.set(command == "assets");
                 self.refresh_layers();
                 return true;
@@ -1115,6 +1204,21 @@ impl EditorShell {
                 platform::pick_file();
                 #[cfg(not(target_os = "emscripten"))]
                 self.import_dialog();
+                return true;
+            }
+            "place-image" => {
+                #[cfg(target_os = "emscripten")]
+                platform::pick_image();
+                #[cfg(not(target_os = "emscripten"))]
+                self.import_dialog();
+                return true;
+            }
+            "styles" => {
+                self.styles_dialog();
+                return true;
+            }
+            "create-fill-style" | "create-text-style" | "create-effect-style" => {
+                self.create_style(command);
                 return true;
             }
             "import-json" => {
@@ -1437,7 +1541,7 @@ impl EditorShell {
         self.modal(title, description);
         let host = self.control::<StackPanel>("ModalContent");
         let search = TextBox::new();
-        search.set_watermark(Some("Search actions…"));
+        search.set_placeholder_text(Some("Search actions…"));
         host.children().add(search.clone());
         let rows = StackPanel::new();
         rows.set_spacing(3.0);
@@ -1469,7 +1573,10 @@ impl EditorShell {
         search.focus();
     }
     fn import_dialog(self: &Rc<Self>) {
-        self.modal("Import design", "Paste the JSON from a FerroDesign file.");
+        self.modal(
+            "Import design",
+            "Paste a FerroDesign JSON document, SVG markup, or an embedded raster image data URI.",
+        );
         let text = TextBox::new();
         text.set_accepts_return(true);
         text.set_min_height(300.0);
@@ -1591,6 +1698,111 @@ impl EditorShell {
             .add(button);
     }
 
+    fn styles_dialog(self: &Rc<Self>) {
+        self.modal(
+            "Local styles",
+            "Apply a reusable fill, text, or effect style to the current selection.",
+        );
+        let styles: Vec<_> = self
+            .editor
+            .borrow()
+            .document
+            .styles
+            .values()
+            .cloned()
+            .collect();
+        let host = self.control::<StackPanel>("ModalContent");
+        for style in styles {
+            let kind = match &style.value {
+                core::StyleValue::Fill { .. } => "Fill",
+                core::StyleValue::Text { .. } => "Text",
+                core::StyleValue::Effect { .. } => "Effects",
+                core::StyleValue::Grid { .. } => "Grid",
+            };
+            let button = Button::new();
+            button.classes().add("layer");
+            button.set_content(Some(Rc::new(format!("{}  ·  {}", style.name, kind))));
+            let id = style.id;
+            let weak = Rc::downgrade(self);
+            button.click(move |_, _| {
+                if let Some(s) = weak.upgrade() {
+                    let mut editor = s.editor.borrow_mut();
+                    let selection = editor.selection.clone();
+                    if selection.is_empty() {
+                        drop(editor);
+                        s.toast("Select artwork before applying a style.");
+                        return;
+                    }
+                    editor.begin_transaction("Apply local style");
+                    let mut applied = false;
+                    for node in selection {
+                        applied |= editor.apply_style(node, id);
+                    }
+                    editor.commit_transaction();
+                    drop(editor);
+                    if applied {
+                        s.changed();
+                        s.close_modal();
+                    } else {
+                        s.toast("This style type has no visual application control yet.");
+                    }
+                }
+            });
+            host.children().add(button);
+        }
+        self.modal_button("Create fill style", "create-fill-style");
+        self.modal_button("Create text style", "create-text-style");
+        self.modal_button("Create effect style", "create-effect-style");
+    }
+    fn create_style(self: &Rc<Self>, command: &str) {
+        let node = {
+            let editor = self.editor.borrow();
+            editor
+                .selection
+                .first()
+                .and_then(|id| editor.document.nodes.get(id))
+                .cloned()
+        };
+        let Some(node) = node else {
+            self.toast("Select a layer to create a style from its properties.");
+            return;
+        };
+        let value = match command {
+            "create-text-style" => core::StyleValue::Text {
+                family: node.font_family,
+                size: node.font_size,
+                weight: node.font_weight,
+                line_height: node.line_height,
+                letter_spacing: node.letter_spacing,
+            },
+            "create-effect-style" => core::StyleValue::Effect {
+                effects: node.effects,
+            },
+            _ => core::StyleValue::Fill { fills: node.fills },
+        };
+        let mut editor = self.editor.borrow_mut();
+        editor.begin_transaction("Create local style");
+        let id = editor.transact("Create local style", |doc| {
+            let id = doc.allocate_id();
+            doc.styles.insert(
+                id,
+                core::Style {
+                    id,
+                    name: node.name,
+                    description: String::new(),
+                    value,
+                },
+            );
+            id
+        });
+        for node in editor.selection.clone() {
+            editor.apply_style(node, id);
+        }
+        editor.commit_transaction();
+        drop(editor);
+        self.changed();
+        self.styles_dialog();
+    }
     fn variables_dialog(self: &Rc<Self>) {
         let editor = self.editor.borrow();
         let value = serde_json::to_string_pretty(&editor.document.variables).unwrap_or_default();
@@ -1599,7 +1811,7 @@ impl EditorShell {
         self.modal("Local variables","Edit the variable collection and switch its active mode. Bindings are applied to the document when saved.");
         let mode_field = TextBox::new();
         mode_field.set_text(Some(&mode));
-        mode_field.set_watermark(Some("Mode"));
+        mode_field.set_placeholder_text(Some("Mode"));
         let text = TextBox::new();
         text.set_accepts_return(true);
         text.set_min_height(320.0);
@@ -1627,6 +1839,7 @@ impl EditorShell {
                                 doc.variables = candidate.variables;
                                 doc.variable_mode = candidate.variable_mode;
                                 doc.apply_variables();
+                                doc.layout_all();
                             });
                             drop(editor);
                             s.close_modal();
@@ -1643,6 +1856,7 @@ impl EditorShell {
         self.control::<StackPanel>("ModalActions")
             .children()
             .add(button);
+        self.modal_button("Local styles", "styles");
     }
 
     fn comment_dialog(self: &Rc<Self>, position: Point) {
@@ -1651,7 +1865,7 @@ impl EditorShell {
         text.set_accepts_return(true);
         text.set_min_height(120.0);
         text.set_text_wrapping(TextWrapping::Wrap);
-        text.set_watermark(Some("Leave a comment…"));
+        text.set_placeholder_text(Some("Leave a comment…"));
         self.control::<StackPanel>("ModalContent")
             .children()
             .add(text.clone());
@@ -1682,7 +1896,6 @@ impl EditorShell {
         self.control::<StackPanel>("ModalActions")
             .children()
             .add(button);
-        text.focus();
     }
     fn comments_dialog(self: &Rc<Self>) {
         self.modal("Comments", "Review comments saved in this file.");
@@ -1703,7 +1916,7 @@ impl EditorShell {
             for message in comment.messages {
                 let author = TextBlock::new();
                 author.set_text(Some(&message.author));
-                author.set_font_weight(FontWeight::SEMI_BOLD);
+                author.set_font_weight(FontWeight::SemiBold);
                 panel.children().add(author);
                 let body = TextBlock::new();
                 body.set_text(Some(&message.body));
@@ -1986,13 +2199,15 @@ fn xaml_node(doc: &core::Document, id: NodeId, depth: usize, result: &mut String
 }
 const FILE_ACTIONS: &[(&str, &str)] = &[
     ("New design", "new"),
-    ("Open design…  Ctrl+O", "open"),
-    ("Import JSON…", "import-json"),
+    ("Open design or SVG…  Ctrl+O", "open"),
+    ("Place image…", "place-image"),
+    ("Import JSON or SVG…", "import-json"),
     ("Save editable design…  Ctrl+S", "save"),
     ("Export SVG", "export-svg"),
     ("Export PNG", "export-png"),
     ("Export FerroUI XAML", "export-xaml"),
-    ("Local variables and styles", "variables"),
+    ("Local variables", "variables"),
+    ("Local styles", "styles"),
     ("Local components", "assets"),
     ("Comments", "comments"),
     ("Present prototype", "present"),
@@ -2044,6 +2259,7 @@ const ACTIONS: &[(&str, &str)] = &[
     ("Pen  P", "pen"),
     ("Pencil  Shift+P", "pencil"),
     ("Text  T", "text"),
+    ("Place image…", "place-image"),
     ("Hand  H", "hand"),
     ("Comment  C", "comment"),
     ("Section  Shift+F", "section"),
@@ -2062,10 +2278,11 @@ const ACTIONS: &[(&str, &str)] = &[
     ("Create component", "component"),
     ("Create instance", "instance"),
     ("Update instances", "sync-instances"),
-    ("Local variables and styles", "variables"),
+    ("Local variables", "variables"),
+    ("Local styles", "styles"),
     ("Toggle grid", "grid"),
     ("Toggle rulers", "rulers"),
-    ("Toggle pixel snapping", "snapping"),
+    ("Toggle pixel and object snapping", "snapping"),
     ("Zoom to fit  1", "fit"),
     ("Zoom to selection  2", "fit-selection"),
     ("Layer data…", "advanced"),

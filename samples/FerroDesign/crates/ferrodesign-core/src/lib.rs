@@ -1,18 +1,22 @@
 //! Renderer-independent vector-design document and editing engine.
 //! Logical positions are parent-relative; rotation is about each node's center.
-mod geometry;
-mod model;
-mod layout;
-mod spatial;
 mod editor;
-mod svg;
+mod geometry;
+mod layout;
+mod model;
 mod seed;
-pub use geometry::*;
-pub use model::*;
-pub use layout::*;
-pub use spatial::*;
+mod spatial;
+mod svg;
+mod svg_import;
 pub use editor::*;
-pub use svg::*;
+pub use geometry::*;
+pub use layout::*;
+pub use model::*;
 pub use seed::*;
-#[cfg(test)] mod tests;
-
+pub use spatial::*;
+pub use svg::*;
+pub use svg_import::*;
+#[cfg(test)]
+mod svg_import_tests;
+#[cfg(test)]
+mod tests;

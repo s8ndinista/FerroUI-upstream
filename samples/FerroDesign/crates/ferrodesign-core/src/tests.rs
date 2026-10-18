@@ -738,3 +738,75 @@ fn seed_is_fully_editable_serializable_and_prototyped() {
     assert!(svg.contains("TOTAL BALANCE"));
     assert!(svg.contains("linearGradient"));
 }
+
+#[test]
+fn incremental_scene_update_matches_rebuild_when_clipped_subtree_moves_into_view() {
+    let mut document = Document::new("Clipped subtree");
+    let page = document.pages[0].id;
+    let outer = document
+        .insert_node(
+            page,
+            Node::new(NodeKind::Frame, "Outer", 100.0, 100.0, 120.0, 120.0),
+        )
+        .unwrap();
+    document.nodes.get_mut(&outer).unwrap().rotation = 21.0;
+    let inner = document
+        .insert_node(
+            outer,
+            Node::new(NodeKind::Frame, "Initially outside", 200.0, 0.0, 70.0, 70.0),
+        )
+        .unwrap();
+    let child = rectangle(&mut document, inner, 10.0, 10.0, 40.0, 40.0);
+    let mut editor = Editor::new(document);
+    assert!(editor.scene.spatial.bounds(child).is_none());
+    editor.begin_transaction("Move clipped frame");
+    for x in [90.0, 55.0, 20.0, -90.0, 35.0] {
+        editor.document.nodes.get_mut(&inner).unwrap().x = x;
+        editor.refresh();
+        let mut rebuilt = SceneIndex::default();
+        rebuilt.rebuild(&editor.document, page);
+        assert_eq!(editor.scene.draw_order, rebuilt.draw_order);
+        for id in [outer, inner, child] {
+            assert_eq!(
+                editor.scene.transforms.get(&id),
+                rebuilt.transforms.get(&id)
+            );
+            assert_eq!(editor.scene.spatial.bounds(id), rebuilt.spatial.bounds(id));
+        }
+        let point = editor
+            .document
+            .world_transform(child)
+            .unwrap()
+            .apply(Point::new(20.0, 20.0));
+        assert_eq!(
+            editor.hit_test(point, 0.0),
+            rebuilt.hit_test(&editor.document, point, 0.0, false)
+        );
+    }
+    editor.commit_transaction();
+    assert!(editor.scene.spatial.bounds(child).is_some());
+    editor.undo();
+    assert!(editor.scene.spatial.bounds(child).is_none());
+}
+
+#[test]
+fn top_level_reorder_updates_hit_test_and_undo_restores_stacking() {
+    let mut editor = Editor::default();
+    let back = editor.add_node(NodeKind::Rectangle, 0.0, 0.0, 100.0, 100.0);
+    let front = editor.add_node(NodeKind::Rectangle, 0.0, 0.0, 100.0, 100.0);
+    let point = Point::new(50.0, 50.0);
+    assert_eq!(editor.hit_test(point, 0.0), Some(front));
+    editor.selection = vec![back];
+    editor.arrange_selection(Arrange::BringToFront);
+    assert_eq!(editor.hit_test(point, 0.0), Some(back));
+    editor.undo();
+    assert_eq!(editor.hit_test(point, 0.0), Some(front));
+}
+
+#[test]
+fn oversized_corner_radius_uses_the_same_clamp_as_rendered_geometry() {
+    let node = Node::new(NodeKind::Rectangle, "Rounded", 0.0, 0.0, 50.0, 50.0).with_radius(200.0);
+    assert!(node.hit_test_local(Point::new(25.0, 25.0), 0.0));
+    assert!(!node.hit_test_local(Point::new(1.0, 1.0), 0.0));
+    assert!(node.hit_test_local(Point::new(25.0, 0.0), 0.0));
+}

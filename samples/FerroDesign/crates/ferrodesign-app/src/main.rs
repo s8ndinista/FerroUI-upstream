@@ -42,6 +42,16 @@ pub fn import_document(text: &str) -> bool {
     ferrodesign_app::app::with_shell(|s| s.import_document(text, "Imported design"))
         .unwrap_or(false)
 }
+#[cfg(target_os = "emscripten")]
+#[wasm_bindgen(js_name = ferroDesignImportFile)]
+pub fn import_file(text: &str, name: &str) -> bool {
+    ferrodesign_app::app::with_shell(|s| s.import_document(text, name)).unwrap_or(false)
+}
+#[cfg(target_os = "emscripten")]
+#[wasm_bindgen(js_name = ferroDesignHostError)]
+pub fn host_error(message: &str) {
+    ferrodesign_app::app::with_shell(|s| s.notify(message));
+}
 #[cfg(not(target_os = "emscripten"))]
 fn main() {
     std::process::exit(ferrodesign_app::desktop::run());

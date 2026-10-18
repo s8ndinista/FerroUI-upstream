@@ -31,6 +31,13 @@ codegen-units = 16
 opt-level = 1
 codegen-units = 16
 
+[profile.browser.package.ferrodesign-app]
+codegen-units = 1
+
+[profile.browser.package.ferroui-themes-fluent]
+# Keep the generated theme tables in a single compilation unit.
+codegen-units = 1
+
 [profile.browser.package.ferroui-vello]
 opt-level = 3
 

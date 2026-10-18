@@ -98,6 +98,8 @@ enum Gesture {
     Move {
         start: Point,
         nodes: Vec<Node>,
+        bounds: Option<Rect>,
+        exclude: Vec<NodeId>,
         moved: bool,
     },
     Resize {
@@ -142,6 +144,7 @@ pub struct DesignCanvas {
     pub overlays: RefCell<Vec<(NodeId, Point)>>,
     pub frames: Cell<u64>,
     pub snap: Cell<bool>,
+    snap_guides: Cell<(Option<f64>, Option<f64>)>,
     pen_node: Cell<Option<NodeId>>,
 }
 ferro_class!(DesignCanvas:Control);
@@ -166,6 +169,7 @@ impl DesignCanvas {
             overlays: RefCell::new(Vec::new()),
             frames: Cell::new(0),
             snap: Cell::new(true),
+            snap_guides: Cell::new((None, None)),
             pen_node: Cell::new(None),
         });
         this.set_focusable(true);
@@ -218,6 +222,9 @@ impl DesignCanvas {
     pub fn render_stats(&self) -> RenderStats {
         self.painter.borrow().stats()
     }
+    pub fn register_image_data(&self, href: &str) -> std::io::Result<(f64, f64)> {
+        self.painter.borrow_mut().register_image_data(href)
+    }
     pub fn export_png(&self) -> Result<Vec<u8>, String> {
         use ferroui_base::media::imaging::{
             BitmapEncoderOptions, PngBitmapEncoderOptions, RenderTargetBitmap,
@@ -233,10 +240,10 @@ impl DesignCanvas {
         } else {
             editor.root_selection()
         };
-        let bounds = roots
-            .iter()
-            .filter_map(|&id| editor.document.world_bounds(id))
-            .reduce(|a, b| a.union(b))
+        let bounds = self
+            .painter
+            .borrow_mut()
+            .rendered_bounds(&editor.document, &roots)
             .ok_or_else(|| "There are no layers to export.".to_string())?;
         let width = bounds.width.ceil().max(1.0);
         let height = bounds.height.ceil().max(1.0);
@@ -268,8 +275,11 @@ impl DesignCanvas {
         self.invalidate_visual();
     }
     pub fn finish_pen(&self) {
-        if self.pen_node.take().is_some() {
-            self.editor.borrow_mut().commit_transaction();
+        if let Some(id) = self.pen_node.take() {
+            let mut editor = self.editor.borrow_mut();
+            normalize_drawn_vector(&mut editor, id);
+            editor.commit_transaction();
+            drop(editor);
             self.invalidate_visual();
             self.emit(CanvasEvent::Document);
         }
@@ -278,6 +288,7 @@ impl DesignCanvas {
         self.editor.borrow_mut().cancel_transaction();
         self.pen_node.set(None);
         *self.gesture.borrow_mut() = Gesture::None;
+        self.snap_guides.set((None, None));
         self.space.set(false);
         self.invalidate_visual();
         self.emit(CanvasEvent::Document);
@@ -452,8 +463,12 @@ impl InputElementImpl for DesignCanvas {
                         this.emit(CanvasEvent::EditText(id));
                         return;
                     }
-                    let nodes = editor
-                        .root_selection()
+                    let exclude = editor.root_selection();
+                    let bounds = exclude
+                        .iter()
+                        .filter_map(|&id| editor.document.world_bounds(id))
+                        .reduce(|a, b| a.union(b));
+                    let nodes = exclude
                         .iter()
                         .filter_map(|id| editor.document.nodes.get(id).cloned())
                         .collect();
@@ -461,6 +476,8 @@ impl InputElementImpl for DesignCanvas {
                     *this.gesture.borrow_mut() = Gesture::Move {
                         start: world,
                         nodes,
+                        bounds,
+                        exclude,
                         moved: false,
                     };
                     drop(editor);
@@ -572,6 +589,8 @@ impl InputElementImpl for DesignCanvas {
             Gesture::Move {
                 start,
                 nodes,
+                bounds,
+                exclude,
                 moved,
             } => {
                 let mut delta = world - *start;
@@ -591,6 +610,32 @@ impl InputElementImpl for DesignCanvas {
                     delta.y = delta.y.round();
                 }
                 let mut editor = this.editor.borrow_mut();
+                this.snap_guides.set((None, None));
+                if this.snap.get() {
+                    if let Some(bounds) = bounds {
+                        let proposed = Rect::new(
+                            bounds.x + delta.x,
+                            bounds.y + delta.y,
+                            bounds.width,
+                            bounds.height,
+                        );
+                        let snap =
+                            editor.smart_snap(proposed, 5.0 / this.viewport.get().zoom, exclude);
+                        // An axis-constrained drag must stay on its original axis.
+                        let snap_x = !shift || delta.x != 0.0;
+                        let snap_y = !shift || delta.y != 0.0;
+                        if snap_x {
+                            delta.x += snap.delta.x;
+                        }
+                        if snap_y {
+                            delta.y += snap.delta.y;
+                        }
+                        this.snap_guides.set((
+                            if snap_x { snap.vertical_guide } else { None },
+                            if snap_y { snap.horizontal_guide } else { None },
+                        ));
+                    }
+                }
                 for original in nodes.iter() {
                     let parent = original
                         .parent
@@ -728,6 +773,7 @@ impl InputElementImpl for DesignCanvas {
     fn on_pointer_released(this: &Self, e: &PointerReleasedEventArgs) {
         Self::parent_on_pointer_released(this, e);
         e.pointer().capture(None);
+        this.snap_guides.set((None, None));
         let gesture = std::mem::replace(&mut *this.gesture.borrow_mut(), Gesture::None);
         match gesture {
             Gesture::Marquee {
@@ -743,11 +789,18 @@ impl InputElementImpl for DesignCanvas {
             Gesture::Move { moved: false, .. } => {
                 this.editor.borrow_mut().cancel_transaction();
             }
+            Gesture::Pencil { id, .. } => {
+                let mut editor = this.editor.borrow_mut();
+                normalize_drawn_vector(&mut editor, id);
+                editor.commit_transaction();
+                drop(editor);
+                this.tool.set(Tool::Select);
+                this.emit(CanvasEvent::Document);
+            }
             Gesture::Move { .. }
             | Gesture::Resize { .. }
             | Gesture::Rotate { .. }
-            | Gesture::Draw { .. }
-            | Gesture::Pencil { .. } => {
+            | Gesture::Draw { .. } => {
                 this.editor.borrow_mut().commit_transaction();
                 this.tool.set(Tool::Select);
                 this.emit(CanvasEvent::Document);
@@ -797,6 +850,7 @@ impl InputElementImpl for DesignCanvas {
             .key_modifiers
             .intersects(KeyModifiers::CONTROL | KeyModifiers::META);
         let shift = e.key_modifiers.contains(KeyModifiers::SHIFT);
+        let alt = e.key_modifiers.contains(KeyModifiers::ALT);
         let action = if command {
             match e.key {
                 Key::Z => Some(if shift { "redo" } else { "undo" }),
@@ -806,10 +860,22 @@ impl InputElementImpl for DesignCanvas {
                 Key::V => Some("paste"),
                 Key::D => Some("duplicate"),
                 Key::A => Some("select-all"),
-                Key::G => Some(if shift { "ungroup" } else { "group" }),
+                Key::G => Some(if alt {
+                    "frame-selection"
+                } else if shift {
+                    "ungroup"
+                } else {
+                    "group"
+                }),
                 Key::S => Some("save"),
                 Key::O => Some("open"),
-                Key::K => Some("actions"),
+                Key::K => Some(if shift {
+                    "place-image"
+                } else if alt {
+                    "component"
+                } else {
+                    "actions"
+                }),
                 _ => None,
             }
         } else {
@@ -824,6 +890,8 @@ impl InputElementImpl for DesignCanvas {
                 Key::T => Some("text"),
                 Key::H => Some("hand"),
                 Key::C => Some("comment"),
+                Key::A if shift => Some("auto-layout"),
+                Key::S if shift => Some("section"),
                 Key::D1 => Some("fit"),
                 Key::D2 => Some("fit-selection"),
                 Key::K => Some("actions"),
@@ -857,6 +925,45 @@ impl InputElementImpl for DesignCanvas {
             e.set_handled(true);
         }
     }
+}
+fn normalize_drawn_vector(editor: &mut Editor, id: NodeId) {
+    let Some(node) = editor.document.nodes.get_mut(&id) else {
+        return;
+    };
+    let Some(bounds) = node.path.bounds() else {
+        return;
+    };
+    // Freehand strokes and pen vertices may extend left/up from their first
+    // point. Normalize once when committing so handles and spatial hits cover
+    // the complete vector without moving the artwork in document space.
+    node.x += bounds.x;
+    node.y += bounds.y;
+    node.width = bounds.width.max(1.0);
+    node.height = bounds.height.max(1.0);
+    for segment in &mut node.path.segments {
+        let translate = |point: &mut Point| {
+            point.x -= bounds.x;
+            point.y -= bounds.y;
+        };
+        match segment {
+            PathSegment::MoveTo { point } | PathSegment::LineTo { point } => translate(point),
+            PathSegment::QuadraticTo { control, point } => {
+                translate(control);
+                translate(point);
+            }
+            PathSegment::CubicTo {
+                control1,
+                control2,
+                point,
+            } => {
+                translate(control1);
+                translate(control2);
+                translate(point);
+            }
+            PathSegment::Close => {}
+        }
+    }
+    editor.refresh();
 }
 fn ui(p: Point) -> UiPoint {
     UiPoint::new(p.x, p.y)
@@ -1007,6 +1114,18 @@ impl VisualImpl for DesignCanvas {
             return;
         }
         let blue = pen(0xFF0D99FF, 1.0);
+        let (vertical, horizontal) = this.snap_guides.get();
+        if vertical.is_some() || horizontal.is_some() {
+            let guide = pen(0xFFDD498B, 1.0);
+            if let Some(x) = vertical {
+                let x = v.world_to_screen(Point::new(x, 0.0)).x;
+                ctx.draw_line(&guide, UiPoint::new(x, 0.0), UiPoint::new(x, v.height));
+            }
+            if let Some(y) = horizontal {
+                let y = v.world_to_screen(Point::new(0.0, y)).y;
+                ctx.draw_line(&guide, UiPoint::new(0.0, y), UiPoint::new(v.width, y));
+            }
+        }
         for &id in &roots {
             if let Some(n) = doc.nodes.get(&id) {
                 if n.kind.is_container() && n.visible {

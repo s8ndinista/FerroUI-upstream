@@ -84,7 +84,7 @@
             <TextBlock Name="LeftTitle" Text="Layers" Classes="heading" VerticalAlignment="Center"/>
             <Button Name="CollapseLayersButton" Grid.Column="1" Content="⌃" ToolTip.Tip="Expand or collapse all"/>
           </Grid>
-          <TextBox Name="LayerSearch" Watermark="Search layers…"/>
+          <TextBox Name="LayerSearch" PlaceholderText="Search layers…"/>
         </StackPanel>
         <ScrollViewer Grid.Row="3" HorizontalScrollBarVisibility="Disabled">
           <StackPanel Name="LayersHost" Margin="8,0,8,12" Spacing="1"/>
@@ -117,7 +117,7 @@
               <Button Name="VisibleButton" Grid.Column="1" ToolTip.Tip="Show or hide layer"/>
               <Button Name="LockedButton" Grid.Column="2" ToolTip.Tip="Lock or unlock layer"/>
             </Grid>
-            <TextBox Name="NameField" Watermark="Layer name"/>
+            <TextBox Name="NameField" PlaceholderText="Layer name"/>
             <StackPanel Name="DesignInspector" Spacing="8">
               <UniformGrid Columns="6">
                 <Button Name="AlignLeftButton" ToolTip.Tip="Align left"/>

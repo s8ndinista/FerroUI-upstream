@@ -11,12 +11,21 @@ export function ferroDownload(name, text, mime) {
   setTimeout(()=>URL.revokeObjectURL(url),10000);
 }
 export function ferroCopy(text) { navigator.clipboard?.writeText(text).catch(()=>{}); }
-export function ferroPick() {
-  const picker=document.createElement('input'); picker.type='file'; picker.accept='.ferrodesign,.json';
+export function ferroPick(accept) {
+  const picker=document.createElement('input'); picker.type='file'; picker.accept=accept;
   picker.onchange=async()=>{const f=picker.files?.[0]; if(!f)return;
-    const api=globalThis.ferroDesign; const text=await f.text();
-    if(api?.ferroDesignImportJson) api.ferroDesignImportJson(text);
-    else if(api?.importDocument) api.importDocument(text,f.name);
+    const api=globalThis.ferroDesign;
+    try {
+      if(f.size>48*1024*1024) throw new Error('The selected file exceeds 48 MiB.');
+      const raster=/^image\/(png|jpeg|gif|bmp)$/i.test(f.type);
+      const text=raster ? await new Promise((resolve,reject)=>{
+        const reader=new FileReader(); reader.onload=()=>resolve(reader.result);
+        reader.onerror=()=>reject(new Error('The image could not be read.'));
+        reader.readAsDataURL(f);
+      }) : await f.text();
+      if(api?.ferroDesignImportFile) api.ferroDesignImportFile(text,f.name);
+      else if(api?.ferroDesignImportJson) api.ferroDesignImportJson(text);
+    } catch(error) { api?.ferroDesignHostError?.(String(error.message||error)); }
   }; picker.click();
 }
 export function ferroBytes(name, bytes, mime) {
@@ -35,7 +44,7 @@ export function ferroBytes(name, bytes, mime) {
         #[wasm_bindgen(js_name=ferroCopy)]
         pub fn copy(text: &str);
         #[wasm_bindgen(js_name=ferroPick)]
-        pub fn pick();
+        pub fn pick(accept: &str);
         #[wasm_bindgen(js_name=ferroBytes)]
         pub fn bytes(name: &str, bytes: &[u8], mime: &str);
     }
@@ -102,9 +111,15 @@ pub fn copy(text: &str) {
 }
 pub fn pick_file() {
     #[cfg(target_os = "emscripten")]
-    browser::pick();
+    browser::pick(".ferrodesign,.json,.svg,image/png,image/jpeg,image/gif,image/bmp");
     #[cfg(not(target_os = "emscripten"))]
     eprintln!("Use the Import JSON dialog to open a design on desktop.");
+}
+pub fn pick_image() {
+    #[cfg(target_os = "emscripten")]
+    browser::pick("image/png,image/jpeg,image/gif,image/bmp");
+    #[cfg(not(target_os = "emscripten"))]
+    eprintln!("Paste a raster image data URI in the Import dialog to place an image.");
 }
 pub fn download_bytes(name: &str, bytes: &[u8], mime: &str) -> bool {
     #[cfg(target_os = "emscripten")]

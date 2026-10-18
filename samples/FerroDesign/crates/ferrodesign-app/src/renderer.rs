@@ -125,6 +125,7 @@ struct PreparedNode {
     opacity: f64,
     blend: BlendMode,
     clip: Option<RoundedRect>,
+    child_blur_outset: f64,
     local_subtree_bounds: Rect,
     world_subtree_bounds: Rect,
     end: usize,
@@ -190,6 +191,19 @@ impl ScenePainter {
         Ok(())
     }
 
+    /// Decode an embedded image with FerroUI, retain the bitmap and return its
+    /// logical size for an image layer. No browser canvas rasterizer is involved.
+    pub fn register_image_data(&mut self, href: &str) -> io::Result<(f64, f64)> {
+        let bytes = decode_image_data_url(href)?;
+        let bitmap = Bitmap::from_stream(&mut Cursor::new(bytes))?;
+        let size = bitmap.size();
+        self.images
+            .insert(href.to_owned(), ImageAsset::Ready(Rc::new(bitmap)));
+        self.asset_revision = self.asset_revision.wrapping_add(1);
+        self.invalidate();
+        Ok((size.width, size.height))
+    }
+
     pub fn image_errors(&self) -> impl Iterator<Item = (&str, &str)> {
         self.images.iter().filter_map(|(href, asset)| match asset {
             ImageAsset::Error(error) => Some((href.as_str(), error.as_str())),
@@ -206,27 +220,7 @@ impl ScenePainter {
         roots: &[NodeId],
         viewport: Rect,
     ) -> RenderStats {
-        let mut signature = DefaultHasher::new();
-        roots.hash(&mut signature);
-        self.asset_revision.hash(&mut signature);
-        document.nodes.len().hash(&mut signature);
-        // Detect a replaced map even if deserialization reset its revision.
-        document
-            .nodes
-            .values()
-            .next()
-            .map(|node| node as *const Node as usize)
-            .hash(&mut signature);
-        let key = (
-            document as *const Document as usize,
-            document.revision,
-            signature.finish(),
-        );
-        let scene_reused = self.scene_key == Some(key);
-        if !scene_reused {
-            self.prepare(document, roots);
-            self.scene_key = Some(key);
-        }
+        let scene_reused = self.ensure_prepared(document, roots);
         self.stats = RenderStats {
             invalid_nodes: self.prepare_invalid_nodes,
             ..RenderStats::default()
@@ -244,6 +238,43 @@ impl ScenePainter {
             }
         }
         self.stats
+    }
+
+    /// Conservative world-space paint bounds, including strokes, effects and
+    /// unclipped child overflow. Use these bounds for raster exports rather
+    /// than the document's selection rectangles. Requires initialized FerroUI
+    /// rendering/font services and reuses the same cache as render().
+    pub fn rendered_bounds(&mut self, document: &Document, roots: &[NodeId]) -> Option<Rect> {
+        self.ensure_prepared(document, roots);
+        self.prepared_roots
+            .iter()
+            .map(|&index| self.prepared[index].world_subtree_bounds)
+            .reduce(|a, b| a.union(b))
+    }
+
+    fn ensure_prepared(&mut self, document: &Document, roots: &[NodeId]) -> bool {
+        let mut signature = DefaultHasher::new();
+        roots.hash(&mut signature);
+        self.asset_revision.hash(&mut signature);
+        document.nodes.len().hash(&mut signature);
+        // Detect a replaced map even if deserialization reset its revision.
+        document
+            .nodes
+            .values()
+            .next()
+            .map(|node| node as *const Node as usize)
+            .hash(&mut signature);
+        let key = (
+            document as *const Document as usize,
+            document.revision,
+            signature.finish(),
+        );
+        let reused = self.scene_key == Some(key);
+        if !reused {
+            self.prepare(document, roots);
+            self.scene_key = Some(key);
+        }
+        reused
     }
 
     fn prepare(&mut self, document: &Document, roots: &[NodeId]) {
@@ -296,10 +327,13 @@ impl ScenePainter {
             .cloned()
             .unwrap_or_else(|| self.empty.as_ref().unwrap().clone());
         self.prepared.push(PreparedNode {
-            local,
+            // An isolated nested root still paints at its document position.
+            // Its ancestors are absent from the drawing-context state stack.
+            local: if depth == 0 { world } else { local },
             opacity: unit(node.opacity),
             blend: node.blend_mode,
             clip: node.clip_content.then(|| rounded_rect(node)),
+            child_blur_outset: blur_outset_world(&node.effects, world),
             local_subtree_bounds: node.local_bounds(),
             world_subtree_bounds: world.transform_rect(node.local_bounds()),
             end: index + 1,
@@ -444,8 +478,11 @@ fn paint_blurs(
             .map(|rect| context.push_rounded_clip(rect))
             .unwrap_or(PushedState::NONE);
         let mut child = index + 1;
+        // A child outside the visible rectangle can still contribute pixels
+        // through an ancestor's layer blur. Keep those source pixels alive.
+        let child_viewport = viewport.inflate(node.child_blur_outset);
         while child < node.end {
-            paint_subtree(context, scene, child, viewport, scene_reused, stats);
+            paint_subtree(context, scene, child, child_viewport, scene_reused, stats);
             child = scene[child].end;
         }
         context.pop(clip);
@@ -1138,8 +1175,18 @@ fn make_text_layout(node: &Node, brush: Rc<dyn IBrush>) -> CachedText {
             ..TextLayoutOptions::default()
         },
     );
-    let extra = node.height - layout.height();
-    let origin = UiPoint::new(
+    let origin = text_origin(
+        node,
+        layout.width_including_trailing_whitespace(),
+        layout.height(),
+        layout.baseline(),
+    );
+    CachedText { layout, origin }
+}
+
+fn text_origin(node: &Node, width: f64, height: f64, baseline: f64) -> UiPoint {
+    let extra = node.height - height;
+    let mut origin = UiPoint::new(
         0.0,
         match node.text_vertical_align {
             TextVerticalAlign::Top => 0.0,
@@ -1147,7 +1194,25 @@ fn make_text_layout(node: &Node, brush: Rc<dyn IBrush>) -> CachedText {
             TextVerticalAlign::Bottom => extra,
         },
     );
-    CachedText { layout, origin }
+    if node.metadata.get("svg_element").map(String::as_str) == Some("text") {
+        let anchor = match node.metadata.get("svg_text_anchor").map(String::as_str) {
+            Some("middle") => 0.5,
+            Some("end") => 1.0,
+            _ => 0.0,
+        };
+        // Import records estimated selection bounds. Preserve the original
+        // SVG anchor and baseline using the actual shaped layout metrics.
+        origin.x += anchor * (node.width - width);
+        if let Some(offset) = node
+            .metadata
+            .get("svg_text_baseline_offset")
+            .and_then(|value| value.parse::<f64>().ok())
+            .filter(|value| value.is_finite())
+        {
+            origin.y += offset - baseline;
+        }
+    }
+    origin
 }
 
 fn typeface(family: &str, weight: u16, italic: bool) -> Typeface {
@@ -1200,6 +1265,16 @@ impl OutlineSink {
         geometry.set_transform(MatrixTransform::with_matrix(self.transform));
         self.group.children().add(geometry);
     }
+
+    fn append_stroke(&self, geometry: &Ref<Geometry>, pen: &dyn IPen) {
+        // get_widened_geometry returns immutable platform geometry whose
+        // Transform setter cannot invalidate its fixed implementation. A
+        // mutable geometry group carries the text-line transform instead.
+        let group = GeometryGroup::new();
+        group.set_fill_rule(ferroui_base::media::FillRule::NonZero);
+        group.children().add(geometry.get_widened_geometry(pen));
+        self.append(group.upcast());
+    }
 }
 
 impl ITextDrawingSink for OutlineSink {
@@ -1215,7 +1290,7 @@ impl ITextDrawingSink for OutlineSink {
     ) {
         let geometry: Ref<Geometry> = RectangleGeometry::with_rect(rect).upcast();
         if let Some(pen) = pen {
-            self.append(geometry.get_widened_geometry(pen.as_ref()));
+            self.append_stroke(&geometry, pen.as_ref());
         }
         if brush.is_some() {
             self.append(geometry);
@@ -1224,7 +1299,7 @@ impl ITextDrawingSink for OutlineSink {
 
     fn draw_line(&mut self, pen: &Rc<dyn IPen>, p1: UiPoint, p2: UiPoint) {
         let geometry = polyline_geometry(&[Point::new(p1.x, p1.y), Point::new(p2.x, p2.y)], false);
-        self.append(geometry.get_widened_geometry(pen.as_ref()));
+        self.append_stroke(&geometry, pen.as_ref());
     }
 
     fn push_transform(&mut self, matrix: Matrix) {
@@ -1528,6 +1603,16 @@ fn subtree_bounds(node: &Node, own: Rect, children: Option<Rect>) -> Rect {
     bounds
 }
 
+fn blur_outset_world(effects: &[Effect], world: Transform) -> f64 {
+    let radius: f64 = effects
+        .iter()
+        .filter(|effect| effect.visible && effect.kind == EffectKind::LayerBlur)
+        .map(|effect| radius(effect.radius) * 3.0)
+        .sum();
+    let scale = (world.a.abs() + world.c.abs()).max(world.b.abs() + world.d.abs());
+    radius * scale
+}
+
 fn union_optional(a: Option<Rect>, b: Option<Rect>) -> Option<Rect> {
     match (a, b) {
         (Some(a), Some(b)) => Some(a.union(b)),
@@ -1657,6 +1742,11 @@ fn visual_fingerprint(node: &Node, children: u64, needs_outline: bool, assets: u
     node.font_family.hash(&mut hash);
     node.font_weight.hash(&mut hash);
     node.text.hash(&mut hash);
+    node.metadata.get("svg_element").hash(&mut hash);
+    node.metadata.get("svg_text_anchor").hash(&mut hash);
+    node.metadata
+        .get("svg_text_baseline_offset")
+        .hash(&mut hash);
     node.italic.hash(&mut hash);
     std::mem::discriminant(&node.text_align).hash(&mut hash);
     std::mem::discriminant(&node.text_vertical_align).hash(&mut hash);
@@ -1870,6 +1960,32 @@ mod tests {
         let child = Rect::new(400.0, 200.0, 40.0, 40.0);
         let bounds = subtree_bounds(&node, node.local_bounds(), Some(child));
         assert!(bounds.intersects(Rect::new(459.0, 210.0, 2.0, 2.0)));
+        let viewport = Rect::new(459.0, 210.0, 2.0, 2.0);
+        assert!(!child.intersects(viewport));
+        assert!(child
+            .intersects(viewport.inflate(blur_outset_world(&node.effects, Transform::IDENTITY,))));
+    }
+
+    #[test]
+    fn imported_svg_text_preserves_anchor_and_baseline_with_real_font_metrics() {
+        let mut node = Node::default();
+        node.kind = NodeKind::Text;
+        node.x = 150.0;
+        node.y = 40.0;
+        node.width = 100.0;
+        node.metadata.insert("svg_element".into(), "text".into());
+        node.metadata
+            .insert("svg_text_anchor".into(), "middle".into());
+        node.metadata
+            .insert("svg_text_baseline_offset".into(), "16".into());
+        let old_fingerprint = visual_fingerprint(&node, 0, false, 0);
+        let origin = text_origin(&node, 80.0, 24.0, 19.0);
+        assert_eq!(node.x + origin.x + 40.0, 200.0);
+        assert_eq!(node.y + origin.y + 19.0, 56.0);
+        node.metadata.insert("svg_text_anchor".into(), "end".into());
+        assert_ne!(old_fingerprint, visual_fingerprint(&node, 0, false, 0));
+        let origin = text_origin(&node, 80.0, 24.0, 19.0);
+        assert_eq!(node.x + origin.x + 80.0, 250.0);
     }
 
     #[test]
