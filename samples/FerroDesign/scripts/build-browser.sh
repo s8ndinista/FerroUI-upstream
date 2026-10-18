@@ -51,6 +51,7 @@ if [ -z "$FERRODESIGN_SKIP_WEBAPP" ]; then
         cd "$FERRODESIGN_BROWSER/webapp"
         npm ci --no-audit --no-fund
         npm run typecheck
+        npm run test:input
         npm run build
     )
 fi

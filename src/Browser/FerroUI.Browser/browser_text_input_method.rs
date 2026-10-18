@@ -201,6 +201,24 @@ impl BrowserTextInputMethod {
         }
     }
 
+    /// Inserts text that arrived without a keydown. The native client's
+    /// selection is authoritative: the hidden input may still contain the
+    /// surrounding text from before a native selection change.
+    pub fn on_text_input(&self, data: Option<&str>) -> bool {
+        if self.is_composing() || self.client().is_none() {
+            return false;
+        }
+        let Some(data) = data.filter(|data| !data.is_empty()) else {
+            return false;
+        };
+        let handled = self.input_handler.upgrade().is_some_and(|input_handler| input_handler.raw_text_event(data));
+        // A TextBox raises its text notification before it finishes moving the
+        // caret. Mirror again after dispatch so the DOM also gets the final
+        // selection (and any filtering performed by the native control).
+        self.surrounding_text_changed();
+        handled
+    }
+
     /// The input method of the browser started composing.
     pub fn on_composition_start(&self) {
         let Some(client) = self.client() else {

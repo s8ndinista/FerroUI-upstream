@@ -751,6 +751,27 @@ try {
             failed = true;
             result.status = "failed";
             result.error = error.stack || String(error);
+            const diagnostic = await page.evaluate(() => {
+                const read = (callback) => { try { return callback(); } catch (error) { return { error: String(error) }; } };
+                const element = (input) => input && ({
+                    tag: input.tagName, id: input.id, value: input.value,
+                    selectionStart: input.selectionStart, selectionEnd: input.selectionEnd,
+                });
+                return {
+                    state: read(() => JSON.parse(globalThis.ferroDesign.ferroDesignState())),
+                    storage: read(() => globalThis.ferroDesignStorage?.status()),
+                    focus: element(document.activeElement),
+                    textInputs: [...document.querySelectorAll(".ferroui-input-element")].map(element),
+                    documentJson: read(() => globalThis.ferroDesign.ferroDesignExportJson()),
+                };
+            }).catch((error) => ({ error: String(error) }));
+            if (typeof diagnostic.documentJson === "string") {
+                const file = mode + "-failure.ferrodesign";
+                await writeFile(resolve(output, file), diagnostic.documentJson);
+                diagnostic.document = { file, bytes: Buffer.byteLength(diagnostic.documentJson), sha256: digest(diagnostic.documentJson) };
+            }
+            delete diagnostic.documentJson;
+            result.failure = diagnostic;
             await page.screenshot({ path: resolve(output, mode + "-failure.png"), timeout: 15000 }).catch(() => {});
             console.error(mode + ": " + result.error);
         } finally {

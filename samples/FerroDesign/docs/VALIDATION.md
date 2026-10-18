@@ -9,14 +9,20 @@ This file distinguishes commands that have passed from checks that are still in 
 | Core unit tests | 79 passed: existing document/SVG/layout coverage plus vector-edit, Unicode text-range, prototype timing/key/overlay, isolated-root hit testing and interaction-authoring regressions |
 | Native full application check | Passed on Linux, Rust 1.99.0, with `--lib --tests`; compiled the XAML shell, native text/paint editors, prototype runtime and test targets |
 | FerroUI browser bridge TypeScript check/build | Passed |
+| Browser text-input event regressions | 8 passed with Node, bundling the actual TypeScript bridge; includes Unicode insertion, composition deduplication and listener cleanup |
 | Browser host JavaScript and shell syntax | Passed |
 | Browser persistence host tests | 13 passed with Node |
+| Actual IndexedDB transactions in Chromium | All 5 checks passed, including atomic migration, rollback, stale-tab conflicts and reload of a 12,000,042-character document |
 | Native atomic-save tests | 2 passed in the standalone host harness |
 | Active browser dependency graph | No `ferroui-skia`, `skia-safe` or `skia-bindings` |
-| Actual WebAssembly application build | In progress |
-| Browser pixels and editing interactions | Pending the WebAssembly build |
+| Actual WebAssembly application build | Passed with the pinned Emscripten toolchain, including linking and optimization; all six required JavaScript modules verified in the distribution |
+| Browser pixels and editing interactions | [CI run 39152600835](https://github.com/wieslawsoltes/FerroUI/actions/runs/39152600835) built the actual WASM app; Software2D and real WebGL2 each passed 12 checks, then found a native text-input failure. The bridge fix is awaiting a new complete browser run. |
 | macOS/Windows native runtime | Not run in this environment |
 | Exact Figma visual parity | Not measured |
+
+The final local browser distribution contains 16 files totaling 48,616,131 bytes. Its WebAssembly module is 47,950,030 bytes before HTTP compression. All browser host sources match their packaged counterparts, including the IndexedDB storage module. These packaging checks establish that the application is buildable and its imports are complete; rendered behavior is checked separately in Chromium.
+
+The first CI browser run found that text inserted without a keydown updated only the hidden DOM input. FerroUI's browser bridge now forwards non-composing `insertText` payloads through the native text event, preserving native selection and resynchronizing the DOM after the native control finishes its edit. Composition input remains owned by the composition handlers, with a bounded duplicate-commit guard. This is a targeted text-insertion fix; browser autocorrect replacement ranges and input-only deletion are not newly implemented by this patch. The original multiline Unicode assertions remain in place.
 
 ## Document-engine benchmark
 
