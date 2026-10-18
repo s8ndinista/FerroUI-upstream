@@ -47,6 +47,7 @@ Every file in the three primary roots is retained, including build and data file
 
 | Upstream file | State | Reviewed Rust target |
 |---|---|---|
+| `dxaml/xcp/core/inc/BlockTextElement.h` | pending | — |
 | `dxaml/xcp/core/inc/RichTextServicesHelper.h` | pending | — |
 | `dxaml/xcp/core/inc/TextElementCollection.h` | pending | — |
 | `dxaml/xcp/core/text/Inc/TextSchema.h` | pending | — |
@@ -116,6 +117,8 @@ Every file in the three primary roots is retained, including build and data file
 |---|---|---|
 | `dxaml/xcp/dxaml/lib/BlockCollection_Partial.cpp` | pending | — |
 | `dxaml/xcp/dxaml/lib/BlockCollection_Partial.h` | pending | — |
+| `dxaml/xcp/dxaml/lib/CaretBrowsingDialog.cpp` | pending | — |
+| `dxaml/xcp/dxaml/lib/CaretBrowsingDialog.h` | pending | — |
 | `dxaml/xcp/dxaml/lib/HyperLink_Partial.cpp` | pending | — |
 | `dxaml/xcp/dxaml/lib/HyperLink_Partial.h` | pending | — |
 | `dxaml/xcp/dxaml/lib/InlineCollection_Partial.cpp` | pending | — |
@@ -247,6 +250,8 @@ Every file in the three primary roots is retained, including build and data file
 | `dxaml/xcp/dxaml/lib/winrtgeneratedclasses/Glyphs.g.h` | reference | — |
 | `dxaml/xcp/dxaml/lib/winrtgeneratedclasses/Hyperlink.g.cpp` | reference | — |
 | `dxaml/xcp/dxaml/lib/winrtgeneratedclasses/Hyperlink.g.h` | reference | — |
+| `dxaml/xcp/dxaml/lib/winrtgeneratedclasses/HyperlinkAutomationPeer.g.cpp` | reference | — |
+| `dxaml/xcp/dxaml/lib/winrtgeneratedclasses/HyperlinkAutomationPeer.g.h` | reference | — |
 | `dxaml/xcp/dxaml/lib/winrtgeneratedclasses/HyperlinkClickEventArgs.g.cpp` | reference | — |
 | `dxaml/xcp/dxaml/lib/winrtgeneratedclasses/HyperlinkClickEventArgs.g.h` | reference | — |
 | `dxaml/xcp/dxaml/lib/winrtgeneratedclasses/Inline.g.cpp` | reference | — |
@@ -323,6 +328,8 @@ Every file in the three primary roots is retained, including build and data file
 | `dxaml/xcp/dxaml/lib/winrtgeneratedclasses/TextHighlighterBase.g.h` | reference | — |
 | `dxaml/xcp/dxaml/lib/winrtgeneratedclasses/TextHighlighterCollection.g.cpp` | reference | — |
 | `dxaml/xcp/dxaml/lib/winrtgeneratedclasses/TextHighlighterCollection.g.h` | reference | — |
+| `dxaml/xcp/dxaml/lib/winrtgeneratedclasses/TextOptions.g.cpp` | reference | — |
+| `dxaml/xcp/dxaml/lib/winrtgeneratedclasses/TextOptions.g.h` | reference | — |
 | `dxaml/xcp/dxaml/lib/winrtgeneratedclasses/TextPointer.g.cpp` | reference | — |
 | `dxaml/xcp/dxaml/lib/winrtgeneratedclasses/TextPointer.g.h` | reference | — |
 | `dxaml/xcp/dxaml/lib/winrtgeneratedclasses/TextPointerWrapper.g.cpp` | reference | — |
@@ -408,8 +415,12 @@ Every file in the three primary roots is retained, including build and data file
 
 | Upstream file | State | Reviewed Rust target |
 |---|---|---|
+| `dxaml/xcp/components/metadata/inc/EnumDefs.g.h` | reference | — |
 | `dxaml/xcp/dxaml/idl/winrt/main/microsoft.ui.xaml.idl` | reference | — |
 | `dxaml/xcp/tools/XCPTypesAutoGen/XamlOM/Model/Microsoft.UI.Xaml.Automation.Peers.cs` | reference | — |
+| `dxaml/xcp/tools/XCPTypesAutoGen/XamlOM/Model/Microsoft.UI.Xaml.Automation.Provider.cs` | reference | — |
+| `dxaml/xcp/tools/XCPTypesAutoGen/XamlOM/Model/Microsoft.UI.Xaml.Automation.Text.cs` | reference | — |
+| `dxaml/xcp/tools/XCPTypesAutoGen/XamlOM/Model/Microsoft.UI.Xaml.Automation.cs` | reference | — |
 | `dxaml/xcp/tools/XCPTypesAutoGen/XamlOM/Model/Microsoft.UI.Xaml.Controls.cs` | reference | — |
 | `dxaml/xcp/tools/XCPTypesAutoGen/XamlOM/Model/Microsoft.UI.Xaml.Documents.cs` | reference | — |
 | `dxaml/xcp/tools/XCPTypesAutoGen/XamlOM/Model/Microsoft.UI.Xaml.Internal.cs` | reference | — |
@@ -583,6 +594,7 @@ Every file in the three primary roots is retained, including build and data file
 | `dxaml/xcp/core/core/elements/Glyphs.cpp` | pending | — |
 | `dxaml/xcp/core/core/elements/InputScope.cpp` | pending | — |
 | `dxaml/xcp/core/inc/CandidateWindowBoundsChangedEventArgs.h` | pending | — |
+| `dxaml/xcp/core/inc/CaretBrowsingCaret.h` | pending | — |
 | `dxaml/xcp/core/inc/CaretBrowsingGlobal.h` | pending | — |
 | `dxaml/xcp/core/inc/Glyphs.h` | pending | — |
 | `dxaml/xcp/core/inc/HyperlinkClickEventArgs.h` | pending | — |
@@ -623,6 +635,7 @@ Every file in the three primary roots is retained, including build and data file
 | `dxaml/xcp/core/core/elements/RichTextBlockAutomationPeer.cpp` | pending | — |
 | `dxaml/xcp/core/core/elements/RichTextBlockOverflowAutomationPeer.cpp` | pending | — |
 | `dxaml/xcp/core/core/elements/TextBlockAutomationPeer.cpp` | pending | — |
+| `dxaml/xcp/core/inc/HyperLinkAutomationPeer.h` | pending | — |
 | `dxaml/xcp/core/inc/RichTextBlockAutomationPeer.h` | pending | — |
 | `dxaml/xcp/core/inc/RichTextBlockOverflowAutomationPeer.h` | pending | — |
 | `dxaml/xcp/core/inc/TextBlockAutomationPeer.h` | pending | — |
@@ -636,6 +649,8 @@ Every file in the three primary roots is retained, including build and data file
 | `dxaml/xcp/core/native/text/Controls/TextBoxAutomationPeer.h` | pending | — |
 | `dxaml/xcp/core/native/text/Controls/TextBoxBaseAutomationPeer.cpp` | pending | — |
 | `dxaml/xcp/core/native/text/Controls/TextBoxBaseAutomationPeer.h` | pending | — |
+| `dxaml/xcp/dxaml/lib/HyperlinkAutomationPeer_Partial.cpp` | pending | — |
+| `dxaml/xcp/dxaml/lib/HyperlinkAutomationPeer_Partial.h` | pending | — |
 | `dxaml/xcp/dxaml/lib/RichEditBoxAutomationPeer_Partial.cpp` | pending | — |
 | `dxaml/xcp/dxaml/lib/RichEditBoxAutomationPeer_Partial.h` | pending | — |
 | `dxaml/xcp/dxaml/lib/RichTextBlockAutomationPeer_Partial.cpp` | pending | — |
@@ -646,6 +661,8 @@ Every file in the three primary roots is retained, including build and data file
 | `dxaml/xcp/dxaml/lib/TextBlockAutomationPeer_Partial.h` | pending | — |
 | `dxaml/xcp/dxaml/lib/TextBoxAutomationPeer_Partial.cpp` | pending | — |
 | `dxaml/xcp/dxaml/lib/TextBoxAutomationPeer_Partial.h` | pending | — |
+| `dxaml/xcp/win/inc/UIAPatternProviderWrapper.h` | pending | — |
+| `dxaml/xcp/win/shared/UIAPatternProviderWrapper.cpp` | pending | — |
 
 ## Theme reference
 

@@ -5,6 +5,829 @@
     "commit": "fe244ca6ac4d482712b234a9de3cf771cc6481de"
   },
   "coverage": "Exact entries of the selected upstream IntelliSense XML; not undocumented/internal or inherited members.",
+  "type_plans": {
+    "Microsoft.UI.Text.CaretType": {
+      "batch": "R3/R8",
+      "candidate_paths": [
+        "src/FerroUI.Controls/rich_text/",
+        "src/FerroUI.Controls/documents/"
+      ],
+      "remaining_review": "The native implementation is external to the pinned repository. Review this exact enum/format/service contract and its consumers before claiming equivalent behavior."
+    },
+    "Microsoft.UI.Text.FindOptions": {
+      "batch": "R3/R8",
+      "candidate_paths": [
+        "src/FerroUI.Controls/rich_text/",
+        "src/FerroUI.Controls/documents/"
+      ],
+      "remaining_review": "The native implementation is external to the pinned repository. Review this exact enum/format/service contract and its consumers before claiming equivalent behavior."
+    },
+    "Microsoft.UI.Text.FontWeights": {
+      "batch": "R6",
+      "candidate_paths": [
+        "src/FerroUI.Base/media/font_weight.rs"
+      ],
+      "remaining_review": "Audit named font weight values, conversion and font selection; each retained XML property has its own state."
+    },
+    "Microsoft.UI.Text.FormatEffect": {
+      "batch": "R3/R8",
+      "candidate_paths": [
+        "src/FerroUI.Controls/rich_text/",
+        "src/FerroUI.Controls/documents/"
+      ],
+      "remaining_review": "The native implementation is external to the pinned repository. Review this exact enum/format/service contract and its consumers before claiming equivalent behavior."
+    },
+    "Microsoft.UI.Text.HorizontalCharacterAlignment": {
+      "batch": "R3/R8",
+      "candidate_paths": [
+        "src/FerroUI.Controls/rich_text/",
+        "src/FerroUI.Controls/documents/"
+      ],
+      "remaining_review": "The native implementation is external to the pinned repository. Review this exact enum/format/service contract and its consumers before claiming equivalent behavior."
+    },
+    "Microsoft.UI.Text.ITextCharacterFormat": {
+      "batch": "R3/R8",
+      "candidate_paths": [
+        "src/FerroUI.Controls/documents/character_format.rs"
+      ],
+      "remaining_review": "Audit native formatting units, mixed values, font/brush representation, tabs, lists, language and formatting flags. Rust patches cover only explicitly mapped fields."
+    },
+    "Microsoft.UI.Text.ITextParagraphFormat": {
+      "batch": "R3/R8",
+      "candidate_paths": [
+        "src/FerroUI.Controls/documents/character_format.rs"
+      ],
+      "remaining_review": "Audit native formatting units, mixed values, font/brush representation, tabs, lists, language and formatting flags. Rust patches cover only explicitly mapped fields."
+    },
+    "Microsoft.UI.Text.ITextRange": {
+      "batch": "R3/R8",
+      "candidate_paths": [
+        "src/FerroUI.Controls/rich_text/rich_edit_text_document.rs"
+      ],
+      "remaining_review": "Audit the external TOM contract member by member. The Rust facade uses typed errors, UTF-16 text ranges and shared editor services; native option flags, ABI, streams and additional units are not inferred from similarly named methods."
+    },
+    "Microsoft.UI.Text.ITextSelection": {
+      "batch": "R3/R8",
+      "candidate_paths": [
+        "src/FerroUI.Controls/rich_text/rich_edit_text_document.rs"
+      ],
+      "remaining_review": "Audit the external TOM contract member by member. The Rust facade uses typed errors, UTF-16 text ranges and shared editor services; native option flags, ABI, streams and additional units are not inferred from similarly named methods."
+    },
+    "Microsoft.UI.Text.LetterCase": {
+      "batch": "R3/R8",
+      "candidate_paths": [
+        "src/FerroUI.Controls/rich_text/",
+        "src/FerroUI.Controls/documents/"
+      ],
+      "remaining_review": "The native implementation is external to the pinned repository. Review this exact enum/format/service contract and its consumers before claiming equivalent behavior."
+    },
+    "Microsoft.UI.Text.LineSpacingRule": {
+      "batch": "R3/R8",
+      "candidate_paths": [
+        "src/FerroUI.Controls/rich_text/",
+        "src/FerroUI.Controls/documents/"
+      ],
+      "remaining_review": "The native implementation is external to the pinned repository. Review this exact enum/format/service contract and its consumers before claiming equivalent behavior."
+    },
+    "Microsoft.UI.Text.LinkType": {
+      "batch": "R3/R8",
+      "candidate_paths": [
+        "src/FerroUI.Controls/rich_text/",
+        "src/FerroUI.Controls/documents/"
+      ],
+      "remaining_review": "The native implementation is external to the pinned repository. Review this exact enum/format/service contract and its consumers before claiming equivalent behavior."
+    },
+    "Microsoft.UI.Text.MarkerAlignment": {
+      "batch": "R3/R8",
+      "candidate_paths": [
+        "src/FerroUI.Controls/rich_text/",
+        "src/FerroUI.Controls/documents/"
+      ],
+      "remaining_review": "The native implementation is external to the pinned repository. Review this exact enum/format/service contract and its consumers before claiming equivalent behavior."
+    },
+    "Microsoft.UI.Text.MarkerStyle": {
+      "batch": "R3/R8",
+      "candidate_paths": [
+        "src/FerroUI.Controls/rich_text/",
+        "src/FerroUI.Controls/documents/"
+      ],
+      "remaining_review": "The native implementation is external to the pinned repository. Review this exact enum/format/service contract and its consumers before claiming equivalent behavior."
+    },
+    "Microsoft.UI.Text.MarkerType": {
+      "batch": "R3/R8",
+      "candidate_paths": [
+        "src/FerroUI.Controls/rich_text/",
+        "src/FerroUI.Controls/documents/"
+      ],
+      "remaining_review": "The native implementation is external to the pinned repository. Review this exact enum/format/service contract and its consumers before claiming equivalent behavior."
+    },
+    "Microsoft.UI.Text.ParagraphAlignment": {
+      "batch": "R3/R8",
+      "candidate_paths": [
+        "src/FerroUI.Controls/rich_text/",
+        "src/FerroUI.Controls/documents/"
+      ],
+      "remaining_review": "The native implementation is external to the pinned repository. Review this exact enum/format/service contract and its consumers before claiming equivalent behavior."
+    },
+    "Microsoft.UI.Text.ParagraphStyle": {
+      "batch": "R3/R8",
+      "candidate_paths": [
+        "src/FerroUI.Controls/rich_text/",
+        "src/FerroUI.Controls/documents/"
+      ],
+      "remaining_review": "The native implementation is external to the pinned repository. Review this exact enum/format/service contract and its consumers before claiming equivalent behavior."
+    },
+    "Microsoft.UI.Text.PointOptions": {
+      "batch": "R3/R8",
+      "candidate_paths": [
+        "src/FerroUI.Controls/rich_text/",
+        "src/FerroUI.Controls/documents/"
+      ],
+      "remaining_review": "The native implementation is external to the pinned repository. Review this exact enum/format/service contract and its consumers before claiming equivalent behavior."
+    },
+    "Microsoft.UI.Text.RangeGravity": {
+      "batch": "R3/R8",
+      "candidate_paths": [
+        "src/FerroUI.Controls/rich_text/",
+        "src/FerroUI.Controls/documents/"
+      ],
+      "remaining_review": "The native implementation is external to the pinned repository. Review this exact enum/format/service contract and its consumers before claiming equivalent behavior."
+    },
+    "Microsoft.UI.Text.RichEditMathMode": {
+      "batch": "R3/R8",
+      "candidate_paths": [
+        "src/FerroUI.Controls/rich_text/",
+        "src/FerroUI.Controls/documents/"
+      ],
+      "remaining_review": "The native implementation is external to the pinned repository. Review this exact enum/format/service contract and its consumers before claiming equivalent behavior."
+    },
+    "Microsoft.UI.Text.RichEditTextDocument": {
+      "batch": "R3/R8",
+      "candidate_paths": [
+        "src/FerroUI.Controls/rich_text/",
+        "src/FerroUI.Controls/documents/"
+      ],
+      "remaining_review": "The native implementation is external to the pinned repository. Review this exact enum/format/service contract and its consumers before claiming equivalent behavior."
+    },
+    "Microsoft.UI.Text.RichEditTextRange": {
+      "batch": "R3/R8",
+      "candidate_paths": [
+        "src/FerroUI.Controls/rich_text/",
+        "src/FerroUI.Controls/documents/"
+      ],
+      "remaining_review": "The native implementation is external to the pinned repository. Review this exact enum/format/service contract and its consumers before claiming equivalent behavior."
+    },
+    "Microsoft.UI.Text.SelectionOptions": {
+      "batch": "R3/R8",
+      "candidate_paths": [
+        "src/FerroUI.Controls/rich_text/",
+        "src/FerroUI.Controls/documents/"
+      ],
+      "remaining_review": "The native implementation is external to the pinned repository. Review this exact enum/format/service contract and its consumers before claiming equivalent behavior."
+    },
+    "Microsoft.UI.Text.SelectionType": {
+      "batch": "R3/R8",
+      "candidate_paths": [
+        "src/FerroUI.Controls/rich_text/",
+        "src/FerroUI.Controls/documents/"
+      ],
+      "remaining_review": "The native implementation is external to the pinned repository. Review this exact enum/format/service contract and its consumers before claiming equivalent behavior."
+    },
+    "Microsoft.UI.Text.TabAlignment": {
+      "batch": "R3/R8",
+      "candidate_paths": [
+        "src/FerroUI.Controls/rich_text/",
+        "src/FerroUI.Controls/documents/"
+      ],
+      "remaining_review": "The native implementation is external to the pinned repository. Review this exact enum/format/service contract and its consumers before claiming equivalent behavior."
+    },
+    "Microsoft.UI.Text.TabLeader": {
+      "batch": "R3/R8",
+      "candidate_paths": [
+        "src/FerroUI.Controls/rich_text/",
+        "src/FerroUI.Controls/documents/"
+      ],
+      "remaining_review": "The native implementation is external to the pinned repository. Review this exact enum/format/service contract and its consumers before claiming equivalent behavior."
+    },
+    "Microsoft.UI.Text.TextConstants": {
+      "batch": "R3/R8",
+      "candidate_paths": [
+        "src/FerroUI.Controls/rich_text/",
+        "src/FerroUI.Controls/documents/"
+      ],
+      "remaining_review": "The native implementation is external to the pinned repository. Review this exact enum/format/service contract and its consumers before claiming equivalent behavior."
+    },
+    "Microsoft.UI.Text.TextGetOptions": {
+      "batch": "R4/R8",
+      "candidate_paths": [
+        "src/FerroUI.Controls/rich_text/rtf.rs",
+        "src/FerroUI.Controls/rich_text/rich_text_transfer.rs"
+      ],
+      "remaining_review": "Review every import/export option and supported content feature. Explicit unsupported RTF errors do not implement omitted flags or native stream APIs."
+    },
+    "Microsoft.UI.Text.TextRangeUnit": {
+      "batch": "R3/R8",
+      "candidate_paths": [
+        "src/FerroUI.Controls/rich_text/",
+        "src/FerroUI.Controls/documents/"
+      ],
+      "remaining_review": "The native implementation is external to the pinned repository. Review this exact enum/format/service contract and its consumers before claiming equivalent behavior."
+    },
+    "Microsoft.UI.Text.TextScript": {
+      "batch": "R3/R8",
+      "candidate_paths": [
+        "src/FerroUI.Controls/rich_text/",
+        "src/FerroUI.Controls/documents/"
+      ],
+      "remaining_review": "The native implementation is external to the pinned repository. Review this exact enum/format/service contract and its consumers before claiming equivalent behavior."
+    },
+    "Microsoft.UI.Text.TextSetOptions": {
+      "batch": "R4/R8",
+      "candidate_paths": [
+        "src/FerroUI.Controls/rich_text/rtf.rs",
+        "src/FerroUI.Controls/rich_text/rich_text_transfer.rs"
+      ],
+      "remaining_review": "Review every import/export option and supported content feature. Explicit unsupported RTF errors do not implement omitted flags or native stream APIs."
+    },
+    "Microsoft.UI.Text.UnderlineType": {
+      "batch": "R3/R8",
+      "candidate_paths": [
+        "src/FerroUI.Controls/rich_text/",
+        "src/FerroUI.Controls/documents/"
+      ],
+      "remaining_review": "The native implementation is external to the pinned repository. Review this exact enum/format/service contract and its consumers before claiming equivalent behavior."
+    },
+    "Microsoft.UI.Text.VerticalCharacterAlignment": {
+      "batch": "R3/R8",
+      "candidate_paths": [
+        "src/FerroUI.Controls/rich_text/",
+        "src/FerroUI.Controls/documents/"
+      ],
+      "remaining_review": "The native implementation is external to the pinned repository. Review this exact enum/format/service contract and its consumers before claiming equivalent behavior."
+    },
+    "Microsoft.UI.Xaml.Automation.AnnotationPatternIdentifiers": {
+      "batch": "R7",
+      "candidate_paths": [
+        "src/FerroUI.Controls/automation/",
+        "src/Windows/FerroUI.Win32/automation/"
+      ],
+      "remaining_review": "Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2, annotations, composition and unsupported attribute families remain explicit pending contracts."
+    },
+    "Microsoft.UI.Xaml.Automation.AnnotationType": {
+      "batch": "R7",
+      "candidate_paths": [
+        "src/FerroUI.Controls/automation/",
+        "src/Windows/FerroUI.Win32/automation/"
+      ],
+      "remaining_review": "Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2, annotations, composition and unsupported attribute families remain explicit pending contracts."
+    },
+    "Microsoft.UI.Xaml.Automation.AutomationActiveEnd": {
+      "batch": "R7",
+      "candidate_paths": [
+        "src/FerroUI.Controls/automation/",
+        "src/Windows/FerroUI.Win32/automation/"
+      ],
+      "remaining_review": "Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2, annotations, composition and unsupported attribute families remain explicit pending contracts."
+    },
+    "Microsoft.UI.Xaml.Automation.AutomationAnimationStyle": {
+      "batch": "R7",
+      "candidate_paths": [
+        "src/FerroUI.Controls/automation/",
+        "src/Windows/FerroUI.Win32/automation/"
+      ],
+      "remaining_review": "Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2, annotations, composition and unsupported attribute families remain explicit pending contracts."
+    },
+    "Microsoft.UI.Xaml.Automation.AutomationAnnotation": {
+      "batch": "R7",
+      "candidate_paths": [
+        "src/FerroUI.Controls/automation/",
+        "src/Windows/FerroUI.Win32/automation/"
+      ],
+      "remaining_review": "Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2, annotations, composition and unsupported attribute families remain explicit pending contracts."
+    },
+    "Microsoft.UI.Xaml.Automation.AutomationBulletStyle": {
+      "batch": "R7",
+      "candidate_paths": [
+        "src/FerroUI.Controls/automation/",
+        "src/Windows/FerroUI.Win32/automation/"
+      ],
+      "remaining_review": "Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2, annotations, composition and unsupported attribute families remain explicit pending contracts."
+    },
+    "Microsoft.UI.Xaml.Automation.AutomationCaretBidiMode": {
+      "batch": "R7",
+      "candidate_paths": [
+        "src/FerroUI.Controls/automation/",
+        "src/Windows/FerroUI.Win32/automation/"
+      ],
+      "remaining_review": "Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2, annotations, composition and unsupported attribute families remain explicit pending contracts."
+    },
+    "Microsoft.UI.Xaml.Automation.AutomationCaretPosition": {
+      "batch": "R7",
+      "candidate_paths": [
+        "src/FerroUI.Controls/automation/",
+        "src/Windows/FerroUI.Win32/automation/"
+      ],
+      "remaining_review": "Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2, annotations, composition and unsupported attribute families remain explicit pending contracts."
+    },
+    "Microsoft.UI.Xaml.Automation.AutomationFlowDirections": {
+      "batch": "R7",
+      "candidate_paths": [
+        "src/FerroUI.Controls/automation/",
+        "src/Windows/FerroUI.Win32/automation/"
+      ],
+      "remaining_review": "Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2, annotations, composition and unsupported attribute families remain explicit pending contracts."
+    },
+    "Microsoft.UI.Xaml.Automation.AutomationOutlineStyles": {
+      "batch": "R7",
+      "candidate_paths": [
+        "src/FerroUI.Controls/automation/",
+        "src/Windows/FerroUI.Win32/automation/"
+      ],
+      "remaining_review": "Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2, annotations, composition and unsupported attribute families remain explicit pending contracts."
+    },
+    "Microsoft.UI.Xaml.Automation.AutomationStyleId": {
+      "batch": "R7",
+      "candidate_paths": [
+        "src/FerroUI.Controls/automation/",
+        "src/Windows/FerroUI.Win32/automation/"
+      ],
+      "remaining_review": "Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2, annotations, composition and unsupported attribute families remain explicit pending contracts."
+    },
+    "Microsoft.UI.Xaml.Automation.AutomationTextDecorationLineStyle": {
+      "batch": "R7",
+      "candidate_paths": [
+        "src/FerroUI.Controls/automation/",
+        "src/Windows/FerroUI.Win32/automation/"
+      ],
+      "remaining_review": "Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2, annotations, composition and unsupported attribute families remain explicit pending contracts."
+    },
+    "Microsoft.UI.Xaml.Automation.AutomationTextEditChangeType": {
+      "batch": "R7",
+      "candidate_paths": [
+        "src/FerroUI.Controls/automation/",
+        "src/Windows/FerroUI.Win32/automation/"
+      ],
+      "remaining_review": "Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2, annotations, composition and unsupported attribute families remain explicit pending contracts."
+    },
+    "Microsoft.UI.Xaml.Automation.Peers.AutomationEvents": {
+      "batch": "R7",
+      "candidate_paths": [
+        "src/FerroUI.Controls/automation/",
+        "src/Windows/FerroUI.Win32/automation/"
+      ],
+      "remaining_review": "Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2, annotations, composition and unsupported attribute families remain explicit pending contracts."
+    },
+    "Microsoft.UI.Xaml.Automation.Peers.AutomationPeer": {
+      "batch": "R7",
+      "candidate_paths": [
+        "src/FerroUI.Controls/automation/",
+        "src/Windows/FerroUI.Win32/automation/"
+      ],
+      "remaining_review": "Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2, annotations, composition and unsupported attribute families remain explicit pending contracts."
+    },
+    "Microsoft.UI.Xaml.Automation.Peers.PatternInterface": {
+      "batch": "R7",
+      "candidate_paths": [
+        "src/FerroUI.Controls/automation/",
+        "src/Windows/FerroUI.Win32/automation/"
+      ],
+      "remaining_review": "Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2, annotations, composition and unsupported attribute families remain explicit pending contracts."
+    },
+    "Microsoft.UI.Xaml.Automation.Peers.RichEditBoxAutomationPeer": {
+      "batch": "R7",
+      "candidate_paths": [
+        "src/FerroUI.Controls/automation/",
+        "src/Windows/FerroUI.Win32/automation/"
+      ],
+      "remaining_review": "Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2, annotations, composition and unsupported attribute families remain explicit pending contracts."
+    },
+    "Microsoft.UI.Xaml.Automation.Peers.RichTextBlockAutomationPeer": {
+      "batch": "R7",
+      "candidate_paths": [
+        "src/FerroUI.Controls/automation/",
+        "src/Windows/FerroUI.Win32/automation/"
+      ],
+      "remaining_review": "Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2, annotations, composition and unsupported attribute families remain explicit pending contracts."
+    },
+    "Microsoft.UI.Xaml.Automation.Peers.RichTextBlockOverflowAutomationPeer": {
+      "batch": "R7",
+      "candidate_paths": [
+        "src/FerroUI.Controls/automation/",
+        "src/Windows/FerroUI.Win32/automation/"
+      ],
+      "remaining_review": "Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2, annotations, composition and unsupported attribute families remain explicit pending contracts."
+    },
+    "Microsoft.UI.Xaml.Automation.Provider.ITextChildProvider": {
+      "batch": "R7",
+      "candidate_paths": [
+        "src/FerroUI.Controls/automation/",
+        "src/Windows/FerroUI.Win32/automation/"
+      ],
+      "remaining_review": "Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2, annotations, composition and unsupported attribute families remain explicit pending contracts."
+    },
+    "Microsoft.UI.Xaml.Automation.Provider.ITextEditProvider": {
+      "batch": "R7",
+      "candidate_paths": [
+        "src/FerroUI.Controls/automation/",
+        "src/Windows/FerroUI.Win32/automation/"
+      ],
+      "remaining_review": "Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2, annotations, composition and unsupported attribute families remain explicit pending contracts."
+    },
+    "Microsoft.UI.Xaml.Automation.Provider.ITextProvider": {
+      "batch": "R7",
+      "candidate_paths": [
+        "src/FerroUI.Controls/automation/",
+        "src/Windows/FerroUI.Win32/automation/"
+      ],
+      "remaining_review": "Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2, annotations, composition and unsupported attribute families remain explicit pending contracts."
+    },
+    "Microsoft.UI.Xaml.Automation.Provider.ITextProvider2": {
+      "batch": "R7",
+      "candidate_paths": [
+        "src/FerroUI.Controls/automation/",
+        "src/Windows/FerroUI.Win32/automation/"
+      ],
+      "remaining_review": "Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2, annotations, composition and unsupported attribute families remain explicit pending contracts."
+    },
+    "Microsoft.UI.Xaml.Automation.Provider.ITextRangeProvider": {
+      "batch": "R7",
+      "candidate_paths": [
+        "src/FerroUI.Controls/automation/",
+        "src/Windows/FerroUI.Win32/automation/"
+      ],
+      "remaining_review": "Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2, annotations, composition and unsupported attribute families remain explicit pending contracts."
+    },
+    "Microsoft.UI.Xaml.Automation.Provider.ITextRangeProvider2": {
+      "batch": "R7",
+      "candidate_paths": [
+        "src/FerroUI.Controls/automation/",
+        "src/Windows/FerroUI.Win32/automation/"
+      ],
+      "remaining_review": "Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2, annotations, composition and unsupported attribute families remain explicit pending contracts."
+    },
+    "Microsoft.UI.Xaml.Automation.SupportedTextSelection": {
+      "batch": "R7",
+      "candidate_paths": [
+        "src/FerroUI.Controls/automation/",
+        "src/Windows/FerroUI.Win32/automation/"
+      ],
+      "remaining_review": "Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2, annotations, composition and unsupported attribute families remain explicit pending contracts."
+    },
+    "Microsoft.UI.Xaml.Automation.Text.TextPatternRangeEndpoint": {
+      "batch": "R7",
+      "candidate_paths": [
+        "src/FerroUI.Controls/automation/",
+        "src/Windows/FerroUI.Win32/automation/"
+      ],
+      "remaining_review": "Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2, annotations, composition and unsupported attribute families remain explicit pending contracts."
+    },
+    "Microsoft.UI.Xaml.Automation.Text.TextUnit": {
+      "batch": "R7",
+      "candidate_paths": [
+        "src/FerroUI.Controls/automation/",
+        "src/Windows/FerroUI.Win32/automation/"
+      ],
+      "remaining_review": "Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2, annotations, composition and unsupported attribute families remain explicit pending contracts."
+    },
+    "Microsoft.UI.Xaml.Controls.CandidateWindowBoundsChangedEventArgs": {
+      "batch": "R5/R7",
+      "candidate_paths": [
+        "src/FerroUI.Controls/rich_edit_box.rs",
+        "src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs"
+      ],
+      "remaining_review": "Review editable control members, native event timing, IME/clipboard capabilities, templates, accelerators and automation. Missing members are omitted, not stubbed."
+    },
+    "Microsoft.UI.Xaml.Controls.RichEditBox": {
+      "batch": "R5/R7",
+      "candidate_paths": [
+        "src/FerroUI.Controls/rich_edit_box.rs",
+        "src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs"
+      ],
+      "remaining_review": "Review editable control members, native event timing, IME/clipboard capabilities, templates, accelerators and automation. Missing members are omitted, not stubbed."
+    },
+    "Microsoft.UI.Xaml.Controls.RichEditBoxSelectionChangingEventArgs": {
+      "batch": "R5/R7",
+      "candidate_paths": [
+        "src/FerroUI.Controls/rich_edit_box.rs",
+        "src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs"
+      ],
+      "remaining_review": "Review editable control members, native event timing, IME/clipboard capabilities, templates, accelerators and automation. Missing members are omitted, not stubbed."
+    },
+    "Microsoft.UI.Xaml.Controls.RichEditBoxTextChangingEventArgs": {
+      "batch": "R5/R7",
+      "candidate_paths": [
+        "src/FerroUI.Controls/rich_edit_box.rs",
+        "src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs"
+      ],
+      "remaining_review": "Review editable control members, native event timing, IME/clipboard capabilities, templates, accelerators and automation. Missing members are omitted, not stubbed."
+    },
+    "Microsoft.UI.Xaml.Controls.RichEditClipboardFormat": {
+      "batch": "R5/R7",
+      "candidate_paths": [
+        "src/FerroUI.Controls/rich_edit_box.rs",
+        "src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs"
+      ],
+      "remaining_review": "Review editable control members, native event timing, IME/clipboard capabilities, templates, accelerators and automation. Missing members are omitted, not stubbed."
+    },
+    "Microsoft.UI.Xaml.Controls.RichTextBlock": {
+      "batch": "R2/R7",
+      "candidate_paths": [
+        "src/FerroUI.Controls/rich_text_block.rs",
+        "src/FerroUI.Controls/rich_text_block_overflow.rs",
+        "src/FerroUI.Controls/rich_text_layout.rs"
+      ],
+      "remaining_review": "Review document ownership, line/overflow continuation, selection, rendering, input, property notifications and accessibility. Existing formatter output is not exact native engine or pixel parity."
+    },
+    "Microsoft.UI.Xaml.Controls.RichTextBlockOverflow": {
+      "batch": "R2/R7",
+      "candidate_paths": [
+        "src/FerroUI.Controls/rich_text_block.rs",
+        "src/FerroUI.Controls/rich_text_block_overflow.rs",
+        "src/FerroUI.Controls/rich_text_layout.rs"
+      ],
+      "remaining_review": "Review document ownership, line/overflow continuation, selection, rendering, input, property notifications and accessibility. Existing formatter output is not exact native engine or pixel parity."
+    },
+    "Microsoft.UI.Xaml.Controls.TextChangedEventArgs": {
+      "batch": "R5/R7",
+      "candidate_paths": [
+        "src/FerroUI.Controls/rich_edit_box.rs",
+        "src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs"
+      ],
+      "remaining_review": "Review editable control members, native event timing, IME/clipboard capabilities, templates, accelerators and automation. Missing members are omitted, not stubbed."
+    },
+    "Microsoft.UI.Xaml.Controls.TextCompositionChangedEventArgs": {
+      "batch": "R5/R7",
+      "candidate_paths": [
+        "src/FerroUI.Controls/rich_edit_box.rs",
+        "src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs"
+      ],
+      "remaining_review": "Review editable control members, native event timing, IME/clipboard capabilities, templates, accelerators and automation. Missing members are omitted, not stubbed."
+    },
+    "Microsoft.UI.Xaml.Controls.TextCompositionEndedEventArgs": {
+      "batch": "R5/R7",
+      "candidate_paths": [
+        "src/FerroUI.Controls/rich_edit_box.rs",
+        "src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs"
+      ],
+      "remaining_review": "Review editable control members, native event timing, IME/clipboard capabilities, templates, accelerators and automation. Missing members are omitted, not stubbed."
+    },
+    "Microsoft.UI.Xaml.Controls.TextCompositionStartedEventArgs": {
+      "batch": "R5/R7",
+      "candidate_paths": [
+        "src/FerroUI.Controls/rich_edit_box.rs",
+        "src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs"
+      ],
+      "remaining_review": "Review editable control members, native event timing, IME/clipboard capabilities, templates, accelerators and automation. Missing members are omitted, not stubbed."
+    },
+    "Microsoft.UI.Xaml.Controls.TextControlCopyingToClipboardEventArgs": {
+      "batch": "R5/R7",
+      "candidate_paths": [
+        "src/FerroUI.Controls/rich_edit_box.rs",
+        "src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs"
+      ],
+      "remaining_review": "Review editable control members, native event timing, IME/clipboard capabilities, templates, accelerators and automation. Missing members are omitted, not stubbed."
+    },
+    "Microsoft.UI.Xaml.Controls.TextControlCuttingToClipboardEventArgs": {
+      "batch": "R5/R7",
+      "candidate_paths": [
+        "src/FerroUI.Controls/rich_edit_box.rs",
+        "src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs"
+      ],
+      "remaining_review": "Review editable control members, native event timing, IME/clipboard capabilities, templates, accelerators and automation. Missing members are omitted, not stubbed."
+    },
+    "Microsoft.UI.Xaml.Controls.TextControlPasteEventArgs": {
+      "batch": "R5/R7",
+      "candidate_paths": [
+        "src/FerroUI.Controls/rich_edit_box.rs",
+        "src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs"
+      ],
+      "remaining_review": "Review editable control members, native event timing, IME/clipboard capabilities, templates, accelerators and automation. Missing members are omitted, not stubbed."
+    },
+    "Microsoft.UI.Xaml.Documents.Block": {
+      "batch": "R1/R2",
+      "candidate_paths": [
+        "src/FerroUI.Controls/documents/block.rs"
+      ],
+      "remaining_review": "Review each document property, collection identity, inherited formatting, invalidation, markup and observable edge case against the pinned source."
+    },
+    "Microsoft.UI.Xaml.Documents.BlockCollection": {
+      "batch": "R1/R2",
+      "candidate_paths": [
+        "src/FerroUI.Controls/documents/block_collection.rs"
+      ],
+      "remaining_review": "Review each document property, collection identity, inherited formatting, invalidation, markup and observable edge case against the pinned source."
+    },
+    "Microsoft.UI.Xaml.Documents.Bold": {
+      "batch": "R1/R2",
+      "candidate_paths": [
+        "src/FerroUI.Controls/documents/bold.rs"
+      ],
+      "remaining_review": "Review each document property, collection identity, inherited formatting, invalidation, markup and observable edge case against the pinned source."
+    },
+    "Microsoft.UI.Xaml.Documents.Glyphs": {
+      "batch": "R8",
+      "candidate_paths": [
+        "src/FerroUI.Base/media/glyph_run.rs"
+      ],
+      "remaining_review": "The existing glyph run is a rendering contract; the document Glyphs control's parsing, indices, font URI, properties and layout need their own review."
+    },
+    "Microsoft.UI.Xaml.Documents.Hyperlink": {
+      "batch": "R1/R2",
+      "candidate_paths": [
+        "src/FerroUI.Controls/documents/hyperlink.rs"
+      ],
+      "remaining_review": "Review each document property, collection identity, inherited formatting, invalidation, markup and observable edge case against the pinned source."
+    },
+    "Microsoft.UI.Xaml.Documents.HyperlinkClickEventArgs": {
+      "batch": "R1/R5",
+      "candidate_paths": [
+        "src/FerroUI.Controls/documents/hyperlink.rs"
+      ],
+      "remaining_review": "Review hyperlink presentation, shared handled arguments, activation and navigation behavior."
+    },
+    "Microsoft.UI.Xaml.Documents.Inline": {
+      "batch": "R1/R2",
+      "candidate_paths": [
+        "src/FerroUI.Controls/documents/inline.rs"
+      ],
+      "remaining_review": "Review each document property, collection identity, inherited formatting, invalidation, markup and observable edge case against the pinned source."
+    },
+    "Microsoft.UI.Xaml.Documents.InlineCollection": {
+      "batch": "R1/R2",
+      "candidate_paths": [
+        "src/FerroUI.Controls/documents/inline_collection.rs"
+      ],
+      "remaining_review": "Review each document property, collection identity, inherited formatting, invalidation, markup and observable edge case against the pinned source."
+    },
+    "Microsoft.UI.Xaml.Documents.InlineUIContainer": {
+      "batch": "R1/R2",
+      "candidate_paths": [
+        "src/FerroUI.Controls/documents/inline_ui_container.rs"
+      ],
+      "remaining_review": "Review each document property, collection identity, inherited formatting, invalidation, markup and observable edge case against the pinned source."
+    },
+    "Microsoft.UI.Xaml.Documents.Italic": {
+      "batch": "R1/R2",
+      "candidate_paths": [
+        "src/FerroUI.Controls/documents/italic.rs"
+      ],
+      "remaining_review": "Review each document property, collection identity, inherited formatting, invalidation, markup and observable edge case against the pinned source."
+    },
+    "Microsoft.UI.Xaml.Documents.LineBreak": {
+      "batch": "R1/R2",
+      "candidate_paths": [
+        "src/FerroUI.Controls/documents/line_break.rs"
+      ],
+      "remaining_review": "Review each document property, collection identity, inherited formatting, invalidation, markup and observable edge case against the pinned source."
+    },
+    "Microsoft.UI.Xaml.Documents.LogicalDirection": {
+      "batch": "R1/R2",
+      "candidate_paths": [
+        "src/FerroUI.Controls/documents/text_position.rs"
+      ],
+      "remaining_review": "Review UTF-16 positions, gravity, element/visual parents and geometry; public text offsets exclude native synthetic element markers."
+    },
+    "Microsoft.UI.Xaml.Documents.Paragraph": {
+      "batch": "R1/R2",
+      "candidate_paths": [
+        "src/FerroUI.Controls/documents/paragraph.rs"
+      ],
+      "remaining_review": "Review each document property, collection identity, inherited formatting, invalidation, markup and observable edge case against the pinned source."
+    },
+    "Microsoft.UI.Xaml.Documents.Run": {
+      "batch": "R1/R2",
+      "candidate_paths": [
+        "src/FerroUI.Controls/documents/run.rs"
+      ],
+      "remaining_review": "Review each document property, collection identity, inherited formatting, invalidation, markup and observable edge case against the pinned source."
+    },
+    "Microsoft.UI.Xaml.Documents.Span": {
+      "batch": "R1/R2",
+      "candidate_paths": [
+        "src/FerroUI.Controls/documents/span.rs"
+      ],
+      "remaining_review": "Review each document property, collection identity, inherited formatting, invalidation, markup and observable edge case against the pinned source."
+    },
+    "Microsoft.UI.Xaml.Documents.TextElement": {
+      "batch": "R1/R2",
+      "candidate_paths": [
+        "src/FerroUI.Controls/documents/text_element.rs"
+      ],
+      "remaining_review": "Review each document property, collection identity, inherited formatting, invalidation, markup and observable edge case against the pinned source."
+    },
+    "Microsoft.UI.Xaml.Documents.TextHighlighter": {
+      "batch": "R6",
+      "candidate_paths": [
+        "src/FerroUI.Controls/documents/text_highlighter.rs",
+        "src/FerroUI.Controls/documents/text_highlight_range.rs",
+        "src/FerroUI.Controls/documents/text_highlight_merge.rs"
+      ],
+      "remaining_review": "Review range value semantics, defaults, mutable brush invalidation and layering. The projection-only base can map to FerroObject; TextRange needs a Rust name distinct from the live document range."
+    },
+    "Microsoft.UI.Xaml.Documents.TextHighlighterBase": {
+      "batch": "R6",
+      "candidate_paths": [
+        "src/FerroUI.Controls/documents/text_highlighter.rs",
+        "src/FerroUI.Controls/documents/text_highlight_range.rs",
+        "src/FerroUI.Controls/documents/text_highlight_merge.rs"
+      ],
+      "remaining_review": "Review range value semantics, defaults, mutable brush invalidation and layering. The projection-only base can map to FerroObject; TextRange needs a Rust name distinct from the live document range."
+    },
+    "Microsoft.UI.Xaml.Documents.TextPointer": {
+      "batch": "R1/R2",
+      "candidate_paths": [
+        "src/FerroUI.Controls/documents/text_position.rs"
+      ],
+      "remaining_review": "Review UTF-16 positions, gravity, element/visual parents and geometry; public text offsets exclude native synthetic element markers."
+    },
+    "Microsoft.UI.Xaml.Documents.TextRange": {
+      "batch": "R6",
+      "candidate_paths": [
+        "src/FerroUI.Controls/documents/text_highlighter.rs",
+        "src/FerroUI.Controls/documents/text_highlight_range.rs",
+        "src/FerroUI.Controls/documents/text_highlight_merge.rs"
+      ],
+      "remaining_review": "Review range value semantics, defaults, mutable brush invalidation and layering. The projection-only base can map to FerroObject; TextRange needs a Rust name distinct from the live document range."
+    },
+    "Microsoft.UI.Xaml.Documents.Typography": {
+      "batch": "R6",
+      "candidate_paths": [
+        "src/FerroUI.Controls/documents/text_element.rs",
+        "src/FerroUI.Base/media/text_formatting/text_shaper.rs"
+      ],
+      "remaining_review": "Audit every attached OpenType feature and its inheritance/shaping behavior; a FontFeatures collection alone does not verify all named feature APIs."
+    },
+    "Microsoft.UI.Xaml.Documents.Underline": {
+      "batch": "R1/R2",
+      "candidate_paths": [
+        "src/FerroUI.Controls/documents/underline.rs"
+      ],
+      "remaining_review": "Review each document property, collection identity, inherited formatting, invalidation, markup and observable edge case against the pinned source."
+    },
+    "Microsoft.UI.Xaml.Documents.UnderlineStyle": {
+      "batch": "R1/R5",
+      "candidate_paths": [
+        "src/FerroUI.Controls/documents/hyperlink.rs"
+      ],
+      "remaining_review": "Review hyperlink presentation, shared handled arguments, activation and navigation behavior."
+    },
+    "Microsoft.UI.Xaml.LineStackingStrategy": {
+      "batch": "R2/R6",
+      "candidate_paths": [
+        "src/FerroUI.Base/media/",
+        "src/FerroUI.Controls/rich_text_layout.rs"
+      ],
+      "remaining_review": "Audit shared layout/rendering enum values and all consumers, including unsupported values and native defaults."
+    },
+    "Microsoft.UI.Xaml.OpticalMarginAlignment": {
+      "batch": "R2/R6",
+      "candidate_paths": [
+        "src/FerroUI.Base/media/",
+        "src/FerroUI.Controls/rich_text_layout.rs"
+      ],
+      "remaining_review": "Audit shared layout/rendering enum values and all consumers, including unsupported values and native defaults."
+    },
+    "Microsoft.UI.Xaml.TextAlignment": {
+      "batch": "R2/R6",
+      "candidate_paths": [
+        "src/FerroUI.Base/media/",
+        "src/FerroUI.Controls/rich_text_layout.rs"
+      ],
+      "remaining_review": "Audit shared layout/rendering enum values and all consumers, including unsupported values and native defaults."
+    },
+    "Microsoft.UI.Xaml.TextLineBounds": {
+      "batch": "R2/R6",
+      "candidate_paths": [
+        "src/FerroUI.Base/media/",
+        "src/FerroUI.Controls/rich_text_layout.rs"
+      ],
+      "remaining_review": "Audit shared layout/rendering enum values and all consumers, including unsupported values and native defaults."
+    },
+    "Microsoft.UI.Xaml.TextReadingOrder": {
+      "batch": "R2/R6",
+      "candidate_paths": [
+        "src/FerroUI.Base/media/",
+        "src/FerroUI.Controls/rich_text_layout.rs"
+      ],
+      "remaining_review": "Audit shared layout/rendering enum values and all consumers, including unsupported values and native defaults."
+    },
+    "Microsoft.UI.Xaml.TextTrimming": {
+      "batch": "R2/R6",
+      "candidate_paths": [
+        "src/FerroUI.Base/media/",
+        "src/FerroUI.Controls/rich_text_layout.rs"
+      ],
+      "remaining_review": "Audit shared layout/rendering enum values and all consumers, including unsupported values and native defaults."
+    },
+    "Microsoft.UI.Xaml.TextWrapping": {
+      "batch": "R2/R6",
+      "candidate_paths": [
+        "src/FerroUI.Base/media/",
+        "src/FerroUI.Controls/rich_text_layout.rs"
+      ],
+      "remaining_review": "Audit shared layout/rendering enum values and all consumers, including unsupported values and native defaults."
+    }
+  },
   "members": [
     {
       "id": "E:Microsoft.UI.Xaml.Controls.RichEditBox.CandidateWindowBoundsChanged",
@@ -2765,6 +3588,1023 @@
       "implementation_source": "external WinUIEdit/Microsoft.UI.Text implementation"
     },
     {
+      "id": "F:Microsoft.UI.Xaml.Automation.AnnotationType.AdvancedProofingIssue",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AnnotationType",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AnnotationType.Author",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AnnotationType",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AnnotationType.CircularReferenceError",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AnnotationType",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AnnotationType.Comment",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AnnotationType",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AnnotationType.ConflictingChange",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AnnotationType",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AnnotationType.DataValidationError",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AnnotationType",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AnnotationType.DeletionChange",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AnnotationType",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AnnotationType.EditingLockedChange",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AnnotationType",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AnnotationType.Endnote",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AnnotationType",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AnnotationType.ExternalChange",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AnnotationType",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AnnotationType.Footer",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AnnotationType",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AnnotationType.Footnote",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AnnotationType",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AnnotationType.FormatChange",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AnnotationType",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AnnotationType.FormulaError",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AnnotationType",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AnnotationType.GrammarError",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AnnotationType",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AnnotationType.Header",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AnnotationType",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AnnotationType.Highlighted",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AnnotationType",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AnnotationType.InsertionChange",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AnnotationType",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AnnotationType.MoveChange",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AnnotationType",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AnnotationType.SpellingError",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AnnotationType",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AnnotationType.TrackChanges",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AnnotationType",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AnnotationType.Unknown",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AnnotationType",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AnnotationType.UnsyncedChange",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AnnotationType",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationActiveEnd.End",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationActiveEnd",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationActiveEnd.None",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationActiveEnd",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationActiveEnd.Start",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationActiveEnd",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationAnimationStyle.BlinkingBackground",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationAnimationStyle",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationAnimationStyle.LasVegasLights",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationAnimationStyle",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationAnimationStyle.MarchingBlackAnts",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationAnimationStyle",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationAnimationStyle.MarchingRedAnts",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationAnimationStyle",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationAnimationStyle.None",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationAnimationStyle",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationAnimationStyle.Other",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationAnimationStyle",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationAnimationStyle.Shimmer",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationAnimationStyle",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationAnimationStyle.SparkleText",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationAnimationStyle",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationBulletStyle.DashBullet",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationBulletStyle",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationBulletStyle.FilledRoundBullet",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationBulletStyle",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationBulletStyle.FilledSquareBullet",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationBulletStyle",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationBulletStyle.HollowRoundBullet",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationBulletStyle",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationBulletStyle.HollowSquareBullet",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationBulletStyle",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationBulletStyle.None",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationBulletStyle",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationBulletStyle.Other",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationBulletStyle",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationCaretBidiMode.LTR",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationCaretBidiMode",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationCaretBidiMode.RTL",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationCaretBidiMode",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationCaretPosition.BeginningOfLine",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationCaretPosition",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationCaretPosition.EndOfLine",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationCaretPosition",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationCaretPosition.Unknown",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationCaretPosition",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationFlowDirections.BottomToTop",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationFlowDirections",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationFlowDirections.Default",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationFlowDirections",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationFlowDirections.RightToLeft",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationFlowDirections",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationFlowDirections.Vertical",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationFlowDirections",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationOutlineStyles.Embossed",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationOutlineStyles",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationOutlineStyles.Engraved",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationOutlineStyles",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationOutlineStyles.None",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationOutlineStyles",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationOutlineStyles.Outline",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationOutlineStyles",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationOutlineStyles.Shadow",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationOutlineStyles",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationStyleId.BulletedList",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationStyleId",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationStyleId.Emphasis",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationStyleId",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationStyleId.Heading1",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationStyleId",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationStyleId.Heading2",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationStyleId",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationStyleId.Heading3",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationStyleId",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationStyleId.Heading4",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationStyleId",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationStyleId.Heading5",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationStyleId",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationStyleId.Heading6",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationStyleId",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationStyleId.Heading7",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationStyleId",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationStyleId.Heading8",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationStyleId",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationStyleId.Heading9",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationStyleId",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationStyleId.Normal",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationStyleId",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationStyleId.Quote",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationStyleId",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationStyleId.Subtitle",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationStyleId",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationStyleId.Title",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationStyleId",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationTextDecorationLineStyle.Dash",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationTextDecorationLineStyle",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationTextDecorationLineStyle.DashDot",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationTextDecorationLineStyle",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationTextDecorationLineStyle.DashDotDot",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationTextDecorationLineStyle",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationTextDecorationLineStyle.Dot",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationTextDecorationLineStyle",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationTextDecorationLineStyle.Double",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationTextDecorationLineStyle",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationTextDecorationLineStyle.DoubleWavy",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationTextDecorationLineStyle",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationTextDecorationLineStyle.LongDash",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationTextDecorationLineStyle",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationTextDecorationLineStyle.None",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationTextDecorationLineStyle",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationTextDecorationLineStyle.Other",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationTextDecorationLineStyle",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationTextDecorationLineStyle.Single",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationTextDecorationLineStyle",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationTextDecorationLineStyle.ThickDash",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationTextDecorationLineStyle",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationTextDecorationLineStyle.ThickDashDot",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationTextDecorationLineStyle",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationTextDecorationLineStyle.ThickDashDotDot",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationTextDecorationLineStyle",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationTextDecorationLineStyle.ThickDot",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationTextDecorationLineStyle",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationTextDecorationLineStyle.ThickLongDash",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationTextDecorationLineStyle",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationTextDecorationLineStyle.ThickSingle",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationTextDecorationLineStyle",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationTextDecorationLineStyle.ThickWavy",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationTextDecorationLineStyle",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationTextDecorationLineStyle.Wavy",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationTextDecorationLineStyle",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationTextDecorationLineStyle.WordsOnly",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationTextDecorationLineStyle",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationTextEditChangeType.AutoCorrect",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationTextEditChangeType",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationTextEditChangeType.Composition",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationTextEditChangeType",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationTextEditChangeType.CompositionFinalized",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationTextEditChangeType",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.AutomationTextEditChangeType.None",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationTextEditChangeType",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.Peers.AutomationEvents.TextEditTextChanged",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.Peers.AutomationEvents",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.Peers.AutomationEvents.TextPatternOnTextChanged",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.Peers.AutomationEvents",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.Peers.AutomationEvents.TextPatternOnTextSelectionChanged",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.Peers.AutomationEvents",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.Peers.PatternInterface.Text",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.Peers.PatternInterface",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.Peers.PatternInterface.Text2",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.Peers.PatternInterface",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.Peers.PatternInterface.TextChild",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.Peers.PatternInterface",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.Peers.PatternInterface.TextEdit",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.Peers.PatternInterface",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.Peers.PatternInterface.TextRange",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.Peers.PatternInterface",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.SupportedTextSelection.Multiple",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.SupportedTextSelection",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.SupportedTextSelection.None",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.SupportedTextSelection",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.SupportedTextSelection.Single",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.SupportedTextSelection",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.Text.TextPatternRangeEndpoint.End",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.Text.TextPatternRangeEndpoint",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.Text.TextPatternRangeEndpoint.Start",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.Text.TextPatternRangeEndpoint",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.Text.TextUnit.Character",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.Text.TextUnit",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.Text.TextUnit.Document",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.Text.TextUnit",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.Text.TextUnit.Format",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.Text.TextUnit",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.Text.TextUnit.Line",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.Text.TextUnit",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.Text.TextUnit.Page",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.Text.TextUnit",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.Text.TextUnit.Paragraph",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.Text.TextUnit",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.Automation.Text.TextUnit.Word",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.Text.TextUnit",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
       "id": "F:Microsoft.UI.Xaml.Controls.RichEditClipboardFormat.AllFormats",
       "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
       "owner": "Microsoft.UI.Xaml.Controls.RichEditClipboardFormat",
@@ -4111,6 +5951,42 @@
       "implementation_source": "external WinUIEdit/Microsoft.UI.Text implementation"
     },
     {
+      "id": "M:Microsoft.UI.Xaml.Automation.AutomationAnnotation.#ctor",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationAnnotation",
+      "kind": "M",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "M:Microsoft.UI.Xaml.Automation.AutomationAnnotation.#ctor(Microsoft.UI.Xaml.Automation.AnnotationType)",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationAnnotation",
+      "kind": "M",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "M:Microsoft.UI.Xaml.Automation.AutomationAnnotation.#ctor(Microsoft.UI.Xaml.Automation.AnnotationType,Microsoft.UI.Xaml.UIElement)",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationAnnotation",
+      "kind": "M",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "M:Microsoft.UI.Xaml.Automation.Peers.AutomationPeer.RaiseTextEditTextChangedEvent(Microsoft.UI.Xaml.Automation.AutomationTextEditChangeType,Windows.Foundation.Collections.IVectorView{System.String})",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.Peers.AutomationPeer",
+      "kind": "M",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
       "id": "M:Microsoft.UI.Xaml.Automation.Peers.RichEditBoxAutomationPeer.#ctor(Microsoft.UI.Xaml.Controls.RichEditBox)",
       "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
       "owner": "Microsoft.UI.Xaml.Automation.Peers.RichEditBoxAutomationPeer",
@@ -4132,6 +6008,249 @@
       "id": "M:Microsoft.UI.Xaml.Automation.Peers.RichTextBlockOverflowAutomationPeer.#ctor(Microsoft.UI.Xaml.Controls.RichTextBlockOverflow)",
       "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
       "owner": "Microsoft.UI.Xaml.Automation.Peers.RichTextBlockOverflowAutomationPeer",
+      "kind": "M",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "M:Microsoft.UI.Xaml.Automation.Provider.ITextEditProvider.GetActiveComposition",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.Provider.ITextEditProvider",
+      "kind": "M",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "M:Microsoft.UI.Xaml.Automation.Provider.ITextEditProvider.GetConversionTarget",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.Provider.ITextEditProvider",
+      "kind": "M",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "M:Microsoft.UI.Xaml.Automation.Provider.ITextProvider.GetSelection",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.Provider.ITextProvider",
+      "kind": "M",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "M:Microsoft.UI.Xaml.Automation.Provider.ITextProvider.GetVisibleRanges",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.Provider.ITextProvider",
+      "kind": "M",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "M:Microsoft.UI.Xaml.Automation.Provider.ITextProvider.RangeFromChild(Microsoft.UI.Xaml.Automation.Provider.IRawElementProviderSimple)",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.Provider.ITextProvider",
+      "kind": "M",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "M:Microsoft.UI.Xaml.Automation.Provider.ITextProvider.RangeFromPoint(Windows.Foundation.Point)",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.Provider.ITextProvider",
+      "kind": "M",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "M:Microsoft.UI.Xaml.Automation.Provider.ITextProvider2.GetCaretRange(System.Boolean@)",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.Provider.ITextProvider2",
+      "kind": "M",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "M:Microsoft.UI.Xaml.Automation.Provider.ITextProvider2.RangeFromAnnotation(Microsoft.UI.Xaml.Automation.Provider.IRawElementProviderSimple)",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.Provider.ITextProvider2",
+      "kind": "M",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "M:Microsoft.UI.Xaml.Automation.Provider.ITextRangeProvider.AddToSelection",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.Provider.ITextRangeProvider",
+      "kind": "M",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "M:Microsoft.UI.Xaml.Automation.Provider.ITextRangeProvider.Clone",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.Provider.ITextRangeProvider",
+      "kind": "M",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "M:Microsoft.UI.Xaml.Automation.Provider.ITextRangeProvider.Compare(Microsoft.UI.Xaml.Automation.Provider.ITextRangeProvider)",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.Provider.ITextRangeProvider",
+      "kind": "M",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "M:Microsoft.UI.Xaml.Automation.Provider.ITextRangeProvider.CompareEndpoints(Microsoft.UI.Xaml.Automation.Text.TextPatternRangeEndpoint,Microsoft.UI.Xaml.Automation.Provider.ITextRangeProvider,Microsoft.UI.Xaml.Automation.Text.TextPatternRangeEndpoint)",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.Provider.ITextRangeProvider",
+      "kind": "M",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "M:Microsoft.UI.Xaml.Automation.Provider.ITextRangeProvider.ExpandToEnclosingUnit(Microsoft.UI.Xaml.Automation.Text.TextUnit)",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.Provider.ITextRangeProvider",
+      "kind": "M",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "M:Microsoft.UI.Xaml.Automation.Provider.ITextRangeProvider.FindAttribute(System.Int32,System.Object,System.Boolean)",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.Provider.ITextRangeProvider",
+      "kind": "M",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "M:Microsoft.UI.Xaml.Automation.Provider.ITextRangeProvider.FindText(System.String,System.Boolean,System.Boolean)",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.Provider.ITextRangeProvider",
+      "kind": "M",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "M:Microsoft.UI.Xaml.Automation.Provider.ITextRangeProvider.GetAttributeValue(System.Int32)",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.Provider.ITextRangeProvider",
+      "kind": "M",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "M:Microsoft.UI.Xaml.Automation.Provider.ITextRangeProvider.GetBoundingRectangles(System.Double[]@)",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.Provider.ITextRangeProvider",
+      "kind": "M",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "M:Microsoft.UI.Xaml.Automation.Provider.ITextRangeProvider.GetChildren",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.Provider.ITextRangeProvider",
+      "kind": "M",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "M:Microsoft.UI.Xaml.Automation.Provider.ITextRangeProvider.GetEnclosingElement",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.Provider.ITextRangeProvider",
+      "kind": "M",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "M:Microsoft.UI.Xaml.Automation.Provider.ITextRangeProvider.GetText(System.Int32)",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.Provider.ITextRangeProvider",
+      "kind": "M",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "M:Microsoft.UI.Xaml.Automation.Provider.ITextRangeProvider.Move(Microsoft.UI.Xaml.Automation.Text.TextUnit,System.Int32)",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.Provider.ITextRangeProvider",
+      "kind": "M",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "M:Microsoft.UI.Xaml.Automation.Provider.ITextRangeProvider.MoveEndpointByRange(Microsoft.UI.Xaml.Automation.Text.TextPatternRangeEndpoint,Microsoft.UI.Xaml.Automation.Provider.ITextRangeProvider,Microsoft.UI.Xaml.Automation.Text.TextPatternRangeEndpoint)",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.Provider.ITextRangeProvider",
+      "kind": "M",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "M:Microsoft.UI.Xaml.Automation.Provider.ITextRangeProvider.MoveEndpointByUnit(Microsoft.UI.Xaml.Automation.Text.TextPatternRangeEndpoint,Microsoft.UI.Xaml.Automation.Text.TextUnit,System.Int32)",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.Provider.ITextRangeProvider",
+      "kind": "M",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "M:Microsoft.UI.Xaml.Automation.Provider.ITextRangeProvider.RemoveFromSelection",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.Provider.ITextRangeProvider",
+      "kind": "M",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "M:Microsoft.UI.Xaml.Automation.Provider.ITextRangeProvider.ScrollIntoView(System.Boolean)",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.Provider.ITextRangeProvider",
+      "kind": "M",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "M:Microsoft.UI.Xaml.Automation.Provider.ITextRangeProvider.Select",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.Provider.ITextRangeProvider",
+      "kind": "M",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "M:Microsoft.UI.Xaml.Automation.Provider.ITextRangeProvider2.ShowContextMenu",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.Provider.ITextRangeProvider2",
       "kind": "M",
       "state": "pending",
       "targets": [],
@@ -6319,6 +8438,123 @@
       "targets": [],
       "tests": [],
       "implementation_source": "external WinUIEdit/Microsoft.UI.Text implementation"
+    },
+    {
+      "id": "P:Microsoft.UI.Xaml.Automation.AnnotationPatternIdentifiers.AnnotationTypeIdProperty",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AnnotationPatternIdentifiers",
+      "kind": "P",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "P:Microsoft.UI.Xaml.Automation.AnnotationPatternIdentifiers.AnnotationTypeNameProperty",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AnnotationPatternIdentifiers",
+      "kind": "P",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "P:Microsoft.UI.Xaml.Automation.AnnotationPatternIdentifiers.AuthorProperty",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AnnotationPatternIdentifiers",
+      "kind": "P",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "P:Microsoft.UI.Xaml.Automation.AnnotationPatternIdentifiers.DateTimeProperty",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AnnotationPatternIdentifiers",
+      "kind": "P",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "P:Microsoft.UI.Xaml.Automation.AnnotationPatternIdentifiers.TargetProperty",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AnnotationPatternIdentifiers",
+      "kind": "P",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "P:Microsoft.UI.Xaml.Automation.AutomationAnnotation.Element",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationAnnotation",
+      "kind": "P",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "P:Microsoft.UI.Xaml.Automation.AutomationAnnotation.ElementProperty",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationAnnotation",
+      "kind": "P",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "P:Microsoft.UI.Xaml.Automation.AutomationAnnotation.Type",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationAnnotation",
+      "kind": "P",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "P:Microsoft.UI.Xaml.Automation.AutomationAnnotation.TypeProperty",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationAnnotation",
+      "kind": "P",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "P:Microsoft.UI.Xaml.Automation.Provider.ITextChildProvider.TextContainer",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.Provider.ITextChildProvider",
+      "kind": "P",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "P:Microsoft.UI.Xaml.Automation.Provider.ITextChildProvider.TextRange",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.Provider.ITextChildProvider",
+      "kind": "P",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "P:Microsoft.UI.Xaml.Automation.Provider.ITextProvider.DocumentRange",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.Provider.ITextProvider",
+      "kind": "P",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "P:Microsoft.UI.Xaml.Automation.Provider.ITextProvider.SupportedTextSelection",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.Provider.ITextProvider",
+      "kind": "P",
+      "state": "pending",
+      "targets": [],
+      "tests": []
     },
     {
       "id": "P:Microsoft.UI.Xaml.Controls.CandidateWindowBoundsChangedEventArgs.Bounds",
@@ -9783,6 +12019,123 @@
       "implementation_source": "external WinUIEdit/Microsoft.UI.Text implementation"
     },
     {
+      "id": "T:Microsoft.UI.Xaml.Automation.AnnotationPatternIdentifiers",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AnnotationPatternIdentifiers",
+      "kind": "T",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "T:Microsoft.UI.Xaml.Automation.AnnotationType",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AnnotationType",
+      "kind": "T",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "T:Microsoft.UI.Xaml.Automation.AutomationActiveEnd",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationActiveEnd",
+      "kind": "T",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "T:Microsoft.UI.Xaml.Automation.AutomationAnimationStyle",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationAnimationStyle",
+      "kind": "T",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "T:Microsoft.UI.Xaml.Automation.AutomationAnnotation",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationAnnotation",
+      "kind": "T",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "T:Microsoft.UI.Xaml.Automation.AutomationBulletStyle",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationBulletStyle",
+      "kind": "T",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "T:Microsoft.UI.Xaml.Automation.AutomationCaretBidiMode",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationCaretBidiMode",
+      "kind": "T",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "T:Microsoft.UI.Xaml.Automation.AutomationCaretPosition",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationCaretPosition",
+      "kind": "T",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "T:Microsoft.UI.Xaml.Automation.AutomationFlowDirections",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationFlowDirections",
+      "kind": "T",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "T:Microsoft.UI.Xaml.Automation.AutomationOutlineStyles",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationOutlineStyles",
+      "kind": "T",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "T:Microsoft.UI.Xaml.Automation.AutomationStyleId",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationStyleId",
+      "kind": "T",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "T:Microsoft.UI.Xaml.Automation.AutomationTextDecorationLineStyle",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationTextDecorationLineStyle",
+      "kind": "T",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "T:Microsoft.UI.Xaml.Automation.AutomationTextEditChangeType",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.AutomationTextEditChangeType",
+      "kind": "T",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
       "id": "T:Microsoft.UI.Xaml.Automation.Peers.RichEditBoxAutomationPeer",
       "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
       "owner": "Microsoft.UI.Xaml.Automation.Peers.RichEditBoxAutomationPeer",
@@ -9804,6 +12157,87 @@
       "id": "T:Microsoft.UI.Xaml.Automation.Peers.RichTextBlockOverflowAutomationPeer",
       "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
       "owner": "Microsoft.UI.Xaml.Automation.Peers.RichTextBlockOverflowAutomationPeer",
+      "kind": "T",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "T:Microsoft.UI.Xaml.Automation.Provider.ITextChildProvider",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.Provider.ITextChildProvider",
+      "kind": "T",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "T:Microsoft.UI.Xaml.Automation.Provider.ITextEditProvider",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.Provider.ITextEditProvider",
+      "kind": "T",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "T:Microsoft.UI.Xaml.Automation.Provider.ITextProvider",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.Provider.ITextProvider",
+      "kind": "T",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "T:Microsoft.UI.Xaml.Automation.Provider.ITextProvider2",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.Provider.ITextProvider2",
+      "kind": "T",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "T:Microsoft.UI.Xaml.Automation.Provider.ITextRangeProvider",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.Provider.ITextRangeProvider",
+      "kind": "T",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "T:Microsoft.UI.Xaml.Automation.Provider.ITextRangeProvider2",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.Provider.ITextRangeProvider2",
+      "kind": "T",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "T:Microsoft.UI.Xaml.Automation.SupportedTextSelection",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.SupportedTextSelection",
+      "kind": "T",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "T:Microsoft.UI.Xaml.Automation.Text.TextPatternRangeEndpoint",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.Text.TextPatternRangeEndpoint",
+      "kind": "T",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "T:Microsoft.UI.Xaml.Automation.Text.TextUnit",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.Automation.Text.TextUnit",
       "kind": "T",
       "state": "pending",
       "targets": [],

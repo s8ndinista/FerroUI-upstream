@@ -46,6 +46,26 @@ XAML_CONTROL_TYPES = {
     "CandidateWindowBoundsChangedEventArgs", "TextReadingOrder", "TextLineBounds", "TextWrapping",
     "TextTrimming", "TextAlignment", "LineStackingStrategy", "OpticalMarginAlignment",
 }
+XAML_TEXT_AUTOMATION_TYPES = {
+    "ITextProvider", "ITextProvider2", "ITextRangeProvider", "ITextRangeProvider2",
+    "ITextEditProvider", "ITextChildProvider", "SupportedTextSelection", "TextUnit",
+    "TextPatternRangeEndpoint", "AutomationActiveEnd", "AutomationAnimationStyle",
+    "AutomationBulletStyle", "AutomationCaretBidiMode", "AutomationCaretPosition",
+    "AutomationFlowDirections", "AutomationOutlineStyles", "AutomationStyleId",
+    "AutomationTextDecorationLineStyle", "AutomationTextEditChangeType",
+    "AnnotationType", "AutomationAnnotation", "AnnotationPatternIdentifiers",
+}
+XAML_TEXT_AUTOMATION_MEMBERS = {
+    "F:Microsoft.UI.Xaml.Automation.Peers.PatternInterface.Text",
+    "F:Microsoft.UI.Xaml.Automation.Peers.PatternInterface.Text2",
+    "F:Microsoft.UI.Xaml.Automation.Peers.PatternInterface.TextRange",
+    "F:Microsoft.UI.Xaml.Automation.Peers.PatternInterface.TextEdit",
+    "F:Microsoft.UI.Xaml.Automation.Peers.PatternInterface.TextChild",
+    "F:Microsoft.UI.Xaml.Automation.Peers.AutomationEvents.TextPatternOnTextChanged",
+    "F:Microsoft.UI.Xaml.Automation.Peers.AutomationEvents.TextPatternOnTextSelectionChanged",
+    "F:Microsoft.UI.Xaml.Automation.Peers.AutomationEvents.TextEditTextChanged",
+    "M:Microsoft.UI.Xaml.Automation.Peers.AutomationPeer.RaiseTextEditTextChangedEvent(Microsoft.UI.Xaml.Automation.AutomationTextEditChangeType,Windows.Foundation.Collections.IVectorView{System.String})",
+}
 RELATED_TYPES = XAML_CONTROL_TYPES | {
     "TextElement", "TextElementCollection", "TextElementTreeCollection", "Block", "Paragraph",
     "BlockCollection", "Inline", "InlineCollection", "InlineUIContainer", "Run", "CRun", "Span",
@@ -58,7 +78,8 @@ RELATED_TYPES = XAML_CONTROL_TYPES | {
     "TextBoxBaseAutomationPeer", "InputScope", "InputScopeName", "InputScopeNameFactory", "FontFamily",
     "FontAndScriptServices", "InheritedProperties", "RichTextServicesHelper", "GripperPopup",
     "WindowLessSiteHost", "TextControlFlyoutHelper", "TextControlHelper", "TextBoxPlaceholderTextHelper",
-    "TextAlternativesAsyncOperation", "CaretBrowsingGlobal",
+    "TextAlternativesAsyncOperation", "CaretBrowsingGlobal", "BlockTextElement",
+    "CaretBrowsingCaret", "CaretBrowsingDialog", "HyperLinkAutomationPeer", "TextOptions",
 }
 RELATED_NAMES = {name.lower() for name in RELATED_TYPES}
 EXPLICIT_REFERENCES = {
@@ -69,7 +90,13 @@ EXPLICIT_REFERENCES = {
     "dxaml/xcp/tools/XCPTypesAutoGen/XamlOM/Model/Microsoft.UI.Xaml.Documents.cs",
     "dxaml/xcp/tools/XCPTypesAutoGen/XamlOM/Model/Microsoft.UI.Xaml.Controls.cs",
     "dxaml/xcp/tools/XCPTypesAutoGen/XamlOM/Model/Microsoft.UI.Xaml.Automation.Peers.cs",
+    "dxaml/xcp/tools/XCPTypesAutoGen/XamlOM/Model/Microsoft.UI.Xaml.Automation.Provider.cs",
+    "dxaml/xcp/tools/XCPTypesAutoGen/XamlOM/Model/Microsoft.UI.Xaml.Automation.Text.cs",
+    "dxaml/xcp/tools/XCPTypesAutoGen/XamlOM/Model/Microsoft.UI.Xaml.Automation.cs",
     "dxaml/xcp/tools/XCPTypesAutoGen/XamlOM/Model/Microsoft.UI.Xaml.Internal.cs",
+    "dxaml/xcp/win/shared/UIAPatternProviderWrapper.cpp",
+    "dxaml/xcp/win/inc/UIAPatternProviderWrapper.h",
+    "dxaml/xcp/components/metadata/inc/EnumDefs.g.h",
     "dxaml/xcp/dxaml/idl/winrt/main/microsoft.ui.xaml.idl",
     "dxaml/xcp/dxaml/themes/generic.xaml",
     "controls/dev/CommonStyles/RichEditBox_themeresources.xaml",
@@ -158,7 +185,7 @@ def classify(path: str) -> tuple[str, str, list[str]]:
     stem = type_stem(path)
     if "/test/" in lower or "/unittests/" in lower:
         return "upstream tests", "reference", []
-    if path in {TEXT_API, XAML_API} or "/xamlom/model/" in lower or lower.endswith(".idl"):
+    if path in {TEXT_API, XAML_API} or "/xamlom/model/" in lower or lower.endswith(".idl") or lower.endswith("/enumdefs.g.h"):
         return "public API metadata", "reference", []
     if "/winrtgeneratedclasses/" in lower:
         return "generated WinRT projection", "reference", []
@@ -166,7 +193,7 @@ def classify(path: str) -> tuple[str, str, list[str]]:
         return "build, tooling and attribution", "reference", []
     if lower.endswith(".xaml"):
         return "theme reference", "reference", ["src/FerroUI.Themes.WinUI/"]
-    if "automationpeer" in lower or stem in {"textprovider", "textrangeprovider"}:
+    if "automationpeer" in lower or stem in {"textprovider", "textrangeprovider", "uiapatternproviderwrapper"}:
         return "text automation", "pending", ["src/FerroUI.Controls/automation/"]
     if "/pal/" in lower or "/fonts/" in lower or stem in {"fontfamily", "fontandscriptservices", "fonts", "typefacecollection"}:
         return "font and script services", "reuse_candidate", ["src/FerroUI.Base/media/font_manager.rs", FORMAT_ROOT + "text_shaper.rs"]
@@ -190,7 +217,7 @@ def classify(path: str) -> tuple[str, str, list[str]]:
         return "rich text controls and overflow", "pending", ["src/FerroUI.Controls/rich_text_block.rs", "src/FerroUI.Controls/rich_text_block_overflow.rs"]
     if "/dxaml/lib/" in lower:
         return "control projection and services", "pending", ["src/FerroUI.Controls/"]
-    if stem in {"block", "paragraph", "blockcollection", "textschema", "textelementcollection", "richtextserviceshelper"}:
+    if stem in {"block", "blocktextelement", "paragraph", "blockcollection", "textschema", "textelementcollection", "richtextserviceshelper"}:
         return "block document model", "pending", [DOCUMENT_ROOT]
     if stem in {"inline", "run", "crun", "span", "bold", "italic", "underline", "linebreak", "inlinecollection", "inlineuicontainer", "textelement", "hyperlink", "typography"}:
         return "document inlines and formatting", "reuse_candidate", [DOCUMENT_ROOT]
@@ -245,6 +272,64 @@ def validate_review(entry: dict, label: str):
             raise ValueError(f"Complete mapping lacks Rust target, tests or review reason: {label}")
 
 
+def validate_mapping(mapping: dict):
+    deviations = set(re.findall(r"\|\s*(RT-[A-Z]\d+)\s*\|", (DESTINATION / "DEVIATIONS.md").read_text()))
+    for group in ("files", "api_members"):
+        for label, entry in mapping[group].items():
+            unknown = set(entry.get("deviations", [])) - deviations
+            if unknown:
+                raise ValueError(f"Undefined deviations for {label}: {sorted(unknown)}")
+    for name, capability in mapping["capabilities"].items():
+        if capability.get("state") not in STATES or not capability.get("description"):
+            raise ValueError(f"Invalid capability record: {name}")
+    for run in mapping["validation"]:
+        if not run.get("command") or not run.get("result"):
+            raise ValueError("A validation record requires the actual command and result")
+
+
+def api_type_plan(owner: str) -> dict:
+    name = owner.rsplit(".", 1)[-1]
+    if ".Automation." in owner:
+        return {
+            "batch": "R7",
+            "candidate_paths": ["src/FerroUI.Controls/automation/", "src/Windows/FerroUI.Win32/automation/"],
+            "remaining_review": "Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2, annotations, composition and unsupported attribute families remain explicit pending contracts.",
+        }
+    if name in {"TextHighlighter", "TextHighlighterBase", "TextRange"} and ".Documents." in owner:
+        return {
+            "batch": "R6",
+            "candidate_paths": [DOCUMENT_ROOT + "text_highlighter.rs", DOCUMENT_ROOT + "text_highlight_range.rs", DOCUMENT_ROOT + "text_highlight_merge.rs"],
+            "remaining_review": "Review range value semantics, defaults, mutable brush invalidation and layering. The projection-only base can map to FerroObject; TextRange needs a Rust name distinct from the live document range.",
+        }
+    if name == "Typography":
+        return {"batch": "R6", "candidate_paths": [DOCUMENT_ROOT + "text_element.rs", FORMAT_ROOT + "text_shaper.rs"], "remaining_review": "Audit every attached OpenType feature and its inheritance/shaping behavior; a FontFeatures collection alone does not verify all named feature APIs."}
+    if name == "Glyphs":
+        return {"batch": "R8", "candidate_paths": ["src/FerroUI.Base/media/glyph_run.rs"], "remaining_review": "The existing glyph run is a rendering contract; the document Glyphs control's parsing, indices, font URI, properties and layout need their own review."}
+    if name in {"TextPointer", "LogicalDirection"}:
+        return {"batch": "R1/R2", "candidate_paths": [DOCUMENT_ROOT + "text_position.rs"], "remaining_review": "Review UTF-16 positions, gravity, element/visual parents and geometry; public text offsets exclude native synthetic element markers."}
+    if name in {"UnderlineStyle", "HyperlinkClickEventArgs"}:
+        return {"batch": "R1/R5", "candidate_paths": [DOCUMENT_ROOT + "hyperlink.rs"], "remaining_review": "Review hyperlink presentation, shared handled arguments, activation and navigation behavior."}
+    if ".Documents." in owner:
+        stem = re.sub(r"(?<!^)(?=[A-Z])", "_", name).lower()
+        stem = {"InlineUIContainer": "inline_ui_container"}.get(name, stem)
+        return {"batch": "R1/R2", "candidate_paths": [DOCUMENT_ROOT + stem + ".rs"], "remaining_review": "Review each document property, collection identity, inherited formatting, invalidation, markup and observable edge case against the pinned source."}
+    if name.startswith("RichTextBlock"):
+        return {"batch": "R2/R7", "candidate_paths": ["src/FerroUI.Controls/rich_text_block.rs", "src/FerroUI.Controls/rich_text_block_overflow.rs", "src/FerroUI.Controls/rich_text_layout.rs"], "remaining_review": "Review document ownership, line/overflow continuation, selection, rendering, input, property notifications and accessibility. Existing formatter output is not exact native engine or pixel parity."}
+    if ".Controls." in owner:
+        return {"batch": "R5/R7", "candidate_paths": ["src/FerroUI.Controls/rich_edit_box.rs", "src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs"], "remaining_review": "Review editable control members, native event timing, IME/clipboard capabilities, templates, accelerators and automation. Missing members are omitted, not stubbed."}
+    if name in {"ITextDocument", "ITextRange", "ITextSelection"}:
+        return {"batch": "R3/R8", "candidate_paths": ["src/FerroUI.Controls/rich_text/rich_edit_text_document.rs"], "remaining_review": "Audit the external TOM contract member by member. The Rust facade uses typed errors, UTF-16 text ranges and shared editor services; native option flags, ABI, streams and additional units are not inferred from similarly named methods."}
+    if name in {"ITextCharacterFormat", "ITextParagraphFormat"}:
+        return {"batch": "R3/R8", "candidate_paths": [DOCUMENT_ROOT + "character_format.rs"], "remaining_review": "Audit native formatting units, mixed values, font/brush representation, tabs, lists, language and formatting flags. Rust patches cover only explicitly mapped fields."}
+    if name in {"TextGetOptions", "TextSetOptions"}:
+        return {"batch": "R4/R8", "candidate_paths": ["src/FerroUI.Controls/rich_text/rtf.rs", "src/FerroUI.Controls/rich_text/rich_text_transfer.rs"], "remaining_review": "Review every import/export option and supported content feature. Explicit unsupported RTF errors do not implement omitted flags or native stream APIs."}
+    if name == "FontWeights":
+        return {"batch": "R6", "candidate_paths": ["src/FerroUI.Base/media/font_weight.rs"], "remaining_review": "Audit named font weight values, conversion and font selection; each retained XML property has its own state."}
+    if owner.startswith("Microsoft.UI.Text."):
+        return {"batch": "R3/R8", "candidate_paths": ["src/FerroUI.Controls/rich_text/", DOCUMENT_ROOT], "remaining_review": "The native implementation is external to the pinned repository. Review this exact enum/format/service contract and its consumers before claiming equivalent behavior."}
+    return {"batch": "R2/R6", "candidate_paths": ["src/FerroUI.Base/media/", "src/FerroUI.Controls/rich_text_layout.rs"], "remaining_review": "Audit shared layout/rendering enum values and all consumers, including unsupported values and native defaults."}
+
+
 def public_api(reader: GitObjects, mapping: dict) -> dict:
     members = []
     for source in (TEXT_API, XAML_API):
@@ -254,7 +339,7 @@ def public_api(reader: GitObjects, mapping: dict) -> dict:
             name = identifier[2:].split("(", 1)[0]
             owner = name if identifier.startswith("T:") else name.rsplit(".", 1)[0]
             if source == XAML_API:
-                if not name.startswith("Microsoft.UI.Xaml.Documents.") and owner.split(".")[-1] not in XAML_CONTROL_TYPES:
+                if not name.startswith("Microsoft.UI.Xaml.Documents.") and owner.split(".")[-1] not in XAML_CONTROL_TYPES | XAML_TEXT_AUTOMATION_TYPES and identifier not in XAML_TEXT_AUTOMATION_MEMBERS:
                     continue
             entry = {
                 "id": identifier, "source": source, "owner": owner,
@@ -276,6 +361,7 @@ def public_api(reader: GitObjects, mapping: dict) -> dict:
     return {
         "schema_version": 1, "reference": mapping["reference"],
         "coverage": "Exact entries of the selected upstream IntelliSense XML; not undocumented/internal or inherited members.",
+        "type_plans": {owner: api_type_plan(owner) for owner in sorted({member["owner"] for member in members})},
         "members": members,
     }
 
@@ -433,7 +519,47 @@ def render_progress(inventory: dict, api: dict, mapping: dict) -> str:
             lines.append(f"- `{run['command']}` — {run['result']}")
     else:
         lines.append("Runtime tests have not yet been recorded in this mapping. See [TESTS.md](TESTS.md) for the verification plan.")
+    if not any("cargo test" in run["command"] for run in mapping["validation"]):
+        lines += ["", "No successful Rust runtime-test command has been recorded yet; source-map checks and linked test definitions are traceability evidence only."]
     lines += ["", "Full WinUI rich text parity remains open until the pending member mappings and [DEVIATIONS.md](DEVIATIONS.md) boundaries are closed with evidence.", ""]
+    return "\n".join(lines)
+
+
+def render_api_map(api: dict) -> str:
+    grouped = collections.defaultdict(list)
+    for member in api["members"]:
+        grouped[member["owner"]].append(member)
+    lines = [
+        "# Rich text public API mapping", "",
+        "Generated from the exact pinned XML identifiers and reviewed `mapping.json`; do not edit this file.", "",
+        "The type plan locates all retained public types, including entirely pending types. Candidate paths describe work allocation and do not assert that a Rust type exists or that it is equivalent. Every pending member remains listed in [api-members.json](api-members.json). A partial mapping records only the behavior described with its target, tests and deviation; it does not close the whole native contract.", "",
+        "## Type and contract plan", "",
+        "| Public owner | Exact entries | Partial / complete | Batch | Candidate implementation |", "|---|---:|---:|---|---|",
+    ]
+    for owner, members in sorted(grouped.items()):
+        plan = api["type_plans"][owner]
+        counts = collections.Counter(member["state"] for member in members)
+        paths = ", ".join(f"`{path}`" for path in plan["candidate_paths"])
+        lines.append(f"| `{owner}` | {len(members)} | {counts['partial']} / {counts['complete']} | {plan['batch']} | {paths} |")
+    lines += ["", "## Reviewed member evidence", ""]
+    for owner, members in sorted(grouped.items()):
+        lines += [f"### `{owner}`", "", api["type_plans"][owner]["remaining_review"], ""]
+        reviewed = [member for member in members if member["state"] != "pending"]
+        if not reviewed:
+            lines += ["All retained members remain pending.", ""]
+            continue
+        for member in reviewed:
+            lines += [f"#### `{member['id']}`", "", f"State: **{member['state']}**. {member.get('reason', '')}", ""]
+            for target in member["targets"]:
+                path = target["path"] if isinstance(target, dict) else target
+                symbol = " — `" + target["symbol"] + "`" if isinstance(target, dict) and target.get("symbol") else ""
+                lines.append(f"- Target: [{path}](../../../{path}){symbol}.")
+            for test in member["tests"]:
+                symbol = " — `" + test["symbol"] + "`" if test.get("symbol") else ""
+                lines.append(f"- Test: [{test['path']}](../../../{test['path']}){symbol}.")
+            if member.get("deviations"):
+                lines.append("- Differences: " + ", ".join(f"[{item}](DEVIATIONS.md)" for item in member["deviations"]) + ".")
+            lines.append("")
     return "\n".join(lines)
 
 
@@ -478,6 +604,7 @@ def main() -> int:
     mapping = json.loads((DESTINATION / "mapping.json").read_text())
     if mapping.get("schema_version") != 1:
         raise ValueError("Unsupported mapping schema")
+    validate_mapping(mapping)
     reader = GitObjects(arguments.reference, mapping["reference"]["commit"])
     try:
         inventory = build_inventory(reader, mapping)
@@ -487,6 +614,7 @@ def main() -> int:
     outputs = {
         "inventory.json": json.dumps(inventory, indent=2, ensure_ascii=False) + "\n",
         "api-members.json": json.dumps(api, indent=2, ensure_ascii=False) + "\n",
+        "API-MAP.md": render_api_map(api),
         "TRACKING.md": render_tracking(inventory),
         "PROGRESS.md": render_progress(inventory, api, mapping),
         "DEPENDENCIES.md": render_dependencies(inventory),

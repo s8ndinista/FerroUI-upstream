@@ -25,6 +25,10 @@ inventory does not establish rich text implementation parity at this reference.
 
 - [PLAN.md](PLAN.md): dependency decisions, Rust/FerroUI mapping, work batches,
   and the acceptance requirements for each subsystem.
+- [API-MAP.md](API-MAP.md): a destination/review plan for every public API owner,
+  with exact member, Rust target, test and deviation evidence for reviewed entries.
+- [JOURNAL.md](JOURNAL.md): implementation/checkpoint history and the distinction
+  between recovered published code and newly reconstructed work.
 - [PROGRESS.md](PROGRESS.md): generated counts of the file and public API inventory.
 - [TRACKING.md](TRACKING.md): every selected source file and its disposition.
 - [DEPENDENCIES.md](DEPENDENCIES.md): available source, external implementation
@@ -36,7 +40,9 @@ inventory does not establish rich text implementation parity at this reference.
   declaration candidates, dependency edges, and the complete source-file map.
 - [api-members.json](api-members.json): exact documentation member identifiers
   for the selected public controls, document types, and all `Microsoft.UI.Text`
-  members exposed by the reference's IntelliSense documentation.
+  members exposed by the reference's IntelliSense documentation. It also retains
+  Text/TextRange, Text2, TextEdit, TextChild, text attributes, annotations, and the
+  text-specific automation events/pattern dispatch members.
 - [mapping.json](mapping.json): reviewed implementation, deviation, and test
   evidence used by the generator. This is the editable tracking input.
 

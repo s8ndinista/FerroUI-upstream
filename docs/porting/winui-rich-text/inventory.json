@@ -8072,6 +8072,21 @@
       "callable_candidates": []
     },
     {
+      "path": "dxaml/xcp/components/metadata/inc/EnumDefs.g.h",
+      "git_blob": "f321ccac9c6c2212d2fecdcce059fa31557d012c",
+      "sha256": "8e5bc5a6b6185434a16328bc0d499e54f57978ef358a36c1598dafefb3ef1288",
+      "bytes": 55154,
+      "lines": 2277,
+      "scope_reason": "explicit dependency/reference",
+      "component": "public API metadata",
+      "state": "reference",
+      "reuse_or_destination_candidates": [],
+      "targets": [],
+      "tests": [],
+      "includes": [],
+      "callable_candidates": []
+    },
+    {
       "path": "dxaml/xcp/components/primitiveDependencyObjects/TextRange.cpp",
       "git_blob": "c016107eabc4f61c120e660be43c17b00416dd80",
       "sha256": "d724ae5aad34bb8a8538852c0a8a8e28aaa115b758c28edc3185468ab2446ae4",
@@ -10708,11 +10723,74 @@
       ]
     },
     {
+      "path": "dxaml/xcp/core/inc/BlockTextElement.h",
+      "git_blob": "cf324d7ad91836774cb8f382e2c0cebcf8f36988",
+      "sha256": "2728d8655e8403fcaf74bf21eeda5f987a58a753eea1920a9bf2fac155e20b8d",
+      "bytes": 7450,
+      "lines": 228,
+      "scope_reason": "related document/control/service declaration or projection",
+      "component": "block document model",
+      "state": "pending",
+      "reuse_or_destination_candidates": [
+        "src/FerroUI.Controls/documents/"
+      ],
+      "targets": [],
+      "tests": [],
+      "includes": [
+        {
+          "header": "TextElement.h",
+          "line": 14,
+          "style": "quoted",
+          "resolution": "relative_path",
+          "candidates": [
+            "dxaml/xcp/core/inc/TextElement.h"
+          ]
+        },
+        {
+          "header": "TextElementCollection.h",
+          "line": 16,
+          "style": "quoted",
+          "resolution": "relative_path",
+          "candidates": [
+            "dxaml/xcp/core/inc/TextElementCollection.h"
+          ]
+        },
+        {
+          "header": "TextContainer.h",
+          "line": 17,
+          "style": "quoted",
+          "resolution": "relative_path",
+          "candidates": [
+            "dxaml/xcp/core/inc/TextContainer.h"
+          ]
+        }
+      ],
+      "callable_candidates": []
+    },
+    {
       "path": "dxaml/xcp/core/inc/CandidateWindowBoundsChangedEventArgs.h",
       "git_blob": "7523c3eaf44625410400cf9b8647d1a63bc3e5f9",
       "sha256": "4899f0264203f13d9530fb12d5a2d448a17ff49e552f2dfefb8d2bd81251da90",
       "bytes": 896,
       "lines": 34,
+      "scope_reason": "related document/control/service declaration or projection",
+      "component": "shared text infrastructure",
+      "state": "pending",
+      "reuse_or_destination_candidates": [
+        "src/FerroUI.Base/media/text_formatting/",
+        "src/FerroUI.Controls/documents/"
+      ],
+      "targets": [],
+      "tests": [],
+      "includes": [],
+      "callable_candidates": []
+    },
+    {
+      "path": "dxaml/xcp/core/inc/CaretBrowsingCaret.h",
+      "git_blob": "88451339993b98173baf0cfab12f3d9be93abdfb",
+      "sha256": "a543e9ef1b34eb007dc56f58e7ac950ac88e37fb0ee53cb512b55c827c52431b",
+      "bytes": 520,
+      "lines": 25,
       "scope_reason": "related document/control/service declaration or projection",
       "component": "shared text infrastructure",
       "state": "pending",
@@ -10847,6 +10925,23 @@
       "reuse_or_destination_candidates": [
         "src/FerroUI.Controls/documents/",
         "src/FerroUI.Base/input/text_input/"
+      ],
+      "targets": [],
+      "tests": [],
+      "includes": [],
+      "callable_candidates": []
+    },
+    {
+      "path": "dxaml/xcp/core/inc/HyperLinkAutomationPeer.h",
+      "git_blob": "f53a30782630ef6c23b2550c098ef69a828aadec",
+      "sha256": "e1d967c1495168eb6c20b22c5dc7582a294b35b81c8cff00d581ef74a9a88610",
+      "bytes": 1043,
+      "lines": 40,
+      "scope_reason": "related document/control/service declaration or projection",
+      "component": "text automation",
+      "state": "pending",
+      "reuse_or_destination_candidates": [
+        "src/FerroUI.Controls/automation/"
       ],
       "targets": [],
       "tests": [],
@@ -44955,6 +45050,122 @@
       "callable_candidates": []
     },
     {
+      "path": "dxaml/xcp/dxaml/lib/CaretBrowsingDialog.cpp",
+      "git_blob": "482e52d58fe314ae8d358cb31e5f180f5c09b52d",
+      "sha256": "097887e4c732f32551d397df16069a3470f17db266418bc359011dcd62dae57e",
+      "bytes": 11557,
+      "lines": 272,
+      "scope_reason": "related document/control/service declaration or projection",
+      "component": "control projection and services",
+      "state": "pending",
+      "reuse_or_destination_candidates": [
+        "src/FerroUI.Controls/"
+      ],
+      "targets": [],
+      "tests": [],
+      "includes": [
+        {
+          "header": "precomp.h",
+          "line": 3,
+          "style": "quoted",
+          "resolution": "relative_path",
+          "candidates": [
+            "dxaml/xcp/dxaml/lib/precomp.h"
+          ]
+        },
+        {
+          "header": "ContentDialog.g.h",
+          "line": 5,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/dxaml/lib/winrtgeneratedclasses/ContentDialog.g.h"
+          ]
+        },
+        {
+          "header": "ContentDialogMetadata.h",
+          "line": 6,
+          "style": "quoted",
+          "resolution": "relative_path",
+          "candidates": [
+            "dxaml/xcp/dxaml/lib/ContentDialogMetadata.h"
+          ]
+        },
+        {
+          "header": "CaretBrowsingDialog.h",
+          "line": 7,
+          "style": "quoted",
+          "resolution": "relative_path",
+          "candidates": [
+            "dxaml/xcp/dxaml/lib/CaretBrowsingDialog.h"
+          ]
+        },
+        {
+          "header": "TextBlock.g.h",
+          "line": 8,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/dxaml/lib/winrtgeneratedclasses/TextBlock.g.h"
+          ]
+        },
+        {
+          "header": "WrlHelper.h",
+          "line": 9,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/components/base/inc/wrlhelper.h"
+          ]
+        },
+        {
+          "header": "localizedResource.h",
+          "line": 10,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/inc/localizedResource.h"
+          ]
+        },
+        {
+          "header": "XamlRoot_Partial.h",
+          "line": 11,
+          "style": "quoted",
+          "resolution": "relative_path",
+          "candidates": [
+            "dxaml/xcp/dxaml/lib/XamlRoot_Partial.h"
+          ]
+        },
+        {
+          "header": "CaretBrowsingGlobal.h",
+          "line": 12,
+          "style": "system",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/core/inc/CaretBrowsingGlobal.h"
+          ]
+        }
+      ],
+      "callable_candidates": []
+    },
+    {
+      "path": "dxaml/xcp/dxaml/lib/CaretBrowsingDialog.h",
+      "git_blob": "dca965eca07213790257ede03e19e2cf64f0b0f7",
+      "sha256": "690a745032c19a3948f89a35060c7989f7aafc1b7cd7d46faf784f772bf9f2b4",
+      "bytes": 264,
+      "lines": 9,
+      "scope_reason": "related document/control/service declaration or projection",
+      "component": "control projection and services",
+      "state": "pending",
+      "reuse_or_destination_candidates": [
+        "src/FerroUI.Controls/"
+      ],
+      "targets": [],
+      "tests": [],
+      "includes": [],
+      "callable_candidates": []
+    },
+    {
       "path": "dxaml/xcp/dxaml/lib/FontFamily_Partial.cpp",
       "git_blob": "68159265b12d105376a227641e92c081fb8db306",
       "sha256": "50641303ff81120b4cd1b22d52291d641c626a46b1ff2f7270234a5b4897c202",
@@ -45123,6 +45334,274 @@
           "resolution": "unique_path_suffix",
           "candidates": [
             "dxaml/xcp/dxaml/lib/winrtgeneratedclasses/Hyperlink.g.h"
+          ]
+        }
+      ],
+      "callable_candidates": []
+    },
+    {
+      "path": "dxaml/xcp/dxaml/lib/HyperlinkAutomationPeer_Partial.cpp",
+      "git_blob": "20fb6bf0389918ea009e8be5fbccaa9bb2527a4f",
+      "sha256": "1e5323cd0731db85bf61fa98f3329705b810a7e62c4a9574a907ce653ecb8c16",
+      "bytes": 13431,
+      "lines": 391,
+      "scope_reason": "related document/control/service declaration or projection",
+      "component": "text automation",
+      "state": "pending",
+      "reuse_or_destination_candidates": [
+        "src/FerroUI.Controls/automation/"
+      ],
+      "targets": [],
+      "tests": [],
+      "includes": [
+        {
+          "header": "precomp.h",
+          "line": 3,
+          "style": "quoted",
+          "resolution": "relative_path",
+          "candidates": [
+            "dxaml/xcp/dxaml/lib/precomp.h"
+          ]
+        },
+        {
+          "header": "Hyperlink.h",
+          "line": 5,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/core/inc/Hyperlink.h"
+          ]
+        },
+        {
+          "header": "HyperlinkAutomationPeer.g.h",
+          "line": 6,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/dxaml/lib/winrtgeneratedclasses/HyperlinkAutomationPeer.g.h"
+          ]
+        },
+        {
+          "header": "HyperLink.g.h",
+          "line": 7,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/dxaml/lib/winrtgeneratedclasses/Hyperlink.g.h"
+          ]
+        },
+        {
+          "header": "AutomationProperties.h",
+          "line": 8,
+          "style": "quoted",
+          "resolution": "relative_path",
+          "candidates": [
+            "dxaml/xcp/dxaml/lib/AutomationProperties.h"
+          ]
+        },
+        {
+          "header": "AccessKeyStringBuilder.h",
+          "line": 9,
+          "style": "quoted",
+          "resolution": "relative_path",
+          "candidates": [
+            "dxaml/xcp/dxaml/lib/AccessKeyStringBuilder.h"
+          ]
+        },
+        {
+          "header": "XamlOneCoreTransforms.h",
+          "line": 10,
+          "style": "system",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/components/OneCoreTransforms/inc/XamlOneCoreTransforms.h"
+          ]
+        },
+        {
+          "header": "RootScale.h",
+          "line": 11,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/components/scaling/inc/RootScale.h"
+          ]
+        },
+        {
+          "header": "TextAdapter.h",
+          "line": 12,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/core/text/Inc/TextAdapter.h"
+          ]
+        },
+        {
+          "header": "UIElement.g.h",
+          "line": 13,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/dxaml/lib/winrtgeneratedclasses/UIElement.g.h"
+          ]
+        }
+      ],
+      "callable_candidates": [
+        {
+          "name": "HyperlinkAutomationPeer::GetPatternCore",
+          "line": 18,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "HyperlinkAutomationPeer::GetClassNameCore",
+          "line": 35,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "HyperlinkAutomationPeer::GetAutomationControlTypeCore",
+          "line": 41,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "HyperlinkAutomationPeer::IsContentElementCore",
+          "line": 48,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "HyperlinkAutomationPeer::IsControlElementCore",
+          "line": 61,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "HyperlinkAutomationPeer::GetNameCore",
+          "line": 68,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "HyperlinkAutomationPeer::IsEnabledCore",
+          "line": 111,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "HyperlinkAutomationPeer::GetAcceleratorKeyCore",
+          "line": 117,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "HyperlinkAutomationPeer::GetAccessKeyCore",
+          "line": 126,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "HyperlinkAutomationPeer::GetAutomationIdCore",
+          "line": 155,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "HyperlinkAutomationPeer::GetHelpTextCore",
+          "line": 176,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "HyperlinkAutomationPeer::GetItemStatusCore",
+          "line": 186,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "HyperlinkAutomationPeer::GetItemTypeCore",
+          "line": 196,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "HyperlinkAutomationPeer::GetLabeledByCore",
+          "line": 206,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "HyperlinkAutomationPeer::GetLiveSettingCore",
+          "line": 221,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "HyperlinkAutomationPeer::put_Owner",
+          "line": 233,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "HyperlinkAutomationPeer::get_Owner",
+          "line": 239,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "HyperlinkAutomationPeer::InvokeImpl",
+          "line": 257,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "HyperlinkAutomationPeer::GetBoundingRectangleCore",
+          "line": 267,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "HyperlinkAutomationPeer::IsKeyboardFocusableCore",
+          "line": 293,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "HyperlinkAutomationPeer::GetClickablePointCore",
+          "line": 299,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "HyperlinkAutomationPeer::IsOffscreenCore",
+          "line": 353,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        }
+      ]
+    },
+    {
+      "path": "dxaml/xcp/dxaml/lib/HyperlinkAutomationPeer_Partial.h",
+      "git_blob": "c64fd1137893e8f5d0f5a1f96ab903bb2e443bcb",
+      "sha256": "ecc3890a6f8c8e0d24bb3664c2152b22daef53d425a0f6526bc132f984c6c5ac",
+      "bytes": 2702,
+      "lines": 48,
+      "scope_reason": "related document/control/service declaration or projection",
+      "component": "text automation",
+      "state": "pending",
+      "reuse_or_destination_candidates": [
+        "src/FerroUI.Controls/automation/"
+      ],
+      "targets": [],
+      "tests": [],
+      "includes": [
+        {
+          "header": "HyperlinkAutomationPeer.g.h",
+          "line": 5,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/dxaml/lib/winrtgeneratedclasses/HyperlinkAutomationPeer.g.h"
           ]
         }
       ],
@@ -51111,6 +51590,99 @@
           "resolution": "unique_path_suffix",
           "candidates": [
             "dxaml/xcp/dxaml/lib/HyperLink_Partial.h"
+          ]
+        }
+      ],
+      "callable_candidates": []
+    },
+    {
+      "path": "dxaml/xcp/dxaml/lib/winrtgeneratedclasses/HyperlinkAutomationPeer.g.cpp",
+      "git_blob": "94f189cabaece8246cd3cfb7c947890b2d595018",
+      "sha256": "96a4c47fc17a5fae0c08e0acd0247fac1f2cb3468c6c920ec3a77c243ace9bb3",
+      "bytes": 1975,
+      "lines": 70,
+      "scope_reason": "related document/control/service declaration or projection",
+      "component": "generated WinRT projection",
+      "state": "reference",
+      "reuse_or_destination_candidates": [],
+      "targets": [],
+      "tests": [],
+      "includes": [
+        {
+          "header": "HyperlinkAutomationPeer.g.h",
+          "line": 11,
+          "style": "quoted",
+          "resolution": "relative_path",
+          "candidates": [
+            "dxaml/xcp/dxaml/lib/winrtgeneratedclasses/HyperlinkAutomationPeer.g.h"
+          ]
+        },
+        {
+          "header": "XamlTelemetry.h",
+          "line": 13,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/components/base/inc/XamlTelemetry.h"
+          ]
+        }
+      ],
+      "callable_candidates": [
+        {
+          "name": "DirectUI::HyperlinkAutomationPeerGenerated::HyperlinkAutomationPeerGenerated",
+          "line": 16,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "DirectUI::HyperlinkAutomationPeerGenerated::~HyperlinkAutomationPeerGenerated",
+          "line": 20,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "DirectUI::HyperlinkAutomationPeerGenerated::QueryInterfaceImpl",
+          "line": 24,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "DirectUI::HyperlinkAutomationPeerGenerated::Invoke",
+          "line": 48,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        }
+      ]
+    },
+    {
+      "path": "dxaml/xcp/dxaml/lib/winrtgeneratedclasses/HyperlinkAutomationPeer.g.h",
+      "git_blob": "2155abbb1c4573e167d6a9f5be2f9003e30f51de",
+      "sha256": "1cc786dfac4594759ab9dddae2b11f85d300892a0377e3765f0b6c0a95912c63",
+      "bytes": 1856,
+      "lines": 67,
+      "scope_reason": "related document/control/service declaration or projection",
+      "component": "generated WinRT projection",
+      "state": "reference",
+      "reuse_or_destination_candidates": [],
+      "targets": [],
+      "tests": [],
+      "includes": [
+        {
+          "header": "AutomationPeer.g.h",
+          "line": 13,
+          "style": "quoted",
+          "resolution": "relative_path",
+          "candidates": [
+            "dxaml/xcp/dxaml/lib/winrtgeneratedclasses/AutomationPeer.g.h"
+          ]
+        },
+        {
+          "header": "HyperlinkAutomationPeer_Partial.h",
+          "line": 65,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/dxaml/lib/HyperlinkAutomationPeer_Partial.h"
           ]
         }
       ],
@@ -59090,6 +59662,55 @@
       "callable_candidates": []
     },
     {
+      "path": "dxaml/xcp/dxaml/lib/winrtgeneratedclasses/TextOptions.g.cpp",
+      "git_blob": "4078fdf4b7328ac27f8556081a4f804f726c1f7d",
+      "sha256": "26782091834c2675483210875850db4466cf639e37ece7d84164e53b141a5268",
+      "bytes": 453,
+      "lines": 16,
+      "scope_reason": "related document/control/service declaration or projection",
+      "component": "generated WinRT projection",
+      "state": "reference",
+      "reuse_or_destination_candidates": [],
+      "targets": [],
+      "tests": [],
+      "includes": [
+        {
+          "header": "TextOptions.g.h",
+          "line": 11,
+          "style": "quoted",
+          "resolution": "relative_path",
+          "candidates": [
+            "dxaml/xcp/dxaml/lib/winrtgeneratedclasses/TextOptions.g.h"
+          ]
+        },
+        {
+          "header": "XamlTelemetry.h",
+          "line": 13,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/components/base/inc/XamlTelemetry.h"
+          ]
+        }
+      ],
+      "callable_candidates": []
+    },
+    {
+      "path": "dxaml/xcp/dxaml/lib/winrtgeneratedclasses/TextOptions.g.h",
+      "git_blob": "fca19692584b04581c343939b1ce206af4ceeb93",
+      "sha256": "f656d1c60bedf2dbe405f2b9045b5cae0863e3acf6483571613db364eca4dd40",
+      "bytes": 413,
+      "lines": 16,
+      "scope_reason": "related document/control/service declaration or projection",
+      "component": "generated WinRT projection",
+      "state": "reference",
+      "reuse_or_destination_candidates": [],
+      "targets": [],
+      "tests": [],
+      "includes": [],
+      "callable_candidates": []
+    },
+    {
       "path": "dxaml/xcp/dxaml/lib/winrtgeneratedclasses/TextPointer.g.cpp",
       "git_blob": "a02c0dd44bf3e0f4dcc14f271e6225ba226315b3",
       "sha256": "95259261cc4d5e85e8415bb21a382e66df701ae995442944c9ce58a2437f5ed8",
@@ -62679,6 +63300,51 @@
       "callable_candidates": []
     },
     {
+      "path": "dxaml/xcp/tools/XCPTypesAutoGen/XamlOM/Model/Microsoft.UI.Xaml.Automation.Provider.cs",
+      "git_blob": "d26195f24afabbc48819415a71814d1e0c86a294",
+      "sha256": "9fc8f17c7bce1ce37edad2f99351b620ee4679fea798366545250258c83a7fac",
+      "bytes": 28811,
+      "lines": 916,
+      "scope_reason": "explicit dependency/reference",
+      "component": "public API metadata",
+      "state": "reference",
+      "reuse_or_destination_candidates": [],
+      "targets": [],
+      "tests": [],
+      "includes": [],
+      "callable_candidates": []
+    },
+    {
+      "path": "dxaml/xcp/tools/XCPTypesAutoGen/XamlOM/Model/Microsoft.UI.Xaml.Automation.Text.cs",
+      "git_blob": "582343086314660c817bb87810873be149e4d4ab",
+      "sha256": "450500671a0b6dbfb59dd014d552ea8ad321c304f4dc9915822f4f5fe5f93b9d",
+      "bytes": 825,
+      "lines": 29,
+      "scope_reason": "explicit dependency/reference",
+      "component": "public API metadata",
+      "state": "reference",
+      "reuse_or_destination_candidates": [],
+      "targets": [],
+      "tests": [],
+      "includes": [],
+      "callable_candidates": []
+    },
+    {
+      "path": "dxaml/xcp/tools/XCPTypesAutoGen/XamlOM/Model/Microsoft.UI.Xaml.Automation.cs",
+      "git_blob": "de0d411da3652a6c19a14f79e712dc8aed7067b5",
+      "sha256": "ae38f51160cfd3ea031f8eb3442eef9d2ba707126ad6168c30f11581d0220b7b",
+      "bytes": 40850,
+      "lines": 1026,
+      "scope_reason": "explicit dependency/reference",
+      "component": "public API metadata",
+      "state": "reference",
+      "reuse_or_destination_candidates": [],
+      "targets": [],
+      "tests": [],
+      "includes": [],
+      "callable_candidates": []
+    },
+    {
       "path": "dxaml/xcp/tools/XCPTypesAutoGen/XamlOM/Model/Microsoft.UI.Xaml.Controls.cs",
       "git_blob": "cf26552e09287ac315955985086b5da27e9b440b",
       "sha256": "37976959a6101c6d330b792c0bd67f71d6fba23d403cec5c87a0090678404608",
@@ -62724,6 +63390,23 @@
       "callable_candidates": []
     },
     {
+      "path": "dxaml/xcp/win/inc/UIAPatternProviderWrapper.h",
+      "git_blob": "c73efad24286776c9d3f5b116c4ac97654fa0284",
+      "sha256": "3750cfd72e214af6afd39370cc4b54dd9549cf700903aa6f5ada29f3e79641dd",
+      "bytes": 110714,
+      "lines": 3067,
+      "scope_reason": "explicit dependency/reference",
+      "component": "text automation",
+      "state": "pending",
+      "reuse_or_destination_candidates": [
+        "src/FerroUI.Controls/automation/"
+      ],
+      "targets": [],
+      "tests": [],
+      "includes": [],
+      "callable_candidates": []
+    },
+    {
       "path": "dxaml/xcp/win/inc/WindowLessSiteHost.h",
       "git_blob": "87d02c4f0283ead5c916e8834892e0c6e312e2db",
       "sha256": "eb86c05682ee69033809eaedfe7cf9384008692b68fd69d1abab6ecf2f42ae15",
@@ -62740,6 +63423,1660 @@
       "tests": [],
       "includes": [],
       "callable_candidates": []
+    },
+    {
+      "path": "dxaml/xcp/win/shared/UIAPatternProviderWrapper.cpp",
+      "git_blob": "d5639025200e8070bb6012c60d719b6d1613383a",
+      "sha256": "8cab82072ed32f3b7a0211014cf0b270000d72c9239020e1bf3ffff8f95f71f6",
+      "bytes": 192041,
+      "lines": 6885,
+      "scope_reason": "explicit dependency/reference",
+      "component": "text automation",
+      "state": "pending",
+      "reuse_or_destination_candidates": [
+        "src/FerroUI.Controls/automation/"
+      ],
+      "targets": [],
+      "tests": [],
+      "includes": [
+        {
+          "header": "precomp.h",
+          "line": 3,
+          "style": "quoted",
+          "resolution": "relative_path",
+          "candidates": [
+            "dxaml/xcp/win/shared/precomp.h"
+          ]
+        },
+        {
+          "header": "AutomationCValue.h",
+          "line": 5,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/inc/AutomationCValue.h"
+          ]
+        },
+        {
+          "header": "RootScale.h",
+          "line": 6,
+          "style": "system",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/components/scaling/inc/RootScale.h"
+          ]
+        }
+      ],
+      "callable_candidates": [
+        {
+          "name": "CUIAPatternProviderWrapper::Invalidate",
+          "line": 15,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAPatternProviderWrapper::InvalidateWrapper",
+          "line": 20,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAPatternProviderWrapper::SetWrapper",
+          "line": 28,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAInvokeProviderWrapper::Invoke",
+          "line": 44,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAInvokeProviderWrapper::InvokeImpl",
+          "line": 64,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIADockProviderWrapper::get_DockPosition",
+          "line": 81,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIADockProviderWrapper::get_DockPositionImpl",
+          "line": 103,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIADockProviderWrapper::SetDockPosition",
+          "line": 127,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIADockProviderWrapper::SetDockPositionImpl",
+          "line": 149,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAExpandCollapseProviderWrapper::Collapse",
+          "line": 176,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAExpandCollapseProviderWrapper::CollapseImpl",
+          "line": 196,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAExpandCollapseProviderWrapper::Expand",
+          "line": 214,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAExpandCollapseProviderWrapper::ExpandImpl",
+          "line": 234,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAExpandCollapseProviderWrapper::get_ExpandCollapseState",
+          "line": 252,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAExpandCollapseProviderWrapper::get_ExpandCollapseStateImpl",
+          "line": 275,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAGridItemProviderWrapper::get_Column",
+          "line": 298,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAGridItemProviderWrapper::get_ColumnImpl",
+          "line": 320,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAGridItemProviderWrapper::get_ColumnSpan",
+          "line": 344,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAGridItemProviderWrapper::get_ColumnSpanImpl",
+          "line": 366,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAGridItemProviderWrapper::get_ContainingGrid",
+          "line": 390,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAGridItemProviderWrapper::get_ContainingGridImpl",
+          "line": 418,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAGridItemProviderWrapper::get_Row",
+          "line": 442,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAGridItemProviderWrapper::get_RowImpl",
+          "line": 464,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAGridItemProviderWrapper::get_RowSpan",
+          "line": 488,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAGridItemProviderWrapper::get_RowSpanImpl",
+          "line": 510,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAGridProviderWrapper::get_ColumnCount",
+          "line": 534,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAGridProviderWrapper::get_ColumnCountImpl",
+          "line": 556,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAGridProviderWrapper::GetItem",
+          "line": 580,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAGridProviderWrapper::GetItemImpl",
+          "line": 614,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAGridProviderWrapper::get_RowCount",
+          "line": 643,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAGridProviderWrapper::get_RowCountImpl",
+          "line": 666,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAMultipleViewProviderWrapper::get_CurrentView",
+          "line": 690,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAMultipleViewProviderWrapper::get_CurrentViewImpl",
+          "line": 713,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAMultipleViewProviderWrapper::GetSupportedViews",
+          "line": 737,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAMultipleViewProviderWrapper::GetSupportedViewsImpl",
+          "line": 779,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAMultipleViewProviderWrapper::GetViewName",
+          "line": 805,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAMultipleViewProviderWrapper::GetViewNameImpl",
+          "line": 831,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAMultipleViewProviderWrapper::SetCurrentView",
+          "line": 855,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAMultipleViewProviderWrapper::SetCurrentViewImpl",
+          "line": 878,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIARangeValueProviderWrapper::get_IsReadOnly",
+          "line": 905,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIARangeValueProviderWrapper::get_IsReadOnlyImpl",
+          "line": 928,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIARangeValueProviderWrapper::get_LargeChange",
+          "line": 954,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIARangeValueProviderWrapper::get_LargeChangeImpl",
+          "line": 981,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIARangeValueProviderWrapper::get_Maximum",
+          "line": 1005,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIARangeValueProviderWrapper::get_MaximumImpl",
+          "line": 1030,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIARangeValueProviderWrapper::get_Minimum",
+          "line": 1054,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIARangeValueProviderWrapper::get_MinimumImpl",
+          "line": 1079,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIARangeValueProviderWrapper::SetValue",
+          "line": 1103,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIARangeValueProviderWrapper::SetValueImpl",
+          "line": 1126,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIARangeValueProviderWrapper::get_SmallChange",
+          "line": 1153,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIARangeValueProviderWrapper::get_SmallChangeImpl",
+          "line": 1179,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIARangeValueProviderWrapper::get_Value",
+          "line": 1203,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIARangeValueProviderWrapper::get_ValueImpl",
+          "line": 1227,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAScrollItemProviderWrapper::ScrollIntoView",
+          "line": 1251,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAScrollItemProviderWrapper::ScrollIntoViewImpl",
+          "line": 1271,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAScrollProviderWrapper::get_HorizontallyScrollable",
+          "line": 1289,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAScrollProviderWrapper::get_HorizontallyScrollableImpl",
+          "line": 1312,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAScrollProviderWrapper::get_HorizontalScrollPercent",
+          "line": 1336,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAScrollProviderWrapper::get_HorizontalScrollPercentImpl",
+          "line": 1360,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAScrollProviderWrapper::get_HorizontalViewSize",
+          "line": 1384,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAScrollProviderWrapper::get_HorizontalViewSizeImpl",
+          "line": 1408,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAScrollProviderWrapper::Scroll",
+          "line": 1432,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAScrollProviderWrapper::ScrollImpl",
+          "line": 1456,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAScrollProviderWrapper::SetScrollPercent",
+          "line": 1481,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAScrollProviderWrapper::SetScrollPercentImpl",
+          "line": 1505,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAScrollProviderWrapper::get_VerticallyScrollable",
+          "line": 1530,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAScrollProviderWrapper::get_VerticallyScrollableImpl",
+          "line": 1553,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAScrollProviderWrapper::get_VerticalScrollPercent",
+          "line": 1577,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAScrollProviderWrapper::get_VerticalScrollPercentImpl",
+          "line": 1602,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAScrollProviderWrapper::get_VerticalViewSize",
+          "line": 1626,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAScrollProviderWrapper::get_VerticalViewSizeImpl",
+          "line": 1651,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIASelectionItemProviderWrapper::AddToSelection",
+          "line": 1675,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIASelectionItemProviderWrapper::AddToSelectionImpl",
+          "line": 1695,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIASelectionItemProviderWrapper::get_IsSelected",
+          "line": 1713,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIASelectionItemProviderWrapper::get_IsSelectedImpl",
+          "line": 1736,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIASelectionItemProviderWrapper::RemoveFromSelection",
+          "line": 1760,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIASelectionItemProviderWrapper::RemoveFromSelectionImpl",
+          "line": 1780,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIASelectionItemProviderWrapper::Select",
+          "line": 1798,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIASelectionItemProviderWrapper::SelectImpl",
+          "line": 1818,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIASelectionItemProviderWrapper::get_SelectionContainer",
+          "line": 1836,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIASelectionItemProviderWrapper::get_SelectionContainerImpl",
+          "line": 1869,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIASelectionProviderWrapper::get_CanSelectMultiple",
+          "line": 1893,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIASelectionProviderWrapper::get_CanSelectMultipleImpl",
+          "line": 1916,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIASelectionProviderWrapper::GetSelection",
+          "line": 1940,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIASelectionProviderWrapper::GetSelectionImpl",
+          "line": 1989,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIASelectionProviderWrapper::get_IsSelectionRequired",
+          "line": 2015,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIASelectionProviderWrapper::get_IsSelectionRequiredImpl",
+          "line": 2038,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATableItemProviderWrapper::GetColumnHeaderItems",
+          "line": 2062,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATableItemProviderWrapper::GetColumnHeaderItemsImpl",
+          "line": 2111,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATableItemProviderWrapper::GetRowHeaderItems",
+          "line": 2137,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATableItemProviderWrapper::GetRowHeaderItemsImpl",
+          "line": 2186,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATableProviderWrapper::GetColumnHeaders",
+          "line": 2212,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATableProviderWrapper::GetColumnHeadersImpl",
+          "line": 2264,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATableProviderWrapper::GetRowHeaders",
+          "line": 2290,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATableProviderWrapper::GetRowHeadersImpl",
+          "line": 2339,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATableProviderWrapper::get_RowOrColumnMajor",
+          "line": 2365,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATableProviderWrapper::get_RowOrColumnMajorImpl",
+          "line": 2388,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAToggleProviderWrapper::Toggle",
+          "line": 2412,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAToggleProviderWrapper::ToggleImpl",
+          "line": 2432,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAToggleProviderWrapper::get_ToggleState",
+          "line": 2449,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAToggleProviderWrapper::get_ToggleStateImpl",
+          "line": 2472,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATransformProviderWrapper::get_CanMove",
+          "line": 2496,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATransformProviderWrapper::get_CanMoveImpl",
+          "line": 2519,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATransformProviderWrapper::get_CanResize",
+          "line": 2543,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATransformProviderWrapper::get_CanResizeImpl",
+          "line": 2566,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATransformProviderWrapper::get_CanRotate",
+          "line": 2590,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATransformProviderWrapper::get_CanRotateImpl",
+          "line": 2613,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATransformProviderWrapper::Move",
+          "line": 2637,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATransformProviderWrapper::MoveImpl",
+          "line": 2662,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATransformProviderWrapper::Resize",
+          "line": 2687,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATransformProviderWrapper::ResizeImpl",
+          "line": 2711,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATransformProviderWrapper::Rotate",
+          "line": 2736,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATransformProviderWrapper::RotateImpl",
+          "line": 2759,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATransformProviderWrapper::get_CanZoom",
+          "line": 2784,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATransformProviderWrapper::get_CanZoomImpl",
+          "line": 2808,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATransformProviderWrapper::get_ZoomLevel",
+          "line": 2832,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATransformProviderWrapper::get_ZoomMaximum",
+          "line": 2854,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATransformProviderWrapper::get_ZoomMinimum",
+          "line": 2876,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATransformProviderWrapper::Zoom",
+          "line": 2898,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATransformProviderWrapper::ZoomImpl",
+          "line": 2921,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATransformProviderWrapper::ZoomByUnit",
+          "line": 2946,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATransformProviderWrapper::ZoomByUnitImpl",
+          "line": 2969,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAValueProviderWrapper::get_IsReadOnly",
+          "line": 2994,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAValueProviderWrapper::get_IsReadOnlyImpl",
+          "line": 3018,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAValueProviderWrapper::SetValue",
+          "line": 3042,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAValueProviderWrapper::SetValueImpl",
+          "line": 3080,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAValueProviderWrapper::get_Value",
+          "line": 3101,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAValueProviderWrapper::get_ValueImpl",
+          "line": 3123,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindowProviderWrapper::Close",
+          "line": 3147,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindowProviderWrapper::CloseImpl",
+          "line": 3167,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindowProviderWrapper::get_IsModal",
+          "line": 3184,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindowProviderWrapper::get_IsModalImpl",
+          "line": 3207,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindowProviderWrapper::get_IsTopmost",
+          "line": 3231,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindowProviderWrapper::get_IsTopmostImpl",
+          "line": 3254,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindowProviderWrapper::get_CanMaximize",
+          "line": 3278,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindowProviderWrapper::get_CanMaximizeImpl",
+          "line": 3301,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindowProviderWrapper::get_CanMinimize",
+          "line": 3325,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindowProviderWrapper::get_CanMinimizeImpl",
+          "line": 3348,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindowProviderWrapper::SetVisualState",
+          "line": 3372,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindowProviderWrapper::SetVisualStateImpl",
+          "line": 3396,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindowProviderWrapper::WaitForInputIdle",
+          "line": 3421,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindowProviderWrapper::WaitForInputIdleImpl",
+          "line": 3446,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindowProviderWrapper::get_WindowInteractionState",
+          "line": 3475,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindowProviderWrapper::get_WindowInteractionStateImpl",
+          "line": 3498,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindowProviderWrapper::get_WindowVisualState",
+          "line": 3522,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindowProviderWrapper::get_WindowVisualStateImpl",
+          "line": 3545,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextProviderWrapper::GetSelection",
+          "line": 3568,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextProviderWrapper::GetSelectionImpl",
+          "line": 3623,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextProviderWrapper::GetVisibleRanges",
+          "line": 3650,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextProviderWrapper::GetVisibleRangesImpl",
+          "line": 3706,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextProviderWrapper::RangeFromChild",
+          "line": 3733,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextProviderWrapper::RangeFromChildImpl",
+          "line": 3783,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextProviderWrapper::RangeFromPoint",
+          "line": 3813,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextProviderWrapper::RangeFromPointImpl",
+          "line": 3865,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextProviderWrapper::get_DocumentRange",
+          "line": 3894,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextProviderWrapper::get_DocumentRangeImpl",
+          "line": 3932,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextProviderWrapper::get_SupportedTextSelection",
+          "line": 3957,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextProviderWrapper::get_SupportedTextSelectionImpl",
+          "line": 3979,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextProviderWrapper::RangeFromAnnotation",
+          "line": 4003,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextProviderWrapper::RangeFromAnnotationImpl",
+          "line": 4050,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextProviderWrapper::GetCaretRange",
+          "line": 4080,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextProviderWrapper::GetCaretRangeImpl",
+          "line": 4120,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextRangeProviderWrapper::QueryInterface",
+          "line": 4140,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextRangeProviderWrapper::AddToSelection",
+          "line": 4186,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextRangeProviderWrapper::AddToSelectionImpl",
+          "line": 4205,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextRangeProviderWrapper::Clone",
+          "line": 4222,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextRangeProviderWrapper::CloneImpl",
+          "line": 4260,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextRangeProviderWrapper::Compare",
+          "line": 4284,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextRangeProviderWrapper::CompareImpl",
+          "line": 4319,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextRangeProviderWrapper::CompareEndpoints",
+          "line": 4347,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextRangeProviderWrapper::CompareEndpointsImpl",
+          "line": 4385,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextRangeProviderWrapper::ExpandToEnclosingUnit",
+          "line": 4418,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextRangeProviderWrapper::ExpandToEnclosingUnitImpl",
+          "line": 4440,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextRangeProviderWrapper::FindAttribute",
+          "line": 4464,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextRangeProviderWrapper::FindAttributeImpl",
+          "line": 4523,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextRangeProviderWrapper::FindText",
+          "line": 4561,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextRangeProviderWrapper::FindTextImpl",
+          "line": 4614,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextRangeProviderWrapper::GetAttributeValue",
+          "line": 4645,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextRangeProviderWrapper::GetAttributeValueImpl",
+          "line": 4711,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextRangeProviderWrapper::GetBoundingRectangles",
+          "line": 4743,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextRangeProviderWrapper::GetBoundingRectanglesImpl",
+          "line": 4803,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextRangeProviderWrapper::GetChildren",
+          "line": 4828,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextRangeProviderWrapper::GetChildrenImpl",
+          "line": 4876,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextRangeProviderWrapper::GetEnclosingElement",
+          "line": 4901,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextRangeProviderWrapper::GetEnclosingElementImpl",
+          "line": 4930,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextRangeProviderWrapper::GetText",
+          "line": 4953,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextRangeProviderWrapper::GetTextImpl",
+          "line": 4978,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextRangeProviderWrapper::Move",
+          "line": 5001,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextRangeProviderWrapper::MoveImpl",
+          "line": 5030,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextRangeProviderWrapper::MoveEndpointByRange",
+          "line": 5062,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextRangeProviderWrapper::MoveEndpointByRangeImpl",
+          "line": 5096,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextRangeProviderWrapper::MoveEndpointByUnit",
+          "line": 5123,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextRangeProviderWrapper::MoveEndpointByUnitImpl",
+          "line": 5154,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextRangeProviderWrapper::RemoveFromSelection",
+          "line": 5187,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextRangeProviderWrapper::RemoveFromSelectionImpl",
+          "line": 5206,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextRangeProviderWrapper::ScrollIntoView",
+          "line": 5223,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextRangeProviderWrapper::ScrollIntoViewImpl",
+          "line": 5245,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextRangeProviderWrapper::Select",
+          "line": 5270,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextRangeProviderWrapper::ShowContextMenuImpl",
+          "line": 5289,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextRangeProviderWrapper::ShowContextMenu",
+          "line": 5306,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextRangeProviderWrapper::SelectImpl",
+          "line": 5323,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAItemContainerProviderWrapper::FindItemByProperty",
+          "line": 5341,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAItemContainerProviderWrapper::FindItemByPropertyImpl",
+          "line": 5405,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAVirtualizedItemProviderWrapper::Realize",
+          "line": 5454,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAVirtualizedItemProviderWrapper::RealizeImpl",
+          "line": 5474,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextChildProviderWrapper::get_TextContainer",
+          "line": 5491,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextChildProviderWrapper::get_TextContainerImpl",
+          "line": 5520,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextChildProviderWrapper::get_TextRange",
+          "line": 5543,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextChildProviderWrapper::get_TextRangeImpl",
+          "line": 5580,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextEditProviderWrapper::GetSelection",
+          "line": 5598,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextEditProviderWrapper::GetVisibleRanges",
+          "line": 5603,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextEditProviderWrapper::RangeFromChild",
+          "line": 5608,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextEditProviderWrapper::RangeFromPoint",
+          "line": 5613,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextEditProviderWrapper::get_DocumentRange",
+          "line": 5618,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextEditProviderWrapper::get_SupportedTextSelection",
+          "line": 5623,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextEditProviderWrapper::GetActiveComposition",
+          "line": 5628,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIATextEditProviderWrapper::GetConversionTarget",
+          "line": 5652,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAAnnotationProviderWrapper::get_AnnotationTypeId",
+          "line": 5684,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAAnnotationProviderWrapper::get_AnnotationTypeIdImpl",
+          "line": 5709,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAAnnotationProviderWrapper::get_AnnotationTypeName",
+          "line": 5733,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAAnnotationProviderWrapper::get_AnnotationTypeNameImpl",
+          "line": 5760,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAAnnotationProviderWrapper::get_Author",
+          "line": 5784,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAAnnotationProviderWrapper::get_AuthorImpl",
+          "line": 5813,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAAnnotationProviderWrapper::get_DateTime",
+          "line": 5837,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAAnnotationProviderWrapper::get_DateTimeImpl",
+          "line": 5865,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAAnnotationProviderWrapper::get_Target",
+          "line": 5891,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAAnnotationProviderWrapper::get_TargetImpl",
+          "line": 5926,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIADragProviderWrapper::get_IsGrabbed",
+          "line": 5949,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIADragProviderWrapper::get_IsGrabbedImpl",
+          "line": 5972,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIADragProviderWrapper::get_DropEffect",
+          "line": 5995,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIADragProviderWrapper::get_DropEffectImpl",
+          "line": 6022,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIADragProviderWrapper::get_DropEffects",
+          "line": 6046,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIADragProviderWrapper::get_DropEffectsImpl",
+          "line": 6097,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIADragProviderWrapper::GetGrabbedItems",
+          "line": 6122,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIADragProviderWrapper::GetGrabbedItemsImpl",
+          "line": 6175,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIADropTargetProviderWrapper::get_DropTargetEffect",
+          "line": 6200,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIADropTargetProviderWrapper::get_DropTargetEffectImpl",
+          "line": 6228,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIADropTargetProviderWrapper::get_DropTargetEffects",
+          "line": 6253,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIADropTargetProviderWrapper::get_DropTargetEffectsImpl",
+          "line": 6301,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAObjectModelProviderWrapper::GetUnderlyingObjectModel",
+          "line": 6321,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAObjectModelProviderWrapper::GetUnderlyingObjectModelImpl",
+          "line": 6340,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIASpreadsheetProviderWrapper::GetItemByName",
+          "line": 6357,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIASpreadsheetProviderWrapper::GetItemByNameImpl",
+          "line": 6387,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIASpreadsheetItemProviderWrapper::get_Formula",
+          "line": 6411,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIASpreadsheetItemProviderWrapper::get_FormulaImpl",
+          "line": 6432,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIASpreadsheetItemProviderWrapper::GetAnnotationObjects",
+          "line": 6450,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIASpreadsheetItemProviderWrapper::GetAnnotationObjectsImpl",
+          "line": 6491,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIASpreadsheetItemProviderWrapper::GetAnnotationTypes",
+          "line": 6509,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIASpreadsheetItemProviderWrapper::GetAnnotationTypesImpl",
+          "line": 6543,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAStylesProviderWrapper::get_ExtendedProperties",
+          "line": 6562,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAStylesProviderWrapper::get_ExtendedPropertiesImpl",
+          "line": 6583,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAStylesProviderWrapper::get_FillColor",
+          "line": 6602,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAStylesProviderWrapper::get_FillColorImpl",
+          "line": 6617,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAStylesProviderWrapper::get_FillPatternColor",
+          "line": 6633,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAStylesProviderWrapper::get_FillPatternColorImpl",
+          "line": 6648,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAStylesProviderWrapper::get_FillPatternStyle",
+          "line": 6664,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAStylesProviderWrapper::get_FillPatternStyleImpl",
+          "line": 6685,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAStylesProviderWrapper::get_Shape",
+          "line": 6703,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAStylesProviderWrapper::get_ShapeImpl",
+          "line": 6724,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAStylesProviderWrapper::get_StyleId",
+          "line": 6742,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAStylesProviderWrapper::get_StyleIdImpl",
+          "line": 6757,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAStylesProviderWrapper::get_StyleName",
+          "line": 6773,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAStylesProviderWrapper::get_StyleNameImpl",
+          "line": 6792,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIASynchronizedInputProviderWrapper::Cancel",
+          "line": 6811,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIASynchronizedInputProviderWrapper::CancelImpl",
+          "line": 6816,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIASynchronizedInputProviderWrapper::StartListening",
+          "line": 6825,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIASynchronizedInputProviderWrapper::StartListeningImpl",
+          "line": 6840,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIACustomNavigationProviderWrapper::Navigate",
+          "line": 6857,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        }
+      ]
     },
     {
       "path": "eng/Versions.props",
@@ -65636,6 +67973,13 @@
       ]
     },
     {
+      "path": "dxaml/xcp/components/base/inc/wrlhelper.h",
+      "git_blob": "ecf2d527f425cc0f528c3089b0991fc18d48fb76",
+      "sha256": "2fdef15280858206f9ba5fa1c87943b9dee7c7afcc510d5d753900e2ba310be4",
+      "state": "framework_dependency_review",
+      "includes": []
+    },
+    {
       "path": "dxaml/xcp/components/base/inc/xhashmap.h",
       "git_blob": "619fe86fef80d64a637860982a9762339c3f63ab",
       "sha256": "3de3e0c6f8032f893bc327d2857b60dfb2d9395326077f17afc4e6f96127e67f",
@@ -67905,13 +70249,6 @@
       ]
     },
     {
-      "path": "dxaml/xcp/components/metadata/inc/EnumDefs.g.h",
-      "git_blob": "f321ccac9c6c2212d2fecdcce059fa31557d012c",
-      "sha256": "8e5bc5a6b6185434a16328bc0d499e54f57978ef358a36c1598dafefb3ef1288",
-      "state": "framework_dependency_review",
-      "includes": []
-    },
-    {
       "path": "dxaml/xcp/components/metadata/inc/EnumDefs.h",
       "git_blob": "bd50021641618130ea5e04ecdbedc4c62ce01a3c",
       "sha256": "055f7e0ada7b2b83e4849c372053ec990fe8324a30e4fcc3d9c62b73660caa5c",
@@ -69262,6 +71599,34 @@
       "includes": []
     },
     {
+      "path": "dxaml/xcp/control/common/shared/CommonBrowserHost.h",
+      "git_blob": "28014f98f1f8c06f68e02f306d3018691e199b20",
+      "sha256": "084d06419adfc7decd820ad70110eeabfbb258b0202a4d94d53536520c2b13aa",
+      "state": "framework_dependency_review",
+      "includes": []
+    },
+    {
+      "path": "dxaml/xcp/control/common/shared/FrameCounter.h",
+      "git_blob": "6064472351a99e663c081f1ed613e8c8fa0b496c",
+      "sha256": "de5d5dca6dcf10b61eb53dd07b604e0dd6e449bc5450d7618a275b3f52ae04bd",
+      "state": "framework_dependency_review",
+      "includes": []
+    },
+    {
+      "path": "dxaml/xcp/control/inc/AsyncDownloadRequestManager.h",
+      "git_blob": "00c98bab3dccf191161352cc3f0d9eb3c525fe01",
+      "sha256": "4d37481b2143b73bc8ec23848b75f3702617c11e68b6278722388d0198d34f1b",
+      "state": "framework_dependency_review",
+      "includes": []
+    },
+    {
+      "path": "dxaml/xcp/control/inc/hal.h",
+      "git_blob": "ec4e11623cc5d5c58398972d6dbcfac8ba762240",
+      "sha256": "0c75196802038b3419206c83fa068f20e447303e961306495dc4ba9725c573e1",
+      "state": "framework_dependency_review",
+      "includes": []
+    },
+    {
       "path": "dxaml/xcp/control/inc/host.h",
       "git_blob": "1c4bc7cd9640d3e50f268c6addb935001c0b4848",
       "sha256": "2553fe824a3095a494dfcbb31f1db794fd377d71dc7835ce087d9b40f2516263",
@@ -70387,6 +72752,13 @@
       ]
     },
     {
+      "path": "dxaml/xcp/core/inc/AutomationPeerCollection.h",
+      "git_blob": "9871075828dc1e6701a21c89439891430c80efcd",
+      "sha256": "2938f3b9c6612470d617110cb54f3a63814d472b84058eb02ba2200408cd761c",
+      "state": "framework_dependency_review",
+      "includes": []
+    },
+    {
       "path": "dxaml/xcp/core/inc/AutomationPeerEventArgs.h",
       "git_blob": "0520d9026fd79849886ca7fdc61a6d5e25e26308",
       "sha256": "a1077c1a9aed69ebbfac2c2ac3f698dd28a8922d08cac69438ad466982818689",
@@ -70446,41 +72818,6 @@
           "resolution": "unique_path_suffix",
           "candidates": [
             "dxaml/xcp/components/metadata/inc/DependencyObjectTraits.g.h"
-          ]
-        }
-      ]
-    },
-    {
-      "path": "dxaml/xcp/core/inc/BlockTextElement.h",
-      "git_blob": "cf324d7ad91836774cb8f382e2c0cebcf8f36988",
-      "sha256": "2728d8655e8403fcaf74bf21eeda5f987a58a753eea1920a9bf2fac155e20b8d",
-      "state": "framework_dependency_review",
-      "includes": [
-        {
-          "header": "TextElement.h",
-          "line": 14,
-          "style": "quoted",
-          "resolution": "relative_path",
-          "candidates": [
-            "dxaml/xcp/core/inc/TextElement.h"
-          ]
-        },
-        {
-          "header": "TextElementCollection.h",
-          "line": 16,
-          "style": "quoted",
-          "resolution": "relative_path",
-          "candidates": [
-            "dxaml/xcp/core/inc/TextElementCollection.h"
-          ]
-        },
-        {
-          "header": "TextContainer.h",
-          "line": 17,
-          "style": "quoted",
-          "resolution": "relative_path",
-          "candidates": [
-            "dxaml/xcp/core/inc/TextContainer.h"
           ]
         }
       ]
@@ -71180,13 +73517,6 @@
           "candidates": []
         }
       ]
-    },
-    {
-      "path": "dxaml/xcp/core/inc/CaretBrowsingCaret.h",
-      "git_blob": "88451339993b98173baf0cfab12f3d9be93abdfb",
-      "sha256": "a543e9ef1b34eb007dc56f58e7ac950ac88e37fb0ee53cb512b55c827c52431b",
-      "state": "framework_dependency_review",
-      "includes": []
     },
     {
       "path": "dxaml/xcp/core/inc/ChangedPropertyEventArgs.h",
@@ -72893,13 +75223,6 @@
           ]
         }
       ]
-    },
-    {
-      "path": "dxaml/xcp/core/inc/HyperLinkAutomationPeer.h",
-      "git_blob": "f53a30782630ef6c23b2550c098ef69a828aadec",
-      "sha256": "e1d967c1495168eb6c20b22c5dc7582a294b35b81c8cff00d581ef74a9a88610",
-      "state": "framework_dependency_review",
-      "includes": []
     },
     {
       "path": "dxaml/xcp/core/inc/IBackingStore.h",
@@ -80154,6 +82477,41 @@
       ]
     },
     {
+      "path": "dxaml/xcp/dxaml/lib/AccessKeyStringBuilder.h",
+      "git_blob": "e31f5194f071adf99f397bc2886e9d2e067f1386",
+      "sha256": "34c36ce546f653175dee02ae8967258914346e672185b4b305426c2b79890a22",
+      "state": "framework_dependency_review",
+      "includes": [
+        {
+          "header": "FrameworkElementAutomationPeer.g.h",
+          "line": 5,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/dxaml/lib/winrtgeneratedclasses/FrameworkElementAutomationPeer.g.h"
+          ]
+        },
+        {
+          "header": "TextElement.g.h",
+          "line": 7,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/dxaml/lib/winrtgeneratedclasses/TextElement.g.h"
+          ]
+        },
+        {
+          "header": "DependencyObject.h",
+          "line": 8,
+          "style": "quoted",
+          "resolution": "relative_path",
+          "candidates": [
+            "dxaml/xcp/dxaml/lib/DependencyObject.h"
+          ]
+        }
+      ]
+    },
+    {
       "path": "dxaml/xcp/dxaml/lib/AutoSuggestBox_Partial.h",
       "git_blob": "1221f9e6023ee0be194629b706e00700c5eadfed",
       "sha256": "407cc793abbc32c31f6153e716ff13f12100e68071f10d6076d5260cf051c859",
@@ -80431,6 +82789,49 @@
           "resolution": "unique_path_suffix",
           "candidates": [
             "dxaml/xcp/dxaml/lib/winrtgeneratedclasses/ContentControl.g.h"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "dxaml/xcp/dxaml/lib/ContentDialogMetadata.h",
+      "git_blob": "0bd515c5c31f7eb59837e3c2ae4322fdac297296",
+      "sha256": "826a32bc6319797c2f483f3be2d4ce4e828c4926d1525914c9deffe8afffebad",
+      "state": "framework_dependency_review",
+      "includes": [
+        {
+          "header": "TrackerCollections.h",
+          "line": 5,
+          "style": "quoted",
+          "resolution": "relative_path",
+          "candidates": [
+            "dxaml/xcp/dxaml/lib/TrackerCollections.h"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "dxaml/xcp/dxaml/lib/ContentDialog_Partial.h",
+      "git_blob": "ca739c36569bf14cea23ec3e3a7a6691d086e725",
+      "sha256": "679ed29479191a47524dfa463f704c31bb25b4bbc28efdf0be01a0e671a3feda",
+      "state": "framework_dependency_review",
+      "includes": [
+        {
+          "header": "DeferralManager.h",
+          "line": 5,
+          "style": "quoted",
+          "resolution": "relative_path",
+          "candidates": [
+            "dxaml/xcp/dxaml/lib/DeferralManager.h"
+          ]
+        },
+        {
+          "header": "ContentDialog.g.h",
+          "line": 7,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/dxaml/lib/winrtgeneratedclasses/ContentDialog.g.h"
           ]
         }
       ]
@@ -80725,6 +83126,23 @@
       "sha256": "d398ac6c871e864ead4b8aba7c723e94362d69c0cc82b496bc28f347fd1560e0",
       "state": "framework_dependency_review",
       "includes": []
+    },
+    {
+      "path": "dxaml/xcp/dxaml/lib/DeferralManager.h",
+      "git_blob": "2275ab1ed6bdf59276498891977ee35c1c53d4d4",
+      "sha256": "b7b68061c558ece07c8aacab66429e2079311984994aad3b22608d56baef69c1",
+      "state": "framework_dependency_review",
+      "includes": [
+        {
+          "header": "DXamlAsyncBase.h",
+          "line": 5,
+          "style": "quoted",
+          "resolution": "relative_path",
+          "candidates": [
+            "dxaml/xcp/dxaml/lib/DXamlAsyncBase.h"
+          ]
+        }
+      ]
     },
     {
       "path": "dxaml/xcp/dxaml/lib/DependencyObject.h",
@@ -81328,23 +83746,6 @@
       "sha256": "8ab94de5a1326adf345a9d9b24807f0321218847d442e5d1e7dac755c1c63075",
       "state": "framework_dependency_review",
       "includes": []
-    },
-    {
-      "path": "dxaml/xcp/dxaml/lib/HyperlinkAutomationPeer_Partial.h",
-      "git_blob": "c64fd1137893e8f5d0f5a1f96ab903bb2e443bcb",
-      "sha256": "ecc3890a6f8c8e0d24bb3664c2152b22daef53d425a0f6526bc132f984c6c5ac",
-      "state": "framework_dependency_review",
-      "includes": [
-        {
-          "header": "HyperlinkAutomationPeer.g.h",
-          "line": 5,
-          "style": "quoted",
-          "resolution": "unique_path_suffix",
-          "candidates": [
-            "dxaml/xcp/dxaml/lib/winrtgeneratedclasses/HyperlinkAutomationPeer.g.h"
-          ]
-        }
-      ]
     },
     {
       "path": "dxaml/xcp/dxaml/lib/IRawElementProviderSimple_Partial.h",
@@ -83668,6 +86069,32 @@
       ]
     },
     {
+      "path": "dxaml/xcp/dxaml/lib/winrtgeneratedclasses/ContentDialog.g.h",
+      "git_blob": "292f7927190d802784206603adcdc8d15d5e0b94",
+      "sha256": "776d1cdb601985b67e1d43d96aedafe6d80f50c3e16e08b9fd5ecae6c3f18d19",
+      "state": "framework_dependency_review",
+      "includes": [
+        {
+          "header": "ContentControl.g.h",
+          "line": 13,
+          "style": "quoted",
+          "resolution": "relative_path",
+          "candidates": [
+            "dxaml/xcp/dxaml/lib/winrtgeneratedclasses/ContentControl.g.h"
+          ]
+        },
+        {
+          "header": "ContentDialog_Partial.h",
+          "line": 151,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/dxaml/lib/ContentDialog_Partial.h"
+          ]
+        }
+      ]
+    },
+    {
       "path": "dxaml/xcp/dxaml/lib/winrtgeneratedclasses/ContentPresenter.g.h",
       "git_blob": "8eb3bf1833076ddc0b038d396e99759f366ae0a7",
       "sha256": "d47f61d2018206fc6029b77cfc572117d42fd6d8d63cd65ba397512572fa129c",
@@ -84076,32 +86503,6 @@
           "resolution": "relative_path",
           "candidates": [
             "dxaml/xcp/dxaml/lib/winrtgeneratedclasses/UIElement.g.h"
-          ]
-        }
-      ]
-    },
-    {
-      "path": "dxaml/xcp/dxaml/lib/winrtgeneratedclasses/HyperlinkAutomationPeer.g.h",
-      "git_blob": "2155abbb1c4573e167d6a9f5be2f9003e30f51de",
-      "sha256": "1cc786dfac4594759ab9dddae2b11f85d300892a0377e3765f0b6c0a95912c63",
-      "state": "framework_dependency_review",
-      "includes": [
-        {
-          "header": "AutomationPeer.g.h",
-          "line": 13,
-          "style": "quoted",
-          "resolution": "relative_path",
-          "candidates": [
-            "dxaml/xcp/dxaml/lib/winrtgeneratedclasses/AutomationPeer.g.h"
-          ]
-        },
-        {
-          "header": "HyperlinkAutomationPeer_Partial.h",
-          "line": 65,
-          "style": "quoted",
-          "resolution": "unique_path_suffix",
-          "candidates": [
-            "dxaml/xcp/dxaml/lib/HyperlinkAutomationPeer_Partial.h"
           ]
         }
       ]
@@ -84863,6 +87264,68 @@
       ]
     },
     {
+      "path": "dxaml/xcp/inc/AutomationCValue.h",
+      "git_blob": "3abd8664bbbd6300c66df024b6de3632adc7cb75",
+      "sha256": "68481dfafd52e0f2e1ce07e5a18add40faeb2ab4c90d57715d40d927ed7ec113",
+      "state": "framework_dependency_review",
+      "includes": [
+        {
+          "header": "InternalEventHandler.h",
+          "line": 10,
+          "style": "system",
+          "resolution": "relative_path",
+          "candidates": [
+            "dxaml/xcp/inc/internaleventhandler.h"
+          ]
+        },
+        {
+          "header": "xstring_ptr.h",
+          "line": 12,
+          "style": "system",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/components/xstring/inc/xstring_ptr.h"
+          ]
+        },
+        {
+          "header": "ValueType.h",
+          "line": 13,
+          "style": "system",
+          "resolution": "relative_path",
+          "candidates": [
+            "dxaml/xcp/inc/ValueType.h"
+          ]
+        },
+        {
+          "header": "Indexes.g.h",
+          "line": 14,
+          "style": "system",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/components/metadata/inc/Indexes.g.h"
+          ]
+        },
+        {
+          "header": "xref_ptr.h",
+          "line": 15,
+          "style": "system",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/components/base/inc/xref_ptr.h"
+          ]
+        },
+        {
+          "header": "ComPtr.h",
+          "line": 16,
+          "style": "system",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/components/com/inc/ComPtr.h"
+          ]
+        }
+      ]
+    },
+    {
       "path": "dxaml/xcp/inc/CValueStores.h",
       "git_blob": "aa16042d2c12872cc9b78ed5a270ea240c3e4860",
       "sha256": "c3ac1d50fbfb535c768fc34760dd3346ea4d629b75a05c861f15c6de88a5c8a1",
@@ -85199,6 +87662,13 @@
           "candidates": []
         }
       ]
+    },
+    {
+      "path": "dxaml/xcp/inc/ReentrancyGuard.h",
+      "git_blob": "04797877170a889e31c770d5b6e89494387e6aba",
+      "sha256": "bfb07d06851ff9050d6a93116650fe5f326dc8b74fa58b8d9c5d73c1d7e9c210",
+      "state": "framework_dependency_review",
+      "includes": []
     },
     {
       "path": "dxaml/xcp/inc/TextSurrogates.h",
@@ -88737,6 +91207,13 @@
       "includes": []
     },
     {
+      "path": "dxaml/xcp/win/inc/PendingMessages.h",
+      "git_blob": "60a2521b207e992f9d442066657a736857c160b0",
+      "sha256": "7d25553fb76f1e97e951ccd557ea982f4baf2074099239cd5280e9fadf3162ba",
+      "state": "framework_dependency_review",
+      "includes": []
+    },
+    {
       "path": "dxaml/xcp/win/inc/UIAHostEnvironmentInfo.h",
       "git_blob": "e8ea96f3df44bdc2c62f0dba7f62e8c7df39ea8d",
       "sha256": "f742b84f854ddb8d33fd78789612ac69c66ddc6da30e2c28e5b047bb129cdcac",
@@ -88752,13 +91229,6 @@
           ]
         }
       ]
-    },
-    {
-      "path": "dxaml/xcp/win/inc/UIAPatternProviderWrapper.h",
-      "git_blob": "c73efad24286776c9d3f5b116c4ac97654fa0284",
-      "sha256": "3750cfd72e214af6afd39370cc4b54dd9549cf700903aa6f5ada29f3e79641dd",
-      "state": "framework_dependency_review",
-      "includes": []
     },
     {
       "path": "dxaml/xcp/win/inc/UIAWindow.h",
@@ -88855,6 +91325,392 @@
       "sha256": "bfe647f682acec7179ff8ec0cad3ec5aa060cb968d91648f20373c514c1d4b55",
       "state": "framework_dependency_review",
       "includes": []
+    },
+    {
+      "path": "dxaml/xcp/win/shared/SafeArrayUtil.h",
+      "git_blob": "62d47124ffef5327a96b67a46a5160a586722915",
+      "sha256": "0f99b4f37fcb8666f6e68256293dfce330449215009437882e2fabd264572503",
+      "state": "framework_dependency_review",
+      "includes": []
+    },
+    {
+      "path": "dxaml/xcp/win/shared/precomp.h",
+      "git_blob": "5b309835d3b0261704f69a889ab04b115c785aea",
+      "sha256": "d92404e95de91730cb1a1231dbb6d7a1c53078379a3a6d62fc0e297dfb1bec9d",
+      "state": "framework_dependency_review",
+      "includes": [
+        {
+          "header": "xcpwindows.h",
+          "line": 7,
+          "style": "system",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/inc/xcpwindows.h"
+          ]
+        },
+        {
+          "header": "oleauto.h",
+          "line": 9,
+          "style": "system",
+          "resolution": "external_or_generated",
+          "candidates": []
+        },
+        {
+          "header": "synchapi.h",
+          "line": 10,
+          "style": "system",
+          "resolution": "external_or_generated",
+          "candidates": []
+        },
+        {
+          "header": "objbase.h",
+          "line": 11,
+          "style": "system",
+          "resolution": "external_or_generated",
+          "candidates": []
+        },
+        {
+          "header": "stdlib.h",
+          "line": 13,
+          "style": "system",
+          "resolution": "external_or_generated",
+          "candidates": []
+        },
+        {
+          "header": "malloc.h",
+          "line": 14,
+          "style": "system",
+          "resolution": "external_or_generated",
+          "candidates": []
+        },
+        {
+          "header": "tchar.h",
+          "line": 15,
+          "style": "system",
+          "resolution": "external_or_generated",
+          "candidates": []
+        },
+        {
+          "header": "stdio.h",
+          "line": 16,
+          "style": "system",
+          "resolution": "external_or_generated",
+          "candidates": []
+        },
+        {
+          "header": "strsafe.h",
+          "line": 17,
+          "style": "system",
+          "resolution": "external_or_generated",
+          "candidates": []
+        },
+        {
+          "header": "hstring.h",
+          "line": 18,
+          "style": "system",
+          "resolution": "external_or_generated",
+          "candidates": []
+        },
+        {
+          "header": "math.h",
+          "line": 21,
+          "style": "system",
+          "resolution": "external_or_generated",
+          "candidates": []
+        },
+        {
+          "header": "float.h",
+          "line": 22,
+          "style": "system",
+          "resolution": "external_or_generated",
+          "candidates": []
+        },
+        {
+          "header": "shlwapi.h",
+          "line": 25,
+          "style": "system",
+          "resolution": "external_or_generated",
+          "candidates": []
+        },
+        {
+          "header": "macros.h",
+          "line": 26,
+          "style": "quoted",
+          "resolution": "ambiguous",
+          "candidates": [
+            "dxaml/xcp/dxaml/tools/AppAnalysis/runtime/common/macros.h",
+            "dxaml/xcp/pal/inc/macros.h"
+          ]
+        },
+        {
+          "header": "xcpdebug.h",
+          "line": 28,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/pal/inc/xcpdebug.h"
+          ]
+        },
+        {
+          "header": "pal.h",
+          "line": 29,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/inc/pal.h"
+          ]
+        },
+        {
+          "header": "core.h",
+          "line": 30,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/inc/core.h"
+          ]
+        },
+        {
+          "header": "refcounting.h",
+          "line": 31,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/pal/inc/refcounting.h"
+          ]
+        },
+        {
+          "header": "host.h",
+          "line": 32,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/control/inc/host.h"
+          ]
+        },
+        {
+          "header": "xlist.h",
+          "line": 33,
+          "style": "system",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/pal/inc/xlist.h"
+          ]
+        },
+        {
+          "header": "hal.h",
+          "line": 34,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/control/inc/hal.h"
+          ]
+        },
+        {
+          "header": "winpal.h",
+          "line": 35,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/win/inc/winpal.h"
+          ]
+        },
+        {
+          "header": "xstrutil.h",
+          "line": 36,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/components/xstring/inc/xstrutil.h"
+          ]
+        },
+        {
+          "header": "XCPList.h",
+          "line": 37,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/inc/XcpList.h"
+          ]
+        },
+        {
+          "header": "values.h",
+          "line": 38,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/core/inc/values.h"
+          ]
+        },
+        {
+          "header": "PendingMessages.h",
+          "line": 39,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/win/inc/PendingMessages.h"
+          ]
+        },
+        {
+          "header": "frameCounter.h",
+          "line": 40,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/control/common/shared/FrameCounter.h"
+          ]
+        },
+        {
+          "header": "commonBrowserHost.h",
+          "line": 41,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/control/common/shared/CommonBrowserHost.h"
+          ]
+        },
+        {
+          "header": "AsyncDownloadRequestManager.h",
+          "line": 42,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/control/inc/AsyncDownloadRequestManager.h"
+          ]
+        },
+        {
+          "header": "UIAutomation.h",
+          "line": 45,
+          "style": "system",
+          "resolution": "external_or_generated",
+          "candidates": []
+        },
+        {
+          "header": "UIAWindow.h",
+          "line": 46,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/win/inc/UIAWindow.h"
+          ]
+        },
+        {
+          "header": "UIAWrapper.h",
+          "line": 47,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/win/inc/UIAWrapper.h"
+          ]
+        },
+        {
+          "header": "UIAPatternProviderWrapper.h",
+          "line": 48,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/win/inc/UIAPatternProviderWrapper.h"
+          ]
+        },
+        {
+          "header": "SafeArrayUtil.h",
+          "line": 49,
+          "style": "quoted",
+          "resolution": "relative_path",
+          "candidates": [
+            "dxaml/xcp/win/shared/SafeArrayUtil.h"
+          ]
+        },
+        {
+          "header": "corep.h",
+          "line": 52,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/core/inc/corep.h"
+          ]
+        },
+        {
+          "header": "DependencyObjectTraits.g.h",
+          "line": 53,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/components/metadata/inc/DependencyObjectTraits.g.h"
+          ]
+        },
+        {
+          "header": "depends.h",
+          "line": 54,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/core/inc/depends.h"
+          ]
+        },
+        {
+          "header": "xcpmath.h",
+          "line": 55,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/pal/inc/xcpmath.h"
+          ]
+        },
+        {
+          "header": "collectionbase.h",
+          "line": 56,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/components/Collection/Inc/collectionbase.h"
+          ]
+        },
+        {
+          "header": "DOCollection.h",
+          "line": 57,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/components/Collection/Inc/docollection.h"
+          ]
+        },
+        {
+          "header": "AutomationPeer.h",
+          "line": 58,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/core/inc/AutomationPeer.h"
+          ]
+        },
+        {
+          "header": "AutomationPeerCollection.h",
+          "line": 59,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/core/inc/AutomationPeerCollection.h"
+          ]
+        },
+        {
+          "header": "ReentrancyGuard.h",
+          "line": 62,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/inc/ReentrancyGuard.h"
+          ]
+        },
+        {
+          "header": "MUX-ETWEvents.h",
+          "line": 64,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/inc/MUX-ETWEvents.h"
+          ]
+        }
+      ]
     },
     {
       "path": "external/inc/SafeInt/SafeInt.hpp",
@@ -102391,6 +105247,121 @@
       "from": "dxaml/xcp/win/inc/winpal.h",
       "header": "vadefs.h",
       "line": 8,
+      "style": "system",
+      "resolution": "external_or_generated",
+      "candidates": []
+    },
+    {
+      "from": "dxaml/xcp/win/shared/precomp.h",
+      "header": "oleauto.h",
+      "line": 9,
+      "style": "system",
+      "resolution": "external_or_generated",
+      "candidates": []
+    },
+    {
+      "from": "dxaml/xcp/win/shared/precomp.h",
+      "header": "synchapi.h",
+      "line": 10,
+      "style": "system",
+      "resolution": "external_or_generated",
+      "candidates": []
+    },
+    {
+      "from": "dxaml/xcp/win/shared/precomp.h",
+      "header": "objbase.h",
+      "line": 11,
+      "style": "system",
+      "resolution": "external_or_generated",
+      "candidates": []
+    },
+    {
+      "from": "dxaml/xcp/win/shared/precomp.h",
+      "header": "stdlib.h",
+      "line": 13,
+      "style": "system",
+      "resolution": "external_or_generated",
+      "candidates": []
+    },
+    {
+      "from": "dxaml/xcp/win/shared/precomp.h",
+      "header": "malloc.h",
+      "line": 14,
+      "style": "system",
+      "resolution": "external_or_generated",
+      "candidates": []
+    },
+    {
+      "from": "dxaml/xcp/win/shared/precomp.h",
+      "header": "tchar.h",
+      "line": 15,
+      "style": "system",
+      "resolution": "external_or_generated",
+      "candidates": []
+    },
+    {
+      "from": "dxaml/xcp/win/shared/precomp.h",
+      "header": "stdio.h",
+      "line": 16,
+      "style": "system",
+      "resolution": "external_or_generated",
+      "candidates": []
+    },
+    {
+      "from": "dxaml/xcp/win/shared/precomp.h",
+      "header": "strsafe.h",
+      "line": 17,
+      "style": "system",
+      "resolution": "external_or_generated",
+      "candidates": []
+    },
+    {
+      "from": "dxaml/xcp/win/shared/precomp.h",
+      "header": "hstring.h",
+      "line": 18,
+      "style": "system",
+      "resolution": "external_or_generated",
+      "candidates": []
+    },
+    {
+      "from": "dxaml/xcp/win/shared/precomp.h",
+      "header": "math.h",
+      "line": 21,
+      "style": "system",
+      "resolution": "external_or_generated",
+      "candidates": []
+    },
+    {
+      "from": "dxaml/xcp/win/shared/precomp.h",
+      "header": "float.h",
+      "line": 22,
+      "style": "system",
+      "resolution": "external_or_generated",
+      "candidates": []
+    },
+    {
+      "from": "dxaml/xcp/win/shared/precomp.h",
+      "header": "shlwapi.h",
+      "line": 25,
+      "style": "system",
+      "resolution": "external_or_generated",
+      "candidates": []
+    },
+    {
+      "from": "dxaml/xcp/win/shared/precomp.h",
+      "header": "macros.h",
+      "line": 26,
+      "style": "quoted",
+      "resolution": "ambiguous",
+      "candidates": [
+        "dxaml/xcp/dxaml/tools/AppAnalysis/runtime/common/macros.h",
+        "dxaml/xcp/pal/inc/macros.h"
+      ]
+    },
+    {
+      "from": "dxaml/xcp/win/shared/precomp.h",
+      "header": "UIAutomation.h",
+      "line": 45,
       "style": "system",
       "resolution": "external_or_generated",
       "candidates": []
