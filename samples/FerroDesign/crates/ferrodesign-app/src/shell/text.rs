@@ -18,7 +18,14 @@ impl EditorShell {
             let Some(id) = shell.inline_text.get() else {
                 return;
             };
-            let value = shell.field("InlineTextBox").text().unwrap_or_default();
+            let field = shell.field("InlineTextBox");
+            // IME preedit can remove the native selection before it commits.
+            // Keep confirmed text and rich-text runs in the document so a
+            // lifecycle save during composition cannot persist that removal.
+            if field.is_composing_text() {
+                return;
+            }
+            let value = field.text().unwrap_or_default();
             let mut editor = shell.editor.borrow_mut();
             let changed = editor
                 .document

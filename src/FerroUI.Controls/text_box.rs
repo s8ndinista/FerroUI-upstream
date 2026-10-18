@@ -1747,6 +1747,16 @@ impl TextBox {
         self.set_value(Self::text_property(), value.map(str::to_owned))
     }
 
+    /// Whether the input method has supplied pending preedit text.
+    ///
+    /// An empty preedit update is still pending. The input method clears this
+    /// state explicitly with `None`, or it is cleared when the client detaches
+    /// from its presenter. Unlike the presenter's visual preedit, this state
+    /// survives selection and caret synchronization during `TextChanging`.
+    pub fn is_composing_text(&self) -> bool {
+        self.im_client.has_pending_preedit()
+    }
+
     fn coerce_text_callback(sender: &FerroObject, value: Option<String>) -> Option<String> {
         match sender.downcast_ref::<TextBox>() {
             Some(text_box) => text_box.coerce_text(value),

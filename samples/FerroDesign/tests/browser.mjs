@@ -350,9 +350,8 @@ async function nativeEditingRegressions(page, canvas, reference, result, check, 
             input.dispatchEvent(new CompositionEvent("compositionupdate", { bubbles: true, data: "日本" }));
             input.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "insertCompositionText", data: "日本", isComposing: true }));
         });
-        // FerroUI removes the selected range when preedit starts, while the
-        // composition string itself remains in the native text presenter.
-        assert.equal((await documentNode(page, 3)).text, "", "IME may replace the selected range, but its preedit string must remain outside the document draft");
+        assert.equal((await state(page)).editingComposition, true, "The actual native text client must have pending preedit");
+        assert.deepEqual(await documentNode(page, 3), committedText, "The document must retain confirmed text and runs while native preedit replaces the selected range");
     };
     await beginComposition();
     const composedText = "日本語 · café Ω 🚀";
@@ -360,6 +359,7 @@ async function nativeEditingRegressions(page, canvas, reference, result, check, 
         input.dispatchEvent(new CompositionEvent("compositionend", { bubbles: true, cancelable: true, data }));
         input.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "insertText", data, isComposing: false }));
     }, composedText);
+    assert.equal((await state(page)).editingComposition, false, "Composition end must clear the native pending state");
     assert.equal((await documentNode(page, 3)).text, composedText, "A composition and trailing insertText must commit exactly once");
     await page.keyboard.press("Control+Enter");
     await page.keyboard.press("Control+z");
@@ -386,6 +386,37 @@ async function nativeEditingRegressions(page, canvas, reference, result, check, 
     await page.keyboard.press("Escape");
     assert.deepEqual(await documentNode(page, 3), committedText, "Canceling the replacement draft must restore the complete text and formatting");
     check("Browser composition events commit once, keep preedit out of the document, and cannot block or overwrite a new native text client after cancellation");
+
+    await clickWorld(page, 420, 88, { clickCount: 2, delay: 80 });
+    await page.waitForFunction(() => JSON.parse(globalThis.ferroDesign.ferroDesignState()).editingText === 3);
+    await page.keyboard.press("Control+a");
+    await page.keyboard.insertText("Confirmed before composition · Ω 🚀");
+    const confirmedDraft = await documentNode(page, 3);
+    await page.keyboard.press("Control+a");
+    await ime.evaluate((input) => {
+        input.dispatchEvent(new CompositionEvent("compositionstart", { bubbles: true, data: "" }));
+        input.dispatchEvent(new CompositionEvent("compositionupdate", { bubbles: true, data: "未確定" }));
+    });
+    assert.equal((await state(page)).editingComposition, true, "The lifecycle regression must start with pending native preedit");
+    assert.deepEqual(await documentNode(page, 3), confirmedDraft, "Pending composition must not replace the last confirmed document draft");
+    // Use the real page lifecycle listener, whose synchronous native committer
+    // must preserve confirmed input even without a browser compositionend.
+    await page.evaluate(() => globalThis.dispatchEvent(new Event("pagehide")));
+    await page.waitForFunction(() => JSON.parse(globalThis.ferroDesign.ferroDesignState()).editingText === null);
+    assert.equal((await flushStorage(page)).saved, true);
+    assert.deepEqual(await page.evaluate(() => JSON.parse(globalThis.ferroDesignStorage.load()).nodes[3]), confirmedDraft);
+    // Hiding the inline host releases native focus. Resume through a real
+    // canvas click before exercising document keyboard history.
+    await clickWorld(page, 620, 240);
+    await page.keyboard.press("Control+z");
+    assert.deepEqual(await documentNode(page, 3), committedText, "Lifecycle commit must remain one undo step for the confirmed input");
+    await page.keyboard.press("Control+Shift+z");
+    assert.deepEqual(await documentNode(page, 3), confirmedDraft);
+    assert.equal((await flushStorage(page)).saved, true);
+    await page.reload({ waitUntil: "domcontentloaded", timeout: 120000 });
+    await waitForReload(page);
+    assert.deepEqual(await documentNode(page, 3), confirmedDraft, "A real reload must recover confirmed Unicode and formatting, never the intermediate IME deletion");
+    check("Pagehide during unfinished composition durably saves confirmed Unicode and formatting, preserves one-step history, and survives a real reload");
 
     const paintFixture = isolatedDocument(reference, [fixtureNode(reference, 2)], "Paint stack input fixture");
     await importFixture(page, paintFixture);

@@ -20,6 +20,7 @@ pub struct TextBoxTextInputMethodClient {
     events: TextInputMethodClientEvents,
     parent: RefCell<Option<WeakRef<TextBox>>>,
     presenter: RefCell<Option<WeakRef<TextPresenter>>>,
+    pending_preedit: Cell<bool>,
     selection_changed: Cell<bool>,
     is_in_change: Cell<bool>,
     parent_property_changed: RefCell<Option<Rc<dyn IDisposable>>>,
@@ -119,9 +120,15 @@ impl TextInputMethodClient for TextBoxTextInputMethodClient {
 
     fn set_preedit_text_with_cursor(&self, preedit_text: Option<&str>, cursor_pos: Option<i32>) {
         let (Some(_parent), Some(presenter)) = (self.parent(), self.presenter()) else {
+            self.pending_preedit.set(false);
             return;
         };
 
+        // Publishing preedit can synchronously delete the TextBox selection.
+        // Its caret/text synchronization can then clear the presenter's visual
+        // preedit before TextChanging runs. Keep the input client's state until
+        // the input method explicitly clears it, including an empty update.
+        self.pending_preedit.set(preedit_text.is_some());
         presenter.set_current_value(TextPresenter::preedit_text_property(), preedit_text.map(str::to_owned));
         presenter.set_current_value(TextPresenter::preedit_text_cursor_position_property(), cursor_pos);
     }
@@ -147,6 +154,7 @@ impl TextBoxTextInputMethodClient {
             events: TextInputMethodClientEvents::new(),
             parent: RefCell::new(None),
             presenter: RefCell::new(None),
+            pending_preedit: Cell::new(false),
             selection_changed: Cell::new(false),
             is_in_change: Cell::new(false),
             parent_property_changed: RefCell::new(None),
@@ -165,7 +173,12 @@ impl TextBoxTextInputMethodClient {
         presenter.and_then(|presenter| presenter.upgrade())
     }
 
+    pub(crate) fn has_pending_preedit(&self) -> bool {
+        self.pending_preedit.get()
+    }
+
     pub(crate) fn set_presenter(&self, presenter: Option<&Ref<TextPresenter>>, parent: Option<&Ref<TextBox>>) {
+        self.pending_preedit.set(false);
         let property_changed = self.parent_property_changed.borrow_mut().take();
         let tapped = self.parent_tapped.borrow_mut().take();
 

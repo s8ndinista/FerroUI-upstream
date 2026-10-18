@@ -2124,6 +2124,61 @@ fn text_box_without_template_is_focused_with_an_input_method() {
 }
 
 #[test]
+fn pending_preedit_survives_selection_deletion_before_text_changing() {
+    let _scope = test_scope();
+    let text_box = templated_text_box(Some("hello"));
+    // Attach an already-templated control to exercise the presenter's
+    // selection-deletion callback during the first nonempty preedit update.
+    text_box.apply_template();
+    let _root = host_in_root(&text_box);
+    text_box.set_caret_index(5);
+    text_box.select_all();
+    let client = get_input_method_client(&text_box);
+    let changes = Rc::new(RefCell::new(Vec::new()));
+    let recorded = changes.clone();
+    let weak = text_box.downgrade();
+    text_box.text_changing(move |_, _| {
+        if let Some(text_box) = weak.upgrade() {
+            recorded.borrow_mut().push((text_box.text(), text_box.is_composing_text()));
+        }
+    });
+
+    assert!(!text_box.is_composing_text());
+    client.set_preedit_text_with_cursor(Some("\u{304b}"), Some(1));
+    assert_eq!(Some(""), text_box.text().as_deref());
+    assert!(text_box.is_composing_text());
+    assert_eq!(vec![(Some(String::new()), true)], *changes.borrow());
+
+    client.set_preedit_text(None);
+    raise_text_event(&text_box, "\u{304b}");
+    assert!(!text_box.is_composing_text());
+    assert_eq!(
+        vec![(Some(String::new()), true), (Some("\u{304b}".to_string()), false)],
+        *changes.borrow()
+    );
+}
+
+#[test]
+fn empty_preedit_is_pending_until_cleared_or_the_client_detaches() {
+    let _scope = test_scope();
+    let text_box = templated_text_box(Some("hello"));
+    let root = host_in_root(&text_box);
+    let client = get_input_method_client(&text_box);
+
+    client.set_preedit_text(Some(""));
+    assert!(text_box.is_composing_text());
+    client.set_preedit_text(None);
+    assert!(!text_box.is_composing_text());
+
+    client.set_preedit_text(Some("\u{304b}"));
+    assert!(text_box.is_composing_text());
+    root.set_child(Button::new());
+    assert!(!text_box.is_composing_text());
+    client.set_preedit_text(Some("late"));
+    assert!(!text_box.is_composing_text());
+}
+
+#[test]
 fn preedit_survives_reentrant_layout_invalidation_from_caret_bounds_changed() {
     let _scope = test_scope();
 

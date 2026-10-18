@@ -73,6 +73,12 @@ jobs:
           cargo metadata --locked --no-deps --format-version 1 > browser-report/cargo-metadata.json
           cargo test --locked -p ferrodesign-core --jobs 1 2>&1 | tee browser-report/core-tests.log
 
+      - name: Test native text preedit ownership
+        run: |
+          set -o pipefail
+          source "$RUNNER_TEMP/ferrodesign-tools/env.sh"
+          CARGO_PROFILE_TEST_DEBUG=0 CARGO_PROFILE_TEST_CODEGEN_UNITS=16 cargo test --locked --manifest-path ../../Cargo.toml -p ferroui-controls --lib preedit --jobs 1 -- --test-threads=1 2>&1 | tee browser-report/preedit-tests.log
+
       - name: Build actual FerroUI Vello WebAssembly application
         run: |
           set -o pipefail

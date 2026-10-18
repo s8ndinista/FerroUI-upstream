@@ -651,6 +651,7 @@ impl EditorShell {
             "realizedLayerRows":self.layer_buttons.borrow().values().filter(|row| row.upgrade().is_some()).count(),
             "vectorNode":self.canvas.vector_node.get(),
             "editingText":self.inline_text.get(),
+            "editingComposition":self.inline_text.get().is_some() && self.field("InlineTextBox").is_composing_text(),
             "prototypeOverlays":*self.canvas.overlays.borrow(),
             "vectorPoint":self.canvas.vector_point.get().map(|point| json!({"segment":point.segment,"kind":format!("{:?}",point.kind)})),
             "saveStatus":platform::document_save_status(),
