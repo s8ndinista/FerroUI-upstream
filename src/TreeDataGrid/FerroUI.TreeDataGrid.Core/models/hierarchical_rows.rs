@@ -113,20 +113,25 @@ impl<M: TreeModel> HierarchicalRows<M> {
 
     /// Expands the rows on the way to the model at `index` (`Expand`).
     pub fn expand(&self, index: &IndexPath) {
-        let mut rows: Option<Vec<Rc<HierarchicalRow<M>>>> = Some(self.roots().to_vec());
+        let mut rows: Option<Rc<RootRows<M>>> = Some(self.roots());
         for i in 0..index.count() {
             let Some(current) = rows.take() else {
                 break;
             };
-            let model_index = index.get(i);
-            match current.into_iter().find(|row| row.model_index() == model_index) {
+            match Self::find_row(&current, index.get(i)) {
                 Some(row) => {
                     row.set_is_expanded(true);
-                    rows = row.children();
+                    rows = row.expanded_child_rows();
                 }
                 None => break,
             }
         }
+    }
+
+    /// The row of `rows` (in their order) whose model index is `model_index`; the rows are read
+    /// through their list rather than copied.
+    fn find_row(rows: &RootRows<M>, model_index: i32) -> Option<Rc<HierarchicalRow<M>>> {
+        (0..rows.count()).map(|i| rows.get(i)).find(|row| row.model_index() == model_index)
     }
 
     /// Expands or collapses the rows below `row` (all rows: `None`) by `predicate`, with one reset
@@ -152,18 +157,17 @@ impl<M: TreeModel> HierarchicalRows<M> {
     /// Collapses the row of the model at `index` (`Collapse`).
     pub fn collapse(&self, index: &IndexPath) {
         let count = index.count();
-        let mut rows: Option<Vec<Rc<HierarchicalRow<M>>>> = Some(self.roots().to_vec());
+        let mut rows: Option<Rc<RootRows<M>>> = Some(self.roots());
         for i in 0..count {
             let Some(current) = rows.take() else {
                 break;
             };
-            let model_index = index.get(i);
-            match current.into_iter().find(|row| row.model_index() == model_index) {
+            match Self::find_row(&current, index.get(i)) {
                 Some(row) => {
                     if i == count - 1 {
                         row.set_is_expanded(false);
                     }
-                    rows = row.children();
+                    rows = row.expanded_child_rows();
                 }
                 None => break,
             }
