@@ -50,7 +50,9 @@ Constraint resizing updates children relative to the old and new container exten
 
 Interactive vector editing uses stable path-command/point identifiers within a gesture. Curve splitting preserves cubic and quadratic shape; nearest-point queries isolate polynomial stationary points instead of using display tessellation. Recomputing tight bounds compensates the node transform, including the center-of-rotation change and reflected/sheared parents.
 
-The on-canvas text editor is a FerroUI TextBox transformed into the selected layer coordinate system. The scene temporarily omits that text layer without changing its authored visibility. Synchronous text-changing events update the open transaction, and focus loss/Ctrl+Enter commits it; Escape cancels it. A minimal Unicode character diff remaps rich-run UTF-8 byte ranges. The native control owns caret navigation, selection, IME and text clipboard handling.
+The on-canvas text editor is a FerroUI TextBox transformed into the selected layer coordinate system. The scene temporarily omits that text layer without changing its authored visibility. Confirmed synchronous text-changing events update the open transaction, and focus loss/Ctrl+Enter commits it; Escape cancels it. A minimal Unicode character diff remaps rich-run UTF-8 byte ranges. The native control owns caret navigation, selection, IME and text clipboard handling.
+
+`TextBox::is_composing_text()` reads pending preedit from its native input client. The client publishes that state before changing the presenter, and clears it when the input method explicitly ends preedit or the presenter detaches. Unlike visual preedit, the state survives selection deletion and caret synchronization. The shell excludes text-changing notifications while preedit is pending, retaining confirmed text and rich runs for autosave and lifecycle commits. Browser composition cancellation also resets the shared hidden-input bridge, so delayed events cannot write into a replacement text client. Input-only Unicode insertion is forwarded through the native text event and resynchronized after native caret handling.
 
 ## Prototypes and local services
 

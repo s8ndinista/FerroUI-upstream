@@ -1,13 +1,14 @@
 # Validation and measurements
 
-This file distinguishes commands that have passed from checks that are still in progress. It will be updated with the completed browser run and its artifacts.
+This file distinguishes implemented paths, completed checks and measurements. The current application implementation is `f1184c3e4f70dce7ab96c9ea807b0b01572b3cc0`, exercised in [CI run 39165941373](https://github.com/wieslawsoltes/FerroUI/actions/runs/39165941373). Source/core, all six focused native preedit tests and the actual WebAssembly build passed. Browser validation stopped on two harness failures described below; their corrections await a complete rerun.
 
 ## Observed results
 
 | Check | Result |
 | --- | --- |
 | Core unit tests | 79 passed: existing document/SVG/layout coverage plus vector-edit, Unicode text-range, prototype timing/key/overlay, isolated-root hit testing and interaction-authoring regressions |
-| Native full application check | Passed on Linux, Rust 1.99.0, with `--lib --tests`; compiled the XAML shell, native text/paint editors, prototype runtime and test targets |
+| Native TextBox preedit regressions | All 6 tests in the focused `preedit` gate passed for the current implementation; it compiles the controls test binary and exercises pending-state ownership, selection deletion, empty updates, detachment and existing preedit regressions |
+| Native full application check | Passed in the earlier development environment on Linux, Rust 1.99.0, with `--lib --tests`; compiled the XAML shell, native text/paint editors, prototype runtime and test targets. The current CI run skipped this gate after its browser harness failure. |
 | FerroUI browser bridge TypeScript check/build | Passed |
 | Browser text-input event regressions | 10 passed with Node, bundling the actual TypeScript bridge; includes Unicode insertion, composition deduplication, canceled-client recovery and listener cleanup |
 | Browser host JavaScript and shell syntax | Passed |
@@ -16,7 +17,7 @@ This file distinguishes commands that have passed from checks that are still in 
 | Native atomic-save tests | 2 passed in the standalone host harness |
 | Active browser dependency graph | No `ferroui-skia`, `skia-safe` or `skia-bindings` |
 | Actual WebAssembly application build | Passed with the pinned Emscripten toolchain, including linking and optimization; all six required JavaScript modules verified in the distribution |
-| Browser pixels and editing interactions | [CI run 39161125725](https://github.com/wieslawsoltes/FerroUI/actions/runs/39161125725), revision `b17b4ffd`: Software2D passed all 23 checks; real WebGL2 passed 13, including complete native Unicode editing, then sampled a rebuilt gradient field before native layout had arranged it. The harness now waits for arranged native bounds; the complete rerun is pending. |
+| Browser pixels and editing interactions | Current run: Software2D passed 13 recorded checks and its first composition cycle, then failed to reopen text after rapid same-position double-clicks. Real WebGL2 passed 15 checks including the complete native composition and pagehide/reload regressions, then timed out on a supplemental canvas locator screenshot after successful paint edits. Both harness corrections are pending a complete rerun. The earlier `b17b4ffd` Software2D run passed all 23 checks in its suite. |
 | macOS/Windows native runtime | Not run in this environment |
 | Exact Figma visual parity | Not measured |
 
@@ -27,6 +28,12 @@ The [first CI browser run](https://github.com/wieslawsoltes/FerroUI/actions/runs
 The second run's WebGL2 failure state contained the expected linear gradient and visible native paint controls with zero-size bounds. The harness sampled those controls about 7 ms after the document transaction, before the next native arrangement. A bounded readiness predicate now requires visible, finite, positive native bounds before deriving pointer coordinates. It does not bypass the field interaction or alter the paint assertions.
 
 The same review found a native composition lifecycle bug: losing a text client before `compositionend` left the framework composing flag set, blocking subsequent input-only text. Native reset/client replacement now cancels preedit, and the TypeScript bridge synchronizes its composition state when the shared hidden input is cleared. Late events from the canceled composition cannot edit the replacement client. The browser suite now exercises normal composition, cancellation, resumed Unicode input before a delayed end, and late-event isolation against the actual WASM TextBox.
+
+The [third run](https://github.com/wieslawsoltes/FerroUI/actions/runs/39163539589), revision `fd800712`, passed the 13 existing editor checks in each mode and then exposed an incorrect assumption in the new preedit assertion. The real compiled-XAML TextBox retained its confirmed document value, while the test expected an intermediate selection deletion. That internal value depends on whether the native presenter exists when the TextBox attaches. The corrected test checks the native input client's explicit pending-preedit state and the complete confirmed document node, then requires exactly-once composition commit and cancellation behavior.
+
+The editor also guards a separate durability boundary: when a native preedit update does remove the selection, its text-changing notification must not replace confirmed document text. `TextBox::is_composing_text()` exposes a stable native-client signal independent of caret/presenter synchronization. The shell keeps those intermediate notifications outside the document draft. A browser regression now starts with confirmed Unicode input, begins unfinished native composition, dispatches the real pagehide listener, checks durable text and rich runs, exercises one-step undo/redo, and reloads the page. These assertions passed in the current WebGL2 run; all six focused native signal regressions also passed.
+
+The fourth run exposed two harness timing assumptions. In Software2D, a second double-click at the identical position followed the first within the native 500 ms click-count window, so the next text editor did not open. The fixture now makes a real blank-canvas click at a different position before each opening double-click, establishing an independent native sequence without arbitrary sleeps. In WebGL2, all native gradient edits succeeded, but `locator.screenshot` timed out waiting for DOM canvas stability; the fallback page screenshot succeeded and showed the correctly arranged three-stop dialog. The paint artifact now uses a page screenshot at the same fixed viewport. All model, keyboard, history, composition and persistence assertions remain in place.
 
 ## Observed large-document browser result
 
@@ -66,7 +73,17 @@ cargo run --release -p ferrodesign-core --example performance -- 10000
 
 `tests/browser.mjs` launches the actual application at a 1600 by 1000 viewport in two contexts, requesting Software2D and WebGL2. It records the observed canvas context and allows the documented WebGL2-to-Software2D fallback. The CI browser may use SwiftShader; its results establish functional rendering, not real GPU throughput.
 
-The test waits for a completed native frame and dismissal of the loading surface, inspects native pixel diversity, draws a rectangle, edits vector anchors and pen tangents, edits multiline Unicode in the native on-canvas TextBox, changes paints through the native dialog, and dispatches prototype hover/press/drag/key/delay actions. It checks one-transaction history, canceled text edits, UTF-8 rich-run ranges, JSON import/export equality, durable reload, and bounded virtualized rows with a 10,000-layer document larger than 5 MiB. Deterministic browser composition events exercise preedit, exactly-once commits and focus loss through the real WASM text client; they do not certify operating-system IME behavior on every platform. Prototype rules are imported as fixtures for runtime validation; interaction-dialog authoring controls have not been browser-operated by this suite. The separate IndexedDB browser test uses actual transactions for migration, rollback, stale-tab conflicts and a document larger than 10 MiB. The application browser test also collects console exceptions, startup failures and FerroUI render-thread panics. Its screenshots, Playwright traces and report are written under `browser-report` and uploaded by GitHub Actions.
+The test waits for a completed native frame and dismissal of the loading surface, inspects native pixel diversity, draws a rectangle, edits vector anchors and pen tangents, edits multiline Unicode in the native on-canvas TextBox, changes paints through the native dialog, and dispatches prototype hover/press/drag/key/delay actions. It checks one-transaction history, canceled text edits, UTF-8 rich-run ranges, JSON import/export equality, durable reload, and bounded virtualized rows with a 10,000-layer document larger than 5 MiB. Deterministic browser composition events exercise explicit native preedit state, exactly-once commits, focus loss and confirmed-text durability through pagehide/reload; they do not certify operating-system IME behavior on every platform. Prototype rules are imported as fixtures for runtime validation; interaction-dialog authoring controls have not been browser-operated by this suite. The separate IndexedDB browser test uses actual transactions for migration, rollback, stale-tab conflicts and a document larger than 10 MiB. The application browser test also collects console exceptions, startup failures and FerroUI render-thread panics. Its screenshots, Playwright traces and report are written under `browser-report` and uploaded by GitHub Actions.
+
+The focused native preedit gate can be reproduced from the sample directory:
+
+```sh
+CARGO_PROFILE_TEST_DEBUG=0 CARGO_PROFILE_TEST_CODEGEN_UNITS=16 \
+  cargo test --locked --manifest-path ../../Cargo.toml \
+  -p ferroui-controls --lib preedit --jobs 1 -- --test-threads=1
+```
+
+The filter narrows execution, while Cargo still compiles and links the controls test binary. This gate uses the pure Rust controls/base test graph; it does not introduce a separate graphics backend.
 
 An interaction test is evidence for those paths, not for every item in the feature inventory. There is no same-document image comparison to a Figma reference screenshot. Browser rendering timings and memory should be measured on the intended deployment devices before establishing a frame-rate or capacity target.
 

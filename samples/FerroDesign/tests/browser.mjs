@@ -294,8 +294,14 @@ async function nativeEditingRegressions(page, canvas, reference, result, check, 
     check("Enter while the Pen pointer is held finalizes the gesture and ignores later handle movement until release");
 
     await importFixture(page, fixture);
-    await clickWorld(page, 420, 88, { clickCount: 2, delay: 80 });
-    await page.waitForFunction(() => JSON.parse(globalThis.ferroDesign.ferroDesignState()).editingText === 3);
+    const openTextEditor = async () => {
+        // Start each double-click sequence at a distinct pointer position.
+        // Fast commit/undo/reopen cycles otherwise accumulate native clicks 3/4.
+        await clickWorld(page, 40, 260);
+        await clickWorld(page, 420, 88, { clickCount: 2, delay: 80 });
+        await page.waitForFunction(() => JSON.parse(globalThis.ferroDesign.ferroDesignState()).editingText === 3);
+    };
+    await openTextEditor();
     const inline = (await state(page)).chrome.InlineTextBox;
     assert.ok(inline?.visible && inline.width > 0 && inline.height > 0, "Double-click must open an arranged native FerroUI TextBox");
     const editedText = "FerroUI · café Ω 🚀\nEditable text";
@@ -319,8 +325,7 @@ async function nativeEditingRegressions(page, canvas, reference, result, check, 
     assert.equal((await documentNode(page, 3)).text, originalText, "A complete native text edit must be one document undo");
     await page.keyboard.press("Control+Shift+z");
     assert.deepEqual(await documentNode(page, 3), committedText);
-    await clickWorld(page, 420, 88, { clickCount: 2, delay: 80 });
-    await page.waitForFunction(() => JSON.parse(globalThis.ferroDesign.ferroDesignState()).editingText === 3);
+    await openTextEditor();
     await page.keyboard.press("Control+a");
     await page.keyboard.insertText("Discard this draft");
     await page.keyboard.press("Escape");
@@ -341,8 +346,7 @@ async function nativeEditingRegressions(page, canvas, reference, result, check, 
     const ime = page.locator(".ferroui-input-element");
     assert.equal(await ime.count(), 1, "The editor has one native browser text-input bridge");
     const beginComposition = async () => {
-        await clickWorld(page, 420, 88, { clickCount: 2, delay: 80 });
-        await page.waitForFunction(() => JSON.parse(globalThis.ferroDesign.ferroDesignState()).editingText === 3);
+        await openTextEditor();
         await page.keyboard.press("Control+a");
         await ime.evaluate((input) => {
             if (document.activeElement !== input) throw new Error("The native TextBox must own browser input focus");
@@ -369,8 +373,7 @@ async function nativeEditingRegressions(page, canvas, reference, result, check, 
     await page.keyboard.press("Escape");
     await page.waitForFunction(() => JSON.parse(globalThis.ferroDesign.ferroDesignState()).editingText === null);
     assert.deepEqual(await documentNode(page, 3), committedText, "Losing the text client must discard its preedit");
-    await clickWorld(page, 420, 88, { clickCount: 2, delay: 80 });
-    await page.waitForFunction(() => JSON.parse(globalThis.ferroDesign.ferroDesignState()).editingText === 3);
+    await openTextEditor();
     await page.keyboard.press("Control+a");
     const resumedText = "After canceled IME · Ω 🚀";
     await page.keyboard.insertText(resumedText);
@@ -387,8 +390,7 @@ async function nativeEditingRegressions(page, canvas, reference, result, check, 
     assert.deepEqual(await documentNode(page, 3), committedText, "Canceling the replacement draft must restore the complete text and formatting");
     check("Browser composition events commit once, keep preedit out of the document, and cannot block or overwrite a new native text client after cancellation");
 
-    await clickWorld(page, 420, 88, { clickCount: 2, delay: 80 });
-    await page.waitForFunction(() => JSON.parse(globalThis.ferroDesign.ferroDesignState()).editingText === 3);
+    await openTextEditor();
     await page.keyboard.press("Control+a");
     await page.keyboard.insertText("Confirmed before composition · Ω 🚀");
     const confirmedDraft = await documentNode(page, 3);
@@ -441,7 +443,7 @@ async function nativeEditingRegressions(page, canvas, reference, result, check, 
     await page.waitForFunction(() => JSON.parse(globalThis.ferroDesign.ferroDesignExportJson()).nodes[2].fills[0].paint.stops.length === 3);
     fill = (await documentNode(page, 2)).fills[0];
     assert.equal(fill.opacity, 0.65);
-    await canvas.screenshot({ path: resolve(output, mode + "-paint-stack.png") });
+    await page.screenshot({ path: resolve(output, mode + "-paint-stack.png") });
     await clickNative(page, "PaintDone");
     assert.equal((await state(page)).chrome.ModalBackdrop.visible, false);
     await page.keyboard.press("Control+z");
