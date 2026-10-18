@@ -237,22 +237,28 @@ impl<M: TreeModel> HierarchicalRows<M> {
 
     fn initialize_rows(&self) {
         let mut rows = Vec::new();
-        for row in self.roots().to_vec() {
-            Self::collect_rows_and_descendants(row, &mut rows);
-        }
+        Self::collect_child_rows(&self.roots(), &mut rows);
         self.flattened_rows.borrow_mut().splice(0..0, rows);
     }
 
     /// The rows `AddRowsAndDescendants` inserts for `row`: the row and the rows of its expanded
     /// descendants, depth first. The reference inserts them into the flattened list one by one; the
-    /// port collects them and inserts them at once (`add`), which moves the rows after them once.
+    /// port collects them and inserts them at once (`insert_rows`), which moves the rows after them
+    /// once.
     fn collect_rows_and_descendants(row: Rc<HierarchicalRow<M>>, rows: &mut Vec<Rc<HierarchicalRow<M>>>) {
-        let children = row.children();
+        let children = row.expanded_child_rows();
         rows.push(row);
         if let Some(children) = children {
-            for child in children {
-                Self::collect_rows_and_descendants(child, rows);
-            }
+            Self::collect_child_rows(&children, rows);
+        }
+    }
+
+    /// The rows of `children` and of their expanded descendants, depth first.
+    fn collect_child_rows(children: &RootRows<M>, rows: &mut Vec<Rc<HierarchicalRow<M>>>) {
+        let children = children.to_vec();
+        rows.reserve(children.len());
+        for row in children {
+            Self::collect_rows_and_descendants(row, rows);
         }
     }
 
@@ -282,11 +288,16 @@ impl<M: TreeModel> HierarchicalRows<M> {
         });
     }
 
-    fn add(&self, index: usize, items: &[Rc<HierarchicalRow<M>>]) {
-        let mut rows = Vec::new();
+    fn add(&self, index: usize, items: Vec<Rc<HierarchicalRow<M>>>) {
+        let mut rows = Vec::with_capacity(items.len());
         for row in items {
-            Self::collect_rows_and_descendants(row.clone(), &mut rows);
+            Self::collect_rows_and_descendants(row, &mut rows);
         }
+        self.insert_rows(index, rows);
+    }
+
+    /// Inserts `rows` at `index` of the flattened rows and raises the change.
+    fn insert_rows(&self, index: usize, rows: Vec<Rc<HierarchicalRow<M>>>) {
         if rows.is_empty() {
             return;
         }
@@ -362,7 +373,7 @@ impl<M: TreeModel> HierarchicalRows<M> {
         match e.action {
             NotifyCollectionChangedAction::Add => {
                 let insert = self.advance(first, e.new_starting_index);
-                self.add(insert, &Self::typed_rows(e.new_items));
+                self.add(insert, Self::typed_rows(e.new_items));
             }
             NotifyCollectionChangedAction::Remove => {
                 let start = self.advance(first, e.old_starting_index);
@@ -373,25 +384,28 @@ impl<M: TreeModel> HierarchicalRows<M> {
                 let start = self.advance(first, e.old_starting_index);
                 let end = self.advance(start, e.old_items.len() as i32);
                 self.remove(start, end - start);
-                self.add(start, &Self::typed_rows(e.new_items));
+                self.add(start, Self::typed_rows(e.new_items));
             }
             NotifyCollectionChangedAction::Move => {
                 let from_start = self.advance(first, e.old_starting_index);
                 let from_end = self.advance(from_start, e.old_items.len() as i32);
                 self.remove(from_start, from_end - from_start);
                 let to = self.advance(first, e.new_starting_index);
-                self.add(to, &Self::typed_rows(e.new_items));
+                self.add(to, Self::typed_rows(e.new_items));
             }
             NotifyCollectionChangedAction::Reset => {
                 let children = if parent_row_index >= 0 {
-                    self.flattened_rows.borrow()[parent_row_index as usize].children()
+                    let parent = self.flattened_rows.borrow()[parent_row_index as usize].clone();
+                    parent.expanded_child_rows()
                 } else {
-                    Some(self.roots().to_vec())
+                    Some(self.roots())
                 };
                 let count = self.get_descendent_row_count(parent_row_index);
                 self.remove(first, count);
                 if let Some(children) = children {
-                    self.add(first, &children);
+                    let mut rows = Vec::new();
+                    Self::collect_child_rows(&children, &mut rows);
+                    self.insert_rows(first, rows);
                 }
             }
         }

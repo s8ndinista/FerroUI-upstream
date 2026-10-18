@@ -16,7 +16,7 @@ use std::any::Any;
 use std::cell::{Cell, RefCell};
 use std::rc::{Rc, Weak};
 
-type ChildRows<M> = SortableRowsBase<M, Rc<HierarchicalRow<M>>>;
+pub(crate) type ChildRows<M> = SortableRowsBase<M, Rc<HierarchicalRow<M>>>;
 
 fn reset_rows_args<'a>() -> RowsChangedArgs<'a> {
     RowsChangedArgs {
@@ -52,6 +52,9 @@ pub struct HierarchicalRow<M: TreeModel> {
     is_expanded: Cell<bool>,
     show_expander: Cell<Option<bool>>,
     model_index_path: RefCell<IndexPath>,
+    // The length of the model index path, which a row keeps for its life (its updates change the
+    // indexes, not the depth): the indent is read without the path.
+    depth: usize,
     model: Rc<M>,
 }
 
@@ -84,6 +87,7 @@ impl<M: TreeModel> HierarchicalRow<M> {
             model_notifications: Cell::new(None),
             is_expanded: Cell::new(false),
             show_expander: Cell::new(None),
+            depth: model_index.count(),
             model_index_path: RefCell::new(model_index),
             model: model.clone(),
         });
@@ -129,6 +133,15 @@ impl<M: TreeModel> HierarchicalRow<M> {
 
     fn controller(&self) -> Option<Rc<dyn IExpanderRowController<M>>> {
         self.controller.upgrade()
+    }
+
+    /// The rows of the children while the row is expanded, without copying them.
+    pub(crate) fn expanded_child_rows(&self) -> Option<Rc<ChildRows<M>>> {
+        if self.is_expanded.get() {
+            self.child_rows.borrow().clone()
+        } else {
+            None
+        }
     }
 
     /// The child rows while the row is expanded (`Children`).
@@ -182,7 +195,7 @@ impl<M: TreeModel> HierarchicalRow<M> {
     }
 
     pub fn indent(&self) -> i32 {
-        self.model_index_path.borrow().count() as i32 - 1
+        self.depth as i32 - 1
     }
 
     pub fn model(&self) -> &Rc<M> {
