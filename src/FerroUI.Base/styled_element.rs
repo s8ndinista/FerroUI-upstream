@@ -1097,10 +1097,9 @@ impl StyledElement {
                 self.on_data_context_begin_update();
 
                 if let Some(children) = self.logical_children.get() {
-                    let this: Ref<FerroObject> = self.to_ref().upcast();
+                    let this: &FerroObject = self;
                     for child in children.snapshot().iter() {
-                        if child.inheritance_parent().is_some_and(|p| p == this)
-                            && !child.is_set(Self::data_context_property())
+                        if child.is_inheritance_parent(this) && !child.is_set(Self::data_context_property())
                         {
                             child.data_context_notifying_core(update_started);
                         }
