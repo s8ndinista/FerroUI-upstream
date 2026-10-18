@@ -103,6 +103,39 @@ test("a distinct input-only edit immediately after composition is an independent
     assert.deepEqual(calls, [["compositionstart", 17], ["compositionend", 17, "語"], ["text", 17, "!"]]);
 });
 
+test("native client reset accepts fresh input before a canceled composition sends its delayed end", (t) => {
+    const { element, calls } = setup(t);
+    element.dispatchEvent(event("compositionstart", { data: "" }));
+    element.dispatchEvent(event("compositionupdate", { data: "old preedit" }));
+    // Production subscribes on the containing view, while native reset clears
+    // its hidden input. Model that ancestry without requiring a DOM renderer.
+    const hiddenInput = { value: "old preedit", parentElement: element };
+    InputHelper.clearInput(hiddenInput);
+    assert.equal(hiddenInput.value, "");
+    calls.length = 0;
+
+    element.dispatchEvent(insertion("resumed · Ω 🚀"));
+    element.dispatchEvent(event("compositionupdate", { data: "late preedit" }));
+    element.dispatchEvent(event("compositionend", { data: "late commit" }));
+    element.dispatchEvent(insertion("late commit"));
+    element.dispatchEvent(insertion("!"));
+    assert.deepEqual(calls, [["text", 17, "resumed · Ω 🚀"], ["text", 17, "!"]]);
+});
+
+test("a native reset permits a new composition without waiting for the canceled one to end", (t) => {
+    const { element, calls } = setup(t);
+    element.dispatchEvent(event("compositionstart", { data: "" }));
+    element.dispatchEvent(event("compositionupdate", { data: "old" }));
+    InputHelper.clearInput(element);
+    calls.length = 0;
+
+    element.dispatchEvent(event("compositionstart", { data: "" }));
+    element.dispatchEvent(event("compositionupdate", { data: "new" }));
+    element.dispatchEvent(event("compositionend", { data: "新" }));
+    element.dispatchEvent(insertion("新"));
+    assert.deepEqual(calls, [["compositionstart", 17], ["compositionupdate", 17, "new"], ["compositionend", 17, "新"]]);
+});
+
 for (const handled of [false, true]) {
     test(`ordinary character keydown prevents a duplicate DOM insertion (native handled: ${handled})`, (t) => {
         const { element, calls } = setup(t, { handled });

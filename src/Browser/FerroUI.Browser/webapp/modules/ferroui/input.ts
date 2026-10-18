@@ -87,6 +87,7 @@ export class InputHelper {
     static clipboardState: ClipboardState = ClipboardState.None;
     static resolveClipboard?: (value: ClipboardResult) => void;
     static rejectClipboard?: (reason?: any) => void;
+    private static readonly textInputResets = new WeakMap<EventTarget, () => void>();
 
     public static initializeBackgroundHandlers() {
         if (this.clipboardState !== ClipboardState.None) {
@@ -488,6 +489,11 @@ export class InputHelper {
                 compositionCommitTimer = undefined;
             }
         };
+        const resetComposition = () => {
+            composing = false;
+            clearCompositionCommit();
+        };
+        this.textInputResets.set(element, resetComposition);
 
         const compositionStartHandler = (args: CompositionEvent) => {
             clearCompositionCommit();
@@ -540,27 +546,37 @@ export class InputHelper {
         element.addEventListener("blur", clearCompositionCommit);
 
         const compositionUpdateHandler = (args: CompositionEvent) => {
-            FerroExports.InputHelper?.OnCompositionUpdate(topLevelId, args.data);
+            if (composing) {
+                FerroExports.InputHelper?.OnCompositionUpdate(topLevelId, args.data);
+            }
         };
         element.addEventListener("compositionupdate", compositionUpdateHandler);
 
         const compositionEndHandler = (args: CompositionEvent) => {
+            const wasComposing = composing;
             composing = false;
             clearCompositionCommit();
+            if (wasComposing) {
+                FerroExports.InputHelper?.OnCompositionEnd(topLevelId, args.data);
+            }
             // Some browsers send a final non-composing insertText in the same
-            // event turn. CompositionEnd owns that commit. Expire the guard so
-            // a later identical insertion remains an independent edit.
+            // event turn. An active end owns its commit; a canceled end and its
+            // trailing input must both stay out of a replacement native client.
+            // Set the guard after native dispatch, which can itself move focus.
+            // Expire it so a later identical insertion remains independent.
             if (args.data) {
                 compositionCommit = args.data;
                 compositionCommitTimer = setTimeout(clearCompositionCommit, 0);
             }
-            FerroExports.InputHelper?.OnCompositionEnd(topLevelId, args.data);
             args.preventDefault();
         };
         element.addEventListener("compositionend", compositionEndHandler);
 
         return () => {
             clearCompositionCommit();
+            if (this.textInputResets.get(element) === resetComposition) {
+                this.textInputResets.delete(element);
+            }
             element.removeEventListener("compositionstart", compositionStartHandler);
             // Differs from the original, which leaves the "beforeinput" listener in place.
             element.removeEventListener("beforeinput", beforeInputHandler);
@@ -751,6 +767,16 @@ export class InputHelper {
     }
 
     public static clearInput(inputElement: HTMLInputElement) {
+        // Native reset/client changes clear the hidden input. Text events are
+        // subscribed on its containing view, and no DOM blur is required when
+        // focus moves between two native TextBoxes using that same input.
+        for (let target: Element | null = inputElement; target; target = target.parentElement) {
+            const reset = this.textInputResets.get(target);
+            if (reset) {
+                reset();
+                break;
+            }
+        }
         inputElement.value = "";
     }
 

@@ -148,6 +148,14 @@ async function clickWorld(page, x, y, options) {
     await page.mouse.click(point.x, point.y, options);
 }
 async function clickNative(page, name, scrollContainer) {
+    // Model transactions can finish before FerroUI arranges a rebuilt modal.
+    // Wait for the actual native control to be visible and laid out before
+    // deriving pointer coordinates; a DOM animation frame alone is not proof.
+    await page.waitForFunction((name) => {
+        const bounds = JSON.parse(globalThis.ferroDesign.ferroDesignState()).chrome[name];
+        return bounds?.visible !== false && bounds?.width > 0 && bounds?.height > 0 &&
+            [bounds.x, bounds.y, bounds.width, bounds.height].every(Number.isFinite);
+    }, name, { timeout: 10000 });
     for (let attempt = 0; attempt < 16; attempt++) {
         const view = await state(page), bounds = view.chrome[name];
         assert.ok(bounds && bounds.visible !== false && bounds.width > 0 && bounds.height > 0, name + " must exist in the native visual tree");
@@ -326,6 +334,58 @@ async function nativeEditingRegressions(page, canvas, reference, result, check, 
     assert.deepEqual(persistedText, committedText, "Committed Unicode text and formatting must reach durable storage");
     result.nativeEditing = { vectorAnchor: { x: moved.x + point.x, y: moved.y + point.y }, penSegments: pen.path.segments.length, unicodeBytes: bytes.length, textRuns: committedText.text_runs.length };
     check("Native on-canvas TextBox handles multiline Unicode, UTF-8 rich-text ranges, Ctrl+Enter commit, Escape cancel, one-step history, and autosave");
+
+    // Drive browser composition events through the production bridge and the
+    // actual native TextBox. These deterministic lifecycle regressions are not
+    // a substitute for testing an operating-system IME on each target device.
+    const ime = page.locator(".ferroui-input-element");
+    assert.equal(await ime.count(), 1, "The editor has one native browser text-input bridge");
+    const beginComposition = async () => {
+        await clickWorld(page, 420, 88, { clickCount: 2, delay: 80 });
+        await page.waitForFunction(() => JSON.parse(globalThis.ferroDesign.ferroDesignState()).editingText === 3);
+        await page.keyboard.press("Control+a");
+        await ime.evaluate((input) => {
+            if (document.activeElement !== input) throw new Error("The native TextBox must own browser input focus");
+            input.dispatchEvent(new CompositionEvent("compositionstart", { bubbles: true, data: "" }));
+            input.dispatchEvent(new CompositionEvent("compositionupdate", { bubbles: true, data: "日本" }));
+            input.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "insertCompositionText", data: "日本", isComposing: true }));
+        });
+        // FerroUI removes the selected range when preedit starts, while the
+        // composition string itself remains in the native text presenter.
+        assert.equal((await documentNode(page, 3)).text, "", "IME may replace the selected range, but its preedit string must remain outside the document draft");
+    };
+    await beginComposition();
+    const composedText = "日本語 · café Ω 🚀";
+    await ime.evaluate((input, data) => {
+        input.dispatchEvent(new CompositionEvent("compositionend", { bubbles: true, cancelable: true, data }));
+        input.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "insertText", data, isComposing: false }));
+    }, composedText);
+    assert.equal((await documentNode(page, 3)).text, composedText, "A composition and trailing insertText must commit exactly once");
+    await page.keyboard.press("Control+Enter");
+    await page.keyboard.press("Control+z");
+    assert.deepEqual(await documentNode(page, 3), committedText, "The complete committed composition must be one document undo");
+
+    await beginComposition();
+    await page.keyboard.press("Escape");
+    await page.waitForFunction(() => JSON.parse(globalThis.ferroDesign.ferroDesignState()).editingText === null);
+    assert.deepEqual(await documentNode(page, 3), committedText, "Losing the text client must discard its preedit");
+    await clickWorld(page, 420, 88, { clickCount: 2, delay: 80 });
+    await page.waitForFunction(() => JSON.parse(globalThis.ferroDesign.ferroDesignState()).editingText === 3);
+    await page.keyboard.press("Control+a");
+    const resumedText = "After canceled IME · Ω 🚀";
+    await page.keyboard.insertText(resumedText);
+    assert.equal((await documentNode(page, 3)).text, resumedText, "A new text client must accept input before the canceled composition sends its late end");
+    await ime.evaluate((input) => {
+        input.dispatchEvent(new CompositionEvent("compositionupdate", { bubbles: true, data: "late preedit" }));
+        input.dispatchEvent(new CompositionEvent("compositionend", { bubbles: true, cancelable: true, data: "late commit" }));
+        input.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "insertText", data: "late commit", isComposing: false }));
+    });
+    assert.equal((await documentNode(page, 3)).text, resumedText, "Late composition events must not edit the replacement client");
+    await page.keyboard.insertText("!");
+    assert.equal((await documentNode(page, 3)).text, resumedText + "!", "Independent input remains usable after a late composition end");
+    await page.keyboard.press("Escape");
+    assert.deepEqual(await documentNode(page, 3), committedText, "Canceling the replacement draft must restore the complete text and formatting");
+    check("Browser composition events commit once, keep preedit out of the document, and cannot block or overwrite a new native text client after cancellation");
 
     const paintFixture = isolatedDocument(reference, [fixtureNode(reference, 2)], "Paint stack input fixture");
     await importFixture(page, paintFixture);
