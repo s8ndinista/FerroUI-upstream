@@ -4,6 +4,10 @@ All notable changes to FerroUI are recorded in this file. The format follows [Ke
 
 ## [Unreleased]
 
+### Added
+
+- **`ferroui-system`**: the parts of the .NET base class library that FerroUI and its reusable libraries share, in a crate with no dependency on the framework: `ferro_thread_local!` with its table for Android, the multicast events (`Event`, `HandlerList`), `INotifyPropertyChanged`, `INotifyCollectionChanged` with the arguments of a change (`NotifyCollectionChangedAction`, `NotifyCollectionChangedEventArgs`, `CollectionChange`), and `CancellationToken` with its source and registration. It is the first step of the reactive foundation (`docs/porting/reactive.md`). `ferroui-base` depends on it and re-exports every item at the path it had there, so no code changes.
+
 ## [0.2.0] - 2026-10-18
 
 The second release. It adds the TreeDataGrid: the port of TreeDataGrid, its demo and its benchmarks, with the pages of the demo in the ControlCatalog. Scrolling a TreeDataGrid led to changes of the framework that make translating a visual into the coordinates of an ancestor, and the layout queues, faster for every control. The port follows upstream at 66b7273b9a, as 0.1.0 did: upstream has no later commits.

@@ -1,0 +1,31 @@
+[package]
+name = "ferroui-system"
+description = "The parts of the .NET base class library that FerroUI and its reusable libraries share: thread-local variables for every target, events, property and collection change notification, cancellation"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+readme.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+# Unit tests live in `tests/` as a module tree of the library (`mod tests;`), not as integration test
+# targets.
+autotests = false
+
+[lib]
+path = "lib.rs"
+
+[dependencies]
+smallvec = { workspace = true }
+
+# `--cfg ferro_tls_table` makes every `ferro_thread_local!` of a build use the table of the Android
+# targets on a Linux or macOS host, so that test suites run against it (`ferro_thread_local.rs`).
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ["cfg(ferro_tls_table)"] }
+
+# The group of the crate in the table of the README (docs/release.md).
+[package.metadata.release]
+group = "core"
