@@ -1,3 +1,4 @@
+use rustc_hash::FxHashMap;
 use super::layout_queue::LayoutQueue;
 use super::{
     BringIntoViewRequest, EffectiveViewportChangedEventArgs, IBringIntoViewLayoutManager, ILayoutManager, ILayoutRoot,
@@ -300,12 +301,23 @@ impl LayoutManager {
     fn raise_effective_viewport_changed(&self) -> bool {
         let start_count = self.to_measure.borrow().count() + self.to_arrange.borrow().count();
 
+        // The viewports of the ancestors the listeners share are computed once in the pass while
+        // nothing they are computed from changes (a handler of the event may change it, so the
+        // version of the geometry is checked before each listener).
+        let mut ancestors: FxHashMap<usize, Rect> = FxHashMap::default();
+        let mut version = crate::visual::geometry_version();
+
         let listeners: Vec<_> = self.effective_viewport_changed_listeners.borrow().clone();
         for l in listeners {
             if !l.listener.is_attached_to_visual_tree() {
                 continue;
             }
-            let viewport = Self::calculate_effective_viewport(&l.listener);
+            let current = crate::visual::geometry_version();
+            if current != version {
+                ancestors.clear();
+                version = current;
+            }
+            let viewport = Self::calculate_effective_viewport_with(&l.listener, &mut ancestors);
             if Some(viewport) != l.viewport.get() {
                 l.listener.raise_effective_viewport_changed(&EffectiveViewportChangedEventArgs::new(viewport));
                 l.viewport.set(Some(viewport));
@@ -315,46 +327,48 @@ impl LayoutManager {
         start_count != self.to_measure.borrow().count() + self.to_arrange.borrow().count()
     }
 
-    fn calculate_effective_viewport(control: &Visual) -> Rect {
-        let mut viewport = Rect::new(0.0, 0.0, f64::INFINITY, f64::INFINITY);
-        Self::calculate_effective_viewport_core(control, control, &mut viewport);
-        viewport
+    /// `CalculateEffectiveViewport` with the viewports of the ancestors in `ancestors` (by
+    /// address; valid while the geometry of the visuals does not change): the steps of
+    /// `CalculateEffectiveViewportCore` from the root down to the control, with the prefix of the
+    /// walk of an ancestor shared by the listeners below it (DEVIATIONS.md, Layout).
+    fn calculate_effective_viewport_with(control: &Visual, ancestors: &mut FxHashMap<usize, Rect>) -> Rect {
+        let viewport = match control.visual_parent() {
+            Some(parent) => Self::ancestor_viewport(&parent, ancestors),
+            None => Rect::from_size(control.bounds().size()),
+        };
+        // The target: translated into its coordinate space, without its clip and transform.
+        viewport.translate((-control.bounds().position()).into())
     }
 
-    fn calculate_effective_viewport_core(target: &Visual, control: &Visual, viewport: &mut Rect) {
-        // Recurse until the top level control.
-        match control.visual_parent() {
-            Some(parent) => Self::calculate_effective_viewport_core(target, &parent, viewport),
-            None => *viewport = Rect::from_size(control.bounds().size()),
+    /// The viewport in the coordinate space of `control` as an ancestor of the target: its clip,
+    /// its position and its render transform applied.
+    fn ancestor_viewport(control: &Visual, ancestors: &mut FxHashMap<usize, Rect>) -> Rect {
+        let key = control as *const Visual as usize;
+        if let Some(viewport) = ancestors.get(&key) {
+            return *viewport;
         }
-
-        let is_target = std::ptr::eq(control, target);
-
-        // Apply the control clip bounds if it's not the target control. We
-        // don't apply it to the target control because it may itself be
-        // clipped to bounds and if so the viewport we calculate would be of no
-        // use.
-        if !is_target && control.clip_to_bounds() {
-            *viewport = control.bounds().intersect(*viewport);
+        let mut viewport = match control.visual_parent() {
+            Some(parent) => Self::ancestor_viewport(&parent, ancestors),
+            None => Rect::from_size(control.bounds().size()),
+        };
+        if control.clip_to_bounds() {
+            viewport = control.bounds().intersect(viewport);
         }
-
-        // Translate the viewport into this control's coordinate space.
-        *viewport = viewport.translate((-control.bounds().position()).into());
-
-        // The flag skips the property read for the visuals without a render transform (the
-        // transforms of the visual tree do the same, DEVIATIONS.md, Visual tree).
-        if !is_target && control.has_render_transform() {
+        viewport = viewport.translate((-control.bounds().position()).into());
+        if control.has_render_transform() {
             if let Some(transform) = control.render_transform() {
                 match transform.value().try_invert() {
                     Some(inverted_matrix) => {
                         let origin = control.render_transform_origin().to_pixels(control.bounds().size());
                         let offset = Matrix::create_translation(origin.x, origin.y);
-                        *viewport = viewport.transform_to_aabb(-offset * inverted_matrix * offset);
+                        viewport = viewport.transform_to_aabb(-offset * inverted_matrix * offset);
                     }
-                    None => *viewport = Rect::default(),
+                    None => viewport = Rect::default(),
                 }
             }
         }
+        ancestors.insert(key, viewport);
+        viewport
     }
 }
 
