@@ -810,3 +810,83 @@ fn oversized_corner_radius_uses_the_same_clamp_as_rendered_geometry() {
     assert!(!node.hit_test_local(Point::new(1.0, 1.0), 0.0));
     assert!(node.hit_test_local(Point::new(25.0, 0.0), 0.0));
 }
+
+#[test]
+fn comments_stay_on_their_page_and_follow_reparented_layers_through_history() {
+    let mut editor = Editor::default();
+    let first_page = editor.active_page;
+    let position = Point::new(40.0, 60.0);
+    let first = editor.add_comment(None, position, "Author", "First page", "2026-10-18");
+    assert_eq!(editor.document.comments[0].node, Some(first_page));
+
+    let second_page = editor.add_page("Playground");
+    editor.clear_history();
+    let second = editor.add_comment(None, position, "Author", "Second page", "2026-10-18");
+    let second_comment = editor.document.comments.last().unwrap().clone();
+    assert_eq!(second_comment.node, Some(second_page));
+    assert_eq!(editor.history_len(), 1);
+    assert!(editor.undo());
+    assert!(!editor.document.comments.iter().any(|c| c.id == second));
+    assert!(editor.redo());
+    assert_eq!(editor.document.comments.last(), Some(&second_comment));
+
+    let layer = editor.add_node(NodeKind::Rectangle, 20.0, 30.0, 100.0, 80.0);
+    let attached = editor.add_comment(
+        Some(layer),
+        position,
+        "Author",
+        "Follows this layer",
+        "2026-10-18",
+    );
+    let pages = |document: &Document| {
+        document
+            .comments
+            .iter()
+            .map(|comment| (comment.id, document.comment_page(comment)))
+            .collect::<Vec<_>>()
+    };
+    assert_eq!(
+        pages(&editor.document),
+        vec![
+            (first, Some(first_page)),
+            (second, Some(second_page)),
+            (attached, Some(second_page)),
+        ]
+    );
+
+    editor.clear_history();
+    let before_move = editor.to_json().unwrap();
+    editor
+        .transact("Move commented layer", |document| {
+            document.reparent(layer, first_page, 0)
+        })
+        .unwrap();
+    let expected_pages = vec![
+        (first, Some(first_page)),
+        (second, Some(second_page)),
+        (attached, Some(first_page)),
+    ];
+    assert_eq!(pages(&editor.document), expected_pages);
+    let after_move = editor.to_json().unwrap();
+    assert_eq!(editor.history_len(), 1);
+    assert!(editor.undo());
+    assert_eq!(editor.to_json().unwrap(), before_move);
+    assert!(editor.redo());
+    assert_eq!(editor.to_json().unwrap(), after_move);
+
+    let mut restored = Document::from_json(&after_move).unwrap();
+    assert_eq!(restored.comments, editor.document.comments);
+    assert_eq!(pages(&restored), expected_pages);
+    restored.comments[0].node = None;
+    let restored = Document::from_json(&restored.to_json().unwrap()).unwrap();
+    assert_eq!(restored.comments[0].node, None);
+    assert_eq!(restored.comment_page(&restored.comments[0]), Some(first_page));
+
+    let mut invalid = restored.comments[0].clone();
+    invalid.node = Some(u64::MAX);
+    assert_eq!(restored.comment_page(&invalid), None);
+    invalid.node = Some(layer);
+    let mut detached = restored;
+    detached.nodes.get_mut(&layer).unwrap().parent = None;
+    assert_eq!(detached.comment_page(&invalid), None);
+}

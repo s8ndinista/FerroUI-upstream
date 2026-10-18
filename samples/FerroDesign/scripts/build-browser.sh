@@ -81,6 +81,15 @@ test -f "$FERRODESIGN_BUILT/$FERRODESIGN_WASM"
 mkdir -p "$FERRODESIGN_OUT"
 cp -R "$FERRODESIGN_ROOT/web/." "$FERRODESIGN_OUT/"
 cp "$FERRODESIGN_SCRIPT" "$FERRODESIGN_BUILT/$FERRODESIGN_WASM" "$FERRODESIGN_OUT/"
+# wasm-bindgen emits inline_js modules beside the linker output. Cargo can copy the
+# application module from deps/ to the profile root without copying its snippets.
+# Preserve both possible output locations so every generated static import ships.
+for FERRODESIGN_SNIPPETS in "$FERRODESIGN_BUILT/deps/snippets" "$FERRODESIGN_BUILT/snippets"; do
+    if [ -d "$FERRODESIGN_SNIPPETS" ]; then
+        mkdir -p "$FERRODESIGN_OUT/snippets"
+        cp -R "$FERRODESIGN_SNIPPETS/." "$FERRODESIGN_OUT/snippets/"
+    fi
+done
 for FERRODESIGN_FILE in ferroui.js storage.js ferroui-sw.js; do
     cp "$FERRODESIGN_BROWSER/dist/$FERRODESIGN_FILE" "$FERRODESIGN_OUT/"
     if [ -f "$FERRODESIGN_BROWSER/dist/$FERRODESIGN_FILE.map" ]; then
@@ -89,9 +98,11 @@ for FERRODESIGN_FILE in ferroui.js storage.js ferroui-sw.js; do
 done
 cp "$FERROUI_ROOT/scripts/browser/threads/ferroui-loader.js" "$FERRODESIGN_OUT/"
 
-node - "$FERRODESIGN_MESSAGES" "$FERRODESIGN_OUT" <<'NODE'
+node --experimental-vm-modules - "$FERRODESIGN_MESSAGES" "$FERRODESIGN_OUT" <<'NODE'
 const fs = require("node:fs");
 const path = require("node:path");
+const vm = require("node:vm");
+const { fileURLToPath, pathToFileURL } = require("node:url");
 for (const line of fs.readFileSync(process.argv[2], "utf8").split("\n")) {
     if (!line.startsWith("{")) continue;
     const message = JSON.parse(line);
@@ -99,6 +110,34 @@ for (const line of fs.readFileSync(process.argv[2], "utf8").split("\n")) {
     const directory = path.join(message.out_dir, "browser-site");
     if (fs.existsSync(directory)) fs.cpSync(directory, process.argv[3], { recursive: true });
 }
+
+// Parse the static module graph without executing browser code. A missing inline
+// dependency otherwise appears in the browser as a failure to import the main JS.
+const output = path.resolve(process.argv[3]);
+const pending = ["main.js", "ferrodesign-app.js"].map(name => path.join(output, name));
+const checked = new Set();
+while (pending.length) {
+    const file = pending.pop();
+    if (checked.has(file)) continue;
+    if (!fs.existsSync(file) || !fs.statSync(file).isFile()) {
+        throw new Error(`Browser distribution is missing a required module: ${path.relative(output, file)}`);
+    }
+    checked.add(file);
+    const identifier = pathToFileURL(file).href;
+    const module = new vm.SourceTextModule(fs.readFileSync(file, "utf8"), { identifier });
+    for (const specifier of module.dependencySpecifiers) {
+        if (!specifier.startsWith("./") && !specifier.startsWith("../")) {
+            throw new Error(`Browser module ${path.relative(output, file)} has a nonlocal import: ${specifier}`);
+        }
+        const dependency = fileURLToPath(new URL(specifier, identifier));
+        const relative = path.relative(output, dependency);
+        if (relative === ".." || relative.startsWith(".." + path.sep) || path.isAbsolute(relative)) {
+            throw new Error(`Browser module import leaves the distribution: ${specifier}`);
+        }
+        pending.push(dependency);
+    }
+}
+console.log(`Verified ${checked.size} required JavaScript modules in the browser distribution.`);
 NODE
 
 printf '%s\n' "$FERRODESIGN_GRAPH" > "$FERRODESIGN_OUT/dependencies.txt"

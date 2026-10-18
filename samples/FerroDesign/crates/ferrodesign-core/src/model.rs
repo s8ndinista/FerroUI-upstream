@@ -1274,6 +1274,14 @@ impl Document {
         }
         None
     }
+    /// Resolve a comment's page from its current layer or page anchor. Legacy
+    /// unanchored comments belong to the first page; missing anchors stay hidden.
+    pub fn comment_page(&self, comment: &CommentThread) -> Option<NodeId> {
+        match comment.node {
+            Some(anchor) => self.page_of(anchor),
+            None => self.pages.first().map(|page| page.id),
+        }
+    }
     pub fn world_transform(&self, id: NodeId) -> Option<Transform> {
         let mut current = Some(id);
         let mut chain = Vec::new();

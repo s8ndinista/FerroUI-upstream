@@ -1143,7 +1143,7 @@ impl Editor {
             let id = e.document.allocate_id();
             e.document.comments.push(CommentThread {
                 id,
-                node,
+                node: Some(node.unwrap_or(e.active_page)),
                 position,
                 resolved: false,
                 messages: vec![CommentMessage {

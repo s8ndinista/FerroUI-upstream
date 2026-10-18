@@ -99,7 +99,9 @@ try {
         try {
             const started = performance.now();
             await page.goto(base + "/?Renderer=Vello&RenderingMode=" + mode, { waitUntil: "domcontentloaded", timeout: 120000 });
-            await page.waitForFunction(() => globalThis.ferroDesignReady === true, undefined, { timeout: 120000 });
+            await page.waitForFunction(() => globalThis.ferroDesignReady === true || globalThis.ferroDesignErrors?.length > 0, undefined, { timeout: 120000 });
+            const startupErrors = await page.evaluate(() => globalThis.ferroDesignErrors || []);
+            assert.deepEqual(startupErrors, [], "The application must start without a runtime or module-loading error");
             await page.waitForFunction(() => {
                 const data = JSON.parse(globalThis.ferroDesign.ferroDesignState());
                 return data && data.nodeCount > 0 && data.renderedFrames > 0;

@@ -1232,7 +1232,7 @@ impl VisualImpl for DesignCanvas {
             );
         }
         for comment in &doc.comments {
-            if !comment.resolved {
+            if !comment.resolved && doc.comment_page(comment) == Some(editor.active_page) {
                 let p = v.world_to_screen(comment.position);
                 let fill = brush("#FFCD29");
                 ctx.draw_ellipse_at(Some(&fill), None, ui(p), 10.0, 10.0);
