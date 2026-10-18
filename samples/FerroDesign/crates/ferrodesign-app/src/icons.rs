@@ -1,4 +1,6 @@
-use ferroui_base::media::immutable::ImmutableSolidColorBrush;
+use ferroui_base::media::immutable::{
+    ImmutableGradientStop, ImmutableLinearGradientBrush, ImmutableSolidColorBrush,
+};
 use ferroui_base::media::{Color, IBrush, StreamGeometry, Stretch};
 use ferroui_base::Ref;
 use ferroui_controls::shapes::Path;
@@ -14,7 +16,9 @@ pub fn icon(name: &str, color: &str, size: f64) -> Ref<Path> {
         "logo" => "M4,2 H18 V6 H8 V10 H16 V14 H8 V22 H4 Z",
         "pointer" => "M5,2 L20,12 L13,14 L10,21 Z",
         "frame" => "M7,2 V22 M17,2 V22 M2,7 H22 M2,17 H22",
-        "rect" => "M4,4 H20 V20 H4 Z",
+        "rect" | "gradient" => "M4,4 H20 V20 H4 Z",
+        "chevron-down" => "M5,8 L12,15 L19,8",
+        "chevron-right" => "M8,5 L15,12 L8,19",
         "ellipse" => "M12,3 A9,9 0 1 1 11.99,3 Z",
         "line" => "M4,20 L20,4",
         "pen" => "M3,21 L7,8 L17,3 L21,7 L16,17 Z M3,21 L12,12 M10,10 L14,14",
@@ -49,6 +53,14 @@ pub fn icon(name: &str, color: &str, size: f64) -> Ref<Path> {
     path.set_stroke_thickness(if name == "logo" { 0.0 } else { 1.5 });
     if matches!(name, "logo" | "pointer" | "play") {
         path.set_fill(Some(brush(color)));
+    } else if name == "gradient" {
+        path.set_fill(Some(Rc::new(ImmutableLinearGradientBrush::from_stops(&[
+            ImmutableGradientStop::new(0.0, Color::from_rgb(255, 255, 255)),
+            ImmutableGradientStop::new(
+                1.0,
+                Color::parse(color).unwrap_or(Color::from_rgb(32, 32, 32)),
+            ),
+        ]))));
     }
     path.set_width(size);
     path.set_height(size);

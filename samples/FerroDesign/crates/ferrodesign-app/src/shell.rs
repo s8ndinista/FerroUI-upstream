@@ -121,6 +121,7 @@ impl EditorShell {
             ("PresentButton", "play"),
             ("VisibleButton", "eye"),
             ("LockedButton", "lock"),
+            ("GradientButton", "gradient"),
             ("SelectTool", "pointer"),
             ("FrameTool", "frame"),
             ("RectTool", "rect"),
@@ -341,11 +342,34 @@ impl EditorShell {
             .filter_map(|&id| editor.document.world_bounds(id))
             .reduce(|a, b| a.union(b));
         let canvas = self.canvas.bounds();
+        // Native control bounds make the browser validation bridge useful for
+        // real pointer input and layout checks without a parallel DOM editor.
+        let native_bounds = |control: &Control| {
+            let bounds = control.bounds();
+            let origin = control
+                .translate_point(ferroui_base::Point::new(0.0, 0.0), &self.root)
+                .unwrap_or_default();
+            json!({"x":origin.x,"y":origin.y,"width":bounds.width,"height":bounds.height})
+        };
+        let mut chrome: serde_json::Map<String, serde_json::Value> = [
+            "CanvasHost", "Toolbar", "SelectTool", "FrameTool", "RectTool", "EllipseTool",
+            "PenTool", "TextTool", "HandTool", "CommentTool", "ActionsButton",
+            "PagesViewport", "LayersViewport", "AddPageButton",
+        ]
+        .into_iter()
+        .map(|name| (name.to_string(), native_bounds(&self.control::<Control>(name))))
+        .collect();
+        if let Some(index) = editor.document.pages.iter().position(|p| p.id == editor.active_page) {
+            let button = self.control::<StackPanel>("PagesHost").children().get(index);
+            chrome.insert("ActivePage".into(), native_bounds(&button));
+        }
         json!({
             "revision":editor.revision,"documentRevision":editor.document.revision,"nodeCount":editor.document.nodes.len(),
             "selectionCount":editor.selection.len(),"selection":editor.selection,"selectionBounds":selection_bounds,
             "tool":self.canvas.tool.get().name(),"zoom":v.zoom,"pan":{"x":v.pan.x,"y":v.pan.y},
+            "zoomLabel":self.button("ZoomValueButton").content().and_then(|value| value.downcast_ref::<String>().cloned()),
             "canvas":{"x":canvas.x,"y":canvas.y,"width":canvas.width,"height":canvas.height},
+            "chrome":chrome,
             "renderer":"FerroUI Vello","pageCount":editor.document.pages.len(),"activePage":editor.active_page,
             "renderedFrames":self.canvas.frames.get(),"visibleNodes":stats.visible_nodes,"culledNodes":stats.culled_nodes,
             "cachedNodes":stats.cached_nodes,"missingImages":stats.missing_images,"unsupportedEffects":stats.unsupported_effects,
@@ -530,7 +554,10 @@ impl EditorShell {
                     s.canvas.focus();
                 }
             });
-            host.children().add(button);
+            host.children().add(button.clone());
+            if id == editor.active_page {
+                button.bring_into_view();
+            }
         }
     }
     fn refresh_layers(self: &Rc<Self>) {
@@ -617,12 +644,13 @@ impl EditorShell {
         let expanded = self.expanded.borrow().contains(&id) || !filter.is_empty();
         if !node.children.is_empty() {
             let collapse = Button::new();
+            collapse.set_min_width(20.0);
             collapse.set_padding(Thickness::uniform(0.0));
-            collapse.set_content(Some(Rc::new(if expanded {
-                "⌄".to_string()
-            } else {
-                "›".to_string()
-            })));
+            collapse.set_content(Some(Control::boxed(icons::icon(
+                if expanded { "chevron-down" } else { "chevron-right" },
+                "#777777",
+                8.0,
+            ))));
             let weak = Rc::downgrade(self);
             collapse.click(move |_, _| {
                 if let Some(s) = weak.upgrade() {

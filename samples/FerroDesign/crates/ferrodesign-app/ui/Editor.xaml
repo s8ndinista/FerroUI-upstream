@@ -76,7 +76,9 @@
             <TextBlock Text="Pages" Classes="heading" VerticalAlignment="Center"/>
             <Button Name="AddPageButton" Grid.Column="1" Content="+" ToolTip.Tip="Add page"/>
           </Grid>
-          <StackPanel Name="PagesHost" Spacing="2"/>
+          <ScrollViewer Name="PagesViewport" MaxHeight="155" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+            <StackPanel Name="PagesHost" Spacing="2"/>
+          </ScrollViewer>
         </StackPanel>
         <StackPanel Grid.Row="2" Margin="12,0,12,8" Spacing="8">
           <Border Height="1" Background="#EEEEEE" Margin="-12,0"/>
@@ -86,7 +88,7 @@
           </Grid>
           <TextBox Name="LayerSearch" PlaceholderText="Search layers…"/>
         </StackPanel>
-        <ScrollViewer Grid.Row="3" HorizontalScrollBarVisibility="Disabled">
+        <ScrollViewer Name="LayersViewport" Grid.Row="3" HorizontalScrollBarVisibility="Disabled">
           <StackPanel Name="LayersHost" Margin="8,0,8,12" Spacing="1"/>
         </ScrollViewer>
         <Border Grid.Row="4" BorderBrush="#EEEEEE" BorderThickness="0,1,0,0" Padding="12,9">
@@ -214,7 +216,7 @@
     </Border>
     <TextBlock Name="CanvasCaption" Grid.Column="2" Text="ORBIT / MOBILE BANKING" FontSize="10" Foreground="#868686" Margin="24,25" HorizontalAlignment="Left" VerticalAlignment="Top" IsHitTestVisible="False"/>
     <Border Name="Toolbar" Grid.Column="2" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="8,0,8,24" Padding="7" Background="White" CornerRadius="13" BorderBrush="#D7D7D7" BorderThickness="1" BoxShadow="0 3 14 0 #20000000">
-      <StackPanel Orientation="Horizontal" Spacing="2">
+      <StackPanel Orientation="Horizontal" Spacing="1">
         <Button Name="SelectTool" Classes="tool active" ToolTip.Tip="Move (V)"/>
         <Button Name="FrameTool" Classes="tool" ToolTip.Tip="Frame (F)"/>
         <Button Name="RectTool" Classes="tool" ToolTip.Tip="Rectangle (R)"/>

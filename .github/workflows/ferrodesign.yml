@@ -88,6 +88,12 @@ jobs:
           set -o pipefail
           npm run test:browser 2>&1 | tee browser-report/browser-tests.log
 
+      - name: Install native Fontconfig development files
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y pkg-config libfontconfig1-dev
+          pkg-config --modversion fontconfig
+
       - name: Check native launcher and shared UI compilation
         run: |
           set -o pipefail

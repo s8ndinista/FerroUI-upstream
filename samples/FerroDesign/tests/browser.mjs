@@ -81,6 +81,14 @@ function countPixels(png, bounds, matches) {
     }
     return count;
 }
+function assertInside(child, parent, name) {
+    assert.ok(child && parent && [child.x, child.y, child.width, child.height].every(Number.isFinite), name + " must have native layout bounds");
+    assert.ok(child.width > 0 && child.height > 0, name + " must be arranged");
+    assert.ok(child.x >= parent.x - 1 && child.y >= parent.y - 1 &&
+        child.x + child.width <= parent.x + parent.width + 1 &&
+        child.y + child.height <= parent.y + parent.height + 1,
+        name + " must remain inside its native container: " + JSON.stringify({ child, parent }));
+}
 try {
     browser = await chromium.launch({
         headless: true,
@@ -113,6 +121,7 @@ try {
             result.firstFrameMs = Math.round(performance.now() - started);
             result.initial = await state(page);
             assert.equal(result.initial.renderer, "FerroUI Vello");
+            assert.equal(result.initial.zoomLabel, Math.round(result.initial.zoom * 100) + "%", "Native zoom label must reflect the initial fitted camera");
             assert.ok(result.initial.pageCount > 0);
             const baseline = await canvas.screenshot({ path: resolve(output, mode + "-initial.png") });
             result.pixels = colors(baseline);
@@ -235,6 +244,50 @@ try {
             assert.equal(afterSvgRoundTrip.invalidNodes, 0, "Reopened SVG must still contain valid renderer nodes");
             assert.equal(afterSvgRoundTrip.missingImages, 0, "Reopened SVG must not introduce missing resources");
             check("JSON round-trip preserves the complete imported SVG hierarchy and visual properties");
+
+            // Validate the desktop minimum with the actual native layout. These
+            // rectangles come from FerroUI's visual tree, not HTML stand-ins.
+            await page.setViewportSize({ width: 980, height: 650 });
+            await page.waitForFunction(() => {
+                const canvas = document.querySelector("canvas.ferroui-canvas");
+                const data = JSON.parse(globalThis.ferroDesign.ferroDesignState());
+                return canvas?.width === 980 && canvas.height === 650 && data.canvas.width <= 396.1;
+            });
+            await frames(page);
+            const compact = await state(page);
+            assertInside(compact.chrome.Toolbar, compact.chrome.CanvasHost, "Floating toolbar");
+            for (const name of ["SelectTool", "FrameTool", "RectTool", "EllipseTool", "PenTool", "TextTool", "HandTool", "CommentTool", "ActionsButton"]) {
+                assertInside(compact.chrome[name], compact.chrome.Toolbar, name);
+            }
+            for (const [name, tool] of [["HandTool", "Hand"], ["SelectTool", "Select"]]) {
+                const bounds = compact.chrome[name];
+                await page.mouse.click(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
+                await page.waitForFunction((expected) => JSON.parse(globalThis.ferroDesign.ferroDesignState()).tool === expected, tool);
+            }
+            await frames(page);
+            result.compact = { viewport: { width: 980, height: 650 }, chrome: (await state(page)).chrome };
+            await canvas.screenshot({ path: resolve(output, mode + "-compact.png") });
+            check("All nine toolbar controls fit at 980×650; native toolbar pointer input switches tools");
+
+            for (let added = 0; added < 8; added++) {
+                const before = await state(page);
+                const bounds = before.chrome.AddPageButton;
+                await page.mouse.click(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
+                await page.waitForFunction((count) => JSON.parse(globalThis.ferroDesign.ferroDesignState()).pageCount === count + 1, before.pageCount);
+            }
+            await frames(page);
+            const manyPages = await state(page);
+            assert.equal(manyPages.pageCount, compact.pageCount + 8);
+            assert.ok(manyPages.chrome.PagesViewport.height <= 155.1, "Long page lists must stay within their scrolling viewport");
+            assert.ok(manyPages.chrome.LayersViewport.height >= 180, "The layer list must retain usable height when many pages exist");
+            assertInside(manyPages.chrome.ActivePage, manyPages.chrome.PagesViewport, "Newly active page");
+            result.compact.manyPages = { pageCount: manyPages.pageCount, chrome: manyPages.chrome };
+            await canvas.screenshot({ path: resolve(output, mode + "-many-pages.png") });
+            check("Native Add page clicks retain a scrollable page list and usable layer viewport at 980×650");
+            assert.equal(await page.evaluate((json) => globalThis.ferroDesign.ferroDesignImportJson(json), svgJson), true);
+            assert.deepEqual(JSON.parse(await page.evaluate(() => globalThis.ferroDesign.ferroDesignExportJson())), svgDocument);
+            await page.setViewportSize({ width: 1600, height: 1000 });
+            await frames(page);
             result.final = await state(page);
             assert.deepEqual(result.pageErrors, [], "No uncaught browser exceptions");
             const panics = await page.evaluate(() => ({

@@ -545,7 +545,30 @@ impl Editor {
         }
     }
     pub fn resize_node(&mut self, id: NodeId, w: f64, h: f64) {
-        if !w.is_finite() || !h.is_finite() {
+        self.resize_node_impl(id, w, h, None)
+    }
+    /// Resize and assign the final position in the parent's coordinate space.
+    /// Both changes share one edit, refresh, and undo transaction.
+    pub fn resize_node_and_position(
+        &mut self,
+        id: NodeId,
+        w: f64,
+        h: f64,
+        position: Point,
+    ) {
+        self.resize_node_impl(id, w, h, Some(position))
+    }
+    fn resize_node_impl(
+        &mut self,
+        id: NodeId,
+        w: f64,
+        h: f64,
+        position: Option<Point>,
+    ) {
+        if !w.is_finite()
+            || !h.is_finite()
+            || position.is_some_and(|p| !p.x.is_finite() || !p.y.is_finite())
+        {
             return;
         }
         self.edit("Resize layer", |e| {
@@ -577,6 +600,12 @@ impl Editor {
                     n.y += original_transform.f - resized_transform.f;
                 }
                 e.document.layout_node(id);
+                if let Some(position) = position {
+                    if let Some(n) = e.document.nodes.get_mut(&id) {
+                        n.x = position.x;
+                        n.y = position.y;
+                    }
+                }
             }
         })
     }

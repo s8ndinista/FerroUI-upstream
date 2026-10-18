@@ -17,6 +17,7 @@ use ferroui_base::media::immutable::ImmutablePen;
 use ferroui_base::media::{
     BoxShadows, DrawingContext, FlowDirection, FormattedText, IPen, Typeface,
 };
+use ferroui_base::threading::{Dispatcher, DispatcherPriority};
 use ferroui_base::utilities::CultureInfo;
 use ferroui_base::{
     ferro_class, ferro_impl_classes, instantiate, FerroObjectImpl, Matrix, Point as UiPoint,
@@ -697,12 +698,15 @@ impl InputElementImpl for DesignCanvas {
                 updated.height = height;
                 let anchor_in_parent = node.local_transform().apply(opposite);
                 let offset = updated.local_transform().apply(new_opposite);
-                editor.resize_node(node.id, width, height);
-                if let Some(n) = editor.document.nodes.get_mut(&node.id) {
-                    n.x = anchor_in_parent.x - offset.x;
-                    n.y = anchor_in_parent.y - offset.y;
-                }
-                editor.refresh();
+                editor.resize_node_and_position(
+                    node.id,
+                    width,
+                    height,
+                    Point::new(
+                        anchor_in_parent.x - offset.x,
+                        anchor_in_parent.y - offset.y,
+                    ),
+                );
             }
             Gesture::Rotate {
                 node,
@@ -1003,7 +1007,8 @@ impl VisualImpl for DesignCanvas {
                 .map(|p| p.children.clone())
                 .unwrap_or_default()
         };
-        if !this.initialized.replace(true) {
+        let fitted = !this.initialized.replace(true);
+        if fitted {
             if let Some(bounds) = roots
                 .iter()
                 .filter_map(|&id| doc.world_bounds(id))
@@ -1016,6 +1021,16 @@ impl VisualImpl for DesignCanvas {
             }
         }
         this.viewport.set(v);
+        if fitted {
+            // Fitting needs the arranged viewport. Update native chrome after
+            // rendering so it observes that fit without changing controls here.
+            if let Some(callback) = this.callback.borrow().clone() {
+                Dispatcher::ui_thread().post_local(
+                    move || callback(CanvasEvent::Camera),
+                    DispatcherPriority::AFTER_RENDER,
+                );
+            }
+        }
         this.frames.set(this.frames.get() + 1);
         let page_color = doc
             .page(editor.active_page)

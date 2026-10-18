@@ -890,3 +890,52 @@ fn comments_stay_on_their_page_and_follow_reparented_layers_through_history() {
     detached.nodes.get_mut(&layer).unwrap().parent = None;
     assert_eq!(detached.comment_page(&invalid), None);
 }
+
+#[test]
+fn resize_and_position_refresh_once_with_constraints_spatial_bounds_and_history() {
+    let mut document = make_document();
+    let page = document.pages[0].id;
+    let frame = document
+        .insert_node(
+            page,
+            Node::new(NodeKind::Frame, "Frame", 20.0, 30.0, 100.0, 80.0),
+        )
+        .unwrap();
+    let child = rectangle(&mut document, frame, 70.0, 55.0, 20.0, 15.0);
+    document.nodes.get_mut(&child).unwrap().constraints = Constraints {
+        horizontal: Constraint::End,
+        vertical: Constraint::End,
+    };
+    let mut editor = Editor::new(document);
+    editor.selection = vec![frame];
+    let before = editor.to_json().unwrap();
+    let original_frame_bounds = Rect::new(20.0, 30.0, 100.0, 80.0);
+    let original_child_bounds = Rect::new(90.0, 85.0, 20.0, 15.0);
+    editor.begin_transaction("Resize gesture");
+    let revision = editor.revision;
+    editor.resize_node_and_position(frame, 200.0, 120.0, Point::new(200.0, 300.0));
+    assert_eq!(editor.revision, revision + 1);
+    assert_eq!(editor.history_len(), 0);
+    let frame_bounds = Rect::new(200.0, 300.0, 200.0, 120.0);
+    let child_bounds = Rect::new(370.0, 395.0, 20.0, 15.0);
+    assert_eq!(editor.document.nodes[&frame].bounds(), frame_bounds);
+    assert_eq!(
+        editor.document.nodes[&child].bounds(),
+        Rect::new(170.0, 95.0, 20.0, 15.0)
+    );
+    assert_eq!(editor.scene.spatial.bounds(frame), Some(frame_bounds));
+    assert_eq!(editor.scene.spatial.bounds(child), Some(child_bounds));
+    assert_eq!(editor.hit_test(child_bounds.center(), 0.0), Some(child));
+
+    assert!(editor.commit_transaction());
+    assert_eq!(editor.history_len(), 1);
+    let after = editor.to_json().unwrap();
+    assert!(editor.undo());
+    assert_eq!(editor.to_json().unwrap(), before);
+    assert_eq!(editor.scene.spatial.bounds(frame), Some(original_frame_bounds));
+    assert_eq!(editor.scene.spatial.bounds(child), Some(original_child_bounds));
+    assert!(editor.redo());
+    assert_eq!(editor.to_json().unwrap(), after);
+    assert_eq!(editor.scene.spatial.bounds(frame), Some(frame_bounds));
+    assert_eq!(editor.scene.spatial.bounds(child), Some(child_bounds));
+}
