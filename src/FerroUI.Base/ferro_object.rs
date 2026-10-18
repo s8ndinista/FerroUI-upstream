@@ -404,6 +404,12 @@ impl FerroObject {
         self.inheritance_parent.borrow().as_ref().and_then(WeakRef::upgrade)
     }
 
+    /// Whether `parent` is the inheritance parent of the object (`InheritanceParent == parent`),
+    /// without taking a handle to it.
+    pub(crate) fn is_inheritance_parent(&self, parent: &FerroObject) -> bool {
+        self.inheritance_parent.borrow().as_ref().is_some_and(|weak| weak.points_at(parent))
+    }
+
     /// Sets the parent object that inherited property values are inherited
     /// from.
     pub fn set_inheritance_parent(&self, value: impl Into<Nullable<FerroObject>>) {
