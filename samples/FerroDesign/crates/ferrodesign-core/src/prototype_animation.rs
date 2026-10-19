@@ -450,6 +450,8 @@ fn compatible_nodes(a: &Node, b: &Node) -> bool {
         && a.text_align == b.text_align && a.text_vertical_align == b.text_vertical_align
         && a.italic == b.italic && a.text_decoration == b.text_decoration
         && a.polygon_sides == b.polygon_sides && a.boolean_operation == b.boolean_operation
+        && a.vector_network == b.vector_network
+        && (a.vector_network.is_none() || (a.width == b.width && a.height == b.height))
         && a.path.fill_rule == b.path.fill_rule && a.path.segments.len() == b.path.segments.len()
         && a.path.segments.iter().zip(&b.path.segments).all(|(a, b)| std::mem::discriminant(a) == std::mem::discriminant(b))
         && a.fills.len() == b.fills.len()

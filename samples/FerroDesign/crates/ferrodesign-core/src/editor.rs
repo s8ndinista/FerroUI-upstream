@@ -877,22 +877,12 @@ impl Editor {
             if let Some(n) = e.document.nodes.get(&id) {
                 let (ow, oh) = (n.width, n.height);
                 let original_transform = n.local_transform();
+                if !e.document.nodes.get_mut(&id).unwrap().resize_vector_geometry(w.max(0.0), h.max(0.0)) {
+                    return;
+                }
                 e.document
                     .apply_constraints(id, ow, oh, w.max(0.0), h.max(0.0));
                 if let Some(n) = e.document.nodes.get_mut(&id) {
-                    if n.kind == NodeKind::Vector {
-                        let sx = if ow > GEOMETRY_EPSILON {
-                            w.max(0.0) / ow
-                        } else {
-                            1.0
-                        };
-                        let sy = if oh > GEOMETRY_EPSILON {
-                            h.max(0.0) / oh
-                        } else {
-                            1.0
-                        };
-                        n.path = n.path.transformed(Transform::scale(sx, sy));
-                    }
                     n.width = w.max(0.0);
                     n.height = h.max(0.0);
                     // Resizing preserves the transformed local origin, including
@@ -1702,7 +1692,7 @@ impl Editor {
             return None;
         }
         let mut node = self.document.nodes.get(&id)?.clone();
-        if node.kind != NodeKind::Vector {
+        if node.kind != NodeKind::Vector || node.vector_network.is_some() {
             return None;
         }
         let result = operation(&mut node.path)?;

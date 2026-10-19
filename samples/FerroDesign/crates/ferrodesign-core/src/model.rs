@@ -688,6 +688,8 @@ pub struct Node {
     pub polygon_sides: usize,
     pub star_inner_radius: f64,
     pub path: VectorPath,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub vector_network: Option<crate::VectorNetwork>,
     pub boolean_operation: BooleanOperation,
     pub constraints: Constraints,
     pub layout: Option<AutoLayout>,
@@ -747,6 +749,7 @@ impl Default for Node {
             polygon_sides: 3,
             star_inner_radius: 0.45,
             path: VectorPath::default(),
+            vector_network: None,
             boolean_operation: BooleanOperation::Union,
             constraints: Constraints::default(),
             layout: None,
@@ -934,6 +937,9 @@ impl Node {
                         .any(|(i, a)| distance_to_segment(p, *a, ps[(i + 1) % ps.len()]) <= stroke)
             }
             NodeKind::Vector => {
+                if let Some(network) = &self.vector_network {
+                    return network.hit_test(p, stroke, self.fills.iter().any(|f| f.visible && f.opacity > 0.0));
+                }
                 self.path.contains(p)
                     || self.path.flattened(0.35).iter().any(|c| {
                         c.windows(2)
@@ -1596,6 +1602,12 @@ impl Document {
                 return Err(DocumentError::Invalid(format!(
                     "invalid geometry on node {id}"
                 )));
+            }
+            if let Some(network) = &n.vector_network {
+                if n.kind != NodeKind::Vector || !n.path.segments.is_empty() || !n.path.anchor_modes.is_empty() {
+                    return Err(DocumentError::Invalid(format!("vector network must be the only geometry on vector node {id}")));
+                }
+                network.validate().map_err(|error| DocumentError::Invalid(format!("invalid network on node {id}: {error}")))?;
             }
             if !n.path.validate_anchor_modes() {
                 return Err(DocumentError::Invalid(format!("invalid vector anchor constraints on node {id}")));

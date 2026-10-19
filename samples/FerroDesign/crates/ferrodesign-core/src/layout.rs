@@ -90,20 +90,27 @@ impl Document {
                 if has_layout && !c.layout_child.absolute {
                     continue;
                 }
+                let (mut x, mut y, mut width, mut height) = (c.x, c.y, c.width, c.height);
                 axis(
-                    &mut c.x,
-                    &mut c.width,
+                    &mut x,
+                    &mut width,
                     old_width,
                     new_width,
                     c.constraints.horizontal,
                 );
                 axis(
-                    &mut c.y,
-                    &mut c.height,
+                    &mut y,
+                    &mut height,
                     old_height,
                     new_height,
                     c.constraints.vertical,
-                )
+                );
+                if c.resize_vector_geometry(width, height) {
+                    c.x = x;
+                    c.y = y;
+                    c.width = width;
+                    c.height = height;
+                }
             }
         }
     }
@@ -373,6 +380,10 @@ impl Document {
         for c in children {
             if let Some(n) = self.nodes.get_mut(&c.id) {
                 if n.x != c.x || n.y != c.y || n.width != c.width || n.height != c.height {
+                    if !n.resize_vector_geometry(c.width, c.height) {
+                        result.warnings.push(format!("Vector geometry could not fit layout bounds on node {}", n.id));
+                        continue;
+                    }
                     n.x = c.x;
                     n.y = c.y;
                     n.width = c.width;

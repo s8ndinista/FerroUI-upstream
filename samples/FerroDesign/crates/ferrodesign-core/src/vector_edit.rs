@@ -14,6 +14,13 @@ use std::collections::BTreeMap;
 #[path = "vector_tools.rs"]
 mod vector_tools;
 
+#[path = "vector_layout.rs"]
+mod vector_layout;
+
+#[path = "vector_network.rs"]
+mod vector_network;
+pub use vector_network::*;
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum PathPointKind {
     Anchor,
