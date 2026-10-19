@@ -6,7 +6,7 @@ This is an implementation inventory, not a claim of complete Figma parity. “UI
 
 | Area | Implemented | Limit |
 | --- | --- | --- |
-| Shell | XAML navigation rail, pages/layers, canvas, property sidebar, bottom toolbar, modal actions and toasts | Visual arrangement is Figma-inspired; pixel parity has not been established |
+| Shell | Compiled XAML navigation rail, pages/layers, contextual page/layer inspector, bottom toolbar, native modal actions and toasts | Visual arrangement follows the public design-file reference; a same-document pixel-parity comparison has not been established |
 | Pages | Add and switch pages; separate roots, backgrounds and flow starts | No cloud projects or team file browser |
 | Layers | Select, search, expand/collapse, rename, hide, lock and change stacking order | Native ItemsControl/VirtualizingStackPanel realizes viewport rows; selection refresh retains the item source. Browser tests check bounded rows for 10,000 layers |
 | Canvas | Pan, pointer-anchored zoom, fit page/selection, grid/ruler overlay | No multiplayer cursors or synced views |
@@ -23,14 +23,15 @@ This is an implementation inventory, not a claim of complete Figma parity. “UI
 | Area | Implemented | Limit |
 | --- | --- | --- |
 | Shapes | Frames, groups, rectangles, ellipses, lines, polygons, stars, sections | Device-preset picker and every Figma shape property are not implemented |
-| Vectors | Pen click/drag tangents, freehand pencil, anchor/control-point editing, exact curve picking/splitting, anchor removal and corner/smooth/symmetric conversion | No vector-network topology, bend/erase or variable-width tool; smooth/symmetric conversion is geometric, not a persistent tangent constraint |
+| Vectors | Pen click/drag tangents, freehand pencil, persistent corner/smooth/symmetric constraints, exact curve picking/splitting/bending, anchor and segment erasure | Native point/bend/erase tools preserve one-gesture history and affine geometry; variable-width strokes are absent |
+| Vector networks | Stable vertices and edges, branches, self-loops, parallel edges, explicit filled regions/holes, connection, splitting, welding, bending and erasure | Native conversion and topology controls; regions share the layer paint stack. Automatic face extraction at arbitrary intersections and separate region paints are absent |
 | Booleans | Non-destructive union/subtract/intersect/exclude; operand rendering and hit testing | Flattening text/boolean results into exact editable outlines is not implemented |
-| Paints | Stacked solids, linear/radial gradients, image paints, opacity/visibility | Native paint dialog edits stack order, visibility/opacity, solid/linear/radial types, gradient stops/geometry and image scale; no color-profile or image-crop-handle parity |
+| Paints | Stacked solids, linear/radial gradients, image paints, opacity/visibility, blend-mode selection | Native paint dialog edits order, visibility/opacity, paint types, stops/geometry, image scale and normalized source window; no complete color-profile, mesh-gradient or angular-gradient workflow |
 | Strokes | Width, color, alignment, cap/join, dashes and arrow geometry | Native controls for alignment, cap, join and dash lengths; no variable-width stroke editing |
 | Corners | Uniform and per-corner radii in the model and renderer | Native uniform/per-corner fields; no continuous-corner smoothing parity |
-| Text | Font family/size/weight/style, alignment, line/letter spacing, wrapping, decoration and rich-run rendering | Native on-canvas TextBox caret, selection, IME, one-transaction editing and UTF-8 run preservation; active editing displays base style, and rich-run style authoring remains structured |
-| Images | Place PNG/JPEG/GIF/BMP from the browser picker, FerroUI decoding, embedded data-URI persistence and image brush fills | No remote asset service, animated video/GIF authoring or crop-handle UI |
-| Effects | Shadow stacks, inner/drop shadows and layer blur through FerroUI | Background blur and full group blend compositing require public API support; diagnostics report unsupported effects |
+| Text | Font family/size/weight/style, alignment, line/letter spacing, wrapping, decoration and rich-run rendering | Native on-canvas TextBox caret, selection, IME, one-transaction editing and UTF-8 run preservation. A native character-selection dialog applies and clears range styling with a rich preview. Active on-canvas editing still displays the base layer style |
+| Images | Place PNG/JPEG/GIF/BMP, public FerroUI decoding, embedded persistence, all four image scale modes and cropped image brushes | Native source-window fields work with Fill/Fit/Stretch/Tile. Direct pan/corner crop handles support Fill/Stretch leaf shapes, affine pixel anchoring, cancel/capture handling and one-gesture history; no remote asset service or animated media authoring |
+| Effects | Shadow stacks, inner/drop shadows, layer blur, isolated group opacity/blend, cached background blur through public FerroUI APIs | Background blur samples document content within the current isolated group. Its bounded fallback can decline oversized/deep effects with diagnostics; see rendering limits below. Pass-through groups and complete Figma effect/color-management parity are absent |
 | Auto layout | Row/column, wrap, grid, fixed/fill/hug dimensions, gap, padding, alignment, absolute children, min/max | Common controls are visual; no complete Figma grid/span and drag-reorder interaction parity |
 | Constraints | Start/end/center/stretch/scale behavior when resizing containers | Native horizontal/vertical choices; a graphical constraint diagram is not implemented |
 | Export | JSON, SVG, PNG via FerroUI, basic FerroUI XAML, CSS inspection | XAML/CSS are useful approximations, not complete round-trip representations of every paint/layout/effect |
@@ -39,16 +40,26 @@ This is an implementation inventory, not a claim of complete Figma parity. “UI
 
 | Area | Implemented | Limit |
 | --- | --- | --- |
-| Components | Create component, instantiate, detach, synchronize instances while preserving overrides | No remote library publishing, complete variants/slots/property editor or library analytics |
+| Components | Create/instantiate/detach, component sets, named variant combinations, stable-ID variant switching, text/boolean/nested-instance properties, reset and override-preserving synchronization | Native component/property/variant dialogs; definitions target source layers. No remote library publishing, full slot semantics, analytics or cross-file library subscription |
 | Styles | Visual creation/application of local fill, text and effect styles; bindings and serialization; grid style data in the core | No full style-definition editor or remote style libraries; grid style application remains unsupported |
-| Variables | Collections, modes, typed values, aliases with cycle detection, bindings and mode application | Collection editing is structured; no complete visual variable table or conditional-expression builder |
-| Prototypes | Native add/edit/remove interaction dialog, all core triggers/actions, flow starts, presentation, navigate/back, modal overlays and session variable state | Transition definitions are stored but animated interpolation/Smart Animate is not hosted |
-| Additional prototype triggers | Browser/native input dispatches hover, press, drag and key rules; native DispatcherTimers fire activation-scoped after-delay rules | Hover fires on entry and drag after a movement threshold; Figma while-hover/while-press/release reversal semantics are not implemented |
-| URL/scroll prototype actions | Validated HTTP(S)/mailto/tel links use browser/native host openers; blocked requests are reported | Scroll targets remain explicit unsupported requests; prototype scroll containers are not implemented |
+| Variables | Native collection/mode/value/alias/binding controls, typed color/number/string/boolean values, cycle detection and mode application | Invalid authoring operations are atomic. Legacy imported variable data is preserved and diagnosed; no remote collections or complete expression-builder interface |
+| Prototypes | Native interaction authoring, flow starts, navigate/back/overlays, session variable state, transition interpolation and Smart Animate | Matching layers interpolate supported geometry/paint/text properties; incompatible artwork uses a crossfade. No complete Figma timeline, spring/physics or video playback system |
+| Additional prototype triggers | Hover, press, drag, key and activation-scoped native delay timers, reversible while-hover/while-press state | Reversal restores state across temporary frame/variant IDs; no shared presentation session or every Figma gesture preference |
+| URL/scroll prototype actions | Validated HTTP(S)/mailto/tel openers, scroll-container bounds, ScrollTo actions and clamped native wheel scrolling | Scroll updates the disposable prototype document, retaining authored positions and saves. No full momentum/touch scroll physics or device emulation |
 | Comments | Local comment threads, pins, resolve/reopen and serialization | No network delivery, notifications, mentions or concurrent commenting |
 | Inspect | Selected-layer CSS and structured properties | No full Figma Dev Mode, code connector, repository mapping or ready-for-dev workflow |
 
 ## Features outside this implementation
+
+### Rendering and authoring limits
+
+Normal artwork remains vector geometry, brushes, pens and text submitted through FerroUI. Background blur is the bounded raster operation: each padded surface supports at most 2048 pixels per dimension and 4 million pixels, with 32 MiB of retained backdrop cache, 128 MiB of conservative working reservations and eight nested filters. Canvas sampling follows zoom and display scaling; PNG sampling follows export resolution. Panning reuses cached filtered output. A declined filter increments explicit renderer diagnostics and renders the remaining layer content; it is not silently presented as a successfully rendered blur.
+
+The new `DrawingContext::try_push_compositing_layer` capability records/replays isolated blend and opacity scopes through FerroUI. Vello implements it; an unsupported backend returns `None` without changing the state stack. Group opacity is applied to completed overlapping children once. Background replacement operates on premultiplied pixels within document isolation, so it does not copy the editor canvas background into a transparent export.
+
+Vector-network regions are explicit topological contours. Branching edges may exist without fills, and implicit fill-closing edges can remain unstroked. Stable IDs survive splitting, movement and undo. Geometry normalization preserves world placement, including reflected or sheared parents. These capabilities do not imply automatic curve-intersection topology or variable-width geometry.
+
+Component variant changes match source identity, then layer name/kind and sibling occurrence. Matching materialized layer IDs and explicit overrides survive a switch. Exposed property controls display effective direct descendant overrides; setting or resetting that property clears its corresponding direct flags. Component synchronization can affect dependent instances and layout, so it still uses full document history snapshots. The performance benchmark reports this cost separately from scoped single-node editing.
 
 ### SVG import limits
 

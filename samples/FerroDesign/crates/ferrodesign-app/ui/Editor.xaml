@@ -153,7 +153,21 @@
                 <TextBlock Text="Drag a point or handle. Double-click a segment to add a point. Delete removes the selected point." TextWrapping="Wrap" Classes="label"/>
               </StackPanel>
             </StackPanel>
-            <StackPanel Name="DesignInspector" Spacing="8">
+            <StackPanel Name="PageInspector" Spacing="12">
+              <Border Classes="rule"/>
+              <TextBlock Text="Page background" Classes="heading"/>
+              <Grid ColumnDefinitions="28,8,*">
+                <Border Name="PageBackgroundSwatch" Width="26" Height="26" CornerRadius="4" BorderBrush="#D9D9D9" BorderThickness="1"/>
+                <TextBox Name="PageBackgroundField" Grid.Column="2" ToolTip.Tip="Canvas background color"/>
+              </Grid>
+              <Border Classes="rule"/>
+              <TextBlock Text="Local resources" Classes="heading"/>
+              <TextBlock Name="PageResourcesSummary" Classes="label" TextWrapping="Wrap"/>
+              <Button Name="PageStylesButton" Content="Styles" HorizontalContentAlignment="Left"/>
+              <Button Name="PageVariablesButton" Content="Variables" HorizontalContentAlignment="Left"/>
+              <Button Name="PageComponentsButton" Content="Components" HorizontalContentAlignment="Left"/>
+            </StackPanel>
+            <StackPanel Name="DesignInspector" Spacing="8" IsVisible="False">
               <UniformGrid Columns="6">
                 <Button Name="AlignLeftButton" ToolTip.Tip="Align left"/>
                 <Button Name="AlignCenterButton" ToolTip.Tip="Align horizontal centers"/>

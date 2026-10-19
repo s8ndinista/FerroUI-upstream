@@ -397,6 +397,9 @@ impl EditorShell {
             ("AlignMiddleButton", "align-middle"),
             ("AlignBottomButton", "align-bottom"),
             ("AddLayoutButton", "auto-layout"),
+            ("PageStylesButton", "styles"),
+            ("PageVariablesButton", "variables"),
+            ("PageComponentsButton", "assets"),
             ("LayoutRowButton", "layout-row"),
             ("LayoutColumnButton", "layout-column"),
             ("LayoutGridButton", "layout-grid"),
@@ -470,6 +473,7 @@ impl EditorShell {
             "OpacityField",
             "RadiusField",
             "FillField",
+            "PageBackgroundField",
             "StrokeField",
             "StrokeWidthField",
             "TextField",
@@ -623,6 +627,8 @@ impl EditorShell {
             "PagesViewport",
             "LayersViewport",
             "InspectorViewport",
+            "PageInspector", "DesignInspector", "PageBackgroundField", "PageBackgroundSwatch",
+            "PageStylesButton", "PageVariablesButton", "PageComponentsButton",
             "AddPageButton",
             "EditVectorButton",
             "DoneVectorButton",
@@ -1198,7 +1204,10 @@ impl EditorShell {
             .selection
             .first()
             .and_then(|id| editor.document.nodes.get(id));
-        self.visible("DesignInspector", self.inspector_tab.get() == 0);
+        self.visible("DesignInspector", self.inspector_tab.get() == 0 && node.is_some());
+        self.visible("PageInspector", self.inspector_tab.get() == 0 && node.is_none());
+        self.visible("VisibleButton", node.is_some());
+        self.visible("LockedButton", node.is_some());
         self.visible("PrototypeInspector", self.inspector_tab.get() == 1);
         self.visible("InspectInspector", self.inspector_tab.get() == 2);
         let vector_edit = self.canvas.vector_node.get().is_some();
@@ -1305,6 +1314,13 @@ impl EditorShell {
                 .unwrap_or(Color::WHITE)
         });
         set("FillField", fill.hex().trim_start_matches('#').to_string());
+        let page_background = editor.document.page(editor.active_page)
+            .map_or(Color::WHITE, |page| page.background);
+        set("PageBackgroundField", page_background.hex().trim_start_matches('#').to_string());
+        self.control::<Border>("PageBackgroundSwatch")
+            .set_background(Some(icons::brush(&xaml_color(page_background))));
+        self.text("PageResourcesSummary", &format!("{} styles · {} variable collections",
+            editor.document.styles.len(), editor.document.variables.len()));
         self.button("FillSwatch")
             .set_background(Some(icons::brush(&xaml_color(fill))));
         set(
@@ -1514,7 +1530,12 @@ impl EditorShell {
         let id = self.editor.borrow().selection.first().copied();
         self.canvas.finish_image_crop();
         if id.is_none() {
-            if name == "NameField" || name == "FillField" {
+            if name == "NameField" || name == "FillField" || name == "PageBackgroundField" {
+                if name != "NameField" && Color::from_hex(&text).is_none() {
+                    self.toast("Use a hex color, for example 7B61FF.");
+                    self.refresh();
+                    return;
+                }
                 let mut editor = self.editor.borrow_mut();
                 let page = editor.active_page;
                 editor.transact("Edit page", |doc| {

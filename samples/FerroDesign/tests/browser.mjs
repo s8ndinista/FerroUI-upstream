@@ -4,6 +4,7 @@ import { vectorNetworkRegressions } from "./network-browser.mjs";
 import { componentAuthoringRegressions } from "./components-browser.mjs";
 import { imageCropRegressions } from "./image-crop-browser.mjs";
 import { compositingRegressions } from "./compositing-browser.mjs";
+import { pageInspectorRegressions } from "./page-inspector-browser.mjs";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { createServer } from "node:http";
@@ -809,6 +810,8 @@ try {
             await imageCropRegressions(page, svgDocument, check,
                 { fixtureNode, isolatedDocument, importFixture, documentState, state, clickWorld, clickNative, moveWorld, frames }, output, mode);
             await compositingRegressions(page, svgDocument, check,
+                { fixtureNode, isolatedDocument, importFixture, documentState, state, clickWorld, clickNative, frames }, output, mode);
+            await pageInspectorRegressions(page, svgDocument, check,
                 { fixtureNode, isolatedDocument, importFixture, documentState, state, clickWorld, clickNative, frames }, output, mode);
             await prototypeInputRegressions(page, svgDocument, check);
             await prototypeMotionRegressions(page, svgDocument, check,

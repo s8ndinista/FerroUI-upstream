@@ -1,8 +1,42 @@
 # Validation and measurements
 
-This file distinguishes implemented paths, completed checks and measurements. The validated source is `c2d2e71ac8b512bddc4a4e4d4c920d5e03f09457`. [CI run 39168689287](https://github.com/wieslawsoltes/FerroUI/actions/runs/39168689287) completed successfully: source/core, all six focused native preedit tests, the actual WebAssembly build, the complete Chromium interaction suite and the native application compilation check all passed.
+This file distinguishes implemented paths, completed checks and measurements. The earlier complete baseline is `c2d2e71ac8b512bddc4a4e4d4c920d5e03f09457`. [CI run 39168689287](https://github.com/wieslawsoltes/FerroUI/actions/runs/39168689287) completed successfully: source/core, all six focused native preedit tests, the actual WebAssembly build, the complete Chromium interaction suite and the native application compilation check all passed. That baseline does not validate every feature subsequently added to the branch.
 
-## Observed results
+## Continuation checkpoints
+
+[Run 39221682967](https://github.com/wieslawsoltes/FerroUI/actions/runs/39221682967), source `0efde37fa53801db1ec1829d7355090203fc52ec`, passed 131 core tests, 17 persistence-host tests, six native preedit tests, ten framework browser-input tests, the paired release benchmark, the actual Vello WASM build and five actual Chromium IndexedDB checks. Software2D completed all 28 browser checks, including Smart Animate midpoint pixels, clamped scroll and reversible hover/press interaction state. WebGL2 completed 15 checks and the native paint model edits, then a page screenshot timed out after fonts had already loaded. Trace frames continued and the diagnostic screenshot succeeded with the complete three-stop dialog. This run is a failure, not a complete validation pass.
+
+[Run 39227652054](https://github.com/wieslawsoltes/FerroUI/actions/runs/39227652054), source `fc212577143968b8fa17886f5389970cd3ec7191`, passed all 183 core tests, 17 host tests and the schema-4 component/editor benchmark. The native preedit compilation gate found a missing `PushCompositingLayerPayload` import in the framework's shared test stream reader. Commit `b48a258c856769e87076e53bb691efb56bcd859b` fixes the import; its full validation was still running when this checkpoint was recorded.
+
+The expanded browser harness retains real native pointer/keyboard operations and PNG captures. The paint checkpoint now waits for newly arranged native controls and a render after the Add-stop input. A screenshot TimeoutError may receive one bounded retry only if document hash, selection, camera and native control bounds remain unchanged, the page responds, and the renderer has no lost context or panic. Per-attempt diagnostics remain in the report; a second failure, changed state, or invalid/blank capture fails the run. Continuous traces and font readiness remain enabled.
+
+## Paired release measurements
+
+These are **native editor-engine measurements on one GitHub runner**, not browser frame rate or hardware-GPU throughput. The same process compares the scoped command/gesture path with an explicitly defined generic full-document transaction reference, and asserts exact document/history equivalence. The flat fixture has 10,000 filled rectangles, one selected node, 48 nudge operations and 12 gestures of 24 updates. Raw results are preserved in [the source-tagged JSON](benchmarks/2026-10-19-0efde37f-editor-10000-nodes.json).
+
+| Operation | Full-document reference p50 | Scoped path p50 |
+| --- | ---: | ---: |
+| Nudge | 9.253 ms | 0.020 ms |
+| Undo | 1.509 ms | 0.008 ms |
+| Redo | 1.491 ms | 0.008 ms |
+| Gesture begin | 2.346 ms | 0.010 ms |
+| Gesture update | 1.454 ms | 0.000631 ms |
+| Gesture commit | 7.248 ms | 0.009 ms |
+| Complete 24-update gesture | 46.008 ms | 0.044 ms |
+
+The savings come from reducing snapshot, comparison and scene-update work for known mutation sets. They do not include native control layout, scene preparation, rasterization, browser input delivery or JSON serialization. Pretty JSON serialization remained 36.595 ms p50 for 20,152,206 bytes in this run; coalescing before serialization reduces its frequency. A compact-format candidate was measured separately and did not change the production format.
+
+The [component workload at `fc212577`](benchmarks/2026-10-19-fc212577-editor-components.json) includes two matched 32-child variants, typed text/visibility changes, embedded images and vector paths, and a 5,592,566-byte unrelated image data URI among 10,000 nodes. The paired no-history document operation is compared with the same operation plus an explicit whole-document candidate clone; this is a reference workload, not a measured previous-version speedup. Both variants of the benchmark preserve exact document state and matching materialized IDs. Actual Editor operations are measured separately with their current full history snapshots:
+
+| Component operation | Editor with history p50 | Editor with history p95 |
+| --- | ---: | ---: |
+| Variant switch | 16.656 ms | 17.138 ms |
+| Text property | 16.986 ms | 17.677 ms |
+| Visibility property | 20.875 ms | 21.322 ms |
+
+The complete component undo/redo round-trip was exact. The remaining full-snapshot cost is visible rather than being hidden behind the faster isolated document-operation numbers.
+
+## Earlier complete baseline: observed results
 
 | Check | Result |
 | --- | --- |
