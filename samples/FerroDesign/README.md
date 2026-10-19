@@ -136,7 +136,7 @@ The GitHub Actions workflow `.github/workflows/ferrodesign.yml` runs locked core
 | `crates/ferrodesign-app/ui/Editor.xaml` | Compiled FerroUI editor shell and control styling |
 | `crates/ferrodesign-app/src/shell.rs` | Control events, property editing and document commands |
 | `crates/ferrodesign-app/src/canvas.rs` | FerroUI canvas control, input gestures and selection overlays |
-| `crates/ferrodesign-app/src/shell/` | Native text, paint and interaction editors |
+| `crates/ferrodesign-app/src/shell/` | Native authoring dialogs and the cached layer projection |
 | `crates/ferrodesign-app/src/prototype.rs` | Presentation snapshots and cancellable FerroUI dispatcher timers |
 | `crates/ferrodesign-app/src/renderer.rs` | Cached public-API scene renderer |
 | `crates/ferrodesign-app/src/platform.rs` | Browser/native storage, clipboard and downloads |

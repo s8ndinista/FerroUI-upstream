@@ -964,7 +964,15 @@ try {
                     };
                     assert.deepEqual(delta, { full: 0, incremental: 1, nodes: 1, visuals: 0 },
                         label + " must prepare only the changed leaf and reuse its immutable visual resources");
-                    return { after, delta };
+                    const layerProjection = {
+                        builds: after.layerProjectionBuilds - before.layerProjectionBuilds,
+                        reuses: after.layerProjectionReuses - before.layerProjectionReuses,
+                    };
+                    assert.equal(layerProjection.builds, 0,
+                        label + " must reuse the 10,000-layer projection without rebuilding rows or names");
+                    assert.ok(layerProjection.reuses >= 1,
+                        label + " must pass through the native shell's layer-projection cache");
+                    return { after, delta, layerProjection };
                 };
                 const nudgedAt = performance.now();
                 await page.keyboard.press("ArrowRight");
@@ -977,7 +985,12 @@ try {
                 result.largeDocument.preparation = {
                     nudge: nudgePreparation.delta, undo: undoPreparation.delta, redo: redoPreparation.delta,
                 };
-                check("Native nudge/undo/redo in 10,000 layers each prepare one leaf, rebuild no immutable visuals, and avoid full scene preparation");
+                result.largeDocument.layerProjection = {
+                    nudge: nudgePreparation.layerProjection,
+                    undo: undoPreparation.layerProjection,
+                    redo: redoPreparation.layerProjection,
+                };
+                check("Native nudge/undo/redo in 10,000 layers each prepare one leaf, rebuild no immutable visuals, and reuse the scene and layer projection");
                 const largeSaved = await page.evaluate(() => globalThis.ferroDesign.ferroDesignExportJson());
                 const persistedAt = performance.now();
                 const largePersistence = await flushStorage(page);

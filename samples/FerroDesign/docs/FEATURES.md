@@ -64,6 +64,8 @@ Component variant changes match source identity, then layer name/kind and siblin
 
 Scoped canvas edits use an editor change feed to refresh affected render data and ancestor bounds. Camera frames retain prepared geometry, text and paints. Structural, component, variable and layout transactions retain full preparation; missing history or unusual dependency sets also fall back to a complete refresh. Preparation counters distinguish this work from ordinary drawing: root signatures and paint traversal still visit root IDs, and wide ancestor bounds still inspect siblings. A one-leaf preparation result is not a constant-time full frame or an FPS measurement.
 
+The layer sidebar consumes the same complete change feed to reuse unchanged row data on scoped edits, avoiding a fresh name and row allocation for every displayed layer. Page/assets/search/expansion changes, incomplete history and structural edits retain conservative projection. Expanded-set equality may still visit expanded IDs; scoped history still copies document metadata such as page root IDs. These remaining costs are separate from node snapshots, row projection and render preparation.
+
 Grid placement is zero-based in the serialized model and one-based in native fields; empty/Auto leaves a coordinate unspecified. Pinned children reserve cells before automatic children, while hidden and absolute children do not occupy tracks. Invalid spans and occupied-cell collisions are rejected atomically by authoring commands. Connected groups of overlapping row spans use equal-height tracks for stable repeated Hug/Fill layout. Existing grids without nondefault placement metadata retain their earlier layout path.
 
 ### SVG import limits

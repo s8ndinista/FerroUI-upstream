@@ -2,6 +2,7 @@
 mod paints;
 mod components;
 mod layout;
+mod layer_projection;
 mod prototyping;
 mod rich_text;
 mod text;
@@ -32,24 +33,12 @@ use ferroui_controls::{
 };
 use ferroui_markup_xaml::FerroXamlLoader;
 use serde_json::json;
+use layer_projection::{LayerProjection, LayerRow};
 use std::{
     cell::{Cell, RefCell},
     collections::{BTreeMap, BTreeSet},
     rc::Rc,
 };
-
-#[derive(Clone, Debug, PartialEq)]
-struct LayerRow {
-    id: NodeId,
-    name: String,
-    kind: NodeKind,
-    depth: usize,
-    expanded: bool,
-    has_children: bool,
-    visible: bool,
-    locked: bool,
-    assets: bool,
-}
 
 pub struct EditorShell {
     pub root: Ref<UserControl>,
@@ -60,7 +49,7 @@ pub struct EditorShell {
     inline_updating: Cell<bool>,
     expanded: RefCell<BTreeSet<NodeId>>,
     layer_buttons: RefCell<BTreeMap<NodeId, WeakRef<Button>>>,
-    layer_rows: RefCell<Vec<LayerRow>>,
+    layer_projection: RefCell<LayerProjection>,
     page_rows: RefCell<Vec<(NodeId, String)>>,
     assets: Cell<bool>,
     inspector_tab: Cell<u8>,
@@ -105,7 +94,7 @@ impl EditorShell {
             inline_updating: Cell::new(false),
             expanded: RefCell::new(expanded),
             layer_buttons: RefCell::new(BTreeMap::new()),
-            layer_rows: RefCell::new(Vec::new()),
+            layer_projection: RefCell::new(LayerProjection::default()),
             page_rows: RefCell::new(Vec::new()),
             assets: Cell::new(false),
             inspector_tab: Cell::new(0),
@@ -598,6 +587,10 @@ impl EditorShell {
         let editor = self.editor.borrow();
         let v = self.canvas.viewport.get();
         let stats = self.canvas.render_stats();
+        let (layer_row_count, layer_projection_stats) = {
+            let projection = self.layer_projection.borrow();
+            (projection.rows().len(), projection.stats())
+        };
         let selection_bounds = editor
             .selection
             .iter()
@@ -696,7 +689,7 @@ impl EditorShell {
             "zoomLabel":self.button("ZoomValueButton").content().and_then(|value| value.downcast_ref::<String>().cloned()),
             "canvas":{"x":canvas.x,"y":canvas.y,"width":canvas.width,"height":canvas.height},
             "chrome":chrome,
-            "layerRowCount":self.layer_rows.borrow().len(),
+            "layerRowCount":layer_row_count,
             "realizedLayerRows":self.layer_buttons.borrow().values().filter(|row| row.upgrade().is_some()).count(),
             "vectorNode":self.canvas.vector_node.get(),
             "vectorTool":format!("{:?}",self.canvas.vector_tool.get()),
@@ -726,6 +719,9 @@ impl EditorShell {
             "invalidNodes":stats.invalid_nodes,
             "canUndo":editor.undo_label().is_some(),"canRedo":editor.redo_label().is_some(),
             "historyLength":editor.history_len(),"presentation":self.canvas.presentation.get(),
+        }), json!({
+            "layerProjectionBuilds":layer_projection_stats.builds,
+            "layerProjectionReuses":layer_projection_stats.reuses,
         })] {
             let serde_json::Value::Object(fields) = group else {
                 unreachable!("state groups are JSON objects");
@@ -904,17 +900,29 @@ impl EditorShell {
         // clicking artwork never recreates every page, icon and layer control.
         self.canvas.reconcile_image_crop();
         self.canvas.reconcile_vector_edit();
-        let selection = self.editor.borrow().selection.clone();
-        self.layer_buttons.borrow_mut().retain(|id, weak| {
-            if let Some(button) = weak.upgrade() {
-                button.classes().set("active", selection.contains(id));
-                true
-            } else {
-                false
-            }
-        });
+        self.refresh_layer_selection();
         self.refresh_inspector();
         self.updating.set(false);
+    }
+    fn refresh_layer_selection(&self) {
+        let selection = self.editor.borrow().selection.clone();
+        let buttons = {
+            let mut buttons = Vec::new();
+            self.layer_buttons.borrow_mut().retain(|id, weak| {
+                if let Some(button) = weak.upgrade() {
+                    buttons.push((button, selection.contains(id)));
+                    true
+                } else {
+                    false
+                }
+            });
+            buttons
+        };
+        // Native class changes can apply styles synchronously. Keep the weak
+        // registry unborrowed while updating this bounded set of realized rows.
+        for (button, selected) in buttons {
+            button.classes().set("active", selected);
+        }
     }
     fn refresh_pages(self: &Rc<Self>) {
         let host = self.control::<StackPanel>("PagesHost");
@@ -999,71 +1007,21 @@ impl EditorShell {
             .text()
             .unwrap_or_default()
             .to_lowercase();
-        let editor = self.editor.borrow();
-        let roots = if self.assets.get() {
-            editor
-                .document
-                .nodes
-                .values()
-                .filter(|n| n.kind == NodeKind::Component)
-                .map(|n| n.id)
-                .collect::<Vec<_>>()
-        } else {
-            editor
-                .document
-                .page(editor.active_page)
-                .map(|p| p.children.clone())
-                .unwrap_or_default()
-        };
-        // Compute a flat projection of the expanded tree, without realizing controls.
-        // Search collects ancestor IDs once instead of walking every subtree per row.
-        let mut included = BTreeSet::new();
-        if !filter.is_empty() {
-            for node in editor
-                .document
-                .nodes
-                .values()
-                .filter(|n| n.name.to_lowercase().contains(&filter))
-            {
-                let mut id = Some(node.id);
-                while let Some(current) = id {
-                    if !included.insert(current) {
-                        break;
-                    }
-                    id = editor.document.nodes.get(&current).and_then(|n| n.parent);
-                }
-            }
-        }
-        let expanded = self.expanded.borrow();
         let assets = self.assets.get();
-        let mut pending: Vec<_> = roots.into_iter().map(|id| (id, 0)).collect();
-        let mut rows = Vec::new();
-        while let Some((id, depth)) = pending.pop() {
-            if !filter.is_empty() && !included.contains(&id) {
-                continue;
-            }
-            let Some(node) = editor.document.nodes.get(&id) else {
-                continue;
-            };
-            let open = expanded.contains(&id) || !filter.is_empty();
-            rows.push(LayerRow {
-                id,
-                name: node.name.clone(),
-                kind: node.kind,
-                depth,
-                expanded: open,
-                has_children: !node.children.is_empty(),
-                visible: node.visible,
-                locked: node.locked,
-                assets,
-            });
-            if open && !assets {
-                pending.extend(node.children.iter().map(|&child| (child, depth + 1)));
-            }
-        }
-        drop(expanded);
-        drop(editor);
-        self.visible("EmptyLayers", rows.is_empty());
+        let (items, empty) = {
+            let editor = self.editor.borrow();
+            let expanded = self.expanded.borrow();
+            let mut projection = self.layer_projection.borrow_mut();
+            let changed = projection.refresh(&editor, assets, &filter, &expanded);
+            let items = changed.then(|| ItemsSource::from_items(
+                projection.rows().iter().cloned()
+                    .map(|row| Some(Rc::new(row) as BoxedValue)),
+            ));
+            (items, projection.rows().is_empty())
+        };
+        // ItemsSource realization can synchronously call layer_row. No editor,
+        // expansion or projection RefCell borrow crosses native control setters.
+        self.visible("EmptyLayers", empty);
         self.text(
             "EmptyLayers",
             if !filter.is_empty() {
@@ -1074,25 +1032,11 @@ impl EditorShell {
                 "Draw a frame or shape to get started."
             },
         );
-        if *self.layer_rows.borrow() != rows {
+        if let Some(items) = items {
             self.layer_buttons.borrow_mut().clear();
-            let items = ItemsSource::from_items(
-                rows.iter()
-                    .cloned()
-                    .map(|row| Some(Rc::new(row) as BoxedValue)),
-            );
-            *self.layer_rows.borrow_mut() = rows;
             host.set_items_source(Some(items));
         } else {
-            let selection = self.editor.borrow().selection.clone();
-            self.layer_buttons.borrow_mut().retain(|id, weak| {
-                if let Some(button) = weak.upgrade() {
-                    button.classes().set("active", selection.contains(id));
-                    true
-                } else {
-                    false
-                }
-            });
+            self.refresh_layer_selection();
         }
     }
     fn layer_row(self: &Rc<Self>, row: &LayerRow) -> Ref<Grid> {
