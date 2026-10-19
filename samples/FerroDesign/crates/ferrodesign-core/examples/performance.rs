@@ -22,6 +22,92 @@ fn distribution(mut samples: Vec<f64>) -> Value {
     })
 }
 
+#[derive(Default)]
+struct GestureTimings {
+    begin: Vec<f64>,
+    updates: Vec<f64>,
+    commit: Vec<f64>,
+    total: Vec<f64>,
+}
+impl GestureTimings {
+    fn measure(&mut self, editor: &mut Editor, id: NodeId, scoped: bool) {
+        let total = Instant::now();
+        let started = Instant::now();
+        if scoped {
+            editor.begin_node_transaction(&[id], "Drag layer");
+        } else {
+            editor.begin_transaction("Drag layer");
+        }
+        self.begin.push(milliseconds(started));
+        for _ in 0..24 {
+            let started = Instant::now();
+            let node = editor.document.nodes.get_mut(&id).unwrap();
+            node.x += 0.25;
+            node.y += 0.125;
+            if scoped {
+                editor.refresh_preview_nodes(&[id]);
+            } else {
+                editor.refresh();
+            }
+            self.updates.push(milliseconds(started));
+        }
+        let started = Instant::now();
+        assert!(editor.commit_transaction());
+        self.commit.push(milliseconds(started));
+        self.total.push(milliseconds(total));
+    }
+    fn into_json(self) -> Value {
+        json!({
+            "begin": distribution(self.begin),
+            "update": distribution(self.updates),
+            "commit": distribution(self.commit),
+            "total": distribution(self.total),
+        })
+    }
+}
+
+fn dense_layout_measurement(count: usize) -> Value {
+    let mut document = Document::new("Dense layout fixture");
+    let page = document.pages[0].id;
+    let children = count.saturating_sub(1);
+    let mut row = Node::new(NodeKind::Frame, "Row", 0.0, 0.0,
+        children as f64 * 24.0 + 16.0, 80.0);
+    row.layout = Some(AutoLayout {
+        gap: 2.0,
+        padding: Padding::all(8.0),
+        height: SizingMode::Fixed,
+        ..AutoLayout::default()
+    });
+    let row = document.insert_node(page, row).unwrap();
+    let payload = "Auto layout retains text, paint and style data. Ω 🚀 ".repeat(8);
+    for index in 0..children {
+        let mut node = Node::new(NodeKind::Text, format!("Text {index}"),
+            0.0, 0.0, 12.0, 24.0)
+            .with_text(payload.clone(), 16.0, Color::BLACK);
+        if index % 4 != 0 {
+            node.layout_child.width = SizingMode::Fill;
+        }
+        document.insert_node(row, node).unwrap();
+    }
+    let mut timings = Vec::with_capacity(5);
+    let mut changed = Vec::with_capacity(5);
+    for _ in 0..5 {
+        document.nodes.get_mut(&row).unwrap().width += 16.0;
+        let started = Instant::now();
+        let result = black_box(document.layout_all());
+        timings.push(milliseconds(started));
+        assert!(result.warnings.is_empty());
+        changed.push(result.changed.len());
+    }
+    document.validate().unwrap();
+    json!({
+        "kind": "fixed-row-three-quarter-fill-text-children",
+        "nodes": document.nodes.len(), "children": children,
+        "textBytesPerChild": payload.len(), "parentWidthDelta": 16.0,
+        "changedPerIteration": changed, "timing": distribution(timings),
+    })
+}
+
 fn main() {
     let count = std::env::args().nth(1)
         .and_then(|s| s.parse::<usize>().ok()).unwrap_or(10_000)
@@ -132,6 +218,34 @@ fn main() {
     assert_eq!(reference.to_json().unwrap(), edited);
     editor.document.validate().unwrap();
 
+    let mut gesture_scoped = GestureTimings::default();
+    let mut gesture_unscoped = GestureTimings::default();
+    for index in 0..12 {
+        if index % 2 == 0 {
+            gesture_scoped.measure(&mut editor, selected, true);
+            gesture_unscoped.measure(&mut reference, selected, false);
+        } else {
+            gesture_unscoped.measure(&mut reference, selected, false);
+            gesture_scoped.measure(&mut editor, selected, true);
+        }
+    }
+    let after_gestures = editor.to_json().unwrap();
+    assert_eq!(reference.to_json().unwrap(), after_gestures);
+    assert_eq!(editor.history_len(), iterations + 12);
+    for _ in 0..12 {
+        assert!(editor.undo());
+        assert!(reference.undo());
+    }
+    assert_eq!(editor.to_json().unwrap(), edited);
+    assert_eq!(reference.to_json().unwrap(), edited);
+    for _ in 0..12 {
+        assert!(editor.redo());
+        assert!(reference.redo());
+    }
+    assert_eq!(editor.to_json().unwrap(), after_gestures);
+    assert_eq!(reference.to_json().unwrap(), after_gestures);
+    let edited = after_gestures;
+
     let mut pretty = Vec::with_capacity(5);
     let mut compact = Vec::with_capacity(5);
     let mut compact_bytes = 0;
@@ -153,9 +267,19 @@ fn main() {
         reload.push(milliseconds(started));
         assert_eq!(loaded.to_json().unwrap(), edited);
     }
+    let mut no_layout = editor.document.clone();
+    let mut no_layout_timings = Vec::with_capacity(5);
+    for _ in 0..5 {
+        let started = Instant::now();
+        let result = black_box(no_layout.layout_all());
+        no_layout_timings.push(milliseconds(started));
+        assert_eq!(result, LayoutResult::default());
+    }
+    assert_eq!(no_layout.to_json().unwrap(), edited);
+    let dense_layout = dense_layout_measurement(count);
 
     println!("{}", serde_json::to_string_pretty(&json!({
-        "schemaVersion": 2,
+        "schemaVersion": 3,
         "measurement": "native-engine-same-process",
         "releaseBuild": !cfg!(debug_assertions),
         "nodes": count,
@@ -170,6 +294,11 @@ fn main() {
         "nudge": {"unscopedReference": distribution(unscoped), "scoped": distribution(scoped)},
         "undo": {"unscopedReference": distribution(undo_unscoped), "scoped": distribution(undo_scoped)},
         "redo": {"unscopedReference": distribution(redo_unscoped), "scoped": distribution(redo_scoped)},
+        "gesture": {"gestures": 12, "updatesPerGesture": 24,
+            "deltaPerUpdate": [0.25, 0.125], "includesBrowserEvents": false,
+            "unscopedReference": gesture_unscoped.into_json(),
+            "scoped": gesture_scoped.into_json()},
+        "layout": {"noLayout": distribution(no_layout_timings), "denseMixedFill": dense_layout},
         "serialization": {
             "pretty": {"bytes": edited.len(), "timing": distribution(pretty)},
             "compactCandidate": {"bytes": compact_bytes, "timing": distribution(compact)},

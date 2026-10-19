@@ -5,6 +5,17 @@ pub struct LayoutResult {
     pub changed: Vec<NodeId>,
     pub warnings: Vec<String>,
 }
+/// Layout reads only geometry and sizing rules. Retaining an entire `Node`
+/// here would copy text, vector paths, images, and paint stacks on every pass.
+#[derive(Clone, Copy)]
+struct LayoutItem {
+    id: NodeId,
+    x: f64,
+    y: f64,
+    width: f64,
+    height: f64,
+    layout_child: LayoutChild,
+}
 fn clamp_size(v: f64, min: f64, max: Option<f64>) -> f64 {
     v.max(min.max(0.0))
         .min(max.unwrap_or(f64::MAX).max(min.max(0.0)))
@@ -98,18 +109,25 @@ impl Document {
     }
     pub fn layout_node(&mut self, id: NodeId) -> LayoutResult {
         let mut result = LayoutResult::default();
-        let Some(parent) = self.nodes.get(&id).cloned() else {
+        let Some(parent) = self.nodes.get(&id) else {
             return result;
         };
         let Some(layout) = parent.layout.clone() else {
             return result;
         };
-        let mut children: Vec<Node> = parent
+        let mut children: Vec<LayoutItem> = parent
             .children
             .iter()
             .filter_map(|id| self.nodes.get(id))
             .filter(|n| n.visible && !n.layout_child.absolute)
-            .cloned()
+            .map(|node| LayoutItem {
+                id: node.id,
+                x: node.x,
+                y: node.y,
+                width: node.width,
+                height: node.height,
+                layout_child: node.layout_child,
+            })
             .collect();
         if layout.reverse {
             children.reverse()
@@ -198,8 +216,8 @@ impl Document {
             let cross_hug = (if row { layout.height } else { layout.width }) == SizingMode::Hug;
             let mut main = if row { pw } else { ph };
             let mut cross = if row { ph } else { pw };
-            let cm = |n: &Node| if row { n.width } else { n.height };
-            let cc = |n: &Node| if row { n.height } else { n.width };
+            let cm = |n: &LayoutItem| if row { n.width } else { n.height };
+            let cc = |n: &LayoutItem| if row { n.height } else { n.width };
             if main_hug {
                 main = mb
                     + ma
@@ -258,7 +276,13 @@ impl Document {
                 if !flexible.is_empty() {
                     let fixed: f64 = line
                         .iter()
-                        .filter(|i| !flexible.contains(i))
+                        .filter(|i| {
+                            (if row {
+                                children[**i].layout_child.width
+                            } else {
+                                children[**i].layout_child.height
+                            }) != SizingMode::Fill
+                        })
                         .map(|i| cm(&children[*i]))
                         .sum();
                     let space =
@@ -391,5 +415,84 @@ impl Document {
             changed: changed.into_iter().collect(),
             warnings: warnings.into_iter().collect(),
         }
+    }
+}
+
+#[cfg(test)]
+mod performance_tests {
+    use super::*;
+
+    #[test]
+    fn dense_mixed_fill_layout_preserves_payloads_and_excluded_children() {
+        let mut document = Document::new("Dense layout");
+        let page = document.pages[0].id;
+        let mut row = Node::new(NodeKind::Frame, "Row", 20.0, 30.0, 10_000.0, 80.0);
+        row.layout = Some(AutoLayout {
+            gap: 1.0,
+            padding: Padding::all(4.0),
+            height: SizingMode::Fixed,
+            ..AutoLayout::default()
+        });
+        let row = document.insert_node(page, row).unwrap();
+        let mut originals = Vec::new();
+        for index in 0..1024 {
+            let mut node = Node::new(NodeKind::Text, format!("Text {index}"),
+                7.0, 9.0, 2.0, 24.0)
+                .with_text("Layout retains café Ω 🚀. ".repeat(32), 16.0, Color::BLACK);
+            if index % 4 != 0 {
+                node.layout_child.width = SizingMode::Fill;
+            }
+            let id = document.insert_node(row, node).unwrap();
+            originals.push(document.nodes[&id].clone());
+        }
+        for absolute in [false, true] {
+            let mut node = Node::new(NodeKind::Rectangle, "Excluded", 700.0, 800.0, 99.0, 100.0);
+            node.visible = absolute;
+            node.layout_child.absolute = absolute;
+            let id = document.insert_node(row, node).unwrap();
+            originals.push(document.nodes[&id].clone());
+        }
+        let result = document.layout_all();
+        assert!(result.warnings.is_empty());
+        let fill_width = (10_000.0 - 8.0 - 1023.0 - 256.0 * 2.0) / 768.0;
+        let mut x = 4.0;
+        for (index, original) in originals.iter().enumerate() {
+            let actual = &document.nodes[&original.id];
+            if index < 1024 {
+                let width = if index % 4 == 0 { 2.0 } else { fill_width };
+                assert!((actual.x - x).abs() < 1e-6);
+                assert!((actual.width - width).abs() < 1e-6);
+                assert_eq!(actual.y, 4.0);
+                x += width + 1.0;
+                let mut payload = actual.clone();
+                payload.x = original.x;
+                payload.y = original.y;
+                payload.width = original.width;
+                payload.height = original.height;
+                assert_eq!(&payload, original);
+            } else {
+                assert_eq!(actual, original);
+                assert!(!result.changed.contains(&original.id));
+            }
+        }
+        assert!((x - 1.0 - 9996.0).abs() < 1e-6);
+        assert!(document.layout_all().changed.is_empty());
+        document.validate().unwrap();
+    }
+
+    #[test]
+    fn no_layout_document_retains_all_content_and_geometry() {
+        let mut document = Document::new("No layout");
+        let page = document.pages[0].id;
+        for index in 0..128 {
+            document.insert_node(page,
+                Node::new(NodeKind::Text, format!("Text {index}"),
+                    index as f64 * 24.0, 90.0, 200.0, 40.0)
+                    .with_text("Unchanged rich content Ω 🚀 ".repeat(64), 18.0, Color::BLACK))
+                .unwrap();
+        }
+        let before = document.to_json().unwrap();
+        assert_eq!(document.layout_all(), LayoutResult::default());
+        assert_eq!(document.to_json().unwrap(), before);
     }
 }

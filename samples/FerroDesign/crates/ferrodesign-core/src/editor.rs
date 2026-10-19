@@ -90,9 +90,17 @@ struct HistoryEntry {
     node_only: bool,
 }
 #[derive(Clone, Debug)]
+enum PendingSnapshot {
+    Document(Document),
+    Nodes {
+        nodes: BTreeMap<NodeId, Node>,
+        metadata: Metadata,
+    },
+}
+#[derive(Clone, Debug)]
 struct PendingTransaction {
     label: String,
-    before: Document,
+    before: PendingSnapshot,
     selection: Vec<NodeId>,
     page: NodeId,
 }
@@ -122,6 +130,7 @@ pub struct Editor {
     previous_nodes: BTreeMap<NodeId, Node>,
     previous_page: NodeId,
     previous_roots: Vec<NodeId>,
+    layout_node_count: usize,
     history_limit: usize,
     paste_count: u32,
 }
@@ -151,6 +160,7 @@ impl Editor {
             previous_nodes: BTreeMap::new(),
             previous_page: 0,
             previous_roots: Vec::new(),
+            layout_node_count: 0,
             history_limit: 100,
             paste_count: 0,
         };
@@ -161,6 +171,10 @@ impl Editor {
         Self::new(seeded_document())
     }
     pub fn refresh(&mut self) {
+        // Full refresh permits arbitrary direct document writes. If a scoped
+        // gesture was open, the last refreshed nodes plus its original captures
+        // reconstruct the complete state before those writes.
+        self.promote_node_transaction(true);
         self.selection
             .retain(|id| self.document.nodes.contains_key(id));
         if self.document.page(self.active_page).is_none() {
@@ -175,9 +189,11 @@ impl Editor {
             || self.previous_nodes.len() != self.document.nodes.len()
             || self.previous_roots != roots;
         let mut geometry_changed = Vec::new();
+        self.layout_node_count = 0;
         self.revision = self.revision.wrapping_add(1);
         self.document.revision = self.revision;
         for (id, n) in &mut self.document.nodes {
+            self.layout_node_count += usize::from(n.layout.is_some());
             let content_changed = self
                 .previous_nodes
                 .get(id)
@@ -233,6 +249,7 @@ impl Editor {
     /// history. Call `refresh` instead when changing pages, document metadata,
     /// node membership, or nodes outside `changed`.
     pub fn refresh_preview_nodes(&mut self, changed: &[NodeId]) {
+        self.capture_pending_nodes(changed, true);
         self.refresh_nodes(changed);
     }
     /// Refresh a known set of node edits without comparing unrelated text,
@@ -255,6 +272,14 @@ impl Editor {
             let Some(node) = self.document.nodes.get_mut(id) else {
                 continue;
             };
+            let had_layout = self.previous_nodes.get(id).is_some_and(|old| old.layout.is_some());
+            if node.layout.is_some() != had_layout {
+                if had_layout {
+                    self.layout_node_count = self.layout_node_count.saturating_sub(1);
+                } else {
+                    self.layout_node_count += 1;
+                }
+            }
             let content_changed = if let Some(old) = self.previous_nodes.get(id) {
                 structural_change |= node.parent != old.parent
                     || node.children != old.children
@@ -299,43 +324,112 @@ impl Editor {
         if self.pending.is_none() {
             self.pending = Some(PendingTransaction {
                 label: label.into(),
-                before: self.document.clone(),
+                before: PendingSnapshot::Document(self.document.clone()),
                 selection: self.selection.clone(),
                 page: self.active_page,
             })
+        } else {
+            self.promote_node_transaction(false);
         }
     }
-    pub fn commit_transaction(&mut self) -> bool {
-        let Some(mut p) = self.pending.take() else {
-            return false;
+    /// Capture a gesture that directly edits only known existing nodes. Preview
+    /// mutations must report their IDs through `refresh_preview_nodes`; generic
+    /// edits and full refreshes promote the snapshot before proceeding. Layout
+    /// can change ancestors and siblings, so any auto-layout document keeps a
+    /// complete snapshot. Creation, hierarchy changes, and resize constraints
+    /// should use `begin_transaction`.
+    pub fn begin_node_transaction(&mut self, ids: &[NodeId], label: impl Into<String>) {
+        if self.layout_node_count != 0
+            || ids.iter().any(|id| !self.document.nodes.contains_key(id))
+        {
+            self.begin_transaction(label);
+            return;
+        }
+        if self.pending.is_some() {
+            self.capture_pending_nodes(ids, false);
+            return;
+        }
+        self.pending = Some(PendingTransaction {
+            label: label.into(),
+            before: PendingSnapshot::Nodes {
+                nodes: ids.iter().filter_map(|id| {
+                    self.document.nodes.get(id).map(|node| (*id, node.clone()))
+                }).collect(),
+                metadata: Metadata::capture(&self.document),
+            },
+            selection: self.selection.clone(),
+            page: self.active_page,
+        });
+    }
+    /// Before a scoped API mutates a new node, capture its current value. A
+    /// direct preview reports after mutation, so use the last refreshed value.
+    fn capture_pending_nodes(&mut self, ids: &[NodeId], preview: bool) {
+        let Some(PendingTransaction {
+            before: PendingSnapshot::Nodes { nodes, .. }, ..
+        }) = &mut self.pending else {
+            return;
         };
-        let mut nodes = BTreeMap::new();
-        let keys: BTreeSet<_> = p
-            .before
-            .nodes
-            .keys()
-            .chain(self.document.nodes.keys())
-            .copied()
-            .collect();
-        for id in keys {
-            let mut before = p.before.nodes.get_mut(&id);
-            let after = self.document.nodes.get(&id);
-            if let (Some(a), Some(b)) = (before.as_deref_mut(), after) {
-                a.revision = b.revision;
-            }
-            let equal = match (before.as_deref(), after) {
-                (Some(a), Some(b)) => a == b,
-                (None, None) => true,
-                _ => false,
-            };
-            if !equal {
-                nodes.insert(id, (before.map(|n| n.clone()), after.cloned()));
+        let source = if preview { &self.previous_nodes } else { &self.document.nodes };
+        for id in ids {
+            if !nodes.contains_key(id) {
+                if let Some(node) = source.get(id) {
+                    nodes.insert(*id, node.clone());
+                }
             }
         }
-        let before = Metadata::capture(&p.before);
+    }
+    fn promote_node_transaction(&mut self, unreported_changes: bool) {
+        let Some(pending) = &mut self.pending else { return };
+        let PendingSnapshot::Nodes { nodes, metadata } = &pending.before else { return };
+        let mut before = self.document.clone();
+        if unreported_changes {
+            before.nodes = self.previous_nodes.clone();
+        }
+        for (id, node) in nodes {
+            before.nodes.insert(*id, node.clone());
+        }
+        metadata.restore(&mut before);
+        pending.before = PendingSnapshot::Document(before);
+    }
+    pub fn commit_transaction(&mut self) -> bool {
+        if self.previous_nodes.len() != self.document.nodes.len() {
+            self.promote_node_transaction(true);
+        }
+        let Some(p) = self.pending.take() else {
+            return false;
+        };
+        let (mut before_nodes, before, scoped) = match p.before {
+            PendingSnapshot::Document(document) => {
+                let metadata = Metadata::capture(&document);
+                (document.nodes, metadata, false)
+            }
+            PendingSnapshot::Nodes { nodes, metadata } => (nodes, metadata, true),
+        };
+        let keys: Vec<_> = if scoped {
+            before_nodes.keys().copied().collect()
+        } else {
+            before_nodes.keys().chain(self.document.nodes.keys())
+                .copied().collect::<BTreeSet<_>>().into_iter().collect()
+        };
+        let mut nodes = BTreeMap::new();
+        for id in keys.iter().copied() {
+            let mut old = before_nodes.remove(&id);
+            let after = self.document.nodes.get(&id);
+            if let (Some(a), Some(b)) = (old.as_mut(), after) {
+                a.revision = b.revision;
+            }
+            if old.as_ref() != after {
+                nodes.insert(id, (old, after.cloned()));
+            }
+        }
         let after = Metadata::capture(&self.document);
+        let node_only = scoped && before == after;
         if nodes.is_empty() && before == after {
-            self.refresh();
+            if node_only {
+                self.refresh_nodes(&keys);
+            } else {
+                self.refresh();
+            }
             return false;
         }
         self.undo.push(HistoryEntry {
@@ -347,21 +441,38 @@ impl Editor {
             selection_after: self.selection.clone(),
             page_before: p.page,
             page_after: self.active_page,
-            node_only: false,
+            node_only,
         });
         if self.undo.len() > self.history_limit {
             self.undo.remove(0);
         }
         self.redo.clear();
-        self.refresh();
+        if node_only {
+            self.refresh_nodes(&keys);
+        } else {
+            self.refresh();
+        }
         true
     }
     pub fn cancel_transaction(&mut self) {
+        if self.previous_nodes.len() != self.document.nodes.len() {
+            self.promote_node_transaction(true);
+        }
         if let Some(p) = self.pending.take() {
-            self.document = p.before;
             self.selection = p.selection;
             self.active_page = p.page;
-            self.refresh()
+            match p.before {
+                PendingSnapshot::Document(before) => {
+                    self.document = before;
+                    self.refresh();
+                }
+                PendingSnapshot::Nodes { nodes, metadata } => {
+                    let changed: Vec<_> = nodes.keys().copied().collect();
+                    self.document.nodes.extend(nodes);
+                    metadata.restore(&mut self.document);
+                    self.refresh_nodes(&changed);
+                }
+            }
         }
     }
     pub fn transact<R>(
@@ -372,6 +483,8 @@ impl Editor {
         let own = self.pending.is_none();
         if own {
             self.begin_transaction(label)
+        } else {
+            self.promote_node_transaction(false);
         }
         let r = operation(&mut self.document);
         if own {
@@ -385,6 +498,8 @@ impl Editor {
         let own = self.pending.is_none();
         if own {
             self.begin_transaction(label)
+        } else {
+            self.promote_node_transaction(false);
         }
         let r = operation(self);
         if own {
@@ -395,16 +510,24 @@ impl Editor {
         r
     }
     /// Internal operations using this path may change only the supplied nodes.
-    /// Existing open transactions remain fully general: direct gesture edits
-    /// and nested operations still use their original complete snapshot.
-    fn edit_nodes<R>(
+    /// Open scoped gestures capture additional nodes before mutation; open
+    /// general transactions retain their original complete snapshot.
+    pub(crate) fn edit_nodes<R>(
         &mut self,
         label: &str,
         ids: &[NodeId],
         operation: impl FnOnce(&mut Self) -> R,
     ) -> R {
         if self.pending.is_some() {
-            return self.edit(label, operation);
+            self.capture_pending_nodes(ids, false);
+            let result = operation(self);
+            if matches!(self.pending.as_ref().map(|pending| &pending.before),
+                Some(PendingSnapshot::Nodes { .. })) {
+                self.refresh_nodes(ids);
+            } else {
+                self.refresh();
+            }
+            return result;
         }
         let before: BTreeMap<_, _> = ids
             .iter()
@@ -672,6 +795,33 @@ impl Editor {
             }
             count
         })
+    }
+    /// Apply inspector changes once per existing node, then preserve normal
+    /// document-wide auto layout when any layout exists or the edit introduces
+    /// one. The cached layout count avoids scanning the document just to choose
+    /// the scoped path; edited values are prepared before capturing history.
+    pub fn update_nodes_with_layout(
+        &mut self,
+        ids: &[NodeId],
+        label: &str,
+        mut update: impl FnMut(&mut Node),
+    ) -> usize {
+        let edits: Vec<_> = ids.iter().copied().collect::<BTreeSet<_>>().into_iter()
+            .filter_map(|id| self.document.nodes.get(&id).cloned().map(|mut node| {
+                update(&mut node);
+                (id, node)
+            })).collect();
+        let count = edits.len();
+        if self.layout_node_count != 0 || edits.iter().any(|(_, node)| node.layout.is_some()) {
+            self.transact(label, |document| {
+                document.nodes.extend(edits);
+                document.layout_all();
+            });
+        } else {
+            let ids: Vec<_> = edits.iter().map(|(id, _)| *id).collect();
+            self.edit_nodes(label, &ids, |editor| editor.document.nodes.extend(edits));
+        }
+        count
     }
     pub fn move_selection(&mut self, dx: f64, dy: f64) {
         if !dx.is_finite() || !dy.is_finite() {
@@ -1766,6 +1916,165 @@ mod performance_tests {
         editor.update_node(child, "Nested text", |node| node.text = "Discard".into());
         editor.cancel_transaction();
         assert_eq!(editor.to_json().unwrap(), edited);
+    }
+
+    #[test]
+    fn scoped_gesture_previews_commit_once_and_cancel_without_full_snapshot() {
+        let (document, frame, child, sibling) = fixture();
+        let mut actual = Editor::new(document.clone());
+        let mut reference = Editor::new(document);
+        actual.selection = vec![frame];
+        reference.selection = actual.selection.clone();
+        let original = actual.to_json().unwrap();
+        actual.begin_node_transaction(&[frame], "Drag frame");
+        reference.begin_transaction("Drag frame");
+        for _ in 0..24 {
+            actual.document.nodes.get_mut(&frame).unwrap().x += 1.0;
+            actual.refresh_preview_nodes(&[frame]);
+            reference.document.nodes.get_mut(&frame).unwrap().x += 1.0;
+            reference.refresh();
+            equivalent(&actual, &reference);
+            assert!(matches!(actual.pending.as_ref().map(|p| &p.before),
+                Some(PendingSnapshot::Nodes { .. })));
+        }
+        // Scoped APIs can add another node to the gesture before changing it.
+        actual.update_node(child, "Nested fill", |node| node.opacity = 0.5);
+        reference.update_node(child, "Nested fill", |node| node.opacity = 0.5);
+        assert!(actual.commit_transaction());
+        assert!(reference.commit_transaction());
+        equivalent(&actual, &reference);
+        assert_eq!(actual.history_len(), 1);
+        assert!(actual.undo());
+        assert!(reference.undo());
+        equivalent(&actual, &reference);
+        assert_eq!(actual.to_json().unwrap(), original);
+        assert!(actual.redo());
+        assert!(reference.redo());
+        equivalent(&actual, &reference);
+        let committed = actual.to_json().unwrap();
+        actual.begin_node_transaction(&[frame], "Canceled drag");
+        actual.document.nodes.get_mut(&frame).unwrap().rotation += 30.0;
+        actual.refresh_preview_nodes(&[frame]);
+        // A late preview report captures the previous value of a newly affected
+        // node rather than capturing its already-mutated value.
+        actual.document.nodes.get_mut(&sibling).unwrap().opacity = 0.25;
+        actual.refresh_preview_nodes(&[sibling]);
+        actual.cancel_transaction();
+        assert_eq!(actual.to_json().unwrap(), committed);
+        equivalent(&actual, &reference);
+        actual.begin_node_transaction(&[frame], "No movement");
+        assert!(!actual.commit_transaction());
+        assert_eq!(actual.history_len(), 1);
+    }
+
+    #[test]
+    fn scoped_gesture_promotes_before_general_edits_and_unreported_full_refresh() {
+        let (document, frame, _, sibling) = fixture();
+        let mut editor = Editor::new(document);
+        let original = editor.to_json().unwrap();
+        editor.begin_node_transaction(&[frame], "Drag then create");
+        editor.document.nodes.get_mut(&frame).unwrap().x += 10.0;
+        editor.refresh_preview_nodes(&[frame]);
+        editor.transact("Create another layer", |document| {
+            document.name = "Combined edit".into();
+            document.insert_node(document.pages[0].id,
+                Node::new(NodeKind::Rectangle, "Added", 10.0, 20.0, 30.0, 40.0)).unwrap();
+        });
+        assert!(matches!(editor.pending.as_ref().map(|p| &p.before),
+            Some(PendingSnapshot::Document(_))));
+        assert!(editor.commit_transaction());
+        let edited = editor.to_json().unwrap();
+        assert!(editor.undo());
+        assert_eq!(editor.to_json().unwrap(), original);
+        assert!(editor.redo());
+        assert_eq!(editor.to_json().unwrap(), edited);
+        assert!(editor.undo());
+
+        editor.begin_node_transaction(&[frame], "Direct document edit");
+        editor.document.nodes.get_mut(&frame).unwrap().x += 12.0;
+        editor.refresh_preview_nodes(&[frame]);
+        editor.document.nodes.get_mut(&sibling).unwrap().text = "Unreported Ω".into();
+        editor.document.name = "Direct metadata".into();
+        editor.refresh();
+        assert!(matches!(editor.pending.as_ref().map(|p| &p.before),
+            Some(PendingSnapshot::Document(_))));
+        assert!(editor.commit_transaction());
+        assert!(editor.undo());
+        assert_eq!(editor.to_json().unwrap(), original);
+    }
+
+    #[test]
+    fn scoped_gesture_uses_full_snapshot_for_nested_auto_layout() {
+        let (mut document, frame, child, _) = fixture();
+        document.nodes.get_mut(&frame).unwrap().layout = Some(AutoLayout {
+            width: SizingMode::Hug,
+            ..AutoLayout::default()
+        });
+        document.nodes.get_mut(&child).unwrap().kind = NodeKind::Frame;
+        document.nodes.get_mut(&child).unwrap().layout = Some(AutoLayout {
+            width: SizingMode::Hug,
+            ..AutoLayout::default()
+        });
+        let leaf = document.insert_node(child,
+            Node::new(NodeKind::Rectangle, "Nested", 0.0, 0.0, 40.0, 20.0)).unwrap();
+        document.layout_all();
+        let mut editor = Editor::new(document);
+        let original = editor.to_json().unwrap();
+        editor.begin_node_transaction(&[leaf], "Layout resize");
+        assert!(matches!(editor.pending.as_ref().map(|p| &p.before),
+            Some(PendingSnapshot::Document(_))));
+        editor.document.nodes.get_mut(&leaf).unwrap().width += 100.0;
+        editor.document.layout_all();
+        editor.refresh();
+        assert!(editor.commit_transaction());
+        assert!(editor.undo());
+        assert_eq!(editor.to_json().unwrap(), original);
+        editor.begin_node_transaction(&[leaf], "Cancel layout resize");
+        editor.document.nodes.get_mut(&leaf).unwrap().height += 100.0;
+        editor.document.layout_all();
+        editor.refresh();
+        editor.cancel_transaction();
+        assert_eq!(editor.to_json().unwrap(), original);
+    }
+
+    #[test]
+    fn inspector_scope_preserves_introduced_layout_and_cached_layout_history() {
+        let (document, frame, child, sibling) = fixture();
+        let mut editor = Editor::new(document);
+        let mut calls = 0;
+        assert_eq!(editor.update_nodes_with_layout(&[sibling, sibling], "Opacity", |node| {
+            calls += 1;
+            node.opacity = 0.5;
+        }), 1);
+        assert_eq!(calls, 1);
+        assert!(editor.undo.last().unwrap().node_only);
+        assert_eq!(editor.layout_node_count, 0);
+        let before_layout = editor.to_json().unwrap();
+        editor.update_nodes_with_layout(&[frame], "Add layout", |node| {
+            node.layout = Some(AutoLayout {
+                width: SizingMode::Hug,
+                ..AutoLayout::default()
+            });
+        });
+        assert!(!editor.undo.last().unwrap().node_only);
+        assert_eq!(editor.layout_node_count, 1);
+        assert_eq!(editor.document.nodes[&child].x, 16.0);
+        let with_layout = editor.to_json().unwrap();
+        assert!(editor.undo());
+        assert_eq!(editor.layout_node_count, 0);
+        assert_eq!(editor.to_json().unwrap(), before_layout);
+        assert!(editor.redo());
+        assert_eq!(editor.layout_node_count, 1);
+        assert_eq!(editor.to_json().unwrap(), with_layout);
+        editor.update_nodes_with_layout(&[child], "Resize layout child", |node| node.width += 40.0);
+        assert!(!editor.undo.last().unwrap().node_only);
+        assert_eq!(editor.document.nodes[&frame].width, editor.document.nodes[&child].width + 32.0);
+        assert!(editor.undo());
+        assert_eq!(editor.to_json().unwrap(), with_layout);
+        editor.update_node(frame, "Remove layout", |node| node.layout = None);
+        assert_eq!(editor.layout_node_count, 0);
+        assert!(editor.undo());
+        assert_eq!(editor.layout_node_count, 1);
     }
 
     #[test]
