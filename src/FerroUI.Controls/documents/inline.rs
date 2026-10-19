@@ -55,9 +55,7 @@ impl FerroObjectImpl for Inline {
 
         match change.property().name() {
             "TextDecorations" | "BaselineAlignment" => {
-                if let Some(host) = this.inline_host() {
-                    host.invalidate();
-                }
+                this.invalidate_format_change(change);
             }
             _ => {}
         }
@@ -106,6 +104,16 @@ ferroui_base::ferro_properties! { impl Inline {
 } }
 
 impl Inline {
+    fn invalidate_decoration_change(&self) {
+        if let Some(host) = self.inline_host() {
+            if self.get_base_value(Self::text_decorations_property()).is_some() {
+                host.invalidate();
+            } else {
+                host.invalidate_layout();
+            }
+        }
+    }
+
     /// Creates the class data; see [`ferroui_base::FerroObject::construct`].
     pub fn construct() -> Self {
         Self {
@@ -127,9 +135,7 @@ impl Inline {
         subscriptions.push(decorations.collection_changed(move |_| {
             if let Some(inline) = weak.upgrade() {
                 inline.refresh_decoration_subscriptions();
-                if let Some(host) = inline.inline_host() {
-                    host.invalidate();
-                }
+                inline.invalidate_decoration_change();
             }
         }));
         for decoration in decorations.iter() {
@@ -137,16 +143,14 @@ impl Inline {
             subscriptions.push(decoration.property_changed(move |_| {
                 if let Some(inline) = weak.upgrade() {
                     inline.refresh_decoration_subscriptions();
-                    if let Some(host) = inline.inline_host() {
-                        host.invalidate();
-                    }
+                    inline.invalidate_decoration_change();
                 }
             }));
             if let Some(dashes) = decoration.stroke_dash_array() {
                 let weak = self.to_ref().downgrade();
                 subscriptions.push(dashes.collection_changed(move |_| {
-                    if let Some(host) = weak.upgrade().and_then(|inline| inline.inline_host()) {
-                        host.invalidate();
+                    if let Some(inline) = weak.upgrade() {
+                        inline.invalidate_decoration_change();
                     }
                 }));
             }

@@ -48,6 +48,19 @@ Pointers created midway through a batch track only subsequent edits, so ending
 the batch cannot apply an earlier edit to them twice. The tests for these boundaries are in
 [rich_text_document_tests.rs](../../../src/FerroUI.Controls/documents/rich_text_document_tests.rs).
 
+Inherited presentation changes rebuild formatted text without changing the stored
+document's revision or composition identity. The property system reports explicit
+inheritance provenance because clearing a local value can also produce a value
+with inherited priority. `TextElement`, `Inline`, `Block` and `Paragraph` use that
+provenance to choose `IInlineHost::invalidate_layout`; the block collection forwards
+it to the view without publishing a document edit. Local document formatting still
+publishes semantic invalidation, including inside an open edit batch. Inherited
+mutable feature and decoration collections take the same layout-only route;
+locally assigned collections remain document formatting. Snapshots capture base
+values rather than flattening parent presentation, so undo restores content that
+continues to inherit the current theme. See RT-I14 and
+[presentation invalidation tests](../../../src/FerroUI.Controls/documents/rich_presentation_invalidation_tests.rs).
+
 ## Construct a rich document
 
 ```rust

@@ -253,6 +253,16 @@ impl IInlineHost for BlockInlineHost {
         }
     }
 
+    fn invalidate_layout(&self) {
+        let host = self
+            .0
+            .upgrade()
+            .and_then(|data| data.inline_host.borrow().clone());
+        if let Some(host) = host {
+            host.invalidate_layout();
+        }
+    }
+
     fn with_visual_children(&self, f: &mut dyn FnMut(&FerroList<Ref<Visual>>)) {
         let host = self
             .0

@@ -12,6 +12,10 @@ pub trait IInlineHost {
     /// Invalidates the text of the host.
     fn invalidate(&self);
 
+    /// Rebuilds formatted text after inherited presentation changes. Document
+    /// collection hosts forward this to the view without publishing a model edit.
+    fn invalidate_layout(&self) { self.invalidate(); }
+
     /// Invalidates interaction visuals without changing document content or
     /// formatted text. A host with separate drawing invalidation overrides it.
     fn invalidate_render(&self) { self.invalidate(); }

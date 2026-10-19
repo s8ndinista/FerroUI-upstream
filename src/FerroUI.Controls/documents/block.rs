@@ -59,9 +59,7 @@ impl FerroObjectImpl for Block {
             change.property().name(),
             "TextAlignment" | "LineHeight" | "LineStackingStrategy" | "Margin" | "FlowDirection"
         ) {
-            if let Some(host) = this.inline_host() {
-                host.invalidate();
-            }
+            this.invalidate_format_change(change);
         }
     }
 }

@@ -190,3 +190,33 @@ published presenter, streams, native-valued units, immediate pointers, inherited
 language and TextEdit behavior. The previous Cluster/grapheme equivalence claim
 has been removed. Twenty complete entries are enum fields; no source file or
 entire rich-text subsystem is declared complete by that count.
+
+## Inherited presentation versus document edits — 2026-10-19
+
+The first complete WinUI theme run reached 293 passing tests but failed the new
+opened rich-editor command-flyout test: undo was disabled after the theme was
+applied. A diagnostic assertion localized the loss before the flyout opened.
+The source trace was `TextElement` inherited font/foreground invalidation through
+`BlockInlineHost`, followed by a document revision and invalidation of editor
+history. The same path could invalidate an accepted composition when focus or
+theme presentation changed.
+
+The fix adds inheritance provenance to borrowed and owned property-change
+arguments, independently of resulting binding priority. Ancestor propagation and
+inheritance-parent changes set this flag; clearing a local document value does
+not, even when the new effective value is inherited. A separate inline-host
+layout route now reaches the view without notifying document observers. Local
+formatting remains a semantic mutation. Inherited feature and decoration
+collections use the same distinction. Existing snapshot capture already used
+base values, so it retains inheritance across undo rather than freezing the
+previous theme into restored runs.
+
+`cargo test --locked --offline -p ferroui-controls --lib rich_ --no-fail-fast`
+passed **276 tests, zero failures**, including four new regressions covering
+preview/history retention, actual layout refresh, inherited mutable formatting,
+and local formatting inside a model batch. The Base `--lib inheritance` command
+passed **34 tests, zero failures**, including assertions distinguishing parent
+propagation from clearing a local value and checking owned arguments. Only
+formatting of the new test file followed these runs. The real-theme rerun and
+the remaining theme/markup/workspace gates are recorded in their own subsequent
+checkpoint; these focused results do not establish those gates.

@@ -49,9 +49,7 @@ impl FerroObjectImpl for Paragraph {
             || change.property() == Self::left_indent_property().as_property()
             || change.property() == Self::right_indent_property().as_property()
         {
-            if let Some(host) = this.inline_host() {
-                host.invalidate();
-            }
+            this.invalidate_format_change(change);
         }
     }
 }

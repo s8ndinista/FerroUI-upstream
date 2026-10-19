@@ -14,6 +14,10 @@ use ferroui_base::{
 use std::cell::RefCell;
 use std::rc::Rc;
 
+#[cfg(test)]
+#[path = "rich_presentation_invalidation_tests.rs"]
+mod rich_presentation_invalidation_tests;
+
 /// `TextElement` is the base class for content in text based controls.
 /// It also defines the inherited font and foreground attached properties
 /// used by every control that displays text.
@@ -55,9 +59,7 @@ impl FerroObjectImpl for TextElement {
         match change.property().name() {
             "Background" | "FontFamily" | "FontSize" | "FontStyle" | "FontWeight"
             | "FontStretch" | "Foreground" | "FontFeatures" | "LetterSpacing" | "Language" => {
-                if let Some(host) = this.inline_host() {
-                    host.invalidate();
-                }
+                this.invalidate_format_change(change);
             }
             _ => {}
         }
@@ -187,6 +189,16 @@ ferroui_base::ferro_properties! { impl TextElement {
 } }
 
 impl TextElement {
+    pub(crate) fn invalidate_format_change(&self, change: &FerroPropertyChangedEventArgs<'_>) {
+        if let Some(host) = self.inline_host() {
+            if change.is_inherited_value_change() {
+                host.invalidate_layout();
+            } else {
+                host.invalidate();
+            }
+        }
+    }
+
     /// Gets the assigned or inherited language before empty-tag resolution.
     pub fn language(&self) -> CultureInfo {
         self.get_value(Self::language_property())
@@ -219,8 +231,14 @@ impl TextElement {
         if let Some(features) = self.font_features() {
             let weak = self.to_ref().downgrade();
             subscriptions.push(features.collection_changed(move |_| {
-                if let Some(host) = weak.upgrade().and_then(|element| element.inline_host()) {
-                    host.invalidate();
+                if let Some(element) = weak.upgrade() {
+                    if let Some(host) = element.inline_host() {
+                        if element.get_base_value(Self::font_features_property()).is_some() {
+                            host.invalidate();
+                        } else {
+                            host.invalidate_layout();
+                        }
+                    }
                 }
             }));
         }
