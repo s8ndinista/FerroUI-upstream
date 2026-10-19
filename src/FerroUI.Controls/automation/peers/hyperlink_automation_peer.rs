@@ -4,13 +4,12 @@
 use super::{AutomationControlType, AutomationPeer, AutomationPeerImpl, ControlAutomationPeer};
 use crate::automation::provider::{
     IInvokeProvider, ITextChildProvider, ITextRangeProvider, ProviderAdapter, ProviderError,
-    RichTextAutomationState, TextProviderError,
+    RichTextAutomationHost, RichTextAutomationState, TextProviderError,
 };
 use crate::automation::{
     AccessibilityView, AutomationLiveSetting, AutomationProperties, ElementNotEnabledException,
 };
 use crate::documents::Hyperlink;
-use crate::RichTextBlock;
 use ferroui_base::{ferro_class, instantiate, FerroObjectImpl, Rect, Ref, WeakRef};
 use std::cell::RefCell;
 use std::rc::{Rc, Weak};
@@ -22,7 +21,7 @@ use std::rc::{Rc, Weak};
 pub struct HyperlinkAutomationPeer {
     base: AutomationPeer,
     owner: WeakRef<Hyperlink>,
-    view: WeakRef<RichTextBlock>,
+    host: RichTextAutomationHost,
     container: WeakRef<AutomationPeer>,
     parent: RefCell<Option<WeakRef<AutomationPeer>>>,
     state: Weak<RichTextAutomationState>,
@@ -71,15 +70,14 @@ impl AutomationPeerImpl for HyperlinkAutomationPeer {
             .unwrap_or_default()
     }
     fn get_or_create_children_core(this: &Self) -> Rc<Vec<Ref<AutomationPeer>>> {
-        let (Some(view), Some(container), Some(state), Some(link)) = (
-            this.view.upgrade(),
+        let (Some(container), Some(state), Some(link)) = (
             this.container.upgrade(),
             this.state.upgrade(),
             this.try_owner(),
         ) else {
             return Rc::new(Vec::new());
         };
-        state.children(&view, &container, Some(&link))
+        state.children(&this.host, &container, Some(&link))
     }
     fn get_class_name_core(_this: &Self) -> String {
         "Hyperlink".to_owned()
@@ -112,7 +110,9 @@ impl AutomationPeerImpl for HyperlinkAutomationPeer {
         this.parent.borrow().as_ref().and_then(WeakRef::upgrade)
     }
     fn has_keyboard_focus_core(this: &Self) -> bool {
-        this.try_owner().is_some_and(|link| link.is_focused()) && this.text_range().is_ok()
+        this.host.has_focus()
+            && this.try_owner().is_some_and(|link| link.is_focused())
+            && this.text_range().is_ok()
     }
     fn is_content_element_core(this: &Self) -> bool {
         this.try_owner().is_some_and(|link| {
@@ -130,9 +130,7 @@ impl AutomationPeerImpl for HyperlinkAutomationPeer {
     fn is_enabled_core(this: &Self) -> bool {
         // FerroUI hyperlinks have an explicit IsEnabled property, unlike the
         // pinned WinUI peer's unconditional true. Honor both it and the host.
-        this.view
-            .upgrade()
-            .is_some_and(|view| view.is_effectively_enabled())
+        this.host.is_enabled()
             && this.try_owner().is_some_and(|link| link.is_enabled())
             && this.text_range().is_ok()
     }
@@ -146,22 +144,23 @@ impl AutomationPeerImpl for HyperlinkAutomationPeer {
         if !this.is_keyboard_focusable() {
             return;
         }
-        let (Some(view), Some(link), Ok(range)) =
-            (this.view.upgrade(), this.try_owner(), this.text_range())
-        else {
+        let (Some(link), Ok(range)) = (this.try_owner(), this.text_range()) else {
             return;
         };
         let (Some(container), Some(state)) = (this.container.upgrade(), this.state.upgrade())
         else {
             return;
         };
-        let Ok(bounds) = state.range_bounds_for_child(&view, &container, &this.to_ref().upcast())
+        let Ok(bounds) =
+            state.range_bounds_for_child(&this.host, &container, &this.to_ref().upcast())
         else {
             return;
         };
-        let host = view.text_view_for_position(bounds.start).unwrap_or(view);
-        if host.focus() {
-            host.focus_hyperlink(Some(link));
+        if this
+            .host
+            .focus_hyperlink(link, bounds.start)
+            .unwrap_or(false)
+        {
             let _ = range.scroll_into_view(true);
         }
     }
@@ -213,7 +212,7 @@ impl AutomationPeerImpl for HyperlinkAutomationPeer {
 
 impl HyperlinkAutomationPeer {
     pub(crate) fn new(
-        view: &Ref<RichTextBlock>,
+        host: RichTextAutomationHost,
         container: &Ref<AutomationPeer>,
         owner: &Ref<Hyperlink>,
         state: Weak<RichTextAutomationState>,
@@ -221,7 +220,7 @@ impl HyperlinkAutomationPeer {
         instantiate(Self {
             base: AutomationPeer::construct(),
             owner: owner.downgrade(),
-            view: view.downgrade(),
+            host,
             container: container.downgrade(),
             parent: RefCell::new(Some(container.downgrade())),
             state,
@@ -240,10 +239,6 @@ impl HyperlinkAutomationPeer {
     }
 
     pub fn text_range(&self) -> Result<Rc<dyn ITextRangeProvider>, ProviderError> {
-        let view = self
-            .view
-            .upgrade()
-            .ok_or(TextProviderError::ElementNotAvailable)?;
         let container = self
             .container
             .upgrade()
@@ -252,7 +247,7 @@ impl HyperlinkAutomationPeer {
             .state
             .upgrade()
             .ok_or(TextProviderError::ElementNotAvailable)?;
-        state.range_for_child(&view, &container, &self.to_ref().upcast())
+        state.range_for_child(&self.host, &container, &self.to_ref().upcast())
     }
 
     pub fn invoke(&self) -> Result<(), ElementNotEnabledException> {

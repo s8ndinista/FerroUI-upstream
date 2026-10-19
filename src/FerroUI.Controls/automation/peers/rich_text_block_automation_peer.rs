@@ -3,7 +3,8 @@ use super::{
     ControlAutomationPeerImpl,
 };
 use crate::automation::provider::{
-    ITextProvider, ITextProvider2, ProviderAdapter, RichTextAutomationPeer, RichTextAutomationState,
+    ITextProvider, ITextProvider2, ProviderAdapter, RichTextAutomationHost, RichTextAutomationPeer,
+    RichTextAutomationState,
 };
 use crate::RichTextBlock;
 use ferroui_base::{ferro_class, instantiate, FerroObjectImpl, FerroObjectImplExt, Ref};
@@ -38,18 +39,20 @@ impl AutomationPeerImpl for RichTextBlockAutomationPeer {
         Some(this.owner().document().text())
     }
     fn get_or_create_children_core(this: &Self) -> Rc<Vec<Ref<AutomationPeer>>> {
-        this.text_owner().map_or_else(
+        this.text_host().map_or_else(
             || Rc::new(Vec::new()),
-            |view| {
+            |host| {
                 this.text_automation
-                    .children(&view, &this.text_peer(), None)
+                    .children(&host, &this.text_peer(), None)
             },
         )
     }
 }
 impl RichTextAutomationPeer for RichTextBlockAutomationPeer {
-    fn text_owner(&self) -> Option<Ref<RichTextBlock>> {
-        ControlAutomationPeer::try_owner(self).and_then(|owner| owner.cast())
+    fn text_host(&self) -> Option<RichTextAutomationHost> {
+        ControlAutomationPeer::try_owner(self)
+            .and_then(|owner| owner.cast::<RichTextBlock>())
+            .map(|view| RichTextAutomationHost::Block(view.downgrade()))
     }
     fn text_peer(&self) -> Ref<AutomationPeer> {
         self.to_ref().upcast()

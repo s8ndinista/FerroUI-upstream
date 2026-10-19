@@ -2,13 +2,13 @@ use super::{TextElement, TextElementImpl};
 use crate::Control;
 use ferroui_base::media::text_formatting::{GenericTextRunProperties, TextRun, TextRunProperties};
 use ferroui_base::media::{
-    BaselineAlignment, IBrush, TextDecorationCollection, Typeface, subscribe_invalidated,
+    subscribe_invalidated, BaselineAlignment, IBrush, TextDecorationCollection, Typeface,
 };
 use ferroui_base::reactive::IDisposable;
 use ferroui_base::{
-    AttachedProperty, FerroObjectImpl, FerroObjectImplExt, FerroProperty,
-    FerroPropertyChangedEventArgs, Size, StyledElementImpl, StyledProperty, StyledPropertyOptions,
-    ferro_class, ferro_property,
+    ferro_class, ferro_property, AttachedProperty, FerroObjectImpl, FerroObjectImplExt,
+    FerroProperty, FerroPropertyChangedEventArgs, Size, StyledElementImpl, StyledProperty,
+    StyledPropertyOptions,
 };
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -221,7 +221,7 @@ impl Inline {
             self.foreground(),
             parent_or_self_background,
             self.baseline_alignment(),
-            None,
+            Some(self.resolved_language()),
             self.font_features(),
         ))
     }

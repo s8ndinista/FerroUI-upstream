@@ -133,6 +133,7 @@ struct RichTextDocumentData {
     blocks: BlockCollection,
     revision: Cell<u64>,
     changed: Rc<HandlerList<dyn Fn(&DocumentChangedEventArgs)>>,
+    position_changed: Rc<HandlerList<dyn Fn(&DocumentTextChange)>>,
     cached_text: RefCell<Rc<str>>,
     observed_text: RefCell<Rc<str>>,
     text_changes: RefCell<Vec<DocumentTextChange>>,
@@ -202,6 +203,7 @@ impl RichTextDocument {
             blocks,
             revision: Cell::new(0),
             changed: Rc::new(HandlerList::new()),
+            position_changed: Rc::new(HandlerList::new()),
             cached_text: RefCell::new(text.clone()),
             observed_text: RefCell::new(text),
             text_changes: RefCell::new(Vec::new()),
@@ -272,6 +274,22 @@ impl RichTextDocument {
     ) -> Rc<dyn IDisposable> {
         let token = self.0.changed.add(Rc::new(handler));
         let weak = Rc::downgrade(&self.0.changed);
+        Disposable::create(move || {
+            if let Some(handlers) = weak.upgrade() {
+                handlers.remove(token);
+            }
+        })
+    }
+
+    /// Internal position tracking runs at each completed model replacement. The
+    /// public Changed event stays batched, but pointers must already address the
+    /// current text when another pointer is created or used inside that batch.
+    pub(super) fn position_changed(
+        &self,
+        handler: impl Fn(&DocumentTextChange) + 'static,
+    ) -> Rc<dyn IDisposable> {
+        let token = self.0.position_changed.add(Rc::new(handler));
+        let weak = Rc::downgrade(&self.0.position_changed);
         Disposable::create(move || {
             if let Some(handlers) = weak.upgrade() {
                 handlers.remove(token);
@@ -749,10 +767,18 @@ impl RichTextDocument {
         let previous = self.0.observed_text.replace(Rc::from(text.as_str()));
         if previous.as_ref() != text {
             let (range, inserted_length) = changed_range(&previous, &text);
-            self.0.text_changes.borrow_mut().push(DocumentTextChange {
+            let change = DocumentTextChange {
                 range,
                 inserted_length,
-            });
+            };
+            self.0.text_changes.borrow_mut().push(change.clone());
+            // These handlers are private pointer bookkeeping, with no application
+            // callbacks. Apply each replacement once before public notifications;
+            // a pointer created afterwards starts in the new coordinates and must
+            // not replay this replacement when the enclosing batch is published.
+            for (_, handler) in self.0.position_changed.snapshot().iter() {
+                handler(&change);
+            }
         }
     }
 

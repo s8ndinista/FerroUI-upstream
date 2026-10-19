@@ -64,6 +64,117 @@ fn ready<T>(future: impl Future<Output = T>) -> T {
     }
 }
 
+/// A concrete test template using the same named parts and content-host contract
+/// as the production themes. Tests retain a TestRoot so template bindings and
+/// normal content-presenter attachment run through the framework lifecycle.
+pub(crate) fn rich_edit_box_template() -> std::rc::Rc<dyn crate::templates::IControlTemplate> {
+    use crate::presenters::{ContentPresenter, ScrollContentPresenter};
+    use crate::primitives::TemplatedControl;
+    use crate::templates::{FuncControlTemplate, FuncTemplateNameScopeExtensions};
+    use crate::{ContentControl, Grid, RowDefinitions, ScrollViewer, TextBlock};
+    use ferroui_base::data::TemplateBinding;
+    use ferroui_base::media::TextWrapping;
+    use ferroui_base::{FerroProperty, Thickness};
+
+    FuncControlTemplate::for_type::<RichEditBox>(|_, scope| {
+        let grid = Grid::new();
+        grid.set_row_definitions(RowDefinitions::parse("Auto,*,Auto").unwrap());
+        let header = ContentPresenter::new();
+        header.set_name(Some("HeaderContentPresenter".to_owned()));
+        header.set_margin(Thickness::new(0.0, 0.0, 0.0, 8.0));
+        header.set_text_wrapping(TextWrapping::Wrap);
+        header.set_font_weight(FontWeight::Normal);
+        header.bind_binding(
+            ContentPresenter::content_property().as_property(),
+            &TemplateBinding::new(RichEditBox::header_property().as_property()),
+        );
+        header.bind_binding(
+            ContentPresenter::content_template_property().as_property(),
+            &TemplateBinding::new(RichEditBox::header_template_property().as_property()),
+        );
+        grid.children().add(header.register_in_name_scope(&**scope));
+
+        let content = ScrollViewer::new();
+        content.set_name(Some("ContentElement".to_owned()));
+        content.set_focusable(false);
+        content.set_is_tab_stop(false);
+        content.bind_binding(
+            TemplatedControl::padding_property().as_property(),
+            &TemplateBinding::new(
+                crate::primitives::TemplatedControl::padding_property().as_property(),
+            ),
+        );
+        content.set_template(Some(FuncControlTemplate::for_type::<ScrollViewer>(
+            |_, scope| {
+                let presenter = ScrollContentPresenter::new();
+                presenter.set_name(Some("PART_ContentPresenter".to_owned()));
+                presenter.set_can_horizontally_scroll(true);
+                presenter.set_can_vertically_scroll(true);
+                for property in [
+                    ContentControl::content_property().as_property(),
+                    TemplatedControl::padding_property().as_property(),
+                ] {
+                    presenter.bind_binding(property, &TemplateBinding::new(property));
+                }
+                presenter.register_in_name_scope(&**scope).upcast()
+            },
+        )));
+        Grid::set_row(&content, 1);
+        grid.children()
+            .add(content.register_in_name_scope(&**scope));
+
+        let placeholder = TextBlock::new();
+        placeholder.set_name(Some("PlaceholderTextContentPresenter".to_owned()));
+        placeholder.set_is_hit_test_visible(false);
+        let bind = |target: &'static FerroProperty, source: &'static FerroProperty| {
+            placeholder.bind_binding(target, &TemplateBinding::new(source));
+        };
+        bind(
+            TextBlock::text_property().as_property(),
+            RichEditBox::placeholder_text_property().as_property(),
+        );
+        bind(
+            TextBlock::foreground_property().as_property(),
+            RichEditBox::placeholder_foreground_property().as_property(),
+        );
+        bind(
+            TextBlock::padding_property().as_property(),
+            crate::primitives::TemplatedControl::padding_property().as_property(),
+        );
+        bind(
+            TextBlock::text_alignment_property().as_property(),
+            RichEditBox::text_alignment_property().as_property(),
+        );
+        bind(
+            TextBlock::text_wrapping_property().as_property(),
+            RichEditBox::text_wrapping_property().as_property(),
+        );
+        Grid::set_row(&placeholder, 1);
+        grid.children()
+            .add(placeholder.register_in_name_scope(&**scope));
+
+        let description = ContentPresenter::new();
+        description.set_name(Some("DescriptionPresenter".to_owned()));
+        description.bind_binding(
+            ContentPresenter::content_property().as_property(),
+            &TemplateBinding::new(RichEditBox::description_property().as_property()),
+        );
+        Grid::set_row(&description, 2);
+        grid.children()
+            .add(description.register_in_name_scope(&**scope));
+        grid.upcast()
+    })
+}
+
+fn rich_edit_layout(root: &crate::test_support::TestRoot, size: Size) {
+    root.set_client_size(size);
+    root.measure(size);
+    root.arrange(Rect::from_size(size));
+    // Child invalidations are queued on the normal layout manager. They need
+    // not synchronously invalidate a still-valid owning templated control.
+    root.layout_manager().execute_layout_pass();
+}
+
 #[test]
 fn rich_edit_undo_restores_nested_inline_structure_and_paragraph_format() {
     let _scope = Dispatcher::unit_test_scope();
@@ -463,9 +574,10 @@ fn rich_edit_framework_clipboard_preserves_exact_in_process_snapshot() {
 fn rich_edit_control_uses_document_layout_and_native_input_method_projection() {
     let _scope = crate::test_support::test_scope();
     let editor = RichEditBox::new();
+    editor.set_template(Some(rich_edit_box_template()));
+    let _root = crate::test_support::TestRoot::with_child(editor.clone());
     editor.set_text("hello\nworld").unwrap();
-    editor.measure(Size::new(200.0, 100.0));
-    editor.arrange(Rect::new(0.0, 0.0, 200.0, 100.0));
+    rich_edit_layout(&_root, Size::new(200.0, 100.0));
     editor.select(1, 4);
     let input = editor.text_input_method_client();
     assert_eq!(input.surrounding_text(), "hello\nworld");
@@ -603,23 +715,23 @@ fn rich_edit_range_replacement_rebases_independent_selection_and_undoes_once() {
 }
 
 #[test]
-fn rich_edit_text_unit_movement_preserves_graphemes_and_directed_selection() {
+fn rich_edit_text_unit_movement_preserves_scalars_and_directed_selection() {
     let _scope = Dispatcher::unit_test_scope();
     let services = RichEditTextDocument::new(RichTextDocument::from_text("A😀e\u{301} Z"));
     let range = services.get_range(1, 3).unwrap();
     assert_eq!(range.move_by(TextRangeUnit::Character, 0).unwrap(), 0);
     assert_eq!(range.range(), 1..3);
     assert_eq!(range.move_by(TextRangeUnit::Character, 1).unwrap(), 1);
-    assert_eq!(range.range(), 5..5);
+    assert_eq!(range.range(), 3..3);
     range.move_start(TextRangeUnit::Character, -1).unwrap();
-    assert_eq!(range.text().unwrap(), "e\u{301}");
+    assert_eq!(range.text().unwrap(), "😀");
     services.selection().set_range(5, 5).unwrap();
     services
         .selection()
         .move_by(TextRangeUnit::Character, -2, true)
         .unwrap();
-    assert_eq!(services.selection().selection(), EditorSelection::new(5, 1));
-    assert_eq!(services.selection().text().unwrap(), "😀e\u{301}");
+    assert_eq!(services.selection().selection(), EditorSelection::new(5, 3));
+    assert_eq!(services.selection().text().unwrap(), "e\u{301}");
 }
 
 #[test]
@@ -731,6 +843,8 @@ fn rich_edit_collapsed_typing_format_is_used_until_the_caret_moves() {
 fn rich_edit_control_text_services_share_selection_history_and_visual_geometry() {
     let _scope = crate::test_support::test_scope();
     let control = RichEditBox::new();
+    control.set_template(Some(rich_edit_box_template()));
+    let _root = crate::test_support::TestRoot::with_child(control.clone());
     control.set_text("hello world").unwrap();
     let services = control.text_document();
     services.selection().set_range(1, 4).unwrap();
@@ -738,16 +852,18 @@ fn rich_edit_control_text_services_share_selection_history_and_visual_geometry()
     services.selection().type_text("i").unwrap();
     assert_eq!(control.text(), "hio world");
     assert_eq!(control.caret_index(), 2);
-    control.measure(Size::new(200.0, 100.0));
-    control.arrange(Rect::new(0.0, 0.0, 200.0, 100.0));
+    rich_edit_layout(&_root, Size::new(200.0, 100.0));
     let range = services.get_range(0, 2).unwrap();
     assert!(range
-        .get_rectangles(&control)
+        .get_rectangles(&control.text_presenter())
         .unwrap()
         .iter()
         .any(|rect| rect.width > 0.0 && rect.height > 0.0));
     let position = services
-        .get_range_from_point(&control, control.cursor_rectangle().top_left())
+        .get_range_from_point(
+            &control.text_presenter(),
+            control.text_presenter().cursor_rectangle().top_left(),
+        )
         .unwrap();
     assert!(position.start_position() <= services.text_length());
     let unrelated = crate::RichTextBlock::new();
@@ -1078,10 +1194,10 @@ fn rich_edit_caret_timer_blinks_resets_after_input_and_stops_for_selection_or_bl
     use ferroui_base::input::{FocusChangedEventArgs, InputElement};
     let _scope = crate::test_support::test_scope();
     let editor = RichEditBox::new();
+    editor.set_template(Some(rich_edit_box_template()));
     editor.set_text("text").unwrap();
     let root = crate::test_support::TestRoot::with_child(editor.clone());
-    root.measure(Size::new(200.0, 80.0));
-    root.arrange(Rect::new(0.0, 0.0, 200.0, 80.0));
+    rich_edit_layout(&root, Size::new(200.0, 80.0));
     editor.raise_event(&FocusChangedEventArgs::new(InputElement::got_focus_event()));
     assert!(editor.is_focused());
     assert!(editor.caret_visible());
@@ -1111,10 +1227,10 @@ fn rich_edit_zero_caret_interval_is_steady_and_detaching_stops_the_timer() {
     use ferroui_base::input::{FocusChangedEventArgs, InputElement};
     let _scope = crate::test_support::test_scope();
     let editor = RichEditBox::new();
+    editor.set_template(Some(rich_edit_box_template()));
     editor.set_caret_blink_interval(TimeSpan::ZERO);
     let root = crate::test_support::TestRoot::with_child(editor.clone());
-    root.measure(Size::new(200.0, 80.0));
-    root.arrange(Rect::new(0.0, 0.0, 200.0, 80.0));
+    rich_edit_layout(&root, Size::new(200.0, 80.0));
     let before = Dispatcher::timers_for_unit_tests().len();
     editor.raise_event(&FocusChangedEventArgs::new(InputElement::got_focus_event()));
     assert!(editor.caret_visible());
@@ -1535,7 +1651,7 @@ fn rich_edit_selection_property_keyboard_and_ime_requests_share_cancellation() {
         seen.set(seen.get() + 1);
         args.set_cancel(true);
     });
-    editor.set_direct_value(crate::RichTextBlock::selection_end_property(), 3);
+    editor.set_direct_value(RichEditBox::selection_end_property(), 3);
     let mut key = KeyEventArgs::new();
     key.key = Key::Right;
     key.key_modifiers = KeyModifiers::NONE;
@@ -1634,10 +1750,11 @@ fn rich_edit_header_description_and_placeholder_use_framework_visuals_and_shared
     use ferroui_base::{Point, Thickness};
     let _scope = crate::test_support::test_scope();
     let editor = RichEditBox::new();
+    editor.set_template(Some(rich_edit_box_template()));
+    let _root = crate::test_support::TestRoot::with_child(editor.clone());
     editor.set_padding(Thickness::new(3.0, 5.0, 7.0, 11.0));
     editor.set_text("abc").unwrap();
-    editor.measure(Size::new(300.0, 200.0));
-    editor.arrange(Rect::new(0.0, 0.0, 300.0, 200.0));
+    rich_edit_layout(&_root, Size::new(300.0, 200.0));
     let original = editor.get_rect_from_character_index(1);
     let header = Border::new();
     header.set_width(90.0);
@@ -1648,8 +1765,7 @@ fn rich_edit_header_description_and_placeholder_use_framework_visuals_and_shared
     editor.set_header(Some(Control::boxed(header.clone())));
     editor.set_description(Some(Control::boxed(description.clone())));
     editor.set_placeholder_text("Empty notes");
-    editor.measure(Size::new(300.0, 200.0));
-    editor.arrange(Rect::new(0.0, 0.0, 300.0, 200.0));
+    rich_edit_layout(&_root, Size::new(300.0, 200.0));
     let header_presenter = editor.header_presenter().unwrap();
     assert_eq!(header_presenter.child(), Some(header.upcast()));
     assert_eq!(header_presenter.desired_size().height, 28.0);
@@ -1676,17 +1792,15 @@ fn rich_edit_header_description_and_placeholder_use_framework_visuals_and_shared
     assert!(!placeholder.is_visible());
     assert!(!placeholder.is_hit_test_visible());
     assert_eq!(placeholder.text(), Some("Empty notes".to_owned()));
-    assert_eq!(editor.visual_children().count(), 3);
+    assert_eq!(editor.visual_children().count(), 1);
     editor.set_text("").unwrap();
     assert!(placeholder.is_visible());
-    editor.measure(Size::new(300.0, 200.0));
-    editor.arrange(Rect::new(0.0, 0.0, 300.0, 200.0));
-    assert_eq!(placeholder.bounds().y, 33.0);
+    rich_edit_layout(&_root, Size::new(300.0, 200.0));
+    assert_eq!(placeholder.bounds().y + placeholder.padding().top, 33.0);
     editor.set_header(None);
     editor.set_description(None);
-    editor.measure(Size::new(300.0, 200.0));
-    editor.arrange(Rect::new(0.0, 0.0, 300.0, 200.0));
-    assert_eq!(placeholder.bounds().y, 5.0);
+    rich_edit_layout(&_root, Size::new(300.0, 200.0));
+    assert_eq!(placeholder.bounds().y + placeholder.padding().top, 5.0);
     assert!(!header_presenter.is_visible());
 }
 
@@ -1698,6 +1812,8 @@ fn rich_edit_header_template_renders_without_header_data_and_is_not_rebuilt_by_m
     use std::rc::Rc;
     let _scope = crate::test_support::test_scope();
     let editor = RichEditBox::new();
+    editor.set_template(Some(rich_edit_box_template()));
+    let _root = crate::test_support::TestRoot::with_child(editor.clone());
     let builds = Rc::new(Cell::new(0));
     let count = builds.clone();
     editor.set_header_template(Some(FuncDataTemplate::new(
@@ -1712,13 +1828,13 @@ fn rich_edit_header_template_renders_without_header_data_and_is_not_rebuilt_by_m
         },
         false,
     )));
+    assert_eq!(builds.get(), 0);
+    editor.apply_template();
     let presenter = editor.header_presenter().unwrap();
     assert!(presenter.is_visible());
-    editor.measure(Size::new(300.0, 200.0));
-    editor.arrange(Rect::new(0.0, 0.0, 300.0, 200.0));
+    rich_edit_layout(&_root, Size::new(300.0, 200.0));
     editor.invalidate_measure();
-    editor.measure(Size::new(250.0, 200.0));
-    editor.arrange(Rect::new(0.0, 0.0, 250.0, 200.0));
+    rich_edit_layout(&_root, Size::new(250.0, 200.0));
     assert_eq!(builds.get(), 1);
     assert_eq!(presenter.desired_size().height, 32.0);
     editor.set_header_template(None);
@@ -1727,15 +1843,18 @@ fn rich_edit_header_template_renders_without_header_data_and_is_not_rebuilt_by_m
 }
 
 #[test]
-fn rich_edit_placeholder_participates_in_measure_alignment_and_foreground_inheritance() {
+fn rich_edit_placeholder_participates_in_measure_alignment_and_template_binding() {
     use ferroui_base::media::{Brushes, Colors, TextWrapping};
     let _scope = crate::test_support::test_scope();
     let editor = RichEditBox::new();
+    editor.set_template(Some(rich_edit_box_template()));
+    let _root = crate::test_support::TestRoot::with_child(editor.clone());
     editor.set_foreground(Some(Brushes::blue()));
+    editor.set_placeholder_foreground(Some(Brushes::blue()));
     editor.set_placeholder_text("A lengthy placeholder that is laid out by a real text block");
     editor.set_text_wrapping(TextWrapping::Wrap);
     editor.set_text_alignment(TextAlignment::Right);
-    editor.measure(Size::new(120.0, 400.0));
+    rich_edit_layout(&_root, Size::new(120.0, 400.0));
     let placeholder = editor.placeholder_presenter().unwrap();
     assert_eq!(placeholder.text_alignment(), TextAlignment::Right);
     assert_eq!(placeholder.text_wrapping(), TextWrapping::Wrap);
@@ -1752,8 +1871,10 @@ fn rich_edit_placeholder_participates_in_measure_alignment_and_foreground_inheri
         Colors::RED
     );
     editor.set_placeholder_foreground(None);
+    assert!(placeholder.foreground().is_none());
     assert_eq!(
-        placeholder
+        editor
+            .text_presenter()
             .foreground()
             .unwrap()
             .as_solid_color_brush()
@@ -1851,6 +1972,8 @@ fn rich_edit_header_and_embedded_control_remain_in_the_same_visual_tree_after_re
     use std::rc::Rc;
     let _scope = crate::test_support::test_scope();
     let editor = RichEditBox::new();
+    editor.set_template(Some(rich_edit_box_template()));
+    let _root = crate::test_support::TestRoot::with_child(editor.clone());
     let child = Border::new();
     child.set_width(30.0);
     child.set_height(20.0);
@@ -1861,15 +1984,22 @@ fn rich_edit_header_and_embedded_control_remain_in_the_same_visual_tree_after_re
     editor.blocks().add(paragraph);
     editor.set_header(Some(Rc::new("Notes".to_owned())));
     for width in [300.0, 280.0, 300.0] {
-        editor.measure(Size::new(width, 200.0));
-        editor.arrange(Rect::new(0.0, 0.0, width, 200.0));
-        assert_eq!(child.visual_parent(), Some(editor.clone().upcast()));
+        rich_edit_layout(&_root, Size::new(width, 200.0));
         assert_eq!(
-            editor.header_presenter().unwrap().visual_parent(),
-            Some(editor.clone().upcast())
+            child.visual_parent(),
+            Some(editor.text_presenter().upcast())
         );
-        assert_eq!(editor.visual_children().count(), 2);
-        assert!(child.bounds().y >= editor.header_presenter().unwrap().desired_size().height);
+        assert_eq!(
+            editor
+                .header_presenter()
+                .unwrap()
+                .find_ancestor_of_type::<RichEditBox>(false),
+            Some(editor.clone())
+        );
+        assert_eq!(editor.visual_children().count(), 1);
+        let bounds = Rect::from_size(child.bounds().size())
+            .transform_to_aabb(child.transform_to_visual(&editor).unwrap());
+        assert!(bounds.y >= editor.header_presenter().unwrap().desired_size().height);
     }
 }
 
@@ -1905,9 +2035,10 @@ fn rich_edit_home_and_end_keep_paragraph_end_and_empty_paragraph_positions_on_th
     use ferroui_base::input::Key;
     let _scope = crate::test_support::test_scope();
     let editor = RichEditBox::new();
+    editor.set_template(Some(rich_edit_box_template()));
+    let _root = crate::test_support::TestRoot::with_child(editor.clone());
     editor.set_text("abc\n\nend").unwrap();
-    editor.measure(Size::new(300.0, 200.0));
-    editor.arrange(Rect::new(0.0, 0.0, 300.0, 200.0));
+    rich_edit_layout(&_root, Size::new(300.0, 200.0));
     editor.select(3, 3);
     rich_edit_press_key(&editor, Key::Home);
     assert_eq!(editor.caret_index(), 0);
@@ -1925,6 +2056,8 @@ fn rich_edit_end_stops_before_an_inline_line_break() {
     use ferroui_base::input::Key;
     let _scope = crate::test_support::test_scope();
     let editor = RichEditBox::new();
+    editor.set_template(Some(rich_edit_box_template()));
+    let _root = crate::test_support::TestRoot::with_child(editor.clone());
     editor
         .document()
         .restore(&DocumentSnapshot {
@@ -1941,8 +2074,7 @@ fn rich_edit_end_stops_before_an_inline_line_break() {
             }],
         })
         .unwrap();
-    editor.measure(Size::new(300.0, 200.0));
-    editor.arrange(Rect::new(0.0, 0.0, 300.0, 200.0));
+    rich_edit_layout(&_root, Size::new(300.0, 200.0));
     editor.select(0, 0);
     rich_edit_press_key(&editor, Key::End);
     assert_eq!(editor.caret_index(), 3);
@@ -1956,9 +2088,10 @@ fn rich_edit_vertical_navigation_preserves_desired_column_across_short_lines() {
     use ferroui_base::input::Key;
     let _scope = crate::test_support::test_scope();
     let editor = RichEditBox::new();
+    editor.set_template(Some(rich_edit_box_template()));
+    let _root = crate::test_support::TestRoot::with_child(editor.clone());
     editor.set_text("abcdef\nx\nabcdef").unwrap();
-    editor.measure(Size::new(300.0, 200.0));
-    editor.arrange(Rect::new(0.0, 0.0, 300.0, 200.0));
+    rich_edit_layout(&_root, Size::new(300.0, 200.0));
     editor.select(5, 5);
     rich_edit_press_key(&editor, Key::Down);
     assert_eq!(editor.caret_index(), 8);
@@ -1969,4 +2102,491 @@ fn rich_edit_vertical_navigation_preserves_desired_column_across_short_lines() {
     assert_eq!(editor.caret_index(), 7);
     rich_edit_press_key(&editor, Key::Down);
     assert_eq!(editor.caret_index(), 9);
+}
+#[test]
+fn rich_edit_retemplate_preserves_composition_history_and_live_document_services() {
+    use crate::templates::{FuncControlTemplate, FuncTemplateNameScopeExtensions};
+    use crate::{Border, ContentControl};
+    use std::rc::Rc;
+
+    let _scope = crate::test_support::test_scope();
+    let editor = RichEditBox::new();
+    editor.set_template(Some(rich_edit_box_template()));
+    let _root = crate::test_support::TestRoot::with_child(editor.clone());
+    editor.set_text("original").unwrap();
+    rich_edit_layout(&_root, Size::new(220.0, 90.0));
+    let presenter = editor.text_presenter();
+    let document = editor.document();
+    let service = editor.editor();
+    let range = editor.text_document().get_range(0, 3).unwrap();
+    let old_host = editor
+        .content_element()
+        .unwrap()
+        .cast::<ContentControl>()
+        .unwrap();
+    editor.select(8, 8);
+    editor.insert_text("!").unwrap();
+    editor.set_preedit_text(Some("preview"), Some(2)).unwrap();
+    let preview = editor.document().snapshot();
+    let selection = service.selection();
+
+    editor.set_template(Some(FuncControlTemplate::for_type::<RichEditBox>(
+        |_, scope| {
+            let host = Border::new();
+            host.set_name(Some("ContentElement".to_owned()));
+            host.set_padding(ferroui_base::Thickness::uniform(9.0));
+            host.register_in_name_scope(&**scope).upcast()
+        },
+    )));
+    editor.apply_template();
+    rich_edit_layout(&_root, Size::new(180.0, 80.0));
+
+    assert_eq!(editor.text_presenter(), presenter);
+    assert_eq!(editor.document(), document);
+    assert!(Rc::ptr_eq(&editor.editor(), &service));
+    assert!(service.is_composing());
+    assert_eq!(editor.document().snapshot(), preview);
+    assert_eq!(service.selection(), selection);
+    assert_eq!(range.text().unwrap(), "ori");
+    assert!(old_host.content().is_none());
+    assert_eq!(presenter.templated_parent(), Some(editor.clone().upcast()));
+    assert_eq!(
+        presenter.parent(),
+        editor.content_element().map(|host| host.upcast())
+    );
+
+    editor.cancel_composition().unwrap();
+    editor.undo().unwrap();
+    assert_eq!(editor.text(), "original");
+    editor.redo().unwrap();
+    assert_eq!(editor.text(), "original!");
+    editor.set_template(None);
+    editor.apply_template();
+    assert!(presenter.visual_parent().is_none());
+    assert!(editor.content_element().is_none());
+    editor.select(9, 9);
+    editor.insert_text("?").unwrap();
+    editor.set_template(Some(rich_edit_box_template()));
+    editor.apply_template();
+    rich_edit_layout(&_root, Size::new(180.0, 80.0));
+    assert_eq!(editor.text_presenter(), presenter);
+    assert_eq!(editor.text(), "original!?");
+    assert_eq!(range.text().unwrap(), "ori");
+}
+
+#[test]
+fn rich_edit_content_element_accepts_framework_hosts_and_missing_parts_are_optional() {
+    use crate::presenters::ContentPresenter;
+    use crate::templates::{FuncControlTemplate, FuncTemplateNameScopeExtensions};
+    use crate::{Border, ContentControl, Control, Panel, TextBlock};
+    use ferroui_base::Ref;
+
+    let _scope = crate::test_support::test_scope();
+    let editor = RichEditBox::new();
+    let _root = crate::test_support::TestRoot::with_child(editor.clone());
+    editor.set_text("persistent document").unwrap();
+    let presenter = editor.text_presenter();
+    for kind in 0..6 {
+        editor.set_template(Some(FuncControlTemplate::for_type::<RichEditBox>(
+            move |_, scope| {
+                let host: Ref<Control> = match kind {
+                    0 => Border::new().upcast(),
+                    1 => ContentPresenter::new().upcast(),
+                    2 => Panel::new().upcast(),
+                    3 => ContentControl::new().upcast(),
+                    _ => TextBlock::new().upcast(),
+                };
+                if kind != 5 {
+                    host.set_name(Some("ContentElement".to_owned()));
+                    host.register_in_name_scope(&**scope)
+                } else {
+                    host
+                }
+            },
+        )));
+        editor.apply_template();
+        rich_edit_layout(&_root, Size::new(180.0, 80.0));
+        assert_eq!(editor.text(), "persistent document");
+        assert_eq!(editor.text_presenter(), presenter);
+        assert_eq!(editor.content_element().is_some(), kind < 4);
+        assert_eq!(presenter.visual_parent().is_some(), kind < 4);
+        assert!(editor.header_presenter().is_none());
+        assert!(editor.description_presenter().is_none());
+        assert!(editor.placeholder_presenter().is_none());
+    }
+}
+
+#[test]
+fn rich_edit_scroll_view_formats_the_full_document_and_clamps_offsets_after_shrink() {
+    use crate::ScrollViewer;
+    use ferroui_base::input::IScrollable;
+    use ferroui_base::Vector;
+
+    let _scope = crate::test_support::test_scope();
+    let editor = RichEditBox::new();
+    editor.set_template(Some(rich_edit_box_template()));
+    let _root = crate::test_support::TestRoot::with_child(editor.clone());
+    editor
+        .set_text(
+            &(0..40)
+                .map(|line| format!("line {line}"))
+                .collect::<Vec<_>>()
+                .join("\n"),
+        )
+        .unwrap();
+    rich_edit_layout(&_root, Size::new(160.0, 70.0));
+    let presenter = editor.text_presenter();
+    let scroll = editor
+        .content_element()
+        .unwrap()
+        .cast::<ScrollViewer>()
+        .unwrap();
+    assert_eq!(presenter.line_metrics().len(), 40);
+    assert_eq!(presenter.content_end(), editor.document().text_length());
+    assert!(!presenter.has_overflow_content());
+    assert!(presenter.extent().height > presenter.viewport().height * 4.0);
+    assert_eq!(scroll.extent(), presenter.extent());
+    assert_eq!(scroll.viewport(), presenter.viewport());
+
+    presenter.set_offset(Vector::new(f64::INFINITY, f64::INFINITY));
+    assert_eq!(presenter.offset().x, 0.0);
+    assert_eq!(
+        presenter.offset().y,
+        presenter.extent().height - presenter.viewport().height
+    );
+    assert_eq!(scroll.offset(), presenter.offset());
+    rich_edit_layout(&_root, Size::new(160.0, 70.0));
+    assert!(presenter.get_rect_from_character_index(0).y < 0.0);
+
+    editor.set_text("tiny").unwrap();
+    rich_edit_layout(&_root, Size::new(160.0, 70.0));
+    assert_eq!(presenter.offset(), Vector::default());
+    assert_eq!(scroll.offset(), Vector::default());
+    assert_eq!(presenter.extent(), presenter.viewport());
+}
+
+#[test]
+fn rich_edit_wrapping_uses_viewport_width_and_no_wrap_preserves_horizontal_extent() {
+    use ferroui_base::input::IScrollable;
+    use ferroui_base::media::TextWrapping;
+    use ferroui_base::Vector;
+
+    let _scope = crate::test_support::test_scope();
+    let editor = RichEditBox::new();
+    editor.set_template(Some(rich_edit_box_template()));
+    let _root = crate::test_support::TestRoot::with_child(editor.clone());
+    editor.set_text(&"wide words ".repeat(30)).unwrap();
+    rich_edit_layout(&_root, Size::new(140.0, 70.0));
+    let presenter = editor.text_presenter();
+    assert!(presenter.line_metrics().len() > 1);
+    assert_eq!(presenter.extent().width, presenter.viewport().width);
+    presenter.set_offset(Vector::new(100.0, 0.0));
+    assert_eq!(presenter.offset().x, 0.0);
+
+    editor.set_text_wrapping(TextWrapping::NoWrap);
+    rich_edit_layout(&_root, Size::new(140.0, 70.0));
+    assert_eq!(presenter.line_metrics().len(), 1);
+    assert!(presenter.extent().width > presenter.viewport().width * 2.0);
+    presenter.set_offset(Vector::new(100.0, 0.0));
+    assert_eq!(presenter.offset().x, 100.0);
+    assert!(presenter.get_rect_from_character_index(0).x < 0.0);
+
+    editor.set_text_wrapping(TextWrapping::Wrap);
+    rich_edit_layout(&_root, Size::new(140.0, 70.0));
+    assert_eq!(presenter.offset().x, 0.0);
+    assert_eq!(presenter.extent().width, presenter.viewport().width);
+    assert!(presenter.line_metrics().len() > 1);
+}
+
+#[test]
+fn rich_edit_caret_scroll_keeps_template_chrome_fixed_and_ime_geometry_in_owner_coordinates() {
+    use crate::{Border, Control};
+    use ferroui_base::input::IScrollable;
+    use ferroui_base::{Point, Thickness};
+
+    let _scope = crate::test_support::test_scope();
+    let editor = RichEditBox::new();
+    editor.set_template(Some(rich_edit_box_template()));
+    let _root = crate::test_support::TestRoot::with_child(editor.clone());
+    let header = Border::new();
+    header.set_height(20.0);
+    let description = Border::new();
+    description.set_height(14.0);
+    editor.set_header(Some(Control::boxed(header)));
+    editor.set_description(Some(Control::boxed(description)));
+    editor.set_padding(Thickness::new(3.0, 5.0, 7.0, 11.0));
+    editor
+        .set_text(
+            &(0..40)
+                .map(|line| format!("line {line}"))
+                .collect::<Vec<_>>()
+                .join("\n"),
+        )
+        .unwrap();
+    rich_edit_layout(&_root, Size::new(220.0, 150.0));
+    let header_bounds = editor.header_presenter().unwrap().bounds();
+    let description_bounds = editor.description_presenter().unwrap().bounds();
+    let length = editor.document().text_length();
+    editor.select(length, length);
+    rich_edit_layout(&_root, Size::new(220.0, 150.0));
+    let presenter = editor.text_presenter();
+    assert!(presenter.offset().y > 0.0);
+    assert_eq!(editor.header_presenter().unwrap().bounds(), header_bounds);
+    assert_eq!(
+        editor.description_presenter().unwrap().bounds(),
+        description_bounds
+    );
+    let owner_rect = presenter
+        .cursor_rectangle()
+        .transform_to_aabb(presenter.transform_to_visual(&editor).unwrap());
+    assert_eq!(editor.cursor_rectangle(), owner_rect);
+    assert_eq!(
+        editor.text_input_method_client().cursor_rectangle(),
+        owner_rect
+    );
+    assert_eq!(
+        editor.text_input_method_client().text_view_visual(),
+        Some(presenter.clone().upcast())
+    );
+    let viewport_rect = Rect::from_size(presenter.viewport())
+        .transform_to_aabb(presenter.transform_to_visual(&editor).unwrap());
+    assert!(owner_rect.y >= viewport_rect.y);
+    assert!(owner_rect.bottom() <= viewport_rect.bottom() + 1e-6);
+    let character = editor.get_rect_from_character_index(length - 1);
+    assert_eq!(
+        editor.hit_test_text_position(Point::new(
+            character.x,
+            character.y + character.height / 2.0
+        )),
+        length - 1
+    );
+}
+
+#[test]
+fn rich_edit_selection_focus_brushes_restore_inline_format_and_observe_mutable_transparency() {
+    use crate::documents::{Paragraph, Run};
+    use crate::RichTextBlockImplExt;
+    use ferroui_base::input::{FocusChangedEventArgs, InputElement};
+    use ferroui_base::media::text_formatting::{ITextSource, TextRunProperties};
+    use ferroui_base::media::{Brushes, Colors, IBrush, SolidColorBrush};
+    use std::rc::Rc;
+
+    let _scope = crate::test_support::test_scope();
+    let editor = RichEditBox::new();
+    editor.set_template(Some(rich_edit_box_template()));
+    let _root = crate::test_support::TestRoot::with_child(editor.clone());
+    let run = Run::with_text(Some("color"));
+    run.set_foreground(Some(Brushes::blue()));
+    run.set_background(Some(Brushes::green()));
+    let paragraph = Paragraph::new();
+    paragraph.add_child(run);
+    editor.blocks().add(paragraph);
+    editor.set_selection_foreground_brush(Some(Brushes::white()));
+    editor.set_selection_highlight_color(Some(Brushes::red()));
+    rich_edit_layout(&_root, Size::new(220.0, 80.0));
+    editor.select(0, 3);
+    let presenter = editor.text_presenter();
+    let revision = editor.document().revision();
+    let properties = || -> Rc<dyn TextRunProperties> {
+        presenter.page_layout().source.paragraphs[0]
+            .source
+            .get_text_run(1)
+            .unwrap()
+            .properties()
+            .unwrap()
+            .clone()
+    };
+    let color = |brush: Option<&Rc<dyn IBrush>>| {
+        brush
+            .and_then(|brush| brush.as_solid_color_brush())
+            .map(|brush| brush.color())
+    };
+    assert!(!presenter.selection_is_visible());
+    assert_eq!(color(properties().foreground_brush()), Some(Colors::BLUE));
+    assert_eq!(color(properties().background_brush()), Some(Colors::GREEN));
+
+    editor.raise_event(&FocusChangedEventArgs::new(InputElement::got_focus_event()));
+    assert!(presenter.selection_is_visible());
+    assert_eq!(
+        color(presenter.selection_render_brush().as_ref()),
+        Some(Colors::RED)
+    );
+    assert_eq!(color(properties().foreground_brush()), Some(Colors::WHITE));
+    assert!(properties().background_brush().is_none());
+    editor.raise_event(&FocusChangedEventArgs::new(InputElement::lost_focus_event()));
+    assert!(!presenter.selection_is_visible());
+    assert_eq!(color(properties().background_brush()), Some(Colors::GREEN));
+
+    let inactive = SolidColorBrush::with_color(Colors::TRANSPARENT);
+    editor.set_selection_highlight_color_when_not_focused(Some(inactive.clone().into()));
+    inactive.set_color(Colors::RED);
+    assert!(presenter.selection_is_visible());
+    assert_eq!(color(properties().foreground_brush()), Some(Colors::WHITE));
+    inactive.set_opacity(0.0);
+    assert!(!presenter.selection_is_visible());
+    assert_eq!(color(properties().foreground_brush()), Some(Colors::BLUE));
+    assert_eq!(color(properties().background_brush()), Some(Colors::GREEN));
+    assert_eq!(editor.document().revision(), revision);
+}
+
+#[test]
+fn rich_edit_presenter_selection_events_and_ime_requests_keep_the_owner_identity() {
+    use crate::documents::{InlineUIContainer, Paragraph};
+    use crate::{Border, RichTextBlock};
+    use ferroui_base::input::text_input::TextInputMethodClientRequestedEventArgs;
+    use ferroui_base::input::InputElement;
+    use std::cell::Cell;
+    use std::rc::Rc;
+
+    let _scope = crate::test_support::test_scope();
+    let editor = RichEditBox::new();
+    editor.set_template(Some(rich_edit_box_template()));
+    let _root = crate::test_support::TestRoot::with_child(editor.clone());
+    let child = Border::new();
+    child.set_width(20.0);
+    child.set_height(20.0);
+    let paragraph = Paragraph::with_text("text");
+    paragraph.add_child(InlineUIContainer::with_child(child.clone()));
+    editor.blocks().add(paragraph);
+    rich_edit_layout(&_root, Size::new(220.0, 80.0));
+    let owner_events = Rc::new(Cell::new(0));
+    let observed = owner_events.clone();
+    let weak = editor.downgrade();
+    editor.add_handler(RichEditBox::selection_changed_event(), move |_, event| {
+        let owner = weak.upgrade().unwrap();
+        assert_eq!(event.source(), Some(owner.upcast()));
+        observed.set(observed.get() + 1);
+    });
+    let presenter_events = Rc::new(Cell::new(0));
+    let observed = presenter_events.clone();
+    editor
+        .text_presenter()
+        .add_handler(RichTextBlock::selection_changed_event(), move |_, _| {
+            observed.set(observed.get() + 1);
+        });
+    editor.text_presenter().select(1, 3);
+    assert_eq!(owner_events.get(), 1);
+    assert_eq!(presenter_events.get(), 0);
+    assert_eq!(editor.editor().selection(), EditorSelection::new(1, 3));
+
+    let event = TextInputMethodClientRequestedEventArgs::new();
+    event.set_routed_event(Some(
+        InputElement::text_input_method_client_requested_event(),
+    ));
+    editor.raise_event(&event);
+    assert!(Rc::ptr_eq(
+        &event.client().unwrap(),
+        &editor.text_input_method_client()
+    ));
+    let event = TextInputMethodClientRequestedEventArgs::new();
+    event.set_routed_event(Some(
+        InputElement::text_input_method_client_requested_event(),
+    ));
+    child.raise_event(&event);
+    assert!(event.client().is_none());
+}
+
+#[test]
+fn rich_edit_handled_embedded_control_pointer_input_does_not_move_selection() {
+    use crate::documents::{InlineUIContainer, Paragraph};
+    use crate::Border;
+    use ferroui_base::input::{
+        InputElementImplExt, KeyModifiers, Pointer, PointerPointProperties,
+        PointerPressedEventArgs, PointerType, PointerUpdateKind,
+    };
+
+    let _scope = crate::test_support::test_scope();
+    let editor = RichEditBox::new();
+    editor.set_template(Some(rich_edit_box_template()));
+    let root = crate::test_support::TestRoot::with_child(editor.clone());
+    let child = Border::new();
+    child.set_width(20.0);
+    child.set_height(20.0);
+    let paragraph = Paragraph::with_text("prefix");
+    paragraph.add_child(InlineUIContainer::with_child(child.clone()));
+    editor.blocks().add(paragraph);
+    rich_edit_layout(&root, Size::new(220.0, 80.0));
+    editor.select(0, 0);
+    let point = child.bounds().center();
+    let pointer = Pointer::new(Pointer::get_next_free_id(), PointerType::Mouse, true);
+    let event = PointerPressedEventArgs::new(
+        child,
+        pointer,
+        &root,
+        point,
+        0,
+        PointerPointProperties::new(
+            ferroui_base::input::RawInputModifiers::LEFT_MOUSE_BUTTON,
+            PointerUpdateKind::LeftButtonPressed,
+        ),
+        KeyModifiers::NONE,
+        1,
+    );
+    event.set_handled(true);
+    editor.text_presenter().on_pointer_pressed(&event);
+    assert_eq!(editor.editor().selection(), EditorSelection::default());
+    assert_eq!((editor.selection_start(), editor.selection_end()), (0, 0));
+}
+
+#[test]
+fn rich_edit_line_services_use_paragraph_fallback_until_the_presenter_is_measured() {
+    use ferroui_base::media::TextWrapping;
+
+    let _scope = crate::test_support::test_scope();
+    let editor = RichEditBox::new();
+    editor.set_text_wrapping(TextWrapping::Wrap);
+    editor
+        .set_text("one two three four five six seven eight")
+        .unwrap();
+    let services = editor.text_document();
+    let range = services.get_range(0, 0).unwrap();
+    assert!(!editor.text_presenter().has_measured_layout());
+    range.expand(TextRangeUnit::Line).unwrap();
+    assert_eq!(range.range(), 0..editor.document().text_length());
+
+    // Offscreen measurement is sufficient. A window is not required for a
+    // caller to request real geometry from a FerroUI document presenter.
+    editor.text_presenter().measure(Size::new(90.0, 80.0));
+    assert!(editor.text_presenter().has_measured_layout());
+    let lines = editor.line_metrics();
+    assert!(lines.len() > 1);
+    range.set_range(0, 0).unwrap();
+    range.expand(TextRangeUnit::Line).unwrap();
+    assert_eq!(range.range(), 0..lines[1].start);
+    editor.document().replace_text(0..0, "x").unwrap();
+    range.set_range(0, 0).unwrap();
+    range.expand(TextRangeUnit::Line).unwrap();
+    let lines = editor.line_metrics();
+    assert!(lines.len() > 1);
+    assert_eq!(range.range(), 0..lines[1].start);
+}
+
+#[test]
+fn rich_edit_range_edge_scroll_alignment_is_stable_before_rearrange() {
+    use ferroui_base::input::IScrollable;
+    let _scope = crate::test_support::test_scope();
+    let editor = RichEditBox::new();
+    editor.set_template(Some(rich_edit_box_template()));
+    let root = crate::test_support::TestRoot::with_child(editor.clone());
+    editor
+        .set_text(
+            &(0..20)
+                .map(|line| format!("line {line}"))
+                .collect::<Vec<_>>()
+                .join("\n"),
+        )
+        .unwrap();
+    rich_edit_layout(&root, Size::new(160.0, 40.0));
+    let presenter = editor.text_presenter();
+    let index = presenter.line_metrics()[8].start;
+    let rect = presenter.get_rect_from_character_index(index);
+    assert!(presenter.bring_text_rect_into_view_aligned(rect, false));
+    let bottom = rect.bottom() - presenter.viewport().height;
+    assert_eq!(presenter.offset().y, bottom);
+    assert!(!presenter
+        .bring_text_rect_into_view_aligned(presenter.get_rect_from_character_index(index), false));
+    presenter
+        .bring_text_rect_into_view_aligned(presenter.get_rect_from_character_index(index), true);
+    assert_eq!(presenter.offset().y, rect.y);
+    assert_eq!(editor.editor().selection(), EditorSelection::default());
 }

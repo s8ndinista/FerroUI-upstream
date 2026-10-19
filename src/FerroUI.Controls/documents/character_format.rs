@@ -3,6 +3,7 @@ use ferroui_base::media::{
     BaselineAlignment, FlowDirection, FontFamily, FontFeatureCollection, FontStretch, FontStyle,
     FontWeight, IBrush, MediaCollection, TextAlignment, TextDecoration, TextDecorationCollection,
 };
+use ferroui_base::utilities::CultureInfo;
 use ferroui_base::{Ref, Thickness};
 use std::rc::Rc;
 
@@ -11,6 +12,7 @@ use std::rc::Rc;
 /// `Some(None)` explicitly clears it. Snapshots copy mutable formatting collections.
 #[derive(Default)]
 pub struct CharacterFormat {
+    pub language: Option<CultureInfo>,
     pub font_family: Option<FontFamily>,
     pub font_size: Option<f64>,
     pub font_style: Option<FontStyle>,
@@ -27,6 +29,7 @@ pub struct CharacterFormat {
 impl std::fmt::Debug for CharacterFormat {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("CharacterFormat")
+            .field("language", &self.language)
             .field("font_family", &self.font_family)
             .field("font_size", &self.font_size)
             .field("font_style", &self.font_style)
@@ -57,6 +60,7 @@ impl std::fmt::Debug for CharacterFormat {
 impl Clone for CharacterFormat {
     fn clone(&self) -> Self {
         Self {
+            language: self.language.clone(),
             font_family: self.font_family.clone(),
             font_size: self.font_size,
             font_style: self.font_style,
@@ -86,7 +90,8 @@ impl Clone for CharacterFormat {
 
 impl PartialEq for CharacterFormat {
     fn eq(&self, other: &Self) -> bool {
-        self.font_family == other.font_family
+        self.language == other.language
+            && self.font_family == other.font_family
             && self.font_size == other.font_size
             && self.font_style == other.font_style
             && self.font_weight == other.font_weight
@@ -122,6 +127,7 @@ impl CharacterFormat {
     /// Captures assigned properties without flattening inherited span formatting.
     pub fn from_element(element: &TextElement) -> Self {
         Self {
+            language: element.get_base_value(TextElement::language_property()),
             font_family: element.get_base_value(TextElement::font_family_property()),
             font_size: element.get_base_value(TextElement::font_size_property()),
             font_style: element.get_base_value(TextElement::font_style_property()),
@@ -147,6 +153,7 @@ impl CharacterFormat {
     /// Captures computed values, including formatting inherited through logical parents.
     pub fn effective(element: &TextElement) -> Self {
         Self {
+            language: Some(element.language()),
             font_family: Some(element.font_family()),
             font_size: Some(element.font_size()),
             font_style: Some(element.font_style()),
@@ -173,6 +180,7 @@ impl CharacterFormat {
             ($($field:ident),* $(,)?) => { $(if patch.$field.is_some() { result.$field = patch.$field.clone(); })* };
         }
         overlay!(
+            language,
             font_family,
             font_size,
             font_style,
@@ -189,6 +197,15 @@ impl CharacterFormat {
     }
 
     pub fn validate(&self) -> Result<(), super::DocumentError> {
+        if self
+            .language
+            .as_ref()
+            .is_some_and(|language| !super::text_language::is_valid_language_tag(language.name()))
+        {
+            return Err(super::DocumentError::InvalidFormat(
+                "Language must be a valid XML language tag",
+            ));
+        }
         if self.font_size.is_some_and(|v| !v.is_finite() || v <= 0.0) {
             return Err(super::DocumentError::InvalidFormat(
                 "FontSize must be finite and positive",
@@ -209,6 +226,9 @@ impl CharacterFormat {
     }
 
     pub(crate) fn apply_to(&self, element: &TextElement) {
+        if let Some(language) = &self.language {
+            element.set_language(language.clone());
+        }
         if let Some(value) = &self.font_family {
             element.set_font_family(value.clone());
         }
@@ -248,6 +268,7 @@ impl CharacterFormat {
     }
 
     pub(crate) fn replace_on(&self, element: &TextElement) {
+        element.clear_value(TextElement::language_property());
         element.clear_value(TextElement::font_family_property());
         element.clear_value(TextElement::font_size_property());
         element.clear_value(TextElement::font_style_property());
@@ -260,6 +281,24 @@ impl CharacterFormat {
         element.clear_value(Inline::baseline_alignment_property());
         element.clear_value(TextElement::letter_spacing_property());
         self.apply_to(element);
+    }
+
+    /// The assigned native LanguageTag value. None means that this patch leaves
+    /// language unchanged; mixed range values use TextFormatValue as usual.
+    pub fn language_tag(&self) -> Option<&str> {
+        self.language.as_ref().map(CultureInfo::name)
+    }
+
+    /// Assigns the language without losing the original tag or modifying any
+    /// other character formatting. Validation completes before this patch changes.
+    pub fn set_language_tag(&mut self, tag: &str) -> Result<(), super::DocumentError> {
+        if !super::text_language::is_valid_language_tag(tag) {
+            return Err(super::DocumentError::InvalidFormat(
+                "Language must be a valid XML language tag",
+            ));
+        }
+        self.language = Some(CultureInfo::get_culture_info(tag));
+        Ok(())
     }
 }
 

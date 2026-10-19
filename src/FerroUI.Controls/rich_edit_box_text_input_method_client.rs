@@ -35,7 +35,7 @@ impl TextInputMethodClient for RichEditBoxTextInputMethodClient {
         &self.events
     }
     fn text_view_visual(&self) -> Option<Ref<Visual>> {
-        self.owner().map(Ref::upcast)
+        self.owner().map(|owner| owner.text_presenter().upcast())
     }
     fn supports_preedit(&self) -> bool {
         true

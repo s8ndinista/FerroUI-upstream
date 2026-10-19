@@ -19,6 +19,7 @@ mod rich_text_document;
 mod run;
 mod span;
 mod text_element;
+pub(crate) mod text_language;
 mod text_highlight_merge;
 mod text_highlight_range;
 mod text_highlighter;
@@ -65,6 +66,9 @@ mod rich_text_document_tests;
 
 #[cfg(test)]
 mod rich_paragraph_tests;
+
+#[cfg(test)]
+mod rich_language_tests;
 
 #[cfg(test)]
 mod text_highlighter_tests;

@@ -424,10 +424,12 @@ mod rich_text_layout;
 mod rich_text_block;
 mod rich_text_block_overflow;
 mod rich_edit_box;
+mod rich_edit_box_text_presenter;
 mod rich_edit_box_text_input_method_client;
 pub mod rich_text;
 pub use rich_text_block::{RichTextBlock, RichTextBlockImpl, RichTextBlockImplExt, RichTextBlockVTable, RichTextSelectionChangedEventArgs};
 pub use rich_text_block_overflow::RichTextBlockOverflow;
+pub use rich_edit_box_text_presenter::RichEditBoxTextPresenter;
 pub use rich_text_layout::RichTextLineMetrics;
 pub use rich_edit_box::{RichEditBox, RichEditCharacterCasing, DisabledFormattingAccelerators, RichEditCompositionEventArgs, RichEditCompositionRoutedEvent, RichEditBoxSelectionChangingEventArgs, RichEditBoxSelectionChangingRoutedEvent, RichEditBoxTextChangingEventArgs, RichEditBoxTextChangingRoutedEvent};
 #[cfg(test)]

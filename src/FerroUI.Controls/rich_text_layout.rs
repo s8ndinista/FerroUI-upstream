@@ -6,6 +6,7 @@ use crate::documents::{
     RichTextDocument, TextHighlightRegion,
 };
 use crate::text_block::InlinesTextSource;
+use crate::RichTextBlockImplExt;
 use ferroui_base::media::text_formatting::TextRun;
 use ferroui_base::media::text_formatting::{
     GenericTextParagraphProperties, GenericTextRunProperties, ITextDrawingSink,
@@ -73,7 +74,9 @@ impl RichTextSource {
                     view.foreground(),
                     None,
                     BaselineAlignment::Baseline,
-                    None,
+                    Some(crate::documents::text_language::resolved_language(
+                        &view.language(),
+                    )),
                     view.font_features(),
                 ))
             } else {
@@ -89,7 +92,7 @@ impl RichTextSource {
                     block.foreground(),
                     block.background(),
                     BaselineAlignment::Baseline,
-                    None,
+                    Some(block.resolved_language()),
                     block.font_features(),
                 ))
             };
@@ -121,7 +124,7 @@ fn formatting_overrides(
 ) -> Option<Rc<[ValueSpan<Rc<dyn TextRunProperties>>]>> {
     let selected = view.selection_start().min(view.selection_end())
         ..view.selection_start().max(view.selection_end());
-    let selection = view.is_text_selection_enabled() && !selected.is_empty();
+    let selection = view.selection_is_visible() && !selected.is_empty();
     if highlights.is_empty() && !selection {
         return None;
     }
@@ -162,13 +165,12 @@ fn formatting_overrides(
                 }
                 .or_else(|| highlight.and_then(|region| region.foreground.clone()))
                 .or_else(|| properties.foreground_brush().cloned());
-                let background = if highlight.is_some()
-                    || selected && view.selection_highlight_color().is_some()
-                {
-                    None
-                } else {
-                    properties.background_brush().cloned()
-                };
+                let background =
+                    if highlight.is_some() || selected && view.selection_render_brush().is_some() {
+                        None
+                    } else {
+                        properties.background_brush().cloned()
+                    };
                 let override_properties: Rc<dyn TextRunProperties> =
                     Rc::new(GenericTextRunProperties::with_all(
                         properties.typeface().clone(),

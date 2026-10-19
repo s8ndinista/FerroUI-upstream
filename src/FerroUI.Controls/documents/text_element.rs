@@ -1,14 +1,15 @@
 use super::IInlineHost;
 use crate::{Border, Control};
 use ferroui_base::media::{
-    Brushes, FontFamily, FontFeatureCollection, FontStretch, FontStyle, FontWeight, IBrush,
-    subscribe_invalidated,
+    subscribe_invalidated, Brushes, FontFamily, FontFeatureCollection, FontStretch, FontStyle,
+    FontWeight, IBrush,
 };
 use ferroui_base::reactive::IDisposable;
+use ferroui_base::utilities::CultureInfo;
 use ferroui_base::{
-    AttachedProperty, FerroObjectImpl, FerroObjectImplExt, FerroProperty,
-    FerroPropertyChangedEventArgs, StyledElement, StyledElementImpl, StyledProperty,
-    StyledPropertyOptions, ferro_class, ferro_property,
+    ferro_class, ferro_property, AttachedProperty, FerroObjectImpl, FerroObjectImplExt,
+    FerroProperty, FerroPropertyChangedEventArgs, StyledElement, StyledElementImpl, StyledProperty,
+    StyledPropertyOptions,
 };
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -53,7 +54,7 @@ impl FerroObjectImpl for TextElement {
 
         match change.property().name() {
             "Background" | "FontFamily" | "FontSize" | "FontStyle" | "FontWeight"
-            | "FontStretch" | "Foreground" | "FontFeatures" | "LetterSpacing" => {
+            | "FontStretch" | "Foreground" | "FontFeatures" | "LetterSpacing" | "Language" => {
                 if let Some(host) = this.inline_host() {
                     host.invalidate();
                 }
@@ -81,6 +82,20 @@ impl TextElementImpl for TextElement {
 }
 
 ferroui_base::ferro_properties! { impl TextElement {
+    ferro_property!(
+        /// The inherited text language, represented by FerroUI's culture value.
+        /// Markup accepts a language tag, and an empty tag resolves to the
+        /// preferred application language when text is shaped.
+        pub fn language_property() -> AttachedProperty<CultureInfo> {
+            FerroProperty::register_attached_with::<TextElement, Control, _>(
+                "Language",
+                StyledPropertyOptions::new(super::text_language::default_language())
+                    .inherits(true)
+                    .validate(|language: &CultureInfo| super::text_language::is_valid_language_tag(language.name())),
+            )
+        }
+    );
+
     ferro_property!(
         /// Defines the `Background` property.
         pub fn background_property() -> StyledProperty<Option<Rc<dyn IBrush>>> {
@@ -172,6 +187,20 @@ ferroui_base::ferro_properties! { impl TextElement {
 } }
 
 impl TextElement {
+    /// Gets the assigned or inherited language before empty-tag resolution.
+    pub fn language(&self) -> CultureInfo {
+        self.get_value(Self::language_property())
+    }
+
+    pub fn set_language(&self, value: CultureInfo) {
+        self.set_value(Self::language_property(), value);
+    }
+
+    /// The language passed to font fallback and shaping for this element.
+    pub fn resolved_language(&self) -> CultureInfo {
+        super::text_language::resolved_language(&self.language())
+    }
+
     /// Creates the class data; see [`ferroui_base::FerroObject::construct`].
     pub fn construct() -> Self {
         Self {

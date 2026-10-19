@@ -4,10 +4,10 @@ use super::{
 };
 use crate::automation::provider::{
     ITextProvider, ITextProvider2, IValueProvider, ProviderAdapter, ProviderError,
-    RichTextAutomationPeer, RichTextAutomationState, TextProviderError,
+    RichTextAutomationHost, RichTextAutomationPeer, RichTextAutomationState, TextProviderError,
 };
 use crate::automation::{ElementNotEnabledException, ValuePatternIdentifiers};
-use crate::{RichEditBox, RichTextBlock};
+use crate::RichEditBox;
 use ferroui_base::data::core::ValueTypes;
 use ferroui_base::{
     ferro_class, instantiate, BoxedValue, FerroObjectImpl, FerroObjectImplExt, Ref,
@@ -34,29 +34,28 @@ impl AutomationPeerImpl for RichEditBoxAutomationPeer {
         AutomationControlType::Edit
     }
     fn get_placeholder_text_core(this: &Self) -> Option<String> {
-        Some(this.owner().placeholder_text()).filter(|text| !text.is_empty())
+        this.try_owner()
+            .map(|owner| owner.placeholder_text())
+            .filter(|text| !text.is_empty())
     }
     fn get_name_core(this: &Self) -> Option<String> {
+        let owner = this.try_owner()?;
         Self::parent_get_name_core(this)
             .filter(|name| !name.trim().is_empty())
-            .or_else(|| presenter_name(this.owner().header_presenter(), this.owner().header()))
+            .or_else(|| presenter_name(owner.header_presenter(), owner.header()))
     }
     fn get_help_text_core(this: &Self) -> Option<String> {
+        let owner = this.try_owner()?;
         Self::parent_get_help_text_core(this)
             .filter(|text| !text.trim().is_empty())
-            .or_else(|| {
-                presenter_name(
-                    this.owner().description_presenter(),
-                    this.owner().description(),
-                )
-            })
+            .or_else(|| presenter_name(owner.description_presenter(), owner.description()))
     }
     fn get_or_create_children_core(this: &Self) -> Rc<Vec<Ref<AutomationPeer>>> {
-        this.text_owner().map_or_else(
+        this.text_host().map_or_else(
             || Rc::new(Vec::new()),
-            |view| {
+            |host| {
                 this.text_automation
-                    .children(&view, &this.text_peer(), None)
+                    .children(&host, &this.text_peer(), None)
             },
         )
     }
@@ -92,12 +91,14 @@ impl RichEditBoxAutomationPeer {
         instantiate(Self::construct(owner))
     }
     pub fn owner(&self) -> Ref<RichEditBox> {
-        ControlAutomationPeer::owner(self)
-            .cast()
+        self.try_owner()
             .expect("The owner of the peer is a rich editor.")
     }
+    pub fn try_owner(&self) -> Option<Ref<RichEditBox>> {
+        ControlAutomationPeer::try_owner(self).and_then(|owner| owner.cast())
+    }
     pub fn is_read_only(&self) -> bool {
-        self.owner().is_read_only()
+        self.try_owner().is_none_or(|owner| owner.is_read_only())
     }
     pub fn value(&self) -> String {
         self.owner().text()
@@ -131,8 +132,9 @@ impl RichEditBoxAutomationPeer {
     }
 }
 impl RichTextAutomationPeer for RichEditBoxAutomationPeer {
-    fn text_owner(&self) -> Option<Ref<RichTextBlock>> {
-        ControlAutomationPeer::try_owner(self).and_then(|owner| owner.cast())
+    fn text_host(&self) -> Option<RichTextAutomationHost> {
+        self.try_owner()
+            .map(|owner| RichTextAutomationHost::Editor(owner.downgrade()))
     }
     fn text_peer(&self) -> Ref<AutomationPeer> {
         self.to_ref().upcast()
@@ -149,7 +151,7 @@ impl IValueProvider for ProviderAdapter<RichEditBoxAutomationPeer> {
         self.0.is_read_only()
     }
     fn value(&self) -> Option<String> {
-        Some(self.0.value())
+        self.0.try_owner().map(|owner| owner.text())
     }
     fn set_value(&self, value: Option<&str>) -> Result<(), ProviderError> {
         self.0.set_value(value.unwrap_or_default())

@@ -93,6 +93,18 @@ ferro_class! {
         fn rebase_selection_on_document_change(this) -> bool;
         /// Space outside the document's formatted text, including editor adornments.
         fn text_insets(this) -> Thickness;
+        /// The formatter constraint, independent of a scrollable view's viewport.
+        fn text_layout_constraint(this, available_size: Size) -> Size;
+        /// Shared origin for text, inline controls, caret, selection and hit testing.
+        fn text_origin(this) -> Point;
+        /// Whether selection formatting is currently visible in this view.
+        fn selection_is_visible(this) -> bool;
+        /// The selection background after the host's focus policy is applied.
+        fn selection_render_brush(this) -> Option<Rc<dyn IBrush>>;
+        /// Publishes the selection event on the owning control.
+        fn raise_selection_changed_event(this);
+        /// The keyboard focus target for pointer interaction with text.
+        fn text_focus_target(this) -> Ref<InputElement>;
         /// Bounds painted by the document background; editor headers are outside it.
         fn text_background_bounds(this) -> Rect;
         /// Native framework visuals displayed beside the document's inline controls.
@@ -139,6 +151,7 @@ impl FerroObjectImpl for RichTextBlock {
             | "FontWeight"
             | "FontStretch"
             | "FontFeatures"
+            | "Language"
             | "Foreground"
             | "FlowDirection"
             | "LetterSpacing"
@@ -194,8 +207,8 @@ impl VisualImpl for RichTextBlock {
                 }
             }
         }
-        if this.is_text_selection_enabled() {
-            if let Some(brush) = this.selection_highlight_color() {
+        if this.selection_is_visible() {
+            if let Some(brush) = this.selection_render_brush() {
                 for rect in this.selection_rects() {
                     context.fill_rectangle(&brush, rect, 0.0);
                 }
@@ -243,6 +256,31 @@ impl RichTextBlockImpl for RichTextBlock {
         this.padding()
     }
 
+    fn text_layout_constraint(this: &Self, available_size: Size) -> Size {
+        available_size.deflate(this.text_insets())
+    }
+
+    fn text_origin(this: &Self) -> Point {
+        let insets = this.text_insets();
+        Point::new(insets.left, insets.top)
+    }
+
+    fn selection_is_visible(this: &Self) -> bool {
+        this.is_text_selection_enabled()
+    }
+
+    fn selection_render_brush(this: &Self) -> Option<Rc<dyn IBrush>> {
+        this.selection_highlight_color()
+    }
+
+    fn raise_selection_changed_event(this: &Self) {
+        this.raise_event(&RoutedEventArgs::with_event(Self::selection_changed_event()));
+    }
+
+    fn text_focus_target(this: &Self) -> Ref<InputElement> {
+        this.to_ref().upcast()
+    }
+
     fn text_background_bounds(this: &Self) -> Rect {
         Rect::from_size(this.bounds().size())
     }
@@ -254,7 +292,7 @@ impl RichTextBlockImpl for RichTextBlock {
 
 impl LayoutableImpl for RichTextBlock {
     fn measure_override(this: &Self, available_size: Size) -> Size {
-        let inner = available_size.deflate(this.text_insets());
+        let inner = this.text_layout_constraint(available_size);
         if this.constraint.replace(inner) != inner {
             this.layout.borrow_mut().take();
         }
@@ -272,7 +310,7 @@ impl LayoutableImpl for RichTextBlock {
     }
 
     fn arrange_override(this: &Self, final_size: Size) -> Size {
-        let inner = final_size.deflate(this.text_insets());
+        let inner = this.text_layout_constraint(final_size);
         if this.constraint.replace(inner) != inner {
             this.layout.borrow_mut().take();
         }
@@ -413,10 +451,11 @@ impl InputElementImpl for RichTextBlock {
                     rect.height.max(1.0)
                 };
                 let down = matches!(e.key, Key::Down | Key::PageDown);
-                let x = this.navigation_x.get().unwrap_or(rect.x);
+                let origin = this.text_origin();
+                let x = this.navigation_x.get().unwrap_or(rect.x - origin.x);
                 navigation_x = Some(x);
                 this.hit_test_text_position(Point::new(
-                    x,
+                    x + origin.x,
                     rect.y + rect.height * 0.5 + if down { distance } else { -distance },
                 ))
             }
@@ -440,7 +479,10 @@ impl InputElementImpl for RichTextBlock {
             if let Some(link) = this.hyperlink_at(e.get_position(Some(this))) {
                 this.focus_hyperlink(Some(link.clone()));
                 if link.pointer_pressed() {
-                    this.focus();
+                    this.text_focus_target().focus_with(
+                        ferroui_base::input::NavigationMethod::Pointer,
+                        e.key_modifiers(),
+                    );
                     *this.pressed_link.borrow_mut() = Some(link.downgrade());
                     let input: Ref<InputElement> = this.to_ref().upcast();
                     e.pointer().capture(Some(&input));
@@ -449,7 +491,8 @@ impl InputElementImpl for RichTextBlock {
                 }
             }
         }
-        if !this.is_text_selection_enabled()
+        if e.handled()
+            || !this.is_text_selection_enabled()
             || !e
                 .get_current_point(Some(this))
                 .properties
@@ -457,7 +500,10 @@ impl InputElementImpl for RichTextBlock {
         {
             return;
         }
-        this.focus();
+        this.text_focus_target().focus_with(
+            ferroui_base::input::NavigationMethod::Pointer,
+            e.key_modifiers(),
+        );
         this.focus_hyperlink(None);
         let index = this.hit_test_text_position(e.get_position(Some(this)));
         let text: Vec<u16> = this.document().text().encode_utf16().collect();
@@ -615,6 +661,7 @@ ferroui_base::ferro_properties! {
         pub fn font_weight_property() -> StyledProperty<FontWeight> { TextElement::font_weight_property().add_owner::<RichTextBlock>() }
         pub fn font_stretch_property() -> StyledProperty<FontStretch> { TextElement::font_stretch_property().add_owner::<RichTextBlock>() }
         pub fn font_features_property() -> StyledProperty<Option<FontFeatureCollection>> { TextElement::font_features_property().add_owner::<RichTextBlock>() }
+        pub fn language_property() -> StyledProperty<ferroui_base::utilities::CultureInfo> { TextElement::language_property().add_owner::<RichTextBlock>() }
         pub fn foreground_property() -> StyledProperty<Option<Rc<dyn IBrush>>> { TextElement::foreground_property().add_owner::<RichTextBlock>() }
         pub fn letter_spacing_property() -> StyledProperty<f64> { TextElement::letter_spacing_property().add_owner::<RichTextBlock>() }
         pub fn text_alignment_property() -> StyledProperty<TextAlignment> { TextBlock::text_alignment_property().add_owner::<RichTextBlock>() }
@@ -1028,7 +1075,7 @@ impl RichTextBlock {
         for (_, handler) in self.selection_changed.snapshot().iter() {
             handler(args);
         }
-        self.raise_event(&RoutedEventArgs::with_event(Self::selection_changed_event()));
+        self.raise_selection_changed_event();
         if let Some(target) = self.overflow_content_target() {
             target.notify_selection_changed(args);
         }
@@ -1329,6 +1376,12 @@ impl RichTextBlock {
     pub fn font_features(&self) -> Option<FontFeatureCollection> {
         self.get_value(Self::font_features_property())
     }
+    pub fn language(&self) -> ferroui_base::utilities::CultureInfo {
+        self.get_value(Self::language_property())
+    }
+    pub fn set_language(&self, value: ferroui_base::utilities::CultureInfo) {
+        self.set_value(Self::language_property(), value);
+    }
     pub fn set_font_features(&self, value: Option<FontFeatureCollection>) {
         self.set_value(Self::font_features_property(), value);
     }
@@ -1476,11 +1529,6 @@ impl RichTextBlock {
             .as_ref()
             .and_then(WeakRef::upgrade)
     }
-    fn text_origin(&self) -> Point {
-        let padding = self.text_insets();
-        Point::new(padding.left, padding.top)
-    }
-
     pub(crate) fn invalidate_document_layout(&self) {
         self.source.borrow_mut().take();
         self.invalidate_layout();

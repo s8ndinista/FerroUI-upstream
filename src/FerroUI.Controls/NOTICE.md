@@ -108,7 +108,7 @@ The rich text implementation adapts source and public contracts from
 | FerroUI files | Pinned source and contract families |
 |---|---|
 | `rich_text_block.rs`, `rich_text_block_overflow.rs`, `rich_text_layout.rs`, and their tests | `dxaml/xcp/core/text/RichTextBlock/`, `BlockLayout/`, selection/view contracts under `core/inc` and `core/text/Inc`, and `dxaml/xcp/components/text/TextHighlightRenderer.*`. |
-| `rich_edit_box.rs`, `rich_edit_box_text_input_method_client.rs`, `rich_text/`, and editor tests | `dxaml/xcp/core/native/text/Controls/RichEditBox.*`, `TextBoxBase.*`, `TextBoxView.*`, `TextServicesHost.*`, and the external text-object contracts documented by `packaging/Intellisense/generated/Microsoft.UI.Text.xml`. |
+| `rich_edit_box.rs`, `rich_edit_box_text_presenter.rs`, `rich_edit_box_text_input_method_client.rs`, `rich_text/`, and editor tests | `dxaml/xcp/core/native/text/Controls/RichEditBox.*`, `TextBoxBase.*`, `TextBoxView.*`, `TextServicesHost.*`, and the external text-object contracts documented by `packaging/Intellisense/generated/Microsoft.UI.Text.xml`. |
 | Rich text/edit automation peers and `automation/provider/{i_text_provider,i_text_range_provider,rich_text_automation}.rs` with their tests | Native rich control automation peers, text provider declarations, `dxaml/xcp/win/shared/UIAPatternProviderWrapper.cpp`, its header under `win/inc`, and the generated public text/range provider contracts. |
 | Document modules | The block/paragraph/inline/hyperlink/position/highlighter sources recorded in [documents/NOTICE.md](documents/NOTICE.md). |
 

@@ -7,6 +7,7 @@ use ferroui_base::media::{
     BaselineAlignment, Color, FlowDirection, FontFamily, FontStretch, FontStyle, FontWeight,
     IBrush, TextAlignment, TextDecorationCollection, TextDecorationLocation, TextDecorations,
 };
+use ferroui_base::utilities::CultureInfo;
 use ferroui_base::Thickness;
 use std::collections::BTreeMap;
 use std::fmt::{self, Write};
@@ -253,6 +254,7 @@ struct Decoder {
     fonts: BTreeMap<i32, FontFamily>,
     colors: Vec<Option<Rc<dyn IBrush>>>,
     default_font: Option<i32>,
+    default_language: Option<CultureInfo>,
     document: DocumentSnapshot,
     pending: Vec<u16>,
     pending_format: CharacterFormat,
@@ -301,6 +303,7 @@ impl RtfReader {
             fonts: BTreeMap::new(),
             colors: Vec::new(),
             default_font: None,
+            default_language: None,
             document: DocumentSnapshot {
                 paragraphs: vec![ParagraphSnapshot {
                     format: ParagraphFormat::default(),
@@ -435,8 +438,14 @@ impl Decoder {
                     let number = *number;
                     let enabled = number != Some(0);
                     match *word {
-                        "rtf" | "ansi" | "viewkind" | "viewscale" | "deflang" | "deflangfe"
-                        | "nouicompat" | "fet" => {}
+                        "rtf" | "ansi" | "viewkind" | "viewscale" | "deflangfe" | "nouicompat"
+                        | "fet" => {}
+                        "deflang" => {
+                            let language = rtf_language(number)?;
+                            self.default_language = Some(language.clone());
+                            state.character.language = Some(language);
+                        }
+                        "lang" => state.character.language = Some(rtf_language(number)?),
                         "ansicpg" => {
                             let codepage = number.ok_or(RtfError::InvalidParameter("code page"))?;
                             if codepage != 1252 {
@@ -462,6 +471,7 @@ impl Decoder {
                         "deff" => self.default_font = number,
                         "plain" => {
                             state.character = CharacterFormat::default();
+                            state.character.language = self.default_language.clone();
                             state.character.font_family = self
                                 .default_font
                                 .and_then(|id| self.fonts.get(&id).cloned());
@@ -1177,6 +1187,19 @@ impl Encoder {
         Ok(())
     }
     fn format(&mut self, format: &CharacterFormat) -> Result<(), RtfError> {
+        if let Some(language) = &format.language {
+            let identifier = if language.is_invariant() {
+                1024
+            } else {
+                language.lcid()
+            };
+            if identifier == 0x1000 {
+                return Err(RtfError::UnsupportedFeature(
+                    "language tag without a known Windows identifier",
+                ));
+            }
+            let _ = write!(self.output, "\\lang{identifier}");
+        }
         if let Some(font) = &format.font_family {
             let index = self
                 .fonts
@@ -1404,6 +1427,18 @@ impl Encoder {
         }
         Ok(())
     }
+}
+
+fn rtf_language(number: Option<i32>) -> Result<CultureInfo, RtfError> {
+    let identifier = number
+        .filter(|value| (0..=65535).contains(value))
+        .ok_or(RtfError::InvalidParameter("language identifier"))?;
+    if identifier == 1024 {
+        return Ok(CultureInfo::invariant_culture());
+    }
+    CultureInfo::get_culture_info_by_lcid(identifier).ok_or(RtfError::UnsupportedFeature(
+        "unknown Windows language identifier",
+    ))
 }
 
 fn rtf_measure(value: f64, scale: f64, parameter: &'static str) -> Result<i32, RtfError> {

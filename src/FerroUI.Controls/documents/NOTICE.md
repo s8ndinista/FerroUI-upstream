@@ -7,6 +7,10 @@ are derived from Microsoft WinUI, pinned at commit
 - `dxaml/xcp/core/inc/BlockTextElement.h`
 - `dxaml/xcp/core/text/common/BlockCollection.cpp`
 - `dxaml/xcp/core/text/RichTextArea/paragraph.cpp`
+- `dxaml/xcp/core/text/RichTextArea/TextElement.cpp`
+- `dxaml/xcp/core/text/common/text.cpp`
+- `dxaml/xcp/core/text/common/TextFormatting.cpp`
+- `dxaml/xcp/core/text/common/PALFontAndScriptServices.cpp`
 - `dxaml/xcp/core/text/TextBlock/Hyperlink.cpp`
 - `dxaml/xcp/core/inc/Hyperlink.h`
 - `dxaml/xcp/core/text/Inc/TextPosition.h`

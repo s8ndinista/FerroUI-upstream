@@ -5,6 +5,7 @@ use crate::documents::{
 use ferroui_base::media::TextDecorations;
 use ferroui_base::reactive::{Disposable, IDisposable};
 use ferroui_base::utilities::HandlerList;
+use ferroui_base::{Ref, WeakRef};
 use std::cell::{Cell, RefCell};
 use std::fmt;
 use std::ops::Range;
@@ -106,6 +107,7 @@ struct History {
 /// silently overwrite an application's subsequent document changes.
 pub struct RichTextEditor {
     document: RichTextDocument,
+    text_view: RefCell<Option<WeakRef<crate::RichTextBlock>>>,
     selection: Cell<EditorSelection>,
     typing_format: RefCell<CharacterFormat>,
     default_character_format: RefCell<CharacterFormat>,
@@ -145,6 +147,7 @@ impl RichTextEditor {
         Self {
             known_revision: Cell::new(document.revision()),
             document,
+            text_view: RefCell::new(None),
             selection: Cell::new(EditorSelection::default()),
             typing_format: RefCell::new(CharacterFormat::default()),
             default_character_format: RefCell::new(CharacterFormat::default()),
@@ -164,6 +167,27 @@ impl RichTextEditor {
 
     pub fn document(&self) -> RichTextDocument {
         self.document.clone()
+    }
+
+    /// Associates the live text layout used by display-dependent TOM units. The
+    /// weak association does not keep a control alive or participate in history.
+    pub fn set_text_view(&self, view: Option<Ref<crate::RichTextBlock>>) -> Result<(), EditError> {
+        if view
+            .as_ref()
+            .is_some_and(|view| view.document() != self.document)
+        {
+            return Err(DocumentError::InvalidFormat(
+                "The text view must display this editor's document.",
+            )
+            .into());
+        }
+        let previous = self.text_view.replace(view.as_ref().map(Ref::downgrade));
+        drop(previous);
+        Ok(())
+    }
+
+    pub(super) fn text_view(&self) -> Option<Ref<crate::RichTextBlock>> {
+        self.text_view.borrow().as_ref().and_then(WeakRef::upgrade)
     }
     pub fn selection(&self) -> EditorSelection {
         self.selection.get()
@@ -203,6 +227,33 @@ impl RichTextEditor {
     }
     pub fn is_composing(&self) -> bool {
         self.history.borrow().composition.is_some()
+    }
+    /// Absolute UTF-16 extent of the current IME preview. A later external model
+    /// mutation invalidates this extent instead of exposing stale composition text.
+    pub fn active_composition_range(&self) -> Option<Range<usize>> {
+        let (revision, range, retained) = {
+            let history = self.history.borrow();
+            let composition = history.composition.as_ref()?;
+            let range = composition.before.selection.range();
+            let retained = composition
+                .before
+                .document
+                .text_length()
+                .checked_sub(range.len())?;
+            (composition.preview_revision, range, retained)
+        };
+        if self.document.revision() != revision {
+            return None;
+        }
+        let length = self.document.text_length().checked_sub(retained)?;
+        let end = range.start.checked_add(length)?;
+        let result = range.start..end;
+        if self.document.revision() != revision
+            || self.document.validate_range(result.clone()).is_err()
+        {
+            return None;
+        }
+        Some(result)
     }
     pub fn typing_format(&self) -> CharacterFormat {
         self.typing_format.borrow().clone()
@@ -912,6 +963,7 @@ fn text_is_deletion(kind: EditKind) -> bool {
 fn merge_format(mut current: CharacterFormat, update: &CharacterFormat) -> CharacterFormat {
     macro_rules! update { ($($field:ident),* $(,)?) => { $(if update.$field.is_some() { current.$field = update.$field.clone(); })* }; }
     update!(
+        language,
         font_family,
         font_size,
         font_style,

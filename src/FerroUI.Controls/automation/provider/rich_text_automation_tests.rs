@@ -10,7 +10,7 @@ use crate::documents::{
     UnderlineStyle,
 };
 use crate::test_support::{test_scope, TestRoot};
-use crate::{Border, RichEditBox, RichTextBlock};
+use crate::{Border, Control, RichEditBox, RichTextBlock};
 use ferroui_base::input::{IKeyboardDevice, KeyboardDevice};
 use ferroui_base::media::text_formatting::testing::TextTestScope;
 use ferroui_base::media::{
@@ -42,7 +42,7 @@ impl Drop for KeyboardScope {
     }
 }
 
-fn provider(view: &RichTextBlock) -> Rc<dyn ITextProvider> {
+fn provider(view: &Control) -> Rc<dyn ITextProvider> {
     ControlAutomationPeer::create_peer_for_element(view)
         .get_provider::<dyn ITextProvider>()
         .expect("Rich text exposes the Text pattern")
@@ -53,6 +53,21 @@ fn rich(text: &str) -> Ref<RichTextBlock> {
     view.set_document(RichTextDocument::from_text(text));
     view.set_is_text_selection_enabled(true);
     view
+}
+
+fn apply_editor_template(editor: &RichEditBox, padding: Thickness) {
+    use crate::templates::{FuncControlTemplate, FuncTemplateNameScopeExtensions};
+    editor.set_template(Some(FuncControlTemplate::for_type::<RichEditBox>(
+        move |_owner, names| {
+            let content = Border::new();
+            content.set_name(Some("ContentElement".to_owned()));
+            let border = Border::new();
+            border.set_padding(padding);
+            border.set_child(content.register_in_name_scope(&**names));
+            border.upcast()
+        },
+    )));
+    editor.apply_template();
 }
 
 fn found(provider: &dyn ITextProvider, text: &str) -> Rc<dyn ITextRangeProvider> {
@@ -97,7 +112,7 @@ fn rich_automation_document_text_preserves_utf16_boundaries_and_read_only_semant
 fn rich_automation_editor_exposes_text_and_value_over_the_same_undoable_document() {
     let _scope = test_scope();
     let editor = RichEditBox::new();
-    editor.set_text("before");
+    editor.set_text("before").unwrap();
     let peer = ControlAutomationPeer::create_peer_for_element(&editor);
     let value = peer.get_provider::<dyn IValueProvider>().unwrap();
     let text = peer.get_provider::<dyn ITextProvider>().unwrap();
@@ -727,6 +742,7 @@ fn rich_automation_hyperlink_tree_retains_embedded_children_and_innermost_enclos
         found(&*text, "inner").get_enclosing_element().unwrap(),
         inner_peer
     );
+    assert!(found(&*text, "inner").get_children().unwrap().is_empty());
     assert_eq!(
         text.range_from_child(&embedded_peer)
             .unwrap()
@@ -734,6 +750,12 @@ fn rich_automation_hyperlink_tree_retains_embedded_children_and_innermost_enclos
             .unwrap(),
         embedded_peer
     );
+    assert!(text
+        .range_from_child(&embedded_peer)
+        .unwrap()
+        .get_children()
+        .unwrap()
+        .is_empty());
     assert_eq!(
         text.document_range().unwrap().get_children().unwrap().len(),
         3
@@ -916,17 +938,57 @@ fn rich_automation_extra_attributes_use_effective_decoration_colors_and_logical_
 
 #[test]
 fn rich_automation_editor_header_description_preserve_explicit_metadata_and_visual_children() {
+    use crate::presenters::ContentPresenter;
+    use crate::templates::{FuncControlTemplate, FuncTemplateNameScopeExtensions};
+    use ferroui_base::data::TemplateBinding;
+
     let _scope = test_scope();
     let editor = RichEditBox::new();
     editor.set_header(Some(Rc::new("Editor label".to_owned())));
     editor.set_description(Some(Rc::new("Editor guidance".to_owned())));
+    editor.set_template(Some(FuncControlTemplate::for_type::<RichEditBox>(
+        |_owner, names| {
+            let panel = crate::StackPanel::new();
+            let header = ContentPresenter::new();
+            header.set_name(Some("HeaderContentPresenter".to_owned()));
+            header.bind_binding(
+                ContentPresenter::content_property().as_property(),
+                &TemplateBinding::new(RichEditBox::header_property().as_property()),
+            );
+            panel
+                .children()
+                .add(header.register_in_name_scope(&**names));
+            let content = Border::new();
+            content.set_name(Some("ContentElement".to_owned()));
+            panel
+                .children()
+                .add(content.register_in_name_scope(&**names));
+            let description = ContentPresenter::new();
+            description.set_name(Some("DescriptionPresenter".to_owned()));
+            description.bind_binding(
+                ContentPresenter::content_property().as_property(),
+                &TemplateBinding::new(RichEditBox::description_property().as_property()),
+            );
+            panel
+                .children()
+                .add(description.register_in_name_scope(&**names));
+            panel.upcast()
+        },
+    )));
+    editor.apply_template();
     let root = TestRoot::with_child(editor.clone());
     root.measure(Size::new(200.0, 80.0));
     root.arrange(Rect::new(0.0, 0.0, 200.0, 80.0));
     let peer = ControlAutomationPeer::create_peer_for_element(&editor);
     assert_eq!(peer.get_name(), "Editor label");
     assert_eq!(peer.get_help_text(), "Editor guidance");
-    assert!(peer.get_children().len() >= 2);
+    let header_peer =
+        ControlAutomationPeer::create_peer_for_element(&editor.header_presenter().unwrap());
+    let description_peer =
+        ControlAutomationPeer::create_peer_for_element(&editor.description_presenter().unwrap());
+    let template_children = peer.get_children()[0].get_children();
+    assert!(template_children.contains(&header_peer));
+    assert!(template_children.contains(&description_peer));
     editor.set_value(
         AutomationProperties::name_property(),
         Some("Explicit name".to_owned()),
@@ -1006,4 +1068,353 @@ fn rich_automation_visible_ranges_exclude_text_collapsed_into_an_ellipsis() {
     assert!(!visible.is_empty());
     assert!(!visible.contains("zeta"));
     assert!(visible.len() < view.document().text().len());
+}
+
+#[test]
+fn rich_automation_document_and_hyperlink_ranges_do_not_enumerate_themselves() {
+    let _scope = test_scope();
+    let view = RichTextBlock::new();
+    let paragraph = Paragraph::new();
+    let link = Hyperlink::with_text("only link", None);
+    paragraph.add_child(link);
+    view.blocks().add(paragraph);
+    let text = provider(&view);
+    let all = text.document_range().unwrap();
+    let link_peer = all.get_children().unwrap()[0].clone();
+    // The document and link have identical visible UTF-16 offsets. Their
+    // enclosing scopes still differ, as the source's structural endpoints do.
+    assert_eq!(all.get_enclosing_element().unwrap(), text.peer());
+    let all_clone = all.clone_range().unwrap();
+    assert_eq!(all_clone.get_enclosing_element().unwrap(), text.peer());
+    assert_eq!(all_clone.get_children().unwrap(), vec![link_peer.clone()]);
+    let content = link_peer
+        .get_provider::<dyn ITextChildProvider>()
+        .unwrap()
+        .text_range()
+        .unwrap();
+    assert_eq!(content.get_enclosing_element().unwrap(), link_peer);
+    assert!(content.get_children().unwrap().is_empty());
+    assert!(content
+        .clone_range()
+        .unwrap()
+        .get_children()
+        .unwrap()
+        .is_empty());
+    assert!(found(&*text, "link").get_children().unwrap().is_empty());
+    content
+        .expand_to_enclosing_unit(TextUnit::Document)
+        .unwrap();
+    assert_eq!(content.get_enclosing_element().unwrap(), text.peer());
+    assert_eq!(content.get_children().unwrap(), vec![link_peer]);
+
+    let embedded_view = RichTextBlock::new();
+    let paragraph = Paragraph::new();
+    let embedded = Border::new();
+    paragraph.add_child(InlineUIContainer::with_child(embedded.clone()));
+    embedded_view.blocks().add(paragraph);
+    let text = provider(&embedded_view);
+    let all = text.document_range().unwrap();
+    let embedded_peer = all.get_children().unwrap()[0].clone();
+    assert_eq!(all.get_enclosing_element().unwrap(), text.peer());
+    let content = text.range_from_child(&embedded_peer).unwrap();
+    assert_eq!(content.get_enclosing_element().unwrap(), embedded_peer);
+    assert!(content.get_children().unwrap().is_empty());
+}
+
+#[test]
+fn rich_automation_scroll_alignment_uses_the_last_selected_line() {
+    use crate::presenters::ScrollContentPresenter;
+    use crate::primitives::ScrollBarVisibility;
+    use crate::templates::FuncControlTemplate;
+    use crate::ScrollViewer;
+
+    let _scope = test_scope();
+    let view = rich(
+        &(0..12)
+            .map(|line| format!("line{line}"))
+            .collect::<Vec<_>>()
+            .join("\n"),
+    );
+    let scroller = ScrollViewer::new();
+    scroller.set_horizontal_scroll_bar_visibility(ScrollBarVisibility::Disabled);
+    scroller.set_vertical_scroll_bar_visibility(ScrollBarVisibility::Hidden);
+    scroller.set_template(Some(FuncControlTemplate::for_type::<ScrollViewer>(
+        crate::scroll_viewer_tests::create_template,
+    )));
+    scroller.set_content(Some(Control::boxed(&view)));
+    scroller.apply_template();
+    let presenter = scroller
+        .presenter()
+        .unwrap()
+        .cast::<ScrollContentPresenter>()
+        .unwrap();
+    presenter.attach_to_scroll_viewer();
+    presenter.update_child();
+    let root = TestRoot::with_child(scroller.clone());
+    let size = Size::new(200.0, 30.0);
+    root.set_client_size(size);
+    root.measure(size);
+    root.arrange(Rect::from_size(size));
+    let lines = view.line_metrics();
+    assert!(lines.len() >= 12);
+    assert!(scroller.extent().height > scroller.viewport().height);
+    let selected = lines[2].start..lines[5].start;
+    let selected_text = view.document().get_text(selected.clone()).unwrap();
+    let range = found(&*provider(&view), &selected_text);
+    let rectangles = view.get_rects_for_range(selected);
+    let expected_bottom = rectangles.last().unwrap().bottom() - scroller.viewport().height;
+    let expected_top = rectangles[0].y;
+    assert!(expected_bottom > 0.0);
+    view.select(1, 3);
+
+    range.scroll_into_view(false).unwrap();
+    assert!((scroller.offset().y - expected_bottom).abs() < 1e-8);
+    // The child has not been arranged at its new offset yet. Repeating or
+    // changing alignment must use extent coordinates, not its stale transform.
+    range.scroll_into_view(false).unwrap();
+    assert!((scroller.offset().y - expected_bottom).abs() < 1e-8);
+    range.scroll_into_view(true).unwrap();
+    assert!((scroller.offset().y - expected_top).abs() < 1e-8);
+    assert_eq!((view.selection_start(), view.selection_end()), (1, 3));
+}
+
+#[test]
+fn rich_automation_editor_scroll_alignment_uses_the_presenter_viewport_and_current_offset() {
+    use ferroui_base::input::IScrollable;
+
+    let _scope = test_scope();
+    let editor = RichEditBox::new();
+    editor
+        .set_text(
+            &(0..12)
+                .map(|line| format!("line{line}"))
+                .collect::<Vec<_>>()
+                .join("\n"),
+        )
+        .unwrap();
+    editor.select(1, 3);
+    editor.set_template(Some(crate::rich_edit_box_tests::rich_edit_box_template()));
+    let root = TestRoot::with_child(editor.clone());
+    let size = Size::new(200.0, 40.0);
+    root.set_client_size(size);
+    root.measure(size);
+    root.arrange(Rect::from_size(size));
+    root.layout_manager().execute_layout_pass();
+    let presenter = editor.text_presenter();
+    assert!(presenter.extent().height > presenter.viewport().height);
+    let lines = presenter.line_metrics();
+    let selected = lines[2].start..lines[5].start;
+    let selected_text = editor.document().get_text(selected.clone()).unwrap();
+    let range = found(&*provider(&editor), &selected_text);
+    let rectangles = presenter.get_rects_for_range(selected);
+    let expected_bottom =
+        rectangles.last().unwrap().bottom() + presenter.offset().y - presenter.viewport().height;
+    let expected_top = rectangles[0].y + presenter.offset().y;
+    range.scroll_into_view(false).unwrap();
+    assert!((presenter.offset().y - expected_bottom).abs() < 1e-8);
+    // Logical scrolling changes the presenter's text origin immediately. Its
+    // subsequent outer bring-into-view must receive the updated local bounds.
+    range.scroll_into_view(false).unwrap();
+    assert!((presenter.offset().y - expected_bottom).abs() < 1e-8);
+    range.scroll_into_view(true).unwrap();
+    assert!((presenter.offset().y - expected_top).abs() < 1e-8);
+    assert_eq!((editor.selection_start(), editor.selection_end()), (1, 3));
+}
+
+#[test]
+fn rich_automation_scroll_rejects_text_without_a_laid_out_view() {
+    let _scope = test_scope();
+    let view = rich("first\nsecond\nthird");
+    view.set_max_lines(1);
+    let text = provider(&view);
+    let unavailable = found(&*text, "third");
+    let root = TestRoot::with_child(view.clone());
+    for align_to_top in [true, false] {
+        assert_eq!(
+            unavailable
+                .scroll_into_view(align_to_top)
+                .err()
+                .unwrap()
+                .downcast_ref::<TextProviderError>(),
+            Some(&TextProviderError::GeometryUnavailable)
+        );
+    }
+    let size = Size::new(200.0, 50.0);
+    root.set_client_size(size);
+    root.measure(size);
+    root.arrange(Rect::from_size(size));
+    assert!(view.get_rects_for_range(13..18).is_empty());
+    for align_to_top in [true, false] {
+        assert_eq!(
+            unavailable
+                .scroll_into_view(align_to_top)
+                .err()
+                .unwrap()
+                .downcast_ref::<TextProviderError>(),
+            Some(&TextProviderError::GeometryUnavailable)
+        );
+    }
+    let available = found(&*text, "first");
+    available.scroll_into_view(true).unwrap();
+    root.set_child(None::<Ref<Control>>);
+    assert_eq!(
+        available
+            .scroll_into_view(true)
+            .err()
+            .unwrap()
+            .downcast_ref::<TextProviderError>(),
+        Some(&TextProviderError::GeometryUnavailable)
+    );
+}
+
+#[test]
+fn rich_automation_editor_templates_preserve_owner_identity_ranges_and_presenter_geometry() {
+    let _scope = test_scope();
+    let _keyboard = KeyboardScope::new();
+    let editor = RichEditBox::new();
+    editor.set_text("first second").unwrap();
+    let presenter = editor.text_presenter();
+    let text = provider(&editor);
+    let peer = text.peer();
+    let word = found(&*text, "second");
+    assert!(word.get_bounding_rectangles().unwrap().is_empty());
+    apply_editor_template(&editor, Thickness::new(8.0, 12.0, 0.0, 0.0));
+    let root = TestRoot::with_child(editor.clone());
+    let size = Size::new(240.0, 100.0);
+    root.set_client_size(size);
+    root.measure(size);
+    root.arrange(Rect::from_size(size));
+    let first = word.get_bounding_rectangles().unwrap()[0];
+    let expected = presenter.get_rects_for_range(6..12)[0]
+        .transform_to_aabb(presenter.transform_to_visual(&root).unwrap());
+    assert_eq!(first, expected);
+    assert!(first.x >= 8.0 && first.y >= 12.0);
+    assert!(editor.focus());
+    assert!(!presenter.is_focused());
+    assert!(
+        peer.get_provider::<dyn ITextProvider2>()
+            .unwrap()
+            .get_caret_range()
+            .unwrap()
+            .is_active
+    );
+    word.select().unwrap();
+    assert_eq!((editor.selection_start(), editor.selection_end()), (6, 12));
+    assert_eq!(editor.editor().selection().range(), 6..12);
+    assert_eq!(presenter.document(), editor.document());
+
+    let changes = Rc::new(Cell::new(0));
+    let count = changes.clone();
+    let subscription = text
+        .text_changed(Rc::new(move || count.set(count.get() + 1)))
+        .unwrap();
+    apply_editor_template(&editor, Thickness::new(31.0, 29.0, 0.0, 0.0));
+    // Descendant invalidations are queued by the framework layout manager.
+    // Repeating an unchanged root arrange alone can skip the new template.
+    root.layout_manager().execute_layout_pass();
+    assert_eq!(presenter, editor.text_presenter());
+    assert_eq!(
+        peer,
+        ControlAutomationPeer::create_peer_for_element(&editor)
+    );
+    assert_eq!(word.peer().unwrap(), peer);
+    assert_eq!(word.get_text(None).unwrap(), "second");
+    let second = word.get_bounding_rectangles().unwrap()[0];
+    assert!(
+        (second.x - first.x - 23.0).abs() < 1e-8,
+        "{first:?} -> {second:?}"
+    );
+    assert!(
+        (second.y - first.y - 17.0).abs() < 1e-8,
+        "{first:?} -> {second:?}"
+    );
+    assert_eq!((editor.selection_start(), editor.selection_end()), (6, 12));
+    assert_eq!(changes.get(), 0);
+    editor.set_is_read_only(true);
+    assert_eq!(
+        word.get_attribute_value(TextAttribute::IsReadOnly).unwrap(),
+        TextAttributeValue::Bool(true)
+    );
+    subscription.dispose();
+}
+
+#[test]
+fn rich_automation_retained_editor_presenter_does_not_keep_owner_or_text_provider_alive() {
+    let _scope = test_scope();
+    let (presenter, text, range, weak_editor) = {
+        let editor = RichEditBox::new();
+        editor.set_text("retained layout").unwrap();
+        let text = provider(&editor);
+        let range = text.document_range().unwrap();
+        (editor.text_presenter(), text, range, editor.downgrade())
+    };
+    assert!(weak_editor.upgrade().is_none());
+    assert_eq!(presenter.document().text(), "retained layout");
+    assert_eq!(
+        range
+            .get_text(None)
+            .err()
+            .unwrap()
+            .downcast_ref::<TextProviderError>(),
+        Some(&TextProviderError::ElementNotAvailable)
+    );
+    assert!(text.document_range().is_err());
+    assert!(text
+        .peer()
+        .get_provider::<dyn ITextProvider2>()
+        .unwrap()
+        .get_caret_range()
+        .is_err());
+    assert_eq!(text.peer().get_name(), "");
+}
+
+#[test]
+fn rich_automation_editor_raw_presenter_does_not_duplicate_embedded_document_children() {
+    let _scope = test_scope();
+    let editor = RichEditBox::new();
+    let paragraph = Paragraph::new();
+    let link = Hyperlink::with_text("link ", None);
+    let embedded = Border::new();
+    embedded.set_width(16.0);
+    embedded.set_height(12.0);
+    link.add_child(InlineUIContainer::with_child(embedded.clone()));
+    paragraph.add_child(link);
+    let document = RichTextDocument::new();
+    document.blocks().add(paragraph);
+    editor.set_document(document);
+    apply_editor_template(&editor, Thickness::uniform(4.0));
+    let root = TestRoot::with_child(editor.clone());
+    let size = Size::new(200.0, 60.0);
+    root.set_client_size(size);
+    root.measure(size);
+    root.arrange(Rect::from_size(size));
+    let text = provider(&editor);
+    let link_peer = text
+        .document_range()
+        .unwrap()
+        .get_children()
+        .unwrap()
+        .into_iter()
+        .find(|peer| peer.get_provider::<dyn ITextChildProvider>().is_some())
+        .unwrap();
+    let embedded_peer = ControlAutomationPeer::create_peer_for_element(&embedded);
+    assert_eq!(
+        link_peer.get_children().as_ref(),
+        &vec![embedded_peer.clone()]
+    );
+    let presenter_peer = ControlAutomationPeer::create_peer_for_element(&editor.text_presenter());
+    assert!(!presenter_peer.is_content_element());
+    assert!(!presenter_peer.is_control_element());
+    assert!(presenter_peer.get_provider::<dyn ITextProvider>().is_none());
+    assert!(presenter_peer.get_children().is_empty());
+    let mut pending = text.peer().get_children().as_ref().clone();
+    let mut visited = std::collections::HashSet::new();
+    while let Some(peer) = pending.pop() {
+        assert!(visited.insert(
+            std::ptr::from_ref::<crate::automation::peers::AutomationPeer>(&peer) as usize
+        ));
+        assert!(visited.len() < 32);
+        pending.extend(peer.get_children().iter().cloned());
+    }
+    assert_eq!(embedded_peer.get_parent(), Some(link_peer));
 }

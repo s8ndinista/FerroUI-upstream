@@ -597,6 +597,9 @@ fn native_hyperlink_text_child_has_canonical_container_ranges_and_dispatches_inv
             enclosing.cast::<IUnknown>().unwrap(),
             child.cast::<IUnknown>().unwrap()
         );
+        assert!(
+            array::<ComPtr<IRawElementProviderSimple>>(range.get_children().unwrap()).is_empty()
+        );
         child.cast::<IInvokeProvider>().unwrap().invoke().unwrap();
         let mut available = child
             .get_property_value(UiaPropertyId::IsTextChildPatternAvailable.0)
@@ -623,9 +626,18 @@ fn native_text_child_range_survives_child_removal_but_not_document_replacement()
     view.blocks().add(paragraph.clone());
     let text_provider = native_node(&view).cast::<ITextProvider>().unwrap();
     let all = text_provider.get_document_range().unwrap().unwrap();
+    assert_eq!(
+        all.get_enclosing_element()
+            .unwrap()
+            .unwrap()
+            .cast::<IUnknown>()
+            .unwrap(),
+        text_provider.cast::<IUnknown>().unwrap()
+    );
     let children = array::<ComPtr<IRawElementProviderSimple>>(all.get_children().unwrap());
     let child = children[0].cast::<ITextChildProvider>().unwrap();
     let range = child.get_text_range().unwrap().unwrap();
+    assert!(array::<ComPtr<IRawElementProviderSimple>>(range.get_children().unwrap()).is_empty());
     paragraph.inlines().clear();
     assert_eq!(text(&range, -1), "");
     assert_eq!(

@@ -111,7 +111,7 @@ impl TextPointer {
             subscription: RefCell::new(None),
         }));
         let weak = Rc::downgrade(&pointer.0);
-        let subscription = document.changed(move |change| {
+        let subscription = document.position_changed(move |change| {
             if let Some(pointer) = weak.upgrade() {
                 pointer
                     .position
@@ -204,3 +204,7 @@ impl TextPointer {
             .flatten()
     }
 }
+
+#[cfg(test)]
+#[path = "rich_text_pointer_tests.rs"]
+mod tests;

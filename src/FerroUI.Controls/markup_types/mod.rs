@@ -60,6 +60,8 @@ const RICH_TEXT_TYPES: &[&MarkupType] = &[
     <crate::rich_text::FindOptions as MarkupTyped>::MARKUP,
     <crate::rich_text::TextGetOptions as MarkupTyped>::MARKUP,
     <crate::rich_text::TextSetOptions as MarkupTyped>::MARKUP,
+    <crate::rich_text::TextStreamEncoding as MarkupTyped>::MARKUP,
+    <crate::rich_text::TextRangeUnit as MarkupTyped>::MARKUP,
 ];
 
 /// Adds the types declared in this module to the process-wide table of
@@ -112,6 +114,8 @@ fn register_rich_text_value_types() {
     ValueTypes::register_nullable::<crate::rich_text::FindOptions>();
     ValueTypes::register_nullable::<crate::rich_text::TextGetOptions>();
     ValueTypes::register_nullable::<crate::rich_text::TextSetOptions>();
+    ValueTypes::register_nullable::<crate::rich_text::TextStreamEncoding>();
+    ValueTypes::register_nullable::<crate::rich_text::TextRangeUnit>();
     ValueTypes::register_nullable::<ferroui_base::interactivity::RoutedEvent<crate::RichEditCompositionEventArgs>>();
     ValueTypes::register_nullable::<ferroui_base::interactivity::RoutedEvent<crate::RichEditBoxSelectionChangingEventArgs>>();
     ValueTypes::register_nullable::<ferroui_base::interactivity::RoutedEvent<crate::RichEditBoxTextChangingEventArgs>>();

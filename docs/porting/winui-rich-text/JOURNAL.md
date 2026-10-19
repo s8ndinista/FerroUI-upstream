@@ -99,3 +99,43 @@ batching from model notification batching, and native tab stops from the current
 formatter's fixed-width tabs. These are implementation tasks, not stored-property
 substitutes. The next batch preserves one document/editor while completing the
 template/presenter, scrolling and stream-service boundaries.
+
+## Persistent editor view, streams, units and language — 2026-10-19
+
+The next implementation checkpoint makes RichEditBox a FerroUI TemplatedControl
+with one persistent RichEditBoxTextPresenter. The model, directed selection,
+composition and undo history survive template replacement. Header, placeholder
+and description use ordinary framework presenters; document extent, scroll
+offset, caret, IME, hit testing and automation share the presenter's coordinates.
+Automation retains the semantic editor owner and exposes no duplicate document
+through its raw presenter peer. Both physical and logical scroll alignment use
+the last selected line and the established viewport.
+
+Document and range streaming use bounded, explicit UTF-8/UTF-16 Read/Write
+operations and the existing RTF parser, with complete validation before editing.
+TOM Character, Word, Sentence, Paragraph, Line, Story and HardParagraph units now
+have separate native-valued service contracts; Unicode navigation/search remains
+distinct. An unmeasured editor falls back from Line to Paragraph, while a
+measured presenter supplies current display-line boundaries. Cluster and other
+unimplemented native units are not aliases for Unicode graphemes.
+
+Inherited TextElement.Language now reaches FerroUI shaping and fallback through
+CultureInfo, with the pinned source's XML-language validation and application
+language default. Character-format snapshots, editor history and supported RTF
+language controls preserve the tag. Windows locale resolution, the complete
+LCID namespace and dual proofing languages remain separate native contracts.
+
+The integrated command
+`cargo test --locked --offline -p ferroui-controls --lib rich_ --no-fail-fast`
+completed with **246 passed, 0 failed, 4434 filtered out**. New coverage consists
+of 15 stream, 19 TOM unit, 8 live-pointer, 6 language, 10 presenter/control and 7
+automation tests. A real double-rebase bug in batched range replacement was fixed
+by updating internal weak live positions at each model replacement while keeping
+public document notifications batched. Tests cover nested edits, rollback,
+undo/redo, reentrant callbacks and weak lifetime. Geometry fixtures now execute
+the actual layout manager, and the unmeasured Line fixture uses wrapping rather
+than a line break that was also a TOM paragraph boundary.
+
+This checkpoint does not assert complete native parity. Theme templates,
+compiled markup, TextEdit composition notifications and the remaining external
+engine contracts continue in subsequent implementation and validation batches.

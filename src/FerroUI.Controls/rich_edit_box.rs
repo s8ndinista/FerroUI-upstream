@@ -1,20 +1,26 @@
 use crate::documents::{
-    CharacterFormat, DocumentSnapshot, InlineSnapshot, InlineSnapshotKind, ParagraphFormat,
-    TextElement,
+    BlockCollection, CharacterFormat, DocumentSnapshot, InlineSnapshot, InlineSnapshotKind,
+    LineStackingStrategy, ParagraphFormat, RichTextDocument, TextHighlighterCollection,
+    TextPosition,
 };
+use crate::metadata::{PseudoClassesAttribute, TemplatePartAttribute};
 use crate::presenters::ContentPresenter;
+use crate::primitives::{
+    TemplateAppliedEventArgs, TemplatedControl, TemplatedControlImpl, TemplatedControlImplExt,
+};
 use crate::rich_edit_box_text_input_method_client::RichEditBoxTextInputMethodClient;
 use crate::rich_text::{
     EditError, EditKind, EditorSelection, RichEditClipboardFormat, RichEditTextDocument,
     RichTextEditor, RichTextTransfer, RtfError, RtfReader, RtfWriter,
 };
 use crate::rich_text_block::RichTextSelectionChangedEventArgs;
-use crate::templates::IDataTemplate;
+use crate::rich_text_layout::RichTextLineMetrics;
+use crate::templates::{IControlTemplate, IDataTemplate};
 use crate::utils::ClipboardHelper;
 use crate::TextBlock;
 use crate::{
-    Application, ControlImpl, RichTextBlock, RichTextBlockImpl, RichTextBlockImplExt, TextBox,
-    TopLevel,
+    Application, ContentControl, Control, ControlImpl, Decorator, Panel, RichEditBoxTextPresenter,
+    RichTextBlock, TextBox, TopLevel,
 };
 use ferroui_base::animation::TimeSpan;
 use ferroui_base::input::platform::{
@@ -25,7 +31,7 @@ use ferroui_base::input::text_input::{
 };
 use ferroui_base::input::{
     FocusChangedEventArgs, InputElement, InputElementImpl, InputElementImplExt, Key, KeyEventArgs,
-    KeyGesture, LocalBoxFuture, TextInputEventArgs,
+    KeyGesture, LocalBoxFuture, PointerPressedEventArgs, TextInputEventArgs,
 };
 use ferroui_base::interactivity::{
     Interactive, InteractiveImpl, RoutedEvent, RoutedEventArgs, RoutedEventHandlerToken,
@@ -33,8 +39,8 @@ use ferroui_base::interactivity::{
 };
 use ferroui_base::layout::{LayoutableImpl, LayoutableImplExt};
 use ferroui_base::media::{
-    DrawingContext, FontStyle, FontWeight, IBrush, TextDecorationLocation, TextDecorations,
-    TextWrapping,
+    subscribe_invalidated, Brushes, FontStyle, FontWeight, IBrush, TextAlignment,
+    TextDecorationCollection, TextDecorationLocation, TextDecorations, TextWrapping,
 };
 use ferroui_base::reactive::{Disposable, IDisposable};
 use ferroui_base::threading::{Dispatcher, DispatcherPriority, DispatcherTimer};
@@ -42,11 +48,12 @@ use ferroui_base::utilities::HandlerList;
 use ferroui_base::{
     ferro_class, ferro_impl_classes, ferro_routed_event, ferro_routed_event_args, instantiate,
     BoxedValue, DirectProperty, FerroObjectImpl, FerroObjectImplExt, FerroProperty,
-    FerroPropertyChangedEventArgs, Rect, Ref, Size, StyledElementImpl, StyledProperty,
-    StyledPropertyOptions, Thickness, Visual, VisualImpl, VisualImplExt,
+    FerroPropertyChangedEventArgs, Point, Rect, Ref, Size, StaticType, StyledElementImpl,
+    StyledProperty, StyledPropertyOptions, Visual, VisualImpl, VisualImplExt,
     VisualTreeAttachmentEventArgs,
 };
 use std::cell::{Cell, RefCell};
+use std::ops::Range;
 use std::rc::Rc;
 
 /// Character casing applied to newly entered text, including clipboard and IME commits.
@@ -187,13 +194,16 @@ ferroui_base::ferro_markup_type!(class RichEditBoxTextChangingRoutedEvent as "Ro
 
 /// A structured rich-text editor rendered by FerroUI's text layout, drawing, and input APIs.
 ///
-/// The inherited `Document` is shared with the view and remains editable independently of
+/// The `Document` is shared with its persistent presenter and remains editable independently of
 /// this control. Read-only and length policies apply to user editing, clipboard, and IME;
 /// applications can replace the document directly. Every user operation goes through the
 /// same transaction engine, including formatting and accessible value changes.
 #[repr(C)]
 pub struct RichEditBox {
-    base: RichTextBlock,
+    base: TemplatedControl,
+    text_presenter: Ref<RichEditBoxTextPresenter>,
+    content_element: RefCell<Option<Ref<Control>>>,
+    applied_template: RefCell<Option<Rc<dyn IControlTemplate>>>,
     editor: RefCell<Option<Rc<RichTextEditor>>>,
     im_client: Rc<RichEditBoxTextInputMethodClient>,
     document_subscription: RefCell<Option<Rc<dyn IDisposable>>>,
@@ -206,8 +216,7 @@ pub struct RichEditBox {
     header_presenter: RefCell<Option<Ref<ContentPresenter>>>,
     description_presenter: RefCell<Option<Ref<ContentPresenter>>>,
     placeholder_presenter: RefCell<Option<Ref<TextBlock>>>,
-    header_height: Cell<f64>,
-    description_height: Cell<f64>,
+    selection_brush_subscriptions: RefCell<Vec<Rc<dyn IDisposable>>>,
     can_undo: Cell<bool>,
     can_redo: Cell<bool>,
     can_copy: Cell<bool>,
@@ -220,7 +229,7 @@ pub struct RichEditBox {
     caret_phase: Cell<bool>,
 }
 
-ferro_class!(RichEditBox: RichTextBlock);
+ferro_class!(RichEditBox: TemplatedControl);
 
 impl Drop for RichEditBox {
     fn drop(&mut self) {
@@ -232,6 +241,11 @@ impl Drop for RichEditBox {
 ferroui_base::ferro_class_info!(RichEditBox {
     new: RichEditBox::new,
     markup: {
+        content: Blocks,
+        properties: [
+            Blocks: BlockCollection { get: RichEditBox::blocks },
+            TextHighlighters: TextHighlighterCollection { get: RichEditBox::text_highlighters },
+        ],
         fields: [
             CopyingToClipboardEvent: RoutedEvent<RoutedEventArgs> => || *RichEditBox::copying_to_clipboard_event(),
             CuttingToClipboardEvent: RoutedEvent<RoutedEventArgs> => || *RichEditBox::cutting_to_clipboard_event(),
@@ -239,6 +253,7 @@ ferroui_base::ferro_class_info!(RichEditBox {
             TextChangedEvent: RoutedEvent<RoutedEventArgs> => || *RichEditBox::text_changed_event(),
             TextChangingEvent: RoutedEvent<RichEditBoxTextChangingEventArgs> => || *RichEditBox::text_changing_event(),
             SelectionChangingEvent: RoutedEvent<RichEditBoxSelectionChangingEventArgs> => || *RichEditBox::selection_changing_event(),
+            SelectionChangedEvent: RoutedEvent<RoutedEventArgs> => || *RichEditBox::selection_changed_event(),
             TextCompositionStartedEvent: RoutedEvent<RichEditCompositionEventArgs> => || *RichEditBox::text_composition_started_event(),
             TextCompositionChangedEvent: RoutedEvent<RichEditCompositionEventArgs> => || *RichEditBox::text_composition_changed_event(),
             TextCompositionEndedEvent: RoutedEvent<RichEditCompositionEventArgs> => || *RichEditBox::text_composition_ended_event(),
@@ -255,148 +270,46 @@ ferroui_base::ferro_class_info!(RichEditBox {
 });
 ferro_impl_classes!(RichEditBox: StyledElementImpl, InteractiveImpl);
 
-impl RichTextBlockImpl for RichEditBox {
-    fn request_selection_change(this: &Self, start: usize, end: usize) -> bool {
-        if this.projecting_selection.get() {
-            return false;
-        }
-        let editor = this.editor();
-        let selection = EditorSelection::new(start, end);
-        if editor.is_in_operation() || editor.selection() == selection {
-            return false;
-        }
-        this.handle_edit(editor.set_selection(selection));
-        true
-    }
-
-    fn on_selection_changing(this: &Self, args: &RichTextSelectionChangedEventArgs) -> bool {
-        let args = RichEditBoxSelectionChangingEventArgs {
-            base: RoutedEventArgs::with_event(Self::selection_changing_event()),
-            selection_start: args.start.min(args.end),
-            selection_length: args.start.abs_diff(args.end),
-            cancel: Rc::new(Cell::new(false)),
-        };
-        this.raise_event(&args);
-        !args.cancel()
-    }
-
-    fn rebase_selection_on_document_change(this: &Self) -> bool {
-        let editor = this.editor.borrow().clone();
-        !editor.is_some_and(|editor| editor.is_in_operation())
-    }
-
-    fn text_insets(this: &Self) -> Thickness {
-        let padding = this.padding();
-        Thickness::new(
-            padding.left,
-            padding.top + this.header_height.get(),
-            padding.right,
-            padding.bottom + this.description_height.get(),
-        )
-    }
-
-    fn text_background_bounds(this: &Self) -> Rect {
-        Rect::new(
-            0.0,
-            this.header_height.get(),
-            this.bounds().width,
-            (this.bounds().height - this.header_height.get() - this.description_height.get())
-                .max(0.0),
-        )
-    }
-
-    fn additional_visual_children(this: &Self) -> Vec<Ref<Visual>> {
-        let mut children = Vec::new();
-        if let Some(header) = this.header_presenter() {
-            children.push(header.upcast());
-        }
-        if let Some(description) = this.description_presenter() {
-            children.push(description.upcast());
-        }
-        if let Some(placeholder) = this.placeholder_presenter() {
-            children.push(placeholder.upcast());
-        }
-        children
-    }
-
-    fn allow_hyperlink_navigation(
-        this: &Self,
-        modifiers: ferroui_base::input::KeyModifiers,
-    ) -> bool {
-        this.is_read_only()
-            || modifiers.intersects(
-                ferroui_base::input::KeyModifiers::CONTROL
-                    | ferroui_base::input::KeyModifiers::META,
-            )
-    }
-    fn caret_visible(this: &Self) -> bool {
-        this.caret_is_active() && this.caret_phase.get()
-    }
-
-    fn render_text(this: &Self, context: &mut DrawingContext) {
-        Self::parent_render_text(this, context);
-    }
-}
-
 impl LayoutableImpl for RichEditBox {
-    fn measure_override(this: &Self, available_size: Size) -> Size {
-        let auxiliary = Size::new(available_size.width, f64::INFINITY);
-        let header = this.header_presenter();
-        let description = this.description_presenter();
-        for presenter in [&header, &description].into_iter().flatten() {
-            presenter.measure(auxiliary);
+    fn apply_template(this: &Self) {
+        let template = this.template();
+        let applied = this.applied_template.borrow().clone();
+        if applied != template && (template.is_some() || this.is_attached_to_logical_tree()) {
+            // Remove the persistent view before TemplatedControl clears template
+            // descendants. Its document, history and composition survive this.
+            this.release_template_parts();
+            Self::parent_apply_template(this);
+            *this.applied_template.borrow_mut() = template;
+        } else {
+            Self::parent_apply_template(this);
         }
-        let header_size = header.map_or(Size::default(), |header| header.desired_size());
-        let description_size =
-            description.map_or(Size::default(), |description| description.desired_size());
-        this.header_height.set(header_size.height);
-        this.description_height.set(description_size.height);
-        let mut desired = Self::parent_measure_override(this, available_size);
-        desired.width = desired
-            .width
-            .max(header_size.width)
-            .max(description_size.width);
-        if let Some(placeholder) = this.placeholder_presenter() {
-            placeholder.measure(available_size.deflate(this.text_insets()));
-            if placeholder.is_visible() {
-                let placeholder_size = placeholder.desired_size().inflate(this.text_insets());
-                desired.width = desired.width.max(placeholder_size.width);
-                desired.height = desired.height.max(placeholder_size.height);
-            }
-        }
-        desired
     }
 
     fn arrange_override(this: &Self, final_size: Size) -> Size {
         let result = Self::parent_arrange_override(this, final_size);
-        if let Some(header) = this.header_presenter() {
-            header.arrange(Rect::new(
-                0.0,
-                0.0,
-                final_size.width,
-                this.header_height.get(),
-            ));
-        }
-        if let Some(description) = this.description_presenter() {
-            description.arrange(Rect::new(
-                0.0,
-                (final_size.height - this.description_height.get()).max(this.header_height.get()),
-                final_size.width,
-                this.description_height.get(),
-            ));
-        }
-        if let Some(placeholder) = this.placeholder_presenter() {
-            let insets = this.text_insets();
-            let inner = final_size.deflate(insets);
-            placeholder.arrange(Rect::new(
-                insets.left,
-                insets.top,
-                inner.width,
-                inner.height,
-            ));
-        }
-        this.im_client.raise_cursor_rectangle_changed();
+        this.on_text_view_geometry_changed();
         result
+    }
+}
+
+impl TemplatedControlImpl for RichEditBox {
+    fn on_apply_template(this: &Self, event: &TemplateAppliedEventArgs) {
+        Self::parent_on_apply_template(this, event);
+        let scope = event.name_scope();
+        *this.header_presenter.borrow_mut() =
+            scope.find_as::<ContentPresenter>("HeaderContentPresenter");
+        *this.description_presenter.borrow_mut() =
+            scope.find_as::<ContentPresenter>("DescriptionPresenter");
+        *this.placeholder_presenter.borrow_mut() =
+            scope.find_as::<TextBlock>("PlaceholderTextContentPresenter");
+        if let Some(host) = scope.find_as::<Control>("ContentElement") {
+            this.attach_to_content_element(host);
+        }
+        this.update_presenters();
+        this.im_client.raise_text_view_visual_changed();
+        this.on_text_view_geometry_changed();
+        this.reset_caret_blink();
+        this.ensure_caret_visible();
     }
 }
 
@@ -409,6 +322,10 @@ impl ControlImpl for RichEditBox {
 impl FerroObjectImpl for RichEditBox {
     fn constructed(this: &Self) {
         Self::parent_constructed(this);
+        this.text_presenter.set_owner(&this.to_ref());
+        this.text_presenter.set_inheritance_parent(this.to_ref());
+        this.sync_presenter_properties();
+        this.refresh_selection_brush_subscriptions();
         this.im_client.attach(Some(&this.to_ref()));
         this.attach_document();
         this.update_presenters();
@@ -432,7 +349,7 @@ impl FerroObjectImpl for RichEditBox {
     fn on_property_changed(this: &Self, change: &FerroPropertyChangedEventArgs<'_>) {
         Self::parent_on_property_changed(this, change);
         let property = change.property();
-        if property == RichTextBlock::document_property().as_property() {
+        if property == Self::document_property().as_property() {
             this.attach_document();
         }
         if property == Self::is_read_only_property().as_property() {
@@ -443,7 +360,7 @@ impl FerroObjectImpl for RichEditBox {
             editor.set_is_read_only(this.is_read_only());
             this.im_client.request_reset();
             this.update_command_states();
-            this.invalidate_visual();
+            this.invalidate_text_view();
         } else if property == Self::max_length_property().as_property() {
             this.editor().set_max_length(this.max_length());
         } else if property == Self::undo_limit_property().as_property()
@@ -468,8 +385,8 @@ impl FerroObjectImpl for RichEditBox {
             || property == Self::header_property().as_property()
             || property == Self::header_template_property().as_property()
             || property == Self::description_property().as_property()
-            || property == RichTextBlock::text_alignment_property().as_property()
-            || property == RichTextBlock::text_wrapping_property().as_property()
+            || property == Self::text_alignment_property().as_property()
+            || property == Self::text_wrapping_property().as_property()
         {
             this.update_presenters();
             this.invalidate_measure();
@@ -483,6 +400,26 @@ impl FerroObjectImpl for RichEditBox {
         }
         if property == InputElement::is_effectively_enabled_property().as_property() {
             this.update_command_states();
+        }
+        match property.name() {
+            "TextAlignment"
+            | "TextWrapping"
+            | "LineHeight"
+            | "TextIndent"
+            | "LineStackingStrategy"
+            | "TextDecorations"
+            | "LetterSpacing"
+            | "IsTextSelectionEnabled"
+            | "SelectionHighlightColor"
+            | "SelectionForegroundBrush"
+            | "CaretBrush" => this.sync_presenter_properties(),
+            _ => {}
+        }
+        if property == Self::selection_highlight_color_property().as_property()
+            || property == Self::selection_highlight_color_when_not_focused_property().as_property()
+        {
+            this.refresh_selection_brush_subscriptions();
+            this.text_presenter.invalidate_document_layout();
         }
     }
 }
@@ -503,19 +440,23 @@ impl VisualImpl for RichEditBox {
 impl InputElementImpl for RichEditBox {
     fn on_got_focus(this: &Self, event: &FocusChangedEventArgs) {
         Self::parent_on_got_focus(this, event);
+        if !this.is_focused() {
+            return;
+        }
         this.im_client.raise_text_view_visual_changed();
         this.im_client.raise_cursor_rectangle_changed();
         this.reset_caret_blink();
         this.ensure_caret_visible();
-        this.invalidate_visual();
+        this.text_presenter.invalidate_document_layout();
     }
     fn on_lost_focus(this: &Self, event: &FocusChangedEventArgs) {
         Self::parent_on_lost_focus(this, event);
+        this.text_presenter.focus_hyperlink(None);
         this.handle_edit(this.cancel_composition());
         this.editor().checkpoint();
         this.im_client.request_reset();
         this.stop_caret_blink();
-        this.invalidate_visual();
+        this.text_presenter.invalidate_document_layout();
     }
     fn on_text_input(this: &Self, event: &TextInputEventArgs) {
         if event.handled() {
@@ -590,15 +531,70 @@ impl InputElementImpl for RichEditBox {
                 }
                 _ => {
                     Self::parent_on_key_down(this, event);
+                    this.text_presenter.on_key_down(event);
                     return;
                 }
             }
         }
         event.set_handled(true);
     }
+
+    fn on_key_up(this: &Self, event: &KeyEventArgs) {
+        Self::parent_on_key_up(this, event);
+        if !event.handled() {
+            this.text_presenter.on_key_up(event);
+        }
+    }
+
+    fn on_pointer_pressed(this: &Self, event: &PointerPressedEventArgs) {
+        Self::parent_on_pointer_pressed(this, event);
+        if !event.handled()
+            && event
+                .get_current_point(Some(this))
+                .properties
+                .is_left_button_pressed
+        {
+            // Template chrome can take focus without moving the document caret.
+            this.focus_with(
+                ferroui_base::input::NavigationMethod::Pointer,
+                event.key_modifiers(),
+            );
+        }
+    }
 }
 
 ferroui_base::ferro_properties! { impl RichEditBox {
+    pub fn document_property() -> DirectProperty<RichEditBox, RichTextDocument> {
+        RichTextBlock::document_property().add_owner::<RichEditBox>(Self::document, Some(Self::set_document), None)
+    }
+    pub fn selection_start_property() -> DirectProperty<RichEditBox, i32> {
+        RichTextBlock::selection_start_property().add_owner::<RichEditBox>(
+            |this| this.selection_start().min(i32::MAX as usize) as i32,
+            Some(|this, value| this.set_selection_start(value.max(0) as usize)), None)
+    }
+    pub fn selection_end_property() -> DirectProperty<RichEditBox, i32> {
+        RichTextBlock::selection_end_property().add_owner::<RichEditBox>(
+            |this| this.selection_end().min(i32::MAX as usize) as i32,
+            Some(|this, value| this.set_selection_end(value.max(0) as usize)), None)
+    }
+    pub fn selected_text_property() -> DirectProperty<RichEditBox, String> {
+        RichTextBlock::selected_text_property().add_owner::<RichEditBox>(Self::selected_text, None, None)
+    }
+    pub fn is_text_selection_enabled_property() -> StyledProperty<bool> { RichTextBlock::is_text_selection_enabled_property().add_owner::<RichEditBox>() }
+    pub fn selection_highlight_color_property() -> StyledProperty<Option<Rc<dyn IBrush>>> { RichTextBlock::selection_highlight_color_property().add_owner::<RichEditBox>() }
+    pub fn selection_highlight_color_when_not_focused_property() -> StyledProperty<Option<Rc<dyn IBrush>>> {
+        FerroProperty::register::<RichEditBox, _>("SelectionHighlightColorWhenNotFocused", Some(Brushes::transparent()))
+    }
+    pub fn selection_foreground_brush_property() -> StyledProperty<Option<Rc<dyn IBrush>>> { RichTextBlock::selection_foreground_brush_property().add_owner::<RichEditBox>() }
+    pub fn caret_brush_property() -> StyledProperty<Option<Rc<dyn IBrush>>> { RichTextBlock::caret_brush_property().add_owner::<RichEditBox>() }
+    pub fn letter_spacing_property() -> StyledProperty<f64> { RichTextBlock::letter_spacing_property().add_owner::<RichEditBox>() }
+    pub fn language_property() -> StyledProperty<ferroui_base::utilities::CultureInfo> { RichTextBlock::language_property().add_owner::<RichEditBox>() }
+    pub fn text_alignment_property() -> StyledProperty<TextAlignment> { RichTextBlock::text_alignment_property().add_owner::<RichEditBox>() }
+    pub fn text_wrapping_property() -> StyledProperty<TextWrapping> { RichTextBlock::text_wrapping_property().add_owner::<RichEditBox>() }
+    pub fn line_height_property() -> StyledProperty<f64> { RichTextBlock::line_height_property().add_owner::<RichEditBox>() }
+    pub fn text_indent_property() -> StyledProperty<f64> { RichTextBlock::text_indent_property().add_owner::<RichEditBox>() }
+    pub fn line_stacking_strategy_property() -> StyledProperty<LineStackingStrategy> { RichTextBlock::line_stacking_strategy_property().add_owner::<RichEditBox>() }
+    pub fn text_decorations_property() -> StyledProperty<Option<TextDecorationCollection>> { RichTextBlock::text_decorations_property().add_owner::<RichEditBox>() }
     pub fn is_read_only_property() -> StyledProperty<bool> { FerroProperty::register::<RichEditBox, _>("IsReadOnly", false) }
     pub fn accepts_return_property() -> StyledProperty<bool> { FerroProperty::register::<RichEditBox, _>("AcceptsReturn", true) }
     pub fn accepts_tab_property() -> StyledProperty<bool> { FerroProperty::register::<RichEditBox, _>("AcceptsTab", false) }
@@ -631,7 +627,8 @@ impl RichEditBox {
         InputElement::focusable_property().override_default_value::<RichEditBox>(true);
         InputElement::text_input_method_client_requested_event().add_class_handler::<RichEditBox>(
             |this, event| {
-                if !this.is_read_only() {
+                if !this.is_read_only() && event.source().as_ref() == Some(&this.to_ref().upcast())
+                {
                     event.set_client(Some(this.im_client.clone()));
                 }
             },
@@ -639,7 +636,10 @@ impl RichEditBox {
     }
     pub fn construct() -> Self {
         Self {
-            base: RichTextBlock::construct(),
+            base: TemplatedControl::construct(),
+            text_presenter: RichEditBoxTextPresenter::new(),
+            content_element: RefCell::new(None),
+            applied_template: RefCell::new(None),
             editor: RefCell::new(None),
             im_client: RichEditBoxTextInputMethodClient::new(),
             document_subscription: RefCell::new(None),
@@ -652,8 +652,7 @@ impl RichEditBox {
             header_presenter: RefCell::new(None),
             description_presenter: RefCell::new(None),
             placeholder_presenter: RefCell::new(None),
-            header_height: Cell::new(0.0),
-            description_height: Cell::new(0.0),
+            selection_brush_subscriptions: RefCell::new(Vec::new()),
             can_undo: Cell::new(false),
             can_redo: Cell::new(false),
             can_copy: Cell::new(false),
@@ -668,6 +667,322 @@ impl RichEditBox {
     }
     pub fn new() -> Ref<Self> {
         instantiate(Self::construct())
+    }
+
+    pub const TEMPLATE_PARTS: &'static [TemplatePartAttribute] = &[
+        TemplatePartAttribute::new("ContentElement", <Control as StaticType>::TYPE),
+        TemplatePartAttribute::new(
+            "HeaderContentPresenter",
+            <ContentPresenter as StaticType>::TYPE,
+        ),
+        TemplatePartAttribute::new(
+            "PlaceholderTextContentPresenter",
+            <TextBlock as StaticType>::TYPE,
+        ),
+        TemplatePartAttribute::new(
+            "DescriptionPresenter",
+            <ContentPresenter as StaticType>::TYPE,
+        ),
+    ];
+    pub const PSEUDO_CLASSES: PseudoClassesAttribute =
+        PseudoClassesAttribute::new(&[":header", ":description", ":empty", ":placeholder"]);
+
+    /// The persistent rich document view used by the current control template.
+    pub fn text_presenter(&self) -> Ref<RichEditBoxTextPresenter> {
+        self.text_presenter.clone()
+    }
+    /// The supported content host found in the applied template, if present.
+    pub fn content_element(&self) -> Option<Ref<Control>> {
+        self.content_element.borrow().clone()
+    }
+    pub fn document(&self) -> RichTextDocument {
+        self.text_presenter.document()
+    }
+    pub fn set_document(&self, document: RichTextDocument) {
+        self.text_presenter.set_document(document);
+    }
+    pub fn try_set_document(&self, document: RichTextDocument) -> bool {
+        self.text_presenter.try_set_document(document)
+    }
+    pub fn blocks(&self) -> BlockCollection {
+        self.text_presenter.blocks()
+    }
+    pub fn text_highlighters(&self) -> TextHighlighterCollection {
+        self.text_presenter.text_highlighters()
+    }
+    pub fn selection_start(&self) -> usize {
+        self.text_presenter.selection_start()
+    }
+    pub fn set_selection_start(&self, value: usize) {
+        self.select(value, self.selection_end());
+    }
+    pub fn selection_end(&self) -> usize {
+        self.text_presenter.selection_end()
+    }
+    pub fn set_selection_end(&self, value: usize) {
+        self.select(self.selection_start(), value);
+    }
+    pub fn caret_index(&self) -> usize {
+        self.selection_end()
+    }
+    pub fn select(&self, start: usize, end: usize) {
+        self.text_presenter.select(start, end);
+    }
+    pub fn clear_selection(&self) {
+        self.text_presenter.clear_selection();
+    }
+    pub fn selected_text(&self) -> String {
+        self.text_presenter.selected_text()
+    }
+    pub fn selection_changed(
+        &self,
+        handler: impl Fn(&RichTextSelectionChangedEventArgs) + 'static,
+    ) -> Rc<dyn IDisposable> {
+        self.text_presenter.selection_changed(handler)
+    }
+    pub fn is_text_selection_enabled(&self) -> bool {
+        self.get_value(Self::is_text_selection_enabled_property())
+    }
+    pub fn set_is_text_selection_enabled(&self, value: bool) {
+        self.set_value(Self::is_text_selection_enabled_property(), value);
+    }
+    pub fn selection_highlight_color(&self) -> Option<Rc<dyn IBrush>> {
+        self.get_value(Self::selection_highlight_color_property())
+    }
+    pub fn set_selection_highlight_color(&self, value: Option<Rc<dyn IBrush>>) {
+        self.set_value(Self::selection_highlight_color_property(), value);
+    }
+    pub fn selection_highlight_color_when_not_focused(&self) -> Option<Rc<dyn IBrush>> {
+        self.get_value(Self::selection_highlight_color_when_not_focused_property())
+    }
+    pub fn set_selection_highlight_color_when_not_focused(&self, value: Option<Rc<dyn IBrush>>) {
+        self.set_value(
+            Self::selection_highlight_color_when_not_focused_property(),
+            value,
+        );
+    }
+    pub fn selection_foreground_brush(&self) -> Option<Rc<dyn IBrush>> {
+        self.get_value(Self::selection_foreground_brush_property())
+    }
+    pub fn set_selection_foreground_brush(&self, value: Option<Rc<dyn IBrush>>) {
+        self.set_value(Self::selection_foreground_brush_property(), value);
+    }
+    pub fn caret_brush(&self) -> Option<Rc<dyn IBrush>> {
+        self.get_value(Self::caret_brush_property())
+    }
+    pub fn set_caret_brush(&self, value: Option<Rc<dyn IBrush>>) {
+        self.set_value(Self::caret_brush_property(), value);
+    }
+    pub fn letter_spacing(&self) -> f64 {
+        self.get_value(Self::letter_spacing_property())
+    }
+    pub fn language(&self) -> ferroui_base::utilities::CultureInfo {
+        self.get_value(Self::language_property())
+    }
+    pub fn set_language(&self, value: ferroui_base::utilities::CultureInfo) {
+        self.set_value(Self::language_property(), value);
+    }
+    pub fn set_letter_spacing(&self, value: f64) {
+        self.set_value(Self::letter_spacing_property(), value);
+    }
+    pub fn text_alignment(&self) -> TextAlignment {
+        self.get_value(Self::text_alignment_property())
+    }
+    pub fn set_text_alignment(&self, value: TextAlignment) {
+        self.set_value(Self::text_alignment_property(), value);
+    }
+    pub fn text_wrapping(&self) -> TextWrapping {
+        self.get_value(Self::text_wrapping_property())
+    }
+    pub fn set_text_wrapping(&self, value: TextWrapping) {
+        self.set_value(Self::text_wrapping_property(), value);
+    }
+    pub fn line_height(&self) -> f64 {
+        self.get_value(Self::line_height_property())
+    }
+    pub fn set_line_height(&self, value: f64) {
+        self.set_value(Self::line_height_property(), value);
+    }
+    pub fn text_indent(&self) -> f64 {
+        self.get_value(Self::text_indent_property())
+    }
+    pub fn set_text_indent(&self, value: f64) {
+        self.set_value(Self::text_indent_property(), value);
+    }
+    pub fn line_stacking_strategy(&self) -> LineStackingStrategy {
+        self.get_value(Self::line_stacking_strategy_property())
+    }
+    pub fn set_line_stacking_strategy(&self, value: LineStackingStrategy) {
+        self.set_value(Self::line_stacking_strategy_property(), value);
+    }
+    pub fn text_decorations(&self) -> Option<TextDecorationCollection> {
+        self.get_value(Self::text_decorations_property())
+    }
+    pub fn set_text_decorations(&self, value: Option<TextDecorationCollection>) {
+        self.set_value(Self::text_decorations_property(), value);
+    }
+
+    /// The caret rectangle in the owning control's coordinate system.
+    pub fn cursor_rectangle(&self) -> Rect {
+        self.rect_from_presenter(self.text_presenter.cursor_rectangle())
+    }
+    pub fn get_rect_from_character_index(&self, index: usize) -> Rect {
+        self.rect_from_presenter(self.text_presenter.get_rect_from_character_index(index))
+    }
+    pub fn get_rect_from_text_position(&self, position: TextPosition) -> Rect {
+        self.rect_from_presenter(self.text_presenter.get_rect_from_text_position(position))
+    }
+    pub fn selection_rects(&self) -> Vec<Rect> {
+        self.get_rects_for_range(
+            self.selection_start().min(self.selection_end())
+                ..self.selection_start().max(self.selection_end()),
+        )
+    }
+    pub fn get_rects_for_range(&self, range: Range<usize>) -> Vec<Rect> {
+        self.text_presenter
+            .get_rects_for_range(range)
+            .into_iter()
+            .map(|rect| self.rect_from_presenter(rect))
+            .collect()
+    }
+    pub fn hit_test_text_position(&self, point: Point) -> usize {
+        let point = self
+            .transform_to_visual(&self.text_presenter)
+            .map_or(point, |transform| point.transform(transform));
+        self.text_presenter.hit_test_text_position(point)
+    }
+    pub fn line_metrics(&self) -> Vec<RichTextLineMetrics> {
+        self.text_presenter
+            .line_metrics()
+            .into_iter()
+            .map(|mut line| {
+                let baseline = self.rect_from_presenter(Rect::new(0.0, line.baseline, 0.0, 0.0));
+                line.bounds = self.rect_from_presenter(line.bounds);
+                line.baseline = baseline.y;
+                line
+            })
+            .collect()
+    }
+    fn rect_from_presenter(&self, rect: Rect) -> Rect {
+        self.text_presenter
+            .transform_to_visual(self)
+            .map_or(rect, |transform| rect.transform_to_aabb(transform))
+    }
+
+    fn sync_presenter_properties(&self) {
+        let presenter = &self.text_presenter;
+        presenter.set_is_text_selection_enabled(self.is_text_selection_enabled());
+        presenter.set_selection_highlight_color(self.selection_highlight_color());
+        presenter.set_selection_foreground_brush(self.selection_foreground_brush());
+        presenter.set_caret_brush(self.caret_brush());
+        presenter.set_text_alignment(self.text_alignment());
+        presenter.set_text_wrapping(self.text_wrapping());
+        presenter.set_line_height(self.line_height());
+        presenter.set_text_indent(self.text_indent());
+        presenter.set_line_stacking_strategy(self.line_stacking_strategy());
+        presenter.set_text_decorations(self.text_decorations());
+        presenter.set_letter_spacing(self.letter_spacing());
+    }
+
+    pub(crate) fn on_text_view_property_changed(&self, change: &FerroPropertyChangedEventArgs<'_>) {
+        let property = change.property();
+        if property == RichTextBlock::document_property().as_property() {
+            let (old, new) = change.get_old_and_new_value::<RichTextDocument>();
+            self.raise_direct_property_changed(Self::document_property(), &old, &new);
+        } else if property == RichTextBlock::selection_start_property().as_property() {
+            let (old, new) = change.get_old_and_new_value::<i32>();
+            self.raise_direct_property_changed(Self::selection_start_property(), &old, &new);
+        } else if property == RichTextBlock::selection_end_property().as_property() {
+            let (old, new) = change.get_old_and_new_value::<i32>();
+            self.raise_direct_property_changed(Self::selection_end_property(), &old, &new);
+        } else if property == RichTextBlock::selected_text_property().as_property() {
+            let (old, new) = change.get_old_and_new_value::<String>();
+            self.raise_direct_property_changed(Self::selected_text_property(), &old, &new);
+        }
+    }
+    pub(crate) fn request_presenter_selection_change(&self, start: usize, end: usize) -> bool {
+        if self.projecting_selection.get() {
+            return false;
+        }
+        let editor = self.editor();
+        let selection = EditorSelection::new(start, end);
+        if editor.is_in_operation() || editor.selection() == selection {
+            return false;
+        }
+        self.handle_edit(editor.set_selection(selection));
+        true
+    }
+    pub(crate) fn presenter_selection_changing(
+        &self,
+        args: &RichTextSelectionChangedEventArgs,
+    ) -> bool {
+        let args = RichEditBoxSelectionChangingEventArgs {
+            base: RoutedEventArgs::with_event(Self::selection_changing_event()),
+            selection_start: args.start.min(args.end),
+            selection_length: args.start.abs_diff(args.end),
+            cancel: Rc::new(Cell::new(false)),
+        };
+        self.raise_event(&args);
+        !args.cancel()
+    }
+    pub(crate) fn rebase_presenter_selection_on_document_change(&self) -> bool {
+        let editor = self.editor.borrow().clone();
+        !editor.is_some_and(|editor| editor.is_in_operation())
+    }
+    pub(crate) fn raise_presenter_selection_changed(&self) {
+        self.raise_event(&RoutedEventArgs::with_event(Self::selection_changed_event()));
+    }
+    pub(crate) fn active_selection_brush(&self) -> Option<Rc<dyn IBrush>> {
+        if self.is_focused() {
+            self.selection_highlight_color()
+        } else {
+            self.selection_highlight_color_when_not_focused()
+        }
+    }
+    pub(crate) fn selection_is_visible(&self) -> bool {
+        self.active_selection_brush().is_some_and(|brush| {
+            brush.opacity() > 0.0
+                && brush
+                    .as_solid_color_brush()
+                    .is_none_or(|solid| solid.color().a != 0)
+        })
+    }
+    fn refresh_selection_brush_subscriptions(&self) {
+        let old = std::mem::take(&mut *self.selection_brush_subscriptions.borrow_mut());
+        for subscription in old {
+            subscription.dispose();
+        }
+        let mut subscriptions = Vec::new();
+        for brush in [
+            self.selection_highlight_color(),
+            self.selection_highlight_color_when_not_focused(),
+        ] {
+            let weak = self.to_ref().downgrade();
+            if let Some(subscription) = subscribe_invalidated(
+                &brush,
+                Rc::new(move || {
+                    if let Some(owner) = weak.upgrade() {
+                        owner.text_presenter.invalidate_document_layout();
+                    }
+                }),
+            ) {
+                subscriptions.push(subscription);
+            }
+        }
+        *self.selection_brush_subscriptions.borrow_mut() = subscriptions;
+    }
+    pub(crate) fn on_text_view_geometry_changed(&self) {
+        if self.text_presenter.has_measured_layout() {
+            // Automatic association starts only once a real view constraint is
+            // available. It survives later invalidation and offscreen reflow.
+            self.editor()
+                .set_text_view(Some(self.text_presenter.clone().upcast()))
+                .expect("The presenter and editor share one document.");
+        }
+        self.im_client.raise_cursor_rectangle_changed();
+    }
+    fn invalidate_text_view(&self) {
+        self.text_presenter.invalidate_visual();
     }
     pub fn is_read_only(&self) -> bool {
         self.get_value(Self::is_read_only_property())
@@ -774,70 +1089,97 @@ impl RichEditBox {
         self.placeholder_presenter.borrow().clone()
     }
 
+    fn attach_to_content_element(&self, host: Ref<Control>) {
+        let presenter: Ref<Control> = self.text_presenter.clone().upcast();
+        // A detached presenter inherits owner font defaults. The real content
+        // host becomes its inheritance parent once it enters the template.
+        self.text_presenter
+            .set_inheritance_parent(None::<Ref<ferroui_base::FerroObject>>);
+        let attached = if let Some(content) = host.cast::<ContentControl>() {
+            content.set_content(Some(Control::boxed(presenter.clone())));
+            true
+        } else if let Some(content) = host.cast::<ContentPresenter>() {
+            content.set_content(Some(Control::boxed(presenter.clone())));
+            content.update_child();
+            true
+        } else if let Some(decorator) = host.cast::<Decorator>() {
+            decorator.set_child(presenter.clone());
+            true
+        } else if let Some(panel) = host.cast::<Panel>() {
+            panel.children().add(presenter);
+            true
+        } else {
+            false
+        };
+        if attached {
+            self.text_presenter.set_templated_parent(self.to_ref());
+            *self.content_element.borrow_mut() = Some(host);
+        } else {
+            self.text_presenter.set_inheritance_parent(self.to_ref());
+        }
+    }
+
+    fn release_template_parts(&self) {
+        let old = self.content_element.borrow_mut().take();
+        let presenter: Ref<Control> = self.text_presenter.clone().upcast();
+        if let Some(host) = old {
+            if let Some(content) = host.cast::<ContentControl>() {
+                if content
+                    .content()
+                    .as_ref()
+                    .and_then(Control::from_boxed)
+                    .as_ref()
+                    == Some(&presenter)
+                {
+                    content.set_content(None);
+                    if let Some(view) = content.presenter() {
+                        view.update_child();
+                    }
+                }
+            } else if let Some(content) = host.cast::<ContentPresenter>() {
+                if content
+                    .content()
+                    .as_ref()
+                    .and_then(Control::from_boxed)
+                    .as_ref()
+                    == Some(&presenter)
+                {
+                    content.set_content(None);
+                    content.update_child();
+                }
+            } else if let Some(decorator) = host.cast::<Decorator>() {
+                if decorator.child().as_ref() == Some(&presenter) {
+                    decorator.set_child(None::<Ref<Control>>);
+                }
+            } else if let Some(panel) = host.cast::<Panel>() {
+                panel.children().remove(&presenter);
+            }
+        }
+        if let Some(parent) = self.text_presenter.visual_parent() {
+            parent
+                .visual_children()
+                .remove(&self.text_presenter.clone().upcast());
+        }
+        self.text_presenter
+            .set_parent(None::<Ref<ferroui_base::StyledElement>>);
+        self.text_presenter
+            .set_templated_parent(None::<Ref<ferroui_base::FerroObject>>);
+        self.text_presenter.set_inheritance_parent(self.to_ref());
+        self.header_presenter.borrow_mut().take();
+        self.description_presenter.borrow_mut().take();
+        self.placeholder_presenter.borrow_mut().take();
+        self.stop_caret_blink();
+        self.im_client.raise_text_view_visual_changed();
+    }
+
     fn update_presenters(&self) {
-        let header = self.header();
-        let header_template = self.header_template();
-        let show_header = header.is_some() || header_template.is_some();
-        let mut presenter = self.header_presenter();
-        if presenter.is_none() && show_header {
-            let created = ContentPresenter::new();
-            created.set_name(Some("PART_HeaderPresenter".to_owned()));
-            // RichEditBoxTopHeaderMargin in the pinned WinUI template.
-            created.set_margin(Thickness::new(0.0, 0.0, 0.0, 8.0));
-            created.set_text_wrapping(TextWrapping::Wrap);
-            created.set_font_weight(FontWeight::Normal);
-            *self.header_presenter.borrow_mut() = Some(created.clone());
-            self.logical_children().add(created.clone().upcast());
-            presenter = Some(created);
-        }
-        if let Some(presenter) = presenter {
-            let changed =
-                presenter.content() != header || presenter.content_template() != header_template;
-            presenter.set_content(header);
-            presenter.set_content_template(header_template);
+        let show_header = self.header().is_some() || self.header_template().is_some();
+        if let Some(presenter) = self.header_presenter() {
             presenter.set_is_visible(show_header);
-            if changed && !presenter.is_attached_to_logical_tree() {
-                presenter.update_child();
-            }
         }
-        let description = self.description();
-        let show_description = description.is_some();
-        let mut presenter = self.description_presenter();
-        if presenter.is_none() && show_description {
-            let created = ContentPresenter::new();
-            created.set_name(Some("PART_DescriptionPresenter".to_owned()));
-            created.set_text_wrapping(TextWrapping::Wrap);
-            *self.description_presenter.borrow_mut() = Some(created.clone());
-            self.logical_children().add(created.clone().upcast());
-            presenter = Some(created);
-        }
-        if let Some(presenter) = presenter {
-            let changed = presenter.content() != description;
-            presenter.set_content(description);
+        let show_description = self.description().is_some();
+        if let Some(presenter) = self.description_presenter() {
             presenter.set_is_visible(show_description);
-            if changed && !presenter.is_attached_to_logical_tree() {
-                presenter.update_child();
-            }
-        }
-        let text = self.placeholder_text();
-        let mut presenter = self.placeholder_presenter();
-        if presenter.is_none() && !text.is_empty() {
-            let created = TextBlock::new();
-            created.set_name(Some("PART_PlaceholderTextPresenter".to_owned()));
-            created.set_is_hit_test_visible(false);
-            *self.placeholder_presenter.borrow_mut() = Some(created.clone());
-            self.logical_children().add(created.clone().upcast());
-            presenter = Some(created);
-        }
-        if let Some(presenter) = presenter {
-            presenter.set_text(Some(&text));
-            presenter.set_text_alignment(self.text_alignment());
-            presenter.set_text_wrapping(self.text_wrapping());
-            if let Some(foreground) = self.placeholder_foreground() {
-                presenter.set_foreground(Some(foreground));
-            } else {
-                presenter.clear_value(TextElement::foreground_property());
-            }
         }
         self.pseudo_classes().set(":header", show_header);
         self.pseudo_classes().set(":description", show_description);
@@ -909,8 +1251,16 @@ impl RichEditBox {
                 return editor;
             }
             editor.set_selection_projection(None);
+            editor
+                .set_text_view(None)
+                .expect("Removing a text view cannot change its document.");
         }
         let editor = Rc::new(RichTextEditor::new(self.document()));
+        if self.text_presenter.has_measured_layout() {
+            editor
+                .set_text_view(Some(self.text_presenter.clone().upcast()))
+                .expect("The presenter and editor share one document.");
+        }
         editor.set_is_read_only(self.is_read_only());
         editor.set_max_length(self.max_length());
         editor.set_undo_limit(if self.is_undo_enabled() {
@@ -964,6 +1314,9 @@ impl RichEditBox {
         let old_editor = self.editor.borrow_mut().take();
         if let Some(editor) = &old_editor {
             editor.set_selection_projection(None);
+            editor
+                .set_text_view(None)
+                .expect("Removing a text view cannot change its document.");
         }
         drop(old_editor);
         let weak = self.to_ref().downgrade();
@@ -1051,7 +1404,7 @@ impl RichEditBox {
         self.im_client.raise_cursor_rectangle_changed();
         self.update_command_states();
         self.reset_caret_blink();
-        self.invalidate_visual();
+        self.invalidate_text_view();
         self.ensure_caret_visible();
     }
 
@@ -1062,19 +1415,21 @@ impl RichEditBox {
         }
     }
     fn ensure_caret_visible(&self) {
-        if self.visual_parent().is_none() {
+        if self.text_presenter.visual_parent().is_none() {
             return;
         }
-        if self.is_measure_valid() && self.is_arrange_valid() {
-            self.bring_into_view_rect(self.cursor_rectangle());
+        if self.text_presenter.is_measure_valid() && self.text_presenter.is_arrange_valid() {
+            self.text_presenter
+                .bring_into_view_rect(self.text_presenter.cursor_rectangle());
         } else if !self.caret_scroll_pending.replace(true) {
             let weak = self.to_ref().downgrade();
             Dispatcher::ui_thread().post_local(
                 move || {
                     if let Some(this) = weak.upgrade() {
                         this.caret_scroll_pending.set(false);
-                        if this.visual_parent().is_some() {
-                            this.bring_into_view_rect(this.cursor_rectangle());
+                        if this.text_presenter.visual_parent().is_some() {
+                            this.text_presenter
+                                .bring_into_view_rect(this.text_presenter.cursor_rectangle());
                         }
                     }
                 },
@@ -1089,6 +1444,11 @@ impl RichEditBox {
             && !self.is_read_only()
             && self.selection_start() == self.selection_end()
             && self.visual_parent().is_some()
+            && self.text_presenter.visual_parent().is_some()
+    }
+
+    pub fn caret_visible(&self) -> bool {
+        self.caret_is_active() && self.caret_phase.get()
     }
 
     fn stop_caret_blink(&self) {
@@ -1097,7 +1457,7 @@ impl RichEditBox {
             timer.stop();
         }
         if self.caret_phase.replace(false) {
-            self.invalidate_visual();
+            self.invalidate_text_view();
         }
     }
 
@@ -1108,7 +1468,7 @@ impl RichEditBox {
         }
         let active = self.caret_is_active();
         self.caret_phase.set(active);
-        self.invalidate_visual();
+        self.invalidate_text_view();
         let interval = self.caret_blink_interval();
         if !active || interval <= TimeSpan::ZERO || self.editor().is_composing() {
             return;
@@ -1123,7 +1483,7 @@ impl RichEditBox {
                 };
                 if this.caret_is_active() {
                     this.caret_phase.set(!this.caret_phase.get());
-                    this.invalidate_visual();
+                    this.invalidate_text_view();
                 } else {
                     this.caret_phase.set(false);
                     timer.stop();
@@ -1239,7 +1599,7 @@ impl RichEditBox {
         editor.redo()
     }
     pub fn select_all(&self) {
-        RichTextBlock::select_all(self);
+        self.text_presenter.select_all();
     }
 
     fn format_accelerator(&self, key: Key) -> bool {
@@ -1540,6 +1900,15 @@ impl RichEditBox {
     pub fn text_input_method_client(&self) -> Rc<dyn TextInputMethodClient> {
         self.im_client.clone()
     }
+
+    ferro_routed_event!(
+        pub fn selection_changed_event() -> RoutedEvent<RoutedEventArgs> {
+            RoutedEvent::register::<RichEditBox, RoutedEventArgs>(
+                "SelectionChanged",
+                RoutingStrategies::BUBBLE,
+            )
+        }
+    );
 
     ferro_routed_event!(
         pub fn text_changed_event() -> RoutedEvent<RoutedEventArgs> {

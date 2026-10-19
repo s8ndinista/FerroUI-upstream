@@ -42,7 +42,7 @@ pub use i_text_range_provider::{
 };
 pub use i_toggle_provider::{IToggleProvider, ToggleState};
 pub use i_value_provider::{IValueProvider, ProviderError};
-pub(crate) use rich_text_automation::{RichTextAutomationPeer, RichTextAutomationState};
+pub(crate) use rich_text_automation::{RichTextAutomationHost, RichTextAutomationPeer, RichTextAutomationState};
 
 use ferroui_base::{ObjectType, Ref};
 use std::rc::Rc;

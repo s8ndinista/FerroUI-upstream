@@ -4,23 +4,52 @@ use crate::documents::{
     ParagraphFormat, RichTextDocument, TextGravity, TextPointer,
 };
 use crate::RichTextBlock;
-use ferroui_base::media::text_formatting::unicode::{
-    GraphemeEnumerator, SentenceBreakEnumerator, WordBreakEnumerator,
-};
+use ferroui_base::media::text_formatting::unicode::{GraphemeEnumerator, WordBreakEnumerator};
 use ferroui_base::{Point, Rect};
 use std::cell::RefCell;
 use std::fmt;
 use std::ops::Range;
 use std::rc::Rc;
 
-/// Units whose boundaries are defined by the document and Unicode text services.
+#[path = "rich_edit_text_stream.rs"]
+mod stream;
+pub use stream::{TextStreamEncoding, TextStreamOptions};
+
+#[path = "rich_edit_text_units.rs"]
+mod units;
+use units::TextUnits;
+
+/// Implemented TOM units, with their native numeric values. Display lines use the
+/// editor's associated view and otherwise follow the native paragraph fallback.
+/// Character traverses Unicode scalars without splitting surrogate pairs; it is
+/// separate from the framework's grapheme-based caret and automation navigation.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[repr(i32)]
 pub enum TextRangeUnit {
+    Character = 0,
+    Word = 1,
+    Sentence = 2,
+    Paragraph = 3,
+    Line = 4,
+    Story = 5,
+    HardParagraph = 12,
+}
+impl TextRangeUnit {
+    /// Compatibility name for the one story represented by a FerroUI document.
+    #[allow(non_upper_case_globals)]
+    pub const Document: Self = Self::Story;
+}
+ferroui_base::ferro_markup_enum!(TextRangeUnit {
+    Character, Word, Sentence, Paragraph, Line, Story, HardParagraph,
+}, { namespace: "FerroUI.Controls" });
+
+/// Framework Unicode boundaries used by search and automation. These deliberately
+/// remain separate from TOM's whitespace-inclusive navigation units.
+#[derive(Clone, Copy)]
+pub(crate) enum UnicodeTextUnit {
     Character,
     Word,
-    Sentence,
     Paragraph,
-    Document,
 }
 
 bitflags::bitflags! {
@@ -106,6 +135,9 @@ pub enum TextOperationError {
     UnsupportedOptions { operation: &'static str, bits: u32 },
     Edit(EditError),
     Rtf(RtfError),
+    Io(std::io::Error),
+    InvalidEncoding(&'static str),
+    StreamLimitExceeded { limit: usize },
 }
 
 impl fmt::Display for TextOperationError {
@@ -117,6 +149,11 @@ impl fmt::Display for TextOperationError {
             }
             Self::Edit(error) => error.fmt(f),
             Self::Rtf(error) => error.fmt(f),
+            Self::Io(error) => error.fmt(f),
+            Self::InvalidEncoding(message) => f.write_str(message),
+            Self::StreamLimitExceeded { limit } => {
+                write!(f, "The text stream exceeds its {limit}-byte limit.")
+            }
         }
     }
 }
@@ -125,6 +162,7 @@ impl std::error::Error for TextOperationError {
         match self {
             Self::Edit(error) => Some(error),
             Self::Rtf(error) => Some(error),
+            Self::Io(error) => Some(error),
             _ => None,
         }
     }
@@ -142,6 +180,11 @@ impl From<DocumentError> for TextOperationError {
 impl From<RtfError> for TextOperationError {
     fn from(error: RtfError) -> Self {
         Self::Rtf(error)
+    }
+}
+impl From<std::io::Error> for TextOperationError {
+    fn from(error: std::io::Error) -> Self {
+        Self::Io(error)
     }
 }
 
@@ -373,6 +416,12 @@ impl RichEditTextRange {
     pub fn length(&self) -> usize {
         self.range().len()
     }
+    /// Length of the single story in FerroUI's UTF-16 model coordinates. As with
+    /// the range endpoints, this excludes the synthetic terminal mark emitted by
+    /// complete-document text retrieval.
+    pub fn story_length(&self) -> usize {
+        self.document().text_length()
+    }
     pub fn is_degenerate(&self) -> bool {
         self.range().is_empty()
     }
@@ -572,10 +621,19 @@ impl RichEditTextRange {
         } else {
             None
         };
-        if let Some(fragment) = &fragment {
+        self.replace_with_options(options, text, fragment.as_ref())
+    }
+
+    fn replace_with_options(
+        &self,
+        options: TextSetOptions,
+        text: &str,
+        fragment: Option<&DocumentSnapshot>,
+    ) -> Result<(), TextOperationError> {
+        if let Some(fragment) = fragment {
             fragment.validate()?;
         }
-        let inserted_length = fragment.as_ref().map_or_else(
+        let inserted_length = fragment.map_or_else(
             || DocumentSnapshot::from_text(text).text_length(),
             DocumentSnapshot::text_length,
         );
@@ -589,7 +647,7 @@ impl RichEditTextRange {
                     .saturating_add(inserted_length);
                 editor.set_max_length(previous_limit.max(length));
             }
-            if let Some(fragment) = &fragment {
+            if let Some(fragment) = fragment {
                 self.set_snapshot(fragment)
             } else {
                 self.set_text(text)
@@ -736,52 +794,90 @@ impl RichEditTextRange {
         Ok(TextFormatValue::Uniform(format))
     }
 
-    /// Expands to the smallest whole units containing the range. Character units are
-    /// extended grapheme clusters; word and sentence units use the framework's UAX #29 data.
+    /// Expands to the smallest whole TOM units containing the range. Whole-word
+    /// search retains independent Unicode boundaries and excludes trailing blanks.
     pub fn expand(&self, unit: TextRangeUnit) -> Result<usize, EditError> {
-        let units = unit_ranges(&self.document().text(), unit);
+        let units = TextUnits::resolve(&self.editor, unit)?;
         let range = self.range();
-        let start = units
-            .iter()
-            .find(|unit| unit.start <= range.start && (range.start < unit.end || unit.is_empty()))
-            .map_or(range.start, |unit| unit.start);
-        let active = if range.is_empty() {
-            range.end
-        } else {
-            range.end.saturating_sub(1)
-        };
-        let end = units
-            .iter()
-            .find(|unit| unit.start <= active && (active < unit.end || unit.is_empty()))
-            .map_or(range.end, |unit| unit.end);
-        self.set_range(start, end)?;
-        Ok((end - start).saturating_sub(range.len()))
+        let expanded = units.expanded(range.clone());
+        self.set_range(expanded.start, expanded.end)?;
+        Ok(expanded.len().saturating_sub(range.len()))
     }
 
-    /// Moves a collapsed range by whole units. A non-degenerate range collapses toward
-    /// the movement direction before advancing. Returns the number of units traversed.
+    /// Moves to the beginning of the first overlapping unit. Extension changes
+    /// only the start; otherwise the range collapses. The signed UTF-16 displacement
+    /// is always nonpositive, including zero when already on a unit boundary.
+    pub fn start_of(&self, unit: TextRangeUnit, extend: bool) -> Result<isize, EditError> {
+        let units = TextUnits::resolve(&self.editor, unit)?;
+        let range = self.range();
+        let start = units.start_of(range.start);
+        let moved = units::signed_displacement(start, range.start)?;
+        self.set_range(start, if extend { range.end } else { start })?;
+        Ok(moved)
+    }
+
+    /// Moves to the end of the last overlapping unit. A collapse contributes one
+    /// to the returned UTF-16 displacement, matching the native EndOf contract.
+    /// The synthetic final-CR case is outside FerroUI's range coordinates.
+    pub fn end_of(&self, unit: TextRangeUnit, extend: bool) -> Result<isize, EditError> {
+        let units = TextUnits::resolve(&self.editor, unit)?;
+        let range = self.range();
+        let end = units.end_of(range.end);
+        let moved = units::signed_displacement(end, range.end)?
+            .checked_add(isize::from(!extend && !range.is_empty()))
+            .ok_or(DocumentError::InvalidFormat(
+                "The text movement exceeds the signed offset range.",
+            ))?;
+        self.set_range(if extend { range.start } else { end }, end)?;
+        Ok(moved)
+    }
+
+    /// Gets the one-based story index at StartPosition. At the end of a story it
+    /// reports the total unit count; a unit absent from empty content has index zero.
+    pub fn get_index(&self, unit: TextRangeUnit) -> Result<usize, EditError> {
+        Ok(TextUnits::resolve(&self.editor, unit)?.index(self.start_position()))
+    }
+
+    /// Relocates to a whole unit (extend) or its starting insertion point. Positive
+    /// indices count from one; negative indices count back from the last unit.
+    /// Zero and out-of-range indices fail without changing the live range.
+    pub fn set_index(
+        &self,
+        unit: TextRangeUnit,
+        index: i32,
+        extend: bool,
+    ) -> Result<(), EditError> {
+        let units = TextUnits::resolve(&self.editor, unit)?;
+        let range = units.indexed(index)?;
+        self.set_range(range.start, if extend { range.end } else { range.start })
+    }
+
+    /// A non-degenerate range first collapses toward the movement direction and
+    /// reaches the nearest unit boundary. That collapse counts as the first unit.
     pub fn move_by(&self, unit: TextRangeUnit, count: i32) -> Result<i32, EditError> {
         if count == 0 {
             return Ok(0);
         }
-        let start = if count < 0 {
-            self.start_position()
-        } else {
-            self.end_position()
-        };
-        let (position, moved) = move_position(&self.document().text(), start, unit, count);
+        let units = TextUnits::resolve(&self.editor, unit)?;
+        let (position, moved) = units.move_range(self.range(), count);
         self.set_range(position, position)?;
         Ok(moved)
     }
     pub fn move_start(&self, unit: TextRangeUnit, count: i32) -> Result<i32, EditError> {
-        let (position, moved) =
-            move_position(&self.document().text(), self.start_position(), unit, count);
+        if count == 0 {
+            return Ok(0);
+        }
+        let units = TextUnits::resolve(&self.editor, unit)?;
+        let (position, moved) = units.move_position(self.start_position(), count);
         self.set_range(position, self.end_position().max(position))?;
         Ok(moved)
     }
     pub fn move_end(&self, unit: TextRangeUnit, count: i32) -> Result<i32, EditError> {
-        let (position, moved) =
-            move_position(&self.document().text(), self.end_position(), unit, count);
+        if count == 0 {
+            return Ok(0);
+        }
+        let units = TextUnits::resolve(&self.editor, unit)?;
+        let (position, moved) = units.move_position(self.end_position(), count);
         self.set_range(self.start_position().min(position), position)?;
         Ok(moved)
     }
@@ -800,7 +896,7 @@ impl RichEditTextRange {
         let (haystack, boundaries) = searchable(&source, case_sensitive);
         let (needle, _) = searchable(text, case_sensitive);
         let words = if options.contains(TextFindOptions::WHOLE_WORD) {
-            unit_ranges(&self.document().text(), TextRangeUnit::Word)
+            unit_ranges(&self.document().text(), UnicodeTextUnit::Word)
         } else {
             Vec::new()
         };
@@ -1032,14 +1128,12 @@ impl RichEditTextSelection {
             return Ok(0);
         }
         let current = self.selection();
-        let start = if extend || current.is_empty() {
-            current.active
-        } else if count < 0 {
-            current.range().start
+        let units = TextUnits::resolve(&self.editor, unit)?;
+        let (position, moved) = if extend {
+            units.move_position(current.active, count)
         } else {
-            current.range().end
+            units.move_range(current.range(), count)
         };
-        let (position, moved) = move_position(&self.editor.document().text(), start, unit, count);
         self.set_range(if extend { current.anchor } else { position }, position)?;
         Ok(moved)
     }
@@ -1075,19 +1169,16 @@ fn rebase_selection(
     };
     EditorSelection::new(map(selection.anchor), map(selection.active))
 }
-pub(crate) fn unit_ranges(text: &str, unit: TextRangeUnit) -> Vec<Range<usize>> {
+pub(crate) fn unit_ranges(text: &str, unit: UnicodeTextUnit) -> Vec<Range<usize>> {
     let utf16: Vec<u16> = text.encode_utf16().collect();
     match unit {
-        TextRangeUnit::Character => GraphemeEnumerator::new(&utf16)
+        UnicodeTextUnit::Character => GraphemeEnumerator::new(&utf16)
             .map(|segment| segment.offset()..segment.offset() + segment.length())
             .collect(),
-        TextRangeUnit::Word => WordBreakEnumerator::new(&utf16)
+        UnicodeTextUnit::Word => WordBreakEnumerator::new(&utf16)
             .map(|segment| segment.offset()..segment.offset() + segment.length())
             .collect(),
-        TextRangeUnit::Sentence => SentenceBreakEnumerator::new(&utf16)
-            .map(|segment| segment.offset()..segment.offset() + segment.text().len())
-            .collect(),
-        TextRangeUnit::Paragraph => {
+        UnicodeTextUnit::Paragraph => {
             let mut ranges = Vec::new();
             let mut start = 0;
             for (index, unit) in utf16.iter().enumerate() {
@@ -1099,39 +1190,6 @@ pub(crate) fn unit_ranges(text: &str, unit: TextRangeUnit) -> Vec<Range<usize>> 
             ranges.push(start..utf16.len());
             ranges
         }
-        TextRangeUnit::Document => vec![0..utf16.len()],
-    }
-}
-fn move_position(text: &str, position: usize, unit: TextRangeUnit, count: i32) -> (usize, i32) {
-    if count == 0 {
-        return (position, 0);
-    }
-    let units = unit_ranges(text, unit);
-    let mut boundaries: Vec<usize> = units
-        .iter()
-        .flat_map(|range| [range.start, range.end])
-        .collect();
-    boundaries.push(0);
-    boundaries.push(text.encode_utf16().count());
-    boundaries.sort_unstable();
-    boundaries.dedup();
-    // Boundary lookup and a clamped index displacement replace the previous
-    // repeated full scan, including saturated i32::MIN/MAX movement requests.
-    let requested = count.unsigned_abs() as usize;
-    if count < 0 {
-        let before = boundaries.partition_point(|boundary| *boundary < position);
-        let moved = requested.min(before);
-        if moved == 0 {
-            return (position, 0);
-        }
-        (boundaries[before - moved], (-(moved as i64)) as i32)
-    } else {
-        let after = boundaries.partition_point(|boundary| *boundary <= position);
-        let moved = requested.min(boundaries.len() - after);
-        if moved == 0 {
-            return (position, 0);
-        }
-        (boundaries[after + moved - 1], moved as i32)
     }
 }
 fn searchable(text: &str, case_sensitive: bool) -> (String, Vec<(usize, usize)>) {

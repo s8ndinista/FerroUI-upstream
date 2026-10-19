@@ -10,16 +10,17 @@ use crate::documents::{
     InlineUIContainer, LineBreak, Paragraph, ParagraphFormat, RichTextDocument, Run, Span,
     TextGravity, WeakRichTextDocument,
 };
-use crate::rich_text::{RichEditTextDocument, RichEditTextRange, TextFindOptions, TextRangeUnit};
-use crate::{Control, RichEditBox, RichTextBlock, ScrollViewer};
+use crate::rich_text::{RichEditTextDocument, RichEditTextRange, TextFindOptions, UnicodeTextUnit};
+use crate::{Control, RichEditBox, RichEditBoxTextPresenter, RichTextBlock};
+use ferroui_base::input::IScrollable;
 use ferroui_base::media::{
     BaselineAlignment, Color, FlowDirection, FontStyle, IBrush, TextAlignment,
     TextDecorationLocation,
 };
 use ferroui_base::reactive::{CompositeDisposable, IDisposable, SerialDisposable};
-use ferroui_base::{Matrix, ObjectType, Point, Rect, Ref, Vector, Visual, WeakRef};
+use ferroui_base::{Matrix, ObjectType, Point, Rect, Ref, Visual, WeakRef};
 use std::any::Any;
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 use std::collections::HashSet;
 use std::ops::Range;
 use std::rc::{Rc, Weak};
@@ -27,34 +28,164 @@ use std::rc::{Rc, Weak};
 /// Both rich peers expose the same document/range implementation. The owner is
 /// weak because accessibility clients can retain a peer after its control dies.
 pub(crate) trait RichTextAutomationPeer: ObjectType {
-    fn text_owner(&self) -> Option<Ref<RichTextBlock>>;
+    fn text_host(&self) -> Option<RichTextAutomationHost>;
     fn text_peer(&self) -> Ref<AutomationPeer>;
     fn text_automation_state(&self) -> &Rc<RichTextAutomationState>;
 }
 
+/// The semantic owner of text is distinct from its layout view. In particular,
+/// the editor keeps its document, history, focus and automation identity while
+/// its persistent presenter participates in different control templates.
+#[derive(Clone)]
+pub(crate) enum RichTextAutomationHost {
+    Block(WeakRef<RichTextBlock>),
+    Editor(WeakRef<RichEditBox>),
+}
+
+impl RichTextAutomationHost {
+    pub(crate) fn control(&self) -> Result<Ref<Control>, ProviderError> {
+        match self {
+            Self::Block(view) => view.upgrade().map(Ref::upcast),
+            Self::Editor(editor) => editor.upgrade().map(Ref::upcast),
+        }
+        .ok_or_else(|| TextProviderError::ElementNotAvailable.into())
+    }
+
+    pub(crate) fn view(&self) -> Result<Ref<RichTextBlock>, ProviderError> {
+        match self {
+            Self::Block(view) => view.upgrade(),
+            Self::Editor(editor) => editor
+                .upgrade()
+                .map(|editor| editor.text_presenter().upcast()),
+        }
+        .ok_or_else(|| TextProviderError::ElementNotAvailable.into())
+    }
+
+    fn service(&self) -> Result<RichEditTextDocument, ProviderError> {
+        match self {
+            Self::Block(_) => Ok(RichEditTextDocument::new(self.view()?.document())),
+            Self::Editor(editor) => Ok(editor
+                .upgrade()
+                .ok_or(TextProviderError::ElementNotAvailable)?
+                .text_document()),
+        }
+    }
+
+    fn selection(&self) -> Result<Range<usize>, ProviderError> {
+        match self {
+            Self::Block(_) => {
+                let view = self.view()?;
+                Ok(selection(&view))
+            }
+            Self::Editor(editor) => {
+                let editor = editor
+                    .upgrade()
+                    .ok_or(TextProviderError::ElementNotAvailable)?;
+                Ok(editor.selection_start().min(editor.selection_end())
+                    ..editor.selection_start().max(editor.selection_end()))
+            }
+        }
+    }
+
+    fn caret_index(&self) -> Result<usize, ProviderError> {
+        match self {
+            Self::Block(_) => Ok(self.view()?.caret_index()),
+            Self::Editor(editor) => Ok(editor
+                .upgrade()
+                .ok_or(TextProviderError::ElementNotAvailable)?
+                .caret_index()),
+        }
+    }
+
+    pub(crate) fn is_enabled(&self) -> bool {
+        self.control()
+            .is_ok_and(|owner| owner.is_effectively_enabled())
+    }
+
+    fn is_read_only(&self) -> Result<bool, ProviderError> {
+        match self {
+            Self::Block(_) => {
+                self.view()?;
+                Ok(true)
+            }
+            Self::Editor(editor) => Ok(editor
+                .upgrade()
+                .ok_or(TextProviderError::ElementNotAvailable)?
+                .is_read_only()),
+        }
+    }
+
+    pub(crate) fn has_focus(&self) -> bool {
+        match self {
+            Self::Block(_) => self.view().is_ok_and(|view| {
+                text_views(&view)
+                    .iter()
+                    .any(|page| page.is_focused() && page.is_effectively_enabled())
+            }),
+            Self::Editor(editor) => editor
+                .upgrade()
+                .is_some_and(|editor| editor.is_focused() && editor.is_effectively_enabled()),
+        }
+    }
+
+    fn select(&self, range: Range<usize>) -> Result<(), ProviderError> {
+        self.control()?;
+        if !self.is_enabled() {
+            return Err(Box::new(ElementNotEnabledException::new()));
+        }
+        let view = self.view()?;
+        if !view.is_text_selection_enabled() {
+            return Err(TextProviderError::SelectionNotSupported.into());
+        }
+        match self {
+            Self::Block(_) => view.select(range.start, range.end),
+            Self::Editor(editor) => editor
+                .upgrade()
+                .ok_or(TextProviderError::ElementNotAvailable)?
+                .select(range.start, range.end),
+        }
+        Ok(())
+    }
+
+    pub(crate) fn focus_hyperlink(
+        &self,
+        link: Ref<Hyperlink>,
+        position: usize,
+    ) -> Result<bool, ProviderError> {
+        let view = self.view()?;
+        let page = view.text_view_for_position(position).unwrap_or(view);
+        let focused = match self {
+            Self::Block(_) => page.focus(),
+            Self::Editor(_) => self.control()?.focus(),
+        };
+        if focused {
+            page.focus_hyperlink(Some(link));
+        }
+        Ok(focused)
+    }
+}
+
 #[derive(Clone)]
 struct TextContext {
-    view: WeakRef<RichTextBlock>,
+    host: RichTextAutomationHost,
     peer: WeakRef<AutomationPeer>,
     state: Weak<RichTextAutomationState>,
 }
 
 impl TextContext {
     fn from_peer<T: RichTextAutomationPeer>(peer: &T) -> Result<Self, ProviderError> {
-        let view = peer
-            .text_owner()
+        let host = peer
+            .text_host()
             .ok_or(TextProviderError::ElementNotAvailable)?;
         Ok(Self {
-            view: view.downgrade(),
+            host,
             peer: peer.text_peer().downgrade(),
             state: Rc::downgrade(peer.text_automation_state()),
         })
     }
 
     fn view(&self) -> Result<Ref<RichTextBlock>, ProviderError> {
-        self.view
-            .upgrade()
-            .ok_or_else(|| TextProviderError::ElementNotAvailable.into())
+        self.host.view()
     }
 
     fn peer(&self) -> Result<Ref<AutomationPeer>, ProviderError> {
@@ -65,14 +196,19 @@ impl TextContext {
     }
 
     fn make_range(&self, range: Range<usize>) -> Result<Rc<dyn ITextRangeProvider>, ProviderError> {
-        let view = self.view()?;
-        let service = view
-            .cast::<RichEditBox>()
-            .map(|editor| editor.text_document())
-            .unwrap_or_else(|| RichEditTextDocument::new(view.document()));
+        self.make_range_in_scope(range, false)
+    }
+
+    fn make_range_in_scope(
+        &self,
+        range: Range<usize>,
+        document_scope: bool,
+    ) -> Result<Rc<dyn ITextRangeProvider>, ProviderError> {
+        let service = self.host.service()?;
         Ok(Rc::new(RichTextAutomationRange {
             context: self.clone(),
             range: service.get_range(range.start, range.end)?,
+            document_scope: Cell::new(document_scope),
         }))
     }
 
@@ -81,7 +217,7 @@ impl TextContext {
             .state
             .upgrade()
             .ok_or(TextProviderError::ElementNotAvailable)?;
-        Ok(state.entries(&self.view()?, &self.peer()?))
+        state.entries(&self.host, &self.peer()?)
     }
 }
 
@@ -106,11 +242,9 @@ impl<T: RichTextAutomationPeer> ITextProvider2 for ProviderAdapter<T> {
                 range: None,
             });
         }
-        let caret = view.caret_index();
+        let caret = context.host.caret_index()?;
         Ok(TextCaretRange {
-            is_active: text_views(&view)
-                .iter()
-                .any(|page| page.is_focused() && page.is_effectively_enabled()),
+            is_active: context.host.has_focus(),
             range: Some(context.make_range(caret..caret)?),
         })
     }
@@ -124,7 +258,7 @@ impl<T: RichTextAutomationPeer> ITextProvider for ProviderAdapter<T> {
     fn document_range(&self) -> Result<Rc<dyn ITextRangeProvider>, ProviderError> {
         let context = TextContext::from_peer(&*self.0)?;
         let length = context.view()?.document().text_length();
-        context.make_range(0..length)
+        context.make_range_in_scope(0..length, true)
     }
 
     fn get_selection(&self) -> Result<Vec<Rc<dyn ITextRangeProvider>>, ProviderError> {
@@ -133,7 +267,7 @@ impl<T: RichTextAutomationPeer> ITextProvider for ProviderAdapter<T> {
         if !view.is_text_selection_enabled() {
             return Ok(Vec::new());
         }
-        Ok(vec![context.make_range(selection(&view))?])
+        Ok(vec![context.make_range(context.host.selection()?)?])
     }
 
     fn get_visible_ranges(&self) -> Result<Vec<Rc<dyn ITextRangeProvider>>, ProviderError> {
@@ -252,14 +386,21 @@ impl<T: RichTextAutomationPeer> ITextProvider for ProviderAdapter<T> {
     fn text_changed(&self, handler: Rc<dyn Fn()>) -> Result<Rc<dyn IDisposable>, ProviderError> {
         let context = TextContext::from_peer(&*self.0)?;
         let view = context.view()?;
+        let owner = context.host.control()?;
         let document_subscription = Rc::new(SerialDisposable::new());
         let callback = handler.clone();
         document_subscription.set(Some(view.document().changed(move |_| callback())));
         let current = document_subscription.clone();
-        let weak = view.downgrade();
-        let property_subscription = view.property_changed(move |event| {
-            if event.property() == RichTextBlock::document_property().as_property() {
-                if let Some(view) = weak.upgrade() {
+        let host = context.host;
+        let property_subscription = owner.property_changed(move |event| {
+            let document_property = match &host {
+                RichTextAutomationHost::Block(_) => {
+                    RichTextBlock::document_property().as_property()
+                }
+                RichTextAutomationHost::Editor(_) => RichEditBox::document_property().as_property(),
+            };
+            if event.property() == document_property {
+                if let Ok(view) = host.view() {
                     let callback = handler.clone();
                     current.set(Some(view.document().changed(move |_| callback())));
                     handler();
@@ -276,15 +417,26 @@ impl<T: RichTextAutomationPeer> ITextProvider for ProviderAdapter<T> {
         &self,
         handler: Rc<dyn Fn()>,
     ) -> Result<Rc<dyn IDisposable>, ProviderError> {
-        Ok(TextContext::from_peer(&*self.0)?
-            .view()?
-            .selection_changed(move |_| handler()))
+        let context = TextContext::from_peer(&*self.0)?;
+        match &context.host {
+            RichTextAutomationHost::Block(_) => {
+                Ok(context.view()?.selection_changed(move |_| handler()))
+            }
+            RichTextAutomationHost::Editor(editor) => Ok(editor
+                .upgrade()
+                .ok_or(TextProviderError::ElementNotAvailable)?
+                .selection_changed(move |_| handler())),
+        }
     }
 }
 
 struct RichTextAutomationRange {
     context: TextContext,
     range: RichEditTextRange,
+    // WinUI's document endpoints enclose structural positions outside a link.
+    // UTF-16 offsets intentionally omit those positions, so retain the outer
+    // document scope separately from a same-offset hyperlink content range.
+    document_scope: Cell<bool>,
 }
 
 impl RichTextAutomationRange {
@@ -335,15 +487,14 @@ impl RichTextAutomationRange {
     }
 
     fn select_range(&self, range: Range<usize>) -> Result<(), ProviderError> {
-        let view = self.view()?;
-        if !view.is_effectively_enabled() {
-            return Err(Box::new(ElementNotEnabledException::new()));
-        }
-        if !view.is_text_selection_enabled() {
-            return Err(TextProviderError::SelectionNotSupported.into());
-        }
-        view.select(range.start, range.end);
-        Ok(())
+        self.view()?;
+        self.context.host.select(range)
+    }
+
+    fn encloses_document(&self) -> bool {
+        self.document_scope.get()
+            && self.range.start_position() == 0
+            && self.range.end_position() == self.range.document().text_length()
     }
 
     fn units(&self, unit: TextUnit) -> Result<Vec<Range<usize>>, ProviderError> {
@@ -352,9 +503,9 @@ impl RichTextAutomationRange {
         let text = document.text();
         Ok(match unit {
             TextUnit::Character => {
-                crate::rich_text::rich_text_unit_ranges(&text, TextRangeUnit::Character)
+                crate::rich_text::rich_text_unit_ranges(&text, UnicodeTextUnit::Character)
             }
-            TextUnit::Word => crate::rich_text::rich_text_unit_ranges(&text, TextRangeUnit::Word),
+            TextUnit::Word => crate::rich_text::rich_text_unit_ranges(&text, UnicodeTextUnit::Word),
             TextUnit::Paragraph => paragraph_units(&text),
             TextUnit::Format => format_spans(&view)
                 .into_iter()
@@ -412,6 +563,7 @@ impl ITextRangeProvider for RichTextAutomationRange {
         Ok(Rc::new(Self {
             context: self.context.clone(),
             range: self.range.get_clone()?,
+            document_scope: Cell::new(self.document_scope.get()),
         }))
     }
 
@@ -435,6 +587,7 @@ impl ITextRangeProvider for RichTextAutomationRange {
         if let Some(unit) = enclosing_unit(&units, self.range.start_position()) {
             self.range.set_range(unit.start, unit.end)?;
         }
+        self.document_scope.set(unit == TextUnit::Document);
         Ok(())
     }
 
@@ -445,6 +598,7 @@ impl ITextRangeProvider for RichTextAutomationRange {
         backwards: bool,
     ) -> Result<Option<Rc<dyn ITextRangeProvider>>, ProviderError> {
         let view = self.view()?;
+        let read_only = self.context.host.is_read_only()?;
         if matches!(attribute, TextAttribute::Unknown(_)) {
             return Err(TextProviderError::UnsupportedAttribute.into());
         }
@@ -461,7 +615,7 @@ impl ITextRangeProvider for RichTextAutomationRange {
             if selected.is_empty() {
                 continue;
             }
-            let actual = attribute_value(&view, selected.start, false, attribute);
+            let actual = attribute_value(&view, read_only, selected.start, false, attribute);
             if actual == TextAttributeValue::NotSupported {
                 return Err(TextProviderError::UnsupportedAttribute.into());
             }
@@ -505,6 +659,7 @@ impl ITextRangeProvider for RichTextAutomationRange {
                 Ok(Rc::new(Self {
                     context: self.context.clone(),
                     range,
+                    document_scope: Cell::new(false),
                 }) as Rc<dyn ITextRangeProvider>)
             })
             .transpose()
@@ -516,13 +671,14 @@ impl ITextRangeProvider for RichTextAutomationRange {
     ) -> Result<TextAttributeValue, ProviderError> {
         let view = self.view()?;
         let range = self.range.range();
-        let first = attribute_value(&view, range.start, range.is_empty(), attribute);
+        let read_only = self.context.host.is_read_only()?;
+        let first = attribute_value(&view, read_only, range.start, range.is_empty(), attribute);
         if range.is_empty() || first == TextAttributeValue::NotSupported {
             return Ok(first);
         }
         for span in format_spans(&view) {
             if span.range.start > range.start && span.range.start < range.end {
-                let next = attribute_value(&view, span.range.start, false, attribute);
+                let next = attribute_value(&view, read_only, span.range.start, false, attribute);
                 if next == TextAttributeValue::NotSupported {
                     return Ok(next);
                 }
@@ -556,7 +712,7 @@ impl ITextRangeProvider for RichTextAutomationRange {
     fn get_enclosing_element(&self) -> Result<Ref<AutomationPeer>, ProviderError> {
         self.view()?;
         let selected = self.range.range();
-        if !selected.is_empty() {
+        if !selected.is_empty() && !self.encloses_document() {
             // Descendants follow their ancestor in document order. Prefer the
             // deepest containing inline, including an embedded control inside
             // a hyperlink, without treating a boundary caret as that child.
@@ -636,8 +792,8 @@ impl ITextRangeProvider for RichTextAutomationRange {
     }
 
     fn add_to_selection(&self) -> Result<(), ProviderError> {
-        let view = self.view()?;
-        let current = selection(&view);
+        self.view()?;
+        let current = self.context.host.selection()?;
         let added = self.range.range();
         if current.is_empty() || added.is_empty() {
             return self.select_range(added);
@@ -649,8 +805,8 @@ impl ITextRangeProvider for RichTextAutomationRange {
     }
 
     fn remove_from_selection(&self) -> Result<(), ProviderError> {
-        let view = self.view()?;
-        let current = selection(&view);
+        self.view()?;
+        let current = self.context.host.selection()?;
         let removed = self.range.range();
         if removed.is_empty() {
             return self.select_range(removed);
@@ -672,41 +828,69 @@ impl ITextRangeProvider for RichTextAutomationRange {
 
     fn scroll_into_view(&self, align_to_top: bool) -> Result<(), ProviderError> {
         let host = self.view()?;
-        let position = if align_to_top {
-            self.range.start_position()
-        } else {
-            self.range.end_position()
-        };
-        let view = host.text_view_for_position(position).unwrap_or(host);
-        let rectangle = view.get_rect_from_character_index(position);
-        if rectangle.height <= 0.0 || !view.is_arrange_valid() {
+        if host.visual_root().is_none() {
             return Err(TextProviderError::GeometryUnavailable.into());
         }
-        let mut ancestor = view.visual_parent();
-        let mut viewport = None;
-        while let Some(parent) = ancestor {
-            if parent
-                .cast::<crate::presenters::ScrollContentPresenter>()
-                .is_some()
-            {
-                viewport = Some(parent.clone());
+        let selected = self.range.range();
+        let target = if selected.is_empty() {
+            // A selection or scroll can invalidate arrangement without losing
+            // the last viewport. Rebuild text in that established viewport;
+            // a view that has never been arranged still has no scroll target.
+            for view in text_views(&host) {
+                if view.previous_arrange().is_some() && view.is_effectively_visible() {
+                    view.page_layout();
+                }
             }
-            if let Some(scroller) = parent.cast::<ScrollViewer>() {
-                let target = viewport.as_ref().unwrap_or(&parent);
-                let transform = view
-                    .transform_to_visual(target)
-                    .ok_or(TextProviderError::GeometryUnavailable)?;
-                let rect = rectangle.transform_to_aabb(transform);
-                let delta = if align_to_top {
-                    rect.y
+            host.text_view_for_position(selected.start)
+                .filter(|view| view.previous_arrange().is_some() && view.is_effectively_visible())
+                .map(|view| {
+                    let rectangle = view.get_rect_from_character_index(selected.start);
+                    (view, rectangle)
+                })
+        } else {
+            // Use selected glyph bounds. The exclusive end can be the start of
+            // the next line/page; its forward caret is not the last selected
+            // line. Unformatted or collapsed-only source has no scroll target.
+            let mut target = None;
+            for view in text_views(&host) {
+                if view.previous_arrange().is_none() || !view.is_effectively_visible() {
+                    continue;
+                }
+                let rectangles = view.get_rects_for_range(selected.clone());
+                let rectangle = if align_to_top {
+                    rectangles.into_iter().next()
                 } else {
-                    rect.bottom() - scroller.viewport().height
+                    rectangles.into_iter().next_back()
                 };
-                let offset = scroller.offset();
-                scroller.set_offset(Vector::new(offset.x, offset.y + delta));
-                break;
+                if let Some(rectangle) = rectangle {
+                    target = Some((view, rectangle));
+                    if align_to_top {
+                        break;
+                    }
+                }
             }
-            ancestor = parent.visual_parent();
+            target
+        };
+        let (view, mut rectangle) = target.ok_or(TextProviderError::GeometryUnavailable)?;
+        if rectangle.height <= 0.0 {
+            return Err(TextProviderError::GeometryUnavailable.into());
+        }
+        if let Some(presenter) = view.cast::<RichEditBoxTextPresenter>() {
+            let old_offset = presenter.offset();
+            presenter.bring_text_rect_into_view_aligned(rectangle, align_to_top);
+            // The editor translates glyph geometry immediately when scrolling.
+            // Forward its new local rectangle to outer scrolling ancestors.
+            rectangle = rectangle.translate(old_offset - presenter.offset());
+        } else {
+            let mut ancestor = view.visual_parent();
+            while let Some(parent) = ancestor {
+                if let Some(presenter) = parent.cast::<crate::presenters::ScrollContentPresenter>()
+                {
+                    presenter.bring_descendant_into_view_aligned(&view, rectangle, align_to_top);
+                    break;
+                }
+                ancestor = parent.visual_parent();
+            }
         }
         view.bring_into_view_rect(rectangle);
         Ok(())
@@ -715,6 +899,7 @@ impl ITextRangeProvider for RichTextAutomationRange {
     fn get_children(&self) -> Result<Vec<Ref<AutomationPeer>>, ProviderError> {
         self.view()?;
         let selected = self.range.range();
+        let document_scope = self.encloses_document();
         let children = self.context.children()?;
         Ok(children
             .into_iter()
@@ -722,6 +907,12 @@ impl ITextRangeProvider for RichTextAutomationRange {
                 !selected.is_empty()
                     && child.range.start < selected.end
                     && selected.start < child.range.end
+                    // CTextRangeAdapter::IsLinkWithinRange excludes an object
+                    // that contains the range. Do not expose the enclosing
+                    // hyperlink/object (or an ancestor) as its own child.
+                    && (document_scope
+                        || !(child.range.start <= selected.start
+                            && selected.end <= child.range.end))
             })
             .map(|child| child.peer)
             .collect())
@@ -734,7 +925,7 @@ fn selection(view: &RichTextBlock) -> Range<usize> {
 }
 
 fn paragraph_units(text: &str) -> Vec<Range<usize>> {
-    crate::rich_text::rich_text_unit_ranges(text, TextRangeUnit::Paragraph)
+    crate::rich_text::rich_text_unit_ranges(text, UnicodeTextUnit::Paragraph)
 }
 
 fn enclosing_unit_index(units: &[Range<usize>], position: usize) -> Option<usize> {
@@ -849,19 +1040,17 @@ impl RichTextAutomationState {
 
     pub(crate) fn observe<T: RichTextAutomationPeer>(self: &Rc<Self>, peer: Ref<T>) {
         let weak_peer = peer.text_peer().downgrade();
-        let weak_view = peer.text_owner().map(|view| view.downgrade());
+        let host = peer.text_host();
         let weak_state = Rc::downgrade(self);
         let provider = ProviderAdapter(peer);
         let subscription = provider
             .text_changed(Rc::new(move || {
-                let (Some(state), Some(peer), Some(view)) = (
-                    weak_state.upgrade(),
-                    weak_peer.upgrade(),
-                    weak_view.as_ref().and_then(WeakRef::upgrade),
-                ) else {
+                let (Some(state), Some(peer), Some(host)) =
+                    (weak_state.upgrade(), weak_peer.upgrade(), host.as_ref())
+                else {
                     return;
                 };
-                state.entries(&view, &peer);
+                let _ = state.entries(host, &peer);
             }))
             .ok();
         if let Some(previous) = self.subscription.replace(subscription) {
@@ -871,9 +1060,10 @@ impl RichTextAutomationState {
 
     fn entries(
         self: &Rc<Self>,
-        view: &Ref<RichTextBlock>,
+        host: &RichTextAutomationHost,
         container: &Ref<AutomationPeer>,
-    ) -> Vec<TextChildEntry> {
+    ) -> Result<Vec<TextChildEntry>, ProviderError> {
+        let view = host.view()?;
         let document = view.document();
         let previous = {
             let current = self.children.borrow();
@@ -881,7 +1071,7 @@ impl RichTextAutomationState {
                 if current.document.upgrade().as_ref() == Some(&document)
                     && current.revision == document.revision()
                 {
-                    return current.entries.clone();
+                    return Ok(current.entries.clone());
                 }
                 current.entries.clone()
             } else {
@@ -908,7 +1098,7 @@ impl RichTextAutomationState {
                         .remove(&hyperlink_key(&link))
                         .unwrap_or_else(|| {
                             HyperlinkAutomationPeer::new(
-                                view,
+                                host.clone(),
                                 container,
                                 &link,
                                 Rc::downgrade(self),
@@ -958,17 +1148,19 @@ impl RichTextAutomationState {
         if changed {
             container.raise_children_changed_event();
         }
-        entries
+        Ok(entries)
     }
 
     pub(crate) fn children(
         self: &Rc<Self>,
-        view: &Ref<RichTextBlock>,
+        host: &RichTextAutomationHost,
         container: &Ref<AutomationPeer>,
         parent: Option<&Ref<Hyperlink>>,
     ) -> Rc<Vec<Ref<AutomationPeer>>> {
         let parent = parent.map(hyperlink_key);
-        let entries = self.entries(view, container);
+        let Ok(entries) = self.entries(host, container) else {
+            return Rc::new(Vec::new());
+        };
         let mut children: Vec<_> = entries
             .iter()
             .filter(|entry| entry.parent == parent)
@@ -979,7 +1171,11 @@ impl RichTextAutomationState {
             // placeholder presenters. Retain those visual children in the raw
             // automation tree without duplicating any document child (including
             // a control nested inside a hyperlink).
-            if let Some(visuals) = view.visual_children_snapshot() {
+            if let Some(visuals) = host
+                .control()
+                .ok()
+                .and_then(|owner| owner.visual_children_snapshot())
+            {
                 for control in visuals.iter().filter_map(|visual| visual.cast::<Control>()) {
                     if !control.is_visible() {
                         continue;
@@ -997,13 +1193,13 @@ impl RichTextAutomationState {
 
     pub(crate) fn range_for_child(
         self: &Rc<Self>,
-        view: &Ref<RichTextBlock>,
+        host: &RichTextAutomationHost,
         container: &Ref<AutomationPeer>,
         child: &Ref<AutomationPeer>,
     ) -> Result<Rc<dyn ITextRangeProvider>, ProviderError> {
-        let range = self.range_bounds_for_child(view, container, child)?;
+        let range = self.range_bounds_for_child(host, container, child)?;
         TextContext {
-            view: view.downgrade(),
+            host: host.clone(),
             peer: container.downgrade(),
             state: Rc::downgrade(self),
         }
@@ -1012,12 +1208,12 @@ impl RichTextAutomationState {
 
     pub(crate) fn range_bounds_for_child(
         self: &Rc<Self>,
-        view: &Ref<RichTextBlock>,
+        host: &RichTextAutomationHost,
         container: &Ref<AutomationPeer>,
         child: &Ref<AutomationPeer>,
     ) -> Result<Range<usize>, ProviderError> {
         let entry = self
-            .entries(view, container)
+            .entries(host, container)?
             .into_iter()
             .find(|entry| entry.peer == *child)
             .ok_or(TextProviderError::ElementNotAvailable)?;
@@ -1240,6 +1436,7 @@ fn effective_paragraph(view: &RichTextBlock, position: usize) -> ParagraphFormat
 
 fn attribute_value(
     view: &RichTextBlock,
+    read_only: bool,
     position: usize,
     caret: bool,
     attribute: TextAttribute,
@@ -1263,11 +1460,7 @@ fn attribute_value(
                 .font_style
                 .is_some_and(|style| style != FontStyle::Normal),
         ),
-        A::IsReadOnly => V::Bool(
-            view.to_ref()
-                .cast::<RichEditBox>()
-                .is_none_or(|editor| editor.is_read_only()),
-        ),
+        A::IsReadOnly => V::Bool(read_only),
         A::IsHidden => V::Bool(!view.is_effectively_visible()),
         A::ForegroundColor => brush_color(format.foreground.as_ref().and_then(Option::as_ref)),
         A::BackgroundColor => brush_color(format.background.as_ref().and_then(Option::as_ref)),
