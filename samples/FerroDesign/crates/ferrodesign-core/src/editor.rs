@@ -745,6 +745,10 @@ impl Editor {
         self.refresh_nodes(ids);
         result
     }
+    /// Whether a live edit currently owns the next history transaction.
+    pub fn has_active_transaction(&self) -> bool {
+        self.pending.is_some()
+    }
     pub fn can_undo(&self) -> bool {
         !self.undo.is_empty()
     }

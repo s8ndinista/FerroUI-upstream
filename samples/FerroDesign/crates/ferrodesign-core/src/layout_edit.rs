@@ -28,7 +28,7 @@ impl Editor {
         Ok(parent.id)
     }
 
-    fn commit_layout_candidate(&mut self, label: &str, mut candidate: Document) -> Result<LayoutResult, DocumentError> {
+    pub(crate) fn commit_layout_candidate(&mut self, label: &str, mut candidate: Document) -> Result<LayoutResult, DocumentError> {
         candidate.validate()?;
         let result = candidate.layout_all();
         if !result.errors.is_empty() { return Err(layout_error(result.errors.join("\n"))); }
@@ -72,6 +72,7 @@ impl Editor {
     /// into the stored child list; pinned grid coordinates remain unchanged.
     pub fn reorder_layout_child(&mut self, child: NodeId, anchor: NodeId, after: bool) -> Result<LayoutResult, DocumentError> {
         let parent = self.layout_parent_for_edit(child)?;
+        crate::layout_drag::validate_layout_reorder_ancestry(&self.document, parent)?;
         if child == anchor { return Err(layout_error("Choose a different sibling as the reorder target")); }
         if self.document.nodes.get(&anchor).and_then(|node| node.parent) != Some(parent) {
             return Err(layout_error("Layout reorder requires two children of the same frame"));
