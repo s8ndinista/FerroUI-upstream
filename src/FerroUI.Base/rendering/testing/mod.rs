@@ -17,7 +17,7 @@ pub use mock_platform_render_interface::{
 use crate::media::BoxShadow;
 use crate::rendering::composition::drawing::{
     DrawBitmapPayload, DrawCustomPayload, DrawEllipsePayload, DrawGeometryPayload, DrawGlyphRunPayload,
-    DrawLinePayload, DrawRectanglePayload, PushClipPayload, PushEffectPayload, PushGeometryClipPayload,
+    DrawLinePayload, DrawRectanglePayload, PushClipPayload, PushCompositingLayerPayload, PushEffectPayload, PushGeometryClipPayload,
     PushOpacityMaskPayload, PushOpacityPayload, PushRenderOptionsPayload, PushTextOptionsPayload, PushTransformPayload,
     RenderDataOpcode, RenderDataReader, RenderDataStream,
 };
