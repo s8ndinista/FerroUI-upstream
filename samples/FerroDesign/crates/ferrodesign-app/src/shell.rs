@@ -846,7 +846,7 @@ impl EditorShell {
         if let Some(timer) = self.pending_save_timer.borrow_mut().take() { timer.dispose(); }
         if !self.pending_save.get() { return; }
         let started = Instant::now();
-        let text = match self.prototype.document_json() {
+        let text = match self.prototype.autosave_json() {
             Ok(text) if !text.is_empty() => text,
             _ => { self.toast("The document could not be serialized. Export your design before closing."); return; }
         };

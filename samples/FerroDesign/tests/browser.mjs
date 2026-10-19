@@ -6,6 +6,7 @@ import { imageCropRegressions } from "./image-crop-browser.mjs";
 import { compositingRegressions } from "./compositing-browser.mjs";
 import { pageInspectorRegressions } from "./page-inspector-browser.mjs";
 import { layoutAuthoringRegressions } from "./layout-browser.mjs";
+import { compactAutosaveRegressions } from "./serialization-browser.mjs";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { createServer } from "node:http";
@@ -109,6 +110,24 @@ async function flushStorage(page) {
             ]);
             return { saved, ...globalThis.ferroDesignStorage.status() };
         } finally { clearTimeout(timeout); }
+    });
+}
+async function committedDocumentInfo(page) {
+    return page.evaluate(async () => {
+        const snapshot = await globalThis.ferroDesignStorage.backend.load();
+        if (typeof snapshot?.text !== "string") throw new Error("No committed IndexedDB document exists.");
+        const exported = globalThis.ferroDesign.ferroDesignExportJson();
+        if (JSON.stringify(JSON.parse(snapshot.text)) !== JSON.stringify(JSON.parse(exported))) {
+            throw new Error("The durable autosave must preserve every exported document field.");
+        }
+        const encoder = new TextEncoder();
+        return {
+            exportBytes: encoder.encode(exported).length,
+            autosaveBytes: encoder.encode(snapshot.text).length,
+            compact: !snapshot.text.includes("\n"),
+            revision: snapshot.revision,
+            serializationMs: JSON.parse(globalThis.ferroDesign.ferroDesignState()).lastSerializationMs,
+        };
     });
 }
 async function waitForReload(page) {
@@ -816,6 +835,8 @@ try {
                 { fixtureNode, isolatedDocument, importFixture, documentState, state, clickWorld, clickNative, frames }, output, mode);
             await layoutAuthoringRegressions(page, svgDocument, check,
                 { fixtureNode, isolatedDocument, importFixture, documentState, state, clickWorld, clickNative, frames }, output, mode);
+            await compactAutosaveRegressions(page, svgDocument, check,
+                { fixtureNode, isolatedDocument, importFixture, documentState, state, clickWorld, clickNative, frames, flushStorage }, output, mode);
             await prototypeInputRegressions(page, svgDocument, check);
             await prototypeMotionRegressions(page, svgDocument, check,
                 { fixtureNode, isolatedDocument, importFixture, documentState, state, moveWorld, frames }, output, mode);
@@ -868,17 +889,21 @@ try {
 
             const saveStarted = performance.now();
             const persisted = await flushStorage(page);
+            const saveCompleted = performance.now();
             assert.equal(persisted.saved, true, "Autosave must finish its storage transaction");
             assert.equal(persisted.backend, "indexedDB");
             assert.equal(persisted.dirty, false);
             const beforeReload = await page.evaluate(() => globalThis.ferroDesign.ferroDesignExportJson());
+            const stored = await committedDocumentInfo(page);
+            assert.equal(stored.compact, true, "Autosave serializes compact JSON");
+            assert.ok(stored.autosaveBytes < stored.exportBytes);
             const reloadStarted = performance.now();
             await page.reload({ waitUntil: "domcontentloaded", timeout: 120000 });
             await waitForReload(page);
             const afterReload = await page.evaluate(() => globalThis.ferroDesign.ferroDesignExportJson());
             assert.deepEqual(JSON.parse(afterReload), JSON.parse(beforeReload), "Reload must restore the complete authored document from IndexedDB before Rust creates the shell");
             assert.equal((await state(page)).saveStatus, "All changes saved locally");
-            result.persistence = { backend: persisted.backend, revision: persisted.revision, saveMs: Math.round(reloadStarted - saveStarted), reloadMs: Math.round(performance.now() - reloadStarted), documentBytes: Buffer.byteLength(beforeReload) };
+            result.persistence = { backend: persisted.backend, revision: persisted.revision, saveMs: Math.round(saveCompleted - saveStarted), reloadMs: Math.round(performance.now() - reloadStarted), exportBytes: Buffer.byteLength(beforeReload), autosaveBytes: stored.autosaveBytes, autosaveSerializationMs: stored.serializationMs };
             await canvas.screenshot({ path: resolve(output, mode + "-reloaded.png") });
             check("A committed IndexedDB autosave restores the exact document after a real browser reload");
 
@@ -904,7 +929,7 @@ try {
                     "The native layer list must realize a bounded viewport of controls: " + large.realizedLayerRows);
                 assert.equal(large.invalidNodes, 0);
                 assert.ok(large.visibleNodes >= 9000, "Fit page must render the dense 10,000-node fixture");
-                result.largeDocument = { nodeCount: large.nodeCount, documentBytes: Buffer.byteLength(fixtureJson), importAndFirstFrameMs: Math.round(performance.now() - importedAt), layerRows: large.layerRowCount, realizedRows: large.realizedLayerRows, visibleNodes: large.visibleNodes };
+                result.largeDocument = { nodeCount: large.nodeCount, importBytes: Buffer.byteLength(fixtureJson), importAndFirstFrameMs: Math.round(performance.now() - importedAt), layerRows: large.layerRowCount, realizedRows: large.realizedLayerRows, visibleNodes: large.visibleNodes };
                 await canvas.screenshot({ path: resolve(output, mode + "-large-document.png") });
                 const layers = large.chrome.LayersViewport;
                 await page.mouse.move(layers.x + layers.width / 2, layers.y + layers.height / 2);
@@ -959,6 +984,11 @@ try {
                 assert.equal(largePersistence.saved, true);
                 assert.equal(largePersistence.dirty, false);
                 result.largeDocument.commitMs = Math.round(performance.now() - persistedAt);
+                const largeStored = await committedDocumentInfo(page);
+                assert.equal(largeStored.compact, true);
+                assert.ok(largeStored.autosaveBytes < largeStored.exportBytes);
+                result.largeDocument.autosaveBytes = largeStored.autosaveBytes;
+                result.largeDocument.autosaveSerializationMs = largeStored.serializationMs;
                 const largeReloadAt = performance.now();
                 await page.reload({ waitUntil: "domcontentloaded", timeout: 120000 });
                 await waitForReload(page);
@@ -969,7 +999,7 @@ try {
                 assert.equal(restoredLarge.layerRowCount, 10000);
                 assert.ok(restoredLarge.realizedLayerRows > 0 && restoredLarge.realizedLayerRows <= 200);
                 result.largeDocument.reloadMs = Math.round(performance.now() - largeReloadAt);
-                result.largeDocument.savedBytes = Buffer.byteLength(largeSaved);
+                result.largeDocument.exportBytes = Buffer.byteLength(largeSaved);
                 result.largeDocument.sha256 = digest(largeSaved);
                 check("10,000 rendered layers retain bounded native row realization, real pointer/nudge/undo/redo, and exact durable reload");
                 assert.equal(await page.evaluate((json) => globalThis.ferroDesign.ferroDesignImportJson(json), svgJson), true);

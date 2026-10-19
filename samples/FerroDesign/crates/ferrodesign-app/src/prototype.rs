@@ -135,6 +135,17 @@ impl PrototypeRuntime {
         }
     }
 
+    /// Compact local snapshots use the same authored-state boundary as portable
+    /// exports. Borrow only for serialization, then release before host storage.
+    pub fn autosave_json(&self) -> Result<String, DocumentError> {
+        let result = if let Some(authored) = self.authored.borrow().as_ref() {
+            serde_json::to_string(&authored.document)
+        } else {
+            serde_json::to_string(&self.editor.borrow().document)
+        };
+        result.map_err(|error| DocumentError::Json(error.to_string()))
+    }
+
     pub fn start(self: &Rc<Self>, root: NodeId) -> bool {
         self.canvas.finish_pen();
         self.canvas.cancel_active_edit();
