@@ -83,6 +83,7 @@ struct CachedShadow {
 struct CachedNode {
     fingerprint: u64,
     geometry: Ref<Geometry>,
+    stroke_geometry: Ref<Geometry>,
     rounded_rect: Option<RoundedRect>,
     fills: Vec<Rc<dyn IBrush>>,
     strokes: Vec<CachedStroke>,
@@ -103,6 +104,7 @@ impl CachedNode {
         Self {
             fingerprint: 0,
             geometry: StreamGeometry::new().upcast(),
+            stroke_geometry: StreamGeometry::new().upcast(),
             rounded_rect: None,
             fills: Vec::new(),
             strokes: Vec::new(),
@@ -515,7 +517,7 @@ fn paint_body(context: &mut DrawingContext<'_>, visual: &CachedNode) {
         if let Some(outline) = &stroke.outline {
             context.draw_geometry(Some(&stroke.brush), None, outline);
         } else {
-            context.draw_geometry(None, Some(&stroke.pen), &visual.geometry);
+            context.draw_geometry(None, Some(&stroke.pen), &visual.stroke_geometry);
         }
         if let Some(arrow) = &stroke.arrow {
             context.draw_geometry(Some(&stroke.brush), None, arrow);
@@ -662,6 +664,8 @@ fn build_visual(
     } else {
         geometry
     };
+    let stroke_geometry = node.vector_network.as_ref()
+        .map(|network| path_geometry(&network.stroke_path())).unwrap_or_else(|| geometry.clone());
     let mut local_bounds = node.local_bounds();
     if outline_required || node.kind != NodeKind::Text {
         let geometry_bounds = core_rect(geometry.bounds());
@@ -694,7 +698,7 @@ fn build_visual(
         let aligned = stroke.align != StrokeAlign::Center && is_closed(node);
         let pen = make_pen(stroke, immutable_brush, if aligned { 2.0 } else { 1.0 });
         let outline = if aligned {
-            let widened = geometry.get_widened_geometry(pen.as_ref());
+            let widened = stroke_geometry.get_widened_geometry(pen.as_ref());
             Some(combined(
                 if stroke.align == StrokeAlign::Inside {
                     GeometryCombineMode::Intersect
@@ -712,7 +716,7 @@ fn build_visual(
         } else {
             None
         };
-        let stroke_bounds = core_rect(geometry.get_render_bounds(pen.as_ref()));
+        let stroke_bounds = core_rect(stroke_geometry.get_render_bounds(pen.as_ref()));
         if stroke_bounds.is_finite() {
             local_bounds = local_bounds.union(stroke_bounds);
         }
@@ -789,6 +793,7 @@ fn build_visual(
     CachedNode {
         fingerprint,
         geometry,
+        stroke_geometry,
         rounded_rect: rect,
         fills,
         strokes,
@@ -814,15 +819,23 @@ fn shape_geometry(node: &Node) -> Ref<Geometry> {
         ),
         NodeKind::Polygon | NodeKind::Star => polyline_geometry(&node.polygon_points(), true),
         NodeKind::Vector => {
+            if let Some(network) = &node.vector_network { path_geometry(&network.fill_path()) }
+            else { path_geometry(&node.path) }
+        }
+        _ => rounded_geometry(rounded_rect(node)),
+    }
+}
+
+pub(crate) fn path_geometry(path: &ferrodesign_core::VectorPath) -> Ref<Geometry> {
             let geometry = StreamGeometry::new();
             {
                 let mut context = geometry.open();
-                context.set_fill_rule(match node.path.fill_rule {
+                context.set_fill_rule(match path.fill_rule {
                     FillRule::NonZero => ferroui_base::media::FillRule::NonZero,
                     FillRule::EvenOdd => ferroui_base::media::FillRule::EvenOdd,
                 });
                 let mut open = false;
-                for segment in &node.path.segments {
+                for segment in &path.segments {
                     match segment {
                         PathSegment::MoveTo { point } => {
                             if open {
@@ -861,9 +874,6 @@ fn shape_geometry(node: &Node) -> Ref<Geometry> {
                 }
             }
             geometry.upcast()
-        }
-        _ => rounded_geometry(rounded_rect(node)),
-    }
 }
 
 fn polyline_geometry(points: &[Point], closed: bool) -> Ref<Geometry> {
@@ -980,6 +990,14 @@ fn boolean_mode(operation: BooleanOperation) -> GeometryCombineMode {
 }
 
 fn is_closed(node: &Node) -> bool {
+    if let Some(network) = &node.vector_network {
+        let mut degrees = std::collections::BTreeMap::new();
+        for edge in network.edges.values().filter(|edge| edge.stroke) {
+            *degrees.entry(edge.start).or_insert(0usize) += 1;
+            *degrees.entry(edge.end).or_insert(0usize) += 1;
+        }
+        return !network.regions.is_empty() && !degrees.is_empty() && degrees.values().all(|degree| *degree == 2);
+    }
     if node.kind == NodeKind::Line {
         return false;
     }
@@ -1822,6 +1840,27 @@ fn visual_fingerprint(node: &Node, children: u64, needs_outline: bool, assets: u
                 hash_point(*point, &mut hash);
             }
             PathSegment::Close => {}
+        }
+    }
+    node.vector_network.is_some().hash(&mut hash);
+    if let Some(network) = &node.vector_network {
+        std::mem::discriminant(&network.fill_rule).hash(&mut hash);
+        for (id, vertex) in &network.vertices {
+            id.hash(&mut hash); hash_point(vertex.position, &mut hash);
+        }
+        for (id, edge) in &network.edges {
+            id.hash(&mut hash); edge.start.hash(&mut hash); edge.end.hash(&mut hash); edge.stroke.hash(&mut hash);
+            std::mem::discriminant(&edge.curve).hash(&mut hash);
+            if let ferrodesign_core::NetworkCurve::Cubic { control1, control2 } = edge.curve {
+                hash_point(control1, &mut hash); hash_point(control2, &mut hash);
+            }
+        }
+        for (id, region) in &network.regions {
+            id.hash(&mut hash);
+            for contour in &region.contours {
+                contour.len().hash(&mut hash);
+                for edge in contour { edge.edge.hash(&mut hash); edge.reversed.hash(&mut hash); }
+            }
         }
     }
     if node.kind == NodeKind::Boolean

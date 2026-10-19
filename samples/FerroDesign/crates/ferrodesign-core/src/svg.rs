@@ -204,7 +204,7 @@ fn path_data(path: &VectorPath, t: Transform) -> String {
 
 pub fn outline_path(node: &Node) -> VectorPath {
     if node.kind == NodeKind::Vector {
-        return node.path.clone();
+        return node.vector_network.as_ref().map(|network| network.fill_path()).unwrap_or_else(|| node.path.clone());
     }
     if node.kind == NodeKind::Polygon || node.kind == NodeKind::Star {
         return VectorPath::polygon(&node.polygon_points(), true);
@@ -307,13 +307,19 @@ fn node_shape(node: &Node, attributes: &str) -> String {
         _ => format!(
             r#"<path d="{}" fill-rule="{}" {attributes}/>"#,
             path_data(&outline_path(node), Transform::IDENTITY),
-            if node.path.fill_rule == FillRule::EvenOdd {
+            if node.vector_network.as_ref().map(|g| g.fill_rule).unwrap_or(node.path.fill_rule) == FillRule::EvenOdd {
                 "evenodd"
             } else {
                 "nonzero"
             }
         ),
     }
+}
+
+fn stroke_shape(node: &Node, attributes: &str) -> String {
+    if let Some(network) = &node.vector_network {
+        format!(r#"<path d="{}" {attributes}/>"#, path_data(&network.stroke_path(), Transform::IDENTITY))
+    } else { node_shape(node, attributes) }
 }
 
 fn text_shape(node: &Node, attributes: &str) -> String {
@@ -644,7 +650,7 @@ impl Document {
                     let _ = write!(attributes, r#" marker-end="url(#arrow-{id}-{i})""#);
                 }
                 match stroke.align {
-                    StrokeAlign::Center => body.push_str(&node_shape(node, &attributes)),
+                    StrokeAlign::Center => body.push_str(&stroke_shape(node, &attributes)),
                     StrokeAlign::Inside => {
                         let _ = write!(
                             defs,
@@ -653,7 +659,7 @@ impl Document {
                         let _ = write!(
                             body,
                             r#"<g clip-path="url(#stroke-clip-{id}-{i})">{}</g>"#,
-                            node_shape(node, &attributes)
+                            stroke_shape(node, &attributes)
                         );
                     }
                     StrokeAlign::Outside => {
@@ -674,7 +680,7 @@ impl Document {
                         let _ = write!(
                             body,
                             r#"<g mask="url(#stroke-mask-{id}-{i})">{}</g>"#,
-                            node_shape(node, &attributes)
+                            stroke_shape(node, &attributes)
                         );
                     }
                 }

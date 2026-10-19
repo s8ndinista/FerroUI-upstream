@@ -1,4 +1,5 @@
 //! Interactive retained-mode surface. Artwork uses only FerroUI's public DrawingContext API.
+mod network;
 use crate::{
     icons::brush,
     renderer::{RenderStats, ScenePainter},
@@ -80,7 +81,7 @@ impl Tool {
     }
 }
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub enum VectorTool { #[default] Point, Bend, Erase }
+pub enum VectorTool { #[default] Point, Bend, Erase, Connect }
 
 #[derive(Clone)]
 pub enum CanvasEvent {
@@ -140,6 +141,8 @@ enum Gesture {
         anchor: Point,
         start: Point,
     },
+    NetworkPoint { node: NodeId, point: core::NetworkPointId, start: Point, original: Point },
+    NetworkBend { node: NodeId, edge: core::VectorEdgeId, t: f64 },
     VectorBend { node: NodeId, segment: usize, t: f64 },
     VectorPoint {
         node: NodeId,
@@ -175,6 +178,8 @@ pub struct DesignCanvas {
     pub vector_node: Cell<Option<NodeId>>,
     pub vector_point: Cell<Option<PathPointId>>,
     pub vector_tool: Cell<VectorTool>,
+    pub network_point: Cell<Option<core::NetworkPointId>>,
+    pub network_vertices: RefCell<Vec<core::VectorVertexId>>,
 }
 ferro_class!(DesignCanvas:Control);
 ferro_impl_classes!(DesignCanvas:FerroObjectImpl,StyledElementImpl,LayoutableImpl,InteractiveImpl,ControlImpl);
@@ -206,6 +211,8 @@ impl DesignCanvas {
             vector_node: Cell::new(None),
             vector_point: Cell::new(None),
             vector_tool: Cell::new(VectorTool::Point),
+            network_point: Cell::new(None),
+            network_vertices: RefCell::new(Vec::new()),
         });
         this.set_focusable(true);
         this.set_clip_to_bounds(true);
@@ -381,7 +388,7 @@ impl DesignCanvas {
         let id = editor.selection.first().copied().filter(|id| {
             editor.selection.len() == 1
                 && editor.document.nodes.get(id).is_some_and(|n| {
-                    n.kind == NodeKind::Vector && !n.locked && !n.path.segments.is_empty()
+                    n.kind == NodeKind::Vector && !n.locked && (!n.path.segments.is_empty() || n.vector_network.is_some())
                 })
         });
         drop(editor);
@@ -400,6 +407,8 @@ impl DesignCanvas {
     pub fn leave_vector_edit(&self) {
         self.vector_node.set(None);
         self.vector_point.set(None);
+        self.network_point.set(None);
+        self.network_vertices.borrow_mut().clear();
         self.invalidate_visual();
     }
     pub fn reconcile_vector_edit(&self) {
@@ -414,6 +423,9 @@ impl DesignCanvas {
         });
         if !valid {
             self.leave_vector_edit();
+        } else if let Some(network) = self.vector_node.get().and_then(|id| editor.document.nodes.get(&id)).and_then(|n| n.vector_network.as_ref()) {
+            if self.network_point.get().is_some_and(|point| network.point_position(point).is_none()) { self.network_point.set(None); }
+            self.network_vertices.borrow_mut().retain(|vertex| network.vertices.contains_key(vertex));
         } else if let (Some(id), Some(point)) = (self.vector_node.get(), self.vector_point.get()) {
             if editor.document.nodes[&id]
                 .path
@@ -428,6 +440,14 @@ impl DesignCanvas {
         let Some(id) = self.vector_node.get() else {
             return false;
         };
+        if let Some(point) = self.network_point.get() {
+            let vertex = self.editor.borrow().document.nodes.get(&id).and_then(|node| node.vector_network.as_ref()).and_then(|network| network.point_vertex(point));
+            if let Some(vertex) = vertex {
+                let changed = self.editor.borrow_mut().set_network_vertex_mode(id, vertex, mode);
+                if changed { self.emit(CanvasEvent::Document); }
+                return changed;
+            }
+        }
         let Some(point) = self.vector_point.get() else {
             return false;
         };
@@ -453,7 +473,7 @@ impl DesignCanvas {
         }
         changed
     }
-    fn vector_press(&self, world: Point, clicks: i32) -> bool {
+    fn vector_press(&self, world: Point, clicks: i32, additive: bool) -> bool {
         let Some(id) = self.vector_node.get() else {
             return false;
         };
@@ -461,6 +481,10 @@ impl DesignCanvas {
         let Some(node) = editor.document.nodes.get(&id) else {
             return false;
         };
+        if node.vector_network.is_some() {
+            drop(editor);
+            return self.network_press(world, clicks, additive);
+        }
         let Some(transform) = editor.document.world_transform(id) else {
             return false;
         };
@@ -661,7 +685,7 @@ impl InputElementImpl for DesignCanvas {
         match this.tool.get() {
             Tool::Comment => this.emit(CanvasEvent::Comment(world)),
             Tool::Select => {
-                if this.vector_press(world, e.click_count()) {
+                if this.vector_press(world, e.click_count(), additive) {
                     return;
                 }
                 if let Some(corner) = this.handle_at(world) {
@@ -1100,6 +1124,15 @@ impl InputElementImpl for DesignCanvas {
                 }
                 editor.refresh();
             }
+            Gesture::NetworkPoint { node, point, start, original } => {
+                let mut delta = world - *start;
+                if shift { if delta.x.abs() > delta.y.abs() { delta.y = 0.0; } else { delta.x = 0.0; } }
+                let position = if matches!(point, core::NetworkPointId::Vertex(_)) && this.snap.get() { this.snap_point(*original + delta) } else { *original + delta };
+                this.editor.borrow_mut().move_network_point(*node, *point, position);
+            }
+            Gesture::NetworkBend { node, edge, t } => {
+                this.editor.borrow_mut().bend_network_edge(*node, *edge, *t, world);
+            }
             Gesture::VectorBend { node, segment, t } => {
                 this.editor.borrow_mut().bend_vector_segment(*node, *segment, *t, world);
             }
@@ -1181,6 +1214,8 @@ impl InputElementImpl for DesignCanvas {
             | Gesture::Rotate { .. }
             | Gesture::VectorPoint { .. }
             | Gesture::VectorBend { .. }
+            | Gesture::NetworkPoint { .. }
+            | Gesture::NetworkBend { .. }
             | Gesture::Draw { .. } => {
                 this.editor.borrow_mut().commit_transaction();
                 this.tool.set(Tool::Select);
@@ -1286,6 +1321,7 @@ impl InputElementImpl for DesignCanvas {
         }
         if !command && matches!(e.key, Key::Delete | Key::Back) && this.vector_node.get().is_some()
         {
+            if this.delete_network_selection() { e.set_handled(true); return; }
             if let (Some(id), Some(point)) = (this.vector_node.get(), this.vector_point.get()) {
                 if point.kind == PathPointKind::Anchor {
                     this.editor
@@ -1781,7 +1817,9 @@ impl VisualImpl for DesignCanvas {
                 continue;
             };
             if this.vector_node.get() == Some(id) {
-                render_vector_editor(ctx, &n.path, t, v, this.vector_point.get());
+                if let Some(graph) = &n.vector_network {
+                    network::render_network_editor(ctx, graph, t, v, this.network_point.get(), &this.network_vertices.borrow());
+                } else { render_vector_editor(ctx, &n.path, t, v, this.vector_point.get()); }
                 continue;
             }
             if this.pen_node.get() == Some(id) {

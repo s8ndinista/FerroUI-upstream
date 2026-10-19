@@ -1,7 +1,9 @@
 //! The XAML shell binds real FerroUI controls to the document command layer.
 mod paints;
 mod prototyping;
+mod rich_text;
 mod text;
+mod variables;
 use crate::{
     canvas::{CanvasEvent, DesignCanvas, Tool},
     icons, platform,
@@ -399,6 +401,7 @@ impl EditorShell {
             ("AddEffectButton", "add-effect"),
             ("EffectButton", "effects"),
             ("BoldButton", "bold"),
+            ("RichTextButton", "rich-text"),
             ("TextLeftButton", "text-left"),
             ("TextCenterButton", "text-center"),
             ("TextRightButton", "text-right"),
@@ -418,6 +421,9 @@ impl EditorShell {
             ("CloseModalButton", "close-modal"),
             ("EditVectorButton", "edit-vector"),
             ("DoneVectorButton", "done-vector"),
+            ("ConvertNetworkButton", "vector-network"),
+            ("NetworkPenButton", "network-pen"), ("NetworkJoinButton", "network-join"),
+            ("NetworkFillButton", "network-fill"), ("NetworkWeldButton", "network-weld"),
             ("VectorSelectButton", "vector-points"),
             ("VectorBendButton", "vector-bend"),
             ("VectorEraseButton", "vector-erase"),
@@ -616,12 +622,15 @@ impl EditorShell {
             "DoneVectorButton",
             "VectorPointOptions",
             "VectorSelectButton", "VectorBendButton", "VectorEraseButton",
+            "ConvertNetworkButton", "NetworkPenButton", "NetworkJoinButton", "NetworkFillButton", "NetworkWeldButton",
             "CornerPointButton", "SmoothPointButton", "SymmetricPointButton",
             "InlineTextBox",
             "EditPaintsButton",
+            "RichTextButton",
             "EditInteractionsButton",
             "ModalBackdrop",
             "ModalContent",
+            "ModalViewport",
             "ModalActions",
         ]
         .into_iter()
@@ -640,7 +649,8 @@ impl EditorShell {
                 if let Some(control) = visual.cast::<Control>() {
                     if let Some(name) = control
                         .name()
-                        .filter(|name| name.starts_with("Paint") || name.starts_with("Interaction"))
+                        .filter(|name| ["Paint", "Interaction", "RichText", "Variable", "Component", "Crop"]
+                            .iter().any(|prefix| name.starts_with(prefix)))
                     {
                         chrome.insert(name, native_bounds(&control));
                     }
@@ -670,6 +680,8 @@ impl EditorShell {
             "realizedLayerRows":self.layer_buttons.borrow().values().filter(|row| row.upgrade().is_some()).count(),
             "vectorNode":self.canvas.vector_node.get(),
             "vectorTool":format!("{:?}",self.canvas.vector_tool.get()),
+            "networkPoint":self.canvas.network_point.get(),
+            "networkVertices":*self.canvas.network_vertices.borrow(),
             "editingText":self.inline_text.get(),
             "editingComposition":self.inline_text.get().is_some() && self.field("InlineTextBox").is_composing_text(),
             "prototypeOverlays":*self.canvas.overlays.borrow(),
@@ -1179,6 +1191,10 @@ impl EditorShell {
         self.visible("VectorPointOptions", vector_edit);
         self.visible("EditVectorButton", !vector_edit);
         self.visible("DoneVectorButton", vector_edit);
+        let network = node.is_some_and(|n| n.vector_network.is_some());
+        self.visible("NetworkOptions", network && vector_edit);
+        self.visible("ConvertNetworkButton", !network);
+        self.button("NetworkPenButton").classes().set("active", self.canvas.vector_tool.get() == crate::canvas::VectorTool::Connect);
         for (name, mode) in [("VectorSelectButton", crate::canvas::VectorTool::Point),
             ("VectorBendButton", crate::canvas::VectorTool::Bend), ("VectorEraseButton", crate::canvas::VectorTool::Erase)] {
             self.button(name).classes().set("active", self.canvas.vector_tool.get() == mode);
@@ -1684,6 +1700,20 @@ impl EditorShell {
                 self.paints_dialog();
                 return true;
             }
+            "vector-network" => return self.canvas.convert_network(),
+            "network-join" => return self.canvas.network_connect_selection(),
+            "network-fill" => {
+                let changed = self.canvas.network_fill_selection();
+                if !changed { self.toast("Shift-select at least three connected vertices in boundary order."); }
+                return changed;
+            }
+            "network-weld" => return self.canvas.network_weld_selection(),
+            "network-pen" => {
+                if self.canvas.vector_node.get().is_none() && !self.canvas.edit_vector() { return false; }
+                self.canvas.convert_network();
+                self.canvas.vector_tool.set(crate::canvas::VectorTool::Connect);
+                self.refresh_selection(); self.canvas.focus(); return true;
+            }
             "vector-points" | "vector-bend" | "vector-erase" => {
                 if self.canvas.vector_node.get().is_none() && !self.canvas.edit_vector() { return false; }
                 self.canvas.vector_tool.set(match command {
@@ -1822,7 +1852,11 @@ impl EditorShell {
                 return true;
             }
             "variables" => {
-                self.variables_dialog();
+                self.visual_variables_dialog();
+                return true;
+            }
+            "rich-text" => {
+                self.rich_text_dialog();
                 return true;
             }
             "comments" => {
@@ -2936,6 +2970,7 @@ const FILE_ACTIONS: &[(&str, &str)] = &[
     ("Export PNG", "export-png"),
     ("Export FerroUI XAML", "export-xaml"),
     ("Local variables", "variables"),
+    ("Style text characters", "rich-text"),
     ("Local styles", "styles"),
     ("Local components", "assets"),
     ("Comments", "comments"),
@@ -2974,6 +3009,7 @@ const LAYER_ACTIONS: &[(&str, &str)] = &[
     ("Create component", "component"),
     ("Create instance", "instance"),
     ("Update instances", "sync-instances"),
+    ("Style text characters", "rich-text"),
     ("Detach instance", "detach"),
     ("Layer data…", "advanced"),
 ];

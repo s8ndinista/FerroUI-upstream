@@ -132,6 +132,7 @@
             <TextBox Name="NameField" PlaceholderText="Layer name"/>
             <StackPanel Name="VectorOptions" Spacing="8" IsVisible="False">
               <Button Name="EditVectorButton" Content="Edit vector" ToolTip.Tip="Edit vector points (Enter)" HorizontalContentAlignment="Left"/>
+              <Button Name="ConvertNetworkButton" Content="Convert to vector network"/>
               <Button Name="DoneVectorButton" Content="Done editing" Classes="primary" IsVisible="False"/>
               <StackPanel Name="VectorPointOptions" Spacing="8" IsVisible="False">
                 <UniformGrid Columns="3">
@@ -144,6 +145,11 @@
                   <Button Name="SmoothPointButton" Content="Smooth"/>
                   <Button Name="SymmetricPointButton" Content="Mirror" ToolTip.Tip="Make both handles symmetric"/>
                 </UniformGrid>
+                <StackPanel Name="NetworkOptions" Spacing="6" IsVisible="False">
+                  <UniformGrid Columns="2"><Button Name="NetworkPenButton" Content="Connect tool"/><Button Name="NetworkJoinButton" Content="Join selected"/></UniformGrid>
+                  <UniformGrid Columns="2"><Button Name="NetworkFillButton" Content="Fill region"/><Button Name="NetworkWeldButton" Content="Weld vertices"/></UniformGrid>
+                  <TextBlock Text="Connect extends any vertex. Shift-select vertices in boundary order to fill a region, or select two to join or weld." TextWrapping="Wrap" Classes="label"/>
+                </StackPanel>
                 <TextBlock Text="Drag a point or handle. Double-click a segment to add a point. Delete removes the selected point." TextWrapping="Wrap" Classes="label"/>
               </StackPanel>
             </StackPanel>
@@ -242,6 +248,7 @@
               <StackPanel Name="TextOptions" IsVisible="False" Spacing="8">
                 <Border Classes="rule"/><TextBlock Text="Typography" Classes="heading"/>
                 <TextBox Name="TextField" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="64"/>
+                <Button Name="RichTextButton" Content="Style selected characters…" HorizontalAlignment="Stretch"/>
                 <TextBox Name="FontFamilyField" Text="Inter"/>
                 <Grid ColumnDefinitions="*,8,*,8,28,28"><TextBox Name="FontSizeField" Text="16" ToolTip.Tip="Font size"/><TextBox Name="FontWeightField" Grid.Column="2" Text="400" ToolTip.Tip="Font weight (1–1000)"/><Button Name="BoldButton" Grid.Column="4" Content="B" FontWeight="Bold"/><Button Name="ItalicButton" Grid.Column="5" Content="I" FontStyle="Italic"/></Grid>
                 <Grid ColumnDefinitions="*,12,*">
@@ -313,7 +320,7 @@
             <Button Name="CloseModalButton" Grid.Column="1" Content="×" FontSize="18"/>
           </Grid>
           <TextBlock Name="ModalDescription" Grid.Row="1" Margin="0,8,0,16" TextWrapping="Wrap" Foreground="#777777"/>
-          <ScrollViewer Grid.Row="2" MaxHeight="470"><StackPanel Name="ModalContent" Spacing="8"/></ScrollViewer>
+          <ScrollViewer Name="ModalViewport" Grid.Row="2" MaxHeight="470"><StackPanel Name="ModalContent" Spacing="8"/></ScrollViewer>
           <StackPanel Name="ModalActions" Grid.Row="3" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right" Margin="0,18,0,0"/>
         </Grid>
       </Border>

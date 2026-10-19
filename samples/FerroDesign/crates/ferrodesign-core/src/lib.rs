@@ -10,6 +10,7 @@ mod spatial;
 mod svg;
 mod svg_import;
 mod text_edit;
+mod variable_edit;
 mod vector_edit;
 pub use editor::*;
 pub use geometry::*;
@@ -21,6 +22,7 @@ pub use spatial::*;
 pub use svg::*;
 pub use svg_import::*;
 pub use text_edit::*;
+pub use variable_edit::*;
 pub use vector_edit::*;
 #[cfg(test)]
 mod svg_import_tests;
