@@ -437,7 +437,6 @@ impl Default for SvgStyle {
             join: StrokeJoin::Miter,
             dash: Vec::new(),
             fill_rule: FillRule::NonZero,
-            anchor_modes: Default::default(),
             color: Color::BLACK,
             font_family: "Inter".into(),
             font_size: 16.0,
