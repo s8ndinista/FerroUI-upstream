@@ -10,7 +10,9 @@ permissions:
 
 concurrency:
   group: ferrodesign-${{ github.ref }}
-  cancel-in-progress: true
+  # Finish browser evidence for the running commit; frequent development pushes
+  # replace the pending run without repeatedly discarding the long native build.
+  cancel-in-progress: false
 
 jobs:
   browser:

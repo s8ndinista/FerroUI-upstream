@@ -1031,6 +1031,9 @@ impl DrawingContextImpl {
     }
 
     fn create_effect(&self, effect: &dyn IEffect) -> Option<sk::ImageFilter> {
+        if effect.as_any().is::<ferroui_base::media::ImmutableLuminanceToAlphaEffect>() {
+            return sk::image_filters::color_filter(sk::ColorFilter::luma(), None, None);
+        }
         if let Some(blur) = effect.as_blur_effect() {
             if blur.radius() <= 0.0 {
                 return None;

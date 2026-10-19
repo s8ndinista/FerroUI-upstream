@@ -4,18 +4,83 @@
 use crate::{PlatformRenderInterface, SkiaOptions};
 use ferroui_base::media::imaging::BitmapBlendingMode;
 use ferroui_base::media::immutable::{ImmutableImageBrush, ImmutableSolidColorBrush};
-use ferroui_base::media::{Color, Colors, DrawingContext, DrawingGroup, IBrush, ISceneBrushContent, ITileBrush, PlatformDrawingContext};
+use ferroui_base::media::{
+    Color, Colors, DrawingContext, DrawingGroup, IBrush, ISceneBrushContent, ITileBrush,
+    PlatformDrawingContext,
+};
 use ferroui_base::platform::{IPlatformRenderInterface, IRenderTargetBitmapImpl, PixelFormat};
 use ferroui_base::rendering::composition::drawing::RenderDataDrawingContext;
 use ferroui_base::{FerroLocator, Matrix, PixelSize, Rect, Vector};
 use std::rc::Rc;
 use std::sync::Arc;
+#[test]
+fn compositing_layer_luminance_to_alpha_preserves_transparency_and_recorded_state() {
+    use ferroui_base::media::{IEffect, ImmutableLuminanceToAlphaEffect};
+    let scope = FerroLocator::enter_scope();
+    FerroLocator::current_mutable()
+        .bind::<dyn IPlatformRenderInterface>()
+        .to_constant(Rc::new(PlatformRenderInterface::default()));
+    let draw = |context: &mut DrawingContext<'_>| {
+        let effect: Rc<dyn IEffect> = Rc::new(ImmutableLuminanceToAlphaEffect);
+        let opacity = context
+            .try_push_compositing_layer(
+                BitmapBlendingMode::SourceOver,
+                0.5,
+                Rect::new(0.0, 0.0, 100.0, 70.0),
+            )
+            .unwrap();
+        let state = context.push_effect(&effect, Rect::new(0.0, 0.0, 100.0, 70.0));
+        for (index, color) in [
+            Color::from_argb(128, 255, 255, 255),
+            Colors::RED,
+            Color::from_argb(128, 0, 255, 0),
+            Colors::BLACK,
+            Color::from_argb(64, 0, 0, 255),
+        ]
+        .into_iter()
+        .enumerate()
+        {
+            context.fill_rectangle(
+                &brush(color),
+                Rect::new(index as f64 * 20.0, 0.0, 20.0, 70.0),
+                0.0,
+            );
+        }
+        context.pop(state);
+        context.pop(opacity);
+        context.fill_rectangle(
+            &brush(Colors::YELLOW),
+            Rect::new(0.0, 80.0, 100.0, 20.0),
+            0.0,
+        );
+    };
+    for save_layers in [false, true] {
+        let direct = render(save_layers, draw);
+        for (x, alpha) in [(10, 64), (30, 27), (50, 46), (70, 0), (90, 2)] {
+            near(pixel(&*direct, x, 30), [0, 0, 0, alpha]);
+        }
+        near(pixel(&*direct, 50, 90), [255, 255, 0, 255]);
+        let group = DrawingGroup::new();
+        {
+            let mut context = group.open();
+            draw(&mut context);
+        }
+        let recorded = render(save_layers, |context| group.draw(context));
+        for (x, y) in [(10, 30), (30, 30), (50, 30), (70, 30), (90, 30), (50, 90)] {
+            near(pixel(&*recorded, x, y), pixel(&*direct, x, y));
+        }
+    }
+    scope.dispose();
+}
 
 fn brush(color: Color) -> Rc<dyn IBrush> {
     Rc::new(ImmutableSolidColorBrush::new(color))
 }
 
-fn render(save_opacity_layers: bool, draw: impl FnOnce(&mut DrawingContext<'_>)) -> Arc<dyn IRenderTargetBitmapImpl> {
+fn render(
+    save_opacity_layers: bool,
+    draw: impl FnOnce(&mut DrawingContext<'_>),
+) -> Arc<dyn IRenderTargetBitmapImpl> {
     let scope = FerroLocator::enter_scope();
     FerroLocator::current_mutable().bind_to_self(Rc::new(SkiaOptions {
         use_opacity_save_layer: save_opacity_layers,
@@ -50,16 +115,23 @@ fn pixel(bitmap: &dyn IRenderTargetBitmapImpl, x: usize, y: usize) -> [u8; 4] {
 }
 
 fn near(actual: [u8; 4], expected: [u8; 4]) {
-    assert!(actual.iter().zip(expected).all(|(a, e)| a.abs_diff(e) <= 1), "{actual:?} != {expected:?}");
+    assert!(
+        actual.iter().zip(expected).all(|(a, e)| a.abs_diff(e) <= 1),
+        "{actual:?} != {expected:?}"
+    );
 }
 
 #[test]
 fn compositing_layer_opacity_applies_once_to_overlapping_vectors_in_both_opacity_modes() {
     for save_layers in [false, true] {
         let bitmap = render(save_layers, |context| {
-            let _group = context.try_push_compositing_layer(
-                BitmapBlendingMode::SourceOver, 0.5, Rect::new(0.0, 0.0, 100.0, 100.0),
-            ).unwrap();
+            let _group = context
+                .try_push_compositing_layer(
+                    BitmapBlendingMode::SourceOver,
+                    0.5,
+                    Rect::new(0.0, 0.0, 100.0, 100.0),
+                )
+                .unwrap();
             context.fill_rectangle(&brush(Colors::RED), Rect::new(0.0, 0.0, 60.0, 100.0), 0.0);
             context.fill_rectangle(&brush(Colors::RED), Rect::new(40.0, 0.0, 60.0, 100.0), 0.0);
             // The public context drop balances a still-open group.
@@ -74,11 +146,17 @@ fn compositing_layer_opacity_applies_once_to_overlapping_vectors_in_both_opacity
 fn compositing_layer_multiplies_the_completed_group_with_the_existing_backdrop() {
     let bitmap = render(false, |context| {
         context.fill_rectangle(
-            &brush(Color::from_argb(255, 128, 128, 255)), Rect::new(0.0, 0.0, 100.0, 100.0), 0.0,
+            &brush(Color::from_argb(255, 128, 128, 255)),
+            Rect::new(0.0, 0.0, 100.0, 100.0),
+            0.0,
         );
-        let group = context.try_push_compositing_layer(
-            BitmapBlendingMode::Multiply, 1.0, Rect::new(0.0, 0.0, 100.0, 100.0),
-        ).unwrap();
+        let group = context
+            .try_push_compositing_layer(
+                BitmapBlendingMode::Multiply,
+                1.0,
+                Rect::new(0.0, 0.0, 100.0, 100.0),
+            )
+            .unwrap();
         context.fill_rectangle(&brush(Colors::RED), Rect::new(0.0, 0.0, 60.0, 100.0), 0.0);
         context.fill_rectangle(&brush(Colors::BLUE), Rect::new(40.0, 0.0, 60.0, 100.0), 0.0);
         context.pop(group);
@@ -95,12 +173,20 @@ fn compositing_layer_nested_opacity_consumes_inherited_opacity_once_and_restores
     for save_layers in [false, true] {
         let bitmap = render(save_layers, |context| {
             let opacity = context.push_opacity(0.5);
-            let outer = context.try_push_compositing_layer(
-                BitmapBlendingMode::SourceOver, 0.5, Rect::new(0.0, 0.0, 60.0, 100.0),
-            ).unwrap();
-            let inner = context.try_push_compositing_layer(
-                BitmapBlendingMode::SourceOver, 0.5, Rect::new(0.0, 0.0, 30.0, 100.0),
-            ).unwrap();
+            let outer = context
+                .try_push_compositing_layer(
+                    BitmapBlendingMode::SourceOver,
+                    0.5,
+                    Rect::new(0.0, 0.0, 60.0, 100.0),
+                )
+                .unwrap();
+            let inner = context
+                .try_push_compositing_layer(
+                    BitmapBlendingMode::SourceOver,
+                    0.5,
+                    Rect::new(0.0, 0.0, 30.0, 100.0),
+                )
+                .unwrap();
             context.fill_rectangle(&brush(Colors::RED), Rect::new(0.0, 0.0, 30.0, 100.0), 0.0);
             context.pop(inner);
             context.fill_rectangle(&brush(Colors::RED), Rect::new(30.0, 0.0, 30.0, 100.0), 0.0);
@@ -120,9 +206,13 @@ fn compositing_layer_advisory_bounds_do_not_clip_and_explicit_transform_clip_sco
     let bitmap = render(false, |context| {
         let transform = context.push_transform(Matrix::create_translation(20.0, 10.0));
         let clip = context.push_clip(Rect::new(0.0, 0.0, 20.0, 20.0));
-        let group = context.try_push_compositing_layer(
-            BitmapBlendingMode::SourceOver, 1.0, Rect::new(50.0, 50.0, 1.0, 1.0),
-        ).unwrap();
+        let group = context
+            .try_push_compositing_layer(
+                BitmapBlendingMode::SourceOver,
+                1.0,
+                Rect::new(50.0, 50.0, 1.0, 1.0),
+            )
+            .unwrap();
         context.fill_rectangle(&brush(Colors::BLUE), Rect::new(0.0, 0.0, 40.0, 40.0), 0.0);
         context.pop(group);
         context.pop(clip);
@@ -137,13 +227,22 @@ fn compositing_layer_advisory_bounds_do_not_clip_and_explicit_transform_clip_sco
 #[test]
 fn compositing_layer_public_recording_replays_identical_pixels() {
     let scope = FerroLocator::enter_scope();
-    FerroLocator::current_mutable().bind::<dyn IPlatformRenderInterface>()
+    FerroLocator::current_mutable()
+        .bind::<dyn IPlatformRenderInterface>()
         .to_constant(Rc::new(PlatformRenderInterface::default()));
     let scene = |context: &mut DrawingContext<'_>| {
-        context.fill_rectangle(&brush(Colors::WHITE), Rect::new(0.0, 0.0, 100.0, 100.0), 0.0);
-        let outer = context.try_push_compositing_layer(
-            BitmapBlendingMode::Multiply, 0.5, Rect::new(0.0, 0.0, 100.0, 100.0),
-        ).unwrap();
+        context.fill_rectangle(
+            &brush(Colors::WHITE),
+            Rect::new(0.0, 0.0, 100.0, 100.0),
+            0.0,
+        );
+        let outer = context
+            .try_push_compositing_layer(
+                BitmapBlendingMode::Multiply,
+                0.5,
+                Rect::new(0.0, 0.0, 100.0, 100.0),
+            )
+            .unwrap();
         context.fill_rectangle(&brush(Colors::RED), Rect::new(0.0, 0.0, 60.0, 100.0), 0.0);
         context.fill_rectangle(&brush(Colors::BLUE), Rect::new(40.0, 0.0, 60.0, 100.0), 0.0);
         context.pop(outer);
@@ -155,7 +254,9 @@ fn compositing_layer_public_recording_replays_identical_pixels() {
         scene(&mut context);
     }
     let tile: Rc<dyn ITileBrush> = Rc::new(ImmutableImageBrush::from_bitmap(None));
-    let content = recorder.get_immediate_scene_brush_content(tile, None, true).unwrap();
+    let content = recorder
+        .get_immediate_scene_brush_content(tile, None, true)
+        .unwrap();
     let recorded = PlatformRenderInterface::default()
         .create_render_target_bitmap(PixelSize::new(100, 100), Vector::new(96.0, 96.0));
     let mut implementation = recorded.create_drawing_context();
@@ -173,21 +274,28 @@ fn compositing_layer_public_recording_replays_identical_pixels() {
 #[test]
 fn compositing_layer_drawing_group_structural_wrappers_keep_the_external_backdrop() {
     let scope = FerroLocator::enter_scope();
-    FerroLocator::current_mutable().bind::<dyn IPlatformRenderInterface>()
+    FerroLocator::current_mutable()
+        .bind::<dyn IPlatformRenderInterface>()
         .to_constant(Rc::new(PlatformRenderInterface::default()));
     let group = DrawingGroup::new();
     {
         let mut context = group.open();
-        let _layer = context.try_push_compositing_layer(
-            BitmapBlendingMode::Multiply, 1.0, Rect::new(0.0, 0.0, 100.0, 100.0),
-        ).unwrap();
+        let _layer = context
+            .try_push_compositing_layer(
+                BitmapBlendingMode::Multiply,
+                1.0,
+                Rect::new(0.0, 0.0, 100.0, 100.0),
+            )
+            .unwrap();
         context.fill_rectangle(&brush(Colors::RED), Rect::new(0.0, 0.0, 60.0, 100.0), 0.0);
         context.fill_rectangle(&brush(Colors::BLUE), Rect::new(40.0, 0.0, 60.0, 100.0), 0.0);
     }
     for save_layers in [false, true] {
         let bitmap = render(save_layers, |context| {
             context.fill_rectangle(
-                &brush(Color::from_argb(255, 128, 128, 255)), Rect::new(0.0, 0.0, 100.0, 100.0), 0.0,
+                &brush(Color::from_argb(255, 128, 128, 255)),
+                Rect::new(0.0, 0.0, 100.0, 100.0),
+                0.0,
             );
             group.draw(context);
         });
@@ -223,7 +331,11 @@ fn compositing_layer_invalid_backend_push_preserves_opacity_transform_and_clip()
             (0.5, Rect::new(0.0, 0.0, -1.0, 10.0)),
             (0.5, Rect::new(0.0, 0.0, 10.0, f64::INFINITY)),
         ] {
-            assert!(!implementation.try_push_compositing_layer(BitmapBlendingMode::Multiply, opacity, bounds));
+            assert!(!implementation.try_push_compositing_layer(
+                BitmapBlendingMode::Multiply,
+                opacity,
+                bounds
+            ));
             assert_eq!(implementation.transform(), transform);
         }
         {
