@@ -206,6 +206,10 @@ impl ScenePainter {
     /// Decode an embedded image with FerroUI, retain the bitmap and return its
     /// logical size for an image layer. No browser canvas rasterizer is involved.
     pub fn register_image_data(&mut self, href: &str) -> io::Result<(f64, f64)> {
+        if let Some(ImageAsset::Ready(bitmap)) = self.images.get(href) {
+            let size = bitmap.size();
+            return Ok((size.width, size.height));
+        }
         let bytes = decode_image_data_url(href)?;
         let bitmap = Bitmap::from_stream(&mut Cursor::new(bytes))?;
         let size = bitmap.size();
@@ -438,12 +442,18 @@ fn paint_subtree(
     stats.unsupported_effects += node.visual.unsupported_effects;
 
     let transform = context.push_transform(ui_matrix(node.local));
-    let opacity = if node.opacity < 1.0 {
+    let isolate = node.opacity < 1.0 || node.blend != BlendMode::Normal || node.end > index + 1;
+    let composite = if isolate {
+        context.try_push_compositing_layer(bitmap_blend(node.blend), node.opacity, ui_rect(node.local_subtree_bounds))
+    } else { None };
+    let isolated = composite.is_some();
+    if isolate && !isolated { stats.unsupported_effects += 1; }
+    let opacity = if !isolated && node.opacity < 1.0 {
         context.push_opacity(node.opacity)
     } else {
         PushedState::NONE
     };
-    let blend = if node.blend != BlendMode::Normal {
+    let blend = if !isolated && node.blend != BlendMode::Normal {
         context.push_render_options(RenderOptions {
             bitmap_blending_mode: bitmap_blend(node.blend),
             ..RenderOptions::default()
@@ -454,6 +464,7 @@ fn paint_subtree(
     paint_blurs(context, scene, index, viewport, scene_reused, stats, 0);
     context.pop(blend);
     context.pop(opacity);
+    context.pop(composite.unwrap_or(PushedState::NONE));
     context.pop(transform);
 }
 
@@ -827,53 +838,53 @@ fn shape_geometry(node: &Node) -> Ref<Geometry> {
 }
 
 pub(crate) fn path_geometry(path: &ferrodesign_core::VectorPath) -> Ref<Geometry> {
-            let geometry = StreamGeometry::new();
-            {
-                let mut context = geometry.open();
-                context.set_fill_rule(match path.fill_rule {
-                    FillRule::NonZero => ferroui_base::media::FillRule::NonZero,
-                    FillRule::EvenOdd => ferroui_base::media::FillRule::EvenOdd,
-                });
-                let mut open = false;
-                for segment in &path.segments {
-                    match segment {
-                        PathSegment::MoveTo { point } => {
-                            if open {
-                                context.end_figure(false);
-                            }
-                            context.begin_figure(ui_point(*point), true);
-                            open = true;
-                        }
-                        PathSegment::LineTo { point } if open => {
-                            context.line_to(ui_point(*point), true);
-                        }
-                        PathSegment::CubicTo {
-                            control1,
-                            control2,
-                            point,
-                        } if open => {
-                            context.cubic_bezier_to(
-                                ui_point(*control1),
-                                ui_point(*control2),
-                                ui_point(*point),
-                                true,
-                            );
-                        }
-                        PathSegment::QuadraticTo { control, point } if open => {
-                            context.quadratic_bezier_to(ui_point(*control), ui_point(*point), true);
-                        }
-                        PathSegment::Close if open => {
-                            context.end_figure(true);
-                            open = false;
-                        }
-                        _ => {}
+    let geometry = StreamGeometry::new();
+    {
+        let mut context = geometry.open();
+        context.set_fill_rule(match path.fill_rule {
+            FillRule::NonZero => ferroui_base::media::FillRule::NonZero,
+            FillRule::EvenOdd => ferroui_base::media::FillRule::EvenOdd,
+        });
+        let mut open = false;
+        for segment in &path.segments {
+            match segment {
+                PathSegment::MoveTo { point } => {
+                    if open {
+                        context.end_figure(false);
                     }
+                    context.begin_figure(ui_point(*point), true);
+                    open = true;
                 }
-                if open {
-                    context.end_figure(false);
+                PathSegment::LineTo { point } if open => {
+                    context.line_to(ui_point(*point), true);
                 }
+                PathSegment::CubicTo {
+                    control1,
+                    control2,
+                    point,
+                } if open => {
+                    context.cubic_bezier_to(
+                        ui_point(*control1),
+                        ui_point(*control2),
+                        ui_point(*point),
+                        true,
+                    );
+                }
+                PathSegment::QuadraticTo { control, point } if open => {
+                    context.quadratic_bezier_to(ui_point(*control), ui_point(*point), true);
+                }
+                PathSegment::Close if open => {
+                    context.end_figure(true);
+                    open = false;
+                }
+                _ => {}
             }
-            geometry.upcast()
+        }
+        if open {
+            context.end_figure(false);
+        }
+    }
+    geometry.upcast()
 }
 
 fn polyline_geometry(points: &[Point], closed: bool) -> Ref<Geometry> {
@@ -990,34 +1001,7 @@ fn boolean_mode(operation: BooleanOperation) -> GeometryCombineMode {
 }
 
 fn is_closed(node: &Node) -> bool {
-    if let Some(network) = &node.vector_network {
-        let mut degrees = std::collections::BTreeMap::new();
-        for edge in network.edges.values().filter(|edge| edge.stroke) {
-            *degrees.entry(edge.start).or_insert(0usize) += 1;
-            *degrees.entry(edge.end).or_insert(0usize) += 1;
-        }
-        return !network.regions.is_empty() && !degrees.is_empty() && degrees.values().all(|degree| *degree == 2);
-    }
-    if node.kind == NodeKind::Line {
-        return false;
-    }
-    if node.kind != NodeKind::Vector {
-        return true;
-    }
-    let mut open = false;
-    for segment in &node.path.segments {
-        match segment {
-            PathSegment::MoveTo { .. } => {
-                if open {
-                    return false;
-                }
-                open = true;
-            }
-            PathSegment::Close => open = false,
-            _ => {}
-        }
-    }
-    !open && !node.path.segments.is_empty()
+    node.has_closed_stroke_contours()
 }
 
 fn arrow_geometry(node: &Node, width: f64) -> Option<Ref<Geometry>> {
@@ -1402,7 +1386,7 @@ fn make_brush(
                 false,
             )
         }
-        Paint::Image { href, scale } => {
+        Paint::Image { href, scale, crop } => {
             if !images.contains_key(href) {
                 let decoded = decode_image_data_url(href)
                     .and_then(|bytes| Bitmap::from_stream(&mut Cursor::new(bytes)));
@@ -1419,8 +1403,8 @@ fn make_brush(
                     ferroui_base::RelativeRect::new(
                         0.0,
                         0.0,
-                        size.width.max(1.0),
-                        size.height.max(1.0),
+                        (size.width * crop.map_or(1.0, |crop| crop.width)).max(0.001),
+                        (size.height * crop.map_or(1.0, |crop| crop.height)).max(0.001),
                         RelativeUnit::Absolute,
                     )
                 });
@@ -1433,7 +1417,9 @@ fn make_brush(
                         opacity,
                         None,
                         RelativePoint::CENTER,
-                        None,
+                        crop.map(|crop| ferroui_base::RelativeRect::new(
+                            crop.x, crop.y, crop.width, crop.height, RelativeUnit::Relative,
+                        )),
                         match scale {
                             ImageScale::Fill => Stretch::UniformToFill,
                             ImageScale::Fit => Stretch::Uniform,
@@ -1926,9 +1912,13 @@ fn hash_paint(paint: &Paint, hash: &mut DefaultHasher) {
                 hash_color(stop.color, hash);
             }
         }
-        Paint::Image { href, scale } => {
+        Paint::Image { href, scale, crop } => {
             href.hash(hash);
             std::mem::discriminant(scale).hash(hash);
+            crop.is_some().hash(hash);
+            if let Some(crop) = crop {
+                for value in [crop.x, crop.y, crop.width, crop.height] { hash_number(value, hash); }
+            }
         }
     }
 }

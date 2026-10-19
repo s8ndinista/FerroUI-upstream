@@ -225,7 +225,8 @@ fn svg_embedded_raster_is_preserved_and_external_images_rejected() {
         image.fills[0].paint,
         Paint::Image {
             href: data.into(),
-            scale: ImageScale::Stretch
+            scale: ImageScale::Stretch,
+            crop: None,
         }
     );
     close(image.opacity, 0.5);

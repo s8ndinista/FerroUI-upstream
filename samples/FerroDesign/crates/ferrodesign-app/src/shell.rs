@@ -1,5 +1,6 @@
 //! The XAML shell binds real FerroUI controls to the document command layer.
 mod paints;
+mod components;
 mod prototyping;
 mod rich_text;
 mod text;
@@ -168,6 +169,10 @@ impl EditorShell {
         self.wire_inline_text();
         self.hook("EditPaintsButton", "paints");
         self.hook("EditInteractionsButton", "interactions");
+        self.hook("CropImageButton", "crop-image");
+        self.hook("CropDoneButton", "crop-done");
+        self.choice("BlendModeChoice", &BLEND_OPTIONS.iter().map(|(label, _)| *label).collect::<Vec<_>>(),
+            |node, index| { node.blend_mode = BLEND_OPTIONS[index].1; node.overridden_properties.insert("blend_mode".into()); });
         let weak = Rc::downgrade(self);
         self.prototype.set_callback(move |event| {
             if let Some(shell) = weak.upgrade() {
@@ -352,6 +357,7 @@ impl EditorShell {
             ("AlignMiddleButton", "align-middle"),
             ("AlignBottomButton", "align-bottom"),
             ("CreateComponentButton", "component"),
+            ("EditComponentsButton", "components"),
         ] {
             self.icon(name, icon);
         }
@@ -626,7 +632,9 @@ impl EditorShell {
             "CornerPointButton", "SmoothPointButton", "SymmetricPointButton",
             "InlineTextBox",
             "EditPaintsButton",
+            "CropImageButton", "CropDoneButton", "BlendModeChoice",
             "RichTextButton",
+            "EditComponentsButton",
             "EditInteractionsButton",
             "ModalBackdrop",
             "ModalContent",
@@ -682,6 +690,7 @@ impl EditorShell {
             "vectorTool":format!("{:?}",self.canvas.vector_tool.get()),
             "networkPoint":self.canvas.network_point.get(),
             "networkVertices":*self.canvas.network_vertices.borrow(),
+            "imageCrop":self.canvas.image_crop_state(),
             "editingText":self.inline_text.get(),
             "editingComposition":self.inline_text.get().is_some() && self.field("InlineTextBox").is_composing_text(),
             "prototypeOverlays":*self.canvas.overlays.borrow(),
@@ -770,6 +779,7 @@ impl EditorShell {
         fill.paint = Paint::Image {
             href: href.to_owned(),
             scale: ferrodesign_core::ImageScale::Fill,
+            crop: None,
         };
         node.fills = vec![fill];
         let result = {
@@ -814,10 +824,14 @@ impl EditorShell {
             Ok(text) if !text.is_empty() => text,
             _ => { self.toast("The document could not be serialized. Export your design before closing."); return; }
         };
-        self.pending_save.set(false);
         self.last_serialization_ms.set(started.elapsed().as_secs_f64() * 1000.0);
         self.save_serializations.set(self.save_serializations.get().wrapping_add(1));
-        platform::save_document(&text);
+        if !platform::save_document(&text) {
+            self.text("DocumentStatus", &platform::document_save_status());
+            self.toast("Autosave could not accept this document. Export the design to keep your changes.");
+            return;
+        }
+        self.pending_save.set(false);
         platform::set_document_serialization_pending(false);
         self.text("DocumentStatus", &platform::document_save_status());
     }
@@ -848,6 +862,7 @@ impl EditorShell {
         if self.updating.replace(true) {
             return;
         }
+        self.canvas.reconcile_image_crop();
         self.canvas.reconcile_vector_edit();
         self.sync_tools();
         self.refresh_pages();
@@ -861,6 +876,7 @@ impl EditorShell {
         }
         // Selection does not change the layer tree. Reuse native control rows so
         // clicking artwork never recreates every page, icon and layer control.
+        self.canvas.reconcile_image_crop();
         self.canvas.reconcile_vector_edit();
         let selection = self.editor.borrow().selection.clone();
         self.layer_buttons.borrow_mut().retain(|id, weak| {
@@ -1191,6 +1207,10 @@ impl EditorShell {
         self.visible("VectorPointOptions", vector_edit);
         self.visible("EditVectorButton", !vector_edit);
         self.visible("DoneVectorButton", vector_edit);
+        let image_crop = self.canvas.image_crop_state().is_some();
+        self.visible("CropImageButton", !image_crop && node.is_some_and(|node|
+            node.fills.iter().any(|fill| matches!(fill.paint, Paint::Image { .. }))));
+        self.visible("CropDoneButton", image_crop);
         let network = node.is_some_and(|n| n.vector_network.is_some());
         self.visible("NetworkOptions", network && vector_edit);
         self.visible("ConvertNetworkButton", !network);
@@ -1323,6 +1343,7 @@ impl EditorShell {
             node.is_some_and(|n| n.layout.as_ref().is_some_and(|l| l.reverse)),
         );
         for (name, index) in [
+            ("BlendModeChoice", node.and_then(|node| BLEND_OPTIONS.iter().position(|(_, mode)| *mode == node.blend_mode))),
             (
                 "HorizontalConstraint",
                 node.map(|n| constraint_index(n.constraints.horizontal)),
@@ -1479,6 +1500,7 @@ impl EditorShell {
         }
     }
     fn modify(self: &Rc<Self>, label: &str, mut operation: impl FnMut(&mut Node)) {
+        self.canvas.finish_image_crop();
         let ids = self.editor.borrow().selection.clone();
         self.editor.borrow_mut().update_nodes_with_layout(&ids, label, |node| operation(node));
     }
@@ -1488,6 +1510,7 @@ impl EditorShell {
         }
         let text = self.field(name).text().unwrap_or_default();
         let id = self.editor.borrow().selection.first().copied();
+        self.canvas.finish_image_crop();
         if id.is_none() {
             if name == "NameField" || name == "FillField" {
                 let mut editor = self.editor.borrow_mut();
@@ -1650,8 +1673,9 @@ impl EditorShell {
     pub fn command(self: &Rc<Self>, command: &str) -> bool {
         if command == "commit-edit" {
             self.finish_inline_text(true);
+            self.canvas.finish_image_crop();
             self.flush_pending_save();
-            return true;
+            return !self.pending_save.get();
         }
         if command == "storage-status" {
             self.text("DocumentStatus", &platform::document_save_status());
@@ -1661,6 +1685,7 @@ impl EditorShell {
         if matches!(command, "undo" | "redo") && self.canvas.cancel_active_edit() {
             return true;
         }
+        if !matches!(command, "crop-image" | "crop-done") { self.canvas.finish_image_crop(); }
         if self.prototype.is_active()
             && !matches!(
                 command,
@@ -1692,6 +1717,12 @@ impl EditorShell {
             return true;
         }
         match command {
+            "crop-image" => {
+                let opened = self.canvas.edit_image_crop(None);
+                if !opened { self.toast("Select an unlocked shape with a Fill or Stretch image paint. Fit and Tile crops are available in the paint editor."); }
+                return opened;
+            }
+            "crop-done" => return self.canvas.finish_image_crop(),
             "interactions" => {
                 self.interactions_dialog();
                 return true;
@@ -1853,6 +1884,10 @@ impl EditorShell {
             }
             "variables" => {
                 self.visual_variables_dialog();
+                return true;
+            }
+            "components" => {
+                self.components_dialog();
                 return true;
             }
             "rich-text" => {
@@ -2960,10 +2995,21 @@ fn xaml_node(doc: &core::Document, id: NodeId, depth: usize, result: &mut String
         _=>*result+=&format!("{pad}<Rectangle {position}{transform} RadiusX=\"{}\" RadiusY=\"{}\" Fill=\"{fill}\"{stroke}/>\n",number(n.corner_radius),number(n.corner_radius)),
     }
 }
+const BLEND_OPTIONS: &[(&str, core::BlendMode)] = &[
+    ("Normal", core::BlendMode::Normal), ("Multiply", core::BlendMode::Multiply),
+    ("Screen", core::BlendMode::Screen), ("Overlay", core::BlendMode::Overlay),
+    ("Darken", core::BlendMode::Darken), ("Lighten", core::BlendMode::Lighten),
+    ("Color dodge", core::BlendMode::ColorDodge), ("Color burn", core::BlendMode::ColorBurn),
+    ("Hard light", core::BlendMode::HardLight), ("Soft light", core::BlendMode::SoftLight),
+    ("Difference", core::BlendMode::Difference), ("Exclusion", core::BlendMode::Exclusion),
+    ("Hue", core::BlendMode::Hue), ("Saturation", core::BlendMode::Saturation),
+    ("Color", core::BlendMode::Color), ("Luminosity", core::BlendMode::Luminosity),
+];
 const FILE_ACTIONS: &[(&str, &str)] = &[
     ("New design", "new"),
     ("Open design or SVG…  Ctrl+O", "open"),
     ("Place image…", "place-image"),
+    ("Crop image", "crop-image"),
     ("Import JSON or SVG…", "import-json"),
     ("Save editable design…  Ctrl+S", "save"),
     ("Export SVG", "export-svg"),
@@ -2973,6 +3019,7 @@ const FILE_ACTIONS: &[(&str, &str)] = &[
     ("Style text characters", "rich-text"),
     ("Local styles", "styles"),
     ("Local components", "assets"),
+    ("Component properties and variants", "components"),
     ("Comments", "comments"),
     ("Present prototype", "present"),
 ];
@@ -3009,6 +3056,7 @@ const LAYER_ACTIONS: &[(&str, &str)] = &[
     ("Create component", "component"),
     ("Create instance", "instance"),
     ("Update instances", "sync-instances"),
+    ("Component properties and variants", "components"),
     ("Style text characters", "rich-text"),
     ("Detach instance", "detach"),
     ("Layer data…", "advanced"),

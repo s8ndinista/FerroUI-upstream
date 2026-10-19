@@ -494,7 +494,7 @@ impl Editor {
         }
         r
     }
-    fn edit<R>(&mut self, label: &str, operation: impl FnOnce(&mut Self) -> R) -> R {
+    pub(crate) fn edit<R>(&mut self, label: &str, operation: impl FnOnce(&mut Self) -> R) -> R {
         let own = self.pending.is_none();
         if own {
             self.begin_transaction(label)
@@ -1364,33 +1364,16 @@ impl Editor {
             if let Some(n) = e.document.nodes.get_mut(&id) {
                 n.kind = NodeKind::Component;
                 n.component_id = None;
-                n.component_source = None
+                n.component_source = None;
+                n.component_property_values.clear();
+                n.metadata.remove(crate::COMPONENT_SET_METADATA_KEY);
             }
             Some(id)
         })
     }
     pub fn create_instance(&mut self, component: NodeId, x: f64, y: f64) -> Option<NodeId> {
         self.edit("Create instance", |e| {
-            let source = e.document.nodes.clone();
-            let n = source.get(&component)?;
-            if n.kind != NodeKind::Component {
-                return None;
-            }
-            let offset = Point::new(x - n.x, y - n.y);
-            let roots = clone_tree_into(
-                &mut e.document,
-                &source,
-                &[component],
-                e.active_page,
-                offset,
-                true,
-            );
-            let id = *roots.first()?;
-            if let Some(n) = e.document.nodes.get_mut(&id) {
-                n.kind = NodeKind::Instance;
-                n.component_id = Some(component);
-                n.component_source = Some(component)
-            }
+            let id = e.document.create_component_instance(component, e.active_page, x, y).ok()?;
             e.selection = vec![id];
             Some(id)
         })
@@ -1410,11 +1393,14 @@ impl Editor {
                     n.component_id = None;
                     n.component_source = None;
                     n.overridden_properties.clear();
+                    n.component_property_definitions.clear();
+                    n.component_property_values.clear();
                     if n.kind == NodeKind::Instance {
                         n.kind = NodeKind::Frame
                     }
                 }
             }
+            e.document.repair_component_references();
             true
         })
     }
@@ -2164,10 +2150,16 @@ fn clone_tree_into(
         }
         if instance {
             n.component_source = Some(old);
-            n.overridden_properties.clear()
-        } else if let Some(component) = n.component_id {
-            if let Some(new) = remap.get(&component) {
-                n.component_id = Some(*new)
+            n.component_property_definitions.clear();
+            n.overridden_properties.clear();
+            if n.kind == NodeKind::Component {
+                n.kind = NodeKind::Instance;
+                n.component_id = Some(old);
+            }
+        } else {
+            crate::components::remap_component_references(&mut n, &remap);
+            if roots.contains(&old) && n.kind == NodeKind::Component && d.is_component_set(parent) {
+                n.variant_properties = crate::components::unique_variant_properties(d, parent, &n.variant_properties);
             }
         }
         for i in &mut n.interactions {
@@ -2193,109 +2185,8 @@ fn clone_tree_into(
     }
     ids
 }
-/// Reconciles materialized instance children by source identity. Overrides are
-/// applied independently, preserving unrelated property updates from the master.
-pub fn sync_component_instances(d: &mut Document, component: NodeId) -> usize {
-    let source = d.nodes.clone();
-    let Some(master) = source.get(&component) else {
-        return 0;
-    };
-    if master.kind != NodeKind::Component {
-        return 0;
-    }
-    let instances: Vec<_> = source
-        .values()
-        .filter(|n| n.kind == NodeKind::Instance && n.component_id == Some(component))
-        .map(|n| n.id)
-        .collect();
-    fn sync(
-        d: &mut Document,
-        source: &BTreeMap<NodeId, Node>,
-        target: NodeId,
-        source_id: NodeId,
-        root: bool,
-    ) {
-        let Some(master) = source.get(&source_id) else {
-            return;
-        };
-        let Some(old) = d.nodes.get(&target).cloned() else {
-            return;
-        };
-        let mut n = master.clone();
-        n.id = target;
-        n.parent = old.parent;
-        n.component_source = Some(source_id);
-        n.component_id = old.component_id;
-        n.overridden_properties = old.overridden_properties.clone();
-        n.revision = old.revision;
-        n.children = old.children.clone();
-        if root {
-            n.kind = NodeKind::Instance;
-            n.x = old.x;
-            n.y = old.y;
-            n.rotation = old.rotation;
-            n.flip_x = old.flip_x;
-            n.flip_y = old.flip_y;
-            n.affine_transform = old.affine_transform
-        }
-        for p in &old.overridden_properties {
-            match p.as_str() {
-                "text" => {
-                    n.text = old.text.clone();
-                    n.text_runs = old.text_runs.clone()
-                }
-                "fills" => n.fills = old.fills.clone(),
-                "strokes" => n.strokes = old.strokes.clone(),
-                "effects" => n.effects = old.effects.clone(),
-                "visible" => n.visible = old.visible,
-                "opacity" => n.opacity = old.opacity,
-                "width" => n.width = old.width,
-                "height" => n.height = old.height,
-                "position" => {
-                    n.x = old.x;
-                    n.y = old.y
-                }
-                "font_size" => n.font_size = old.font_size,
-                "name" => n.name = old.name.clone(),
-                _ => {}
-            }
-        }
-        d.nodes.insert(target, n);
-        let old_children: Vec<_> = old
-            .children
-            .iter()
-            .filter_map(|id| d.nodes.get(id).map(|n| (*id, n.component_source)))
-            .collect();
-        let mut children = Vec::new();
-        for source_id in &master.children {
-            if let Some((child, _)) = old_children
-                .iter()
-                .find(|(_, sid)| *sid == Some(*source_id))
-            {
-                sync(d, source, *child, *source_id, false);
-                children.push(*child)
-            } else {
-                children.extend(clone_tree_into(
-                    d,
-                    source,
-                    &[*source_id],
-                    target,
-                    Point::default(),
-                    true,
-                ))
-            }
-        }
-        for (child, sid) in old_children {
-            if !sid.is_some_and(|id| master.children.contains(&id)) {
-                d.remove_subtree(child);
-            }
-        }
-        if let Some(n) = d.nodes.get_mut(&target) {
-            n.children = children
-        }
-    }
-    for id in &instances {
-        sync(d, &source, *id, component, true)
-    }
-    instances.len()
+/// Update materialized instances and dependent main components while retaining
+/// stable matching layer IDs and independent authored overrides.
+pub fn sync_component_instances(document: &mut Document, component: NodeId) -> usize {
+    document.refresh_component_instances(component).unwrap_or(0)
 }

@@ -111,6 +111,10 @@ pub enum Paint {
     Image {
         href: String,
         scale: ImageScale,
+        /// Normalized source-image window. Direct crop resolves the visible
+        /// cover region and preserves Fill/Stretch while retaining pixel positions.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        crop: Option<Rect>,
     },
 }
 impl Paint {
@@ -698,6 +702,10 @@ pub struct Node {
     pub component_source: Option<NodeId>,
     pub overridden_properties: BTreeSet<String>,
     pub variant_properties: BTreeMap<String, String>,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub component_property_definitions: BTreeMap<String, crate::ComponentPropertyDefinition>,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub component_property_values: BTreeMap<String, crate::ComponentPropertyValue>,
     pub fill_style: Option<StyleId>,
     pub text_style: Option<StyleId>,
     pub effect_style: Option<StyleId>,
@@ -758,6 +766,8 @@ impl Default for Node {
             component_source: None,
             overridden_properties: BTreeSet::new(),
             variant_properties: BTreeMap::new(),
+            component_property_definitions: BTreeMap::new(),
+            component_property_values: BTreeMap::new(),
             fill_style: None,
             text_style: None,
             effect_style: None,
@@ -808,6 +818,29 @@ impl Node {
     pub fn with_fill(mut self, color: Color) -> Self {
         self.fills = vec![Fill::solid(color)];
         self
+    }
+    /// Inside/outside alignment needs closed stroke boundaries. Open paths and
+    /// branching graphs retain a centered stroke in both native and SVG output.
+    pub fn has_closed_stroke_contours(&self) -> bool {
+        if let Some(network) = &self.vector_network {
+            let mut degrees = BTreeMap::new();
+            for edge in network.edges.values().filter(|edge| edge.stroke) {
+                *degrees.entry(edge.start).or_insert(0usize) += 1;
+                *degrees.entry(edge.end).or_insert(0usize) += 1;
+            }
+            return !network.regions.is_empty() && !degrees.is_empty() && degrees.values().all(|degree| *degree == 2);
+        }
+        if self.kind == NodeKind::Line { return false; }
+        if self.kind != NodeKind::Vector { return true; }
+        let mut open = false;
+        for segment in &self.path.segments {
+            match segment {
+                PathSegment::MoveTo { .. } => { if open { return false; } open = true; }
+                PathSegment::Close => open = false,
+                _ => {}
+            }
+        }
+        !open && !self.path.segments.is_empty()
     }
     pub fn with_text(mut self, text: impl Into<String>, font_size: f64, color: Color) -> Self {
         self.text = text.into();
@@ -1240,6 +1273,9 @@ impl Document {
         }
     }
     pub fn insert_node(&mut self, parent: NodeId, mut node: Node) -> Result<NodeId, DocumentError> {
+        if self.is_component_set(parent) && node.kind != NodeKind::Component {
+            return Err(DocumentError::InvalidParent(parent));
+        }
         if self.children(parent).is_none()
             || self
                 .nodes
@@ -1434,6 +1470,7 @@ impl Document {
         }
         self.comments
             .retain(|c| !c.node.is_some_and(|id| set.contains(&id)));
+        self.repair_component_references();
         removed
     }
     pub fn reparent(
@@ -1444,6 +1481,9 @@ impl Document {
     ) -> Result<(), DocumentError> {
         if id == parent || self.is_ancestor(id, parent) {
             return Err(DocumentError::Cycle(id));
+        }
+        if self.is_component_set(parent) && !self.nodes.get(&id).is_some_and(|node| node.kind == NodeKind::Component) {
+            return Err(DocumentError::InvalidParent(parent));
         }
         if self.children(parent).is_none()
             || self
@@ -1466,6 +1506,7 @@ impl Document {
         self.nodes.get_mut(&id).unwrap().parent = Some(parent);
         let children = self.children_mut(parent).unwrap();
         children.insert(index.min(children.len()), id);
+        self.repair_component_references();
         Ok(())
     }
     pub fn resolve_variable(&self, id: VariableId, mode: &str) -> Option<&VariableValue> {
@@ -1612,6 +1653,13 @@ impl Document {
             if !n.path.validate_anchor_modes() {
                 return Err(DocumentError::Invalid(format!("invalid vector anchor constraints on node {id}")));
             }
+            for paint in n.fills.iter().map(|fill| &fill.paint).chain(n.strokes.iter().map(|stroke| &stroke.paint)) {
+                if let Paint::Image { crop: Some(crop), .. } = paint {
+                    if !crate::valid_image_crop(*crop) {
+                        return Err(DocumentError::Invalid(format!("invalid image source crop on node {id}")));
+                    }
+                }
+            }
             if !n.font_size.is_finite()
                 || n.font_size <= 0.0
                 || !n.corner_radius.is_finite()
@@ -1657,6 +1705,7 @@ impl Document {
                 "unreachable nodes in document".into(),
             ));
         }
+        self.validate_component_properties()?;
         Ok(())
     }
 }

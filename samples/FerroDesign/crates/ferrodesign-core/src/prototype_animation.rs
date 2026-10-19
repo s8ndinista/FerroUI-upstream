@@ -438,7 +438,7 @@ fn compatible_paint(a: &Paint, b: &Paint) -> bool {
         (Paint::Solid(_), Paint::Solid(_)) => true,
         (Paint::LinearGradient { stops: a, .. }, Paint::LinearGradient { stops: b, .. })
         | (Paint::RadialGradient { stops: a, .. }, Paint::RadialGradient { stops: b, .. }) => a.len() == b.len(),
-        (Paint::Image { href: a, scale: sa }, Paint::Image { href: b, scale: sb }) => a == b && sa == sb,
+        (Paint::Image { href: a, scale: sa, crop: ca }, Paint::Image { href: b, scale: sb, crop: cb }) => a == b && sa == sb && ca == cb,
         _ => false,
     }
 }

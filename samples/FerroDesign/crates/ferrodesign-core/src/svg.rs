@@ -107,18 +107,26 @@ fn paint_definition(paint: &Paint, id: &str, node: &Node, out: &mut String) {
             stops_definition(stops, out);
             out.push_str("</radialGradient>");
         }
-        Paint::Image { href, scale } => {
+        Paint::Image { href, scale, crop } => {
             let mode = match scale {
                 ImageScale::Fill => "xMidYMid slice",
                 ImageScale::Fit => "xMidYMid meet",
                 _ => "none",
             };
+            let size = crate::embedded_image_size(href)
+                .unwrap_or(Point::new(node.width.max(0.001), node.height.max(0.001)));
+            let crop = crop.unwrap_or(Rect::new(0.0, 0.0, 1.0, 1.0));
+            let source = Rect::new(crop.x * size.x, crop.y * size.y, crop.width * size.x, crop.height * size.y);
+            let tiled = *scale == ImageScale::Tile;
+            let (width, height) = if tiled { (source.width, source.height) } else { (node.width.max(0.001), node.height.max(0.001)) };
+            let viewport = Rect::new(0.0, 0.0, width, height);
             let _ = write!(
                 out,
-                r#"<pattern id="{id}" width="1" height="1" patternContentUnits="objectBoundingBox"><image href="{}" width="1" height="1" preserveAspectRatio="{mode}"/></pattern>"#,
-                escape_xml(&safe_image_href(href))
+                r#"<pattern id="{id}" width="{}" height="{}" patternUnits="userSpaceOnUse"><svg x="{}" y="{}" width="{}" height="{}" viewBox="{} {} {} {}" preserveAspectRatio="{mode}" overflow="hidden"><image href="{}" width="{}" height="{}" preserveAspectRatio="none"/></svg></pattern>"#,
+                number(width), number(height), number(viewport.x), number(viewport.y), number(viewport.width), number(viewport.height),
+                number(source.x), number(source.y), number(source.width), number(source.height),
+                escape_xml(&safe_image_href(href)), number(size.x), number(size.y),
             );
-            let _ = node;
         }
     }
 }
@@ -616,13 +624,14 @@ impl Document {
                     StrokeJoin::Round => "round",
                     StrokeJoin::Bevel => "bevel",
                 };
+                let alignment = if node.has_closed_stroke_contours() { stroke.align } else { StrokeAlign::Center };
                 let mut attributes = format!(
                     r#"fill="none" stroke="{}" stroke-opacity="{}" stroke-width="{}" stroke-linecap="{cap}" stroke-linejoin="{join}""#,
                     paint_color(&stroke.paint, &paint_id),
                     number(paint_opacity(&stroke.paint, stroke.opacity)),
                     number(
                         stroke.width
-                            * if stroke.align == StrokeAlign::Center {
+                            * if alignment == StrokeAlign::Center {
                                 1.0
                             } else {
                                 2.0
@@ -649,7 +658,7 @@ impl Document {
                     );
                     let _ = write!(attributes, r#" marker-end="url(#arrow-{id}-{i})""#);
                 }
-                match stroke.align {
+                match alignment {
                     StrokeAlign::Center => body.push_str(&stroke_shape(node, &attributes)),
                     StrokeAlign::Inside => {
                         let _ = write!(

@@ -1,5 +1,7 @@
 import { prototypeMotionRegressions } from "./prototype-browser.mjs";
 import { nativeAuthoringRegressions } from "./authoring-browser.mjs";
+import { vectorNetworkRegressions } from "./network-browser.mjs";
+import { componentAuthoringRegressions } from "./components-browser.mjs";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { createServer } from "node:http";
@@ -699,7 +701,11 @@ try {
             check("JSON round-trip preserves the complete imported SVG hierarchy and visual properties");
 
             await nativeEditingRegressions(page, canvas, svgDocument, result, check, mode);
+            await vectorNetworkRegressions(page, svgDocument, check,
+                { fixtureNode, isolatedDocument, importFixture, documentState, state, clickWorld, clickNative, frames }, output, mode);
             await nativeAuthoringRegressions(page, svgDocument, check,
+                { fixtureNode, isolatedDocument, importFixture, documentState, state, clickWorld, clickNative, frames }, output, mode);
+            await componentAuthoringRegressions(page, svgDocument, check,
                 { fixtureNode, isolatedDocument, importFixture, documentState, state, clickWorld, clickNative, frames }, output, mode);
             await prototypeInputRegressions(page, svgDocument, check);
             await prototypeMotionRegressions(page, svgDocument, check,

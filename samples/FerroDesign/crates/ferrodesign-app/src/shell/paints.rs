@@ -1,5 +1,6 @@
 //! Native paint-stack controls. Every accepted edit is one document transaction.
 use super::*;
+use ferrodesign_core::Rect;
 use ferroui_base::media::immutable::{
     ImmutableGradientStop, ImmutableLinearGradientBrush, ImmutableRadialGradientBrush,
     ImmutableSolidColorBrush,
@@ -40,6 +41,7 @@ enum PaintEdit {
     RemoveStop(usize),
     ReverseStops,
     ImageScale(core::ImageScale),
+    ImageCrop(Rect),
 }
 
 #[derive(Clone, Copy)]
@@ -301,13 +303,106 @@ impl EditorShell {
                         shell.edit_paints(
                             "Change image scaling",
                             StackEdit::Paint(index, PaintEdit::ImageScale(scale)),
-                            false,
+                            true,
                         );
                     },
                 ));
+                self.paint_crop_controls(&content, index, fill);
             }
         }
         card
+    }
+
+    fn paint_crop_controls(self: &Rc<Self>, content: &Ref<StackPanel>, index: usize, fill: &Fill) {
+        let Some(crop) = fill.paint.image_crop() else { return; };
+        content.children().add(paint_text(
+            "Source window · percentages of the original image. Apply the complete window; image scaling stays unchanged.",
+            true,
+        ));
+        let row = paint_grid("*,*,*,*", 8.0);
+        let mut fields = Vec::new();
+        for (column, label, suffix, value) in [
+            (0, "Left %", "X", crop.x), (1, "Top %", "Y", crop.y),
+            (2, "Width %", "Width", crop.width), (3, "Height %", "Height", crop.height),
+        ] {
+            let panel = StackPanel::new();
+            panel.set_spacing(4.0);
+            panel.children().add(paint_text(label, true));
+            let field = TextBox::new();
+            field.set_name(Some(format!("PaintCrop{suffix}{index}")));
+            field.set_text(Some(&(value * 100.0).to_string()));
+            fields.push(field.clone());
+            panel.children().add(field);
+            Grid::set_column(&panel, column);
+            row.children().add(panel);
+        }
+        content.children().add(row);
+        let error = paint_text("", true);
+        error.set_name(Some(format!("PaintCropError{index}")));
+        error.set_foreground(Some(icons::brush("#C8372B")));
+        error.set_is_visible(false);
+        content.children().add(error.clone());
+        let weak_fields: Vec<_> = fields.iter().map(|field| field.downgrade()).collect();
+        let weak_error = error.downgrade();
+        let apply = Rc::new(move |shell: &Rc<Self>| {
+            if shell.updating.get() { return; }
+            let values: Option<Vec<_>> = weak_fields.iter().map(|field| field.upgrade()
+                .map(|field| field.text().unwrap_or_default())).collect();
+            let (Some(values), Some(error)) = (values, weak_error.upgrade()) else { return; };
+            let crop = paint_crop_values(&values);
+            match crop {
+                Ok(crop) => {
+                    shell.edit_paints("Crop image source", StackEdit::Paint(index, PaintEdit::ImageCrop(crop)), false);
+                    error.set_is_visible(false);
+                }
+                Err(message) => {
+                    error.set_text(Some(message));
+                    error.set_is_visible(true);
+                    error.bring_into_view();
+                }
+            }
+        });
+        for field in fields {
+            let weak_shell = Rc::downgrade(self);
+            let apply = apply.clone();
+            field.add_handler(InputElement::key_down_event(), move |_, event| {
+                if event.key == Key::Enter {
+                    if let Some(shell) = weak_shell.upgrade() { apply(&shell); }
+                    event.set_handled(true);
+                }
+            });
+        }
+        let actions = paint_grid("*,*,*", 6.0);
+        actions.children().add(self.paint_button("Apply window", &format!("PaintCropApply{index}"), true,
+            move |shell| apply(shell)));
+        let reset = self.paint_button("Reset source", &format!("PaintCropReset{index}"), true,
+            move |shell| {
+                shell.edit_paints("Reset image source", StackEdit::Paint(index,
+                    PaintEdit::ImageCrop(Rect::new(0.0, 0.0, 1.0, 1.0))), false);
+                // Also discard unapplied percentage fields when the source was
+                // already full-sized and the document edit was a no-op.
+                shell.paints_dialog();
+            });
+        Grid::set_column(&reset, 1);
+        actions.children().add(reset);
+        let direct = matches!(fill.paint, Paint::Image { scale: core::ImageScale::Fill | core::ImageScale::Stretch, .. });
+        let single = self.editor.borrow().selection.len() == 1;
+        let button = self.paint_button("Crop on canvas", &format!("PaintCropCanvas{index}"), direct && single && fill.visible && fill.opacity > 0.0,
+            move |shell| {
+                shell.finish_inline_text(true);
+                shell.close_modal();
+                if !shell.canvas.edit_image_crop(Some(index)) {
+                    shell.toast("Direct crop needs one unlocked rectangle, ellipse, polygon, star, or empty frame with a readable embedded image in Fill or Stretch mode.");
+                }
+            });
+        Grid::set_column(&button, 2);
+        actions.children().add(button);
+        content.children().add(actions);
+        content.children().add(paint_text(if direct {
+            "On canvas: drag the image to pan, or drag a corner to change its window while retained pixels stay fixed. Enter finishes; Esc cancels the active drag. Flow layout children support panning."
+        } else {
+            "Fit and Tile support the source-window fields. Choose Fill to use direct canvas crop handles without stretching the image."
+        }, true));
     }
 
     fn paint_stops(
@@ -560,8 +655,13 @@ impl EditorShell {
         if self.updating.get() {
             return;
         }
+        let ids: Vec<_> = {
+            let editor = self.editor.borrow();
+            editor.selection.iter().copied()
+                .filter(|id| !editor.document.effective_locked(*id)).collect()
+        };
         let mut changed = false;
-        self.modify(label, |node| {
+        self.editor.borrow_mut().update_nodes_with_layout(&ids, label, |node| {
             if apply_stack_edit(&mut node.fills, edit) {
                 node.fill_style = None;
                 node.variable_bindings.remove("fill");
@@ -629,6 +729,14 @@ fn paint_percent(value: &str) -> Result<f64, &'static str> {
     } else {
         Err("Enter a percentage from 0 to 100.")
     }
+}
+
+fn paint_crop_values(values: &[String]) -> Result<Rect, &'static str> {
+    if values.len() != 4 { return Err("Enter left, top, width, and height percentages."); }
+    let crop = Rect::new(paint_percent(&values[0])?, paint_percent(&values[1])?,
+        paint_percent(&values[2])?, paint_percent(&values[3])?);
+    if core::valid_image_crop(crop) { Ok(crop) }
+    else { Err("Width and height must be above 0%; the complete window must stay inside 100% of the source.") }
 }
 
 fn replace_paint_value<T: PartialEq>(target: &mut T, value: T) -> bool {
@@ -726,6 +834,7 @@ fn apply_paint_edit(fill: &mut Fill, edit: PaintEdit) -> bool {
             Paint::Image { scale, .. } => replace_paint_value(scale, value),
             _ => false,
         },
+        PaintEdit::ImageCrop(value) => fill.paint.set_image_crop(value),
         PaintEdit::Coordinate(coordinate, value) => {
             let target = match (&mut fill.paint, coordinate) {
                 (Paint::LinearGradient { start, .. }, Coordinate::StartX) => &mut start.x,
@@ -885,6 +994,7 @@ mod tests {
             paint: Paint::Image {
                 href: "data:image/png;base64,exact-bytes".into(),
                 scale: core::ImageScale::Fill,
+                crop: None,
             },
             opacity: 1.0,
             visible: true,
@@ -900,7 +1010,7 @@ mod tests {
             StackEdit::Paint(1, PaintEdit::ImageScale(core::ImageScale::Fit))
         ));
         assert!(
-            matches!(&fills[1].paint, Paint::Image { href, scale: core::ImageScale::Fit } if href == "data:image/png;base64,exact-bytes")
+            matches!(&fills[1].paint, Paint::Image { href, scale: core::ImageScale::Fit, .. } if href == "data:image/png;base64,exact-bytes")
         );
         assert_eq!(fills[1].opacity, 0.4);
         assert!(!apply_stack_edit(
@@ -911,6 +1021,26 @@ mod tests {
             &mut fills,
             StackEdit::Paint(99, PaintEdit::Solid(Color::WHITE))
         ));
+    }
+
+    #[test]
+    fn image_crop_percentages_are_atomic_and_preserve_scaling_and_embedded_data() {
+        let values = |values: [&str; 4]| values.map(str::to_string).to_vec();
+        let crop = paint_crop_values(&values(["10%", "20", "80", "60"])).unwrap();
+        assert_eq!(crop, Rect::new(0.1, 0.2, 0.8, 0.6));
+        for invalid in [["90", "0", "20", "100"], ["0", "0", "0", "100"], ["NaN", "0", "50", "50"]] {
+            assert!(paint_crop_values(&values(invalid)).is_err());
+        }
+        let mut fill = Fill {
+            paint: Paint::Image { href: "data:image/png;base64,exact".into(), scale: core::ImageScale::Fit, crop: None },
+            ..Fill::solid(Color::WHITE)
+        };
+        assert!(apply_paint_edit(&mut fill, PaintEdit::ImageCrop(crop)));
+        assert!(!apply_paint_edit(&mut fill, PaintEdit::ImageCrop(crop)));
+        assert!(matches!(&fill.paint, Paint::Image { href, scale: core::ImageScale::Fit, crop: Some(value) }
+            if href == "data:image/png;base64,exact" && *value == crop));
+        assert!(apply_paint_edit(&mut fill, PaintEdit::ImageCrop(Rect::new(0.0, 0.0, 1.0, 1.0))));
+        assert!(matches!(fill.paint, Paint::Image { scale: core::ImageScale::Fit, crop: None, .. }));
     }
 
     #[test]

@@ -211,6 +211,7 @@
               </Grid>
               <Border Classes="rule"/>
               <TextBlock Text="Appearance" Classes="heading"/>
+              <ComboBox Name="BlendModeChoice" HorizontalAlignment="Stretch" ToolTip.Tip="Blend the completed layer with the content underneath"/>
               <Grid ColumnDefinitions="*,12,*">
                 <StackPanel Spacing="4"><TextBlock Text="Opacity %" Classes="label"/><TextBox Name="OpacityField" Text="100"/></StackPanel>
                 <StackPanel Grid.Column="2" Spacing="4"><TextBlock Text="Corner radius" Classes="label"/><TextBox Name="RadiusField" Text="0"/></StackPanel>
@@ -225,6 +226,8 @@
               <Border Classes="rule"/>
               <Grid ColumnDefinitions="*,28"><TextBlock Text="Fill" Classes="heading" VerticalAlignment="Center"/><Button Name="AddFillButton" Grid.Column="1" Content="+"/></Grid>
               <Button Name="EditPaintsButton" Content="Edit paint stack…" HorizontalAlignment="Stretch"/>
+              <Button Name="CropImageButton" Content="Crop image…" HorizontalAlignment="Stretch" IsVisible="False"/>
+              <Button Name="CropDoneButton" Content="Done cropping" HorizontalAlignment="Stretch" IsVisible="False" Classes="primary"/>
               <Grid ColumnDefinitions="28,8,*,32">
                 <Button Name="FillSwatch" Width="26" Height="26" Background="#D9D9D9" ToolTip.Tip="Color palette"/>
                 <TextBox Name="FillField" Grid.Column="2" Text="D9D9D9"/>
@@ -267,6 +270,7 @@
               <Border Classes="rule"/>
               <Grid ColumnDefinitions="*,28"><TextBlock Text="Component" Classes="heading" VerticalAlignment="Center"/><Button Name="CreateComponentButton" Grid.Column="1" ToolTip.Tip="Create component"/></Grid>
               <UniformGrid Columns="2"><Button Name="CreateInstanceButton" Content="Create instance"/><Button Name="DetachButton" Content="Detach instance"/></UniformGrid>
+              <Button Name="EditComponentsButton" Content="Properties and variants…" HorizontalAlignment="Stretch"/>
             </StackPanel>
             <StackPanel Name="PrototypeInspector" IsVisible="False" Spacing="12">
               <Border Classes="rule"/><TextBlock Text="Interactions" Classes="heading"/>

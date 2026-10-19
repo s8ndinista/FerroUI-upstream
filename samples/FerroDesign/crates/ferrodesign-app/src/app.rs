@@ -47,6 +47,12 @@ impl ApplicationImpl for App {
             window.set_min_width(980.0);
             window.set_min_height(650.0);
             window.set_content(Some(Control::boxed(shell.root.clone())));
+            let weak = Rc::downgrade(&shell);
+            window.closing(move |event| {
+                if let Some(shell) = weak.upgrade() {
+                    if !shell.command("commit-edit") { event.set_cancel(true); }
+                }
+            });
             desktop.set_main_window(Some(window));
         }
         SHELL.with(|slot| *slot.borrow_mut() = Some(shell));

@@ -323,8 +323,21 @@ impl PrototypeRuntime {
         self.cancel_animation(true);
         let changed = {
             let mut editor = self.editor.borrow_mut();
-            let changed = self.player.borrow_mut().scroll_by(&mut editor.document, node, delta);
-            if changed { editor.refresh(); }
+            let mut player = self.player.borrow_mut();
+            let before = player.scroll.offsets().clone();
+            let changed = player.scroll_by(&mut editor.document, node, delta);
+            if changed {
+                let mut dirty = BTreeSet::new();
+                for (&container, &offset) in player.scroll.offsets() {
+                    if before.get(&container).copied().unwrap_or_default() != offset {
+                        dirty.insert(container);
+                        if let Some(frame) = editor.document.nodes.get(&container) {
+                            dirty.extend(frame.children.iter().copied());
+                        }
+                    }
+                }
+                editor.refresh_preview_nodes(&dirty.into_iter().collect::<Vec<_>>());
+            }
             changed
         };
         if changed { self.canvas.invalidate_visual(); }

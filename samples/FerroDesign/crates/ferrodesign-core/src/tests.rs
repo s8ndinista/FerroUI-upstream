@@ -702,6 +702,7 @@ fn svg_image_export_rejects_script_urls() {
         paint: Paint::Image {
             href: "javascript:alert(1)".into(),
             scale: ImageScale::Fill,
+            crop: None,
         },
         opacity: 1.0,
         visible: true,

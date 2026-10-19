@@ -1,5 +1,6 @@
 //! Interactive retained-mode surface. Artwork uses only FerroUI's public DrawingContext API.
 mod network;
+mod image_crop;
 use crate::{
     icons::brush,
     renderer::{RenderStats, ScenePainter},
@@ -180,6 +181,8 @@ pub struct DesignCanvas {
     pub vector_tool: Cell<VectorTool>,
     pub network_point: Cell<Option<core::NetworkPointId>>,
     pub network_vertices: RefCell<Vec<core::VectorVertexId>>,
+    image_crop: Cell<Option<image_crop::ImageCropMode>>,
+    image_crop_gesture: RefCell<Option<image_crop::ImageCropGesture>>,
 }
 ferro_class!(DesignCanvas:Control);
 ferro_impl_classes!(DesignCanvas:FerroObjectImpl,StyledElementImpl,LayoutableImpl,InteractiveImpl,ControlImpl);
@@ -213,6 +216,8 @@ impl DesignCanvas {
             vector_tool: Cell::new(VectorTool::Point),
             network_point: Cell::new(None),
             network_vertices: RefCell::new(Vec::new()),
+            image_crop: Cell::new(None),
+            image_crop_gesture: RefCell::new(None),
         });
         this.set_focusable(true);
         this.set_clip_to_bounds(true);
@@ -252,6 +257,7 @@ impl DesignCanvas {
         self.space.set(false);
     }
     pub fn set_tool(&self, tool: Tool) {
+        self.finish_image_crop();
         self.finish_pen();
         if tool != Tool::Select {
             self.leave_vector_edit();
@@ -364,6 +370,7 @@ impl DesignCanvas {
     /// Undo during a live pointer edit cancels that transaction and its gesture.
     /// Later pointer events must never continue writing after history restored it.
     pub fn cancel_active_edit(&self) -> bool {
+        if self.cancel_image_crop_gesture() { return true; }
         let active =
             self.pen_node.get().is_some() || !matches!(*self.gesture.borrow(), Gesture::None);
         if active {
@@ -372,6 +379,7 @@ impl DesignCanvas {
         active
     }
     pub fn cancel(&self) {
+        self.cancel_image_crop();
         self.editor.borrow_mut().cancel_transaction();
         self.pen_node.set(None);
         self.pen_tangent.set(None);
@@ -383,6 +391,7 @@ impl DesignCanvas {
     }
     /// Enter direct path editing without replacing the retained document node.
     pub fn edit_vector(&self) -> bool {
+        self.finish_image_crop();
         self.finish_pen();
         let editor = self.editor.borrow();
         let id = editor.selection.first().copied().filter(|id| {
@@ -681,6 +690,7 @@ impl InputElementImpl for DesignCanvas {
             };
             return;
         }
+        if this.image_crop_press(world) { return; }
         let additive = e.key_modifiers().contains(KeyModifiers::SHIFT);
         match this.tool.get() {
             Tool::Comment => this.emit(CanvasEvent::Comment(world)),
@@ -884,6 +894,7 @@ impl InputElementImpl for DesignCanvas {
             }
             return;
         }
+        if this.image_crop_move(world) { return; }
         let shift = e.key_modifiers().contains(KeyModifiers::SHIFT);
         let mut camera_changed = false;
         let mut gesture = this.gesture.borrow_mut();
@@ -1183,6 +1194,11 @@ impl InputElementImpl for DesignCanvas {
             e.set_handled(true);
             return;
         }
+        if this.image_crop_release() {
+            e.pointer().capture(None);
+            e.set_handled(true);
+            return;
+        }
         this.snap_guides.set((None, None));
         let gesture = std::mem::replace(&mut *this.gesture.borrow_mut(), Gesture::None);
         // Clear the gesture before releasing capture: capture-lost is synchronous.
@@ -1227,6 +1243,7 @@ impl InputElementImpl for DesignCanvas {
     }
     fn on_pointer_capture_lost(this: &Self, e: &PointerCaptureLostEventArgs) {
         Self::parent_on_pointer_capture_lost(this, e);
+        if this.cancel_image_crop_gesture() { return; }
         if let Some((id, _, _)) = this.prototype_press.take() {
             if this.presentation.get().is_some() {
                 this.emit(CanvasEvent::PrototypeTrigger(id, core::Trigger::Release));
@@ -1278,6 +1295,7 @@ impl InputElementImpl for DesignCanvas {
             e.set_handled(true);
             return;
         }
+        if this.image_crop_key(e.key) { e.set_handled(true); return; }
         if e.key == Key::Space {
             this.space.set(true);
             e.set_handled(true);
@@ -1816,6 +1834,7 @@ impl VisualImpl for DesignCanvas {
             let Some(t) = doc.world_transform(id) else {
                 continue;
             };
+            if this.render_image_crop(ctx, n, t, v) { continue; }
             if this.vector_node.get() == Some(id) {
                 if let Some(graph) = &n.vector_network {
                     network::render_network_editor(ctx, graph, t, v, this.network_point.get(), &this.network_vertices.borrow());

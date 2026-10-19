@@ -1,7 +1,10 @@
 //! Renderer-independent vector-design document and editing engine.
 //! Logical positions are parent-relative; rotation is about each node's center.
 mod editor;
+mod components;
 mod geometry;
+mod image_edit;
+mod image_info;
 mod layout;
 mod model;
 mod prototype;
@@ -13,7 +16,10 @@ mod text_edit;
 mod variable_edit;
 mod vector_edit;
 pub use editor::*;
+pub use components::*;
 pub use geometry::*;
+pub use image_edit::*;
+pub use image_info::*;
 pub use layout::*;
 pub use model::*;
 pub use prototype::*;

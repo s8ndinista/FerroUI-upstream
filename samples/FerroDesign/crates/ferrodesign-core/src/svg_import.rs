@@ -1434,6 +1434,7 @@ impl<'a, 'input> Importer<'a, 'input> {
                 paint: Paint::Image {
                     href: data.to_string(),
                     scale,
+                    crop: None,
                 },
                 opacity: 1.0,
                 visible: true,
