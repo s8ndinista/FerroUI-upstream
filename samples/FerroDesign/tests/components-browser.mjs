@@ -39,9 +39,9 @@ export async function componentAuthoringRegressions(page, reference, check, help
     const mark = (id, parent, text, source = null) => label(id, parent, text, source, {
         name: "Mark", x: 2, y: 2, width: 30, height: 30, font_size: 18,
     });
-    const icon = (id, parent, child, source) => fixtureNode(reference, id, {
+    const icon = (id, parent, child, source, properties = {}) => fixtureNode(reference, id, {
         parent, kind: "instance", name: "Icon", x: 160, y: 14, width: 32, height: 32,
-        children: [child], component_id: 20, component_source: source,
+        children: [child], component_id: 20, component_source: source, ...properties,
     });
     const nodes = [
         fixtureNode(reference, 2, { kind: "frame", name: "Button set", x: 40, y: 40, width: 470, height: 140,
@@ -54,8 +54,8 @@ export async function componentAuthoringRegressions(page, reference, check, help
         label(7, 6, "Hover title"), icon(8, 6, 25, 20), mark(25, 8, "○", 21),
         fixtureNode(reference, 10, { kind: "instance", name: "Button instance", x: 40, y: 240, width: 200, height: 100,
             children: [11, 12], component_id: 3, component_source: 3, variant_properties: { State: "Default" } }),
-        label(11, 10, "Manual layer override", 4, { overridden_properties: ["text"] }),
-        icon(12, 10, 13, 5), mark(13, 12, "○", 24),
+        label(11, 10, "Manual layer override", 4, { overridden_properties: ["text", "visible"], visible: false }),
+        icon(12, 10, 13, 5, { component_id: 22, overridden_properties: ["component_id"] }), mark(13, 12, "□", 23),
         fixtureNode(reference, 20, { kind: "component", name: "Circle icon", x: 540, y: 40, width: 32, height: 32, children: [21] }),
         mark(21, 20, "○"),
         fixtureNode(reference, 22, { kind: "component", name: "Square icon", x: 600, y: 40, width: 32, height: 32, children: [23] }),
@@ -84,6 +84,45 @@ export async function componentAuthoringRegressions(page, reference, check, help
     await frames(page);
     assert.deepEqual(await documentState(page), hover);
     check("Native variant selection preserves descendant IDs, text overrides and placement with exact one-step undo and redo");
+
+    await open();
+    // Append to the displayed value without replacing it. This proves the
+    // native TextBox contains the effective direct layer override, not a default.
+    await click("ComponentValue2");
+    await page.keyboard.press("Control+End");
+    await page.keyboard.insertText(" · edited");
+    await page.keyboard.press("Enter");
+    await waitDocument((doc) => doc.nodes[11].text === "Manual layer override · edited");
+    // The effective direct visibility is false and the direct swap is Square.
+    // Native toggle/previous-item input must therefore produce true / Circle.
+    await click("ComponentValue1");
+    await waitDocument((doc) => doc.nodes[11].visible === true && doc.nodes[10].component_property_values.show.value === true);
+    await click("ComponentValue0");
+    await page.keyboard.press("ArrowUp");
+    await page.keyboard.press("Enter");
+    await waitDocument((doc) => doc.nodes[12].component_id === 20 && doc.nodes[10].component_property_values.icon.value === 20);
+    await done();
+    for (let index = 0; index < 3; index++) await page.keyboard.press("Control+z");
+    await frames(page);
+    assert.deepEqual(await documentState(page), hover);
+    await open();
+    await click("ComponentReset2");
+    await waitDocument((doc) => doc.nodes[11].text === "Hover title" && !doc.nodes[11].overridden_properties.includes("text"));
+    await click("ComponentReset1");
+    await waitDocument((doc) => doc.nodes[11].visible === true && !doc.nodes[11].overridden_properties.includes("visible"));
+    await click("ComponentReset0");
+    await waitDocument((doc) => doc.nodes[12].component_id === 20 && !doc.nodes[12].overridden_properties.includes("component_id"));
+    const directReset = await documentState(page);
+    assert.deepEqual(directReset.nodes[10].children, [11, 12]);
+    assert.deepEqual(directReset.nodes[12].children, [13]);
+    await done();
+    for (let index = 0; index < 3; index++) await page.keyboard.press("Control+z");
+    await frames(page);
+    assert.deepEqual(await documentState(page), hover, "Resetting direct text, visibility and swap overrides remains independently reversible");
+    for (let index = 0; index < 3; index++) await page.keyboard.press("Control+Shift+z");
+    await frames(page);
+    assert.deepEqual(await documentState(page), directReset);
+    check("Native exposed fields display effective direct text, visibility and component swaps; editing and Reset clear only the corresponding direct override with exact history");
 
     await open();
     const unicode = "東京 · café 👩🏽‍💻";

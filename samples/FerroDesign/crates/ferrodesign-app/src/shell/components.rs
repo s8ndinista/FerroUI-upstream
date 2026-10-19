@@ -7,6 +7,31 @@ impl Drop for UpdatingComponents<'_> {
     fn drop(&mut self) { self.0.set(self.1); }
 }
 
+// Inspector menus need identity and property metadata, never copies of image
+// bytes, vector geometry, effects, or unrelated text payloads from source layers.
+struct ComponentOwner {
+    id: NodeId,
+    kind: NodeKind,
+    name: String,
+    component_id: Option<NodeId>,
+    variant_properties: BTreeMap<String, String>,
+    component_property_definitions: BTreeMap<String, ComponentPropertyDefinition>,
+}
+impl From<&Node> for ComponentOwner {
+    fn from(node: &Node) -> Self {
+        Self {
+            id: node.id, kind: node.kind, name: node.name.clone(), component_id: node.component_id,
+            variant_properties: node.variant_properties.clone(),
+            component_property_definitions: node.component_property_definitions.clone(),
+        }
+    }
+}
+struct ComponentTarget { id: NodeId, kind: NodeKind, name: String }
+impl From<&Node> for ComponentTarget {
+    fn from(node: &Node) -> Self { Self { id: node.id, kind: node.kind, name: node.name.clone() } }
+}
+struct VariantChoice { id: NodeId, label: String }
+
 impl EditorShell {
     pub(super) fn components_dialog(self: &Rc<Self>) {
         self.components_view(None, 0);
@@ -18,15 +43,17 @@ impl EditorShell {
             let document = &editor.document;
             let selected = editor.selection.clone();
             let owner = requested.or_else(|| selected.first().and_then(|id| document.component_owner(*id)))
-                .and_then(|id| document.nodes.get(&id)).cloned();
+                .and_then(|id| document.nodes.get(&id)).map(ComponentOwner::from);
             let set = owner.as_ref().and_then(|node| document.component_set_of(node.id));
             let variants: Vec<_> = set.map(|set| document.component_variants(set)).unwrap_or_default()
-                .iter().filter_map(|id| document.nodes.get(id)).cloned().collect();
+                .iter().filter_map(|id| document.nodes.get(id)).map(|node| VariantChoice {
+                    id: node.id, label: core::variant_label(&node.variant_properties),
+                }).collect();
             let masters: Vec<_> = document.nodes.values().filter(|node| node.kind == NodeKind::Component)
                 .map(|node| (node.id, format!("{} · {}", node.name, core::variant_label(&node.variant_properties)))).collect();
             let targets: Vec<_> = owner.as_ref().filter(|node| node.kind == NodeKind::Component)
                 .map(|node| document.descendants(node.id)).unwrap_or_default()
-                .iter().filter_map(|id| document.nodes.get(id)).cloned().collect();
+                .iter().filter_map(|id| document.nodes.get(id)).map(ComponentTarget::from).collect();
             let views = owner.as_ref().map(|node| document.component_property_views(node.id)).unwrap_or_default();
             (selected, owner, variants, masters, targets, views, set)
         };
@@ -72,7 +99,7 @@ impl EditorShell {
         let owner_id = owner.id;
         host.children().add(component_text(&owner.name, false));
         if !variants.is_empty() {
-            let labels: Vec<_> = variants.iter().map(|node| core::variant_label(&node.variant_properties)).collect();
+            let labels: Vec<_> = variants.iter().map(|node| node.label.clone()).collect();
             let current = if owner.kind == NodeKind::Instance { owner.component_id } else { Some(owner.id) };
             let index = variants.iter().position(|variant| Some(variant.id) == current).unwrap_or(0);
             let ids: Vec<_> = variants.iter().map(|node| node.id).collect();
@@ -153,7 +180,7 @@ impl EditorShell {
         }
     }
 
-    fn component_variant_axes(self: &Rc<Self>, host: &Ref<StackPanel>, component: &Node) {
+    fn component_variant_axes(self: &Rc<Self>, host: &Ref<StackPanel>, component: &ComponentOwner) {
         if self.editor.borrow().document.component_set_of(component.id).is_none() { return; }
         let id = component.id;
         host.children().add(component_text("Variant properties", false));
@@ -199,7 +226,7 @@ impl EditorShell {
     }
 
     fn component_definition_card(self: &Rc<Self>, host: &Ref<StackPanel>, owner: NodeId, index: usize, key: &str,
-        definition: &ComponentPropertyDefinition, targets: &[Node], masters: &[(NodeId, String)]) {
+        definition: &ComponentPropertyDefinition, targets: &[ComponentTarget], masters: &[(NodeId, String)]) {
         let card = component_panel();
         let property = key.to_string();
         card.children().add(self.component_field("Property name", &format!("ComponentPropertyName{index}"), &definition.name,
@@ -269,7 +296,7 @@ impl EditorShell {
         host.children().add(card);
     }
 
-    fn component_new_property(self: &Rc<Self>, host: &Ref<StackPanel>, owner: NodeId, kind: usize, targets: &[Node]) {
+    fn component_new_property(self: &Rc<Self>, host: &Ref<StackPanel>, owner: NodeId, kind: usize, targets: &[ComponentTarget]) {
         let panel = component_panel();
         panel.children().add(component_text("Expose a property", false));
         panel.children().add(self.component_choice("Type", "ComponentNewPropertyType",
@@ -458,7 +485,7 @@ fn component_combo(name: &str, labels: &[String], selected: usize) -> Ref<ComboB
     choice.set_selected_index(if labels.is_empty() { -1 } else { selected.min(labels.len() - 1) as i32 });
     choice.set_is_enabled(!labels.is_empty()); choice
 }
-fn component_target_matches(node: &Node, value: &ComponentPropertyValue) -> bool {
+fn component_target_matches(node: &ComponentTarget, value: &ComponentPropertyValue) -> bool {
     match value {
         ComponentPropertyValue::Text(_) => node.kind == NodeKind::Text,
         ComponentPropertyValue::Boolean(_) => true,

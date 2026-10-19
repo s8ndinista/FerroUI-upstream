@@ -108,6 +108,205 @@ fn dense_layout_measurement(count: usize) -> Value {
     })
 }
 
+/// A valid one-pixel PNG with a large uncompressed tEXt chunk makes paint
+/// payload-copy costs reproducible without network access or image decoding.
+fn embedded_image(payload_bytes: usize) -> String {
+    fn chunk(output: &mut Vec<u8>, kind: &[u8; 4], data: &[u8]) {
+        output.extend_from_slice(&(data.len() as u32).to_be_bytes());
+        output.extend_from_slice(kind);
+        output.extend_from_slice(data);
+        let mut crc = !0u32;
+        for byte in kind.iter().chain(data) {
+            crc ^= u32::from(*byte);
+            for _ in 0..8 { crc = (crc >> 1) ^ (0xEDB88320 & (0u32.wrapping_sub(crc & 1))); }
+        }
+        output.extend_from_slice(&(!crc).to_be_bytes());
+    }
+    let mut png = b"\x89PNG\r\n\x1a\n".to_vec();
+    chunk(&mut png, b"IHDR", &[0, 0, 0, 1, 0, 0, 0, 1, 8, 6, 0, 0, 0]);
+    let mut metadata = b"FerroDesignBench\0".to_vec();
+    metadata.resize(metadata.len() + payload_bytes, b'X');
+    chunk(&mut png, b"tEXt", &metadata);
+    let pixels = [0u8, 123, 97, 255, 255];
+    let mut compressed = vec![0x78, 0x01, 0x01, 5, 0, 0xfa, 0xff];
+    compressed.extend_from_slice(&pixels);
+    let (mut a, mut b) = (1u32, 0u32);
+    for byte in pixels { a = (a + u32::from(byte)) % 65521; b = (b + a) % 65521; }
+    compressed.extend_from_slice(&((b << 16) | a).to_be_bytes());
+    chunk(&mut png, b"IDAT", &compressed);
+    chunk(&mut png, b"IEND", &[]);
+    const ALPHABET: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    let mut href = String::with_capacity(22 + png.len().div_ceil(3) * 4);
+    href.push_str("data:image/png;base64,");
+    for bytes in png.chunks(3) {
+        let bits = (u32::from(bytes[0]) << 16)
+            | (u32::from(*bytes.get(1).unwrap_or(&0)) << 8) | u32::from(*bytes.get(2).unwrap_or(&0));
+        for index in 0..4 {
+            href.push(if index > bytes.len() { '=' } else { ALPHABET[((bits >> (18 - index * 6)) & 63) as usize] as char });
+        }
+    }
+    href
+}
+
+enum ComponentOperation { Variant(NodeId), Text(String), Visible(bool) }
+impl ComponentOperation {
+    fn apply_document(&self, document: &mut Document, instance: NodeId) {
+        match self {
+            Self::Variant(component) => document.swap_instance_component(instance, *component).unwrap(),
+            Self::Text(text) => document.set_instance_property(instance, "title", Some(ComponentPropertyValue::Text(text.clone()))).unwrap(),
+            Self::Visible(value) => document.set_instance_property(instance, "show", Some(ComponentPropertyValue::Boolean(*value))).unwrap(),
+        }
+    }
+    fn apply_editor(&self, editor: &mut Editor, instance: NodeId) {
+        match self {
+            Self::Variant(component) => editor.swap_instance_component(instance, *component).unwrap(),
+            Self::Text(text) => editor.set_instance_property(instance, "title", Some(ComponentPropertyValue::Text(text.clone()))).unwrap(),
+            Self::Visible(value) => editor.set_instance_property(instance, "show", Some(ComponentPropertyValue::Boolean(*value))).unwrap(),
+        }
+    }
+}
+#[derive(Default)]
+struct ComponentTimings { variant: Vec<f64>, text: Vec<f64>, visible: Vec<f64> }
+impl ComponentTimings {
+    fn record(&mut self, operation: &ComponentOperation, elapsed: f64) {
+        match operation {
+            ComponentOperation::Variant(_) => self.variant.push(elapsed),
+            ComponentOperation::Text(_) => self.text.push(elapsed),
+            ComponentOperation::Visible(_) => self.visible.push(elapsed),
+        }
+    }
+    fn into_json(self) -> Value {
+        json!({ "variant": distribution(self.variant), "text": distribution(self.text), "visibility": distribution(self.visible) })
+    }
+}
+
+fn component_measurement(count: usize) -> Value {
+    let mut document = Document::new("Component performance fixture");
+    let page = document.pages[0].id;
+    let source_image = embedded_image(64 * 1024);
+    let background_image = embedded_image(4 * 1024 * 1024);
+    let mut components = Vec::new();
+    for variant in 0..2 {
+        let master = document.insert_node(page, Node::new(NodeKind::Component,
+            format!("Variant {variant}"), variant as f64 * 300.0, 0.0, 240.0, 320.0)).unwrap();
+        let mut label = 0;
+        for index in 0..32 {
+            let kind = if index == 0 { NodeKind::Text } else if index % 4 == 0 { NodeKind::Vector } else { NodeKind::Rectangle };
+            let mut node = Node::new(kind, format!("Layer {index}"), (index % 4) as f64 * 56.0,
+                (index / 4) as f64 * 38.0, 48.0, 32.0);
+            if index == 0 { node.text = format!("Default {variant}"); }
+            if index % 8 == 1 {
+                node.fills = vec![Fill { paint: Paint::Image { href: source_image.clone(), scale: ImageScale::Fill, crop: None }, opacity: 1.0, visible: true }];
+            }
+            if kind == NodeKind::Vector {
+                node.path.segments.push(PathSegment::MoveTo { point: Point::default() });
+                for point in 1..=64 {
+                    node.path.segments.push(PathSegment::CubicTo {
+                        control1: Point::new(point as f64 / 2.0, 4.0), control2: Point::new(point as f64 / 2.0, 28.0),
+                        point: Point::new(point as f64 / 2.0, 16.0),
+                    });
+                }
+            }
+            let id = document.insert_node(master, node).unwrap();
+            if index == 0 { label = id; }
+        }
+        for (key, value) in [
+            ("title", ComponentPropertyValue::Text(format!("Default {variant}"))),
+            ("show", ComponentPropertyValue::Boolean(true)),
+        ] {
+            document.set_component_property_definition(master, key, ComponentPropertyDefinition {
+                name: key.into(), default_value: value, targets: vec![label],
+            }).unwrap();
+        }
+        components.push(master);
+    }
+    document.create_component_set(&components, "Benchmark variants").unwrap();
+    let instance = document.create_component_instance(components[0], page, 0.0, 500.0).unwrap();
+    let descendants = document.descendants(instance);
+    let unrelated = count.saturating_sub(document.nodes.len()).max(1);
+    for index in 0..unrelated {
+        let mut node = Node::new(NodeKind::Rectangle, format!("Unrelated {index}"),
+            1000.0 + (index % 100) as f64 * 48.0, (index / 100) as f64 * 48.0, 32.0, 32.0);
+        if index == 0 {
+            node.fills = vec![Fill { paint: Paint::Image { href: background_image.clone(), scale: ImageScale::Fill, crop: None }, opacity: 1.0, visible: true }];
+        }
+        document.insert_node(page, node).unwrap();
+    }
+    document.validate().unwrap();
+    let original = document.to_json().unwrap();
+    let mut reference = document.clone();
+    let mut editor = Editor::new(document.clone());
+    let mut planned = ComponentTimings::default();
+    let mut copied = ComponentTimings::default();
+    let mut authored = ComponentTimings::default();
+    let iterations = 24;
+    for index in 0..iterations {
+        let operation = match index % 3 {
+            0 => ComponentOperation::Variant(components[1 - (index / 3) % 2]),
+            1 => ComponentOperation::Text(format!("Authored title {index} 東京 🦀")),
+            _ => ComponentOperation::Visible((index / 3) % 2 == 1),
+        };
+        let measure_planned = |document: &mut Document, samples: &mut ComponentTimings| {
+            let started = Instant::now();
+            operation.apply_document(document, instance);
+            samples.record(&operation, milliseconds(started));
+        };
+        let measure_copied = |document: &mut Document, samples: &mut ComponentTimings| {
+            let started = Instant::now();
+            // Explicit conservative reference: copy the whole document before
+            // the same validated operation and replace it only after success.
+            let mut candidate = document.clone();
+            operation.apply_document(&mut candidate, instance);
+            *document = candidate;
+            samples.record(&operation, milliseconds(started));
+        };
+        if index % 2 == 0 {
+            measure_planned(&mut document, &mut planned);
+            measure_copied(&mut reference, &mut copied);
+        } else {
+            measure_copied(&mut reference, &mut copied);
+            measure_planned(&mut document, &mut planned);
+        }
+        let started = Instant::now();
+        operation.apply_editor(&mut editor, instance);
+        authored.record(&operation, milliseconds(started));
+        assert!(document == reference, "Paired component state differs at operation {index}");
+        assert_eq!(document.descendants(instance), descendants, "Matching IDs must survive repeated variants and exposed-value updates");
+    }
+    assert_eq!(editor.history_len(), iterations);
+    let final_json = document.to_json().unwrap();
+    assert_eq!(editor.to_json().unwrap(), final_json);
+    let mut undo = Vec::new();
+    let mut redo = Vec::new();
+    for _ in 0..iterations {
+        let started = Instant::now();
+        assert!(editor.undo());
+        undo.push(milliseconds(started));
+    }
+    assert_eq!(editor.to_json().unwrap(), original);
+    for _ in 0..iterations {
+        let started = Instant::now();
+        assert!(editor.redo());
+        redo.push(milliseconds(started));
+    }
+    assert_eq!(editor.to_json().unwrap(), final_json);
+    editor.document.validate().unwrap();
+    json!({
+        "kind": "two-matched-variants-with-text-visibility-images-and-vector-paths",
+        "nodes": document.nodes.len(), "unrelatedNodes": unrelated,
+        "instanceNodes": descendants.len(), "iterations": iterations, "operationsPerKind": iterations / 3,
+        "embeddedPngHrefBytesPerSourceImage": source_image.len(),
+        "unrelatedEmbeddedPngHrefBytes": background_image.len(), "serializedBytes": final_json.len(),
+        "equivalentDocumentsAndStableIds": true, "includesBrowserEvents": false,
+        "documentOperationsWithoutHistory": {
+            "plannedChanges": planned.into_json(), "fullDocumentCloneReference": copied.into_json(),
+            "referenceDefinition": "the same operation plus a whole-document candidate clone and replacement",
+        },
+        "editorWithHistory": {"operation": authored.into_json(), "undo": distribution(undo), "redo": distribution(redo),
+            "exactHistoryRoundTrip": true, "snapshotScope": "whole-document"},
+    })
+}
+
 fn main() {
     let count = std::env::args().nth(1)
         .and_then(|s| s.parse::<usize>().ok()).unwrap_or(10_000)
@@ -277,9 +476,10 @@ fn main() {
     }
     assert_eq!(no_layout.to_json().unwrap(), edited);
     let dense_layout = dense_layout_measurement(count);
+    let components = component_measurement(count);
 
     println!("{}", serde_json::to_string_pretty(&json!({
-        "schemaVersion": 3,
+        "schemaVersion": 4,
         "measurement": "native-engine-same-process",
         "releaseBuild": !cfg!(debug_assertions),
         "nodes": count,
@@ -299,6 +499,7 @@ fn main() {
             "unscopedReference": gesture_unscoped.into_json(),
             "scoped": gesture_scoped.into_json()},
         "layout": {"noLayout": distribution(no_layout_timings), "denseMixedFill": dense_layout},
+        "componentAuthoring": components,
         "serialization": {
             "pretty": {"bytes": edited.len(), "timing": distribution(pretty)},
             "compactCandidate": {"bytes": compact_bytes, "timing": distribution(compact)},

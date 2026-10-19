@@ -25,6 +25,22 @@ impl ComponentPropertyValue {
     pub fn same_kind(&self, other: &Self) -> bool {
         std::mem::discriminant(self) == std::mem::discriminant(other)
     }
+    fn direct_override(&self) -> &'static str {
+        match self {
+            Self::Text(_) => "text",
+            Self::Boolean(_) => "visible",
+            Self::InstanceSwap(_) => "component_id",
+        }
+    }
+    fn manual_value(&self, node: &Node) -> Option<Self> {
+        if !node.overridden_properties.contains(self.direct_override()) { return None; }
+        match self {
+            Self::Text(_) if node.kind == NodeKind::Text => Some(Self::Text(node.text.clone())),
+            Self::Boolean(_) => Some(Self::Boolean(node.visible)),
+            Self::InstanceSwap(_) if node.kind == NodeKind::Instance => node.component_id.map(Self::InstanceSwap),
+            _ => None,
+        }
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -139,13 +155,19 @@ impl Document {
         let Some(master) = node.component_id.and_then(|id| self.nodes.get(&id)) else {
             return Vec::new();
         };
+        let plan = InstancePlan::new(self);
         master.component_property_definitions.iter().map(|(key, definition)| {
-            let value = node.component_property_values.get(key);
+            let stored = node.component_property_values.get(key);
+            let manual = definition.targets.iter().find_map(|source| {
+                let target = plan.materialized_target(instance, master.id, *source)?;
+                definition.default_value.manual_value(self.nodes.get(&target)?)
+            });
+            let overridden = manual.is_some() || stored.is_some();
             ComponentPropertyView {
                 key: key.clone(),
                 definition: definition.clone(),
-                value: value.unwrap_or(&definition.default_value).clone(),
-                overridden: value.is_some(),
+                value: manual.or_else(|| stored.cloned()).unwrap_or_else(|| definition.default_value.clone()),
+                overridden,
             }
         }).collect()
     }
@@ -409,6 +431,14 @@ impl<'a> InstancePlan<'a> {
         if self.changes.removed.contains(&id) { return None; }
         self.changes.nodes.get(&id).or_else(|| self.document.nodes.get(&id))
     }
+    fn node_mut(&mut self, id: NodeId) -> Option<&mut Node> {
+        if self.changes.removed.contains(&id) { return None; }
+        if !self.changes.nodes.contains_key(&id) {
+            let node = self.document.nodes.get(&id)?.clone();
+            self.changes.nodes.insert(id, node);
+        }
+        self.changes.nodes.get_mut(&id)
+    }
     fn allocate(&mut self) -> Result<NodeId, DocumentError> {
         loop {
             let id = self.changes.next_id;
@@ -470,26 +500,27 @@ impl<'a> InstancePlan<'a> {
 
     fn reconcile_node(&mut self, target: NodeId, source: NodeId, root: bool, depth: usize) -> Result<(), DocumentError> {
         if depth >= MAX_DOCUMENT_DEPTH { return Err(invalid("Component hierarchy is too deep")); }
-        let template = self.node(source).cloned().ok_or_else(|| invalid("Component source layer is missing"))?;
-        let old = self.node(target).cloned();
-        let swapped = old.as_ref().filter(|old| !root && template.kind == NodeKind::Instance
+        let template = self.node(source).ok_or_else(|| invalid("Component source layer is missing"))?;
+        let old = self.node(target);
+        let swapped = old.filter(|old| !root && template.kind == NodeKind::Instance
             && old.overridden_properties.contains("component_id")
             && old.component_id != template.component_id)
-            .and_then(|old| old.component_id).and_then(|id| self.node(id)).cloned();
-        let mut node = swapped.as_ref().unwrap_or(&template).clone();
-        let source_children = node.children.clone();
+            .and_then(|old| old.component_id).and_then(|id| self.node(id));
+        // Borrow the old node and clone the effective source once. In particular,
+        // do not copy image/path payloads to inspect a node or its matching key.
+        let mut node = swapped.unwrap_or(template).clone();
+        let source_children = std::mem::take(&mut node.children);
         node.id = target;
-        node.parent = old.as_ref().and_then(|old| old.parent);
+        node.parent = old.and_then(|old| old.parent);
         node.component_source = Some(source);
         node.component_property_definitions.clear();
         node.overridden_properties.clear();
-        node.children.clear();
-        node.revision = old.as_ref().map(|old| old.revision).unwrap_or(0);
+        node.revision = old.map(|old| old.revision).unwrap_or(0);
         if template.kind == NodeKind::Component || swapped.is_some() {
             node.kind = NodeKind::Instance;
-            node.component_id = if let Some(swapped) = &swapped { Some(swapped.id) } else { Some(source) };
+            node.component_id = if let Some(swapped) = swapped { Some(swapped.id) } else { Some(source) };
         }
-        if let Some(old) = &old {
+        if let Some(old) = old {
             preserve_overrides(&mut node, old);
             if root {
                 node.kind = NodeKind::Instance;
@@ -521,7 +552,7 @@ impl<'a> InstancePlan<'a> {
                 }
             }
         }
-        let old_children = old.as_ref().map(|old| old.children.clone()).unwrap_or_default();
+        let old_children = old.map(|old| old.children.clone()).unwrap_or_default();
         let mut by_source: BTreeMap<NodeId, VecDeque<NodeId>> = BTreeMap::new();
         let mut by_name: BTreeMap<(String, u8), VecDeque<NodeId>> = BTreeMap::new();
         for id in &old_children {
@@ -534,7 +565,8 @@ impl<'a> InstancePlan<'a> {
         let mut used = BTreeSet::new();
         let mut children = Vec::with_capacity(source_children.len());
         for source_child in source_children {
-            let template = self.node(source_child).cloned().ok_or_else(|| invalid("Component child is missing"))?;
+            let key = self.node(source_child).map(|node| (node.name.clone(), materialized_kind(node.kind) as u8))
+                .ok_or_else(|| invalid("Component child is missing"))?;
             let pop = |queue: Option<&mut VecDeque<NodeId>>, used: &BTreeSet<NodeId>| {
                 let queue = queue?;
                 while let Some(id) = queue.pop_front() {
@@ -543,7 +575,7 @@ impl<'a> InstancePlan<'a> {
                 None
             };
             let matched = pop(by_source.get_mut(&source_child), &used)
-                .or_else(|| pop(by_name.get_mut(&(template.name.clone(), materialized_kind(template.kind) as u8)), &used));
+                .or_else(|| pop(by_name.get_mut(&key), &used));
             let child = if let Some(id) = matched { id } else { self.allocate()? };
             used.insert(child);
             self.reconcile_node(child, source_child, false, depth + 1)?;
@@ -609,8 +641,10 @@ impl InstancePlan<'_> {
 
     fn remap_links(&mut self, instance: NodeId, component: NodeId) {
         for id in self.descendants(instance) {
-            let Some(mut node) = self.node(id).cloned() else { continue };
-            node.interactions.retain_mut(|interaction| {
+            let Some(node) = self.node(id) else { continue };
+            if node.interactions.is_empty() { continue; }
+            let mut interactions = node.interactions.clone();
+            interactions.retain_mut(|interaction| {
                 let target = match &mut interaction.action {
                     PrototypeAction::NavigateTo { target }
                     | PrototypeAction::OpenOverlay { target, .. }
@@ -626,7 +660,9 @@ impl InstancePlan<'_> {
                 }
                 true
             });
-            self.changes.nodes.insert(id, node);
+            if self.node(id).is_some_and(|node| node.interactions != interactions) {
+                self.node_mut(id).unwrap().interactions = interactions;
+            }
         }
     }
 
@@ -649,10 +685,12 @@ impl InstancePlan<'_> {
             for source in &definition.targets {
                 let Some(target) = self.materialized_target(instance, component, *source) else { continue };
                 let Some(node) = self.node(target) else { continue };
-                if value.is_none() && node.overridden_properties.contains("component_id") { continue; }
+                // Direct layer editing takes precedence until this exposed
+                // property is authored or reset, which clears its direct flag.
+                if node.overridden_properties.contains("component_id") { continue; }
                 self.reconcile(target, *swap_component)?;
                 if value.is_some() {
-                    self.changes.nodes.get_mut(&target).unwrap().overridden_properties.insert("component_id".into());
+                    self.node_mut(target).unwrap().overridden_properties.insert("component_id".into());
                 }
             }
         }
@@ -676,21 +714,19 @@ impl InstancePlan<'_> {
             let value = explicit.unwrap_or(&definition.default_value);
             for source in &definition.targets {
                 let Some(target) = self.materialized_target(instance, component, *source) else { continue };
-                let Some(mut node) = self.node(target).cloned() else { continue };
+                let Some(node) = self.node(target) else { continue };
+                if node.overridden_properties.contains(value.direct_override()) { continue; }
                 match value {
                     ComponentPropertyValue::Text(text) if node.kind == NodeKind::Text => {
-                        if explicit.is_none() && node.overridden_properties.contains("text") { continue; }
-                        node.replace_text_preserving_runs(text.clone());
-                        if explicit.is_some() { node.overridden_properties.remove("text"); }
+                        if node.text != *text {
+                            self.node_mut(target).unwrap().replace_text_preserving_runs(text.clone());
+                        }
                     }
                     ComponentPropertyValue::Boolean(visible) => {
-                        if explicit.is_none() && node.overridden_properties.contains("visible") { continue; }
-                        node.visible = *visible;
-                        if explicit.is_some() { node.overridden_properties.remove("visible"); }
+                        if node.visible != *visible { self.node_mut(target).unwrap().visible = *visible; }
                     }
                     _ => continue,
                 }
-                self.changes.nodes.insert(target, node);
             }
         }
         stack.pop();
@@ -988,18 +1024,16 @@ impl Document {
             } else {
                 node.component_property_values.remove(key);
                 node.overridden_properties.remove(&marker);
-                if matches!(definition.default_value, ComponentPropertyValue::InstanceSwap(_)) {
-                    for source in &definition.targets {
-                        if let Some(target) = plan.materialized_target(instance, component, *source) {
-                            if let Some(mut nested) = plan.node(target).cloned() {
-                                nested.overridden_properties.remove("component_id");
-                                plan.changes.nodes.insert(target, nested);
-                            }
-                        }
+            }
+            plan.changes.nodes.insert(instance, node);
+            for source in &definition.targets {
+                if let Some(target) = plan.materialized_target(instance, component, *source) {
+                    let property = definition.default_value.direct_override();
+                    if plan.node(target).is_some_and(|node| node.overridden_properties.contains(property)) {
+                        plan.node_mut(target).unwrap().overridden_properties.remove(property);
                     }
                 }
             }
-            plan.changes.nodes.insert(instance, node);
             plan.reconcile(instance, component)?;
             plan.apply_properties(instance, component)?;
             plan.finish()?
@@ -1376,6 +1410,95 @@ mod tests {
         assert_eq!(document.nodes[&target].component_source, Some(nested));
         assert_eq!(label(&document, target), original_label);
         assert_eq!(document.nodes[&original_label].text, "B");
+        roundtrip(&document);
+    }
+
+    #[test]
+    fn exposed_views_and_reset_follow_direct_edits_over_stale_stored_values() {
+        let mut document = Document::new("Effective exposed values");
+        let page = document.pages[0].id;
+        let (icon_a, _) = component(&mut document, page, "A", 0.0);
+        let (icon_b, _) = component(&mut document, page, "B", 200.0);
+        let (master, source_label) = component(&mut document, page, "Default", 400.0);
+        let source_icon = document.create_component_instance(icon_a, master, 0.0, 0.0).unwrap();
+        expose(&mut document, master, "title", ComponentPropertyValue::Text("Default".into()), source_label);
+        expose(&mut document, master, "show", ComponentPropertyValue::Boolean(true), source_label);
+        expose(&mut document, master, "icon", ComponentPropertyValue::InstanceSwap(icon_a), source_icon);
+        let instance = document.create_component_instance(master, page, 0.0, 300.0).unwrap();
+        let target_label = label(&document, instance);
+        let target_icon = document.nodes[&instance].children.iter().copied()
+            .find(|id| document.nodes[id].component_source == Some(source_icon)).unwrap();
+        let icon_label = label(&document, target_icon);
+        document.set_instance_property(instance, "title", Some(ComponentPropertyValue::Text("Earlier value".into()))).unwrap();
+        document.set_instance_property(instance, "show", Some(ComponentPropertyValue::Boolean(true))).unwrap();
+        document.set_instance_property(instance, "icon", Some(ComponentPropertyValue::InstanceSwap(icon_b))).unwrap();
+        let direct = document.nodes.get_mut(&target_label).unwrap();
+        direct.text = "Direct 東京 🦀".into();
+        direct.visible = false;
+        direct.overridden_properties.extend(["text".into(), "visible".into()]);
+        document.swap_instance_component(target_icon, icon_a).unwrap();
+        let effective: BTreeMap<_, _> = document.component_property_views(instance).into_iter()
+            .map(|view| { assert!(view.overridden); (view.key, view.value) }).collect();
+        assert_eq!(effective["title"], ComponentPropertyValue::Text("Direct 東京 🦀".into()));
+        assert_eq!(effective["show"], ComponentPropertyValue::Boolean(false));
+        assert_eq!(effective["icon"], ComponentPropertyValue::InstanceSwap(icon_a));
+        document.refresh_component_instances(master).unwrap();
+        assert_eq!(document.nodes[&target_label].text, "Direct 東京 🦀");
+        assert!(!document.nodes[&target_label].visible);
+        assert_eq!(document.nodes[&target_icon].component_id, Some(icon_a));
+        assert_eq!(label(&document, target_icon), icon_label);
+        let mut editor = Editor::new(document);
+        let before = editor.document.to_json().unwrap();
+        for key in ["title", "show", "icon"] { editor.set_instance_property(instance, key, None).unwrap(); }
+        let after = editor.document.to_json().unwrap();
+        assert_eq!(editor.document.nodes[&target_label].text, "Default");
+        assert!(editor.document.nodes[&target_label].visible);
+        assert_eq!(editor.document.nodes[&target_icon].component_id, Some(icon_a));
+        assert!(!editor.document.nodes[&target_label].overridden_properties.contains("text"));
+        assert!(!editor.document.nodes[&target_label].overridden_properties.contains("visible"));
+        assert!(!editor.document.nodes[&target_icon].overridden_properties.contains("component_id"));
+        assert!(editor.document.component_property_views(instance).iter().all(|view| !view.overridden));
+        for _ in 0..3 { assert!(editor.undo()); }
+        assert_eq!(editor.document.to_json().unwrap(), before);
+        for _ in 0..3 { assert!(editor.redo()); }
+        assert_eq!(editor.document.to_json().unwrap(), after);
+        roundtrip(&editor.document);
+    }
+
+    #[test]
+    fn authoring_exposed_value_clears_only_its_direct_flags_on_all_bound_layers() {
+        let mut document = Document::new("Bound field ownership");
+        let page = document.pages[0].id;
+        let (master, first) = component(&mut document, page, "Default", 0.0);
+        let second = document.insert_node(master, Node::new(NodeKind::Text, "Secondary", 0.0, 24.0, 80.0, 24.0).with_text("Default", 14.0, Color::BLACK)).unwrap();
+        document.set_component_property_definition(master, "title", ComponentPropertyDefinition {
+            name: "Title".into(), default_value: ComponentPropertyValue::Text("Default".into()), targets: vec![first, second],
+        }).unwrap();
+        expose(&mut document, master, "show", ComponentPropertyValue::Boolean(true), master);
+        let instance = document.create_component_instance(master, page, 0.0, 150.0).unwrap();
+        let children = document.nodes[&instance].children.clone();
+        for child in &children {
+            let node = document.nodes.get_mut(child).unwrap();
+            node.text = "Manual".into();
+            node.visible = false;
+            node.overridden_properties.extend(["text".into(), "visible".into()]);
+        }
+        let root = document.nodes.get_mut(&instance).unwrap();
+        root.visible = false;
+        root.overridden_properties.insert("visible".into());
+        document.set_instance_property(instance, "title", Some(ComponentPropertyValue::Text("Typed Ω".into()))).unwrap();
+        for child in &children {
+            let node = &document.nodes[child];
+            assert_eq!(node.text, "Typed Ω");
+            assert!(!node.overridden_properties.contains("text"));
+            assert!(node.overridden_properties.contains("visible"));
+            assert!(!node.visible);
+        }
+        assert!(!document.nodes[&instance].visible);
+        document.set_instance_property(instance, "show", None).unwrap();
+        assert!(document.nodes[&instance].visible);
+        assert!(!document.nodes[&instance].overridden_properties.contains("visible"));
+        assert_eq!(document.nodes[&instance].children, children);
         roundtrip(&document);
     }
 
