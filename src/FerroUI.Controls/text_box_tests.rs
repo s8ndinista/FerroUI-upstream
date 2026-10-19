@@ -96,6 +96,7 @@ fn build_template(_control: &Ref<TextBox>, scope: &NameScopeRef) -> Ref<Control>
     presenter.set_name(Some("PART_TextPresenter".to_string()));
     presenter.bind_binding(TextPresenter::text_property().as_property(), &template_binding("Text"));
     presenter.bind_binding(TextPresenter::caret_index_property().as_property(), &template_binding("CaretIndex"));
+    presenter.bind_binding(TextPresenter::text_style_overrides_property().as_property(), &template_binding("TextStyleOverrides"));
 
     let scroll_viewer = ScrollViewer::new();
     scroll_viewer.set_name(Some("PART_ScrollViewer".to_string()));
@@ -129,6 +130,7 @@ fn build_themed_template(_control: &Ref<TextBox>, scope: &NameScopeRef) -> Ref<C
         (TextPresenter::selection_end_property().as_property(), TextBox::selection_end_property().as_property()),
         (TextPresenter::password_char_property().as_property(), TextBox::password_char_property().as_property()),
         (TextPresenter::reveal_password_property().as_property(), TextBox::reveal_password_property().as_property()),
+        (TextPresenter::text_style_overrides_property().as_property(), TextBox::text_style_overrides_property().as_property()),
     ];
 
     for (target, source) in one_way {
@@ -2176,6 +2178,69 @@ fn empty_preedit_is_pending_until_cleared_or_the_client_detaches() {
     assert!(!text_box.is_composing_text());
     client.set_preedit_text(Some("late"));
     assert!(!text_box.is_composing_text());
+}
+
+#[test]
+fn rich_preedit_blur_restores_confirmed_unicode_text_and_selection_before_observers() {
+    use ferroui_base::media::text_formatting::{GenericTextRunProperties, TextRunProperties};
+    use ferroui_base::media::Typeface;
+    use ferroui_base::utilities::ValueSpan;
+    let _scope = test_scope();
+    let _focus = focus_scope();
+    let text = "a東京🦀z";
+    let target = templated_text_box(Some(text));
+    target.set_clear_selection_on_lost_focus(false);
+    let properties: Rc<dyn TextRunProperties> = Rc::new(GenericTextRunProperties::with_font_size(Typeface::default(), 30.0));
+    let styles: crate::presenters::TextStyleOverrides = Rc::from([ValueSpan::new(1, 4, properties)]);
+    target.set_text_style_overrides(Some(styles.clone()));
+    target.apply_template();
+    let other = Button::new();
+    let panel = StackPanel::new();
+    panel.children().add(target.clone());
+    panel.children().add(other.clone());
+    let _root = TestRoot::with_child(panel);
+    target.focus();
+    target.set_selection_start(1);
+    target.set_selection_end(5);
+    let observed = Rc::new(RefCell::new(None));
+    let observed_event = observed.clone();
+    let weak = target.downgrade();
+    target.lost_focus(move |_, _| {
+        let target = weak.upgrade().unwrap();
+        *observed_event.borrow_mut() = Some((target.text(), target.is_composing_text(), target.selection_start(), target.selection_end()));
+    });
+    let client = get_input_method_client(&target);
+    client.set_preedit_text(Some("漢"));
+    assert_eq!(target.text().as_deref(), Some("az"));
+    assert!(target.is_composing_text());
+    let presenter = target.find_descendant_of_type::<TextPresenter>(false).unwrap();
+    // A second update presents the IME clause after native selection deletion.
+    client.set_preedit_text_with_cursor(Some("漢字"), Some(2));
+    let layout = presenter.text_layout();
+    let clause = layout.text_lines()[0].text_runs().iter().find(|run| run.text().to_string_lossy().contains('漢')).cloned().unwrap();
+    assert_eq!(clause.properties().unwrap().font_rendering_em_size(), 30.0);
+    assert!(other.focus());
+    assert_eq!(*observed.borrow(), Some((Some(text.into()), false, 1, 5)));
+    assert!(Rc::ptr_eq(target.text_style_overrides().as_ref().unwrap(), &styles));
+    client.set_preedit_text(Some("late"));
+    assert_eq!(target.text().as_deref(), Some(text));
+    assert!(!target.is_composing_text());
+}
+
+#[test]
+fn pending_preedit_detach_does_not_replace_a_new_host_value() {
+    let _scope = test_scope();
+    let target = templated_text_box(Some("confirmed"));
+    target.apply_template();
+    let root = host_in_root(&target);
+    target.select_all();
+    let client = get_input_method_client(&target);
+    client.set_preedit_text(Some("漢"));
+    assert_eq!(target.text().as_deref(), Some(""));
+    target.set_text(Some("replacement from host"));
+    root.set_child(Button::new());
+    assert_eq!(target.text().as_deref(), Some("replacement from host"));
+    assert!(!target.is_composing_text());
 }
 
 #[test]

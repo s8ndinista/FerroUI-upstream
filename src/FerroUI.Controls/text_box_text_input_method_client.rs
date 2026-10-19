@@ -1,4 +1,4 @@
-use crate::presenters::TextPresenter;
+use crate::presenters::{TextPresenter, TextStyleOverrides};
 use crate::TextBox;
 use ferroui_base::input::text_input::{
     ContextMenuAction, TextInputMethodClient, TextInputMethodClientEvents, TextSelection,
@@ -21,11 +21,38 @@ pub struct TextBoxTextInputMethodClient {
     parent: RefCell<Option<WeakRef<TextBox>>>,
     presenter: RefCell<Option<WeakRef<TextPresenter>>>,
     pending_preedit: Cell<bool>,
+    confirmed_preedit: RefCell<Option<ConfirmedPreedit>>,
     selection_changed: Cell<bool>,
     is_in_change: Cell<bool>,
     parent_property_changed: RefCell<Option<Rc<dyn IDisposable>>>,
     parent_tapped: RefCell<Option<RoutedEventHandlerToken>>,
     caret_bounds_changed: RefCell<Option<Rc<dyn IDisposable>>>,
+}
+
+/// Native preedit may provisionally remove the selection from `Text`. Keep the
+/// confirmed value until an explicit clear/commit, or restore it when this
+/// client detaches while composition is still owned by the input method.
+struct ConfirmedPreedit {
+    text: Option<String>,
+    provisional_text: Option<String>,
+    caret: i32,
+    selection: TextSelection,
+    styles: Option<TextStyleOverrides>,
+}
+
+impl ConfirmedPreedit {
+    fn capture(parent: &TextBox) -> Self {
+        let text = parent.text();
+        let selection = TextSelection::new(parent.selection_start(), parent.selection_end());
+        let mut units: Vec<_> = text.as_deref().unwrap_or_default().encode_utf16().collect();
+        let start = selection.start.min(selection.end).max(0) as usize;
+        let end = (selection.start.max(selection.end).max(0) as usize).min(units.len());
+        let provisional_text = if start < end && !parent.is_read_only() {
+            units.drain(start..end);
+            Some(String::from_utf16_lossy(&units))
+        } else { text.clone() };
+        Self { text, provisional_text, caret: parent.caret_index(), selection, styles: parent.text_style_overrides() }
+    }
 }
 
 /// The scope of a change of a text box (see
@@ -119,8 +146,9 @@ impl TextInputMethodClient for TextBoxTextInputMethodClient {
     }
 
     fn set_preedit_text_with_cursor(&self, preedit_text: Option<&str>, cursor_pos: Option<i32>) {
-        let (Some(_parent), Some(presenter)) = (self.parent(), self.presenter()) else {
+        let (Some(parent), Some(presenter)) = (self.parent(), self.presenter()) else {
             self.pending_preedit.set(false);
+            self.confirmed_preedit.borrow_mut().take();
             return;
         };
 
@@ -128,6 +156,11 @@ impl TextInputMethodClient for TextBoxTextInputMethodClient {
         // Its caret/text synchronization can then clear the presenter's visual
         // preedit before TextChanging runs. Keep the input client's state until
         // the input method explicitly clears it, including an empty update.
+        if preedit_text.is_some() && !self.pending_preedit.get() {
+            *self.confirmed_preedit.borrow_mut() = Some(ConfirmedPreedit::capture(&parent));
+        } else if preedit_text.is_none() {
+            self.confirmed_preedit.borrow_mut().take();
+        }
         self.pending_preedit.set(preedit_text.is_some());
         presenter.set_current_value(TextPresenter::preedit_text_property(), preedit_text.map(str::to_owned));
         presenter.set_current_value(TextPresenter::preedit_text_cursor_position_property(), cursor_pos);
@@ -155,6 +188,7 @@ impl TextBoxTextInputMethodClient {
             parent: RefCell::new(None),
             presenter: RefCell::new(None),
             pending_preedit: Cell::new(false),
+            confirmed_preedit: RefCell::new(None),
             selection_changed: Cell::new(false),
             is_in_change: Cell::new(false),
             parent_property_changed: RefCell::new(None),
@@ -177,7 +211,37 @@ impl TextBoxTextInputMethodClient {
         self.pending_preedit.get()
     }
 
+    /// Style ranges still refer to confirmed text while the native TextBox has
+    /// provisionally deleted the selection. Do not remap a collection that the
+    /// application has already replaced in response to that temporary change.
+    pub(crate) fn preedit_removed_style_range(&self, styles: Option<&TextStyleOverrides>) -> Option<(i32, i32)> {
+        if !self.pending_preedit.get() { return None; }
+        let parent = self.parent()?;
+        let confirmed = self.confirmed_preedit.borrow();
+        let confirmed = confirmed.as_ref()?;
+        if confirmed.styles.as_ref() != styles || confirmed.text == confirmed.provisional_text
+            || parent.text() != confirmed.provisional_text { return None; }
+        let start = confirmed.selection.start.min(confirmed.selection.end);
+        let end = confirmed.selection.start.max(confirmed.selection.end);
+        Some((start, end - start))
+    }
+
     pub(crate) fn set_presenter(&self, presenter: Option<&Ref<TextPresenter>>, parent: Option<&Ref<TextBox>>) {
+        let confirmed = self.confirmed_preedit.borrow_mut().take();
+        if self.pending_preedit.get() {
+            if let (Some(old_parent), Some(confirmed)) = (self.parent(), confirmed) {
+                // A host may already have restored or replaced Text. Never
+                // overwrite that later value with an obsolete IME snapshot.
+                if old_parent.text() == confirmed.provisional_text && confirmed.text != confirmed.provisional_text {
+                    let _change = self.begin_change();
+                    old_parent.set_text_from_internal_synchronization(confirmed.text);
+                    old_parent.set_current_value(TextBox::text_style_overrides_property(), confirmed.styles);
+                    old_parent.set_current_value(TextBox::caret_index_property(), confirmed.caret);
+                    old_parent.set_current_value(TextBox::selection_start_property(), confirmed.selection.start);
+                    old_parent.set_current_value(TextBox::selection_end_property(), confirmed.selection.end);
+                }
+            }
+        }
         self.pending_preedit.set(false);
         let property_changed = self.parent_property_changed.borrow_mut().take();
         let tapped = self.parent_tapped.borrow_mut().take();

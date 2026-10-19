@@ -23,7 +23,8 @@ mod scroll_content_presenter_tests;
 mod scroll_content_presenter_tests_i_logical_scrollable;
 
 mod text_presenter;
-pub use text_presenter::{TextPresenter, TextPresenterImpl, TextPresenterImplExt, TextPresenterVTable};
+mod text_presenter_styles;
+pub use text_presenter::{TextPresenter, TextPresenterImpl, TextPresenterImplExt, TextPresenterVTable, TextStyleOverrides};
 #[cfg(test)]
 mod content_presenter_text_tests;
 #[cfg(test)]

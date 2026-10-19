@@ -1,4 +1,4 @@
-use crate::presenters::TextPresenter;
+use crate::presenters::{TextPresenter, TextStyleOverrides};
 use crate::primitives::{
     ScrollBarVisibility, TemplateAppliedEventArgs, TemplatedControl, TemplatedControlImpl,
 };
@@ -381,6 +381,10 @@ impl InputElementImpl for TextBox {
     fn on_lost_focus(this: &Self, e: &FocusChangedEventArgs) {
         Self::parent_on_lost_focus(this, e);
 
+        // Restore a still-pending composition before applying normal blur
+        // selection policy or notifying application LostFocus handlers.
+        this.im_client.set_presenter(None, None);
+
         if !this.context_flyout().is_some_and(|flyout| flyout.is_open())
             && !this.context_menu().is_some_and(|menu| menu.is_open())
         {
@@ -401,8 +405,6 @@ impl InputElementImpl for TextBox {
         if let Some(presenter) = &presenter {
             presenter.hide_caret();
         }
-
-        this.im_client.set_presenter(None, None);
 
         if let Some(presenter) = &presenter {
             if !this.is_inactive_selection_highlight_enabled() {
@@ -1303,6 +1305,14 @@ ferroui_base::ferro_properties! { impl TextBox, also [
     );
 
     ferro_property!(
+        /// Defines the `TextStyleOverrides` property. Control templates bind
+        /// this to the presenter's property, just like `Text` and `TextWrapping`.
+        pub fn text_style_overrides_property() -> StyledProperty<Option<TextStyleOverrides>> {
+            FerroProperty::register::<TextBox, _>("TextStyleOverrides", None)
+        }
+    );
+
+    ferro_property!(
         /// Defines the `TextAlignment` property.
         pub fn text_alignment_property() -> AttachedProperty<TextAlignment> {
             TextBlock::text_alignment_property().add_owner::<TextBox>()
@@ -1798,6 +1808,18 @@ impl TextBox {
 
     pub fn set_vertical_content_alignment(&self, value: VerticalAlignment) {
         self.set_value(Self::vertical_content_alignment_property(), value)
+    }
+
+    /// Complete run properties at UTF-16 ranges of `Text`. Applications that
+    /// own rich documents should update the immutable collection in
+    /// `TextChanging` after rebasing their committed ranges. IME preedit remains
+    /// a temporary presentation and does not alter the supplied collection.
+    pub fn text_style_overrides(&self) -> Option<TextStyleOverrides> {
+        self.get_value(Self::text_style_overrides_property())
+    }
+
+    pub fn set_text_style_overrides(&self, value: Option<TextStyleOverrides>) {
+        self.set_value(Self::text_style_overrides_property(), value)
     }
 
     /// The text alignment of the text box.

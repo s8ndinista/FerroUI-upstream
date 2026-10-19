@@ -12,7 +12,7 @@ use ferroui_base::media::text_formatting::{
 use ferroui_base::media::{
     BaselineAlignment, BrushExtensions, Brushes, CharacterHit, Color, DrawingContext, FlowDirection, FontFamily,
     FontFeatureCollection, FontStretch, FontStyle, FontWeight, IBrush, IImmutableBrush, IPen, TextAlignment,
-    TextDecorations, TextWrapping, Typeface,
+    TextWrapping, Typeface,
 };
 use ferroui_base::reactive::{Disposable, IDisposable};
 use ferroui_base::threading::{Dispatcher, DispatcherPriority, DispatcherTimer};
@@ -25,6 +25,12 @@ use ferroui_base::{
 };
 use std::cell::{Cell, RefCell};
 use std::rc::{Rc, Weak};
+
+/// Immutable range formatting for the same UTF-16 positions used by
+/// [`TextLayout`], the caret, selection and input methods. Replace the collection
+/// when its ranges or run properties change. A span supplies complete run
+/// properties; unspanned text uses the control's defaults.
+pub type TextStyleOverrides = Rc<[ValueSpan<Rc<dyn TextRunProperties>>]>;
 
 /// The control that displays the text of a text box: the text, the
 /// selection, the pre-edit text of an input method and the caret.
@@ -106,6 +112,7 @@ impl FerroObjectImpl for TextPresenter {
             // Properties that affect shaping: invalidate the run cache + layout.
             "PreeditText" | "Foreground" | "FontSize" | "FontStyle" | "FontWeight" | "FontFamily" | "FontStretch"
             | "Text" | "LetterSpacing" | "PasswordChar" | "RevealPassword" | "FlowDirection"
+            | "FontFeatures" | "TextStyleOverrides"
             | "SelectionForegroundBrush" | "ShowSelectionHighlight" => {
                 this.invalidate_text_layout();
             }
@@ -285,41 +292,21 @@ impl TextPresenterImpl for TextPresenter {
         let start = selection_start.min(selection_end);
         let length = selection_start.max(selection_end) - start;
 
-        let mut text_style_overrides: Option<Rc<[ValueSpan<Rc<dyn TextRunProperties>>]>> = None;
-
-        let foreground = this.foreground();
-
-        if let Some(preedit_text) = &preedit_text {
-            let properties: Rc<dyn TextRunProperties> = Rc::new(GenericTextRunProperties::with_all(
-                typeface.clone(),
-                this.font_size(),
-                Some(TextDecorations::underline()),
-                foreground,
-                None,
-                BaselineAlignment::Baseline,
-                None,
-                this.font_features(),
-            ));
-
-            let preedit_highlight = ValueSpan::new(caret_index, preedit_text.len() as i32, properties);
-
-            text_style_overrides = Some(Rc::new([preedit_highlight]));
-        } else if this.show_selection_highlight() && length > 0 {
-            if let Some(selection_foreground_brush) = this.selection_foreground_brush() {
-                let properties: Rc<dyn TextRunProperties> = Rc::new(GenericTextRunProperties::with_all(
-                    typeface.clone(),
-                    this.font_size(),
-                    None,
-                    Some(selection_foreground_brush),
-                    None,
-                    BaselineAlignment::Baseline,
-                    None,
-                    this.font_features(),
-                ));
-
-                text_style_overrides = Some(Rc::new([ValueSpan::new(start, length, properties)]));
-            }
-        }
+        let defaults: Rc<dyn TextRunProperties> = Rc::new(GenericTextRunProperties::with_all(
+            typeface.clone(), this.font_size(), None, this.foreground(), None,
+            BaselineAlignment::Baseline, None, this.font_features(),
+        ));
+        let styles = this.text_style_overrides();
+        let removed = this.current_im_client.borrow().as_ref().and_then(Weak::upgrade)
+            .and_then(|client| client.preedit_removed_style_range(styles.as_ref()));
+        let committed_length = this.utf16_text().as_ref().map_or(0, |text| text.len() as i32);
+        let selected_foreground = (this.show_selection_highlight() && length > 0)
+            .then(|| this.selection_foreground_brush()).flatten()
+            .map(|brush| (start, length, brush));
+        let text_style_overrides = super::text_presenter_styles::compose(
+            defaults, styles, committed_length, removed, caret_index,
+            preedit_text.as_ref().map_or(0, |text| text.len() as i32), selected_foreground,
+        );
 
         let password_char = this.password_char();
 
@@ -359,6 +346,13 @@ impl TextPresenterImpl for TextPresenter {
 }
 
 ferroui_base::ferro_properties! { impl TextPresenter {
+    ferro_property!(
+        /// Defines the `TextStyleOverrides` property.
+        pub fn text_style_overrides_property() -> StyledProperty<Option<TextStyleOverrides>> {
+            TextBox::text_style_overrides_property().add_owner::<TextPresenter>()
+        }
+    );
+
     ferro_property!(
         /// Defines the `ShowSelectionHighlight` property.
         pub fn show_selection_highlight_property() -> StyledProperty<bool> {
@@ -584,6 +578,17 @@ impl TextPresenter {
 
     pub fn set_preedit_text_cursor_position(&self, value: Option<i32>) {
         self.set_value(Self::preedit_text_cursor_position_property(), value)
+    }
+
+    /// Complete run properties at UTF-16 ranges of committed `Text`.
+    pub fn text_style_overrides(&self) -> Option<TextStyleOverrides> {
+        self.get_value(Self::text_style_overrides_property())
+    }
+
+    /// Selection colors and IME decorations preserve these properties. The
+    /// collection is immutable; assign a new one after editing the text.
+    pub fn set_text_style_overrides(&self, value: Option<TextStyleOverrides>) {
+        self.set_value(Self::text_style_overrides_property(), value)
     }
 
     /// The font family.
