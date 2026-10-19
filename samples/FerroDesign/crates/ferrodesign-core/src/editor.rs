@@ -87,6 +87,7 @@ struct HistoryEntry {
     selection_after: Vec<NodeId>,
     page_before: NodeId,
     page_after: NodeId,
+    node_only: bool,
 }
 #[derive(Clone, Debug)]
 struct PendingTransaction {
@@ -228,6 +229,72 @@ impl Editor {
                 .update_nodes(&self.document, self.active_page, &geometry_changed);
         }
     }
+    /// Re-index transient edits to a known set of existing nodes without adding
+    /// history. Call `refresh` instead when changing pages, document metadata,
+    /// node membership, or nodes outside `changed`.
+    pub fn refresh_preview_nodes(&mut self, changed: &[NodeId]) {
+        self.refresh_nodes(changed);
+    }
+    /// Refresh a known set of node edits without comparing unrelated text,
+    /// paths, images, or paint stacks. Arbitrary mutations through `document`
+    /// still use `refresh`, and generic transactions retain that full scan.
+    fn refresh_nodes(&mut self, changed: &[NodeId]) {
+        if self.previous_page != self.active_page
+            || self.previous_nodes.len() != self.document.nodes.len()
+        {
+            self.refresh();
+            return;
+        }
+        self.selection
+            .retain(|id| self.document.nodes.contains_key(id));
+        self.revision = self.revision.wrapping_add(1);
+        self.document.revision = self.revision;
+        let mut structural_change = false;
+        let mut geometry_changed = Vec::new();
+        for id in changed {
+            let Some(node) = self.document.nodes.get_mut(id) else {
+                continue;
+            };
+            let content_changed = if let Some(old) = self.previous_nodes.get(id) {
+                structural_change |= node.parent != old.parent
+                    || node.children != old.children
+                    || node.visible != old.visible
+                    || node.kind != old.kind
+                    || node.clip_content != old.clip_content;
+                if node.x != old.x
+                    || node.y != old.y
+                    || node.width != old.width
+                    || node.height != old.height
+                    || node.rotation != old.rotation
+                    || node.flip_x != old.flip_x
+                    || node.flip_y != old.flip_y
+                    || node.affine_transform != old.affine_transform
+                    || node.effects != old.effects
+                    || node.strokes != old.strokes
+                {
+                    geometry_changed.push(*id);
+                }
+                let revision = node.revision;
+                node.revision = old.revision;
+                let differs = *node != *old;
+                node.revision = revision;
+                differs
+            } else {
+                structural_change = true;
+                true
+            };
+            if content_changed {
+                node.revision = self.revision;
+                self.previous_nodes.insert(*id, node.clone());
+            }
+        }
+        if structural_change {
+            self.scene.rebuild(&self.document, self.active_page);
+        } else if !geometry_changed.is_empty() {
+            self.scene
+                .update_nodes(&self.document, self.active_page, &geometry_changed);
+        }
+    }
     pub fn begin_transaction(&mut self, label: impl Into<String>) {
         if self.pending.is_none() {
             self.pending = Some(PendingTransaction {
@@ -280,6 +347,7 @@ impl Editor {
             selection_after: self.selection.clone(),
             page_before: p.page,
             page_after: self.active_page,
+            node_only: false,
         });
         if self.undo.len() > self.history_limit {
             self.undo.remove(0);
@@ -326,6 +394,56 @@ impl Editor {
         }
         r
     }
+    /// Internal operations using this path may change only the supplied nodes.
+    /// Existing open transactions remain fully general: direct gesture edits
+    /// and nested operations still use their original complete snapshot.
+    fn edit_nodes<R>(
+        &mut self,
+        label: &str,
+        ids: &[NodeId],
+        operation: impl FnOnce(&mut Self) -> R,
+    ) -> R {
+        if self.pending.is_some() {
+            return self.edit(label, operation);
+        }
+        let before: BTreeMap<_, _> = ids
+            .iter()
+            .map(|id| (*id, self.document.nodes.get(id).cloned()))
+            .collect();
+        let metadata = Metadata::capture(&self.document);
+        let selection_before = self.selection.clone();
+        let page_before = self.active_page;
+        let result = operation(self);
+        let mut nodes = BTreeMap::new();
+        for (id, mut old) in before {
+            let new = self.document.nodes.get(&id);
+            if let (Some(old), Some(new)) = (old.as_mut(), new) {
+                old.revision = new.revision;
+            }
+            if old.as_ref() != new {
+                nodes.insert(id, (old, new.cloned()));
+            }
+        }
+        if !nodes.is_empty() {
+            self.undo.push(HistoryEntry {
+                label: label.into(),
+                nodes,
+                before: metadata.clone(),
+                after: metadata,
+                selection_before,
+                selection_after: self.selection.clone(),
+                page_before,
+                page_after: self.active_page,
+                node_only: true,
+            });
+            if self.undo.len() > self.history_limit {
+                self.undo.remove(0);
+            }
+            self.redo.clear();
+        }
+        self.refresh_nodes(ids);
+        result
+    }
     pub fn can_undo(&self) -> bool {
         !self.undo.is_empty()
     }
@@ -359,8 +477,14 @@ impl Editor {
         e.before.restore(&mut self.document);
         self.selection = e.selection_before.clone();
         self.active_page = e.page_before;
+        let changed: Vec<_> = e.nodes.keys().copied().collect();
+        let node_only = e.node_only;
         self.redo.push(e);
-        self.refresh();
+        if node_only {
+            self.refresh_nodes(&changed);
+        } else {
+            self.refresh();
+        }
         true
     }
     pub fn redo(&mut self) -> bool {
@@ -380,8 +504,14 @@ impl Editor {
         e.after.restore(&mut self.document);
         self.selection = e.selection_after.clone();
         self.active_page = e.page_after;
+        let changed: Vec<_> = e.nodes.keys().copied().collect();
+        let node_only = e.node_only;
         self.undo.push(e);
-        self.refresh();
+        if node_only {
+            self.refresh_nodes(&changed);
+        } else {
+            self.refresh();
+        }
         true
     }
     pub fn clear_history(&mut self) {
@@ -444,10 +574,7 @@ impl Editor {
             })
             .collect();
         let set: BTreeSet<_> = ids.iter().copied().collect();
-        ids.retain(|id| {
-            !set.iter()
-                .any(|p| p != id && self.document.is_ancestor(*p, *id))
-        });
+        ids.retain(|id| !has_selected_ancestor(&self.document, *id, &set));
         for id in ids {
             if !self.selection.contains(&id) {
                 self.selection.push(id)
@@ -472,14 +599,12 @@ impl Editor {
             .reduce(|a, b| a.union(b))
     }
     pub fn root_selection(&self) -> Vec<NodeId> {
+        let selected: BTreeSet<_> = self.selection.iter().copied().collect();
         self.selection
             .iter()
             .filter(|id| {
                 !self.document.effective_locked(**id)
-                    && !self
-                        .selection
-                        .iter()
-                        .any(|p| p != *id && self.document.is_ancestor(*p, **id))
+                    && !has_selected_ancestor(&self.document, **id, &selected)
             })
             .copied()
             .collect()
@@ -525,15 +650,37 @@ impl Editor {
         label: &str,
         update: impl FnOnce(&mut Node) -> R,
     ) -> Option<R> {
-        self.edit(label, |e| Some(update(e.document.nodes.get_mut(&id)?)))
+        self.edit_nodes(label, &[id], |e| Some(update(e.document.nodes.get_mut(&id)?)))
+    }
+    /// Update each existing node once and retain one undo record. This scoped
+    /// callback cannot mutate document metadata or unrelated nodes, so small
+    /// inspector edits do not copy and compare the whole document.
+    pub fn update_nodes(
+        &mut self,
+        ids: &[NodeId],
+        label: &str,
+        mut update: impl FnMut(&mut Node),
+    ) -> usize {
+        let ids: Vec<_> = ids.iter().copied().collect::<BTreeSet<_>>().into_iter().collect();
+        self.edit_nodes(label, &ids, |editor| {
+            let mut count = 0;
+            for id in &ids {
+                if let Some(node) = editor.document.nodes.get_mut(id) {
+                    update(node);
+                    count += 1;
+                }
+            }
+            count
+        })
     }
     pub fn move_selection(&mut self, dx: f64, dy: f64) {
         if !dx.is_finite() || !dy.is_finite() {
             return;
         }
-        self.edit("Move layers", |e| {
-            for id in e.root_selection() {
-                e.move_world(id, Point::new(dx, dy))
+        let ids = self.root_selection();
+        self.edit_nodes("Move layers", &ids, |e| {
+            for id in &ids {
+                e.move_world(*id, Point::new(dx, dy))
             }
         })
     }
@@ -618,9 +765,10 @@ impl Editor {
         if !degrees.is_finite() {
             return;
         }
-        self.edit("Rotate layers", |e| {
-            for id in e.root_selection() {
-                if let Some(n) = e.document.nodes.get_mut(&id) {
+        let ids = self.root_selection();
+        self.edit_nodes("Rotate layers", &ids, |e| {
+            for id in &ids {
+                if let Some(n) = e.document.nodes.get_mut(id) {
                     n.rotation = (n.rotation + degrees).rem_euclid(360.0)
                 }
             }
@@ -633,14 +781,10 @@ impl Editor {
         });
     }
     pub fn set_selection_fill(&mut self, c: Color) {
-        self.edit("Change fill", |e| {
-            for id in e.selection.clone() {
-                if let Some(n) = e.document.nodes.get_mut(&id) {
-                    n.fills = vec![Fill::solid(c)];
-                    n.overridden_properties.insert("fills".into());
-                }
-            }
-        })
+        self.update_nodes(&self.selection.clone(), "Change fill", |node| {
+            node.fills = vec![Fill::solid(c)];
+            node.overridden_properties.insert("fills".into());
+        });
     }
     pub fn set_text(&mut self, id: NodeId, text: impl Into<String>) {
         let text = text.into();
@@ -1398,7 +1542,7 @@ impl Editor {
         .is_some()
     }
 
-    fn edit_vector_path<R>(
+    pub(crate) fn edit_vector_path<R>(
         &mut self,
         id: NodeId,
         label: &str,
@@ -1415,7 +1559,7 @@ impl Editor {
         if !normalize_vector_bounds(&mut node) {
             return None;
         }
-        self.edit(label, |editor| {
+        self.edit_nodes(label, &[id], |editor| {
             editor.document.nodes.insert(id, node);
         });
         Some(result)
@@ -1481,6 +1625,7 @@ impl Editor {
             n.path = VectorPath {
                 segments,
                 fill_rule: FillRule::NonZero,
+                ..VectorPath::default()
             };
             n.fills = fills;
             let id = e.document.insert_node(e.active_page, n).ok()?;
@@ -1497,6 +1642,175 @@ pub struct SnapResult {
     pub delta: Point,
     pub vertical_guide: Option<f64>,
     pub horizontal_guide: Option<f64>,
+}
+fn has_selected_ancestor(document: &Document, id: NodeId, selected: &BTreeSet<NodeId>) -> bool {
+    let mut current = id;
+    for _ in 0..MAX_DOCUMENT_DEPTH {
+        let Some(parent) = document.nodes.get(&current).and_then(|node| node.parent) else {
+            return false;
+        };
+        if parent != id && selected.contains(&parent) {
+            return true;
+        }
+        current = parent;
+    }
+    false
+}
+
+#[cfg(test)]
+mod performance_tests {
+    use super::*;
+
+    fn fixture() -> (Document, NodeId, NodeId, NodeId) {
+        let mut document = Document::new("Scoped edit fixture");
+        let page = document.pages[0].id;
+        let mut frame = Node::new(NodeKind::Frame, "Clipped frame", 80.0, 30.0, 200.0, 180.0);
+        frame.clip_content = true;
+        frame.rotation = 17.0;
+        let frame = document.insert_node(page, frame).unwrap();
+        let child = document
+            .insert_node(frame, Node::new(NodeKind::Rectangle, "Child", 20.0, 20.0, 80.0, 60.0))
+            .unwrap();
+        let sibling = document
+            .insert_node(page, Node::new(NodeKind::Text, "Text", 330.0, 20.0, 200.0, 80.0)
+                .with_text("Unrelated café Ω 🚀", 18.0, Color::BLACK))
+            .unwrap();
+        for index in 0..64 {
+            document.insert_node(page, Node::new(NodeKind::Rectangle, format!("Other {index}"),
+                index as f64 * 12.0, 400.0, 8.0, 8.0)).unwrap();
+        }
+        (document, frame, child, sibling)
+    }
+
+    fn equivalent(actual: &Editor, reference: &Editor) {
+        assert_eq!(actual.to_json().unwrap(), reference.to_json().unwrap());
+        assert_eq!(actual.selection, reference.selection);
+        assert_eq!(actual.active_page, reference.active_page);
+        assert_eq!(actual.history_len(), reference.history_len());
+        assert_eq!(actual.can_undo(), reference.can_undo());
+        assert_eq!(actual.can_redo(), reference.can_redo());
+        let mut rebuilt = SceneIndex::default();
+        rebuilt.rebuild(&actual.document, actual.active_page);
+        assert_eq!(actual.scene.transforms, rebuilt.transforms);
+        assert_eq!(actual.scene.draw_order, rebuilt.draw_order);
+        for rect in [Rect::new(-100.0, -100.0, 1500.0, 1000.0),
+            Rect::new(50.0, 20.0, 200.0, 200.0), Rect::new(400.0, 380.0, 100.0, 60.0)] {
+            assert_eq!(actual.visible_nodes(rect), rebuilt.visible_nodes(rect));
+        }
+        for id in actual.document.nodes.keys() {
+            assert_eq!(actual.scene.spatial.bounds(*id), rebuilt.spatial.bounds(*id));
+        }
+    }
+
+    #[test]
+    fn scoped_edits_match_full_transactions_and_rebuilt_scene_through_history() {
+        let (document, frame, child, sibling) = fixture();
+        let mut actual = Editor::new(document.clone());
+        let mut reference = Editor::new(document);
+        actual.selection = vec![frame, child];
+        reference.selection = actual.selection.clone();
+        actual.move_selection(18.0, -4.0);
+        reference.transact("Move layers", |document| {
+            let frame = document.nodes.get_mut(&frame).unwrap();
+            frame.x += 18.0;
+            frame.y -= 4.0;
+        });
+        equivalent(&actual, &reference);
+        actual.update_nodes(&[child, child, sibling], "Paint", |node| {
+            node.fills = vec![Fill::solid(Color::rgb(13, 42, 197))];
+        });
+        reference.transact("Paint", |document| {
+            for id in [child, sibling] {
+                document.nodes.get_mut(&id).unwrap().fills = vec![Fill::solid(Color::rgb(13, 42, 197))];
+            }
+        });
+        equivalent(&actual, &reference);
+        actual.update_node(frame, "Hide frame", |node| node.visible = false);
+        reference.transact("Hide frame", |document| document.nodes.get_mut(&frame).unwrap().visible = false);
+        equivalent(&actual, &reference);
+        for _ in 0..3 {
+            assert!(actual.undo());
+            assert!(reference.undo());
+            equivalent(&actual, &reference);
+        }
+        for _ in 0..3 {
+            assert!(actual.redo());
+            assert!(reference.redo());
+            equivalent(&actual, &reference);
+        }
+        actual.document.validate().unwrap();
+    }
+
+    #[test]
+    fn scoped_noop_keeps_redo_and_open_generic_transaction_preserves_all_changes() {
+        let (document, frame, child, _) = fixture();
+        let mut editor = Editor::new(document);
+        let original = editor.to_json().unwrap();
+        editor.update_node(child, "Move child", |node| node.x += 5.0);
+        assert!(editor.undo());
+        editor.update_node(child, "No change", |_| {});
+        assert!(editor.can_redo());
+        assert_eq!(editor.to_json().unwrap(), original);
+        editor.begin_transaction("Mixed document edit");
+        editor.document.name = "Renamed document".into();
+        editor.document.nodes.get_mut(&frame).unwrap().x += 20.0;
+        editor.update_nodes(&[child], "Nested fill", |node| node.opacity = 0.5);
+        assert!(editor.commit_transaction());
+        let edited = editor.to_json().unwrap();
+        assert!(editor.undo());
+        assert_eq!(editor.to_json().unwrap(), original);
+        assert!(editor.redo());
+        assert_eq!(editor.to_json().unwrap(), edited);
+        editor.begin_transaction("Canceled mixed edit");
+        editor.document.name = "Canceled".into();
+        editor.update_node(child, "Nested text", |node| node.text = "Discard".into());
+        editor.cancel_transaction();
+        assert_eq!(editor.to_json().unwrap(), edited);
+    }
+
+    #[test]
+    fn ancestor_selection_filter_preserves_order_duplicates_and_locked_semantics() {
+        let (mut document, frame, child, sibling) = fixture();
+        document.nodes.get_mut(&sibling).unwrap().locked = true;
+        let mut editor = Editor::new(document);
+        editor.selection = vec![child, sibling, frame, frame];
+        let reference: Vec<_> = editor.selection.iter().filter(|id| {
+            !editor.document.effective_locked(**id)
+                && !editor.selection.iter().any(|ancestor| ancestor != *id
+                    && editor.document.is_ancestor(*ancestor, **id))
+        }).copied().collect();
+        assert_eq!(editor.root_selection(), reference);
+        assert_eq!(reference, vec![frame, frame]);
+        editor.select_rect(Rect::new(-1000.0, -1000.0, 3000.0, 3000.0), false);
+        assert!(editor.selection.contains(&frame));
+        assert!(!editor.selection.contains(&child));
+        assert!(!editor.selection.contains(&sibling));
+    }
+
+    #[test]
+    fn spatial_updates_match_exact_bounds_across_bucket_and_oversized_transitions() {
+        let mut spatial = SpatialIndex::new(64.0);
+        let mut bounds = BTreeMap::new();
+        for (index, rect) in [Rect::new(2.0, 3.0, 10.0, 11.0),
+            Rect::new(8.0, 9.0, 10.0, 11.0), Rect::new(61.0, 61.0, 12.0, 12.0),
+            Rect::new(-128.0, -128.0, 4000.0, 4000.0),
+            Rect::new(-256.0, -256.0, 4100.0, 4100.0),
+            Rect::new(-31.0, -31.0, 9.0, 9.0)].into_iter().enumerate() {
+            spatial.insert(10, rect);
+            bounds.insert(10, rect);
+            let other = Rect::new(index as f64 * 7.0, 0.0, 4.0, 4.0);
+            spatial.insert(index as u64 + 20, other);
+            bounds.insert(index as u64 + 20, other);
+            for query in [Rect::new(-64.0, -64.0, 128.0, 128.0),
+                Rect::new(60.0, 60.0, 16.0, 16.0), Rect::new(-10000.0, -10000.0, 20000.0, 20000.0)] {
+                let expected: Vec<_> = bounds.iter().filter_map(|(id, rect)| rect.intersects(query).then_some(*id)).collect();
+                assert_eq!(spatial.query(query), expected);
+            }
+        }
+        spatial.insert(10, Rect::new(f64::NAN, 0.0, 1.0, 1.0));
+        assert_eq!(spatial.bounds(10), None);
+        assert!(!spatial.query(Rect::new(-5000.0, -5000.0, 10000.0, 10000.0)).contains(&10));
+    }
 }
 fn assign_transform(n: &mut Node, t: Transform) {
     n.set_local_transform(t)

@@ -46,12 +46,23 @@ impl SpatialIndex {
             .saturating_mul((d as i64 - b as i64 + 1).max(0) as u64)
     }
     pub fn insert(&mut self, id: NodeId, bounds: Rect) {
-        self.remove(id);
         if !bounds.is_finite() {
+            self.remove(id);
             return;
         }
-        self.bounds.insert(id, bounds);
         let range = self.range(bounds);
+        if let Some(previous) = self.bounds.get(&id).copied() {
+            // Most pointer/nudge updates remain in the same cells. Preserve
+            // their bucket memberships and replace only the exact bounds.
+            if self.range(previous) == range
+                || (self.large.contains(&id) && Self::cell_count(range) > 1024)
+            {
+                self.bounds.insert(id, bounds);
+                return;
+            }
+        }
+        self.remove(id);
+        self.bounds.insert(id, bounds);
         if Self::cell_count(range) > 1024 {
             self.large.insert(id);
             return;
@@ -97,7 +108,7 @@ impl SpatialIndex {
                 .filter_map(|(id, b)| b.intersects(rect).then_some(*id))
                 .collect();
         }
-        let mut ids: BTreeSet<_> = self.large.iter().copied().collect();
+        let mut ids: Vec<_> = self.large.iter().copied().collect();
         let (x0, y0, x1, y1) = range;
         for x in x0..=x1 {
             for y in y0..=y1 {
@@ -106,9 +117,12 @@ impl SpatialIndex {
                 }
             }
         }
-        ids.into_iter()
-            .filter(|id| self.bounds.get(id).is_some_and(|b| b.intersects(rect)))
-            .collect()
+        // A flat buffer avoids one tree allocation per candidate while keeping
+        // query order deterministic and removing shapes spanning several cells.
+        ids.sort_unstable();
+        ids.dedup();
+        ids.retain(|id| self.bounds.get(id).is_some_and(|b| b.intersects(rect)));
+        ids
     }
 }
 #[derive(Clone, Copy, Debug)]
@@ -233,7 +247,7 @@ impl SceneIndex {
             };
             let transform = parent.transform * node.local_transform();
             self.transforms.insert(id, transform);
-            self.spatial.remove(id);
+            let mut indexed = false;
             let visible = parent.visible && node.visible;
             let bounds = transform.transform_rect(node.local_bounds());
             if visible && !parent.operand {
@@ -262,11 +276,16 @@ impl SceneIndex {
                     if let Some(clip) = parent.clip {
                         if let Some(intersection) = paint.intersection(clip) {
                             self.spatial.insert(id, intersection);
+                            indexed = true;
                         }
                     } else {
                         self.spatial.insert(id, paint);
+                        indexed = true;
                     }
                 }
+            }
+            if !indexed {
+                self.spatial.remove(id);
             }
             let mut next = WalkState {
                 transform,
