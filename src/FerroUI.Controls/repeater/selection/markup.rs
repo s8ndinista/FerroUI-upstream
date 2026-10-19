@@ -110,11 +110,14 @@ ferro_markup_type!(struct SelectionModelSelectionChangedEventArgs {
     handles: [SelectionModelSelectionChangedEventArgs],
 });
 
+const TYPES: &[&MarkupType] = &[
+    <SelectionModel as MarkupTyped>::MARKUP,
+    <IndexPath as MarkupTyped>::MARKUP,
+    <SelectionModelChildrenRequestedEventArgs as MarkupTyped>::MARKUP,
+    <SelectionModelSelectionChangedEventArgs as MarkupTyped>::MARKUP,
+];
+
 pub fn register_markup_types() {
-    MarkupType::register_all(&[
-        <SelectionModel as MarkupTyped>::MARKUP,
-        <IndexPath as MarkupTyped>::MARKUP,
-        <SelectionModelChildrenRequestedEventArgs as MarkupTyped>::MARKUP,
-        <SelectionModelSelectionChangedEventArgs as MarkupTyped>::MARKUP,
-    ]);
+    MarkupType::register_all(TYPES);
+    super::selected_items_markup::register_markup_types();
 }

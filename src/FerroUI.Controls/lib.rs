@@ -16,6 +16,27 @@ pub mod presenters;
 pub mod primitives;
 pub mod remote;
 pub mod repeater;
+
+// Layout-driven realization and the public WinUI repeater layout family.
+pub use repeater::{
+    ItemsRepeater, ItemsRepeaterScrollHost, LayoutPanel, RepeaterAutomationPeer,
+    Layout, LayoutImpl, VirtualizingLayout, VirtualizingLayoutImpl, NonVirtualizingLayout,
+    NonVirtualizingLayoutImpl, LayoutContext, LayoutContextImpl, VirtualizingLayoutContext,
+    VirtualizingLayoutContextImpl, NonVirtualizingLayoutContext, NonVirtualizingLayoutContextImpl,
+    LayoutContextHost, ElementRealizationOptions, IndexBasedLayoutOrientation,
+    StackLayout, FlowLayout, UniformGridLayout, LinedFlowLayout, FlowLayoutLineAlignment,
+    UniformGridLayoutItemsJustification, UniformGridLayoutItemsStretch,
+    LinedFlowLayoutItemsJustification, LinedFlowLayoutItemsStretch,
+    LinedFlowLayoutItemsInfoRequestedEventArgs, ItemsRepeaterElementPreparedEventArgs,
+    ItemsRepeaterElementClearingEventArgs, ItemsRepeaterElementIndexChangedEventArgs,
+    ElementFactory, ElementFactoryImpl, IElementFactory, ElementFactoryGetArgs,
+    ElementFactoryRecycleArgs, RecyclingElementFactory, RecyclePool,
+    SelectTemplateEventArgs, ItemCollectionTransition, ItemCollectionTransitionProvider,
+    ItemCollectionTransitionProviderImpl, ItemCollectionTransitionProgress,
+    ItemCollectionTransitionCompletedEventArgs, ItemCollectionTransitionOperation,
+    ItemCollectionTransitionTriggers, LinedFlowLayoutItemCollectionTransitionProvider,
+};
+
 pub mod shapes;
 pub mod templates;
 pub mod utils;

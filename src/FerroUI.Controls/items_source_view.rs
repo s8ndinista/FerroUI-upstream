@@ -27,6 +27,10 @@ pub struct ItemsSourceView {
     listening: Cell<bool>,
 }
 
+impl PartialEq for ItemsSourceView {
+    fn eq(&self, other: &Self) -> bool { std::ptr::eq(self, other) }
+}
+
 impl ItemsSourceView {
     /// Gets an empty [`ItemsSourceView`].
     pub fn empty() -> Rc<ItemsSourceView> {
@@ -39,7 +43,7 @@ impl ItemsSourceView {
     }
 
     /// Initializes a new instance of the view for the specified data source.
-    pub(crate) fn new(source: ItemsSource) -> Rc<Self> {
+    pub fn new(source: ItemsSource) -> Rc<Self> {
         Rc::new_cyclic(|this| Self {
             this: this.clone(),
             source: RefCell::new(source),
@@ -286,7 +290,7 @@ impl<T: PropertyValue> ItemsSourceViewOf<T> {
     }
 
     /// Initializes a new instance of the view for the specified data source.
-    pub(crate) fn new(source: ItemsSource) -> Self {
+    pub fn new(source: ItemsSource) -> Self {
         Self { view: ItemsSourceView::new(source), marker: PhantomData }
     }
 

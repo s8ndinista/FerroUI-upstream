@@ -454,6 +454,15 @@ fn select_range_regression_test() {
     );
     assert_eq!(model.is_selected(0), Some(true));
     assert_eq!(model.is_selected(1), None);
+
+    // The source test's second endpoint names group 2 in a two-group source.
+    // Checked Rust traversal returns the contract error for that invalid path.
+    let model = SelectionModel::new();
+    model.set_source(Some(nested_source(2, 2, 1)));
+    assert_eq!(
+        model.select_range(&path(&[1]), &path(&[2])),
+        Err(SelectionError::IndexOutOfRange)
+    );
 }
 
 #[test]
