@@ -1379,7 +1379,8 @@ impl EditorShell {
             node.is_some_and(|n| n.layout.as_ref().is_some_and(|l| l.reverse)),
         );
         for (name, index) in [
-            ("BlendModeChoice", node.and_then(|node| BLEND_OPTIONS.iter().position(|(_, mode)| *mode == node.blend_mode))),
+            ("BlendModeChoice", node.and_then(|node| BLEND_OPTIONS.iter()
+                .position(|(_, mode)| *mode == node.blend_mode).map(|index| index as i32))),
             (
                 "HorizontalConstraint",
                 node.map(|n| constraint_index(n.constraints.horizontal)),

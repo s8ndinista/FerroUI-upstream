@@ -479,7 +479,7 @@ fn main() {
     let components = component_measurement(count);
 
     println!("{}", serde_json::to_string_pretty(&json!({
-        "schemaVersion": 4,
+        "schemaVersion": 5,
         "measurement": "native-engine-same-process",
         "releaseBuild": !cfg!(debug_assertions),
         "nodes": count,
@@ -501,9 +501,9 @@ fn main() {
         "layout": {"noLayout": distribution(no_layout_timings), "denseMixedFill": dense_layout},
         "componentAuthoring": components,
         "serialization": {
-            "pretty": {"bytes": edited.len(), "timing": distribution(pretty)},
-            "compactCandidate": {"bytes": compact_bytes, "timing": distribution(compact)},
-            "changesProductionFormat": false,
+            "portablePretty": {"bytes": edited.len(), "timing": distribution(pretty)},
+            "compactAutosave": {"bytes": compact_bytes, "timing": distribution(compact)},
+            "equivalentDocumentRoundTrip": true,
         },
         "parseValidateAndIndex": distribution(reload),
     })).unwrap());
