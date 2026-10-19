@@ -184,7 +184,8 @@ fn native_text_pattern_marshals_unicode_ranges_and_selection_from_worker_thread(
         );
 
         let needle = string_to_bstr("😀 b\0c");
-        let found = document.find_text(needle, 0, 0).unwrap().unwrap();
+        // SAFETY: needle is an owned, live BSTR for this synchronous call.
+        let found = unsafe { document.find_text(needle, 0, 0) }.unwrap().unwrap();
         // SAFETY: this test owns the BSTR passed as a borrowed search input.
         unsafe { free_bstr(needle) };
         assert_eq!(text(&found, -1), "😀 b\0c");
