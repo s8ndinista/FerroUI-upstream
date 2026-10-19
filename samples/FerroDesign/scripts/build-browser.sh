@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build the FerroUI/Vello application and assemble a self-contained static distribution.
+# Build the FerroUI/Skia application and assemble a self-contained static distribution.
 # Run setup.sh once, then source its env.sh before invoking this script.
 set -euo pipefail
 
@@ -41,8 +41,12 @@ fi
 
 # Check the active target graph, not optional dependencies that merely appear in Cargo.lock.
 FERRODESIGN_GRAPH="$(cd "$FERRODESIGN_ROOT" && cargo tree --locked --target wasm32-unknown-emscripten -p ferrodesign-app -e normal,build)"
-if [[ "$FERRODESIGN_GRAPH" =~ ferroui-skia|skia-safe|skia-bindings ]]; then
-    printf '%s\n' 'Refusing to build: a Skia dependency entered the application dependency graph.' >&2
+if [[ ! "$FERRODESIGN_GRAPH" =~ ferroui-skia ]] || [[ ! "$FERRODESIGN_GRAPH" =~ skia-bindings ]]; then
+    printf '%s\n' 'Refusing to build: the application dependency graph does not contain the FerroUI Skia backend.' >&2
+    exit 1
+fi
+if [[ "$FERRODESIGN_GRAPH" =~ ferroui-vello ]]; then
+    printf '%s\n' 'Refusing to build: this distribution must use the selected Skia backend.' >&2
     exit 1
 fi
 
@@ -65,8 +69,8 @@ FERRODESIGN_FLAGS=()
 if [ "$FERRODESIGN_PROFILE" = "browser" ]; then FERRODESIGN_FLAGS+=(--profile browser); fi
 
 # The repository's .cargo/config.toml supplies the Emscripten/wasm-bindgen ABI options.
-# No undefined-symbol suppression or Skia compatibility flags are used. Serialization keeps
-# the framework's generated controls and metadata within ordinary CI memory limits.
+# FerroUI.Skia supplies its prebuilt archive's setjmp bridge. Keep unresolved-symbol
+# diagnostics enabled; serial compilation bounds generated-control code generation memory.
 (
     cd "$FERRODESIGN_ROOT"
     cargo build --locked --target wasm32-unknown-emscripten --target-dir "$FERRODESIGN_TARGET" \
@@ -143,5 +147,5 @@ NODE
 
 printf '%s\n' "$FERRODESIGN_GRAPH" > "$FERRODESIGN_OUT/dependencies.txt"
 cp "$FERRODESIGN_ROOT/Cargo.lock" "$FERRODESIGN_OUT/Cargo.lock"
-printf 'Browser distribution: %s\nRenderer: FerroUI Vello (WebGL2 hybrid, CPU fallback)\n' "$FERRODESIGN_OUT"
+printf 'Browser distribution: %s\nRenderer: FerroUI Skia (WebGL2 Ganesh, Software2D raster fallback)\n' "$FERRODESIGN_OUT"
 printf 'Serve with: python3 -m http.server 8080 --directory "%s"\n' "$FERRODESIGN_OUT"

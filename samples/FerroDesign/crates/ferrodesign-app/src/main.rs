@@ -4,22 +4,40 @@ use wasm_bindgen::prelude::*;
 
 #[cfg(target_os = "emscripten")]
 #[wasm_bindgen(js_name = runMain)]
-pub fn run_main(query: &str) {
+pub fn run_main(query: &str) -> Result<(), JsValue> {
     use ferroui_browser::{
         BrowserAppBuilder, BrowserPlatformOptions, BrowserRenderer, BrowserRenderingMode,
     };
     let mut options = BrowserPlatformOptions::default();
-    options.renderer = BrowserRenderer::Vello;
-    options.rendering_mode = if query.contains("Software2D") {
-        vec![BrowserRenderingMode::Software2D]
-    } else {
-        vec![
-            BrowserRenderingMode::WebGL2,
-            BrowserRenderingMode::Software2D,
-        ]
-    };
+    options.renderer = BrowserRenderer::Skia;
+    options.rendering_mode = vec![
+        BrowserRenderingMode::WebGL2,
+        BrowserRenderingMode::Software2D,
+    ];
+    for item in query.trim_start_matches('?').split('&') {
+        let Some((key, value)) = item.split_once('=') else {
+            continue;
+        };
+        match key {
+            "Renderer" if !value.eq_ignore_ascii_case("Skia") => {
+                return Err(JsValue::from_str(
+                    "This FerroDesign build uses the FerroUI Skia renderer.",
+                ));
+            }
+            "RenderingMode" => {
+                let mode = BrowserRenderingMode::parse(value).ok_or_else(|| {
+                    JsValue::from_str("RenderingMode must be Software2D, WebGL2, or WebGL1.")
+                })?;
+                // An explicit surface request is exact. The default launch keeps a
+                // raster fallback for systems where a GPU context is unavailable.
+                options.rendering_mode = vec![mode];
+            }
+            _ => {}
+        }
+    }
     options.register_ferro_service_worker = false;
     ferrodesign_app::app::build_app().start_browser_app("out", Some(options));
+    Ok(())
 }
 #[cfg(target_os = "emscripten")]
 #[wasm_bindgen(js_name = ferroDesignState)]

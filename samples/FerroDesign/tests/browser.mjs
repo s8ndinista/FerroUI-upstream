@@ -741,14 +741,14 @@ try {
         const context = await browser.newContext({ viewport: { width: 1600, height: 1000 }, deviceScaleFactor: 1, acceptDownloads: true });
         await context.tracing.start({ screenshots: true, snapshots: true, sources: true });
         const page = await context.newPage();
-        const result = { requestedMode: mode, status: "running", pageErrors: [], consoleErrors: [], checks: [] };
+        const result = { requestedRenderer: "Skia", requestedMode: mode, status: "running", pageErrors: [], consoleErrors: [], checks: [] };
         report.results.push(result);
         page.on("pageerror", (error) => result.pageErrors.push(error.stack || String(error)));
         page.on("console", (message) => { if (message.type() === "error") result.consoleErrors.push(message.text()); });
         const check = (name) => result.checks.push(name);
         try {
             const started = performance.now();
-            await page.goto(base + "/?Renderer=Vello&RenderingMode=" + mode, { waitUntil: "domcontentloaded", timeout: 120000 });
+            await page.goto(base + "/?RenderingMode=" + mode, { waitUntil: "domcontentloaded", timeout: 120000 });
             await page.waitForFunction(() => globalThis.ferroDesignReady === true || globalThis.ferroDesignErrors?.length > 0, undefined, { timeout: 120000 });
             const startupErrors = await page.evaluate(() => globalThis.ferroDesignErrors || []);
             assert.deepEqual(startupErrors, [], "The application must start without a runtime or module-loading error");
@@ -762,7 +762,7 @@ try {
             await frames(page);
             result.firstFrameMs = Math.round(performance.now() - started);
             result.initial = await state(page);
-            assert.equal(result.initial.renderer, "FerroUI Vello");
+            assert.equal(result.initial.renderer, "FerroUI Skia", "The default application backend must be Skia");
             assert.equal(result.initial.zoomLabel, Math.round(result.initial.zoom * 100) + "%", "Native zoom label must reflect the initial fitted camera");
             assert.ok(result.initial.pageCount > 0);
             const baseline = await canvas.screenshot({ path: resolve(output, mode + "-initial.png") });
@@ -777,7 +777,7 @@ try {
                 return { kind: "WebGL2", device: debug ? gl.getParameter(debug.UNMASKED_RENDERER_WEBGL) : "unreported" };
             });
             assert.notEqual(result.surface.kind, "unknown");
-            if (mode === "Software2D") assert.equal(result.surface.kind, "Software2D");
+            assert.equal(result.surface.kind, mode, "The requested surface must be rendered, without substituting another mode");
             check("Native FerroUI canvas contains rendered UI and document pixels");
 
             // Focus the document viewport through a real pointer event, then invoke its keyboard shortcut.

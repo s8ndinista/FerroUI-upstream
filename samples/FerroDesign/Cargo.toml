@@ -38,31 +38,10 @@ codegen-units = 1
 # Keep the generated theme tables in a single compilation unit.
 codegen-units = 1
 
-[profile.browser.package.ferroui-vello]
-opt-level = 3
-
-[profile.browser.package.vello_cpu]
-opt-level = 3
-
-[profile.browser.package.vello_common]
-opt-level = 3
-
-[profile.browser.package.vello_gpu]
-opt-level = 3
-
-[profile.browser.package.glifo]
+[profile.browser.package.ferroui-skia]
 opt-level = 3
 
 [profile.browser.package.kurbo]
-opt-level = 3
-
-[profile.browser.package.fearless_simd]
-opt-level = 3
-
-[profile.browser.package.skrifa]
-opt-level = 3
-
-[profile.browser.package.read-fonts]
 opt-level = 3
 
 [profile.dev]

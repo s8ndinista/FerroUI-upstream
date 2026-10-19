@@ -726,7 +726,7 @@ impl EditorShell {
             "serializationPending":self.pending_save.get(),
             "saveSerializations":self.save_serializations.get(),
             "lastSerializationMs":self.last_serialization_ms.get(),
-            "renderer":"FerroUI Vello","pageCount":editor.document.pages.len(),"activePage":editor.active_page,
+            "renderer":"FerroUI Skia","pageCount":editor.document.pages.len(),"activePage":editor.active_page,
             "renderedFrames":self.canvas.frames.get(),"visibleNodes":stats.visible_nodes,"culledNodes":stats.culled_nodes,
             "cachedNodes":stats.cached_nodes,"missingImages":stats.missing_images,"unsupportedEffects":stats.unsupported_effects,
             "backdropCacheHits":stats.backdrop_cache_hits,"backdropRasterizations":stats.backdrop_rasterizations,
