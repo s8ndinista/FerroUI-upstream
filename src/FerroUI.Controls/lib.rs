@@ -15,6 +15,7 @@ pub mod presentation_source;
 pub mod presenters;
 pub mod primitives;
 pub mod remote;
+pub mod repeater;
 pub mod shapes;
 pub mod templates;
 pub mod utils;

@@ -30,6 +30,7 @@
 
 mod i_selection_model;
 mod index_range;
+pub(crate) use index_range::IndexRange;
 mod internal_selection_model;
 mod read_only_selection_list_base;
 mod selected_indexes;
