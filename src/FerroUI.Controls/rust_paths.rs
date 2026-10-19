@@ -320,6 +320,7 @@ ferroui_base::ferro_rust_paths! {
         crate::rich_text::TextSetOptions,
         crate::rich_text::TextStreamEncoding,
         crate::rich_text::TextRangeUnit,
+        crate::automation::provider::TextEditChangeType,
         crate::RowDefinitions,
         crate::ScrollChangedEventArgs,
         crate::SelectionChangedEventArgs,

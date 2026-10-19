@@ -1,16 +1,22 @@
 use super::{
-    ITextProvider, ITextProvider2, ITextRangeProvider, ProviderAdapter, ProviderError,
-    SupportedTextSelection, TextAttribute, TextAttributeValue, TextCaretRange,
-    TextPatternRangeEndpoint, TextProviderError, TextUnit,
+    ITextEditProvider, ITextProvider, ITextProvider2, ITextRangeProvider, ProviderAdapter,
+    ProviderError, SupportedTextSelection, TextAttribute, TextAttributeValue, TextCaretRange,
+    TextEditChangeType, TextEditTextChangedEventArgs, TextPatternRangeEndpoint, TextProviderError,
+    TextUnit,
 };
-use crate::automation::peers::{AutomationPeer, ControlAutomationPeer, HyperlinkAutomationPeer};
+use crate::automation::peers::{
+    AutomationPeer, ControlAutomationPeer, HyperlinkAutomationPeer, RichEditBoxAutomationPeer,
+};
 use crate::automation::ElementNotEnabledException;
 use crate::documents::{
     CharacterFormat, Hyperlink, InlineCollection, InlineSnapshot, InlineSnapshotKind,
     InlineUIContainer, LineBreak, Paragraph, ParagraphFormat, RichTextDocument, Run, Span,
     TextGravity, WeakRichTextDocument,
 };
-use crate::rich_text::{RichEditTextDocument, RichEditTextRange, TextFindOptions, UnicodeTextUnit};
+use crate::rich_text::{
+    RichEditTextDocument, RichEditTextRange, RichTextCompositionChange, TextFindOptions,
+    UnicodeTextUnit,
+};
 use crate::{Control, RichEditBox, RichEditBoxTextPresenter, RichTextBlock};
 use ferroui_base::input::IScrollable;
 use ferroui_base::media::{
@@ -219,6 +225,85 @@ impl TextContext {
             .ok_or(TextProviderError::ElementNotAvailable)?;
         state.entries(&self.host, &self.peer()?)
     }
+}
+
+impl ITextEditProvider for ProviderAdapter<RichEditBoxAutomationPeer> {
+    fn get_active_composition(&self) -> Result<Option<Rc<dyn ITextRangeProvider>>, ProviderError> {
+        let context = TextContext::from_peer(&*self.0)?;
+        let owner = self
+            .0
+            .try_owner()
+            .ok_or(TextProviderError::ElementNotAvailable)?;
+        owner
+            .editor()
+            .active_composition_range()
+            .map(|range| context.make_range(range))
+            .transpose()
+    }
+
+    fn get_conversion_target(&self) -> Result<Option<Rc<dyn ITextRangeProvider>>, ProviderError> {
+        self.0
+            .try_owner()
+            .ok_or(TextProviderError::ElementNotAvailable)?;
+        // TextInputMethodClient::set_preedit_text supplies a preview and caret,
+        // but not TSF's TF_ATTR_TARGET_NOTCONVERTED/TF_ATTR_TARGET_CONVERTED
+        // span. Neither the preview nor the selection identifies that span.
+        Ok(None)
+    }
+
+    fn text_edit_text_changed(
+        &self,
+        handler: Rc<dyn Fn(&TextEditTextChangedEventArgs)>,
+    ) -> Result<Rc<dyn IDisposable>, ProviderError> {
+        let owner = self
+            .0
+            .try_owner()
+            .ok_or(TextProviderError::ElementNotAvailable)?;
+        let current = Rc::new(SerialDisposable::new());
+        current.set(Some(observe_text_edit_changes(&owner, handler.clone())));
+        let subscription = current.clone();
+        let weak = owner.downgrade();
+        let property_subscription = owner.property_changed(move |event| {
+            if event.property() == RichEditBox::document_property().as_property() {
+                if let Some(owner) = weak.upgrade() {
+                    subscription.set(Some(observe_text_edit_changes(&owner, handler.clone())));
+                }
+            }
+        });
+        Ok(Rc::new(CompositeDisposable::from_disposables([
+            property_subscription,
+            current as Rc<dyn IDisposable>,
+        ])))
+    }
+}
+
+fn observe_text_edit_changes(
+    owner: &RichEditBox,
+    handler: Rc<dyn Fn(&TextEditTextChangedEventArgs)>,
+) -> Rc<dyn IDisposable> {
+    let editor = owner.editor();
+    let weak_owner = owner.to_ref().downgrade();
+    let weak_editor = Rc::downgrade(&editor);
+    editor.composition_changed(move |change| {
+        let (Some(owner), Some(editor)) = (weak_owner.upgrade(), weak_editor.upgrade()) else {
+            return;
+        };
+        if !Rc::ptr_eq(&editor, &owner.editor()) {
+            return;
+        }
+        let (change_type, text) = match change {
+            RichTextCompositionChange::Preview { changed_text } => {
+                (TextEditChangeType::Composition, changed_text)
+            }
+            RichTextCompositionChange::Finalized { text } => {
+                (TextEditChangeType::CompositionFinalized, text)
+            }
+        };
+        handler(&TextEditTextChangedEventArgs {
+            change_type,
+            changed_data: vec![text.clone()],
+        });
+    })
 }
 
 impl<T: RichTextAutomationPeer> ITextProvider2 for ProviderAdapter<T> {

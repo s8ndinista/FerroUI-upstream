@@ -4,9 +4,9 @@
 
 use super::automation_node::{AutomationNode, SendProvider, ELEMENT_NOT_AVAILABLE};
 use super::interop::{
-    IInvokeProvider, IRawElementProviderSimple, ITextChildProvider, ITextProvider, ITextProvider2,
+    IInvokeProvider, IRawElementProviderSimple, ITextChildProvider, ITextEditProvider, ITextProvider, ITextProvider2,
     ITextRangeProvider, IUiaCoreProviderApi, StructureChangeType, SupportedTextSelection,
-    TextPatternRangeEndpoint, TextUnit, UiaCoreProviderApi, UiaCoreTypesApi, UiaEventId,
+    TextEditChangeType, TextPatternRangeEndpoint, TextUnit, UiaCoreProviderApi, UiaCoreTypesApi, UiaEventId,
     UiaPatternId, UiaPoint, UiaPropertyId,
 };
 use super::marshalling::{
@@ -33,9 +33,18 @@ use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 use std::time::{Duration, Instant};
 
+struct TextEditRecord {
+    change_type: TextEditChangeType,
+    changed_data: Vec<String>,
+    identity: usize,
+    thread: std::thread::ThreadId,
+}
+
 #[derive(Default)]
 struct Recorder {
     events: RefCell<Vec<i32>>,
+    text_edits: RefCell<Vec<TextEditRecord>>,
+    text_edit_result: Cell<i32>,
 }
 
 impl IUiaCoreProviderApi for Recorder {
@@ -61,6 +70,33 @@ impl IUiaCoreProviderApi for Recorder {
         self.events.borrow_mut().push(event);
         0
     }
+    fn uia_raise_text_edit_text_changed_event(
+        &self,
+        provider: Option<&IRawElementProviderSimple>,
+        change_type: TextEditChangeType,
+        changed_data: SafeArrayRef,
+    ) -> i32 {
+        assert!(!changed_data.is_null());
+        // SAFETY: UiaCoreProviderApi lends a one-dimensional VT_BSTR array.
+        // Inspect its ABI shape and copy strings without freeing borrowed data.
+        let data = unsafe {
+            let descriptor = &*changed_data.as_ptr();
+            assert_eq!(descriptor.c_dims, 1);
+            assert_eq!(descriptor.cb_elements as usize, std::mem::size_of::<usize>());
+            assert_eq!(descriptor.rgsabound[0].l_lbound, 0);
+            SafeArrayMarshaller::<String>::convert_to_managed(changed_data).unwrap().unwrap()
+        };
+        let identity = super::text_pattern_marshalling::identity_of(provider.unwrap()).unwrap();
+        self.text_edits.borrow_mut().push(TextEditRecord {
+            change_type,
+            changed_data: data,
+            identity: identity.as_ptr() as usize,
+            thread: std::thread::current().id(),
+        });
+        self.events.borrow_mut().push(UiaEventId::TextEdit_TextChanged.0);
+        self.text_edit_result.get()
+    }
+
     fn uia_raise_automation_property_changed_event(
         &self,
         _: Option<&IRawElementProviderSimple>,
@@ -676,4 +712,142 @@ fn native_extra_text_attributes_preserve_colorref_and_find_color_input_types() {
         color.dispose();
     }
     assert_eq!(text(&found, -1), "overline");
+}
+
+#[test]
+fn native_text_edit_inherits_text_shares_text2_identity_and_dispatches_live_composition_ranges() {
+    let _app = UnitTestApplication::start(TestServices::styled_window());
+    let _recording = RecordingScope::new();
+    let editor = RichEditBox::new();
+    editor.set_text("a😀b tail").unwrap();
+    editor.select(1, 4);
+    let node = native_node(&editor);
+    let identity = node.cast::<IUnknown>().unwrap().as_ptr() as usize;
+    let edit = node.cast::<ITextEditProvider>().unwrap();
+    assert!(edit.get_active_composition().unwrap().is_none());
+    editor.set_preedit_text(Some("候😀補"), Some(1)).unwrap();
+    let selection = editor.editor().selection();
+    let revision = editor.document().revision();
+    let node = SendProvider(node);
+    on_worker(move || {
+        let advertised = node.get().get_pattern_provider(UiaPatternId::TextEdit.0).unwrap().unwrap();
+        assert_eq!(advertised.as_ptr() as usize, identity);
+        let edit = advertised.cast::<ITextEditProvider>().unwrap();
+        let text_provider = edit.cast::<ITextProvider>().unwrap();
+        let text2 = edit.cast::<ITextProvider2>().unwrap();
+        assert_eq!(text_provider.cast::<IUnknown>().unwrap().as_ptr() as usize, identity);
+        assert_eq!(text2.cast::<IUnknown>().unwrap().as_ptr() as usize, identity);
+        let document = edit.get_document_range().unwrap().unwrap();
+        assert_eq!(text(&document, -1), "a候😀補 tail");
+        let composition = edit.get_active_composition().unwrap().unwrap();
+        assert_eq!(text(&composition, -1), "候😀補");
+        assert_eq!(composition.compare_endpoints(TextPatternRangeEndpoint::Start, Some(&document), TextPatternRangeEndpoint::Start), Ok(1));
+        assert_eq!(composition.compare_endpoints(TextPatternRangeEndpoint::End, Some(&document), TextPatternRangeEndpoint::Start), Ok(5));
+        assert_eq!(composition.get_enclosing_element().unwrap().unwrap().cast::<IUnknown>().unwrap().as_ptr() as usize, identity);
+        let mut active = -1;
+        // SAFETY: caller-owned writable BOOL storage remains on this thread.
+        let caret = unsafe { text2.get_caret_range(&mut active) }.unwrap().unwrap();
+        assert_eq!(caret.compare_endpoints(TextPatternRangeEndpoint::Start, Some(&document), TextPatternRangeEndpoint::Start), Ok(2));
+        assert!(edit.get_conversion_target().unwrap().is_none());
+        let mut available = node.get().get_property_value(UiaPropertyId::IsTextEditPatternAvailable.0).unwrap();
+        // SAFETY: the call returned an owned VARIANT, released once after copy.
+        unsafe {
+            assert_eq!(available.as_object().unwrap(), Some(VariantValue::Bool(true)));
+            available.dispose();
+        }
+    });
+    assert_eq!(editor.editor().selection(), selection);
+    assert_eq!(editor.document().revision(), revision);
+
+    let view = RichTextBlock::new();
+    let node = native_node(&view);
+    assert!(node.get_pattern_provider(UiaPatternId::TextEdit.0).unwrap().is_none());
+    let mut available = node.get_property_value(UiaPropertyId::IsTextEditPatternAvailable.0).unwrap();
+    // SAFETY: this call owns its native VARIANT until disposed below.
+    unsafe {
+        assert_eq!(available.as_object().unwrap(), Some(VariantValue::Bool(false)));
+        available.dispose();
+    }
+}
+
+#[test]
+fn native_text_edit_range_lifetime_follows_owner_and_document_not_composition() {
+    let _app = UnitTestApplication::start(TestServices::styled_window());
+    let _recording = RecordingScope::new();
+    let (provider, retained_range, model) = {
+        let editor = RichEditBox::new();
+        editor.set_text("before").unwrap();
+        let node = native_node(&editor);
+        let provider = node.cast::<ITextEditProvider>().unwrap();
+        editor.set_preedit_text(Some("preview"), Some(2)).unwrap();
+        let range = provider.get_active_composition().unwrap().unwrap();
+        editor.cancel_composition().unwrap();
+        assert!(provider.get_active_composition().unwrap().is_none());
+        assert!(range.get_text(-1).is_ok_and(|value| {
+            // SAFETY: the range returned an owned BSTR; its text is irrelevant
+            // here because live endpoints follow the model's cancellation.
+            unsafe { free_bstr(value) };
+            true
+        }));
+        editor.set_document(RichTextDocument::from_text("replacement"));
+        assert_eq!(range.get_text(-1).map(|_| ()), Err(ELEMENT_NOT_AVAILABLE));
+        editor.set_preedit_text(Some("live"), None).unwrap();
+        let retained_range = provider.get_active_composition().unwrap().unwrap();
+        (provider, retained_range, editor.editor())
+    };
+    assert_eq!(provider.get_active_composition().map(|_| ()), Err(ELEMENT_NOT_AVAILABLE));
+    assert_eq!(provider.get_conversion_target().map(|_| ()), Err(ELEMENT_NOT_AVAILABLE));
+    assert_eq!(retained_range.get_text(-1).map(|_| ()), Err(ELEMENT_NOT_AVAILABLE));
+    assert!(model.is_composing());
+}
+
+#[test]
+fn native_text_edit_events_marshal_unicode_deltas_and_empty_finalization_on_ui_thread() {
+    let _app = UnitTestApplication::start(TestServices::styled_window());
+    let recording = RecordingScope::new();
+    let editor = RichEditBox::new();
+    let node = native_node(&editor);
+    let identity = node.cast::<IUnknown>().unwrap().as_ptr() as usize;
+    let thread = std::thread::current().id();
+    editor.set_preedit_text(Some("a😀\0z"), Some(1)).unwrap();
+    editor.set_preedit_text(Some("a🦀\0z"), Some(1)).unwrap();
+    editor.set_preedit_text(Some("a🦀\0z"), Some(3)).unwrap();
+    editor.commit_composition("完成\0😀").unwrap();
+    editor.select(0, editor.document().text_length());
+    editor.set_preedit_text(Some("cancel"), None).unwrap();
+    editor.cancel_composition().unwrap();
+    let expected = [
+        (TextEditChangeType::Composition, "a😀\0z"),
+        (TextEditChangeType::Composition, "🦀"),
+        (TextEditChangeType::CompositionFinalized, "完成\0😀"),
+        (TextEditChangeType::Composition, "cancel"),
+        (TextEditChangeType::CompositionFinalized, ""),
+    ];
+    let events = recording.0.text_edits.borrow();
+    assert_eq!(events.len(), expected.len());
+    for (event, (cause, value)) in events.iter().zip(expected) {
+        assert_eq!(event.change_type, cause);
+        assert_eq!(event.changed_data, vec![value.to_owned()]);
+        assert_eq!(event.identity, identity);
+        assert_eq!(event.thread, thread);
+    }
+    assert!(!recording.0.events.borrow().contains(&UiaEventId::TextEdit_ConversionTargetChanged.0));
+}
+
+#[test]
+fn native_text_edit_payload_validation_preserves_embedded_nul_and_return_codes() {
+    let _app = UnitTestApplication::start(TestServices::styled_window());
+    let recording = RecordingScope::new();
+    let editor = RichEditBox::new();
+    let node = native_node(&editor);
+    let data = vec!["候\0😀".to_owned(), String::new()];
+    assert_eq!(UiaCoreProviderApi::uia_raise_text_edit_text_changed_event(Some(&node), TextEditChangeType::None, &data), 0);
+    assert_eq!(UiaCoreProviderApi::uia_raise_text_edit_text_changed_event(Some(&node), TextEditChangeType(-1), &data), ferroui_microcom::E_INVALIDARG as i32);
+    assert!(recording.0.text_edits.borrow().is_empty());
+    recording.0.text_edit_result.set(ferroui_microcom::E_FAIL as i32);
+    assert_eq!(UiaCoreProviderApi::uia_raise_text_edit_text_changed_event(Some(&node), TextEditChangeType::Composition, &data), ferroui_microcom::E_FAIL as i32);
+    assert_eq!(recording.0.text_edits.borrow().len(), 1);
+    // The native call has returned and its borrowed SAFEARRAY has been freed.
+    // The recorder retains only copied Rust strings, including embedded NUL.
+    assert_eq!(recording.0.text_edits.borrow()[0].changed_data, data);
 }

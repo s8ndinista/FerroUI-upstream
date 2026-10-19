@@ -18,6 +18,7 @@ mod i_selection_provider;
 mod i_text_provider;
 mod i_text_provider2;
 mod i_text_child_provider;
+mod i_text_edit_provider;
 mod i_text_range_provider;
 mod i_toggle_provider;
 mod i_value_provider;
@@ -36,6 +37,7 @@ pub use i_selection_provider::ISelectionProvider;
 pub use i_text_provider::{ITextProvider, SupportedTextSelection};
 pub use i_text_provider2::{ITextProvider2, TextCaretRange};
 pub use i_text_child_provider::ITextChildProvider;
+pub use i_text_edit_provider::{ITextEditProvider, TextEditChangeType, TextEditTextChangedEventArgs};
 pub use i_text_range_provider::{
     ITextRangeProvider, TextAttribute, TextAttributeValue, TextPatternRangeEndpoint,
     TextProviderError, TextUnit,
@@ -84,6 +86,7 @@ conversions! {
     as_text_provider: ITextProvider,
     as_text_provider2: ITextProvider2,
     as_text_child_provider: ITextChildProvider,
+    as_text_edit_provider: ITextEditProvider,
     as_toggle_provider: IToggleProvider,
     as_value_provider: IValueProvider,
 }

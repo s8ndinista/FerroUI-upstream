@@ -32,7 +32,7 @@ use super::interop::{
     IExpandCollapseProvider, IInvokeProvider, IInvokeProviderImpl, IRangeValueProvider, IRawElementProviderFragment,
     IRawElementProviderFragmentImpl, IRawElementProviderFragmentRoot, IRawElementProviderFragmentRootImpl,
     IRawElementProviderSimple, IRawElementProviderSimple2, IRawElementProviderSimple2Impl, IRawElementProviderSimpleImpl,
-    IScrollItemProvider, IScrollProvider, ISelectionItemProvider, ISelectionProvider, ITextProvider2, ITextChildProvider, IToggleProvider, IValueProvider,
+    IScrollItemProvider, IScrollProvider, ISelectionItemProvider, ISelectionProvider, ITextProvider2, ITextChildProvider, ITextEditProvider, IToggleProvider, IValueProvider,
     NavigateDirection, ProviderOptions, StructureChangeType, UiaControlTypeId, UiaCoreProviderApi, UiaCoreTypesApi,
     UiaEventId, UiaHeadingLevel, UiaLandmarkType, UiaLiveSetting, UiaPatternId, UiaPropertyId, UiaRect,
 };
@@ -212,6 +212,7 @@ impl AutomationNode {
                     InterfaceEntry::of::<IValueProvider>(),
                     InterfaceEntry::of::<ITextProvider2>(),
                     InterfaceEntry::of::<ITextChildProvider>(),
+                    InterfaceEntry::of::<ITextEditProvider>(),
                 ]
             };
         }
@@ -220,10 +221,10 @@ impl AutomationNode {
         let provider: ComPtr<IRawElementProviderSimple2> = match kind {
             NodeKind::Node => make_com_with(node, patterns!()),
             NodeKind::Root | NodeKind::Interop { .. } => {
-                let [a, b, c, d, e, f, g, h, i, j, k, l] = patterns!();
+                let [a, b, c, d, e, f, g, h, i, j, k, l, m] = patterns!();
                 make_com_with(
                     node,
-                    [a, b, c, d, e, f, g, h, i, j, k, l, InterfaceEntry::of::<IRawElementProviderFragmentRoot>()],
+                    [a, b, c, d, e, f, g, h, i, j, k, l, m, InterfaceEntry::of::<IRawElementProviderFragmentRoot>()],
                 )
             }
         };
@@ -375,6 +376,7 @@ impl AutomationNode {
             UiaPatternId::Text => has::<dyn aap::ITextProvider>(self)?,
             UiaPatternId::Text2 => has::<dyn aap::ITextProvider2>(self)?,
             UiaPatternId::TextChild => has::<dyn aap::ITextChildProvider>(self)?,
+            UiaPatternId::TextEdit => has::<dyn aap::ITextEditProvider>(self)?,
             UiaPatternId::Toggle => has::<dyn aap::IToggleProvider>(self)?,
             UiaPatternId::Value => has::<dyn aap::IValueProvider>(self)?,
             _ => false,
@@ -423,6 +425,7 @@ impl AutomationNode {
             UiaPropertyId::IsOffscreen => Plain::Bool(peer.is_offscreen()),
             UiaPropertyId::IsTextPatternAvailable => Plain::Bool(peer.get_provider::<dyn aap::ITextProvider>().is_some()),
             UiaPropertyId::IsTextPattern2Available => Plain::Bool(peer.get_provider::<dyn aap::ITextProvider2>().is_some()),
+            UiaPropertyId::IsTextEditPatternAvailable => Plain::Bool(peer.get_provider::<dyn aap::ITextEditProvider>().is_some()),
             UiaPropertyId::IsTextChildPatternAvailable => Plain::Bool(peer.get_provider::<dyn aap::ITextChildProvider>().is_some()),
             UiaPropertyId::ItemType => Plain::Text(peer.get_item_type()),
             UiaPropertyId::ItemStatus => Plain::Text(peer.get_item_status()),

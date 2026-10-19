@@ -3,8 +3,9 @@ use super::{
     ControlAutomationPeer, ControlAutomationPeerImpl,
 };
 use crate::automation::provider::{
-    ITextProvider, ITextProvider2, IValueProvider, ProviderAdapter, ProviderError,
-    RichTextAutomationHost, RichTextAutomationPeer, RichTextAutomationState, TextProviderError,
+    ITextEditProvider, ITextProvider, ITextProvider2, IValueProvider, ProviderAdapter,
+    ProviderError, RichTextAutomationHost, RichTextAutomationPeer, RichTextAutomationState,
+    TextProviderError,
 };
 use crate::automation::{ElementNotEnabledException, ValuePatternIdentifiers};
 use crate::RichEditBox;
@@ -26,6 +27,7 @@ ferroui_base::ferro_class_info!(RichEditBoxAutomationPeer {
         Rc<dyn IValueProvider> => ProviderAdapter::as_value_provider,
         Rc<dyn ITextProvider> => ProviderAdapter::as_text_provider,
         Rc<dyn ITextProvider2> => ProviderAdapter::as_text_provider2,
+        Rc<dyn ITextEditProvider> => ProviderAdapter::as_text_edit_provider,
     ]
 });
 impl ControlAutomationPeerImpl for RichEditBoxAutomationPeer {}

@@ -320,6 +320,13 @@ impl RichEditBoxTextPresenter {
     pub(crate) fn has_measured_layout(&self) -> bool {
         self.has_measured_layout.get()
     }
+    pub(crate) fn bring_caret_into_view(&self) {
+        // The document view owns its offset even when ContentElement is a
+        // decorator or panel. Reveal the caret here before asking outer
+        // scrollers to reveal its updated rectangle in the surrounding UI.
+        ILogicalScrollable::bring_into_view(self, &self.to_ref().upcast(), self.cursor_rectangle());
+        self.bring_into_view_rect(self.cursor_rectangle());
+    }
     /// Aligns a text range edge for TOM/UI automation without changing selection.
     /// The rectangle uses presenter coordinates, as all public text geometry does.
     pub(crate) fn bring_text_rect_into_view_aligned(&self, rect: Rect, align_to_top: bool) -> bool {

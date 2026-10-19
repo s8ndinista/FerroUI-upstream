@@ -107,7 +107,7 @@ impl TextHighlightRange {
     /// Registering this carrier does not change the collection's copied values.
     #[doc(hidden)]
     pub fn for_markup(start_index: i32, length: i32) -> Rc<Self> {
-        ValueTypes::register_reference::<Self>();
+        ValueTypes::register_reference::<TextHighlightRange>();
         Rc::new(Self::new(start_index, length))
     }
 

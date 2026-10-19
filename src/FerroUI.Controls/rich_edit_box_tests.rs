@@ -2217,6 +2217,72 @@ fn rich_edit_content_element_accepts_framework_hosts_and_missing_parts_are_optio
 }
 
 #[test]
+fn rich_edit_generic_content_hosts_reveal_the_caret_without_an_ancestor_scroller() {
+    use crate::presenters::ContentPresenter;
+    use crate::templates::{FuncControlTemplate, FuncTemplateNameScopeExtensions};
+    use crate::{Border, ContentControl, Control, Panel};
+    use ferroui_base::input::IScrollable;
+    use ferroui_base::utilities::MathUtilities;
+    use ferroui_base::Ref;
+
+    let _scope = crate::test_support::test_scope();
+    let editor = RichEditBox::new();
+    let root = crate::test_support::TestRoot::with_child(editor.clone());
+    editor
+        .set_text(
+            &(0..20)
+                .map(|line| format!("line {line}"))
+                .collect::<Vec<_>>()
+                .join("\n"),
+        )
+        .unwrap();
+    let presenter = editor.text_presenter();
+    for kind in 0..4 {
+        editor.set_template(Some(FuncControlTemplate::for_type::<RichEditBox>(
+            move |_, scope| {
+                let host: Ref<Control> = match kind {
+                    0 => Border::new().upcast(),
+                    1 => ContentPresenter::new().upcast(),
+                    2 => Panel::new().upcast(),
+                    _ => ContentControl::new().upcast(),
+                };
+                host.set_name(Some("ContentElement".to_owned()));
+                host.register_in_name_scope(&**scope)
+            },
+        )));
+        rich_edit_layout(&root, Size::new(180.0, 60.0));
+        editor.select(0, 0);
+        Dispatcher::ui_thread().run_jobs(None);
+        rich_edit_layout(&root, Size::new(180.0, 60.0));
+        assert_eq!(presenter.offset().y, 0.0);
+        assert!(presenter.extent().height > presenter.viewport().height);
+
+        let end = editor.document().text_length();
+        editor.select(end, end);
+        rich_edit_layout(&root, Size::new(180.0, 60.0));
+        Dispatcher::ui_thread().run_jobs(None);
+        assert!(presenter.offset().y > 0.0);
+        let caret = presenter.cursor_rectangle();
+        assert!(
+            MathUtilities::greater_than_or_close(caret.y, 0.0),
+            "host {kind}: caret {caret:?}, extent {:?}, viewport {:?}, offset {:?}",
+            presenter.extent(),
+            presenter.viewport(),
+            presenter.offset(),
+        );
+        assert!(
+            MathUtilities::less_than_or_close(caret.bottom(), presenter.viewport().height),
+            "host {kind}: caret {caret:?}, extent {:?}, viewport {:?}, offset {:?}",
+            presenter.extent(),
+            presenter.viewport(),
+            presenter.offset(),
+        );
+        assert_eq!(editor.editor().selection(), EditorSelection::new(end, end));
+        assert_eq!(editor.text_presenter(), presenter);
+    }
+}
+
+#[test]
 fn rich_edit_scroll_view_formats_the_full_document_and_clamps_offsets_after_shrink() {
     use crate::ScrollViewer;
     use ferroui_base::input::IScrollable;
@@ -2589,4 +2655,248 @@ fn rich_edit_range_edge_scroll_alignment_is_stable_before_rearrange() {
         .bring_text_rect_into_view_aligned(presenter.get_rect_from_character_index(index), true);
     assert_eq!(presenter.offset().y, rect.y);
     assert_eq!(editor.editor().selection(), EditorSelection::default());
+}
+
+fn rich_edit_flyout_services(overlay: bool) -> crate::testing::UnitTestApplicationScope {
+    use crate::platform::{IPopupImpl, ITopLevelImpl};
+    use crate::testing::{MockWindowingPlatform, TestServices, UnitTestApplication};
+    use std::rc::Rc;
+
+    UnitTestApplication::start(TestServices::focusable_window().with_windowing_platform(
+        MockWindowingPlatform::with_window_impl(move || {
+            let window = MockWindowingPlatform::create_window_mock();
+            let weak = Rc::downgrade(&window);
+            window.setup_create_popup(move |_| {
+                if overlay {
+                    None
+                } else {
+                    let parent: Rc<dyn ITopLevelImpl> = weak.upgrade()?;
+                    Some(MockWindowingPlatform::create_popup_mock(parent) as Rc<dyn IPopupImpl>)
+                }
+            });
+            window
+        }),
+    ))
+}
+
+fn rich_edit_flyout_fixture() -> (
+    ferroui_base::Ref<crate::Window>,
+    ferroui_base::Ref<RichEditBox>,
+    ferroui_base::Ref<crate::flyouts::Flyout>,
+    ferroui_base::Ref<crate::Border>,
+    ferroui_base::Ref<crate::Border>,
+) {
+    use crate::flyouts::{Flyout, FlyoutShowMode};
+    use crate::{Border, Control, StackPanel, Window};
+
+    let editor = RichEditBox::new();
+    editor.set_template(Some(rich_edit_box_template()));
+    editor.set_height(80.0);
+    editor.set_text("editable text").unwrap();
+    let outside = Border::new();
+    outside.set_focusable(true);
+    outside.set_height(30.0);
+    let panel = StackPanel::new();
+    panel.children().add(editor.clone());
+    panel.children().add(outside.clone());
+    let window = Window::new();
+    window.set_width(260.0);
+    window.set_height(140.0);
+    window.set_content(Some(Control::boxed(panel)));
+
+    let popup_child = Border::new();
+    popup_child.set_focusable(true);
+    popup_child.set_width(70.0);
+    popup_child.set_height(30.0);
+    let flyout = Flyout::new();
+    flyout.set_content(Some(Control::boxed(popup_child.clone())));
+    flyout.set_show_mode(FlyoutShowMode::Standard);
+    editor.set_context_flyout(flyout.clone());
+    window.show();
+    editor.focus();
+    assert!(editor.is_focused());
+    (window, editor, flyout, popup_child, outside)
+}
+
+#[test]
+fn rich_edit_owned_context_flyout_preserves_focused_selection_and_owner_identity() {
+    use crate::flyouts::FlyoutBaseImplExt;
+    use ferroui_base::input::InputElement;
+    use ferroui_base::media::text_formatting::testing::TextTestScope;
+    use ferroui_base::media::{Brushes, Colors};
+    use std::cell::Cell;
+    use std::rc::Rc;
+
+    for overlay in [false, true] {
+        let _app = rich_edit_flyout_services(overlay);
+        let _text = TextTestScope::new();
+        let (window, editor, flyout, popup_child, _) = rich_edit_flyout_fixture();
+        editor.set_selection_highlight_color(Some(Brushes::red()));
+        editor.set_selection_highlight_color_when_not_focused(Some(Brushes::blue()));
+        editor.select(1, 5);
+        let observed = Rc::new(Cell::new(false));
+        let checking = Rc::new(Cell::new(true));
+        let count = observed.clone();
+        let check = checking.clone();
+        let weak = editor.downgrade();
+        let subscription = editor.property_changed(move |change| {
+            if check.get()
+                && change.property() == InputElement::is_focused_property().as_property()
+                && !change.get_new_value::<bool>()
+            {
+                let editor = weak.upgrade().unwrap();
+                let brush = editor.active_selection_brush().unwrap();
+                count.set(brush.as_solid_color_brush().unwrap().color() == Colors::RED);
+            }
+        });
+        flyout.show_at(&editor);
+        checking.set(false);
+        assert!(
+            observed.get(),
+            "focus observers must see the retained brush"
+        );
+        assert!(!editor.is_focused());
+        assert!(popup_child.is_focused());
+        assert_eq!(
+            window.focus_manager().get_focused_element(),
+            Some(popup_child.upcast::<InputElement>())
+        );
+        assert!(editor.classes().contains(":flyout-focus"));
+        assert_eq!((editor.selection_start(), editor.selection_end()), (1, 5));
+        assert_eq!(editor.selected_text(), "dita");
+        assert_eq!(
+            editor
+                .active_selection_brush()
+                .unwrap()
+                .as_solid_color_brush()
+                .unwrap()
+                .color(),
+            Colors::RED
+        );
+
+        editor.focus();
+        flyout.hide();
+        assert!(editor.is_focused());
+        assert!(!editor.classes().contains(":flyout-focus"));
+        assert_eq!((editor.selection_start(), editor.selection_end()), (1, 5));
+        subscription.dispose();
+        window.close();
+    }
+}
+
+#[test]
+fn rich_edit_context_flyout_defers_composition_blur_until_focus_leaves_its_content() {
+    use crate::flyouts::FlyoutBaseImplExt;
+    use ferroui_base::media::text_formatting::testing::TextTestScope;
+    use std::cell::Cell;
+    use std::rc::Rc;
+
+    for overlay in [false, true] {
+        let _app = rich_edit_flyout_services(overlay);
+        let _text = TextTestScope::new();
+        let (window, editor, flyout, popup_child, outside) = rich_edit_flyout_fixture();
+        editor.select(8, 8);
+        editor.set_preedit_text(Some("preview"), Some(3)).unwrap();
+        let preview = editor.document().snapshot();
+        let resets = Rc::new(Cell::new(0));
+        let count = resets.clone();
+        let subscription = editor
+            .text_input_method_client()
+            .reset_requested(Rc::new(move || {
+                count.set(count.get() + 1);
+            }));
+        flyout.show_at(&editor);
+        assert!(popup_child.is_focused());
+        assert!(editor.editor().is_composing());
+        assert_eq!(editor.document().snapshot(), preview);
+        assert_eq!(resets.get(), 0);
+
+        outside.focus();
+        assert!(outside.is_focused());
+        assert!(!editor.classes().contains(":flyout-focus"));
+        assert!(!editor.editor().is_composing());
+        assert_eq!(editor.text(), "editable text");
+        assert_eq!(resets.get(), 1);
+        flyout.hide();
+        assert_eq!(
+            resets.get(),
+            1,
+            "closing must not repeat completed blur cleanup"
+        );
+        subscription.dispose();
+        window.close();
+    }
+}
+
+#[test]
+fn rich_edit_context_flyout_focus_checks_actual_target_and_redirected_destination() {
+    use crate::flyouts::FlyoutBaseImplExt;
+    use ferroui_base::input::{FocusChangingEventArgs, InputElement};
+    use ferroui_base::media::text_formatting::testing::TextTestScope;
+
+    for overlay in [false, true] {
+        let _app = rich_edit_flyout_services(overlay);
+        let _text = TextTestScope::new();
+        let (window, editor, flyout, popup_child, outside) = rich_edit_flyout_fixture();
+        editor.set_preedit_text(Some("preview"), None).unwrap();
+        // A shared flyout can be open for a different target. Its existence
+        // alone must not preserve this editor's focus state.
+        flyout.show_at(&outside);
+        assert!(popup_child.is_focused());
+        assert!(!editor.classes().contains(":flyout-focus"));
+        assert!(!editor.editor().is_composing());
+        flyout.hide();
+        editor.focus();
+        editor.set_preedit_text(Some("preview"), None).unwrap();
+        let target = outside.clone().upcast::<InputElement>();
+        let token = editor.add_handler(
+            InputElement::losing_focus_event(),
+            move |_, event: &FocusChangingEventArgs| {
+                assert!(event.try_set_new_focused_element(Some(&target)));
+            },
+        );
+        flyout.show_at(&editor);
+        assert!(outside.is_focused());
+        assert!(!editor.classes().contains(":flyout-focus"));
+        assert!(!editor.editor().is_composing());
+        editor.remove_handler(InputElement::losing_focus_event(), token);
+        flyout.hide();
+        window.close();
+    }
+}
+
+#[test]
+fn rich_edit_canceled_flyout_focus_keeps_editor_state_and_replacement_ends_retention() {
+    use crate::flyouts::FlyoutBaseImplExt;
+    use ferroui_base::input::{FocusChangingEventArgs, InputElement};
+    use ferroui_base::media::text_formatting::testing::TextTestScope;
+
+    for overlay in [false, true] {
+        let _app = rich_edit_flyout_services(overlay);
+        let _text = TextTestScope::new();
+        let (window, editor, flyout, popup_child, _) = rich_edit_flyout_fixture();
+        editor.set_preedit_text(Some("preview"), None).unwrap();
+        let token = editor.add_handler(
+            InputElement::losing_focus_event(),
+            |_, event: &FocusChangingEventArgs| {
+                assert!(event.try_cancel());
+            },
+        );
+        flyout.show_at(&editor);
+        assert!(editor.is_focused());
+        assert!(!editor.classes().contains(":flyout-focus"));
+        assert!(editor.editor().is_composing());
+        editor.remove_handler(InputElement::losing_focus_event(), token);
+        flyout.hide();
+
+        flyout.show_at(&editor);
+        assert!(popup_child.is_focused());
+        assert!(editor.classes().contains(":flyout-focus"));
+        editor.set_context_flyout(None);
+        assert!(!editor.classes().contains(":flyout-focus"));
+        assert!(!editor.editor().is_composing());
+        assert_eq!(editor.text(), "editable text");
+        flyout.hide();
+        window.close();
+    }
 }

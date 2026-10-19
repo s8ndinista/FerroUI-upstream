@@ -132,6 +132,7 @@ pub struct RichTextDocument(Rc<RichTextDocumentData>);
 struct RichTextDocumentData {
     blocks: BlockCollection,
     revision: Cell<u64>,
+    mutation_version: Cell<u64>,
     changed: Rc<HandlerList<dyn Fn(&DocumentChangedEventArgs)>>,
     position_changed: Rc<HandlerList<dyn Fn(&DocumentTextChange)>>,
     cached_text: RefCell<Rc<str>>,
@@ -202,6 +203,7 @@ impl RichTextDocument {
         let document = Self(Rc::new(RichTextDocumentData {
             blocks,
             revision: Cell::new(0),
+            mutation_version: Cell::new(0),
             changed: Rc::new(HandlerList::new()),
             position_changed: Rc::new(HandlerList::new()),
             cached_text: RefCell::new(text.clone()),
@@ -239,6 +241,12 @@ impl RichTextDocument {
     }
     pub fn revision(&self) -> u64 {
         self.0.revision.get()
+    }
+    /// Internal state identity advances during a batch, before public revisions
+    /// are published. IME previews must detect an intervening model mutation even
+    /// while an application holds an outer edit scope open.
+    pub(crate) fn mutation_version(&self) -> u64 {
+        self.0.mutation_version.get()
     }
     pub fn downgrade(&self) -> WeakRichTextDocument {
         WeakRichTextDocument(Rc::downgrade(&self.0))
@@ -753,6 +761,9 @@ impl RichTextDocument {
         if self.0.silent_depth.get() != 0 {
             return;
         }
+        self.0
+            .mutation_version
+            .set(self.mutation_version().wrapping_add(1));
         self.0.dirty.set(true);
         if !self.0.installing.get() {
             self.observe_text_change();

@@ -45,6 +45,19 @@ pub enum EditKind {
     Group,
 }
 
+/// Accepted IME replacements, after normalization and the editor's length limit.
+///
+/// Preview carries only the replacement substring that differs from the previous
+/// preview, on Unicode scalar boundaries. Finalized carries the complete accepted
+/// commit, or an empty string when the preview is cancelled or no text is accepted.
+/// These causes support TextEdit automation without inferring composition from an
+/// ordinary text-change notification.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum RichTextCompositionChange {
+    Preview { changed_text: String },
+    Finalized { text: String },
+}
+
 /// A failed editing operation leaves the document and its undo history unchanged.
 #[derive(Debug)]
 pub enum EditError {
@@ -87,9 +100,11 @@ struct UndoUnit {
     merge_generation: u64,
 }
 
+#[derive(Clone)]
 struct Composition {
     before: EditorSnapshot,
-    preview_revision: u64,
+    preview_version: u64,
+    preview_text: String,
 }
 
 #[derive(Default)]
@@ -123,6 +138,8 @@ pub struct RichTextEditor {
     in_operation: Cell<bool>,
     group_depth: Cell<usize>,
     changed: Rc<HandlerList<dyn Fn()>>,
+    composition_changed: Rc<HandlerList<dyn Fn(&RichTextCompositionChange)>>,
+    pending_composition_changes: RefCell<Vec<RichTextCompositionChange>>,
 }
 
 struct Operation<'a>(&'a Cell<bool>);
@@ -162,6 +179,8 @@ impl RichTextEditor {
             in_operation: Cell::new(false),
             group_depth: Cell::new(0),
             changed: Rc::new(HandlerList::new()),
+            composition_changed: Rc::new(HandlerList::new()),
+            pending_composition_changes: RefCell::new(Vec::new()),
         }
     }
 
@@ -218,12 +237,12 @@ impl RichTextEditor {
         }
     }
     pub fn can_undo(&self) -> bool {
-        self.document.revision() == self.known_revision.get()
-            && !self.history.borrow().undo.is_empty()
+        let history = self.history.borrow();
+        self.history_is_current(&history) && !history.undo.is_empty()
     }
     pub fn can_redo(&self) -> bool {
-        self.document.revision() == self.known_revision.get()
-            && !self.history.borrow().redo.is_empty()
+        let history = self.history.borrow();
+        self.history_is_current(&history) && !history.redo.is_empty()
     }
     pub fn is_composing(&self) -> bool {
         self.history.borrow().composition.is_some()
@@ -231,24 +250,20 @@ impl RichTextEditor {
     /// Absolute UTF-16 extent of the current IME preview. A later external model
     /// mutation invalidates this extent instead of exposing stale composition text.
     pub fn active_composition_range(&self) -> Option<Range<usize>> {
-        let (revision, range, retained) = {
+        let (version, start, length) = {
             let history = self.history.borrow();
             let composition = history.composition.as_ref()?;
-            let range = composition.before.selection.range();
-            let retained = composition
-                .before
-                .document
-                .text_length()
-                .checked_sub(range.len())?;
-            (composition.preview_revision, range, retained)
+            (
+                composition.preview_version,
+                composition.before.selection.range().start,
+                composition.preview_text.encode_utf16().count(),
+            )
         };
-        if self.document.revision() != revision {
+        if self.document.mutation_version() != version {
             return None;
         }
-        let length = self.document.text_length().checked_sub(retained)?;
-        let end = range.start.checked_add(length)?;
-        let result = range.start..end;
-        if self.document.revision() != revision
+        let result = start..start.checked_add(length)?;
+        if self.document.mutation_version() != version
             || self.document.validate_range(result.clone()).is_err()
         {
             return None;
@@ -408,6 +423,27 @@ impl RichTextEditor {
         })
     }
 
+    /// Observes accepted composition causes after the editor's change notifications.
+    /// A completed editor edit group delivers its queued causes in order; callbacks
+    /// observe the settled group state. A failed group discards them. A separately
+    /// held model edit batch may defer its public document notification further.
+    pub fn composition_changed(
+        &self,
+        handler: impl Fn(&RichTextCompositionChange) + 'static,
+    ) -> Rc<dyn IDisposable> {
+        let token = self.composition_changed.add(Rc::new(handler));
+        let weak = Rc::downgrade(&self.composition_changed);
+        Disposable::create(move || {
+            if let Some(events) = weak.upgrade() {
+                events.remove(token);
+            }
+        })
+    }
+
+    fn queue_composition_change(&self, change: RichTextCompositionChange) {
+        self.pending_composition_changes.borrow_mut().push(change);
+    }
+
     fn publish_changed(&self) {
         if self.group_depth.get() > 0 || self.projecting_selection.get() {
             return;
@@ -415,6 +451,12 @@ impl RichTextEditor {
         self.project_selection();
         for (_, handler) in self.changed.snapshot().iter() {
             handler();
+        }
+        let changes = std::mem::take(&mut *self.pending_composition_changes.borrow_mut());
+        for change in changes {
+            for (_, handler) in self.composition_changed.snapshot().iter() {
+                handler(&change);
+            }
         }
     }
 
@@ -425,6 +467,7 @@ impl RichTextEditor {
             .borrow()
             .composition
             .as_ref()
+            .filter(|composition| composition.preview_version == self.document.mutation_version())
             .map(|composition| composition.before.document.clone());
         committed.map_or_else(|| self.document.text(), |snapshot| snapshot.text())
     }
@@ -435,6 +478,7 @@ impl RichTextEditor {
             .borrow()
             .composition
             .as_ref()
+            .filter(|composition| composition.preview_version == self.document.mutation_version())
             .map_or(self.selection(), |composition| composition.before.selection)
     }
 
@@ -486,22 +530,38 @@ impl RichTextEditor {
         if require_writable && self.is_read_only() {
             return Err(EditError::ReadOnly);
         }
-        if self.in_operation.replace(true) {
+        if self.projecting_selection.get() || self.in_operation.replace(true) {
             return Err(EditError::ReentrantEdit);
         }
         Ok(Operation(&self.in_operation))
     }
 
     fn synchronize(&self) {
-        if self.document.revision() != self.known_revision.get() {
+        let current = self.history_is_current(&self.history.borrow());
+        if current {
+            // Closing an application-owned model batch publishes a revision without
+            // changing the accepted preview. Its mutation identity remains valid.
+            self.known_revision.set(self.document.revision());
+        } else {
             self.clear_history();
-            let length = self.document.text_length();
-            let selection = self.selection();
-            self.selection.set(EditorSelection::new(
-                self.scalar_boundary(selection.anchor.min(length)),
-                self.scalar_boundary(selection.active.min(length)),
-            ));
+            self.clamp_selection();
         }
+    }
+
+    fn history_is_current(&self, history: &History) -> bool {
+        history.composition.as_ref().map_or_else(
+            || self.document.revision() == self.known_revision.get(),
+            |composition| composition.preview_version == self.document.mutation_version(),
+        )
+    }
+
+    fn clamp_selection(&self) {
+        let length = self.document.text_length();
+        let selection = self.selection();
+        self.selection.set(EditorSelection::new(
+            self.scalar_boundary(selection.anchor.min(length)),
+            self.scalar_boundary(selection.active.min(length)),
+        ));
     }
 
     fn scalar_boundary(&self, offset: usize) -> usize {
@@ -538,7 +598,16 @@ impl RichTextEditor {
             return;
         }
         self.project_selection();
-        let after = self.capture();
+        // A group may finish with a visible preview. Only its preceding committed
+        // edits belong in the undo unit; committing or cancelling the preview later
+        // must not resurrect uncommitted IME text when redo restores this group.
+        let committed = self
+            .history
+            .borrow()
+            .composition
+            .as_ref()
+            .map(|composition| composition.before.clone());
+        let after = committed.unwrap_or_else(|| self.capture());
         if before.document == after.document
             && before.typing_format == after.typing_format
             && before.default_character_format == after.default_character_format
@@ -606,12 +675,10 @@ impl RichTextEditor {
 
     /// Replaces the selection and applies the current insertion format in one undo unit.
     pub fn insert_text(&self, text: &str, kind: EditKind) -> Result<bool, EditError> {
-        let composing = self.prepare_edit()?;
-        let kind = if composing && kind == EditKind::Typing {
-            EditKind::Composition
-        } else {
-            kind
-        };
+        if self.is_composing() && matches!(kind, EditKind::Typing | EditKind::Composition) {
+            return self.commit_composition(text);
+        }
+        self.prepare_edit()?;
         let _operation = self.enter(true)?;
         self.synchronize();
         let range = self.selection().range();
@@ -624,10 +691,26 @@ impl RichTextEditor {
         kind: EditKind,
         range: Range<usize>,
     ) -> Result<bool, EditError> {
+        let Some((before, text)) = self.replace_text_unrecorded(text, kind, range)? else {
+            return Ok(false);
+        };
+        if text.contains('\n') {
+            self.checkpoint();
+        }
+        self.record(before, kind);
+        Ok(true)
+    }
+
+    fn replace_text_unrecorded(
+        &self,
+        text: &str,
+        kind: EditKind,
+        range: Range<usize>,
+    ) -> Result<Option<(EditorSnapshot, String)>, EditError> {
         let text = self.permitted_text(text, range.clone());
         // Rejected input at a length limit must not delete a selected range.
         if text.is_empty() && (!text_is_deletion(kind) || range.is_empty()) {
-            return Ok(false);
+            return Ok(None);
         }
         let before = self.capture();
         let length = text.encode_utf16().count();
@@ -647,11 +730,7 @@ impl RichTextEditor {
             self.selection
                 .set(EditorSelection::caret(range.start + length));
         }
-        if text.contains('\n') {
-            self.checkpoint();
-        }
-        self.record(before, kind);
-        Ok(true)
+        Ok(Some((before, text)))
     }
 
     pub(super) fn prepare_edit(&self) -> Result<bool, EditError> {
@@ -808,6 +887,7 @@ impl RichTextEditor {
         self.synchronize();
         let before = self.capture();
         let before_limit = self.max_length();
+        let pending_start = self.pending_composition_changes.borrow().len();
         let depth = self.group_depth.get();
         self.group_depth.set(depth + 1);
         let batch = self.document.begin_edit();
@@ -817,6 +897,11 @@ impl RichTextEditor {
             // TOM SetText may grow MaxLength inside a nested group. Failed
             // transactions restore that configuration along with the story.
             self.set_max_length(before_limit);
+            let composition = self.history.borrow_mut().composition.take();
+            drop(composition);
+            self.pending_composition_changes
+                .borrow_mut()
+                .truncate(pending_start);
             self.restore(&before)?;
         }
         drop(batch);
@@ -877,21 +962,31 @@ impl RichTextEditor {
                 .count()
         });
         self.synchronize();
-        let composition = self.history.borrow_mut().composition.take();
-        let before = composition.map_or_else(|| self.capture(), |composition| composition.before);
+        let previous = self.history.borrow_mut().composition.take();
+        let visible = self.capture();
+        let before = previous
+            .as_ref()
+            .map_or_else(|| visible.clone(), |composition| composition.before.clone());
         // Keep the committed context available before publishing the model change:
         // platform callbacks can synchronously query surrounding text while it is raised.
         self.history.borrow_mut().composition = Some(Composition {
             before: before.clone(),
-            preview_revision: self.document.revision(),
+            preview_version: self.document.mutation_version(),
+            preview_text: String::new(),
         });
         let batch = self.document.begin_edit();
-        self.restore(&before)?;
-        let range = before.selection.range();
-        let text = self.permitted_text(text, range.clone());
-        let length = text.encode_utf16().count();
-        {
+        let result = (|| -> Result<String, EditError> {
+            self.restore(&before)?;
+            let range = before.selection.range();
+            let text = self.permitted_text(text, range.clone());
+            let length = text.encode_utf16().count();
             self.document.replace_text(range.clone(), &text)?;
+            if before.document.text_length() == 0 || self.document.text_length() == 0 {
+                self.document.apply_paragraph_format(
+                    0..self.document.text_length(),
+                    &self.insertion_defaults(),
+                )?;
+            }
             if length > 0 {
                 let preedit_format = before.typing_format.overlay(&CharacterFormat {
                     text_decorations: Some(Some(TextDecorations::underline())),
@@ -903,14 +998,33 @@ impl RichTextEditor {
             let offset = range.start + cursor.unwrap_or(length).min(length);
             self.selection
                 .set(EditorSelection::caret(self.scalar_boundary(offset)));
-        }
-        drop(batch);
-        let revision = self.document.revision();
-        self.known_revision.set(revision);
+            Ok(text)
+        })();
+        let text = match result {
+            Ok(text) => text,
+            Err(error) => {
+                self.restore_composition_state(&visible, previous)?;
+                drop(batch);
+                self.known_revision.set(self.document.revision());
+                return Err(error);
+            }
+        };
+        let old_text = previous
+            .as_ref()
+            .map_or("", |composition| composition.preview_text.as_str());
+        let changed_text = changed_composition_text(old_text, &text);
+        // Install the final state before model callbacks. Public revisions may be
+        // delayed by a caller's outer batch; the actual mutation identity is current.
         self.history.borrow_mut().composition = Some(Composition {
             before,
-            preview_revision: revision,
+            preview_version: self.document.mutation_version(),
+            preview_text: text,
         });
+        if let Some(changed_text) = changed_text {
+            self.queue_composition_change(RichTextCompositionChange::Preview { changed_text });
+        }
+        drop(batch);
+        self.known_revision.set(self.document.revision());
         self.publish_changed();
         Ok(())
     }
@@ -922,23 +1036,103 @@ impl RichTextEditor {
         let Some(composition) = composition else {
             return Ok(false);
         };
-        if self.document.revision() == composition.preview_revision {
-            self.restore(&composition.before)?;
+        if self.document.mutation_version() == composition.preview_version {
+            if let Err(error) = self.restore(&composition.before) {
+                self.history.borrow_mut().composition = Some(composition);
+                return Err(error);
+            }
         } else {
-            self.synchronize();
+            self.clear_history();
+            self.clamp_selection();
         }
+        self.queue_composition_change(RichTextCompositionChange::Finalized {
+            text: String::new(),
+        });
         self.publish_changed();
         Ok(true)
     }
 
+    /// Ends a preview and inserts the accepted committed text as one transaction.
+    /// Empty or fully rejected input ends the preview without replacing the original
+    /// committed selection. A writable/reentrant error preserves the preview.
     pub fn commit_composition(&self, text: &str) -> Result<bool, EditError> {
-        self.cancel_composition()?;
-        if text.is_empty() {
-            return Ok(false);
-        }
+        let _operation = self.enter(true)?;
+        self.synchronize();
+        let composition = self.history.borrow_mut().composition.take();
+        let Some(composition) = composition else {
+            self.checkpoint();
+            return self.replace_text_core(text, EditKind::Composition, self.selection().range());
+        };
+        let visible = self.capture();
+        let batch = self.document.begin_edit();
+        let result = (|| {
+            self.restore(&composition.before)?;
+            self.replace_text_unrecorded(
+                text,
+                EditKind::Composition,
+                composition.before.selection.range(),
+            )
+        })();
+        let accepted = match result {
+            Ok(accepted) => accepted,
+            Err(error) => {
+                self.restore_composition_state(&visible, Some(composition))?;
+                drop(batch);
+                self.known_revision.set(self.document.revision());
+                return Err(error);
+            }
+        };
+        self.queue_composition_change(RichTextCompositionChange::Finalized {
+            text: accepted
+                .as_ref()
+                .map_or_else(String::new, |(_, text)| text.clone()),
+        });
+        drop(batch);
+        self.known_revision.set(self.document.revision());
         self.checkpoint();
-        self.insert_text(text, EditKind::Composition)
+        if let Some((before, _)) = accepted {
+            self.record(before, EditKind::Composition);
+            Ok(true)
+        } else {
+            self.publish_changed();
+            Ok(false)
+        }
     }
+
+    fn restore_composition_state(
+        &self,
+        visible: &EditorSnapshot,
+        composition: Option<Composition>,
+    ) -> Result<(), EditError> {
+        self.restore(visible)?;
+        self.history.borrow_mut().composition = composition.map(|mut composition| {
+            composition.preview_version = self.document.mutation_version();
+            composition
+        });
+        Ok(())
+    }
+}
+
+/// The smallest scalar-aligned replacement in the new preview. Empty replacement
+/// text is meaningful for a deletion, while None denotes a cursor-only update.
+fn changed_composition_text(previous: &str, current: &str) -> Option<String> {
+    if previous == current {
+        return None;
+    }
+    let prefix = previous
+        .chars()
+        .zip(current.chars())
+        .take_while(|(before, after)| before == after)
+        .map(|(_, ch)| ch.len_utf8())
+        .sum::<usize>();
+    let suffix = previous[prefix..]
+        .chars()
+        .rev()
+        .zip(current[prefix..].chars().rev())
+        .take_while(|(before, after)| before == after)
+        .map(|(_, ch)| ch.len_utf8())
+        .sum::<usize>();
+    Some(current[prefix..current.len() - suffix].to_owned())
 }
 
 /// Gets the prefix at or before a UTF-16 position without splitting a scalar.
@@ -978,3 +1172,7 @@ fn merge_format(mut current: CharacterFormat, update: &CharacterFormat) -> Chara
     );
     current
 }
+
+#[cfg(test)]
+#[path = "rich_text_composition_tests.rs"]
+mod composition_tests;

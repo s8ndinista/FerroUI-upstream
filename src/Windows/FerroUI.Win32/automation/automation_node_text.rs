@@ -5,8 +5,8 @@
 
 use super::automation_node::{AutomationNode, SendProvider, ELEMENT_NOT_AVAILABLE};
 use super::interop::{
-    IRawElementProviderSimple, ITextChildProviderImpl, ITextProvider2Impl, ITextProviderImpl,
-    ITextRangeProvider, SupportedTextSelection, UiaCoreProviderApi, UiaEventId, UiaPoint,
+    IRawElementProviderSimple, ITextChildProviderImpl, ITextEditProviderImpl, ITextProvider2Impl, ITextProviderImpl,
+    ITextRangeProvider, SupportedTextSelection, TextEditChangeType, UiaCoreProviderApi, UiaEventId, UiaPoint,
 };
 use super::marshalling::{SafeArrayMarshaller, SafeArrayRef};
 use super::root_automation_node::RootAutomationNode;
@@ -15,7 +15,7 @@ use super::text_range_node::{SendTextRange, TextRangeNode};
 use ferroui_base::reactive::IDisposable;
 use ferroui_base::{PixelPoint, PixelRect, Point, Rect, Ref};
 use ferroui_controls::automation::peers::{AutomationPeer, ControlAutomationPeer};
-use ferroui_controls::automation::provider::{ITextChildProvider, ITextProvider, ITextProvider2};
+use ferroui_controls::automation::provider::{ITextChildProvider, ITextEditProvider, ITextProvider, ITextProvider2, TextEditTextChangedEventArgs};
 use ferroui_microcom::{ComPtr, HResult, E_FAIL, E_INVALIDARG};
 use std::rc::Rc;
 
@@ -40,7 +40,30 @@ impl AutomationNode {
         })) {
             subscriptions.push(subscription);
         }
+        if let Some(provider) = peer.get_provider::<dyn ITextEditProvider>() {
+            if let Ok(subscription) = provider.text_edit_text_changed(Rc::new(move |event| {
+                Self::raise_text_edit_event(id, event)
+            })) {
+                subscriptions.push(subscription);
+            }
+        }
         subscriptions
+    }
+
+    fn raise_text_edit_event(id: i32, event: &TextEditTextChangedEventArgs) {
+        if Self::peer_of(id).is_none() {
+            return;
+        }
+        if let Some(node) = Self::provider_of(id) {
+            // The cause and owned strings come from completed editor operations
+            // on this UI thread. No BSTR, SAFEARRAY or UI object crosses a
+            // dispatcher boundary; the core API scopes the native payload.
+            UiaCoreProviderApi::uia_raise_text_edit_text_changed_event(
+                Some(&node),
+                TextEditChangeType(event.change_type as i32),
+                &event.changed_data,
+            );
+        }
     }
 
     fn raise_text_event(id: i32, event: UiaEventId) {
@@ -198,6 +221,30 @@ impl ITextProvider2Impl for AutomationNode {
         unsafe {
             *is_active = i32::from(active);
         }
+        Ok(range.map(SendTextRange::into_inner))
+    }
+}
+
+impl ITextEditProviderImpl for AutomationNode {
+    fn get_active_composition(&self) -> Result<Option<ComPtr<ITextRangeProvider>>, HResult> {
+        let owner = self.id();
+        let range = self.invoke_sync_provider(move |provider: &Rc<dyn ITextEditProvider>| {
+            provider
+                .get_active_composition()
+                .map(|range| range.map(|range| TextRangeNode::new(owner, range)))
+                .map_err(provider_error)
+        })?;
+        Ok(range.map(SendTextRange::into_inner))
+    }
+
+    fn get_conversion_target(&self) -> Result<Option<ComPtr<ITextRangeProvider>>, HResult> {
+        let owner = self.id();
+        let range = self.invoke_sync_provider(move |provider: &Rc<dyn ITextEditProvider>| {
+            provider
+                .get_conversion_target()
+                .map(|range| range.map(|range| TextRangeNode::new(owner, range)))
+                .map_err(provider_error)
+        })?;
         Ok(range.map(SendTextRange::into_inner))
     }
 }

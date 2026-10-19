@@ -3,6 +3,7 @@ use crate::documents::{
     LineStackingStrategy, ParagraphFormat, RichTextDocument, TextHighlighterCollection,
     TextPosition,
 };
+use crate::flyouts::PopupFlyoutBase;
 use crate::metadata::{PseudoClassesAttribute, TemplatePartAttribute};
 use crate::presenters::ContentPresenter;
 use crate::primitives::{
@@ -31,7 +32,7 @@ use ferroui_base::input::text_input::{
 };
 use ferroui_base::input::{
     FocusChangedEventArgs, InputElement, InputElementImpl, InputElementImplExt, Key, KeyEventArgs,
-    KeyGesture, LocalBoxFuture, PointerPressedEventArgs, TextInputEventArgs,
+    KeyGesture, KeyboardDevice, LocalBoxFuture, PointerPressedEventArgs, TextInputEventArgs,
 };
 use ferroui_base::interactivity::{
     Interactive, InteractiveImpl, RoutedEvent, RoutedEventArgs, RoutedEventHandlerToken,
@@ -217,6 +218,9 @@ pub struct RichEditBox {
     description_presenter: RefCell<Option<Ref<ContentPresenter>>>,
     placeholder_presenter: RefCell<Option<Ref<TextBlock>>>,
     selection_brush_subscriptions: RefCell<Vec<Rc<dyn IDisposable>>>,
+    context_flyout_closed_subscription: RefCell<Option<Rc<dyn IDisposable>>>,
+    flyout_focus_subscription: RefCell<Option<Rc<dyn IDisposable>>>,
+    force_focused_visual_state: Cell<bool>,
     can_undo: Cell<bool>,
     can_redo: Cell<bool>,
     can_copy: Cell<bool>,
@@ -235,6 +239,15 @@ impl Drop for RichEditBox {
     fn drop(&mut self) {
         if let Some(timer) = self.caret_timer.get_mut().take() {
             timer.stop();
+        }
+        for subscription in [
+            self.context_flyout_closed_subscription.get_mut().take(),
+            self.flyout_focus_subscription.get_mut().take(),
+        ]
+        .into_iter()
+        .flatten()
+        {
+            subscription.dispose();
         }
     }
 }
@@ -326,6 +339,7 @@ impl FerroObjectImpl for RichEditBox {
         this.text_presenter.set_inheritance_parent(this.to_ref());
         this.sync_presenter_properties();
         this.refresh_selection_brush_subscriptions();
+        this.refresh_context_flyout_subscription();
         this.im_client.attach(Some(&this.to_ref()));
         this.attach_document();
         this.update_presenters();
@@ -347,8 +361,25 @@ impl FerroObjectImpl for RichEditBox {
     }
 
     fn on_property_changed(this: &Self, change: &FerroPropertyChangedEventArgs<'_>) {
-        Self::parent_on_property_changed(this, change);
         let property = change.property();
+        if property == InputElement::is_focused_property().as_property() {
+            if change.get_new_value::<bool>() {
+                this.set_force_focused_visual_state(false);
+            } else if change.get_old_value::<bool>() == Some(true) {
+                // KeyboardDevice has already committed the final destination,
+                // including any application redirection. Publish this state
+                // before focus styles or observers request selection formatting.
+                let focused =
+                    KeyboardDevice::instance().and_then(|device| device.focused_element());
+                this.set_force_focused_visual_state(
+                    this.context_flyout_contains_focus(focused.as_deref()),
+                );
+            }
+        }
+        Self::parent_on_property_changed(this, change);
+        if property == Control::context_flyout_property().as_property() {
+            this.refresh_context_flyout_subscription();
+        }
         if property == Self::document_property().as_property() {
             this.attach_document();
         }
@@ -443,6 +474,7 @@ impl InputElementImpl for RichEditBox {
         if !this.is_focused() {
             return;
         }
+        this.set_force_focused_visual_state(false);
         this.im_client.raise_text_view_visual_changed();
         this.im_client.raise_cursor_rectangle_changed();
         this.reset_caret_blink();
@@ -451,12 +483,18 @@ impl InputElementImpl for RichEditBox {
     }
     fn on_lost_focus(this: &Self, event: &FocusChangedEventArgs) {
         Self::parent_on_lost_focus(this, event);
+        // Popup and embedded-control focus events can pass through their owner.
+        // Only the editor's own focus transition changes its editing state.
+        if !event.is_source(this) || this.is_focused() {
+            return;
+        }
         this.text_presenter.focus_hyperlink(None);
-        this.handle_edit(this.cancel_composition());
-        this.editor().checkpoint();
-        this.im_client.request_reset();
         this.stop_caret_blink();
-        this.text_presenter.invalidate_document_layout();
+        let retain = this.context_flyout_contains_focus(event.new_focused_element.as_deref());
+        this.set_force_focused_visual_state(retain);
+        if !retain {
+            this.complete_focus_loss();
+        }
     }
     fn on_text_input(this: &Self, event: &TextInputEventArgs) {
         if event.handled() {
@@ -653,6 +691,9 @@ impl RichEditBox {
             description_presenter: RefCell::new(None),
             placeholder_presenter: RefCell::new(None),
             selection_brush_subscriptions: RefCell::new(Vec::new()),
+            context_flyout_closed_subscription: RefCell::new(None),
+            flyout_focus_subscription: RefCell::new(None),
+            force_focused_visual_state: Cell::new(false),
             can_undo: Cell::new(false),
             can_redo: Cell::new(false),
             can_copy: Cell::new(false),
@@ -684,8 +725,13 @@ impl RichEditBox {
             <ContentPresenter as StaticType>::TYPE,
         ),
     ];
-    pub const PSEUDO_CLASSES: PseudoClassesAttribute =
-        PseudoClassesAttribute::new(&[":header", ":description", ":empty", ":placeholder"]);
+    pub const PSEUDO_CLASSES: PseudoClassesAttribute = PseudoClassesAttribute::new(&[
+        ":header",
+        ":description",
+        ":empty",
+        ":placeholder",
+        ":flyout-focus",
+    ]);
 
     /// The persistent rich document view used by the current control template.
     pub fn text_presenter(&self) -> Ref<RichEditBoxTextPresenter> {
@@ -933,12 +979,100 @@ impl RichEditBox {
         self.raise_event(&RoutedEventArgs::with_event(Self::selection_changed_event()));
     }
     pub(crate) fn active_selection_brush(&self) -> Option<Rc<dyn IBrush>> {
-        if self.is_focused() {
+        if self.is_focused() || self.force_focused_visual_state.get() {
             self.selection_highlight_color()
         } else {
             self.selection_highlight_color_when_not_focused()
         }
     }
+    fn context_flyout_contains_focus(&self, focused: Option<&InputElement>) -> bool {
+        let Some(flyout) = self.context_flyout().filter(|flyout| {
+            flyout.is_open() && flyout.target() == Some(self.to_ref().upcast::<Control>())
+        }) else {
+            return false;
+        };
+        let Some(presenter) = flyout
+            .cast::<PopupFlyoutBase>()
+            .and_then(|flyout| flyout.popup().child())
+        else {
+            return false;
+        };
+        let presenter: Ref<Visual> = presenter.upcast();
+        let mut current = focused.map(|focused| focused.to_ref().upcast::<Visual>());
+        while let Some(visual) = current {
+            if visual == presenter {
+                return true;
+            }
+            current = visual.visual_parent();
+        }
+        false
+    }
+
+    fn set_force_focused_visual_state(&self, value: bool) {
+        if self.force_focused_visual_state.replace(value) == value {
+            return;
+        }
+        self.pseudo_classes().set(":flyout-focus", value);
+        self.text_presenter.invalidate_document_layout();
+        let previous = self.flyout_focus_subscription.take();
+        if let Some(previous) = previous {
+            previous.dispose();
+        }
+        if value {
+            if let Some(device) = KeyboardDevice::instance() {
+                let weak = self.to_ref().downgrade();
+                *self.flyout_focus_subscription.borrow_mut() =
+                    Some(device.property_changed(move |property| {
+                        if property == "FocusedElement" {
+                            if let Some(owner) = weak.upgrade() {
+                                owner.refresh_flyout_focus_state();
+                            }
+                        }
+                    }));
+            }
+        }
+    }
+
+    fn refresh_flyout_focus_state(&self) {
+        if !self.force_focused_visual_state.get() {
+            return;
+        }
+        if self.is_focused() {
+            self.set_force_focused_visual_state(false);
+        } else {
+            let focused = KeyboardDevice::instance().and_then(|device| device.focused_element());
+            if !self.context_flyout_contains_focus(focused.as_deref()) {
+                self.complete_focus_loss();
+            }
+        }
+    }
+
+    fn refresh_context_flyout_subscription(&self) {
+        let previous = self.context_flyout_closed_subscription.take();
+        if let Some(previous) = previous {
+            previous.dispose();
+        }
+        if let Some(flyout) = self.context_flyout() {
+            let weak = self.to_ref().downgrade();
+            *self.context_flyout_closed_subscription.borrow_mut() =
+                Some(flyout.closed(move || {
+                    if let Some(owner) = weak.upgrade() {
+                        owner.refresh_flyout_focus_state();
+                    }
+                }));
+        }
+        self.refresh_flyout_focus_state();
+    }
+
+    fn complete_focus_loss(&self) {
+        self.set_force_focused_visual_state(false);
+        self.handle_edit(self.cancel_composition());
+        self.editor().checkpoint();
+        self.im_client.request_reset();
+        self.stop_caret_blink();
+        self.text_presenter.invalidate_document_layout();
+    }
+
     pub(crate) fn selection_is_visible(&self) -> bool {
         self.active_selection_brush().is_some_and(|brush| {
             brush.opacity() > 0.0
@@ -1419,8 +1553,7 @@ impl RichEditBox {
             return;
         }
         if self.text_presenter.is_measure_valid() && self.text_presenter.is_arrange_valid() {
-            self.text_presenter
-                .bring_into_view_rect(self.text_presenter.cursor_rectangle());
+            self.text_presenter.bring_caret_into_view();
         } else if !self.caret_scroll_pending.replace(true) {
             let weak = self.to_ref().downgrade();
             Dispatcher::ui_thread().post_local(
@@ -1428,8 +1561,7 @@ impl RichEditBox {
                     if let Some(this) = weak.upgrade() {
                         this.caret_scroll_pending.set(false);
                         if this.text_presenter.visual_parent().is_some() {
-                            this.text_presenter
-                                .bring_into_view_rect(this.text_presenter.cursor_rectangle());
+                            this.text_presenter.bring_caret_into_view();
                         }
                     }
                 },

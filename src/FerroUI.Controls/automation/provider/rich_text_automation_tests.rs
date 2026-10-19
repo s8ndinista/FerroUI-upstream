@@ -1,7 +1,8 @@
 use super::{
-    IInvokeProvider, ITextChildProvider, ITextProvider, ITextProvider2, ITextRangeProvider,
-    IValueProvider, SupportedTextSelection, TextAttribute, TextAttributeValue,
-    TextPatternRangeEndpoint as Endpoint, TextProviderError, TextUnit,
+    IInvokeProvider, ITextChildProvider, ITextEditProvider, ITextProvider, ITextProvider2,
+    ITextRangeProvider, IValueProvider, SupportedTextSelection, TextAttribute, TextAttributeValue,
+    TextEditChangeType, TextEditTextChangedEventArgs, TextPatternRangeEndpoint as Endpoint,
+    TextProviderError, TextUnit,
 };
 use crate::automation::peers::{AutomationControlType, ControlAutomationPeer};
 use crate::automation::AutomationProperties;
@@ -1417,4 +1418,254 @@ fn rich_automation_editor_raw_presenter_does_not_duplicate_embedded_document_chi
         pending.extend(peer.get_children().iter().cloned());
     }
     assert_eq!(embedded_peer.get_parent(), Some(link_peer));
+}
+
+// These regressions exercise the portable TextEdit bridge against the actual
+// editor. They are additional coverage for the WinUI/SDK provider contract.
+
+#[test]
+fn rich_automation_text_edit_composition_range_tracks_utf16_preview_and_rejects_stale_state() {
+    let _scope = test_scope();
+    let editor = RichEditBox::new();
+    editor.set_text("a😀b tail").unwrap();
+    editor.select(1, 4);
+    let peer = ControlAutomationPeer::create_peer_for_element(&editor);
+    let text = peer.get_provider::<dyn ITextProvider>().unwrap();
+    let edit = peer.get_provider::<dyn ITextEditProvider>().unwrap();
+    assert!(edit.get_active_composition().unwrap().is_none());
+    assert!(edit.get_conversion_target().unwrap().is_none());
+
+    editor.set_preedit_text(Some("候😀補"), Some(1)).unwrap();
+    let before = editor.editor().selection();
+    let revision = editor.document().revision();
+    let active = edit.get_active_composition().unwrap().unwrap();
+    let all = text.document_range().unwrap();
+    assert_eq!(active.get_text(None).unwrap(), "候😀補");
+    assert_eq!(active.peer().unwrap(), peer);
+    assert_eq!(
+        active
+            .compare_endpoints(Endpoint::Start, &*all, Endpoint::Start)
+            .unwrap(),
+        1
+    );
+    assert_eq!(
+        active
+            .compare_endpoints(Endpoint::End, &*all, Endpoint::Start)
+            .unwrap(),
+        5
+    );
+    let caret = peer
+        .get_provider::<dyn ITextProvider2>()
+        .unwrap()
+        .get_caret_range()
+        .unwrap()
+        .range
+        .unwrap();
+    assert_eq!(
+        caret
+            .compare_endpoints(Endpoint::Start, &*all, Endpoint::Start)
+            .unwrap(),
+        2
+    );
+    assert!(edit.get_conversion_target().unwrap().is_none());
+    assert_eq!(editor.editor().selection(), before);
+    assert_eq!(editor.document().revision(), revision);
+
+    editor.document().replace_text(0..0, "z").unwrap();
+    assert!(edit.get_active_composition().unwrap().is_none());
+    assert_eq!(active.get_text(None).unwrap(), "候😀補");
+    assert_eq!(
+        active
+            .compare_endpoints(
+                Endpoint::Start,
+                &*text.document_range().unwrap(),
+                Endpoint::Start
+            )
+            .unwrap(),
+        2
+    );
+    assert!(editor.cancel_composition().unwrap());
+    assert_eq!(editor.text(), "za候😀補 tail");
+
+    editor.select(2, 6);
+    editor.set_preedit_text(Some(""), Some(0)).unwrap();
+    let empty = edit.get_active_composition().unwrap().unwrap();
+    assert_eq!(empty.get_text(None).unwrap(), "");
+    assert_eq!(
+        empty
+            .compare_endpoints(Endpoint::Start, &*empty, Endpoint::End)
+            .unwrap(),
+        0
+    );
+    editor.commit_composition("完成").unwrap();
+    assert!(edit.get_active_composition().unwrap().is_none());
+    assert!(edit.get_conversion_target().unwrap().is_none());
+}
+
+#[test]
+fn rich_automation_text_edit_events_report_accepted_deltas_and_single_finalization() {
+    use crate::RichEditCharacterCasing;
+    let _scope = test_scope();
+    let editor = RichEditBox::new();
+    editor.set_text("LR").unwrap();
+    editor.set_max_length(6);
+    editor.set_accepts_return(false);
+    editor.set_character_casing(RichEditCharacterCasing::Upper);
+    editor.select(1, 1);
+    let peer = ControlAutomationPeer::create_peer_for_element(&editor);
+    let edit = peer.get_provider::<dyn ITextEditProvider>().unwrap();
+    let events = Rc::new(std::cell::RefCell::new(Vec::new()));
+    let observed = events.clone();
+    let active_during_events = Rc::new(std::cell::RefCell::new(Vec::new()));
+    let active = active_during_events.clone();
+    let weak_provider = Rc::downgrade(&edit);
+    let subscription = edit
+        .text_edit_text_changed(Rc::new(move |event| {
+            let provider = weak_provider.upgrade().unwrap();
+            active.borrow_mut().push(
+                provider
+                    .get_active_composition()
+                    .unwrap()
+                    .map(|range| range.get_text(None).unwrap()),
+            );
+            observed.borrow_mut().push(event.clone());
+        }))
+        .unwrap();
+
+    editor.set_preedit_text(Some("ab😀\r\nZ"), Some(1)).unwrap();
+    editor.set_preedit_text(Some("ac😀\r\nZ"), Some(1)).unwrap();
+    editor.set_preedit_text(Some("ac😀"), Some(2)).unwrap();
+    editor.commit_composition("ax😀\r\nZZ").unwrap();
+    assert_eq!(editor.text(), "LAX😀R");
+    assert_eq!(
+        active_during_events.borrow().as_slice(),
+        &[Some("AB😀".to_owned()), Some("AC😀".to_owned()), None]
+    );
+    assert_eq!(
+        events.borrow().as_slice(),
+        &[
+            TextEditTextChangedEventArgs {
+                change_type: TextEditChangeType::Composition,
+                changed_data: vec!["AB😀".to_owned()]
+            },
+            TextEditTextChangedEventArgs {
+                change_type: TextEditChangeType::Composition,
+                changed_data: vec!["C".to_owned()]
+            },
+            TextEditTextChangedEventArgs {
+                change_type: TextEditChangeType::CompositionFinalized,
+                changed_data: vec!["AX😀".to_owned()]
+            },
+        ]
+    );
+
+    events.borrow_mut().clear();
+    editor.select(1, 5);
+    editor.set_preedit_text(Some("z😀"), Some(1)).unwrap();
+    editor.cancel_composition().unwrap();
+    assert_eq!(editor.text(), "LAX😀R");
+    assert_eq!(
+        events.borrow().as_slice(),
+        &[
+            TextEditTextChangedEventArgs {
+                change_type: TextEditChangeType::Composition,
+                changed_data: vec!["Z😀".to_owned()]
+            },
+            TextEditTextChangedEventArgs {
+                change_type: TextEditChangeType::CompositionFinalized,
+                changed_data: vec![String::new()]
+            },
+        ]
+    );
+    events.borrow_mut().clear();
+    editor.insert_text("plain").unwrap();
+    assert!(events.borrow().is_empty());
+    subscription.dispose();
+}
+
+#[test]
+fn rich_automation_text_edit_observation_follows_document_replacement_and_disposal() {
+    let _scope = test_scope();
+    let editor = RichEditBox::new();
+    editor.set_text("old").unwrap();
+    let old_editor = editor.editor();
+    let peer = ControlAutomationPeer::create_peer_for_element(&editor);
+    let edit = peer.get_provider::<dyn ITextEditProvider>().unwrap();
+    let events = Rc::new(std::cell::RefCell::new(Vec::new()));
+    let observed = events.clone();
+    let subscription = edit
+        .text_edit_text_changed(Rc::new(move |event| {
+            observed.borrow_mut().push(event.clone())
+        }))
+        .unwrap();
+    editor.set_preedit_text(Some("old preview"), None).unwrap();
+    let old_range = edit.get_active_composition().unwrap().unwrap();
+    events.borrow_mut().clear();
+
+    editor.set_document(RichTextDocument::from_text("new"));
+    assert!(events.borrow().is_empty());
+    assert!(edit.get_active_composition().unwrap().is_none());
+    assert!(old_range.get_text(None).is_err());
+    old_editor.set_preedit("detached preview", None).unwrap();
+    assert!(events.borrow().is_empty());
+    editor.set_preedit_text(Some("current"), None).unwrap();
+    assert_eq!(
+        events.borrow().as_slice(),
+        &[TextEditTextChangedEventArgs {
+            change_type: TextEditChangeType::Composition,
+            changed_data: vec!["current".to_owned()]
+        },]
+    );
+    subscription.dispose();
+    editor.cancel_composition().unwrap();
+    assert_eq!(events.borrow().len(), 1);
+}
+
+#[test]
+fn rich_automation_text_edit_pattern_is_editor_only_and_does_not_retain_owner() {
+    let _scope = test_scope();
+    let view = rich("read-only content");
+    assert!(ControlAutomationPeer::create_peer_for_element(&view)
+        .get_provider::<dyn ITextEditProvider>()
+        .is_none());
+    let events = Rc::new(Cell::new(0));
+    let (edit, range, model, subscription, weak_owner) = {
+        let editor = RichEditBox::new();
+        let peer = ControlAutomationPeer::create_peer_for_element(&editor);
+        editor.set_is_read_only(true);
+        let edit = peer.get_provider::<dyn ITextEditProvider>().unwrap();
+        assert!(edit.get_active_composition().unwrap().is_none());
+        editor.set_is_read_only(false);
+        editor.set_preedit_text(Some("active"), None).unwrap();
+        let range = edit.get_active_composition().unwrap().unwrap();
+        let observed = events.clone();
+        let subscription = edit
+            .text_edit_text_changed(Rc::new(move |_| observed.set(observed.get() + 1)))
+            .unwrap();
+        assert!(
+            ControlAutomationPeer::create_peer_for_element(&editor.text_presenter())
+                .get_provider::<dyn ITextEditProvider>()
+                .is_none()
+        );
+        (
+            edit,
+            range,
+            editor.editor(),
+            subscription,
+            editor.downgrade(),
+        )
+    };
+    assert!(weak_owner.upgrade().is_none());
+    assert_eq!(
+        edit.get_active_composition()
+            .err()
+            .unwrap()
+            .downcast_ref::<TextProviderError>(),
+        Some(&TextProviderError::ElementNotAvailable)
+    );
+    assert!(edit.get_conversion_target().is_err());
+    assert!(range.get_text(None).is_err());
+    model.set_preedit("retained model", None).unwrap();
+    assert_eq!(events.get(), 0);
+    subscription.dispose();
 }

@@ -10,6 +10,8 @@ pub use rich_edit_text_document::{
     TextStreamEncoding, TextStreamOptions,
 };
 pub(crate) use rich_text_editor::utf16_prefix;
-pub use rich_text_editor::{EditError, EditKind, EditorSelection, RichTextEditor};
+pub use rich_text_editor::{
+    EditError, EditKind, EditorSelection, RichTextCompositionChange, RichTextEditor,
+};
 pub use rich_text_transfer::{RichEditClipboardFormat, RichTextTransfer};
 pub use rtf::{RtfError, RtfLimits, RtfReader, RtfWriter};
