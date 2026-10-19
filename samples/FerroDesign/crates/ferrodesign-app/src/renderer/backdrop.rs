@@ -145,16 +145,7 @@ impl BackdropCache {
         let entry = self.entries.get_mut(&key).unwrap();
         entry.used = self.clock;
         let clip = context.push_clip(ui_rect(entry.raster.output));
-        let replacement = context.try_push_compositing_layer(
-            BitmapBlendingMode::Source, 1.0, ui_rect(entry.raster.output),
-        );
-        let Some(replacement) = replacement else {
-            context.pop(clip);
-            record_failure(stats, Failure::Unsupported, count);
-            return false;
-        };
-        draw_surface(context, entry.image.as_ref(), entry.raster.sample);
-        context.pop(replacement);
+        replace_surface(context, entry.image.as_ref(), entry.raster.sample);
         context.pop(clip);
         if cached { self.hits += 1; }
         merge_children(stats, entry.children, cached);
@@ -205,7 +196,7 @@ impl BackdropCache {
             // corners and transparent holes. Only the filtered region changes.
             draw_surface(context, prefix.as_ref(), raster.sample);
             let clip = context.push_geometry_clip(&node.visual.geometry);
-            composite_image(context, blurred.as_ref(), raster.sample, BitmapBlendingMode::Source, 1.0)?;
+            replace_surface(context, blurred.as_ref(), raster.sample);
             context.pop(clip);
             composite_image(context, source.as_ref(), raster.sample, bitmap_blend(node.blend), 1.0)
         })?;
@@ -353,6 +344,21 @@ fn composite_image(
     draw_surface(context, image, bounds);
     context.pop(layer);
     Ok(())
+}
+
+fn replace_surface(context: &mut DrawingContext<'_>, image: &RenderTargetBitmap, bounds: Rect) {
+    // Source on an isolated group also replaces its transparent surroundings;
+    // a clip on its contents does not bound that final group composition. This
+    // operation replaces one bitmap instead, so use the public bitmap blend:
+    // its image rectangle and the active clips supply destructive coverage.
+    // Keep Source rather than SourceOver so transparent/premultiplied pixels
+    // replace the previous prefix without increasing its alpha.
+    let options = context.push_render_options(RenderOptions {
+        bitmap_blending_mode: BitmapBlendingMode::Source,
+        ..RenderOptions::default()
+    });
+    draw_surface(context, image, bounds);
+    context.pop(options);
 }
 
 fn draw_surface(context: &mut DrawingContext<'_>, image: &RenderTargetBitmap, bounds: Rect) {
