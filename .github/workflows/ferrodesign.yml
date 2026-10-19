@@ -100,6 +100,18 @@ jobs:
           CARGO_PROFILE_TEST_DEBUG=0 CARGO_PROFILE_TEST_CODEGEN_UNITS=16 cargo test --locked --manifest-path ../../Cargo.toml -p ferroui-base --lib compositing_layer --jobs 1 -- --test-threads=1 2>&1 | tee browser-report/compositing-base-tests.log
           CARGO_PROFILE_TEST_DEBUG=0 CARGO_PROFILE_TEST_CODEGEN_UNITS=16 cargo test --locked --manifest-path ../../Cargo.toml -p ferroui-vello --lib compositing_layer --jobs 1 -- --test-threads=1 2>&1 | tee browser-report/compositing-vello-tests.log
 
+      - name: Check native launcher and shared UI compilation
+        run: |
+          set -o pipefail
+          source "$RUNNER_TEMP/ferrodesign-tools/env.sh"
+          cargo check --locked -p ferrodesign-app --lib --tests --jobs 1 2>&1 | tee browser-report/native-check.log
+
+      - name: Test native editor, incremental rendering and background blur
+        run: |
+          set -o pipefail
+          source "$RUNNER_TEMP/ferrodesign-tools/env.sh"
+          CARGO_PROFILE_TEST_DEBUG=0 CARGO_PROFILE_TEST_CODEGEN_UNITS=16 cargo test --locked -p ferrodesign-app --lib --jobs 1 -- --test-threads=1 2>&1 | tee browser-report/native-tests.log
+
       - name: Build actual FerroUI Vello WebAssembly application
         run: |
           set -o pipefail
@@ -116,24 +128,6 @@ jobs:
           set -o pipefail
           node tests/document-store-browser.mjs 2>&1 | tee browser-report/indexeddb-tests.log
           npm run test:browser 2>&1 | tee browser-report/browser-tests.log
-
-      - name: Check native launcher and shared UI compilation
-        run: |
-          set -o pipefail
-          source "$RUNNER_TEMP/ferrodesign-tools/env.sh"
-          cargo check --locked -p ferrodesign-app --lib --tests --jobs 1 2>&1 | tee browser-report/native-check.log
-
-      - name: Test background blur through public FerroUI bitmap APIs
-        run: |
-          set -o pipefail
-          source "$RUNNER_TEMP/ferrodesign-tools/env.sh"
-          CARGO_PROFILE_TEST_DEBUG=0 CARGO_PROFILE_TEST_CODEGEN_UNITS=16 cargo test --locked -p ferrodesign-app --lib backdrop_blur --jobs 1 -- --test-threads=1 2>&1 | tee browser-report/backdrop-tests.log
-
-      - name: Compare incremental and full renderer output
-        run: |
-          set -o pipefail
-          source "$RUNNER_TEMP/ferrodesign-tools/env.sh"
-          CARGO_PROFILE_TEST_DEBUG=0 CARGO_PROFILE_TEST_CODEGEN_UNITS=16 cargo test --locked -p ferrodesign-app --lib incremental_renderer --jobs 1 -- --test-threads=1 2>&1 | tee browser-report/incremental-renderer-tests.log
 
       - name: Upload complete browser build
         if: always()

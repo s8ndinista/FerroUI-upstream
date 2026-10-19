@@ -15,7 +15,7 @@ git clone --depth 1 --branch feat/ferrodesign-editor --single-branch https://git
 cd FerroUI/samples/FerroDesign
 ```
 
-The implementation was based on upstream commit `325b3ce4b0fcf154eba79cbd92262536daf77e71`. The branch contains the complete application, Vello browser feature gating, native text-input fixes and the public FerroUI isolated-compositing capability. [PR #254](https://github.com/wieslawsoltes/FerroUI/pull/254) collects the branch changes.
+The implementation began from upstream commit `325b3ce4b0fcf154eba79cbd92262536daf77e71` and incorporates upstream `3d8b473d95662c74d7bed4874a861233a09f3f05` (FerroUI 0.3.0-preview.1). The branch contains the complete application, Vello browser feature gating, native text-input fixes and the public FerroUI isolated-compositing capability. [PR #254](https://github.com/wieslawsoltes/FerroUI/pull/254) collects the branch changes.
 
 ## Build and run in a browser
 
@@ -59,6 +59,8 @@ The native configuration uses Vello CPU and the platform framebuffer on Linux/X1
 ## Editing
 
 The initial document contains editable Orbit mobile banking screens, a component page, styles, variables, comments and a linked prototype. Click a layer on the canvas or in the left sidebar; the right sidebar edits the selected layer. Empty-canvas selection exposes the page background.
+
+Select an auto-layout frame or one of its children, then choose **Layout and grid placement…** in the inspector. Native controls edit child sizing, min/max limits, growth, absolute positioning, one-based grid cells and row/column spans. **Move before/after** follows the visual flow, including reversed layouts; pinned grid children keep their cells.
 
 | Action | Shortcut |
 | --- | --- |
@@ -106,6 +108,7 @@ Export options include editable JSON, SVG, PNG rendered through FerroUI's `Rende
 ```sh
 cargo test --locked -p ferrodesign-core
 cargo check --locked -p ferrodesign-app
+cargo test --locked -p ferrodesign-app --lib -- --test-threads=1
 cargo run --release -p ferrodesign-core --example performance -- 10000
 npm ci
 npx playwright install chromium
@@ -116,7 +119,7 @@ npm run test:browser
 
 `tests/browser.mjs` serves the actual `dist` build and exercises both requested browser rendering modes. It checks native pixels, pointer drawing, vector-point and pen-handle gestures, on-canvas Unicode text editing, paint controls, prototype pointer/key/delay interactions, keyboard history, document import/export, durable reload, and a 10,000-layer document larger than the usual localStorage allowance. It also checks startup exceptions and render-thread panics, and writes PNG screenshots, traces and JSON/HTML reports to `browser-report`. The separate IndexedDB test verifies real transaction rollback, migration and conflicting tab writes.
 
-The GitHub Actions workflow `.github/workflows/ferrodesign.yml` runs the locked core tests, paired release benchmarks, focused native TextBox preedit tests, public compositing recording/Vello pixel tests, the real WebAssembly build, browser interaction validation, native compilation and background-blur pixel tests. Build and validation artifacts are attached to each workflow run. See [validation and measurements](docs/VALIDATION.md) for observed results and the distinction between document-engine timings and browser rendering performance.
+The GitHub Actions workflow `.github/workflows/ferrodesign.yml` runs locked core tests, paired release benchmarks, focused native TextBox preedit tests, public compositing recording/Vello pixel tests, native compilation and the complete native application test suite before the real WebAssembly build and browser interaction validation. Native tests compare incremental and full rendering pixels and cover bounded background blur and authoring parsers. Browser checks also cover networks, components, variables, rich text, crop gestures, page controls, grid spans/reorder and 10,000-layer preparation counts. Build and validation artifacts are attached to each workflow run. See [validation and measurements](docs/VALIDATION.md) for observed results and the distinction between document-engine timings and browser rendering performance.
 
 ## Source map
 
