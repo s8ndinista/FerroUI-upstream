@@ -4,6 +4,9 @@ use std::collections::BTreeSet;
 pub struct LayoutResult {
     pub changed: Vec<NodeId>,
     pub warnings: Vec<String>,
+    /// Invalid settings or exhausted placement bounds, separate from advisory
+    /// Hug/Fill warnings. Authoring transactions reject these atomically.
+    pub errors: Vec<String>,
 }
 /// Layout reads only geometry and sizing rules. Retaining an entire `Node`
 /// here would copy text, vector paths, images, and paint stacks on every pass.
@@ -56,7 +59,286 @@ fn alignment_offset(a: LayoutAlign, extra: f64) -> f64 {
         _ => 0.0,
     }
 }
+
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+struct GridCell { row: usize, column: usize, row_span: usize, column_span: usize }
+
+fn has_grid_placement(children: &[LayoutItem]) -> bool {
+    children.iter().any(|child| child.layout_child.grid
+        .is_some_and(|grid| grid != GridPlacement::default()))
+}
+
+fn layout_inputs(parent: &Node, layout: &AutoLayout, children: &[LayoutItem]) -> Result<(), String> {
+    if ![parent.width, parent.height, layout.gap, layout.cross_gap,
+        layout.padding.top, layout.padding.right, layout.padding.bottom, layout.padding.left]
+        .iter().all(|value| value.is_finite() && *value >= 0.0)
+    {
+        return Err("Layout sizes, padding and gaps must be finite nonnegative numbers".into());
+    }
+    if layout.axis == LayoutAxis::Grid && !(1..=MAX_GRID_COLUMNS).contains(&layout.columns) {
+        return Err(format!("Grid columns must be between 1 and {MAX_GRID_COLUMNS}"));
+    }
+    for child in children {
+        let sizing = child.layout_child;
+        if ![child.width, child.height, sizing.min_width, sizing.min_height, sizing.grow]
+            .iter().all(|value| value.is_finite() && *value >= 0.0)
+            || sizing.max_width.is_some_and(|value| !value.is_finite() || value < sizing.min_width)
+            || sizing.max_height.is_some_and(|value| !value.is_finite() || value < sizing.min_height)
+        {
+            return Err(format!("Node {} has invalid minimum, maximum or growth settings", child.id));
+        }
+        if let Some(grid) = sizing.grid { grid.validate().map_err(|error| error.to_string())?; }
+    }
+    Ok(())
+}
+
+/// At most 128 KiB of occupancy bits and a bounded number of word probes.
+/// A monotonic auto-placement cursor avoids rescanning earlier occupied cells.
+struct GridOccupancy {
+    columns: usize,
+    max_rows: usize,
+    bits: Vec<u64>,
+    work: usize,
+}
+impl GridOccupancy {
+    fn new(columns: usize) -> Self {
+        Self { columns, max_rows: MAX_GRID_ROWS.min(MAX_GRID_CELLS / columns),
+            bits: Vec::new(), work: 8 * MAX_GRID_CELLS }
+    }
+    fn spend(&mut self) -> Result<(), String> {
+        self.work = self.work.checked_sub(1)
+            .ok_or_else(|| "Grid placement exceeded its bounded work budget".to_string())?;
+        Ok(())
+    }
+    fn fits(&self, cell: GridCell) -> bool {
+        cell.row.checked_add(cell.row_span).is_some_and(|end| end <= self.max_rows)
+            && cell.column.checked_add(cell.column_span).is_some_and(|end| end <= self.columns)
+    }
+    fn conflict(&mut self, cell: GridCell) -> Result<Option<usize>, String> {
+        if !self.fits(cell) {
+            return Err(format!("Grid placement exceeds {MAX_GRID_CELLS} cells or the supported track bounds"));
+        }
+        for row in cell.row..cell.row + cell.row_span {
+            let mut start = row * self.columns + cell.column;
+            let end = start + cell.column_span;
+            while start < end {
+                self.spend()?;
+                let offset = start % 64;
+                let count = (end - start).min(64 - offset);
+                let mask = if count == 64 { u64::MAX } else { ((1u64 << count) - 1) << offset };
+                let occupied = self.bits.get(start / 64).copied().unwrap_or(0) & mask;
+                if occupied != 0 {
+                    let position = start / 64 * 64 + occupied.trailing_zeros() as usize;
+                    return Ok(Some(position - row * self.columns));
+                }
+                start += count;
+            }
+        }
+        Ok(None)
+    }
+    fn reserve(&mut self, cell: GridCell) -> Result<(), String> {
+        if !self.fits(cell) { return Err("Grid placement exceeds the supported cell bounds".into()); }
+        let end = (cell.row + cell.row_span - 1) * self.columns + cell.column + cell.column_span;
+        self.bits.resize(self.bits.len().max(end.div_ceil(64)), 0);
+        for row in cell.row..cell.row + cell.row_span {
+            let mut start = row * self.columns + cell.column;
+            let end = start + cell.column_span;
+            while start < end {
+                self.spend()?;
+                let offset = start % 64;
+                let count = (end - start).min(64 - offset);
+                let mask = if count == 64 { u64::MAX } else { ((1u64 << count) - 1) << offset };
+                self.bits[start / 64] |= mask;
+                start += count;
+            }
+        }
+        Ok(())
+    }
+}
+
+fn grid_cells(children: &[LayoutItem], columns: usize) -> Result<Vec<GridCell>, String> {
+    if !(1..=MAX_GRID_COLUMNS).contains(&columns) { return Err("Invalid grid column count".into()); }
+    let mut occupancy = GridOccupancy::new(columns);
+    let mut cells = vec![None; children.len()];
+    for child in children {
+        let grid = child.layout_child.grid.unwrap_or_default();
+        grid.validate().map_err(|error| error.to_string())?;
+        if grid.column_span > columns
+            || grid.column.is_some_and(|column| column + grid.column_span > columns)
+            || grid.row_span > occupancy.max_rows
+        {
+            return Err(format!("Node {} does not fit the grid's column or row bounds", child.id));
+        }
+    }
+    // Fully pinned cells have priority independent of layer order.
+    for (index, child) in children.iter().enumerate() {
+        let grid = child.layout_child.grid.unwrap_or_default();
+        if let (Some(row), Some(column)) = (grid.row, grid.column) {
+            let cell = GridCell { row, column, row_span: grid.row_span, column_span: grid.column_span };
+            if occupancy.conflict(cell)?.is_some() {
+                return Err(format!("Node {} overlaps another explicitly placed grid child", child.id));
+            }
+            occupancy.reserve(cell)?;
+            cells[index] = Some(cell);
+        }
+    }
+    // A fixed row must find a column in that row; it cannot silently drift.
+    for (index, child) in children.iter().enumerate() {
+        let grid = child.layout_child.grid.unwrap_or_default();
+        if cells[index].is_some() || grid.row.is_none() { continue; }
+        let row = grid.row.unwrap();
+        let mut column = 0;
+        while column + grid.column_span <= columns {
+            let cell = GridCell { row, column, row_span: grid.row_span, column_span: grid.column_span };
+            match occupancy.conflict(cell)? {
+                Some(blocked) => column = blocked + 1,
+                None => { occupancy.reserve(cell)?; cells[index] = Some(cell); break; }
+            }
+        }
+        if cells[index].is_none() {
+            return Err(format!("Node {} has no free span in its specified grid row", child.id));
+        }
+    }
+    let mut cursor = 0;
+    for (index, child) in children.iter().enumerate() {
+        if cells[index].is_some() { continue; }
+        let grid = child.layout_child.grid.unwrap_or_default();
+        let mut row = cursor / columns;
+        let mut column = grid.column.unwrap_or(cursor % columns);
+        if grid.column.is_some_and(|fixed| fixed < cursor % columns) { row += 1; }
+        while row + grid.row_span <= occupancy.max_rows {
+            if column + grid.column_span > columns {
+                row += 1;
+                column = grid.column.unwrap_or(0);
+                continue;
+            }
+            let cell = GridCell { row, column, row_span: grid.row_span, column_span: grid.column_span };
+            match occupancy.conflict(cell)? {
+                Some(blocked) => {
+                    if let Some(fixed) = grid.column { row += 1; column = fixed; }
+                    else { column = blocked + 1; }
+                }
+                None => {
+                    occupancy.reserve(cell)?;
+                    cells[index] = Some(cell);
+                    cursor = row * columns + column + grid.column_span;
+                    break;
+                }
+            }
+        }
+        if cells[index].is_none() {
+            return Err(format!("Node {} has no free grid span within the supported bounds", child.id));
+        }
+    }
+    Ok(cells.into_iter().map(Option::unwrap).collect())
+}
+
+fn arrange_placed_grid(children: &mut [LayoutItem], layout: &AutoLayout,
+    width: &mut f64, height: &mut f64, warnings: &mut Vec<String>) -> Result<(), String> {
+    let cells = grid_cells(children, layout.columns)?;
+    let columns = layout.columns;
+    let rows = cells.iter().map(|cell| cell.row + cell.row_span).max().unwrap_or(0);
+    let p = layout.padding;
+    let gap = layout.gap;
+    let cross_gap = layout.cross_gap;
+    for child in children.iter_mut() {
+        child.width = clamp_size(child.width, child.layout_child.min_width, child.layout_child.max_width);
+        child.height = clamp_size(child.height, child.layout_child.min_height, child.layout_child.max_height);
+    }
+    if layout.width == SizingMode::Hug {
+        let track = children.iter().zip(&cells).map(|(child, cell)|
+            ((child.width - gap * (cell.column_span - 1) as f64) / cell.column_span as f64).max(0.0))
+            .fold(0.0, f64::max);
+        *width = p.left + p.right + track * columns as f64 + gap * (columns - 1) as f64;
+    }
+    let track_width = ((*width - p.left - p.right - gap * (columns - 1) as f64) / columns as f64).max(0.0);
+    // Spans join row tracks into groups. Equal tracks within each joined group
+    // give Hug/Fill a stable intrinsic policy: writing a Fill child's arranged
+    // height back cannot increase its per-track demand in a later layout pass.
+    // Unjoined rows retain their independent natural height.
+    let mut joins = vec![0i64; rows + 1];
+    for cell in &cells {
+        if cell.row_span > 1 {
+            joins[cell.row] += 1;
+            joins[cell.row + cell.row_span - 1] -= 1;
+        }
+    }
+    let mut groups = Vec::with_capacity(rows);
+    let (mut active, mut group) = (0i64, 0usize);
+    for joined in joins.iter().take(rows) {
+        groups.push(group);
+        active += *joined;
+        if active == 0 { group += 1; }
+    }
+    let mut group_heights = vec![0.0f64; group + 1];
+    for (child, cell) in children.iter().zip(&cells) {
+        let demand = ((child.height - cross_gap * (cell.row_span - 1) as f64) / cell.row_span as f64).max(0.0);
+        group_heights[groups[cell.row]] = group_heights[groups[cell.row]].max(demand);
+    }
+    let mut heights: Vec<_> = groups.iter().map(|group| group_heights[*group]).collect();
+    if layout.height == SizingMode::Hug {
+        *height = p.top + p.bottom + heights.iter().sum::<f64>() + cross_gap * rows.saturating_sub(1) as f64;
+    } else if layout.cross_align == LayoutAlign::Stretch && rows != 0 {
+        heights.fill(((*height - p.top - p.bottom - cross_gap * (rows - 1) as f64) / rows as f64).max(0.0));
+    }
+    let mut row_y = Vec::with_capacity(rows + 1);
+    row_y.push(p.top);
+    for track in &heights { row_y.push(row_y.last().copied().unwrap() + track + cross_gap); }
+    for (child, cell) in children.iter_mut().zip(cells) {
+        let available_width = track_width * cell.column_span as f64 + gap * (cell.column_span - 1) as f64;
+        let available_height = row_y[cell.row + cell.row_span] - row_y[cell.row] - cross_gap;
+        if child.layout_child.width == SizingMode::Fill || layout.cross_align == LayoutAlign::Stretch {
+            child.width = clamp_size(available_width, child.layout_child.min_width, child.layout_child.max_width);
+        }
+        if child.layout_child.height == SizingMode::Fill || layout.cross_align == LayoutAlign::Stretch {
+            child.height = clamp_size(available_height, child.layout_child.min_height, child.layout_child.max_height);
+        }
+        if child.width > available_width + GEOMETRY_EPSILON
+            || child.height > available_height + GEOMETRY_EPSILON {
+            warnings.push(format!("Node {}: fixed or minimum size exceeds its allocated grid span", child.id));
+        }
+        child.x = p.left + cell.column as f64 * (track_width + gap)
+            + alignment_offset(layout.main_align, available_width - child.width);
+        child.y = row_y[cell.row] + alignment_offset(layout.cross_align, available_height - child.height);
+    }
+    Ok(())
+}
 impl Document {
+    fn layout_items(&self, parent: &Node) -> Vec<LayoutItem> {
+        let mut children: Vec<_> = parent.children.iter().filter_map(|id| self.nodes.get(id))
+            .filter(|node| node.visible && !node.layout_child.absolute)
+            .map(|node| LayoutItem { id: node.id, x: node.x, y: node.y, width: node.width,
+                height: node.height, layout_child: node.layout_child }).collect();
+        if parent.layout.as_ref().is_some_and(|layout| layout.reverse) { children.reverse(); }
+        children
+    }
+
+    /// Old documents omit placement entirely. Only authored placement needs
+    /// occupancy validation during import; the original simple grid is intact.
+    pub fn validate_grid_placements(&self) -> Result<(), DocumentError> {
+        for parent in self.nodes.values().filter(|node| node.layout.as_ref()
+            .is_some_and(|layout| layout.axis == LayoutAxis::Grid)) {
+            let children = self.layout_items(parent);
+            if !has_grid_placement(&children) { continue; }
+            let layout = parent.layout.as_ref().unwrap();
+            layout_inputs(parent, layout, &children)
+                .and_then(|_| grid_cells(&children, layout.columns).map(|_| ()))
+                .map_err(|error| DocumentError::Invalid(format!("Grid {}: {error}", parent.id)))?;
+        }
+        Ok(())
+    }
+
+    pub(crate) fn validate_layout_node_settings(&self, id: NodeId) -> Result<(), DocumentError> {
+        let parent = self.nodes.get(&id).ok_or(DocumentError::MissingNode(id))?;
+        let layout = parent.layout.as_ref().ok_or_else(|| DocumentError::Invalid("Parent does not use auto layout".into()))?;
+        let children = self.layout_items(parent);
+        layout_inputs(parent, layout, &children).map_err(DocumentError::Invalid)?;
+        if layout.axis == LayoutAxis::Grid && has_grid_placement(&children) {
+            grid_cells(&children, layout.columns).map_err(DocumentError::Invalid)?;
+        }
+        Ok(())
+    }
+
     pub fn apply_constraints(
         &mut self,
         parent: NodeId,
@@ -122,22 +404,10 @@ impl Document {
         let Some(layout) = parent.layout.clone() else {
             return result;
         };
-        let mut children: Vec<LayoutItem> = parent
-            .children
-            .iter()
-            .filter_map(|id| self.nodes.get(id))
-            .filter(|n| n.visible && !n.layout_child.absolute)
-            .map(|node| LayoutItem {
-                id: node.id,
-                x: node.x,
-                y: node.y,
-                width: node.width,
-                height: node.height,
-                layout_child: node.layout_child,
-            })
-            .collect();
-        if layout.reverse {
-            children.reverse()
+        let mut children = self.layout_items(parent);
+        if let Err(error) = layout_inputs(parent, &layout, &children) {
+            result.errors.push(format!("Node {id}: {error}"));
+            return result;
         }
         let p = layout.padding;
         let mut pw = parent.width;
@@ -150,6 +420,11 @@ impl Document {
             }
             if layout.height == SizingMode::Hug {
                 ph = p.top + p.bottom
+            }
+        } else if layout.axis == LayoutAxis::Grid && has_grid_placement(&children) {
+            if let Err(error) = arrange_placed_grid(&mut children, &layout, &mut pw, &mut ph, &mut result.warnings) {
+                result.errors.push(format!("Node {id}: {error}"));
+                return result;
             }
         } else if layout.axis == LayoutAxis::Grid {
             let columns = layout.columns.max(1).min(4096).min(children.len());
@@ -377,11 +652,19 @@ impl Document {
                 pw = cross
             }
         }
+        if ![pw, ph].iter().all(|value| value.is_finite() && *value >= 0.0)
+            || children.iter().any(|child| ![child.x, child.y, child.width, child.height]
+                .iter().all(|value| value.is_finite()) || child.width < 0.0 || child.height < 0.0)
+        {
+            result.errors.push(format!("Node {id}: layout geometry overflowed its finite bounds"));
+            return result;
+        }
         for c in children {
             if let Some(n) = self.nodes.get_mut(&c.id) {
                 if n.x != c.x || n.y != c.y || n.width != c.width || n.height != c.height {
                     if !n.resize_vector_geometry(c.width, c.height) {
                         result.warnings.push(format!("Vector geometry could not fit layout bounds on node {}", n.id));
+                        result.errors.push(format!("Vector geometry could not fit layout bounds on node {}", n.id));
                         continue;
                     }
                     n.x = c.x;
@@ -410,21 +693,24 @@ impl Document {
             .collect();
         let mut changed = BTreeSet::new();
         let mut warnings = BTreeSet::new();
+        let mut errors = BTreeSet::new();
         for _ in 0..6 {
             let mut count = 0;
             for id in order.iter().rev().chain(order.iter()) {
                 let r = self.layout_node(*id);
                 count += r.changed.len();
                 changed.extend(r.changed);
-                warnings.extend(r.warnings)
+                warnings.extend(r.warnings);
+                errors.extend(r.errors);
             }
-            if count == 0 {
+            if count == 0 || !errors.is_empty() {
                 break;
             }
         }
         LayoutResult {
             changed: changed.into_iter().collect(),
             warnings: warnings.into_iter().collect(),
+            errors: errors.into_iter().collect(),
         }
     }
 }

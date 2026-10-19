@@ -67,19 +67,34 @@ export async function imageCropRegressions(page, reference, check, helpers, outp
         assert.ok(color.every((channel, index) => Math.abs(channel - value[index]) <= 8) && value[3] >= 247,
             label + ": " + JSON.stringify(value));
     };
+    const historyLength = async () => {
+        const length = (await state(page)).historyLength;
+        assert.ok(Number.isSafeInteger(length) && length >= 0, "The native editor must report its actual undo depth");
+        return length;
+    };
+    const committedHistory = (before, after, label) => {
+        // Imports are undoable and this long suite can fill the bounded history.
+        // Appending then evicts the oldest entry; undo below must still remove
+        // exactly one entry and restore the complete pre-gesture document.
+        assert.ok(after > 0 && (after === before + 1 || after === before),
+            label + ": unexpected undo depth " + before + " -> " + after);
+    };
 
     await importFixture(page, isolatedDocument(reference, [photo()], "Native image panning"));
     await clickWorld(page, 140, 110);
     const authored = await documentState(page);
+    const authoredHistory = await historyLength();
     await openCrop();
     // A handle click must not normalize an implicit cover window into a new
     // crop, add overrides, or produce an undo entry.
     await clickWorld(page, 40, 60);
     await frames(page);
     assert.deepEqual(await documentState(page), authored);
-    assert.equal((await state(page)).canUndo, false);
+    assert.equal(await historyLength(), authoredHistory, "A crop handle click must preserve imported history");
     await drag({ x: 140, y: 110 }, { x: 140, y: 140 });
     const panned = await documentState(page);
+    const pannedHistory = await historyLength();
+    committedHistory(authoredHistory, pannedHistory, "One pan gesture");
     cropIs(panned.nodes[2], { x: 0, y: 0.1, width: 1, height: 0.5 });
     assert.equal(panned.nodes[2].fills[0].paint.scale, "fill");
     for (const property of ["x", "y", "width", "height", "rotation", "affine_transform"]) {
@@ -95,15 +110,17 @@ export async function imageCropRegressions(page, reference, check, helpers, outp
     await page.keyboard.press("Control+z");
     await frames(page);
     assert.deepEqual(await documentState(page), authored, "One undo restores every update in the image pan gesture");
-    assert.equal((await state(page)).canUndo, false);
+    assert.equal(await historyLength(), pannedHistory - 1, "One undo removes only the pan transaction");
     await page.keyboard.press("Control+Shift+z");
     await frames(page);
     assert.deepEqual(await documentState(page), panned);
+    assert.equal(await historyLength(), pannedHistory, "Redo restores the pan transaction");
     check("Native image panning resolves Fill aspect, stores normalized UVs without changing bytes or bounds, produces verified PNG pixels, and restores one-step history");
 
     await importFixture(page, isolatedDocument(reference, [photo()], "Canceled image crop"));
     await clickWorld(page, 140, 110);
     const original = await documentState(page);
+    const originalHistory = await historyLength();
     await openCrop();
     let start = await drag({ x: 40, y: 60 }, { x: 80, y: 80 }, false);
     assert.equal((await state(page)).imageCrop[2], true);
@@ -112,7 +129,7 @@ export async function imageCropRegressions(page, reference, check, helpers, outp
     await page.mouse.up();
     await frames(page);
     assert.deepEqual(await documentState(page), original, "Escape cancels geometry, UVs and override metadata; later pointer events cannot resume it");
-    assert.equal((await state(page)).canUndo, false);
+    assert.equal(await historyLength(), originalHistory, "Canceled crop leaves imported history intact");
     assert.equal((await state(page)).imageCrop[2], false);
     // Move away and back under the same capture. Exact history must remain
     // unchanged, including implicit Fill crop and authored override metadata.
@@ -121,13 +138,13 @@ export async function imageCropRegressions(page, reference, check, helpers, outp
     await page.mouse.up();
     await frames(page);
     assert.deepEqual(await documentState(page), original);
-    assert.equal((await state(page)).canUndo, false);
+    assert.equal(await historyLength(), originalHistory, "Dragging back to the original window adds no undo entry");
     await drag({ x: 40, y: 60 }, { x: 80, y: 80 }, false);
     await page.keyboard.press("Control+z");
     await page.mouse.up();
     await frames(page);
     assert.deepEqual(await documentState(page), original, "Undo during capture cancels the gesture before history traversal");
-    assert.equal((await state(page)).canUndo, false);
+    assert.equal(await historyLength(), originalHistory, "Undo during crop capture cancels without traversing prior history");
     await page.keyboard.press("Escape");
     assert.equal((await state(page)).imageCrop, null);
     check("Native crop Escape, drag-to-origin, and Undo during capture restore the exact authored document and ignore late pointer events");
@@ -139,6 +156,7 @@ export async function imageCropRegressions(page, reference, check, helpers, outp
     });
     await importFixture(page, isolatedDocument(reference, [affine], "Affine image corner crop"));
     const before = (await documentState(page)).nodes[2];
+    const beforeAffineHistory = await historyLength();
     const transform = nodeTransform(before);
     const inside = transformPoint(transform, { x: 80, y: 50 });
     await clickWorld(page, inside.x, inside.y);
@@ -147,6 +165,8 @@ export async function imageCropRegressions(page, reference, check, helpers, outp
     const destination = transformPoint(transform, { x: 32, y: 20 });
     await drag(corner, destination);
     const resized = (await documentState(page)).nodes[2];
+    const affineHistory = await historyLength();
+    committedHistory(beforeAffineHistory, affineHistory, "One affine crop gesture");
     cropIs(resized, { x: 0.2, y: 0.2, width: 0.8, height: 0.8 });
     near(resized.width, 128, "Cropped layer width");
     near(resized.height, 80, "Cropped layer height");
@@ -162,12 +182,14 @@ export async function imageCropRegressions(page, reference, check, helpers, outp
     await page.keyboard.press("Control+z");
     await frames(page);
     assert.deepEqual((await documentState(page)).nodes[2], before);
+    assert.equal(await historyLength(), affineHistory - 1);
     check("Actual native crop corner dragging preserves retained source pixels through affine shear, changes the window bounds, and supports the native Done control and exact undo");
 
     const fit = photo({ fills: [{ paint: { type: "image", href, scale: "fit" }, opacity: 1, visible: true }] });
     await importFixture(page, isolatedDocument(reference, [fit], "Native numeric image windows"));
     await clickWorld(page, 140, 110);
     const beforeNumeric = await documentState(page);
+    const beforeNumericHistory = await historyLength();
     await command("paints");
     const field = async (name, value) => {
         await clickNative(page, name, "ModalViewport");
@@ -179,13 +201,17 @@ export async function imageCropRegressions(page, reference, check, helpers, outp
         await field("PaintCrop" + suffix + "0", value);
     }
     assert.deepEqual(await documentState(page), beforeNumeric, "Source-window fields stage an atomic rectangle until Apply");
+    assert.equal(await historyLength(), beforeNumericHistory, "Staged source-window fields add no history");
     await clickNative(page, "PaintCropApply0", "ModalViewport");
     const numeric = await documentState(page);
+    const numericHistory = await historyLength();
+    committedHistory(beforeNumericHistory, numericHistory, "Applying one source window");
     cropIs(numeric.nodes[2], { x: 0.1, y: 0.2, width: 0.8, height: 0.6 });
     assert.equal(numeric.nodes[2].fills[0].paint.scale, "fit");
     await field("PaintCropWidth0", "95");
     await clickNative(page, "PaintCropApply0", "ModalViewport");
     assert.deepEqual(await documentState(page), numeric, "An out-of-bounds source window is rejected atomically");
+    assert.equal(await historyLength(), numericHistory, "Rejected source-window fields add no history");
     assert.equal((await state(page)).chrome.PaintCropError0.visible, true);
     await page.screenshot({ path: resolve(output, mode + "-image-crop-percentages-native.png") });
     await clickNative(page, "PaintDone");
@@ -197,6 +223,8 @@ export async function imageCropRegressions(page, reference, check, helpers, outp
     await command("paints");
     await clickNative(page, "PaintCropReset0", "ModalViewport");
     const reset = await documentState(page);
+    const resetHistory = await historyLength();
+    committedHistory(numericHistory, resetHistory, "Resetting the source window");
     assert.equal(reset.nodes[2].fills[0].paint.crop, undefined);
     assert.equal(reset.nodes[2].fills[0].paint.scale, "fit");
     assert.equal(reset.nodes[2].fills[0].paint.href, href);
@@ -204,9 +232,11 @@ export async function imageCropRegressions(page, reference, check, helpers, outp
     await page.keyboard.press("Control+z");
     await frames(page);
     assert.deepEqual(await documentState(page), numeric, "Reset source is a single undoable paint edit");
+    assert.equal(await historyLength(), resetHistory - 1);
     await page.keyboard.press("Control+z");
     await frames(page);
     assert.deepEqual(await documentState(page), beforeNumeric, "Rejected source fields added no history between Apply and Reset");
+    assert.equal(await historyLength(), resetHistory - 2);
     check("Native percentage fields atomically apply and validate source windows, retain Fit letterboxing in actual PNG output, reset embedded source bytes without conversion, and preserve undo ordering");
 
     const tiled = photo({ fills: [{ paint: { type: "image", href, scale: "tile",

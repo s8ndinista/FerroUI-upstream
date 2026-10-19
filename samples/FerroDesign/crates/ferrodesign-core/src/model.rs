@@ -445,6 +445,35 @@ impl Default for AutoLayout {
 }
 #[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
+pub struct GridPlacement {
+    /// Zero-based track indices. A missing index uses auto placement.
+    pub row: Option<usize>,
+    pub column: Option<usize>,
+    pub row_span: usize,
+    pub column_span: usize,
+}
+pub const MAX_GRID_COLUMNS: usize = 4096;
+pub const MAX_GRID_ROWS: usize = 65_536;
+pub const MAX_GRID_CELLS: usize = 1_048_576;
+impl Default for GridPlacement {
+    fn default() -> Self {
+        Self { row: None, column: None, row_span: 1, column_span: 1 }
+    }
+}
+impl GridPlacement {
+    pub fn validate(self) -> Result<(), DocumentError> {
+        if self.row_span == 0 || self.column_span == 0
+            || self.row_span > MAX_GRID_ROWS || self.column_span > MAX_GRID_COLUMNS
+            || self.row.is_some_and(|row| row.checked_add(self.row_span).is_none_or(|end| end > MAX_GRID_ROWS))
+            || self.column.is_some_and(|column| column.checked_add(self.column_span).is_none_or(|end| end > MAX_GRID_COLUMNS))
+        {
+            return Err(DocumentError::Invalid("Grid placement requires positive spans within the supported track bounds".into()));
+        }
+        Ok(())
+    }
+}
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
 pub struct LayoutChild {
     pub width: SizingMode,
     pub height: SizingMode,
@@ -454,6 +483,8 @@ pub struct LayoutChild {
     pub max_height: Option<f64>,
     pub absolute: bool,
     pub grow: f64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub grid: Option<GridPlacement>,
 }
 impl Default for LayoutChild {
     fn default() -> Self {
@@ -466,6 +497,7 @@ impl Default for LayoutChild {
             max_height: None,
             absolute: false,
             grow: 1.0,
+            grid: None,
         }
     }
 }
@@ -1644,6 +1676,9 @@ impl Document {
                     "invalid geometry on node {id}"
                 )));
             }
+            if let Some(grid) = n.layout_child.grid {
+                grid.validate().map_err(|error| DocumentError::Invalid(format!("Node {id}: {error}")))?;
+            }
             if let Some(network) = &n.vector_network {
                 if n.kind != NodeKind::Vector || !n.path.segments.is_empty() || !n.path.anchor_modes.is_empty() {
                     return Err(DocumentError::Invalid(format!("vector network must be the only geometry on vector node {id}")));
@@ -1706,6 +1741,7 @@ impl Document {
             ));
         }
         self.validate_component_properties()?;
+        self.validate_grid_placements()?;
         Ok(())
     }
 }

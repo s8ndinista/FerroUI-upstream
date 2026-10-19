@@ -1,6 +1,7 @@
 //! The XAML shell binds real FerroUI controls to the document command layer.
 mod paints;
 mod components;
+mod layout;
 mod prototyping;
 mod rich_text;
 mod text;
@@ -397,6 +398,7 @@ impl EditorShell {
             ("AlignMiddleButton", "align-middle"),
             ("AlignBottomButton", "align-bottom"),
             ("AddLayoutButton", "auto-layout"),
+            ("EditLayoutButton", "layout-details"),
             ("PageStylesButton", "styles"),
             ("PageVariablesButton", "variables"),
             ("PageComponentsButton", "assets"),
@@ -629,6 +631,7 @@ impl EditorShell {
             "InspectorViewport",
             "PageInspector", "DesignInspector", "PageBackgroundField", "PageBackgroundSwatch",
             "PageStylesButton", "PageVariablesButton", "PageComponentsButton",
+            "EditLayoutButton",
             "AddPageButton",
             "EditVectorButton",
             "DoneVectorButton",
@@ -663,7 +666,7 @@ impl EditorShell {
                 if let Some(control) = visual.cast::<Control>() {
                     if let Some(name) = control
                         .name()
-                        .filter(|name| ["Paint", "Interaction", "RichText", "Variable", "Component", "Crop"]
+                        .filter(|name| ["Paint", "Interaction", "RichText", "Variable", "Component", "Crop", "Layout"]
                             .iter().any(|prefix| name.starts_with(prefix)))
                     {
                         chrome.insert(name, native_bounds(&control));
@@ -712,8 +715,13 @@ impl EditorShell {
             "cachedNodes":stats.cached_nodes,"missingImages":stats.missing_images,"unsupportedEffects":stats.unsupported_effects,
             "backdropCacheHits":stats.backdrop_cache_hits,"backdropRasterizations":stats.backdrop_rasterizations,
             "backdropSkipped":stats.backdrop_skipped,"backdropTooLarge":stats.backdrop_too_large,
+            "fullPrepares":stats.full_prepares,"incrementalPrepares":stats.incremental_prepares,
+            "preparedNodes":stats.prepared_nodes,"rebuiltVisuals":stats.rebuilt_visuals,
+            "totalFullPrepares":stats.total_full_prepares,"totalIncrementalPrepares":stats.total_incremental_prepares,
+            "totalPreparedNodes":stats.total_prepared_nodes,"totalRebuiltVisuals":stats.total_rebuilt_visuals,
             "invalidNodes":stats.invalid_nodes,
-            "canUndo":editor.undo_label().is_some(),"canRedo":editor.redo_label().is_some(),"presentation":self.canvas.presentation.get(),
+            "canUndo":editor.undo_label().is_some(),"canRedo":editor.redo_label().is_some(),
+            "historyLength":editor.history_len(),"presentation":self.canvas.presentation.get(),
         }).to_string()
     }
     pub fn notify(&self, message: &str) {
@@ -1213,7 +1221,7 @@ impl EditorShell {
         let vector_edit = self.canvas.vector_node.get().is_some();
         self.visible(
             "VectorOptions",
-            node.is_some_and(|n| n.kind == NodeKind::Vector),
+            self.inspector_tab.get() == 0 && node.is_some_and(|n| n.kind == NodeKind::Vector),
         );
         self.visible("VectorPointOptions", vector_edit);
         self.visible("EditVectorButton", !vector_edit);
@@ -1459,6 +1467,9 @@ impl EditorShell {
         self.control::<CheckBox>("ClipCheck")
             .set_is_checked(Some(node.is_some_and(|n| n.clip_content)));
         self.visible("LayoutOptions", node.is_some_and(|n| n.layout.is_some()));
+        self.visible("EditLayoutButton", node.is_some_and(|node| node.layout.is_some()
+            || node.parent.and_then(|parent| editor.document.nodes.get(&parent))
+                .is_some_and(|parent| parent.layout.is_some())));
         self.visible(
             "TextOptions",
             node.is_some_and(|n| n.kind == NodeKind::Text),
@@ -1913,6 +1924,10 @@ impl EditorShell {
                 self.components_dialog();
                 return true;
             }
+            "layout-details" => {
+                self.layout_dialog();
+                return true;
+            }
             "rich-text" => {
                 self.rich_text_dialog();
                 return true;
@@ -2103,7 +2118,11 @@ impl EditorShell {
                 });
             }
             "flatten" => {
-                self.editor.borrow_mut().flatten_selection();
+                let flattened = self.editor.borrow_mut().flatten_selection().is_some();
+                if !flattened {
+                    self.toast("Select shapes or vectors to flatten. Text and boolean outlines are not supported yet.");
+                    return false;
+                }
             }
             "align-left" | "align-center" | "align-right" | "align-top" | "align-middle"
             | "align-bottom" => {
@@ -3075,6 +3094,7 @@ const LAYER_ACTIONS: &[(&str, &str)] = &[
     ("Exclude overlap", "exclude"),
     ("Flatten to vector", "flatten"),
     ("Add auto layout", "auto-layout"),
+    ("Layout and grid placement…", "layout-details"),
     ("Remove auto layout", "remove-layout"),
     ("Create component", "component"),
     ("Create instance", "instance"),

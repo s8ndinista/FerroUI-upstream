@@ -6,6 +6,7 @@ mod geometry;
 mod image_edit;
 mod image_info;
 mod layout;
+mod layout_edit;
 mod model;
 mod prototype;
 mod seed;

@@ -197,6 +197,7 @@
                 <ComboBox Name="HeightSizingChoice" Grid.Column="2" HorizontalAlignment="Stretch" ToolTip.Tip="Height sizing"/>
               </Grid>
               <CheckBox Name="ClipCheck" Content="Clip content" FontSize="11"/>
+              <Button Name="EditLayoutButton" Content="Layout and grid placement…" HorizontalAlignment="Stretch" IsVisible="False"/>
               <StackPanel Name="LayoutOptions" IsVisible="False" Spacing="8">
                 <UniformGrid Columns="3">
                   <Button Name="LayoutRowButton" Content="Horizontal"/>

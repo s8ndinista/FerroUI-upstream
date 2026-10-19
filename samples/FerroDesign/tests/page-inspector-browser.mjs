@@ -10,6 +10,7 @@ export async function pageInspectorRegressions(page, reference, check, helpers, 
     await importFixture(page, fixture);
     const authored = await documentState(page);
     let view = await state(page);
+    const initialHistory = view.historyLength;
     assert.equal(view.selectionCount, 0);
     assert.equal(view.chrome.PageInspector.visible, true);
     assert.equal(view.chrome.DesignInspector.visible, false);
@@ -23,6 +24,9 @@ export async function pageInspectorRegressions(page, reference, check, helpers, 
     });
     await frames(page);
     view = await state(page);
+    const committedHistory = view.historyLength;
+    assert.ok(committedHistory === initialHistory + 1 || committedHistory === initialHistory,
+        "A page background edit adds one history entry, allowing bounded-history eviction");
     const bytes = await page.screenshot({ path: resolve(output, mode + "-page-inspector-native.png") });
     const png = PNG.sync.read(bytes);
     const x = Math.floor(view.chrome.CanvasHost.x + 10), y = 90;
@@ -32,14 +36,14 @@ export async function pageInspectorRegressions(page, reference, check, helpers, 
     assert.equal(await page.evaluate(() => globalThis.ferroDesign.ferroDesignCommand("undo")), true);
     await frames(page);
     assert.deepEqual(await documentState(page), authored, "Page background has one exact document undo");
-    assert.equal((await state(page)).canUndo, false);
+    assert.equal((await state(page)).historyLength, committedHistory - 1);
     await clickNative(page, "PageBackgroundField", "InspectorViewport");
     await page.keyboard.press("Control+a");
     await page.keyboard.insertText("not a color");
     await page.keyboard.press("Enter");
     await frames(page);
     assert.deepEqual(await documentState(page), authored, "Invalid page colors leave the document and history unchanged");
-    assert.equal((await state(page)).canUndo, false);
+    assert.equal((await state(page)).historyLength, committedHistory - 1);
     await clickWorld(page, 80, 60);
     await frames(page);
     view = await state(page);

@@ -58,6 +58,7 @@ export async function compositingRegressions(page, reference, check, helpers, ou
     await clickWorld(page, 64, 64);
     assert.deepEqual((await state(page)).selection, [3]);
     const authoredBlend = await documentState(page);
+    const blendHistory = (await state(page)).historyLength;
     await clickNative(page, "BlendModeChoice", "InspectorViewport");
     await page.keyboard.press("Home");
     await page.keyboard.press("ArrowDown");
@@ -66,11 +67,15 @@ export async function compositingRegressions(page, reference, check, helpers, ou
     await frames(page);
     png = await exported("multiply");
     near(pixel(png, 64, 64), [100, 80, 120, 255], "Native Multiply consumes the existing layer backdrop");
+    const committedBlendHistory = (await state(page)).historyLength;
+    assert.ok(committedBlendHistory === blendHistory + 1 || committedBlendHistory === blendHistory,
+        "A native blend edit adds one history entry, allowing bounded-history eviction");
     await command("undo");
     assert.deepEqual(await documentState(page), authoredBlend, "One undo restores the native blend selection and overrides");
-    assert.equal((await state(page)).canUndo, false);
+    assert.equal((await state(page)).historyLength, committedBlendHistory - 1);
     await command("redo");
     assert.equal((await documentState(page)).nodes[3].blend_mode, "multiply");
+    assert.equal((await state(page)).historyLength, committedBlendHistory);
     check("The native blend-mode ComboBox changes real Multiply pixels and retains exact one-step undo/redo");
 
     const divided = [
@@ -90,7 +95,7 @@ export async function compositingRegressions(page, reference, check, helpers, ou
     near(pixel(png, 33, 33), [255, 255, 255, 255], "Rounded corners preserve the unfiltered prefix");
     near(pixel(png, 61, 20), [255, 255, 255, 255], "Pixels outside the blur geometry stay sharp");
     const beforePan = await state(page);
-    const canvas = beforePan.canvas;
+    const canvas = beforePan.chrome.CanvasHost;
     await page.mouse.move(canvas.x + canvas.width / 2, canvas.y + canvas.height / 2);
     await page.keyboard.down("Space");
     await page.mouse.down();

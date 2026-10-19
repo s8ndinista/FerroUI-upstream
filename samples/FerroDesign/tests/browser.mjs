@@ -5,6 +5,7 @@ import { componentAuthoringRegressions } from "./components-browser.mjs";
 import { imageCropRegressions } from "./image-crop-browser.mjs";
 import { compositingRegressions } from "./compositing-browser.mjs";
 import { pageInspectorRegressions } from "./page-inspector-browser.mjs";
+import { layoutAuthoringRegressions } from "./layout-browser.mjs";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { createServer } from "node:http";
@@ -813,6 +814,8 @@ try {
                 { fixtureNode, isolatedDocument, importFixture, documentState, state, clickWorld, clickNative, frames }, output, mode);
             await pageInspectorRegressions(page, svgDocument, check,
                 { fixtureNode, isolatedDocument, importFixture, documentState, state, clickWorld, clickNative, frames }, output, mode);
+            await layoutAuthoringRegressions(page, svgDocument, check,
+                { fixtureNode, isolatedDocument, importFixture, documentState, state, clickWorld, clickNative, frames }, output, mode);
             await prototypeInputRegressions(page, svgDocument, check);
             await prototypeMotionRegressions(page, svgDocument, check,
                 { fixtureNode, isolatedDocument, importFixture, documentState, state, moveWorld, frames }, output, mode);
@@ -918,14 +921,38 @@ try {
                 const y = view.chrome.CanvasHost.y + view.pan.y + (selected.y + selected.height / 2) * view.zoom;
                 await page.mouse.click(x, y);
                 await page.waitForFunction((id) => JSON.parse(globalThis.ferroDesign.ferroDesignState()).selection[0] === id, selectedId);
+                await frames(page);
+                const beforeNudge = await state(page);
+                const preparationAfter = async (before, expectedX, label) => {
+                    await page.waitForFunction(({ before, expectedX }) => {
+                        const data = JSON.parse(globalThis.ferroDesign.ferroDesignState());
+                        return data.selectionBounds.x === expectedX &&
+                            (data.totalFullPrepares > before.totalFullPrepares ||
+                             data.totalIncrementalPrepares > before.totalIncrementalPrepares);
+                    }, { before, expectedX });
+                    const after = await state(page);
+                    const delta = {
+                        full: after.totalFullPrepares - before.totalFullPrepares,
+                        incremental: after.totalIncrementalPrepares - before.totalIncrementalPrepares,
+                        nodes: after.totalPreparedNodes - before.totalPreparedNodes,
+                        visuals: after.totalRebuiltVisuals - before.totalRebuiltVisuals,
+                    };
+                    assert.deepEqual(delta, { full: 0, incremental: 1, nodes: 1, visuals: 0 },
+                        label + " must prepare only the changed leaf and reuse its immutable visual resources");
+                    return { after, delta };
+                };
                 const nudgedAt = performance.now();
                 await page.keyboard.press("ArrowRight");
-                await page.waitForFunction((x) => JSON.parse(globalThis.ferroDesign.ferroDesignState()).selectionBounds.x === x + 1, selected.x);
+                const nudgePreparation = await preparationAfter(beforeNudge, selected.x + 1, "Native nudge");
                 result.largeDocument.nudgeMs = Math.round(performance.now() - nudgedAt);
                 await page.keyboard.press("Control+z");
-                await page.waitForFunction((x) => JSON.parse(globalThis.ferroDesign.ferroDesignState()).selectionBounds.x === x, selected.x);
+                const undoPreparation = await preparationAfter(nudgePreparation.after, selected.x, "Native undo");
                 await page.keyboard.press("Control+Shift+z");
-                await page.waitForFunction((x) => JSON.parse(globalThis.ferroDesign.ferroDesignState()).selectionBounds.x === x + 1, selected.x);
+                const redoPreparation = await preparationAfter(undoPreparation.after, selected.x + 1, "Native redo");
+                result.largeDocument.preparation = {
+                    nudge: nudgePreparation.delta, undo: undoPreparation.delta, redo: redoPreparation.delta,
+                };
+                check("Native nudge/undo/redo in 10,000 layers each prepare one leaf, rebuild no immutable visuals, and avoid full scene preparation");
                 const largeSaved = await page.evaluate(() => globalThis.ferroDesign.ferroDesignExportJson());
                 const persistedAt = performance.now();
                 const largePersistence = await flushStorage(page);
