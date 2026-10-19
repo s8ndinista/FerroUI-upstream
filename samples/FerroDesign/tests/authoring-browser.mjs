@@ -1,11 +1,10 @@
 import assert from "node:assert/strict";
-import { resolve } from "node:path";
 
 // Uses only the real app, native-control bounds and browser input supplied by
 // the main gate. No substitute document editor, synthetic selection, or browser
 // process is created here.
 export async function nativeAuthoringRegressions(page, reference, check, helpers, output, mode) {
-    const { fixtureNode, isolatedDocument, importFixture, documentState, state, clickWorld, clickNative, frames } = helpers;
+    const { fixtureNode, isolatedDocument, importFixture, documentState, state, clickWorld, clickNative, frames, captureNativeScreenshot } = helpers;
     const command = async (name) => {
         assert.equal(await page.evaluate((name) => globalThis.ferroDesign.ferroDesignCommand(name), name), true);
         await frames(page);
@@ -55,7 +54,9 @@ export async function nativeAuthoringRegressions(page, reference, check, helpers
         start: 1, end: 5, font_family: null, font_size: null, font_weight: 700,
         color: { r: 123, g: 97, b: 255, a: 128 }, italic: null, decoration: null,
     }]);
-    await page.screenshot({ path: resolve(output, mode + "-rich-text-ranges.png") });
+    await captureNativeScreenshot(mode + "-rich-text-ranges", {
+        controls: ["ModalContent", "RichTextPreview", "RichTextApply"],
+    });
     // An unchanged Apply must add no duplicate history entry.
     await clickNative(page, "RichTextApply");
     await clickNative(page, "RichTextInheritAll");
@@ -116,7 +117,9 @@ export async function nativeAuthoringRegressions(page, reference, check, helpers
     assert.deepEqual(await documentState(page), beforeRejectedDelete, "Deleting an alias target must fail atomically");
     assert.equal((await state(page)).chrome.VariablesError.visible, true);
     await click("VariableEdit102");
-    await page.screenshot({ path: resolve(output, mode + "-visual-variables.png") });
+    await captureNativeScreenshot(mode + "-visual-variables", {
+        controls: ["ModalContent", "VariableName", "VariableSave"],
+    });
     const beforeDelete = await documentState(page);
     await clickNative(page, "VariableDelete");
     await waitDocument((doc) => !doc.variables[102]);

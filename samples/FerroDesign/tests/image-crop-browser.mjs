@@ -6,7 +6,7 @@ import { PNG } from "pngjs";
 // Real FerroUI controls, pointer capture, DrawingContext image brushes and PNG
 // downloads. This helper never launches a browser or substitutes a DOM editor.
 export async function imageCropRegressions(page, reference, check, helpers, output, mode) {
-    const { fixtureNode, isolatedDocument, importFixture, documentState, state, clickWorld, clickNative, moveWorld, frames } = helpers;
+    const { fixtureNode, isolatedDocument, importFixture, documentState, state, clickWorld, clickNative, moveWorld, frames, captureNativeScreenshot } = helpers;
     const colors = [[255, 20, 30], [255, 200, 0], [0, 90, 255], [0, 200, 90]];
     const image = new PNG({ width: 100, height: 100 });
     for (let y = 0; y < 100; y++) for (let x = 0; x < 100; x++) {
@@ -100,7 +100,9 @@ export async function imageCropRegressions(page, reference, check, helpers, outp
     for (const property of ["x", "y", "width", "height", "rotation", "affine_transform"]) {
         assert.deepEqual(panned.nodes[2][property], authored.nodes[2][property], "Panning preserves layer " + property);
     }
-    await page.screenshot({ path: resolve(output, mode + "-image-crop-pan-native.png") });
+    await captureNativeScreenshot(mode + "-image-crop-pan-native", {
+        controls: ["CanvasHost", "CropDoneButton"],
+    });
     const rendered = await exportPng("pan-export");
     assert.equal(rendered.width, 200);
     assert.equal(rendered.height, 100);
@@ -175,7 +177,9 @@ export async function imageCropRegressions(page, reference, check, helpers, outp
     const newPixel = transformPoint(nodeTransform(resized), { x: 88, y: 55 });
     near(newPixel.x, oldPixel.x, "Affine source pixel X remains fixed");
     near(newPixel.y, oldPixel.y, "Affine source pixel Y remains fixed");
-    await page.screenshot({ path: resolve(output, mode + "-image-crop-affine-native.png") });
+    await captureNativeScreenshot(mode + "-image-crop-affine-native", {
+        controls: ["CanvasHost", "CropDoneButton"],
+    });
     await clickNative(page, "CropDoneButton", "InspectorViewport");
     assert.equal((await state(page)).imageCrop, null);
     await clickWorld(page, oldPixel.x, oldPixel.y);
@@ -213,7 +217,9 @@ export async function imageCropRegressions(page, reference, check, helpers, outp
     assert.deepEqual(await documentState(page), numeric, "An out-of-bounds source window is rejected atomically");
     assert.equal(await historyLength(), numericHistory, "Rejected source-window fields add no history");
     assert.equal((await state(page)).chrome.PaintCropError0.visible, true);
-    await page.screenshot({ path: resolve(output, mode + "-image-crop-percentages-native.png") });
+    await captureNativeScreenshot(mode + "-image-crop-percentages-native", {
+        controls: ["ModalContent", "PaintCropApply0", "PaintCropError0"],
+    });
     await clickNative(page, "PaintDone");
     const fitPixels = await exportPng("fit-export");
     assert.equal(fitPixels.width, 200);

@@ -6,7 +6,7 @@ import { PNG } from "pngjs";
 // Both browser backends render these fixtures through the native canvas and
 // the same public FerroUI bitmap path used by the real Export PNG command.
 export async function compositingRegressions(page, reference, check, helpers, output, mode) {
-    const { fixtureNode, isolatedDocument, importFixture, documentState, state, clickWorld, clickNative, frames } = helpers;
+    const { fixtureNode, isolatedDocument, importFixture, documentState, state, clickWorld, clickNative, frames, captureNativeScreenshot } = helpers;
     const fill = (r, g, b, a = 255) => ({ paint: { type: "solid", r, g, b, a }, opacity: 1, visible: true });
     const rectangle = (id, properties = {}) => fixtureNode(reference, id, {
         kind: "rectangle", x: 0, y: 0, width: 128, height: 128,
@@ -109,7 +109,7 @@ export async function compositingRegressions(page, reference, check, helpers, ou
     assert.equal(panned.backdropRasterizations, 0);
     assert.equal(panned.unsupportedEffects, 0);
     assert.deepEqual(await documentState(page), authoredBlur, "Panning must preserve the authored document");
-    await page.screenshot({ path: resolve(output, mode + "-background-blur-native.png") });
+    await captureNativeScreenshot(mode + "-background-blur-native", { controls: ["CanvasHost"] });
     check("Real background-blur exports soften only the rounded geometry; native canvas pan reuses its cached surface without changing the document");
 
     await importFixture(page, isolatedDocument(reference, [

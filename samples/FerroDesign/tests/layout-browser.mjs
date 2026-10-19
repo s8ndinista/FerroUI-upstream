@@ -1,10 +1,9 @@
 import assert from "node:assert/strict";
-import { resolve } from "node:path";
 
 // The main gate supplies the real browser/app and imports the fixture. Every
 // placement, sizing and reorder assertion below uses native controls or keys.
 export async function layoutAuthoringRegressions(page, reference, check, helpers, output, mode) {
-    const { fixtureNode, isolatedDocument, importFixture, documentState, state, clickWorld, clickNative, frames } = helpers;
+    const { fixtureNode, isolatedDocument, importFixture, documentState, state, clickWorld, clickNative, frames, captureNativeScreenshot } = helpers;
     const click = (name) => clickNative(page, name, "ModalViewport");
     const open = () => clickNative(page, "EditLayoutButton", "InspectorViewport");
     const done = () => clickNative(page, "LayoutDone");
@@ -77,7 +76,9 @@ export async function layoutAuthoringRegressions(page, reference, check, helpers
     assert.deepEqual(authored.nodes[2].children, [3, 4, 5, 6, 7]);
     assert.deepEqual(authored.nodes[6], initial.nodes[6], "Hidden children reserve no grid cells and keep their geometry");
     assert.deepEqual(authored.nodes[7], initial.nodes[7], "Absolute children reserve no grid cells and keep their geometry");
-    await page.screenshot({ path: resolve(output, mode + "-grid-placement-spans.png") });
+    await captureNativeScreenshot(mode + "-grid-placement-spans", {
+        controls: ["ModalContent", "LayoutGridRow", "LayoutApply"],
+    });
     await done();
     await page.keyboard.press("Control+z");
     await frames(page);
@@ -132,7 +133,9 @@ export async function layoutAuthoringRegressions(page, reference, check, helpers
     assert.deepEqual(reordered.nodes[4].layout_child.grid, placement(0, 1));
     assert.deepEqual(reordered.nodes[6], reset.nodes[6]);
     assert.deepEqual(reordered.nodes[7], reset.nodes[7]);
-    await page.screenshot({ path: resolve(output, mode + "-layout-native-reorder.png") });
+    await captureNativeScreenshot(mode + "-layout-native-reorder", {
+        controls: ["ModalContent", "LayoutReorderTarget", "LayoutMoveAfter"],
+    });
     // Repeating the same relation must not create an extra history boundary.
     await next("LayoutReorderTarget");
     await click("LayoutMoveAfter");

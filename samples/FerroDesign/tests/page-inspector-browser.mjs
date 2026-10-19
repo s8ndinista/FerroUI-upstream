@@ -1,9 +1,8 @@
 import assert from "node:assert/strict";
-import { resolve } from "node:path";
 import { PNG } from "pngjs";
 
 export async function pageInspectorRegressions(page, reference, check, helpers, output, mode) {
-    const { fixtureNode, isolatedDocument, importFixture, documentState, state, clickWorld, clickNative, frames } = helpers;
+    const { fixtureNode, isolatedDocument, importFixture, documentState, state, clickWorld, clickNative, frames, captureNativeScreenshot } = helpers;
     const fixture = isolatedDocument(reference, [fixtureNode(reference, 2, {
         x: 0, y: 0, width: 160, height: 120, corner_radius: 0,
     })], "Contextual native inspector");
@@ -27,7 +26,9 @@ export async function pageInspectorRegressions(page, reference, check, helpers, 
     const committedHistory = view.historyLength;
     assert.ok(committedHistory === initialHistory + 1 || committedHistory === initialHistory,
         "A page background edit adds one history entry, allowing bounded-history eviction");
-    const bytes = await page.screenshot({ path: resolve(output, mode + "-page-inspector-native.png") });
+    const bytes = await captureNativeScreenshot(mode + "-page-inspector-native", {
+        controls: ["CanvasHost", "PageInspector", "PageBackgroundField"],
+    });
     const png = PNG.sync.read(bytes);
     const x = Math.floor(view.chrome.CanvasHost.x + 10), y = 90;
     const actual = [...png.data.subarray((y * png.width + x) * 4, (y * png.width + x) * 4 + 4)];

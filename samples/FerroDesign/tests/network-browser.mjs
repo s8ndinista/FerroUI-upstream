@@ -1,10 +1,9 @@
 import assert from "node:assert/strict";
-import { resolve } from "node:path";
 import { PNG } from "pngjs";
 
 // Pointer coordinates and controls are supplied by the actual FerroUI tree.
 export async function vectorNetworkRegressions(page, reference, check, helpers, output, mode) {
-    const { fixtureNode, isolatedDocument, importFixture, documentState, state, clickWorld, clickNative, frames } = helpers;
+    const { fixtureNode, isolatedDocument, importFixture, documentState, state, clickWorld, clickNative, frames, captureNativeScreenshot } = helpers;
     const command = async (name) => {
         assert.equal(await page.evaluate((name) => globalThis.ferroDesign.ferroDesignCommand(name), name), true);
         await frames(page);
@@ -43,7 +42,9 @@ export async function vectorNetworkRegressions(page, reference, check, helpers, 
     assert.equal(Object.keys(converted.vector_network.vertices).length, 3);
     assert.equal(Object.keys(converted.vector_network.edges).length, 3);
     assert.equal(Object.keys(converted.vector_network.regions).length, 1);
-    const image = PNG.sync.read(await page.screenshot()), p = screen(await state(page), 140, 100);
+    const image = PNG.sync.read(await captureNativeScreenshot(mode + "-vector-network-fill", {
+        controls: ["CanvasHost", "DoneVectorButton"],
+    })), p = screen(await state(page), 140, 100);
     let red = 0;
     for (let y = Math.round(p.y) - 3; y <= Math.round(p.y) + 3; y++) {
         for (let x = Math.round(p.x) - 3; x <= Math.round(p.x) + 3; x++) {
@@ -108,7 +109,9 @@ export async function vectorNetworkRegressions(page, reference, check, helpers, 
     assert.deepEqual(await node(), bent);
     await command("redo");
     assert.deepEqual(await node(), erased);
-    await page.screenshot({ path: resolve(output, mode + "-vector-network.png") });
+    await captureNativeScreenshot(mode + "-vector-network", {
+        controls: ["CanvasHost", "VectorEraseButton"],
+    });
     const json = await documentState(page);
     await importFixture(page, json);
     assert.deepEqual(await documentState(page), json, "Stable graph IDs and boundaries must survive a real browser save/import round-trip");

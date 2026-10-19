@@ -821,20 +821,28 @@ try {
             check("JSON round-trip preserves the complete imported SVG hierarchy and visual properties");
 
             await nativeEditingRegressions(page, canvas, svgDocument, result, check, mode);
+            // Static native checkpoints share the same bounded capture and
+            // unchanged-state diagnostics. Timed prototype animation captures
+            // below intentionally keep their existing timing-sensitive path.
+            const nativeHelpers = {
+                fixtureNode, isolatedDocument, importFixture, documentState, state,
+                clickWorld, clickNative, moveWorld, frames,
+                captureNativeScreenshot: (name, options) => captureNativeScreenshot(page, result, name, options),
+            };
             await vectorNetworkRegressions(page, svgDocument, check,
-                { fixtureNode, isolatedDocument, importFixture, documentState, state, clickWorld, clickNative, frames }, output, mode);
+                nativeHelpers, output, mode);
             await nativeAuthoringRegressions(page, svgDocument, check,
-                { fixtureNode, isolatedDocument, importFixture, documentState, state, clickWorld, clickNative, frames }, output, mode);
+                nativeHelpers, output, mode);
             await componentAuthoringRegressions(page, svgDocument, check,
-                { fixtureNode, isolatedDocument, importFixture, documentState, state, clickWorld, clickNative, frames }, output, mode);
+                nativeHelpers, output, mode);
             await imageCropRegressions(page, svgDocument, check,
-                { fixtureNode, isolatedDocument, importFixture, documentState, state, clickWorld, clickNative, moveWorld, frames }, output, mode);
+                nativeHelpers, output, mode);
             await compositingRegressions(page, svgDocument, check,
-                { fixtureNode, isolatedDocument, importFixture, documentState, state, clickWorld, clickNative, frames }, output, mode);
+                nativeHelpers, output, mode);
             await pageInspectorRegressions(page, svgDocument, check,
-                { fixtureNode, isolatedDocument, importFixture, documentState, state, clickWorld, clickNative, frames }, output, mode);
+                nativeHelpers, output, mode);
             await layoutAuthoringRegressions(page, svgDocument, check,
-                { fixtureNode, isolatedDocument, importFixture, documentState, state, clickWorld, clickNative, frames }, output, mode);
+                nativeHelpers, output, mode);
             await compactAutosaveRegressions(page, svgDocument, check,
                 { fixtureNode, isolatedDocument, importFixture, documentState, state, clickWorld, clickNative, frames, flushStorage }, output, mode);
             await prototypeInputRegressions(page, svgDocument, check);

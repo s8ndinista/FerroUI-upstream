@@ -1,12 +1,19 @@
 import assert from "node:assert/strict";
-import { resolve } from "node:path";
 
 // Fixture import supplies authored source trees. Every mutation asserted below
 // comes from real FerroUI controls, pointer selection, and native key handling.
 export async function componentAuthoringRegressions(page, reference, check, helpers, output, mode) {
-    const { fixtureNode, isolatedDocument, importFixture, documentState, state, clickWorld, clickNative, frames } = helpers;
+    const { fixtureNode, isolatedDocument, importFixture, documentState, state, clickWorld, clickNative, frames, captureNativeScreenshot } = helpers;
     const click = (name) => clickNative(page, name, "ModalViewport");
-    const open = () => clickNative(page, "EditComponentsButton", "InspectorViewport");
+    const open = async () => {
+        const selection = (await state(page)).selection;
+        await clickNative(page, "EditComponentsButton", "InspectorViewport");
+        await page.waitForFunction(() => {
+            const chrome = JSON.parse(globalThis.ferroDesign.ferroDesignState()).chrome;
+            return chrome.ModalBackdrop?.visible === true && chrome.ComponentDone?.visible === true;
+        }, undefined, { timeout: 10000 });
+        assert.deepEqual((await state(page)).selection, selection, "Opening component properties preserves the layer selection");
+    };
     const done = () => clickNative(page, "ComponentDone");
     const field = async (name, value, commit = true) => {
         await click(name);
@@ -140,7 +147,9 @@ export async function componentAuthoringRegressions(page, reference, check, help
     assert.equal(overridden.nodes[13].text, "□");
     assert.equal(overridden.nodes[12].component_source, 8, "A nested swap retains its identity in the outer main component");
     assert.deepEqual(overridden.nodes[12].children, [13]);
-    await page.screenshot({ path: resolve(output, mode + "-component-instance-properties.png") });
+    await captureNativeScreenshot(mode + "-component-instance-properties", {
+        controls: ["ModalContent", "ComponentValue0", "ComponentDone"],
+    });
     await click("ComponentReset2");
     await waitDocument((doc) => doc.nodes[11].text === "Hover title");
     await click("ComponentReset1");
@@ -181,7 +190,9 @@ export async function componentAuthoringRegressions(page, reference, check, help
     assert.deepEqual(authored.nodes[6].component_property_definitions.property1, {
         name: "Show icon", default_value: value("boolean", true), targets: [8],
     });
-    await page.screenshot({ path: resolve(output, mode + "-component-main-properties.png") });
+    await captureNativeScreenshot(mode + "-component-main-properties", {
+        controls: ["ModalContent", "ComponentAddProperty", "ComponentDone"],
+    });
     await done();
     await page.keyboard.press("Control+z");
     await frames(page);
@@ -222,7 +233,9 @@ export async function componentAuthoringRegressions(page, reference, check, help
     assert.notDeepEqual(added.variant_properties, copied.nodes[2].variant_properties);
     assert.equal(added.component_property_definitions.title.targets[0], added.children[0]);
     assert.notEqual(added.children[0], 3);
-    await page.screenshot({ path: resolve(output, mode + "-component-set-authoring.png") });
+    await captureNativeScreenshot(mode + "-component-set-authoring", {
+        controls: ["ModalContent", "ComponentVariant", "ComponentAddVariant", "ComponentDone"],
+    });
     await done();
     await page.keyboard.press("Control+z");
     await frames(page);

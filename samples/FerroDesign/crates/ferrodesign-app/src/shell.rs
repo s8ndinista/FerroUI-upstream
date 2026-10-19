@@ -347,7 +347,6 @@ impl EditorShell {
             ("AlignMiddleButton", "align-middle"),
             ("AlignBottomButton", "align-bottom"),
             ("CreateComponentButton", "component"),
-            ("EditComponentsButton", "components"),
         ] {
             self.icon(name, icon);
         }
@@ -406,6 +405,7 @@ impl EditorShell {
             ("TextCenterButton", "text-center"),
             ("TextRightButton", "text-right"),
             ("CreateComponentButton", "component"),
+            ("EditComponentsButton", "components"),
             ("CreateInstanceButton", "instance"),
             ("DetachButton", "detach"),
             ("ConnectButton", "connect"),
