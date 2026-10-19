@@ -39,6 +39,14 @@ crate::ferro_thread_local! {
     static OLD_NEW_VALUES_POOL: RefCell<Vec<Vec<OldNewValue>>> = const { RefCell::new(Vec::new()) };
 }
 
+crate::ferro_thread_local! {
+    /// Not upstream: the lists in which a reevaluation copies the effective
+    /// values it visits at its end, kept for the next reevaluation (a
+    /// reevaluation inside the notifications of another takes a list of its
+    /// own), so that a reevaluation does not allocate one.
+    static REEVALUATION_LISTS: RefCell<Vec<Vec<EffectiveValueRef>>> = const { RefCell::new(Vec::new()) };
+}
+
 /// Stores the styled property values of a [`FerroObject`] and resolves the
 /// effective value of each property from the values supplied at different
 /// priorities.
@@ -754,6 +762,11 @@ impl ValueStore {
     fn add_effective_value(&self, owner: &FerroObject, property: &FerroProperty, value: EffectiveValueRef) {
         {
             let mut values = self.effective_values.borrow_mut();
+            if values.capacity() == 0 {
+                // A control holds several values once styled: room for them in one allocation
+                // instead of growing through four.
+                values.reserve_exact(8);
+            }
             let index = values.partition_point(|(id, _)| *id < property.id());
             debug_assert!(values.get(index).is_none_or(|(id, _)| *id != property.id()));
             values.insert(index, (property.id(), value));
@@ -997,8 +1010,8 @@ impl ValueStore {
             }
 
             // Remove all effective values that are still unset.
-            let values: Vec<EffectiveValueRef> =
-                self.effective_values.borrow().iter().map(|(_, v)| v.clone()).collect();
+            let mut values = REEVALUATION_LISTS.with(|lists| lists.borrow_mut().pop()).unwrap_or_default();
+            values.extend(self.effective_values.borrow().iter().map(|(_, v)| v.clone()));
             for value in values.iter().rev() {
                 let property = value.property();
                 value.end_reevaluation(owner);
@@ -1007,6 +1020,10 @@ impl ValueStore {
                     value.dispose_and_raise_unset(owner);
                 }
                 value.unsubscribe_if_necessary();
+            }
+            values.clear();
+            if values.capacity() <= 64 {
+                REEVALUATION_LISTS.with(|lists| lists.borrow_mut().push(values));
             }
             return;
         }

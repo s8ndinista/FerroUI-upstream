@@ -31,6 +31,9 @@ pub struct Visual {
     presentation_source: RefCell<Option<Rc<dyn IPresentationSource>>>,
     visual_parent: RefCell<Option<WeakRef<Visual>>>,
     has_mirror_transform: Cell<bool>,
+    // Deviation (DEVIATIONS.md, Visual tree): whether `RenderTransform` has a value, kept by its
+    // change handler, so that the transforms of the visual tree skip the property read.
+    has_render_transform: Cell<bool>,
     is_effectively_visible: Cell<bool>,
     has_non_uniform_z_index_children: Cell<bool>,
     visual_children: OnceCell<FerroList<Ref<Visual>>>,
@@ -101,6 +104,25 @@ crate::ferro_thread_local! {
     static ROOTED_VISUAL_CHILDREN_COUNT: Cell<i32> = const { Cell::new(0) };
 }
 crate::ferro_class_info!(Visual { new: Visual::new });
+
+crate::ferro_thread_local! {
+    // Not upstream: a version of what the effective viewports of the visuals are computed from (the
+    // bounds, the visual parents, `ClipToBounds`, `RenderTransform` and `RenderTransformOrigin` of
+    // the visuals of the thread), which the layout manager reads to reuse the viewports of shared
+    // ancestors within one pass (DEVIATIONS.md, Layout).
+    static GEOMETRY_VERSION: Cell<u64> = const { Cell::new(0) };
+}
+
+/// The version of the geometry of the visuals of the thread (see `GEOMETRY_VERSION`).
+#[inline]
+pub(crate) fn geometry_version() -> u64 {
+    GEOMETRY_VERSION.with(Cell::get)
+}
+
+#[inline]
+fn bump_geometry_version() {
+    GEOMETRY_VERSION.with(|version| version.set(version.get().wrapping_add(1)));
+}
 
 crate::ferro_overrides! { impl FerroObjectImpl for Visual {
     fn constructed(this: &Self) {
@@ -573,6 +595,8 @@ impl Visual {
             Self::has_mirror_transform_property().as_property(),
         ]);
         Self::render_transform_property().changed().subscribe(Self::render_transform_changed);
+        Self::clip_to_bounds_property().changed().subscribe(|_| bump_geometry_version());
+        Self::render_transform_origin_property().changed().subscribe(|_| bump_geometry_version());
         Self::z_index_property().changed().subscribe(|e| {
             let Some(sender) = e.sender().downcast_ref::<Visual>() else { return };
             let parent = sender.visual_parent();
@@ -598,6 +622,7 @@ impl Visual {
             presentation_source: RefCell::new(None),
             visual_parent: RefCell::new(None),
             has_mirror_transform: Cell::new(false),
+            has_render_transform: Cell::new(false),
             is_effectively_visible: Cell::new(true),
             has_non_uniform_z_index_children: Cell::new(false),
             visual_children: OnceCell::new(),
@@ -668,6 +693,9 @@ impl Visual {
 
     /// Sets the bounds of the control. Called by the layout system.
     pub fn set_bounds(&self, value: Rect) {
+        if self.bounds.get() != value {
+            bump_geometry_version();
+        }
         self.set_and_raise_cell(Self::bounds_property(), &self.bounds, value);
     }
 
@@ -756,6 +784,13 @@ impl Visual {
 
     pub fn set_opacity(&self, value: f64) {
         self.set_value(Self::opacity_property(), value)
+    }
+
+    /// Whether `RenderTransform` has a value (not upstream: the transforms of the visual tree
+    /// skip the property read when it has none).
+    #[inline]
+    pub(crate) fn has_render_transform(&self) -> bool {
+        self.has_render_transform.get()
     }
 
     /// Whether the control is mirrored relative to its parent because of its
@@ -995,9 +1030,11 @@ impl Visual {
     /// notification moves from the old value to the new one.
     fn render_transform_changed(e: &FerroPropertyChangedEventArgs<'_>) {
         let Some(sender) = e.sender().downcast_ref::<Visual>() else { return };
+        let (_, new_value) = e.get_old_and_new_value::<Option<Rc<dyn ITransform>>>();
+        sender.has_render_transform.set(new_value.is_some());
+        bump_geometry_version();
 
         if sender.visual_root().is_some() {
-            let (_, new_value) = e.get_old_and_new_value::<Option<Rc<dyn ITransform>>>();
 
             // The old transform's subscription is the one held.
             let subscription = new_value.as_ref().and_then(|new_value| {
@@ -1017,6 +1054,7 @@ impl Visual {
 
     /// Called when the render transform's `changed` notification is raised.
     fn render_transform_value_changed(&self) {
+        bump_geometry_version();
         self.invalidate_visual();
     }
 
@@ -1081,6 +1119,7 @@ impl Visual {
             return;
         }
         *self.visual_parent.borrow_mut() = value.map(Ref::downgrade);
+        bump_geometry_version();
 
         if let (Some(source), Some(old)) = (self.presentation_source(), &old) {
             let e = VisualTreeAttachmentEventArgs::new(Some(old.clone()), source);

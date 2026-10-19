@@ -59,6 +59,24 @@ Avalonia itself incorporates code from other projects (for example WPF-derived l
 - License: MIT, Copyright (c) Microsoft Corporation
 - Used for: the WinUI theme `src/FerroUI.Themes.WinUI`, whose resource and control theme documents are ported from the theme of WinUI 3 (`generic.xaml` and the theme resources of the controls library; see `src/FerroUI.Themes.WinUI/NOTICE.md`, which holds the license text, and `docs/porting/winui-theme.md`).
 
+## Reactive Extensions for .NET (Rx.NET)
+
+- Project: <https://github.com/dotnet/reactive> (`Rx.NET/Source`, commit `89e05b8`)
+- License: MIT, Copyright (c) .NET Foundation and Contributors
+- Used for: `src/FerroUI.Reactive` (a port of System.Reactive), `src/FerroUI.Reactive.Testing` (a port of Microsoft.Reactive.Testing) and their unit tests in `tests/FerroUI.Reactive.Tests`, ported from `Tests.System.Reactive` (`docs/porting/reactive.md`).
+
+## Splat
+
+- Project: <https://github.com/reactiveui/splat> (commit `39466de`)
+- License: MIT, Copyright (c) ReactiveUI 2018 - 2025
+- Used for: `src/FerroUI.Splat` (a port of Splat.Core, Splat.Logging, Splat.Builder, and the mode detection and feature usage tracking of Splat) and its unit tests in `tests/FerroUI.Splat.Tests`, ported from Splat.Tests, Splat.Logging.Tests and Splat.Builder.Tests (`docs/porting/reactive.md`).
+
+## DynamicData
+
+- Project: <https://github.com/reactivemarbles/DynamicData> (`src`, commit `65016e5`)
+- License: MIT, Copyright (c) Roland Pheasant 2011-2022
+- Used for: `src/FerroUI.DynamicData` (a port of DynamicData) and its unit tests in `tests/FerroUI.DynamicData.Tests`, ported from `DynamicData.Tests` (`docs/porting/reactive.md`).
+
 ## RemoteViewing
 
 - Project: <https://github.com/quamotion/remoteviewing> (package `Quamotion.RemoteViewing` 1.1.211)

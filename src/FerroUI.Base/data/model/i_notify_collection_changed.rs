@@ -1,29 +1,10 @@
 use super::Event;
-use crate::collections::{FerroList, NotifyCollectionChangedAction, NotifyCollectionChangedEventArgs};
+use crate::collections::{FerroList, NotifyCollectionChangedEventArgs};
+pub use ferroui_system::collections::specialized::{CollectionChange, INotifyCollectionChanged};
 use crate::data::core::ValueType;
 use crate::{BoxedValue, PropertyValue};
 use std::cell::OnceCell;
 use std::rc::Rc;
-
-/// An untyped description of a change to a collection, as seen by bindings
-/// with an indexer in their path.
-///
-/// Indexes are `-1` when not applicable to the action.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct CollectionChange {
-    pub action: NotifyCollectionChangedAction,
-    pub new_starting_index: i32,
-    pub new_count: usize,
-    pub old_starting_index: i32,
-    pub old_count: usize,
-}
-
-/// Notifies clients of changes to a collection, such as when items are added
-/// and removed or the whole collection is reset.
-pub trait INotifyCollectionChanged {
-    /// The event raised when the collection changes.
-    fn collection_changed(&self) -> &Event<CollectionChange>;
-}
 
 /// Untyped indexed access to a list, for bindings with an indexer in their
 /// path (`Items[2]`).

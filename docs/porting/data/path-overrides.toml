@@ -584,10 +584,8 @@ reason = "the copy-on-write-while-enumerated behaviour is the behaviour of every
 [[map]]
 project = "Avalonia.Base"
 upstream = ["Utilities/SafeEnumerableHashSet.cs"]
-kind = "replaced"
-rust = "utilities/handler_list.rs"
-types = { SafeEnumerableHashSet = "HandlerList" }
-reason = "its one user is the listener set of Classes; the listeners of the port are closures in a HandlerList, which is invoked on a snapshot that is copied only when the list changes. HandlerList itself has no upstream file: it is the storage of the handlers of a C# `event` (multicast delegates have no Rust equivalent; porting guide, Types table)"
+kind = "not-applicable"
+reason = "replaced: its one user is the listener set of Classes; the listeners of the port are closures in a HandlerList, which is invoked on a snapshot that is copied only when the list changes. HandlerList has no upstream file: it is the storage of the handlers of a C# `event` (multicast delegates have no Rust equivalent; porting guide, Types table), and it lives with the events of the base class library in ferroui-system (`events/handler_list.rs`), which this crate re-exports"
 
 [[map]]
 project = "Avalonia.Base"
@@ -1588,7 +1586,7 @@ path = "src/FerroUI.Base/animation/time_span.rs"
 reason = "counterpart of .NET `System.TimeSpan` (signed 100-nanosecond ticks), the time type of the animation system"
 
 [[rust_only]]
-path = "src/FerroUI.Base/threading/cancellation_token.rs"
+path = "src/FerroUI.System/threading/cancellation_token.rs"
 reason = "counterpart of .NET `CancellationToken`, `CancellationTokenSource` and `CancellationTokenRegistration`"
 
 [[rust_only]]
@@ -1630,11 +1628,11 @@ reason = "counterpart of .NET `System.ComponentModel.TypeConverter` and `ITypeDe
 # The object model and the markup metadata, where upstream relies on the CLR, reflection or attributes.
 
 [[rust_only]]
-path = "src/FerroUI.Base/ferro_thread_local.rs"
+path = "src/FerroUI.System/ferro_thread_local.rs"
 reason = "the declaration of thread-local variables: `thread_local!` on every target but Android, where each would take one of the 128 keys of the C library of a process (docs/porting/android-platform.md, section 5.1); thread-static fields of the managed runtime upstream"
 
 [[rust_only]]
-path = "src/FerroUI.Base/ferro_thread_local/table.rs"
+path = "src/FerroUI.System/ferro_thread_local/table.rs"
 reason = "the table of thread-local variables of a thread on Android behind one key of the C library (docs/porting/android-platform.md, section 5.1); the managed runtime keeps thread-static fields itself upstream"
 
 [[rust_only]]

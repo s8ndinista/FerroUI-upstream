@@ -1,6 +1,6 @@
 # Releasing FerroUI
 
-How the crates of the workspace are published to crates.io: which crates, in which order, at which version, what each package holds, how the release workflow runs and what has to be true before it is run. Four previews (`0.1.0-preview.1` to `0.1.0-preview.4`) and the first release that is not a preview, `0.1.0` (tag `v0.1.0`, 38 crates), are published; the workspace carries the next version. Section 12 records the decisions the owner made before the first release.
+How the crates of the workspace are published to crates.io: which crates, in which order, at which version, what each package holds, how the release workflow runs and what has to be true before it is run. Four previews (`0.1.0-preview.1` to `0.1.0-preview.4`), the first release that is not a preview, `0.1.0` (tag `v0.1.0`, 38 crates), and `0.2.0` (tag `v0.2.0`, 40 crates: the two crates of the TreeDataGrid joined) are published; the workspace carries the next version. Section 12 records the decisions the owner made before the first release.
 
 Publishing cannot be taken back. A version of a crate can be yanked (Cargo then no longer selects it for new builds) but never removed or replaced, and the name of a crate belongs to the account that published it first. Everything below is arranged so that a release is rehearsed completely before anything is uploaded.
 
@@ -59,6 +59,8 @@ Joined since the table was made (2026-10-10): `ferroui-win32` (`src/Windows/Ferr
 The first preview added the five other names of section 2.2 as placeholders (37 packages). Each of the six placeholders is a real crate since 2026-10-15, at the same path and name: `ferroui` (the facade, section 2.1), `ferroui-wayland`, `ferroui-vulkan`, `ferroui-linuxframebuffer`, `ferroui-winui` and `ferroui-headless-vnc`. The set is still 37 crates. Its dependencies on the Wayland crates, `xkbcommon-dl` and `libc` are dependencies of Linux targets only, and none of them links a system library (they are opened at run time), so the package builds on the hosts of the release like the rest.
 
 `ferroui-themes-winui` (`src/FerroUI.Themes.WinUI`, Controls and themes; the WinUI 3 theme, docs/porting/winui-theme.md) joined on 2026-10-16: 38 crates. It is an optional theme of the facade (`winui-theme`).
+
+`ferroui-system` (`src/FerroUI.System`, Core; the parts of the .NET base class library that FerroUI and its reusable libraries share, docs/porting/reactive.md) joined on 2026-10-18 for `0.3.0-preview.1`: it has no dependency on the framework, `ferroui-base` depends on it and re-exports its items at the paths they had in the base library. It holds `ferro_thread_local!`, so it is published before every crate that declares thread-local variables. `ferroui-reactive` (`src/FerroUI.Reactive`, Core; the port of System.Reactive) and `ferroui-reactive-testing` (`src/FerroUI.Reactive.Testing`, Core; the port of Microsoft.Reactive.Testing) joined the same day; the unit tests of the port are the unpublished crate `ferroui-reactive-tests`.
 
 Every crate was checked in the same way: packaged, and built from its package, by `scripts/release/publish.sh --dry-run` (section 8). `cargo publish --dry-run -p <crate>` cannot be used for this before the first release: it resolves the dependencies of the package in the registry, where the other crates of the workspace are not yet. `cargo package --workspace` (Cargo 1.90 and later) resolves them among the packages it has just assembled instead, which is what the dry run uses, and so every crate got the full check, not only the ones without dependencies in the workspace.
 
@@ -131,6 +133,7 @@ Two names are not under the `ferroui-` prefix. The owner decided on 2026-10-10 t
   | `winui-theme` | `ferroui-themes-winui` | `themes_winui` | no |
   | `xaml` | `ferroui-markup-xaml` and the run-time loader (`ferroui-markup-xaml-loader` with its feature `runtime`) | `markup_xaml`, `markup_xaml_loader` | no |
   | `color-picker`, `dialogs` | `ferroui-controls-color-picker`, `ferroui-dialogs` | `controls_color_picker`, `dialogs` | no |
+  | `treedatagrid` | `ferroui-controls-treedatagrid` and `ferroui-treedatagrid-core` (added for 0.2) | `controls_treedatagrid`, `treedatagrid_core` | no |
   | `browser` | `ferroui-browser`, with Skia and HarfBuzz | `browser`, `skia`, `harfbuzz` | no |
   | `vello`, `vello-hybrid`, `vello-gpu` | `ferroui-vello`; the second and third turn on its features `hybrid` and `gpu` | `vello` | no |
   | `headless` | `ferroui-headless` | `headless` | no |
@@ -166,7 +169,7 @@ Why pre-release identifiers and not `0.1.0`, `0.1.1`, ...: Cargo treats `0.1.x` 
 
 **The crates of the workspace are pinned to one another exactly.** A requirement that names a pre-release without `=` (`"0.1.0-preview.1"`) is a caret requirement: it matches that preview, every later preview of `0.1.0`, and `0.1.x` releases. Cargo would then be free to build `ferroui-controls 0.1.0-preview.1` against `ferroui-base 0.1.0-preview.3`, which was never built or tested together and, between previews, will not compile. So every dependency between crates of the workspace is `version = "=<the version of the workspace>"`: the crates of a release resolve only as the set they were released as. An application does the same and names one version for every FerroUI crate (README, "Installation").
 
-After `0.1.0` the scheme repeats for the next minor version: its previews are `0.2.0-preview.1`, `0.2.0-preview.2`, ... and then `0.2.0`; a fix of `0.1.0` that keeps its public API would be `0.1.1`.
+After `0.1.0` the scheme repeats for the next minor version: its previews are `0.2.0-preview.1`, `0.2.0-preview.2`, ... and then `0.2.0`; a fix of `0.1.0` that keeps its public API would be `0.1.1`. `0.2.0` was released without a preview of it on crates.io (the workspace carried `0.2.0-preview.1` on `main` only); the work towards `0.3.0` is published as its previews.
 
 The exact pins stay when `0.1.0` is released. They can be relaxed to caret requirements once the crates keep semantic versioning towards one another individually, which is a later decision.
 

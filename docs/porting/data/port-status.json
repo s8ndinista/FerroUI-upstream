@@ -2,25 +2,25 @@
  "upstreamCommit": "66b7273b9a2b5ba8416feb4376b9cdc3078b8573",
  "inScope": {
   "files": [
-   2795,
-   2795,
+   2794,
+   2794,
    0
   ],
   "types": [
-   3938,
-   4348,
-   410
+   3937,
+   4346,
+   409
   ],
   "members": [
-   30353,
-   36201,
-   5848
+   30351,
+   36188,
+   5837
   ]
  },
  "allProjects": {
-  "membersPresent": 30353,
+  "membersPresent": 30351,
   "members": 37382,
-  "membersNotApplicable": 1181,
+  "membersNotApplicable": 1194,
   "membersOutOfScope": 0
  },
  "projects": [
@@ -726,19 +726,19 @@
    "scope": "in",
    "detail": "full",
    "files": [
-    1248,
-    1248,
+    1247,
+    1247,
     0
    ],
    "types": [
-    1524,
-    1659,
-    135
+    1523,
+    1657,
+    134
    ],
    "members": [
-    10360,
-    11393,
-    1033
+    10358,
+    11380,
+    1022
    ],
    "interfaces": [
     248,
@@ -752,7 +752,7 @@
     41,
     41
    ],
-   "notApplicableFiles": 51,
+   "notApplicableFiles": 52,
    "matchKinds": {
     "alias field": 3,
     "alias fn": 162,
@@ -760,7 +760,7 @@
     "const": 381,
     "derive": 62,
     "field": 619,
-    "fn": 6558,
+    "fn": 6556,
     "free fn": 15,
     "free item": 16,
     "getter fn": 4,
@@ -4439,9 +4439,6 @@
     "Utilities/SafeEnumerableAvaloniaList.cs": [
      "collections/ferro_list.rs"
     ],
-    "Utilities/SafeEnumerableHashSet.cs": [
-     "utilities/handler_list.rs"
-    ],
     "Utilities/SingleOrQueue.cs": [
      "utilities/single_or_queue.rs"
     ],
@@ -4538,16 +4535,12 @@
     "data/core/plugins/property_info_accessor_factory.rs",
     "data/core/plugins/untyped_accessor_plugin.rs",
     "data/core/weak_value.rs",
-    "data/model/event.rs",
     "data/model/i_bindable_indexer.rs",
     "data/model/i_notify_collection_changed.rs",
     "data/model/i_notify_data_error_info.rs",
-    "data/model/i_notify_property_changed.rs",
     "data/model/model_type.rs",
     "diagnostics/perf_counters.rs",
     "element_ref.rs",
-    "ferro_thread_local.rs",
-    "ferro_thread_local/table.rs",
     "i_support_initialize.rs",
     "input/i_command.rs",
     "input/platform/clipboard_error.rs",
@@ -4652,7 +4645,6 @@
     "rust_paths.rs",
     "styling/test_support.rs",
     "styling/testing.rs",
-    "threading/cancellation_token.rs",
     "threading/dispatcher_task.rs",
     "threading/dispatcher_tests_exception.rs",
     "type_system.rs",

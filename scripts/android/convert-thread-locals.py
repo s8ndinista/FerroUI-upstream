@@ -2,21 +2,25 @@
 """Declares the thread-local variables of the workspace with `ferro_thread_local!`.
 
 The Android targets of Rust keep every `thread_local!` under a key of the C library of its own, and
-bionic has 128 of them for a process; `ferro_thread_local!` of ferroui-base is `thread_local!` on
-every other target and a slot of one table per thread on Android (docs/porting/android-platform.md,
-section 5.1). This script rewrites every `thread_local!` (also written `std::thread_local!` or
-`::std::thread_local!`) of the crates of the workspace, and the types `std::thread::LocalKey` and
-`std::thread::AccessError` where a signature names them:
+bionic has 128 of them for a process; `ferro_thread_local!` of ferroui-system (which ferroui-base
+re-exports at the path it had there) is `thread_local!` on every other target and a slot of one
+table per thread on Android (docs/porting/android-platform.md, section 5.1). This script rewrites
+every `thread_local!` (also written `std::thread_local!` or `::std::thread_local!`) of the crates of
+the workspace, and the types `std::thread::LocalKey` and `std::thread::AccessError` where a signature
+names them:
 
-- in ferroui-base, `::std::thread_local!` (the form its exported macros use) becomes
-  `$crate::ferro_thread_local!` and any other form `crate::ferro_thread_local!`, a type
+- in ferroui-system and ferroui-base, `::std::thread_local!` (the form their exported macros use)
+  becomes `$crate::ferro_thread_local!` and any other form `crate::ferro_thread_local!`, a type
   `crate::ferro_thread_local::LocalKey` (or `AccessError`);
 - in a crate that depends on ferroui-base, `ferroui_base::ferro_thread_local!` and
-  `ferroui_base::ferro_thread_local::LocalKey` (or `AccessError`).
+  `ferroui_base::ferro_thread_local::LocalKey` (or `AccessError`);
+- in a crate that depends on ferroui-system but not on ferroui-base (the reusable libraries),
+  `ferroui_system::ferro_thread_local!` and `ferroui_system::ferro_thread_local::LocalKey` (or
+  `AccessError`).
 
 Only the name of the macro changes: the declarations keep their grammar. Running it again changes
-nothing. A crate that has a `thread_local!` and does not depend on ferroui-base is reported and left
-alone; it has to be on the allow-list below (with the reason) or be changed by hand.
+nothing. A crate that has a `thread_local!` and depends on neither is reported and left alone; it
+has to be on the allow-list below (with the reason) or be changed by hand.
 
     scripts/android/convert-thread-locals.py            rewrite, and list what changed
     scripts/android/convert-thread-locals.py --check    change nothing; fail when a `thread_local!`
@@ -36,10 +40,10 @@ SKIPPED_DIRECTORIES = {"target", ".git", "node_modules", ".claude"}
 ALLOWED = {
     # The definition of the macro: it expands to `std::thread_local!` on targets with thread-local
     # statics, and its documentation names it.
-    "src/FerroUI.Base/ferro_thread_local.rs": "the definition of ferro_thread_local!",
-    "src/FerroUI.Base/ferro_thread_local/": "the table, which has the methods of the standard library",
+    "src/FerroUI.System/ferro_thread_local.rs": "the definition of ferro_thread_local!",
+    "src/FerroUI.System/ferro_thread_local/": "the table, which has the methods of the standard library",
     # The tests of the table compare its errors with those of a variable of the standard library.
-    "src/FerroUI.Base/tests/ferro_thread_local_tests.rs": "compares the table with the standard library",
+    "src/FerroUI.System/tests/ferro_thread_local_tests.rs": "compares the table with the standard library",
     # XamlX is a port of a third-party compiler of its own, with no dependency on the framework. It
     # runs where markup is compiled: the build scripts on the development machine, and the loader of
     # markup at run time, which no Android application of the repository links. Where one would, its
@@ -77,6 +81,10 @@ def package_name(manifest):
 
 def depends_on_base(manifest):
     return re.search(r"^ferroui-base\s*(=|\.)", manifest, re.M) is not None
+
+
+def depends_on_system(manifest):
+    return re.search(r"^ferroui-system\s*(=|\.)", manifest, re.M) is not None
 
 
 def code_matches(text):
@@ -118,7 +126,7 @@ def main():
             continue
         _, manifest = crate_of(full)
         name = package_name(manifest)
-        if name == "ferroui-base":
+        if name in ("ferroui-system", "ferroui-base"):
             def replacement(match):
                 if match.re is TYPE_PATTERN:
                     return f"crate::ferro_thread_local::{match.group(1)}"
@@ -128,10 +136,15 @@ def main():
                 if match.re is TYPE_PATTERN:
                     return f"ferroui_base::ferro_thread_local::{match.group(1)}"
                 return "ferroui_base::ferro_thread_local!"
+        elif depends_on_system(manifest):
+            def replacement(match):
+                if match.re is TYPE_PATTERN:
+                    return f"ferroui_system::ferro_thread_local::{match.group(1)}"
+                return "ferroui_system::ferro_thread_local!"
         else:
             for match in matches:
                 line = text.count("\n", 0, match.start()) + 1
-                left.append(f"{rel}:{line} (the crate {name} does not depend on ferroui-base)")
+                left.append(f"{rel}:{line} (the crate {name} depends on neither ferroui-system nor ferroui-base)")
             continue
         pieces = []
         last = 0
@@ -147,7 +160,7 @@ def main():
     if check:
         if left:
             for entry in left:
-                print(f"{entry} (declare thread-local variables with ferroui_base::ferro_thread_local!)")
+                print(f"{entry} (declare thread-local variables with ferro_thread_local! of ferroui-system)")
             print(
                 f"{len(left)} uses of thread_local! or its types outside of the allow-list of "
                 "scripts/android/convert-thread-locals.py; "
