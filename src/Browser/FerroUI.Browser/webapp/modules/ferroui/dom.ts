@@ -209,4 +209,11 @@ export class FerroDOM {
     public static getNavigatorLanguage(globalThis: Window): string | null {
         return globalThis.navigator?.language ?? null;
     }
+
+    public static getAnimationsEnabled(globalThis: Window): boolean {
+        // Read at animation scheduling time so changing the system preference
+        // also affects an already running application.
+        return globalThis.matchMedia === undefined ||
+            !globalThis.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    }
 }

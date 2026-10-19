@@ -35,6 +35,15 @@ pub trait IPlatformSettings {
     /// language (such as `en-US`) the platform reports for the application.
     fn preferred_application_language(&self) -> String;
 
+    /// Whether the system permits nonessential UI animations. The setting is
+    /// queried when an animation is scheduled so changes apply to subsequent
+    /// animations. Backends without an exposed motion preference permit them.
+    ///
+    /// Added for the WinUI Repeater transition provider's UISettings query.
+    fn animations_enabled(&self) -> bool {
+        true
+    }
+
     /// Gets current system color values including dark mode and accent
     /// colors.
     fn get_color_values(&self) -> PlatformColorValues;

@@ -16,6 +16,7 @@ use std::time::Duration;
 trait IPageSettings {
     fn get_dark_mode(&self) -> Vec<i32>;
     fn get_navigator_language(&self) -> Option<String>;
+    fn animations_enabled(&self) -> bool;
 }
 
 struct PageSettings;
@@ -27,6 +28,10 @@ impl IPageSettings for PageSettings {
 
     fn get_navigator_language(&self) -> Option<String> {
         dom_helper::get_navigator_language(&BrowserWindowingPlatform::global_this())
+    }
+
+    fn animations_enabled(&self) -> bool {
+        dom_helper::get_animations_enabled(&BrowserWindowingPlatform::global_this())
     }
 }
 
@@ -150,6 +155,10 @@ impl IPlatformSettings for BrowserPlatformSettings {
         }
     }
 
+    fn animations_enabled(&self) -> bool {
+        self.page.animations_enabled()
+    }
+
     fn get_color_values(&self) -> PlatformColorValues {
         if let Some(color_values) = self.color_values.get() {
             return color_values;
@@ -180,6 +189,7 @@ mod tests {
         dark_mode: Vec<i32>,
         language: Option<&'static str>,
         queries: Rc<Cell<u32>>,
+        animations: Rc<Cell<bool>>,
     }
 
     impl IPageSettings for FixedPage {
@@ -191,12 +201,32 @@ mod tests {
         fn get_navigator_language(&self) -> Option<String> {
             self.language.map(str::to_string)
         }
+
+        fn animations_enabled(&self) -> bool {
+            self.animations.get()
+        }
     }
 
     fn settings(dark_mode: &[i32], language: Option<&'static str>) -> (BrowserPlatformSettings, Rc<Cell<u32>>) {
         let queries = Rc::new(Cell::new(0));
-        let page = FixedPage { dark_mode: dark_mode.to_vec(), language, queries: queries.clone() };
+        let page = FixedPage {
+            dark_mode: dark_mode.to_vec(), language, queries: queries.clone(), animations: Rc::new(Cell::new(true)),
+        };
         (BrowserPlatformSettings::with_page(Box::new(page)), queries)
+    }
+
+    #[test]
+    fn animation_preference_is_read_again_for_each_animation() {
+        let animations = Rc::new(Cell::new(false));
+        let page = FixedPage {
+            dark_mode: vec![0, 0], language: None, queries: Rc::new(Cell::new(0)), animations: animations.clone(),
+        };
+        let settings = BrowserPlatformSettings::with_page(Box::new(page));
+        assert!(!settings.animations_enabled());
+        animations.set(true);
+        assert!(settings.animations_enabled());
+        animations.set(false);
+        assert!(!settings.animations_enabled());
     }
 
     #[test]

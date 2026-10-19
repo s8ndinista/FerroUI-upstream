@@ -79,7 +79,7 @@ mod imp {
     use super::*;
     use crate::interop::unmanaged_methods::{get_double_click_time, get_system_metrics, SystemMetric};
     use crate::win_rt::{
-        HStringInterop, IAccessibilitySettings, IGlobalizationPreferencesStatics, IUISettings3, NativeWinRTMethods,
+        HStringInterop, IAccessibilitySettings, IGlobalizationPreferencesStatics, IUISettings, IUISettings3, NativeWinRTMethods,
         UIColorType, WinRTApiInformation,
     };
     use ferroui_base::input::platform::PlatformHotkeyConfiguration;
@@ -296,6 +296,26 @@ mod imp {
             let language = self.query_preferred_application_language();
             *self.last_language.borrow_mut() = Some(language.clone());
             language
+        }
+
+        fn animations_enabled(&self) -> bool {
+            // Query per animation, as SharedHelpers::IsAnimationsEnabled does.
+            // An unavailable UISettings class follows the default backend;
+            // no Windows-only API enters the controls crate.
+            if !ui_settings_supported() {
+                return self.base.animations_enabled();
+            }
+            match NativeWinRTMethods::create_instance::<IUISettings>("Windows.UI.ViewManagement.UISettings")
+                .and_then(|settings| settings.animations_enabled())
+            {
+                Ok(enabled) => enabled != 0,
+                Err(error) => {
+                    if let Some(logger) = Logger::try_get(LogEventLevel::Warning, LogArea::WIN32_PLATFORM) {
+                        logger.log_with_values(None, "Unable to read the animation preference of the system: {0}", &[&error]);
+                    }
+                    self.base.animations_enabled()
+                }
+            }
         }
 
         fn get_color_values(&self) -> PlatformColorValues {
