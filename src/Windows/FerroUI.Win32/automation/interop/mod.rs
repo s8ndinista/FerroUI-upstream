@@ -63,6 +63,8 @@ mod tests {
         assert_eq!(ITableItemProvider::IID, iid("b9734fa6-771f-4d78-9c90-2517999349cd"));
         assert_eq!(ITableProvider::IID, iid("9c860395-97b3-490a-b52a-858cc22af166"));
         assert_eq!(ITextProvider::IID, iid("3589c92c-63f3-4367-99bb-ada653b77cf2"));
+        assert_eq!(ITextProvider2::IID, iid("0dc5e6ed-3e16-4bf1-8f9a-a979878bc195"));
+        assert_eq!(ITextChildProvider::IID, iid("4c2de2b9-c88f-4f88-a111-f1d336b7d1a9"));
         assert_eq!(ITextRangeProvider::IID, iid("5347ad7b-c355-46f8-aff5-909033582f63"));
         assert_eq!(ITransformProvider::IID, iid("6829ddc4-4f91-4ffa-b86f-bd3e2987cb4c"));
         assert_eq!(IWindowProvider::IID, iid("987df77b-db06-4d77-8f8a-86a9c3bb90b9"));
@@ -97,6 +99,8 @@ mod tests {
         assert_eq!(3 + 2, slots::<ITableItemProvider>());
         assert_eq!(3 + 3, slots::<ITableProvider>());
         assert_eq!(3 + 6, slots::<ITextProvider>());
+        assert_eq!(3 + 6 + 2, slots::<ITextProvider2>());
+        assert_eq!(3 + 2, slots::<ITextChildProvider>());
         assert_eq!(3 + 18, slots::<ITextRangeProvider>());
         assert_eq!(3 + 6, slots::<ITransformProvider>());
         assert_eq!(3 + 9, slots::<IWindowProvider>());
@@ -131,6 +135,8 @@ mod tests {
         assert_eq!(10010, UiaPatternId::SelectionItem.0);
         assert_eq!(10015, UiaPatternId::Toggle.0);
         assert_eq!(10017, UiaPatternId::ScrollItem.0);
+        assert_eq!(10024, UiaPatternId::Text2.0);
+        assert_eq!(10029, UiaPatternId::TextChild.0);
         assert_eq!(10033, UiaPatternId::CustomNavigation.0);
 
         assert_eq!(50000, UiaControlTypeId::Button.0);

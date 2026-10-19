@@ -7,9 +7,9 @@ use super::automation_node::{ELEMENT_NOT_AVAILABLE, ELEMENT_NOT_ENABLED, NOT_SUP
 use super::interop::{TextPatternRangeEndpoint, TextUnit, UiaCoreTypesApi};
 use super::marshalling::{ComVariant, VariantValue};
 use ferroui_base::media::Color;
-use ferroui_controls::automation::ElementNotEnabledException;
 use ferroui_controls::automation::provider::{self as portable, TextAttribute, TextAttributeValue};
-use ferroui_microcom::{COR_E_INVALIDOPERATION, ComPtr, E_FAIL, E_INVALIDARG, HResult, IUnknown};
+use ferroui_controls::automation::ElementNotEnabledException;
+use ferroui_microcom::{ComPtr, HResult, IUnknown, COR_E_INVALIDOPERATION, E_FAIL, E_INVALIDARG};
 
 pub(crate) fn provider_error(error: portable::ProviderError) -> HResult {
     if error.downcast_ref::<ElementNotEnabledException>().is_some() {
@@ -70,7 +70,16 @@ pub(crate) fn attribute(id: i32) -> TextAttribute {
         40015 => TextAttribute::IsReadOnly,
         40016 => TextAttribute::IsSubscript,
         40017 => TextAttribute::IsSuperscript,
+        40018 => TextAttribute::MarginBottom,
+        40019 => TextAttribute::MarginLeading,
+        40020 => TextAttribute::MarginTop,
+        40021 => TextAttribute::MarginTrailing,
+        40023 => TextAttribute::OverlineColor,
+        40024 => TextAttribute::OverlineStyle,
+        40025 => TextAttribute::StrikethroughColor,
         40026 => TextAttribute::StrikethroughStyle,
+        40028 => TextAttribute::TextFlowDirections,
+        40029 => TextAttribute::UnderlineColor,
         40030 => TextAttribute::UnderlineStyle,
         _ => TextAttribute::Unknown(id),
     }
@@ -119,11 +128,19 @@ pub(crate) unsafe fn attribute_from_variant(
     }
     let value = match (attribute, value) {
         (
-            TextAttribute::ForegroundColor | TextAttribute::BackgroundColor,
+            TextAttribute::ForegroundColor
+            | TextAttribute::BackgroundColor
+            | TextAttribute::UnderlineColor
+            | TextAttribute::OverlineColor
+            | TextAttribute::StrikethroughColor,
             Some(VariantValue::I4(value)),
         ) => TextAttributeValue::Color(color_from_colorref(value as u32)),
         (
-            TextAttribute::ForegroundColor | TextAttribute::BackgroundColor,
+            TextAttribute::ForegroundColor
+            | TextAttribute::BackgroundColor
+            | TextAttribute::UnderlineColor
+            | TextAttribute::OverlineColor
+            | TextAttribute::StrikethroughColor,
             Some(VariantValue::UI4(value)),
         ) => TextAttributeValue::Color(color_from_colorref(value)),
         (_, Some(VariantValue::Bool(value))) => TextAttributeValue::Bool(value),

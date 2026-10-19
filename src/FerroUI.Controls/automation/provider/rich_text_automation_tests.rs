@@ -1,19 +1,46 @@
 use super::{
-    ITextProvider, ITextRangeProvider, IValueProvider, SupportedTextSelection, TextAttribute,
-    TextAttributeValue, TextPatternRangeEndpoint as Endpoint, TextProviderError, TextUnit,
+    IInvokeProvider, ITextChildProvider, ITextProvider, ITextProvider2, ITextRangeProvider,
+    IValueProvider, SupportedTextSelection, TextAttribute, TextAttributeValue,
+    TextPatternRangeEndpoint as Endpoint, TextProviderError, TextUnit,
 };
-use crate::automation::peers::ControlAutomationPeer;
+use crate::automation::peers::{AutomationControlType, ControlAutomationPeer};
+use crate::automation::AutomationProperties;
 use crate::documents::{
     Bold, CharacterFormat, Hyperlink, InlineUIContainer, Paragraph, RichTextDocument, Run, Span,
     UnderlineStyle,
 };
-use crate::test_support::{TestRoot, test_scope};
+use crate::test_support::{test_scope, TestRoot};
 use crate::{Border, RichEditBox, RichTextBlock};
+use ferroui_base::input::{IKeyboardDevice, KeyboardDevice};
 use ferroui_base::media::text_formatting::testing::TextTestScope;
-use ferroui_base::media::{Brushes, FontWeight, TextAlignment};
-use ferroui_base::{Point, Rect, Ref, Size, Thickness};
+use ferroui_base::media::{
+    Brushes, Color, FlowDirection, FontWeight, TextAlignment, TextDecoration,
+    TextDecorationCollection, TextDecorationLocation,
+};
+use ferroui_base::reactive::IDisposable;
+use ferroui_base::{FerroLocator, Point, Rect, Ref, Size, Thickness};
 use std::cell::Cell;
 use std::rc::Rc;
+
+/// Focus goes through the framework keyboard device, which the layout-only
+/// TestRoot does not register. Keep the registration scoped to the test.
+struct KeyboardScope(Rc<dyn IDisposable>);
+
+impl KeyboardScope {
+    fn new() -> Self {
+        let scope = FerroLocator::enter_scope();
+        FerroLocator::current_mutable()
+            .bind::<dyn IKeyboardDevice>()
+            .to_constant(KeyboardDevice::new());
+        Self(scope)
+    }
+}
+
+impl Drop for KeyboardScope {
+    fn drop(&mut self) {
+        self.0.dispose();
+    }
+}
 
 fn provider(view: &RichTextBlock) -> Rc<dyn ITextProvider> {
     ControlAutomationPeer::create_peer_for_element(view)
@@ -292,14 +319,13 @@ fn rich_automation_attributes_distinguish_uniform_mixed_and_unsupported_values()
             .unwrap(),
         TextAttributeValue::NotSupported
     );
-    assert!(
-        all.find_attribute(
+    assert!(all
+        .find_attribute(
             TextAttribute::Unknown(59999),
             &TextAttributeValue::Bool(true),
             false
         )
-        .is_err()
-    );
+        .is_err());
 }
 
 #[test]
@@ -372,12 +398,11 @@ fn rich_automation_embedded_objects_are_enumerable_and_have_real_ranges() {
     range.expand_to_enclosing_unit(TextUnit::Format).unwrap();
     assert_eq!(range.get_text(None).unwrap(), "\u{fffc}");
     assert_eq!(all.get_enclosing_element().unwrap(), text.peer());
-    assert!(
-        text.range_from_child(&ControlAutomationPeer::create_peer_for_element(
+    assert!(text
+        .range_from_child(&ControlAutomationPeer::create_peer_for_element(
             &Border::new()
         ))
-        .is_err()
-    );
+        .is_err());
 }
 
 #[test]
@@ -528,4 +553,457 @@ fn rich_automation_line_units_follow_wrapped_layout_and_paragraph_units_follow_b
     assert_eq!(range.get_text(None).unwrap(), "alpha beta gamma delta\n");
     range.expand_to_enclosing_unit(TextUnit::Page).unwrap();
     assert_eq!(range.get_text(None).unwrap(), view.document().text());
+}
+
+// The following cases are FerroUI integration regressions, not upstream tests.
+#[test]
+fn rich_automation_text2_caret_uses_active_utf16_endpoint_and_focus_without_selecting() {
+    let _scope = test_scope();
+    let _keyboard = KeyboardScope::new();
+    let editor = RichEditBox::new();
+    editor.set_text("a😀bc").unwrap();
+    let root = TestRoot::with_child(editor.clone());
+    root.measure(Size::new(200.0, 80.0));
+    root.arrange(Rect::new(0.0, 0.0, 200.0, 80.0));
+    editor.select(5, 1);
+    let peer = ControlAutomationPeer::create_peer_for_element(&editor);
+    let provider = peer.get_provider::<dyn ITextProvider2>().unwrap();
+    let caret = provider.get_caret_range().unwrap();
+    assert!(!caret.is_active);
+    let caret = caret.range.unwrap();
+    assert_eq!(caret.get_text(None).unwrap(), "");
+    let all = provider.document_range().unwrap();
+    assert_eq!(
+        caret
+            .compare_endpoints(Endpoint::Start, &*all, Endpoint::Start)
+            .unwrap(),
+        1
+    );
+    assert_eq!((editor.selection_start(), editor.selection_end()), (5, 1));
+    assert!(editor.focus());
+    assert!(provider.get_caret_range().unwrap().is_active);
+    editor.select(1, 5);
+    let caret = provider.get_caret_range().unwrap().range.unwrap();
+    assert_eq!(
+        caret
+            .compare_endpoints(Endpoint::Start, &*all, Endpoint::Start)
+            .unwrap(),
+        5
+    );
+    editor.set_is_enabled(false);
+    assert!(!provider.get_caret_range().unwrap().is_active);
+    assert!(provider.get_caret_range().unwrap().range.is_some());
+}
+
+#[test]
+fn rich_automation_text2_has_no_caret_when_selection_disabled_and_rejects_non_annotations() {
+    let _scope = test_scope();
+    let view = RichTextBlock::new();
+    view.set_document(RichTextDocument::from_text("text"));
+    view.set_is_text_selection_enabled(false);
+    let peer = ControlAutomationPeer::create_peer_for_element(&view);
+    let provider = peer.get_provider::<dyn ITextProvider2>().unwrap();
+    let caret = provider.get_caret_range().unwrap();
+    assert!(!caret.is_active);
+    assert!(caret.range.is_none());
+    assert_eq!(
+        provider
+            .range_from_annotation(&peer)
+            .err()
+            .unwrap()
+            .downcast_ref::<TextProviderError>(),
+        Some(&TextProviderError::InvalidArgument)
+    );
+    let weak = view.downgrade();
+    drop(view);
+    assert!(weak.upgrade().is_none());
+    assert!(provider.get_caret_range().is_err());
+}
+
+#[test]
+fn rich_automation_hyperlinks_have_stable_identity_text_child_ranges_and_invoke() {
+    let _scope = test_scope();
+    let view = RichTextBlock::new();
+    let paragraph = Paragraph::new();
+    let prefix = Run::with_text(Some("😀 "));
+    paragraph.add_child(prefix.clone());
+    let link = Hyperlink::with_text("link😀", Some("https://example.com/"));
+    paragraph.add_child(link.clone());
+    paragraph.add_child_text("!");
+    view.blocks().add(paragraph.clone());
+    let text = provider(&view);
+    let peer = text.peer();
+    let children = peer.get_children();
+    assert_eq!(children.len(), 1);
+    let child = children[0].clone();
+    assert_eq!(child.get_parent(), Some(peer.clone()));
+    assert_eq!(
+        child.get_automation_control_type(),
+        AutomationControlType::Hyperlink
+    );
+    assert_eq!(child.get_class_name(), "Hyperlink");
+    assert_eq!(child.get_name(), "link😀");
+    let child_text = child.get_provider::<dyn ITextChildProvider>().unwrap();
+    assert_eq!(child_text.text_container().unwrap(), peer);
+    let range = child_text.text_range().unwrap();
+    assert_eq!(range.get_text(None).unwrap(), "link😀");
+    assert!(range
+        .compare(&*text.range_from_child(&child).unwrap())
+        .unwrap());
+    assert_eq!(range.get_enclosing_element().unwrap(), child);
+    let all = text.document_range().unwrap();
+    assert_eq!(all.get_children().unwrap(), vec![child.clone()]);
+    assert_eq!(
+        range
+            .compare_endpoints(Endpoint::Start, &*all, Endpoint::Start)
+            .unwrap(),
+        3
+    );
+    prefix.set_text(Some("zz😀 "));
+    assert_eq!(peer.get_children()[0], child);
+    assert_eq!(
+        child_text
+            .text_range()
+            .unwrap()
+            .compare_endpoints(
+                Endpoint::Start,
+                &*text.document_range().unwrap(),
+                Endpoint::Start
+            )
+            .unwrap(),
+        5
+    );
+    assert_eq!(range.get_text(None).unwrap(), "link😀");
+    let invoked = Rc::new(Cell::new(0));
+    let count = invoked.clone();
+    link.click(move |args| {
+        count.set(count.get() + 1);
+        args.set_handled(true);
+    });
+    let invoke = child.get_provider::<dyn IInvokeProvider>().unwrap();
+    invoke.invoke().unwrap();
+    assert_eq!(invoked.get(), 1);
+    link.set_is_enabled(false);
+    assert!(!child.is_enabled());
+    assert!(invoke.invoke().is_err());
+    assert_eq!(invoked.get(), 1);
+    link.set_is_enabled(true);
+    view.set_is_enabled(false);
+    assert!(invoke.invoke().is_err());
+}
+
+#[test]
+fn rich_automation_hyperlink_tree_retains_embedded_children_and_innermost_enclosing_peer() {
+    let _scope = test_scope();
+    let view = RichTextBlock::new();
+    let paragraph = Paragraph::with_text("before ");
+    let outer = Hyperlink::with_text("outer ", None);
+    let inner = Hyperlink::with_text("inner", None);
+    let embedded = Border::new();
+    inner.add_child(InlineUIContainer::with_child(embedded.clone()));
+    outer.add_child(inner);
+    paragraph.add_child(outer);
+    view.blocks().add(paragraph);
+    let text = provider(&view);
+    let root = text.peer();
+    let outer_peer = root.get_children()[0].clone();
+    assert_eq!(root.get_children().len(), 1);
+    let inner_peer = outer_peer.get_children()[0].clone();
+    let embedded_peer = inner_peer.get_children()[0].clone();
+    assert_eq!(
+        embedded_peer,
+        ControlAutomationPeer::create_peer_for_element(&embedded)
+    );
+    assert_eq!(inner_peer.get_parent(), Some(outer_peer));
+    assert_eq!(embedded_peer.get_parent(), Some(inner_peer.clone()));
+    assert_eq!(
+        text.range_from_child(&embedded_peer)
+            .unwrap()
+            .get_text(None)
+            .unwrap(),
+        "\u{fffc}"
+    );
+    assert_eq!(
+        found(&*text, "inner").get_enclosing_element().unwrap(),
+        inner_peer
+    );
+    assert_eq!(
+        text.range_from_child(&embedded_peer)
+            .unwrap()
+            .get_enclosing_element()
+            .unwrap(),
+        embedded_peer
+    );
+    assert_eq!(
+        text.document_range().unwrap().get_children().unwrap().len(),
+        3
+    );
+}
+
+#[test]
+fn rich_automation_hyperlink_metadata_geometry_focus_and_document_detachment_are_live() {
+    let _scope = test_scope();
+    let _keyboard = KeyboardScope::new();
+    let view = RichTextBlock::new();
+    let paragraph = Paragraph::new();
+    let link = Hyperlink::with_text("Open", Some("https://example.com/"));
+    paragraph.add_child(link.clone());
+    view.blocks().add(paragraph.clone());
+    let root = TestRoot::with_child(view.clone());
+    root.measure(Size::new(200.0, 80.0));
+    root.arrange(Rect::new(0.0, 0.0, 200.0, 80.0));
+    let peer = provider(&view).peer().get_children()[0].clone();
+    let child = peer.get_provider::<dyn ITextChildProvider>().unwrap();
+    link.set_value(
+        AutomationProperties::name_property(),
+        Some("Custom name".to_owned()),
+    );
+    link.set_value(
+        AutomationProperties::help_text_property(),
+        Some("Open the site".to_owned()),
+    );
+    assert_eq!(peer.get_name(), "Custom name");
+    assert_eq!(peer.get_help_text(), "Open the site");
+    assert!(!peer.get_bounding_rectangle().is_empty());
+    assert!(!peer.is_offscreen());
+    peer.set_focus();
+    assert!(view.is_focused());
+    assert!(peer.has_keyboard_focus());
+    view.set_is_visible(false);
+    assert!(peer.is_offscreen());
+    assert!(peer.get_bounding_rectangle().is_empty());
+    paragraph.inlines().clear();
+    assert_eq!(
+        child
+            .text_range()
+            .err()
+            .unwrap()
+            .downcast_ref::<TextProviderError>(),
+        Some(&TextProviderError::ElementNotAvailable)
+    );
+    assert!(child.text_container().is_err());
+    assert!(peer.get_parent().is_none());
+    assert!(peer
+        .get_provider::<dyn IInvokeProvider>()
+        .unwrap()
+        .invoke()
+        .is_err());
+}
+
+#[test]
+fn rich_automation_retained_hyperlink_peer_does_not_retain_document_or_owners() {
+    let _scope = test_scope();
+    let (child, view, link, document) = {
+        let view = RichTextBlock::new();
+        let paragraph = Paragraph::new();
+        let link = Hyperlink::with_text("temporary", None);
+        paragraph.add_child(link.clone());
+        view.blocks().add(paragraph);
+        let child = provider(&view).peer().get_children()[0]
+            .get_provider::<dyn ITextChildProvider>()
+            .unwrap();
+        (
+            child,
+            view.downgrade(),
+            link.downgrade(),
+            view.document().downgrade(),
+        )
+    };
+    assert!(view.upgrade().is_none());
+    assert!(link.upgrade().is_none());
+    assert!(document.upgrade().is_none());
+    assert!(child.text_range().is_err());
+    assert!(child.text_container().is_err());
+}
+
+#[test]
+fn rich_automation_hyperlink_structure_events_follow_identity_changes_only() {
+    let _scope = test_scope();
+    let view = RichTextBlock::new();
+    let paragraph = Paragraph::with_text("text");
+    view.blocks().add(paragraph.clone());
+    let peer = provider(&view).peer();
+    peer.get_children();
+    let changes = Rc::new(Cell::new(0));
+    let sink = changes.clone();
+    let subscription = peer.children_changed(move || sink.set(sink.get() + 1));
+    let link = Hyperlink::with_text("link", None);
+    paragraph.add_child(link.clone());
+    assert_eq!(changes.get(), 1);
+    link.add_child_text(" changed");
+    assert_eq!(changes.get(), 1);
+    paragraph.inlines().remove(&link.upcast());
+    assert_eq!(changes.get(), 2);
+    subscription.dispose();
+    paragraph.add_child(Hyperlink::with_text("more", None));
+    assert_eq!(changes.get(), 2);
+}
+
+#[test]
+fn rich_automation_extra_attributes_use_effective_decoration_colors_and_logical_margins() {
+    let _scope = test_scope();
+    let view = RichTextBlock::new();
+    let paragraph = Paragraph::new();
+    paragraph.set_flow_direction(FlowDirection::RightToLeft);
+    paragraph.set_margin(Thickness::new(8.0, 12.0, 16.0, 20.0));
+    paragraph.set_left_indent(-4.0);
+    paragraph.set_right_indent(24.0);
+    let first = Run::with_text(Some("red"));
+    let red = TextDecoration::new();
+    red.set_location(TextDecorationLocation::Overline);
+    red.set_stroke(Some(Brushes::red()));
+    first.set_text_decorations(Some(TextDecorationCollection::from_items([red])));
+    let second = Run::with_text(Some("blue"));
+    let blue = TextDecoration::new();
+    blue.set_location(TextDecorationLocation::Overline);
+    blue.set_stroke(Some(Brushes::blue()));
+    second.set_text_decorations(Some(TextDecorationCollection::from_items([blue])));
+    paragraph.add_child(first);
+    paragraph.add_child(second);
+    view.blocks().add(paragraph);
+    let text = provider(&view);
+    let all = text.document_range().unwrap();
+    for (attribute, value) in [
+        (
+            TextAttribute::TextFlowDirections,
+            TextAttributeValue::Integer(1),
+        ),
+        (TextAttribute::MarginTop, TextAttributeValue::Number(9.0)),
+        (
+            TextAttribute::MarginBottom,
+            TextAttributeValue::Number(15.0),
+        ),
+        (
+            TextAttribute::MarginLeading,
+            TextAttributeValue::Number(12.0),
+        ),
+        (
+            TextAttribute::MarginTrailing,
+            TextAttributeValue::Number(6.0),
+        ),
+        (
+            TextAttribute::IndentationLeading,
+            TextAttributeValue::Number(30.0),
+        ),
+        (
+            TextAttribute::IndentationTrailing,
+            TextAttributeValue::Number(3.0),
+        ),
+        (TextAttribute::OverlineStyle, TextAttributeValue::Integer(1)),
+        (TextAttribute::OverlineColor, TextAttributeValue::Mixed),
+    ] {
+        assert_eq!(
+            all.get_attribute_value(attribute).unwrap(),
+            value,
+            "{attribute:?}"
+        );
+    }
+    let red = all
+        .find_attribute(
+            TextAttribute::OverlineColor,
+            &TextAttributeValue::Color(Color::from_rgb(255, 0, 0)),
+            false,
+        )
+        .unwrap()
+        .unwrap();
+    assert_eq!(red.get_text(None).unwrap(), "red");
+    assert_eq!(
+        red.get_attribute_value(TextAttribute::UnderlineColor)
+            .unwrap(),
+        TextAttributeValue::NotSupported
+    );
+}
+
+#[test]
+fn rich_automation_editor_header_description_preserve_explicit_metadata_and_visual_children() {
+    let _scope = test_scope();
+    let editor = RichEditBox::new();
+    editor.set_header(Some(Rc::new("Editor label".to_owned())));
+    editor.set_description(Some(Rc::new("Editor guidance".to_owned())));
+    let root = TestRoot::with_child(editor.clone());
+    root.measure(Size::new(200.0, 80.0));
+    root.arrange(Rect::new(0.0, 0.0, 200.0, 80.0));
+    let peer = ControlAutomationPeer::create_peer_for_element(&editor);
+    assert_eq!(peer.get_name(), "Editor label");
+    assert_eq!(peer.get_help_text(), "Editor guidance");
+    assert!(peer.get_children().len() >= 2);
+    editor.set_value(
+        AutomationProperties::name_property(),
+        Some("Explicit name".to_owned()),
+    );
+    editor.set_value(
+        AutomationProperties::help_text_property(),
+        Some("Explicit help".to_owned()),
+    );
+    assert_eq!(peer.get_name(), "Explicit name");
+    assert_eq!(peer.get_help_text(), "Explicit help");
+}
+
+#[test]
+fn rich_automation_overflow_hyperlink_geometry_and_point_ranges_share_the_root() {
+    let _scope = test_scope();
+    let view = RichTextBlock::new();
+    view.set_width(75.0);
+    view.set_max_lines(1);
+    let paragraph = Paragraph::with_text("one two three four five six ");
+    paragraph.add_child(Hyperlink::with_text("target", None));
+    view.blocks().add(paragraph);
+    let overflow = crate::RichTextBlockOverflow::new();
+    overflow.set_width(130.0);
+    view.set_overflow_content_target(Some(overflow.clone()));
+    let panel = crate::StackPanel::new();
+    panel.set_orientation(ferroui_base::layout::Orientation::Horizontal);
+    panel.children().add(view.clone());
+    panel.children().add(overflow.clone());
+    let root = TestRoot::with_child(panel);
+    root.measure(Size::new(205.0, 160.0));
+    root.arrange(Rect::new(0.0, 0.0, 205.0, 160.0));
+    assert!(overflow.content_start() > 0);
+    let text = provider(&view);
+    let target = found(&*text, "target");
+    let rectangles = target.get_bounding_rectangles().unwrap();
+    assert!(!rectangles.is_empty());
+    assert!(rectangles.iter().all(|rect| rect.x >= 75.0));
+    let hit = text.range_from_point(rectangles[0].center()).unwrap();
+    assert!(
+        hit.compare_endpoints(Endpoint::Start, &*target, Endpoint::Start)
+            .unwrap()
+            >= 0
+    );
+    assert!(
+        hit.compare_endpoints(Endpoint::Start, &*target, Endpoint::End)
+            .unwrap()
+            <= 0
+    );
+    let link = text.peer().get_children()[0].clone();
+    assert!(!link.is_offscreen());
+    assert!(link.get_bounding_rectangle().x >= 75.0);
+    assert!(text
+        .get_visible_ranges()
+        .unwrap()
+        .into_iter()
+        .map(|range| range.get_text(None).unwrap())
+        .collect::<String>()
+        .contains("target"));
+}
+
+#[test]
+fn rich_automation_visible_ranges_exclude_text_collapsed_into_an_ellipsis() {
+    let _scope = test_scope();
+    let view = rich("alpha beta gamma delta epsilon zeta");
+    view.set_max_lines(1);
+    view.set_text_trimming(<dyn ferroui_base::media::TextTrimming>::character_ellipsis());
+    let root = TestRoot::with_child(view.clone());
+    root.measure(Size::new(90.0, 40.0));
+    root.arrange(Rect::new(0.0, 0.0, 90.0, 40.0));
+    assert!(view.is_text_trimmed());
+    let visible = provider(&view)
+        .get_visible_ranges()
+        .unwrap()
+        .into_iter()
+        .map(|range| range.get_text(None).unwrap())
+        .collect::<String>();
+    assert!(!visible.is_empty());
+    assert!(!visible.contains("zeta"));
+    assert!(visible.len() < view.document().text().len());
 }

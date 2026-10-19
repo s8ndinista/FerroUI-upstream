@@ -22,17 +22,17 @@ use ferroui_base::interactivity::{
 use ferroui_base::layout::{LayoutableImpl, LayoutableImplExt};
 use ferroui_base::media::text_formatting::unicode::GraphemeEnumerator;
 use ferroui_base::media::{
-    Brushes, DrawingContext, FontFamily, FontFeatureCollection, FontStretch, FontStyle, FontWeight,
-    IBrush, TextAlignment, TextDecorationCollection, TextTrimming, TextWrapping,
-    subscribe_invalidated,
+    subscribe_invalidated, Brushes, DrawingContext, FontFamily, FontFeatureCollection, FontStretch,
+    FontStyle, FontWeight, IBrush, TextAlignment, TextDecorationCollection, TextTrimming,
+    TextWrapping,
 };
 use ferroui_base::reactive::{Disposable, IDisposable};
 use ferroui_base::utilities::HandlerList;
 use ferroui_base::{
-    DirectProperty, ElementRef, FerroObjectImpl, FerroObjectImplExt, FerroProperty,
-    FerroPropertyChangedEventArgs, IntoRef, Point, Rect, Ref, Size, StyledElementImpl,
-    StyledProperty, StyledPropertyOptions, Thickness, Vector, Visual, VisualImpl, WeakRef,
-    ferro_class, instantiate,
+    ferro_class, instantiate, DirectProperty, ElementRef, FerroObjectImpl, FerroObjectImplExt,
+    FerroProperty, FerroPropertyChangedEventArgs, IntoRef, Point, Rect, Ref, Size,
+    StyledElementImpl, StyledProperty, StyledPropertyOptions, Thickness, Vector, Visual,
+    VisualImpl, WeakRef,
 };
 use std::cell::{Cell, RefCell};
 use std::ops::Range;
@@ -59,6 +59,8 @@ pub struct RichTextBlock {
     constraint: Cell<Size>,
     selection_start: Cell<usize>,
     selection_end: Cell<usize>,
+    selection_changing: Cell<bool>,
+    navigation_x: Cell<Option<f64>>,
     selection_changed: HandlerList<dyn Fn(&RichTextSelectionChangedEventArgs)>,
     dragging: Cell<bool>,
     hovered_link: RefCell<Option<WeakRef<Hyperlink>>>,
@@ -82,6 +84,19 @@ ferro_class! {
         fn caret_visible(this) -> bool;
         /// Whether pointer input activates a hyperlink or edits its text.
         fn allow_hyperlink_navigation(this, modifiers: KeyModifiers) -> bool;
+        /// Runs synchronously while the proposed selection is visible to readers.
+        /// Returning false cancels it unless a handler selected a different range.
+        fn on_selection_changing(this, args: &RichTextSelectionChangedEventArgs) -> bool;
+        /// Lets an editable view arbitrate a normalized selection through its editor.
+        fn request_selection_change(this, start: usize, end: usize) -> bool;
+        /// Editors publish their final transaction selection after document changes.
+        fn rebase_selection_on_document_change(this) -> bool;
+        /// Space outside the document's formatted text, including editor adornments.
+        fn text_insets(this) -> Thickness;
+        /// Bounds painted by the document background; editor headers are outside it.
+        fn text_background_bounds(this) -> Rect;
+        /// Native framework visuals displayed beside the document's inline controls.
+        fn additional_visual_children(this) -> Vec<Ref<Visual>>;
     }
 }
 
@@ -169,7 +184,7 @@ impl ControlImpl for RichTextBlock {
 impl VisualImpl for RichTextBlock {
     fn render(this: &Self, context: &mut DrawingContext) {
         if let Some(background) = this.background() {
-            context.fill_rectangle(&background, Rect::from_size(this.bounds().size()), 0.0);
+            context.fill_rectangle(&background, this.text_background_bounds(), 0.0);
         }
         let layout = this.page_layout();
         for highlight in &layout.source.highlights {
@@ -211,11 +226,35 @@ impl RichTextBlockImpl for RichTextBlock {
     fn allow_hyperlink_navigation(_this: &Self, _modifiers: KeyModifiers) -> bool {
         true
     }
+
+    fn on_selection_changing(_this: &Self, _args: &RichTextSelectionChangedEventArgs) -> bool {
+        true
+    }
+
+    fn request_selection_change(_this: &Self, _start: usize, _end: usize) -> bool {
+        false
+    }
+
+    fn rebase_selection_on_document_change(_this: &Self) -> bool {
+        true
+    }
+
+    fn text_insets(this: &Self) -> Thickness {
+        this.padding()
+    }
+
+    fn text_background_bounds(this: &Self) -> Rect {
+        Rect::from_size(this.bounds().size())
+    }
+
+    fn additional_visual_children(_this: &Self) -> Vec<Ref<Visual>> {
+        Vec::new()
+    }
 }
 
 impl LayoutableImpl for RichTextBlock {
     fn measure_override(this: &Self, available_size: Size) -> Size {
-        let inner = available_size.deflate(this.padding());
+        let inner = available_size.deflate(this.text_insets());
         if this.constraint.replace(inner) != inner {
             this.layout.borrow_mut().take();
         }
@@ -229,20 +268,21 @@ impl LayoutableImpl for RichTextBlock {
                 this.layout.borrow_mut().take();
             }
         }
-        this.page_layout().size.inflate(this.padding())
+        this.page_layout().size.inflate(this.text_insets())
     }
 
     fn arrange_override(this: &Self, final_size: Size) -> Size {
-        let inner = final_size.deflate(this.padding());
+        let inner = final_size.deflate(this.text_insets());
         if this.constraint.replace(inner) != inner {
             this.layout.borrow_mut().take();
         }
         let layout = this.page_layout();
         let children = layout.embedded_controls(this.text_origin());
-        let desired: Vec<Ref<Visual>> = children
+        let mut desired: Vec<Ref<Visual>> = children
             .iter()
             .map(|(child, _)| child.clone().upcast())
             .collect();
+        desired.extend(this.additional_visual_children());
         let current = this.visual_children().snapshot();
         if current.as_slice() != desired.as_slice() {
             this.visual_children().clear();
@@ -317,6 +357,7 @@ impl InputElementImpl for RichTextBlock {
         let text = this.document().text();
         let text: Vec<u16> = text.encode_utf16().collect();
         let extend = e.key_modifiers.contains(KeyModifiers::SHIFT);
+        let mut navigation_x = None;
         let next = match e.key {
             Key::Left if !extend && this.selection_start() != active => {
                 this.selection_start().min(active)
@@ -339,13 +380,27 @@ impl InputElementImpl for RichTextBlock {
                 let line = layout
                     .lines
                     .iter()
-                    .find(|line| active >= line.start() && active < line.end())
+                    .enumerate()
+                    .find(|(index, line)| {
+                        active >= line.start()
+                            && (active < line.end()
+                                || active == line.end()
+                                    && layout
+                                        .lines
+                                        .get(index + 1)
+                                        .is_none_or(|next| next.start() > active))
+                    })
+                    .map(|(_, line)| line)
                     .or_else(|| layout.lines.last());
                 line.map_or(active, |line| {
                     if e.key == Key::Home {
                         line.start()
                     } else {
-                        line.end()
+                        // Like TextBox::move_end, stop before a real line break.
+                        // Paragraph terminators are outside the stored paragraph text.
+                        (line.start()
+                            + (line.line.length() - line.line.new_line_length()).max(0) as usize)
+                            .min(line.paragraph_offset + line.paragraph_length)
                     }
                 })
             }
@@ -358,14 +413,19 @@ impl InputElementImpl for RichTextBlock {
                     rect.height.max(1.0)
                 };
                 let down = matches!(e.key, Key::Down | Key::PageDown);
+                let x = this.navigation_x.get().unwrap_or(rect.x);
+                navigation_x = Some(x);
                 this.hit_test_text_position(Point::new(
-                    rect.x,
+                    x,
                     rect.y + rect.height * 0.5 + if down { distance } else { -distance },
                 ))
             }
             _ => return,
         };
         this.select(if extend { this.selection_start() } else { next }, next);
+        // Crossing a short line must not discard the original desired column.
+        // Any nonvertical selection request resets it in select().
+        this.navigation_x.set(navigation_x);
         e.set_handled(true);
     }
 
@@ -625,6 +685,8 @@ impl RichTextBlock {
             constraint: Cell::new(Size::new(f64::INFINITY, f64::INFINITY)),
             selection_start: Cell::new(0),
             selection_end: Cell::new(0),
+            selection_changing: Cell::new(false),
+            navigation_x: Cell::new(None),
             selection_changed: HandlerList::new(),
             dragging: Cell::new(false),
             hovered_link: RefCell::new(None),
@@ -720,7 +782,9 @@ impl RichTextBlock {
                         TextGravity::Forward,
                     ))
                     .offset;
-                this.select(start, end);
+                if this.rebase_selection_on_document_change() {
+                    this.select(start, end);
+                }
                 this.raise_direct_property_changed(
                     Self::selected_text_property(),
                     &String::new(),
@@ -873,6 +937,7 @@ impl RichTextBlock {
     }
 
     pub fn select(&self, start: usize, end: usize) {
+        self.navigation_x.set(None);
         let parent = self
             .flow_parent
             .borrow()
@@ -885,17 +950,54 @@ impl RichTextBlock {
         let text: Vec<u16> = self.document().text().encode_utf16().collect();
         let start = scalar_boundary(&text, start);
         let end = scalar_boundary(&text, end);
+        if !self.selection_changing.get() && self.request_selection_change(start, end) {
+            return;
+        }
         let old_start = self.selection_start.replace(start);
         let old_end = self.selection_end.replace(end);
         if start == old_start && end == old_end {
             return;
         }
+        // WinUI CTextBoxBase::ProcessSelectionChangingEvent suppresses nested
+        // notifications, but lets an application's new selection supersede Cancel.
+        // Keep proposed values observable without publishing transient property values.
+        if self.selection_changing.replace(true) {
+            return;
+        }
+        struct SelectionChange<'a>(&'a Cell<bool>);
+        impl Drop for SelectionChange<'_> {
+            fn drop(&mut self) {
+                self.0.set(false);
+            }
+        }
+        let guard = SelectionChange(&self.selection_changing);
         let args = RichTextSelectionChangedEventArgs {
             old_start,
             old_end,
             start,
             end,
         };
+        let accepted = self.on_selection_changing(&args);
+        let changed_by_handler =
+            self.selection_start.get() != start || self.selection_end.get() != end;
+        if !accepted && !changed_by_handler {
+            // A handler may have edited the public document as well. Its current
+            // scalar boundaries govern restoration of the previous range.
+            let text: Vec<u16> = self.document().text().encode_utf16().collect();
+            self.selection_start.set(scalar_boundary(&text, old_start));
+            self.selection_end.set(scalar_boundary(&text, old_end));
+            return;
+        }
+        let args = RichTextSelectionChangedEventArgs {
+            old_start,
+            old_end,
+            start: self.selection_start.get(),
+            end: self.selection_end.get(),
+        };
+        drop(guard);
+        if args.start == old_start && args.end == old_end {
+            return;
+        }
         self.notify_selection_changed(&args);
     }
 
@@ -983,7 +1085,7 @@ impl RichTextBlock {
         None
     }
 
-    fn focus_hyperlink(&self, next: Option<Ref<Hyperlink>>) {
+    pub(crate) fn focus_hyperlink(&self, next: Option<Ref<Hyperlink>>) {
         let previous = self
             .focused_link
             .borrow_mut()
@@ -1375,7 +1477,7 @@ impl RichTextBlock {
             .and_then(WeakRef::upgrade)
     }
     fn text_origin(&self) -> Point {
-        let padding = self.padding();
+        let padding = self.text_insets();
         Point::new(padding.left, padding.top)
     }
 

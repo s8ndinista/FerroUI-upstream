@@ -3,10 +3,10 @@
 //! (Microsoft Corporation, MIT), using the existing FerroUI automation node's
 //! dispatcher and identity instead of a parallel native document.
 
-use super::automation_node::{AutomationNode, ELEMENT_NOT_AVAILABLE};
+use super::automation_node::{AutomationNode, SendProvider, ELEMENT_NOT_AVAILABLE};
 use super::interop::{
-    IRawElementProviderSimple, ITextProviderImpl, ITextRangeProvider, SupportedTextSelection,
-    UiaCoreProviderApi, UiaEventId, UiaPoint,
+    IRawElementProviderSimple, ITextChildProviderImpl, ITextProvider2Impl, ITextProviderImpl,
+    ITextRangeProvider, SupportedTextSelection, UiaCoreProviderApi, UiaEventId, UiaPoint,
 };
 use super::marshalling::{SafeArrayMarshaller, SafeArrayRef};
 use super::root_automation_node::RootAutomationNode;
@@ -15,8 +15,8 @@ use super::text_range_node::{SendTextRange, TextRangeNode};
 use ferroui_base::reactive::IDisposable;
 use ferroui_base::{PixelPoint, PixelRect, Point, Rect, Ref};
 use ferroui_controls::automation::peers::{AutomationPeer, ControlAutomationPeer};
-use ferroui_controls::automation::provider::ITextProvider;
-use ferroui_microcom::{ComPtr, E_FAIL, E_INVALIDARG, HResult};
+use ferroui_controls::automation::provider::{ITextChildProvider, ITextProvider, ITextProvider2};
+use ferroui_microcom::{ComPtr, HResult, E_FAIL, E_INVALIDARG};
 use std::rc::Rc;
 
 impl AutomationNode {
@@ -150,6 +150,77 @@ impl ITextProviderImpl for AutomationNode {
                 .map(|value| SupportedTextSelection(value as i32))
                 .map_err(provider_error)
         })
+    }
+}
+
+impl ITextProvider2Impl for AutomationNode {
+    fn range_from_annotation(
+        &self,
+        annotation_element: Option<&IRawElementProviderSimple>,
+    ) -> Result<Option<ComPtr<ITextRangeProvider>>, HResult> {
+        let identity = identity_of(annotation_element.ok_or(HResult(E_INVALIDARG))?)?;
+        let key = identity.as_ptr() as usize;
+        let owner = self.id();
+        let range = self.invoke_sync_provider(move |provider: &Rc<dyn ITextProvider2>| {
+            let annotation = Self::peer_from_identity(key).ok_or(HResult(E_INVALIDARG))?;
+            provider
+                .range_from_annotation(&annotation)
+                .map(|range| TextRangeNode::new(owner, range))
+                .map_err(provider_error)
+        })?;
+        Ok(Some(range.into_inner()))
+    }
+
+    fn get_caret_range(
+        &self,
+        is_active: *mut i32,
+    ) -> Result<Option<ComPtr<ITextRangeProvider>>, HResult> {
+        if is_active.is_null() {
+            return Err(HResult(E_INVALIDARG));
+        }
+        // SAFETY: UIA supplies writable BOOL storage for this synchronous COM
+        // call. Null is rejected above. The pointer stays on the caller's thread
+        // and never enters the dispatched closure; only owned results cross it.
+        unsafe {
+            *is_active = 0;
+        }
+        let owner = self.id();
+        let (active, range) =
+            self.invoke_sync_provider(move |provider: &Rc<dyn ITextProvider2>| {
+                let caret = provider.get_caret_range().map_err(provider_error)?;
+                Ok((
+                    caret.is_active,
+                    caret.range.map(|range| TextRangeNode::new(owner, range)),
+                ))
+            })?;
+        // SAFETY: same caller-owned BOOL storage, still live until this call
+        // returns. A failed dispatched operation leaves its initialized false.
+        unsafe {
+            *is_active = i32::from(active);
+        }
+        Ok(range.map(SendTextRange::into_inner))
+    }
+}
+
+impl ITextChildProviderImpl for AutomationNode {
+    fn get_text_container(&self) -> Result<Option<ComPtr<IRawElementProviderSimple>>, HResult> {
+        let container = self.invoke_sync_provider(|provider: &Rc<dyn ITextChildProvider>| {
+            let peer = provider.text_container().map_err(provider_error)?;
+            Self::get_or_create(Some(&peer))
+                .map(SendProvider)
+                .ok_or(ELEMENT_NOT_AVAILABLE)
+        })?;
+        Ok(Some(container.into_inner()))
+    }
+
+    fn get_text_range(&self) -> Result<Option<ComPtr<ITextRangeProvider>>, HResult> {
+        let range = self.invoke_sync_provider(|provider: &Rc<dyn ITextChildProvider>| {
+            let range = provider.text_range().map_err(provider_error)?;
+            let peer = range.peer().map_err(provider_error)?;
+            let owner = Self::id_for_peer(&peer).ok_or(ELEMENT_NOT_AVAILABLE)?;
+            Ok(TextRangeNode::new(owner, range))
+        })?;
+        Ok(Some(range.into_inner()))
     }
 }
 

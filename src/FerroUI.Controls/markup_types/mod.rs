@@ -52,7 +52,14 @@ const RICH_TEXT_TYPES: &[&MarkupType] = &[
     <crate::DisabledFormattingAccelerators as MarkupTyped>::MARKUP,
     <crate::RichEditCompositionEventArgs as MarkupTyped>::MARKUP,
     <crate::RichEditCompositionRoutedEvent as MarkupTyped>::MARKUP,
+    <crate::RichEditBoxSelectionChangingEventArgs as MarkupTyped>::MARKUP,
+    <crate::RichEditBoxSelectionChangingRoutedEvent as MarkupTyped>::MARKUP,
+    <crate::RichEditBoxTextChangingEventArgs as MarkupTyped>::MARKUP,
+    <crate::RichEditBoxTextChangingRoutedEvent as MarkupTyped>::MARKUP,
     <crate::rich_text::RichEditClipboardFormat as MarkupTyped>::MARKUP,
+    <crate::rich_text::FindOptions as MarkupTyped>::MARKUP,
+    <crate::rich_text::TextGetOptions as MarkupTyped>::MARKUP,
+    <crate::rich_text::TextSetOptions as MarkupTyped>::MARKUP,
 ];
 
 /// Adds the types declared in this module to the process-wide table of
@@ -102,7 +109,12 @@ fn register_rich_text_value_types() {
     ValueTypes::register_nullable::<crate::RichEditCharacterCasing>();
     ValueTypes::register_nullable::<crate::DisabledFormattingAccelerators>();
     ValueTypes::register_nullable::<crate::rich_text::RichEditClipboardFormat>();
+    ValueTypes::register_nullable::<crate::rich_text::FindOptions>();
+    ValueTypes::register_nullable::<crate::rich_text::TextGetOptions>();
+    ValueTypes::register_nullable::<crate::rich_text::TextSetOptions>();
     ValueTypes::register_nullable::<ferroui_base::interactivity::RoutedEvent<crate::RichEditCompositionEventArgs>>();
+    ValueTypes::register_nullable::<ferroui_base::interactivity::RoutedEvent<crate::RichEditBoxSelectionChangingEventArgs>>();
+    ValueTypes::register_nullable::<ferroui_base::interactivity::RoutedEvent<crate::RichEditBoxTextChangingEventArgs>>();
 }
 
 /// The casts between a binding and the value of a property that is assigned a binding.

@@ -28,6 +28,7 @@ mod expander_automation_peer;
 #[cfg(test)]
 mod foundation_automation_peer_tests;
 mod image_automation_peer;
+mod hyperlink_automation_peer;
 mod interop_automation_peer;
 #[cfg(test)]
 mod items_automation_peer_tests;
@@ -104,6 +105,7 @@ pub use drawer_page_automation_peer::DrawerPageAutomationPeer;
 pub use embeddable_control_root_automation_peer::EmbeddableControlRootAutomationPeer;
 pub use expander_automation_peer::ExpanderAutomationPeer;
 pub use image_automation_peer::ImageAutomationPeer;
+pub use hyperlink_automation_peer::HyperlinkAutomationPeer;
 pub use interop_automation_peer::InteropAutomationPeer;
 pub use items_control_automation_peer::{
     ItemsControlAutomationPeer, ItemsControlAutomationPeerImpl, ItemsControlAutomationPeerImplExt,

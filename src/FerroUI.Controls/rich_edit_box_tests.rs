@@ -9,7 +9,6 @@ use crate::rich_text::{
 };
 use crate::{RichEditBox, RichEditCharacterCasing};
 use ferroui_base::input::text_input::{TextInputOptions, TextSelection};
-use ferroui_base::media::text_formatting::testing::TextTestScope;
 use ferroui_base::media::{FontFamily, FontStyle, FontWeight, TextAlignment};
 use ferroui_base::threading::Dispatcher;
 use ferroui_base::{Rect, Size};
@@ -462,7 +461,7 @@ fn rich_edit_framework_clipboard_preserves_exact_in_process_snapshot() {
 
 #[test]
 fn rich_edit_control_uses_document_layout_and_native_input_method_projection() {
-    let _scope = TextTestScope::new();
+    let _scope = crate::test_support::test_scope();
     let editor = RichEditBox::new();
     editor.set_text("hello\nworld").unwrap();
     editor.measure(Size::new(200.0, 100.0));
@@ -645,11 +644,10 @@ fn rich_edit_range_search_keeps_utf16_offsets_and_reverse_overlapping_matches() 
         .unwrap()
         .unwrap();
     assert_eq!(word.range(), 16..21);
-    assert!(
-        all.find("istanbul", TextFindOptions::MATCH_CASE)
-            .unwrap()
-            .is_none()
-    );
+    assert!(all
+        .find("istanbul", TextFindOptions::MATCH_CASE)
+        .unwrap()
+        .is_none());
     assert!(!all.find_text("missing", TextFindOptions::empty()).unwrap());
     assert_eq!(all.range(), 0..services.text_length());
 }
@@ -731,7 +729,7 @@ fn rich_edit_collapsed_typing_format_is_used_until_the_caret_moves() {
 
 #[test]
 fn rich_edit_control_text_services_share_selection_history_and_visual_geometry() {
-    let _scope = TextTestScope::new();
+    let _scope = crate::test_support::test_scope();
     let control = RichEditBox::new();
     control.set_text("hello world").unwrap();
     let services = control.text_document();
@@ -743,13 +741,11 @@ fn rich_edit_control_text_services_share_selection_history_and_visual_geometry()
     control.measure(Size::new(200.0, 100.0));
     control.arrange(Rect::new(0.0, 0.0, 200.0, 100.0));
     let range = services.get_range(0, 2).unwrap();
-    assert!(
-        range
-            .get_rectangles(&control)
-            .unwrap()
-            .iter()
-            .any(|rect| rect.width > 0.0 && rect.height > 0.0)
-    );
+    assert!(range
+        .get_rectangles(&control)
+        .unwrap()
+        .iter()
+        .any(|rect| rect.width > 0.0 && rect.height > 0.0));
     let position = services
         .get_range_from_point(&control, control.cursor_rectangle().top_left())
         .unwrap();
@@ -920,12 +916,10 @@ fn rich_edit_ime_notifications_expose_committed_text_during_preview_publication(
     input.set_preedit_text(Some("日"));
     input.set_preedit_text(Some("日本"));
     assert!(!observations.borrow().is_empty());
-    assert!(
-        observations
-            .borrow()
-            .iter()
-            .all(|value| value == &("original".to_owned(), TextSelection::new(1, 4)))
-    );
+    assert!(observations
+        .borrow()
+        .iter()
+        .all(|value| value == &("original".to_owned(), TextSelection::new(1, 4))));
     control.commit_composition("日本").unwrap();
     assert_eq!(input.surrounding_text(), "o日本inal");
 }
@@ -951,14 +945,12 @@ fn rich_edit_whole_word_search_accepts_phrases_and_rechecks_overlapping_matches(
         .unwrap();
     assert_eq!(last.text().unwrap(), "new york");
     assert!(last.start_position() > 8);
-    assert!(
-        service
-            .get_range(1, 8)
-            .unwrap()
-            .find("ew", TextFindOptions::WHOLE_WORD)
-            .unwrap()
-            .is_none()
-    );
+    assert!(service
+        .get_range(1, 8)
+        .unwrap()
+        .find("ew", TextFindOptions::WHOLE_WORD)
+        .unwrap()
+        .is_none());
     let overlap = RichEditTextDocument::new(RichTextDocument::from_text("xa a a"));
     let matched = overlap
         .document_range()
@@ -1138,43 +1130,50 @@ fn rich_edit_zero_caret_interval_is_steady_and_detaching_stops_the_timer() {
     assert!(!editor.caret_visible());
 }
 
-
 #[test]
 fn rich_edit_rtf_unicode_fallback_consumes_control_words_symbols_and_binary_tokens() {
     let _scope = Dispatcher::unit_test_scope();
-    let snapshot = RtfReader::read(
-        br"{\rtf1\uc1 \u945\par x\u946\b y\u947\bin3 abcz\u948\%q}",
-    ).unwrap();
+    let snapshot =
+        RtfReader::read(br"{\rtf1\uc1 \u945\par x\u946\b y\u947\bin3 abcz\u948\%q}").unwrap();
     assert_eq!(snapshot.text(), "αxβyγzδq");
     assert_eq!(snapshot.paragraphs.len(), 1);
     let document = RichTextDocument::new();
     document.restore(&snapshot).unwrap();
-    assert_ne!(document.character_format_at(3).unwrap().font_weight, Some(FontWeight::Bold));
+    assert_ne!(
+        document.character_format_at(3).unwrap().font_weight,
+        Some(FontWeight::Bold)
+    );
 }
 
 #[test]
 fn rich_edit_rtf_unicode_fallback_ends_at_every_group_boundary() {
     let _scope = Dispatcher::unit_test_scope();
-    let snapshot = RtfReader::read(
-        br"{\rtf1\uc3 \u945{\*\unknown ignored}x{\uc2\u946?}y\u947{\b z}q}",
-    ).unwrap();
+    let snapshot =
+        RtfReader::read(br"{\rtf1\uc3 \u945{\*\unknown ignored}x{\uc2\u946?}y\u947{\b z}q}")
+            .unwrap();
     assert_eq!(snapshot.text(), "αxβyγzq");
     let document = RichTextDocument::new();
     document.restore(&snapshot).unwrap();
-    assert_eq!(document.character_format_at(6).unwrap().font_weight, Some(FontWeight::Bold));
-    assert_ne!(document.character_format_at(7).unwrap().font_weight, Some(FontWeight::Bold));
+    assert_eq!(
+        document.character_format_at(6).unwrap().font_weight,
+        Some(FontWeight::Bold)
+    );
+    assert_ne!(
+        document.character_format_at(7).unwrap().font_weight,
+        Some(FontWeight::Bold)
+    );
 }
 
 #[test]
 fn rich_edit_rtf_prefers_unicode_alternatives_over_ansi_destinations() {
     let _scope = Dispatcher::unit_test_scope();
-    let snapshot = RtfReader::read(
-        br"{\rtf1 A{\upr{wrong}{\*\ud \uc0\u945}}Z}",
-    ).unwrap();
+    let snapshot = RtfReader::read(br"{\rtf1 A{\upr{wrong}{\*\ud \uc0\u945}}Z}").unwrap();
     assert_eq!(snapshot.text(), "AαZ");
     assert!(matches!(
         RtfReader::read(br"{\rtf1{\upr{missing Unicode alternative}}}"),
-        Err(RtfError::InvalidParameter("Unicode alternative destination")),
+        Err(RtfError::InvalidParameter(
+            "Unicode alternative destination"
+        )),
     ));
 }
 
@@ -1187,7 +1186,10 @@ fn rich_edit_rtf_unicode_rules_apply_to_font_names_and_hyperlink_instructions() 
     assert_eq!(snapshot.text(), "xlink");
     let document = RichTextDocument::new();
     document.restore(&snapshot).unwrap();
-    assert_eq!(document.character_format_at(1).unwrap().font_family, Some(FontFamily::new("Γamma")));
+    assert_eq!(
+        document.character_format_at(1).unwrap().font_family,
+        Some(FontFamily::new("Γamma"))
+    );
     assert!(snapshot.paragraphs[0].inlines.iter().any(|inline| {
         matches!(&inline.kind, InlineSnapshotKind::Hyperlink { navigate_uri: Some(uri), .. } if uri == "https://example/αx")
     }));
@@ -1200,23 +1202,47 @@ fn rich_edit_rtf_character_spacing_units_and_plain_resets_roundtrip() {
     let snapshot = RtfReader::read(br"{\rtf1\expnd6 a{\expndtw-15 b}\plain c}").unwrap();
     let document = RichTextDocument::new();
     document.restore(&snapshot).unwrap();
-    assert_eq!(document.character_format_at(1).unwrap().letter_spacing, Some(2.0));
-    assert_eq!(document.character_format_at(2).unwrap().letter_spacing, Some(-1.0));
-    assert_eq!(document.character_format_at(3).unwrap().letter_spacing, Some(0.0));
-    assert_eq!(document.character_format_at(3).unwrap().font_stretch, Some(FontStretch::Normal));
+    assert_eq!(
+        document.character_format_at(1).unwrap().letter_spacing,
+        Some(2.0)
+    );
+    assert_eq!(
+        document.character_format_at(2).unwrap().letter_spacing,
+        Some(-1.0)
+    );
+    assert_eq!(
+        document.character_format_at(3).unwrap().letter_spacing,
+        Some(0.0)
+    );
+    assert_eq!(
+        document.character_format_at(3).unwrap().font_stretch,
+        Some(FontStretch::Normal)
+    );
 
-    document.apply_format(0..1, &CharacterFormat {
-        letter_spacing: Some(1.4),
-        font_stretch: Some(FontStretch::Normal),
-        ..Default::default()
-    }).unwrap();
+    document
+        .apply_format(
+            0..1,
+            &CharacterFormat {
+                letter_spacing: Some(1.4),
+                font_stretch: Some(FontStretch::Normal),
+                ..Default::default()
+            },
+        )
+        .unwrap();
     let rtf = RtfWriter::write(&document.snapshot()).unwrap();
     assert!(rtf.contains("\\expnd4\\expndtw21"));
     assert!(rtf.contains("\\charscalex100"));
     let copy = RichTextDocument::new();
-    copy.restore(&RtfReader::read(rtf.as_bytes()).unwrap()).unwrap();
-    assert_eq!(copy.character_format_at(1).unwrap().letter_spacing, Some(1.4));
-    assert_eq!(copy.character_format_at(1).unwrap().font_stretch, Some(FontStretch::Normal));
+    copy.restore(&RtfReader::read(rtf.as_bytes()).unwrap())
+        .unwrap();
+    assert_eq!(
+        copy.character_format_at(1).unwrap().letter_spacing,
+        Some(1.4)
+    );
+    assert_eq!(
+        copy.character_format_at(1).unwrap().font_stretch,
+        Some(FontStretch::Normal)
+    );
 }
 
 #[test]
@@ -1226,13 +1252,19 @@ fn rich_edit_rtf_rejects_unrepresented_scaling_and_font_encodings() {
         br"{\rtf1\charscalex80 x}".as_slice(),
         br"{\rtf1\charscalex120 x}".as_slice(),
     ] {
-        assert!(matches!(RtfReader::read(input), Err(RtfError::UnsupportedFeature("character scaling"))));
+        assert!(matches!(
+            RtfReader::read(input),
+            Err(RtfError::UnsupportedFeature("character scaling"))
+        ));
     }
     for input in [
         br"{\rtf1\charscalex0 x}".as_slice(),
         br"{\rtf1\charscalex x}".as_slice(),
     ] {
-        assert!(matches!(RtfReader::read(input), Err(RtfError::InvalidParameter("character scaling"))));
+        assert!(matches!(
+            RtfReader::read(input),
+            Err(RtfError::InvalidParameter("character scaling"))
+        ));
     }
     assert!(matches!(
         RtfReader::read(br"{\rtf1{\fonttbl{\f0\fcharset2 Symbol;}}\f0 A}"),
@@ -1248,24 +1280,42 @@ fn rich_edit_rtf_rejects_unrepresented_scaling_and_font_encodings() {
 fn rich_edit_rtf_font_names_with_semicolons_are_escaped_losslessly() {
     let _scope = Dispatcher::unit_test_scope();
     let document = RichTextDocument::from_text("text");
-    document.apply_format(0..4, &CharacterFormat {
-        font_family: Some(FontFamily::new("Example; Family")),
-        ..Default::default()
-    }).unwrap();
+    document
+        .apply_format(
+            0..4,
+            &CharacterFormat {
+                font_family: Some(FontFamily::new("Example; Family")),
+                ..Default::default()
+            },
+        )
+        .unwrap();
     let rtf = RtfWriter::write(&document.snapshot()).unwrap();
     assert!(rtf.contains("Example\\u59? Family"));
     let copy = RichTextDocument::new();
-    copy.restore(&RtfReader::read(rtf.as_bytes()).unwrap()).unwrap();
-    assert_eq!(copy.character_format_at(1).unwrap().font_family, Some(FontFamily::new("Example; Family")));
+    copy.restore(&RtfReader::read(rtf.as_bytes()).unwrap())
+        .unwrap();
+    assert_eq!(
+        copy.character_format_at(1).unwrap().font_family,
+        Some(FontFamily::new("Example; Family"))
+    );
 }
 
 #[test]
 fn rich_edit_rtf_export_rejects_metrics_that_cannot_fit_native_parameters() {
     let _scope = Dispatcher::unit_test_scope();
     for character in [
-        CharacterFormat { font_size: Some(f64::MAX), ..Default::default() },
-        CharacterFormat { font_size: Some(0.1), ..Default::default() },
-        CharacterFormat { letter_spacing: Some(f64::MAX), ..Default::default() },
+        CharacterFormat {
+            font_size: Some(f64::MAX),
+            ..Default::default()
+        },
+        CharacterFormat {
+            font_size: Some(0.1),
+            ..Default::default()
+        },
+        CharacterFormat {
+            letter_spacing: Some(f64::MAX),
+            ..Default::default()
+        },
     ] {
         let snapshot = DocumentSnapshot {
             paragraphs: vec![ParagraphSnapshot {
@@ -1273,16 +1323,31 @@ fn rich_edit_rtf_export_rejects_metrics_that_cannot_fit_native_parameters() {
                 ..Default::default()
             }],
         };
-        assert!(matches!(RtfWriter::write(&snapshot), Err(RtfError::InvalidParameter(_))));
+        assert!(matches!(
+            RtfWriter::write(&snapshot),
+            Err(RtfError::InvalidParameter(_))
+        ));
     }
     for format in [
-        ParagraphFormat { text_indent: Some(f64::MAX), ..Default::default() },
-        ParagraphFormat { line_height: Some(f64::MAX), ..Default::default() },
+        ParagraphFormat {
+            text_indent: Some(f64::MAX),
+            ..Default::default()
+        },
+        ParagraphFormat {
+            line_height: Some(f64::MAX),
+            ..Default::default()
+        },
     ] {
         let snapshot = DocumentSnapshot {
-            paragraphs: vec![ParagraphSnapshot { format, inlines: vec![run("text", CharacterFormat::default())] }],
+            paragraphs: vec![ParagraphSnapshot {
+                format,
+                inlines: vec![run("text", CharacterFormat::default())],
+            }],
         };
-        assert!(matches!(RtfWriter::write(&snapshot), Err(RtfError::InvalidParameter(_))));
+        assert!(matches!(
+            RtfWriter::write(&snapshot),
+            Err(RtfError::InvalidParameter(_))
+        ));
     }
 }
 
@@ -1324,4 +1389,584 @@ fn rich_edit_native_ime_cursor_follows_filtered_and_case_expanded_text() {
     assert_eq!(control.caret_index(), 3);
     input.set_preedit_text(None);
     assert_eq!(control.text(), "x");
+}
+
+// Port-specific contract tests derived from CRichEditBox::OnSelectionChanged,
+// CTextBoxBase::ProcessSelectionChangingEvent and the RichEditBox API contract.
+#[test]
+fn rich_edit_selection_changing_cancellation_preserves_selection_and_properties() {
+    use std::cell::{Cell, RefCell};
+    use std::rc::Rc;
+    let _scope = Dispatcher::unit_test_scope();
+    let editor = RichEditBox::new();
+    editor.set_text("a🦀bc").unwrap();
+    editor.select(1, 1);
+    let proposals = Rc::new(RefCell::new(Vec::new()));
+    let seen = proposals.clone();
+    let weak = editor.downgrade();
+    editor.selection_changing(move |_, args| {
+        let owner = weak.upgrade().unwrap();
+        seen.borrow_mut()
+            .push((args.selection_start(), args.selection_length()));
+        assert_eq!((owner.selection_start(), owner.selection_end()), (4, 1));
+        assert_eq!(
+            owner.text_document().selection().selection(),
+            EditorSelection::new(4, 1)
+        );
+        args.clone().set_cancel(true);
+        assert!(args.cancel(), "clones share the cancellation flag");
+    });
+    let changed = Rc::new(Cell::new(0));
+    let count = changed.clone();
+    editor.selection_changed(move |_| count.set(count.get() + 1));
+    let property_changes = Rc::new(Cell::new(0));
+    let count = property_changes.clone();
+    editor.property_changed(move |change| {
+        if matches!(
+            change.property().name(),
+            "SelectionStart" | "SelectionEnd" | "SelectedText"
+        ) {
+            count.set(count.get() + 1);
+        }
+    });
+    editor.select(4, 2);
+    assert_eq!(&*proposals.borrow(), &[(1, 3)]);
+    assert_eq!(editor.editor().selection(), EditorSelection::caret(1));
+    assert_eq!((editor.selection_start(), editor.selection_end()), (1, 1));
+    assert_eq!(changed.get(), 0);
+    assert_eq!(property_changes.get(), 0);
+}
+
+#[test]
+fn rich_edit_selection_changing_reentrant_view_and_tom_changes_publish_once() {
+    use std::cell::RefCell;
+    use std::rc::Rc;
+    let _scope = Dispatcher::unit_test_scope();
+    let editor = RichEditBox::new();
+    editor.set_text("abcdef").unwrap();
+    let changes = Rc::new(RefCell::new(Vec::new()));
+    let seen = changes.clone();
+    let weak = editor.downgrade();
+    editor.selection_changing(move |_, args| {
+        seen.borrow_mut().push("changing");
+        let owner = weak.upgrade().unwrap();
+        assert_eq!(owner.editor().selection(), EditorSelection::new(1, 4));
+        owner.text_document().selection().set_range(5, 2).unwrap();
+        assert_eq!((owner.selection_start(), owner.selection_end()), (5, 2));
+        owner.select(6, 3);
+        args.set_cancel(true);
+    });
+    let seen = changes.clone();
+    editor.selection_changed(move |args| {
+        assert_eq!((args.old_start, args.old_end), (0, 0));
+        assert_eq!((args.start, args.end), (6, 3));
+        seen.borrow_mut().push("changed");
+    });
+    editor.text_document().selection().set_range(1, 4).unwrap();
+    assert_eq!(editor.editor().selection(), EditorSelection::new(6, 3));
+    assert_eq!((editor.selection_start(), editor.selection_end()), (6, 3));
+    assert_eq!(&*changes.borrow(), &["changing", "changed"]);
+}
+
+#[test]
+fn rich_edit_canceled_post_edit_selection_is_retained_in_undo_and_redo() {
+    use std::cell::Cell;
+    use std::rc::Rc;
+    let _scope = Dispatcher::unit_test_scope();
+    let editor = RichEditBox::new();
+    editor.set_text("abcd").unwrap();
+    editor.select(2, 2);
+    let canceled = Rc::new(Cell::new(false));
+    let state = canceled.clone();
+    editor.selection_changing(move |_, args| {
+        if !state.replace(true) {
+            assert_eq!((args.selection_start(), args.selection_length()), (3, 0));
+            args.set_cancel(true);
+        }
+    });
+    editor.insert_text("X").unwrap();
+    assert_eq!(editor.text(), "abXcd");
+    assert_eq!(editor.editor().selection(), EditorSelection::caret(2));
+    assert_eq!((editor.selection_start(), editor.selection_end()), (2, 2));
+    assert!(editor.undo().unwrap());
+    assert_eq!(editor.text(), "abcd");
+    assert_eq!(editor.editor().selection(), EditorSelection::caret(2));
+    assert!(editor.redo().unwrap());
+    assert_eq!(editor.text(), "abXcd");
+    assert_eq!(editor.editor().selection(), EditorSelection::caret(2));
+}
+
+#[test]
+fn rich_edit_grouped_range_edits_expose_only_the_final_user_selection() {
+    use std::cell::RefCell;
+    use std::rc::Rc;
+    let _scope = Dispatcher::unit_test_scope();
+    let editor = RichEditBox::new();
+    editor.set_text("abcdef").unwrap();
+    editor.select(6, 6);
+    let proposals = Rc::new(RefCell::new(Vec::new()));
+    let seen = proposals.clone();
+    editor.selection_changing(move |_, args| {
+        seen.borrow_mut()
+            .push((args.selection_start(), args.selection_length()));
+    });
+    editor
+        .text_document()
+        .get_range(1, 3)
+        .unwrap()
+        .set_text("X")
+        .unwrap();
+    assert_eq!(editor.text(), "aXdef");
+    assert_eq!(editor.editor().selection(), EditorSelection::caret(5));
+    assert_eq!(&*proposals.borrow(), &[(5, 0)]);
+}
+
+#[test]
+fn rich_edit_selection_property_keyboard_and_ime_requests_share_cancellation() {
+    use ferroui_base::input::{InputElement, Key, KeyEventArgs, KeyModifiers};
+    use std::cell::Cell;
+    use std::rc::Rc;
+    let _scope = Dispatcher::unit_test_scope();
+    let editor = RichEditBox::new();
+    editor.set_text("abcd").unwrap();
+    let count = Rc::new(Cell::new(0));
+    let seen = count.clone();
+    editor.selection_changing(move |_, args| {
+        seen.set(seen.get() + 1);
+        args.set_cancel(true);
+    });
+    editor.set_direct_value(crate::RichTextBlock::selection_end_property(), 3);
+    let mut key = KeyEventArgs::new();
+    key.key = Key::Right;
+    key.key_modifiers = KeyModifiers::NONE;
+    key.set_routed_event(Some(InputElement::key_down_event()));
+    editor.raise_event(&key);
+    assert!(key.handled());
+    editor
+        .text_input_method_client()
+        .set_selection(TextSelection::new(1, 2));
+    assert_eq!(count.get(), 3);
+    assert_eq!(editor.editor().selection(), EditorSelection::caret(0));
+    assert_eq!(
+        editor.text_input_method_client().selection(),
+        TextSelection::new(0, 0)
+    );
+}
+
+#[test]
+fn rich_edit_text_changing_reports_content_and_formatting_before_deferred_text_changed() {
+    use std::cell::RefCell;
+    use std::rc::Rc;
+    let _scope = Dispatcher::unit_test_scope();
+    let editor = RichEditBox::new();
+    let events = Rc::new(RefCell::new(Vec::new()));
+    let seen = events.clone();
+    let weak = editor.downgrade();
+    editor.text_changing(move |_, args| {
+        assert_eq!(weak.upgrade().unwrap().text(), "abcd");
+        seen.borrow_mut().push(if args.is_content_changing() {
+            "content"
+        } else {
+            "format"
+        });
+    });
+    let seen = events.clone();
+    editor.text_changed(move |_, _| seen.borrow_mut().push("changed"));
+    editor.set_text("abcd").unwrap();
+    editor.select(0, 4);
+    editor
+        .apply_format(&CharacterFormat {
+            font_weight: Some(FontWeight::Bold),
+            ..CharacterFormat::default()
+        })
+        .unwrap();
+    assert_eq!(&*events.borrow(), &["content", "format"]);
+    Dispatcher::ui_thread().run_jobs(None);
+    assert_eq!(
+        &*events.borrow(),
+        &["content", "format", "changed", "changed"]
+    );
+}
+
+#[test]
+fn rich_edit_deferred_text_changed_drops_replaced_documents_and_allows_further_edits() {
+    use std::cell::Cell;
+    use std::rc::Rc;
+    let _scope = Dispatcher::unit_test_scope();
+    let editor = RichEditBox::new();
+    let count = Rc::new(Cell::new(0));
+    let seen = count.clone();
+    let weak = editor.downgrade();
+    editor.text_changed(move |_, _| {
+        let owner = weak.upgrade().unwrap();
+        seen.set(seen.get() + 1);
+        if seen.get() == 1 {
+            assert_eq!(owner.text(), "new");
+            owner.insert_text("!").unwrap();
+        }
+    });
+    editor.set_text("obsolete").unwrap();
+    editor.select(8, 8);
+    let replacement = RichTextDocument::new();
+    replacement.replace_text(0..0, "new").unwrap();
+    assert!(editor.try_set_document(replacement));
+    assert_eq!((editor.selection_start(), editor.selection_end()), (0, 0));
+    Dispatcher::ui_thread().run_jobs(None);
+    assert_eq!(editor.text(), "!new");
+    assert_eq!(count.get(), 2);
+}
+
+#[test]
+fn rich_edit_deferred_notifications_do_not_retain_the_control() {
+    let _scope = Dispatcher::unit_test_scope();
+    let weak = {
+        let editor = RichEditBox::new();
+        editor.set_text("queued").unwrap();
+        editor.downgrade()
+    };
+    assert!(weak.upgrade().is_none());
+    Dispatcher::ui_thread().run_jobs(None);
+}
+
+#[test]
+fn rich_edit_header_description_and_placeholder_use_framework_visuals_and_shared_geometry() {
+    use crate::{Border, Control};
+    use ferroui_base::{Point, Thickness};
+    let _scope = crate::test_support::test_scope();
+    let editor = RichEditBox::new();
+    editor.set_padding(Thickness::new(3.0, 5.0, 7.0, 11.0));
+    editor.set_text("abc").unwrap();
+    editor.measure(Size::new(300.0, 200.0));
+    editor.arrange(Rect::new(0.0, 0.0, 300.0, 200.0));
+    let original = editor.get_rect_from_character_index(1);
+    let header = Border::new();
+    header.set_width(90.0);
+    header.set_height(20.0);
+    let description = Border::new();
+    description.set_width(90.0);
+    description.set_height(14.0);
+    editor.set_header(Some(Control::boxed(header.clone())));
+    editor.set_description(Some(Control::boxed(description.clone())));
+    editor.set_placeholder_text("Empty notes");
+    editor.measure(Size::new(300.0, 200.0));
+    editor.arrange(Rect::new(0.0, 0.0, 300.0, 200.0));
+    let header_presenter = editor.header_presenter().unwrap();
+    assert_eq!(header_presenter.child(), Some(header.upcast()));
+    assert_eq!(header_presenter.desired_size().height, 28.0);
+    assert_eq!(
+        editor.description_presenter().unwrap().child(),
+        Some(description.upcast())
+    );
+    let character = editor.get_rect_from_character_index(1);
+    assert_eq!(character.y, original.y + 28.0);
+    assert_eq!(
+        editor.hit_test_text_position(Point::new(
+            character.x,
+            character.y + character.height / 2.0
+        )),
+        1
+    );
+    editor.select(1, 1);
+    assert_eq!(
+        editor.text_input_method_client().cursor_rectangle(),
+        editor.cursor_rectangle()
+    );
+    assert_eq!(editor.cursor_rectangle().y, character.y);
+    let placeholder = editor.placeholder_presenter().unwrap();
+    assert!(!placeholder.is_visible());
+    assert!(!placeholder.is_hit_test_visible());
+    assert_eq!(placeholder.text(), Some("Empty notes".to_owned()));
+    assert_eq!(editor.visual_children().count(), 3);
+    editor.set_text("").unwrap();
+    assert!(placeholder.is_visible());
+    editor.measure(Size::new(300.0, 200.0));
+    editor.arrange(Rect::new(0.0, 0.0, 300.0, 200.0));
+    assert_eq!(placeholder.bounds().y, 33.0);
+    editor.set_header(None);
+    editor.set_description(None);
+    editor.measure(Size::new(300.0, 200.0));
+    editor.arrange(Rect::new(0.0, 0.0, 300.0, 200.0));
+    assert_eq!(placeholder.bounds().y, 5.0);
+    assert!(!header_presenter.is_visible());
+}
+
+#[test]
+fn rich_edit_header_template_renders_without_header_data_and_is_not_rebuilt_by_measure() {
+    use crate::templates::FuncDataTemplate;
+    use crate::Border;
+    use std::cell::Cell;
+    use std::rc::Rc;
+    let _scope = crate::test_support::test_scope();
+    let editor = RichEditBox::new();
+    let builds = Rc::new(Cell::new(0));
+    let count = builds.clone();
+    editor.set_header_template(Some(FuncDataTemplate::new(
+        |_| true,
+        move |data, _| {
+            assert!(data.is_none());
+            count.set(count.get() + 1);
+            let child = Border::new();
+            child.set_width(80.0);
+            child.set_height(24.0);
+            Some(child.upcast())
+        },
+        false,
+    )));
+    let presenter = editor.header_presenter().unwrap();
+    assert!(presenter.is_visible());
+    editor.measure(Size::new(300.0, 200.0));
+    editor.arrange(Rect::new(0.0, 0.0, 300.0, 200.0));
+    editor.invalidate_measure();
+    editor.measure(Size::new(250.0, 200.0));
+    editor.arrange(Rect::new(0.0, 0.0, 250.0, 200.0));
+    assert_eq!(builds.get(), 1);
+    assert_eq!(presenter.desired_size().height, 32.0);
+    editor.set_header_template(None);
+    assert!(!presenter.is_visible());
+    assert!(presenter.child().is_none());
+}
+
+#[test]
+fn rich_edit_placeholder_participates_in_measure_alignment_and_foreground_inheritance() {
+    use ferroui_base::media::{Brushes, Colors, TextWrapping};
+    let _scope = crate::test_support::test_scope();
+    let editor = RichEditBox::new();
+    editor.set_foreground(Some(Brushes::blue()));
+    editor.set_placeholder_text("A lengthy placeholder that is laid out by a real text block");
+    editor.set_text_wrapping(TextWrapping::Wrap);
+    editor.set_text_alignment(TextAlignment::Right);
+    editor.measure(Size::new(120.0, 400.0));
+    let placeholder = editor.placeholder_presenter().unwrap();
+    assert_eq!(placeholder.text_alignment(), TextAlignment::Right);
+    assert_eq!(placeholder.text_wrapping(), TextWrapping::Wrap);
+    assert!(placeholder.desired_size().height > editor.get_rect_from_character_index(0).height);
+    assert!(editor.desired_size().height >= placeholder.desired_size().height);
+    editor.set_placeholder_foreground(Some(Brushes::red()));
+    assert_eq!(
+        placeholder
+            .foreground()
+            .unwrap()
+            .as_solid_color_brush()
+            .unwrap()
+            .color(),
+        Colors::RED
+    );
+    editor.set_placeholder_foreground(None);
+    assert_eq!(
+        placeholder
+            .foreground()
+            .unwrap()
+            .as_solid_color_brush()
+            .unwrap()
+            .color(),
+        Colors::BLUE
+    );
+}
+
+#[test]
+fn rich_edit_ime_rejection_and_read_only_transition_have_balanced_composition_events() {
+    use std::cell::RefCell;
+    use std::rc::Rc;
+    let _scope = Dispatcher::unit_test_scope();
+    let editor = RichEditBox::new();
+    let events = Rc::new(RefCell::new(Vec::new()));
+    let seen = events.clone();
+    editor.add_handler(
+        RichEditBox::text_composition_started_event(),
+        move |_, _| seen.borrow_mut().push("start"),
+    );
+    let seen = events.clone();
+    editor.add_handler(
+        RichEditBox::text_composition_ended_event(),
+        move |_, args| {
+            assert!(!args.committed);
+            seen.borrow_mut().push("cancel");
+        },
+    );
+    editor.set_is_read_only(true);
+    assert!(matches!(
+        editor.set_preedit_text(Some("x"), None),
+        Err(EditError::ReadOnly)
+    ));
+    assert!(events.borrow().is_empty());
+    editor.set_is_read_only(false);
+    editor.set_preedit_text(Some("x"), None).unwrap();
+    editor.set_is_read_only(true);
+    assert_eq!(&*events.borrow(), &["start", "cancel"]);
+    assert_eq!(editor.text(), "");
+    assert!(!editor.editor().is_composing());
+}
+
+#[test]
+fn rich_edit_can_paste_observes_effective_enabled_state() {
+    let _scope = crate::test_support::test_scope();
+    let editor = RichEditBox::new();
+    let root = crate::test_support::TestRoot::with_child(editor.clone());
+    assert!(editor.can_paste());
+    root.set_is_enabled(false);
+    assert!(editor.is_enabled());
+    assert!(!editor.is_effectively_enabled());
+    assert!(!editor.can_paste());
+    assert!(!editor.get_direct_value(RichEditBox::can_paste_property()));
+    root.set_is_enabled(true);
+    assert!(editor.get_direct_value(RichEditBox::can_paste_property()));
+}
+
+#[test]
+fn rich_edit_native_selection_notifications_publish_once_per_committed_selection() {
+    use std::cell::Cell;
+    use std::rc::Rc;
+    let _scope = Dispatcher::unit_test_scope();
+    let editor = RichEditBox::new();
+    editor.set_text("abcd").unwrap();
+    let count = Rc::new(Cell::new(0));
+    let seen = count.clone();
+    let input = editor.text_input_method_client();
+    let _subscription = input.selection_changed(Rc::new(move || seen.set(seen.get() + 1)));
+    editor.select(1, 1);
+    assert_eq!(count.get(), 1);
+    editor.insert_text("X").unwrap();
+    assert_eq!(count.get(), 2);
+    editor
+        .apply_format(&CharacterFormat {
+            font_weight: Some(FontWeight::Bold),
+            ..CharacterFormat::default()
+        })
+        .unwrap();
+    assert_eq!(count.get(), 2);
+    editor.set_preedit_text(Some("字"), Some(1)).unwrap();
+    assert_eq!(
+        count.get(),
+        2,
+        "preview positions do not change the committed IME selection"
+    );
+    editor.cancel_composition().unwrap();
+    assert_eq!(count.get(), 2);
+}
+
+#[test]
+fn rich_edit_header_and_embedded_control_remain_in_the_same_visual_tree_after_relayout() {
+    use crate::documents::{InlineUIContainer, Paragraph};
+    use crate::Border;
+    use std::rc::Rc;
+    let _scope = crate::test_support::test_scope();
+    let editor = RichEditBox::new();
+    let child = Border::new();
+    child.set_width(30.0);
+    child.set_height(20.0);
+    let inline = InlineUIContainer::new();
+    inline.set_child(child.clone());
+    let paragraph = Paragraph::with_text("a");
+    paragraph.add_child(inline);
+    editor.blocks().add(paragraph);
+    editor.set_header(Some(Rc::new("Notes".to_owned())));
+    for width in [300.0, 280.0, 300.0] {
+        editor.measure(Size::new(width, 200.0));
+        editor.arrange(Rect::new(0.0, 0.0, width, 200.0));
+        assert_eq!(child.visual_parent(), Some(editor.clone().upcast()));
+        assert_eq!(
+            editor.header_presenter().unwrap().visual_parent(),
+            Some(editor.clone().upcast())
+        );
+        assert_eq!(editor.visual_children().count(), 2);
+        assert!(child.bounds().y >= editor.header_presenter().unwrap().desired_size().height);
+    }
+}
+
+#[test]
+fn rich_edit_detached_text_document_services_do_not_select_the_replacement_control_document() {
+    let _scope = Dispatcher::unit_test_scope();
+    let editor = RichEditBox::new();
+    editor.set_text("previous").unwrap();
+    let detached = editor.text_document();
+    let replacement = RichTextDocument::new();
+    replacement.replace_text(0..0, "new").unwrap();
+    assert!(editor.try_set_document(replacement));
+    editor.select(1, 1);
+    detached.selection().set_range(3, 6).unwrap();
+    assert_eq!(detached.selection().selection(), EditorSelection::new(3, 6));
+    detached.selection().type_text("X").unwrap();
+    assert_eq!(editor.text(), "new");
+    assert_eq!((editor.selection_start(), editor.selection_end()), (1, 1));
+    assert_eq!(editor.editor().selection(), EditorSelection::caret(1));
+}
+
+fn rich_edit_press_key(editor: &RichEditBox, key: ferroui_base::input::Key) {
+    use ferroui_base::input::{InputElement, KeyEventArgs};
+    let mut event = KeyEventArgs::new();
+    event.key = key;
+    event.set_routed_event(Some(InputElement::key_down_event()));
+    editor.raise_event(&event);
+    assert!(event.handled());
+}
+
+#[test]
+fn rich_edit_home_and_end_keep_paragraph_end_and_empty_paragraph_positions_on_their_line() {
+    use ferroui_base::input::Key;
+    let _scope = crate::test_support::test_scope();
+    let editor = RichEditBox::new();
+    editor.set_text("abc\n\nend").unwrap();
+    editor.measure(Size::new(300.0, 200.0));
+    editor.arrange(Rect::new(0.0, 0.0, 300.0, 200.0));
+    editor.select(3, 3);
+    rich_edit_press_key(&editor, Key::Home);
+    assert_eq!(editor.caret_index(), 0);
+    rich_edit_press_key(&editor, Key::End);
+    assert_eq!(editor.caret_index(), 3);
+    editor.select(4, 4);
+    rich_edit_press_key(&editor, Key::Home);
+    assert_eq!(editor.caret_index(), 4);
+    rich_edit_press_key(&editor, Key::End);
+    assert_eq!(editor.caret_index(), 4);
+}
+
+#[test]
+fn rich_edit_end_stops_before_an_inline_line_break() {
+    use ferroui_base::input::Key;
+    let _scope = crate::test_support::test_scope();
+    let editor = RichEditBox::new();
+    editor
+        .document()
+        .restore(&DocumentSnapshot {
+            paragraphs: vec![ParagraphSnapshot {
+                format: ParagraphFormat::default(),
+                inlines: vec![
+                    run("abc", CharacterFormat::default()),
+                    InlineSnapshot {
+                        format: CharacterFormat::default(),
+                        kind: InlineSnapshotKind::LineBreak,
+                    },
+                    run("def", CharacterFormat::default()),
+                ],
+            }],
+        })
+        .unwrap();
+    editor.measure(Size::new(300.0, 200.0));
+    editor.arrange(Rect::new(0.0, 0.0, 300.0, 200.0));
+    editor.select(0, 0);
+    rich_edit_press_key(&editor, Key::End);
+    assert_eq!(editor.caret_index(), 3);
+    editor.select(4, 4);
+    rich_edit_press_key(&editor, Key::Home);
+    assert_eq!(editor.caret_index(), 4);
+}
+
+#[test]
+fn rich_edit_vertical_navigation_preserves_desired_column_across_short_lines() {
+    use ferroui_base::input::Key;
+    let _scope = crate::test_support::test_scope();
+    let editor = RichEditBox::new();
+    editor.set_text("abcdef\nx\nabcdef").unwrap();
+    editor.measure(Size::new(300.0, 200.0));
+    editor.arrange(Rect::new(0.0, 0.0, 300.0, 200.0));
+    editor.select(5, 5);
+    rich_edit_press_key(&editor, Key::Down);
+    assert_eq!(editor.caret_index(), 8);
+    rich_edit_press_key(&editor, Key::Down);
+    assert_eq!(editor.caret_index(), 14);
+    editor.select(0, 0);
+    rich_edit_press_key(&editor, Key::Down);
+    assert_eq!(editor.caret_index(), 7);
+    rich_edit_press_key(&editor, Key::Down);
+    assert_eq!(editor.caret_index(), 9);
 }

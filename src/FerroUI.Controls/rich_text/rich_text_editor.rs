@@ -74,6 +74,8 @@ struct EditorSnapshot {
     document: DocumentSnapshot,
     selection: EditorSelection,
     typing_format: CharacterFormat,
+    default_character_format: CharacterFormat,
+    default_paragraph_format: ParagraphFormat,
 }
 
 #[derive(Clone)]
@@ -106,6 +108,10 @@ pub struct RichTextEditor {
     document: RichTextDocument,
     selection: Cell<EditorSelection>,
     typing_format: RefCell<CharacterFormat>,
+    default_character_format: RefCell<CharacterFormat>,
+    default_paragraph_format: RefCell<ParagraphFormat>,
+    selection_projection: RefCell<Option<Rc<dyn Fn(EditorSelection) -> EditorSelection>>>,
+    projecting_selection: Cell<bool>,
     history: RefCell<History>,
     known_revision: Cell<u64>,
     merge_generation: Cell<u64>,
@@ -124,6 +130,16 @@ impl Drop for Operation<'_> {
     }
 }
 
+struct SelectionProjection<'a> {
+    flag: &'a Cell<bool>,
+    previous: bool,
+}
+impl Drop for SelectionProjection<'_> {
+    fn drop(&mut self) {
+        self.flag.set(self.previous);
+    }
+}
+
 impl RichTextEditor {
     pub fn new(document: RichTextDocument) -> Self {
         Self {
@@ -131,6 +147,10 @@ impl RichTextEditor {
             document,
             selection: Cell::new(EditorSelection::default()),
             typing_format: RefCell::new(CharacterFormat::default()),
+            default_character_format: RefCell::new(CharacterFormat::default()),
+            default_paragraph_format: RefCell::new(ParagraphFormat::default()),
+            selection_projection: RefCell::new(None),
+            projecting_selection: Cell::new(false),
             history: RefCell::new(History::default()),
             merge_generation: Cell::new(0),
             is_read_only: Cell::new(false),
@@ -188,6 +208,121 @@ impl RichTextEditor {
         self.typing_format.borrow().clone()
     }
 
+    /// Assigned document defaults. Unassigned fields continue to inherit the host's
+    /// FerroUI text properties; callers receive an independent value snapshot.
+    pub fn default_character_format(&self) -> CharacterFormat {
+        self.default_character_format.borrow().clone()
+    }
+
+    pub fn default_paragraph_format(&self) -> ParagraphFormat {
+        self.default_paragraph_format.borrow().clone()
+    }
+
+    /// Updates the defaults for empty content and document replacement without
+    /// restyling existing text. The change participates in grouped undo/rollback.
+    pub fn set_default_character_format(&self, format: &CharacterFormat) -> Result<(), EditError> {
+        format.validate()?;
+        self.prepare_edit()?;
+        let _operation = self.enter(true)?;
+        self.synchronize();
+        let before = self.capture();
+        let merged = self.default_character_format().overlay(format).clone();
+        let previous = self.default_character_format.replace(merged);
+        if self.document.text_length() == 0 {
+            if let Err(error) = self
+                .document
+                .apply_paragraph_format(0..0, &self.insertion_defaults())
+            {
+                let failed = self.default_character_format.replace(previous);
+                drop(failed);
+                return Err(error.into());
+            }
+        }
+        drop(previous);
+        self.checkpoint();
+        self.record(before, EditKind::Formatting);
+        Ok(())
+    }
+
+    pub fn set_default_paragraph_format(&self, format: &ParagraphFormat) -> Result<(), EditError> {
+        format.validate()?;
+        self.prepare_edit()?;
+        let _operation = self.enter(true)?;
+        self.synchronize();
+        let before = self.capture();
+        let merged = self.default_paragraph_format().overlay(format).clone();
+        let previous = self.default_paragraph_format.replace(merged);
+        if self.document.text_length() == 0 {
+            if let Err(error) = self
+                .document
+                .apply_paragraph_format(0..0, &self.insertion_defaults())
+            {
+                let failed = self.default_paragraph_format.replace(previous);
+                drop(failed);
+                return Err(error.into());
+            }
+        }
+        drop(previous);
+        self.checkpoint();
+        self.record(before, EditKind::Formatting);
+        Ok(())
+    }
+
+    pub(super) fn insertion_defaults(&self) -> ParagraphFormat {
+        let mut format = self.default_paragraph_format();
+        format.character = format.character.overlay(&self.default_character_format());
+        format
+    }
+
+    pub(crate) fn is_in_operation(&self) -> bool {
+        self.in_operation.get()
+    }
+
+    /// The control projects proposed selection through its cancellable routed event.
+    /// This callback owns no control strongly and runs without an interior borrow.
+    pub(crate) fn set_selection_projection(
+        &self,
+        projection: Option<Rc<dyn Fn(EditorSelection) -> EditorSelection>>,
+    ) {
+        let old = self.selection_projection.replace(projection);
+        drop(old);
+    }
+
+    fn project_selection(&self) {
+        if self.projecting_selection.get() || self.group_depth.get() > 0 {
+            return;
+        }
+        self.invoke_selection_projection();
+    }
+
+    fn invoke_selection_projection(&self) {
+        if self.group_depth.get() > 0 {
+            return;
+        }
+        let projection = self.selection_projection.borrow().clone();
+        let Some(projection) = projection else {
+            return;
+        };
+        let _projection = SelectionProjection {
+            flag: &self.projecting_selection,
+            previous: self.projecting_selection.replace(true),
+        };
+        let candidate = self.selection();
+        let accepted = projection(candidate);
+        // The owner hook is internal, but never let a stale/reentrant result put a
+        // surrogate interior or an out-of-document offset in the editor state.
+        let accepted = if self.document.validate_range(accepted.range()).is_ok() {
+            accepted
+        } else {
+            let length = self.document.text_length();
+            EditorSelection::new(
+                self.scalar_boundary(candidate.anchor.min(length)),
+                self.scalar_boundary(candidate.active.min(length)),
+            )
+        };
+        self.selection.set(accepted);
+    }
+
     /// Effective formatting at the selection start or insertion point, including the
     /// current collapsed-selection format overrides.
     pub fn current_character_format(&self) -> Result<CharacterFormat, EditError> {
@@ -206,7 +341,7 @@ impl RichTextEditor {
             .document
             .element_at(offset, gravity)
             .map(|element| CharacterFormat::effective(&element))
-            .unwrap_or_default();
+            .unwrap_or_else(|| self.insertion_defaults().character);
         Ok(format.overlay(&self.typing_format()))
     }
 
@@ -223,9 +358,10 @@ impl RichTextEditor {
     }
 
     fn publish_changed(&self) {
-        if self.group_depth.get() > 0 {
+        if self.group_depth.get() > 0 || self.projecting_selection.get() {
             return;
         }
+        self.project_selection();
         for (_, handler) in self.changed.snapshot().iter() {
             handler();
         }
@@ -256,11 +392,20 @@ impl RichTextEditor {
         if self.selection() == selection {
             return Ok(());
         }
-        if self.in_operation.get() {
+        if self.in_operation.get() && !self.projecting_selection.get() {
             return Err(EditError::ReentrantEdit);
         }
-        if self.selection.replace(selection) != selection {
-            *self.typing_format.borrow_mut() = CharacterFormat::default();
+        let previous = self.selection.replace(selection);
+        if previous != selection {
+            let previous_format = self.typing_format.replace(CharacterFormat::default());
+            // A nested owner request must immediately update the view's proposal.
+            // The view suppresses recursive SelectionChanging, while this guard
+            // suppresses nested editor publication until the outer request settles.
+            self.invoke_selection_projection();
+            if self.selection() == previous {
+                *self.typing_format.borrow_mut() = previous_format;
+                return Ok(());
+            }
             self.checkpoint();
             self.publish_changed();
         }
@@ -321,6 +466,8 @@ impl RichTextEditor {
             document: self.document.snapshot(),
             selection: self.selection(),
             typing_format: self.typing_format(),
+            default_character_format: self.default_character_format(),
+            default_paragraph_format: self.default_paragraph_format(),
         }
     }
 
@@ -328,6 +475,8 @@ impl RichTextEditor {
         self.document.restore(&snapshot.document)?;
         self.selection.set(snapshot.selection);
         *self.typing_format.borrow_mut() = snapshot.typing_format.clone();
+        *self.default_character_format.borrow_mut() = snapshot.default_character_format.clone();
+        *self.default_paragraph_format.borrow_mut() = snapshot.default_paragraph_format.clone();
         self.known_revision.set(self.document.revision());
         Ok(())
     }
@@ -337,8 +486,13 @@ impl RichTextEditor {
         if self.group_depth.get() > 0 {
             return;
         }
+        self.project_selection();
         let after = self.capture();
-        if before.document == after.document && before.typing_format == after.typing_format {
+        if before.document == after.document
+            && before.typing_format == after.typing_format
+            && before.default_character_format == after.default_character_format
+            && before.default_paragraph_format == after.default_paragraph_format
+        {
             self.publish_changed();
             return;
         }
@@ -429,6 +583,12 @@ impl RichTextEditor {
         {
             let _batch = self.document.begin_edit();
             self.document.replace_text(range.clone(), &text)?;
+            if before.document.text_length() == 0 || self.document.text_length() == 0 {
+                self.document.apply_paragraph_format(
+                    0..self.document.text_length(),
+                    &self.insertion_defaults(),
+                )?;
+            }
             if length > 0 {
                 self.document
                     .apply_format(range.start..range.start + length, &self.typing_format())?;
@@ -447,7 +607,7 @@ impl RichTextEditor {
         if self.is_read_only() {
             return Err(EditError::ReadOnly);
         }
-        if self.in_operation.get() {
+        if self.in_operation.get() || self.projecting_selection.get() {
             return Err(EditError::ReentrantEdit);
         }
         let composing = self.is_composing();
@@ -464,6 +624,7 @@ impl RichTextEditor {
         fragment: &DocumentSnapshot,
         kind: EditKind,
     ) -> Result<bool, EditError> {
+        fragment.validate()?;
         self.prepare_edit()?;
         let _operation = self.enter(true)?;
         self.synchronize();
@@ -548,6 +709,7 @@ impl RichTextEditor {
     }
 
     pub fn apply_format(&self, format: &CharacterFormat) -> Result<(), EditError> {
+        format.validate()?;
         self.prepare_edit()?;
         let _operation = self.enter(true)?;
         self.synchronize();
@@ -556,7 +718,7 @@ impl RichTextEditor {
             // Validate the format through the same model path as a nonempty selection.
             self.document
                 .apply_format(self.selection().range(), format)?;
-            let merged = merge_format(self.typing_format(), format);
+            let merged = merge_format(self.typing_format(), format).clone();
             *self.typing_format.borrow_mut() = merged;
         } else {
             self.document
@@ -568,6 +730,7 @@ impl RichTextEditor {
     }
 
     pub fn apply_paragraph_format(&self, format: &ParagraphFormat) -> Result<(), EditError> {
+        format.validate()?;
         self.prepare_edit()?;
         let _operation = self.enter(true)?;
         self.synchronize();
@@ -593,12 +756,16 @@ impl RichTextEditor {
         }
         self.synchronize();
         let before = self.capture();
+        let before_limit = self.max_length();
         let depth = self.group_depth.get();
         self.group_depth.set(depth + 1);
         let batch = self.document.begin_edit();
         let result = action(self);
         let _operation = self.enter(false)?;
         if result.is_err() {
+            // TOM SetText may grow MaxLength inside a nested group. Failed
+            // transactions restore that configuration along with the story.
+            self.set_max_length(before_limit);
             self.restore(&before)?;
         }
         drop(batch);
@@ -654,7 +821,9 @@ impl RichTextEditor {
     pub fn set_preedit(&self, text: &str, cursor: Option<usize>) -> Result<(), EditError> {
         let _operation = self.enter(true)?;
         let cursor = cursor.map(|offset| {
-            normalize_text(utf16_prefix(text, offset)).encode_utf16().count()
+            normalize_text(utf16_prefix(text, offset))
+                .encode_utf16()
+                .count()
         });
         self.synchronize();
         let composition = self.history.borrow_mut().composition.take();

@@ -1,12 +1,14 @@
 use super::{
-    ITextProvider, ITextRangeProvider, ProviderAdapter, ProviderError, SupportedTextSelection,
-    TextAttribute, TextAttributeValue, TextPatternRangeEndpoint, TextProviderError, TextUnit,
+    ITextProvider, ITextProvider2, ITextRangeProvider, ProviderAdapter, ProviderError,
+    SupportedTextSelection, TextAttribute, TextAttributeValue, TextCaretRange,
+    TextPatternRangeEndpoint, TextProviderError, TextUnit,
 };
+use crate::automation::peers::{AutomationPeer, ControlAutomationPeer, HyperlinkAutomationPeer};
 use crate::automation::ElementNotEnabledException;
-use crate::automation::peers::{AutomationPeer, ControlAutomationPeer};
 use crate::documents::{
-    CharacterFormat, InlineSnapshot, InlineSnapshotKind, Paragraph, ParagraphFormat,
-    RichTextDocument, TextGravity,
+    CharacterFormat, Hyperlink, InlineCollection, InlineSnapshot, InlineSnapshotKind,
+    InlineUIContainer, LineBreak, Paragraph, ParagraphFormat, RichTextDocument, Run, Span,
+    TextGravity, WeakRichTextDocument,
 };
 use crate::rich_text::{RichEditTextDocument, RichEditTextRange, TextFindOptions, TextRangeUnit};
 use crate::{Control, RichEditBox, RichTextBlock, ScrollViewer};
@@ -17,21 +19,24 @@ use ferroui_base::media::{
 use ferroui_base::reactive::{CompositeDisposable, IDisposable, SerialDisposable};
 use ferroui_base::{Matrix, ObjectType, Point, Rect, Ref, Vector, Visual, WeakRef};
 use std::any::Any;
+use std::cell::RefCell;
 use std::collections::HashSet;
 use std::ops::Range;
-use std::rc::Rc;
+use std::rc::{Rc, Weak};
 
 /// Both rich peers expose the same document/range implementation. The owner is
 /// weak because accessibility clients can retain a peer after its control dies.
 pub(crate) trait RichTextAutomationPeer: ObjectType {
     fn text_owner(&self) -> Option<Ref<RichTextBlock>>;
     fn text_peer(&self) -> Ref<AutomationPeer>;
+    fn text_automation_state(&self) -> &Rc<RichTextAutomationState>;
 }
 
 #[derive(Clone)]
 struct TextContext {
     view: WeakRef<RichTextBlock>,
     peer: WeakRef<AutomationPeer>,
+    state: Weak<RichTextAutomationState>,
 }
 
 impl TextContext {
@@ -42,6 +47,7 @@ impl TextContext {
         Ok(Self {
             view: view.downgrade(),
             peer: peer.text_peer().downgrade(),
+            state: Rc::downgrade(peer.text_automation_state()),
         })
     }
 
@@ -69,6 +75,45 @@ impl TextContext {
             range: service.get_range(range.start, range.end)?,
         }))
     }
+
+    fn children(&self) -> Result<Vec<TextChildEntry>, ProviderError> {
+        let state = self
+            .state
+            .upgrade()
+            .ok_or(TextProviderError::ElementNotAvailable)?;
+        Ok(state.entries(&self.view()?, &self.peer()?))
+    }
+}
+
+impl<T: RichTextAutomationPeer> ITextProvider2 for ProviderAdapter<T> {
+    fn range_from_annotation(
+        &self,
+        _annotation: &Ref<AutomationPeer>,
+    ) -> Result<Rc<dyn ITextRangeProvider>, ProviderError> {
+        TextContext::from_peer(&*self.0)?.view()?;
+        // RichTextDocument has no annotation objects yet. No peer can identify
+        // an annotation of this document; do not reinterpret embedded controls
+        // or hyperlinks as annotations (ITextProvider2.RangeFromAnnotation).
+        Err(TextProviderError::InvalidArgument.into())
+    }
+
+    fn get_caret_range(&self) -> Result<TextCaretRange, ProviderError> {
+        let context = TextContext::from_peer(&*self.0)?;
+        let view = context.view()?;
+        if !view.is_text_selection_enabled() {
+            return Ok(TextCaretRange {
+                is_active: false,
+                range: None,
+            });
+        }
+        let caret = view.caret_index();
+        Ok(TextCaretRange {
+            is_active: text_views(&view)
+                .iter()
+                .any(|page| page.is_focused() && page.is_effectively_enabled()),
+            range: Some(context.make_range(caret..caret)?),
+        })
+    }
 }
 
 impl<T: RichTextAutomationPeer> ITextProvider for ProviderAdapter<T> {
@@ -95,17 +140,30 @@ impl<T: RichTextAutomationPeer> ITextProvider for ProviderAdapter<T> {
         let context = TextContext::from_peer(&*self.0)?;
         let view = context.view()?;
         let mut visible: Vec<Range<usize>> = Vec::new();
-        if let Some(geometry) = ViewGeometry::new(&view) {
-            for line in view.line_metrics() {
-                let bounds = geometry.visible(line.bounds);
-                if bounds.is_empty() {
+        if let Some(root) = view.visual_root() {
+            for page in text_views(&view) {
+                let Some(geometry) = ViewGeometry::in_root(&page, &root) else {
                     continue;
-                }
-                let range = line.start..line.start + line.length;
-                if let Some(previous) = visible.last_mut().filter(|last| last.end == range.start) {
-                    previous.end = range.end;
-                } else {
-                    visible.push(range);
+                };
+                let sources = page.visible_text_ranges();
+                for line in page.line_metrics() {
+                    if geometry.visible(line.bounds).is_empty() {
+                        continue;
+                    }
+                    for source in &sources {
+                        let range =
+                            source.start.max(line.start)..source.end.min(line.start + line.length);
+                        if range.is_empty() {
+                            continue;
+                        }
+                        if let Some(previous) =
+                            visible.last_mut().filter(|last| last.end == range.start)
+                        {
+                            previous.end = range.end;
+                        } else {
+                            visible.push(range);
+                        }
+                    }
                 }
             }
         }
@@ -125,13 +183,12 @@ impl<T: RichTextAutomationPeer> ITextProvider for ProviderAdapter<T> {
         child: &Ref<AutomationPeer>,
     ) -> Result<Rc<dyn ITextRangeProvider>, ProviderError> {
         let context = TextContext::from_peer(&*self.0)?;
-        let view = context.view()?;
-        let children = embedded_children(&view.document());
+        let children = context.children()?;
         let mut candidate = Some(child.clone());
         while let Some(peer) = candidate {
-            for (range, control) in &children {
-                if ControlAutomationPeer::create_peer_for_element(control) == peer {
-                    return context.make_range(range.clone());
+            for child in &children {
+                if child.peer == peer {
+                    return context.make_range(child.range.clone());
                 }
             }
             if peer == context.peer()? {
@@ -151,10 +208,31 @@ impl<T: RichTextAutomationPeer> ITextProvider for ProviderAdapter<T> {
         let root = view
             .visual_root()
             .ok_or(TextProviderError::GeometryUnavailable)?;
-        let transform = root
-            .transform_to_visual(&view)
-            .ok_or(TextProviderError::GeometryUnavailable)?;
-        let position = view.hit_test_text_position(point.transform(transform));
+        let mut nearest = None;
+        for page in text_views(&view) {
+            let Some(geometry) = ViewGeometry::in_root(&page, &root) else {
+                continue;
+            };
+            let bounds = geometry.visible(Rect::from_size(page.bounds().size()));
+            if bounds.is_empty() {
+                continue;
+            }
+            let dx = (bounds.x - point.x).max(0.0).max(point.x - bounds.right());
+            let dy = (bounds.y - point.y).max(0.0).max(point.y - bounds.bottom());
+            let distance = dx * dx + dy * dy;
+            if nearest
+                .as_ref()
+                .is_none_or(|(previous, _)| distance < *previous)
+            {
+                if let Some(transform) = root.transform_to_visual(&page) {
+                    nearest = Some((
+                        distance,
+                        page.hit_test_text_position(point.transform(transform)),
+                    ));
+                }
+            }
+        }
+        let (_, position) = nearest.ok_or(TextProviderError::GeometryUnavailable)?;
         context.make_range(position..position)
     }
 
@@ -458,25 +536,34 @@ impl ITextRangeProvider for RichTextAutomationRange {
 
     fn get_bounding_rectangles(&self) -> Result<Vec<Rect>, ProviderError> {
         let view = self.view()?;
-        let Some(geometry) = ViewGeometry::new(&view) else {
+        let Some(root) = view.visual_root() else {
             return Ok(Vec::new());
         };
-        Ok(view
-            .get_rects_for_range(self.range.range())
-            .into_iter()
-            .map(|rect| geometry.visible(rect))
-            .filter(|rect| !rect.is_empty())
-            .collect())
+        let mut rectangles = Vec::new();
+        for page in text_views(&view) {
+            if let Some(geometry) = ViewGeometry::in_root(&page, &root) {
+                rectangles.extend(
+                    page.get_rects_for_range(self.range.range())
+                        .into_iter()
+                        .map(|rect| geometry.visible(rect))
+                        .filter(|rect| !rect.is_empty()),
+                );
+            }
+        }
+        Ok(rectangles)
     }
 
     fn get_enclosing_element(&self) -> Result<Ref<AutomationPeer>, ProviderError> {
-        let view = self.view()?;
+        self.view()?;
         let selected = self.range.range();
         if !selected.is_empty() {
-            for (range, child) in embedded_children(&view.document()) {
-                if range.start <= selected.start && selected.end <= range.end {
-                    return Ok(ControlAutomationPeer::create_peer_for_element(&child));
-                }
+            // Descendants follow their ancestor in document order. Prefer the
+            // deepest containing inline, including an embedded control inside
+            // a hyperlink, without treating a boundary caret as that child.
+            if let Some(child) = self.context.children()?.into_iter().rev().find(|child| {
+                child.range.start <= selected.start && selected.end <= child.range.end
+            }) {
+                return Ok(child.peer);
             }
         }
         self.context.peer()
@@ -626,14 +713,17 @@ impl ITextRangeProvider for RichTextAutomationRange {
     }
 
     fn get_children(&self) -> Result<Vec<Ref<AutomationPeer>>, ProviderError> {
-        let view = self.view()?;
+        self.view()?;
         let selected = self.range.range();
-        Ok(embedded_children(&view.document())
+        let children = self.context.children()?;
+        Ok(children
             .into_iter()
-            .filter(|(range, _)| {
-                !selected.is_empty() && range.start < selected.end && selected.start < range.end
+            .filter(|child| {
+                !selected.is_empty()
+                    && child.range.start < selected.end
+                    && selected.start < child.range.end
             })
-            .map(|(_, control)| ControlAutomationPeer::create_peer_for_element(&control))
+            .map(|child| child.peer)
             .collect())
     }
 }
@@ -693,16 +783,17 @@ struct ViewGeometry {
     clip: Rect,
 }
 impl ViewGeometry {
-    fn new(view: &RichTextBlock) -> Option<Self> {
+    fn in_root(view: &RichTextBlock, root: &Ref<Visual>) -> Option<Self> {
         if !view.is_effectively_visible() {
             return None;
         }
-        let root = view.visual_root()?;
-        let transform = view.transform_to_visual(&root)?;
+        // The portable provider reports one root coordinate space. Overflow
+        // pages in a different presentation root cannot be expressed in it.
+        let transform = view.transform_to_visual(root)?;
         let mut clip = Rect::from_size(root.bounds().size());
         let mut current = Some(view.to_ref().upcast::<Visual>());
         while let Some(visual) = current {
-            let to_root = visual.transform_to_visual(&root)?;
+            let to_root = visual.transform_to_visual(root)?;
             if visual.clip_to_bounds() {
                 clip = clip
                     .intersect(Rect::from_size(visual.bounds().size()).transform_to_aabb(to_root));
@@ -719,30 +810,294 @@ impl ViewGeometry {
     }
 }
 
-fn embedded_children(document: &RichTextDocument) -> Vec<(Range<usize>, Ref<Control>)> {
-    fn visit(
-        inlines: &[InlineSnapshot],
-        offset: &mut usize,
-        output: &mut Vec<(Range<usize>, Ref<Control>)>,
-    ) {
-        for inline in inlines {
-            if let InlineSnapshotKind::Embedded(Some(control)) = &inline.kind {
-                output.push((*offset..*offset + 1, control.clone()));
-            }
-            if let Some(children) = inline.children() {
-                visit(children, offset, output)
+fn text_views(view: &Ref<RichTextBlock>) -> Vec<Ref<RichTextBlock>> {
+    let mut views = Vec::new();
+    let mut next = Some(view.clone());
+    while let Some(page) = next {
+        next = page.overflow_content_target().map(Ref::upcast);
+        views.push(page);
+    }
+    views
+}
+
+/// A peer owns one cache for the document's nonvisual children. The cache only
+/// retains automation peers: document, control and hyperlink owners stay weak.
+/// Revision checks avoid walking the inline tree for each native range call.
+#[derive(Default)]
+pub(crate) struct RichTextAutomationState {
+    children: RefCell<Option<TextChildrenCache>>,
+    subscription: RefCell<Option<Rc<dyn IDisposable>>>,
+}
+
+struct TextChildrenCache {
+    document: WeakRichTextDocument,
+    revision: u64,
+    entries: Vec<TextChildEntry>,
+}
+
+#[derive(Clone)]
+struct TextChildEntry {
+    range: Range<usize>,
+    parent: Option<usize>,
+    peer: Ref<AutomationPeer>,
+}
+
+impl RichTextAutomationState {
+    pub(crate) fn new() -> Rc<Self> {
+        Rc::new(Self::default())
+    }
+
+    pub(crate) fn observe<T: RichTextAutomationPeer>(self: &Rc<Self>, peer: Ref<T>) {
+        let weak_peer = peer.text_peer().downgrade();
+        let weak_view = peer.text_owner().map(|view| view.downgrade());
+        let weak_state = Rc::downgrade(self);
+        let provider = ProviderAdapter(peer);
+        let subscription = provider
+            .text_changed(Rc::new(move || {
+                let (Some(state), Some(peer), Some(view)) = (
+                    weak_state.upgrade(),
+                    weak_peer.upgrade(),
+                    weak_view.as_ref().and_then(WeakRef::upgrade),
+                ) else {
+                    return;
+                };
+                state.entries(&view, &peer);
+            }))
+            .ok();
+        if let Some(previous) = self.subscription.replace(subscription) {
+            previous.dispose();
+        }
+    }
+
+    fn entries(
+        self: &Rc<Self>,
+        view: &Ref<RichTextBlock>,
+        container: &Ref<AutomationPeer>,
+    ) -> Vec<TextChildEntry> {
+        let document = view.document();
+        let previous = {
+            let current = self.children.borrow();
+            if let Some(current) = current.as_ref() {
+                if current.document.upgrade().as_ref() == Some(&document)
+                    && current.revision == document.revision()
+                {
+                    return current.entries.clone();
+                }
+                current.entries.clone()
             } else {
-                *offset += inline.text_length()
+                Vec::new()
+            }
+        };
+        // No cache borrow is held while creating peers or assigning parents:
+        // provider constructors and framework callbacks may reenter automation.
+        let descriptors = document_children(&document);
+        let mut entries = Vec::with_capacity(descriptors.len());
+        let mut links = std::collections::HashMap::new();
+        let mut retained_links: std::collections::HashMap<_, _> = previous
+            .iter()
+            .filter_map(|entry| {
+                let peer = entry.peer.cast::<HyperlinkAutomationPeer>()?;
+                let link = peer.try_owner()?;
+                Some((hyperlink_key(&link), peer))
+            })
+            .collect();
+        for child in descriptors {
+            let peer = match child.owner {
+                TextChildOwner::Hyperlink(link) => {
+                    let peer = retained_links
+                        .remove(&hyperlink_key(&link))
+                        .unwrap_or_else(|| {
+                            HyperlinkAutomationPeer::new(
+                                view,
+                                container,
+                                &link,
+                                Rc::downgrade(self),
+                            )
+                        });
+                    let peer = peer.upcast::<AutomationPeer>();
+                    links.insert(hyperlink_key(&link), peer.clone());
+                    peer
+                }
+                TextChildOwner::Embedded(control) => {
+                    ControlAutomationPeer::create_peer_for_element(&control)
+                }
+            };
+            entries.push(TextChildEntry {
+                range: child.range,
+                parent: child.parent,
+                peer,
+            });
+        }
+        for child in &entries {
+            let parent = child
+                .parent
+                .and_then(|key| links.get(&key))
+                .unwrap_or(container)
+                .clone();
+            child.peer.try_set_parent(Some(parent));
+        }
+        let current_peers: HashSet<_> = entries
+            .iter()
+            .map(|entry| std::ptr::from_ref::<AutomationPeer>(&entry.peer) as usize)
+            .collect();
+        for removed in previous.iter().filter(|old| {
+            !current_peers.contains(&(std::ptr::from_ref::<AutomationPeer>(&old.peer) as usize))
+        }) {
+            removed.peer.try_set_parent(None);
+        }
+        let changed = previous.len() != entries.len()
+            || previous
+                .iter()
+                .zip(&entries)
+                .any(|(old, new)| old.peer != new.peer || old.parent != new.parent);
+        *self.children.borrow_mut() = Some(TextChildrenCache {
+            document: document.downgrade(),
+            revision: document.revision(),
+            entries: entries.clone(),
+        });
+        if changed {
+            container.raise_children_changed_event();
+        }
+        entries
+    }
+
+    pub(crate) fn children(
+        self: &Rc<Self>,
+        view: &Ref<RichTextBlock>,
+        container: &Ref<AutomationPeer>,
+        parent: Option<&Ref<Hyperlink>>,
+    ) -> Rc<Vec<Ref<AutomationPeer>>> {
+        let parent = parent.map(hyperlink_key);
+        let entries = self.entries(view, container);
+        let mut children: Vec<_> = entries
+            .iter()
+            .filter(|entry| entry.parent == parent)
+            .map(|entry| entry.peer.clone())
+            .collect();
+        if parent.is_none() {
+            // A rich editor may also contain framework header, description and
+            // placeholder presenters. Retain those visual children in the raw
+            // automation tree without duplicating any document child (including
+            // a control nested inside a hyperlink).
+            if let Some(visuals) = view.visual_children_snapshot() {
+                for control in visuals.iter().filter_map(|visual| visual.cast::<Control>()) {
+                    if !control.is_visible() {
+                        continue;
+                    }
+                    let peer = ControlAutomationPeer::create_peer_for_element(&control);
+                    if !entries.iter().any(|entry| entry.peer == peer) {
+                        peer.try_set_parent(Some(container.clone()));
+                        children.push(peer);
+                    }
+                }
+            }
+        }
+        Rc::new(children)
+    }
+
+    pub(crate) fn range_for_child(
+        self: &Rc<Self>,
+        view: &Ref<RichTextBlock>,
+        container: &Ref<AutomationPeer>,
+        child: &Ref<AutomationPeer>,
+    ) -> Result<Rc<dyn ITextRangeProvider>, ProviderError> {
+        let range = self.range_bounds_for_child(view, container, child)?;
+        TextContext {
+            view: view.downgrade(),
+            peer: container.downgrade(),
+            state: Rc::downgrade(self),
+        }
+        .make_range(range)
+    }
+
+    pub(crate) fn range_bounds_for_child(
+        self: &Rc<Self>,
+        view: &Ref<RichTextBlock>,
+        container: &Ref<AutomationPeer>,
+        child: &Ref<AutomationPeer>,
+    ) -> Result<Range<usize>, ProviderError> {
+        let entry = self
+            .entries(view, container)
+            .into_iter()
+            .find(|entry| entry.peer == *child)
+            .ok_or(TextProviderError::ElementNotAvailable)?;
+        Ok(entry.range)
+    }
+}
+
+impl Drop for RichTextAutomationState {
+    fn drop(&mut self) {
+        if let Some(subscription) = self.subscription.get_mut().take() {
+            subscription.dispose();
+        }
+    }
+}
+
+enum TextChildOwner {
+    Hyperlink(Ref<Hyperlink>),
+    Embedded(Ref<Control>),
+}
+
+struct DocumentChild {
+    range: Range<usize>,
+    parent: Option<usize>,
+    owner: TextChildOwner,
+}
+
+fn hyperlink_key(link: &Ref<Hyperlink>) -> usize {
+    std::ptr::from_ref::<Hyperlink>(link) as usize
+}
+
+fn document_children(document: &RichTextDocument) -> Vec<DocumentChild> {
+    fn visit(
+        inlines: &InlineCollection,
+        offset: &mut usize,
+        parent: Option<usize>,
+        output: &mut Vec<DocumentChild>,
+    ) {
+        for inline in inlines.snapshot().iter() {
+            if let Some(link) = inline.cast::<Hyperlink>() {
+                let index = output.len();
+                output.push(DocumentChild {
+                    range: *offset..*offset,
+                    parent,
+                    owner: TextChildOwner::Hyperlink(link.clone()),
+                });
+                visit(&link.inlines(), offset, Some(hyperlink_key(&link)), output);
+                output[index].range.end = *offset;
+            } else if let Some(span) = inline.cast::<Span>() {
+                visit(&span.inlines(), offset, parent, output);
+            } else {
+                let length = if let Some(run) = inline.cast::<Run>() {
+                    run.text().map_or(0, |text| text.encode_utf16().count())
+                } else if inline.is::<LineBreak>() || inline.is::<InlineUIContainer>() {
+                    1
+                } else {
+                    let mut text = String::new();
+                    inline.append_text(&mut text);
+                    text.encode_utf16().count()
+                };
+                if let Some(control) = inline
+                    .cast::<InlineUIContainer>()
+                    .and_then(|item| item.child())
+                {
+                    output.push(DocumentChild {
+                        range: *offset..*offset + length,
+                        parent,
+                        owner: TextChildOwner::Embedded(control),
+                    });
+                }
+                *offset += length;
             }
         }
     }
     let mut output = Vec::new();
     let mut offset = 0;
-    for (index, paragraph) in document.snapshot().paragraphs.iter().enumerate() {
+    for (index, paragraph) in document.paragraphs().iter().enumerate() {
         if index > 0 {
             offset += 1
         }
-        visit(&paragraph.inlines, &mut offset, &mut output);
+        visit(&paragraph.inlines(), &mut offset, None, &mut output);
     }
     output
 }
@@ -868,6 +1223,8 @@ fn effective_paragraph(view: &RichTextBlock, position: usize) -> ParagraphFormat
                     ),
                     margin: Some(paragraph.margin()),
                     flow_direction: Some(paragraph.flow_direction()),
+                    left_indent: Some(paragraph.left_indent()),
+                    right_indent: Some(paragraph.right_indent()),
                     ..Default::default()
                 };
             }
@@ -891,19 +1248,6 @@ fn attribute_value(
     use TextAttributeValue as V;
     let format = effective_format(view, position, caret);
     let paragraph = effective_paragraph(view, position);
-    let decoration = |location| {
-        format
-            .text_decorations
-            .as_ref()
-            .and_then(Option::as_ref)
-            .is_some_and(|collection| {
-                collection
-                    .list()
-                    .snapshot()
-                    .iter()
-                    .any(|item| item.location() == location)
-            })
-    };
     match attribute {
         A::FontName => format
             .font_family
@@ -927,10 +1271,12 @@ fn attribute_value(
         A::IsHidden => V::Bool(!view.is_effectively_visible()),
         A::ForegroundColor => brush_color(format.foreground.as_ref().and_then(Option::as_ref)),
         A::BackgroundColor => brush_color(format.background.as_ref().and_then(Option::as_ref)),
-        A::UnderlineStyle => V::Integer(i32::from(decoration(TextDecorationLocation::Underline))),
-        A::StrikethroughStyle => {
-            V::Integer(i32::from(decoration(TextDecorationLocation::Strikethrough)))
-        }
+        A::UnderlineStyle => decoration_style(&format, TextDecorationLocation::Underline),
+        A::OverlineStyle => decoration_style(&format, TextDecorationLocation::Overline),
+        A::StrikethroughStyle => decoration_style(&format, TextDecorationLocation::Strikethrough),
+        A::UnderlineColor => decoration_color(&format, TextDecorationLocation::Underline),
+        A::OverlineColor => decoration_color(&format, TextDecorationLocation::Overline),
+        A::StrikethroughColor => decoration_color(&format, TextDecorationLocation::Strikethrough),
         A::IsSubscript => V::Bool(format.baseline_alignment == Some(BaselineAlignment::Subscript)),
         A::IsSuperscript => {
             V::Bool(format.baseline_alignment == Some(BaselineAlignment::Superscript))
@@ -953,10 +1299,91 @@ fn attribute_value(
             let margin = paragraph.margin.unwrap_or_default();
             let rtl = paragraph.flow_direction == Some(FlowDirection::RightToLeft);
             let left = (attribute == A::IndentationLeading) != rtl;
+            let indent = if left {
+                margin.left + paragraph.left_indent.unwrap_or_default()
+            } else {
+                margin.right + paragraph.right_indent.unwrap_or_default()
+            };
+            V::Number(indent * 72.0 / 96.0)
+        }
+        A::MarginTop => V::Number(paragraph.margin.unwrap_or_default().top * 72.0 / 96.0),
+        A::MarginBottom => V::Number(paragraph.margin.unwrap_or_default().bottom * 72.0 / 96.0),
+        A::MarginLeading | A::MarginTrailing => {
+            let margin = paragraph.margin.unwrap_or_default();
+            let rtl = paragraph.flow_direction == Some(FlowDirection::RightToLeft);
+            let left = (attribute == A::MarginLeading) != rtl;
             V::Number(if left { margin.left } else { margin.right } * 72.0 / 96.0)
         }
+        A::TextFlowDirections => V::Integer(i32::from(
+            paragraph.flow_direction == Some(FlowDirection::RightToLeft),
+        )),
         A::Unknown(_) => V::NotSupported,
     }
+}
+
+fn decoration_style(
+    format: &CharacterFormat,
+    location: TextDecorationLocation,
+) -> TextAttributeValue {
+    let decorations: Vec<_> = format
+        .text_decorations
+        .as_ref()
+        .and_then(Option::as_ref)
+        .map(|collection| {
+            collection
+                .list()
+                .snapshot()
+                .iter()
+                .filter(|item| item.location() == location)
+                .cloned()
+                .collect()
+        })
+        .unwrap_or_default();
+    match decorations.as_slice() {
+        [] => TextAttributeValue::Integer(0),
+        [line]
+            if line
+                .stroke_dash_array()
+                .is_none_or(|array| array.list().is_empty()) =>
+        {
+            TextAttributeValue::Integer(1)
+        }
+        // Arbitrary stacked/dashed framework decorations do not have a unique
+        // AutomationTextDecorationLineStyle. Preserve NotSupported instead of
+        // misreporting every custom pattern as a single solid underline.
+        _ => TextAttributeValue::NotSupported,
+    }
+}
+
+fn decoration_color(
+    format: &CharacterFormat,
+    location: TextDecorationLocation,
+) -> TextAttributeValue {
+    let Some(decorations) = format.text_decorations.as_ref().and_then(Option::as_ref) else {
+        return TextAttributeValue::NotSupported;
+    };
+    let mut result = None;
+    for line in decorations
+        .list()
+        .snapshot()
+        .iter()
+        .filter(|line| line.location() == location)
+    {
+        let stroke = line.stroke();
+        let color = brush_color(
+            stroke
+                .as_ref()
+                .or_else(|| format.foreground.as_ref().and_then(Option::as_ref)),
+        );
+        if color == TextAttributeValue::NotSupported {
+            return color;
+        }
+        if result.as_ref().is_some_and(|previous| *previous != color) {
+            return TextAttributeValue::Mixed;
+        }
+        result = Some(color);
+    }
+    result.unwrap_or(TextAttributeValue::NotSupported)
 }
 
 fn brush_color(brush: Option<&Rc<dyn IBrush>>) -> TextAttributeValue {

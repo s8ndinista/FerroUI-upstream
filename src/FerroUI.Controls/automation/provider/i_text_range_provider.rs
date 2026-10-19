@@ -40,7 +40,11 @@ pub enum TextAttribute {
     IsHidden,
     ForegroundColor,
     BackgroundColor,
+    UnderlineColor,
     UnderlineStyle,
+    OverlineColor,
+    OverlineStyle,
+    StrikethroughColor,
     StrikethroughStyle,
     IsSubscript,
     IsSuperscript,
@@ -48,6 +52,11 @@ pub enum TextAttribute {
     IndentationFirstLine,
     IndentationLeading,
     IndentationTrailing,
+    MarginTop,
+    MarginBottom,
+    MarginLeading,
+    MarginTrailing,
+    TextFlowDirections,
     Unknown(i32),
 }
 

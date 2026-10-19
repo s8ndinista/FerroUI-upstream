@@ -32,7 +32,7 @@ use super::interop::{
     IExpandCollapseProvider, IInvokeProvider, IInvokeProviderImpl, IRangeValueProvider, IRawElementProviderFragment,
     IRawElementProviderFragmentImpl, IRawElementProviderFragmentRoot, IRawElementProviderFragmentRootImpl,
     IRawElementProviderSimple, IRawElementProviderSimple2, IRawElementProviderSimple2Impl, IRawElementProviderSimpleImpl,
-    IScrollItemProvider, IScrollProvider, ISelectionItemProvider, ISelectionProvider, ITextProvider, IToggleProvider, IValueProvider,
+    IScrollItemProvider, IScrollProvider, ISelectionItemProvider, ISelectionProvider, ITextProvider2, ITextChildProvider, IToggleProvider, IValueProvider,
     NavigateDirection, ProviderOptions, StructureChangeType, UiaControlTypeId, UiaCoreProviderApi, UiaCoreTypesApi,
     UiaEventId, UiaHeadingLevel, UiaLandmarkType, UiaLiveSetting, UiaPatternId, UiaPropertyId, UiaRect,
 };
@@ -210,7 +210,8 @@ impl AutomationNode {
                     InterfaceEntry::of::<ISelectionItemProvider>(),
                     InterfaceEntry::of::<IToggleProvider>(),
                     InterfaceEntry::of::<IValueProvider>(),
-                    InterfaceEntry::of::<ITextProvider>(),
+                    InterfaceEntry::of::<ITextProvider2>(),
+                    InterfaceEntry::of::<ITextChildProvider>(),
                 ]
             };
         }
@@ -262,6 +263,13 @@ impl AutomationNode {
     /// when the peer is gone.
     pub(crate) fn peer_of(id: i32) -> Option<Ref<AutomationPeer>> {
         Self::entry(id)?.peer.upgrade()
+    }
+
+    /// Resolves the actual text container's node for a range returned by a
+    /// TextChild provider. The range must outlive removal of that child.
+    pub(crate) fn id_for_peer(peer: &Ref<AutomationPeer>) -> Option<i32> {
+        Self::get_or_create(Some(peer))?;
+        S_NODES.with(|nodes| nodes.borrow().by_peer.get(&peer_key(peer)).copied())
     }
 
     /// The provider of the node with the number `id`, on the UI thread.
@@ -365,6 +373,8 @@ impl AutomationNode {
             UiaPatternId::Selection => has::<dyn aap::ISelectionProvider>(self)?,
             UiaPatternId::SelectionItem => has::<dyn aap::ISelectionItemProvider>(self)?,
             UiaPatternId::Text => has::<dyn aap::ITextProvider>(self)?,
+            UiaPatternId::Text2 => has::<dyn aap::ITextProvider2>(self)?,
+            UiaPatternId::TextChild => has::<dyn aap::ITextChildProvider>(self)?,
             UiaPatternId::Toggle => has::<dyn aap::IToggleProvider>(self)?,
             UiaPatternId::Value => has::<dyn aap::IValueProvider>(self)?,
             _ => false,
@@ -412,6 +422,8 @@ impl AutomationNode {
             UiaPropertyId::IsKeyboardFocusable => Plain::Bool(peer.is_keyboard_focusable()),
             UiaPropertyId::IsOffscreen => Plain::Bool(peer.is_offscreen()),
             UiaPropertyId::IsTextPatternAvailable => Plain::Bool(peer.get_provider::<dyn aap::ITextProvider>().is_some()),
+            UiaPropertyId::IsTextPattern2Available => Plain::Bool(peer.get_provider::<dyn aap::ITextProvider2>().is_some()),
+            UiaPropertyId::IsTextChildPatternAvailable => Plain::Bool(peer.get_provider::<dyn aap::ITextChildProvider>().is_some()),
             UiaPropertyId::ItemType => Plain::Text(peer.get_item_type()),
             UiaPropertyId::ItemStatus => Plain::Text(peer.get_item_status()),
             UiaPropertyId::LocalizedControlType => Plain::Text(Some(peer.get_localized_control_type())),

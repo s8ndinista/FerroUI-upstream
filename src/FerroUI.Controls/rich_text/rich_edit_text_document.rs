@@ -1,14 +1,15 @@
-use super::{EditError, EditKind, EditorSelection, RichTextEditor};
-use crate::RichTextBlock;
+use super::{EditError, EditKind, EditorSelection, RichTextEditor, RtfError, RtfReader, RtfWriter};
 use crate::documents::{
     CharacterFormat, DocumentError, DocumentSnapshot, InlineSnapshot, InlineSnapshotKind,
     ParagraphFormat, RichTextDocument, TextGravity, TextPointer,
 };
+use crate::RichTextBlock;
 use ferroui_base::media::text_formatting::unicode::{
     GraphemeEnumerator, SentenceBreakEnumerator, WordBreakEnumerator,
 };
 use ferroui_base::{Point, Rect};
 use std::cell::RefCell;
+use std::fmt;
 use std::ops::Range;
 use std::rc::Rc;
 
@@ -28,6 +29,119 @@ bitflags::bitflags! {
         const MATCH_CASE = 1;
         const WHOLE_WORD = 2;
         const BACKWARDS = 4;
+    }
+
+    /// Public text-object-model search flags. Direction belongs to the signed
+    /// scan length; the convenience TextFindOptions also offers Backwards.
+    #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+    pub struct FindOptions: u32 {
+        const NONE = 0;
+        const WORD = 2;
+        const CASE = 4;
+    }
+}
+
+bitflags::bitflags! {
+    /// Native text retrieval flags. Unsupported content projections return an error.
+    #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+    pub struct TextGetOptions: u32 {
+        const NONE = 0;
+        const ADJUST_CRLF = 1;
+        const USE_CRLF = 2;
+        const USE_OBJECT_TEXT = 4;
+        const ALLOW_FINAL_EOP = 8;
+        const NO_HIDDEN = 32;
+        const INCLUDE_NUMBERING = 64;
+        const FORMAT_RTF = 8192;
+        const USE_LF = 16777216;
+    }
+
+    /// Native text insertion flags. Plain insertion and the supported RTF grammar
+    /// share the same document transaction and length-limit policy.
+    #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+    pub struct TextSetOptions: u32 {
+        const NONE = 0;
+        const UNICODE_BIDI = 1;
+        const UNLINK = 8;
+        const UNHIDE = 16;
+        const CHECK_TEXT_LIMIT = 32;
+        const FORMAT_RTF = 8192;
+        const APPLY_RTF_DOCUMENT_DEFAULTS = 16384;
+    }
+}
+
+ferroui_base::ferro_markup_enum!(flags FindOptions {
+    None = FindOptions::NONE,
+    Word = FindOptions::WORD,
+    Case = FindOptions::CASE,
+}, { namespace: "FerroUI.Controls" });
+
+ferroui_base::ferro_markup_enum!(flags TextGetOptions {
+    None = TextGetOptions::NONE,
+    AdjustCrlf = TextGetOptions::ADJUST_CRLF,
+    UseCrlf = TextGetOptions::USE_CRLF,
+    UseObjectText = TextGetOptions::USE_OBJECT_TEXT,
+    AllowFinalEop = TextGetOptions::ALLOW_FINAL_EOP,
+    NoHidden = TextGetOptions::NO_HIDDEN,
+    IncludeNumbering = TextGetOptions::INCLUDE_NUMBERING,
+    FormatRtf = TextGetOptions::FORMAT_RTF,
+    UseLf = TextGetOptions::USE_LF,
+}, { namespace: "FerroUI.Controls" });
+
+ferroui_base::ferro_markup_enum!(flags TextSetOptions {
+    None = TextSetOptions::NONE,
+    UnicodeBidi = TextSetOptions::UNICODE_BIDI,
+    Unlink = TextSetOptions::UNLINK,
+    Unhide = TextSetOptions::UNHIDE,
+    CheckTextLimit = TextSetOptions::CHECK_TEXT_LIMIT,
+    FormatRtf = TextSetOptions::FORMAT_RTF,
+    ApplyRtfDocumentDefaults = TextSetOptions::APPLY_RTF_DOCUMENT_DEFAULTS,
+}, { namespace: "FerroUI.Controls" });
+
+/// Failure to interpret a text operation. Unsupported flags are never silently
+/// ignored, and parse/option validation finishes before an edit can cancel IME.
+#[derive(Debug)]
+pub enum TextOperationError {
+    InvalidOptions(&'static str),
+    UnsupportedOptions { operation: &'static str, bits: u32 },
+    Edit(EditError),
+    Rtf(RtfError),
+}
+
+impl fmt::Display for TextOperationError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::InvalidOptions(message) => f.write_str(message),
+            Self::UnsupportedOptions { operation, bits } => {
+                write!(f, "{operation} does not implement option bits 0x{bits:X}.")
+            }
+            Self::Edit(error) => error.fmt(f),
+            Self::Rtf(error) => error.fmt(f),
+        }
+    }
+}
+impl std::error::Error for TextOperationError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::Edit(error) => Some(error),
+            Self::Rtf(error) => Some(error),
+            _ => None,
+        }
+    }
+}
+impl From<EditError> for TextOperationError {
+    fn from(error: EditError) -> Self {
+        Self::Edit(error)
+    }
+}
+impl From<DocumentError> for TextOperationError {
+    fn from(error: DocumentError) -> Self {
+        Self::Edit(error.into())
+    }
+}
+impl From<RtfError> for TextOperationError {
+    fn from(error: RtfError) -> Self {
+        Self::Rtf(error)
     }
 }
 
@@ -86,7 +200,110 @@ impl RichEditTextDocument {
         self.get_range(position, position)
     }
     pub fn set_text(&self, text: &str) -> Result<(), EditError> {
-        self.document_range()?.set_text(text)
+        let snapshot = self.plain_document(text);
+        self.replace_document(&snapshot, true)
+    }
+
+    pub fn get_default_character_format(&self) -> CharacterFormat {
+        self.editor.default_character_format()
+    }
+
+    pub fn set_default_character_format(&self, format: &CharacterFormat) -> Result<(), EditError> {
+        self.editor.set_default_character_format(format)
+    }
+
+    pub fn get_default_paragraph_format(&self) -> ParagraphFormat {
+        self.editor.default_paragraph_format()
+    }
+
+    pub fn set_default_paragraph_format(&self, format: &ParagraphFormat) -> Result<(), EditError> {
+        self.editor.set_default_paragraph_format(format)
+    }
+
+    /// Retrieves native paragraph separators while retaining the model's UTF-16
+    /// coordinate system. The complete-story projection synthesizes its terminal
+    /// paragraph mark for None or AllowFinalEop, as the source TOM fixture requires.
+    pub fn get_text(&self, options: TextGetOptions) -> Result<String, TextOperationError> {
+        validate_get_options(options)?;
+        if options.contains(TextGetOptions::FORMAT_RTF) {
+            return self.document_range()?.get_text(options);
+        }
+        let mut text = self.text();
+        if options.is_empty() || options.contains(TextGetOptions::ALLOW_FINAL_EOP) {
+            text.push('\n');
+        }
+        Ok(convert_line_endings(&text, options))
+    }
+
+    /// Replaces the complete story and its paragraph metadata. Plain content starts
+    /// with document defaults; RTF retains all formatting the codec can represent.
+    pub fn set_text_with_options(
+        &self,
+        options: TextSetOptions,
+        text: &str,
+    ) -> Result<(), TextOperationError> {
+        validate_set_options(options)?;
+        let snapshot = if options.contains(TextSetOptions::FORMAT_RTF) {
+            RtfReader::read(&rtf_text_bytes(text)?)?
+        } else {
+            self.plain_document(text)
+        };
+        self.replace_document(
+            &snapshot,
+            options.contains(TextSetOptions::CHECK_TEXT_LIMIT),
+        )?;
+        Ok(())
+    }
+
+    fn plain_document(&self, text: &str) -> DocumentSnapshot {
+        let mut snapshot = DocumentSnapshot::from_text(text);
+        let defaults = self.editor.insertion_defaults();
+        for paragraph in &mut snapshot.paragraphs {
+            paragraph.format = defaults.overlay(&paragraph.format);
+        }
+        snapshot
+    }
+
+    fn replace_document(
+        &self,
+        snapshot: &DocumentSnapshot,
+        check_limit: bool,
+    ) -> Result<(), EditError> {
+        snapshot.validate()?;
+        self.editor.prepare_edit()?;
+        let snapshot = limited_snapshot(
+            snapshot,
+            if check_limit {
+                self.editor.max_length()
+            } else {
+                0
+            },
+        );
+        let previous_limit = self.editor.max_length();
+        let result = self.editor.edit_group(|editor| {
+            if !check_limit && previous_limit > 0 {
+                editor.set_max_length(previous_limit.max(snapshot.text_length()));
+            }
+            editor.document().restore(&snapshot)?;
+            editor.set_selection(EditorSelection::caret(snapshot.text_length()))?;
+            Ok(())
+        });
+        if result.is_err() {
+            self.editor.set_max_length(previous_limit);
+        }
+        result
+    }
+
+    pub fn undo_limit(&self) -> usize {
+        self.editor.undo_limit()
+    }
+
+    pub fn set_undo_limit(&self, limit: usize) {
+        self.editor.set_undo_limit(limit);
+    }
+
+    pub fn clear_undo_redo_history(&self) {
+        self.editor.clear_history();
     }
     pub fn can_undo(&self) -> bool {
         self.editor.can_undo()
@@ -111,6 +328,7 @@ impl RichEditTextDocument {
 struct RangeData {
     start: TextPointer,
     end: TextPointer,
+    typing_format: CharacterFormat,
 }
 
 /// A live, independent range. Its endpoints follow document edits using explicit gravity.
@@ -134,6 +352,7 @@ impl RichEditTextRange {
             data: Rc::new(RefCell::new(RangeData {
                 start: document.create_pointer(range.start, start_gravity)?,
                 end: document.create_pointer(range.end, TextGravity::Forward)?,
+                typing_format: CharacterFormat::default(),
             })),
             editor,
         })
@@ -160,8 +379,44 @@ impl RichEditTextRange {
     pub fn text(&self) -> Result<String, EditError> {
         Ok(self.document().get_text(self.range())?)
     }
+
+    pub fn get_text(&self, options: TextGetOptions) -> Result<String, TextOperationError> {
+        validate_get_options(options)?;
+        let mut range = self.range();
+        if options.contains(TextGetOptions::ADJUST_CRLF) {
+            range.start = adjusted_text_start(&self.document().text(), range.start);
+        }
+        if options.contains(TextGetOptions::FORMAT_RTF) {
+            return Ok(RtfWriter::write(
+                &self.snapshot_with_effective_paragraphs(range)?,
+            )?);
+        }
+        // Live model ranges do not include the native synthetic final paragraph
+        // mark. AllowFinalEop therefore adds no text to an ordinary content range.
+        Ok(convert_line_endings(
+            &self.document().get_text(range)?,
+            options,
+        ))
+    }
     pub fn snapshot(&self) -> Result<DocumentSnapshot, EditError> {
         Ok(self.document().slice(self.range())?)
+    }
+
+    fn snapshot_with_effective_paragraphs(
+        &self,
+        range: Range<usize>,
+    ) -> Result<DocumentSnapshot, EditError> {
+        let document = self.document();
+        let full = document.snapshot();
+        let (start, _) = full.locate(range.start);
+        let mut snapshot = document.slice(range)?;
+        let paragraphs = document.paragraphs();
+        for (index, paragraph) in snapshot.paragraphs.iter_mut().enumerate() {
+            if let Some(original) = paragraphs.get(start + index) {
+                paragraph.format = ParagraphFormat::effective(original).overlay(&paragraph.format);
+            }
+        }
+        Ok(snapshot)
     }
     /// Returns one rectangle for each visual fragment, including bidirectional and wrapped text.
     pub fn get_rectangles(&self, view: &RichTextBlock) -> Result<Vec<Rect>, EditError> {
@@ -169,11 +424,33 @@ impl RichEditTextRange {
         Ok(view.get_rects_for_range(self.range()))
     }
     pub fn get_clone(&self) -> Result<Self, EditError> {
-        Self::new(self.editor.clone(), self.range())
+        let result = Self::new(self.editor.clone(), self.range())?;
+        result.data.borrow_mut().typing_format = self.data.borrow().typing_format.clone();
+        Ok(result)
+    }
+
+    pub fn formatted_text(&self) -> Result<Self, EditError> {
+        self.get_clone()
+    }
+
+    pub fn set_formatted_text(&self, value: &Self) -> Result<(), EditError> {
+        let snapshot = value.snapshot_with_effective_paragraphs(value.range())?;
+        self.set_snapshot(&snapshot)
+    }
+
+    pub fn set_start_position(&self, position: usize) -> Result<(), EditError> {
+        self.set_range(position, self.end_position().max(position))
+    }
+
+    pub fn set_end_position(&self, position: usize) -> Result<(), EditError> {
+        self.set_range(self.start_position().min(position), position)
     }
     pub fn set_range(&self, start: usize, end: usize) -> Result<(), EditError> {
         let range = start.min(end)..start.max(end);
         self.document().validate_range(range.clone())?;
+        if range == self.range() {
+            return Ok(());
+        }
         let replacement = RangeData {
             start: self.document().create_pointer(
                 range.start,
@@ -186,6 +463,7 @@ impl RichEditTextRange {
             end: self
                 .document()
                 .create_pointer(range.end, TextGravity::Forward)?,
+            typing_format: CharacterFormat::default(),
         };
         let old = self.data.replace(replacement);
         drop(old);
@@ -213,6 +491,33 @@ impl RichEditTextRange {
         self.document() == other.document() && self.range() == other.range()
     }
 
+    pub fn in_story(&self, other: &Self) -> bool {
+        self.document() == other.document()
+    }
+
+    pub fn match_selection(&self) -> Result<(), EditError> {
+        let selection = self.editor.selection().range();
+        self.set_range(selection.start, selection.end)
+    }
+
+    /// Decodes the scalar at a signed UTF-16 offset from the range's end. Either
+    /// half of a surrogate pair returns its scalar; outside the story returns zero.
+    pub fn get_character_utf32(&self, offset: i32) -> u32 {
+        let target = self.end_position() as i128 + i128::from(offset);
+        if target < 0 || target >= self.document().text_length() as i128 {
+            return 0;
+        }
+        let target = target as usize;
+        let mut position = 0;
+        for character in self.document().text().chars() {
+            position += character.len_utf16();
+            if target < position {
+                return character as u32;
+            }
+        }
+        0
+    }
+
     /// Replaces the range while preserving and rebasing the editor's independent selection.
     /// The change, formatting, and selection are one undoable transaction.
     pub fn set_text(&self, text: &str) -> Result<(), EditError> {
@@ -221,8 +526,12 @@ impl RichEditTextRange {
         let before_length = self.document().text_length();
         let selection = self.editor.selection();
         let typing_format = self.editor.typing_format();
+        let range_format = self.data.borrow().typing_format.clone();
         self.editor.edit_group(|editor| {
             editor.set_selection(EditorSelection::new(range.start, range.end))?;
+            if range.is_empty() && range_format != CharacterFormat::default() {
+                editor.apply_format(&range_format)?;
+            }
             editor.insert_text(text, EditKind::Programmatic)?;
             let inserted = self
                 .document()
@@ -242,7 +551,59 @@ impl RichEditTextRange {
         self.set_range(range.start, range.start + inserted)
     }
 
+    pub fn set_text_with_options(
+        &self,
+        options: TextSetOptions,
+        text: &str,
+    ) -> Result<(), TextOperationError> {
+        validate_set_options(options)?;
+        let fragment = if options.contains(TextSetOptions::FORMAT_RTF) {
+            Some(RtfReader::read(&rtf_text_bytes(text)?)?)
+        } else if options.contains(TextSetOptions::UNLINK) {
+            let mut fragment = DocumentSnapshot::from_text(text);
+            let format = self
+                .document()
+                .character_format_at(self.start_position())?
+                .overlay(&self.data.borrow().typing_format);
+            for paragraph in &mut fragment.paragraphs {
+                paragraph.format.character = format.clone();
+            }
+            Some(fragment)
+        } else {
+            None
+        };
+        if let Some(fragment) = &fragment {
+            fragment.validate()?;
+        }
+        let inserted_length = fragment.as_ref().map_or_else(
+            || DocumentSnapshot::from_text(text).text_length(),
+            DocumentSnapshot::text_length,
+        );
+        let previous_limit = self.editor.max_length();
+        let result = self.editor.edit_group(|editor| {
+            if !options.contains(TextSetOptions::CHECK_TEXT_LIMIT) && previous_limit > 0 {
+                let length = self
+                    .document()
+                    .text_length()
+                    .saturating_sub(self.length())
+                    .saturating_add(inserted_length);
+                editor.set_max_length(previous_limit.max(length));
+            }
+            if let Some(fragment) = &fragment {
+                self.set_snapshot(fragment)
+            } else {
+                self.set_text(text)
+            }
+        });
+        if result.is_err() {
+            self.editor.set_max_length(previous_limit);
+        }
+        result?;
+        Ok(())
+    }
+
     pub fn set_snapshot(&self, snapshot: &DocumentSnapshot) -> Result<(), EditError> {
+        snapshot.validate()?;
         self.editor.prepare_edit()?;
         if snapshot.text_length() == 0 {
             return self.set_text("");
@@ -291,6 +652,13 @@ impl RichEditTextRange {
         })
     }
     pub fn set_character_format(&self, format: &CharacterFormat) -> Result<(), EditError> {
+        format.validate()?;
+        if self.is_degenerate() {
+            self.editor.prepare_edit()?;
+            let updated = self.data.borrow().typing_format.overlay(format).clone();
+            self.data.borrow_mut().typing_format = updated;
+            return Ok(());
+        }
         self.apply_to_selection(|editor| editor.apply_format(format))
     }
     pub fn set_paragraph_format(&self, format: &ParagraphFormat) -> Result<(), EditError> {
@@ -312,11 +680,13 @@ impl RichEditTextRange {
                     },
                 )
                 .map(|element| CharacterFormat::effective(&element))
-                .unwrap_or_default()
+                .unwrap_or_else(|| self.editor.insertion_defaults().character)
         };
         let first = format_at(range.start);
         if range.is_empty() {
-            return Ok(TextFormatValue::Uniform(first));
+            return Ok(TextFormatValue::Uniform(
+                first.overlay(&self.data.borrow().typing_format),
+            ));
         }
         let mut boundaries = Vec::new();
         let mut offset = 0;
@@ -339,31 +709,36 @@ impl RichEditTextRange {
         Ok(TextFormatValue::Uniform(first))
     }
     pub fn paragraph_format(&self) -> Result<TextFormatValue<ParagraphFormat>, EditError> {
-        let snapshot = self.document().snapshot();
         let range = self.range();
         let mut offset = 0;
         let mut selected = None;
-        for paragraph in snapshot.paragraphs {
-            let end = offset + paragraph.inlines.iter().map(inline_length).sum::<usize>();
+        for paragraph in self.document().paragraphs() {
+            let end = offset + paragraph.text_length();
             if range.start <= end
                 && (range.end > offset || range.is_empty() && range.start == offset)
             {
+                let mut format = ParagraphFormat::effective(&paragraph);
+                // The shared snapshot type also stores inherited character
+                // defaults; those are outside TOM's paragraph-format query.
+                format.character = CharacterFormat::default();
                 if let Some(first) = &selected {
-                    if first != &paragraph.format {
+                    if first != &format {
                         return Ok(TextFormatValue::Mixed);
                     }
                 } else {
-                    selected = Some(paragraph.format);
+                    selected = Some(format);
                 }
             }
             offset = end + 1;
         }
-        Ok(TextFormatValue::Uniform(selected.unwrap_or_default()))
+        let mut format = selected.unwrap_or_else(|| self.editor.insertion_defaults());
+        format.character = CharacterFormat::default();
+        Ok(TextFormatValue::Uniform(format))
     }
 
     /// Expands to the smallest whole units containing the range. Character units are
     /// extended grapheme clusters; word and sentence units use the framework's UAX #29 data.
-    pub fn expand(&self, unit: TextRangeUnit) -> Result<(), EditError> {
+    pub fn expand(&self, unit: TextRangeUnit) -> Result<usize, EditError> {
         let units = unit_ranges(&self.document().text(), unit);
         let range = self.range();
         let start = units
@@ -379,7 +754,8 @@ impl RichEditTextRange {
             .iter()
             .find(|unit| unit.start <= active && (active < unit.end || unit.is_empty()))
             .map_or(range.end, |unit| unit.end);
-        self.set_range(start, end)
+        self.set_range(start, end)?;
+        Ok((end - start).saturating_sub(range.len()))
     }
 
     /// Moves a collapsed range by whole units. A non-degenerate range collapses toward
@@ -413,6 +789,9 @@ impl RichEditTextRange {
     /// Searches this range. Case-insensitive matching uses Unicode lowercase mappings;
     /// UTF-16 offsets remain exact even when a character maps to several lowercase scalars.
     pub fn find(&self, text: &str, options: TextFindOptions) -> Result<Option<Self>, EditError> {
+        if options.bits() & !TextFindOptions::all().bits() != 0 {
+            return Err(DocumentError::InvalidFormat("Unknown text search options").into());
+        }
         if text.is_empty() {
             return Ok(None);
         }
@@ -464,6 +843,80 @@ impl RichEditTextRange {
         };
         self.set_range(found.start_position(), found.end_position())?;
         Ok(true)
+    }
+
+    /// Native bounded search: positive lengths start at StartPosition, negative
+    /// lengths search backward from EndPosition. Zero searches the existing range,
+    /// or the remaining story for a caret. A repeat skips the range already found.
+    pub fn find_text_with_length(
+        &self,
+        text: &str,
+        scan_length: i32,
+        options: FindOptions,
+    ) -> Result<usize, EditError> {
+        if options.bits() & !FindOptions::all().bits() != 0 {
+            return Err(DocumentError::InvalidFormat("Unknown text search options").into());
+        }
+        if text.is_empty() {
+            return Ok(0);
+        }
+        let original = self.range();
+        let source = self.document().text();
+        let length = source.encode_utf16().count();
+        let mut search = if scan_length < 0 {
+            original
+                .end
+                .saturating_sub(scan_length.unsigned_abs() as usize)..original.end
+        } else if scan_length > 0 {
+            original.start
+                ..original
+                    .start
+                    .saturating_add(scan_length as usize)
+                    .min(length)
+        } else if original.is_empty() {
+            original.start..length
+        } else {
+            original.clone()
+        };
+        search.start = scalar_ceiling(&source, search.start);
+        search.end = scalar_floor(&source, search.end);
+        if search.start > search.end {
+            return Ok(0);
+        }
+        let mut convenience = TextFindOptions::empty();
+        convenience.set(
+            TextFindOptions::MATCH_CASE,
+            options.contains(FindOptions::CASE),
+        );
+        convenience.set(
+            TextFindOptions::WHOLE_WORD,
+            options.contains(FindOptions::WORD),
+        );
+        convenience.set(TextFindOptions::BACKWARDS, scan_length < 0);
+        let candidate = Self::new(self.editor.clone(), search.clone())?;
+        let mut found = candidate.find(text, convenience)?;
+        if scan_length != 0
+            && found
+                .as_ref()
+                .is_some_and(|range| range.range() == original)
+        {
+            if scan_length < 0 {
+                search.end = scalar_floor(&source, original.end.saturating_sub(1));
+            } else {
+                search.start =
+                    scalar_ceiling(&source, original.start.saturating_add(1).min(length));
+            }
+            found = if search.start <= search.end {
+                Self::new(self.editor.clone(), search)?.find(text, convenience)?
+            } else {
+                None
+            };
+        }
+        let Some(found) = found else {
+            return Ok(0);
+        };
+        self.set_range(found.start_position(), found.end_position())?;
+        Ok(found.length())
     }
 }
 
@@ -554,6 +1007,20 @@ impl RichEditTextSelection {
     pub fn character_format(&self) -> Result<CharacterFormat, EditError> {
         self.editor.current_character_format()
     }
+    /// Unlike the insertion-format convenience getter, this query reports mixed
+    /// formatting across a nonempty selection instead of choosing its first run.
+    pub fn character_format_value(&self) -> Result<TextFormatValue<CharacterFormat>, EditError> {
+        if self.selection().is_empty() {
+            Ok(TextFormatValue::Uniform(
+                self.editor.current_character_format()?,
+            ))
+        } else {
+            self.range()?.character_format()
+        }
+    }
+    pub fn paragraph_format(&self) -> Result<TextFormatValue<ParagraphFormat>, EditError> {
+        self.range()?.paragraph_format()
+    }
     pub fn set_character_format(&self, format: &CharacterFormat) -> Result<(), EditError> {
         self.editor.apply_format(format)
     }
@@ -636,6 +1103,9 @@ pub(crate) fn unit_ranges(text: &str, unit: TextRangeUnit) -> Vec<Range<usize>> 
     }
 }
 fn move_position(text: &str, position: usize, unit: TextRangeUnit, count: i32) -> (usize, i32) {
+    if count == 0 {
+        return (position, 0);
+    }
     let units = unit_ranges(text, unit);
     let mut boundaries: Vec<usize> = units
         .iter()
@@ -645,23 +1115,24 @@ fn move_position(text: &str, position: usize, unit: TextRangeUnit, count: i32) -
     boundaries.push(text.encode_utf16().count());
     boundaries.sort_unstable();
     boundaries.dedup();
-    let (mut position, mut moved) = (position, 0);
-    for _ in 0..count.unsigned_abs().min(boundaries.len() as u32) {
-        let next = if count < 0 {
-            boundaries
-                .iter()
-                .rev()
-                .find(|boundary| **boundary < position)
-        } else {
-            boundaries.iter().find(|boundary| **boundary > position)
-        };
-        let Some(next) = next else {
-            break;
-        };
-        position = *next;
-        moved += count.signum();
+    // Boundary lookup and a clamped index displacement replace the previous
+    // repeated full scan, including saturated i32::MIN/MAX movement requests.
+    let requested = count.unsigned_abs() as usize;
+    if count < 0 {
+        let before = boundaries.partition_point(|boundary| *boundary < position);
+        let moved = requested.min(before);
+        if moved == 0 {
+            return (position, 0);
+        }
+        (boundaries[before - moved], (-(moved as i64)) as i32)
+    } else {
+        let after = boundaries.partition_point(|boundary| *boundary <= position);
+        let moved = requested.min(boundaries.len() - after);
+        if moved == 0 {
+            return (position, 0);
+        }
+        (boundaries[after + moved - 1], moved as i32)
     }
-    (position, moved)
 }
 fn searchable(text: &str, case_sensitive: bool) -> (String, Vec<(usize, usize)>) {
     let mut output = String::new();
@@ -678,17 +1149,6 @@ fn searchable(text: &str, case_sensitive: bool) -> (String, Vec<(usize, usize)>)
     }
     (output, boundaries)
 }
-fn inline_length(inline: &InlineSnapshot) -> usize {
-    match &inline.kind {
-        InlineSnapshotKind::Run(text) => text.encode_utf16().count(),
-        InlineSnapshotKind::LineBreak | InlineSnapshotKind::Embedded(_) => 1,
-        InlineSnapshotKind::Span(inlines)
-        | InlineSnapshotKind::Bold(inlines)
-        | InlineSnapshotKind::Italic(inlines)
-        | InlineSnapshotKind::Underline(inlines)
-        | InlineSnapshotKind::Hyperlink { inlines, .. } => inlines.iter().map(inline_length).sum(),
-    }
-}
 fn inline_boundaries(inlines: &[InlineSnapshot], offset: &mut usize, output: &mut Vec<usize>) {
     for inline in inlines {
         output.push(*offset);
@@ -700,7 +1160,141 @@ fn inline_boundaries(inlines: &[InlineSnapshot], offset: &mut usize, output: &mu
             | InlineSnapshotKind::Hyperlink { inlines, .. } => {
                 inline_boundaries(inlines, offset, output)
             }
-            _ => *offset += inline_length(inline),
+            _ => *offset += inline.text_length(),
         }
     }
 }
+
+fn validate_get_options(options: TextGetOptions) -> Result<(), TextOperationError> {
+    if options.bits() & !TextGetOptions::all().bits() != 0 {
+        return Err(TextOperationError::InvalidOptions(
+            "Unknown text retrieval options.",
+        ));
+    }
+    if options.contains(TextGetOptions::USE_CRLF | TextGetOptions::USE_LF) {
+        return Err(TextOperationError::InvalidOptions(
+            "UseCrlf and UseLf are mutually exclusive.",
+        ));
+    }
+    let unsupported = options
+        & (TextGetOptions::USE_OBJECT_TEXT
+            | TextGetOptions::INCLUDE_NUMBERING
+            | TextGetOptions::NO_HIDDEN);
+    if !unsupported.is_empty() {
+        return Err(TextOperationError::UnsupportedOptions {
+            operation: "GetText",
+            bits: unsupported.bits(),
+        });
+    }
+    if options.contains(TextGetOptions::FORMAT_RTF) && options != TextGetOptions::FORMAT_RTF {
+        return Err(TextOperationError::InvalidOptions(
+            "RTF retrieval cannot be combined with plain-text conversion options.",
+        ));
+    }
+    Ok(())
+}
+
+fn validate_set_options(options: TextSetOptions) -> Result<(), TextOperationError> {
+    if options.bits() & !TextSetOptions::all().bits() != 0 {
+        return Err(TextOperationError::InvalidOptions(
+            "Unknown text insertion options.",
+        ));
+    }
+    if options.contains(TextSetOptions::APPLY_RTF_DOCUMENT_DEFAULTS) {
+        if !options.contains(TextSetOptions::FORMAT_RTF) {
+            return Err(TextOperationError::InvalidOptions(
+                "ApplyRtfDocumentDefaults requires FormatRtf.",
+            ));
+        }
+        return Err(TextOperationError::UnsupportedOptions {
+            operation: "SetText",
+            bits: TextSetOptions::APPLY_RTF_DOCUMENT_DEFAULTS.bits(),
+        });
+    }
+    if options.contains(TextSetOptions::FORMAT_RTF | TextSetOptions::UNLINK) {
+        return Err(TextOperationError::InvalidOptions(
+            "Unlink with explicit RTF hyperlinks requires a separate link projection.",
+        ));
+    }
+    let unsupported = options & (TextSetOptions::UNICODE_BIDI | TextSetOptions::UNHIDE);
+    if !unsupported.is_empty() {
+        return Err(TextOperationError::UnsupportedOptions {
+            operation: "SetText",
+            bits: unsupported.bits(),
+        });
+    }
+    Ok(())
+}
+
+fn convert_line_endings(text: &str, options: TextGetOptions) -> String {
+    let normalized = text.replace("\r\n", "\n").replace('\r', "\n");
+    if options.contains(TextGetOptions::USE_LF) {
+        normalized
+    } else if options.contains(TextGetOptions::USE_CRLF) {
+        normalized.replace('\n', "\r\n")
+    } else {
+        normalized.replace('\n', "\r")
+    }
+}
+
+fn adjusted_text_start(text: &str, requested: usize) -> usize {
+    let mut offset = 0;
+    let mut previous = None;
+    let mut construct_start = 0;
+    for character in text.chars() {
+        let variation = matches!(character as u32, 0xFE00..=0xFE0F | 0xE0100..=0xE01EF);
+        if !variation {
+            construct_start = offset;
+        }
+        let end = offset + character.len_utf16();
+        if requested < end {
+            return if character == '\n' && previous == Some('\r') {
+                offset.saturating_sub(1)
+            } else if variation {
+                construct_start
+            } else {
+                offset
+            };
+        }
+        previous = Some(character);
+        offset = end;
+    }
+    offset
+}
+
+fn scalar_floor(text: &str, offset: usize) -> usize {
+    super::utf16_prefix(text, offset).encode_utf16().count()
+}
+
+fn scalar_ceiling(text: &str, offset: usize) -> usize {
+    let floor = scalar_floor(text, offset);
+    if floor < offset && floor < text.encode_utf16().count() {
+        floor + 2
+    } else {
+        floor
+    }
+}
+
+fn limited_snapshot(snapshot: &DocumentSnapshot, limit: usize) -> DocumentSnapshot {
+    if limit == 0 || snapshot.text_length() <= limit {
+        return snapshot.clone();
+    }
+    let end = scalar_floor(&snapshot.text(), limit);
+    snapshot.slice_unchecked(0..end)
+}
+
+fn rtf_text_bytes(text: &str) -> Result<Vec<u8>, RtfError> {
+    // Native GetText widens RTF bytes to UTF-16 code units. Reverse that widening
+    // rather than feeding a UTF-8 encoding of byte-valued characters to the codec.
+    text.chars()
+        .map(|character| {
+            u8::try_from(character as u32).map_err(|_| {
+                RtfError::UnsupportedFeature("non-byte RTF literals; use RTF Unicode escapes")
+            })
+        })
+        .collect()
+}
+
+#[cfg(test)]
+#[path = "rich_edit_text_document_tests.rs"]
+mod tests;

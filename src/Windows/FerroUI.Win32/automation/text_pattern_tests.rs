@@ -2,30 +2,34 @@
 //! controls. Attribute cases mirror WinUI's native TextBlock/RichTextBlock UIA
 //! tests; threading, identity, lifetime, and Unicode cases exercise this bridge.
 
-use super::automation_node::{AutomationNode, ELEMENT_NOT_AVAILABLE, SendProvider};
+use super::automation_node::{AutomationNode, SendProvider, ELEMENT_NOT_AVAILABLE};
 use super::interop::{
-    IRawElementProviderSimple, ITextProvider, ITextRangeProvider, IUiaCoreProviderApi,
-    StructureChangeType, SupportedTextSelection, TextPatternRangeEndpoint, TextUnit,
-    UiaCoreProviderApi, UiaCoreTypesApi, UiaEventId, UiaPatternId, UiaPoint, UiaPropertyId,
+    IInvokeProvider, IRawElementProviderSimple, ITextChildProvider, ITextProvider, ITextProvider2,
+    ITextRangeProvider, IUiaCoreProviderApi, StructureChangeType, SupportedTextSelection,
+    TextPatternRangeEndpoint, TextUnit, UiaCoreProviderApi, UiaCoreTypesApi, UiaEventId,
+    UiaPatternId, UiaPoint, UiaPropertyId,
 };
 use super::marshalling::{
-    ComVariant, SafeArrayElement, SafeArrayMarshaller, SafeArrayRef, VariantValue, free_bstr,
-    ptr_to_string_bstr, string_to_bstr,
+    free_bstr, ptr_to_string_bstr, string_to_bstr, ComVariant, SafeArrayElement,
+    SafeArrayMarshaller, SafeArrayRef, VariantValue,
 };
 use super::text_range_node::TextRangeNode;
 use ferroui_base::layout::ILayoutManager;
 use ferroui_base::media::immutable::ImmutableSolidColorBrush;
 use ferroui_base::media::text_formatting::testing::TextTestScope;
-use ferroui_base::media::{Color, FontFamily, FontWeight, IBrush};
+use ferroui_base::media::{
+    Color, FlowDirection, FontFamily, FontWeight, IBrush, TextDecoration, TextDecorationCollection,
+    TextDecorationLocation,
+};
 use ferroui_base::threading::Dispatcher;
 use ferroui_controls::automation::peers::ControlAutomationPeer;
 use ferroui_controls::documents::{
-    CharacterFormat, InlineUIContainer, Paragraph, RichTextDocument,
+    CharacterFormat, Hyperlink, InlineUIContainer, Paragraph, RichTextDocument, Run,
 };
 use ferroui_controls::testing::{TestServices, UnitTestApplication};
 use ferroui_controls::{Button, Control, RichEditBox, RichTextBlock, Window};
 use ferroui_microcom::{ComPtr, HResult, IUnknown};
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 use std::time::{Duration, Instant};
 
@@ -185,7 +189,9 @@ fn native_text_pattern_marshals_unicode_ranges_and_selection_from_worker_thread(
 
         let needle = string_to_bstr("😀 b\0c");
         // SAFETY: needle is an owned, live BSTR for this synchronous call.
-        let found = unsafe { document.find_text(needle, 0, 0) }.unwrap().unwrap();
+        let found = unsafe { document.find_text(needle, 0, 0) }
+            .unwrap()
+            .unwrap();
         // SAFETY: this test owns the BSTR passed as a borrowed search input.
         unsafe { free_bstr(needle) };
         assert_eq!(text(&found, -1), "😀 b\0c");
@@ -335,11 +341,9 @@ fn native_text_geometry_children_and_hit_testing_use_real_document_layout() {
     let rectangles = array::<f64>(document.get_bounding_rectangles().unwrap());
     assert!(!rectangles.is_empty());
     assert_eq!(rectangles.len() % 4, 0);
-    assert!(
-        rectangles
-            .chunks_exact(4)
-            .all(|rect| rect[2] > 0.0 && rect[3] > 0.0)
-    );
+    assert!(rectangles
+        .chunks_exact(4)
+        .all(|rect| rect[2] > 0.0 && rect[3] > 0.0));
     let peer = ControlAutomationPeer::create_peer_for_element(&view);
     let portable = peer
         .get_provider::<dyn ferroui_controls::automation::provider::ITextProvider>()
@@ -363,14 +367,12 @@ fn native_text_geometry_children_and_hit_testing_use_real_document_layout() {
         .unwrap();
     hit.expand_to_enclosing_unit(TextUnit::Character).unwrap();
     assert_eq!(text(&hit, -1), "H");
-    assert!(
-        provider
-            .range_from_point(UiaPoint {
-                x: f64::NAN,
-                y: 0.0
-            })
-            .is_err()
-    );
+    assert!(provider
+        .range_from_point(UiaPoint {
+            x: f64::NAN,
+            y: 0.0
+        })
+        .is_err());
     let visible = array::<ComPtr<ITextRangeProvider>>(provider.get_visible_ranges().unwrap());
     assert!(!visible.is_empty());
     assert_eq!(text(&visible[0], -1), view.text());
@@ -451,11 +453,9 @@ fn native_text_events_observe_edits_formatting_selection_and_document_replacemen
         .unwrap();
     assert!(recording.take().contains(&UiaEventId::Text_TextChanged.0));
     editor.select(1, 3);
-    assert!(
-        recording
-            .take()
-            .contains(&UiaEventId::Text_TextSelectionChanged.0)
-    );
+    assert!(recording
+        .take()
+        .contains(&UiaEventId::Text_TextSelectionChanged.0));
     let old = editor.document();
     editor.set_document(RichTextDocument::from_text("other"));
     assert!(recording.take().contains(&UiaEventId::Text_TextChanged.0));
@@ -479,4 +479,189 @@ fn native_text_events_observe_edits_formatting_selection_and_document_replacemen
     let selected = array::<ComPtr<ITextRangeProvider>>(selection);
     selected[0].remove_from_selection().unwrap();
     assert_eq!(editor.selection_start(), editor.selection_end());
+}
+
+#[test]
+fn native_text2_inherits_text_and_marshals_caret_bool_on_the_callers_thread() {
+    let _app = UnitTestApplication::start(TestServices::styled_window());
+    let _recording = RecordingScope::new();
+    let editor = RichEditBox::new();
+    editor.set_text("a😀b").unwrap();
+    editor.select(4, 1);
+    let node = SendProvider(native_node(&editor));
+    on_worker(move || {
+        let advertised = node
+            .get()
+            .get_pattern_provider(UiaPatternId::Text2.0)
+            .unwrap()
+            .unwrap();
+        let provider = advertised.cast::<ITextProvider2>().unwrap();
+        let text_provider = provider.cast::<ITextProvider>().unwrap();
+        let all = text_provider.get_document_range().unwrap().unwrap();
+        assert_eq!(text(&all, -1), "a😀b");
+        let mut active = [0x1234_5678i32, -1, 0x3456_7890];
+        // SAFETY: the middle entry is writable BOOL storage. The adjacent
+        // sentinels verify that the COM bridge writes exactly one native BOOL.
+        let caret = unsafe { provider.get_caret_range(&mut active[1]) }
+            .unwrap()
+            .unwrap();
+        assert_eq!(active, [0x1234_5678, 0, 0x3456_7890]);
+        assert_eq!(text(&caret, -1), "");
+        assert_eq!(
+            caret.compare_endpoints(
+                TextPatternRangeEndpoint::Start,
+                Some(&all),
+                TextPatternRangeEndpoint::Start
+            ),
+            Ok(1)
+        );
+        // SAFETY: null is an explicitly supported validation input.
+        assert_eq!(
+            unsafe { provider.get_caret_range(std::ptr::null_mut()) }.map(|_| ()),
+            Err(HResult::INVALIDARG)
+        );
+        assert_eq!(
+            provider.range_from_annotation(None).map(|_| ()),
+            Err(HResult::INVALIDARG)
+        );
+        assert_eq!(
+            provider.range_from_annotation(Some(node.get())).map(|_| ()),
+            Err(HResult::INVALIDARG)
+        );
+        let mut available = node
+            .get()
+            .get_property_value(UiaPropertyId::IsTextPattern2Available.0)
+            .unwrap();
+        // SAFETY: this call owns the returned VARIANT until it is disposed.
+        unsafe {
+            assert_eq!(
+                available.as_object().unwrap(),
+                Some(VariantValue::Bool(true))
+            );
+            available.dispose();
+        }
+    });
+    assert_eq!((editor.selection_start(), editor.selection_end()), (4, 1));
+}
+
+#[test]
+fn native_hyperlink_text_child_has_canonical_container_ranges_and_dispatches_invoke() {
+    let _app = UnitTestApplication::start(TestServices::styled_window());
+    let _recording = RecordingScope::new();
+    let view = RichTextBlock::new();
+    let paragraph = Paragraph::with_text("before ");
+    let link = Hyperlink::with_text("link😀", None);
+    let invocations = Rc::new(Cell::new(0));
+    let count = invocations.clone();
+    link.click(move |args| {
+        count.set(count.get() + 1);
+        args.set_handled(true);
+    });
+    paragraph.add_child(link);
+    paragraph.add_child_text(" after");
+    view.blocks().add(paragraph);
+    let node = SendProvider(native_node(&view));
+    on_worker(move || {
+        let text_provider = node.get().cast::<ITextProvider>().unwrap();
+        let all = text_provider.get_document_range().unwrap().unwrap();
+        let children = array::<ComPtr<IRawElementProviderSimple>>(all.get_children().unwrap());
+        assert_eq!(children.len(), 1);
+        let child = &children[0];
+        assert!(child
+            .get_pattern_provider(UiaPatternId::TextChild.0)
+            .unwrap()
+            .is_some());
+        let child_text = child.cast::<ITextChildProvider>().unwrap();
+        let container = child_text.get_text_container().unwrap().unwrap();
+        assert_eq!(
+            container.cast::<IUnknown>().unwrap(),
+            node.get().cast::<IUnknown>().unwrap()
+        );
+        let range = child_text.get_text_range().unwrap().unwrap();
+        assert_eq!(text(&range, -1), "link😀");
+        assert_eq!(
+            range.compare_endpoints(
+                TextPatternRangeEndpoint::Start,
+                Some(&all),
+                TextPatternRangeEndpoint::Start
+            ),
+            Ok(7)
+        );
+        let from_child = text_provider
+            .range_from_child(Some(child))
+            .unwrap()
+            .unwrap();
+        assert_eq!(from_child.compare(Some(&range)), Ok(1));
+        let enclosing = range.get_enclosing_element().unwrap().unwrap();
+        assert_eq!(
+            enclosing.cast::<IUnknown>().unwrap(),
+            child.cast::<IUnknown>().unwrap()
+        );
+        child.cast::<IInvokeProvider>().unwrap().invoke().unwrap();
+        let mut available = child
+            .get_property_value(UiaPropertyId::IsTextChildPatternAvailable.0)
+            .unwrap();
+        // SAFETY: the returned owned VARIANT is copied, then disposed once.
+        unsafe {
+            assert_eq!(
+                available.as_object().unwrap(),
+                Some(VariantValue::Bool(true))
+            );
+            available.dispose();
+        }
+    });
+    assert_eq!(invocations.get(), 1);
+}
+
+#[test]
+fn native_text_child_range_survives_child_removal_but_not_document_replacement() {
+    let _app = UnitTestApplication::start(TestServices::styled_window());
+    let _recording = RecordingScope::new();
+    let view = RichTextBlock::new();
+    let paragraph = Paragraph::new();
+    paragraph.add_child(Hyperlink::with_text("temporary", None));
+    view.blocks().add(paragraph.clone());
+    let text_provider = native_node(&view).cast::<ITextProvider>().unwrap();
+    let all = text_provider.get_document_range().unwrap().unwrap();
+    let children = array::<ComPtr<IRawElementProviderSimple>>(all.get_children().unwrap());
+    let child = children[0].cast::<ITextChildProvider>().unwrap();
+    let range = child.get_text_range().unwrap().unwrap();
+    paragraph.inlines().clear();
+    assert_eq!(text(&range, -1), "");
+    assert_eq!(
+        child.get_text_range().map(|_| ()),
+        Err(ELEMENT_NOT_AVAILABLE)
+    );
+    view.set_document(RichTextDocument::from_text("replacement"));
+    assert_eq!(range.get_text(-1).map(|_| ()), Err(ELEMENT_NOT_AVAILABLE));
+}
+
+#[test]
+fn native_extra_text_attributes_preserve_colorref_and_find_color_input_types() {
+    let _app = UnitTestApplication::start(TestServices::styled_window());
+    let _recording = RecordingScope::new();
+    let view = RichTextBlock::new();
+    let paragraph = Paragraph::new();
+    paragraph.set_flow_direction(FlowDirection::RightToLeft);
+    let run = Run::with_text(Some("overline"));
+    let overline = TextDecoration::new();
+    overline.set_location(TextDecorationLocation::Overline);
+    overline.set_stroke(Some(Rc::new(ImmutableSolidColorBrush::new(
+        Color::from_rgb(0x12, 0x34, 0x56),
+    ))));
+    run.set_text_decorations(Some(TextDecorationCollection::from_items([overline])));
+    paragraph.add_child(run);
+    view.blocks().add(paragraph);
+    let provider = native_node(&view).cast::<ITextProvider>().unwrap();
+    let all = provider.get_document_range().unwrap().unwrap();
+    assert_eq!(attribute(&all, 40023), VariantValue::I4(0x0056_3412));
+    assert_eq!(attribute(&all, 40024), VariantValue::I4(1));
+    assert_eq!(attribute(&all, 40028), VariantValue::I4(1));
+    let mut color = ComVariant::create(Some(&VariantValue::UI4(0x0056_3412))).unwrap();
+    let found = all.find_attribute(40023, color, 0).unwrap().unwrap();
+    // SAFETY: the input VARIANT belongs to this test and is released once.
+    unsafe {
+        color.dispose();
+    }
+    assert_eq!(text(&found, -1), "overline");
 }

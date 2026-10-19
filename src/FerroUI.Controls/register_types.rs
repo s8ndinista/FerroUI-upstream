@@ -147,6 +147,7 @@ const TYPES: &[&TypeInfo] = types![
     crate::automation::peers::DatePickerAutomationPeer,
     crate::automation::peers::DrawerPageAutomationPeer,
     crate::automation::peers::ItemsControlAutomationPeer,
+    crate::automation::peers::HyperlinkAutomationPeer,
     crate::automation::peers::ListBoxAutomationPeer,
     crate::automation::peers::ListItemAutomationPeer,
     crate::automation::peers::MenuItemAutomationPeer,

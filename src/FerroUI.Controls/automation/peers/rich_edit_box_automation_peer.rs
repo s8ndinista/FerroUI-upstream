@@ -1,15 +1,16 @@
 use super::{
-    AutomationControlType, AutomationPeer, AutomationPeerImpl, ControlAutomationPeer,
-    ControlAutomationPeerImpl,
+    AutomationControlType, AutomationPeer, AutomationPeerImpl, AutomationPeerImplExt,
+    ControlAutomationPeer, ControlAutomationPeerImpl,
 };
 use crate::automation::provider::{
-    ITextProvider, IValueProvider, ProviderAdapter, ProviderError, RichTextAutomationPeer,
-    TextProviderError,
+    ITextProvider, ITextProvider2, IValueProvider, ProviderAdapter, ProviderError,
+    RichTextAutomationPeer, RichTextAutomationState, TextProviderError,
 };
 use crate::automation::{ElementNotEnabledException, ValuePatternIdentifiers};
 use crate::{RichEditBox, RichTextBlock};
+use ferroui_base::data::core::ValueTypes;
 use ferroui_base::{
-    BoxedValue, FerroObjectImpl, FerroObjectImplExt, Ref, ferro_class, instantiate,
+    ferro_class, instantiate, BoxedValue, FerroObjectImpl, FerroObjectImplExt, Ref,
 };
 use std::rc::Rc;
 
@@ -17,12 +18,14 @@ use std::rc::Rc;
 #[repr(C)]
 pub struct RichEditBoxAutomationPeer {
     base: ControlAutomationPeer,
+    text_automation: Rc<RichTextAutomationState>,
 }
 ferro_class!(RichEditBoxAutomationPeer: ControlAutomationPeer);
 ferroui_base::ferro_class_info!(RichEditBoxAutomationPeer {
     interfaces: [
         Rc<dyn IValueProvider> => ProviderAdapter::as_value_provider,
         Rc<dyn ITextProvider> => ProviderAdapter::as_text_provider,
+        Rc<dyn ITextProvider2> => ProviderAdapter::as_text_provider2,
     ]
 });
 impl ControlAutomationPeerImpl for RichEditBoxAutomationPeer {}
@@ -33,10 +36,35 @@ impl AutomationPeerImpl for RichEditBoxAutomationPeer {
     fn get_placeholder_text_core(this: &Self) -> Option<String> {
         Some(this.owner().placeholder_text()).filter(|text| !text.is_empty())
     }
+    fn get_name_core(this: &Self) -> Option<String> {
+        Self::parent_get_name_core(this)
+            .filter(|name| !name.trim().is_empty())
+            .or_else(|| presenter_name(this.owner().header_presenter(), this.owner().header()))
+    }
+    fn get_help_text_core(this: &Self) -> Option<String> {
+        Self::parent_get_help_text_core(this)
+            .filter(|text| !text.trim().is_empty())
+            .or_else(|| {
+                presenter_name(
+                    this.owner().description_presenter(),
+                    this.owner().description(),
+                )
+            })
+    }
+    fn get_or_create_children_core(this: &Self) -> Rc<Vec<Ref<AutomationPeer>>> {
+        this.text_owner().map_or_else(
+            || Rc::new(Vec::new()),
+            |view| {
+                this.text_automation
+                    .children(&view, &this.text_peer(), None)
+            },
+        )
+    }
 }
 impl FerroObjectImpl for RichEditBoxAutomationPeer {
     fn constructed(this: &Self) {
         Self::parent_constructed(this);
+        this.text_automation.observe(this.to_ref());
         let weak = this.to_ref().downgrade();
         this.owner().property_changed(move |event| {
             if event.property() == RichEditBox::text_property().as_property() {
@@ -57,6 +85,7 @@ impl RichEditBoxAutomationPeer {
     pub fn construct(owner: &RichEditBox) -> Self {
         Self {
             base: ControlAutomationPeer::construct(owner),
+            text_automation: RichTextAutomationState::new(),
         }
     }
     pub fn new(owner: &RichEditBox) -> Ref<Self> {
@@ -108,6 +137,9 @@ impl RichTextAutomationPeer for RichEditBoxAutomationPeer {
     fn text_peer(&self) -> Ref<AutomationPeer> {
         self.to_ref().upcast()
     }
+    fn text_automation_state(&self) -> &Rc<RichTextAutomationState> {
+        &self.text_automation
+    }
 }
 impl IValueProvider for ProviderAdapter<RichEditBoxAutomationPeer> {
     fn peer(&self) -> Ref<AutomationPeer> {
@@ -122,4 +154,16 @@ impl IValueProvider for ProviderAdapter<RichEditBoxAutomationPeer> {
     fn set_value(&self, value: Option<&str>) -> Result<(), ProviderError> {
         self.0.set_value(value.unwrap_or_default())
     }
+}
+
+fn presenter_name(
+    presenter: Option<Ref<crate::presenters::ContentPresenter>>,
+    content: Option<BoxedValue>,
+) -> Option<String> {
+    presenter
+        .and_then(|presenter| presenter.child())
+        .map(|child| ControlAutomationPeer::create_peer_for_element(&child).get_name())
+        .filter(|name| !name.trim().is_empty())
+        .or_else(|| content.map(|content| ValueTypes::to_display_string(Some(&content))))
+        .filter(|name| !name.trim().is_empty())
 }
