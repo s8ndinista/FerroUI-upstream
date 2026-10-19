@@ -4,8 +4,8 @@
 use super::*;
 use ferrodesign_core::{EffectPropertyEdit, EffectStackEdit, VectorPath};
 use ferroui_base::media::imaging::RenderTargetBitmap;
-use ferroui_base::platform::IPlatformRenderInterface;
-use ferroui_base::{FerroLocator, PixelFormat, PixelRect, PixelSize};
+use ferroui_base::platform::{IPlatformRenderInterface, PixelFormat};
+use ferroui_base::{FerroLocator, PixelRect, PixelSize};
 
 const SIZE: i32 = 128;
 const RED: Color = Color::rgb(255, 0, 0);
