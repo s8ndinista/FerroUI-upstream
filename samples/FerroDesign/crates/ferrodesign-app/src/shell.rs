@@ -686,7 +686,10 @@ impl EditorShell {
                 .get(index);
             chrome.insert("ActivePage".into(), native_bounds(&button));
         }
-        json!({
+        // Keep each macro expansion small while preserving the flat bridge
+        // schema. These groups are moved into the result without cloning values.
+        let mut state = serde_json::Map::new();
+        for group in [json!({
             "revision":editor.revision,"documentRevision":editor.document.revision,"nodeCount":editor.document.nodes.len(),
             "selectionCount":editor.selection.len(),"selection":editor.selection,"selectionBounds":selection_bounds,
             "tool":self.canvas.tool.get().name(),"zoom":v.zoom,"pan":{"x":v.pan.x,"y":v.pan.y},
@@ -706,6 +709,7 @@ impl EditorShell {
             "prototypeAnimation":self.prototype.animation_state(),
             "prototypeScrollOffsets":self.prototype.scroll_offsets(),
             "vectorPoint":self.canvas.vector_point.get().map(|point| json!({"segment":point.segment,"kind":format!("{:?}",point.kind)})),
+        }), json!({
             "saveStatus":platform::document_save_status(),
             "serializationPending":self.pending_save.get(),
             "saveSerializations":self.save_serializations.get(),
@@ -722,7 +726,13 @@ impl EditorShell {
             "invalidNodes":stats.invalid_nodes,
             "canUndo":editor.undo_label().is_some(),"canRedo":editor.redo_label().is_some(),
             "historyLength":editor.history_len(),"presentation":self.canvas.presentation.get(),
-        }).to_string()
+        })] {
+            let serde_json::Value::Object(fields) = group else {
+                unreachable!("state groups are JSON objects");
+            };
+            state.extend(fields);
+        }
+        serde_json::Value::Object(state).to_string()
     }
     pub fn notify(&self, message: &str) {
         self.toast(message);
