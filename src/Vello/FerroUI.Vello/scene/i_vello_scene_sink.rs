@@ -1,5 +1,5 @@
 use crate::vello_options::VelloRenderingMode;
-use kurbo::{Affine, BezPath, Stroke};
+use kurbo::{Affine, BezPath, Shape, Stroke};
 use peniko::color::{AlphaColor, Srgb};
 use peniko::{BlendMode, Extend, Fill, FontData, Gradient, ImageData, ImageQuality};
 
@@ -204,6 +204,23 @@ pub trait IVelloSceneSink {
         anti_alias: bool,
     );
 
+    /// Fills a rectangle. `blend_mode` composes the fill with what is below
+    /// it in the innermost layer.
+    ///
+    /// The same pixels as [`fill`](Self::fill) with the path of the
+    /// rectangle: a renderer with a way of its own for rectangles whose
+    /// sides stay on the axes takes it.
+    fn fill_rect(
+        &mut self,
+        rect: kurbo::Rect,
+        transform: Affine,
+        paint: &VelloScenePaint,
+        blend_mode: BlendMode,
+        anti_alias: bool,
+    ) {
+        self.fill(&rect.to_path(0.1), Fill::NonZero, transform, paint, blend_mode, anti_alias);
+    }
+
     /// Strokes a path.
     fn stroke(&mut self, path: &BezPath, stroke: &Stroke, transform: Affine, paint: &VelloScenePaint, anti_alias: bool);
 
@@ -222,6 +239,15 @@ pub trait IVelloSceneSink {
     /// in it.
     fn push_clip(&mut self, path: &BezPath, fill_rule: Fill, transform: Affine, anti_alias: bool);
 
+    /// Restricts drawing to a rectangle until the matching
+    /// [`pop_clip`](Self::pop_clip): the same pixels as
+    /// [`push_clip`](Self::push_clip) with the path of the rectangle, which
+    /// a renderer with a way of its own for rectangles whose sides stay on
+    /// the axes takes.
+    fn push_clip_rect(&mut self, rect: kurbo::Rect, transform: Affine, anti_alias: bool) {
+        self.push_clip(&rect.to_path(0.1), Fill::NonZero, transform, anti_alias);
+    }
+
     /// Ends the innermost clip.
     fn pop_clip(&mut self);
 
@@ -232,6 +258,13 @@ pub trait IVelloSceneSink {
 
     /// Ends the innermost layer and composes it.
     fn pop_layer(&mut self);
+
+    /// The rectangle of the pixels the last
+    /// [`render_to_pixels`](Self::render_to_pixels) may have changed, or
+    /// `None` for all of them.
+    fn rendered_rect(&self) -> Option<VelloScenePixelRect> {
+        None
+    }
 
     /// Renders the scene into premultiplied RGBA pixels, `width() * 4` bytes
     /// a row without padding, replacing what they held. Pixels nothing was

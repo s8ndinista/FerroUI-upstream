@@ -51,7 +51,8 @@ use crate::gpu::vello_wgpu_device::{block_on, device_descriptor};
 use crate::gpu::{with_autorelease_pool, DeviceSurfaceRenderTarget, IVelloGpu, VelloWgpuDevice, VelloWgpuDeviceError};
 use crate::helpers::pixel_format_helper::scene_size;
 use crate::i_drawable_bitmap_impl::IDrawableBitmapImpl;
-use crate::surface_render_target::{SurfaceRenderTarget, SurfaceRenderTargetCreateInfo};
+use crate::scene::VelloScenePixelRect;
+use crate::surface_render_target::{SurfaceChange, SurfaceRenderTarget, SurfaceRenderTargetCreateInfo};
 use crate::vello_options::VelloRenderingMode;
 use crate::vello_platform::VelloPlatform;
 use ferroui_base::platform::surfaces::IPlatformRenderSurface;
@@ -291,43 +292,45 @@ impl IVelloGpu for VelloMetalGpu {
 enum WindowFrame {
     /// A texture of the device: the hybrid and the GPU mode.
     Device(DeviceSurfaceRenderTarget),
-    /// Pixels in memory: the CPU mode.
-    Memory(SurfaceRenderTarget),
+    /// Pixels in memory: the CPU mode, with a texture of the device that
+    /// holds the same pixels once a frame was copied, and into which only
+    /// what the scenes changed is uploaded.
+    Memory(SurfaceRenderTarget, RefCell<Option<wgpu::Texture>>),
 }
 
 impl WindowFrame {
     fn pixel_size(&self) -> PixelSize {
         match self {
             WindowFrame::Device(surface) => surface.pixel_size(),
-            WindowFrame::Memory(surface) => surface.pixel_size(),
+            WindowFrame::Memory(surface, _) => surface.pixel_size(),
         }
     }
 
     fn dpi(&self) -> ferroui_base::Vector {
         match self {
             WindowFrame::Device(surface) => surface.dpi(),
-            WindowFrame::Memory(surface) => surface.dpi(),
+            WindowFrame::Memory(surface, _) => surface.dpi(),
         }
     }
 
     fn has_content(&self) -> bool {
         match self {
             WindowFrame::Device(surface) => surface.has_content(),
-            WindowFrame::Memory(surface) => surface.has_content(),
+            WindowFrame::Memory(surface, _) => surface.has_content(),
         }
     }
 
     fn is_corrupted(&self) -> bool {
         match self {
             WindowFrame::Device(surface) => surface.is_corrupted(),
-            WindowFrame::Memory(surface) => surface.is_corrupted(),
+            WindowFrame::Memory(surface, _) => surface.is_corrupted(),
         }
     }
 
     fn create_drawing_context_with(&self, disposables: Vec<Box<dyn FnOnce()>>) -> DrawingContextImpl {
         match self {
             WindowFrame::Device(surface) => surface.create_drawing_context_with(disposables),
-            WindowFrame::Memory(surface) => surface.create_drawing_context_with(disposables),
+            WindowFrame::Memory(surface, _) => surface.create_drawing_context_with(disposables),
         }
     }
 
@@ -340,10 +343,34 @@ impl WindowFrame {
                     device.copy_texture_to_texture(texture.view(), target, premultiply);
                 }
             }
-            WindowFrame::Memory(surface) => {
-                if let Some(image) = IDrawableBitmapImpl::image(surface) {
-                    device.copy_pixels_to_texture(image.data.data(), image.width, image.height, target);
+            WindowFrame::Memory(surface, mirror) => {
+                let Some(image) = IDrawableBitmapImpl::image(surface) else {
+                    return;
+                };
+                let (width, height) = (image.width, image.height);
+                let mut mirror = mirror.borrow_mut();
+                let changed = surface.take_changed();
+                let fits = mirror.as_ref().is_some_and(|texture| texture.width() == width && texture.height() == height);
+                let changed = match fits {
+                    true => changed,
+                    false => {
+                        *mirror = Some(device.create_pixel_texture(width, height));
+                        Some(SurfaceChange::All)
+                    }
+                };
+                let mirror = mirror.as_ref().expect("the texture of the frame was just made");
+                let rect = match changed {
+                    None => None,
+                    Some(SurfaceChange::All) => {
+                        Some(VelloScenePixelRect { x0: 0, y0: 0, x1: width as u16, y1: height as u16 })
+                    }
+                    Some(SurfaceChange::Rect(rect)) => Some(rect),
+                };
+                if let Some(rect) = rect {
+                    device.write_pixels_to_texture(image.data.data(), width, rect, mirror);
                 }
+                let view = mirror.create_view(&wgpu::TextureViewDescriptor::default());
+                device.copy_texture_to_texture(&view, target, false);
             }
         }
     }
@@ -351,7 +378,7 @@ impl WindowFrame {
     fn dispose(&self) {
         match self {
             WindowFrame::Device(surface) => IBitmapImpl::dispose(surface),
-            WindowFrame::Memory(surface) => IBitmapImpl::dispose(surface),
+            WindowFrame::Memory(surface, _) => IBitmapImpl::dispose(surface),
         }
     }
 }
@@ -412,13 +439,16 @@ impl VelloMetalRenderTarget {
                     self.rendering_modes.clone(),
                     false,
                 )),
-                false => WindowFrame::Memory(SurfaceRenderTarget::new(SurfaceRenderTargetCreateInfo {
-                    width: pixel_size.width,
-                    height: pixel_size.height,
-                    dpi,
-                    rendering_modes: vec![VelloRenderingMode::Cpu],
-                    use_scaled_drawing: false,
-                })),
+                false => WindowFrame::Memory(
+                    SurfaceRenderTarget::new(SurfaceRenderTargetCreateInfo {
+                        width: pixel_size.width,
+                        height: pixel_size.height,
+                        dpi,
+                        rendering_modes: vec![VelloRenderingMode::Cpu],
+                        use_scaled_drawing: false,
+                    }),
+                    RefCell::new(None),
+                ),
             }));
         }
 

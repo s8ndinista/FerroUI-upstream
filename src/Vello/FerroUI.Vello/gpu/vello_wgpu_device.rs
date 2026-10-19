@@ -1,3 +1,4 @@
+use crate::scene::VelloScenePixelRect;
 use std::any::{Any, TypeId};
 use std::collections::HashMap;
 use std::future::Future;
@@ -255,6 +256,47 @@ impl VelloWgpuDevice {
     /// texture that can be rendered to, whatever its format of four 8 bit
     /// channels: how a scene of the CPU mode reaches the texture of a
     /// window.
+    /// Creates a texture of pixels that are written to part by part
+    /// ([`write_pixels_to_texture`](Self::write_pixels_to_texture)) and
+    /// copied from: the copy on the device of a frame in memory.
+    pub fn create_pixel_texture(&self, width: u32, height: u32) -> wgpu::Texture {
+        self.device.create_texture(&wgpu::TextureDescriptor {
+            label: Some("FerroUI Vello frame"),
+            size: wgpu::Extent3d { width: width.max(1), height: height.max(1), depth_or_array_layers: 1 },
+            mip_level_count: 1,
+            sample_count: 1,
+            dimension: wgpu::TextureDimension::D2,
+            format: wgpu::TextureFormat::Rgba8Unorm,
+            usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST | wgpu::TextureUsages::COPY_SRC,
+            view_formats: &[],
+        })
+    }
+
+    /// Writes the pixels of a rectangle of RGBA pixels, `width` a row, into
+    /// the same rectangle of a texture of their size.
+    pub fn write_pixels_to_texture(&self, rgba: &[u8], width: u32, rect: VelloScenePixelRect, target: &wgpu::Texture) {
+        let (x0, y0) = (u32::from(rect.x0).min(target.width()), u32::from(rect.y0).min(target.height()));
+        let (x1, y1) = (u32::from(rect.x1).min(target.width()), u32::from(rect.y1).min(target.height()));
+        if x1 <= x0 || y1 <= y0 {
+            return;
+        }
+        let offset = (u64::from(y0) * u64::from(width) + u64::from(x0)) * 4;
+        let _perf = crate::perf::scope(crate::perf::Phase::Upload, u64::from(x1 - x0) * u64::from(y1 - y0) * 4);
+        crate::gpu::with_autorelease_pool(|| {
+            self.queue.write_texture(
+                wgpu::TexelCopyTextureInfo {
+                    texture: target,
+                    mip_level: 0,
+                    origin: wgpu::Origin3d { x: x0, y: y0, z: 0 },
+                    aspect: wgpu::TextureAspect::All,
+                },
+                &rgba[offset as usize..],
+                wgpu::TexelCopyBufferLayout { offset: 0, bytes_per_row: Some(4 * width), rows_per_image: None },
+                wgpu::Extent3d { width: x1 - x0, height: y1 - y0, depth_or_array_layers: 1 },
+            );
+        });
+    }
+
     pub fn copy_pixels_to_texture(&self, rgba: &[u8], width: u32, height: u32, target: &wgpu::Texture) {
         let source = self.create_image_texture(width, height, rgba);
         let source_view = source.create_view(&wgpu::TextureViewDescriptor::default());
