@@ -2198,8 +2198,9 @@ fn rich_preedit_blur_restores_confirmed_unicode_text_and_selection_before_observ
     let panel = StackPanel::new();
     panel.children().add(target.clone());
     panel.children().add(other.clone());
-    let _root = TestRoot::with_child(panel);
-    target.focus();
+    let root = TestRoot::with_child(panel);
+    root.execute_initial_layout_pass();
+    assert!(target.focus());
     target.set_selection_start(1);
     target.set_selection_end(5);
     let observed = Rc::new(RefCell::new(None));
