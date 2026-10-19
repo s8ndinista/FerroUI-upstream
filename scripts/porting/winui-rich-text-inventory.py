@@ -293,7 +293,7 @@ def api_type_plan(owner: str) -> dict:
         return {
             "batch": "R7",
             "candidate_paths": ["src/FerroUI.Controls/automation/", "src/Windows/FerroUI.Win32/automation/"],
-            "remaining_review": "Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2, annotations, composition and unsupported attribute families remain explicit pending contracts.",
+            "remaining_review": "Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2 caret and TextChild have mapped implementations; annotations, TextEdit composition and unsupported attribute families remain explicit pending contracts.",
         }
     if name in {"TextHighlighter", "TextHighlighterBase", "TextRange"} and ".Documents." in owner:
         return {
@@ -322,7 +322,7 @@ def api_type_plan(owner: str) -> dict:
     if name in {"ITextCharacterFormat", "ITextParagraphFormat"}:
         return {"batch": "R3/R8", "candidate_paths": [DOCUMENT_ROOT + "character_format.rs"], "remaining_review": "Audit native formatting units, mixed values, font/brush representation, tabs, lists, language and formatting flags. Rust patches cover only explicitly mapped fields."}
     if name in {"TextGetOptions", "TextSetOptions"}:
-        return {"batch": "R4/R8", "candidate_paths": ["src/FerroUI.Controls/rich_text/rtf.rs", "src/FerroUI.Controls/rich_text/rich_text_transfer.rs"], "remaining_review": "Review every import/export option and supported content feature. Explicit unsupported RTF errors do not implement omitted flags or native stream APIs."}
+        return {"batch": "R4/R8", "candidate_paths": ["src/FerroUI.Controls/rich_text/rich_edit_text_document.rs", "src/FerroUI.Controls/rich_text/rtf.rs", "src/FerroUI.Controls/rich_text/rich_text_transfer.rs"], "remaining_review": "Review every import/export option and supported content feature against its mapped implementation. Typed get/set flags reject unsupported modes explicitly; these errors do not implement omitted content semantics or native stream APIs."}
     if name == "FontWeights":
         return {"batch": "R6", "candidate_paths": ["src/FerroUI.Base/media/font_weight.rs"], "remaining_review": "Audit named font weight values, conversion and font selection; each retained XML property has its own state."}
     if owner.startswith("Microsoft.UI.Text."):

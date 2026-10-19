@@ -76,6 +76,23 @@ passed `cargo test --locked --offline -p ferroui-controls --lib rich_ --no-fail-
 added view/highlighter tests, four portable follow-ups, native bridge tests and
 markup/catalog tests need their own later records.
 
+The continuation checkpoints added the following completed runs (the authoritative
+records and exact revisions are also in `mapping.json`):
+
+| Checkpoint | Command scope | Result |
+|---|---|---|
+| `871d566d25aab3e89021d7fc5db6edf32c07267e` | controls `--lib rich_` | 181 passed; 0 failed; 4434 filtered out. |
+| `f1a051f8eaddd2d9b651a731206eebd9fa3a252a` | Win32 `--lib text_` | 34 passed; 0 failed; 234 filtered out, including ten text pattern/range bridge cases on the Linux-hosted test harness. |
+
+The new paragraph tests cover all numeric spacing rules, point conversions,
+actual line/overflow behavior, signed indents and RTF sl/slmult ordering. The
+27 focused document-service tests include the adapted UseLfAndUseCrLf fixture;
+all other additions are independent contract regressions. The control additions
+exercise cancellation/reentrancy, deferred notification lifetime, real content
+presenters, navigation and IME state. Accessibility additions exercise caret
+focus, stable weak hyperlink peers, TextChild, native marshalling and overflow
+geometry. These records do not verify later presenter/stream changes.
+
 ## Implementation test map
 
 | Rust family | Concrete evidence and current limits |
@@ -84,7 +101,7 @@ markup/catalog tests need their own later records.
 | [Rich view tests](../../../src/FerroUI.Controls/rich_text_block_tests.rs) | Measure/wrap, inherited formatting invalidation, selection geometry/direction, linked reflow and ownership, embedded controls, text-pointer insertion geometry, hyperlink host integration, and later real-ellipsis/finite-height/paragraph-indent/visible-range regressions. Check the validation record to determine which additions were executed in a particular run. |
 | [Editor tests](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) | Rich undo/redo, typing coalescing, read-only/max-length policy, failed transaction rollback, IME preview/cancel/commit and surrounding text, stale async clipboard guards, native transfer policies, bounded RTF fixtures, live ranges/search, mixed formatting, shared control geometry and caret blinking. These do not constitute execution of a real platform IME or unavailable native TOM engine. |
 | [Highlighter tests](../../../src/FerroUI.Controls/documents/text_highlighter_tests.rs) | All ten literal upstream overlap fixtures plus an independent per-character layering oracle, signed range value copies, markup boxing, empty/invalid clipping, brush defaults, mutable brush invalidation and weak/reentrant subscriptions. Native raster/high-contrast comparisons remain separate. |
-| [Portable text automation tests](../../../src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs) | Six Text/eighteen TextRange operations over the live model, scalar-safe text, range identity/rebasing/lifetime, selection policies, format and text search, unit normalization, sixteen typed attributes/sentinels, children, events and shaped/clipped geometry. Later tests cover collapsed source geometry, line separators and scroll alignment. |
+| [Portable text automation tests](../../../src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs) | Six Text/eighteen TextRange operations, Text2 caret and TextChild contracts over the live model, scalar-safe text, range identity/rebasing/lifetime, selection policies, format and text search, unit normalization, 25 typed attributes/sentinels, stable hyperlink peers, children, events and shaped/clipped overflow geometry. Scroll alignment and presenter changes added after the recorded checkpoint require a new run. |
 | [Native text pattern tests](../../../src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs) and [range identity lifetime test](../../../src/Windows/FerroUI.Win32/automation/text_range_node.rs) | Native provider slots, worker-to-UI dispatch, BSTR/SAFEARRAY/VARIANT/HRESULT values, correct reserved sentinels/COLORREFs, geometry/children, document replacement, foreign ranges, text/selection events and delayed COM release. Test definitions and a cross-compile are not evidence of an actual Windows UI Automation client or screen-reader run. |
 
 The source overlap fixtures preserved by

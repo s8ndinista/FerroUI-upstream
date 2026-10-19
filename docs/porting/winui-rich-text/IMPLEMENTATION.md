@@ -282,13 +282,14 @@ stale snapshot over the changed model.
 Input scope and prediction settings are passed to existing backend options.
 They do not implement native proofing, dictionary prediction, handwriting or
 candidate-window services. Real platform composition, cancellation and focus
-flows remain separate tests from the deterministic control suite. Native event
-ordering and cancellable SelectionChanging are recorded as remaining differences.
+flows remain separate tests from the deterministic control suite. Synchronous TextChanging, deferred TextChanged and cancellable/reentrant
+SelectionChanging now follow the mapped native host contracts. Real platform
+input ordering still requires separate backend verification.
 
 ## Text accessibility
 
-Both rich view and rich editor peers expose `ITextProvider`; the editor also
-retains `IValueProvider`. The portable service implements the six Text provider
+Both rich view and rich editor peers expose `ITextProvider` and `ITextProvider2`;
+the editor also retains `IValueProvider`. The portable service implements the six Text provider
 operations and eighteen TextRange operations over live weak model ranges. It
 handles single selection, embedded controls, text search, formatting search,
 range movement, geometry and text/selection notifications.
@@ -299,7 +300,7 @@ and embedded-control boundaries. Line falls back to Paragraph when the document
 is not completely laid out; Page falls back to Document without a complete
 multiple-page overflow chain. These are separate from the five TOM-facade units.
 
-Sixteen attribute identifiers have typed handling, including font, color,
+Twenty-five attribute identifiers have typed handling, including font, color,
 read-only/visibility, decoration/baseline, alignment and indentation values.
 Mixed and NotSupported are values distinct from provider failures. Native font
 size/paragraph metrics are converted to typographic points at this boundary;
@@ -313,9 +314,57 @@ portable geometry is transformed to native screen coordinates at the boundary.
 Native tests are linked separately from portable tests; compilation alone is not
 a Windows accessibility-client run.
 
-Text2/caret/annotation, TextEdit/TextChild, additional attributes, dedicated
-hyperlink peers and native text bridges on other backends remain pending. See
-RT-I10 and RT-P05, and the exact pending member list in [API-MAP.md](API-MAP.md).
+Text2 caret activity follows keyboard focus independently of blink visibility,
+and queries do not alter selection. Hyperlinks expose stable weak automation
+peers with Invoke, live metadata and TextChild container/range identity. Returned
+child ranges stay associated with the owning document, not the lifetime of the
+inline peer. TextEdit, annotation lookup, remaining attributes and native text
+bridges on other backends remain pending. See RT-I10 and RT-P05, and the exact
+pending member list in [API-MAP.md](API-MAP.md).
+
+## Paragraph spacing and indentation
+
+`ParagraphFormat::set_line_spacing(rule, value)` and `set_indents(first, left,
+right)` accept native typographic points. Absolute distances are converted to
+FerroUI layout units; Multiple retains its scalar multiplier. The corresponding
+getters convert back to points. Direct Paragraph properties and patch fields
+remain in layout units, like the rest of FerroUI.
+
+Single, OneAndHalf, Double, AtLeast, Exactly and Multiple affect actual line
+advancement, available-height fitting and overflow. Undefined keeps the existing
+LineHeight/LineStackingStrategy behavior. Percent is retained in the native-valued
+enum but rejected by the paragraph operation, matching the pinned contract.
+
+Indents allow finite negative values and remain separate from nonnegative block
+margins. First-line indentation is relative to left indentation. Snapshot edits,
+paragraph splits, undo and RTF retain these values. The codec recognizes either
+ordering of RTF `sl` and `slmult`, and preserves signed `fi`/`li`/`ri`. During RTF
+export, external horizontal block margins are normalized into indentation.
+
+## Text operation flags and document defaults
+
+Document/range `get_text` and `set_text_with_options` use native-valued
+`TextGetOptions` and `TextSetOptions`, with typed errors for unknown, contradictory
+or unsupported combinations. The normalized model keeps LF and scalar-safe
+UTF-16 positions. The native-style document getter can project CR/CRLF/LF and its
+synthetic final paragraph marker without modifying live offsets. The native
+UseLfAndUseCrLf fixture is retained in the focused document-service tests.
+
+`FindOptions` has native Word/Case values. Its signed search length supplies the
+direction and bound; the separate `TextFindOptions` convenience API retains its
+explicit Backwards option. Unicode lowercase matching is not locale collation.
+
+Default character/paragraph formats are shared by facades over one editor and
+copied by value, including mutable collections. They apply to empty typing and
+whole plain-document replacement, preserve existing nonempty text when changed,
+and participate in undo and failed-group rollback. Paragraph-format queries
+compare effective paragraph fields separately from character formatting.
+
+Object-text projection, numbering, hidden-text filtering/unhiding, UnicodeBidi
+insertion mode and ApplyRtfDocumentDefaults return explicit unsupported errors.
+Supported plain Unlink insertion preserves adjacent links while placing the new
+content outside them. Unsupported declarations are not counted as implemented
+operation semantics.
 
 ## Extending the port
 

@@ -53,3 +53,49 @@ actual Rust symbol, its test evidence, and any observable translation. Runtime
 test results are recorded only after their commands finish. Native Windows
 execution, real input-method sessions, screen-reader interaction, exact rendering,
 and external-engine contracts remain separate acceptance gates in [PLAN.md](PLAN.md).
+
+## Continued source review and service contracts — 2026-10-19
+
+The published branch was recovered at `2489efdcc60229a78eadbb52bcf4bc07bc5a3f86`
+in an isolated checkout. Its GitHub CI failures were traced to a missing unsafe
+block around an owned-BSTR COM test call; the repair was published as
+`1b4704b2f96ac844dbfbe48b96fa5621e12e3ed3`.
+
+Paragraph spacing and signed indentation were published as
+`32b19d14facbf06a94c9715f1120d8e2a5b75a90`. This batch adds native-valued spacing
+rules, point conversion, actual line/overflow behavior, signed indent storage,
+RTF multiple spacing and eleven independent regressions. The enum values have
+complete member mappings; the broader paragraph/native formatter contracts do
+not inherit that completion status.
+
+The document-service, edit-event and accessibility batch was published as
+`871d566d25aab3e89021d7fc5db6edf32c07267e`. It adds shared default formats,
+explicit get/set/find flags, native newline fixture assertions, UTF-32 and range
+operations, cancellable/reentrant selection, synchronous TextChanging/deferred
+TextChanged, framework content presenters, Text2 caret and TextChild hyperlink
+providers. The integrated rich-text filter passed all 181 tests. Initial fixture
+failures were corrected by using the existing per-thread test scope, installing
+the framework keyboard device for focus tests and performing layout before
+inspecting the automation visual tree. Production behavior was not weakened to
+make those assertions pass.
+
+The Win32 text-related filter subsequently passed 34 tests, including ten text
+pattern/range bridge cases. Its first compilation caught a pattern-array arity
+mismatch after TextChild was added; `f1a051f8eaddd2d9b651a731206eebd9fa3a252a`
+repairs the complete twelve-interface registration. These runs occurred on a
+Linux host using the portable Win32 test harness; they are not Windows
+screen-reader or real native accessibility-client execution.
+
+The mapping audit also found three historical test symbols absent from the
+published sources. The ellipsis entry now points to an existing executed test,
+and two absent scroll-test references were removed pending real regression
+coverage. The generator checks every retained target and test symbol. No
+unpublished test definition is treated as recovered or executed evidence.
+
+Further source review established that real templates require RichEditBox to use
+FerroUI TemplatedControl with a persistent rich presenter, not inherit the display
+control's finite-height pagination behavior. It also distinguished display
+batching from model notification batching, and native tab stops from the current
+formatter's fixed-width tabs. These are implementation tasks, not stored-property
+substitutes. The next batch preserves one document/editor while completing the
+template/presenter, scrolling and stream-service boundaries.

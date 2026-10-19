@@ -4347,8 +4347,18 @@
       "component": "upstream tests",
       "state": "reference",
       "reuse_or_destination_candidates": [],
-      "targets": [],
-      "tests": [],
+      "targets": [
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_document_tests.rs",
+          "symbol": "use_lf_and_use_cr_lf"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_document_tests.rs",
+          "symbol": "use_lf_and_use_cr_lf"
+        }
+      ],
       "includes": [
         {
           "header": "pch.h",
@@ -4718,6 +4728,15 @@
           "kind": "scoped_callable_definition_candidate",
           "state": "unreviewed"
         }
+      ],
+      "reason": "Native test reference. UseLfAndUseCrLf terminal paragraph/newline assertions are directly adapted; the other native cases remain reference evidence, not executed WinUI tests.",
+      "adapted_test_cases": [
+        "UseLfAndUseCrLf"
+      ],
+      "deviations": [
+        "RT-A03",
+        "RT-I01",
+        "RT-I08"
       ]
     },
     {
@@ -16100,6 +16119,42 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_box.rs",
           "symbol": "pub fn text_input_method_client("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "pub struct RichEditBoxSelectionChangingEventArgs"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "pub fn selection_changing_event("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text_block.rs",
+          "symbol": "pub fn select("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "pub struct RichEditBoxTextChangingEventArgs"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "pub fn text_changing_event("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "pub fn text_changed_event("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "pub fn header("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "pub fn header_template("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "pub fn description("
         }
       ],
       "tests": [
@@ -16122,6 +16177,54 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
           "symbol": "rich_edit_ime_notifications_expose_committed_text_during_preview_publication"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_selection_changing_cancellation_preserves_selection_and_properties"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_selection_changing_reentrant_view_and_tom_changes_publish_once"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_canceled_post_edit_selection_is_retained_in_undo_and_redo"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_grouped_range_edits_expose_only_the_final_user_selection"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_selection_property_keyboard_and_ime_requests_share_cancellation"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_text_changing_reports_content_and_formatting_before_deferred_text_changed"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_deferred_text_changed_drops_replaced_documents_and_allows_further_edits"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_deferred_notifications_do_not_retain_the_control"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_header_description_and_placeholder_use_framework_visuals_and_shared_geometry"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_header_template_renders_without_header_data_and_is_not_rebuilt_by_measure"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_placeholder_participates_in_measure_alignment_and_foreground_inheritance"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_header_and_embedded_control_remain_in_the_same_visual_tree_after_relayout"
         }
       ],
       "includes": [
@@ -16359,12 +16462,14 @@
           "state": "unreviewed"
         }
       ],
-      "reason": "The native rich editor host is translated into the shared Rust view/editor/input model. This does not incorporate the external WinUIEdit engine; every unimplemented control, template and native service member remains pending.",
+      "reason": "The shared Rust editor/control supplies the mapped host editing, IME, clipboard, selection, synchronous/deferred text notifications and composed header/placeholder/description behavior. Cancellable/reentrant selection and native notification timing are now tested. Native text service/windowless host ABI, complete templates/scrolling, input panes, proofing and all unmapped host members remain pending.",
       "deviations": [
         "RT-I04",
         "RT-I06",
         "RT-I07",
-        "RT-I08"
+        "RT-I08",
+        "RT-A03",
+        "RT-A04"
       ]
     },
     {
@@ -16392,6 +16497,42 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_box.rs",
           "symbol": "pub fn text_input_method_client("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "pub struct RichEditBoxSelectionChangingEventArgs"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "pub fn selection_changing_event("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text_block.rs",
+          "symbol": "pub fn select("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "pub struct RichEditBoxTextChangingEventArgs"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "pub fn text_changing_event("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "pub fn text_changed_event("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "pub fn header("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "pub fn header_template("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "pub fn description("
         }
       ],
       "tests": [
@@ -16414,6 +16555,54 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
           "symbol": "rich_edit_ime_notifications_expose_committed_text_during_preview_publication"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_selection_changing_cancellation_preserves_selection_and_properties"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_selection_changing_reentrant_view_and_tom_changes_publish_once"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_canceled_post_edit_selection_is_retained_in_undo_and_redo"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_grouped_range_edits_expose_only_the_final_user_selection"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_selection_property_keyboard_and_ime_requests_share_cancellation"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_text_changing_reports_content_and_formatting_before_deferred_text_changed"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_deferred_text_changed_drops_replaced_documents_and_allows_further_edits"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_deferred_notifications_do_not_retain_the_control"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_header_description_and_placeholder_use_framework_visuals_and_shared_geometry"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_header_template_renders_without_header_data_and_is_not_rebuilt_by_measure"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_placeholder_participates_in_measure_alignment_and_foreground_inheritance"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_header_and_embedded_control_remain_in_the_same_visual_tree_after_relayout"
         }
       ],
       "includes": [
@@ -16428,12 +16617,14 @@
         }
       ],
       "callable_candidates": [],
-      "reason": "The native rich editor host is translated into the shared Rust view/editor/input model. This does not incorporate the external WinUIEdit engine; every unimplemented control, template and native service member remains pending.",
+      "reason": "The shared Rust editor/control supplies the mapped host editing, IME, clipboard, selection, synchronous/deferred text notifications and composed header/placeholder/description behavior. Cancellable/reentrant selection and native notification timing are now tested. Native text service/windowless host ABI, complete templates/scrolling, input panes, proofing and all unmapped host members remain pending.",
       "deviations": [
         "RT-I04",
         "RT-I06",
         "RT-I07",
-        "RT-I08"
+        "RT-I08",
+        "RT-A03",
+        "RT-A04"
       ]
     },
     {
@@ -17418,6 +17609,42 @@
         {
           "path": "src/FerroUI.Controls/rich_text/rich_text_editor.rs",
           "symbol": "pub fn set_preedit("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "pub struct RichEditBoxSelectionChangingEventArgs"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "pub fn selection_changing_event("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text_block.rs",
+          "symbol": "pub fn select("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "pub struct RichEditBoxTextChangingEventArgs"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "pub fn text_changing_event("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "pub fn text_changed_event("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "pub fn header("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "pub fn header_template("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "pub fn description("
         }
       ],
       "tests": [
@@ -17436,6 +17663,54 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
           "symbol": "rich_edit_ime_notifications_expose_committed_text_during_preview_publication"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_selection_changing_cancellation_preserves_selection_and_properties"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_selection_changing_reentrant_view_and_tom_changes_publish_once"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_canceled_post_edit_selection_is_retained_in_undo_and_redo"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_grouped_range_edits_expose_only_the_final_user_selection"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_selection_property_keyboard_and_ime_requests_share_cancellation"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_text_changing_reports_content_and_formatting_before_deferred_text_changed"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_deferred_text_changed_drops_replaced_documents_and_allows_further_edits"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_deferred_notifications_do_not_retain_the_control"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_header_description_and_placeholder_use_framework_visuals_and_shared_geometry"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_header_template_renders_without_header_data_and_is_not_rebuilt_by_measure"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_placeholder_participates_in_measure_alignment_and_foreground_inheritance"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_header_and_embedded_control_remain_in_the_same_visual_tree_after_relayout"
         }
       ],
       "includes": [
@@ -18998,12 +19273,13 @@
           "state": "unreviewed"
         }
       ],
-      "reason": "The visible host delegates editable behavior to an external native engine. RichTextEditor implements the mapped mutations, history and composition contracts through the shared model; Windows host/engine services and the full native surface are not present.",
+      "reason": "The shared Rust editor/control supplies the mapped host editing, IME, clipboard, selection, synchronous/deferred text notifications and composed header/placeholder/description behavior. Cancellable/reentrant selection and native notification timing are now tested. Native text service/windowless host ABI, complete templates/scrolling, input panes, proofing and all unmapped host members remain pending.",
       "deviations": [
         "RT-A03",
         "RT-I06",
         "RT-I07",
-        "RT-I08"
+        "RT-I08",
+        "RT-A04"
       ]
     },
     {
@@ -19031,6 +19307,42 @@
         {
           "path": "src/FerroUI.Controls/rich_text/rich_text_editor.rs",
           "symbol": "pub fn set_preedit("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "pub struct RichEditBoxSelectionChangingEventArgs"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "pub fn selection_changing_event("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text_block.rs",
+          "symbol": "pub fn select("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "pub struct RichEditBoxTextChangingEventArgs"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "pub fn text_changing_event("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "pub fn text_changed_event("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "pub fn header("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "pub fn header_template("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "pub fn description("
         }
       ],
       "tests": [
@@ -19049,6 +19361,54 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
           "symbol": "rich_edit_ime_notifications_expose_committed_text_during_preview_publication"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_selection_changing_cancellation_preserves_selection_and_properties"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_selection_changing_reentrant_view_and_tom_changes_publish_once"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_canceled_post_edit_selection_is_retained_in_undo_and_redo"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_grouped_range_edits_expose_only_the_final_user_selection"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_selection_property_keyboard_and_ime_requests_share_cancellation"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_text_changing_reports_content_and_formatting_before_deferred_text_changed"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_deferred_text_changed_drops_replaced_documents_and_allows_further_edits"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_deferred_notifications_do_not_retain_the_control"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_header_description_and_placeholder_use_framework_visuals_and_shared_geometry"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_header_template_renders_without_header_data_and_is_not_rebuilt_by_measure"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_placeholder_participates_in_measure_alignment_and_foreground_inheritance"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_header_and_embedded_control_remain_in_the_same_visual_tree_after_relayout"
         }
       ],
       "includes": [
@@ -19128,12 +19488,13 @@
           "state": "unreviewed"
         }
       ],
-      "reason": "The visible host delegates editable behavior to an external native engine. RichTextEditor implements the mapped mutations, history and composition contracts through the shared model; Windows host/engine services and the full native surface are not present.",
+      "reason": "The shared Rust editor/control supplies the mapped host editing, IME, clipboard, selection, synchronous/deferred text notifications and composed header/placeholder/description behavior. Cancellable/reentrant selection and native notification timing are now tested. Native text service/windowless host ABI, complete templates/scrolling, input panes, proofing and all unmapped host members remain pending.",
       "deviations": [
         "RT-A03",
         "RT-I06",
         "RT-I07",
-        "RT-I08"
+        "RT-I08",
+        "RT-A04"
       ]
     },
     {
@@ -48145,12 +48506,70 @@
       "lines": 391,
       "scope_reason": "related document/control/service declaration or projection",
       "component": "text automation",
-      "state": "pending",
+      "state": "partial",
       "reuse_or_destination_candidates": [
         "src/FerroUI.Controls/automation/"
       ],
-      "targets": [],
-      "tests": [],
+      "targets": [
+        {
+          "path": "src/FerroUI.Controls/automation/provider/i_text_child_provider.rs",
+          "symbol": "pub trait ITextChildProvider"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/peers/hyperlink_automation_peer.rs",
+          "symbol": "pub struct HyperlinkAutomationPeer"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/automation_node_text.rs",
+          "symbol": "get_text_container"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/automation_node_text.rs",
+          "symbol": "get_text_range"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/peers/hyperlink_automation_peer.rs",
+          "symbol": "get_name_core"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/peers/hyperlink_automation_peer.rs",
+          "symbol": "get_bounding_rectangle_core"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_hyperlinks_have_stable_identity_text_child_ranges_and_invoke"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_hyperlink_tree_retains_embedded_children_and_innermost_enclosing_peer"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_retained_hyperlink_peer_does_not_retain_document_or_owners"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs",
+          "symbol": "native_hyperlink_text_child_has_canonical_container_ranges_and_dispatches_invoke"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs",
+          "symbol": "native_text_child_range_survives_child_removal_but_not_document_replacement"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_hyperlink_metadata_geometry_focus_and_document_detachment_are_live"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_hyperlink_structure_events_follow_identity_changes_only"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_overflow_hyperlink_geometry_and_point_ranges_share_the_root"
+        }
+      ],
       "includes": [
         {
           "header": "precomp.h",
@@ -48376,6 +48795,12 @@
           "kind": "scoped_callable_definition_candidate",
           "state": "unreviewed"
         }
+      ],
+      "reason": "HyperlinkAutomationPeer maps name precedence, class/control type, weak ownership, live range geometry, offscreen metadata, Invoke, focus routing and child hierarchy to native FerroUI automation. TextChild uses the same document range. FerroUI enabled/tab-stop policy is honored; the native first-rectangle clickable-point specialization, full property-change event parity and remaining source members are not implemented by this map.",
+      "deviations": [
+        "RT-A01",
+        "RT-I05",
+        "RT-I10"
       ]
     },
     {
@@ -48386,12 +48811,70 @@
       "lines": 48,
       "scope_reason": "related document/control/service declaration or projection",
       "component": "text automation",
-      "state": "pending",
+      "state": "partial",
       "reuse_or_destination_candidates": [
         "src/FerroUI.Controls/automation/"
       ],
-      "targets": [],
-      "tests": [],
+      "targets": [
+        {
+          "path": "src/FerroUI.Controls/automation/provider/i_text_child_provider.rs",
+          "symbol": "pub trait ITextChildProvider"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/peers/hyperlink_automation_peer.rs",
+          "symbol": "pub struct HyperlinkAutomationPeer"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/automation_node_text.rs",
+          "symbol": "get_text_container"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/automation_node_text.rs",
+          "symbol": "get_text_range"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/peers/hyperlink_automation_peer.rs",
+          "symbol": "get_name_core"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/peers/hyperlink_automation_peer.rs",
+          "symbol": "get_bounding_rectangle_core"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_hyperlinks_have_stable_identity_text_child_ranges_and_invoke"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_hyperlink_tree_retains_embedded_children_and_innermost_enclosing_peer"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_retained_hyperlink_peer_does_not_retain_document_or_owners"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs",
+          "symbol": "native_hyperlink_text_child_has_canonical_container_ranges_and_dispatches_invoke"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs",
+          "symbol": "native_text_child_range_survives_child_removal_but_not_document_replacement"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_hyperlink_metadata_geometry_focus_and_document_detachment_are_live"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_hyperlink_structure_events_follow_identity_changes_only"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_overflow_hyperlink_geometry_and_point_ranges_share_the_root"
+        }
+      ],
       "includes": [
         {
           "header": "HyperlinkAutomationPeer.g.h",
@@ -48403,7 +48886,13 @@
           ]
         }
       ],
-      "callable_candidates": []
+      "callable_candidates": [],
+      "reason": "HyperlinkAutomationPeer maps name precedence, class/control type, weak ownership, live range geometry, offscreen metadata, Invoke, focus routing and child hierarchy to native FerroUI automation. TextChild uses the same document range. FerroUI enabled/tab-stop policy is honored; the native first-rectangle clickable-point specialization, full property-change event parity and remaining source members are not implemented by this map.",
+      "deviations": [
+        "RT-A01",
+        "RT-I05",
+        "RT-I10"
+      ]
     },
     {
       "path": "dxaml/xcp/dxaml/lib/InlineCollection_Partial.cpp",
@@ -49021,6 +49510,42 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_box.rs",
           "symbol": "pub fn text_input_method_client("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "pub struct RichEditBoxSelectionChangingEventArgs"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "pub fn selection_changing_event("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text_block.rs",
+          "symbol": "pub fn select("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "pub struct RichEditBoxTextChangingEventArgs"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "pub fn text_changing_event("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "pub fn text_changed_event("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "pub fn header("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "pub fn header_template("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "pub fn description("
         }
       ],
       "tests": [
@@ -49043,6 +49568,54 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
           "symbol": "rich_edit_ime_notifications_expose_committed_text_during_preview_publication"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_selection_changing_cancellation_preserves_selection_and_properties"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_selection_changing_reentrant_view_and_tom_changes_publish_once"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_canceled_post_edit_selection_is_retained_in_undo_and_redo"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_grouped_range_edits_expose_only_the_final_user_selection"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_selection_property_keyboard_and_ime_requests_share_cancellation"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_text_changing_reports_content_and_formatting_before_deferred_text_changed"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_deferred_text_changed_drops_replaced_documents_and_allows_further_edits"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_deferred_notifications_do_not_retain_the_control"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_header_description_and_placeholder_use_framework_visuals_and_shared_geometry"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_header_template_renders_without_header_data_and_is_not_rebuilt_by_measure"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_placeholder_participates_in_measure_alignment_and_foreground_inheritance"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_header_and_embedded_control_remain_in_the_same_visual_tree_after_relayout"
         }
       ],
       "includes": [
@@ -49469,12 +50042,14 @@
           "state": "unreviewed"
         }
       ],
-      "reason": "The native rich editor host is translated into the shared Rust view/editor/input model. This does not incorporate the external WinUIEdit engine; every unimplemented control, template and native service member remains pending.",
+      "reason": "The shared Rust editor/control supplies the mapped host editing, IME, clipboard, selection, synchronous/deferred text notifications and composed header/placeholder/description behavior. Cancellable/reentrant selection and native notification timing are now tested. Native text service/windowless host ABI, complete templates/scrolling, input panes, proofing and all unmapped host members remain pending.",
       "deviations": [
         "RT-I04",
         "RT-I06",
         "RT-I07",
-        "RT-I08"
+        "RT-I08",
+        "RT-A03",
+        "RT-A04"
       ]
     },
     {
@@ -49501,6 +50076,42 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_box.rs",
           "symbol": "pub fn text_input_method_client("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "pub struct RichEditBoxSelectionChangingEventArgs"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "pub fn selection_changing_event("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text_block.rs",
+          "symbol": "pub fn select("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "pub struct RichEditBoxTextChangingEventArgs"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "pub fn text_changing_event("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "pub fn text_changed_event("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "pub fn header("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "pub fn header_template("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "pub fn description("
         }
       ],
       "tests": [
@@ -49523,6 +50134,54 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
           "symbol": "rich_edit_ime_notifications_expose_committed_text_during_preview_publication"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_selection_changing_cancellation_preserves_selection_and_properties"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_selection_changing_reentrant_view_and_tom_changes_publish_once"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_canceled_post_edit_selection_is_retained_in_undo_and_redo"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_grouped_range_edits_expose_only_the_final_user_selection"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_selection_property_keyboard_and_ime_requests_share_cancellation"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_text_changing_reports_content_and_formatting_before_deferred_text_changed"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_deferred_text_changed_drops_replaced_documents_and_allows_further_edits"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_deferred_notifications_do_not_retain_the_control"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_header_description_and_placeholder_use_framework_visuals_and_shared_geometry"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_header_template_renders_without_header_data_and_is_not_rebuilt_by_measure"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_placeholder_participates_in_measure_alignment_and_foreground_inheritance"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_header_and_embedded_control_remain_in_the_same_visual_tree_after_relayout"
         }
       ],
       "includes": [
@@ -49581,12 +50240,14 @@
         }
       ],
       "callable_candidates": [],
-      "reason": "The native rich editor host is translated into the shared Rust view/editor/input model. This does not incorporate the external WinUIEdit engine; every unimplemented control, template and native service member remains pending.",
+      "reason": "The shared Rust editor/control supplies the mapped host editing, IME, clipboard, selection, synchronous/deferred text notifications and composed header/placeholder/description behavior. Cancellable/reentrant selection and native notification timing are now tested. Native text service/windowless host ABI, complete templates/scrolling, input panes, proofing and all unmapped host members remain pending.",
       "deviations": [
         "RT-I04",
         "RT-I06",
         "RT-I07",
-        "RT-I08"
+        "RT-I08",
+        "RT-A03",
+        "RT-A04"
       ]
     },
     {
@@ -66985,6 +67646,42 @@
         {
           "path": "src/FerroUI.Controls/automation/provider/rich_text_automation.rs",
           "symbol": "RichTextAutomationRange"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/i_text_provider2.rs",
+          "symbol": "pub struct TextCaretRange"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/i_text_provider2.rs",
+          "symbol": "fn get_caret_range("
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation.rs",
+          "symbol": "fn get_caret_range("
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/automation_node_text.rs",
+          "symbol": "fn get_caret_range("
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/i_text_child_provider.rs",
+          "symbol": "pub trait ITextChildProvider"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/peers/hyperlink_automation_peer.rs",
+          "symbol": "pub struct HyperlinkAutomationPeer"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/automation_node_text.rs",
+          "symbol": "get_text_container"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/automation_node_text.rs",
+          "symbol": "get_text_range"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation.rs",
+          "symbol": "TextFlowDirections"
         }
       ],
       "tests": [
@@ -67011,13 +67708,50 @@
         {
           "path": "src/Windows/FerroUI.Win32/automation/text_range_node.rs",
           "symbol": "native_text_range_delayed_release_preserves_reused_com_identity"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_text2_caret_uses_active_utf16_endpoint_and_focus_without_selecting"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_text2_has_no_caret_when_selection_disabled_and_rejects_non_annotations"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs",
+          "symbol": "native_text2_inherits_text_and_marshals_caret_bool_on_the_callers_thread"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_hyperlinks_have_stable_identity_text_child_ranges_and_invoke"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_hyperlink_tree_retains_embedded_children_and_innermost_enclosing_peer"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_retained_hyperlink_peer_does_not_retain_document_or_owners"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs",
+          "symbol": "native_hyperlink_text_child_has_canonical_container_ranges_and_dispatches_invoke"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs",
+          "symbol": "native_text_child_range_survives_child_removal_but_not_document_replacement"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs",
+          "symbol": "native_extra_text_attributes_preserve_colorref_and_find_color_input_types"
         }
       ],
       "includes": [],
       "callable_candidates": [],
-      "reason": "Only CUIATextProviderWrapper and CUIATextRangeProviderWrapper roles are mapped here: six Text and eighteen TextRange slots, typed errors, BSTR/SAFEARRAY/VARIANT marshalling, reserved sentinels, canonical same-backend range identities, UI-thread isolation and coordinate conversion. Other wrapper classes, Text2 and native runtime/client conformance remain pending.",
+      "reason": "Portable Text/TextRange/Text2/TextChild services and the Win32 COM bridge implement mapped operations, typed attributes, dispatcher marshalling and weak document/owner identity. Caret BOOL validation, inherited Text2 slots and canonical TextChild ranges now have regressions. TextEdit, annotation lookup, remaining provider families/attributes and actual native clients remain pending.",
       "deviations": [
-        "RT-I10"
+        "RT-I10",
+        "RT-A01"
       ]
     },
     {
@@ -67066,6 +67800,42 @@
         {
           "path": "src/FerroUI.Controls/automation/provider/rich_text_automation.rs",
           "symbol": "RichTextAutomationRange"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/i_text_provider2.rs",
+          "symbol": "pub struct TextCaretRange"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/i_text_provider2.rs",
+          "symbol": "fn get_caret_range("
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation.rs",
+          "symbol": "fn get_caret_range("
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/automation_node_text.rs",
+          "symbol": "fn get_caret_range("
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/i_text_child_provider.rs",
+          "symbol": "pub trait ITextChildProvider"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/peers/hyperlink_automation_peer.rs",
+          "symbol": "pub struct HyperlinkAutomationPeer"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/automation_node_text.rs",
+          "symbol": "get_text_container"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/automation_node_text.rs",
+          "symbol": "get_text_range"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation.rs",
+          "symbol": "TextFlowDirections"
         }
       ],
       "tests": [
@@ -67092,6 +67862,42 @@
         {
           "path": "src/Windows/FerroUI.Win32/automation/text_range_node.rs",
           "symbol": "native_text_range_delayed_release_preserves_reused_com_identity"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_text2_caret_uses_active_utf16_endpoint_and_focus_without_selecting"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_text2_has_no_caret_when_selection_disabled_and_rejects_non_annotations"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs",
+          "symbol": "native_text2_inherits_text_and_marshals_caret_bool_on_the_callers_thread"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_hyperlinks_have_stable_identity_text_child_ranges_and_invoke"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_hyperlink_tree_retains_embedded_children_and_innermost_enclosing_peer"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_retained_hyperlink_peer_does_not_retain_document_or_owners"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs",
+          "symbol": "native_hyperlink_text_child_has_canonical_container_ranges_and_dispatches_invoke"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs",
+          "symbol": "native_text_child_range_survives_child_removal_but_not_document_replacement"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs",
+          "symbol": "native_extra_text_attributes_preserve_colorref_and_find_color_input_types"
         }
       ],
       "includes": [
@@ -68733,9 +69539,10 @@
           "state": "unreviewed"
         }
       ],
-      "reason": "Only CUIATextProviderWrapper and CUIATextRangeProviderWrapper roles are mapped here: six Text and eighteen TextRange slots, typed errors, BSTR/SAFEARRAY/VARIANT marshalling, reserved sentinels, canonical same-backend range identities, UI-thread isolation and coordinate conversion. Other wrapper classes, Text2 and native runtime/client conformance remain pending.",
+      "reason": "Portable Text/TextRange/Text2/TextChild services and the Win32 COM bridge implement mapped operations, typed attributes, dispatcher marshalling and weak document/owner identity. Caret BOOL validation, inherited Text2 slots and canonical TextChild ranges now have regressions. TextEdit, annotation lookup, remaining provider families/attributes and actual native clients remain pending.",
       "deviations": [
-        "RT-I10"
+        "RT-I10",
+        "RT-A01"
       ]
     },
     {

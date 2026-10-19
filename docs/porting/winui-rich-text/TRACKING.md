@@ -128,8 +128,8 @@ Every file in the three primary roots is retained, including build and data file
 | `dxaml/xcp/dxaml/lib/InputScopeNameFactory.cpp` | pending | — |
 | `dxaml/xcp/dxaml/lib/Paragraph_Partial.cpp` | partial | `src/FerroUI.Controls/documents/paragraph.rs`, `src/FerroUI.Controls/documents/paragraph.rs`, `src/FerroUI.Controls/documents/paragraph.rs`, `src/FerroUI.Controls/documents/block.rs` |
 | `dxaml/xcp/dxaml/lib/Paragraph_Partial.h` | partial | `src/FerroUI.Controls/documents/paragraph.rs`, `src/FerroUI.Controls/documents/paragraph.rs`, `src/FerroUI.Controls/documents/paragraph.rs`, `src/FerroUI.Controls/documents/block.rs` |
-| `dxaml/xcp/dxaml/lib/RichEditBox_Partial.cpp` | partial | `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box.rs` |
-| `dxaml/xcp/dxaml/lib/RichEditBox_Partial.h` | partial | `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box.rs` |
+| `dxaml/xcp/dxaml/lib/RichEditBox_Partial.cpp` | partial | `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_text_block.rs`, `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box.rs` |
+| `dxaml/xcp/dxaml/lib/RichEditBox_Partial.h` | partial | `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_text_block.rs`, `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box.rs` |
 | `dxaml/xcp/dxaml/lib/Span_Partial.cpp` | pending | — |
 | `dxaml/xcp/dxaml/lib/Span_Partial.h` | pending | — |
 | `dxaml/xcp/dxaml/lib/TextAlternativesAsyncOperation.cpp` | pending | — |
@@ -176,8 +176,8 @@ Every file in the three primary roots is retained, including build and data file
 | `dxaml/xcp/core/native/text/Controls/PasswordBox.h` | pending | — |
 | `dxaml/xcp/core/native/text/Controls/PrivateTextInputSettings.cpp` | pending | — |
 | `dxaml/xcp/core/native/text/Controls/PrivateTextInputSettings.h` | pending | — |
-| `dxaml/xcp/core/native/text/Controls/RichEditBox.cpp` | partial | `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box.rs` |
-| `dxaml/xcp/core/native/text/Controls/RichEditBox.h` | partial | `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box.rs` |
+| `dxaml/xcp/core/native/text/Controls/RichEditBox.cpp` | partial | `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_text_block.rs`, `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box.rs` |
+| `dxaml/xcp/core/native/text/Controls/RichEditBox.h` | partial | `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_text_block.rs`, `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box.rs` |
 | `dxaml/xcp/core/native/text/Controls/RichEditOleCallback.cpp` | pending | — |
 | `dxaml/xcp/core/native/text/Controls/RichEditOleCallback.h` | pending | — |
 | `dxaml/xcp/core/native/text/Controls/RichEditPal.h` | pending | — |
@@ -187,8 +187,8 @@ Every file in the three primary roots is retained, including build and data file
 | `dxaml/xcp/core/native/text/Controls/TextBlockCommandHandler.h` | pending | — |
 | `dxaml/xcp/core/native/text/Controls/TextBox.cpp` | pending | — |
 | `dxaml/xcp/core/native/text/Controls/TextBox.h` | pending | — |
-| `dxaml/xcp/core/native/text/Controls/TextBoxBase.cpp` | partial | `src/FerroUI.Controls/rich_text/rich_text_editor.rs`, `src/FerroUI.Controls/rich_text/rich_text_editor.rs`, `src/FerroUI.Controls/rich_text/rich_text_editor.rs` |
-| `dxaml/xcp/core/native/text/Controls/TextBoxBase.h` | partial | `src/FerroUI.Controls/rich_text/rich_text_editor.rs`, `src/FerroUI.Controls/rich_text/rich_text_editor.rs`, `src/FerroUI.Controls/rich_text/rich_text_editor.rs` |
+| `dxaml/xcp/core/native/text/Controls/TextBoxBase.cpp` | partial | `src/FerroUI.Controls/rich_text/rich_text_editor.rs`, `src/FerroUI.Controls/rich_text/rich_text_editor.rs`, `src/FerroUI.Controls/rich_text/rich_text_editor.rs`, `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_text_block.rs`, `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box.rs` |
+| `dxaml/xcp/core/native/text/Controls/TextBoxBase.h` | partial | `src/FerroUI.Controls/rich_text/rich_text_editor.rs`, `src/FerroUI.Controls/rich_text/rich_text_editor.rs`, `src/FerroUI.Controls/rich_text/rich_text_editor.rs`, `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_text_block.rs`, `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box.rs` |
 | `dxaml/xcp/core/native/text/Controls/TextBoxCommandHandler.cpp` | pending | — |
 | `dxaml/xcp/core/native/text/Controls/TextBoxCommandHandler.h` | pending | — |
 | `dxaml/xcp/core/native/text/Controls/TextBoxUIManagerEventSink.cpp` | pending | — |
@@ -649,8 +649,8 @@ Every file in the three primary roots is retained, including build and data file
 | `dxaml/xcp/core/native/text/Controls/TextBoxAutomationPeer.h` | pending | — |
 | `dxaml/xcp/core/native/text/Controls/TextBoxBaseAutomationPeer.cpp` | pending | — |
 | `dxaml/xcp/core/native/text/Controls/TextBoxBaseAutomationPeer.h` | pending | — |
-| `dxaml/xcp/dxaml/lib/HyperlinkAutomationPeer_Partial.cpp` | pending | — |
-| `dxaml/xcp/dxaml/lib/HyperlinkAutomationPeer_Partial.h` | pending | — |
+| `dxaml/xcp/dxaml/lib/HyperlinkAutomationPeer_Partial.cpp` | partial | `src/FerroUI.Controls/automation/provider/i_text_child_provider.rs`, `src/FerroUI.Controls/automation/peers/hyperlink_automation_peer.rs`, `src/Windows/FerroUI.Win32/automation/automation_node_text.rs`, `src/Windows/FerroUI.Win32/automation/automation_node_text.rs`, `src/FerroUI.Controls/automation/peers/hyperlink_automation_peer.rs`, `src/FerroUI.Controls/automation/peers/hyperlink_automation_peer.rs` |
+| `dxaml/xcp/dxaml/lib/HyperlinkAutomationPeer_Partial.h` | partial | `src/FerroUI.Controls/automation/provider/i_text_child_provider.rs`, `src/FerroUI.Controls/automation/peers/hyperlink_automation_peer.rs`, `src/Windows/FerroUI.Win32/automation/automation_node_text.rs`, `src/Windows/FerroUI.Win32/automation/automation_node_text.rs`, `src/FerroUI.Controls/automation/peers/hyperlink_automation_peer.rs`, `src/FerroUI.Controls/automation/peers/hyperlink_automation_peer.rs` |
 | `dxaml/xcp/dxaml/lib/RichEditBoxAutomationPeer_Partial.cpp` | partial | `src/FerroUI.Controls/automation/peers/rich_edit_box_automation_peer.rs` |
 | `dxaml/xcp/dxaml/lib/RichEditBoxAutomationPeer_Partial.h` | partial | `src/FerroUI.Controls/automation/peers/rich_edit_box_automation_peer.rs` |
 | `dxaml/xcp/dxaml/lib/RichTextBlockAutomationPeer_Partial.cpp` | partial | `src/FerroUI.Controls/automation/peers/rich_text_block_automation_peer.rs` |
@@ -661,8 +661,8 @@ Every file in the three primary roots is retained, including build and data file
 | `dxaml/xcp/dxaml/lib/TextBlockAutomationPeer_Partial.h` | pending | — |
 | `dxaml/xcp/dxaml/lib/TextBoxAutomationPeer_Partial.cpp` | pending | — |
 | `dxaml/xcp/dxaml/lib/TextBoxAutomationPeer_Partial.h` | pending | — |
-| `dxaml/xcp/win/inc/UIAPatternProviderWrapper.h` | partial | `src/Windows/FerroUI.Win32/automation/automation_node_text.rs`, `src/Windows/FerroUI.Win32/automation/text_range_node.rs`, `src/Windows/FerroUI.Win32/automation/text_pattern_marshalling.rs`, `src/FerroUI.Controls/automation/provider/rich_text_automation.rs` |
-| `dxaml/xcp/win/shared/UIAPatternProviderWrapper.cpp` | partial | `src/Windows/FerroUI.Win32/automation/automation_node_text.rs`, `src/Windows/FerroUI.Win32/automation/text_range_node.rs`, `src/Windows/FerroUI.Win32/automation/text_pattern_marshalling.rs`, `src/FerroUI.Controls/automation/provider/rich_text_automation.rs` |
+| `dxaml/xcp/win/inc/UIAPatternProviderWrapper.h` | partial | `src/Windows/FerroUI.Win32/automation/automation_node_text.rs`, `src/Windows/FerroUI.Win32/automation/text_range_node.rs`, `src/Windows/FerroUI.Win32/automation/text_pattern_marshalling.rs`, `src/FerroUI.Controls/automation/provider/rich_text_automation.rs`, `src/FerroUI.Controls/automation/provider/i_text_provider2.rs`, `src/FerroUI.Controls/automation/provider/i_text_provider2.rs`, `src/FerroUI.Controls/automation/provider/rich_text_automation.rs`, `src/Windows/FerroUI.Win32/automation/automation_node_text.rs`, `src/FerroUI.Controls/automation/provider/i_text_child_provider.rs`, `src/FerroUI.Controls/automation/peers/hyperlink_automation_peer.rs`, `src/Windows/FerroUI.Win32/automation/automation_node_text.rs`, `src/Windows/FerroUI.Win32/automation/automation_node_text.rs`, `src/FerroUI.Controls/automation/provider/rich_text_automation.rs` |
+| `dxaml/xcp/win/shared/UIAPatternProviderWrapper.cpp` | partial | `src/Windows/FerroUI.Win32/automation/automation_node_text.rs`, `src/Windows/FerroUI.Win32/automation/text_range_node.rs`, `src/Windows/FerroUI.Win32/automation/text_pattern_marshalling.rs`, `src/FerroUI.Controls/automation/provider/rich_text_automation.rs`, `src/FerroUI.Controls/automation/provider/i_text_provider2.rs`, `src/FerroUI.Controls/automation/provider/i_text_provider2.rs`, `src/FerroUI.Controls/automation/provider/rich_text_automation.rs`, `src/Windows/FerroUI.Win32/automation/automation_node_text.rs`, `src/FerroUI.Controls/automation/provider/i_text_child_provider.rs`, `src/FerroUI.Controls/automation/peers/hyperlink_automation_peer.rs`, `src/Windows/FerroUI.Win32/automation/automation_node_text.rs`, `src/Windows/FerroUI.Win32/automation/automation_node_text.rs`, `src/FerroUI.Controls/automation/provider/rich_text_automation.rs` |
 
 ## Theme reference
 
@@ -704,7 +704,7 @@ Every file in the three primary roots is retained, including build and data file
 | `dxaml/test/native/external/foundation/text/MisspellingWavyLinesTests.h` | reference | — |
 | `dxaml/test/native/external/foundation/text/PasswordBoxTests.cpp` | reference | — |
 | `dxaml/test/native/external/foundation/text/PasswordBoxTests.h` | reference | — |
-| `dxaml/test/native/external/foundation/text/RichEditBoxTOMTests.cpp` | reference | — |
+| `dxaml/test/native/external/foundation/text/RichEditBoxTOMTests.cpp` | reference | `src/FerroUI.Controls/rich_text/rich_edit_text_document_tests.rs` |
 | `dxaml/test/native/external/foundation/text/RichEditBoxTOMTests.h` | reference | — |
 | `dxaml/test/native/external/foundation/text/RtblHasContentOverflow.cpp` | reference | — |
 | `dxaml/test/native/external/foundation/text/RtblHasContentOverflow.h` | reference | — |
