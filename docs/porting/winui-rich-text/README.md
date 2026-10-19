@@ -81,7 +81,9 @@ python3 scripts/porting/winui-rich-text-inventory.py --reference /path/to/micros
 ```
 
 The generator reads Git objects at the pinned commit, not the mutable checkout.
-It does not download source or change either repository. Regeneration preserves
+Hydrate required blobs before offline use; Git may fetch missing promised blobs
+in a partial clone. The generator does not check out another revision or alter
+the reference working tree. Regeneration preserves
 reviewed entries in `mapping.json`; additions to the reference cannot silently
 become `complete`. Commit the implementation, tests, mapping, deviations, and
 regenerated record together.

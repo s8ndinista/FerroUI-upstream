@@ -139,3 +139,54 @@ than a line break that was also a TOM paragraph boundary.
 This checkpoint does not assert complete native parity. Theme templates,
 compiled markup, TextEdit composition notifications and the remaining external
 engine contracts continue in subsequent implementation and validation batches.
+
+## Accepted composition, TextEdit and owned flyout focus — 2026-10-19
+
+Published as [`ed836e831fc8af5114e2ce8ae7632867c7a2332f`](https://github.com/wieslawsoltes/FerroUI/commit/ed836e831fc8af5114e2ce8ae7632867c7a2332f).
+The editor publishes accepted preview deltas and one finalization, after its
+normalization, filtering and UTF-16 limits. Cursor-only movement emits no text
+cause. Explicit cancellation finalizes with empty text; successful commit creates
+one history unit without an intermediate cancel. Nested groups queue causes and
+discard them on rollback; an internal mutation identity rejects stale composition
+even before a surrounding model batch publishes its revision.
+
+Portable TextEdit inherits Text independently of Text2, exposes the full live
+composition range and disposes/rewires observations with the owner/document.
+A conversion target remains absent until a backend provides that distinct range.
+The Windows bridge adds the SDK interface and dispatcher-based BSTR SAFEARRAY
+payloads. Array creation now cleans up initialized native slots on conversion
+failure and releases locks during unwinding. Length-aware BSTR allocation retains
+embedded NUL text. Public arbitrary-peer raising, EventsSource and lazy native
+activation are a subsequent contract, not inferred from editor-provider events.
+
+RichEditBox tracks the actual focused descendant and current target of its owned
+context flyout. Active selection/composition survive that transition; focus
+return, closure, replacement or genuine blur clears weak subscriptions. Generic
+content hosts reveal the caret through the presenter's own logical scrolling.
+The control's retained visual/model state does not alone retain a native IME
+transport across a different popup root; the framework owner protocol is next.
+
+The full controls command passed **4706 tests, zero failures**. The initial run
+had six remote display failures because sandboxed loopback listening was denied;
+all eight remote tests passed with loopback access, followed by the successful
+full-suite rerun. One new caret-boundary assertion exposed only roundoff:
+60.00000000000001 versus a viewport height of 60. The test now uses FerroUI's
+existing geometry comparison tolerance and retains diagnostic values; production
+scroll geometry was not padded to satisfy that assertion.
+
+The Win32 `--lib text_` command passed **41 tests, zero failures** on Linux,
+including four TextEdit and three array cleanup cases. CI on the previous
+92551b30 checkpoint identified the missing published themes, stale generated Rust
+path fixture and a scanner-unresolved `Self` reference in a highlighter type
+registration. The equivalent explicit `TextHighlightRange` registration passed
+the source scanner regression. Theme and generated-path verification follow in
+the next checkpoint. Native OS/client and pixel-conformance evidence remains
+separate from these results.
+
+The reviewed map now includes the AutomationPeer partial and UIAWindow source
+pairs: **630 selected sources, 919 additional framework dependencies, 806 include
+boundary edges and 1258 exact public identifiers**. New mappings cover the
+published presenter, streams, native-valued units, immediate pointers, inherited
+language and TextEdit behavior. The previous Cluster/grapheme equivalence claim
+has been removed. Twenty complete entries are enum fields; no source file or
+entire rich-text subsystem is declared complete by that count.

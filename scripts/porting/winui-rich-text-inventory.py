@@ -96,6 +96,10 @@ EXPLICIT_REFERENCES = {
     "dxaml/xcp/tools/XCPTypesAutoGen/XamlOM/Model/Microsoft.UI.Xaml.Internal.cs",
     "dxaml/xcp/win/shared/UIAPatternProviderWrapper.cpp",
     "dxaml/xcp/win/inc/UIAPatternProviderWrapper.h",
+    "dxaml/xcp/win/shared/UIAWindow.cpp",
+    "dxaml/xcp/win/inc/UIAWindow.h",
+    "dxaml/xcp/dxaml/lib/AutomationPeer_Partial.cpp",
+    "dxaml/xcp/dxaml/lib/AutomationPeer_Partial.h",
     "dxaml/xcp/components/metadata/inc/EnumDefs.g.h",
     "dxaml/xcp/dxaml/idl/winrt/main/microsoft.ui.xaml.idl",
     "dxaml/xcp/dxaml/themes/generic.xaml",
@@ -293,7 +297,7 @@ def api_type_plan(owner: str) -> dict:
         return {
             "batch": "R7",
             "candidate_paths": ["src/FerroUI.Controls/automation/", "src/Windows/FerroUI.Win32/automation/"],
-            "remaining_review": "Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2 caret and TextChild have mapped implementations; annotations, TextEdit composition and unsupported attribute families remain explicit pending contracts.",
+            "remaining_review": "Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2 caret, TextChild and TextEdit accepted-composition services have mapped implementations; public peer events, conversion-target backend data, annotations and unsupported attributes remain explicit pending contracts.",
         }
     if name in {"TextHighlighter", "TextHighlighterBase", "TextRange"} and ".Documents." in owner:
         return {
@@ -318,9 +322,9 @@ def api_type_plan(owner: str) -> dict:
     if ".Controls." in owner:
         return {"batch": "R5/R7", "candidate_paths": ["src/FerroUI.Controls/rich_edit_box.rs", "src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs"], "remaining_review": "Review editable control members, native event timing, IME/clipboard capabilities, templates, accelerators and automation. Missing members are omitted, not stubbed."}
     if name in {"RichEditTextDocument", "RichEditTextRange", "ITextRange", "ITextSelection"}:
-        return {"batch": "R3/R8", "candidate_paths": ["src/FerroUI.Controls/rich_text/rich_edit_text_document.rs"], "remaining_review": "Audit the external TOM contract member by member. The Rust facade uses typed errors, UTF-16 text ranges and shared editor services; native option flags, ABI, streams and additional units are not inferred from similarly named methods."}
+        return {"batch": "R3/R8", "candidate_paths": ["src/FerroUI.Controls/rich_text/rich_edit_text_document.rs"], "remaining_review": "Audit the external TOM contract member by member. The Rust facade uses typed errors, UTF-16 text ranges and shared editor services; native option flags, ABI and remaining units are not inferred from similarly named methods. Seven native-valued units and explicit Rust Read/Write adapters have individual mappings; native Cluster remains pending."}
     if name in {"ITextCharacterFormat", "ITextParagraphFormat"}:
-        return {"batch": "R3/R8", "candidate_paths": [DOCUMENT_ROOT + "character_format.rs"], "remaining_review": "Audit native formatting units, mixed values, font/brush representation, tabs, lists, language and formatting flags. Rust patches cover only explicitly mapped fields."}
+        return {"batch": "R3/R8", "candidate_paths": [DOCUMENT_ROOT + "character_format.rs"], "remaining_review": "Audit native formatting units, mixed values, font/brush representation, tabs, lists, language resolution and formatting flags. Inherited language and supported RTF locale IDs have explicit mappings; Rust patches cover only reviewed fields."}
     if name in {"TextGetOptions", "TextSetOptions"}:
         return {"batch": "R4/R8", "candidate_paths": ["src/FerroUI.Controls/rich_text/rich_edit_text_document.rs", "src/FerroUI.Controls/rich_text/rtf.rs", "src/FerroUI.Controls/rich_text/rich_text_transfer.rs"], "remaining_review": "Review every import/export option and supported content feature against its mapped implementation. Typed get/set flags reject unsupported modes explicitly; these errors do not implement omitted content semantics or native stream APIs."}
     if name == "FontWeights":

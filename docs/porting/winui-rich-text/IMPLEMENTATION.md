@@ -15,7 +15,8 @@ flowchart TD
     F --> V["RichTextBlock and overflow"]
     E["RichTextEditor"] --> D
     C["RichEditBox"] --> E
-    C --> V
+    C --> P["Persistent editor presenter"]
+    P --> V
     T["Document/range/selection facade"] --> E
     A["Text automation providers"] --> D
     A --> V
@@ -29,7 +30,7 @@ flowchart TD
 | Shaping and line layout | [RichTextSource/RichTextLayout](../../../src/FerroUI.Controls/rich_text_layout.rs) feed the existing formatter. Existing font selection, Unicode, bidi, shaping, glyph drawing and text-run APIs remain responsible for text layout. |
 | Pagination and selection | [RichTextBlock](../../../src/FerroUI.Controls/rich_text_block.rs) owns a primary view; [RichTextBlockOverflow](../../../src/FerroUI.Controls/rich_text_block_overflow.rs) contributes further pages through weak links. |
 | Editable state | [RichTextEditor](../../../src/FerroUI.Controls/rich_text/rich_text_editor.rs) owns history, selection, typing format, input limits and composition state over the same model. |
-| Control integration | [RichEditBox](../../../src/FerroUI.Controls/rich_edit_box.rs) derives from the rich view and connects routed input, clipboard, caret and the [input-method client](../../../src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs). |
+| Control integration | [RichEditBox](../../../src/FerroUI.Controls/rich_edit_box.rs) derives from TemplatedControl and owns one persistent [RichEditBoxTextPresenter](../../../src/FerroUI.Controls/rich_edit_box_text_presenter.rs). It connects owner-routed input, clipboard, caret and the [input-method client](../../../src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs). |
 | Native text-object semantic services | [RichEditTextDocument/Range/Selection](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document.rs) expose typed operations over the same editor; this is separate from the unavailable native TOM ABI. |
 | Accessibility | [Portable text providers](../../../src/FerroUI.Controls/automation/provider/i_text_provider.rs) and [range providers](../../../src/FerroUI.Controls/automation/provider/i_text_range_provider.rs) use the same document/geometry; the [Windows bridge](../../../src/Windows/FerroUI.Win32/automation/automation_node_text.rs) handles native marshalling. |
 
@@ -41,8 +42,10 @@ snapshot, so copying it does not make simultaneous visual ownership valid.
 
 Formatting and editing callbacks copy values out of interior mutable storage
 before raising notifications. Document batches collect changes into a revision;
-live pointers follow the ordered edits, and reentrant subscribers receive ordered
-notifications. The tests for these boundaries are in
+live pointers follow each completed replacement immediately through an internal
+position notification, and public subscribers receive ordered batched notifications.
+Pointers created midway through a batch track only subsequent edits, so ending
+the batch cannot apply an earlier edit to them twice. The tests for these boundaries are in
 [rich_text_document_tests.rs](../../../src/FerroUI.Controls/documents/rich_text_document_tests.rs).
 
 ## Construct a rich document
@@ -202,7 +205,7 @@ text.edit_group(|text| {
 text.undo()?;
 ```
 
-`RichEditBox::document()` is the inherited shared model.
+`RichEditBox::document()` is the control's direct shared-model property.
 `RichEditBox::text_document()` is the editing/service facade. Both use the same
 document, selection, geometry and history. This naming distinction avoids
 introducing a second editable model behind the control.
@@ -220,17 +223,57 @@ or `Mixed`. A mixed result is not silently converted to one run's format. Patch
 fields use FerroUI font/brush/decoration values and layout distances; native TOM
 points, effect flags and unrepresented fields need explicit conversion or work.
 
-The Rust facade provides Character, Word, Sentence, Paragraph and Document units.
-Character means a grapheme cluster; it does not preserve native TOM's separate
-Character and Cluster units. Native Story is represented by this one document.
+The TOM facade exposes the following native-valued units. These are separate
+from the existing Unicode editing/navigation units and UI Automation units.
+
+| Unit | Value | Implemented boundary |
+|---|---:|---|
+| Character | 0 | A Unicode scalar, preserving UTF-16 surrogate pairs. Combining scalars remain distinct. |
+| Word | 1 | Word span with following ASCII spaces/tabs. Search uses its own boundary rules. |
+| Sentence | 2 | Native punctuation and ASCII-whitespace rules covered by focused fixtures. |
+| Paragraph | 3 | Native separators, including CRLF as one boundary. |
+| Line | 4 | Displayed lines from a complete untrimmed associated view; Paragraph when headless. |
+| Story | 5 | The model's single document. Document remains a Rust associated-constant alias. |
+| HardParagraph | 12 | Paragraph objects, distinguishing inline soft line breaks. |
+
+`Cluster` remains pending. The existing editor's grapheme-aware deletion does
+not establish TOM Cluster semantics. Story coordinates exclude the synthetic
+terminal CR; projection of that mark by GetText does not enlarge the model.
+
+`start_of` and `end_of` return signed movement/collapse counts. `get_index` uses
+one-based indices and `set_index` also accepts negative indices relative to the
+end. Range movement counts collapsing a nonempty range as its first move.
+Extreme counts saturate at the story boundary; invalid indices are nonmutating.
+A control associates its persistent presenter after first measure. A manually
+associated view is weak and must share the model. Incomplete or trimmed line
+coverage produces an explicit error rather than fabricated display lines.
+
 Search supports forward/backward and whole-word options with Unicode lowercase
 mapping and preserved UTF-16 offsets; it is not a locale collation or full case
-folding implementation. Unsupported native units/options remain in the exact API
-inventory.
+folding implementation. Remaining units/options stay in the exact API inventory.
 
-Use a surrounding `ScrollViewer` with a finite height for an editable viewport.
-Caret and selection operations use framework bring-into-view. The control does
-not host `WinUIEdit.dll` or depend on an additional native windowless text engine.
+### Editor template, viewport and focus
+
+A RichEditBox template supplies ContentElement, HeaderContentPresenter,
+PlaceholderTextContentPresenter and DescriptionPresenter. ContentElement may be
+a ScrollViewer or another supported framework content host. The persistent
+presenter is moved into the new host during retemplating; model, selection,
+composition, live ranges and undo/redo survive. Missing parts are allowed.
+
+The presenter measures the full document against the available viewport width,
+implements logical scrolling, and clamps offsets when content shrinks. Header
+and description remain outside the document viewport. Text, caret, selection,
+embedded content, automation ranges and IME geometry use the same offset. The
+control remains the semantic focus and automation owner; the raw presenter adds
+no independent Text provider or tab stop.
+
+The `:flyout-focus` state requires the control's current ContextFlyout to target
+that control and keyboard focus to be inside its actual popup content. It keeps
+the selection brush and model composition active during that transition. Focus
+return, actual blur, closure and replacement clear the state through weak
+subscriptions. This control policy alone does not establish native IME transport
+retention across separate popup roots; that requires the framework/backend
+owner transition described in the remaining deviations.
 
 ## RTF and clipboard
 
@@ -248,8 +291,9 @@ The [RTF codec](../../../src/FerroUI.Controls/rich_text/rtf.rs) supports its RTF
 subset: groups/escapes, Unicode fallback and Windows-1252 bytes, font/color tables,
 supported character formatting, paragraph metrics, and hyperlink/bookmark/target
 fields. Native OLE/pictures, tables/lists, additional code pages and unsupported
-format representations return explicit errors. The native stream ABI and every
-TextGetOptions/TextSetOptions flag are not supplied by the codec.
+format representations return explicit errors. Rust stream adapters use the codec for RTF and have an explicit byte/encoding
+policy. The native stream ABI and every TextGetOptions/TextSetOptions flag are
+not supplied by the codec.
 
 Default reader bounds are 16 MiB of input, nesting depth 128, one million parsed
 tokens and 8 Mi UTF-16 text units. `read_with_limits` permits a caller to choose
@@ -271,13 +315,44 @@ run formatting survives casing and single-line policy transformations. The
 control exposes edit/clipboard failures to callers for normal application status
 handling.
 
+## Rust text streams
+
+`RichEditTextDocument::load_from_stream` and `save_to_stream`, and range
+`set_text_via_stream` and `get_text_via_stream`, accept `&mut dyn Read` or
+`&mut dyn Write` with `TextStreamOptions`. The options make encoding, output BOM
+and byte limits explicit. UTF-8 is the default; UTF-16LE/BE are supported for
+plain text. Matching input BOMs are accepted and contradictory ones fail.
+RTF retains its raw byte encoding and requires the default UTF-8/no-BOM policy.
+
+The default input/output byte limit is 16 MiB. A bounded reader consumes at most
+one byte beyond the limit to detect overflow. Invalid flags and encoding policy
+fail before touching the stream. Read/parse/decode failure leaves content,
+composition, live endpoints, defaults and history intact. Range replacement is
+one undoable operation and rebases the independent selection.
+
+Output is fully encoded before writing, so representability or limit errors
+leave the writer untouched. An I/O failure can leave a written prefix. Interrupted
+I/O is retried. Neither adapter seeks, truncates, flushes or closes the stream;
+position and completion policy stay with the caller. Output is captured before
+writer callbacks, so reentrant writer behavior does not alter the chosen snapshot.
+
 ## Input methods and composition
 
 The input-method client exposes committed surrounding text and UTF-16 selection
 separately from the preview shown by a composition. Repeated previews replace
 the prior preview. Cancel restores the original rich content/selection; commit
 produces one undo unit. An external edit prevents cancellation from restoring a
-stale snapshot over the changed model.
+stale snapshot over the changed model, even while an outer model batch has not
+yet published its revision.
+
+`composition_changed` supplies accepted preview deltas and finalization causes.
+Filtering, normalization and UTF-16 limits are reflected in the payload. Moving
+the preview cursor does not emit a text cause; finalization contains the accepted
+committed text, or an empty string for cancellation. Commit is one history unit,
+without a preceding cancellation notification. Grouped edits queue causes until
+the group settles and discard them on rollback. Preview-only groups create no
+undo entry. An independently held model batch can defer public model Changed
+beyond the cause callback; that event-order difference is recorded explicitly.
 
 Input scope and prediction settings are passed to existing backend options.
 They do not implement native proofing, dictionary prediction, handwriting or
@@ -289,7 +364,7 @@ input ordering still requires separate backend verification.
 ## Text accessibility
 
 Both rich view and rich editor peers expose `ITextProvider` and `ITextProvider2`;
-the editor also retains `IValueProvider`. The portable service implements the six Text provider
+the editor also exposes `ITextEditProvider` and retains `IValueProvider`. The portable service implements the six Text provider
 operations and eighteen TextRange operations over live weak model ranges. It
 handles single selection, embedded controls, text search, formatting search,
 range movement, geometry and text/selection notifications.
@@ -298,7 +373,7 @@ UI Automation has seven units: Character, Format, Word, Line, Paragraph, Page an
 Document. Format boundaries merge equal effective runs but stop at semantic link
 and embedded-control boundaries. Line falls back to Paragraph when the document
 is not completely laid out; Page falls back to Document without a complete
-multiple-page overflow chain. These are separate from the five TOM-facade units.
+multiple-page overflow chain. These are separate from the seven implemented TOM-facade units and their native values.
 
 Twenty-five attribute identifiers have typed handling, including font, color,
 read-only/visibility, decoration/baseline, alignment and indentation values.
@@ -318,9 +393,36 @@ Text2 caret activity follows keyboard focus independently of blink visibility,
 and queries do not alter selection. Hyperlinks expose stable weak automation
 peers with Invoke, live metadata and TextChild container/range identity. Returned
 child ranges stay associated with the owning document, not the lifetime of the
-inline peer. TextEdit, annotation lookup, remaining attributes and native text
-bridges on other backends remain pending. See RT-I10 and RT-P05, and the exact
+inline peer. TextEdit inherits Text independently of Text2 and returns the full
+live composition range. A conversion target stays absent until the backend
+identifies that distinct range. Portable TextEdit observers receive accepted
+preview deltas and one finalization, rewire on document replacement, and dispose
+without retaining the owner. The Windows bridge sends a BSTR SAFEARRAY on the
+UI thread and retains length-aware embedded-NUL strings. Failed array creation
+or conversion destroys already-created slots through RAII.
+
+The public AutomationPeer event-raise path, annotation lookup, remaining
+attributes and native text bridges on other backends remain pending. See RT-I10 and RT-P05, and the exact
 pending member list in [API-MAP.md](API-MAP.md).
+
+## Inherited language and RTF language tags
+
+TextElement's inherited Language property uses FerroUI CultureInfo. Character
+format patches expose `language_tag` and validated `set_language_tag`. Tags
+follow the pinned XML-language grammar: empty, or ASCII subtags of one to eight
+characters; the primary subtag contains letters and later subtags may contain
+digits. This accepts more than registered BCP-47 language tags by design.
+
+Empty language resolves through the platform application's preferred language,
+with en-US as the fallback. Local inline values override inherited values and
+reach the existing culture-aware font fallback and text shaper. Snapshots,
+formatting queries, editor history and the persistent presenter retain language.
+
+The RTF codec supports known `deflang`/`lang` locale IDs and `plain` resets.
+Unknown IDs or tags with no supported RTF representation return typed errors.
+The framework's finite locale table does not reproduce Windows ResolveLocaleName
+or its ordered MUI fallback list. Far-East and dual proofing languages remain
+separate contracts; see RT-I11.
 
 ## Paragraph spacing and indentation
 

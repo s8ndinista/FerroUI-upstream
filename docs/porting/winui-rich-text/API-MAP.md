@@ -13,9 +13,9 @@ The type plan locates all retained public types, including entirely pending type
 | `Microsoft.UI.Text.FontWeights` | 12 | 0 / 0 | R6 | `src/FerroUI.Base/media/font_weight.rs` |
 | `Microsoft.UI.Text.FormatEffect` | 5 | 0 / 0 | R3/R8 | `src/FerroUI.Controls/rich_text/`, `src/FerroUI.Controls/documents/` |
 | `Microsoft.UI.Text.HorizontalCharacterAlignment` | 4 | 0 / 0 | R3/R8 | `src/FerroUI.Controls/rich_text/`, `src/FerroUI.Controls/documents/` |
-| `Microsoft.UI.Text.ITextCharacterFormat` | 28 | 17 / 0 | R3/R8 | `src/FerroUI.Controls/documents/character_format.rs` |
+| `Microsoft.UI.Text.ITextCharacterFormat` | 28 | 18 / 0 | R3/R8 | `src/FerroUI.Controls/documents/character_format.rs` |
 | `Microsoft.UI.Text.ITextParagraphFormat` | 32 | 13 / 0 | R3/R8 | `src/FerroUI.Controls/documents/character_format.rs` |
-| `Microsoft.UI.Text.ITextRange` | 44 | 24 / 0 | R3/R8 | `src/FerroUI.Controls/rich_text/rich_edit_text_document.rs` |
+| `Microsoft.UI.Text.ITextRange` | 44 | 31 / 0 | R3/R8 | `src/FerroUI.Controls/rich_text/rich_edit_text_document.rs` |
 | `Microsoft.UI.Text.ITextSelection` | 10 | 2 / 0 | R3/R8 | `src/FerroUI.Controls/rich_text/rich_edit_text_document.rs` |
 | `Microsoft.UI.Text.LetterCase` | 3 | 0 / 0 | R3/R8 | `src/FerroUI.Controls/rich_text/`, `src/FerroUI.Controls/documents/` |
 | `Microsoft.UI.Text.LineSpacingRule` | 9 | 0 / 9 | R3/R8 | `src/FerroUI.Controls/rich_text/`, `src/FerroUI.Controls/documents/` |
@@ -28,15 +28,15 @@ The type plan locates all retained public types, including entirely pending type
 | `Microsoft.UI.Text.PointOptions` | 9 | 0 / 0 | R3/R8 | `src/FerroUI.Controls/rich_text/`, `src/FerroUI.Controls/documents/` |
 | `Microsoft.UI.Text.RangeGravity` | 6 | 0 / 0 | R3/R8 | `src/FerroUI.Controls/rich_text/`, `src/FerroUI.Controls/documents/` |
 | `Microsoft.UI.Text.RichEditMathMode` | 3 | 0 / 0 | R3/R8 | `src/FerroUI.Controls/rich_text/`, `src/FerroUI.Controls/documents/` |
-| `Microsoft.UI.Text.RichEditTextDocument` | 28 | 18 / 0 | R3/R8 | `src/FerroUI.Controls/rich_text/rich_edit_text_document.rs` |
-| `Microsoft.UI.Text.RichEditTextRange` | 44 | 21 / 0 | R3/R8 | `src/FerroUI.Controls/rich_text/rich_edit_text_document.rs` |
+| `Microsoft.UI.Text.RichEditTextDocument` | 28 | 20 / 0 | R3/R8 | `src/FerroUI.Controls/rich_text/rich_edit_text_document.rs` |
+| `Microsoft.UI.Text.RichEditTextRange` | 44 | 28 / 0 | R3/R8 | `src/FerroUI.Controls/rich_text/rich_edit_text_document.rs` |
 | `Microsoft.UI.Text.SelectionOptions` | 6 | 0 / 0 | R3/R8 | `src/FerroUI.Controls/rich_text/`, `src/FerroUI.Controls/documents/` |
 | `Microsoft.UI.Text.SelectionType` | 6 | 0 / 0 | R3/R8 | `src/FerroUI.Controls/rich_text/`, `src/FerroUI.Controls/documents/` |
 | `Microsoft.UI.Text.TabAlignment` | 6 | 0 / 0 | R3/R8 | `src/FerroUI.Controls/rich_text/`, `src/FerroUI.Controls/documents/` |
 | `Microsoft.UI.Text.TabLeader` | 7 | 0 / 0 | R3/R8 | `src/FerroUI.Controls/rich_text/`, `src/FerroUI.Controls/documents/` |
 | `Microsoft.UI.Text.TextConstants` | 9 | 0 / 0 | R3/R8 | `src/FerroUI.Controls/rich_text/`, `src/FerroUI.Controls/documents/` |
 | `Microsoft.UI.Text.TextGetOptions` | 10 | 10 / 0 | R4/R8 | `src/FerroUI.Controls/rich_text/rich_edit_text_document.rs`, `src/FerroUI.Controls/rich_text/rtf.rs`, `src/FerroUI.Controls/rich_text/rich_text_transfer.rs` |
-| `Microsoft.UI.Text.TextRangeUnit` | 34 | 7 / 0 | R3/R8 | `src/FerroUI.Controls/rich_text/`, `src/FerroUI.Controls/documents/` |
+| `Microsoft.UI.Text.TextRangeUnit` | 34 | 1 / 7 | R3/R8 | `src/FerroUI.Controls/rich_text/`, `src/FerroUI.Controls/documents/` |
 | `Microsoft.UI.Text.TextScript` | 65 | 0 / 0 | R3/R8 | `src/FerroUI.Controls/rich_text/`, `src/FerroUI.Controls/documents/` |
 | `Microsoft.UI.Text.TextSetOptions` | 8 | 8 / 0 | R4/R8 | `src/FerroUI.Controls/rich_text/rich_edit_text_document.rs`, `src/FerroUI.Controls/rich_text/rtf.rs`, `src/FerroUI.Controls/rich_text/rich_text_transfer.rs` |
 | `Microsoft.UI.Text.UnderlineType` | 21 | 0 / 0 | R3/R8 | `src/FerroUI.Controls/rich_text/`, `src/FerroUI.Controls/documents/` |
@@ -53,15 +53,15 @@ The type plan locates all retained public types, including entirely pending type
 | `Microsoft.UI.Xaml.Automation.AutomationOutlineStyles` | 6 | 0 / 0 | R7 | `src/FerroUI.Controls/automation/`, `src/Windows/FerroUI.Win32/automation/` |
 | `Microsoft.UI.Xaml.Automation.AutomationStyleId` | 16 | 0 / 0 | R7 | `src/FerroUI.Controls/automation/`, `src/Windows/FerroUI.Win32/automation/` |
 | `Microsoft.UI.Xaml.Automation.AutomationTextDecorationLineStyle` | 20 | 0 / 0 | R7 | `src/FerroUI.Controls/automation/`, `src/Windows/FerroUI.Win32/automation/` |
-| `Microsoft.UI.Xaml.Automation.AutomationTextEditChangeType` | 5 | 0 / 0 | R7 | `src/FerroUI.Controls/automation/`, `src/Windows/FerroUI.Win32/automation/` |
-| `Microsoft.UI.Xaml.Automation.Peers.AutomationEvents` | 3 | 2 / 0 | R7 | `src/FerroUI.Controls/automation/`, `src/Windows/FerroUI.Win32/automation/` |
+| `Microsoft.UI.Xaml.Automation.AutomationTextEditChangeType` | 5 | 1 / 4 | R7 | `src/FerroUI.Controls/automation/`, `src/Windows/FerroUI.Win32/automation/` |
+| `Microsoft.UI.Xaml.Automation.Peers.AutomationEvents` | 3 | 3 / 0 | R7 | `src/FerroUI.Controls/automation/`, `src/Windows/FerroUI.Win32/automation/` |
 | `Microsoft.UI.Xaml.Automation.Peers.AutomationPeer` | 1 | 0 / 0 | R7 | `src/FerroUI.Controls/automation/`, `src/Windows/FerroUI.Win32/automation/` |
-| `Microsoft.UI.Xaml.Automation.Peers.PatternInterface` | 5 | 1 / 0 | R7 | `src/FerroUI.Controls/automation/`, `src/Windows/FerroUI.Win32/automation/` |
+| `Microsoft.UI.Xaml.Automation.Peers.PatternInterface` | 5 | 2 / 0 | R7 | `src/FerroUI.Controls/automation/`, `src/Windows/FerroUI.Win32/automation/` |
 | `Microsoft.UI.Xaml.Automation.Peers.RichEditBoxAutomationPeer` | 2 | 2 / 0 | R7 | `src/FerroUI.Controls/automation/`, `src/Windows/FerroUI.Win32/automation/` |
 | `Microsoft.UI.Xaml.Automation.Peers.RichTextBlockAutomationPeer` | 2 | 2 / 0 | R7 | `src/FerroUI.Controls/automation/`, `src/Windows/FerroUI.Win32/automation/` |
 | `Microsoft.UI.Xaml.Automation.Peers.RichTextBlockOverflowAutomationPeer` | 2 | 2 / 0 | R7 | `src/FerroUI.Controls/automation/`, `src/Windows/FerroUI.Win32/automation/` |
 | `Microsoft.UI.Xaml.Automation.Provider.ITextChildProvider` | 3 | 3 / 0 | R7 | `src/FerroUI.Controls/automation/`, `src/Windows/FerroUI.Win32/automation/` |
-| `Microsoft.UI.Xaml.Automation.Provider.ITextEditProvider` | 3 | 0 / 0 | R7 | `src/FerroUI.Controls/automation/`, `src/Windows/FerroUI.Win32/automation/` |
+| `Microsoft.UI.Xaml.Automation.Provider.ITextEditProvider` | 3 | 3 / 0 | R7 | `src/FerroUI.Controls/automation/`, `src/Windows/FerroUI.Win32/automation/` |
 | `Microsoft.UI.Xaml.Automation.Provider.ITextProvider` | 7 | 7 / 0 | R7 | `src/FerroUI.Controls/automation/`, `src/Windows/FerroUI.Win32/automation/` |
 | `Microsoft.UI.Xaml.Automation.Provider.ITextProvider2` | 3 | 2 / 0 | R7 | `src/FerroUI.Controls/automation/`, `src/Windows/FerroUI.Win32/automation/` |
 | `Microsoft.UI.Xaml.Automation.Provider.ITextRangeProvider` | 19 | 19 / 0 | R7 | `src/FerroUI.Controls/automation/`, `src/Windows/FerroUI.Win32/automation/` |
@@ -70,7 +70,7 @@ The type plan locates all retained public types, including entirely pending type
 | `Microsoft.UI.Xaml.Automation.Text.TextPatternRangeEndpoint` | 3 | 3 / 0 | R7 | `src/FerroUI.Controls/automation/`, `src/Windows/FerroUI.Win32/automation/` |
 | `Microsoft.UI.Xaml.Automation.Text.TextUnit` | 8 | 8 / 0 | R7 | `src/FerroUI.Controls/automation/`, `src/Windows/FerroUI.Win32/automation/` |
 | `Microsoft.UI.Xaml.Controls.CandidateWindowBoundsChangedEventArgs` | 2 | 0 / 0 | R5/R7 | `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs` |
-| `Microsoft.UI.Xaml.Controls.RichEditBox` | 65 | 44 / 0 | R5/R7 | `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs` |
+| `Microsoft.UI.Xaml.Controls.RichEditBox` | 65 | 46 / 0 | R5/R7 | `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs` |
 | `Microsoft.UI.Xaml.Controls.RichEditBoxSelectionChangingEventArgs` | 4 | 4 / 0 | R5/R7 | `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs` |
 | `Microsoft.UI.Xaml.Controls.RichEditBoxTextChangingEventArgs` | 2 | 2 / 0 | R5/R7 | `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs` |
 | `Microsoft.UI.Xaml.Controls.RichEditClipboardFormat` | 3 | 0 / 0 | R5/R7 | `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs` |
@@ -98,7 +98,7 @@ The type plan locates all retained public types, including entirely pending type
 | `Microsoft.UI.Xaml.Documents.Paragraph` | 5 | 5 / 0 | R1/R2 | `src/FerroUI.Controls/documents/paragraph.rs` |
 | `Microsoft.UI.Xaml.Documents.Run` | 5 | 3 / 0 | R1/R2 | `src/FerroUI.Controls/documents/run.rs` |
 | `Microsoft.UI.Xaml.Documents.Span` | 3 | 3 / 0 | R1/R2 | `src/FerroUI.Controls/documents/span.rs` |
-| `Microsoft.UI.Xaml.Documents.TextElement` | 48 | 17 / 0 | R1/R2 | `src/FerroUI.Controls/documents/text_element.rs` |
+| `Microsoft.UI.Xaml.Documents.TextElement` | 48 | 19 / 0 | R1/R2 | `src/FerroUI.Controls/documents/text_element.rs` |
 | `Microsoft.UI.Xaml.Documents.TextHighlighter` | 7 | 7 / 0 | R6 | `src/FerroUI.Controls/documents/text_highlighter.rs`, `src/FerroUI.Controls/documents/text_highlight_range.rs`, `src/FerroUI.Controls/documents/text_highlight_merge.rs` |
 | `Microsoft.UI.Xaml.Documents.TextHighlighterBase` | 1 | 1 / 0 | R6 | `src/FerroUI.Controls/documents/text_highlighter.rs`, `src/FerroUI.Controls/documents/text_highlight_range.rs`, `src/FerroUI.Controls/documents/text_highlight_merge.rs` |
 | `Microsoft.UI.Xaml.Documents.TextPointer` | 7 | 7 / 0 | R1/R2 | `src/FerroUI.Controls/documents/text_position.rs` |
@@ -186,7 +186,7 @@ All retained members remain pending.
 
 ### `Microsoft.UI.Text.ITextCharacterFormat`
 
-Audit native formatting units, mixed values, font/brush representation, tabs, lists, language and formatting flags. Rust patches cover only explicitly mapped fields.
+Audit native formatting units, mixed values, font/brush representation, tabs, lists, language resolution and formatting flags. Inherited language and supported RTF locale IDs have explicit mappings; Rust patches cover only reviewed fields.
 
 #### `M:Microsoft.UI.Text.ITextCharacterFormat.GetClone`
 
@@ -264,6 +264,20 @@ State: **partial**. This supported format component is represented by a Rust pat
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_collapsed_typing_format_is_used_until_the_caret_moves`.
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_rtf_fonts_colors_paragraph_metrics_and_hyperlinks_are_retained`.
 - Differences: [RT-I03](DEVIATIONS.md), [RT-I08](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Text.ITextCharacterFormat.LanguageTag`
+
+State: **partial**. Inherited CultureInfo Language and CharacterFormat language patches use pinned XML-language validation, platform preferred language/en-US default, and existing culture-aware shaping/font fallback. Empty resolves to the application language. Windows ResolveLocaleName/MUI fallback and every LCID are not supplied by the finite portable culture table. RTF supports known deflang/lang and plain reset; unknown/unrepresentable language data fails explicitly.
+
+- Target: [src/FerroUI.Controls/documents/character_format.rs](../../../src/FerroUI.Controls/documents/character_format.rs) — `pub fn language_tag(`.
+- Target: [src/FerroUI.Controls/documents/character_format.rs](../../../src/FerroUI.Controls/documents/character_format.rs) — `pub fn set_language_tag(`.
+- Test: [src/FerroUI.Controls/documents/rich_language_tests.rs](../../../src/FerroUI.Controls/documents/rich_language_tests.rs) — `rich_language_source_validation_and_patch_assignment_are_atomic`.
+- Test: [src/FerroUI.Controls/documents/rich_language_tests.rs](../../../src/FerroUI.Controls/documents/rich_language_tests.rs) — `rich_language_inherits_into_shaping_and_local_values_override`.
+- Test: [src/FerroUI.Controls/documents/rich_language_tests.rs](../../../src/FerroUI.Controls/documents/rich_language_tests.rs) — `rich_language_snapshots_and_editor_history_preserve_tags`.
+- Test: [src/FerroUI.Controls/documents/rich_language_tests.rs](../../../src/FerroUI.Controls/documents/rich_language_tests.rs) — `rich_language_rtf_default_scope_plain_and_round_trip`.
+- Test: [src/FerroUI.Controls/documents/rich_language_tests.rs](../../../src/FerroUI.Controls/documents/rich_language_tests.rs) — `rich_language_rtf_reports_unrepresentable_tags_and_unknown_ids`.
+- Test: [src/FerroUI.Controls/documents/rich_language_tests.rs](../../../src/FerroUI.Controls/documents/rich_language_tests.rs) — `rich_language_owner_uses_the_same_inherited_presenter_value`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-I03](DEVIATIONS.md), [RT-I11](DEVIATIONS.md).
 
 #### `P:Microsoft.UI.Text.ITextCharacterFormat.Name`
 
@@ -358,7 +372,7 @@ State: **partial**. A typed character-format patch represents the mapped fields,
 
 ### `Microsoft.UI.Text.ITextParagraphFormat`
 
-Audit native formatting units, mixed values, font/brush representation, tabs, lists, language and formatting flags. Rust patches cover only explicitly mapped fields.
+Audit native formatting units, mixed values, font/brush representation, tabs, lists, language resolution and formatting flags. Inherited language and supported RTF locale IDs have explicit mappings; Rust patches cover only reviewed fields.
 
 #### `M:Microsoft.UI.Text.ITextParagraphFormat.IsEqual(Microsoft.UI.Text.ITextParagraphFormat)`
 
@@ -542,7 +556,7 @@ State: **partial**. The supported paragraph format is a typed patch over the sam
 
 ### `Microsoft.UI.Text.ITextRange`
 
-Audit the external TOM contract member by member. The Rust facade uses typed errors, UTF-16 text ranges and shared editor services; native option flags, ABI, streams and additional units are not inferred from similarly named methods.
+Audit the external TOM contract member by member. The Rust facade uses typed errors, UTF-16 text ranges and shared editor services; native option flags, ABI and remaining units are not inferred from similarly named methods. Seven native-valued units and explicit Rust Read/Write adapters have individual mappings; native Cluster remains pending.
 
 #### `M:Microsoft.UI.Text.ITextRange.Collapse(System.Boolean)`
 
@@ -553,12 +567,25 @@ State: **partial**. The range operation uses shared live text positions and type
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_range_replacement_rebases_independent_selection_and_undoes_once`.
 - Differences: [RT-I01](DEVIATIONS.md), [RT-I08](DEVIATIONS.md).
 
+#### `M:Microsoft.UI.Text.ITextRange.EndOf(Microsoft.UI.Text.TextRangeUnit,System.Boolean)`
+
+State: **partial**. end_of operates on live scalar-safe UTF-16 ranges. Start/end use signed displacements, indices are one-based or end-relative, and movement counts a nonempty collapse as its first unit. The seven implemented constants retain native numeric values. Character traverses Unicode scalars, Word includes following ASCII blanks, Sentence follows native punctuation rules, Paragraph handles native separators, HardParagraph distinguishes structural paragraphs from soft breaks, and Line uses a weak complete untrimmed view with headless Paragraph fallback. The model has one Story and excludes the synthetic terminal CR. Remaining native units, arbitrary stories and ABI remain pending.
+
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_document.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document.rs) — `pub fn end_of(`.
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_units.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units.rs) — `TextRangeUnit`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs) — `start_of_and_end_of_report_native_displacements_and_collapse_counts`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs) — `character_end_of_preserves_unit_boundaries_except_at_story_start`.
+- Differences: [RT-I01](DEVIATIONS.md), [RT-I08](DEVIATIONS.md).
+
 #### `M:Microsoft.UI.Text.ITextRange.Expand(Microsoft.UI.Text.TextRangeUnit)`
 
-State: **partial**. The range operation uses shared live text positions and typed Result values. Unit movement and search use the documented Rust subset; native options, count conventions and geometry flags remain adapted.
+State: **partial**. expand operates on live scalar-safe UTF-16 ranges. Start/end use signed displacements, indices are one-based or end-relative, and movement counts a nonempty collapse as its first unit. The seven implemented constants retain native numeric values. Character traverses Unicode scalars, Word includes following ASCII blanks, Sentence follows native punctuation rules, Paragraph handles native separators, HardParagraph distinguishes structural paragraphs from soft breaks, and Line uses a weak complete untrimmed view with headless Paragraph fallback. The model has one Story and excludes the synthetic terminal CR. Remaining native units, arbitrary stories and ABI remain pending.
 
 - Target: [src/FerroUI.Controls/rich_text/rich_edit_text_document.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document.rs) — `pub fn expand(`.
-- Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_text_unit_movement_preserves_graphemes_and_directed_selection`.
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_units.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units.rs) — `TextRangeUnit`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs) — `hard_paragraph_units_distinguish_inline_soft_breaks_and_paragraph_objects`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs) — `attached_line_units_follow_wrapping_and_reflow_while_headless_lines_are_paragraphs`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs) — `incomplete_or_trimmed_line_layout_returns_an_error_without_moving_range`.
 - Differences: [RT-I01](DEVIATIONS.md), [RT-I08](DEVIATIONS.md).
 
 #### `M:Microsoft.UI.Text.ITextRange.FindText(System.String,System.Int32,Microsoft.UI.Text.FindOptions)`
@@ -589,6 +616,16 @@ State: **partial**. The range operation uses shared live text positions and type
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_range_replacement_rebases_independent_selection_and_undoes_once`.
 - Differences: [RT-I01](DEVIATIONS.md), [RT-I08](DEVIATIONS.md).
 
+#### `M:Microsoft.UI.Text.ITextRange.GetIndex(Microsoft.UI.Text.TextRangeUnit)`
+
+State: **partial**. get_index operates on live scalar-safe UTF-16 ranges. Start/end use signed displacements, indices are one-based or end-relative, and movement counts a nonempty collapse as its first unit. The seven implemented constants retain native numeric values. Character traverses Unicode scalars, Word includes following ASCII blanks, Sentence follows native punctuation rules, Paragraph handles native separators, HardParagraph distinguishes structural paragraphs from soft breaks, and Line uses a weak complete untrimmed view with headless Paragraph fallback. The model has one Story and excludes the synthetic terminal CR. Remaining native units, arbitrary stories and ABI remain pending.
+
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_document.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document.rs) — `pub fn get_index(`.
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_units.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units.rs) — `TextRangeUnit`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs) — `get_index_and_set_index_use_one_based_positive_and_end_relative_negative_units`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs) — `empty_and_terminal_paragraph_units_keep_the_model_coordinate_contract`.
+- Differences: [RT-I01](DEVIATIONS.md), [RT-I08](DEVIATIONS.md).
+
 #### `M:Microsoft.UI.Text.ITextRange.GetRect(Microsoft.UI.Text.PointOptions,Windows.Foundation.Rect@,System.Int32@)`
 
 State: **partial**. The range operation uses shared live text positions and typed Result values. Unit movement and search use the documented Rust subset; native options, count conventions and geometry flags remain adapted.
@@ -617,6 +654,19 @@ State: **partial**. Typed get_text/set_text_with_options implement the mapped pl
 - Test: [src/FerroUI.Controls/rich_text/rich_edit_text_document_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document_tests.rs) — `unlink_insertion_keeps_neighboring_hyperlinks_but_excludes_inserted_text`.
 - Test: [src/FerroUI.Controls/rich_text/rich_edit_text_document_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document_tests.rs) — `malformed_rtf_and_invalid_flags_leave_composition_preview_untouched`.
 - Differences: [RT-I01](DEVIATIONS.md), [RT-I08](DEVIATIONS.md), [RT-A03](DEVIATIONS.md), [RT-I04](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Text.ITextRange.GetTextViaStream(Microsoft.UI.Text.TextGetOptions,Windows.Storage.Streams.IRandomAccessStream)`
+
+State: **partial**. The native random-access stream ABI is translated to FerroUI-style Rust Read/Write. TextStreamOptions explicitly selects plain UTF-8/UTF-16LE/UTF-16BE, BOM and byte bounds; RTF uses raw codec bytes. Input validation finishes before mutation, output encoding before writing, and caller ownership/current position are preserved. Unsupported flags/content fail explicitly; native engine encoding defaults and WinRT ABI are not inferred.
+
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_stream.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_stream.rs) — `pub fn get_text_via_stream(`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs) — `stream_encodings_round_trip_scalars_and_matching_byte_order_marks`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs) — `writes_retry_interrupts_and_partial_writes_without_flushing`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs) — `write_failure_exposes_the_prefix_and_preserves_the_document_and_range`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs) — `output_byte_limit_includes_bom_and_fails_before_the_first_write`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs) — `stream_output_snapshot_is_stable_during_writer_reentrancy`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs) — `streams_use_the_current_position_without_seeking_or_truncating`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-I04](DEVIATIONS.md), [RT-I12](DEVIATIONS.md).
 
 #### `M:Microsoft.UI.Text.ITextRange.InRange(Microsoft.UI.Text.ITextRange)`
 
@@ -660,26 +710,40 @@ State: **partial**. Endpoint crossing collapses the opposite endpoint; story ide
 
 #### `M:Microsoft.UI.Text.ITextRange.Move(Microsoft.UI.Text.TextRangeUnit,System.Int32)`
 
-State: **partial**. The range operation uses shared live text positions and typed Result values. Unit movement and search use the documented Rust subset; native options, count conventions and geometry flags remain adapted.
+State: **partial**. move_by operates on live scalar-safe UTF-16 ranges. Start/end use signed displacements, indices are one-based or end-relative, and movement counts a nonempty collapse as its first unit. The seven implemented constants retain native numeric values. Character traverses Unicode scalars, Word includes following ASCII blanks, Sentence follows native punctuation rules, Paragraph handles native separators, HardParagraph distinguishes structural paragraphs from soft breaks, and Line uses a weak complete untrimmed view with headless Paragraph fallback. The model has one Story and excludes the synthetic terminal CR. Remaining native units, arbitrary stories and ABI remain pending.
 
 - Target: [src/FerroUI.Controls/rich_text/rich_edit_text_document.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document.rs) — `pub fn move_by(`.
-- Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_text_unit_movement_preserves_graphemes_and_directed_selection`.
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_units.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units.rs) — `TextRangeUnit`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs) — `move_counts_nonempty_collapse_and_alignment_as_the_first_unit`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs) — `endpoint_movement_collapses_crossings_and_saturates_at_story_limits`.
 - Differences: [RT-I01](DEVIATIONS.md), [RT-I08](DEVIATIONS.md).
 
 #### `M:Microsoft.UI.Text.ITextRange.MoveEnd(Microsoft.UI.Text.TextRangeUnit,System.Int32)`
 
-State: **partial**. The range operation uses shared live text positions and typed Result values. Unit movement and search use the documented Rust subset; native options, count conventions and geometry flags remain adapted.
+State: **partial**. move_end operates on live scalar-safe UTF-16 ranges. Start/end use signed displacements, indices are one-based or end-relative, and movement counts a nonempty collapse as its first unit. The seven implemented constants retain native numeric values. Character traverses Unicode scalars, Word includes following ASCII blanks, Sentence follows native punctuation rules, Paragraph handles native separators, HardParagraph distinguishes structural paragraphs from soft breaks, and Line uses a weak complete untrimmed view with headless Paragraph fallback. The model has one Story and excludes the synthetic terminal CR. Remaining native units, arbitrary stories and ABI remain pending.
 
 - Target: [src/FerroUI.Controls/rich_text/rich_edit_text_document.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document.rs) — `pub fn move_end(`.
-- Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_text_unit_movement_preserves_graphemes_and_directed_selection`.
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_units.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units.rs) — `TextRangeUnit`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs) — `endpoint_movement_collapses_crossings_and_saturates_at_story_limits`.
 - Differences: [RT-I01](DEVIATIONS.md), [RT-I08](DEVIATIONS.md).
 
 #### `M:Microsoft.UI.Text.ITextRange.MoveStart(Microsoft.UI.Text.TextRangeUnit,System.Int32)`
 
-State: **partial**. The range operation uses shared live text positions and typed Result values. Unit movement and search use the documented Rust subset; native options, count conventions and geometry flags remain adapted.
+State: **partial**. move_start operates on live scalar-safe UTF-16 ranges. Start/end use signed displacements, indices are one-based or end-relative, and movement counts a nonempty collapse as its first unit. The seven implemented constants retain native numeric values. Character traverses Unicode scalars, Word includes following ASCII blanks, Sentence follows native punctuation rules, Paragraph handles native separators, HardParagraph distinguishes structural paragraphs from soft breaks, and Line uses a weak complete untrimmed view with headless Paragraph fallback. The model has one Story and excludes the synthetic terminal CR. Remaining native units, arbitrary stories and ABI remain pending.
 
 - Target: [src/FerroUI.Controls/rich_text/rich_edit_text_document.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document.rs) — `pub fn move_start(`.
-- Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_text_unit_movement_preserves_graphemes_and_directed_selection`.
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_units.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units.rs) — `TextRangeUnit`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs) — `endpoint_movement_collapses_crossings_and_saturates_at_story_limits`.
+- Differences: [RT-I01](DEVIATIONS.md), [RT-I08](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Text.ITextRange.SetIndex(Microsoft.UI.Text.TextRangeUnit,System.Int32,System.Boolean)`
+
+State: **partial**. set_index operates on live scalar-safe UTF-16 ranges. Start/end use signed displacements, indices are one-based or end-relative, and movement counts a nonempty collapse as its first unit. The seven implemented constants retain native numeric values. Character traverses Unicode scalars, Word includes following ASCII blanks, Sentence follows native punctuation rules, Paragraph handles native separators, HardParagraph distinguishes structural paragraphs from soft breaks, and Line uses a weak complete untrimmed view with headless Paragraph fallback. The model has one Story and excludes the synthetic terminal CR. Remaining native units, arbitrary stories and ABI remain pending.
+
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_document.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document.rs) — `pub fn set_index(`.
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_units.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units.rs) — `TextRangeUnit`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs) — `get_index_and_set_index_use_one_based_positive_and_end_relative_negative_units`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs) — `invalid_unit_indices_are_nonmutating_including_extreme_signed_values`.
 - Differences: [RT-I01](DEVIATIONS.md), [RT-I08](DEVIATIONS.md).
 
 #### `M:Microsoft.UI.Text.ITextRange.SetRange(System.Int32,System.Int32)`
@@ -711,6 +775,31 @@ State: **partial**. Typed get_text/set_text_with_options implement the mapped pl
 - Test: [src/FerroUI.Controls/rich_text/rich_edit_text_document_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document_tests.rs) — `unlink_insertion_keeps_neighboring_hyperlinks_but_excludes_inserted_text`.
 - Test: [src/FerroUI.Controls/rich_text/rich_edit_text_document_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document_tests.rs) — `malformed_rtf_and_invalid_flags_leave_composition_preview_untouched`.
 - Differences: [RT-I01](DEVIATIONS.md), [RT-I08](DEVIATIONS.md), [RT-A03](DEVIATIONS.md), [RT-I04](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Text.ITextRange.SetTextViaStream(Microsoft.UI.Text.TextSetOptions,Windows.Storage.Streams.IRandomAccessStream)`
+
+State: **partial**. The native random-access stream ABI is translated to FerroUI-style Rust Read/Write. TextStreamOptions explicitly selects plain UTF-8/UTF-16LE/UTF-16BE, BOM and byte bounds; RTF uses raw codec bytes. Input validation finishes before mutation, output encoding before writing, and caller ownership/current position are preserved. Unsupported flags/content fail explicitly; native engine encoding defaults and WinRT ABI are not inferred.
+
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_stream.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_stream.rs) — `pub fn set_text_via_stream(`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs) — `stream_encodings_round_trip_scalars_and_matching_byte_order_marks`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs) — `malformed_stream_encodings_preserve_composition_selection_and_history`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs) — `invalid_stream_flags_and_rtf_encoding_policy_do_not_access_the_stream`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs) — `input_byte_limit_accepts_exact_payload_and_consumes_only_one_overflow_byte`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs) — `interrupted_reads_retry_and_io_failure_after_a_prefix_is_transactional`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs) — `raw_rtf_streams_preserve_ansi_bytes_and_supported_formatting`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs) — `invalid_range_stream_preserves_live_endpoints_and_composition`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs) — `streamed_range_replacement_rebases_selection_and_is_one_undo_unit`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs) — `streamed_range_rtf_retains_format_and_check_text_limit_uses_utf16`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-I04](DEVIATIONS.md), [RT-I12](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Text.ITextRange.StartOf(Microsoft.UI.Text.TextRangeUnit,System.Boolean)`
+
+State: **partial**. start_of operates on live scalar-safe UTF-16 ranges. Start/end use signed displacements, indices are one-based or end-relative, and movement counts a nonempty collapse as its first unit. The seven implemented constants retain native numeric values. Character traverses Unicode scalars, Word includes following ASCII blanks, Sentence follows native punctuation rules, Paragraph handles native separators, HardParagraph distinguishes structural paragraphs from soft breaks, and Line uses a weak complete untrimmed view with headless Paragraph fallback. The model has one Story and excludes the synthetic terminal CR. Remaining native units, arbitrary stories and ABI remain pending.
+
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_document.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document.rs) — `pub fn start_of(`.
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_units.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units.rs) — `TextRangeUnit`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs) — `start_of_and_end_of_report_native_displacements_and_collapse_counts`.
+- Differences: [RT-I01](DEVIATIONS.md), [RT-I08](DEVIATIONS.md).
 
 #### `P:Microsoft.UI.Text.ITextRange.CharacterFormat`
 
@@ -789,6 +878,14 @@ State: **partial**. Endpoint crossing collapses the opposite endpoint; story ide
 - Test: [src/FerroUI.Controls/rich_text/rich_edit_text_document_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document_tests.rs) — `range_endpoint_setters_collapse_crossings_and_reject_surrogate_interiors`.
 - Differences: [RT-I01](DEVIATIONS.md), [RT-I03](DEVIATIONS.md), [RT-I08](DEVIATIONS.md), [RT-A03](DEVIATIONS.md).
 
+#### `P:Microsoft.UI.Text.ITextRange.StoryLength`
+
+State: **partial**. Reports the single model story length in UTF-16 units. Native synthetic terminal CR is excluded from model coordinates, even when GetText projects it.
+
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_document.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document.rs) — `pub fn story_length(`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs) — `empty_and_terminal_paragraph_units_keep_the_model_coordinate_contract`.
+- Differences: [RT-I01](DEVIATIONS.md), [RT-I08](DEVIATIONS.md).
+
 #### `P:Microsoft.UI.Text.ITextRange.Text`
 
 State: **partial**. This range value is represented by the live UTF-16 model, structured snapshot, or composite Uniform/Mixed formatting query. The native TOM value/object model is adapted.
@@ -809,7 +906,7 @@ State: **partial**. Live gravity-based Rust ranges cover the mapped operations o
 
 ### `Microsoft.UI.Text.ITextSelection`
 
-Audit the external TOM contract member by member. The Rust facade uses typed errors, UTF-16 text ranges and shared editor services; native option flags, ABI, streams and additional units are not inferred from similarly named methods.
+Audit the external TOM contract member by member. The Rust facade uses typed errors, UTF-16 text ranges and shared editor services; native option flags, ABI and remaining units are not inferred from similarly named methods. Seven native-valued units and explicit Rust Read/Write adapters have individual mappings; native Cluster remains pending.
 
 #### `M:Microsoft.UI.Text.ITextSelection.TypeText(System.String)`
 
@@ -965,7 +1062,7 @@ All retained members remain pending.
 
 ### `Microsoft.UI.Text.RichEditTextDocument`
 
-Audit the external TOM contract member by member. The Rust facade uses typed errors, UTF-16 text ranges and shared editor services; native option flags, ABI, streams and additional units are not inferred from similarly named methods.
+Audit the external TOM contract member by member. The Rust facade uses typed errors, UTF-16 text ranges and shared editor services; native option flags, ABI and remaining units are not inferred from similarly named methods. Seven native-valued units and explicit Rust Read/Write adapters have individual mappings; native Cluster remains pending.
 
 #### `M:Microsoft.UI.Text.RichEditTextDocument.BeginUndoGroup`
 
@@ -1078,6 +1175,19 @@ State: **partial**. Typed get_text/set_text_with_options implement the mapped pl
 - Test: [src/FerroUI.Controls/rich_text/rich_edit_text_document_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document_tests.rs) — `malformed_rtf_and_invalid_flags_leave_composition_preview_untouched`.
 - Differences: [RT-I01](DEVIATIONS.md), [RT-I08](DEVIATIONS.md), [RT-A03](DEVIATIONS.md), [RT-I04](DEVIATIONS.md).
 
+#### `M:Microsoft.UI.Text.RichEditTextDocument.LoadFromStream(Microsoft.UI.Text.TextSetOptions,Windows.Storage.Streams.IRandomAccessStream)`
+
+State: **partial**. The native random-access stream ABI is translated to FerroUI-style Rust Read/Write. TextStreamOptions explicitly selects plain UTF-8/UTF-16LE/UTF-16BE, BOM and byte bounds; RTF uses raw codec bytes. Input validation finishes before mutation, output encoding before writing, and caller ownership/current position are preserved. Unsupported flags/content fail explicitly; native engine encoding defaults and WinRT ABI are not inferred.
+
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_stream.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_stream.rs) — `pub fn load_from_stream(`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs) — `stream_encodings_round_trip_scalars_and_matching_byte_order_marks`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs) — `malformed_stream_encodings_preserve_composition_selection_and_history`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs) — `invalid_stream_flags_and_rtf_encoding_policy_do_not_access_the_stream`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs) — `input_byte_limit_accepts_exact_payload_and_consumes_only_one_overflow_byte`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs) — `interrupted_reads_retry_and_io_failure_after_a_prefix_is_transactional`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs) — `raw_rtf_streams_preserve_ansi_bytes_and_supported_formatting`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-I04](DEVIATIONS.md), [RT-I12](DEVIATIONS.md).
+
 #### `M:Microsoft.UI.Text.RichEditTextDocument.Redo`
 
 State: **partial**. The named document operation maps to the Rust facade; undo grouping is a scoped Result-returning transaction. Native option flags, signed sentinel positions and stream/ABI details are not inferred from the mapped method.
@@ -1086,6 +1196,19 @@ State: **partial**. The named document operation maps to the Rust facade; undo g
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_undo_restores_nested_inline_structure_and_paragraph_format`.
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_compound_transaction_rolls_back_on_error_and_is_one_undo_unit`.
 - Differences: [RT-I01](DEVIATIONS.md), [RT-I08](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Text.RichEditTextDocument.SaveToStream(Microsoft.UI.Text.TextGetOptions,Windows.Storage.Streams.IRandomAccessStream)`
+
+State: **partial**. The native random-access stream ABI is translated to FerroUI-style Rust Read/Write. TextStreamOptions explicitly selects plain UTF-8/UTF-16LE/UTF-16BE, BOM and byte bounds; RTF uses raw codec bytes. Input validation finishes before mutation, output encoding before writing, and caller ownership/current position are preserved. Unsupported flags/content fail explicitly; native engine encoding defaults and WinRT ABI are not inferred.
+
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_stream.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_stream.rs) — `pub fn save_to_stream(`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs) — `stream_encodings_round_trip_scalars_and_matching_byte_order_marks`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs) — `writes_retry_interrupts_and_partial_writes_without_flushing`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs) — `write_failure_exposes_the_prefix_and_preserves_the_document_and_range`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs) — `output_byte_limit_includes_bom_and_fails_before_the_first_write`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs) — `stream_output_snapshot_is_stable_during_writer_reentrancy`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs) — `streams_use_the_current_position_without_seeking_or_truncating`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-I04](DEVIATIONS.md), [RT-I12](DEVIATIONS.md).
 
 #### `M:Microsoft.UI.Text.RichEditTextDocument.SetDefaultCharacterFormat(Microsoft.UI.Text.ITextCharacterFormat)`
 
@@ -1174,7 +1297,7 @@ State: **partial**. Rust services expose the mapped document/range/selection ope
 
 ### `Microsoft.UI.Text.RichEditTextRange`
 
-Audit the external TOM contract member by member. The Rust facade uses typed errors, UTF-16 text ranges and shared editor services; native option flags, ABI, streams and additional units are not inferred from similarly named methods.
+Audit the external TOM contract member by member. The Rust facade uses typed errors, UTF-16 text ranges and shared editor services; native option flags, ABI and remaining units are not inferred from similarly named methods. Seven native-valued units and explicit Rust Read/Write adapters have individual mappings; native Cluster remains pending.
 
 #### `M:Microsoft.UI.Text.RichEditTextRange.Collapse(System.Boolean)`
 
@@ -1185,12 +1308,25 @@ State: **partial**. The range operation uses shared live text positions and type
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_range_replacement_rebases_independent_selection_and_undoes_once`.
 - Differences: [RT-I01](DEVIATIONS.md), [RT-I08](DEVIATIONS.md).
 
+#### `M:Microsoft.UI.Text.RichEditTextRange.EndOf(Microsoft.UI.Text.TextRangeUnit,System.Boolean)`
+
+State: **partial**. end_of operates on live scalar-safe UTF-16 ranges. Start/end use signed displacements, indices are one-based or end-relative, and movement counts a nonempty collapse as its first unit. The seven implemented constants retain native numeric values. Character traverses Unicode scalars, Word includes following ASCII blanks, Sentence follows native punctuation rules, Paragraph handles native separators, HardParagraph distinguishes structural paragraphs from soft breaks, and Line uses a weak complete untrimmed view with headless Paragraph fallback. The model has one Story and excludes the synthetic terminal CR. Remaining native units, arbitrary stories and ABI remain pending.
+
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_document.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document.rs) — `pub fn end_of(`.
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_units.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units.rs) — `TextRangeUnit`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs) — `start_of_and_end_of_report_native_displacements_and_collapse_counts`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs) — `character_end_of_preserves_unit_boundaries_except_at_story_start`.
+- Differences: [RT-I01](DEVIATIONS.md), [RT-I08](DEVIATIONS.md).
+
 #### `M:Microsoft.UI.Text.RichEditTextRange.Expand(Microsoft.UI.Text.TextRangeUnit)`
 
-State: **partial**. The range operation uses shared live text positions and typed Result values. Unit movement and search use the documented Rust subset; native options, count conventions and geometry flags remain adapted.
+State: **partial**. expand operates on live scalar-safe UTF-16 ranges. Start/end use signed displacements, indices are one-based or end-relative, and movement counts a nonempty collapse as its first unit. The seven implemented constants retain native numeric values. Character traverses Unicode scalars, Word includes following ASCII blanks, Sentence follows native punctuation rules, Paragraph handles native separators, HardParagraph distinguishes structural paragraphs from soft breaks, and Line uses a weak complete untrimmed view with headless Paragraph fallback. The model has one Story and excludes the synthetic terminal CR. Remaining native units, arbitrary stories and ABI remain pending.
 
 - Target: [src/FerroUI.Controls/rich_text/rich_edit_text_document.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document.rs) — `pub fn expand(`.
-- Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_text_unit_movement_preserves_graphemes_and_directed_selection`.
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_units.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units.rs) — `TextRangeUnit`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs) — `hard_paragraph_units_distinguish_inline_soft_breaks_and_paragraph_objects`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs) — `attached_line_units_follow_wrapping_and_reflow_while_headless_lines_are_paragraphs`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs) — `incomplete_or_trimmed_line_layout_returns_an_error_without_moving_range`.
 - Differences: [RT-I01](DEVIATIONS.md), [RT-I08](DEVIATIONS.md).
 
 #### `M:Microsoft.UI.Text.RichEditTextRange.FindText(System.String,System.Int32,Microsoft.UI.Text.FindOptions)`
@@ -1210,6 +1346,16 @@ State: **partial**. The range operation uses shared live text positions and type
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_range_replacement_rebases_independent_selection_and_undoes_once`.
 - Differences: [RT-I01](DEVIATIONS.md), [RT-I08](DEVIATIONS.md).
 
+#### `M:Microsoft.UI.Text.RichEditTextRange.GetIndex(Microsoft.UI.Text.TextRangeUnit)`
+
+State: **partial**. get_index operates on live scalar-safe UTF-16 ranges. Start/end use signed displacements, indices are one-based or end-relative, and movement counts a nonempty collapse as its first unit. The seven implemented constants retain native numeric values. Character traverses Unicode scalars, Word includes following ASCII blanks, Sentence follows native punctuation rules, Paragraph handles native separators, HardParagraph distinguishes structural paragraphs from soft breaks, and Line uses a weak complete untrimmed view with headless Paragraph fallback. The model has one Story and excludes the synthetic terminal CR. Remaining native units, arbitrary stories and ABI remain pending.
+
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_document.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document.rs) — `pub fn get_index(`.
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_units.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units.rs) — `TextRangeUnit`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs) — `get_index_and_set_index_use_one_based_positive_and_end_relative_negative_units`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs) — `empty_and_terminal_paragraph_units_keep_the_model_coordinate_contract`.
+- Differences: [RT-I01](DEVIATIONS.md), [RT-I08](DEVIATIONS.md).
+
 #### `M:Microsoft.UI.Text.RichEditTextRange.GetRect(Microsoft.UI.Text.PointOptions,Windows.Foundation.Rect@,System.Int32@)`
 
 State: **partial**. The range operation uses shared live text positions and typed Result values. Unit movement and search use the documented Rust subset; native options, count conventions and geometry flags remain adapted.
@@ -1226,6 +1372,19 @@ State: **partial**. The range operation uses shared live text positions and type
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_live_ranges_follow_edits_and_support_independent_clones`.
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_range_replacement_rebases_independent_selection_and_undoes_once`.
 - Differences: [RT-I01](DEVIATIONS.md), [RT-I08](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Text.RichEditTextRange.GetTextViaStream(Microsoft.UI.Text.TextGetOptions,Windows.Storage.Streams.IRandomAccessStream)`
+
+State: **partial**. The native random-access stream ABI is translated to FerroUI-style Rust Read/Write. TextStreamOptions explicitly selects plain UTF-8/UTF-16LE/UTF-16BE, BOM and byte bounds; RTF uses raw codec bytes. Input validation finishes before mutation, output encoding before writing, and caller ownership/current position are preserved. Unsupported flags/content fail explicitly; native engine encoding defaults and WinRT ABI are not inferred.
+
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_stream.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_stream.rs) — `pub fn get_text_via_stream(`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs) — `stream_encodings_round_trip_scalars_and_matching_byte_order_marks`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs) — `writes_retry_interrupts_and_partial_writes_without_flushing`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs) — `write_failure_exposes_the_prefix_and_preserves_the_document_and_range`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs) — `output_byte_limit_includes_bom_and_fails_before_the_first_write`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs) — `stream_output_snapshot_is_stable_during_writer_reentrancy`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs) — `streams_use_the_current_position_without_seeking_or_truncating`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-I04](DEVIATIONS.md), [RT-I12](DEVIATIONS.md).
 
 #### `M:Microsoft.UI.Text.RichEditTextRange.InRange(Microsoft.UI.Text.ITextRange)`
 
@@ -1247,26 +1406,40 @@ State: **partial**. The range operation uses shared live text positions and type
 
 #### `M:Microsoft.UI.Text.RichEditTextRange.Move(Microsoft.UI.Text.TextRangeUnit,System.Int32)`
 
-State: **partial**. The range operation uses shared live text positions and typed Result values. Unit movement and search use the documented Rust subset; native options, count conventions and geometry flags remain adapted.
+State: **partial**. move_by operates on live scalar-safe UTF-16 ranges. Start/end use signed displacements, indices are one-based or end-relative, and movement counts a nonempty collapse as its first unit. The seven implemented constants retain native numeric values. Character traverses Unicode scalars, Word includes following ASCII blanks, Sentence follows native punctuation rules, Paragraph handles native separators, HardParagraph distinguishes structural paragraphs from soft breaks, and Line uses a weak complete untrimmed view with headless Paragraph fallback. The model has one Story and excludes the synthetic terminal CR. Remaining native units, arbitrary stories and ABI remain pending.
 
 - Target: [src/FerroUI.Controls/rich_text/rich_edit_text_document.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document.rs) — `pub fn move_by(`.
-- Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_text_unit_movement_preserves_graphemes_and_directed_selection`.
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_units.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units.rs) — `TextRangeUnit`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs) — `move_counts_nonempty_collapse_and_alignment_as_the_first_unit`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs) — `endpoint_movement_collapses_crossings_and_saturates_at_story_limits`.
 - Differences: [RT-I01](DEVIATIONS.md), [RT-I08](DEVIATIONS.md).
 
 #### `M:Microsoft.UI.Text.RichEditTextRange.MoveEnd(Microsoft.UI.Text.TextRangeUnit,System.Int32)`
 
-State: **partial**. The range operation uses shared live text positions and typed Result values. Unit movement and search use the documented Rust subset; native options, count conventions and geometry flags remain adapted.
+State: **partial**. move_end operates on live scalar-safe UTF-16 ranges. Start/end use signed displacements, indices are one-based or end-relative, and movement counts a nonempty collapse as its first unit. The seven implemented constants retain native numeric values. Character traverses Unicode scalars, Word includes following ASCII blanks, Sentence follows native punctuation rules, Paragraph handles native separators, HardParagraph distinguishes structural paragraphs from soft breaks, and Line uses a weak complete untrimmed view with headless Paragraph fallback. The model has one Story and excludes the synthetic terminal CR. Remaining native units, arbitrary stories and ABI remain pending.
 
 - Target: [src/FerroUI.Controls/rich_text/rich_edit_text_document.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document.rs) — `pub fn move_end(`.
-- Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_text_unit_movement_preserves_graphemes_and_directed_selection`.
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_units.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units.rs) — `TextRangeUnit`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs) — `endpoint_movement_collapses_crossings_and_saturates_at_story_limits`.
 - Differences: [RT-I01](DEVIATIONS.md), [RT-I08](DEVIATIONS.md).
 
 #### `M:Microsoft.UI.Text.RichEditTextRange.MoveStart(Microsoft.UI.Text.TextRangeUnit,System.Int32)`
 
-State: **partial**. The range operation uses shared live text positions and typed Result values. Unit movement and search use the documented Rust subset; native options, count conventions and geometry flags remain adapted.
+State: **partial**. move_start operates on live scalar-safe UTF-16 ranges. Start/end use signed displacements, indices are one-based or end-relative, and movement counts a nonempty collapse as its first unit. The seven implemented constants retain native numeric values. Character traverses Unicode scalars, Word includes following ASCII blanks, Sentence follows native punctuation rules, Paragraph handles native separators, HardParagraph distinguishes structural paragraphs from soft breaks, and Line uses a weak complete untrimmed view with headless Paragraph fallback. The model has one Story and excludes the synthetic terminal CR. Remaining native units, arbitrary stories and ABI remain pending.
 
 - Target: [src/FerroUI.Controls/rich_text/rich_edit_text_document.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document.rs) — `pub fn move_start(`.
-- Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_text_unit_movement_preserves_graphemes_and_directed_selection`.
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_units.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units.rs) — `TextRangeUnit`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs) — `endpoint_movement_collapses_crossings_and_saturates_at_story_limits`.
+- Differences: [RT-I01](DEVIATIONS.md), [RT-I08](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Text.RichEditTextRange.SetIndex(Microsoft.UI.Text.TextRangeUnit,System.Int32,System.Boolean)`
+
+State: **partial**. set_index operates on live scalar-safe UTF-16 ranges. Start/end use signed displacements, indices are one-based or end-relative, and movement counts a nonempty collapse as its first unit. The seven implemented constants retain native numeric values. Character traverses Unicode scalars, Word includes following ASCII blanks, Sentence follows native punctuation rules, Paragraph handles native separators, HardParagraph distinguishes structural paragraphs from soft breaks, and Line uses a weak complete untrimmed view with headless Paragraph fallback. The model has one Story and excludes the synthetic terminal CR. Remaining native units, arbitrary stories and ABI remain pending.
+
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_document.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document.rs) — `pub fn set_index(`.
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_units.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units.rs) — `TextRangeUnit`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs) — `get_index_and_set_index_use_one_based_positive_and_end_relative_negative_units`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs) — `invalid_unit_indices_are_nonmutating_including_extreme_signed_values`.
 - Differences: [RT-I01](DEVIATIONS.md), [RT-I08](DEVIATIONS.md).
 
 #### `M:Microsoft.UI.Text.RichEditTextRange.SetRange(System.Int32,System.Int32)`
@@ -1285,6 +1458,31 @@ State: **partial**. The range operation uses shared live text positions and type
 - Target: [src/FerroUI.Controls/rich_text/rich_edit_text_document.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document.rs) — `pub fn set_text(`.
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_live_ranges_follow_edits_and_support_independent_clones`.
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_range_replacement_rebases_independent_selection_and_undoes_once`.
+- Differences: [RT-I01](DEVIATIONS.md), [RT-I08](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Text.RichEditTextRange.SetTextViaStream(Microsoft.UI.Text.TextSetOptions,Windows.Storage.Streams.IRandomAccessStream)`
+
+State: **partial**. The native random-access stream ABI is translated to FerroUI-style Rust Read/Write. TextStreamOptions explicitly selects plain UTF-8/UTF-16LE/UTF-16BE, BOM and byte bounds; RTF uses raw codec bytes. Input validation finishes before mutation, output encoding before writing, and caller ownership/current position are preserved. Unsupported flags/content fail explicitly; native engine encoding defaults and WinRT ABI are not inferred.
+
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_stream.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_stream.rs) — `pub fn set_text_via_stream(`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs) — `stream_encodings_round_trip_scalars_and_matching_byte_order_marks`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs) — `malformed_stream_encodings_preserve_composition_selection_and_history`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs) — `invalid_stream_flags_and_rtf_encoding_policy_do_not_access_the_stream`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs) — `input_byte_limit_accepts_exact_payload_and_consumes_only_one_overflow_byte`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs) — `interrupted_reads_retry_and_io_failure_after_a_prefix_is_transactional`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs) — `raw_rtf_streams_preserve_ansi_bytes_and_supported_formatting`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs) — `invalid_range_stream_preserves_live_endpoints_and_composition`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs) — `streamed_range_replacement_rebases_selection_and_is_one_undo_unit`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs) — `streamed_range_rtf_retains_format_and_check_text_limit_uses_utf16`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-I04](DEVIATIONS.md), [RT-I12](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Text.RichEditTextRange.StartOf(Microsoft.UI.Text.TextRangeUnit,System.Boolean)`
+
+State: **partial**. start_of operates on live scalar-safe UTF-16 ranges. Start/end use signed displacements, indices are one-based or end-relative, and movement counts a nonempty collapse as its first unit. The seven implemented constants retain native numeric values. Character traverses Unicode scalars, Word includes following ASCII blanks, Sentence follows native punctuation rules, Paragraph handles native separators, HardParagraph distinguishes structural paragraphs from soft breaks, and Line uses a weak complete untrimmed view with headless Paragraph fallback. The model has one Story and excludes the synthetic terminal CR. Remaining native units, arbitrary stories and ABI remain pending.
+
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_document.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document.rs) — `pub fn start_of(`.
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_units.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units.rs) — `TextRangeUnit`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs) — `start_of_and_end_of_report_native_displacements_and_collapse_counts`.
 - Differences: [RT-I01](DEVIATIONS.md), [RT-I08](DEVIATIONS.md).
 
 #### `P:Microsoft.UI.Text.RichEditTextRange.CharacterFormat`
@@ -1340,6 +1538,14 @@ State: **partial**. This range value is represented by the live UTF-16 model, st
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_live_ranges_follow_edits_and_support_independent_clones`.
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_range_replacement_rebases_independent_selection_and_undoes_once`.
 - Differences: [RT-I01](DEVIATIONS.md), [RT-I03](DEVIATIONS.md), [RT-I08](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Text.RichEditTextRange.StoryLength`
+
+State: **partial**. Reports the single model story length in UTF-16 units. Native synthetic terminal CR is excluded from model coordinates, even when GetText projects it.
+
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_document.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document.rs) — `pub fn story_length(`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs) — `empty_and_terminal_paragraph_units_keep_the_model_coordinate_contract`.
+- Differences: [RT-I01](DEVIATIONS.md), [RT-I08](DEVIATIONS.md).
 
 #### `P:Microsoft.UI.Text.RichEditTextRange.Text`
 
@@ -1499,59 +1705,75 @@ The native implementation is external to the pinned repository. Review this exac
 
 #### `F:Microsoft.UI.Text.TextRangeUnit.Character`
 
-State: **partial**. The facade Character unit traverses grapheme clusters and does not preserve the native Character-versus-Cluster distinction. Native Story maps to this one document; multiple stories, numeric native ABI and additional units remain pending.
+State: **complete**. The Character constant retains native value 0. This closes the enum field only; operation behavior and remaining Story/geometry differences are tracked on each range member.
 
-- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_document.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document.rs) — `Character`.
-- Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_text_unit_movement_preserves_graphemes_and_directed_selection`.
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_document.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document.rs) — `Character = 0`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs) — `text_range_units_preserve_native_numeric_values_and_story_alias`.
 - Differences: [RT-I08](DEVIATIONS.md).
 
-#### `F:Microsoft.UI.Text.TextRangeUnit.Cluster`
+#### `F:Microsoft.UI.Text.TextRangeUnit.HardParagraph`
 
-State: **partial**. The facade Character unit traverses grapheme clusters and does not preserve the native Character-versus-Cluster distinction. Native Story maps to this one document; multiple stories, numeric native ABI and additional units remain pending.
+State: **complete**. The HardParagraph constant retains native value 12. This closes the enum field only; operation behavior and remaining Story/geometry differences are tracked on each range member.
 
-- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_document.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document.rs) — `Character`.
-- Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_text_unit_movement_preserves_graphemes_and_directed_selection`.
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_document.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document.rs) — `HardParagraph = 12`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs) — `text_range_units_preserve_native_numeric_values_and_story_alias`.
+- Differences: [RT-I08](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Text.TextRangeUnit.Line`
+
+State: **complete**. The Line constant retains native value 4. This closes the enum field only; operation behavior and remaining Story/geometry differences are tracked on each range member.
+
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_document.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document.rs) — `Line = 4`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs) — `text_range_units_preserve_native_numeric_values_and_story_alias`.
 - Differences: [RT-I08](DEVIATIONS.md).
 
 #### `F:Microsoft.UI.Text.TextRangeUnit.Paragraph`
 
-State: **partial**. The facade Character unit traverses grapheme clusters and does not preserve the native Character-versus-Cluster distinction. Native Story maps to this one document; multiple stories, numeric native ABI and additional units remain pending.
+State: **complete**. The Paragraph constant retains native value 3. This closes the enum field only; operation behavior and remaining Story/geometry differences are tracked on each range member.
 
-- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_document.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document.rs) — `Paragraph`.
-- Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_text_unit_movement_preserves_graphemes_and_directed_selection`.
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_document.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document.rs) — `Paragraph = 3`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs) — `text_range_units_preserve_native_numeric_values_and_story_alias`.
 - Differences: [RT-I08](DEVIATIONS.md).
 
 #### `F:Microsoft.UI.Text.TextRangeUnit.Sentence`
 
-State: **partial**. The facade Character unit traverses grapheme clusters and does not preserve the native Character-versus-Cluster distinction. Native Story maps to this one document; multiple stories, numeric native ABI and additional units remain pending.
+State: **complete**. The Sentence constant retains native value 2. This closes the enum field only; operation behavior and remaining Story/geometry differences are tracked on each range member.
 
-- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_document.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document.rs) — `Sentence`.
-- Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_text_unit_movement_preserves_graphemes_and_directed_selection`.
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_document.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document.rs) — `Sentence = 2`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs) — `text_range_units_preserve_native_numeric_values_and_story_alias`.
 - Differences: [RT-I08](DEVIATIONS.md).
 
 #### `F:Microsoft.UI.Text.TextRangeUnit.Story`
 
-State: **partial**. The facade Character unit traverses grapheme clusters and does not preserve the native Character-versus-Cluster distinction. Native Story maps to this one document; multiple stories, numeric native ABI and additional units remain pending.
+State: **complete**. The Story constant retains native value 5. This closes the enum field only; operation behavior and remaining Story/geometry differences are tracked on each range member.
 
-- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_document.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document.rs) — `Document`.
-- Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_text_unit_movement_preserves_graphemes_and_directed_selection`.
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_document.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document.rs) — `Story = 5`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs) — `text_range_units_preserve_native_numeric_values_and_story_alias`.
 - Differences: [RT-I08](DEVIATIONS.md).
 
 #### `F:Microsoft.UI.Text.TextRangeUnit.Word`
 
-State: **partial**. The facade Character unit traverses grapheme clusters and does not preserve the native Character-versus-Cluster distinction. Native Story maps to this one document; multiple stories, numeric native ABI and additional units remain pending.
+State: **complete**. The Word constant retains native value 1. This closes the enum field only; operation behavior and remaining Story/geometry differences are tracked on each range member.
 
-- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_document.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document.rs) — `Word`.
-- Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_text_unit_movement_preserves_graphemes_and_directed_selection`.
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_document.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document.rs) — `Word = 1`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs) — `text_range_units_preserve_native_numeric_values_and_story_alias`.
 - Differences: [RT-I08](DEVIATIONS.md).
 
 #### `T:Microsoft.UI.Text.TextRangeUnit`
 
-State: **partial**. The Rust facade defines five semantic text units. Native enum ABI and layout/table/cell/row or other unrepresented units remain pending.
+State: **partial**. The seven implemented constants retain native numeric values. Character traverses Unicode scalars, Word includes following ASCII blanks, Sentence follows native punctuation rules, Paragraph handles native separators, HardParagraph distinguishes structural paragraphs from soft breaks, and Line uses a weak complete untrimmed view with headless Paragraph fallback. The model has one Story and excludes the synthetic terminal CR. Remaining native units, arbitrary stories and ABI remain pending.
 
-- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_document.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document.rs) — `TextRangeUnit`.
-- Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_text_unit_movement_preserves_graphemes_and_directed_selection`.
-- Differences: [RT-I08](DEVIATIONS.md).
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_document.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document.rs) — `pub enum TextRangeUnit`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs) — `text_range_units_preserve_native_numeric_values_and_story_alias`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs) — `tom_character_distinguishes_combining_scalars_without_splitting_surrogates`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs) — `native_word_units_include_following_blanks_without_changing_search_boundaries`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs) — `tom_sentence_units_follow_native_punctuation_and_ascii_whitespace_rules`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs) — `paragraph_units_recognize_native_separators_and_keep_crlf_together`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs) — `hard_paragraph_units_distinguish_inline_soft_breaks_and_paragraph_objects`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs) — `attached_line_units_follow_wrapping_and_reflow_while_headless_lines_are_paragraphs`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs) — `line_units_cover_structural_marks_across_linked_overflow_views`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs) — `incomplete_or_trimmed_line_layout_returns_an_error_without_moving_range`.
+- Differences: [RT-I01](DEVIATIONS.md), [RT-I08](DEVIATIONS.md).
 
 ### `Microsoft.UI.Text.TextScript`
 
@@ -1657,85 +1879,140 @@ All retained members remain pending.
 
 ### `Microsoft.UI.Xaml.Automation.AnnotationPatternIdentifiers`
 
-Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2 caret and TextChild have mapped implementations; annotations, TextEdit composition and unsupported attribute families remain explicit pending contracts.
+Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2 caret, TextChild and TextEdit accepted-composition services have mapped implementations; public peer events, conversion-target backend data, annotations and unsupported attributes remain explicit pending contracts.
 
 All retained members remain pending.
 
 ### `Microsoft.UI.Xaml.Automation.AnnotationType`
 
-Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2 caret and TextChild have mapped implementations; annotations, TextEdit composition and unsupported attribute families remain explicit pending contracts.
+Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2 caret, TextChild and TextEdit accepted-composition services have mapped implementations; public peer events, conversion-target backend data, annotations and unsupported attributes remain explicit pending contracts.
 
 All retained members remain pending.
 
 ### `Microsoft.UI.Xaml.Automation.AutomationActiveEnd`
 
-Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2 caret and TextChild have mapped implementations; annotations, TextEdit composition and unsupported attribute families remain explicit pending contracts.
+Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2 caret, TextChild and TextEdit accepted-composition services have mapped implementations; public peer events, conversion-target backend data, annotations and unsupported attributes remain explicit pending contracts.
 
 All retained members remain pending.
 
 ### `Microsoft.UI.Xaml.Automation.AutomationAnimationStyle`
 
-Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2 caret and TextChild have mapped implementations; annotations, TextEdit composition and unsupported attribute families remain explicit pending contracts.
+Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2 caret, TextChild and TextEdit accepted-composition services have mapped implementations; public peer events, conversion-target backend data, annotations and unsupported attributes remain explicit pending contracts.
 
 All retained members remain pending.
 
 ### `Microsoft.UI.Xaml.Automation.AutomationAnnotation`
 
-Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2 caret and TextChild have mapped implementations; annotations, TextEdit composition and unsupported attribute families remain explicit pending contracts.
+Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2 caret, TextChild and TextEdit accepted-composition services have mapped implementations; public peer events, conversion-target backend data, annotations and unsupported attributes remain explicit pending contracts.
 
 All retained members remain pending.
 
 ### `Microsoft.UI.Xaml.Automation.AutomationBulletStyle`
 
-Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2 caret and TextChild have mapped implementations; annotations, TextEdit composition and unsupported attribute families remain explicit pending contracts.
+Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2 caret, TextChild and TextEdit accepted-composition services have mapped implementations; public peer events, conversion-target backend data, annotations and unsupported attributes remain explicit pending contracts.
 
 All retained members remain pending.
 
 ### `Microsoft.UI.Xaml.Automation.AutomationCaretBidiMode`
 
-Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2 caret and TextChild have mapped implementations; annotations, TextEdit composition and unsupported attribute families remain explicit pending contracts.
+Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2 caret, TextChild and TextEdit accepted-composition services have mapped implementations; public peer events, conversion-target backend data, annotations and unsupported attributes remain explicit pending contracts.
 
 All retained members remain pending.
 
 ### `Microsoft.UI.Xaml.Automation.AutomationCaretPosition`
 
-Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2 caret and TextChild have mapped implementations; annotations, TextEdit composition and unsupported attribute families remain explicit pending contracts.
+Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2 caret, TextChild and TextEdit accepted-composition services have mapped implementations; public peer events, conversion-target backend data, annotations and unsupported attributes remain explicit pending contracts.
 
 All retained members remain pending.
 
 ### `Microsoft.UI.Xaml.Automation.AutomationFlowDirections`
 
-Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2 caret and TextChild have mapped implementations; annotations, TextEdit composition and unsupported attribute families remain explicit pending contracts.
+Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2 caret, TextChild and TextEdit accepted-composition services have mapped implementations; public peer events, conversion-target backend data, annotations and unsupported attributes remain explicit pending contracts.
 
 All retained members remain pending.
 
 ### `Microsoft.UI.Xaml.Automation.AutomationOutlineStyles`
 
-Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2 caret and TextChild have mapped implementations; annotations, TextEdit composition and unsupported attribute families remain explicit pending contracts.
+Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2 caret, TextChild and TextEdit accepted-composition services have mapped implementations; public peer events, conversion-target backend data, annotations and unsupported attributes remain explicit pending contracts.
 
 All retained members remain pending.
 
 ### `Microsoft.UI.Xaml.Automation.AutomationStyleId`
 
-Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2 caret and TextChild have mapped implementations; annotations, TextEdit composition and unsupported attribute families remain explicit pending contracts.
+Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2 caret, TextChild and TextEdit accepted-composition services have mapped implementations; public peer events, conversion-target backend data, annotations and unsupported attributes remain explicit pending contracts.
 
 All retained members remain pending.
 
 ### `Microsoft.UI.Xaml.Automation.AutomationTextDecorationLineStyle`
 
-Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2 caret and TextChild have mapped implementations; annotations, TextEdit composition and unsupported attribute families remain explicit pending contracts.
+Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2 caret, TextChild and TextEdit accepted-composition services have mapped implementations; public peer events, conversion-target backend data, annotations and unsupported attributes remain explicit pending contracts.
 
 All retained members remain pending.
 
 ### `Microsoft.UI.Xaml.Automation.AutomationTextEditChangeType`
 
-Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2 caret and TextChild have mapped implementations; annotations, TextEdit composition and unsupported attribute families remain explicit pending contracts.
+Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2 caret, TextChild and TextEdit accepted-composition services have mapped implementations; public peer events, conversion-target backend data, annotations and unsupported attributes remain explicit pending contracts.
 
-All retained members remain pending.
+#### `F:Microsoft.UI.Xaml.Automation.AutomationTextEditChangeType.AutoCorrect`
+
+State: **complete**. The public WinUI AutoCorrect cause retains native value 1. The Rust enum currently uses the SDK-derived name TextEditChangeType; this name translation does not add an autocorrection producer or imply arbitrary peer event support.
+
+- Target: [src/FerroUI.Controls/automation/provider/i_text_edit_provider.rs](../../../src/FerroUI.Controls/automation/provider/i_text_edit_provider.rs) — `AutoCorrect = 1`.
+- Test: [src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs](../../../src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs) — `native_text_edit_payload_validation_preserves_embedded_nul_and_return_codes`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-I13](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.Automation.AutomationTextEditChangeType.Composition`
+
+State: **complete**. The public WinUI Composition cause retains native value 2. The Rust enum currently uses the SDK-derived name TextEditChangeType; this name translation does not add an autocorrection producer or imply arbitrary peer event support.
+
+- Target: [src/FerroUI.Controls/automation/provider/i_text_edit_provider.rs](../../../src/FerroUI.Controls/automation/provider/i_text_edit_provider.rs) — `Composition = 2`.
+- Test: [src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs](../../../src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs) — `native_text_edit_payload_validation_preserves_embedded_nul_and_return_codes`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-I13](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.Automation.AutomationTextEditChangeType.CompositionFinalized`
+
+State: **complete**. The public WinUI CompositionFinalized cause retains native value 3. The Rust enum currently uses the SDK-derived name TextEditChangeType; this name translation does not add an autocorrection producer or imply arbitrary peer event support.
+
+- Target: [src/FerroUI.Controls/automation/provider/i_text_edit_provider.rs](../../../src/FerroUI.Controls/automation/provider/i_text_edit_provider.rs) — `CompositionFinalized = 3`.
+- Test: [src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs](../../../src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs) — `native_text_edit_payload_validation_preserves_embedded_nul_and_return_codes`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-I13](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.Automation.AutomationTextEditChangeType.None`
+
+State: **complete**. The public WinUI None cause retains native value 0. The Rust enum currently uses the SDK-derived name TextEditChangeType; this name translation does not add an autocorrection producer or imply arbitrary peer event support.
+
+- Target: [src/FerroUI.Controls/automation/provider/i_text_edit_provider.rs](../../../src/FerroUI.Controls/automation/provider/i_text_edit_provider.rs) — `None = 0`.
+- Test: [src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs](../../../src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs) — `native_text_edit_payload_validation_preserves_embedded_nul_and_return_codes`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-I13](DEVIATIONS.md).
+
+#### `T:Microsoft.UI.Xaml.Automation.AutomationTextEditChangeType`
+
+State: **partial**. Four public WinUI values are represented by the Rust TextEditChangeType enum (the SDK-derived shorter name). AutoComplete is outside this pinned public WinUI enum; native ABI declaration does not expose an invented producer.
+
+- Target: [src/FerroUI.Controls/automation/provider/i_text_edit_provider.rs](../../../src/FerroUI.Controls/automation/provider/i_text_edit_provider.rs) — `pub enum TextEditChangeType`.
+- Test: [src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs](../../../src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs) — `native_text_edit_payload_validation_preserves_embedded_nul_and_return_codes`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-I13](DEVIATIONS.md).
 
 ### `Microsoft.UI.Xaml.Automation.Peers.AutomationEvents`
 
-Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2 caret and TextChild have mapped implementations; annotations, TextEdit composition and unsupported attribute families remain explicit pending contracts.
+Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2 caret, TextChild and TextEdit accepted-composition services have mapped implementations; public peer events, conversion-target backend data, annotations and unsupported attributes remain explicit pending contracts.
+
+#### `F:Microsoft.UI.Xaml.Automation.Peers.AutomationEvents.TextEditTextChanged`
+
+State: **partial**. TextEdit inherits Text independently of Text2. The editor returns the full active accepted IME preview as a live weak UTF-16 range, or None without an active composition; retained ranges follow owner/document lifetime. Accepted preview delta and single finalization events rewire on model replacement and marshal through the Win32 UI-thread bridge. A distinct conversion target requires backend data and is currently absent. Public AutomationPeer.RaiseTextEditTextChangedEvent, system cause producers and native Windows client execution remain pending.
+
+- Target: [src/FerroUI.Controls/automation/provider/i_text_edit_provider.rs](../../../src/FerroUI.Controls/automation/provider/i_text_edit_provider.rs) — `pub trait ITextEditProvider`.
+- Target: [src/FerroUI.Controls/automation/provider/rich_text_automation.rs](../../../src/FerroUI.Controls/automation/provider/rich_text_automation.rs) — `fn get_active_composition(`.
+- Target: [src/Windows/FerroUI.Win32/automation/automation_node_text.rs](../../../src/Windows/FerroUI.Win32/automation/automation_node_text.rs) — `get_active_composition`.
+- Test: [src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs](../../../src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs) — `rich_automation_text_edit_composition_range_tracks_utf16_preview_and_rejects_stale_state`.
+- Test: [src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs](../../../src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs) — `rich_automation_text_edit_events_report_accepted_deltas_and_single_finalization`.
+- Test: [src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs](../../../src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs) — `rich_automation_text_edit_observation_follows_document_replacement_and_disposal`.
+- Test: [src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs](../../../src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs) — `rich_automation_text_edit_pattern_is_editor_only_and_does_not_retain_owner`.
+- Test: [src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs](../../../src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs) — `native_text_edit_inherits_text_shares_text2_identity_and_dispatches_live_composition_ranges`.
+- Test: [src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs](../../../src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs) — `native_text_edit_range_lifetime_follows_owner_and_document_not_composition`.
+- Test: [src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs](../../../src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs) — `native_text_edit_events_marshal_unicode_deltas_and_empty_finalization_on_ui_thread`.
+- Test: [src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs](../../../src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs) — `native_text_edit_payload_validation_preserves_embedded_nul_and_return_codes`.
+- Differences: [RT-I10](DEVIATIONS.md), [RT-I13](DEVIATIONS.md).
 
 #### `F:Microsoft.UI.Xaml.Automation.Peers.AutomationEvents.TextPatternOnTextChanged`
 
@@ -1757,13 +2034,13 @@ State: **partial**. Portable model/selection subscriptions dispatch the correspo
 
 ### `Microsoft.UI.Xaml.Automation.Peers.AutomationPeer`
 
-Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2 caret and TextChild have mapped implementations; annotations, TextEdit composition and unsupported attribute families remain explicit pending contracts.
+Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2 caret, TextChild and TextEdit accepted-composition services have mapped implementations; public peer events, conversion-target backend data, annotations and unsupported attributes remain explicit pending contracts.
 
 All retained members remain pending.
 
 ### `Microsoft.UI.Xaml.Automation.Peers.PatternInterface`
 
-Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2 caret and TextChild have mapped implementations; annotations, TextEdit composition and unsupported attribute families remain explicit pending contracts.
+Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2 caret, TextChild and TextEdit accepted-composition services have mapped implementations; public peer events, conversion-target backend data, annotations and unsupported attributes remain explicit pending contracts.
 
 #### `F:Microsoft.UI.Xaml.Automation.Peers.PatternInterface.Text`
 
@@ -1773,9 +2050,26 @@ State: **partial**. The native bridge advertises Text only when the portable pee
 - Test: [src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs](../../../src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs) — `native_text_pattern_marshals_unicode_ranges_and_selection_from_worker_thread`.
 - Differences: [RT-I10](DEVIATIONS.md).
 
+#### `F:Microsoft.UI.Xaml.Automation.Peers.PatternInterface.TextEdit`
+
+State: **partial**. TextEdit inherits Text independently of Text2. The editor returns the full active accepted IME preview as a live weak UTF-16 range, or None without an active composition; retained ranges follow owner/document lifetime. Accepted preview delta and single finalization events rewire on model replacement and marshal through the Win32 UI-thread bridge. A distinct conversion target requires backend data and is currently absent. Public AutomationPeer.RaiseTextEditTextChangedEvent, system cause producers and native Windows client execution remain pending.
+
+- Target: [src/FerroUI.Controls/automation/provider/i_text_edit_provider.rs](../../../src/FerroUI.Controls/automation/provider/i_text_edit_provider.rs) — `pub trait ITextEditProvider`.
+- Target: [src/FerroUI.Controls/automation/provider/rich_text_automation.rs](../../../src/FerroUI.Controls/automation/provider/rich_text_automation.rs) — `fn get_active_composition(`.
+- Target: [src/Windows/FerroUI.Win32/automation/automation_node_text.rs](../../../src/Windows/FerroUI.Win32/automation/automation_node_text.rs) — `get_active_composition`.
+- Test: [src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs](../../../src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs) — `rich_automation_text_edit_composition_range_tracks_utf16_preview_and_rejects_stale_state`.
+- Test: [src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs](../../../src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs) — `rich_automation_text_edit_events_report_accepted_deltas_and_single_finalization`.
+- Test: [src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs](../../../src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs) — `rich_automation_text_edit_observation_follows_document_replacement_and_disposal`.
+- Test: [src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs](../../../src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs) — `rich_automation_text_edit_pattern_is_editor_only_and_does_not_retain_owner`.
+- Test: [src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs](../../../src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs) — `native_text_edit_inherits_text_shares_text2_identity_and_dispatches_live_composition_ranges`.
+- Test: [src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs](../../../src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs) — `native_text_edit_range_lifetime_follows_owner_and_document_not_composition`.
+- Test: [src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs](../../../src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs) — `native_text_edit_events_marshal_unicode_deltas_and_empty_finalization_on_ui_thread`.
+- Test: [src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs](../../../src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs) — `native_text_edit_payload_validation_preserves_embedded_nul_and_return_codes`.
+- Differences: [RT-I10](DEVIATIONS.md), [RT-I13](DEVIATIONS.md).
+
 ### `Microsoft.UI.Xaml.Automation.Peers.RichEditBoxAutomationPeer`
 
-Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2 caret and TextChild have mapped implementations; annotations, TextEdit composition and unsupported attribute families remain explicit pending contracts.
+Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2 caret, TextChild and TextEdit accepted-composition services have mapped implementations; public peer events, conversion-target backend data, annotations and unsupported attributes remain explicit pending contracts.
 
 #### `M:Microsoft.UI.Xaml.Automation.Peers.RichEditBoxAutomationPeer.#ctor(Microsoft.UI.Xaml.Controls.RichEditBox)`
 
@@ -1795,7 +2089,7 @@ State: **partial**. The peer exposes the portable Text pattern over the same ric
 
 ### `Microsoft.UI.Xaml.Automation.Peers.RichTextBlockAutomationPeer`
 
-Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2 caret and TextChild have mapped implementations; annotations, TextEdit composition and unsupported attribute families remain explicit pending contracts.
+Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2 caret, TextChild and TextEdit accepted-composition services have mapped implementations; public peer events, conversion-target backend data, annotations and unsupported attributes remain explicit pending contracts.
 
 #### `M:Microsoft.UI.Xaml.Automation.Peers.RichTextBlockAutomationPeer.#ctor(Microsoft.UI.Xaml.Controls.RichTextBlock)`
 
@@ -1815,7 +2109,7 @@ State: **partial**. The peer exposes the portable Text pattern over the same ric
 
 ### `Microsoft.UI.Xaml.Automation.Peers.RichTextBlockOverflowAutomationPeer`
 
-Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2 caret and TextChild have mapped implementations; annotations, TextEdit composition and unsupported attribute families remain explicit pending contracts.
+Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2 caret, TextChild and TextEdit accepted-composition services have mapped implementations; public peer events, conversion-target backend data, annotations and unsupported attributes remain explicit pending contracts.
 
 #### `M:Microsoft.UI.Xaml.Automation.Peers.RichTextBlockOverflowAutomationPeer.#ctor(Microsoft.UI.Xaml.Controls.RichTextBlockOverflow)`
 
@@ -1837,7 +2131,7 @@ State: **partial**. Overflow inherits the shared rich view peer instead of intro
 
 ### `Microsoft.UI.Xaml.Automation.Provider.ITextChildProvider`
 
-Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2 caret and TextChild have mapped implementations; annotations, TextEdit composition and unsupported attribute families remain explicit pending contracts.
+Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2 caret, TextChild and TextEdit accepted-composition services have mapped implementations; public peer events, conversion-target backend data, annotations and unsupported attributes remain explicit pending contracts.
 
 #### `P:Microsoft.UI.Xaml.Automation.Provider.ITextChildProvider.TextContainer`
 
@@ -1886,13 +2180,49 @@ State: **partial**. Hyperlink peers expose TextChild with canonical owning Text 
 
 ### `Microsoft.UI.Xaml.Automation.Provider.ITextEditProvider`
 
-Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2 caret and TextChild have mapped implementations; annotations, TextEdit composition and unsupported attribute families remain explicit pending contracts.
+Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2 caret, TextChild and TextEdit accepted-composition services have mapped implementations; public peer events, conversion-target backend data, annotations and unsupported attributes remain explicit pending contracts.
 
-All retained members remain pending.
+#### `M:Microsoft.UI.Xaml.Automation.Provider.ITextEditProvider.GetActiveComposition`
+
+State: **partial**. TextEdit inherits Text independently of Text2. The editor returns the full active accepted IME preview as a live weak UTF-16 range, or None without an active composition; retained ranges follow owner/document lifetime. Accepted preview delta and single finalization events rewire on model replacement and marshal through the Win32 UI-thread bridge. A distinct conversion target requires backend data and is currently absent. Public AutomationPeer.RaiseTextEditTextChangedEvent, system cause producers and native Windows client execution remain pending.
+
+- Target: [src/FerroUI.Controls/automation/provider/i_text_edit_provider.rs](../../../src/FerroUI.Controls/automation/provider/i_text_edit_provider.rs) — `pub trait ITextEditProvider`.
+- Target: [src/FerroUI.Controls/automation/provider/rich_text_automation.rs](../../../src/FerroUI.Controls/automation/provider/rich_text_automation.rs) — `fn get_active_composition(`.
+- Target: [src/Windows/FerroUI.Win32/automation/automation_node_text.rs](../../../src/Windows/FerroUI.Win32/automation/automation_node_text.rs) — `get_active_composition`.
+- Test: [src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs](../../../src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs) — `rich_automation_text_edit_composition_range_tracks_utf16_preview_and_rejects_stale_state`.
+- Test: [src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs](../../../src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs) — `native_text_edit_inherits_text_shares_text2_identity_and_dispatches_live_composition_ranges`.
+- Test: [src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs](../../../src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs) — `native_text_edit_range_lifetime_follows_owner_and_document_not_composition`.
+- Differences: [RT-I01](DEVIATIONS.md), [RT-I10](DEVIATIONS.md), [RT-I13](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Automation.Provider.ITextEditProvider.GetConversionTarget`
+
+State: **partial**. A live editor currently returns None because the framework backend supplies no distinct conversion target. The method validates owner availability and does not substitute selection or full composition for a target. Backend conversion-target data and its change event remain pending.
+
+- Target: [src/FerroUI.Controls/automation/provider/rich_text_automation.rs](../../../src/FerroUI.Controls/automation/provider/rich_text_automation.rs) — `fn get_conversion_target(`.
+- Test: [src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs](../../../src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs) — `rich_automation_text_edit_composition_range_tracks_utf16_preview_and_rejects_stale_state`.
+- Test: [src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs](../../../src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs) — `native_text_edit_inherits_text_shares_text2_identity_and_dispatches_live_composition_ranges`.
+- Differences: [RT-A04](DEVIATIONS.md), [RT-I10](DEVIATIONS.md).
+
+#### `T:Microsoft.UI.Xaml.Automation.Provider.ITextEditProvider`
+
+State: **partial**. TextEdit inherits Text independently of Text2. The editor returns the full active accepted IME preview as a live weak UTF-16 range, or None without an active composition; retained ranges follow owner/document lifetime. Accepted preview delta and single finalization events rewire on model replacement and marshal through the Win32 UI-thread bridge. A distinct conversion target requires backend data and is currently absent. Public AutomationPeer.RaiseTextEditTextChangedEvent, system cause producers and native Windows client execution remain pending.
+
+- Target: [src/FerroUI.Controls/automation/provider/i_text_edit_provider.rs](../../../src/FerroUI.Controls/automation/provider/i_text_edit_provider.rs) — `pub trait ITextEditProvider`.
+- Target: [src/FerroUI.Controls/automation/provider/rich_text_automation.rs](../../../src/FerroUI.Controls/automation/provider/rich_text_automation.rs) — `fn get_active_composition(`.
+- Target: [src/Windows/FerroUI.Win32/automation/automation_node_text.rs](../../../src/Windows/FerroUI.Win32/automation/automation_node_text.rs) — `get_active_composition`.
+- Test: [src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs](../../../src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs) — `rich_automation_text_edit_composition_range_tracks_utf16_preview_and_rejects_stale_state`.
+- Test: [src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs](../../../src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs) — `rich_automation_text_edit_events_report_accepted_deltas_and_single_finalization`.
+- Test: [src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs](../../../src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs) — `rich_automation_text_edit_observation_follows_document_replacement_and_disposal`.
+- Test: [src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs](../../../src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs) — `rich_automation_text_edit_pattern_is_editor_only_and_does_not_retain_owner`.
+- Test: [src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs](../../../src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs) — `native_text_edit_inherits_text_shares_text2_identity_and_dispatches_live_composition_ranges`.
+- Test: [src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs](../../../src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs) — `native_text_edit_range_lifetime_follows_owner_and_document_not_composition`.
+- Test: [src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs](../../../src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs) — `native_text_edit_events_marshal_unicode_deltas_and_empty_finalization_on_ui_thread`.
+- Test: [src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs](../../../src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs) — `native_text_edit_payload_validation_preserves_embedded_nul_and_return_codes`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-I10](DEVIATIONS.md), [RT-I13](DEVIATIONS.md).
 
 ### `Microsoft.UI.Xaml.Automation.Provider.ITextProvider`
 
-Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2 caret and TextChild have mapped implementations; annotations, TextEdit composition and unsupported attribute families remain explicit pending contracts.
+Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2 caret, TextChild and TextEdit accepted-composition services have mapped implementations; public peer events, conversion-target backend data, annotations and unsupported attributes remain explicit pending contracts.
 
 #### `M:Microsoft.UI.Xaml.Automation.Provider.ITextProvider.GetSelection`
 
@@ -1969,7 +2299,7 @@ State: **partial**. Portable text automation uses the same live document, select
 
 ### `Microsoft.UI.Xaml.Automation.Provider.ITextProvider2`
 
-Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2 caret and TextChild have mapped implementations; annotations, TextEdit composition and unsupported attribute families remain explicit pending contracts.
+Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2 caret, TextChild and TextEdit accepted-composition services have mapped implementations; public peer events, conversion-target backend data, annotations and unsupported attributes remain explicit pending contracts.
 
 #### `M:Microsoft.UI.Xaml.Automation.Provider.ITextProvider2.GetCaretRange(System.Boolean@)`
 
@@ -1999,7 +2329,7 @@ State: **partial**. Portable and native Text2 expose the current active UTF-16 i
 
 ### `Microsoft.UI.Xaml.Automation.Provider.ITextRangeProvider`
 
-Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2 caret and TextChild have mapped implementations; annotations, TextEdit composition and unsupported attribute families remain explicit pending contracts.
+Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2 caret, TextChild and TextEdit accepted-composition services have mapped implementations; public peer events, conversion-target backend data, annotations and unsupported attributes remain explicit pending contracts.
 
 #### `M:Microsoft.UI.Xaml.Automation.Provider.ITextRangeProvider.AddToSelection`
 
@@ -2203,13 +2533,13 @@ State: **partial**. Portable text automation uses the same live document, select
 
 ### `Microsoft.UI.Xaml.Automation.Provider.ITextRangeProvider2`
 
-Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2 caret and TextChild have mapped implementations; annotations, TextEdit composition and unsupported attribute families remain explicit pending contracts.
+Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2 caret, TextChild and TextEdit accepted-composition services have mapped implementations; public peer events, conversion-target backend data, annotations and unsupported attributes remain explicit pending contracts.
 
 All retained members remain pending.
 
 ### `Microsoft.UI.Xaml.Automation.SupportedTextSelection`
 
-Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2 caret and TextChild have mapped implementations; annotations, TextEdit composition and unsupported attribute families remain explicit pending contracts.
+Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2 caret, TextChild and TextEdit accepted-composition services have mapped implementations; public peer events, conversion-target backend data, annotations and unsupported attributes remain explicit pending contracts.
 
 #### `F:Microsoft.UI.Xaml.Automation.SupportedTextSelection.Multiple`
 
@@ -2245,7 +2575,7 @@ State: **partial**. The portable enum retains native numeric values and the Wind
 
 ### `Microsoft.UI.Xaml.Automation.Text.TextPatternRangeEndpoint`
 
-Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2 caret and TextChild have mapped implementations; annotations, TextEdit composition and unsupported attribute families remain explicit pending contracts.
+Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2 caret, TextChild and TextEdit accepted-composition services have mapped implementations; public peer events, conversion-target backend data, annotations and unsupported attributes remain explicit pending contracts.
 
 #### `F:Microsoft.UI.Xaml.Automation.Text.TextPatternRangeEndpoint.End`
 
@@ -2279,7 +2609,7 @@ State: **partial**. The portable enum retains native numeric values and the Wind
 
 ### `Microsoft.UI.Xaml.Automation.Text.TextUnit`
 
-Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2 caret and TextChild have mapped implementations; annotations, TextEdit composition and unsupported attribute families remain explicit pending contracts.
+Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2 caret, TextChild and TextEdit accepted-composition services have mapped implementations; public peer events, conversion-target backend data, annotations and unsupported attributes remain explicit pending contracts.
 
 #### `F:Microsoft.UI.Xaml.Automation.Text.TextUnit.Character`
 
@@ -2536,28 +2866,24 @@ State: **partial**. The registered FerroUI property supplies metadata and invali
 
 #### `P:Microsoft.UI.Xaml.Controls.RichEditBox.Description`
 
-State: **partial**. Header, HeaderTemplate and Description use real framework ContentPresenters and IDataTemplate; placeholder text uses a measured non-hit-test TextBlock with shared inherited text properties. Header/template visibility and the native 8-unit header spacing are preserved, and caret/hit/IME/embedded-content geometry shares the text inset. These composed parts do not yet implement the native ControlTemplate, internal ScrollViewer, visual states or full theme.
+State: **partial**. RichEditBox is a FerroUI TemplatedControl with one persistent RichEditBoxTextPresenter and shared model/editor/history. ContentElement accepts framework content hosts; header, placeholder and description use actual optional parts. Internal logical scrolling measures the full document at viewport width, keeps chrome fixed and shares text/caret/IME/automation offsets. Retemplating preserves live services, composition and undo. Owner-routed focus/selection and raw presenter automation avoid duplicate identity. Native windowless ABI, full backend services, touch UI and unmapped members remain pending.
 
-- Target: [src/FerroUI.Controls/rich_edit_box.rs](../../../src/FerroUI.Controls/rich_edit_box.rs) — `pub fn header(`.
-- Target: [src/FerroUI.Controls/rich_edit_box.rs](../../../src/FerroUI.Controls/rich_edit_box.rs) — `pub fn header_template(`.
 - Target: [src/FerroUI.Controls/rich_edit_box.rs](../../../src/FerroUI.Controls/rich_edit_box.rs) — `pub fn description(`.
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_header_description_and_placeholder_use_framework_visuals_and_shared_geometry`.
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_header_template_renders_without_header_data_and_is_not_rebuilt_by_measure`.
-- Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_placeholder_participates_in_measure_alignment_and_foreground_inheritance`.
-- Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_header_and_embedded_control_remain_in_the_same_visual_tree_after_relayout`.
+- Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_placeholder_participates_in_measure_alignment_and_template_binding`.
+- Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_retemplate_preserves_composition_history_and_live_document_services`.
 - Differences: [RT-A01](DEVIATIONS.md), [RT-I06](DEVIATIONS.md).
 
 #### `P:Microsoft.UI.Xaml.Controls.RichEditBox.DescriptionProperty`
 
-State: **partial**. Header, HeaderTemplate and Description use real framework ContentPresenters and IDataTemplate; placeholder text uses a measured non-hit-test TextBlock with shared inherited text properties. Header/template visibility and the native 8-unit header spacing are preserved, and caret/hit/IME/embedded-content geometry shares the text inset. These composed parts do not yet implement the native ControlTemplate, internal ScrollViewer, visual states or full theme.
+State: **partial**. RichEditBox is a FerroUI TemplatedControl with one persistent RichEditBoxTextPresenter and shared model/editor/history. ContentElement accepts framework content hosts; header, placeholder and description use actual optional parts. Internal logical scrolling measures the full document at viewport width, keeps chrome fixed and shares text/caret/IME/automation offsets. Retemplating preserves live services, composition and undo. Owner-routed focus/selection and raw presenter automation avoid duplicate identity. Native windowless ABI, full backend services, touch UI and unmapped members remain pending.
 
-- Target: [src/FerroUI.Controls/rich_edit_box.rs](../../../src/FerroUI.Controls/rich_edit_box.rs) — `pub fn header(`.
-- Target: [src/FerroUI.Controls/rich_edit_box.rs](../../../src/FerroUI.Controls/rich_edit_box.rs) — `pub fn header_template(`.
-- Target: [src/FerroUI.Controls/rich_edit_box.rs](../../../src/FerroUI.Controls/rich_edit_box.rs) — `pub fn description(`.
+- Target: [src/FerroUI.Controls/rich_edit_box.rs](../../../src/FerroUI.Controls/rich_edit_box.rs) — `description_property`.
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_header_description_and_placeholder_use_framework_visuals_and_shared_geometry`.
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_header_template_renders_without_header_data_and_is_not_rebuilt_by_measure`.
-- Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_placeholder_participates_in_measure_alignment_and_foreground_inheritance`.
-- Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_header_and_embedded_control_remain_in_the_same_visual_tree_after_relayout`.
+- Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_placeholder_participates_in_measure_alignment_and_template_binding`.
+- Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_retemplate_preserves_composition_history_and_live_document_services`.
 - Differences: [RT-A01](DEVIATIONS.md), [RT-I06](DEVIATIONS.md).
 
 #### `P:Microsoft.UI.Xaml.Controls.RichEditBox.DisabledFormattingAccelerators`
@@ -2586,54 +2912,46 @@ State: **partial**. The native editor document contract is represented by text_d
 
 #### `P:Microsoft.UI.Xaml.Controls.RichEditBox.Header`
 
-State: **partial**. Header, HeaderTemplate and Description use real framework ContentPresenters and IDataTemplate; placeholder text uses a measured non-hit-test TextBlock with shared inherited text properties. Header/template visibility and the native 8-unit header spacing are preserved, and caret/hit/IME/embedded-content geometry shares the text inset. These composed parts do not yet implement the native ControlTemplate, internal ScrollViewer, visual states or full theme.
+State: **partial**. RichEditBox is a FerroUI TemplatedControl with one persistent RichEditBoxTextPresenter and shared model/editor/history. ContentElement accepts framework content hosts; header, placeholder and description use actual optional parts. Internal logical scrolling measures the full document at viewport width, keeps chrome fixed and shares text/caret/IME/automation offsets. Retemplating preserves live services, composition and undo. Owner-routed focus/selection and raw presenter automation avoid duplicate identity. Native windowless ABI, full backend services, touch UI and unmapped members remain pending.
 
 - Target: [src/FerroUI.Controls/rich_edit_box.rs](../../../src/FerroUI.Controls/rich_edit_box.rs) — `pub fn header(`.
-- Target: [src/FerroUI.Controls/rich_edit_box.rs](../../../src/FerroUI.Controls/rich_edit_box.rs) — `pub fn header_template(`.
-- Target: [src/FerroUI.Controls/rich_edit_box.rs](../../../src/FerroUI.Controls/rich_edit_box.rs) — `pub fn description(`.
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_header_description_and_placeholder_use_framework_visuals_and_shared_geometry`.
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_header_template_renders_without_header_data_and_is_not_rebuilt_by_measure`.
-- Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_placeholder_participates_in_measure_alignment_and_foreground_inheritance`.
-- Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_header_and_embedded_control_remain_in_the_same_visual_tree_after_relayout`.
+- Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_placeholder_participates_in_measure_alignment_and_template_binding`.
+- Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_retemplate_preserves_composition_history_and_live_document_services`.
 - Differences: [RT-A01](DEVIATIONS.md), [RT-I06](DEVIATIONS.md).
 
 #### `P:Microsoft.UI.Xaml.Controls.RichEditBox.HeaderProperty`
 
-State: **partial**. Header, HeaderTemplate and Description use real framework ContentPresenters and IDataTemplate; placeholder text uses a measured non-hit-test TextBlock with shared inherited text properties. Header/template visibility and the native 8-unit header spacing are preserved, and caret/hit/IME/embedded-content geometry shares the text inset. These composed parts do not yet implement the native ControlTemplate, internal ScrollViewer, visual states or full theme.
+State: **partial**. RichEditBox is a FerroUI TemplatedControl with one persistent RichEditBoxTextPresenter and shared model/editor/history. ContentElement accepts framework content hosts; header, placeholder and description use actual optional parts. Internal logical scrolling measures the full document at viewport width, keeps chrome fixed and shares text/caret/IME/automation offsets. Retemplating preserves live services, composition and undo. Owner-routed focus/selection and raw presenter automation avoid duplicate identity. Native windowless ABI, full backend services, touch UI and unmapped members remain pending.
 
-- Target: [src/FerroUI.Controls/rich_edit_box.rs](../../../src/FerroUI.Controls/rich_edit_box.rs) — `pub fn header(`.
-- Target: [src/FerroUI.Controls/rich_edit_box.rs](../../../src/FerroUI.Controls/rich_edit_box.rs) — `pub fn header_template(`.
-- Target: [src/FerroUI.Controls/rich_edit_box.rs](../../../src/FerroUI.Controls/rich_edit_box.rs) — `pub fn description(`.
+- Target: [src/FerroUI.Controls/rich_edit_box.rs](../../../src/FerroUI.Controls/rich_edit_box.rs) — `header_property`.
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_header_description_and_placeholder_use_framework_visuals_and_shared_geometry`.
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_header_template_renders_without_header_data_and_is_not_rebuilt_by_measure`.
-- Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_placeholder_participates_in_measure_alignment_and_foreground_inheritance`.
-- Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_header_and_embedded_control_remain_in_the_same_visual_tree_after_relayout`.
+- Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_placeholder_participates_in_measure_alignment_and_template_binding`.
+- Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_retemplate_preserves_composition_history_and_live_document_services`.
 - Differences: [RT-A01](DEVIATIONS.md), [RT-I06](DEVIATIONS.md).
 
 #### `P:Microsoft.UI.Xaml.Controls.RichEditBox.HeaderTemplate`
 
-State: **partial**. Header, HeaderTemplate and Description use real framework ContentPresenters and IDataTemplate; placeholder text uses a measured non-hit-test TextBlock with shared inherited text properties. Header/template visibility and the native 8-unit header spacing are preserved, and caret/hit/IME/embedded-content geometry shares the text inset. These composed parts do not yet implement the native ControlTemplate, internal ScrollViewer, visual states or full theme.
+State: **partial**. RichEditBox is a FerroUI TemplatedControl with one persistent RichEditBoxTextPresenter and shared model/editor/history. ContentElement accepts framework content hosts; header, placeholder and description use actual optional parts. Internal logical scrolling measures the full document at viewport width, keeps chrome fixed and shares text/caret/IME/automation offsets. Retemplating preserves live services, composition and undo. Owner-routed focus/selection and raw presenter automation avoid duplicate identity. Native windowless ABI, full backend services, touch UI and unmapped members remain pending.
 
-- Target: [src/FerroUI.Controls/rich_edit_box.rs](../../../src/FerroUI.Controls/rich_edit_box.rs) — `pub fn header(`.
 - Target: [src/FerroUI.Controls/rich_edit_box.rs](../../../src/FerroUI.Controls/rich_edit_box.rs) — `pub fn header_template(`.
-- Target: [src/FerroUI.Controls/rich_edit_box.rs](../../../src/FerroUI.Controls/rich_edit_box.rs) — `pub fn description(`.
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_header_description_and_placeholder_use_framework_visuals_and_shared_geometry`.
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_header_template_renders_without_header_data_and_is_not_rebuilt_by_measure`.
-- Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_placeholder_participates_in_measure_alignment_and_foreground_inheritance`.
-- Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_header_and_embedded_control_remain_in_the_same_visual_tree_after_relayout`.
+- Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_placeholder_participates_in_measure_alignment_and_template_binding`.
+- Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_retemplate_preserves_composition_history_and_live_document_services`.
 - Differences: [RT-A01](DEVIATIONS.md), [RT-I06](DEVIATIONS.md).
 
 #### `P:Microsoft.UI.Xaml.Controls.RichEditBox.HeaderTemplateProperty`
 
-State: **partial**. Header, HeaderTemplate and Description use real framework ContentPresenters and IDataTemplate; placeholder text uses a measured non-hit-test TextBlock with shared inherited text properties. Header/template visibility and the native 8-unit header spacing are preserved, and caret/hit/IME/embedded-content geometry shares the text inset. These composed parts do not yet implement the native ControlTemplate, internal ScrollViewer, visual states or full theme.
+State: **partial**. RichEditBox is a FerroUI TemplatedControl with one persistent RichEditBoxTextPresenter and shared model/editor/history. ContentElement accepts framework content hosts; header, placeholder and description use actual optional parts. Internal logical scrolling measures the full document at viewport width, keeps chrome fixed and shares text/caret/IME/automation offsets. Retemplating preserves live services, composition and undo. Owner-routed focus/selection and raw presenter automation avoid duplicate identity. Native windowless ABI, full backend services, touch UI and unmapped members remain pending.
 
-- Target: [src/FerroUI.Controls/rich_edit_box.rs](../../../src/FerroUI.Controls/rich_edit_box.rs) — `pub fn header(`.
-- Target: [src/FerroUI.Controls/rich_edit_box.rs](../../../src/FerroUI.Controls/rich_edit_box.rs) — `pub fn header_template(`.
-- Target: [src/FerroUI.Controls/rich_edit_box.rs](../../../src/FerroUI.Controls/rich_edit_box.rs) — `pub fn description(`.
+- Target: [src/FerroUI.Controls/rich_edit_box.rs](../../../src/FerroUI.Controls/rich_edit_box.rs) — `header_template_property`.
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_header_description_and_placeholder_use_framework_visuals_and_shared_geometry`.
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_header_template_renders_without_header_data_and_is_not_rebuilt_by_measure`.
-- Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_placeholder_participates_in_measure_alignment_and_foreground_inheritance`.
-- Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_header_and_embedded_control_remain_in_the_same_visual_tree_after_relayout`.
+- Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_placeholder_participates_in_measure_alignment_and_template_binding`.
+- Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_retemplate_preserves_composition_history_and_live_document_services`.
 - Differences: [RT-A01](DEVIATIONS.md), [RT-I06](DEVIATIONS.md).
 
 #### `P:Microsoft.UI.Xaml.Controls.RichEditBox.InputScope`
@@ -2702,33 +3020,25 @@ State: **partial**. The registered FerroUI property supplies metadata and invali
 
 #### `P:Microsoft.UI.Xaml.Controls.RichEditBox.PlaceholderText`
 
-State: **partial**. Header, HeaderTemplate and Description use real framework ContentPresenters and IDataTemplate; placeholder text uses a measured non-hit-test TextBlock with shared inherited text properties. Header/template visibility and the native 8-unit header spacing are preserved, and caret/hit/IME/embedded-content geometry shares the text inset. These composed parts do not yet implement the native ControlTemplate, internal ScrollViewer, visual states or full theme.
+State: **partial**. RichEditBox is a FerroUI TemplatedControl with one persistent RichEditBoxTextPresenter and shared model/editor/history. ContentElement accepts framework content hosts; header, placeholder and description use actual optional parts. Internal logical scrolling measures the full document at viewport width, keeps chrome fixed and shares text/caret/IME/automation offsets. Retemplating preserves live services, composition and undo. Owner-routed focus/selection and raw presenter automation avoid duplicate identity. Native windowless ABI, full backend services, touch UI and unmapped members remain pending.
 
 - Target: [src/FerroUI.Controls/rich_edit_box.rs](../../../src/FerroUI.Controls/rich_edit_box.rs) — `pub fn placeholder_text(`.
-- Target: [src/FerroUI.Controls/rich_edit_box.rs](../../../src/FerroUI.Controls/rich_edit_box.rs) — `pub fn header(`.
-- Target: [src/FerroUI.Controls/rich_edit_box.rs](../../../src/FerroUI.Controls/rich_edit_box.rs) — `pub fn header_template(`.
-- Target: [src/FerroUI.Controls/rich_edit_box.rs](../../../src/FerroUI.Controls/rich_edit_box.rs) — `pub fn description(`.
-- Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_control_text_services_share_selection_history_and_visual_geometry`.
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_header_description_and_placeholder_use_framework_visuals_and_shared_geometry`.
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_header_template_renders_without_header_data_and_is_not_rebuilt_by_measure`.
-- Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_placeholder_participates_in_measure_alignment_and_foreground_inheritance`.
-- Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_header_and_embedded_control_remain_in_the_same_visual_tree_after_relayout`.
-- Differences: [RT-I01](DEVIATIONS.md), [RT-I06](DEVIATIONS.md), [RT-A01](DEVIATIONS.md).
+- Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_placeholder_participates_in_measure_alignment_and_template_binding`.
+- Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_retemplate_preserves_composition_history_and_live_document_services`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-I06](DEVIATIONS.md).
 
 #### `P:Microsoft.UI.Xaml.Controls.RichEditBox.PlaceholderTextProperty`
 
-State: **partial**. Header, HeaderTemplate and Description use real framework ContentPresenters and IDataTemplate; placeholder text uses a measured non-hit-test TextBlock with shared inherited text properties. Header/template visibility and the native 8-unit header spacing are preserved, and caret/hit/IME/embedded-content geometry shares the text inset. These composed parts do not yet implement the native ControlTemplate, internal ScrollViewer, visual states or full theme.
+State: **partial**. RichEditBox is a FerroUI TemplatedControl with one persistent RichEditBoxTextPresenter and shared model/editor/history. ContentElement accepts framework content hosts; header, placeholder and description use actual optional parts. Internal logical scrolling measures the full document at viewport width, keeps chrome fixed and shares text/caret/IME/automation offsets. Retemplating preserves live services, composition and undo. Owner-routed focus/selection and raw presenter automation avoid duplicate identity. Native windowless ABI, full backend services, touch UI and unmapped members remain pending.
 
 - Target: [src/FerroUI.Controls/rich_edit_box.rs](../../../src/FerroUI.Controls/rich_edit_box.rs) — `placeholder_text_property`.
-- Target: [src/FerroUI.Controls/rich_edit_box.rs](../../../src/FerroUI.Controls/rich_edit_box.rs) — `pub fn header(`.
-- Target: [src/FerroUI.Controls/rich_edit_box.rs](../../../src/FerroUI.Controls/rich_edit_box.rs) — `pub fn header_template(`.
-- Target: [src/FerroUI.Controls/rich_edit_box.rs](../../../src/FerroUI.Controls/rich_edit_box.rs) — `pub fn description(`.
-- Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_control_text_services_share_selection_history_and_visual_geometry`.
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_header_description_and_placeholder_use_framework_visuals_and_shared_geometry`.
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_header_template_renders_without_header_data_and_is_not_rebuilt_by_measure`.
-- Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_placeholder_participates_in_measure_alignment_and_foreground_inheritance`.
-- Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_header_and_embedded_control_remain_in_the_same_visual_tree_after_relayout`.
-- Differences: [RT-I01](DEVIATIONS.md), [RT-I06](DEVIATIONS.md), [RT-A01](DEVIATIONS.md).
+- Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_placeholder_participates_in_measure_alignment_and_template_binding`.
+- Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_retemplate_preserves_composition_history_and_live_document_services`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-I06](DEVIATIONS.md).
 
 #### `P:Microsoft.UI.Xaml.Controls.RichEditBox.SelectionHighlightColor`
 
@@ -2745,6 +3055,24 @@ State: **partial**. The registered FerroUI property supplies metadata and invali
 - Target: [src/FerroUI.Controls/rich_text_block.rs](../../../src/FerroUI.Controls/rich_text_block.rs) — `selection_highlight_color_property`.
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_control_text_services_share_selection_history_and_visual_geometry`.
 - Differences: [RT-A02](DEVIATIONS.md), [RT-I06](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Controls.RichEditBox.SelectionHighlightColorWhenNotFocused`
+
+State: **partial**. Inactive selection color uses a real styled SolidColorBrush-compatible property with the native transparent default. The presenter retains/restores inline foreground formatting and observes brush mutation. Owned flyout focus retains the active brush; native high-contrast and pixel conformance remain separate.
+
+- Target: [src/FerroUI.Controls/rich_edit_box.rs](../../../src/FerroUI.Controls/rich_edit_box.rs) — `selection_highlight_color_when_not_focused_property`.
+- Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_selection_focus_brushes_restore_inline_format_and_observe_mutable_transparency`.
+- Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_owned_context_flyout_preserves_focused_selection_and_owner_identity`.
+- Differences: [RT-I06](DEVIATIONS.md), [RT-P06](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Controls.RichEditBox.SelectionHighlightColorWhenNotFocusedProperty`
+
+State: **partial**. Inactive selection color uses a real styled SolidColorBrush-compatible property with the native transparent default. The presenter retains/restores inline foreground formatting and observes brush mutation. Owned flyout focus retains the active brush; native high-contrast and pixel conformance remain separate.
+
+- Target: [src/FerroUI.Controls/rich_edit_box.rs](../../../src/FerroUI.Controls/rich_edit_box.rs) — `selection_highlight_color_when_not_focused_property`.
+- Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_selection_focus_brushes_restore_inline_format_and_observe_mutable_transparency`.
+- Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_owned_context_flyout_preserves_focused_selection_and_owner_identity`.
+- Differences: [RT-I06](DEVIATIONS.md), [RT-P06](DEVIATIONS.md).
 
 #### `P:Microsoft.UI.Xaml.Controls.RichEditBox.TextAlignment`
 
@@ -4276,6 +4604,34 @@ State: **partial**. The registered FerroUI property supplies metadata and invali
 - Test: [src/FerroUI.Controls/documents/rich_text_document_tests.rs](../../../src/FerroUI.Controls/documents/rich_text_document_tests.rs) — `nested_formatting_survives_partial_edits_and_format_application`.
 - Test: [src/FerroUI.Controls/documents/rich_text_document_tests.rs](../../../src/FerroUI.Controls/documents/rich_text_document_tests.rs) — `semantic_snapshot_containers_keep_defaults_under_inherited_parent_formatting`.
 - Differences: [RT-A01](DEVIATIONS.md), [RT-I03](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.TextElement.Language`
+
+State: **partial**. Inherited CultureInfo Language and CharacterFormat language patches use pinned XML-language validation, platform preferred language/en-US default, and existing culture-aware shaping/font fallback. Empty resolves to the application language. Windows ResolveLocaleName/MUI fallback and every LCID are not supplied by the finite portable culture table. RTF supports known deflang/lang and plain reset; unknown/unrepresentable language data fails explicitly.
+
+- Target: [src/FerroUI.Controls/documents/text_element.rs](../../../src/FerroUI.Controls/documents/text_element.rs) — `language_property`.
+- Target: [src/FerroUI.Controls/documents/text_language.rs](../../../src/FerroUI.Controls/documents/text_language.rs) — `resolved_language`.
+- Test: [src/FerroUI.Controls/documents/rich_language_tests.rs](../../../src/FerroUI.Controls/documents/rich_language_tests.rs) — `rich_language_source_validation_and_patch_assignment_are_atomic`.
+- Test: [src/FerroUI.Controls/documents/rich_language_tests.rs](../../../src/FerroUI.Controls/documents/rich_language_tests.rs) — `rich_language_inherits_into_shaping_and_local_values_override`.
+- Test: [src/FerroUI.Controls/documents/rich_language_tests.rs](../../../src/FerroUI.Controls/documents/rich_language_tests.rs) — `rich_language_snapshots_and_editor_history_preserve_tags`.
+- Test: [src/FerroUI.Controls/documents/rich_language_tests.rs](../../../src/FerroUI.Controls/documents/rich_language_tests.rs) — `rich_language_rtf_default_scope_plain_and_round_trip`.
+- Test: [src/FerroUI.Controls/documents/rich_language_tests.rs](../../../src/FerroUI.Controls/documents/rich_language_tests.rs) — `rich_language_rtf_reports_unrepresentable_tags_and_unknown_ids`.
+- Test: [src/FerroUI.Controls/documents/rich_language_tests.rs](../../../src/FerroUI.Controls/documents/rich_language_tests.rs) — `rich_language_owner_uses_the_same_inherited_presenter_value`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-I11](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.TextElement.LanguageProperty`
+
+State: **partial**. Inherited CultureInfo Language and CharacterFormat language patches use pinned XML-language validation, platform preferred language/en-US default, and existing culture-aware shaping/font fallback. Empty resolves to the application language. Windows ResolveLocaleName/MUI fallback and every LCID are not supplied by the finite portable culture table. RTF supports known deflang/lang and plain reset; unknown/unrepresentable language data fails explicitly.
+
+- Target: [src/FerroUI.Controls/documents/text_element.rs](../../../src/FerroUI.Controls/documents/text_element.rs) — `language_property`.
+- Target: [src/FerroUI.Controls/documents/text_language.rs](../../../src/FerroUI.Controls/documents/text_language.rs) — `resolved_language`.
+- Test: [src/FerroUI.Controls/documents/rich_language_tests.rs](../../../src/FerroUI.Controls/documents/rich_language_tests.rs) — `rich_language_source_validation_and_patch_assignment_are_atomic`.
+- Test: [src/FerroUI.Controls/documents/rich_language_tests.rs](../../../src/FerroUI.Controls/documents/rich_language_tests.rs) — `rich_language_inherits_into_shaping_and_local_values_override`.
+- Test: [src/FerroUI.Controls/documents/rich_language_tests.rs](../../../src/FerroUI.Controls/documents/rich_language_tests.rs) — `rich_language_snapshots_and_editor_history_preserve_tags`.
+- Test: [src/FerroUI.Controls/documents/rich_language_tests.rs](../../../src/FerroUI.Controls/documents/rich_language_tests.rs) — `rich_language_rtf_default_scope_plain_and_round_trip`.
+- Test: [src/FerroUI.Controls/documents/rich_language_tests.rs](../../../src/FerroUI.Controls/documents/rich_language_tests.rs) — `rich_language_rtf_reports_unrepresentable_tags_and_unknown_ids`.
+- Test: [src/FerroUI.Controls/documents/rich_language_tests.rs](../../../src/FerroUI.Controls/documents/rich_language_tests.rs) — `rich_language_owner_uses_the_same_inherited_presenter_value`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-I11](DEVIATIONS.md).
 
 #### `P:Microsoft.UI.Xaml.Documents.TextElement.TextDecorations`
 

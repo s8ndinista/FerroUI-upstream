@@ -12284,6 +12284,10 @@
         {
           "path": "src/FerroUI.Controls/documents/text_position.rs",
           "symbol": "TextGravity"
+        },
+        {
+          "path": "src/FerroUI.Controls/documents/rich_text_document.rs",
+          "symbol": "position_changed"
         }
       ],
       "tests": [
@@ -12298,6 +12302,26 @@
         {
           "path": "src/FerroUI.Controls/rich_text_block_tests.rs",
           "symbol": "rich_pointer_geometry_keeps_the_insertion_offset_and_finds_overflow_view"
+        },
+        {
+          "path": "src/FerroUI.Controls/documents/rich_text_pointer_tests.rs",
+          "symbol": "rich_pointer_created_after_an_edit_does_not_replay_that_edit_at_batch_end"
+        },
+        {
+          "path": "src/FerroUI.Controls/documents/rich_text_pointer_tests.rs",
+          "symbol": "rich_pointer_created_between_nested_replacements_tracks_only_later_changes"
+        },
+        {
+          "path": "src/FerroUI.Controls/documents/rich_text_pointer_tests.rs",
+          "symbol": "rich_pointer_new_and_existing_positions_follow_failed_group_rollback_once"
+        },
+        {
+          "path": "src/FerroUI.Controls/documents/rich_text_pointer_tests.rs",
+          "symbol": "rich_pointer_reentrant_notifications_see_current_positions_in_registration_order"
+        },
+        {
+          "path": "src/FerroUI.Controls/documents/rich_text_pointer_tests.rs",
+          "symbol": "rich_pointer_tracking_keeps_weak_document_and_subscription_lifetimes"
         }
       ],
       "includes": [
@@ -12321,7 +12345,7 @@
         }
       ],
       "callable_candidates": [],
-      "reason": "Weak live pointers track edits and resolve shaped insertion geometry with gravity. Public text offsets count UTF-16 scalar-safe text instead of native synthetic element positions; unreviewed source position members remain partial.",
+      "reason": "Weak live pointers track edits and resolve shaped insertion geometry with gravity. Public text offsets count UTF-16 scalar-safe text instead of native synthetic element positions; unreviewed source position members remain partial. Live pointers now follow each completed replacement immediately through internal position notifications, before public batch publication; pointers created during a batch never replay earlier edits. Nested rollback and reentrant notification order preserve weak lifetime.",
       "deviations": [
         "RT-I01",
         "RT-I02"
@@ -16155,6 +16179,18 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_box.rs",
           "symbol": "pub fn description("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "RichEditBox: TemplatedControl"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_text_presenter.rs",
+          "symbol": "RichEditBoxTextPresenter: RichTextBlock"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs",
+          "symbol": "RichEditBoxTextInputMethodClient"
         }
       ],
       "tests": [
@@ -16220,11 +16256,43 @@
         },
         {
           "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
-          "symbol": "rich_edit_placeholder_participates_in_measure_alignment_and_foreground_inheritance"
+          "symbol": "rich_edit_placeholder_participates_in_measure_alignment_and_template_binding"
         },
         {
           "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
           "symbol": "rich_edit_header_and_embedded_control_remain_in_the_same_visual_tree_after_relayout"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_retemplate_preserves_composition_history_and_live_document_services"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_content_element_accepts_framework_hosts_and_missing_parts_are_optional"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_scroll_view_formats_the_full_document_and_clamps_offsets_after_shrink"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_wrapping_uses_viewport_width_and_no_wrap_preserves_horizontal_extent"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_caret_scroll_keeps_template_chrome_fixed_and_ime_geometry_in_owner_coordinates"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_presenter_selection_events_and_ime_requests_keep_the_owner_identity"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_handled_embedded_control_pointer_input_does_not_move_selection"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_line_services_use_paragraph_fallback_until_the_presenter_is_measured"
         }
       ],
       "includes": [
@@ -16462,14 +16530,15 @@
           "state": "unreviewed"
         }
       ],
-      "reason": "The shared Rust editor/control supplies the mapped host editing, IME, clipboard, selection, synchronous/deferred text notifications and composed header/placeholder/description behavior. Cancellable/reentrant selection and native notification timing are now tested. Native text service/windowless host ABI, complete templates/scrolling, input panes, proofing and all unmapped host members remain pending.",
+      "reason": "RichEditBox is a FerroUI TemplatedControl with one persistent RichEditBoxTextPresenter and shared model/editor/history. ContentElement accepts framework content hosts; header, placeholder and description use actual optional parts. Internal logical scrolling measures the full document at viewport width, keeps chrome fixed and shares text/caret/IME/automation offsets. Retemplating preserves live services, composition and undo. Owner-routed focus/selection and raw presenter automation avoid duplicate identity. Native windowless ABI, full backend services, touch UI and unmapped members remain pending.",
       "deviations": [
         "RT-I04",
         "RT-I06",
         "RT-I07",
         "RT-I08",
         "RT-A03",
-        "RT-A04"
+        "RT-A04",
+        "RT-A01"
       ]
     },
     {
@@ -16533,6 +16602,18 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_box.rs",
           "symbol": "pub fn description("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "RichEditBox: TemplatedControl"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_text_presenter.rs",
+          "symbol": "RichEditBoxTextPresenter: RichTextBlock"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs",
+          "symbol": "RichEditBoxTextInputMethodClient"
         }
       ],
       "tests": [
@@ -16598,11 +16679,43 @@
         },
         {
           "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
-          "symbol": "rich_edit_placeholder_participates_in_measure_alignment_and_foreground_inheritance"
+          "symbol": "rich_edit_placeholder_participates_in_measure_alignment_and_template_binding"
         },
         {
           "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
           "symbol": "rich_edit_header_and_embedded_control_remain_in_the_same_visual_tree_after_relayout"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_retemplate_preserves_composition_history_and_live_document_services"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_content_element_accepts_framework_hosts_and_missing_parts_are_optional"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_scroll_view_formats_the_full_document_and_clamps_offsets_after_shrink"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_wrapping_uses_viewport_width_and_no_wrap_preserves_horizontal_extent"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_caret_scroll_keeps_template_chrome_fixed_and_ime_geometry_in_owner_coordinates"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_presenter_selection_events_and_ime_requests_keep_the_owner_identity"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_handled_embedded_control_pointer_input_does_not_move_selection"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_line_services_use_paragraph_fallback_until_the_presenter_is_measured"
         }
       ],
       "includes": [
@@ -16617,14 +16730,15 @@
         }
       ],
       "callable_candidates": [],
-      "reason": "The shared Rust editor/control supplies the mapped host editing, IME, clipboard, selection, synchronous/deferred text notifications and composed header/placeholder/description behavior. Cancellable/reentrant selection and native notification timing are now tested. Native text service/windowless host ABI, complete templates/scrolling, input panes, proofing and all unmapped host members remain pending.",
+      "reason": "RichEditBox is a FerroUI TemplatedControl with one persistent RichEditBoxTextPresenter and shared model/editor/history. ContentElement accepts framework content hosts; header, placeholder and description use actual optional parts. Internal logical scrolling measures the full document at viewport width, keeps chrome fixed and shares text/caret/IME/automation offsets. Retemplating preserves live services, composition and undo. Owner-routed focus/selection and raw presenter automation avoid duplicate identity. Native windowless ABI, full backend services, touch UI and unmapped members remain pending.",
       "deviations": [
         "RT-I04",
         "RT-I06",
         "RT-I07",
         "RT-I08",
         "RT-A03",
-        "RT-A04"
+        "RT-A04",
+        "RT-A01"
       ]
     },
     {
@@ -16643,6 +16757,18 @@
         {
           "path": "src/FerroUI.Controls/automation/peers/rich_edit_box_automation_peer.rs",
           "symbol": "ITextProvider"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/i_text_edit_provider.rs",
+          "symbol": "pub trait ITextEditProvider"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation.rs",
+          "symbol": "fn get_active_composition("
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/automation_node_text.rs",
+          "symbol": "get_active_composition"
         }
       ],
       "tests": [
@@ -16665,6 +16791,50 @@
         {
           "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
           "symbol": "rich_automation_retained_ranges_do_not_keep_controls_alive"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_editor_templates_preserve_owner_identity_ranges_and_presenter_geometry"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_retained_editor_presenter_does_not_keep_owner_or_text_provider_alive"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_editor_raw_presenter_does_not_duplicate_embedded_document_children"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_scroll_alignment_uses_the_last_selected_line"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_editor_scroll_alignment_uses_the_presenter_viewport_and_current_offset"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_scroll_rejects_text_without_a_laid_out_view"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_document_and_hyperlink_ranges_do_not_enumerate_themselves"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_text_edit_composition_range_tracks_utf16_preview_and_rejects_stale_state"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_text_edit_events_report_accepted_deltas_and_single_finalization"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_text_edit_observation_follows_document_replacement_and_disposal"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_text_edit_pattern_is_editor_only_and_does_not_retain_owner"
         }
       ],
       "includes": [
@@ -16698,10 +16868,11 @@
           "state": "unreviewed"
         }
       ],
-      "reason": "The rich peer uses existing framework automation adapters and shared model ranges. Overflow inherits the rich view peer and the editor also retains Value; unimplemented native peer members/patterns and concrete hierarchy differences remain explicit.",
+      "reason": "The rich editor peer owns Text, Text2, TextEdit and Value identity independently of its raw persistent presenter. TextEdit causes follow current editor state and subscriptions do not retain the owner. TextEdit inherits Text independently of Text2. The editor returns the full active accepted IME preview as a live weak UTF-16 range, or None without an active composition; retained ranges follow owner/document lifetime. Accepted preview delta and single finalization events rewire on model replacement and marshal through the Win32 UI-thread bridge. A distinct conversion target requires backend data and is currently absent. Public AutomationPeer.RaiseTextEditTextChangedEvent, system cause producers and native Windows client execution remain pending.",
       "deviations": [
         "RT-I02",
-        "RT-I10"
+        "RT-I10",
+        "RT-I13"
       ]
     },
     {
@@ -16720,6 +16891,18 @@
         {
           "path": "src/FerroUI.Controls/automation/peers/rich_edit_box_automation_peer.rs",
           "symbol": "ITextProvider"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/i_text_edit_provider.rs",
+          "symbol": "pub trait ITextEditProvider"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation.rs",
+          "symbol": "fn get_active_composition("
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/automation_node_text.rs",
+          "symbol": "get_active_composition"
         }
       ],
       "tests": [
@@ -16742,6 +16925,50 @@
         {
           "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
           "symbol": "rich_automation_retained_ranges_do_not_keep_controls_alive"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_editor_templates_preserve_owner_identity_ranges_and_presenter_geometry"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_retained_editor_presenter_does_not_keep_owner_or_text_provider_alive"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_editor_raw_presenter_does_not_duplicate_embedded_document_children"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_scroll_alignment_uses_the_last_selected_line"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_editor_scroll_alignment_uses_the_presenter_viewport_and_current_offset"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_scroll_rejects_text_without_a_laid_out_view"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_document_and_hyperlink_ranges_do_not_enumerate_themselves"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_text_edit_composition_range_tracks_utf16_preview_and_rejects_stale_state"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_text_edit_events_report_accepted_deltas_and_single_finalization"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_text_edit_observation_follows_document_replacement_and_disposal"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_text_edit_pattern_is_editor_only_and_does_not_retain_owner"
         }
       ],
       "includes": [
@@ -16756,10 +16983,11 @@
         }
       ],
       "callable_candidates": [],
-      "reason": "The rich peer uses existing framework automation adapters and shared model ranges. Overflow inherits the rich view peer and the editor also retains Value; unimplemented native peer members/patterns and concrete hierarchy differences remain explicit.",
+      "reason": "The rich editor peer owns Text, Text2, TextEdit and Value identity independently of its raw persistent presenter. TextEdit causes follow current editor state and subscriptions do not retain the owner. TextEdit inherits Text independently of Text2. The editor returns the full active accepted IME preview as a live weak UTF-16 range, or None without an active composition; retained ranges follow owner/document lifetime. Accepted preview delta and single finalization events rewire on model replacement and marshal through the Win32 UI-thread bridge. A distinct conversion target requires backend data and is currently absent. Public AutomationPeer.RaiseTextEditTextChangedEvent, system cause producers and native Windows client execution remain pending.",
       "deviations": [
         "RT-I02",
-        "RT-I10"
+        "RT-I10",
+        "RT-I13"
       ]
     },
     {
@@ -17645,6 +17873,26 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_box.rs",
           "symbol": "pub fn description("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "RichEditBox: TemplatedControl"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_text_presenter.rs",
+          "symbol": "RichEditBoxTextPresenter: RichTextBlock"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs",
+          "symbol": "RichEditBoxTextInputMethodClient"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_text_editor.rs",
+          "symbol": "RichTextCompositionChange"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_text_editor.rs",
+          "symbol": "pub fn composition_changed("
         }
       ],
       "tests": [
@@ -17706,11 +17954,71 @@
         },
         {
           "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
-          "symbol": "rich_edit_placeholder_participates_in_measure_alignment_and_foreground_inheritance"
+          "symbol": "rich_edit_placeholder_participates_in_measure_alignment_and_template_binding"
         },
         {
           "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
           "symbol": "rich_edit_header_and_embedded_control_remain_in_the_same_visual_tree_after_relayout"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_retemplate_preserves_composition_history_and_live_document_services"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_content_element_accepts_framework_hosts_and_missing_parts_are_optional"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_scroll_view_formats_the_full_document_and_clamps_offsets_after_shrink"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_wrapping_uses_viewport_width_and_no_wrap_preserves_horizontal_extent"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_caret_scroll_keeps_template_chrome_fixed_and_ime_geometry_in_owner_coordinates"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_presenter_selection_events_and_ime_requests_keep_the_owner_identity"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_handled_embedded_control_pointer_input_does_not_move_selection"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_line_services_use_paragraph_fallback_until_the_presenter_is_measured"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_text_composition_tests.rs",
+          "symbol": "rich_composition_preview_reports_only_accepted_unicode_replacements"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_text_composition_tests.rs",
+          "symbol": "rich_composition_commit_publishes_one_accepted_finalization_and_one_undo_unit"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_text_composition_tests.rs",
+          "symbol": "rich_composition_typing_commit_does_not_publish_a_cancellation_first"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_text_composition_tests.rs",
+          "symbol": "rich_composition_explicit_cancel_is_empty_once_and_restores_directed_selection"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_text_composition_tests.rs",
+          "symbol": "rich_composition_read_only_and_reentrant_errors_preserve_preview_without_false_events"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_text_composition_tests.rs",
+          "symbol": "rich_composition_failed_groups_discard_causes_and_restore_composition_history_and_limits"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_text_composition_tests.rs",
+          "symbol": "rich_composition_external_text_or_format_changes_inside_a_batch_invalidate_the_preview"
         }
       ],
       "includes": [
@@ -19273,13 +19581,15 @@
           "state": "unreviewed"
         }
       ],
-      "reason": "The shared Rust editor/control supplies the mapped host editing, IME, clipboard, selection, synchronous/deferred text notifications and composed header/placeholder/description behavior. Cancellable/reentrant selection and native notification timing are now tested. Native text service/windowless host ABI, complete templates/scrolling, input panes, proofing and all unmapped host members remain pending.",
+      "reason": "RichEditBox is a FerroUI TemplatedControl with one persistent RichEditBoxTextPresenter and shared model/editor/history. ContentElement accepts framework content hosts; header, placeholder and description use actual optional parts. Internal logical scrolling measures the full document at viewport width, keeps chrome fixed and shares text/caret/IME/automation offsets. Retemplating preserves live services, composition and undo. Owner-routed focus/selection and raw presenter automation avoid duplicate identity. Native windowless ABI, full backend services, touch UI and unmapped members remain pending. Accepted composition causes distinguish preview deltas, final committed text and empty cancellation. Group rollback discards causes, failed/read-only operations preserve active preview, and internal mutation identity rejects stale state before batched public revisions. Native composition argument range fields and full backend event order remain pending.",
       "deviations": [
         "RT-A03",
         "RT-I06",
         "RT-I07",
         "RT-I08",
-        "RT-A04"
+        "RT-A04",
+        "RT-A01",
+        "RT-I13"
       ]
     },
     {
@@ -19343,6 +19653,26 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_box.rs",
           "symbol": "pub fn description("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "RichEditBox: TemplatedControl"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_text_presenter.rs",
+          "symbol": "RichEditBoxTextPresenter: RichTextBlock"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs",
+          "symbol": "RichEditBoxTextInputMethodClient"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_text_editor.rs",
+          "symbol": "RichTextCompositionChange"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_text_editor.rs",
+          "symbol": "pub fn composition_changed("
         }
       ],
       "tests": [
@@ -19404,11 +19734,71 @@
         },
         {
           "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
-          "symbol": "rich_edit_placeholder_participates_in_measure_alignment_and_foreground_inheritance"
+          "symbol": "rich_edit_placeholder_participates_in_measure_alignment_and_template_binding"
         },
         {
           "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
           "symbol": "rich_edit_header_and_embedded_control_remain_in_the_same_visual_tree_after_relayout"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_retemplate_preserves_composition_history_and_live_document_services"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_content_element_accepts_framework_hosts_and_missing_parts_are_optional"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_scroll_view_formats_the_full_document_and_clamps_offsets_after_shrink"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_wrapping_uses_viewport_width_and_no_wrap_preserves_horizontal_extent"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_caret_scroll_keeps_template_chrome_fixed_and_ime_geometry_in_owner_coordinates"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_presenter_selection_events_and_ime_requests_keep_the_owner_identity"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_handled_embedded_control_pointer_input_does_not_move_selection"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_line_services_use_paragraph_fallback_until_the_presenter_is_measured"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_text_composition_tests.rs",
+          "symbol": "rich_composition_preview_reports_only_accepted_unicode_replacements"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_text_composition_tests.rs",
+          "symbol": "rich_composition_commit_publishes_one_accepted_finalization_and_one_undo_unit"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_text_composition_tests.rs",
+          "symbol": "rich_composition_typing_commit_does_not_publish_a_cancellation_first"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_text_composition_tests.rs",
+          "symbol": "rich_composition_explicit_cancel_is_empty_once_and_restores_directed_selection"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_text_composition_tests.rs",
+          "symbol": "rich_composition_read_only_and_reentrant_errors_preserve_preview_without_false_events"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_text_composition_tests.rs",
+          "symbol": "rich_composition_failed_groups_discard_causes_and_restore_composition_history_and_limits"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_text_composition_tests.rs",
+          "symbol": "rich_composition_external_text_or_format_changes_inside_a_batch_invalidate_the_preview"
         }
       ],
       "includes": [
@@ -19488,13 +19878,15 @@
           "state": "unreviewed"
         }
       ],
-      "reason": "The shared Rust editor/control supplies the mapped host editing, IME, clipboard, selection, synchronous/deferred text notifications and composed header/placeholder/description behavior. Cancellable/reentrant selection and native notification timing are now tested. Native text service/windowless host ABI, complete templates/scrolling, input panes, proofing and all unmapped host members remain pending.",
+      "reason": "RichEditBox is a FerroUI TemplatedControl with one persistent RichEditBoxTextPresenter and shared model/editor/history. ContentElement accepts framework content hosts; header, placeholder and description use actual optional parts. Internal logical scrolling measures the full document at viewport width, keeps chrome fixed and shares text/caret/IME/automation offsets. Retemplating preserves live services, composition and undo. Owner-routed focus/selection and raw presenter automation avoid duplicate identity. Native windowless ABI, full backend services, touch UI and unmapped members remain pending. Accepted composition causes distinguish preview deltas, final committed text and empty cancellation. Group rollback discards causes, failed/read-only operations preserve active preview, and internal mutation identity rejects stale state before batched public revisions. Native composition argument range fields and full backend event order remain pending.",
       "deviations": [
         "RT-A03",
         "RT-I06",
         "RT-I07",
         "RT-I08",
-        "RT-A04"
+        "RT-A04",
+        "RT-A01",
+        "RT-I13"
       ]
     },
     {
@@ -21104,6 +21496,14 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs",
           "symbol": "RichEditBoxTextInputMethodClient"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "RichEditBox: TemplatedControl"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_text_presenter.rs",
+          "symbol": "RichEditBoxTextPresenter: RichTextBlock"
         }
       ],
       "tests": [
@@ -21114,6 +21514,38 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
           "symbol": "rich_edit_ime_notifications_expose_committed_text_during_preview_publication"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_retemplate_preserves_composition_history_and_live_document_services"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_content_element_accepts_framework_hosts_and_missing_parts_are_optional"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_scroll_view_formats_the_full_document_and_clamps_offsets_after_shrink"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_wrapping_uses_viewport_width_and_no_wrap_preserves_horizontal_extent"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_caret_scroll_keeps_template_chrome_fixed_and_ime_geometry_in_owner_coordinates"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_presenter_selection_events_and_ime_requests_keep_the_owner_identity"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_handled_embedded_control_pointer_input_does_not_move_selection"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_line_services_use_paragraph_fallback_until_the_presenter_is_measured"
         }
       ],
       "includes": [
@@ -21645,7 +22077,7 @@
           "state": "unreviewed"
         }
       ],
-      "reason": "Input-method surrounding text, selection, cursor geometry and preedit use the existing framework client. Native windowless hosting, TSF/UI-manager callbacks and unavailable system services are not mechanically ported.",
+      "reason": "Input-method surrounding text, selection, cursor geometry and preedit use the existing framework client. Native windowless hosting, TSF/UI-manager callbacks and unavailable system services are not mechanically ported. The persistent presenter is the text-view visual while cursor rectangles are converted to semantic-owner coordinates; surrounding text and selection remain on the owner/editor. Native TSF/windowless/UI-manager and other host members remain pending.",
       "deviations": [
         "RT-A04",
         "RT-I06",
@@ -21669,6 +22101,14 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs",
           "symbol": "RichEditBoxTextInputMethodClient"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "RichEditBox: TemplatedControl"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_text_presenter.rs",
+          "symbol": "RichEditBoxTextPresenter: RichTextBlock"
         }
       ],
       "tests": [
@@ -21679,6 +22119,38 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
           "symbol": "rich_edit_ime_notifications_expose_committed_text_during_preview_publication"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_retemplate_preserves_composition_history_and_live_document_services"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_content_element_accepts_framework_hosts_and_missing_parts_are_optional"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_scroll_view_formats_the_full_document_and_clamps_offsets_after_shrink"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_wrapping_uses_viewport_width_and_no_wrap_preserves_horizontal_extent"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_caret_scroll_keeps_template_chrome_fixed_and_ime_geometry_in_owner_coordinates"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_presenter_selection_events_and_ime_requests_keep_the_owner_identity"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_handled_embedded_control_pointer_input_does_not_move_selection"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_line_services_use_paragraph_fallback_until_the_presenter_is_measured"
         }
       ],
       "includes": [
@@ -21698,7 +22170,7 @@
         }
       ],
       "callable_candidates": [],
-      "reason": "Input-method surrounding text, selection, cursor geometry and preedit use the existing framework client. Native windowless hosting, TSF/UI-manager callbacks and unavailable system services are not mechanically ported.",
+      "reason": "Input-method surrounding text, selection, cursor geometry and preedit use the existing framework client. Native windowless hosting, TSF/UI-manager callbacks and unavailable system services are not mechanically ported. The persistent presenter is the text-view visual while cursor rectangles are converted to semantic-owner coordinates; surrounding text and selection remain on the owner/editor. Native TSF/windowless/UI-manager and other host members remain pending.",
       "deviations": [
         "RT-A04",
         "RT-I06",
@@ -27195,6 +27667,10 @@
         {
           "path": "src/FerroUI.Controls/documents/text_position.rs",
           "symbol": "TextGravity"
+        },
+        {
+          "path": "src/FerroUI.Controls/documents/rich_text_document.rs",
+          "symbol": "position_changed"
         }
       ],
       "tests": [
@@ -27209,6 +27685,26 @@
         {
           "path": "src/FerroUI.Controls/rich_text_block_tests.rs",
           "symbol": "rich_pointer_geometry_keeps_the_insertion_offset_and_finds_overflow_view"
+        },
+        {
+          "path": "src/FerroUI.Controls/documents/rich_text_pointer_tests.rs",
+          "symbol": "rich_pointer_created_after_an_edit_does_not_replay_that_edit_at_batch_end"
+        },
+        {
+          "path": "src/FerroUI.Controls/documents/rich_text_pointer_tests.rs",
+          "symbol": "rich_pointer_created_between_nested_replacements_tracks_only_later_changes"
+        },
+        {
+          "path": "src/FerroUI.Controls/documents/rich_text_pointer_tests.rs",
+          "symbol": "rich_pointer_new_and_existing_positions_follow_failed_group_rollback_once"
+        },
+        {
+          "path": "src/FerroUI.Controls/documents/rich_text_pointer_tests.rs",
+          "symbol": "rich_pointer_reentrant_notifications_see_current_positions_in_registration_order"
+        },
+        {
+          "path": "src/FerroUI.Controls/documents/rich_text_pointer_tests.rs",
+          "symbol": "rich_pointer_tracking_keeps_weak_document_and_subscription_lifetimes"
         }
       ],
       "includes": [
@@ -27223,7 +27719,7 @@
         }
       ],
       "callable_candidates": [],
-      "reason": "Weak live pointers track edits and resolve shaped insertion geometry with gravity. Public text offsets count UTF-16 scalar-safe text instead of native synthetic element positions; unreviewed source position members remain partial.",
+      "reason": "Weak live pointers track edits and resolve shaped insertion geometry with gravity. Public text offsets count UTF-16 scalar-safe text instead of native synthetic element positions; unreviewed source position members remain partial. Live pointers now follow each completed replacement immediately through internal position notifications, before public batch publication; pointers created during a batch never replay earlier edits. Nested rollback and reentrant notification order preserve weak lifetime.",
       "deviations": [
         "RT-I01",
         "RT-I02"
@@ -28521,6 +29017,10 @@
         {
           "path": "src/FerroUI.Controls/documents/text_position.rs",
           "symbol": "TextGravity"
+        },
+        {
+          "path": "src/FerroUI.Controls/documents/rich_text_document.rs",
+          "symbol": "position_changed"
         }
       ],
       "tests": [
@@ -28535,6 +29035,26 @@
         {
           "path": "src/FerroUI.Controls/rich_text_block_tests.rs",
           "symbol": "rich_pointer_geometry_keeps_the_insertion_offset_and_finds_overflow_view"
+        },
+        {
+          "path": "src/FerroUI.Controls/documents/rich_text_pointer_tests.rs",
+          "symbol": "rich_pointer_created_after_an_edit_does_not_replay_that_edit_at_batch_end"
+        },
+        {
+          "path": "src/FerroUI.Controls/documents/rich_text_pointer_tests.rs",
+          "symbol": "rich_pointer_created_between_nested_replacements_tracks_only_later_changes"
+        },
+        {
+          "path": "src/FerroUI.Controls/documents/rich_text_pointer_tests.rs",
+          "symbol": "rich_pointer_new_and_existing_positions_follow_failed_group_rollback_once"
+        },
+        {
+          "path": "src/FerroUI.Controls/documents/rich_text_pointer_tests.rs",
+          "symbol": "rich_pointer_reentrant_notifications_see_current_positions_in_registration_order"
+        },
+        {
+          "path": "src/FerroUI.Controls/documents/rich_text_pointer_tests.rs",
+          "symbol": "rich_pointer_tracking_keeps_weak_document_and_subscription_lifetimes"
         }
       ],
       "includes": [
@@ -28659,7 +29179,7 @@
           "state": "unreviewed"
         }
       ],
-      "reason": "Weak live pointers track edits and resolve shaped insertion geometry with gravity. Public text offsets count UTF-16 scalar-safe text instead of native synthetic element positions; unreviewed source position members remain partial.",
+      "reason": "Weak live pointers track edits and resolve shaped insertion geometry with gravity. Public text offsets count UTF-16 scalar-safe text instead of native synthetic element positions; unreviewed source position members remain partial. Live pointers now follow each completed replacement immediately through internal position notifications, before public batch publication; pointers created during a batch never replay earlier edits. Nested rollback and reentrant notification order preserve weak lifetime.",
       "deviations": [
         "RT-I01",
         "RT-I02"
@@ -38986,12 +39506,50 @@
       "lines": 530,
       "scope_reason": "dxaml/xcp/core/text/",
       "component": "rich formatting contracts and structures",
-      "state": "reuse_candidate",
+      "state": "partial",
       "reuse_or_destination_candidates": [
         "src/FerroUI.Base/media/text_formatting/"
       ],
-      "targets": [],
-      "tests": [],
+      "targets": [
+        {
+          "path": "src/FerroUI.Controls/documents/text_language.rs",
+          "symbol": "is_valid_language_tag"
+        },
+        {
+          "path": "src/FerroUI.Controls/documents/text_element.rs",
+          "symbol": "language_property"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text_layout.rs",
+          "symbol": "resolved_language"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Controls/documents/rich_language_tests.rs",
+          "symbol": "rich_language_source_validation_and_patch_assignment_are_atomic"
+        },
+        {
+          "path": "src/FerroUI.Controls/documents/rich_language_tests.rs",
+          "symbol": "rich_language_inherits_into_shaping_and_local_values_override"
+        },
+        {
+          "path": "src/FerroUI.Controls/documents/rich_language_tests.rs",
+          "symbol": "rich_language_snapshots_and_editor_history_preserve_tags"
+        },
+        {
+          "path": "src/FerroUI.Controls/documents/rich_language_tests.rs",
+          "symbol": "rich_language_rtf_default_scope_plain_and_round_trip"
+        },
+        {
+          "path": "src/FerroUI.Controls/documents/rich_language_tests.rs",
+          "symbol": "rich_language_rtf_reports_unrepresentable_tags_and_unknown_ids"
+        },
+        {
+          "path": "src/FerroUI.Controls/documents/rich_language_tests.rs",
+          "symbol": "rich_language_owner_uses_the_same_inherited_presenter_value"
+        }
+      ],
       "includes": [
         {
           "header": "precomp.h",
@@ -39267,6 +39825,12 @@
           "kind": "scoped_callable_definition_candidate",
           "state": "unreviewed"
         }
+      ],
+      "reason": "Inherited CultureInfo Language and CharacterFormat language patches use pinned XML-language validation, platform preferred language/en-US default, and existing culture-aware shaping/font fallback. Empty resolves to the application language. Windows ResolveLocaleName/MUI fallback and every LCID are not supplied by the finite portable culture table. RTF supports known deflang/lang and plain reset; unknown/unrepresentable language data fails explicitly. Other source language/font/text helpers remain under member review.",
+      "deviations": [
+        "RT-A01",
+        "RT-A02",
+        "RT-I11"
       ]
     },
     {
@@ -41781,6 +42345,10 @@
         {
           "path": "src/FerroUI.Controls/documents/text_position.rs",
           "symbol": "TextGravity"
+        },
+        {
+          "path": "src/FerroUI.Controls/documents/rich_text_document.rs",
+          "symbol": "position_changed"
         }
       ],
       "tests": [
@@ -41795,6 +42363,26 @@
         {
           "path": "src/FerroUI.Controls/rich_text_block_tests.rs",
           "symbol": "rich_pointer_geometry_keeps_the_insertion_offset_and_finds_overflow_view"
+        },
+        {
+          "path": "src/FerroUI.Controls/documents/rich_text_pointer_tests.rs",
+          "symbol": "rich_pointer_created_after_an_edit_does_not_replay_that_edit_at_batch_end"
+        },
+        {
+          "path": "src/FerroUI.Controls/documents/rich_text_pointer_tests.rs",
+          "symbol": "rich_pointer_created_between_nested_replacements_tracks_only_later_changes"
+        },
+        {
+          "path": "src/FerroUI.Controls/documents/rich_text_pointer_tests.rs",
+          "symbol": "rich_pointer_new_and_existing_positions_follow_failed_group_rollback_once"
+        },
+        {
+          "path": "src/FerroUI.Controls/documents/rich_text_pointer_tests.rs",
+          "symbol": "rich_pointer_reentrant_notifications_see_current_positions_in_registration_order"
+        },
+        {
+          "path": "src/FerroUI.Controls/documents/rich_text_pointer_tests.rs",
+          "symbol": "rich_pointer_tracking_keeps_weak_document_and_subscription_lifetimes"
         }
       ],
       "includes": [
@@ -41997,7 +42585,7 @@
           "state": "unreviewed"
         }
       ],
-      "reason": "Weak live pointers track edits and resolve shaped insertion geometry with gravity. Public text offsets count UTF-16 scalar-safe text instead of native synthetic element positions; unreviewed source position members remain partial.",
+      "reason": "Weak live pointers track edits and resolve shaped insertion geometry with gravity. Public text offsets count UTF-16 scalar-safe text instead of native synthetic element positions; unreviewed source position members remain partial. Live pointers now follow each completed replacement immediately through internal position notifications, before public batch publication; pointers created during a batch never replay earlier edits. Nested rollback and reentrant notification order preserve weak lifetime.",
       "deviations": [
         "RT-I01",
         "RT-I02"
@@ -44916,13 +45504,51 @@
       "lines": 362,
       "scope_reason": "dxaml/xcp/core/text/",
       "component": "shared text infrastructure",
-      "state": "pending",
+      "state": "partial",
       "reuse_or_destination_candidates": [
         "src/FerroUI.Base/media/text_formatting/",
         "src/FerroUI.Controls/documents/"
       ],
-      "targets": [],
-      "tests": [],
+      "targets": [
+        {
+          "path": "src/FerroUI.Controls/documents/text_language.rs",
+          "symbol": "is_valid_language_tag"
+        },
+        {
+          "path": "src/FerroUI.Controls/documents/text_element.rs",
+          "symbol": "language_property"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text_layout.rs",
+          "symbol": "resolved_language"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Controls/documents/rich_language_tests.rs",
+          "symbol": "rich_language_source_validation_and_patch_assignment_are_atomic"
+        },
+        {
+          "path": "src/FerroUI.Controls/documents/rich_language_tests.rs",
+          "symbol": "rich_language_inherits_into_shaping_and_local_values_override"
+        },
+        {
+          "path": "src/FerroUI.Controls/documents/rich_language_tests.rs",
+          "symbol": "rich_language_snapshots_and_editor_history_preserve_tags"
+        },
+        {
+          "path": "src/FerroUI.Controls/documents/rich_language_tests.rs",
+          "symbol": "rich_language_rtf_default_scope_plain_and_round_trip"
+        },
+        {
+          "path": "src/FerroUI.Controls/documents/rich_language_tests.rs",
+          "symbol": "rich_language_rtf_reports_unrepresentable_tags_and_unknown_ids"
+        },
+        {
+          "path": "src/FerroUI.Controls/documents/rich_language_tests.rs",
+          "symbol": "rich_language_owner_uses_the_same_inherited_presenter_value"
+        }
+      ],
       "includes": [
         {
           "header": "precomp.h",
@@ -45068,6 +45694,12 @@
           "kind": "scoped_callable_definition_candidate",
           "state": "unreviewed"
         }
+      ],
+      "reason": "Inherited CultureInfo Language and CharacterFormat language patches use pinned XML-language validation, platform preferred language/en-US default, and existing culture-aware shaping/font fallback. Empty resolves to the application language. Windows ResolveLocaleName/MUI fallback and every LCID are not supplied by the finite portable culture table. RTF supports known deflang/lang and plain reset; unknown/unrepresentable language data fails explicitly. Other source language/font/text helpers remain under member review.",
+      "deviations": [
+        "RT-A01",
+        "RT-A02",
+        "RT-I11"
       ]
     },
     {
@@ -46695,13 +47327,51 @@
       "lines": 325,
       "scope_reason": "dxaml/xcp/core/text/",
       "component": "shared text infrastructure",
-      "state": "pending",
+      "state": "partial",
       "reuse_or_destination_candidates": [
         "src/FerroUI.Base/media/text_formatting/",
         "src/FerroUI.Controls/documents/"
       ],
-      "targets": [],
-      "tests": [],
+      "targets": [
+        {
+          "path": "src/FerroUI.Controls/documents/text_language.rs",
+          "symbol": "is_valid_language_tag"
+        },
+        {
+          "path": "src/FerroUI.Controls/documents/text_element.rs",
+          "symbol": "language_property"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text_layout.rs",
+          "symbol": "resolved_language"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Controls/documents/rich_language_tests.rs",
+          "symbol": "rich_language_source_validation_and_patch_assignment_are_atomic"
+        },
+        {
+          "path": "src/FerroUI.Controls/documents/rich_language_tests.rs",
+          "symbol": "rich_language_inherits_into_shaping_and_local_values_override"
+        },
+        {
+          "path": "src/FerroUI.Controls/documents/rich_language_tests.rs",
+          "symbol": "rich_language_snapshots_and_editor_history_preserve_tags"
+        },
+        {
+          "path": "src/FerroUI.Controls/documents/rich_language_tests.rs",
+          "symbol": "rich_language_rtf_default_scope_plain_and_round_trip"
+        },
+        {
+          "path": "src/FerroUI.Controls/documents/rich_language_tests.rs",
+          "symbol": "rich_language_rtf_reports_unrepresentable_tags_and_unknown_ids"
+        },
+        {
+          "path": "src/FerroUI.Controls/documents/rich_language_tests.rs",
+          "symbol": "rich_language_owner_uses_the_same_inherited_presenter_value"
+        }
+      ],
       "includes": [
         {
           "header": "precomp.h",
@@ -46768,7 +47438,13 @@
           ]
         }
       ],
-      "callable_candidates": []
+      "callable_candidates": [],
+      "reason": "Inherited CultureInfo Language and CharacterFormat language patches use pinned XML-language validation, platform preferred language/en-US default, and existing culture-aware shaping/font fallback. Empty resolves to the application language. Windows ResolveLocaleName/MUI fallback and every LCID are not supplied by the finite portable culture table. RTF supports known deflang/lang and plain reset; unknown/unrepresentable language data fails explicitly. Other source language/font/text helpers remain under member review.",
+      "deviations": [
+        "RT-A01",
+        "RT-A02",
+        "RT-I11"
+      ]
     },
     {
       "path": "dxaml/xcp/core/text/common/textadapter.cpp",
@@ -48030,6 +48706,847 @@
         }
       ],
       "callable_candidates": []
+    },
+    {
+      "path": "dxaml/xcp/dxaml/lib/AutomationPeer_Partial.cpp",
+      "git_blob": "0a00e514b31b26227af07d7bcd5c00007134584f",
+      "sha256": "f86eef356ee12fb36e65d098ba036bc1cb46334ca2c4d65725c40fe141ce564c",
+      "bytes": 171648,
+      "lines": 4127,
+      "scope_reason": "explicit dependency/reference",
+      "component": "text automation",
+      "state": "partial",
+      "reuse_or_destination_candidates": [
+        "src/FerroUI.Controls/automation/"
+      ],
+      "targets": [
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/interop/uia_core_provider_api.rs",
+          "symbol": "pub fn uia_raise_text_edit_text_changed_event("
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/marshalling/safe_array_ref.rs",
+          "symbol": "pub fn try_create<"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs",
+          "symbol": "native_text_edit_events_marshal_unicode_deltas_and_empty_finalization_on_ui_thread"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs",
+          "symbol": "native_text_edit_payload_validation_preserves_embedded_nul_and_return_codes"
+        }
+      ],
+      "includes": [
+        {
+          "header": "precomp.h",
+          "line": 3,
+          "style": "quoted",
+          "resolution": "relative_path",
+          "candidates": [
+            "dxaml/xcp/dxaml/lib/precomp.h"
+          ]
+        },
+        {
+          "header": "AutomationCValue.h",
+          "line": 5,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/inc/AutomationCValue.h"
+          ]
+        },
+        {
+          "header": "UiaWrapper.h",
+          "line": 6,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/win/inc/UIAWrapper.h"
+          ]
+        },
+        {
+          "header": "AutomationPeer.g.h",
+          "line": 7,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/dxaml/lib/winrtgeneratedclasses/AutomationPeer.g.h"
+          ]
+        },
+        {
+          "header": "IRawElementProviderSimple.g.h",
+          "line": 8,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/dxaml/lib/winrtgeneratedclasses/IRawElementProviderSimple.g.h"
+          ]
+        },
+        {
+          "header": "ItemsControlAutomationPeer.g.h",
+          "line": 9,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/dxaml/lib/winrtgeneratedclasses/ItemsControlAutomationPeer.g.h"
+          ]
+        },
+        {
+          "header": "AutomationPeerCollection.g.h",
+          "line": 10,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/dxaml/lib/winrtgeneratedclasses/AutomationPeerCollection.g.h"
+          ]
+        },
+        {
+          "header": "AutomationProperty.g.h",
+          "line": 11,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/dxaml/lib/winrtgeneratedclasses/AutomationProperty.g.h"
+          ]
+        },
+        {
+          "header": "UIAEnums.g.h",
+          "line": 12,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/inc/UIAEnums.g.h"
+          ]
+        },
+        {
+          "header": "AutomationPeerAnnotationCollection.g.h",
+          "line": 13,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/dxaml/lib/winrtgeneratedclasses/AutomationPeerAnnotationCollection.g.h"
+          ]
+        },
+        {
+          "header": "xstrutil.h",
+          "line": 14,
+          "style": "system",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/components/xstring/inc/xstrutil.h"
+          ]
+        },
+        {
+          "header": "localizedResource.h",
+          "line": 15,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/inc/localizedResource.h"
+          ]
+        },
+        {
+          "header": "UIElement.g.h",
+          "line": 16,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/dxaml/lib/winrtgeneratedclasses/UIElement.g.h"
+          ]
+        }
+      ],
+      "callable_candidates": [
+        {
+          "name": "AutomationPeer::AutomationPeer",
+          "line": 79,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::~AutomationPeer",
+          "line": 84,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "DirectUI::AutomationPeer::QueryInterfaceImpl",
+          "line": 88,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::SetParentImpl",
+          "line": 139,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::GetPatternCoreImpl",
+          "line": 148,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::GetChildrenImpl",
+          "line": 153,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::GetControlledPeersImpl",
+          "line": 189,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::ShowContextMenuImpl",
+          "line": 199,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::GetPeerFromPointImpl",
+          "line": 204,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::GetAcceleratorKeyCoreImpl",
+          "line": 214,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::GetAccessKeyCoreImpl",
+          "line": 219,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::GetAutomationControlTypeCoreImpl",
+          "line": 224,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::GetAutomationIdCoreImpl",
+          "line": 230,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::GetBoundingRectangleCoreImpl",
+          "line": 235,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::GetChildrenCoreImpl",
+          "line": 245,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::NavigateCoreImpl",
+          "line": 254,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::GetClassNameCoreImpl",
+          "line": 353,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::GetClickablePointCoreImpl",
+          "line": 358,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::GetHelpTextCoreImpl",
+          "line": 366,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::GetItemStatusCoreImpl",
+          "line": 371,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::GetItemTypeCoreImpl",
+          "line": 376,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::GetLabeledByCoreImpl",
+          "line": 381,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::GetLocalizedControlTypeCoreImpl",
+          "line": 389,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::GetNameCoreImpl",
+          "line": 538,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::GetOrientationCoreImpl",
+          "line": 543,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::GetLiveSettingCoreImpl",
+          "line": 550,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::GetPositionInSetCoreImpl",
+          "line": 556,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::GetSizeOfSetCoreImpl",
+          "line": 562,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::GetLevelCoreImpl",
+          "line": 568,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::GetControlledPeersCoreImpl",
+          "line": 574,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::GetAnnotationsCoreImpl",
+          "line": 579,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::GetLandmarkTypeCoreImpl",
+          "line": 584,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::GetLocalizedLandmarkTypeCoreImpl",
+          "line": 590,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::HasKeyboardFocusCoreImpl",
+          "line": 595,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::IsContentElementCoreImpl",
+          "line": 600,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::IsControlElementCoreImpl",
+          "line": 606,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::IsEnabledCoreImpl",
+          "line": 612,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::IsKeyboardFocusableCoreImpl",
+          "line": 618,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::IsOffscreenCoreImpl",
+          "line": 624,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::IsPasswordCoreImpl",
+          "line": 630,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::IsRequiredForFormCoreImpl",
+          "line": 636,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::SetFocusCoreImpl",
+          "line": 642,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::SetAutomationFocusImpl",
+          "line": 652,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::ShowContextMenuCoreImpl",
+          "line": 658,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::IsPeripheralCoreImpl",
+          "line": 663,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::IsDataValidForFormCoreImpl",
+          "line": 669,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::GetFullDescriptionCoreImpl",
+          "line": 677,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::GetDescribedByCoreImpl",
+          "line": 682,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::GetFlowsToCoreImpl",
+          "line": 688,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::GetFlowsFromCoreImpl",
+          "line": 694,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::GetCultureCoreImpl",
+          "line": 700,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::GetHeadingLevelCoreImpl",
+          "line": 705,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::IsDialogCoreImpl",
+          "line": 711,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "DirectUI::AutomationPeer::get_EventsSource",
+          "line": 717,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "DirectUI::AutomationPeer::put_EventsSource",
+          "line": 728,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::GetParentImpl",
+          "line": 744,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::InvalidatePeerImpl",
+          "line": 765,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::RaiseAutomationEventImpl",
+          "line": 772,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::RaiseStructureChangedEventImpl",
+          "line": 791,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::RaisePropertyChangedEventImpl",
+          "line": 859,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::RaisePropertyChangedEvent",
+          "line": 899,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::RaiseTextEditTextChangedEventImpl",
+          "line": 916,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::RaiseNotificationEventImpl",
+          "line": 946,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::GetPeerFromPointCoreImpl",
+          "line": 966,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::GetElementFromPointCoreImpl",
+          "line": 981,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::GetFocusedElementCoreImpl",
+          "line": 1002,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::PeerFromProviderImpl",
+          "line": 1017,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::PeerFromProviderStatic",
+          "line": 1029,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::ProviderFromPeerImpl",
+          "line": 1041,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::ProviderFromPeerStatic",
+          "line": 1053,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::GetTrimmedKeyboardAcceleratorTextOverrideStatic",
+          "line": 1077,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::NotifyNoUIAClientObjectToOwner",
+          "line": 1105,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::GenerateAutomationPeerEventsSource",
+          "line": 1112,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::NotifyManagedUIElementIsDead",
+          "line": 1129,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::RaisePropertyChangedEventById",
+          "line": 1138,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::RaisePropertyChangedEventById",
+          "line": 1152,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::GetAutomationPeerStringValue",
+          "line": 1167,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::GetAutomationPeerIntValue",
+          "line": 1254,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::GetAutomationPeerPointValue",
+          "line": 1361,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::GetAutomationPeerRectValue",
+          "line": 1388,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::GetAutomationPeerAPValue",
+          "line": 1417,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::GetAutomationPeerDOValue",
+          "line": 1453,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::CallAutomationPeerMethod",
+          "line": 1544,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::Navigate",
+          "line": 1572,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::GetAutomationPeerChildren",
+          "line": 1602,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::GetPattern",
+          "line": 1671,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::GetElementFromPoint",
+          "line": 1712,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::GetFocusedElement",
+          "line": 1747,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::UIATextRangeInvoke",
+          "line": 1777,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::UIAPatternInvoke",
+          "line": 2297,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::NotifyNoUIAClientObjectForAP",
+          "line": 3690,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::GenerateAutomationPeerEventsSource",
+          "line": 3712,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::RetrieveNativeNodeOrAPFromIInspectable",
+          "line": 3743,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::GetAutomationPropertyFromUIAXcpEnum",
+          "line": 3770,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::GetPropertyValueFromCValue",
+          "line": 3818,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::GetStringFromCValue",
+          "line": 3845,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::SetCValueFromString",
+          "line": 3871,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::ListenerExistsHelper",
+          "line": 3894,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeerFactory::ListenerExistsImpl",
+          "line": 3918,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeerFactory::GenerateRawElementProviderRuntimeIdImpl",
+          "line": 3935,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::BoxArrayOfHStrings",
+          "line": 3955,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::ArePropertyChangedListeners",
+          "line": 3984,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::RaiseEventIfListener",
+          "line": 3991,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::BoxArrayOfRawElementProviderSimple",
+          "line": 4016,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "AutomationPeer::GetAutomationPeerDOValueFromIterable",
+          "line": 4055,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        }
+      ],
+      "reason": "The TextEdit native payload helper validates cause/data shape, creates a BSTR SAFEARRAY with RAII cleanup, and invokes UIA on the existing dispatcher boundary. Embedded NUL strings retain their explicit BSTR length, unlike the source raw-HSTRING SysAllocString path. Public arbitrary-peer raising, lazy native provider activation and EventsSource delegation remain pending; other members in these broad host/peer files are unreviewed.",
+      "deviations": [
+        "RT-A01",
+        "RT-I10",
+        "RT-I13"
+      ]
+    },
+    {
+      "path": "dxaml/xcp/dxaml/lib/AutomationPeer_Partial.h",
+      "git_blob": "9ae66b263bb934e5926c237408583ba3b5e20646",
+      "sha256": "a0c60b1fa6a57b3a686b682a3d82c8111e5b2dc55dbd6ae851e3cbf9fa56b5f9",
+      "bytes": 18509,
+      "lines": 310,
+      "scope_reason": "explicit dependency/reference",
+      "component": "text automation",
+      "state": "partial",
+      "reuse_or_destination_candidates": [
+        "src/FerroUI.Controls/automation/"
+      ],
+      "targets": [
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/interop/uia_core_provider_api.rs",
+          "symbol": "pub fn uia_raise_text_edit_text_changed_event("
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/marshalling/safe_array_ref.rs",
+          "symbol": "pub fn try_create<"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs",
+          "symbol": "native_text_edit_events_marshal_unicode_deltas_and_empty_finalization_on_ui_thread"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs",
+          "symbol": "native_text_edit_payload_validation_preserves_embedded_nul_and_return_codes"
+        }
+      ],
+      "includes": [
+        {
+          "header": "AutomationPeer.g.h",
+          "line": 5,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/dxaml/lib/winrtgeneratedclasses/AutomationPeer.g.h"
+          ]
+        }
+      ],
+      "callable_candidates": [],
+      "reason": "The TextEdit native payload helper validates cause/data shape, creates a BSTR SAFEARRAY with RAII cleanup, and invokes UIA on the existing dispatcher boundary. Embedded NUL strings retain their explicit BSTR length, unlike the source raw-HSTRING SysAllocString path. Public arbitrary-peer raising, lazy native provider activation and EventsSource delegation remain pending; other members in these broad host/peer files are unreviewed.",
+      "deviations": [
+        "RT-A01",
+        "RT-I10",
+        "RT-I13"
+      ]
     },
     {
       "path": "dxaml/xcp/dxaml/lib/BlockCollection_Partial.cpp",
@@ -49322,6 +50839,18 @@
         {
           "path": "src/FerroUI.Controls/automation/peers/rich_edit_box_automation_peer.rs",
           "symbol": "ITextProvider"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/i_text_edit_provider.rs",
+          "symbol": "pub trait ITextEditProvider"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation.rs",
+          "symbol": "fn get_active_composition("
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/automation_node_text.rs",
+          "symbol": "get_active_composition"
         }
       ],
       "tests": [
@@ -49344,6 +50873,50 @@
         {
           "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
           "symbol": "rich_automation_retained_ranges_do_not_keep_controls_alive"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_editor_templates_preserve_owner_identity_ranges_and_presenter_geometry"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_retained_editor_presenter_does_not_keep_owner_or_text_provider_alive"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_editor_raw_presenter_does_not_duplicate_embedded_document_children"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_scroll_alignment_uses_the_last_selected_line"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_editor_scroll_alignment_uses_the_presenter_viewport_and_current_offset"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_scroll_rejects_text_without_a_laid_out_view"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_document_and_hyperlink_ranges_do_not_enumerate_themselves"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_text_edit_composition_range_tracks_utf16_preview_and_rejects_stale_state"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_text_edit_events_report_accepted_deltas_and_single_finalization"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_text_edit_observation_follows_document_replacement_and_disposal"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_text_edit_pattern_is_editor_only_and_does_not_retain_owner"
         }
       ],
       "includes": [
@@ -49422,10 +50995,11 @@
           "state": "unreviewed"
         }
       ],
-      "reason": "The rich peer uses existing framework automation adapters and shared model ranges. Overflow inherits the rich view peer and the editor also retains Value; unimplemented native peer members/patterns and concrete hierarchy differences remain explicit.",
+      "reason": "The rich editor peer owns Text, Text2, TextEdit and Value identity independently of its raw persistent presenter. TextEdit causes follow current editor state and subscriptions do not retain the owner. TextEdit inherits Text independently of Text2. The editor returns the full active accepted IME preview as a live weak UTF-16 range, or None without an active composition; retained ranges follow owner/document lifetime. Accepted preview delta and single finalization events rewire on model replacement and marshal through the Win32 UI-thread bridge. A distinct conversion target requires backend data and is currently absent. Public AutomationPeer.RaiseTextEditTextChangedEvent, system cause producers and native Windows client execution remain pending.",
       "deviations": [
         "RT-I02",
-        "RT-I10"
+        "RT-I10",
+        "RT-I13"
       ]
     },
     {
@@ -49444,6 +51018,18 @@
         {
           "path": "src/FerroUI.Controls/automation/peers/rich_edit_box_automation_peer.rs",
           "symbol": "ITextProvider"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/i_text_edit_provider.rs",
+          "symbol": "pub trait ITextEditProvider"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation.rs",
+          "symbol": "fn get_active_composition("
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/automation_node_text.rs",
+          "symbol": "get_active_composition"
         }
       ],
       "tests": [
@@ -49466,6 +51052,50 @@
         {
           "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
           "symbol": "rich_automation_retained_ranges_do_not_keep_controls_alive"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_editor_templates_preserve_owner_identity_ranges_and_presenter_geometry"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_retained_editor_presenter_does_not_keep_owner_or_text_provider_alive"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_editor_raw_presenter_does_not_duplicate_embedded_document_children"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_scroll_alignment_uses_the_last_selected_line"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_editor_scroll_alignment_uses_the_presenter_viewport_and_current_offset"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_scroll_rejects_text_without_a_laid_out_view"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_document_and_hyperlink_ranges_do_not_enumerate_themselves"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_text_edit_composition_range_tracks_utf16_preview_and_rejects_stale_state"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_text_edit_events_report_accepted_deltas_and_single_finalization"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_text_edit_observation_follows_document_replacement_and_disposal"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_text_edit_pattern_is_editor_only_and_does_not_retain_owner"
         }
       ],
       "includes": [
@@ -49480,10 +51110,11 @@
         }
       ],
       "callable_candidates": [],
-      "reason": "The rich peer uses existing framework automation adapters and shared model ranges. Overflow inherits the rich view peer and the editor also retains Value; unimplemented native peer members/patterns and concrete hierarchy differences remain explicit.",
+      "reason": "The rich editor peer owns Text, Text2, TextEdit and Value identity independently of its raw persistent presenter. TextEdit causes follow current editor state and subscriptions do not retain the owner. TextEdit inherits Text independently of Text2. The editor returns the full active accepted IME preview as a live weak UTF-16 range, or None without an active composition; retained ranges follow owner/document lifetime. Accepted preview delta and single finalization events rewire on model replacement and marshal through the Win32 UI-thread bridge. A distinct conversion target requires backend data and is currently absent. Public AutomationPeer.RaiseTextEditTextChangedEvent, system cause producers and native Windows client execution remain pending.",
       "deviations": [
         "RT-I02",
-        "RT-I10"
+        "RT-I10",
+        "RT-I13"
       ]
     },
     {
@@ -49546,6 +51177,18 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_box.rs",
           "symbol": "pub fn description("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "RichEditBox: TemplatedControl"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_text_presenter.rs",
+          "symbol": "RichEditBoxTextPresenter: RichTextBlock"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs",
+          "symbol": "RichEditBoxTextInputMethodClient"
         }
       ],
       "tests": [
@@ -49611,11 +51254,43 @@
         },
         {
           "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
-          "symbol": "rich_edit_placeholder_participates_in_measure_alignment_and_foreground_inheritance"
+          "symbol": "rich_edit_placeholder_participates_in_measure_alignment_and_template_binding"
         },
         {
           "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
           "symbol": "rich_edit_header_and_embedded_control_remain_in_the_same_visual_tree_after_relayout"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_retemplate_preserves_composition_history_and_live_document_services"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_content_element_accepts_framework_hosts_and_missing_parts_are_optional"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_scroll_view_formats_the_full_document_and_clamps_offsets_after_shrink"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_wrapping_uses_viewport_width_and_no_wrap_preserves_horizontal_extent"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_caret_scroll_keeps_template_chrome_fixed_and_ime_geometry_in_owner_coordinates"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_presenter_selection_events_and_ime_requests_keep_the_owner_identity"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_handled_embedded_control_pointer_input_does_not_move_selection"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_line_services_use_paragraph_fallback_until_the_presenter_is_measured"
         }
       ],
       "includes": [
@@ -50042,14 +51717,15 @@
           "state": "unreviewed"
         }
       ],
-      "reason": "The shared Rust editor/control supplies the mapped host editing, IME, clipboard, selection, synchronous/deferred text notifications and composed header/placeholder/description behavior. Cancellable/reentrant selection and native notification timing are now tested. Native text service/windowless host ABI, complete templates/scrolling, input panes, proofing and all unmapped host members remain pending.",
+      "reason": "RichEditBox is a FerroUI TemplatedControl with one persistent RichEditBoxTextPresenter and shared model/editor/history. ContentElement accepts framework content hosts; header, placeholder and description use actual optional parts. Internal logical scrolling measures the full document at viewport width, keeps chrome fixed and shares text/caret/IME/automation offsets. Retemplating preserves live services, composition and undo. Owner-routed focus/selection and raw presenter automation avoid duplicate identity. Native windowless ABI, full backend services, touch UI and unmapped members remain pending.",
       "deviations": [
         "RT-I04",
         "RT-I06",
         "RT-I07",
         "RT-I08",
         "RT-A03",
-        "RT-A04"
+        "RT-A04",
+        "RT-A01"
       ]
     },
     {
@@ -50112,6 +51788,18 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_box.rs",
           "symbol": "pub fn description("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "RichEditBox: TemplatedControl"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_text_presenter.rs",
+          "symbol": "RichEditBoxTextPresenter: RichTextBlock"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs",
+          "symbol": "RichEditBoxTextInputMethodClient"
         }
       ],
       "tests": [
@@ -50177,11 +51865,43 @@
         },
         {
           "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
-          "symbol": "rich_edit_placeholder_participates_in_measure_alignment_and_foreground_inheritance"
+          "symbol": "rich_edit_placeholder_participates_in_measure_alignment_and_template_binding"
         },
         {
           "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
           "symbol": "rich_edit_header_and_embedded_control_remain_in_the_same_visual_tree_after_relayout"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_retemplate_preserves_composition_history_and_live_document_services"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_content_element_accepts_framework_hosts_and_missing_parts_are_optional"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_scroll_view_formats_the_full_document_and_clamps_offsets_after_shrink"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_wrapping_uses_viewport_width_and_no_wrap_preserves_horizontal_extent"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_caret_scroll_keeps_template_chrome_fixed_and_ime_geometry_in_owner_coordinates"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_presenter_selection_events_and_ime_requests_keep_the_owner_identity"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_handled_embedded_control_pointer_input_does_not_move_selection"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_line_services_use_paragraph_fallback_until_the_presenter_is_measured"
         }
       ],
       "includes": [
@@ -50240,14 +51960,15 @@
         }
       ],
       "callable_candidates": [],
-      "reason": "The shared Rust editor/control supplies the mapped host editing, IME, clipboard, selection, synchronous/deferred text notifications and composed header/placeholder/description behavior. Cancellable/reentrant selection and native notification timing are now tested. Native text service/windowless host ABI, complete templates/scrolling, input panes, proofing and all unmapped host members remain pending.",
+      "reason": "RichEditBox is a FerroUI TemplatedControl with one persistent RichEditBoxTextPresenter and shared model/editor/history. ContentElement accepts framework content hosts; header, placeholder and description use actual optional parts. Internal logical scrolling measures the full document at viewport width, keeps chrome fixed and shares text/caret/IME/automation offsets. Retemplating preserves live services, composition and undo. Owner-routed focus/selection and raw presenter automation avoid duplicate identity. Native windowless ABI, full backend services, touch UI and unmapped members remain pending.",
       "deviations": [
         "RT-I04",
         "RT-I06",
         "RT-I07",
         "RT-I08",
         "RT-A03",
-        "RT-A04"
+        "RT-A04",
+        "RT-A01"
       ]
     },
     {
@@ -53353,12 +55074,34 @@
       "lines": 392,
       "scope_reason": "related document/control/service declaration or projection",
       "component": "control projection and services",
-      "state": "pending",
+      "state": "partial",
       "reuse_or_destination_candidates": [
         "src/FerroUI.Controls/"
       ],
-      "targets": [],
-      "tests": [],
+      "targets": [
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": ":flyout-focus"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_owned_context_flyout_preserves_focused_selection_and_owner_identity"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_context_flyout_defers_composition_blur_until_focus_leaves_its_content"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_context_flyout_focus_checks_actual_target_and_redirected_destination"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_canceled_flyout_focus_keeps_editor_state_and_replacement_ends_retention"
+        }
+      ],
       "includes": [
         {
           "header": "precomp.h",
@@ -53563,6 +55306,12 @@
           "kind": "scoped_callable_definition_candidate",
           "state": "unreviewed"
         }
+      ],
+      "reason": "The current owned ContextFlyout target and actual popup-focused descendant retain editor selection/composition state. Close, replacement, focus return and real blur clear weak subscriptions. Native IME transport retention and remaining flyout helper behavior are not supplied by this control policy.",
+      "deviations": [
+        "RT-A01",
+        "RT-A04",
+        "RT-I06"
       ]
     },
     {
@@ -53573,14 +55322,42 @@
       "lines": 66,
       "scope_reason": "related document/control/service declaration or projection",
       "component": "control projection and services",
-      "state": "pending",
+      "state": "partial",
       "reuse_or_destination_candidates": [
         "src/FerroUI.Controls/"
       ],
-      "targets": [],
-      "tests": [],
+      "targets": [
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": ":flyout-focus"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_owned_context_flyout_preserves_focused_selection_and_owner_identity"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_context_flyout_defers_composition_blur_until_focus_leaves_its_content"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_context_flyout_focus_checks_actual_target_and_redirected_destination"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_canceled_flyout_focus_keeps_editor_state_and_replacement_ends_retention"
+        }
+      ],
       "includes": [],
-      "callable_candidates": []
+      "callable_candidates": [],
+      "reason": "The current owned ContextFlyout target and actual popup-focused descendant retain editor selection/composition state. Close, replacement, focus return and real blur clear weak subscriptions. Native IME transport retention and remaining flyout helper behavior are not supplied by this control policy.",
+      "deviations": [
+        "RT-A01",
+        "RT-A04",
+        "RT-I06"
+      ]
     },
     {
       "path": "dxaml/xcp/dxaml/lib/TextControlHelper.h",
@@ -54076,6 +55853,10 @@
         {
           "path": "src/FerroUI.Controls/documents/text_position.rs",
           "symbol": "TextGravity"
+        },
+        {
+          "path": "src/FerroUI.Controls/documents/rich_text_document.rs",
+          "symbol": "position_changed"
         }
       ],
       "tests": [
@@ -54090,6 +55871,26 @@
         {
           "path": "src/FerroUI.Controls/rich_text_block_tests.rs",
           "symbol": "rich_pointer_geometry_keeps_the_insertion_offset_and_finds_overflow_view"
+        },
+        {
+          "path": "src/FerroUI.Controls/documents/rich_text_pointer_tests.rs",
+          "symbol": "rich_pointer_created_after_an_edit_does_not_replay_that_edit_at_batch_end"
+        },
+        {
+          "path": "src/FerroUI.Controls/documents/rich_text_pointer_tests.rs",
+          "symbol": "rich_pointer_created_between_nested_replacements_tracks_only_later_changes"
+        },
+        {
+          "path": "src/FerroUI.Controls/documents/rich_text_pointer_tests.rs",
+          "symbol": "rich_pointer_new_and_existing_positions_follow_failed_group_rollback_once"
+        },
+        {
+          "path": "src/FerroUI.Controls/documents/rich_text_pointer_tests.rs",
+          "symbol": "rich_pointer_reentrant_notifications_see_current_positions_in_registration_order"
+        },
+        {
+          "path": "src/FerroUI.Controls/documents/rich_text_pointer_tests.rs",
+          "symbol": "rich_pointer_tracking_keeps_weak_document_and_subscription_lifetimes"
         }
       ],
       "includes": [
@@ -54189,7 +55990,7 @@
           "state": "unreviewed"
         }
       ],
-      "reason": "Weak live pointers track edits and resolve shaped insertion geometry with gravity. Public text offsets count UTF-16 scalar-safe text instead of native synthetic element positions; unreviewed source position members remain partial.",
+      "reason": "Weak live pointers track edits and resolve shaped insertion geometry with gravity. Public text offsets count UTF-16 scalar-safe text instead of native synthetic element positions; unreviewed source position members remain partial. Live pointers now follow each completed replacement immediately through internal position notifications, before public batch publication; pointers created during a batch never replay earlier edits. Nested rollback and reentrant notification order preserve weak lifetime.",
       "deviations": [
         "RT-I01",
         "RT-I02"
@@ -54220,6 +56021,10 @@
         {
           "path": "src/FerroUI.Controls/documents/text_position.rs",
           "symbol": "TextGravity"
+        },
+        {
+          "path": "src/FerroUI.Controls/documents/rich_text_document.rs",
+          "symbol": "position_changed"
         }
       ],
       "tests": [
@@ -54234,6 +56039,26 @@
         {
           "path": "src/FerroUI.Controls/rich_text_block_tests.rs",
           "symbol": "rich_pointer_geometry_keeps_the_insertion_offset_and_finds_overflow_view"
+        },
+        {
+          "path": "src/FerroUI.Controls/documents/rich_text_pointer_tests.rs",
+          "symbol": "rich_pointer_created_after_an_edit_does_not_replay_that_edit_at_batch_end"
+        },
+        {
+          "path": "src/FerroUI.Controls/documents/rich_text_pointer_tests.rs",
+          "symbol": "rich_pointer_created_between_nested_replacements_tracks_only_later_changes"
+        },
+        {
+          "path": "src/FerroUI.Controls/documents/rich_text_pointer_tests.rs",
+          "symbol": "rich_pointer_new_and_existing_positions_follow_failed_group_rollback_once"
+        },
+        {
+          "path": "src/FerroUI.Controls/documents/rich_text_pointer_tests.rs",
+          "symbol": "rich_pointer_reentrant_notifications_see_current_positions_in_registration_order"
+        },
+        {
+          "path": "src/FerroUI.Controls/documents/rich_text_pointer_tests.rs",
+          "symbol": "rich_pointer_tracking_keeps_weak_document_and_subscription_lifetimes"
         }
       ],
       "includes": [
@@ -54248,7 +56073,7 @@
         }
       ],
       "callable_candidates": [],
-      "reason": "Weak live pointers track edits and resolve shaped insertion geometry with gravity. Public text offsets count UTF-16 scalar-safe text instead of native synthetic element positions; unreviewed source position members remain partial.",
+      "reason": "Weak live pointers track edits and resolve shaped insertion geometry with gravity. Public text offsets count UTF-16 scalar-safe text instead of native synthetic element positions; unreviewed source position members remain partial. Live pointers now follow each completed replacement immediately through internal position notifications, before public batch publication; pointers created during a batch never replay earlier edits. Nested rollback and reentrant notification order preserve weak lifetime.",
       "deviations": [
         "RT-I01",
         "RT-I02"
@@ -67682,6 +69507,22 @@
         {
           "path": "src/FerroUI.Controls/automation/provider/rich_text_automation.rs",
           "symbol": "TextFlowDirections"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/i_text_edit_provider.rs",
+          "symbol": "pub trait ITextEditProvider"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation.rs",
+          "symbol": "fn get_active_composition("
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/automation_node_text.rs",
+          "symbol": "get_active_composition"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation.rs",
+          "symbol": "RichTextAutomationHost"
         }
       ],
       "tests": [
@@ -67744,14 +69585,164 @@
         {
           "path": "src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs",
           "symbol": "native_extra_text_attributes_preserve_colorref_and_find_color_input_types"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_editor_templates_preserve_owner_identity_ranges_and_presenter_geometry"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_retained_editor_presenter_does_not_keep_owner_or_text_provider_alive"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_editor_raw_presenter_does_not_duplicate_embedded_document_children"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_scroll_alignment_uses_the_last_selected_line"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_editor_scroll_alignment_uses_the_presenter_viewport_and_current_offset"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_scroll_rejects_text_without_a_laid_out_view"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_document_and_hyperlink_ranges_do_not_enumerate_themselves"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_text_edit_composition_range_tracks_utf16_preview_and_rejects_stale_state"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_text_edit_events_report_accepted_deltas_and_single_finalization"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_text_edit_observation_follows_document_replacement_and_disposal"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_text_edit_pattern_is_editor_only_and_does_not_retain_owner"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs",
+          "symbol": "native_text_edit_inherits_text_shares_text2_identity_and_dispatches_live_composition_ranges"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs",
+          "symbol": "native_text_edit_range_lifetime_follows_owner_and_document_not_composition"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs",
+          "symbol": "native_text_edit_events_marshal_unicode_deltas_and_empty_finalization_on_ui_thread"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs",
+          "symbol": "native_text_edit_payload_validation_preserves_embedded_nul_and_return_codes"
         }
       ],
       "includes": [],
       "callable_candidates": [],
-      "reason": "Portable Text/TextRange/Text2/TextChild services and the Win32 COM bridge implement mapped operations, typed attributes, dispatcher marshalling and weak document/owner identity. Caret BOOL validation, inherited Text2 slots and canonical TextChild ranges now have regressions. TextEdit, annotation lookup, remaining provider families/attributes and actual native clients remain pending.",
+      "reason": "Portable Text/TextRange/Text2/TextChild/TextEdit services and Windows COM marshalling implement the mapped operations with weak owner/document identity. The semantic owner is separate from raw presenter geometry; aligned scrolling and nonrecursive hyperlink child ranges are covered. TextEdit inherits Text independently of Text2. The editor returns the full active accepted IME preview as a live weak UTF-16 range, or None without an active composition; retained ranges follow owner/document lifetime. Accepted preview delta and single finalization events rewire on model replacement and marshal through the Win32 UI-thread bridge. A distinct conversion target requires backend data and is currently absent. Public AutomationPeer.RaiseTextEditTextChangedEvent, system cause producers and native Windows client execution remain pending. Remaining provider families, annotations and attributes remain pending.",
       "deviations": [
         "RT-I10",
-        "RT-A01"
+        "RT-A01",
+        "RT-I13"
+      ]
+    },
+    {
+      "path": "dxaml/xcp/win/inc/UIAWindow.h",
+      "git_blob": "c0e64d27dc79ffa9bae0df2df8cab4ae6cc4bd09",
+      "sha256": "57d0c4a956c4778b2843d486d8de1dde97e9c0b791ee0fb888acb679aa5397a6",
+      "bytes": 25689,
+      "lines": 609,
+      "scope_reason": "explicit dependency/reference",
+      "component": "shared text infrastructure",
+      "state": "partial",
+      "reuse_or_destination_candidates": [
+        "src/FerroUI.Base/media/text_formatting/",
+        "src/FerroUI.Controls/documents/"
+      ],
+      "targets": [
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/interop/uia_core_provider_api.rs",
+          "symbol": "pub fn uia_raise_text_edit_text_changed_event("
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/marshalling/safe_array_ref.rs",
+          "symbol": "pub fn try_create<"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs",
+          "symbol": "native_text_edit_events_marshal_unicode_deltas_and_empty_finalization_on_ui_thread"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs",
+          "symbol": "native_text_edit_payload_validation_preserves_embedded_nul_and_return_codes"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/marshalling/safe_array_ref_tests.rs",
+          "symbol": "text_safe_array_failed_element_conversion_releases_initialized_com_references"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/marshalling/safe_array_ref_tests.rs",
+          "symbol": "text_safe_array_rejects_invalid_shape_before_converting_elements"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/marshalling/safe_array_ref_tests.rs",
+          "symbol": "text_safe_array_reader_unwind_releases_the_native_lock"
+        }
+      ],
+      "includes": [
+        {
+          "header": "UIAStructs.h",
+          "line": 6,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/inc/UIAStructs.h"
+          ]
+        },
+        {
+          "header": "UIAHostEnvironmentInfo.h",
+          "line": 8,
+          "style": "quoted",
+          "resolution": "relative_path",
+          "candidates": [
+            "dxaml/xcp/win/inc/UIAHostEnvironmentInfo.h"
+          ]
+        },
+        {
+          "header": "map",
+          "line": 10,
+          "style": "system",
+          "resolution": "external_or_generated",
+          "candidates": []
+        },
+        {
+          "header": "fwd/windows.foundation.h",
+          "line": 11,
+          "style": "system",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/inc/fwd/windows.foundation.h"
+          ]
+        }
+      ],
+      "callable_candidates": [],
+      "reason": "The TextEdit native payload helper validates cause/data shape, creates a BSTR SAFEARRAY with RAII cleanup, and invokes UIA on the existing dispatcher boundary. Embedded NUL strings retain their explicit BSTR length, unlike the source raw-HSTRING SysAllocString path. Public arbitrary-peer raising, lazy native provider activation and EventsSource delegation remain pending; other members in these broad host/peer files are unreviewed.",
+      "deviations": [
+        "RT-A01",
+        "RT-I10",
+        "RT-I13"
       ]
     },
     {
@@ -67836,6 +69827,22 @@
         {
           "path": "src/FerroUI.Controls/automation/provider/rich_text_automation.rs",
           "symbol": "TextFlowDirections"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/i_text_edit_provider.rs",
+          "symbol": "pub trait ITextEditProvider"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation.rs",
+          "symbol": "fn get_active_composition("
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/automation_node_text.rs",
+          "symbol": "get_active_composition"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation.rs",
+          "symbol": "RichTextAutomationHost"
         }
       ],
       "tests": [
@@ -67898,6 +69905,66 @@
         {
           "path": "src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs",
           "symbol": "native_extra_text_attributes_preserve_colorref_and_find_color_input_types"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_editor_templates_preserve_owner_identity_ranges_and_presenter_geometry"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_retained_editor_presenter_does_not_keep_owner_or_text_provider_alive"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_editor_raw_presenter_does_not_duplicate_embedded_document_children"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_scroll_alignment_uses_the_last_selected_line"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_editor_scroll_alignment_uses_the_presenter_viewport_and_current_offset"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_scroll_rejects_text_without_a_laid_out_view"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_document_and_hyperlink_ranges_do_not_enumerate_themselves"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_text_edit_composition_range_tracks_utf16_preview_and_rejects_stale_state"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_text_edit_events_report_accepted_deltas_and_single_finalization"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_text_edit_observation_follows_document_replacement_and_disposal"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs",
+          "symbol": "rich_automation_text_edit_pattern_is_editor_only_and_does_not_retain_owner"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs",
+          "symbol": "native_text_edit_inherits_text_shares_text2_identity_and_dispatches_live_composition_ranges"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs",
+          "symbol": "native_text_edit_range_lifetime_follows_owner_and_document_not_composition"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs",
+          "symbol": "native_text_edit_events_marshal_unicode_deltas_and_empty_finalization_on_ui_thread"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs",
+          "symbol": "native_text_edit_payload_validation_preserves_embedded_nul_and_return_codes"
         }
       ],
       "includes": [
@@ -69539,10 +71606,604 @@
           "state": "unreviewed"
         }
       ],
-      "reason": "Portable Text/TextRange/Text2/TextChild services and the Win32 COM bridge implement mapped operations, typed attributes, dispatcher marshalling and weak document/owner identity. Caret BOOL validation, inherited Text2 slots and canonical TextChild ranges now have regressions. TextEdit, annotation lookup, remaining provider families/attributes and actual native clients remain pending.",
+      "reason": "Portable Text/TextRange/Text2/TextChild/TextEdit services and Windows COM marshalling implement the mapped operations with weak owner/document identity. The semantic owner is separate from raw presenter geometry; aligned scrolling and nonrecursive hyperlink child ranges are covered. TextEdit inherits Text independently of Text2. The editor returns the full active accepted IME preview as a live weak UTF-16 range, or None without an active composition; retained ranges follow owner/document lifetime. Accepted preview delta and single finalization events rewire on model replacement and marshal through the Win32 UI-thread bridge. A distinct conversion target requires backend data and is currently absent. Public AutomationPeer.RaiseTextEditTextChangedEvent, system cause producers and native Windows client execution remain pending. Remaining provider families, annotations and attributes remain pending.",
       "deviations": [
         "RT-I10",
-        "RT-A01"
+        "RT-A01",
+        "RT-I13"
+      ]
+    },
+    {
+      "path": "dxaml/xcp/win/shared/UIAWindow.cpp",
+      "git_blob": "6a71da7c91769d24e051242458d7718bbb76b8d4",
+      "sha256": "81a4df1a178f53b48c686d9ca8ca457ea1870a79576987c1fb2955f53b10e81c",
+      "bytes": 146523,
+      "lines": 3359,
+      "scope_reason": "explicit dependency/reference",
+      "component": "shared text infrastructure",
+      "state": "partial",
+      "reuse_or_destination_candidates": [
+        "src/FerroUI.Base/media/text_formatting/",
+        "src/FerroUI.Controls/documents/"
+      ],
+      "targets": [
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/interop/uia_core_provider_api.rs",
+          "symbol": "pub fn uia_raise_text_edit_text_changed_event("
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/marshalling/safe_array_ref.rs",
+          "symbol": "pub fn try_create<"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs",
+          "symbol": "native_text_edit_events_marshal_unicode_deltas_and_empty_finalization_on_ui_thread"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs",
+          "symbol": "native_text_edit_payload_validation_preserves_embedded_nul_and_return_codes"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/marshalling/safe_array_ref_tests.rs",
+          "symbol": "text_safe_array_failed_element_conversion_releases_initialized_com_references"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/marshalling/safe_array_ref_tests.rs",
+          "symbol": "text_safe_array_rejects_invalid_shape_before_converting_elements"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/marshalling/safe_array_ref_tests.rs",
+          "symbol": "text_safe_array_reader_unwind_releases_the_native_lock"
+        }
+      ],
+      "includes": [
+        {
+          "header": "precomp.h",
+          "line": 3,
+          "style": "quoted",
+          "resolution": "relative_path",
+          "candidates": [
+            "dxaml/xcp/win/shared/precomp.h"
+          ]
+        },
+        {
+          "header": "xstack.h",
+          "line": 5,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/pal/inc/xstack.h"
+          ]
+        },
+        {
+          "header": "CAutomationPeerAnnotation.g.h",
+          "line": 6,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/core/controls/generated/CAutomationPeerAnnotation.g.h"
+          ]
+        },
+        {
+          "header": "AutomationPeerAnnotationCollection.h",
+          "line": 7,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/core/inc/AutomationPeerAnnotationCollection.h"
+          ]
+        },
+        {
+          "header": "UIElement.h",
+          "line": 8,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/core/inc/uielement.h"
+          ]
+        },
+        {
+          "header": "ComPtr.h",
+          "line": 9,
+          "style": "system",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/components/com/inc/ComPtr.h"
+          ]
+        },
+        {
+          "header": "windows.applicationmodel.core.h",
+          "line": 10,
+          "style": "system",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/inc/fwd/windows.applicationmodel.core.h"
+          ]
+        },
+        {
+          "header": "XamlIslandRoot.h",
+          "line": 11,
+          "style": "system",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/core/inc/XamlIslandRoot.h"
+          ]
+        },
+        {
+          "header": "Popup.h",
+          "line": 12,
+          "style": "system",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/core/inc/Popup.h"
+          ]
+        },
+        {
+          "header": "CControl.h",
+          "line": 13,
+          "style": "system",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/core/inc/CControl.h"
+          ]
+        },
+        {
+          "header": "focusmgr.h",
+          "line": 14,
+          "style": "system",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/core/inc/focusmgr.h"
+          ]
+        },
+        {
+          "header": "DesktopUtility.h",
+          "line": 15,
+          "style": "system",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/components/DesktopUtility/inc/DesktopUtility.h"
+          ]
+        },
+        {
+          "header": "DependencyObject.h",
+          "line": 16,
+          "style": "system",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/dxaml/lib/DependencyObject.h"
+          ]
+        },
+        {
+          "header": "RootScale.h",
+          "line": 17,
+          "style": "system",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/components/scaling/inc/RootScale.h"
+          ]
+        },
+        {
+          "header": "xcpwindow.h",
+          "line": 18,
+          "style": "system",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/win/inc/xcpwindow.h"
+          ]
+        }
+      ],
+      "callable_candidates": [
+        {
+          "name": "CUIAWindow::InitIds",
+          "line": 23,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindow::CUIAWindow",
+          "line": 294,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindow::~CUIAWindow",
+          "line": 301,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindow::Init",
+          "line": 307,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindow::Deinit",
+          "line": 324,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindow::UIADisconnectAllProviders",
+          "line": 343,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindow::AddRef",
+          "line": 356,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindow::Release",
+          "line": 360,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindow::QueryInterface",
+          "line": 364,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindow::GetIids",
+          "line": 403,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindow::GetRuntimeClassName",
+          "line": 424,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindow::GetTrustLevel",
+          "line": 430,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindow::get_ProviderOptions",
+          "line": 438,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindow::GetPatternProvider",
+          "line": 447,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindow::GetPropertyValue",
+          "line": 454,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindow::get_HostRawElementProvider",
+          "line": 485,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindow::get_BoundingRectangle",
+          "line": 522,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindow::get_FragmentRoot",
+          "line": 583,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindow::GetEmbeddedFragmentRoots",
+          "line": 618,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindow::GetRuntimeId",
+          "line": 625,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindow::Navigate",
+          "line": 668,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindow::GetAutomationPeersForRoot",
+          "line": 686,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindow::NavigateImpl",
+          "line": 744,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindow::SetFocus",
+          "line": 827,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindow::ElementProviderFromPoint",
+          "line": 834,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindow::ElementProviderFromPointImpl",
+          "line": 846,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindow::GetFocus",
+          "line": 1142,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindow::GetFocusImpl",
+          "line": 1154,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindow::AdviseEventAdded",
+          "line": 1255,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindow::AdviseEventRemoved",
+          "line": 1392,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindow::ReleaseInterfaceOffThread",
+          "line": 1533,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindow::UIAClientsAreListening",
+          "line": 1553,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindow::UIARaiseAutomationEvent",
+          "line": 1676,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindow::UIARaiseAutomationPropertyChangedEvent",
+          "line": 1709,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindow::UIARaiseFocusChangedEventOnUIAWindow",
+          "line": 1823,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindow::UIARaiseTextEditTextChangedEvent",
+          "line": 1841,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindow::UIARaiseNotificationEvent",
+          "line": 1902,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindow::ConvertEnumToId",
+          "line": 1946,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindow::ConvertEnumToId",
+          "line": 2014,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindow::ConvertEnumToId",
+          "line": 2103,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindow::ConvertEnumToId",
+          "line": 2317,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindow::ConvertEnumToId",
+          "line": 2337,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindow::ConvertIdToAPAutomationProperties",
+          "line": 2366,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindow::GetAutomationComponentProperty",
+          "line": 2392,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindow::ConvertIdToAPAutomationControlType",
+          "line": 2410,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindow::CValueToVariant",
+          "line": 2506,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindow::VariantToCValue",
+          "line": 2594,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindow::AutomationPeerAnnotationCollectionToVariant",
+          "line": 2674,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindow::GetUIAWindowValidator",
+          "line": 2784,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindow::FlushUiaBridgeEventTable",
+          "line": 2806,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindow::GetOverrideProviderForHwnd",
+          "line": 2824,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindow::GetOverrideProviderForHwndImpl",
+          "line": 2846,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindow::GetAPForHwnd",
+          "line": 2879,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindow::CreateProviderForAP",
+          "line": 2954,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindow::GetPreventKeyboardDisplayOnProgrammaticFocusId",
+          "line": 2976,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindow::TransformClientToScreen",
+          "line": 3000,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindow::TransformClientToScreen",
+          "line": 3016,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindow::TransformScreenToClient",
+          "line": 3040,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindow::ConvertToVariant",
+          "line": 3056,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindow::ShouldFrameworkProvideWindowProperties",
+          "line": 3100,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindow::GetContentIslandAutomation",
+          "line": 3108,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAHostWindow::CUIAHostWindow",
+          "line": 3119,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAHostWindow::Create",
+          "line": 3136,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAHostWindow::GetRootVisual",
+          "line": 3147,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAHostWindow::GetPropertyValueOverride",
+          "line": 3177,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAWindow::SetMockUIAClientsListening",
+          "line": 3334,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "CUIAHostWindow::GetContentIsland",
+          "line": 3340,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        }
+      ],
+      "reason": "The TextEdit native payload helper validates cause/data shape, creates a BSTR SAFEARRAY with RAII cleanup, and invokes UIA on the existing dispatcher boundary. Embedded NUL strings retain their explicit BSTR length, unlike the source raw-HSTRING SysAllocString path. Public arbitrary-peer raising, lazy native provider activation and EventsSource delegation remain pending; other members in these broad host/peer files are unreviewed.",
+      "deviations": [
+        "RT-A01",
+        "RT-I10",
+        "RT-I13"
       ]
     },
     {
@@ -76348,6 +79009,50 @@
       ]
     },
     {
+      "path": "dxaml/xcp/core/controls/generated/CAutomationPeerAnnotation.g.h",
+      "git_blob": "ced73a1f61e34b897beb935e09f15357d8d4ae77",
+      "sha256": "89a08f6512ba017d9e4f17889994019907ad556983d4e5d203d8bf5220908a34",
+      "state": "framework_dependency_review",
+      "includes": [
+        {
+          "header": "CDependencyObject.h",
+          "line": 13,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/core/inc/CDependencyObject.h"
+          ]
+        },
+        {
+          "header": "DeclareMacros.h",
+          "line": 15,
+          "style": "system",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/core/inc/DeclareMacros.h"
+          ]
+        },
+        {
+          "header": "Indexes.g.h",
+          "line": 16,
+          "style": "system",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/components/metadata/inc/Indexes.g.h"
+          ]
+        },
+        {
+          "header": "minxcptypes.h",
+          "line": 17,
+          "style": "system",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/inc/minxcptypes.h"
+          ]
+        }
+      ]
+    },
+    {
       "path": "dxaml/xcp/core/controls/generated/CButtonBase.g.h",
       "git_blob": "fd72e99e13c5b9ddbf6a4b6ab2145581017cf48c",
       "sha256": "dc003113a22ad1326fd4aa16df7db7ef5135bd32e2217c1a77ea208fa7a7694d",
@@ -77217,6 +79922,13 @@
           "candidates": []
         }
       ]
+    },
+    {
+      "path": "dxaml/xcp/core/inc/AutomationPeerAnnotationCollection.h",
+      "git_blob": "c24f295cbeb1a9ad64a45589c4ad908ca778d555",
+      "sha256": "78b8b265316311162aef05967d0af2589aae6a6c68ef428a26903f26b49c13fe",
+      "state": "framework_dependency_review",
+      "includes": []
     },
     {
       "path": "dxaml/xcp/core/inc/AutomationPeerCollection.h",
@@ -87032,28 +89744,28 @@
       ]
     },
     {
-      "path": "dxaml/xcp/dxaml/lib/AutomationPeer_Partial.h",
-      "git_blob": "9ae66b263bb934e5926c237408583ba3b5e20646",
-      "sha256": "a0c60b1fa6a57b3a686b682a3d82c8111e5b2dc55dbd6ae851e3cbf9fa56b5f9",
-      "state": "framework_dependency_review",
-      "includes": [
-        {
-          "header": "AutomationPeer.g.h",
-          "line": 5,
-          "style": "quoted",
-          "resolution": "unique_path_suffix",
-          "candidates": [
-            "dxaml/xcp/dxaml/lib/winrtgeneratedclasses/AutomationPeer.g.h"
-          ]
-        }
-      ]
-    },
-    {
       "path": "dxaml/xcp/dxaml/lib/AutomationProperties.h",
       "git_blob": "ccf025ad93c40c7e7ece8d22ccd1df600e7135eb",
       "sha256": "3a5a3e38f375bf9377ab9cb4ecbf6970dc76fc94c10dfd2b99438be93063774a",
       "state": "framework_dependency_review",
       "includes": []
+    },
+    {
+      "path": "dxaml/xcp/dxaml/lib/AutomationProperty_Partial.h",
+      "git_blob": "66bbfffdba0754e82fb27cd268c6094a6e35746d",
+      "sha256": "90c47e5f96e5d3b8a355f14ad181fdbadd14030884d9d8ffc0708c603912d3cf",
+      "state": "framework_dependency_review",
+      "includes": [
+        {
+          "header": "AutomationProperty.g.h",
+          "line": 5,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/dxaml/lib/winrtgeneratedclasses/AutomationProperty.g.h"
+          ]
+        }
+      ]
     },
     {
       "path": "dxaml/xcp/dxaml/lib/BindingExpressionBase_Partial.h",
@@ -88327,6 +91039,23 @@
       "sha256": "3e6561a7bec1a15de1c5b8cf733e6ee3cf69aecbef362de0bb934cea8b7ccf95",
       "state": "framework_dependency_review",
       "includes": []
+    },
+    {
+      "path": "dxaml/xcp/dxaml/lib/ItemsControlAutomationPeer_Partial.h",
+      "git_blob": "cb10426de53c109729173d0cbc36a25e658e951c",
+      "sha256": "2da31f6021478eb2d22fe90636bcd4205a5b4ce4b2931b3629f48de8938b3551",
+      "state": "framework_dependency_review",
+      "includes": [
+        {
+          "header": "ItemsControlAutomationPeer.g.h",
+          "line": 5,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/dxaml/lib/winrtgeneratedclasses/ItemsControlAutomationPeer.g.h"
+          ]
+        }
+      ]
     },
     {
       "path": "dxaml/xcp/dxaml/lib/ItemsControl_Partial.h",
@@ -90312,6 +93041,37 @@
       ]
     },
     {
+      "path": "dxaml/xcp/dxaml/lib/winrtgeneratedclasses/AutomationPeerAnnotationCollection.g.h",
+      "git_blob": "ee7e0457261d0caaca474502d353cf03b14417e1",
+      "sha256": "1df8ecde57ad4a0dca3f2dad32cbcbd4028f8cfd7a3fae4feabf1cfd34ec1455",
+      "state": "framework_dependency_review",
+      "includes": []
+    },
+    {
+      "path": "dxaml/xcp/dxaml/lib/winrtgeneratedclasses/AutomationPeerCollection.g.h",
+      "git_blob": "8a8ab47f56d8ef66fa704759a07b4b27692584b4",
+      "sha256": "dd7223b05207c22bab72f6db4017f4041f555ae5c9ea10929925de4716117f9e",
+      "state": "framework_dependency_review",
+      "includes": []
+    },
+    {
+      "path": "dxaml/xcp/dxaml/lib/winrtgeneratedclasses/AutomationProperty.g.h",
+      "git_blob": "063b51a954b6d54b0b4943d79e394e6031c2dea9",
+      "sha256": "ab3e93462b36aba7b1723c506224d31f0a8a8af52462cd0864b9569aad24e81f",
+      "state": "framework_dependency_review",
+      "includes": [
+        {
+          "header": "AutomationProperty_Partial.h",
+          "line": 55,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/dxaml/lib/AutomationProperty_Partial.h"
+          ]
+        }
+      ]
+    },
+    {
       "path": "dxaml/xcp/dxaml/lib/winrtgeneratedclasses/Binding.g.h",
       "git_blob": "084124787820334c52e433955856ff22f06108cb",
       "sha256": "8894eef370208a1faff16bb66da5cdacba3db3716ff847194dfd5ede76eca969",
@@ -91114,6 +93874,32 @@
           "resolution": "unique_path_suffix",
           "candidates": [
             "dxaml/xcp/dxaml/lib/ItemsControl_Partial.h"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "dxaml/xcp/dxaml/lib/winrtgeneratedclasses/ItemsControlAutomationPeer.g.h",
+      "git_blob": "1effc57e6da7d27d018c44a94c4d90a4692db37d",
+      "sha256": "fa96b808bfa4fa5154a1fe9faab208e50864e8ed3c3a5094963120ed03c7509c",
+      "state": "framework_dependency_review",
+      "includes": [
+        {
+          "header": "FrameworkElementAutomationPeer.g.h",
+          "line": 13,
+          "style": "quoted",
+          "resolution": "relative_path",
+          "candidates": [
+            "dxaml/xcp/dxaml/lib/winrtgeneratedclasses/FrameworkElementAutomationPeer.g.h"
+          ]
+        },
+        {
+          "header": "ItemsControlAutomationPeer_Partial.h",
+          "line": 76,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/dxaml/lib/ItemsControlAutomationPeer_Partial.h"
           ]
         }
       ]
@@ -95693,48 +98479,6 @@
           "resolution": "unique_path_suffix",
           "candidates": [
             "dxaml/xcp/core/inc/XamlIslandRoot.h"
-          ]
-        }
-      ]
-    },
-    {
-      "path": "dxaml/xcp/win/inc/UIAWindow.h",
-      "git_blob": "c0e64d27dc79ffa9bae0df2df8cab4ae6cc4bd09",
-      "sha256": "57d0c4a956c4778b2843d486d8de1dde97e9c0b791ee0fb888acb679aa5397a6",
-      "state": "framework_dependency_review",
-      "includes": [
-        {
-          "header": "UIAStructs.h",
-          "line": 6,
-          "style": "quoted",
-          "resolution": "unique_path_suffix",
-          "candidates": [
-            "dxaml/xcp/inc/UIAStructs.h"
-          ]
-        },
-        {
-          "header": "UIAHostEnvironmentInfo.h",
-          "line": 8,
-          "style": "quoted",
-          "resolution": "relative_path",
-          "candidates": [
-            "dxaml/xcp/win/inc/UIAHostEnvironmentInfo.h"
-          ]
-        },
-        {
-          "header": "map",
-          "line": 10,
-          "style": "system",
-          "resolution": "external_or_generated",
-          "candidates": []
-        },
-        {
-          "header": "fwd/windows.foundation.h",
-          "line": 11,
-          "style": "system",
-          "resolution": "unique_path_suffix",
-          "candidates": [
-            "dxaml/xcp/inc/fwd/windows.foundation.h"
           ]
         }
       ]

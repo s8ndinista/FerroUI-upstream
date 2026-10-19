@@ -9,20 +9,20 @@ Generated from the pinned source inventory and reviewed `mapping.json`.
 | `dxaml/xcp/core/text/` | 230 |
 | `dxaml/xcp/core/native/text/` | 62 |
 | `dxaml/xcp/components/text/` | 23 |
-| Additional explicit dependencies, projections, metadata and test source | 311 |
-| Total selected source/reference files | 626 |
-| Additional framework headers reached through unambiguous includes | 913 |
+| Additional explicit dependencies, projections, metadata and test source | 315 |
+| Total selected source/reference files | 630 |
+| Additional framework headers reached through unambiguous includes | 919 |
 | Include boundary edges requiring SDK/generated-header/include-order review | 806 |
 
 ## Reviewed implementation status
 
 | State | Files | Public API entries |
 |---|---:|---:|
-| complete | 0 | 9 |
-| partial | 130 | 397 |
-| pending | 157 | 852 |
+| complete | 0 | 20 |
+| partial | 139 | 418 |
+| pending | 153 | 820 |
 | reference | 201 | 0 |
-| reuse_candidate | 138 | 0 |
+| reuse_candidate | 137 | 0 |
 
 Public API inventory: **1258 exact documented member identifiers**. Type and enum entries are retained alongside properties, methods and events; this denominator is not a count of methods.
 
@@ -32,11 +32,11 @@ Public API inventory: **1258 exact documented member identifiers**. Type and enu
 
 | Capability | State | Evidence / remaining scope |
 |---|---|---|
-| Structured document and live positions | partial | Shared blocks/inlines, nested snapshots, checked UTF-16 edits, weak live gravity pointers and embedded control identity. Native synthetic element markers and unmapped document APIs remain pending. |
-| Rich view and overflow | partial | Existing TextFormatter/TextLine integration, linked continuation, selection geometry, embedded controls and hyperlinks, plus native paragraph spacing rules and signed indents with point conversion and RTF sl/slmult. Full native formatting, templates, appearance and remaining control members stay pending. |
-| Editing, history and text object services | partial | Shared default formats/history, cancellable and reentrant selection, typed get/set/find flags with explicit unsupported modes, native newline fixture, end-relative UTF-32, formatted copies and live scalar-safe range operations. Remaining native units, streams, advanced formats and external TOM ABI remain pending. |
-| Clipboard, RTF and input method | partial | Exact in-process snapshot transfer, explicit bounded RTF subset, asynchronous stale-paste guards and composition preview/commit/cancel. Unsupported RTF features and real backend IME/service parity remain pending. |
-| Text accessibility and Windows bridge | partial | Portable Text/TextRange/Text2/TextChild, stable weak hyperlink peers, shared document/overflow geometry, 25 typed attributes and native COM/dispatcher marshalling have implementation and focused regressions. TextEdit, annotations, remaining attributes, other native backends and actual Windows client verification remain pending. |
+| Structured document and live positions | partial | Shared blocks/inlines, nested snapshots, checked UTF-16 edits and weak live gravity pointers updated immediately per replacement, including nested batches and rollback. Native structural markers and remaining document APIs stay pending. |
+| Rich view and overflow | partial | Existing TextFormatter/TextLine integration, linked continuation, selection, embedded controls and hyperlinks, paragraph spacing/signed indents, inherited language, and a persistent editor presenter with logical scrolling and optional template parts. Full native formatting/appearance and remaining members stay pending. |
+| Editing, history and text object services | partial | Shared formats/history, cancellable reentrant selection, typed flags, UTF-16 live ranges, native-valued seven-unit TOM movement/index services, accepted composition causes and transactional Rust streams. Native Cluster, further units, arbitrary stories, advanced formats and external ABI stay pending. |
+| Clipboard, RTF and input method | partial | Exact in-process snapshots, bounded RTF with language/spacing/indentation support, explicit Read/Write encoding and byte policies, stale-paste guards and accepted composition preview/commit/cancel. Unsupported RTF content and backend service/focus parity stay pending. |
+| Text accessibility and Windows bridge | partial | Portable Text/TextRange/Text2/TextChild/TextEdit, stable weak peers, raw presenter owner separation, aligned geometry/scrolling, 25 typed attributes, accepted composition causes and native COM/BSTR/SAFEARRAY marshalling. Public peer raising, conversion-target data, annotations, remaining attributes, other backends and Windows client verification stay pending. |
 | Text highlighters | partial | Signed copied range values, shared collections, solid-brush validation, weak invalidation subscriptions and last-layer region precedence. All ten source overlap fixtures are adapted; native high-contrast/raster and complete view conformance remain pending. |
 
 ## Verification records
@@ -44,5 +44,9 @@ Public API inventory: **1258 exact documented member identifiers**. Type and enu
 - `cargo test --locked --offline -p ferroui-controls --lib rich_ --no-fail-fast` — Passed: 97 passed; 0 failed; 0 ignored; 0 measured; 4426 filtered out. This checkpoint contains 21 document, 45 editor, 16 view and 15 portable automation tests. Later view/highlighter additions, four portable follow-up tests, native bridge tests and markup/catalog tests are not covered by this historical run.
 - `cargo test --locked --offline -p ferroui-controls --lib rich_ --no-fail-fast` — Passed on Linux: 181 passed; 0 failed; 0 ignored; 0 measured; 4434 filtered out. Includes 27 focused TOM, eleven new paragraph/RTF and 26 portable rich automation cases. Does not cover subsequent presenter/stream changes or text_highlight filter.
 - `cargo test --locked --offline -p ferroui-win32 --lib text_ --no-fail-fast` — Passed on Linux-hosted Win32 test harness: 34 passed; 0 failed; 0 ignored; 0 measured; 234 filtered out. Includes ten automation text pattern/range bridge cases; not a Windows OS accessibility-client or screen-reader run.
+- `cargo test --locked --offline -p ferroui-controls --lib rich_ --no-fail-fast` — Passed on Linux: 246 passed; 0 failed; 0 ignored; 0 measured; 4434 filtered out. Adds persistent editor presenter/scrolling, native-valued TOM unit/index operations, transactional streams, immediate live-pointer rebasing, inherited language and automation owner/aligned-scroll regressions. Subsequent TextEdit/composition/flyout changes and theme work are outside this checkpoint.
+- `cargo test --locked --offline -p ferroui-controls --lib --no-fail-fast` — Passed on Linux with loopback access: 4706 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out. Includes all control/highlighter tests plus 17 accepted-composition, four portable TextEdit and five generic-host/flyout-focus additions. The only subsequent source change before publication made an equivalent explicit type registration for the metadata scanner; its separate scan passed.
+- `cargo test --locked --offline -p ferroui-win32 --lib text_ --no-fail-fast` — Passed on the Linux-hosted Win32 test harness: 41 passed; 0 failed; 0 ignored; 0 measured; 234 filtered out. Adds four native TextEdit interface/range/payload regressions and three SAFEARRAY conversion/shape/unwind cleanup cases. This is not an actual Windows OS accessibility-client or screen-reader run.
+- `cargo test --locked --offline -p ferroui-build-scan --lib scanner::tests::real_crates_are_scanned_without_skipping_a_declaration -- --exact` — Passed: 1 passed; 0 failed; 43 filtered out. TextHighlightRange markup registration names its actual type rather than unresolved Self, closing the CI scanner failure without changing runtime type identity.
 
 Full WinUI rich text parity remains open until the pending member mappings and [DEVIATIONS.md](DEVIATIONS.md) boundaries are closed with evidence.

@@ -17,7 +17,7 @@ Generated alongside the inventory. Source links are pinned to the same commit as
 
 ## Include graph
 
-The machine-readable graph records **913 additional framework files** reached from the selected scope and **806 boundary edges**. It reads source-relative paths first and otherwise follows only unique repository path suffixes. Windows case-insensitive lookup is applied to source paths.
+The machine-readable graph records **919 additional framework files** reached from the selected scope and **806 boundary edges**. It reads source-relative paths first and otherwise follows only unique repository path suffixes. Windows case-insensitive lookup is applied to source paths.
 
 This is a source-dependency audit, not a compiler dependency dump. Conditional compilation, build include-path precedence, SDK/private-package headers, generated headers, runtime interface acquisition and linker inputs cannot be inferred from filename matching. Ambiguous and absent includes are preserved with their referring file and line; traversal stops at those boundaries. `external_or_generated` means absent from this Git tree, not proof that an API is proprietary or unavailable elsewhere.
 
