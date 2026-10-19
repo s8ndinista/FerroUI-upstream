@@ -6,14 +6,17 @@
 //! No graphics-backend types occur in this module.
 
 mod backdrop;
+mod incremental;
 
+use std::cell::Cell;
 use std::collections::{hash_map::DefaultHasher, HashMap, HashSet};
 use std::hash::{Hash, Hasher};
 use std::io::{self, Cursor};
 use std::rc::Rc;
 
 use ferrodesign_core::{
-    BlendMode, BooleanOperation, Color, Document, Effect, EffectKind, FillRule, ImageScale, Node,
+    BlendMode, BooleanOperation, Color, Document, Editor, EditorRenderChanges, EditorRenderToken,
+    Effect, EffectKind, FillRule, ImageScale, Node,
     NodeId, NodeKind, Paint, PathSegment, Point, Rect, Stroke, StrokeAlign, StrokeCap, StrokeJoin,
     TextAlign, TextAutoResize, TextDecoration, TextVerticalAlign, Transform,
 };
@@ -58,6 +61,14 @@ pub struct RenderStats {
     pub backdrop_rasterizations: usize,
     pub backdrop_skipped: usize,
     pub backdrop_too_large: usize,
+    pub full_prepares: usize,
+    pub incremental_prepares: usize,
+    pub prepared_nodes: usize,
+    pub rebuilt_visuals: usize,
+    pub total_full_prepares: u64,
+    pub total_incremental_prepares: u64,
+    pub total_prepared_nodes: u64,
+    pub total_rebuilt_visuals: u64,
 }
 
 enum ImageAsset {
@@ -131,6 +142,7 @@ impl CachedNode {
 }
 
 struct PreparedNode {
+    id: NodeId,
     local: Transform,
     world: Transform,
     parent: Option<usize>,
@@ -143,7 +155,8 @@ struct PreparedNode {
     end: usize,
     subtree_nodes: usize,
     visual: Rc<CachedNode>,
-    reused: bool,
+    reused: Cell<bool>,
+    outline: bool,
 }
 
 /// Main-thread scene renderer, shared by native and WebAssembly hosts.
@@ -166,15 +179,28 @@ pub struct ScenePainter {
     editing_text: Option<NodeId>,
     backdrops: backdrop::BackdropCache,
     has_backdrops: bool,
+    backdrop_nodes: usize,
+    prepared_indices: HashMap<NodeId, usize>,
+    incremental_ready: bool,
+    editor_token: Option<EditorRenderToken>,
+    preparation: incremental::PreparationStats,
+    preparation_totals: incremental::PreparationTotals,
 }
 
 impl ScenePainter {
     pub fn stats(&self) -> RenderStats {
-        self.stats
+        RenderStats {
+            total_full_prepares: self.preparation_totals.full,
+            total_incremental_prepares: self.preparation_totals.incremental,
+            total_prepared_nodes: self.preparation_totals.nodes,
+            total_rebuilt_visuals: self.preparation_totals.visuals,
+            ..self.stats
+        }
     }
 
     pub fn invalidate(&mut self) {
         self.scene_key = None;
+        self.editor_token = None;
     }
 
     /// Physical pixels per document unit before a node's own world transform.
@@ -202,6 +228,9 @@ impl ScenePainter {
         self.empty = None;
         self.backdrops.clear();
         self.has_backdrops = false;
+        self.backdrop_nodes = 0;
+        self.prepared_indices.clear();
+        self.incremental_ready = false;
         self.stats = RenderStats::default();
         self.invalidate();
     }
@@ -257,9 +286,38 @@ impl ScenePainter {
         roots: &[NodeId],
         viewport: Rect,
     ) -> RenderStats {
+        self.editor_token = None;
         let scene_reused = self.ensure_prepared(document, roots);
+        self.paint_prepared(context, viewport, scene_reused)
+    }
+
+    /// Render an authored editor scene using its complete change history.
+    /// Disposable prototype documents and arbitrary document users keep the
+    /// conservative `render` path above. Arbitrary public field writes must be
+    /// followed by `Editor::refresh`, as required by the editor's spatial index.
+    pub fn render_editor(
+        &mut self,
+        context: &mut DrawingContext<'_>,
+        editor: &Editor,
+        roots: &[NodeId],
+        viewport: Rect,
+    ) -> RenderStats {
+        let scene_reused = self.ensure_editor_prepared(editor, roots);
+        self.paint_prepared(context, viewport, scene_reused)
+    }
+
+    fn paint_prepared(
+        &mut self,
+        context: &mut DrawingContext<'_>,
+        viewport: Rect,
+        scene_reused: bool,
+    ) -> RenderStats {
         self.stats = RenderStats {
             invalid_nodes: self.prepare_invalid_nodes,
+            full_prepares: self.preparation.full,
+            incremental_prepares: self.preparation.incremental,
+            prepared_nodes: self.preparation.nodes,
+            rebuilt_visuals: self.preparation.visuals,
             ..RenderStats::default()
         };
         self.backdrops.begin_frame();
@@ -287,6 +345,7 @@ impl ScenePainter {
         }
         self.stats.backdrop_cache_hits = self.backdrops.hits();
         self.stats.backdrop_rasterizations = self.backdrops.rasterizations();
+        self.stats = self.stats();
         self.stats
     }
 
@@ -295,7 +354,17 @@ impl ScenePainter {
     /// than the document's selection rectangles. Requires initialized FerroUI
     /// rendering/font services and reuses the same cache as render().
     pub fn rendered_bounds(&mut self, document: &Document, roots: &[NodeId]) -> Option<Rect> {
+        self.editor_token = None;
         self.ensure_prepared(document, roots);
+        self.prepared_bounds()
+    }
+
+    pub fn rendered_editor_bounds(&mut self, editor: &Editor, roots: &[NodeId]) -> Option<Rect> {
+        self.ensure_editor_prepared(editor, roots);
+        self.prepared_bounds()
+    }
+
+    fn prepared_bounds(&self) -> Option<Rect> {
         self.prepared_roots
             .iter()
             .map(|&index| self.prepared[index].world_subtree_bounds)
@@ -303,6 +372,17 @@ impl ScenePainter {
     }
 
     fn ensure_prepared(&mut self, document: &Document, roots: &[NodeId]) -> bool {
+        self.preparation = incremental::PreparationStats::default();
+        let key = self.scene_key_for(document, roots);
+        let reused = self.scene_key == Some(key);
+        if !reused {
+            self.prepare(document, roots);
+            self.scene_key = Some(key);
+        }
+        reused
+    }
+
+    fn scene_key_for(&self, document: &Document, roots: &[NodeId]) -> (usize, u64, u64) {
         let mut signature = DefaultHasher::new();
         roots.hash(&mut signature);
         self.asset_revision.hash(&mut signature);
@@ -314,26 +394,25 @@ impl ScenePainter {
             .next()
             .map(|node| node as *const Node as usize)
             .hash(&mut signature);
-        let key = (
+        (
             document as *const Document as usize,
             document.revision,
             signature.finish(),
-        );
-        let reused = self.scene_key == Some(key);
-        if !reused {
-            self.prepare(document, roots);
-            self.scene_key = Some(key);
-        }
-        reused
+        )
     }
 
     fn prepare(&mut self, document: &Document, roots: &[NodeId]) {
+        self.preparation = incremental::PreparationStats { full: 1, ..Default::default() };
+        self.preparation_totals.full = self.preparation_totals.full.saturating_add(1);
         self.prepared.clear();
         self.prepared_roots.clear();
         self.visiting.clear();
         self.prepare_invalid_nodes = 0;
         self.backdrops.clear();
         self.has_backdrops = false;
+        self.backdrop_nodes = 0;
+        self.prepared_indices.clear();
+        self.incremental_ready = true;
         self.cache.retain(|id, _| document.nodes.contains_key(id));
         if self.empty.is_none() {
             self.empty = Some(Rc::new(CachedNode::empty()));
@@ -369,10 +448,17 @@ impl ScenePainter {
         }
         if depth >= MAX_RENDER_DEPTH || !valid_node_bounds(node) || !self.visiting.insert(id) {
             self.prepare_invalid_nodes += 1;
+            self.incremental_ready = false;
             return None;
         }
         let local = node.local_transform();
         let world = parent_world * local;
+        let child_outline = needs_outline
+            || node.kind == NodeKind::Boolean
+            || (node.kind == NodeKind::Group
+                && (!node.effects.is_empty()
+                    || !node.strokes.is_empty()
+                    || !node.fills.is_empty()));
         let index = self.prepared.len();
         let placeholder = self
             .cache
@@ -380,6 +466,7 @@ impl ScenePainter {
             .cloned()
             .unwrap_or_else(|| self.empty.as_ref().unwrap().clone());
         self.prepared.push(PreparedNode {
+            id,
             // An isolated nested root still paints at its document position.
             // Its ancestors are absent from the drawing-context state stack.
             local: if depth == 0 { world } else { local },
@@ -394,18 +481,34 @@ impl ScenePainter {
             end: index + 1,
             subtree_nodes: 1,
             visual: placeholder,
-            reused: false,
+            reused: Cell::new(false),
+            outline: child_outline,
         });
-        let child_outline = needs_outline
-            || node.kind == NodeKind::Boolean
-            || (node.kind == NodeKind::Group
-                && (!node.effects.is_empty()
-                    || !node.strokes.is_empty()
-                    || !node.fills.is_empty()));
+        if self.prepared_indices.insert(id, index).is_some() {
+            self.incremental_ready = false;
+        }
         for &child in &node.children {
             self.prepare_node(document, child, world, Some(index), depth + 1, child_outline);
         }
         let end = self.prepared.len();
+        self.prepared[index].end = end;
+        self.prepared[index].subtree_nodes = end - index;
+        self.refresh_prepared_visual(document, index);
+        self.backdrop_nodes += usize::from(!self.prepared[index].visual.background_blurs.is_empty());
+        self.has_backdrops = self.backdrop_nodes != 0;
+        self.visiting.remove(&id);
+        Some(index)
+    }
+
+    /// Shared by full postorder preparation and a verified dirty dependency
+    /// set. The same paint fingerprint and bounds rules govern both paths.
+    fn refresh_prepared_visual(&mut self, document: &Document, index: usize) {
+        self.preparation.nodes += 1;
+        self.preparation_totals.nodes = self.preparation_totals.nodes.saturating_add(1);
+        let id = self.prepared[index].id;
+        let node = &document.nodes[&id];
+        let end = self.prepared[index].end;
+        let outline = self.prepared[index].outline;
         let mut child_signature = DefaultHasher::new();
         let mut child_bounds = None;
         let mut cursor = index + 1;
@@ -421,7 +524,7 @@ impl ScenePainter {
         let fingerprint = visual_fingerprint(
             node,
             child_signature.finish(),
-            child_outline || needs_outline,
+            outline,
             self.asset_revision,
         );
         let existing = self
@@ -431,12 +534,14 @@ impl ScenePainter {
             .cloned();
         let reused = existing.is_some();
         let visual = existing.unwrap_or_else(|| {
+            self.preparation.visuals += 1;
+            self.preparation_totals.visuals = self.preparation_totals.visuals.saturating_add(1);
             Rc::new(build_visual(
                 node,
                 fingerprint,
                 &self.prepared[index + 1..end],
                 index + 1,
-                child_outline || needs_outline,
+                outline,
                 &mut self.images,
             ))
         });
@@ -450,16 +555,11 @@ impl ScenePainter {
             },
         );
         let prepared = &mut self.prepared[index];
-        prepared.end = end;
-        prepared.subtree_nodes = end - index;
         prepared.local_subtree_bounds = subtree;
-        prepared.world_subtree_bounds = world.transform_rect(subtree);
+        prepared.world_subtree_bounds = prepared.world.transform_rect(subtree);
         prepared.visual = visual.clone();
-        self.has_backdrops |= !visual.background_blurs.is_empty();
-        prepared.reused = reused;
+        prepared.reused.set(reused);
         self.cache.insert(id, visual);
-        self.visiting.remove(&id);
-        Some(index)
     }
 }
 
@@ -479,7 +579,8 @@ fn paint_subtree(
         return;
     }
     stats.visible_nodes += 1;
-    stats.cached_nodes += usize::from(scene_reused || node.reused);
+    let reused = node.reused.replace(true);
+    stats.cached_nodes += usize::from(scene_reused || reused);
     stats.missing_images += node.visual.missing_images;
     stats.unsupported_effects += node.visual.unsupported_effects;
 

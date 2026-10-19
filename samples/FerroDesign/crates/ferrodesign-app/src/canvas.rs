@@ -318,7 +318,7 @@ impl DesignCanvas {
         let bounds = self
             .painter
             .borrow_mut()
-            .rendered_bounds(&editor.document, &roots)
+            .rendered_editor_bounds(&editor, &roots)
             .ok_or_else(|| "There are no layers to export.".to_string())?;
         let width = bounds.width.ceil().max(1.0);
         let height = bounds.height.ceil().max(1.0);
@@ -334,7 +334,7 @@ impl DesignCanvas {
             // This export has one output pixel per document unit. Canvas zoom
             // and the window's display density must not affect the saved PNG.
             painter.set_raster_scale(1.0);
-            painter.render(&mut context, &editor.document, &roots, bounds);
+            painter.render_editor(&mut context, &editor, &roots, bounds);
             context.pop(transform);
             context.dispose();
         }
@@ -1735,7 +1735,11 @@ impl VisualImpl for DesignCanvas {
                 .map_or(1.0, |top_level| top_level.render_scaling());
             let mut painter = this.painter.borrow_mut();
             painter.set_raster_scale(v.zoom * display_scale);
-            painter.render(ctx, doc, &roots, v.visible_rect());
+            if prototype_scene.is_none() && this.presentation.get().is_none() {
+                painter.render_editor(ctx, &editor, &roots, v.visible_rect());
+            } else {
+                painter.render(ctx, doc, &roots, v.visible_rect());
+            }
         }
         ctx.pop(camera);
         if let Some(current) = this.presentation.get() {

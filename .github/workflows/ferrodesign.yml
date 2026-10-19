@@ -81,6 +81,12 @@ jobs:
           cargo run --locked --release -p ferrodesign-core --example performance -- 10000 > browser-report/performance.json
           cat browser-report/performance.json
 
+      - name: Install native Fontconfig development files
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y pkg-config libfontconfig1-dev
+          pkg-config --modversion fontconfig
+
       - name: Test native text preedit ownership
         run: |
           set -o pipefail
@@ -111,12 +117,6 @@ jobs:
           node tests/document-store-browser.mjs 2>&1 | tee browser-report/indexeddb-tests.log
           npm run test:browser 2>&1 | tee browser-report/browser-tests.log
 
-      - name: Install native Fontconfig development files
-        run: |
-          sudo apt-get update
-          sudo apt-get install --no-install-recommends -y pkg-config libfontconfig1-dev
-          pkg-config --modversion fontconfig
-
       - name: Check native launcher and shared UI compilation
         run: |
           set -o pipefail
@@ -128,6 +128,12 @@ jobs:
           set -o pipefail
           source "$RUNNER_TEMP/ferrodesign-tools/env.sh"
           CARGO_PROFILE_TEST_DEBUG=0 CARGO_PROFILE_TEST_CODEGEN_UNITS=16 cargo test --locked -p ferrodesign-app --lib backdrop_blur --jobs 1 -- --test-threads=1 2>&1 | tee browser-report/backdrop-tests.log
+
+      - name: Compare incremental and full renderer output
+        run: |
+          set -o pipefail
+          source "$RUNNER_TEMP/ferrodesign-tools/env.sh"
+          CARGO_PROFILE_TEST_DEBUG=0 CARGO_PROFILE_TEST_CODEGEN_UNITS=16 cargo test --locked -p ferrodesign-app --lib incremental_renderer --jobs 1 -- --test-threads=1 2>&1 | tee browser-report/incremental-renderer-tests.log
 
       - name: Upload complete browser build
         if: always()

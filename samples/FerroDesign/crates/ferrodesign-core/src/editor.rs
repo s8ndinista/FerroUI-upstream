@@ -1,6 +1,81 @@
 use crate::*;
 use serde::{Deserialize, Serialize};
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::{BTreeMap, BTreeSet, VecDeque};
+use std::sync::Arc;
+
+const RENDER_CHANGE_HISTORY: usize = 128;
+const RENDER_CHANGE_NODE_LIMIT: usize = 4096;
+const RENDER_CHANGE_RETAINED_IDS: usize = 16384;
+
+/// An opaque position in one editor's complete render-change history. Holding
+/// the identity allocation prevents a replaced editor from reusing its token.
+#[derive(Clone, Debug)]
+pub struct EditorRenderToken {
+    identity: Arc<()>,
+    sequence: u64,
+}
+
+impl PartialEq for EditorRenderToken {
+    fn eq(&self, other: &Self) -> bool {
+        Arc::ptr_eq(&self.identity, &other.identity) && self.sequence == other.sequence
+    }
+}
+impl Eq for EditorRenderToken {}
+
+/// Complete render invalidation between two editor revisions. `nodes` includes
+/// edited nodes and their descendants; `ancestors` carries derived bounds and
+/// group/effect dependencies. IDs can occur on pages outside the active page.
+/// Full refreshes and incomplete/oversized history always return `Full`.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum EditorRenderChanges {
+    Full,
+    Nodes { nodes: Vec<NodeId>, ancestors: Vec<NodeId> },
+}
+
+impl EditorRenderChanges {
+    fn len(&self) -> usize {
+        match self {
+            Self::Full => 0,
+            Self::Nodes { nodes, ancestors } => nodes.len() + ancestors.len(),
+        }
+    }
+}
+
+struct RenderChangeLog {
+    identity: Arc<()>,
+    sequence: u64,
+    published_revision: u64,
+    entries: VecDeque<(u64, EditorRenderChanges)>,
+    retained_ids: usize,
+}
+
+impl Default for RenderChangeLog {
+    fn default() -> Self {
+        Self {
+            identity: Arc::new(()), sequence: 0, published_revision: 0,
+            entries: VecDeque::new(), retained_ids: 0,
+        }
+    }
+}
+
+impl RenderChangeLog {
+    fn append(&mut self, revision: u64, changes: EditorRenderChanges) {
+        if self.sequence == u64::MAX {
+            *self = Self::default();
+        }
+        self.sequence += 1;
+        self.published_revision = revision;
+        self.retained_ids += changes.len();
+        self.entries.push_back((self.sequence, changes));
+        while self.entries.len() > RENDER_CHANGE_HISTORY
+            || self.retained_ids > RENDER_CHANGE_RETAINED_IDS
+        {
+            if let Some((_, removed)) = self.entries.pop_front() {
+                self.retained_ids -= removed.len();
+            }
+        }
+    }
+}
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Align {
     Left,
@@ -133,6 +208,7 @@ pub struct Editor {
     layout_node_count: usize,
     history_limit: usize,
     paste_count: u32,
+    render_changes: RenderChangeLog,
 }
 impl Default for Editor {
     fn default() -> Self {
@@ -163,12 +239,105 @@ impl Editor {
             layout_node_count: 0,
             history_limit: 100,
             paste_count: 0,
+            render_changes: RenderChangeLog::default(),
         };
         e.refresh();
         e
     }
     pub fn demo() -> Self {
         Self::new(seeded_document())
+    }
+    pub fn render_change_token(&self) -> EditorRenderToken {
+        EditorRenderToken {
+            identity: self.render_changes.identity.clone(),
+            sequence: self.render_changes.sequence,
+        }
+    }
+    /// Return every dependency changed since `token`, or request a full scene
+    /// preparation. Consumers never need to assert that their own dirty list is
+    /// complete. As with the spatial index, arbitrary public document writes
+    /// must be followed by `refresh`; scoped previews report their existing IDs
+    /// through `refresh_preview_nodes`.
+    pub fn render_changes_since(&self, token: &EditorRenderToken) -> EditorRenderChanges {
+        let log = &self.render_changes;
+        if !Arc::ptr_eq(&token.identity, &log.identity)
+            || token.sequence > log.sequence
+            || self.document.revision != log.published_revision
+            || self.revision != log.published_revision
+        {
+            return EditorRenderChanges::Full;
+        }
+        let mut sequence = token.sequence;
+        let mut nodes = BTreeSet::new();
+        let mut ancestors = BTreeSet::new();
+        for (next, changes) in &log.entries {
+            if *next <= token.sequence { continue; }
+            if sequence.checked_add(1) != Some(*next) {
+                return EditorRenderChanges::Full;
+            }
+            let EditorRenderChanges::Nodes { nodes: changed, ancestors: parents } = changes else {
+                return EditorRenderChanges::Full;
+            };
+            nodes.extend(changed.iter().copied());
+            ancestors.extend(parents.iter().copied());
+            if nodes.len() + ancestors.len() > RENDER_CHANGE_NODE_LIMIT {
+                return EditorRenderChanges::Full;
+            }
+            sequence = *next;
+        }
+        if sequence != log.sequence { return EditorRenderChanges::Full; }
+        ancestors.retain(|id| !nodes.contains(id));
+        EditorRenderChanges::Nodes {
+            nodes: nodes.into_iter().collect(), ancestors: ancestors.into_iter().collect(),
+        }
+    }
+
+    fn record_scoped_render_changes(&mut self, changed: &[NodeId]) {
+        if changed.len() > RENDER_CHANGE_NODE_LIMIT {
+            self.render_changes.append(self.revision, EditorRenderChanges::Full);
+            return;
+        }
+        let mut nodes = BTreeSet::new();
+        let mut ancestors = BTreeSet::new();
+        let mut stack = changed.to_vec();
+        while let Some(id) = stack.pop() {
+            if !nodes.insert(id) { continue; }
+            let Some(node) = self.document.nodes.get(&id) else {
+                self.render_changes.append(self.revision, EditorRenderChanges::Full);
+                return;
+            };
+            if nodes.len() + ancestors.len() > RENDER_CHANGE_NODE_LIMIT
+                || stack.len().saturating_add(node.children.len()) > RENDER_CHANGE_NODE_LIMIT
+            {
+                self.render_changes.append(self.revision, EditorRenderChanges::Full);
+                return;
+            }
+            stack.extend(node.children.iter().copied());
+        }
+        for &id in &nodes {
+            let mut parent = self.document.nodes.get(&id).and_then(|node| node.parent);
+            let mut seen = BTreeSet::new();
+            while let Some(id) = parent {
+                if self.document.page(id).is_some() { break; }
+                if !seen.insert(id) || seen.len() > MAX_DOCUMENT_DEPTH {
+                    self.render_changes.append(self.revision, EditorRenderChanges::Full);
+                    return;
+                }
+                if !nodes.contains(&id) { ancestors.insert(id); }
+                if nodes.len() + ancestors.len() > RENDER_CHANGE_NODE_LIMIT {
+                    self.render_changes.append(self.revision, EditorRenderChanges::Full);
+                    return;
+                }
+                let Some(node) = self.document.nodes.get(&id) else {
+                    self.render_changes.append(self.revision, EditorRenderChanges::Full);
+                    return;
+                };
+                parent = node.parent;
+            }
+        }
+        self.render_changes.append(self.revision, EditorRenderChanges::Nodes {
+            nodes: nodes.into_iter().collect(), ancestors: ancestors.into_iter().collect(),
+        });
     }
     pub fn refresh(&mut self) {
         // Full refresh permits arbitrary direct document writes. If a scoped
@@ -244,6 +413,7 @@ impl Editor {
             self.scene
                 .update_nodes(&self.document, self.active_page, &geometry_changed);
         }
+        self.render_changes.append(self.revision, EditorRenderChanges::Full);
     }
     /// Re-index transient edits to a known set of existing nodes without adding
     /// history. Call `refresh` instead when changing pages, document metadata,
@@ -268,6 +438,7 @@ impl Editor {
         self.document.revision = self.revision;
         let mut structural_change = false;
         let mut geometry_changed = Vec::new();
+        let mut content_changed_ids = Vec::new();
         for id in changed {
             let Some(node) = self.document.nodes.get_mut(id) else {
                 continue;
@@ -284,6 +455,7 @@ impl Editor {
                 structural_change |= node.parent != old.parent
                     || node.children != old.children
                     || node.visible != old.visible
+                    || (node.opacity > 0.0) != (old.opacity > 0.0)
                     || node.kind != old.kind
                     || node.clip_content != old.clip_content;
                 if node.x != old.x
@@ -309,6 +481,7 @@ impl Editor {
                 true
             };
             if content_changed {
+                content_changed_ids.push(*id);
                 node.revision = self.revision;
                 self.previous_nodes.insert(*id, node.clone());
             }
@@ -318,6 +491,11 @@ impl Editor {
         } else if !geometry_changed.is_empty() {
             self.scene
                 .update_nodes(&self.document, self.active_page, &geometry_changed);
+        }
+        if structural_change {
+            self.render_changes.append(self.revision, EditorRenderChanges::Full);
+        } else {
+            self.record_scoped_render_changes(&content_changed_ids);
         }
     }
     pub fn begin_transaction(&mut self, label: impl Into<String>) {
@@ -2189,4 +2367,139 @@ fn clone_tree_into(
 /// stable matching layer IDs and independent authored overrides.
 pub fn sync_component_instances(document: &mut Document, component: NodeId) -> usize {
     document.refresh_component_instances(component).unwrap_or(0)
+}
+
+#[cfg(test)]
+mod render_change_tests {
+    use super::*;
+
+    fn nested_editor() -> (Editor, NodeId, NodeId, NodeId) {
+        let mut document = Document::new("Render changes");
+        let frame = document.insert_node(1, Node::new(NodeKind::Frame, "Frame", 10.0, 20.0, 120.0, 100.0)).unwrap();
+        let child = document.insert_node(frame, Node::new(NodeKind::Rectangle, "Child", 5.0, 6.0, 20.0, 20.0)).unwrap();
+        let sibling = document.insert_node(frame, Node::new(NodeKind::Rectangle, "Sibling", 40.0, 6.0, 20.0, 20.0)).unwrap();
+        (Editor::new(document), frame, child, sibling)
+    }
+
+    fn scoped(editor: &Editor, token: &EditorRenderToken, nodes: &[NodeId], ancestors: &[NodeId]) {
+        let mut nodes = nodes.to_vec();
+        let mut ancestors = ancestors.to_vec();
+        nodes.sort_unstable(); nodes.dedup();
+        ancestors.sort_unstable(); ancestors.dedup();
+        assert_eq!(editor.render_changes_since(token), EditorRenderChanges::Nodes { nodes, ancestors });
+    }
+
+    #[test]
+    fn render_change_feed_tracks_leaf_dependencies_and_ignores_noop_edits() {
+        let (mut editor, frame, child, _) = nested_editor();
+        let before = editor.render_change_token();
+        editor.update_node(child, "Move", |node| node.x += 3.0);
+        scoped(&editor, &before, &[child], &[frame]);
+        let after = editor.render_change_token();
+        editor.update_node(child, "No change", |_| {});
+        assert_ne!(after, editor.render_change_token());
+        scoped(&editor, &after, &[], &[]);
+    }
+
+    #[test]
+    fn render_change_feed_includes_transformed_descendants_and_coalesces_missed_frames() {
+        let (mut editor, frame, child, sibling) = nested_editor();
+        let before = editor.render_change_token();
+        editor.update_node(child, "Paint", |node| node.fills = vec![Fill::solid(Color::BLACK)]);
+        editor.update_node(frame, "Transform parent", |node| node.rotation = 25.0);
+        editor.update_node(sibling, "Opacity", |node| node.opacity = 0.6);
+        scoped(&editor, &before, &[frame, child, sibling], &[]);
+    }
+
+    #[test]
+    fn render_change_feed_preserves_preview_cancel_commit_and_undo_redo_continuity() {
+        let (mut editor, frame, child, _) = nested_editor();
+        let original = editor.document.nodes[&child].x;
+        editor.begin_node_transaction(&[child], "Drag");
+        editor.document.nodes.get_mut(&child).unwrap().x += 9.0;
+        editor.refresh_preview_nodes(&[child]);
+        let preview = editor.render_change_token();
+        editor.cancel_transaction();
+        assert_eq!(editor.document.nodes[&child].x, original);
+        scoped(&editor, &preview, &[child], &[frame]);
+
+        editor.begin_node_transaction(&[child], "Drag");
+        editor.document.nodes.get_mut(&child).unwrap().x += 4.0;
+        editor.refresh_preview_nodes(&[child]);
+        assert!(editor.commit_transaction());
+        assert_eq!(editor.history_len(), 1);
+        let committed = editor.render_change_token();
+        assert!(editor.undo());
+        scoped(&editor, &committed, &[child], &[frame]);
+        let undone = editor.render_change_token();
+        assert!(editor.redo());
+        scoped(&editor, &undone, &[child], &[frame]);
+        assert_eq!(editor.document.nodes[&child].x, original + 4.0);
+    }
+
+    #[test]
+    fn render_change_feed_requires_full_for_direct_structural_and_visibility_changes() {
+        let (mut editor, frame, child, _) = nested_editor();
+        let before = editor.render_change_token();
+        editor.document.nodes.get_mut(&child).unwrap().x += 7.0;
+        editor.refresh();
+        assert_eq!(editor.render_changes_since(&before), EditorRenderChanges::Full);
+        let before = editor.render_change_token();
+        editor.update_node(frame, "Reorder children", |node| node.children.reverse());
+        assert_eq!(editor.render_changes_since(&before), EditorRenderChanges::Full);
+        let before = editor.render_change_token();
+        editor.update_node(child, "Hide through opacity", |node| node.opacity = 0.0);
+        assert_eq!(editor.render_changes_since(&before), EditorRenderChanges::Full);
+        let before = editor.render_change_token();
+        editor.transact("Global metadata", |document| document.name = "Renamed".into());
+        assert_eq!(editor.render_changes_since(&before), EditorRenderChanges::Full);
+    }
+
+    #[test]
+    fn render_change_feed_does_not_reuse_replaced_editor_or_tampered_revision() {
+        let (mut editor, _, child, _) = nested_editor();
+        let token = editor.render_change_token();
+        let replacement = Editor::new(editor.document.clone());
+        assert_eq!(replacement.render_changes_since(&token), EditorRenderChanges::Full);
+        editor.document.revision += 1;
+        assert_eq!(editor.render_changes_since(&token), EditorRenderChanges::Full);
+        editor.refresh();
+        let token = editor.render_change_token();
+        editor.update_node(child, "Move", |node| node.x += 1.0);
+        let future = editor.render_change_token();
+        assert_eq!(replacement.render_changes_since(&future), EditorRenderChanges::Full);
+        assert!(matches!(editor.render_changes_since(&token), EditorRenderChanges::Nodes { .. }));
+    }
+
+    #[test]
+    fn render_change_feed_bounds_retained_history_and_declines_skipped_revisions() {
+        let (mut editor, _, child, _) = nested_editor();
+        let old = editor.render_change_token();
+        for _ in 0..=RENDER_CHANGE_HISTORY {
+            editor.update_node(child, "Move", |node| node.x += 1.0);
+        }
+        assert_eq!(editor.render_changes.entries.len(), RENDER_CHANGE_HISTORY);
+        assert!(editor.render_changes.retained_ids <= RENDER_CHANGE_RETAINED_IDS);
+        assert_eq!(editor.render_changes_since(&old), EditorRenderChanges::Full);
+        let current = editor.render_change_token();
+        scoped(&editor, &current, &[], &[]);
+    }
+
+    #[test]
+    fn render_change_feed_declines_oversized_subtree_and_resets_identity_at_sequence_wrap() {
+        let mut document = Document::new("Large dependency set");
+        let frame = document.insert_node(1, Node::new(NodeKind::Frame, "Frame", 0.0, 0.0, 100.0, 100.0)).unwrap();
+        for _ in 0..RENDER_CHANGE_NODE_LIMIT {
+            document.insert_node(frame, Node::new(NodeKind::Rectangle, "Child", 0.0, 0.0, 1.0, 1.0)).unwrap();
+        }
+        let mut editor = Editor::new(document);
+        let before = editor.render_change_token();
+        editor.update_node(frame, "Move large group", |node| node.x += 1.0);
+        assert_eq!(editor.render_changes_since(&before), EditorRenderChanges::Full);
+        editor.render_changes.sequence = u64::MAX;
+        let before_wrap = editor.render_change_token();
+        editor.update_node(frame, "No change", |_| {});
+        assert_eq!(editor.render_changes_since(&before_wrap), EditorRenderChanges::Full);
+        assert_eq!(editor.render_changes.sequence, 1);
+    }
 }
