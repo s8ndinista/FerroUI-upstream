@@ -19,7 +19,7 @@ The implementation began from upstream commit `325b3ce4b0fcf154eba79cbd92262536d
 
 ## Build and run in a browser
 
-Required host tools: a C/C++ build toolchain, `git`, `curl`, Python 3, and Node.js/npm. The setup script installs its own pinned Rust and Emscripten tools without editing shell profiles.
+Required host tools: a C/C++ build toolchain, `git`, `curl`, Python 3, and Node.js 22/npm (the CI configuration). The setup script installs its own pinned Rust and Emscripten tools without editing shell profiles.
 
 ```sh
 ./scripts/setup.sh
@@ -46,7 +46,7 @@ Useful build options:
 
 ## Native launcher
 
-Use a supported Rust toolchain and the platform prerequisites documented by the parent FerroUI repository.
+Use Rust **1.99.0**, as required by this sample's Cargo manifest, and the platform prerequisites documented by the parent FerroUI repository. The setup environment above supplies the pinned toolchain for native builds as well.
 
 ```sh
 cargo run -p ferrodesign-app
@@ -101,13 +101,17 @@ In the Prototype tab, **Edit interactions…** adds trigger/action rules and tra
 
 ## Files and local persistence
 
-The native editable format is a versioned `.ferrodesign` JSON document. It stores the complete document graph, paints, layout, components, variable collections, comments and prototype links. Edits coalesce before serializing the full document as compact JSON for local autosave; portable downloads use the readable pretty format. Both read the authored snapshot during presentation. The browser queues snapshots in IndexedDB. A completed transaction updates the current and previous versions together; the status changes to saved only after completion. Lifecycle saves commit pending native edits and serialization first. Legacy localStorage documents migrate on a successful write. Conflicting saves from another tab are reported instead of overwritten, and a failed save leaves the document available for export. The native launcher atomically replaces `ferrodesign-autosave.json` and flushes pending edits before closing. Export a document to make a portable copy.
+The native editable format is a versioned `.ferrodesign` JSON document. It stores the complete document graph, paints, layout, components, variable collections, comments and prototype links. Edits coalesce before serializing the full document as compact JSON for local autosave; portable downloads use the readable pretty format. Both read the authored snapshot during presentation. The browser queues snapshots in IndexedDB. A completed transaction updates the current and previous versions together; the status changes to saved only after completion. Lifecycle saves finish on-canvas text edits and image cropping, then serialize committed document changes. Legacy localStorage documents migrate on a successful write. Conflicting saves from another tab are reported instead of overwritten, and a failed save leaves the document available for export. The native launcher atomically replaces `ferrodesign-autosave.json` and flushes committed document changes before closing. Export a document to make a portable copy.
+
+Native inspector fields commit on Enter or focus loss; numeric arrow keys in Effects also commit. Committed values participate in autosave, but page or window close does not flush a focused, uncommitted field draft. Press Enter or move focus before leaving to apply that draft.
 
 `Open` also imports SVG into a selected editable frame. `Place image` accepts PNG, JPEG, GIF or BMP; FerroUI decodes the image and its data is embedded in the portable document. The native Import dialog accepts JSON, SVG markup or a raster image data URI.
 
 Export options include editable JSON, SVG, PNG rendered through FerroUI's `RenderTargetBitmap`, basic FerroUI XAML, and CSS inspection. SVG/XAML/CSS output have format-specific limits described in the feature matrix. A JSON round trip is the complete fidelity-preserving format for this editor. Figma's proprietary `.fig` file format is not implemented.
 
 ## Validation
+
+Implementation `945283ef` passed the complete [FerroDesign workflow](https://github.com/wieslawsoltes/FerroUI/actions/runs/39306364660): 219 core tests, 17 host tests, 64 native application tests, the actual Vello WebAssembly build, 5 Chromium IndexedDB checks, and 62 Software2D / 59 WebGL2 interaction checks with no page or console errors. The separate [framework CI](https://github.com/wieslawsoltes/FerroUI/actions/runs/39306373798) also passed all 14 jobs. [Source-tagged screenshots and raw evidence](docs/evidence/2026-10-19-945283ef/README.md) and [measurement details](docs/VALIDATION.md) preserve the exact test scope and source revision.
 
 ```sh
 cargo test --locked -p ferrodesign-core

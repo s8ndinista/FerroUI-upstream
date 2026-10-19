@@ -1,6 +1,81 @@
 # Validation and measurements
 
-This file distinguishes implemented paths, completed checks and measurements. The complete continuation result recorded here is source `ecd5078d1cb420153b52960c340b9e79810105a2`, [CI run 39245203777](https://github.com/wieslawsoltes/FerroUI/actions/runs/39245203777). The source/core, benchmark, native preedit/compositing/application, actual WebAssembly build and complete Chromium interaction gates all passed. Subsequent branch validation is linked from [PR #254](https://github.com/wieslawsoltes/FerroUI/pull/254); the observations below remain tied to their exact source and run.
+This file distinguishes implemented paths, completed checks and measurements. The current implementation is source `945283ef24202dab638c85bc9dc3d5f47fcc902d`, with exact-source validation in [CI run 39306364660](https://github.com/wieslawsoltes/FerroUI/actions/runs/39306364660). The observations below remain tied to their exact source and run; older successful runs do not validate later changes. [PR #254](https://github.com/wieslawsoltes/FerroUI/pull/254) collects the complete source and current review status.
+
+## Current continuation: `945283ef`
+
+This continuation adds typed native effect authoring, deferred auto-layout drag previews and transactional drops, a retained spatial index for prepared root bounds, and consistent shadow order through rounded and general geometry. Browser regressions additionally wait for a new native frame after selection and verify actual ComboBox popup focus before sending navigation keys.
+
+The following local checks completed on Ubuntu 24.04 using the pinned Rust 1.99.0, Emscripten 6.0.10 and wasm-bindgen 0.2.129 tools:
+
+| Gate | Observed result |
+| --- | --- |
+| Document core | All 219 tests passed, including atomic typed effect commands and deferred layout-session ownership/history |
+| Persistence host | All 17 JavaScript tests passed; Node 24.19.0 used `--test-isolation=none` to expose the individual cases |
+| Native application | All 64 tests passed, including native capture loss/cancellation, effect-field parsing, spatial-index/reference-pixel comparisons and eight shadow pixel cases |
+| Actual WebAssembly application | The final browser-profile build completed, all six required JavaScript modules resolved, and the active no-Skia dependency check passed |
+| Resolved application dependencies | No `ferroui-skia`, `skia-safe` or `skia-bindings` in the normal/build graphs for the browser, Linux x64, Windows x64, macOS ARM64 or macOS x64 targets |
+
+The cross-target dependency audit used locked, offline Cargo graph resolution. It verifies backend selection, not execution of the native desktop application on those operating systems. Production scene painting uses public FerroUI APIs; direct Vello references configure FerroUI's backend or provide backend pixels in native tests. The compiled XAML shell hosts native controls, including inspector dialogs constructed dynamically in Rust.
+
+The corresponding exact-source CI run **completed successfully**, including both artifact uploads and cleanup. Its observed gates are:
+
+| Exact-source CI gate | Observed result |
+| --- | --- |
+| Document core and persistence host | 219 Rust core tests and 17 JavaScript host tests passed |
+| Native text preedit | All 6 focused tests passed |
+| Public compositing | All 7 Base recording/replay tests and 7 Vello pixel tests passed |
+| Native application | Compilation and all 64 tests passed |
+| Actual Vello WebAssembly application | Build, all six required JavaScript imports, 10 web text-input bridge tests and active no-Skia dependency checks passed |
+| Actual Chromium IndexedDB | All 5 transaction, migration, rollback, conflict and large-document reload checks passed |
+| Chromium Software2D | All 62 interaction checks passed, including the 10,000-layer workload |
+| Chromium WebGL2 | All 59 interaction checks passed; actual WebGL2 through ANGLE/Vulkan/SwiftShader |
+| Runtime errors | No page errors or console errors in either context |
+| Artifact publication | Complete build, screenshots, traces, reports and lockfiles uploaded; both ZIP sizes and GitHub-provided SHA256 digests matched, and both outer ZIPs and inner trace ZIPs passed CRC checks |
+
+Both contexts used Chromium 156.0.8078.4. The first native application frame was observed after 1,498 ms in Software2D and 1,453 ms in WebGL2. All 34 shared static native captures passed on their first attempt, with no retries. Software2D capture attempts took 120–161 ms; WebGL2 attempts took 9,112–23,629 ms. These capture durations include screenshot acquisition and follow-up checks, and do not measure application frame rate or editing latency. The hardware used by this WebGL2 run was SwiftShader, so this is not a hardware-GPU throughput benchmark.
+
+The [source-tagged evidence directory](evidence/2026-10-19-945283ef/README.md) preserves the unchanged report and paired initial/editor, effect-stack and held layout-drag PNGs. Visual inspection found the captured shell, effect controls and insertion marker legible and arranged in both modes. This is a review of this application's pixels; no matched Figma document/reference screenshot was available for a numerical visual-parity comparison.
+
+### Actual 10,000-layer browser workload at `945283ef`
+
+Software2D imported a 12,872,068-byte design containing 10,000 rendered nodes. The native layer list represented all 10,000 rows while realizing only 25 controls, both before and after scrolling.
+
+| Operation | Full preparations | Incremental preparations | Prepared nodes | Rebuilt immutable visuals | Layer-projection builds | Layer-projection reuses |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Native keyboard nudge | 0 | 1 | 1 | 0 | 0 | 1 |
+| Native keyboard undo | 0 | 1 | 1 | 0 | 0 | 1 |
+| Native keyboard redo | 0 | 1 | 1 | 0 | 0 | 1 |
+
+The new zoom fixture then selected **1 root candidate from 10,000 roots with 27 bounds tests**, with one visible node at zoom 17.0833. `rootQueryReused` was false for that observed render, so these are actual query work counts rather than a zero-work cached query. Native tests separately cover unchanged-query reuse, dense full-view traversal, conservative effect bounds, refitting and exact pixels against the original ordered scan.
+
+Import through the first native frame took 829 ms; the measured native keyboard nudge through the browser harness took 151 ms; reload and exact document restoration took 1,226 ms. The edited portable JSON was 20,652,219 bytes and its compact autosave was 13,132,068 bytes; autosave serialization took 33.3 ms. The report's 2 ms `commitMs` is only the remaining wait for the save queue to drain after earlier autosave work, not complete IndexedDB commit latency. The complete restored document SHA256 was `f011b40a7d2bf8d0e21497008f93b613ce7f154e326f2eda41052e83ca776332`.
+
+These counters show avoided preparation, row allocation and root-bound work. Root signatures, drawing visible artwork, wide-parent bounds, structural layout and some history paths can still be linear. The observed browser times include the harness and are single-run functional measurements, not FPS. WebGL2 did not run the 10,000-layer fixture.
+
+### Paired release measurements at `945283ef`
+
+The unchanged [schema-5 benchmark JSON](benchmarks/2026-10-19-945283ef-editor-performance.json) is copied byte-for-byte from the successful CI validation artifact (7,424 bytes, SHA256 `fc7a2776c0f9438204e120096a8746c4b1672bb0081f9313325033a4fb31e497`). It compares scoped commands with an explicit generic full-document transaction reference in one release process on 10,000 flat filled rectangles with one selected node. Exact document/history and serialization equivalence checks passed. The reference is a workload in the same executable, not a previous release or a different CI runner.
+
+| Operation, 48 samples | Full-document reference p50 | Scoped p50 | Scoped p95 |
+| --- | ---: | ---: | ---: |
+| Nudge | 14.098 ms | 0.026 ms | 0.032 ms |
+| Undo | 4.294 ms | 0.017 ms | 0.024 ms |
+| Redo | 4.167 ms | 0.015 ms | 0.018 ms |
+
+Across 12 gestures, a complete 24-update gesture measured 108.968 ms p50 on the reference path and 0.053 ms p50 / 0.070 ms p95 on the scoped path. This benchmark measures the existing scoped engine commands, not the new auto-layout drag index or root rendering hierarchy. It excludes browser events, native control layout, drawing and persistence.
+
+Five serialization samples measured portable pretty output at 30.157 ms p50 / 20,152,206 bytes and compact autosave at 16.139 ms p50 / 12,802,055 bytes, a 36.5% smaller payload with exact round-trip equivalence. Parse/validate/index measured 47.701 ms p50 across three samples. A separate dense layout fixture with 9,999 mixed fixed/fill text children measured 8.798 ms p50 across five samples. These native fixtures are separate from the browser workload above.
+
+Component synchronization retains full document history snapshots. Its separate 10,000-node workload includes 5,592,566 bytes of unrelated embedded-image data and measures actual Editor operations including history: variant switching 19.145 ms p50 / 19.369 ms p95; text properties 19.032 / 19.942 ms; visibility properties 25.298 / 26.163 ms, with eight samples each. Complete history restoration and stable materialized IDs passed. The isolated no-history document-operation figures in the raw JSON are not substituted for production Editor costs.
+
+### Framework integration and earlier checkpoints
+
+The separate [standard repository CI run 39306373798](https://github.com/wieslawsoltes/FerroUI/actions/runs/39306373798) completed successfully with all 14 jobs passing. Its checkout log and merge commit identify source `945283ef` tested as merge `70db461c11217d05d774a6736ec44bfa6c982f35` into base `0116724da88df86fa4e4575f7e9a0d78708f2204`. Source conventions, packaging, macOS, Windows x64/ARM64, Linux X11/Wayland/framebuffer, Android, iOS and all three browser configurations passed. These framework integration jobs are separate from the independent FerroDesign workspace's exact-source application tests; they do not establish native FerroDesign GUI execution on every platform.
+
+The preceding combined implementation `12cbecd3`, [run 39304233073](https://github.com/wieslawsoltes/FerroUI/actions/runs/39304233073), passed the core/host, preedit and public compositing gates, then native checking rejected a new test's incorrect `PixelFormat` import. The current source corrects that import; its complete local native suite and the CI native gate above pass. No browser result is attributed to the failed checkpoint.
+
+The resumed baseline `bc2e9984`, [run 39254507451](https://github.com/wieslawsoltes/FerroUI/actions/runs/39254507451), passed its earlier gates and all 53 Software2D checks, then failed after 31 WebGL2 checks at the native blend selector. Its trace showed a changed selection before a new inspector frame; the subsequent arrow input nudged the selected layer. The revised harness retains native pointer/keyboard input, requires arranged controls and popup focus, and checks that blend selection does not move the layer. Both current modes now pass that regression. The older complete result below is retained as historical evidence.
 
 ## Complete continuation result: `ecd5078d`
 
@@ -191,6 +266,8 @@ cargo run --release -p ferrodesign-core --example performance -- 10000
 `tests/browser.mjs` launches the actual application at a 1600 by 1000 viewport in two contexts, requesting Software2D and WebGL2. It records the observed canvas context and allows the documented WebGL2-to-Software2D fallback. The CI browser may use SwiftShader; its results establish functional rendering, not real GPU throughput.
 
 The test waits for a completed native frame and dismissal of the loading surface, inspects native pixel diversity, draws a rectangle, edits vector anchors and pen tangents, edits multiline Unicode in the native on-canvas TextBox, changes paints through the native dialog, and dispatches prototype hover/press/drag/key/delay actions. It checks one-transaction history, canceled text edits, UTF-8 rich-run ranges, JSON import/export equality, durable reload, and bounded virtualized rows with a 10,000-layer document larger than 5 MiB. Deterministic browser composition events exercise explicit native preedit state, exactly-once commits, focus loss and confirmed-text durability through pagehide/reload; they do not certify operating-system IME behavior on every platform. Prototype rules are imported as fixtures for runtime validation; interaction-dialog authoring controls have not been browser-operated by this suite. The separate IndexedDB browser test uses actual transactions for migration, rollback, stale-tab conflicts and a document larger than 10 MiB. The application browser test also collects console exceptions, startup failures and FerroUI render-thread panics. Its screenshots, Playwright traces and report are written under `browser-report` and uploaded by GitHub Actions.
+
+Lifecycle durability checks cover confirmed on-canvas text and committed document edits. Native inspector fields commit on Enter or focus loss; numeric arrow keys in Effects also commit. Page or window close does not flush a focused, uncommitted inspector draft, so these checks do not establish recovery of such drafts.
 
 The focused native preedit gate can be reproduced from the sample directory:
 
