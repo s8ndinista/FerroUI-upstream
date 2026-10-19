@@ -123,6 +123,12 @@ jobs:
           source "$RUNNER_TEMP/ferrodesign-tools/env.sh"
           cargo check --locked -p ferrodesign-app --lib --tests --jobs 1 2>&1 | tee browser-report/native-check.log
 
+      - name: Test background blur through public FerroUI bitmap APIs
+        run: |
+          set -o pipefail
+          source "$RUNNER_TEMP/ferrodesign-tools/env.sh"
+          CARGO_PROFILE_TEST_DEBUG=0 CARGO_PROFILE_TEST_CODEGEN_UNITS=16 cargo test --locked -p ferrodesign-app --lib backdrop_blur --jobs 1 -- --test-threads=1 2>&1 | tee browser-report/backdrop-tests.log
+
       - name: Upload complete browser build
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4

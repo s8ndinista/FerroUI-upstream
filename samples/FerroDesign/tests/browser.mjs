@@ -2,6 +2,8 @@ import { prototypeMotionRegressions } from "./prototype-browser.mjs";
 import { nativeAuthoringRegressions } from "./authoring-browser.mjs";
 import { vectorNetworkRegressions } from "./network-browser.mjs";
 import { componentAuthoringRegressions } from "./components-browser.mjs";
+import { imageCropRegressions } from "./image-crop-browser.mjs";
+import { compositingRegressions } from "./compositing-browser.mjs";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { createServer } from "node:http";
@@ -215,6 +217,100 @@ async function importFixture(page, fixture) {
     }, { frames: previous.renderedFrames, count: Object.keys(fixture.nodes).length });
     await frames(page);
 }
+
+// Chromium can time out one compositor readback while its page, native app,
+// and trace screencast remain healthy. Keep the actual PNG gate, record every
+// attempt, and retry only that recoverable operation against unchanged state.
+async function captureNativeScreenshot(page, result, name, { controls = [], afterFrame = -1 } = {}) {
+    const ready = () => page.waitForFunction(({ controls, afterFrame }) => {
+        const view = JSON.parse(globalThis.ferroDesign.ferroDesignState());
+        return view.renderedFrames > afterFrame && controls.every((name) => {
+            const bounds = view.chrome[name];
+            return bounds?.visible && bounds.width > 0 && bounds.height > 0 &&
+                [bounds.x, bounds.y, bounds.width, bounds.height].every(Number.isFinite);
+        });
+    }, { controls, afterFrame }, { timeout: 10000 });
+    const snapshot = async () => {
+        let timer;
+        try {
+            const value = await Promise.race([
+                page.evaluate(({ controls, kind }) => {
+                    const view = JSON.parse(globalThis.ferroDesign.ferroDesignState());
+                    const canvas = document.querySelector("canvas.ferroui-canvas");
+                    // The existing surface was already identified at startup;
+                    // never initialize a different context for diagnostics.
+                    const gl = kind === "WebGL2" ? canvas?.getContext("webgl2") : null;
+                    return {
+                        documentJson: globalThis.ferroDesign.ferroDesignExportJson(),
+                        view: {
+                            activePage: view.activePage, selection: view.selection, tool: view.tool,
+                            pan: view.pan, zoom: view.zoom, presentation: view.presentation,
+                            prototypeOverlays: view.prototypeOverlays, imageCrop: view.imageCrop,
+                            vectorNode: view.vectorNode, vectorPoint: view.vectorPoint,
+                            modalVisible: view.chrome.ModalBackdrop.visible,
+                            controls: Object.fromEntries(controls.map((name) => [name, view.chrome[name]])),
+                        },
+                        renderedFrames: view.renderedFrames, documentRevision: view.documentRevision,
+                        fonts: { status: document.fonts.status, faces: [...document.fonts].map((font) => ({ family: font.family, status: font.status })) },
+                        surface: { kind, width: canvas?.width, height: canvas?.height, contextLost: gl?.isContextLost() ?? false },
+                        visibility: document.visibilityState,
+                        focus: document.activeElement && { tag: document.activeElement.tagName, id: document.activeElement.id },
+                        startupErrors: globalThis.ferroDesignErrors || [],
+                        renderPanics: globalThis.ferroDesignRenderPanics?.() || [],
+                    };
+                }, { controls, kind: result.surface.kind }),
+                new Promise((_, reject) => { timer = setTimeout(() => reject(new Error("Native screenshot diagnostics did not respond within 5 seconds.")), 5000); }),
+            ]);
+            value.document = { sha256: digest(value.documentJson), bytes: Buffer.byteLength(value.documentJson) };
+            delete value.documentJson;
+            return value;
+        } finally { clearTimeout(timer); }
+    };
+    await ready();
+    await frames(page);
+    const record = { name, before: await snapshot(), attempts: [] };
+    (result.nativeCaptures ||= []).push(record);
+    const identity = (value) => JSON.stringify({ document: value.document.sha256, view: value.view });
+    const unchanged = (value) => {
+        assert.equal(identity(value), identity(record.before), "The native screenshot must capture the same authored document, selection, camera and arranged controls");
+        assert.equal(value.surface.contextLost, false, "A lost WebGL context is not a recoverable screenshot timeout");
+        assert.deepEqual(value.startupErrors, []);
+        assert.deepEqual(value.renderPanics, []);
+    };
+    const diagnosticPath = resolve(output, name + "-capture.json");
+    for (let attempt = 0; attempt < 2; attempt++) {
+        const entry = { attempt: attempt + 1, timeoutMs: attempt === 0 ? 30000 : 15000 };
+        const started = performance.now();
+        record.attempts.push(entry);
+        try {
+            const bytes = await page.screenshot({ path: resolve(output, name + ".png"), timeout: entry.timeoutMs });
+            entry.pixels = colors(bytes);
+            const viewport = page.viewportSize();
+            assert.equal(entry.pixels.width, viewport.width);
+            assert.equal(entry.pixels.height, viewport.height);
+            assert.ok(entry.pixels.colors >= 24, "Native screenshot must contain actual rendered UI and paint pixels");
+            entry.after = await snapshot();
+            unchanged(entry.after);
+            entry.status = "passed";
+            if (attempt === 1) record.recoveredTimeout = true;
+            return bytes;
+        } catch (error) {
+            entry.error = error.stack || String(error);
+            entry.status = "failed";
+            if (attempt !== 0 || error.name !== "TimeoutError") throw error;
+            entry.after = await snapshot();
+            unchanged(entry.after);
+            await ready();
+            await frames(page);
+            record.retriedTimeout = true;
+            console.warn(name + ": one compositor screenshot timed out; retrying once after verified unchanged native state. See " + name + "-capture.json.");
+        } finally {
+            entry.durationMs = Math.round(performance.now() - started);
+            await writeFile(diagnosticPath, JSON.stringify(record, null, 2));
+        }
+    }
+}
+
 async function nativeEditingRegressions(page, canvas, reference, result, check, mode) {
     const vector = fixtureNode(reference, 2, {
         kind: "vector", name: "Editable curve", x: 20, y: 20, width: 240, height: 160,
@@ -443,11 +539,14 @@ async function nativeEditingRegressions(page, canvas, reference, result, check, 
     await typeNative(page, "PaintOpacity0", "65");
     await typeNative(page, "PaintStopOffset0_0", "12.5");
     assert.equal((await documentNode(page, 2)).fills[0].paint.stops[0].offset, 0.125);
+    const paintFrameBeforeAdd = (await state(page)).renderedFrames;
     await clickNative(page, "PaintStopAdd0");
     await page.waitForFunction(() => JSON.parse(globalThis.ferroDesign.ferroDesignExportJson()).nodes[2].fills[0].paint.stops.length === 3);
     fill = (await documentNode(page, 2)).fills[0];
     assert.equal(fill.opacity, 0.65);
-    await page.screenshot({ path: resolve(output, mode + "-paint-stack.png") });
+    await captureNativeScreenshot(page, result, mode + "-paint-stack", {
+        controls: ["PaintCard0", "PaintStopColor0_2", "PaintDone"], afterFrame: paintFrameBeforeAdd,
+    });
     await clickNative(page, "PaintDone");
     assert.equal((await state(page)).chrome.ModalBackdrop.visible, false);
     await page.keyboard.press("Control+z");
@@ -706,6 +805,10 @@ try {
             await nativeAuthoringRegressions(page, svgDocument, check,
                 { fixtureNode, isolatedDocument, importFixture, documentState, state, clickWorld, clickNative, frames }, output, mode);
             await componentAuthoringRegressions(page, svgDocument, check,
+                { fixtureNode, isolatedDocument, importFixture, documentState, state, clickWorld, clickNative, frames }, output, mode);
+            await imageCropRegressions(page, svgDocument, check,
+                { fixtureNode, isolatedDocument, importFixture, documentState, state, clickWorld, clickNative, moveWorld, frames }, output, mode);
+            await compositingRegressions(page, svgDocument, check,
                 { fixtureNode, isolatedDocument, importFixture, documentState, state, clickWorld, clickNative, frames }, output, mode);
             await prototypeInputRegressions(page, svgDocument, check);
             await prototypeMotionRegressions(page, svgDocument, check,

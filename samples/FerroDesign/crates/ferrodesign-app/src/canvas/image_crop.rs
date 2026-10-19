@@ -120,6 +120,9 @@ impl DesignCanvas {
     }
 
     pub(super) fn image_crop_press(&self, world: Point) -> bool {
+        // A replacement press must snapshot the restored document, rather
+        // than geometry from a preview that cancellation is about to discard.
+        self.cancel_image_crop_gesture();
         self.reconcile_image_crop();
         let Some(mode) = self.image_crop.get() else { return false; };
         let prepared = {
@@ -147,7 +150,6 @@ impl DesignCanvas {
             self.finish_image_crop();
             return false;
         };
-        self.cancel_image_crop_gesture();
         self.editor.borrow_mut().begin_node_transaction(&[mode.node], "Crop image");
         *self.image_crop_gesture.borrow_mut() = Some(gesture);
         self.invalidate_visual();

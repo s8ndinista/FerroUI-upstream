@@ -5,6 +5,8 @@
 //! the camera transform; this module owns only document-space transforms.
 //! No graphics-backend types occur in this module.
 
+mod backdrop;
+
 use std::collections::{hash_map::DefaultHasher, HashMap, HashSet};
 use std::hash::{Hash, Hasher};
 use std::io::{self, Cursor};
@@ -49,9 +51,13 @@ pub struct RenderStats {
     pub culled_nodes: usize,
     pub cached_nodes: usize,
     pub missing_images: usize,
-    /// Background blur needs a backdrop-filter API; layer blur is supported.
+    /// Effects declined by the active backend or bounded offscreen fallback.
     pub unsupported_effects: usize,
     pub invalid_nodes: usize,
+    pub backdrop_cache_hits: usize,
+    pub backdrop_rasterizations: usize,
+    pub backdrop_skipped: usize,
+    pub backdrop_too_large: usize,
 }
 
 enum ImageAsset {
@@ -92,6 +98,7 @@ struct CachedNode {
     box_inner: BoxShadows,
     path_shadows: Vec<CachedShadow>,
     blurs: Vec<Rc<dyn IEffect>>,
+    background_blurs: Vec<f64>,
     local_bounds: Rect,
     missing_images: usize,
     unsupported_effects: usize,
@@ -113,6 +120,7 @@ impl CachedNode {
             box_inner: BoxShadows::default(),
             path_shadows: Vec::new(),
             blurs: Vec::new(),
+            background_blurs: Vec::new(),
             local_bounds: Rect::new(0.0, 0.0, 0.0, 0.0),
             missing_images: 0,
             unsupported_effects: 0,
@@ -124,6 +132,8 @@ impl CachedNode {
 
 struct PreparedNode {
     local: Transform,
+    world: Transform,
+    parent: Option<usize>,
     opacity: f64,
     blend: BlendMode,
     clip: Option<RoundedRect>,
@@ -154,6 +164,8 @@ pub struct ScenePainter {
     prepare_invalid_nodes: usize,
     stats: RenderStats,
     editing_text: Option<NodeId>,
+    backdrops: backdrop::BackdropCache,
+    has_backdrops: bool,
 }
 
 impl ScenePainter {
@@ -163,6 +175,13 @@ impl ScenePainter {
 
     pub fn invalidate(&mut self) {
         self.scene_key = None;
+    }
+
+    /// Physical pixels per document unit before a node's own world transform.
+    /// Hosts pass camera zoom times render scaling; raster exports pass their
+    /// requested output scale. Panning does not invalidate cached backdrops.
+    pub fn set_raster_scale(&mut self, scale: f64) {
+        self.backdrops.set_raster_scale(scale);
     }
 
     /// The active native text editor paints this layer while its caret is open.
@@ -181,6 +200,8 @@ impl ScenePainter {
         self.prepared_roots.clear();
         self.visiting.clear();
         self.empty = None;
+        self.backdrops.clear();
+        self.has_backdrops = false;
         self.stats = RenderStats::default();
         self.invalidate();
     }
@@ -241,7 +262,15 @@ impl ScenePainter {
             invalid_nodes: self.prepare_invalid_nodes,
             ..RenderStats::default()
         };
+        self.backdrops.begin_frame();
         if viewport.is_finite() && viewport.width >= 0.0 && viewport.height >= 0.0 {
+            // Backdrop replacement addresses document pixels only. An explicit
+            // document isolation keeps transparent exports and host canvas
+            // decoration out of each other's pixel history.
+            let document_layer = if self.has_backdrops {
+                context.try_push_compositing_layer(BitmapBlendingMode::SourceOver, 1.0, ui_rect(viewport))
+            } else { None };
+            self.backdrops.set_enabled(document_layer.is_some());
             for &root in &self.prepared_roots {
                 paint_subtree(
                     context,
@@ -250,9 +279,14 @@ impl ScenePainter {
                     viewport,
                     scene_reused,
                     &mut self.stats,
+                    &mut self.backdrops,
+                    &self.prepared_roots,
                 );
             }
+            context.pop(document_layer.unwrap_or(PushedState::NONE));
         }
+        self.stats.backdrop_cache_hits = self.backdrops.hits();
+        self.stats.backdrop_rasterizations = self.backdrops.rasterizations();
         self.stats
     }
 
@@ -298,6 +332,8 @@ impl ScenePainter {
         self.prepared_roots.clear();
         self.visiting.clear();
         self.prepare_invalid_nodes = 0;
+        self.backdrops.clear();
+        self.has_backdrops = false;
         self.cache.retain(|id, _| document.nodes.contains_key(id));
         if self.empty.is_none() {
             self.empty = Some(Rc::new(CachedNode::empty()));
@@ -309,7 +345,7 @@ impl ScenePainter {
                 .and_then(|node| node.parent)
                 .and_then(|parent| document.world_transform(parent))
                 .unwrap_or(Transform::IDENTITY);
-            if let Some(index) = self.prepare_node(document, root, parent_world, 0, false) {
+            if let Some(index) = self.prepare_node(document, root, parent_world, None, 0, false) {
                 self.prepared_roots.push(index);
             }
         }
@@ -320,6 +356,7 @@ impl ScenePainter {
         document: &Document,
         id: NodeId,
         parent_world: Transform,
+        parent: Option<usize>,
         depth: usize,
         needs_outline: bool,
     ) -> Option<usize> {
@@ -346,6 +383,8 @@ impl ScenePainter {
             // An isolated nested root still paints at its document position.
             // Its ancestors are absent from the drawing-context state stack.
             local: if depth == 0 { world } else { local },
+            world,
+            parent,
             opacity: unit(node.opacity),
             blend: node.blend_mode,
             clip: node.clip_content.then(|| rounded_rect(node)),
@@ -364,7 +403,7 @@ impl ScenePainter {
                     || !node.strokes.is_empty()
                     || !node.fills.is_empty()));
         for &child in &node.children {
-            self.prepare_node(document, child, world, depth + 1, child_outline);
+            self.prepare_node(document, child, world, Some(index), depth + 1, child_outline);
         }
         let end = self.prepared.len();
         let mut child_signature = DefaultHasher::new();
@@ -416,6 +455,7 @@ impl ScenePainter {
         prepared.local_subtree_bounds = subtree;
         prepared.world_subtree_bounds = world.transform_rect(subtree);
         prepared.visual = visual.clone();
+        self.has_backdrops |= !visual.background_blurs.is_empty();
         prepared.reused = reused;
         self.cache.insert(id, visual);
         self.visiting.remove(&id);
@@ -430,6 +470,8 @@ fn paint_subtree(
     viewport: Rect,
     scene_reused: bool,
     stats: &mut RenderStats,
+    backdrops: &mut backdrop::BackdropCache,
+    roots: &[usize],
 ) {
     let node = &scene[index];
     if !node.world_subtree_bounds.intersects(viewport) {
@@ -442,6 +484,12 @@ fn paint_subtree(
     stats.unsupported_effects += node.visual.unsupported_effects;
 
     let transform = context.push_transform(ui_matrix(node.local));
+    if !node.visual.background_blurs.is_empty()
+        && backdrops.try_paint(context, scene, roots, index, scene_reused, stats)
+    {
+        context.pop(transform);
+        return;
+    }
     let isolate = node.opacity < 1.0 || node.blend != BlendMode::Normal || node.end > index + 1;
     let composite = if isolate {
         context.try_push_compositing_layer(bitmap_blend(node.blend), node.opacity, ui_rect(node.local_subtree_bounds))
@@ -461,7 +509,7 @@ fn paint_subtree(
     } else {
         PushedState::NONE
     };
-    paint_blurs(context, scene, index, viewport, scene_reused, stats, 0);
+    paint_blurs(context, scene, index, viewport, scene_reused, stats, 0, backdrops, roots);
     context.pop(blend);
     context.pop(opacity);
     context.pop(composite.unwrap_or(PushedState::NONE));
@@ -477,6 +525,8 @@ fn paint_blurs(
     scene_reused: bool,
     stats: &mut RenderStats,
     blur_index: usize,
+    backdrops: &mut backdrop::BackdropCache,
+    roots: &[usize],
 ) {
     let node = &scene[index];
     if let Some(effect) = node.visual.blurs.get(blur_index) {
@@ -489,6 +539,8 @@ fn paint_blurs(
             scene_reused,
             stats,
             blur_index + 1,
+            backdrops,
+            roots,
         );
         context.pop(state);
         return;
@@ -505,7 +557,7 @@ fn paint_blurs(
         // through an ancestor's layer blur. Keep those source pixels alive.
         let child_viewport = viewport.inflate(node.child_blur_outset);
         while child < node.end {
-            paint_subtree(context, scene, child, child_viewport, scene_reused, stats);
+            paint_subtree(context, scene, child, child_viewport, scene_reused, stats, backdrops, roots);
             child = scene[child].end;
         }
         context.pop(clip);
@@ -636,7 +688,7 @@ fn build_visual(
             effect.visible
                 && matches!(
                     effect.kind,
-                    EffectKind::DropShadow | EffectKind::InnerShadow
+                    EffectKind::DropShadow | EffectKind::InnerShadow | EffectKind::BackgroundBlur
                 )
         })
         || missing_images > 0;
@@ -754,7 +806,8 @@ fn build_visual(
     let mut inner = Vec::new();
     let mut path_shadows = Vec::new();
     let mut blurs: Vec<Rc<dyn IEffect>> = Vec::new();
-    let mut unsupported_effects = 0;
+    let mut background_blurs = Vec::new();
+    let unsupported_effects = 0;
     for effect in node.effects.iter().filter(|effect| effect.visible) {
         match effect.kind {
             EffectKind::LayerBlur => {
@@ -762,7 +815,11 @@ fn build_visual(
                     blurs.push(Rc::new(ImmutableBlurEffect::new(radius(effect.radius))));
                 }
             }
-            EffectKind::BackgroundBlur => unsupported_effects += 1,
+            EffectKind::BackgroundBlur => {
+                if effect.radius > 0.0 {
+                    background_blurs.push(radius(effect.radius));
+                }
+            }
             EffectKind::DropShadow | EffectKind::InnerShadow => {
                 if effect.color.a == 0 {
                     continue;
@@ -813,6 +870,7 @@ fn build_visual(
         box_inner: box_shadows(&inner),
         path_shadows,
         blurs,
+        background_blurs,
         local_bounds,
         missing_images,
         unsupported_effects,

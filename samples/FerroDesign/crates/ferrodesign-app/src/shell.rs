@@ -704,6 +704,8 @@ impl EditorShell {
             "renderer":"FerroUI Vello","pageCount":editor.document.pages.len(),"activePage":editor.active_page,
             "renderedFrames":self.canvas.frames.get(),"visibleNodes":stats.visible_nodes,"culledNodes":stats.culled_nodes,
             "cachedNodes":stats.cached_nodes,"missingImages":stats.missing_images,"unsupportedEffects":stats.unsupported_effects,
+            "backdropCacheHits":stats.backdrop_cache_hits,"backdropRasterizations":stats.backdrop_rasterizations,
+            "backdropSkipped":stats.backdrop_skipped,"backdropTooLarge":stats.backdrop_too_large,
             "invalidNodes":stats.invalid_nodes,
             "canUndo":editor.undo_label().is_some(),"canRedo":editor.redo_label().is_some(),"presentation":self.canvas.presentation.get(),
         }).to_string()

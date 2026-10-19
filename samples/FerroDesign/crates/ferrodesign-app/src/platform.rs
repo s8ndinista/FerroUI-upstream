@@ -2,6 +2,12 @@
 #[cfg(not(target_os = "emscripten"))]
 static NATIVE_SAVE_SUCCEEDED: std::sync::atomic::AtomicBool =
     std::sync::atomic::AtomicBool::new(true);
+#[cfg(not(target_os = "emscripten"))]
+static NATIVE_SERIALIZATION_PENDING: std::sync::atomic::AtomicBool =
+    std::sync::atomic::AtomicBool::new(false);
+#[cfg(not(target_os = "emscripten"))]
+static NATIVE_DRAFT_DIRTY: std::sync::atomic::AtomicBool =
+    std::sync::atomic::AtomicBool::new(false);
 #[cfg(target_os = "emscripten")]
 mod browser {
     use wasm_bindgen::prelude::*;
@@ -122,7 +128,7 @@ pub fn set_document_serialization_pending(pending: bool) {
     #[cfg(target_os = "emscripten")]
     browser::serialization_pending(pending);
     #[cfg(not(target_os = "emscripten"))]
-    let _ = pending;
+    NATIVE_SERIALIZATION_PENDING.store(pending, std::sync::atomic::Ordering::Relaxed);
 }
 /// The browser guards an active native text draft without serializing the whole
 /// design on every keystroke. Lifecycle events commit it through the shell once.
@@ -130,7 +136,7 @@ pub fn set_document_draft_dirty(dirty: bool) {
     #[cfg(target_os = "emscripten")]
     browser::draft_dirty(dirty);
     #[cfg(not(target_os = "emscripten"))]
-    let _ = dirty;
+    NATIVE_DRAFT_DIRTY.store(dirty, std::sync::atomic::Ordering::Relaxed);
 }
 /// A browser save request is queued synchronously; its status changes to saved
 /// only when IndexedDB completes the entire transaction.
@@ -147,10 +153,15 @@ pub fn document_save_status() -> &'static str {
     }
     #[cfg(not(target_os = "emscripten"))]
     {
-        if NATIVE_SAVE_SUCCEEDED.load(std::sync::atomic::Ordering::Relaxed) {
-            "All changes saved locally"
-        } else {
+        use std::sync::atomic::Ordering;
+        if !NATIVE_SAVE_SUCCEEDED.load(Ordering::Relaxed) {
             "Save failed · Export to keep your changes"
+        } else if NATIVE_DRAFT_DIRTY.load(Ordering::Relaxed) {
+            "Editing text…"
+        } else if NATIVE_SERIALIZATION_PENDING.load(Ordering::Relaxed) {
+            "Saving locally…"
+        } else {
+            "All changes saved locally"
         }
     }
 }

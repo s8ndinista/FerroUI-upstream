@@ -27,7 +27,7 @@ use ferroui_base::{
     ferro_class, ferro_impl_classes, instantiate, FerroObjectImpl, Matrix, Point as UiPoint,
     Rect as UiRect, Ref, StyledElementImpl, VisualImpl,
 };
-use ferroui_controls::{Control, ControlImpl};
+use ferroui_controls::{Control, ControlImpl, TopLevel};
 use std::{
     cell::{Cell, RefCell},
     rc::Rc,
@@ -330,9 +330,11 @@ impl DesignCanvas {
             let mut context = bitmap.create_drawing_context();
             let transform =
                 context.push_transform(Matrix::create_translation(-bounds.x, -bounds.y));
-            self.painter
-                .borrow_mut()
-                .render(&mut context, &editor.document, &roots, bounds);
+            let mut painter = self.painter.borrow_mut();
+            // This export has one output pixel per document unit. Canvas zoom
+            // and the window's display density must not affect the saved PNG.
+            painter.set_raster_scale(1.0);
+            painter.render(&mut context, &editor.document, &roots, bounds);
             context.pop(transform);
             context.dispose();
         }
@@ -1728,9 +1730,13 @@ impl VisualImpl for DesignCanvas {
         let camera = ctx.push_transform(
             Matrix::create_scale(v.zoom, v.zoom) * Matrix::create_translation(v.pan.x, v.pan.y),
         );
-        this.painter
-            .borrow_mut()
-            .render(ctx, doc, &roots, v.visible_rect());
+        {
+            let display_scale = TopLevel::get_top_level(Some(this))
+                .map_or(1.0, |top_level| top_level.render_scaling());
+            let mut painter = this.painter.borrow_mut();
+            painter.set_raster_scale(v.zoom * display_scale);
+            painter.render(ctx, doc, &roots, v.visible_rect());
+        }
         ctx.pop(camera);
         if let Some(current) = this.presentation.get() {
             for &(id, position) in this.overlays.borrow().iter().filter(|_| prototype_scene.is_none()) {
