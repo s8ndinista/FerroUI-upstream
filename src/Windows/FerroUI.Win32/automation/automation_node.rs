@@ -220,10 +220,10 @@ impl AutomationNode {
         let provider: ComPtr<IRawElementProviderSimple2> = match kind {
             NodeKind::Node => make_com_with(node, patterns!()),
             NodeKind::Root | NodeKind::Interop { .. } => {
-                let [a, b, c, d, e, f, g, h, i, j, k] = patterns!();
+                let [a, b, c, d, e, f, g, h, i, j, k, l] = patterns!();
                 make_com_with(
                     node,
-                    [a, b, c, d, e, f, g, h, i, j, k, InterfaceEntry::of::<IRawElementProviderFragmentRoot>()],
+                    [a, b, c, d, e, f, g, h, i, j, k, l, InterfaceEntry::of::<IRawElementProviderFragmentRoot>()],
                 )
             }
         };
