@@ -8,7 +8,7 @@ use ferroui_fonts_inter::AppBuilderExtension;
 use ferroui_themes_fluent::FluentTheme;
 use std::{cell::RefCell, rc::Rc};
 
-thread_local! { static SHELL: RefCell<Option<Rc<EditorShell>>> = const { RefCell::new(None) }; }
+ferroui_base::ferro_thread_local! { static SHELL: RefCell<Option<Rc<EditorShell>>> = const { RefCell::new(None) }; }
 
 #[repr(C)]
 pub struct App {
