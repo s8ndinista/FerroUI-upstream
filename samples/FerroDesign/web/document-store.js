@@ -26,6 +26,9 @@ export class DocumentStorage {
         this.sequence = 0;
         this.committedSequence = 0;
         this.draftDirty = false;
+        // Keep field validation separate from the durable writer state. A bad
+        // native draft must never turn a stale writer's conflict into a retry.
+        this.draftError = "";
         this.serializationPending = false;
         this.draftCommitter = null;
         this.phase = backend ? "saved" : "unavailable";
@@ -59,7 +62,8 @@ export class DocumentStorage {
     load() { return this.text; }
     status() {
         return {
-            phase: this.draftDirty && ["saved", "saving"].includes(this.phase) ? "editing"
+            phase: this.phase === "conflict" ? "conflict" : this.draftError ? "error"
+                : this.draftDirty && ["saved", "saving"].includes(this.phase) ? "editing"
                 : this.serializationPending && this.phase === "saved" ? "saving" : this.phase,
             backend: this.backend?.name || "memory",
             dirty: this.dirty,
@@ -69,7 +73,7 @@ export class DocumentStorage {
             sequence: this.sequence,
             committedSequence: this.committedSequence,
             characters: this.text.length,
-            error: this.error,
+            error: this.phase === "conflict" ? this.error : this.draftError || this.error,
         };
     }
     setStatusListener(listener) {
@@ -81,12 +85,14 @@ export class DocumentStorage {
         pending = Boolean(pending);
         if (pending === this.serializationPending) return;
         this.serializationPending = pending;
+        if (!pending && !this.draftDirty) this.draftError = "";
         this.notify();
     }
     setDraftDirty(dirty) {
         dirty = Boolean(dirty);
         if (dirty === this.draftDirty) return;
         this.draftDirty = dirty;
+        if (!dirty && !this.serializationPending) this.draftError = "";
         this.notify();
     }
     commitDraft() {
@@ -98,11 +104,11 @@ export class DocumentStorage {
             // draft marker before this synchronous callback returns.
             this.draftCommitter?.();
             if (this.serializationPending) throw new Error("The queued document snapshot could not be captured. Export the design before leaving.");
-            if (this.draftDirty) throw new Error("The active text edit could not be committed. Finish editing or export the design before leaving.");
+            if (this.draftDirty) throw new Error("The active inspector or text edit could not be committed. Correct the value or press Escape before leaving.");
+            this.draftError = "";
             return true;
         } catch (error) {
-            this.phase = "error";
-            this.error = error?.message || String(error);
+            this.draftError = error?.message || String(error);
             this.notify();
             return false;
         }

@@ -248,6 +248,42 @@ test("a failed native draft commit keeps the unload guard and never claims succe
     storage.detachLifecycle();
 });
 
+test("discarding an invalid inspector draft clears validation without inventing a document write", async () => {
+    const { backend, storage } = create();
+    storage.setDraftCommitter(() => {});
+    storage.setDraftDirty(true);
+    assert.equal(storage.commitDraft(), false);
+    assert.equal(storage.status().phase, "error");
+    assert.match(storage.status().error, /inspector/);
+    storage.setDraftDirty(false);
+    assert.equal(storage.status().phase, "saved");
+    assert.equal(storage.status().error, "");
+    assert.equal(await storage.flush(), true);
+    assert.equal(backend.calls.length, 0);
+    assert.equal(backend.current.text, "original");
+});
+
+test("inspector validation cannot clear a stale writer conflict or enable an overwrite retry", async () => {
+    const { backend, storage } = create();
+    storage.save("local edit");
+    await tick();
+    backend.fail(new DocumentConflictError("A newer tab already saved this document."));
+    assert.equal(await storage.flush(), false);
+    assert.equal(storage.status().phase, "conflict");
+    const conflict = storage.status().error;
+    storage.setDraftCommitter(() => {});
+    storage.setDraftDirty(true);
+    assert.equal(storage.commitDraft(), false);
+    assert.equal(storage.status().phase, "conflict");
+    assert.equal(storage.status().error, conflict);
+    storage.setDraftDirty(false);
+    assert.equal(storage.status().phase, "conflict");
+    assert.equal(storage.save("further local edit"), false);
+    assert.equal(await storage.flush(), false);
+    assert.equal(backend.calls.length, 1);
+    assert.equal(backend.current.text, "original");
+});
+
 test("unavailable IndexedDB preserves the legacy document and never silently forks saves", async () => {
     const values = new Map([[LEGACY_DOCUMENT_KEY, "legacy document"]]);
     const storage = await openDocumentStorage({ localStorage: {
