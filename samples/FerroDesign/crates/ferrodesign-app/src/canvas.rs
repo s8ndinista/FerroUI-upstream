@@ -2,6 +2,7 @@
 mod network;
 mod image_crop;
 mod layout_drag;
+mod selection;
 use crate::{
     icons::brush,
     renderer::{RenderStats, ScenePainter},
@@ -186,6 +187,11 @@ pub struct DesignCanvas {
     image_crop: Cell<Option<image_crop::ImageCropMode>>,
     image_crop_gesture: RefCell<Option<image_crop::ImageCropGesture>>,
     layout_drag: RefCell<Option<layout_drag::LayoutDragGesture>>,
+    free_layout_probe: RefCell<Option<layout_drag::FreeLayoutProbe>>,
+    pub select_groups: Cell<bool>,
+    selection_context: RefCell<Option<selection::CachedSelectionContext>>,
+    prototype_selection: RefCell<Option<selection::CachedPrototypeSelection>>,
+    selection_pointer: Cell<Option<Point>>,
 }
 ferro_class!(DesignCanvas:Control);
 ferro_impl_classes!(DesignCanvas:FerroObjectImpl,StyledElementImpl,LayoutableImpl,InteractiveImpl,ControlImpl);
@@ -222,6 +228,11 @@ impl DesignCanvas {
             image_crop: Cell::new(None),
             image_crop_gesture: RefCell::new(None),
             layout_drag: RefCell::new(None),
+            free_layout_probe: RefCell::new(None),
+            select_groups: Cell::new(false),
+            selection_context: RefCell::new(None),
+            prototype_selection: RefCell::new(None),
+            selection_pointer: Cell::new(None),
         });
         this.set_focusable(true);
         this.set_clip_to_bounds(true);
@@ -252,7 +263,7 @@ impl DesignCanvas {
             );
             root = overlay;
         }
-        editor.prototype_hit_test(root, point, 3.0 / self.viewport.get().zoom)
+        self.prototype_pick_in_root(&editor, root, point)
     }
     /// Activation changes cannot reuse a press or hover from an earlier frame.
     pub fn reset_presentation_input(&self) {
@@ -605,11 +616,6 @@ impl DesignCanvas {
             p
         }
     }
-    fn pick(&self, p: Point) -> Option<NodeId> {
-        self.editor
-            .borrow()
-            .hit_test(p, 3.0 / self.viewport.get().zoom)
-    }
     fn handle_at(&self, p: Point) -> Option<usize> {
         let editor = self.editor.borrow();
         if editor.selection.len() != 1 {
@@ -681,6 +687,7 @@ impl InputElementImpl for DesignCanvas {
         e.set_handled(true);
         let screen = e.get_position(Some(this));
         let screen = Point::new(screen.x, screen.y);
+        this.selection_pointer.set(Some(screen));
         let world = this.viewport.get().screen_to_world(screen);
         if e.properties().is_right_button_pressed {
             if this.presentation.get().is_none() {
@@ -712,10 +719,15 @@ impl InputElementImpl for DesignCanvas {
         match this.tool.get() {
             Tool::Comment => this.emit(CanvasEvent::Comment(world)),
             Tool::Select => {
+                let deep = e.key_modifiers().intersects(KeyModifiers::CONTROL | KeyModifiers::META);
+                if e.key_modifiers().contains(KeyModifiers::ALT) && !deep && this.vector_node.get().is_none() {
+                    this.cycle_selection_at(world, if additive { core::SelectionCycle::InFront } else { core::SelectionCycle::Behind });
+                    return;
+                }
                 if this.vector_press(world, e.click_count(), additive) {
                     return;
                 }
-                if let Some(corner) = this.handle_at(world) {
+                if let Some(corner) = if deep { None } else { this.handle_at(world) } {
                     let mut editor = this.editor.borrow_mut();
                     let id = editor.selection[0];
                     let node = editor.document.nodes[&id].clone();
@@ -736,7 +748,7 @@ impl InputElementImpl for DesignCanvas {
                         editor.begin_transaction("Resize");
                         *this.gesture.borrow_mut() = Gesture::Resize { node, corner };
                     }
-                } else if let Some(id) = this.pick(world) {
+                } else if let Some(id) = this.pick_with_modifiers(world, e.key_modifiers(), e.click_count() == 2) {
                     let mut editor = this.editor.borrow_mut();
                     if additive {
                         if editor.selection.contains(&id) {
@@ -773,6 +785,9 @@ impl InputElementImpl for DesignCanvas {
                         .filter_map(|id| editor.document.nodes.get(id).cloned())
                         .collect();
                     editor.begin_node_transaction(&exclude, "Move layers");
+                    if let Some(probe) = this.free_layout_probe.borrow_mut().as_mut() {
+                        probe.record_transaction(&editor);
+                    }
                     *this.gesture.borrow_mut() = Gesture::Move {
                         start: world,
                         nodes,
@@ -895,6 +910,7 @@ impl InputElementImpl for DesignCanvas {
     fn on_pointer_moved(this: &Self, e: &PointerEventArgs) {
         Self::parent_on_pointer_moved(this, e);
         let screen = e.get_position(Some(this));
+        this.selection_pointer.set(Some(Point::new(screen.x, screen.y)));
         let world = this.world(screen);
         if this.presentation.get().is_some() {
             this.emit(CanvasEvent::PrototypePointerMoved(Point::new(screen.x, screen.y)));
@@ -918,13 +934,13 @@ impl InputElementImpl for DesignCanvas {
             return;
         }
         if this.image_crop_move(world) { return; }
-        if this.layout_drag_move(world, Point::new(screen.x, screen.y)) { return; }
         let shift = e.key_modifiers().contains(KeyModifiers::SHIFT);
+        if this.layout_drag_move_constrained(world, Point::new(screen.x, screen.y), shift) { return; }
         let mut camera_changed = false;
         let mut gesture = this.gesture.borrow_mut();
         match &mut *gesture {
             Gesture::None => {
-                let hover = this.pick(world);
+                let hover = this.pick_with_modifiers(world, e.key_modifiers(), false);
                 if this.hover.replace(hover) != hover {
                     this.invalidate_visual();
                 }
@@ -1001,6 +1017,9 @@ impl InputElementImpl for DesignCanvas {
                     }
                 }
                 editor.refresh_preview_nodes(exclude);
+                if let Some(probe) = this.free_layout_probe.borrow_mut().as_mut() {
+                    probe.record_revision(editor.revision);
+                }
                 *moved = true;
             }
             Gesture::Resize { node, corner } => {
@@ -1224,7 +1243,8 @@ impl InputElementImpl for DesignCanvas {
             return;
         }
         let release_screen = e.get_position(Some(this));
-        if this.layout_drag_release(this.world(release_screen), Point::new(release_screen.x, release_screen.y)) {
+        if this.layout_drag_release_constrained(this.world(release_screen), Point::new(release_screen.x, release_screen.y),
+            e.key_modifiers().contains(KeyModifiers::SHIFT)) {
             e.pointer().capture(None);
             e.set_handled(true);
             return;
@@ -1342,7 +1362,12 @@ impl InputElementImpl for DesignCanvas {
                 this.leave_vector_edit();
                 this.emit(CanvasEvent::Selection);
             } else {
-                this.cancel()
+                if !this.cancel_active_edit() && !this.editor.borrow().has_active_transaction() {
+                    this.editor.borrow_mut().clear_selection();
+                    this.hover.set(None);
+                    this.invalidate_visual();
+                    this.emit(CanvasEvent::Selection);
+                }
             }
             e.set_handled(true);
             return;
@@ -1359,13 +1384,7 @@ impl InputElementImpl for DesignCanvas {
             .intersects(KeyModifiers::CONTROL | KeyModifiers::META);
         let shift = e.key_modifiers.contains(KeyModifiers::SHIFT);
         let alt = e.key_modifiers.contains(KeyModifiers::ALT);
-        if e.key == Key::Enter && !command {
-            if this.vector_node.get().is_some() {
-                this.leave_vector_edit();
-                this.emit(CanvasEvent::Selection);
-            } else {
-                this.edit_vector();
-            }
+        if this.selection_key(e) {
             e.set_handled(true);
             return;
         }

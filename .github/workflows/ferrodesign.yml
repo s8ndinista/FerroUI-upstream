@@ -94,6 +94,8 @@ jobs:
           set -o pipefail
           source "$RUNNER_TEMP/ferrodesign-tools/env.sh"
           CARGO_PROFILE_TEST_DEBUG=0 CARGO_PROFILE_TEST_CODEGEN_UNITS=16 cargo test --locked --manifest-path ../../Cargo.toml -p ferroui-controls --lib preedit --jobs 1 -- --test-threads=1 2>&1 | tee browser-report/preedit-tests.log
+          CARGO_PROFILE_TEST_DEBUG=0 CARGO_PROFILE_TEST_CODEGEN_UNITS=16 cargo test --locked --manifest-path ../../Cargo.toml -p ferroui-controls --lib rich_ranges --jobs 1 -- --test-threads=1 2>&1 | tee browser-report/rich-range-tests.log
+          CARGO_PROFILE_TEST_DEBUG=0 CARGO_PROFILE_TEST_CODEGEN_UNITS=16 cargo test --locked --manifest-path ../../Cargo.toml -p ferroui-controls --lib replacing_range_styles_and_font_features_invalidates_shaped_layout --jobs 1 -- --test-threads=1 2>&1 | tee browser-report/text-layout-invalidation-tests.log
 
       - name: Test public compositing recording, Skia pixels and Vello compatibility
         run: |

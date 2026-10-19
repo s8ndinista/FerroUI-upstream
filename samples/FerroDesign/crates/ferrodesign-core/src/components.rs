@@ -353,6 +353,8 @@ fn preserve_overrides(node: &mut Node, old: &Node) {
             "visible" => node.visible = old.visible,
             "opacity" => node.opacity = old.opacity,
             "blend_mode" => node.blend_mode = old.blend_mode,
+            "is_mask" => node.is_mask = old.is_mask,
+            "mask_type" => node.mask_type = old.mask_type,
             "width" => node.width = old.width,
             "height" => node.height = old.height,
             "position" => { node.x = old.x; node.y = old.y; }
@@ -371,6 +373,8 @@ fn preserve_overrides(node: &mut Node, old: &Node) {
             "text_vertical_align" => node.text_vertical_align = old.text_vertical_align,
             "text_decoration" => node.text_decoration = old.text_decoration,
             "text_auto_resize" => node.text_auto_resize = old.text_auto_resize,
+            "text_direction" => node.text_direction = old.text_direction,
+            "font_features" => node.font_features = old.font_features.clone(),
             "text_style" => node.text_style = old.text_style,
             "name" => node.name = old.name.clone(),
             "path" => { node.path = old.path.clone(); node.vector_network = old.vector_network.clone(); }

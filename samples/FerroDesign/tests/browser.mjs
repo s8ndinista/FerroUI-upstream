@@ -1,13 +1,21 @@
 import { prototypeMotionRegressions } from "./prototype-browser.mjs";
 import { nativeAuthoringRegressions } from "./authoring-browser.mjs";
+import { typographyRegressions } from "./typography-browser.mjs";
 import { vectorNetworkRegressions } from "./network-browser.mjs";
 import { componentAuthoringRegressions } from "./components-browser.mjs";
 import { imageCropRegressions } from "./image-crop-browser.mjs";
 import { compositingRegressions } from "./compositing-browser.mjs";
+import { svgCompositingRegressions } from "./svg-compositing-browser.mjs";
+import { maskAuthoringRegressions } from "./masks-browser.mjs";
 import { pageInspectorRegressions } from "./page-inspector-browser.mjs";
 import { layoutAuthoringRegressions } from "./layout-browser.mjs";
 import { layoutDragRegressions } from "./layout-drag-browser.mjs";
 import { effectAuthoringRegressions } from "./effects-browser.mjs";
+import { inspectorLifecycleRegressions } from "./inspector-lifecycle-browser.mjs";
+import { floatingPanelRegressions } from "./panels-browser.mjs";
+import { layoutTransferRegressions } from "./layout-transfer-browser.mjs";
+import { selectionRegressions } from "./selection-browser.mjs";
+import { geometryAuthoringRegressions } from "./geometry-authoring-browser.mjs";
 import { compactAutosaveRegressions } from "./serialization-browser.mjs";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
@@ -900,20 +908,34 @@ try {
                 nativeHelpers, output, mode);
             await nativeAuthoringRegressions(page, svgDocument, check,
                 nativeHelpers, output, mode);
+            await typographyRegressions(page, svgDocument, check,
+                nativeHelpers, output, mode);
             await componentAuthoringRegressions(page, svgDocument, check,
                 nativeHelpers, output, mode);
             await imageCropRegressions(page, svgDocument, check,
                 nativeHelpers, output, mode);
             await compositingRegressions(page, svgDocument, check,
                 nativeHelpers, output, mode);
+            await svgCompositingRegressions(page, svgDocument, check,
+                nativeHelpers, output, mode);
+            await maskAuthoringRegressions(page, svgDocument, check,
+                nativeHelpers, output, mode);
             await effectAuthoringRegressions(page, svgDocument, check,
                 nativeHelpers, output, mode);
+            await inspectorLifecycleRegressions(page, svgDocument, check,
+                { ...nativeHelpers, flushStorage, waitForReload });
+            await floatingPanelRegressions(page, svgDocument, check, nativeHelpers, mode);
             await pageInspectorRegressions(page, svgDocument, check,
                 nativeHelpers, output, mode);
             await layoutAuthoringRegressions(page, svgDocument, check,
                 nativeHelpers, output, mode);
             await layoutDragRegressions(page, svgDocument, check,
                 nativeHelpers, output, mode);
+            await layoutTransferRegressions(page, svgDocument, check,
+                nativeHelpers, output, mode);
+            await selectionRegressions(page, svgDocument, check,
+                nativeHelpers, output, mode);
+            await geometryAuthoringRegressions(page, svgDocument, check, nativeHelpers, mode);
             await compactAutosaveRegressions(page, svgDocument, check,
                 { fixtureNode, isolatedDocument, importFixture, documentState, state, clickWorld, clickNative, frames, flushStorage }, output, mode);
             await prototypeInputRegressions(page, svgDocument, check);

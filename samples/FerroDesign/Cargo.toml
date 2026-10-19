@@ -53,3 +53,11 @@ opt-level = 1
 
 [profile.dev.package.ferroui-controls]
 opt-level = 1
+
+# Native correctness tests exercise generated control code without the large
+# optimizer peak. Browser/release builds keep the optimized profiles above.
+[profile.test.package.ferroui-base]
+opt-level = 0
+
+[profile.test.package.ferroui-controls]
+opt-level = 0

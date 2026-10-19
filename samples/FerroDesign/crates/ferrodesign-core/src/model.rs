@@ -243,6 +243,8 @@ pub enum BlendMode {
     Saturation,
     Color,
     Luminosity,
+    /// Children can blend with artwork below this layer outside the group.
+    PassThrough,
 }
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -422,6 +424,12 @@ pub struct AutoLayout {
     pub cross_align: LayoutAlign,
     pub wrap: bool,
     pub columns: usize,
+    /// Empty lists preserve the original uniform grid. Omitted columns use
+    /// equal fractional tracks; additional rows use intrinsic content sizing.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub column_tracks: Vec<crate::GridTrack>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub row_tracks: Vec<crate::GridTrack>,
     pub width: SizingMode,
     pub height: SizingMode,
     pub reverse: bool,
@@ -437,6 +445,8 @@ impl Default for AutoLayout {
             cross_align: LayoutAlign::Start,
             wrap: false,
             columns: 3,
+            column_tracks: Vec::new(),
+            row_tracks: Vec::new(),
             width: SizingMode::Fixed,
             height: SizingMode::Hug,
             reverse: false,
@@ -702,6 +712,12 @@ pub struct Node {
     pub locked: bool,
     pub opacity: f64,
     pub blend_mode: BlendMode,
+    /// A mask affects subsequent siblings within this parent; the source is
+    /// retained as an independently editable layer and is not ordinary paint.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub is_mask: bool,
+    #[serde(default, skip_serializing_if = "crate::MaskType::is_alpha")]
+    pub mask_type: crate::MaskType,
     pub clip_content: bool,
     pub prototype_overflow: PrototypeOverflow,
     pub fills: Vec<Fill>,
@@ -721,6 +737,12 @@ pub struct Node {
     pub text_decoration: TextDecoration,
     pub text_auto_resize: TextAutoResize,
     pub text_runs: Vec<TextRun>,
+    /// Omitted legacy documents retain the original left-to-right paragraph.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub text_direction: Option<crate::TextDirection>,
+    /// Explicit whole-layer OpenType settings; absent tags use font defaults.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub font_features: Vec<crate::FontFeatureSetting>,
     pub polygon_sides: usize,
     pub star_inner_radius: f64,
     pub path: VectorPath,
@@ -767,6 +789,8 @@ impl Default for Node {
             locked: false,
             opacity: 1.0,
             blend_mode: BlendMode::Normal,
+            is_mask: false,
+            mask_type: crate::MaskType::Alpha,
             clip_content: false,
             prototype_overflow: PrototypeOverflow::None,
             fills: vec![Fill::solid(Color::rgb(217, 217, 217))],
@@ -786,6 +810,8 @@ impl Default for Node {
             text_decoration: TextDecoration::None,
             text_auto_resize: TextAutoResize::Fixed,
             text_runs: Vec::new(),
+            text_direction: None,
+            font_features: Vec::new(),
             polygon_sides: 3,
             star_inner_radius: 0.45,
             path: VectorPath::default(),
@@ -840,6 +866,12 @@ impl Node {
         }
         if kind == NodeKind::Line {
             n.strokes = vec![Stroke::new(Color::BLACK, 1.0)]
+        }
+        // New groups pass child blends through to their backdrop. Keep the
+        // deserialization/default value Normal so existing documents retain
+        // the isolation behavior they were authored with.
+        if kind == NodeKind::Group {
+            n.blend_mode = BlendMode::PassThrough;
         }
         if kind == NodeKind::Frame {
             n.fills = vec![Fill::solid(Color::WHITE)];
@@ -1734,6 +1766,7 @@ impl Document {
                     )));
                 }
             }
+            crate::validate_font_features(&n.font_features)?;
         }
         if seen.len() != self.nodes.len() {
             return Err(DocumentError::Invalid(

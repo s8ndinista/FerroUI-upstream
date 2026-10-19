@@ -1,5 +1,7 @@
 use crate::*;
 use std::collections::BTreeSet;
+#[path = "grid_track_layout.rs"]
+mod grid_track_layout;
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct LayoutResult {
     pub changed: Vec<NodeId>,
@@ -69,6 +71,7 @@ fn has_grid_placement(children: &[LayoutItem]) -> bool {
 }
 
 fn layout_inputs(parent: &Node, layout: &AutoLayout, children: &[LayoutItem]) -> Result<(), String> {
+    layout.validate_grid_tracks().map_err(|error| error.to_string())?;
     if ![parent.width, parent.height, layout.gap, layout.cross_gap,
         layout.padding.top, layout.padding.right, layout.padding.bottom, layout.padding.left]
         .iter().all(|value| value.is_finite() && *value >= 0.0)
@@ -319,8 +322,8 @@ impl Document {
         for parent in self.nodes.values().filter(|node| node.layout.as_ref()
             .is_some_and(|layout| layout.axis == LayoutAxis::Grid)) {
             let children = self.layout_items(parent);
-            if !has_grid_placement(&children) { continue; }
             let layout = parent.layout.as_ref().unwrap();
+            if !has_grid_placement(&children) && !layout.has_explicit_grid_tracks() { continue; }
             layout_inputs(parent, layout, &children)
                 .and_then(|_| grid_cells(&children, layout.columns).map(|_| ()))
                 .map_err(|error| DocumentError::Invalid(format!("Grid {}: {error}", parent.id)))?;
@@ -333,7 +336,7 @@ impl Document {
         let layout = parent.layout.as_ref().ok_or_else(|| DocumentError::Invalid("Parent does not use auto layout".into()))?;
         let children = self.layout_items(parent);
         layout_inputs(parent, layout, &children).map_err(DocumentError::Invalid)?;
-        if layout.axis == LayoutAxis::Grid && has_grid_placement(&children) {
+        if layout.axis == LayoutAxis::Grid && (has_grid_placement(&children) || layout.has_explicit_grid_tracks()) {
             grid_cells(&children, layout.columns).map_err(DocumentError::Invalid)?;
         }
         Ok(())
@@ -414,7 +417,12 @@ impl Document {
         let mut ph = parent.height;
         let gap = layout.gap.max(0.0);
         let cross_gap = layout.cross_gap.max(0.0);
-        if children.is_empty() {
+        if layout.axis == LayoutAxis::Grid && layout.has_explicit_grid_tracks() {
+            if let Err(error) = grid_track_layout::arrange_explicit_grid(&mut children, &layout, &mut pw, &mut ph, &mut result.warnings) {
+                result.errors.push(format!("Node {id}: {error}"));
+                return result;
+            }
+        } else if children.is_empty() {
             if layout.width == SizingMode::Hug {
                 pw = p.left + p.right
             }

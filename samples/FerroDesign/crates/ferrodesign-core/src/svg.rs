@@ -44,7 +44,7 @@ fn matrix(t: Transform) -> String {
 
 fn blend(mode: BlendMode) -> &'static str {
     match mode {
-        BlendMode::Normal => "normal",
+        BlendMode::Normal | BlendMode::PassThrough => "normal",
         BlendMode::Multiply => "multiply",
         BlendMode::Screen => "screen",
         BlendMode::Overlay => "overlay",
@@ -116,16 +116,35 @@ fn paint_definition(paint: &Paint, id: &str, node: &Node, out: &mut String) {
             let size = crate::embedded_image_size(href)
                 .unwrap_or(Point::new(node.width.max(0.001), node.height.max(0.001)));
             let crop = crop.unwrap_or(Rect::new(0.0, 0.0, 1.0, 1.0));
-            let source = Rect::new(crop.x * size.x, crop.y * size.y, crop.width * size.x, crop.height * size.y);
+            let source = Rect::new(
+                crop.x * size.x,
+                crop.y * size.y,
+                crop.width * size.x,
+                crop.height * size.y,
+            );
             let tiled = *scale == ImageScale::Tile;
-            let (width, height) = if tiled { (source.width, source.height) } else { (node.width.max(0.001), node.height.max(0.001)) };
+            let (width, height) = if tiled {
+                (source.width, source.height)
+            } else {
+                (node.width.max(0.001), node.height.max(0.001))
+            };
             let viewport = Rect::new(0.0, 0.0, width, height);
             let _ = write!(
                 out,
                 r#"<pattern id="{id}" width="{}" height="{}" patternUnits="userSpaceOnUse"><svg x="{}" y="{}" width="{}" height="{}" viewBox="{} {} {} {}" preserveAspectRatio="{mode}" overflow="hidden"><image href="{}" width="{}" height="{}" preserveAspectRatio="none"/></svg></pattern>"#,
-                number(width), number(height), number(viewport.x), number(viewport.y), number(viewport.width), number(viewport.height),
-                number(source.x), number(source.y), number(source.width), number(source.height),
-                escape_xml(&safe_image_href(href)), number(size.x), number(size.y),
+                number(width),
+                number(height),
+                number(viewport.x),
+                number(viewport.y),
+                number(viewport.width),
+                number(viewport.height),
+                number(source.x),
+                number(source.y),
+                number(source.width),
+                number(source.height),
+                escape_xml(&safe_image_href(href)),
+                number(size.x),
+                number(size.y),
             );
         }
     }
@@ -212,7 +231,11 @@ fn path_data(path: &VectorPath, t: Transform) -> String {
 
 pub fn outline_path(node: &Node) -> VectorPath {
     if node.kind == NodeKind::Vector {
-        return node.vector_network.as_ref().map(|network| network.fill_path()).unwrap_or_else(|| node.path.clone());
+        return node
+            .vector_network
+            .as_ref()
+            .map(|network| network.fill_path())
+            .unwrap_or_else(|| node.path.clone());
     }
     if node.kind == NodeKind::Polygon || node.kind == NodeKind::Star {
         return VectorPath::polygon(&node.polygon_points(), true);
@@ -267,7 +290,7 @@ pub fn outline_path(node: &Node) -> VectorPath {
     let [tl, tr, br, bl] = radii;
     VectorPath {
         fill_rule: FillRule::NonZero,
-            anchor_modes: Default::default(),
+        anchor_modes: Default::default(),
         segments: vec![
             PathSegment::MoveTo {
                 point: Point::new(tl, 0.0),
@@ -315,7 +338,13 @@ fn node_shape(node: &Node, attributes: &str) -> String {
         _ => format!(
             r#"<path d="{}" fill-rule="{}" {attributes}/>"#,
             path_data(&outline_path(node), Transform::IDENTITY),
-            if node.vector_network.as_ref().map(|g| g.fill_rule).unwrap_or(node.path.fill_rule) == FillRule::EvenOdd {
+            if node
+                .vector_network
+                .as_ref()
+                .map(|g| g.fill_rule)
+                .unwrap_or(node.path.fill_rule)
+                == FillRule::EvenOdd
+            {
                 "evenodd"
             } else {
                 "nonzero"
@@ -326,8 +355,13 @@ fn node_shape(node: &Node, attributes: &str) -> String {
 
 fn stroke_shape(node: &Node, attributes: &str) -> String {
     if let Some(network) = &node.vector_network {
-        format!(r#"<path d="{}" {attributes}/>"#, path_data(&network.stroke_path(), Transform::IDENTITY))
-    } else { node_shape(node, attributes) }
+        format!(
+            r#"<path d="{}" {attributes}/>"#,
+            path_data(&network.stroke_path(), Transform::IDENTITY)
+        )
+    } else {
+        node_shape(node, attributes)
+    }
 }
 
 fn text_shape(node: &Node, attributes: &str) -> String {
@@ -446,13 +480,80 @@ fn text_shape(node: &Node, attributes: &str) -> String {
     out
 }
 
+/// Retain selected paint subtrees, their ancestor transforms/clips, and every
+/// preceding mask needed by those subtrees. This also keeps document paint order
+/// when selection order differs from layer order.
+fn selection_projection(
+    document: &Document,
+    page: NodeId,
+    selected: &BTreeSet<NodeId>,
+) -> Document {
+    fn retain(
+        document: &Document,
+        children: &[NodeId],
+        selected: &BTreeSet<NodeId>,
+        kept: &mut BTreeSet<NodeId>,
+        painted: &mut BTreeSet<NodeId>,
+        whole: bool,
+    ) -> bool {
+        let mut masks = Vec::new();
+        let mut any = false;
+        for id in children {
+            let Some(node) = document.nodes.get(id) else {
+                continue;
+            };
+            let whole = whole || selected.contains(id);
+            let descendant = retain(document, &node.children, selected, kept, painted, whole);
+            if node.is_mask && node.visible {
+                masks.push(*id);
+            }
+            if whole || descendant {
+                kept.insert(*id);
+                if whole {
+                    painted.insert(*id);
+                }
+                for mask in &masks {
+                    let descendants = document.descendants(*mask);
+                    kept.extend(descendants.iter().copied());
+                    painted.extend(descendants);
+                }
+                any = true;
+            }
+        }
+        any
+    }
+    let mut kept = BTreeSet::new();
+    let mut painted = BTreeSet::new();
+    retain(
+        document,
+        document.children(page).unwrap_or_default(),
+        selected,
+        &mut kept,
+        &mut painted,
+        false,
+    );
+    let mut projected = document.clone();
+    projected.nodes.retain(|id, _| kept.contains(id));
+    for node in projected.nodes.values_mut() {
+        node.children.retain(|id| kept.contains(id));
+        if !painted.contains(&node.id) {
+            node.fills.clear();
+            node.strokes.clear();
+        }
+    }
+    for page in &mut projected.pages {
+        page.children.retain(|id| kept.contains(id));
+    }
+    projected
+}
+
 impl Document {
     pub fn export_svg(&self, page: NodeId, selection: &[NodeId]) -> String {
         self.export_svg_report(page, selection).source
     }
     pub fn export_svg_report(&self, page: NodeId, selection: &[NodeId]) -> SvgExport {
         let selection_set: BTreeSet<_> = selection.iter().copied().collect();
-        let roots: Vec<_> = if selection.is_empty() {
+        let mut roots: Vec<_> = if selection.is_empty() {
             self.page(page)
                 .map(|p| p.children.clone())
                 .unwrap_or_default()
@@ -468,6 +569,26 @@ impl Document {
                 .copied()
                 .collect()
         };
+        roots.sort_by_key(|id| {
+            let mut order = Vec::new();
+            let mut current = *id;
+            for _ in 0..MAX_DOCUMENT_DEPTH {
+                let Some(parent) = self.nodes.get(&current).and_then(|n| n.parent) else {
+                    break;
+                };
+                order.push(
+                    self.children(parent)
+                        .unwrap_or_default()
+                        .iter()
+                        .position(|id| *id == current)
+                        .unwrap_or(0),
+                );
+                current = parent;
+            }
+            order.reverse();
+            order
+        });
+        roots.dedup();
         let bounds = roots
             .iter()
             .filter_map(|id| self.world_bounds(*id))
@@ -476,9 +597,45 @@ impl Document {
         let mut defs = String::new();
         let mut body = String::new();
         let mut warnings = Vec::new();
-        for id in roots {
-            self.export_svg_node(id, true, &mut defs, &mut body, &mut warnings, 0);
-        }
+        let needs_mask_context = roots.iter().any(|id| {
+            let mut current = *id;
+            for _ in 0..MAX_DOCUMENT_DEPTH {
+                let Some(parent) = self.nodes.get(&current).and_then(|n| n.parent) else {
+                    break;
+                };
+                if self
+                    .children(parent)
+                    .unwrap_or_default()
+                    .iter()
+                    .take_while(|id| **id != current)
+                    .any(|id| self.nodes.get(id).is_some_and(|n| n.visible && n.is_mask))
+                {
+                    return true;
+                }
+                current = parent;
+            }
+            false
+        });
+        let projected;
+        let document = if selection.is_empty() || !needs_mask_context {
+            self
+        } else {
+            projected = selection_projection(self, page, &selection_set);
+            &projected
+        };
+        document.export_svg_siblings(
+            if selection.is_empty() || needs_mask_context {
+                document.children(page).unwrap_or_default()
+            } else {
+                &roots
+            },
+            true,
+            &mut defs,
+            &mut body,
+            &mut warnings,
+            0,
+            false,
+        );
         let source = format!(
             r#"<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="{}" height="{}" viewBox="{} {} {} {}" role="img" aria-label="{}"><title>{}</title><defs>{}</defs>{}</svg>"#,
@@ -496,6 +653,123 @@ impl Document {
         SvgExport { source, warnings }
     }
 
+    /// Conservative ink bounds in the node's own coordinates, including
+    /// overflowing descendants. A mask region must not impose a new crop.
+    fn svg_ink_bounds(&self, id: NodeId, depth: usize) -> Rect {
+        let Some(node) = self.nodes.get(&id) else {
+            return Rect::default();
+        };
+        if depth >= MAX_DOCUMENT_DEPTH {
+            return node.local_bounds();
+        }
+        let stroke = node
+            .strokes
+            .iter()
+            .filter(|s| s.visible)
+            .map(|s| s.width * 5.0)
+            .fold(0.0, f64::max);
+        let effect = node
+            .effects
+            .iter()
+            .filter(|e| e.visible)
+            .map(|e| e.radius * 3.0 + e.spread.abs() + e.offset.x.abs().max(e.offset.y.abs()))
+            .sum::<f64>();
+        let mut bounds = node.local_bounds().inflate(stroke);
+        for child in &node.children {
+            if let Some(child_node) = self.nodes.get(child).filter(|n| n.visible) {
+                bounds = bounds.union(
+                    child_node
+                        .local_transform()
+                        .transform_rect(self.svg_ink_bounds(*child, depth + 1)),
+                );
+            }
+        }
+        bounds.inflate(effect)
+    }
+
+    fn svg_blends_with_parent(&self, id: NodeId, depth: usize) -> bool {
+        let Some(node) = self.nodes.get(&id).filter(|n| n.visible) else {
+            return false;
+        };
+        if depth >= MAX_DOCUMENT_DEPTH {
+            return false;
+        }
+        match node.blend_mode {
+            BlendMode::Normal => false,
+            BlendMode::PassThrough => node
+                .children
+                .iter()
+                .any(|id| self.svg_blends_with_parent(*id, depth + 1)),
+            _ => true,
+        }
+    }
+
+    fn export_svg_siblings(
+        &self,
+        children: &[NodeId],
+        root: bool,
+        defs: &mut String,
+        body: &mut String,
+        warnings: &mut Vec<String>,
+        depth: usize,
+        vector_mask: bool,
+    ) {
+        let region = children
+            .iter()
+            .filter_map(|id| {
+                self.nodes.get(id).filter(|n| n.visible).map(|n| {
+                    let transform = if root {
+                        self.world_transform(*id).unwrap_or_default()
+                    } else {
+                        n.local_transform()
+                    };
+                    transform.transform_rect(self.svg_ink_bounds(*id, depth))
+                })
+            })
+            .reduce(|a, b| a.union(b))
+            .unwrap_or(Rect::new(0.0, 0.0, 1.0, 1.0))
+            .inflate(1.0);
+        let mut opened = 0;
+        for id in children {
+            let Some(node) = self.nodes.get(id).filter(|n| n.visible) else {
+                continue;
+            };
+            if node.is_mask {
+                let geometry_only = vector_mask || node.mask_type == MaskType::Vector;
+                let kind = if geometry_only || node.mask_type == MaskType::Alpha {
+                    "alpha"
+                } else {
+                    "luminance"
+                };
+                let mut source = String::new();
+                self.export_svg_node(*id, root, defs, &mut source, warnings, depth, geometry_only);
+                let _ = write!(
+                    defs,
+                    r#"<mask id="layer-mask-{id}" maskUnits="userSpaceOnUse" maskContentUnits="userSpaceOnUse" x="{}" y="{}" width="{}" height="{}" mask-type="{kind}" color-interpolation="sRGB"{}>{source}</mask>"#,
+                    number(region.x),
+                    number(region.y),
+                    number(region.width.max(0.0)),
+                    number(region.height.max(0.0)),
+                    if geometry_only {
+                        r#" data-ferro-mask-type="vector""#
+                    } else {
+                        ""
+                    }
+                );
+                let _ = write!(body, r#"<g mask="url(#layer-mask-{id})">"#);
+                opened += 1;
+            } else {
+                if opened > 0 && !vector_mask && self.svg_blends_with_parent(*id, depth) {
+                    warnings.push(format!("Layer {}: SVG masks isolate the masked sibling group; blending through that scope with an external backdrop cannot be preserved", node.name));
+                }
+                self.export_svg_node(*id, root, defs, body, warnings, depth, vector_mask);
+            }
+        }
+        for _ in 0..opened {
+            body.push_str("</g>");
+        }
+    }
+
     fn export_svg_node(
         &self,
         id: NodeId,
@@ -504,6 +778,7 @@ impl Document {
         body: &mut String,
         warnings: &mut Vec<String>,
         depth: usize,
+        vector_mask: bool,
     ) {
         if depth >= MAX_DOCUMENT_DEPTH {
             return;
@@ -511,9 +786,30 @@ impl Document {
         let Some(node) = self.nodes.get(&id) else {
             return;
         };
-        if !node.visible {
+        if !node.visible || (vector_mask && node.opacity <= 0.0) {
             return;
         }
+        let mut geometry;
+        let node = if vector_mask {
+            geometry = node.clone();
+            geometry.opacity = 1.0;
+            geometry.blend_mode = BlendMode::PassThrough;
+            geometry.effects.clear();
+            for fill in &mut geometry.fills {
+                fill.paint = Paint::Solid(Color::WHITE);
+                fill.opacity = 1.0;
+            }
+            for stroke in &mut geometry.strokes {
+                stroke.paint = Paint::Solid(Color::WHITE);
+                stroke.opacity = 1.0;
+            }
+            for run in &mut geometry.text_runs {
+                run.color = Some(Color::WHITE);
+            }
+            &geometry
+        } else {
+            node
+        };
         let transform = if root {
             self.world_transform(id).unwrap_or_default()
         } else {
@@ -521,13 +817,27 @@ impl Document {
         };
         let _ = write!(
             body,
-            r#"<g id="node-{id}" data-name="{}" transform="{}" opacity="{}" style="mix-blend-mode:{}">"#,
+            r#"<g id="node-{id}" data-name="{}" transform="{}" opacity="{}" style="mix-blend-mode:{};isolation:{}">"#,
             escape_xml(&node.name),
             matrix(transform),
             number(node.opacity),
-            blend(node.blend_mode)
+            blend(node.blend_mode),
+            if node.blend_mode == BlendMode::PassThrough {
+                "auto"
+            } else {
+                "isolate"
+            }
         );
         let _ = write!(body, "<title>{}</title>", escape_xml(&node.name));
+        if node.blend_mode == BlendMode::PassThrough
+            && node.opacity < 1.0
+            && node
+                .children
+                .iter()
+                .any(|id| self.svg_blends_with_parent(*id, depth + 1))
+        {
+            warnings.push(format!("Layer {}: SVG opacity isolates this pass-through group; external backdrop blending may differ", node.name));
+        }
         let effects: Vec<_> = node.effects.iter().filter(|e| e.visible).collect();
         let has_filter = effects.iter().any(|e| e.kind != EffectKind::BackgroundBlur);
         if has_filter {
@@ -603,9 +913,15 @@ impl Document {
             if node.kind == NodeKind::Text && node.fills.is_empty() {
                 body.push_str(&node_shape(node, r#"fill="none""#));
             }
-            for child in &node.children {
-                self.export_svg_node(*child, false, defs, body, warnings, depth + 1);
-            }
+            self.export_svg_siblings(
+                &node.children,
+                false,
+                defs,
+                body,
+                warnings,
+                depth + 1,
+                vector_mask,
+            );
             for (i, stroke) in node
                 .strokes
                 .iter()
@@ -624,7 +940,11 @@ impl Document {
                     StrokeJoin::Round => "round",
                     StrokeJoin::Bevel => "bevel",
                 };
-                let alignment = if node.has_closed_stroke_contours() { stroke.align } else { StrokeAlign::Center };
+                let alignment = if node.has_closed_stroke_contours() {
+                    stroke.align
+                } else {
+                    StrokeAlign::Center
+                };
                 let mut attributes = format!(
                     r#"fill="none" stroke="{}" stroke-opacity="{}" stroke-width="{}" stroke-linecap="{cap}" stroke-linejoin="{join}""#,
                     paint_color(&stroke.paint, &paint_id),

@@ -298,6 +298,8 @@ impl EditorShell {
         });
         let blur = commit.clone();
         field.add_handler(InputElement::lost_focus_event(), move |_, _| blur());
+        let draft_commit = commit.clone();
+        let draft_committed = committed.clone();
         let weak_field = field.downgrade();
         let weak_error = error.downgrade();
         let weak_shell = Rc::downgrade(self);
@@ -330,6 +332,7 @@ impl EditorShell {
                 _ => {},
             }
         }, RoutingStrategies::TUNNEL, false);
+        self.bind_inspector_draft(&field, draft_committed, draft_commit, Some(&error));
         panel
     }
 

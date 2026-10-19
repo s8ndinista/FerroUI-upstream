@@ -25,7 +25,7 @@ export async function nativeAuthoringRegressions(page, reference, check, helpers
     const text = fixtureNode(reference, 2, {
         kind: "text", name: "Unicode range", x: 40, y: 40, width: 320, height: 60,
         text: "A🦀BC", text_runs: [], font_family: "Inter", font_size: 24, font_weight: 400,
-        italic: false, text_decoration: "none", text_auto_resize: "fixed", line_height: 28,
+        italic: false, text_decoration: "none", text_auto_resize: "fixed", line_height: 28 / 24,
     });
     await importFixture(page, isolatedDocument(reference, [text], "Native rich text ranges"));
     await clickWorld(page, 100, 60);

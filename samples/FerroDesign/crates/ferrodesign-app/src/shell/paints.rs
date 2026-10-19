@@ -554,7 +554,8 @@ impl EditorShell {
         let weak_shell = Rc::downgrade(self);
         let weak_field = field.downgrade();
         let weak_error = error.downgrade();
-        let committed = RefCell::new(value.to_string());
+        let committed = Rc::new(RefCell::new(value.to_string()));
+        let committed_value = committed.clone();
         let commit = Rc::new(move || {
             let (Some(shell), Some(field), Some(error)) = (
                 weak_shell.upgrade(),
@@ -563,18 +564,18 @@ impl EditorShell {
             ) else {
                 return;
             };
-            if shell.updating.get() {
+            if shell.updating.get() || field.is_composing_text() {
                 return;
             }
             let text = field.text().unwrap_or_default();
             // Enter followed by blur must not produce a second undo entry. This also
             // avoids silently rounding an untouched imported fractional coordinate.
-            if *committed.borrow() == text {
+            if *committed_value.borrow() == text {
                 return;
             }
             match apply(&shell, &text) {
                 Ok(()) => {
-                    *committed.borrow_mut() = text;
+                    *committed_value.borrow_mut() = text;
                     error.set_is_visible(false);
                     field.set_border_brush(Some(icons::brush("#E5E5E5")));
                 }
@@ -587,12 +588,14 @@ impl EditorShell {
         });
         let blur = commit.clone();
         field.add_handler(InputElement::lost_focus_event(), move |_, _| blur());
+        let draft_commit = commit.clone();
         field.add_handler(InputElement::key_down_event(), move |_, event| {
             if event.key == Key::Enter {
                 commit();
                 event.set_handled(true);
             }
         });
+        self.bind_inspector_draft(&field, committed, draft_commit, Some(&error));
         panel
     }
 

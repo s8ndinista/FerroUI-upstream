@@ -22,6 +22,18 @@ impl PartialEq for EditorRenderToken {
 }
 impl Eq for EditorRenderToken {}
 
+/// Opaque ownership of one pending transaction. Retaining its allocation keeps
+/// cancellation safe even if a whole Editor is replaced at the same revision.
+/// This identity is transient and does not enter documents or history entries.
+#[derive(Clone, Debug)]
+pub struct EditorTransactionToken {
+    identity: Arc<()>,
+}
+impl PartialEq for EditorTransactionToken {
+    fn eq(&self, other: &Self) -> bool { Arc::ptr_eq(&self.identity, &other.identity) }
+}
+impl Eq for EditorTransactionToken {}
+
 /// Complete render invalidation between two editor revisions. `nodes` includes
 /// edited nodes and their descendants; `ancestors` carries derived bounds and
 /// group/effect dependencies. IDs can occur on pages outside the active page.
@@ -174,6 +186,7 @@ enum PendingSnapshot {
 }
 #[derive(Clone, Debug)]
 struct PendingTransaction {
+    token: EditorTransactionToken,
     label: String,
     before: PendingSnapshot,
     selection: Vec<NodeId>,
@@ -501,6 +514,7 @@ impl Editor {
     pub fn begin_transaction(&mut self, label: impl Into<String>) {
         if self.pending.is_none() {
             self.pending = Some(PendingTransaction {
+                token: EditorTransactionToken { identity: Arc::new(()) },
                 label: label.into(),
                 before: PendingSnapshot::Document(self.document.clone()),
                 selection: self.selection.clone(),
@@ -528,6 +542,7 @@ impl Editor {
             return;
         }
         self.pending = Some(PendingTransaction {
+            token: EditorTransactionToken { identity: Arc::new(()) },
             label: label.into(),
             before: PendingSnapshot::Nodes {
                 nodes: ids.iter().filter_map(|id| {
@@ -748,6 +763,9 @@ impl Editor {
     /// Whether a live edit currently owns the next history transaction.
     pub fn has_active_transaction(&self) -> bool {
         self.pending.is_some()
+    }
+    pub fn active_transaction_token(&self) -> Option<EditorTransactionToken> {
+        self.pending.as_ref().map(|pending| pending.token.clone())
     }
     pub fn can_undo(&self) -> bool {
         !self.undo.is_empty()
@@ -1968,6 +1986,33 @@ fn has_selected_ancestor(document: &Document, id: NodeId, selected: &BTreeSet<No
 #[cfg(test)]
 mod performance_tests {
     use super::*;
+
+    #[test]
+    fn transaction_identity_survives_promotion_and_never_reuses_a_replaced_editor() {
+        let mut editor = Editor::default();
+        let page = editor.active_page;
+        let child = editor.document.insert_node(page,
+            Node::new(NodeKind::Rectangle, "Owned", 0.0, 0.0, 40.0, 30.0)).unwrap();
+        editor.refresh();
+        let original = editor.document.to_json().unwrap();
+        editor.begin_node_transaction(&[child], "Move layers");
+        let token = editor.active_transaction_token().unwrap();
+        editor.begin_transaction("Promote snapshot");
+        assert_eq!(editor.active_transaction_token(), Some(token.clone()));
+        editor.cancel_transaction();
+        assert!(editor.active_transaction_token().is_none());
+        assert_eq!(editor.document.to_json().unwrap(), original);
+        editor.begin_transaction("Move layers");
+        assert_ne!(editor.active_transaction_token(), Some(token.clone()));
+        let mut replacement = Editor::new(editor.document.clone());
+        replacement.revision = editor.revision;
+        replacement.document.revision = editor.document.revision;
+        replacement.begin_transaction("Move layers");
+        assert_ne!(replacement.active_transaction_token(), editor.active_transaction_token());
+        assert_ne!(replacement.active_transaction_token(), Some(token));
+        assert_eq!(replacement.document.to_json().unwrap(), original);
+        assert_eq!(replacement.history_len(), 0);
+    }
 
     fn fixture() -> (Document, NodeId, NodeId, NodeId) {
         let mut document = Document::new("Scoped edit fixture");

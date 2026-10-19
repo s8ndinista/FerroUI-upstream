@@ -6,13 +6,15 @@ struct UpdatingLayout<'a>(&'a Cell<bool>, bool);
 impl Drop for UpdatingLayout<'_> { fn drop(&mut self) { self.0.set(self.1); } }
 
 struct LayoutSnapshot {
-    child: NodeId,
+    parent: NodeId,
+    child: Option<NodeId>,
     name: String,
     parent_name: String,
     settings: LayoutChild,
     grid: bool,
     reverse: bool,
     children: Vec<(NodeId, String)>,
+    layout: core::AutoLayout,
 }
 
 struct LayoutInputs {
@@ -56,14 +58,20 @@ impl EditorShell {
     pub(super) fn layout_dialog(self: &Rc<Self>) { self.layout_view(None); }
 
     fn layout_view(self: &Rc<Self>, requested: Option<NodeId>) {
+        self.layout_view_at(requested, None);
+    }
+
+    fn layout_view_at(self: &Rc<Self>, requested: Option<NodeId>, parent_id: Option<NodeId>) {
         let snapshot = {
             let editor = self.editor.borrow();
             let document = &editor.document;
             let selected = requested.or_else(|| editor.selection.first().copied())
                 .and_then(|id| document.nodes.get(&id));
-            let parent = selected.and_then(|node| node.parent.and_then(|parent| document.nodes.get(&parent))
-                .filter(|parent| parent.layout.is_some()))
-                .or_else(|| selected.filter(|node| node.layout.is_some()));
+            let parent = parent_id.and_then(|id| document.nodes.get(&id))
+                .filter(|node| node.layout.is_some())
+                .or_else(|| selected.filter(|node| node.layout.is_some()))
+                .or_else(|| selected.and_then(|node| node.parent.and_then(|parent| document.nodes.get(&parent))
+                    .filter(|parent| parent.layout.is_some())));
             parent.and_then(|parent| {
                 let layout = parent.layout.as_ref()?;
                 let mut children: Vec<_> = parent.children.iter().filter_map(|id| document.nodes.get(id))
@@ -72,26 +80,38 @@ impl EditorShell {
                         if node.layout_child.absolute { " · absolute" } else { "" }))).collect();
                 if layout.reverse { children.reverse(); }
                 let child = selected.filter(|node| node.parent == Some(parent.id))
-                    .or_else(|| children.first().and_then(|(id, _)| document.nodes.get(id)))?;
-                Some(LayoutSnapshot { child: child.id, name: child.name.clone(), parent_name: parent.name.clone(),
-                    settings: child.layout_child, grid: layout.axis == LayoutAxis::Grid,
-                    reverse: layout.reverse, children })
+                    .or_else(|| children.first().and_then(|(id, _)| document.nodes.get(id)));
+                Some(LayoutSnapshot { parent: parent.id, child: child.map(|node| node.id),
+                    name: child.map(|node| node.name.clone()).unwrap_or_else(|| "Empty frame".into()), parent_name: parent.name.clone(),
+                    settings: child.map(|node| node.layout_child).unwrap_or_default(), grid: layout.axis == LayoutAxis::Grid,
+                    reverse: layout.reverse, children, layout: layout.clone() })
             })
         };
         let _updating = UpdatingLayout(&self.updating, self.updating.replace(true));
-        self.modal("Layout placement and order", "Size a child, place it across grid tracks, or move it relative to a sibling. Each Apply or reorder is one undo step.");
+        self.modal("Layout placement and order", "Size grid tracks or a child, place layers across cells, or move them relative to a sibling. Each Apply or reorder is one undo step.");
         let host = self.control::<StackPanel>("ModalContent");
         host.set_spacing(12.0);
         let actions = self.control::<StackPanel>("ModalActions");
         actions.children().add(self.layout_button("Done", "LayoutDone", true, |shell| shell.close_modal()));
         let Some(snapshot) = snapshot else {
-            host.children().add(layout_text("Select an auto-layout frame containing layers, or one of its direct children.", true));
+            host.children().add(layout_text("Select an auto-layout frame or one of its direct children.", true));
             return;
         };
-        let child_id = snapshot.child;
+        let parent_id = snapshot.parent;
         let settings = snapshot.settings;
         let is_grid = snapshot.grid;
         host.children().add(layout_text(&format!("{} · {}", snapshot.parent_name, snapshot.name), false));
+
+        let error = layout_text("", true);
+        error.set_name(Some("LayoutError".into()));
+        error.set_foreground(Some(icons::brush("#C8372B")));
+        error.set_is_visible(false);
+        host.children().add(error.clone());
+        if is_grid { self.layout_track_controls(&snapshot, &error); }
+        let Some(child_id) = snapshot.child else {
+            host.children().add(layout_text("This frame has no children. Add or drag layers into it to edit child sizing and placement.", true));
+            return;
+        };
         let labels: Vec<_> = snapshot.children.iter().map(|(_, name)| name.clone()).collect();
         let child_choice = layout_combo("LayoutChildChoice", &labels,
             snapshot.children.iter().position(|(id, _)| *id == child_id).unwrap_or(0));
@@ -102,17 +122,16 @@ impl EditorShell {
             if let (Some(shell), Some(choice)) = (weak_shell.upgrade(), weak_choice.upgrade()) {
                 if shell.updating.get() { return; }
                 if let Some(id) = usize::try_from(choice.selected_index()).ok().and_then(|index| ids.get(index)).copied() {
-                    shell.layout_view(Some(id));
+                    if !shell.flush_inspector_drafts() {
+                        let _updating = UpdatingLayout(&shell.updating, shell.updating.replace(true));
+                        choice.set_selected_index(ids.iter().position(|id| *id == child_id).unwrap_or(0) as i32);
+                        return;
+                    }
+                    shell.layout_view_at(Some(id), Some(parent_id));
                 }
             }
         });
         host.children().add(child_choice);
-
-        let error = layout_text("", true);
-        error.set_name(Some("LayoutError".into()));
-        error.set_foreground(Some(icons::brush("#C8372B")));
-        error.set_is_visible(false);
-        host.children().add(error.clone());
 
         let grid = settings.grid.unwrap_or_default();
         host.children().add(layout_text(if is_grid { "Grid placement" } else { "Grid placement is available in a grid frame." }, false));
@@ -201,15 +220,76 @@ impl EditorShell {
     fn layout_apply_result(self: &Rc<Self>, child: NodeId, error: &WeakRef<TextBlock>,
         operation: impl FnOnce(&mut Editor) -> Result<core::LayoutResult, core::DocumentError>) {
         if self.updating.get() { return; }
+        if !self.flush_inspector_drafts() { return; }
         let result = { let mut editor = self.editor.borrow_mut(); operation(&mut editor) };
         match result {
             Ok(result) => {
                 self.changed();
-                self.layout_view(Some(child));
+                let parent = self.editor.borrow().document.nodes.get(&child).and_then(|node| node.parent);
+                self.layout_view_at(Some(child), parent);
                 if !result.warnings.is_empty() { self.toast(&result.warnings.join("\n")); }
             }
             Err(message) => layout_show_error(error, &message.to_string()),
         }
+    }
+
+    fn layout_track_controls(self: &Rc<Self>, snapshot: &LayoutSnapshot, error: &Ref<TextBlock>) {
+        let host = self.control::<StackPanel>("ModalContent");
+        host.children().add(layout_text("Grid track sizing", false));
+        host.children().add(layout_text("Separate tracks with commas: 120, auto, 2fr. Sizes are pixels, auto fits content, and fr shares remaining space. A blank list restores implicit tracks. Enter, Tab, Apply, or Save commits both lists together.", true));
+        let columns = layout_input("LayoutColumnTracks", &core::format_grid_tracks(&snapshot.layout.column_tracks));
+        let rows = layout_input("LayoutRowTracks", &core::format_grid_tracks(&snapshot.layout.row_tracks));
+        host.children().add(layout_pair("Column tracks", &columns, "Row tracks", &rows));
+        let expected = Rc::new(RefCell::new(snapshot.layout.clone()));
+        let committed_columns = Rc::new(RefCell::new(columns.text().unwrap_or_default()));
+        let committed_rows = Rc::new(RefCell::new(rows.text().unwrap_or_default()));
+        let weak_columns = columns.downgrade(); let weak_rows = rows.downgrade();
+        let weak_error = error.downgrade(); let weak_shell = Rc::downgrade(self);
+        let previous_columns = committed_columns.clone(); let previous_rows = committed_rows.clone();
+        let parent = snapshot.parent;
+        let commit: Rc<dyn Fn()> = Rc::new(move || {
+            let (Some(shell), Some(columns), Some(rows)) = (weak_shell.upgrade(), weak_columns.upgrade(), weak_rows.upgrade()) else { return; };
+            if shell.updating.get() || !columns.is_attached_to_visual_tree() || !columns.is_effectively_visible()
+                || columns.is_composing_text() || rows.is_composing_text() { return; }
+            let column_text = columns.text().unwrap_or_default(); let row_text = rows.text().unwrap_or_default();
+            if column_text == *previous_columns.borrow() && row_text == *previous_rows.borrow() { return; }
+            let parsed = core::parse_grid_tracks(&column_text, core::MAX_GRID_COLUMNS)
+                .and_then(|columns| core::parse_grid_tracks(&row_text, core::MAX_GRID_ROWS).map(|rows| (columns, rows)));
+            let result = parsed.and_then(|(columns, rows)| {
+                let mut editor = shell.editor.borrow_mut();
+                if editor.document.nodes.get(&parent).and_then(|node| node.layout.as_ref()) != Some(&*expected.borrow()) {
+                    return Err(core::DocumentError::Invalid("The frame changed. Reopen layout authoring before applying these tracks.".into()));
+                }
+                let revision = editor.revision;
+                editor.set_grid_tracks(parent, columns, rows).map(|result| (result, editor.revision != revision))
+            });
+            match result {
+                Ok((result, changed)) => {
+                    *previous_columns.borrow_mut() = column_text;
+                    *previous_rows.borrow_mut() = row_text;
+                    if let Some(layout) = shell.editor.borrow().document.nodes.get(&parent).and_then(|node| node.layout.clone()) {
+                        *expected.borrow_mut() = layout;
+                    }
+                    if let Some(error) = weak_error.upgrade() { error.set_is_visible(false); }
+                    if changed { shell.changed(); }
+                    if !result.warnings.is_empty() { shell.toast(&result.warnings.join("\n")); }
+                }
+                Err(error) => layout_show_error(&weak_error, &error.to_string()),
+            }
+            shell.sync_document_draft_dirty();
+        });
+        for (field, committed) in [(&columns, committed_columns), (&rows, committed_rows)] {
+            let blur = commit.clone();
+            field.add_handler(InputElement::lost_focus_event(), move |_, _| blur());
+            let enter = commit.clone(); let weak_field = field.downgrade();
+            field.add_handler(InputElement::key_down_event(), move |_, event| {
+                if event.key == Key::Enter && weak_field.upgrade().is_some_and(|field| !field.is_composing_text()) {
+                    enter(); event.set_handled(true);
+                }
+            });
+            self.bind_inspector_draft(field, committed, commit.clone(), Some(error));
+        }
+        host.children().add(self.layout_button("Apply grid tracks", "LayoutApplyTracks", true, move |_| commit()));
     }
 
     fn layout_button(self: &Rc<Self>, caption: &str, name: &str, enabled: bool,

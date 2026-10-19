@@ -21,6 +21,12 @@
       <Setter Property="Background" Value="#0D99FF"/>
       <Setter Property="Foreground" Value="White"/>
     </Style>
+    <Style Selector="Button.constraint">
+      <Setter Property="MinWidth" Value="0"/><Setter Property="MinHeight" Value="0"/>
+      <Setter Property="Padding" Value="0"/><Setter Property="CornerRadius" Value="2"/>
+      <Setter Property="Background" Value="#BDBDBD"/>
+    </Style>
+    <Style Selector="Button.constraint.active"><Setter Property="Background" Value="#0D99FF"/></Style>
     <Style Selector="Button.tool">
       <Setter Property="Width" Value="38"/><Setter Property="Height" Value="38"/>
       <Setter Property="Padding" Value="9"/><Setter Property="CornerRadius" Value="8"/>
@@ -166,6 +172,8 @@
               <Button Name="PageStylesButton" Content="Styles" HorizontalContentAlignment="Left"/>
               <Button Name="PageVariablesButton" Content="Variables" HorizontalContentAlignment="Left"/>
               <Button Name="PageComponentsButton" Content="Components" HorizontalContentAlignment="Left"/>
+              <Border Classes="rule"/>
+              <Button Name="PageFramePresetsButton" Content="Frame presets…" HorizontalContentAlignment="Left"/>
             </StackPanel>
             <StackPanel Name="DesignInspector" Spacing="8" IsVisible="False">
               <UniformGrid Columns="6">
@@ -186,6 +194,7 @@
                 <StackPanel Spacing="4"><TextBlock Text="Rotation" Classes="label"/><TextBox Name="RotationField" Text="0"/></StackPanel>
                 <Button Name="FlipButton" Grid.Column="2" Content="Flip horizontal" VerticalAlignment="Bottom"/>
               </Grid>
+              <Button Name="AffineButton" Content="Affine transform and skew…" HorizontalContentAlignment="Left"/>
               <Border Classes="rule"/>
               <Grid ColumnDefinitions="*,28"><TextBlock Text="Layout" Classes="heading" VerticalAlignment="Center"/><Button Name="AddLayoutButton" Grid.Column="1" Content="+" ToolTip.Tip="Add auto layout"/></Grid>
               <Grid ColumnDefinitions="*,12,*">
@@ -197,6 +206,7 @@
                 <ComboBox Name="HeightSizingChoice" Grid.Column="2" HorizontalAlignment="Stretch" ToolTip.Tip="Height sizing"/>
               </Grid>
               <CheckBox Name="ClipCheck" Content="Clip content" FontSize="11"/>
+              <Button Name="FramePresetsButton" Content="Create a preset frame…" HorizontalContentAlignment="Left"/>
               <Button Name="EditLayoutButton" Content="Layout and grid placement…" HorizontalAlignment="Stretch" IsVisible="False"/>
               <StackPanel Name="LayoutOptions" IsVisible="False" Spacing="8">
                 <UniformGrid Columns="3">
@@ -220,6 +230,21 @@
               </StackPanel>
               <Border Classes="rule"/>
               <TextBlock Text="Constraints" Classes="heading"/>
+              <Grid ColumnDefinitions="72,12,*">
+                <Border Width="72" Height="64" BorderBrush="#D9D9D9" BorderThickness="1" CornerRadius="4" Padding="8">
+                  <Grid ColumnDefinitions="8,*,8" RowDefinitions="8,*,8">
+                    <Button Name="ConstraintTop" Grid.Column="1" Classes="constraint" Width="22" Height="5" HorizontalAlignment="Center" ToolTip.Tip="Pin to top"/>
+                    <Button Name="ConstraintLeft" Grid.Row="1" Classes="constraint" Width="5" Height="18" VerticalAlignment="Center" ToolTip.Tip="Pin to left"/>
+                    <Border Grid.Column="1" Grid.Row="1" Width="22" Height="18" BorderBrush="#BDBDBD" BorderThickness="1" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    <Button Name="ConstraintRight" Grid.Column="2" Grid.Row="1" Classes="constraint" Width="5" Height="18" VerticalAlignment="Center" ToolTip.Tip="Pin to right"/>
+                    <Button Name="ConstraintBottom" Grid.Column="1" Grid.Row="2" Classes="constraint" Width="22" Height="5" HorizontalAlignment="Center" ToolTip.Tip="Pin to bottom"/>
+                  </Grid>
+                </Border>
+                <StackPanel Grid.Column="2" Spacing="4">
+                  <Button Name="ConstraintCenterX" Content="Horizontal center" HorizontalContentAlignment="Left"/>
+                  <Button Name="ConstraintCenterY" Content="Vertical center" HorizontalContentAlignment="Left"/>
+                </StackPanel>
+              </Grid>
               <Grid ColumnDefinitions="*,12,*">
                 <StackPanel Spacing="4"><TextBlock Text="Horizontal" Classes="label"/><ComboBox Name="HorizontalConstraint" HorizontalAlignment="Stretch"/></StackPanel>
                 <StackPanel Grid.Column="2" Spacing="4"><TextBlock Text="Vertical" Classes="label"/><ComboBox Name="VerticalConstraint" HorizontalAlignment="Stretch"/></StackPanel>
@@ -227,6 +252,7 @@
               <Border Classes="rule"/>
               <TextBlock Text="Appearance" Classes="heading"/>
               <ComboBox Name="BlendModeChoice" HorizontalAlignment="Stretch" ToolTip.Tip="Blend the completed layer with the content underneath"/>
+              <Button Name="CompositingButton" Content="Masks and compositing…" HorizontalContentAlignment="Left"/>
               <Grid ColumnDefinitions="*,12,*">
                 <StackPanel Spacing="4"><TextBlock Text="Opacity %" Classes="label"/><TextBox Name="OpacityField" Text="100"/></StackPanel>
                 <StackPanel Grid.Column="2" Spacing="4"><TextBlock Text="Corner radius" Classes="label"/><TextBox Name="RadiusField" Text="0"/></StackPanel>
@@ -310,7 +336,7 @@
         </ScrollViewer>
       </Grid>
     </Border>
-    <TextBlock Name="CanvasCaption" Grid.Column="2" Text="ORBIT / MOBILE BANKING" FontSize="10" Foreground="#868686" Margin="24,25" HorizontalAlignment="Left" VerticalAlignment="Top" IsHitTestVisible="False"/>
+    <TextBlock Name="CanvasCaption" Grid.Column="2" Text="" FontSize="10" Foreground="#868686" Margin="24,25" HorizontalAlignment="Left" VerticalAlignment="Top" IsHitTestVisible="False"/>
     <Border Name="Toolbar" Grid.Column="2" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="8,0,8,24" Padding="7" Background="White" CornerRadius="13" BorderBrush="#D7D7D7" BorderThickness="1" BoxShadow="0 3 14 0 #20000000">
       <StackPanel Orientation="Horizontal" Spacing="1">
         <Button Name="SelectTool" Classes="tool active" ToolTip.Tip="Move (V)"/>
@@ -334,7 +360,7 @@
     <Border Name="ModalBackdrop" Grid.ColumnSpan="4" Background="#55000000" IsVisible="False">
       <Border Name="ModalPanel" Width="620" MaxHeight="660" Background="White" CornerRadius="12" Padding="24" HorizontalAlignment="Center" VerticalAlignment="Center" BoxShadow="0 12 48 0 #30000000">
         <Grid RowDefinitions="Auto,Auto,*,Auto">
-          <Grid ColumnDefinitions="*,32">
+          <Grid Name="ModalHeader" ColumnDefinitions="*,32" Background="Transparent" ToolTip.Tip="Drag to move the editor">
             <TextBlock Name="ModalTitle" FontSize="17" FontWeight="SemiBold" VerticalAlignment="Center"/>
             <Button Name="CloseModalButton" Grid.Column="1" Content="×" FontSize="18"/>
           </Grid>

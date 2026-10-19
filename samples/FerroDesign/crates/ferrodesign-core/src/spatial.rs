@@ -311,6 +311,43 @@ impl SceneIndex {
         tolerance: f64,
         include_locked: bool,
     ) -> Option<NodeId> {
+        self.hit_test_filtered(d, p, tolerance, include_locked, |_| true)
+    }
+    /// Exact geometry hits in front-to-back painter order. The spatial query
+    /// visits only intersecting buckets; overlap menus and cycling never need
+    /// to enumerate the page. Hidden, locked and ancestor-clipped shapes obey
+    /// the same rules as ordinary picking.
+    pub fn hit_test_candidates(
+        &self,
+        d: &Document,
+        p: Point,
+        tolerance: f64,
+        include_locked: bool,
+    ) -> Vec<NodeId> {
+        self.point_candidates(p, tolerance)
+            .into_iter()
+            .filter(|&id| self.is_hit(d, id, p, tolerance, include_locked, None))
+            .collect()
+    }
+    /// Apply a renderer-specific visibility predicate after exact geometry and
+    /// clipping. Rejected front layers cannot swallow a visible layer behind
+    /// them; ordinary picking stops as soon as the first accepted hit is found.
+    pub fn hit_test_filtered(
+        &self,
+        d: &Document,
+        p: Point,
+        tolerance: f64,
+        include_locked: bool,
+        mut accept: impl FnMut(NodeId) -> bool,
+    ) -> Option<NodeId> {
+        self.point_candidates(p, tolerance)
+            .into_iter()
+            .find(|&id| self.is_hit(d, id, p, tolerance, include_locked, None) && accept(id))
+    }
+    fn point_candidates(&self, p: Point, tolerance: f64) -> Vec<NodeId> {
+        if !valid_pick(p, tolerance) {
+            return Vec::new();
+        }
         let mut ids = self.spatial.query(Rect::new(
             p.x - tolerance,
             p.y - tolerance,
@@ -320,7 +357,7 @@ impl SceneIndex {
         ids.sort_unstable_by_key(|id| {
             std::cmp::Reverse(self.z_order.get(id).copied().unwrap_or(0))
         });
-        self.hit_test_ordered(d, p, tolerance, include_locked, None, ids)
+        ids
     }
     /// Limit the broadphase before z-order selection so overlapping unrelated
     /// page frames cannot swallow presentation input. Presentation roots are
@@ -335,6 +372,46 @@ impl SceneIndex {
         tolerance: f64,
         include_locked: bool,
     ) -> Option<NodeId> {
+        self.hit_test_in_subtree_filtered(d, root, p, tolerance, include_locked, |_| true)
+    }
+    /// Ordered exact hits in an isolated rendered subtree. External clips and
+    /// Boolean ownership are intentionally ignored, matching presentation.
+    pub fn hit_test_candidates_in_subtree(
+        &self,
+        d: &Document,
+        root: NodeId,
+        p: Point,
+        tolerance: f64,
+        include_locked: bool,
+    ) -> Vec<NodeId> {
+        self.subtree_point_candidates(d, root, p, tolerance)
+            .into_iter()
+            .filter(|&id| self.is_hit(d, id, p, tolerance, include_locked, Some(root)))
+            .collect()
+    }
+    pub fn hit_test_in_subtree_filtered(
+        &self,
+        d: &Document,
+        root: NodeId,
+        p: Point,
+        tolerance: f64,
+        include_locked: bool,
+        mut accept: impl FnMut(NodeId) -> bool,
+    ) -> Option<NodeId> {
+        self.subtree_point_candidates(d, root, p, tolerance)
+            .into_iter()
+            .find(|&id| self.is_hit(d, id, p, tolerance, include_locked, Some(root)) && accept(id))
+    }
+    fn subtree_point_candidates(
+        &self,
+        d: &Document,
+        root: NodeId,
+        p: Point,
+        tolerance: f64,
+    ) -> Vec<NodeId> {
+        if !valid_pick(p, tolerance) || !d.nodes.contains_key(&root) {
+            return Vec::new();
+        }
         let mut parent = d.nodes.get(&root).and_then(|node| node.parent);
         let mut externally_clipped = false;
         for _ in 0..MAX_DOCUMENT_DEPTH {
@@ -346,77 +423,153 @@ impl SceneIndex {
             }
             parent = node.parent;
         }
-        let ids = if self.transforms.contains_key(&root) && !externally_clipped {
-            let mut ids = self.spatial.query(Rect::new(
-                p.x - tolerance,
-                p.y - tolerance,
-                tolerance * 2.0,
-                tolerance * 2.0,
-            ));
+        if self.transforms.contains_key(&root) && !externally_clipped {
+            let mut ids = self.point_candidates(p, tolerance);
             ids.retain(|id| *id == root || d.is_ancestor(root, *id));
-            ids.sort_unstable_by_key(|id| {
-                std::cmp::Reverse(self.z_order.get(id).copied().unwrap_or(0))
-            });
             ids
         } else {
             let mut ids = d.descendants(root);
             ids.reverse();
             ids
-        };
-        self.hit_test_ordered(d, p, tolerance, include_locked, Some(root), ids)
+        }
     }
-    fn hit_test_ordered(
+    fn is_hit(
         &self,
         d: &Document,
+        id: NodeId,
         p: Point,
         tolerance: f64,
         include_locked: bool,
         root: Option<NodeId>,
-        ids: Vec<NodeId>,
-    ) -> Option<NodeId> {
-        if !p.x.is_finite() || !p.y.is_finite() || !tolerance.is_finite() || tolerance < 0.0 {
-            return None;
+    ) -> bool {
+        let Some(n) = d.nodes.get(&id) else {
+            return false;
+        };
+        if !d.effective_visible(id) || (!include_locked && d.effective_locked(id)) {
+            return false;
         }
-        for id in ids {
-            let Some(n) = d.nodes.get(&id) else { continue };
-            if !d.effective_visible(id) || (!include_locked && d.effective_locked(id)) {
-                continue;
+        let mut parent = if root == Some(id) { None } else { n.parent };
+        for _ in 0..MAX_DOCUMENT_DEPTH {
+            let Some(pid) = parent else { break };
+            let Some(n) = d.nodes.get(&pid) else { break };
+            if n.kind == NodeKind::Boolean {
+                return false;
             }
-            let mut clipped = false;
-            let mut parent = if root == Some(id) { None } else { n.parent };
-            for _ in 0..MAX_DOCUMENT_DEPTH {
-                let Some(pid) = parent else { break };
-                let Some(n) = d.nodes.get(&pid) else { break };
-                if n.kind == NodeKind::Boolean {
-                    clipped = true;
-                    break;
-                }
-                if n.clip_content {
-                    if let Some(inv) = self
-                        .transforms
-                        .get(&pid)
-                        .copied()
-                        .or_else(|| d.world_transform(pid))
-                        .and_then(Transform::inverse)
-                    {
-                        if !n.hit_test_local(inv.apply(p), 0.0) {
-                            clipped = true;
-                            break;
-                        }
-                    } else {
-                        clipped = true;
-                        break;
+            if n.clip_content {
+                if let Some(inv) = self
+                    .transforms
+                    .get(&pid)
+                    .copied()
+                    .or_else(|| d.world_transform(pid))
+                    .and_then(Transform::inverse)
+                {
+                    if !n.hit_test_local(inv.apply(p), 0.0) {
+                        return false;
                     }
+                } else {
+                    return false;
                 }
-                if root == Some(pid) {
-                    break;
-                }
-                parent = n.parent
             }
-            if !clipped && d.hit_test_node(id, p, tolerance) {
-                return Some(id);
+            if root == Some(pid) {
+                break;
             }
+            parent = n.parent
         }
-        None
+        d.hit_test_node(id, p, tolerance)
+    }
+}
+
+fn valid_pick(p: Point, tolerance: f64) -> bool {
+    p.x.is_finite() && p.y.is_finite() && tolerance.is_finite() && tolerance >= 0.0
+}
+
+/// A retained index for one independently rendered subtree, including a root
+/// on another page or outside an authored ancestor's clip. Build once for the
+/// document revision and reuse it across presentation pointer events. It keeps
+/// inherited affine transforms and internal clips without cloning artwork.
+#[derive(Clone, Debug)]
+pub struct IsolatedSelectionIndex {
+    root: NodeId,
+    scene: SceneIndex,
+}
+
+impl IsolatedSelectionIndex {
+    pub fn new(document: &Document, root: NodeId) -> Option<Self> {
+        let node = document.nodes.get(&root)?;
+        let transform = match node.parent {
+            Some(parent) => document.world_transform(parent)?,
+            None => Transform::IDENTITY,
+        };
+        let mut scene = SceneIndex::default();
+        scene.walk(
+            document,
+            vec![(
+                root,
+                WalkState {
+                    transform,
+                    visible: document.effective_visible(root),
+                    ..WalkState::default()
+                },
+            )],
+            true,
+        );
+        scene.revision = document.revision;
+        Some(Self { root, scene })
+    }
+
+    pub fn root(&self) -> NodeId {
+        self.root
+    }
+    pub fn len(&self) -> usize {
+        self.scene.spatial.len()
+    }
+    pub fn is_empty(&self) -> bool {
+        self.scene.spatial.is_empty()
+    }
+
+    pub fn hit_test_candidates(
+        &self,
+        document: &Document,
+        point: Point,
+        tolerance: f64,
+        include_locked: bool,
+    ) -> Vec<NodeId> {
+        self.scene
+            .point_candidates(point, tolerance)
+            .into_iter()
+            .filter(|&id| {
+                self.scene.is_hit(
+                    document,
+                    id,
+                    point,
+                    tolerance,
+                    include_locked,
+                    Some(self.root),
+                )
+            })
+            .collect()
+    }
+
+    pub fn hit_test_filtered(
+        &self,
+        document: &Document,
+        point: Point,
+        tolerance: f64,
+        include_locked: bool,
+        mut accept: impl FnMut(NodeId) -> bool,
+    ) -> Option<NodeId> {
+        self.scene
+            .point_candidates(point, tolerance)
+            .into_iter()
+            .find(|&id| {
+                self.scene.is_hit(
+                    document,
+                    id,
+                    point,
+                    tolerance,
+                    include_locked,
+                    Some(self.root),
+                ) && accept(id)
+            })
     }
 }

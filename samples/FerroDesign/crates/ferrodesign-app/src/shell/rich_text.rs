@@ -1,7 +1,9 @@
-//! Range authoring uses native selection and native document inlines for the
-//! preview. The editable canvas TextBox intentionally remains plain text.
+//! Native range selection, editable typography and the canvas TextBox share
+//! FerroUI's public text-layout run styles, direction and font features.
 use super::*;
-use ferrodesign_core::{TextStyleChange, TextStylePatch};
+use ferrodesign_core::{TextDirection, TextStyleChange, TextStylePatch, TextTypographyPatch};
+use crate::renderer::typography;
+use ferroui_base::interactivity::RoutingStrategies;
 use ferroui_base::media::{FontFamily, FontStyle, TextDecorations};
 use ferroui_controls::documents::{InlineCollection, Run};
 
@@ -39,10 +41,6 @@ impl EditorShell {
             self.toast("Select one text layer to style a character range.");
             return;
         };
-        if node.text.is_empty() {
-            self.toast("Add text to the layer before styling a character range.");
-            return;
-        }
         let _updating = UpdatingRichText(&self.updating, self.updating.replace(true));
         self.modal("Rich text", &format!(
             "{} · Select characters below, then set or inherit individual styles. Every Apply is undoable.", node.name
@@ -53,6 +51,7 @@ impl EditorShell {
         let selection = TextBox::new();
         selection.set_name(Some("RichTextSelection".into()));
         selection.set_text(Some(&node.text));
+        typography::configure_text_box(&selection, &node);
         selection.set_is_read_only(true);
         selection.set_accepts_return(true);
         // FerroUI defaults this to true; range authoring needs the range to
@@ -92,6 +91,7 @@ impl EditorShell {
         update_rich_preview(&preview, &node);
         host.children().add(rich_label("Style preview", true));
         host.children().add(preview.clone());
+        self.rich_typography_controls(&host, &node, &selection, &preview);
 
         let (family_row, family) = override_field("Font family", "RichTextFamily", &node.font_family);
         let (size_row, size) = override_field("Font size", "RichTextSize", &node.font_size.to_string());
@@ -206,8 +206,107 @@ impl EditorShell {
         let changed = editor.style_text_range(id, range, patch).map_err(|error| error.to_string())?;
         let node = editor.document.nodes[&id].clone();
         drop(editor);
+        typography::configure_text_box(selection, &node);
         update_rich_preview(preview, &node);
         if changed { self.changed(); }
+        Ok(())
+    }
+
+    fn rich_typography_controls(self: &Rc<Self>, host: &StackPanel, node: &Node,
+        selection: &Ref<TextBox>, preview: &Ref<TextBlock>) {
+        host.children().add(rich_label("Paragraph direction", true));
+        let direction = rich_choice("RichTextDirection", &["Left to right", "Right to left", "Auto · first strong character"], match node.text_direction {
+            Some(TextDirection::RightToLeft) => 1, Some(TextDirection::Auto) => 2, _ => 0,
+        });
+        host.children().add(direction.clone());
+        host.children().add(rich_label("OpenType features · kern=1, liga=0, ss01=1", true));
+        let row = rich_grid("*,72");
+        let features = TextBox::new();
+        features.set_name(Some("RichTextFeatures".into()));
+        features.set_text(Some(&core::format_font_features(&node.font_features)));
+        features.set_placeholder_text(Some("Font defaults"));
+        row.children().add(features.clone());
+        let apply = Button::new();
+        apply.set_name(Some("RichTextFeaturesApply".into()));
+        apply.set_content(Some(Rc::new("Apply".to_string())));
+        Grid::set_column(&apply, 1);
+        row.children().add(apply.clone());
+        host.children().add(row);
+        let error = rich_label("", false);
+        error.set_name(Some("RichTextTypographyError".into()));
+        error.set_foreground(Some(icons::brush("#C8372B")));
+        error.set_is_visible(false);
+        host.children().add(error.clone());
+
+        let target = node.id;
+        let weak_shell = Rc::downgrade(self);
+        let weak_direction = direction.downgrade();
+        let weak_selection = selection.downgrade();
+        let weak_preview = preview.downgrade();
+        let weak_error = error.downgrade();
+        direction.selection_changed(move |_, _| {
+            let (Some(shell), Some(direction), Some(selection), Some(preview), Some(error)) =
+                (weak_shell.upgrade(), weak_direction.upgrade(), weak_selection.upgrade(), weak_preview.upgrade(), weak_error.upgrade()) else { return; };
+            if shell.updating.get() { return; }
+            let direction = match direction.selected_index() {
+                1 => TextStyleChange::Set(TextDirection::RightToLeft),
+                2 => TextStyleChange::Set(TextDirection::Auto),
+                _ => TextStyleChange::Inherit,
+            };
+            show_rich_result(&error, shell.apply_rich_typography(target, &selection, &preview,
+                &TextTypographyPatch { direction, ..Default::default() }));
+        });
+
+        let committed = Rc::new(RefCell::new(features.text().unwrap_or_default()));
+        let weak_shell = Rc::downgrade(self);
+        let weak_features = features.downgrade();
+        let weak_selection = selection.downgrade();
+        let weak_preview = preview.downgrade();
+        let weak_error = error.downgrade();
+        let committed_value = committed.clone();
+        let commit: Rc<dyn Fn()> = Rc::new(move || {
+            let (Some(shell), Some(field), Some(selection), Some(preview), Some(error)) =
+                (weak_shell.upgrade(), weak_features.upgrade(), weak_selection.upgrade(), weak_preview.upgrade(), weak_error.upgrade()) else { return; };
+            if shell.updating.get() || field.is_composing_text() { return; }
+            let text = field.text().unwrap_or_default();
+            if text == *committed_value.borrow() { return; }
+            let result = (|| {
+                let features = core::parse_font_features(&text).map_err(|error| error.to_string())?;
+                let canonical = core::format_font_features(&features);
+                shell.apply_rich_typography(target, &selection, &preview,
+                    &TextTypographyPatch { font_features: TextStyleChange::Set(features), ..Default::default() })?;
+                *committed_value.borrow_mut() = canonical.clone();
+                field.set_text(Some(&canonical));
+                Ok(())
+            })();
+            show_rich_result(&error, result);
+        });
+        let blur = commit.clone();
+        features.lost_focus(move |_, _| blur());
+        let enter = commit.clone();
+        let weak_features = features.downgrade();
+        features.add_handler_with(InputElement::key_down_event(), move |_, event| {
+            if event.key == Key::Enter && weak_features.upgrade().is_some_and(|field| !field.is_composing_text()) {
+                enter(); event.set_handled(true);
+            }
+        }, RoutingStrategies::TUNNEL, false);
+        let clicked = commit.clone();
+        apply.click(move |_, _| clicked());
+        self.bind_inspector_draft(&features, committed, commit, Some(&error));
+    }
+
+    fn apply_rich_typography(self: &Rc<Self>, id: NodeId, selection: &TextBox,
+        preview: &TextBlock, patch: &TextTypographyPatch) -> Result<(), String> {
+        let mut editor = self.editor.borrow_mut();
+        if editor.selection.as_slice() != [id] {
+            return Err("The text layer changed. Reopen Rich text to refresh the controls.".into());
+        }
+        let changed = editor.edit_text_typography(&[id], patch).map_err(|error| error.to_string())?;
+        let node = editor.document.nodes[&id].clone();
+        drop(editor);
+        typography::configure_text_box(selection, &node);
+        update_rich_preview(preview, &node);
+        if changed > 0 { self.changed(); }
         Ok(())
     }
 }
@@ -294,6 +393,9 @@ fn update_range_status(field: &TextBox, status: &TextBlock) {
 }
 
 fn update_rich_preview(preview: &TextBlock, node: &Node) {
+    preview.set_flow_direction(typography::flow_direction(node));
+    preview.set_font_features(typography::font_features(node));
+    preview.set_letter_spacing(node.letter_spacing);
     let inlines = InlineCollection::new();
     let mut spans: Vec<_> = node.text_runs.iter().filter(|run| run.start < run.end
         && run.end <= node.text.len() && node.text.is_char_boundary(run.start)
@@ -316,6 +418,7 @@ fn add_preview_run(inlines: &InlineCollection, node: &Node, range: std::ops::Ran
     run.set_font_size(style.and_then(|style| style.font_size).unwrap_or(node.font_size));
     run.set_font_weight(FontWeight(style.and_then(|style| style.font_weight).unwrap_or(node.font_weight) as i32));
     run.set_font_style(if style.and_then(|style| style.italic).unwrap_or(node.italic) { FontStyle::Italic } else { FontStyle::Normal });
+    run.set_font_features(typography::font_features(node));
     let color = style.and_then(|style| style.color).or_else(|| node.fills.iter().rev().find_map(|fill| match fill.paint {
         Paint::Solid(color) if fill.visible => Some(color), _ => None,
     })).unwrap_or(Color::BLACK);

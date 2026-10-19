@@ -6,7 +6,12 @@
 //! No graphics-backend types occur in this module.
 
 mod backdrop;
+pub(crate) mod typography;
 mod incremental;
+#[cfg(all(test, not(target_os = "emscripten")))]
+mod mask_tests;
+mod masks;
+mod picking;
 mod root_index;
 #[cfg(all(test, not(target_os = "emscripten")))]
 mod shadow_tests;
@@ -19,9 +24,9 @@ use std::rc::Rc;
 
 use ferrodesign_core::{
     BlendMode, BooleanOperation, Color, Document, Editor, EditorRenderChanges, EditorRenderToken,
-    Effect, EffectKind, FillRule, ImageScale, Node,
-    NodeId, NodeKind, Paint, PathSegment, Point, Rect, Stroke, StrokeAlign, StrokeCap, StrokeJoin,
-    TextAlign, TextAutoResize, TextDecoration, TextVerticalAlign, Transform,
+    Effect, EffectKind, FillRule, ImageScale, MaskType, Node, NodeId, NodeKind, Paint, PathSegment,
+    Point, Rect, Stroke, StrokeAlign, StrokeCap, StrokeJoin, TextAlign, TextAutoResize,
+    TextDecoration, TextVerticalAlign, Transform,
 };
 use ferroui_base::media::imaging::{Bitmap, BitmapBlendingMode};
 use ferroui_base::media::immutable::{
@@ -123,6 +128,7 @@ struct CachedNode {
     missing_image_pen: Option<Rc<dyn IPen>>,
     suppress_children: bool,
     inner_shadows_below_strokes: bool,
+    vector_mask: Ref<Geometry>,
 }
 
 impl CachedNode {
@@ -146,6 +152,7 @@ impl CachedNode {
             missing_image_pen: None,
             suppress_children: false,
             inner_shadows_below_strokes: true,
+            vector_mask: StreamGeometry::new().upcast(),
         }
     }
 }
@@ -157,6 +164,9 @@ struct PreparedNode {
     parent: Option<usize>,
     opacity: f64,
     blend: BlendMode,
+    mask: Option<MaskType>,
+    mask_scope: Option<usize>,
+    vector_clip: Option<Ref<Geometry>>,
     clip: Option<RoundedRect>,
     child_blur_outset: f64,
     local_subtree_bounds: Rect,
@@ -166,6 +176,19 @@ struct PreparedNode {
     visual: Rc<CachedNode>,
     reused: Cell<bool>,
     outline: bool,
+}
+
+impl PreparedNode {
+    fn needs_document_isolation(&self) -> bool {
+        !self.visual.background_blurs.is_empty()
+            || (self.blend == BlendMode::PassThrough && self.opacity < 1.0)
+            || self.mask.is_some_and(|kind| kind != MaskType::Vector)
+            || !matches!(self.blend, BlendMode::Normal | BlendMode::PassThrough)
+    }
+
+    fn isolates(&self) -> bool {
+        self.mask.is_some() || self.blend != BlendMode::PassThrough || !self.visual.blurs.is_empty()
+    }
 }
 
 /// Main-thread scene renderer, shared by native and WebAssembly hosts.
@@ -179,6 +202,9 @@ pub struct ScenePainter {
     images: HashMap<String, ImageAsset>,
     prepared: Vec<PreparedNode>,
     prepared_roots: Vec<usize>,
+    root_mask_nodes: usize,
+    mask_scopes: Vec<picking::MaskScope>,
+    picking_key: Option<picking::PickKey>,
     root_index: root_index::RootPaintIndex,
     visiting: HashSet<NodeId>,
     empty: Option<Rc<CachedNode>>,
@@ -188,8 +214,8 @@ pub struct ScenePainter {
     stats: RenderStats,
     editing_text: Option<NodeId>,
     backdrops: backdrop::BackdropCache,
-    has_backdrops: bool,
-    backdrop_nodes: usize,
+    isolates_document: bool,
+    isolation_nodes: usize,
     prepared_indices: HashMap<NodeId, usize>,
     incremental_ready: bool,
     editor_token: Option<EditorRenderToken>,
@@ -234,12 +260,14 @@ impl ScenePainter {
         self.images.clear();
         self.prepared.clear();
         self.prepared_roots.clear();
+        self.root_mask_nodes = 0;
+        self.mask_scopes.clear();
         self.root_index.clear();
         self.visiting.clear();
         self.empty = None;
         self.backdrops.clear();
-        self.has_backdrops = false;
-        self.backdrop_nodes = 0;
+        self.isolates_document = false;
+        self.isolation_nodes = 0;
         self.prepared_indices.clear();
         self.incremental_ready = false;
         self.stats = RenderStats::default();
@@ -333,14 +361,24 @@ impl ScenePainter {
         };
         self.backdrops.begin_frame();
         if viewport.is_finite() && viewport.width >= 0.0 && viewport.height >= 0.0 {
-            // Backdrop replacement addresses document pixels only. An explicit
-            // document isolation keeps transparent exports and host canvas
-            // decoration out of each other's pixel history.
-            let document_layer = if self.has_backdrops {
-                context.try_push_compositing_layer(BitmapBlendingMode::SourceOver, 1.0, ui_rect(viewport))
-            } else { None };
+            // The host canvas/page background is presentation, not an authored
+            // blending input. Isolate every backdrop-sensitive scene so an
+            // opaque vector/alpha mask cannot change that contract. The cached
+            // count preserves the direct path for plain Normal-only scenes.
+            let document_layer = if self.isolates_document {
+                context.try_push_compositing_layer(
+                    BitmapBlendingMode::SourceOver,
+                    1.0,
+                    ui_rect(viewport),
+                )
+            } else {
+                None
+            };
             self.backdrops.set_enabled(document_layer.is_some());
-            let roots = if self.root_index.is_active() {
+            // Root masks retain their ordered scope even when the source is
+            // outside the viewport; culling their source cannot reveal content.
+            let root_masks = self.root_mask_nodes != 0;
+            let roots = if self.root_index.is_active() && !root_masks {
                 let query = self.root_index.query(viewport);
                 self.stats.root_bounds_tests = query.bounds_tests;
                 self.stats.root_query_reused = query.reused;
@@ -351,17 +389,31 @@ impl ScenePainter {
                 &self.prepared_roots
             };
             self.stats.root_candidates = roots.len();
-            for &root in roots {
-                paint_subtree(
+            if root_masks {
+                masks::paint_siblings(
                     context,
                     &self.prepared,
-                    root,
+                    0,
+                    self.prepared.len(),
                     viewport,
                     scene_reused,
                     &mut self.stats,
                     &mut self.backdrops,
                     &self.prepared_roots,
                 );
+            } else {
+                for &root in roots {
+                    paint_subtree(
+                        context,
+                        &self.prepared,
+                        root,
+                        viewport,
+                        scene_reused,
+                        &mut self.stats,
+                        &mut self.backdrops,
+                        &self.prepared_roots,
+                    );
+                }
             }
             context.pop(document_layer.unwrap_or(PushedState::NONE));
         }
@@ -424,15 +476,19 @@ impl ScenePainter {
     }
 
     fn prepare(&mut self, document: &Document, roots: &[NodeId]) {
-        self.preparation = incremental::PreparationStats { full: 1, ..Default::default() };
+        self.preparation = incremental::PreparationStats {
+            full: 1,
+            ..Default::default()
+        };
         self.preparation_totals.full = self.preparation_totals.full.saturating_add(1);
         self.prepared.clear();
         self.prepared_roots.clear();
+        self.root_mask_nodes = 0;
         self.visiting.clear();
         self.prepare_invalid_nodes = 0;
         self.backdrops.clear();
-        self.has_backdrops = false;
-        self.backdrop_nodes = 0;
+        self.isolates_document = false;
+        self.isolation_nodes = 0;
         self.prepared_indices.clear();
         self.incremental_ready = true;
         self.cache.retain(|id, _| document.nodes.contains_key(id));
@@ -450,7 +506,9 @@ impl ScenePainter {
                 self.prepared_roots.push(index);
             }
         }
-        self.root_index.rebuild(&self.prepared, &self.prepared_roots);
+        picking::prepare_scopes(&mut self.prepared, &mut self.mask_scopes);
+        self.root_index
+            .rebuild(&self.prepared, &self.prepared_roots);
     }
 
     fn prepare_node(
@@ -466,7 +524,8 @@ impl ScenePainter {
             self.prepare_invalid_nodes += 1;
             return None;
         };
-        if !node.visible || node.opacity <= 0.0 || self.editing_text == Some(id) {
+        if !node.visible || (node.opacity <= 0.0 && !node.is_mask) || self.editing_text == Some(id)
+        {
             return None;
         }
         if depth >= MAX_RENDER_DEPTH || !valid_node_bounds(node) || !self.visiting.insert(id) {
@@ -477,6 +536,7 @@ impl ScenePainter {
         let local = node.local_transform();
         let world = parent_world * local;
         let child_outline = needs_outline
+            || (node.is_mask && node.mask_type == MaskType::Vector)
             || node.kind == NodeKind::Boolean
             || (node.kind == NodeKind::Group
                 && (!node.effects.is_empty()
@@ -497,6 +557,9 @@ impl ScenePainter {
             parent,
             opacity: unit(node.opacity),
             blend: node.blend_mode,
+            mask: node.is_mask.then_some(node.mask_type),
+            mask_scope: None,
+            vector_clip: None,
             clip: node.clip_content.then(|| rounded_rect(node)),
             child_blur_outset: blur_outset_world(&node.effects, world),
             local_subtree_bounds: node.local_bounds(),
@@ -507,18 +570,28 @@ impl ScenePainter {
             reused: Cell::new(false),
             outline: child_outline,
         });
+        if parent.is_none() && node.is_mask {
+            self.root_mask_nodes += 1;
+        }
         if self.prepared_indices.insert(id, index).is_some() {
             self.incremental_ready = false;
         }
         for &child in &node.children {
-            self.prepare_node(document, child, world, Some(index), depth + 1, child_outline);
+            self.prepare_node(
+                document,
+                child,
+                world,
+                Some(index),
+                depth + 1,
+                child_outline,
+            );
         }
         let end = self.prepared.len();
         self.prepared[index].end = end;
         self.prepared[index].subtree_nodes = end - index;
         self.refresh_prepared_visual(document, index);
-        self.backdrop_nodes += usize::from(!self.prepared[index].visual.background_blurs.is_empty());
-        self.has_backdrops = self.backdrop_nodes != 0;
+        self.isolation_nodes += usize::from(self.prepared[index].needs_document_isolation());
+        self.isolates_document = self.isolation_nodes != 0;
         self.visiting.remove(&id);
         Some(index)
     }
@@ -540,16 +613,16 @@ impl ScenePainter {
             child.visual.fingerprint.hash(&mut child_signature);
             hash_transform(child.local, &mut child_signature);
             hash_number(child.opacity, &mut child_signature);
+            child.mask.is_some().hash(&mut child_signature);
+            if let Some(kind) = child.mask {
+                std::mem::discriminant(&kind).hash(&mut child_signature);
+            }
             let bounds = child.local.transform_rect(child.local_subtree_bounds);
             child_bounds = union_optional(child_bounds, Some(bounds));
             cursor = child.end;
         }
-        let fingerprint = visual_fingerprint(
-            node,
-            child_signature.finish(),
-            outline,
-            self.asset_revision,
-        );
+        let fingerprint =
+            visual_fingerprint(node, child_signature.finish(), outline, self.asset_revision);
         let existing = self
             .cache
             .get(&id)
@@ -581,6 +654,15 @@ impl ScenePainter {
         prepared.local_subtree_bounds = subtree;
         prepared.world_subtree_bounds = prepared.world.transform_rect(subtree);
         prepared.visual = visual.clone();
+        prepared.vector_clip = (prepared.mask == Some(MaskType::Vector)).then(|| {
+            let geometry = if prepared.opacity <= 0.0 {
+                StreamGeometry::new().upcast::<Geometry>()
+            } else {
+                visual.vector_mask.clone_geometry()
+            };
+            geometry.set_transform(MatrixTransform::with_matrix(ui_matrix(prepared.local)));
+            geometry
+        });
         prepared.reused.set(reused);
         self.cache.insert(id, visual);
     }
@@ -608,24 +690,37 @@ fn paint_subtree(
     stats.unsupported_effects += node.visual.unsupported_effects;
 
     let transform = context.push_transform(ui_matrix(node.local));
-    if !node.visual.background_blurs.is_empty()
+    if (!node.visual.background_blurs.is_empty()
+        || (node.blend == BlendMode::PassThrough && node.opacity < 1.0))
         && backdrops.try_paint(context, scene, roots, index, scene_reused, stats)
     {
         context.pop(transform);
         return;
     }
-    let isolate = node.opacity < 1.0 || node.blend != BlendMode::Normal || node.end > index + 1;
+    // If the bounded pass-through fallback was declined, still consume group
+    // opacity once. The diagnostic reports its missing external backdrop.
+    let isolate = node.opacity < 1.0
+        || (node.blend != BlendMode::PassThrough
+            && (node.blend != BlendMode::Normal || node.end > index + 1));
     let composite = if isolate {
-        context.try_push_compositing_layer(bitmap_blend(node.blend), node.opacity, ui_rect(node.local_subtree_bounds))
-    } else { None };
+        context.try_push_compositing_layer(
+            bitmap_blend(node.blend),
+            node.opacity,
+            ui_rect(node.local_subtree_bounds),
+        )
+    } else {
+        None
+    };
     let isolated = composite.is_some();
-    if isolate && !isolated { stats.unsupported_effects += 1; }
+    if isolate && !isolated {
+        stats.unsupported_effects += 1;
+    }
     let opacity = if !isolated && node.opacity < 1.0 {
         context.push_opacity(node.opacity)
     } else {
         PushedState::NONE
     };
-    let blend = if !isolated && node.blend != BlendMode::Normal {
+    let blend = if !isolated && !matches!(node.blend, BlendMode::Normal | BlendMode::PassThrough) {
         context.push_render_options(RenderOptions {
             bitmap_blending_mode: bitmap_blend(node.blend),
             ..RenderOptions::default()
@@ -633,7 +728,17 @@ fn paint_subtree(
     } else {
         PushedState::NONE
     };
-    paint_blurs(context, scene, index, viewport, scene_reused, stats, 0, backdrops, roots);
+    paint_blurs(
+        context,
+        scene,
+        index,
+        viewport,
+        scene_reused,
+        stats,
+        0,
+        backdrops,
+        roots,
+    );
     context.pop(blend);
     context.pop(opacity);
     context.pop(composite.unwrap_or(PushedState::NONE));
@@ -686,14 +791,20 @@ fn paint_blurs(
             .clip
             .map(|rect| context.push_rounded_clip(rect))
             .unwrap_or(PushedState::NONE);
-        let mut child = index + 1;
         // A child outside the visible rectangle can still contribute pixels
         // through an ancestor's layer blur. Keep those source pixels alive.
         let child_viewport = viewport.inflate(node.child_blur_outset);
-        while child < node.end {
-            paint_subtree(context, scene, child, child_viewport, scene_reused, stats, backdrops, roots);
-            child = scene[child].end;
-        }
+        masks::paint_siblings(
+            context,
+            scene,
+            index + 1,
+            node.end,
+            child_viewport,
+            scene_reused,
+            stats,
+            backdrops,
+            roots,
+        );
         context.pop(clip);
     }
     paint_shadows(context, &node.visual, true);
@@ -870,8 +981,11 @@ fn build_visual(
     } else {
         geometry
     };
-    let stroke_geometry = node.vector_network.as_ref()
-        .map(|network| path_geometry(&network.stroke_path())).unwrap_or_else(|| geometry.clone());
+    let stroke_geometry = node
+        .vector_network
+        .as_ref()
+        .map(|network| path_geometry(&network.stroke_path()))
+        .unwrap_or_else(|| geometry.clone());
     let mut local_bounds = node.local_bounds();
     if outline_required || node.kind != NodeKind::Text {
         let geometry_bounds = core_rect(geometry.bounds());
@@ -893,6 +1007,16 @@ fn build_visual(
     }
 
     let mut strokes = Vec::new();
+    let mut vector_mask = if node
+        .fills
+        .iter()
+        .any(|fill| fill.visible && fill.opacity > 0.0 && masks::paint_has_alpha(&fill.paint))
+        || (node.kind == NodeKind::Boolean && !fills.is_empty())
+    {
+        geometry.clone()
+    } else {
+        StreamGeometry::new().upcast()
+    };
     for stroke in node
         .strokes
         .iter()
@@ -929,12 +1053,25 @@ fn build_visual(
         if let Some(arrow) = &arrow {
             local_bounds = local_bounds.union(core_rect(arrow.bounds()));
         }
+        if needs_outline && masks::paint_has_alpha(&stroke.paint) {
+            let stroke_region = outline
+                .clone()
+                .unwrap_or_else(|| stroke_geometry.get_widened_geometry(pen.as_ref()));
+            vector_mask = combined(GeometryCombineMode::Union, vector_mask, stroke_region);
+            if let Some(arrow) = &arrow {
+                vector_mask = combined(GeometryCombineMode::Union, vector_mask, arrow.clone());
+            }
+        }
         strokes.push(CachedStroke {
             pen,
             brush,
             outline,
             arrow,
         });
+    }
+
+    if node.kind.is_container() && node.kind != NodeKind::Boolean && needs_outline {
+        vector_mask = masks::add_vector_children(vector_mask, children, child_base, node);
     }
 
     let rect = match node.kind {
@@ -1025,6 +1162,7 @@ fn build_visual(
         missing_image_pen,
         suppress_children: node.kind == NodeKind::Boolean,
         inner_shadows_below_strokes: !node.kind.is_container() || node.kind == NodeKind::Boolean,
+        vector_mask,
     }
 }
 
@@ -1037,8 +1175,11 @@ fn shape_geometry(node: &Node) -> Ref<Geometry> {
         ),
         NodeKind::Polygon | NodeKind::Star => polyline_geometry(&node.polygon_points(), true),
         NodeKind::Vector => {
-            if let Some(network) = &node.vector_network { path_geometry(&network.fill_path()) }
-            else { path_geometry(&node.path) }
+            if let Some(network) = &node.vector_network {
+                path_geometry(&network.fill_path())
+            } else {
+                path_geometry(&node.path)
+            }
         }
         _ => rounded_geometry(rounded_rect(node)),
     }
@@ -1332,34 +1473,7 @@ fn box_shadows(shadows: &[BoxShadow]) -> BoxShadows {
 
 fn make_text_layout(node: &Node, brush: Rc<dyn IBrush>) -> CachedText {
     let default_typeface = typeface(&node.font_family, node.font_weight, node.italic);
-    let mut overrides: Vec<ValueSpan<Rc<dyn TextRunProperties>>> = Vec::new();
-    for run in &node.text_runs {
-        let start = byte_to_utf16(&node.text, run.start);
-        let end = byte_to_utf16(&node.text, run.end);
-        if end <= start {
-            continue;
-        }
-        let properties: Rc<dyn TextRunProperties> = Rc::new(GenericTextRunProperties::with_all(
-            typeface(
-                run.font_family.as_deref().unwrap_or(&node.font_family),
-                run.font_weight.unwrap_or(node.font_weight),
-                run.italic.unwrap_or(node.italic),
-            ),
-            font_size(run.font_size.unwrap_or(node.font_size)),
-            decorations(run.decoration.unwrap_or(node.text_decoration)),
-            Some(
-                run.color
-                    .map(|color| solid_brush(color, brush.opacity()))
-                    .unwrap_or_else(|| brush.clone()),
-            ),
-            None,
-            BaselineAlignment::Baseline,
-            Some(CultureInfo::invariant_culture()),
-            None,
-        ));
-        overrides.push(ValueSpan::new(start, end - start, properties));
-    }
-    overrides.sort_by_key(|span| span.start());
+    let overrides = typography::range_styles(node, brush.clone());
     let unbounded = node.text_auto_resize == TextAutoResize::WidthAndHeight;
     let layout = TextLayout::new(
         &node.text,
@@ -1380,7 +1494,7 @@ fn make_text_layout(node: &Node, brush: Rc<dyn IBrush>) -> CachedText {
             },
             text_trimming: None,
             text_decorations: decorations(node.text_decoration),
-            flow_direction: FlowDirection::LeftToRight,
+            flow_direction: typography::flow_direction(node),
             max_width: if unbounded {
                 f64::INFINITY
             } else {
@@ -1389,7 +1503,8 @@ fn make_text_layout(node: &Node, brush: Rc<dyn IBrush>) -> CachedText {
             max_height: f64::INFINITY,
             line_height: font_size(node.font_size) * finite(node.line_height).clamp(0.01, 100.0),
             letter_spacing: finite(node.letter_spacing),
-            text_style_overrides: (!overrides.is_empty()).then(|| Rc::from(overrides)),
+            font_features: typography::font_features(node),
+            text_style_overrides: overrides,
             text_run_cache: Some(Rc::new(TextRunCache::new())),
             ..TextLayoutOptions::default()
         },
@@ -1624,9 +1739,15 @@ fn make_brush(
                         opacity,
                         None,
                         RelativePoint::CENTER,
-                        crop.map(|crop| ferroui_base::RelativeRect::new(
-                            crop.x, crop.y, crop.width, crop.height, RelativeUnit::Relative,
-                        )),
+                        crop.map(|crop| {
+                            ferroui_base::RelativeRect::new(
+                                crop.x,
+                                crop.y,
+                                crop.width,
+                                crop.height,
+                                RelativeUnit::Relative,
+                            )
+                        }),
                         match scale {
                             ImageScale::Fill => Stretch::UniformToFill,
                             ImageScale::Fit => Stretch::Uniform,
@@ -1917,7 +2038,7 @@ fn ui_color(color: Color) -> ferroui_base::media::Color {
 
 fn bitmap_blend(mode: BlendMode) -> BitmapBlendingMode {
     match mode {
-        BlendMode::Normal => BitmapBlendingMode::SourceOver,
+        BlendMode::Normal | BlendMode::PassThrough => BitmapBlendingMode::SourceOver,
         BlendMode::Multiply => BitmapBlendingMode::Multiply,
         BlendMode::Screen => BitmapBlendingMode::Screen,
         BlendMode::Overlay => BitmapBlendingMode::Overlay,
@@ -1962,6 +2083,8 @@ fn visual_fingerprint(node: &Node, children: u64, needs_outline: bool, assets: u
     node.polygon_sides.hash(&mut hash);
     node.font_family.hash(&mut hash);
     node.font_weight.hash(&mut hash);
+    node.text_direction.hash(&mut hash);
+    node.font_features.hash(&mut hash);
     node.text.hash(&mut hash);
     node.metadata.get("svg_element").hash(&mut hash);
     node.metadata.get("svg_text_anchor").hash(&mut hash);
@@ -2039,20 +2162,28 @@ fn visual_fingerprint(node: &Node, children: u64, needs_outline: bool, assets: u
     if let Some(network) = &node.vector_network {
         std::mem::discriminant(&network.fill_rule).hash(&mut hash);
         for (id, vertex) in &network.vertices {
-            id.hash(&mut hash); hash_point(vertex.position, &mut hash);
+            id.hash(&mut hash);
+            hash_point(vertex.position, &mut hash);
         }
         for (id, edge) in &network.edges {
-            id.hash(&mut hash); edge.start.hash(&mut hash); edge.end.hash(&mut hash); edge.stroke.hash(&mut hash);
+            id.hash(&mut hash);
+            edge.start.hash(&mut hash);
+            edge.end.hash(&mut hash);
+            edge.stroke.hash(&mut hash);
             std::mem::discriminant(&edge.curve).hash(&mut hash);
             if let ferrodesign_core::NetworkCurve::Cubic { control1, control2 } = edge.curve {
-                hash_point(control1, &mut hash); hash_point(control2, &mut hash);
+                hash_point(control1, &mut hash);
+                hash_point(control2, &mut hash);
             }
         }
         for (id, region) in &network.regions {
             id.hash(&mut hash);
             for contour in &region.contours {
                 contour.len().hash(&mut hash);
-                for edge in contour { edge.edge.hash(&mut hash); edge.reversed.hash(&mut hash); }
+                for edge in contour {
+                    edge.edge.hash(&mut hash);
+                    edge.reversed.hash(&mut hash);
+                }
             }
         }
     }
@@ -2124,7 +2255,9 @@ fn hash_paint(paint: &Paint, hash: &mut DefaultHasher) {
             std::mem::discriminant(scale).hash(hash);
             crop.is_some().hash(hash);
             if let Some(crop) = crop {
-                for value in [crop.x, crop.y, crop.width, crop.height] { hash_number(value, hash); }
+                for value in [crop.x, crop.y, crop.width, crop.height] {
+                    hash_number(value, hash);
+                }
             }
         }
     }

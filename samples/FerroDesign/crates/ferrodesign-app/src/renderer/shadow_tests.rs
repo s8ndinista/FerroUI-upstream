@@ -1,4 +1,4 @@
-//! Actual Vello pixels enforce effect-stack order and the layer/group paint
+//! Actual Skia pixels enforce effect-stack order and the layer/group paint
 //! distinction documented by Figma, rather than testing prepared vectors only.
 //! https://help.figma.com/hc/en-us/articles/360041488473-Apply-effects-to-layers
 use super::*;

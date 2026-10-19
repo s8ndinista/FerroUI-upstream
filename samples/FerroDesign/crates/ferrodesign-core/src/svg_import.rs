@@ -1,7 +1,10 @@
 //! Editable SVG import. Supported: nested viewports/groups, arbitrary affine
 //! transforms, paths (including arcs), basic shapes, text/tspan runs, internal
-//! use references, solid/linear/centered radial paints, and embedded raster
-//! images. Unsupported paint servers/effects return an error. No network access,
+//! use references, solid/linear/centered radial paints, embedded raster images,
+//! alpha/sRGB luminance masks, geometry clip paths, and compositing isolation.
+//! Mask/clip coordinate systems and reference inheritance follow CSS Masking 1:
+//! https://www.w3.org/TR/css-masking-1/ . Unsupported paint servers/effects and
+//! linearRGB luminance masks return an error. No network access,
 //! executable content, external fonts, or external images are accepted.
 use crate::*;
 use roxmltree::Node as XmlNode;
@@ -410,6 +413,8 @@ struct SvgStyle {
     join: StrokeJoin,
     dash: Vec<f64>,
     fill_rule: FillRule,
+    clip_rule: FillRule,
+    linear_rgb: bool,
     color: Color,
     font_family: String,
     font_size: f64,
@@ -423,6 +428,11 @@ struct SvgStyle {
     opacity: f64,
     display: bool,
     blend_mode: BlendMode,
+    isolate: bool,
+    mask: Option<String>,
+    clip_path: Option<String>,
+    mask_mode: Option<MaskType>,
+    mask_type: MaskType,
 }
 
 impl Default for SvgStyle {
@@ -437,6 +447,8 @@ impl Default for SvgStyle {
             join: StrokeJoin::Miter,
             dash: Vec::new(),
             fill_rule: FillRule::NonZero,
+            clip_rule: FillRule::NonZero,
+            linear_rgb: false,
             color: Color::BLACK,
             font_family: "Inter".into(),
             font_size: 16.0,
@@ -449,8 +461,48 @@ impl Default for SvgStyle {
             opacity: 1.0,
             display: true,
             blend_mode: BlendMode::Normal,
+            isolate: false,
+            mask: None,
+            clip_path: None,
+            mask_mode: None,
+            mask_type: MaskType::Luminance,
         }
     }
+}
+
+impl SvgStyle {
+    /// SVG groups pass their backdrop through by default. Opacity and masks
+    /// establish an isolated group even when CSS isolation remains `auto`.
+    fn compositing_blend(&self) -> BlendMode {
+        if self.blend_mode == BlendMode::Normal
+            && !self.isolate
+            && self.opacity == 1.0
+            && self.mask.is_none()
+        {
+            BlendMode::PassThrough
+        } else {
+            self.blend_mode
+        }
+    }
+}
+
+fn local_reference(value: &str, property: &str) -> ImportResult<Option<String>> {
+    if value == "none" {
+        return Ok(None);
+    }
+    let target = value
+        .strip_prefix("url(")
+        .and_then(|v| v.strip_suffix(')'))
+        .map(str::trim)
+        .map(|v| v.trim_matches(['\'', '"']))
+        .and_then(|v| v.strip_prefix('#'))
+        .filter(|v| {
+            !v.is_empty()
+                && !v.contains(['(', ')', '#', '\'', '"'])
+                && !v.chars().any(char::is_whitespace)
+        })
+        .ok_or_else(|| invalid(format!("{property} requires one local url(#id) reference")))?;
+    Ok(Some(target.into()))
 }
 
 fn blend_mode(value: &str) -> ImportResult<BlendMode> {
@@ -481,6 +533,7 @@ struct Importer<'a, 'input> {
     rules: Vec<CssRule>,
     warnings: BTreeSet<String>,
     segments: usize,
+    clip_geometry: bool,
 }
 
 impl<'a, 'input> Importer<'a, 'input> {
@@ -531,6 +584,11 @@ impl<'a, 'input> Importer<'a, 'input> {
         result.opacity = 1.0;
         result.display = true;
         result.blend_mode = BlendMode::Normal;
+        result.isolate = false;
+        result.mask = None;
+        result.clip_path = None;
+        result.mask_mode = None;
+        result.mask_type = MaskType::Luminance;
         if let Some(value) = props.get("font-size").filter(|v| v.as_str() != "inherit") {
             result.font_size = length(value, inherited.font_size, inherited.font_size)?.max(0.01);
         }
@@ -540,6 +598,17 @@ impl<'a, 'input> Importer<'a, 'input> {
         let diagonal = (viewport.width.hypot(viewport.height) / std::f64::consts::SQRT_2).max(1.0);
         for (key, value) in &props {
             if value == "inherit" {
+                match key.as_str() {
+                    "opacity" => result.opacity = inherited.opacity,
+                    "display" => result.display = inherited.display,
+                    "mix-blend-mode" => result.blend_mode = inherited.blend_mode,
+                    "isolation" => result.isolate = inherited.isolate,
+                    "mask" | "mask-image" => result.mask = inherited.mask.clone(),
+                    "clip-path" => result.clip_path = inherited.clip_path.clone(),
+                    "mask-mode" => result.mask_mode = inherited.mask_mode,
+                    "mask-type" => result.mask_type = inherited.mask_type,
+                    _ => {}
+                }
                 continue;
             }
             match key.as_str() {
@@ -591,11 +660,16 @@ impl<'a, 'input> Importer<'a, 'input> {
                 "stroke-dashoffset" if length(value, diagonal, result.font_size)?.abs() > 1e-10 => {
                     return Err(invalid("nonzero stroke-dashoffset is unsupported"))
                 }
-                "fill-rule" => {
-                    result.fill_rule = match value.as_str() {
+                "fill-rule" | "clip-rule" => {
+                    let rule = match value.as_str() {
                         "evenodd" => FillRule::EvenOdd,
                         "nonzero" => FillRule::NonZero,
-                        _ => return Err(invalid("unsupported fill-rule")),
+                        _ => return Err(invalid(format!("unsupported {key}"))),
+                    };
+                    if key == "fill-rule" {
+                        result.fill_rule = rule
+                    } else {
+                        result.clip_rule = rule
                     }
                 }
                 "font-family" => {
@@ -650,9 +724,42 @@ impl<'a, 'input> Importer<'a, 'input> {
                     result.visibility = !["hidden", "collapse"].contains(&value.as_str())
                 }
                 "mix-blend-mode" => result.blend_mode = blend_mode(value)?,
-                "filter" | "mask" | "clip-path" | "marker" | "marker-start" | "marker-mid"
-                | "marker-end"
-                    if value != "none" =>
+                "isolation" => {
+                    result.isolate = match value.as_str() {
+                        "auto" => false,
+                        "isolate" => true,
+                        _ => return Err(invalid("unsupported isolation")),
+                    }
+                }
+                "mask" | "mask-image" => result.mask = local_reference(value, key)?,
+                "clip-path" => result.clip_path = local_reference(value, key)?,
+                "mask-type" => {
+                    result.mask_type = match value.as_str() {
+                        "alpha" => MaskType::Alpha,
+                        "luminance" => MaskType::Luminance,
+                        _ => return Err(invalid("unsupported mask-type")),
+                    }
+                }
+                "mask-mode" => {
+                    result.mask_mode = match value.as_str() {
+                        "match-source" => None,
+                        "alpha" => Some(MaskType::Alpha),
+                        "luminance" => Some(MaskType::Luminance),
+                        _ => return Err(invalid("unsupported mask-mode")),
+                    }
+                }
+                "color-interpolation" => {
+                    result.linear_rgb = match value.as_str() {
+                        "auto" | "sRGB" => false,
+                        "linearRGB" => true,
+                        _ => return Err(invalid("unsupported color-interpolation")),
+                    }
+                }
+                "mask-composite" if value != "add" => {
+                    return Err(invalid("multiple CSS mask layers are unsupported"))
+                }
+                "filter" | "marker" | "marker-start" | "marker-mid" | "marker-end"
+                    if value != "none" && !self.clip_geometry =>
                 {
                     return Err(invalid(format!(
                         "{key} is outside the editable SVG import subset"
@@ -673,6 +780,19 @@ impl<'a, 'input> Importer<'a, 'input> {
                 }
                 _ => {}
             }
+        }
+        if self.clip_geometry {
+            // SVG clip silhouettes do not depend on paint, stroke, opacity, or
+            // filters. A child clip-path still intersects the silhouette.
+            result.fill = "white".into();
+            result.stroke = "none".into();
+            result.fill_opacity = 1.0;
+            result.stroke_opacity = 1.0;
+            result.opacity = 1.0;
+            result.fill_rule = result.clip_rule;
+            result.blend_mode = BlendMode::Normal;
+            result.isolate = false;
+            result.mask = None;
         }
         Ok((result, props))
     }
@@ -932,8 +1052,12 @@ impl<'a, 'input> Importer<'a, 'input> {
         viewport: Rect,
     ) -> ImportResult<()> {
         node.visible = style.display && style.visibility;
+        if !style.display {
+            node.metadata
+                .insert("svg_display_none".into(), "true".into());
+        }
         node.opacity = style.opacity;
-        node.blend_mode = style.blend_mode;
+        node.blend_mode = style.compositing_blend();
         node.fills = self
             .paint(&style.fill, bounds, viewport, style.color)?
             .map(|paint| {
@@ -1014,6 +1138,8 @@ impl<'a, 'input> Importer<'a, 'input> {
         let bounds = children
             .iter()
             .filter_map(|child| self.document.nodes.get(child))
+            .filter(|child| !child.is_mask)
+            .filter(|child| !child.metadata.contains_key("svg_display_none"))
             .map(|child| child.local_transform().transform_rect(child.local_bounds()))
             .reduce(|a, b| a.union(b))
             .unwrap_or_default();
@@ -1050,8 +1176,15 @@ impl<'a, 'input> Importer<'a, 'input> {
             0.0,
         );
         group.opacity = style.opacity;
-        group.visible = style.display && style.visibility;
-        group.blend_mode = style.blend_mode;
+        // Visibility inherits to descendants, which may override it. Hiding a
+        // paintless container itself would incorrectly suppress those children.
+        group.visible = style.display;
+        if !style.display {
+            group
+                .metadata
+                .insert("svg_display_none".into(), "true".into());
+        }
+        group.blend_mode = style.compositing_blend();
         Self::identify(&mut group, element);
         let id = self.insert(parent, group)?;
         for child in element.children().filter(|n| n.is_element()) {
@@ -1106,8 +1239,13 @@ impl<'a, 'input> Importer<'a, 'input> {
         );
         frame.fills.clear();
         frame.opacity = style.opacity;
-        frame.visible = style.display && style.visibility && width > 0.0 && height > 0.0;
-        frame.blend_mode = style.blend_mode;
+        frame.visible = style.display && width > 0.0 && height > 0.0;
+        if !style.display {
+            frame
+                .metadata
+                .insert("svg_display_none".into(), "true".into());
+        }
+        frame.blend_mode = style.compositing_blend();
         frame.clip_content = props.get("overflow").is_none_or(|value| value != "visible");
         frame.set_local_transform(
             transform(props.get("transform").map(String::as_str))? * Transform::translation(x, y),
@@ -1130,6 +1268,7 @@ impl<'a, 'input> Importer<'a, 'input> {
             user_viewport.height,
         );
         content.fills.clear();
+        content.blend_mode = BlendMode::PassThrough;
         let content_id = self.insert(id, content)?;
         for child in element.children().filter(|n| n.is_element()) {
             self.element(
@@ -1145,7 +1284,405 @@ impl<'a, 'input> Importer<'a, 'input> {
         Ok(id)
     }
 
+    /// Definitions inherit from their XML ancestors, never from the element
+    /// which references them. Paint inheritance in <use> remains separate.
+    fn definition_style(
+        &mut self,
+        source: XmlNode<'a, 'input>,
+        viewport: Rect,
+    ) -> ImportResult<(SvgStyle, Properties)> {
+        let mut ancestors: Vec<_> = source.ancestors().filter(|n| n.is_element()).collect();
+        if ancestors.len() >= MAX_DOCUMENT_DEPTH {
+            return Err(invalid("mask definition hierarchy depth limit exceeded"));
+        }
+        ancestors.reverse();
+        let mut inherited = SvgStyle::default();
+        let mut properties = Properties::new();
+        for ancestor in ancestors {
+            (inherited, properties) = self.style(ancestor, &inherited, viewport)?;
+        }
+        Ok((inherited, properties))
+    }
+
+    fn mask_source(
+        &mut self,
+        reference: &str,
+        clipping: bool,
+        mask_mode: Option<MaskType>,
+        parent: NodeId,
+        bounds: Rect,
+        user_to_local: Transform,
+        viewport: Rect,
+        depth: usize,
+        references: &mut Vec<String>,
+    ) -> ImportResult<NodeId> {
+        if references.len() >= 64 || references.iter().any(|id| id == reference) {
+            return Err(invalid("cyclic or excessively deep mask/clip reference"));
+        }
+        let source = *self
+            .ids
+            .get(reference)
+            .ok_or_else(|| invalid(format!("missing mask/clip definition #{reference}")))?;
+        let expected = if clipping { "clipPath" } else { "mask" };
+        if source.tag_name().name() != expected
+            || source
+                .tag_name()
+                .namespace()
+                .is_some_and(|ns| ns != "http://www.w3.org/2000/svg")
+        {
+            return Err(invalid(format!("#{reference} must reference <{expected}>")));
+        }
+        references.push(reference.into());
+        let previous_geometry = self.clip_geometry;
+        self.clip_geometry = clipping;
+        let result = (|| {
+            let (style, props) = self.definition_style(source, viewport)?;
+            let units = |key: &str, default: &str| -> ImportResult<bool> {
+                match props.get(key).map(String::as_str).unwrap_or(default) {
+                    "objectBoundingBox" => Ok(true),
+                    "userSpaceOnUse" => Ok(false),
+                    _ => Err(invalid(format!("unsupported {key}"))),
+                }
+            };
+            let object_content = units(
+                if clipping {
+                    "clipPathUnits"
+                } else {
+                    "maskContentUnits"
+                },
+                "userSpaceOnUse",
+            )?;
+            let content_map = if object_content {
+                Transform::translation(bounds.x, bounds.y)
+                    * Transform::scale(bounds.width, bounds.height)
+            } else {
+                Transform::IDENTITY
+            };
+            let content_viewport = if object_content {
+                Rect::new(0.0, 0.0, 1.0, 1.0)
+            } else {
+                viewport
+            };
+            let mask_type = if clipping {
+                MaskType::Vector
+            } else {
+                mask_mode.unwrap_or(style.mask_type)
+            };
+            if mask_type == MaskType::Luminance && style.linear_rgb {
+                return Err(invalid(
+                    "linearRGB luminance masks cannot be represented by the sRGB mask model",
+                ));
+            }
+            let region = if clipping {
+                Rect::default()
+            } else {
+                let object_region = units("maskUnits", "objectBoundingBox")?;
+                let coordinate =
+                    |key: &str, default: &str, horizontal: bool| -> ImportResult<f64> {
+                        length(
+                            props.get(key).map(String::as_str).unwrap_or(default),
+                            if object_region {
+                                1.0
+                            } else if horizontal {
+                                viewport.width
+                            } else {
+                                viewport.height
+                            },
+                            style.font_size,
+                        )
+                    };
+                let mut region = Rect::new(
+                    coordinate("x", "-10%", true)?,
+                    coordinate("y", "-10%", false)?,
+                    coordinate("width", "120%", true)?,
+                    coordinate("height", "120%", false)?,
+                );
+                if region.width < 0.0 || region.height < 0.0 {
+                    return Err(invalid("negative mask region size"));
+                }
+                if object_region {
+                    region = Rect::new(
+                        bounds.x + region.x * bounds.width,
+                        bounds.y + region.y * bounds.height,
+                        region.width * bounds.width,
+                        region.height * bounds.height,
+                    );
+                }
+                region
+            };
+            // The role stays visible even for an empty or display:none source:
+            // transparent mask pixels must hide content, rather than disable it.
+            let mut role = Node::new(
+                if clipping {
+                    NodeKind::Group
+                } else {
+                    NodeKind::Frame
+                },
+                format!("{expected} #{reference}"),
+                0.0,
+                0.0,
+                region.width,
+                region.height,
+            );
+            role.fills.clear();
+            role.blend_mode = BlendMode::Normal;
+            role.is_mask = true;
+            role.mask_type = mask_type;
+            role.clip_content = !clipping;
+            role.metadata
+                .insert("svg_mask_reference".into(), reference.into());
+            role.metadata
+                .insert("svg_mask_kind".into(), expected.into());
+            let role_id = self.insert(parent, role)?;
+            if clipping {
+                for child in source.children().filter(|n| n.is_element()) {
+                    if ![
+                        "title", "desc", "metadata", "rect", "circle", "ellipse", "line",
+                        "polyline", "polygon", "path", "text", "use",
+                    ]
+                    .contains(&child.tag_name().name())
+                    {
+                        return Err(invalid(
+                            "clipPath children must be shapes, text, or direct use references",
+                        ));
+                    }
+                }
+            }
+            let source_matrix = transform(props.get("transform").map(String::as_str))?;
+            let content = self.group(
+                source,
+                role_id,
+                &style,
+                content_viewport,
+                source_matrix,
+                depth + 1,
+                references,
+            )?;
+            let content = self.apply_compositing(
+                source,
+                content,
+                &style,
+                &props,
+                content_viewport,
+                depth + 1,
+                references,
+            )?;
+            // A custom hint must never override the SVG's actual alpha
+            // semantics. Only the opaque geometry emitted by our vector-mask
+            // exporter is equivalent to an editable native vector mask.
+            if !clipping
+                && mask_type == MaskType::Alpha
+                && props
+                    .get("data-ferro-mask-type")
+                    .is_some_and(|v| v == "vector")
+                && self.vector_mask_hint_matches(content)
+            {
+                self.document.nodes.get_mut(&role_id).unwrap().mask_type = MaskType::Vector;
+            }
+            let node = self.document.nodes.get_mut(&content).unwrap();
+            node.set_local_transform(
+                Transform::translation(-region.x, -region.y) * content_map * node.local_transform(),
+            );
+            if clipping {
+                self.fit_group(role_id, user_to_local);
+            } else {
+                self.document
+                    .nodes
+                    .get_mut(&role_id)
+                    .unwrap()
+                    .set_local_transform(
+                        user_to_local * Transform::translation(region.x, region.y),
+                    );
+            }
+            Ok(role_id)
+        })();
+        self.clip_geometry = previous_geometry;
+        references.pop();
+        result
+    }
+
+    fn vector_mask_hint_matches(&self, id: NodeId) -> bool {
+        fn opaque(paint: &Paint) -> bool {
+            match paint {
+                Paint::Solid(color) => color.a == 255,
+                Paint::LinearGradient { stops, .. } | Paint::RadialGradient { stops, .. } => {
+                    !stops.is_empty() && stops.iter().all(|stop| stop.color.a == 255)
+                }
+                Paint::Image { .. } => false,
+            }
+        }
+        self.document.descendants(id).iter().all(|id| {
+            let node = &self.document.nodes[id];
+            !node.visible
+                || node.opacity == 0.0
+                || (node.opacity == 1.0
+                    && !(node.is_mask && node.mask_type == MaskType::Luminance)
+                    && !node.effects.iter().any(|effect| effect.visible)
+                    && node
+                        .fills
+                        .iter()
+                        .filter(|fill| fill.visible)
+                        .all(|fill| fill.opacity == 1.0 && opaque(&fill.paint))
+                    && node
+                        .strokes
+                        .iter()
+                        .filter(|stroke| stroke.visible && stroke.width > 0.0)
+                        .all(|stroke| stroke.opacity == 1.0 && opaque(&stroke.paint))
+                    && node
+                        .text_runs
+                        .iter()
+                        .all(|run| run.color.is_none_or(|color| color.a == 255)))
+        })
+    }
+
+    /// Materialize a reusable SVG definition as an editable sibling mask and
+    /// isolate that one referenced element. Geometry normalization changes no
+    /// world transform; opacity/blending are applied once outside the masks.
+    fn apply_compositing(
+        &mut self,
+        element: XmlNode<'a, 'input>,
+        id: NodeId,
+        style: &SvgStyle,
+        props: &Properties,
+        viewport: Rect,
+        depth: usize,
+        references: &mut Vec<String>,
+    ) -> ImportResult<NodeId> {
+        if style.mask.is_none() && style.clip_path.is_none() {
+            return Ok(id);
+        }
+        if depth >= MAX_DOCUMENT_DEPTH - 5 {
+            return Err(invalid("masked SVG hierarchy depth limit exceeded"));
+        }
+        let original = self.document.nodes[&id].clone();
+        let matrix = original.local_transform();
+        let Some(inverse) = matrix.inverse() else {
+            // A singular 2D transform has no visible area.
+            self.document.nodes.get_mut(&id).unwrap().visible = false;
+            return Ok(id);
+        };
+        let mut user_to_parent = transform(props.get("transform").map(String::as_str))?;
+        let mut user_viewport = viewport;
+        if element.tag_name().name() == "svg" {
+            user_viewport = parse_view_box(element.attribute("viewBox"))?.unwrap_or(Rect::new(
+                0.0,
+                0.0,
+                original.width,
+                original.height,
+            ));
+            user_to_parent = matrix
+                * view_box_transform(
+                    user_viewport,
+                    original.width,
+                    original.height,
+                    element.attribute("preserveAspectRatio"),
+                )?;
+        }
+        let user_to_local = inverse * user_to_parent;
+        let geometry_bounds = if element.tag_name().name() == "svg" {
+            original
+                .children
+                .iter()
+                .filter_map(|id| self.document.nodes.get(id))
+                .filter(|n| !n.is_mask && !n.metadata.contains_key("svg_display_none"))
+                .map(|n| n.local_transform().transform_rect(n.local_bounds()))
+                .reduce(|a, b| a.union(b))
+                .unwrap_or_default()
+        } else {
+            original.local_bounds()
+        };
+        let bounds = user_to_local
+            .inverse()
+            .map(|m| m.transform_rect(geometry_bounds))
+            .unwrap_or_default();
+        let parent = original
+            .parent
+            .ok_or_else(|| invalid("masked element has no parent"))?;
+        let position = self
+            .document
+            .children(parent)
+            .unwrap()
+            .iter()
+            .position(|n| *n == id)
+            .unwrap();
+        let mut wrapper = Node::new(
+            NodeKind::Group,
+            format!("{} compositing", original.name),
+            0.0,
+            0.0,
+            original.width,
+            original.height,
+        );
+        wrapper.fills.clear();
+        wrapper.opacity = original.opacity;
+        wrapper.visible = original.visible;
+        if original.metadata.contains_key("svg_display_none") {
+            wrapper
+                .metadata
+                .insert("svg_display_none".into(), "true".into());
+        }
+        wrapper.blend_mode = original.blend_mode;
+        wrapper.set_local_transform(matrix);
+        wrapper
+            .metadata
+            .insert("svg_compositing_wrapper".into(), "true".into());
+        let wrapper_id = self.insert(parent, wrapper)?;
+        self.document.reparent(wrapper_id, parent, position)?;
+        if let Some(reference) = &style.clip_path {
+            self.mask_source(
+                reference,
+                true,
+                None,
+                wrapper_id,
+                bounds,
+                user_to_local,
+                user_viewport,
+                depth + 1,
+                references,
+            )?;
+        }
+        if let Some(reference) = &style.mask {
+            self.mask_source(
+                reference,
+                false,
+                style.mask_mode,
+                wrapper_id,
+                bounds,
+                user_to_local,
+                user_viewport,
+                depth + 1,
+                references,
+            )?;
+        }
+        self.document.reparent(id, wrapper_id, usize::MAX)?;
+        let node = self.document.nodes.get_mut(&id).unwrap();
+        node.set_local_transform(Transform::IDENTITY);
+        node.opacity = 1.0;
+        node.visible = true;
+        node.blend_mode = BlendMode::PassThrough;
+        Ok(wrapper_id)
+    }
+
     fn element(
+        &mut self,
+        element: XmlNode<'a, 'input>,
+        parent: NodeId,
+        inherited: &SvgStyle,
+        viewport: Rect,
+        depth: usize,
+        references: &mut Vec<String>,
+    ) -> ImportResult<Option<NodeId>> {
+        let Some(id) =
+            self.element_unmasked(element, parent, inherited, viewport, depth, references)?
+        else {
+            return Ok(None);
+        };
+        let (style, props) = self.style(element, inherited, viewport)?;
+        self.apply_compositing(element, id, &style, &props, viewport, depth, references)
+            .map(Some)
+    }
+
+    fn element_unmasked(
         &mut self,
         element: XmlNode<'a, 'input>,
         parent: NodeId,
@@ -1212,6 +1749,16 @@ impl<'a, 'input> Importer<'a, 'input> {
                 .ids
                 .get(reference)
                 .ok_or_else(|| invalid(format!("missing use target #{reference}")))?;
+            if self.clip_geometry
+                && ![
+                    "rect", "circle", "ellipse", "line", "polyline", "polygon", "path", "text",
+                ]
+                .contains(&source.tag_name().name())
+            {
+                return Err(invalid(
+                    "clipPath use must directly reference a shape or text",
+                ));
+            }
             let x = attribute_length(element, "x", 0.0, viewport.width, style.font_size)?;
             let y = attribute_length(element, "y", 0.0, viewport.height, style.font_size)?;
             let matrix = matrix * Transform::translation(x, y);
@@ -1224,8 +1771,13 @@ impl<'a, 'input> Importer<'a, 'input> {
                 0.0,
             );
             group.opacity = style.opacity;
-            group.visible = style.display && style.visibility;
-            group.blend_mode = style.blend_mode;
+            group.visible = style.display;
+            if !style.display {
+                group
+                    .metadata
+                    .insert("svg_display_none".into(), "true".into());
+            }
+            group.blend_mode = style.compositing_blend();
             Self::identify(&mut group, element);
             let id = self.insert(parent, group)?;
             references.push(reference.to_string());
@@ -1758,7 +2310,7 @@ fn rounded_rectangle(w: f64, h: f64, rx: f64, ry: f64) -> VectorPath {
     let k = 0.5522847498307936;
     VectorPath {
         fill_rule: FillRule::NonZero,
-            anchor_modes: Default::default(),
+        anchor_modes: Default::default(),
         segments: vec![
             PathSegment::MoveTo {
                 point: Point::new(rx, 0.0),
@@ -1843,10 +2395,12 @@ pub fn parse_svg(source: &str, name: &str) -> ImportResult<SvgImport> {
         rules: css_rules(&xml)?,
         warnings: BTreeSet::new(),
         segments: 0,
+        clip_geometry: false,
     };
     let page = importer.document.pages[0].id;
     let outer_viewport = Rect::new(0.0, 0.0, 300.0, 150.0);
     let (style, props) = importer.style(root, &SvgStyle::default(), outer_viewport)?;
+    let mut references = Vec::new();
     let root_id = importer.viewport(
         root,
         page,
@@ -1854,8 +2408,17 @@ pub fn parse_svg(source: &str, name: &str) -> ImportResult<SvgImport> {
         &props,
         outer_viewport,
         0,
-        &mut Vec::new(),
+        &mut references,
         Some(name),
+    )?;
+    let root_id = importer.apply_compositing(
+        root,
+        root_id,
+        &style,
+        &props,
+        outer_viewport,
+        0,
+        &mut references,
     )?;
     let warnings: Vec<_> = importer.warnings.into_iter().collect();
     if !warnings.is_empty() {
@@ -1880,3 +2443,7 @@ impl Document {
         parse_svg(source, name).map(|result| result.document)
     }
 }
+
+#[cfg(test)]
+#[path = "svg_compositing_tests.rs"]
+mod compositing_tests;

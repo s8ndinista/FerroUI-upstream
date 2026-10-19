@@ -435,25 +435,28 @@ impl EditorShell {
         let error = component_text("", true);
         error.set_foreground(Some(icons::brush("#C8372B")));
         error.set_is_visible(false);
-        let committed = RefCell::new(value.to_string());
+        let committed = Rc::new(RefCell::new(value.to_string()));
+        let committed_value = committed.clone();
         let weak_shell = Rc::downgrade(self);
         let weak_field = field.downgrade();
         let weak_error = error.downgrade();
         let commit = Rc::new(move || {
             let (Some(shell), Some(field), Some(error)) = (weak_shell.upgrade(), weak_field.upgrade(), weak_error.upgrade()) else { return };
-            if shell.updating.get() { return; }
+            if shell.updating.get() || field.is_composing_text() { return; }
             let value = field.text().unwrap_or_default();
-            if *committed.borrow() == value { return; }
+            if *committed_value.borrow() == value { return; }
             match apply(&shell, &value) {
-                Ok(()) => { *committed.borrow_mut() = value; error.set_is_visible(false); }
+                Ok(()) => { *committed_value.borrow_mut() = value; error.set_is_visible(false); }
                 Err(message) => { error.set_text(Some(&message)); error.set_is_visible(true); }
             }
         });
         let blur = commit.clone();
         field.add_handler(InputElement::lost_focus_event(), move |_, _| blur());
+        let draft_commit = commit.clone();
         field.add_handler(InputElement::key_down_event(), move |_, event| {
             if event.key == Key::Enter { commit(); event.set_handled(true); }
         });
+        self.bind_inspector_draft(&field, committed, draft_commit, Some(&error));
         panel.children().add(field);
         panel.children().add(error);
         panel
