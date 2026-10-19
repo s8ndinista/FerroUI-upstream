@@ -73,6 +73,13 @@ jobs:
           cargo metadata --locked --no-deps --format-version 1 > browser-report/cargo-metadata.json
           cargo test --locked -p ferrodesign-core --jobs 1 2>&1 | tee browser-report/core-tests.log
 
+      - name: Compare scoped editing, history and serialization costs
+        run: |
+          set -o pipefail
+          source "$RUNNER_TEMP/ferrodesign-tools/env.sh"
+          cargo run --locked --release -p ferrodesign-core --example performance -- 10000 > browser-report/performance.json
+          cat browser-report/performance.json
+
       - name: Test native text preedit ownership
         run: |
           set -o pipefail

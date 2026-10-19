@@ -11,6 +11,10 @@ const TRIGGERS: &[(&str, core::Trigger)] = &[
     ("On drag", core::Trigger::Drag),
     ("After delay", core::Trigger::AfterDelay),
     ("Key shortcut", core::Trigger::Key),
+    ("While hovering", core::Trigger::WhileHover),
+    ("While pressing", core::Trigger::WhilePress),
+    ("Mouse leaves", core::Trigger::MouseLeave),
+    ("On release", core::Trigger::Release),
 ];
 const ACTIONS: &[&str] = &[
     "Navigate to",
@@ -276,6 +280,7 @@ impl EditorShell {
         );
         let host = self.control::<StackPanel>("ModalContent");
         host.set_spacing(12.0);
+        self.prototype_scroll_controls(source, &host);
         if interactions.is_empty() {
             host.children().add(interaction_text(
                 "No interactions yet. Choose a trigger and action below.",
@@ -473,6 +478,10 @@ impl EditorShell {
         Grid::set_column(&action_row, 1);
         first.children().add(action_row);
         host.children().add(first);
+        host.children().add(interaction_text(
+            "While hovering and while pressing restore the previous preview state on pointer exit or release.",
+            true,
+        ));
         let selected_target = match draft.action {
             core::PrototypeAction::NavigateTo { target }
             | core::PrototypeAction::OpenOverlay { target, .. }
@@ -600,13 +609,13 @@ impl EditorShell {
         motion.children().add(easing_panel);
         host.children().add(motion);
         let animation_note = interaction_text(
-            "Preview uses instant transitions. Animation settings are saved with this interaction.",
+            "Smart animate matches layer names within the same hierarchy. Compatible geometry and paints interpolate; changed content dissolves.",
             true,
         );
         animation_note.set_name(Some("InteractionAnimationNote".into()));
         host.children().add(animation_note.clone());
         let scroll_note = interaction_text(
-            "Scroll requests are saved; scrolling within a frame is not available in this preview.",
+            "Enable overflow scrolling on the containing frame. Scroll to aligns this destination inside its enclosing scroll frames.",
             true,
         );
         host.children().add(scroll_note.clone());
@@ -647,6 +656,53 @@ impl EditorShell {
             scroll_note,
             error,
         }
+    }
+
+    fn prototype_scroll_controls(self: &Rc<Self>, source: NodeId, host: &Ref<StackPanel>) {
+        let overflow = {
+            let editor = self.editor.borrow();
+            let Some(node) = editor.document.nodes.get(&source) else { return };
+            if !node.kind.is_container() { return; }
+            node.prototype_overflow
+        };
+        let selected = match overflow {
+            core::PrototypeOverflow::None => 0,
+            core::PrototypeOverflow::Horizontal => 1,
+            core::PrototypeOverflow::Vertical => 2,
+            core::PrototypeOverflow::Both => 3,
+        };
+        let (field, choice) = interaction_choice(
+            "Frame overflow scrolling",
+            "PrototypeOverflowMode",
+            &["No scrolling", "Horizontal", "Vertical", "Both directions"],
+            selected,
+        );
+        let row = interaction_grid("*,124");
+        row.children().add(field);
+        let apply = self.interaction_button("Apply scrolling", "PrototypeOverflowSave", move |shell| {
+            let overflow = match choice.selected_index() {
+                1 => core::PrototypeOverflow::Horizontal,
+                2 => core::PrototypeOverflow::Vertical,
+                3 => core::PrototypeOverflow::Both,
+                _ => core::PrototypeOverflow::None,
+            };
+            let mut editor = shell.editor.borrow_mut();
+            if editor.selection.as_slice() != [source] || editor.document.effective_locked(source) {
+                drop(editor);
+                shell.toast("Select and unlock this frame before changing its scrolling.");
+                return;
+            }
+            editor.update_node(source, "Set prototype scrolling", |node| {
+                node.prototype_overflow = overflow;
+                if overflow != core::PrototypeOverflow::None { node.clip_content = true; }
+            });
+            drop(editor);
+            shell.changed();
+        });
+        apply.set_vertical_alignment(VerticalAlignment::Bottom);
+        Grid::set_column(&apply, 1);
+        row.children().add(apply);
+        host.children().add(row);
     }
 
     fn interaction_button(

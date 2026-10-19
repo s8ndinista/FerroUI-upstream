@@ -90,6 +90,9 @@ pub enum CanvasEvent {
     ContextMenu,
     PrototypeTrigger(NodeId, core::Trigger),
     PrototypeKey(String),
+    PrototypeScroll(NodeId, Point),
+    PrototypePointerMoved(Point),
+    PrototypePointerExited,
     ExitPresentation,
     Action(&'static str),
 }
@@ -159,6 +162,7 @@ pub struct DesignCanvas {
     pub dark: Cell<bool>,
     pub presentation: Cell<Option<NodeId>>,
     pub overlays: RefCell<Vec<(NodeId, Point)>>,
+    pub prototype_scene: RefCell<Option<core::PrototypeScene>>,
     pub frames: Cell<u64>,
     pub snap: Cell<bool>,
     snap_guides: Cell<(Option<f64>, Option<f64>)>,
@@ -188,6 +192,7 @@ impl DesignCanvas {
             dark: Cell::new(false),
             presentation: Cell::new(None),
             overlays: RefCell::new(Vec::new()),
+            prototype_scene: RefCell::new(None),
             frames: Cell::new(0),
             snap: Cell::new(true),
             snap_guides: Cell::new((None, None)),
@@ -210,6 +215,7 @@ impl DesignCanvas {
         }
     }
     fn prototype_pick(&self, world: Point) -> Option<NodeId> {
+        if self.prototype_scene.borrow().is_some() { return None; }
         let editor = self.editor.borrow();
         let current = self.presentation.get()?;
         let mut point = world;
@@ -810,8 +816,14 @@ impl InputElementImpl for DesignCanvas {
         let screen = e.get_position(Some(this));
         let world = this.world(screen);
         if this.presentation.get().is_some() {
+            this.emit(CanvasEvent::PrototypePointerMoved(Point::new(screen.x, screen.y)));
+            let world = this.world(screen);
             let hover = this.prototype_pick(world);
-            if this.hover.replace(hover) != hover {
+            let previous = this.hover.replace(hover);
+            if previous != hover {
+                if let Some(id) = previous {
+                    this.emit(CanvasEvent::PrototypeTrigger(id, core::Trigger::MouseLeave));
+                }
                 if let Some(id) = hover {
                     this.emit(CanvasEvent::PrototypeTrigger(id, core::Trigger::Hover));
                 }
@@ -1099,6 +1111,9 @@ impl InputElementImpl for DesignCanvas {
         if this.presentation.get().is_some() {
             let press = this.prototype_press.take();
             e.pointer().capture(None);
+            if let Some((id, _, _)) = press {
+                this.emit(CanvasEvent::PrototypeTrigger(id, core::Trigger::Release));
+            }
             let point = this.world(e.get_position(Some(this)));
             if let Some((id, _, false)) = press {
                 if this.prototype_pick(point) == Some(id) {
@@ -1149,14 +1164,33 @@ impl InputElementImpl for DesignCanvas {
     }
     fn on_pointer_capture_lost(this: &Self, e: &PointerCaptureLostEventArgs) {
         Self::parent_on_pointer_capture_lost(this, e);
-        this.prototype_press.set(None);
+        if let Some((id, _, _)) = this.prototype_press.take() {
+            if this.presentation.get().is_some() {
+                this.emit(CanvasEvent::PrototypeTrigger(id, core::Trigger::Release));
+            }
+        }
         if !matches!(*this.gesture.borrow(), Gesture::None) {
             this.cancel();
+        }
+    }
+    fn on_pointer_exited(this: &Self, e: &PointerEventArgs) {
+        Self::parent_on_pointer_exited(this, e);
+        if this.presentation.get().is_some() {
+            this.emit(CanvasEvent::PrototypePointerExited);
+            if let Some(id) = this.hover.take() {
+                this.emit(CanvasEvent::PrototypeTrigger(id, core::Trigger::MouseLeave));
+            }
         }
     }
     fn on_pointer_wheel_changed(this: &Self, e: &PointerWheelEventArgs) {
         Self::parent_on_pointer_wheel_changed(this, e);
         e.set_handled(true);
+        if let Some(root) = this.presentation.get() {
+            let world = this.world(e.get_position(Some(this)));
+            let target = this.prototype_pick(world).unwrap_or(root);
+            this.emit(CanvasEvent::PrototypeScroll(target, Point::new(-e.delta().x * 36.0, -e.delta().y * 36.0)));
+            return;
+        }
         let mut v = this.viewport.get();
         if e.key_modifiers()
             .intersects(KeyModifiers::CONTROL | KeyModifiers::META)
@@ -1529,15 +1563,18 @@ impl VisualImpl for DesignCanvas {
             return;
         }
         let editor = this.editor.borrow();
-        let doc = &editor.document;
-        let roots: Vec<NodeId> = if let Some(root) = this.presentation.get() {
+        let prototype_scene = this.prototype_scene.borrow();
+        let doc = prototype_scene.as_ref().map(|scene| &scene.document).unwrap_or(&editor.document);
+        let roots: Vec<NodeId> = if let Some(scene) = prototype_scene.as_ref() {
+            vec![scene.root]
+        } else if let Some(root) = this.presentation.get() {
             vec![root]
         } else {
             doc.page(editor.active_page)
                 .map(|p| p.children.clone())
                 .unwrap_or_default()
         };
-        let fitted = !this.initialized.replace(true);
+        let fitted = prototype_scene.is_none() && !this.initialized.replace(true);
         if fitted {
             if let Some(bounds) = roots
                 .iter()
@@ -1614,7 +1651,7 @@ impl VisualImpl for DesignCanvas {
             .render(ctx, doc, &roots, v.visible_rect());
         ctx.pop(camera);
         if let Some(current) = this.presentation.get() {
-            for &(id, position) in this.overlays.borrow().iter() {
+            for &(id, position) in this.overlays.borrow().iter().filter(|_| prototype_scene.is_none()) {
                 if let (Some(current_bounds), Some(overlay_bounds)) =
                     (doc.world_bounds(current), doc.world_bounds(id))
                 {

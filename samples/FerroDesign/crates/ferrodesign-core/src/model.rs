@@ -667,6 +667,7 @@ pub struct Node {
     pub opacity: f64,
     pub blend_mode: BlendMode,
     pub clip_content: bool,
+    pub prototype_overflow: PrototypeOverflow,
     pub fills: Vec<Fill>,
     pub strokes: Vec<Stroke>,
     pub effects: Vec<Effect>,
@@ -725,6 +726,7 @@ impl Default for Node {
             opacity: 1.0,
             blend_mode: BlendMode::Normal,
             clip_content: false,
+            prototype_overflow: PrototypeOverflow::None,
             fills: vec![Fill::solid(Color::rgb(217, 217, 217))],
             strokes: Vec::new(),
             effects: Vec::new(),
@@ -1028,6 +1030,15 @@ pub struct Variable {
 }
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
+pub enum PrototypeOverflow {
+    #[default]
+    None,
+    Horizontal,
+    Vertical,
+    Both,
+}
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum Trigger {
     #[default]
     Click,
@@ -1036,6 +1047,10 @@ pub enum Trigger {
     Drag,
     AfterDelay,
     Key,
+    WhileHover,
+    WhilePress,
+    MouseLeave,
+    Release,
 }
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]

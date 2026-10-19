@@ -545,6 +545,9 @@ impl EditorShell {
             CanvasEvent::PrototypeTrigger(id, trigger) => {
                 self.prototype.dispatch(id, trigger);
             }
+            CanvasEvent::PrototypeScroll(id, delta) => { self.prototype.scroll(id, delta); }
+            CanvasEvent::PrototypePointerMoved(point) => { self.prototype.pointer_moved(point); }
+            CanvasEvent::PrototypePointerExited => { self.prototype.pointer_exited(); }
             CanvasEvent::PrototypeKey(key) => {
                 if !self.prototype.key(&key) && key == "Escape" {
                     self.prototype.stop();
@@ -653,6 +656,8 @@ impl EditorShell {
             "editingText":self.inline_text.get(),
             "editingComposition":self.inline_text.get().is_some() && self.field("InlineTextBox").is_composing_text(),
             "prototypeOverlays":*self.canvas.overlays.borrow(),
+            "prototypeAnimation":self.prototype.animation_state(),
+            "prototypeScrollOffsets":self.prototype.scroll_offsets(),
             "vectorPoint":self.canvas.vector_point.get().map(|point| json!({"segment":point.segment,"kind":format!("{:?}",point.kind)})),
             "saveStatus":platform::document_save_status(),
             "renderer":"FerroUI Vello","pageCount":editor.document.pages.len(),"activePage":editor.active_page,
@@ -2663,7 +2668,6 @@ impl EditorShell {
                 self.prototype.take_pending_url();
             }
             PrototypeRuntimeEvent::ScrollTo(_) => {
-                self.toast("This prototype requests content scrolling; scroll containers are not implemented yet.");
                 self.prototype.take_scroll_target();
             }
         }

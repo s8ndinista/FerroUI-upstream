@@ -53,6 +53,315 @@ fn url(value: &str) -> PrototypeAction {
     PrototypeAction::OpenUrl { url: value.into() }
 }
 
+fn transition_scene(document: &Document, from: NodeId, to: NodeId, kind: TransitionKind) -> PrototypeScene {
+    PrototypeScene::new(
+        PrototypeFrame::capture(document, from, &[]).unwrap(),
+        PrototypeFrame::capture(document, to, &[]).unwrap(),
+        Transition { kind, duration_ms: 1000, easing: Easing::Linear },
+    )
+}
+
+#[test]
+fn prototype_smart_animate_interpolates_named_geometry_paints_and_short_rotation() {
+    let (mut document, a, b, _, button) = fixture();
+    let start = document.nodes.get_mut(&button).unwrap();
+    start.rotation = 350.0;
+    start.fills = vec![Fill::solid(Color::rgb(255, 0, 0))];
+    start.corner_radius = 2.0;
+    let mut end = Node::new(NodeKind::Rectangle, "Button", 120.0, 80.0, 150.0, 90.0);
+    end.rotation = 10.0;
+    end.fills = vec![Fill::solid(Color::rgb(0, 0, 255))];
+    end.corner_radius = 18.0;
+    document.insert_node(b, end).unwrap();
+    let authored = document.clone();
+    let mut scene = transition_scene(&document, a, b, TransitionKind::SmartAnimate);
+    assert!(!scene.sample(500.0));
+    let nodes: Vec<_> = scene.document.nodes.values().filter(|node| node.name == "Button").collect();
+    assert_eq!(nodes.len(), 1, "a matched layer must morph, not duplicate/crossfade");
+    let node = nodes[0];
+    assert_eq!((node.x, node.y, node.width, node.height), (70.0, 50.0, 100.0, 70.0));
+    assert_eq!(node.rotation, 360.0);
+    assert_eq!(node.corner_radius, 10.0);
+    assert_eq!(node.fills[0].paint, Paint::Solid(Color::rgb(128, 0, 128)));
+    assert_eq!(scene.animated_nodes(), 1, "unchanged ancestors require no property tracks");
+    assert!(scene.sample(1000.0));
+    assert_eq!(scene.document.nodes.values().find(|node| node.name == "Button").unwrap().x, 120.0);
+    assert_eq!(document, authored, "animation never mutates authored nodes");
+}
+
+#[test]
+fn prototype_smart_animate_matches_duplicate_names_by_sibling_occurrence() {
+    let (mut document, a, b, _, _) = fixture();
+    for (parent, positions) in [(a, [0.0, 40.0]), (b, [80.0, 160.0])] {
+        for x in positions {
+            document.insert_node(parent, Node::new(NodeKind::Rectangle, "Repeated", x, 100.0, 10.0, 10.0)).unwrap();
+        }
+    }
+    let mut scene = transition_scene(&document, a, b, TransitionKind::SmartAnimate);
+    scene.sample(500.0);
+    let mut positions: Vec<_> = scene.document.nodes.values().filter(|node| node.name == "Repeated").map(|node| node.x).collect();
+    positions.sort_by(f64::total_cmp);
+    assert_eq!(positions, vec![40.0, 100.0]);
+}
+
+#[test]
+fn prototype_smart_animate_crossfades_changed_text_and_reparented_layers() {
+    let (mut document, a, b, _, _) = fixture();
+    for (parent, text, group_name) in [(a, "Before", "Old group"), (b, "After", "New group")] {
+        let group = document.insert_node(parent, Node::new(NodeKind::Group, group_name, 0.0, 0.0, 100.0, 100.0)).unwrap();
+        document.insert_node(group, Node::new(NodeKind::Rectangle, "Shared child", 5.0, 5.0, 10.0, 10.0)).unwrap();
+        let mut label = Node::new(NodeKind::Text, "Label", 5.0, 130.0, 100.0, 30.0);
+        label.text = text.into();
+        document.insert_node(parent, label).unwrap();
+    }
+    let mut scene = transition_scene(&document, a, b, TransitionKind::SmartAnimate);
+    scene.sample(500.0);
+    let labels: Vec<_> = scene.document.nodes.values().filter(|node| node.name == "Label").collect();
+    assert_eq!(labels.len(), 2);
+    assert!(labels.iter().all(|node| node.opacity == 0.5));
+    assert_eq!(scene.document.nodes.values().filter(|node| node.name == "Shared child").count(), 2);
+    for name in ["Old group", "New group"] {
+        assert_eq!(scene.document.nodes.values().find(|node| node.name == name).unwrap().opacity, 0.5);
+    }
+}
+
+#[test]
+fn prototype_slide_tracks_only_two_roots_and_moves_both_inside_a_clip() {
+    let (mut document, a, b, _, _) = fixture();
+    for i in 0..1000 {
+        document.insert_node(a, Node::new(NodeKind::Rectangle, format!("Layer {i}"), 0.0, i as f64, 10.0, 10.0)).unwrap();
+    }
+    let mut scene = transition_scene(&document, a, b, TransitionKind::SlideLeft);
+    let ids = scene.document.nodes[&scene.root].children.clone();
+    assert!(scene.document.nodes[&scene.root].clip_content);
+    assert_eq!(scene.animated_nodes(), 2);
+    let node_count = scene.document.nodes.len();
+    scene.sample(500.0);
+    assert_eq!(scene.document.nodes[&ids[0]].x, -150.0);
+    assert_eq!(scene.document.nodes[&ids[1]].x, 150.0);
+    assert_eq!(scene.document.nodes[&ids[0]].opacity, 1.0);
+    assert_eq!(scene.document.nodes.len(), node_count);
+    assert!(scene.sample(1200.0));
+    assert_eq!(scene.document.nodes[&ids[1]].x, 0.0);
+}
+
+#[test]
+fn prototype_frame_capture_copies_only_active_subtrees_and_positions_overlays() {
+    let (document, a, b, overlay, _) = fixture();
+    let frame = PrototypeFrame::capture(&document, b, &[(overlay, Point::new(30.0, 40.0))]).unwrap();
+    assert_eq!(frame.origin, Point::new(400.0, 0.0));
+    assert_eq!(frame.bounds(), Rect::new(0.0, 0.0, 300.0, 300.0));
+    assert!(!frame.document.nodes.values().any(|node| node.name == document.nodes[&a].name || node.name == "Button"));
+    let overlay = frame.document.nodes.values().find(|node| node.name.starts_with("__prototype_overlay_")).unwrap();
+    assert_eq!((overlay.x, overlay.y), (30.0, 40.0));
+    assert!(frame.document.nodes.values().all(|node| node.interactions.is_empty()));
+}
+
+#[test]
+fn prototype_overlay_motion_keeps_the_base_frame_still_and_fades_its_scrim() {
+    let (document, a, _, overlay, _) = fixture();
+    let mut scene = PrototypeScene::new(
+        PrototypeFrame::capture(&document, a, &[]).unwrap(),
+        PrototypeFrame::capture(&document, a, &[(overlay, Point::new(30.0, 40.0))]).unwrap(),
+        Transition { kind: TransitionKind::SlideLeft, duration_ms: 1000, easing: Easing::Linear },
+    );
+    scene.sample(500.0);
+    let base = scene.document.nodes.values().find(|node| node.name == "__prototype_frame").unwrap();
+    assert_eq!((base.x, base.y, base.opacity), (0.0, 0.0, 1.0));
+    let panel = scene.document.nodes.values().find(|node| node.name.starts_with("__prototype_overlay_")).unwrap();
+    assert_eq!((panel.x, panel.y, panel.opacity), (180.0, 40.0, 1.0));
+    let scrim = scene.document.nodes.values().find(|node| node.name.starts_with("__prototype_scrim_")).unwrap();
+    assert_eq!((scrim.x, scrim.y, scrim.opacity), (0.0, 0.0, 0.5));
+}
+
+#[test]
+fn prototype_opaque_dissolve_does_not_dim_the_source_twice() {
+    let (document, a, b, _, _) = fixture();
+    let mut scene = transition_scene(&document, a, b, TransitionKind::Dissolve);
+    scene.sample(500.0);
+    let roots = &scene.document.nodes[&scene.root].children;
+    assert_eq!(scene.document.nodes[&roots[0]].opacity, 1.0);
+    assert_eq!(scene.document.nodes[&roots[1]].opacity, 0.5);
+}
+
+#[test]
+fn prototype_easing_and_zero_duration_have_finite_exact_endpoints() {
+    for easing in [Easing::Linear, Easing::EaseIn, Easing::EaseOut, Easing::EaseInOut, Easing::Spring] {
+        assert_eq!(prototype_easing(easing, -1.0), 0.0);
+        assert_eq!(prototype_easing(easing, 1.0), 1.0);
+        assert_eq!(prototype_easing(easing, f64::NAN), 0.0);
+        assert!(prototype_easing(easing, 0.5).is_finite());
+    }
+    assert!(prototype_easing(Easing::EaseIn, 0.5) < 0.5);
+    assert!(prototype_easing(Easing::EaseOut, 0.5) > 0.5);
+    assert!((prototype_easing(Easing::EaseInOut, 0.5) - 0.5).abs() < 0.000001);
+    assert!((1..100).any(|i| prototype_easing(Easing::Spring, i as f64 / 100.0) > 1.0));
+    let (document, a, b, _, _) = fixture();
+    let mut scene = transition_scene(&document, a, b, TransitionKind::Dissolve);
+    scene.transition.duration_ms = 0;
+    assert!(scene.sample(0.0));
+    assert_eq!(scene.progress, 1.0);
+}
+
+#[test]
+fn prototype_vertical_scrolling_clamps_content_and_preserves_the_other_axis() {
+    let (mut document, a, _, _, button) = fixture();
+    document.nodes.get_mut(&a).unwrap().prototype_overflow = PrototypeOverflow::Vertical;
+    document.nodes.get_mut(&button).unwrap().y = 620.0;
+    let mut player = PrototypePlayer::default();
+    player.start_at(&document, a);
+    assert!(player.scroll_by(&mut document, button, Point::new(80.0, 400.0)));
+    assert_eq!(player.scroll.offset(a), Point::new(0.0, 370.0));
+    assert_eq!((document.nodes[&button].x, document.nodes[&button].y), (20.0, 250.0));
+    assert!(!player.scroll_by(&mut document, button, Point::new(0.0, 100.0)));
+    assert!(player.scroll_by(&mut document, button, Point::new(0.0, -1000.0)));
+    assert_eq!(player.scroll.offset(a), Point::default());
+    assert_eq!(document.nodes[&button].y, 620.0);
+    let before = document.clone();
+    assert!(!player.scroll_by(&mut document, button, Point::new(f64::NAN, 1.0)));
+    assert_eq!(document, before);
+}
+
+#[test]
+fn prototype_nested_scroll_chains_boundaries_and_scroll_to_aligns_the_target() {
+    let (mut document, a, _, _, _) = fixture();
+    document.nodes.get_mut(&a).unwrap().prototype_overflow = PrototypeOverflow::Vertical;
+    document.insert_node(a, Node::new(NodeKind::Rectangle, "Tail", 0.0, 600.0, 20.0, 50.0)).unwrap();
+    let mut inner = Node::new(NodeKind::Frame, "Inner", 20.0, 20.0, 200.0, 100.0);
+    inner.prototype_overflow = PrototypeOverflow::Vertical;
+    let inner = document.insert_node(a, inner).unwrap();
+    let target = document.insert_node(inner, Node::new(NodeKind::Rectangle, "Target", 0.0, 260.0, 20.0, 40.0)).unwrap();
+    let mut player = PrototypePlayer::default();
+    player.start_at(&document, a);
+    assert!(player.scroll_by(&mut document, target, Point::new(0.0, 250.0)));
+    assert_eq!(player.scroll.offset(inner).y, 200.0);
+    assert_eq!(player.scroll.offset(a).y, 50.0);
+    assert_eq!(document.world_bounds(target).unwrap().y, 30.0);
+    player.scroll.reset_subtree(&mut document, a);
+    assert!(player.scroll.scroll_to(&mut document, a, target));
+    assert_eq!(player.scroll.offset(inner).y, 200.0);
+    assert_eq!(player.scroll.offset(a).y, 80.0);
+    assert_eq!(document.world_bounds(target).unwrap().y, 0.0);
+    assert_eq!(document.nodes[&inner].height, 100.0);
+}
+
+#[test]
+fn prototype_navigation_resets_destination_scroll_and_back_keeps_prior_offset() {
+    let (mut document, a, b, _, button) = fixture();
+    document.nodes.get_mut(&a).unwrap().prototype_overflow = PrototypeOverflow::Vertical;
+    document.nodes.get_mut(&button).unwrap().y = 620.0;
+    document.nodes.get_mut(&a).unwrap().interactions = vec![interaction(Trigger::Click, PrototypeAction::NavigateTo { target: b })];
+    let mut player = PrototypePlayer::default();
+    player.start_at(&document, a);
+    player.scroll_by(&mut document, a, Point::new(0.0, 200.0));
+    assert!(player.trigger(&mut document, a, Trigger::Click));
+    assert!(player.back(&document));
+    assert_eq!(player.scroll.offset(a).y, 200.0);
+    document.nodes.get_mut(&a).unwrap().interactions[0].action = PrototypeAction::NavigateTo { target: a };
+    assert!(player.trigger(&mut document, a, Trigger::Click));
+    assert_eq!(player.scroll.offset(a).y, 0.0);
+    assert_eq!(document.nodes[&button].y, 620.0);
+}
+
+#[test]
+fn prototype_overlay_scroll_cannot_move_the_background_frame() {
+    let (mut document, a, _, overlay, button) = fixture();
+    document.nodes.get_mut(&a).unwrap().prototype_overflow = PrototypeOverflow::Vertical;
+    document.nodes.get_mut(&button).unwrap().y = 620.0;
+    document.nodes.get_mut(&a).unwrap().interactions = vec![interaction(Trigger::Click, PrototypeAction::OpenOverlay { target: overlay, position: Point::default() })];
+    document.nodes.get_mut(&overlay).unwrap().interactions = vec![interaction(Trigger::Click, PrototypeAction::ScrollTo { target: button })];
+    let mut player = PrototypePlayer::default();
+    player.start_at(&document, a);
+    assert!(player.trigger(&mut document, a, Trigger::Click));
+    assert!(!player.scroll_by(&mut document, button, Point::new(0.0, 100.0)));
+    assert!(!player.trigger(&mut document, overlay, Trigger::Click));
+    assert_eq!(document.nodes[&button].y, 620.0);
+}
+
+#[test]
+fn prototype_while_hover_restores_navigation_and_uses_original_hit_region() {
+    let (mut document, a, b, _, button) = fixture();
+    document.nodes.get_mut(&button).unwrap().interactions = vec![Interaction {
+        transition: Transition { kind: TransitionKind::SlideLeft, duration_ms: 400, easing: Easing::EaseIn },
+        ..interaction(Trigger::WhileHover, PrototypeAction::NavigateTo { target: b })
+    }];
+    document.nodes.get_mut(&a).unwrap().interactions = vec![delay(500, url("https://example.com/timer"))];
+    let before = document.clone();
+    let mut player = PrototypePlayer::default();
+    player.start_at(&document, a);
+    let stale = player.pending_timers(&document)[0];
+    assert!(player.trigger(&mut document, button, Trigger::Hover));
+    assert_eq!(player.current, Some(b));
+    assert!(player.transient_contains(Trigger::WhileHover, Point::new(25.0, 25.0)));
+    assert!(!player.transient_contains(Trigger::WhileHover, Point::new(200.0, 200.0)));
+    assert!(player.end_transient(&mut document, Trigger::WhileHover));
+    assert_eq!(player.current, Some(a));
+    assert!(player.history.is_empty());
+    assert_eq!(document, before);
+    assert_eq!(player.last_transition.kind, TransitionKind::SlideRight);
+    assert_eq!(player.last_transition.easing, Easing::EaseOut);
+    assert!(!player.fire_timer(&mut document, stale, 500));
+    assert_ne!(player.pending_timers(&document)[0].activation, stale.activation);
+}
+
+#[test]
+fn prototype_while_press_restores_inside_hover_then_hover_restores_authored_preview() {
+    let (mut document, a, _, overlay, button) = fixture();
+    document.nodes.get_mut(&button).unwrap().interactions = vec![interaction(Trigger::WhileHover, PrototypeAction::OpenOverlay { target: overlay, position: Point::new(10.0, 20.0) })];
+    document.nodes.get_mut(&overlay).unwrap().interactions = vec![interaction(Trigger::WhilePress, PrototypeAction::CloseOverlay)];
+    let before = document.clone();
+    let mut player = PrototypePlayer::default();
+    player.start_at(&document, a);
+    assert!(player.trigger(&mut document, button, Trigger::Hover));
+    assert!(player.trigger(&mut document, overlay, Trigger::Press));
+    assert!(player.overlays.is_empty());
+    assert!(player.end_transient(&mut document, Trigger::WhilePress));
+    assert_eq!(player.overlays, vec![(overlay, Point::new(10.0, 20.0))]);
+    assert!(player.has_transient(Trigger::WhileHover));
+    assert!(player.end_transient(&mut document, Trigger::WhileHover));
+    assert!(player.overlays.is_empty());
+    assert_eq!(document, before);
+    assert!(!player.has_transients());
+    let rule = interaction(Trigger::WhileHover, url("https://example.com"));
+    assert!(validate_prototype_interaction(&document, button, &rule).is_err());
+    document.nodes.get_mut(&button).unwrap().interactions = vec![rule];
+    assert!(!player.trigger(&mut document, button, Trigger::Hover));
+    assert!(player.pending_url.is_none());
+}
+
+#[test]
+fn prototype_smart_animate_morphs_gradient_path_and_disabling_blur() {
+    let (mut document, a, b, _, _) = fixture();
+    for (parent, amount, visible) in [(a, 0.0, true), (b, 20.0, false)] {
+        let mut node = Node::new(NodeKind::Vector, "Morph", 100.0, 100.0, 100.0, 100.0);
+        node.path.segments = vec![PathSegment::MoveTo { point: Point::default() }, PathSegment::CubicTo { control1: Point::new(amount, 10.0), control2: Point::new(80.0, 90.0), point: Point::new(100.0, 100.0) }];
+        node.fills[0].paint = Paint::LinearGradient {
+            start: Point::new(amount, 0.0), end: Point::new(100.0, 100.0),
+            stops: vec![GradientStop { offset: amount / 100.0, color: if visible { Color::BLACK } else { Color::WHITE } }],
+        };
+        node.effects = vec![Effect { kind: EffectKind::LayerBlur, color: Color::BLACK, offset: Point::default(), radius: 20.0, spread: 0.0, visible }];
+        document.insert_node(parent, node).unwrap();
+    }
+    let mut scene = transition_scene(&document, a, b, TransitionKind::SmartAnimate);
+    scene.sample(500.0);
+    let node = scene.document.nodes.values().find(|node| node.name == "Morph").unwrap();
+    assert_eq!(node.effects[0].radius, 10.0);
+    match &node.path.segments[1] {
+        PathSegment::CubicTo { control1, .. } => assert_eq!(*control1, Point::new(10.0, 10.0)),
+        _ => panic!("matching cubic paths must interpolate"),
+    }
+    match &node.fills[0].paint {
+        Paint::LinearGradient { start, stops, .. } => {
+            assert_eq!(start.x, 10.0);
+            assert_eq!(stops[0].offset, 0.1);
+            assert_eq!(stops[0].color, Color::rgb(128, 128, 128));
+        }
+        _ => panic!("matching gradients must interpolate"),
+    }
+    scene.sample(1000.0);
+    assert_eq!(scene.document.nodes.values().find(|node| node.name == "Morph").unwrap().effects[0].radius, 0.0);
+}
+
 #[test]
 fn prototype_key_chords_match_modifiers_aliases_and_exact_authored_keys() {
     assert_eq!(

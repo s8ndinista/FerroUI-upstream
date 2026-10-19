@@ -1,3 +1,4 @@
+import { prototypeMotionRegressions } from "./prototype-browser.mjs";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { createServer } from "node:http";
@@ -698,6 +699,8 @@ try {
 
             await nativeEditingRegressions(page, canvas, svgDocument, result, check, mode);
             await prototypeInputRegressions(page, svgDocument, check);
+            await prototypeMotionRegressions(page, svgDocument, check,
+                { fixtureNode, isolatedDocument, importFixture, documentState, state, moveWorld, frames }, output, mode);
             assert.equal(await page.evaluate((json) => globalThis.ferroDesign.ferroDesignImportJson(json), svgJson), true);
             await frames(page);
 

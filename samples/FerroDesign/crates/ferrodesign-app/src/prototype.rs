@@ -1,13 +1,14 @@
 //! Native FerroUI prototype host. Presentation uses a disposable preview of the
-//! authored document, activation-scoped Dispatcher timers and explicit external
-//! requests. This module adds no rendering backend and no browser-only clock.
+//! authored document, activation-scoped Dispatcher timers, and the public
+//! FerroUI animation clock. Transition scenes use normal FerroUI drawing.
 
 use crate::canvas::{DesignCanvas, Tool};
 use ferrodesign_core::{
-    Document, DocumentError, Editor, NodeId, PrototypeAction, PrototypePlayer, PrototypeTimer,
-    Trigger, Viewport, MAX_DOCUMENT_DEPTH,
+    Document, DocumentError, Editor, NodeId, Point, PrototypeAction, PrototypeFrame, PrototypePlayer,
+    PrototypeScene, PrototypeTimer, Transition, TransitionKind, Trigger, Viewport, MAX_DOCUMENT_DEPTH,
 };
-use ferroui_base::reactive::IDisposable;
+use ferroui_base::animation::{Clock, IClock, PlayState, TimeSpan};
+use ferroui_base::reactive::{AnonymousObserver, IDisposable, IObservable};
 use ferroui_base::threading::{DispatcherPriority, DispatcherTimer};
 use ferroui_base::Ref;
 use std::{
@@ -25,9 +26,22 @@ pub enum PrototypeRuntimeEvent {
     /// A validated request awaiting a host implementation, not a completed
     /// browser launch. Use take_pending_url after accepting/handling it.
     OpenUrl(String),
-    /// The renderer has no scroll-container offset yet. Keep this request
-    /// explicit instead of replacing content scrolling with camera panning.
+    /// A content-scroll action has been processed in the disposable preview.
     ScrollTo(NodeId),
+}
+
+struct PresentationBefore {
+    frame: Option<PrototypeFrame>,
+    current: Option<NodeId>,
+    viewport: Viewport,
+}
+
+struct RunningTransition {
+    clock: Rc<Clock>,
+    subscription: Rc<dyn IDisposable>,
+    from_viewport: Viewport,
+    to_viewport: Viewport,
+    final_viewport: Viewport,
 }
 
 struct AuthoredSnapshot {
@@ -48,6 +62,9 @@ pub struct PrototypeRuntime {
     player: RefCell<PrototypePlayer>,
     authored: RefCell<Option<AuthoredSnapshot>>,
     timers: RefCell<BTreeMap<PrototypeTimer, ScheduledTimer>>,
+    animation: RefCell<Option<RunningTransition>>,
+    animation_generation: Cell<u64>,
+    hover_viewport: Cell<Option<Viewport>>,
     generation: Cell<u64>,
     callback: RefCell<Option<Rc<dyn Fn(PrototypeRuntimeEvent)>>>,
 }
@@ -60,6 +77,9 @@ impl PrototypeRuntime {
             player: RefCell::new(PrototypePlayer::default()),
             authored: RefCell::new(None),
             timers: RefCell::new(BTreeMap::new()),
+            animation: RefCell::new(None),
+            animation_generation: Cell::new(0),
+            hover_viewport: Cell::new(None),
             generation: Cell::new(0),
             callback: RefCell::new(None),
         })
@@ -77,6 +97,34 @@ impl PrototypeRuntime {
         self.player.borrow().current
     }
 
+    pub fn is_animating(&self) -> bool {
+        self.animation.borrow().is_some()
+    }
+
+    pub fn animation_progress(&self) -> Option<f64> {
+        self.canvas.prototype_scene.borrow().as_ref().map(|scene| scene.progress)
+    }
+
+    /// Bounded inspection for the browser validation bridge, outside the
+    /// rendering loop. It exposes sampled scene geometry, not authored edits.
+    pub fn animation_state(&self) -> Option<serde_json::Value> {
+        self.canvas.prototype_scene.borrow().as_ref().map(|scene| {
+            let layers: Vec<_> = scene.document.nodes.values().take(64).map(|node| serde_json::json!({
+                "name": node.name,
+                "x": node.x, "y": node.y, "width": node.width, "height": node.height,
+                "opacity": node.opacity,
+                "fill": node.fills.first().map(|fill| fill.paint.representative_color()),
+            })).collect();
+            serde_json::json!({
+                "progress": scene.progress,
+                "kind": scene.transition.kind,
+                "animatedNodes": scene.animated_nodes(),
+                "nodeCount": scene.document.nodes.len(),
+                "layers": layers,
+            })
+        })
+    }
+
     /// Exports and autosaves always read authored state, including during a
     /// preview that changed bound fills, text, visibility or variable overrides.
     pub fn document_json(&self) -> Result<String, DocumentError> {
@@ -91,6 +139,7 @@ impl PrototypeRuntime {
         self.canvas.finish_pen();
         self.canvas.cancel_active_edit();
         self.canvas.reset_presentation_input();
+        self.hover_viewport.set(None);
         let document = self
             .authored
             .borrow()
@@ -101,6 +150,7 @@ impl PrototypeRuntime {
             return false;
         }
         self.cancel_timers();
+        self.cancel_animation(false);
         self.generation.set(self.generation.get().wrapping_add(1));
         {
             let mut editor = self.editor.borrow_mut();
@@ -117,6 +167,11 @@ impl PrototypeRuntime {
                 });
             }
             editor.document = document;
+            for node in editor.document.nodes.values_mut() {
+                if node.prototype_overflow != ferrodesign_core::PrototypeOverflow::None {
+                    node.clip_content = true;
+                }
+            }
             if let Some(page) = editor.document.page_of(root) {
                 editor.active_page = page;
             }
@@ -138,7 +193,9 @@ impl PrototypeRuntime {
         };
         self.generation.set(self.generation.get().wrapping_add(1));
         self.canvas.reset_presentation_input();
+        self.hover_viewport.set(None);
         self.cancel_timers();
+        self.cancel_animation(false);
         self.player.borrow_mut().stop();
         {
             let mut editor = self.editor.borrow_mut();
@@ -160,7 +217,7 @@ impl PrototypeRuntime {
         if !self.is_active() {
             return false;
         }
-        let previous = self.current();
+        let previous = self.before_action();
         let changed = self
             .player
             .borrow_mut()
@@ -177,13 +234,20 @@ impl PrototypeRuntime {
         if !self.is_active() || matches!(trigger, Trigger::Key | Trigger::AfterDelay) {
             return false;
         }
-        let previous = self.current();
+        let releasing = trigger == Trigger::Release && self.player.borrow().has_transient(Trigger::WhilePress);
+        if !releasing && !self.has_pointer_rule(node, trigger) {
+            return false;
+        }
+        let had_hover = self.player.borrow().has_transient(Trigger::WhileHover);
+        let previous = self.before_action();
+        let hover_viewport = previous.viewport;
         let changed = {
             let mut editor = self.editor.borrow_mut();
             let mut player = self.player.borrow_mut();
+            let restored = releasing && player.end_transient(&mut editor.document, Trigger::WhilePress);
             let root = player.interaction_root();
             let mut source = Some(node);
-            let mut changed = false;
+            let mut changed = restored;
             for _ in 0..MAX_DOCUMENT_DEPTH {
                 let Some(id) = source else {
                     break;
@@ -200,9 +264,75 @@ impl PrototypeRuntime {
             changed
         };
         if changed {
+            if !had_hover && self.player.borrow().has_transient(Trigger::WhileHover) {
+                self.hover_viewport.set(Some(hover_viewport));
+            } else if !self.player.borrow().has_transient(Trigger::WhileHover) {
+                self.hover_viewport.set(None);
+            }
             self.after_action(previous);
         }
         changed
+    }
+
+    fn has_pointer_rule(&self, node: NodeId, trigger: Trigger) -> bool {
+        let editor = self.editor.borrow();
+        let Some(root) = self.player.borrow().interaction_root() else { return false };
+        if node != root && !editor.document.is_ancestor(root, node) { return false; }
+        let mut current = Some(node);
+        for _ in 0..MAX_DOCUMENT_DEPTH {
+            let Some(id) = current else { break };
+            let Some(node) = editor.document.nodes.get(&id) else { break };
+            if node.interactions.iter().any(|rule| rule.trigger == trigger
+                || (trigger == Trigger::Hover && rule.trigger == Trigger::WhileHover)
+                || (trigger == Trigger::Press && rule.trigger == Trigger::WhilePress))
+            {
+                return true;
+            }
+            if id == root { break; }
+            current = node.parent;
+        }
+        false
+    }
+
+    /// Screen coordinates are tested against the viewport captured on hover
+    /// entry, so an animated navigation cannot move its own exit boundary.
+    pub fn pointer_moved(self: &Rc<Self>, screen: Point) {
+        let Some(viewport) = self.hover_viewport.get() else { return };
+        if !self.player.borrow().has_transient(Trigger::WhileHover) {
+            self.hover_viewport.set(None);
+            return;
+        }
+        if !self.player.borrow().transient_contains(Trigger::WhileHover, viewport.screen_to_world(screen)) {
+            self.pointer_exited();
+        }
+    }
+
+    pub fn pointer_exited(self: &Rc<Self>) {
+        if !self.is_active() || !self.player.borrow().has_transient(Trigger::WhileHover) { return; }
+        let before = self.before_action();
+        let changed = self.player.borrow_mut().end_transient(&mut self.editor.borrow_mut().document, Trigger::WhileHover);
+        self.hover_viewport.set(None);
+        if changed { self.after_action(before); }
+    }
+
+    /// Native wheel movement changes content offsets immediately. Hit testing
+    /// is refreshed in the canonical preview and the presentation camera stays
+    /// fixed; no document history or authored state is touched.
+    pub fn scroll(self: &Rc<Self>, node: NodeId, delta: Point) -> bool {
+        if !self.is_active() { return false; }
+        self.cancel_animation(true);
+        let changed = {
+            let mut editor = self.editor.borrow_mut();
+            let changed = self.player.borrow_mut().scroll_by(&mut editor.document, node, delta);
+            if changed { editor.refresh(); }
+            changed
+        };
+        if changed { self.canvas.invalidate_visual(); }
+        changed
+    }
+
+    pub fn scroll_offsets(&self) -> BTreeMap<NodeId, Point> {
+        self.player.borrow().scroll.offsets().clone()
     }
 
     /// Resolve key chords from topmost descendants toward the presentation
@@ -211,7 +341,7 @@ impl PrototypeRuntime {
         if !self.is_active() {
             return false;
         }
-        let previous = self.current();
+        let previous = self.before_action();
         let changed = {
             let mut editor = self.editor.borrow_mut();
             let mut player = self.player.borrow_mut();
@@ -239,13 +369,38 @@ impl PrototypeRuntime {
         self.player.borrow_mut().scroll_target.take()
     }
 
-    fn after_action(self: &Rc<Self>, previous: Option<NodeId>) {
-        let (current, overlays, action, url, scroll) = {
+    fn before_action(&self) -> PresentationBefore {
+        let current = self.current();
+        let frame = if let Some(scene) = self.canvas.prototype_scene.borrow().as_ref() {
+            // A delay can interrupt a transition. Continue from the actual
+            // displayed scene instead of jumping to the old action's endpoint.
+            Some(PrototypeFrame {
+                document: scene.document.clone(),
+                root: scene.root,
+                origin: Point::default(),
+                presentation: None,
+                overlays: Vec::new(),
+            })
+        } else {
+            current.and_then(|root| {
+                PrototypeFrame::capture(
+                    &self.editor.borrow().document,
+                    root,
+                    &self.player.borrow().overlays,
+                )
+            })
+        };
+        PresentationBefore { frame, current, viewport: self.canvas.viewport.get() }
+    }
+
+    fn after_action(self: &Rc<Self>, previous: PresentationBefore) {
+        let (current, overlays, action, mut transition, url, scroll) = {
             let player = self.player.borrow();
             (
                 player.current,
                 player.overlays.clone(),
                 player.last_action.clone(),
+                player.last_transition.clone(),
                 player.pending_url.clone(),
                 player.scroll_target,
             )
@@ -257,7 +412,7 @@ impl PrototypeRuntime {
             }
             editor.refresh();
         }
-        if matches!(
+        if !self.player.borrow().has_transients() && matches!(
             action,
             Some(
                 PrototypeAction::NavigateTo { .. }
@@ -270,10 +425,23 @@ impl PrototypeRuntime {
         }
         self.canvas.presentation.set(current);
         *self.canvas.overlays.borrow_mut() = overlays;
-        if current != previous || matches!(action, Some(PrototypeAction::NavigateTo { .. })) {
-            self.canvas.reset_fit();
-        } else {
+        let navigated = current != previous.current;
+        if matches!(action, Some(PrototypeAction::ScrollTo { .. }))
+            && transition.kind != TransitionKind::Instant
+        {
+            // Scrolling interpolates content positions; slide/dissolve would
+            // move or fade the viewport itself instead of scrolling content.
+            transition.kind = TransitionKind::SmartAnimate;
+        }
+        if matches!(action, Some(PrototypeAction::OpenUrl { .. })) {
             self.canvas.invalidate_visual();
+        } else if !self.start_transition(previous, transition, navigated) {
+            self.cancel_animation(true);
+            if navigated {
+                self.canvas.reset_fit();
+            } else {
+                self.canvas.invalidate_visual();
+            }
         }
         self.synchronize_timers();
         self.emit(PrototypeRuntimeEvent::Changed);
@@ -293,6 +461,90 @@ impl PrototypeRuntime {
             }
             _ => {}
         }
+    }
+
+    fn start_transition(
+        self: &Rc<Self>,
+        before: PresentationBefore,
+        transition: Transition,
+        fit_destination: bool,
+    ) -> bool {
+        if transition.kind == TransitionKind::Instant || transition.duration_ms == 0 {
+            return false;
+        }
+        let Some(from) = before.frame else { return false };
+        let Some(to) = self.current().and_then(|root| {
+            PrototypeFrame::capture(
+                &self.editor.borrow().document,
+                root,
+                &self.player.borrow().overlays,
+            )
+        }) else { return false };
+        if from.document.nodes == to.document.nodes {
+            return false;
+        }
+        let mut from_viewport = before.viewport;
+        from_viewport.pan = from_viewport.pan + from.origin * from_viewport.zoom;
+        let mut to_viewport = from_viewport;
+        if fit_destination {
+            to_viewport.fit(to.bounds(), 65.0);
+        }
+        let mut final_viewport = to_viewport;
+        final_viewport.pan = final_viewport.pan - to.origin * final_viewport.zoom;
+        let scene = PrototypeScene::new(from, to, transition);
+        self.cancel_animation(false);
+        self.canvas.viewport.set(from_viewport);
+        *self.canvas.prototype_scene.borrow_mut() = Some(scene);
+        let generation = self.animation_generation.get();
+        let clock = Clock::new();
+        let weak = Rc::downgrade(self);
+        let subscription = clock.subscribe(Rc::new(AnonymousObserver::new(move |time: TimeSpan| {
+            if let Some(runtime) = weak.upgrade() {
+                if runtime.animation_generation.get() == generation && runtime.is_active() {
+                    runtime.tick_animation(time.total_milliseconds());
+                }
+            }
+        })));
+        *self.animation.borrow_mut() = Some(RunningTransition {
+            clock, subscription, from_viewport, to_viewport, final_viewport,
+        });
+        self.canvas.invalidate_visual();
+        true
+    }
+
+    fn tick_animation(&self, elapsed_ms: f64) {
+        let (finished, progress) = {
+            let mut scene = self.canvas.prototype_scene.borrow_mut();
+            let Some(scene) = scene.as_mut() else { return };
+            let finished = scene.sample(elapsed_ms);
+            (finished, scene.eased_progress())
+        };
+        if let Some(animation) = self.animation.borrow().as_ref() {
+            let mut viewport = animation.from_viewport;
+            viewport.pan = animation.from_viewport.pan.lerp(animation.to_viewport.pan, progress);
+            viewport.zoom = (animation.from_viewport.zoom
+                + (animation.to_viewport.zoom - animation.from_viewport.zoom) * progress)
+                .clamp(0.02, 64.0);
+            self.canvas.viewport.set(viewport);
+        }
+        if finished {
+            self.cancel_animation(true);
+            self.emit(PrototypeRuntimeEvent::Changed);
+        }
+        self.canvas.invalidate_visual();
+    }
+
+    fn cancel_animation(&self, settle: bool) {
+        self.animation_generation.set(self.animation_generation.get().wrapping_add(1));
+        let animation = self.animation.borrow_mut().take();
+        if let Some(animation) = animation {
+            animation.subscription.dispose();
+            animation.clock.set_play_state(PlayState::Stop);
+            if settle {
+                self.canvas.viewport.set(animation.final_viewport);
+            }
+        }
+        self.canvas.prototype_scene.borrow_mut().take();
     }
 
     fn synchronize_timers(self: &Rc<Self>) {
@@ -350,7 +602,7 @@ impl PrototypeRuntime {
                     }
                     return;
                 }
-                let previous = runtime.current();
+                let previous = runtime.before_action();
                 let changed = {
                     let mut editor = runtime.editor.borrow_mut();
                     runtime
@@ -389,6 +641,7 @@ impl PrototypeRuntime {
 
 impl Drop for PrototypeRuntime {
     fn drop(&mut self) {
+        self.cancel_animation(false);
         for (_, timer) in std::mem::take(self.timers.get_mut()) {
             timer.subscription.dispose();
         }

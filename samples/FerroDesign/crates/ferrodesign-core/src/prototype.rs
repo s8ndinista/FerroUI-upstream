@@ -6,6 +6,13 @@
 use crate::*;
 use std::collections::{BTreeMap, BTreeSet};
 
+#[path = "prototype_animation.rs"]
+mod animation;
+pub use animation::*;
+#[path = "prototype_scroll.rs"]
+mod scroll;
+pub use scroll::*;
+
 const MAX_PROTOTYPE_HISTORY: usize = 1000;
 const MAX_PROTOTYPE_OVERLAYS: usize = 64;
 
@@ -24,6 +31,15 @@ struct Activation {
     root: NodeId,
 }
 
+#[derive(Clone, Debug, PartialEq)]
+struct TransientPrototypeState {
+    trigger: Trigger,
+    source: NodeId,
+    document: Document,
+    player: Box<PrototypePlayer>,
+    transition: Transition,
+}
+
 /// A player's variable overrides belong to its preview session; authored
 /// variable definitions are never changed. The host should render a disposable
 /// document copy because applying an override updates the copy's bound nodes.
@@ -36,10 +52,12 @@ pub struct PrototypePlayer {
     pub last_action: Option<PrototypeAction>,
     pub pending_url: Option<String>,
     pub scroll_target: Option<NodeId>,
+    pub scroll: PrototypeScrollState,
     variable_overrides: BTreeMap<VariableId, VariableValue>,
     activations: Vec<Activation>,
     next_activation: u64,
     fired_timers: BTreeSet<(u64, NodeId, usize)>,
+    transients: Vec<TransientPrototypeState>,
 }
 
 impl PrototypePlayer {
@@ -78,9 +96,11 @@ impl PrototypePlayer {
         self.last_action = None;
         self.pending_url = None;
         self.scroll_target = None;
+        self.scroll.clear();
         self.variable_overrides.clear();
         self.activations.clear();
         self.fired_timers.clear();
+        self.transients.clear();
         // Do not reuse activation IDs after restarting this player.
         self.next_activation = self.next_activation.wrapping_add(1);
     }
@@ -98,11 +118,66 @@ impl PrototypePlayer {
         &self.variable_overrides
     }
 
+    pub fn scroll_by(&mut self, document: &mut Document, node: NodeId, delta: Point) -> bool {
+        let Some(root) = self.interaction_root() else { return false };
+        self.scroll.scroll_by(document, root, node, delta)
+    }
+
     pub fn trigger(&mut self, document: &mut Document, node: NodeId, trigger: Trigger) -> bool {
         if matches!(trigger, Trigger::Key | Trigger::AfterDelay) {
             return false;
         }
-        self.trigger_matching(document, node, |interaction| interaction.trigger == trigger)
+        self.trigger_matching(document, node, |interaction| {
+            interaction.trigger == trigger
+                || (trigger == Trigger::Hover && interaction.trigger == Trigger::WhileHover)
+                || (trigger == Trigger::Press && interaction.trigger == Trigger::WhilePress)
+        })
+    }
+
+    pub fn has_transient(&self, trigger: Trigger) -> bool {
+        self.transients.iter().any(|state| state.trigger == trigger)
+    }
+
+    pub fn has_transients(&self) -> bool {
+        !self.transients.is_empty()
+    }
+
+    /// Hover is tested against the original activation's shape and overlay
+    /// placement. Changing frames or opening an overlay cannot accidentally
+    /// end a while-hover action merely because the picked node ID changed.
+    pub fn transient_contains(&self, trigger: Trigger, world: Point) -> bool {
+        let Some(state) = self.transients.iter().find(|state| state.trigger == trigger) else { return false };
+        let mut point = world;
+        if let (Some(current), Some(&(overlay, position))) = (state.player.current, state.player.overlays.last()) {
+            if is_within(&state.document, state.source, overlay) {
+                if let (Some(current), Some(overlay)) = (state.document.world_bounds(current), state.document.world_bounds(overlay)) {
+                    point = point - Point::new(current.x + position.x - overlay.x, current.y + position.y - overlay.y);
+                }
+            }
+        }
+        state.document.hit_test_node(state.source, point, 0.0)
+    }
+
+    /// Restores the exact preview state before a reversible trigger, including
+    /// variable-bound nodes, scroll offsets, history, and the overlay stack.
+    /// Ending an outer hover also ends a press started inside that hover.
+    pub fn end_transient(&mut self, document: &mut Document, trigger: Trigger) -> bool {
+        let Some(index) = self.transients.iter().position(|state| state.trigger == trigger) else { return false };
+        let next_activation = self.next_activation;
+        let mut previous = std::mem::take(&mut self.transients);
+        let state = previous.remove(index);
+        previous.truncate(index);
+        *document = state.document;
+        *self = *state.player;
+        self.transients = previous;
+        self.last_action = None;
+        self.last_transition = reverse_transition(state.transition);
+        // Never revive an already queued timer capability on restoration.
+        self.next_activation = self.next_activation.max(next_activation);
+        self.activations.clear();
+        self.fired_timers.clear();
+        self.reconcile_activations();
+        true
     }
 
     pub fn trigger_key(&mut self, document: &mut Document, node: NodeId, key: &str) -> bool {
@@ -141,7 +216,52 @@ impl PrototypePlayer {
                     .find(|interaction| matches(interaction))
             })
             .cloned();
-        interaction.is_some_and(|interaction| self.execute(document, interaction))
+        let Some(interaction) = interaction else { return false };
+        if matches!(interaction.trigger, Trigger::WhileHover | Trigger::WhilePress) {
+            if self.has_transient(interaction.trigger)
+                || matches!(interaction.action, PrototypeAction::OpenUrl { .. })
+            {
+                return false;
+            }
+            let snapshot = TransientPrototypeState {
+                trigger: interaction.trigger,
+                source: node,
+                document: document.clone(),
+                player: Box::new(self.checkpoint()),
+                transition: interaction.transition.clone(),
+            };
+            if self.execute(document, interaction) {
+                self.transients.push(snapshot);
+                return true;
+            }
+            false
+        } else {
+            let persistent = matches!(interaction.trigger, Trigger::Click | Trigger::Key | Trigger::Drag);
+            let changed = self.execute(document, interaction);
+            if changed && persistent {
+                self.transients.clear();
+            }
+            changed
+        }
+    }
+
+    fn checkpoint(&self) -> Self {
+        // Do not recursively clone previous transient document snapshots.
+        Self {
+            current: self.current,
+            overlays: self.overlays.clone(),
+            history: self.history.clone(),
+            last_transition: self.last_transition.clone(),
+            last_action: self.last_action.clone(),
+            pending_url: self.pending_url.clone(),
+            scroll_target: self.scroll_target,
+            scroll: self.scroll.clone(),
+            variable_overrides: self.variable_overrides.clone(),
+            activations: self.activations.clone(),
+            next_activation: self.next_activation,
+            fired_timers: self.fired_timers.clone(),
+            transients: Vec::new(),
+        }
     }
 
     /// All not-yet-fired delays for visible nodes of active frame/overlay
@@ -260,6 +380,7 @@ impl PrototypePlayer {
                     }
                 }
                 self.current = Some(target);
+                self.scroll.reset_subtree(document, target);
                 self.overlays.clear();
                 self.activations.clear();
                 self.fired_timers.clear();
@@ -277,6 +398,7 @@ impl PrototypePlayer {
                     return false;
                 }
                 self.overlays.push((target, position));
+                self.scroll.reset_subtree(document, target);
                 self.reconcile_activations();
             }
             PrototypeAction::CloseOverlay => {
@@ -308,14 +430,14 @@ impl PrototypePlayer {
             PrototypeAction::ScrollTo { target } => {
                 if !document.nodes.contains_key(&target)
                     || !document.effective_visible(target)
-                    || !self
-                        .activations
-                        .iter()
-                        .any(|scope| is_within(document, target, scope.root))
+                    || !self.interaction_root().is_some_and(|root| is_within(document, target, root))
                 {
                     return false;
                 }
                 self.scroll_target = Some(target);
+                if let Some(root) = self.interaction_root() {
+                    self.scroll.scroll_to(document, root, target);
+                }
             }
         }
         self.last_transition = transition;
@@ -379,6 +501,24 @@ fn is_within(document: &Document, mut node: NodeId, root: NodeId) -> bool {
         node = parent;
     }
     false
+}
+
+fn reverse_transition(mut transition: Transition) -> Transition {
+    transition.kind = match transition.kind {
+        TransitionKind::SlideLeft | TransitionKind::Push => TransitionKind::SlideRight,
+        TransitionKind::SlideRight => TransitionKind::SlideLeft,
+        TransitionKind::SlideUp => TransitionKind::SlideDown,
+        TransitionKind::SlideDown => TransitionKind::SlideUp,
+        TransitionKind::MoveIn => TransitionKind::MoveOut,
+        TransitionKind::MoveOut => TransitionKind::MoveIn,
+        kind => kind,
+    };
+    transition.easing = match transition.easing {
+        Easing::EaseIn => Easing::EaseOut,
+        Easing::EaseOut => Easing::EaseIn,
+        easing => easing,
+    };
+    transition
 }
 
 fn valid_variable_value(
@@ -523,6 +663,11 @@ pub fn validate_prototype_interaction(
     }
     if document.effective_locked(source) {
         return Err("Unlock the source layer before editing its interactions.".into());
+    }
+    if matches!(interaction.trigger, Trigger::WhileHover | Trigger::WhilePress)
+        && matches!(interaction.action, PrototypeAction::OpenUrl { .. })
+    {
+        return Err("Choose a reversible action for a while-hover or while-press trigger.".into());
     }
     if interaction.trigger == Trigger::Key
         && interaction
