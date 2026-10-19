@@ -1,4 +1,4 @@
-use super::{Block, Inline, LineStackingStrategy, Paragraph, TextElement};
+use super::{Block, Inline, LineSpacingRule, LineStackingStrategy, Paragraph, TextElement};
 use ferroui_base::media::{
     BaselineAlignment, FlowDirection, FontFamily, FontFeatureCollection, FontStretch, FontStyle,
     FontWeight, IBrush, MediaCollection, TextAlignment, TextDecoration, TextDecorationCollection,
@@ -273,6 +273,10 @@ pub struct ParagraphFormat {
     pub text_indent: Option<f64>,
     pub margin: Option<Thickness>,
     pub flow_direction: Option<FlowDirection>,
+    pub line_spacing_rule: Option<LineSpacingRule>,
+    pub line_spacing: Option<f64>,
+    pub left_indent: Option<f64>,
+    pub right_indent: Option<f64>,
 }
 
 impl PartialEq for ParagraphFormat {
@@ -284,6 +288,10 @@ impl PartialEq for ParagraphFormat {
             && self.text_indent == other.text_indent
             && self.margin == other.margin
             && self.flow_direction == other.flow_direction
+            && self.line_spacing_rule == other.line_spacing_rule
+            && self.line_spacing == other.line_spacing
+            && self.left_indent == other.left_indent
+            && self.right_indent == other.right_indent
     }
 }
 
@@ -298,11 +306,106 @@ impl ParagraphFormat {
             text_indent: paragraph.get_base_value(Paragraph::text_indent_property()),
             margin: paragraph.get_base_value(Block::margin_property()),
             flow_direction: paragraph.get_base_value(Block::flow_direction_property()),
+            line_spacing_rule: paragraph.get_base_value(Paragraph::line_spacing_rule_property()),
+            line_spacing: paragraph.get_base_value(Paragraph::line_spacing_property()),
+            left_indent: paragraph.get_base_value(Paragraph::left_indent_property()),
+            right_indent: paragraph.get_base_value(Paragraph::right_indent_property()),
         }
+    }
+
+    /// Captures resolved paragraph and inherited character values for format queries.
+    pub fn effective(paragraph: &Paragraph) -> Self {
+        Self {
+            character: CharacterFormat::effective(paragraph),
+            text_alignment: Some(paragraph.text_alignment()),
+            line_height: Some(paragraph.line_height()),
+            line_stacking_strategy: Some(paragraph.line_stacking_strategy()),
+            text_indent: Some(paragraph.text_indent()),
+            margin: Some(paragraph.margin()),
+            flow_direction: Some(paragraph.flow_direction()),
+            line_spacing_rule: Some(paragraph.line_spacing_rule()),
+            line_spacing: Some(paragraph.line_spacing()),
+            left_indent: Some(paragraph.left_indent()),
+            right_indent: Some(paragraph.right_indent()),
+        }
+    }
+
+    /// Sets TOM indentation in points. Negative values are valid; paragraph
+    /// margins remain nonnegative layout spacing and are stored separately.
+    pub fn set_indents(
+        &mut self,
+        first: f64,
+        left: f64,
+        right: f64,
+    ) -> Result<(), super::DocumentError> {
+        let values = [first, left, right].map(|value| value * (96.0 / 72.0));
+        if values.iter().any(|value| !value.is_finite()) {
+            return Err(super::DocumentError::InvalidFormat(
+                "Paragraph indents must be finite",
+            ));
+        }
+        self.text_indent = Some(values[0]);
+        self.left_indent = Some(values[1]);
+        self.right_indent = Some(values[2]);
+        Ok(())
+    }
+
+    /// Returns first-line, left, and right indentation in TOM points.
+    pub fn get_indents(&self) -> (f64, f64, f64) {
+        (
+            self.text_indent.unwrap_or(0.0) * (72.0 / 96.0),
+            self.left_indent.unwrap_or(0.0) * (72.0 / 96.0),
+            self.right_indent.unwrap_or(0.0) * (72.0 / 96.0),
+        )
+    }
+
+    /// Sets the TOM line spacing in points, converting absolute distances to
+    /// layout units. Multipliers and percentages retain their native units.
+    pub fn set_line_spacing(
+        &mut self,
+        rule: LineSpacingRule,
+        spacing: f64,
+    ) -> Result<(), super::DocumentError> {
+        rule.validate(spacing)?;
+        let spacing = if matches!(rule, LineSpacingRule::AtLeast | LineSpacingRule::Exactly) {
+            spacing * (96.0 / 72.0)
+        } else {
+            spacing
+        };
+        rule.validate(spacing)?;
+        self.line_spacing_rule = Some(rule);
+        self.line_spacing = Some(spacing);
+        Ok(())
+    }
+
+    /// Returns the TOM rule and value; absolute distances are returned in points.
+    pub fn get_line_spacing(&self) -> (LineSpacingRule, f64) {
+        let rule = self.line_spacing_rule.unwrap_or_default();
+        let spacing = self.line_spacing.unwrap_or(1.0);
+        (
+            rule,
+            if matches!(rule, LineSpacingRule::AtLeast | LineSpacingRule::Exactly) {
+                spacing * (72.0 / 96.0)
+            } else {
+                spacing
+            },
+        )
     }
 
     pub fn validate(&self) -> Result<(), super::DocumentError> {
         self.character.validate()?;
+        self.line_spacing_rule
+            .unwrap_or_default()
+            .validate(self.line_spacing.unwrap_or(1.0))?;
+        if [self.left_indent, self.right_indent]
+            .iter()
+            .flatten()
+            .any(|value| !value.is_finite())
+        {
+            return Err(super::DocumentError::InvalidFormat(
+                "Paragraph indents must be finite",
+            ));
+        }
         if self
             .line_height
             .is_some_and(|v| (!v.is_finite() && !v.is_nan()) || v < 0.0)
@@ -340,13 +443,18 @@ impl ParagraphFormat {
             line_stacking_strategy,
             text_indent,
             margin,
-            flow_direction
+            flow_direction,
+            line_spacing_rule,
+            line_spacing,
+            left_indent,
+            right_indent
         );
         result
     }
 
     pub fn try_apply_to(&self, paragraph: &Paragraph) -> Result<(), super::DocumentError> {
         self.validate()?;
+        Self::effective(paragraph).overlay(self).validate()?;
         self.apply_to(paragraph);
         Ok(())
     }
@@ -371,6 +479,18 @@ impl ParagraphFormat {
         if let Some(value) = self.flow_direction {
             paragraph.set_flow_direction(value);
         }
+        if let Some(value) = self.line_spacing {
+            paragraph.set_line_spacing(value);
+        }
+        if let Some(value) = self.line_spacing_rule {
+            paragraph.set_line_spacing_rule(value);
+        }
+        if let Some(value) = self.left_indent {
+            paragraph.set_left_indent(value);
+        }
+        if let Some(value) = self.right_indent {
+            paragraph.set_right_indent(value);
+        }
     }
 
     pub(crate) fn replace_on(&self, paragraph: &Paragraph) {
@@ -381,6 +501,10 @@ impl ParagraphFormat {
         paragraph.clear_value(Paragraph::text_indent_property());
         paragraph.clear_value(Block::margin_property());
         paragraph.clear_value(Block::flow_direction_property());
+        paragraph.clear_value(Paragraph::line_spacing_rule_property());
+        paragraph.clear_value(Paragraph::line_spacing_property());
+        paragraph.clear_value(Paragraph::left_indent_property());
+        paragraph.clear_value(Paragraph::right_indent_property());
         self.apply_to(paragraph);
     }
 }

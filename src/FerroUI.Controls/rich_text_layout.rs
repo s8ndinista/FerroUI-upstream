@@ -2,8 +2,8 @@
 //! Source/dependency mapping and validation: docs/porting/winui-rich-text.
 
 use crate::documents::{
-    Block, EmbeddedControlRun, Inline, LineStackingStrategy, Paragraph, RichTextDocument,
-    TextHighlightRegion,
+    Block, EmbeddedControlRun, Inline, LineSpacingRule, LineStackingStrategy, Paragraph,
+    RichTextDocument, TextHighlightRegion,
 };
 use crate::text_block::InlinesTextSource;
 use ferroui_base::media::text_formatting::TextRun;
@@ -403,7 +403,11 @@ impl RichTextLayout {
         'paragraphs: for paragraph_index in start.paragraph..result.source.paragraphs.len() {
             let paragraph = &result.source.paragraphs[paragraph_index];
             let block = &paragraph.block;
-            let margin = block.margin();
+            let mut margin = block.margin();
+            if let Some(paragraph) = block.to_ref().cast::<Paragraph>() {
+                margin.left += paragraph.left_indent();
+                margin.right += paragraph.right_indent();
+            }
             let mut local = if paragraph_index == start.paragraph {
                 start.local_position
             } else {
@@ -421,6 +425,11 @@ impl RichTextLayout {
             let paragraph_width = (width - margin.left - margin.right).max(0.0);
             let line_height = block.line_height();
             let strategy = block.line_stacking_strategy();
+            let (spacing_rule, spacing) = block
+                .to_ref()
+                .cast::<Paragraph>()
+                .map(|paragraph| (paragraph.line_spacing_rule(), paragraph.line_spacing()))
+                .unwrap_or((LineSpacingRule::Undefined, 1.0));
             let mut previous_baseline: Option<f64> = None;
 
             loop {
@@ -444,7 +453,11 @@ impl RichTextLayout {
                         false,
                         paragraph.properties.clone(),
                         wrapping,
-                        if strategy == LineStackingStrategy::BlockLineHeight {
+                        if spacing_rule == LineSpacingRule::Exactly {
+                            spacing
+                        } else if spacing_rule == LineSpacingRule::Undefined
+                            && strategy == LineStackingStrategy::BlockLineHeight
+                        {
                             line_height
                         } else {
                             f64::NAN
@@ -469,19 +482,26 @@ impl RichTextLayout {
                 let mut line = formatted.unwrap_or_else(|| {
                     TextFormatterImpl::create_empty_text_line(index, line_width, &properties)
                 });
-                let advance = match strategy {
-                    LineStackingStrategy::BlockLineHeight
-                    | LineStackingStrategy::BaselineToBaseline
-                        if line_height.is_finite() && line_height > 0.0 =>
-                    {
-                        line_height
+                let advance = if spacing_rule != LineSpacingRule::Undefined {
+                    spacing_rule.advance(line.height(), spacing)
+                } else {
+                    match strategy {
+                        LineStackingStrategy::BlockLineHeight
+                        | LineStackingStrategy::BaselineToBaseline
+                            if line_height.is_finite() && line_height > 0.0 =>
+                        {
+                            line_height
+                        }
+                        _ if line_height.is_finite() => line.height().max(line_height),
+                        _ => line.height(),
                     }
-                    _ if line_height.is_finite() => line.height().max(line_height),
-                    _ => line.height(),
                 }
                 .max(f64::MIN_POSITIVE);
                 let mut origin_y = y;
-                if strategy == LineStackingStrategy::BaselineToBaseline && line_height.is_finite() {
+                if spacing_rule == LineSpacingRule::Undefined
+                    && strategy == LineStackingStrategy::BaselineToBaseline
+                    && line_height.is_finite()
+                {
                     if let Some(baseline) = previous_baseline {
                         origin_y = baseline + line_height - line.baseline();
                     }

@@ -1,13 +1,13 @@
 use crate::documents::{
-    CharacterFormat, DocumentSnapshot, InlineSnapshot, InlineSnapshotKind, LineStackingStrategy,
-    ParagraphFormat, ParagraphSnapshot,
+    CharacterFormat, DocumentSnapshot, InlineSnapshot, InlineSnapshotKind, LineSpacingRule,
+    LineStackingStrategy, ParagraphFormat, ParagraphSnapshot,
 };
-use ferroui_base::Thickness;
 use ferroui_base::media::immutable::ImmutableSolidColorBrush;
 use ferroui_base::media::{
     BaselineAlignment, Color, FlowDirection, FontFamily, FontStretch, FontStyle, FontWeight,
     IBrush, TextAlignment, TextDecorationCollection, TextDecorationLocation, TextDecorations,
 };
+use ferroui_base::Thickness;
 use std::collections::BTreeMap;
 use std::fmt::{self, Write};
 use std::rc::Rc;
@@ -230,6 +230,8 @@ struct State {
     skip: usize,
     underline: bool,
     strike: bool,
+    line_spacing_twips: i32,
+    line_spacing_multiple: bool,
 }
 impl Default for State {
     fn default() -> Self {
@@ -240,6 +242,8 @@ impl Default for State {
             skip: 0,
             underline: false,
             strike: false,
+            line_spacing_twips: 0,
+            line_spacing_multiple: false,
         }
     }
 }
@@ -309,6 +313,10 @@ impl RtfReader {
         };
         decoder.decode(&nodes, &mut State::default())?;
         decoder.flush()?;
+        decoder
+            .document
+            .validate()
+            .map_err(|_| RtfError::InvalidParameter("document formatting"))?;
         Ok(decoder.document)
     }
 }
@@ -562,6 +570,8 @@ impl Decoder {
                         }
                         "pard" => {
                             state.paragraph = ParagraphFormat::default();
+                            state.line_spacing_twips = 0;
+                            state.line_spacing_multiple = false;
                             self.paragraph().format = state.paragraph.clone();
                         }
                         "ql" | "qr" | "qc" | "qj" => {
@@ -589,15 +599,24 @@ impl Decoder {
                             );
                             self.paragraph().format = state.paragraph.clone();
                         }
-                        "li" | "ri" | "sb" | "sa" => {
+                        "li" | "ri" => {
+                            let value = f64::from(
+                                number.ok_or(RtfError::InvalidParameter("paragraph indent"))?,
+                            ) / 15.0;
+                            if *word == "li" {
+                                state.paragraph.left_indent = Some(value);
+                            } else {
+                                state.paragraph.right_indent = Some(value);
+                            }
+                            self.paragraph().format = state.paragraph.clone();
+                        }
+                        "sb" | "sa" => {
                             let value = number
                                 .ok_or(RtfError::InvalidParameter("paragraph margin"))?
                                 as f64
                                 / 15.0;
                             let mut margin = state.paragraph.margin.unwrap_or_default();
                             match *word {
-                                "li" => margin.left = value,
-                                "ri" => margin.right = value,
                                 "sb" => margin.top = value,
                                 _ => margin.bottom = value,
                             }
@@ -606,17 +625,18 @@ impl Decoder {
                         }
                         "sl" => {
                             let value = number.ok_or(RtfError::InvalidParameter("line height"))?;
-                            state.paragraph.line_height =
-                                (value != 0).then_some((value as f64).abs() / 15.0);
-                            state.paragraph.line_stacking_strategy = Some(if value < 0 {
-                                LineStackingStrategy::BlockLineHeight
-                            } else {
-                                LineStackingStrategy::MaxHeight
-                            });
-                            self.paragraph().format = state.paragraph.clone();
+                            state.line_spacing_twips = value;
+                            self.set_line_spacing(state)?;
                         }
-                        "slmult" if number != Some(0) => {
-                            return Err(RtfError::UnsupportedFeature("multiple line spacing"));
+                        "slmult" => {
+                            state.line_spacing_multiple = match number {
+                                Some(0) => false,
+                                Some(1) => true,
+                                _ => {
+                                    return Err(RtfError::InvalidParameter("multiple line spacing"))
+                                }
+                            };
+                            self.set_line_spacing(state)?;
                         }
                         "par" => {
                             self.flush()?;
@@ -673,6 +693,34 @@ impl Decoder {
         }
         self.append(unit, state)
     }
+    fn set_line_spacing(&mut self, state: &mut State) -> Result<(), RtfError> {
+        let value = state.line_spacing_twips;
+        if state.line_spacing_multiple && value < 0 {
+            return Err(RtfError::InvalidParameter("multiple line spacing"));
+        }
+        let (rule, spacing) = if state.line_spacing_multiple && value != 0 {
+            (LineSpacingRule::Multiple, f64::from(value) / 240.0)
+        } else if value == 0 {
+            (LineSpacingRule::Single, 0.0)
+        } else if value < 0 {
+            (LineSpacingRule::Exactly, f64::from(value).abs() / 15.0)
+        } else {
+            (LineSpacingRule::AtLeast, f64::from(value) / 15.0)
+        };
+        state.paragraph.line_spacing_rule = Some(rule);
+        state.paragraph.line_spacing = Some(spacing);
+        // Retain the established block metrics for callers of the original
+        // paragraph API; the explicit rule controls the rich layout path.
+        state.paragraph.line_height =
+            (!state.line_spacing_multiple && value != 0).then_some(f64::from(value).abs() / 15.0);
+        state.paragraph.line_stacking_strategy = Some(if value < 0 {
+            LineStackingStrategy::BlockLineHeight
+        } else {
+            LineStackingStrategy::MaxHeight
+        });
+        self.paragraph().format = state.paragraph.clone();
+        Ok(())
+    }
     fn read_fonts(&mut self, nodes: &[Node<'_>], uc: usize) -> Result<(), RtfError> {
         fn visit(
             nodes: &[Node<'_>],
@@ -703,7 +751,9 @@ impl Decoder {
                     Node::Control("cpg", Some(value)) if *value != 1252 => {
                         return Err(RtfError::UnsupportedCodePage(*value));
                     }
-                    Node::Group(children) if destination(children).is_some_and(|(word, _)| word == "upr") => {
+                    Node::Group(children)
+                        if destination(children).is_some_and(|(word, _)| word == "upr") =>
+                    {
                         name.node(node)?;
                     }
                     Node::Group(children) => {
@@ -825,12 +875,19 @@ fn destination<'a>(nodes: &'a [Node<'a>]) -> Option<(&'a str, bool)> {
 }
 
 fn unicode_alternative<'a>(nodes: &'a [Node<'a>]) -> Result<&'a [Node<'a>], RtfError> {
-    nodes.iter().find_map(|node| match node {
-        Node::Group(children) if destination(children).is_some_and(|(word, _)| word == "ud") => {
-            Some(children.as_slice())
-        }
-        _ => None,
-    }).ok_or(RtfError::InvalidParameter("Unicode alternative destination"))
+    nodes
+        .iter()
+        .find_map(|node| match node {
+            Node::Group(children)
+                if destination(children).is_some_and(|(word, _)| word == "ud") =>
+            {
+                Some(children.as_slice())
+            }
+            _ => None,
+        })
+        .ok_or(RtfError::InvalidParameter(
+            "Unicode alternative destination",
+        ))
 }
 /// Decodes text destinations without interpreting their font/field control words as
 /// document formatting. The Unicode fallback and group scope rules are identical to body text.
@@ -1010,6 +1067,9 @@ struct Encoder {
 
 impl RtfWriter {
     pub fn write(document: &DocumentSnapshot) -> Result<String, RtfError> {
+        document
+            .validate()
+            .map_err(|_| RtfError::InvalidParameter("document formatting"))?;
         let mut encoder = Encoder {
             fonts: Vec::new(),
             colors: Vec::new(),
@@ -1228,8 +1288,8 @@ impl Encoder {
         }
         let margin = format.margin.unwrap_or(Thickness::default());
         for (word, value) in [
-            ("li", margin.left),
-            ("ri", margin.right),
+            ("li", margin.left + format.left_indent.unwrap_or(0.0)),
+            ("ri", margin.right + format.right_indent.unwrap_or(0.0)),
             ("sb", margin.top),
             ("sa", margin.bottom),
             ("fi", format.text_indent.unwrap_or(0.0)),
@@ -1241,6 +1301,21 @@ impl Encoder {
                 let value = rtf_measure(value, 15.0, "paragraph metric")?;
                 let _ = write!(self.output, "\\{word}{value}");
             }
+        }
+        let rule = format.line_spacing_rule.unwrap_or_default();
+        if rule != LineSpacingRule::Undefined {
+            let spacing = format.line_spacing.unwrap_or(1.0);
+            let (value, multiple) = match rule {
+                LineSpacingRule::Single => (240, true),
+                LineSpacingRule::OneAndHalf => (360, true),
+                LineSpacingRule::Double => (480, true),
+                LineSpacingRule::Multiple => (rtf_measure(spacing, 240.0, "line spacing")?, true),
+                LineSpacingRule::AtLeast => (rtf_measure(spacing, 15.0, "line spacing")?, false),
+                LineSpacingRule::Exactly => (-rtf_measure(spacing, 15.0, "line spacing")?, false),
+                _ => return Err(RtfError::UnsupportedFeature("line spacing rule")),
+            };
+            let _ = write!(self.output, "\\sl{value}\\slmult{}", i32::from(multiple));
+            return Ok(());
         }
         if let Some(height) = format.line_height {
             if height.is_nan() || height == 0.0 {

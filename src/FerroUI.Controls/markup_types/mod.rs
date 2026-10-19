@@ -41,6 +41,7 @@ const RICH_TEXT_TYPES: &[&MarkupType] = &[
     <crate::documents::BlockCollection as MarkupTyped>::MARKUP,
     <crate::documents::RichTextDocument as MarkupTyped>::MARKUP,
     <crate::documents::LineStackingStrategy as MarkupTyped>::MARKUP,
+    <crate::documents::LineSpacingRule as MarkupTyped>::MARKUP,
     <crate::documents::TextGravity as MarkupTyped>::MARKUP,
     <crate::documents::UnderlineStyle as MarkupTyped>::MARKUP,
     <crate::documents::HyperlinkClickEventArgs as MarkupTyped>::MARKUP,
@@ -91,6 +92,7 @@ fn register_rich_text_value_types() {
     ValueTypes::register_nullable::<crate::documents::BlockCollection>();
     ValueTypes::register_nullable::<crate::documents::RichTextDocument>();
     ValueTypes::register_nullable::<crate::documents::LineStackingStrategy>();
+    ValueTypes::register_nullable::<crate::documents::LineSpacingRule>();
     ValueTypes::register_nullable::<crate::documents::TextGravity>();
     ValueTypes::register_nullable::<crate::documents::UnderlineStyle>();
     ValueTypes::register_nullable::<crate::documents::TextHighlightRange>();

@@ -13,6 +13,7 @@ mod inline_run;
 mod inline_ui_container;
 mod italic;
 mod line_break;
+mod line_spacing_rule;
 mod paragraph;
 mod rich_text_document;
 mod run;
@@ -40,6 +41,7 @@ pub use inline_run::EmbeddedControlRun;
 pub use inline_ui_container::InlineUIContainer;
 pub use italic::Italic;
 pub use line_break::LineBreak;
+pub use line_spacing_rule::LineSpacingRule;
 pub use paragraph::Paragraph;
 pub use rich_text_document::{
     DocumentChangeKind, DocumentChangedEventArgs, DocumentEditBatch, DocumentError,
@@ -60,6 +62,9 @@ mod inline_tests;
 
 #[cfg(test)]
 mod rich_text_document_tests;
+
+#[cfg(test)]
+mod rich_paragraph_tests;
 
 #[cfg(test)]
 mod text_highlighter_tests;

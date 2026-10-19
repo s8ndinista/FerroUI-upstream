@@ -363,6 +363,7 @@ ferroui_base::ferro_rust_paths! {
         crate::documents::HyperlinkClickEventArgs,
         crate::documents::InlineCollection,
         crate::documents::LineStackingStrategy,
+        crate::documents::LineSpacingRule,
         crate::documents::RichTextDocument,
         crate::documents::TextGravity,
         crate::documents::TextHighlightRange,

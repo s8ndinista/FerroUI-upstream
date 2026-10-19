@@ -1,12 +1,14 @@
 use super::{
-    Block, BlockImpl, IInlineHost, Inline, InlineCollection, TextElementImpl, TextElementImplExt,
+    Block, BlockImpl, IInlineHost, Inline, InlineCollection, LineSpacingRule, TextElementImpl,
+    TextElementImplExt,
 };
 use crate::Control;
 use ferroui_base::media::text_formatting::TextRun;
 use ferroui_base::metadata::IAddChild;
 use ferroui_base::{
-    FerroObjectImpl, FerroObjectImplExt, FerroProperty, FerroPropertyChangedEventArgs, IntoRef,
-    Ref, Size, StyledElementImpl, StyledProperty, StyledPropertyOptions, ferro_class, instantiate,
+    ferro_class, instantiate, FerroObjectImpl, FerroObjectImplExt, FerroProperty,
+    FerroPropertyChangedEventArgs, IntoRef, Ref, Size, StyledElementImpl, StyledProperty,
+    StyledPropertyOptions,
 };
 use std::rc::Rc;
 
@@ -41,7 +43,12 @@ impl FerroObjectImpl for Paragraph {
 
     fn on_property_changed(this: &Self, change: &FerroPropertyChangedEventArgs<'_>) {
         Self::parent_on_property_changed(this, change);
-        if change.property() == Self::text_indent_property().as_property() {
+        if change.property() == Self::text_indent_property().as_property()
+            || change.property() == Self::line_spacing_rule_property().as_property()
+            || change.property() == Self::line_spacing_property().as_property()
+            || change.property() == Self::left_indent_property().as_property()
+            || change.property() == Self::right_indent_property().as_property()
+        {
             if let Some(host) = this.inline_host() {
                 host.invalidate();
             }
@@ -84,6 +91,28 @@ ferroui_base::ferro_properties! {
     impl Paragraph {
         pub fn text_indent_property() -> StyledProperty<f64> {
             FerroProperty::register_with::<Paragraph, _>("TextIndent",
+                StyledPropertyOptions::new(0.0).validate(|value: &f64| value.is_finite()))
+        }
+
+        pub fn line_spacing_rule_property() -> StyledProperty<LineSpacingRule> {
+            FerroProperty::register_with::<Paragraph, _>("LineSpacingRule",
+                StyledPropertyOptions::new(LineSpacingRule::Undefined).inherits(true)
+                    .validate(|value: &LineSpacingRule| *value != LineSpacingRule::Percent))
+        }
+
+        pub fn line_spacing_property() -> StyledProperty<f64> {
+            FerroProperty::register_with::<Paragraph, _>("LineSpacing",
+                StyledPropertyOptions::new(1.0).inherits(true)
+                    .validate(|value: &f64| value.is_finite() && *value >= 0.0))
+        }
+
+        pub fn left_indent_property() -> StyledProperty<f64> {
+            FerroProperty::register_with::<Paragraph, _>("LeftIndent",
+                StyledPropertyOptions::new(0.0).validate(|value: &f64| value.is_finite()))
+        }
+
+        pub fn right_indent_property() -> StyledProperty<f64> {
+            FerroProperty::register_with::<Paragraph, _>("RightIndent",
                 StyledPropertyOptions::new(0.0).validate(|value: &f64| value.is_finite()))
         }
     }
@@ -129,6 +158,38 @@ impl Paragraph {
 
     pub fn set_text_indent(&self, value: f64) {
         self.set_value(Self::text_indent_property(), value);
+    }
+
+    pub fn line_spacing_rule(&self) -> LineSpacingRule {
+        self.get_value(Self::line_spacing_rule_property())
+    }
+
+    pub fn set_line_spacing_rule(&self, value: LineSpacingRule) {
+        self.set_value(Self::line_spacing_rule_property(), value);
+    }
+
+    pub fn line_spacing(&self) -> f64 {
+        self.get_value(Self::line_spacing_property())
+    }
+
+    pub fn set_line_spacing(&self, value: f64) {
+        self.set_value(Self::line_spacing_property(), value);
+    }
+
+    pub fn left_indent(&self) -> f64 {
+        self.get_value(Self::left_indent_property())
+    }
+
+    pub fn set_left_indent(&self, value: f64) {
+        self.set_value(Self::left_indent_property(), value);
+    }
+
+    pub fn right_indent(&self) -> f64 {
+        self.get_value(Self::right_indent_property())
+    }
+
+    pub fn set_right_indent(&self, value: f64) {
+        self.set_value(Self::right_indent_property(), value);
     }
 
     pub fn as_add_child_of_inline(this: Ref<Self>) -> Rc<dyn IAddChild<Ref<Inline>>> {
