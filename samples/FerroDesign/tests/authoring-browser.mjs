@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 // the main gate. No substitute document editor, synthetic selection, or browser
 // process is created here.
 export async function nativeAuthoringRegressions(page, reference, check, helpers, output, mode) {
-    const { fixtureNode, isolatedDocument, importFixture, documentState, state, clickWorld, clickNative, frames, captureNativeScreenshot } = helpers;
+    const { fixtureNode, isolatedDocument, importFixture, documentState, state, clickWorld, clickNative, chooseNative, frames, captureNativeScreenshot } = helpers;
     const command = async (name) => {
         assert.equal(await page.evaluate((name) => globalThis.ferroDesign.ferroDesignCommand(name), name), true);
         await frames(page);
@@ -16,12 +16,7 @@ export async function nativeAuthoringRegressions(page, reference, check, helpers
         await page.keyboard.insertText(value);
         await frames(page);
     };
-    const chooseNext = async (name, count = 1) => {
-        await click(name);
-        for (let index = 0; index < count; index++) await page.keyboard.press("ArrowDown");
-        await page.keyboard.press("Enter");
-        await frames(page);
-    };
+    const chooseNext = (name, count = 1) => chooseNative(page, name, { offset: count, scrollContainer: "ModalViewport" });
     const waitDocument = (predicate, args) => page.waitForFunction(({ source, args }) => {
         const doc = JSON.parse(globalThis.ferroDesign.ferroDesignExportJson());
         return new Function("doc", "args", "return (" + source + ")(doc, args)")(doc, args);

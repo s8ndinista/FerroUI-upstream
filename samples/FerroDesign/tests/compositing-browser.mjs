@@ -6,7 +6,7 @@ import { PNG } from "pngjs";
 // Both browser backends render these fixtures through the native canvas and
 // the same public FerroUI bitmap path used by the real Export PNG command.
 export async function compositingRegressions(page, reference, check, helpers, output, mode) {
-    const { fixtureNode, isolatedDocument, importFixture, documentState, state, clickWorld, clickNative, frames, captureNativeScreenshot } = helpers;
+    const { fixtureNode, isolatedDocument, importFixture, documentState, state, clickWorld, chooseNative, frames, captureNativeScreenshot } = helpers;
     const fill = (r, g, b, a = 255) => ({ paint: { type: "solid", r, g, b, a }, opacity: 1, visible: true });
     const rectangle = (id, properties = {}) => fixtureNode(reference, id, {
         kind: "rectangle", x: 0, y: 0, width: 128, height: 128,
@@ -59,12 +59,12 @@ export async function compositingRegressions(page, reference, check, helpers, ou
     assert.deepEqual((await state(page)).selection, [3]);
     const authoredBlend = await documentState(page);
     const blendHistory = (await state(page)).historyLength;
-    await clickNative(page, "BlendModeChoice", "InspectorViewport");
-    await page.keyboard.press("Home");
-    await page.keyboard.press("ArrowDown");
-    await page.keyboard.press("Enter");
+    await chooseNative(page, "BlendModeChoice", { index: 1, scrollContainer: "InspectorViewport" });
     await page.waitForFunction(() => JSON.parse(globalThis.ferroDesign.ferroDesignExportJson()).nodes[3].blend_mode === "multiply");
     await frames(page);
+    const nativeBlend = await documentState(page);
+    assert.equal(nativeBlend.nodes[3].x, authoredBlend.nodes[3].x, "Blend popup keys must not nudge the canvas selection");
+    assert.equal(nativeBlend.nodes[3].y, authoredBlend.nodes[3].y, "Blend popup keys must stay in the native ComboBox");
     png = await exported("multiply");
     near(pixel(png, 64, 64), [100, 80, 120, 255], "Native Multiply consumes the existing layer backdrop");
     const committedBlendHistory = (await state(page)).historyLength;

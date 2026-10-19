@@ -2,7 +2,7 @@
 
 A design editor built with **FerroUI, Rust, compiled XAML and Vello**. The same editor, controls, document model and scene renderer run in a browser and in the native launcher.
 
-The editor includes pages and layers, an infinite canvas, editable vector networks, rich text, image cropping, layout, component variants and typed properties, visual local variables, animated prototypes, comments, undo/redo and portable export. The compiled XAML shell follows the navigation rail, contextual left sidebar, canvas, property sidebar and floating toolbar arrangement of Figma Design. [Feature coverage](docs/FEATURES.md) records the implementation and its limits; this repository does not claim complete Figma compatibility or verified pixel parity.
+The editor includes pages and layers, an infinite canvas, editable vector networks, rich text, image cropping, native effect controls, auto-layout child dragging, component variants and typed properties, visual local variables, animated prototypes, comments, undo/redo and portable export. The compiled XAML shell follows the navigation rail, contextual left sidebar, canvas, property sidebar and floating toolbar arrangement of Figma Design. [Feature coverage](docs/FEATURES.md) records the implementation and its limits; this repository does not claim complete Figma compatibility or verified pixel parity.
 
 The editor is real FerroUI UI. `Editor.xaml` compiles into native FerroUI controls; `DesignCanvas` derives from `Control`; artwork is drawn through the public `DrawingContext`, geometry, brush, pen, text and imaging APIs. The HTML host only starts WebAssembly and provides browser storage, clipboard and downloads.
 
@@ -62,6 +62,8 @@ The initial document contains editable Orbit mobile banking screens, a component
 
 Select an auto-layout frame or one of its children, then choose **Layout and grid placement…** in the inspector. Native controls edit child sizing, min/max limits, growth, absolute positioning, one-based grid cells and row/column spans. **Move before/after** follows the visual flow, including reversed layouts; pinned grid children keep their cells.
 
+Select one automatic child and drag it along its existing auto-layout frame to reorder it. An outline and insertion line preview the destination in rows, columns, wrapped rows and grids, including reversed flow and transformed frames. The document stays unchanged during the preview; releasing the pointer commits the reorder and sibling layout as one undo step. Returning to the original slot, Escape or lost pointer capture cancels without a document edit. Dragging stays within the original parent. Use the placement dialog for pinned grid coordinates; moving several layout children together or dragging them into another frame is not implemented.
+
 | Action | Shortcut |
 | --- | --- |
 | Select / frame / rectangle / ellipse / line | `V` / `F` / `R` / `O` / `L` |
@@ -89,7 +91,9 @@ Double-click a text layer to edit directly on the canvas with a native FerroUI c
 
 Use the property sidebar for geometry, fills, strokes, typography and layout. With no layer selected it shows the page background and local styles, variables and components. The paint-stack dialog edits fill order, visibility/opacity, gradients, stops and image source windows. **Crop image…** provides native pan and corner gestures for Fill/Stretch images; Escape cancels the active gesture, and Undo restores the whole gesture. Numeric crop windows are also available for Fit and Tile.
 
-The Appearance blend selector controls isolated layer compositing. Layer opacity applies once to the completed group. Background blur samples earlier document content within that group and caches its filtered result; [documented bounds](docs/FEATURES.md#rendering-and-authoring-limits) keep its allocations predictable. Shapes, ordinary fills, strokes and text continue to use native vector rendering.
+The **Effects** editor provides native controls for drop shadow, inner shadow, layer blur and background blur. Edit blur radius, signed shadow offsets/spread, RGB and separate opacity; show or hide a row, move it up/down, duplicate, remove or clear effects. Enter or leaving a field applies its value, and Escape restores the committed value. Numeric arrow keys step by 1, with Shift for 10 and Alt for 0.1. Multi-selection changes matching effect rows on unlocked layers; missing rows remain unchanged. Each accepted command is one history step, and invalid or unchanged input preserves history and bound styles.
+
+The Appearance blend selector controls isolated layer compositing. Layer opacity applies once to the completed group. The first listed shadow of each kind paints above later shadows of that kind. Leaf shapes paint inner shadows between fills and strokes; container inner shadows sit above their compound content. Background blur samples earlier document content within the isolated group and caches its filtered result; [documented bounds](docs/FEATURES.md#rendering-and-authoring-limits) keep its allocations predictable. Shapes, ordinary fills, strokes and text continue to use native vector rendering.
 
 **Properties and variants…** creates component sets, assigns variant combinations and exposes text, visibility and nested instance-swap properties. Switching a variant preserves matching layer IDs and explicit overrides. The native variable editor manages collections, modes, typed values, aliases and layer bindings. Invalid authoring changes are rejected atomically.
 
@@ -117,9 +121,15 @@ node tests/document-store-browser.mjs
 npm run test:browser
 ```
 
-`tests/browser.mjs` serves the actual `dist` build and exercises both requested browser rendering modes. It checks native pixels, pointer drawing, vector-point and pen-handle gestures, on-canvas Unicode text editing, paint controls, prototype pointer/key/delay interactions, keyboard history, document import/export, durable reload, and a 10,000-layer document larger than the usual localStorage allowance. It also checks startup exceptions and render-thread panics, and writes PNG screenshots, traces and JSON/HTML reports to `browser-report`. The separate IndexedDB test verifies real transaction rollback, migration and conflicting tab writes.
+`tests/browser.mjs` serves the actual `dist` build and exercises both requested browser rendering modes. It checks native pixels, pointer drawing, vector-point and pen-handle gestures, on-canvas Unicode text editing, paint/effect controls, auto-layout drag previews and drops, prototype pointer/key/delay interactions, keyboard history, document import/export, durable reload, and a 10,000-layer document larger than the usual localStorage allowance. ComboBox checks verify the actual native popup item focus, and selection-dependent interactions wait for a committed native frame. The suite also checks startup exceptions and render-thread panics, and writes PNG screenshots, traces and JSON/HTML reports to `browser-report`. The separate IndexedDB test verifies real transaction rollback, migration and conflicting tab writes.
 
-The GitHub Actions workflow `.github/workflows/ferrodesign.yml` runs locked core tests, paired release benchmarks, focused native TextBox preedit tests, public compositing recording/Vello pixel tests, native compilation and the complete native application test suite before the real WebAssembly build and browser interaction validation. Native tests compare incremental and full rendering pixels and cover bounded background blur and authoring parsers. Browser checks also cover networks, components, variables, rich text, crop gestures, page controls, grid spans/reorder and 10,000-layer preparation counts. Build and validation artifacts are attached to each workflow run. See [validation and measurements](docs/VALIDATION.md) for observed results and the distinction between document-engine timings and browser rendering performance.
+The GitHub Actions workflow `.github/workflows/ferrodesign.yml` runs locked core tests, paired release benchmarks, focused native TextBox preedit tests, public compositing recording/Vello pixel tests, native compilation and the complete native application test suite before the real WebAssembly build and browser interaction validation. The native suite contains pixel comparisons for incremental preparation, spatial root culling and shadow order, plus bounded background blur, gesture ownership and authoring parser regressions. Browser checks also cover networks, components, variables, rich text, crop gestures, page controls, grid spans/reorder, effect transactions and 10,000-layer preparation/root-candidate counts. Build and validation artifacts are attached to each workflow run. See [validation and measurements](docs/VALIDATION.md) for observed results; source coverage and added assertions do not establish a passing run on their own.
+
+## Rendering performance
+
+The renderer retains immutable geometry, paints, text, image assets and prepared subtree bounds. Scoped changes refresh affected nodes and ancestors, and the layer sidebar reuses unchanged row projections. Scenes with at least 32 prepared roots also use a balanced bounds hierarchy to find paint candidates for the viewport. Candidates return to document paint order before compositing, so spatial partitioning preserves stacking. Unchanged viewport queries reuse their candidate buffer; scoped root-bound changes refit the affected tree branch. A view containing the entire root bounds uses the retained paint-order list directly.
+
+These mechanisms reduce preparation, bounds testing and control allocation. Root signatures, visible artwork drawing, wide sibling aggregation, structural layout commits and complete serialization still have size-dependent costs. The report distinguishes those operations from device-specific GPU time and display frame rate. See [architecture](docs/ARCHITECTURE.md#retained-scene-and-invalidation) for cache boundaries and conservative fallbacks.
 
 ## Source map
 
@@ -132,6 +142,8 @@ The GitHub Actions workflow `.github/workflows/ferrodesign.yml` runs locked core
 | `crates/ferrodesign-core/src/prototype.rs` | Trigger rules, activation tokens, overlays and variable overrides |
 | `crates/ferrodesign-core/src/geometry.rs` | Affine geometry, vector paths and viewport math |
 | `crates/ferrodesign-core/src/layout.rs` | Constraints and row/column/wrapped/grid auto layout |
+| `crates/ferrodesign-core/src/layout_drag.rs` | Immutable sibling geometry, indexed insertion targets and validated reorder commits |
+| `crates/ferrodesign-core/src/effects_edit.rs` | Typed effect commands, atomic batch validation and scoped history |
 | `crates/ferrodesign-core/src/spatial.rs` | Spatial index, clipping and geometry-aware hit testing |
 | `crates/ferrodesign-app/ui/Editor.xaml` | Compiled FerroUI editor shell and control styling |
 | `crates/ferrodesign-app/src/shell.rs` | Control events, property editing and document commands |
@@ -139,6 +151,7 @@ The GitHub Actions workflow `.github/workflows/ferrodesign.yml` runs locked core
 | `crates/ferrodesign-app/src/shell/` | Native authoring dialogs and the cached layer projection |
 | `crates/ferrodesign-app/src/prototype.rs` | Presentation snapshots and cancellable FerroUI dispatcher timers |
 | `crates/ferrodesign-app/src/renderer.rs` | Cached public-API scene renderer |
+| `crates/ferrodesign-app/src/renderer/root_index.rs` | Prepared-root bounds hierarchy, refitting and retained ordered viewport candidates |
 | `crates/ferrodesign-app/src/platform.rs` | Browser/native storage, clipboard and downloads |
 | `crates/ferrodesign-app/src/desktop.rs` | Vello native configuration and headless rendering |
 | `web` / `scripts` / `tests` | Browser host, reproducible build and interaction validation |

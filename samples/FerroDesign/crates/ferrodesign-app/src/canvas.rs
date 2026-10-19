@@ -1,6 +1,7 @@
 //! Interactive retained-mode surface. Artwork uses only FerroUI's public DrawingContext API.
 mod network;
 mod image_crop;
+mod layout_drag;
 use crate::{
     icons::brush,
     renderer::{RenderStats, ScenePainter},
@@ -93,6 +94,7 @@ pub enum CanvasEvent {
     EditText(NodeId),
     Comment(Point),
     ContextMenu,
+    Notice(String),
     PrototypeTrigger(NodeId, core::Trigger),
     PrototypeKey(String),
     PrototypeScroll(NodeId, Point),
@@ -183,6 +185,7 @@ pub struct DesignCanvas {
     pub network_vertices: RefCell<Vec<core::VectorVertexId>>,
     image_crop: Cell<Option<image_crop::ImageCropMode>>,
     image_crop_gesture: RefCell<Option<image_crop::ImageCropGesture>>,
+    layout_drag: RefCell<Option<layout_drag::LayoutDragGesture>>,
 }
 ferro_class!(DesignCanvas:Control);
 ferro_impl_classes!(DesignCanvas:FerroObjectImpl,StyledElementImpl,LayoutableImpl,InteractiveImpl,ControlImpl);
@@ -218,6 +221,7 @@ impl DesignCanvas {
             network_vertices: RefCell::new(Vec::new()),
             image_crop: Cell::new(None),
             image_crop_gesture: RefCell::new(None),
+            layout_drag: RefCell::new(None),
         });
         this.set_focusable(true);
         this.set_clip_to_bounds(true);
@@ -252,11 +256,13 @@ impl DesignCanvas {
     }
     /// Activation changes cannot reuse a press or hover from an earlier frame.
     pub fn reset_presentation_input(&self) {
+        self.cancel_layout_drag();
         self.prototype_press.set(None);
         self.hover.set(None);
         self.space.set(false);
     }
     pub fn set_tool(&self, tool: Tool) {
+        self.cancel_layout_drag();
         self.finish_image_crop();
         self.finish_pen();
         if tool != Tool::Select {
@@ -268,10 +274,12 @@ impl DesignCanvas {
         self.emit(CanvasEvent::Tool);
     }
     pub fn reset_fit(&self) {
+        self.cancel_layout_drag();
         self.initialized.set(false);
         self.invalidate_visual();
     }
     pub fn zoom(&self, factor: f64) {
+        self.cancel_layout_drag();
         let mut v = self.viewport.get();
         v.zoom_at(Point::new(v.width / 2.0, v.height / 2.0), v.zoom * factor);
         self.viewport.set(v);
@@ -279,6 +287,7 @@ impl DesignCanvas {
         self.emit(CanvasEvent::Camera);
     }
     pub fn zoom_to_selection(&self) {
+        self.cancel_layout_drag();
         let editor = self.editor.borrow();
         let bounds = editor
             .selection
@@ -372,6 +381,7 @@ impl DesignCanvas {
     /// Undo during a live pointer edit cancels that transaction and its gesture.
     /// Later pointer events must never continue writing after history restored it.
     pub fn cancel_active_edit(&self) -> bool {
+        if self.cancel_layout_drag() { return true; }
         if self.cancel_image_crop_gesture() { return true; }
         let active =
             self.pen_node.get().is_some() || !matches!(*self.gesture.borrow(), Gesture::None);
@@ -381,6 +391,9 @@ impl DesignCanvas {
         active
     }
     pub fn cancel(&self) {
+        // This preview owns no transaction. In particular, Escape must not
+        // cancel an unrelated edit opened after its immutable snapshot.
+        if self.cancel_layout_drag() { return; }
         self.cancel_image_crop();
         self.editor.borrow_mut().cancel_transaction();
         self.pen_node.set(None);
@@ -393,6 +406,7 @@ impl DesignCanvas {
     }
     /// Enter direct path editing without replacing the retained document node.
     pub fn edit_vector(&self) -> bool {
+        self.cancel_layout_drag();
         self.finish_image_crop();
         self.finish_pen();
         let editor = self.editor.borrow();
@@ -662,6 +676,7 @@ impl DesignCanvas {
 impl InputElementImpl for DesignCanvas {
     fn on_pointer_pressed(this: &Self, e: &PointerPressedEventArgs) {
         Self::parent_on_pointer_pressed(this, e);
+        this.cancel_layout_drag();
         this.focus();
         e.set_handled(true);
         let screen = e.get_position(Some(this));
@@ -740,6 +755,12 @@ impl InputElementImpl for DesignCanvas {
                     if e.click_count() == 2 && editor.document.nodes[&id].kind == NodeKind::Vector {
                         drop(editor);
                         this.edit_vector();
+                        return;
+                    }
+                    if this.layout_drag_press(&editor, id, world, screen) {
+                        drop(editor);
+                        this.emit(CanvasEvent::Selection);
+                        this.invalidate_visual();
                         return;
                     }
                     let exclude = editor.root_selection();
@@ -897,6 +918,7 @@ impl InputElementImpl for DesignCanvas {
             return;
         }
         if this.image_crop_move(world) { return; }
+        if this.layout_drag_move(world, Point::new(screen.x, screen.y)) { return; }
         let shift = e.key_modifiers().contains(KeyModifiers::SHIFT);
         let mut camera_changed = false;
         let mut gesture = this.gesture.borrow_mut();
@@ -1201,6 +1223,12 @@ impl InputElementImpl for DesignCanvas {
             e.set_handled(true);
             return;
         }
+        let release_screen = e.get_position(Some(this));
+        if this.layout_drag_release(this.world(release_screen), Point::new(release_screen.x, release_screen.y)) {
+            e.pointer().capture(None);
+            e.set_handled(true);
+            return;
+        }
         this.snap_guides.set((None, None));
         let gesture = std::mem::replace(&mut *this.gesture.borrow_mut(), Gesture::None);
         // Clear the gesture before releasing capture: capture-lost is synchronous.
@@ -1245,6 +1273,7 @@ impl InputElementImpl for DesignCanvas {
     }
     fn on_pointer_capture_lost(this: &Self, e: &PointerCaptureLostEventArgs) {
         Self::parent_on_pointer_capture_lost(this, e);
+        if this.cancel_layout_drag() { return; }
         if this.cancel_image_crop_gesture() { return; }
         if let Some((id, _, _)) = this.prototype_press.take() {
             if this.presentation.get().is_some() {
@@ -1274,6 +1303,7 @@ impl InputElementImpl for DesignCanvas {
             return;
         }
         let mut v = this.viewport.get();
+        this.cancel_layout_drag();
         if e.key_modifiers()
             .intersects(KeyModifiers::CONTROL | KeyModifiers::META)
         {
@@ -1402,6 +1432,7 @@ impl InputElementImpl for DesignCanvas {
             }
         };
         if let Some(action) = action {
+            if !matches!(action, "undo" | "redo") { this.cancel_layout_drag(); }
             this.emit(CanvasEvent::Action(action));
             e.set_handled(true);
             return;
@@ -1415,6 +1446,7 @@ impl InputElementImpl for DesignCanvas {
             _ => None,
         };
         if let Some((x, y)) = delta {
+            this.cancel_layout_drag();
             if let (Some(id), Some(point)) = (this.vector_node.get(), this.vector_point.get()) {
                 let mut editor = this.editor.borrow_mut();
                 let world = editor
@@ -1928,6 +1960,7 @@ impl VisualImpl for DesignCanvas {
                 &BoxShadows::default(),
             );
         }
+        this.render_layout_drag(ctx, v);
         for comment in &doc.comments {
             if !comment.resolved && doc.comment_page(comment) == Some(editor.active_page) {
                 let p = v.world_to_screen(comment.position);

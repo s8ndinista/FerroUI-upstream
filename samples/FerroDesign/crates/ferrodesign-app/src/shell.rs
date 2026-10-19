@@ -1,5 +1,6 @@
 //! The XAML shell binds real FerroUI controls to the document command layer.
 mod paints;
+mod effects;
 mod components;
 mod layout;
 mod layer_projection;
@@ -554,6 +555,7 @@ impl EditorShell {
                 self.position_inline_text();
             }
             CanvasEvent::Tool => self.sync_tools(),
+            CanvasEvent::Notice(message) => self.toast(&message),
             CanvasEvent::EditText(id) => {
                 self.begin_inline_text(id);
             }
@@ -604,8 +606,23 @@ impl EditorShell {
             let origin = control
                 .translate_point(ferroui_base::Point::new(0.0, 0.0), &self.root)
                 .unwrap_or_default();
-            json!({"x":origin.x,"y":origin.y,"width":bounds.width,"height":bounds.height,
-                "visible":control.is_effectively_visible()})
+            let mut state = json!({"x":origin.x,"y":origin.y,"width":bounds.width,"height":bounds.height,
+                "visible":control.is_effectively_visible(),
+                "enabled":control.is_effectively_enabled(),
+                "measureValid":control.is_measure_valid(),"arrangeValid":control.is_arrange_valid(),
+                "focused":control.is_focused(),"focusWithin":control.is_keyboard_focus_within()});
+            if let Some(choice) = control.downcast_ref::<ComboBox>() {
+                // Popups have a separate visual ancestry. Report the realized
+                // item's actual keyboard focus instead of inferring it from
+                // the ComboBox's focus-within flag or its selected value.
+                let focused_index = choice.get_realized_containers().into_iter()
+                    .find(|item| item.is_keyboard_focus_within())
+                    .map(|item| choice.index_from_container(&item));
+                state["choice"] = json!({"open":choice.is_drop_down_open(),
+                    "selectedIndex":choice.selected_index(),"itemCount":choice.item_count(),
+                    "focusedIndex":focused_index});
+            }
+            state
         };
         let mut chrome: serde_json::Map<String, serde_json::Value> = [
             "CanvasHost",
@@ -634,6 +651,7 @@ impl EditorShell {
             "CornerPointButton", "SmoothPointButton", "SymmetricPointButton",
             "InlineTextBox",
             "EditPaintsButton",
+            "EffectButton", "AddEffectButton",
             "CropImageButton", "CropDoneButton", "BlendModeChoice",
             "RichTextButton",
             "EditComponentsButton",
@@ -659,7 +677,7 @@ impl EditorShell {
                 if let Some(control) = visual.cast::<Control>() {
                     if let Some(name) = control
                         .name()
-                        .filter(|name| ["Paint", "Interaction", "RichText", "Variable", "Component", "Crop", "Layout"]
+                        .filter(|name| ["Paint", "Effect", "Interaction", "RichText", "Variable", "Component", "Crop", "Layout"]
                             .iter().any(|prefix| name.starts_with(prefix)))
                     {
                         chrome.insert(name, native_bounds(&control));
@@ -696,6 +714,7 @@ impl EditorShell {
             "networkPoint":self.canvas.network_point.get(),
             "networkVertices":*self.canvas.network_vertices.borrow(),
             "imageCrop":self.canvas.image_crop_state(),
+            "layoutDrag":self.canvas.layout_drag_state(),
             "editingText":self.inline_text.get(),
             "editingComposition":self.inline_text.get().is_some() && self.field("InlineTextBox").is_composing_text(),
             "prototypeOverlays":*self.canvas.overlays.borrow(),
@@ -714,6 +733,8 @@ impl EditorShell {
             "backdropSkipped":stats.backdrop_skipped,"backdropTooLarge":stats.backdrop_too_large,
             "fullPrepares":stats.full_prepares,"incrementalPrepares":stats.incremental_prepares,
             "preparedNodes":stats.prepared_nodes,"rebuiltVisuals":stats.rebuilt_visuals,
+            "rootBoundsTests":stats.root_bounds_tests,"rootCandidates":stats.root_candidates,
+            "rootQueryReused":stats.root_query_reused,
             "totalFullPrepares":stats.total_full_prepares,"totalIncrementalPrepares":stats.total_incremental_prepares,
             "totalPreparedNodes":stats.total_prepared_nodes,"totalRebuiltVisuals":stats.total_rebuilt_visuals,
             "invalidNodes":stats.invalid_nodes,
@@ -2208,13 +2229,10 @@ impl EditorShell {
             "add-stroke" => self.modify("Add stroke", |n| {
                 n.strokes.push(Stroke::new(Color::BLACK, 1.0))
             }),
-            "add-effect" => self.modify("Add drop shadow", |n| {
-                n.effects.push(Effect::shadow(
-                    Color::rgba(0, 0, 0, 40),
-                    Point::new(0.0, 8.0),
-                    24.0,
-                ))
-            }),
+            "add-effect" => {
+                self.add_effect();
+                return true;
+            }
             "bold" => self.modify("Text weight", |n| {
                 n.font_weight = if n.font_weight >= 600 { 400 } else { 700 }
             }),
@@ -2376,54 +2394,6 @@ impl EditorShell {
         button.click(move |_, _| {
             if let Some(s) = weak.upgrade() {
                 s.import_document(&text.text().unwrap_or_default(), "Imported design");
-            }
-        });
-        self.control::<StackPanel>("ModalActions")
-            .children()
-            .add(button);
-    }
-    fn effects_dialog(self: &Rc<Self>) {
-        let id = self.editor.borrow().selection.first().copied();
-        let Some(id) = id else {
-            self.toast("Select a layer first.");
-            return;
-        };
-        let value = serde_json::to_string_pretty(&self.editor.borrow().document.nodes[&id].effects)
-            .unwrap_or_default();
-        self.modal("Effects","Edit the effect stack. Radius, spread, offset, color, and visibility are preserved in the design.");
-        let text = TextBox::new();
-        text.set_accepts_return(true);
-        text.set_min_height(300.0);
-        text.set_text_wrapping(TextWrapping::Wrap);
-        text.set_text(Some(&value));
-        self.control::<StackPanel>("ModalContent")
-            .children()
-            .add(text.clone());
-        let button = Button::new();
-        button.set_content(Some(Rc::new("Apply effects".to_string())));
-        button.classes().add("primary");
-        let weak = Rc::downgrade(self);
-        button.click(move |_, _| {
-            if let Some(s) = weak.upgrade() {
-                match serde_json::from_str::<Vec<Effect>>(&text.text().unwrap_or_default()) {
-                    Ok(effects)
-                        if effects.iter().all(|e| {
-                            e.radius.is_finite()
-                                && e.radius >= 0.0
-                                && e.radius <= 10000.0
-                                && e.spread.is_finite()
-                                && e.offset.x.is_finite()
-                                && e.offset.y.is_finite()
-                        }) =>
-                    {
-                        s.editor
-                            .borrow_mut()
-                            .update_node(id, "Edit effects", |n| n.effects = effects);
-                        s.close_modal();
-                        s.changed();
-                    }
-                    _ => s.toast("Check the effect values and JSON format."),
-                }
             }
         });
         self.control::<StackPanel>("ModalActions")

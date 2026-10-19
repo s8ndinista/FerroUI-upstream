@@ -6,6 +6,8 @@ import { imageCropRegressions } from "./image-crop-browser.mjs";
 import { compositingRegressions } from "./compositing-browser.mjs";
 import { pageInspectorRegressions } from "./page-inspector-browser.mjs";
 import { layoutAuthoringRegressions } from "./layout-browser.mjs";
+import { layoutDragRegressions } from "./layout-drag-browser.mjs";
+import { effectAuthoringRegressions } from "./effects-browser.mjs";
 import { compactAutosaveRegressions } from "./serialization-browser.mjs";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
@@ -170,9 +172,32 @@ async function moveWorld(page, x, y) {
     await page.mouse.move(point.x, point.y);
     return point;
 }
+async function waitForNativeFrame(page, afterFrame, label) {
+    try {
+        await page.waitForFunction((afterFrame) =>
+            JSON.parse(globalThis.ferroDesign.ferroDesignState()).renderedFrames > afterFrame,
+        afterFrame, { timeout: 10000 });
+    } catch (error) {
+        const view = await state(page);
+        throw new Error(label + " did not produce a committed native frame: " + JSON.stringify({
+            afterFrame, renderedFrames: view.renderedFrames, selection: view.selection,
+            documentRevision: view.documentRevision, tool: view.tool, chrome: view.chrome,
+        }), { cause: error });
+    }
+}
 async function clickWorld(page, x, y, options) {
-    const point = worldPoint(await state(page), x, y);
+    const before = await state(page), point = worldPoint(before, x, y);
     await page.mouse.click(point.x, point.y, options);
+    const after = await state(page);
+    // Selection updates the native properties synchronously, but its inspector
+    // visibility and hit-test scene are committed by the native renderer. The
+    // WebGL2 trace showed the old bounds accepting a click while
+    // the previous Page inspector still owned hit testing. Wait for that real
+    // selection frame before the next interaction; a DOM rAF alone is not a
+    // native frame, and unchanged clicks need no extra rendering.
+    if (JSON.stringify(after.selection) !== JSON.stringify(before.selection)) {
+        await waitForNativeFrame(page, before.renderedFrames, "Canvas selection");
+    }
 }
 async function clickNative(page, name, scrollContainer) {
     // Model transactions can finish before FerroUI arranges a rebuilt modal.
@@ -180,7 +205,8 @@ async function clickNative(page, name, scrollContainer) {
     // deriving pointer coordinates; a DOM animation frame alone is not proof.
     await page.waitForFunction((name) => {
         const bounds = JSON.parse(globalThis.ferroDesign.ferroDesignState()).chrome[name];
-        return bounds?.visible !== false && bounds?.width > 0 && bounds?.height > 0 &&
+        return bounds?.visible === true && bounds?.enabled === true &&
+            bounds?.measureValid === true && bounds?.arrangeValid === true && bounds?.width > 0 && bounds?.height > 0 &&
             [bounds.x, bounds.y, bounds.width, bounds.height].every(Number.isFinite);
     }, name, { timeout: 10000 });
     for (let attempt = 0; attempt < 16; attempt++) {
@@ -201,6 +227,48 @@ async function clickNative(page, name, scrollContainer) {
         await frames(page);
     }
     assert.fail("Could not scroll the native " + scrollContainer + " to " + name);
+}
+async function chooseNative(page, name, { index, offset = 1, scrollContainer } = {}) {
+    const before = (await state(page)).chrome[name]?.choice;
+    assert.ok(before, name + " must be a native ComboBox with selection diagnostics");
+    assert.equal(before.open, false, name + " must start with its popup closed");
+    const target = index ?? before.selectedIndex + offset;
+    assert.ok(Number.isInteger(target) && target >= 0 && target < before.itemCount,
+        name + " requires an in-range native option: " + JSON.stringify({ before, target }));
+    const waitChoice = async (expected, label) => {
+        try {
+            await page.waitForFunction(({ name, expected }) => {
+                const choice = JSON.parse(globalThis.ferroDesign.ferroDesignState()).chrome[name]?.choice;
+                return choice && Object.entries(expected).every(([key, value]) => choice[key] === value);
+            }, { name, expected }, { timeout: 10000 });
+        } catch (error) {
+            const view = await state(page);
+            throw new Error(name + " " + label + " failed: " + JSON.stringify({
+                expected, actual: view.chrome[name], selection: view.selection,
+                selectionBounds: view.selectionBounds, renderedFrames: view.renderedFrames,
+            }), { cause: error });
+        }
+    };
+    await clickNative(page, name, scrollContainer);
+    // Opening the popup must actually transfer native keyboard focus. Inspect
+    // the realized item: popup visuals have their own focus ancestry, so the
+    // browser's MAIN focus and the ComboBox's selected value cannot prove this.
+    await waitChoice({ open: true, focusedIndex: before.selectedIndex }, "popup focus");
+    let focused = before.selectedIndex;
+    if (index !== undefined) {
+        await page.keyboard.press("Home");
+        focused = 0;
+        await waitChoice({ open: true, focusedIndex: focused }, "Home navigation");
+    }
+    while (focused !== target) {
+        const step = Math.sign(target - focused);
+        await page.keyboard.press(step > 0 ? "ArrowDown" : "ArrowUp");
+        focused += step;
+        await waitChoice({ open: true, focusedIndex: focused }, "option navigation");
+    }
+    await page.keyboard.press("Enter");
+    await waitChoice({ open: false, selectedIndex: target }, "selection commit");
+    await frames(page);
 }
 async function typeNative(page, name, value) {
     await clickNative(page, name);
@@ -267,6 +335,7 @@ async function captureNativeScreenshot(page, result, name, { controls = [], afte
                             activePage: view.activePage, selection: view.selection, tool: view.tool,
                             pan: view.pan, zoom: view.zoom, presentation: view.presentation,
                             prototypeOverlays: view.prototypeOverlays, imageCrop: view.imageCrop,
+                            layoutDrag: view.layoutDrag,
                             vectorNode: view.vectorNode, vectorPoint: view.vectorPoint,
                             modalVisible: view.chrome.ModalBackdrop.visible,
                             controls: Object.fromEntries(controls.map((name) => [name, view.chrome[name]])),
@@ -546,9 +615,7 @@ async function nativeEditingRegressions(page, canvas, reference, result, check, 
     await clickWorld(page, 120, 90);
     await clickNative(page, "EditPaintsButton", "InspectorViewport");
     await page.waitForFunction(() => JSON.parse(globalThis.ferroDesign.ferroDesignState()).chrome.ModalBackdrop.visible);
-    await clickNative(page, "PaintType0");
-    await page.keyboard.press("ArrowDown");
-    await page.keyboard.press("Enter");
+    await chooseNative(page, "PaintType0");
     await page.waitForFunction(() => JSON.parse(globalThis.ferroDesign.ferroDesignExportJson()).nodes[2].fills[0].paint.type === "linear_gradient");
     await typeNative(page, "PaintStopColor0_0", "#FF3B6B80");
     let fill = (await documentNode(page, 2)).fills[0];
@@ -826,7 +893,7 @@ try {
             // below intentionally keep their existing timing-sensitive path.
             const nativeHelpers = {
                 fixtureNode, isolatedDocument, importFixture, documentState, state,
-                clickWorld, clickNative, moveWorld, frames,
+                clickWorld, clickNative, chooseNative, moveWorld, frames, waitForNativeFrame,
                 captureNativeScreenshot: (name, options) => captureNativeScreenshot(page, result, name, options),
             };
             await vectorNetworkRegressions(page, svgDocument, check,
@@ -839,9 +906,13 @@ try {
                 nativeHelpers, output, mode);
             await compositingRegressions(page, svgDocument, check,
                 nativeHelpers, output, mode);
+            await effectAuthoringRegressions(page, svgDocument, check,
+                nativeHelpers, output, mode);
             await pageInspectorRegressions(page, svgDocument, check,
                 nativeHelpers, output, mode);
             await layoutAuthoringRegressions(page, svgDocument, check,
+                nativeHelpers, output, mode);
+            await layoutDragRegressions(page, svgDocument, check,
                 nativeHelpers, output, mode);
             await compactAutosaveRegressions(page, svgDocument, check,
                 { fixtureNode, isolatedDocument, importFixture, documentState, state, clickWorld, clickNative, frames, flushStorage }, output, mode);
@@ -999,6 +1070,23 @@ try {
                     redo: redoPreparation.layerProjection,
                 };
                 check("Native nudge/undo/redo in 10,000 layers each prepare one leaf, rebuild no immutable visuals, and reuse the scene and layer projection");
+                const beforeZoom = await state(page);
+                await page.keyboard.press("2");
+                await waitForNativeFrame(page, beforeZoom.renderedFrames, "Native zoom to selection");
+                const zoomed = await state(page);
+                assert.ok(zoomed.zoom > beforeZoom.zoom, "Native zoom to selection must narrow the view of the 10,000-layer fixture");
+                assert.ok(zoomed.rootCandidates > 0 && zoomed.rootCandidates < 250,
+                    "The root spatial index must enumerate only local paint candidates: " + zoomed.rootCandidates);
+                assert.ok(zoomed.rootBoundsTests < 1000,
+                    "A narrow view must avoid an exhaustive 10,000-root bounds scan: " + zoomed.rootBoundsTests);
+                assert.ok(zoomed.visibleNodes > 0 && zoomed.visibleNodes <= zoomed.rootCandidates,
+                    "Spatial candidates must include the actual visible leaf layers");
+                result.largeDocument.spatialQuery = {
+                    roots: zoomed.nodeCount, candidates: zoomed.rootCandidates,
+                    boundsTests: zoomed.rootBoundsTests, reused: zoomed.rootQueryReused,
+                    visibleNodes: zoomed.visibleNodes, zoom: zoomed.zoom,
+                };
+                check("Native zoom into 10,000 layers narrows root bounds testing and paint candidates to the local viewport without dropping visible layers");
                 const largeSaved = await page.evaluate(() => globalThis.ferroDesign.ferroDesignExportJson());
                 const persistedAt = performance.now();
                 const largePersistence = await flushStorage(page);

@@ -7,6 +7,9 @@
 
 mod backdrop;
 mod incremental;
+mod root_index;
+#[cfg(all(test, not(target_os = "emscripten")))]
+mod shadow_tests;
 
 use std::cell::Cell;
 use std::collections::{hash_map::DefaultHasher, HashMap, HashSet};
@@ -65,6 +68,10 @@ pub struct RenderStats {
     pub incremental_prepares: usize,
     pub prepared_nodes: usize,
     pub rebuilt_visuals: usize,
+    /// Spatial broad-phase work, separate from preparation and GPU drawing.
+    pub root_bounds_tests: usize,
+    pub root_candidates: usize,
+    pub root_query_reused: bool,
     pub total_full_prepares: u64,
     pub total_incremental_prepares: u64,
     pub total_prepared_nodes: u64,
@@ -115,6 +122,7 @@ struct CachedNode {
     unsupported_effects: usize,
     missing_image_pen: Option<Rc<dyn IPen>>,
     suppress_children: bool,
+    inner_shadows_below_strokes: bool,
 }
 
 impl CachedNode {
@@ -137,6 +145,7 @@ impl CachedNode {
             unsupported_effects: 0,
             missing_image_pen: None,
             suppress_children: false,
+            inner_shadows_below_strokes: true,
         }
     }
 }
@@ -170,6 +179,7 @@ pub struct ScenePainter {
     images: HashMap<String, ImageAsset>,
     prepared: Vec<PreparedNode>,
     prepared_roots: Vec<usize>,
+    root_index: root_index::RootPaintIndex,
     visiting: HashSet<NodeId>,
     empty: Option<Rc<CachedNode>>,
     scene_key: Option<(usize, u64, u64)>,
@@ -224,6 +234,7 @@ impl ScenePainter {
         self.images.clear();
         self.prepared.clear();
         self.prepared_roots.clear();
+        self.root_index.clear();
         self.visiting.clear();
         self.empty = None;
         self.backdrops.clear();
@@ -329,7 +340,18 @@ impl ScenePainter {
                 context.try_push_compositing_layer(BitmapBlendingMode::SourceOver, 1.0, ui_rect(viewport))
             } else { None };
             self.backdrops.set_enabled(document_layer.is_some());
-            for &root in &self.prepared_roots {
+            let roots = if self.root_index.is_active() {
+                let query = self.root_index.query(viewport);
+                self.stats.root_bounds_tests = query.bounds_tests;
+                self.stats.root_query_reused = query.reused;
+                self.stats.culled_nodes += query.culled_nodes;
+                self.root_index.candidates()
+            } else {
+                self.stats.root_bounds_tests = self.prepared_roots.len();
+                &self.prepared_roots
+            };
+            self.stats.root_candidates = roots.len();
+            for &root in roots {
                 paint_subtree(
                     context,
                     &self.prepared,
@@ -428,6 +450,7 @@ impl ScenePainter {
                 self.prepared_roots.push(index);
             }
         }
+        self.root_index.rebuild(&self.prepared, &self.prepared_roots);
     }
 
     fn prepare_node(
@@ -647,6 +670,16 @@ fn paint_blurs(
         return;
     }
     paint_shadows(context, &node.visual, false);
+    if node.visual.inner_shadows_below_strokes {
+        // Figma's layer order is fill -> inner shadow -> stroke; groups place
+        // inner shadows above their compound contents instead. Boolean output
+        // is one derived leaf shape, even though its source has child nodes.
+        // https://help.figma.com/hc/en-us/articles/360041488473-Apply-effects-to-layers
+        paint_fills(context, &node.visual);
+        paint_shadows(context, &node.visual, true);
+        paint_strokes(context, &node.visual);
+        return;
+    }
     paint_body(context, &node.visual);
     if !node.visual.suppress_children {
         let clip = node
@@ -667,6 +700,12 @@ fn paint_blurs(
 }
 
 fn paint_body(context: &mut DrawingContext<'_>, visual: &CachedNode) {
+    // Container/backdrop-prefix callers retain their established body order.
+    paint_fills(context, visual);
+    paint_strokes(context, visual);
+}
+
+fn paint_fills(context: &mut DrawingContext<'_>, visual: &CachedNode) {
     if visual.texts.is_empty() {
         // The first fill is the topmost item in the inspector.
         for fill in visual.fills.iter().rev() {
@@ -677,6 +716,9 @@ fn paint_body(context: &mut DrawingContext<'_>, visual: &CachedNode) {
             text.layout.draw(context, text.origin);
         }
     }
+}
+
+fn paint_strokes(context: &mut DrawingContext<'_>, visual: &CachedNode) {
     for stroke in visual.strokes.iter().rev() {
         if let Some(outline) = &stroke.outline {
             context.draw_geometry(Some(&stroke.brush), None, outline);
@@ -946,6 +988,11 @@ fn build_visual(
             }
         }
     }
+    // FerroUI draws BoxShadows in supplied order. The model's first effect
+    // must land on top, matching paint_shadows' reverse path-shadow traversal.
+    // Prepare this order once rather than allocating or reversing per frame.
+    outer.reverse();
+    inner.reverse();
     let missing_image_pen = (missing_images > 0).then(|| {
         let brush: Rc<dyn IImmutableBrush> = Rc::new(ImmutableSolidColorBrush::new(ui_color(
             Color::rgb(164, 169, 181),
@@ -977,6 +1024,7 @@ fn build_visual(
         unsupported_effects,
         missing_image_pen,
         suppress_children: node.kind == NodeKind::Boolean,
+        inner_shadows_below_strokes: !node.kind.is_container() || node.kind == NodeKind::Boolean,
     }
 }
 

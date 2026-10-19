@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 // Fixture import supplies authored source trees. Every mutation asserted below
 // comes from real FerroUI controls, pointer selection, and native key handling.
 export async function componentAuthoringRegressions(page, reference, check, helpers, output, mode) {
-    const { fixtureNode, isolatedDocument, importFixture, documentState, state, clickWorld, clickNative, frames, captureNativeScreenshot } = helpers;
+    const { fixtureNode, isolatedDocument, importFixture, documentState, state, clickWorld, clickNative, chooseNative, frames, captureNativeScreenshot } = helpers;
     const click = (name) => clickNative(page, name, "ModalViewport");
     const open = async () => {
         const selection = (await state(page)).selection;
@@ -22,12 +22,7 @@ export async function componentAuthoringRegressions(page, reference, check, help
         if (commit) await page.keyboard.press("Enter");
         await frames(page);
     };
-    const next = async (name, count = 1) => {
-        await click(name);
-        for (let index = 0; index < count; index++) await page.keyboard.press("ArrowDown");
-        await page.keyboard.press("Enter");
-        await frames(page);
-    };
+    const next = (name, count = 1) => chooseNative(page, name, { offset: count, scrollContainer: "ModalViewport" });
     const waitDocument = (predicate, args) => page.waitForFunction(({ source, args }) => {
         const doc = JSON.parse(globalThis.ferroDesign.ferroDesignExportJson());
         return new Function("doc", "args", "return (" + source + ")(doc, args)")(doc, args);
