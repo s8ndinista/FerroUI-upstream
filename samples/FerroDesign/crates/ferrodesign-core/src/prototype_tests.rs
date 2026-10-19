@@ -335,10 +335,13 @@ fn prototype_smart_animate_morphs_gradient_path_and_disabling_blur() {
     for (parent, amount, visible) in [(a, 0.0, true), (b, 20.0, false)] {
         let mut node = Node::new(NodeKind::Vector, "Morph", 100.0, 100.0, 100.0, 100.0);
         node.path.segments = vec![PathSegment::MoveTo { point: Point::default() }, PathSegment::CubicTo { control1: Point::new(amount, 10.0), control2: Point::new(80.0, 90.0), point: Point::new(100.0, 100.0) }];
-        node.fills[0].paint = Paint::LinearGradient {
+        node.fills = vec![Fill {
+            paint: Paint::LinearGradient {
             start: Point::new(amount, 0.0), end: Point::new(100.0, 100.0),
             stops: vec![GradientStop { offset: amount / 100.0, color: if visible { Color::BLACK } else { Color::WHITE } }],
-        };
+            },
+            ..Fill::solid(Color::BLACK)
+        }];
         node.effects = vec![Effect { kind: EffectKind::LayerBlur, color: Color::BLACK, offset: Point::default(), radius: 20.0, spread: 0.0, visible }];
         document.insert_node(parent, node).unwrap();
     }
