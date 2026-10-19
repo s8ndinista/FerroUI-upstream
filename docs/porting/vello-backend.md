@@ -1172,7 +1172,7 @@ The other way is the second configuration of `browser-platform.md`: `wasm32-unkn
 
 ## 13. Open work, in one list (2026-10-10)
 
-The owner will supply patches for this backend; no optimization or tuning is in progress (the backend is kept building and its tests green). This section gathers every open item of the sections above in one place, so that a patch can be checked against it. Each row names where the evidence is. Nothing here is new; where a section and this list disagree, the section is the record.
+Since 2026-10-19 the speed of the backend against Skia is worked on, on every desktop platform and in all three modes (section 14). This section gathers every open item of the sections above in one place, so that a patch can be checked against it. Each row names where the evidence is. Nothing here is new; where a section and this list disagree, the section is the record.
 
 ### 13.1 Wrong output (correctness)
 
@@ -1202,7 +1202,7 @@ The owner will supply patches for this backend; no optimization or tuning is in 
 | T8 | Variation coordinates have no member in the contracts: shaping and advances use the default instance | section 8, "Text" |
 | T9 | The font stack was run on macOS only (and with registered collections in the browser) | section 8, "Text"; 12.1 |
 
-### 13.3 Speed and memory (not being worked on)
+### 13.3 Speed and memory (as of 2026-10-10; section 14 is the current record)
 
 | # | What | Mode | Where |
 |---|---|---|---|
@@ -1241,3 +1241,70 @@ The owner will supply patches for this backend; no optimization or tuning is in 
 | V3 | That a frame scheduled on the backend's own command queue is always in order with the present of the platform | 11.2 |
 | V4 | Browsers other than Chrome; a real loss of a WebGL context; a scaling other than 1 in the browser; the composed site of two modules with both backends | 12.4, 12.7 items 10, 11 |
 | V5 | Dependencies that describe themselves as early: `linesweeper` for combined geometries (a panic in it is caught and gives the empty geometry), the glyph atlas of the hybrid renderer for bitmap fonts | section 9 item 6, 4.1 |
+
+## 14. Speed against Skia (from 2026-10-19)
+
+The goal: each of the three modes as fast as the Skia backend or faster, on macOS, Windows and Linux. This section is the record of what was measured and changed; each round of changes is a pull request with its numbers.
+
+### 14.1 How it is measured
+
+The frame benchmarks of the catalog (section 11.1) on the Metal surface that is not on screen, 2560 by 1600 pixels (scaling 2), on an Apple M3 Pro, in an optimised build. Every frame waits until the device has drawn it, so a time holds the work of the GPU, for Skia (Graphite) as for Vello. The test binary is built once and run once a renderer and a benchmark:
+
+```sh
+cargo test -p control-catalog --release --lib --no-run
+FERROUI_TEST_RENDERER=vello-hybrid FERROUI_BENCH_SURFACE=metal FERROUI_BENCH_SCALING=2 \
+  target/release/deps/control_catalog-<hash> frame_benchmark_buttons_page --ignored --nocapture --test-threads=1
+```
+
+(`cargo test` itself builds the two sample crates again on every run, four minutes each, through their build scripts; running the binary does not.) `FERROUI_VELLO_PERF=1000` adds the phases of a frame (section 11.1).
+
+### 14.2 Where the time went (2026-10-19)
+
+Median milliseconds a frame; the tour is the time of all its frames.
+
+| Scenario | Skia | hybrid | GPU | CPU |
+|---|---|---|---|---|
+| buttons page, the pointer moving across the buttons | 1.26 | 1.05 | 2.02 | 4.26 |
+| buttons page, scrolled 20 pixels a frame | 2.28 | 4.15 | 3.30 | 8.02 |
+| text block page, drawn again | 0.85 | 2.38 | 2.86 | 7.21 |
+| effects page, every box drawn again | 7.05 | 8.10 | 46.06 | 39.40 |
+| effects page, one box drawn again | 2.24 | 3.16 | 17.13 | 13.09 |
+| catalog tour, first round | 1028 | 1522 | 1659 | 3345 |
+| catalog tour, second round | 472 | 1437 | 1649 | 3558 |
+
+The phases (`FERROUI_VELLO_PERF`) and `/usr/bin/sample` of the tour:
+
+- **Hybrid.** The text page: recording the scene 1.13 ms, of which glyph runs 0.84 (the strips of every outline made on the processor for every frame); the render call 0.16; waiting for the device 1.0. In the tour, recording is mostly the strips of paths (`StripGenerator::generate_with_clip`) and of clips (`ClipState::push_clip_path`): rectangles and the rectangle clips of the compositor went through the path code of the renderer, which has a way of its own for them.
+- **CPU, in a window.** The text page: the render of the whole frame 1.85 ms, the upload of the whole frame 1.54 (16 MB, into a texture made for the frame), the device 1.0. A frame that changes one button costs the same as one that changes all.
+- **CPU, every scene.** A render context of the size of the target (the storage of its strips and tiles) and the resources of the renderer (the outlines of glyphs, the hinting instances of fonts) were made for every scene.
+
+### 14.3 Round 1 (2026-10-20)
+
+| # | Change | Where |
+|---|---|---|
+| 1 | **Rectangles and rectangle clips take the way of the renderers for them** (`IVelloSceneSink::fill_rect`, `push_clip_rect`): the hybrid renderer records a rectangle without strips when it lies in a rectangle clip, the CPU renderer fills it without making strips. A rectangle without anti-aliasing, the clips of the compositor among them, is the one with its sides on the nearest edges between pixels, which the anti-aliased way paints exactly | `scene/vello_cpu_scene_sink.rs` (`axis_aligned_rect`), `scene/vello_hybrid_scene_sink.rs`, `drawing_context_impl.rs` (`draw_rectangle`, `push_clip`, `draw_brush_in_device_space`) |
+| 2 | **Text of the hybrid mode from the glyph atlas of its renderer**: a glyph is rasterized once, at a quarter of a pixel across and on a whole pixel down, and drawn as an image, as Skia draws text. Aliased text stays outlines. The comparison harness gives the hybrid mode bounds of its own against the CPU mode for six text scenes (0.13 to 1.67 %; measured 0.055 to 1.080 %), and against Skia every text scene is as near as in the CPU mode or nearer (`text_latin_sizes`: 3.92 % against 4.24 %). A text scene drawn twice differs in one pixel by one digit (the atlas holds the glyphs of the first draw): the hybrid mode has the allowance of the GPU mode for that | `scene/vello_hybrid_scene_sink.rs`; the harness: `modes.rs` (`BOUNDS`), `lib.rs` |
+| 3 | **The CPU mode keeps its render contexts and the resources of its renderer** from scene to scene on a thread (`RendererPool`), by size, four at most | `scene/vello_cpu_scene_sink.rs` |
+| 4 | **A kept target that is drawn again in part is rendered there only** in the CPU mode: when the drawing context says which rectangles it clears (`retain_target`) and nothing but clips was recorded, the scene goes on in a render context of the rectangle around them, placed on the target (`RasterizerSettings::offset`). If the clips that bound it end and drawing goes on, the rest is recorded in a context of the whole target and rendered over it | `scene/vello_cpu_scene_sink.rs` (tests in the same file) |
+| 5 | **The CPU frame of a window is uploaded where it changed**: the window keeps a texture with the pixels of the frame, the sink says which rectangle its render changed (`rendered_rect`), and only that is written into the texture before the copy into the drawable | `gpu/metal.rs` (`WindowFrame::Memory`), `surface_render_target.rs` (`take_changed`), `gpu/vello_wgpu_device.rs` |
+
+After the round, the same benchmarks:
+
+| Scenario | Skia | hybrid | GPU | CPU |
+|---|---|---|---|---|
+| buttons page, the pointer moving across the buttons | 1.26 | **0.91** | 1.95 | **0.55** |
+| buttons page, scrolled 20 pixels a frame | 2.28 | **2.22** | 3.25 | 6.17 |
+| text block page, drawn again | 0.85 | 1.35 | 2.81 | 5.77 |
+| effects page, every box drawn again | 7.05 | 7.51 | 42.14 | 37.01 |
+| effects page, one box drawn again | 2.24 | 3.16 | 14.82 | 9.47 |
+| catalog tour, first round | 1028 | **900** | 1500 | 2469 |
+| catalog tour, second round | 472 | 887 | 1606 | 2442 |
+
+Bold: as fast as Skia or faster. The pixels: the comparison harness (32 tests), the tests of the crate (517, 3 new) and the render tests (376 pass, the one failure of section 8, the aliased circle) give what they gave before, but for the text of the hybrid mode (item 2).
+
+### 14.4 Linux and Windows, as found (2026-10-19)
+
+- The backend draws a window of these platforms in the CPU mode only: `wgpu` is built with Metal alone, and `create_gpu` takes the Metal device of macOS only. A platform that hands out graphics (X11 with GLX, its default; Wayland with EGL, its default; Windows with ANGLE on Direct3D 11, its default) makes the backend panic; it draws when the platform renders in software.
+- In software every frame of these platforms is whole: the framebuffers are not kept (X11 `XPutImage` and `XShm`, Wayland `wl_shm` with a new buffer every frame, Windows `SetDIBitsToDevice`), so the compositor draws into a layer of its own and the whole layer into the framebuffer; the framebuffers are BGRA, so the CPU mode renders into pixels of its own and converts all of them.
+- What will close it: a `wgpu` device of the backend's own on Vulkan (Linux) and Direct3D 12 (Windows) with a surface made from the handle of the window (`XID`, `HWND`), whatever graphics the platform chose; and a framebuffer target that keeps its frame in the format the renderer draws, converting only what changed.
+
