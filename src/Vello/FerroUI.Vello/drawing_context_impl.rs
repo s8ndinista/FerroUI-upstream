@@ -19,6 +19,7 @@ use ferroui_base::media::{
     BaselinePixelAlignment, BoxShadows, Color, Colors, EdgeMode, FontSimulations, IBrush, IGradientBrush, IPen,
     ITileBrush, RenderOptions, TextHintingMode, TextOptions, TextRenderingMode, TileMode,
 };
+use ferroui_base::media::imaging::BitmapBlendingMode;
 use ferroui_base::platform::{
     IBitmapImpl, IDrawingContextImpl, IDrawingContextLayerImpl, IGeometryImpl, IGlyphRunImpl,
     IPlatformRenderInterfaceRegion,
@@ -212,6 +213,8 @@ enum SavedKind {
     Nothing,
     /// An effect: its layer, and its scene when it has one of its own.
     Effect,
+    /// An explicitly isolated blend group, including saved multiplied opacity.
+    CompositingLayer,
 }
 
 /// Vello based drawing context.
@@ -243,6 +246,7 @@ pub struct DrawingContextImpl {
     drawn: bool,
     mask_stack: Vec<(Affine, PaintWrapper)>,
     opacity_stack: Vec<(f64, bool)>,
+    compositing_opacity_stack: Vec<f64>,
     render_options_stack: Vec<RenderOptions>,
     text_options_stack: Vec<TextOptions>,
     post_transform: Option<Matrix>,
@@ -299,6 +303,7 @@ impl DrawingContextImpl {
             drawn: false,
             mask_stack: Vec::new(),
             opacity_stack: Vec::new(),
+            compositing_opacity_stack: Vec::new(),
             render_options_stack: Vec::new(),
             text_options_stack: Vec::new(),
             post_transform,
@@ -527,6 +532,11 @@ impl DrawingContextImpl {
             SavedKind::Layer => self.sink().pop_layer(),
             SavedKind::Nothing => {}
             SavedKind::Effect => self.end_effect(),
+            SavedKind::CompositingLayer => {
+                self.sink().pop_layer();
+                self.current_opacity = self.compositing_opacity_stack.pop()
+                    .expect("The compositing opacity stack is empty");
+            }
         }
 
         self.current_transform = transform;
@@ -1545,8 +1555,30 @@ impl IDrawingContextImpl for DrawingContextImpl {
         self.restore();
     }
 
+    fn try_push_compositing_layer(&mut self, blend: BitmapBlendingMode, opacity: f64, bounds: Rect) -> bool {
+        if !self.scene().capabilities().blend_layers
+            || ![bounds.x, bounds.y, bounds.width, bounds.height, opacity].iter().all(|value| value.is_finite())
+            || bounds.width < 0.0 || bounds.height < 0.0 || !(0.0..=1.0).contains(&opacity)
+        {
+            return false;
+        }
+        let inherited_opacity = self.current_opacity;
+        self.compositing_opacity_stack.push(inherited_opacity);
+        self.current_opacity = 1.0;
+        self.sink().push_layer(to_blend_mode(blend), (inherited_opacity * opacity).clamp(0.0, 1.0) as f32);
+        self.save(SavedKind::CompositingLayer);
+        true
+    }
+
+    fn pop_compositing_layer(&mut self) {
+        self.restore();
+    }
+
     fn push_opacity(&mut self, opacity: f64, _bounds: Option<Rect>) {
-        let use_opacity_layer = self.uses_opacity_layer();
+        // A unit opacity with no inherited attenuation is a no-op, as it is
+        // in recorded render data. In particular, DrawingGroup's structural
+        // wrappers must not isolate a child's blend from its actual backdrop.
+        let use_opacity_layer = self.uses_opacity_layer() && (opacity != 1.0 || self.current_opacity != 1.0);
         self.opacity_stack.push((self.current_opacity, use_opacity_layer));
 
         if use_opacity_layer {

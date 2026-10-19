@@ -107,6 +107,7 @@ pub fn recorded_opcodes(stream: &RenderDataStream) -> Vec<RenderDataOpcode> {
             RenderDataOpcode::PushClip => drop(reader.read_payload::<PushClipPayload>()),
             RenderDataOpcode::PushGeometryClip => drop(reader.read_payload::<PushGeometryClipPayload>()),
             RenderDataOpcode::PushOpacity => drop(reader.read_payload::<PushOpacityPayload>()),
+            RenderDataOpcode::PushCompositingLayer => drop(reader.read_payload::<PushCompositingLayerPayload>()),
             RenderDataOpcode::PushOpacityMask => drop(reader.read_payload::<PushOpacityMaskPayload>()),
             RenderDataOpcode::PushTransform => drop(reader.read_payload::<PushTransformPayload>()),
             RenderDataOpcode::PushRenderOptions => drop(reader.read_payload::<PushRenderOptionsPayload>()),

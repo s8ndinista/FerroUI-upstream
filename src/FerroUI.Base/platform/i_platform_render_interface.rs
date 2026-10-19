@@ -151,6 +151,13 @@ pub trait IPlatformRenderInterface: 'static {
     /// rectangles.
     fn supports_individual_round_rects(&self) -> bool;
 
+    /// Whether drawing contexts created by this backend support isolated
+    /// compositing layers for all drawing primitives. Recording contexts use
+    /// this capability before accepting a compositing-layer push.
+    fn supports_compositing_layers(&self) -> bool {
+        false
+    }
+
     /// The default alpha format of the backend.
     fn default_alpha_format(&self) -> AlphaFormat;
 
