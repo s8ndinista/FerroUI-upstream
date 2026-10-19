@@ -223,6 +223,7 @@ pub fn outline_path(node: &Node) -> VectorPath {
         let ry = h / 2.0;
         return VectorPath {
             fill_rule: FillRule::NonZero,
+            anchor_modes: Default::default(),
             segments: vec![
                 PathSegment::MoveTo {
                     point: Point::new(w, ry),
@@ -258,6 +259,7 @@ pub fn outline_path(node: &Node) -> VectorPath {
     let [tl, tr, br, bl] = radii;
     VectorPath {
         fill_rule: FillRule::NonZero,
+            anchor_modes: Default::default(),
         segments: vec![
             PathSegment::MoveTo {
                 point: Point::new(tl, 0.0),

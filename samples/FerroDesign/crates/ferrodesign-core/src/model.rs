@@ -492,15 +492,28 @@ pub enum PathSegment {
     },
     Close,
 }
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum AnchorMode {
+    #[default]
+    Corner,
+    Smooth,
+    Symmetric,
+}
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 pub struct VectorPath {
     pub segments: Vec<PathSegment>,
     pub fill_rule: FillRule,
+    /// Persistent constraints keyed by the canonical anchor command. Legacy paths
+    /// omit this map and retain independent handles. Structural edits remap keys.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub anchor_modes: BTreeMap<usize, AnchorMode>,
 }
 impl VectorPath {
     pub fn transformed(&self, transform: Transform) -> Self {
         Self {
             fill_rule: self.fill_rule,
+            anchor_modes: self.anchor_modes.clone(),
             segments: self
                 .segments
                 .iter()
@@ -1568,6 +1581,9 @@ impl Document {
                 return Err(DocumentError::Invalid(format!(
                     "invalid geometry on node {id}"
                 )));
+            }
+            if !n.path.validate_anchor_modes() {
+                return Err(DocumentError::Invalid(format!("invalid vector anchor constraints on node {id}")));
             }
             if !n.font_size.is_finite()
                 || n.font_size <= 0.0

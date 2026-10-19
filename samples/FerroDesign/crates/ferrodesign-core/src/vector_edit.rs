@@ -3,9 +3,16 @@
 //! Point identities are command offsets, so pointer-frequency coordinate edits
 //! preserve identity without a second, synchronized vector representation.
 //! Inserting/deleting commands or converting an implicit closing edge changes
-//! offsets; clients must rebuild their selection after structural edits.
+//! offsets; clients must rebuild their selection after structural edits. Stored
+//! tangent modes follow the retained anchors when those offsets change.
 
-use crate::{Node, NodeKind, PathSegment, Point, Rect, Transform, VectorPath, GEOMETRY_EPSILON};
+use crate::{
+    AnchorMode, Node, NodeKind, PathSegment, Point, Rect, Transform, VectorPath, GEOMETRY_EPSILON,
+};
+use std::collections::BTreeMap;
+
+#[path = "vector_tools.rs"]
+mod vector_tools;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum PathPointKind {
@@ -47,17 +54,6 @@ pub struct PathSegmentHit {
     pub t: f64,
     pub position: Point,
     pub distance: f64,
-}
-
-/// Geometric conversion of the two tangents at an anchor. Corner retracts its
-/// handles; Smooth aligns them while retaining their individual lengths;
-/// Symmetric additionally makes their lengths equal. Subsequent handle edits
-/// remain independent: these operations do not introduce hidden node metadata.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum AnchorMode {
-    Corner,
-    Smooth,
-    Symmetric,
 }
 
 #[derive(Clone, Copy)]
@@ -267,9 +263,201 @@ impl Topology {
             segment = next;
         }
     }
+
+    fn for_each_handle(
+        &self,
+        path: &VectorPath,
+        mut visit: impl FnMut(usize, PathPointId, Point),
+    ) {
+        for edge in &self.edges {
+            match path.segments[edge.segment] {
+                PathSegment::CubicTo {
+                    control1, control2, ..
+                } => {
+                    if let Some(anchor) = edge.start_anchor {
+                        visit(
+                            anchor,
+                            PathPointId {
+                                segment: edge.segment,
+                                kind: PathPointKind::Control1,
+                            },
+                            control1,
+                        );
+                    }
+                    visit(
+                        edge.end_anchor,
+                        PathPointId {
+                            segment: edge.segment,
+                            kind: PathPointKind::Control2,
+                        },
+                        control2,
+                    );
+                }
+                PathSegment::QuadraticTo { control, .. } => {
+                    let id = PathPointId {
+                        segment: edge.segment,
+                        kind: PathPointKind::QuadraticControl,
+                    };
+                    if let Some(anchor) = edge.start_anchor {
+                        visit(anchor, id, control);
+                    }
+                    if edge.start_anchor != Some(edge.end_anchor) {
+                        visit(edge.end_anchor, id, control);
+                    }
+                }
+                _ => {}
+            }
+        }
+    }
+
+    fn handles(&self, path: &VectorPath, anchor: usize) -> Vec<(PathPointId, Point)> {
+        let mut handles = Vec::with_capacity(2);
+        self.for_each_handle(path, |owner, id, position| {
+            if owner == anchor {
+                handles.push((id, position));
+            }
+        });
+        handles
+    }
+
+    fn constrained_handles(
+        &self,
+        path: &VectorPath,
+    ) -> BTreeMap<usize, Vec<(PathPointId, Point)>> {
+        let mut handles: BTreeMap<_, Vec<_>> = path
+            .anchor_modes
+            .iter()
+            .filter(|(_, mode)| **mode != AnchorMode::Corner)
+            .map(|(&anchor, _)| (anchor, Vec::with_capacity(2)))
+            .collect();
+        self.for_each_handle(path, |owner, id, position| {
+            if let Some(owned) = handles.get_mut(&owner) {
+                owned.push((id, position));
+            }
+        });
+        handles
+    }
 }
 
 impl VectorPath {
+    /// Returns the persistent tangent constraint at a canonical anchor or its
+    /// welded closing endpoint. Older paths without metadata are Corner nodes:
+    /// their handles remain independent, including already-curved SVG paths.
+    pub fn anchor_mode(&self, segment: usize) -> Option<AnchorMode> {
+        let topology = Topology::new(self)?;
+        let anchor = topology.canonical(segment)?;
+        Some(
+            self.anchor_modes
+                .get(&anchor)
+                .copied()
+                .unwrap_or_default(),
+        )
+    }
+
+    /// Validates serialized edit metadata without rejecting legacy command
+    /// streams which have no constraints. Non-corner constraints require
+    /// independent cubic handles, at most one on each side of the anchor.
+    /// A zero-length handle has no direction; Smooth may retain its partner.
+    pub fn validate_anchor_modes(&self) -> bool {
+        if self.anchor_modes.is_empty() {
+            return true;
+        }
+        let Some(topology) = Topology::new(self) else {
+            return false;
+        };
+        let handles = topology.constrained_handles(self);
+        self.anchor_modes.iter().all(|(&anchor, &mode)| {
+            if topology.canonical(anchor) != Some(anchor) {
+                return false;
+            }
+            if mode == AnchorMode::Corner {
+                return true;
+            }
+            let handles = handles.get(&anchor).map_or(&[][..], Vec::as_slice);
+            if handles.len() > 2
+                || handles
+                    .iter()
+                    .any(|(id, _)| id.kind == PathPointKind::QuadraticControl)
+            {
+                return false;
+            }
+            let position = endpoint(&self.segments[anchor]).unwrap_or_default();
+            tangents_match_mode(handles, position, mode)
+        })
+    }
+
+    fn canonical_anchor_modes(&self, topology: &Topology) -> BTreeMap<usize, AnchorMode> {
+        let mut modes = BTreeMap::new();
+        for (&segment, &mode) in &self.anchor_modes {
+            if mode == AnchorMode::Corner {
+                continue;
+            }
+            if let Some(anchor) = topology.canonical(segment) {
+                // The canonical key precedes a closed endpoint alias, so an
+                // explicitly canonical entry wins over redundant input data.
+                modes.entry(anchor).or_insert(mode);
+            }
+        }
+        modes
+    }
+
+    /// Exact structural operations can shorten only one side of a symmetric
+    /// node. Retain the curve and aligned tangent constraint in that case.
+    fn relax_subdivided_symmetry(&mut self) {
+        let Some(topology) = Topology::new(self) else {
+            return;
+        };
+        let handles = topology.constrained_handles(self);
+        let relaxed: Vec<_> = self
+            .anchor_modes
+            .iter()
+            .filter_map(|(&anchor, &mode)| {
+                if mode != AnchorMode::Symmetric {
+                    return None;
+                }
+                let position = endpoint(self.segments.get(anchor)?)?;
+                (!tangents_match_mode(
+                    handles.get(&anchor).map_or(&[][..], Vec::as_slice),
+                    position,
+                    AnchorMode::Symmetric,
+                ))
+                .then_some(anchor)
+            })
+            .collect();
+        for anchor in relaxed {
+            self.anchor_modes.insert(anchor, AnchorMode::Smooth);
+        }
+    }
+
+    fn replace_contour(&mut self, contour: &Contour, replacement: Vec<PathSegment>) {
+        let Some(topology) = Topology::new(self) else {
+            return;
+        };
+        let modes = self.canonical_anchor_modes(&topology);
+        let contour_indices: BTreeMap<_, _> = contour
+            .anchor_commands
+            .iter()
+            .enumerate()
+            .map(|(index, &old)| (old, contour.start + index))
+            .collect();
+        let mut retained = BTreeMap::new();
+        for (anchor, mode) in modes {
+            let remapped = if anchor < contour.start {
+                Some(anchor)
+            } else if anchor >= contour.end {
+                Some(contour.start + replacement.len() + (anchor - contour.end))
+            } else {
+                contour_indices.get(&anchor).copied()
+            };
+            if let Some(anchor) = remapped {
+                retained.insert(anchor, mode);
+            }
+        }
+        self.segments
+            .splice(contour.start..contour.end, replacement);
+        self.anchor_modes = retained;
+    }
+
     /// The single source of truth for anchor/control overlays and hit testing.
     /// Anchors precede handles. An explicit endpoint coincident with the start
     /// of a closed subpath is represented by that subpath's MoveTo anchor.
@@ -352,9 +540,11 @@ impl VectorPath {
     }
 
     /// Moves an anchor with all directly attached handles; a quadratic's shared
-    /// handle moves once, including closed single-anchor loops. Control-point
-    /// edits leave every anchor and unrelated handle unchanged. Returns false
-    /// for invalid/stale IDs, non-finite positions, or an unchanged position.
+    /// handle moves once, including closed single-anchor loops. A Smooth
+    /// control rotates its opposite handle without changing that handle's
+    /// length; a Symmetric control mirrors its position and length. Corner
+    /// controls remain independent. Returns false for invalid/stale IDs,
+    /// non-finite prospective geometry, or an unchanged position.
     pub fn move_edit_point(&mut self, id: PathPointId, position: Point) -> bool {
         if !finite(position) {
             return false;
@@ -369,20 +559,53 @@ impl VectorPath {
             return false;
         }
         if id.kind != PathPointKind::Anchor {
-            let Some(command) = self.segments.get_mut(id.segment) else {
+            let Some(edge) = topology.edges.iter().find(|edge| edge.segment == id.segment) else {
                 return false;
             };
-            match (id.kind, command) {
-                (PathPointKind::Control1, PathSegment::CubicTo { control1, .. }) => {
-                    *control1 = position
+            let owner = match id.kind {
+                PathPointKind::Control1 => edge.start_anchor,
+                PathPointKind::Control2 => Some(edge.end_anchor),
+                _ => None,
+            };
+            let mut opposite = None;
+            if let Some(anchor) = owner {
+                let mode = self.anchor_modes.get(&anchor).copied().unwrap_or_default();
+                if mode != AnchorMode::Corner {
+                    let handles = topology.handles(self, anchor);
+                    if handles.len() > 2
+                        || handles
+                            .iter()
+                            .any(|(id, _)| id.kind == PathPointKind::QuadraticControl)
+                    {
+                        return false;
+                    }
+                    if let Some(&(other, old_position)) = handles.iter().find(|(other, _)| *other != id)
+                    {
+                        let anchor_position = endpoint(&self.segments[anchor]).unwrap_or_default();
+                        let direction = position - anchor_position;
+                        let next = if mode == AnchorMode::Symmetric {
+                            anchor_position - direction
+                        } else if let Some(direction) = unit(direction) {
+                            anchor_position
+                                - direction * old_position.distance(anchor_position)
+                        } else {
+                            // Retraction has no direction. Retain the smooth
+                            // partner until a subsequent nonzero drag supplies one.
+                            old_position
+                        };
+                        if !finite(next) {
+                            return false;
+                        }
+                        opposite = Some((other, next));
+                    }
                 }
-                (PathPointKind::Control2, PathSegment::CubicTo { control2, .. }) => {
-                    *control2 = position
-                }
-                (PathPointKind::QuadraticControl, PathSegment::QuadraticTo { control, .. }) => {
-                    *control = position
-                }
-                _ => return false,
+            }
+            let Some(control) = control_mut(&mut self.segments[id.segment], id.kind) else {
+                return false;
+            };
+            *control = position;
+            if let Some((other, position)) = opposite {
+                *control_mut(&mut self.segments[other.segment], other.kind).unwrap() = position;
             }
             return true;
         }
@@ -442,13 +665,18 @@ impl VectorPath {
     }
 
     /// Exact Bézier subdivision. The returned ID addresses the inserted anchor.
-    /// Closing edges remain closed, and other subpaths/commands are untouched.
+    /// New curve anchors are persistently Smooth. Quadratic halves are degree
+    /// elevated to cubics so that their tangents can be edited independently.
+    /// Existing Symmetric nodes become Smooth only when retaining the exact
+    /// geometry requires unequal handles. Other anchor modes follow their
+    /// original endpoints, including aliases and later subpaths.
     pub fn split_segment(&mut self, segment: usize, t: f64) -> Option<PathPointId> {
         if !t.is_finite() || !(0.0 < t && t < 1.0) {
             return None;
         }
         let topology = Topology::new(self)?;
         let edge = topology.edges.iter().find(|edge| edge.segment == segment)?;
+        let modes = self.canonical_anchor_modes(&topology);
         let points = edge.curve.points;
         let mut replacement = Vec::with_capacity(2);
         match self.segments[segment] {
@@ -462,11 +690,16 @@ impl VectorPath {
                 let a = interpolate(points[0], control, t);
                 let b = interpolate(control, point, t);
                 let middle = interpolate(a, b, t);
-                replacement.push(PathSegment::QuadraticTo {
-                    control: a,
+                replacement.push(PathSegment::CubicTo {
+                    control1: interpolate(points[0], a, 2.0 / 3.0),
+                    control2: interpolate(middle, a, 2.0 / 3.0),
                     point: middle,
                 });
-                replacement.push(PathSegment::QuadraticTo { control: b, point });
+                replacement.push(PathSegment::CubicTo {
+                    control1: interpolate(middle, b, 2.0 / 3.0),
+                    control2: interpolate(point, b, 2.0 / 3.0),
+                    point,
+                });
             }
             PathSegment::CubicTo {
                 control1,
@@ -499,6 +732,16 @@ impl VectorPath {
             _ => return None,
         }
         self.segments.splice(segment..=segment, replacement);
+        self.anchor_modes = modes
+            .into_iter()
+            .map(|(anchor, mode)| {
+                (if anchor >= segment { anchor + 1 } else { anchor }, mode)
+            })
+            .collect();
+        if edge.curve.degree > 1 {
+            self.anchor_modes.insert(segment, AnchorMode::Smooth);
+        }
+        self.relax_subdivided_symmetry();
         Some(PathPointId::anchor(segment))
     }
 
@@ -580,7 +823,8 @@ impl VectorPath {
         };
         let count = contour.points.len();
         if count == 1 {
-            self.segments.drain(contour.start..contour.end);
+            contour.anchor_commands.clear();
+            self.replace_contour(&contour, Vec::new());
             return true;
         }
         if contour.closed {
@@ -609,16 +853,22 @@ impl VectorPath {
             contour.edges.remove(index);
         }
         contour.points.remove(index);
+        contour.anchor_commands.remove(index);
         if contour.points.len() == 1 {
             contour.edges.clear();
             contour.closed = false;
         }
         let replacement = contour.commands();
-        self.segments
-            .splice(contour.start..contour.end, replacement);
+        self.replace_contour(&contour, replacement);
+        self.relax_subdivided_symmetry();
         true
     }
 
+    /// Sets a persistent node mode and establishes its initial tangents.
+    /// Corner retracts both handles and subsequently leaves them independent.
+    /// Smooth aligns them while retaining their lengths; Symmetric also makes
+    /// those lengths equal. Retained anchors keep their modes after conversion
+    /// materializes an implicit closing edge or elevates a quadratic curve.
     pub fn convert_anchor(&mut self, segment: usize, mode: AnchorMode) -> bool {
         let Some(mut contour) = Contour::for_anchor(self, segment) else {
             return false;
@@ -631,7 +881,11 @@ impl VectorPath {
             return false;
         };
         let count = contour.points.len();
-        if contour.edges.is_empty() {
+        let previous_mode = self.anchor_mode(segment).unwrap_or_default();
+        if previous_mode == mode
+            && mode != AnchorMode::Corner
+            && self.validate_anchor_modes()
+        {
             return false;
         }
         let incoming = if index > 0 {
@@ -711,11 +965,16 @@ impl VectorPath {
             }
         }
         let replacement = contour.commands();
-        if self.segments[contour.start..contour.end] == replacement {
+        if self.segments[contour.start..contour.end] == replacement && previous_mode == mode {
             return false;
         }
-        self.segments
-            .splice(contour.start..contour.end, replacement);
+        self.replace_contour(&contour, replacement);
+        let anchor = contour.start + index;
+        if mode == AnchorMode::Corner {
+            self.anchor_modes.remove(&anchor);
+        } else {
+            self.anchor_modes.insert(anchor, mode);
+        }
         true
     }
 }
@@ -888,6 +1147,46 @@ fn endpoint_mut(segment: &mut PathSegment) -> Option<&mut Point> {
         | PathSegment::CubicTo { point, .. } => Some(point),
         PathSegment::Close => None,
     }
+}
+
+fn control_mut(segment: &mut PathSegment, kind: PathPointKind) -> Option<&mut Point> {
+    match (kind, segment) {
+        (PathPointKind::Control1, PathSegment::CubicTo { control1, .. }) => Some(control1),
+        (PathPointKind::Control2, PathSegment::CubicTo { control2, .. }) => Some(control2),
+        (PathPointKind::QuadraticControl, PathSegment::QuadraticTo { control, .. }) => Some(control),
+        _ => None,
+    }
+}
+
+fn tangents_match_mode(
+    handles: &[(PathPointId, Point)],
+    anchor: Point,
+    mode: AnchorMode,
+) -> bool {
+    if handles.len() < 2 || mode == AnchorMode::Corner {
+        return true;
+    }
+    if handles.len() != 2 || handles[0].0.kind == handles[1].0.kind {
+        return false;
+    }
+    let a = handles[0].1 - anchor;
+    let b = handles[1].1 - anchor;
+    let scale = a.x.abs().max(a.y.abs()).max(b.x.abs()).max(b.y.abs());
+    if !scale.is_finite() {
+        return false;
+    }
+    if scale <= GEOMETRY_EPSILON {
+        return true;
+    }
+    let a = a * (1.0 / scale);
+    let b = b * (1.0 / scale);
+    if mode == AnchorMode::Symmetric {
+        return (a + b).distance(Point::default()) <= 1e-7;
+    }
+    let (Some(a), Some(b)) = (unit(a), unit(b)) else {
+        return true;
+    };
+    (a.x * b.y - a.y * b.x).abs() <= 1e-7 && dot(a, b) <= 0.0
 }
 
 fn finite(point: Point) -> bool {

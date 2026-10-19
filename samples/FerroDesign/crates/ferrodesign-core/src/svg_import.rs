@@ -437,6 +437,7 @@ impl Default for SvgStyle {
             join: StrokeJoin::Miter,
             dash: Vec::new(),
             fill_rule: FillRule::NonZero,
+            anchor_modes: Default::default(),
             color: Color::BLACK,
             font_family: "Inter".into(),
             font_size: 16.0,
@@ -1757,6 +1758,7 @@ fn rounded_rectangle(w: f64, h: f64, rx: f64, ry: f64) -> VectorPath {
     let k = 0.5522847498307936;
     VectorPath {
         fill_rule: FillRule::NonZero,
+            anchor_modes: Default::default(),
         segments: vec![
             PathSegment::MoveTo {
                 point: Point::new(rx, 0.0),
