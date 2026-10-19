@@ -20,6 +20,7 @@ pub use seed::*;
 pub use spatial::*;
 pub use svg::*;
 pub use svg_import::*;
+pub use text_edit::*;
 pub use vector_edit::*;
 #[cfg(test)]
 mod svg_import_tests;

@@ -17,6 +17,9 @@ use ferroui_base::layout::{Orientation, VerticalAlignment};
 use ferroui_base::media::{FontWeight, TextWrapping};
 use ferroui_base::metadata::from_markup_value;
 use ferroui_base::utilities::{Uri, UriKind};
+use ferroui_base::reactive::IDisposable;
+use ferroui_base::threading::{DispatcherPriority, DispatcherTimer};
+use std::time::{Duration, Instant};
 use ferroui_base::{BoxedValue, ObjectType, Ref, Thickness, WeakRef};
 use ferroui_controls::templates::FuncDataTemplate;
 use ferroui_controls::{
@@ -59,6 +62,10 @@ pub struct EditorShell {
     inspector_tab: Cell<u8>,
     prototype_targets: RefCell<Vec<NodeId>>,
     prototype: Rc<PrototypeRuntime>,
+    pending_save: Cell<bool>,
+    pending_save_timer: RefCell<Option<Rc<dyn IDisposable>>>,
+    save_serializations: Cell<u64>,
+    last_serialization_ms: Cell<f64>,
 }
 impl EditorShell {
     pub fn new() -> Rc<Self> {
@@ -100,6 +107,10 @@ impl EditorShell {
             inspector_tab: Cell::new(0),
             prototype_targets: RefCell::new(Vec::new()),
             prototype,
+            pending_save: Cell::new(false),
+            pending_save_timer: RefCell::new(None),
+            save_serializations: Cell::new(0),
+            last_serialization_ms: Cell::new(0.0),
         });
         this.wire();
         this.refresh();
@@ -407,6 +418,9 @@ impl EditorShell {
             ("CloseModalButton", "close-modal"),
             ("EditVectorButton", "edit-vector"),
             ("DoneVectorButton", "done-vector"),
+            ("VectorSelectButton", "vector-points"),
+            ("VectorBendButton", "vector-bend"),
+            ("VectorEraseButton", "vector-erase"),
             ("CornerPointButton", "vector-corner"),
             ("SmoothPointButton", "vector-smooth"),
             ("SymmetricPointButton", "vector-symmetric"),
@@ -601,6 +615,8 @@ impl EditorShell {
             "EditVectorButton",
             "DoneVectorButton",
             "VectorPointOptions",
+            "VectorSelectButton", "VectorBendButton", "VectorEraseButton",
+            "CornerPointButton", "SmoothPointButton", "SymmetricPointButton",
             "InlineTextBox",
             "EditPaintsButton",
             "EditInteractionsButton",
@@ -653,6 +669,7 @@ impl EditorShell {
             "layerRowCount":self.layer_rows.borrow().len(),
             "realizedLayerRows":self.layer_buttons.borrow().values().filter(|row| row.upgrade().is_some()).count(),
             "vectorNode":self.canvas.vector_node.get(),
+            "vectorTool":format!("{:?}",self.canvas.vector_tool.get()),
             "editingText":self.inline_text.get(),
             "editingComposition":self.inline_text.get().is_some() && self.field("InlineTextBox").is_composing_text(),
             "prototypeOverlays":*self.canvas.overlays.borrow(),
@@ -660,6 +677,9 @@ impl EditorShell {
             "prototypeScrollOffsets":self.prototype.scroll_offsets(),
             "vectorPoint":self.canvas.vector_point.get().map(|point| json!({"segment":point.segment,"kind":format!("{:?}",point.kind)})),
             "saveStatus":platform::document_save_status(),
+            "serializationPending":self.pending_save.get(),
+            "saveSerializations":self.save_serializations.get(),
+            "lastSerializationMs":self.last_serialization_ms.get(),
             "renderer":"FerroUI Vello","pageCount":editor.document.pages.len(),"activePage":editor.active_page,
             "renderedFrames":self.canvas.frames.get(),"visibleNodes":stats.visible_nodes,"culledNodes":stats.culled_nodes,
             "cachedNodes":stats.cached_nodes,"missingImages":stats.missing_images,"unsupportedEffects":stats.unsupported_effects,
@@ -759,10 +779,35 @@ impl EditorShell {
         }
     }
     fn changed(self: &Rc<Self>) {
-        platform::save_document(&self.document_json());
+        // Coalesce before serializing: a held arrow key should not clone a
+        // multi-megabyte JSON string on the input/render thread for each event.
+        self.pending_save.set(true);
+        platform::set_document_serialization_pending(true);
+        if let Some(timer) = self.pending_save_timer.borrow_mut().take() { timer.dispose(); }
+        let weak = Rc::downgrade(self);
+        *self.pending_save_timer.borrow_mut() = Some(DispatcherTimer::run_once(
+            move || { if let Some(shell) = weak.upgrade() { shell.flush_pending_save(); } },
+            Duration::from_millis(220), DispatcherPriority::BACKGROUND));
         self.text("DocumentStatus", &platform::document_save_status());
         self.refresh();
         self.canvas.invalidate_visual();
+    }
+    /// Lifecycle/export boundaries synchronously capture confirmed authored
+    /// state before the host awaits its durable IndexedDB transaction.
+    fn flush_pending_save(&self) {
+        if let Some(timer) = self.pending_save_timer.borrow_mut().take() { timer.dispose(); }
+        if !self.pending_save.get() { return; }
+        let started = Instant::now();
+        let text = match self.prototype.document_json() {
+            Ok(text) if !text.is_empty() => text,
+            _ => { self.toast("The document could not be serialized. Export your design before closing."); return; }
+        };
+        self.pending_save.set(false);
+        self.last_serialization_ms.set(started.elapsed().as_secs_f64() * 1000.0);
+        self.save_serializations.set(self.save_serializations.get().wrapping_add(1));
+        platform::save_document(&text);
+        platform::set_document_serialization_pending(false);
+        self.text("DocumentStatus", &platform::document_save_status());
     }
     fn sync_zoom(&self) {
         self.button("ZoomValueButton")
@@ -1134,6 +1179,10 @@ impl EditorShell {
         self.visible("VectorPointOptions", vector_edit);
         self.visible("EditVectorButton", !vector_edit);
         self.visible("DoneVectorButton", vector_edit);
+        for (name, mode) in [("VectorSelectButton", crate::canvas::VectorTool::Point),
+            ("VectorBendButton", crate::canvas::VectorTool::Bend), ("VectorEraseButton", crate::canvas::VectorTool::Erase)] {
+            self.button(name).classes().set("active", self.canvas.vector_tool.get() == mode);
+        }
         for (name, index) in [("DesignTab", 0), ("PrototypeTab", 1), ("InspectTab", 2)] {
             self.button(name)
                 .classes()
@@ -1415,14 +1464,7 @@ impl EditorShell {
     }
     fn modify(self: &Rc<Self>, label: &str, mut operation: impl FnMut(&mut Node)) {
         let ids = self.editor.borrow().selection.clone();
-        self.editor.borrow_mut().transact(label, |doc| {
-            for id in ids {
-                if let Some(n) = doc.nodes.get_mut(&id) {
-                    operation(n);
-                }
-            }
-            doc.layout_all();
-        });
+        self.editor.borrow_mut().update_nodes_with_layout(&ids, label, |node| operation(node));
     }
     fn commit_field(self: &Rc<Self>, name: &str) {
         if self.updating.get() {
@@ -1592,6 +1634,7 @@ impl EditorShell {
     pub fn command(self: &Rc<Self>, command: &str) -> bool {
         if command == "commit-edit" {
             self.finish_inline_text(true);
+            self.flush_pending_save();
             return true;
         }
         if command == "storage-status" {
@@ -1639,6 +1682,17 @@ impl EditorShell {
             }
             "paints" => {
                 self.paints_dialog();
+                return true;
+            }
+            "vector-points" | "vector-bend" | "vector-erase" => {
+                if self.canvas.vector_node.get().is_none() && !self.canvas.edit_vector() { return false; }
+                self.canvas.vector_tool.set(match command {
+                    "vector-bend" => crate::canvas::VectorTool::Bend,
+                    "vector-erase" => crate::canvas::VectorTool::Erase,
+                    _ => crate::canvas::VectorTool::Point,
+                });
+                self.refresh_selection();
+                self.canvas.focus();
                 return true;
             }
             "edit-vector" => return self.canvas.edit_vector(),

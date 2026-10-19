@@ -26,6 +26,7 @@ export class DocumentStorage {
         this.sequence = 0;
         this.committedSequence = 0;
         this.draftDirty = false;
+        this.serializationPending = false;
         this.draftCommitter = null;
         this.phase = backend ? "saved" : "unavailable";
         this.error = options.error || "";
@@ -54,14 +55,16 @@ export class DocumentStorage {
     }
 
     get pendingSave() { return this.sequence !== this.committedSequence; }
-    get dirty() { return this.pendingSave || this.draftDirty; }
+    get dirty() { return this.pendingSave || this.draftDirty || this.serializationPending; }
     load() { return this.text; }
     status() {
         return {
-            phase: this.draftDirty && ["saved", "saving"].includes(this.phase) ? "editing" : this.phase,
+            phase: this.draftDirty && ["saved", "saving"].includes(this.phase) ? "editing"
+                : this.serializationPending && this.phase === "saved" ? "saving" : this.phase,
             backend: this.backend?.name || "memory",
             dirty: this.dirty,
             draftDirty: this.draftDirty,
+            serializationPending: this.serializationPending,
             revision: this.revision,
             sequence: this.sequence,
             committedSequence: this.committedSequence,
@@ -74,6 +77,12 @@ export class DocumentStorage {
         this.notify();
     }
     setDraftCommitter(commit) { this.draftCommitter = commit; }
+    setSerializationPending(pending) {
+        pending = Boolean(pending);
+        if (pending === this.serializationPending) return;
+        this.serializationPending = pending;
+        this.notify();
+    }
     setDraftDirty(dirty) {
         dirty = Boolean(dirty);
         if (dirty === this.draftDirty) return;
@@ -81,13 +90,14 @@ export class DocumentStorage {
         this.notify();
     }
     commitDraft() {
-        if (!this.draftDirty) return true;
+        if (!this.draftDirty && !this.serializationPending) return true;
         try {
             // The native TextBox keeps the live draft in Rust. Commit once at a
             // lifecycle boundary so no full document crosses the bridge for
             // each keystroke. The shell queues its ordinary save and clears the
             // draft marker before this synchronous callback returns.
             this.draftCommitter?.();
+            if (this.serializationPending) throw new Error("The queued document snapshot could not be captured. Export the design before leaving.");
             if (this.draftDirty) throw new Error("The active text edit could not be committed. Finish editing or export the design before leaving.");
             return true;
         } catch (error) {
@@ -178,7 +188,8 @@ export class DocumentStorage {
         return this.running;
     }
     async flush() {
-        if (!this.pendingSave) return !this.draftDirty;
+        if (this.serializationPending && !this.commitDraft()) return false;
+        if (!this.pendingSave) return !this.draftDirty && !this.serializationPending;
         if (!this.backend || this.phase === "conflict") return false;
         do {
             this.phase = "saving";
@@ -186,6 +197,7 @@ export class DocumentStorage {
             const committed = await this.drain();
             if (!committed || ["error", "conflict", "unavailable"].includes(this.phase)) return false;
         } while (this.pendingSave);
+        if (this.serializationPending) return this.flush();
         return !this.draftDirty;
     }
 }

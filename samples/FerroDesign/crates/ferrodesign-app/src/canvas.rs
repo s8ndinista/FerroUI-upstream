@@ -79,6 +79,9 @@ impl Tool {
         }
     }
 }
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum VectorTool { #[default] Point, Bend, Erase }
+
 #[derive(Clone)]
 pub enum CanvasEvent {
     Selection,
@@ -137,6 +140,7 @@ enum Gesture {
         anchor: Point,
         start: Point,
     },
+    VectorBend { node: NodeId, segment: usize, t: f64 },
     VectorPoint {
         node: NodeId,
         point: PathPointId,
@@ -170,6 +174,7 @@ pub struct DesignCanvas {
     pen_tangent: Cell<Option<Point>>,
     pub vector_node: Cell<Option<NodeId>>,
     pub vector_point: Cell<Option<PathPointId>>,
+    pub vector_tool: Cell<VectorTool>,
 }
 ferro_class!(DesignCanvas:Control);
 ferro_impl_classes!(DesignCanvas:FerroObjectImpl,StyledElementImpl,LayoutableImpl,InteractiveImpl,ControlImpl);
@@ -200,6 +205,7 @@ impl DesignCanvas {
             pen_tangent: Cell::new(None),
             vector_node: Cell::new(None),
             vector_point: Cell::new(None),
+            vector_tool: Cell::new(VectorTool::Point),
         });
         this.set_focusable(true);
         this.set_clip_to_bounds(true);
@@ -460,6 +466,24 @@ impl DesignCanvas {
         };
         let viewport = self.viewport.get();
         let pointer = viewport.world_to_screen(world);
+        if self.vector_tool.get() != VectorTool::Point {
+            let hit = node.path.transformed(transform).nearest_segment(world)
+                .filter(|hit| viewport.world_to_screen(hit.position).distance(pointer) <= 8.0);
+            drop(editor);
+            if let Some(hit) = hit {
+                self.vector_point.set(None);
+                if self.vector_tool.get() == VectorTool::Erase {
+                    if self.editor.borrow_mut().erase_vector_segment(id, hit.segment) {
+                        self.emit(CanvasEvent::Document);
+                    }
+                } else {
+                    self.editor.borrow_mut().begin_node_transaction(&[id], "Bend vector segment");
+                    *self.gesture.borrow_mut() = Gesture::VectorBend { node: id, segment: hit.segment, t: hit.t };
+                }
+                self.invalidate_visual();
+            }
+            return true;
+        }
         let selected = self.vector_point.get();
         let points = node.path.edit_points();
         let active_anchor = selected
@@ -486,7 +510,7 @@ impl DesignCanvas {
             self.vector_point.set(Some(point));
             self.editor
                 .borrow_mut()
-                .begin_transaction("Move vector point");
+                .begin_node_transaction(&[id], "Move vector point");
             *self.gesture.borrow_mut() = Gesture::VectorPoint {
                 node: id,
                 point,
@@ -651,7 +675,7 @@ impl InputElementImpl for DesignCanvas {
                             .unwrap()
                             .apply(Point::new(node.width / 2.0, node.height / 2.0));
                         let angle = (world.y - center.y).atan2(world.x - center.x).to_degrees();
-                        editor.begin_transaction("Rotate");
+                        editor.begin_node_transaction(&[id], "Rotate");
                         *this.gesture.borrow_mut() = Gesture::Rotate {
                             node,
                             center,
@@ -691,7 +715,7 @@ impl InputElementImpl for DesignCanvas {
                         .iter()
                         .filter_map(|id| editor.document.nodes.get(id).cloned())
                         .collect();
-                    editor.begin_transaction("Move layers");
+                    editor.begin_node_transaction(&exclude, "Move layers");
                     *this.gesture.borrow_mut() = Gesture::Move {
                         start: world,
                         nodes,
@@ -917,7 +941,7 @@ impl InputElementImpl for DesignCanvas {
                         node.y = original.y + local.y;
                     }
                 }
-                editor.refresh();
+                editor.refresh_preview_nodes(exclude);
                 *moved = true;
             }
             Gesture::Resize { node, corner } => {
@@ -986,7 +1010,7 @@ impl InputElementImpl for DesignCanvas {
                 if let Some(n) = editor.document.nodes.get_mut(&node.id) {
                     n.rotation = rotation;
                 }
-                editor.refresh();
+                editor.refresh_preview_nodes(&[node.id]);
             }
             Gesture::Marquee { current, .. } => *current = world,
             Gesture::Draw { start, id } => {
@@ -1076,6 +1100,9 @@ impl InputElementImpl for DesignCanvas {
                 }
                 editor.refresh();
             }
+            Gesture::VectorBend { node, segment, t } => {
+                this.editor.borrow_mut().bend_vector_segment(*node, *segment, *t, world);
+            }
             Gesture::VectorPoint {
                 node,
                 point,
@@ -1153,6 +1180,7 @@ impl InputElementImpl for DesignCanvas {
             | Gesture::Resize { .. }
             | Gesture::Rotate { .. }
             | Gesture::VectorPoint { .. }
+            | Gesture::VectorBend { .. }
             | Gesture::Draw { .. } => {
                 this.editor.borrow_mut().commit_transaction();
                 this.tool.set(Tool::Select);

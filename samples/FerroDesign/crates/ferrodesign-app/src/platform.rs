@@ -8,6 +8,7 @@ mod browser {
     #[wasm_bindgen(inline_js = r#"
 export function ferroLoad() { return globalThis.ferroDesignStorage?.load() || ''; }
 export function ferroSave(text) { return globalThis.ferroDesignStorage?.save(text) === true; }
+export function ferroSerializationPending(pending) { globalThis.ferroDesignStorage?.setSerializationPending(pending); }
 export function ferroDraftDirty(dirty) { globalThis.ferroDesignStorage?.setDraftDirty(dirty); }
 export function ferroSaveStatus() {
   switch(globalThis.ferroDesignStorage?.status().phase) {
@@ -76,6 +77,8 @@ export function ferroBytes(name, bytes, mime) {
         pub fn save(text: &str) -> bool;
         #[wasm_bindgen(js_name=ferroSaveStatus)]
         pub fn save_status() -> u8;
+        #[wasm_bindgen(js_name=ferroSerializationPending)]
+        pub fn serialization_pending(pending: bool);
         #[wasm_bindgen(js_name=ferroDraftDirty)]
         pub fn draft_dirty(dirty: bool);
         #[wasm_bindgen(js_name=ferroDownload)]
@@ -113,6 +116,13 @@ pub fn save_document(text: &str) -> bool {
         NATIVE_SAVE_SUCCEEDED.store(saved, std::sync::atomic::Ordering::Relaxed);
         saved
     }
+}
+/// Keep lifecycle guards active before a coalesced JSON snapshot is produced.
+pub fn set_document_serialization_pending(pending: bool) {
+    #[cfg(target_os = "emscripten")]
+    browser::serialization_pending(pending);
+    #[cfg(not(target_os = "emscripten"))]
+    let _ = pending;
 }
 /// The browser guards an active native text draft without serializing the whole
 /// design on every keystroke. Lifecycle events commit it through the shell once.

@@ -273,3 +273,83 @@ test("storage security exceptions do not prevent the editor from opening", async
     assert.equal(storage.save("editable draft"), false);
     assert.equal(storage.load(), "editable draft");
 });
+
+
+test("queued serialization is dirty before JSON exists and flush captures it once", async () => {
+    const { backend, storage } = create();
+    let captures = 0;
+    storage.setDraftCommitter(() => {
+        captures++;
+        storage.save("latest coalesced document");
+        storage.setSerializationPending(false);
+    });
+    storage.setSerializationPending(true);
+    storage.setSerializationPending(true);
+    assert.equal(storage.status().phase, "saving");
+    assert.equal(storage.status().dirty, true);
+    assert.equal(storage.load(), "original");
+    assert.equal(backend.calls.length, 0);
+    const flushing = storage.flush();
+    await tick();
+    assert.equal(captures, 1);
+    assert.equal(backend.calls[0].text, "latest coalesced document");
+    assert.equal(storage.status().dirty, true);
+    backend.complete();
+    assert.equal(await flushing, true);
+    assert.equal(storage.status().dirty, false);
+});
+
+test("pagehide synchronously captures a queued non-text edit before its deferred timer", async () => {
+    const { backend, storage } = create();
+    const window = new EventTarget(), document = new EventTarget();
+    storage.attachLifecycle(window, document);
+    let captures = 0;
+    storage.setDraftCommitter(() => {
+        captures++;
+        storage.save("confirmed pointer edit");
+        storage.setSerializationPending(false);
+    });
+    storage.setSerializationPending(true);
+    assert.equal(storage.unloadAttached, true);
+    window.dispatchEvent(new Event("pagehide"));
+    window.dispatchEvent(new Event("pagehide"));
+    assert.equal(storage.load(), "confirmed pointer edit");
+    assert.equal(captures, 1);
+    await tick();
+    backend.complete();
+    assert.equal(await storage.flush(), true);
+    assert.equal(storage.unloadAttached, false);
+    storage.detachLifecycle();
+});
+
+test("failed queued serialization cannot acknowledge the old saved document", async () => {
+    const { backend, storage } = create();
+    storage.setDraftCommitter(() => {});
+    storage.setSerializationPending(true);
+    assert.equal(await storage.flush(), false);
+    assert.equal(storage.status().phase, "error");
+    assert.equal(storage.status().serializationPending, true);
+    assert.equal(storage.status().dirty, true);
+    assert.equal(backend.calls.length, 0);
+    assert.equal(backend.current.text, "original");
+});
+
+test("flush includes a fresh deferred snapshot queued while its prior write completes", async () => {
+    const { backend, storage } = create();
+    let next = "new deferred edit";
+    storage.setDraftCommitter(() => {
+        storage.save(next);
+        storage.setSerializationPending(false);
+    });
+    storage.save("first snapshot");
+    const flushing = storage.flush();
+    await tick();
+    storage.setSerializationPending(true);
+    backend.complete();
+    await tick();
+    assert.equal(backend.calls.at(-1).text, next);
+    backend.complete();
+    assert.equal(await flushing, true);
+    assert.equal(backend.current.text, next);
+    assert.equal(storage.status().dirty, false);
+});

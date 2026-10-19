@@ -135,6 +135,11 @@
               <Button Name="DoneVectorButton" Content="Done editing" Classes="primary" IsVisible="False"/>
               <StackPanel Name="VectorPointOptions" Spacing="8" IsVisible="False">
                 <UniformGrid Columns="3">
+                  <Button Name="VectorSelectButton" Content="Points"/>
+                  <Button Name="VectorBendButton" Content="Bend" ToolTip.Tip="Drag a segment to bend its curve"/>
+                  <Button Name="VectorEraseButton" Content="Erase" ToolTip.Tip="Remove a segment without reconnecting it"/>
+                </UniformGrid>
+                <UniformGrid Columns="3">
                   <Button Name="CornerPointButton" Content="Corner"/>
                   <Button Name="SmoothPointButton" Content="Smooth"/>
                   <Button Name="SymmetricPointButton" Content="Mirror" ToolTip.Tip="Make both handles symmetric"/>
