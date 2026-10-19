@@ -7,6 +7,74 @@ use crate::ItemsSourceView;
 use ferroui_base::collections::FerroList;
 use std::rc::Rc;
 
+// Additional Rust integration tests for WinUI's optional stable-key contract.
+struct KeyedList {
+    keys: std::cell::RefCell<Vec<String>>,
+    reads: std::cell::Cell<usize>,
+}
+
+impl crate::IKeyIndexMapping for KeyedList {
+    fn key_from_index(&self, index: i32) -> String {
+        self.keys.borrow()[index as usize].clone()
+    }
+
+    fn index_from_key(&self, key: &str) -> i32 {
+        self.keys.borrow().iter().position(|candidate| candidate == key).map_or(-1, |i| i as i32)
+    }
+}
+
+impl crate::IItemsList for KeyedList {
+    fn key_index_mapping(&self) -> Option<&dyn crate::IKeyIndexMapping> { Some(self) }
+    fn count(&self) -> usize { self.keys.borrow().len() }
+    fn get_at(&self, index: usize) -> Option<ferroui_base::BoxedValue> {
+        self.reads.set(self.reads.get() + 1);
+        Some(Rc::new(self.keys.borrow()[index].clone()))
+    }
+    fn as_any(&self) -> &dyn std::any::Any { self }
+}
+
+#[test]
+fn stable_key_mapping_does_not_materialize_items_and_tracks_reordering() {
+    let list = Rc::new(KeyedList {
+        keys: std::cell::RefCell::new(vec!["a".into(), "b".into(), "c".into()]),
+        reads: std::cell::Cell::new(0),
+    });
+    let source = ItemsSource::new(list.clone());
+    let view = ItemsSourceView::get_or_create(Some(&source));
+    assert!(view.has_key_index_mapping());
+    assert_eq!(view.key_from_index(1), "b");
+    assert_eq!(view.index_from_key("b"), 1);
+    assert_eq!(view.index_from_key("absent"), -1);
+    list.keys.borrow_mut().swap(0, 1);
+    assert_eq!(view.key_from_index(0), "b");
+    assert_eq!(view.index_from_key("b"), 0);
+    assert_eq!(list.reads.get(), 0);
+}
+
+#[test]
+fn ordinary_sources_do_not_claim_stable_key_mapping() {
+    let source = ItemsSource::from_strs(["a", "b"]);
+    assert!(!ItemsSourceView::get_or_create(Some(&source)).has_key_index_mapping());
+    assert!(!ItemsSourceView::empty().has_key_index_mapping());
+}
+
+#[test]
+#[should_panic(expected = "does not implement IKeyIndexMapping")]
+fn absent_key_mapping_is_reported_instead_of_inventing_an_index_key() {
+    let source = ItemsSource::from_strs(["a"]);
+    ItemsSourceView::get_or_create(Some(&source)).key_from_index(0);
+}
+
+#[test]
+#[should_panic(expected = "Argument index is invalid")]
+fn stable_key_mapping_rejects_a_negative_index() {
+    let source = ItemsSource::new(Rc::new(KeyedList {
+        keys: std::cell::RefCell::new(vec!["a".into()]),
+        reads: std::cell::Cell::new(0),
+    }));
+    ItemsSourceView::get_or_create(Some(&source)).key_from_index(-1);
+}
+
 #[test]
 fn only_subscribes_to_source_collection_changed_when_collection_changed_subscribed() {
     let source = Rc::new(FerroList::<String>::new());

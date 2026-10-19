@@ -464,6 +464,12 @@ fn item_equals_typed<T: PropertyValue>(item: &Option<BoxedValue>, value: &T) -> 
 
 /// An untyped, indexable list of items that may notify of changes.
 pub trait IItemsList {
+    /// The optional stable-key mapping of this collection. Existing lists need
+    /// not implement it; an index is never substituted for a stable key.
+    fn key_index_mapping(&self) -> Option<&dyn crate::IKeyIndexMapping> {
+        None
+    }
+
     /// The number of items.
     fn count(&self) -> usize;
 

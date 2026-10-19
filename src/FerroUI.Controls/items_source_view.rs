@@ -56,6 +56,30 @@ impl ItemsSourceView {
         self.source.borrow().count()
     }
 
+    /// Whether the source supplies stable keys for reset-time element reuse.
+    pub fn has_key_index_mapping(&self) -> bool {
+        self.source().list().key_index_mapping().is_some()
+    }
+
+    /// Gets the source's stable key. Panics if the source does not implement
+    /// [`IKeyIndexMapping`](crate::IKeyIndexMapping), or `index` is invalid.
+    pub fn key_from_index(&self, index: i32) -> String {
+        let source = self.source();
+        assert!(index >= 0 && (index as usize) < source.count(), "Argument index is invalid.");
+        source.list().key_index_mapping()
+            .expect("The items source does not implement IKeyIndexMapping.")
+            .key_from_index(index)
+    }
+
+    /// Looks up a stable key without enumerating source items. Returns `-1`
+    /// for an absent key; the source must implement the mapping contract.
+    pub fn index_from_key(&self, key: &str) -> i32 {
+        let source = self.source();
+        source.list().key_index_mapping()
+            .expect("The items source does not implement IKeyIndexMapping.")
+            .index_from_key(key)
+    }
+
     /// Gets the source collection.
     #[inline]
     pub fn source(&self) -> ItemsSource {
