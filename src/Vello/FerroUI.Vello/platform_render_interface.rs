@@ -259,10 +259,15 @@ impl IPlatformRenderInterface for PlatformRenderInterface {
                 };
                 Rc::new(context.with_gl_windows(gl_windows))
             }
-            #[cfg(not(any(feature = "hybrid", feature = "gpu")))]
+            #[cfg(all(not(any(feature = "hybrid", feature = "gpu")), not(target_family = "wasm")))]
             Some(graphics_context) => Rc::new(
                 VelloContext::new(self.rendering_modes.clone())
                     .with_gl_windows(crate::gl_window::VelloGlWindows::try_new(&graphics_context)),
+            ),
+            #[cfg(all(not(any(feature = "hybrid", feature = "gpu")), target_family = "wasm"))]
+            Some(_) => panic!(
+                "The Vello backend draws a canvas of a web page with the WebGL2 context of the canvas (the feature \
+                 `hybrid-webgl` of ferroui-vello) or into the framebuffer of the platform"
             ),
         }
     }
