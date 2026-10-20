@@ -112,7 +112,7 @@ jobs:
         run: cargo test --locked -p ferroui-winui --lib --no-fail-fast
       - name: Exact native UTF-16 string contracts
         if: ${{ !cancelled() }}
-        run: cargo test --locked -p ferroui-win32 --lib exact_hstring --no-fail-fast
+        run: cargo test --locked -p ferroui-win32 --no-default-features --lib exact_hstring --no-fail-fast
       - name: Rich text control contracts on Windows
         if: ${{ !cancelled() }}
         run: cargo test --locked -p ferroui-controls --lib rich_ --no-fail-fast
