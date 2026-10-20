@@ -5,14 +5,20 @@
 
 FerroUI is a cross-platform UI framework for Rust: a retained-mode control library with a styled property system, data binding, XAML markup, control themes and a composition-based renderer. It is a port of the Avalonia UI framework to Rust that keeps the original architecture, contracts and behaviour, so that applications, themes and markup written against that model carry over with their structure intact.
 
-> **Status: 0.1.0.** `0.1.0`, the first release that is not a preview, is published on crates.io ([CHANGELOG.md](CHANGELOG.md)). Every upstream file and member in scope is ported or waived with a recorded reason. The framework runs on macOS, Windows, Linux (X11, Wayland and the framebuffer), iOS, Android and in the browser. It was verified in continuous integration, in virtual machines, in the iOS simulator and on the Android emulator, not on a range of real devices. Within 0.1 the public API is kept; 0.2.0 may change it. See [Project status](#project-status).
+> **Status: 0.2.0.** `0.2.0`, which adds the TreeDataGrid, is published on crates.io ([CHANGELOG.md](CHANGELOG.md)). Every upstream file and member in scope is ported or waived with a recorded reason. The framework runs on macOS, Windows, Linux (X11, Wayland and the framebuffer), iOS, Android and in the browser. It was verified in continuous integration, in virtual machines, in the iOS simulator and on the Android emulator, not on a range of real devices. Within 0.2 the public API is kept; 0.3.0 may change it. See [Project status](#project-status).
 
-![Fluent theme rendered by FerroUI](docs/porting/images/themed_window_fluent.png)
+![The ControlCatalog with the WinUI 3 theme on Windows 11, in a window with the Mica backdrop](docs/porting/images/control_catalog_winui_windows.png)
+
+The ControlCatalog sample with the WinUI 3 theme (`ferroui-themes-winui`), its default theme, on Windows 11 with the Mica backdrop. Text is shaped with HarfBuzz and drawn by Skia with the platform's text rendering settings: the contrast and gamma of ClearType on Windows, greyscale antialiasing on a high-density display, and colour emoji (`docs/porting/text-rendering.md`).
+
+| Text on Windows | The same catalog on macOS |
+|---|---|
+| ![The TextBlock page of the ControlCatalog on Windows: trimming, wrapping, alignment, decorations, inlines and colour emoji](docs/porting/images/control_catalog_winui_text_windows.png) | ![The home page of the ControlCatalog with the WinUI 3 theme on macOS](docs/porting/images/control_catalog_winui_macos.png) |
 
 ## Highlights
 
 - **Complete object model.** Styled and direct properties with value priorities, inheritance, coercion and change notification; logical and visual trees; routed events; layout; input, focus and gestures.
-- **Styling and theming.** Selectors, styles, control themes, resources, theme variants and transitions. The Fluent and Simple themes are included.
+- **Styling and theming.** Selectors, styles, control themes, resources, theme variants and transitions. The Fluent, Simple and WinUI 3 themes are included.
 - **Data binding.** Compiled and reflection-style binding paths, converters, multi-bindings, data validation and templates.
 - **XAML.** A port of the XamlX compiler front end with the framework's transformers and markup extensions. Documents are compiled to Rust source by the build script of a crate, or loaded at run time.
 - **Composition renderer.** A compositor with a render loop on its own thread, dirty-region tracking, server-side visuals and composition animations, drawing through a backend-neutral drawing context.
@@ -75,17 +81,17 @@ FerroUI is a set of crates that are released together at one version. A desktop 
 
 ```toml
 [dependencies]
-ferroui-base = "=0.1.0"
-ferroui-controls = "=0.1.0"
-ferroui-desktop = "=0.1.0"
-ferroui-themes-fluent = "=0.1.0"
+ferroui-base = "=0.2.0"
+ferroui-controls = "=0.2.0"
+ferroui-desktop = "=0.2.0"
+ferroui-themes-fluent = "=0.2.0"
 ```
 
 The WinUI 3 theme is the crate `ferroui-themes-winui` (`WinUITheme`), used in place of `ferroui-themes-fluent` or beside it; the facade crate has it as the feature `winui-theme`.
 
-An application can also name one dependency instead: the facade crate `ferroui`. It re-exports the common crates under short names (`ferroui::base`, `ferroui::controls`, ...) with a prelude of the types of a minimal application; its default features are the desktop platforms and the Fluent theme, and further features add the Simple theme, XAML loading at run time, the colour picker, the dialogs, the browser platform, the WinUI 3 theme, the Vello backend, the headless platform and the graphics contracts ([docs/release.md](docs/release.md), section 2.1). In the repository it is used already: `cargo run -p ferroui --example hello`.
+An application can also name one dependency instead: the facade crate `ferroui`. It re-exports the common crates under short names (`ferroui::base`, `ferroui::controls`, ...) with a prelude of the types of a minimal application; its default features are the desktop platforms and the Fluent theme, and further features add the Simple theme, XAML loading at run time, the colour picker, the TreeDataGrid, the dialogs, the browser platform, the WinUI 3 theme, the Vello backend, the headless platform and the graphics contracts ([docs/release.md](docs/release.md), section 2.1). In the repository it is used already: `cargo run -p ferroui --example hello`.
 
-The crates of a release depend on one another at exactly its version, so name the same version for every FerroUI crate, as above. `0.1.0` follows four previews (`0.1.0-preview.1` to `0.1.0-preview.4`), pre-releases in the sense of semantic versioning, which Cargo selects only when they are named. The work towards the next minor version is published as previews of it (`0.2.0-preview.1`, ...), which may change any part of the public API. The release process is described in [docs/release.md](docs/release.md) and the changes of each release in [CHANGELOG.md](CHANGELOG.md).
+The crates of a release depend on one another at exactly its version, so name the same version for every FerroUI crate, as above. `0.1.0` followed four previews (`0.1.0-preview.1` to `0.1.0-preview.4`), pre-releases in the sense of semantic versioning, which Cargo selects only when they are named, and `0.2.0` is the next minor version. The work towards the next one is published as previews of it (`0.3.0-preview.1`, ...), which may change any part of the public API. The release process is described in [docs/release.md](docs/release.md) and the changes of each release in [CHANGELOG.md](CHANGELOG.md).
 
 The platforms that are not part of platform detection are named by their own crates beside the others: `ferroui-wayland`, `ferroui-linuxframebuffer`, `ferroui-ios`, `ferroui-android`, `ferroui-browser`, `ferroui-winui` and `ferroui-headless-vnc`.
 
@@ -108,8 +114,10 @@ Markup is loaded at run time with `ferroui-markup-xaml-loader` (the feature `xam
 |---|---|---|---|---|
 | [`ferroui-controls`](https://crates.io/crates/ferroui-controls) | The controls of FerroUI: the application model, top levels, the control set and automation peers | [![version](https://img.shields.io/crates/v/ferroui-controls.svg)](https://crates.io/crates/ferroui-controls) | [![downloads](https://img.shields.io/crates/d/ferroui-controls.svg)](https://crates.io/crates/ferroui-controls) | [![docs.rs](https://img.shields.io/docsrs/ferroui-controls)](https://docs.rs/ferroui-controls) |
 | [`ferroui-fonts-inter`](https://crates.io/crates/ferroui-fonts-inter) | The Inter font family as an embedded font collection of FerroUI | [![version](https://img.shields.io/crates/v/ferroui-fonts-inter.svg)](https://crates.io/crates/ferroui-fonts-inter) | [![downloads](https://img.shields.io/crates/d/ferroui-fonts-inter.svg)](https://crates.io/crates/ferroui-fonts-inter) | [![docs.rs](https://img.shields.io/docsrs/ferroui-fonts-inter)](https://docs.rs/ferroui-fonts-inter) |
+| [`ferroui-treedatagrid-core`](https://crates.io/crates/ferroui-treedatagrid-core) | The framework-neutral part of FerroUI's TreeDataGrid: flat and hierarchical sources, columns, rows, sorting, expansion, and row and cell selection | [![version](https://img.shields.io/crates/v/ferroui-treedatagrid-core.svg)](https://crates.io/crates/ferroui-treedatagrid-core) | [![downloads](https://img.shields.io/crates/d/ferroui-treedatagrid-core.svg)](https://crates.io/crates/ferroui-treedatagrid-core) | [![docs.rs](https://img.shields.io/docsrs/ferroui-treedatagrid-core)](https://docs.rs/ferroui-treedatagrid-core) |
 | [`ferroui-dialogs`](https://crates.io/crates/ferroui-dialogs) | The managed dialogs of FerroUI: the managed file chooser, the managed storage provider and the about dialog | [![version](https://img.shields.io/crates/v/ferroui-dialogs.svg)](https://crates.io/crates/ferroui-dialogs) | [![downloads](https://img.shields.io/crates/d/ferroui-dialogs.svg)](https://crates.io/crates/ferroui-dialogs) | [![docs.rs](https://img.shields.io/docsrs/ferroui-dialogs)](https://docs.rs/ferroui-dialogs) |
 | [`ferroui-themes-fluent`](https://crates.io/crates/ferroui-themes-fluent) | The FerroUI Fluent theme: control themes, colour palettes and resources for the control set, in light and dark variants | [![version](https://img.shields.io/crates/v/ferroui-themes-fluent.svg)](https://crates.io/crates/ferroui-themes-fluent) | [![downloads](https://img.shields.io/crates/d/ferroui-themes-fluent.svg)](https://crates.io/crates/ferroui-themes-fluent) | [![docs.rs](https://img.shields.io/docsrs/ferroui-themes-fluent)](https://docs.rs/ferroui-themes-fluent) |
+| [`ferroui-controls-treedatagrid`](https://crates.io/crates/ferroui-controls-treedatagrid) | The TreeDataGrid control of FerroUI: hierarchical and tabular data in one virtualizing view, with sorting, selection, editing, drag and drop and its control themes | [![version](https://img.shields.io/crates/v/ferroui-controls-treedatagrid.svg)](https://crates.io/crates/ferroui-controls-treedatagrid) | [![downloads](https://img.shields.io/crates/d/ferroui-controls-treedatagrid.svg)](https://crates.io/crates/ferroui-controls-treedatagrid) | [![docs.rs](https://img.shields.io/docsrs/ferroui-controls-treedatagrid)](https://docs.rs/ferroui-controls-treedatagrid) |
 | [`ferroui-themes-simple`](https://crates.io/crates/ferroui-themes-simple) | The FerroUI Simple theme: control themes and resources for the control set, in light and dark variants | [![version](https://img.shields.io/crates/v/ferroui-themes-simple.svg)](https://crates.io/crates/ferroui-themes-simple) | [![downloads](https://img.shields.io/crates/d/ferroui-themes-simple.svg)](https://crates.io/crates/ferroui-themes-simple) | [![docs.rs](https://img.shields.io/docsrs/ferroui-themes-simple)](https://docs.rs/ferroui-themes-simple) |
 | [`ferroui-controls-color-picker`](https://crates.io/crates/ferroui-controls-color-picker) | The colour picker library of FerroUI: ColorPicker, ColorView, ColorSpectrum, ColorSlider, ColorPreviewer, the colour palettes and their control themes | [![version](https://img.shields.io/crates/v/ferroui-controls-color-picker.svg)](https://crates.io/crates/ferroui-controls-color-picker) | [![downloads](https://img.shields.io/crates/d/ferroui-controls-color-picker.svg)](https://crates.io/crates/ferroui-controls-color-picker) | [![docs.rs](https://img.shields.io/docsrs/ferroui-controls-color-picker)](https://docs.rs/ferroui-controls-color-picker) |
 | [`ferroui-themes-winui`](https://crates.io/crates/ferroui-themes-winui) | The FerroUI WinUI theme: the control styles, templates and theme resources of WinUI 3, in light, dark and high contrast variants | [![version](https://img.shields.io/crates/v/ferroui-themes-winui.svg)](https://crates.io/crates/ferroui-themes-winui) | [![downloads](https://img.shields.io/crates/d/ferroui-themes-winui.svg)](https://crates.io/crates/ferroui-themes-winui) | [![docs.rs](https://img.shields.io/docsrs/ferroui-themes-winui)](https://docs.rs/ferroui-themes-winui) |
@@ -189,6 +197,9 @@ cargo run -p ferroui-themes-simple --example themed_window
 
 # The ControlCatalog sample application
 cargo run -p control-catalog-desktop
+
+# The TreeDataGrid demo (its pages are also the page TreeDataGrid of the ControlCatalog)
+cargo run -p treedatagrid-demo
 
 # The gallery of the WinUI theme (its capture mode and its comparison with WinUI 3 on Windows:
 # docs/porting/winui-theme-gallery.md)

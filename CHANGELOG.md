@@ -4,6 +4,32 @@ All notable changes to FerroUI are recorded in this file. The format follows [Ke
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-18
+
+The second release. It adds the TreeDataGrid: the port of TreeDataGrid, its demo and its benchmarks, with the pages of the demo in the ControlCatalog. Scrolling a TreeDataGrid led to changes of the framework that make translating a visual into the coordinates of an ancestor, and the layout queues, faster for every control. The port follows upstream at 66b7273b9a, as 0.1.0 did: upstream has no later commits.
+
+### Added
+
+- **TreeDataGrid**: the port of TreeDataGrid (<https://github.com/wieslawsoltes/TreeDataGrid>) as two new crates. `ferroui-treedatagrid-core` is the framework-neutral data layer: flat and hierarchical sources, value, text, check box, template and hierarchical expander columns, sorting, expansion, filtering, row and cell selection. `ferroui-controls-treedatagrid` is the control: a virtualizing view of rows and columns with star and auto column layout, resizing and sorting from the headers, row and cell selection, editing, row drag and drop, automation peers, the Generic and Fluent themes, and declarative columns in markup (`<TreeDataGrid ItemsSource=".."><TreeDataGridTextColumn Binding=".." /></TreeDataGrid>`). The tests of the reference are ported (the 198 tests of the core and the 497 of the control pass), and `docs/porting/treedatagrid.md` describes the port.
+- **The TreeDataGrid demo** (`samples/TreeDataGridDemo`, `cargo run -p treedatagrid-demo`): every page of the reference demo (countries with filtering and editing, a file tree, people declared in markup, drag and drop, the articles of the day from Wikipedia, finding a displayed row, rows of different heights, template column reuse) and the core demo. The ControlCatalog shows the same pages in its new page TreeDataGrid of the section Collections & Data.
+- **The TreeDataGrid benchmarks** (`tests/FerroUI.TreeDataGrid.Benchmarks`): the benchmark suite of the reference on the harness of the workspace. Run on one machine against the reference's suite, the port is as fast or faster in 58 of the 71 benchmarks, with a geometric mean of the ratio port / reference of 0.68 (`docs/porting/treedatagrid.md`, section 6).
+- **The feature `treedatagrid` of the facade crate `ferroui`**: the modules `controls_treedatagrid` and `treedatagrid_core`.
+
+### Changed
+
+- **Translating a visual into the coordinates of one of its ancestors** (`Visual::transform_to_visual`, `translate_point`) walks up from the visual once, where it walked both visuals up to the root; the transforms of the visual tree and the effective viewport read the render transform only of visuals that have one; the layout queues and the scroll anchors of a scroll presenter keep their entries in maps with the Fx hasher. The results are the same (`docs/porting/DEVIATIONS.md`, Visual tree); scrolling a list of many realized rows spent most of its time there.
+- **The day items of the calendar of the WinUI 3 theme** have the padding 0,0,0,2, which places the text of the days where WinUI 3 draws it at a scaling of 2 (CDB-10).
+
+### Fixed
+
+- **Path icons of the WinUI 3 theme are scaled into their boxes again**: a style meant for the icons of menu items (`MenuItem > ^` in the control theme of `PathIcon`) matched every path icon, because the nesting selector stands for the whole selector of the theme and what precedes it is dropped (as upstream). Every path icon got the unscaled template, so the icons of the ControlCatalog (its navigation, the cards of its home page, the logo) were drawn at the size of their geometry and cut. The style is now `MenuItem > PathIcon`, a style of the theme.
+
+### Known limitations
+
+- **Expanding and collapsing many rows of a TreeDataGrid** takes about twice as long as in the reference (14.5 against 7.7 microseconds for a thousand rows); 12 other benchmarks of the TreeDataGrid are up to 14 % slower than the reference (`docs/porting/treedatagrid.md`, section 6).
+- **The Wikipedia page of the TreeDataGrid demo** loads only with the demo's feature `online` (the default of the demo, not used by the ControlCatalog), and the names of its drag and drop page are not the reference's (`docs/porting/DEVIATIONS.md`, TreeDataGrid).
+- The limitations of 0.1.0 below still apply: verification on continuous integration, virtual machines, the iOS simulator and the Android emulator rather than real devices; the experimental Vello backend; the open parts of XAML; the browser scripts outside the packages.
+
 ## [0.1.0] - 2026-10-17
 
 The first release that is not a preview. It is the fourth preview with the work that followed it: the port at upstream 66b7273b9a, the WinUI 3 theme placing text on the baseline of native WinUI 3, and touch scrolling that coasts after a flick, in the browser on a phone too. The crates of 0.1.0 depend on one another at exactly that version, as the previews did; within 0.1 a later release keeps the public API, and the work towards 0.2.0 is published as previews of it (`0.2.0-preview.N`).
@@ -161,7 +187,8 @@ The preview makes the framework available as crates so that it can be tried outs
 - **Documentation.** The API documentation is the documentation comments carried over by the port; there are no guides beyond the README and the documents under `docs/`. Not every crate is expected to build on docs.rs (see `docs/release.md`).
 - **Tests of the published crates.** The packages hold the sources of the tests but not the test fonts and images of the Skia backend; the test suites are run from the repository.
 
-[Unreleased]: https://github.com/wieslawsoltes/FerroUI/compare/v0.1.0...main
+[Unreleased]: https://github.com/wieslawsoltes/FerroUI/compare/v0.2.0...main
+[0.2.0]: https://github.com/wieslawsoltes/FerroUI/releases/tag/v0.2.0
 [0.1.0]: https://github.com/wieslawsoltes/FerroUI/releases/tag/v0.1.0
 [0.1.0-preview.4]: https://github.com/wieslawsoltes/FerroUI/releases/tag/v0.1.0-preview.4
 [0.1.0-preview.3]: https://github.com/wieslawsoltes/FerroUI/releases/tag/v0.1.0-preview.3
