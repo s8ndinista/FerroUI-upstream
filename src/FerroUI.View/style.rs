@@ -38,14 +38,9 @@ pub fn style_of(selector: Selector) -> StyleBuilder {
     StyleBuilder { selector, setters: Vec::new(), nested: Vec::new() }
 }
 
-/// Parses a selector in the syntax of XAML. A selector of a nested style
-/// starts with `^` and continues with classes, pseudo-classes and names
-/// (`^.selected`, `^:pointerover`, `^#Header`); other nested selectors are
-/// built with the selectors API (`style_of(Selectors::nesting(None)...)`).
+/// Parses a selector in the syntax of XAML, nested selectors (`^.selected`,
+/// `^:pointerover > Button`) included.
 pub fn parse_selector(selector: &str) -> Result<Selector, String> {
-    if let Some(rest) = selector.trim().strip_prefix('^') {
-        return parse_nested(rest);
-    }
     ferroui_controls::register_types();
     let parser = ferroui_markup::markup::parsers::SelectorParser::new(|_namespace, name| TypeInfo::find_by_name(name));
     match parser.parse(selector) {
@@ -79,37 +74,4 @@ impl StyleBuilder {
         }
         style
     }
-}
-
-/// The part of a nested selector after `^`: the run-time parser of the port,
-/// like upstream's, leaves the nesting selector to the XAML compiler.
-fn parse_nested(rest: &str) -> Result<Selector, String> {
-    use ferroui_base::styling::Selectors;
-    let mut selector = Selectors::nesting(None);
-    let mut chars = rest.trim().chars().peekable();
-    while let Some(marker) = chars.next() {
-        let mut name = String::new();
-        while let Some(&c) = chars.peek() {
-            if c.is_alphanumeric() || c == '-' || c == '_' {
-                name.push(c);
-                chars.next();
-            } else {
-                break;
-            }
-        }
-        if name.is_empty() {
-            return Err(format!("a name is expected after `{marker}`"));
-        }
-        selector = match marker {
-            '.' => Selectors::class(Some(selector), &name),
-            ':' => Selectors::class(Some(selector), &format!(":{name}")),
-            '#' => Selectors::name(Some(selector), &name),
-            other => {
-                return Err(format!(
-                    "`{other}`: a nested selector takes classes, pseudo-classes and names after `^`; build others with the selectors API"
-                ))
-            }
-        };
-    }
-    Ok(selector)
 }

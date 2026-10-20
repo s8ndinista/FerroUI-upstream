@@ -465,7 +465,7 @@ stack_panel().styles([
 
 - `style(selector)` parses a selector in the syntax of XAML with the run-time selector parser of the port (`ferroui-markup`), resolving type names among the registered classes. `style_of(selector)` takes a selector built with the selectors API.
 - `.set(property, value)` takes what converts to the value of the property, as the setters of elements do.
-- `.nested(style("^..."))` adds a nested style. The run-time parser, like upstream's, leaves the nesting selector `^` to the XAML compiler. So `style` builds the part after `^` itself: classes, pseudo-classes and names. A separate pull request adds `^` to the parser.
+- `.nested(style("^..."))` adds a nested style; its selector starts with `^`, the selector of the style it is in (`^:pointerover`, `^.selected > TextBlock`). The run-time parser of the port parses `^`, an addition to upstream's, whose run-time parser leaves it to the XAML compiler (DEVIATIONS.md, Parsers of markup).
 - `.styles([..])` of an element (`styles: [..]` in `rsx!`) adds the styles to the `Styles` of the control when it is made.
 
 ### 10.3 The theme variant and resources
