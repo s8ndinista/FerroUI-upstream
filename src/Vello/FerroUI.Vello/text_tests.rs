@@ -1170,3 +1170,106 @@ fn font_manager_lists_each_family_once_and_makes_the_default_typeface() {
         .try_match_family_style("No Such Family 4f1c", FontStyle::Normal, FontWeight::Normal, FontStretch::Normal)
         .is_none());
 }
+
+// The public outline API follows the very same shaped lines as drawing. Its
+// contours are not hinted: disable hinting and baseline snapping for the pixel
+// comparison, while still exercising the actual font manager and shaper.
+fn assert_layout_geometry_matches_ink(layout: &TextLayout, origin: Point) {
+    let foreground = ImmutableSolidColorBrush::new(Colors::BLACK);
+    let geometry = layout.build_geometry(origin);
+    let platform = geometry.platform_impl().expect("The text has contours");
+    let filled = TextTarget::new(420, 250);
+    filled.draw(|context| context.draw_geometry(Some(&foreground), None, &*platform));
+
+    let drawn = TextTarget::new(420, 250);
+    let mut context = drawn.bitmap.create_drawing_context();
+    context.clear(Colors::WHITE);
+    context.push_text_options(TextOptions {
+        text_hinting_mode: TextHintingMode::None,
+        baseline_pixel_alignment: BaselinePixelAlignment::Unaligned,
+        ..TextOptions::default()
+    });
+    let mut sink = ContextSink::new(context);
+    layout.draw(&mut sink, origin);
+    assert!(sink.transforms.borrow().is_empty());
+    sink.context.borrow_mut().pop_text_options();
+    sink.context.borrow_mut().dispose();
+
+    let (drawn_bounds, drawn_count) = drawn.ink(is_dark);
+    let (filled_bounds, filled_count) = filled.ink(is_dark);
+    assert!(drawn_count > 300 && filled_count > 300, "There is measurable text ink");
+    assert!(drawn_bounds.inflate(1.0).contains_rect(filled_bounds), "{filled_bounds} in {drawn_bounds}");
+    assert!(filled_bounds.inflate(1.0).contains_rect(drawn_bounds), "{drawn_bounds} in {filled_bounds}");
+    let difference = difference_of_ink(&drawn, &filled);
+    assert!(difference < 2.0, "{difference}% of glyph/decorations ink differs from its public outline");
+}
+
+#[test]
+fn text_layout_build_geometry_preserves_styled_multiline_positions_and_decorations() {
+    use ferroui_base::media::text_formatting::{GenericTextRunProperties, TextRunProperties};
+    use ferroui_base::media::{BaselineAlignment, TextAlignment, TextDecorations};
+    use ferroui_base::utilities::ValueSpan;
+
+    let scope = start();
+    let foreground: Rc<dyn IBrush> = Rc::new(ImmutableSolidColorBrush::new(Colors::BLACK));
+    let emphasized: Rc<dyn TextRunProperties> = Rc::new(GenericTextRunProperties::with_all(
+        test_typeface("Inter"), 44.0, Some(TextDecorations::strikethrough()),
+        Some(foreground.clone()), None, BaselineAlignment::Baseline, None, None,
+    ));
+    let layout = TextLayout::new(
+        "Ho ffi\nAV Ω",
+        test_typeface("Inter"),
+        TextLayoutOptions {
+            font_size: 30.0,
+            foreground: Some(foreground),
+            text_alignment: TextAlignment::Center,
+            max_width: 320.0,
+            line_height: 68.0,
+            letter_spacing: 0.75,
+            text_decorations: Some(TextDecorations::underline()),
+            text_style_overrides: Some(Rc::from(vec![ValueSpan::new(3, 3, emphasized)])),
+            ..TextLayoutOptions::default()
+        },
+    );
+    assert_eq!(layout.text_lines().len(), 2);
+    let origin = Point::new(33.25, 27.5);
+    let zero = layout.build_geometry(Point::new(0.0, 0.0)).bounds();
+    let offset = layout.build_geometry(origin).bounds();
+    assert!((offset.x - zero.x - origin.x).abs() < 1e-8);
+    assert!((offset.y - zero.y - origin.y).abs() < 1e-8);
+    assert!((offset.width - zero.width).abs() < 1e-8);
+    assert!((offset.height - zero.height).abs() < 1e-8);
+    assert_layout_geometry_matches_ink(&layout, origin);
+    scope.dispose();
+}
+
+#[test]
+fn text_layout_build_geometry_preserves_rtl_runs_and_holes() {
+    let scope = start();
+    let foreground: Rc<dyn IBrush> = Rc::new(ImmutableSolidColorBrush::new(Colors::BLACK));
+    let layout = TextLayout::new(
+        "سلام Oo",
+        test_typeface("Noto Sans Arabic"),
+        TextLayoutOptions {
+            font_size: 40.0,
+            foreground: Some(foreground),
+            flow_direction: FlowDirection::RightToLeft,
+            text_alignment: ferroui_base::media::TextAlignment::Start,
+            max_width: 320.0,
+            ..TextLayoutOptions::default()
+        },
+    );
+    assert_layout_geometry_matches_ink(&layout, Point::new(29.5, 32.25));
+    scope.dispose();
+}
+
+#[test]
+fn text_layout_build_geometry_of_empty_text_has_no_ink() {
+    let scope = start();
+    let layout = TextLayout::new("", test_typeface("Inter"), TextLayoutOptions::default());
+    let geometry = layout.build_geometry(Point::new(91.0, 73.0));
+    assert_eq!(geometry.bounds().width, 0.0);
+    assert_eq!(geometry.bounds().height, 0.0);
+    assert!(!geometry.fill_contains(Point::new(91.0, 73.0)));
+    scope.dispose();
+}

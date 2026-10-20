@@ -264,6 +264,20 @@ impl TextLayout {
         }
     }
 
+    /// Obtains the scalable contours of this already shaped layout at `origin`.
+    ///
+    /// The geometry follows the same line positions, bidi ordering, style runs,
+    /// letter spacing and decoration strokes as [`Self::draw`], without shaping
+    /// or measuring the text again. An empty layout produces an empty geometry.
+    /// Glyph paints are not retained; callers can fill or stroke the returned
+    /// geometry. Bitmap-only glyphs contribute no contours, and colour glyphs
+    /// contribute only outlines exposed by the platform glyph-run contract.
+    pub fn build_geometry(&self, origin: Point) -> crate::Ref<crate::media::Geometry> {
+        let mut sink = super::text_geometry_sink::TextGeometrySink::new();
+        self.draw(&mut sink, origin);
+        sink.into_geometry()
+    }
+
     /// Get the pixel location relative to the top-left of the layout box given the text position.
     ///
     /// * `text_position` — the text position.

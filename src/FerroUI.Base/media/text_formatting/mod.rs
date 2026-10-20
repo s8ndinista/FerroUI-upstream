@@ -49,6 +49,7 @@ mod text_end_of_line;
 mod text_end_of_paragraph;
 mod text_formatter;
 mod text_formatter_impl;
+mod text_geometry_sink;
 mod text_index;
 mod text_layout;
 mod text_leading_prefix_character_ellipsis;
