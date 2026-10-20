@@ -69,8 +69,10 @@ impl IServerVisualContent for ServerCompositionDrawListVisual {
         let Some(commands) = commands else { return };
         let canvas = context.canvas();
 
-        // A backend that keeps fragments draws the commands from the one it
-        // kept when it can, and keeps a new one when it cannot.
+        // Deviation (DEVIATIONS.md, Server composition visuals): upstream
+        // replays the commands every time (`RenderCore`). A backend that
+        // keeps fragments draws them from the one it kept when it can, and
+        // keeps a new one when it cannot.
         if let Some(fragments) = canvas.as_drawing_context_impl_with_fragments() {
             let kept = self.fragment.borrow().clone();
             if kept.is_some_and(|fragment| fragments.draw_fragment(&fragment)) {

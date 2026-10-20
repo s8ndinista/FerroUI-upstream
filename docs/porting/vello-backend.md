@@ -1244,7 +1244,7 @@ Since 2026-10-19 the speed of the backend against Skia is worked on, on every de
 
 ## 14. Speed against Skia (from 2026-10-19)
 
-The goal: each of the three modes as fast as the Skia backend or faster, on macOS, Windows and Linux. This section is the record of what was measured and changed; each round of changes is a pull request with its numbers.
+The goal: each of the three modes as fast as the Skia backend or faster, on macOS, Windows and Linux. This section is the record of what was measured and changed; each round of changes is a pull request with its numbers. The summary of the whole work, the cost model, the experiments that were not kept and the open designs are in `vello-performance.md`.
 
 ### 14.1 How it is measured
 
@@ -1491,6 +1491,8 @@ One session, one build, the frame benchmarks of the catalog on the Metal surface
 Fragments take a third of the processor time of the GPU mode off a scrolled frame and leave the pixels as they were (`gpu/fragment_tests.rs`: equal at the place a fragment was made, within one level moved by whole pixels). The GPU mode stays bound by its GPU: a Metal trace of the scrolled frames has about 0.85 ms of compute passes of `vello` and 0.3 ms of copies (the region of a kept frame, and the frame into the drawable with the alpha premultiplied) a frame, where Skia's whole frame takes about 0.6 ms of GPU. The hybrid mode stays the faster one, and the default.
 
 ### 15.4 Not built: retained texture layers in the compositor
+
+(`vello-performance.md`, section 9, has this design with the others that are open.)
 
 The Vello work stops here (2026-10-20): Skia stays the default backend, and its speed is enough for now. This is the design of the next step for the hybrid mode, the one that would close the gap on scrolling and on content that moves.
 
