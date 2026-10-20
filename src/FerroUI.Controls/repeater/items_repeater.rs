@@ -65,6 +65,7 @@ pub struct ItemsRepeater {
     pub(crate) view_manager: ViewManager,
     pub(crate) viewport_manager: ViewportManager,
     in_layout: Cell<bool>,
+    pending_template_reset: Cell<bool>,
     stack_measure_count: Cell<u8>,
     processing_change: Cell<Option<NotifyCollectionChangedAction>>,
     item_template_empty: Cell<bool>,
@@ -168,14 +169,6 @@ impl FerroObjectImpl for ItemsRepeater {
                 }
             })));
         let weak = this.to_ref().downgrade();
-        this.effective_viewport_changed(move |args| {
-            if let Some(owner) = weak.upgrade() {
-                owner
-                    .viewport_manager
-                    .on_effective_viewport_changed(&owner, args.effective_viewport());
-            }
-        });
-        let weak = this.to_ref().downgrade();
         this.layout_updated(move || {
             if let Some(owner) = weak.upgrade() {
                 owner.stack_measure_count.set(0);
@@ -218,6 +211,10 @@ impl FerroObjectImpl for ItemsRepeater {
             && KeyboardNavigation::get_tab_navigation(this) != KeyboardNavigationMode::Once
         {
             KeyboardNavigation::set_tab_once_active_element(this, None);
+        } else if property == Visual::render_transform_property().as_property() {
+            this.viewport_manager.on_render_transform_changed(this);
+        } else if property == Visual::render_transform_origin_property().as_property() {
+            this.viewport_manager.refresh_viewport(this);
         }
     }
 }
@@ -243,11 +240,27 @@ impl LayoutableImpl for ItemsRepeater {
         this.view_manager.prune_pinned_elements(this);
         this.viewport_manager.on_owner_measuring(this);
         let context = this.layout_context();
-        let desired = if this.item_template_empty.get() {
+        let mut desired = if this.item_template_empty.get() {
             Size::default()
         } else {
             this.effective_layout().measure(&context, available_size)
         };
+        if this.pending_template_reset.replace(false) {
+            // A mixed source can discover its first data item after a layout
+            // has already measured direct control items. Resetting that
+            // layout inside GetElement would invalidate its active traversal.
+            // Keep the public template change synchronous, but deliver Reset
+            // at this safe point with the old (absent) factory visible, then
+            // measure the complete source with the newly installed factory.
+            let factory = this.factory.borrow_mut().take();
+            this.reset_template_elements();
+            *this.factory.borrow_mut() = factory;
+            desired = if this.item_template_empty.get() {
+                Size::default()
+            } else {
+                this.effective_layout().measure(&context, available_size)
+            };
+        }
         let children = this.children().snapshot();
         for child in children.iter() {
             let info = Self::get_virtualization_info(child);
@@ -440,6 +453,7 @@ impl ItemsRepeater {
             view_manager: ViewManager::default(),
             viewport_manager: ViewportManager::default(),
             in_layout: Cell::new(false),
+            pending_template_reset: Cell::new(false),
             stack_measure_count: Cell::new(0),
             processing_change: Cell::new(None),
             item_template_empty: Cell::new(false),
@@ -534,6 +548,10 @@ impl ItemsRepeater {
         let element = existing.unwrap_or_else(|| {
             let element = self.get_element_impl(index, ElementRealizationOptions::NONE);
             element.measure(Size::INFINITY);
+            // A recycled native control may still have a valid arrange at
+            // its old offscreen pool position. BringIntoView must wait for
+            // the new item's arrange instead of scrolling to those bounds.
+            element.invalidate_arrange();
             element
         });
         self.viewport_manager.make_anchor(self, &element, outside);
@@ -781,7 +799,7 @@ impl ItemsRepeater {
                 .on_transition_provider_changed(layout.create_default_item_transition_provider());
         }
         self.viewport_manager
-            .on_layout_changed(layout.is::<VirtualizingLayout>());
+            .on_layout_changed(self, layout.is::<VirtualizingLayout>());
         self.invalidate_measure();
     }
     fn change_source(&self) {
@@ -826,6 +844,16 @@ impl ItemsRepeater {
         let template = self.item_template();
         let factory =
             factory_from_template(template.as_ref()).unwrap_or_else(|error| panic!("{error}"));
+        if self.in_layout.get() {
+            self.pending_template_reset.set(true);
+        } else {
+            self.reset_template_elements();
+        }
+        *self.factory.borrow_mut() = factory;
+        self.recheck_template_empty();
+        self.invalidate_measure();
+    }
+    fn reset_template_elements(&self) {
         {
             self.processing_change
                 .set(Some(NotifyCollectionChangedAction::Reset));
@@ -840,9 +868,6 @@ impl ItemsRepeater {
                 }
             }
         }
-        *self.factory.borrow_mut() = factory;
-        self.recheck_template_empty();
-        self.invalidate_measure();
     }
     fn recheck_template_empty(&self) {
         let item = self

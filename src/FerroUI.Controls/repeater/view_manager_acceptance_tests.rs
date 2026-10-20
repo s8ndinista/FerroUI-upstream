@@ -705,6 +705,11 @@ fn source_reset_to_empty_recycles_a_focused_element() {
         };
         repeater.set_layout(Some(layout));
         let root = TestRoot::with_child(&repeater);
+        // The native fixture has no implicit Button theme to supply a width.
+        // Match the fixed viewport of the source window so all ten rows can
+        // be realized before focusing the middle one.
+        root.set_width(100.0);
+        root.set_height(200.0);
         root.execute_initial_layout_pass();
         let focused = repeater.try_get_element(4).unwrap();
         assert!(focused.focus());

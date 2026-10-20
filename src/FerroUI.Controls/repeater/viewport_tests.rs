@@ -123,6 +123,10 @@ fn validate_no_scrolling_surface_scenario() {
     let (repeater, layout) = probe(Size::new(500.0, 500.0));
     let root = TestRoot::with_child(&repeater);
     root.set_client_size(Size::new(800.0, 600.0));
+    // TestRoot measures its child against ClientSize but otherwise sizes to
+    // content. Give it the fixed bounds of the upstream test window too.
+    root.set_width(800.0);
+    root.set_height(600.0);
     root.execute_initial_layout_pass();
     assert_eq!(layout.measures.borrow()[0], Rect::default());
     assert_close(layout.last(), Rect::new(0.0, 0.0, 800.0, 600.0));

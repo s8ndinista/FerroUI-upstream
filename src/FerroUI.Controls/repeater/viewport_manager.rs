@@ -6,16 +6,21 @@ use crate::i_scroll_anchor_provider::as_scroll_anchor_provider;
 use crate::presenters::ScrollContentPresenter;
 use crate::{Control, ScrollViewer};
 use ferroui_base::layout::Layoutable;
+use ferroui_base::reactive::IDisposable;
 use ferroui_base::threading::{Dispatcher, DispatcherPriority};
-use ferroui_base::{Point, Rect, Ref, Size, Visual, WeakRef};
+use ferroui_base::{Matrix, Point, Rect, Ref, Size, Visual, WeakRef};
 use std::cell::{Cell, RefCell};
+use std::rc::Rc;
 
 /// Effective viewport, gradual cache growth, and scroll-anchor registration.
 /// The state lives with the control; queued work holds only a weak reference.
 pub(crate) struct ViewportManager {
     scroller: RefCell<Option<WeakRef<Visual>>>,
     visible: Cell<Rect>,
+    native_viewport: Cell<Rect>,
     viewport_received: Cell<bool>,
+    viewport_subscription: RefCell<Option<Rc<dyn IDisposable>>>,
+    transform_subscription: RefCell<Option<Rc<dyn IDisposable>>>,
     attached: Cell<bool>,
     last_realization: Cell<Rect>,
     extent: Cell<Rect>,
@@ -40,7 +45,10 @@ impl Default for ViewportManager {
         Self {
             scroller: RefCell::new(None),
             visible: Cell::new(Rect::default()),
+            native_viewport: Cell::new(Rect::default()),
             viewport_received: Cell::new(false),
+            viewport_subscription: RefCell::new(None),
+            transform_subscription: RefCell::new(None),
             attached: Cell::new(false),
             last_realization: Cell::new(Rect::default()),
             extent: Cell::new(Rect::default()),
@@ -164,6 +172,7 @@ impl ViewportManager {
         self.anchor_release_pending.set(false);
         self.reset_cache();
         self.visible.set(Rect::default());
+        self.native_viewport.set(Rect::default());
         self.viewport_received.set(false);
         self.extent.set(Rect::default());
         self.expected_shift.set(Point::default());
@@ -171,8 +180,29 @@ impl ViewportManager {
         self.unshiftable_shift.set(Point::default());
     }
 
-    pub fn on_layout_changed(&self, virtualizing: bool) {
+    pub fn on_layout_changed(&self, owner: &ItemsRepeater, virtualizing: bool) {
         self.virtualizing.set(virtualizing);
+        if virtualizing && self.viewport_subscription.borrow().is_none() {
+            // A newly virtualizing layout needs a fresh native viewport even
+            // when the geometry is unchanged since the nonvirtualizing pass.
+            let weak = owner.to_ref().downgrade();
+            let subscription = owner.effective_viewport_changed(move |args| {
+                if let Some(owner) = weak.upgrade() {
+                    owner
+                        .viewport_manager
+                        .on_effective_viewport_changed(&owner, args.effective_viewport());
+                }
+            });
+            *self.viewport_subscription.borrow_mut() = Some(subscription);
+        } else if !virtualizing {
+            let subscription = self.viewport_subscription.borrow_mut().take();
+            if let Some(subscription) = subscription {
+                subscription.dispose();
+            }
+            self.viewport_received.set(false);
+            self.visible.set(Rect::default());
+            self.native_viewport.set(Rect::default());
+        }
         self.extent.set(Rect::default());
         self.expected_shift.set(Point::default());
         self.pending_shift.set(Point::default());
@@ -226,6 +256,10 @@ impl ViewportManager {
             self.reset_cache();
         }
         self.last_realization.set(self.realization_window());
+        self.register_arranged_candidates();
+    }
+
+    fn register_arranged_candidates(&self) {
         let arranged = std::mem::take(&mut *self.arranged.borrow_mut());
         if let Some(scroller) = self.scroller() {
             if let Some(provider) = as_scroll_anchor_provider(&scroller) {
@@ -264,6 +298,10 @@ impl ViewportManager {
     pub fn on_owner_arranged(&self, owner: &ItemsRepeater) {
         let prepared = std::mem::take(&mut *self.prepared.borrow_mut());
         self.arranged.borrow_mut().extend(prepared);
+        // Native scroll presenters select their anchor after child arrange.
+        // With a zero-length cache there need not be another measure before
+        // scrolling, so publish the now-valid candidates in this same pass.
+        self.register_arranged_candidates();
         self.expected_shift.set(Point::default());
         let unshiftable = self.unshiftable_shift.get();
         if unshiftable != Point::default() {
@@ -357,8 +395,24 @@ impl ViewportManager {
             return;
         }
         self.viewport_received.set(true);
+        self.native_viewport.set(viewport);
         let viewport = if viewport.x >= 10000.0 && viewport.y >= 10000.0 {
             Rect::default()
+        } else if let Some(transform) = owner.render_transform() {
+            // Native effective viewports include ancestor transforms and
+            // deliberately exclude the receiving visual's own transform.
+            // Repeater layouts consume item-space coordinates, including a
+            // LayoutTransformControl's matrix installed on this visual.
+            transform
+                .value()
+                .try_invert()
+                .map_or(Rect::default(), |inverse| {
+                    let origin = owner
+                        .render_transform_origin()
+                        .to_pixels(owner.bounds().size());
+                    let offset = Matrix::create_translation(origin.x, origin.y);
+                    viewport.transform_to_aabb(-offset * inverse * offset)
+                })
         } else {
             viewport
         };
@@ -377,6 +431,31 @@ impl ViewportManager {
         {
             self.try_invalidate_measure(owner);
         }
+    }
+
+    pub fn refresh_viewport(&self, owner: &ItemsRepeater) {
+        if self.viewport_received.get() {
+            self.on_effective_viewport_changed(owner, self.native_viewport.get());
+        }
+    }
+
+    pub fn on_render_transform_changed(&self, owner: &ItemsRepeater) {
+        let previous = self.transform_subscription.borrow_mut().take();
+        if let Some(previous) = previous {
+            previous.dispose();
+        }
+        if let Some(transform) = owner.render_transform() {
+            if let Some(mutable) = transform.as_mutable_transform() {
+                let weak = owner.to_ref().downgrade();
+                let subscription = mutable.changed(Rc::new(move || {
+                    if let Some(owner) = weak.upgrade() {
+                        owner.viewport_manager.refresh_viewport(&owner);
+                    }
+                }));
+                *self.transform_subscription.borrow_mut() = Some(subscription);
+            }
+        }
+        self.refresh_viewport(owner);
     }
 
     pub fn make_anchor(&self, owner: &ItemsRepeater, element: &Ref<Control>, outside: bool) {
@@ -423,5 +502,19 @@ impl ViewportManager {
     pub fn set_test_viewport(&self, viewport: Rect) {
         self.test_viewport.set(Some(viewport));
         self.visible.set(viewport);
+    }
+}
+
+impl Drop for ViewportManager {
+    fn drop(&mut self) {
+        for subscription in [
+            self.viewport_subscription.get_mut().take(),
+            self.transform_subscription.get_mut().take(),
+        ]
+        .into_iter()
+        .flatten()
+        {
+            subscription.dispose();
+        }
     }
 }

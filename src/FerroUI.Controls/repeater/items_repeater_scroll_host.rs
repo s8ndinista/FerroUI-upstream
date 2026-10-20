@@ -10,7 +10,7 @@ use ferroui_base::animation::easings::{Easing, SplineEasing};
 use ferroui_base::animation::{Animation, Cue, FillMode, IClock, IGlobalClock, KeyFrame, TimeSpan};
 use ferroui_base::input::InputElementImpl;
 use ferroui_base::interactivity::InteractiveImpl;
-use ferroui_base::layout::LayoutableImpl;
+use ferroui_base::layout::{Layoutable, LayoutableImpl};
 use ferroui_base::reactive::{Disposable, IDisposable};
 use ferroui_base::styling::Setter;
 use ferroui_base::threading::CancellationTokenSource;
@@ -571,6 +571,22 @@ impl ItemsRepeaterScrollHost {
         let Some(content) = Self::content_root(viewer) else {
             return;
         };
+        // Native layout can queue the host before a virtualized descendant.
+        // Capture the destination only once the target and its content-space
+        // ancestors have completed layout; LayoutUpdated retries this request.
+        let content_visual = content.clone().upcast::<Visual>();
+        let mut ancestor = Some(target.clone().upcast::<Visual>());
+        while let Some(visual) = ancestor {
+            if visual.cast::<Layoutable>().is_some_and(|layoutable| {
+                !layoutable.is_measure_valid() || !layoutable.is_arrange_valid()
+            }) {
+                return;
+            }
+            if visual == content_visual {
+                break;
+            }
+            ancestor = visual.visual_parent();
+        }
         let Some(bounds) = Self::bounds_relative_to(&target, &content) else {
             return;
         };
