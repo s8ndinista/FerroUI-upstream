@@ -1452,3 +1452,45 @@ The same machines and tour as 14.8, one session each, milliseconds a frame:
 | p95 | 5.70, 7.36 | 7.65, 6.85 |
 
 The window as the system composed it (Windows) and as X shows it (Linux) has the content of the catalog, upright. The first frame of the hybrid mode on a context of OpenGL takes up to 1.2 s (the shaders of the renderer are compiled by the driver; Skia's first frame there 0.26 s).
+
+## 15. Experimental: stock Vello used the way it is fast (from 2026-10-20)
+
+The renderer crates stay those of crates.io; what changes is how the backend and the compositor drive them. The work is on the branch `vello-renderer-experimental` (a draft pull request).
+
+### 15.1 What the measures say
+
+On a full redraw of the catalog at 2560 by 1600 (Metal, M3 Pro), the hybrid mode spent about 2.5 times Skia's processor time and about 1.5 times its GPU time. The processor time is the coverage of every path, which the sparse-strips renderers compute on the processor while a scene is recorded: replaying the draw list of every visual into a new scene each frame (as the drawing context of the contract does, and as Skia is driven) pays it again for content that only moved. Vello itself has no way to keep it: `vello_gpu` and `vello_cpu` removed their recordings in 0.0.8, and only classic `vello` appends one scene to another (`Scene::append`), which is how Xilem keeps the drawing of its widgets and Graphite its documents.
+
+### 15.2 Changes
+
+| # | Change | Where |
+|---|---|---|
+| 1 | **A depth buffer for the hybrid renderer**: `vello_gpu` draws what is opaque front to back and leaves out the pixels it covers | `scene/vello_hybrid_scene_sink.rs` |
+| 2 | **The Metal queues ordered by a shared event**: the device's queue signals an `MTLSharedEvent` behind the frame and a command buffer of the platform's queue waits for it ahead of the presentation; the processor no longer waits until the frame is scheduled (`waitUntilScheduled` remains the fallback) | `gpu/metal.rs` |
+| 3 | **Fragments** (`IDrawingContextImplWithFragments`, an optional extension of the drawing context reached like the effects one): the compositor keeps what the backend made of the draw list of a visual and has it drawn again while the draw list and its resources do not change. The GPU mode keeps a scene of `vello` per visual and appends it whole; it draws a fragment again only at the transform it was made at moved by whole pixels, with the opacity and options it was made with, and keeps none that paints with an image or blends with what lies outside it. Other backends and modes keep none | `FerroUI.Base` (`platform/i_drawing_context_impl_with_fragments.rs`, `server_composition_draw_list_visual.rs`), `drawing_context_impl/fragments.rs`, `scene/vello_gpu_scene_sink.rs`, `gpu/fragment_tests.rs` |
+
+### 15.3 Measures
+
+One session, one build, the frame benchmarks of the catalog on the Metal surface at scaling 2; median milliseconds a frame, with the device waited for / without:
+
+| Scenario | Skia | hybrid, before 1-2 | hybrid, after 1-2 |
+|---|---|---|---|
+| pointer moving across buttons | 0.78 / 0.18 | 0.77 / 0.42 | 0.73 / 0.28 |
+| wheel scrolling 20 px a frame | 1.20 / 0.45 | 2.33 / 1.22 | 1.73 / 1.04 |
+| text page drawn again | 0.70 / 0.21 | 1.39 / 0.52 | 1.22 / 0.44 |
+
+(Skia's two runs of the second session: 1.14 and 0.90, 1.59 and 0.94, 0.69 and 0.70; the first two lines of Skia vary between runs by up to a factor of 1.7.)
+
+| Scenario | Skia | GPU mode, before 3 | GPU mode, after 3 | hybrid |
+|---|---|---|---|---|
+| pointer moving across buttons | 0.64 / 0.16 | 1.11 / 0.36 | 1.12 / 0.34 | 0.74 / 0.30 |
+| wheel scrolling 20 px a frame | 0.92 / 0.34 | 2.51 / 0.71 | 2.26 / 0.48 | 1.80 / 1.10 |
+| text page drawn again | 0.69 / 0.20 | 2.00 / 0.57 | 1.99 / 0.56 | 1.26 / 0.45 |
+| catalog tour 2 (total ms) | 483 | 1150 | 1150 | 853 |
+
+Fragments take a third of the processor time of the GPU mode off a scrolled frame and leave the pixels as they were (`gpu/fragment_tests.rs`: equal at the place a fragment was made, within one level moved by whole pixels). The GPU mode stays bound by its GPU: a Metal trace of the scrolled frames has about 0.85 ms of compute passes of `vello` and 0.3 ms of copies (the region of a kept frame, and the frame into the drawable with the alpha premultiplied) a frame, where Skia's whole frame takes about 0.6 ms of GPU. The hybrid mode stays the faster one, and the default.
+
+### 15.4 Next
+
+- Retained layers in the compositor: a subtree whose content does not change while it moves by whole pixels (scrolled content, a moving panel) drawn from a texture of the part of it that is visible and a margin, with the cache of the bitmap cache mode (`ServerCompositionVisualCache`), which already re-renders only what changed inside it. For every mode; for Skia only if it gains.
+- The scene of a full redraw built in bands on several threads, for content that is new.
