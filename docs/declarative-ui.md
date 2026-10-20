@@ -190,6 +190,20 @@ The seven tasks of 7GUIs (<https://eugenkiss.github.io/7guis/tasks>) are written
 
 `samples/SevenGuis/Model` holds what the two share: the conversions, the dates, the CRUD filter, the circle history, the formulas of the cells (a parser and an evaluator; each cell is a memo of the cells it names, so a change is computed again only in the cells that depend on it, and a cycle is an error until it is broken), the reactive state of the circle drawer and of the cells, and the window a task runs in. `samples/SevenGuis/Tests` runs one scenario per task on each of the fourteen crates (what a user types and clicks, and what the task must show), in one test binary.
 
+The windows of the tasks, as each renders itself (`FERROUI_SEVEN_GUIS_SHOTS`); the two versions of a task render the same pixels:
+
+| Counter | Temperature converter | Flight booker |
+|---|---|---|
+| ![Counter](images/seven-guis/builders-counter.png) | ![Temperature converter](images/seven-guis/builders-temperature.png) | ![Flight booker](images/seven-guis/builders-flight-booker.png) |
+
+| Timer | CRUD |
+|---|---|
+| ![Timer](images/seven-guis/builders-timer.png) | ![CRUD](images/seven-guis/builders-crud.png) |
+
+| Circle drawer | Cells |
+|---|---|
+| ![Circle drawer](images/seven-guis/builders-circle-drawer.png) | ![Cells](images/seven-guis/builders-cells.png) |
+
 ```sh
 cargo run -p seven-guis-counter-builders
 cargo run -p seven-guis-cells-macros
