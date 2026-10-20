@@ -40,6 +40,7 @@ jobs:
           # Snapshot drift deliberately fails the gate after producing the
           # review artifact. Keep the expensive build for the correcting run.
           cache-on-failure: true
+          cache-workspace-crates: true
       - name: Build the XAML test executable
         id: xaml-build
         run: |
