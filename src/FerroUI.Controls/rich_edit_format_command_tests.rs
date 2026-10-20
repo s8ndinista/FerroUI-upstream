@@ -172,9 +172,12 @@ fn rich_format_commands_honor_read_only_and_keep_accelerator_policy_separate() {
     let before = editor.document().snapshot();
     editor.set_is_read_only(true);
     assert!(!editor.can_format());
-    assert_eq!(editor.toggle_bold(), Err(EditError::ReadOnly));
-    assert_eq!(editor.toggle_italic(), Err(EditError::ReadOnly));
-    assert_eq!(editor.toggle_underline(), Err(EditError::ReadOnly));
+    assert!(matches!(editor.toggle_bold(), Err(EditError::ReadOnly)));
+    assert!(matches!(editor.toggle_italic(), Err(EditError::ReadOnly)));
+    assert!(matches!(
+        editor.toggle_underline(),
+        Err(EditError::ReadOnly)
+    ));
     assert_eq!(editor.document().snapshot(), before);
     assert!(!editor.can_undo());
     editor.set_is_read_only(false);
@@ -198,7 +201,10 @@ fn rich_format_commands_reject_reentrant_document_notifications() {
         }
     });
     editor.toggle_bold().unwrap();
-    assert_eq!(*result.borrow(), Some(Err(EditError::ReentrantEdit)));
+    assert!(matches!(
+        *result.borrow(),
+        Some(Err(EditError::ReentrantEdit))
+    ));
     assert!(editor.is_italic());
     subscription.dispose();
 }

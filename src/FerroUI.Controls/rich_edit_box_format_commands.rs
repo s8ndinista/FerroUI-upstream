@@ -2,13 +2,13 @@
 //!
 //! Source: microsoft-ui-xaml@fe244ca6ac4d482712b234a9de3cf771cc6481de,
 //! controls/dev/CommandBarFlyout/TextCommandBarFlyout.cpp, ExecuteBoldCommand,
-//! ExecuteItalicCommand and ExecuteUnderlineCommand. The native format effect
-//! Toggle makes a mixed selection uniform. Queries therefore inspect each
-//! selected text run, independently for each attribute, rather than using the
-//! insertion-format convenience getter of the editor.
+//! ExecuteItalicCommand and ExecuteUnderlineCommand. The native commands query
+//! the selection and turn a uniformly enabled attribute off; a mixed attribute
+//! becomes enabled. Queries therefore inspect each selected text run, independently
+//! for each attribute, rather than using the editor's insertion-format getter.
 
 use super::*;
-use crate::documents::{Inline, InlineCollection, InlineImplExt, Paragraph, Span};
+use crate::documents::{Inline, InlineCollection, Paragraph, Span};
 use std::ops::Range;
 
 #[cfg(test)]
@@ -286,7 +286,7 @@ impl RichEditBox {
                 if self.formatting_state.get() != next {
                     return;
                 }
-                if $old != $new {
+                if ($old) != ($new) {
                     self.raise_direct_property_changed(Self::$property(), &$old, &$new);
                 }
             };

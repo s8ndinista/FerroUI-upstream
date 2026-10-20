@@ -58,7 +58,8 @@ pub(super) fn font_code_page(charset: i32) -> Result<Option<i32>, RtfError> {
         255 => 437,
         _ => return Err(RtfError::UnsupportedFeature("font character set")),
     };
-    validate_code_page(code_page)?;
+    // A following explicit `cpg` may override this declaration before any
+    // bytes are decoded. Validate the effective codec at the byte boundary.
     Ok(Some(code_page))
 }
 

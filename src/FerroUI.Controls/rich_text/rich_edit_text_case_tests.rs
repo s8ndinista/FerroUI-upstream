@@ -106,7 +106,7 @@ fn rich_text_case_preserves_nested_links_soft_breaks_paragraph_formats_and_contr
     expected.paragraphs[0].inlines[3] = InlineSnapshot::run("Z");
     expected.paragraphs[1].inlines[0] = InlineSnapshot::run("É");
     assert_eq!(after, expected);
-    assert!(matches!(&first.inlines[2].kind, InlineSnapshotKind::Embedded(Some(control)) if control == &child.clone().upcast()));
+    assert!(matches!(&first.inlines[2].kind, InlineSnapshotKind::Embedded(Some(control)) if control == &child.clone().upcast::<crate::Control>()));
 }
 
 #[test]

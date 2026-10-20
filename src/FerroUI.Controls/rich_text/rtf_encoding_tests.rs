@@ -93,9 +93,23 @@ fn rich_edit_rtf_font_charsets_are_scoped_and_plain_restores_default_font() {
 #[test]
 fn rich_edit_rtf_font_code_page_overrides_charset_in_either_order() {
     let _scope = Dispatcher::unit_test_scope();
-    for declaration in [r"\fcharset0\cpg1251", r"\cpg1251\fcharset0"] {
+    for declaration in [
+        r"\fcharset0\cpg1251",
+        r"\cpg1251\fcharset0",
+        r"\fcharset255\cpg1251",
+        r"\cpg1251\fcharset255",
+        r"\fcharset130\cpg1251",
+        r"\cpg1251\fcharset130",
+    ] {
         let input = format!(r"{{\rtf1\deff0{{\fonttbl{{\f0{declaration} Cyrillic;}}}}\'cf\'f0}}");
         assert_eq!(RtfReader::read_str(&input).unwrap().text(), "Пр");
+    }
+    for (charset, page) in [(255, 437), (130, 1361)] {
+        let input = format!(r"{{\rtf1{{\fonttbl{{\f0\fcharset{charset} Unsupported;}}}}text}}");
+        assert!(matches!(
+            RtfReader::read_str(&input),
+            Err(RtfError::UnsupportedCodePage(actual)) if actual == page
+        ));
     }
 }
 
