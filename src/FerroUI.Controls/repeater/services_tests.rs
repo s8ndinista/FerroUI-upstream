@@ -1324,6 +1324,188 @@ fn shared_transition_provider_completes_only_the_repeaters_own_elements() {
 }
 
 #[test]
+fn clearing_transition_provider_recycles_pending_removals_before_their_render_frame() {
+    let _scope = test_scope();
+    let clock = TestClock::install();
+    let (first, first_source) = transition_repeater();
+    let (second, second_source) = transition_repeater();
+    let provider = TestTransitionProvider::new(true);
+    first.set_item_transition_provider(Some(provider.clone().upcast()));
+    second.set_item_transition_provider(Some(provider.clone().upcast()));
+    let removed = first.try_get_element(0).unwrap();
+    let retained = first.try_get_element(1).unwrap();
+    let other_removed = second.try_get_element(0).unwrap();
+    let cleared = Rc::new(Cell::new(0));
+    let observed = cleared.clone();
+    first.element_clearing(move |_| observed.set(observed.get() + 1));
+    first_source.remove_at(0);
+    second_source.remove_at(0);
+    arrange_transition_repeater(&first);
+    arrange_transition_repeater(&second);
+
+    first.set_item_transition_provider(None);
+    assert_eq!(cleared.get(), 1);
+    assert_eq!(
+        super::ItemsRepeater::get_virtualization_info(&removed).owner(),
+        ElementOwner::ElementFactory
+    );
+    assert_eq!(first.try_get_element(0), Some(retained.clone()));
+    assert_eq!(
+        super::ItemsRepeater::get_virtualization_info(&other_removed).owner(),
+        ElementOwner::Animator
+    );
+    clock.pulse(0.0);
+    assert_eq!(cleared.get(), 1);
+    assert!(provider
+        .started
+        .borrow()
+        .iter()
+        .all(|transition| { transition.element() != removed && transition.element() != retained }));
+    assert!(provider
+        .started
+        .borrow()
+        .iter()
+        .any(|transition| transition.element() == other_removed));
+    assert_eq!(
+        super::ItemsRepeater::get_virtualization_info(&other_removed).owner(),
+        ElementOwner::ElementFactory
+    );
+}
+
+#[test]
+fn replacing_transition_provider_stops_old_animations_and_preserves_new_removal_identity() {
+    let _scope = test_scope();
+    let clock = TestClock::install();
+    let (first, first_source) = transition_repeater();
+    let (second, second_source) = transition_repeater();
+    let provider = LinedFlowLayoutItemCollectionTransitionProvider::new();
+    first.set_item_transition_provider(Some(provider.clone().upcast()));
+    second.set_item_transition_provider(Some(provider.clone().upcast()));
+    let removed = first.try_get_element(0).unwrap();
+    let retained = first.try_get_element(1).unwrap();
+    let other_removed = second.try_get_element(0).unwrap();
+    let cleared = Rc::new(Cell::new(0));
+    let observed = cleared.clone();
+    first.element_clearing(move |args| {
+        assert!(args.element.render_transform().is_none());
+        assert_eq!(args.element.opacity(), 1.0);
+        observed.set(observed.get() + 1);
+    });
+    let completed = Rc::new(RefCell::new(Vec::new()));
+    let observed = completed.clone();
+    provider.transition_completed(move |args| observed.borrow_mut().push(args.transition()));
+    first_source.remove_at(0);
+    second_source.remove_at(0);
+    arrange_transition_repeater(&first);
+    arrange_transition_repeater(&second);
+    clock.pulse(0.0);
+    clock.pulse(50.0);
+    assert_eq!(provider.active_animation_count(), 4);
+
+    let replacement = TestTransitionProvider::new(true);
+    *replacement.start.borrow_mut() = Some(Rc::new(|transitions| {
+        for transition in transitions {
+            transition.start();
+        }
+    }));
+    first.set_item_transition_provider(Some(replacement.clone().upcast()));
+    assert_eq!(cleared.get(), 1);
+    assert_eq!(provider.active_animation_count(), 2);
+    assert_eq!(first.try_get_element(0), Some(retained.clone()));
+    assert!(removed.render_transform().is_none());
+    assert!(retained.render_transform().is_none());
+    assert_eq!(
+        super::ItemsRepeater::get_virtualization_info(&removed).owner(),
+        ElementOwner::ElementFactory
+    );
+    let old_removal = completed
+        .borrow()
+        .iter()
+        .find(|transition| {
+            transition.operation() == Operation::Remove && transition.element() == removed
+        })
+        .unwrap()
+        .clone();
+
+    first_source.add(2);
+    arrange_transition_repeater(&first);
+    assert_eq!(first.try_get_element(1), Some(removed.clone()));
+    first_source.remove_at(1);
+    arrange_transition_repeater(&first);
+    clock.pulse(60.0);
+    let new_removal = replacement
+        .started
+        .borrow()
+        .iter()
+        .find(|transition| transition.operation() == Operation::Remove)
+        .unwrap()
+        .clone();
+    let completion_count = completed.borrow().len();
+    old_removal.start().complete();
+    old_removal.start().complete();
+    assert_eq!(completed.borrow().len(), completion_count + 2);
+    assert_eq!(cleared.get(), 1);
+    assert_eq!(
+        super::ItemsRepeater::get_virtualization_info(&removed).owner(),
+        ElementOwner::Animator
+    );
+    assert_eq!(
+        super::ItemsRepeater::get_virtualization_info(&other_removed).owner(),
+        ElementOwner::Animator
+    );
+    new_removal.start().complete();
+    assert_eq!(cleared.get(), 2);
+    assert_eq!(
+        super::ItemsRepeater::get_virtualization_info(&removed).owner(),
+        ElementOwner::ElementFactory
+    );
+    clock.pulse(900.0);
+    assert_eq!(provider.active_animation_count(), 0);
+    assert_eq!(
+        super::ItemsRepeater::get_virtualization_info(&other_removed).owner(),
+        ElementOwner::ElementFactory
+    );
+}
+
+#[test]
+fn a_provider_change_from_cancellation_completion_supersedes_the_outer_change() {
+    let _scope = test_scope();
+    let clock = TestClock::install();
+    let (repeater, source) = transition_repeater();
+    let original = LinedFlowLayoutItemCollectionTransitionProvider::new();
+    let superseded = TestTransitionProvider::new(true);
+    let replacement = TestTransitionProvider::new(true);
+    repeater.set_item_transition_provider(Some(original.clone().upcast()));
+    let weak = repeater.downgrade();
+    let newest = replacement.clone();
+    original.transition_completed(move |args| {
+        if args.transition().operation() == Operation::Remove {
+            weak.upgrade()
+                .unwrap()
+                .set_item_transition_provider(Some(newest.clone().upcast()));
+        }
+    });
+    source.remove_at(0);
+    arrange_transition_repeater(&repeater);
+    clock.pulse(0.0);
+    repeater.set_item_transition_provider(Some(superseded.clone().upcast()));
+    assert_eq!(
+        repeater.item_transition_provider(),
+        Some(replacement.clone().upcast())
+    );
+    source.add(2);
+    arrange_transition_repeater(&repeater);
+    clock.pulse(16.0);
+    assert!(superseded.started.borrow().is_empty());
+    assert!(replacement
+        .started
+        .borrow()
+        .iter()
+        .any(|transition| transition.operation() == Operation::Add));
+    assert_eq!(original.active_animation_count(), 0);
+}
+
+#[test]
 fn started_transitions_remain_available_until_the_full_keepalive_expires() {
     let _scope = test_scope();
     let clock = TestClock::install();
@@ -1634,6 +1816,9 @@ fn template_replacement_stops_native_animations_before_the_old_factory_reuses_co
     first.set_items_source(Some(first_source.clone().into()));
     first.set_element_factory(Some(old_factory.clone()));
     arrange_transition_repeater(&first);
+    // StackLayout estimates its initial item size with a recycled probe.
+    // Count only the template replacement performed below.
+    old_factory.recycled.borrow_mut().clear();
     let old_elements = first.realized_elements();
     let removed = first.try_get_element(0).unwrap();
     let opacity = Rc::new(LightweightSubject::<f64>::new());
@@ -1686,6 +1871,9 @@ fn template_replacement_stops_native_animations_before_the_old_factory_reuses_co
     assert!(old_elements
         .iter()
         .all(|element| next.realized_elements().contains(element)));
+    // The destination layout also performs an initial probe. Later animation
+    // ticks must not add any recycling beyond this completed reuse operation.
+    let recycle_count_after_reuse = old_factory.recycled.borrow().len();
     let replacement: Rc<dyn ITransform> =
         MatrixTransform::with_matrix(Matrix::create_translation(9.0, 10.0)).into();
     removed.set_render_transform(Some(replacement.clone()));
@@ -1698,7 +1886,10 @@ fn template_replacement_stops_native_animations_before_the_old_factory_reuses_co
         removed.render_transform().unwrap().reference_id(),
         replacement.reference_id()
     );
-    assert_eq!(old_factory.recycled.borrow().len(), 2);
+    assert_eq!(
+        old_factory.recycled.borrow().len(),
+        recycle_count_after_reuse
+    );
     assert_eq!(next.realized_elements().len(), 2);
     binding.dispose();
 }
@@ -3376,14 +3567,19 @@ fn host_bring_releases_a_distant_repeater_anchor_and_allows_scrolling_back() {
     assert!(repeater.try_get_element(500).is_some());
     viewer.set_offset(Vector::default());
     root.layout_manager().execute_layout_pass();
+    assert_eq!(viewer.offset(), Vector::default());
+    // Layout coordinates retain the origin established by the distant
+    // anchor. The native scroll position and arranged row bounds are zero;
+    // a layout-visible Y of -10000 is correct for an extent at -10000.
     assert!(
-        repeater.visible_window().y.abs() < 1.0,
+        (repeater.visible_window().y - repeater.viewport_manager.layout_extent().y).abs() < 1.0,
         "offset {:?}, viewport {:?}, layout extent {:?}",
         viewer.offset(),
         repeater.visible_window(),
         repeater.viewport_manager.layout_extent(),
     );
-    assert!(repeater.try_get_element(0).is_some());
+    let first = repeater.try_get_element(0).expect("first row is realized");
+    assert!(first.bounds().y.abs() < 1.0);
     assert!(repeater.try_get_element(500).is_none());
     assert!(repeater.realized_elements().len() < 100);
 }

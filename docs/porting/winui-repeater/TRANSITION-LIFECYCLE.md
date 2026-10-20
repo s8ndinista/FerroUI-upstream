@@ -26,11 +26,16 @@ control can be reused and removed again before an old progress handle reports
 another completion. That old completion must not return the new removal's
 element to a factory.
 
+Changing ItemTransitionProvider presents a related problem. The pinned
+`OnTransitionProviderChanged` unsubscribes from the old provider without first
+returning its pending removals. A queued or running old removal can then finish
+without any handler returning its Animator-owned element to the factory.
+
 The pinned implementation does not provide a per-element provider cancellation
-hook or a removal-generation comparison. WR-26 explicitly adds those native
-lifecycle protections. They are recorded as a correction required by the
-combined template, recycling and animation behavior, rather than attributed to
-an existing WinRT API.
+hook, a removal-generation comparison or a drain before provider replacement.
+WR-26 explicitly adds those native lifecycle protections. They are recorded as
+a correction required by the combined template, recycling and animation
+behavior, rather than attributed to an existing WinRT API.
 
 ## Native implementation
 
@@ -46,6 +51,15 @@ pending removal identity and takes its tracked transitions out of the map. It
 then cancels work for that element through the current provider and any older
 providers still associated with those transitions. No transition-map borrow is
 held while provider or application callbacks execute.
+
+Provider replacement cancels the old provider's tracked work before changing
+subscriptions. It returns pending removals once through the repeater's current
+factory and preserves realized controls that were only adding or moving. The
+cleanup drains work queued by its completion and factory callbacks while the
+old provider remains installed. A version token allows a reentrant provider
+change to supersede the original request; the outer request cannot overwrite
+the newer provider after its callbacks return. Canceling one repeater's work
+does not stop another repeater's elements in a shared provider.
 
 Provider cancellation marks both queued transitions and transitions currently
 being dispatched. `StartTransitions` filters canceled entries before invoking
@@ -65,7 +79,9 @@ element from `AnimationManager`, cancels its `Animation` through the existing
 `CancellationTokenSource`, and disposes its Animation-priority transform,
 transform origin and opacity values. Disposing those values reveals the
 application's current bindings and styles before the old factory can reuse the
-control. Other elements using the same provider continue animating.
+control. The same hook releases the old provider's values when its provider
+property changes, even for controls that remain realized. Other elements using
+the same provider continue animating.
 
 The base provider can suppress pending framework dispatches; it cannot dispose
 arbitrary resources owned by a custom subclass that does not implement the
@@ -91,9 +107,19 @@ dispatcher, factories and transition provider. They are in
 |---|---|
 | `removal_completion_invalidates_arrange_and_does_not_recycle_a_reused_element_twice` | Repeating an old Complete while the same control is Animator-owned by a newer removal still raises public notifications, while only the newer removal returns the control to its factory. |
 | `template_replacement_cancels_queued_transitions_without_affecting_shared_hosts` | Queued Add, Move and Remove transitions for controls from the old template are never passed to the provider's start override. Their unstarted completions remain frame-deferred, and another repeater sharing the provider completes normally. |
+| `clearing_transition_provider_recycles_pending_removals_before_their_render_frame` | Removing a provider returns pending removals immediately, preserves the remaining realized controls, suppresses their old queued work and leaves the shared provider's other host intact. |
+| `replacing_transition_provider_stops_old_animations_and_preserves_new_removal_identity` | Replacing an active provider restores native values and returns its removal exactly once. A late old completion cannot recycle a subsequent removal under the new provider, while the old shared provider continues animating its other host. |
+| `a_provider_change_from_cancellation_completion_supersedes_the_outer_change` | A provider installed by a cancellation-completion callback remains the active provider after the outer change returns. |
 | `cancellation_preserves_started_progress_keepalive_and_repeated_public_completion` | Cancellation preserves the full five-second weak-handle lifetime and repeatable public completion notifications. |
 | `template_replacement_stops_native_animations_before_the_old_factory_reuses_controls` | Active native remove/move animations restore current opacity bindings and the original transform/origin before ElementClearing and the old factory's recycle callback. The exact controls can be reused in another repeater while the shared provider finishes unrelated animations. Later clock ticks do not overwrite the reused controls' new values. |
 | `reentrant_cancellation_prevents_later_direct_batch_transitions_from_starting` | Completion while replacing an animation can cancel both the replacement and a later element in a direct StartTransitions batch, without leaving transient property values installed. |
+
+The factory regression starts its recycle count after the first StackLayout
+measure because that layout legitimately recycles a FORCE_CREATE sizing probe.
+It also records a new baseline after the destination host's initial measure.
+The exact-once assertions therefore cover the template transition and later
+animation ticks without counting either layout's initial size estimator as a
+duplicate factory return.
 
 Run the service suite through the actual crate:
 

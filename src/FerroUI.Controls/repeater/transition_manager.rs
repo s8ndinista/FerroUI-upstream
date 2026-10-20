@@ -11,7 +11,7 @@ use ferroui_base::collections::NotifyCollectionChangedAction;
 use ferroui_base::reactive::IDisposable;
 use ferroui_base::{Rect, Ref};
 use std::cell::{Cell, RefCell};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::rc::{Rc, Weak};
 
 /// Derives animation triggers from collection and layout changes during the
@@ -21,6 +21,7 @@ pub struct TransitionManager {
     subscription: RefCell<Option<Rc<dyn IDisposable>>>,
     recycle: Rc<dyn Fn(Ref<Control>)>,
     triggers: Cell<Triggers>,
+    provider_change: Cell<u64>,
     transitions: RefCell<HashMap<Ref<Control>, Vec<Weak<ItemCollectionTransition>>>>,
     removals: RefCell<HashMap<Ref<Control>, Weak<ItemCollectionTransition>>>,
 }
@@ -31,6 +32,7 @@ impl TransitionManager {
             subscription: RefCell::new(None),
             recycle,
             triggers: Cell::new(Triggers::empty()),
+            provider_change: Cell::new(0),
             transitions: RefCell::new(HashMap::new()),
             removals: RefCell::new(HashMap::new()),
         })
@@ -39,6 +41,14 @@ impl TransitionManager {
         self: &Rc<Self>,
         provider: Option<Ref<ItemCollectionTransitionProvider>>,
     ) {
+        if self.provider.borrow().as_ref() == provider.as_ref() {
+            return;
+        }
+        let change = self.provider_change.get().wrapping_add(1);
+        self.provider_change.set(change);
+        if !self.clear_previous_provider_transitions(change) {
+            return;
+        }
         let old = self.subscription.borrow_mut().take();
         if let Some(old) = old {
             old.dispose();
@@ -52,6 +62,42 @@ impl TransitionManager {
                 }
             });
             *self.subscription.borrow_mut() = Some(subscription);
+        }
+    }
+    fn clear_previous_provider_transitions(&self, change: u64) -> bool {
+        loop {
+            if self.provider_change.get() != change {
+                // A completion or factory callback installed a newer provider.
+                return false;
+            }
+            let elements: HashSet<_> = self
+                .transitions
+                .borrow()
+                .keys()
+                .chain(self.removals.borrow().keys())
+                .cloned()
+                .collect();
+            if elements.is_empty() {
+                return true;
+            }
+            for element in elements {
+                if self.provider_change.get() != change {
+                    return false;
+                }
+                let was_removing = self.removals.borrow().contains_key(&element);
+                self.on_element_clearing(&element);
+                // Cancellation can complete synchronously. The old identity is
+                // already invalid, so explicitly release its Animator owner;
+                // a callback that reused and removed this control again owns a
+                // different pending identity and must keep it.
+                let recycle = was_removing && !self.removals.borrow().contains_key(&element);
+                if recycle {
+                    (self.recycle)(element);
+                }
+            }
+            // Factory and completion callbacks may queue more work while the
+            // old provider is still installed. Drain that work before detaching
+            // its subscription, unless a nested provider change superseded us.
         }
     }
     pub fn on_layout_changing(&self) {
