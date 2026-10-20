@@ -6,6 +6,7 @@ use super::{
     SelectionModelSelectionChangedEventArgs,
 };
 use crate::ItemsSource;
+use ferroui_base::data::core::ValueTypes;
 use ferroui_base::metadata::{into_markup_value, MarkupDelegate, MarkupType, MarkupTyped};
 use ferroui_base::{ferro_markup_type, BoxedValue};
 use std::rc::Rc;
@@ -119,5 +120,11 @@ const TYPES: &[&MarkupType] = &[
 
 pub fn register_markup_types() {
     MarkupType::register_all(TYPES);
+    ValueTypes::register_global(register_value_types);
     super::selected_items_markup::register_markup_types();
+}
+
+fn register_value_types() {
+    ValueTypes::register_nullable::<Rc<SelectionModel>>();
+    ValueTypes::register_nullable::<IndexPath>();
 }

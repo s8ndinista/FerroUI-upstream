@@ -4,6 +4,7 @@
 
 use super::{IndexPath, SelectedItems, SelectionError};
 use crate::{IItemsList, ItemsSource};
+use ferroui_base::data::core::ValueTypes;
 use ferroui_base::metadata::{MarkupType, MarkupTyped};
 use ferroui_base::{ferro_markup_type, BoxedValue, PropertyValue};
 use std::rc::Rc;
@@ -70,6 +71,10 @@ const TYPES: &[&MarkupType] = &[
 
 pub(super) fn register_markup_types() {
     MarkupType::register_all(TYPES);
+    ValueTypes::register_global(register_value_types);
+}
+
+fn register_value_types() {
     ItemsSource::register_binding_conversion_with::<SelectedItemsView>(|view| {
         ItemsSource::new(Rc::new(view.clone()))
     });

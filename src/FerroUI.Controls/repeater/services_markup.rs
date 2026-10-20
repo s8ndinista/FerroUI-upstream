@@ -12,7 +12,7 @@ use super::{
     Phaser, RepeaterBindingHelper, RepeaterTestHooks, SelectTemplateEventArgs,
 };
 use crate::templates::IDataTemplate;
-use crate::Control;
+use crate::{Control, ItemsSource, ItemsSourceView};
 use ferroui_base::data::core::ValueTypes;
 use ferroui_base::metadata::{MarkupDelegate, MarkupType, MarkupTyped};
 use ferroui_base::reactive::IDisposable;
@@ -246,11 +246,28 @@ const TYPES: &[&MarkupType] = &[
 
 pub(crate) fn register_types() {
     MarkupType::register_all(TYPES);
+    ValueTypes::register_global(register_value_types);
+}
+
+// Controls metadata is registered once for the process, whereas value
+// conversions belong to each UI thread. Keep the registration callback global
+// so loading templates or binding services also works on later UI threads.
+fn register_value_types() {
+    ValueTypes::register_nullable::<ElementFactoryGetArgs>();
+    ValueTypes::register_nullable::<ElementFactoryRecycleArgs>();
+    ValueTypes::register_nullable::<SelectTemplateEventArgs>();
     ValueTypes::register_nullable::<Rc<dyn IElementFactory>>();
     ValueTypes::register_nullable::<Rc<dyn IDataTemplateSelector>>();
     ValueTypes::register_nullable::<Rc<dyn IDataTemplateComponent>>();
     ValueTypes::register_nullable::<Rc<ItemTemplateWrapper>>();
     ValueTypes::register_nullable::<ElementFactoryTemplates>();
+    ValueTypes::register_nullable::<Rc<ItemCollectionTransition>>();
+    ValueTypes::register_nullable::<Rc<ItemCollectionTransitionProgress>>();
+    ValueTypes::register_nullable::<ItemCollectionTransitionCompletedEventArgs>();
+    ValueTypes::register_nullable::<Rc<ItemsSourceView>>();
+    ItemsSource::register_binding_conversion_with::<Rc<ItemsSourceView>>(|view| {
+        view.clone().into()
+    });
     ValueTypes::register_cast::<Rc<ItemTemplateWrapper>, Rc<dyn IElementFactory>>(|wrapper| {
         wrapper.clone()
     });
