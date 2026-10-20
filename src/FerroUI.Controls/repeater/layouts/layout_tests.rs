@@ -110,7 +110,11 @@ impl LayoutContextHost for TestHost {
         index: i32,
         options: ElementRealizationOptions,
     ) -> Ref<Control> {
-        if !options.contains(ElementRealizationOptions::FORCE_CREATE) {
+        // A programmatically made anchor is reused even with ForceCreate.
+        // Repeater's ViewManager performs this lookup after the ordinary
+        // layout-owned lookup, which ForceCreate alone is allowed to skip.
+        if !options.contains(ElementRealizationOptions::FORCE_CREATE) || self.anchor.get() == index
+        {
             let existing = self
                 .live
                 .borrow()

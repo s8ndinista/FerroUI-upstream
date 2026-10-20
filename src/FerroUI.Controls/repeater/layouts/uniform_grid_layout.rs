@@ -265,6 +265,10 @@ impl VirtualizingLayoutImpl for UniformGridLayout {
             return Size::default();
         };
         state.ensure_element_size(available, context, this.parameters());
+        let items_per_line = this.items_per_line(available, &state);
+        state
+            .flow_algorithm
+            .set_uniform_grid(items_per_line, this.axis().minor(state.effective_size()));
         state.flow_algorithm.measure(
             available,
             context,
@@ -272,7 +276,7 @@ impl VirtualizingLayoutImpl for UniformGridLayout {
                 is_wrapping: true,
                 min_item_spacing: this.min_item_spacing(),
                 line_spacing: this.line_spacing(),
-                max_items_per_line: this.maximum(),
+                max_items_per_line: items_per_line,
                 orientation: this.axis().orientation,
                 is_virtualization_enabled: true,
             },

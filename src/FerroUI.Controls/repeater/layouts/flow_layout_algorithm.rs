@@ -132,6 +132,9 @@ pub struct FlowLayoutAlgorithm {
     last_inside: Cell<i32>,
     scroll_same_as_flow: Cell<bool>,
     orientation: Cell<ScrollOrientation>,
+    // UniformGrid can retain only part of a row at either realization edge.
+    // Its source-index columns still refer to the entire logical row.
+    uniform_grid: Cell<Option<(u32, f64)>>,
 }
 impl Default for FlowLayoutAlgorithm {
     fn default() -> Self {
@@ -152,6 +155,7 @@ impl FlowLayoutAlgorithm {
             last_inside: Cell::new(-1),
             scroll_same_as_flow: Cell::new(false),
             orientation: Cell::new(ScrollOrientation::Vertical),
+            uniform_grid: Cell::new(None),
         }
     }
     pub fn initialize_for_context(&self, context: &Ref<VirtualizingLayoutContext>) {
@@ -175,6 +179,15 @@ impl FlowLayoutAlgorithm {
     }
     pub fn last_extent(&self) -> Rect {
         self.last_extent.get()
+    }
+    pub(crate) fn set_uniform_grid(&self, items_per_line: u32, minor_size: f64) {
+        self.uniform_grid
+            .set(Some((items_per_line.max(1), minor_size)));
+    }
+    fn grid_minor_position(&self, index: i32, spacing: f64) -> Option<f64> {
+        self.uniform_grid.get().map(|(items_per_line, minor_size)| {
+            (index as u32 % items_per_line) as f64 * (minor_size + spacing)
+        })
     }
     pub fn get_element_if_realized(&self, index: i32) -> Option<Ref<Control>> {
         self.element_manager.get_element_if_realized(index)
@@ -397,6 +410,13 @@ impl FlowLayoutAlgorithm {
         self.first_inside.set(anchor);
         self.last_inside.set(anchor);
         if self.element_manager.is_index_valid_in_data(anchor) {
+            // UniformGrid intentionally returns the target itself rather than
+            // the first item in its row: only one offscreen edge element needs
+            // to survive recycling. Restore that target's actual column when
+            // it is newly made or its source index changes after insertion.
+            if let Some(minor) = self.grid_minor_position(anchor, options.min_item_spacing) {
+                position = axis.point(minor, axis.major_point(position));
+            }
             if !self.element_manager.is_data_index_realized(anchor) {
                 self.element_manager.clear_realized_range();
                 let element = context.get_or_create_element_at_with_options(
@@ -563,6 +583,9 @@ impl FlowLayoutAlgorithm {
                     count_in_line += 1;
                 }
             }
+            if let Some(minor) = self.grid_minor_position(current_index, options.min_item_spacing) {
+                bounds = axis.with_minor_start(bounds, minor);
+            }
             self.element_manager
                 .set_layout_bounds_for_data_index(current_index, bounds);
             previous_index = current_index;
@@ -664,23 +687,45 @@ impl FlowLayoutAlgorithm {
     ) {
         let axis = self.axis();
         let extent = self.last_extent.get();
+        let uniform_grid = self
+            .uniform_grid
+            .get()
+            .map(|metrics| (metrics, self.context().item_count() as u32));
         for index in first..first + count {
             let mut bounds = axis.with_major_size(
                 self.element_manager.layout_bounds_for_range_index(index),
                 major,
             );
-            if !self.scroll_same_as_flow.get() && (space_start != 0.0 || space_end != 0.0) {
-                let total = space_start + space_end;
-                let i = (index - first) as f64;
+            let (alignment_index, alignment_count, start, end) =
+                if let Some(((items_per_line, minor_size), item_count)) = uniform_grid {
+                    let data_index = self.element_manager.data_index_from_range_index(index) as u32;
+                    let column = data_index % items_per_line;
+                    let row_start = data_index - column;
+                    let row_count = (item_count - row_start).min(items_per_line);
+                    let spacing = self.last_item_spacing.get();
+                    let width = row_count as f64 * minor_size
+                        + row_count.saturating_sub(1) as f64 * spacing;
+                    bounds = axis.with_minor_start(bounds, column as f64 * (minor_size + spacing));
+                    // Missing offscreen siblings are logical members of this
+                    // line; their columns and justification cannot be folded
+                    // into the remaining realized children.
+                    (column, row_count, 0.0, axis.minor(final_size) - width)
+                } else {
+                    ((index - first) as u32, count as u32, space_start, space_end)
+                };
+            if !self.scroll_same_as_flow.get() && (start != 0.0 || end != 0.0) {
+                let total = start + end;
+                let i = alignment_index as f64;
+                let count = alignment_count;
                 let shift = match alignment {
-                    FlowLayoutLineAlignment::Start => -space_start,
-                    FlowLayoutLineAlignment::End => space_end,
-                    FlowLayoutLineAlignment::Center => -space_start + total / 2.0,
+                    FlowLayoutLineAlignment::Start => -start,
+                    FlowLayoutLineAlignment::End => end,
+                    FlowLayoutLineAlignment::Center => -start + total / 2.0,
                     FlowLayoutLineAlignment::SpaceAround => {
-                        -space_start + total / (count as f64 * 2.0) * (i * 2.0 + 1.0)
+                        -start + total / (count as f64 * 2.0) * (i * 2.0 + 1.0)
                     }
                     FlowLayoutLineAlignment::SpaceBetween => {
-                        -space_start
+                        -start
                             + if count > 1 {
                                 total / (count - 1) as f64 * i
                             } else {
@@ -688,7 +733,7 @@ impl FlowLayoutAlgorithm {
                             }
                     }
                     FlowLayoutLineAlignment::SpaceEvenly => {
-                        -space_start + total / (count + 1) as f64 * (i + 1.0)
+                        -start + total / (count + 1) as f64 * (i + 1.0)
                     }
                 };
                 bounds = axis.with_minor_start(bounds, axis.minor_start(bounds) + shift);

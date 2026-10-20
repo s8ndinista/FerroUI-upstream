@@ -330,6 +330,104 @@ fn validate_grid_layout_desired_sizing_with_max_rows_or_columns_set() {
     }
 }
 
+// Regression for the pinned source's ignored PC-GRID-ANCHOR-INSERT scenario.
+// The edge sentinel can be the only realized child of its logical row. Its
+// column and justification must still include the offscreen siblings.
+#[test]
+fn grid_partial_lines_preserve_source_columns_for_every_justification() {
+    for axis in [Axis(true), Axis(false)] {
+        for alignment in [
+            UniformGridLayoutItemsJustification::Start,
+            UniformGridLayoutItemsJustification::Center,
+            UniformGridLayoutItemsJustification::End,
+            UniformGridLayoutItemsJustification::SpaceBetween,
+            UniformGridLayoutItemsJustification::SpaceAround,
+            UniformGridLayoutItemsJustification::SpaceEvenly,
+        ] {
+            let layout = UniformGridLayout::new();
+            layout.set_orientation(axis.orientation(false));
+            layout.set_min_item_width(axis.size(100.0, 60.0).width);
+            layout.set_min_item_height(axis.size(100.0, 60.0).height);
+            layout.set_min_column_spacing(if axis.0 { 10.0 } else { 5.0 });
+            layout.set_min_row_spacing(if axis.0 { 5.0 } else { 10.0 });
+            layout.set_items_justification(alignment);
+            let fixture = Fixture::new(
+                layout.upcast(),
+                vec![Size::default(); 45],
+                axis.size(350.0, f64::INFINITY),
+                axis.rect(0.0, 670.0, 350.0, 200.0),
+            );
+            let verify = || {
+                let items = fixture.host.sizes.borrow().len() as i32;
+                let live = fixture.host.live.borrow();
+                assert!(live.len() < 24, "realization stays bounded to the viewport");
+                for (index, element) in live.iter() {
+                    let column = index % 3;
+                    let row_start = index - column;
+                    let row_count = (items - row_start).min(3);
+                    let free = 350.0 - (row_count as f64 * 110.0 - 10.0);
+                    let shift = match alignment {
+                        UniformGridLayoutItemsJustification::Start => 0.0,
+                        UniformGridLayoutItemsJustification::Center => free / 2.0,
+                        UniformGridLayoutItemsJustification::End => free,
+                        UniformGridLayoutItemsJustification::SpaceBetween => {
+                            if row_count > 1 {
+                                free * column as f64 / (row_count - 1) as f64
+                            } else {
+                                0.0
+                            }
+                        }
+                        UniformGridLayoutItemsJustification::SpaceAround => {
+                            free * (column as f64 + 0.5) / row_count as f64
+                        }
+                        UniformGridLayoutItemsJustification::SpaceEvenly => {
+                            free * (column + 1) as f64 / (row_count + 1) as f64
+                        }
+                    };
+                    rect_close(
+                        element.bounds(),
+                        axis.rect(
+                            column as f64 * 110.0 + shift,
+                            (index / 3) as f64 * 65.0,
+                            100.0,
+                            60.0,
+                        ),
+                    );
+                }
+            };
+            fixture.measure();
+            assert!(fixture
+                .host
+                .live
+                .borrow()
+                .iter()
+                .any(|(index, _)| *index == 29));
+            verify();
+
+            let anchor = fixture.host.element(31);
+            // First move the anchor into a nonzero column, then across a row.
+            for index in [32, 33] {
+                fixture.insert_item(0, Size::default());
+                fixture.host.anchor.set(index);
+                fixture.measure();
+                assert!(fixture.host.element(index).ptr_eq(&anchor));
+                verify();
+            }
+
+            fixture.host.anchor.set(-1);
+            fixture.host.window.set(axis.rect(0.0, 930.0, 350.0, 200.0));
+            fixture.measure();
+            verify();
+            assert!(fixture
+                .host
+                .live
+                .borrow()
+                .iter()
+                .any(|(index, _)| *index == 46));
+        }
+    }
+}
+
 #[test]
 fn validate_flow_layout() {
     for axis in [Axis(true), Axis(false)] {
@@ -345,15 +443,24 @@ fn validate_flow_layout() {
             for spacing in [0.0, 10.0] {
                 layout.set_line_spacing(spacing);
                 layout.set_min_item_spacing(spacing);
-                let count = ((width + spacing) / (20.0 + spacing)).floor().max(1.0) as i32;
+                // The source helper uses child.DesiredSize, not the intrinsic
+                // size before native measurement constrains it to the panel.
+                let item_minor = width.min(20.0);
+                let count = ((width + spacing) / (item_minor + spacing))
+                    .floor()
+                    .max(1.0) as i32;
                 let desired = fixture.measure();
                 for i in 0..10 {
                     assert_eq!(
+                        fixture.host.element(i).desired_size(),
+                        axis.size(item_minor, 30.0)
+                    );
+                    assert_eq!(
                         fixture.host.element(i).bounds(),
                         axis.rect(
-                            (i % count) as f64 * (20.0 + spacing),
+                            (i % count) as f64 * (item_minor + spacing),
                             (i / count) as f64 * (30.0 + spacing),
-                            20.0,
+                            item_minor,
                             30.0
                         )
                     );
