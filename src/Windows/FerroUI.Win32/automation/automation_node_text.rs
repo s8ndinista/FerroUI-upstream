@@ -6,7 +6,7 @@
 use super::automation_node::{AutomationNode, SendProvider, ELEMENT_NOT_AVAILABLE};
 use super::interop::{
     IRawElementProviderSimple, ITextChildProviderImpl, ITextEditProviderImpl, ITextProvider2Impl, ITextProviderImpl,
-    ITextRangeProvider, SupportedTextSelection, TextEditChangeType, UiaCoreProviderApi, UiaEventId, UiaPoint,
+    ITextRangeProvider, SupportedTextSelection, UiaCoreProviderApi, UiaEventId, UiaPoint,
 };
 use super::marshalling::{SafeArrayMarshaller, SafeArrayRef};
 use super::root_automation_node::RootAutomationNode;
@@ -41,28 +41,20 @@ impl AutomationNode {
             subscriptions.push(subscription);
         }
         if let Some(provider) = peer.get_provider::<dyn ITextEditProvider>() {
-            if let Ok(subscription) = provider.text_edit_text_changed(Rc::new(move |event| {
-                Self::raise_text_edit_event(id, event)
-            })) {
-                subscriptions.push(subscription);
+            if !provider.raises_text_edit_events_through_peer() {
+                if let Ok(subscription) = provider.text_edit_text_changed(Rc::new(move |event| {
+                    Self::raise_text_edit_event(id, event)
+                })) {
+                    subscriptions.push(subscription);
+                }
             }
         }
         subscriptions
     }
 
     fn raise_text_edit_event(id: i32, event: &TextEditTextChangedEventArgs) {
-        if Self::peer_of(id).is_none() {
-            return;
-        }
-        if let Some(node) = Self::provider_of(id) {
-            // The cause and owned strings come from completed editor operations
-            // on this UI thread. No BSTR, SAFEARRAY or UI object crosses a
-            // dispatcher boundary; the core API scopes the native payload.
-            UiaCoreProviderApi::uia_raise_text_edit_text_changed_event(
-                Some(&node),
-                TextEditChangeType(event.change_type as i32),
-                &event.changed_data,
-            );
+        if let Some(peer) = Self::peer_of(id) {
+            peer.raise_text_edit_text_changed_event(event.change_type, event.changed_data.clone());
         }
     }
 

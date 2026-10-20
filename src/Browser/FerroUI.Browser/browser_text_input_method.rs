@@ -1,8 +1,11 @@
 use crate::browser_input_handler::BrowserInputHandler;
-use crate::interop::{input_helper, JsObject};
-use ferroui_base::input::text_input::{ITextInputMethodImpl, TextInputMethodClient, TextInputOptions, TextSelection};
-use ferroui_base::reactive::IDisposable;
+use crate::interop::{JsObject, input_helper};
 use ferroui_base::Rect;
+use ferroui_base::input::text_input::{
+    ITextInputMethodImpl, TextInputMethodClient, TextInputMethodComposition,
+    TextInputMethodConnection, TextInputOptions, TextSelection,
+};
+use ferroui_base::reactive::IDisposable;
 use std::cell::{Cell, RefCell};
 use std::rc::{Rc, Weak};
 
@@ -72,9 +75,12 @@ pub struct BrowserTextInputMethod {
     page: Box<dyn ITextInputPage>,
     input_handler: Weak<BrowserInputHandler>,
     client: RefCell<Option<Rc<dyn TextInputMethodClient>>>,
+    connection: RefCell<Option<Rc<TextInputMethodConnection>>>,
+    composition_session: RefCell<Option<TextInputMethodComposition>>,
     /// The subscriptions to the events of the current client.
     subscriptions: RefCell<Vec<Rc<dyn IDisposable>>>,
     is_composing: Cell<bool>,
+    generation: Cell<u64>,
     /// Set while the page reports that the keyboard focus left the view.
     focus_is_leaving_view: Cell<bool>,
 }
@@ -97,17 +103,29 @@ impl BrowserTextInputMethod {
             panic!("Value cannot be null. (Parameter 'containerElement')");
         }
 
-        Self::with_page(input_handler, Box::new(TextInputPage { input_element, container_element }))
+        Self::with_page(
+            input_handler,
+            Box::new(TextInputPage {
+                input_element,
+                container_element,
+            }),
+        )
     }
 
-    pub(crate) fn with_page(input_handler: Weak<BrowserInputHandler>, page: Box<dyn ITextInputPage>) -> Rc<Self> {
+    pub(crate) fn with_page(
+        input_handler: Weak<BrowserInputHandler>,
+        page: Box<dyn ITextInputPage>,
+    ) -> Rc<Self> {
         Rc::new_cyclic(|weak_self| Self {
             weak_self: weak_self.clone(),
             page,
             input_handler,
             client: RefCell::new(None),
+            connection: RefCell::new(None),
+            composition_session: RefCell::new(None),
             subscriptions: RefCell::new(Vec::new()),
             is_composing: Cell::new(false),
+            generation: Cell::new(0),
             focus_is_leaving_view: Cell::new(false),
         })
     }
@@ -177,7 +195,8 @@ impl BrowserTextInputMethod {
             let surrounding_text = client.surrounding_text();
             let selection = client.selection();
 
-            self.page.set_surrounding_text(&surrounding_text, selection.start, selection.end);
+            self.page
+                .set_surrounding_text(&surrounding_text, selection.start, selection.end);
         }
     }
 
@@ -203,12 +222,30 @@ impl BrowserTextInputMethod {
 
     /// The input method of the browser started composing.
     pub fn on_composition_start(&self) {
+        let generation = self.generation.get().wrapping_add(1);
+        self.generation.set(generation);
         let Some(client) = self.client() else {
             return;
         };
 
-        client.set_preedit_text(None);
-        self.is_composing.set(true);
+        let connection = self.connection.borrow().clone();
+        if let Some(connection) = connection {
+            self.composition_session.take();
+            let result = connection.begin_composition();
+            if self.generation.get() != generation {
+                return;
+            }
+            let Ok(session) = result else {
+                self.is_composing.set(false);
+                return;
+            };
+            *self.composition_session.borrow_mut() = Some(session);
+        } else {
+            client.set_preedit_text(None);
+        }
+        if self.generation.get() == generation {
+            self.is_composing.set(true);
+        }
     }
 
     /// The text being composed changed.
@@ -217,18 +254,47 @@ impl BrowserTextInputMethod {
             return;
         };
 
-        client.set_preedit_text(data);
+        if self.connection.borrow().is_some() {
+            let session = self.composition_session.borrow().clone();
+            if let Some(session) = session {
+                if let Some(data) = data {
+                    let _ = session.update(data, None);
+                }
+            }
+        } else {
+            client.set_preedit_text(data);
+        }
     }
 
     /// The input method of the browser finished composing; `data` is the
     /// text it committed.
     pub fn on_composition_end(&self, data: Option<&str>) {
+        let generation = self.generation.get();
         let Some(client) = self.client() else {
             return;
         };
 
         self.is_composing.set(false);
-
+        if self.connection.borrow().is_some() {
+            let session = self.composition_session.borrow().clone();
+            if let Some(session) = session {
+                // Commit the accepted marked replacement directly. Clearing it
+                // first would destroy formatting and split one edit into two.
+                let result = match data {
+                    Some(data) => session.commit(
+                        data,
+                        self.input_handler
+                            .upgrade()
+                            .map_or(0, |handler| handler.timestamp()),
+                    ),
+                    None => session.cancel(),
+                };
+                if result.is_ok() && self.generation.get() == generation {
+                    self.composition_session.take();
+                }
+            }
+            return;
+        }
         client.set_preedit_text(None);
 
         if let Some(data) = data {
@@ -241,6 +307,31 @@ impl BrowserTextInputMethod {
 
 impl ITextInputMethodImpl for BrowserTextInputMethod {
     fn set_client(&self, client: Option<Rc<dyn TextInputMethodClient>>) {
+        let generation = self.generation.get().wrapping_add(1);
+        self.generation.set(generation);
+        if self.connection.borrow().is_some()
+            || client
+                .as_ref()
+                .is_some_and(|client| client.input_method_editing().is_some())
+        {
+            self.is_composing.set(false);
+        }
+        self.composition_session.take();
+        self.connection.take();
+        if let Some(previous) = self.client() {
+            if previous.input_method_editing().is_some() {
+                previous.set_preedit_text(None);
+            }
+        }
+        if self.generation.get() != generation {
+            return;
+        }
+        let connection = client.as_ref().and_then(|client| {
+            client
+                .input_method_editing()
+                .and_then(|_| client.input_method_connection())
+        });
+        *self.connection.borrow_mut() = connection;
         if self.client().is_some() {
             let subscriptions = std::mem::take(&mut *self.subscriptions.borrow_mut());
             for subscription in subscriptions {
@@ -251,23 +342,32 @@ impl ITextInputMethodImpl for BrowserTextInputMethod {
         if let Some(client) = &client {
             let subscriptions = vec![
                 client.surrounding_text_changed(self.handler(Self::surrounding_text_changed)),
-                client.input_pane_activation_requested(self.handler(Self::input_pane_activation_requested)),
+                client.input_pane_activation_requested(
+                    self.handler(Self::input_pane_activation_requested),
+                ),
             ];
             *self.subscriptions.borrow_mut() = subscriptions;
         }
 
         self.page.clear_input_element();
+        if self.generation.get() != generation {
+            return;
+        }
 
         let old_client = self.client.replace(client);
         drop(old_client);
 
         if let Some(client) = self.client() {
             self.show_ime();
+            if self.generation.get() != generation {
+                return;
+            }
 
             let surrounding_text = client.surrounding_text();
             let selection = client.selection();
 
-            self.page.set_surrounding_text(&surrounding_text, selection.start, selection.end);
+            self.page
+                .set_surrounding_text(&surrounding_text, selection.start, selection.end);
         } else {
             self.hide_ime();
         }
@@ -276,15 +376,36 @@ impl ITextInputMethodImpl for BrowserTextInputMethod {
     fn set_cursor_rect(&self, rect: Rect) {
         self.focus_input_element();
         let caret = self.client().map_or(0, |client| client.selection().end);
-        self.page.set_bounds(rect.x as i32, rect.y as i32, rect.width as i32, rect.height as i32, caret);
+        self.page.set_bounds(
+            rect.x as i32,
+            rect.y as i32,
+            rect.width as i32,
+            rect.height as i32,
+            caret,
+        );
         self.focus_input_element();
     }
 
     fn set_options(&self, _options: &TextInputOptions) {}
 
     fn reset(&self) {
+        let generation = self.generation.get().wrapping_add(1);
+        self.generation.set(generation);
+        self.is_composing.set(false);
+        self.composition_session.take();
+        if let Some(client) = self
+            .client()
+            .filter(|client| client.input_method_editing().is_some())
+        {
+            client.set_preedit_text(None);
+        }
+        if self.generation.get() != generation {
+            return;
+        }
         self.page.clear_input_element();
-        self.page.set_surrounding_text("", 0, 0);
+        if self.generation.get() == generation {
+            self.page.set_surrounding_text("", 0, 0);
+        }
     }
 }
 
@@ -397,7 +518,9 @@ mod tests {
         }
 
         fn set_preedit_text(&self, preedit_text: Option<&str>) {
-            self.preedit.borrow_mut().push(preedit_text.map(str::to_string));
+            self.preedit
+                .borrow_mut()
+                .push(preedit_text.map(str::to_string));
         }
     }
 
@@ -411,9 +534,16 @@ mod tests {
         fn new() -> Self {
             let calls: Calls = Rc::new(RefCell::new(Vec::new()));
             let selection = Rc::new(Cell::new((0, 0)));
-            let page = RecordingPage { calls: calls.clone(), selection: selection.clone() };
+            let page = RecordingPage {
+                calls: calls.clone(),
+                selection: selection.clone(),
+            };
             let method = BrowserTextInputMethod::with_page(Weak::new(), Box::new(page));
-            Self { method, calls, selection }
+            Self {
+                method,
+                calls,
+                selection,
+            }
         }
 
         fn take_calls(&self) -> Vec<String> {
@@ -433,7 +563,10 @@ mod tests {
 
         fixture.set_client(&client);
 
-        assert_eq!(vec!["clear", "show", "focus input", "text 'hello' 1 3"], fixture.take_calls());
+        assert_eq!(
+            vec!["clear", "show", "focus input", "text 'hello' 1 3"],
+            fixture.take_calls()
+        );
     }
 
     #[test]
@@ -444,7 +577,10 @@ mod tests {
 
         fixture.method.set_client(None);
 
-        assert_eq!(vec!["clear", "hide", "focus container"], fixture.take_calls());
+        assert_eq!(
+            vec!["clear", "hide", "focus container"],
+            fixture.take_calls()
+        );
     }
 
     #[test]
@@ -455,18 +591,26 @@ mod tests {
 
         fixture.method.while_focus_leaves_view(|| {
             // The client moves its cursor as it loses the focus, and then goes away.
-            fixture.method.set_cursor_rect(Rect::new(1.0, 2.0, 3.0, 4.0));
+            fixture
+                .method
+                .set_cursor_rect(Rect::new(1.0, 2.0, 3.0, 4.0));
             fixture.method.set_client(None);
         });
         let calls = fixture.take_calls();
-        assert!(!calls.iter().any(|call| call.starts_with("focus")), "{calls:?}");
+        assert!(
+            !calls.iter().any(|call| call.starts_with("focus")),
+            "{calls:?}"
+        );
         assert_eq!(Some(&"hide".to_string()), calls.last());
 
         // Afterwards the usual behaviour is back.
         fixture.set_client(&TestClient::new("hello", 1, 3));
         fixture.take_calls();
         fixture.method.set_client(None);
-        assert_eq!(vec!["clear", "hide", "focus container"], fixture.take_calls());
+        assert_eq!(
+            vec!["clear", "hide", "focus container"],
+            fixture.take_calls()
+        );
     }
 
     #[test]
@@ -522,13 +666,23 @@ mod tests {
     fn the_cursor_rectangle_moves_the_input_element_to_the_caret_of_the_client() {
         let fixture = Fixture::new();
 
-        fixture.method.set_cursor_rect(Rect::new(10.9, 20.2, 1.0, 16.7));
-        assert_eq!(vec!["focus input", "bounds 10 20 1 16 caret 0", "focus input"], fixture.take_calls());
+        fixture
+            .method
+            .set_cursor_rect(Rect::new(10.9, 20.2, 1.0, 16.7));
+        assert_eq!(
+            vec!["focus input", "bounds 10 20 1 16 caret 0", "focus input"],
+            fixture.take_calls()
+        );
 
         fixture.set_client(&TestClient::new("hello", 1, 3));
         fixture.take_calls();
-        fixture.method.set_cursor_rect(Rect::new(10.9, 20.2, 1.0, 16.7));
-        assert_eq!(vec!["focus input", "bounds 10 20 1 16 caret 3", "focus input"], fixture.take_calls());
+        fixture
+            .method
+            .set_cursor_rect(Rect::new(10.9, 20.2, 1.0, 16.7));
+        assert_eq!(
+            vec!["focus input", "bounds 10 20 1 16 caret 3", "focus input"],
+            fixture.take_calls()
+        );
     }
 
     #[test]
@@ -538,6 +692,40 @@ mod tests {
         fixture.method.reset();
 
         assert_eq!(vec!["clear", "text '' 0 0"], fixture.take_calls());
+    }
+
+    #[test]
+    fn reset_does_not_clear_a_client_installed_during_rich_composition_cancellation() {
+        use ferroui_controls::RichEditBox;
+        let _dispatcher = ferroui_base::threading::Dispatcher::unit_test_scope();
+        let _text = ferroui_base::media::text_formatting::testing::TextTestScope::new();
+        let fixture = Fixture::new();
+        let owner = RichEditBox::new();
+        owner.set_text("original").unwrap();
+        fixture
+            .method
+            .set_client(Some(owner.text_input_method_client()));
+        owner.set_preedit_text(Some("preview"), None).unwrap();
+        fixture.take_calls();
+        let next = TestClient::new("next", 2, 2);
+        let next_client: Rc<dyn TextInputMethodClient> = next;
+        let method = Rc::downgrade(&fixture.method);
+        let installed = next_client.clone();
+        owner.add_handler(RichEditBox::text_composition_ended_event(), move |_, _| {
+            method
+                .upgrade()
+                .unwrap()
+                .set_client(Some(installed.clone()));
+        });
+
+        fixture.method.reset();
+
+        assert_eq!(owner.text(), "original");
+        assert!(Rc::ptr_eq(&fixture.method.client().unwrap(), &next_client));
+        assert_eq!(
+            fixture.take_calls().last().map(String::as_str),
+            Some("text 'next' 2 2")
+        );
     }
 
     #[test]
@@ -557,7 +745,9 @@ mod tests {
         let client = TestClient::new("hello", 5, 5);
         fixture.set_client(&client);
 
-        fixture.method.on_before_input("deleteByComposition", -1, -1);
+        fixture
+            .method
+            .on_before_input("deleteByComposition", -1, -1);
         fixture.method.on_before_input("deleteByComposition", 2, -1);
 
         assert_eq!(TextSelection::new(5, 5), client.selection());
@@ -570,7 +760,9 @@ mod tests {
         fixture.set_client(&client);
         fixture.selection.set((3, 4));
 
-        fixture.method.on_before_input("deleteContentBackward", 0, 1);
+        fixture
+            .method
+            .on_before_input("deleteContentBackward", 0, 1);
 
         assert_eq!(TextSelection::new(3, 4), client.selection());
     }
@@ -583,7 +775,9 @@ mod tests {
         fixture.selection.set((3, 4));
 
         fixture.method.on_before_input("insertText", 0, 1);
-        fixture.method.on_before_input("insertCompositionText", 2, 4);
+        fixture
+            .method
+            .on_before_input("insertCompositionText", 2, 4);
 
         assert_eq!(TextSelection::new(5, 5), client.selection());
     }
@@ -593,7 +787,9 @@ mod tests {
         let fixture = Fixture::new();
 
         fixture.method.on_before_input("deleteByComposition", 2, 4);
-        fixture.method.on_before_input("deleteContentBackward", 0, 1);
+        fixture
+            .method
+            .on_before_input("deleteContentBackward", 0, 1);
 
         assert!(fixture.take_calls().is_empty());
     }
@@ -617,7 +813,13 @@ mod tests {
         assert!(!fixture.method.is_composing());
 
         assert_eq!(
-            vec![None, Some("k".to_string()), Some("ka".to_string()), None, None],
+            vec![
+                None,
+                Some("k".to_string()),
+                Some("ka".to_string()),
+                None,
+                None
+            ],
             *client.preedit.borrow()
         );
     }

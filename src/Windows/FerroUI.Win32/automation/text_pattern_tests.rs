@@ -21,7 +21,9 @@ use ferroui_base::media::{
     Color, FlowDirection, FontFamily, FontWeight, IBrush, TextDecoration, TextDecorationCollection,
     TextDecorationLocation,
 };
+use ferroui_base::reactive::IDisposable;
 use ferroui_base::threading::Dispatcher;
+use ferroui_base::FerroLocator;
 use ferroui_controls::automation::peers::ControlAutomationPeer;
 use ferroui_controls::documents::{
     CharacterFormat, Hyperlink, InlineUIContainer, Paragraph, RichTextDocument, Run,
@@ -45,6 +47,7 @@ struct Recorder {
     events: RefCell<Vec<i32>>,
     text_edits: RefCell<Vec<TextEditRecord>>,
     text_edit_result: Cell<i32>,
+    text_edit_callback: RefCell<Option<Rc<dyn Fn()>>>,
 }
 
 impl IUiaCoreProviderApi for Recorder {
@@ -94,6 +97,10 @@ impl IUiaCoreProviderApi for Recorder {
             thread: std::thread::current().id(),
         });
         self.events.borrow_mut().push(UiaEventId::TextEdit_TextChanged.0);
+        let callback = self.text_edit_callback.borrow().clone();
+        if let Some(callback) = callback {
+            callback();
+        }
         self.text_edit_result.get()
     }
 
@@ -119,12 +126,14 @@ impl IUiaCoreProviderApi for Recorder {
     }
 }
 
-struct RecordingScope(Rc<Recorder>);
+struct RecordingScope(Rc<Recorder>, Rc<dyn IDisposable>);
 impl RecordingScope {
     fn new() -> Self {
+        let scope = FerroLocator::enter_scope();
+        super::Win32AutomationEventSink::register();
         let recorder = Rc::new(Recorder::default());
         UiaCoreProviderApi::set_for_thread(Some(recorder.clone()));
-        Self(recorder)
+        Self(recorder, scope)
     }
     fn take(&self) -> Vec<i32> {
         self.0.events.take()
@@ -133,6 +142,7 @@ impl RecordingScope {
 impl Drop for RecordingScope {
     fn drop(&mut self) {
         UiaCoreProviderApi::set_for_thread(None);
+        self.1.dispose();
     }
 }
 
@@ -850,4 +860,208 @@ fn native_text_edit_payload_validation_preserves_embedded_nul_and_return_codes()
     // The native call has returned and its borrowed SAFEARRAY has been freed.
     // The recorder retains only copied Rust strings, including embedded NUL.
     assert_eq!(recording.0.text_edits.borrow()[0].changed_data, data);
+}
+
+#[test]
+fn native_public_text_edit_event_lazily_creates_a_provider_without_a_text_pattern() {
+    use ferroui_controls::automation::provider::TextEditChangeType as Cause;
+    let _app = UnitTestApplication::start(TestServices::styled_window());
+    let recording = RecordingScope::new();
+    let button = Button::new();
+    let peer = ControlAutomationPeer::create_peer_for_element(&button);
+    let before = AutomationNode::count();
+    peer.raise_text_edit_text_changed_event(Cause::None, vec!["ignored".into()]);
+    assert_eq!(AutomationNode::count(), before);
+    assert!(recording.0.text_edits.borrow().is_empty());
+    peer.raise_text_edit_text_changed_event(
+        Cause::AutoCorrect,
+        vec!["候\0😀".into(), String::new()],
+    );
+    let events = recording.0.text_edits.borrow();
+    assert_eq!(events.len(), 1);
+    assert_eq!(events[0].changed_data, ["候\0😀", ""]);
+    assert_eq!(events[0].change_type, TextEditChangeType::AutoCorrect);
+    assert_eq!(
+        AutomationNode::peer_from_identity(events[0].identity),
+        Some(peer.clone())
+    );
+    let native = AutomationNode::get_or_create(Some(&peer)).unwrap();
+    assert_eq!(
+        events[0].identity,
+        native.cast::<IUnknown>().unwrap().as_ptr() as usize
+    );
+    assert!(native
+        .get_pattern_provider(UiaPatternId::TextEdit.0)
+        .unwrap()
+        .is_none());
+    assert_eq!(events[0].thread, std::thread::current().id());
+}
+
+#[test]
+fn native_public_text_edit_events_source_has_one_hop_and_uses_the_target_identity() {
+    use ferroui_controls::automation::provider::TextEditChangeType as Cause;
+    let _app = UnitTestApplication::start(TestServices::styled_window());
+    let recording = RecordingScope::new();
+    let a = Button::new();
+    let b = Button::new();
+    let c = Button::new();
+    let original = ControlAutomationPeer::create_peer_for_element(&a);
+    let source = ControlAutomationPeer::create_peer_for_element(&b);
+    let further = ControlAutomationPeer::create_peer_for_element(&c);
+    original.set_events_source(Some(source.clone()));
+    source.set_events_source(Some(further));
+    original.raise_text_edit_text_changed_event(Cause::Composition, vec!["one hop".into()]);
+    let events = recording.0.text_edits.borrow();
+    assert_eq!(events.len(), 1);
+    assert_eq!(
+        AutomationNode::peer_from_identity(events[0].identity),
+        Some(source)
+    );
+}
+
+#[test]
+fn native_rich_first_composition_creates_both_peer_and_provider() {
+    let _app = UnitTestApplication::start(TestServices::styled_window());
+    let recording = RecordingScope::new();
+    let editor = RichEditBox::new();
+    assert!(ControlAutomationPeer::from_element(&editor).is_none());
+    editor.set_preedit_text(Some("first"), None).unwrap();
+    let peer = ControlAutomationPeer::from_element(&editor).unwrap();
+    let first_identity = recording.0.text_edits.borrow()[0].identity;
+    assert_eq!(AutomationNode::peer_from_identity(first_identity), Some(peer));
+    editor.set_preedit_text(Some("second"), None).unwrap();
+    editor.cancel_composition().unwrap();
+    let events = recording.0.text_edits.borrow();
+    assert_eq!(events.len(), 3);
+    assert_eq!(events[0].changed_data, ["first"]);
+    assert!(events.iter().all(|event| event.identity == first_identity));
+    assert_eq!(events[2].change_type, TextEditChangeType::CompositionFinalized);
+}
+
+#[test]
+fn native_rich_peer_first_composition_activates_text_edit_delivery_without_duplicates() {
+    use ferroui_controls::automation::provider::ITextEditProvider as PortableTextEdit;
+    let _app = UnitTestApplication::start(TestServices::styled_window());
+    let recording = RecordingScope::new();
+    let editor = RichEditBox::new();
+    let peer = ControlAutomationPeer::create_peer_for_element(&editor);
+    let provider = peer.get_provider::<dyn PortableTextEdit>().unwrap();
+    assert!(provider.raises_text_edit_events_through_peer());
+    let portable = Rc::new(RefCell::new(Vec::new()));
+    let observed = portable.clone();
+    let subscription = provider
+        .text_edit_text_changed(Rc::new(move |event| {
+            observed.borrow_mut().push(event.clone());
+        }))
+        .unwrap();
+    editor.set_preedit_text(Some("候補"), None).unwrap();
+    // The first event creates the COM node during event delivery. Its new
+    // subscriptions must not forward the current or subsequent cause twice.
+    let first_identity = recording.0.text_edits.borrow()[0].identity;
+    assert_eq!(
+        AutomationNode::peer_from_identity(first_identity),
+        Some(peer)
+    );
+    editor.set_preedit_text(Some("候補文字"), None).unwrap();
+    editor.commit_composition("確定").unwrap();
+    assert_eq!(recording.0.text_edits.borrow().len(), 3);
+    assert_eq!(portable.borrow().len(), 3);
+    assert!(recording
+        .0
+        .text_edits
+        .borrow()
+        .iter()
+        .all(|event| event.identity == first_identity));
+    assert_eq!(
+        recording.0.text_edits.borrow()[2].change_type,
+        TextEditChangeType::CompositionFinalized
+    );
+    subscription.dispose();
+}
+
+#[test]
+fn native_rich_peer_event_route_rewires_documents_and_does_not_retain_the_owner() {
+    let _app = UnitTestApplication::start(TestServices::styled_window());
+    let recording = RecordingScope::new();
+    let (detached_model, retained_model, weak_peer) = {
+        let editor = RichEditBox::new();
+        let peer = ControlAutomationPeer::create_peer_for_element(&editor);
+        let old = editor.editor();
+        editor.set_document(RichTextDocument::from_text("new document"));
+        old.set_preedit("detached", None).unwrap();
+        assert!(recording.0.text_edits.borrow().is_empty());
+        editor.set_preedit_text(Some("live"), None).unwrap();
+        assert_eq!(recording.0.text_edits.borrow().len(), 1);
+        (old, editor.editor(), peer.downgrade())
+    };
+    assert!(weak_peer.upgrade().is_none());
+    let count = recording.0.text_edits.borrow().len();
+    detached_model.set_preedit("still detached", None).unwrap();
+    retained_model.set_preedit("owner gone", None).unwrap();
+    assert_eq!(recording.0.text_edits.borrow().len(), count);
+}
+
+#[test]
+fn native_public_text_edit_can_reactivate_a_released_node_without_old_subscriptions() {
+    let _app = UnitTestApplication::start(TestServices::styled_window());
+    let recording = RecordingScope::new();
+    let editor = RichEditBox::new();
+    let peer = ControlAutomationPeer::create_peer_for_element(&editor);
+    editor.set_preedit_text(Some("first"), None).unwrap();
+    let retired = recording.0.text_edits.borrow()[0].identity;
+    let retained_node = AutomationNode::get_or_create(Some(&peer)).unwrap();
+    AutomationNode::release(&peer);
+    editor.set_preedit_text(Some("second"), None).unwrap();
+    editor.cancel_composition().unwrap();
+    let events = recording.0.text_edits.borrow();
+    assert_eq!(events.len(), 3);
+    assert_ne!(events[1].identity, retired);
+    assert_eq!(events[1].identity, events[2].identity);
+    assert_eq!(
+        retained_node
+            .get_property_value(UiaPropertyId::Name.0)
+            .map(|_| ()),
+        Err(ELEMENT_NOT_AVAILABLE)
+    );
+}
+
+#[test]
+fn native_public_text_edit_reentrant_release_and_source_change_preserve_each_event() {
+    use ferroui_controls::automation::provider::TextEditChangeType as Cause;
+    let _app = UnitTestApplication::start(TestServices::styled_window());
+    let recording = RecordingScope::new();
+    let owner = Button::new();
+    let b = Button::new();
+    let c = Button::new();
+    let original = ControlAutomationPeer::create_peer_for_element(&owner);
+    let source = ControlAutomationPeer::create_peer_for_element(&b);
+    let next = ControlAutomationPeer::create_peer_for_element(&c);
+    original.set_events_source(Some(source.clone()));
+    let expected = AutomationNode::get_or_create(Some(&source)).unwrap();
+    let old_identity = expected.cast::<IUnknown>().unwrap().as_ptr() as usize;
+    let entered = Rc::new(Cell::new(false));
+    let original_weak = original.downgrade();
+    let source_weak = source.downgrade();
+    let next_weak = next.downgrade();
+    *recording.0.text_edit_callback.borrow_mut() = Some(Rc::new(move || {
+        if !entered.replace(true) {
+            AutomationNode::release(&source_weak.upgrade().unwrap());
+            let peer = original_weak.upgrade().unwrap();
+            peer.set_events_source(next_weak.upgrade());
+            peer.raise_text_edit_text_changed_event(
+                Cause::CompositionFinalized,
+                vec!["nested".into()],
+            );
+        }
+    }));
+    original.raise_text_edit_text_changed_event(Cause::Composition, vec!["outer".into()]);
+    let events = recording.0.text_edits.borrow();
+    assert_eq!(events.len(), 2);
+    assert_eq!(events[0].identity, old_identity);
+    assert_eq!(events[0].changed_data, ["outer"]);
+    assert_eq!(
+        AutomationNode::peer_from_identity(events[1].identity),
+        Some(next)
+    );
+    assert_eq!(events[1].changed_data, ["nested"]);
 }

@@ -2362,6 +2362,30 @@ mod native {
         found.then_some(Msg(msg))
     }
 
+    /// Maps a native rectangle between client areas. Passing exactly two
+    /// points preserves MapWindowPoints' RTL rectangle normalization.
+    pub fn map_window_rect(from: isize, to: isize, rect: RECT) -> Option<RECT> {
+        let mut points = [wf::POINT { x: rect.left, y: rect.top }, wf::POINT { x: rect.right, y: rect.bottom }];
+        // SAFETY: the array has exactly two writable POINTs; window handles
+        // are borrowed. A zero translation is success when last-error is zero.
+        unsafe {
+            wf::SetLastError(0);
+            let result = gdi::MapWindowPoints(h(from), h(to), points.as_mut_ptr(), 2);
+            if result == 0 && wf::GetLastError() != 0 { return None; }
+        }
+        Some(RECT { left: points[0].x, top: points[0].y, right: points[1].x, bottom: points[1].y })
+    }
+
+    /// Observes the next queued native message without removing it. Some
+    /// Korean input methods send END immediately before the queued result.
+    pub fn next_message_is_composition_result(hwnd: isize) -> bool {
+        // SAFETY: valid zeroed output; PM_NOREMOVE never consumes the message.
+        let mut msg: wm::MSG = unsafe { std::mem::zeroed() };
+        let found = unsafe { wm::PeekMessageW(&mut msg, std::ptr::null_mut(), 0, 0, wm::PM_NOREMOVE) != 0 };
+        found && msg.hwnd as isize == hwnd && msg.message == wm::WM_IME_COMPOSITION
+            && msg.lParam as u32 & super::GCS::GCS_RESULTSTR != 0
+    }
+
     /// An overlapped window of a class, never shown: what the device
     /// context of an OpenGL context belongs to.
     pub fn create_offscreen_gl_window(atom: u16) -> isize {
@@ -2483,6 +2507,14 @@ mod native {
         unsafe { ime::ImmCreateContext() as isize }
     }
 
+    /// `ImmDestroyContext`: only for a context created by this backend, after
+    /// all window associations have been removed and acquired borrows released.
+    pub fn imm_destroy_context(context: isize) -> bool {
+        // SAFETY: ownership is held by OwnedImmContext; associated windows and
+        // acquired borrows keep it alive until they have released the handle.
+        unsafe { ime::ImmDestroyContext(himc(context)) != 0 }
+    }
+
     /// `ImmAssociateContext`: gives a window an input context (0 for
     /// none) and returns the one it had.
     pub fn imm_associate_context(hwnd: isize, context: isize) -> isize {
@@ -2559,21 +2591,21 @@ mod native {
     }
 
     /// `ImmGetCompositionString` for a string of the composition: `None`
-    /// when the context has none (or the string is empty, as the helper of
-    /// the reference answers).
+    /// when the native read fails or contains malformed UTF-16. An explicit
+    /// empty native result is retained as an empty string.
     pub fn imm_get_composition_string(context: isize, index: u32) -> Option<String> {
         let buffer_length = imm_get_composition_value(context, index);
-        if buffer_length <= 0 {
-            return None;
-        }
+        if buffer_length < 0 || buffer_length % 2 != 0 { return None; }
+        if buffer_length == 0 { return Some(String::new()); }
         // The length is in bytes; the buffer is of UTF-16 code units.
-        let mut buffer = vec![0u16; (buffer_length as usize).div_ceil(2)];
+        let mut buffer = vec![0u16; buffer_length as usize / 2];
         // SAFETY: the system writes at most `buffer_length` bytes into a
         // buffer of at least that size.
         let result = unsafe {
             ime::ImmGetCompositionStringW(himc(context), index, buffer.as_mut_ptr().cast(), buffer_length as u32)
         };
-        (result >= 0).then(|| String::from_utf16_lossy(&buffer[..(result as usize / 2).min(buffer.len())]))
+        if result < 0 || result % 2 != 0 || result as usize > buffer.len() * 2 { return None; }
+        String::from_utf16(&buffer[..result as usize / 2]).ok()
     }
 
     /// `ImmSetCompositionString` with `SCS_SETSTR`: asks the input method
