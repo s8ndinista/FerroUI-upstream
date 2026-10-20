@@ -5034,7 +5034,6 @@ fn the_input_method_of_the_new_root_takes_over_when_focus_moves_between_roots() 
         tree.take_log(),
         [
             "im client none",
-            "other-im reset",
             "other-im options Normal",
             "other-im cursor 1,2 3x4",
             "other-im client other",

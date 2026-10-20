@@ -5,6 +5,7 @@ mod i_text_input_method_impl;
 mod input_method_manager;
 mod text_input_content_type;
 mod text_input_method_client;
+mod text_input_method_connection;
 mod text_input_method_client_requery_requested_event_args;
 mod text_input_method_client_requested_event_args;
 mod text_input_options;
@@ -23,3 +24,5 @@ pub use text_input_options::TextInputOptions;
 pub use text_input_return_key_type::TextInputReturnKeyType;
 pub use transform_tracking_helper::TransformTrackingHelper;
 
+
+pub use text_input_method_connection::{TextInputMethodCommit, TextInputMethodComposition, TextInputMethodConnection, TextInputMethodEditing, TextInputMethodError};
