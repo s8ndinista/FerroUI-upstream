@@ -44,12 +44,12 @@ use ferroui_base::{
 use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 
-struct TestClock {
+pub(super) struct TestClock {
     time: LightweightSubject<TimeSpan>,
     state: Cell<PlayState>,
 }
 impl TestClock {
-    fn install() -> Rc<Self> {
+    pub(super) fn install() -> Rc<Self> {
         let clock = Rc::new(Self {
             time: LightweightSubject::new(),
             state: Cell::new(PlayState::Run),
@@ -59,7 +59,7 @@ impl TestClock {
             .to_constant(clock.clone() as Rc<dyn IGlobalClock>);
         clock
     }
-    fn pulse(&self, milliseconds: f64) {
+    pub(super) fn pulse(&self, milliseconds: f64) {
         self.time.on_next(TimeSpan::from_milliseconds(milliseconds));
         Dispatcher::ui_thread().run_jobs(None);
     }
@@ -83,6 +83,7 @@ impl IGlobalClock for TestClock {}
 struct TestTransitionProvider {
     base: ItemCollectionTransitionProvider,
     animate: Cell<bool>,
+    only_add: Cell<bool>,
     should_calls: Cell<usize>,
     started: RefCell<Vec<Rc<ItemCollectionTransition>>>,
     start: RefCell<Option<Rc<dyn Fn(Vec<Rc<ItemCollectionTransition>>)>>>,
@@ -90,9 +91,9 @@ struct TestTransitionProvider {
 ferro_class!(TestTransitionProvider: ItemCollectionTransitionProvider);
 impl FerroObjectImpl for TestTransitionProvider {}
 impl ItemCollectionTransitionProviderImpl for TestTransitionProvider {
-    fn should_animate_core(this: &Self, _transition: Rc<ItemCollectionTransition>) -> bool {
+    fn should_animate_core(this: &Self, transition: Rc<ItemCollectionTransition>) -> bool {
         this.should_calls.set(this.should_calls.get() + 1);
-        this.animate.get()
+        this.animate.get() && (!this.only_add.get() || transition.operation() == Operation::Add)
     }
     fn start_transitions_core(this: &Self, transitions: Vec<Rc<ItemCollectionTransition>>) {
         this.started
@@ -109,6 +110,7 @@ impl TestTransitionProvider {
         instantiate(Self {
             base: ItemCollectionTransitionProvider::construct(),
             animate: Cell::new(animate),
+            only_add: Cell::new(false),
             should_calls: Cell::new(0),
             started: RefCell::new(Vec::new()),
             start: RefCell::new(None),
@@ -980,7 +982,9 @@ impl ferroui_base::platform::IPlatformSettings for MotionPlatformSettings {
     fn hold_wait_duration(&self) -> std::time::Duration {
         self.base.hold_wait_duration()
     }
-    fn hotkey_configuration(&self) -> Rc<ferroui_base::input::platform::PlatformHotkeyConfiguration> {
+    fn hotkey_configuration(
+        &self,
+    ) -> Rc<ferroui_base::input::platform::PlatformHotkeyConfiguration> {
         self.base.hotkey_configuration()
     }
     fn preferred_application_language(&self) -> String {
@@ -998,10 +1002,7 @@ impl ferroui_base::platform::IPlatformSettings for MotionPlatformSettings {
     ) -> Rc<dyn IDisposable> {
         self.base.color_values_changed(handler)
     }
-    fn preferred_application_language_changed(
-        &self,
-        handler: Rc<dyn Fn()>,
-    ) -> Rc<dyn IDisposable> {
+    fn preferred_application_language_changed(&self, handler: Rc<dyn Fn()>) -> Rc<dyn IDisposable> {
         self.base.preferred_application_language_changed(handler)
     }
 }
@@ -1022,7 +1023,11 @@ fn queued_transitions_observe_live_native_motion_settings_per_element() {
     provider.queue_transition(add(&provider, item.clone()));
     settings.enabled.set(true);
     provider.queue_transition(add(&provider, item));
-    assert_eq!(completed.get(), 0, "Even disabled transitions complete on a frame.");
+    assert_eq!(
+        completed.get(),
+        0,
+        "Even disabled transitions complete on a frame."
+    );
     clock.pulse(0.0);
     assert_eq!(provider.should_calls.get(), 1);
     assert_eq!(provider.started.borrow().len(), 1);
@@ -1054,11 +1059,18 @@ fn unattached_transitions_use_application_motion_preference_without_overriding_l
     assert_eq!(provider.should_calls.get(), 1);
 }
 
-fn transition_repeater() -> (Ref<super::ItemsRepeater>, Rc<ferroui_base::collections::FerroList<i32>>) {
+fn transition_repeater() -> (
+    Ref<super::ItemsRepeater>,
+    Rc<ferroui_base::collections::FerroList<i32>>,
+) {
     let repeater = super::ItemsRepeater::new();
     let source = Rc::new(ferroui_base::collections::FerroList::from_items([0, 1]));
     repeater.set_items_source(Some(source.clone().into()));
-    repeater.set_data_template(Some(FuncDataTemplate::new(|_| true, |_, _| Some(element()), true)));
+    repeater.set_data_template(Some(FuncDataTemplate::new(
+        |_| true,
+        |_, _| Some(element()),
+        true,
+    )));
     arrange_transition_repeater(&repeater);
     (repeater, source)
 }
@@ -1069,26 +1081,114 @@ fn arrange_transition_repeater(repeater: &super::ItemsRepeater) {
 }
 
 #[test]
+fn validate_item_collection_transition_provider() {
+    let _scope = test_scope();
+    let clock = TestClock::install();
+    let repeater = super::ItemsRepeater::new();
+    let source = Rc::new(ferroui_base::collections::FerroList::from_items(0..10));
+    repeater.set_items_source(Some(source.clone().into()));
+    repeater.set_data_template(Some(FuncDataTemplate::new(
+        |_| true,
+        |_, _| {
+            let child = Border::new();
+            child.set_height(50.0);
+            Some(child.upcast())
+        },
+        true,
+    )));
+    arrange_transition_repeater(&repeater);
+    let provider = TestTransitionProvider::new(true);
+    let calls = Rc::new(RefCell::new(Vec::new()));
+    let observed = calls.clone();
+    let weak = repeater.downgrade();
+    *provider.start.borrow_mut() = Some(Rc::new(move |transitions| {
+        let repeater = weak.upgrade().unwrap();
+        for transition in transitions {
+            let progress = transition.start();
+            observed.borrow_mut().push((
+                repeater.get_element_index(&progress.element().unwrap()),
+                transition.clone(),
+            ));
+            progress.complete();
+        }
+    }));
+    repeater.set_item_transition_provider(Some(provider.clone().upcast()));
+    for (frame, only_add) in [false, true].into_iter().enumerate() {
+        provider.only_add.set(only_add);
+        calls.borrow_mut().clear();
+        source.insert(0, -1);
+        source.remove_at(2);
+        arrange_transition_repeater(&repeater);
+        clock.pulse(frame as f64 * 16.0);
+        let calls = calls.borrow();
+        let additions: Vec<_> = calls
+            .iter()
+            .filter(|(_, t)| t.operation() == Operation::Add)
+            .collect();
+        let removals: Vec<_> = calls
+            .iter()
+            .filter(|(_, t)| t.operation() == Operation::Remove)
+            .collect();
+        let moves: Vec<_> = calls
+            .iter()
+            .filter(|(_, t)| t.operation() == Operation::Move)
+            .collect();
+        assert_eq!(additions.len(), 1);
+        assert_eq!(additions[0].0, 0);
+        assert_eq!(additions[0].1.triggers(), Triggers::COLLECTION_CHANGE_ADD);
+        if only_add {
+            assert!(removals.is_empty());
+            assert!(moves.is_empty());
+        } else {
+            assert_eq!(removals.len(), 1);
+            assert_eq!(removals[0].0, -1);
+            assert_eq!(removals[0].1.triggers(), Triggers::COLLECTION_CHANGE_REMOVE);
+            assert_eq!(moves.len(), 1);
+            assert_eq!(moves[0].0, 1);
+            assert_eq!(
+                moves[0].1.triggers(),
+                Triggers::COLLECTION_CHANGE_ADD | Triggers::COLLECTION_CHANGE_REMOVE
+            );
+            assert_eq!(moves[0].1.old_bounds().y, 0.0);
+            assert_eq!(moves[0].1.new_bounds().y, 50.0);
+        }
+    }
+}
+
+#[test]
 fn removal_completion_invalidates_arrange_and_does_not_recycle_a_reused_element_twice() {
     let _scope = test_scope();
     let clock = TestClock::install();
     let (repeater, source) = transition_repeater();
     let provider = TestTransitionProvider::new(true);
     *provider.start.borrow_mut() = Some(Rc::new(|transitions| {
-        for transition in transitions { transition.start(); }
+        for transition in transitions {
+            transition.start();
+        }
     }));
     repeater.set_item_transition_provider(Some(provider.clone().upcast()));
     let removed = repeater.try_get_element(0).unwrap();
     source.remove_at(0);
     arrange_transition_repeater(&repeater);
     clock.pulse(0.0);
-    let transition = provider.started.borrow().iter()
-        .find(|transition| transition.operation() == Operation::Remove).unwrap().clone();
-    assert_eq!(super::ItemsRepeater::get_virtualization_info(&removed).owner(), ElementOwner::Animator);
+    let transition = provider
+        .started
+        .borrow()
+        .iter()
+        .find(|transition| transition.operation() == Operation::Remove)
+        .unwrap()
+        .clone();
+    assert_eq!(
+        super::ItemsRepeater::get_virtualization_info(&removed).owner(),
+        ElementOwner::Animator
+    );
     assert!(repeater.is_arrange_valid());
     transition.start().complete();
     assert!(!repeater.is_arrange_valid());
-    assert_eq!(super::ItemsRepeater::get_virtualization_info(&removed).owner(), ElementOwner::ElementFactory);
+    assert_eq!(
+        super::ItemsRepeater::get_virtualization_info(&removed).owner(),
+        ElementOwner::ElementFactory
+    );
     arrange_transition_repeater(&repeater);
     assert!(removed.bounds().x < -1000.0);
 
@@ -1097,8 +1197,18 @@ fn removal_completion_invalidates_arrange_and_does_not_recycle_a_reused_element_
     assert_eq!(repeater.try_get_element(1), Some(removed.clone()));
     transition.start().complete();
     assert_eq!(repeater.try_get_element(1), Some(removed.clone()));
-    assert_eq!(super::ItemsRepeater::get_virtualization_info(&removed).owner(), ElementOwner::Layout);
-    assert_eq!(*removed.data_context().unwrap().downcast_ref::<i32>().unwrap(), 2);
+    assert_eq!(
+        super::ItemsRepeater::get_virtualization_info(&removed).owner(),
+        ElementOwner::Layout
+    );
+    assert_eq!(
+        *removed
+            .data_context()
+            .unwrap()
+            .downcast_ref::<i32>()
+            .unwrap(),
+        2
+    );
 }
 
 #[test]
@@ -1116,7 +1226,10 @@ fn shared_transition_provider_completes_only_the_repeaters_own_elements() {
     source.remove_at(0);
     arrange_transition_repeater(&first);
     clock.pulse(0.0);
-    assert_eq!(super::ItemsRepeater::get_virtualization_info(&removed).owner(), ElementOwner::ElementFactory);
+    assert_eq!(
+        super::ItemsRepeater::get_virtualization_info(&removed).owner(),
+        ElementOwner::ElementFactory
+    );
     assert_eq!(second.try_get_element(0), Some(second_first));
     assert_eq!(second.realized_elements().len(), 2);
 }

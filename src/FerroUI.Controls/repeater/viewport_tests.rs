@@ -8,14 +8,18 @@ use super::*;
 use crate::presenters::ScrollContentPresenter;
 use crate::primitives::{Popup, ScrollBarVisibility};
 use crate::templates::{FuncControlTemplate, FuncDataTemplate};
-use crate::test_support::{TestRoot, test_scope};
+use crate::test_support::{test_scope, TestRoot};
 use crate::testing::{TestServices, UnitTestApplication};
-use crate::{Border, Control, Grid, ItemsSource, LayoutTransformControl, ScrollViewer, Window};
+use crate::{
+    Border, Control, Grid, ItemsSource, LayoutTransformControl, ScrollViewer, TextBlock, Window,
+};
+use ferroui_base::data::BindingPriority;
 use ferroui_base::layout::{HorizontalAlignment, ILayoutManager, VerticalAlignment};
 use ferroui_base::media::ScaleTransform;
 use ferroui_base::threading::Dispatcher;
 use ferroui_base::{
-    FerroObjectImpl, Point, Rect, Ref, Size, Vector, ferro_class, ferro_impl_classes, instantiate,
+    ferro_class, ferro_impl_classes, instantiate, BoxedValue, FerroObject, FerroObjectExtensions,
+    FerroObjectImpl, Point, Rect, Ref, Size, StyledElement, Thickness, Vector,
 };
 use std::cell::{Cell, RefCell};
 
@@ -435,6 +439,171 @@ fn can_bring_into_view_elements_with_native_scroll_viewer() {
         assert_eq!(repeater.get_element_index(&element), index);
         assert!(repeater.viewport_manager.made_anchor().is_none());
         assert!(repeater.realized_elements().len() <= 10);
+    }
+}
+
+#[test]
+fn verify_uniform_grid_layout_doesnt_crash_when_trying_to_scroll_to_end() {
+    let _scope = test_scope();
+    let repeater = ItemsRepeater::new();
+    let grid = UniformGridLayout::new();
+    grid.set_min_item_width(100.0);
+    grid.set_min_item_height(40.0);
+    grid.set_min_row_spacing(10.0);
+    grid.set_min_column_spacing(10.0);
+    repeater.set_layout(Some(grid.upcast()));
+    repeater.set_items_source(Some(ItemsSource::from_items((0..1000).map(|index| {
+        let text = TextBlock::new();
+        text.set_text(Some(format!("#{index}")));
+        let border = Border::new();
+        border.set_child(&text);
+        Some(Control::boxed(border))
+    }))));
+    let scroll = viewer(&repeater.clone().upcast(), Some(Size::new(400.0, 600.0)));
+    scroll.set_horizontal_scroll_bar_visibility(ScrollBarVisibility::Disabled);
+    let root = TestRoot::with_child(&scroll);
+    root.execute_initial_layout_pass();
+    settle(&root);
+    scroll.set_offset(Vector::new(0.0, repeater.bounds().height));
+    settle(&root);
+    assert!(repeater.try_get_element(999).is_some());
+    scroll.set_offset(Vector::default());
+    settle(&root);
+    assert!(repeater.try_get_element(0).is_some());
+    assert_eq!(scroll.offset(), Vector::default());
+}
+
+#[test]
+fn verify_uniform_grid_layout_doesnt_hang_when_trying_to_scroll_to_start() {
+    let _scope = test_scope();
+    let outer = ItemsRepeater::new();
+    outer.set_items_source(Some(ItemsSource::from_values(
+        (0..10).map(|_| ItemsSource::from_values(1..7)),
+    )));
+    outer.set_data_template(Some(FuncDataTemplate::new(
+        |_| true,
+        |_, _| {
+            let inner = ItemsRepeater::new();
+            let grid = UniformGridLayout::new();
+            grid.set_orientation(ferroui_base::layout::Orientation::Horizontal);
+            grid.set_min_item_width(150.0);
+            grid.set_min_item_height(150.0);
+            grid.set_maximum_rows_or_columns(3);
+            grid.set_min_row_spacing(4.0);
+            grid.set_min_column_spacing(4.0);
+            grid.set_items_stretch(UniformGridLayoutItemsStretch::Fill);
+            inner.set_layout(Some(grid.upcast()));
+            let object: &FerroObject = &inner;
+            inner.bind(
+                ItemsRepeater::items_source_property(),
+                FerroObjectExtensions::get_observable_with(
+                    object,
+                    StyledElement::data_context_property(),
+                    |data: Option<BoxedValue>| {
+                        data.and_then(|data| data.downcast_ref::<ItemsSource>().cloned())
+                    },
+                ),
+                BindingPriority::LocalValue,
+            );
+            Some(inner.upcast())
+        },
+        true,
+    )));
+    let scroll = viewer(&outer.clone().upcast(), Some(Size::new(500.0, 400.0)));
+    scroll.set_horizontal_scroll_bar_visibility(ScrollBarVisibility::Disabled);
+    let root = TestRoot::with_child(&scroll);
+    root.execute_initial_layout_pass();
+    settle(&root);
+    for step in (1..=16).chain((0..16).rev()) {
+        let end = (scroll.extent().height - scroll.viewport().height).max(0.0);
+        scroll.set_offset(Vector::new(0.0, end * step as f64 / 16.0));
+        settle(&root);
+        assert!(scroll.offset().y.is_finite());
+        assert!(!outer.realized_elements().is_empty());
+    }
+    assert_eq!(scroll.offset().y, 0.0);
+    let first = outer
+        .try_get_element(0)
+        .unwrap()
+        .cast::<ItemsRepeater>()
+        .unwrap();
+    assert!(first.try_get_element(0).is_some());
+}
+
+#[test]
+fn can_bring_into_view_elements_with_alignment_and_animation() {
+    let _scope = test_scope();
+    let clock = super::services_tests::TestClock::install();
+    let repeater = ItemsRepeater::new();
+    repeater.set_horizontal_cache_length(0.0);
+    repeater.set_vertical_cache_length(0.0);
+    repeater.set_items_source(Some(ItemsSource::from_values(0..400)));
+    repeater.set_data_template(Some(FuncDataTemplate::new(
+        |_| true,
+        |_, _| {
+            let border = Border::new();
+            border.set_height(94.0);
+            border.set_margin(Thickness::uniform(5.0));
+            Some(border.upcast())
+        },
+        true,
+    )));
+    let scroll = viewer(&repeater.clone().upcast(), None);
+    scroll.set_horizontal_scroll_bar_visibility(ScrollBarVisibility::Disabled);
+    let host = ItemsRepeaterScrollHost::new();
+    host.set_width(400.0);
+    host.set_height(600.0);
+    host.set_scroll_viewer(Some(scroll.clone()));
+    let root = TestRoot::with_child(&host);
+    root.execute_initial_layout_pass();
+    settle(&root);
+
+    // Preserve the source sequence and outer dimensions. FerroUI's native
+    // compatibility host supplies alignment/animation options, and its clock
+    // replaces CompositionTarget ticks without wall-clock sleeps.
+    for (step, (index, alignment, animate, expected_first, expected_last)) in [
+        (100, 0.5, false, 96, 103),
+        (103, 0.5, true, 99, 107),
+        (0, 0.5, true, 0, 6),
+        (20, 0.0, false, 19, 26),
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        let target = repeater.get_or_create_element(index);
+        host.start_bring_into_view(&target, 0.0, alignment, 0.0, 0.0, animate);
+        settle(&root);
+        if animate {
+            let time = step as f64 * 1000.0;
+            clock.pulse(time);
+            settle(&root);
+            clock.pulse(time + 125.0);
+            settle(&root);
+            clock.pulse(time + 251.0);
+            settle(&root);
+        }
+        assert!(!host.has_pending_bring_into_view());
+        let mut realized: Vec<_> = repeater
+            .realized_elements()
+            .iter()
+            .map(|element| repeater.get_element_index(element))
+            .collect();
+        realized.sort_unstable();
+        assert_eq!(
+            realized,
+            (expected_first..=expected_last).collect::<Vec<_>>()
+        );
+        if index == 0 {
+            assert_eq!(scroll.offset().y, 0.0);
+        }
+        let before = scroll.offset();
+        host.start_bring_into_view(&target, 0.0, alignment, 0.0, 0.0, false);
+        settle(&root);
+        assert_eq!(
+            scroll.offset(),
+            before,
+            "repeating the same aligned request is a no-op"
+        );
     }
 }
 

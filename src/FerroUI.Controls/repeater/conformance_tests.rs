@@ -387,7 +387,11 @@ fn verify_repeater_does_not_leak_item_containers() {
     repeater.set_data_template(Some(template(true)));
     let root = TestRoot::with_child(&repeater);
     root.execute_initial_layout_pass();
-    let containers = repeater.realized_elements().iter().map(Ref::downgrade).collect::<Vec<_>>();
+    let containers = repeater
+        .realized_elements()
+        .iter()
+        .map(Ref::downgrade)
+        .collect::<Vec<_>>();
     assert_eq!(containers.len(), 10);
     let weak = repeater.downgrade();
     root.set_child(None::<Ref<Control>>);
@@ -395,7 +399,9 @@ fn verify_repeater_does_not_leak_item_containers() {
     drop(repeater);
     ferroui_base::threading::Dispatcher::ui_thread().run_jobs(None);
     assert!(weak.upgrade().is_none());
-    assert!(containers.iter().all(|container| container.upgrade().is_none()));
+    assert!(containers
+        .iter()
+        .all(|container| container.upgrade().is_none()));
     assert!(!source.has_collection_changed_subscribers());
 }
 
@@ -410,19 +416,27 @@ fn verify_repeater_with_recycled_elements_does_not_leak() {
     repeater.set_data_template(Some(template));
     let root = TestRoot::with_child(&repeater);
     root.execute_initial_layout_pass();
-    let containers = repeater.realized_elements().iter().map(Ref::downgrade).collect::<Vec<_>>();
+    let containers = repeater
+        .realized_elements()
+        .iter()
+        .map(Ref::downgrade)
+        .collect::<Vec<_>>();
     let weak = repeater.downgrade();
     source.clear();
     root.layout_manager().execute_layout_pass();
     assert!(repeater.realized_elements().is_empty());
-    assert!(containers.iter().all(|container| container.upgrade().is_some()));
+    assert!(containers
+        .iter()
+        .all(|container| container.upgrade().is_some()));
     root.set_child(None::<Ref<Control>>);
     root.layout_manager().execute_layout_pass();
     drop(repeater);
     ferroui_base::threading::Dispatcher::ui_thread().run_jobs(None);
     assert!(weak.upgrade().is_none());
     assert!(weak_template.upgrade().is_none());
-    assert!(containers.iter().all(|container| container.upgrade().is_none()));
+    assert!(containers
+        .iter()
+        .all(|container| container.upgrade().is_none()));
     assert!(!source.has_collection_changed_subscribers());
 }
 
@@ -445,7 +459,11 @@ fn verify_repeater_with_recycling_element_factory_does_not_leak() {
     repeater.set_items_source(Some(source.clone().into()));
     let root = TestRoot::with_child(&repeater);
     root.execute_initial_layout_pass();
-    let containers = repeater.realized_elements().iter().map(Ref::downgrade).collect::<Vec<_>>();
+    let containers = repeater
+        .realized_elements()
+        .iter()
+        .map(Ref::downgrade)
+        .collect::<Vec<_>>();
     let weak = repeater.downgrade();
     source.clear();
     root.layout_manager().execute_layout_pass();
@@ -456,7 +474,9 @@ fn verify_repeater_with_recycling_element_factory_does_not_leak() {
     ferroui_base::threading::Dispatcher::ui_thread().run_jobs(None);
     assert!(weak.upgrade().is_none());
     assert!(weak_factory.upgrade().is_none());
-    assert!(containers.iter().all(|container| container.upgrade().is_none()));
+    assert!(containers
+        .iter()
+        .all(|container| container.upgrade().is_none()));
     assert!(!source.has_collection_changed_subscribers());
 }
 
@@ -1151,6 +1171,86 @@ fn verify_clearing_items_source_clears_elements() {
 }
 
 #[test]
+fn validate_null_item_template_and_container_in_items() {
+    let _scope = test_scope();
+    let repeater = ItemsRepeater::new();
+    repeater.set_layout(Some(StackLayout::new().upcast()));
+    let buttons: Vec<_> = (0..10)
+        .map(|index| {
+            let button = Button::new();
+            button.set_content(Some(Rc::new(index)));
+            button.set_height(20.0);
+            button
+        })
+        .collect();
+    repeater.set_items_source(Some(ItemsSource::from_items(
+        buttons.iter().map(|button| Some(Control::boxed(button))),
+    )));
+    run(&repeater);
+    assert!(repeater.item_template().is_none());
+    assert_eq!(repeater.children().count(), 10);
+    for (index, button) in buttons.iter().enumerate() {
+        assert_eq!(
+            repeater.try_get_element(index as i32),
+            Some(button.clone().upcast())
+        );
+        assert_eq!(
+            *button.content().unwrap().downcast_ref::<i32>().unwrap(),
+            index as i32
+        );
+        assert!(button.visual_parent().is_some());
+    }
+    repeater.set_items_source(None);
+    for button in buttons {
+        assert!(button.visual_parent().is_none());
+    }
+}
+
+#[test]
+fn verify_stack_layout_alignment() {
+    use ferroui_base::layout::HorizontalAlignment;
+    let _scope = test_scope();
+    for alignment in [
+        HorizontalAlignment::Left,
+        HorizontalAlignment::Center,
+        HorizontalAlignment::Right,
+        HorizontalAlignment::Stretch,
+    ] {
+        let repeater = ItemsRepeater::new();
+        repeater.set_horizontal_alignment(alignment);
+        repeater.set_items_source(Some(ItemsSource::from_values(0..2)));
+        repeater.set_data_template(Some(template(false)));
+        let border = Border::new();
+        border.set_width(400.0);
+        border.set_height(400.0);
+        border.set_child(Some(repeater.clone().upcast()));
+        let root = TestRoot::with_child(&border);
+        root.execute_initial_layout_pass();
+        assert_eq!(repeater.horizontal_alignment(), alignment);
+        let x = repeater
+            .translate_point(Point::default(), &border)
+            .unwrap()
+            .x;
+        let remaining = border.bounds().width - repeater.bounds().width;
+        let expected = match alignment {
+            HorizontalAlignment::Left | HorizontalAlignment::Stretch => 0.0,
+            HorizontalAlignment::Center => remaining / 2.0,
+            HorizontalAlignment::Right => remaining,
+        };
+        assert_eq!(x, expected);
+        if matches!(
+            alignment,
+            HorizontalAlignment::Center | HorizontalAlignment::Right
+        ) {
+            assert!(x > 0.0);
+        }
+        for index in 0..2 {
+            assert!(repeater.try_get_element(index).is_some());
+        }
+    }
+}
+
+#[test]
 fn verify_invalid_item_template_type_is_rejected() {
     let _scope = test_scope();
     let (repeater, _) = fixture(3, None);
@@ -1393,6 +1493,60 @@ fn removing_last_index_changed_handler_detaches_it() {
     subscription.dispose();
     source.insert(0, 200);
     assert_eq!(calls.get(), 3);
+}
+
+#[test]
+fn verify_removing_last_event_handler_detaches_it() {
+    use super::selection::SelectionModel;
+    let _scope = test_scope();
+    let source = || {
+        ItemsSource::from_values([
+            ItemsSource::from_values([1, 2, 3]),
+            ItemsSource::from_values([4, 5, 6]),
+        ])
+    };
+    let model = SelectionModel::new();
+    model.set_source(Some(source()));
+    let calls = Rc::new(Cell::new(0));
+    let observed = calls.clone();
+    let subscription = model.children_requested(move |args| {
+        observed.set(observed.get() + 1);
+        args.set_children(
+            args.source()
+                .unwrap()
+                .as_ref()
+                .and_then(SelectionModel::source_from_item),
+        );
+    });
+    model.select_with_group(0, 1).unwrap();
+    assert!(calls.get() > 0);
+    subscription.dispose();
+    let before = calls.get();
+    model.set_source(Some(source()));
+    model.select_with_group(1, 2).unwrap();
+    assert_eq!(calls.get(), before);
+    assert_eq!(model.is_selected_with_group(1, 2), Some(true));
+
+    let factory = RecyclingElementFactory::new();
+    factory.set_recycle_pool(Some(RecyclePool::new()));
+    factory.templates().set("T".into(), template(false));
+    factory.templates().set("U".into(), template(true));
+    let selects = Rc::new(Cell::new(0));
+    let observed = selects.clone();
+    let subscription = factory.select_template_key(move |args| {
+        observed.set(observed.get() + 1);
+        args.set_template_key("U");
+    });
+    let owner = StackPanel::new();
+    let args = ElementFactoryGetArgs::new(Some(Rc::new(1_i32)), Some(owner.upcast()));
+    assert!(factory.get_element(&args).unwrap().is::<Button>());
+    assert_eq!(selects.get(), 1);
+    subscription.dispose();
+    assert_eq!(
+        factory.get_element(&args),
+        Err(ElementFactoryError::EmptyTemplateKey)
+    );
+    assert_eq!(selects.get(), 1);
 }
 
 // Additional source-fidelity regression: implicit template installation is a

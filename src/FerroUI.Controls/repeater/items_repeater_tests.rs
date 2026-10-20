@@ -6,7 +6,7 @@
 use super::*;
 use crate::items_source::ItemsChangedHandler;
 use crate::templates::FuncDataTemplate;
-use crate::test_support::{TestRoot, test_scope};
+use crate::test_support::{test_scope, TestRoot};
 use crate::{
     Border, Button, Control, IItemsList, IKeyIndexMapping, ItemsChangedEventArgs, ItemsSource,
 };
@@ -15,11 +15,11 @@ use ferroui_base::input::{ICustomKeyboardNavigation, InputElement, NavigationDir
 use ferroui_base::threading::Dispatcher;
 use ferroui_base::utilities::HandlerList;
 use ferroui_base::{
-    BoxedValue, FerroObjectImpl, Rect, Ref, Size, Thickness, ferro_class, ferro_impl_classes,
-    instantiate,
+    ferro_class, ferro_impl_classes, instantiate, BoxedValue, FerroObjectImpl, Rect, Ref, Size,
+    Thickness,
 };
 use std::cell::{Cell, RefCell};
-use std::panic::{AssertUnwindSafe, catch_unwind};
+use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::rc::Rc;
 
 #[repr(C)]
@@ -456,6 +456,38 @@ fn source_change_and_drop_unsubscribe() {
 }
 
 #[test]
+fn validate_mapping_and_auto_recycling() {
+    let _scope = test_scope();
+    let (repeater, window, factory) = fixture(5, &[]);
+    let forced =
+        ElementRealizationOptions::FORCE_CREATE | ElementRealizationOptions::SUPPRESS_AUTO_RECYCLE;
+    *window.requests.borrow_mut() = vec![
+        (0, ElementRealizationOptions::NONE),
+        (0, ElementRealizationOptions::NONE),
+        (1, forced),
+        (1, forced),
+    ];
+    layout(&repeater);
+    {
+        let live = window.live.borrow();
+        assert!(live[0].1.ptr_eq(&live[1].1));
+        assert!(!live[2].1.ptr_eq(&live[3].1));
+    }
+    assert_eq!(factory.created.get(), 3);
+    assert!(repeater.try_get_element(0).is_some());
+    assert!(repeater.try_get_element(1).is_some());
+
+    // Match the source's second measure without any element requests: normal
+    // mapping is automatically recycled; both explicitly retained roots live.
+    window.set_indices(&[]);
+    layout(&repeater);
+    assert!(repeater.try_get_element(0).is_none());
+    assert!(repeater.try_get_element(1).is_some());
+    assert_eq!(repeater.realized_elements().len(), 2);
+    assert_eq!(factory.cleared.borrow().len(), 1);
+}
+
+#[test]
 fn template_change_preserves_old_pool_ownership_until_reuse() {
     let _scope = test_scope();
     let (repeater, _, old_factory) = fixture(1, &[0]);
@@ -598,12 +630,10 @@ fn stack_virtualization_does_not_enumerate_a_million_item_source() {
     layout(&repeater);
     assert!(repeater.realized_elements().len() <= 8);
     assert!(source.0.get() <= 25);
-    assert!(
-        repeater
-            .realized_elements()
-            .iter()
-            .all(|e| repeater.get_element_index(e) > 49_990)
-    );
+    assert!(repeater
+        .realized_elements()
+        .iter()
+        .all(|e| repeater.get_element_index(e) > 49_990));
 }
 
 #[test]
