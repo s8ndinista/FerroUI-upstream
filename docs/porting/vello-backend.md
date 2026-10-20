@@ -1248,6 +1248,8 @@ The goal: each of the three modes as fast as the Skia backend or faster, on macO
 
 ### 14.1 How it is measured
 
+(The Skia numbers of 14.2 to 14.4 were measured under load; 14.5 has the comparison of every renderer in one session.)
+
 The frame benchmarks of the catalog (section 11.1) on the Metal surface that is not on screen, 2560 by 1600 pixels (scaling 2), on an Apple M3 Pro, in an optimised build. Every frame waits until the device has drawn it, so a time holds the work of the GPU, for Skia (Graphite) as for Vello. The test binary is built once and run once a renderer and a benchmark:
 
 ```sh
@@ -1336,7 +1338,37 @@ The Metal surface after round 2:
 
 What a frame of the hybrid mode is now: on the text page about 0.85 ms on the processor (recording 0.64, of which glyph runs 0.36; the render call 0.19) and about 1 ms of waiting for the device, of which about 0.25 ms is the copy of the frame of the window into the drawable (measured by leaving it out) and about 0.3 ms the hand-over between the queues; in the tour 911 of 1511 samples of the frame are that wait. The Skia backend copies its layer into the drawable as well.
 
-### 14.5 Linux and Windows, as found (2026-10-19)
+### 14.5 Correction: one session for every renderer (2026-10-20)
+
+The Skia column of 14.2, 14.3 and 14.4 was measured in the first session, where `cargo test` built the two sample crates again before every run: the machine was loaded or warm, and Skia came out slower than it is (scrolled 2.28 ms where it is 1.15, the first round of the tour 1028 ms where it is 557). The Vello columns of those tables were measured in later sessions without that. The comparisons in them that say Vello is as fast as Skia or faster hold for the pointer across the buttons, the effects pages and the software framebuffer, and not for the scrolled page and the tour on the Metal surface.
+
+Every renderer measured again from the same build in one session (Skia before the others and after them; the two Skia runs agree within 0.1 ms), after round 2:
+
+| Scenario (Metal surface) | Skia | hybrid | GPU | CPU |
+|---|---|---|---|---|
+| buttons page, the pointer moving across the buttons | 1.08 | **0.72** | 1.17 | **0.62** |
+| buttons page, scrolled 20 pixels a frame | 1.15 | 2.31 | 2.45 | 4.90 |
+| text block page, drawn again | 0.70 | 1.42 | 2.01 | 4.37 |
+| effects page, every box drawn again | 9.68 | **7.99** | 11.59 | 22.72 |
+| effects page, one box drawn again | 3.88 | **3.37** | 4.85 | 6.84 |
+| catalog tour, first round | 557 | 871 | 1119 | 2179 |
+| catalog tour, second round | 466 | 905 | 1133 | 2269 |
+
+(The GPU column already holds the changes of round 3, the next pull request: filter scenes on the device and bounded scenes.)
+
+| Scenario (raster surface) | Skia raster | CPU |
+|---|---|---|
+| buttons page, the pointer moving across the buttons | 1.48 | **0.56** |
+| buttons page, scrolled 20 pixels a frame | 3.27 | **2.39** |
+| text block page, drawn again | 2.42 | **1.90** |
+| effects page, every box drawn again | 77.38 | **20.12** |
+| effects page, one box drawn again | 6.18 | 6.26 |
+| catalog tour, first round | 1633 | **1367** |
+| catalog tour, second round | 1716 | **1357** |
+
+From now on a comparison is made this way: one build, every renderer in one session, Skia first and last.
+
+### 14.6 Linux and Windows, as found (2026-10-19)
 
 - The backend draws a window of these platforms in the CPU mode only: `wgpu` is built with Metal alone, and `create_gpu` takes the Metal device of macOS only. A platform that hands out graphics (X11 with GLX, its default; Wayland with EGL, its default; Windows with ANGLE on Direct3D 11, its default) makes the backend panic; it draws when the platform renders in software.
 - In software every frame of these platforms was whole: the framebuffers are not kept (X11 `XPutImage` and `XShm`, Wayland `wl_shm` with a new buffer every frame, Windows `SetDIBitsToDevice`), so the compositor drew into a layer of its own and the whole layer into the framebuffer; the framebuffers are BGRA, so the CPU mode rendered into pixels of its own and converted all of them. Round 2 (item 1) keeps the frame in the render target instead: what changed is rendered, and only the conversion into the framebuffer is whole.
