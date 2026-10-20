@@ -55,6 +55,45 @@ jobs:
       - name: Runtime and compiled XAML
         if: ${{ !cancelled() }}
         run: cargo test --locked -p ferroui-markup-xaml-tests --no-fail-fast
+      - name: Regenerate WinUI theme reference
+        if: ${{ !cancelled() }}
+        run: cargo test --locked -p ferroui-themes-winui --lib tests::compiled_xaml_tests::regenerate_compiled_xaml -- --ignored --exact
+      - name: Regenerate Fluent theme reference
+        if: ${{ !cancelled() }}
+        run: cargo test --locked -p ferroui-themes-fluent --lib tests::compiled_xaml_tests::regenerate_compiled_xaml -- --ignored --exact
+      - name: Regenerate Simple theme reference
+        if: ${{ !cancelled() }}
+        run: cargo test --locked -p ferroui-themes-simple --lib tests::compiled_xaml_tests::regenerate_compiled_xaml -- --ignored --exact
+      - name: Regenerate differential XAML reference
+        if: ${{ !cancelled() }}
+        run: cargo test --locked -p ferroui-markup-xaml-tests --lib emitter::differential_tests::regenerate_emitter_output -- --ignored --exact
+      - name: Verify checked-in generated references
+        if: ${{ !cancelled() }}
+        run: >-
+          git diff --exit-code --
+          src/FerroUI.Themes.WinUI/compiled_xaml.rs
+          src/FerroUI.Themes.WinUI/compiled_xaml.xamlmeta
+          src/FerroUI.Themes.Fluent/compiled_xaml.rs
+          src/FerroUI.Themes.Fluent/compiled_xaml.xamlmeta
+          src/FerroUI.Themes.Simple/compiled_xaml.rs
+          src/FerroUI.Themes.Simple/compiled_xaml.xamlmeta
+          tests/FerroUI.Markup.Xaml.UnitTests/emitter/generated.rs
+          tests/FerroUI.Markup.Xaml.UnitTests/emitter/generated.map.json
+      - name: Upload generated references for review
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: rich-text-generated-references
+          retention-days: 7
+          path: |
+            src/FerroUI.Themes.WinUI/compiled_xaml.rs
+            src/FerroUI.Themes.WinUI/compiled_xaml.xamlmeta
+            src/FerroUI.Themes.Fluent/compiled_xaml.rs
+            src/FerroUI.Themes.Fluent/compiled_xaml.xamlmeta
+            src/FerroUI.Themes.Simple/compiled_xaml.rs
+            src/FerroUI.Themes.Simple/compiled_xaml.xamlmeta
+            tests/FerroUI.Markup.Xaml.UnitTests/emitter/generated.rs
+            tests/FerroUI.Markup.Xaml.UnitTests/emitter/generated.map.json
 
   windows:
     name: Native Windows input and automation contracts
