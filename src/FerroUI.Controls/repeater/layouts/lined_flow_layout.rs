@@ -10,8 +10,9 @@ use super::*;
 use crate::repeater::{
     ItemCollectionTransitionProvider, LinedFlowLayoutItemCollectionTransitionProvider,
 };
-use crate::{ItemsChangedEventArgs, TopLevel};
+use crate::{Control, ItemsChangedEventArgs};
 use ferroui_base::collections::NotifyCollectionChangedAction;
+use ferroui_base::layout::LayoutHelper;
 use ferroui_base::reactive::{Disposable, IDisposable};
 use ferroui_base::threading::{Dispatcher, DispatcherPriority, DispatcherTimer};
 use ferroui_base::utilities::HandlerList;
@@ -83,6 +84,7 @@ pub struct LinedFlowLayout {
     anchor_index: Cell<i32>,
     anchor_retention: Cell<i32>,
     rounding_scale: Cell<f64>,
+    context_generation: Cell<u64>,
     async_invalidation_pending: Cell<bool>,
     timer: RefCell<Option<(Rc<DispatcherTimer>, Rc<dyn IDisposable>)>>,
     timer_tick_count: Cell<i32>,
@@ -154,6 +156,7 @@ impl LinedFlowLayout {
             anchor_index: Cell::new(-1),
             anchor_retention: Cell::new(0),
             rounding_scale: Cell::new(1.0),
+            context_generation: Cell::new(0),
             async_invalidation_pending: Cell::new(false),
             timer: RefCell::new(None),
             timer_tick_count: Cell::new(0),
@@ -390,6 +393,8 @@ impl LinedFlowLayout {
             return Err(LinedFlowLayoutError::CannotShareLayout);
         }
         *self.context.borrow_mut() = Some(context.downgrade());
+        self.context_generation
+            .set(self.context_generation.get().wrapping_add(1));
         self.element_manager.set_context(context);
         self.item_count.set(context.item_count());
         self.force_relayout.set(true);
@@ -424,6 +429,9 @@ impl LinedFlowLayout {
     }
     pub fn uses_fast_path_layout(&self) -> bool {
         self.fast_path_layout.get()
+    }
+    fn uses_arrange_width_info(&self) -> bool {
+        self.uses_fast_path_layout() || self.items_info.borrow().start >= 0
     }
     fn line_index(&self, item: i32) -> i32 {
         if item == 0 {
@@ -541,6 +549,9 @@ impl LinedFlowLayout {
         if suggested >= 0 && suggested < self.item_count.get() {
             self.anchor_index.set(suggested);
             self.anchor_retention.set(10);
+        } else if self.anchor_index.get() >= self.item_count.get() {
+            self.anchor_index.set(-1);
+            self.anchor_retention.set(0);
         } else if self.anchor_retention.get() > 0 {
             self.anchor_retention.set(self.anchor_retention.get() - 1);
         } else {
@@ -695,7 +706,8 @@ impl LinedFlowLayout {
     }
     fn request_items_info(&self, first: i32, end: i32) -> bool {
         if self.items_info_requested.is_empty() {
-            if self.items_info.borrow().start != -1 || self.fast_path_layout.replace(false) {
+            let was_fast = self.fast_path_layout.replace(false);
+            if self.items_info.borrow().start != -1 || was_fast {
                 *self.items_info.borrow_mut() = Rc::new(LinedFlowItemsInfo::default());
                 self.force_relayout.set(true);
             }
@@ -723,7 +735,14 @@ impl LinedFlowLayout {
         for (start, end) in requests {
             let info = self.raise_items_info_requested(start, end - start);
             if info.ratios.is_empty() {
-                continue;
+                // RequestItemsInfo abandons the metadata path when ANY
+                // requested interval is unavailable. Missing entries are not
+                // application-provided negative aspect ratios: use measured
+                // controls for the complete sizing window instead.
+                *self.items_info.borrow_mut() = Rc::new(LinedFlowItemsInfo::default());
+                self.fast_path_layout.set(false);
+                self.force_relayout.set(true);
+                return false;
             }
             if self.fast_path_supported.get()
                 && info.start == 0
@@ -749,15 +768,26 @@ impl LinedFlowLayout {
         // suffixes, as UpdateItemsInfo does. Negative supplied ratios stay valid
         // metadata entries and use the measured average as their fallback.
         let globals = received.last().expect("nonempty metadata requests");
+        // Handlers may cover a wider interval than requested. Retain that
+        // interval so the public RequestedRange properties describe the data
+        // we actually depend on, and the next scroll can reuse that prefetch.
+        let merged_start = received.iter().map(|info| info.start).min().unwrap().min(first);
+        let merged_end = received
+            .iter()
+            .map(LinedFlowItemsInfo::end)
+            .max()
+            .unwrap()
+            .max(end)
+            .min(self.item_count.get());
         let mut merged = LinedFlowItemsInfo {
-            start: first,
-            ratios: Vec::with_capacity((end - first) as usize),
-            min_widths: Vec::with_capacity((end - first) as usize),
-            max_widths: Vec::with_capacity((end - first) as usize),
+            start: merged_start,
+            ratios: Vec::with_capacity((merged_end - merged_start) as usize),
+            min_widths: Vec::with_capacity((merged_end - merged_start) as usize),
+            max_widths: Vec::with_capacity((merged_end - merged_start) as usize),
             min_width: globals.min_width,
             max_width: globals.max_width,
         };
-        for index in first..end {
+        for index in merged_start..merged_end {
             let source = received
                 .iter()
                 .rev()
@@ -786,7 +816,46 @@ impl LinedFlowLayout {
             );
         }
         *self.items_info.borrow_mut() = Rc::new(merged);
+        self.stop_timer();
         false
+    }
+    fn update_rounding_scale(&self, element: &Control) {
+        self.rounding_scale.set(if element.use_layout_rounding() {
+            LayoutHelper::get_layout_scale(element)
+        } else {
+            1.0
+        });
+    }
+    fn measured_item_metrics(&self, element: &Control, index: i32) -> ItemMetrics {
+        // Layoutable::DesiredSize already contains the rounded margin and
+        // content constraints. LinedFlow's allocation widths are outer slots,
+        // so applying a bare MaxWidth again would remove the margin and clip
+        // the content. Convert the constraints to that same coordinate space.
+        self.update_rounding_scale(element);
+        let mut margin = element.margin();
+        let mut minimum = element.min_width();
+        let mut maximum = element.max_width().max(minimum);
+        if element.use_layout_rounding() {
+            let scale = self.rounding_scale.get();
+            margin = LayoutHelper::round_layout_thickness(margin, scale);
+            minimum = LayoutHelper::round_layout_size_up(Size::new(minimum, 0.0), scale).width;
+            maximum = LayoutHelper::round_layout_size_up(Size::new(maximum, 0.0), scale).width;
+        }
+        let margin_width = margin.left + margin.right;
+        ItemMetrics {
+            index,
+            width: element.desired_size().width,
+            minimum: if element.is_visible() {
+                (minimum + margin_width).max(0.0)
+            } else {
+                0.0
+            },
+            maximum: if element.is_visible() {
+                (maximum + margin_width).max(0.0)
+            } else {
+                0.0
+            },
+        }
     }
     fn ensure_range(&self, context: &Ref<VirtualizingLayoutContext>, first: i32, end: i32) -> bool {
         if !context.is_virtualizing() {
@@ -889,35 +958,19 @@ impl LinedFlowLayout {
                 let element = self.element_manager.get_realized_element(index);
                 element.measure(Size::new(f64::INFINITY, height));
                 let desired = element.desired_size();
-                let minimum = element.min_width();
-                let maximum = element.max_width();
-                let width = desired.width.max(minimum).min(maximum);
-                let measured = ItemMetrics {
-                    index,
-                    width,
-                    minimum,
-                    maximum,
-                };
+                let measured = self.measured_item_metrics(&element, index);
                 metrics.push(measured);
                 self.measure_metrics.borrow_mut().insert(index, measured);
                 if desired.height > 0.0 {
                     let old = self.aspect_ratios.borrow().get_at(index);
-                    let weight = if width > minimum {
+                    let weight = if measured.width > measured.minimum {
                         16
                     } else if old.weight == 0 || index < old_first || index >= old_end {
                         1
                     } else {
                         (old.weight + 1).min(16)
                     };
-                    observations.push((index, width / desired.height, weight));
-                }
-                if element.use_layout_rounding() {
-                    if let Some(root) = element
-                        .visual_root()
-                        .and_then(|root| root.cast::<TopLevel>())
-                    {
-                        self.rounding_scale.set(root.render_scaling());
-                    }
+                    observations.push((index, measured.width / desired.height, weight));
                 }
             }
         }
@@ -930,7 +983,7 @@ impl LinedFlowLayout {
                 .max((end - first) as usize)
                 .min(self.item_count.get().max(1) as usize);
             let mut storage = self.aspect_ratios.borrow_mut();
-            storage.resize(capacity, (end - first - 1).max(0) / 2);
+            storage.resize(capacity, first + (end - first - 1).max(0) / 2);
             for (index, ratio, weight) in observations {
                 storage.set_at(
                     index,
@@ -1225,6 +1278,7 @@ impl LinedFlowLayout {
             .map(|line| line.end());
         if let (Some(first), Some(end)) = (first, last) {
             let newly_realized = self.ensure_range(context, first, end);
+            self.update_rounding_scale(&self.element_manager.get_realized_element(first));
             for line in lines
                 .iter()
                 .filter(|line| line.first >= first && line.end() <= end)
@@ -1282,9 +1336,13 @@ impl LinedFlowLayout {
             return;
         }
         let weak = self.to_ref().downgrade();
+        let generation = self.context_generation.get();
         Dispatcher::ui_thread().post_local(
             move || {
                 if let Some(this) = weak.upgrade() {
+                    if generation != this.context_generation.get() {
+                        return;
+                    }
                     this.async_invalidation_pending.set(false);
                     if this.context.borrow().is_some() {
                         this.invalidate_measure();
@@ -1296,14 +1354,21 @@ impl LinedFlowLayout {
     }
     fn start_timer(&self, tick_count: i32) {
         self.stop_timer();
+        if self.context.borrow().is_none() || self.uses_arrange_width_info() {
+            return;
+        }
         let timer = DispatcherTimer::new();
         timer.set_interval(Duration::from_secs_f64(0.1 * 1.5f64.powi(tick_count)));
         self.timer_tick_count.set(tick_count);
         let weak = self.to_ref().downgrade();
+        let generation = self.context_generation.get();
         let subscription = timer.tick(move |_| {
             if let Some(this) = weak.upgrade() {
+                if generation != this.context_generation.get() {
+                    return;
+                }
                 this.invalidate_measure_async();
-                if !this.uses_fast_path_layout() && this.timer_tick_count.get() < 7 {
+                if !this.uses_arrange_width_info() && this.timer_tick_count.get() < 7 {
                     this.start_timer(this.timer_tick_count.get() + 1);
                 } else {
                     this.stop_timer();
@@ -1330,6 +1395,9 @@ impl VirtualizingLayoutImpl for LinedFlowLayout {
     fn uninitialize_for_context_core(this: &Self, _context: &Ref<VirtualizingLayoutContext>) {
         this.element_manager.clear_realized_range();
         this.context.borrow_mut().take();
+        this.context_generation
+            .set(this.context_generation.get().wrapping_add(1));
+        this.async_invalidation_pending.set(false);
         this.item_count.set(0);
         this.fast_path_layout.set(false);
         this.average_items_per_line.set((0.0, 0.0));
@@ -1337,6 +1405,14 @@ impl VirtualizingLayoutImpl for LinedFlowLayout {
         this.measured_widths.borrow_mut().clear();
         this.measure_metrics.borrow_mut().clear();
         this.measure_countdown.set(5);
+        this.anchor_index.set(-1);
+        this.anchor_retention.set(0);
+        this.first_frozen_line.set(-1);
+        this.last_frozen_line.set(-1);
+        this.realization_shift.set(0.0);
+        this.rounding_scale.set(1.0);
+        this.max_line_width.set(0.0);
+        this.previous_available_width.set(0.0);
         this.stop_timer();
         this.unlock_items();
         *this.lines.borrow_mut() = Rc::new(Vec::new());
@@ -1517,26 +1593,34 @@ impl VirtualizingLayoutImpl for LinedFlowLayout {
         }
         let lines = this.lines.borrow().clone();
         let width = this.previous_available_width.get();
-        let metadata = this.uses_fast_path_layout() || this.items_info.borrow().start >= 0;
+        let metadata = this.uses_arrange_width_info();
         let scale = this.rounding_scale.get();
         let first_realized = this.element_manager.first_realized_data_index();
         let end_realized = first_realized + this.element_manager.realized_element_count();
-        let start = lines.partition_point(|line| line.first < first_realized);
+        let start = lines.partition_point(|line| line.end() <= first_realized);
         for line in &lines[start..] {
-            if line.end() > end_realized {
+            if line.first >= end_realized {
                 break;
             }
-            let elements = (line.first..line.end())
+            // Collection updates and custom hosts can leave only part of a
+            // sized edge line realized. Keep its full alignment geometry, but
+            // arrange only the retained controls; do not drop that line or
+            // realize its missing prefix/suffix just to compute their offsets.
+            let begin = line.first.max(first_realized);
+            let end = line.end().min(end_realized);
+            let elements = (begin..end)
                 .map(|index| this.element_manager.get_realized_element(index))
                 .collect::<Vec<_>>();
-            let widths = elements
+            let widths = line
+                .widths
                 .iter()
                 .enumerate()
-                .map(|(position, element)| {
-                    if metadata {
-                        line.widths[position]
+                .map(|(position, allocated)| {
+                    let index = line.first + position as i32;
+                    if !metadata && index >= begin && index < end {
+                        elements[(index - begin) as usize].desired_size().width
                     } else {
-                        element.desired_size().width
+                        *allocated
                     }
                 })
                 .collect::<Vec<_>>();
@@ -1576,7 +1660,9 @@ impl VirtualizingLayoutImpl for LinedFlowLayout {
                 }
             }
             let y = line.index as f64 * (height + this.line_spacing());
-            for (element, item_width) in elements.iter().zip(widths) {
+            let prefix = (begin - line.first) as usize;
+            x += widths[..prefix].iter().sum::<f64>() + prefix as f64 * item_spacing;
+            for (element, item_width) in elements.iter().zip(widths[prefix..].iter().copied()) {
                 // FerroUI's Layoutable applies the visual-root scaling and
                 // layout rounding, just as UIElement.Arrange does upstream.
                 element.arrange(Rect::new(x, y, item_width, height));
@@ -1619,3 +1705,7 @@ impl Drop for LinedFlowLayout {
         }
     }
 }
+
+#[cfg(test)]
+#[path = "lined_flow_lifecycle_tests.rs"]
+mod lifecycle_tests;
