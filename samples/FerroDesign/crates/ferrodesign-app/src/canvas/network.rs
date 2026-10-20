@@ -55,6 +55,15 @@ impl DesignCanvas {
         changed
     }
 
+    pub fn network_fill_faces(&self) -> Result<bool, core::NetworkFaceError> {
+        let id = self.vector_node.get().ok_or(core::NetworkFaceError::NotEditable)?;
+        // Preflight finishes before the core opens a scoped edit. Rejected and
+        // repeated actions therefore do not advance even the editor revision.
+        let result = self.editor.borrow_mut().fill_network_faces(id);
+        if matches!(result, Ok(true)) { self.emit(CanvasEvent::Document); }
+        result
+    }
+
     pub(super) fn delete_network_selection(&self) -> bool {
         let Some(id) = self.vector_node.get() else { return false; };
         if self.editor.borrow().document.nodes.get(&id).and_then(|n| n.vector_network.as_ref()).is_none() {

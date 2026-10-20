@@ -374,7 +374,8 @@ fn opaque_presentation(frame: &PrototypeFrame) -> bool {
         && root.corner_radius == 0.0 && root.corner_radii.is_none()
         && root.fills.iter().any(|fill| fill.visible && fill.opacity >= 1.0 && match &fill.paint {
             Paint::Solid(color) => color.a == 255,
-            Paint::LinearGradient { stops, .. } | Paint::RadialGradient { stops, .. } => !stops.is_empty() && stops.iter().all(|stop| stop.color.a == 255),
+            Paint::LinearGradient { stops, .. } | Paint::RadialGradient { stops, .. }
+            | Paint::AngularGradient { stops, .. } => !stops.is_empty() && stops.iter().all(|stop| stop.color.a == 255),
             Paint::Image { .. } => false,
         })
 }
@@ -437,7 +438,8 @@ fn compatible_paint(a: &Paint, b: &Paint) -> bool {
     match (a, b) {
         (Paint::Solid(_), Paint::Solid(_)) => true,
         (Paint::LinearGradient { stops: a, .. }, Paint::LinearGradient { stops: b, .. })
-        | (Paint::RadialGradient { stops: a, .. }, Paint::RadialGradient { stops: b, .. }) => a.len() == b.len(),
+        | (Paint::RadialGradient { stops: a, .. }, Paint::RadialGradient { stops: b, .. })
+        | (Paint::AngularGradient { stops: a, .. }, Paint::AngularGradient { stops: b, .. }) => a.len() == b.len(),
         (Paint::Image { href: a, scale: sa, crop: ca }, Paint::Image { href: b, scale: sb, crop: cb }) => a == b && sa == sb && ca == cb,
         _ => false,
     }
@@ -482,6 +484,13 @@ fn interpolate_paint(out: &mut Paint, a: &Paint, b: &Paint, t: f64) {
         }
         (Paint::RadialGradient { center, radius, stops }, Paint::RadialGradient { center: ca, radius: ra, stops: a }, Paint::RadialGradient { center: cb, radius: rb, stops: b }) => {
             *center = ca.lerp(*cb, t); *radius = lerp(*ra, *rb, t).max(0.0);
+            interpolate_stops(stops, a, b, t);
+        }
+        (Paint::AngularGradient { center, angle, stops }, Paint::AngularGradient { center: ca, angle: aa, stops: a }, Paint::AngularGradient { center: cb, angle: ab, stops: b }) => {
+            *center = ca.lerp(*cb, t);
+            // Match rotation tracks: cross the seam by the shortest angular path.
+            let start = aa.rem_euclid(360.0);
+            *angle = start + ((ab.rem_euclid(360.0) - start + 180.0).rem_euclid(360.0) - 180.0) * t;
             interpolate_stops(stops, a, b, t);
         }
         _ => {}

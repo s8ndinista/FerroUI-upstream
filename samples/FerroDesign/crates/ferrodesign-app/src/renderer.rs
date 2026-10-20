@@ -5,6 +5,8 @@
 //! the camera transform; this module owns only document-space transforms.
 //! No graphics-backend types occur in this module.
 
+#[cfg(all(test, not(target_os = "emscripten")))]
+mod angular_tests;
 mod backdrop;
 pub(crate) mod flatten;
 pub(crate) mod typography;
@@ -31,7 +33,7 @@ use ferrodesign_core::{
 };
 use ferroui_base::media::imaging::{Bitmap, BitmapBlendingMode};
 use ferroui_base::media::immutable::{
-    ImmutableDashStyle, ImmutableGradientStop, ImmutableImageBrush, ImmutableLinearGradientBrush,
+    ImmutableConicGradientBrush, ImmutableDashStyle, ImmutableGradientStop, ImmutableImageBrush, ImmutableLinearGradientBrush,
     ImmutablePen, ImmutableRadialGradientBrush, ImmutableSolidColorBrush,
 };
 use ferroui_base::media::text_formatting::{
@@ -1643,6 +1645,13 @@ fn make_brush(
                 false,
             )
         }
+        Paint::AngularGradient { center, angle, stops } => (
+            Rc::new(ImmutableConicGradientBrush::new(
+                &gradient_stops(stops), opacity, None, None, GradientSpreadMethod::Pad,
+                Some(relative_point(*center)), finite(*angle).rem_euclid(360.0), None,
+            )),
+            false,
+        ),
         Paint::Image { href, scale, crop } => {
             if !images.contains_key(href) {
                 let decoded = decode_image_data_url(href)
@@ -2180,6 +2189,14 @@ fn hash_paint(paint: &Paint, hash: &mut DefaultHasher) {
         } => {
             hash_point(*center, hash);
             hash_number(*radius, hash);
+            for stop in stops {
+                hash_number(stop.offset, hash);
+                hash_color(stop.color, hash);
+            }
+        }
+        Paint::AngularGradient { center, angle, stops } => {
+            hash_point(*center, hash);
+            hash_number(*angle, hash);
             for stop in stops {
                 hash_number(stop.offset, hash);
                 hash_color(stop.color, hash);

@@ -17,6 +17,7 @@ import { layoutTransferRegressions } from "./layout-transfer-browser.mjs";
 import { selectionRegressions } from "./selection-browser.mjs";
 import { geometryAuthoringRegressions } from "./geometry-authoring-browser.mjs";
 import { flattenRegressions } from "./flatten-browser.mjs";
+import { angularPaintRegressions } from "./angular-paints-browser.mjs";
 import { localStyleRegressions } from "./styles-browser.mjs";
 import { compactAutosaveRegressions } from "./serialization-browser.mjs";
 import assert from "node:assert/strict";
@@ -941,6 +942,7 @@ try {
             await geometryAuthoringRegressions(page, svgDocument, check, nativeHelpers, mode);
             await flattenRegressions(page, svgDocument, check, nativeHelpers, mode);
             await localStyleRegressions(page, svgDocument, check, nativeHelpers, mode);
+            await angularPaintRegressions(page, svgDocument, check, nativeHelpers, output, mode);
             await compactAutosaveRegressions(page, svgDocument, check,
                 { fixtureNode, isolatedDocument, importFixture, documentState, state, clickWorld, clickNative, frames, flushStorage }, output, mode);
             await prototypeInputRegressions(page, svgDocument, check);

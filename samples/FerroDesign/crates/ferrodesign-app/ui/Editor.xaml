@@ -154,6 +154,7 @@
                 <StackPanel Name="NetworkOptions" Spacing="6" IsVisible="False">
                   <UniformGrid Columns="2"><Button Name="NetworkPenButton" Content="Connect tool"/><Button Name="NetworkJoinButton" Content="Join selected"/></UniformGrid>
                   <UniformGrid Columns="2"><Button Name="NetworkFillButton" Content="Fill region"/><Button Name="NetworkWeldButton" Content="Weld vertices"/></UniformGrid>
+                  <Button Name="NetworkDetectFacesButton" Content="Fill all closed regions"/>
                   <TextBlock Text="Connect extends any vertex. Shift-select vertices in boundary order to fill a region, or select two to join or weld." TextWrapping="Wrap" Classes="label"/>
                 </StackPanel>
                 <TextBlock Text="Drag a point or handle. Double-click a segment to add a point. Delete removes the selected point." TextWrapping="Wrap" Classes="label"/>

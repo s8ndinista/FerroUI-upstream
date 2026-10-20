@@ -116,4 +116,81 @@ export async function vectorNetworkRegressions(page, reference, check, helpers, 
     await importFixture(page, json);
     assert.deepEqual(await documentState(page), json, "Stable graph IDs and boundaries must survive a real browser save/import round-trip");
     check("Native network Bend and Erase edit authoritative cubic edges, retain unrelated fill regions and serialize stable topology");
+
+    const graphFixture = {
+        vertices: {
+            1: { position: { x: 0, y: 0 }, mode: "corner" },
+            2: { position: { x: 200, y: 0 }, mode: "corner" },
+            3: { position: { x: 200, y: 160 }, mode: "corner" },
+            4: { position: { x: 0, y: 160 }, mode: "corner" },
+            5: { position: { x: 260, y: 160 }, mode: "corner" },
+        },
+        edges: {
+            6: { start: 1, end: 2, curve: { type: "line" }, stroke: true },
+            7: { start: 2, end: 3, curve: { type: "line" }, stroke: true },
+            8: { start: 3, end: 4, curve: { type: "line" }, stroke: true },
+            9: { start: 4, end: 1, curve: { type: "line" }, stroke: true },
+            10: { start: 1, end: 3, curve: { type: "line" }, stroke: true },
+            11: { start: 3, end: 5, curve: { type: "line" }, stroke: true },
+        },
+        regions: {}, fill_rule: "even_odd", next_id: 12,
+    };
+    const faceNode = fixtureNode(reference, 2, {
+        ...fixture, name: "Automatic closed faces", width: 260,
+        path: { segments: [], fill_rule: "even_odd" }, vector_network: graphFixture,
+    });
+    await importFixture(page, isolatedDocument(reference, [faceNode], "Automatic vector faces"));
+    await page.keyboard.press("Escape");
+    await page.keyboard.press("Tab");
+    await page.waitForFunction(() => JSON.parse(globalThis.ferroDesign.ferroDesignState()).selection.join() === "2");
+    await command("edit-vector");
+    const unfilled = await documentState(page), faceDepth = (await state(page)).historyLength;
+    await clickNative(page, "NetworkDetectFacesButton", "InspectorViewport");
+    await frames(page);
+    const filled = await documentState(page), filledGraph = filled.nodes[2].vector_network;
+    assert.equal(Object.keys(filledGraph.regions).length, 2);
+    assert.equal(filledGraph.next_id, 14);
+    assert.deepEqual(filledGraph.vertices, graphFixture.vertices);
+    assert.deepEqual(filledGraph.edges, graphFixture.edges);
+    assert.equal((await state(page)).historyLength, faceDepth + 1);
+    assert.ok(Object.values(filledGraph.regions).every((region) =>
+        region.contours.flat().every((reference) => reference.edge !== 11)),
+    "Open branches must stay stroked without entering a face boundary");
+    const faceImage = PNG.sync.read(await captureNativeScreenshot(mode + "-automatic-vector-faces", {
+        controls: ["CanvasHost", "NetworkDetectFacesButton"],
+    }));
+    const faceView = await state(page);
+    for (const [x, y] of [[90, 150], [190, 90]]) {
+        const pixel = screen(faceView, x, y), offset = (Math.round(pixel.y) * faceImage.width + Math.round(pixel.x)) * 4;
+        assert.ok(faceImage.data[offset] > 200 && faceImage.data[offset + 1] < 100 && faceImage.data[offset + 2] < 100,
+            "Both automatically discovered faces must paint with the native layer fill");
+    }
+    assert.equal(await page.evaluate(() => globalThis.ferroDesign.ferroDesignCommand("network-fill-faces")), false);
+    assert.deepEqual(await documentState(page), filled, "Repeated discovery is a serialized no-op");
+    assert.equal((await state(page)).historyLength, faceDepth + 1);
+    await command("undo");
+    assert.deepEqual(await documentState(page), unfilled);
+    await command("redo");
+    assert.deepEqual(await documentState(page), filled);
+    check("Native Fill all closed regions discovers planar faces, excludes open branches, paints every face, preserves topology IDs and commits one exact idempotent undo/redo edit");
+
+    const crossing = structuredClone(faceNode);
+    crossing.vector_network.edges[12] = { start: 2, end: 4, curve: { type: "line" }, stroke: true };
+    crossing.vector_network.next_id = 13;
+    await importFixture(page, isolatedDocument(reference, [crossing], "Unsplit network crossing"));
+    await page.keyboard.press("Escape"); await page.keyboard.press("Tab");
+    await page.waitForFunction(() => JSON.parse(globalThis.ferroDesign.ferroDesignState()).selection.join() === "2");
+    await page.keyboard.press("ArrowRight"); await frames(page);
+    const redoDocument = await documentState(page);
+    await command("undo");
+    const beforeError = await documentState(page), beforeErrorView = await state(page);
+    assert.equal(beforeErrorView.canRedo, true);
+    await command("edit-vector");
+    await clickNative(page, "NetworkDetectFacesButton", "InspectorViewport"); await frames(page);
+    assert.deepEqual(await documentState(page), beforeError, "Unsplit intersections must fail before changing graph or allocator");
+    assert.equal((await state(page)).historyLength, beforeErrorView.historyLength);
+    assert.equal((await state(page)).canRedo, true);
+    await command("redo");
+    assert.deepEqual(await documentState(page), redoDocument);
+    check("Native automatic face discovery rejects unsplit crossings atomically and retains the preceding redo transaction");
 }

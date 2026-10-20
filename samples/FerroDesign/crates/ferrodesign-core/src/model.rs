@@ -108,6 +108,12 @@ pub enum Paint {
         radius: f64,
         stops: Vec<GradientStop>,
     },
+    /// A clockwise sweep around a relative center. Zero degrees points up.
+    AngularGradient {
+        center: Point,
+        angle: f64,
+        stops: Vec<GradientStop>,
+    },
     Image {
         href: String,
         scale: ImageScale,
@@ -121,7 +127,8 @@ impl Paint {
     pub fn representative_color(&self) -> Color {
         match self {
             Self::Solid(c) => *c,
-            Self::LinearGradient { stops, .. } | Self::RadialGradient { stops, .. } => {
+            Self::LinearGradient { stops, .. } | Self::RadialGradient { stops, .. }
+            | Self::AngularGradient { stops, .. } => {
                 stops.first().map(|s| s.color).unwrap_or(Color::TRANSPARENT)
             }
             Self::Image { .. } => Color::rgb(224, 226, 230),
@@ -1721,6 +1728,15 @@ impl Document {
                 return Err(DocumentError::Invalid(format!("invalid vector anchor constraints on node {id}")));
             }
             for paint in n.fills.iter().map(|fill| &fill.paint).chain(n.strokes.iter().map(|stroke| &stroke.paint)) {
+                if let Paint::AngularGradient { center, angle, stops } = paint {
+                    if !center.x.is_finite() || !center.y.is_finite() || !angle.is_finite()
+                        || stops.is_empty() || stops.iter().any(|stop| {
+                            !stop.offset.is_finite() || !(0.0..=1.0).contains(&stop.offset)
+                        })
+                    {
+                        return Err(DocumentError::Invalid(format!("invalid angular gradient on node {id}")));
+                    }
+                }
                 if let Paint::Image { crop: Some(crop), .. } = paint {
                     if !crate::valid_image_crop(*crop) {
                         return Err(DocumentError::Invalid(format!("invalid image source crop on node {id}")));

@@ -53,3 +53,5 @@ mod svg_import_tests;
 mod tests;
 #[cfg(test)]
 mod vector_edit_tests;
+#[cfg(test)]
+mod angular_gradient_tests;

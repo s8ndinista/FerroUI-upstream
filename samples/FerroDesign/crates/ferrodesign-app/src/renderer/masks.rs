@@ -5,7 +5,8 @@ use super::*;
 pub(super) fn paint_has_alpha(paint: &Paint) -> bool {
     match paint {
         Paint::Solid(color) => color.a != 0,
-        Paint::LinearGradient { stops, .. } | Paint::RadialGradient { stops, .. } => {
+        Paint::LinearGradient { stops, .. } | Paint::RadialGradient { stops, .. }
+            | Paint::AngularGradient { stops, .. } => {
             stops.iter().any(|stop| stop.color.a != 0)
         }
         Paint::Image { .. } => true,

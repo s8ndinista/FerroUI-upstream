@@ -77,7 +77,7 @@ fn paint_opacity(paint: &Paint, opacity: f64) -> f64 {
         }
 }
 
-fn paint_definition(paint: &Paint, id: &str, node: &Node, out: &mut String) {
+fn paint_definition(paint: &Paint, id: &str, node: &Node, stroke: Option<&Stroke>, out: &mut String) {
     match paint {
         Paint::Solid(_) => {}
         Paint::LinearGradient { start, end, stops } => {
@@ -106,6 +106,10 @@ fn paint_definition(paint: &Paint, id: &str, node: &Node, out: &mut String) {
             );
             stops_definition(stops, out);
             out.push_str("</radialGradient>");
+        }
+        Paint::AngularGradient { center, angle, stops } => {
+            let (paint_bounds, tile_bounds) = angular_paint_bounds(node, stroke);
+            angular_gradient_definition(*center, *angle, stops, id, paint_bounds, tile_bounds, out);
         }
         Paint::Image { href, scale, crop } => {
             let mode = match scale {
@@ -149,6 +153,90 @@ fn paint_definition(paint: &Paint, id: &str, node: &Node, out: &mut String) {
         }
     }
 }
+
+fn angular_paint_bounds(node: &Node, stroke: Option<&Stroke>) -> (Rect, Rect) {
+    let path = if stroke.is_some() {
+        node.vector_network.as_ref().map(|network| network.stroke_path())
+            .unwrap_or_else(|| outline_path(node))
+    } else {
+        outline_path(node)
+    };
+    let geometry = path.tight_bounds().unwrap_or_else(|| node.local_bounds());
+    let Some(stroke) = stroke else { return (geometry, geometry); };
+    let alignment = if node.has_closed_stroke_contours() { stroke.align } else { StrokeAlign::Center };
+    // FerroUI draws center strokes with relative brush coordinates against the
+    // geometry bounds inflated by half the pen width. Aligned strokes are filled
+    // outlines: ordinary inside/outside contours use the corresponding bounds.
+    let paint_bounds = geometry.inflate(match alignment {
+        StrokeAlign::Center => stroke.width / 2.0,
+        StrokeAlign::Inside => 0.0,
+        StrokeAlign::Outside => stroke.width,
+    });
+    // A paint server repeats outside its tile. Keep its tile independent of the
+    // center's reference bounds and large enough for the renderer's miter limit
+    // of ten, caps, and doubled-width alignment. This also gives horizontal and
+    // vertical paths a nonzero user-space tile, unlike objectBoundingBox paints.
+    let tile_bounds = geometry.inflate(stroke.width * 10.0 + 1.0);
+    (paint_bounds, tile_bounds)
+}
+
+/// SVG has no portable conic paint server. Export a bounded, explicitly reported
+/// vector approximation instead of replacing the paint with a representative
+/// color. Shared hard-stop cuts retain their exact angular boundary. Crisp
+/// internal edges prevent antialiasing gaps without overlapping translucent
+/// sectors; the outer layer geometry still supplies normal antialiasing.
+fn angular_gradient_definition(
+    center: Point, angle: f64, stops: &[GradientStop], id: &str,
+    paint_bounds: Rect, tile_bounds: Rect, out: &mut String,
+) {
+    const MAX_SECTORS: usize = 1024;
+    let mut stops: Vec<_> = stops.iter().filter(|stop| stop.offset.is_finite()).cloned().collect();
+    stops.sort_by(|a, b| a.offset.total_cmp(&b.offset));
+    if stops.is_empty() { return; }
+    let divisions = if stops.len() <= MAX_SECTORS / 2 { MAX_SECTORS / 2 } else { MAX_SECTORS };
+    let mut cuts: Vec<_> = (0..=divisions).map(|i| i as f64 / divisions as f64).collect();
+    if stops.len() <= MAX_SECTORS / 2 {
+        cuts.extend(stops.iter().map(|stop| stop.offset.clamp(0.0, 1.0)));
+        cuts.sort_by(f64::total_cmp);
+        cuts.dedup();
+    }
+    let center = Point::new(paint_bounds.x + center.x * paint_bounds.width,
+        paint_bounds.y + center.y * paint_bounds.height);
+    let radius = tile_bounds.corners()
+        .iter().map(|corner| (corner.x - center.x).hypot(corner.y - center.y))
+        .fold(0.0, f64::max) * 1.01;
+    let _ = write!(out,
+        r#"<pattern id="{id}" x="{}" y="{}" width="{}" height="{}" patternUnits="userSpaceOnUse" viewBox="{} {} {} {}" preserveAspectRatio="none" data-ferrodesign-approximation="angular-gradient"><g shape-rendering="crispEdges">"#,
+        number(tile_bounds.x), number(tile_bounds.y), number(tile_bounds.width.max(0.001)), number(tile_bounds.height.max(0.001)),
+        number(tile_bounds.x), number(tile_bounds.y), number(tile_bounds.width.max(0.001)), number(tile_bounds.height.max(0.001)));
+    let angle = angle.rem_euclid(360.0).to_radians() - std::f64::consts::FRAC_PI_2;
+    let mut next_stop = 0;
+    for interval in cuts.windows(2) {
+        let position = (interval[0] + interval[1]) * 0.5;
+        while next_stop < stops.len() && stops[next_stop].offset <= position { next_stop += 1; }
+        let color = if next_stop == 0 {
+            stops[0].color
+        } else if next_stop == stops.len() {
+            stops[next_stop - 1].color
+        } else {
+            let a = &stops[next_stop - 1];
+            let b = &stops[next_stop];
+            a.color.lerp(b.color, (position - a.offset) / (b.offset - a.offset))
+        };
+        let point = |offset: f64| {
+            let radians = angle + std::f64::consts::TAU * offset;
+            Point::new(center.x + radius * radians.cos(), center.y + radius * radians.sin())
+        };
+        let a = point(interval[0]);
+        let b = point(interval[1]);
+        let _ = write!(out,
+            r##"<path d="M{} {} L{} {} L{} {} Z" fill="#{:02X}{:02X}{:02X}" fill-opacity="{}"/>"##,
+            number(center.x), number(center.y), number(a.x), number(a.y), number(b.x), number(b.y),
+            color.r, color.g, color.b, number(color.a as f64 / 255.0));
+    }
+    out.push_str("</g></pattern>");
+}
+
 fn safe_image_href(href: &str) -> String {
     let lower = href.trim().to_ascii_lowercase();
     if lower.starts_with("https://")
@@ -810,6 +898,11 @@ impl Document {
         } else {
             node
         };
+        if node.fills.iter().any(|fill| fill.visible && matches!(fill.paint, Paint::AngularGradient { .. }))
+            || node.strokes.iter().any(|stroke| stroke.visible && matches!(stroke.paint, Paint::AngularGradient { .. }))
+        {
+            warnings.push(format!("Layer {}: SVG has no portable angular-gradient primitive; the gradient is approximated by at most 1024 vector sectors per paint. JSON and PNG retain the native angular paint. Complex aligned strokes, arrows, and text may differ in paint bounds.", node.name));
+        }
         let transform = if root {
             self.world_transform(id).unwrap_or_default()
         } else {
@@ -900,7 +993,7 @@ impl Document {
         } else {
             for (i, fill) in node.fills.iter().enumerate().filter(|(_, f)| f.visible) {
                 let paint_id = format!("fill-{id}-{i}");
-                paint_definition(&fill.paint, &paint_id, node, defs);
+                paint_definition(&fill.paint, &paint_id, node, None, defs);
                 body.push_str(&node_shape(
                     node,
                     &format!(
@@ -929,7 +1022,7 @@ impl Document {
                 .filter(|(_, s)| s.visible && s.width > 0.0)
             {
                 let paint_id = format!("stroke-{id}-{i}");
-                paint_definition(&stroke.paint, &paint_id, node, defs);
+                paint_definition(&stroke.paint, &paint_id, node, Some(stroke), defs);
                 let cap = match stroke.cap {
                     StrokeCap::Round => "round",
                     StrokeCap::Square => "square",
@@ -1085,7 +1178,7 @@ impl Document {
         defs.push_str("</mask>");
         for (i, fill) in node.fills.iter().enumerate().filter(|(_, f)| f.visible) {
             let paint_id = format!("fill-{id}-{i}");
-            paint_definition(&fill.paint, &paint_id, node, defs);
+            paint_definition(&fill.paint, &paint_id, node, None, defs);
             let _ = write!(
                 body,
                 r#"<rect width="{}" height="{}" fill="{}" fill-opacity="{}" mask="url(#boolean-{id})"/>"#,

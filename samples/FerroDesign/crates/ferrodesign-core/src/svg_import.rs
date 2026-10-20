@@ -1505,7 +1505,8 @@ impl<'a, 'input> Importer<'a, 'input> {
         fn opaque(paint: &Paint) -> bool {
             match paint {
                 Paint::Solid(color) => color.a == 255,
-                Paint::LinearGradient { stops, .. } | Paint::RadialGradient { stops, .. } => {
+                Paint::LinearGradient { stops, .. } | Paint::RadialGradient { stops, .. }
+                | Paint::AngularGradient { stops, .. } => {
                     !stops.is_empty() && stops.iter().all(|stop| stop.color.a == 255)
                 }
                 Paint::Image { .. } => false,

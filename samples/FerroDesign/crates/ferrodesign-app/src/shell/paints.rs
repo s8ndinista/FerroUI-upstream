@@ -2,7 +2,7 @@
 use super::*;
 use ferrodesign_core::Rect;
 use ferroui_base::media::immutable::{
-    ImmutableGradientStop, ImmutableLinearGradientBrush, ImmutableRadialGradientBrush,
+    ImmutableConicGradientBrush, ImmutableGradientStop, ImmutableLinearGradientBrush, ImmutableRadialGradientBrush,
     ImmutableSolidColorBrush,
 };
 use ferroui_base::media::{GradientSpreadMethod, IBrush};
@@ -26,6 +26,7 @@ enum Coordinate {
     CenterX,
     CenterY,
     Radius,
+    Angle,
 }
 
 #[derive(Clone, Copy)]
@@ -171,17 +172,19 @@ impl EditorShell {
             Paint::Solid(_) => 0,
             Paint::LinearGradient { .. } => 1,
             Paint::RadialGradient { .. } => 2,
-            Paint::Image { .. } => 3,
+            Paint::AngularGradient { .. } => 3,
+            Paint::Image { .. } => 4,
         };
-        let kinds: &[&str] = if kind == 3 {
+        let kinds: &[&str] = if kind == 4 {
             &[
                 "Solid",
                 "Linear gradient",
                 "Radial gradient",
+                "Angular gradient",
                 "Embedded image",
             ]
         } else {
-            &["Solid", "Linear gradient", "Radial gradient"]
+            &["Solid", "Linear gradient", "Radial gradient", "Angular gradient"]
         };
         let choice = self.paint_choice(
             "Type",
@@ -270,6 +273,24 @@ impl EditorShell {
                     (0, "Center X", Coordinate::CenterX, center.x),
                     (1, "Center Y", Coordinate::CenterY, center.y),
                     (2, "Radius", Coordinate::Radius, *radius),
+                ] {
+                    let field = self.paint_coordinate(index, label, coordinate, value, &preview);
+                    Grid::set_column(&field, column);
+                    row.children().add(field);
+                }
+                content.children().add(row);
+            }
+            Paint::AngularGradient { center, angle, stops } => {
+                self.paint_stops(&content, &preview, index, stops);
+                content.children().add(paint_text(
+                    "Center is relative to layer bounds. Angle is clockwise in degrees; 0° points up.",
+                    true,
+                ));
+                let row = paint_grid("*,*,*", 8.0);
+                for (column, label, coordinate, value) in [
+                    (0, "Center X", Coordinate::CenterX, center.x),
+                    (1, "Center Y", Coordinate::CenterY, center.y),
+                    (2, "Angle", Coordinate::Angle, *angle),
                 ] {
                     let field = self.paint_coordinate(index, label, coordinate, value, &preview);
                     Grid::set_column(&field, column);
@@ -795,13 +816,15 @@ fn apply_paint_edit(fill: &mut Fill, edit: PaintEdit) -> bool {
                 (Paint::Solid(_), 0)
                     | (Paint::LinearGradient { .. }, 1)
                     | (Paint::RadialGradient { .. }, 2)
-                    | (Paint::Image { .. }, 3)
+                    | (Paint::AngularGradient { .. }, 3)
+                    | (Paint::Image { .. }, 4)
             ) {
                 return false;
             }
             let color = fill.paint.representative_color();
             let stops = match &fill.paint {
-                Paint::LinearGradient { stops, .. } | Paint::RadialGradient { stops, .. } => {
+                Paint::LinearGradient { stops, .. } | Paint::RadialGradient { stops, .. }
+                | Paint::AngularGradient { stops, .. } => {
                     stops.clone()
                 }
                 _ => vec![
@@ -824,6 +847,11 @@ fn apply_paint_edit(fill: &mut Fill, edit: PaintEdit) -> bool {
                     radius: 0.5,
                     stops,
                 },
+                3 => Paint::AngularGradient {
+                    center: Point::new(0.5, 0.5),
+                    angle: 0.0,
+                    stops,
+                },
                 // Creating an image requires imported bytes, never an empty href.
                 _ => return false,
             };
@@ -839,13 +867,19 @@ fn apply_paint_edit(fill: &mut Fill, edit: PaintEdit) -> bool {
         },
         PaintEdit::ImageCrop(value) => fill.paint.set_image_crop(value),
         PaintEdit::Coordinate(coordinate, value) => {
+            if !value.is_finite() || value.abs() > 1000.0
+                || matches!(coordinate, Coordinate::Radius) && value <= 0.0
+            {
+                return false;
+            }
             let target = match (&mut fill.paint, coordinate) {
                 (Paint::LinearGradient { start, .. }, Coordinate::StartX) => &mut start.x,
                 (Paint::LinearGradient { start, .. }, Coordinate::StartY) => &mut start.y,
                 (Paint::LinearGradient { end, .. }, Coordinate::EndX) => &mut end.x,
                 (Paint::LinearGradient { end, .. }, Coordinate::EndY) => &mut end.y,
-                (Paint::RadialGradient { center, .. }, Coordinate::CenterX) => &mut center.x,
-                (Paint::RadialGradient { center, .. }, Coordinate::CenterY) => &mut center.y,
+                (Paint::RadialGradient { center, .. } | Paint::AngularGradient { center, .. }, Coordinate::CenterX) => &mut center.x,
+                (Paint::RadialGradient { center, .. } | Paint::AngularGradient { center, .. }, Coordinate::CenterY) => &mut center.y,
+                (Paint::AngularGradient { angle, .. }, Coordinate::Angle) => angle,
                 (Paint::RadialGradient { radius, .. }, Coordinate::Radius) => radius,
                 _ => return false,
             };
@@ -853,7 +887,8 @@ fn apply_paint_edit(fill: &mut Fill, edit: PaintEdit) -> bool {
         }
         edit => {
             let stops = match &mut fill.paint {
-                Paint::LinearGradient { stops, .. } | Paint::RadialGradient { stops, .. } => stops,
+                Paint::LinearGradient { stops, .. } | Paint::RadialGradient { stops, .. }
+                | Paint::AngularGradient { stops, .. } => stops,
                 _ => return false,
             };
             match edit {
@@ -980,6 +1015,10 @@ fn paint_preview(fill: &Fill) -> Rc<dyn IBrush> {
             Some(relative(*center)),
             *radius,
         )),
+        Paint::AngularGradient { center, angle, stops } => Rc::new(ImmutableConicGradientBrush::new(
+            &gradient(stops), opacity, None, None, GradientSpreadMethod::Pad,
+            Some(relative(*center)), angle.rem_euclid(360.0), None,
+        )),
         Paint::Image { .. } => Rc::new(ImmutableSolidColorBrush::with_opacity(
             color(fill.paint.representative_color()),
             opacity,
@@ -1018,7 +1057,7 @@ mod tests {
         assert_eq!(fills[1].opacity, 0.4);
         assert!(!apply_stack_edit(
             &mut fills,
-            StackEdit::Paint(0, PaintEdit::Kind(3))
+            StackEdit::Paint(0, PaintEdit::Kind(4))
         ));
         assert!(!apply_stack_edit(
             &mut fills,
@@ -1111,5 +1150,162 @@ mod tests {
         assert_eq!(paint_percent("25 %"), Ok(0.25));
         assert!(paint_color("💜💜💜").is_err());
         assert_eq!(paint_color("#1234"), Ok(Color::rgba(17, 34, 51, 68)));
+    }
+}
+
+#[cfg(test)]
+mod angular_tests {
+    use super::*;
+
+    #[test]
+    fn angular_gradient_type_conversion_preserves_latest_colors_stops_and_alpha() {
+        let mut fill = Fill::solid(Color::BLACK);
+        assert!(apply_paint_edit(&mut fill, PaintEdit::Solid(Color::rgba(11, 22, 33, 44))));
+        assert!(apply_paint_edit(&mut fill, PaintEdit::Kind(3)));
+        let Paint::AngularGradient { stops, .. } = &fill.paint else { panic!("angular type must create an angular paint") };
+        assert_eq!(stops[0].color, Color::rgba(11, 22, 33, 44));
+        assert!(apply_paint_edit(&mut fill, PaintEdit::AddStop));
+        assert!(apply_paint_edit(&mut fill, PaintEdit::StopColor(1, Color::rgb(1, 2, 3))));
+        let Paint::AngularGradient { stops, .. } = &fill.paint else { unreachable!() };
+        let expected = stops.clone();
+        assert!(apply_paint_edit(&mut fill, PaintEdit::Kind(1)));
+        assert!(apply_paint_edit(&mut fill, PaintEdit::Kind(3)));
+        let Paint::AngularGradient { stops, .. } = &fill.paint else { unreachable!() };
+        assert_eq!(*stops, expected);
+        assert!(!apply_paint_edit(&mut fill, PaintEdit::Kind(3)), "same type leaves geometry unchanged");
+    }
+
+    #[test]
+    fn angular_gradient_fields_reject_nonfinite_values_and_preserve_noops() {
+        let mut fill = Fill::solid(Color::BLACK);
+        apply_paint_edit(&mut fill, PaintEdit::Kind(3));
+        assert!(apply_paint_edit(&mut fill, PaintEdit::Coordinate(Coordinate::Angle, -90.0)));
+        assert!(apply_paint_edit(&mut fill, PaintEdit::Coordinate(Coordinate::CenterX, 0.25)));
+        let before = fill.clone();
+        for value in [f64::NAN, f64::INFINITY, -1001.0, 1001.0] {
+            assert!(!apply_paint_edit(&mut fill, PaintEdit::Coordinate(Coordinate::Angle, value)));
+            assert_eq!(fill, before);
+        }
+        assert!(!apply_paint_edit(&mut fill, PaintEdit::Coordinate(Coordinate::Angle, -90.0)));
+        assert!(!apply_paint_edit(&mut fill, PaintEdit::Coordinate(Coordinate::Radius, 2.0)));
+        assert_eq!(fill, before);
+    }
+
+    #[test]
+    fn angular_gradient_css_reports_center_angle_all_colors_and_hard_stops() {
+        let mut node = Node::new(NodeKind::Rectangle, "Angular CSS", 0.0, 0.0, 100.0, 100.0);
+        node.fills = vec![Fill {
+            paint: Paint::AngularGradient { center: Point::new(0.25, 0.75), angle: -90.0,
+                stops: vec![GradientStop { offset: 0.0, color: Color::BLACK },
+                    GradientStop { offset: 0.5, color: Color::WHITE },
+                    GradientStop { offset: 0.5, color: Color::rgba(255, 0, 0, 128) }] },
+            ..Fill::solid(Color::BLACK)
+        }];
+        let css = css(&node);
+        assert!(css.contains("conic-gradient(from 270deg at 25% 75%"), "{css}");
+        assert!(css.contains("#000000 0%, #FFFFFF 50%, rgba(255,0,0,0.50196078) 50%"), "{css}");
+        assert!(!css.contains("approximated"), "Hard transitions need no interpolation samples");
+    }
+
+    #[test]
+    fn angular_gradient_css_single_stop_is_a_valid_constant_with_fill_opacity() {
+        let mut node = Node::new(NodeKind::Rectangle, "One stop", 0.0, 0.0, 100.0, 100.0);
+        node.fills = vec![Fill {
+            paint: Paint::AngularGradient { center: Point::new(0.2, 0.8), angle: 45.0,
+                stops: vec![GradientStop { offset: 0.37, color: Color::rgba(12, 34, 56, 128) }] },
+            opacity: 0.5, visible: true,
+        }];
+        let css = css(&node);
+        assert!(css.contains("background: rgba(12,34,56,0.25098039);"), "{css}");
+        assert!(!css.contains("conic-gradient"), "A CSS gradient with only one stop is invalid");
+    }
+
+    #[test]
+    fn angular_gradient_css_samples_match_native_straight_alpha_between_stops() {
+        let stops = vec![GradientStop { offset: 0.0, color: Color::rgba(255, 0, 0, 0) },
+            GradientStop { offset: 1.0, color: Color::rgb(0, 0, 255) }];
+        for opacity in [1.0, 0.7] {
+            let (samples, approximate) = angular_css_stops(&stops, opacity);
+            assert!(approximate);
+            for t in [0.0003, 0.0209, 0.314159, 0.50123, 0.73219, 0.9987] {
+                let pair = samples.windows(2).find(|pair| pair[0].0 <= t && t <= pair[1].0).unwrap();
+                let weight = (t - pair[0].0) / (pair[1].0 - pair[0].0);
+                let alpha = pair[0].1[3] * (1.0 - weight) + pair[1].1[3] * weight;
+                let native_alpha = t * opacity;
+                let native_color = [255.0 * (1.0 - t), 0.0, 255.0 * t];
+                assert!((alpha - native_alpha).abs() < 1e-12);
+                // Evaluate CSS's premultiplied interpolation independently of
+                // the sampling helper, on both opaque white and black.
+                for background in [0.0, 255.0] {
+                    for channel in 0..3 {
+                        let css = pair[0].1[channel] * pair[0].1[3] * (1.0 - weight)
+                            + pair[1].1[channel] * pair[1].1[3] * weight
+                            + background * (1.0 - alpha);
+                        let native = native_color[channel] * native_alpha + background * (1.0 - native_alpha);
+                        assert!((css - native).abs() <= 0.25,
+                            "CSS must remain within a quarter channel: t={t}, opacity={opacity}, css={css}, native={native}");
+                    }
+                }
+            }
+        }
+        let mut node = Node::new(NodeKind::Rectangle, "Transparent sweep", 0.0, 0.0, 100.0, 100.0);
+        node.fills = vec![Fill { paint: Paint::AngularGradient { center: Point::new(0.5, 0.5), angle: 0.0, stops },
+            ..Fill::solid(Color::BLACK) }];
+        let css = css(&node);
+        assert!(css.contains("approximated with up to 1024 additional native-interpolated stops"));
+        assert!(css.contains("rgba(127.5,0,127.5,0.5) 50%"), "{css}");
+    }
+
+    #[test]
+    fn angular_gradient_css_preserves_authored_hard_stops_and_bounds_extra_work() {
+        let hard = vec![GradientStop { offset: 1.0, color: Color::rgb(0, 0, 255) },
+            GradientStop { offset: 0.5, color: Color::rgba(255, 0, 0, 0) },
+            GradientStop { offset: 0.0, color: Color::BLACK },
+            GradientStop { offset: 0.5, color: Color::rgba(0, 255, 0, 200) }];
+        let (samples, approximate) = angular_css_stops(&hard, 1.0);
+        assert!(approximate);
+        let boundary: Vec<_> = samples.iter().filter(|(offset, _)| *offset == 0.5).map(|(_, color)| *color).collect();
+        assert_eq!(boundary, vec![[255.0, 0.0, 0.0, 0.0], [0.0, 255.0, 0.0, 200.0 / 255.0]],
+            "Stable sorting and inserted samples must preserve both authored sides of the hard transition");
+        let many: Vec<_> = (0..2050).map(|index| GradientStop { offset: index as f64 / 2049.0,
+            color: if index % 2 == 0 { Color::rgba(255, 0, 0, 0) } else { Color::rgb(0, 0, 255) } }).collect();
+        let (samples, approximate) = angular_css_stops(&many, 1.0);
+        assert!(approximate);
+        assert!(samples.len() <= many.len() + 1024, "Additional interpolation work has a fixed budget");
+        for stop in &many {
+            assert!(samples.iter().any(|(offset, color)| *offset == stop.offset
+                && *color == [stop.color.r as f64, stop.color.g as f64, stop.color.b as f64, stop.color.a as f64 / 255.0]),
+                "The work limit must never discard authored stops");
+        }
+        let opaque = vec![GradientStop { offset: 0.0, color: Color::BLACK }, GradientStop { offset: 1.0, color: Color::WHITE }];
+        let (samples, approximate) = angular_css_stops(&opaque, 0.4);
+        assert_eq!(samples.len(), 2, "Uniform alpha already matches CSS interpolation");
+        assert!(!approximate);
+    }
+}
+
+#[cfg(test)]
+mod angular_xaml_tests {
+    use super::*;
+
+    #[test]
+    fn angular_gradient_xaml_retains_public_brush_coordinates_alpha_and_stroke() {
+        let mut document = core::Document::new("Angular XAML");
+        let mut node = Node::new(NodeKind::Rectangle, "Angular", 4.0, 8.0, 100.0, 70.0);
+        let paint = Paint::AngularGradient { center: Point::new(0.25, 0.75), angle: 35.0,
+            stops: vec![GradientStop { offset: 0.0, color: Color::rgba(20, 40, 60, 128) },
+                GradientStop { offset: 0.5, color: Color::WHITE },
+                GradientStop { offset: 0.5, color: Color::BLACK }] };
+        node.fills = vec![Fill { paint: paint.clone(), opacity: 0.6, visible: true }];
+        node.strokes = vec![core::Stroke { paint, opacity: 0.4, ..core::Stroke::new(Color::BLACK, 3.0) }];
+        let id = document.insert_node(1, node).unwrap();
+        let xaml = export_xaml(&document, &[id]);
+        assert!(xaml.contains("<Rectangle.Fill>"));
+        assert!(xaml.contains("<Rectangle.Stroke>"));
+        assert_eq!(xaml.matches("<ConicGradientBrush ").count(), 2);
+        assert!(xaml.contains("Center=\"25%,75%\" Angle=\"35\" Opacity=\"0.6\""));
+        assert!(xaml.contains("Center=\"25%,75%\" Angle=\"35\" Opacity=\"0.4\""));
+        assert_eq!(xaml.matches("Offset=\"0\" Color=\"#8014283C\"").count(), 2);
+        assert_eq!(xaml.matches("Offset=\"0.5\"").count(), 4, "duplicate offsets preserve hard color stops");
     }
 }

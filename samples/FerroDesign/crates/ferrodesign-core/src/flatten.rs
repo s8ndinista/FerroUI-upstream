@@ -403,7 +403,8 @@ fn fully_opaque_fill(fill: &Fill) -> bool {
         && fill.opacity == 1.0
         && match &fill.paint {
             Paint::Solid(color) => color.a == 255,
-            Paint::LinearGradient { stops, .. } | Paint::RadialGradient { stops, .. } => {
+            Paint::LinearGradient { stops, .. } | Paint::RadialGradient { stops, .. }
+            | Paint::AngularGradient { stops, .. } => {
                 !stops.is_empty() && stops.iter().all(|stop| stop.color.a == 255)
             }
             // Opacity of source pixels (or empty space from image fitting)

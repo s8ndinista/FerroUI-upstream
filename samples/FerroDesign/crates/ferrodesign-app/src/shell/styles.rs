@@ -403,19 +403,31 @@ impl EditorShell {
             Paint::Solid(_) => 0,
             Paint::LinearGradient { .. } => 1,
             Paint::RadialGradient { .. } => 2,
-            Paint::Image { .. } => 3,
+            Paint::AngularGradient { .. } => 3,
+            Paint::Image { .. } => 4,
         };
         panel.children().add(self.style_choice(id, &format!("StyleFillType{index}"),
-            &["Solid", "Linear gradient", "Radial gradient", "Existing image"], selected, move |style, value| {
+            &["Solid", "Linear gradient", "Radial gradient", "Angular gradient", "Existing image"], selected, move |style, value| {
                 let fill = style_fill_mut(style, index)?;
                 // Fields commit in place, so the current paint can differ
                 // from the value that created this native choice control.
+                if matches!((&fill.paint, value), (Paint::Solid(_), 0)
+                    | (Paint::LinearGradient { .. }, 1) | (Paint::RadialGradient { .. }, 2)
+                    | (Paint::AngularGradient { .. }, 3) | (Paint::Image { .. }, 4))
+                {
+                    return Ok(());
+                }
                 let color = fill.paint.representative_color();
+                let stops = match &fill.paint {
+                    Paint::LinearGradient { stops, .. } | Paint::RadialGradient { stops, .. }
+                    | Paint::AngularGradient { stops, .. } => stops.clone(),
+                    _ => style_default_stops(color),
+                };
                 fill.paint = match value {
                     0 => Paint::Solid(color),
-                    1 => Paint::LinearGradient { start: Point::new(0.0, 0.0), end: Point::new(1.0, 1.0), stops: style_default_stops(color) },
-                    2 => Paint::RadialGradient { center: Point::new(0.5, 0.5), radius: 0.5, stops: style_default_stops(color) },
-                    _ if matches!(fill.paint, Paint::Image { .. }) => return Ok(()),
+                    1 => Paint::LinearGradient { start: Point::new(0.0, 0.0), end: Point::new(1.0, 1.0), stops },
+                    2 => Paint::RadialGradient { center: Point::new(0.5, 0.5), radius: 0.5, stops },
+                    3 => Paint::AngularGradient { center: Point::new(0.5, 0.5), angle: 0.0, stops },
                     _ => return Err("Replace from a selected image layer to use its embedded image and source window.".into()),
                 }; Ok(())
             }));
@@ -471,6 +483,13 @@ impl EditorShell {
                         ("Center Y", center.y),
                         ("Radius", *radius),
                     ],
+                );
+                self.style_gradient_stops(&panel, id, index, stops);
+            }
+            Paint::AngularGradient { center, angle, stops } => {
+                self.style_gradient_coordinates(
+                    &panel, id, index,
+                    &[("Center X", center.x), ("Center Y", center.y), ("Angle (degrees)", *angle)],
                 );
                 self.style_gradient_stops(&panel, id, index, stops);
             }
@@ -554,6 +573,11 @@ impl EditorShell {
                             0 => center.x = value,
                             1 => center.y = value,
                             _ => *radius = value,
+                        },
+                        Paint::AngularGradient { center, angle, .. } => match property {
+                            0 => center.x = value,
+                            1 => center.y = value,
+                            _ => *angle = value,
                         },
                         _ => return Err(stale_style()),
                     }
@@ -1044,7 +1068,8 @@ fn style_effect_mut(style: &mut Style, index: usize) -> Result<&mut Effect, Stri
 }
 fn style_stops_mut(style: &mut Style, index: usize) -> Result<&mut Vec<GradientStop>, String> {
     match &mut style_fill_mut(style, index)?.paint {
-        Paint::LinearGradient { stops, .. } | Paint::RadialGradient { stops, .. } => Ok(stops),
+        Paint::LinearGradient { stops, .. } | Paint::RadialGradient { stops, .. }
+        | Paint::AngularGradient { stops, .. } => Ok(stops),
         _ => Err(stale_style()),
     }
 }

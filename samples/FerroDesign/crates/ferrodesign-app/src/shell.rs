@@ -442,6 +442,7 @@ impl EditorShell {
             ("ConvertNetworkButton", "vector-network"),
             ("NetworkPenButton", "network-pen"), ("NetworkJoinButton", "network-join"),
             ("NetworkFillButton", "network-fill"), ("NetworkWeldButton", "network-weld"),
+            ("NetworkDetectFacesButton", "network-fill-faces"),
             ("VectorSelectButton", "vector-points"),
             ("VectorBendButton", "vector-bend"),
             ("VectorEraseButton", "vector-erase"),
@@ -658,6 +659,7 @@ impl EditorShell {
             "VectorPointOptions",
             "VectorSelectButton", "VectorBendButton", "VectorEraseButton",
             "ConvertNetworkButton", "NetworkPenButton", "NetworkJoinButton", "NetworkFillButton", "NetworkWeldButton",
+            "NetworkDetectFacesButton",
             "CornerPointButton", "SmoothPointButton", "SymmetricPointButton",
             "InlineTextBox",
             "EditPaintsButton",
@@ -1787,6 +1789,15 @@ impl EditorShell {
                 return changed;
             }
             "network-weld" => return self.canvas.network_weld_selection(),
+            "network-fill-faces" => {
+                match self.canvas.network_fill_faces() {
+                    Ok(changed) => {
+                        if !changed { self.toast("Every closed face is already filled, or this network has no closed faces."); }
+                        return changed;
+                    }
+                    Err(error) => { self.toast(&error.to_string()); return false; }
+                }
+            }
             "network-pen" => {
                 if self.canvas.vector_node.get().is_none() && !self.canvas.edit_vector() { return false; }
                 self.canvas.convert_network();
@@ -2049,9 +2060,20 @@ impl EditorShell {
                 return true;
             }
             "export-svg" => {
-                let svg = self.editor.borrow().export_selection_svg();
-                platform::download("FerroDesign.svg", &svg, "image/svg+xml");
+                let report = {
+                    let editor = self.editor.borrow();
+                    editor.document.export_svg_report(editor.active_page, &editor.selection)
+                };
+                platform::download("FerroDesign.svg", &report.source, "image/svg+xml");
                 self.close_modal();
+                if let Some(first) = report.warnings.first() {
+                    let message = if report.warnings.len() == 1 {
+                        first.clone()
+                    } else {
+                        format!("{} ({} export warnings.)", first, report.warnings.len())
+                    };
+                    self.toast(&message);
+                }
                 return true;
             }
             "export-png" => {
@@ -2753,6 +2775,54 @@ fn alignment_index(value: core::LayoutAlign) -> i32 {
         core::LayoutAlign::Stretch => 4,
     }
 }
+/// CSS interpolates premultiplied colors, while the public native brush
+/// interpolates straight RGBA. Sampling the native ramp bounds this difference
+/// without discarding authored stop order or coincident hard-stop boundaries.
+fn angular_css_stops(stops: &[core::GradientStop], opacity: f64) -> (Vec<(f64, [f64; 4])>, bool) {
+    const MAX_ADDITIONAL_STOPS: usize = 1024;
+    const SUBDIVISIONS: usize = 16;
+    let opacity = opacity.clamp(0.0, 1.0);
+    let mut stops = stops.to_vec();
+    stops.sort_by(|a, b| a.offset.total_cmp(&b.offset));
+    let needs_samples = |a: &core::GradientStop, b: &core::GradientStop| {
+        opacity > 0.0 && a.offset < b.offset && a.color.a != b.color.a
+            && (a.color.r != b.color.r || a.color.g != b.color.g || a.color.b != b.color.b)
+    };
+    let varying = stops.windows(2).filter(|pair| needs_samples(&pair[0], &pair[1])).count();
+    let rgba = |color: Color| [color.r as f64, color.g as f64, color.b as f64,
+        color.a as f64 / 255.0 * opacity];
+    let mut result = Vec::with_capacity(stops.len() + MAX_ADDITIONAL_STOPS.min(varying * (SUBDIVISIONS - 1)));
+    let mut interval = 0;
+    for (index, stop) in stops.iter().enumerate() {
+        let a = rgba(stop.color);
+        result.push((stop.offset, a));
+        let Some(next) = stops.get(index + 1) else { continue; };
+        if !needs_samples(stop, next) { continue; }
+        // Share a fixed extra-stop budget across all varying-alpha intervals.
+        // At 16 subdivisions the premultiplied channel error of one interval
+        // is at most 255 / (4 * 16^2), below a quarter of an 8-bit channel.
+        let additional = (MAX_ADDITIONAL_STOPS / varying
+            + usize::from(interval < MAX_ADDITIONAL_STOPS % varying)).min(SUBDIVISIONS - 1);
+        interval += 1;
+        let divisions = additional + 1;
+        let b = rgba(next.color);
+        for sample in 1..divisions {
+            let t = sample as f64 / divisions as f64;
+            result.push((stop.offset + (next.offset - stop.offset) * t,
+                std::array::from_fn(|channel| a[channel] + (b[channel] - a[channel]) * t)));
+        }
+    }
+    (result, varying != 0)
+}
+
+fn angular_css_color(rgba: [f64; 4]) -> String {
+    if rgba[3] == 1.0 && rgba[..3].iter().all(|channel| channel.fract() == 0.0) {
+        return Color::rgb(rgba[0] as u8, rgba[1] as u8, rgba[2] as u8).css();
+    }
+    let scalar = |value: f64| format!("{value:.8}").trim_end_matches('0').trim_end_matches('.').to_string();
+    format!("rgba({},{},{},{})", scalar(rgba[0]), scalar(rgba[1]), scalar(rgba[2]), scalar(rgba[3]))
+}
+
 fn css(n: &Node) -> String {
     let mut output = format!(
         "/* {} */\nposition: absolute;\nleft: {}px;\ntop: {}px;\nwidth: {}px;\nheight: {}px;\n",
@@ -2771,7 +2841,7 @@ fn css(n: &Node) -> String {
     if n.corner_radius > 0.0 {
         output += &format!("border-radius: {}px;\n", number(n.corner_radius));
     }
-    if let Some(fill) = n.fills.first() {
+    if let Some(fill) = n.fills.iter().find(|fill| fill.visible) {
         match &fill.paint {
             Paint::Solid(color) => output += &format!("background: {};\n", color.css()),
             Paint::LinearGradient { stops, .. } => {
@@ -2783,6 +2853,24 @@ fn css(n: &Node) -> String {
                         .collect::<Vec<_>>()
                         .join(", ")
                 )
+            }
+            Paint::AngularGradient { center, angle, stops } => {
+                let (stops, sampled) = angular_css_stops(stops, fill.opacity);
+                if let [(_, color)] = stops.as_slice() {
+                    // A valid native one-stop brush is constant; CSS gradient
+                    // syntax requires at least two stops.
+                    output += &format!("background: {};\n", angular_css_color(*color));
+                } else if !stops.is_empty() {
+                    if sampled {
+                        output += "/* Angular color/alpha is approximated with up to 1024 additional native-interpolated stops; CSS otherwise premultiplies alpha. */\n";
+                    }
+                    output += &format!(
+                        "background: conic-gradient(from {}deg at {}% {}%, {});\n",
+                        number(angle.rem_euclid(360.0)), number(center.x * 100.0), number(center.y * 100.0),
+                        stops.iter().map(|(offset, color)| format!("{} {}%", angular_css_color(*color), offset * 100.0))
+                            .collect::<Vec<_>>().join(", "),
+                    );
+                }
             }
             _ => {}
         }
@@ -2866,62 +2954,98 @@ fn export_xaml(doc: &core::Document, roots: &[NodeId]) -> String {
     result += "</Canvas>\n";
     result
 }
+/// Emit native angular brush properties instead of approximating a sweep with
+/// its first stop. Other paint kinds retain the exporter's existing subset.
+fn xaml_paint(
+    tag: &str, property: &str, paint: &Paint, opacity: f64, depth: usize,
+    attributes: &mut String, properties: &mut String,
+) {
+    if let Paint::AngularGradient { center, angle, stops } = paint {
+        let pad = "  ".repeat(depth);
+        *properties += &format!("{pad}<{tag}.{property}>\n{pad}  <ConicGradientBrush Center=\"{}%,{}%\" Angle=\"{}\" Opacity=\"{}\">\n",
+            center.x * 100.0, center.y * 100.0, angle, opacity);
+        let mut stops = stops.clone();
+        stops.sort_by(|a, b| a.offset.total_cmp(&b.offset));
+        for stop in stops {
+            *properties += &format!("{pad}    <GradientStop Offset=\"{}\" Color=\"{}\"/>\n",
+                stop.offset, xaml_color(stop.color));
+        }
+        *properties += &format!("{pad}  </ConicGradientBrush>\n{pad}</{tag}.{property}>\n");
+    } else {
+        *attributes += &format!(" {property}=\"{}\"", xaml_color(paint.representative_color()));
+    }
+}
+
 fn xaml_node(doc: &core::Document, id: NodeId, depth: usize, result: &mut String) {
     let Some(n) = doc.nodes.get(&id) else { return };
     let pad = "  ".repeat(depth);
-    let position=format!("Canvas.Left=\"{}\" Canvas.Top=\"{}\" Width=\"{}\" Height=\"{}\" Opacity=\"{}\" IsVisible=\"{}\"",
-        number(n.x),number(n.y),number(n.width),number(n.height),number(n.opacity),if n.visible{"True"}else{"False"});
-    let fill = xaml_color(n.fill_color());
-    let transform = if n.rotation != 0.0 {
-        format!(
-            " RenderTransform=\"rotate({}deg)\" RenderTransformOrigin=\"50%,50%\"",
-            number(n.rotation)
-        )
-    } else {
-        String::new()
-    };
-    if n.kind.is_container() {
-        *result += &format!(
-            "{pad}<Canvas {position}{transform} Background=\"{fill}\" ClipToBounds=\"{}\">\n",
-            if n.clip_content { "True" } else { "False" }
-        );
-        for &child in &n.children {
-            xaml_node(doc, child, depth + 1, result)
-        }
-        *result += &format!("{pad}</Canvas>\n");
-        return;
+    let mut attributes = format!("Canvas.Left=\"{}\" Canvas.Top=\"{}\" Width=\"{}\" Height=\"{}\" Opacity=\"{}\" IsVisible=\"{}\"",
+        number(n.x), number(n.y), number(n.width), number(n.height), number(n.opacity), if n.visible { "True" } else { "False" });
+    if n.rotation != 0.0 {
+        attributes += &format!(" RenderTransform=\"rotate({}deg)\" RenderTransformOrigin=\"50%,50%\"", number(n.rotation));
     }
-    let stroke = n
-        .strokes
-        .first()
-        .map(|s| {
-            format!(
-                " Stroke=\"{}\" StrokeThickness=\"{}\"",
-                xaml_color(s.paint.representative_color()),
-                number(s.width)
-            )
-        })
-        .unwrap_or_default();
-    match n.kind {
-        NodeKind::Text=>*result+=&format!("{pad}<TextBlock {position}{transform} Text=\"{}\" FontFamily=\"{}\" FontSize=\"{}\" FontWeight=\"{}\" Foreground=\"{fill}\" TextWrapping=\"Wrap\"/>\n",xml(&n.text),xml(&n.font_family),number(n.font_size),n.font_weight),
-        NodeKind::Ellipse=>*result+=&format!("{pad}<Ellipse {position}{transform} Fill=\"{fill}\"{stroke}/>\n"),
-        NodeKind::Vector=>{
-            let mut data=String::new();
-            for segment in &n.path.segments{data+=&match segment{
-                core::PathSegment::MoveTo{point}=>format!("M{},{} ",number(point.x),number(point.y)),
-                core::PathSegment::LineTo{point}=>format!("L{},{} ",number(point.x),number(point.y)),
-                core::PathSegment::CubicTo{control1,control2,point}=>format!("C{},{} {},{} {},{} ",number(control1.x),number(control1.y),number(control2.x),number(control2.y),number(point.x),number(point.y)),
-                core::PathSegment::QuadraticTo{control,point}=>format!("Q{},{} {},{} ",number(control.x),number(control.y),number(point.x),number(point.y)),
-                core::PathSegment::Close=>"Z ".into(),
-            };}
-            *result+=&format!("{pad}<Path {position}{transform} Data=\"{data}\" Fill=\"{fill}\"{stroke}/>\n");
+    let container = n.kind.is_container();
+    let tag = if container { "Canvas" } else {
+        match n.kind {
+            NodeKind::Text => "TextBlock",
+            NodeKind::Ellipse => "Ellipse",
+            NodeKind::Vector => "Path",
+            NodeKind::Line => "Line",
+            NodeKind::Polygon | NodeKind::Star => "Polygon",
+            _ => "Rectangle",
         }
-        NodeKind::Line=>*result+=&format!("{pad}<Line {position}{transform} StartPoint=\"0,0\" EndPoint=\"{},{}\"{stroke}/>\n",number(n.width),number(n.height)),
-        NodeKind::Polygon|NodeKind::Star=>{
-            let points=n.polygon_points().iter().map(|p|format!("{},{}",number(p.x),number(p.y))).collect::<Vec<_>>().join(" ");
-            *result+=&format!("{pad}<Polygon {position}{transform} Points=\"{points}\" Fill=\"{fill}\"{stroke}/>\n");
+    };
+    if container {
+        attributes += &format!(" ClipToBounds=\"{}\"", if n.clip_content { "True" } else { "False" });
+    } else {
+        match n.kind {
+            NodeKind::Text => attributes += &format!(" Text=\"{}\" FontFamily=\"{}\" FontSize=\"{}\" FontWeight=\"{}\" TextWrapping=\"Wrap\"",
+                xml(&n.text), xml(&n.font_family), number(n.font_size), n.font_weight),
+            NodeKind::Vector => {
+                let mut data = String::new();
+                for segment in &n.path.segments {
+                    data += &match segment {
+                        core::PathSegment::MoveTo { point } => format!("M{},{} ", number(point.x), number(point.y)),
+                        core::PathSegment::LineTo { point } => format!("L{},{} ", number(point.x), number(point.y)),
+                        core::PathSegment::CubicTo { control1, control2, point } => format!("C{},{} {},{} {},{} ", number(control1.x), number(control1.y), number(control2.x), number(control2.y), number(point.x), number(point.y)),
+                        core::PathSegment::QuadraticTo { control, point } => format!("Q{},{} {},{} ", number(control.x), number(control.y), number(point.x), number(point.y)),
+                        core::PathSegment::Close => "Z ".into(),
+                    };
+                }
+                attributes += &format!(" Data=\"{data}\"");
+            }
+            NodeKind::Line => attributes += &format!(" StartPoint=\"0,0\" EndPoint=\"{},{}\"", number(n.width), number(n.height)),
+            NodeKind::Polygon | NodeKind::Star => {
+                let points = n.polygon_points().iter().map(|p| format!("{},{}", number(p.x), number(p.y))).collect::<Vec<_>>().join(" ");
+                attributes += &format!(" Points=\"{points}\"");
+            }
+            NodeKind::Ellipse => {}
+            _ => attributes += &format!(" RadiusX=\"{}\" RadiusY=\"{}\"", number(n.corner_radius), number(n.corner_radius)),
         }
-        _=>*result+=&format!("{pad}<Rectangle {position}{transform} RadiusX=\"{}\" RadiusY=\"{}\" Fill=\"{fill}\"{stroke}/>\n",number(n.corner_radius),number(n.corner_radius)),
+    }
+    let mut properties = String::new();
+    if n.kind != NodeKind::Line {
+        let property = if container { "Background" } else if n.kind == NodeKind::Text { "Foreground" } else { "Fill" };
+        if let Some(fill) = n.fills.iter().find(|fill| fill.visible) {
+            xaml_paint(tag, property, &fill.paint, fill.opacity, depth + 1, &mut attributes, &mut properties);
+        } else {
+            attributes += &format!(" {property}=\"#00000000\"");
+        }
+    }
+    if !container && n.kind != NodeKind::Text {
+        if let Some(stroke) = n.strokes.iter().find(|stroke| stroke.visible) {
+            attributes += &format!(" StrokeThickness=\"{}\"", number(stroke.width));
+            xaml_paint(tag, "Stroke", &stroke.paint, stroke.opacity, depth + 1, &mut attributes, &mut properties);
+        }
+    }
+    if !container && properties.is_empty() {
+        *result += &format!("{pad}<{tag} {attributes}/>\n");
+    } else {
+        *result += &format!("{pad}<{tag} {attributes}>\n{properties}");
+        if container {
+            for &child in &n.children { xaml_node(doc, child, depth + 1, result); }
+        }
+        *result += &format!("{pad}</{tag}>\n");
     }
 }
 const BLEND_OPTIONS: &[(&str, core::BlendMode)] = &[

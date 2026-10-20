@@ -188,6 +188,12 @@ impl StyleValue {
                             }
                             validate_stops(stops)?;
                         }
+                        Paint::AngularGradient { center, angle, stops } => {
+                            if !finite_point(*center) || !angle.is_finite() {
+                                return Err(invalid("Style angular gradient center and angle must be finite."));
+                            }
+                            validate_stops(stops)?;
+                        }
                         Paint::Image { href, crop, .. } => {
                             if href.trim().is_empty()
                                 || crop.is_some_and(|crop| !crate::valid_image_crop(crop))

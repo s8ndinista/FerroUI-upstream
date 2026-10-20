@@ -13,6 +13,10 @@ use crate::{Editor, FillRule, NodeId};
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 
+#[path = "vector_faces.rs"]
+mod faces;
+pub use faces::NetworkFaceError;
+
 pub type VectorVertexId = u64;
 pub type VectorEdgeId = u64;
 pub type VectorRegionId = u64;
