@@ -41,6 +41,10 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           shared-key: rich-text-portable
+      - name: Install font discovery build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libfontconfig1-dev libfreetype6-dev pkg-config
       - name: Base contracts
         run: cargo test --locked -p ferroui-base --lib --no-fail-fast
       - name: Full controls suite
