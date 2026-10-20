@@ -39,12 +39,12 @@ use ferroui_base::media::text_formatting::{
     TextRunProperties,
 };
 use ferroui_base::media::{
-    AlignmentX, AlignmentY, BaselineAlignment, BoxShadow, BoxShadows, CombinedGeometry,
+    AlignmentX, AlignmentY, BaselineAlignment, BaselinePixelAlignment, BoxShadow, BoxShadows, CombinedGeometry,
     DrawingContext, EllipseGeometry, FlowDirection, FontFamily, FontStretch, FontStyle, FontWeight,
     Geometry, GeometryCombineMode, GeometryGroup, GradientSpreadMethod, IBrush, IEffect,
     IImmutableBrush, IPen, ImmutableBlurEffect, MatrixTransform, PenLineCap, PenLineJoin,
     PushedState, RectangleGeometry, RenderOptions, StreamGeometry, Stretch, TextAlignment,
-    TextDecorationCollection, TextDecorations, TextWrapping, TileMode, Typeface,
+    TextDecorationCollection, TextDecorations, TextHintingMode, TextOptions, TextWrapping, TileMode, Typeface,
 };
 use ferroui_base::platform::IGeometryContext;
 use ferroui_base::utilities::{CultureInfo, ValueSpan};
@@ -824,9 +824,11 @@ fn paint_fills(context: &mut DrawingContext<'_>, visual: &CachedNode) {
             context.draw_geometry(Some(fill), None, &visual.geometry);
         }
     } else {
+        let text_options = context.push_text_options(typography::design_text_options());
         for text in visual.texts.iter().rev() {
             text.layout.draw(context, text.origin);
         }
+        context.pop(text_options);
     }
 }
 

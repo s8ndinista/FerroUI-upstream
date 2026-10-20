@@ -80,7 +80,23 @@ pub(crate) fn editor_brush(node: &Node) -> Rc<dyn IBrush> {
     }).unwrap_or_else(|| solid_brush(Color::TRANSPARENT, 1.0))
 }
 
+/// Authored text keeps its shaped contours and fractional baseline in document
+/// coordinates. Device hinting and baseline snapping would move its ink as the
+/// view changes and disagree with its scalable stroke, shadow and flatten paths.
+pub(crate) fn design_text_options() -> TextOptions {
+    TextOptions {
+        text_hinting_mode: TextHintingMode::None,
+        baseline_pixel_alignment: BaselinePixelAlignment::Unaligned,
+        ..TextOptions::default()
+    }
+}
+
 pub(crate) fn configure_text_box(field: &TextBox, node: &Node) {
+    TextOptions::set_text_options(field, design_text_options());
+    // The inline editor shares the document's fractional layout bounds before
+    // the host applies its world/camera transform. This inherits into its
+    // template, preserving wrapping and placement while entering edit mode.
+    field.set_use_layout_rounding(false);
     field.set_font_family(FontFamily::new(&node.font_family));
     field.set_font_size(font_size(node.font_size));
     field.set_font_weight(FontWeight(node.font_weight.clamp(1, 1000) as i32));
@@ -187,6 +203,10 @@ mod tests {
         let field = TextBox::new();
         configure_text_box(&field, node);
         let presenter = TextPresenter::new();
+        // This isolated presenter fixture has no TextBox template ancestor.
+        // Copy the inherited visual policy along with its typography inputs.
+        TextOptions::set_text_options(&presenter, TextOptions::get_text_options(&field));
+        presenter.set_use_layout_rounding(field.use_layout_rounding());
         presenter.set_text(Some(&node.text));
         presenter.set_font_family(field.font_family());
         presenter.set_font_size(field.font_size());
@@ -227,14 +247,31 @@ mod tests {
         });
         let canvas = make_text_layout(&node, editor_brush(&node));
         let presenter = presenter(&node);
+        let options = TextOptions::get_text_options(&presenter);
+        assert_eq!(options.text_hinting_mode, TextHintingMode::None);
+        assert_eq!(options.baseline_pixel_alignment, BaselinePixelAlignment::Unaligned);
+        assert!(!presenter.use_layout_rounding());
         let native = presenter.text_layout();
         assert_eq!(canvas.layout.width_including_trailing_whitespace(), native.width_including_trailing_whitespace());
         assert_eq!(canvas.layout.height(), native.height());
         for (start, length) in [(0, 2), (3, 1), (4, 2), (6, 3)] {
             assert_eq!(canvas.layout.hit_test_text_range(start, length), native.hit_test_text_range(start, length));
         }
-        let canvas_pixels = pixels(|context| canvas.layout.draw(context, canvas.origin));
-        let native_pixels = pixels(|context| presenter.render(context));
+        let mut document = Document::new("Native typography parity");
+        document.insert_node(1, node).unwrap();
+        let editor = Editor::new(document);
+        let canvas_pixels = pixels(|context| {
+            let stats = ScenePainter::default().render_editor(context, &editor,
+                &editor.document.pages[0].children, Rect::new(0.0, 0.0, 512.0, 160.0));
+            assert_eq!(stats.invalid_nodes, 0);
+            assert_eq!(stats.unsupported_effects, 0);
+        });
+        let native_pixels = pixels(|context| {
+            // ImmediateRenderer applies visual TextOptions just as the live
+            // compositor does; calling presenter.render directly bypasses it.
+            ferroui_base::rendering::ImmediateRenderer::render_clipped(context,
+                &presenter.clone().upcast(), UiRect::new(0.0, 0.0, 512.0, 160.0));
+        });
         assert!(canvas_pixels.chunks_exact(4).filter(|pixel| pixel[3] > 0).count() > 500);
         assert_eq!(canvas_pixels, native_pixels);
         scope.dispose();

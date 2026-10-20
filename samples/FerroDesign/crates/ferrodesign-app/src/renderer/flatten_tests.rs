@@ -22,10 +22,19 @@ fn pixels(editor: &Editor) -> Vec<u8> {
 }
 
 fn pixels_with(painter: &mut ScenePainter, editor: &Editor) -> (Vec<u8>, RenderStats) {
+    pixels_with_view(painter, editor, Transform::IDENTITY)
+}
+
+fn pixels_with_view(
+    painter: &mut ScenePainter,
+    editor: &Editor,
+    view: Transform,
+) -> (Vec<u8>, RenderStats) {
     let bitmap = RenderTargetBitmap::new(PixelSize::new(180, 140));
     let stats;
     {
         let mut context = bitmap.create_drawing_context();
+        let transform = context.push_transform(ui_matrix(view));
         stats = painter.render_editor(
             &mut context,
             editor,
@@ -34,6 +43,7 @@ fn pixels_with(painter: &mut ScenePainter, editor: &Editor) -> (Vec<u8>, RenderS
         );
         assert_eq!(stats.invalid_nodes, 0);
         assert_eq!(stats.unsupported_effects, 0);
+        context.pop(transform);
     }
     let mut pixels = vec![0; 180 * 140 * 4];
     bitmap.copy_pixels(PixelRect::new(0, 0, 180, 140), &mut pixels, 180 * 4);
@@ -219,6 +229,54 @@ fn flatten_native_text_uses_actual_shaping_rich_fonts_and_decorations() {
             PathSegment::QuadraticTo { .. } | PathSegment::CubicTo { .. }
         )));
     equivalent(&before, &pixels(&editor));
+    scope.dispose();
+}
+
+#[test]
+fn flatten_native_text_preserves_fractional_views_and_rich_run_positions() {
+    let scope = backend();
+    let mut document = Document::new("Fractional text outline");
+    let mut node = Node::new(NodeKind::Text, "Scalable text", 12.25, 15.5, 145.0, 100.0)
+        .with_text("office\nAV ffi", 22.5, Color::rgb(230, 40, 90));
+    node.font_family = "fonts:Inter#Inter".into();
+    node.letter_spacing = 0.375;
+    node.line_height = 1.6;
+    node.text_align = TextAlign::Center;
+    node.text_vertical_align = TextVerticalAlign::Center;
+    node.text_decoration = TextDecoration::Underline;
+    node.text_runs.push(ferrodesign_core::TextRun {
+        start: 0,
+        end: 6,
+        font_family: None,
+        font_size: Some(27.25),
+        font_weight: Some(600),
+        color: None,
+        italic: None,
+        decoration: Some(TextDecoration::Strikethrough),
+    });
+    let id = document.insert_node(1, node).unwrap();
+    let mut editor = Editor::new(document);
+    editor.selection = vec![id];
+    // The host supplies the camera transform. Upright fractional scales expose
+    // device baseline snapping; an affine view also retains shaped run offsets.
+    let views = [
+        Transform::IDENTITY,
+        Transform { a: 0.8, b: 0.0, c: 0.0, d: 1.1, e: 10.375, f: 7.625 },
+        Transform { a: 0.95, b: 0.08, c: 0.12, d: 0.9, e: 2.25, f: 1.75 },
+    ];
+    let mut painter = ScenePainter::default();
+    let before: Vec<_> = views
+        .iter()
+        .map(|view| pixels_with_view(&mut painter, &editor, *view).0)
+        .collect();
+    for image in &before {
+        assert!(image.chunks_exact(4).filter(|pixel| pixel[3] > 0).count() > 200);
+    }
+    flatten_selection(&mut editor).unwrap();
+    for (view, before) in views.iter().zip(&before) {
+        let (after, _) = pixels_with_view(&mut painter, &editor, *view);
+        equivalent(before, &after);
+    }
     scope.dispose();
 }
 
