@@ -6,6 +6,7 @@ mod input_method_manager;
 mod text_input_content_type;
 mod text_input_method_client;
 mod text_input_method_connection;
+mod text_input_method_edit;
 mod text_input_method_client_requery_requested_event_args;
 mod text_input_method_client_requested_event_args;
 mod text_input_options;
@@ -15,6 +16,7 @@ mod transform_tracking_helper;
 pub use i_text_input_method_impl::ITextInputMethodImpl;
 pub(crate) use input_method_manager::TextInputMethodManager;
 pub use text_input_content_type::TextInputContentType;
+pub use text_input_method_edit::{TextInputMethodEdit, TextInputMethodState};
 pub use text_input_method_client::{
     ContextMenuAction, TextInputMethodClient, TextInputMethodClientEvents, TextSelection,
 };

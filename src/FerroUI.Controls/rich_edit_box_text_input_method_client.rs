@@ -1,7 +1,7 @@
 use crate::RichEditBox;
 use ferroui_base::input::text_input::{
-    ContextMenuAction, TextInputMethodClient, TextInputMethodClientEvents, TextInputMethodEditing,
-    TextInputMethodError, TextSelection,
+    ContextMenuAction, TextInputMethodClient, TextInputMethodClientEvents, TextInputMethodEdit,
+    TextInputMethodEditing, TextInputMethodError, TextInputMethodState, TextSelection,
 };
 use ferroui_base::input::InputElement;
 use ferroui_base::{Rect, Ref, Visual, WeakRef};
@@ -124,6 +124,55 @@ pub(crate) fn input_method_error(error: &crate::rich_text::EditError) -> TextInp
 }
 
 impl TextInputMethodEditing for RichEditBoxTextInputMethodClient {
+    fn supports_exact_edits(&self) -> bool {
+        true
+    }
+
+    fn edit_state(&self) -> Result<TextInputMethodState, TextInputMethodError> {
+        let owner = self.owner().ok_or(TextInputMethodError::Unavailable)?;
+        let editor = owner.editor();
+        let selection = editor.selection();
+        Ok(TextInputMethodState {
+            text: editor.document().text(),
+            selection: TextSelection::new(
+                i32::try_from(selection.anchor).map_err(|_| TextInputMethodError::InvalidRange)?,
+                i32::try_from(selection.active).map_err(|_| TextInputMethodError::InvalidRange)?,
+            ),
+        })
+    }
+
+    fn apply_edit(
+        &self,
+        edit: &TextInputMethodEdit,
+        composing: bool,
+    ) -> Result<bool, TextInputMethodError> {
+        let owner = self.owner().ok_or(TextInputMethodError::Unavailable)?;
+        edit.apply_to(&owner.document().text())?;
+        let result = owner.apply_input_method_edit(edit, composing);
+        let accepted = result.as_ref().copied().map_err(input_method_error);
+        owner.handle_edit(result);
+        accepted
+    }
+
+    fn complete_composition(&self) -> Result<bool, TextInputMethodError> {
+        let owner = self.owner().ok_or(TextInputMethodError::Unavailable)?;
+        let result = owner.complete_input_method_composition();
+        let accepted = result.as_ref().copied().map_err(input_method_error);
+        owner.handle_edit(result);
+        accepted
+    }
+
+    fn select_exact(&self, selection: TextSelection) -> Result<(), TextInputMethodError> {
+        let owner = self.owner().ok_or(TextInputMethodError::Unavailable)?;
+        let editor = owner.editor();
+        TextInputMethodEdit::new(TextSelection::new(0, 0), "", selection)
+            .apply_to(&editor.document().text())?;
+        let result = editor.select_exact_input(selection);
+        let accepted = result.as_ref().map(|_| ()).map_err(input_method_error);
+        owner.handle_edit(result);
+        accepted
+    }
+
     fn begin_composition(&self) -> Result<(), TextInputMethodError> {
         let owner = self.owner().ok_or(TextInputMethodError::Unavailable)?;
         if owner.is_read_only() {

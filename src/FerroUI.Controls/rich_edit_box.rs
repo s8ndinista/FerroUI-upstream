@@ -58,6 +58,9 @@ use std::cell::{Cell, RefCell};
 use std::ops::Range;
 use std::rc::Rc;
 
+#[path = "rich_edit_box_format_commands.rs"]
+mod format_commands;
+
 /// Character casing applied to newly entered text, including clipboard and IME commits.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 #[repr(i32)]
@@ -227,6 +230,8 @@ pub struct RichEditBox {
     can_copy: Cell<bool>,
     can_cut: Cell<bool>,
     can_paste: Cell<bool>,
+    can_format: Cell<bool>,
+    formatting_state: Cell<format_commands::FormattingState>,
     errors: Rc<HandlerList<dyn Fn(&EditError)>>,
     clipboard_errors: Rc<HandlerList<dyn Fn(&ClipboardError)>>,
     caret_scroll_pending: Cell<bool>,
@@ -284,6 +289,9 @@ ferroui_base::ferro_class_info!(RichEditBox {
             fn Cut() => RichEditBox::cut,
             fn Paste() => RichEditBox::paste,
             fn SelectAll() => RichEditBox::select_all,
+            fn ToggleBold() => |this: &Ref<RichEditBox>| { this.handle_edit(this.toggle_bold()); },
+            fn ToggleItalic() => |this: &Ref<RichEditBox>| { this.handle_edit(this.toggle_italic()); },
+            fn ToggleUnderline() => |this: &Ref<RichEditBox>| { this.handle_edit(this.toggle_underline()); },
             fn Undo() => |this: &Ref<RichEditBox>| { this.handle_edit(this.undo()); },
             fn Redo() => |this: &Ref<RichEditBox>| { this.handle_edit(this.redo()); },
         ],
@@ -440,6 +448,9 @@ impl FerroObjectImpl for RichEditBox {
         if property == InputElement::is_effectively_enabled_property().as_property() {
             this.update_command_states();
         }
+        if matches!(property.name(), "FontWeight" | "FontStyle" | "TextDecorations") {
+            this.update_format_command_states();
+        }
         match property.name() {
             "TextAlignment"
             | "TextWrapping"
@@ -517,7 +528,13 @@ impl InputElementImpl for RichEditBox {
                 return;
             }
             if let Some(text) = &event.text {
-                let result = this.insert_text(text);
+                let result = if let Some(edit) = commit.edit() {
+                    this.apply_input_method_edit(edit, false)
+                } else if commit.completes_composition() {
+                    this.complete_input_method_composition()
+                } else {
+                    this.insert_text(text)
+                };
                 commit.complete(
                     result
                         .as_ref()
@@ -681,6 +698,13 @@ ferroui_base::ferro_properties! { impl RichEditBox {
     pub fn can_copy_property() -> DirectProperty<RichEditBox, bool> { FerroProperty::register_direct::<RichEditBox, _>("CanCopy", |this| this.can_copy.get(), None, false) }
     pub fn can_cut_property() -> DirectProperty<RichEditBox, bool> { FerroProperty::register_direct::<RichEditBox, _>("CanCut", |this| this.can_cut.get(), None, false) }
     pub fn can_paste_property() -> DirectProperty<RichEditBox, bool> { FerroProperty::register_direct::<RichEditBox, _>("CanPaste", |this| this.can_paste.get(), None, false) }
+    pub fn can_format_property() -> DirectProperty<RichEditBox, bool> { FerroProperty::register_direct::<RichEditBox, _>("CanFormat", Self::can_format, None, true) }
+    pub fn bold_state_property() -> DirectProperty<RichEditBox, Option<bool>> { FerroProperty::register_direct::<RichEditBox, _>("BoldState", Self::bold_state, None, Some(false)) }
+    pub fn italic_state_property() -> DirectProperty<RichEditBox, Option<bool>> { FerroProperty::register_direct::<RichEditBox, _>("ItalicState", Self::italic_state, None, Some(false)) }
+    pub fn underline_state_property() -> DirectProperty<RichEditBox, Option<bool>> { FerroProperty::register_direct::<RichEditBox, _>("UnderlineState", Self::underline_state, None, Some(false)) }
+    pub fn is_bold_property() -> DirectProperty<RichEditBox, bool> { FerroProperty::register_direct::<RichEditBox, _>("IsBold", Self::is_bold, None, false) }
+    pub fn is_italic_property() -> DirectProperty<RichEditBox, bool> { FerroProperty::register_direct::<RichEditBox, _>("IsItalic", Self::is_italic, None, false) }
+    pub fn is_underlined_property() -> DirectProperty<RichEditBox, bool> { FerroProperty::register_direct::<RichEditBox, _>("IsUnderlined", Self::is_underlined, None, false) }
     pub fn text_property() -> DirectProperty<RichEditBox, String> {
         FerroProperty::register_direct::<RichEditBox, String>("Text", |this| this.text(), Some(|this, value| { this.handle_edit(this.set_text(&value)); }), String::new())
     }
@@ -725,6 +749,8 @@ impl RichEditBox {
             can_copy: Cell::new(false),
             can_cut: Cell::new(false),
             can_paste: Cell::new(true),
+            can_format: Cell::new(true),
+            formatting_state: Cell::new(format_commands::FormattingState::default()),
             errors: Rc::new(HandlerList::new()),
             clipboard_errors: Rc::new(HandlerList::new()),
             caret_scroll_pending: Cell::new(false),
@@ -1584,6 +1610,7 @@ impl RichEditBox {
             &self.can_paste,
             self.can_paste(),
         );
+        self.update_format_command_states();
     }
 
     fn selection(&self) -> EditorSelection {
@@ -1797,61 +1824,13 @@ impl RichEditBox {
 
     fn format_accelerator(&self, key: Key) -> bool {
         let disabled = self.disabled_formatting_accelerators();
-        let editor = self.editor();
-        let _ = self.synchronize_editor_selection(&editor);
-        let current = editor.current_character_format().unwrap_or_default();
-        let format = match key {
-            Key::B if !disabled.contains(DisabledFormattingAccelerators::BOLD) => CharacterFormat {
-                font_weight: Some(if current.font_weight == Some(FontWeight::Bold) {
-                    FontWeight::Normal
-                } else {
-                    FontWeight::Bold
-                }),
-                ..CharacterFormat::default()
-            },
-            Key::I if !disabled.contains(DisabledFormattingAccelerators::ITALIC) => {
-                CharacterFormat {
-                    font_style: Some(if current.font_style == Some(FontStyle::Italic) {
-                        FontStyle::Normal
-                    } else {
-                        FontStyle::Italic
-                    }),
-                    ..CharacterFormat::default()
-                }
-            }
-            Key::U if !disabled.contains(DisabledFormattingAccelerators::UNDERLINE) => {
-                let underlined = current
-                    .text_decorations
-                    .as_ref()
-                    .and_then(Option::as_ref)
-                    .is_some_and(|decorations| {
-                        (0..decorations.len()).any(|index| {
-                            decorations.get(index).location() == TextDecorationLocation::Underline
-                        })
-                    });
-                let mut decorations = current
-                    .text_decorations
-                    .as_ref()
-                    .and_then(Option::as_ref)
-                    .map_or_else(Vec::new, |items| {
-                        (0..items.len())
-                            .map(|index| items.get(index))
-                            .filter(|item| item.location() != TextDecorationLocation::Underline)
-                            .collect()
-                    });
-                if !underlined {
-                    decorations.push(TextDecorations::underline().get(0));
-                }
-                CharacterFormat {
-                    text_decorations: Some((!decorations.is_empty()).then(|| {
-                        ferroui_base::media::TextDecorationCollection::from_items(decorations)
-                    })),
-                    ..CharacterFormat::default()
-                }
-            }
+        let result = match key {
+            Key::B if !disabled.contains(DisabledFormattingAccelerators::BOLD) => self.toggle_bold(),
+            Key::I if !disabled.contains(DisabledFormattingAccelerators::ITALIC) => self.toggle_italic(),
+            Key::U if !disabled.contains(DisabledFormattingAccelerators::UNDERLINE) => self.toggle_underline(),
             _ => return false,
         };
-        self.handle_edit(self.apply_format(&format));
+        self.handle_edit(result);
         true
     }
 
@@ -1915,6 +1894,58 @@ impl RichEditBox {
             Err(EditError::ReentrantEdit)
         }
     }
+    pub(crate) fn apply_input_method_edit(
+        &self,
+        edit: &ferroui_base::input::text_input::TextInputMethodEdit,
+        composing: bool,
+    ) -> Result<bool, EditError> {
+        if self.filter_input(&edit.text) != edit.text {
+            return Err(crate::documents::DocumentError::InvalidFormat(
+                "Input filtering would change an exact input-method edit.",
+            ).into());
+        }
+        let editor = self.editor();
+        let started = composing && !editor.is_composing();
+        let changed = editor.apply_exact_input_edit(edit, composing)?;
+        let version = editor.document().mutation_version();
+        let selection = editor.selection();
+        let current = || Rc::ptr_eq(&editor, &self.editor())
+            && editor.document().mutation_version() == version
+            && editor.selection() == selection
+            && editor.is_composing() == composing;
+        if composing {
+            let text = editor.active_composition_range()
+                .and_then(|range| editor.document().get_text(range).ok())
+                .ok_or(EditError::ReentrantEdit)?;
+            if started {
+                self.raise_composition(Self::text_composition_started_event(), &text, false);
+                if !current() { return Err(EditError::ReentrantEdit); }
+            }
+            if changed {
+                self.raise_composition(Self::text_composition_changed_event(), &text, false);
+            }
+        }
+        if current() { Ok(changed) } else { Err(EditError::ReentrantEdit) }
+    }
+
+    pub(crate) fn complete_input_method_composition(&self) -> Result<bool, EditError> {
+        let editor = self.editor();
+        let text = editor.active_composition_range()
+            .and_then(|range| editor.document().get_text(range).ok()).unwrap_or_default();
+        let composing = editor.is_composing();
+        let changed = editor.complete_exact_composition()?;
+        if composing {
+            let version = editor.document().mutation_version();
+            let selection = editor.selection();
+            self.raise_composition(Self::text_composition_ended_event(), &text, true);
+            if !Rc::ptr_eq(&editor, &self.editor()) || version != editor.document().mutation_version()
+                || selection != editor.selection() || editor.is_composing() {
+                return Err(EditError::ReentrantEdit);
+            }
+        }
+        Ok(changed)
+    }
+
     pub fn cancel_composition(&self) -> Result<bool, EditError> {
         let editor = self.editor();
         let result = editor.cancel_composition();

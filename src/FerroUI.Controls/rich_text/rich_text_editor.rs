@@ -105,6 +105,14 @@ struct Composition {
     before: EditorSnapshot,
     preview_version: u64,
     preview_text: String,
+    exact: Option<ExactComposition>,
+}
+
+#[derive(Clone)]
+struct ExactComposition {
+    /// Current structured content before temporary IME decorations.
+    document: DocumentSnapshot,
+    range: Range<usize>,
 }
 
 #[derive(Default)]
@@ -255,7 +263,10 @@ impl RichTextEditor {
             let composition = history.composition.as_ref()?;
             (
                 composition.preview_version,
-                composition.before.selection.range().start,
+                composition.exact.as_ref().map_or_else(
+                    || composition.before.selection.range().start,
+                    |exact| exact.range.start,
+                ),
                 composition.preview_text.encode_utf16().count(),
             )
         };
@@ -973,6 +984,7 @@ impl RichTextEditor {
             before: before.clone(),
             preview_version: self.document.mutation_version(),
             preview_text: String::new(),
+            exact: None,
         });
         let batch = self.document.begin_edit();
         let result = (|| -> Result<String, EditError> {
@@ -1019,6 +1031,7 @@ impl RichTextEditor {
             before,
             preview_version: self.document.mutation_version(),
             preview_text: text,
+            exact: None,
         });
         if let Some(changed_text) = changed_text {
             self.queue_composition_change(RichTextCompositionChange::Preview { changed_text });
@@ -1176,3 +1189,6 @@ fn merge_format(mut current: CharacterFormat, update: &CharacterFormat) -> Chara
 #[cfg(test)]
 #[path = "rich_text_composition_tests.rs"]
 mod composition_tests;
+
+#[path = "rich_text_exact_edit.rs"]
+mod exact_edit;

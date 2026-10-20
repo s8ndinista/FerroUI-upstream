@@ -11,8 +11,8 @@ use ferroui_base::input::text_input::{
 };
 use ferroui_base::input::{InputElement, InputManager, TextInputEventArgs};
 use ferroui_base::interactivity::RoutingStrategies;
-use ferroui_base::media::FontWeight;
 use ferroui_base::media::text_formatting::testing::TextTestScope;
+use ferroui_base::media::FontWeight;
 use ferroui_base::reactive::ObservableExt;
 use ferroui_base::{Rect, Ref};
 use std::cell::{Cell, RefCell};
@@ -142,6 +142,9 @@ impl Drop for Fixture {
         self.window.close();
     }
 }
+
+#[path = "rich_edit_exact_input_tests.rs"]
+mod exact_tests;
 
 #[test]
 fn rich_input_method_start_preserves_styled_selection_and_commit_is_one_undo_unit() {

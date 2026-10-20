@@ -1,4 +1,6 @@
-use super::{TextInputMethodClient, TextInputMethodClientEvents};
+use super::{
+    TextInputMethodClient, TextInputMethodClientEvents, TextInputMethodEdit, TextInputMethodState,
+};
 use crate::input::raw::RawTextInputEventArgs;
 use crate::input::{IInputDevice, InputElement, InputManager, InputMethod, KeyboardDevice};
 use crate::{Ref, WeakRef};
@@ -18,6 +20,7 @@ pub enum TextInputMethodError {
     ReentrantEdit,
     Rejected,
     Intercepted,
+    InvalidRange,
 }
 
 impl fmt::Display for TextInputMethodError {
@@ -31,6 +34,9 @@ impl fmt::Display for TextInputMethodError {
             Self::ReentrantEdit => "An input edit is already being published.",
             Self::Rejected => "The input client rejected the edit.",
             Self::Intercepted => "The input event was intercepted before its owner accepted it.",
+            Self::InvalidRange => {
+                "An input range is outside the text or splits a UTF-16 surrogate pair."
+            }
         })
     }
 }
@@ -48,6 +54,27 @@ pub trait TextInputMethodEditing {
         cursor: Option<i32>,
     ) -> Result<(), TextInputMethodError>;
     fn cancel_composition(&self) -> Result<bool, TextInputMethodError>;
+
+    /// Exact range edits are optional; legacy preedit clients remain supported.
+    fn supports_exact_edits(&self) -> bool {
+        false
+    }
+    fn edit_state(&self) -> Result<TextInputMethodState, TextInputMethodError> {
+        Err(TextInputMethodError::Unsupported)
+    }
+    fn apply_edit(
+        &self,
+        _edit: &TextInputMethodEdit,
+        _composing: bool,
+    ) -> Result<bool, TextInputMethodError> {
+        Err(TextInputMethodError::Unsupported)
+    }
+    fn complete_composition(&self) -> Result<bool, TextInputMethodError> {
+        Err(TextInputMethodError::Unsupported)
+    }
+    fn select_exact(&self, _selection: super::TextSelection) -> Result<(), TextInputMethodError> {
+        Err(TextInputMethodError::Unsupported)
+    }
 }
 
 /// A manager-owned connection to one semantic input owner. Platform adapters
@@ -109,6 +136,58 @@ impl TextInputMethodConnection {
             .is_ok_and(|client| client.input_method_editing().is_some())
     }
 
+    pub fn supports_exact_edits(&self) -> bool {
+        self.client().is_ok_and(|client| {
+            client
+                .input_method_editing()
+                .is_some_and(TextInputMethodEditing::supports_exact_edits)
+        })
+    }
+
+    pub fn edit_state(&self) -> Result<TextInputMethodState, TextInputMethodError> {
+        let client = self.client()?;
+        client
+            .input_method_editing()
+            .ok_or(TextInputMethodError::Unsupported)?
+            .edit_state()
+    }
+
+    /// Applies a committed exact edit through the same raw/routed interception
+    /// path as ordinary text. The owner's acknowledgement is authoritative.
+    pub fn apply_edit(
+        self: &Rc<Self>,
+        edit: &TextInputMethodEdit,
+        timestamp: u64,
+    ) -> Result<bool, TextInputMethodError> {
+        let client = self.client()?;
+        let editing = client
+            .input_method_editing()
+            .ok_or(TextInputMethodError::Unsupported)?;
+        if !editing.supports_exact_edits() {
+            return Err(TextInputMethodError::Unsupported);
+        }
+        edit.apply_to(&editing.edit_state()?.text)?;
+        self.dispatch(
+            text_for_edit(edit),
+            timestamp,
+            client.events().state_version(),
+            CommitAction::Edit(edit.clone()),
+        )
+    }
+
+    pub fn select_exact(
+        &self,
+        selection: super::TextSelection,
+    ) -> Result<(), TextInputMethodError> {
+        let client = self.client()?;
+        client
+            .input_method_editing()
+            .ok_or(TextInputMethodError::Unsupported)?
+            .select_exact(selection)?;
+        self.client()?;
+        Ok(())
+    }
+
     /// Starts a new immutable platform session without deleting the current
     /// selection. Any previous session on this connection is superseded.
     pub fn begin_composition(
@@ -153,6 +232,16 @@ impl TextInputMethodConnection {
         timestamp: u64,
         version: u64,
     ) -> Result<bool, TextInputMethodError> {
+        self.dispatch(text, timestamp, version, CommitAction::Text)
+    }
+
+    fn dispatch(
+        self: &Rc<Self>,
+        text: &str,
+        timestamp: u64,
+        version: u64,
+        action: CommitAction,
+    ) -> Result<bool, TextInputMethodError> {
         let owner = self.owner().ok_or(TextInputMethodError::StaleConnection)?;
         let root = owner
             .get_input_root()
@@ -163,6 +252,7 @@ impl TextInputMethodConnection {
             connection: self.clone(),
             version,
             result: Cell::new(None),
+            action,
         });
         let device: Rc<dyn IInputDevice> = keyboard;
         let event = Rc::new(RawTextInputEventArgs::for_input_method(
@@ -187,9 +277,29 @@ pub struct TextInputMethodCommit {
     connection: Rc<TextInputMethodConnection>,
     version: u64,
     result: Cell<Option<Result<bool, TextInputMethodError>>>,
+    action: CommitAction,
+}
+
+enum CommitAction {
+    Text,
+    Edit(TextInputMethodEdit),
+    CompleteComposition,
+}
+
+fn text_for_edit(edit: &TextInputMethodEdit) -> &str {
+    &edit.text
 }
 
 impl TextInputMethodCommit {
+    pub fn edit(&self) -> Option<&TextInputMethodEdit> {
+        match &self.action {
+            CommitAction::Edit(edit) => Some(edit),
+            _ => None,
+        }
+    }
+    pub fn completes_composition(&self) -> bool {
+        matches!(self.action, CommitAction::CompleteComposition)
+    }
     pub fn owner(&self) -> Option<Ref<InputElement>> {
         self.connection.owner()
     }
@@ -254,6 +364,45 @@ impl TextInputMethodComposition {
             .ok_or(TextInputMethodError::Unsupported)?
             .update_composition(text, cursor)?;
         self.finish_operation(&*client)
+    }
+
+    /// Applies the platform's delta to the current preview without committing
+    /// history. The resulting selection is part of this operation.
+    pub fn apply_edit(&self, edit: &TextInputMethodEdit) -> Result<bool, TextInputMethodError> {
+        let client = self.client()?;
+        let result = client
+            .input_method_editing()
+            .ok_or(TextInputMethodError::Unsupported)?
+            .apply_edit(edit, true)?;
+        self.finish_operation(&*client)?;
+        Ok(result)
+    }
+
+    pub fn select_exact(
+        &self,
+        selection: super::TextSelection,
+    ) -> Result<(), TextInputMethodError> {
+        let client = self.client()?;
+        client
+            .input_method_editing()
+            .ok_or(TextInputMethodError::Unsupported)?
+            .select_exact(selection)?;
+        self.finish_operation(&*client)
+    }
+
+    /// Commits exactly the accepted preview, including empty deletions and
+    /// arbitrary directed selection, as one undo transaction.
+    pub fn complete(&self, timestamp: u64) -> Result<bool, TextInputMethodError> {
+        let client = self.client()?;
+        let result = self.0.connection.dispatch(
+            "",
+            timestamp,
+            self.0.version.get(),
+            CommitAction::CompleteComposition,
+        )?;
+        self.finish_operation(&*client)?;
+        self.0.finished.set(true);
+        Ok(result)
     }
 
     pub fn commit(&self, text: &str, timestamp: u64) -> Result<bool, TextInputMethodError> {

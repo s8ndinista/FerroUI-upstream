@@ -15,6 +15,10 @@ use std::rc::Rc;
 mod stream;
 pub use stream::{TextStreamEncoding, TextStreamOptions};
 
+#[path = "rich_edit_text_case.rs"]
+mod case;
+pub use case::LetterCase;
+
 #[path = "rich_edit_text_units.rs"]
 mod units;
 use units::TextUnits;

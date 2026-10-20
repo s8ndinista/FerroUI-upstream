@@ -5,7 +5,7 @@ mod rtf;
 
 pub(crate) use rich_edit_text_document::{unit_ranges as rich_text_unit_ranges, UnicodeTextUnit};
 pub use rich_edit_text_document::{
-    FindOptions, RichEditTextDocument, RichEditTextRange, RichEditTextSelection, TextFindOptions,
+    FindOptions, LetterCase, RichEditTextDocument, RichEditTextRange, RichEditTextSelection, TextFindOptions,
     TextFormatValue, TextGetOptions, TextOperationError, TextRangeUnit, TextSetOptions,
     TextStreamEncoding, TextStreamOptions,
 };
