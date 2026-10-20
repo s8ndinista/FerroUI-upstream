@@ -1521,11 +1521,13 @@ name = "ferroui-view"
 version = "0.4.0-preview.1"
 dependencies = [
  "ferroui-base",
+ "ferroui-build-scan",
  "ferroui-controls",
  "ferroui-controls-color-picker",
  "ferroui-controls-treedatagrid",
  "ferroui-desktop",
  "ferroui-dialogs",
+ "ferroui-markup",
  "ferroui-markup-xaml",
  "ferroui-markup-xaml-loader",
  "ferroui-reactiveui",
@@ -4405,7 +4407,10 @@ version = "0.4.0-preview.1"
 dependencies = [
  "ferroui-base",
  "ferroui-controls",
+ "ferroui-markup",
+ "ferroui-markup-xaml",
  "ferroui-view",
+ "sample-build",
  "seven-guis-model",
 ]
 

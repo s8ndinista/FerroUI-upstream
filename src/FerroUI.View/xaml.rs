@@ -1,6 +1,6 @@
-//! XAML and components together: the types of this crate for markup
-//! ([`register_types`], so that XAML names `ComponentHost`), and XAML in a
-//! component ([`load_xaml`], [`xaml`], [`use_xaml`]; feature `xaml`).
+//! XAML in a component ([`load_xaml`], [`xaml`], [`use_xaml`]; feature
+//! `xaml`). The types of this crate for markup are registered by
+//! [`register_types`](crate::register_types).
 //!
 //! ```xml
 //! <UserControl xmlns="https://github.com/ferroui"
@@ -8,34 +8,6 @@
 //!   <view:ComponentHost Component="Counter" />
 //! </UserControl>
 //! ```
-
-use ferroui_base::metadata::MarkupAssembly;
-use ferroui_base::TypeInfo;
-
-/// The namespace of the types of this crate in markup.
-const NAMESPACES: &[(&str, &str)] = &[("ferroui_view", "FerroUI.View")];
-
-/// What this crate states about itself for markup.
-pub static ASSEMBLY: MarkupAssembly = MarkupAssembly {
-    name: "FerroUI.View",
-    crate_name: "ferroui_view",
-    xmlns_definitions: &[],
-    xmlns_prefixes: &[],
-    metadata: &[],
-};
-
-/// Registers the types of this crate for markup: XAML then names
-/// `ComponentHost` as `using:FerroUI.View` (or
-/// `clr-namespace:FerroUI.View;assembly=FerroUI.View`). Calling it again
-/// does nothing.
-pub fn register_types() {
-    static ONCE: std::sync::Once = std::sync::Once::new();
-    ONCE.call_once(|| {
-        TypeInfo::register_namespaces(NAMESPACES);
-        TypeInfo::register_all(&[crate::ComponentHost::TYPE]);
-        MarkupAssembly::register(&ASSEMBLY);
-    });
-}
 
 #[cfg(feature = "xaml")]
 mod loading {
@@ -49,7 +21,7 @@ mod loading {
 
     fn prepare() {
         ferroui_markup_xaml::register_types();
-        super::register_types();
+        crate::register_types();
         FerroRuntimeXamlLoader::register();
     }
 

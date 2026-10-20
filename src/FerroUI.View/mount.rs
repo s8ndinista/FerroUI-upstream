@@ -48,6 +48,9 @@ pub(crate) enum Host {
     Decorator(Ref<Decorator>),
     /// `TextBlock.Text`.
     Text(Ref<TextBlock>),
+    /// One control in a property of a control class (`Popup.Child`, a
+    /// property that holds a control: `ContextMenu`): `wrap` makes the value.
+    Typed(Ref<Control>, &'static FerroProperty, fn(Option<Ref<Control>>) -> BoxedValue),
     /// No parent: the root of a mounted tree, whose control is handed to the
     /// caller and cannot be replaced.
     Root,
@@ -79,6 +82,19 @@ impl Placed {
 
 impl Host {
     fn of(control: &Ref<Control>) -> Option<Host> {
+        // A popup shows its child in a root of its own, above the window: the
+        // child is in the logical tree and under the owner of the popup, but
+        // outside its visual tree (what a portal is in React).
+        if control.cast::<ferroui_controls::primitives::Popup>().is_some() {
+            fn wrap(child: Option<Ref<Control>>) -> BoxedValue {
+                Rc::new(child)
+            }
+            return Some(Host::Typed(
+                control.clone(),
+                ferroui_controls::primitives::Popup::child_property().as_property(),
+                wrap,
+            ));
+        }
         if let Some(panel) = control.cast::<Panel>() {
             return Some(Host::Panel(panel));
         }
@@ -114,6 +130,7 @@ impl Host {
             Host::Content(control, _) => Some(control.clone()),
             Host::Decorator(decorator) => Some(decorator.clone().upcast()),
             Host::Text(text) => Some(text.clone().upcast()),
+            Host::Typed(control, ..) => Some(control.clone()),
             Host::Root => None,
         }
     }
@@ -175,6 +192,15 @@ impl Host {
                     })
                     .collect();
                 text_block.set_text(Some(text.as_str()));
+            }
+            Host::Typed(control, property, wrap) => {
+                assert!(all.len() <= 1, "a property that holds a control holds one; it was given {}", all.len());
+                let child = match all.first() {
+                    Some(Placed::Control(child)) => Some(child.clone()),
+                    Some(Placed::Value(_)) => panic!("this property holds a control, not text (use a TextBlock)"),
+                    None => None,
+                };
+                set_untyped(control, property, wrap(child));
             }
             Host::Root => panic!(
                 "the root of a mounted tree changed its control: a component at the root keeps the class of the element it returns"
@@ -575,6 +601,13 @@ fn mount_prop(control: &Ref<Control>, property: &'static FerroProperty, value: P
             let children = owner.with(|| Children::mount(Host::Content(control.clone(), property), vec![element]));
             MountedProp { property, value, owner: Some(owner), element: Some(children) }
         }
+        PropValue::TypedElement { element, wrap } => {
+            let element = element.borrow_mut().take().unwrap_or_default();
+            let owner = Owner::new();
+            let wrap = *wrap;
+            let children = owner.with(|| Children::mount(Host::Typed(control.clone(), property, wrap), vec![element]));
+            MountedProp { property, value, owner: Some(owner), element: Some(children) }
+        }
         _ => {
             let owner = Owner::new();
             owner.with(|| start_prop(control, property, &value));
@@ -618,7 +651,9 @@ fn start_prop(control: &Ref<Control>, property: &'static FerroProperty, value: &
             let expression = control.bind_binding(property, &**binding);
             on_cleanup(move || expression.dispose());
         }
-        PropValue::Value(_) | PropValue::Element(_) => unreachable!("handled by mount_prop"),
+        PropValue::Value(_) | PropValue::Element(_) | PropValue::TypedElement { .. } => {
+            unreachable!("handled by mount_prop")
+        }
     }
 }
 
@@ -908,8 +943,12 @@ fn patch_control(instance: &ControlInstance, element: ControlElement) {
             let previous = previous.and_then(Option::take);
             let prop = match previous {
                 Some(previous) if previous.value == entry.value => previous,
-                Some(MountedProp { element: Some(mut children), owner, .. }) if matches!(entry.value, PropValue::Element(_)) => {
-                    let PropValue::Element(cell) = &entry.value else { unreachable!() };
+                Some(MountedProp { element: Some(mut children), owner, .. })
+                    if matches!(entry.value, PropValue::Element(_) | PropValue::TypedElement { .. }) =>
+                {
+                    let (PropValue::Element(cell) | PropValue::TypedElement { element: cell, .. }) = &entry.value else {
+                        unreachable!()
+                    };
                     let new = cell.borrow_mut().take().unwrap_or_default();
                     match owner {
                         Some(owner) => owner.with(|| children.reconcile(vec![new])),

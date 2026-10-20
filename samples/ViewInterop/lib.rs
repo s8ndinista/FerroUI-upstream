@@ -4,8 +4,9 @@
 //! - the list is a virtualized `ListBox` whose item template is a component
 //!   ([`template`]): only the visible items have controls, and scrolling
 //!   gives their hosts other people instead of making new controls;
-//! - the details are XAML loaded into the component ([`use_xaml`]), whose
-//!   named controls the component fills;
+//! - the details are XAML (`Details.xaml`), compiled to Rust when the crate
+//!   is built and loaded into the component by its URI ([`use_xaml`]); the
+//!   component fills its named controls;
 //! - inside that XAML, a `ComponentHost` shows the registered component
 //!   `Badge`, which reads the person from its data context.
 //!
@@ -18,6 +19,16 @@ use ferroui_controls::{Control, ItemsSource, TextBlock};
 use ferroui_view::prelude::*;
 use ferroui_view::{register_component, use_xaml};
 use std::rc::Rc;
+
+// The compiled markup of a document names the types of this crate by the name of the crate.
+extern crate self as view_interop;
+
+mod register_types;
+pub use register_types::{register_types, ASSEMBLY};
+
+// One module per compiled document and `compiled_markup` (the loader table of the compiled
+// markup of the crate and `register()`), which the build script of the crate generates.
+ferroui_markup_xaml::include_compiled_xaml!();
 
 /// A person of the directory.
 #[derive(Clone, PartialEq, Debug)]
@@ -42,18 +53,9 @@ pub fn people(count: u32) -> Vec<Person> {
         .collect()
 }
 
-/// The details of a person: XAML, with a component inside.
-const DETAILS: &str = r##"
-<Border xmlns="https://github.com/ferroui" xmlns:view="using:FerroUI.View"
-        Padding="16" BorderBrush="#DDDDDD" BorderThickness="1" CornerRadius="4">
-  <StackPanel Spacing="8">
-    <TextBlock Text="Details (XAML)" FontWeight="SemiBold" Foreground="#666666" />
-    <TextBlock Name="Title" FontSize="22" Text="Select a person" />
-    <TextBlock Name="City" />
-    <view:ComponentHost Component="Badge" />
-  </StackPanel>
-</Border>
-"##;
+/// The details of a person: `Details.xaml`, compiled to Rust by the build of the crate
+/// (`build.rs`), with a component inside.
+pub const DETAILS: &str = "ferres://ViewInterop/Details.xaml";
 
 /// Registers the components the XAML of the sample names.
 pub fn register_components() {
