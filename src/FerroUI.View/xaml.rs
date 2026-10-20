@@ -10,7 +10,7 @@
 //! ```
 
 use ferroui_base::metadata::MarkupAssembly;
-use ferroui_base::{ObjectType, TypeInfo};
+use ferroui_base::TypeInfo;
 
 /// The namespace of the types of this crate in markup.
 const NAMESPACES: &[(&str, &str)] = &[("ferroui_view", "FerroUI.View")];
