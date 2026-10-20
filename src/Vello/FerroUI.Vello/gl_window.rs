@@ -62,21 +62,62 @@ impl VelloGlWindows {
         surfaces: &[Arc<dyn IPlatformRenderSurface>],
         rendering_modes: &[VelloRenderingMode],
     ) -> Option<Rc<dyn IRenderTarget>> {
-        let features: &dyn IOptionalFeatureProvider = &*self.gl_context;
-        let factory = features.try_get::<dyn IGlPlatformSurfaceRenderTargetFactory>();
-        for surface in surfaces {
-            let target = match &factory {
-                Some(factory) if factory.can_render_to_surface(&self.gl_context, surface) => {
-                    Some(factory.create_render_target(&self.gl_context, surface))
-                }
-                _ => try_get_gl_surface(&**surface).map(|gl_surface| gl_surface.create_gl_render_target(&self.gl_context)),
-            };
-            if let Some(target) = target {
-                return Some(Rc::new(VelloGlRenderTarget::new(self.gl_context.clone(), target, rendering_modes)));
-            }
-        }
-        None
+        let target = gl_render_target(&self.gl_context, surfaces)?;
+        Some(Rc::new(VelloGlRenderTarget::new(self.gl_context.clone(), target, rendering_modes)))
     }
+}
+
+/// The render target of the first surface a context of OpenGL renders to:
+/// one its render target factory takes (the surfaces of the composition
+/// modes of Windows), or a surface of OpenGL; as the Skia backend finds it.
+pub(crate) fn gl_render_target(
+    gl_context: &Rc<dyn IGlContext>,
+    surfaces: &[Arc<dyn IPlatformRenderSurface>],
+) -> Option<Rc<dyn IGlPlatformSurfaceRenderTarget>> {
+    let features: &dyn IOptionalFeatureProvider = &**gl_context;
+    let factory = features.try_get::<dyn IGlPlatformSurfaceRenderTargetFactory>();
+    surfaces.iter().find_map(|surface| match &factory {
+        Some(factory) if factory.can_render_to_surface(gl_context, surface) => {
+            Some(factory.create_render_target(gl_context, surface))
+        }
+        _ => try_get_gl_surface(&**surface).map(|gl_surface| gl_surface.create_gl_render_target(gl_context)),
+    })
+}
+
+/// Whether a context of OpenGL has a surface among `surfaces` to render to.
+#[cfg_attr(not(any(target_os = "linux", windows)), allow(dead_code))]
+pub(crate) fn has_gl_surface(gl_context: &Rc<dyn IGlContext>, surfaces: &[Arc<dyn IPlatformRenderSurface>]) -> Option<bool> {
+    let features: &dyn IOptionalFeatureProvider = &**gl_context;
+    let factory = features.try_get::<dyn IGlPlatformSurfaceRenderTargetFactory>();
+    surfaces
+        .iter()
+        .find(|surface| {
+            factory.as_ref().is_some_and(|factory| factory.can_render_to_surface(gl_context, surface))
+                || try_get_gl_surface(&***surface).is_some()
+        })
+        .map(|surface| surface.is_ready())
+}
+
+/// Copies a texture of the context (the frame of a window, its first row the
+/// top of the frame) into the framebuffer `target_framebuffer` of `width` by
+/// `height` pixels, whose first row is the top of the window when
+/// `y_flipped`, the bottom otherwise; `read_framebuffer` is a framebuffer of
+/// the caller's the texture is attached to for the copy.
+pub(crate) fn blit_texture(
+    gl: &GlInterface,
+    texture: i32,
+    read_framebuffer: i32,
+    target_framebuffer: i32,
+    width: i32,
+    height: i32,
+    y_flipped: bool,
+) {
+    let (dst_y0, dst_y1) = if y_flipped { (0, height) } else { (height, 0) };
+    gl.bind_framebuffer(GL_READ_FRAMEBUFFER, read_framebuffer);
+    gl.framebuffer_texture_2d(GL_READ_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
+    gl.bind_framebuffer(GL_DRAW_FRAMEBUFFER, target_framebuffer);
+    gl.blit_framebuffer(0, 0, width, height, 0, dst_y0, width, dst_y1, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+    gl.bind_framebuffer(GL_FRAMEBUFFER, target_framebuffer);
 }
 
 /// The texture of the frame of a window in the context, and the framebuffer
@@ -240,11 +281,7 @@ fn present_frame(
     // The rows of the texture go up in the coordinates of OpenGL: its first
     // row, the top of the frame, is copied to the top of a framebuffer that
     // is not turned over.
-    let (dst_y0, dst_y1) = if y_flipped { (0, height) } else { (height, 0) };
-    gl.bind_framebuffer(GL_READ_FRAMEBUFFER, frame_texture.framebuffer);
-    gl.bind_framebuffer(GL_DRAW_FRAMEBUFFER, target_framebuffer);
-    gl.blit_framebuffer(0, 0, width, height, 0, dst_y0, width, dst_y1, GL_COLOR_BUFFER_BIT, GL_NEAREST);
-    gl.bind_framebuffer(GL_FRAMEBUFFER, target_framebuffer);
+    blit_texture(gl, frame_texture.texture, frame_texture.framebuffer, target_framebuffer, width, height, y_flipped);
 }
 
 impl IRenderTarget for VelloGlRenderTarget {

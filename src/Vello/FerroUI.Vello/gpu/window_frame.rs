@@ -42,6 +42,16 @@ impl WindowFrame {
         }
     }
 
+    /// The texture of the device the frame is drawn into: a frame of the
+    /// hybrid or the GPU mode.
+    #[cfg_attr(not(any(target_os = "linux", windows)), allow(dead_code))]
+    pub(crate) fn device_texture(&self) -> Option<std::sync::Arc<crate::gpu::VelloDeviceTexture>> {
+        match self {
+            WindowFrame::Device(surface) => surface.texture(),
+            WindowFrame::Memory(..) => None,
+        }
+    }
+
     pub(crate) fn has_content(&self) -> bool {
         match self {
             WindowFrame::Device(surface) => surface.has_content(),
