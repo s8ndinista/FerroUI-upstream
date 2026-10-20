@@ -1432,3 +1432,23 @@ The Parallels virtual machine Windows 11 ARM64 on the same Mac (Direct3D 11 acce
 Through ANGLE the CPU mode is 1.6 ms a frame slower than Skia, which draws on the device: the upload of what changed (1.2 ms a frame in the tour, about 10 MB), the recording and the render on the processor (2.1 ms), the present (2.2 ms). What closes it is drawing on the device of the context of the platform: `wgpu` over an existing context of OpenGL (`Adapter::new_external`), the hybrid mode on ANGLE, GLX, EGL and CGL alike, which is the next round. Not yet run: Wayland (whose windows hand out no handle: the GL presenter of item 6 draws its EGL surfaces), and a machine with a Vulkan or Direct3D 12 device that is hardware (whether a swap chain of `wgpu` on the window of a composition mode of Windows shows is not verified).
 
 Seen once in four runs of the tests of the crate (macOS): `the_layer_of_a_scene_on_a_device_is_a_texture_and_keeps_what_was_drawn_into_it` found its layer corrupted (the device reported lost), and passed alone and in the next three runs: of the kind of 13.1, C9.
+
+### 14.9 Round 5 (2026-10-20): the hybrid mode on the context of OpenGL of the platform
+
+| # | Change | Where |
+|---|---|---|
+| 1 | **Where the machine has no Vulkan or Direct3D 12 device that is hardware, the device of the GPU modes is made over the context of OpenGL of the platform** (`VelloGlGpu`): `wgpu` on OpenGL with an adapter of the existing context (`gles::Adapter::new_external`, through the loader of the GL interface), which makes no context of its own and uses the one that is current: the compositor renders and disposes with the context of the platform current, and a session of a surface makes it current with the surface. The hybrid mode draws the frame of a window into a texture of that context (`WindowFrames`), which is copied into the framebuffer of the session (`glBlitFramebuffer`) before the session presents; the surfaces are found as the Skia backend finds them (the render target factory of the context first). The device is not the one other threads draw into memory with. The order of `create_gpu` on Linux and Windows: a device that is hardware on Vulkan or Direct3D 12; the context of OpenGL of the platform; on Linux without one, OpenGL through EGL on a device of the backend's own | `gpu/gl_context_gpu.rs`, `gpu/mod.rs`, `gl_window.rs` (`gl_render_target`, `blit_texture`), `gpu/window_surface.rs` |
+| 2 | `wgpu` with OpenGL on Windows (its feature `gles`) | the manifest of the crate |
+
+The same machines and tour as 14.8, one session each, milliseconds a frame:
+
+| | Skia (two runs) | Vello (two runs) |
+|---|---|---|
+| Windows 11 ARM64, ANGLE on Direct3D 11: median | 7.01, 7.46 | **4.73, 4.33** (the hybrid mode on the context of ANGLE) |
+| mean | 8.90, 8.84 | **7.75, 6.30** |
+| p95 | 15.55, 15.88 | **13.18, 11.45** |
+| Ubuntu 24.04 ARM64, GLX on virgl: median | 1.71, 2.42 | 2.74, 2.61 (the hybrid mode on the context of GLX) |
+| mean | 3.56, 4.12 | 5.11, 4.72 |
+| p95 | 5.70, 7.36 | 7.65, 6.85 |
+
+The window as the system composed it (Windows) and as X shows it (Linux) has the content of the catalog, upright. The first frame of the hybrid mode on a context of OpenGL takes up to 1.2 s (the shaders of the renderer are compiled by the driver; Skia's first frame there 0.26 s).
