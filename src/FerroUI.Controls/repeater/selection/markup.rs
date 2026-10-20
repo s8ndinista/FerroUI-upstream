@@ -127,4 +127,5 @@ pub fn register_markup_types() {
 fn register_value_types() {
     ValueTypes::register_nullable::<Rc<SelectionModel>>();
     ValueTypes::register_nullable::<IndexPath>();
+    ValueTypes::register_display::<IndexPath>();
 }

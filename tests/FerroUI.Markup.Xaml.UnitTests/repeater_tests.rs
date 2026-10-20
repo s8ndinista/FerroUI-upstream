@@ -76,11 +76,11 @@ fn uniform_grid_layout_properties_and_enumerations_load() {
 fn flow_layout_properties_and_enumerations_load() {
     let _scope = xaml_test_base();
     let layout = load_as::<Ref<FlowLayout>>(&format!(
-        "<FlowLayout {NS} Orientation='Horizontal' MinRowSpacing='6' MinColumnSpacing='9' LineAlignment='SpaceBetween'/>"
+        "<FlowLayout {NS} Orientation='Horizontal' LineSpacing='6' MinItemSpacing='9' LineAlignment='SpaceBetween'/>"
     ));
     assert_eq!(layout.orientation(), Orientation::Horizontal);
-    assert_eq!(layout.min_row_spacing(), 6.0);
-    assert_eq!(layout.min_column_spacing(), 9.0);
+    assert_eq!(layout.line_spacing(), 6.0);
+    assert_eq!(layout.min_item_spacing(), 9.0);
     assert_eq!(
         layout.line_alignment(),
         FlowLayoutLineAlignment::SpaceBetween
@@ -334,11 +334,16 @@ fn repeater_conversions_are_registered_on_subsequent_ui_threads() {
         let repeater = load_as::<Ref<ItemsRepeater>>(&format!(
             "<ItemsRepeater {NS} ItemsSource='{{Binding SelectedItems}}'><DataTemplate><Border Width='20' Height='10'/></DataTemplate></ItemsRepeater>"
         ));
-        repeater.set_data_context(Some(Rc::new(model)));
+        repeater.set_data_context(Some(Rc::new(model.clone())));
         repeater.measure(Size::new(100.0, 100.0));
         let view = repeater.items_source_view().unwrap();
         assert_eq!(view.count(), 1);
         assert_eq!(view.get_at(0).unwrap().downcast_ref::<String>().map(String::as_str), Some("second"));
+        let selected = load_as::<Ref<ferroui_controls::TextBlock>>(&format!(
+            "<TextBlock {NS} Text='{{Binding SelectedIndex}}'/>"
+        ));
+        selected.set_data_context(Some(Rc::new(model)));
+        assert_eq!(selected.text().as_deref(), Some("R.1"));
     }).join().unwrap();
 }
 
@@ -357,12 +362,17 @@ fn items_source_view_uses_its_native_class_name_and_preserves_binding_identity()
         ValueTypes::to_display_string(Some(&boxed)),
         "FerroUI.Controls.ItemsSourceView"
     );
-    let repeater = load_as::<Ref<ItemsRepeater>>(&format!(
-        "<ItemsRepeater {NS} ItemsSource='{{Binding}}'><DataTemplate><Border Width='20' Height='10'/></DataTemplate></ItemsRepeater>"
-    ));
-    repeater.set_data_context(Some(boxed));
-    repeater.measure(Size::new(100.0, 100.0));
-    assert!(Rc::ptr_eq(&repeater.items_source_view().unwrap(), &view));
+    for source in [
+        boxed,
+        Rc::new(Some(view.clone())) as ferroui_base::BoxedValue,
+    ] {
+        let repeater = load_as::<Ref<ItemsRepeater>>(&format!(
+            "<ItemsRepeater {NS} ItemsSource='{{Binding}}'><DataTemplate><Border Width='20' Height='10'/></DataTemplate></ItemsRepeater>"
+        ));
+        repeater.set_data_context(Some(source));
+        repeater.measure(Size::new(100.0, 100.0));
+        assert!(Rc::ptr_eq(&repeater.items_source_view().unwrap(), &view));
+    }
     assert_eq!(view.count(), 1);
 }
 
