@@ -789,6 +789,7 @@ impl EditorShell {
             .cloned()
             .ok_or_else(stale_style)?;
         edit(&mut style)?;
+        let kind = style.value.kind();
         let result = self
             .editor
             .borrow_mut()
@@ -796,6 +797,24 @@ impl EditorShell {
             .map_err(|error| error.to_string())?;
         if result.definition_changed {
             self.changed();
+        }
+        let usage = self.editor.borrow().document.local_style_usage(id);
+        // Update only the native label: rebuilding the editor here would
+        // replace the focused field and its still-live draft/IME state.
+        for visual in self
+            .control::<StackPanel>("ModalContent")
+            .get_visual_descendants()
+        {
+            if let Some(label) = visual
+                .cast::<TextBlock>()
+                .filter(|label| label.name().as_deref() == Some("StyleUsage"))
+            {
+                label.set_text(Some(&format!(
+                    "{} style · {usage} linked layers",
+                    kind.label()
+                )));
+                break;
+            }
         }
         if result.detached_overrides != 0 {
             self.toast(&format!(

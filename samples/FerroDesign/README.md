@@ -136,6 +136,7 @@ cargo test --locked -p ferrodesign-core
 cargo check --locked -p ferrodesign-app
 cargo test --locked -p ferrodesign-app --lib -- --test-threads=1
 cargo run --release -p ferrodesign-core --example performance -- 10000
+cargo run --locked -p ferrodesign-core --example style_allocations
 npm ci
 npx playwright install chromium
 node --test tests/document-store.test.mjs
@@ -145,6 +146,8 @@ npm run test:browser
 
 `tests/browser.mjs` serves the actual `dist` build and exercises both requested browser rendering modes. It checks native pixels, pointer drawing, vector-point and pen-handle gestures, on-canvas Unicode text editing, paint/effect controls, auto-layout drag previews and drops, prototype pointer/key/delay interactions, keyboard history, document import/export, durable reload, and a 10,000-layer document larger than the usual localStorage allowance. ComboBox checks verify the actual native popup item focus, and selection-dependent interactions wait for a committed native frame. The suite also checks startup exceptions and render-thread panics, and writes PNG screenshots, traces and JSON/HTML reports to `browser-report`. The separate IndexedDB test verifies real transaction rollback, migration and conflicting tab writes.
 
+Both Chromium suites accept `FERRODESIGN_CHROMIUM=/absolute/path/to/chrome` to use an existing executable. Without this variable, they use Playwright's installed Chromium. The editor suite also exercises native local-style definition editing and text/Boolean flattening, including rejected conversions and exact undo/redo.
+
 The GitHub Actions workflow `.github/workflows/ferrodesign.yml` runs locked core tests, paired release benchmarks, focused native TextBox preedit tests, public compositing recording and Vello pixel tests, native compilation and the complete native application test suite before the real WebAssembly build and browser interaction validation. The native suite contains pixel comparisons for incremental preparation, spatial root culling and shadow order, plus bounded background blur, gesture ownership and authoring parser regressions. Browser checks also cover networks, components, variables, rich text, crop gestures, page controls, grid spans/reorder, effect transactions and 10,000-layer preparation/root-candidate counts. Build and validation artifacts are attached to each workflow run. See [validation and measurements](docs/VALIDATION.md) for observed results; source coverage and added assertions do not establish a passing run on their own.
 
 ## Rendering performance
@@ -152,6 +155,8 @@ The GitHub Actions workflow `.github/workflows/ferrodesign.yml` runs locked core
 The renderer retains immutable geometry, paints, text, image assets and prepared subtree bounds. Scoped changes refresh affected nodes and ancestors, and the layer sidebar reuses unchanged row projections. Scenes with at least 32 prepared roots also use a balanced bounds hierarchy to find paint candidates for the viewport. Candidates return to document paint order before compositing, so spatial partitioning preserves stacking. Unchanged viewport queries reuse their candidate buffer; scoped root-bound changes refit the affected tree branch. A view containing the entire root bounds uses the retained paint-order list directly.
 
 These mechanisms reduce preparation, bounds testing and control allocation. Root signatures, visible artwork drawing, wide sibling aggregation, structural layout commits and complete serialization still have size-dependent costs. The report distinguishes those operations from device-specific GPU time and display frame rate. See [architecture](docs/ARCHITECTURE.md#retained-scene-and-invalidation) for cache boundaries and conservative fallbacks.
+
+`style_allocations` compares identical edits on linked and unlinked image-filled layers. It counts allocations and requested bytes, asserts equal overhead in each cohort, and deliberately omits timing. Existing history/cache/metadata copies remain in both measurements; this checks that binding comparisons avoid another payload snapshot, not that moves are allocation-free. Shared-definition propagation is still document-sized.
 
 ## Source map
 
