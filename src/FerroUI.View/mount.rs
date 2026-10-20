@@ -380,26 +380,30 @@ impl Instance {
 pub(crate) struct Children {
     host: Rc<Host>,
     top: Rc<Slot>,
-    instances: Vec<Instance>,
+    instances: Rc<RefCell<Vec<Instance>>>,
 }
 
 impl Children {
     fn mount(host: Host, elements: Vec<Element>) -> Children {
         let host = Rc::new(host);
         let top = Slot::group(&host);
-        let instances: Vec<Instance> = flatten(elements).into_iter().map(|element| mount_instance(element, &host)).collect();
+        let elements = flatten(elements);
+        #[cfg(debug_assertions)]
+        check_keys(&elements);
+        let instances: Vec<Instance> = elements.into_iter().map(|element| mount_instance(element, &host)).collect();
         top.set_group(instances.iter().map(Instance::slot).collect());
         top.attach();
-        Children { host, top, instances }
+        Children { host, top, instances: Rc::new(RefCell::new(instances)) }
     }
 
     fn reconcile(&mut self, elements: Vec<Element>) {
-        let old = std::mem::take(&mut self.instances);
-        self.instances = reconcile_list(&self.host, &self.top, old, elements);
+        let old = std::mem::take(&mut *self.instances.borrow_mut());
+        let next = reconcile_list(&self.host, &self.top, old, elements);
+        *self.instances.borrow_mut() = next;
     }
 
     fn dispose(&self) {
-        for instance in &self.instances {
+        for instance in self.instances.borrow().iter() {
             instance.dispose();
         }
     }
@@ -448,6 +452,8 @@ pub(crate) struct DynamicInstance {
     /// render now.
     version: Signal<u64>,
     refresh: Cell<bool>,
+    /// The items in order, for the inspector.
+    items: RefCell<Vec<(Option<Key>, Vec<Instance>)>>,
 }
 
 /// An item of a dynamic list, by key.
@@ -463,6 +469,11 @@ struct MountedItem {
 /// A component that runs again.
 pub(crate) struct ComponentInstance {
     type_id: TypeId,
+    name: &'static str,
+    /// The runs of the component, and the propagation of the last one with
+    /// the runs in it (the diagnostics of a component that runs away).
+    runs: Cell<u64>,
+    runs_in_propagation: Cell<(u64, u32)>,
     key: Option<Key>,
     owner: Owner,
     /// The owner of the instances of what the component rendered.
@@ -482,11 +493,44 @@ pub(crate) fn flatten(children: Vec<Element>) -> Vec<Element> {
     for child in children {
         match child {
             Element::Fragment(items) => flat.extend(flatten(items)),
+            Element::List(items) => {
+                #[cfg(debug_assertions)]
+                check_list(&items);
+                flat.extend(flatten(items));
+            }
             Element::Empty => {}
             child => flat.push(child),
         }
     }
     flat
+}
+
+/// Reports the items of a list that have no keys (debug builds).
+#[cfg(debug_assertions)]
+fn check_list(items: &[Element]) {
+    let unkeyed: Vec<&Element> = items
+        .iter()
+        .filter(|item| matches!(item, Element::Control(_) | Element::Component(_)) && item.key().is_none())
+        .collect();
+    if unkeyed.len() >= 2 {
+        let first = match unkeyed[0] {
+            Element::Control(control) => control.class.name.rsplit("::").next().unwrap_or(control.class.name).to_string(),
+            Element::Component(component) => component.name.to_string(),
+            _ => String::new(),
+        };
+        crate::diagnostics::report(crate::diagnostics::Diagnostic::MissingKeys { items: unkeyed.len(), first });
+    }
+}
+
+/// Reports siblings with the same key (debug builds).
+#[cfg(debug_assertions)]
+fn check_keys(elements: &[Element]) {
+    let mut seen = std::collections::HashSet::new();
+    for key in elements.iter().filter_map(Element::key) {
+        if !seen.insert(key) {
+            crate::diagnostics::report(crate::diagnostics::Diagnostic::DuplicateKey { key: key.clone() });
+        }
+    }
 }
 
 /// Mounts an element that is not a fragment or empty, for `host`.
@@ -509,14 +553,14 @@ fn mount_instance(element: Element, host: &Rc<Host>) -> Instance {
         }
         Element::Dynamic(dynamic) => Instance::Dynamic(mount_dynamic(dynamic, host)),
         Element::Component(component) => Instance::Component(mount_component(component, host)),
-        Element::Fragment(_) | Element::Empty => unreachable!("fragments are flattened"),
+        Element::Fragment(_) | Element::List(_) | Element::Empty => unreachable!("fragments are flattened"),
     }
 }
 
 /// Mounts the root of a tree: an element that makes one control.
 pub(crate) fn mount_root(element: Element) -> Ref<Control> {
     let element = match element {
-        Element::Fragment(items) => {
+        Element::Fragment(items) | Element::List(items) => {
             let mut panel = ControlElement::new(ElementClass {
                 name: "StackPanel",
                 type_id: TypeId::of::<ferroui_controls::StackPanel>,
@@ -537,6 +581,9 @@ pub(crate) fn mount_root(element: Element) -> Ref<Control> {
     top.set_group(vec![instance.slot()]);
     top.attached.set(true);
     keep_alive(top.clone());
+    let roots = Rc::new(RefCell::new(vec![instance]));
+    register_root("tree", &roots);
+    keep_alive(roots);
     let placed = top.placed();
     match placed.as_slice() {
         [Placed::Control(control)] => control.clone(),
@@ -675,6 +722,7 @@ fn mount_dynamic(dynamic: DynamicChildren, host: &Rc<Host>) -> Rc<DynamicInstanc
             render: RefCell::new(dynamic),
             version: signal(0),
             refresh: Cell::new(false),
+            items: RefCell::new(Vec::new()),
         })
     });
     let mounted: Rc<RefCell<HashMap<Key, MountedItem>>> = Rc::new(RefCell::new(HashMap::new()));
@@ -778,6 +826,20 @@ fn update_dynamic(
     for item in previous_unkeyed {
         item.owner.dispose();
     }
+    // The items in order, for the inspector: the keyed ones by the order of
+    // the entries, the others in theirs.
+    let mut in_order = Vec::with_capacity(entries.len());
+    let mut unkeyed_items = next_unkeyed.iter();
+    for (key, _, _) in &entries {
+        let item = match key {
+            Some(key) => next_mounted.get(key),
+            None => unkeyed_items.next(),
+        };
+        if let Some(item) = item {
+            in_order.push((key.clone(), item.instances.clone()));
+        }
+    }
+    *state.items.borrow_mut() = in_order;
     *mounted.borrow_mut() = next_mounted;
     *unkeyed.borrow_mut() = next_unkeyed;
 }
@@ -787,6 +849,9 @@ fn mount_component(element: ComponentElement, host: &Rc<Host>) -> Rc<ComponentIn
     let instance = owner.with(|| {
         Rc::new(ComponentInstance {
             type_id: element.type_id,
+            name: element.name,
+            runs: Cell::new(0),
+            runs_in_propagation: Cell::new((0, 0)),
             key: element.key,
             owner,
             tree: Owner::new(),
@@ -803,6 +868,17 @@ fn mount_component(element: ComponentElement, host: &Rc<Host>) -> Rc<ComponentIn
     owner.with(|| {
         effect(move || {
             state.version.get();
+            state.runs.set(state.runs.get() + 1);
+            #[cfg(debug_assertions)]
+            {
+                let propagation = crate::reactive::propagation();
+                let (last, runs) = state.runs_in_propagation.get();
+                let runs = if last == propagation { runs + 1 } else { 1 };
+                state.runs_in_propagation.set((propagation, runs));
+                if runs == crate::diagnostics::RUNAWAY_RUNS + 1 {
+                    crate::diagnostics::report(crate::diagnostics::Diagnostic::RunawayComponent { name: state.name, runs });
+                }
+            }
             let render = state.render.borrow().clone();
             let parent = state.host.control();
             let (element, after) = crate::hooks::render_with(&state.hooks, state.owner, parent, || render());
@@ -823,6 +899,8 @@ fn mount_component(element: ComponentElement, host: &Rc<Host>) -> Rc<ComponentIn
 /// returns the instances of the new list.
 fn reconcile_list(host: &Rc<Host>, slot: &Rc<Slot>, old: Vec<Instance>, elements: Vec<Element>) -> Vec<Instance> {
     let elements = flatten(elements);
+    #[cfg(debug_assertions)]
+    check_keys(&elements);
     let mut keyed: HashMap<Key, Instance> = HashMap::new();
     let mut unkeyed = Vec::new();
     for instance in old {
@@ -1005,8 +1083,10 @@ pub(crate) struct MountedChild(Children);
 
 impl MountedChild {
     /// Mounts `element` as the child of `control`, under the current owner.
-    pub(crate) fn mount(control: &Ref<Control>, element: Element) -> MountedChild {
-        MountedChild(Children::mount(Host::of_control(control), vec![element]))
+    pub(crate) fn mount(control: &Ref<Control>, element: Element, origin: &'static str) -> MountedChild {
+        let children = Children::mount(Host::of_control(control), vec![element]);
+        register_root(origin, &children.instances);
+        MountedChild(children)
     }
 
     /// Takes the child out of the control and disposes what it mounted.
@@ -1027,4 +1107,129 @@ fn keep_alive<T: 'static>(value: Rc<T>) {
 #[allow(dead_code)]
 pub(crate) fn dispose_with_owner(subscription: Rc<dyn ferroui_base::reactive::IDisposable>) {
     on_cleanup(move || subscription.dispose());
+}
+
+// The inspector (`inspect.rs`): the mounted trees of the thread, and a
+// description of their instances.
+
+type Roots = Weak<RefCell<Vec<Instance>>>;
+
+ferroui_base::ferro_thread_local! {
+    static ROOTS: RefCell<Vec<(&'static str, Roots)>> = RefCell::new(Vec::new());
+}
+
+fn register_root(label: &'static str, instances: &Rc<RefCell<Vec<Instance>>>) {
+    ROOTS.with(|roots| {
+        let mut roots = roots.borrow_mut();
+        roots.retain(|(_, root)| root.strong_count() > 0);
+        roots.push((label, Rc::downgrade(instances)));
+    });
+}
+
+/// The live mounted trees of the thread: what mounted each, and its
+/// instances described.
+pub(crate) fn snapshot() -> Vec<(&'static str, Vec<crate::inspect::InstanceNode>)> {
+    let roots: Vec<(&'static str, Rc<RefCell<Vec<Instance>>>)> =
+        ROOTS.with(|roots| roots.borrow().iter().filter_map(|(label, root)| Some((*label, root.upgrade()?))).collect());
+    roots.into_iter().map(|(label, root)| (label, root.borrow().iter().map(describe).collect())).collect()
+}
+
+fn describe(instance: &Instance) -> crate::inspect::InstanceNode {
+    use crate::inspect::{InstanceKind, InstanceNode, PropertyInfo};
+    match instance {
+        Instance::Control(control) => {
+            let state = control.state.borrow();
+            let properties = state
+                .props
+                .iter()
+                .map(|prop| {
+                    let source = match &prop.value {
+                        PropValue::Value(_) => "value",
+                        PropValue::Dynamic(_) => "follows state",
+                        PropValue::TwoWay { .. } => "two-way",
+                        PropValue::Element(_) | PropValue::TypedElement { .. } => "element",
+                        PropValue::Binding(_) => "binding",
+                    };
+                    let value = control.control.get_value_untyped(prop.property);
+                    PropertyInfo {
+                        name: prop.property.name().to_string(),
+                        value: display_value(&value),
+                        source,
+                    }
+                })
+                .collect();
+            let children = state.children.as_ref().map(|children| children.instances.borrow().iter().map(describe).collect()).unwrap_or_default();
+            InstanceNode {
+                kind: InstanceKind::Control {
+                    class: short_name(control.class.name),
+                    name: state.name.clone(),
+                    classes: state.classes.clone(),
+                    properties,
+                },
+                key: control.key.clone(),
+                children,
+            }
+        }
+        Instance::Text(text) => InstanceNode { kind: InstanceKind::Text(text.text.borrow().to_string()), key: None, children: Vec::new() },
+        Instance::Existing(control, _) => InstanceNode {
+            kind: InstanceKind::Existing { class: control.get_type().name().to_string() },
+            key: None,
+            children: Vec::new(),
+        },
+        Instance::Dynamic(dynamic) => InstanceNode {
+            kind: InstanceKind::Dynamic { items: dynamic.items.borrow().len() },
+            key: None,
+            children: dynamic
+                .items
+                .borrow()
+                .iter()
+                .flat_map(|(key, instances)| {
+                    instances.iter().map(|instance| {
+                        let mut node = describe(instance);
+                        if node.key.is_none() {
+                            node.key = key.clone();
+                        }
+                        node
+                    })
+                })
+                .collect(),
+        },
+        Instance::Component(component) => InstanceNode {
+            kind: InstanceKind::Component {
+                name: short_name(component.name),
+                runs: component.runs.get(),
+                hooks: component.hooks.borrow().len(),
+            },
+            key: component.key.clone(),
+            children: component.instances.borrow().iter().map(describe).collect(),
+        },
+    }
+}
+
+/// `ferroui_controls::Button` as `Button`; a closure of `rerender` as the
+/// function it is in (`my_app::counter::{{closure}}` as `counter`).
+fn short_name(name: &str) -> String {
+    let segments: Vec<&str> = name.split("::").filter(|segment| !segment.starts_with("{{")).collect();
+    segments.last().map_or_else(|| name.to_string(), |last| last.to_string())
+}
+
+/// A value of a property as the inspector shows it: the value of an option,
+/// a number, text; the display string of the port otherwise.
+fn display_value(value: &BoxedValue) -> String {
+    let any: &dyn ferroui_base::AnyValue = &**value;
+    macro_rules! shown {
+        ($($t:ty),*) => {$(
+            if let Some(v) = any.downcast_ref::<$t>() {
+                return format!("{v:?}");
+            }
+            if let Some(v) = any.downcast_ref::<Option<$t>>() {
+                return v.as_ref().map_or_else(|| String::from("(none)"), |v| format!("{v:?}"));
+            }
+        )*};
+    }
+    shown!(String, f64, f32, i32, i64, u32, usize, bool, ferroui_base::Thickness, ferroui_base::CornerRadius);
+    if let Some(inner) = any.downcast_ref::<Option<BoxedValue>>() {
+        return inner.as_ref().map_or_else(|| String::from("(none)"), display_value);
+    }
+    ferroui_base::data::core::ValueTypes::to_display_string(Some(value))
 }

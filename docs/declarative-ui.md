@@ -13,8 +13,9 @@ This document is the design of the crates and the plan of the work (issue #237).
   - the theme variant and resources;
   - transitions and animations;
   - popups and context menus as elements.
+- **Phase 4**: tools (section 11): hot reload of the literals of `rsx!`, diagnostics, and an inspector of the mounted trees.
 
-Section 12 plans the phases that remain. [declarative-ui-react.md](declarative-ui-react.md) compares the API with React.
+Section 13 plans the phases that remain. [declarative-ui-react.md](declarative-ui-react.md) compares the API with React.
 
 ## 1. A first look
 
@@ -323,7 +324,7 @@ Every instance has an owner of the runtime of section 6, made under the owner of
 ### 8.6 Costs and limits
 
 - **The cost of a run** is the function and a walk of the elements it returned: equal plain values are compared and skipped. Reactive values, bindings and handlers are applied again on each run, so a component that runs often (the timer of the hooks samples runs on every tick) is better off with fine-grained values for what changes most.
-- **Moves.** A keyed list whose order changes is patched by the prefix and suffix rule, which removes and inserts the controls in between. That is correct and keeps the controls, but it is not the minimal number of moves (section 12, phase 5).
+- **Moves.** A keyed list whose order changes is patched by the prefix and suffix rule, which removes and inserts the controls in between. That is correct and keeps the controls, but it is not the minimal number of moves (section 13, phase 5).
 - **Synchronous.** A run happens when the write that caused it ends (or the batch); there is no scheduler that splits or defers work, and no concurrent rendering.
 - **Items controls.** The children of an items control are its items. An items control with virtualization and an item template is not driven by the reconciler; its items are components through a data template (section 9.2).
 
@@ -511,7 +512,55 @@ Flyouts (`flyout`, `context_flyout`) are not controls (`FlyoutBase` derives from
 |---|---|
 | ![The gallery, light](images/declarative-ui/view-gallery.png) | ![The gallery, dark](images/declarative-ui/view-gallery-dark.png) |
 
-## 11. Samples: 7GUIs
+## 11. Tools (phase 4)
+
+### 11.1 Hot reload of `rsx!`
+
+With the feature `hot-reload` of `ferroui-view`, the literals of `rsx!` can be edited while the application runs:
+- the text of a child (`"Count"`);
+- a number, a text or a character given to an attribute (`width: 80.0`, `background: "#0063B1"`, `class: "accent"`).
+
+How it works:
+1. `rsx!` passes each such literal through `ferroui_view::hot::lit(site, index, value)`. The site is the place of the macro (`file!()`, `line!()`, `column!()` of the invocation and the directory of its crate). The index is the number of the literal among the literal tokens of the macro, in the order of the source; the macro counts the literals inside expressions too, to keep the numbers in step with the source.
+2. Without the feature, `lit` returns its value: the cost is nothing.
+3. With it, the first call of a file reads the file and records its `rsx!` invocations as the build saw them: where each starts, its literal tokens, and the shape of its other tokens. `launch` calls `hot::watch()`, which checks the files on the dispatcher every 300 ms.
+4. When a file changes, its invocations are read again with `proc-macro2` (with the locations of tokens). An invocation whose shape is the shape of the build gets its changed literals, and a version signal changes. `lit` reads that signal, so the components that read a changed literal run again, and the reconciler patches their controls: state, focus and scroll positions stay.
+5. An invocation whose shape changed (an attribute added, an element moved) is reported as needing a rebuild (`Diagnostic::NeedsRebuild`). The literals of the other invocations still apply.
+
+Only components that run again, and children that follow state, run again. A component that runs once keeps what it built. Literals inside expressions (`{if dark { "a" } else { "b" }}`) are code, not literals of the tree, and need a rebuild. `hot::apply_source(file, text)` applies a text as if the file had been saved with it: for tests and tools that hold the source.
+
+The gallery of section 10.6, run with `cargo run -p view-gallery --features hot-reload` and its source edited while it ran. The text of the second button and the colour of the bar changed, and the console printed `hot reload, 2 literals differ from the build`:
+
+![The gallery after a hot reload](images/declarative-ui/view-gallery-hot-reload.png)
+
+### 11.2 Diagnostics
+
+Mistakes the framework can see are checked in debug builds and reported as a `Diagnostic`:
+
+| Diagnostic | When |
+|---|---|
+| `MissingKeys` | A list (`for` in `rsx!`, a `Vec` of elements: `Element::List`) has two or more controls or components without keys |
+| `DuplicateKey` | Two siblings have the same key |
+| `RunawayComponent` | A component runs more than 100 times in one propagation of changes (its function writes a signal it reads) |
+| `NeedsRebuild`, `HotReloaded` | Hot reload: an `rsx!` changed more than its literals; literals were applied |
+
+By default each distinct diagnostic is printed once to the standard error. `set_diagnostics_handler(|d| ..)` sends them elsewhere (a test, a log, a tool). `Element::List` is new: an iteration makes it, and it is flattened like a fragment, but its items are checked for keys.
+
+### 11.3 The inspector
+
+`mounted_trees()` describes the live mounted trees of the thread as `InstanceNode`s:
+- components, with their keys, runs and hooks;
+- controls, with their class, `Name`, style classes, and properties: the value on the control now and where the element's value comes from (`value`, `follows state`, `two-way`, `element`, `binding`);
+- text;
+- the lists that follow state, with their items and keys.
+
+Each mounted tree registers its roots in a registry of the thread (`Element::mount`, a window, a `ComponentHost`), and each dynamic list keeps its items in order for it.
+
+`inspector()` is an element that shows them: a list of the instances, indented by depth, and the details of the selected one, refreshed on a click or every second. With the feature `desktop`, `open_inspector()` opens it in a window. `launch` attaches it to the main window on Shift+F12 in debug builds (`attach_inspector`), leaving F12 to the DevTools of the port, which are being ported separately. When they land, the inspector becomes their "Components" page.
+
+![The inspector](images/declarative-ui/view-inspector.png)
+
+## 12. Samples: 7GUIs
 
 The seven tasks of 7GUIs (<https://eugenkiss.github.io/7guis/tasks>) are written three times, each task a crate of its own so that each stays small:
 
@@ -559,7 +608,7 @@ cargo run -p seven-guis-crud-hooks
 FERROUI_SEVEN_GUIS_SHOTS=/tmp/shots cargo run -p seven-guis-crud-macros   # renders the window into /tmp/shots/macros-crud.png
 ```
 
-## 12. Phases
+## 13. Phases
 
 | Phase | Content | State |
 |---|---|---|
@@ -567,7 +616,7 @@ FERROUI_SEVEN_GUIS_SHOTS=/tmp/shots cargo run -p seven-guis-crud-macros   # rend
 | 1 | Components that run again, hooks, contexts, the reconciler, 7GUIs in a third version | done |
 | 2 | Interoperation with XAML and templates: `ComponentHost`, data templates of components, the data context, XAML in a component | done |
 | 3 | The rest of the API: other crates of controls, styles, resources and the theme variant, transitions and animations, popups and context menus | done |
-| 4 | Tools: hot reload, an inspector, diagnostics | planned |
+| 4 | Tools: hot reload of the literals of `rsx!`, diagnostics, an inspector of the mounted trees | done |
 | 5 | Performance and scale | planned |
 | 6 | Patterns of larger applications | planned |
 
@@ -601,11 +650,16 @@ What was built differs from the plan above in three points:
 - The hook of animations runs an animation of the port on a control when a value changes (`use_animation`). It does not animate a value itself.
 - Flyouts are not elements (section 10.5).
 
-### Phase 4: tools
+### Phase 4: tools (done, section 11)
 
 - **Hot reload of `rsx!`.** The static parts of `rsx!` (the classes, the literal values, the layout) are kept in a form the running application can load again. Only expressions need a rebuild. The reconciler applies the new tree to the mounted controls and keeps their state.
 - **An inspector.** The DevTools of FerroUI show the instance tree beside the visual tree: components, their hooks and their keys.
 - **Diagnostics.** In debug builds, warnings for siblings of a list without keys, duplicate keys, and a component that runs again more than a given number of times in one propagation of changes.
+
+What was built differs from the plan above in three points:
+- Hot reload changes literals only. Classes and layout given as literals change; a new element or attribute needs a rebuild and is reported as such.
+- The inspector is an element and a window of its own until the DevTools of the port land.
+- The diagnostic of a component that runs too often counts runs in one propagation of changes, not in a frame.
 
 ### Phase 5: performance and scale
 
@@ -621,7 +675,7 @@ What was built differs from the plan above in three points:
 - **Navigation.** A router of views for single-window applications, with the routing of ReactiveUI as a model.
 - **A larger sample.** TodoMVC and a port of a ReactiveUI sample to components that run again, in the WinUI 3 theme, with screenshots and scenario tests.
 
-## 13. Testing
+## 14. Testing
 
 - `src/FerroUI.View/tests`: the reactive runtime, setters and conversions, mounting, two-way values, handlers, keyed lists, conditions, the macros and components; and for phase 1 (`rerender_tests.rs`):
   - runs again and kept controls;
@@ -648,5 +702,10 @@ What was built differs from the plan above in three points:
   - transitions and animations;
   - a popup's child and a context menu as elements;
   - a builder of another crate (feature `treedatagrid`).
+- `src/FerroUI.View/tests/tools_tests.rs` (phase 4):
+  - a list without keys and duplicate keys reported;
+  - a component that writes what it reads reported;
+  - hot reload of the literals of a component, keeping its controls, with a change of structure reported;
+  - the inspector's description of a mounted tree and its view.
 - `samples/SevenGuis/Tests`: the scenarios of the seven tasks on the twenty-one crates, on the test application of `ferroui-controls` (a dispatcher of the thread).
 - `samples/SevenGuis/Model`: the logic without user interface.

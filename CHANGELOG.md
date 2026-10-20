@@ -26,6 +26,10 @@ All notable changes to FerroUI are recorded in this file. The format follows [Ke
   - a `Popup` holds its child element, and a property that holds a control of a class (`context_menu`) takes an element;
   - `ferroui-view` exports its type model, so compiled XAML names `ComponentHost`; `samples/ViewInterop` compiles its XAML;
   - the sample `samples/ViewGallery`: styles, the theme variant and resources, a transition, a context menu, a `ColorView` and a `TreeDataGrid`, light and dark.
+- **Tools** in `ferroui-view` (phase 4, `docs/declarative-ui.md`, section 11):
+  - hot reload of the literals of `rsx!` (feature `hot-reload`): `hot::lit`, `hot::watch`, `hot::poll`, `hot::apply_source`; `launch` watches the sources;
+  - diagnostics in debug builds: `Diagnostic` (`MissingKeys`, `DuplicateKey`, `RunawayComponent`, `NeedsRebuild`, `HotReloaded`), `set_diagnostics_handler`; `Element::List` for iterations;
+  - the inspector: `mounted_trees()`, `inspector()`, `open_inspector()`, `attach_inspector()` (Shift+F12 in debug builds).
 
 ### Changed
 
