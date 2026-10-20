@@ -129,13 +129,14 @@ impl ItemsRepeaterPage {
 
     fn refresh_status(&self) {
         let repeater = self.get_control::<ItemsRepeater>("Repeater");
+        let status = format!(
+            "{} items · {} realized · {} prepared · {} cleared",
+            self.items.count(),
+            repeater.realized_elements().len(),
+            self.prepared_count.get(),
+            self.cleared_count.get(),
+        );
         self.get_control::<TextBlock>("RealizationStatus")
-            .set_text(Some(format!(
-                "{} items · {} realized · {} prepared · {} cleared",
-                self.items.count(),
-                repeater.realized_elements().len(),
-                self.prepared_count.get(),
-                self.cleared_count.get(),
-            )));
+            .set_text(Some(&status));
     }
 }

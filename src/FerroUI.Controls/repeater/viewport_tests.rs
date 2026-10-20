@@ -454,7 +454,7 @@ fn verify_uniform_grid_layout_doesnt_crash_when_trying_to_scroll_to_end() {
     repeater.set_layout(Some(grid.upcast()));
     repeater.set_items_source(Some(ItemsSource::from_items((0..1000).map(|index| {
         let text = TextBlock::new();
-        text.set_text(Some(format!("#{index}")));
+        text.set_text(Some(&format!("#{index}")));
         let border = Border::new();
         border.set_child(&text);
         Some(Control::boxed(border))
