@@ -87,6 +87,16 @@ pub enum PropValue {
     /// A binding of the property system (`Binding`, a path on the data
     /// context, a compiled binding).
     Binding(Rc<dyn BindingBase>),
+    /// An element, mounted with its parent, for a property that holds a
+    /// control of a class (`context_menu`): `wrap` makes the value of the
+    /// property from the control.
+    TypedElement {
+        /// The element.
+        element: Rc<RefCell<Option<Element>>>,
+        /// The value of the property for the control (`None` when it is not
+        /// of the class of the property).
+        wrap: fn(Option<Ref<Control>>) -> BoxedValue,
+    },
 }
 
 impl PartialEq for PropValue {
@@ -108,6 +118,7 @@ impl fmt::Debug for PropValue {
             PropValue::TwoWay { .. } => f.write_str("TwoWay"),
             PropValue::Element(_) => f.write_str("Element"),
             PropValue::Binding(_) => f.write_str("Binding"),
+            PropValue::TypedElement { .. } => f.write_str("TypedElement"),
         }
     }
 }

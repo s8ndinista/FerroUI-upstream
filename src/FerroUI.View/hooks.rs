@@ -27,6 +27,7 @@
 //! function itself belong to that run and are made again on the next one.
 
 use crate::reactive::{effect, on_cleanup, Memo, Owner, Signal};
+use ferroui_base::reactive::ObservableExt;
 use ferroui_base::{BoxedValue, Ref, StyledElement};
 use ferroui_controls::Control;
 use std::any::Any;
@@ -180,30 +181,72 @@ pub fn use_parent_control() -> Option<Ref<Control>> {
     parent
 }
 
+/// The value of `property` on the control the component is mounted in, as
+/// it is now; the component runs again when it changes. For an inherited
+/// property (`DataContext`, `ActualThemeVariant`, `FlowDirection`) it is the
+/// value the control inherits. `None` at the root of a tree.
+pub fn use_parent_property<T: ferroui_base::PropertyValue>(
+    property: &'static ferroui_base::StyledProperty<T>,
+) -> Option<T> {
+    let parent = use_parent_control();
+    let value = use_hook(move || {
+        let value = crate::reactive::signal(parent.as_ref().map(|control| control.get_value(property)));
+        if let Some(control) = parent {
+            let untyped = property.as_property();
+            let subscription = control.property_changed(move |e| {
+                if std::ptr::eq(e.property(), untyped) {
+                    if let Some(new) = e.new_value().downcast_ref::<T>() {
+                        if value.is_alive() {
+                            value.set(Some(new.clone()));
+                        }
+                    }
+                }
+            });
+            on_cleanup(move || subscription.dispose());
+        }
+        value
+    });
+    value.get()
+}
+
 /// The `DataContext` of the control the component is mounted in (inherited
 /// from its ancestors), as it is now; the component runs again when it
 /// changes. This is how a component reads the item of an item template
 /// ([`template`](crate::template)) or the view model of a view it is hosted
 /// in ([`ComponentHost`](crate::ComponentHost)).
 pub fn use_data_context_value() -> Option<BoxedValue> {
+    use_parent_property(StyledElement::data_context_property()).flatten()
+}
+
+/// The theme variant of the control the component is mounted in (`Light`,
+/// `Dark`, or one of the application), as it is now; the component runs again
+/// when it changes.
+pub fn use_theme_variant() -> Option<ferroui_base::styling::ThemeVariant> {
+    use_parent_property(ferroui_base::styling::ThemeVariant::actual_theme_variant_property()).flatten()
+}
+
+/// The resource `key` as the control the component is mounted in finds it
+/// (its resources, those of its ancestors, the application's and the
+/// theme's, for its theme variant), as it is now; the component runs again
+/// when it changes (another theme variant, a resource dictionary changed).
+pub fn use_resource(key: &str) -> Option<BoxedValue> {
     let parent = use_parent_control();
-    let context = use_hook(move || {
-        let context = crate::reactive::signal(parent.as_ref().and_then(|control| control.data_context()));
+    let key = key.to_string();
+    let value = use_hook(move || {
+        let value = crate::reactive::signal(None::<BoxedValue>);
         if let Some(control) = parent {
-            let property = StyledElement::data_context_property().as_property();
-            let subscription = control.property_changed(move |e| {
-                if std::ptr::eq(e.property(), property) {
-                    let value = e.new_value().downcast_ref::<Option<BoxedValue>>().cloned().flatten();
-                    if context.is_alive() {
-                        context.set(value);
-                    }
+            let host = ferroui_base::controls::ResourceHostRef::from(&control);
+            let subscription = host.resource_observable(key.as_str(), None).subscribe_fn(move |resource: Option<BoxedValue>| {
+                let resource = resource.filter(|resource| !resource.is::<ferroui_base::UnsetValueType>());
+                if value.is_alive() {
+                    value.set(resource);
                 }
             });
             on_cleanup(move || subscription.dispose());
         }
-        context
+        value
     });
-    context.get()
+    value.get()
 }
 
 /// The `DataContext` of the control the component is mounted in, when it

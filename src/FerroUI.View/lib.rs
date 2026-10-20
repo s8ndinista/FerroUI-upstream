@@ -40,6 +40,7 @@
 // The expansions of the macros name the crate; its own tests use them too.
 extern crate self as ferroui_view;
 
+mod animation;
 pub mod builder;
 mod component_host;
 mod control_flow;
@@ -49,6 +50,9 @@ mod extras;
 pub mod hooks;
 mod mount;
 pub mod reactive;
+mod register_types;
+mod rust_paths;
+mod style;
 mod template;
 pub mod xaml;
 
@@ -73,10 +77,16 @@ pub use control_flow::{dynamic, for_each, show, show_else, NodeRef};
 pub use element::{rerender, ComponentElement, Element, IntoChild, IntoChildren, IntoElement, Key};
 pub use component_host::{register_component, ComponentHost, View};
 pub use hooks::{
-    use_data_context, use_data_context_value, use_effect, use_effect_with, use_hook, use_memo, use_parent_control, use_signal,
+    use_data_context, use_data_context_value, use_effect, use_effect_with, use_hook, use_memo, use_parent_control,
+    use_parent_property, use_resource, use_signal, use_theme_variant,
 };
+pub use animation::{
+    animation, ms, transition, transition_eased, transitions, use_animation, AnimationBuilder, KeyFrameBuilder,
+    Transitionable,
+};
+pub use style::{parse_selector, style, style_of, StyleBuilder};
 pub use template::template;
-pub use xaml::register_types;
+pub use register_types::{register_types, ASSEMBLY};
 #[cfg(feature = "xaml")]
 pub use xaml::{load_xaml, load_xaml_uri, use_xaml};
 pub use extras::GridDefinitions;
@@ -101,7 +111,8 @@ pub mod prelude {
     #[cfg(feature = "treedatagrid")]
     pub use crate::generated::treedatagrid::*;
     pub use crate::{
-        batch, component, dynamic, effect, for_each, memo, on_cleanup, provide_context, rerender, rsx, show, show_else,
+        animation, batch, component, dynamic, effect, for_each, memo, ms, on_cleanup, provide_context, rerender, rsx, show,
+        show_else, style, transition, transitions, use_animation, use_resource, use_theme_variant,
         signal, template, untrack, use_context, use_data_context, use_effect, use_effect_with, use_hook, use_memo,
         use_signal, Bind, ComponentHost, El, Element, ElementBuilder, GridDefinitions, IntoChild, IntoChildren, IntoElement, Key, Memo, NodeRef, Owner, Signal, TwoWay,
     };
