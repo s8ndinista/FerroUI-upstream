@@ -1447,6 +1447,40 @@ impl IDrawingContextImpl for DrawingContextImpl {
         let snap_x = |x: f64| if whole_pixels { ((a * x + e).round() - e) / a } else { x };
         let snap_y = |y: f64| if snap_baseline { ((d * y + f).round() - f) / d } else { y };
 
+        // Explicitly unhinted outlines are scalable geometry. The native
+        // glyph builders flatten their curves to 0.25 device pixels, while
+        // the geometry sinks prepare curves at 0.05: passing these outlines
+        // through the same sink keeps drawing, strokes and public extraction
+        // in agreement. Default/hinted text retains the native glyph caches,
+        // and colour, bitmap or incomplete runs retain their native artwork.
+        if effective_text_options.text_hinting_mode == TextHintingMode::None {
+            if let Some(paths) = glyph_run_impl.try_outline_paths() {
+                let baseline_y = snap_y(origin.y);
+                self.draw_with(paint_wrapper, &|sink, paint, transform, _| {
+                    let _perf = crate::perf::scope(crate::perf::Phase::GlyphRun, paths.len() as u64);
+                    let mut glyph_paint = paint.clone();
+                    for (path, (x, _)) in paths.iter().zip(glyph_run_impl.outline_positions()) {
+                        let Some(path) = path.as_ref().filter(|path| !path.elements().is_empty()) else {
+                            continue;
+                        };
+                        let baseline_x = if whole_pixels { snap_x(origin.x + *x) - *x } else { origin.x };
+                        let placement = Affine::translate((baseline_x, baseline_y));
+                        // The brush was resolved once against the whole run.
+                        // Moving a glyph must not move its gradient or image:
+                        // (transform * placement) * (placement^-1 * brush).
+                        glyph_paint.transform = placement.inverse() * paint.transform;
+                        // Keep each glyph a separate source-over draw: merging
+                        // their contours would change translucent overlaps.
+                        sink.fill(
+                            path, Fill::NonZero, transform * placement, &glyph_paint,
+                            BlendMode::default(), anti_alias,
+                        );
+                    }
+                });
+                return;
+            }
+        }
+
         let glyphs: Vec<VelloSceneGlyph> = glyph_run_impl
             .glyph_indices()
             .iter()

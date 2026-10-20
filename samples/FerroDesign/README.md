@@ -4,6 +4,8 @@ A design editor built with **FerroUI, Rust, compiled XAML and the FerroUI Vello 
 
 The editor includes pages and layers, an infinite canvas, editable vector networks, rich text, image cropping, native effect/mask controls, cross-frame auto-layout dragging, component variants and typed properties, visual local variables, animated prototypes, comments, undo/redo and portable export. The compiled XAML shell follows the navigation rail, contextual left sidebar, canvas, property sidebar and floating toolbar arrangement of Figma Design. [Feature coverage](docs/FEATURES.md) records the implementation and its limits; this repository does not claim complete Figma compatibility or verified pixel parity.
 
+The [angular paint](docs/ANGULAR_PAINTS.md) and [vector face discovery](docs/VECTOR_FACES.md) guides describe their authoring contracts, export approximations and geometry limits.
+
 The editor is real FerroUI UI. `Editor.xaml` compiles into native FerroUI controls; `DesignCanvas` derives from `Control`; artwork is drawn through the public `DrawingContext`, geometry, brush, pen, text and imaging APIs. The HTML host only starts WebAssembly and provides browser storage, clipboard and downloads.
 
 ## Get the complete source
@@ -33,6 +35,8 @@ Open <http://localhost:8080>. The standard browser configuration requests **Ferr
 The generated `dist` directory is a static distribution containing the application JavaScript, WebAssembly, FerroUI browser bridge, resources and dependency manifest. Serve it over HTTP; opening `index.html` through `file://` does not provide a usable WebAssembly application origin. This build does not enable the FerroUI service worker.
 
 The pinned browser tools are Rust **1.99.0**, Emscripten **6.0.10** and `wasm-bindgen-cli` **0.2.129**. `Cargo.lock` and the browser validation package lock are committed. The build script requires the **active target dependency graph** to contain FerroUI Vello and rejects `ferroui-skia`, `skia-safe` or `skia-bindings`. The first build needs access to the Rust package registry.
+
+Setup prefers official, pinned SHA-256-verified wasm-bindgen binaries on Linux and macOS for x86_64 and aarch64. Unsupported targets or unavailable downloads retain the locked Cargo installation; a checksum mismatch stops setup before extraction or execution.
 
 The first build is substantial because it compiles FerroUI itself. The browser profile builds one job at a time, splits code generation and avoids LTO to control peak memory. Vello and its rasterization dependencies retain optimization level 3. The repository's Emscripten configuration links with `em++`. The build retains unresolved-symbol diagnostics. Do not increase parallelism on a memory-constrained runner before measuring peak memory.
 

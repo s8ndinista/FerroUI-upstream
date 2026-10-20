@@ -9,16 +9,16 @@ permissions:
   contents: read
 
 concurrency:
-  group: ferrodesign-${{ github.ref }}
-  # Finish browser evidence for the running commit; frequent development pushes
-  # replace the pending run without repeatedly discarding the long native build.
+  group: ferrodesign-v3-${{ github.ref }}
+  # The v3 group lets the previous combined-job baseline finish independently.
+  # Keep both running validation jobs when later development commits arrive.
   cancel-in-progress: false
 
 jobs:
-  browser:
+  native-validation:
+    name: Native validation
     runs-on: ubuntu-24.04
-    # The cold native/WASM build reached an early browser assertion after
-    # 69 minutes; retain time for the complete interaction suites and evidence.
+    # Keep native/core/pixel gates independent of WebAssembly build progress.
     timeout-minutes: 120
     env:
       CARGO_BUILD_JOBS: 1
@@ -31,6 +31,8 @@ jobs:
         working-directory: samples/FerroDesign
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.sha }}
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
@@ -54,16 +56,16 @@ jobs:
             ${{ runner.temp }}/ferrodesign-tools/cargo/registry
             ${{ runner.temp }}/ferrodesign-tools/cargo/git
             samples/FerroDesign/target
-          key: ferrodesign-build-${{ runner.os }}-v2-${{ hashFiles('samples/FerroDesign/**/Cargo.toml', 'samples/FerroDesign/Cargo.lock') }}-${{ github.sha }}
+          key: ferrodesign-build-${{ runner.os }}-v3-native-${{ hashFiles('samples/FerroDesign/**/Cargo.toml', 'samples/FerroDesign/Cargo.lock') }}-${{ github.sha }}
           restore-keys: |
+            ferrodesign-build-${{ runner.os }}-v3-native-${{ hashFiles('samples/FerroDesign/**/Cargo.toml', 'samples/FerroDesign/Cargo.lock') }}-
             ferrodesign-build-${{ runner.os }}-v2-${{ hashFiles('samples/FerroDesign/**/Cargo.toml', 'samples/FerroDesign/Cargo.lock') }}-
-            ferrodesign-build-${{ runner.os }}-v2-
 
       - name: Install pinned Rust, Emscripten and wasm-bindgen
         run: |
           set -o pipefail
-          mkdir -p browser-report
-          scripts/setup.sh "$RUNNER_TEMP/ferrodesign-tools" 2>&1 | tee browser-report/toolchain.log
+          mkdir -p native-report
+          scripts/setup.sh "$RUNNER_TEMP/ferrodesign-tools" 2>&1 | tee native-report/toolchain.log
           free -h
 
       - name: Check source and test document engine
@@ -73,23 +75,24 @@ jobs:
           bash -n scripts/setup.sh scripts/build-browser.sh scripts/check-renderer.sh
           node --check web/main.js
           node --check tests/browser.mjs
+          node --check tests/text-render-benchmark.mjs
           for file in tests/*-browser.mjs; do node --check "$file"; done
           node --test tests/document-store.test.mjs
-          cargo metadata --locked --no-deps --format-version 1 > browser-report/cargo-metadata.json
-          cargo test --locked -p ferrodesign-core --jobs 1 2>&1 | tee browser-report/core-tests.log
+          cargo metadata --locked --no-deps --format-version 1 > native-report/cargo-metadata.json
+          cargo test --locked -p ferrodesign-core --jobs 1 2>&1 | tee native-report/core-tests.log
 
       - name: Verify Vello without Skia on every supported application target
         run: |
           set -o pipefail
           source "$RUNNER_TEMP/ferrodesign-tools/env.sh"
-          FERRODESIGN_GRAPH_DIR=browser-report/dependency-graphs scripts/check-renderer.sh 2>&1 | tee browser-report/renderer-graphs.log
+          FERRODESIGN_GRAPH_DIR=native-report/dependency-graphs scripts/check-renderer.sh 2>&1 | tee native-report/renderer-graphs.log
 
       - name: Compare scoped editing, history and serialization costs
         run: |
           set -o pipefail
           source "$RUNNER_TEMP/ferrodesign-tools/env.sh"
-          cargo run --locked --release -p ferrodesign-core --example performance -- 10000 > browser-report/performance.json
-          cat browser-report/performance.json
+          cargo run --locked --release -p ferrodesign-core --example performance -- 10000 > native-report/performance.json
+          cat native-report/performance.json
 
       - name: Install native Fontconfig and FreeType development files
         run: |
@@ -101,45 +104,135 @@ jobs:
         run: |
           set -o pipefail
           source "$RUNNER_TEMP/ferrodesign-tools/env.sh"
-          CARGO_PROFILE_TEST_DEBUG=0 CARGO_PROFILE_TEST_CODEGEN_UNITS=16 cargo test --locked --manifest-path ../../Cargo.toml -p ferroui-controls --lib preedit --jobs 1 -- --test-threads=1 2>&1 | tee browser-report/preedit-tests.log
-          CARGO_PROFILE_TEST_DEBUG=0 CARGO_PROFILE_TEST_CODEGEN_UNITS=16 cargo test --locked --manifest-path ../../Cargo.toml -p ferroui-controls --lib rich_ranges --jobs 1 -- --test-threads=1 2>&1 | tee browser-report/rich-range-tests.log
-          CARGO_PROFILE_TEST_DEBUG=0 CARGO_PROFILE_TEST_CODEGEN_UNITS=16 cargo test --locked --manifest-path ../../Cargo.toml -p ferroui-controls --lib replacing_range_styles_and_font_features_invalidates_shaped_layout --jobs 1 -- --test-threads=1 2>&1 | tee browser-report/text-layout-invalidation-tests.log
+          CARGO_PROFILE_TEST_DEBUG=0 CARGO_PROFILE_TEST_CODEGEN_UNITS=16 cargo test --locked --manifest-path ../../Cargo.toml -p ferroui-controls --lib preedit --jobs 1 -- --test-threads=1 2>&1 | tee native-report/preedit-tests.log
+          CARGO_PROFILE_TEST_DEBUG=0 CARGO_PROFILE_TEST_CODEGEN_UNITS=16 cargo test --locked --manifest-path ../../Cargo.toml -p ferroui-controls --lib rich_ranges --jobs 1 -- --test-threads=1 2>&1 | tee native-report/rich-range-tests.log
+          CARGO_PROFILE_TEST_DEBUG=0 CARGO_PROFILE_TEST_CODEGEN_UNITS=16 cargo test --locked --manifest-path ../../Cargo.toml -p ferroui-controls --lib replacing_range_styles_and_font_features_invalidates_shaped_layout --jobs 1 -- --test-threads=1 2>&1 | tee native-report/text-layout-invalidation-tests.log
 
       - name: Test public compositing recording and Vello pixels
         run: |
           set -o pipefail
           source "$RUNNER_TEMP/ferrodesign-tools/env.sh"
-          CARGO_PROFILE_TEST_DEBUG=0 CARGO_PROFILE_TEST_CODEGEN_UNITS=16 cargo test --locked --manifest-path ../../Cargo.toml -p ferroui-base --lib compositing_layer --jobs 1 -- --test-threads=1 2>&1 | tee browser-report/compositing-base-tests.log
-          CARGO_PROFILE_TEST_DEBUG=0 CARGO_PROFILE_TEST_CODEGEN_UNITS=16 cargo test --locked --manifest-path ../../Cargo.toml -p ferroui-vello --lib compositing_layer --jobs 1 -- --test-threads=1 2>&1 | tee browser-report/compositing-vello-tests.log
+          CARGO_PROFILE_TEST_DEBUG=0 CARGO_PROFILE_TEST_CODEGEN_UNITS=16 cargo test --locked --manifest-path ../../Cargo.toml -p ferroui-base --lib compositing_layer --jobs 1 -- --test-threads=1 2>&1 | tee native-report/compositing-base-tests.log
+          CARGO_PROFILE_TEST_DEBUG=0 CARGO_PROFILE_TEST_CODEGEN_UNITS=16 cargo test --locked --manifest-path ../../Cargo.toml -p ferroui-vello --lib compositing_layer --jobs 1 -- --test-threads=1 2>&1 | tee native-report/compositing-vello-tests.log
 
       - name: Test public geometry and shaped text outline APIs
         run: |
           set -o pipefail
           source "$RUNNER_TEMP/ferrodesign-tools/env.sh"
-          CARGO_PROFILE_TEST_DEBUG=0 CARGO_PROFILE_TEST_CODEGEN_UNITS=16 cargo test --locked --manifest-path ../../Cargo.toml -p ferroui-vello --lib geometry_path_data --jobs 1 -- --test-threads=1 2>&1 | tee browser-report/geometry-path-tests.log
-          CARGO_PROFILE_TEST_DEBUG=0 CARGO_PROFILE_TEST_CODEGEN_UNITS=16 cargo test --locked --manifest-path ../../Cargo.toml -p ferroui-vello --lib text_layout_build_geometry --jobs 1 -- --test-threads=1 2>&1 | tee browser-report/text-outline-tests.log
-          CARGO_PROFILE_TEST_DEBUG=0 CARGO_PROFILE_TEST_CODEGEN_UNITS=16 cargo test --locked --manifest-path ../../Cargo.toml -p ferroui-vello --lib glyph_run_complete_geometry --jobs 1 -- --test-threads=1 2>&1 | tee browser-report/complete-glyph-tests.log
+          CARGO_PROFILE_TEST_DEBUG=0 CARGO_PROFILE_TEST_CODEGEN_UNITS=16 cargo test --locked --manifest-path ../../Cargo.toml -p ferroui-vello --lib geometry_path_data --jobs 1 -- --test-threads=1 2>&1 | tee native-report/geometry-path-tests.log
+          CARGO_PROFILE_TEST_DEBUG=0 CARGO_PROFILE_TEST_CODEGEN_UNITS=16 cargo test --locked --manifest-path ../../Cargo.toml -p ferroui-vello --lib text_layout_build_geometry --jobs 1 -- --test-threads=1 2>&1 | tee native-report/text-outline-tests.log
+          CARGO_PROFILE_TEST_DEBUG=0 CARGO_PROFILE_TEST_CODEGEN_UNITS=16 cargo test --locked --manifest-path ../../Cargo.toml -p ferroui-vello --lib glyph_run_complete_geometry --jobs 1 -- --test-threads=1 2>&1 | tee native-report/complete-glyph-tests.log
+          CARGO_PROFILE_TEST_DEBUG=0 CARGO_PROFILE_TEST_CODEGEN_UNITS=16 cargo test --locked --manifest-path ../../Cargo.toml -p ferroui-vello --lib unhinted_ --jobs 1 -- --test-threads=1 2>&1 | tee native-report/unhinted-outline-tests.log
 
       - name: Check native launcher and shared UI compilation
         id: native-check
         run: |
           set -o pipefail
           source "$RUNNER_TEMP/ferrodesign-tools/env.sh"
-          cargo check --locked -p ferrodesign-app --lib --tests --jobs 1 2>&1 | tee browser-report/native-check.log
+          cargo check --locked -p ferrodesign-app --lib --tests --jobs 1 2>&1 | tee native-report/native-check.log
 
       - name: Test native editor, incremental rendering and background blur
         env:
-          FERRODESIGN_PIXEL_DIAGNOSTICS: browser-report/pixel-diffs
+          FERRODESIGN_PIXEL_DIAGNOSTICS: native-report/pixel-diffs
         run: |
           set -o pipefail
           source "$RUNNER_TEMP/ferrodesign-tools/env.sh"
-          CARGO_PROFILE_TEST_DEBUG=0 CARGO_PROFILE_TEST_CODEGEN_UNITS=16 cargo test --locked -p ferrodesign-app --lib --jobs 1 -- --test-threads=1 2>&1 | tee browser-report/native-tests.log
+          CARGO_PROFILE_TEST_DEBUG=0 CARGO_PROFILE_TEST_CODEGEN_UNITS=16 cargo test --locked -p ferrodesign-app --lib --jobs 1 -- --test-threads=1 2>&1 | tee native-report/native-tests.log
+
+      - name: Upload native validation logs, pixel diagnostics and lockfiles
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: FerroDesign-native-validation-${{ github.sha }}
+          path: |
+            samples/FerroDesign/native-report
+            samples/FerroDesign/Cargo.lock
+            samples/FerroDesign/package-lock.json
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Cache pinned toolchain
+        if: always() && steps.tools.outputs.cache-hit != 'true'
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: |
+            ${{ runner.temp }}/ferrodesign-tools/rustup
+            ${{ runner.temp }}/ferrodesign-tools/cargo/bin
+            ${{ runner.temp }}/ferrodesign-tools/bin
+            ${{ runner.temp }}/ferrodesign-tools/emsdk
+          key: ${{ steps.tools.outputs.cache-primary-key }}
+
+      - name: Cache partial build for subsequent fixes
+        if: always() && steps.build-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: |
+            ${{ runner.temp }}/ferrodesign-tools/cargo/registry
+            ${{ runner.temp }}/ferrodesign-tools/cargo/git
+            samples/FerroDesign/target
+          key: ${{ steps.build-cache.outputs.cache-primary-key }}
+
+  browser-validation:
+    name: Browser validation
+    runs-on: ubuntu-24.04
+    # Build the actual WebAssembly app without waiting for native pixel tests.
+    timeout-minutes: 120
+    env:
+      CARGO_BUILD_JOBS: 1
+      CARGO_TERM_COLOR: always
+      FERRODESIGN_BUILD_JOBS: 1
+      CARGO_TARGET_DIR: ${{ github.workspace }}/samples/FerroDesign/target
+    defaults:
+      run:
+        shell: bash
+        working-directory: samples/FerroDesign
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+
+      - name: Restore pinned toolchain
+        id: tools
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: |
+            ${{ runner.temp }}/ferrodesign-tools/rustup
+            ${{ runner.temp }}/ferrodesign-tools/cargo/bin
+            ${{ runner.temp }}/ferrodesign-tools/bin
+            ${{ runner.temp }}/ferrodesign-tools/emsdk
+          key: ferrodesign-tools-${{ runner.os }}-rust1.99.0-em6.0.10-bindgen0.2.129
+
+      - name: Restore dependencies and compiled framework
+        id: build-cache
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: |
+            ${{ runner.temp }}/ferrodesign-tools/cargo/registry
+            ${{ runner.temp }}/ferrodesign-tools/cargo/git
+            samples/FerroDesign/target
+          key: ferrodesign-build-${{ runner.os }}-v3-browser-${{ hashFiles('samples/FerroDesign/**/Cargo.toml', 'samples/FerroDesign/Cargo.lock') }}-${{ github.sha }}
+          restore-keys: |
+            ferrodesign-build-${{ runner.os }}-v3-browser-${{ hashFiles('samples/FerroDesign/**/Cargo.toml', 'samples/FerroDesign/Cargo.lock') }}-
+            ferrodesign-build-${{ runner.os }}-v2-${{ hashFiles('samples/FerroDesign/**/Cargo.toml', 'samples/FerroDesign/Cargo.lock') }}-
+
+      - name: Install pinned Rust, Emscripten and wasm-bindgen
+        run: |
+          set -o pipefail
+          mkdir -p browser-report
+          scripts/setup.sh "$RUNNER_TEMP/ferrodesign-tools" 2>&1 | tee browser-report/toolchain.log
+          free -h
+
+      - name: Install native Fontconfig and FreeType development files
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y pkg-config libfontconfig1-dev libfreetype6-dev
+          pkg-config --modversion fontconfig freetype2
 
       - name: Build actual FerroUI Vello WebAssembly application
         id: browser-build
-        # A native pixel regression must keep this workflow red, but should
-        # not discard independent browser build and interaction evidence.
-        if: ${{ !cancelled() && steps.native-check.outcome == 'success' }}
         run: |
           set -o pipefail
           source "$RUNNER_TEMP/ferrodesign-tools/env.sh"
@@ -152,12 +245,26 @@ jobs:
           npm ci --no-audit --no-fund
           npx playwright install --with-deps chromium
 
-      - name: Validate pixels, pointer editing, keyboard history and serialization
+      - name: Validate browser persistence and IndexedDB transactions
         if: ${{ !cancelled() && steps.chromium.outcome == 'success' }}
         run: |
           set -o pipefail
           node tests/document-store-browser.mjs 2>&1 | tee browser-report/indexeddb-tests.log
+
+      - name: Validate pixels, pointer editing, keyboard history and serialization
+        if: ${{ !cancelled() && steps.chromium.outcome == 'success' }}
+        run: |
+          set -o pipefail
           npm run test:browser 2>&1 | tee browser-report/browser-tests.log
+
+      - name: Measure native text panning in both browser surfaces
+        if: ${{ !cancelled() && steps.chromium.outcome == 'success' }}
+        env:
+          FERRODESIGN_REPORT: browser-report/text-render-benchmark
+          FERRODESIGN_BENCHMARK_LABEL: ${{ github.sha }}
+        run: |
+          set -o pipefail
+          node tests/text-render-benchmark.mjs 2>&1 | tee browser-report/text-render-benchmark.log
 
       - name: Upload complete browser build
         if: always()

@@ -1,0 +1,268 @@
+// Usage (run from samples/FerroDesign):
+//   FERRODESIGN_DIST=/path/to/build FERRODESIGN_CHROMIUM=/path/to/chromium \
+//   FERRODESIGN_REPORT=/path/to/report node tests/text-render-benchmark.mjs
+// Optional FERRODESIGN_BASELINE_DIST runs the identical fixture against both
+// builds in one browser launch. Labels are recorded from FERRODESIGN_BENCHMARK_LABEL and
+// FERRODESIGN_BASELINE_LABEL. No renderer, document, or camera test command is
+// invoked: JSON imports are validated normally; real middle-button input pans.
+import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
+import { createReadStream } from "node:fs";
+import { mkdir, readFile, readdir, stat, writeFile } from "node:fs/promises";
+import { createServer } from "node:http";
+import { dirname, extname, resolve, sep } from "node:path";
+import { fileURLToPath } from "node:url";
+import { chromium } from "playwright";
+
+const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const output = resolve(process.env.FERRODESIGN_REPORT || resolve(root, "text-benchmark-report"));
+const builds = [
+    ...(process.env.FERRODESIGN_BASELINE_DIST ? [{ id: "baseline", path: resolve(process.env.FERRODESIGN_BASELINE_DIST),
+        label: process.env.FERRODESIGN_BASELINE_LABEL || "baseline" }] : []),
+    { id: "current", path: resolve(process.env.FERRODESIGN_DIST || resolve(root, "dist")),
+        label: process.env.FERRODESIGN_BENCHMARK_LABEL || "current" },
+];
+const viewport = { width: 1600, height: 1100 };
+const warmupCount = 12, measuredCount = 36, seed = 0x4f726269;
+const motions = [[4, 0], [4, 4], [0, 4], [-4, 4], [-4, 0], [-4, -4], [0, -4], [4, -4], [0, 0]];
+const totalCounters = ["totalFullPrepares", "totalIncrementalPrepares", "totalPreparedNodes", "totalRebuiltVisuals",
+    "layerProjectionBuilds", "layerProjectionReuses"];
+const frameCounters = ["visibleNodes", "culledNodes", "cachedNodes", "preparedNodes", "rebuiltVisuals",
+    "fullPrepares", "incrementalPrepares", "rootBoundsTests", "rootCandidates", "rootQueryReused"];
+const hash = (value) => createHash("sha256").update(value).digest("hex");
+const state = (page) => page.evaluate(() => JSON.parse(globalThis.ferroDesign.ferroDesignState()));
+const frames = (page) => page.evaluate(() => new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done))));
+const pick = (value, keys) => Object.fromEntries(keys.map(key => [key, value[key] ?? null]));
+const delta = (before, after) => Object.fromEntries(totalCounters.map(key => [key,
+    Number.isFinite(before[key]) && Number.isFinite(after[key]) ? after[key] - before[key] : null]));
+function statistics(values) {
+    const sorted = [...values].sort((a, b) => a - b);
+    const middle = Math.floor(sorted.length / 2);
+    return { count: sorted.length, medianMs: sorted.length % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2,
+        p95Ms: sorted[Math.ceil(sorted.length * 0.95) - 1], minMs: sorted[0], maxMs: sorted.at(-1) };
+}
+
+// The standalone form of browser.mjs's validated fixture import/wait helpers.
+// Minimal Node fields deliberately use the model's serde defaults, so the exact
+// seeded input bytes stay the same across baseline/current builds.
+function fixture(schemaVersion) {
+    let random = seed;
+    const next = () => { random = (Math.imul(random, 1664525) + 1013904223) >>> 0; return random; };
+    const words = ["Orbit", "Curves", "Round", "Object", "Canvas", "Motion"];
+    const nodes = {};
+    for (let index = 0; index < 150; index++) {
+        const id = index + 2, style = index % 4;
+        const text = `${words[next() % words.length]} oOo Qq AV ${String(index).padStart(3, "0")} curves`;
+        nodes[id] = {
+            id, parent: 1, children: [], kind: "text", name: `Text benchmark ${String(index).padStart(3, "0")}`,
+            x: 20 + (index % 5) * 240 + (next() % 4) * 0.25 + 0.125,
+            y: 20 + Math.floor(index / 5) * 26 + (next() % 4) * 0.25 + 0.125,
+            width: 228, height: 23, visible: true, locked: false, opacity: 1,
+            fills: [{ paint: { type: "solid", r: 25, g: 31, b: 43, a: 255 }, opacity: 1, visible: true }],
+            strokes: [], effects: [], text, font_family: "Inter", font_size: 12.75,
+            font_weight: style & 1 ? 700 : 400, italic: Boolean(style & 2),
+            line_height: 1.2, letter_spacing: 0, text_align: "left", text_vertical_align: "top",
+            text_auto_resize: "width_and_height", text_decoration: "none", text_runs: [],
+            font_features: [{ tag: "liga", value: 0 }, { tag: "clig", value: 0 }, { tag: "calt", value: 0 }],
+        };
+    }
+    return { schema_version: schemaVersion, name: "Seeded150LabelTextBenchmark", nodes,
+        pages: [{ id: 1, name: "Visible text workload", children: Object.values(nodes).map(node => node.id),
+            background: { r: 255, g: 255, b: 255, a: 255 }, prototype_start: null }],
+        styles: {}, variables: {}, variable_mode: "Default", comments: [], guides: {}, next_id: 152 };
+}
+
+async function importFixture(page, document) {
+    const before = await state(page);
+    assert.equal(await page.evaluate(json => globalThis.ferroDesign.ferroDesignImportJson(json), JSON.stringify(document)), true,
+        "The normal native document import must accept the benchmark fixture");
+    await page.waitForFunction(({ after, count }) => {
+        const view = JSON.parse(globalThis.ferroDesign.ferroDesignState());
+        return view.nodeCount === count && view.visibleNodes === count && view.renderedFrames > after;
+    }, { after: before.renderedFrames, count: Object.keys(document.nodes).length }, { timeout: 120000 });
+    // Drain the import's ordinary serialization/storage work before measuring.
+    await page.waitForFunction(() => !JSON.parse(globalThis.ferroDesign.ferroDesignState()).serializationPending,
+        undefined, { timeout: 30000 });
+    await page.evaluate(async () => { await globalThis.ferroDesignStorage?.flush(); });
+    await frames(page);
+}
+
+async function identifyBuild(build) {
+    const names = (await readdir(build.path)).filter(name => /\.(?:wasm|data|js|html)$/.test(name)).sort();
+    const files = [];
+    for (const name of names) {
+        const path = resolve(build.path, name), info = await stat(path);
+        if (!info.isFile()) continue;
+        const digest = createHash("sha256");
+        for await (const chunk of createReadStream(path)) digest.update(chunk);
+        files.push({ name, bytes: info.size, sha256: digest.digest("hex") });
+    }
+    return { ...build, files, fingerprint: hash(JSON.stringify(files)) };
+}
+
+const report = {
+    schemaVersion: 1, created: new Date().toISOString(), benchmark: "native-text-pan-v1", viewport, seed,
+    warmupCount, measuredCount, motions, builds: [], results: [],
+    method: "Host input dispatch to observed native renderedFrames advance at the expected camera position. Two subsequent animation callbacks are recorded separately as a settling observation.",
+    limitations: [
+        "Primary timings include Playwright dispatch, bridge-state serialization and browser scheduling; they are not isolated renderer timings or GPU completion timestamps. Settling timings also include two subsequent animation callbacks.",
+        "Native label visibility/preparation counters are observed. The bridge does not expose actual shaped/drawn glyph totals; exact input character counts describe the workload instead.",
+        "The WebGL2 launch requests SwiftShader; the actual renderer string is recorded when available. This is not a hardware-GPU throughput measurement. No speed threshold or FPS assertion is made.",
+        "Baseline/current order is sequential and not randomized; machine load and thermal/order effects can affect a paired comparison.",
+    ],
+};
+const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".wasm": "application/wasm", ".json": "application/json", ".png": "image/png", ".svg": "image/svg+xml" };
+const server = createServer(async (request, response) => {
+    try {
+        const pathname = decodeURIComponent(new URL(request.url, "http://localhost").pathname);
+        const match = builds.find(build => pathname.startsWith("/" + build.id + "/"));
+        if (!match) { response.writeHead(404).end(); return; }
+        let file = resolve(match.path, "." + pathname.slice(match.id.length + 1));
+        if (file !== match.path && !file.startsWith(match.path + sep)) { response.writeHead(403).end(); return; }
+        if ((await stat(file)).isDirectory()) file = resolve(file, "index.html");
+        response.writeHead(200, { "content-type": types[extname(file)] || "application/octet-stream", "cache-control": "no-store" });
+        createReadStream(file).on("error", () => response.destroy()).pipe(response);
+    } catch { response.writeHead(404).end(); }
+});
+let browser, fixtureDocument, fixtureJson;
+await mkdir(output, { recursive: true });
+try {
+    for (const build of builds) report.builds.push(await identifyBuild(build));
+    await new Promise((done, reject) => { server.once("error", reject); server.listen(0, "127.0.0.1", done); });
+    const base = "http://127.0.0.1:" + server.address().port;
+    browser = await chromium.launch({ headless: true, executablePath: process.env.FERRODESIGN_CHROMIUM || undefined,
+        args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] });
+    report.browser = browser.version();
+    for (const build of builds) for (const mode of ["Software2D", "WebGL2"]) {
+        const result = { build: build.id, label: build.label, requestedMode: mode, status: "running", pageErrors: [], consoleErrors: [], samples: [] };
+        report.results.push(result);
+        const context = await browser.newContext({ viewport, deviceScaleFactor: 1 });
+        const page = await context.newPage();
+        page.on("pageerror", error => result.pageErrors.push(error.stack || String(error)));
+        page.on("console", message => { if (message.type() === "error") result.consoleErrors.push(message.text()); });
+        try {
+            await page.goto(base + "/" + build.id + "/?RenderingMode=" + mode, { waitUntil: "domcontentloaded", timeout: 120000 });
+            await page.waitForFunction(() => globalThis.ferroDesignReady || globalThis.ferroDesignErrors?.length,
+                undefined, { timeout: 120000 });
+            assert.deepEqual(await page.evaluate(() => globalThis.ferroDesignErrors || []), []);
+            await page.waitForFunction(() => {
+                const view = JSON.parse(globalThis.ferroDesign?.ferroDesignState?.() || "null");
+                return view?.renderedFrames > 0 && view.nodeCount > 0;
+            }, undefined, { timeout: 120000 });
+            await page.locator(".ferroui-splash").waitFor({ state: "hidden", timeout: 120000 });
+            result.environment = await page.evaluate(() => {
+                const canvas = document.querySelector("canvas.ferroui-canvas");
+                const gl = canvas?.getContext("webgl2"), debug = gl?.getExtension("WEBGL_debug_renderer_info");
+                return { userAgent: navigator.userAgent, hardwareConcurrency: navigator.hardwareConcurrency,
+                    devicePixelRatio, canvas: { width: canvas?.width, height: canvas?.height },
+                    surface: gl ? "WebGL2" : canvas?.getContext("2d") ? "Software2D" : "unknown",
+                    device: debug ? gl.getParameter(debug.UNMASKED_RENDERER_WEBGL) : null };
+            });
+            assert.equal(result.environment.surface, mode, "The requested rendering surface must be observed");
+            if (!fixtureDocument) {
+                const initial = await page.evaluate(() => JSON.parse(globalThis.ferroDesign.ferroDesignExportJson()));
+                fixtureDocument = fixture(initial.schema_version);
+                fixtureJson = JSON.stringify(fixtureDocument);
+                const labels = Object.values(fixtureDocument.nodes);
+                report.workload = { inputSha256: hash(fixtureJson), labels: labels.length,
+                    inputCodePoints: labels.reduce((sum, node) => sum + [...node.text].length, 0),
+                    inputNonSpaceCodePoints: labels.reduce((sum, node) => sum + [...node.text.replaceAll(" ", "")].length, 0),
+                    actualRenderedGlyphCount: null, actualRenderedGlyphCountReason: "Not exposed by the native bridge; no glyph count is inferred from characters.",
+                    font: "Inter", fontSize: 12.75, styles: ["regular", "bold", "italic", "bold italic"],
+                    wrapping: "disabled", ligatures: "liga/clig/calt disabled", columns: 5, rows: 30 };
+                await writeFile(resolve(output, "fixture.json"), fixtureJson);
+            }
+            await importFixture(page, fixtureDocument);
+            const prepared = await state(page);
+            assert.equal(prepared.renderer, "FerroUI Vello");
+            assert.equal(prepared.visibleNodes, 150);
+            for (const key of ["invalidNodes", "unsupportedEffects", "missingImages"]) assert.equal(prepared[key], 0, key);
+            result.imported = { renderedFrames: prepared.renderedFrames, zoom: prepared.zoom, pan: prepared.pan,
+                canvas: prepared.chrome.CanvasHost, counters: pick(prepared, [...frameCounters, ...totalCounters]) };
+            const canonical = await page.evaluate(() => globalThis.ferroDesign.ferroDesignExportJson());
+            result.documentSha256 = hash(canonical);
+            await page.screenshot({ path: resolve(output, build.id + "-" + mode + "-text.png"), timeout: 60000 });
+            const canvas = prepared.chrome.CanvasHost;
+            const pointer = { x: Math.floor(canvas.x + canvas.width / 2), y: Math.floor(canvas.y + canvas.height / 2) };
+            await page.mouse.move(pointer.x, pointer.y);
+            await page.mouse.down({ button: "middle" });
+            await frames(page);
+            const original = await state(page);
+            const panStep = async (index) => {
+                const [dx, dy] = motions[index % motions.length], before = await state(page);
+                const expected = { x: original.pan.x + dx, y: original.pan.y + dy };
+                const started = performance.now();
+                await page.mouse.move(pointer.x + dx, pointer.y + dy, { steps: 1 });
+                await page.waitForFunction(({ after, x, y }) => {
+                    const view = JSON.parse(globalThis.ferroDesign.ferroDesignState());
+                    return view.renderedFrames > after && Math.abs(view.pan.x - x) < 0.01 && Math.abs(view.pan.y - y) < 0.01;
+                }, { after: before.renderedFrames, ...expected }, { timeout: 30000 });
+                const durationMs = performance.now() - started;
+                await frames(page);
+                const settledObservationMs = performance.now() - started, after = await state(page);
+                assert.equal(after.documentRevision, original.documentRevision, "Panning must not edit the document");
+                assert.equal(after.visibleNodes, 150, "Every text label must remain visible throughout the workload");
+                assert.equal(after.invalidNodes, 0);
+                return { index, durationMs, settledObservationMs, pointerDelta: { x: dx, y: dy }, frameDelta: after.renderedFrames - before.renderedFrames,
+                    zoom: after.zoom, pan: after.pan, preparationDelta: delta(before, after), frameCounters: pick(after, frameCounters) };
+            };
+            try {
+                const warmStart = performance.now();
+                for (let index = 0; index < warmupCount; index++) await panStep(index);
+                result.warmupMs = performance.now() - warmStart;
+                const before = await state(page);
+                for (let index = 0; index < measuredCount; index++) result.samples.push(await panStep(warmupCount + index));
+                const after = await state(page);
+                result.timing = statistics(result.samples.map(sample => sample.durationMs));
+                result.settlingTiming = statistics(result.samples.map(sample => sample.settledObservationMs));
+                result.preparationDelta = delta(before, after);
+                result.nativeFrameDelta = after.renderedFrames - before.renderedFrames;
+            } finally { await page.mouse.up({ button: "middle" }); }
+            assert.equal(hash(await page.evaluate(() => globalThis.ferroDesign.ferroDesignExportJson())), result.documentSha256);
+            result.renderPanics = await page.evaluate(() => globalThis.ferroDesignRenderPanics?.() || []);
+            assert.deepEqual(result.renderPanics, []);
+            assert.deepEqual(result.pageErrors, []);
+            assert.deepEqual(result.consoleErrors, []);
+            result.status = "passed";
+            console.log(`${build.label} ${mode}: ${result.timing.medianMs.toFixed(2)} ms median / ${result.timing.p95Ms.toFixed(2)} ms p95 (${measuredCount} native pan observations)`);
+        } catch (error) {
+            result.status = "failed"; result.error = error.stack || String(error); process.exitCode = 1;
+            console.error(`${build.label} ${mode}: ${result.error}`);
+        } finally {
+            await context.close();
+            await writeFile(resolve(output, "report.json"), JSON.stringify(report, null, 2));
+        }
+    }
+    report.comparisons = ["Software2D", "WebGL2"].flatMap(mode => {
+        const baseline = report.results.find(result => result.build === "baseline" && result.requestedMode === mode && result.status === "passed");
+        const current = report.results.find(result => result.build === "current" && result.requestedMode === mode && result.status === "passed");
+        if (!baseline || !current) return [];
+        const consistency = {
+            canonicalDocument: current.documentSha256 === baseline.documentSha256,
+            camera: current.imported.zoom === baseline.imported.zoom
+                && current.imported.pan.x === baseline.imported.pan.x
+                && current.imported.pan.y === baseline.imported.pan.y,
+            canvasBounds: ["x", "y", "width", "height"].every(key => current.imported.canvas[key] === baseline.imported.canvas[key]),
+            surface: current.environment.surface === baseline.environment.surface
+                && current.environment.device === baseline.environment.device,
+        };
+        const mismatches = Object.keys(consistency).filter(key => !consistency[key]);
+        return [{ mode, baseline: baseline.timing, current: current.timing, consistency,
+            comparable: mismatches.length === 0, mismatches,
+            comparisonNote: mismatches.length ? "Different document/view/surface: raw observations retained, comparative deltas suppressed." : "Same canonical document, camera, canvas bounds and observed surface; sequential-order caveats still apply.",
+            medianDeltaMs: mismatches.length ? null : current.timing.medianMs - baseline.timing.medianMs,
+            p95DeltaMs: mismatches.length ? null : current.timing.p95Ms - baseline.timing.p95Ms,
+            fixtureSha256: report.workload.inputSha256 }];
+    });
+} catch (error) { report.error = error.stack || String(error); process.exitCode = 1; console.error(report.error); }
+finally {
+    try { await browser?.close(); }
+    finally {
+        if (server.listening) {
+            server.closeIdleConnections?.();
+            await new Promise(done => server.close(done));
+        }
+        report.finished = new Date().toISOString();
+        await writeFile(resolve(output, "report.json"), JSON.stringify(report, null, 2));
+    }
+}

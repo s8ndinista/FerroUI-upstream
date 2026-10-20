@@ -2,6 +2,26 @@
 
 This file distinguishes implemented paths, completed checks and measurements. Each observation belongs to its stated source and run; older successful runs do not validate later changes. The branch now incorporates FerroUI `ab7a15b8` / `0.4.0-preview.1`, restores Vello for every application target, and adds local style definition editing and public-API flattening. Those changes require their own validation. [PR #254](https://github.com/wieslawsoltes/FerroUI/pull/254) collects the complete source and current review status.
 
+## Continuation checkpoint: `2004673e` (2026-10-20)
+
+[Source `2004673e`](https://github.com/wieslawsoltes/FerroUI/commit/2004673e2829e67a74c060fd4f6acf0ce78f3bc0) adds native angular paints and checked planar vector-network face discovery. Its full core source was tested before publication; native application and actual WASM rendering validation are separate gates and remain pending at this checkpoint.
+
+| Gate | Completed observation |
+| --- | --- |
+| Document core | All **340** unit tests passed, including nine angular-paint and fifteen vector-face cases; no ignored tests |
+| Persistence host | All **19** Node tests passed using `--test-isolation=none` |
+| Actual Chromium IndexedDB | All **5** checks passed in Chrome for Testing **156.0.8078.4**, including atomic migration/abort handling, two-tab conflict protection and reload of **12,000,042** document characters |
+| Framework browser bridge | Type checking, all **10** input/composition cases and bundling passed |
+| JavaScript and source checks | Changed browser modules passed `node --check`; `git diff --check` passed |
+| Resolved application dependencies | Vello present and no active Skia packages in the Emscripten, Linux x64, Windows x64, macOS ARM64 and macOS x64 normal/build graphs |
+| Native application / current WASM pixels | Pending; one local native build was killed by the shared host memory limit. Subsequent attempts were stopped before the shared disk filled; no local native-test result is claimed |
+
+The dependency audit confirms backend selection, not native execution on those five platforms. The storage tests run an actual browser, but do not execute the FerroUI WASM editor. These observations do not establish new editor pixel correctness or a Figma visual-parity score.
+
+The resumed source `f1e29bfc` had a completed [framework CI run](https://github.com/wieslawsoltes/FerroUI/actions/runs/39431182704) with all 14 jobs passing. Its separate [FerroDesign run](https://github.com/wieslawsoltes/FerroUI/actions/runs/39431175291) passed all 316 core cases and 110 native application cases, then failed two text-Flatten pixel comparisons: 258 and 445 pixels differed by more than 4/255. The threshold remains fewer than 252 changed pixels in a 180×140 target. The WASM build and browser suite were skipped in that run.
+
+[Checkpoint `bf57095f`](https://github.com/wieslawsoltes/FerroUI/commit/bf57095f7256a3444482beea64f77cd41c4bb685) preserves those assertions and failure status, adds opt-in raw pixel diagnostics, and permits the independent browser build after successful native compilation even if a subsequent native pixel assertion fails. Its [CI run](https://github.com/wieslawsoltes/FerroUI/actions/runs/39488148455) is tracked separately. A completed older run is never substituted for validation of the current source.
+
 ## Current validation checkpoint: `f83ad955` (in progress)
 
 [Source `f83ad955`](https://github.com/wieslawsoltes/FerroUI/commit/f83ad9558c24117673e29077275f4176676a7acd) includes the complete local-style lifecycle, public geometry and shaped-text outlines, conservative flattening, current-color paint conversion and rejected-draft menu protection. The final core test artifact contains all three shadow-composition guards in this source.

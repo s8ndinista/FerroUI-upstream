@@ -25,8 +25,6 @@ use ferroui_base::platform::{
 };
 use ferroui_base::{PixelSize, Point, Rect, Vector};
 use kurbo::BezPath;
-use skrifa::raw::types::Tag;
-use skrifa::raw::TableProvider;
 use std::fs::File;
 use std::io::{self, Read};
 use std::rc::Rc;
@@ -57,43 +55,22 @@ impl Default for PlatformRenderInterface {
 }
 
 fn glyph_run_geometry(glyph_run: &GlyphRun, require_complete: bool) -> Option<Arc<dyn IGeometryImpl>> {
-    let glyph_typeface = match VelloTypeface::try_get(&**glyph_run.glyph_typeface().platform_typeface()) {
-        Some(typeface) => typeface,
+    match VelloTypeface::try_get(&**glyph_run.glyph_typeface().platform_typeface()) {
+        Some(_) => {}
         None if require_complete => return None,
         None => panic!("PlatformImpl can't be null."),
-    };
-    let face = glyph_typeface.face();
-    if require_complete {
-        // A monochrome contour cannot retain layered colour paints or embedded
-        // raster/SVG glyph artwork. Conservatively reject such typefaces even
-        // if they also expose fallback TrueType outlines for some glyphs.
-        let font = face.font_ref();
-        if [b"sbix", b"CBDT", b"EBDT", b"COLR", b"SVG ", b"bdat"]
-            .iter()
-            .any(|tag| font.table_data(Tag::new(tag)).is_some())
-        {
-            return None;
-        }
     }
-    let em_size = glyph_run.font_rendering_em_size();
+    let platform = glyph_run.platform_impl();
+    let run = platform.as_any().downcast_ref::<GlyphRunImpl>()?;
+    let paths = if require_complete { run.try_outline_paths()? } else { run.outline_paths() };
     let mut path = BezPath::new();
     let origin = glyph_run.baseline_origin();
-    let mut current_x = origin.x;
-    let glyph_infos = glyph_run.glyph_infos();
-    for glyph in glyph_infos.borrow().iter() {
-        if let Some(glyph_path) = face.glyph_path(glyph.glyph_index, em_size) {
-            if !glyph_path.elements().is_empty() {
-                // The shaper may position a mark independently of its advance.
-                // Use exactly the same per-glyph offsets as GlyphRunImpl draws.
-                path.extend(kurbo::Affine::translate((
-                    current_x + glyph.glyph_offset.x,
-                    origin.y + glyph.glyph_offset.y,
-                )) * glyph_path);
-            }
-        } else if require_complete {
-            return None;
-        }
-        current_x += glyph.glyph_advance;
+    let placement = kurbo::Affine::translate((origin.x, origin.y));
+    // Drawing and extraction share the cached, exact f64 shaped contours.
+    // GlyphRun's glyph-info, font-size and baseline setters invalidate its
+    // platform implementation, keeping drawing and extraction on one snapshot.
+    for glyph_path in paths.iter().flatten() {
+        path.extend(glyph_path.iter().map(|element| placement * element));
     }
     Some(SimpleGeometryImpl::new(VelloPath::new(path, FillRule::NonZero), FillPath::SameAsStroke, None))
 }

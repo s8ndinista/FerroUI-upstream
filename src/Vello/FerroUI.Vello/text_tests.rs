@@ -29,6 +29,9 @@ use std::cell::RefCell;
 use std::io::Read;
 use std::rc::Rc;
 
+#[path = "text_outline_tests.rs"]
+mod outline_tests;
+
 const FONTS: &str = "resm:FerroUI.Vello.UnitTests.Fonts?assembly=ferroui-vello";
 const ASSETS: &str = "resm:FerroUI.Vello.UnitTests.Assets?assembly=ferroui-vello";
 
