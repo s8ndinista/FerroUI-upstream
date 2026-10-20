@@ -524,6 +524,25 @@ fn repeater_service_metadata_has_native_names() {
 }
 
 #[test]
+fn repeater_static_helpers_resolve_by_their_declared_markup_namespace() {
+    use ferroui_base::metadata::MarkupType;
+    use ferroui_controls::repeater::{LayoutsTestHooks, RepeaterBindingHelper, RepeaterTestHooks};
+    use ferroui_markup_xaml_loader::FerroXamlIlRuntimeCompiler;
+    use xamlx::type_system::IXamlTypeSystem;
+
+    let _scope = xaml_test_base();
+    let system = FerroXamlIlRuntimeCompiler::type_system();
+    for type_info in [LayoutsTestHooks::TYPE, RepeaterBindingHelper::TYPE, RepeaterTestHooks::TYPE] {
+        let metadata = MarkupType::find_by_type_info(type_info).expect("linked static metadata");
+        let projected = system.type_of_class(type_info);
+        assert_eq!(projected.full_name(), metadata.full_name());
+        let by_name = system.find_type(&metadata.full_name()).expect("the declared markup name");
+        assert!(by_name.equals(&*projected));
+        assert!(system.find_type(&format!("FerroUI.Controls.{}", type_info.name())).is_none());
+    }
+}
+
+#[test]
 fn repeater_markup_activation_requires_native_constructor_arguments() {
     use ferroui_base::data::core::ValueTypes;
     use ferroui_controls::RepeaterAutomationPeer;

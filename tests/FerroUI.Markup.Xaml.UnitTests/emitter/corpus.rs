@@ -153,6 +153,8 @@ pub const DOCUMENTS: &[(&str, &str)] = &[
     ("repeater_native_items.xaml", "<ItemsRepeater xmlns='https://github.com/ferroui' xmlns:col='using:System.Collections'><ItemsRepeater.ItemsSource><col:ArrayList><Border Name='original' Width='32' Height='18'/></col:ArrayList></ItemsRepeater.ItemsSource></ItemsRepeater>"),
     ("repeater_selection_bindings.xaml", "<StackPanel xmlns='https://github.com/ferroui' xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml' xmlns:r='using:FerroUI.Controls.Repeater' x:DataType='r:SelectionModel'><TextBlock Name='selectedItemsCount' Text='{CompiledBinding SelectedItems.Count}'/><TextBlock Name='selectedIndicesCount' Text='{CompiledBinding SelectedIndices.Count}'/></StackPanel>"),
     ("repeater_flow_anchor.xaml", "<FlowLayoutAnchorInfo xmlns='https://github.com/ferroui' xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'><x:Arguments><x:Int32>7</x:Int32><x:Double>24.5</x:Double></x:Arguments></FlowLayoutAnchorInfo>"),
+    ("repeater_source_view.xaml", "<ItemsSourceView xmlns='https://github.com/ferroui' xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml' xmlns:col='using:System.Collections'><x:Arguments><col:ArrayList><Border Name='original' Width='32' Height='18'/></col:ArrayList></x:Arguments></ItemsSourceView>"),
+    ("repeater_selection.xaml", "<r:SelectionModel xmlns='https://github.com/ferroui' xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml' xmlns:r='using:FerroUI.Controls.Repeater' xmlns:col='using:System.Collections' SingleSelect='False'><r:SelectionModel.Source><col:ArrayList><x:String>first</x:String><x:String>second</x:String></col:ArrayList></r:SelectionModel.Source><r:SelectionModel.SelectedIndex><r:IndexPath><x:Arguments><x:Int32>1</x:Int32></x:Arguments></r:IndexPath></r:SelectionModel.SelectedIndex></r:SelectionModel>"),
 ];
 
 /// The documents that must be eligible for emission.
@@ -294,6 +296,8 @@ pub const EXPECTED_ELIGIBLE: &[&str] = &[
     "repeater_native_items.xaml",
     "repeater_selection_bindings.xaml",
     "repeater_flow_anchor.xaml",
+    "repeater_source_view.xaml",
+    "repeater_selection.xaml",
 ];
 
 /// The documents whose values depend on the base URI of the document or on a service of

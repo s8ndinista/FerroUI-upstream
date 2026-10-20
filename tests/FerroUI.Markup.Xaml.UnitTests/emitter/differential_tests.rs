@@ -103,13 +103,13 @@ fn display_enum(value: &BoxedValue) -> Option<String> {
         .map(|found| format!("{}({found})", markup.name))
 }
 
-/// A value of a plain (non-object) reference type with metadata in display
+/// A value or plain (non-object) reference type with metadata in display
 /// form: its type and the values of its declared properties, by name, each
 /// in plain display form (one level).
 fn display_declared(value: &BoxedValue) -> Option<String> {
     use ferroui_base::metadata::{MarkupType, MarkupTypeKind};
     let markup = MarkupType::find_by_handle(value.value_type_id())?;
-    if markup.kind != MarkupTypeKind::Class || markup.properties.is_empty() {
+    if !matches!(markup.kind, MarkupTypeKind::Class | MarkupTypeKind::Struct) || markup.properties.is_empty() {
         return None;
     }
     let mut properties: Vec<String> = Vec::new();
@@ -507,7 +507,10 @@ pub(super) fn dump_root(root: &BoxedValue) -> String {
             let scope = object.cast::<StyledElement>().and_then(|styled| NameScope::get_name_scope(&styled)).map(|scope| scope.0);
             dump(&object, scope.as_ref(), 0, &mut output);
         }
-        None => output.push_str("<the root is not an object of the object model>\n"),
+        None => {
+            output.push_str(&display(root));
+            output.push('\n');
+        }
     }
     output
 }
@@ -675,6 +678,48 @@ fn compiled_repeater_layout_anchor_info_is_a_native_value() {
     let anchor = crate::support::loader::cast::<FlowLayoutAnchorInfo>(&value);
     assert_eq!(anchor.index, 7);
     assert_eq!(anchor.offset, 24.5);
+}
+
+#[test]
+fn compiled_source_view_root_preserves_native_reference_and_item_identity() {
+    use ferroui_base::Size;
+    use ferroui_controls::{Control, ItemsRepeater, ItemsSourceView};
+
+    let _base = xaml_test_base();
+    let (_, build) = generated::DOCUMENTS.iter().find(|(document, _)| *document == "repeater_source_view.xaml").unwrap();
+    let provider = XamlIlRuntimeHelpers::create_root_service_provider_v3(None);
+    let scope = provider.get_service_of::<Rc<dyn INameScope>>().unwrap();
+    let value = build(Some(provider)).unwrap();
+    let view = crate::support::loader::cast::<Rc<ItemsSourceView>>(&value);
+    assert_eq!(view.count(), 1);
+    let item = Control::from_boxed(&view.get_at(0).unwrap()).unwrap();
+    assert_eq!(item.width(), 32.0);
+    assert_eq!(item.height(), 18.0);
+    assert_eq!(scope.find("original"), Some(item.clone().upcast()));
+    assert!(scope.is_completed());
+
+    let repeater = crate::support::loader::load_as::<Ref<ItemsRepeater>>(
+        "<ItemsRepeater xmlns='https://github.com/ferroui' ItemsSource='{Binding}'/>",
+    );
+    repeater.set_data_context(Some(value));
+    repeater.measure(Size::new(100.0, 100.0));
+    assert!(Rc::ptr_eq(&repeater.items_source_view().unwrap(), &view));
+    assert_eq!(repeater.try_get_element(0), Some(item));
+}
+
+#[test]
+fn compiled_selection_root_populates_native_service_and_value_properties() {
+    use ferroui_controls::repeater::selection::{IndexPath, SelectionModel};
+
+    let _base = xaml_test_base();
+    let value = build_generated("repeater_selection.xaml").unwrap().unwrap();
+    let model = crate::support::loader::cast::<Rc<SelectionModel>>(&value);
+    assert!(!model.single_select());
+    assert_eq!(model.source().unwrap().count(), 2);
+    assert_eq!(model.selected_index(), Some(IndexPath::create_from(1)));
+    assert_eq!(model.selected_item().unwrap().downcast_ref::<String>().map(String::as_str), Some("second"));
+    model.select(0).unwrap();
+    assert_eq!(model.selected_indices().count(), 2);
 }
 
 #[test]

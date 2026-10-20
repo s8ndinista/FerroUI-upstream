@@ -286,8 +286,18 @@ impl RuntimeTypeSystem {
         if let Some(found) = self.by_class.borrow().get(&address) {
             return found.clone();
         }
-        let namespace = type_info.namespace();
-        let key = self.unique_key(type_info.full_name(), namespace, type_info.module_path(), type_info.name());
+        // Static helpers link their metadata through `type_info` instead of
+        // storing it in TypeInfo. Honor its declared markup namespace just as
+        // the source model does, including when projecting through TypeInfo.
+        let namespace = MarkupType::find_by_type_info(type_info)
+            .and_then(|markup| markup.explicit_namespace)
+            .unwrap_or_else(|| type_info.namespace());
+        let full_name = if namespace.is_empty() {
+            type_info.name().to_string()
+        } else {
+            format!("{namespace}.{}", type_info.name())
+        };
+        let key = self.unique_key(full_name, namespace, type_info.module_path(), type_info.name());
         let mut spec = RuntimeTypeSpec::new(
             key,
             namespace,
@@ -668,7 +678,10 @@ impl RuntimeTypeSystem {
             None => ("", full_name),
         };
         if let Some(type_info) = TypeInfo::find(namespace, name) {
-            return Some(self.runtime_type_of_class(type_info));
+            let projected = self.runtime_type_of_class(type_info);
+            if projected.namespace().as_deref().unwrap_or_default() == namespace {
+                return Some(projected);
+            }
         }
         if let Some(markup) = MarkupType::find(namespace, name).filter(|m| m.generic.is_none()) {
             return Some(self.runtime_type_of_markup(markup));
