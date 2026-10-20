@@ -49,14 +49,12 @@ const WINDOW_HANDLE_DESCRIPTOR: &str = "XID";
 #[cfg(windows)]
 const WINDOW_HANDLE_DESCRIPTOR: &str = "HWND";
 
-/// The graphics APIs the device of the backend is made on, in the order
-/// they are preferred: Vulkan, and OpenGL through EGL where Vulkan has no
-/// adapter that is hardware (a virtual machine whose OpenGL is accelerated
-/// by its host, an old GPU).
+/// The graphics API of the platform the device of the backend is made on
+/// first.
 #[cfg(target_os = "linux")]
-const BACKENDS: wgpu::Backends = wgpu::Backends::VULKAN.union(wgpu::Backends::GL);
+pub const PRIMARY_BACKENDS: wgpu::Backends = wgpu::Backends::VULKAN;
 #[cfg(windows)]
-const BACKENDS: wgpu::Backends = wgpu::Backends::DX12;
+pub const PRIMARY_BACKENDS: wgpu::Backends = wgpu::Backends::DX12;
 
 fn unavailable(reason: impl Into<String>) -> VelloWgpuDeviceError {
     VelloWgpuDeviceError { reason: reason.into() }
@@ -178,18 +176,22 @@ impl VelloSurfaceGpu {
     /// Fails when `wgpu` has no adapter on the graphics API of the
     /// platform, when the only one is software and that is not allowed, and
     /// when the adapter gives no device.
-    pub fn new(context: Rc<dyn IPlatformGraphicsContext>) -> Result<Rc<Self>, VelloWgpuDeviceError> {
+    /// `backends` are the graphics APIs the adapter is looked for on:
+    /// [`PRIMARY_BACKENDS`], or OpenGL through EGL (Linux) where the
+    /// platform has no context of OpenGL of its own to draw on
+    /// (`gl_context_gpu.rs`).
+    pub fn new(context: Rc<dyn IPlatformGraphicsContext>, backends: wgpu::Backends) -> Result<Rc<Self>, VelloWgpuDeviceError> {
         #[cfg(target_os = "linux")]
         let x_connection = Arc::new(XConnection::open().map_err(unavailable)?);
         #[cfg(target_os = "linux")]
         let descriptor = wgpu::InstanceDescriptor::new_with_display_handle(Box::new(XDisplayHandle(x_connection.clone())));
         #[cfg(windows)]
         let descriptor = wgpu::InstanceDescriptor::new_without_display_handle();
-        let instance = wgpu::Instance::new(wgpu::InstanceDescriptor { backends: BACKENDS, ..descriptor });
+        let instance = wgpu::Instance::new(wgpu::InstanceDescriptor { backends, ..descriptor });
 
         // The adapter: hardware first, by the order of the graphics APIs;
         // a software one only when the environment allows it.
-        let adapters = block_on(instance.enumerate_adapters(BACKENDS));
+        let adapters = block_on(instance.enumerate_adapters(backends));
         let rank = |adapter: &wgpu::Adapter| {
             let info = adapter.get_info();
             let software = info.device_type == wgpu::DeviceType::Cpu;
@@ -206,7 +208,7 @@ impl VelloSurfaceGpu {
             .min_by_key(rank)
             .ok_or_else(|| {
                 unavailable(format!(
-                    "no adapter that is hardware for {BACKENDS:?} (found: {names:?}): the CPU mode draws instead \
+                    "no adapter that is hardware for {backends:?} (found: {names:?}): the CPU mode draws instead \
                      (FERROUI_VELLO_ALLOW_SOFTWARE_ADAPTER=1 allows a software one)"
                 ))
             })?;

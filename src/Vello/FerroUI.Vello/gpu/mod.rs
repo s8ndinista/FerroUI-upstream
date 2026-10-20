@@ -17,6 +17,8 @@ pub mod metal_offscreen;
 mod vello_wgpu_device;
 mod window_frame;
 #[cfg(any(target_os = "linux", windows))]
+pub mod gl_context_gpu;
+#[cfg(any(target_os = "linux", windows))]
 pub mod window_surface;
 
 
@@ -51,19 +53,34 @@ pub fn create_gpu(graphics_context: &Rc<dyn IPlatformGraphicsContext>) -> Option
         };
     }
 
+    // A device that is hardware on Vulkan or Direct3D 12; otherwise the
+    // context of OpenGL of the platform; otherwise (Linux) OpenGL through
+    // EGL on a device of the backend's own.
     #[cfg(any(target_os = "linux", windows))]
-    match window_surface::VelloSurfaceGpu::new(graphics_context.clone()) {
-        Ok(gpu) => return Some(gpu),
-        Err(error) => {
-            if let Some(logger) = Logger::try_get(LogEventLevel::Warning, LogArea::VISUAL) {
-                logger.log_with_values(
-                    None,
-                    "The Vello backend draws the windows in software: {Reason}",
-                    &[&error.reason.as_str()],
-                );
-            }
-            return None;
+    {
+        let mut reasons = Vec::new();
+        match window_surface::VelloSurfaceGpu::new(graphics_context.clone(), window_surface::PRIMARY_BACKENDS) {
+            Ok(gpu) => return Some(gpu),
+            Err(error) => reasons.push(error.reason),
         }
+        let features: &dyn ferroui_base::platform::IOptionalFeatureProvider = &**graphics_context;
+        if let Some(gl_context) = features.try_get::<dyn ferroui_opengl::IGlContext>() {
+            match gl_context_gpu::VelloGlGpu::new(gl_context) {
+                Ok(gpu) => return Some(gpu),
+                Err(error) => reasons.push(error.reason),
+            }
+        } else {
+            #[cfg(target_os = "linux")]
+            match window_surface::VelloSurfaceGpu::new(graphics_context.clone(), wgpu::Backends::GL) {
+                Ok(gpu) => return Some(gpu),
+                Err(error) => reasons.push(error.reason),
+            }
+        }
+        if let Some(logger) = Logger::try_get(LogEventLevel::Warning, LogArea::VISUAL) {
+            let reasons = reasons.join("; ");
+            logger.log_with_values(None, "The Vello backend draws the windows in software: {Reason}", &[&reasons.as_str()]);
+        }
+        return None;
     }
 
     #[allow(unreachable_code)]
