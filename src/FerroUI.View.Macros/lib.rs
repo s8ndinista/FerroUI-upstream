@@ -25,13 +25,19 @@ use syn::{braced, token, Expr, FnArg, Ident, ItemFn, LitStr, Pat, Path, Token, T
 /// }
 /// ```
 ///
-/// - `Name { ... }` is an element: the builder function of the class or
-///   component in snake case (`StackPanel` is `stack_panel()`, `todo::Row`
-///   is `todo::row()`).
+/// - `Name { ... }` is an element of the control class or component `Name`
+///   in scope (`<Name as Builder>::builder()`): `StackPanel` is
+///   `stack_panel()`, `todo::Row` the component `Row` of the module `todo`.
+/// - `name` alone gives the setter `name` the variable `name`, as a field of
+///   a struct is given (`TextBlock { text }`).
 /// - `name: value` calls the setter `.name(value)`: a property
 ///   (`spacing: 8.0`), a handler (`on_click: ...`), `key`, `name`, `class`.
 /// - `Owner.name: value` sets an attached property: `Grid.row: 1` calls
 ///   `.grid_row(1)`.
+/// - `name(a, b)` calls a method of the builder with several arguments:
+///   `on_changed(TextBox::text_property(), handler)`,
+///   `set(Grid::row_property(), 1)` (the indexer `control[Property] = 1`
+///   upstream), `bind(TextBlock::text_property(), binding)`.
 /// - `"text"` is a text child, `{expr}` any child (an element, a builder, a
 ///   list, `for_each(..)`, `show(..)`), and a nested element a child.
 /// - `if cond { .. } else { .. }` and `for x in items { .. }` choose and
@@ -80,11 +86,16 @@ struct ElementNode {
     children: Vec<Node>,
 }
 
-struct Attribute {
-    /// `Owner` of `Owner.name`.
-    owner: Option<Ident>,
-    name: Ident,
-    value: Expr,
+enum Attribute {
+    /// `name: value` or `Owner.name: value`.
+    Value {
+        /// `Owner` of `Owner.name`.
+        owner: Option<Ident>,
+        name: Ident,
+        value: Expr,
+    },
+    /// `name(arguments)`: a method of the builder with several arguments.
+    Call { name: Ident, arguments: syn::punctuated::Punctuated<Expr, Token![,]> },
 }
 
 fn parse_children(input: ParseStream) -> syn::Result<Vec<Node>> {
@@ -136,7 +147,19 @@ impl Parse for Node {
         let mut attributes = Vec::new();
         let mut children = Vec::new();
         while !content.is_empty() {
-            if is_attribute(&content) {
+            if content.peek(Ident::peek_any) && content.peek2(token::Paren) {
+                let name = content.call(Ident::parse_any)?;
+                let arguments;
+                syn::parenthesized!(arguments in content);
+                let arguments = arguments.parse_terminated(Expr::parse, Token![,])?;
+                attributes.push(Attribute::Call { name, arguments });
+            } else if content.peek(Ident::peek_any) && (content.peek2(Token![,]) || is_last_token(&content)) {
+                // `name` alone: the setter of the name with the variable of
+                // the name, as a field of a struct is given.
+                let name = content.call(Ident::parse_any)?;
+                let value: Expr = syn::parse_quote!(#name);
+                attributes.push(Attribute::Value { owner: None, name, value });
+            } else if is_attribute(&content) {
                 let owner = if content.peek2(Token![.]) {
                     let owner = content.call(Ident::parse_any)?;
                     content.parse::<Token![.]>()?;
@@ -147,7 +170,7 @@ impl Parse for Node {
                 let name = content.call(Ident::parse_any)?;
                 content.parse::<Token![:]>()?;
                 let value: Expr = content.parse()?;
-                attributes.push(Attribute { owner, name, value });
+                attributes.push(Attribute::Value { owner, name, value });
             } else {
                 children.push(content.parse()?);
             }
@@ -157,6 +180,12 @@ impl Parse for Node {
         }
         Ok(Node::Element(ElementNode { path, attributes, children }))
     }
+}
+
+/// Whether the next token is the last one of the stream.
+fn is_last_token(input: ParseStream) -> bool {
+    let fork = input.fork();
+    fork.parse::<proc_macro2::TokenTree>().is_ok() && fork.is_empty()
 }
 
 /// `name: ...` or `Owner.name: ...`, as opposed to a child element
@@ -193,21 +222,6 @@ fn snake_case(name: &str) -> String {
         }
     }
     out
-}
-
-/// The builder function of an element path: its last segment in snake case.
-fn builder_path(path: &Path) -> TokenStream2 {
-    let mut path = path.clone();
-    if let Some(last) = path.segments.last_mut() {
-        let name = last.ident.to_string();
-        let snake = snake_case(&name);
-        last.ident = if syn::parse_str::<Ident>(&snake).is_ok() {
-            Ident::new(&snake, last.ident.span())
-        } else {
-            Ident::new_raw(&snake, last.ident.span())
-        };
-    }
-    path.to_token_stream()
 }
 
 impl Node {
@@ -258,16 +272,24 @@ fn fragment(nodes: &[Node]) -> TokenStream2 {
 
 impl ElementNode {
     fn to_builder(&self) -> TokenStream2 {
-        let function = builder_path(&self.path);
+        let path = &self.path;
         let span = self.path.span();
-        let mut tokens = quote_spanned! {span=> #function() };
+        let mut tokens = quote_spanned! {span=> <#path as ::ferroui_view::Builder>::builder() };
         for attribute in &self.attributes {
-            let value = &attribute.value;
-            let method = match &attribute.owner {
-                Some(owner) => format_ident!("{}_{}", snake_case(&owner.unraw().to_string()), attribute.name.unraw(), span = attribute.name.span()),
-                None => attribute.name.clone(),
-            };
-            tokens = quote_spanned! {method.span()=> #tokens.#method(#value) };
+            match attribute {
+                Attribute::Value { owner, name, value } => {
+                    let method = match owner {
+                        Some(owner) => {
+                            format_ident!("{}_{}", snake_case(&owner.unraw().to_string()), name.unraw(), span = name.span())
+                        }
+                        None => name.clone(),
+                    };
+                    tokens = quote_spanned! {method.span()=> #tokens.#method(#value) };
+                }
+                Attribute::Call { name, arguments } => {
+                    tokens = quote_spanned! {name.span()=> #tokens.#name(#arguments) };
+                }
+            }
         }
         for child in &self.children {
             let child = child.to_child();
@@ -290,8 +312,9 @@ impl ElementNode {
 /// rsx! { Counter { initial: 5 } }        // or counter().initial(5)
 /// ```
 ///
-/// The name is in upper camel case; the builder function is the name in
-/// snake case (`counter()`), with a setter per parameter that takes what
+/// The name is in upper camel case. Besides the function, the macro declares
+/// a type of the name (what `rsx!` names: `Counter { .. }`) and a builder
+/// function of the name in snake case (`counter()`), with a setter per parameter that takes what
 /// converts into its type (`IntoValue`: the conversions of the setters of
 /// controls). A parameter is required unless it has
 /// `#[prop(default)]` (the default of its type), `#[prop(default = expr)]`,
@@ -421,6 +444,7 @@ fn expand_component(mut function: ItemFn) -> syn::Result<TokenStream2> {
     let field_names: Vec<&Ident> = params.iter().map(|param| &param.name).collect();
     let doc = format!("The builder of the component [`{name_text}`].");
     let start_doc = format!("Starts an element of the component [`{name_text}`].");
+    let type_doc = format!("The component [`{name_text}`] as the name of an element of `rsx!`.");
 
     function.attrs.push(syn::parse_quote!(#[allow(non_snake_case)]));
     Ok(quote! {
@@ -431,6 +455,17 @@ fn expand_component(mut function: ItemFn) -> syn::Result<TokenStream2> {
         #visibility struct #builder_type {
             #(#fields,)*
             key: ::std::option::Option<::ferroui_view::Key>,
+        }
+
+        #[doc = #type_doc]
+        #[allow(non_camel_case_types)]
+        #visibility struct #name {}
+
+        impl ::ferroui_view::Builder for #name {
+            type Output = #builder_type;
+            fn builder() -> #builder_type {
+                #builder_function()
+            }
         }
 
         #[doc = #start_doc]

@@ -3483,6 +3483,35 @@ dependencies = [
 ]
 
 [[package]]
+name = "seven-guis-builders"
+version = "0.4.0-preview.1"
+dependencies = [
+ "ferroui-base",
+ "ferroui-controls",
+ "ferroui-view",
+ "seven-guis-model",
+]
+
+[[package]]
+name = "seven-guis-macros"
+version = "0.4.0-preview.1"
+dependencies = [
+ "ferroui-base",
+ "ferroui-controls",
+ "ferroui-view",
+ "seven-guis-model",
+]
+
+[[package]]
+name = "seven-guis-model"
+version = "0.4.0-preview.1"
+dependencies = [
+ "ferroui-base",
+ "ferroui-controls",
+ "ferroui-view",
+]
+
+[[package]]
 name = "sha3"
 version = "0.10.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"

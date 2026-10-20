@@ -39,6 +39,23 @@ pub trait ViewClass: ObjectType + Upcast<Control> {
     fn create() -> Ref<Self>;
 }
 
+/// What an element name of `rsx!` resolves to: a control class (every
+/// [`ViewClass`]) or a component (`#[component]` declares a type of the name
+/// of its function). `Button { .. }` in `rsx!` is `<Button as Builder>::builder()`.
+pub trait Builder {
+    /// The builder of an element of the name.
+    type Output;
+    /// Starts an element.
+    fn builder() -> Self::Output;
+}
+
+impl<T: ViewClass> Builder for T {
+    type Output = El<T>;
+    fn builder() -> El<T> {
+        El::new()
+    }
+}
+
 /// A property of a type known to the compiler: what the setters of an
 /// element take.
 pub trait TypedProperty: 'static {

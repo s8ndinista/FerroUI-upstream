@@ -51,7 +51,7 @@ pub mod generated {
     pub mod builders;
 }
 
-pub use builder::{Bind, El, ElementBuilder, FromValue, IntoProp, IntoValue, TypedProperty, ViewClass};
+pub use builder::{Bind, Builder, El, ElementBuilder, FromValue, IntoProp, IntoValue, TypedProperty, ViewClass};
 pub use control_flow::{dynamic, for_each, show, show_else, NodeRef};
 pub use element::{Element, IntoChild, IntoChildren, IntoElement, Key};
 pub use extras::GridDefinitions;
