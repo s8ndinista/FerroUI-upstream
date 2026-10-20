@@ -6,6 +6,7 @@ mod flow_layout_algorithm;
 mod flow_layout_state;
 mod layout;
 mod layout_context;
+pub(crate) mod layouts_markup;
 mod layouts_test_hooks;
 mod lined_flow_layout;
 mod lined_flow_layout_algorithm;

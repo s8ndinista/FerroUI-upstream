@@ -411,6 +411,7 @@ ferroui_base::ferro_rust_paths! {
         crate::repeater::ElementOwner,
         crate::repeater::FlowLayoutAnchorInfo,
         crate::repeater::ItemTemplateWrapper,
+        crate::repeater::LayoutsTestHooks,
         crate::repeater::LayoutsTestHooksLinedFlowLayoutInvalidatedEventArgs,
         crate::repeater::LayoutsTestHooksLinedFlowLayoutItemLockedEventArgs,
         crate::repeater::LinedFlowLayoutInvalidationTrigger,

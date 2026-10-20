@@ -124,6 +124,7 @@ pub fn register_types() {
         MarkupAssembly::register(&ASSEMBLY);
         crate::markup_types::register();
         crate::repeater::markup::register_types();
+        crate::repeater::layouts::layouts_markup::register_types();
         crate::repeater::services_markup::register_types();
         crate::repeater::selection::register_markup_types();
     });
