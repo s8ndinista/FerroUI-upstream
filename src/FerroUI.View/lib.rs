@@ -58,6 +58,14 @@ mod app;
 /// The generated builders (see the module documentation).
 pub mod generated {
     pub mod builders;
+    #[cfg(feature = "color-picker")]
+    pub mod color_picker;
+    #[cfg(feature = "dialogs")]
+    pub mod dialogs;
+    #[cfg(feature = "reactiveui")]
+    pub mod reactiveui;
+    #[cfg(feature = "treedatagrid")]
+    pub mod treedatagrid;
 }
 
 pub use builder::{Bind, Builder, El, ElementBuilder, FromValue, IntoProp, IntoValue, TypedProperty, ViewClass};
@@ -84,6 +92,14 @@ pub use ferroui_view_macros::{component, rsx};
 /// Everything an application written with the builders or the macro uses.
 pub mod prelude {
     pub use crate::generated::builders::*;
+    #[cfg(feature = "color-picker")]
+    pub use crate::generated::color_picker::*;
+    #[cfg(feature = "dialogs")]
+    pub use crate::generated::dialogs::*;
+    #[cfg(feature = "reactiveui")]
+    pub use crate::generated::reactiveui::*;
+    #[cfg(feature = "treedatagrid")]
+    pub use crate::generated::treedatagrid::*;
     pub use crate::{
         batch, component, dynamic, effect, for_each, memo, on_cleanup, provide_context, rerender, rsx, show, show_else,
         signal, template, untrack, use_context, use_data_context, use_effect, use_effect_with, use_hook, use_memo,
