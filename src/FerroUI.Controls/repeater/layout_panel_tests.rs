@@ -10,6 +10,7 @@ use ferroui_base::{ferro_class, ferro_impl_classes, instantiate, FerroObjectImpl
 use std::cell::Cell;
 use std::rc::Rc;
 
+#[derive(PartialEq)]
 struct LayoutStateLifetime(Rc<Cell<usize>>);
 impl Drop for LayoutStateLifetime {
     fn drop(&mut self) {
