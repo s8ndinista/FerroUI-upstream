@@ -317,6 +317,56 @@ fn validate_single(node: &Node) -> Result<(), DocumentError> {
     if node.kind.is_container() && node.kind != NodeKind::Boolean && !node.children.is_empty() {
         return Err(invalid("Flatten a frame's artwork separately to retain its independent paints, clips and layout."));
     }
+    let box_shape = matches!(
+        node.kind,
+        NodeKind::Rectangle | NodeKind::Frame | NodeKind::Section
+    );
+    if box_shape
+        && node.effects.iter().any(|effect| {
+            effect.visible && effect.color.a > 0 && effect.kind == EffectKind::DropShadow
+        })
+        && !node.fills.iter().any(fully_opaque_fill)
+    {
+        // Box shadows exclude the original silhouette. A vector shadow paints
+        // behind its silhouette instead, so an absent or translucent fill
+        // exposes shadow pixels that the box never painted. Layer opacity is
+        // applied after this composition and does not affect this condition.
+        return Err(invalid("Box-shaped drop shadows exclude the layer interior; flatten only with a fully opaque fill to preserve their appearance."));
+    }
+    if box_shape
+        && node
+            .corner_radii
+            .unwrap_or([node.corner_radius; 4])
+            .iter()
+            .any(|radius| *radius <= 0.0)
+        && node.effects.iter().any(|effect| {
+            effect.visible
+                && effect.color.a > 0
+                && match effect.kind {
+                    EffectKind::DropShadow => effect.spread > 0.0,
+                    EffectKind::InnerShadow => effect.spread < 0.0,
+                    _ => false,
+                }
+        })
+    {
+        // Box-shadow expansion retains square corners. Expanding a general
+        // vector uses a round-join stroke, which rounds those shadow corners.
+        return Err(invalid("Outward box-shadow spread preserves square corners that a vector shadow rounds; remove that spread or round every corner before flattening."));
+    }
+    if node.kind.is_container()
+        && node.kind != NodeKind::Boolean
+        && node.effects.iter().any(|effect| {
+            effect.visible && effect.color.a > 0 && effect.kind == EffectKind::InnerShadow
+        })
+        && node
+            .strokes
+            .iter()
+            .any(|stroke| stroke.visible && stroke.opacity > 0.0 && stroke.width > 0.0)
+    {
+        // Empty frames/sections are still containers: their inner shadow is
+        // above the stroke, while a vector's inner shadow is below its stroke.
+        return Err(invalid("A container's inner shadows cover its strokes; flatten the stroke or shadow separately to preserve that ordering."));
+    }
     if node.kind == NodeKind::Text {
         // Range colors are painted by individual glyph runs. One vector paint
         // stack cannot represent those independent regions yet.
@@ -346,6 +396,20 @@ fn validate_single(node: &Node) -> Result<(), DocumentError> {
         }
     }
     Ok(())
+}
+
+fn fully_opaque_fill(fill: &Fill) -> bool {
+    fill.visible
+        && fill.opacity == 1.0
+        && match &fill.paint {
+            Paint::Solid(color) => color.a == 255,
+            Paint::LinearGradient { stops, .. } | Paint::RadialGradient { stops, .. } => {
+                !stops.is_empty() && stops.iter().all(|stop| stop.color.a == 255)
+            }
+            // Opacity of source pixels (or empty space from image fitting)
+            // cannot be established from the image paint's metadata alone.
+            Paint::Image { .. } => false,
+        }
 }
 
 fn uniform_fills(

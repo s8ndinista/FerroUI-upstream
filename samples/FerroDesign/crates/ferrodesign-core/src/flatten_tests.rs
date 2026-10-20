@@ -212,6 +212,136 @@ fn flatten_rejects_translucent_text_paints_but_retains_whole_layer_opacity() {
 }
 
 #[test]
+fn flatten_box_drop_shadow_requires_an_opaque_covering_fill_atomically() {
+    let mut translucent = Color::BLACK;
+    translucent.a = 128;
+    let gradient = |alpha| Fill {
+        paint: Paint::LinearGradient {
+            start: Point::new(0.0, 0.0),
+            end: Point::new(1.0, 1.0),
+            stops: vec![
+                GradientStop {
+                    offset: 0.0,
+                    color: Color::WHITE,
+                },
+                GradientStop {
+                    offset: 1.0,
+                    color: Color {
+                        a: alpha,
+                        ..Color::BLACK
+                    },
+                },
+            ],
+        },
+        opacity: 1.0,
+        visible: true,
+    };
+    let unsupported = [
+        Vec::new(),
+        vec![Fill::solid(translucent)],
+        vec![Fill {
+            opacity: 0.5,
+            ..Fill::solid(Color::BLACK)
+        }],
+        vec![Fill {
+            visible: false,
+            ..Fill::solid(Color::BLACK)
+        }],
+        vec![gradient(128)],
+        vec![Fill {
+            paint: Paint::Image {
+                href: "data:image/png;base64,unknown-alpha".into(),
+                scale: ImageScale::Fill,
+                crop: None,
+            },
+            opacity: 1.0,
+            visible: true,
+        }],
+    ];
+    for kind in [NodeKind::Rectangle, NodeKind::Frame, NodeKind::Section] {
+        let (mut editor, _, id) = fixture();
+        editor.add_node(NodeKind::Ellipse, 0.0, 0.0, 10.0, 10.0);
+        assert!(editor.undo());
+        editor.selection = vec![id];
+        for fills in &unsupported {
+            let node = editor.document.nodes.get_mut(&id).unwrap();
+            node.kind = kind;
+            node.effects = vec![Effect::shadow(Color::BLACK, Point::new(4.0, 0.0), 2.0)];
+            node.fills = fills.clone();
+            unchanged_on_error(&mut editor, |editor| {
+                editor.flatten_selection_with_geometry(|_, _| {
+                    panic!("a box-shadow paint mismatch must fail before extraction")
+                })
+            });
+            assert!(editor.can_redo());
+        }
+        // An opaque gradient hides the shadow even when other fills and the
+        // whole isolated layer are translucent. There is no per-fill blend
+        // operator in this model; each fill uses ordinary source-over.
+        let node = editor.document.nodes.get_mut(&id).unwrap();
+        node.fills = vec![gradient(255), Fill::solid(translucent)];
+        node.opacity = 0.5;
+        assert_eq!(editor.flatten_selection(), Some(id));
+        assert_eq!(editor.document.nodes[&id].opacity, 0.5);
+    }
+}
+
+#[test]
+fn flatten_empty_container_rejects_inner_shadow_stroke_order_change_atomically() {
+    for kind in [NodeKind::Frame, NodeKind::Section] {
+        let (mut editor, _, id) = fixture();
+        editor.add_node(NodeKind::Ellipse, 0.0, 0.0, 10.0, 10.0);
+        assert!(editor.undo());
+        editor.selection = vec![id];
+        let node = editor.document.nodes.get_mut(&id).unwrap();
+        node.kind = kind;
+        node.effects = vec![Effect::for_kind(EffectKind::InnerShadow)];
+        assert!(node.children.is_empty());
+        unchanged_on_error(&mut editor, |editor| {
+            editor.flatten_selection_with_geometry(|_, _| {
+                panic!("an inner-shadow/stroke order mismatch must fail before extraction")
+            })
+        });
+        assert!(editor.can_redo());
+        // With no painted stroke the container/leaf ordering distinction has
+        // no second paint to affect, so an otherwise ordinary frame can pass.
+        editor.document.nodes.get_mut(&id).unwrap().strokes[0].visible = false;
+        assert_eq!(editor.flatten_selection(), Some(id));
+    }
+}
+
+#[test]
+fn flatten_box_shadow_outward_spread_rejects_square_corners_atomically() {
+    for kind in [NodeKind::Rectangle, NodeKind::Frame, NodeKind::Section] {
+        for (effect_kind, spread) in [
+            (EffectKind::DropShadow, 12.0),
+            (EffectKind::InnerShadow, -12.0),
+        ] {
+            let (mut editor, _, id) = fixture();
+            editor.add_node(NodeKind::Ellipse, 0.0, 0.0, 10.0, 10.0);
+            assert!(editor.undo());
+            editor.selection = vec![id];
+            let node = editor.document.nodes.get_mut(&id).unwrap();
+            node.kind = kind;
+            node.strokes.clear();
+            node.effects = vec![Effect::for_kind(effect_kind)];
+            node.effects[0].spread = spread;
+            node.corner_radii = Some([8.0, 0.0, 8.0, 8.0]);
+            unchanged_on_error(&mut editor, |editor| {
+                editor.flatten_selection_with_geometry(|_, _| {
+                    panic!("square shadow corners must fail before extraction")
+                })
+            });
+            assert!(editor.can_redo());
+            // A single zero corner is enough to differ; all round corners
+            // keep their radii through the outward spread and remain eligible.
+            editor.document.nodes.get_mut(&id).unwrap().corner_radii = Some([8.0; 4]);
+            assert_eq!(editor.flatten_selection(), Some(id));
+        }
+    }
+}
+
+#[test]
 fn flatten_preserves_exact_host_fill_rule_and_curves() {
     let (mut editor, _, id) = fixture();
     let path = VectorPath {

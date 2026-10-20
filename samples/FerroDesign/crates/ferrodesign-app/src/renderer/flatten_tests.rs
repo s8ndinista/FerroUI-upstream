@@ -422,6 +422,186 @@ fn flatten_native_round_shape_effects_keep_rendered_appearance() {
     scope.dispose();
 }
 
+fn naive_vector_pixels(editor: &Editor, id: NodeId) -> Vec<u8> {
+    let path = outline(
+        &editor.document,
+        &FlattenRequest {
+            roots: vec![id],
+            destination_world: editor.document.world_transform(id).unwrap(),
+        },
+    )
+    .unwrap();
+    let mut naive = editor.document.clone();
+    let node = naive.nodes.get_mut(&id).unwrap();
+    node.kind = NodeKind::Vector;
+    node.path = path;
+    pixels(&Editor::new(naive))
+}
+
+fn assert_atomic_rejection(editor: &mut Editor, reason: &str) {
+    let before = editor.document.to_json().unwrap();
+    let selection = editor.selection.clone();
+    let revision = editor.document.revision;
+    let history = editor.history_len();
+    let redo = editor.can_redo();
+    let error = flatten_selection(editor).unwrap_err().to_string();
+    assert!(error.contains(reason), "{error}");
+    assert_eq!(editor.document.to_json().unwrap(), before);
+    assert_eq!(editor.document.revision, revision);
+    assert_eq!(editor.history_len(), history);
+    assert_eq!(editor.selection, selection);
+    assert_eq!(editor.can_redo(), redo);
+}
+
+#[test]
+fn flatten_native_box_shadow_exposes_interior_through_translucent_fills_and_rejects() {
+    let scope = backend();
+    for fill_mode in 0..3 {
+        let mut document = Document::new("Box-shadow interior");
+        let mut node = Node::new(
+            NodeKind::Rectangle,
+            "Clipped shadow",
+            40.0,
+            30.0,
+            80.0,
+            70.0,
+        )
+        .with_radius(12.0)
+        .with_fill(Color::rgb(0, 0, 255));
+        match fill_mode {
+            0 => node.fills.clear(),
+            1 => node.fills[0].opacity = 0.5,
+            _ => {
+                node.fills[0].paint = Paint::Solid(Color {
+                    a: 128,
+                    ..Color::rgb(0, 0, 255)
+                });
+            }
+        }
+        node.effects = vec![Effect::shadow(
+            Color::rgb(255, 0, 0),
+            Point::new(4.0, 0.0),
+            0.0,
+        )];
+        let id = document.insert_node(1, node).unwrap();
+        let mut editor = Editor::new(document);
+        editor.add_node(NodeKind::Ellipse, 0.0, 0.0, 10.0, 10.0);
+        assert!(editor.undo());
+        editor.selection = vec![id];
+        let before = pixels(&editor);
+        // Render a deliberately naive conversion independently of preflight.
+        // A path shadow fills the silhouette behind the paint; BoxShadows
+        // excludes that interior even when the paint is absent or translucent.
+        let after = naive_vector_pixels(&editor, id);
+        let exposed = before
+            .chunks_exact(4)
+            .zip(after.chunks_exact(4))
+            .filter(|(source, vector)| source[3] <= 128 && vector[3] >= 250)
+            .count();
+        assert!(
+            exposed > 200,
+            "fill mode {fill_mode}: {exposed} interior shadow pixels"
+        );
+        assert_atomic_rejection(&mut editor, "Box-shaped drop shadows");
+        assert!(editor.can_redo());
+    }
+    scope.dispose();
+}
+
+#[test]
+fn flatten_native_empty_container_inner_shadow_stroke_order_changes_and_rejects() {
+    let scope = backend();
+    for kind in [NodeKind::Frame, NodeKind::Section] {
+        let mut document = Document::new("Container inner shadow");
+        let mut node =
+            Node::new(kind, "Container ordering", 40.0, 30.0, 80.0, 70.0).with_fill(Color::WHITE);
+        let mut stroke = Stroke::new(Color::rgb(0, 255, 0), 8.0);
+        stroke.align = StrokeAlign::Inside;
+        node.strokes = vec![stroke];
+        node.effects = vec![Effect {
+            kind: EffectKind::InnerShadow,
+            color: Color::rgb(255, 0, 0),
+            offset: Point::new(16.0, 0.0),
+            radius: 0.0,
+            spread: 0.0,
+            visible: true,
+        }];
+        let id = document.insert_node(1, node).unwrap();
+        let mut editor = Editor::new(document);
+        editor.add_node(NodeKind::Ellipse, 0.0, 0.0, 10.0, 10.0);
+        assert!(editor.undo());
+        editor.selection = vec![id];
+        let before = pixels(&editor);
+        let after = naive_vector_pixels(&editor, id);
+        let sample = (60 * 180 + 44) * 4;
+        assert_eq!(
+            &before[sample..sample + 4],
+            &[255, 0, 0, 255],
+            "{kind:?} shadows cover strokes"
+        );
+        assert_eq!(
+            &after[sample..sample + 4],
+            &[0, 255, 0, 255],
+            "vector strokes cover inner shadows"
+        );
+        assert_atomic_rejection(&mut editor, "inner shadows cover its strokes");
+        assert!(editor.can_redo());
+    }
+    scope.dispose();
+}
+
+#[test]
+fn flatten_native_box_shadow_outward_spread_rounds_square_corners_and_rejects() {
+    let scope = backend();
+    for kind in [EffectKind::DropShadow, EffectKind::InnerShadow] {
+        let mut document = Document::new("Square shadow corners");
+        let mut node = Node::new(NodeKind::Rectangle, "Square box", 45.0, 35.0, 70.0, 55.0)
+            .with_fill(Color::WHITE);
+        let inset = kind == EffectKind::InnerShadow;
+        node.effects = vec![Effect {
+            kind,
+            color: Color::rgb(255, 0, 0),
+            offset: if inset {
+                Point::new(20.0, 20.0)
+            } else {
+                Point::default()
+            },
+            radius: 0.0,
+            spread: if inset { -12.0 } else { 12.0 },
+            visible: true,
+        }];
+        let id = document.insert_node(1, node).unwrap();
+        let mut editor = Editor::new(document);
+        editor.add_node(NodeKind::Ellipse, 0.0, 0.0, 10.0, 10.0);
+        assert!(editor.undo());
+        editor.selection = vec![id];
+        let before = pixels(&editor);
+        let after = naive_vector_pixels(&editor, id);
+        // Outsetting a box retains its sharp outer (or hole) corner. A
+        // round-join vector stroke rounds that very corner. Sample well away
+        // from antialiased boundaries so the distinction is unambiguous.
+        let (x, y, box_pixel, vector_pixel) = if inset {
+            (54, 44, [255, 255, 255, 255], [255, 0, 0, 255])
+        } else {
+            (34, 24, [255, 0, 0, 255], [0, 0, 0, 0])
+        };
+        let sample = (y * 180 + x) * 4;
+        assert_eq!(
+            &before[sample..sample + 4],
+            &box_pixel,
+            "{kind:?} box corner"
+        );
+        assert_eq!(
+            &after[sample..sample + 4],
+            &vector_pixel,
+            "{kind:?} vector corner"
+        );
+        assert_atomic_rejection(&mut editor, "Outward box-shadow spread");
+        assert!(editor.can_redo());
+    }
+    scope.dispose();
+}
+
 #[test]
 fn flatten_native_mixed_colour_glyph_text_rejects_partial_geometry_atomically() {
     use ferroui_base::media::fonts::{EmbeddedFontCollection, IFontCollection};
