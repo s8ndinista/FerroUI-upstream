@@ -83,16 +83,55 @@ export async function localStyleRegressions(page, reference, check, helpers, mod
     await history(beforeColor, recolored, colorDepth, "Native shared color edit");
     check("Native style name, description and color editing propagates to both linked layers, preserves their bindings and Unicode metadata, renders, and undoes once");
 
+    // Keep a real redo entry so rejected drafts and action-menu shortcuts
+    // cannot silently discard the next valid document transaction.
+    await page.keyboard.press("ArrowRight"); await frames(page);
+    const redoAfterInvalid = await documentState(page);
+    assert.notDeepEqual(redoAfterInvalid, recolored);
+    await page.keyboard.press("Control+z"); await frames(page);
+    assert.deepEqual(await documentState(page), recolored);
+    assert.equal((await state(page)).canRedo, true);
     await open(); await clickNative(page, "StyleEdit" + id, "ModalViewport");
-    const invalidDepth = (await state(page)).historyLength;
+    const beforeInvalid = await state(page), invalidDepth = beforeInvalid.historyLength;
     await field("StyleFillOpacity0", "150");
     assert.equal((await state(page)).chrome.StyleFillOpacity0Error.visible, true);
     assert.deepEqual(await documentState(page), recolored);
     assert.equal((await state(page)).historyLength, invalidDepth);
+    await clickNative(page, "StyleDone", "ModalActions");
+    assert.equal((await state(page)).chrome.ModalBackdrop.visible, true,
+        "Done must retain a style editor with an invalid field");
+    assert.equal((await state(page)).chrome.CanvasHost.focusWithin, true,
+        "The refused close leaves the canvas owning the actual Ctrl+K command route");
+    await page.keyboard.press("Control+k"); await frames(page);
+    const blocked = await state(page);
+    assert.equal(blocked.chrome.ModalBackdrop.visible, true);
+    assert.equal(blocked.chrome.StyleFillOpacity0.text, "150",
+        "The action shortcut must not replace or clear the rejected native draft");
+    assert.equal(blocked.chrome.StyleFillOpacity0Error.visible, true);
+    assert.equal(blocked.chrome.StyleName.text, "Brand / Primary");
+    assert.equal(blocked.chrome.ActionSearch, undefined,
+        "A rejected style draft must prevent the action menu from replacing its editor");
+    assert.deepEqual(blocked.selection, beforeInvalid.selection);
+    assert.equal(blocked.historyLength, invalidDepth);
+    assert.equal(blocked.canUndo, beforeInvalid.canUndo);
+    assert.equal(blocked.canRedo, true);
+    assert.deepEqual(await documentState(page), recolored);
+    await clickNative(page, "StyleFillOpacity0", "ModalViewport");
     await page.keyboard.press("Escape"); await frames(page);
     assert.equal((await state(page)).chrome.StyleFillOpacity0.text, "100");
+    assert.equal((await state(page)).chrome.StyleFillOpacity0Error.visible, false);
     await clickNative(page, "StyleDone", "ModalActions");
-    check("Invalid native shared-style drafts retain visible validation without changing any linked layer or history; Escape restores the committed field");
+    assert.equal((await state(page)).chrome.ModalBackdrop.visible, false);
+    await page.keyboard.press("Control+Shift+z"); await frames(page);
+    assert.deepEqual(await documentState(page), redoAfterInvalid,
+        "The transaction that preceded rejected style actions must still redo exactly");
+    await page.keyboard.press("Control+z"); await frames(page);
+    assert.deepEqual(await documentState(page), recolored);
+    await open(); await clickNative(page, "StyleEdit" + id, "ModalViewport");
+    assert.equal((await state(page)).chrome.StyleFillOpacity0.text, "100");
+    assert.equal((await state(page)).chrome.StyleFillOpacity0Error.visible, false);
+    await clickNative(page, "StyleDone", "ModalActions");
+    check("Invalid native shared-style drafts survive refused Done and Ctrl+K with their validation, document and redo intact; Escape restores the field and permits normal close/reopen");
 
     await clickWorld(page, 80, 80);
     await open(); await clickNative(page, "StyleEdit" + id, "ModalViewport");

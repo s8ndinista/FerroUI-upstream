@@ -2387,6 +2387,11 @@ impl EditorShell {
         description: &str,
         actions: &[(&str, &'static str)],
     ) {
+        // Every action menu replaces the current panel. Retain an invalid
+        // inspector draft until it is corrected or explicitly discarded.
+        if !self.flush_inspector_drafts() {
+            return;
+        }
         self.modal(title, description);
         let host = self.control::<StackPanel>("ModalContent");
         let search = TextBox::new();
