@@ -34,17 +34,26 @@ fn length(text: &[u16]) -> i32 {
     text.len() as i32
 }
 
+/// A native query counts code units, so its requested slice can contain only
+/// one half of a surrogate pair. Keep those units intact for the HSTRING reply.
+/// Owning the slice also releases client-state borrows before the COM callback.
+fn requested_units(text: &[u16], start: i32, end: i32) -> Vec<u16> {
+    let start = clamp(start, 0, length(text)) as usize;
+    let end = clamp(end, start as i32, length(text)) as usize;
+    text[start..end].to_vec()
+}
+
 #[cfg(windows)]
 pub(crate) use imp::WinUITextInputMethod;
 
 #[cfg(windows)]
 mod imp {
-    use super::{clamp, length, splice, substring};
+    use super::{clamp, length, requested_units, splice, substring};
     use crate::core_text_synchronization::CoreTextSynchronization;
     use crate::ferro_swap_chain_panel::FerroSwapChainPanel;
     use crate::interop::event_handlers::*;
     use crate::interop::win_rt::{
-        client_origin_on_screen, factory, get_window_from_window_id, hstring, take_string,
+        client_origin_on_screen, factory, get_window_from_window_id, take_string, take_string_exact,
     };
     use crate::interop::*;
     use ferroui_base::input::raw::{
@@ -63,6 +72,7 @@ mod imp {
     use ferroui_base::reactive::IDisposable;
     use ferroui_base::Rect as FerroRect;
     use ferroui_microcom::{ComPtr, HResult};
+    use ferroui_win32::win_rt::HStringInterop;
     use std::cell::{Cell, RefCell};
     use std::rc::{Rc, Weak};
 
@@ -265,23 +275,37 @@ mod imp {
         }
 
         fn sync_from_client(&self, notify_server: bool) {
+            let generation = self.client_generation.get();
+            let composition_generation = self.composition_generation.get();
             let Some(client) = self.client.borrow().clone() else {
                 self.ime_text.borrow_mut().clear();
                 self.ime_selection.set(range(0, 0));
                 return;
             };
 
-            let exact = self
-                .connection
-                .borrow()
-                .clone()
-                .filter(|connection| connection.supports_exact_edits());
-            let state = exact
-                .and_then(|connection| connection.edit_state().ok())
-                .unwrap_or_else(|| TextInputMethodState {
+            let state = if self.exact_client.get() {
+                // Reading the installed client's current visible state remains
+                // valid during a manager handoff; editing requires its captured
+                // connection. Never downgrade a stale exact client to the legacy
+                // committed-only surrounding-text projection.
+                let Some(editing) = client.input_method_editing() else {
+                    return;
+                };
+                let Ok(state) = editing.edit_state() else {
+                    return;
+                };
+                state
+            } else {
+                TextInputMethodState {
                     text: client.surrounding_text(),
                     selection: client.selection(),
-                });
+                }
+            };
+            if generation != self.client_generation.get()
+                || composition_generation != self.composition_generation.get()
+            {
+                return;
+            }
             *self.ime_text.borrow_mut() = state.text.encode_utf16().collect();
             let text_length = length(&self.ime_text.borrow());
             let sel = state.selection;
@@ -369,10 +393,12 @@ mod imp {
                 return;
             };
             let Ok(range) = request.range() else { return };
-            let text = self.ime_text.borrow();
-            let start = clamp(range.start_caret_position, 0, length(&text));
-            let end = clamp(range.end_caret_position, start, length(&text));
-            if let Ok(value) = hstring(&substring(&text, start, end - start)) {
+            let text = requested_units(
+                &self.ime_text.borrow(),
+                range.start_caret_position,
+                range.end_caret_position,
+            );
+            if let Ok(value) = HStringInterop::new_utf16(&text) {
                 let _ = request.set_text(value.handle());
             }
         }
@@ -486,9 +512,12 @@ mod imp {
             else {
                 return;
             };
-            let (Ok(native_range), Ok(text), Ok(selection)) =
-                (args.range(), args.text(), args.new_selection())
-            else {
+            let (Ok(native_range), Ok(selection)) = (args.range(), args.new_selection()) else {
+                return;
+            };
+            // Read scalar properties first, then immediately take ownership of
+            // the returned HSTRING. A later failing getter must not leak it.
+            let Ok(text) = args.text().and_then(take_string_exact) else {
                 return;
             };
             let edit = TextInputMethodEdit::new(
@@ -496,7 +525,7 @@ mod imp {
                     native_range.start_caret_position,
                     native_range.end_caret_position,
                 ),
-                take_string(text),
+                text,
                 TextSelection::new(selection.start_caret_position, selection.end_caret_position),
             );
             let before = self.synchronization.borrow().current().clone();
@@ -537,6 +566,11 @@ mod imp {
                 && connection
                     .edit_state()
                     .is_ok_and(|state| state.text == expected && state.selection == edit.selection);
+            if generation != self.client_generation.get()
+                || composition_generation != self.composition_generation.get()
+            {
+                return;
+            }
             if accepted {
                 // Snapshot before the COM setter: it can synchronously reenter.
                 let pending = self.synchronization.borrow().pending();
@@ -666,11 +700,16 @@ mod imp {
                 return;
             }
             self.sync_from_client(false);
-            if result.is_ok()
+            let accepted = result.is_ok()
                 && connection
                     .edit_state()
-                    .is_ok_and(|state| state.selection == selection)
+                    .is_ok_and(|state| state.text == before.text && state.selection == selection);
+            if generation != self.client_generation.get()
+                || composition_generation != self.composition_generation.get()
             {
+                return;
+            }
+            if accepted {
                 let pending = self.synchronization.borrow().pending();
                 if args
                     .set_result(CoreTextSelectionUpdatingResult::Succeeded)
@@ -733,10 +772,13 @@ mod imp {
                 return;
             };
             let generation = self.client_generation.get();
+            let composition_generation = self.composition_generation.get();
             let suppression = FlagGuard::set(&self.suppress_client_echo);
             let result = connection.begin_composition();
             drop(suppression);
-            if generation != self.client_generation.get() {
+            if generation != self.client_generation.get()
+                || composition_generation != self.composition_generation.get()
+            {
                 return;
             }
             if let Ok(session) = result {
@@ -880,7 +922,7 @@ mod imp {
             let old = self.client.borrow().clone();
             if self.is_composing.get() {
                 let suppression = FlagGuard::set(&self.suppress_client_echo);
-                if let Some(old) = old {
+                if let Some(old) = old.as_ref() {
                     if let Some(editing) = old.input_method_editing() {
                         let _ = editing.cancel_composition();
                     } else {
@@ -892,19 +934,33 @@ mod imp {
                     return;
                 }
             }
-            for subscription in std::mem::take(&mut *self.client_events.borrow_mut()) {
+            let subscriptions = std::mem::take(&mut *self.client_events.borrow_mut());
+            for subscription in subscriptions {
                 subscription.dispose();
             }
+            if generation != self.client_generation.get() {
+                return;
+            }
 
-            *self.connection.borrow_mut() = client
+            // Client accessors can synchronously change focus and install a
+            // replacement. Stage their results without borrowing our slots.
+            let connection = client
                 .as_ref()
                 .and_then(|client| client.input_method_connection());
-            self.exact_client.set(client.as_ref().is_some_and(|client| {
+            if generation != self.client_generation.get() {
+                return;
+            }
+            let exact_client = client.as_ref().is_some_and(|client| {
                 client
                     .input_method_editing()
                     .is_some_and(|editing| editing.supports_exact_edits())
-            }));
-            *self.client.borrow_mut() = client.clone();
+            });
+            if generation != self.client_generation.get() {
+                return;
+            }
+            self.connection.replace(connection);
+            self.exact_client.set(exact_client);
+            self.client.replace(client.clone());
             self.reset_composition_state();
             self.synchronization.borrow_mut().replace_client();
 
@@ -917,9 +973,8 @@ mod imp {
                         text: String::new(),
                         selection: TextSelection::default(),
                     });
-                if let (Some(edit_context), true) =
-                    (self.edit_context.borrow().clone(), self.has_focus.get())
-                {
+                let context = self.edit_context.borrow().clone();
+                if let (Some(edit_context), true) = (context, self.has_focus.get()) {
                     let _ = edit_context.notify_focus_leave();
                 }
                 return;
@@ -928,18 +983,38 @@ mod imp {
             let handler = |call: fn(&WinUITextInputMethod)| -> Rc<dyn Fn()> {
                 let this = self.this.clone();
                 Rc::new(move || {
-                    if let Some(this) = this.upgrade() {
+                    if let Some(this) = this
+                        .upgrade()
+                        .filter(|this| this.client_generation.get() == generation)
+                    {
                         call(&this);
                     }
                 })
             };
-            *self.client_events.borrow_mut() = vec![
-                client.surrounding_text_changed(handler(Self::on_client_surrounding_text_changed)),
-                client.selection_changed(handler(Self::on_client_selection_changed)),
-            ];
+            let text_subscription =
+                client.surrounding_text_changed(handler(Self::on_client_surrounding_text_changed));
+            if generation != self.client_generation.get() {
+                text_subscription.dispose();
+                return;
+            }
+            let selection_subscription =
+                client.selection_changed(handler(Self::on_client_selection_changed));
+            if generation != self.client_generation.get() {
+                text_subscription.dispose();
+                selection_subscription.dispose();
+                return;
+            }
+            self.client_events
+                .replace(vec![text_subscription, selection_subscription]);
 
             let ctx = self.get_or_create_context();
+            if generation != self.client_generation.get() {
+                return;
+            }
             self.sync_from_client(true);
+            if generation != self.client_generation.get() {
+                return;
+            }
             if let (Some(ctx), true) = (ctx, self.has_focus.get()) {
                 let _ = ctx.notify_focus_enter();
             }
@@ -989,6 +1064,9 @@ mod imp {
             self.sync_from_client(true);
         }
     }
+
+    #[cfg(test)]
+    include!("win_ui_text_input_method_reentrancy_tests.rs");
 }
 
 #[cfg(test)]
@@ -1015,6 +1093,19 @@ mod tests {
         assert_eq!("\u{1F600}", substring(&text, 1, 2));
         assert_eq!("b", substring(&text, 3, 1));
         assert_eq!("", substring(&text, 4, 0));
+    }
+
+    #[test]
+    fn native_text_request_preserves_exact_code_units_and_snapshot_lifetime() {
+        let mut text = units("a😀\0b");
+        let request = requested_units(&text, 1, 2);
+        assert_eq!(request, [0xd83d]);
+        assert_eq!(requested_units(&text, 2, 4), [0xde00, 0]);
+        // A reentrant client update cannot change a response captured before
+        // invoking the native setter, and does not need a retained RefCell borrow.
+        text.clear();
+        assert_eq!(request, [0xd83d]);
+        assert!(requested_units(&text, -1, i32::MAX).is_empty());
     }
 
     #[test]
