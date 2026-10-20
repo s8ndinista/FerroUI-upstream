@@ -17,7 +17,9 @@ concurrency:
 jobs:
   browser:
     runs-on: ubuntu-24.04
-    timeout-minutes: 75
+    # The cold native/WASM build reached an early browser assertion after
+    # 69 minutes; retain time for the complete interaction suites and evidence.
+    timeout-minutes: 120
     env:
       CARGO_BUILD_JOBS: 1
       CARGO_TERM_COLOR: always
