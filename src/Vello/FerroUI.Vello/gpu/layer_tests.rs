@@ -414,3 +414,114 @@ fn a_layer_on_the_device_is_drawn_as_a_bitmap() {
         assert!(largest <= 3, "{mode:?}");
     }
 }
+
+/// The two frames of a kept target. The first is two shapes over all of
+/// it. The second is the clip of the dirty rectangles of the compositor,
+/// their clear, an ellipse and a curve that cross their edges and, with
+/// `after_clips`, a bar drawn over all of the target once the clips ended.
+/// `bounded` lets the sink render the rectangle around the dirty ones only;
+/// without it a transparent fill before the clips keeps the scene the size
+/// of the target.
+#[cfg(feature = "gpu")]
+fn kept_target_frames(bounded: bool, after_clips: bool) -> Vec<Box<dyn FnOnce(&mut dyn IVelloSceneSink)>> {
+    let first: Box<dyn FnOnce(&mut dyn IVelloSceneSink)> = Box::new(|sink| {
+        fill_rect(sink, kurbo::Rect::new(0.0, 0.0, 64.0, 64.0), &solid(200, 30, 0, 255));
+        let circle = kurbo::Circle::new((32.0, 32.0), 26.0).to_path(0.1);
+        sink.fill(&circle, Fill::NonZero, Affine::IDENTITY, &solid(0, 40, 220, 160), BlendMode::default(), true);
+    });
+    let second: Box<dyn FnOnce(&mut dyn IVelloSceneSink)> = Box::new(move |sink| {
+        let dirty = [
+            VelloScenePixelRect { x0: 6, y0: 8, x1: 34, y1: 26 },
+            VelloScenePixelRect { x0: 20, y0: 20, x1: 46, y1: 42 },
+        ];
+        if !bounded {
+            fill_rect(sink, kurbo::Rect::new(0.0, 0.0, 1.0, 1.0), &solid(0, 0, 0, 0));
+        }
+        sink.push_clip(&kurbo::Rect::new(6.0, 8.0, 46.0, 42.0).to_path(0.1), Fill::NonZero, Affine::IDENTITY, false);
+        let mut region = kurbo::BezPath::new();
+        for rect in &dirty {
+            let rect = kurbo::Rect::new(f64::from(rect.x0), f64::from(rect.y0), f64::from(rect.x1), f64::from(rect.y1));
+            region.extend(rect.to_path(0.1));
+        }
+        sink.push_clip(&region, Fill::NonZero, Affine::IDENTITY, false);
+        sink.retain_target(&dirty);
+
+        let ellipse = kurbo::Ellipse::new((26.0, 25.0), (22.0, 11.0), 0.3).to_path(0.1);
+        sink.fill(&ellipse, Fill::NonZero, Affine::translate((1.5, 0.25)), &solid(20, 180, 40, 190), BlendMode::default(), true);
+        let mut line = kurbo::BezPath::new();
+        line.move_to((0.0, 0.0));
+        line.curve_to((26.0, 60.0), (40.0, -14.0), (64.0, 52.0));
+        sink.stroke(&line, &kurbo::Stroke::new(3.0), Affine::IDENTITY, &solid(250, 250, 0, 255), true);
+        sink.pop_clip();
+        sink.pop_clip();
+
+        if after_clips {
+            fill_rect(sink, kurbo::Rect::new(4.0, 28.0, 60.0, 34.0), &solid(90, 0, 120, 200));
+        }
+    });
+    vec![first, second]
+}
+
+/// Renders the frames of [`kept_target_frames`] in the GPU mode into a
+/// texture that is kept, and reads it back (premultiplied).
+#[cfg(feature = "gpu")]
+fn gpu_kept_target(device: &Arc<VelloWgpuDevice>, bounded: bool, after_clips: bool) -> Vec<u8> {
+    let texture = VelloDeviceTexture::new(device, u32::from(SIZE), u32::from(SIZE), VelloTextureAlpha::Straight);
+    for frame in kept_target_frames(bounded, after_clips) {
+        let mut sink = crate::scene::VelloGpuSceneSink::new(device.clone(), SIZE, SIZE);
+        frame(&mut sink);
+        sink.render_to_texture(&VelloGpuTexture { texture: texture.texture() }).expect("the frame is rendered");
+    }
+    texture.read_pixels().expect("the texture is read back")
+}
+
+/// The same frames in the CPU mode, into pixels that are kept.
+#[cfg(feature = "gpu")]
+fn cpu_kept_target(after_clips: bool) -> Vec<u8> {
+    let mut pixels = vec![0u8; usize::from(SIZE) * usize::from(SIZE) * 4];
+    for frame in kept_target_frames(false, after_clips) {
+        let mut sink = VelloCpuSceneSink::new(SIZE, SIZE);
+        frame(&mut sink);
+        sink.render_to_pixels(&mut pixels);
+    }
+    pixels
+}
+
+/// The share of pixels of which a channel differs by more than 32.
+#[cfg(feature = "gpu")]
+fn share_beyond_tolerance(a: &[u8], b: &[u8]) -> f64 {
+    let beyond = a.chunks_exact(4).zip(b.chunks_exact(4)).filter(|(a, b)| a.iter().zip(*b).any(|(a, b)| a.abs_diff(*b) > 32)).count();
+    beyond as f64 / (a.len() / 4) as f64
+}
+
+/// A kept target of the GPU mode that is drawn again in a part is rendered
+/// there only, to the pixels of the scene of the whole target, and both
+/// are what the CPU mode draws.
+#[cfg(feature = "gpu")]
+#[test]
+fn a_kept_target_of_the_gpu_mode_is_rendered_where_it_is_cleared() {
+    let test = "a_kept_target_of_the_gpu_mode_is_rendered_where_it_is_cleared";
+    let Some(device) = test_device(test) else { return };
+    if !device.supports_compute() {
+        println!("skipped: the adapter runs no compute shaders ({test})");
+        return;
+    }
+
+    for after_clips in [false, true] {
+        let bounded = gpu_kept_target(&device, true, after_clips);
+        let whole = gpu_kept_target(&device, false, after_clips);
+        assert!(largest_difference(&bounded, &whole) <= 2, "after the clips: {after_clips}");
+
+        let cpu = cpu_kept_target(after_clips);
+        let share = share_beyond_tolerance(&bounded, &cpu);
+        assert!(share < 0.01, "after the clips: {after_clips}: {:.3} % of the pixels differ from the CPU mode", share * 100.0);
+        // Kept outside the cleared rectangles; cleared where nothing was
+        // drawn over them.
+        assert_eq!(pixel(&cpu, 2, 2), pixel(&bounded, 2, 2));
+        let cleared = (0..usize::from(SIZE) * usize::from(SIZE))
+            .filter(|index| cpu[index * 4..index * 4 + 4] == [0, 0, 0, 0])
+            .collect::<Vec<_>>();
+        assert!(!cleared.is_empty());
+        assert!(cleared.iter().all(|index| bounded[index * 4 + 3] <= 2), "after the clips: {after_clips}");
+    }
+}
