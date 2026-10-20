@@ -1396,3 +1396,39 @@ What separates the Metal modes from Skia where they are slower: on the processor
 - In software every frame of these platforms was whole: the framebuffers are not kept (X11 `XPutImage` and `XShm`, Wayland `wl_shm` with a new buffer every frame, Windows `SetDIBitsToDevice`), so the compositor drew into a layer of its own and the whole layer into the framebuffer; the framebuffers are BGRA, so the CPU mode rendered into pixels of its own and converted all of them. Round 2 (item 1) keeps the frame in the render target instead: what changed is rendered, and only the conversion into the framebuffer is whole.
 - What will close it: a `wgpu` device of the backend's own on Vulkan (Linux) and Direct3D 12 (Windows) with a surface made from the handle of the window (`XID`, `HWND`), whatever graphics the platform chose; and a framebuffer target that keeps its frame in the format the renderer draws, converting only what changed.
 
+
+### 14.8 Round 4 (2026-10-20): the windows of Linux and Windows
+
+| # | Change | Where |
+|---|---|---|
+| 1 | **A graphics context the backend cannot draw with no longer makes it panic**: `create_gpu` gives `None`, the reason is logged, and the windows of the platform are drawn into their framebuffers in software | `gpu/mod.rs`, `platform_render_interface.rs` |
+| 2 | **The GPU modes draw the windows of Linux and Windows on a device of the backend's own**, whatever graphics the platform chose for its compositor: `wgpu` on Vulkan, or on OpenGL through EGL where Vulkan has no adapter that is hardware (Linux), or on Direct3D 12 (Windows), with a surface of `wgpu` made from the handle of the window (`XID`, `HWND`) and a swap chain of its own. The frame of the window is kept as on macOS (`WindowFrames`, shared with `gpu/metal.rs` now). An adapter that is software (lavapipe, WARP) is not used unless `FERROUI_VELLO_ALLOW_SOFTWARE_ADAPTER=1`: the CPU mode is faster there. On X11 the surface is made with a connection to the X server of the backend's own; the X11 and Win32 platforms hand out the handle of the window as a native handle surface (`try_get_surface_kind`). An adapter without compute shaders is asked for the limits of WebGL2 | `gpu/window_surface.rs`, `gpu/window_frame.rs`, `gpu/vello_wgpu_device.rs` (`device_descriptor`); `src/FerroUI.X11/x11_window.rs` (`RenderWindowHandle`), `src/Windows/FerroUI.Win32/window_impl.rs` |
+| 3 | **The swap chain of a window that is closed is dropped when the next frame of a window starts**: the compositor disposes a render target with the graphics context of the platform current, and with a context of GLX current on the thread EGL cannot make its own current (Mesa refuses with `BadAccess`) | `gpu/window_surface.rs` (`retired`) |
+| 4 | **X11: the render window is sized to the top-level by the framebuffer surface and the native handle surface**, as the surfaces of GLX and EGL size it before they draw. With GLX the platform resizes the render window only when a frame of GLX is drawn: a backend that drew otherwise beside a GLX platform drew into a render window of the size the window had first (a black band at the bottom of a window that grew) | `src/FerroUI.X11/x11_framebuffer_surface.rs`, `x11_window.rs` |
+| 5 | Composition targets print the times of their frames when `FERROUI_FRAME_TIMES=1` (count, median, mean, 95th percentile, longest), for every backend: what measures a window on screen | `src/FerroUI.Base/rendering/composition/server/server_composition_target.rs` |
+| 6 | **The windows of a platform whose graphics are OpenGL that the GPU modes do not draw are drawn in the CPU mode and presented through the context of the platform** (`VelloGlWindows`): the frame is kept by the render target, what changed is uploaded into a texture of the context (`glTexSubImage2D`, added to the GL interface with `glPixelStorei`) and the texture is copied into the framebuffer of the surface (`glBlitFramebuffer`), found through the render target factory of the context first (the surfaces of the composition modes of Windows), as the Skia backend finds it. On Windows a framebuffer drawn with GDI does not show in a window of WinUI composition or DirectComposition, the default: with no Direct3D 12 device that is hardware the window was black | `gl_window.rs`, `vello_backend_context.rs`, `src/FerroUI.OpenGL/gl_interface.rs` |
+| 7 | TreeDataGrid: the presenter counts its items again while it realizes them (the catalog tour panicked in a layout pass of a page that was being taken down, with every renderer; DEVIATIONS.md) | `src/TreeDataGrid/.../tree_data_grid_presenter_base.rs` |
+
+Measured in the Parallels virtual machine Ubuntu 24.04 ARM64 on the M3 Pro (OpenGL accelerated by the host through virgl; Vulkan only lavapipe, so the backend takes OpenGL), on its X11 desktop at a scaling of 2 (2200 by 1600 pixels), the catalog showing every page for 150 ms (`FERROUI_SMOKE_PAGES=150`, `FERROUI_FRAME_TIMES=1`), one session, Skia first and last; milliseconds a frame:
+
+| Renderer | median | mean | p95 |
+|---|---|---|---|
+| Skia, GLX (two runs) | 2.55, 2.19 | 6.10, 3.82 | 9.98, 12.03 |
+| Vello, its default modes (the hybrid mode on OpenGL) | **2.54** | 5.11 | **6.60** |
+| Skia, software (`FERROUI_SMOKE_RENDERING=software`) | 14.49 | 15.64 | 23.30 |
+| Vello, the CPU mode in software | **13.82** | 15.29 | 26.28 |
+
+The hybrid mode on lavapipe (allowed explicitly) draws the catalog correctly at 92 ms a frame, the GPU mode at 73: a device that is software is no place for them. In software both backends spend about half of a frame in `XPutImage` of the whole frame (4.8 ms measured): the framebuffers of X11 are presented whole.
+
+The Parallels virtual machine Windows 11 ARM64 on the same Mac (Direct3D 11 accelerated by the host, which ANGLE uses; Direct3D 12 only WARP, so the backend draws in the CPU mode, presented through ANGLE (item 6); the window as the system composed it has the content of the catalog), the same tour, one session:
+
+| Renderer | median | mean | p95 |
+|---|---|---|---|
+| Skia, ANGLE with WinUI composition (two runs) | 6.53, 6.20 | 7.47, 7.42 | 13.30, 14.71 |
+| Vello, its default modes (the CPU mode through ANGLE; two runs) | 8.09, 7.89 | 8.50, 8.38 | 14.36, 12.82 |
+| Skia, software | 7.50 | 7.96 | 12.29 |
+| Vello, the CPU mode in software | **5.82** | 6.91 | **11.78** |
+
+Through ANGLE the CPU mode is 1.6 ms a frame slower than Skia, which draws on the device: the upload of what changed (1.2 ms a frame in the tour, about 10 MB), the recording and the render on the processor (2.1 ms), the present (2.2 ms). What closes it is drawing on the device of the context of the platform: `wgpu` over an existing context of OpenGL (`Adapter::new_external`), the hybrid mode on ANGLE, GLX, EGL and CGL alike, which is the next round. Not yet run: Wayland (whose windows hand out no handle: the GL presenter of item 6 draws its EGL surfaces), and a machine with a Vulkan or Direct3D 12 device that is hardware (whether a swap chain of `wgpu` on the window of a composition mode of Windows shows is not verified).
+
+Seen once in four runs of the tests of the crate (macOS): `the_layer_of_a_scene_on_a_device_is_a_texture_and_keeps_what_was_drawn_into_it` found its layer corrupted (the device reported lost), and passed alone and in the next three runs: of the kind of 13.1, C9.

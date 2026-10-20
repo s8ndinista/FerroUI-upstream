@@ -158,6 +158,24 @@ gl_entry_points! {
 
     required safe pub fn tex_parameteri(target: i32, name: i32, value: i32) = get("glTexParameteri");
 
+    /// Not from the reference: the upload of a part of a texture, for a
+    /// render backend that presents frames it draws in memory through the
+    /// context (the Vello backend, docs/porting/vello-backend.md, section 14).
+    optional unsafe pub fn tex_sub_image_2d(
+        target: i32,
+        level: i32,
+        xoffset: i32,
+        yoffset: i32,
+        width: i32,
+        height: i32,
+        format: i32,
+        type_: i32,
+        data: *const c_void
+    ) = get("glTexSubImage2D");
+
+    /// Not from the reference, with [`tex_sub_image_2d`](Self::tex_sub_image_2d).
+    optional safe pub fn pixel_storei(name: i32, value: i32) = get("glPixelStorei");
+
     required safe pub fn framebuffer_texture_2d(target: i32, attachment: i32, tex_target: i32, texture: i32, level: i32)
         = get("glFramebufferTexture2D");
 

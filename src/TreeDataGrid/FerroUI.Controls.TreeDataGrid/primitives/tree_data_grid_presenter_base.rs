@@ -1074,7 +1074,17 @@ impl TreeDataGridPresenterBase {
         }
 
         // Start at the anchor element and move forwards, realizing elements.
+        //
+        // Deviation (DEVIATIONS.md, TreeDataGrid): the items are counted again
+        // before each element is realized. Realizing an element can change
+        // the items (the columns of a grid whose page is being taken down
+        // while a layout pass measures it): an index past their end is not
+        // realized, and the change measures the presenter again.
+        let in_range = |index: i32| index >= 0 && (index as usize) < hooks.item_count().unwrap_or(0);
         loop {
+            if !in_range(index) {
+                break;
+            }
             let e = self.get_or_create_element(hooks, index);
             let constraint = hooks.get_initial_constraint(&e, index, available_size);
             let slot = hooks.measure_element(index, &e, constraint);
@@ -1105,7 +1115,7 @@ impl TreeDataGridPresenterBase {
         index = viewport.anchor_index - 1;
         u = viewport.anchor_u;
 
-        while u > viewport.viewport_u_start && index >= 0 {
+        while u > viewport.viewport_u_start && in_range(index) {
             let e = self.get_or_create_element(hooks, index);
             let constraint = hooks.get_initial_constraint(&e, index, available_size);
             let slot = hooks.measure_element(index, &e, constraint);

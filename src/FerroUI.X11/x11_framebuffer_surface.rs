@@ -22,6 +22,8 @@ use std::rc::Rc;
 pub struct X11FramebufferSurface {
     display: XDisplay,
     xid: XID,
+    /// The window `xid` is the render window of, or `xid` itself.
+    parent: XID,
     depth: i32,
     retain: bool,
 }
@@ -30,14 +32,17 @@ pub struct X11FramebufferSurface {
 struct TargetState {
     display: XDisplay,
     xid: XID,
+    parent: XID,
     depth: i32,
     retain: bool,
     fb: RefCell<Option<Rc<RetainedFramebuffer>>>,
 }
 
 impl X11FramebufferSurface {
-    pub fn new(display: XDisplay, xid: XID, depth: i32, retain: bool) -> Self {
-        Self { display, xid, depth, retain }
+    /// A framebuffer surface that draws into the window `xid`, which is
+    /// the render window of `parent` (or `parent` itself).
+    pub fn new(display: XDisplay, xid: XID, parent: XID, depth: i32, retain: bool) -> Self {
+        Self { display, xid, parent, depth, retain }
     }
 }
 
@@ -62,8 +67,18 @@ impl TargetState {
     }
 
     fn lock(self: &Rc<Self>) -> (Rc<dyn ILockedFramebuffer>, FramebufferLockProperties) {
+        // The size of the window: the render window inside it is resized
+        // to it here, as the surfaces of GLX and EGL resize it before they
+        // draw. Not from the reference: with GLX the platform resizes the
+        // render window only when a frame of GLX is drawn, and a frame of
+        // this surface left it at the size it had before (a backend that
+        // draws in software beside a GLX platform, the Vello backend).
         xlib::x_lock_display(self.display);
-        let geometry = xlib::x_get_geometry(self.display, self.xid).unwrap_or_default();
+        let geometry = xlib::x_get_geometry(self.display, self.parent).unwrap_or_default();
+        if self.parent != self.xid {
+            xlib::x_resize_window(self.display, self.xid, geometry.width as _, geometry.height as _);
+            xlib::x_flush(self.display);
+        }
         xlib::x_unlock_display(self.display);
         let (width, height) = (geometry.width, geometry.height);
 
@@ -103,6 +118,7 @@ impl IFramebufferPlatformSurface for X11FramebufferSurface {
         let state = Rc::new(TargetState {
             display: self.display,
             xid: self.xid,
+            parent: self.parent,
             depth: self.depth,
             retain: self.retain,
             fb: RefCell::new(None),

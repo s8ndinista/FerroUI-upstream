@@ -460,14 +460,16 @@ impl VelloWgpuDevice {
 pub(crate) fn device_descriptor(adapter: &wgpu::Adapter) -> wgpu::DeviceDescriptor<'static> {
     let optional = wgpu::Features::CLEAR_TEXTURE;
     let adapter_limits = adapter.limits();
+    // An adapter without compute shaders (OpenGL ES 3.0 and the like) has
+    // none of their limits: the hybrid mode, which needs none, is asked for
+    // the limits of WebGL2, the device it also draws on in a web page.
+    let compute = adapter.get_downlevel_capabilities().flags.contains(wgpu::DownlevelFlags::COMPUTE_SHADERS);
+    let base = if compute { wgpu::Limits::default() } else { wgpu::Limits::downlevel_webgl2_defaults() };
 
     wgpu::DeviceDescriptor {
         label: Some("FerroUI Vello"),
         required_features: adapter.features() & optional,
-        required_limits: wgpu::Limits {
-            max_texture_dimension_2d: adapter_limits.max_texture_dimension_2d,
-            ..wgpu::Limits::default()
-        },
+        required_limits: wgpu::Limits { max_texture_dimension_2d: adapter_limits.max_texture_dimension_2d, ..base },
         ..Default::default()
     }
 }
