@@ -28,7 +28,7 @@ impl IItemsList for CountingSource {
         self
     }
 }
-fn boxed<T: 'static>(value: T) -> MarkupValue {
+fn boxed<T: PartialEq + 'static>(value: T) -> MarkupValue {
     Some(Rc::new(value))
 }
 

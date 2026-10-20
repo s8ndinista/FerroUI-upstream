@@ -361,6 +361,106 @@ fn verify_items_repeater_dependency_properties() {
 }
 
 #[test]
+fn validate_get_set_items_source_preserves_supplied_view_identity() {
+    let _scope = test_scope();
+    let source = Rc::new(FerroList::from_items(0..3));
+    let view = crate::ItemsSourceView::new(source.clone().into());
+    let (repeater, _) = fixture(0, None);
+    repeater.set_items_source(Some(view.clone().into()));
+    assert!(Rc::ptr_eq(&view, &repeater.items_source_view().unwrap()));
+    run(&repeater);
+    assert_eq!(repeater.realized_elements().len(), 3);
+    source.add(3);
+    run(&repeater);
+    assert_eq!(item_value(&repeater.try_get_element(3).unwrap()), 3);
+    repeater.set_items_source(None);
+    assert!(repeater.items_source_view().is_none());
+    assert!(!source.has_collection_changed_subscribers());
+}
+
+#[test]
+fn verify_repeater_does_not_leak_item_containers() {
+    let _scope = test_scope();
+    let source = Rc::new(FerroList::from_items(0..10));
+    let repeater = ItemsRepeater::new();
+    repeater.set_items_source(Some(source.clone().into()));
+    repeater.set_data_template(Some(template(true)));
+    let root = TestRoot::with_child(&repeater);
+    root.execute_initial_layout_pass();
+    let containers = repeater.realized_elements().iter().map(Ref::downgrade).collect::<Vec<_>>();
+    assert_eq!(containers.len(), 10);
+    let weak = repeater.downgrade();
+    root.set_child(None::<Ref<Control>>);
+    root.layout_manager().execute_layout_pass();
+    drop(repeater);
+    ferroui_base::threading::Dispatcher::ui_thread().run_jobs(None);
+    assert!(weak.upgrade().is_none());
+    assert!(containers.iter().all(|container| container.upgrade().is_none()));
+    assert!(!source.has_collection_changed_subscribers());
+}
+
+#[test]
+fn verify_repeater_with_recycled_elements_does_not_leak() {
+    let _scope = test_scope();
+    let source = Rc::new(FerroList::from_items(0..5));
+    let repeater = ItemsRepeater::new();
+    repeater.set_items_source(Some(source.clone().into()));
+    let template = template(true);
+    let weak_template = Rc::downgrade(&template);
+    repeater.set_data_template(Some(template));
+    let root = TestRoot::with_child(&repeater);
+    root.execute_initial_layout_pass();
+    let containers = repeater.realized_elements().iter().map(Ref::downgrade).collect::<Vec<_>>();
+    let weak = repeater.downgrade();
+    source.clear();
+    root.layout_manager().execute_layout_pass();
+    assert!(repeater.realized_elements().is_empty());
+    assert!(containers.iter().all(|container| container.upgrade().is_some()));
+    root.set_child(None::<Ref<Control>>);
+    root.layout_manager().execute_layout_pass();
+    drop(repeater);
+    ferroui_base::threading::Dispatcher::ui_thread().run_jobs(None);
+    assert!(weak.upgrade().is_none());
+    assert!(weak_template.upgrade().is_none());
+    assert!(containers.iter().all(|container| container.upgrade().is_none()));
+    assert!(!source.has_collection_changed_subscribers());
+}
+
+#[test]
+fn verify_repeater_with_recycling_element_factory_does_not_leak() {
+    let _scope = test_scope();
+    let source = Rc::new(FerroList::from_items(0..6));
+    let repeater = ItemsRepeater::new();
+    let factory = RecyclingElementFactory::new();
+    factory.set_recycle_pool(Some(RecyclePool::new()));
+    factory.templates().set("even".into(), template(true));
+    factory.templates().set("odd".into(), template(true));
+    factory.select_template_key(|args| {
+        let item = *args.data_context().unwrap().downcast_ref::<i32>().unwrap();
+        args.set_template_key(if item % 2 == 0 { "even" } else { "odd" });
+    });
+    let weak_factory = factory.downgrade();
+    repeater.set_element_factory(Some(factory.as_element_factory()));
+    drop(factory);
+    repeater.set_items_source(Some(source.clone().into()));
+    let root = TestRoot::with_child(&repeater);
+    root.execute_initial_layout_pass();
+    let containers = repeater.realized_elements().iter().map(Ref::downgrade).collect::<Vec<_>>();
+    let weak = repeater.downgrade();
+    source.clear();
+    root.layout_manager().execute_layout_pass();
+    assert!(repeater.realized_elements().is_empty());
+    root.set_child(None::<Ref<Control>>);
+    root.layout_manager().execute_layout_pass();
+    drop(repeater);
+    ferroui_base::threading::Dispatcher::ui_thread().run_jobs(None);
+    assert!(weak.upgrade().is_none());
+    assert!(weak_factory.upgrade().is_none());
+    assert!(containers.iter().all(|container| container.upgrade().is_none()));
+    assert!(!source.has_collection_changed_subscribers());
+}
+
+#[test]
 fn verify_stack_layout_dependency_properties() {
     let _scope = test_scope();
     let layout = StackLayout::new();

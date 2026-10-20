@@ -806,6 +806,12 @@ impl From<Rc<dyn IItemsList>> for ItemsSource {
     }
 }
 
+impl From<Rc<crate::ItemsSourceView>> for ItemsSource {
+    fn from(value: Rc<crate::ItemsSourceView>) -> Self {
+        Self(value)
+    }
+}
+
 impl<T: PropertyValue> From<Rc<FerroList<T>>> for ItemsSource {
     fn from(value: Rc<FerroList<T>>) -> Self {
         Self(value)

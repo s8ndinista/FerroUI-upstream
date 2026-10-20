@@ -125,6 +125,44 @@ fn get_or_create_returns_empty_for_no_source() {
 }
 
 #[test]
+fn get_or_create_preserves_an_existing_view_and_its_live_notifications() {
+    let source = Rc::new(FerroList::from_items([10, 20]));
+    let view = ItemsSourceView::new(source.clone().into());
+    let as_source: ItemsSource = view.clone().into();
+    let existing = ItemsSourceView::get_or_create(Some(&as_source));
+    assert!(Rc::ptr_eq(&view, &existing));
+    assert!(as_source.ptr_eq(&view.clone().into()));
+    let changes = Rc::new(std::cell::RefCell::new(Vec::new()));
+    let observed = changes.clone();
+    let token = as_source.list().add_collection_changed(Rc::new(move |args| {
+        observed.borrow_mut().push((args.action, args.new_starting_index));
+    })).unwrap();
+    source.insert(1, 15);
+    assert_eq!(view.count(), 3);
+    assert_eq!(existing.index_of(&Some(Rc::new(15))), 1);
+    assert_eq!(&*changes.borrow(), &[(ferroui_base::collections::NotifyCollectionChangedAction::Add, 1)]);
+    as_source.list().remove_collection_changed(token);
+    assert!(!source.has_collection_changed_subscribers());
+}
+
+#[test]
+fn existing_view_as_source_preserves_optional_stable_keys_without_reading_items() {
+    let list = Rc::new(KeyedList {
+        keys: std::cell::RefCell::new(vec!["a".into(), "b".into()]),
+        reads: std::cell::Cell::new(0),
+    });
+    let view = ItemsSourceView::new(ItemsSource::new(list.clone()));
+    let source: ItemsSource = view.clone().into();
+    let mapping = source.list().key_index_mapping().unwrap();
+    assert_eq!(mapping.key_from_index(1), "b");
+    assert_eq!(mapping.index_from_key("missing"), -1);
+    assert_eq!(list.reads.get(), 0);
+    let ordinary: ItemsSource = ItemsSourceView::new(ItemsSource::from_values([1, 2])).into();
+    assert!(ordinary.list().key_index_mapping().is_none());
+    assert!(!ordinary.is_notifying());
+}
+
+#[test]
 fn typed_view_reads_items_as_the_item_type() {
     let source = Rc::new(FerroList::from_items(["foo".to_string(), "bar".to_string()]));
     let target = ItemsSourceView::get_or_create_of::<String>(Some(&source.into()));

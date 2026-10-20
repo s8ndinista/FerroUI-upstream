@@ -1,7 +1,7 @@
 // This source file is adapted from the WinUI project.
 // (https://github.com/microsoft/microsoft-ui-xaml)
 
-use crate::items_source::{unbox_item, ItemsChangedEventArgs, ItemsChangedHandler, ItemsSource};
+use crate::items_source::{unbox_item, IItemsList, ItemsChangedEventArgs, ItemsChangedHandler, ItemsSource};
 use crate::utils::{CollectionChangedEventManager, ICollectionChangedListener};
 use ferroui_base::utilities::HandlerList;
 use ferroui_base::{BoxedValue, PropertyValue};
@@ -157,12 +157,15 @@ impl ItemsSourceView {
 
     /// Gets or creates an [`ItemsSourceView`] for the specified source.
     ///
-    /// Returns [`empty`](Self::empty) if `items` is `None`, otherwise a new
-    /// view. (A caller that already holds a view uses it as is.)
+    /// Returns [`empty`](Self::empty) if `items` is `None`, preserves an
+    /// existing view supplied as the source, or creates a view of the list.
     pub fn get_or_create(items: Option<&ItemsSource>) -> Rc<ItemsSourceView> {
         match items {
             None => Self::empty(),
-            Some(items) => Self::new(items.clone()),
+            Some(items) => items
+                .downcast_ref::<Self>()
+                .and_then(|view| view.this.upgrade())
+                .unwrap_or_else(|| Self::new(items.clone())),
         }
     }
 
@@ -244,6 +247,55 @@ impl ItemsSourceView {
                 handler(e);
             }
         }
+    }
+}
+
+/// An existing view can itself be assigned to an items-source property.
+/// Keep its identity and event stream instead of unwrapping its source or
+/// layering another view over it. Stable keys remain those of its source.
+impl IItemsList for ItemsSourceView {
+    fn key_index_mapping(&self) -> Option<&dyn crate::IKeyIndexMapping> {
+        self.has_key_index_mapping()
+            .then_some(self as &dyn crate::IKeyIndexMapping)
+    }
+
+    fn count(&self) -> usize {
+        ItemsSourceView::count(self)
+    }
+
+    fn get_at(&self, index: usize) -> Option<BoxedValue> {
+        ItemsSourceView::get_at(self, index)
+    }
+
+    fn index_of(&self, item: &Option<BoxedValue>) -> i32 {
+        ItemsSourceView::index_of(self, item)
+    }
+
+    fn is_notifying(&self) -> bool {
+        self.source().is_notifying()
+    }
+
+    fn add_collection_changed(&self, handler: Rc<ItemsChangedHandler>) -> Option<u64> {
+        self.is_notifying()
+            .then(|| ItemsSourceView::add_collection_changed(self, handler))
+    }
+
+    fn remove_collection_changed(&self, token: u64) {
+        ItemsSourceView::remove_collection_changed(self, token);
+    }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+}
+
+impl crate::IKeyIndexMapping for ItemsSourceView {
+    fn key_from_index(&self, index: i32) -> String {
+        ItemsSourceView::key_from_index(self, index)
+    }
+
+    fn index_from_key(&self, key: &str) -> i32 {
+        ItemsSourceView::index_from_key(self, key)
     }
 }
 

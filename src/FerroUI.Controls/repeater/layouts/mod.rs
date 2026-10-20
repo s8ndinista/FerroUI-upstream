@@ -59,6 +59,8 @@ pub use uniform_grid_layout_state::UniformGridLayoutState;
 #[cfg(test)]
 mod layout_collection_tests;
 #[cfg(test)]
+mod flow_layout_upstream_tests;
+#[cfg(test)]
 mod layout_tests;
 #[cfg(test)]
 mod lined_flow_layout_tests;
