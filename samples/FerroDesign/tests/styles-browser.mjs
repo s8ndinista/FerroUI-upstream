@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 
 export async function localStyleRegressions(page, reference, check, helpers, mode) {
     const { fixtureNode, isolatedDocument, importFixture, documentState, state,
-        clickWorld, clickNative, frames, captureNativeScreenshot } = helpers;
+        clickWorld, clickNative, chooseNative, frames, captureNativeScreenshot } = helpers;
     const red = { r: 239, g: 68, b: 68, a: 255 };
     const blue = { r: 37, g: 99, b: 235, a: 255 };
     const green = { r: 16, g: 185, b: 129, a: 255 };
@@ -156,4 +156,45 @@ export async function localStyleRegressions(page, reference, check, helpers, mod
     await clickNative(page, "StyleDone", "ModalActions");
     await history(effects, duplicated, duplicateDepth, "Native shared effect duplication");
     check("Native shared effects support creation, numeric authoring and stack duplication with linked propagation and exact undo/redo");
+
+    await importFixture(page, document);
+    await selectSurfaces(); await open(); await clickNative(page, "StyleCreateFill", "ModalActions");
+    const conversionId = (await documentState(page)).nodes[2].fill_style;
+    // Keep the same dialog open across the field edit and type conversion.
+    // Reopening it would hide an opening-time color captured by the ComboBox.
+    await field("StyleFillColor0", "2563EB");
+    const beforeLinear = await documentState(page), linearDepth = (await state(page)).historyLength;
+    await chooseNative(page, "StyleFillType0", { index: 1, scrollContainer: "ModalViewport" });
+    const linear = await documentState(page);
+    const expectedLinear = {
+        type: "linear_gradient", start: { x: 0, y: 0 }, end: { x: 1, y: 1 },
+        stops: [{ offset: 0, color: blue }, { offset: 1, color: { r: 255, g: 255, b: 255, a: 255 } }],
+    };
+    for (const node of [2, 3]) {
+        assert.equal(linear.nodes[node].fill_style, conversionId);
+        assert.deepEqual(linear.nodes[node].fills[0].paint, expectedLinear,
+            "A native paint type change uses the solid color just committed in the open dialog");
+    }
+    assert.deepEqual(linear.nodes[4], beforeLinear.nodes[4]);
+    await clickNative(page, "StyleDone", "ModalActions");
+    await history(beforeLinear, linear, linearDepth, "Native solid-to-gradient conversion");
+
+    await open(); await clickNative(page, "StyleEdit" + conversionId, "ModalViewport");
+    await field("StyleStopColor0_0", "10B981");
+    const beforeRadial = await documentState(page), radialDepth = (await state(page)).historyLength;
+    await chooseNative(page, "StyleFillType0", { index: 2, scrollContainer: "ModalViewport" });
+    const radial = await documentState(page);
+    const expectedRadial = {
+        type: "radial_gradient", center: { x: 0.5, y: 0.5 }, radius: 0.5,
+        stops: [{ offset: 0, color: green }, { offset: 1, color: { r: 255, g: 255, b: 255, a: 255 } }],
+    };
+    for (const node of [2, 3]) {
+        assert.equal(radial.nodes[node].fill_style, conversionId);
+        assert.deepEqual(radial.nodes[node].fills[0].paint, expectedRadial,
+            "A native gradient type change uses the first stop color just committed in the open dialog");
+    }
+    assert.deepEqual(radial.nodes[4], beforeRadial.nodes[4]);
+    await clickNative(page, "StyleDone", "ModalActions");
+    await history(beforeRadial, radial, radialDepth, "Native linear-to-radial conversion");
+    check("Native paint type changes use the latest solid or gradient-stop color, preserve linked propagation and default geometry, and each undo and redo exactly once");
 }

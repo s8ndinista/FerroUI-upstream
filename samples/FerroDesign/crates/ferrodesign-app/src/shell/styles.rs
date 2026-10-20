@@ -399,7 +399,6 @@ impl EditorShell {
                 Ok(())
             },
         ));
-        let color = fill.paint.representative_color();
         let selected = match fill.paint {
             Paint::Solid(_) => 0,
             Paint::LinearGradient { .. } => 1,
@@ -409,6 +408,9 @@ impl EditorShell {
         panel.children().add(self.style_choice(id, &format!("StyleFillType{index}"),
             &["Solid", "Linear gradient", "Radial gradient", "Existing image"], selected, move |style, value| {
                 let fill = style_fill_mut(style, index)?;
+                // Fields commit in place, so the current paint can differ
+                // from the value that created this native choice control.
+                let color = fill.paint.representative_color();
                 fill.paint = match value {
                     0 => Paint::Solid(color),
                     1 => Paint::LinearGradient { start: Point::new(0.0, 0.0), end: Point::new(1.0, 1.0), stops: style_default_stops(color) },
