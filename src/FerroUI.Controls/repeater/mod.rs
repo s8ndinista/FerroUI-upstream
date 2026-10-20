@@ -79,3 +79,6 @@ mod source_view_tests;
 
 #[cfg(test)]
 mod layout_contract_tests;
+
+#[cfg(test)]
+mod layout_panel_tests;

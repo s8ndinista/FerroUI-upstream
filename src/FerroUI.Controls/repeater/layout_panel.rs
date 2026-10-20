@@ -136,7 +136,13 @@ impl LayoutPanel {
     fn change_layout(&self) {
         let context = self.layout_context();
         let old = self.effective_layout.borrow_mut().take();
-        if let Some(old) = old { old.uninitialize_for_context(&context); }
+        if let Some(old) = old {
+            old.uninitialize_for_context(&context);
+            // The outgoing layout can observe its state while uninitializing.
+            // Ownership ends here even if a custom layout leaves the value in
+            // the context; a replacement must initialize with its own state.
+            self.set_layout_state(None);
+        }
         for subscription in std::mem::take(&mut *self.subscriptions.borrow_mut()) { subscription.dispose(); }
         let layout = self.layout();
         *self.effective_layout.borrow_mut() = layout.clone();
