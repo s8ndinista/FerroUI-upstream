@@ -9,10 +9,11 @@ use ferroui_base::metadata::from_markup_value;
 use ferroui_base::styling::{ControlTheme, ThemeVariant};
 use ferroui_base::{ObjectType, Ref, Visual};
 use ferroui_controls::documents::CharacterFormat;
-use ferroui_controls::flyouts::{FlyoutBaseImplExt, MenuFlyout};
+use ferroui_controls::primitives::FlyoutBaseImplExt;
 use ferroui_controls::testing::MockWindowingPlatform;
 use ferroui_controls::{
-    Border, Control, MenuItem, RichEditBox, RichEditBoxTextPresenter, ScrollViewer, Window,
+    Border, Control, MenuFlyout, MenuItem, RichEditBox, RichEditBoxTextPresenter, ScrollViewer,
+    Window,
 };
 use ferroui_markup_xaml::{RuntimeXamlLoaderConfiguration, RuntimeXamlLoaderDocument};
 use ferroui_markup_xaml_loader::FerroRuntimeXamlLoader;

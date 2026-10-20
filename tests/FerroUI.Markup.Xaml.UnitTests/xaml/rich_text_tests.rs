@@ -53,10 +53,21 @@ fn rich_text_markup_preserves_nested_document_content_and_copied_highlight_value
         Some(FontStyle::Italic)
     );
     let highlighter = display.text_highlighters().get(0);
-    let copied = highlighter.ranges().get(0);
+    let copied = highlighter
+        .ranges()
+        .get(0)
+        .expect("the declared highlight range is loaded");
     assert_eq!(copied, TextHighlightRange::new(0, 4));
     copied.set_length(9);
-    assert_eq!(highlighter.ranges().get(0).length(), 4);
+    assert_eq!(copied.length(), 9);
+    assert_eq!(
+        highlighter
+            .ranges()
+            .get(0)
+            .expect("the stored highlight range remains present")
+            .length(),
+        4
+    );
 }
 
 #[test]
@@ -104,7 +115,7 @@ fn rich_edit_text_binding_updates_the_document_in_both_directions() {
     window.set_content(Some(Control::boxed(root)));
     window.show();
     assert_eq!(editor.text(), "first");
-    source.set_text(Some("second 😀".to_owned()));
+    source.set_text(Some("second 😀"));
     assert_eq!(editor.text(), "second 😀");
     editor.select_all();
     editor.insert_text("replacement").unwrap();
