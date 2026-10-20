@@ -257,3 +257,11 @@ pub fn use_data_context<T: Clone + 'static>() -> Option<T> {
         value.downcast_ref::<T>().cloned()
     })
 }
+
+/// The resource `key` as a `T` (see [`use_resource`]): the conversion of
+/// markup values, so a brush of a theme is a `Rc<dyn IBrush>` and a colour a
+/// `Color`. `None` when the resource is missing or not a `T`.
+pub fn use_resource_as<T: Clone + 'static>(key: &str) -> Option<T> {
+    let value = use_resource(key);
+    ferroui_base::metadata::from_markup_value::<T>(&value)
+}

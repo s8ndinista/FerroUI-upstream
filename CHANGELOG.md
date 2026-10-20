@@ -18,6 +18,14 @@ All notable changes to FerroUI are recorded in this file. The format follows [Ke
   - `use_data_context`, `use_data_context_value` and `use_parent_control`;
   - with the feature `xaml`: `load_xaml`, `load_xaml_uri`, `xaml` and `use_xaml`, XAML in a component;
   - the sample `samples/ViewInterop`: a virtualized directory of 10,000 people with XAML details and a component inside the XAML.
+- **The rest of the API** in `ferroui-view` (phase 3, `docs/declarative-ui.md`, section 10):
+  - the builders of the TreeDataGrid, the colour picker, the dialogs and the ReactiveUI controls, each behind a feature (`treedatagrid`, `color-picker`, `dialogs`, `reactiveui`), from the same generator;
+  - styles: `style("Button.accent").set(..).nested(style("^:pointerover")..)`, `style_of(selector)`, and `.styles([..])` of an element;
+  - hooks: `use_parent_property`, `use_theme_variant`, `use_resource`, `use_resource_as`;
+  - transitions and animations: `transition`, `transition_eased`, `transitions`, `ms`, `animation(..).key_frame(..)`, `use_animation`;
+  - a `Popup` holds its child element, and a property that holds a control of a class (`context_menu`) takes an element;
+  - `ferroui-view` exports its type model, so compiled XAML names `ComponentHost`; `samples/ViewInterop` compiles its XAML;
+  - the sample `samples/ViewGallery`: styles, the theme variant and resources, a transition, a context menu, a `ColorView` and a `TreeDataGrid`, light and dark.
 
 ### Changed
 

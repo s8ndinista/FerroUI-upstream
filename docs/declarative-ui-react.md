@@ -5,7 +5,7 @@ This document is for developers who know React. It compares `ferroui-view`, the 
 - where the two behave alike and where they differ;
 - what React has that FerroUI does not have yet.
 
-It describes FerroUI after phases 1 and 2 of issue #237 (components that run again, hooks, the reconciler; XAML and data templates of components) and React 18 and 19.
+It describes FerroUI after phases 1 to 3 of issue #237 (components that run again, hooks, the reconciler; XAML and data templates of components; styles, themes, transitions, popups) and React 18 and 19.
 
 ## 1. Summary
 
@@ -57,7 +57,11 @@ What sets FerroUI apart from React is where the elements end up. React DOM rende
 | `React.memo(C)` | `#[component(rerender, memo)]` | It compares all parameters with `PartialEq`, where React compares props shallowly with `Object.is`. |
 | controlled input (`value` and `onChange`) | `text: name.get()` with `on_changed(TextBox::text_property(), ..)`, or `text: name.two_way()` | A two-way value is shorter. The hooks temperature converter shows both forms. |
 | uncontrolled input with a ref | a control with no bound value, read through a `NodeRef` | |
-| `createPortal` | not yet (phase 3: popups and flyouts) | A second window is `open_window(|| ..)`. |
+| `createPortal` | `Popup { .. }` with a child element; `context_menu: rsx! { ContextMenu { .. } }` | The child of a popup is shown above the window, outside the visual tree of its parent, under its owner, as a portal. A second window is `open_window(|| ..)`. |
+| CSS modules, CSS-in-JS (styled-components, emotion) | `styles: [style("Button.accent").set(..).nested(style("^:pointerover")..)]` | Styles of the property system with selectors in the syntax of XAML, scoped to the control and the controls below it. |
+| `prefers-color-scheme`, a theme context | `use_theme_variant()`, `ThemeVariantScope { requested_theme_variant: .. }` | |
+| CSS custom properties (`var(--accent)`) | `use_resource_as::<T>(key)` | Resources of the theme follow the theme variant. |
+| CSS transitions, Framer Motion | `transitions: transitions([transition(property, ms(200))])`, `animation(..)`, `use_animation` | Transitions and key-frame animations of the port, on any animatable property. |
 | a list virtualized with react-window or react-virtuoso | a virtualized `ListBox` with `item_template: template(|item: T| ..)` | The virtualizing panels of FerroUI realize the visible items. The template keeps a pool of hosts, so scrolling patches existing items instead of mounting new ones (as react-window reuses its rows). |
 | a React root inside a page of another framework (`createRoot(el).render(..)`) | `ComponentHost`, in XAML or any tree of controls | |
 | React inside a page of another framework, or that page inside React | `use_xaml(..)` puts XAML inside a component; `ComponentHost` puts a component inside XAML | |
@@ -263,7 +267,6 @@ React runs `useLayoutEffect` after the DOM changes and before the browser paints
 
 | React | FerroUI plan |
 |---|---|
-| Portals | phase 3: popups, flyouts and context menus as elements |
 | Error boundaries | phase 6 |
 | Suspense and data loading | phase 6: `use_resource` |
 | Fast Refresh | phase 4: hot reload of the static parts of `rsx!` |
