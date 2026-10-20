@@ -22,6 +22,7 @@ use ferroui_base::{
     FerroObjectImpl, Point, Rect, Ref, Size, StyledElement, Thickness, Vector,
 };
 use std::cell::{Cell, RefCell};
+use std::rc::Rc;
 
 #[repr(C)]
 struct ViewportProbe {
@@ -640,4 +641,58 @@ fn detach_and_reparent_reset_viewport_cache_and_anchor_lifetimes() {
     drop(repeater);
     settle(&root);
     assert!(weak.upgrade().is_none());
+}
+
+#[test]
+fn reparenting_registers_surviving_layout_children_with_the_new_anchor_provider() {
+    let _scope = test_scope();
+    let repeater = ItemsRepeater::new();
+    repeater.set_horizontal_cache_length(0.0);
+    repeater.set_vertical_cache_length(0.0);
+    repeater.set_data_template(Some(FuncDataTemplate::new(
+        |_| true,
+        |_, _| {
+            let item = Border::new();
+            item.set_width(100.0);
+            item.set_height(50.0);
+            Some(item.upcast())
+        },
+        true,
+    )));
+    repeater.set_items_source(Some(ItemsSource::from_values(0..100)));
+    let first_item_preparations = Rc::new(Cell::new(0));
+    let preparations = first_item_preparations.clone();
+    let _prepared_subscription = repeater.element_prepared(move |args| {
+        if args.index == 0 {
+            preparations.set(preparations.get() + 1);
+        }
+    });
+    let size = Some(Size::new(200.0, 300.0));
+    let first = viewer(&repeater.clone().upcast(), size);
+    let second = viewer(&Border::new().upcast(), size);
+    let panel = Grid::new();
+    panel.children().add(&first);
+    panel.children().add(&second);
+    let root = TestRoot::with_child(&panel);
+    root.execute_initial_layout_pass();
+    settle(&root);
+    let retained = repeater
+        .try_get_element(0)
+        .expect("The first item is visible.");
+    let preparation_count = first_item_preparations.get();
+    assert_eq!(first.current_anchor(), Some(retained.clone()));
+
+    // The first layout-owned row survives each move without ElementPrepared.
+    // It still needs to be registered after arrange with the new provider,
+    // even when no cache growth schedules an additional measure pass.
+    for (previous, next) in [(&first, &second), (&second, &first)] {
+        previous.set_content(Some(Control::boxed(Border::new())));
+        next.set_content(Some(Control::boxed(&repeater)));
+        settle(&root);
+        assert_eq!(repeater.try_get_element(0), Some(retained.clone()));
+        assert_eq!(first_item_preparations.get(), preparation_count);
+        assert_eq!(next.current_anchor(), Some(retained.clone()));
+        assert!(previous.current_anchor().is_none());
+        assert_eq!(next.offset(), Vector::default());
+    }
 }

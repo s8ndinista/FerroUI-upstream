@@ -150,15 +150,32 @@ impl ViewportManager {
         let mut provider = None;
         while let Some(parent) = visual {
             if parent.is::<ItemsRepeaterScrollHost>() {
-                provider = Some(parent.downgrade());
+                provider = Some(parent);
                 break;
             }
             if provider.is_none() && as_scroll_anchor_provider(&parent).is_some() {
-                provider = Some(parent.downgrade());
+                provider = Some(parent.clone());
             }
             visual = parent.visual_parent();
         }
-        *self.scroller.borrow_mut() = provider;
+        if self.scroller() != provider {
+            self.unregister_candidates(owner, None);
+            self.prepared.borrow_mut().clear();
+            self.arranged.borrow_mut().clear();
+            if provider.is_some() {
+                // Reparenting preserves layout-owned controls, so they need
+                // not pass through ElementPrepared again. Queue them for the
+                // new provider after their bounds have been arranged in its
+                // coordinate space, just like newly realized controls.
+                for child in owner.children().snapshot().iter() {
+                    if ItemsRepeater::get_virtualization_info(child).owner() == ElementOwner::Layout
+                    {
+                        self.on_element_prepared(child);
+                    }
+                }
+            }
+        }
+        *self.scroller.borrow_mut() = provider.as_ref().map(Ref::downgrade);
     }
 
     pub fn detach(&self, owner: &ItemsRepeater) {
