@@ -78,7 +78,7 @@ pub use element::{rerender, ComponentElement, Element, IntoChild, IntoChildren, 
 pub use component_host::{register_component, ComponentHost, View};
 pub use hooks::{
     use_data_context, use_data_context_value, use_effect, use_effect_with, use_hook, use_memo, use_parent_control,
-    use_parent_property, use_resource, use_signal, use_theme_variant,
+    use_parent_property, use_resource, use_resource_as, use_signal, use_theme_variant,
 };
 pub use animation::{
     animation, ms, transition, transition_eased, transitions, use_animation, AnimationBuilder, KeyFrameBuilder,
@@ -112,7 +112,7 @@ pub mod prelude {
     pub use crate::generated::treedatagrid::*;
     pub use crate::{
         animation, batch, component, dynamic, effect, for_each, memo, ms, on_cleanup, provide_context, rerender, rsx, show,
-        show_else, style, transition, transitions, use_animation, use_resource, use_theme_variant,
+        show_else, style, transition, transitions, use_animation, use_resource, use_resource_as, use_theme_variant,
         signal, template, untrack, use_context, use_data_context, use_effect, use_effect_with, use_hook, use_memo,
         use_signal, Bind, ComponentHost, El, Element, ElementBuilder, GridDefinitions, IntoChild, IntoChildren, IntoElement, Key, Memo, NodeRef, Owner, Signal, TwoWay,
     };
