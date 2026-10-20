@@ -1368,7 +1368,29 @@ Every renderer measured again from the same build in one session (Skia before th
 
 From now on a comparison is made this way: one build, every renderer in one session, Skia first and last.
 
-### 14.6 Linux and Windows, as found (2026-10-19)
+### 14.6 Round 3 (2026-10-20): the GPU mode
+
+| # | Change | Where |
+|---|---|---|
+| 1 | **The filter scenes of the GPU mode are drawn on the device by the hybrid renderer** (in a build with both GPU modes): an effect, a blurred box shadow and the content of an effect under a clip were scenes of the CPU renderer, uploaded, because the compute renderer has no filters; now they are scenes of the sparse-strips renderer on the same device, composed as textures | `drawing_context_impl/effects.rs` (`filter_scene_device`) |
+| 2 | **A kept target of the GPU mode is rendered where it is cleared**: the sink composes over its target (`retained_targets`), and before anything but clips was recorded a scene of the rectangles a kept target clears becomes a scene of the rectangle around them, rendered into a texture of its size, which starts with what the target holds there unless the cleared rectangles cover all of it, and copied into its place. Clips that end while drawing goes on put the bounded scene into a scene of the whole target at its place. A whole frame that is not composed over its target starts with a copy of it made on the device. Before, every frame of a window drew all of it, starting with the frame before as a paint | `scene/vello_gpu_scene_sink.rs` (`retain_target`, `render_over_target`), `gpu/device_surface_render_target.rs`; tests: `gpu/layer_tests.rs` |
+| 3 | The frame benchmarks print the time of a frame **without waiting for the device**, which a window on screen does not do: the Metal surface of the benchmarks counts its waits | `gpu/metal_offscreen.rs`, `samples/ControlCatalog/tests/frame_benchmark.rs` |
+
+One session, the build before the round (main) and after it, then Skia; median milliseconds a frame (after the slash: without waiting for the device):
+
+| Scenario | Skia | GPU before | GPU after | hybrid |
+|---|---|---|---|---|
+| buttons page, the pointer moving across the buttons | 0.95 / 0.19 | 1.97 | 1.04 / 0.65 | **0.66** / 0.34 |
+| buttons page, scrolled 20 pixels a frame | 1.25 / 0.46 | 3.22 | 2.35 / 0.81 | 2.20 / 1.11 |
+| text block page, drawn again | 0.67 / 0.19 | 2.82 | 1.91 / 0.79 | 1.34 / 0.48 |
+| effects page, every box drawn again | 9.75 / 2.76 | 22.26 | 11.12 / 9.68 | **7.65** / 6.52 |
+| effects page, one box drawn again | 3.86 / 1.14 | 6.91 | 4.63 / 4.07 | **3.13** / 2.56 |
+| catalog tour, first round | 514 | 1369 | 1053 | 872 |
+| catalog tour, second round | 426 | 1375 | 1089 | 864 |
+
+What separates the Metal modes from Skia where they are slower: on the processor, the sparse-strips renderer makes the strips of every path and glyph of a frame (Skia records commands and its device does the rest: 0.2 to 0.5 ms a frame on the processor against 0.3 to 1.1 for the hybrid mode); on the device, a whole page takes the hybrid renderer about 0.43 ms (measured by rendering every scene twice), and each frame of the benchmarks waits about 0.6 ms more for the copy of the frame of the window into the drawable and the hand-over between the two command queues (11.2). Both are the renderers' or the design of 11.2; what the backend does around them is listed in 14.2 to 14.6.
+
+### 14.7 Linux and Windows, as found (2026-10-19)
 
 - The backend draws a window of these platforms in the CPU mode only: `wgpu` is built with Metal alone, and `create_gpu` takes the Metal device of macOS only. A platform that hands out graphics (X11 with GLX, its default; Wayland with EGL, its default; Windows with ANGLE on Direct3D 11, its default) makes the backend panic; it draws when the platform renders in software.
 - In software every frame of these platforms was whole: the framebuffers are not kept (X11 `XPutImage` and `XShm`, Wayland `wl_shm` with a new buffer every frame, Windows `SetDIBitsToDevice`), so the compositor drew into a layer of its own and the whole layer into the framebuffer; the framebuffers are BGRA, so the CPU mode rendered into pixels of its own and converted all of them. Round 2 (item 1) keeps the frame in the render target instead: what changed is rendered, and only the conversion into the framebuffer is whole.

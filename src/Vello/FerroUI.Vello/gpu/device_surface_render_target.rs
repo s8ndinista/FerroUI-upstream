@@ -267,7 +267,32 @@ impl DeviceSurfaceRenderTarget {
         };
 
         let backdrop = has_content.then(|| {
-            if composes_over_target {
+            if composes_over_target && self.mode == VelloRenderingMode::Gpu {
+                // The compute renderer replaces what its target holds: a
+                // scene that is not composed over the texture (see
+                // `VelloBackdrop`) starts with a copy of it, made on the
+                // device, as its first paint.
+                let (device, content, surface) = (self.device.clone(), texture.clone(), self.surface.clone());
+                let (width, height) = (u32::from(width), u32::from(height));
+                VelloBackdrop {
+                    composes_over_target: true,
+                    brush: Box::new(move || {
+                        let spare = surface
+                            .borrow_mut()
+                            .spare
+                            .get_or_insert_with(|| VelloDeviceTexture::new(&device, width, height, VelloTextureAlpha::Straight))
+                            .clone();
+                        device.copy_texture_region(content.texture(), (0, 0), spare.texture(), (0, 0), (width, height));
+                        Some(VelloSceneBrush::Texture(VelloSceneTexture {
+                            texture: spare,
+                            x_extend: Extend::Pad,
+                            y_extend: Extend::Pad,
+                            quality: ImageQuality::Low,
+                            alpha: 1.0,
+                        }))
+                    }),
+                }
+            } else if composes_over_target {
                 // What the texture holds stays under the scene: the
                 // renderer composes over it. Only a scene that cannot be
                 // composed over its target (see `VelloBackdrop`) gets the

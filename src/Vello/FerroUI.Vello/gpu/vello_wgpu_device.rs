@@ -213,9 +213,42 @@ impl VelloWgpuDevice {
             sample_count: 1,
             dimension: wgpu::TextureDimension::D2,
             format: wgpu::TextureFormat::Rgba8Unorm,
-            usage: usage | wgpu::TextureUsages::COPY_SRC,
+            usage: usage | wgpu::TextureUsages::COPY_SRC | wgpu::TextureUsages::COPY_DST,
             view_formats: &[],
         })
+    }
+
+    /// Copies a rectangle of `size` pixels of a texture at `from` into
+    /// another of the same format at `to`, as they are.
+    pub fn copy_texture_region(
+        &self,
+        source: &wgpu::Texture,
+        from: (u32, u32),
+        target: &wgpu::Texture,
+        to: (u32, u32),
+        size: (u32, u32),
+    ) {
+        let _perf = crate::perf::scope(crate::perf::Phase::TextureCopy, u64::from(size.0) * u64::from(size.1) * 4);
+        let mut encoder =
+            self.device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: Some("FerroUI Vello region") });
+        encoder.copy_texture_to_texture(
+            wgpu::TexelCopyTextureInfo {
+                texture: source,
+                mip_level: 0,
+                origin: wgpu::Origin3d { x: from.0, y: from.1, z: 0 },
+                aspect: wgpu::TextureAspect::All,
+            },
+            wgpu::TexelCopyTextureInfo {
+                texture: target,
+                mip_level: 0,
+                origin: wgpu::Origin3d { x: to.0, y: to.1, z: 0 },
+                aspect: wgpu::TextureAspect::All,
+            },
+            wgpu::Extent3d { width: size.0, height: size.1, depth_or_array_layers: 1 },
+        );
+        crate::gpu::with_autorelease_pool(|| {
+            self.queue.submit([encoder.finish()]);
+        });
     }
 
     /// Creates a texture that holds the given RGBA pixels, to be sampled.
