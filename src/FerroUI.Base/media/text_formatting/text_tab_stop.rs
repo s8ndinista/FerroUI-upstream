@@ -191,6 +191,7 @@ crate::ferro_markup_type!(
     struct TextTabStops {
         namespace: "FerroUI.Media.TextFormatting",
         handles: [TextTabStops],
+        constructors: [() => TextTabStops::default],
         parse: TextTabStops::parse,
     }
 );
