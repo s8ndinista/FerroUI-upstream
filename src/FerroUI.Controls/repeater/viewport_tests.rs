@@ -304,6 +304,30 @@ fn scale_transform_supplies_the_zoomed_effective_viewport() {
     assert_close(layout.last(), Rect::new(300.0, 100.0, 200.0, 300.0));
 }
 
+#[test]
+fn relative_render_transform_origin_refreshes_when_the_repeater_resizes() {
+    let _scope = test_scope();
+    let (repeater, layout) = probe(Size::new(500.0, 600.0));
+    repeater.set_render_transform_origin(ferroui_base::RelativePoint::CENTER);
+    repeater.set_render_transform(Some(ScaleTransform::with_scale(2.0, 2.0).into()));
+    let scroll = viewer(&repeater.clone().upcast(), Some(Size::new(200.0, 300.0)));
+    let root = TestRoot::with_child(&scroll);
+    root.execute_initial_layout_pass();
+    settle(&root);
+    assert_eq!(repeater.bounds().size(), Size::new(500.0, 600.0));
+    assert_close(layout.last(), Rect::new(125.0, 150.0, 100.0, 150.0));
+
+    // The scroller still exposes the same viewport at the same offset. The
+    // new bounds move the center about which the repeater is scaled.
+    layout.extent.set(Size::new(700.0, 1000.0));
+    layout.invalidate_measure();
+    settle(&root);
+    assert_eq!(scroll.offset(), Vector::default());
+    assert_eq!(scroll.viewport(), Size::new(200.0, 300.0));
+    assert_eq!(repeater.bounds().size(), Size::new(700.0, 1000.0));
+    assert_close(layout.last(), Rect::new(175.0, 250.0, 100.0, 150.0));
+}
+
 fn cache_growth(presenter: bool) {
     let _scope = test_scope();
     let (repeater, layout) = probe(Size::new(1000.0, 2000.0));

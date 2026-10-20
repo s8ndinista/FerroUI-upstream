@@ -369,6 +369,90 @@ fn validate_stable_reset_element_index_event_trace() {
 }
 
 #[test]
+fn changing_template_during_a_keyed_reset_returns_every_old_element_to_its_factory() {
+    let _scope = test_scope();
+
+    struct OldFactory {
+        recycled: Rc<RefCell<Vec<Ref<Control>>>>,
+    }
+    impl IElementFactory for OldFactory {
+        fn get_element(
+            &self,
+            _args: &ElementFactoryGetArgs,
+        ) -> Result<Ref<Control>, ElementFactoryError> {
+            let button = Button::new();
+            button.set_height(20.0);
+            Ok(button.upcast())
+        }
+        fn recycle_element(
+            &self,
+            args: &ElementFactoryRecycleArgs,
+        ) -> Result<(), ElementFactoryError> {
+            self.recycled.borrow_mut().push(args.element());
+            args.parent()
+                .unwrap()
+                .cast::<ItemsRepeater>()
+                .unwrap()
+                .children()
+                .remove(&args.element());
+            Ok(())
+        }
+    }
+
+    // A source Reset and a layout replacement both preserve keyed controls
+    // until arrange. A template replacement in that interval must end reuse.
+    for change_layout in [false, true] {
+        let source = KeyedSource::new(0..3);
+        let (repeater, _) = fixture(ItemsSource::new(source.clone()), 3, false);
+        let recycled = Rc::new(RefCell::new(Vec::new()));
+        repeater.set_element_factory(Some(Rc::new(OldFactory {
+            recycled: recycled.clone(),
+        })));
+        run(&repeater);
+        let old: Vec<_> = (0..3)
+            .map(|index| repeater.try_get_element(index).unwrap())
+            .collect();
+        if change_layout {
+            repeater.set_layout(Some(StackLayout::new().upcast()));
+        } else {
+            source.reset(0..3);
+        }
+        assert!(recycled.borrow().is_empty());
+        assert!(old.iter().all(|element| {
+            ItemsRepeater::get_virtualization_info(element).is_in_unique_id_reset_pool()
+        }));
+
+        repeater.set_data_template(Some(FuncDataTemplate::new(
+            |_| true,
+            |_, _| {
+                let text = TextBlock::new();
+                text.set_height(20.0);
+                Some(text.upcast())
+            },
+            true,
+        )));
+        assert_eq!(recycled.borrow().len(), old.len());
+        for element in &old {
+            assert!(recycled.borrow().contains(element));
+            assert!(element.visual_parent().is_none());
+            assert!(element.data_context().is_none());
+        }
+        run(&repeater);
+        for index in 0..3 {
+            let element = repeater.try_get_element(index).unwrap();
+            assert!(element.is::<TextBlock>());
+            assert!(!old.contains(&element));
+            assert_eq!(
+                element.data_context().unwrap().downcast_ref::<i32>(),
+                Some(&index)
+            );
+        }
+        // Completing the reset/arrange must not recycle the old roots twice.
+        assert_eq!(recycled.borrow().len(), old.len());
+    }
+}
+
+#[test]
 fn validate_get_element_at_caching_request_trace() {
     let _scope = test_scope();
     let (repeater, layout) = fixture(ItemsSource::from_values(0..15), 0, false);

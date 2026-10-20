@@ -215,6 +215,20 @@ impl FerroObjectImpl for ItemsRepeater {
             this.viewport_manager.on_render_transform_changed(this);
         } else if property == Visual::render_transform_origin_property().as_property() {
             this.viewport_manager.refresh_viewport(this);
+        } else if property == Visual::bounds_property().as_property()
+            && this.render_transform().is_some()
+        {
+            let origin = this.render_transform_origin();
+            let (old, new) = change.get_old_and_new_value::<Rect>();
+            if origin.unit == ferroui_base::RelativeUnit::Relative
+                && origin.point != Point::default()
+                && old.size() != new.size()
+            {
+                // Native viewport geometry can stay unchanged when only the
+                // receiving visual grows. Its own relative transform origin
+                // nevertheless moves, changing the viewport in item space.
+                this.viewport_manager.refresh_viewport(this);
+            }
         }
     }
 }
@@ -855,6 +869,7 @@ impl ItemsRepeater {
     }
     fn reset_template_elements(&self) {
         {
+            self.view_manager.on_template_changing();
             self.processing_change
                 .set(Some(NotifyCollectionChangedAction::Reset));
             let _guard = CollectionGuard(&self.processing_change);
@@ -867,6 +882,10 @@ impl ItemsRepeater {
                     self.clear_element_impl(&element);
                 }
             }
+            // Reset first releases the layout's references. A keyed source
+            // reset or an active removal transition may still own children
+            // outside that layout; they must also reach the OLD factory.
+            self.view_manager.clear_all(self);
         }
     }
     fn recheck_template_empty(&self) {

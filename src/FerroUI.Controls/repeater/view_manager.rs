@@ -318,6 +318,13 @@ impl ViewManager {
         }
     }
 
+    pub fn on_template_changing(&self) {
+        // Stable keys preserve identity only while the factory is unchanged.
+        // Disable reuse before the layout receives Reset; clear_all drains
+        // the retained pool after that callback releases layout references.
+        self.stable_reset_pending.set(false);
+    }
+
     pub fn clear_all(&self, owner: &ItemsRepeater) {
         self.stable_reset_pending.set(false);
         let _ = self.reset_pool.take_all();
