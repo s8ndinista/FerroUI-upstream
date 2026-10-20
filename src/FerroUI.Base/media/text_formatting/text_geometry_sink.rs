@@ -14,17 +14,27 @@ pub(super) struct TextGeometrySink {
     group: Ref<GeometryGroup>,
     transform: Matrix,
     transforms: Vec<Matrix>,
+    require_complete: bool,
+    complete: bool,
 }
 
 impl TextGeometrySink {
     pub(super) fn new() -> Self {
         let group = GeometryGroup::new();
         group.set_fill_rule(FillRule::NonZero);
-        Self { group, transform: Matrix::IDENTITY, transforms: Vec::new() }
+        Self { group, transform: Matrix::IDENTITY, transforms: Vec::new(), require_complete: false, complete: true }
+    }
+
+    pub(super) fn complete() -> Self {
+        Self { require_complete: true, ..Self::new() }
     }
 
     pub(super) fn into_geometry(self) -> Ref<Geometry> {
         self.group.upcast()
+    }
+
+    pub(super) fn into_complete_geometry(self) -> Option<Ref<Geometry>> {
+        self.complete.then(|| self.group.upcast())
     }
 
     fn append(&self, geometry: Ref<Geometry>) {
@@ -45,7 +55,15 @@ impl TextGeometrySink {
 
 impl ITextDrawingSink for TextGeometrySink {
     fn draw_glyph_run(&mut self, _foreground: Option<&Rc<dyn IBrush>>, glyph_run: &Rc<GlyphRun>) {
-        self.append(glyph_run.build_geometry());
+        if self.require_complete {
+            if let Some(geometry) = glyph_run.try_build_geometry() {
+                self.append(geometry);
+            } else {
+                self.complete = false;
+            }
+        } else {
+            self.append(glyph_run.build_geometry());
+        }
     }
 
     fn draw_rectangle(&mut self, brush: Option<&Rc<dyn IBrush>>, pen: Option<&Rc<dyn IPen>>, rect: Rect) {

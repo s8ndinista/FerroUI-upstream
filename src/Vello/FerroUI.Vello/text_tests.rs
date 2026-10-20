@@ -893,6 +893,69 @@ fn glyph_run_of(platform_typeface: Rc<VelloTypeface>, text: &str, em_size: f64, 
     GlyphRun::new(glyph_typeface, em_size, utf16(text), GlyphInfoList::from(glyph_infos), Some(origin), 0)
 }
 
+#[test]
+fn glyph_run_complete_geometry_preserves_shaped_offsets_exactly() {
+    let scope = start();
+    let face = VelloTypeface::from_bytes(INTER.to_vec(), FontSimulations::None).unwrap();
+    let run = glyph_run_of(face, "o", 40.0, Point::new(11.0, 65.0));
+    let original = run.try_build_geometry().expect("a monochrome outline").bounds();
+    let mut infos = run.glyph_infos().borrow().to_vec();
+    assert_eq!(infos.len(), 1);
+    let displacement = Vector::new(19.25, -13.75);
+    infos[0].glyph_offset = displacement;
+    run.set_glyph_infos(GlyphInfoList::from(infos));
+    for geometry in [run.build_geometry(), run.try_build_geometry().unwrap()] {
+        let displaced = geometry.bounds();
+        assert!((displaced.x - original.x - displacement.x).abs() < 1e-9);
+        assert!((displaced.y - original.y - displacement.y).abs() < 1e-9);
+        assert!((displaced.width - original.width).abs() < 1e-9);
+        assert!((displaced.height - original.height).abs() < 1e-9);
+    }
+    // Compare this one displaced glyph's actual ink, so a misplaced small mark
+    // cannot disappear inside a whole-layout percentage tolerance.
+    let foreground = ImmutableSolidColorBrush::new(Colors::BLACK);
+    let drawn = TextTarget::new(100, 90);
+    drawn.draw(|context| {
+        context.push_text_options(TextOptions {
+            text_hinting_mode: TextHintingMode::None,
+            baseline_pixel_alignment: BaselinePixelAlignment::Unaligned,
+            ..TextOptions::default()
+        });
+        context.draw_glyph_run(Some(&foreground), &*run.platform_impl());
+        context.pop_text_options();
+    });
+    let outlined = TextTarget::new(100, 90);
+    let geometry = run.try_build_geometry().unwrap();
+    outlined.draw(|context| context.draw_geometry(Some(&foreground), None, &*geometry.platform_impl().unwrap()));
+    assert_eq!(drawn.ink(is_dark).0, outlined.ink(is_dark).0);
+    assert!(drawn.ink(is_dark).1 > 100);
+    assert!(difference_of_ink(&drawn, &outlined) < 2.0);
+    scope.dispose();
+}
+
+#[test]
+fn glyph_run_complete_geometry_rejects_missing_and_colour_outlines() {
+    let scope = start();
+    let face = VelloTypeface::from_bytes(INTER.to_vec(), FontSimulations::None).unwrap();
+    let run = glyph_run_of(face.clone(), "a ", 30.0, Point::default());
+    assert!(run.try_build_geometry().is_some(), "whitespace is a complete empty contour");
+    let mut infos = run.glyph_infos().borrow().to_vec();
+    infos[1].glyph_index = u16::MAX;
+    run.set_glyph_infos(GlyphInfoList::from(infos));
+    assert!(run.build_geometry().bounds().width > 0.0, "the legacy outline is only the a");
+    assert!(run.try_build_geometry().is_none(), "a partial outline must never count as complete");
+
+    let colour: &[u8] = include_bytes!("../../Skia/FerroUI.Skia/test_assets/assets/TwitterColorEmoji-SVGinOT.ttf");
+    let face = VelloTypeface::from_bytes(colour.to_vec(), FontSimulations::None).unwrap();
+    let run = glyph_run_of(face, "😀", 30.0, Point::default());
+    assert!(run.try_build_geometry().is_none(), "colour artwork is not a monochrome path");
+    let bitmap: &[u8] = include_bytes!("../../Skia/FerroUI.Skia/test_assets/assets/NISC18030.ttf");
+    let face = VelloTypeface::from_bytes(bitmap.to_vec(), FontSimulations::None).unwrap();
+    let run = glyph_run_of(face, "中", 30.0, Point::default());
+    assert!(run.try_build_geometry().is_none(), "bitmap glyphs have no outline");
+    scope.dispose();
+}
+
 /// The share of the pixels of two renderings that differ by more than a
 /// quarter of the range, in percent of the pixels with ink in the first.
 fn difference_of_ink(first: &TextTarget, second: &TextTarget) -> f64 {

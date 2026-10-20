@@ -25,6 +25,8 @@ use ferroui_base::platform::{
 };
 use ferroui_base::{PixelSize, Point, Rect, Vector};
 use kurbo::BezPath;
+use skrifa::raw::types::Tag;
+use skrifa::raw::TableProvider;
 use std::fs::File;
 use std::io::{self, Read};
 use std::rc::Rc;
@@ -52,6 +54,45 @@ impl Default for PlatformRenderInterface {
     fn default() -> Self {
         Self::new(VelloOptions::default())
     }
+}
+
+fn glyph_run_geometry(glyph_run: &GlyphRun, require_complete: bool) -> Option<Arc<dyn IGeometryImpl>> {
+    let glyph_typeface = VelloTypeface::try_get(&**glyph_run.glyph_typeface().platform_typeface())
+        .unwrap_or_else(|| panic!("PlatformImpl can't be null."));
+    let face = glyph_typeface.face();
+    if require_complete {
+        // A monochrome contour cannot retain layered colour paints or embedded
+        // raster/SVG glyph artwork. Conservatively reject such typefaces even
+        // if they also expose fallback TrueType outlines for some glyphs.
+        let font = face.font_ref();
+        if [b"sbix", b"CBDT", b"EBDT", b"COLR", b"SVG ", b"bdat"]
+            .iter()
+            .any(|tag| font.table_data(Tag::new(tag)).is_some())
+        {
+            return None;
+        }
+    }
+    let em_size = glyph_run.font_rendering_em_size();
+    let mut path = BezPath::new();
+    let origin = glyph_run.baseline_origin();
+    let mut current_x = origin.x;
+    let glyph_infos = glyph_run.glyph_infos();
+    for glyph in glyph_infos.borrow().iter() {
+        if let Some(glyph_path) = face.glyph_path(glyph.glyph_index, em_size) {
+            if !glyph_path.elements().is_empty() {
+                // The shaper may position a mark independently of its advance.
+                // Use exactly the same per-glyph offsets as GlyphRunImpl draws.
+                path.extend(kurbo::Affine::translate((
+                    current_x + glyph.glyph_offset.x,
+                    origin.y + glyph.glyph_offset.y,
+                )) * glyph_path);
+            }
+        } else if require_complete {
+            return None;
+        }
+        current_x += glyph.glyph_advance;
+    }
+    Some(SimpleGeometryImpl::new(VelloPath::new(path, FillRule::NonZero), FillPath::SameAsStroke, None))
 }
 
 impl IPlatformRenderInterface for PlatformRenderInterface {
@@ -89,31 +130,11 @@ impl IPlatformRenderInterface for PlatformRenderInterface {
     }
 
     fn build_glyph_run_geometry(&self, glyph_run: &GlyphRun) -> Arc<dyn IGeometryImpl> {
-        let glyph_typeface = VelloTypeface::try_get(&**glyph_run.glyph_typeface().platform_typeface())
-            .unwrap_or_else(|| panic!("PlatformImpl can't be null."));
+        glyph_run_geometry(glyph_run, false).expect("Partial glyph outlines are always available")
+    }
 
-        let font_rendering_em_size = glyph_run.font_rendering_em_size();
-
-        let mut path = BezPath::new();
-
-        let baseline_origin = glyph_run.baseline_origin();
-        let (mut current_x, current_y) = (baseline_origin.x, baseline_origin.y);
-
-        let glyph_infos = glyph_run.glyph_infos();
-
-        // As the Skia backend builds it: the outline of every glyph without
-        // hinting at its pen position on the baseline.
-        for glyph_info in glyph_infos.borrow().iter() {
-            if let Some(glyph_path) = glyph_typeface.face().glyph_path(glyph_info.glyph_index, font_rendering_em_size) {
-                if !glyph_path.elements().is_empty() {
-                    path.extend(kurbo::Affine::translate((current_x, current_y)) * glyph_path);
-                }
-            }
-
-            current_x += glyph_info.glyph_advance;
-        }
-
-        SimpleGeometryImpl::new(VelloPath::new(path, FillRule::NonZero), FillPath::SameAsStroke, None)
+    fn try_build_glyph_run_geometry(&self, glyph_run: &GlyphRun) -> Option<Arc<dyn IGeometryImpl>> {
+        glyph_run_geometry(glyph_run, true)
     }
 
     fn create_glyph_run(

@@ -278,6 +278,19 @@ impl TextLayout {
         sink.into_geometry()
     }
 
+    /// Obtains all contours at `origin` without accepting a partial glyph
+    /// outline. Positions and decorations are the same as `build_geometry`.
+    ///
+    /// Returns `None` when the platform cannot verify completeness or any run
+    /// contains bitmap or colour-font glyphs. Glyph paints are not represented
+    /// by geometry; callers must preserve or validate those separately before
+    /// replacing text with a path. An empty layout succeeds with empty geometry.
+    pub fn try_build_geometry(&self, origin: Point) -> Option<crate::Ref<crate::media::Geometry>> {
+        let mut sink = super::text_geometry_sink::TextGeometrySink::complete();
+        self.draw(&mut sink, origin);
+        sink.into_complete_geometry()
+    }
+
     /// Get the pixel location relative to the top-left of the layout box given the text position.
     ///
     /// * `text_position` — the text position.
