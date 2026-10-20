@@ -145,9 +145,148 @@ impl Host {
         matches!(self, Host::Content(..) | Host::Items(_) | Host::Text(_))
     }
 
+    /// Whether the children are a list whose items can be removed, inserted
+    /// and moved one by one (`Children` of a panel, `Items`).
+    fn is_list(&self) -> bool {
+        matches!(self, Host::Panel(_) | Host::Items(_))
+    }
+
+    fn remove_at(&self, index: usize) {
+        count_operation();
+        match self {
+            Host::Panel(panel) => panel.children().remove_at(index),
+            Host::Items(items) => items.items().remove_at(index),
+            _ => unreachable!("only lists remove one child"),
+        }
+    }
+
+    fn insert_at(&self, index: usize, item: &Placed) {
+        count_operation();
+        match (self, item) {
+            (Host::Panel(panel), Placed::Control(control)) => panel.children().insert(index, control.clone()),
+            (Host::Panel(_), Placed::Value(_)) => panic!("a panel holds controls; text is not a child of a panel (use a TextBlock)"),
+            (Host::Items(items), item) => items.items().insert(index, Some(item.boxed())),
+            _ => unreachable!("only lists insert one child"),
+        }
+    }
+
+    /// Moves the child at `from` to `to` (an index of the list without it).
+    /// A panel moves the control without taking it out of the visual tree.
+    fn move_to(&self, from: usize, to: usize, item: &Placed) {
+        match self {
+            Host::Panel(panel) => {
+                count_operation();
+                panel.children().move_item(from, to);
+            }
+            Host::Items(_) => {
+                self.remove_at(from);
+                self.insert_at(to, item);
+            }
+            _ => unreachable!("only lists move a child"),
+        }
+    }
+
+    /// Patches the children `old` from `start` on into `new`: the children
+    /// that are gone are removed, the ones that stay keep their place when
+    /// they are in the longest increasing subsequence of their old places
+    /// (the fewest moves), the others are moved, and the new ones inserted.
+    /// The places of controls are found through a map that each move and
+    /// insertion updates over the range it shifts.
+    fn patch_list(&self, start: usize, old: &[Placed], new: &[Placed]) {
+        fn identity(item: &Placed) -> Option<usize> {
+            match item {
+                Placed::Control(control) => Some(&**control as *const Control as usize),
+                Placed::Value(_) => None,
+            }
+        }
+        let new_index: HashMap<usize, usize> =
+            new.iter().enumerate().filter_map(|(i, item)| Some((identity(item)?, i))).collect();
+        let new_place = |item: &Placed| -> Option<usize> {
+            match identity(item) {
+                Some(id) => new_index.get(&id).copied(),
+                None => new.iter().position(|other| other.same(item)),
+            }
+        };
+
+        // 1. What is gone, from the end so that the places hold.
+        let mut kept: Vec<Placed> = Vec::with_capacity(old.len());
+        let mut places: Vec<usize> = Vec::with_capacity(old.len());
+        for (j, item) in old.iter().enumerate().rev() {
+            match new_place(item) {
+                Some(place) => {
+                    kept.push(item.clone());
+                    places.push(place);
+                }
+                None => self.remove_at(start + j),
+            }
+        }
+        kept.reverse();
+        places.reverse();
+
+        // 2. The kept children in the longest increasing subsequence of
+        //    their new places stay where they are.
+        let stationary = longest_increasing_subsequence(&places);
+        let mut current: Vec<(Placed, bool)> =
+            kept.into_iter().enumerate().map(|(k, item)| (item, stationary.contains(&k))).collect();
+        // A few moves: the places of controls come from a map that each move
+        // and insertion updates over the range it shifts. Many moves (a list
+        // sorted another way): every move shifts long ranges, and a scan of
+        // the list costs less than keeping the map.
+        let moves = current.iter().filter(|(_, stays)| !stays).count() + new.len() - current.len();
+        let use_map = moves <= 16;
+        let mut index: HashMap<usize, usize> = if use_map {
+            current.iter().enumerate().filter_map(|(k, (item, _))| Some((identity(item)?, k))).collect()
+        } else {
+            HashMap::new()
+        };
+        let reindex = |current: &[(Placed, bool)], index: &mut HashMap<usize, usize>, range: std::ops::Range<usize>| {
+            if use_map {
+                for k in range {
+                    if let Some(id) = identity(&current[k].0) {
+                        index.insert(id, k);
+                    }
+                }
+            }
+        };
+        let position = |current: &[(Placed, bool)], index: &HashMap<usize, usize>, item: &Placed| -> Option<usize> {
+            match identity(item) {
+                Some(id) if use_map => index.get(&id).copied(),
+                _ => current.iter().position(|(entry, _)| entry.same(item)),
+            }
+        };
+
+        // 3. From the end: each child goes before the one that follows it in
+        //    the new list, which is in place already.
+        let mut next: usize = current.len();
+        for i in (0..new.len()).rev() {
+            let target = next;
+            match position(&current, &index, &new[i]) {
+                Some(j) if current[j].1 => next = j,
+                Some(j) => {
+                    let to = if j < target { target - 1 } else { target };
+                    if j != to {
+                        self.move_to(start + j, start + to, &new[i]);
+                        let entry = current.remove(j);
+                        current.insert(to, entry);
+                        reindex(&current, &mut index, j.min(to)..j.max(to) + 1);
+                    }
+                    next = to;
+                }
+                None => {
+                    self.insert_at(start + target, &new[i]);
+                    current.insert(target, (new[i].clone(), true));
+                    let end = current.len();
+                    reindex(&current, &mut index, target..end);
+                    next = target;
+                }
+            }
+        }
+    }
+
     /// Replaces `removed` children from `start` on with `inserted`; `all` is
     /// the whole list after the change.
     fn splice(&self, start: usize, removed: usize, inserted: &[Placed], all: &[Placed]) {
+        count_operation();
         match self {
             Host::Panel(panel) => {
                 let children = panel.children();
@@ -318,7 +457,11 @@ impl Slot {
             return;
         }
         let all = top.placed();
-        self.host.splice(offset + prefix, old.len() - prefix - suffix, &new[prefix..new.len() - suffix], &all);
+        if self.host.is_list() {
+            self.host.patch_list(offset + prefix, &old[prefix..old.len() - suffix], &new[prefix..new.len() - suffix]);
+        } else {
+            self.host.splice(offset + prefix, old.len() - prefix - suffix, &new[prefix..new.len() - suffix], &all);
+        }
     }
 
     /// Places the children of a top slot into the host for the first time.
@@ -415,6 +558,9 @@ struct ControlState {
     classes: Vec<String>,
     props: Vec<MountedProp>,
     handlers: Owner,
+    /// The handlers attached: their identities and cells, which a patch
+    /// with the same identities swaps the closures into.
+    attached: Vec<(usize, Rc<dyn Any>, fn(&dyn Any, &dyn Any))>,
     children: Option<Children>,
 }
 
@@ -612,10 +758,12 @@ fn mount_control(element: ControlElement, host: &Rc<Host>) -> Rc<ControlInstance
         let props = element.props.into_iter().map(|entry| mount_prop(&control, entry.property, entry.value)).collect();
         let handlers = Owner::new();
         handlers.with(|| {
-            for attach in &element.handlers {
-                attach(&control);
+            for handler in &element.handlers {
+                (handler.attach)(&control);
             }
         });
+        count(|stats| stats.handler_attachments += element.handlers.len() as u64);
+        let attached = element.handlers.iter().map(|h| (h.identity, h.cell.clone(), h.swap)).collect();
         let children = flatten(element.children);
         let children = (!children.is_empty()).then(|| Children::mount(Host::of_control(&control), children));
         control.end_init();
@@ -629,7 +777,7 @@ fn mount_control(element: ControlElement, host: &Rc<Host>) -> Rc<ControlInstance
             control,
             owner,
             slot,
-            state: RefCell::new(ControlState { name: element.name, classes: element.classes, props, handlers, children }),
+            state: RefCell::new(ControlState { name: element.name, classes: element.classes, props, handlers, attached, children }),
         });
         keep_alive(instance.clone());
         instance
@@ -666,8 +814,9 @@ fn mount_prop(control: &Ref<Control>, property: &'static FerroProperty, value: P
 /// Starts a reactive value, a two-way value or a binding of a property; it
 /// belongs to the current owner.
 fn start_prop(control: &Ref<Control>, property: &'static FerroProperty, value: &PropValue) {
+    count(|stats| stats.value_starts += 1);
     match value {
-        PropValue::Dynamic(compute) => {
+        PropValue::Dynamic(compute) | PropValue::Follows { compute, .. } => {
             let compute = compute.clone();
             let weak = control.downgrade();
             effect(move || {
@@ -677,7 +826,7 @@ fn start_prop(control: &Ref<Control>, property: &'static FerroProperty, value: &
                 }
             });
         }
-        PropValue::TwoWay { get, set } => {
+        PropValue::TwoWay { get, set, .. } => {
             let get = get.clone();
             let set = set.clone();
             let weak = control.downgrade();
@@ -1049,14 +1198,26 @@ fn patch_control(instance: &ControlInstance, element: ControlElement) {
     });
     state.props = props;
 
-    // Handlers: closures are never equal, so they are attached again.
-    let handlers = instance.owner.with(Owner::new);
-    handlers.with(|| {
-        for attach in &element.handlers {
-            attach(control);
+    // Handlers: the same identities in the same order swap their closures
+    // into the cells of the attached trampolines; anything else attaches
+    // them again (closures are never equal).
+    let same = state.attached.len() == element.handlers.len()
+        && state.attached.iter().zip(&element.handlers).all(|((identity, ..), handler)| *identity != 0 && *identity == handler.identity);
+    if same {
+        for ((_, old, swap), handler) in state.attached.iter().zip(&element.handlers) {
+            swap(&**old, &*handler.cell);
         }
-    });
-    std::mem::replace(&mut state.handlers, handlers).dispose();
+    } else {
+        let handlers = instance.owner.with(Owner::new);
+        handlers.with(|| {
+            for handler in &element.handlers {
+                (handler.attach)(control);
+            }
+        });
+        std::mem::replace(&mut state.handlers, handlers).dispose();
+        count(|stats| stats.handler_attachments += element.handlers.len() as u64);
+        state.attached = element.handlers.iter().map(|h| (h.identity, h.cell.clone(), h.swap)).collect();
+    }
 
     // Children.
     let children = flatten(element.children);
@@ -1145,7 +1306,7 @@ fn describe(instance: &Instance) -> crate::inspect::InstanceNode {
                 .map(|prop| {
                     let source = match &prop.value {
                         PropValue::Value(_) => "value",
-                        PropValue::Dynamic(_) => "follows state",
+                        PropValue::Dynamic(_) | PropValue::Follows { .. } => "follows state",
                         PropValue::TwoWay { .. } => "two-way",
                         PropValue::Element(_) | PropValue::TypedElement { .. } => "element",
                         PropValue::Binding(_) => "binding",
@@ -1232,4 +1393,62 @@ fn display_value(value: &BoxedValue) -> String {
         return inner.as_ref().map_or_else(|| String::from("(none)"), display_value);
     }
     ferroui_base::data::core::ValueTypes::to_display_string(Some(value))
+}
+
+/// The indices of a longest strictly increasing subsequence of `values`
+/// (O(n log n), the patience method).
+pub(crate) fn longest_increasing_subsequence(values: &[usize]) -> std::collections::HashSet<usize> {
+    let mut tails: Vec<usize> = Vec::new();
+    let mut previous: Vec<Option<usize>> = vec![None; values.len()];
+    for (i, &value) in values.iter().enumerate() {
+        let at = tails.partition_point(|&t| values[t] < value);
+        previous[i] = if at > 0 { Some(tails[at - 1]) } else { None };
+        if at == tails.len() {
+            tails.push(i);
+        } else {
+            tails[at] = i;
+        }
+    }
+    let mut result = std::collections::HashSet::new();
+    let mut next = tails.last().copied();
+    while let Some(i) = next {
+        result.insert(i);
+        next = previous[i];
+    }
+    result
+}
+
+/// What the mounting and the reconciler did so far on this thread: what the
+/// tests and the benchmarks count ([`view_stats`]).
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct ViewStats {
+    /// Operations on the children of hosts: an insertion, a removal, a move,
+    /// a splice.
+    pub host_operations: u64,
+    /// Handlers attached to controls (a patch that swaps closures attaches
+    /// none).
+    pub handler_attachments: u64,
+    /// Reactive values, two-way values and bindings started on properties.
+    pub value_starts: u64,
+}
+
+ferroui_base::ferro_thread_local! {
+    static STATS: Cell<ViewStats> = Cell::new(ViewStats::default());
+}
+
+fn count(f: impl FnOnce(&mut ViewStats)) {
+    STATS.with(|stats| {
+        let mut value = stats.get();
+        f(&mut value);
+        stats.set(value);
+    });
+}
+
+fn count_operation() {
+    count(|stats| stats.host_operations += 1);
+}
+
+/// What the mounting and the reconciler did so far on this thread.
+pub fn view_stats() -> ViewStats {
+    STATS.with(Cell::get)
 }

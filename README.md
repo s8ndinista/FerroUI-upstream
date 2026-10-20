@@ -24,6 +24,7 @@ The ControlCatalog sample with the WinUI 3 theme (`ferroui-themes-winui`), its d
 - **XAML.** A port of the XamlX compiler front end with the framework's transformers and markup extensions. Documents are compiled to Rust source by the build script of a crate, or loaded at run time.
 - **Composition renderer.** A compositor with a render loop on its own thread, dirty-region tracking, server-side visuals and composition animations, drawing through a backend-neutral drawing context.
 - **Swappable backends.** Rendering and windowing sit behind contracts. Skia renders through Graphite on Metal, Ganesh on OpenGL, ANGLE, WebGL and Vulkan, or in software; an experimental Vello backend sits behind the same contracts; HarfBuzz shapes text.
+- **Declarative Rust UI.** `ferroui-view` writes user interfaces in Rust without XAML: builders generated for every control, an `rsx!` macro, fine-grained signals, and React-style components with hooks and a reconciler, with hot reload, an inspector and interoperation with XAML ([below](#declarative-rust-ui)).
 - **Safe Rust.** The controls, markup, XAML and theme crates contain no `unsafe` code. It is confined to a small part of the object model core and to the rendering, text shaping, platform and interop backends.
 
 ## Project status
@@ -321,6 +322,69 @@ Views can be written in XAML. FerroUI uses its own XML namespace:
 </Window>
 ```
 
+### Declarative Rust UI
+
+`ferroui-view` writes user interfaces in Rust without XAML, on the same controls, themes, styles and bindings. A component can run once and let its properties follow signals (the model of SolidJS and Leptos), or run again when its state changes and let a reconciler patch the controls (the model of React):
+
+```rust
+use ferroui_base::layout::Orientation;
+use ferroui_view::prelude::*;
+
+#[component(rerender)]
+fn Counter() -> Element {
+    let count = use_signal(|| 0);
+    rsx! {
+        StackPanel { orientation: Orientation::Horizontal, spacing: 8.0,
+            TextBlock { text: format!("Clicked {} times", count.get()) }
+            Button { class: "accent", on_click: move |_| count.update(|c| *c += 1), "Click" }
+        }
+    }
+}
+
+fn main() {
+    ferroui_view::launch(|| rsx! { Window { title: "Counter", Counter {} } });
+}
+```
+
+| The gallery of the API (light and dark, a TreeDataGrid and a colour view from their builders) | CRUD of 7GUIs as a component with hooks |
+|---|---|
+| ![The ViewGallery sample](docs/images/declarative-ui/view-gallery.png) | ![CRUD with hooks](docs/images/seven-guis/hooks-crud.png) |
+
+| Area | What it gives | API |
+|---|---|---|
+| Builders | A builder per control and setter per property and routed event, generated from the sources of the controls; the TreeDataGrid, the colour picker, the dialogs and the ReactiveUI controls behind features | `button()`, `stack_panel().child(..)`, `.set(property, value)`, `.bind(property, binding)` |
+| Markup in Rust | Elements, attributes, attached properties, text, conditions and loops | `rsx! { Grid { Grid.row: 1, Button { on_click: f, "Go" } } }` |
+| Fine-grained state | Signals, memos, effects and owners; a property follows a signal or a closure; two-way values | `signal`, `memo`, `effect`, `text: count`, `text: name.two_way()` |
+| Children that follow state | Keyed lists, conditions, computed children | `for_each`, `show`, `show_else`, `dynamic` |
+| Components | Run once, or run again; a component that runs again with comparable parameters is memoized by default (its parent's run skips it when they are equal) | `#[component]`, `#[component(rerender)]`, `#[component(rerender, always)]`, `rerender(..)` |
+| Hooks and context | State and effects of a component that runs again; values provided to the components below | `use_signal`, `use_memo`, `use_effect`, `use_effect_with`, `use_hook`, `provide_context`, `use_context` |
+| Reconciler | Siblings matched by key and by place, equal values left alone, handlers swapped in place, values following the same signal kept, keyed lists reordered with the fewest moves | automatic |
+| XAML together | A component in XAML, XAML (run time or compiled) in a component, the data context of a view model | `ComponentHost`, `register_component`, `use_xaml`, `use_data_context` |
+| Virtualized lists | Data templates whose items are components, recycled as the list scrolls | `template(\|item: T\| ..)` |
+| Styles and themes | Styles with XAML selectors, the theme variant and resources followed live | `style("Button.accent").set(..)`, `styles: [..]`, `use_theme_variant`, `use_resource_as`, `ThemeVariantScope` |
+| Motion | Transitions and key-frame animations of the port | `transition(property, ms(200))`, `transitions([..])`, `animation(..)`, `use_animation` |
+| Popups | A popup's child and a context menu as elements | `Popup { .. }`, `context_menu: rsx! { ContextMenu { .. } }` |
+| Tools | Hot reload of the literals of `rsx!`, diagnostics (keys, runaway components), an inspector of components on Shift+F12 | feature `hot-reload`, `set_diagnostics_handler`, `open_inspector` |
+| Samples | The 7GUIs in builders, `rsx!` and hooks versions; XAML interoperation; the gallery | `samples/SevenGuis`, `samples/ViewInterop`, `samples/ViewGallery` |
+
+For React developers, in short:
+
+| React | FerroUI |
+|---|---|
+| JSX | `rsx!`, or the builders |
+| function component | `#[component(rerender)]`, or `#[component]` that runs once |
+| `useState`, `useReducer` | `use_signal` (a `Copy` signal: `get`, `set`, `update`) |
+| `useEffect`, `useLayoutEffect` | `use_effect_with(deps, ..)` with `on_cleanup`; `use_effect` follows the signals it reads |
+| `useMemo`, `useCallback` | `use_memo` (follows signals, no dependency list); handlers need no memoizing |
+| `useContext` | `provide_context`, `use_context::<T>()` |
+| `React.memo`, `key` | the default for comparable parameters (`always` opts out), `key: ..` |
+| portals | `Popup` with a child element |
+| react-window | a virtualized `ListBox` with `item_template: template(..)` |
+| Fast Refresh, React DevTools | feature `hot-reload` (literals), the inspector (Shift+F12) |
+| no counterpart | a property that follows a signal updates without running anything; typed setters checked at compile time; two-way values; XAML and components inside each other |
+
+The design is in [docs/declarative-ui.md](docs/declarative-ui.md), and the comparison with React in [docs/declarative-ui-react.md](docs/declarative-ui-react.md).
+
 ### MVVM with ReactiveUI
 
 FerroUI has ports of System.Reactive, DynamicData, Splat and ReactiveUI, one crate each, and an integration of ReactiveUI with the controls (`ferroui-reactiveui-controls`) that is set up with `use_reactive_ui` on the application builder. Only the integration depends on the user interface, so view models can be tested without a window. The guide [docs/mvvm.md](docs/mvvm.md) covers view models, property paths, commands, views, routing, reactive collections, threading and testing, with the two samples, `samples/ReactiveDemo` and `samples/ReactiveUIExample`.
@@ -350,6 +414,7 @@ The layout follows the upstream project so that files can be compared side by si
 - [Tracking](docs/porting/TRACKING.md) and [what is left](docs/porting/REMAINING.md): generated per-file, per-type and per-member status.
 - [Deviations](docs/porting/DEVIATIONS.md): every place where the port differs from upstream, and why.
 - [XAML design](docs/porting/xaml.md): the markup pipeline, the run-time loader and the compiler of markup to Rust.
+- [Declarative Rust UI](docs/declarative-ui.md): `ferroui-view`, its builders, `rsx!`, signals, components, hooks, the reconciler, XAML interoperation, tools and the phases of the work; [compared with React](docs/declarative-ui-react.md).
 - [MVVM on FerroUI](docs/mvvm.md): ReactiveUI, DynamicData and System.Reactive on FerroUI, with the samples ReactiveDemo and ReactiveUIExample.
 - Platforms: [Windows](docs/porting/win32-platform.md), [WinUI](docs/porting/winui.md), [Linux on X11](docs/porting/x11-platform.md) with [AT-SPI](docs/porting/atspi.md), [Wayland](docs/porting/wayland-platform.md), [Linux framebuffer](docs/porting/linux-framebuffer-platform.md), [OpenGL on macOS and iOS](docs/porting/apple-opengl.md), [iOS](docs/porting/ios-platform.md), [Android](docs/porting/android-platform.md), [browser](docs/porting/browser-platform.md) with its [render worker](docs/porting/browser-render-worker.md), [headless VNC](docs/porting/headless-vnc.md), [Vulkan](docs/porting/vulkan.md).
 - Rendering: [render thread](docs/porting/render-thread.md), [Vello backend](docs/porting/vello-backend.md), [render tests](docs/porting/render-tests.md).

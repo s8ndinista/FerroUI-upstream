@@ -396,12 +396,14 @@ impl ElementNode {
 /// the element is built.
 ///
 /// `#[component(rerender)]` makes a component that runs again: its function
-/// runs whenever a signal it read changes or its parent runs again, the
-/// elements it returns are patched into the controls it made before, and its
-/// state is kept in hooks (`use_signal`, `use_effect`, ...). Its parameters
-/// are cloned for each run, so they are `Clone`. With
-/// `#[component(rerender, memo)]` a parent that runs again with equal
-/// parameters (`PartialEq`) does not run it again.
+/// runs whenever a signal it read changes or its parent runs again with
+/// other parameters, the elements it returns are patched into the controls it
+/// made before, and its state is kept in hooks (`use_signal`, `use_effect`,
+/// ...). Its parameters are cloned for each run, so they are `Clone`. When
+/// they are also `PartialEq` it is memoized: a parent that runs again with
+/// equal parameters does not run it again. `#[component(rerender, memo)]`
+/// requires that (a compile error otherwise), and
+/// `#[component(rerender, always)]` runs it with its parent every time.
 #[proc_macro_attribute]
 pub fn component(attribute: TokenStream, item: TokenStream) -> TokenStream {
     let mut options = ComponentOptions::default();
@@ -412,15 +414,21 @@ pub fn component(attribute: TokenStream, item: TokenStream) -> TokenStream {
         } else if meta.path.is_ident("memo") {
             options.memo = true;
             Ok(())
+        } else if meta.path.is_ident("always") {
+            options.always = true;
+            Ok(())
         } else {
-            Err(meta.error("expected `rerender` or `memo`"))
+            Err(meta.error("expected `rerender`, `memo` or `always`"))
         }
     });
     syn::parse_macro_input!(attribute with parser);
-    if options.memo && !options.rerender {
-        return syn::Error::new(Span::call_site(), "`memo` is an option of a component that runs again: `#[component(rerender, memo)]`")
+    if (options.memo || options.always) && !options.rerender {
+        return syn::Error::new(Span::call_site(), "`memo` and `always` are options of a component that runs again: `#[component(rerender, memo)]`")
             .to_compile_error()
             .into();
+    }
+    if options.memo && options.always {
+        return syn::Error::new(Span::call_site(), "`memo` and `always` contradict each other").to_compile_error().into();
     }
     let function = syn::parse_macro_input!(item as ItemFn);
     match expand_component(function, options) {
@@ -432,7 +440,10 @@ pub fn component(attribute: TokenStream, item: TokenStream) -> TokenStream {
 #[derive(Default, Clone, Copy)]
 struct ComponentOptions {
     rerender: bool,
+    /// Memoized, and its parameters must be `PartialEq`.
     memo: bool,
+    /// Never memoized.
+    always: bool,
 }
 
 struct Param {
@@ -551,8 +562,16 @@ fn expand_component(mut function: ItemFn, options: ComponentOptions) -> syn::Res
     let into_element = if options.rerender {
         let props = if options.memo {
             quote! { ::std::option::Option::Some(::std::rc::Rc::new(::std::clone::Clone::clone(&props)) as ::std::rc::Rc<dyn ::ferroui_view::element::AnyValueEq>) }
-        } else {
+        } else if options.always {
             quote! { ::std::option::Option::None }
+        } else {
+            // Memoized when the parameters can be compared, which the types
+            // of the expansion decide (autoref specialization).
+            quote! {{
+                #[allow(unused_imports)]
+                use ::ferroui_view::element::{MemoNever as _, MemoWhenComparable as _};
+                (&::ferroui_view::element::MemoProbe(::std::clone::Clone::clone(&props))).memo_props()
+            }}
         };
         quote! {
             impl ::ferroui_view::IntoElement for #builder_type {
