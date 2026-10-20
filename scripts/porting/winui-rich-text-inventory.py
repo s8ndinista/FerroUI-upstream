@@ -104,6 +104,8 @@ EXPLICIT_REFERENCES = {
     "dxaml/xcp/dxaml/idl/winrt/main/microsoft.ui.xaml.idl",
     "dxaml/xcp/dxaml/themes/generic.xaml",
     "controls/dev/CommonStyles/RichEditBox_themeresources.xaml",
+    "controls/dev/CommandBarFlyout/TextCommandBarFlyout.cpp",
+    "controls/dev/CommandBarFlyout/TextCommandBarFlyout.h",
     "controls/dev/CommonStyles/TextBlock_themeresources.xaml",
     "controls/dev/CommonStyles/TextBox_themeresources.xaml",
     "controls/dev/CommonStyles/Hyperlink_themeresources.xaml",
@@ -197,6 +199,8 @@ def classify(path: str) -> tuple[str, str, list[str]]:
         return "build, tooling and attribution", "reference", []
     if lower.endswith(".xaml"):
         return "theme reference", "reference", ["src/FerroUI.Themes.WinUI/"]
+    if path.startswith("controls/dev/CommandBarFlyout/TextCommandBarFlyout."):
+        return "text command flyout", "pending", ["src/FerroUI.Controls/rich_edit_box_format_commands.rs"]
     if "automationpeer" in lower or stem in {"textprovider", "textrangeprovider", "uiapatternproviderwrapper"}:
         return "text automation", "pending", ["src/FerroUI.Controls/automation/"]
     if "/pal/" in lower or "/fonts/" in lower or stem in {"fontfamily", "fontandscriptservices", "fonts", "typefacecollection"}:
@@ -297,7 +301,7 @@ def api_type_plan(owner: str) -> dict:
         return {
             "batch": "R7",
             "candidate_paths": ["src/FerroUI.Controls/automation/", "src/Windows/FerroUI.Win32/automation/"],
-            "remaining_review": "Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2 caret, TextChild and TextEdit accepted-composition services have mapped implementations; public peer events, conversion-target backend data, annotations and unsupported attributes remain explicit pending contracts.",
+            "remaining_review": "Review text provider/range/peer members individually, including attributes, units, platform marshalling, weak lifetime, events and native clients. Text2 caret, TextChild, accepted-composition TextEdit and public peer/EventsSource events have mapped implementations; conversion-target backend data, annotations, unsupported attributes and native client conformance remain explicit pending contracts.",
         }
     if name in {"TextHighlighter", "TextHighlighterBase", "TextRange"} and ".Documents." in owner:
         return {
@@ -322,7 +326,7 @@ def api_type_plan(owner: str) -> dict:
     if ".Controls." in owner:
         return {"batch": "R5/R7", "candidate_paths": ["src/FerroUI.Controls/rich_edit_box.rs", "src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs"], "remaining_review": "Review editable control members, native event timing, IME/clipboard capabilities, templates, accelerators and automation. Missing members are omitted, not stubbed."}
     if name in {"RichEditTextDocument", "RichEditTextRange", "ITextRange", "ITextSelection"}:
-        return {"batch": "R3/R8", "candidate_paths": ["src/FerroUI.Controls/rich_text/rich_edit_text_document.rs"], "remaining_review": "Audit the external TOM contract member by member. The Rust facade uses typed errors, UTF-16 text ranges and shared editor services; native option flags, ABI and remaining units are not inferred from similarly named methods. Seven native-valued units and explicit Rust Read/Write adapters have individual mappings; native Cluster remains pending."}
+        return {"batch": "R3/R8", "candidate_paths": ["src/FerroUI.Controls/rich_text/rich_edit_text_document.rs"], "remaining_review": "Audit the external TOM contract member by member. The Rust facade uses typed errors, UTF-16 text ranges and shared editor services; remaining option behavior, ABI and native units are not inferred from similarly named methods. Eight native-valued units including shaped Cluster, explicit Rust Read/Write adapters, paragraph tabs and structured Unicode case conversion have individual mappings; locale/engine conformance and unmapped members remain pending."}
     if name in {"ITextCharacterFormat", "ITextParagraphFormat"}:
         return {"batch": "R3/R8", "candidate_paths": [DOCUMENT_ROOT + "character_format.rs"], "remaining_review": "Audit native formatting units, mixed values, font/brush representation, tabs, lists, language resolution and formatting flags. Inherited language and supported RTF locale IDs have explicit mappings; Rust patches cover only reviewed fields."}
     if name in {"TextGetOptions", "TextSetOptions"}:

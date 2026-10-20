@@ -40,6 +40,612 @@
       "tests": []
     },
     {
+      "path": "controls/dev/CommandBarFlyout/TextCommandBarFlyout.cpp",
+      "git_blob": "1375c89d6e17df6f321ddbff6616e3c99a3bf0c5",
+      "sha256": "77e2284ef65277824c7ee96c1bad280e85e91c98f12037caa005c1bb15bac6a6",
+      "bytes": 32234,
+      "lines": 927,
+      "scope_reason": "explicit dependency/reference",
+      "component": "text command flyout",
+      "state": "partial",
+      "reuse_or_destination_candidates": [
+        "src/FerroUI.Controls/rich_edit_box_format_commands.rs"
+      ],
+      "targets": [
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_format_commands.rs",
+          "symbol": "pub fn toggle_bold("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_format_commands.rs",
+          "symbol": "pub fn toggle_italic("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_format_commands.rs",
+          "symbol": "pub fn toggle_underline("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_format_commands.rs",
+          "symbol": "pub fn can_format("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_format_commands.rs",
+          "symbol": "pub fn bold_state("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_format_commands.rs",
+          "symbol": "pub fn italic_state("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_format_commands.rs",
+          "symbol": "pub fn underline_state("
+        },
+        {
+          "path": "src/FerroUI.Themes.WinUI/Controls/RichEditBox.xaml",
+          "symbol": "TargetType=\"RichEditBox\""
+        },
+        {
+          "path": "src/FerroUI.Themes.Fluent/Controls/RichEditBox.xaml",
+          "symbol": "TargetType=\"RichEditBox\""
+        },
+        {
+          "path": "src/FerroUI.Themes.Simple/Controls/RichEditBox.xaml",
+          "symbol": "TargetType=\"RichEditBox\""
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Controls/rich_edit_format_command_tests.rs",
+          "symbol": "rich_format_queries_report_mixed_attributes_independently"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_format_command_tests.rs",
+          "symbol": "rich_bold_command_makes_mixed_selection_uniform_and_preserves_direction_and_history"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_format_command_tests.rs",
+          "symbol": "rich_underline_command_preserves_each_runs_unrelated_decorations"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_format_command_tests.rs",
+          "symbol": "rich_format_commands_update_collapsed_typing_format"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_format_command_tests.rs",
+          "symbol": "rich_format_commands_honor_read_only_and_keep_accelerator_policy_separate"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_format_command_tests.rs",
+          "symbol": "rich_format_commands_reject_reentrant_document_notifications"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_format_command_tests.rs",
+          "symbol": "rich_format_command_cancels_preedit_before_querying_the_accepted_selection"
+        },
+        {
+          "path": "src/FerroUI.Themes.WinUI/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_compiled_theme_populates_live_parts_with_one_shared_presenter"
+        },
+        {
+          "path": "src/FerroUI.Themes.WinUI/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_theme_scrolls_the_complete_story_and_reveals_the_end_caret"
+        },
+        {
+          "path": "src/FerroUI.Themes.WinUI/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_theme_changes_preserve_history_composition_and_presenter_identity"
+        },
+        {
+          "path": "src/FerroUI.Themes.WinUI/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_retemplate_detaches_previous_host_without_replacing_document_or_history"
+        },
+        {
+          "path": "src/FerroUI.Themes.WinUI/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_opened_command_flyout_uses_owner_commands_and_live_enablement"
+        },
+        {
+          "path": "src/FerroUI.Themes.WinUI/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_local_placeholder_brush_survives_pointer_focus_and_disabled_states"
+        },
+        {
+          "path": "src/FerroUI.Themes.Fluent/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_compiled_theme_populates_live_parts_with_one_shared_presenter"
+        },
+        {
+          "path": "src/FerroUI.Themes.Fluent/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_theme_scrolls_the_complete_story_and_reveals_the_end_caret"
+        },
+        {
+          "path": "src/FerroUI.Themes.Fluent/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_theme_changes_preserve_history_composition_and_presenter_identity"
+        },
+        {
+          "path": "src/FerroUI.Themes.Fluent/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_retemplate_detaches_previous_host_without_replacing_document_or_history"
+        },
+        {
+          "path": "src/FerroUI.Themes.Fluent/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_opened_command_flyout_uses_owner_commands_and_live_enablement"
+        },
+        {
+          "path": "src/FerroUI.Themes.Fluent/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_local_placeholder_brush_survives_pointer_focus_and_disabled_states"
+        },
+        {
+          "path": "src/FerroUI.Themes.Simple/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_compiled_theme_populates_live_parts_with_one_shared_presenter"
+        },
+        {
+          "path": "src/FerroUI.Themes.Simple/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_theme_scrolls_the_complete_story_and_reveals_the_end_caret"
+        },
+        {
+          "path": "src/FerroUI.Themes.Simple/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_theme_changes_preserve_history_composition_and_presenter_identity"
+        },
+        {
+          "path": "src/FerroUI.Themes.Simple/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_retemplate_detaches_previous_host_without_replacing_document_or_history"
+        },
+        {
+          "path": "src/FerroUI.Themes.Simple/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_opened_command_flyout_uses_owner_commands_and_live_enablement"
+        },
+        {
+          "path": "src/FerroUI.Themes.Simple/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_local_placeholder_brush_survives_pointer_focus_and_disabled_states"
+        }
+      ],
+      "includes": [
+        {
+          "header": "pch.h",
+          "line": 3,
+          "style": "quoted",
+          "resolution": "ambiguous",
+          "candidates": [
+            "Samples/AppTestAutomationHelpers/pch.h",
+            "Samples/ChartApp/ChartAppCppPackaged/pch.h",
+            "Samples/ChartApp/ChartAppCppUnpackaged/pch.h",
+            "Samples/DisableXamlGeneratedMain/Cpp/pch.h",
+            "Samples/DisableXamlGeneratedMain/CppNoCtor/pch.h",
+            "Samples/FolderTreeAppCpp/FolderTreeAppCpp/pch.h",
+            "Samples/ScratchPadAppCpp/ScratchPadAppCpp/pch.h",
+            "Samples/TableViewApp/TableViewAppCppPackaged/pch.h",
+            "Samples/TableViewApp/TableViewAppCppUnpackaged/pch.h",
+            "Samples/WinUICppDesktopSampleApp/CustomWindow/pch.h",
+            "Samples/WinUICppDesktopSampleApp/WinUICppDesktopSampleApp/WinUICppDesktopSampleApp/pch.h",
+            "Samples/WinUICppDesktopSampleApp/WinUICppRuntimeComponent/pch.h",
+            "Samples/WinUICppIsland2SampleApp/WinUICppIsland2SampleApp/pch.h",
+            "Samples/WinUICppIslandsSampleApp/WinUICppIslandsSampleApp/pch.h",
+            "Samples/WinUIDesktop/CppDesktopSample/pch.h",
+            "Samples/WinUIDesktop/NativeDX12DesktopSample/pch.h",
+            "Samples/WinUIDesktop/NativeDesktopSample/pch.h",
+            "Samples/WinUISnoop/WinUISnoopTap/pch.h",
+            "Samples/WinUITextInputXamlIslandApp/WinUITextInputXamlIslandApp/pch.h",
+            "controls/dev/dll-tabular/pch.h",
+            "controls/dev/dll/pch.h",
+            "controls/test/TabViewTearOutApp/pch.h",
+            "controls/test/TestAppCX/pch.h",
+            "dxaml/test/infra/taefhostapp/pch.h",
+            "dxaml/test/native/external/adaptability/customtypes/pch.h",
+            "dxaml/test/native/external/controls/customtypes/pch/pch.h",
+            "dxaml/test/native/external/foundation/customTypes/pch.h",
+            "dxaml/test/native/external/pch/pch.h",
+            "dxaml/test/native/external/sample/customTypes/pch.h",
+            "dxaml/test/native/external/tools/customTypes/pch.h",
+            "perf/scenarios/XAMLPerf.ButtonApp.Cpp.MUX/pch.h",
+            "perf/scenarios/XAMLPerf.HelloWorldApp.Cpp.MUX/XAMLPerf.HelloWorldApp.Cpp.MUX/pch.h",
+            "perf/scenarios/XAMLPerf.Islands-BlankUserControl.Cpp.MUX/Host/pch.h",
+            "perf/scenarios/XAMLPerf.Islands.Cpp.MUX/Host/pch.h",
+            "perf/scenarios/XAMLPerf.MinApp.Cpp.MUX/pch.h",
+            "perf/scenarios/XAMLPerf.MinApp.Cpp.WUX/pch.h",
+            "perf/scenarios/XAMLPerf.TextBlockApp.Cpp.MUX/pch.h",
+            "perf/scenarios/XAMLPerf.UnpackagedApp.Cpp.MUX/pch.h",
+            "perf/scenarios/cpp-win32-unpackaged/pch.h",
+            "src/XamlCompiler/Tests/RegressionProjects/Basic/CppWinRT/EventHandling_968976/pch.h",
+            "src/XamlCompiler/Tests/RegressionProjects/Basic/CppWinRT/Simple/pch.h",
+            "src/XamlCompiler/Tests/RegressionProjects/Basic/References/CppWinRTComponent/pch.h",
+            "src/XamlCompiler/Tests/RegressionProjects/Basic/References/CppWinRTExe/pch.h",
+            "src/XamlCompiler/Tests/RegressionProjects/Features/BindPhasingTestBedCppWinRT/BindPhasingTestBedCppWinRT/pch.h",
+            "src/XamlCompiler/Tests/RegressionProjects/Features/CompiledBinding/BindTestbedCppWinRT/pch.h",
+            "src/XamlCompiler/Tests/RegressionProjects/Features/CompiledBinding/BindTestbedCppWinRTModel/pch.h",
+            "src/XamlCompiler/Tests/RegressionProjects/Features/Conditionals/ConditionalsCppWinRT/pch.h",
+            "src/XamlCompiler/Tests/RegressionProjects/Features/DeferLoadStrategy/CppWinRT/pch.h",
+            "src/XamlCompiler/Tests/RegressionProjects/Features/LinkedMD/LinkedMDAppCppWinRT/pch.h",
+            "src/XamlCompiler/Tests/RegressionProjects/Features/LinkedMD/LinkedMDControlsCppWinRT/pch.h",
+            "src/XamlCompiler/Tests/RegressionProjects/Features/LinkedMD/LinkedMDSubControlsCppWinRT/pch.h",
+            "src/XamlCompiler/Tests/RegressionProjects/Features/MarkupExtensions/MarkupExtensionsCppWinRT/pch.h",
+            "src/XamlCompiler/Tests/RegressionProjects/Features/Metadata/MetadataTestbedCppWinRT/pch.h",
+            "src/XamlCompiler/Tests/RegressionProjects/Features/MultiXamlFiles/MultipleViewsTestbedCppWinRT/pch.h",
+            "src/XamlCompiler/Tests/RegressionProjects/Features/ReduceProviderLoading/ConsumerProvider/ConsumerCppWinRT/pch.h",
+            "src/XamlCompiler/Tests/RegressionProjects/Features/ReduceProviderLoading/ConsumerProvider/ProviderCppWinRT/pch.h",
+            "src/XamlCompiler/Tests/RegressionProjects/Features/StaticLibs/RuntimeComponentWithStaticLibInApp/pch.h",
+            "src/XamlCompiler/Tests/RegressionProjects/Features/StaticLibs/StaticControlsLib/pch.h",
+            "src/XamlCompiler/Tests/RegressionProjects/Features/StaticLibs/StaticLibInApp/pch.h",
+            "src/XamlCompiler/Tests/RegressionProjects/Features/StaticLibs/StaticLibInRuntimeComponent/pch.h",
+            "src/XamlCompiler/Tests/RegressionProjects/NonStandard/NonStandardCppWinRT/NonStandardCppWinRT/pch.h",
+            "tools/XamlProfiler/XamlProfilerTap/pch.h"
+          ]
+        },
+        {
+          "header": "common.h",
+          "line": 5,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "controls/dev/inc/common.h"
+          ]
+        },
+        {
+          "header": "TextCommandBarFlyout.h",
+          "line": 6,
+          "style": "quoted",
+          "resolution": "relative_path",
+          "candidates": [
+            "controls/dev/CommandBarFlyout/TextCommandBarFlyout.h"
+          ]
+        },
+        {
+          "header": "CommandBarFlyoutCommandBar.h",
+          "line": 7,
+          "style": "quoted",
+          "resolution": "relative_path",
+          "candidates": [
+            "controls/dev/CommandBarFlyout/CommandBarFlyoutCommandBar.h"
+          ]
+        },
+        {
+          "header": "ResourceAccessor.h",
+          "line": 8,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "controls/dev/ResourceHelper/ResourceAccessor.h"
+          ]
+        },
+        {
+          "header": "RuntimeProfiler.h",
+          "line": 9,
+          "style": "quoted",
+          "resolution": "ambiguous",
+          "candidates": [
+            "controls/dev/Telemetry/RuntimeProfiler.h",
+            "dxaml/xcp/components/Telemetry/inc/RuntimeProfiler.h"
+          ]
+        },
+        {
+          "header": "TextCommandBarFlyout.properties.cpp",
+          "line": 10,
+          "style": "quoted",
+          "resolution": "external_or_generated",
+          "candidates": []
+        }
+      ],
+      "callable_candidates": [
+        {
+          "name": "TextCommandBarFlyout::TextCommandBarFlyout",
+          "line": 13,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "TextCommandBarFlyout::InitializeButtonWithUICommand",
+          "line": 42,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "TextCommandBarFlyout::InitializeButtonWithProperties",
+          "line": 51,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "TextCommandBarFlyout::InitializeButtonWithProperties",
+          "line": 116,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "TextCommandBarFlyout::UpdateButtons",
+          "line": 148,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "TextCommandBarFlyout::GetButtonsToAdd",
+          "line": 322,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "TextCommandBarFlyout::GetTextBoxButtonsToAdd",
+          "line": 358,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "TextCommandBarFlyout::GetTextBlockButtonsToAdd",
+          "line": 398,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "TextCommandBarFlyout::GetRichEditBoxButtonsToAdd",
+          "line": 415,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "TextCommandBarFlyout::GetRichTextBlockButtonsToAdd",
+          "line": 480,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "TextCommandBarFlyout::GetPasswordBoxButtonsToAdd",
+          "line": 497,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "TextCommandBarFlyout::IsButtonInPrimaryCommands",
+          "line": 514,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "TextCommandBarFlyout::ExecuteCutCommand",
+          "line": 521,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "TextCommandBarFlyout::ExecuteCopyCommand",
+          "line": 557,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "TextCommandBarFlyout::ExecutePasteCommand",
+          "line": 614,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "TextCommandBarFlyout::ExecuteBoldCommand",
+          "line": 654,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "TextCommandBarFlyout::ExecuteItalicCommand",
+          "line": 680,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "TextCommandBarFlyout::ExecuteUnderlineCommand",
+          "line": 706,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "TextCommandBarFlyout::ExecuteUndoCommand",
+          "line": 732,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "TextCommandBarFlyout::ExecuteRedoCommand",
+          "line": 751,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "TextCommandBarFlyout::ExecuteSelectAllCommand",
+          "line": 770,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "TextCommandBarFlyout::GetButton",
+          "line": 813,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        }
+      ],
+      "reason": "The pinned ExecuteBoldCommand/ExecuteItalicCommand query the selected format and set On unless already On; ExecuteUnderlineCommand sets Single for None/Undefined and otherwise None. FerroUI owner commands perform the equivalent supported-format query/set over the shared editor. Mixed attributes are queried independently, a mixed selection becomes enabled, and underline preserves unrelated run decorations in one history transaction. Existing MenuFlyout expresses the command UI; native command-bar layout, advanced underline/format effects and full native flyout behavior remain separate.",
+      "deviations": [
+        "RT-A01",
+        "RT-I03",
+        "RT-I06",
+        "RT-I17"
+      ]
+    },
+    {
+      "path": "controls/dev/CommandBarFlyout/TextCommandBarFlyout.h",
+      "git_blob": "748a0d927ee55e5254bc5d6fd4331c50476f7d88",
+      "sha256": "38b37263eda750d079c4ea7b9eb72460312dc94ff021f847e55e0d4864380650",
+      "bytes": 3265,
+      "lines": 92,
+      "scope_reason": "explicit dependency/reference",
+      "component": "text command flyout",
+      "state": "partial",
+      "reuse_or_destination_candidates": [
+        "src/FerroUI.Controls/rich_edit_box_format_commands.rs"
+      ],
+      "targets": [
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_format_commands.rs",
+          "symbol": "pub fn toggle_bold("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_format_commands.rs",
+          "symbol": "pub fn toggle_italic("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_format_commands.rs",
+          "symbol": "pub fn toggle_underline("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_format_commands.rs",
+          "symbol": "pub fn can_format("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_format_commands.rs",
+          "symbol": "pub fn bold_state("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_format_commands.rs",
+          "symbol": "pub fn italic_state("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_format_commands.rs",
+          "symbol": "pub fn underline_state("
+        },
+        {
+          "path": "src/FerroUI.Themes.WinUI/Controls/RichEditBox.xaml",
+          "symbol": "TargetType=\"RichEditBox\""
+        },
+        {
+          "path": "src/FerroUI.Themes.Fluent/Controls/RichEditBox.xaml",
+          "symbol": "TargetType=\"RichEditBox\""
+        },
+        {
+          "path": "src/FerroUI.Themes.Simple/Controls/RichEditBox.xaml",
+          "symbol": "TargetType=\"RichEditBox\""
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Controls/rich_edit_format_command_tests.rs",
+          "symbol": "rich_format_queries_report_mixed_attributes_independently"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_format_command_tests.rs",
+          "symbol": "rich_bold_command_makes_mixed_selection_uniform_and_preserves_direction_and_history"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_format_command_tests.rs",
+          "symbol": "rich_underline_command_preserves_each_runs_unrelated_decorations"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_format_command_tests.rs",
+          "symbol": "rich_format_commands_update_collapsed_typing_format"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_format_command_tests.rs",
+          "symbol": "rich_format_commands_honor_read_only_and_keep_accelerator_policy_separate"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_format_command_tests.rs",
+          "symbol": "rich_format_commands_reject_reentrant_document_notifications"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_format_command_tests.rs",
+          "symbol": "rich_format_command_cancels_preedit_before_querying_the_accepted_selection"
+        },
+        {
+          "path": "src/FerroUI.Themes.WinUI/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_compiled_theme_populates_live_parts_with_one_shared_presenter"
+        },
+        {
+          "path": "src/FerroUI.Themes.WinUI/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_theme_scrolls_the_complete_story_and_reveals_the_end_caret"
+        },
+        {
+          "path": "src/FerroUI.Themes.WinUI/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_theme_changes_preserve_history_composition_and_presenter_identity"
+        },
+        {
+          "path": "src/FerroUI.Themes.WinUI/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_retemplate_detaches_previous_host_without_replacing_document_or_history"
+        },
+        {
+          "path": "src/FerroUI.Themes.WinUI/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_opened_command_flyout_uses_owner_commands_and_live_enablement"
+        },
+        {
+          "path": "src/FerroUI.Themes.WinUI/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_local_placeholder_brush_survives_pointer_focus_and_disabled_states"
+        },
+        {
+          "path": "src/FerroUI.Themes.Fluent/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_compiled_theme_populates_live_parts_with_one_shared_presenter"
+        },
+        {
+          "path": "src/FerroUI.Themes.Fluent/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_theme_scrolls_the_complete_story_and_reveals_the_end_caret"
+        },
+        {
+          "path": "src/FerroUI.Themes.Fluent/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_theme_changes_preserve_history_composition_and_presenter_identity"
+        },
+        {
+          "path": "src/FerroUI.Themes.Fluent/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_retemplate_detaches_previous_host_without_replacing_document_or_history"
+        },
+        {
+          "path": "src/FerroUI.Themes.Fluent/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_opened_command_flyout_uses_owner_commands_and_live_enablement"
+        },
+        {
+          "path": "src/FerroUI.Themes.Fluent/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_local_placeholder_brush_survives_pointer_focus_and_disabled_states"
+        },
+        {
+          "path": "src/FerroUI.Themes.Simple/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_compiled_theme_populates_live_parts_with_one_shared_presenter"
+        },
+        {
+          "path": "src/FerroUI.Themes.Simple/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_theme_scrolls_the_complete_story_and_reveals_the_end_caret"
+        },
+        {
+          "path": "src/FerroUI.Themes.Simple/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_theme_changes_preserve_history_composition_and_presenter_identity"
+        },
+        {
+          "path": "src/FerroUI.Themes.Simple/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_retemplate_detaches_previous_host_without_replacing_document_or_history"
+        },
+        {
+          "path": "src/FerroUI.Themes.Simple/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_opened_command_flyout_uses_owner_commands_and_live_enablement"
+        },
+        {
+          "path": "src/FerroUI.Themes.Simple/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_local_placeholder_brush_survives_pointer_focus_and_disabled_states"
+        }
+      ],
+      "includes": [
+        {
+          "header": "TextCommandBarFlyout.g.h",
+          "line": 5,
+          "style": "quoted",
+          "resolution": "external_or_generated",
+          "candidates": []
+        },
+        {
+          "header": "CommandBarFlyout.h",
+          "line": 7,
+          "style": "quoted",
+          "resolution": "relative_path",
+          "candidates": [
+            "controls/dev/CommandBarFlyout/CommandBarFlyout.h"
+          ]
+        }
+      ],
+      "callable_candidates": [],
+      "reason": "The pinned ExecuteBoldCommand/ExecuteItalicCommand query the selected format and set On unless already On; ExecuteUnderlineCommand sets Single for None/Undefined and otherwise None. FerroUI owner commands perform the equivalent supported-format query/set over the shared editor. Mixed attributes are queried independently, a mixed selection becomes enabled, and underline preserves unrelated run decorations in one history transaction. Existing MenuFlyout expresses the command UI; native command-bar layout, advanced underline/format effects and full native flyout behavior remain separate.",
+      "deviations": [
+        "RT-A01",
+        "RT-I03",
+        "RT-I06",
+        "RT-I17"
+      ]
+    },
+    {
       "path": "controls/dev/CommonStyles/Hyperlink_themeresources.xaml",
       "git_blob": "9755333d16e487361eb56d335d2190d4ed234610",
       "sha256": "54b8d05ca5d9eb299b537923b1d8c007d620ed54bd56f1b3c7c3622bdae539ff",
@@ -62,12 +668,106 @@
       "lines": 102,
       "scope_reason": "explicit dependency/reference",
       "component": "theme reference",
-      "state": "reference",
+      "state": "partial",
       "reuse_or_destination_candidates": [
         "src/FerroUI.Themes.WinUI/"
       ],
-      "targets": [],
-      "tests": []
+      "targets": [
+        {
+          "path": "src/FerroUI.Themes.WinUI/Controls/RichEditBox.xaml",
+          "symbol": "TargetType=\"RichEditBox\""
+        },
+        {
+          "path": "src/FerroUI.Themes.Fluent/Controls/RichEditBox.xaml",
+          "symbol": "TargetType=\"RichEditBox\""
+        },
+        {
+          "path": "src/FerroUI.Themes.Simple/Controls/RichEditBox.xaml",
+          "symbol": "TargetType=\"RichEditBox\""
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Themes.WinUI/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_compiled_theme_populates_live_parts_with_one_shared_presenter"
+        },
+        {
+          "path": "src/FerroUI.Themes.WinUI/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_theme_scrolls_the_complete_story_and_reveals_the_end_caret"
+        },
+        {
+          "path": "src/FerroUI.Themes.WinUI/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_theme_changes_preserve_history_composition_and_presenter_identity"
+        },
+        {
+          "path": "src/FerroUI.Themes.WinUI/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_retemplate_detaches_previous_host_without_replacing_document_or_history"
+        },
+        {
+          "path": "src/FerroUI.Themes.WinUI/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_opened_command_flyout_uses_owner_commands_and_live_enablement"
+        },
+        {
+          "path": "src/FerroUI.Themes.WinUI/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_local_placeholder_brush_survives_pointer_focus_and_disabled_states"
+        },
+        {
+          "path": "src/FerroUI.Themes.Fluent/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_compiled_theme_populates_live_parts_with_one_shared_presenter"
+        },
+        {
+          "path": "src/FerroUI.Themes.Fluent/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_theme_scrolls_the_complete_story_and_reveals_the_end_caret"
+        },
+        {
+          "path": "src/FerroUI.Themes.Fluent/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_theme_changes_preserve_history_composition_and_presenter_identity"
+        },
+        {
+          "path": "src/FerroUI.Themes.Fluent/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_retemplate_detaches_previous_host_without_replacing_document_or_history"
+        },
+        {
+          "path": "src/FerroUI.Themes.Fluent/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_opened_command_flyout_uses_owner_commands_and_live_enablement"
+        },
+        {
+          "path": "src/FerroUI.Themes.Fluent/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_local_placeholder_brush_survives_pointer_focus_and_disabled_states"
+        },
+        {
+          "path": "src/FerroUI.Themes.Simple/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_compiled_theme_populates_live_parts_with_one_shared_presenter"
+        },
+        {
+          "path": "src/FerroUI.Themes.Simple/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_theme_scrolls_the_complete_story_and_reveals_the_end_caret"
+        },
+        {
+          "path": "src/FerroUI.Themes.Simple/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_theme_changes_preserve_history_composition_and_presenter_identity"
+        },
+        {
+          "path": "src/FerroUI.Themes.Simple/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_retemplate_detaches_previous_host_without_replacing_document_or_history"
+        },
+        {
+          "path": "src/FerroUI.Themes.Simple/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_opened_command_flyout_uses_owner_commands_and_live_enablement"
+        },
+        {
+          "path": "src/FerroUI.Themes.Simple/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_local_placeholder_brush_survives_pointer_focus_and_disabled_states"
+        }
+      ],
+      "reason": "The pinned rich-editor theme is translated to compiled FerroUI ControlTheme resources in WinUI, Fluent and Simple. Actual template parts host the existing persistent presenter, logical scrolling, header/placeholder/description and raw accessibility view. State selectors and dynamic resources preserve semantic document/history/composition; an owned MenuFlyout binds commands and enablement to the actual editor. Native lazy part allocation, touch selection command bar, OS focus reveal, full localization and pixel parity remain unverified or pending. Test fixtures run actual framework theme templates; executed results are recorded separately.",
+      "deviations": [
+        "RT-A01",
+        "RT-A02",
+        "RT-I06",
+        "RT-I14",
+        "RT-I17"
+      ]
     },
     {
       "path": "controls/dev/CommonStyles/TextBlock_themeresources.xaml",
@@ -16191,6 +16891,46 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs",
           "symbol": "RichEditBoxTextInputMethodClient"
+        },
+        {
+          "path": "src/FerroUI.Themes.WinUI/Controls/RichEditBox.xaml",
+          "symbol": "TargetType=\"RichEditBox\""
+        },
+        {
+          "path": "src/FerroUI.Themes.Fluent/Controls/RichEditBox.xaml",
+          "symbol": "TargetType=\"RichEditBox\""
+        },
+        {
+          "path": "src/FerroUI.Themes.Simple/Controls/RichEditBox.xaml",
+          "symbol": "TargetType=\"RichEditBox\""
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_format_commands.rs",
+          "symbol": "pub fn toggle_bold("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_format_commands.rs",
+          "symbol": "pub fn toggle_italic("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_format_commands.rs",
+          "symbol": "pub fn toggle_underline("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_format_commands.rs",
+          "symbol": "pub fn can_format("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_format_commands.rs",
+          "symbol": "pub fn bold_state("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_format_commands.rs",
+          "symbol": "pub fn italic_state("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_format_commands.rs",
+          "symbol": "pub fn underline_state("
         }
       ],
       "tests": [
@@ -16293,6 +17033,86 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
           "symbol": "rich_edit_line_services_use_paragraph_fallback_until_the_presenter_is_measured"
+        },
+        {
+          "path": "src/FerroUI.Themes.WinUI/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_compiled_theme_populates_live_parts_with_one_shared_presenter"
+        },
+        {
+          "path": "src/FerroUI.Themes.WinUI/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_theme_scrolls_the_complete_story_and_reveals_the_end_caret"
+        },
+        {
+          "path": "src/FerroUI.Themes.WinUI/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_theme_changes_preserve_history_composition_and_presenter_identity"
+        },
+        {
+          "path": "src/FerroUI.Themes.WinUI/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_retemplate_detaches_previous_host_without_replacing_document_or_history"
+        },
+        {
+          "path": "src/FerroUI.Themes.WinUI/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_opened_command_flyout_uses_owner_commands_and_live_enablement"
+        },
+        {
+          "path": "src/FerroUI.Themes.WinUI/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_local_placeholder_brush_survives_pointer_focus_and_disabled_states"
+        },
+        {
+          "path": "src/FerroUI.Themes.Fluent/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_compiled_theme_populates_live_parts_with_one_shared_presenter"
+        },
+        {
+          "path": "src/FerroUI.Themes.Fluent/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_theme_scrolls_the_complete_story_and_reveals_the_end_caret"
+        },
+        {
+          "path": "src/FerroUI.Themes.Fluent/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_theme_changes_preserve_history_composition_and_presenter_identity"
+        },
+        {
+          "path": "src/FerroUI.Themes.Fluent/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_retemplate_detaches_previous_host_without_replacing_document_or_history"
+        },
+        {
+          "path": "src/FerroUI.Themes.Fluent/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_opened_command_flyout_uses_owner_commands_and_live_enablement"
+        },
+        {
+          "path": "src/FerroUI.Themes.Fluent/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_local_placeholder_brush_survives_pointer_focus_and_disabled_states"
+        },
+        {
+          "path": "src/FerroUI.Themes.Simple/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_compiled_theme_populates_live_parts_with_one_shared_presenter"
+        },
+        {
+          "path": "src/FerroUI.Themes.Simple/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_theme_scrolls_the_complete_story_and_reveals_the_end_caret"
+        },
+        {
+          "path": "src/FerroUI.Themes.Simple/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_theme_changes_preserve_history_composition_and_presenter_identity"
+        },
+        {
+          "path": "src/FerroUI.Themes.Simple/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_retemplate_detaches_previous_host_without_replacing_document_or_history"
+        },
+        {
+          "path": "src/FerroUI.Themes.Simple/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_opened_command_flyout_uses_owner_commands_and_live_enablement"
+        },
+        {
+          "path": "src/FerroUI.Themes.Simple/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_local_placeholder_brush_survives_pointer_focus_and_disabled_states"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs",
+          "symbol": "rich_edit_markup_commands_bind_the_real_owner_and_follow_read_only_state"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs",
+          "symbol": "rich_edit_text_binding_updates_the_document_in_both_directions"
         }
       ],
       "includes": [
@@ -16530,7 +17350,7 @@
           "state": "unreviewed"
         }
       ],
-      "reason": "RichEditBox is a FerroUI TemplatedControl with one persistent RichEditBoxTextPresenter and shared model/editor/history. ContentElement accepts framework content hosts; header, placeholder and description use actual optional parts. Internal logical scrolling measures the full document at viewport width, keeps chrome fixed and shares text/caret/IME/automation offsets. Retemplating preserves live services, composition and undo. Owner-routed focus/selection and raw presenter automation avoid duplicate identity. Native windowless ABI, full backend services, touch UI and unmapped members remain pending.",
+      "reason": "RichEditBox is a FerroUI TemplatedControl with one persistent RichEditBoxTextPresenter and shared model/editor/history. ContentElement accepts framework content hosts; header, placeholder and description use actual optional parts. Internal logical scrolling measures the full document at viewport width, keeps chrome fixed and shares text/caret/IME/automation offsets. Retemplating preserves live services, composition and undo. Owner-routed focus/selection and raw presenter automation avoid duplicate identity. Native windowless ABI, full backend services, touch UI and unmapped members remain pending. Compiled WinUI/Fluent/Simple themes, formatting commands and runtime/compiled XAML fixtures now have explicit source and test anchors; fixture presence does not assert a runtime gate.",
       "deviations": [
         "RT-I04",
         "RT-I06",
@@ -16538,7 +17358,8 @@
         "RT-I08",
         "RT-A03",
         "RT-A04",
-        "RT-A01"
+        "RT-A01",
+        "RT-I17"
       ]
     },
     {
@@ -16614,6 +17435,46 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs",
           "symbol": "RichEditBoxTextInputMethodClient"
+        },
+        {
+          "path": "src/FerroUI.Themes.WinUI/Controls/RichEditBox.xaml",
+          "symbol": "TargetType=\"RichEditBox\""
+        },
+        {
+          "path": "src/FerroUI.Themes.Fluent/Controls/RichEditBox.xaml",
+          "symbol": "TargetType=\"RichEditBox\""
+        },
+        {
+          "path": "src/FerroUI.Themes.Simple/Controls/RichEditBox.xaml",
+          "symbol": "TargetType=\"RichEditBox\""
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_format_commands.rs",
+          "symbol": "pub fn toggle_bold("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_format_commands.rs",
+          "symbol": "pub fn toggle_italic("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_format_commands.rs",
+          "symbol": "pub fn toggle_underline("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_format_commands.rs",
+          "symbol": "pub fn can_format("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_format_commands.rs",
+          "symbol": "pub fn bold_state("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_format_commands.rs",
+          "symbol": "pub fn italic_state("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_format_commands.rs",
+          "symbol": "pub fn underline_state("
         }
       ],
       "tests": [
@@ -16716,6 +17577,86 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
           "symbol": "rich_edit_line_services_use_paragraph_fallback_until_the_presenter_is_measured"
+        },
+        {
+          "path": "src/FerroUI.Themes.WinUI/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_compiled_theme_populates_live_parts_with_one_shared_presenter"
+        },
+        {
+          "path": "src/FerroUI.Themes.WinUI/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_theme_scrolls_the_complete_story_and_reveals_the_end_caret"
+        },
+        {
+          "path": "src/FerroUI.Themes.WinUI/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_theme_changes_preserve_history_composition_and_presenter_identity"
+        },
+        {
+          "path": "src/FerroUI.Themes.WinUI/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_retemplate_detaches_previous_host_without_replacing_document_or_history"
+        },
+        {
+          "path": "src/FerroUI.Themes.WinUI/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_opened_command_flyout_uses_owner_commands_and_live_enablement"
+        },
+        {
+          "path": "src/FerroUI.Themes.WinUI/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_local_placeholder_brush_survives_pointer_focus_and_disabled_states"
+        },
+        {
+          "path": "src/FerroUI.Themes.Fluent/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_compiled_theme_populates_live_parts_with_one_shared_presenter"
+        },
+        {
+          "path": "src/FerroUI.Themes.Fluent/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_theme_scrolls_the_complete_story_and_reveals_the_end_caret"
+        },
+        {
+          "path": "src/FerroUI.Themes.Fluent/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_theme_changes_preserve_history_composition_and_presenter_identity"
+        },
+        {
+          "path": "src/FerroUI.Themes.Fluent/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_retemplate_detaches_previous_host_without_replacing_document_or_history"
+        },
+        {
+          "path": "src/FerroUI.Themes.Fluent/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_opened_command_flyout_uses_owner_commands_and_live_enablement"
+        },
+        {
+          "path": "src/FerroUI.Themes.Fluent/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_local_placeholder_brush_survives_pointer_focus_and_disabled_states"
+        },
+        {
+          "path": "src/FerroUI.Themes.Simple/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_compiled_theme_populates_live_parts_with_one_shared_presenter"
+        },
+        {
+          "path": "src/FerroUI.Themes.Simple/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_theme_scrolls_the_complete_story_and_reveals_the_end_caret"
+        },
+        {
+          "path": "src/FerroUI.Themes.Simple/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_theme_changes_preserve_history_composition_and_presenter_identity"
+        },
+        {
+          "path": "src/FerroUI.Themes.Simple/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_retemplate_detaches_previous_host_without_replacing_document_or_history"
+        },
+        {
+          "path": "src/FerroUI.Themes.Simple/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_opened_command_flyout_uses_owner_commands_and_live_enablement"
+        },
+        {
+          "path": "src/FerroUI.Themes.Simple/tests/rich_edit_box_tests.rs",
+          "symbol": "rich_edit_local_placeholder_brush_survives_pointer_focus_and_disabled_states"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs",
+          "symbol": "rich_edit_markup_commands_bind_the_real_owner_and_follow_read_only_state"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs",
+          "symbol": "rich_edit_text_binding_updates_the_document_in_both_directions"
         }
       ],
       "includes": [
@@ -16730,7 +17671,7 @@
         }
       ],
       "callable_candidates": [],
-      "reason": "RichEditBox is a FerroUI TemplatedControl with one persistent RichEditBoxTextPresenter and shared model/editor/history. ContentElement accepts framework content hosts; header, placeholder and description use actual optional parts. Internal logical scrolling measures the full document at viewport width, keeps chrome fixed and shares text/caret/IME/automation offsets. Retemplating preserves live services, composition and undo. Owner-routed focus/selection and raw presenter automation avoid duplicate identity. Native windowless ABI, full backend services, touch UI and unmapped members remain pending.",
+      "reason": "RichEditBox is a FerroUI TemplatedControl with one persistent RichEditBoxTextPresenter and shared model/editor/history. ContentElement accepts framework content hosts; header, placeholder and description use actual optional parts. Internal logical scrolling measures the full document at viewport width, keeps chrome fixed and shares text/caret/IME/automation offsets. Retemplating preserves live services, composition and undo. Owner-routed focus/selection and raw presenter automation avoid duplicate identity. Native windowless ABI, full backend services, touch UI and unmapped members remain pending. Compiled WinUI/Fluent/Simple themes, formatting commands and runtime/compiled XAML fixtures now have explicit source and test anchors; fixture presence does not assert a runtime gate.",
       "deviations": [
         "RT-I04",
         "RT-I06",
@@ -16738,7 +17679,8 @@
         "RT-I08",
         "RT-A03",
         "RT-A04",
-        "RT-A01"
+        "RT-A01",
+        "RT-I17"
       ]
     },
     {
@@ -16868,7 +17810,7 @@
           "state": "unreviewed"
         }
       ],
-      "reason": "The rich editor peer owns Text, Text2, TextEdit and Value identity independently of its raw persistent presenter. TextEdit causes follow current editor state and subscriptions do not retain the owner. TextEdit inherits Text independently of Text2. The editor returns the full active accepted IME preview as a live weak UTF-16 range, or None without an active composition; retained ranges follow owner/document lifetime. Accepted preview delta and single finalization events rewire on model replacement and marshal through the Win32 UI-thread bridge. A distinct conversion target requires backend data and is currently absent. Public AutomationPeer.RaiseTextEditTextChangedEvent, system cause producers and native Windows client execution remain pending.",
+      "reason": "The rich editor peer owns Text, Text2, TextEdit and Value identity independently of its raw persistent presenter. TextEdit causes follow current editor state and subscriptions do not retain the owner. TextEdit inherits Text independently of Text2. The editor returns the full active accepted IME preview as a live weak UTF-16 range, or None without an active composition; retained ranges follow owner/document lifetime. Accepted preview delta and single finalization events rewire on model replacement and marshal through the Win32 UI-thread bridge. A distinct conversion target requires backend data and is currently absent. Public AutomationPeer.RaiseTextEditTextChangedEvent and weak EventsSource routing are implemented; system cause producers and native Windows client execution remain pending.",
       "deviations": [
         "RT-I02",
         "RT-I10",
@@ -16983,7 +17925,7 @@
         }
       ],
       "callable_candidates": [],
-      "reason": "The rich editor peer owns Text, Text2, TextEdit and Value identity independently of its raw persistent presenter. TextEdit causes follow current editor state and subscriptions do not retain the owner. TextEdit inherits Text independently of Text2. The editor returns the full active accepted IME preview as a live weak UTF-16 range, or None without an active composition; retained ranges follow owner/document lifetime. Accepted preview delta and single finalization events rewire on model replacement and marshal through the Win32 UI-thread bridge. A distinct conversion target requires backend data and is currently absent. Public AutomationPeer.RaiseTextEditTextChangedEvent, system cause producers and native Windows client execution remain pending.",
+      "reason": "The rich editor peer owns Text, Text2, TextEdit and Value identity independently of its raw persistent presenter. TextEdit causes follow current editor state and subscriptions do not retain the owner. TextEdit inherits Text independently of Text2. The editor returns the full active accepted IME preview as a live weak UTF-16 range, or None without an active composition; retained ranges follow owner/document lifetime. Accepted preview delta and single finalization events rewire on model replacement and marshal through the Win32 UI-thread bridge. A distinct conversion target requires backend data and is currently absent. Public AutomationPeer.RaiseTextEditTextChangedEvent and weak EventsSource routing are implemented; system cause producers and native Windows client execution remain pending.",
       "deviations": [
         "RT-I02",
         "RT-I10",
@@ -21504,6 +22446,42 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_box_text_presenter.rs",
           "symbol": "RichEditBoxTextPresenter: RichTextBlock"
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/text_input_method_edit.rs",
+          "symbol": "pub struct TextInputMethodEdit"
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/text_input_method_edit.rs",
+          "symbol": "pub fn apply_to("
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/text_input_method_connection.rs",
+          "symbol": "pub fn apply_edit("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_text_exact_edit.rs",
+          "symbol": "pub(crate) fn apply_exact_input_edit("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_text_exact_edit.rs",
+          "symbol": "pub(crate) fn complete_exact_composition("
+        },
+        {
+          "path": "src/Windows/FerroUI.WinUI/core_text_synchronization.rs",
+          "symbol": "struct CoreTextSynchronization"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/win_rt/native_win_rt_methods.rs",
+          "symbol": "pub fn new_utf16("
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/win_rt/native_win_rt_methods.rs",
+          "symbol": "pub fn try_value("
+        },
+        {
+          "path": "src/Windows/FerroUI.WinUI/win_ui_text_input_method.rs",
+          "symbol": "fn requested_units("
         }
       ],
       "tests": [
@@ -21546,6 +22524,94 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
           "symbol": "rich_edit_line_services_use_paragraph_fallback_until_the_presenter_is_measured"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_exact_input_tests.rs",
+          "symbol": "rich_exact_input_replaces_requested_range_independently_of_selection_and_undoes_once"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_exact_input_tests.rs",
+          "symbol": "rich_exact_input_empty_replacement_deletes_real_range"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_exact_input_tests.rs",
+          "symbol": "rich_exact_input_invalid_utf16_and_policy_changes_leave_text_selection_and_history_intact"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_exact_input_tests.rs",
+          "symbol": "rich_exact_composition_uses_current_utf16_deltas_and_retains_suffix_when_caret_moves_inside"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_exact_input_tests.rs",
+          "symbol": "rich_exact_composition_extends_across_original_selection_and_preserves_cancel_snapshot"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_exact_input_tests.rs",
+          "symbol": "rich_exact_composition_empty_deletion_commits_without_resurrecting_original_selection"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_exact_input_tests.rs",
+          "symbol": "rich_exact_composition_selection_update_keeps_full_preview_and_does_not_cancel"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_exact_input_tests.rs",
+          "symbol": "rich_exact_composition_intercepted_completion_preserves_preview_for_retry"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_exact_input_tests.rs",
+          "symbol": "rich_exact_input_selection_cancellation_rolls_back_structured_edit_without_history"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_exact_input_tests.rs",
+          "symbol": "rich_exact_composition_reentrant_callback_keeps_application_edit_and_rejects_native_success"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_exact_input_tests.rs",
+          "symbol": "rich_exact_input_identical_text_updates_selection_without_destroying_redo_or_formatting"
+        },
+        {
+          "path": "src/Windows/FerroUI.WinUI/core_text_synchronization.rs",
+          "symbol": "failed_text_notification_retries_from_last_acknowledged_length"
+        },
+        {
+          "path": "src/Windows/FerroUI.WinUI/core_text_synchronization.rs",
+          "symbol": "successful_old_notification_does_not_hide_reentrant_new_state"
+        },
+        {
+          "path": "src/Windows/FerroUI.WinUI/core_text_synchronization.rs",
+          "symbol": "replacement_client_rejects_late_acknowledgement"
+        },
+        {
+          "path": "src/Windows/FerroUI.WinUI/core_text_synchronization.rs",
+          "symbol": "failed_selection_notification_remains_pending_and_text_failure_takes_precedence"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/win_rt/win_rt_tests.rs",
+          "symbol": "exact_hstring_retains_astral_text_and_embedded_nuls_with_borrowed_ownership"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/win_rt/win_rt_tests.rs",
+          "symbol": "exact_hstring_rejects_isolated_surrogates_without_substituting_text"
+        },
+        {
+          "path": "src/Windows/FerroUI.WinUI/win_ui_text_input_method.rs",
+          "symbol": "native_text_request_preserves_exact_code_units_and_snapshot_lifetime"
+        },
+        {
+          "path": "src/Windows/FerroUI.WinUI/win_ui_text_input_method_reentrancy_tests.rs",
+          "symbol": "subscription_disposal_can_replace_client_without_a_live_adapter_borrow"
+        },
+        {
+          "path": "src/Windows/FerroUI.WinUI/win_ui_text_input_method_reentrancy_tests.rs",
+          "symbol": "connection_accessor_cannot_overwrite_a_reentrant_client_replacement"
+        },
+        {
+          "path": "src/Windows/FerroUI.WinUI/win_ui_text_input_method_reentrancy_tests.rs",
+          "symbol": "event_registration_disposes_its_subscription_after_reentrant_replacement"
+        },
+        {
+          "path": "src/Windows/FerroUI.WinUI/win_ui_text_input_method_reentrancy_tests.rs",
+          "symbol": "reentrant_state_query_cannot_publish_the_previous_clients_text"
         }
       ],
       "includes": [
@@ -22077,11 +23143,12 @@
           "state": "unreviewed"
         }
       ],
-      "reason": "Input-method surrounding text, selection, cursor geometry and preedit use the existing framework client. Native windowless hosting, TSF/UI-manager callbacks and unavailable system services are not mechanically ported. The persistent presenter is the text-view visual while cursor rectangles are converted to semantic-owner coordinates; surrounding text and selection remain on the owner/editor. Native TSF/windowless/UI-manager and other host members remain pending.",
+      "reason": "Input-method surrounding text, selection, cursor geometry and preedit use the existing framework client. Native windowless hosting, TSF/UI-manager callbacks and unavailable system services are not mechanically ported. The persistent presenter is the text-view visual while cursor rectangles are converted to semantic-owner coordinates; surrounding text and selection remain on the owner/editor. Native TSF/windowless/UI-manager and other host members remain pending. Exact native input requests retain the UTF-16 replacement range, replacement text and resulting directed selection through the shared connection and rich editor. Empty replacements delete their requested range. Composition retains its whole active span independently of the caret, commits once and keeps the original cancellation snapshot. Invalid or filtered/limited/cancelled/reentrant requests reject success. CoreText keeps last-acknowledged state separate from current state so failed notifications retry from the old native length and late/reentrant acknowledgements cannot hide newer state. Unsupported CoreText clause formatting reports Failed; legacy TextBox transport and actual OS conformance remain separate. Native HSTRING query slices retain exact counted UTF-16 units and NULs; edit payloads use strict scalar decoding. Native adapter disposal, accessor, subscription and state callbacks are fenced against client replacement. Windows-only adapter fixture definitions do not assert an executed OS/CoreText gate.",
       "deviations": [
         "RT-A04",
         "RT-I06",
-        "RT-I07"
+        "RT-I07",
+        "RT-I16"
       ]
     },
     {
@@ -22109,6 +23176,42 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_box_text_presenter.rs",
           "symbol": "RichEditBoxTextPresenter: RichTextBlock"
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/text_input_method_edit.rs",
+          "symbol": "pub struct TextInputMethodEdit"
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/text_input_method_edit.rs",
+          "symbol": "pub fn apply_to("
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/text_input_method_connection.rs",
+          "symbol": "pub fn apply_edit("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_text_exact_edit.rs",
+          "symbol": "pub(crate) fn apply_exact_input_edit("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_text_exact_edit.rs",
+          "symbol": "pub(crate) fn complete_exact_composition("
+        },
+        {
+          "path": "src/Windows/FerroUI.WinUI/core_text_synchronization.rs",
+          "symbol": "struct CoreTextSynchronization"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/win_rt/native_win_rt_methods.rs",
+          "symbol": "pub fn new_utf16("
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/win_rt/native_win_rt_methods.rs",
+          "symbol": "pub fn try_value("
+        },
+        {
+          "path": "src/Windows/FerroUI.WinUI/win_ui_text_input_method.rs",
+          "symbol": "fn requested_units("
         }
       ],
       "tests": [
@@ -22151,6 +23254,94 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
           "symbol": "rich_edit_line_services_use_paragraph_fallback_until_the_presenter_is_measured"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_exact_input_tests.rs",
+          "symbol": "rich_exact_input_replaces_requested_range_independently_of_selection_and_undoes_once"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_exact_input_tests.rs",
+          "symbol": "rich_exact_input_empty_replacement_deletes_real_range"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_exact_input_tests.rs",
+          "symbol": "rich_exact_input_invalid_utf16_and_policy_changes_leave_text_selection_and_history_intact"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_exact_input_tests.rs",
+          "symbol": "rich_exact_composition_uses_current_utf16_deltas_and_retains_suffix_when_caret_moves_inside"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_exact_input_tests.rs",
+          "symbol": "rich_exact_composition_extends_across_original_selection_and_preserves_cancel_snapshot"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_exact_input_tests.rs",
+          "symbol": "rich_exact_composition_empty_deletion_commits_without_resurrecting_original_selection"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_exact_input_tests.rs",
+          "symbol": "rich_exact_composition_selection_update_keeps_full_preview_and_does_not_cancel"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_exact_input_tests.rs",
+          "symbol": "rich_exact_composition_intercepted_completion_preserves_preview_for_retry"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_exact_input_tests.rs",
+          "symbol": "rich_exact_input_selection_cancellation_rolls_back_structured_edit_without_history"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_exact_input_tests.rs",
+          "symbol": "rich_exact_composition_reentrant_callback_keeps_application_edit_and_rejects_native_success"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_exact_input_tests.rs",
+          "symbol": "rich_exact_input_identical_text_updates_selection_without_destroying_redo_or_formatting"
+        },
+        {
+          "path": "src/Windows/FerroUI.WinUI/core_text_synchronization.rs",
+          "symbol": "failed_text_notification_retries_from_last_acknowledged_length"
+        },
+        {
+          "path": "src/Windows/FerroUI.WinUI/core_text_synchronization.rs",
+          "symbol": "successful_old_notification_does_not_hide_reentrant_new_state"
+        },
+        {
+          "path": "src/Windows/FerroUI.WinUI/core_text_synchronization.rs",
+          "symbol": "replacement_client_rejects_late_acknowledgement"
+        },
+        {
+          "path": "src/Windows/FerroUI.WinUI/core_text_synchronization.rs",
+          "symbol": "failed_selection_notification_remains_pending_and_text_failure_takes_precedence"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/win_rt/win_rt_tests.rs",
+          "symbol": "exact_hstring_retains_astral_text_and_embedded_nuls_with_borrowed_ownership"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/win_rt/win_rt_tests.rs",
+          "symbol": "exact_hstring_rejects_isolated_surrogates_without_substituting_text"
+        },
+        {
+          "path": "src/Windows/FerroUI.WinUI/win_ui_text_input_method.rs",
+          "symbol": "native_text_request_preserves_exact_code_units_and_snapshot_lifetime"
+        },
+        {
+          "path": "src/Windows/FerroUI.WinUI/win_ui_text_input_method_reentrancy_tests.rs",
+          "symbol": "subscription_disposal_can_replace_client_without_a_live_adapter_borrow"
+        },
+        {
+          "path": "src/Windows/FerroUI.WinUI/win_ui_text_input_method_reentrancy_tests.rs",
+          "symbol": "connection_accessor_cannot_overwrite_a_reentrant_client_replacement"
+        },
+        {
+          "path": "src/Windows/FerroUI.WinUI/win_ui_text_input_method_reentrancy_tests.rs",
+          "symbol": "event_registration_disposes_its_subscription_after_reentrant_replacement"
+        },
+        {
+          "path": "src/Windows/FerroUI.WinUI/win_ui_text_input_method_reentrancy_tests.rs",
+          "symbol": "reentrant_state_query_cannot_publish_the_previous_clients_text"
         }
       ],
       "includes": [
@@ -22170,11 +23361,12 @@
         }
       ],
       "callable_candidates": [],
-      "reason": "Input-method surrounding text, selection, cursor geometry and preedit use the existing framework client. Native windowless hosting, TSF/UI-manager callbacks and unavailable system services are not mechanically ported. The persistent presenter is the text-view visual while cursor rectangles are converted to semantic-owner coordinates; surrounding text and selection remain on the owner/editor. Native TSF/windowless/UI-manager and other host members remain pending.",
+      "reason": "Input-method surrounding text, selection, cursor geometry and preedit use the existing framework client. Native windowless hosting, TSF/UI-manager callbacks and unavailable system services are not mechanically ported. The persistent presenter is the text-view visual while cursor rectangles are converted to semantic-owner coordinates; surrounding text and selection remain on the owner/editor. Native TSF/windowless/UI-manager and other host members remain pending. Exact native input requests retain the UTF-16 replacement range, replacement text and resulting directed selection through the shared connection and rich editor. Empty replacements delete their requested range. Composition retains its whole active span independently of the caret, commits once and keeps the original cancellation snapshot. Invalid or filtered/limited/cancelled/reentrant requests reject success. CoreText keeps last-acknowledged state separate from current state so failed notifications retry from the old native length and late/reentrant acknowledgements cannot hide newer state. Unsupported CoreText clause formatting reports Failed; legacy TextBox transport and actual OS conformance remain separate. Native HSTRING query slices retain exact counted UTF-16 units and NULs; edit payloads use strict scalar decoding. Native adapter disposal, accessor, subscription and state callbacks are fenced against client replacement. Windows-only adapter fixture definitions do not assert an executed OS/CoreText gate.",
       "deviations": [
         "RT-A04",
         "RT-I06",
-        "RT-I07"
+        "RT-I07",
+        "RT-I16"
       ]
     },
     {
@@ -26332,6 +27524,14 @@
         {
           "path": "src/FerroUI.Controls/rich_text_layout.rs",
           "symbol": "RichTextSource"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text_layout.rs",
+          "symbol": "RichTextLayout"
+        },
+        {
+          "path": "src/FerroUI.Base/media/text_formatting/text_tab_layout.rs",
+          "symbol": "fn resolve_tabs("
         }
       ],
       "tests": [
@@ -26350,6 +27550,14 @@
         {
           "path": "src/FerroUI.Controls/documents/rich_text_document_tests.rs",
           "symbol": "semantic_snapshot_containers_keep_defaults_under_inherited_parent_formatting"
+        },
+        {
+          "path": "src/FerroUI.Controls/documents/rich_paragraph_tabs_tests.rs",
+          "symbol": "rich_paragraph_tabs_layout_positions_invalidate_with_the_property"
+        },
+        {
+          "path": "src/FerroUI.Base/media/text_formatting/text_tab_layout_tests.rs",
+          "symbol": "paragraph_tabs_rtl_decimal_uses_visual_field_coordinate"
         }
       ],
       "includes": [
@@ -26489,7 +27697,7 @@
           "state": "unreviewed"
         }
       ],
-      "reason": "Paragraph sources flatten supported structured inline runs into the existing TextSource/TextRun properties and retain document offsets. Native text-source callbacks and all formatting edge cases remain partial.",
+      "reason": "Paragraph sources flatten supported structured inline runs into the existing TextSource/TextRun properties and retain document offsets. Native text-source callbacks and all formatting edge cases remain partial. Paragraph adapters now supply explicit/default tab context to the shared shaped formatter; alignment, leaders, culture-aware decimal fields, RTL and wrapped continuations have dedicated tests. Remaining native source members stay partial.",
       "deviations": [
         "RT-A02",
         "RT-I01",
@@ -26517,6 +27725,14 @@
         {
           "path": "src/FerroUI.Controls/rich_text_layout.rs",
           "symbol": "RichTextSource"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text_layout.rs",
+          "symbol": "RichTextLayout"
+        },
+        {
+          "path": "src/FerroUI.Base/media/text_formatting/text_tab_layout.rs",
+          "symbol": "fn resolve_tabs("
         }
       ],
       "tests": [
@@ -26535,11 +27751,19 @@
         {
           "path": "src/FerroUI.Controls/documents/rich_text_document_tests.rs",
           "symbol": "semantic_snapshot_containers_keep_defaults_under_inherited_parent_formatting"
+        },
+        {
+          "path": "src/FerroUI.Controls/documents/rich_paragraph_tabs_tests.rs",
+          "symbol": "rich_paragraph_tabs_layout_positions_invalidate_with_the_property"
+        },
+        {
+          "path": "src/FerroUI.Base/media/text_formatting/text_tab_layout_tests.rs",
+          "symbol": "paragraph_tabs_rtl_decimal_uses_visual_field_coordinate"
         }
       ],
       "includes": [],
       "callable_candidates": [],
-      "reason": "Paragraph sources flatten supported structured inline runs into the existing TextSource/TextRun properties and retain document offsets. Native text-source callbacks and all formatting edge cases remain partial.",
+      "reason": "Paragraph sources flatten supported structured inline runs into the existing TextSource/TextRun properties and retain document offsets. Native text-source callbacks and all formatting edge cases remain partial. Paragraph adapters now supply explicit/default tab context to the shared shaped formatter; alignment, leaders, culture-aware decimal fields, RTL and wrapped continuations have dedicated tests. Remaining native source members stay partial.",
       "deviations": [
         "RT-A02",
         "RT-I01",
@@ -29788,6 +31012,14 @@
         {
           "path": "src/FerroUI.Controls/rich_text_block_tests.rs",
           "symbol": "rich_selection_tracks_external_edits_and_is_shared_across_columns"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs",
+          "symbol": "rich_text_markup_preserves_nested_document_content_and_copied_highlight_values"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs",
+          "symbol": "rich_text_markup_links_overflow_to_the_same_document"
         }
       ],
       "includes": [
@@ -30832,6 +32064,14 @@
         {
           "path": "src/FerroUI.Controls/rich_text_block_tests.rs",
           "symbol": "rich_overflow_rejects_cycles_and_second_owners"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs",
+          "symbol": "rich_text_markup_preserves_nested_document_content_and_copied_highlight_values"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs",
+          "symbol": "rich_text_markup_links_overflow_to_the_same_document"
         }
       ],
       "includes": [
@@ -48727,6 +49967,14 @@
         {
           "path": "src/Windows/FerroUI.Win32/automation/marshalling/safe_array_ref.rs",
           "symbol": "pub fn try_create<"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/peers/automation_peer.rs",
+          "symbol": "pub fn raise_text_edit_text_changed_event("
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/peers/automation_peer.rs",
+          "symbol": "pub fn events_source("
         }
       ],
       "tests": [
@@ -48737,6 +49985,34 @@
         {
           "path": "src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs",
           "symbol": "native_text_edit_payload_validation_preserves_embedded_nul_and_return_codes"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/peers/automation_peer_text_edit_tests.rs",
+          "symbol": "public_text_edit_metadata_preserves_existing_peer_events_and_calls_typed_members"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/peers/automation_peer_text_edit_tests.rs",
+          "symbol": "public_text_edit_event_works_for_an_arbitrary_peer_without_text_patterns"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/peers/automation_peer_text_edit_tests.rs",
+          "symbol": "public_text_edit_events_source_is_substituted_once_even_with_cycles"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/peers/automation_peer_text_edit_tests.rs",
+          "symbol": "public_text_edit_events_source_does_not_retain_other_peers_or_owners"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs",
+          "symbol": "native_public_text_edit_event_lazily_creates_a_provider_without_a_text_pattern"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs",
+          "symbol": "native_public_text_edit_events_source_has_one_hop_and_uses_the_target_identity"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs",
+          "symbol": "native_public_text_edit_reentrant_release_and_source_change_preserve_each_event"
         }
       ],
       "includes": [
@@ -49517,6 +50793,14 @@
         {
           "path": "src/Windows/FerroUI.Win32/automation/marshalling/safe_array_ref.rs",
           "symbol": "pub fn try_create<"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/peers/automation_peer.rs",
+          "symbol": "pub fn raise_text_edit_text_changed_event("
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/peers/automation_peer.rs",
+          "symbol": "pub fn events_source("
         }
       ],
       "tests": [
@@ -49527,6 +50811,34 @@
         {
           "path": "src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs",
           "symbol": "native_text_edit_payload_validation_preserves_embedded_nul_and_return_codes"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/peers/automation_peer_text_edit_tests.rs",
+          "symbol": "public_text_edit_metadata_preserves_existing_peer_events_and_calls_typed_members"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/peers/automation_peer_text_edit_tests.rs",
+          "symbol": "public_text_edit_event_works_for_an_arbitrary_peer_without_text_patterns"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/peers/automation_peer_text_edit_tests.rs",
+          "symbol": "public_text_edit_events_source_is_substituted_once_even_with_cycles"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/peers/automation_peer_text_edit_tests.rs",
+          "symbol": "public_text_edit_events_source_does_not_retain_other_peers_or_owners"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs",
+          "symbol": "native_public_text_edit_event_lazily_creates_a_provider_without_a_text_pattern"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs",
+          "symbol": "native_public_text_edit_events_source_has_one_hop_and_uses_the_target_identity"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs",
+          "symbol": "native_public_text_edit_reentrant_release_and_source_change_preserve_each_event"
         }
       ],
       "includes": [
@@ -50995,7 +52307,7 @@
           "state": "unreviewed"
         }
       ],
-      "reason": "The rich editor peer owns Text, Text2, TextEdit and Value identity independently of its raw persistent presenter. TextEdit causes follow current editor state and subscriptions do not retain the owner. TextEdit inherits Text independently of Text2. The editor returns the full active accepted IME preview as a live weak UTF-16 range, or None without an active composition; retained ranges follow owner/document lifetime. Accepted preview delta and single finalization events rewire on model replacement and marshal through the Win32 UI-thread bridge. A distinct conversion target requires backend data and is currently absent. Public AutomationPeer.RaiseTextEditTextChangedEvent, system cause producers and native Windows client execution remain pending.",
+      "reason": "The rich editor peer owns Text, Text2, TextEdit and Value identity independently of its raw persistent presenter. TextEdit causes follow current editor state and subscriptions do not retain the owner. TextEdit inherits Text independently of Text2. The editor returns the full active accepted IME preview as a live weak UTF-16 range, or None without an active composition; retained ranges follow owner/document lifetime. Accepted preview delta and single finalization events rewire on model replacement and marshal through the Win32 UI-thread bridge. A distinct conversion target requires backend data and is currently absent. Public AutomationPeer.RaiseTextEditTextChangedEvent and weak EventsSource routing are implemented; system cause producers and native Windows client execution remain pending.",
       "deviations": [
         "RT-I02",
         "RT-I10",
@@ -51110,7 +52422,7 @@
         }
       ],
       "callable_candidates": [],
-      "reason": "The rich editor peer owns Text, Text2, TextEdit and Value identity independently of its raw persistent presenter. TextEdit causes follow current editor state and subscriptions do not retain the owner. TextEdit inherits Text independently of Text2. The editor returns the full active accepted IME preview as a live weak UTF-16 range, or None without an active composition; retained ranges follow owner/document lifetime. Accepted preview delta and single finalization events rewire on model replacement and marshal through the Win32 UI-thread bridge. A distinct conversion target requires backend data and is currently absent. Public AutomationPeer.RaiseTextEditTextChangedEvent, system cause producers and native Windows client execution remain pending.",
+      "reason": "The rich editor peer owns Text, Text2, TextEdit and Value identity independently of its raw persistent presenter. TextEdit causes follow current editor state and subscriptions do not retain the owner. TextEdit inherits Text independently of Text2. The editor returns the full active accepted IME preview as a live weak UTF-16 range, or None without an active composition; retained ranges follow owner/document lifetime. Accepted preview delta and single finalization events rewire on model replacement and marshal through the Win32 UI-thread bridge. A distinct conversion target requires backend data and is currently absent. Public AutomationPeer.RaiseTextEditTextChangedEvent and weak EventsSource routing are implemented; system cause producers and native Windows client execution remain pending.",
       "deviations": [
         "RT-I02",
         "RT-I10",
@@ -69649,7 +70961,7 @@
       ],
       "includes": [],
       "callable_candidates": [],
-      "reason": "Portable Text/TextRange/Text2/TextChild/TextEdit services and Windows COM marshalling implement the mapped operations with weak owner/document identity. The semantic owner is separate from raw presenter geometry; aligned scrolling and nonrecursive hyperlink child ranges are covered. TextEdit inherits Text independently of Text2. The editor returns the full active accepted IME preview as a live weak UTF-16 range, or None without an active composition; retained ranges follow owner/document lifetime. Accepted preview delta and single finalization events rewire on model replacement and marshal through the Win32 UI-thread bridge. A distinct conversion target requires backend data and is currently absent. Public AutomationPeer.RaiseTextEditTextChangedEvent, system cause producers and native Windows client execution remain pending. Remaining provider families, annotations and attributes remain pending.",
+      "reason": "Portable Text/TextRange/Text2/TextChild/TextEdit services and Windows COM marshalling implement the mapped operations with weak owner/document identity. The semantic owner is separate from raw presenter geometry; aligned scrolling and nonrecursive hyperlink child ranges are covered. TextEdit inherits Text independently of Text2. The editor returns the full active accepted IME preview as a live weak UTF-16 range, or None without an active composition; retained ranges follow owner/document lifetime. Accepted preview delta and single finalization events rewire on model replacement and marshal through the Win32 UI-thread bridge. A distinct conversion target requires backend data and is currently absent. Public AutomationPeer.RaiseTextEditTextChangedEvent and weak EventsSource routing are implemented; system cause producers and native Windows client execution remain pending. Remaining provider families, annotations and attributes remain pending.",
       "deviations": [
         "RT-I10",
         "RT-A01",
@@ -71606,7 +72918,7 @@
           "state": "unreviewed"
         }
       ],
-      "reason": "Portable Text/TextRange/Text2/TextChild/TextEdit services and Windows COM marshalling implement the mapped operations with weak owner/document identity. The semantic owner is separate from raw presenter geometry; aligned scrolling and nonrecursive hyperlink child ranges are covered. TextEdit inherits Text independently of Text2. The editor returns the full active accepted IME preview as a live weak UTF-16 range, or None without an active composition; retained ranges follow owner/document lifetime. Accepted preview delta and single finalization events rewire on model replacement and marshal through the Win32 UI-thread bridge. A distinct conversion target requires backend data and is currently absent. Public AutomationPeer.RaiseTextEditTextChangedEvent, system cause producers and native Windows client execution remain pending. Remaining provider families, annotations and attributes remain pending.",
+      "reason": "Portable Text/TextRange/Text2/TextChild/TextEdit services and Windows COM marshalling implement the mapped operations with weak owner/document identity. The semantic owner is separate from raw presenter geometry; aligned scrolling and nonrecursive hyperlink child ranges are covered. TextEdit inherits Text independently of Text2. The editor returns the full active accepted IME preview as a live weak UTF-16 range, or None without an active composition; retained ranges follow owner/document lifetime. Accepted preview delta and single finalization events rewire on model replacement and marshal through the Win32 UI-thread bridge. A distinct conversion target requires backend data and is currently absent. Public AutomationPeer.RaiseTextEditTextChangedEvent and weak EventsSource routing are implemented; system cause producers and native Windows client execution remain pending. Remaining provider families, annotations and attributes remain pending.",
       "deviations": [
         "RT-I10",
         "RT-A01",
@@ -71634,6 +72946,14 @@
         {
           "path": "src/Windows/FerroUI.Win32/automation/marshalling/safe_array_ref.rs",
           "symbol": "pub fn try_create<"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/peers/automation_peer.rs",
+          "symbol": "pub fn raise_text_edit_text_changed_event("
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/peers/automation_peer.rs",
+          "symbol": "pub fn events_source("
         }
       ],
       "tests": [
@@ -71656,6 +72976,34 @@
         {
           "path": "src/Windows/FerroUI.Win32/automation/marshalling/safe_array_ref_tests.rs",
           "symbol": "text_safe_array_reader_unwind_releases_the_native_lock"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/peers/automation_peer_text_edit_tests.rs",
+          "symbol": "public_text_edit_metadata_preserves_existing_peer_events_and_calls_typed_members"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/peers/automation_peer_text_edit_tests.rs",
+          "symbol": "public_text_edit_event_works_for_an_arbitrary_peer_without_text_patterns"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/peers/automation_peer_text_edit_tests.rs",
+          "symbol": "public_text_edit_events_source_is_substituted_once_even_with_cycles"
+        },
+        {
+          "path": "src/FerroUI.Controls/automation/peers/automation_peer_text_edit_tests.rs",
+          "symbol": "public_text_edit_events_source_does_not_retain_other_peers_or_owners"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs",
+          "symbol": "native_public_text_edit_event_lazily_creates_a_provider_without_a_text_pattern"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs",
+          "symbol": "native_public_text_edit_events_source_has_one_hop_and_uses_the_target_identity"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/automation/text_pattern_tests.rs",
+          "symbol": "native_public_text_edit_reentrant_release_and_source_change_preserve_each_event"
         }
       ],
       "includes": [
@@ -72307,8 +73655,97 @@
       "component": "public API metadata",
       "state": "reference",
       "reuse_or_destination_candidates": [],
-      "targets": [],
-      "tests": []
+      "targets": [
+        {
+          "path": "src/FerroUI.Controls/rich_text/rtf.rs",
+          "symbol": "pub struct RtfReader;"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rtf.rs",
+          "symbol": "struct Decoder"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rtf.rs",
+          "symbol": "fn read_fonts("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rtf.rs",
+          "symbol": "struct DestinationText"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rtf_encoding.rs",
+          "symbol": "pub(super) struct EncodedText"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rtf.rs",
+          "symbol": "pub struct RtfWriter;"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Controls/rich_text/rtf_encoding_tests.rs",
+          "symbol": "rich_edit_rtf_code_pages_decode_independent_multilingual_fixtures"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rtf_encoding_tests.rs",
+          "symbol": "rich_edit_rtf_multibyte_sequences_span_raw_and_escaped_tokens"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rtf_encoding_tests.rs",
+          "symbol": "rich_edit_rtf_multibyte_escaped_delimiters_are_text"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rtf_encoding_tests.rs",
+          "symbol": "rich_edit_rtf_font_charsets_are_scoped_and_plain_restores_default_font"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rtf_encoding_tests.rs",
+          "symbol": "rich_edit_rtf_font_code_page_overrides_charset_in_either_order"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rtf_encoding_tests.rs",
+          "symbol": "rich_edit_rtf_default_charset_uses_declared_document_code_page"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rtf_encoding_tests.rs",
+          "symbol": "rich_edit_rtf_code_page_applies_to_font_names_and_field_destinations"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rtf_encoding_tests.rs",
+          "symbol": "rich_edit_rtf_unicode_fallback_bytes_do_not_reach_the_legacy_decoder"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rtf_encoding_tests.rs",
+          "symbol": "rich_edit_rtf_incomplete_sequences_fail_at_every_semantic_boundary"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rtf_encoding_tests.rs",
+          "symbol": "rich_edit_rtf_invalid_utf8_is_rejected_without_replacement"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rtf_encoding_tests.rs",
+          "symbol": "rich_edit_rtf_code_page_changes_restore_with_group_state"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rtf_encoding_tests.rs",
+          "symbol": "rich_edit_rtf_code_page_limits_count_decoded_utf16_units"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rtf_encoding_tests.rs",
+          "symbol": "rich_edit_rtf_long_multibyte_runs_cross_decoder_output_buffers"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rtf_encoding_tests.rs",
+          "symbol": "rich_edit_rtf_ignored_destination_does_not_inject_hyperlink_target_text"
+        }
+      ],
+      "reason": "This file declares the exact public RichEdit document/range text and stream contracts. The RTF engine implementation is external to the WinUI tree; portable codec targets are mapped against the declared contract, not presented as source copied from this XML. Every documented member retains its individual state in the API inventory. Portable byte decoding supports 874, 932, 936, 949, 950, 1250..1258, 10000, 10007 and 65001 through pinned encoding_rs tables. Raw/escaped multibyte tokens share one incremental UTF-16 decoder; malformed input and incomplete sequences at syntax boundaries fail without replacement. Font-scoped fcharset/cpg, default-font/plain resets, font names and field destinations share that codec. Symbol/OEM/Johab and unspecified pages remain explicit errors. Export retains the canonical Unicode-escaped writer; byte-for-byte native code-page roundtrip and full RTF content are not claimed.",
+      "deviations": [
+        "RT-A03",
+        "RT-I04",
+        "RT-I12",
+        "RT-I18"
+      ]
     },
     {
       "path": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
@@ -72325,6 +73762,584 @@
     }
   ],
   "framework_dependencies": [
+    {
+      "path": "controls/dev/CommandBarFlyout/CommandBarFlyout.h",
+      "git_blob": "de75af9640a82b17e5cef19db0e59f897ac43b53",
+      "sha256": "d526347b92e5ad4f3de84fbdf3a8124cf6caabbbdb133c414102f39aaddc3514",
+      "state": "framework_dependency_review",
+      "includes": [
+        {
+          "header": "CommandBarFlyout.g.h",
+          "line": 5,
+          "style": "quoted",
+          "resolution": "external_or_generated",
+          "candidates": []
+        },
+        {
+          "header": "CommandBarFlyoutTrace.h",
+          "line": 7,
+          "style": "quoted",
+          "resolution": "relative_path",
+          "candidates": [
+            "controls/dev/CommandBarFlyout/CommandBarFlyoutTrace.h"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "controls/dev/CommandBarFlyout/CommandBarFlyoutCommandBar.h",
+      "git_blob": "8fe2f763ebf369809c30aa7eb4f14c60825db857",
+      "sha256": "465837491cc10c72bab6bf8e4d4f82221c3d689eeed0e2dea47a93092883ce3f",
+      "state": "framework_dependency_review",
+      "includes": [
+        {
+          "header": "CommandBarFlyoutCommandBar.g.h",
+          "line": 5,
+          "style": "quoted",
+          "resolution": "external_or_generated",
+          "candidates": []
+        },
+        {
+          "header": "CommandBarFlyoutCommandBar.properties.h",
+          "line": 7,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "controls/dev/Generated/CommandBarFlyoutCommandBar.properties.h"
+          ]
+        },
+        {
+          "header": "CommandBarFlyoutTrace.h",
+          "line": 8,
+          "style": "quoted",
+          "resolution": "relative_path",
+          "candidates": [
+            "controls/dev/CommandBarFlyout/CommandBarFlyoutTrace.h"
+          ]
+        },
+        {
+          "header": "CppWinrtContentExternalBackdropLinkHelper.h",
+          "line": 9,
+          "style": "system",
+          "resolution": "external_or_generated",
+          "candidates": []
+        }
+      ]
+    },
+    {
+      "path": "controls/dev/CommandBarFlyout/CommandBarFlyoutTrace.h",
+      "git_blob": "0fe81ae333174c89fdd807a94c44a5ea9a7c504e",
+      "sha256": "43149ea4bd5a148e2d9f18faa04747ffd09526c9e3087dd3099d16efd500a6cf",
+      "state": "framework_dependency_review",
+      "includes": [
+        {
+          "header": "common.h",
+          "line": 5,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "controls/dev/inc/common.h"
+          ]
+        },
+        {
+          "header": "MuxcTraceLogging.h",
+          "line": 7,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "controls/dev/Telemetry/MuxcTraceLogging.h"
+          ]
+        },
+        {
+          "header": "Utils.h",
+          "line": 8,
+          "style": "quoted",
+          "resolution": "ambiguous",
+          "candidates": [
+            "controls/dev/ResourceHelper/Utils.h",
+            "dxaml/test/native/external/inc/Utils.h"
+          ]
+        },
+        {
+          "header": "MUXControlsTestHooks.h",
+          "line": 9,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "controls/dev/TestHooks/MUXControlsTestHooks.h"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "controls/dev/Generated/CommandBarFlyoutCommandBar.properties.h",
+      "git_blob": "f9686c7dbd8c1c0d0c4948c5894600de73b16463",
+      "sha256": "a8b37d135c889ed207cc3b0e0eff32bc7b3035eec0670c9a97a0779f5a1e3596",
+      "state": "framework_dependency_review",
+      "includes": []
+    },
+    {
+      "path": "controls/dev/ResourceHelper/ResourceAccessor.h",
+      "git_blob": "697b03b4ba69a1b1eb54ff2c92994bde5386cadd",
+      "sha256": "7bb08480d2e157c4be4dd551497237f06854623225ad0398f0177c80bbb1a8ed",
+      "state": "framework_dependency_review",
+      "includes": [
+        {
+          "header": "pch.h",
+          "line": 5,
+          "style": "quoted",
+          "resolution": "ambiguous",
+          "candidates": [
+            "Samples/AppTestAutomationHelpers/pch.h",
+            "Samples/ChartApp/ChartAppCppPackaged/pch.h",
+            "Samples/ChartApp/ChartAppCppUnpackaged/pch.h",
+            "Samples/DisableXamlGeneratedMain/Cpp/pch.h",
+            "Samples/DisableXamlGeneratedMain/CppNoCtor/pch.h",
+            "Samples/FolderTreeAppCpp/FolderTreeAppCpp/pch.h",
+            "Samples/ScratchPadAppCpp/ScratchPadAppCpp/pch.h",
+            "Samples/TableViewApp/TableViewAppCppPackaged/pch.h",
+            "Samples/TableViewApp/TableViewAppCppUnpackaged/pch.h",
+            "Samples/WinUICppDesktopSampleApp/CustomWindow/pch.h",
+            "Samples/WinUICppDesktopSampleApp/WinUICppDesktopSampleApp/WinUICppDesktopSampleApp/pch.h",
+            "Samples/WinUICppDesktopSampleApp/WinUICppRuntimeComponent/pch.h",
+            "Samples/WinUICppIsland2SampleApp/WinUICppIsland2SampleApp/pch.h",
+            "Samples/WinUICppIslandsSampleApp/WinUICppIslandsSampleApp/pch.h",
+            "Samples/WinUIDesktop/CppDesktopSample/pch.h",
+            "Samples/WinUIDesktop/NativeDX12DesktopSample/pch.h",
+            "Samples/WinUIDesktop/NativeDesktopSample/pch.h",
+            "Samples/WinUISnoop/WinUISnoopTap/pch.h",
+            "Samples/WinUITextInputXamlIslandApp/WinUITextInputXamlIslandApp/pch.h",
+            "controls/dev/dll-tabular/pch.h",
+            "controls/dev/dll/pch.h",
+            "controls/test/TabViewTearOutApp/pch.h",
+            "controls/test/TestAppCX/pch.h",
+            "dxaml/test/infra/taefhostapp/pch.h",
+            "dxaml/test/native/external/adaptability/customtypes/pch.h",
+            "dxaml/test/native/external/controls/customtypes/pch/pch.h",
+            "dxaml/test/native/external/foundation/customTypes/pch.h",
+            "dxaml/test/native/external/pch/pch.h",
+            "dxaml/test/native/external/sample/customTypes/pch.h",
+            "dxaml/test/native/external/tools/customTypes/pch.h",
+            "perf/scenarios/XAMLPerf.ButtonApp.Cpp.MUX/pch.h",
+            "perf/scenarios/XAMLPerf.HelloWorldApp.Cpp.MUX/XAMLPerf.HelloWorldApp.Cpp.MUX/pch.h",
+            "perf/scenarios/XAMLPerf.Islands-BlankUserControl.Cpp.MUX/Host/pch.h",
+            "perf/scenarios/XAMLPerf.Islands.Cpp.MUX/Host/pch.h",
+            "perf/scenarios/XAMLPerf.MinApp.Cpp.MUX/pch.h",
+            "perf/scenarios/XAMLPerf.MinApp.Cpp.WUX/pch.h",
+            "perf/scenarios/XAMLPerf.TextBlockApp.Cpp.MUX/pch.h",
+            "perf/scenarios/XAMLPerf.UnpackagedApp.Cpp.MUX/pch.h",
+            "perf/scenarios/cpp-win32-unpackaged/pch.h",
+            "src/XamlCompiler/Tests/RegressionProjects/Basic/CppWinRT/EventHandling_968976/pch.h",
+            "src/XamlCompiler/Tests/RegressionProjects/Basic/CppWinRT/Simple/pch.h",
+            "src/XamlCompiler/Tests/RegressionProjects/Basic/References/CppWinRTComponent/pch.h",
+            "src/XamlCompiler/Tests/RegressionProjects/Basic/References/CppWinRTExe/pch.h",
+            "src/XamlCompiler/Tests/RegressionProjects/Features/BindPhasingTestBedCppWinRT/BindPhasingTestBedCppWinRT/pch.h",
+            "src/XamlCompiler/Tests/RegressionProjects/Features/CompiledBinding/BindTestbedCppWinRT/pch.h",
+            "src/XamlCompiler/Tests/RegressionProjects/Features/CompiledBinding/BindTestbedCppWinRTModel/pch.h",
+            "src/XamlCompiler/Tests/RegressionProjects/Features/Conditionals/ConditionalsCppWinRT/pch.h",
+            "src/XamlCompiler/Tests/RegressionProjects/Features/DeferLoadStrategy/CppWinRT/pch.h",
+            "src/XamlCompiler/Tests/RegressionProjects/Features/LinkedMD/LinkedMDAppCppWinRT/pch.h",
+            "src/XamlCompiler/Tests/RegressionProjects/Features/LinkedMD/LinkedMDControlsCppWinRT/pch.h",
+            "src/XamlCompiler/Tests/RegressionProjects/Features/LinkedMD/LinkedMDSubControlsCppWinRT/pch.h",
+            "src/XamlCompiler/Tests/RegressionProjects/Features/MarkupExtensions/MarkupExtensionsCppWinRT/pch.h",
+            "src/XamlCompiler/Tests/RegressionProjects/Features/Metadata/MetadataTestbedCppWinRT/pch.h",
+            "src/XamlCompiler/Tests/RegressionProjects/Features/MultiXamlFiles/MultipleViewsTestbedCppWinRT/pch.h",
+            "src/XamlCompiler/Tests/RegressionProjects/Features/ReduceProviderLoading/ConsumerProvider/ConsumerCppWinRT/pch.h",
+            "src/XamlCompiler/Tests/RegressionProjects/Features/ReduceProviderLoading/ConsumerProvider/ProviderCppWinRT/pch.h",
+            "src/XamlCompiler/Tests/RegressionProjects/Features/StaticLibs/RuntimeComponentWithStaticLibInApp/pch.h",
+            "src/XamlCompiler/Tests/RegressionProjects/Features/StaticLibs/StaticControlsLib/pch.h",
+            "src/XamlCompiler/Tests/RegressionProjects/Features/StaticLibs/StaticLibInApp/pch.h",
+            "src/XamlCompiler/Tests/RegressionProjects/Features/StaticLibs/StaticLibInRuntimeComponent/pch.h",
+            "src/XamlCompiler/Tests/RegressionProjects/NonStandard/NonStandardCppWinRT/NonStandardCppWinRT/pch.h",
+            "tools/XamlProfiler/XamlProfilerTap/pch.h"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "controls/dev/Telemetry/MicrosoftTelemetry.h",
+      "git_blob": "d66e9c361db34b10196c23ea8e1c0ded792ee357",
+      "sha256": "e1304c2453db9428fc1aec63a0d8bd3e1b3ae3a4819543c322c99beb0df3478d",
+      "state": "framework_dependency_review",
+      "includes": []
+    },
+    {
+      "path": "controls/dev/Telemetry/MuxcTraceLogging.h",
+      "git_blob": "d9c1e6580877973ad0bc6d4b253444793c8d05b0",
+      "sha256": "9c774eb1d704105563a7a5013e193a76e55c85ff415833e442222f628807e3d2",
+      "state": "framework_dependency_review",
+      "includes": [
+        {
+          "header": "WinEventLogLevels.h",
+          "line": 5,
+          "style": "quoted",
+          "resolution": "ambiguous",
+          "candidates": [
+            "controls/dev/Common/WinEventLogLevels.h",
+            "controls/dev/inc/WinEventLogLevels.h"
+          ]
+        },
+        {
+          "header": "TraceLoggingProvider.h",
+          "line": 7,
+          "style": "system",
+          "resolution": "external_or_generated",
+          "candidates": []
+        },
+        {
+          "header": "MicrosoftTelemetry.h",
+          "line": 12,
+          "style": "system",
+          "resolution": "relative_path",
+          "candidates": [
+            "controls/dev/Telemetry/MicrosoftTelemetry.h"
+          ]
+        },
+        {
+          "header": "wil/TraceLogging.h",
+          "line": 16,
+          "style": "system",
+          "resolution": "external_or_generated",
+          "candidates": []
+        }
+      ]
+    },
+    {
+      "path": "controls/dev/TestHooks/MUXControlsTestHooks.h",
+      "git_blob": "3cd017d2acb801e909b988af980904fa7f1ba3f9",
+      "sha256": "c31918e4b78a38a94415fa50d66686b266ecc6d898caa12d6d3b83e66b9484c9",
+      "state": "framework_dependency_review",
+      "includes": [
+        {
+          "header": "WinEventLogLevels.h",
+          "line": 5,
+          "style": "quoted",
+          "resolution": "ambiguous",
+          "candidates": [
+            "controls/dev/Common/WinEventLogLevels.h",
+            "controls/dev/inc/WinEventLogLevels.h"
+          ]
+        },
+        {
+          "header": "MUXControlsTestHooksLoggingMessageEventArgs.h",
+          "line": 7,
+          "style": "quoted",
+          "resolution": "relative_path",
+          "candidates": [
+            "controls/dev/TestHooks/MUXControlsTestHooksLoggingMessageEventArgs.h"
+          ]
+        },
+        {
+          "header": "MUXControlsTestHooks.g.h",
+          "line": 11,
+          "style": "quoted",
+          "resolution": "external_or_generated",
+          "candidates": []
+        }
+      ]
+    },
+    {
+      "path": "controls/dev/TestHooks/MUXControlsTestHooksLoggingMessageEventArgs.h",
+      "git_blob": "b42ec6dad5cfea1fe11f644ff23df3dc140ea0d3",
+      "sha256": "b430e810fd848fbd7def43736037334100a8d5171ce31c3fe8d3c9250ca04b52",
+      "state": "framework_dependency_review",
+      "includes": [
+        {
+          "header": "MUXControlsTestHooksLoggingMessageEventArgs.g.h",
+          "line": 5,
+          "style": "quoted",
+          "resolution": "external_or_generated",
+          "candidates": []
+        }
+      ]
+    },
+    {
+      "path": "controls/dev/inc/AutoHandle.h",
+      "git_blob": "d75e8a9989a20890609039a48768ae4e6752473b",
+      "sha256": "297832f1f7060a01a15dc59e247e1bc464c7fcea6de5fc7e4fa423e1a8c63d6c",
+      "state": "framework_dependency_review",
+      "includes": []
+    },
+    {
+      "path": "controls/dev/inc/BoxHelpers.h",
+      "git_blob": "f81b5ac70737bcd2b695a0de6e5a9791d8bbdfc3",
+      "sha256": "b3c6b34f3ea19d9dd095481714f49f211c3c35c92b1619f8b441a04c83c96209",
+      "state": "framework_dependency_review",
+      "includes": [
+        {
+          "header": "CppWinRTHelpers.h",
+          "line": 11,
+          "style": "quoted",
+          "resolution": "relative_path",
+          "candidates": [
+            "controls/dev/inc/CppWinRTHelpers.h"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "controls/dev/inc/CastHelpers.h",
+      "git_blob": "f37a5afa37a07697630947ce91f58e348fac1831",
+      "sha256": "b31ec8a0fddde6166df145dace2e009c90d70ca3c7ca19b7c5e10a77b8725686",
+      "state": "framework_dependency_review",
+      "includes": []
+    },
+    {
+      "path": "controls/dev/inc/CollectionHelper.h",
+      "git_blob": "67365a90ed47bd0337b90643f17a5a9afba7483c",
+      "sha256": "fdbb7b00e750f34be340624935e36d04d30c0a09af69254b470f22efb689b861",
+      "state": "framework_dependency_review",
+      "includes": []
+    },
+    {
+      "path": "controls/dev/inc/CppWinRTHelpers.h",
+      "git_blob": "9751a19a3e4de22a5b349a395f18748b9c6f5c46",
+      "sha256": "bf4d6e83666858ed89ecdc98057b0615b395485934ad657afd7f8ba2e9383d83",
+      "state": "framework_dependency_review",
+      "includes": []
+    },
+    {
+      "path": "controls/dev/inc/ErrorHandling.h",
+      "git_blob": "3f2bc4dc3e0d3bbbbd76e7d726059e268677c421",
+      "sha256": "00d7c32f2213723b3ddda400efdf1814acbd28d70db3dfc581aefeb04b98d7f7",
+      "state": "framework_dependency_review",
+      "includes": [
+        {
+          "header": "windows.h",
+          "line": 5,
+          "style": "system",
+          "resolution": "external_or_generated",
+          "candidates": []
+        },
+        {
+          "header": "exception",
+          "line": 7,
+          "style": "system",
+          "resolution": "external_or_generated",
+          "candidates": []
+        }
+      ]
+    },
+    {
+      "path": "controls/dev/inc/GlobalDependencyProperty.h",
+      "git_blob": "195389292326b5864e5ad6d3c9230a9e4a5ecd51",
+      "sha256": "c463b5202b4d945e7844d667e06c1bfbe1c1d59d4f3450f7c5dcb9a324e509b0",
+      "state": "framework_dependency_review",
+      "includes": []
+    },
+    {
+      "path": "controls/dev/inc/RoutedEventHelpers.h",
+      "git_blob": "3a2acccb2bf4da38e2120ac4bf8acb7bd3304559",
+      "sha256": "d85e1d443a2efa3a6ce0f24143a542b3ac4920f1523f53a290510970c1b0bd52",
+      "state": "framework_dependency_review",
+      "includes": []
+    },
+    {
+      "path": "controls/dev/inc/RuntimeClassHelpers.h",
+      "git_blob": "7c871d8dc0acbf996d35540cb1291e21417d5183",
+      "sha256": "4c31ea034612ca20cb0a0d79824207caa4601e6f7d7fa0bf2b9ba25c289f29db",
+      "state": "framework_dependency_review",
+      "includes": [
+        {
+          "header": "tracker_ref.h",
+          "line": 5,
+          "style": "quoted",
+          "resolution": "relative_path",
+          "candidates": [
+            "controls/dev/inc/tracker_ref.h"
+          ]
+        },
+        {
+          "header": "winrt\\Microsoft.UI.Xaml.h",
+          "line": 7,
+          "style": "system",
+          "resolution": "external_or_generated",
+          "candidates": []
+        }
+      ]
+    },
+    {
+      "path": "controls/dev/inc/SharedHelpers.h",
+      "git_blob": "5843e2aa4b0a3ea313bc18e230e0f75c62885344",
+      "sha256": "307dfc6575784223d964ef5a6ed1ba8df5d5f1e88e58f1f7069736840ad2ce37",
+      "state": "framework_dependency_review",
+      "includes": [
+        {
+          "header": "AutoHandle.h",
+          "line": 5,
+          "style": "quoted",
+          "resolution": "relative_path",
+          "candidates": [
+            "controls/dev/inc/AutoHandle.h"
+          ]
+        },
+        {
+          "header": "StaticAssertFalse.h",
+          "line": 7,
+          "style": "quoted",
+          "resolution": "relative_path",
+          "candidates": [
+            "controls/dev/inc/StaticAssertFalse.h"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "controls/dev/inc/StaticAssertFalse.h",
+      "git_blob": "56751519a5ab7c9b61f92a2651f67a5d254324eb",
+      "sha256": "f28c39684ef64a897c6328a66ae7e55ef3aaffe4ee2a93e6c3ba2e13f0616a17",
+      "state": "framework_dependency_review",
+      "includes": []
+    },
+    {
+      "path": "controls/dev/inc/common.h",
+      "git_blob": "9455669fe920dc1636eecc12732e5c083c0d24fb",
+      "sha256": "8f69e830fd1a490ac97ca06b560510576832e6b00726fc6898add6ab3e0a4b8f",
+      "state": "framework_dependency_review",
+      "includes": [
+        {
+          "header": "ErrorHandling.h",
+          "line": 13,
+          "style": "quoted",
+          "resolution": "relative_path",
+          "candidates": [
+            "controls/dev/inc/ErrorHandling.h"
+          ]
+        },
+        {
+          "header": "CppWinRTHelpers.h",
+          "line": 15,
+          "style": "quoted",
+          "resolution": "relative_path",
+          "candidates": [
+            "controls/dev/inc/CppWinRTHelpers.h"
+          ]
+        },
+        {
+          "header": "RuntimeClassHelpers.h",
+          "line": 16,
+          "style": "quoted",
+          "resolution": "relative_path",
+          "candidates": [
+            "controls/dev/inc/RuntimeClassHelpers.h"
+          ]
+        },
+        {
+          "header": "SharedHelpers.h",
+          "line": 17,
+          "style": "quoted",
+          "resolution": "relative_path",
+          "candidates": [
+            "controls/dev/inc/SharedHelpers.h"
+          ]
+        },
+        {
+          "header": "BoxHelpers.h",
+          "line": 18,
+          "style": "quoted",
+          "resolution": "relative_path",
+          "candidates": [
+            "controls/dev/inc/BoxHelpers.h"
+          ]
+        },
+        {
+          "header": "CastHelpers.h",
+          "line": 19,
+          "style": "quoted",
+          "resolution": "relative_path",
+          "candidates": [
+            "controls/dev/inc/CastHelpers.h"
+          ]
+        },
+        {
+          "header": "event.h",
+          "line": 20,
+          "style": "quoted",
+          "resolution": "relative_path",
+          "candidates": [
+            "controls/dev/inc/event.h"
+          ]
+        },
+        {
+          "header": "AutoHandle.h",
+          "line": 21,
+          "style": "quoted",
+          "resolution": "relative_path",
+          "candidates": [
+            "controls/dev/inc/AutoHandle.h"
+          ]
+        },
+        {
+          "header": "GlobalDependencyProperty.h",
+          "line": 22,
+          "style": "quoted",
+          "resolution": "relative_path",
+          "candidates": [
+            "controls/dev/inc/GlobalDependencyProperty.h"
+          ]
+        },
+        {
+          "header": "CollectionHelper.h",
+          "line": 23,
+          "style": "quoted",
+          "resolution": "relative_path",
+          "candidates": [
+            "controls/dev/inc/CollectionHelper.h"
+          ]
+        },
+        {
+          "header": "RoutedEventHelpers.h",
+          "line": 24,
+          "style": "quoted",
+          "resolution": "relative_path",
+          "candidates": [
+            "controls/dev/inc/RoutedEventHelpers.h"
+          ]
+        },
+        {
+          "header": "MUXControlsFactory.h",
+          "line": 25,
+          "style": "quoted",
+          "resolution": "ambiguous",
+          "candidates": [
+            "controls/dev/dll-tabular/MUXControlsFactory.h",
+            "controls/dev/dll/MUXControlsFactory.h"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "controls/dev/inc/event.h",
+      "git_blob": "d5a637289877c8f2df3ee49e804655cd1da9da20",
+      "sha256": "1694f3ded9e47c41ab4d20039c3defbb457511566d068cad3d4f3475a888337c",
+      "state": "framework_dependency_review",
+      "includes": [
+        {
+          "header": "set",
+          "line": 5,
+          "style": "system",
+          "resolution": "external_or_generated",
+          "candidates": []
+        }
+      ]
+    },
+    {
+      "path": "controls/dev/inc/tracker_ref.h",
+      "git_blob": "5e16a2f1ef1d9289034d1df736bcfab140c8bd5f",
+      "sha256": "ebd75b005c5d851e6d9f63b152d03dc7d1784e38a805aab438bcd65766a59308",
+      "state": "framework_dependency_review",
+      "includes": [
+        {
+          "header": "SharedHelpers.h",
+          "line": 5,
+          "style": "quoted",
+          "resolution": "relative_path",
+          "candidates": [
+            "controls/dev/inc/SharedHelpers.h"
+          ]
+        }
+      ]
+    },
     {
       "path": "dxaml/test/infra/client/inc/FontHelperPrivate.h",
       "git_blob": "92af9266e2bda4915bbb01eceb025641f4912a78",
@@ -99147,6 +101162,307 @@
     }
   ],
   "include_boundaries": [
+    {
+      "from": "controls/dev/CommandBarFlyout/CommandBarFlyout.h",
+      "header": "CommandBarFlyout.g.h",
+      "line": 5,
+      "style": "quoted",
+      "resolution": "external_or_generated",
+      "candidates": []
+    },
+    {
+      "from": "controls/dev/CommandBarFlyout/CommandBarFlyoutCommandBar.h",
+      "header": "CommandBarFlyoutCommandBar.g.h",
+      "line": 5,
+      "style": "quoted",
+      "resolution": "external_or_generated",
+      "candidates": []
+    },
+    {
+      "from": "controls/dev/CommandBarFlyout/CommandBarFlyoutCommandBar.h",
+      "header": "CppWinrtContentExternalBackdropLinkHelper.h",
+      "line": 9,
+      "style": "system",
+      "resolution": "external_or_generated",
+      "candidates": []
+    },
+    {
+      "from": "controls/dev/CommandBarFlyout/CommandBarFlyoutTrace.h",
+      "header": "Utils.h",
+      "line": 8,
+      "style": "quoted",
+      "resolution": "ambiguous",
+      "candidates": [
+        "controls/dev/ResourceHelper/Utils.h",
+        "dxaml/test/native/external/inc/Utils.h"
+      ]
+    },
+    {
+      "from": "controls/dev/CommandBarFlyout/TextCommandBarFlyout.cpp",
+      "header": "pch.h",
+      "line": 3,
+      "style": "quoted",
+      "resolution": "ambiguous",
+      "candidates": [
+        "Samples/AppTestAutomationHelpers/pch.h",
+        "Samples/ChartApp/ChartAppCppPackaged/pch.h",
+        "Samples/ChartApp/ChartAppCppUnpackaged/pch.h",
+        "Samples/DisableXamlGeneratedMain/Cpp/pch.h",
+        "Samples/DisableXamlGeneratedMain/CppNoCtor/pch.h",
+        "Samples/FolderTreeAppCpp/FolderTreeAppCpp/pch.h",
+        "Samples/ScratchPadAppCpp/ScratchPadAppCpp/pch.h",
+        "Samples/TableViewApp/TableViewAppCppPackaged/pch.h",
+        "Samples/TableViewApp/TableViewAppCppUnpackaged/pch.h",
+        "Samples/WinUICppDesktopSampleApp/CustomWindow/pch.h",
+        "Samples/WinUICppDesktopSampleApp/WinUICppDesktopSampleApp/WinUICppDesktopSampleApp/pch.h",
+        "Samples/WinUICppDesktopSampleApp/WinUICppRuntimeComponent/pch.h",
+        "Samples/WinUICppIsland2SampleApp/WinUICppIsland2SampleApp/pch.h",
+        "Samples/WinUICppIslandsSampleApp/WinUICppIslandsSampleApp/pch.h",
+        "Samples/WinUIDesktop/CppDesktopSample/pch.h",
+        "Samples/WinUIDesktop/NativeDX12DesktopSample/pch.h",
+        "Samples/WinUIDesktop/NativeDesktopSample/pch.h",
+        "Samples/WinUISnoop/WinUISnoopTap/pch.h",
+        "Samples/WinUITextInputXamlIslandApp/WinUITextInputXamlIslandApp/pch.h",
+        "controls/dev/dll-tabular/pch.h",
+        "controls/dev/dll/pch.h",
+        "controls/test/TabViewTearOutApp/pch.h",
+        "controls/test/TestAppCX/pch.h",
+        "dxaml/test/infra/taefhostapp/pch.h",
+        "dxaml/test/native/external/adaptability/customtypes/pch.h",
+        "dxaml/test/native/external/controls/customtypes/pch/pch.h",
+        "dxaml/test/native/external/foundation/customTypes/pch.h",
+        "dxaml/test/native/external/pch/pch.h",
+        "dxaml/test/native/external/sample/customTypes/pch.h",
+        "dxaml/test/native/external/tools/customTypes/pch.h",
+        "perf/scenarios/XAMLPerf.ButtonApp.Cpp.MUX/pch.h",
+        "perf/scenarios/XAMLPerf.HelloWorldApp.Cpp.MUX/XAMLPerf.HelloWorldApp.Cpp.MUX/pch.h",
+        "perf/scenarios/XAMLPerf.Islands-BlankUserControl.Cpp.MUX/Host/pch.h",
+        "perf/scenarios/XAMLPerf.Islands.Cpp.MUX/Host/pch.h",
+        "perf/scenarios/XAMLPerf.MinApp.Cpp.MUX/pch.h",
+        "perf/scenarios/XAMLPerf.MinApp.Cpp.WUX/pch.h",
+        "perf/scenarios/XAMLPerf.TextBlockApp.Cpp.MUX/pch.h",
+        "perf/scenarios/XAMLPerf.UnpackagedApp.Cpp.MUX/pch.h",
+        "perf/scenarios/cpp-win32-unpackaged/pch.h",
+        "src/XamlCompiler/Tests/RegressionProjects/Basic/CppWinRT/EventHandling_968976/pch.h",
+        "src/XamlCompiler/Tests/RegressionProjects/Basic/CppWinRT/Simple/pch.h",
+        "src/XamlCompiler/Tests/RegressionProjects/Basic/References/CppWinRTComponent/pch.h",
+        "src/XamlCompiler/Tests/RegressionProjects/Basic/References/CppWinRTExe/pch.h",
+        "src/XamlCompiler/Tests/RegressionProjects/Features/BindPhasingTestBedCppWinRT/BindPhasingTestBedCppWinRT/pch.h",
+        "src/XamlCompiler/Tests/RegressionProjects/Features/CompiledBinding/BindTestbedCppWinRT/pch.h",
+        "src/XamlCompiler/Tests/RegressionProjects/Features/CompiledBinding/BindTestbedCppWinRTModel/pch.h",
+        "src/XamlCompiler/Tests/RegressionProjects/Features/Conditionals/ConditionalsCppWinRT/pch.h",
+        "src/XamlCompiler/Tests/RegressionProjects/Features/DeferLoadStrategy/CppWinRT/pch.h",
+        "src/XamlCompiler/Tests/RegressionProjects/Features/LinkedMD/LinkedMDAppCppWinRT/pch.h",
+        "src/XamlCompiler/Tests/RegressionProjects/Features/LinkedMD/LinkedMDControlsCppWinRT/pch.h",
+        "src/XamlCompiler/Tests/RegressionProjects/Features/LinkedMD/LinkedMDSubControlsCppWinRT/pch.h",
+        "src/XamlCompiler/Tests/RegressionProjects/Features/MarkupExtensions/MarkupExtensionsCppWinRT/pch.h",
+        "src/XamlCompiler/Tests/RegressionProjects/Features/Metadata/MetadataTestbedCppWinRT/pch.h",
+        "src/XamlCompiler/Tests/RegressionProjects/Features/MultiXamlFiles/MultipleViewsTestbedCppWinRT/pch.h",
+        "src/XamlCompiler/Tests/RegressionProjects/Features/ReduceProviderLoading/ConsumerProvider/ConsumerCppWinRT/pch.h",
+        "src/XamlCompiler/Tests/RegressionProjects/Features/ReduceProviderLoading/ConsumerProvider/ProviderCppWinRT/pch.h",
+        "src/XamlCompiler/Tests/RegressionProjects/Features/StaticLibs/RuntimeComponentWithStaticLibInApp/pch.h",
+        "src/XamlCompiler/Tests/RegressionProjects/Features/StaticLibs/StaticControlsLib/pch.h",
+        "src/XamlCompiler/Tests/RegressionProjects/Features/StaticLibs/StaticLibInApp/pch.h",
+        "src/XamlCompiler/Tests/RegressionProjects/Features/StaticLibs/StaticLibInRuntimeComponent/pch.h",
+        "src/XamlCompiler/Tests/RegressionProjects/NonStandard/NonStandardCppWinRT/NonStandardCppWinRT/pch.h",
+        "tools/XamlProfiler/XamlProfilerTap/pch.h"
+      ]
+    },
+    {
+      "from": "controls/dev/CommandBarFlyout/TextCommandBarFlyout.cpp",
+      "header": "RuntimeProfiler.h",
+      "line": 9,
+      "style": "quoted",
+      "resolution": "ambiguous",
+      "candidates": [
+        "controls/dev/Telemetry/RuntimeProfiler.h",
+        "dxaml/xcp/components/Telemetry/inc/RuntimeProfiler.h"
+      ]
+    },
+    {
+      "from": "controls/dev/CommandBarFlyout/TextCommandBarFlyout.cpp",
+      "header": "TextCommandBarFlyout.properties.cpp",
+      "line": 10,
+      "style": "quoted",
+      "resolution": "external_or_generated",
+      "candidates": []
+    },
+    {
+      "from": "controls/dev/CommandBarFlyout/TextCommandBarFlyout.h",
+      "header": "TextCommandBarFlyout.g.h",
+      "line": 5,
+      "style": "quoted",
+      "resolution": "external_or_generated",
+      "candidates": []
+    },
+    {
+      "from": "controls/dev/ResourceHelper/ResourceAccessor.h",
+      "header": "pch.h",
+      "line": 5,
+      "style": "quoted",
+      "resolution": "ambiguous",
+      "candidates": [
+        "Samples/AppTestAutomationHelpers/pch.h",
+        "Samples/ChartApp/ChartAppCppPackaged/pch.h",
+        "Samples/ChartApp/ChartAppCppUnpackaged/pch.h",
+        "Samples/DisableXamlGeneratedMain/Cpp/pch.h",
+        "Samples/DisableXamlGeneratedMain/CppNoCtor/pch.h",
+        "Samples/FolderTreeAppCpp/FolderTreeAppCpp/pch.h",
+        "Samples/ScratchPadAppCpp/ScratchPadAppCpp/pch.h",
+        "Samples/TableViewApp/TableViewAppCppPackaged/pch.h",
+        "Samples/TableViewApp/TableViewAppCppUnpackaged/pch.h",
+        "Samples/WinUICppDesktopSampleApp/CustomWindow/pch.h",
+        "Samples/WinUICppDesktopSampleApp/WinUICppDesktopSampleApp/WinUICppDesktopSampleApp/pch.h",
+        "Samples/WinUICppDesktopSampleApp/WinUICppRuntimeComponent/pch.h",
+        "Samples/WinUICppIsland2SampleApp/WinUICppIsland2SampleApp/pch.h",
+        "Samples/WinUICppIslandsSampleApp/WinUICppIslandsSampleApp/pch.h",
+        "Samples/WinUIDesktop/CppDesktopSample/pch.h",
+        "Samples/WinUIDesktop/NativeDX12DesktopSample/pch.h",
+        "Samples/WinUIDesktop/NativeDesktopSample/pch.h",
+        "Samples/WinUISnoop/WinUISnoopTap/pch.h",
+        "Samples/WinUITextInputXamlIslandApp/WinUITextInputXamlIslandApp/pch.h",
+        "controls/dev/dll-tabular/pch.h",
+        "controls/dev/dll/pch.h",
+        "controls/test/TabViewTearOutApp/pch.h",
+        "controls/test/TestAppCX/pch.h",
+        "dxaml/test/infra/taefhostapp/pch.h",
+        "dxaml/test/native/external/adaptability/customtypes/pch.h",
+        "dxaml/test/native/external/controls/customtypes/pch/pch.h",
+        "dxaml/test/native/external/foundation/customTypes/pch.h",
+        "dxaml/test/native/external/pch/pch.h",
+        "dxaml/test/native/external/sample/customTypes/pch.h",
+        "dxaml/test/native/external/tools/customTypes/pch.h",
+        "perf/scenarios/XAMLPerf.ButtonApp.Cpp.MUX/pch.h",
+        "perf/scenarios/XAMLPerf.HelloWorldApp.Cpp.MUX/XAMLPerf.HelloWorldApp.Cpp.MUX/pch.h",
+        "perf/scenarios/XAMLPerf.Islands-BlankUserControl.Cpp.MUX/Host/pch.h",
+        "perf/scenarios/XAMLPerf.Islands.Cpp.MUX/Host/pch.h",
+        "perf/scenarios/XAMLPerf.MinApp.Cpp.MUX/pch.h",
+        "perf/scenarios/XAMLPerf.MinApp.Cpp.WUX/pch.h",
+        "perf/scenarios/XAMLPerf.TextBlockApp.Cpp.MUX/pch.h",
+        "perf/scenarios/XAMLPerf.UnpackagedApp.Cpp.MUX/pch.h",
+        "perf/scenarios/cpp-win32-unpackaged/pch.h",
+        "src/XamlCompiler/Tests/RegressionProjects/Basic/CppWinRT/EventHandling_968976/pch.h",
+        "src/XamlCompiler/Tests/RegressionProjects/Basic/CppWinRT/Simple/pch.h",
+        "src/XamlCompiler/Tests/RegressionProjects/Basic/References/CppWinRTComponent/pch.h",
+        "src/XamlCompiler/Tests/RegressionProjects/Basic/References/CppWinRTExe/pch.h",
+        "src/XamlCompiler/Tests/RegressionProjects/Features/BindPhasingTestBedCppWinRT/BindPhasingTestBedCppWinRT/pch.h",
+        "src/XamlCompiler/Tests/RegressionProjects/Features/CompiledBinding/BindTestbedCppWinRT/pch.h",
+        "src/XamlCompiler/Tests/RegressionProjects/Features/CompiledBinding/BindTestbedCppWinRTModel/pch.h",
+        "src/XamlCompiler/Tests/RegressionProjects/Features/Conditionals/ConditionalsCppWinRT/pch.h",
+        "src/XamlCompiler/Tests/RegressionProjects/Features/DeferLoadStrategy/CppWinRT/pch.h",
+        "src/XamlCompiler/Tests/RegressionProjects/Features/LinkedMD/LinkedMDAppCppWinRT/pch.h",
+        "src/XamlCompiler/Tests/RegressionProjects/Features/LinkedMD/LinkedMDControlsCppWinRT/pch.h",
+        "src/XamlCompiler/Tests/RegressionProjects/Features/LinkedMD/LinkedMDSubControlsCppWinRT/pch.h",
+        "src/XamlCompiler/Tests/RegressionProjects/Features/MarkupExtensions/MarkupExtensionsCppWinRT/pch.h",
+        "src/XamlCompiler/Tests/RegressionProjects/Features/Metadata/MetadataTestbedCppWinRT/pch.h",
+        "src/XamlCompiler/Tests/RegressionProjects/Features/MultiXamlFiles/MultipleViewsTestbedCppWinRT/pch.h",
+        "src/XamlCompiler/Tests/RegressionProjects/Features/ReduceProviderLoading/ConsumerProvider/ConsumerCppWinRT/pch.h",
+        "src/XamlCompiler/Tests/RegressionProjects/Features/ReduceProviderLoading/ConsumerProvider/ProviderCppWinRT/pch.h",
+        "src/XamlCompiler/Tests/RegressionProjects/Features/StaticLibs/RuntimeComponentWithStaticLibInApp/pch.h",
+        "src/XamlCompiler/Tests/RegressionProjects/Features/StaticLibs/StaticControlsLib/pch.h",
+        "src/XamlCompiler/Tests/RegressionProjects/Features/StaticLibs/StaticLibInApp/pch.h",
+        "src/XamlCompiler/Tests/RegressionProjects/Features/StaticLibs/StaticLibInRuntimeComponent/pch.h",
+        "src/XamlCompiler/Tests/RegressionProjects/NonStandard/NonStandardCppWinRT/NonStandardCppWinRT/pch.h",
+        "tools/XamlProfiler/XamlProfilerTap/pch.h"
+      ]
+    },
+    {
+      "from": "controls/dev/Telemetry/MuxcTraceLogging.h",
+      "header": "WinEventLogLevels.h",
+      "line": 5,
+      "style": "quoted",
+      "resolution": "ambiguous",
+      "candidates": [
+        "controls/dev/Common/WinEventLogLevels.h",
+        "controls/dev/inc/WinEventLogLevels.h"
+      ]
+    },
+    {
+      "from": "controls/dev/Telemetry/MuxcTraceLogging.h",
+      "header": "TraceLoggingProvider.h",
+      "line": 7,
+      "style": "system",
+      "resolution": "external_or_generated",
+      "candidates": []
+    },
+    {
+      "from": "controls/dev/Telemetry/MuxcTraceLogging.h",
+      "header": "wil/TraceLogging.h",
+      "line": 16,
+      "style": "system",
+      "resolution": "external_or_generated",
+      "candidates": []
+    },
+    {
+      "from": "controls/dev/TestHooks/MUXControlsTestHooks.h",
+      "header": "WinEventLogLevels.h",
+      "line": 5,
+      "style": "quoted",
+      "resolution": "ambiguous",
+      "candidates": [
+        "controls/dev/Common/WinEventLogLevels.h",
+        "controls/dev/inc/WinEventLogLevels.h"
+      ]
+    },
+    {
+      "from": "controls/dev/TestHooks/MUXControlsTestHooks.h",
+      "header": "MUXControlsTestHooks.g.h",
+      "line": 11,
+      "style": "quoted",
+      "resolution": "external_or_generated",
+      "candidates": []
+    },
+    {
+      "from": "controls/dev/TestHooks/MUXControlsTestHooksLoggingMessageEventArgs.h",
+      "header": "MUXControlsTestHooksLoggingMessageEventArgs.g.h",
+      "line": 5,
+      "style": "quoted",
+      "resolution": "external_or_generated",
+      "candidates": []
+    },
+    {
+      "from": "controls/dev/inc/ErrorHandling.h",
+      "header": "windows.h",
+      "line": 5,
+      "style": "system",
+      "resolution": "external_or_generated",
+      "candidates": []
+    },
+    {
+      "from": "controls/dev/inc/ErrorHandling.h",
+      "header": "exception",
+      "line": 7,
+      "style": "system",
+      "resolution": "external_or_generated",
+      "candidates": []
+    },
+    {
+      "from": "controls/dev/inc/RuntimeClassHelpers.h",
+      "header": "winrt\\Microsoft.UI.Xaml.h",
+      "line": 7,
+      "style": "system",
+      "resolution": "external_or_generated",
+      "candidates": []
+    },
+    {
+      "from": "controls/dev/inc/common.h",
+      "header": "MUXControlsFactory.h",
+      "line": 25,
+      "style": "quoted",
+      "resolution": "ambiguous",
+      "candidates": [
+        "controls/dev/dll-tabular/MUXControlsFactory.h",
+        "controls/dev/dll/MUXControlsFactory.h"
+      ]
+    },
+    {
+      "from": "controls/dev/inc/event.h",
+      "header": "set",
+      "line": 5,
+      "style": "system",
+      "resolution": "external_or_generated",
+      "candidates": []
+    },
     {
       "from": "dxaml/test/native/external/Automation/AutomationClient/AutomationClientInitializer.h",
       "header": "UIAutomation.h",

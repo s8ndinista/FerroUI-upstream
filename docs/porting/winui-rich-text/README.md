@@ -18,8 +18,11 @@ claim.
 | Highlighters and focused helpers | [`dxaml/xcp/components/text`](https://github.com/microsoft/microsoft-ui-xaml/tree/fe244ca6ac4d482712b234a9de3cf771cc6481de/dxaml/xcp/components/text), all 23 tracked files, including its isolated tests |
 | License | Microsoft Corporation, MIT; the reference repository's `LICENSE` applies to source derived from it |
 
-The WinUI theme has its own older reference commit. Its completed theme-resource
-inventory does not establish rich text implementation parity at this reference.
+The general WinUI theme inventory has its own older reference commit. New
+RichEditBox resources in WinUI, Fluent and Simple and the native text-command
+source/header are tracked here at the rich-text reference. Completed general
+theme-resource inventory does not establish rich text behavior or appearance
+parity at this reference.
 
 ## Reading the record
 

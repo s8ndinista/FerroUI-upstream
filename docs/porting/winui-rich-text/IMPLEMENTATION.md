@@ -248,9 +248,12 @@ from the existing Unicode editing/navigation units and UI Automation units.
 | Line | 4 | Displayed lines from a complete untrimmed associated view; Paragraph when headless. |
 | Story | 5 | The model's single document. Document remains a Rust associated-constant alias. |
 | HardParagraph | 12 | Paragraph objects, distinguishing inline soft line breaks. |
+| Cluster | 13 | Actual shaping clusters from a complete untrimmed associated view, without grapheme fallback. |
 
-`Cluster` remains pending. The existing editor's grapheme-aware deletion does
-not establish TOM Cluster semantics. Story coordinates exclude the synthetic
+`Cluster` reads the formatter's shaped cluster output, including ligatures,
+complex-script clusters, bidi logical order, inline objects and linked pages. It
+rejects an unavailable, incomplete, trimmed, stale or malformed layout. Ordinary
+editor grapheme deletion remains a separate navigation contract. Story coordinates exclude the synthetic
 terminal CR; projection of that mark by GetText does not enlarge the model.
 
 `start_of` and `end_of` return signed movement/collapse counts. `get_index` uses
@@ -284,9 +287,49 @@ The `:flyout-focus` state requires the control's current ContextFlyout to target
 that control and keyboard focus to be inside its actual popup content. It keeps
 the selection brush and model composition active during that transition. Focus
 return, actual blur, closure and replacement clear the state through weak
-subscriptions. This control policy alone does not establish native IME transport
-retention across separate popup roots; that requires the framework/backend
-owner transition described in the remaining deviations.
+subscriptions. The shared input-method connection now retains semantic ownership and session
+generations across owned popup roots; browser and IMM32 adapters follow that
+transport ownership. Actual platform IME/candidate behavior and separate native
+window execution remain conformance gates.
+
+### Compiled theme resources and formatting commands
+
+The port supplies actual `RichEditBox` resources in the
+[WinUI](../../../src/FerroUI.Themes.WinUI/Controls/RichEditBox.xaml),
+[Fluent](../../../src/FerroUI.Themes.Fluent/Controls/RichEditBox.xaml) and
+[Simple](../../../src/FerroUI.Themes.Simple/Controls/RichEditBox.xaml) themes.
+Each merged dictionary uses the existing theme's palette and density resources.
+It installs the persistent rich presenter in `ContentElement`, alongside the
+header, placeholder and description parts. Selection, composition, the document,
+live ranges and undo remain properties of the shared editor during theme changes
+and retemplating.
+
+The native `TextCommandBarFlyout` source queries bold and italic, disables an
+effect when the complete selection has it, and otherwise enables it. Underline
+sets Single when the selected native value is None or Undefined. The
+[owner commands](../../../src/FerroUI.Controls/rich_edit_box_format_commands.rs)
+express those operations through existing FerroUI format patches and grouped
+history. `BoldState`, `ItalicState` and `UnderlineState` independently return
+`Option<bool>`: `None` denotes mixed formatting. `IsBold`, `IsItalic` and
+`IsUnderlined` expose uniform-on values to the menu's checked state. Toggling a
+mixed selection enables the supported effect across the range. Underline is
+changed run by run within one transaction, retaining each run's other
+decorations. A collapsed selection changes its typing format.
+
+The owned framework `MenuFlyout` binds cut/copy/paste, undo/redo, select-all and
+`ToggleBold`/`ToggleItalic`/`ToggleUnderline` to the actual editor.
+`CanFormat` observes read-only and effective enablement. The commands use the
+same cancellation and reentrancy policy as other editor edits; they query the
+accepted selection after preedit cancellation. Declared XAML commands, dynamic
+resources and theme parts are exercised by the actual-theme and runtime/compiled
+markup fixtures listed in [TESTS.md](TESTS.md).
+
+The [RichTextPage](../../../samples/ControlCatalog/Pages/RichTextPage.xaml)
+catalog entry demonstrates formatting/history/read-only controls, an editor and
+read-only preview over shared content, and linked read-only columns. It is a
+framework example authored for this port. RT-I17 retains the native command-bar,
+lazy-part, touch UI, OS focus-reveal, localization and appearance boundaries;
+headless theme tests do not close them.
 
 ## RTF and clipboard
 
@@ -301,9 +344,9 @@ assert_eq!(decoded.text(), snapshot.text());
 ```
 
 The [RTF codec](../../../src/FerroUI.Controls/rich_text/rtf.rs) supports its RTF1
-subset: groups/escapes, Unicode fallback and Windows-1252 bytes, font/color tables,
-supported character formatting, paragraph metrics, and hyperlink/bookmark/target
-fields. Native OLE/pictures, tables/lists, additional code pages and unsupported
+subset: groups/escapes, Unicode fallback and the portable byte encodings below,
+font/color tables, supported character formatting, paragraph metrics, and
+hyperlink/bookmark/target fields. Native OLE/pictures, tables/lists, additional code pages and unsupported
 format representations return explicit errors. Rust stream adapters use the codec for RTF and have an explicit byte/encoding
 policy. The native stream ABI and every TextGetOptions/TextSetOptions flag are
 not supplied by the codec.
@@ -327,6 +370,45 @@ the captured document/revision/selection before applying a delayed result. Rich
 run formatting survives casing and single-line policy transformations. The
 control exposes edit/clipboard failures to callers for normal application status
 handling.
+
+### RTF byte encodings and font-scoped decoding
+
+The [byte boundary](../../../src/FerroUI.Controls/rich_text/rtf_encoding.rs)
+uses `encoding_rs` 0.8.42 with default features disabled. It feeds raw text and
+hex escapes into one incremental decoder and emits UTF-16 from a fixed stack
+buffer. A multibyte character can span adjacent raw/escaped tokens. A change of
+format, group, font, page or destination finishes the previous sequence, so an
+incomplete character cannot be hidden across a semantic boundary. Invalid input
+returns a typed error without replacement characters, before a parsed document
+can be applied to the live editor.
+
+| RTF code page | Portable decoder |
+|---|---|
+| 874 | Thai |
+| 932 | Shift JIS |
+| 936 | GBK |
+| 949 | Korean |
+| 950 | Big5 |
+| 1250–1258 | Windows Central European, Cyrillic, Western, Greek, Turkish, Hebrew, Arabic, Baltic and Vietnamese |
+| 10000 / 10007 | Mac Roman / Mac Cyrillic |
+| 65001 | UTF-8 |
+
+Document `ansicpg`, font `fcharset` and explicit font `cpg` select byte decoding;
+they are separate from `lang`/`deflang`. A font's explicit `cpg` takes precedence
+regardless of declaration order. DEFAULT charset inherits the declared document
+page, while ANSI charset selects 1252. Group exit restores font/page state and
+`plain` restores the default font. Font names and hyperlink field instructions
+use the same decoding boundary as body text. RTF `u`/`uc` fallback bytes are
+consumed before entering the legacy decoder. Text limits apply to decoded UTF-16
+units, including astral scalars.
+
+The writer continues to emit canonical Unicode escapes, preserving text rather
+than the input file's original byte encoding or charset declarations. Symbol
+fonts, OEM/Johab and unlisted pages fail explicitly; portable tables and vendor
+mapping differences require native comparison. Tables, lists, OLE, pictures,
+math and remaining format effects remain outside the supported content subset.
+RT-I18 records these boundaries and the fixture suite is linked in
+[TESTS.md](TESTS.md).
 
 ## Rust text streams
 
@@ -374,6 +456,34 @@ flows remain separate tests from the deterministic control suite. Synchronous Te
 SelectionChanging now follow the mapped native host contracts. Real platform
 input ordering still requires separate backend verification.
 
+### Exact native replacement requests and acknowledgement
+
+`TextInputMethodEdit` carries three related values: the UTF-16 range being
+replaced, replacement text, and the desired selection in the resulting text.
+The connection/session exposes this as one request. RichEditBox validates the
+whole request against its current document and policies; it acknowledges success
+only when range, text and selection are accepted together. Empty replacement
+text performs the requested deletion. Malformed scalar boundaries, impossible
+selection, filtering or limit changes, cancellation and reentrant edits cannot
+be reported as an accepted exact update.
+
+An exact composition retains its complete active span separately from the
+current caret/selection. Subsequent updates address the current UTF-16 preview
+without losing its suffix when the caret moves inside it. Starting composition
+does not synthesize a separate Delete of the previous selection. Selection-only
+updates keep the preview; completion finalizes one undo unit; cancellation
+restores the original rich snapshot. An intercepted completion retains preview
+for a later retry.
+
+The CoreText adapter also distinguishes current client state from the state that
+native CoreText has acknowledged. A failed NotifyTextChanged does not advance
+the acknowledged length. Later retry therefore uses the last successful native
+length, even if the document changes again meanwhile. Generation/revision checks
+keep late client acknowledgements and reentrant older notifications from hiding
+newer work. Unsupported clause FormatUpdating returns Failed. This path does not
+assert support for native clause display or proofing/candidates, and the legacy
+TextBox route and actual Windows execution remain separate gates (RT-I16).
+
 ## Text accessibility
 
 Both rich view and rich editor peers expose `ITextProvider` and `ITextProvider2`;
@@ -386,7 +496,7 @@ UI Automation has seven units: Character, Format, Word, Line, Paragraph, Page an
 Document. Format boundaries merge equal effective runs but stop at semantic link
 and embedded-control boundaries. Line falls back to Paragraph when the document
 is not completely laid out; Page falls back to Document without a complete
-multiple-page overflow chain. These are separate from the seven implemented TOM-facade units and their native values.
+multiple-page overflow chain. These are separate from the eight implemented TOM-facade units and their native values.
 
 Twenty-five attribute identifiers have typed handling, including font, color,
 read-only/visibility, decoration/baseline, alignment and indentation values.
@@ -414,8 +524,13 @@ without retaining the owner. The Windows bridge sends a BSTR SAFEARRAY on the
 UI thread and retains length-aware embedded-NUL strings. Failed array creation
 or conversion destroys already-created slots through RAII.
 
-The public AutomationPeer event-raise path, annotation lookup, remaining
-attributes and native text bridges on other backends remain pending. See RT-I10 and RT-P05, and the exact
+The public `AutomationPeer::raise_text_edit_text_changed_event` path works even
+when that peer has no TextEdit pattern. It resolves its weak `EventsSource` once,
+retains that identity through reentrant callbacks and creates the Windows provider
+on demand. `None` produces no event; accepted strings retain embedded NUL and
+UTF-16 data. Runtime metadata merges these members with the existing peer
+declaration. Annotation lookup, remaining attributes and native text bridges on
+other backends remain pending. See RT-I10 and RT-P05, and the exact
 pending member list in [API-MAP.md](API-MAP.md).
 
 ## Inherited language and RTF language tags
@@ -481,6 +596,66 @@ Supported plain Unlink insertion preserves adjacent links while placing the new
 content outside them. Unsupported declarations are not counted as implemented
 operation semantics.
 
+## Structured Unicode case conversion
+
+`RichEditTextRange::change_case(LetterCase::Lower | LetterCase::Upper)` operates
+on the same structured snapshot and editor history as the other range services.
+The enum retains the native values 0 and 1. A changed result is `true`; a
+writable degenerate or unchanged range returns `false` without creating history,
+changing its revision or interrupting composition.
+
+```rust
+use ferroui_controls::rich_text::LetterCase;
+
+let range = editor.text_document().document_range()?;
+range.change_case(LetterCase::Upper)?;
+```
+
+Conversion reads the complete selected string, then attributes the converted
+scalars to their original runs. Consequently `ß` expands to `SS` in its original
+format, and Greek final-sigma context crosses adjacent spans rather than being
+reset at a style boundary. Hyperlink metadata, paragraph properties, soft breaks
+and embedded-control identity remain structured. Independent directed selection
+endpoints are remapped in UTF-16, including endpoints inside the converted range.
+The outer transaction records content and selection as one undo unit.
+
+An expansion that exceeds the configured text limit fails instead of losing
+characters through truncation. A nonexpanding operation remains valid when an
+application has lowered the limit below the existing document length; its limit
+is restored before the group publishes. A changed programmatic operation first
+settles preedit, then captures committed content again so the preview cannot be
+reintroduced as a committed edit.
+
+This operation uses Rust's Unicode default casing over the selected text. It
+does not call Windows locale services or infer Turkish/Azeri/Lithuanian casing
+from Language. Native locale and Unicode-version conformance, structural offsets,
+and finer live-pointer behavior within the replaced fragment remain separate
+boundaries in RT-I15.
+
+## Explicit and default paragraph tabs
+
+`ParagraphFormat::add_tab`, `delete_tab`, `clear_all_tabs`, `get_tab` and
+`tab_count` use native-valued `TabAlignment` and `TabLeader` enums. Facade tab
+positions are typographic points; `Paragraph`/formatter values use layout units.
+`TextTabStops` is an immutable sorted shared value. Adding a position replaces an
+existing position, clearing removes explicit stops while retaining default stops,
+and more than 63 explicit positions or nonfinite/negative distances fail before
+changing the value.
+
+The formatter resolves Left, Center, Right, Decimal and Bar alignment, with
+Spaces, Dots, Dashes, Lines, ThickLines and Equals leaders. Fields can span
+formatted runs and embedded controls. Decimal alignment uses the supplied run
+culture. RTL paragraphs measure from the right leading edge while left/right
+alignment remains physical. Reflow forks the necessary shaped run state instead
+of modifying cached input shared with earlier lines.
+
+`RichEditTextDocument::default_tab_stop` and `set_default_tab_stop` expose the
+shared document interval in points. Changes apply to existing/new paragraphs in
+one undoable operation. RTF document loading restores document defaults; inserting
+RTF into an existing range uses that destination document's default interval.
+Explicit stops survive both paths. Clipboard export resolves effective external
+context while the in-process transfer retains the exact snapshot.
+
 ## Extending the port
 
 For each new contract, read the pinned source or external public definition,
@@ -490,3 +665,14 @@ fail for the previous behavior. Add exact target/test/deviation evidence to
 source file partial until all its relevant members and deviations have been
 reviewed. `reuse_candidate`, `reference`, source-map checks and a growing test
 count are never substitutes for a completed native behavior audit.
+
+The native string boundary distinguishes counted text queries from editable
+Unicode strings. `HStringInterop::new_utf16` preserves the requested code-unit
+slice exactly, including a native request for half a surrogate pair or an
+embedded NUL. The slice is owned before entering a COM callback.
+`HStringInterop::try_value` strictly decodes inbound edits and reports malformed
+UTF-16 instead of introducing replacement characters. Adapter generation checks
+also surround client accessors, subscription registration/disposal and state
+queries, whose callbacks can replace the client. The Windows-only reentrancy
+fixtures instantiate the actual adapter while avoiding context/window creation;
+they still require an executed Windows test gate.

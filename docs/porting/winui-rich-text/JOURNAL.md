@@ -220,3 +220,75 @@ propagation from clearing a local value and checking owned arguments. Only
 formatting of the new test file followed these runs. The real-theme rerun and
 the remaining theme/markup/workspace gates are recorded in their own subsequent
 checkpoint; these focused results do not establish those gates.
+
+## 2026-10-20 — Published-state recovery, TOM casing and map reconciliation
+
+Recovered PR #243 at `86ee377d`. Earlier unpublished local files were not
+available in the new workspace, so new work is built from the published source.
+Reconciled the source/member map with the already published shaped Cluster,
+explicit/default paragraph tab, and public AutomationPeer TextEdit/EventsSource
+implementations. Source files remain partial; the map retains the full pinned
+inventory and does not turn lexical counts into parity percentages.
+
+Added a dedicated structured `ChangeCase` implementation and native-valued
+`LetterCase`. Complete selected-string Unicode casing is partitioned back into
+existing inline structure, preserving cross-run final-sigma context, expanding
+characters, paragraph/link/control content, and directed UTF-16 selection.
+No-op edits preserve history/revision; successful edits form one undo unit.
+Over-limit expansions fail before truncation; nonexpanding changes preserve an
+already-over-limit document. Changed programmatic operations recapture committed
+content after preedit cancellation. RT-I15 records the exact portable casing and
+native locale/position boundaries.
+
+Validation is pending at the time of this journal entry. The task-owned baseline
+build was stopped to release memory while unrelated compiler jobs used the shared
+environment; the stopped run is neither a pass nor a failure.
+Focused and final integration results will be appended after they complete.
+
+The same continuation adds exact UTF-16 range/text/resulting-selection input
+requests, independently retained composition spans and generation/revision-aware
+CoreText acknowledgement recovery. Empty replacement deletion, selection-only
+updates, cancelled/reentrant acknowledgement and last-successful native lengths
+have dedicated fixtures. Unsupported native clause formatting explicitly fails;
+the legacy TextBox route and native OS execution remain tracked separately.
+
+Source-map reproduction completed successfully after fetching the missing pinned
+Git blobs in one batch: 630 source/reference files, 1,258 public identifiers, 919
+framework dependencies and 806 include boundaries. A subsequent `--check` was
+clean. These are source integrity/reconciliation gates, not runtime test results.
+
+The continuation also supplies compiled RichEditBox themes for WinUI, Fluent and
+Simple; owner-bound formatting commands preserve independent mixed state,
+unrelated underline decorations and one history transaction. New actual-theme,
+runtime/compiled XAML and catalog fixtures cover the framework integration.
+`TextCommandBarFlyout.cpp` and its header are newly selected pinned source inputs,
+so their command behavior and transitive include boundaries are now part of this
+rich-text map. The native query/set branches were read directly before recording
+the mapping. RT-I17 records the MenuFlyout/palette translation and remaining
+native touch, lazy-part, localization and appearance contracts. Runtime gates
+for these additions are pending until their completed results are appended.
+
+The RTF reader now shares an incremental, non-replacing byte decoder across body
+text, font names and field instructions. Seventeen portable code pages have
+literal multilingual fixtures; font charset/code-page precedence, default-font
+resets, Unicode fallback, malformed boundary handling and decoded UTF-16 bounds
+are separately covered. `encoding_rs` is pinned to 0.8.42 with default features
+disabled. The public Text XML remains a reference-only specification because the
+native RTF engine is external; the reader/writer/stream API rows now link the
+actual codec implementation and fixtures. RT-I18 preserves Symbol/OEM/Johab,
+unlisted pages, vendor/native mappings, original-byte roundtrip and unsupported
+full-content boundaries. Runtime gate results follow only when completed.
+
+The native boundary follow-up retains exact counted UTF-16 query slices and
+embedded NULs in owned HSTRING values while strictly rejecting malformed edit
+payloads. Callback generation fences cover client access, subscription setup,
+disposal and state queries. Host fixtures and Windows-only actual-adapter
+regressions are linked separately from native execution evidence.
+
+After adding the native text-command source/header and all continuation anchors,
+the regenerated record and `--check` passed with **632 selected files, 1,258
+public API identifiers, 942 additional framework dependencies and 826 include
+boundary edges**. The map records 36 complete API entries, 428 partial and
+794 pending entries; no runtime source file is marked complete. These numbers
+measure the mapped inventory, not a percentage of functional parity. The source
+integrity command and its actual result are recorded in `mapping.json`.

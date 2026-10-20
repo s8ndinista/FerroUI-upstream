@@ -17,7 +17,7 @@ Generated alongside the inventory. Source links are pinned to the same commit as
 
 ## Include graph
 
-The machine-readable graph records **919 additional framework files** reached from the selected scope and **806 boundary edges**. It reads source-relative paths first and otherwise follows only unique repository path suffixes. Windows case-insensitive lookup is applied to source paths.
+The machine-readable graph records **942 additional framework files** reached from the selected scope and **826 boundary edges**. It reads source-relative paths first and otherwise follows only unique repository path suffixes. Windows case-insensitive lookup is applied to source paths.
 
 This is a source-dependency audit, not a compiler dependency dump. Conditional compilation, build include-path precedence, SDK/private-package headers, generated headers, runtime interface acquisition and linker inputs cannot be inferred from filename matching. Ambiguous and absent includes are preserved with their referring file and line; traversal stops at those boundaries. `external_or_generated` means absent from this Git tree, not proof that an API is proprietary or unavailable elsewhere.
 
@@ -30,7 +30,7 @@ General dependency-object, rendering, input, UI Automation and DXAML framework h
 | `precomp.h` | ambiguous | 139 |
 | `vector` | external_or_generated | 28 |
 | `XamlTailored.h` | ambiguous | 26 |
-| `pch.h` | ambiguous | 24 |
+| `pch.h` | ambiguous | 26 |
 | `NamespaceAliases.h` | ambiguous | 21 |
 | `functional` | external_or_generated | 19 |
 | `ppltasks.h` | external_or_generated | 16 |
@@ -38,10 +38,10 @@ General dependency-object, rendering, input, UI Automation and DXAML framework h
 | `utility` | external_or_generated | 14 |
 | `memory` | external_or_generated | 13 |
 | `cstdint` | external_or_generated | 11 |
+| `windows.h` | external_or_generated | 10 |
 | `array` | external_or_generated | 9 |
 | `macros.h` | ambiguous | 9 |
 | `microsoft.ui.composition.h` | external_or_generated | 9 |
-| `windows.h` | external_or_generated | 9 |
 | `map` | external_or_generated | 8 |
 | `math.h` | external_or_generated | 8 |
 | `unordered_set` | external_or_generated | 8 |
@@ -76,6 +76,7 @@ General dependency-object, rendering, input, UI Automation and DXAML framework h
 | `Microsoft.UI.Xaml.private.h` | external_or_generated | 3 |
 | `SimpleProperties.h` | ambiguous | 3 |
 | `TextAnalysis.h` | external_or_generated | 3 |
+| `TraceLoggingProvider.h` | external_or_generated | 3 |
 | `WexTestClass.h` | external_or_generated | 3 |
 | `d2d1_1.h` | external_or_generated | 3 |
 | `flags_enum.h` | ambiguous | 3 |
@@ -106,6 +107,5 @@ General dependency-object, rendering, input, UI Automation and DXAML framework h
 | `MuiUdk.h` | external_or_generated | 2 |
 | `Ptls-min.h` | external_or_generated | 2 |
 | `Richedit.h` | external_or_generated | 2 |
-| `SelectionBehavior.h` | external_or_generated | 2 |
 
 The full boundary list and all candidate matches are retained in `inventory.json`; this summary is intentionally bounded.
