@@ -39,10 +39,14 @@ request from lowering that minimum. The direct overlap regression checks both
 the retained and newly appended portions without creating controls.
 
 The original integration regression used a 40-DIP scroll to require another
-metadata request. The startup average can prefetch beyond that scroll, so its
-setup assertion failed before exercising the minimum change. The revised
-200-DIP scroll crosses the prefetched boundary while retaining overlap. Its
-final control-width assertion remains in place.
+metadata request. Both that distance and a later 200-DIP correction remained
+inside startup prefetch in integrated execution, so the setup failed before
+exercising the minimum change. The regression now reads the actual metadata
+range and scrolls in viewport-sized steps until it requests another interval.
+It then checks realized controls whose metadata came from the original range
+and was never supplied again by any later request. At least one such control
+must exist, and all must use the lower global limit. Returning to index zero
+and rerequesting its metadata would not establish retained-overlap behavior.
 
 ### Native measurement and scheduling
 

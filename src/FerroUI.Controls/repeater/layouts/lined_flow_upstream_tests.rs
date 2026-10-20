@@ -470,17 +470,48 @@ fn lowering_global_minimum_applies_to_retained_metadata_overlap() {
     let retained = fixture.host.element(0);
     close(retained.bounds().width, 50.0);
     let requests_before_scroll = requests.borrow().len();
+    let old_start = fixture.layout.requested_range_start_index();
+    let old_end = old_start + fixture.layout.requested_range_length();
     minimum.set(10.0);
-    // The startup estimate may prefetch more items than the eventual two
-    // items per line. Move two viewports so the sized window crosses that
-    // retained metadata boundary while its leading part still overlaps.
-    fixture.scroll(200.0);
-    assert!(requests.borrow().len() > requests_before_scroll);
-    fixture.scroll(0.0);
+    // Startup prefetch is based on an estimate that precedes MinWidth. Cross
+    // its actual boundary in viewport-sized steps, retaining overlap instead
+    // of assuming a fixed scroll distance will request more metadata.
+    for step in 1..=old_end - old_start + 1 {
+        fixture.scroll(step as f64 * 100.0);
+        if requests.borrow().len() > requests_before_scroll {
+            break;
+        }
+    }
+    assert!(
+        requests.borrow().len() > requests_before_scroll,
+        "scrolling must expose metadata beyond {old_start}..{old_end}"
+    );
     // The source deliberately preserves widths inside its frozen lines. A
     // layout invalidation recomputes those widths using the retained metadata,
     // without discarding the overlap as InvalidateItemsInfo would.
     fixture.layout.invalidate_layout();
     fixture.settle();
-    close(fixture.host.element(0).bounds().width, 20.0);
+    let refreshed = requests.borrow()[requests_before_scroll..].to_vec();
+    let retained: Vec<_> = fixture
+        .host
+        .live
+        .borrow()
+        .iter()
+        .filter(|(index, _)| {
+            (old_start..old_end).contains(index)
+                && !refreshed
+                    .iter()
+                    .any(|(start, length)| (*start..*start + *length).contains(index))
+        })
+        .cloned()
+        .collect();
+    assert!(
+        !retained.is_empty(),
+        "the width check must use metadata retained from {old_start}..{old_end}, \
+         not rerequested entries: requests={refreshed:?}, viewport={:?}",
+        fixture.host.window.get()
+    );
+    for (_, element) in retained {
+        close(element.bounds().width, 20.0);
+    }
 }
