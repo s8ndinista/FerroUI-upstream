@@ -1,0 +1,38 @@
+[package]
+name = "ferroui-view"
+description = "A declarative Rust API for FerroUI user interfaces without XAML: element builders generated for every control, an rsx! macro, signals that properties follow, keyed dynamic children"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+readme.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+# Unit tests live in `tests/` as a module tree of the library (`mod tests;`), not as integration test
+# targets.
+autotests = false
+
+[lib]
+path = "lib.rs"
+
+[features]
+default = []
+# `launch`, `open_window`: an application on the platform of the operating system with the Fluent theme.
+desktop = ["dep:ferroui-desktop", "dep:ferroui-themes-fluent"]
+
+[dependencies]
+ferroui-base = { workspace = true }
+ferroui-controls = { workspace = true }
+ferroui-view-macros = { workspace = true }
+ferroui-desktop = { workspace = true, optional = true }
+ferroui-themes-fluent = { workspace = true, optional = true }
+
+[dev-dependencies]
+ferroui-controls = { workspace = true, features = ["testing"] }
+
+# The group of the crate in the table of the README (docs/release.md).
+[package.metadata.release]
+group = "controls"
