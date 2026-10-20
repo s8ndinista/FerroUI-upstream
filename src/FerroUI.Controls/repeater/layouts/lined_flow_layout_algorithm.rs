@@ -58,6 +58,71 @@ pub(super) struct LineOptions {
     pub wrap_multiplier: f64,
 }
 
+/// ComputeFrozenItemsRange and the partially displayed-line branch of
+/// GetFirstAndLastDisplayedLineIndexes. Frozen lines cover the viewport plus
+/// the larger of 80% of a viewport or 40% of each adjacent sized region.
+pub(super) fn frozen_line_range(
+    viewport: f64,
+    mut offset: f64,
+    height: f64,
+    spacing: f64,
+    line_count: i32,
+    sized: (i32, i32),
+) -> (i32, i32) {
+    let (first_sized, last_sized) = sized;
+    if line_count <= 0 || first_sized > last_sized {
+        return (-1, -1);
+    }
+    if viewport == f64::INFINITY {
+        return sized;
+    }
+    let stride = height + spacing;
+    if viewport <= 0.0 || stride <= 0.0 {
+        return (-1, -1);
+    }
+    let extent = line_count as f64 * stride - spacing;
+    let maximum_offset = (extent - viewport).max(0.0);
+    offset = offset.min(maximum_offset);
+    if offset.abs() < 0.01 {
+        offset = 0.0;
+    }
+    // Zero padding still accounts for a temporary negative scroll offset.
+    let near = offset + offset.min(0.0);
+    let far = offset + viewport - (maximum_offset - offset).min(0.0);
+    if far <= 0.0 || near >= extent {
+        return (-1, -1);
+    }
+    let spacing_portion = spacing / stride;
+    let fractional_first = near.max(0.0) / stride;
+    let mut first_displayed = fractional_first as i32;
+    if first_displayed as f64 + 1.0 - fractional_first <= spacing_portion
+        && first_displayed + 1 < line_count
+    {
+        first_displayed += 1;
+    }
+    let fractional_last = (far.min(extent) + spacing) / stride;
+    let mut last_displayed = fractional_last as i32;
+    if fractional_last - last_displayed as f64 <= spacing_portion {
+        last_displayed = (last_displayed - 1).max(0);
+    }
+    first_displayed = first_displayed.max(first_sized);
+    last_displayed = last_displayed.min(last_sized);
+    if first_displayed > last_displayed {
+        return (-1, -1);
+    }
+    let viewport_lines = (viewport / stride) as i32;
+    let viewport_frozen = (0.8 * viewport_lines as f64) as i32 + 1;
+    let near_sized = first_displayed - first_sized;
+    let far_sized = last_sized - last_displayed;
+    let near_frozen = viewport_frozen
+        .min(near_sized)
+        .max((0.4 * near_sized as f64) as i32);
+    let far_frozen = viewport_frozen
+        .min(far_sized)
+        .max((0.4 * far_sized as f64) as i32);
+    (first_displayed - near_frozen, last_displayed + far_frozen)
+}
+
 fn sum_width(items: &[ItemMetrics], spacing: f64) -> f64 {
     items.iter().map(|item| item.width).sum::<f64>()
         + spacing * items.len().saturating_sub(1) as f64
@@ -92,14 +157,24 @@ pub(super) fn line_scale(items: &[ItemMetrics], available: f64, spacing: f64, ex
                 && if expand {
                     item.maximum < item.width * factor
                 } else {
-                    item.minimum > item.width * factor
+                    // ComputeLineShrinkFactor applies MaxWidth before
+                    // MinWidth when probing constraints, unlike the initial
+                    // arrange-width calculation. Preserve that ordering for
+                    // metadata with conflicting limits.
+                    item.minimum > item.width.max(item.minimum) * factor
                 }
         });
         let Some((index, item)) = next else {
             return factor;
         };
         budget = (budget - if expand { item.maximum } else { item.minimum }).max(0.0);
-        desired = (desired - item.width).max(0.0);
+        desired = (desired
+            - if expand {
+                item.width
+            } else {
+                item.width.max(item.minimum)
+            })
+        .max(0.0);
         ignored[index] = true;
         if budget <= 0.0 {
             return if expand { factor } else { 0.0 };

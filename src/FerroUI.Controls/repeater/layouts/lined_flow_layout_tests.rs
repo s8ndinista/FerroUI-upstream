@@ -3,7 +3,8 @@
 
 use super::layout_tests::{base, run, TestHost};
 use super::lined_flow_layout_algorithm::{
-    compute_fast_path, compute_regular_path, line_scale, ItemMetrics, LineOptions,
+    compute_fast_path, compute_regular_path, frozen_line_range, line_scale, ItemMetrics,
+    LineOptions,
 };
 use super::*;
 use ferroui_base::{Rect, Size};
@@ -43,6 +44,44 @@ fn close(actual: f64, expected: f64) {
 }
 
 #[test]
+fn lined_flow_frozen_lines_cover_large_sized_regions_and_small_cache_boundaries() {
+    // Displayed lines are 40..=44. With a large realization cache, 40% of
+    // either adjacent sized region is larger than 80% of the viewport.
+    assert_eq!(
+        frozen_line_range(100.0, 800.0, 20.0, 0.0, 100, (0, 99)),
+        (24, 66)
+    );
+    assert_eq!(
+        frozen_line_range(100.0, 800.0, 20.0, 0.0, 100, (36, 48)),
+        (36, 48)
+    );
+    assert_eq!(
+        frozen_line_range(f64::INFINITY, 0.0, 20.0, 5.0, 100, (0, 99)),
+        (0, 99)
+    );
+}
+
+#[test]
+fn lined_flow_frozen_lines_ignore_spacing_and_clamp_stale_scroll_offsets() {
+    assert_eq!(
+        frozen_line_range(1.0, 20.0, 20.0, 5.0, 100, (0, 99)),
+        (-1, -1)
+    );
+    assert_eq!(
+        frozen_line_range(20.0, 25.0, 20.0, 5.0, 100, (1, 1)),
+        (1, 1)
+    );
+    assert_eq!(
+        frozen_line_range(20.0, 1000.0, 20.0, 5.0, 3, (0, 2)),
+        (1, 2)
+    );
+    assert_eq!(
+        frozen_line_range(0.0, 0.0, 20.0, 5.0, 100, (0, 99)),
+        (-1, -1)
+    );
+}
+
+#[test]
 fn lined_flow_constraint_aware_expansion_and_shrinkage() {
     let mut items = metrics(&[20.0, 20.0]);
     items[0].maximum = 25.0;
@@ -52,6 +91,17 @@ fn lined_flow_constraint_aware_expansion_and_shrinkage() {
     close(line_scale(&items, 100.0, 0.0, false), 0.2);
     items[1].minimum = 80.0;
     assert_eq!(line_scale(&items, 100.0, 0.0, false), 0.0);
+}
+
+#[test]
+fn lined_flow_metadata_shrink_preserves_upstream_constraint_ordering() {
+    // WinUI ComputeLineShrinkFactor probes MaxWidth before MinWidth, while
+    // GetArrangeWidth applies MinWidth before MaxWidth to its initial width.
+    // These intentionally differ for contradictory application metadata.
+    let mut items = metrics(&[20.0, 100.0]);
+    items[0].minimum = 100.0;
+    items[0].maximum = 20.0;
+    close(line_scale(&items, 110.0, 0.0, false), 0.5);
 }
 
 #[test]

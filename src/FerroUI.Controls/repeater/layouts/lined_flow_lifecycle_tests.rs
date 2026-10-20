@@ -53,7 +53,7 @@ fn conflicting_control_constraints_follow_ferroui_minimum_precedence() {
 }
 
 #[test]
-fn partial_first_and_last_lines_arrange_their_retained_controls() {
+fn partial_last_line_arranges_its_retained_controls_after_skipping_the_leading_partial_line() {
     let _scope = crate::test_support::test_scope();
     for metadata in [false, true] {
         let host = TestHost::uniform(10, Size::new(20.0, 20.0));
@@ -68,7 +68,7 @@ fn partial_first_and_last_lines_arrange_their_retained_controls() {
         });
         layout.initialize_for_context(&base(&context));
         settle(&layout, &context, Size::new(100.0, 100.0));
-        let expected = (2..8)
+        let expected = (5..8)
             .map(|index| (host.element(index), host.element(index).bounds()))
             .collect::<Vec<_>>();
         layout.element_manager.discard_elements_outside_window(false, 1);
@@ -81,6 +81,7 @@ fn partial_first_and_last_lines_arrange_their_retained_controls() {
         for (element, bounds) in expected {
             assert_eq!(element.bounds(), bounds);
         }
+        assert_eq!(host.element(2).bounds().y, 0.0);
         assert_eq!(layout.realized_range(), (2, 7));
         assert_eq!(host.created.get(), created);
         layout.uninitialize_for_context(&base(&context));
@@ -155,6 +156,34 @@ fn expanded_metadata_is_clipped_to_the_items_source() {
 }
 
 #[test]
+fn prefetched_positive_ratios_update_history_before_negative_fallback_widths() {
+    let _scope = crate::test_support::test_scope();
+    let host = TestHost::uniform(1000, Size::new(20.0, 20.0));
+    let context = host.context();
+    let layout = LinedFlowLayout::new();
+    layout.set_line_height(20.0);
+    layout.initialize_for_context(&base(&context));
+    layout.average_items_per_line.set((5.0, 5.0));
+    layout.current_available_width.set(100.0);
+    let mut ratios = vec![2.0; 100];
+    ratios[20] = -1.0;
+    *layout.items_info.borrow_mut() = Rc::new(LinedFlowItemsInfo {
+        start: 80,
+        ratios,
+        ..LinedFlowItemsInfo::default()
+    });
+    let metrics = layout.collect_metrics(&context, 100, 120, 20.0, true);
+    assert_eq!(metrics[0].width, 40.0);
+    let history = layout.aspect_ratios.borrow();
+    assert_eq!(history.get_at(80).weight, 16);
+    assert_eq!(history.get_at(179).weight, 16);
+    assert_eq!(history.get_at(100).weight, 0);
+    drop(history);
+    assert_eq!(host.created.get(), 0);
+    layout.uninitialize_for_context(&base(&context));
+}
+
+#[test]
 fn regular_metadata_stops_delayed_control_measurement() {
     let _scope = crate::test_support::test_scope();
     let host = TestHost::new(
@@ -198,6 +227,37 @@ fn pending_invalidation_cannot_escape_into_a_replacement_context() {
     assert_eq!(invalidations.get(), 1);
     assert!(!layout.async_invalidation_pending.get());
     layout.uninitialize_for_context(&base(&replacement));
+}
+
+#[test]
+fn releasing_layout_with_a_queued_measure_timer_stops_it_and_allows_a_fresh_host() {
+    let _scope = crate::test_support::test_scope();
+    let host = TestHost::uniform(30, Size::new(20.0, 20.0));
+    let context = host.context();
+    let layout = LinedFlowLayout::new();
+    layout.set_line_height(20.0);
+    layout.initialize_for_context(&base(&context));
+    run(&layout, &context, Size::new(100.0, 100.0));
+    let timer = layout.timer.borrow().as_ref().unwrap().0.clone();
+    // Queue an already-due tick without a wall-clock sleep. Release the
+    // layout before the dispatcher processes that callback.
+    timer.stop();
+    timer.set_interval(Duration::ZERO);
+    timer.start();
+    let weak = layout.downgrade();
+    drop(layout);
+    assert!(weak.upgrade().is_none());
+    assert!(!timer.is_enabled());
+    Dispatcher::ui_thread().run_jobs(None);
+    let fresh_host = TestHost::uniform(3, Size::new(20.0, 20.0));
+    let fresh_context = fresh_host.context();
+    let fresh_layout = LinedFlowLayout::new();
+    fresh_layout.set_line_height(20.0);
+    fresh_layout.initialize_for_context(&base(&fresh_context));
+    settle(&fresh_layout, &fresh_context, Size::new(100.0, 100.0));
+    assert_eq!(fresh_layout.realized_range(), (0, 2));
+    assert_eq!(fresh_host.element(0).bounds(), Rect::new(0.0, 0.0, 20.0, 20.0));
+    fresh_layout.uninitialize_for_context(&base(&fresh_context));
 }
 
 #[test]
