@@ -257,7 +257,15 @@ pub trait ElementBuilder: Sized {
         let handler = Rc::new(handler);
         let attach: Attach = Rc::new(move |control: &Ref<Control>| {
             let handler = handler.clone();
-            control.add_handler(event, move |sender, e| handler(sender, e));
+            // The handler is detached with its owner: a component that runs
+            // again attaches its handlers again.
+            let token = control.add_handler(event, move |sender, e| handler(sender, e));
+            let weak = control.downgrade();
+            crate::reactive::on_cleanup(move || {
+                if let Some(control) = weak.upgrade() {
+                    control.remove_handler(event, token);
+                }
+            });
         });
         self.element_mut().handlers.push(attach);
         self

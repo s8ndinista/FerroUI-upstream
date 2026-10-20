@@ -14,6 +14,7 @@ path = "lib.rs"
 
 [dependencies]
 seven-guis-model = { path = "../Model", features = ["scenarios"] }
+ferroui-view = { workspace = true }
 seven-guis-counter-builders = { path = "../Builders/Counter" }
 seven-guis-counter-macros = { path = "../Macros/Counter" }
 seven-guis-temperature-builders = { path = "../Builders/Temperature" }
@@ -28,3 +29,10 @@ seven-guis-circle-drawer-builders = { path = "../Builders/CircleDrawer" }
 seven-guis-circle-drawer-macros = { path = "../Macros/CircleDrawer" }
 seven-guis-cells-builders = { path = "../Builders/Cells" }
 seven-guis-cells-macros = { path = "../Macros/Cells" }
+seven-guis-counter-hooks = { path = "../Hooks/Counter" }
+seven-guis-temperature-hooks = { path = "../Hooks/Temperature" }
+seven-guis-flight-booker-hooks = { path = "../Hooks/FlightBooker" }
+seven-guis-timer-hooks = { path = "../Hooks/Timer" }
+seven-guis-crud-hooks = { path = "../Hooks/Crud" }
+seven-guis-circle-drawer-hooks = { path = "../Hooks/CircleDrawer" }
+seven-guis-cells-hooks = { path = "../Hooks/Cells" }

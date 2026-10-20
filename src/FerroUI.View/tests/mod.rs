@@ -5,3 +5,4 @@ mod builder_tests;
 mod dynamic_tests;
 mod macro_tests;
 mod reactive_tests;
+mod rerender_tests;

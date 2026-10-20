@@ -321,16 +321,45 @@ impl ElementNode {
 /// or an `Option` type. A parameter named `children` of type `Element` takes
 /// the children of the element (`.child(..)`). The function runs once, when
 /// the element is built.
+///
+/// `#[component(rerender)]` makes a component that runs again: its function
+/// runs whenever a signal it read changes or its parent runs again, the
+/// elements it returns are patched into the controls it made before, and its
+/// state is kept in hooks (`use_signal`, `use_effect`, ...). Its parameters
+/// are cloned for each run, so they are `Clone`. With
+/// `#[component(rerender, memo)]` a parent that runs again with equal
+/// parameters (`PartialEq`) does not run it again.
 #[proc_macro_attribute]
 pub fn component(attribute: TokenStream, item: TokenStream) -> TokenStream {
-    if !attribute.is_empty() {
-        return syn::Error::new(Span::call_site(), "#[component] takes no arguments").to_compile_error().into();
+    let mut options = ComponentOptions::default();
+    let parser = syn::meta::parser(|meta| {
+        if meta.path.is_ident("rerender") {
+            options.rerender = true;
+            Ok(())
+        } else if meta.path.is_ident("memo") {
+            options.memo = true;
+            Ok(())
+        } else {
+            Err(meta.error("expected `rerender` or `memo`"))
+        }
+    });
+    syn::parse_macro_input!(attribute with parser);
+    if options.memo && !options.rerender {
+        return syn::Error::new(Span::call_site(), "`memo` is an option of a component that runs again: `#[component(rerender, memo)]`")
+            .to_compile_error()
+            .into();
     }
     let function = syn::parse_macro_input!(item as ItemFn);
-    match expand_component(function) {
+    match expand_component(function, options) {
         Ok(tokens) => tokens.into(),
         Err(error) => error.to_compile_error().into(),
     }
+}
+
+#[derive(Default, Clone, Copy)]
+struct ComponentOptions {
+    rerender: bool,
+    memo: bool,
 }
 
 struct Param {
@@ -344,7 +373,7 @@ fn is_option(ty: &Type) -> bool {
     matches!(ty, Type::Path(path) if path.path.segments.last().is_some_and(|segment| segment.ident == "Option"))
 }
 
-fn expand_component(mut function: ItemFn) -> syn::Result<TokenStream2> {
+fn expand_component(mut function: ItemFn, options: ComponentOptions) -> syn::Result<TokenStream2> {
     let name = function.sig.ident.clone();
     let name_text = name.to_string();
     if !name_text.chars().next().is_some_and(char::is_uppercase) {
@@ -446,6 +475,43 @@ fn expand_component(mut function: ItemFn) -> syn::Result<TokenStream2> {
     let start_doc = format!("Starts an element of the component [`{name_text}`].");
     let type_doc = format!("The component [`{name_text}`] as the name of an element of `rsx!`.");
 
+    let into_element = if options.rerender {
+        let props = if options.memo {
+            quote! { ::std::option::Option::Some(::std::rc::Rc::new(::std::clone::Clone::clone(&props)) as ::std::rc::Rc<dyn ::ferroui_view::element::AnyValueEq>) }
+        } else {
+            quote! { ::std::option::Option::None }
+        };
+        quote! {
+            impl ::ferroui_view::IntoElement for #builder_type {
+                fn into_element(self) -> ::ferroui_view::Element {
+                    let props = (#(#arguments,)*);
+                    let memo = #props;
+                    ::ferroui_view::element::component_element::<#name>(
+                        #name_text,
+                        self.key,
+                        move || {
+                            let (#(#field_names,)*) = ::std::clone::Clone::clone(&props);
+                            #name(#(#field_names),*)
+                        },
+                        memo,
+                    )
+                }
+            }
+        }
+    } else {
+        quote! {
+            impl ::ferroui_view::IntoElement for #builder_type {
+                fn into_element(self) -> ::ferroui_view::Element {
+                    let element = #name(#(#arguments),*);
+                    match self.key {
+                        ::std::option::Option::Some(key) => ::ferroui_view::element::with_key(element, key),
+                        ::std::option::Option::None => element,
+                    }
+                }
+            }
+        }
+    };
+
     function.attrs.push(syn::parse_quote!(#[allow(non_snake_case)]));
     Ok(quote! {
         #function
@@ -483,14 +549,6 @@ fn expand_component(mut function: ItemFn) -> syn::Result<TokenStream2> {
             }
         }
 
-        impl ::ferroui_view::IntoElement for #builder_type {
-            fn into_element(self) -> ::ferroui_view::Element {
-                let element = #name(#(#arguments),*);
-                match self.key {
-                    ::std::option::Option::Some(key) => ::ferroui_view::element::with_key(element, key),
-                    ::std::option::Option::None => element,
-                }
-            }
-        }
+        #into_element
     })
 }

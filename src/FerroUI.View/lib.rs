@@ -8,7 +8,7 @@
 //! The pieces (`docs/declarative-ui.md` has the design):
 //!
 //! - [`Element`]: a description of controls, their property values,
-//!   handlers and children. It is data, compared by value, so that a later
+//!   handlers and children. It is data, compared by value, so that the
 //!   reconciler can compare two trees and patch controls; mounting makes the
 //!   controls ([`Element::mount`]).
 //! - Builders: a function per control class (`button()`, `stack_panel()`)
@@ -17,6 +17,10 @@
 //! - Reactivity: [`Signal`], [`Memo`], [`effect`], owned by an [`Owner`].
 //!   A setter given a signal or a closure makes the property follow it.
 //! - Children that follow state: [`for_each`] (keyed), [`show`], [`dynamic`].
+//! - Components that run again: [`rerender`] and `#[component(rerender)]`,
+//!   with their state in [hooks](hooks) ([`use_signal`], [`use_effect`], ...);
+//!   the reconciler compares what they return with what they returned before
+//!   and patches the controls.
 //! - With the feature `desktop`: [`launch`] runs an application whose main
 //!   window is an element.
 //!
@@ -41,6 +45,8 @@ mod control_flow;
 mod conversions;
 pub mod element;
 mod extras;
+pub mod hooks;
+mod mount;
 pub mod reactive;
 
 #[cfg(feature = "desktop")]
@@ -53,9 +59,12 @@ pub mod generated {
 
 pub use builder::{Bind, Builder, El, ElementBuilder, FromValue, IntoProp, IntoValue, TypedProperty, ViewClass};
 pub use control_flow::{dynamic, for_each, show, show_else, NodeRef};
-pub use element::{Element, IntoChild, IntoChildren, IntoElement, Key};
+pub use element::{rerender, ComponentElement, Element, IntoChild, IntoChildren, IntoElement, Key};
+pub use hooks::{use_effect, use_effect_with, use_hook, use_memo, use_signal};
 pub use extras::GridDefinitions;
-pub use reactive::{batch, effect, memo, on_cleanup, signal, untrack, Memo, Owner, Signal, TwoWay};
+pub use reactive::{
+    batch, effect, memo, on_cleanup, provide_context, signal, untrack, use_context, Memo, Owner, Signal, TwoWay,
+};
 
 #[cfg(feature = "desktop")]
 pub use app::{launch, launch_themed, launch_with, mount_window, open_window};
@@ -66,9 +75,9 @@ pub use ferroui_view_macros::{component, rsx};
 pub mod prelude {
     pub use crate::generated::builders::*;
     pub use crate::{
-        batch, component, dynamic, effect, for_each, memo, on_cleanup, rsx, show, show_else, signal, untrack, Bind, El,
-        Element, ElementBuilder, GridDefinitions, IntoChild, IntoChildren, IntoElement, Key, Memo, NodeRef, Owner,
-        Signal, TwoWay,
+        batch, component, dynamic, effect, for_each, memo, on_cleanup, provide_context, rerender, rsx, show, show_else,
+        signal, untrack, use_context, use_effect, use_effect_with, use_hook, use_memo, use_signal, Bind, El, Element,
+        ElementBuilder, GridDefinitions, IntoChild, IntoChildren, IntoElement, Key, Memo, NodeRef, Owner, Signal, TwoWay,
     };
     #[cfg(feature = "desktop")]
     pub use crate::{launch, launch_themed, launch_with, mount_window, open_window};

@@ -3493,6 +3493,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "seven-guis-cells-hooks"
+version = "0.4.0-preview.1"
+dependencies = [
+ "ferroui-base",
+ "ferroui-controls",
+ "ferroui-view",
+ "seven-guis-model",
+]
+
+[[package]]
 name = "seven-guis-cells-macros"
 version = "0.4.0-preview.1"
 dependencies = [
@@ -3504,6 +3514,16 @@ dependencies = [
 
 [[package]]
 name = "seven-guis-circle-drawer-builders"
+version = "0.4.0-preview.1"
+dependencies = [
+ "ferroui-base",
+ "ferroui-controls",
+ "ferroui-view",
+ "seven-guis-model",
+]
+
+[[package]]
+name = "seven-guis-circle-drawer-hooks"
 version = "0.4.0-preview.1"
 dependencies = [
  "ferroui-base",
@@ -3533,6 +3553,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "seven-guis-counter-hooks"
+version = "0.4.0-preview.1"
+dependencies = [
+ "ferroui-base",
+ "ferroui-controls",
+ "ferroui-view",
+ "seven-guis-model",
+]
+
+[[package]]
 name = "seven-guis-counter-macros"
 version = "0.4.0-preview.1"
 dependencies = [
@@ -3553,6 +3583,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "seven-guis-crud-hooks"
+version = "0.4.0-preview.1"
+dependencies = [
+ "ferroui-base",
+ "ferroui-controls",
+ "ferroui-view",
+ "seven-guis-model",
+]
+
+[[package]]
 name = "seven-guis-crud-macros"
 version = "0.4.0-preview.1"
 dependencies = [
@@ -3564,6 +3604,16 @@ dependencies = [
 
 [[package]]
 name = "seven-guis-flight-booker-builders"
+version = "0.4.0-preview.1"
+dependencies = [
+ "ferroui-base",
+ "ferroui-controls",
+ "ferroui-view",
+ "seven-guis-model",
+]
+
+[[package]]
+name = "seven-guis-flight-booker-hooks"
 version = "0.4.0-preview.1"
 dependencies = [
  "ferroui-base",
@@ -3603,6 +3653,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "seven-guis-temperature-hooks"
+version = "0.4.0-preview.1"
+dependencies = [
+ "ferroui-base",
+ "ferroui-controls",
+ "ferroui-view",
+ "seven-guis-model",
+]
+
+[[package]]
 name = "seven-guis-temperature-macros"
 version = "0.4.0-preview.1"
 dependencies = [
@@ -3616,25 +3676,43 @@ dependencies = [
 name = "seven-guis-tests"
 version = "0.4.0-preview.1"
 dependencies = [
+ "ferroui-view",
  "seven-guis-cells-builders",
+ "seven-guis-cells-hooks",
  "seven-guis-cells-macros",
  "seven-guis-circle-drawer-builders",
+ "seven-guis-circle-drawer-hooks",
  "seven-guis-circle-drawer-macros",
  "seven-guis-counter-builders",
+ "seven-guis-counter-hooks",
  "seven-guis-counter-macros",
  "seven-guis-crud-builders",
+ "seven-guis-crud-hooks",
  "seven-guis-crud-macros",
  "seven-guis-flight-booker-builders",
+ "seven-guis-flight-booker-hooks",
  "seven-guis-flight-booker-macros",
  "seven-guis-model",
  "seven-guis-temperature-builders",
+ "seven-guis-temperature-hooks",
  "seven-guis-temperature-macros",
  "seven-guis-timer-builders",
+ "seven-guis-timer-hooks",
  "seven-guis-timer-macros",
 ]
 
 [[package]]
 name = "seven-guis-timer-builders"
+version = "0.4.0-preview.1"
+dependencies = [
+ "ferroui-base",
+ "ferroui-controls",
+ "ferroui-view",
+ "seven-guis-model",
+]
+
+[[package]]
+name = "seven-guis-timer-hooks"
 version = "0.4.0-preview.1"
 dependencies = [
  "ferroui-base",
