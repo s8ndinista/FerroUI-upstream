@@ -935,6 +935,12 @@ The design, the choice of bindings and what each stage builds are in `android-pl
 | The handler of `AvaloniaObject.PropertyChanged` attached from markup receives the `AvaloniaPropertyChangedEventArgs` the object raises. | `FerroPropertyChangedEventArgs<'_>` borrows the values of the change, so the event is declared for markup with `OwnedFerroPropertyChangedEventArgs` (`FerroPropertyChangedEventArgs::to_owned_args`): the sender, the property, the priority and copies of the old and new value in untyped form. Markup knows it as `FerroPropertyChangedEventArgs`. | Representation | A handler called through metadata receives values it can keep. The copies are made only for handlers attached through metadata. | pull request 96 |
 | A property a compiled binding streams (`Property^`) is declared `IObservable<T>` or `Task<T>`, and the path element after the stream has the type `T`. | An observable or a task held as a value is `ObservableValue` or `TaskValue`, which hold their values untyped. Where no metadata declares the instantiation for the handle (`generic: "IObservable`1" [T]`), the run-time type system resolves it to `IObservable<object>` or `Task<object>` (`RuntimeTypeSystem::resolve_untyped_stream`), so the stream has the type `object`. | Representation | One Rust type holds every observable; a crate can declare one instantiation for it. A path that continues after the stream (`Property^.Member`) needs that declaration to resolve the member. | pull request 96 |
 
+### Parsers of markup (`src/Markup/FerroUI.Markup/markup/parsers/`)
+
+| Upstream | Port | Kind | Why | Since |
+|---|---|---|---|---|
+| `SelectorParser` refuses the nesting selector `^` (`NotSupportedException`, "Unsupported selector grammar"): only the selector transformer of the markup compiler builds a nesting selector. | `SelectorParser` builds `Selectors::nesting` for `^`, so the selector of a nested style written in code parses (`^.selected`, `^:pointerover > Button`). Every other syntax is parsed as upstream does. | Addition | The declarative API writes nested styles in code (`style("^:pointerover")` of `ferroui-view`, `docs/declarative-ui.md`, section 10.2); markup is not affected, its selectors go through the compiler. | #237 |
+
 ### Build integration of markup (`src/FerroUI.Build.Tasks/`, `tests/XamlIncludeFixture/`)
 
 | Upstream | Port | Kind | Why | Since |
