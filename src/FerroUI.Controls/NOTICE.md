@@ -112,6 +112,15 @@ The rich text implementation adapts source and public contracts from
 | Rich text/edit automation peers and `automation/provider/{i_text_provider,i_text_range_provider,i_text_edit_provider,rich_text_automation}.rs` with their tests | Native rich control automation peers, text provider declarations, `dxaml/xcp/win/shared/UIAPatternProviderWrapper.cpp`, `UIAWindow.cpp`, their headers under `win/inc`, `dxaml/xcp/dxaml/lib/AutomationPeer_Partial.cpp`, and the generated public text/range provider contracts. |
 | Document modules | The block/paragraph/inline/hyperlink/position/highlighter sources recorded in [documents/NOTICE.md](documents/NOTICE.md). |
 
+The RTF charset-to-code-page interpretation in `rich_text/rtf_encoding.rs`
+was checked against Microsoft's `dotnet/wpf` implementation in
+`src/Microsoft.DotNet.Wpf/src/PresentationFramework/System/Windows/Documents/RtfToXamlReader.cs`
+(`FontTableEntry.CharSetToCodePage`), also Copyright (c) Microsoft Corporation,
+MIT License as reproduced below. Actual byte decoding uses the unmodified
+`encoding_rs` dependency at the version recorded in Cargo.lock; that crate carries
+its own Apache-2.0/MIT and BSD-3-Clause notices. No native Windows text engine is
+linked by this portable codec.
+
 The Rust document/editor/RTF implementation uses the existing FerroUI services.
 It does not incorporate the unavailable implementations of WinUIEdit, LineServices
 or the Windows text engines. The complete file/member map and remaining behavior

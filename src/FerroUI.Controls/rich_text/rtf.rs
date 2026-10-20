@@ -13,6 +13,14 @@ use std::collections::BTreeMap;
 use std::fmt::{self, Write};
 use std::rc::Rc;
 
+#[path = "rtf_encoding.rs"]
+mod encoding;
+use encoding::{font_code_page, validate_code_page, EncodedText};
+
+#[cfg(test)]
+#[path = "rtf_encoding_tests.rs"]
+mod encoding_tests;
+
 /// Explicit bounds for untrusted clipboard and file input.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct RtfLimits {
@@ -42,6 +50,9 @@ pub enum RtfError {
     },
     LimitExceeded(&'static str),
     InvalidUnicode,
+    InvalidEncodedText {
+        code_page: i32,
+    },
     InvalidParameter(&'static str),
     UnsupportedCodePage(i32),
     UnsupportedFeature(&'static str),
@@ -56,6 +67,9 @@ impl fmt::Display for RtfError {
             }
             Self::LimitExceeded(limit) => write!(f, "RTF {limit} limit exceeded."),
             Self::InvalidUnicode => f.write_str("RTF contains unpaired UTF-16 surrogates."),
+            Self::InvalidEncodedText { code_page } => {
+                write!(f, "RTF contains malformed code page {code_page} text.")
+            }
             Self::InvalidParameter(parameter) => write!(f, "Invalid RTF {parameter} parameter."),
             Self::UnsupportedCodePage(codepage) => write!(
                 f,
@@ -227,6 +241,8 @@ fn hex(byte: u8) -> Option<u8> {
 struct State {
     character: CharacterFormat,
     paragraph: ParagraphFormat,
+    code_page: i32,
+    font: Option<i32>,
     uc: usize,
     skip: usize,
     underline: bool,
@@ -240,6 +256,8 @@ impl Default for State {
     fn default() -> Self {
         Self {
             character: CharacterFormat::default(),
+            code_page: 1252,
+            font: None,
             paragraph: ParagraphFormat {
                 default_tab_stop: Some(48.0),
                 ..Default::default()
@@ -256,9 +274,14 @@ impl Default for State {
     }
 }
 
+struct FontEntry {
+    family: FontFamily,
+    code_page: Option<i32>,
+}
+
 struct Decoder {
     limits: RtfLimits,
-    fonts: BTreeMap<i32, FontFamily>,
+    fonts: BTreeMap<i32, FontEntry>,
     colors: Vec<Option<Rc<dyn IBrush>>>,
     default_font: Option<i32>,
     default_language: Option<CultureInfo>,
@@ -267,12 +290,14 @@ struct Decoder {
     pending: Vec<u16>,
     pending_format: CharacterFormat,
     text_length: usize,
+    encoded: EncodedText,
 }
 
 /// A bounded RTF 1 reader for the formatting represented by FerroUI documents.
 ///
 /// Supports scoped character/paragraph properties, font/color tables, signed Unicode
-/// escapes, fallback tokens, Unicode alternative destinations, Windows-1252 byte escapes,
+/// escapes, fallback tokens, Unicode alternative destinations, scoped Windows/Macintosh/CJK
+/// code pages and UTF-8 byte sequences,
 /// character spacing in quarter-points or twips, and hyperlink fields. Ignorable destinations
 /// are skipped without interpreting their content. Native OLE, pictures, tables, unsupported
 /// font encodings, and horizontal glyph scaling return explicit errors.
@@ -325,6 +350,7 @@ impl RtfReader {
             pending: Vec::new(),
             pending_format: CharacterFormat::default(),
             text_length: 0,
+            encoded: EncodedText::default(),
         };
         decoder.decode(&nodes, &mut State::default())?;
         decoder.flush()?;
@@ -357,23 +383,47 @@ impl Decoder {
         Ok(())
     }
     fn append(&mut self, unit: u16, state: &State) -> Result<(), RtfError> {
+        self.append_units(&[unit], state)
+    }
+    fn append_units(&mut self, units: &[u16], state: &State) -> Result<(), RtfError> {
+        if units.is_empty() {
+            return Ok(());
+        }
         if self.pending_format != state.character {
             self.flush()?;
             self.pending_format = state.character.clone();
         }
-        self.text_length += 1;
-        if self.text_length > self.limits.max_text_length {
+        if units.len() > self.limits.max_text_length.saturating_sub(self.text_length) {
             return Err(RtfError::LimitExceeded("text length"));
         }
-        self.pending.push(unit);
+        self.text_length += units.len();
+        self.pending.extend_from_slice(units);
         Ok(())
     }
     fn byte(&mut self, byte: u8, state: &mut State) -> Result<(), RtfError> {
-        if state.skip > 0 {
-            state.skip -= 1;
-            return Ok(());
-        }
-        self.append(cp1252(byte), state)
+        self.bytes(&[byte], state)
+    }
+    fn code_page(&self, state: &State) -> i32 {
+        state
+            .font
+            .and_then(|id| self.fonts.get(&id))
+            .and_then(|font| font.code_page)
+            .unwrap_or(state.code_page)
+    }
+    fn bytes(&mut self, bytes: &[u8], state: &mut State) -> Result<(), RtfError> {
+        let skipped = state.skip.min(bytes.len());
+        state.skip -= skipped;
+        let code_page = self.code_page(state);
+        let mut encoded = std::mem::take(&mut self.encoded);
+        let result = encoded.push(code_page, &bytes[skipped..], |units| {
+            self.append_units(units, state)
+        });
+        self.encoded = encoded;
+        result
+    }
+    fn finish_bytes(&mut self, state: &State) -> Result<(), RtfError> {
+        let mut encoded = std::mem::take(&mut self.encoded);
+        encoded.finish(|units| self.append_units(units, state))
     }
     fn format_decorations(state: &mut State) {
         state.character.text_decorations = Some(if state.underline && state.strike {
@@ -391,6 +441,12 @@ impl Decoder {
     }
     fn decode(&mut self, nodes: &[Node<'_>], state: &mut State) -> Result<(), RtfError> {
         for node in nodes {
+            if !matches!(
+                node,
+                Node::Text(_) | Node::Byte(_) | Node::Symbol(b'\\' | b'{' | b'}')
+            ) {
+                self.finish_bytes(state)?;
+            }
             // RTF Unicode fallback counts every control word, symbol or binary
             // token as one character. A scope delimiter ends the fallback run.
             if matches!(node, Node::Group(_)) {
@@ -401,9 +457,7 @@ impl Decoder {
             }
             match node {
                 Node::Text(bytes) => {
-                    for byte in *bytes {
-                        self.byte(*byte, state)?;
-                    }
+                    self.bytes(bytes, state)?;
                 }
                 Node::Byte(byte) => self.byte(*byte, state)?,
                 Node::Symbol(symbol) => match symbol {
@@ -418,7 +472,15 @@ impl Decoder {
                 Node::Group(children) => {
                     let destination = destination(children);
                     match destination {
-                        Some(("fonttbl", _)) => self.read_fonts(children, state.uc)?,
+                        Some(("fonttbl", _)) => {
+                            self.read_fonts(children, state.uc, state.code_page)?;
+                            if state.font.is_none() {
+                                state.font = self.default_font;
+                            }
+                            if let Some(font) = state.font.and_then(|id| self.fonts.get(&id)) {
+                                state.character.font_family = Some(font.family.clone());
+                            }
+                        }
                         Some(("colortbl", _)) => self.read_colors(children)?,
                         Some(("field", _)) => self.read_field(children, state)?,
                         Some(("upr", _)) => {
@@ -450,8 +512,7 @@ impl Decoder {
                     let number = *number;
                     let enabled = number != Some(0);
                     match *word {
-                        "rtf" | "ansi" | "viewkind" | "viewscale" | "deflangfe" | "nouicompat"
-                        | "fet" => {}
+                        "rtf" | "viewkind" | "viewscale" | "deflangfe" | "nouicompat" | "fet" => {}
                         "deflang" => {
                             let language = rtf_language(number)?;
                             self.default_language = Some(language.clone());
@@ -460,11 +521,11 @@ impl Decoder {
                         "lang" => state.character.language = Some(rtf_language(number)?),
                         "ansicpg" => {
                             let codepage = number.ok_or(RtfError::InvalidParameter("code page"))?;
-                            if codepage != 1252 {
-                                return Err(RtfError::UnsupportedCodePage(codepage));
-                            }
+                            validate_code_page(codepage)?;
+                            state.code_page = codepage;
                         }
-                        "mac" => return Err(RtfError::UnsupportedCodePage(10000)),
+                        "ansi" => state.code_page = 1252,
+                        "mac" => state.code_page = 10000,
                         "pc" => return Err(RtfError::UnsupportedCodePage(437)),
                         "pca" => return Err(RtfError::UnsupportedCodePage(850)),
                         "uc" => {
@@ -480,13 +541,21 @@ impl Decoder {
                             self.append(value as u16, state)?;
                             state.skip = state.uc;
                         }
-                        "deff" => self.default_font = number,
+                        "deff" => {
+                            self.default_font = Some(
+                                number
+                                    .filter(|id| *id >= 0)
+                                    .ok_or(RtfError::InvalidParameter("default font"))?,
+                            );
+                            state.font = self.default_font;
+                        }
                         "plain" => {
                             state.character = CharacterFormat::default();
                             state.character.language = self.default_language.clone();
+                            state.font = self.default_font;
                             state.character.font_family = self
                                 .default_font
-                                .and_then(|id| self.fonts.get(&id).cloned());
+                                .and_then(|id| self.fonts.get(&id).map(|font| font.family.clone()));
                             state.character.font_weight = Some(FontWeight::Normal);
                             state.character.font_style = Some(FontStyle::Normal);
                             state.character.font_size = Some(16.0);
@@ -527,10 +596,11 @@ impl Decoder {
                         }
                         "f" => {
                             let id = number.ok_or(RtfError::InvalidParameter("font"))?;
+                            state.font = Some(id);
                             state.character.font_family = Some(
                                 self.fonts
                                     .get(&id)
-                                    .cloned()
+                                    .map(|font| font.family.clone())
                                     .ok_or(RtfError::InvalidParameter("font table reference"))?,
                             );
                         }
@@ -770,7 +840,7 @@ impl Decoder {
                 }
             }
         }
-        Ok(())
+        self.finish_bytes(state)
     }
     fn character(&mut self, unit: u16, state: &mut State) -> Result<(), RtfError> {
         if state.skip > 0 {
@@ -807,17 +877,26 @@ impl Decoder {
         self.paragraph().format = state.paragraph.clone();
         Ok(())
     }
-    fn read_fonts(&mut self, nodes: &[Node<'_>], uc: usize) -> Result<(), RtfError> {
+    fn read_fonts(
+        &mut self,
+        nodes: &[Node<'_>],
+        uc: usize,
+        code_page: i32,
+    ) -> Result<(), RtfError> {
         fn visit(
             nodes: &[Node<'_>],
-            fonts: &mut BTreeMap<i32, FontFamily>,
+            fonts: &mut BTreeMap<i32, FontEntry>,
             uc: usize,
+            code_page: i32,
             limit: usize,
         ) -> Result<(), RtfError> {
             let mut id = None;
-            let mut name = DestinationText::new(uc, limit);
+            let mut charset_page = None;
+            let mut explicit_page = None;
+            let mut name = DestinationText::new(uc, limit, code_page);
             for node in nodes {
                 if matches!(node, Node::Group(_)) {
+                    name.finish_bytes()?;
                     name.skip = 0;
                 } else if name.skip > 0 && !matches!(node, Node::Text(_)) {
                     name.node(node)?;
@@ -828,14 +907,24 @@ impl Decoder {
                         if *number < 0 {
                             return Err(RtfError::InvalidParameter("font identifier"));
                         }
+                        name.finish_bytes()?;
                         id = Some(*number);
+                        charset_page = None;
+                        explicit_page = None;
+                        name.code_page = code_page;
                         name.text.clear();
                     }
-                    Node::Control("fcharset", Some(value)) if !matches!(value, 0 | 1) => {
-                        return Err(RtfError::UnsupportedFeature("font character set"));
+                    Node::Control("fcharset", value) => {
+                        charset_page = font_code_page(
+                            value.ok_or(RtfError::InvalidParameter("font character set"))?,
+                        )?;
+                        name.set_code_page(explicit_page.or(charset_page).unwrap_or(code_page))?;
                     }
-                    Node::Control("cpg", Some(value)) if *value != 1252 => {
-                        return Err(RtfError::UnsupportedCodePage(*value));
+                    Node::Control("cpg", value) => {
+                        let value = value.ok_or(RtfError::InvalidParameter("font code page"))?;
+                        validate_code_page(value)?;
+                        explicit_page = Some(value);
+                        name.set_code_page(value)?;
                     }
                     Node::Group(children)
                         if destination(children).is_some_and(|(word, _)| word == "upr") =>
@@ -844,30 +933,43 @@ impl Decoder {
                     }
                     Node::Group(children) => {
                         if !destination(children).is_some_and(|(_, starred)| starred) {
-                            visit(children, fonts, name.uc, limit)?;
+                            visit(children, fonts, name.uc, code_page, limit)?;
                         }
                     }
                     Node::Text(bytes) => {
                         for byte in *bytes {
                             if *byte == b';' && name.skip == 0 {
-                                if let Some(id) = id {
+                                if let Some(id) = id.take() {
                                     let value = name.string()?;
                                     if !value.trim().is_empty() {
-                                        fonts.insert(id, FontFamily::new(value.trim()));
+                                        fonts.insert(
+                                            id,
+                                            FontEntry {
+                                                family: FontFamily::new(value.trim()),
+                                                code_page: explicit_page.or(charset_page),
+                                            },
+                                        );
                                     }
                                 }
+                                name.finish_bytes()?;
                                 name.text.clear();
                             } else {
-                                name.append(cp1252(*byte))?;
+                                name.bytes(&[*byte])?;
                             }
                         }
                     }
                     _ => name.node(node)?,
                 }
             }
-            Ok(())
+            name.finish_bytes()
         }
-        visit(nodes, &mut self.fonts, uc, self.limits.max_text_length)
+        visit(
+            nodes,
+            &mut self.fonts,
+            uc,
+            code_page,
+            self.limits.max_text_length,
+        )
     }
     fn read_colors(&mut self, nodes: &[Node<'_>]) -> Result<(), RtfError> {
         let (mut red, mut green, mut blue, mut has_color) = (0, 0, 0, false);
@@ -913,7 +1015,11 @@ impl Decoder {
             if let Node::Group(children) = node {
                 match destination(children) {
                     Some(("fldinst", _)) => {
-                        let mut text = DestinationText::new(state.uc, self.limits.max_text_length);
+                        let mut text = DestinationText::new(
+                            state.uc,
+                            self.limits.max_text_length,
+                            self.code_page(state),
+                        );
                         text.nodes(children)?;
                         instruction = text.string()?;
                     }
@@ -982,14 +1088,18 @@ struct DestinationText {
     uc: usize,
     skip: usize,
     limit: usize,
+    code_page: i32,
+    encoded: EncodedText,
 }
 impl DestinationText {
-    fn new(uc: usize, limit: usize) -> Self {
+    fn new(uc: usize, limit: usize, code_page: i32) -> Self {
         Self {
             text: Vec::new(),
             uc,
             skip: 0,
             limit,
+            code_page,
+            encoded: EncodedText::default(),
         }
     }
     fn append(&mut self, value: u16) -> Result<(), RtfError> {
@@ -997,22 +1107,51 @@ impl DestinationText {
             self.skip -= 1;
             return Ok(());
         }
-        if self.text.len() >= self.limit {
+        self.append_units(&[value])
+    }
+    fn append_units(&mut self, values: &[u16]) -> Result<(), RtfError> {
+        if values.len() > self.limit.saturating_sub(self.text.len()) {
             return Err(RtfError::LimitExceeded("destination text length"));
         }
-        self.text.push(value);
+        self.text.extend_from_slice(values);
         Ok(())
     }
-    fn string(&self) -> Result<String, RtfError> {
+    fn bytes(&mut self, bytes: &[u8]) -> Result<(), RtfError> {
+        let skipped = self.skip.min(bytes.len());
+        self.skip -= skipped;
+        let mut encoded = std::mem::take(&mut self.encoded);
+        let result = encoded.push(self.code_page, &bytes[skipped..], |units| {
+            self.append_units(units)
+        });
+        self.encoded = encoded;
+        result
+    }
+    fn finish_bytes(&mut self) -> Result<(), RtfError> {
+        let mut encoded = std::mem::take(&mut self.encoded);
+        encoded.finish(|units| self.append_units(units))
+    }
+    fn set_code_page(&mut self, code_page: i32) -> Result<(), RtfError> {
+        self.finish_bytes()?;
+        self.code_page = code_page;
+        Ok(())
+    }
+    fn string(&mut self) -> Result<String, RtfError> {
+        self.finish_bytes()?;
         String::from_utf16(&self.text).map_err(|_| RtfError::InvalidUnicode)
     }
     fn nodes(&mut self, nodes: &[Node<'_>]) -> Result<(), RtfError> {
         for node in nodes {
             self.node(node)?;
         }
-        Ok(())
+        self.finish_bytes()
     }
     fn node(&mut self, node: &Node<'_>) -> Result<(), RtfError> {
+        if !matches!(
+            node,
+            Node::Text(_) | Node::Byte(_) | Node::Symbol(b'\\' | b'{' | b'}')
+        ) {
+            self.finish_bytes()?;
+        }
         if matches!(node, Node::Group(_)) {
             self.skip = 0;
         } else if self.skip > 0 && !matches!(node, Node::Text(_)) {
@@ -1020,13 +1159,9 @@ impl DestinationText {
             return Ok(());
         }
         match node {
-            Node::Text(bytes) => {
-                for byte in *bytes {
-                    self.append(cp1252(*byte))?;
-                }
-            }
-            Node::Byte(byte) => self.append(cp1252(*byte))?,
-            Node::Symbol(byte @ (b'\\' | b'{' | b'}')) => self.append(*byte as u16)?,
+            Node::Text(bytes) => self.bytes(bytes)?,
+            Node::Byte(byte) => self.bytes(&[*byte])?,
+            Node::Symbol(byte @ (b'\\' | b'{' | b'}')) => self.bytes(&[*byte])?,
             Node::Symbol(b'~') => self.append(0xa0)?,
             Node::Symbol(b'_') => self.append(0x2011)?,
             Node::Symbol(b'-') => self.append(0xad)?,
@@ -1048,10 +1183,10 @@ impl DestinationText {
             Node::Group(children) => {
                 let uc = self.uc;
                 self.skip = 0;
-                if destination(children).is_some_and(|(word, _)| word == "upr") {
-                    self.nodes(unicode_alternative(children)?)?;
-                } else {
-                    self.nodes(children)?;
+                match destination(children) {
+                    Some(("upr", _)) => self.nodes(unicode_alternative(children)?)?,
+                    Some((_, true)) => {}
+                    _ => self.nodes(children)?,
                 }
                 self.uc = uc;
                 self.skip = 0;
@@ -1127,19 +1262,6 @@ fn parse_hyperlink(instruction: &str) -> Result<Option<HyperlinkTarget>, RtfErro
     }
     Ok(Some(HyperlinkTarget { uri, name }))
 }
-fn cp1252(byte: u8) -> u16 {
-    const UPPER: [u16; 32] = [
-        0x20ac, 0x81, 0x201a, 0x0192, 0x201e, 0x2026, 0x2020, 0x2021, 0x02c6, 0x2030, 0x0160,
-        0x2039, 0x0152, 0x8d, 0x017d, 0x8f, 0x90, 0x2018, 0x2019, 0x201c, 0x201d, 0x2022, 0x2013,
-        0x2014, 0x02dc, 0x2122, 0x0161, 0x203a, 0x0153, 0x9d, 0x017e, 0x0178,
-    ];
-    if (0x80..=0x9f).contains(&byte) {
-        UPPER[(byte - 0x80) as usize]
-    } else {
-        byte as u16
-    }
-}
-
 /// Produces ASCII RTF with signed UTF-16 escapes, font/color tables, scoped formatting,
 /// paragraph metrics, and hyperlink fields. Unsupported content returns an error; the
 /// in-process clipboard format remains available for lossless structured transfers.

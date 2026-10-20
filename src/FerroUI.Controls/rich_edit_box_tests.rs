@@ -494,8 +494,8 @@ fn rich_edit_rtf_rejects_malformed_and_unsupported_content_without_panicking() {
         );
     }
     assert!(matches!(
-        RtfReader::read(br"{\rtf1\ansicpg932 x}"),
-        Err(RtfError::UnsupportedCodePage(932))
+        RtfReader::read(br"{\rtf1\ansicpg1361 x}"),
+        Err(RtfError::UnsupportedCodePage(1361))
     ));
     assert!(matches!(
         RtfReader::read(br"{\rtf1{\object\bin2 {}}}"),
@@ -1387,8 +1387,8 @@ fn rich_edit_rtf_rejects_unrepresented_scaling_and_font_encodings() {
         Err(RtfError::UnsupportedFeature("font character set")),
     ));
     assert!(matches!(
-        RtfReader::read(br"{\rtf1{\fonttbl{\f0\cpg932 Example;}}\f0 A}"),
-        Err(RtfError::UnsupportedCodePage(932)),
+        RtfReader::read(br"{\rtf1{\fonttbl{\f0\cpg1361 Example;}}\f0 A}"),
+        Err(RtfError::UnsupportedCodePage(1361)),
     ));
 }
 
