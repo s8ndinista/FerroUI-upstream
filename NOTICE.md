@@ -59,6 +59,16 @@ Avalonia itself incorporates code from other projects (for example WPF-derived l
 - License: MIT, Copyright (c) Microsoft Corporation
 - Used for: the WinUI theme `src/FerroUI.Themes.WinUI`, whose resource and control theme documents are ported from the theme of WinUI 3 (`generic.xaml` and the theme resources of the controls library; see `src/FerroUI.Themes.WinUI/NOTICE.md`, which holds the license text, and `docs/porting/winui-theme.md`).
 
+The Repeater family is ported from a separate pinned revision,
+`1af995b98a02d86b1951c4babe35caa269a6d569`, under `controls/dev/Repeater`.
+This covers `src/FerroUI.Controls/repeater/`, the stable-key mapping contract
+`src/FerroUI.Controls/i_key_index_mapping.rs`, and their source-derived tests.
+Existing native item-source views and selection intervals are reused and
+extended. The Microsoft copyright and complete MIT license accompany these
+sources in [the Repeater notice](src/FerroUI.Controls/repeater/NOTICE.md).
+The pinned source inventory, native framework decisions and execution record
+are in [the Repeater port documentation](docs/porting/winui-repeater/README.md).
+
 ## Reactive Extensions for .NET (Rx.NET)
 
 - Project: <https://github.com/dotnet/reactive> (`Rx.NET/Source`, commit `89e05b8`)

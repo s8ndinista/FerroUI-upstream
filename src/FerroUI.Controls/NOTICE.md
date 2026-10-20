@@ -102,7 +102,8 @@ Copyright (c) Microsoft Corporation.
 The files under `repeater/`, and `i_key_index_mapping.rs`, are ported directly
 from `controls/dev/Repeater` in WinUI at commit
 `1af995b98a02d86b1951c4babe35caa269a6d569`. The source-to-port inventory and
-framework adaptations are recorded in `docs/porting/winui-repeater.md`.
+framework adaptations are recorded in
+[`docs/porting/winui-repeater/README.md`](../../docs/porting/winui-repeater/README.md).
 Copyright (c) Microsoft Corporation. All rights reserved. Licensed under the
 MIT License; the complete notice accompanies the sources in `repeater/NOTICE.md`.
 

@@ -1906,7 +1906,7 @@
       "owner": "ItemsSourceView",
       "kind": "type",
       "name": "ItemsSourceView",
-      "signature": "runtimeclass ItemsSourceView: Microsoft.UI.Xaml.Interop.INotifyCollectionChanged"
+      "signature": "unsealed runtimeclass ItemsSourceView: Microsoft.UI.Xaml.Interop.INotifyCollectionChanged"
     },
     {
       "path": "controls/dev/Repeater/ItemsRepeater.idl",
@@ -1970,7 +1970,7 @@
       "owner": "ItemsRepeater",
       "kind": "type",
       "name": "ItemsRepeater",
-      "signature": "runtimeclass ItemsRepeater : Microsoft.UI.Xaml.FrameworkElement"
+      "signature": "unsealed runtimeclass ItemsRepeater : Microsoft.UI.Xaml.FrameworkElement"
     },
     {
       "path": "controls/dev/Repeater/ItemsRepeater.idl",
@@ -2154,7 +2154,7 @@
       "owner": "ElementFactory",
       "kind": "type",
       "name": "ElementFactory",
-      "signature": "runtimeclass ElementFactory : Microsoft.UI.Xaml.DependencyObject, Microsoft.UI.Xaml.IElementFactory"
+      "signature": "unsealed runtimeclass ElementFactory : Microsoft.UI.Xaml.DependencyObject, Microsoft.UI.Xaml.IElementFactory"
     },
     {
       "path": "controls/dev/Repeater/ItemsRepeater.idl",
@@ -2186,7 +2186,7 @@
       "owner": "LayoutContext",
       "kind": "type",
       "name": "LayoutContext",
-      "signature": "runtimeclass LayoutContext : Microsoft.UI.Xaml.DependencyObject"
+      "signature": "unsealed runtimeclass LayoutContext : Microsoft.UI.Xaml.DependencyObject"
     },
     {
       "path": "controls/dev/Repeater/ItemsRepeater.idl",
@@ -2210,7 +2210,7 @@
       "owner": "NonVirtualizingLayoutContext",
       "kind": "type",
       "name": "NonVirtualizingLayoutContext",
-      "signature": "runtimeclass NonVirtualizingLayoutContext : LayoutContext"
+      "signature": "unsealed runtimeclass NonVirtualizingLayoutContext : LayoutContext"
     },
     {
       "path": "controls/dev/Repeater/ItemsRepeater.idl",
@@ -2242,7 +2242,7 @@
       "owner": "VirtualizingLayoutContext",
       "kind": "type",
       "name": "VirtualizingLayoutContext",
-      "signature": "runtimeclass VirtualizingLayoutContext : LayoutContext"
+      "signature": "unsealed runtimeclass VirtualizingLayoutContext : LayoutContext"
     },
     {
       "path": "controls/dev/Repeater/ItemsRepeater.idl",
@@ -2394,7 +2394,7 @@
       "owner": "Layout",
       "kind": "type",
       "name": "Layout",
-      "signature": "runtimeclass Layout : Microsoft.UI.Xaml.DependencyObject"
+      "signature": "unsealed runtimeclass Layout : Microsoft.UI.Xaml.DependencyObject"
     },
     {
       "path": "controls/dev/Repeater/ItemsRepeater.idl",
@@ -2490,7 +2490,7 @@
       "owner": "NonVirtualizingLayout",
       "kind": "type",
       "name": "NonVirtualizingLayout",
-      "signature": "runtimeclass NonVirtualizingLayout : Layout"
+      "signature": "unsealed runtimeclass NonVirtualizingLayout : Layout"
     },
     {
       "path": "controls/dev/Repeater/ItemsRepeater.idl",
@@ -2538,7 +2538,7 @@
       "owner": "VirtualizingLayout",
       "kind": "type",
       "name": "VirtualizingLayout",
-      "signature": "runtimeclass VirtualizingLayout : Layout"
+      "signature": "unsealed runtimeclass VirtualizingLayout : Layout"
     },
     {
       "path": "controls/dev/Repeater/ItemsRepeater.idl",
@@ -2706,7 +2706,7 @@
       "owner": "ItemCollectionTransitionProvider",
       "kind": "type",
       "name": "ItemCollectionTransitionProvider",
-      "signature": "runtimeclass ItemCollectionTransitionProvider"
+      "signature": "unsealed runtimeclass ItemCollectionTransitionProvider"
     },
     {
       "path": "controls/dev/Repeater/ItemsRepeater.idl",
@@ -2762,7 +2762,7 @@
       "owner": "LinedFlowLayoutItemCollectionTransitionProvider",
       "kind": "type",
       "name": "LinedFlowLayoutItemCollectionTransitionProvider",
-      "signature": "runtimeclass LinedFlowLayoutItemCollectionTransitionProvider : Microsoft.UI.Xaml.Controls.ItemCollectionTransitionProvider"
+      "signature": "unsealed runtimeclass LinedFlowLayoutItemCollectionTransitionProvider : Microsoft.UI.Xaml.Controls.ItemCollectionTransitionProvider"
     },
     {
       "path": "controls/dev/Repeater/ItemsRepeater.idl",
@@ -2922,7 +2922,7 @@
       "owner": "UniformGridLayoutState",
       "kind": "type",
       "name": "UniformGridLayoutState",
-      "signature": "runtimeclass UniformGridLayoutState"
+      "signature": "unsealed runtimeclass UniformGridLayoutState"
     },
     {
       "path": "controls/dev/Repeater/ItemsRepeater.idl",
@@ -2938,7 +2938,7 @@
       "owner": "UniformGridLayout",
       "kind": "type",
       "name": "UniformGridLayout",
-      "signature": "runtimeclass UniformGridLayout : VirtualizingLayout"
+      "signature": "unsealed runtimeclass UniformGridLayout : VirtualizingLayout"
     },
     {
       "path": "controls/dev/Repeater/ItemsRepeater.idl",
@@ -3082,7 +3082,7 @@
       "owner": "StackLayoutState",
       "kind": "type",
       "name": "StackLayoutState",
-      "signature": "runtimeclass StackLayoutState"
+      "signature": "unsealed runtimeclass StackLayoutState"
     },
     {
       "path": "controls/dev/Repeater/ItemsRepeater.idl",
@@ -3098,7 +3098,7 @@
       "owner": "StackLayout",
       "kind": "type",
       "name": "StackLayout",
-      "signature": "runtimeclass StackLayout : VirtualizingLayout"
+      "signature": "unsealed runtimeclass StackLayout : VirtualizingLayout"
     },
     {
       "path": "controls/dev/Repeater/ItemsRepeater.idl",
@@ -3162,7 +3162,7 @@
       "owner": "FlowLayoutState",
       "kind": "type",
       "name": "FlowLayoutState",
-      "signature": "runtimeclass FlowLayoutState"
+      "signature": "unsealed runtimeclass FlowLayoutState"
     },
     {
       "path": "controls/dev/Repeater/ItemsRepeater.idl",
@@ -3178,7 +3178,7 @@
       "owner": "FlowLayout",
       "kind": "type",
       "name": "FlowLayout",
-      "signature": "runtimeclass FlowLayout : VirtualizingLayout"
+      "signature": "unsealed runtimeclass FlowLayout : VirtualizingLayout"
     },
     {
       "path": "controls/dev/Repeater/ItemsRepeater.idl",
@@ -3386,7 +3386,7 @@
       "owner": "LinedFlowLayout",
       "kind": "type",
       "name": "LinedFlowLayout",
-      "signature": "runtimeclass LinedFlowLayout : VirtualizingLayout"
+      "signature": "unsealed runtimeclass LinedFlowLayout : VirtualizingLayout"
     },
     {
       "path": "controls/dev/Repeater/ItemsRepeater.idl",
@@ -3546,7 +3546,7 @@
       "owner": "RecyclePool",
       "kind": "type",
       "name": "RecyclePool",
-      "signature": "runtimeclass RecyclePool"
+      "signature": "unsealed runtimeclass RecyclePool"
     },
     {
       "path": "controls/dev/Repeater/ItemsRepeater.idl",
@@ -3666,7 +3666,7 @@
       "owner": "RecyclingElementFactory",
       "kind": "type",
       "name": "RecyclingElementFactory",
-      "signature": "runtimeclass RecyclingElementFactory : ElementFactory"
+      "signature": "unsealed runtimeclass RecyclingElementFactory : ElementFactory"
     },
     {
       "path": "controls/dev/Repeater/ItemsRepeater.idl",
@@ -3810,7 +3810,7 @@
       "owner": "SelectionModel",
       "kind": "type",
       "name": "SelectionModel",
-      "signature": "runtimeclass SelectionModel : Microsoft.UI.Xaml.Data.INotifyPropertyChanged"
+      "signature": "unsealed runtimeclass SelectionModel : Microsoft.UI.Xaml.Data.INotifyPropertyChanged"
     },
     {
       "path": "controls/dev/Repeater/ItemsRepeater.idl",
@@ -4410,7 +4410,7 @@
       "owner": "RepeaterAutomationPeer",
       "kind": "type",
       "name": "RepeaterAutomationPeer",
-      "signature": "runtimeclass RepeaterAutomationPeer : Microsoft.UI.Xaml.Automation.Peers.FrameworkElementAutomationPeer"
+      "signature": "unsealed runtimeclass RepeaterAutomationPeer : Microsoft.UI.Xaml.Automation.Peers.FrameworkElementAutomationPeer"
     },
     {
       "path": "controls/dev/Repeater/RepeaterAutomationPeer.idl",

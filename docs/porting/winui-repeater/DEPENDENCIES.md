@@ -97,3 +97,11 @@ This table records every unique direct C++ include whose basename is outside the
 | `pch.h` | framework-replacement | [Cargo.toml](../../../src/FerroUI.Controls/Cargo.toml); [repeater_automation_peer.rs](../../../src/FerroUI.Controls/repeater/repeater_automation_peer.rs); [items_source.rs](../../../src/FerroUI.Controls/items_source.rs) | Windows SDK, C++ precompiled-header and ABI plumbing are replaced by Cargo and native FerroUI contracts; native platform automation remains a platform validation gate. |
 | `windows.h` | framework-replacement | [Cargo.toml](../../../src/FerroUI.Controls/Cargo.toml); [repeater_automation_peer.rs](../../../src/FerroUI.Controls/repeater/repeater_automation_peer.rs); [items_source.rs](../../../src/FerroUI.Controls/items_source.rs) | Windows SDK, C++ precompiled-header and ABI plumbing are replaced by Cargo and native FerroUI contracts; native platform automation remains a platform validation gate. |
 | `winrt/Windows.UI.Xaml.Interop.h` | framework-replacement | [Cargo.toml](../../../src/FerroUI.Controls/Cargo.toml); [repeater_automation_peer.rs](../../../src/FerroUI.Controls/repeater/repeater_automation_peer.rs); [items_source.rs](../../../src/FerroUI.Controls/items_source.rs) | Windows SDK, C++ precompiled-header and ABI plumbing are replaced by Cargo and native FerroUI contracts; native platform automation remains a platform validation gate. |
+
+## Native framework extensions
+
+These are explicit changes to existing FerroUI services needed by a Repeater source contract. They are separate from the direct C++ include-boundary count.
+
+| Source contract | Native implementation | Rationale |
+|---|---|---|
+| ChildrenInTabFocusOrderIterable / ItemsRepeater tab-focus ordering | [items_repeater.rs](../../../src/FerroUI.Controls/repeater/items_repeater.rs); [i_custom_keyboard_navigation.rs](../../../src/FerroUI.Base/input/i_custom_keyboard_navigation.rs); [focus_helpers.rs](../../../src/FerroUI.Base/input/focus_helpers.rs) | The existing native keyboard-navigation trait gains an optional realized-child ordering projection consumed by the native focus helper. Repeater supplies source order and excludes pooled visuals; the default None preserves other controls and nested repeaters use the same projection. |

@@ -53,6 +53,35 @@ template registrations. Explicit disposal remains necessary for event
 subscriptions: the existing FerroUI convention does not interpret dropping an
 `IDisposable` handle as automatic unsubscription.
 
+## Native focus ordering
+
+WinUI's `ChildrenInTabFocusOrderIterable` exposes realized children in source
+order, which can differ from visual insertion order after recycling. The port
+extends the existing
+[`ICustomKeyboardNavigation`](../../../src/FerroUI.Base/input/i_custom_keyboard_navigation.rs)
+with `get_children_in_tab_focus_order`. Its default returns `None`, preserving
+normal visual-child enumeration for other controls. Repeater returns its
+realized direct children, excluding pooled visuals, in source order.
+
+The native [focus helper](../../../src/FerroUI.Base/input/focus_helpers.rs) uses
+this projection for traversal when focus enters, leaves or wraps through a
+container. Repeater also consults it while walking descendants, so nested
+repeaters retain their own source order. This integrates the ordering contract
+with FerroUI's focus manager and its `Once`/`Cycle` semantics rather than
+maintaining a separate tab-focus engine. Routed focus events update each
+repeater's own pin contribution; a nested focus target must not add multiple
+pins to the same outer container.
+
+Additional [native integration scenarios](../../../src/FerroUI.Controls/repeater/view_manager_acceptance_tests.rs)
+exercise `Once`, `Local`, `Cycle`, `Contained` and `None` navigation, exclude a
+discarded active item while its visual remains pooled or owned by the animator,
+and remember nested `Once` targets without duplicating ancestor pins. Direct
+removal and detaching-factory scenarios verify that ancestor focus pins are
+released before the visual parent disappears, while preserving an independent
+manual pin and any new focus target selected by a recycling callback. These are
+FerroUI service regressions beyond the pinned test-declaration inventory; their
+presence is separate from the execution checkpoints in [VALIDATION.md](VALIDATION.md).
+
 ## Layout contexts and state
 
 [`LayoutContext`](../../../src/FerroUI.Controls/repeater/layouts/layout_context.rs)
@@ -112,6 +141,15 @@ notifications. It preserves unaffected elements, remaps realized and pinned
 indices, and uses `IKeyIndexMapping` when the source offers stable keys. A reset
 without stable identity must not accidentally reuse an old item binding by
 numeric index.
+
+The native [`ItemsSourceView`](../../../src/FerroUI.Controls/items_source_view.rs)
+reads its current count through `IItemsList::count`. WinUI instead caches the
+result of its overridable `GetSizeCore` and refreshes it on a collection change.
+The port retains FerroUI's live count contract and introduces no count cache.
+The source-derived `CanQueryElementFactory` scenario preserves data-read and
+factory-callback counts, element identity and parent identity; its WinRT
+size-override invocation counts do not apply to this native collection boundary.
+This adaptation is recorded as [WR-22](DEVIATIONS.md).
 
 The hierarchical selection model is in
 [`repeater::selection`](../../../src/FerroUI.Controls/repeater/selection/mod.rs).

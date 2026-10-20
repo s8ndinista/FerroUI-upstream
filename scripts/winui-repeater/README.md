@@ -22,6 +22,11 @@ reviewed aliases with reasons. The generator rejects stale target paths and
 aliases that name missing Rust `#[test]` functions. Generated Markdown and
 `status.json` are deterministic and `--check` fails when they need regeneration.
 
+`api_signature_overrides` keys include the full IDL signature. This distinguishes
+native `*_with_options`, `*_with_owner` and `*_with_group` overload names from
+the shorter source-name match. The output records the actual identifiers found
+for each row; this remains a source-navigation check, not signature typechecking.
+
 The scanner is intentionally a navigation/inventory tool, not a Rust/C++ semantic
 equivalence checker. It does not run tests, prove module reachability, inspect
 native platform output or certify full behavior. The IDL symbol check includes

@@ -12,6 +12,12 @@ This is the derivation revision already recorded in the implementation's
 [`NOTICE.md`](../../../src/FerroUI.Controls/repeater/NOTICE.md). Moving WinUI
 `main` does not silently change the acceptance target.
 
+On 2026-10-20 the upstream GitHub Contents API identified the same Repeater
+directory tree, [`1de63a85615582e33d24e19795bd73d374195ac1`](https://api.github.com/repos/microsoft/microsoft-ui-xaml/git/trees/1de63a85615582e33d24e19795bd73d374195ac1),
+at both this pinned revision and current `main`. The source subtree therefore
+needed no pin update at that checkpoint. This comparison covers Repeater's
+directory contents, not every transitive dependency in the WinUI repository.
+
 The working review is [FerroUI PR #269](https://github.com/wieslawsoltes/FerroUI/pull/269),
 on `feat/winui-repeater-port`. The journal and validation record distinguish
 published implementation checkpoints from source mapping and pending checks.
@@ -23,6 +29,7 @@ published implementation checkpoints from source mapping and pending checks.
 | [DESIGN.md](DESIGN.md) | Native framework integration, ownership, layout, source mutation, selection, scheduling and extension rules |
 | [SOURCES.md](SOURCES.md) | All 302 upstream files, including private helpers, IDL, test support, build inputs and sample assets |
 | [API.md](API.md) | Every defined type/member in the five Repeater IDL files, including preview contracts and private test hooks |
+| [API-SHAPES.md](API-SHAPES.md) | Exact Rust overload spellings, nullability, error boundaries, callbacks and important default/sentinel distinctions |
 | [TESTS.md](TESTS.md) | All 265 upstream test declarations and their Rust scenario mappings |
 | [DEPENDENCIES.md](DEPENDENCIES.md) | Every direct C++ include boundary outside the Repeater directory and its native replacement |
 | [DEVIATIONS.md](DEVIATIONS.md) | Deliberate Rust/framework adaptations and pinned-source corrections |

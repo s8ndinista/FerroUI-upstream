@@ -1,0 +1,126 @@
+# Native API shapes and signature decisions
+
+The complete declaration list is in [API.md](API.md). Its pinned source is
+[ItemsRepeater.idl](https://github.com/microsoft/microsoft-ui-xaml/blob/1af995b98a02d86b1951c4babe35caa269a6d569/controls/dev/Repeater/ItemsRepeater.idl)
+and the four private/automation/test-hook IDL files recorded in that map.
+This page explains the signature changes required to use the native FerroUI
+type system. An identifier match in the generated map remains a navigation
+check; the constructor, default, error and lifecycle contracts need the scenario
+evidence described in [VALIDATION.md](VALIDATION.md).
+
+## Objects, values and nullability
+
+| WinUI contract | Native Rust form | Meaning |
+|---|---|---|
+| Layout/control/dependency object | `Ref<T>` and `WeakRef<T>` through `ferro_class!` | Native inheritance, virtual dispatch, properties and tree ownership; weak callbacks do not keep detached hosts alive |
+| Nonvisual shared service or identity-bearing event data | `Rc<T>` or a cloneable handle containing `Rc<T>` | Shared state and explicit identity without introducing a second COM object model |
+| `Object` item data | `Option<BoxedValue>` | Arbitrary native values remain nullable; a null data item is distinct from an absent realized control |
+| `Object` collection source | `Option<ItemsSource>` | Native list/notification/key-mapping contracts preserve collection identity; an explicitly supplied `ItemsSourceView` is preserved |
+| Nullable `UIElement`, layout or provider | `Option<Ref<Control>>`, `Option<Ref<Layout>>`, or `Option<Ref<ItemCollectionTransitionProvider>>` | Absence is explicit in the type; required element arguments use `Ref<Control>` |
+| `IReference<Boolean>` selection state | `Option<bool>` | `None` represents an indeterminate/partly selected branch; it does not collapse into `false` |
+| `Double[]` metadata input | `&[f64]` | The callback supplies borrowed input and the arguments copy the accepted interval into owned request storage |
+| Transition `IVector` | `Vec<Rc<ItemCollectionTransition>>` | The override receives an owned batch containing shared transition identities |
+| Read-only selected-item/index views | `SelectedItems<T>` plus native metadata view adapters | Views remain lazy and detect stale selection versions; native adapters publish binding notifications |
+| `IStringable` on `IndexPath` | `Display`/`Debug` | The source's `R.0.1` formatting remains available through normal Rust formatting |
+
+These mappings are implemented in the native
+[source contracts](../../../src/FerroUI.Controls/items_source.rs),
+[layout contexts](../../../src/FerroUI.Controls/repeater/layouts/layout_context.rs),
+[selection service](../../../src/FerroUI.Controls/repeater/selection/selection_model.rs),
+[selected views](../../../src/FerroUI.Controls/repeater/selection/selected_items.rs),
+[metadata request arguments](../../../src/FerroUI.Controls/repeater/layouts/lined_flow_layout_items_info_requested_event_args.rs)
+and [transition provider](../../../src/FerroUI.Controls/repeater/item_collection_transition_provider.rs).
+
+`ItemsSourceView::count()` uses the native `IItemsList::count` contract to read
+the current size. It does not expose WinRT's `GetSizeCore` override or maintain
+that implementation's count cache. Collection notifications, source identity,
+stable keys and indexed data access still use the existing native source
+interfaces. The resulting difference in size-query invocation counts is
+explicitly recorded in [WR-22](DEVIATIONS.md); it is not treated as an equivalent
+assertion in the source factory scenario.
+
+## Overload spelling
+
+Rust methods have distinct names. The generator records each overload using its
+full IDL signature, so removing a grouped/owner/options variant cannot be hidden
+by the presence of the shorter method with the same upstream name.
+
+| Source overload | Native entry point |
+|---|---|
+| `VirtualizingLayoutContext.GetOrCreateElementAt(index)` | `get_or_create_element_at(index)` |
+| `VirtualizingLayoutContext.GetOrCreateElementAt(index, options)` | `get_or_create_element_at_with_options(index, options)` |
+| `RecyclePool.PutElement(element, key)` | `put_element(element, key)` |
+| `RecyclePool.PutElement(element, key, owner)` | `put_element_with_owner(element, key, owner)` |
+| `RecyclePool.TryGetElement(key)` | `try_get_element(key)` |
+| `RecyclePool.TryGetElement(key, owner)` | `try_get_element_with_owner(key, owner)` |
+| `IndexPath.CreateFrom(index)` | `create_from(index)` |
+| `IndexPath.CreateFrom(group, item)` | `create_from_group_and_item_index(group, item)` |
+| `SelectionModel.SetAnchorIndex(index)` | `set_anchor_index_flat(index)` |
+| `SelectionModel.SetAnchorIndex(group, item)` | `set_anchor_index_with_group(group, item)` |
+| `SelectionModel.Select(index)` / `Deselect(index)` | `select(index)` / `deselect(index)` |
+| `SelectionModel.Select(group, item)` / `Deselect(group, item)` | `select_with_group(group, item)` / `deselect_with_group(group, item)` |
+| `SelectionModel.IsSelected(index)` | `is_selected(index)` |
+| `SelectionModel.IsSelected(group, item)` | `is_selected_with_group(group, item)` |
+| `SelectionModel.SelectRangeFromAnchor(index)` / `DeselectRangeFromAnchor(index)` | `select_range_from_anchor(index)` / `deselect_range_from_anchor(index)` |
+| `SelectionModel.SelectRangeFromAnchor(group, item)` / `DeselectRangeFromAnchor(group, item)` | `select_range_from_anchor_with_group(group, item)` / `deselect_range_from_anchor_with_group(group, item)` |
+
+The `AnchorIndex` property setter is separately named
+`set_anchor_index(Option<IndexPath>)`; it must not be mistaken for the flat-index
+method above. Arbitrary-depth `SelectAt`, `DeselectAt` and range operations borrow
+an `IndexPath`. `IndexPath::create_from_indices` accepts an iterator of `i32`
+values rather than requiring a WinRT vector.
+
+Source method names and overload arities remain in the native markup metadata
+where reflective invocation needs them. Rust callers use the explicit names.
+See [pool APIs](../../../src/FerroUI.Controls/repeater/recycle_pool.rs),
+[selection APIs](../../../src/FerroUI.Controls/repeater/selection/selection_model.rs)
+and [selection markup](../../../src/FerroUI.Controls/repeater/selection/markup.rs).
+
+## Errors, callbacks and extension points
+
+Recoverable pool/template, metadata-range and selection errors use
+`ElementFactoryError`, `LinedFlowLayoutError` and `SelectionError` with `Result`.
+For example, pool lookup returns `Result<Option<Ref<Control>>, ElementFactoryError>`:
+an empty pool is successful absence, while an invalid owner is an error.
+An expired selection callback returns `SelectionError::EventArgsExpired` when
+its source or source path is accessed. Array-length and requested-range failures
+remain distinguishable in lined-flow metadata callbacks.
+
+Invalid layout reentrancy and an unimplemented required base virtual remain
+programmer errors. Native base classes reject those calls; a panic in that path
+represents the source precondition/abstract-core failure, not a missing normal
+implementation. Such behavior must stay paired with the deriving-override and
+invalid-call tests in [the layout contract suite](../../../src/FerroUI.Controls/repeater/layout_contract_tests.rs).
+
+`ferro_class!` traits preserve overridable layout/factory/provider operations.
+`FlowLayout::get_extent` groups each realized boundary's element, source index
+and bounds into `FlowLayoutRealizedElement`; the source's three related
+arguments remain one coherent Rust value. The callback preserves separate
+first/last boundary values. The algorithm delegates through the layout virtuals
+instead of bypassing an application override.
+
+Native event subscription methods return `Rc<dyn IDisposable>`. Explicit
+`dispose()` detaches the handler; simply dropping the handle is not the
+framework's unsubscribe convention. Rust callbacks receive the typed arguments;
+native markup event adapters supply the sender and arguments required by the
+markup delegate contract. Reentrant event delivery takes a handler snapshot.
+
+## Defaults and sentinel values
+
+The IDL's attributes and the source constructors jointly define defaults. A
+public zero default must not erase an internal uninitialized measurement
+sentinel. The following distinctions are significant for behavior:
+
+| Contract | Native default / distinction | Source and implementation |
+|---|---|---|
+| Repeater cache lengths | `2.0`; values must be finite and nonnegative | [Repeater properties](../../../src/FerroUI.Controls/repeater/items_repeater.rs) |
+| Stack layout | Vertical orientation, zero spacing, virtualization enabled | [Stack layout](../../../src/FerroUI.Controls/repeater/layouts/stack_layout.rs) |
+| Uniform grid | Horizontal orientation, zero public minimum dimensions/spacings, start justification, no stretch, maximum `-1` | [Uniform grid](../../../src/FerroUI.Controls/repeater/layouts/uniform_grid_layout.rs) |
+| Untouched uniform-grid item dimensions | Internal `NaN` fields cause the first item to supply its natural size until a dimension property change establishes a numeric value; the internal sentinel is separate from the public zero default | [Uniform grid initialization](../../../src/FerroUI.Controls/repeater/layouts/uniform_grid_layout.rs) |
+| Flow layout | Horizontal orientation, zero line/item spacing, start line alignment | [Flow layout](../../../src/FerroUI.Controls/repeater/layouts/flow_layout.rs) |
+| Lined flow | Start justification, no stretch, zero spacing, `LineHeight = NaN`, `ActualLineHeight = 0` before measurement | [Pinned constants](https://github.com/microsoft/microsoft-ui-xaml/blob/1af995b98a02d86b1951c4babe35caa269a6d569/controls/dev/Repeater/LinedFlowLayout.h), [native layout](../../../src/FerroUI.Controls/repeater/layouts/lined_flow_layout.rs) |
+| Metadata global minimum/maximum width | `-1` denotes unspecified; negative assignments normalize to that sentinel | [Request arguments](../../../src/FerroUI.Controls/repeater/layouts/lined_flow_layout_items_info_requested_event_args.rs) |
+
+Default-value assertions, invalid argument tests and actual host behavior remain
+separate review gates. The signature inventory records all declared members;
+it does not infer these behaviors from a matching identifier.

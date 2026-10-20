@@ -53,10 +53,12 @@
     },
     "ChildrenInTabFocusOrderIterable": {
       "targets": [
-        "src/FerroUI.Controls/repeater/items_repeater.rs"
+        "src/FerroUI.Controls/repeater/items_repeater.rs",
+        "src/FerroUI.Base/input/i_custom_keyboard_navigation.rs",
+        "src/FerroUI.Base/input/focus_helpers.rs"
       ],
       "status": "implementation-mapped",
-      "note": "Keyboard traversal projects realized elements in source order through FerroUI custom keyboard navigation."
+      "note": "The existing native keyboard-navigation trait gains an optional realized-child ordering projection consumed by the native focus helper. Repeater supplies source order and excludes pooled visuals; the default None preserves other controls and nested repeaters use the same projection."
     },
     "ItemsRepeaterElementPreparedEventArgs": {
       "targets": [
@@ -495,7 +497,9 @@
     "LayoutTests.cs": [
       "src/FerroUI.Controls/repeater/layout_contract_tests.rs",
       "src/FerroUI.Controls/repeater/layouts/layout_tests.rs",
-      "src/FerroUI.Controls/repeater/conformance_tests.rs"
+      "src/FerroUI.Controls/repeater/conformance_tests.rs",
+      "src/FerroUI.Controls/repeater/items_repeater_tests.rs",
+      "src/FerroUI.Controls/repeater/viewport_tests.rs"
     ],
     "LinedFlowLayoutTests.cs": [
       "src/FerroUI.Controls/repeater/layouts/lined_flow_upstream_tests.rs",
@@ -508,17 +512,20 @@
       "src/FerroUI.Controls/repeater/services_tests.rs"
     ],
     "RepeaterApiContractTests.cs": [
-      "src/FerroUI.Controls/repeater/conformance_tests.rs"
+      "src/FerroUI.Controls/repeater/conformance_tests.rs",
+      "src/FerroUI.Controls/repeater/services_tests.rs"
     ],
     "RepeaterFocusTests.cs": [
       "src/FerroUI.Controls/repeater/conformance_tests.rs",
-      "src/FerroUI.Controls/repeater/services_tests.rs"
+      "src/FerroUI.Controls/repeater/services_tests.rs",
+      "src/FerroUI.Controls/repeater/view_manager_acceptance_tests.rs"
     ],
     "RepeaterTests.cs": [
       "src/FerroUI.Controls/repeater/items_repeater_tests.rs",
       "src/FerroUI.Controls/repeater/services_tests.rs",
       "src/FerroUI.Controls/repeater/conformance_tests.rs",
-      "src/FerroUI.Controls/repeater/acceptance_tests.rs"
+      "src/FerroUI.Controls/repeater/acceptance_tests.rs",
+      "src/FerroUI.Controls/repeater/view_manager_acceptance_tests.rs"
     ],
     "SelectionModelTests.cs": [
       "src/FerroUI.Controls/repeater/selection/tests.rs"
@@ -526,7 +533,8 @@
     "ViewManagerTests.cs": [
       "src/FerroUI.Controls/repeater/conformance_tests.rs",
       "src/FerroUI.Controls/repeater/items_repeater_tests.rs",
-      "src/FerroUI.Controls/repeater/services_tests.rs"
+      "src/FerroUI.Controls/repeater/services_tests.rs",
+      "src/FerroUI.Controls/repeater/view_manager_acceptance_tests.rs"
     ],
     "ViewportTests.cs": [
       "src/FerroUI.Controls/repeater/viewport_tests.rs"
@@ -976,5 +984,198 @@
       "status": "framework-replacement",
       "note": "Generated dependency-property registration is replaced by ferro_properties!, ferro_class_info! and native markup metadata."
     }
-  }
+  },
+  "api_signature_overrides": {
+    "VirtualizingLayoutContext::Microsoft.UI.Xaml.UIElement GetOrCreateElementAt(Int32 index)": {
+      "targets": [
+        "src/FerroUI.Controls/repeater/layouts/layout_context.rs"
+      ],
+      "symbols": [
+        "get_or_create_element_at"
+      ],
+      "note": "The options overload has a distinct Rust method; the short method supplies ElementRealizationOptions::NONE."
+    },
+    "VirtualizingLayoutContext::Microsoft.UI.Xaml.UIElement GetOrCreateElementAt(Int32 index, ElementRealizationOptions options)": {
+      "targets": [
+        "src/FerroUI.Controls/repeater/layouts/layout_context.rs"
+      ],
+      "symbols": [
+        "get_or_create_element_at_with_options"
+      ],
+      "note": "The options overload has a distinct Rust method; the short method supplies ElementRealizationOptions::NONE."
+    },
+    "RecyclePool::void PutElement(Microsoft.UI.Xaml.UIElement element, String key)": {
+      "targets": [
+        "src/FerroUI.Controls/repeater/recycle_pool.rs"
+      ],
+      "symbols": [
+        "put_element"
+      ],
+      "note": "The owner overload is explicit; Result distinguishes an invalid owner from a successful pool miss."
+    },
+    "RecyclePool::void PutElement(Microsoft.UI.Xaml.UIElement element, String key, Microsoft.UI.Xaml.UIElement owner)": {
+      "targets": [
+        "src/FerroUI.Controls/repeater/recycle_pool.rs"
+      ],
+      "symbols": [
+        "put_element_with_owner"
+      ],
+      "note": "The owner overload is explicit; Result distinguishes an invalid owner from a successful pool miss."
+    },
+    "RecyclePool::Microsoft.UI.Xaml.UIElement TryGetElement(String key)": {
+      "targets": [
+        "src/FerroUI.Controls/repeater/recycle_pool.rs"
+      ],
+      "symbols": [
+        "try_get_element"
+      ],
+      "note": "The owner overload is explicit; Result distinguishes an invalid owner from a successful pool miss."
+    },
+    "RecyclePool::Microsoft.UI.Xaml.UIElement TryGetElement(String key, Microsoft.UI.Xaml.UIElement owner)": {
+      "targets": [
+        "src/FerroUI.Controls/repeater/recycle_pool.rs"
+      ],
+      "symbols": [
+        "try_get_element_with_owner"
+      ],
+      "note": "The owner overload is explicit; Result distinguishes an invalid owner from a successful pool miss."
+    },
+    "IndexPath::static IndexPath CreateFrom(Int32 index)": {
+      "targets": [
+        "src/FerroUI.Controls/repeater/selection/index_path.rs"
+      ],
+      "symbols": [
+        "create_from"
+      ],
+      "note": "Distinct Rust constructors preserve flat versus grouped path shape."
+    },
+    "IndexPath::static IndexPath CreateFrom(Int32 groupIndex, Int32 itemIndex)": {
+      "targets": [
+        "src/FerroUI.Controls/repeater/selection/index_path.rs"
+      ],
+      "symbols": [
+        "create_from_group_and_item_index"
+      ],
+      "note": "Distinct Rust constructors preserve flat versus grouped path shape."
+    },
+    "SelectionModel::void SetAnchorIndex(Int32 index)": {
+      "targets": [
+        "src/FerroUI.Controls/repeater/selection/selection_model.rs"
+      ],
+      "symbols": [
+        "set_anchor_index_flat"
+      ],
+      "note": "The grouped overload has a distinct Rust method; the flat anchor method is also distinct from the Option<IndexPath> property setter."
+    },
+    "SelectionModel::void SetAnchorIndex(Int32 groupIndex, Int32 itemIndex)": {
+      "targets": [
+        "src/FerroUI.Controls/repeater/selection/selection_model.rs"
+      ],
+      "symbols": [
+        "set_anchor_index_with_group"
+      ],
+      "note": "The grouped overload has a distinct Rust method; the flat anchor method is also distinct from the Option<IndexPath> property setter."
+    },
+    "SelectionModel::void Select(Int32 index)": {
+      "targets": [
+        "src/FerroUI.Controls/repeater/selection/selection_model.rs"
+      ],
+      "symbols": [
+        "select"
+      ],
+      "note": "The grouped overload has a distinct Rust method; the flat anchor method is also distinct from the Option<IndexPath> property setter."
+    },
+    "SelectionModel::void Select(Int32 groupIndex, Int32 itemIndex)": {
+      "targets": [
+        "src/FerroUI.Controls/repeater/selection/selection_model.rs"
+      ],
+      "symbols": [
+        "select_with_group"
+      ],
+      "note": "The grouped overload has a distinct Rust method; the flat anchor method is also distinct from the Option<IndexPath> property setter."
+    },
+    "SelectionModel::void Deselect(Int32 index)": {
+      "targets": [
+        "src/FerroUI.Controls/repeater/selection/selection_model.rs"
+      ],
+      "symbols": [
+        "deselect"
+      ],
+      "note": "The grouped overload has a distinct Rust method; the flat anchor method is also distinct from the Option<IndexPath> property setter."
+    },
+    "SelectionModel::void Deselect(Int32 groupIndex, Int32 itemIndex)": {
+      "targets": [
+        "src/FerroUI.Controls/repeater/selection/selection_model.rs"
+      ],
+      "symbols": [
+        "deselect_with_group"
+      ],
+      "note": "The grouped overload has a distinct Rust method; the flat anchor method is also distinct from the Option<IndexPath> property setter."
+    },
+    "SelectionModel::Windows.Foundation.IReference<Boolean> IsSelected(Int32 index)": {
+      "targets": [
+        "src/FerroUI.Controls/repeater/selection/selection_model.rs"
+      ],
+      "symbols": [
+        "is_selected"
+      ],
+      "note": "The grouped overload has a distinct Rust method; the flat anchor method is also distinct from the Option<IndexPath> property setter."
+    },
+    "SelectionModel::Windows.Foundation.IReference<Boolean> IsSelected(Int32 groupIndex, Int32 itemIndex)": {
+      "targets": [
+        "src/FerroUI.Controls/repeater/selection/selection_model.rs"
+      ],
+      "symbols": [
+        "is_selected_with_group"
+      ],
+      "note": "The grouped overload has a distinct Rust method; the flat anchor method is also distinct from the Option<IndexPath> property setter."
+    },
+    "SelectionModel::void SelectRangeFromAnchor(Int32 index)": {
+      "targets": [
+        "src/FerroUI.Controls/repeater/selection/selection_model.rs"
+      ],
+      "symbols": [
+        "select_range_from_anchor"
+      ],
+      "note": "The grouped overload has a distinct Rust method; the flat anchor method is also distinct from the Option<IndexPath> property setter."
+    },
+    "SelectionModel::void SelectRangeFromAnchor(Int32 groupIndex, Int32 itemIndex)": {
+      "targets": [
+        "src/FerroUI.Controls/repeater/selection/selection_model.rs"
+      ],
+      "symbols": [
+        "select_range_from_anchor_with_group"
+      ],
+      "note": "The grouped overload has a distinct Rust method; the flat anchor method is also distinct from the Option<IndexPath> property setter."
+    },
+    "SelectionModel::void DeselectRangeFromAnchor(Int32 index)": {
+      "targets": [
+        "src/FerroUI.Controls/repeater/selection/selection_model.rs"
+      ],
+      "symbols": [
+        "deselect_range_from_anchor"
+      ],
+      "note": "The grouped overload has a distinct Rust method; the flat anchor method is also distinct from the Option<IndexPath> property setter."
+    },
+    "SelectionModel::void DeselectRangeFromAnchor(Int32 groupIndex, Int32 itemIndex)": {
+      "targets": [
+        "src/FerroUI.Controls/repeater/selection/selection_model.rs"
+      ],
+      "symbols": [
+        "deselect_range_from_anchor_with_group"
+      ],
+      "note": "The grouped overload has a distinct Rust method; the flat anchor method is also distinct from the Option<IndexPath> property setter."
+    }
+  },
+  "native_extensions": [
+    {
+      "source": "ChildrenInTabFocusOrderIterable / ItemsRepeater tab-focus ordering",
+      "targets": [
+        "src/FerroUI.Controls/repeater/items_repeater.rs",
+        "src/FerroUI.Base/input/i_custom_keyboard_navigation.rs",
+        "src/FerroUI.Base/input/focus_helpers.rs"
+      ],
+      "note": "The existing native keyboard-navigation trait gains an optional realized-child ordering projection consumed by the native focus helper. Repeater supplies source order and excludes pooled visuals; the default None preserves other controls and nested repeaters use the same projection."
+    }
+  ]
 }

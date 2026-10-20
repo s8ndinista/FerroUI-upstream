@@ -49,7 +49,7 @@ native scrolling and collection operations. The Windows UI Automation driver
 and wheel transport are replaced; their native input behavior is not covered by
 these headless equivalents. The source animated nested-scroll variant already
 returns early under microsoft-ui-xaml#779; the nine nonanimated destinations are
-the executed source acceptance target.
+the source acceptance target.
 
 ## Acceptance boundaries
 
