@@ -5,20 +5,27 @@ pub(crate) struct FocusHelpers;
 
 impl FocusHelpers {
     pub fn get_input_element_children(parent: &InputElement) -> Vec<Ref<InputElement>> {
+        if let Some(children) = parent
+            .as_custom_keyboard_navigation()
+            .and_then(|navigation| navigation.get_children_in_tab_focus_order())
+        {
+            return children;
+        }
         match parent.visual_children_snapshot() {
-            Some(children) => children.iter().filter_map(|child| child.cast::<InputElement>()).collect(),
+            Some(children) => children
+                .iter()
+                .filter_map(|child| child.cast::<InputElement>())
+                .collect(),
             None => Vec::new(),
         }
     }
 
     pub fn can_have_focusable_children(parent: Option<&InputElement>) -> bool {
         let Some(parent) = parent else { return false };
-        let Some(children) = parent.visual_children_snapshot() else { return false };
-
-        for child in children.iter() {
-            let Some(child) = child.downcast_ref::<InputElement>() else { continue };
-
-            if Self::is_visible(child) && (child.focusable() || Self::can_have_focusable_children(Some(child))) {
+        for child in Self::get_input_element_children(parent) {
+            if Self::is_visible(&child)
+                && (child.focusable() || Self::can_have_focusable_children(Some(&child)))
+            {
                 return true;
             }
         }
@@ -29,10 +36,14 @@ impl FocusHelpers {
     pub fn get_focus_parent(input_element: Option<&InputElement>) -> Option<Ref<InputElement>> {
         let input_element = input_element?;
         let this: &crate::Visual = input_element;
-        let is_root = input_element.visual_root().is_some_and(|root| std::ptr::eq::<crate::Visual>(&*root, this));
+        let is_root = input_element
+            .visual_root()
+            .is_some_and(|root| std::ptr::eq::<crate::Visual>(&*root, this));
 
         if !is_root {
-            return input_element.parent().and_then(|parent| parent.downcast::<InputElement>().ok());
+            return input_element
+                .parent()
+                .and_then(|parent| parent.downcast::<InputElement>().ok());
         }
 
         None

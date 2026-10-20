@@ -69,6 +69,9 @@ mod conformance_tests;
 mod acceptance_tests;
 
 #[cfg(test)]
+mod view_manager_acceptance_tests;
+
+#[cfg(test)]
 mod viewport_tests;
 
 #[cfg(test)]

@@ -5,11 +5,11 @@ use super::repeater_layout_context::RepeaterLayoutContext;
 use super::view_manager::ViewManager;
 use super::viewport_manager::ViewportManager;
 use super::{
-    ElementOwner, ElementRealizationOptions, IElementFactory, ItemCollectionTransitionProvider,
-    ItemsRepeaterElementClearingEventArgs, ItemsRepeaterElementIndexChangedEventArgs,
-    ItemsRepeaterElementPreparedEventArgs, Layout, LayoutContext, Phaser, RepeaterAutomationPeer,
-    StackLayout, TransitionManager, VirtualizationInfo, VirtualizingLayout,
-    VirtualizingLayoutContext, factory_from_template,
+    factory_from_template, ElementOwner, ElementRealizationOptions, IElementFactory,
+    ItemCollectionTransitionProvider, ItemsRepeaterElementClearingEventArgs,
+    ItemsRepeaterElementIndexChangedEventArgs, ItemsRepeaterElementPreparedEventArgs, Layout,
+    LayoutContext, Phaser, RepeaterAutomationPeer, StackLayout, TransitionManager,
+    VirtualizationInfo, VirtualizingLayout, VirtualizingLayoutContext,
 };
 use crate::automation::{AccessibilityView, AutomationProperties};
 use crate::templates::{FuncDataTemplate, IDataTemplate};
@@ -17,9 +17,8 @@ use crate::{
     Control, ControlImpl, ItemsChangedEventArgs, ItemsSource, ItemsSourceView, Panel, PanelImpl,
     RequestBringIntoViewEventArgs,
 };
-use ferroui_base::FerroObjectExtensions;
 use ferroui_base::collections::NotifyCollectionChangedAction;
-use ferroui_base::data::{BindingPriority, core::ValueTypes};
+use ferroui_base::data::{core::ValueTypes, BindingPriority};
 use ferroui_base::input::navigation::{XYFocus, XYFocusNavigationModes};
 use ferroui_base::input::{
     FocusChangedEventArgs, ICustomKeyboardNavigation, InputElement, InputElementImpl,
@@ -29,11 +28,12 @@ use ferroui_base::interactivity::{InteractiveImpl, RoutingStrategies};
 use ferroui_base::layout::LayoutableImpl;
 use ferroui_base::reactive::{Disposable, IDisposable};
 use ferroui_base::utilities::HandlerList;
+use ferroui_base::FerroObjectExtensions;
 use ferroui_base::{
+    ferro_class, ferro_class_info, ferro_impl_classes, ferro_properties, instantiate,
     AttachedProperty, BoxedValue, FerroObjectImpl, FerroObjectImplExt, FerroProperty,
     FerroPropertyChangedEventArgs, Point, Rect, Ref, Size, StyledElementImpl, StyledProperty,
     StyledPropertyOptions, Visual, VisualImpl, VisualImplExt, VisualTreeAttachmentEventArgs,
-    ferro_class, ferro_class_info, ferro_impl_classes, ferro_properties, instantiate,
 };
 use std::cell::{Cell, OnceCell, RefCell};
 use std::rc::Rc;
@@ -152,9 +152,9 @@ impl FerroObjectImpl for ItemsRepeater {
                     // Only the current animator owner may recycle it. The
                     // ownership check also makes repeated completion harmless
                     // if this element has already been reused for another item.
-                    let is_child = element.visual_parent().is_some_and(|parent| {
-                        parent.ptr_eq(&owner.clone().upcast::<Visual>())
-                    });
+                    let is_child = element
+                        .visual_parent()
+                        .is_some_and(|parent| parent.ptr_eq(&owner.clone().upcast::<Visual>()));
                     if is_child
                         && Self::get_virtualization_info(&element).owner() == ElementOwner::Animator
                     {
@@ -333,6 +333,15 @@ impl ControlImpl for ItemsRepeater {
 }
 
 impl ICustomKeyboardNavigation for ItemsRepeater {
+    fn get_children_in_tab_focus_order(&self) -> Option<Vec<Ref<InputElement>>> {
+        Some(
+            self.realized_elements()
+                .into_iter()
+                .map(Ref::upcast)
+                .collect(),
+        )
+    }
+
     fn get_next(
         &self,
         element: &Ref<InputElement>,
@@ -684,6 +693,16 @@ impl ItemsRepeater {
                 {
                     result.push(input);
                 }
+            }
+            if let Some(children) = visual.cast::<InputElement>().and_then(|input| {
+                input
+                    .as_custom_keyboard_navigation()
+                    .and_then(|navigation| navigation.get_children_in_tab_focus_order())
+            }) {
+                for child in children {
+                    visit(&child.upcast(), result);
+                }
+                return;
             }
             for child in visual.visual_children().snapshot().iter() {
                 visit(child, result);
