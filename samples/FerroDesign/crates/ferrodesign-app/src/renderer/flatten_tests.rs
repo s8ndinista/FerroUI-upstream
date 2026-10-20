@@ -61,6 +61,15 @@ fn equivalent(before: &[u8], after: &[u8]) {
         .zip(after.chunks_exact(4))
         .filter(|(a, b)| a.iter().zip(*b).any(|(a, b)| a.abs_diff(*b) > 4))
         .count();
+    if bad >= 180 * 140 / 100 {
+        if let Some(directory) = std::env::var_os("FERRODESIGN_PIXEL_DIAGNOSTICS") {
+            let directory = std::path::PathBuf::from(directory);
+            std::fs::create_dir_all(&directory).unwrap();
+            let name = std::thread::current().name().unwrap_or("flatten").replace("::", "_");
+            std::fs::write(directory.join(format!("{name}-before.rgba")), before).unwrap();
+            std::fs::write(directory.join(format!("{name}-after.rgba")), after).unwrap();
+        }
+    }
     assert!(
         bad < 180 * 140 / 100,
         "{bad} pixels differ by more than 4/255"
