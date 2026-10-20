@@ -146,19 +146,7 @@ ferro_class! {
         fn try_set_parent(this, parent: Option<Ref<AutomationPeer>>) -> bool;
     }
 }
-ferroui_base::ferro_class_info!(AutomationPeer {
-    markup: {
-        properties: [
-            EventsSource: Option<Ref<AutomationPeer>> {
-                get: AutomationPeer::events_source,
-                set: |this: &Ref<AutomationPeer>, value: Option<Ref<AutomationPeer>>| this.set_events_source(value)
-            },
-        ],
-        methods: [
-            fn RaiseTextEditTextChangedEvent(TextEditChangeType, Vec<String>) => AutomationPeer::raise_text_edit_text_changed_event,
-        ],
-    },
-});
+ferroui_base::ferro_class_info!(AutomationPeer {});
 
 fn abstract_member(name: &str) -> ! {
     panic!("The automation peer class does not implement the abstract member `{name}`.")

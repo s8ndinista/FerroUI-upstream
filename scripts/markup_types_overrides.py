@@ -275,6 +275,17 @@ BASE = {
 }
 
 CONTROLS = {
+    'AutomationPeer': {
+        'properties': [
+            """EventsSource: Option<Ref<AutomationPeer>> {
+                get: AutomationPeer::events_source,
+                set: |this: &Ref<AutomationPeer>, value: Option<Ref<AutomationPeer>>| this.set_events_source(value)
+            }""",
+        ],
+        'methods': [
+            "fn RaiseTextEditTextChangedEvent(crate::automation::provider::TextEditChangeType, Vec<String>) => AutomationPeer::raise_text_edit_text_changed_event",
+        ],
+    },
     # The accessors of the design-time properties that are not plain attached-property
     # accessors, in the declaration order of the managed original (overloads are tried
     # in that order).

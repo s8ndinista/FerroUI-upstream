@@ -50,6 +50,45 @@ fn identity(peer: &Ref<AutomationPeer>) -> usize {
 }
 
 #[test]
+fn public_text_edit_metadata_preserves_existing_peer_events_and_calls_typed_members() {
+    use ferroui_base::metadata::{from_markup_value, into_markup_value};
+    use ferroui_base::StaticType;
+
+    let _scope = test_scope();
+    let sink = install_sink();
+    let (_owner, original) = peer();
+    let (_source_owner, source) = peer();
+    let markup = AutomationPeer::TYPE.markup().unwrap();
+    assert!(markup
+        .events
+        .iter()
+        .any(|event| event.name == "ChildrenChanged"));
+    let property = markup.find_property("EventsSource").unwrap();
+    let instance = into_markup_value(original.clone());
+    (property.set.unwrap())(&[instance.clone(), into_markup_value(Some(source.clone()))]).unwrap();
+    let read = (property.get.unwrap())(&[instance.clone()]).unwrap();
+    assert_eq!(
+        from_markup_value::<Option<Ref<AutomationPeer>>>(&read).unwrap(),
+        Some(source.clone())
+    );
+    let raise = markup
+        .methods
+        .iter()
+        .find(|method| method.name == "RaiseTextEditTextChangedEvent")
+        .unwrap();
+    (raise.invoke)(&[
+        instance,
+        into_markup_value(TextEditChangeType::Composition),
+        into_markup_value(vec!["typed 😀".to_string()]),
+    ])
+    .unwrap();
+    let events = sink.events.borrow();
+    assert_eq!(events.len(), 1);
+    assert_eq!(events[0].0, identity(&source));
+    assert_eq!(events[0].1.changed_data, ["typed 😀"]);
+}
+
+#[test]
 fn public_text_edit_event_works_for_an_arbitrary_peer_without_text_patterns() {
     let _scope = test_scope();
     let sink = install_sink();
