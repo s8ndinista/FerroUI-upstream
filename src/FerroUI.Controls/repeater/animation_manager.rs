@@ -126,11 +126,23 @@ impl AnimationManager {
     pub(crate) fn active_count(&self) -> usize {
         self.current.borrow().len()
     }
+    pub(crate) fn cancel_for_element(&self, element: &Ref<Control>) {
+        let state = self.current.borrow_mut().remove(element);
+        if let Some((_, state)) = state {
+            if let Some(transition) = state.progress.transition() {
+                transition.cancel();
+            }
+            state.finish();
+        }
+    }
     pub(crate) fn start(
         self: &Rc<Self>,
         transition: Rc<ItemCollectionTransition>,
         timeline: TransitionTimeline,
     ) {
+        if transition.is_cancelled() {
+            return;
+        }
         let element = transition.element();
         let clock = element.clock().or_else(|| {
             FerroLocator::current()
@@ -145,6 +157,9 @@ impl AnimationManager {
         let old = self.current.borrow_mut().remove(&element);
         if let Some((_, old)) = old {
             old.finish();
+        }
+        if transition.is_cancelled() {
+            return;
         }
         let id = self.next_id.get().wrapping_add(1);
         self.next_id.set(id);

@@ -4,6 +4,7 @@
 use super::build_tree_scheduler::queue_render_callback;
 use super::item_collection_transition::ItemCollectionTransition;
 use super::item_collection_transition_completed_event_args::ItemCollectionTransitionCompletedEventArgs;
+use crate::Control;
 use ferroui_base::reactive::{Disposable, IDisposable};
 use ferroui_base::threading::{DispatcherPriority, DispatcherTimer};
 use ferroui_base::utilities::HandlerList;
@@ -20,14 +21,25 @@ struct TransitionBatch {
     keepalive: Option<Rc<DispatcherTimer>>,
 }
 
+struct TransitionDispatch<'a>(&'a RefCell<Vec<Vec<Rc<ItemCollectionTransition>>>>);
+impl Drop for TransitionDispatch<'_> {
+    fn drop(&mut self) {
+        self.0.borrow_mut().pop();
+    }
+}
+
 /// Extensible transition provider. Batches begin on the next rendering frame;
 /// transitions a subclass does not start still receive completion notification.
+/// Native subclasses that own animation resources also override
+/// `cancel_transitions_core` to release those resources before an element is
+/// returned to its factory.
 #[repr(C)]
 pub struct ItemCollectionTransitionProvider {
     base: FerroObject,
     next_batch: Cell<u64>,
     queued_batch: Cell<Option<u64>>,
     batches: RefCell<BTreeMap<u64, TransitionBatch>>,
+    dispatching: RefCell<Vec<Vec<Rc<ItemCollectionTransition>>>>,
     completed: HandlerList<dyn Fn(&ItemCollectionTransitionCompletedEventArgs)>,
     animations_enabled: Cell<bool>,
 }
@@ -35,6 +47,7 @@ ferro_class! {
     ItemCollectionTransitionProvider: FerroObject, virtuals ItemCollectionTransitionProviderImpl: FerroObjectImpl {
         fn start_transitions_core(this, transitions: Vec<Rc<ItemCollectionTransition>>);
         fn should_animate_core(this, transition: Rc<ItemCollectionTransition>) -> bool;
+        fn cancel_transitions_core(this, element: Ref<Control>);
     }
 }
 ferro_class_info!(ItemCollectionTransitionProvider {
@@ -76,6 +89,7 @@ impl ItemCollectionTransitionProviderImpl for ItemCollectionTransitionProvider {
     fn should_animate_core(_this: &Self, _transition: Rc<ItemCollectionTransition>) -> bool {
         panic!("A derived transition provider must override ShouldAnimateCore.");
     }
+    fn cancel_transitions_core(_this: &Self, _element: Ref<Control>) {}
 }
 impl ItemCollectionTransitionProvider {
     pub fn construct() -> Self {
@@ -84,6 +98,7 @@ impl ItemCollectionTransitionProvider {
             next_batch: Cell::new(0),
             queued_batch: Cell::new(None),
             batches: RefCell::new(BTreeMap::new()),
+            dispatching: RefCell::new(Vec::new()),
             completed: HandlerList::new(),
             animations_enabled: Cell::new(true),
         }
@@ -104,7 +119,45 @@ impl ItemCollectionTransitionProvider {
         self.should_animate_core(transition)
     }
     pub fn start_transitions(&self, transitions: Vec<Rc<ItemCollectionTransition>>) {
+        if transitions.is_empty() {
+            // An explicit empty call still reaches the override, including the
+            // abstract base implementation. Only canceled work is suppressed.
+            self.start_transitions_core(transitions);
+            return;
+        }
+        let transitions: Vec<_> = transitions
+            .into_iter()
+            .filter(|transition| !transition.is_cancelled())
+            .collect();
+        if transitions.is_empty() {
+            return;
+        }
+        // Keep the current dispatch visible to cancellation, including direct
+        // StartTransitions calls and reentrant callbacks inside a provider.
+        self.dispatching.borrow_mut().push(transitions.clone());
+        let _dispatch = TransitionDispatch(&self.dispatching);
         self.start_transitions_core(transitions);
+    }
+    /// Native lifecycle hook used before returning an element to its factory.
+    /// Overrides of CancelTransitionsCore release any animation resources they
+    /// own for this element. Other elements sharing the provider are untouched.
+    pub(crate) fn cancel_transitions_for_element(&self, element: &Ref<Control>) {
+        {
+            let batches = self.batches.borrow();
+            let dispatching = self.dispatching.borrow();
+            for transition in batches
+                .values()
+                .flat_map(|batch| &batch.all)
+                .chain(dispatching.iter().flatten())
+            {
+                if transition.element() == *element {
+                    transition.cancel();
+                }
+            }
+        }
+        // Mark pending work before invoking subclass code: stopping an active
+        // animation can synchronously raise TransitionCompleted and reenter us.
+        self.cancel_transitions_core(element.clone());
     }
     pub fn queue_transition(&self, transition: Rc<ItemCollectionTransition>) {
         let (batch, schedule) = match self.queued_batch.get() {
@@ -119,7 +172,8 @@ impl ItemCollectionTransitionProvider {
                 (batch, true)
             }
         };
-        let animate = self.animations_enabled()
+        let animate = !transition.is_cancelled()
+            && self.animations_enabled()
             && transition
                 .element()
                 .get_platform_settings()
@@ -180,7 +234,7 @@ impl ItemCollectionTransitionProvider {
             return;
         };
         if !animated.is_empty() {
-            self.start_transitions_core(animated);
+            self.start_transitions(animated);
         }
         let mut keepalive_required = false;
         for transition in all {

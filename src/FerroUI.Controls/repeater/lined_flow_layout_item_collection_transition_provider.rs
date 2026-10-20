@@ -11,6 +11,7 @@ use super::item_collection_transition::{
 use super::item_collection_transition_provider::{
     ItemCollectionTransitionProvider, ItemCollectionTransitionProviderImpl,
 };
+use crate::Control;
 use ferroui_base::{ferro_class, ferro_class_info, instantiate, FerroObjectImpl, Point, Ref};
 use std::rc::Rc;
 
@@ -44,6 +45,9 @@ impl ItemCollectionTransitionProviderImpl for LinedFlowLayoutItemCollectionTrans
     fn should_animate_core(_this: &Self, _transition: Rc<ItemCollectionTransition>) -> bool {
         true
     }
+    fn cancel_transitions_core(this: &Self, element: Ref<Control>) {
+        this.animations.cancel_for_element(&element);
+    }
     fn start_transitions_core(this: &Self, transitions: Vec<Rc<ItemCollectionTransition>>) {
         let has_add = transitions
             .iter()
@@ -55,6 +59,9 @@ impl ItemCollectionTransitionProviderImpl for LinedFlowLayoutItemCollectionTrans
             .iter()
             .any(|transition| transition.operation() == Operation::Move);
         for transition in transitions {
+            if transition.is_cancelled() {
+                continue;
+            }
             let timeline = match transition.operation() {
                 Operation::Add => {
                     if transition

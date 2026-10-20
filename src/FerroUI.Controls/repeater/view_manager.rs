@@ -253,6 +253,7 @@ impl ViewManager {
         if info.owner() == ElementOwner::ElementFactory {
             return;
         }
+        owner.transition_manager().on_element_clearing(element);
         let index = info.index();
         // The event observes the original DataContext and source index.
         owner.raise_element_clearing(&ItemsRepeaterElementClearingEventArgs {

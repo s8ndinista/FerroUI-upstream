@@ -11,7 +11,8 @@ use ferroui_base::collections::NotifyCollectionChangedAction;
 use ferroui_base::reactive::IDisposable;
 use ferroui_base::{Rect, Ref};
 use std::cell::{Cell, RefCell};
-use std::rc::Rc;
+use std::collections::HashMap;
+use std::rc::{Rc, Weak};
 
 /// Derives animation triggers from collection and layout changes during the
 /// current layout cycle and returns removed elements when their transition ends.
@@ -20,6 +21,8 @@ pub struct TransitionManager {
     subscription: RefCell<Option<Rc<dyn IDisposable>>>,
     recycle: Rc<dyn Fn(Ref<Control>)>,
     triggers: Cell<Triggers>,
+    transitions: RefCell<HashMap<Ref<Control>, Vec<Weak<ItemCollectionTransition>>>>,
+    removals: RefCell<HashMap<Ref<Control>, Weak<ItemCollectionTransition>>>,
 }
 impl TransitionManager {
     pub fn new(recycle: Rc<dyn Fn(Ref<Control>)>) -> Rc<Self> {
@@ -28,6 +31,8 @@ impl TransitionManager {
             subscription: RefCell::new(None),
             recycle,
             triggers: Cell::new(Triggers::empty()),
+            transitions: RefCell::new(HashMap::new()),
+            removals: RefCell::new(HashMap::new()),
         })
     }
     pub fn on_transition_provider_changed(
@@ -42,10 +47,8 @@ impl TransitionManager {
         if let Some(provider) = provider {
             let weak = Rc::downgrade(self);
             let subscription = provider.transition_completed(move |args| {
-                if args.transition().operation() == Operation::Remove {
-                    if let Some(this) = weak.upgrade() {
-                        (this.recycle)(args.element());
-                    }
+                if let Some(this) = weak.upgrade() {
+                    this.on_transition_completed(&args.transition());
                 }
             });
             *self.subscription.borrow_mut() = Some(subscription);
@@ -74,12 +77,14 @@ impl TransitionManager {
                 | Triggers::COLLECTION_CHANGE_RESET
                 | Triggers::LAYOUT_TRANSITION);
         if let Some(provider) = provider.filter(|_| !triggers.is_empty()) {
-            provider.queue_transition(ItemCollectionTransition::new(
+            let transition = ItemCollectionTransition::new(
                 provider.clone(),
                 element.clone(),
                 Operation::Add,
                 triggers,
-            ));
+            );
+            self.track_transition(&transition);
+            provider.queue_transition(transition);
         }
     }
     pub fn clear_element(&self, element: &Ref<Control>) -> bool {
@@ -98,6 +103,10 @@ impl TransitionManager {
         if !provider.should_animate(transition.clone()) {
             return false;
         }
+        self.removals
+            .borrow_mut()
+            .insert(element.clone(), Rc::downgrade(&transition));
+        self.track_transition(&transition);
         provider.queue_transition(transition);
         true
     }
@@ -115,13 +124,78 @@ impl TransitionManager {
             } else {
                 recorded
             };
-            provider.queue_transition(ItemCollectionTransition::with_bounds(
+            let transition = ItemCollectionTransition::with_bounds(
                 provider.clone(),
                 element.clone(),
                 triggers,
                 old_bounds,
                 new_bounds,
-            ));
+            );
+            self.track_transition(&transition);
+            provider.queue_transition(transition);
+        }
+    }
+    /// Invalidate the removal identity and cancel native animation values before
+    /// ElementClearing or the old factory can observe and reuse this control.
+    pub fn on_element_clearing(&self, element: &Ref<Control>) {
+        self.removals.borrow_mut().remove(element);
+        let transitions = self.transitions.borrow_mut().remove(element);
+        let mut providers: Vec<_> = self.provider.borrow().clone().into_iter().collect();
+        for transition in transitions
+            .into_iter()
+            .flatten()
+            .filter_map(|t| t.upgrade())
+        {
+            transition.cancel();
+            if let Some(provider) = transition.owning_provider() {
+                if !providers.contains(&provider) {
+                    providers.push(provider);
+                }
+            }
+        }
+        for provider in providers {
+            provider.cancel_transitions_for_element(element);
+        }
+    }
+    fn track_transition(&self, transition: &Rc<ItemCollectionTransition>) {
+        let mut transitions = self.transitions.borrow_mut();
+        let tracked = transitions.entry(transition.element()).or_default();
+        tracked.retain(|transition| transition.strong_count() != 0);
+        tracked.push(Rc::downgrade(transition));
+    }
+    fn on_transition_completed(&self, transition: &Rc<ItemCollectionTransition>) {
+        let element = transition.element();
+        {
+            let mut transitions = self.transitions.borrow_mut();
+            if let Some(tracked) = transitions.get_mut(&element) {
+                tracked.retain(|candidate| {
+                    candidate
+                        .upgrade()
+                        .is_some_and(|candidate| !Rc::ptr_eq(&candidate, transition))
+                });
+                if tracked.is_empty() {
+                    transitions.remove(&element);
+                }
+            }
+        }
+        // A public progress handle may report Complete repeatedly, even after
+        // this same control has been reused and removed a second time. Only the
+        // exact removal that transferred ownership to Animator may recycle it.
+        let recycle = if transition.operation() == Operation::Remove {
+            let mut removals = self.removals.borrow_mut();
+            let matches = removals
+                .get(&element)
+                .and_then(Weak::upgrade)
+                .is_some_and(|pending| Rc::ptr_eq(&pending, transition));
+            if matches {
+                removals.remove(&element);
+            }
+            matches
+        } else {
+            false
+        };
+        if recycle {
+            (self.recycle)(element);
         }
     }
     pub fn on_owner_arranged(&self) {

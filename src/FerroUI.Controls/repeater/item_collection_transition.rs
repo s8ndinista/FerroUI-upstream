@@ -5,7 +5,7 @@ use super::item_collection_transition_progress::ItemCollectionTransitionProgress
 use super::item_collection_transition_provider::ItemCollectionTransitionProvider;
 use crate::Control;
 use ferroui_base::{Rect, Ref, WeakRef};
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -35,6 +35,7 @@ pub struct ItemCollectionTransition {
     old_bounds: Rect,
     new_bounds: Rect,
     progress: RefCell<Option<Rc<ItemCollectionTransitionProgress>>>,
+    cancelled: Cell<bool>,
 }
 impl PartialEq for ItemCollectionTransition {
     fn eq(&self, other: &Self) -> bool {
@@ -94,6 +95,7 @@ impl ItemCollectionTransition {
             old_bounds,
             new_bounds,
             progress: RefCell::new(None),
+            cancelled: Cell::new(false),
         })
     }
     pub fn owning_provider(&self) -> Option<Ref<ItemCollectionTransitionProvider>> {
@@ -116,6 +118,12 @@ impl ItemCollectionTransition {
     }
     pub fn has_started(&self) -> bool {
         self.progress.borrow().is_some()
+    }
+    pub(crate) fn is_cancelled(&self) -> bool {
+        self.cancelled.get()
+    }
+    pub(crate) fn cancel(&self) {
+        self.cancelled.set(true);
     }
     pub fn start(self: &Rc<Self>) -> Rc<ItemCollectionTransitionProgress> {
         if let Some(progress) = self.progress.borrow().as_ref() {

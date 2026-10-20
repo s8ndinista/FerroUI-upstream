@@ -1209,6 +1209,95 @@ fn removal_completion_invalidates_arrange_and_does_not_recycle_a_reused_element_
             .unwrap(),
         2
     );
+
+    // The old completion must also be harmless when the reused control is
+    // Animator-owned again, rather than merely while it belongs to Layout.
+    source.remove_at(1);
+    arrange_transition_repeater(&repeater);
+    clock.pulse(16.0);
+    let next_removal = provider
+        .started
+        .borrow()
+        .iter()
+        .rev()
+        .find(|candidate| {
+            candidate.operation() == Operation::Remove && candidate.element() == removed
+        })
+        .unwrap()
+        .clone();
+    assert!(!Rc::ptr_eq(&transition, &next_removal));
+    let notifications = Rc::new(Cell::new(0));
+    let observed = notifications.clone();
+    provider.transition_completed(move |_| observed.set(observed.get() + 1));
+    transition.start().complete();
+    transition.start().complete();
+    assert_eq!(notifications.get(), 2);
+    assert_eq!(
+        super::ItemsRepeater::get_virtualization_info(&removed).owner(),
+        ElementOwner::Animator
+    );
+    next_removal.start().complete();
+    assert_eq!(notifications.get(), 3);
+    assert_eq!(
+        super::ItemsRepeater::get_virtualization_info(&removed).owner(),
+        ElementOwner::ElementFactory
+    );
+}
+
+#[test]
+fn template_replacement_cancels_queued_transitions_without_affecting_shared_hosts() {
+    let _scope = test_scope();
+    let clock = TestClock::install();
+    let (first, first_source) = transition_repeater();
+    let (second, second_source) = transition_repeater();
+    let provider = TestTransitionProvider::new(true);
+    first.set_item_transition_provider(Some(provider.clone().upcast()));
+    second.set_item_transition_provider(Some(provider.clone().upcast()));
+    let completed = Rc::new(RefCell::new(Vec::new()));
+    let observed = completed.clone();
+    provider.transition_completed(move |args| {
+        observed.borrow_mut().push(args.transition());
+    });
+
+    first_source.add(2);
+    arrange_transition_repeater(&first);
+    let old_elements = first.realized_elements();
+    first_source.remove_at(0);
+    arrange_transition_repeater(&first);
+    let second_removed = second.try_get_element(0).unwrap();
+    second_source.remove_at(0);
+    arrange_transition_repeater(&second);
+    first.set_data_template(Some(template(true)));
+    assert!(completed.borrow().is_empty());
+    assert!(provider.started.borrow().is_empty());
+    for element in &old_elements {
+        assert_eq!(
+            super::ItemsRepeater::get_virtualization_info(element).owner(),
+            ElementOwner::ElementFactory
+        );
+    }
+
+    clock.pulse(0.0);
+    let started = provider.started.borrow();
+    assert!(started
+        .iter()
+        .all(|transition| !old_elements.contains(&transition.element())));
+    assert!(started.iter().any(|transition| {
+        transition.operation() == Operation::Remove && transition.element() == second_removed
+    }));
+    let completed = completed.borrow();
+    for operation in [Operation::Add, Operation::Remove, Operation::Move] {
+        assert!(completed.iter().any(|transition| {
+            transition.operation() == operation
+                && old_elements.contains(&transition.element())
+                && !transition.has_started()
+        }));
+    }
+    assert_eq!(
+        super::ItemsRepeater::get_virtualization_info(&second_removed).owner(),
+        ElementOwner::ElementFactory
+    );
+    assert_eq!(second.realized_elements().len(), 1);
 }
 
 #[test]
@@ -1259,6 +1348,41 @@ fn started_transitions_remain_available_until_the_full_keepalive_expires() {
     assert_eq!(provider.retained_batch_count(), 0);
     assert!(progress.transition().is_none());
     progress.complete();
+}
+
+#[test]
+fn cancellation_preserves_started_progress_keepalive_and_repeated_public_completion() {
+    let _scope = test_scope();
+    let clock = TestClock::install();
+    let provider = TestTransitionProvider::new(true);
+    let progress = Rc::new(RefCell::new(None));
+    let captured = progress.clone();
+    *provider.start.borrow_mut() = Some(Rc::new(move |transitions| {
+        *captured.borrow_mut() = Some(transitions[0].start());
+    }));
+    let item = element();
+    provider.queue_transition(add(&provider, item.clone()));
+    clock.pulse(0.0);
+    provider.started.borrow_mut().clear();
+    let progress = progress.borrow().clone().unwrap();
+    provider.cancel_transitions_for_element(&item);
+    assert!(progress.transition().unwrap().is_cancelled());
+    assert_eq!(provider.retained_batch_count(), 1);
+    let completed = Rc::new(Cell::new(0));
+    let observed = completed.clone();
+    provider.transition_completed(move |_| observed.set(observed.get() + 1));
+    progress.complete();
+    progress.complete();
+    assert_eq!(completed.get(), 2);
+    let timer = Dispatcher::timers_for_unit_tests()
+        .into_iter()
+        .find(|timer| timer.interval() == std::time::Duration::from_secs(5))
+        .unwrap();
+    Dispatcher::force_fire_timer_for_unit_tests(&timer);
+    assert!(progress.transition().is_none());
+    assert_eq!(provider.retained_batch_count(), 0);
+    progress.complete();
+    assert_eq!(completed.get(), 2);
 }
 
 #[test]
@@ -1455,6 +1579,172 @@ fn replacing_an_animation_releases_its_transient_values_without_clobbering_new_b
     assert_eq!(provider.active_animation_count(), 0);
     assert_eq!(item.opacity(), 0.3);
     binding.dispose();
+}
+
+#[test]
+fn template_replacement_stops_native_animations_before_the_old_factory_reuses_controls() {
+    let _scope = test_scope();
+    let clock = TestClock::install();
+    struct StyleCheckingFactory {
+        pool: Ref<RecyclePool>,
+        original_transform: Rc<dyn ITransform>,
+        recycled: RefCell<Vec<Ref<Control>>>,
+    }
+    impl IElementFactory for StyleCheckingFactory {
+        fn get_element(
+            &self,
+            args: &ElementFactoryGetArgs,
+        ) -> Result<Ref<Control>, ElementFactoryError> {
+            if let Some(element) = self.pool.try_get_element_with_owner("", args.parent())? {
+                return Ok(element);
+            }
+            let element = element();
+            element.set_render_transform(Some(self.original_transform.clone()));
+            element.set_render_transform_origin(ferroui_base::RelativePoint::CENTER);
+            element.set_opacity(0.3);
+            Ok(element)
+        }
+        fn recycle_element(
+            &self,
+            args: &ElementFactoryRecycleArgs,
+        ) -> Result<(), ElementFactoryError> {
+            let element = args.element();
+            assert_eq!(element.opacity(), 0.3);
+            assert_eq!(
+                element.render_transform().unwrap().reference_id(),
+                self.original_transform.reference_id()
+            );
+            assert_eq!(
+                element.render_transform_origin(),
+                ferroui_base::RelativePoint::CENTER
+            );
+            self.recycled.borrow_mut().push(element.clone());
+            self.pool.put_element_with_owner(element, "", args.parent())
+        }
+    }
+    let original: Rc<dyn ITransform> =
+        MatrixTransform::with_matrix(Matrix::create_translation(3.0, 4.0)).into();
+    let old_factory = Rc::new(StyleCheckingFactory {
+        pool: RecyclePool::new(),
+        original_transform: original.clone(),
+        recycled: RefCell::new(Vec::new()),
+    });
+    let first = super::ItemsRepeater::new();
+    let first_source = Rc::new(ferroui_base::collections::FerroList::from_items([0, 1]));
+    first.set_items_source(Some(first_source.clone().into()));
+    first.set_element_factory(Some(old_factory.clone()));
+    arrange_transition_repeater(&first);
+    let old_elements = first.realized_elements();
+    let removed = first.try_get_element(0).unwrap();
+    let opacity = Rc::new(LightweightSubject::<f64>::new());
+    let binding = removed.bind(
+        Visual::opacity_property(),
+        opacity.clone(),
+        BindingPriority::LocalValue,
+    );
+    opacity.on_next(0.8);
+    let (second, second_source) = transition_repeater();
+    let provider = LinedFlowLayoutItemCollectionTransitionProvider::new();
+    first.set_item_transition_provider(Some(provider.clone().upcast()));
+    second.set_item_transition_provider(Some(provider.clone().upcast()));
+    first_source.remove_at(0);
+    second_source.remove_at(0);
+    arrange_transition_repeater(&first);
+    arrange_transition_repeater(&second);
+    clock.pulse(0.0);
+    clock.pulse(50.0);
+    assert_eq!(provider.active_animation_count(), 4);
+    assert_ne!(
+        removed.render_transform().unwrap().reference_id(),
+        original.reference_id()
+    );
+    opacity.on_next(0.3);
+    let cleared = Rc::new(Cell::new(0));
+    let observed = cleared.clone();
+    let expected_transform = original.clone();
+    first.element_clearing(move |args| {
+        assert_eq!(args.element.opacity(), 0.3);
+        assert_eq!(
+            args.element.render_transform().unwrap().reference_id(),
+            expected_transform.reference_id()
+        );
+        observed.set(observed.get() + 1);
+    });
+
+    first.set_data_template(Some(template(true)));
+    assert_eq!(cleared.get(), 2);
+    assert_eq!(old_factory.recycled.borrow().len(), 2);
+    assert_eq!(provider.active_animation_count(), 2);
+    assert_eq!(removed.opacity(), 0.3);
+
+    // Reuse the exact controls in another native host while the shared
+    // provider continues running the unrelated host's animations.
+    let next = super::ItemsRepeater::new();
+    next.set_items_source(Some(crate::ItemsSource::from_values([2, 3])));
+    next.set_element_factory(Some(old_factory.clone()));
+    arrange_transition_repeater(&next);
+    assert!(old_elements
+        .iter()
+        .all(|element| next.realized_elements().contains(element)));
+    let replacement: Rc<dyn ITransform> =
+        MatrixTransform::with_matrix(Matrix::create_translation(9.0, 10.0)).into();
+    removed.set_render_transform(Some(replacement.clone()));
+    opacity.on_next(0.45);
+    clock.pulse(100.0);
+    clock.pulse(900.0);
+    assert_eq!(provider.active_animation_count(), 0);
+    assert_eq!(removed.opacity(), 0.45);
+    assert_eq!(
+        removed.render_transform().unwrap().reference_id(),
+        replacement.reference_id()
+    );
+    assert_eq!(old_factory.recycled.borrow().len(), 2);
+    assert_eq!(next.realized_elements().len(), 2);
+    binding.dispose();
+}
+
+#[test]
+fn reentrant_cancellation_prevents_later_direct_batch_transitions_from_starting() {
+    let _scope = test_scope();
+    let _clock = TestClock::install();
+    let provider = LinedFlowLayoutItemCollectionTransitionProvider::new();
+    let first = element();
+    let second = element();
+    let transition = |element: &Ref<Control>| {
+        ItemCollectionTransition::new(
+            provider.clone().upcast(),
+            element.clone(),
+            Operation::Add,
+            Triggers::LAYOUT_TRANSITION,
+        )
+    };
+    let old_first = transition(&first);
+    let old_second = transition(&second);
+    provider.start_transitions(vec![old_first.clone(), old_second.clone()]);
+    assert_eq!(provider.active_animation_count(), 2);
+    let replacement_first = transition(&first);
+    let replacement_second = transition(&second);
+    let weak = provider.downgrade();
+    let completed_first = old_first.clone();
+    let cancelled_first = first.clone();
+    let cancelled_second = second.clone();
+    provider.transition_completed(move |args| {
+        if Rc::ptr_eq(&args.transition(), &completed_first) {
+            let provider = weak.upgrade().unwrap();
+            provider.cancel_transitions_for_element(&cancelled_first);
+            provider.cancel_transitions_for_element(&cancelled_second);
+        }
+    });
+    provider.start_transitions(vec![replacement_first.clone(), replacement_second.clone()]);
+    assert_eq!(provider.active_animation_count(), 0);
+    for transition in [&replacement_first, &replacement_second] {
+        assert!(transition.is_cancelled());
+        assert!(!transition.has_started());
+    }
+    for element in [&first, &second] {
+        assert!(element.render_transform().is_none());
+        assert_eq!(element.opacity(), 1.0);
+    }
 }
 
 #[test]
@@ -3086,7 +3376,13 @@ fn host_bring_releases_a_distant_repeater_anchor_and_allows_scrolling_back() {
     assert!(repeater.try_get_element(500).is_some());
     viewer.set_offset(Vector::default());
     root.layout_manager().execute_layout_pass();
-    assert!(repeater.visible_window().y.abs() < 1.0);
+    assert!(
+        repeater.visible_window().y.abs() < 1.0,
+        "offset {:?}, viewport {:?}, layout extent {:?}",
+        viewer.offset(),
+        repeater.visible_window(),
+        repeater.viewport_manager.layout_extent(),
+    );
     assert!(repeater.try_get_element(0).is_some());
     assert!(repeater.try_get_element(500).is_none());
     assert!(repeater.realized_elements().len() < 100);
