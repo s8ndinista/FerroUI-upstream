@@ -1,0 +1,454 @@
+{
+  "APITests/EffectiveViewportScrollPresenterTests.cs::CanGrowCacheBuffer": {
+    "rust_tests": [
+      "can_grow_cache_buffer_with_scroll_presenter"
+    ],
+    "status": "explicit-alias",
+    "reason": "Native anchor-provider/viewport fixture exercises incremental cache growth; FerroUI does not host a WinUI ScrollPresenter."
+  },
+  "APITests/EffectiveViewportScrollViewerTests.cs::ValidateOneScrollViewerScenario": {
+    "rust_tests": [
+      "validate_basic_scroll_viewer_scenario"
+    ],
+    "status": "explicit-alias",
+    "reason": "Native ScrollViewer fixture checks viewport geometry for a single scrolling ancestor."
+  },
+  "APITests/EffectiveViewportScrollPresenterTests.cs::CanBringIntoViewElements": {
+    "rust_tests": [
+      "can_bring_into_view_elements_with_native_scroll_viewer",
+      "scroll_host_bring_into_view_waits_for_arrange_and_applies_alignment_and_offsets"
+    ],
+    "status": "related-regressions",
+    "reason": "Native viewer and compatibility-host regressions exercise target realization/alignment; exact source host/timing variants still need comparative review."
+  },
+  "APITests/EffectiveViewportScrollViewerTests.cs::CanBringIntoViewElements": {
+    "rust_tests": [
+      "can_bring_into_view_elements_with_native_scroll_viewer",
+      "scroll_host_bring_into_view_waits_for_arrange_and_applies_alignment_and_offsets"
+    ],
+    "status": "related-regressions",
+    "reason": "Native viewer and compatibility-host regressions exercise target realization/alignment; exact source host/timing variants still need comparative review."
+  },
+  "APITests/ViewportTests.cs::CanBringIntoViewElements": {
+    "rust_tests": [
+      "can_bring_into_view_elements_with_native_scroll_viewer",
+      "scroll_host_bring_into_view_waits_for_arrange_and_applies_alignment_and_offsets"
+    ],
+    "status": "related-regressions",
+    "reason": "Native viewer and compatibility-host regressions exercise target realization/alignment; exact source host/timing variants still need comparative review."
+  },
+  "APITests/ViewportTests.cs::CanGrowCacheBuffer": {
+    "rust_tests": [
+      "can_grow_cache_buffer_with_scroll_viewer",
+      "cache_grows_by_forty_per_side_and_resets_after_distant_scroll"
+    ],
+    "status": "explicit-alias",
+    "reason": "Native viewer and isolated viewport regressions assert 40-DIP increments and reset behavior."
+  },
+  "APITests/ViewportTests.cs::ValidateLoadUnload": {
+    "rust_tests": [
+      "detach_and_reparent_reset_viewport_cache_and_anchor_lifetimes"
+    ],
+    "status": "explicit-alias",
+    "reason": "Native attach/detach/reparent regression checks cache, anchor and viewport lifetime reset."
+  },
+  "APITests/FlowLayoutTests.cs::ValidateFlowLayoutLineAlignment": {
+    "rust_tests": [
+      "verify_flow_layout_line_alignment_positions"
+    ],
+    "status": "explicit-alias",
+    "reason": "The native layout test verifies the line-alignment positions under the ported Rust policy."
+  },
+  "APITests/ItemCollectionTransitionProviderTests.cs::ValidateItemCollectionTransitionProvider": {
+    "rust_tests": [
+      "verify_transition_lifecycle_without_animation",
+      "verify_queue_transition_schedules_transitions_on_next_frame",
+      "started_transitions_remain_available_until_the_full_keepalive_expires"
+    ],
+    "status": "related-regressions",
+    "reason": "Lifecycle, next-frame queuing and keepalive are separated into focused regressions; source scenario orchestration still needs assertion-by-assertion review."
+  },
+  "APITests/ItemTemplateTests.cs::ValidateNoSizeWhenEmptyDataTemplate": {
+    "rust_tests": [
+      "empty_template_is_measured_as_zero_and_can_be_replaced",
+      "empty_template_still_invokes_layout_arrange"
+    ],
+    "status": "explicit-alias",
+    "reason": "Native tests cover zero desired size and continued arrange dispatch for an empty template."
+  },
+  "APITests/ItemTemplateTests.cs::ValidateNullItemTemplateAndContainerInItems": {
+    "rust_tests": [
+      "direct_control_items_preserve_data_context",
+      "mixed_control_and_data_source_installs_one_implicit_template"
+    ],
+    "status": "related-regressions",
+    "reason": "Direct control sources and the default template are exercised; mixed-source behavior has additional native regressions."
+  },
+  "APITests/LayoutTests.cs::ValidateMappingAndAutoRecycling": {
+    "rust_tests": [
+      "validate_force_create_produces_two_roots_for_one_index",
+      "validate_suppress_auto_recycle_requires_explicit_recycle",
+      "validate_pinned_element_survives_virtualization_and_is_reused"
+    ],
+    "status": "related-regressions",
+    "reason": "Focused ownership regressions cover creation, suppression and pinning. The complete source mapping fixture needs separate review."
+  },
+  "APITests/LayoutTests.cs::VerifyStackLayoutAlignment": {
+    "rust_tests": [
+      "validate_stack_layout_arrange_with_stretch"
+    ],
+    "status": "related-regressions",
+    "reason": "Native layout regression covers major-axis stretch; review the source alignment combinations individually."
+  },
+  "APITests/LayoutTests.cs::VerifyUniformGridLayoutDoesntCrashWhenTryingToScrollToEnd": {
+    "rust_tests": [
+      "validate_estimations_grid_horizontal",
+      "validate_estimations_grid_vertical"
+    ],
+    "status": "related-regressions",
+    "reason": "Grid extent-estimation regressions exercise the relevant algorithms; the complete end-scroll host scenario has not been reproduced here."
+  },
+  "APITests/LayoutTests.cs::VerifyUniformGridLayoutDoesntHangWhenTryingToScrollToStart": {
+    "rust_tests": [
+      "validate_estimations_grid_horizontal",
+      "validate_estimations_grid_vertical"
+    ],
+    "status": "related-regressions",
+    "reason": "Grid extent-estimation regressions are related evidence; no equivalence claim for the source start-scroll liveness scenario."
+  },
+  "APITests/RepeaterApiContractTests.cs::VerifyRemovingLastEventHandlerDetachesIt": {
+    "rust_tests": [
+      "removing_last_index_changed_handler_detaches_it"
+    ],
+    "status": "related-regressions",
+    "reason": "Native token disposal is verified on the index-changed event; source event variants require review."
+  },
+  "APITests/RepeaterFocusTests.cs::ValidateTabNavigation": {
+    "rust_tests": [
+      "tab_order_follows_source_indices_after_out_of_order_realization",
+      "keyboard_navigation_orders_descendants_and_skips_non_tab_stops"
+    ],
+    "status": "related-regressions",
+    "reason": "Native keyboard ordering/descendant traversal are tested directly; actual backend key injection is separate integration evidence."
+  },
+  "APITests/RepeaterTests.cs::ValidateElementToIndexMapping": {
+    "rust_tests": [
+      "validate_element_prepared_and_clearing_observe_parent_data_and_index",
+      "validate_binding_and_template_selection"
+    ],
+    "status": "related-regressions",
+    "reason": "Native event/index lookup and binding-template regressions cover the core mapping contracts; source UI fixture is not reproduced byte-for-byte."
+  },
+  "APITests/RepeaterTests.cs::ValidateRepeaterDefaults": {
+    "rust_tests": [
+      "validate_default_properties_and_empty_source",
+      "implicit_template_is_published_before_factory_reset_and_handles_null_items"
+    ],
+    "status": "related-regressions",
+    "reason": "Default source/layout/cache values and implicit template creation are covered by separate focused regressions."
+  },
+  "APITests/RepeaterTests.cs::CanSetItemsSource": {
+    "rust_tests": [
+      "verify_items_repeater_dependency_properties",
+      "verify_clearing_items_source_clears_elements"
+    ],
+    "status": "related-regressions",
+    "reason": "Native property set/clear and element cleanup are covered; every source-view transition in the source scenario needs explicit review."
+  },
+  "APITests/RepeaterTests.cs::ValidateNullItemsSource": {
+    "rust_tests": [
+      "verify_get_or_create_element_rejects_invalid_requests"
+    ],
+    "status": "related-regressions",
+    "reason": "Native invalid-source/index validation is exercised; WinRT HRESULT/message formatting is replaced by the native programmer-error contract."
+  },
+  "APITests/RepeaterTests.cs::ValidateGetSetBackground": {
+    "rust_tests": [
+      "verify_items_repeater_dependency_properties"
+    ],
+    "status": "explicit-alias",
+    "reason": "The native test verifies inherited Panel background property set/get, handle identity and clearing."
+  },
+  "APITests/RepeaterTests.cs::VerifyCurrentAnchor": {
+    "rust_tests": [
+      "verify_current_anchor_is_candidate_closest_to_viewport_edge",
+      "verify_anchor_and_relative_viewport_use_scroll_offset"
+    ],
+    "status": "related-regressions",
+    "reason": "Source declaration is commented out; native host tests independently verify anchor selection and scroll-relative geometry."
+  },
+  "APITests/RepeaterTests.cs::VerifyFocusedItemIsRecycledOnCollectionReset": {
+    "rust_tests": [
+      "validate_stable_reset_reuses_by_key_and_clears_leftovers_after_arrange",
+      "collection_remove_clears_pins"
+    ],
+    "status": "related-regressions",
+    "reason": "Stable reset and pin cleanup are independently tested; the complete focused-reset sequence still requires review."
+  },
+  "APITests/RepeaterTests.cs::VerifyCorrectionsInNonScrollableDirection": {
+    "rust_tests": [
+      "effective_viewport_without_scroller_remains_finite_without_cache"
+    ],
+    "status": "related-regressions",
+    "reason": "The source declaration is commented out. Native non-scroller viewport behavior is tested, but this is not the same horizontal-correction fixture."
+  },
+  "APITests/RepeaterTests.cs::VerifyUIElementsInItemsSource": {
+    "rust_tests": [
+      "direct_control_items_preserve_data_context"
+    ],
+    "status": "explicit-alias",
+    "reason": "Native source controls keep their identity/data context through realization."
+  },
+  "APITests/RepeaterTests.cs::BringIntoViewOfExistingItemsDoesNotChangeScrollOffset": {
+    "rust_tests": [
+      "can_bring_into_view_elements_with_native_scroll_viewer"
+    ],
+    "status": "related-regressions",
+    "reason": "Native bring-into-view is covered; compare the already-visible item and exact offset assertions separately."
+  },
+  "APITests/RepeaterTests.cs::ValidateCodeAuthoredDataTemplateReceivesDataContext": {
+    "rust_tests": [
+      "validate_data_context_gets_propagated",
+      "validate_data_context_does_not_get_overwritten"
+    ],
+    "status": "explicit-alias",
+    "reason": "Native generated roots receive source data while control-owned data context is preserved."
+  },
+  "APITests/RepeaterTests.cs::VerifyRepeaterApisThrowWhenCalledDuringLayout": {
+    "rust_tests": [
+      "layout_reentrancy_guards_recover_after_caught_panics"
+    ],
+    "status": "related-regressions",
+    "reason": "Native layout guard behavior is tested under caught programmer-error panics; each source API variant requires review."
+  },
+  "APITests/RepeaterTests.cs::VerifyCollectionChangeDuringLayoutThrows": {
+    "rust_tests": [
+      "collection_mutation_during_measure_is_rejected"
+    ],
+    "status": "explicit-alias",
+    "reason": "Native collection notification during measurement is rejected and the guard is exercised."
+  },
+  "APITests/RepeaterTests.cs::VerifyReentrantMeasureAndArrangeAreRejected": {
+    "rust_tests": [
+      "layout_reentrancy_guards_recover_after_caught_panics"
+    ],
+    "status": "explicit-alias",
+    "reason": "The native regression invokes recursive layout and verifies guard restoration after caught panics."
+  },
+  "APITests/RepeaterTests.cs::VerifyClearingItemTemplateFallsBackToDefaultTemplate": {
+    "rust_tests": [
+      "implicit_template_is_published_before_factory_reset_and_handles_null_items"
+    ],
+    "status": "related-regressions",
+    "reason": "Related default-template fallback/visibility regression; compare explicit clear/reset sequence separately."
+  },
+  "APITests/SelectionModelTests.cs::CanReadSelectedItemViaICustomPropertyProvider": {
+    "rust_tests": [
+      "verify_custom_property_provider_members"
+    ],
+    "status": "explicit-alias",
+    "reason": "Source scenario is ignored for a WinRT custom-property issue. Native metadata directly reads SelectedItem and returns the selected scalar value."
+  },
+  "APITests/SelectionModelTests.cs::VerifySingleItemRangeRaisesSelectionChangedOnce": {
+    "rust_tests": [
+      "singleton_range_preserves_upstream_double_notification"
+    ],
+    "status": "known-upstream-difference",
+    "reason": "Source desired-once scenario is ignored for PC-SELECTION-DOUBLE-EVENT. The Rust test deliberately asserts the pinned implementation's two notifications, not the ignored desired result."
+  },
+  "APITests/ViewManagerTests.cs::CanQueryElementFactory": {
+    "rust_tests": [
+      "untyped_factory_conversion_preserves_object_and_template_identity"
+    ],
+    "status": "related-regressions",
+    "reason": "Native factory/interface conversion retains identity; review all source QueryInterface-style cases separately."
+  },
+  "APITests/ViewManagerTests.cs::CanPinFocusedElements": {
+    "rust_tests": [
+      "verify_focused_element_is_reused_from_pinned_pool",
+      "validate_pinned_element_survives_virtualization_and_is_reused"
+    ],
+    "status": "related-regressions",
+    "reason": "Native focus pinning and reuse are covered by focused ownership regressions."
+  },
+  "APITests/ViewManagerTests.cs::CanReuseElementsDuringUniqueIdReset": {
+    "rust_tests": [
+      "validate_stable_reset_reuses_by_key_and_clears_leftovers_after_arrange"
+    ],
+    "status": "explicit-alias",
+    "reason": "Native reset test verifies key-based reuse and post-arrange clearing of unmatched elements."
+  },
+  "APITests/ViewManagerTests.cs::CanChangeFocusAfterUniqueIdReset": {
+    "rust_tests": [
+      "validate_stable_reset_reuses_by_key_and_clears_leftovers_after_arrange",
+      "clearing_focus_prefers_next_layout_item_then_last_previous_descendant"
+    ],
+    "status": "related-regressions",
+    "reason": "Reset identity and focus fallback are independently covered; exact combined unique-key focus sequence is not claimed equivalent."
+  },
+  "APITests/ViewManagerTests.cs::ValidateBringIntoViewOperations": {
+    "rust_tests": [
+      "get_or_create_makes_out_of_range_anchor_and_rejects_invalid_index",
+      "can_bring_into_view_elements_with_native_scroll_viewer"
+    ],
+    "status": "related-regressions",
+    "reason": "Target anchoring and native scrolling regressions cover related paths; inspect every upstream bring request/offset condition separately."
+  },
+  "APITests/ViewManagerTests.cs::ValidateElementEvents": {
+    "rust_tests": [
+      "validate_element_prepared_and_clearing_observe_parent_data_and_index"
+    ],
+    "status": "related-regressions",
+    "reason": "Native events assert visible index/data during preparation/clearing; full source index-change sequence is additional acceptance."
+  },
+  "APITests/ViewManagerTests.cs::ValidateElementCreationUponRemovals": {
+    "rust_tests": [
+      "validate_collection_insert_remove_replace_and_move_preserve_indices"
+    ],
+    "status": "related-regressions",
+    "reason": "Native mutation regression verifies surviving element/index relationships; complete source creation-count expectations require review."
+  },
+  "APITests/ViewManagerTests.cs::ValidateElementIndexChangedEventOnStableReset": {
+    "rust_tests": [
+      "validate_stable_reset_reuses_by_key_and_clears_leftovers_after_arrange"
+    ],
+    "status": "related-regressions",
+    "reason": "Native stable reset verifies retained controls and remapped indices; compare precise event ordering separately."
+  },
+  "APITests/ViewManagerTests.cs::ValidateGetElementAtCachingForLayout": {
+    "rust_tests": [
+      "validate_force_create_produces_two_roots_for_one_index",
+      "validate_recycling_reuses_roots_and_updates_data_context"
+    ],
+    "status": "related-regressions",
+    "reason": "Normal cached roots and forced second roots are covered; exact source fixture request trace needs review."
+  },
+  "APITests/ViewManagerTests.cs::ValidateElementClearingOrderFromFlowLayout": {
+    "rust_tests": [
+      "validate_element_prepared_and_clearing_observe_parent_data_and_index"
+    ],
+    "status": "related-regressions",
+    "reason": "Native clearing event state is covered; upstream multi-element flow clearing order is not established by this single-element regression."
+  },
+  "APITests/ViewManagerTests.cs::ValidateFocusMoveOnElementCleared": {
+    "rust_tests": [
+      "clearing_focus_prefers_next_layout_item_then_last_previous_descendant"
+    ],
+    "status": "explicit-alias",
+    "reason": "Native focus fallback chooses the next layout item or the last previous focusable descendant."
+  },
+  "APITests/ViewManagerTests.cs::ValidateFocusMoveOnElementClearedWithUniqueIds": {
+    "rust_tests": [
+      "clearing_focus_prefers_next_layout_item_then_last_previous_descendant",
+      "validate_stable_reset_reuses_by_key_and_clears_leftovers_after_arrange"
+    ],
+    "status": "related-regressions",
+    "reason": "Focus fallback and keyed reset are separate focused regressions; exact combined unique-key sequence requires review."
+  },
+  "APITests/ViewManagerTests.cs::ValidateElementClearingClearsDataContext": {
+    "rust_tests": [
+      "validate_element_prepared_and_clearing_observe_parent_data_and_index"
+    ],
+    "status": "explicit-alias",
+    "reason": "The native clearing regression asserts source data during callback and None after recycling."
+  },
+  "APITests/ViewManagerTests.cs::VerifyFocusMovesToAdjacentItemWhenFocusedItemRemoved": {
+    "rust_tests": [
+      "clearing_focus_prefers_next_layout_item_then_last_previous_descendant"
+    ],
+    "status": "related-regressions",
+    "reason": "Native removal fallback covers adjacent layout items; inspect source first/last-item combinations individually."
+  },
+  "APITests/ViewManagerTests.cs::VerifyFocusMovesToAdjacentItemDescendantWhenFocusedItemRemoved": {
+    "rust_tests": [
+      "clearing_focus_prefers_next_layout_item_then_last_previous_descendant"
+    ],
+    "status": "related-regressions",
+    "reason": "Native fallback test includes focusable descendants; source template and first/last-item combinations still need comparison."
+  },
+  "APITests/RepeaterTests.cs::ValidateGetSetItemsSource": {
+    "rust_tests": [
+      "validate_get_set_items_source_preserves_supplied_view_identity"
+    ],
+    "status": "explicit-alias",
+    "reason": "Native ItemsSource conversion retains the supplied ItemsSourceView identity; the repeater exposes that exact shared view and preserves its source notifications/key mapping."
+  },
+  "APITests/LinedFlowLayoutTests.cs::VerifyReleasingLinedFlowLayoutWithRunningMeasureTimerDoesNotCrash": {
+    "rust_tests": [
+      "releasing_layout_with_a_queued_measure_timer_stops_it_and_allows_a_fresh_host"
+    ],
+    "status": "explicit-alias",
+    "reason": "Native deterministic regression drops the layout with a due dispatcher timer, asserts weak release and timer shutdown, drains queued jobs and lays out a fresh host. WinRT off-thread finalizer release is replaced by non-Send UI-thread ownership."
+  },
+  "APITests/RepeaterTests.cs::NestedRepeaterWithDataTemplateScenario": {
+    "rust_tests": [
+      "nested_repeater_with_data_template_scenario"
+    ],
+    "status": "explicit-alias",
+    "reason": "Native recycled group templates bind inherited data to notifying inner sources, preserve zero vertical cache and reach all nine source offsets200..1800. Fixed20-DIP native text rows remove backend font dependence. The source animated branch returns early under#779."
+  },
+  "APITests/RepeaterTests.cs::VerifyStoreScenarioCache": {
+    "rust_tests": [
+      "verify_store_scenario_cache"
+    ],
+    "status": "explicit-alias",
+    "reason": "Native nested horizontal ScrollViewer/host/templates assert cached outer group2 lies below the viewport and realizes inner item0, as in the source400x200 host."
+  },
+  "APITests/FlowLayoutCollectionChangeTests.cs::ValidateStableResets": {
+    "rust_tests": [
+      "validate_stable_resets"
+    ],
+    "status": "explicit-alias",
+    "reason": "Native keyed notifying source asserts zero get_at calls after Reset, three realized items, identical element/data objects and unchanged bound text."
+  },
+  "APITests/FlowLayoutCollectionChangeTests.cs::ValidateGridPlacementAfterInsertBeforeScrolledAnchor": {
+    "rust_tests": [
+      "validate_grid_placement_after_insert_before_scrolled_anchor"
+    ],
+    "status": "explicit-alias",
+    "reason": "Preserves desired assertions of ignored PC-GRID-ANCHOR-INSERT:60 items,3 columns of100-DIP cells, offset1050, front insertion, exact data/X/Y positions, contiguous realization and at least9 realized cells. Runtime result is recorded separately."
+  },
+  "InteractionTests/RepeaterTests.cs::VerifyUniformGridLayoutDoesNotCreateHoles": {
+    "rust_tests": [
+      "verify_uniform_grid_layout_does_not_create_holes"
+    ],
+    "status": "explicit-alias",
+    "reason": "Native viewer replaces Windows wheel injection while retaining the40-item demo grid, end/repeated-reverse scroll sequence and less-than1-DIP height-change assertion; does not test wheel transport."
+  },
+  "InteractionTests/RepeaterTests.cs::VerifyUniformGridLayoutScrolling": {
+    "rust_tests": [
+      "verify_uniform_grid_layout_scrolling"
+    ],
+    "status": "explicit-alias",
+    "reason": "Native viewer uses source40-item demo grid, horizontal scrolling disabled,500-DIP width, Fill and50-DIP column gap, and asserts final offset1000; replaces UI Automation property-edit clicks."
+  },
+  "InteractionTests/RepeaterTests.cs::InsertAtStartBehavior": {
+    "rust_tests": [
+      "insert_at_start_behavior"
+    ],
+    "status": "explicit-alias",
+    "reason": "Native notifying front insertion preserves BasicDemo handler ordering: label captures child count before mutation, then layout completes; asserts counts0..9 and realized counts1..10. Windows button-input transport is replaced."
+  },
+  "APITests/RepeaterApiContractTests.cs::VerifyRuntimeClassNamesOfRepeaterObjects": {
+    "rust_tests": [
+      "repeater_runtime_types_have_native_markup_names",
+      "repeater_service_metadata_has_native_names"
+    ],
+    "status": "explicit-alias",
+    "reason": "Native metadata asserts the FerroUI class/namespace identities for controls, layouts and services, replacing C++/WinRT runtime class names."
+  },
+  "APITests/RepeaterApiContractTests.cs::VerifyItemsSourceViewRuntimeClassName": {
+    "rust_tests": [
+      "items_source_view_uses_its_native_class_name_and_preserves_binding_identity"
+    ],
+    "status": "explicit-alias",
+    "reason": "Native ItemsSourceView metadata name and binding identity replace the ignored WinRT class-name expectation."
+  },
+  "APITests/RepeaterApiContractTests.cs::VerifyActivationFactoriesOfRepeaterClasses": {
+    "rust_tests": [
+      "repeater_markup_activation_requires_native_constructor_arguments"
+    ],
+    "status": "explicit-alias",
+    "reason": "Native constructors/type metadata reject activation lacking required constructor arguments; WinRT E_NOTIMPL activation factories are replaced by FerroUI construction rules."
+  }
+}

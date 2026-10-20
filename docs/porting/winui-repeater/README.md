@@ -1,0 +1,111 @@
+# WinUI Repeater port
+
+This directory records the port of the WinUI Repeater family to native FerroUI
+Rust controls, layouts and services. The implementation lives in
+[`ferroui_controls::repeater`](../../../src/FerroUI.Controls/repeater/mod.rs),
+with the existing source-view and inclusive-selection-range implementations
+reused rather than duplicated.
+
+The source reference is
+[`microsoft/microsoft-ui-xaml@1af995b98a02d86b1951c4babe35caa269a6d569`](https://github.com/microsoft/microsoft-ui-xaml/tree/1af995b98a02d86b1951c4babe35caa269a6d569/controls/dev/Repeater).
+This is the derivation revision already recorded in the implementation's
+[`NOTICE.md`](../../../src/FerroUI.Controls/repeater/NOTICE.md). Moving WinUI
+`main` does not silently change the acceptance target.
+
+The working review is [FerroUI PR #269](https://github.com/wieslawsoltes/FerroUI/pull/269),
+on `feat/winui-repeater-port`. The journal and validation record distinguish
+published implementation checkpoints from source mapping and pending checks.
+
+## Reading the record
+
+| Document | Purpose |
+|---|---|
+| [DESIGN.md](DESIGN.md) | Native framework integration, ownership, layout, source mutation, selection, scheduling and extension rules |
+| [SOURCES.md](SOURCES.md) | All 302 upstream files, including private helpers, IDL, test support, build inputs and sample assets |
+| [API.md](API.md) | Every defined type/member in the five Repeater IDL files, including preview contracts and private test hooks |
+| [TESTS.md](TESTS.md) | All 265 upstream test declarations and their Rust scenario mappings |
+| [DEPENDENCIES.md](DEPENDENCIES.md) | Every direct C++ include boundary outside the Repeater directory and its native replacement |
+| [DEVIATIONS.md](DEVIATIONS.md) | Deliberate Rust/framework adaptations and pinned-source corrections |
+| [VALIDATION.md](VALIDATION.md) | Commands, actual execution evidence and the limits of that evidence |
+| [REMAINING.md](REMAINING.md) | Acceptance work that a source or test-name inventory cannot establish |
+| [JOURNAL.md](JOURNAL.md) | Recoverable checkpoints and implementation decisions |
+
+The methodology follows the existing [FerroUI porting guide](../PORTING-GUIDE.md):
+preserve observable behavior, explicitly map consolidated files, use the native
+class/property system, retain attribution, and keep unported members visible.
+The C++/WinRT source needs a separate extractor from the C# framework inventory;
+the generated maps use the same distinction between upstream identity, Rust
+location, deliberate replacement and executable evidence.
+
+## Implemented areas
+
+The control implementation contains item realization, automatic and explicitly
+suppressed recycling, element preparation/clearing/index events, stable-key
+resets, focus pinning, data-order keyboard navigation and an automation peer.
+`ItemsRepeaterScrollHost` supplies the compatibility scrolling host; ordinary
+FerroUI `ScrollViewer` integration uses effective viewport and anchor-provider
+services. `LayoutPanel` hosts the same layout contracts over fixed children.
+
+The layout family contains `Layout`, `VirtualizingLayout`,
+`NonVirtualizingLayout`, both context adapters, `StackLayout`,
+`UniformGridLayout`, `FlowLayout`, `LinedFlowLayout`, the shared flow algorithm,
+element management and per-host state. The lined-flow implementation includes
+metadata requests, bounded aspect-ratio history, row distribution, frozen
+windows, public item locks and transition-provider creation.
+
+The supporting implementation contains keyed/template recycling, extensible
+factories, phased template binding, frame scheduling, transition batching and
+completion, reduced-motion queries, diagnostic hooks, hierarchical index paths,
+lazy hierarchical selection and observable selected-item views. Runtime and
+compiled XAML use FerroUI metadata rather than C++/WinRT activation.
+
+These statements describe code present in the branch. The generated inventories
+do **not** turn source presence into a claim of complete semantic, native
+platform or visual parity. Each remaining acceptance item stays recorded.
+
+## Regenerating the maps
+
+From the repository root, using Python 3.11 or later:
+
+```sh
+python3 scripts/winui-repeater/inventory.py
+python3 scripts/winui-repeater/inventory.py --check
+```
+
+Normal generation and checking require no network, WinUI checkout, Windows SDK or
+.NET SDK. The immutable extraction is committed as
+[`data/upstream.json`](data/upstream.json). It contains each upstream file's
+SHA-256 and size, every IDL declaration, test declaration and direct include edge.
+[`data/mapping.json`](data/mapping.json) records explicit consolidation and native
+service replacements; [`data/test-aliases.json`](data/test-aliases.json) records
+reviewed scenario relationships. The generated machine-readable result is
+[`data/status.json`](data/status.json).
+
+To re-extract the pinned source:
+
+```sh
+python3 scripts/winui-repeater/inventory.py --extract /path/to/microsoft-ui-xaml
+python3 scripts/winui-repeater/inventory.py --check
+```
+
+The input must be the pinned commit. A Git checkout's `HEAD` is verified. A
+source archive can be obtained from the
+[official pinned archive](https://codeload.github.com/microsoft/microsoft-ui-xaml/tar.gz/1af995b98a02d86b1951c4babe35caa269a6d569);
+pass its extracted repository root. Extraction validates the pinned file and
+scenario totals. Review the committed source hashes when deliberately changing
+the extraction; a count alone is not a source integrity check.
+
+## What the numbers mean
+
+`implementation-mapped` means a C++ implementation has named Rust targets.
+`framework-replacement` means an explicit native service replaces a WinRT/Windows
+mechanism. `symbol-found` means an identifier appears in its mapped source,
+including macro declarations; overloads, argument validation and behavior still
+need review and tests. `name-matched` means an existing Rust `#[test]` function
+matches the upstream test name in the mapped suite. None is a test pass count.
+
+The 265 test declarations include three commented-out and 27 ignored upstream
+declarations. Ignored tests remain identified, including known product
+concerns. Exact WinUI sample applications and their images are retained in the
+inventory as references; the FerroUI catalog is a native demonstration, not a
+claim that every WinUI sample page was ported.
