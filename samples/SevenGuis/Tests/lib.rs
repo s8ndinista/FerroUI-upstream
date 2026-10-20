@@ -1,7 +1,7 @@
 //! The scenarios of the 7GUIs tasks (`seven_guis_model::scenarios`), run on the
-//! user interface of each port: the builders and the `rsx!` macro of
-//! `ferroui-view`. One crate for the fourteen ports, so that they link into
-//! one test binary.
+//! user interface of each port: the builders, the `rsx!` macro, and
+//! components that run again with hooks, of `ferroui-view`. One crate for the
+//! twenty-one ports, so that they link into one test binary.
 
 #[cfg(test)]
 mod tests {
@@ -75,5 +75,42 @@ mod tests {
     #[test]
     fn cells_macros() {
         scenarios::cells(seven_guis_cells_macros::Cells);
+    }
+
+    #[test]
+    fn counter_hooks() {
+        scenarios::counter(|| ferroui_view::IntoElement::into_element(seven_guis_counter_hooks::counter()));
+    }
+
+    #[test]
+    fn temperature_hooks() {
+        scenarios::temperature(|| ferroui_view::IntoElement::into_element(seven_guis_temperature_hooks::temperature_converter()));
+    }
+
+    #[test]
+    fn flight_booker_hooks() {
+        scenarios::flight(|| ferroui_view::IntoElement::into_element(seven_guis_flight_booker_hooks::flight_booker()));
+    }
+
+    #[test]
+    fn timer_hooks() {
+        scenarios::timer(|elapsed, duration| {
+            ferroui_view::IntoElement::into_element(seven_guis_timer_hooks::timer_view().elapsed(elapsed).duration(duration))
+        });
+    }
+
+    #[test]
+    fn crud_hooks() {
+        scenarios::crud(|| ferroui_view::IntoElement::into_element(seven_guis_crud_hooks::crud()));
+    }
+
+    #[test]
+    fn circle_drawer_hooks() {
+        scenarios::circles(|drawer| ferroui_view::IntoElement::into_element(seven_guis_circle_drawer_hooks::circle_drawer().drawer(drawer)));
+    }
+
+    #[test]
+    fn cells_hooks() {
+        scenarios::cells(|sheet| ferroui_view::IntoElement::into_element(seven_guis_cells_hooks::cells().sheet(sheet)));
     }
 }

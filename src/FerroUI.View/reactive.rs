@@ -21,7 +21,7 @@
 //! (reading a dirty memo computes it again first). [`batch`] defers the runs
 //! until the end of a group of writes.
 
-use std::any::Any;
+use std::any::{Any, TypeId};
 use std::cell::{Cell, RefCell};
 use std::collections::VecDeque;
 use std::marker::PhantomData;
@@ -62,6 +62,8 @@ struct Node {
     owner: Option<NodeId>,
     owned: Vec<NodeId>,
     cleanups: Vec<Box<dyn FnOnce()>>,
+    /// The values provided to what the node owns (see [`provide_context`]).
+    contexts: Vec<(TypeId, Rc<dyn Any>)>,
 }
 
 #[derive(Default)]
@@ -99,6 +101,7 @@ impl Runtime {
             owner,
             owned: Vec::new(),
             cleanups: Vec::new(),
+            contexts: Vec::new(),
         };
         let mut nodes = self.nodes.borrow_mut();
         let id = match self.free.borrow_mut().pop() {
@@ -278,6 +281,7 @@ impl Runtime {
             let Some(node) = Self::node_mut(&mut nodes, id) else { return };
             node.alive = false;
             node.kind = Kind::Owner;
+            node.contexts.clear();
             (std::mem::take(&mut node.subscribers), node.value.take(), node.owner.take())
         };
         {
@@ -585,6 +589,57 @@ impl Owner {
     pub fn is_alive(&self) -> bool {
         with_runtime(|runtime| runtime.is_alive(self.id))
     }
+}
+
+impl Owner {
+    /// Provides `value` to what this owner owns, at any depth: [`use_context`]
+    /// finds it from an owner below. A value of the same type provided again
+    /// replaces it.
+    pub fn provide_context<T: Clone + 'static>(&self, value: T) {
+        with_runtime(|runtime| {
+            let mut nodes = runtime.nodes.borrow_mut();
+            if let Some(node) = Runtime::node_mut(&mut nodes, self.id) {
+                let type_id = TypeId::of::<T>();
+                node.contexts.retain(|(id, _)| *id != type_id);
+                node.contexts.push((type_id, Rc::new(value)));
+            }
+        });
+    }
+
+    /// The value of type `T` provided to this owner or to the nearest owner
+    /// above it.
+    pub fn context<T: Clone + 'static>(&self) -> Option<T> {
+        let type_id = TypeId::of::<T>();
+        let value = with_runtime(|runtime| {
+            let nodes = runtime.nodes.borrow();
+            let mut current = Some(self.id);
+            while let Some(id) = current {
+                let node = nodes.get(id.index as usize).filter(|node| node.alive && node.generation == id.generation)?;
+                if let Some((_, value)) = node.contexts.iter().find(|(id, _)| *id == type_id) {
+                    return Some(value.clone());
+                }
+                current = node.owner;
+            }
+            None
+        })?;
+        value.downcast_ref::<T>().cloned()
+    }
+}
+
+/// Provides `value` to what the current owner owns (see
+/// [`Owner::provide_context`]). In the render of a component that runs again
+/// it is provided to the component, so that its children find it. Without an
+/// owner it does nothing.
+pub fn provide_context<T: Clone + 'static>(value: T) {
+    if let Some(owner) = crate::hooks::render_owner().or_else(Owner::current) {
+        owner.provide_context(value);
+    }
+}
+
+/// The value of type `T` provided by [`provide_context`] to the current
+/// owner or an owner above it.
+pub fn use_context<T: Clone + 'static>() -> Option<T> {
+    Owner::current().and_then(|owner| owner.context::<T>())
 }
 
 impl Default for Owner {

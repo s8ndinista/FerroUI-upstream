@@ -4,6 +4,19 @@ All notable changes to FerroUI are recorded in this file. The format follows [Ke
 
 ## [Unreleased]
 
+### Added
+
+- **Components that run again** in `ferroui-view` (phase 1 of the declarative API, `docs/declarative-ui.md`, sections 7 and 8):
+  - `rerender(..)` and `#[component(rerender)]`: a component whose function runs again when a signal it read changes or its parent runs again; `#[component(rerender, memo)]` skips a run for equal parameters;
+  - hooks: `use_hook`, `use_signal`, `use_memo`, `use_effect`, `use_effect_with`; contexts: `provide_context`, `use_context`;
+  - a reconciler that patches the mounted controls into the elements a component returns: siblings matched by key and by place, equal values left alone, values that are gone cleared, handlers attached again, controls kept;
+  - the 7GUIs tasks as components that run again (`samples/SevenGuis/Hooks`), in the scenario tests with the other ports;
+  - `docs/declarative-ui-react.md`, a comparison of the API with React, and the plan of the phases that remain.
+
+### Changed
+
+- **`ferroui-view`**: mounting is built on instances that the reconciler patches (`mount.rs`). A routed handler attached by an element is detached when the owner of the element ends. A dynamic list may give other dynamic lists.
+
 ## [0.4.0-preview.1] - 2026-10-20
 
 The first preview of 0.4. It adds:
