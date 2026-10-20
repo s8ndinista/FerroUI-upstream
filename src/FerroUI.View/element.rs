@@ -534,6 +534,11 @@ impl Element {
 
 fn mount_control(element: ControlElement) -> Ref<Control> {
     let control = (element.class.create)();
+    // As the XAML loader does: the control is told that it is being
+    // initialised while it gets its values and children, so that what it
+    // decides from both (a selected index of an items control) is decided
+    // once both are there.
+    control.begin_init();
     if let Some(name) = element.name {
         control.set_name(Some(name));
     }
@@ -550,6 +555,7 @@ fn mount_control(element: ControlElement) -> Ref<Control> {
         attach(&control);
     }
     place_children(&control, element.children);
+    control.end_init();
     for attach in &element.on_mount {
         attach(&control);
     }

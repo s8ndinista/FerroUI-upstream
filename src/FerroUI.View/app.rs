@@ -45,12 +45,19 @@ pub fn open_window(view: impl FnOnce() -> crate::Element) -> Ref<Window> {
 /// }
 /// ```
 pub fn launch(view: impl FnOnce() -> crate::Element + 'static) {
+    launch_with(view, |_| {});
+}
+
+/// [`launch`], calling `started` with the main window before the main loop
+/// runs (to drive the window from code: a demonstration, screenshots).
+pub fn launch_with(view: impl FnOnce() -> crate::Element + 'static, started: impl FnOnce(&Ref<Window>) + 'static) {
     let args: Vec<String> = std::env::args().skip(1).collect();
     AppBuilder::configure::<Application>().use_platform_detect().start(
         move |app, _| {
             app.styles().add(FluentTheme::new().as_style());
             let window = mount_window(view);
             smoke_exit(&window);
+            started(&window);
             app.run_window(window);
         },
         &args,
