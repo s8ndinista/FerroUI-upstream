@@ -11,7 +11,7 @@ fn backend() -> Rc<dyn ferroui_base::reactive::IDisposable> {
     let scope = FerroLocator::enter_scope();
     FerroLocator::current_mutable()
         .bind::<dyn IPlatformRenderInterface>()
-        .to_constant(Rc::new(ferroui_skia::PlatformRenderInterface::default()));
+        .to_constant(Rc::new(ferroui_vello::PlatformRenderInterface::default()));
     scope
 }
 

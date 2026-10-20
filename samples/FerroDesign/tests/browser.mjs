@@ -749,7 +749,7 @@ try {
         const context = await browser.newContext({ viewport: { width: 1600, height: 1000 }, deviceScaleFactor: 1, acceptDownloads: true });
         await context.tracing.start({ screenshots: true, snapshots: true, sources: true });
         const page = await context.newPage();
-        const result = { requestedRenderer: "Skia", requestedMode: mode, status: "running", pageErrors: [], consoleErrors: [], checks: [] };
+        const result = { requestedRenderer: "Vello", requestedMode: mode, status: "running", pageErrors: [], consoleErrors: [], checks: [] };
         report.results.push(result);
         page.on("pageerror", (error) => result.pageErrors.push(error.stack || String(error)));
         page.on("console", (message) => { if (message.type() === "error") result.consoleErrors.push(message.text()); });
@@ -770,7 +770,7 @@ try {
             await frames(page);
             result.firstFrameMs = Math.round(performance.now() - started);
             result.initial = await state(page);
-            assert.equal(result.initial.renderer, "FerroUI Skia", "The default application backend must be Skia");
+            assert.equal(result.initial.renderer, "FerroUI Vello", "The default application backend must be Vello");
             assert.equal(result.initial.zoomLabel, Math.round(result.initial.zoom * 100) + "%", "Native zoom label must reflect the initial fitted camera");
             assert.ok(result.initial.pageCount > 0);
             const baseline = await canvas.screenshot({ path: resolve(output, mode + "-initial.png") });

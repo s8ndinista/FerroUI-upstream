@@ -1,16 +1,16 @@
-//! Native launchers using FerroUI platform providers and the Skia render backend.
+//! Native launchers using FerroUI platform providers and the Vello render backend.
 //!
-//! macOS uses Metal, Linux/X11 uses GLX, and Windows uses ANGLE. Each platform
-//! retains a raster fallback; `--software` requests that framebuffer path directly.
+//! macOS uses Metal with the hybrid renderer. Linux/X11 and Windows use Vello CPU
+//! rendering through their platform framebuffer contracts.
 
 use ferroui_controls::AppBuilder;
 use ferroui_harfbuzz::HarfBuzzApplicationExtensions;
-use ferroui_skia::SkiaApplicationExtensions;
+use ferroui_vello::{VelloApplicationExtensions, VelloOptions, VelloRenderingMode};
 use std::rc::Rc;
 
 /// Configure services without creating a window or connecting to a display server.
 pub fn configure(builder: AppBuilder, software: bool) -> AppBuilder {
-    let builder = builder.use_harfbuzz().use_skia();
+    let builder = builder.use_harfbuzz().use_vello();
 
     #[cfg(target_os = "macos")]
     {
@@ -25,46 +25,57 @@ pub fn configure(builder: AppBuilder, software: bool) -> AppBuilder {
                 FerroNativeRenderingMode::Software,
             ]
         };
+        let renderer = if software {
+            VelloOptions::with_rendering_mode(VelloRenderingMode::Cpu)
+        } else {
+            VelloOptions {
+                rendering_modes: [
+                    Some(VelloRenderingMode::Hybrid),
+                    Some(VelloRenderingMode::Cpu),
+                    None,
+                ],
+                ..VelloOptions::default()
+            }
+        };
         builder
             .with(Rc::new(FerroNativePlatformOptions {
                 rendering_mode: modes,
                 ..FerroNativePlatformOptions::default()
             }))
+            .with(Rc::new(renderer))
             .use_ferro_native()
     }
 
     #[cfg(target_os = "linux")]
     {
         use ferroui_x11::{FerroX11PlatformExtensions, X11PlatformOptions, X11RenderingMode};
-        let modes = if software {
-            vec![X11RenderingMode::Software]
-        } else {
-            X11PlatformOptions::default().rendering_mode
-        };
+        let _ = software;
         builder
             .with(Rc::new(X11PlatformOptions {
-                rendering_mode: modes,
+                rendering_mode: vec![X11RenderingMode::Software],
                 wm_class: Some("FerroDesign".to_owned()),
                 use_retained_framebuffer: Some(true),
                 use_x_shm_framebuffer: Some(true),
                 ..X11PlatformOptions::default()
             }))
+            .with(Rc::new(VelloOptions::with_rendering_mode(
+                VelloRenderingMode::Cpu,
+            )))
             .use_x11()
     }
 
     #[cfg(windows)]
     {
         use ferroui_win32::{Win32ApplicationExtensions, Win32PlatformOptions, Win32RenderingMode};
-        let modes = if software {
-            vec![Win32RenderingMode::Software]
-        } else {
-            Win32PlatformOptions::default().rendering_mode
-        };
+        let _ = software;
         builder
             .with(Rc::new(Win32PlatformOptions {
-                rendering_mode: modes,
+                rendering_mode: vec![Win32RenderingMode::Software],
                 ..Win32PlatformOptions::default()
             }))
+            .with(Rc::new(VelloOptions::with_rendering_mode(
+                VelloRenderingMode::Cpu,
+            )))
             .use_win32()
     }
 
@@ -85,7 +96,7 @@ pub fn run() -> i32 {
         };
         return match render_smoke(std::path::Path::new(path)) {
             Ok(()) => {
-                println!("Rendered FerroDesign with Skia raster: {path}");
+                println!("Rendered FerroDesign with Vello CPU: {path}");
                 0
             }
             Err(error) => {
@@ -111,7 +122,7 @@ pub fn run() -> i32 {
     builder.start_with_classic_desktop_lifetime(&args)
 }
 
-/// Draw the compiled-XAML application into a real Skia framebuffer and save a PNG.
+/// Draw the compiled-XAML application into a real Vello framebuffer and save a PNG.
 pub fn render_smoke(path: &std::path::Path) -> Result<(), Box<dyn std::error::Error>> {
     use ferroui_base::media::imaging::{BitmapEncoderOptions, PngBitmapEncoderOptions};
     use ferroui_headless::{
@@ -120,7 +131,10 @@ pub fn render_smoke(path: &std::path::Path) -> Result<(), Box<dyn std::error::Er
 
     let builder = crate::app::build_app()
         .use_harfbuzz()
-        .use_skia()
+        .with(Rc::new(VelloOptions::with_rendering_mode(
+            VelloRenderingMode::Cpu,
+        )))
+        .use_vello()
         .use_headless(FerroHeadlessPlatformOptions {
             use_headless_drawing: false,
             ..FerroHeadlessPlatformOptions::default()
@@ -143,7 +157,7 @@ pub fn render_smoke(path: &std::path::Path) -> Result<(), Box<dyn std::error::Er
     window.show();
     let frame = window
         .capture_rendered_frame()
-        .ok_or_else(|| std::io::Error::other("Skia produced no frame"))?;
+        .ok_or_else(|| std::io::Error::other("Vello produced no frame"))?;
     let mut file = std::fs::File::create(path)?;
     frame.save(
         &mut file,
@@ -159,9 +173,9 @@ mod tests {
     use ferroui_controls::Application;
 
     #[test]
-    fn native_services_select_skia_without_opening_a_display() {
+    fn native_services_select_vello_without_opening_a_display() {
         let builder = configure(AppBuilder::configure::<Application>(), true);
-        assert_eq!(builder.rendering_subsystem_name().as_deref(), Some("Skia"));
+        assert_eq!(builder.rendering_subsystem_name().as_deref(), Some("Vello"));
         assert_eq!(
             builder.text_shaping_subsystem_name().as_deref(),
             Some("HarfBuzz")

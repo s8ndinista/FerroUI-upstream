@@ -1,4 +1,4 @@
-//! Actual Skia pixels enforce effect-stack order and the layer/group paint
+//! Actual Vello pixels enforce effect-stack order and the layer/group paint
 //! distinction documented by Figma, rather than testing prepared vectors only.
 //! https://help.figma.com/hc/en-us/articles/360041488473-Apply-effects-to-layers
 use super::*;
@@ -17,7 +17,7 @@ fn backend() -> Rc<dyn ferroui_base::reactive::IDisposable> {
     let scope = FerroLocator::enter_scope();
     FerroLocator::current_mutable()
         .bind::<dyn IPlatformRenderInterface>()
-        .to_constant(Rc::new(ferroui_skia::PlatformRenderInterface::default()));
+        .to_constant(Rc::new(ferroui_vello::PlatformRenderInterface::default()));
     scope
 }
 

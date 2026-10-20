@@ -9,7 +9,7 @@ pub fn run_main(query: &str) -> Result<(), JsValue> {
         BrowserAppBuilder, BrowserPlatformOptions, BrowserRenderer, BrowserRenderingMode,
     };
     let mut options = BrowserPlatformOptions::default();
-    options.renderer = BrowserRenderer::Skia;
+    options.renderer = BrowserRenderer::Vello;
     options.rendering_mode = vec![
         BrowserRenderingMode::WebGL2,
         BrowserRenderingMode::Software2D,
@@ -19,15 +19,17 @@ pub fn run_main(query: &str) -> Result<(), JsValue> {
             continue;
         };
         match key {
-            "Renderer" if !value.eq_ignore_ascii_case("Skia") => {
+            "Renderer" if !value.eq_ignore_ascii_case("Vello") => {
                 return Err(JsValue::from_str(
-                    "This FerroDesign build uses the FerroUI Skia renderer.",
+                    "This FerroDesign build uses the FerroUI Vello renderer.",
                 ));
             }
             "RenderingMode" => {
-                let mode = BrowserRenderingMode::parse(value).ok_or_else(|| {
-                    JsValue::from_str("RenderingMode must be Software2D, WebGL2, or WebGL1.")
-                })?;
+                let mode = BrowserRenderingMode::parse(value)
+                    .filter(|mode| matches!(mode, BrowserRenderingMode::Software2D | BrowserRenderingMode::WebGL2))
+                    .ok_or_else(|| {
+                        JsValue::from_str("RenderingMode must be Software2D or WebGL2 for Vello.")
+                    })?;
                 // An explicit surface request is exact. The default launch keeps a
                 // raster fallback for systems where a GPU context is unavailable.
                 options.rendering_mode = vec![mode];

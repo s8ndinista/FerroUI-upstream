@@ -167,7 +167,7 @@ mod tests {
     fn fonts() -> Rc<dyn ferroui_base::reactive::IDisposable> {
         let scope = FerroLocator::enter_scope();
         FerroLocator::current_mutable().bind::<dyn IAssetLoader>().to_constant(Rc::new(StandardAssetLoader::new(None)));
-        ferroui_skia::SkiaPlatform::initialize();
+        ferroui_vello::VelloPlatform::initialize();
         ferroui_harfbuzz::HarfBuzzPlatform::initialize();
         FontManager::current().add_font_collection(Rc::new(ferroui_fonts_inter::InterFontCollection::new()));
         scope

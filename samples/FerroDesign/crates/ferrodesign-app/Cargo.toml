@@ -22,25 +22,26 @@ ferroui-markup = { path = "../../../../src/Markup/FerroUI.Markup" }
 ferroui-markup-xaml = { path = "../../../../src/Markup/FerroUI.Markup.Xaml" }
 ferroui-themes-fluent = { path = "../../../../src/FerroUI.Themes.Fluent" }
 ferroui-fonts-inter = { path = "../../../../src/FerroUI.Fonts.Inter" }
-ferroui-skia = { path = "../../../../src/Skia/FerroUI.Skia" }
 serde_json = "1"
 
 [target.'cfg(target_os = "emscripten")'.dependencies]
-ferroui-browser = { path = "../../../../src/Browser/FerroUI.Browser", default-features = false, features = ["skia"] }
+ferroui-browser = { path = "../../../../src/Browser/FerroUI.Browser", default-features = false, features = ["vello"] }
 wasm-bindgen = "=0.2.129"
 
 [target.'cfg(not(target_os = "emscripten"))'.dependencies]
 ferroui-headless = { path = "../../../../src/Headless/FerroUI.Headless" }
+ferroui-vello = { path = "../../../../src/Vello/FerroUI.Vello" }
 ferroui-harfbuzz = { path = "../../../../src/HarfBuzz/FerroUI.HarfBuzz" }
 
 [target.'cfg(target_os = "linux")'.dependencies]
 ferroui-x11 = { path = "../../../../src/FerroUI.X11" }
 
 [target.'cfg(windows)'.dependencies]
-ferroui-win32 = { path = "../../../../src/Windows/FerroUI.Win32" }
+ferroui-win32 = { path = "../../../../src/Windows/FerroUI.Win32", default-features = false }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 ferroui-native = { path = "../../../../src/FerroUI.Native" }
+ferroui-vello = { path = "../../../../src/Vello/FerroUI.Vello", features = ["hybrid"] }
 
 [build-dependencies]
 ferroui-build = { path = "../../../../src/FerroUI.Build.Tasks" }
