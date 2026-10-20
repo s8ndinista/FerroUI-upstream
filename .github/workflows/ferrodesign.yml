@@ -68,13 +68,19 @@ jobs:
         run: |
           set -o pipefail
           source "$RUNNER_TEMP/ferrodesign-tools/env.sh"
-          bash -n scripts/setup.sh scripts/build-browser.sh
+          bash -n scripts/setup.sh scripts/build-browser.sh scripts/check-renderer.sh
           node --check web/main.js
           node --check tests/browser.mjs
           for file in tests/*-browser.mjs; do node --check "$file"; done
           node --test tests/document-store.test.mjs
           cargo metadata --locked --no-deps --format-version 1 > browser-report/cargo-metadata.json
           cargo test --locked -p ferrodesign-core --jobs 1 2>&1 | tee browser-report/core-tests.log
+
+      - name: Verify Vello without Skia on every supported application target
+        run: |
+          set -o pipefail
+          source "$RUNNER_TEMP/ferrodesign-tools/env.sh"
+          FERRODESIGN_GRAPH_DIR=browser-report/dependency-graphs scripts/check-renderer.sh 2>&1 | tee browser-report/renderer-graphs.log
 
       - name: Compare scoped editing, history and serialization costs
         run: |
@@ -103,6 +109,14 @@ jobs:
           source "$RUNNER_TEMP/ferrodesign-tools/env.sh"
           CARGO_PROFILE_TEST_DEBUG=0 CARGO_PROFILE_TEST_CODEGEN_UNITS=16 cargo test --locked --manifest-path ../../Cargo.toml -p ferroui-base --lib compositing_layer --jobs 1 -- --test-threads=1 2>&1 | tee browser-report/compositing-base-tests.log
           CARGO_PROFILE_TEST_DEBUG=0 CARGO_PROFILE_TEST_CODEGEN_UNITS=16 cargo test --locked --manifest-path ../../Cargo.toml -p ferroui-vello --lib compositing_layer --jobs 1 -- --test-threads=1 2>&1 | tee browser-report/compositing-vello-tests.log
+
+      - name: Test public geometry and shaped text outline APIs
+        run: |
+          set -o pipefail
+          source "$RUNNER_TEMP/ferrodesign-tools/env.sh"
+          CARGO_PROFILE_TEST_DEBUG=0 CARGO_PROFILE_TEST_CODEGEN_UNITS=16 cargo test --locked --manifest-path ../../Cargo.toml -p ferroui-vello --lib geometry_path_data --jobs 1 -- --test-threads=1 2>&1 | tee browser-report/geometry-path-tests.log
+          CARGO_PROFILE_TEST_DEBUG=0 CARGO_PROFILE_TEST_CODEGEN_UNITS=16 cargo test --locked --manifest-path ../../Cargo.toml -p ferroui-vello --lib text_layout_build_geometry --jobs 1 -- --test-threads=1 2>&1 | tee browser-report/text-outline-tests.log
+          CARGO_PROFILE_TEST_DEBUG=0 CARGO_PROFILE_TEST_CODEGEN_UNITS=16 cargo test --locked --manifest-path ../../Cargo.toml -p ferroui-vello --lib glyph_run_complete_geometry --jobs 1 -- --test-threads=1 2>&1 | tee browser-report/complete-glyph-tests.log
 
       - name: Check native launcher and shared UI compilation
         run: |

@@ -57,8 +57,11 @@ impl Default for PlatformRenderInterface {
 }
 
 fn glyph_run_geometry(glyph_run: &GlyphRun, require_complete: bool) -> Option<Arc<dyn IGeometryImpl>> {
-    let glyph_typeface = VelloTypeface::try_get(&**glyph_run.glyph_typeface().platform_typeface())
-        .unwrap_or_else(|| panic!("PlatformImpl can't be null."));
+    let glyph_typeface = match VelloTypeface::try_get(&**glyph_run.glyph_typeface().platform_typeface()) {
+        Some(typeface) => typeface,
+        None if require_complete => return None,
+        None => panic!("PlatformImpl can't be null."),
+    };
     let face = glyph_typeface.face();
     if require_complete {
         // A monochrome contour cannot retain layered colour paints or embedded
