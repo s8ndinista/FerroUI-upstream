@@ -16,7 +16,7 @@
         </Button.Tag>
       </Button>
       <Button Name="FlowLayoutButton" Content="Flow">
-        <Button.Tag><FlowLayout MinRowSpacing="8" MinColumnSpacing="8" LineAlignment="Start"/></Button.Tag>
+        <Button.Tag><FlowLayout LineSpacing="8" MinItemSpacing="8" LineAlignment="Start"/></Button.Tag>
       </Button>
       <Button Name="LinedFlowLayoutButton" Content="Lined flow">
         <Button.Tag><LinedFlowLayout LineHeight="64" LineSpacing="8" MinItemSpacing="8" ItemsStretch="Fill"/></Button.Tag>
