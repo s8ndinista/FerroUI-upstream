@@ -188,7 +188,7 @@ The seven tasks of 7GUIs (<https://eugenkiss.github.io/7guis/tasks>) are written
 | Circle drawer | `.../Builders/CircleDrawer` | `.../Macros/CircleDrawer` |
 | Cells | `.../Builders/Cells` | `.../Macros/Cells` |
 
-`samples/SevenGuis/Model` holds what the two share: the conversions, the dates, the CRUD filter, the circle history, the formulas of the cells (a parser and an evaluator; each cell is a memo of the cells it names, so a change is computed again only in the cells that depend on it, and a cycle is an error until it is broken), the reactive state of the circle drawer and of the cells, and the window a task runs in. `samples/SevenGuis/Tests` runs one scenario per task on each of the fourteen crates (what a user types and clicks, and what the task must show), in one test binary.
+`samples/SevenGuis/Model` holds what the two share: the conversions, the dates, the CRUD filter, the circle history, the formulas of the cells (a parser and an evaluator; each cell is a memo of the cells it names, so a change is computed again only in the cells that depend on it, and a cycle is an error until it is broken), the reactive state of the circle drawer and of the cells, and the window a task runs in (in the WinUI 3 theme of `ferroui-themes-winui`). `samples/SevenGuis/Tests` runs one scenario per task on each of the fourteen crates (what a user types and clicks, and what the task must show), in one test binary.
 
 The windows of the tasks, as each renders itself (`FERROUI_SEVEN_GUIS_SHOTS`); the two versions of a task render the same pixels:
 

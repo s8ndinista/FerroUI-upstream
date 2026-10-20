@@ -14,6 +14,7 @@ path = "lib.rs"
 ferroui-base = { workspace = true }
 ferroui-controls = { workspace = true }
 ferroui-view = { workspace = true, features = ["desktop"] }
+ferroui-themes-winui = { workspace = true }
 
 [features]
 # The scenarios the tests of the two ports run (`scenarios.rs`), on the test application of
