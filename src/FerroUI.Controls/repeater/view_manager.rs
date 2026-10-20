@@ -9,7 +9,10 @@ use super::{
 };
 use crate::{Control, ItemsChangedEventArgs};
 use ferroui_base::collections::NotifyCollectionChangedAction;
-use ferroui_base::input::{FocusManager, InputElement, KeyboardNavigation, KeyboardNavigationMode};
+use ferroui_base::input::{
+    FocusManager, InputElement, KeyModifiers, KeyboardNavigation, KeyboardNavigationMode,
+    NavigationMethod,
+};
 use ferroui_base::{Ref, Visual, WeakRef};
 use rustc_hash::FxHashMap;
 use std::cell::{Cell, RefCell};
@@ -524,6 +527,37 @@ impl ViewManager {
     }
 
     fn release_focus_from_cleared_element(&self, element: &Ref<Control>) -> bool {
+        if self.release_tracked_focus(element) {
+            return true;
+        }
+        // A focused descendant of a nested repeater is tracked only by that
+        // nearest repeater. Clearing an enclosing row must release its pin
+        // there, while the visual path to every containing repeater remains
+        // intact. Native detach notifications arrive after that path is cut.
+        let Some(focused) = FocusManager::get_focus_manager(element)
+            .and_then(|manager| manager.get_focused_element())
+        else {
+            return false;
+        };
+        let mut child = focused.upcast::<Visual>();
+        if !element.clone().upcast::<Visual>().ptr_eq(&child)
+            && !element.is_visual_ancestor_of(&child)
+        {
+            return false;
+        }
+        while let Some(parent) = child.visual_parent() {
+            if let Some(repeater) = parent.cast::<ItemsRepeater>() {
+                if let Some(row) = child.cast::<Control>() {
+                    repeater.view_manager.release_tracked_focus(&row);
+                }
+                break;
+            }
+            child = parent;
+        }
+        true
+    }
+
+    fn release_tracked_focus(&self, element: &Ref<Control>) -> bool {
         if self
             .focused
             .borrow()
@@ -537,9 +571,9 @@ impl ViewManager {
         // Clear tracking first so native focus notifications caused by
         // detachment or a factory callback cannot release this pin twice.
         *self.focused.borrow_mut() = None;
-        // The terminal ownership change reset this row's pin counter. Its
-        // containing realized repeaters still hold the propagated focus pin;
-        // release it before native focus events pin the replacement row.
+        // A terminal ownership change already reset the removed row's pin
+        // counter. A nested focused row and the other containing realized
+        // rows still hold their propagated focus pin.
         Self::update_pin(element, false);
         true
     }
@@ -584,7 +618,20 @@ impl ViewManager {
             };
             if let Some(focus) = focus {
                 if focus.focus() {
-                    break;
+                    return;
+                }
+            }
+        }
+        // A factory can keep the removed subtree attached for reuse. With no
+        // surviving focus target, native detachment will not clear its focus.
+        // Preserve any redirect made by a focus callback during the search.
+        if let Some(manager) = FocusManager::get_focus_manager(owner) {
+            if let Some(focused) = manager.get_focused_element() {
+                let focused = focused.upcast::<Visual>();
+                if element.clone().upcast::<Visual>().ptr_eq(&focused)
+                    || element.is_visual_ancestor_of(&focused)
+                {
+                    manager.focus(None, NavigationMethod::Unspecified, KeyModifiers::NONE);
                 }
             }
         }

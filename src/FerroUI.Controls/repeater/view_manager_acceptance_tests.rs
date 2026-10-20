@@ -1120,6 +1120,173 @@ fn nested_focus_releases_pins_before_direct_or_factory_owned_rows_are_detached()
 }
 
 #[test]
+fn clearing_an_enclosing_row_releases_nested_focus_before_detach_or_pooling() {
+    let _scope = test_scope();
+    let _app = UnitTestApplication::start(TestServices::real_focus());
+
+    struct EnclosingRowFactory {
+        ancestor: ferroui_base::WeakRef<Control>,
+        observed_pins: Rc<RefCell<Vec<u32>>>,
+        detach: bool,
+        redirect: Option<ferroui_base::WeakRef<InputElement>>,
+    }
+    impl IElementFactory for EnclosingRowFactory {
+        fn get_element(
+            &self,
+            args: &ElementFactoryGetArgs,
+        ) -> Result<Ref<Control>, ElementFactoryError> {
+            Ok(args.data().as_ref().and_then(Control::from_boxed).unwrap())
+        }
+        fn recycle_element(
+            &self,
+            args: &ElementFactoryRecycleArgs,
+        ) -> Result<(), ElementFactoryError> {
+            // Only the independent pin may remain before a factory can cut
+            // the visual path from the focused inner row to this ancestor.
+            self.observed_pins.borrow_mut().push(
+                ItemsRepeater::get_virtualization_info(&self.ancestor.upgrade().unwrap())
+                    .pin_count(),
+            );
+            if self.detach {
+                args.parent()
+                    .unwrap()
+                    .cast::<ItemsRepeater>()
+                    .unwrap()
+                    .children()
+                    .remove(&args.element());
+            }
+            if let Some(redirect) = self
+                .redirect
+                .as_ref()
+                .and_then(ferroui_base::WeakRef::upgrade)
+            {
+                assert!(redirect.focus());
+            }
+            Ok(())
+        }
+    }
+
+    for (use_factory, detach, redirect) in [
+        (false, true, false),
+        (true, true, false),
+        (true, false, false),
+        (true, true, true),
+        (true, false, true),
+    ] {
+        let (first, _) = fixture(ItemsSource::from_values(0..2), 2, false);
+        let (second, _) = fixture(ItemsSource::from_values(0..2), 2, false);
+        let groups = [StackPanel::new(), StackPanel::new()];
+        groups[0].children().add(first.clone());
+        groups[1].children().add(second.clone());
+        let source = Rc::new(FerroList::from_items(
+            groups
+                .iter()
+                .map(|group| Some(Control::boxed(group.clone()))),
+        ));
+        let middle = ItemsRepeater::new();
+        middle.set_layout(Some(WindowLayout::new(0, 2).upcast()));
+        let ancestor = StackPanel::new();
+        ancestor.children().add(middle.clone());
+        let after = Button::new();
+        let observed_pins = Rc::new(RefCell::new(Vec::new()));
+        if use_factory {
+            middle.set_element_factory(Some(Rc::new(EnclosingRowFactory {
+                ancestor: ancestor.clone().upcast::<Control>().downgrade(),
+                observed_pins: observed_pins.clone(),
+                detach,
+                redirect: redirect.then(|| after.clone().upcast::<InputElement>().downgrade()),
+            })));
+        }
+        middle.set_items_source(Some(source.clone().into()));
+        let outer = ItemsRepeater::new();
+        outer.set_layout(Some(WindowLayout::new(0, 1).upcast()));
+        outer.set_items_source(Some(ItemsSource::from_items([Some(Control::boxed(
+            ancestor.clone(),
+        ))])));
+        let panel = StackPanel::new();
+        panel.children().add(outer.clone());
+        panel.children().add(after.clone());
+        let root = TestRoot::with_child(&panel);
+        root.execute_initial_layout_pass();
+        let focused = first.try_get_element(1).unwrap();
+        let replacement = second.try_get_element(0).unwrap();
+        assert!(focused.focus());
+        outer.pin_element(&ancestor.clone().upcast());
+        assert_eq!(
+            ItemsRepeater::get_virtualization_info(&focused).pin_count(),
+            1
+        );
+        assert_eq!(
+            ItemsRepeater::get_virtualization_info(&groups[0]).pin_count(),
+            1
+        );
+        assert_eq!(
+            ItemsRepeater::get_virtualization_info(&ancestor).pin_count(),
+            2
+        );
+
+        source.remove_at(0);
+        root.layout_manager().execute_layout_pass();
+        assert_eq!(groups[0].visual_parent().is_none(), detach);
+        assert_eq!(
+            ItemsRepeater::get_virtualization_info(&groups[0]).owner(),
+            ElementOwner::ElementFactory
+        );
+        assert_eq!(
+            ItemsRepeater::get_virtualization_info(&focused).pin_count(),
+            0
+        );
+        assert_eq!(
+            root.focus_manager().get_focused_element(),
+            Some(if redirect {
+                after.clone().upcast()
+            } else {
+                replacement.clone().upcast()
+            })
+        );
+        assert_eq!(
+            ItemsRepeater::get_virtualization_info(&replacement).pin_count(),
+            if redirect { 0 } else { 1 }
+        );
+        assert_eq!(
+            ItemsRepeater::get_virtualization_info(&ancestor).pin_count(),
+            if redirect { 1 } else { 2 }
+        );
+
+        // Removing the final enclosing row has no replacement. Pooled rows
+        // remain attached, so their stale focused leaf must be cleared too.
+        source.remove_at(0);
+        root.layout_manager().execute_layout_pass();
+        assert_eq!(groups[1].visual_parent().is_none(), detach);
+        assert_eq!(
+            ItemsRepeater::get_virtualization_info(&replacement).pin_count(),
+            0
+        );
+        assert_eq!(
+            ItemsRepeater::get_virtualization_info(&ancestor).pin_count(),
+            1
+        );
+        assert_eq!(
+            root.focus_manager().get_focused_element(),
+            redirect.then(|| after.clone().upcast())
+        );
+        if use_factory {
+            assert_eq!(*observed_pins.borrow(), vec![1, 1]);
+        }
+        assert!(after.focus());
+        assert_eq!(
+            ItemsRepeater::get_virtualization_info(&ancestor).pin_count(),
+            1
+        );
+        outer.unpin_element(&ancestor.clone().upcast());
+        assert_eq!(
+            ItemsRepeater::get_virtualization_info(&ancestor).pin_count(),
+            0
+        );
+    }
+}
+
+#[test]
 fn disconnected_bring_into_view_preserves_realization_order_with_both_cache_lengths() {
     let _scope = test_scope();
     for cache in [0.0, 2.0] {
