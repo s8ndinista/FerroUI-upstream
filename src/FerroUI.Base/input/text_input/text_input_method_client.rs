@@ -110,6 +110,23 @@ pub trait TextInputMethodClient {
         None
     }
 
+    /// Optional identity of the current editing state, including changes whose
+    /// public text/selection notifications are still deferred. A supporting
+    /// client advances this revision for changes to its document, selection or
+    /// composition state; reading it must describe the current state.
+    ///
+    /// This getter is observational: it may update a private cache used to
+    /// produce the revision, but must not initiate edits, input operations or
+    /// ownership transitions. The connection defensively rejects observable
+    /// reentrancy; it cannot identify an unreported edit made by the getter
+    /// itself when the getter returns that edit's new revision.
+    ///
+    /// Input sessions compare both this revision and the public event version.
+    /// Existing clients that return `None` continue to use their events alone.
+    fn input_method_state_revision(&self) -> Option<u64> {
+        None
+    }
+
     /// The visual that's showing the text, or `None` when the client has
     /// none (a text box without a template).
     fn text_view_visual(&self) -> Option<Ref<Visual>>;

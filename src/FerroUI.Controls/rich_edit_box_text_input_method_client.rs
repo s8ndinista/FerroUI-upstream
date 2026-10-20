@@ -1,3 +1,4 @@
+use crate::rich_text::{EditorSelection, RichTextEditor};
 use crate::RichEditBox;
 use ferroui_base::input::text_input::{
     ContextMenuAction, TextInputMethodClient, TextInputMethodClientEvents, TextInputMethodEdit,
@@ -6,13 +7,36 @@ use ferroui_base::input::text_input::{
 use ferroui_base::input::InputElement;
 use ferroui_base::{Rect, Ref, Visual, WeakRef};
 use std::cell::RefCell;
-use std::rc::Rc;
+use std::rc::{Rc, Weak};
+
+struct RichInputMethodState {
+    editor: Weak<RichTextEditor>,
+    mutation: u64,
+    selection: EditorSelection,
+    composing: bool,
+}
+
+impl PartialEq for RichInputMethodState {
+    fn eq(&self, other: &Self) -> bool {
+        self.editor.ptr_eq(&other.editor)
+            && self.mutation == other.mutation
+            && self.selection == other.selection
+            && self.composing == other.composing
+    }
+}
+
+#[derive(Default)]
+struct InputMethodRevision {
+    value: u64,
+    observed: Option<RichInputMethodState>,
+}
 
 /// Platform input-method projection of the live rich document and layout geometry.
 /// Its owner is weak, so retaining a platform client cannot retain a removed control.
 pub struct RichEditBoxTextInputMethodClient {
     events: TextInputMethodClientEvents,
     owner: RefCell<Option<WeakRef<RichEditBox>>>,
+    revision: RefCell<InputMethodRevision>,
 }
 
 impl RichEditBoxTextInputMethodClient {
@@ -20,6 +44,7 @@ impl RichEditBoxTextInputMethodClient {
         Rc::new(Self {
             events: TextInputMethodClientEvents::new(),
             owner: RefCell::new(None),
+            revision: RefCell::new(InputMethodRevision::default()),
         })
     }
     pub(crate) fn attach(&self, owner: Option<&Ref<RichEditBox>>) {
@@ -46,6 +71,26 @@ impl TextInputMethodClient for RichEditBoxTextInputMethodClient {
     }
     fn input_method_editing(&self) -> Option<&dyn TextInputMethodEditing> {
         Some(self)
+    }
+    fn input_method_state_revision(&self) -> Option<u64> {
+        let observed = self.owner().map(|owner| {
+            let editor = owner.editor();
+            RichInputMethodState {
+                editor: Rc::downgrade(&editor),
+                mutation: editor.document().mutation_version(),
+                selection: editor.selection(),
+                composing: editor.is_composing(),
+            }
+        });
+        let mut revision = self.revision.borrow_mut();
+        if revision.observed != observed {
+            revision.value = revision.value.wrapping_add(1);
+            revision.observed = observed;
+        }
+        // Document mutation identity advances before an outer DocumentEditBatch
+        // publishes its event. The weak editor identity also distinguishes an
+        // equal-looking replacement document without retaining its control.
+        Some(revision.value)
     }
     fn text_view_visual(&self) -> Option<Ref<Visual>> {
         self.owner().map(|owner| owner.text_presenter().upcast())

@@ -155,6 +155,174 @@ fn rich_exact_composition_selection_update_keeps_full_preview_and_does_not_cance
 }
 
 #[test]
+fn rich_exact_composition_external_visible_selection_rejects_late_native_requests() {
+    let f = Fixture::new(true);
+    let session = f.connection().begin_composition().unwrap();
+    session.apply_edit(&edit(1, 3, "XYZ", 4, 4)).unwrap();
+    let committed = f.owner.text_input_method_client().selection();
+    f.owner.select(0, 0);
+    let before = f.owner.document().snapshot();
+    assert_eq!(f.owner.text_input_method_client().selection(), committed);
+    assert!(!session.is_current());
+    assert_eq!(
+        session.apply_edit(&edit(1, 2, "Q", 2, 2)),
+        Err(TextInputMethodError::StateChanged)
+    );
+    assert_eq!(
+        session.select_exact(TextSelection::new(4, 4)),
+        Err(TextInputMethodError::StateChanged)
+    );
+    assert_eq!(session.complete(0), Err(TextInputMethodError::StateChanged));
+    assert_eq!(f.owner.document().snapshot(), before);
+    assert_eq!((f.owner.selection_start(), f.owner.selection_end()), (0, 0));
+}
+
+#[test]
+fn rich_exact_composition_canceled_visible_selection_keeps_the_native_session_current() {
+    let f = Fixture::new(true);
+    let session = f.connection().begin_composition().unwrap();
+    session.apply_edit(&edit(1, 3, "XYZ", 4, 4)).unwrap();
+    f.owner.selection_changing(|_, args| args.set_cancel(true));
+    f.owner.select(0, 0);
+    assert_eq!((f.owner.selection_start(), f.owner.selection_end()), (4, 4));
+    assert!(session.is_current());
+    assert!(session.complete(0).unwrap());
+    assert_eq!(f.owner.text(), "aXYZd");
+}
+
+#[test]
+fn rich_exact_composition_rejects_external_mutation_before_document_batch_notification() {
+    let f = Fixture::new(true);
+    let session = f.connection().begin_composition().unwrap();
+    session.apply_edit(&edit(1, 3, "XYZ", 4, 4)).unwrap();
+    let document = f.owner.document();
+    let revision = document.revision();
+    let batch = document.begin_edit();
+    document.replace_text(0..0, "external").unwrap();
+    let before = document.snapshot();
+    assert_eq!(
+        document.revision(),
+        revision,
+        "public notification remains deferred"
+    );
+    assert_eq!(
+        session.apply_edit(&edit(0, 0, "stale", 0, 0)),
+        Err(TextInputMethodError::StateChanged)
+    );
+    assert_eq!(document.snapshot(), before);
+    assert!(!session.is_current());
+    drop(batch);
+    assert_eq!(document.snapshot(), before);
+}
+
+#[test]
+fn rich_exact_composition_rejects_unpublished_formatting_even_when_text_and_selection_match() {
+    let f = Fixture::new(true);
+    let session = f.connection().begin_composition().unwrap();
+    session.apply_edit(&edit(1, 3, "XYZ", 4, 4)).unwrap();
+    let document = f.owner.document();
+    let revision = document.revision();
+    let text = document.text();
+    let selection = f.owner.editor().selection();
+    let batch = document.begin_edit();
+    document
+        .apply_format(
+            0..1,
+            &CharacterFormat {
+                font_weight: Some(FontWeight::Bold),
+                ..CharacterFormat::default()
+            },
+        )
+        .unwrap();
+    let before = document.snapshot();
+    assert_eq!(document.revision(), revision);
+    assert_eq!(document.text(), text);
+    assert_eq!(f.owner.editor().selection(), selection);
+    assert_eq!(session.complete(0), Err(TextInputMethodError::StateChanged));
+    assert_eq!(document.snapshot(), before);
+    drop(batch);
+    assert_eq!(document.snapshot(), before);
+}
+
+#[test]
+fn rich_exact_input_raw_and_routed_requests_reject_a_deferred_document_mutation() {
+    for raw in [true, false] {
+        let f = Fixture::new(true);
+        let document = f.owner.document();
+        let revision = document.revision();
+        let batch = document.begin_edit();
+        let raw_subscription = raw.then(|| {
+            let document = document.clone();
+            InputManager::instance()
+                .unwrap()
+                .pre_process()
+                .subscribe_fn(move |event| {
+                    if event
+                        .downcast_ref::<ferroui_base::input::raw::RawTextInputEventArgs>()
+                        .is_some()
+                    {
+                        document.replace_text(0..0, "external").unwrap();
+                    }
+                })
+        });
+        let routed_subscription = (!raw).then(|| {
+            let document = document.clone();
+            f.owner.add_handler_with(
+                InputElement::text_input_event(),
+                move |_, _: &TextInputEventArgs| {
+                    document.replace_text(0..0, "external").unwrap();
+                },
+                RoutingStrategies::TUNNEL,
+                false,
+            )
+        });
+        assert_eq!(
+            f.connection().apply_edit(&edit(1, 3, "stale", 0, 0), 0),
+            Err(TextInputMethodError::StateChanged)
+        );
+        assert_eq!(document.revision(), revision);
+        assert_eq!(document.text(), "externalabcd");
+        assert!(!f.owner.can_undo());
+        if let Some(subscription) = raw_subscription {
+            subscription.dispose();
+        }
+        if let Some(subscription) = routed_subscription {
+            f.owner
+                .remove_handler(InputElement::text_input_event(), subscription);
+        }
+        drop(batch);
+        assert_eq!(f.owner.text(), "externalabcd");
+    }
+}
+
+#[test]
+fn rich_exact_composition_refreshes_accepted_state_while_document_notifications_are_deferred() {
+    let f = Fixture::new(true);
+    let document = f.owner.document();
+    let revision = document.revision();
+    let batch = document.begin_edit();
+    let session = f.connection().begin_composition().unwrap();
+    session.apply_edit(&edit(1, 3, "XYZ", 4, 4)).unwrap();
+    assert!(session.is_current());
+    session.apply_edit(&edit(2, 3, "Q", 3, 3)).unwrap();
+    assert!(session.is_current());
+    session.select_exact(TextSelection::new(4, 2)).unwrap();
+    assert!(session.is_current());
+    assert_eq!(document.revision(), revision);
+    assert_eq!(document.text(), "aXQZd");
+    assert!(session.complete(0).unwrap());
+    assert!(!session.is_current());
+    assert_eq!(document.revision(), revision);
+    assert_eq!(document.text(), "aXQZd");
+    assert_eq!(
+        f.owner.editor().selection(),
+        crate::rich_text::EditorSelection::new(4, 2)
+    );
+    drop(batch);
+    assert_eq!(f.owner.text(), "aXQZd");
+}
+
+#[test]
 fn rich_exact_composition_intercepted_completion_preserves_preview_for_retry() {
     let f = Fixture::new(true);
     let session = f.connection().begin_composition().unwrap();

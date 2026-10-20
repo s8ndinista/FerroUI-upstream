@@ -216,6 +216,7 @@ pub struct RichEditBox {
     editor_subscription: RefCell<Option<Rc<dyn IDisposable>>>,
     projecting_selection: Cell<bool>,
     last_input_selection: Cell<EditorSelection>,
+    last_visible_input_selection: Cell<EditorSelection>,
     last_text: RefCell<String>,
     document_generation: Cell<u64>,
     header_presenter: RefCell<Option<Ref<ContentPresenter>>>,
@@ -735,6 +736,7 @@ impl RichEditBox {
             editor_subscription: RefCell::new(None),
             projecting_selection: Cell::new(false),
             last_input_selection: Cell::new(EditorSelection::default()),
+            last_visible_input_selection: Cell::new(EditorSelection::default()),
             last_text: RefCell::new(String::new()),
             document_generation: Cell::new(0),
             header_presenter: RefCell::new(None),
@@ -1631,8 +1633,16 @@ impl RichEditBox {
     }
 
     fn notify_input_method_selection(&self) {
-        let selection = self.editor().input_method_selection();
-        if self.last_input_selection.replace(selection) != selection {
+        let editor = self.editor();
+        let selection = editor.input_method_selection();
+        let visible_selection = editor.selection();
+        let committed_changed = self.last_input_selection.replace(selection) != selection;
+        let visible_changed = self.last_visible_input_selection.replace(visible_selection)
+            != visible_selection;
+        // Legacy surrounding-text queries intentionally retain the committed
+        // selection during preedit. The visible selection is still client state:
+        // an external caret move must invalidate a captured platform session.
+        if committed_changed || visible_changed {
             self.im_client.raise_selection_changed();
         }
     }
@@ -2041,7 +2051,7 @@ impl RichEditBox {
     ) -> LocalBoxFuture<Result<(), ClipboardError>> {
         let this = self.to_ref();
         let document = self.document();
-        let revision = document.revision();
+        let mutation = document.mutation_version();
         let selection = self.selection();
         let allowed = !selection.is_empty() && (!cut || !self.is_read_only());
         let event = RoutedEventArgs::with_event(if cut {
@@ -2084,9 +2094,11 @@ impl RichEditBox {
                 .await?;
             // The async clipboard may complete after typing or moving the selection. In that
             // case it has still copied the requested fragment, but must not delete new content.
+            // Public revisions may be deferred by an application's document batch;
+            // the mutation identity also observes changes before that batch closes.
             if cut
                 && this.document() == document
-                && document.revision() == revision
+                && document.mutation_version() == mutation
                 && this.selection() == selection
                 && !this.is_read_only()
             {
@@ -2107,7 +2119,7 @@ impl RichEditBox {
     ) -> LocalBoxFuture<Result<(), ClipboardError>> {
         let this = self.to_ref();
         let document = self.document();
-        let revision = document.revision();
+        let mutation = document.mutation_version();
         let selection = self.selection();
         let event = RoutedEventArgs::with_event(Self::pasting_from_clipboard_event());
         if self.can_paste() {
@@ -2135,7 +2147,7 @@ impl RichEditBox {
                 return Ok(());
             };
             if this.document() != document
-                || document.revision() != revision
+                || document.mutation_version() != mutation
                 || this.selection() != selection
                 || this.is_read_only()
             {

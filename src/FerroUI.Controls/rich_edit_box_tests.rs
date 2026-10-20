@@ -15,6 +15,9 @@ use ferroui_base::{Rect, Size};
 use std::future::Future;
 use std::task::{Context, Poll, Waker};
 
+#[path = "rich_edit_clipboard_tests.rs"]
+mod clipboard_tests;
+
 fn run(text: &str, format: CharacterFormat) -> InlineSnapshot {
     InlineSnapshot {
         format,

@@ -87,6 +87,13 @@ pub struct TextInputMethodConnection {
     composition: Cell<u64>,
 }
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+struct ClientStateVersion {
+    events: u64,
+    intrinsic: Option<u64>,
+    composition: u64,
+}
+
 impl TextInputMethodConnection {
     pub(crate) fn new(
         owner: &Ref<InputElement>,
@@ -131,6 +138,44 @@ impl TextInputMethodConnection {
             .ok_or(TextInputMethodError::StaleConnection)
     }
 
+    fn state_version(
+        &self,
+        client: &dyn TextInputMethodClient,
+    ) -> Result<ClientStateVersion, TextInputMethodError> {
+        if !self.is_current() {
+            return Err(TextInputMethodError::StaleConnection);
+        }
+        let composition = self.composition.get();
+        let events = client.events();
+        let version = events.state_version();
+        let intrinsic = client.input_method_state_revision();
+        // A custom client's getter can publish events, replace the connection,
+        // or synchronously start another composition. Never capture that newer
+        // state as though it belonged to the operation that called the getter.
+        if !self.is_current() || self.composition.get() != composition {
+            return Err(TextInputMethodError::StaleConnection);
+        }
+        if events.state_version() != version {
+            return Err(TextInputMethodError::StateChanged);
+        }
+        Ok(ClientStateVersion {
+            events: version,
+            intrinsic,
+            composition,
+        })
+    }
+
+    fn check_state(
+        &self,
+        client: &dyn TextInputMethodClient,
+        expected: ClientStateVersion,
+    ) -> Result<(), TextInputMethodError> {
+        if self.state_version(client)? != expected {
+            return Err(TextInputMethodError::StateChanged);
+        }
+        Ok(())
+    }
+
     pub fn supports_composition(&self) -> bool {
         self.client()
             .is_ok_and(|client| client.input_method_editing().is_some())
@@ -160,6 +205,7 @@ impl TextInputMethodConnection {
         timestamp: u64,
     ) -> Result<bool, TextInputMethodError> {
         let client = self.client()?;
+        let version = self.state_version(&*client)?;
         let editing = client
             .input_method_editing()
             .ok_or(TextInputMethodError::Unsupported)?;
@@ -167,10 +213,11 @@ impl TextInputMethodConnection {
             return Err(TextInputMethodError::Unsupported);
         }
         edit.apply_to(&editing.edit_state()?.text)?;
+        self.check_state(&*client, version)?;
         self.dispatch(
             text_for_edit(edit),
             timestamp,
-            client.events().state_version(),
+            version,
             CommitAction::Edit(edit.clone()),
         )
     }
@@ -200,13 +247,14 @@ impl TextInputMethodConnection {
         let id = self.composition.get().wrapping_add(1);
         self.composition.set(id);
         editing.begin_composition()?;
+        let version = self.state_version(&*client)?;
         if !self.is_current() || self.composition.get() != id {
             return Err(TextInputMethodError::StaleConnection);
         }
         Ok(TextInputMethodComposition(Rc::new(CompositionState {
             connection: self.clone(),
             id,
-            version: Cell::new(client.events().state_version()),
+            version: Cell::new(version),
             finished: Cell::new(false),
         })))
     }
@@ -223,14 +271,14 @@ impl TextInputMethodConnection {
         client
             .input_method_editing()
             .ok_or(TextInputMethodError::Unsupported)?;
-        self.dispatch_commit(text, timestamp, client.events().state_version())
+        self.dispatch_commit(text, timestamp, self.state_version(&*client)?)
     }
 
     fn dispatch_commit(
         self: &Rc<Self>,
         text: &str,
         timestamp: u64,
-        version: u64,
+        version: ClientStateVersion,
     ) -> Result<bool, TextInputMethodError> {
         self.dispatch(text, timestamp, version, CommitAction::Text)
     }
@@ -239,7 +287,7 @@ impl TextInputMethodConnection {
         self: &Rc<Self>,
         text: &str,
         timestamp: u64,
-        version: u64,
+        version: ClientStateVersion,
         action: CommitAction,
     ) -> Result<bool, TextInputMethodError> {
         let owner = self.owner().ok_or(TextInputMethodError::StaleConnection)?;
@@ -275,7 +323,7 @@ impl TextInputMethodConnection {
 /// result; an application handling the event does not imply an accepted edit.
 pub struct TextInputMethodCommit {
     connection: Rc<TextInputMethodConnection>,
-    version: u64,
+    version: ClientStateVersion,
     result: Cell<Option<Result<bool, TextInputMethodError>>>,
     action: CommitAction,
 }
@@ -307,7 +355,7 @@ impl TextInputMethodCommit {
     pub fn is_current(&self) -> bool {
         self.connection
             .client()
-            .is_ok_and(|client| client.events().state_version() == self.version)
+            .is_ok_and(|client| self.connection.check_state(&*client, self.version).is_ok())
     }
 
     pub fn complete(&self, result: Result<bool, TextInputMethodError>) {
@@ -320,7 +368,7 @@ impl TextInputMethodCommit {
 struct CompositionState {
     connection: Rc<TextInputMethodConnection>,
     id: u64,
-    version: Cell<u64>,
+    version: Cell<ClientStateVersion>,
     finished: Cell<bool>,
 }
 
@@ -331,12 +379,20 @@ struct CompositionState {
 pub struct TextInputMethodComposition(Rc<CompositionState>);
 
 impl TextInputMethodComposition {
-    fn client(&self) -> Result<Rc<dyn TextInputMethodClient>, TextInputMethodError> {
+    fn check_lifetime(&self) -> Result<(), TextInputMethodError> {
         if self.0.finished.get() || self.0.connection.composition.get() != self.0.id {
             return Err(TextInputMethodError::StaleConnection);
         }
+        Ok(())
+    }
+
+    fn client(&self) -> Result<Rc<dyn TextInputMethodClient>, TextInputMethodError> {
+        self.check_lifetime()?;
         let client = self.0.connection.client()?;
-        if client.events().state_version() != self.0.version.get() {
+        let version = self.0.version.get();
+        self.0.connection.check_state(&*client, version)?;
+        self.check_lifetime()?;
+        if self.0.version.get() != version {
             return Err(TextInputMethodError::StateChanged);
         }
         Ok(client)
@@ -350,10 +406,10 @@ impl TextInputMethodComposition {
         &self,
         client: &dyn TextInputMethodClient,
     ) -> Result<(), TextInputMethodError> {
-        if !self.0.connection.is_current() || self.0.connection.composition.get() != self.0.id {
-            return Err(TextInputMethodError::StaleConnection);
-        }
-        self.0.version.set(client.events().state_version());
+        self.check_lifetime()?;
+        let version = self.0.connection.state_version(client)?;
+        self.check_lifetime()?;
+        self.0.version.set(version);
         Ok(())
     }
 

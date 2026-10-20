@@ -4725,6 +4725,9 @@ fn do_drag_drop_goes_through_the_platform_drag_source() {
 
 // --- text input methods ---------------------------------------------------------
 
+#[path = "text_input/text_input_method_revision_tests.rs"]
+mod text_input_method_revision_tests;
+
 use text_input::{
     ContextMenuAction, ITextInputMethodImpl, TextInputContentType, TextInputMethodClient, TextInputMethodClientEvents,
     TextInputMethodClientRequeryRequestedEventArgs, TextInputOptions, TextInputReturnKeyType, TextSelection,
@@ -5065,6 +5068,7 @@ fn the_cursor_rectangle_follows_the_text_view_through_layout_changes() {
 fn text_input_method_client_defaults() {
     let view = TestControl::new("view");
     let client = TestTextClient::new("client", &view);
+    assert_eq!(client.input_method_state_revision(), None);
 
     // Without an override the cursor position is dropped.
     client.set_preedit_text_with_cursor(Some("pre"), Some(2));
