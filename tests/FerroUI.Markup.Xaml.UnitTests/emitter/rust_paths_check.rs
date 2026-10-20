@@ -253,6 +253,7 @@ pub fn classes() -> Vec<(&'static ::ferroui_base::TypeInfo, &'static str)> {
         (<::ferroui_controls::automation::peers::DrawerPageAutomationPeer as ::ferroui_base::StaticType>::TYPE, "ferroui_controls::automation::peers::DrawerPageAutomationPeer"),
         (<::ferroui_controls::automation::peers::EmbeddableControlRootAutomationPeer as ::ferroui_base::StaticType>::TYPE, "ferroui_controls::automation::peers::EmbeddableControlRootAutomationPeer"),
         (<::ferroui_controls::automation::peers::ExpanderAutomationPeer as ::ferroui_base::StaticType>::TYPE, "ferroui_controls::automation::peers::ExpanderAutomationPeer"),
+        (<::ferroui_controls::automation::peers::HyperlinkAutomationPeer as ::ferroui_base::StaticType>::TYPE, "ferroui_controls::automation::peers::HyperlinkAutomationPeer"),
         (<::ferroui_controls::automation::peers::ImageAutomationPeer as ::ferroui_base::StaticType>::TYPE, "ferroui_controls::automation::peers::ImageAutomationPeer"),
         (<::ferroui_controls::automation::peers::InteropAutomationPeer as ::ferroui_base::StaticType>::TYPE, "ferroui_controls::automation::peers::InteropAutomationPeer"),
         (<::ferroui_controls::automation::peers::ItemsControlAutomationPeer as ::ferroui_base::StaticType>::TYPE, "ferroui_controls::automation::peers::ItemsControlAutomationPeer"),
