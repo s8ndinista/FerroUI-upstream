@@ -19,6 +19,9 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     x:ClassModifier="internal">
   <Thickness x:Key="RichEditBoxTopHeaderMargin">0,0,0,4</Thickness>
+  <x:String x:Key="StringRichEditUndoText">Undo</x:String>
+  <x:String x:Key="StringRichEditRedoText">Redo</x:String>
+  <x:String x:Key="StringRichEditSelectAllText">Select all</x:String>
   <x:String x:Key="StringRichEditBoldText">Bold</x:String>
   <x:String x:Key="StringRichEditItalicText">Italic</x:String>
   <x:String x:Key="StringRichEditUnderlineText">Underline</x:String>
@@ -26,9 +29,9 @@
     <MenuItem Header="{DynamicResource StringTextFlyoutCutText}" Command="{Binding $parent[RichEditBox].Cut}" IsEnabled="{Binding $parent[RichEditBox].CanCut}" InputGesture="{x:Static TextBox.CutGesture}" />
     <MenuItem Header="{DynamicResource StringTextFlyoutCopyText}" Command="{Binding $parent[RichEditBox].Copy}" IsEnabled="{Binding $parent[RichEditBox].CanCopy}" InputGesture="{x:Static TextBox.CopyGesture}" />
     <MenuItem Header="{DynamicResource StringTextFlyoutPasteText}" Command="{Binding $parent[RichEditBox].Paste}" IsEnabled="{Binding $parent[RichEditBox].CanPaste}" InputGesture="{x:Static TextBox.PasteGesture}" />
-    <MenuItem Header="{DynamicResource StringTextFlyoutUndoText}" Command="{Binding $parent[RichEditBox].Undo}" IsEnabled="{Binding $parent[RichEditBox].CanUndo}" />
-    <MenuItem Header="{DynamicResource StringTextFlyoutRedoText}" Command="{Binding $parent[RichEditBox].Redo}" IsEnabled="{Binding $parent[RichEditBox].CanRedo}" />
-    <MenuItem Header="{DynamicResource StringTextFlyoutSelectAllText}" Command="{Binding $parent[RichEditBox].SelectAll}" />
+    <MenuItem Header="{DynamicResource StringRichEditUndoText}" Command="{Binding $parent[RichEditBox].Undo}" IsEnabled="{Binding $parent[RichEditBox].CanUndo}" />
+    <MenuItem Header="{DynamicResource StringRichEditRedoText}" Command="{Binding $parent[RichEditBox].Redo}" IsEnabled="{Binding $parent[RichEditBox].CanRedo}" />
+    <MenuItem Header="{DynamicResource StringRichEditSelectAllText}" Command="{Binding $parent[RichEditBox].SelectAll}" />
     <MenuItem Header="{DynamicResource StringRichEditBoldText}"
               Command="{Binding $parent[RichEditBox].ToggleBold}"
               IsEnabled="{Binding $parent[RichEditBox].CanFormat}"

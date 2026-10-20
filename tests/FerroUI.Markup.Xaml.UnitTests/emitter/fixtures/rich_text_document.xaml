@@ -1,0 +1,23 @@
+<UserControl xmlns="https://github.com/ferroui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <StackPanel>
+    <RichTextBlock x:Name="display" Language="pl-PL" TextWrapping="Wrap">
+      <Paragraph FontSize="18">
+        <Bold><Run Text="Bold" /></Bold>
+        <Italic><Run Text=" italic" /></Italic>
+        <Underline><Run Text=" 😀" /></Underline>
+      </Paragraph>
+      <Paragraph TextAlignment="Right"><Run Text="Second" /></Paragraph>
+      <RichTextBlock.TextHighlighters>
+        <TextHighlighter Background="Yellow" Foreground="Black">
+          <TextRange StartIndex="0" Length="4" />
+        </TextHighlighter>
+      </RichTextBlock.TextHighlighters>
+    </RichTextBlock>
+    <RichEditBox x:Name="editor" Header="Document" Description="Rich editing"
+                 PlaceholderText="Write here" Language="pl-PL" AcceptsTab="True">
+      <Paragraph><Run Text="Edit 😀" /></Paragraph>
+    </RichEditBox>
+    <Button x:Name="bold" Command="{Binding #editor.ToggleBold}" IsEnabled="{Binding #editor.CanFormat}">Bold</Button>
+  </StackPanel>
+</UserControl>

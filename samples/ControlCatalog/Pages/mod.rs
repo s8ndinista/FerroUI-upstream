@@ -56,6 +56,7 @@ mod pointer_canvas;
 mod progress_bar_page;
 mod radio_button_page;
 mod relative_panel_page;
+mod rich_text_page;
 mod screen_page;
 mod section_page;
 mod settings_page;
@@ -206,6 +207,7 @@ pub use tab_strip_page::TabStripPage;
 pub use tabbed_demo_page::TabbedDemoPage;
 pub use table_view_page::TableViewPage;
 pub use text_block_page::TextBlockPage;
+pub use rich_text_page::RichTextPage;
 pub use text_box::{
     TextBoxEditingPage,
     TextBoxFirstLookPage,
@@ -328,6 +330,7 @@ const ROOT_TYPES: &[&TypeInfo] = &[
     TabControlPage::TYPE,
     TabStripPage::TYPE,
     TextBlockPage::TYPE,
+    RichTextPage::TYPE,
     TextBoxPage::TYPE,
     ThemePage::TYPE,
     ToggleSwitchPage::TYPE,
@@ -407,6 +410,7 @@ const ROOT_CLASSES: &[&XamlClass] = &[
     &TabControlPage::XAML_CLASS,
     &TabStripPage::XAML_CLASS,
     &TextBlockPage::XAML_CLASS,
+    &RichTextPage::XAML_CLASS,
     &TextBoxPage::XAML_CLASS,
     &ThemePage::XAML_CLASS,
     &ToggleSwitchPage::XAML_CLASS,
