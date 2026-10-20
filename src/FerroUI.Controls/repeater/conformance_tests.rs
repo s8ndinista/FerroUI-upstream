@@ -1024,8 +1024,12 @@ fn clearing_focus_prefers_next_layout_item_then_last_previous_descendant() {
 // visited in item order, independently of visual insertion order.
 #[test]
 fn keyboard_navigation_orders_descendants_and_skips_non_tab_stops() {
+    use ferroui_base::input::{
+        KeyboardNavigation, KeyboardNavigationHandler, KeyboardNavigationMode,
+    };
     let _scope = test_scope();
     let (repeater, _) = fixture(3, Some(&[2, 0, 1]));
+    KeyboardNavigation::set_tab_navigation(&repeater, KeyboardNavigationMode::Local);
     repeater.set_data_template(Some(FuncDataTemplate::new(
         |_| true,
         |_, _| {
@@ -1039,6 +1043,7 @@ fn keyboard_navigation_orders_descendants_and_skips_non_tab_stops() {
         },
         false,
     )));
+    let _root = TestRoot::with_child(&repeater);
     run(&repeater);
     let mut expected = Vec::<Ref<InputElement>>::new();
     for index in 0..3 {
@@ -1061,21 +1066,21 @@ fn keyboard_navigation_orders_descendants_and_skips_non_tab_stops() {
     );
     for pair in expected.windows(2) {
         assert_eq!(
-            repeater.get_next(&pair[0], NavigationDirection::Next),
-            (true, Some(pair[1].clone()))
+            KeyboardNavigationHandler::get_next(&pair[0], NavigationDirection::Next),
+            Some(pair[1].clone())
         );
         assert_eq!(
-            repeater.get_next(&pair[1], NavigationDirection::Previous),
-            (true, Some(pair[0].clone()))
+            KeyboardNavigationHandler::get_next(&pair[1], NavigationDirection::Previous),
+            Some(pair[0].clone())
         );
     }
     assert_eq!(
         repeater.get_next(expected.last().unwrap(), NavigationDirection::Next),
-        (true, None)
+        (false, None)
     );
     assert_eq!(
         repeater.get_next(expected.first().unwrap(), NavigationDirection::Previous),
-        (true, None)
+        (false, None)
     );
 }
 
@@ -1223,7 +1228,7 @@ fn verify_stack_layout_alignment() {
         let border = Border::new();
         border.set_width(400.0);
         border.set_height(400.0);
-        border.set_child(Some(repeater.clone().upcast()));
+        border.set_child(&repeater);
         let root = TestRoot::with_child(&border);
         root.execute_initial_layout_pass();
         assert_eq!(repeater.horizontal_alignment(), alignment);

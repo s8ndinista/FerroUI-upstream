@@ -28,10 +28,15 @@ struct WindowLayout {
     requests: RefCell<Vec<(i32, ElementRealizationOptions)>>,
     live: RefCell<Vec<(i32, Ref<Control>)>>,
     measure_hook: RefCell<Option<Rc<dyn Fn(&Ref<VirtualizingLayoutContext>)>>>,
+    arrange_hook: RefCell<Option<Rc<dyn Fn()>>>,
+    uninitialized: Cell<usize>,
 }
 ferro_class!(WindowLayout: VirtualizingLayout);
 ferro_impl_classes!(WindowLayout: FerroObjectImpl, LayoutImpl);
 impl VirtualizingLayoutImpl for WindowLayout {
+    fn uninitialize_for_context_core(this: &Self, _context: &Ref<VirtualizingLayoutContext>) {
+        this.uninitialized.set(this.uninitialized.get() + 1);
+    }
     fn measure_override(
         this: &Self,
         context: &Ref<VirtualizingLayoutContext>,
@@ -59,6 +64,10 @@ impl VirtualizingLayoutImpl for WindowLayout {
         let live = this.live.borrow().clone();
         for (index, element) in live {
             element.arrange(Rect::new(0.0, index as f64 * 20.0, 100.0, 20.0));
+        }
+        let hook = this.arrange_hook.borrow().clone();
+        if let Some(hook) = hook {
+            hook();
         }
         final_size
     }
@@ -97,6 +106,8 @@ impl WindowLayout {
             ),
             live: RefCell::new(Vec::new()),
             measure_hook: RefCell::new(None),
+            arrange_hook: RefCell::new(None),
+            uninitialized: Cell::new(0),
         })
     }
     fn set_indices(&self, indices: &[i32]) {
@@ -584,6 +595,209 @@ fn layout_reentrancy_guards_recover_after_caught_panics() {
 }
 
 #[test]
+fn verify_repeater_apis_throw_when_called_during_layout() {
+    let _scope = test_scope();
+    let repeater = ItemsRepeater::new();
+    let window = WindowLayout::new(&[0, 1, 2, 3, 4]);
+    repeater.set_layout(Some(window.clone().upcast()));
+    repeater.set_items_source(Some(ItemsSource::from_values(
+        (0..5).map(|index| format!("Item #{index}")),
+    )));
+    repeater.set_data_template(Some(FuncDataTemplate::new(
+        |_| true,
+        |data, _| {
+            let text = crate::TextBlock::new();
+            text.set_height(20.0);
+            text.set_text(
+                data.as_ref()
+                    .and_then(|data| data.downcast_ref::<String>())
+                    .map(String::as_str),
+            );
+            Some(text.upcast())
+        },
+        true,
+    )));
+    let failures = Rc::new(RefCell::new(Vec::new()));
+    let observed = failures.clone();
+    let weak = repeater.downgrade();
+    let attempted = Cell::new(false);
+    *window.measure_hook.borrow_mut() = Some(Rc::new(move |_| {
+        if attempted.replace(true) {
+            return;
+        }
+        let repeater = weak.upgrade().unwrap();
+        observed.borrow_mut().push((
+            "GetOrCreateElement",
+            catch_unwind(AssertUnwindSafe(|| repeater.get_or_create_element(0))).is_err(),
+        ));
+        observed.borrow_mut().push((
+            "ItemsSource",
+            catch_unwind(AssertUnwindSafe(|| {
+                repeater.set_items_source(Some(ItemsSource::from_values(["Other".to_owned()])))
+            }))
+            .is_err(),
+        ));
+        observed.borrow_mut().push((
+            "ItemTemplate",
+            catch_unwind(AssertUnwindSafe(|| {
+                repeater.set_data_template(Some(FuncDataTemplate::new(
+                    |_| true,
+                    |_, _| Some(Button::new().upcast()),
+                    true,
+                )))
+            }))
+            .is_err(),
+        ));
+    }));
+    let weak = repeater.downgrade();
+    let original = window.downgrade();
+    let observed = failures.clone();
+    let attempted = Cell::new(false);
+    *window.arrange_hook.borrow_mut() = Some(Rc::new(move || {
+        if attempted.replace(true) {
+            return;
+        }
+        let repeater = weak.upgrade().unwrap();
+        observed.borrow_mut().push((
+            "Layout",
+            catch_unwind(AssertUnwindSafe(|| {
+                repeater.set_layout(Some(StackLayout::new().upcast()))
+            }))
+            .is_err(),
+        ));
+        // Native styled properties store the proposed value before notifying,
+        // just as the pinned dependency-property callback does. Restore the
+        // original public value; that callback must also reject reentrancy.
+        observed.borrow_mut().push((
+            "RestoreLayout",
+            catch_unwind(AssertUnwindSafe(|| {
+                repeater.set_layout(Some(original.upgrade().unwrap().upcast()))
+            }))
+            .is_err(),
+        ));
+    }));
+    layout(&repeater);
+    assert_eq!(failures.borrow().len(), 5);
+    for (name, rejected) in failures.borrow().iter() {
+        assert!(rejected, "{name} must reject mutation during layout");
+    }
+    assert_eq!(repeater.items_source_view().unwrap().count(), 5);
+    assert_eq!(repeater.layout(), Some(window.clone().upcast()));
+    assert_eq!(window.uninitialized.get(), 0);
+    for index in 0..5 {
+        let text = repeater
+            .try_get_element(index)
+            .unwrap()
+            .cast::<crate::TextBlock>()
+            .unwrap();
+        assert_eq!(text.text(), Some(format!("Item #{index}")));
+    }
+}
+
+#[test]
+fn can_query_element_factory() {
+    struct Source {
+        inner: ItemsSource,
+        gets: RefCell<Vec<usize>>,
+    }
+    impl IItemsList for Source {
+        fn count(&self) -> usize {
+            self.inner.count()
+        }
+        fn get_at(&self, index: usize) -> Option<BoxedValue> {
+            self.gets.borrow_mut().push(index);
+            self.inner.get_at(index)
+        }
+        fn is_notifying(&self) -> bool {
+            true
+        }
+        fn add_collection_changed(&self, handler: Rc<ItemsChangedHandler>) -> Option<u64> {
+            self.inner.list().add_collection_changed(handler)
+        }
+        fn remove_collection_changed(&self, token: u64) {
+            self.inner.list().remove_collection_changed(token);
+        }
+        fn as_any(&self) -> &dyn std::any::Any {
+            self
+        }
+    }
+    struct Factory {
+        element: Ref<Control>,
+        gets: RefCell<Vec<(i32, Option<ferroui_base::WeakRef<Control>>)>>,
+        recycles: RefCell<Vec<(Ref<Control>, Option<ferroui_base::WeakRef<Control>>)>>,
+    }
+    impl IElementFactory for Factory {
+        fn get_element(
+            &self,
+            args: &ElementFactoryGetArgs,
+        ) -> Result<Ref<Control>, ElementFactoryError> {
+            self.gets.borrow_mut().push((
+                *args.data().unwrap().downcast_ref::<i32>().unwrap(),
+                args.parent().as_ref().map(Ref::downgrade),
+            ));
+            Ok(self.element.clone())
+        }
+        fn recycle_element(
+            &self,
+            args: &ElementFactoryRecycleArgs,
+        ) -> Result<(), ElementFactoryError> {
+            self.recycles
+                .borrow_mut()
+                .push((args.element(), args.parent().as_ref().map(Ref::downgrade)));
+            Ok(())
+        }
+    }
+    let _scope = test_scope();
+    let items = Rc::new(FerroList::<i32>::new());
+    let source = Rc::new(Source {
+        inner: items.clone().into(),
+        gets: RefCell::new(Vec::new()),
+    });
+    let factory = Rc::new(Factory {
+        element: Border::new().upcast(),
+        gets: RefCell::new(Vec::new()),
+        recycles: RefCell::new(Vec::new()),
+    });
+    let repeater = ItemsRepeater::new();
+    let window = WindowLayout::new(&[]);
+    repeater.set_layout(Some(window.clone().upcast()));
+    repeater.set_items_source(Some(ItemsSource::new(source.clone())));
+    repeater.set_element_factory(Some(factory.clone()));
+    layout(&repeater);
+    assert!(source.gets.borrow().is_empty());
+    assert!(factory.gets.borrow().is_empty());
+    assert!(factory.recycles.borrow().is_empty());
+    items.add(1);
+    window.set_indices(&[0]);
+    layout(&repeater);
+    assert_eq!(*source.gets.borrow(), vec![0]);
+    assert_eq!(factory.gets.borrow().len(), 1);
+    assert_eq!(factory.gets.borrow()[0].0, 1);
+    assert_eq!(
+        factory.gets.borrow()[0].1.as_ref().unwrap().upgrade(),
+        Some(repeater.clone().upcast())
+    );
+    assert_eq!(repeater.try_get_element(0), Some(factory.element.clone()));
+    assert!(factory.recycles.borrow().is_empty());
+    source.gets.borrow_mut().clear();
+    factory.gets.borrow_mut().clear();
+    items.remove_at(0);
+    window.set_indices(&[]);
+    layout(&repeater);
+    assert!(source.gets.borrow().is_empty());
+    assert!(factory.gets.borrow().is_empty());
+    assert_eq!(factory.recycles.borrow().len(), 1);
+    assert_eq!(factory.recycles.borrow()[0].0, factory.element);
+    assert_eq!(
+        factory.recycles.borrow()[0].1.as_ref().unwrap().upgrade(),
+        Some(repeater.upcast())
+    );
+    // Native ItemsSourceView queries the live IItemsList count. It does not
+    // expose WinRT's cached GetSizeCore callback; data reads and factory
+    // callback identity/ordering above are the portable observable contract.
+}
+
+#[test]
 fn collection_mutation_during_measure_is_rejected() {
     let _scope = test_scope();
     let (repeater, window, _) = fixture(0, &[0]);
@@ -680,8 +894,12 @@ fn cache_grows_by_forty_per_side_and_resets_after_distant_scroll() {
 
 #[test]
 fn tab_order_follows_source_indices_after_out_of_order_realization() {
+    use ferroui_base::input::{
+        KeyboardNavigation, KeyboardNavigationHandler, KeyboardNavigationMode,
+    };
     let _scope = test_scope();
     let repeater = ItemsRepeater::new();
+    KeyboardNavigation::set_tab_navigation(&repeater, KeyboardNavigationMode::Local);
     let buttons: Vec<_> = (0..3).map(|_| Button::new()).collect();
     repeater.set_items_source(Some(ItemsSource::from_items(
         buttons.iter().map(|b| Some(Control::boxed(b.clone()))),
@@ -691,12 +909,13 @@ fn tab_order_follows_source_indices_after_out_of_order_realization() {
     let _root = TestRoot::with_child(repeater.clone());
     layout(&repeater);
     let first: Ref<InputElement> = buttons[0].clone().upcast();
-    let (handled, next) = repeater.get_next(&first, NavigationDirection::Next);
-    assert!(handled);
-    assert_eq!(next, Some(buttons[1].clone().upcast()));
+    assert_eq!(
+        KeyboardNavigationHandler::get_next(&first, NavigationDirection::Next),
+        Some(buttons[1].clone().upcast())
+    );
     assert_eq!(
         repeater.get_next(&first, NavigationDirection::Previous),
-        (true, None)
+        (false, None)
     );
 }
 

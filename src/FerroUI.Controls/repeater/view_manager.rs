@@ -9,7 +9,7 @@ use super::{
 };
 use crate::{Control, ItemsChangedEventArgs};
 use ferroui_base::collections::NotifyCollectionChangedAction;
-use ferroui_base::input::{InputElement, KeyboardNavigation};
+use ferroui_base::input::{FocusManager, InputElement, KeyboardNavigation, KeyboardNavigationMode};
 use ferroui_base::{Ref, Visual, WeakRef};
 use rustc_hash::FxHashMap;
 use std::cell::{Cell, RefCell};
@@ -231,7 +231,10 @@ impl ViewManager {
             self.untrack(index, element);
             self.pinned.borrow_mut().retain(|pinned| pinned != element);
             info.move_ownership_to_animator();
-            self.move_focus_from_cleared_index(owner, element, index);
+            Self::forget_tab_once_active_element(element);
+            if self.release_focus_from_cleared_element(element) {
+                self.move_focus_from_cleared_index(owner, element, index);
+            }
         } else if !collection_change && info.is_pinned() {
             if !info.is_in_pinned_pool() {
                 self.pinned.borrow_mut().push(element.clone());
@@ -257,6 +260,11 @@ impl ViewManager {
         owner.viewport_manager.on_element_cleared(element);
         owner.phaser().stop_phasing(element, &info);
         info.move_ownership_to_element_factory();
+        Self::forget_tab_once_active_element(element);
+        // Recycling factories and direct-control removal may detach the row.
+        // Release its propagated focus pins while its ancestors are reachable,
+        // but preserve event/recycle ordering before choosing replacement focus.
+        let was_focused = self.release_focus_from_cleared_element(element);
         if info.must_clear_data_context() {
             element.set_data_context(None);
             info.set_must_clear_data_context(false);
@@ -271,7 +279,9 @@ impl ViewManager {
         } else {
             owner.children().remove(element);
         }
-        self.move_focus_from_cleared_index(owner, element, index);
+        if was_focused {
+            self.move_focus_from_cleared_index(owner, element, index);
+        }
     }
 
     pub fn prune_pinned_elements(&self, owner: &ItemsRepeater) {
@@ -463,6 +473,23 @@ impl ViewManager {
             }
             None
         });
+        // Native Once navigation returns to the most recently focused
+        // descendant. Local, Cycle and Contained navigation must enter in
+        // source order instead of jumping to this remembered target.
+        if KeyboardNavigation::get_tab_navigation(owner) != KeyboardNavigationMode::Once {
+            KeyboardNavigation::set_tab_once_active_element(owner, None);
+        } else if focused.is_some_and(|focused| {
+            owner
+                .immediate_child(&focused.clone().upcast())
+                .is_some_and(|element| {
+                    ItemsRepeater::get_virtualization_info(&element).is_realized()
+                })
+        }) {
+            // Once history includes descendants of nested repeaters. It is
+            // independent of nearest-owner pin tracking, and also changes
+            // when focus moves within the same item without changing pins.
+            KeyboardNavigation::set_tab_once_active_element(owner, focused.cloned());
+        }
         let previous = self.focused.borrow().as_ref().and_then(WeakRef::upgrade);
         if previous == next {
             return;
@@ -473,16 +500,30 @@ impl ViewManager {
         }
         if let Some(next) = next {
             Self::update_pin(&next, true);
-            KeyboardNavigation::set_tab_once_active_element(owner, focused.cloned());
         }
     }
 
-    fn move_focus_from_cleared_index(
-        &self,
-        owner: &ItemsRepeater,
-        element: &Ref<Control>,
-        index: i32,
-    ) {
+    fn forget_tab_once_active_element(element: &Ref<Control>) {
+        let element = element.clone().upcast::<Visual>();
+        let mut parent = element.visual_parent();
+        while let Some(ancestor) = parent {
+            if let Some(repeater) = ancestor.cast::<ItemsRepeater>() {
+                if let Some(active) = KeyboardNavigation::get_tab_once_active_element(&repeater) {
+                    let active = active.upcast::<Visual>();
+                    if element.ptr_eq(&active) || element.is_visual_ancestor_of(&active) {
+                        // An outer Once group may remember this same nested
+                        // leaf. Clear every such record before focus fallback
+                        // selects a replacement; pooled and animating rows
+                        // remain attached but no longer participate in focus.
+                        KeyboardNavigation::set_tab_once_active_element(&repeater, None);
+                    }
+                }
+            }
+            parent = ancestor.visual_parent();
+        }
+    }
+
+    fn release_focus_from_cleared_element(&self, element: &Ref<Control>) -> bool {
         if self
             .focused
             .borrow()
@@ -491,9 +532,37 @@ impl ViewManager {
             .as_ref()
             != Some(element)
         {
-            return;
+            return false;
         }
+        // Clear tracking first so native focus notifications caused by
+        // detachment or a factory callback cannot release this pin twice.
         *self.focused.borrow_mut() = None;
+        // The terminal ownership change reset this row's pin counter. Its
+        // containing realized repeaters still hold the propagated focus pin;
+        // release it before native focus events pin the replacement row.
+        Self::update_pin(element, false);
+        true
+    }
+
+    fn move_focus_from_cleared_index(
+        &self,
+        owner: &ItemsRepeater,
+        element: &Ref<Control>,
+        index: i32,
+    ) {
+        // A recycling callback may have moved focus deliberately. Only choose
+        // a fallback when focus is still in the removed row or was cleared by
+        // its detachment; never replace a newly selected target.
+        if let Some(focused) =
+            FocusManager::get_focus_manager(owner).and_then(|manager| manager.get_focused_element())
+        {
+            let focused = focused.upcast::<Visual>();
+            if !element.clone().upcast::<Visual>().ptr_eq(&focused)
+                && !element.is_visual_ancestor_of(&focused)
+            {
+                return;
+            }
+        }
         let mut candidates = owner.realized_elements();
         candidates.retain(|candidate| {
             candidate != element

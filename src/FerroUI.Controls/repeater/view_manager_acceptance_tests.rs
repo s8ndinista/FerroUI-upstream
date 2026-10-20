@@ -795,6 +795,331 @@ fn tab_navigation_follows_source_order_after_scroll_and_bulk_removal() {
 }
 
 #[test]
+fn native_tab_navigation_honors_once_local_cycle_contained_and_none_modes() {
+    let _scope = test_scope();
+    let _app = UnitTestApplication::start(TestServices::real_focus());
+    let (repeater, _) = fixture(ItemsSource::from_values(0..3), 3, false);
+    let before = Button::new();
+    let after = Button::new();
+    let panel = StackPanel::new();
+    panel.children().add(before.clone());
+    panel.children().add(repeater.clone());
+    panel.children().add(after.clone());
+    let root = TestRoot::with_child(&panel);
+    root.execute_initial_layout_pass();
+    let first = focus_target(&repeater, 0);
+    let middle = focus_target(&repeater, 1);
+    let last = focus_target(&repeater, 2);
+    let before = before.upcast::<InputElement>();
+    let after = after.upcast::<InputElement>();
+    let next = NavigationDirection::Next;
+    let previous = NavigationDirection::Previous;
+    let find = |current: &Ref<InputElement>, direction| {
+        assert!(current.focus_with(NavigationMethod::Tab, KeyModifiers::NONE));
+        KeyboardNavigationHandler::get_next(current, direction)
+    };
+
+    assert_eq!(
+        KeyboardNavigation::get_tab_navigation(&repeater),
+        KeyboardNavigationMode::Once
+    );
+    assert_eq!(find(&middle, next), Some(after.clone()));
+    assert_eq!(find(&middle, previous), Some(before.clone()));
+    assert_eq!(find(&before, next), Some(middle.clone()));
+    assert_eq!(find(&after, previous), Some(middle.clone()));
+
+    KeyboardNavigation::set_tab_navigation(&repeater, KeyboardNavigationMode::Local);
+    assert_eq!(find(&last, next), Some(after.clone()));
+    assert_eq!(find(&before, next), Some(first.clone()));
+    assert_eq!(find(&middle, next), Some(last.clone()));
+    assert_eq!(find(&middle, previous), Some(first.clone()));
+    assert_eq!(find(&first, previous), Some(before.clone()));
+
+    KeyboardNavigation::set_tab_navigation(&repeater, KeyboardNavigationMode::Cycle);
+    assert_eq!(find(&last, next), Some(first.clone()));
+    assert_eq!(find(&first, previous), Some(last.clone()));
+
+    KeyboardNavigation::set_tab_navigation(&repeater, KeyboardNavigationMode::Contained);
+    assert_eq!(find(&last, next), None);
+    assert_eq!(find(&first, previous), None);
+    assert_eq!(find(&middle, next), Some(last));
+
+    KeyboardNavigation::set_tab_navigation(&repeater, KeyboardNavigationMode::None);
+    assert_eq!(find(&before, next), Some(after.clone()));
+    assert_eq!(find(&after, previous), Some(before));
+}
+
+#[test]
+fn native_once_navigation_does_not_return_to_a_recycled_or_animating_active_item() {
+    let _scope = test_scope();
+    let _app = UnitTestApplication::start(TestServices::real_focus());
+    let clock = super::services_tests::TestClock::install();
+    for animate in [false, true] {
+        let source = Rc::new(FerroList::from_items([0]));
+        let (repeater, _) = fixture(source.clone().into(), 1, false);
+        let before = Button::new();
+        let after = Button::new();
+        let panel = StackPanel::new();
+        panel.children().add(before.clone());
+        panel.children().add(repeater.clone());
+        panel.children().add(after.clone());
+        let root = TestRoot::with_child(&panel);
+        root.execute_initial_layout_pass();
+        if animate {
+            repeater.set_item_transition_provider(Some(
+                LinedFlowLayoutItemCollectionTransitionProvider::new().upcast(),
+            ));
+        }
+        let removed = repeater.try_get_element(0).unwrap();
+        assert!(removed.focus());
+        assert_eq!(
+            KeyboardNavigation::get_tab_once_active_element(&repeater),
+            Some(removed.clone().upcast())
+        );
+        source.remove_at(0);
+        assert_eq!(
+            ItemsRepeater::get_virtualization_info(&removed).owner(),
+            if animate {
+                ElementOwner::Animator
+            } else {
+                ElementOwner::ElementFactory
+            }
+        );
+        assert!(removed.visual_parent().is_some());
+        assert!(before.focus());
+        assert_eq!(
+            KeyboardNavigationHandler::get_next(&before.upcast(), NavigationDirection::Next),
+            Some(after.upcast()),
+            "retained removed element, animate={animate}"
+        );
+        let start = if animate { 2000.0 } else { 0.0 };
+        clock.pulse(start);
+        clock.pulse(start + 1000.0);
+    }
+}
+
+#[test]
+fn nested_once_navigation_remembers_the_inner_target_without_duplicating_pins() {
+    let _scope = test_scope();
+    let _app = UnitTestApplication::start(TestServices::real_focus());
+    let (first, _) = fixture(ItemsSource::from_values(0..2), 2, false);
+    let second_source = Rc::new(FerroList::from_items(0..2));
+    let (second, _) = fixture(second_source.clone().into(), 2, false);
+    let groups = [StackPanel::new(), StackPanel::new()];
+    groups[0].children().add(first.clone());
+    groups[1].children().add(second.clone());
+    let outer = ItemsRepeater::new();
+    outer.set_layout(Some(WindowLayout::new(0, 2).upcast()));
+    outer.set_items_source(Some(ItemsSource::from_items(
+        groups
+            .iter()
+            .map(|group| Some(Control::boxed(group.clone()))),
+    )));
+    let before = Button::new();
+    let after = Button::new();
+    let panel = StackPanel::new();
+    panel.children().add(before.clone());
+    panel.children().add(outer.clone());
+    panel.children().add(after);
+    let root = TestRoot::with_child(&panel);
+    root.execute_initial_layout_pass();
+    let focused = second.try_get_element(1).unwrap();
+    assert!(focused.focus());
+    assert_eq!(
+        ItemsRepeater::get_virtualization_info(&focused).pin_count(),
+        1
+    );
+    assert_eq!(
+        ItemsRepeater::get_virtualization_info(&groups[1]).pin_count(),
+        1
+    );
+    assert_eq!(
+        KeyboardNavigation::get_tab_once_active_element(&outer),
+        Some(focused.clone().upcast())
+    );
+    assert_eq!(
+        KeyboardNavigation::get_tab_once_active_element(&second),
+        Some(focused.clone().upcast())
+    );
+    assert!(before.focus());
+    assert_eq!(
+        ItemsRepeater::get_virtualization_info(&focused).pin_count(),
+        0
+    );
+    assert_eq!(
+        ItemsRepeater::get_virtualization_info(&groups[1]).pin_count(),
+        0
+    );
+    assert_eq!(
+        KeyboardNavigationHandler::get_next(&before.clone().upcast(), NavigationDirection::Next),
+        Some(focused.clone().upcast())
+    );
+
+    assert!(focused.focus());
+    second_source.remove_at(1);
+    root.layout_manager().execute_layout_pass();
+    let remaining = second.try_get_element(0).unwrap();
+    assert_eq!(
+        KeyboardNavigation::get_tab_once_active_element(&outer),
+        Some(remaining.clone().upcast())
+    );
+    assert_eq!(
+        ItemsRepeater::get_virtualization_info(&remaining).pin_count(),
+        1
+    );
+    assert_eq!(
+        ItemsRepeater::get_virtualization_info(&groups[1]).pin_count(),
+        1
+    );
+    second_source.remove_at(0);
+    root.layout_manager().execute_layout_pass();
+    assert!(KeyboardNavigation::get_tab_once_active_element(&outer).is_none());
+    assert!(KeyboardNavigation::get_tab_once_active_element(&second).is_none());
+    assert!(before.focus());
+    assert_eq!(
+        KeyboardNavigationHandler::get_next(&before.upcast(), NavigationDirection::Next),
+        Some(first.try_get_element(0).unwrap().upcast())
+    );
+}
+
+#[test]
+fn nested_focus_releases_pins_before_direct_or_factory_owned_rows_are_detached() {
+    let _scope = test_scope();
+    let _app = UnitTestApplication::start(TestServices::real_focus());
+
+    struct DetachingFactory {
+        group: ferroui_base::WeakRef<Control>,
+        observed_pins: Rc<RefCell<Vec<u32>>>,
+        redirect: Option<ferroui_base::WeakRef<InputElement>>,
+    }
+    impl IElementFactory for DetachingFactory {
+        fn get_element(
+            &self,
+            _args: &ElementFactoryGetArgs,
+        ) -> Result<Ref<Control>, ElementFactoryError> {
+            let button = Button::new();
+            button.set_height(20.0);
+            Ok(button.upcast())
+        }
+        fn recycle_element(
+            &self,
+            args: &ElementFactoryRecycleArgs,
+        ) -> Result<(), ElementFactoryError> {
+            self.observed_pins.borrow_mut().push(
+                ItemsRepeater::get_virtualization_info(&self.group.upgrade().unwrap()).pin_count(),
+            );
+            args.parent()
+                .unwrap()
+                .cast::<ItemsRepeater>()
+                .unwrap()
+                .children()
+                .remove(&args.element());
+            if let Some(redirect) = self
+                .redirect
+                .as_ref()
+                .and_then(ferroui_base::WeakRef::upgrade)
+            {
+                assert!(redirect.focus());
+            }
+            Ok(())
+        }
+    }
+
+    for (use_factory, redirect) in [(false, false), (true, false), (true, true)] {
+        let items: Vec<Option<BoxedValue>> = (0..3)
+            .map(|index| {
+                if use_factory {
+                    Some(Rc::new(index) as BoxedValue)
+                } else {
+                    let item = Button::new();
+                    item.set_height(20.0);
+                    Some(Control::boxed(item))
+                }
+            })
+            .collect();
+        let source = Rc::new(FerroList::from_items(items));
+        let inner = ItemsRepeater::new();
+        inner.set_layout(Some(WindowLayout::new(0, 3).upcast()));
+        let group = StackPanel::new();
+        group.children().add(inner.clone());
+        let after = Button::new();
+        let observed_pins = Rc::new(RefCell::new(Vec::new()));
+        if use_factory {
+            inner.set_element_factory(Some(Rc::new(DetachingFactory {
+                group: group.clone().upcast::<Control>().downgrade(),
+                observed_pins: observed_pins.clone(),
+                redirect: redirect.then(|| after.clone().upcast::<InputElement>().downgrade()),
+            })));
+        }
+        inner.set_items_source(Some(source.clone().into()));
+        let outer = ItemsRepeater::new();
+        outer.set_layout(Some(WindowLayout::new(0, 1).upcast()));
+        outer.set_items_source(Some(ItemsSource::from_items([Some(Control::boxed(
+            group.clone(),
+        ))])));
+        let panel = StackPanel::new();
+        panel.children().add(outer.clone());
+        panel.children().add(after.clone());
+        let root = TestRoot::with_child(&panel);
+        root.execute_initial_layout_pass();
+        let removed = inner.try_get_element(1).unwrap();
+        assert!(removed.focus());
+        // An independent pin makes a duplicate focus release observable.
+        outer.pin_element(&group.clone().upcast());
+        assert_eq!(
+            ItemsRepeater::get_virtualization_info(&group).pin_count(),
+            2
+        );
+        source.remove_at(1);
+        root.layout_manager().execute_layout_pass();
+        assert!(removed.visual_parent().is_none());
+        assert_eq!(
+            ItemsRepeater::get_virtualization_info(&removed).pin_count(),
+            0
+        );
+        if redirect {
+            assert_eq!(
+                root.focus_manager().get_focused_element(),
+                Some(after.upcast())
+            );
+            assert_eq!(
+                ItemsRepeater::get_virtualization_info(&group).pin_count(),
+                1
+            );
+        } else {
+            let replacement = inner.try_get_element(1).unwrap();
+            assert_eq!(
+                root.focus_manager().get_focused_element(),
+                Some(replacement.clone().upcast())
+            );
+            assert_eq!(
+                ItemsRepeater::get_virtualization_info(&replacement).pin_count(),
+                1
+            );
+            assert_eq!(
+                ItemsRepeater::get_virtualization_info(&group).pin_count(),
+                2
+            );
+            source.remove_at(1);
+            root.layout_manager().execute_layout_pass();
+            source.remove_at(0);
+            root.layout_manager().execute_layout_pass();
+            assert_eq!(
+                ItemsRepeater::get_virtualization_info(&group).pin_count(),
+                1
+            );
+        }
+        if use_factory {
+            assert_eq!(
+                *observed_pins.borrow(),
+                vec![1; if redirect { 1 } else { 3 }]
+            );
+        }
+        outer.unpin_element(&group.upcast());
+    }
+}
+
+#[test]
 fn disconnected_bring_into_view_preserves_realization_order_with_both_cache_lengths() {
     let _scope = test_scope();
     for cache in [0.0, 2.0] {

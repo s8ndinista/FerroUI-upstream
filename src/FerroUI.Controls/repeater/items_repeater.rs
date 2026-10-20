@@ -214,6 +214,10 @@ impl FerroObjectImpl for ItemsRepeater {
         {
             this.viewport_manager.reset_cache();
             this.invalidate_measure();
+        } else if property == KeyboardNavigation::tab_navigation_property().as_property()
+            && KeyboardNavigation::get_tab_navigation(this) != KeyboardNavigationMode::Once
+        {
+            KeyboardNavigation::set_tab_once_active_element(this, None);
         }
     }
 }
@@ -344,15 +348,21 @@ impl ICustomKeyboardNavigation for ItemsRepeater {
 
     fn get_next(
         &self,
-        element: &Ref<InputElement>,
+        _element: &Ref<InputElement>,
         direction: NavigationDirection,
     ) -> (bool, Option<Ref<InputElement>>) {
+        // The native focus engine applies Once/Local/Cycle/Contained/None.
+        // Its child enumeration above already preserves repeater item order;
+        // bypassing it for individual neighbors would bypass those modes too.
+        if matches!(
+            direction,
+            NavigationDirection::Next | NavigationDirection::Previous
+        ) {
+            return (false, None);
+        }
         if !matches!(
             direction,
-            NavigationDirection::Next
-                | NavigationDirection::Previous
-                | NavigationDirection::First
-                | NavigationDirection::Last
+            NavigationDirection::First | NavigationDirection::Last
         ) {
             return (false, None);
         }
@@ -361,24 +371,12 @@ impl ICustomKeyboardNavigation for ItemsRepeater {
             .iter()
             .flat_map(Self::focusable_descendants)
             .collect();
-        let index = candidates.iter().position(|candidate| candidate == element);
         let next = match direction {
             NavigationDirection::First => candidates.first().cloned(),
             NavigationDirection::Last => candidates.last().cloned(),
-            NavigationDirection::Next => index.and_then(|index| candidates.get(index + 1).cloned()),
-            NavigationDirection::Previous => index
-                .and_then(|index| index.checked_sub(1))
-                .and_then(|index| candidates.get(index).cloned()),
             _ => None,
         };
-        (
-            index.is_some()
-                || matches!(
-                    direction,
-                    NavigationDirection::First | NavigationDirection::Last
-                ),
-            next,
-        )
+        (true, next)
     }
 }
 

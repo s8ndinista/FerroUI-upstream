@@ -8,7 +8,7 @@
 use super::*;
 use crate::primitives::ScrollBarVisibility;
 use crate::templates::{FuncControlTemplate, FuncDataTemplate, IDataTemplate};
-use crate::test_support::{TestRoot, test_scope};
+use crate::test_support::{test_scope, TestRoot};
 use crate::{
     Control, Grid, IItemsList, ItemsChangedEventArgs, ItemsSource, ScrollViewer, StackPanel,
     TextBlock,
@@ -22,6 +22,7 @@ use ferroui_base::{
     BoxedValue, FerroObject, FerroObjectExtensions, Point, Ref, Size, StyledElement, Vector,
 };
 use std::cell::Cell;
+use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::rc::Rc;
 
 fn settle(root: &TestRoot) {
@@ -77,6 +78,69 @@ fn text_template(width: Option<f64>, height: f64) -> Rc<dyn IDataTemplate> {
         move |_, _| Some(bound_text(width, height).upcast()),
         true,
     )
+}
+
+fn verify_text_and_element_indices(repeater: &ItemsRepeater) {
+    for index in 0..10 {
+        let element = repeater.try_get_element(index).expect("realized item");
+        assert_eq!(
+            element.cast::<TextBlock>().unwrap().text(),
+            Some(format!("Item #{index}")),
+        );
+        assert_eq!(repeater.get_element_index(&element), index);
+    }
+    assert!(repeater.try_get_element(20).is_none());
+}
+
+#[test]
+fn validate_element_to_index_mapping() {
+    let _scope = test_scope();
+    let repeater = ItemsRepeater::new();
+    let factory = RecyclingElementFactory::new();
+    factory.set_recycle_pool(Some(RecyclePool::new()));
+    factory
+        .templates()
+        .add("Item".into(), text_template(None, 50.0));
+    repeater.set_element_factory(Some(factory.as_element_factory()));
+    repeater.set_items_source(Some(ItemsSource::from_values(
+        (0..10).map(|index| format!("Item #{index}")),
+    )));
+    // As in the source, do not assign Layout: this must use the default stack.
+    let (_root, _scroll) = mount(&repeater, Size::new(400.0, 800.0));
+    verify_text_and_element_indices(&repeater);
+}
+
+#[test]
+fn validate_repeater_defaults() {
+    let _scope = test_scope();
+    let repeater = ItemsRepeater::new();
+    repeater.set_items_source(Some(ItemsSource::from_values(
+        (0..10).map(|index| format!("Item #{index}")),
+    )));
+    // The source scenario leaves both Layout and ItemTemplate unspecified.
+    let (_root, _scroll) = mount(&repeater, Size::new(400.0, 800.0));
+    verify_text_and_element_indices(&repeater);
+}
+
+#[test]
+fn validate_null_items_source() {
+    let _scope = test_scope();
+    let repeater = ItemsRepeater::new();
+    let error = catch_unwind(AssertUnwindSafe(|| {
+        repeater.get_or_create_element(0);
+    }))
+    .expect_err("requesting an element without a source must reject the call");
+    let message = error
+        .downcast_ref::<String>()
+        .map(String::as_str)
+        .or_else(|| error.downcast_ref::<&str>().copied())
+        .expect("the native precondition exposes a diagnostic");
+    // The ignored C# assertion spells this ItemSource, but its pinned C++
+    // implementation emits ItemsSource. Keep the actual source diagnostic;
+    // Rust's programmer-error panic replaces the E_FAIL COM exception.
+    assert!(message.contains("ItemsSource doesn't have a value"));
+    assert!(repeater.items_source_view().is_none());
+    assert!(repeater.try_get_element(0).is_none());
 }
 
 fn bind_group_source(repeater: &ItemsRepeater) {
@@ -154,6 +218,65 @@ fn nested_repeater_with_data_template_scenario() {
         scroll.set_offset(Vector::new(0.0, offset));
         settle(&root);
         assert_eq!(scroll.offset().y, offset, "nested scroll step {step}");
+    }
+}
+
+#[test]
+fn verify_current_anchor() {
+    let _scope = test_scope();
+    let repeater = ItemsRepeater::new();
+    repeater.set_vertical_cache_length(0.0);
+    repeater.set_data_template(Some(text_template(None, 50.0)));
+    repeater.set_items_source(Some(ItemsSource::from_values(0..500)));
+    let (root, scroll) = mount(&repeater, Size::new(400.0, 600.0));
+    // This declaration is commented out in the pinned source. Exercise its
+    // exact offset and anchor-index assertions through the native viewer.
+    for step in 1..10 {
+        scroll.set_offset(Vector::new(0.0, (step * 200) as f64));
+        settle(&root);
+        assert_eq!(scroll.offset().y, (step * 200) as f64);
+        let anchor = scroll.current_anchor().expect("a visible anchor candidate");
+        assert_eq!(repeater.get_element_index(&anchor), step * 4);
+    }
+}
+
+#[test]
+fn verify_corrections_in_non_scrollable_direction() {
+    let _scope = test_scope();
+    let repeater = ItemsRepeater::new();
+    repeater.set_data_template(Some(FuncDataTemplate::new(
+        |_| true,
+        |_, _| {
+            let panel = StackPanel::new();
+            let inner = ItemsRepeater::new();
+            let layout = StackLayout::new();
+            layout.set_orientation(Orientation::Horizontal);
+            inner.set_layout(Some(layout.upcast()));
+            bind_group_source(&inner);
+            panel.children().add(inner);
+            Some(panel.upcast())
+        },
+        true,
+    )));
+    repeater.set_items_source(Some(groups(4)));
+    let scroll = viewer(&repeater.clone().upcast());
+    scroll.set_width(400.0);
+    scroll.set_height(400.0);
+    let host = ItemsRepeaterScrollHost::new();
+    host.set_width(400.0);
+    host.set_height(600.0);
+    host.set_scroll_viewer(Some(scroll.clone()));
+    let root = TestRoot::with_child(&host);
+    root.execute_initial_layout_pass();
+    settle(&root);
+    // The commented source scenario scrolls this nested orthogonal layout
+    // four times and asserts completion without a crash. Native set_offset
+    // completes synchronously; draining layout observes queued corrections.
+    for step in 1..5 {
+        scroll.set_offset(Vector::new(0.0, (step * 200) as f64));
+        settle(&root);
+        assert_eq!(scroll.offset().x, 0.0);
+        assert!(scroll.offset().y > 0.0);
     }
 }
 
