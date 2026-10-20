@@ -142,6 +142,17 @@ pub const DOCUMENTS: &[(&str, &str)] = &[
     ("method_command.xaml", "<StackPanel xmlns='https://github.com/ferroui' xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'\n            xmlns:t='clr-namespace:FerroUI.Markup.Xaml.UnitTests;assembly=FerroUI.Markup.Xaml.UnitTests'\n            x:DataType='t:Desk' x:CompileBindings='True'>\n  <Button Command='{Binding Save}'/>\n  <Button Command='{Binding Rename}' CommandParameter='draft'/>\n  <Button Command='{Binding Fire}' CommandParameter='now'/>\n  <TextBox Name='box' Text='selected'/>\n  <Button Command='{Binding #box.SelectAll}'/>\n</StackPanel>\n"),
     ("container_query.xaml", "<StackPanel xmlns='https://github.com/ferroui' xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'>\n  <StackPanel.Styles>\n    <ContainerQuery Name='Host' Query='max-width:400'>\n      <Style Selector='Border'>\n        <Setter Property='Opacity' Value='0.5'/>\n      </Style>\n    </ContainerQuery>\n    <ContainerQuery Name='Host' Query='min-width:400 and max-height:120, height:1'>\n      <Style Selector='Border'>\n        <Setter Property='Opacity' Value='0.25'/>\n      </Style>\n    </ContainerQuery>\n    <ContainerQuery Name='Host' Query='width:800, height:600'>\n      <Style Selector='Border'>\n        <Setter Property='Opacity' Value='0.75'/>\n      </Style>\n    </ContainerQuery>\n  </StackPanel.Styles>\n  <Border Name='Host'/>\n</StackPanel>\n"),
     ("static_resource_element.xaml", "<StackPanel xmlns='https://github.com/ferroui' xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'>\n  <StackPanel.Resources>\n    <ControlTheme x:Key='Plain' TargetType='Button'>\n      <Setter Property='Opacity' Value='0.5'/>\n    </ControlTheme>\n    <SolidColorBrush x:Key='Accent' Color='Blue'/>\n  </StackPanel.Resources>\n  <Button>\n    <Button.Theme>\n      <StaticResource ResourceKey='Plain'/>\n    </Button.Theme>\n  </Button>\n  <Border>\n    <Border.Background>\n      <StaticResource ResourceKey='Accent'/>\n    </Border.Background>\n  </Border>\n</StackPanel>\n"),
+    ("repeater_compiled_binding.xaml", "<ItemsRepeater xmlns='https://github.com/ferroui' xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml' xmlns:t='clr-namespace:FerroUI.Markup.Xaml.UnitTests;assembly=FerroUI.Markup.Xaml.UnitTests' x:DataType='t:Table' ItemsSource='{CompiledBinding Rows}'><DataTemplate><Border Width='32' Height='18' Tag='{CompiledBinding Name}'/></DataTemplate></ItemsRepeater>"),
+    ("repeater_stack.xaml", "<ItemsRepeater xmlns='https://github.com/ferroui' xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml' HorizontalCacheLength='1.5' VerticalCacheLength='3'><ItemsRepeater.Layout><StackLayout Orientation='Horizontal' Spacing='7' IsVirtualizationEnabled='False'/></ItemsRepeater.Layout><DataTemplate><Border Width='20' Height='16'/></DataTemplate></ItemsRepeater>"),
+    ("repeater_uniform_grid.xaml", "<UniformGridLayout xmlns='https://github.com/ferroui' MinItemWidth='48' MinItemHeight='24' MinRowSpacing='3' MinColumnSpacing='5' MaximumRowsOrColumns='4' ItemsJustification='SpaceEvenly' ItemsStretch='Uniform'/>"),
+    ("repeater_flow.xaml", "<FlowLayout xmlns='https://github.com/ferroui' LineSpacing='6' MinItemSpacing='9' LineAlignment='SpaceBetween'/>"),
+    ("repeater_lined_flow.xaml", "<LinedFlowLayout xmlns='https://github.com/ferroui' LineHeight='72' LineSpacing='8' MinItemSpacing='4' ItemsJustification='Center' ItemsStretch='Fill'/>"),
+    ("repeater_factory.xaml", "<RecyclingElementFactory xmlns='https://github.com/ferroui' xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'><DataTemplate x:Key='item'><Border Width='24' Height='16'/></DataTemplate></RecyclingElementFactory>"),
+    ("repeater_layout_panel.xaml", "<LayoutPanel xmlns='https://github.com/ferroui' Padding='4' BorderThickness='2' CornerRadius='3'><LayoutPanel.Layout><StackLayout Orientation='Horizontal' Spacing='5'/></LayoutPanel.Layout><Border Width='20' Height='10'/><Border Width='30' Height='10'/></LayoutPanel>"),
+    ("repeater_scroll_host.xaml", "<ItemsRepeaterScrollHost xmlns='https://github.com/ferroui' HorizontalAnchorRatio='0.25' VerticalAnchorRatio='0.75'><ScrollViewer><ItemsRepeater/></ScrollViewer></ItemsRepeaterScrollHost>"),
+    ("repeater_native_items.xaml", "<ItemsRepeater xmlns='https://github.com/ferroui' xmlns:col='using:System.Collections'><ItemsRepeater.ItemsSource><col:ArrayList><Border Name='original' Width='32' Height='18'/></col:ArrayList></ItemsRepeater.ItemsSource></ItemsRepeater>"),
+    ("repeater_selection_bindings.xaml", "<StackPanel xmlns='https://github.com/ferroui' xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml' xmlns:r='using:FerroUI.Controls.Repeater' x:DataType='r:SelectionModel'><TextBlock Name='selectedItemsCount' Text='{CompiledBinding SelectedItems.Count}'/><TextBlock Name='selectedIndicesCount' Text='{CompiledBinding SelectedIndices.Count}'/></StackPanel>"),
+    ("repeater_flow_anchor.xaml", "<FlowLayoutAnchorInfo xmlns='https://github.com/ferroui' xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'><x:Arguments><x:Int32>7</x:Int32><x:Double>24.5</x:Double></x:Arguments></FlowLayoutAnchorInfo>"),
 ];
 
 /// The documents that must be eligible for emission.
@@ -272,6 +283,17 @@ pub const EXPECTED_ELIGIBLE: &[&str] = &[
     "method_command.xaml",
     "container_query.xaml",
     "static_resource_element.xaml",
+    "repeater_compiled_binding.xaml",
+    "repeater_stack.xaml",
+    "repeater_uniform_grid.xaml",
+    "repeater_flow.xaml",
+    "repeater_lined_flow.xaml",
+    "repeater_factory.xaml",
+    "repeater_layout_panel.xaml",
+    "repeater_scroll_host.xaml",
+    "repeater_native_items.xaml",
+    "repeater_selection_bindings.xaml",
+    "repeater_flow_anchor.xaml",
 ];
 
 /// The documents whose values depend on the base URI of the document or on a service of

@@ -85,6 +85,11 @@ fn flow_layout_properties_and_enumerations_load() {
         layout.line_alignment(),
         FlowLayoutLineAlignment::SpaceBetween
     );
+    let anchor = load_as::<ferroui_controls::repeater::FlowLayoutAnchorInfo>(&format!(
+        "<FlowLayoutAnchorInfo {NS}><x:Arguments><x:Int32>7</x:Int32><x:Double>24.5</x:Double></x:Arguments></FlowLayoutAnchorInfo>"
+    ));
+    assert_eq!(anchor.index, 7);
+    assert_eq!(anchor.offset, 24.5);
 }
 
 #[test]
@@ -313,6 +318,47 @@ fn selection_service_loads_native_source_and_index_path() {
 }
 
 #[test]
+fn compiled_selection_view_bindings_track_native_selection_changes() {
+    use ferroui_controls::repeater::selection::SelectionModel;
+    use ferroui_controls::{StackPanel, TextBlock};
+    use std::rc::Rc;
+
+    let _scope = xaml_test_base();
+    let panel = load_as::<Ref<StackPanel>>(&format!(
+        "<StackPanel {NS} xmlns:r='using:FerroUI.Controls.Repeater' x:DataType='r:SelectionModel'>
+           <TextBlock Name='selectedItemsCount' Text='{{CompiledBinding SelectedItems.Count}}'/>
+           <TextBlock Name='selectedIndicesCount' Text='{{CompiledBinding SelectedIndices.Count}}'/>
+         </StackPanel>"
+    ));
+    let model = SelectionModel::new();
+    model.set_single_select(false);
+    model.set_source(Some(ItemsSource::from_values([
+        "first".to_owned(),
+        "second".to_owned(),
+    ])));
+    model.select(1).unwrap();
+    panel.set_data_context(Some(Rc::new(model.clone())));
+    let assert_counts = |expected: &str| {
+        for name in ["selectedItemsCount", "selectedIndicesCount"] {
+            assert_eq!(
+                panel
+                    .find_control::<TextBlock>(name)
+                    .unwrap()
+                    .text()
+                    .as_deref(),
+                Some(expected),
+                "{name}"
+            );
+        }
+    };
+    assert_counts("1");
+    model.select(0).unwrap();
+    assert_counts("2");
+    model.deselect(1).unwrap();
+    assert_counts("1");
+}
+
+#[test]
 fn repeater_conversions_are_registered_on_subsequent_ui_threads() {
     // The process-wide metadata registration can have happened on a thread
     // that has already exited. Each new UI thread still needs its conversions.
@@ -488,6 +534,8 @@ fn repeater_markup_activation_requires_native_constructor_arguments() {
         "<p:RepeaterAutomationPeer {NS} xmlns:p='using:FerroUI.Automation.Peers'/>"
     ))
     .is_err());
+    // A native automation peer holds its owner weakly. The inline constructor
+    // argument may be released after the load; class activation is still valid.
     let peer = load_as::<Ref<RepeaterAutomationPeer>>(&format!(
         "<p:RepeaterAutomationPeer {NS} xmlns:p='using:FerroUI.Automation.Peers'><x:Arguments><ItemsRepeater/></x:Arguments></p:RepeaterAutomationPeer>"
     ));
@@ -495,7 +543,6 @@ fn repeater_markup_activation_requires_native_constructor_arguments() {
         peer.get_type().full_name(),
         "FerroUI.Automation.Peers.RepeaterAutomationPeer"
     );
-    assert!(peer.owner().get_type().name() == "ItemsRepeater");
     let model = crate::support::loader::load(&format!(
         "<r:SelectionModel {NS} xmlns:r='using:FerroUI.Controls.Repeater'/>"
     ));
