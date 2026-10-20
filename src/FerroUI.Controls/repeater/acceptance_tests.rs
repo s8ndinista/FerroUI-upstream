@@ -537,7 +537,7 @@ fn validate_stable_resets() {
 
 fn verify_grid_placement(repeater: &ItemsRepeater, source: &FerroList<i32>) -> usize {
     let mut realized = Vec::new();
-    for index in 0..source.len() {
+    for index in 0..source.count() {
         let Some(element) = repeater.try_get_element(index as i32) else {
             continue;
         };
