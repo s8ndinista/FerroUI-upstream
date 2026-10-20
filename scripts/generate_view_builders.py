@@ -182,7 +182,7 @@ def read_classes(model, directory, crate):
         read_members(model, text, crate, path)
 
 
-IMPL = re.compile(r"\bimpl\s+([A-Z]\w*)\s*\{")
+IMPL = re.compile(r"\bimpl\s+([A-Z]\w*)\s*(?:,\s*also\s*\[[^\]]*\]\s*)?\{")
 PROPERTY = re.compile(r"pub fn (\w+)_property\(\)\s*->\s*(StyledProperty|DirectProperty|AttachedProperty)\s*<")
 EVENT = re.compile(r"pub fn (\w+)_event\(\)\s*->\s*RoutedEvent\s*<")
 
@@ -276,7 +276,8 @@ def generate(model):
         "//! The element builders of the classes of FerroUI.Base and FerroUI.Controls:",
         "//! a function that starts an element of each class that can be created, and a",
         "//! trait per class with a setter for each of its properties and a handler for",
-        "//! each of its routed events. See `scripts/generate_view_builders.py`.",
+        "//! each of its routed events, and the classes themselves (the names of the",
+        "//! elements of `rsx!`). See `scripts/generate_view_builders.py`.",
         "",
         "#![allow(clippy::too_many_arguments, missing_docs)]",
         "",
@@ -296,8 +297,7 @@ def generate(model):
             inherited = set(names_of(base))
         own = set()
         for kind, prop, value_type, target, holder in model.properties.get(name, []):
-            if kind != "AttachedProperty":
-                own.add(prop)
+            own.add(prop)
         for event, _ in model.events.get(name, []):
             own.add(f"on_{event}")
         defined[name] = inherited | own
@@ -312,12 +312,15 @@ def generate(model):
             function = ident(snake(name))
             if function not in used_functions:
                 used_functions.add(function)
+                functions.append(f"pub use {path};\n")
                 functions.append(f"impl ViewClass for {path} {{\n    fn create() -> ferroui_base::Ref<Self> {{\n        <{path}>::new()\n    }}\n}}\n")
                 functions.append(f"/// Starts an element of [`{name}`]({path}).\npub fn {function}() -> El<{path}> {{\n    El::new()\n}}\n")
         inherited = set(names_of(model.bases[name])) if model.bases.get(name) else set()
         members = []
         for kind, prop, value_type, target, holder in model.properties.get(name, []):
-            if kind == "AttachedProperty":
+            # An attached property of the class is also set on the class
+            # itself, as markup does (`ScrollViewer.HorizontalScrollBarVisibility`).
+            if kind == "AttachedProperty" and (prop in inherited or prop in ELEMENT_METHODS):
                 continue
             holder_path = class_path(model, holder)
             if holder_path is None:

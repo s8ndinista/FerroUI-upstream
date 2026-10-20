@@ -421,6 +421,12 @@ impl Host {
         !matches!(self, Host::Panel(_) | Host::Items(_))
     }
 
+    /// Whether text is held as text (a content, an item, the text of a
+    /// `TextBlock`) rather than as a `TextBlock`.
+    fn takes_text(&self) -> bool {
+        matches!(self, Host::Content(..) | Host::Items(_) | Host::Text(_))
+    }
+
     /// Replaces the children from `start` on (`removed` of them) with `items`.
     fn splice(&self, start: usize, removed: usize, items: &[Placed]) {
         match self {
@@ -623,7 +629,7 @@ fn place_children(control: &Ref<Control>, children: Vec<Element>) {
                 mount_dynamic(host.clone(), slots.clone(), items, dynamic);
             }
             child => {
-                let placed = place(child, host.is_single());
+                let placed = place(child, host.takes_text());
                 fixed.push(placed.clone());
                 slots.borrow_mut().push(Slot::Fixed(placed));
             }
@@ -661,9 +667,9 @@ fn flatten(children: Vec<Element>) -> Vec<Element> {
 
 /// A child element as what its host holds: text stays text in a content and
 /// an item, and becomes a `TextBlock` elsewhere.
-fn place(child: Element, single: bool) -> Placed {
+fn place(child: Element, takes_text: bool) -> Placed {
     match child {
-        Element::Text(text) if single => Placed::Value(Rc::new(text.to_string())),
+        Element::Text(text) if takes_text => Placed::Value(Rc::new(text.to_string())),
         child => Placed::Control(child.mount()),
     }
 }
@@ -676,7 +682,7 @@ struct MountedItem {
 }
 
 fn mount_dynamic(host: Rc<Host>, slots: Rc<RefCell<Vec<Slot>>>, items: Rc<RefCell<Vec<Placed>>>, dynamic: DynamicChildren) {
-    let single = host.is_single();
+    let takes_text = host.takes_text();
     let mounted: Rc<RefCell<HashMap<Key, MountedItem>>> = Rc::new(RefCell::new(HashMap::new()));
     let unkeyed: Rc<RefCell<Vec<Owner>>> = Rc::new(RefCell::new(Vec::new()));
     let first_run = Rc::new(std::cell::Cell::new(true));
@@ -703,7 +709,7 @@ fn mount_dynamic(host: Rc<Host>, slots: Rc<RefCell<Vec<Slot>>>, items: Rc<RefCel
                         .into_iter()
                         .map(|element| match element {
                             Element::Dynamic(_) => panic!("a dynamic list gives elements, not other dynamic lists"),
-                            element => place(element, single),
+                            element => place(element, takes_text),
                         })
                         .collect()
                 });

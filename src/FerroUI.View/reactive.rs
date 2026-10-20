@@ -487,6 +487,14 @@ impl<T: 'static> Memo<T> {
     {
         self.with(T::clone)
     }
+
+    /// A copy of the value; the read is not recorded.
+    pub fn get_untracked(&self) -> T
+    where
+        T: Clone,
+    {
+        untrack(|| self.get())
+    }
 }
 
 /// Runs `f` now and again whenever a signal or memo it read changes, until
