@@ -66,6 +66,9 @@ mod items_repeater_tests;
 mod conformance_tests;
 
 #[cfg(test)]
+mod acceptance_tests;
+
+#[cfg(test)]
 mod viewport_tests;
 
 #[cfg(test)]
