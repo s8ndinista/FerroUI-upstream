@@ -147,9 +147,24 @@ impl FerroObjectImpl for ItemsRepeater {
             .transitions
             .set(TransitionManager::new(Rc::new(move |element| {
                 if let Some(owner) = weak.upgrade() {
-                    owner
-                        .view_manager
-                        .clear_element_to_element_factory(&owner, &element);
+                    // Completion can arrive after a source/template change or
+                    // after a shared provider's element moved to another host.
+                    // Only the current animator owner may recycle it. The
+                    // ownership check also makes repeated completion harmless
+                    // if this element has already been reused for another item.
+                    let is_child = element.visual_parent().is_some_and(|parent| {
+                        parent.ptr_eq(&owner.clone().upcast::<Visual>())
+                    });
+                    if is_child
+                        && Self::get_virtualization_info(&element).owner() == ElementOwner::Animator
+                    {
+                        owner
+                            .view_manager
+                            .clear_element_to_element_factory(&owner, &element);
+                        // Recycle pools can retain the element in our panel.
+                        // Arrange must move it outside the visible viewport.
+                        owner.invalidate_arrange();
+                    }
                 }
             })));
         let weak = this.to_ref().downgrade();

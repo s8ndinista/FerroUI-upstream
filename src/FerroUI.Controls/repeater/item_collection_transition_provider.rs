@@ -91,8 +91,9 @@ impl ItemCollectionTransitionProvider {
     pub fn new() -> Ref<Self> {
         instantiate(Self::construct())
     }
-    /// Supplies the host's motion preference. Platform settings adapters can
-    /// update this without changing a custom provider's animation policy.
+    /// Whether this provider permits animations. The current platform motion
+    /// preference is also consulted for each queued transition; enabling this
+    /// flag does not override a system request for reduced motion.
     pub fn animations_enabled(&self) -> bool {
         self.animations_enabled.get()
     }
@@ -118,7 +119,16 @@ impl ItemCollectionTransitionProvider {
                 (batch, true)
             }
         };
-        let animate = self.animations_enabled() && self.should_animate(transition.clone());
+        let animate = self.animations_enabled()
+            && transition
+                .element()
+                .get_platform_settings()
+                .or_else(|| {
+                    crate::Application::current()
+                        .and_then(|application| application.platform_settings())
+                })
+                .is_none_or(|settings| settings.animations_enabled())
+            && self.should_animate(transition.clone());
         {
             let mut batches = self.batches.borrow_mut();
             let batch = batches.entry(batch).or_default();

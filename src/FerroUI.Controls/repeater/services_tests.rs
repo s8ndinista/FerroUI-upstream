@@ -955,6 +955,172 @@ fn disabled_animations_do_not_consult_the_provider_and_still_complete() {
     assert_eq!(count.get(), 1);
 }
 
+struct MotionPlatformSettings {
+    base: ferroui_base::platform::DefaultPlatformSettings,
+    enabled: Cell<bool>,
+}
+impl MotionPlatformSettings {
+    fn new(enabled: bool) -> Rc<Self> {
+        Rc::new(Self {
+            base: ferroui_base::platform::DefaultPlatformSettings::new(),
+            enabled: Cell::new(enabled),
+        })
+    }
+}
+impl ferroui_base::platform::IPlatformSettings for MotionPlatformSettings {
+    fn get_tap_size(&self, kind: ferroui_base::input::PointerType) -> Size {
+        self.base.get_tap_size(kind)
+    }
+    fn get_double_tap_size(&self, kind: ferroui_base::input::PointerType) -> Size {
+        self.base.get_double_tap_size(kind)
+    }
+    fn get_double_tap_time(&self, kind: ferroui_base::input::PointerType) -> std::time::Duration {
+        self.base.get_double_tap_time(kind)
+    }
+    fn hold_wait_duration(&self) -> std::time::Duration {
+        self.base.hold_wait_duration()
+    }
+    fn hotkey_configuration(&self) -> Rc<ferroui_base::input::platform::PlatformHotkeyConfiguration> {
+        self.base.hotkey_configuration()
+    }
+    fn preferred_application_language(&self) -> String {
+        self.base.preferred_application_language()
+    }
+    fn animations_enabled(&self) -> bool {
+        self.enabled.get()
+    }
+    fn get_color_values(&self) -> ferroui_base::platform::PlatformColorValues {
+        self.base.get_color_values()
+    }
+    fn color_values_changed(
+        &self,
+        handler: Rc<dyn Fn(&ferroui_base::platform::PlatformColorValues)>,
+    ) -> Rc<dyn IDisposable> {
+        self.base.color_values_changed(handler)
+    }
+    fn preferred_application_language_changed(
+        &self,
+        handler: Rc<dyn Fn()>,
+    ) -> Rc<dyn IDisposable> {
+        self.base.preferred_application_language_changed(handler)
+    }
+}
+
+#[test]
+fn queued_transitions_observe_live_native_motion_settings_per_element() {
+    let _scope = test_scope();
+    let clock = TestClock::install();
+    let provider = TestTransitionProvider::new(true);
+    let item = element();
+    let root = TestRoot::with_child(&item);
+    let settings = MotionPlatformSettings::new(false);
+    root.set_platform_settings(Some(settings.clone()));
+    let completed = Rc::new(Cell::new(0));
+    let observed = completed.clone();
+    provider.transition_completed(move |_| observed.set(observed.get() + 1));
+
+    provider.queue_transition(add(&provider, item.clone()));
+    settings.enabled.set(true);
+    provider.queue_transition(add(&provider, item));
+    assert_eq!(completed.get(), 0, "Even disabled transitions complete on a frame.");
+    clock.pulse(0.0);
+    assert_eq!(provider.should_calls.get(), 1);
+    assert_eq!(provider.started.borrow().len(), 1);
+    assert_eq!(completed.get(), 2);
+}
+
+#[test]
+fn unattached_transitions_use_application_motion_preference_without_overriding_local_opt_out() {
+    let _scope = test_scope();
+    let settings = MotionPlatformSettings::new(false);
+    let _app = crate::testing::UnitTestApplication::start(
+        crate::testing::TestServices::default().with_platform_settings(settings.clone()),
+    );
+    let clock = TestClock::install();
+    let provider = TestTransitionProvider::new(true);
+    provider.queue_transition(add(&provider, element()));
+    clock.pulse(0.0);
+    assert_eq!(provider.should_calls.get(), 0);
+    assert!(provider.started.borrow().is_empty());
+
+    settings.enabled.set(true);
+    provider.set_animations_enabled(false);
+    provider.queue_transition(add(&provider, element()));
+    clock.pulse(16.0);
+    assert_eq!(provider.should_calls.get(), 0);
+    provider.set_animations_enabled(true);
+    provider.queue_transition(add(&provider, element()));
+    clock.pulse(32.0);
+    assert_eq!(provider.should_calls.get(), 1);
+}
+
+fn transition_repeater() -> (Ref<super::ItemsRepeater>, Rc<ferroui_base::collections::FerroList<i32>>) {
+    let repeater = super::ItemsRepeater::new();
+    let source = Rc::new(ferroui_base::collections::FerroList::from_items([0, 1]));
+    repeater.set_items_source(Some(source.clone().into()));
+    repeater.set_data_template(Some(FuncDataTemplate::new(|_| true, |_, _| Some(element()), true)));
+    arrange_transition_repeater(&repeater);
+    (repeater, source)
+}
+
+fn arrange_transition_repeater(repeater: &super::ItemsRepeater) {
+    repeater.measure(Size::new(80.0, 100.0));
+    repeater.arrange(Rect::new(0.0, 0.0, 80.0, repeater.desired_size().height));
+}
+
+#[test]
+fn removal_completion_invalidates_arrange_and_does_not_recycle_a_reused_element_twice() {
+    let _scope = test_scope();
+    let clock = TestClock::install();
+    let (repeater, source) = transition_repeater();
+    let provider = TestTransitionProvider::new(true);
+    *provider.start.borrow_mut() = Some(Rc::new(|transitions| {
+        for transition in transitions { transition.start(); }
+    }));
+    repeater.set_item_transition_provider(Some(provider.clone().upcast()));
+    let removed = repeater.try_get_element(0).unwrap();
+    source.remove_at(0);
+    arrange_transition_repeater(&repeater);
+    clock.pulse(0.0);
+    let transition = provider.started.borrow().iter()
+        .find(|transition| transition.operation() == Operation::Remove).unwrap().clone();
+    assert_eq!(super::ItemsRepeater::get_virtualization_info(&removed).owner(), ElementOwner::Animator);
+    assert!(repeater.is_arrange_valid());
+    transition.start().complete();
+    assert!(!repeater.is_arrange_valid());
+    assert_eq!(super::ItemsRepeater::get_virtualization_info(&removed).owner(), ElementOwner::ElementFactory);
+    arrange_transition_repeater(&repeater);
+    assert!(removed.bounds().x < -1000.0);
+
+    source.add(2);
+    arrange_transition_repeater(&repeater);
+    assert_eq!(repeater.try_get_element(1), Some(removed.clone()));
+    transition.start().complete();
+    assert_eq!(repeater.try_get_element(1), Some(removed.clone()));
+    assert_eq!(super::ItemsRepeater::get_virtualization_info(&removed).owner(), ElementOwner::Layout);
+    assert_eq!(*removed.data_context().unwrap().downcast_ref::<i32>().unwrap(), 2);
+}
+
+#[test]
+fn shared_transition_provider_completes_only_the_repeaters_own_elements() {
+    let _scope = test_scope();
+    let clock = TestClock::install();
+    let (first, source) = transition_repeater();
+    let (second, _) = transition_repeater();
+    let provider = TestTransitionProvider::new(true);
+    // The unrelated host receives the completion first.
+    second.set_item_transition_provider(Some(provider.clone().upcast()));
+    first.set_item_transition_provider(Some(provider.clone().upcast()));
+    let removed = first.try_get_element(0).unwrap();
+    let second_first = second.try_get_element(0).unwrap();
+    source.remove_at(0);
+    arrange_transition_repeater(&first);
+    clock.pulse(0.0);
+    assert_eq!(super::ItemsRepeater::get_virtualization_info(&removed).owner(), ElementOwner::ElementFactory);
+    assert_eq!(second.try_get_element(0), Some(second_first));
+    assert_eq!(second.realized_elements().len(), 2);
+}
+
 #[test]
 fn started_transitions_remain_available_until_the_full_keepalive_expires() {
     let _scope = test_scope();
