@@ -193,6 +193,19 @@ impl IDrawingContextLayerImpl for SurfaceRenderTarget {
 }
 
 impl SurfaceRenderTarget {
+    /// Replaces the pixels of the surface with what `write` writes into
+    /// them (premultiplied RGBA, `width * 4` bytes a row): the surface has
+    /// content from then on.
+    pub fn write_pixels(&self, write: &mut dyn FnMut(&mut [u8])) {
+        let mut pixels = self.pixels.borrow_mut();
+        pixels.image = None;
+        if let Some(data) = pixels.data.as_mut() {
+            write(&mut std::sync::Arc::make_mut(data)[..]);
+            pixels.has_content = true;
+            pixels.changed = Some(SurfaceChange::All);
+        }
+    }
+
     /// What the scenes rendered since this was last asked changed of the
     /// pixels, `None` for nothing.
     pub fn take_changed(&self) -> Option<SurfaceChange> {

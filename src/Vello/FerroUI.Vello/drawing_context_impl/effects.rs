@@ -173,7 +173,36 @@ impl DrawingContextImpl {
             }
         }
 
-        Box::new(VelloCpuSceneSink::new(width, height))
+        Box::new(VelloCpuSceneSink::single_threaded(width, height))
+    }
+
+    /// Whether [`create_filter_scene`](Self::create_filter_scene) makes a
+    /// scene of the device: one of the hybrid mode with filter layers.
+    pub(super) fn filter_scene_on_device(&mut self) -> bool {
+        #[cfg(feature = "hybrid")]
+        {
+            let scene = self.scene();
+            return scene.rendering_mode() == crate::VelloRenderingMode::Hybrid
+                && scene.filter_capabilities().filter_layers
+                && scene.device().is_some();
+        }
+        #[cfg(not(feature = "hybrid"))]
+        false
+    }
+
+    /// Renders a scene of the CPU renderer that
+    /// [`create_filter_scene`](Self::create_filter_scene) made into a
+    /// picture.
+    pub(super) fn render_filter_scene_to_image(
+        &mut self,
+        scene: &mut dyn IVelloSceneSink,
+        phase: crate::perf::Phase,
+    ) -> peniko::ImageData {
+        let (width, height) = (scene.width(), scene.height());
+        crate::perf::count(phase, u64::from(width) * u64::from(height) * 4);
+        let mut rgba = vec![0u8; width as usize * height as usize * 4];
+        scene.render_to_pixels(&mut rgba);
+        to_image(rgba, PixelSize::new(width as i32, height as i32))
     }
 
     /// Renders a scene of [`create_filter_scene`](Self::create_filter_scene)
