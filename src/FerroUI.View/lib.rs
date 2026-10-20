@@ -58,7 +58,7 @@ pub use extras::GridDefinitions;
 pub use reactive::{batch, effect, memo, on_cleanup, signal, untrack, Memo, Owner, Signal, TwoWay};
 
 #[cfg(feature = "desktop")]
-pub use app::{launch, mount_window, open_window};
+pub use app::{launch, launch_with, mount_window, open_window};
 
 pub use ferroui_view_macros::{component, rsx};
 
@@ -71,7 +71,7 @@ pub mod prelude {
         Signal, TwoWay,
     };
     #[cfg(feature = "desktop")]
-    pub use crate::{launch, mount_window, open_window};
+    pub use crate::{launch, launch_with, mount_window, open_window};
 }
 
 #[cfg(test)]

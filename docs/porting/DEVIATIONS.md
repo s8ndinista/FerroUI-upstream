@@ -287,6 +287,14 @@ The whole backend is an addition of the port: upstream has one render backend pe
 | A colour font is drawn by the platform: bitmaps, COLR, SVG. | COLR glyphs and PNG bitmap glyphs are drawn in colour; a glyph that is an SVG document is drawn as the plain outline of the font; a bitmap font of Apple (no `head` table) is a typeface with metrics of which the runs draw nothing. | Missing | What `glifo` 0.4 draws. | Vello backend, stage 5 |
 | A variable font is the instance Skia matched. | A typeface carries the values of its axes (`VelloTypeface::new`, `from_bytes_with_variations`; the font manager sets the weight or the slant of a variable font of the system), which the contract has no member for. | Addition | The renderers take normalized coordinates with a run. | Vello backend, stage 5 |
 
+### Declarative Rust API (`src/FerroUI.View/`, `src/FerroUI.View.Macros/`, an addition)
+
+The crates are an addition of the port: upstream writes user interface in XAML or in imperative code. They change nothing in the crates they use; `docs/declarative-ui.md` is their design.
+
+| Upstream | Port | Kind | Why | Since |
+|---|---|---|---|---|
+| User interface in XAML or imperative code; code-first properties and bindings through indexers and operators on properties (`control[Grid.RowProperty] = 1`, `control[!Property] = binding`). | `ferroui-view`: elements built with setters generated for every control (`scripts/generate_view_builders.py`), signals the properties follow, keyed children that follow state, `launch`; `ferroui-view-macros`: `rsx!` and `#[component]`. The indexers and operators are methods of the element (`set`, `bind`, `two_way`). Samples: the 7GUIs tasks in `samples/SevenGuis`. | Addition | Owner's request (issue #237, phase 0): user interfaces without XAML, built so that a reconciler of element trees can come later. | #237 |
+
 ### Headless platform (`src/Headless/FerroUI.Headless/`)
 
 | Upstream | Port | Kind | Why | Since |
