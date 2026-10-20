@@ -6,8 +6,9 @@ This document is the design of the crates and the plan of the work (issue #237).
 
 - **Phase 0**: the element tree, the builders, the macros, fine-grained reactivity, and the 7GUIs samples.
 - **Phase 1**: components that run again, their hooks, and the reconciler (sections 7 and 8).
+- **Phase 2**: XAML and components together, and data templates whose items are components (section 9).
 
-Section 10 plans the phases that remain. [declarative-ui-react.md](declarative-ui-react.md) compares the API with React.
+Section 11 plans the phases that remain. [declarative-ui-react.md](declarative-ui-react.md) compares the API with React.
 
 ## 1. A first look
 
@@ -69,7 +70,7 @@ fn main() {
 
 | Crate | What it holds |
 |---|---|
-| `ferroui-view` (`src/FerroUI.View`) | The element tree (`element.rs`), mounting and the reconciler (`mount.rs`), the reactive runtime with contexts (`reactive.rs`), the hooks (`hooks.rs`), the builders (generated), the conversions of values, children that follow state, and with the feature `desktop` the launch of an application |
+| `ferroui-view` (`src/FerroUI.View`) | The element tree (`element.rs`), mounting and the reconciler (`mount.rs`), the reactive runtime with contexts (`reactive.rs`), the hooks (`hooks.rs`), `ComponentHost` (`component_host.rs`), data templates of components (`template.rs`), the types for markup and, with the feature `xaml`, XAML in a component (`xaml.rs`), the builders (generated), the conversions of values, children that follow state, and with the feature `desktop` the launch of an application |
 | `ferroui-view-macros` (`src/FerroUI.View.Macros`) | `rsx!` and `#[component]` (with `rerender` and `memo`) |
 
 `ferroui-view` depends on `ferroui-base` and `ferroui-controls`; it adds nothing to them. The builders are generated from their sources by `scripts/generate_view_builders.py`, so a control or a property ported later gets its builder by running the script again (`--check` fails when the generated file is stale; `--report` lists what was left out and why).
@@ -314,11 +315,102 @@ Every instance has an owner of the runtime of section 6, made under the owner of
 ### 8.6 Costs and limits
 
 - **The cost of a run** is the function and a walk of the elements it returned: equal plain values are compared and skipped. Reactive values, bindings and handlers are applied again on each run, so a component that runs often (the timer of the hooks samples runs on every tick) is better off with fine-grained values for what changes most.
-- **Moves.** A keyed list whose order changes is patched by the prefix and suffix rule, which removes and inserts the controls in between. That is correct and keeps the controls, but it is not the minimal number of moves (section 10, phase 5).
+- **Moves.** A keyed list whose order changes is patched by the prefix and suffix rule, which removes and inserts the controls in between. That is correct and keeps the controls, but it is not the minimal number of moves (section 11, phase 5).
 - **Synchronous.** A run happens when the write that caused it ends (or the batch); there is no scheduler that splits or defers work, and no concurrent rendering.
-- **Items controls.** The children of an items control are its items; an items control with virtualization and an item template is not driven by the reconciler (section 10, phase 2).
+- **Items controls.** The children of an items control are its items. An items control with virtualization and an item template is not driven by the reconciler; its items are components through a data template (section 9.2).
 
-## 9. Samples: 7GUIs
+## 9. XAML and templates (phase 2)
+
+Phase 2 connects the declarative API with the rest of FerroUI: a component can live inside XAML or any tree of controls made otherwise, XAML can live inside a component, and the items of an items control can be components.
+
+### 9.1 `ComponentHost`: a component in another tree
+
+`ComponentHost` (`component_host.rs`) is a control, a `Decorator`, that shows an element:
+
+```rust
+let host = ComponentHost::with_view(|| rsx! { Counter {} });
+some_panel.children().add(host);
+```
+
+- The element is mounted when the host is given it, under the owner that was current then (so contexts reach it), or under a root owner.
+- It is disposed (effects, hooks, handlers) when the host leaves the visual tree, and mounted anew when the host is attached again.
+- A component inside reads the `DataContext` of the host with `use_data_context` (section 9.3), so a host in a view of an MVVM application shows its view model.
+
+**In XAML**, the `Component` property names a component registered with `register_component`:
+
+```rust
+ferroui_view::register_types();                // XAML finds ComponentHost as using:FerroUI.View
+register_component("Counter", || rsx! { Counter {} });
+```
+
+```xml
+<UserControl xmlns="https://github.com/ferroui" xmlns:view="using:FerroUI.View">
+  <view:ComponentHost Component="Counter" />
+</UserControl>
+```
+
+`register_types` registers the types of `ferroui-view` for markup: the namespace `FerroUI.View` and the assembly `FerroUI.View`, so both `using:FerroUI.View` and `clr-namespace:FerroUI.View;assembly=FerroUI.View` resolve.
+
+### 9.2 Data templates whose items are components
+
+`template(|item: T| ..)` (`template.rs`) is a data template for the `ItemTemplate` of an items control or the `ContentTemplate` of a content control:
+
+```rust
+let item_template = use_hook(|| template(|person: Person| rsx! {
+    StackPanel {
+        TextBlock { text: person.name }
+        TextBlock { text: person.city }
+    }
+}));
+rsx! { ListBox { items_source: source, item_template: item_template } }
+```
+
+Each item container gets a `ComponentHost`. Its component reads the item (the `DataContext` of the container) and runs `view` with it. The template matches data of type `T`.
+
+**Recycling.** A virtualizing panel realizes only the visible items. When it takes a container away, it clears the container's content, so the presenter builds a new child for the next item: a template that made a new host each time would mount a new component and new controls for every item scrolled into view. The template keeps a pool instead:
+
+1. A host that leaves the visual tree goes to the pool of its template, with its component still mounted. While it has no data context, the component keeps showing its last item, so nothing is taken down.
+2. The next container that needs a child takes a host from the pool. Its data context becomes the new item, the component runs again with it, and the reconciler patches its controls.
+3. When the template is dropped (the items control is gone), the pool ends its hosts.
+
+In the test of 10,000 items in a list 300 pixels high (`tests/template_tests.rs`), 19 containers are realized. Scrolling to items 2,000, 5,000 and 9,999 mounts one more component in all (20 mounts), and the components run 133 times. Without the pool, each screen mounted 19 new components (76 in all).
+
+**Keep the template and the items in hooks.** A data template and an items source compare by identity. A new one on each run of a component is a new value: the list sets it again and makes its items again. A component that runs again makes them in `use_hook`, as above. A component that runs once makes them in its body.
+
+### 9.3 The data context and the parent control
+
+| Hook | Gives |
+|---|---|
+| `use_data_context::<T>()` | The `DataContext` of the control the component is mounted in (inherited from its ancestors), when it is a `T`. The component runs again when it changes. |
+| `use_data_context_value()` | The same, untyped (`Option<BoxedValue>`). |
+| `use_parent_control()` | The control the component is mounted in: the control whose children or content hold it; `None` at the root of a tree. |
+
+The reconciler hands each component the control of its host (section 8.1), so a component knows its parent without a lookup.
+
+### 9.4 XAML in a component
+
+With the feature `xaml` (the XAML runtime library and its run-time loader):
+
+| Function | Does |
+|---|---|
+| `load_xaml(text)` | Loads XAML text whose root is a control. Its named controls are found with `find_control` or `get_control` of the root. |
+| `load_xaml_uri("ferres://assembly/path.xaml")` | Loads a document: its compiled markup when the assembly has it, the run-time loader otherwise. |
+| `xaml(text)` | An element of the loaded control, for a component that runs once. |
+| `use_xaml(text_or_uri)` | A hook: the control is loaded on the first run and kept, so `Element::Existing(use_xaml(..))` keeps its control on every run. |
+
+Each registers what it needs (the types of the XAML runtime library and of `ferroui-view`, the run-time loader) the first time it is called.
+
+### 9.5 The sample
+
+`samples/ViewInterop` (`cargo run -p view-interop`) puts the three together:
+
+- a directory of 10,000 people in a virtualized `ListBox` whose item template is a component;
+- the details of the selected person are XAML loaded with `use_xaml`, whose named controls the component fills;
+- inside that XAML, a `ComponentHost` shows the registered component `Badge`, which reads the person from its data context.
+
+![The ViewInterop sample](images/declarative-ui/view-interop.png)
+
+## 10. Samples: 7GUIs
 
 The seven tasks of 7GUIs (<https://eugenkiss.github.io/7guis/tasks>) are written three times, each task a crate of its own so that each stays small:
 
@@ -366,13 +458,13 @@ cargo run -p seven-guis-crud-hooks
 FERROUI_SEVEN_GUIS_SHOTS=/tmp/shots cargo run -p seven-guis-crud-macros   # renders the window into /tmp/shots/macros-crud.png
 ```
 
-## 10. Phases
+## 11. Phases
 
 | Phase | Content | State |
 |---|---|---|
 | 0 | Element tree, generated builders, `rsx!`, `#[component]`, signals, children that follow state, 7GUIs in two versions | done (#270) |
 | 1 | Components that run again, hooks, contexts, the reconciler, 7GUIs in a third version | done |
-| 2 | Interoperation with XAML and templates | planned |
+| 2 | Interoperation with XAML and templates: `ComponentHost`, data templates of components, the data context, XAML in a component | done |
 | 3 | The rest of the API: other crates of controls, styles, resources, animations | planned |
 | 4 | Tools: hot reload, an inspector, diagnostics | planned |
 | 5 | Performance and scale | planned |
@@ -380,14 +472,18 @@ FERROUI_SEVEN_GUIS_SHOTS=/tmp/shots cargo run -p seven-guis-crud-macros   # rend
 
 Each phase lands as one or more pull requests with tests, and samples where they show something new. Each also updates this document and [declarative-ui-react.md](declarative-ui-react.md).
 
-### Phase 2: interoperation with XAML and templates
+### Phase 2: interoperation with XAML and templates (done, section 9)
 
 - **A component in XAML.** A control, `ComponentHost`, holds a component, so that a XAML view can host a part written in Rust. Its content is mounted under the owner of the control and disposed when the control is detached. Properties of the host reach the component as a context or as parameters.
 - **XAML in a component.** `Element::Existing` takes any control already. What is missing is to load a XAML resource as an element (`xaml("ferres://..")`), with access to its named controls.
 - **Item templates from components.** An `ItemsControl` with virtualization makes its item containers itself, so the reconciler does not drive them. A data template that builds an element per item (`template(|item: &T| rsx! { .. })`) would mount the element in each container and reconcile it when the container is given another item. This makes the declarative API work with virtualized lists, `TreeDataGrid` included.
 - **Data context.** A hook that reads the `DataContext` of the control a component is mounted in, for components that live in a view model application (`docs/mvvm.md`).
 
-Acceptance: a XAML window with a Rust component inside, a component with a XAML user control inside, and a virtualized `ListBox` of 10,000 items whose template is a component; each tested.
+Acceptance: a XAML window with a Rust component inside, a component with a XAML user control inside, and a virtualized `ListBox` of 10,000 items whose template is a component; each tested (`tests/template_tests.rs`).
+
+What was built differs from the plan above in two points:
+- Properties of the host reach the component through the data context, not as parameters.
+- `xaml(..)` takes text or a `ferres://` URI, and the named controls are found with the existing `find_control` / `get_control` of the root.
 
 ### Phase 3: the rest of the API
 
@@ -419,7 +515,7 @@ Acceptance: the ControlCatalog page of one control of each crate written with th
 - **Navigation.** A router of views for single-window applications, with the routing of ReactiveUI as a model.
 - **A larger sample.** TodoMVC and a port of a ReactiveUI sample to components that run again, in the WinUI 3 theme, with screenshots and scenario tests.
 
-## 11. Testing
+## 12. Testing
 
 - `src/FerroUI.View/tests`: the reactive runtime, setters and conversions, mounting, two-way values, handlers, keyed lists, conditions, the macros and components; and for phase 1 (`rerender_tests.rs`):
   - runs again and kept controls;
@@ -433,5 +529,11 @@ Acceptance: the ControlCatalog page of one control of each crate written with th
   - the order of hooks;
   - dynamic lists in a component that runs again;
   - `if` and `for` of `rsx!`.
+- `src/FerroUI.View/tests/template_tests.rs` (phase 2):
+  - a host that follows its data context, ends its component when detached and mounts it again when attached;
+  - a component registered and shown by name;
+  - XAML that hosts a registered component;
+  - a component that hosts XAML and keeps it across runs (feature `xaml`);
+  - a virtualized list of 10,000 items whose template recycles its hosts.
 - `samples/SevenGuis/Tests`: the scenarios of the seven tasks on the twenty-one crates, on the test application of `ferroui-controls` (a dispatcher of the thread).
 - `samples/SevenGuis/Model`: the logic without user interface.

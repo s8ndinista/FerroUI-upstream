@@ -90,6 +90,7 @@ members = [
     "samples/SevenGuis/Hooks/CircleDrawer",
     "samples/SevenGuis/Hooks/Cells",
     "samples/SevenGuis/Tests",
+    "samples/ViewInterop",
     "samples/MiniMvvm",
     "samples/ControlCatalog",
     "samples/ControlCatalog.Desktop",

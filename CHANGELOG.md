@@ -12,6 +12,12 @@ All notable changes to FerroUI are recorded in this file. The format follows [Ke
   - a reconciler that patches the mounted controls into the elements a component returns: siblings matched by key and by place, equal values left alone, values that are gone cleared, handlers attached again, controls kept;
   - the 7GUIs tasks as components that run again (`samples/SevenGuis/Hooks`), in the scenario tests with the other ports;
   - `docs/declarative-ui-react.md`, a comparison of the API with React, and the plan of the phases that remain.
+- **XAML and templates** in `ferroui-view` (phase 2, `docs/declarative-ui.md`, section 9):
+  - `ComponentHost`, a control that shows a component in XAML or any tree of controls; `register_component` names components for its `Component` property; `register_types` registers the types of the crate for markup (`using:FerroUI.View`);
+  - `template(|item: T| ..)`, a data template whose items are components, which recycles its hosts through a pool so that a virtualized list patches its items as it scrolls;
+  - `use_data_context`, `use_data_context_value` and `use_parent_control`;
+  - with the feature `xaml`: `load_xaml`, `load_xaml_uri`, `xaml` and `use_xaml`, XAML in a component;
+  - the sample `samples/ViewInterop`: a virtualized directory of 10,000 people with XAML details and a component inside the XAML.
 
 ### Changed
 

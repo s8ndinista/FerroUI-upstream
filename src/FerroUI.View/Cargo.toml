@@ -22,6 +22,8 @@ path = "lib.rs"
 default = []
 # `launch`, `open_window`: an application on the platform of the operating system with the Fluent theme.
 desktop = ["dep:ferroui-desktop", "dep:ferroui-themes-fluent"]
+# XAML in a component (`load_xaml`, `use_xaml`): the XAML runtime library and its run-time loader.
+xaml = ["dep:ferroui-markup-xaml", "dep:ferroui-markup-xaml-loader"]
 
 [dependencies]
 ferroui-base = { workspace = true }
@@ -29,9 +31,13 @@ ferroui-controls = { workspace = true }
 ferroui-view-macros = { workspace = true }
 ferroui-desktop = { workspace = true, optional = true }
 ferroui-themes-fluent = { workspace = true, optional = true }
+ferroui-markup-xaml = { workspace = true, optional = true }
+ferroui-markup-xaml-loader = { workspace = true, optional = true, features = ["runtime"] }
 
 [dev-dependencies]
 ferroui-controls = { workspace = true, features = ["testing"] }
+ferroui-markup-xaml = { workspace = true }
+ferroui-markup-xaml-loader = { workspace = true, features = ["runtime"] }
 
 # The group of the crate in the table of the README (docs/release.md).
 [package.metadata.release]

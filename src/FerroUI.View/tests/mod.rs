@@ -6,3 +6,4 @@ mod dynamic_tests;
 mod macro_tests;
 mod reactive_tests;
 mod rerender_tests;
+mod template_tests;

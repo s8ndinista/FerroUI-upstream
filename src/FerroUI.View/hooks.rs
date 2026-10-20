@@ -26,7 +26,9 @@
 //! component is taken out. Signals made with [`signal`](crate::signal) in the
 //! function itself belong to that run and are made again on the next one.
 
-use crate::reactive::{effect, Memo, Owner, Signal};
+use crate::reactive::{effect, on_cleanup, Memo, Owner, Signal};
+use ferroui_base::{BoxedValue, Ref, StyledElement};
+use ferroui_controls::Control;
 use std::any::Any;
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -41,6 +43,8 @@ struct Frame {
     owner: Owner,
     /// What runs once the controls of the run are in place.
     after: Vec<Box<dyn FnOnce()>>,
+    /// The control the component is mounted in, if any.
+    parent: Option<Ref<Control>>,
 }
 
 ferroui_base::ferro_thread_local! {
@@ -53,10 +57,11 @@ ferroui_base::ferro_thread_local! {
 pub(crate) fn render_with<R>(
     slots: &Rc<RefCell<Vec<Rc<dyn Any>>>>,
     owner: Owner,
+    parent: Option<Ref<Control>>,
     render: impl FnOnce() -> R,
 ) -> (R, Vec<Box<dyn FnOnce()>>) {
     FRAMES.with(|frames| {
-        frames.borrow_mut().push(Frame { slots: slots.clone(), index: 0, owner, after: Vec::new() });
+        frames.borrow_mut().push(Frame { slots: slots.clone(), index: 0, owner, after: Vec::new(), parent });
     });
     let result = render();
     let frame = FRAMES.with(|frames| frames.borrow_mut().pop()).expect("the frame of the run");
@@ -159,4 +164,53 @@ fn after(f: impl FnOnce(Owner) + 'static) {
         let owner = frame.owner;
         frame.after.push(Box::new(move || f(owner)));
     });
+}
+
+/// The control the component is mounted in: the control whose content or
+/// children hold it (`None` at the root of a tree). It is the same control on
+/// every run.
+pub fn use_parent_control() -> Option<Ref<Control>> {
+    let parent = FRAMES.with(|frames| {
+        let frames = frames.borrow();
+        let Some(frame) = frames.last() else { no_frame() };
+        frame.parent.clone()
+    });
+    // A hook, so that the order of the hooks does not depend on the parent.
+    use_hook(|| ());
+    parent
+}
+
+/// The `DataContext` of the control the component is mounted in (inherited
+/// from its ancestors), as it is now; the component runs again when it
+/// changes. This is how a component reads the item of an item template
+/// ([`template`](crate::template)) or the view model of a view it is hosted
+/// in ([`ComponentHost`](crate::ComponentHost)).
+pub fn use_data_context_value() -> Option<BoxedValue> {
+    let parent = use_parent_control();
+    let context = use_hook(move || {
+        let context = crate::reactive::signal(parent.as_ref().and_then(|control| control.data_context()));
+        if let Some(control) = parent {
+            let property = StyledElement::data_context_property().as_property();
+            let subscription = control.property_changed(move |e| {
+                if std::ptr::eq(e.property(), property) {
+                    let value = e.new_value().downcast_ref::<Option<BoxedValue>>().cloned().flatten();
+                    if context.is_alive() {
+                        context.set(value);
+                    }
+                }
+            });
+            on_cleanup(move || subscription.dispose());
+        }
+        context
+    });
+    context.get()
+}
+
+/// The `DataContext` of the control the component is mounted in, when it
+/// holds a `T` (see [`use_data_context_value`]).
+pub fn use_data_context<T: Clone + 'static>() -> Option<T> {
+    use_data_context_value().and_then(|value| {
+        let value: &dyn ferroui_base::AnyValue = &*value;
+        value.downcast_ref::<T>().cloned()
+    })
 }

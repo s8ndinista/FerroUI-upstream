@@ -105,6 +105,19 @@ impl Host {
             .unwrap_or_else(|| panic!("{} has no content to place children into", control.get_type().full_name()))
     }
 
+    /// The control whose content this is: what a component mounted here is
+    /// in (its data context, for [`use_data_context`](crate::hooks::use_data_context)).
+    fn control(&self) -> Option<Ref<Control>> {
+        match self {
+            Host::Panel(panel) => Some(panel.clone().upcast()),
+            Host::Items(items) => Some(items.clone().upcast()),
+            Host::Content(control, _) => Some(control.clone()),
+            Host::Decorator(decorator) => Some(decorator.clone().upcast()),
+            Host::Text(text) => Some(text.clone().upcast()),
+            Host::Root => None,
+        }
+    }
+
     fn is_single(&self) -> bool {
         !matches!(self, Host::Panel(_) | Host::Items(_))
     }
@@ -756,7 +769,8 @@ fn mount_component(element: ComponentElement, host: &Rc<Host>) -> Rc<ComponentIn
         effect(move || {
             state.version.get();
             let render = state.render.borrow().clone();
-            let (element, after) = crate::hooks::render_with(&state.hooks, state.owner, || render());
+            let parent = state.host.control();
+            let (element, after) = crate::hooks::render_with(&state.hooks, state.owner, parent, || render());
             untrack(|| {
                 let old = std::mem::take(&mut *state.instances.borrow_mut());
                 let next = state.tree.with(|| reconcile_list(&state.host, &state.slot, old, vec![element]));
@@ -943,6 +957,23 @@ fn stop_prop(prop: &MountedProp) {
     }
     if let Some(owner) = prop.owner {
         owner.dispose();
+    }
+}
+
+/// The children an element mounted into a control that holds one child (a
+/// decorator, a content control): what `ComponentHost` keeps.
+pub(crate) struct MountedChild(Children);
+
+impl MountedChild {
+    /// Mounts `element` as the child of `control`, under the current owner.
+    pub(crate) fn mount(control: &Ref<Control>, element: Element) -> MountedChild {
+        MountedChild(Children::mount(Host::of_control(control), vec![element]))
+    }
+
+    /// Takes the child out of the control and disposes what it mounted.
+    pub(crate) fn unmount(self) {
+        let mut children = self.0;
+        children.reconcile(Vec::new());
     }
 }
 

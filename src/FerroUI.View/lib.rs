@@ -41,6 +41,7 @@
 extern crate self as ferroui_view;
 
 pub mod builder;
+mod component_host;
 mod control_flow;
 mod conversions;
 pub mod element;
@@ -48,6 +49,8 @@ mod extras;
 pub mod hooks;
 mod mount;
 pub mod reactive;
+mod template;
+pub mod xaml;
 
 #[cfg(feature = "desktop")]
 mod app;
@@ -60,7 +63,14 @@ pub mod generated {
 pub use builder::{Bind, Builder, El, ElementBuilder, FromValue, IntoProp, IntoValue, TypedProperty, ViewClass};
 pub use control_flow::{dynamic, for_each, show, show_else, NodeRef};
 pub use element::{rerender, ComponentElement, Element, IntoChild, IntoChildren, IntoElement, Key};
-pub use hooks::{use_effect, use_effect_with, use_hook, use_memo, use_signal};
+pub use component_host::{register_component, ComponentHost, View};
+pub use hooks::{
+    use_data_context, use_data_context_value, use_effect, use_effect_with, use_hook, use_memo, use_parent_control, use_signal,
+};
+pub use template::template;
+pub use xaml::register_types;
+#[cfg(feature = "xaml")]
+pub use xaml::{load_xaml, load_xaml_uri, use_xaml};
 pub use extras::GridDefinitions;
 pub use reactive::{
     batch, effect, memo, on_cleanup, provide_context, signal, untrack, use_context, Memo, Owner, Signal, TwoWay,
@@ -76,8 +86,8 @@ pub mod prelude {
     pub use crate::generated::builders::*;
     pub use crate::{
         batch, component, dynamic, effect, for_each, memo, on_cleanup, provide_context, rerender, rsx, show, show_else,
-        signal, untrack, use_context, use_effect, use_effect_with, use_hook, use_memo, use_signal, Bind, El, Element,
-        ElementBuilder, GridDefinitions, IntoChild, IntoChildren, IntoElement, Key, Memo, NodeRef, Owner, Signal, TwoWay,
+        signal, template, untrack, use_context, use_data_context, use_effect, use_effect_with, use_hook, use_memo,
+        use_signal, Bind, ComponentHost, El, Element, ElementBuilder, GridDefinitions, IntoChild, IntoChildren, IntoElement, Key, Memo, NodeRef, Owner, Signal, TwoWay,
     };
     #[cfg(feature = "desktop")]
     pub use crate::{launch, launch_themed, launch_with, mount_window, open_window};

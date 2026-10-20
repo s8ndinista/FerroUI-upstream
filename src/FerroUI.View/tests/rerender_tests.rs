@@ -387,3 +387,23 @@ fn rsx_conditions_and_loops_in_a_component_that_runs_again() {
     assert_eq!(list.items().count(), 3);
     owner.dispose();
 }
+
+#[test]
+fn a_component_follows_the_data_context_of_the_control_it_is_in() {
+    let owner = Owner::new_root();
+    let panel = owner.with(|| {
+        stack_panel()
+            .child(rerender(|| {
+                let name = crate::hooks::use_data_context::<String>().unwrap_or_else(|| String::from("none"));
+                text_block().text(name)
+            }))
+            .into_element()
+            .mount()
+    });
+    assert_eq!(texts(&panel), vec!["none"]);
+    let first = children(&panel)[0].clone();
+    panel.set_data_context(Some(Rc::new(String::from("Ada")) as BoxedValue));
+    assert_eq!(texts(&panel), vec!["Ada"], "the data context is inherited and followed");
+    assert!(first.ptr_eq(&children(&panel)[0]));
+    owner.dispose();
+}
