@@ -1,6 +1,9 @@
 use crate::gpu::{log_render_failure, premultiply_pixel, VelloGpuTexture, VelloWgpuDevice};
 use crate::scene::vello_cpu_scene_sink::{prepare, stroke_outline};
-use crate::scene::{IVelloSceneSink, VelloSceneBrush, VelloSceneCapabilities, VelloSceneGlyphRun, VelloScenePaint};
+use crate::scene::{
+    IVelloSceneSink, VelloSceneBrush, VelloSceneCapabilities, VelloSceneGlyphRun, VelloScenePaint, VelloScenePixelRect,
+    VelloSceneTexture,
+};
 use crate::vello_options::VelloRenderingMode;
 use kurbo::{Affine, BezPath, Diagonal2, PathEl, Point, Rect, Stroke, Vec2};
 use peniko::color::{palette, AlphaColor};
@@ -46,6 +49,9 @@ struct GpuRendererState {
     /// writes with a compute shader, which the texture of a drawable does
     /// not allow.
     intermediate: Option<wgpu::Texture>,
+    /// The texture the scene of a part of a kept target is rendered into,
+    /// before it is copied into its place.
+    region: Option<wgpu::Texture>,
     /// The images that stand for what scenes paint with, by their size and
     /// alpha form: the n-th image or texture of a size in a scene is always
     /// the n-th of these (see [`ImagePlace`]).
@@ -107,6 +113,16 @@ enum Open {
     Clip(OpenClip),
 }
 
+/// A clip opened before anything was drawn, as it was pushed (see
+/// [`VelloGpuSceneSink::first_clips`]).
+#[derive(Clone)]
+struct FirstClip {
+    path: BezPath,
+    fill_rule: Fill,
+    transform: Affine,
+    anti_alias: bool,
+}
+
 #[derive(Clone)]
 struct OpenClip {
     path: BezPath,
@@ -165,8 +181,27 @@ struct OpenClip {
 pub struct VelloGpuSceneSink {
     device: Arc<VelloWgpuDevice>,
     scene: Scene,
+    /// The size of the scene: of the target, or of the part of a kept
+    /// target it is restricted to (see [`IVelloSceneSink::retain_target`]).
     width: u16,
     height: u16,
+    /// The size of the target.
+    target_size: (u16, u16),
+    /// Where the scene lies on the target: its top-left pixel.
+    origin: (u16, u16),
+    /// The rectangles of a kept target that are made transparent before
+    /// the scene is composed over what the target holds.
+    retained: Option<Vec<VelloScenePixelRect>>,
+    /// The clips that were opened before anything else was recorded, as
+    /// they were pushed, to be opened again in a scene of the rectangles a
+    /// kept target clears; `None` once something else was recorded.
+    first_clips: Option<Vec<FirstClip>>,
+    /// The clips that bound a scene of a part of the target: those that
+    /// were open when it was restricted.
+    bounding_clips: usize,
+    /// Whether the clips that bound the scene were ended: what is recorded
+    /// next goes to a scene of the whole target.
+    unbounded: bool,
     anti_aliasing: VelloGpuAntiAliasing,
     open: Vec<Open>,
     /// What the scene paints with, each with the image that stands for it
@@ -201,6 +236,12 @@ impl VelloGpuSceneSink {
             scene: Scene::new(),
             width,
             height,
+            target_size: (width, height),
+            origin: (0, 0),
+            retained: None,
+            first_clips: Some(Vec::new()),
+            bounding_clips: 0,
+            unbounded: false,
             anti_aliasing,
             open: Vec::new(),
             images: Vec::new(),
@@ -216,6 +257,77 @@ impl VelloGpuSceneSink {
 
     fn target_rect(&self) -> Rect {
         Rect::new(0.0, 0.0, f64::from(self.width), f64::from(self.height))
+    }
+
+    /// A transform to the pixels of the target as a transform to the pixels
+    /// of the scene.
+    fn placed(&self, transform: Affine) -> Affine {
+        match self.origin {
+            (0, 0) => transform,
+            (x, y) => Affine::translate((-f64::from(x), -f64::from(y))) * transform,
+        }
+    }
+
+    /// Something other than a clip is recorded: the scene keeps its size.
+    fn drawing(&mut self) {
+        self.first_clips = None;
+        self.recording();
+    }
+
+    /// Something is recorded: after the clips that bound the scene were
+    /// ended, in a scene of the whole target, which starts with what was
+    /// recorded in the bounded one at its place.
+    fn recording(&mut self) {
+        if !std::mem::take(&mut self.unbounded) {
+            return;
+        }
+        let mut bounded = std::mem::replace(&mut self.scene, Scene::new());
+        // The clips still open in the bounded scene end there and are
+        // opened again, in the pixels of the target.
+        let open: Vec<OpenClip> = self
+            .open
+            .iter()
+            .filter_map(|open| match open {
+                Open::Clip(clip) => Some(clip.clone()),
+                Open::Layer { .. } => None,
+            })
+            .collect();
+        for _ in &self.open {
+            bounded.pop_layer();
+        }
+        let offset = Affine::translate((f64::from(self.origin.0), f64::from(self.origin.1)));
+        self.scene.append(&bounded, Some(offset));
+
+        self.origin = (0, 0);
+        (self.width, self.height) = self.target_size;
+        self.open.clear();
+        for clip in open {
+            let clip = OpenClip { transform: offset * clip.transform, ..clip };
+            self.scene.push_clip_layer(clip.fill_rule, clip.transform, &clip.path);
+            self.open.push(Open::Clip(clip));
+        }
+    }
+
+    /// The clips that are open.
+    fn open_clip_count(&self) -> usize {
+        self.open.iter().filter(|open| matches!(open, Open::Clip(_))).count()
+    }
+
+    /// Opens a clip in the scene, the transform in the pixels of the
+    /// target.
+    fn open_clip(&mut self, path: &BezPath, fill_rule: Fill, transform: Affine, anti_alias: bool) {
+        let transform = self.placed(transform);
+        let snapped = if anti_alias { None } else { snap_to_pixels(path, transform) };
+        let clip = match snapped {
+            Some(snapped) => OpenClip { path: snapped, fill_rule: Fill::NonZero, transform: Affine::IDENTITY },
+            None => {
+                let (path, transform) = prepare(path, transform);
+                OpenClip { path: path.into_owned(), fill_rule, transform }
+            }
+        };
+
+        self.scene.push_clip_layer(clip.fill_rule, clip.transform, &clip.path);
+        self.open.push(Open::Clip(clip));
     }
 
     /// The image that stands in the scene for an image or a texture of
@@ -424,10 +536,95 @@ impl VelloGpuSceneSink {
         result
     }
 
+    /// Renders the scene over what a texture of the device holds (one the
+    /// compute shaders write, of colors that are not premultiplied), the
+    /// `cleared` rectangles made transparent first: the scene of the
+    /// rectangle the scene covers ([`IVelloSceneSink::retain_target`]) is
+    /// rendered into a texture of its size, which starts with what the
+    /// target holds there unless the cleared rectangles cover all of it,
+    /// and is copied into its place.
+    fn render_over_target(&mut self, target: &wgpu::Texture, cleared: &[VelloScenePixelRect]) -> Result<(), String> {
+        let (x, y) = (u32::from(self.origin.0), u32::from(self.origin.1));
+        let (width, height) = (u32::from(self.width), u32::from(self.height));
+        let region = VelloScenePixelRect {
+            x0: self.origin.0,
+            y0: self.origin.1,
+            x1: self.origin.0 + self.width,
+            y1: self.origin.1 + self.height,
+        };
+        let covered = cleared.iter().any(|rect| {
+            rect.x0 <= region.x0 && rect.y0 <= region.y0 && rect.x1 >= region.x1 && rect.y1 >= region.y1
+        });
+
+        let combined = if covered {
+            None
+        } else {
+            // What the target holds in the region, as the first paint of
+            // the scene, with the cleared rectangles taken out of it.
+            let backdrop = crate::gpu::VelloDeviceTexture::new(
+                &self.device,
+                width,
+                height,
+                crate::gpu::VelloTextureAlpha::Straight,
+            );
+            self.device.copy_texture_region(target, (x, y), backdrop.texture(), (0, 0), (width, height));
+            let paint = VelloScenePaint {
+                brush: VelloSceneBrush::Texture(VelloSceneTexture {
+                    texture: backdrop,
+                    x_extend: peniko::Extend::Pad,
+                    y_extend: peniko::Extend::Pad,
+                    quality: peniko::ImageQuality::Low,
+                    alpha: 1.0,
+                }),
+                transform: Affine::IDENTITY,
+            };
+            let brush = self.brush(&paint);
+            let area = self.target_rect();
+
+            let mut combined = Scene::new();
+            combined.fill(Fill::NonZero, Affine::IDENTITY, &brush, None, &area);
+            let take_out = BlendMode::new(Mix::Normal, Compose::DestOut);
+            for rect in cleared {
+                let rect = Rect::new(
+                    f64::from(rect.x0) - f64::from(region.x0),
+                    f64::from(rect.y0) - f64::from(region.y0),
+                    f64::from(rect.x1) - f64::from(region.x0),
+                    f64::from(rect.y1) - f64::from(region.y0),
+                )
+                .intersect(area);
+                if rect.area() > 0.0 {
+                    combined.push_layer(Fill::NonZero, take_out, 1.0, Affine::IDENTITY, &rect);
+                    combined.fill(Fill::NonZero, Affine::IDENTITY, &Brush::Solid(AlphaColor::BLACK), None, &rect);
+                    combined.pop_layer();
+                }
+            }
+            combined.append(&self.scene, None);
+            Some(combined)
+        };
+
+        let scene = combined.as_ref().unwrap_or(&self.scene);
+        let (images, anti_aliasing) = (&self.images, self.anti_aliasing);
+        let rendered = self.device.with_renderer_state(Self::new_state, |device, state| {
+            let reusable =
+                state.region.as_ref().is_some_and(|texture| texture.width() == width && texture.height() == height);
+            if !reusable {
+                state.region = Some(device.create_rgba_texture(width, height, Self::TARGET_USAGE));
+            }
+            let region = state.region.clone().unwrap_or_else(|| panic!("The texture was just created"));
+            let view = region.create_view(&wgpu::TextureViewDescriptor::default());
+            Self::render(scene, images, anti_aliasing, device, state, &view, width, height)?;
+            Ok::<_, String>(region)
+        })?;
+
+        self.device.copy_texture_region(&rendered, (0, 0), target, (x, y), (width, height));
+        Ok(())
+    }
+
     fn new_state(_device: &VelloWgpuDevice) -> GpuRendererState {
         GpuRendererState {
             renderers: HashMap::new(),
             intermediate: None,
+            region: None,
             places: HashMap::new(),
             image_textures: HashMap::new(),
             render_count: 0,
@@ -558,7 +755,7 @@ impl IVelloSceneSink for VelloGpuSceneSink {
             image_paints: true,
             read_back: true,
             device_textures: true,
-            retained_targets: false,
+            retained_targets: true,
         }
     }
 
@@ -567,16 +764,70 @@ impl IVelloSceneSink for VelloGpuSceneSink {
     }
 
     fn width(&self) -> u16 {
-        self.width
+        self.target_size.0
     }
 
     fn height(&self) -> u16 {
-        self.height
+        self.target_size.1
+    }
+
+    fn retain_target(&mut self, cleared: &[VelloScenePixelRect]) {
+        // Before anything but clips was recorded, a scene that is composed
+        // over its target in the rectangles it clears is rendered there
+        // only: a scene of the rectangle around them, rendered into a
+        // texture of its size and copied into its place. The renderer
+        // renders every tile of its target, whatever the scene covers.
+        let first = self.retained.is_none()
+            && self.origin == (0, 0)
+            && self.first_clips.as_ref().is_some_and(|clips| !clips.is_empty() && clips.len() == self.open_clip_count());
+        self.retained.get_or_insert_with(Vec::new).extend_from_slice(cleared);
+        if !first || cleared.is_empty() {
+            return;
+        }
+
+        let (width, height) = self.target_size;
+        let bounds = cleared.iter().fold(None::<VelloScenePixelRect>, |bounds, rect| {
+            let rect = VelloScenePixelRect {
+                x0: rect.x0.min(width),
+                y0: rect.y0.min(height),
+                x1: rect.x1.min(width),
+                y1: rect.y1.min(height),
+            };
+            Some(match bounds {
+                None => rect,
+                Some(bounds) => VelloScenePixelRect {
+                    x0: bounds.x0.min(rect.x0),
+                    y0: bounds.y0.min(rect.y0),
+                    x1: bounds.x1.max(rect.x1),
+                    y1: bounds.y1.max(rect.y1),
+                },
+            })
+        });
+        let Some(bounds) = bounds.filter(|bounds| bounds.x1 > bounds.x0 && bounds.y1 > bounds.y0) else {
+            return;
+        };
+
+        let clips = self.first_clips.take().unwrap_or_default();
+        self.scene.reset();
+        self.open.clear();
+        self.origin = (bounds.x0, bounds.y0);
+        (self.width, self.height) = (bounds.x1 - bounds.x0, bounds.y1 - bounds.y0);
+        for clip in &clips {
+            self.open_clip(&clip.path, clip.fill_rule, clip.transform, clip.anti_alias);
+        }
+        self.bounding_clips = clips.len();
+        self.first_clips = Some(clips);
     }
 
     fn reset(&mut self) {
         self.scene.reset();
         self.open.clear();
+        self.origin = (0, 0);
+        (self.width, self.height) = self.target_size;
+        self.retained = None;
+        self.first_clips = Some(Vec::new());
+        self.bounding_clips = 0;
+        self.unbounded = false;
         self.images.clear();
         self.stand_ins.clear();
         self.place_counts.clear();
@@ -591,6 +842,8 @@ impl IVelloSceneSink for VelloGpuSceneSink {
         blend_mode: BlendMode,
         anti_alias: bool,
     ) {
+        self.drawing();
+        let transform = self.placed(transform);
         let brush = self.brush(paint);
         // The brush in the pixels of the target. The renderer evaluates a
         // gradient at the corner of a pixel, not at its center (its fine
@@ -683,6 +936,8 @@ impl IVelloSceneSink for VelloGpuSceneSink {
             return;
         }
         let _perf = crate::perf::scope(crate::perf::Phase::GlyphRun, glyph_run.glyphs.len() as u64);
+        self.drawing();
+        let transform = self.placed(transform);
 
         // The brush as a shape gets it (see `fill`): a gradient moved by
         // half a pixel, a linear one in the pixels of the target. The scene
@@ -729,27 +984,26 @@ impl IVelloSceneSink for VelloGpuSceneSink {
     }
 
     fn push_clip(&mut self, path: &BezPath, fill_rule: Fill, transform: Affine, anti_alias: bool) {
-        let snapped = if anti_alias { None } else { snap_to_pixels(path, transform) };
-        let clip = match snapped {
-            Some(snapped) => OpenClip { path: snapped, fill_rule: Fill::NonZero, transform: Affine::IDENTITY },
-            None => {
-                let (path, transform) = prepare(path, transform);
-                OpenClip { path: path.into_owned(), fill_rule, transform }
-            }
-        };
-
-        self.scene.push_clip_layer(clip.fill_rule, clip.transform, &clip.path);
-        self.open.push(Open::Clip(clip));
+        self.recording();
+        if let Some(clips) = &mut self.first_clips {
+            clips.push(FirstClip { path: path.clone(), fill_rule, transform, anti_alias });
+        }
+        self.open_clip(path, fill_rule, transform, anti_alias);
     }
 
     fn pop_clip(&mut self) {
+        self.first_clips = None;
         if let Some(Open::Clip(_)) = self.open.last() {
             self.open.pop();
             self.scene.pop_layer();
         }
+        if self.origin != (0, 0) && self.open_clip_count() < self.bounding_clips {
+            self.unbounded = true;
+        }
     }
 
     fn push_layer(&mut self, blend_mode: BlendMode, opacity: f32) {
+        self.drawing();
         let target = self.target_rect();
 
         if blend_mode == BlendMode::default() {
@@ -770,6 +1024,7 @@ impl IVelloSceneSink for VelloGpuSceneSink {
     }
 
     fn pop_layer(&mut self) {
+        self.drawing();
         let Some(index) = self.open.iter().rposition(|open| matches!(open, Open::Layer { .. })) else {
             return;
         };
@@ -792,6 +1047,12 @@ impl IVelloSceneSink for VelloGpuSceneSink {
     }
 
     fn render_to_pixels(&mut self, pixels: &mut [u8]) {
+        // Pixels in memory are rendered whole: a scene restricted to a part
+        // of a kept target goes back to the size of the target.
+        if self.origin != (0, 0) || (self.width, self.height) != self.target_size {
+            self.unbounded = true;
+            self.recording();
+        }
         let (width, height) = (u32::from(self.width), u32::from(self.height));
         let texture = self.device.create_rgba_texture(width, height, Self::TARGET_USAGE);
         let view = texture.create_view(&wgpu::TextureViewDescriptor::default());
@@ -812,6 +1073,12 @@ impl IVelloSceneSink for VelloGpuSceneSink {
     }
 
     fn render_to_texture(&mut self, target: &VelloGpuTexture<'_>) -> Result<(), String> {
+        let writable = target.texture.format() == wgpu::TextureFormat::Rgba8Unorm
+            && target.texture.usage().contains(wgpu::TextureUsages::STORAGE_BINDING);
+        if let (Some(cleared), true) = (self.retained.take(), writable) {
+            return self.render_over_target(target.texture, &cleared);
+        }
+
         let (width, height) = (u32::from(self.width), u32::from(self.height));
         let (scene, images, anti_aliasing) = (&self.scene, &self.images, self.anti_aliasing);
         let format = target.texture.format();

@@ -251,15 +251,27 @@ impl IPlatformRenderInterface for PlatformRenderInterface {
             None => Rc::new(VelloContext::new(self.rendering_modes.clone())),
             // A scene is drawn into the surface of a window on a device
             // made over the graphics context of the platform.
+            // The windows the GPU modes do not draw, on a platform whose
+            // graphics are OpenGL, are drawn in the CPU mode and presented
+            // through its context.
             #[cfg(any(feature = "hybrid", feature = "gpu"))]
             Some(graphics_context) => {
-                Rc::new(VelloContext::with_gpu(crate::gpu::create_gpu(&graphics_context), self.rendering_modes.clone()))
+                let gl_windows = crate::gl_window::VelloGlWindows::try_new(&graphics_context);
+                let context = match crate::gpu::create_gpu(&graphics_context) {
+                    Some(gpu) => VelloContext::with_gpu(gpu, self.rendering_modes.clone()),
+                    None => VelloContext::new(self.rendering_modes.clone()),
+                };
+                Rc::new(context.with_gl_windows(gl_windows))
             }
-            #[cfg(not(any(feature = "hybrid", feature = "gpu")))]
+            #[cfg(all(not(any(feature = "hybrid", feature = "gpu")), not(target_family = "wasm")))]
+            Some(graphics_context) => Rc::new(
+                VelloContext::new(self.rendering_modes.clone())
+                    .with_gl_windows(crate::gl_window::VelloGlWindows::try_new(&graphics_context)),
+            ),
+            #[cfg(all(not(any(feature = "hybrid", feature = "gpu")), target_family = "wasm"))]
             Some(_) => panic!(
-                "The Vello backend was built without a GPU mode for this graphics context (the features `hybrid` and \
-                 `gpu` of ferroui-vello draw on the device of a desktop platform, `hybrid-webgl` with the WebGL2 \
-                 context of a canvas): it draws into the framebuffer of a platform that renders in software"
+                "The Vello backend draws a canvas of a web page with the WebGL2 context of the canvas (the feature \
+                 `hybrid-webgl` of ferroui-vello) or into the framebuffer of the platform"
             ),
         }
     }

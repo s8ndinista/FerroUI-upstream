@@ -18,6 +18,8 @@
 
 #[cfg(any(feature = "hybrid", feature = "gpu"))]
 pub mod gpu;
+#[cfg(not(target_family = "wasm"))]
+pub mod gl_window;
 pub mod helpers;
 pub mod perf;
 pub mod scene;

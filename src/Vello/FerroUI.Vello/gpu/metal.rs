@@ -45,19 +45,16 @@
 //! This is the one file of the crate with `unsafe`: the raw handles of the
 //! contract become objects of `wgpu`.
 
-use crate::drawing_context_impl::DrawingContextImpl;
-use crate::gpu::i_vello_gpu::window_rendering_mode;
 use crate::gpu::vello_wgpu_device::{block_on, device_descriptor};
-use crate::gpu::{with_autorelease_pool, DeviceSurfaceRenderTarget, IVelloGpu, VelloWgpuDevice, VelloWgpuDeviceError};
+use crate::gpu::window_frame::WindowFrames;
+use crate::gpu::{with_autorelease_pool, IVelloGpu, VelloWgpuDevice, VelloWgpuDeviceError};
 use crate::helpers::pixel_format_helper::scene_size;
-use crate::i_drawable_bitmap_impl::IDrawableBitmapImpl;
-use crate::surface_render_target::{SurfaceRenderTarget, SurfaceRenderTargetCreateInfo};
 use crate::vello_options::VelloRenderingMode;
 use crate::vello_platform::VelloPlatform;
 use ferroui_base::platform::surfaces::IPlatformRenderSurface;
 use ferroui_base::platform::{
-    IBitmapImpl, IDrawingContextImpl, IDrawingContextLayerImpl, IPlatformGraphicsContext, IRenderTarget,
-    PlatformRenderTargetState, RenderTargetDrawingContextProperties, RenderTargetProperties, RenderTargetSceneInfo,
+    IDrawingContextImpl, IPlatformGraphicsContext, IRenderTarget, PlatformRenderTargetState,
+    RenderTargetDrawingContextProperties, RenderTargetProperties, RenderTargetSceneInfo,
 };
 use ferroui_base::PixelSize;
 use ferroui_metal::{try_get_metal_surface, IMetalDevice, IMetalPlatformSurfaceRenderTarget};
@@ -286,76 +283,6 @@ impl IVelloGpu for VelloMetalGpu {
     }
 }
 
-/// What a window holds between its frames: the surface its scenes are
-/// rendered into. The texture of each drawable is a copy of it.
-enum WindowFrame {
-    /// A texture of the device: the hybrid and the GPU mode.
-    Device(DeviceSurfaceRenderTarget),
-    /// Pixels in memory: the CPU mode.
-    Memory(SurfaceRenderTarget),
-}
-
-impl WindowFrame {
-    fn pixel_size(&self) -> PixelSize {
-        match self {
-            WindowFrame::Device(surface) => surface.pixel_size(),
-            WindowFrame::Memory(surface) => surface.pixel_size(),
-        }
-    }
-
-    fn dpi(&self) -> ferroui_base::Vector {
-        match self {
-            WindowFrame::Device(surface) => surface.dpi(),
-            WindowFrame::Memory(surface) => surface.dpi(),
-        }
-    }
-
-    fn has_content(&self) -> bool {
-        match self {
-            WindowFrame::Device(surface) => surface.has_content(),
-            WindowFrame::Memory(surface) => surface.has_content(),
-        }
-    }
-
-    fn is_corrupted(&self) -> bool {
-        match self {
-            WindowFrame::Device(surface) => surface.is_corrupted(),
-            WindowFrame::Memory(surface) => surface.is_corrupted(),
-        }
-    }
-
-    fn create_drawing_context_with(&self, disposables: Vec<Box<dyn FnOnce()>>) -> DrawingContextImpl {
-        match self {
-            WindowFrame::Device(surface) => surface.create_drawing_context_with(disposables),
-            WindowFrame::Memory(surface) => surface.create_drawing_context_with(disposables),
-        }
-    }
-
-    /// Copies what the frame holds into the texture of a drawable.
-    fn copy_to(&self, device: &VelloWgpuDevice, target: &wgpu::Texture) {
-        match self {
-            WindowFrame::Device(surface) => {
-                if let Some(texture) = surface.texture() {
-                    let premultiply = texture.alpha() == crate::gpu::VelloTextureAlpha::Straight;
-                    device.copy_texture_to_texture(texture.view(), target, premultiply);
-                }
-            }
-            WindowFrame::Memory(surface) => {
-                if let Some(image) = IDrawableBitmapImpl::image(surface) {
-                    device.copy_pixels_to_texture(image.data.data(), image.width, image.height, target);
-                }
-            }
-        }
-    }
-
-    fn dispose(&self) {
-        match self {
-            WindowFrame::Device(surface) => IBitmapImpl::dispose(surface),
-            WindowFrame::Memory(surface) => IBitmapImpl::dispose(surface),
-        }
-    }
-}
-
 /// The render target of a Metal surface: every frame is a session of the
 /// platform, whose texture is given the frame of the window.
 ///
@@ -372,10 +299,8 @@ impl WindowFrame {
 pub struct VelloMetalRenderTarget {
     gpu: Rc<VelloMetalGpu>,
     target: RefCell<Option<Rc<dyn IMetalPlatformSurfaceRenderTarget>>>,
-    rendering_modes: Vec<VelloRenderingMode>,
-    /// The frame of the window, once a frame was drawn: of the size and
-    /// the scaling of the last session.
-    frame: RefCell<Option<Rc<WindowFrame>>>,
+    /// The frame of the window.
+    frames: WindowFrames,
 }
 
 impl VelloMetalRenderTarget {
@@ -384,45 +309,8 @@ impl VelloMetalRenderTarget {
         target: Rc<dyn IMetalPlatformSurfaceRenderTarget>,
         rendering_modes: Vec<VelloRenderingMode>,
     ) -> Self {
-        Self { gpu, target: RefCell::new(Some(target)), rendering_modes, frame: RefCell::new(None) }
-    }
-
-    /// The frame of the window for a drawable of `pixel_size` at `dpi`: the
-    /// one of the frame before when it still fits, a new one otherwise (the
-    /// window was resized, its scaling changed, the device was lost).
-    fn frame_for(&self, pixel_size: PixelSize, dpi: ferroui_base::Vector) -> Rc<WindowFrame> {
-        let mut frame = self.frame.borrow_mut();
-
-        let fits = frame
-            .as_ref()
-            .is_some_and(|frame| frame.pixel_size() == pixel_size && frame.dpi() == dpi && !frame.is_corrupted());
-        if !fits {
-            if let Some(old) = frame.take() {
-                old.dispose();
-            }
-
-            let device = &self.gpu.device;
-            let mode = window_rendering_mode(device, &self.rendering_modes);
-            *frame = Some(Rc::new(match DeviceSurfaceRenderTarget::is_available(mode, device) {
-                true => WindowFrame::Device(DeviceSurfaceRenderTarget::new(
-                    device.clone(),
-                    mode,
-                    pixel_size,
-                    dpi,
-                    self.rendering_modes.clone(),
-                    false,
-                )),
-                false => WindowFrame::Memory(SurfaceRenderTarget::new(SurfaceRenderTargetCreateInfo {
-                    width: pixel_size.width,
-                    height: pixel_size.height,
-                    dpi,
-                    rendering_modes: vec![VelloRenderingMode::Cpu],
-                    use_scaled_drawing: false,
-                })),
-            }));
-        }
-
-        frame.clone().unwrap_or_else(|| panic!("The frame of the window was just created"))
+        let frames = WindowFrames::new(gpu.device.clone(), rendering_modes);
+        Self { gpu, target: RefCell::new(Some(target)), frames }
     }
 }
 
@@ -464,7 +352,7 @@ impl IRenderTarget for VelloMetalRenderTarget {
 
         let pixel_size = PixelSize::new(texture.width() as i32, texture.height() as i32);
         let (width, height) = scene_size(pixel_size);
-        let frame = self.frame_for(pixel_size, VelloPlatform::default_dpi() * scaling);
+        let frame = self.frames.frame_for(pixel_size, VelloPlatform::default_dpi() * scaling);
         let properties = RenderTargetDrawingContextProperties { previous_frame_is_retained: frame.has_content() };
 
         let (gpu, copied) = (self.gpu.clone(), frame.clone());
@@ -512,9 +400,7 @@ impl IRenderTarget for VelloMetalRenderTarget {
     }
 
     fn dispose(&self) {
-        if let Some(frame) = self.frame.borrow_mut().take() {
-            frame.dispose();
-        }
+        self.frames.dispose();
         if let Some(target) = self.target.borrow_mut().take() {
             target.dispose();
         }

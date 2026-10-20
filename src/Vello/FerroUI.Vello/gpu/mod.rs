@@ -15,34 +15,76 @@ pub mod metal;
 #[cfg(target_os = "macos")]
 pub mod metal_offscreen;
 mod vello_wgpu_device;
+mod window_frame;
+#[cfg(any(target_os = "linux", windows))]
+pub mod gl_context_gpu;
+#[cfg(any(target_os = "linux", windows))]
+pub mod window_surface;
 
 
 pub use device_surface_render_target::DeviceSurfaceRenderTarget;
 pub use i_vello_gpu::{create_window_scene_sink, window_rendering_mode, IVelloGpu};
 pub use vello_wgpu_device::{VelloWgpuDevice, VelloWgpuDeviceError};
 
-use ferroui_base::platform::{IOptionalFeatureProvider, IPlatformGraphicsContext};
+use ferroui_base::platform::IPlatformGraphicsContext;
 use std::rc::Rc;
 
-/// The GPU of the backend for a graphics context of a platform.
+/// The GPU of the backend for a graphics context of a platform, or `None`
+/// when the backend draws the windows of the platform in software: the
+/// backend context then draws into their framebuffers.
+///
+/// On macOS the device is the Metal device of the platform ([`metal`]); on
+/// Linux and Windows it is a device of the backend's own, whatever the
+/// graphics context is, and the windows are drawn through surfaces of
+/// `wgpu` ([`window_surface`]): `None` when the machine has no adapter for
+/// it (the reason is logged).
 ///
 /// # Panics
-/// Panics when the graphics context is of a kind the backend cannot render
-/// with (it draws with the Metal device of the macOS platform), and when
-/// `wgpu` does not take the device.
-pub fn create_gpu(graphics_context: &Rc<dyn IPlatformGraphicsContext>) -> Rc<dyn IVelloGpu> {
-    let features: &dyn IOptionalFeatureProvider = &**graphics_context;
-
+/// Panics on macOS when `wgpu` does not take the Metal device of the
+/// platform.
+pub fn create_gpu(graphics_context: &Rc<dyn IPlatformGraphicsContext>) -> Option<Rc<dyn IVelloGpu>> {
     #[cfg(target_os = "macos")]
-    if let Some(metal) = features.try_get::<dyn ferroui_metal::IMetalDevice>() {
+    if let Some(metal) = (&**graphics_context as &dyn ferroui_base::platform::IOptionalFeatureProvider)
+        .try_get::<dyn ferroui_metal::IMetalDevice>()
+    {
         return match metal::VelloMetalGpu::new(metal) {
-            Ok(gpu) => gpu,
+            Ok(gpu) => Some(gpu),
             Err(error) => panic!("{error}"),
         };
     }
 
-    let _ = features;
-    panic!("Graphics context of type is not supported");
+    // A device that is hardware on Vulkan or Direct3D 12; otherwise the
+    // context of OpenGL of the platform; otherwise (Linux) OpenGL through
+    // EGL on a device of the backend's own.
+    #[cfg(any(target_os = "linux", windows))]
+    {
+        let mut reasons = Vec::new();
+        match window_surface::VelloSurfaceGpu::new(graphics_context.clone(), window_surface::PRIMARY_BACKENDS) {
+            Ok(gpu) => return Some(gpu),
+            Err(error) => reasons.push(error.reason),
+        }
+        let features: &dyn ferroui_base::platform::IOptionalFeatureProvider = &**graphics_context;
+        if let Some(gl_context) = features.try_get::<dyn ferroui_opengl::IGlContext>() {
+            match gl_context_gpu::VelloGlGpu::new(gl_context) {
+                Ok(gpu) => return Some(gpu),
+                Err(error) => reasons.push(error.reason),
+            }
+        } else {
+            #[cfg(target_os = "linux")]
+            match window_surface::VelloSurfaceGpu::new(graphics_context.clone(), wgpu::Backends::GL) {
+                Ok(gpu) => return Some(gpu),
+                Err(error) => reasons.push(error.reason),
+            }
+        }
+        if let Some(logger) = Logger::try_get(LogEventLevel::Warning, LogArea::VISUAL) {
+            let reasons = reasons.join("; ");
+            logger.log_with_values(None, "The Vello backend draws the windows in software: {Reason}", &[&reasons.as_str()]);
+        }
+        return None;
+    }
+
+    #[allow(unreachable_code)]
+    None
 }
 
 #[cfg(all(test, feature = "hybrid"))]

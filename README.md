@@ -2,10 +2,11 @@
 
 [![CI](https://github.com/wieslawsoltes/FerroUI/actions/workflows/ci.yml/badge.svg)](https://github.com/wieslawsoltes/FerroUI/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Community chat](https://img.shields.io/badge/chat-Telegram-26A5E4?logo=telegram&logoColor=white)](https://t.me/+yQ69t8M7xgwyOGZk)
 
 FerroUI is a cross-platform UI framework for Rust: a retained-mode control library with a styled property system, data binding, XAML markup, control themes and a composition-based renderer. It is a port of the Avalonia UI framework to Rust that keeps the original architecture, contracts and behaviour, so that applications, themes and markup written against that model carry over with their structure intact.
 
-> **Status: 0.2.0.** `0.2.0`, which adds the TreeDataGrid, is published on crates.io ([CHANGELOG.md](CHANGELOG.md)). Every upstream file and member in scope is ported or waived with a recorded reason. The framework runs on macOS, Windows, Linux (X11, Wayland and the framebuffer), iOS, Android and in the browser. It was verified in continuous integration, in virtual machines, in the iOS simulator and on the Android emulator, not on a range of real devices. Within 0.2 the public API is kept; 0.3.0 may change it. See [Project status](#project-status).
+> **Status: 0.3.0.** `0.3.0`, which adds ports of Rx, DynamicData and ReactiveUI for MVVM applications ([docs/mvvm.md](docs/mvvm.md)), is published on crates.io ([CHANGELOG.md](CHANGELOG.md)). Every upstream file and member in scope is ported or waived with a recorded reason. The framework runs on macOS, Windows, Linux (X11, Wayland and the framebuffer), iOS, Android and in the browser. It was verified in continuous integration, in virtual machines, in the iOS simulator and on the Android emulator, not on a range of real devices. Within 0.3 the public API is kept; 0.4.0 may change it. See [Project status](#project-status).
 
 ![The ControlCatalog with the WinUI 3 theme on Windows 11, in a window with the Mica backdrop](docs/porting/images/control_catalog_winui_windows.png)
 
@@ -81,17 +82,19 @@ FerroUI is a set of crates that are released together at one version. A desktop 
 
 ```toml
 [dependencies]
-ferroui-base = "=0.2.0"
-ferroui-controls = "=0.2.0"
-ferroui-desktop = "=0.2.0"
-ferroui-themes-fluent = "=0.2.0"
+ferroui-base = "=0.3.0"
+ferroui-controls = "=0.3.0"
+ferroui-desktop = "=0.3.0"
+ferroui-themes-fluent = "=0.3.0"
 ```
 
 The WinUI 3 theme is the crate `ferroui-themes-winui` (`WinUITheme`), used in place of `ferroui-themes-fluent` or beside it; the facade crate has it as the feature `winui-theme`.
 
 An application can also name one dependency instead: the facade crate `ferroui`. It re-exports the common crates under short names (`ferroui::base`, `ferroui::controls`, ...) with a prelude of the types of a minimal application; its default features are the desktop platforms and the Fluent theme, and further features add the Simple theme, XAML loading at run time, the colour picker, the TreeDataGrid, the dialogs, the browser platform, the WinUI 3 theme, the Vello backend, the headless platform and the graphics contracts ([docs/release.md](docs/release.md), section 2.1). In the repository it is used already: `cargo run -p ferroui --example hello`.
 
-The crates of a release depend on one another at exactly its version, so name the same version for every FerroUI crate, as above. `0.1.0` followed four previews (`0.1.0-preview.1` to `0.1.0-preview.4`), pre-releases in the sense of semantic versioning, which Cargo selects only when they are named, and `0.2.0` is the next minor version. The work towards the next one is published as previews of it (`0.3.0-preview.1`, ...), which may change any part of the public API. The release process is described in [docs/release.md](docs/release.md) and the changes of each release in [CHANGELOG.md](CHANGELOG.md).
+The libraries for MVVM applications (Rx, DynamicData, ReactiveUI and their integration with the controls) are crates of the release as well: `ferroui-reactiveui-controls = "=0.3.0"` beside the crates above, or the facade crate with its feature `reactiveui` ([docs/mvvm.md](docs/mvvm.md)).
+
+The crates of a release depend on one another at exactly its version, so name the same version for every FerroUI crate, as above. `0.1.0` followed four previews (`0.1.0-preview.1` to `0.1.0-preview.4`), pre-releases in the sense of semantic versioning, which Cargo selects only when they are named, `0.2.0` and `0.3.0` are the next minor versions, and `0.3.0` followed one preview (`0.3.0-preview.1`). The work towards the next one is published as previews of it (`0.4.0-preview.1`, ...), which may change any part of the public API. The release process is described in [docs/release.md](docs/release.md) and the changes of each release in [CHANGELOG.md](CHANGELOG.md).
 
 The platforms that are not part of platform detection are named by their own crates beside the others: `ferroui-wayland`, `ferroui-linuxframebuffer`, `ferroui-ios`, `ferroui-android`, `ferroui-browser`, `ferroui-winui` and `ferroui-headless-vnc`.
 
@@ -111,6 +114,8 @@ Markup is loaded at run time with `ferroui-markup-xaml-loader` (the feature `xam
 | [`ferroui-dynamic-data`](https://crates.io/crates/ferroui-dynamic-data) | A port of DynamicData for FerroUI: reactive collections, change sets, observable caches and lists with their operators, independent of the user interface | [![version](https://img.shields.io/crates/v/ferroui-dynamic-data.svg)](https://crates.io/crates/ferroui-dynamic-data) | [![downloads](https://img.shields.io/crates/d/ferroui-dynamic-data.svg)](https://crates.io/crates/ferroui-dynamic-data) | [![docs.rs](https://img.shields.io/docsrs/ferroui-dynamic-data)](https://docs.rs/ferroui-dynamic-data) |
 | [`ferroui-reactive-testing`](https://crates.io/crates/ferroui-reactive-testing) | A port of Microsoft.Reactive.Testing for ferroui-reactive: the virtual-time test scheduler, recorded notifications, hot and cold test observables and their assertions | [![version](https://img.shields.io/crates/v/ferroui-reactive-testing.svg)](https://crates.io/crates/ferroui-reactive-testing) | [![downloads](https://img.shields.io/crates/d/ferroui-reactive-testing.svg)](https://crates.io/crates/ferroui-reactive-testing) | [![docs.rs](https://img.shields.io/docsrs/ferroui-reactive-testing)](https://docs.rs/ferroui-reactive-testing) |
 | [`ferroui-splat`](https://crates.io/crates/ferroui-splat) | A port of Splat for FerroUI: the service locator with its dependency resolvers, logging, mode detection, feature usage tracking and the application builder, independent of the user interface | [![version](https://img.shields.io/crates/v/ferroui-splat.svg)](https://crates.io/crates/ferroui-splat) | [![downloads](https://img.shields.io/crates/d/ferroui-splat.svg)](https://crates.io/crates/ferroui-splat) | [![docs.rs](https://img.shields.io/docsrs/ferroui-splat)](https://docs.rs/ferroui-splat) |
+| [`ferroui-reactiveui`](https://crates.io/crates/ferroui-reactiveui) | A port of ReactiveUI for FerroUI, in its System.Reactive flavour with the run time of ReactiveUI.Binding: reactive objects, commands, property observation, bindings, view location, activation and routing for MVVM, independent of the user interface | [![version](https://img.shields.io/crates/v/ferroui-reactiveui.svg)](https://crates.io/crates/ferroui-reactiveui) | [![downloads](https://img.shields.io/crates/d/ferroui-reactiveui.svg)](https://crates.io/crates/ferroui-reactiveui) | [![docs.rs](https://img.shields.io/docsrs/ferroui-reactiveui)](https://docs.rs/ferroui-reactiveui) |
+| [`ferroui-reactiveui-testing`](https://crates.io/crates/ferroui-reactiveui-testing) | A port of ReactiveUI.Testing for ferroui-reactiveui: running code with test schedulers, the builders of test data and the helpers of tests of view models | [![version](https://img.shields.io/crates/v/ferroui-reactiveui-testing.svg)](https://crates.io/crates/ferroui-reactiveui-testing) | [![downloads](https://img.shields.io/crates/d/ferroui-reactiveui-testing.svg)](https://crates.io/crates/ferroui-reactiveui-testing) | [![docs.rs](https://img.shields.io/docsrs/ferroui-reactiveui-testing)](https://docs.rs/ferroui-reactiveui-testing) |
 | [`ferroui`](https://crates.io/crates/ferroui) | FerroUI in one dependency: the facade crate that re-exports the common crates under short names, with a prelude and features that choose the platform, the theme and the backends | [![version](https://img.shields.io/crates/v/ferroui.svg)](https://crates.io/crates/ferroui) | [![downloads](https://img.shields.io/crates/d/ferroui.svg)](https://crates.io/crates/ferroui) | [![docs.rs](https://img.shields.io/docsrs/ferroui)](https://docs.rs/ferroui) |
 
 **Controls and themes**
@@ -119,6 +124,7 @@ Markup is loaded at run time with `ferroui-markup-xaml-loader` (the feature `xam
 |---|---|---|---|---|
 | [`ferroui-controls`](https://crates.io/crates/ferroui-controls) | The controls of FerroUI: the application model, top levels, the control set and automation peers | [![version](https://img.shields.io/crates/v/ferroui-controls.svg)](https://crates.io/crates/ferroui-controls) | [![downloads](https://img.shields.io/crates/d/ferroui-controls.svg)](https://crates.io/crates/ferroui-controls) | [![docs.rs](https://img.shields.io/docsrs/ferroui-controls)](https://docs.rs/ferroui-controls) |
 | [`ferroui-fonts-inter`](https://crates.io/crates/ferroui-fonts-inter) | The Inter font family as an embedded font collection of FerroUI | [![version](https://img.shields.io/crates/v/ferroui-fonts-inter.svg)](https://crates.io/crates/ferroui-fonts-inter) | [![downloads](https://img.shields.io/crates/d/ferroui-fonts-inter.svg)](https://crates.io/crates/ferroui-fonts-inter) | [![docs.rs](https://img.shields.io/docsrs/ferroui-fonts-inter)](https://docs.rs/ferroui-fonts-inter) |
+| [`ferroui-reactiveui-controls`](https://crates.io/crates/ferroui-reactiveui-controls) | The integration of ReactiveUI with FerroUI: the scheduler of the dispatcher, property observation and command binding for FerroUI objects, activation, the reactive views and view hosts, the data-template hook, suspension and use_reactive_ui on the application builder | [![version](https://img.shields.io/crates/v/ferroui-reactiveui-controls.svg)](https://crates.io/crates/ferroui-reactiveui-controls) | [![downloads](https://img.shields.io/crates/d/ferroui-reactiveui-controls.svg)](https://crates.io/crates/ferroui-reactiveui-controls) | [![docs.rs](https://img.shields.io/docsrs/ferroui-reactiveui-controls)](https://docs.rs/ferroui-reactiveui-controls) |
 | [`ferroui-treedatagrid-core`](https://crates.io/crates/ferroui-treedatagrid-core) | The framework-neutral part of FerroUI's TreeDataGrid: flat and hierarchical sources, columns, rows, sorting, expansion, and row and cell selection | [![version](https://img.shields.io/crates/v/ferroui-treedatagrid-core.svg)](https://crates.io/crates/ferroui-treedatagrid-core) | [![downloads](https://img.shields.io/crates/d/ferroui-treedatagrid-core.svg)](https://crates.io/crates/ferroui-treedatagrid-core) | [![docs.rs](https://img.shields.io/docsrs/ferroui-treedatagrid-core)](https://docs.rs/ferroui-treedatagrid-core) |
 | [`ferroui-dialogs`](https://crates.io/crates/ferroui-dialogs) | The managed dialogs of FerroUI: the managed file chooser, the managed storage provider and the about dialog | [![version](https://img.shields.io/crates/v/ferroui-dialogs.svg)](https://crates.io/crates/ferroui-dialogs) | [![downloads](https://img.shields.io/crates/d/ferroui-dialogs.svg)](https://crates.io/crates/ferroui-dialogs) | [![docs.rs](https://img.shields.io/docsrs/ferroui-dialogs)](https://docs.rs/ferroui-dialogs) |
 | [`ferroui-themes-fluent`](https://crates.io/crates/ferroui-themes-fluent) | The FerroUI Fluent theme: control themes, colour palettes and resources for the control set, in light and dark variants | [![version](https://img.shields.io/crates/v/ferroui-themes-fluent.svg)](https://crates.io/crates/ferroui-themes-fluent) | [![downloads](https://img.shields.io/crates/d/ferroui-themes-fluent.svg)](https://crates.io/crates/ferroui-themes-fluent) | [![docs.rs](https://img.shields.io/docsrs/ferroui-themes-fluent)](https://docs.rs/ferroui-themes-fluent) |
@@ -205,6 +211,13 @@ cargo run -p control-catalog-desktop
 
 # The TreeDataGrid demo (its pages are also the page TreeDataGrid of the ControlCatalog)
 cargo run -p treedatagrid-demo
+
+# ReactiveDemo, the getting-started sample of ReactiveUI: a crates.io browser on the WinUI 3
+# theme (add --no-default-features to search an in-memory catalogue instead of crates.io)
+cargo run -p reactive-demo
+
+# The example of the ReactiveUI integration, with a DynamicData page, on the WinUI 3 theme
+cargo run -p reactiveui-example
 
 # The gallery of the WinUI theme (its capture mode and its comparison with WinUI 3 on Windows:
 # docs/porting/winui-theme-gallery.md)
@@ -304,6 +317,14 @@ Views can be written in XAML. FerroUI uses its own XML namespace:
 </Window>
 ```
 
+### MVVM with ReactiveUI
+
+FerroUI has ports of System.Reactive, DynamicData, Splat and ReactiveUI, one crate each, and an integration of ReactiveUI with the controls (`ferroui-reactiveui-controls`) that is set up with `use_reactive_ui` on the application builder. Only the integration depends on the user interface, so view models can be tested without a window. The guide [docs/mvvm.md](docs/mvvm.md) covers view models, property paths, commands, views, routing, reactive collections, threading and testing, with the two samples, `samples/ReactiveDemo` and `samples/ReactiveUIExample`.
+
+| ReactiveDemo | The DynamicData page of the ReactiveUI example |
+|---|---|
+| ![ReactiveDemo, the getting-started sample of ReactiveUI as a crate browser, with the WinUI 3 theme on macOS](docs/porting/images/reactive_demo_winui_macos.png) | ![The DynamicData page of the ReactiveUI example: a searchable list of features with favourites sorted first](docs/porting/images/reactiveui_example_dynamicdata_winui_macos.png) |
+
 ## Repository layout
 
 The layout follows the upstream project so that files can be compared side by side; the crate of each directory is in the table of crates above.
@@ -325,6 +346,7 @@ The layout follows the upstream project so that files can be compared side by si
 - [Tracking](docs/porting/TRACKING.md) and [what is left](docs/porting/REMAINING.md): generated per-file, per-type and per-member status.
 - [Deviations](docs/porting/DEVIATIONS.md): every place where the port differs from upstream, and why.
 - [XAML design](docs/porting/xaml.md): the markup pipeline, the run-time loader and the compiler of markup to Rust.
+- [MVVM on FerroUI](docs/mvvm.md): ReactiveUI, DynamicData and System.Reactive on FerroUI, with the samples ReactiveDemo and ReactiveUIExample.
 - Platforms: [Windows](docs/porting/win32-platform.md), [WinUI](docs/porting/winui.md), [Linux on X11](docs/porting/x11-platform.md) with [AT-SPI](docs/porting/atspi.md), [Wayland](docs/porting/wayland-platform.md), [Linux framebuffer](docs/porting/linux-framebuffer-platform.md), [OpenGL on macOS and iOS](docs/porting/apple-opengl.md), [iOS](docs/porting/ios-platform.md), [Android](docs/porting/android-platform.md), [browser](docs/porting/browser-platform.md) with its [render worker](docs/porting/browser-render-worker.md), [headless VNC](docs/porting/headless-vnc.md), [Vulkan](docs/porting/vulkan.md).
 - Rendering: [render thread](docs/porting/render-thread.md), [Vello backend](docs/porting/vello-backend.md), [render tests](docs/porting/render-tests.md).
 - [Releasing](docs/release.md): the published crates, the version scheme and the release workflow; [changelog](CHANGELOG.md).

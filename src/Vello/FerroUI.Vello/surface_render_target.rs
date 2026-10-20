@@ -3,7 +3,7 @@ use crate::helpers::image_saving_helper;
 use crate::helpers::pixel_format_helper::{scene_size, to_shared_image};
 use crate::i_drawable_bitmap_impl::IDrawableBitmapImpl;
 use crate::immutable_bitmap::ImmutableBitmap;
-use crate::scene::{create_scene_sink, VelloSceneBrush, VelloSceneImage};
+use crate::scene::{create_scene_sink, VelloSceneBrush, VelloSceneImage, VelloScenePixelRect};
 use crate::vello_options::VelloRenderingMode;
 use ferroui_base::media::imaging::BitmapEncoderOptions;
 use ferroui_base::platform::{IBitmapImpl, IDrawingContextImpl, IDrawingContextLayerImpl, RenderTargetProperties};
@@ -44,6 +44,34 @@ struct SurfacePixels {
     has_content: bool,
     /// The pixels as an image, until they change.
     image: Option<ImageData>,
+    /// The rectangle around the pixels the scenes rendered since
+    /// [`SurfaceRenderTarget::take_changed`] was last asked, `None` for
+    /// none of them; [`SurfaceChange::All`] once a scene may have changed
+    /// any of them.
+    changed: Option<SurfaceChange>,
+}
+
+/// What scenes changed of the pixels of a surface.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum SurfaceChange {
+    /// Any of them.
+    All,
+    /// Those of a rectangle.
+    Rect(VelloScenePixelRect),
+}
+
+impl SurfaceChange {
+    fn union(self, other: SurfaceChange) -> SurfaceChange {
+        match (self, other) {
+            (SurfaceChange::Rect(a), SurfaceChange::Rect(b)) => SurfaceChange::Rect(VelloScenePixelRect {
+                x0: a.x0.min(b.x0),
+                y0: a.y0.min(b.y0),
+                x1: a.x1.max(b.x1),
+                y1: a.y1.max(b.y1),
+            }),
+            _ => SurfaceChange::All,
+        }
+    }
 }
 
 /// Vello render target that writes to a surface in memory: a layer.
@@ -77,6 +105,7 @@ impl SurfaceRenderTarget {
                 data: Some(std::sync::Arc::new(vec![0u8; width as usize * height as usize * 4])),
                 has_content: false,
                 image: None,
+                changed: None,
             })),
             rendering_modes: create_info.rendering_modes,
             dpi: create_info.dpi,
@@ -164,6 +193,25 @@ impl IDrawingContextLayerImpl for SurfaceRenderTarget {
 }
 
 impl SurfaceRenderTarget {
+    /// Replaces the pixels of the surface with what `write` writes into
+    /// them (premultiplied RGBA, `width * 4` bytes a row): the surface has
+    /// content from then on.
+    pub fn write_pixels(&self, write: &mut dyn FnMut(&mut [u8])) {
+        let mut pixels = self.pixels.borrow_mut();
+        pixels.image = None;
+        if let Some(data) = pixels.data.as_mut() {
+            write(&mut std::sync::Arc::make_mut(data)[..]);
+            pixels.has_content = true;
+            pixels.changed = Some(SurfaceChange::All);
+        }
+    }
+
+    /// What the scenes rendered since this was last asked changed of the
+    /// pixels, `None` for nothing.
+    pub fn take_changed(&self) -> Option<SurfaceChange> {
+        self.pixels.borrow_mut().changed.take()
+    }
+
     /// Whether a scene was rendered into the surface.
     pub fn has_content(&self) -> bool {
         self.pixels.borrow().has_content
@@ -214,6 +262,8 @@ impl SurfaceRenderTarget {
                         crate::perf::count(crate::perf::Phase::PixelCopy, data.len() as u64);
                     }
                     sink.render_to_pixels(&mut std::sync::Arc::make_mut(data)[..]);
+                    let change = sink.rendered_rect().map_or(SurfaceChange::All, SurfaceChange::Rect);
+                    pixels.changed = Some(pixels.changed.map_or(change, |changed| changed.union(change)));
                 }
             }),
             scale_drawing_to_dpi: self.use_scaled_drawing,

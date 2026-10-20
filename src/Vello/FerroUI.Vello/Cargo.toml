@@ -53,15 +53,38 @@ hybrid-webgl = ["dep:vello_gpu", "vello_gpu/webgl", "dep:ferroui-opengl", "dep:w
 gpu = ["dep:vello", "wgpu-device"]
 # What both GPU modes need: `wgpu`, and on macOS the Metal contracts of the platform with the bindings
 # that turn their handles into objects of `wgpu`. Not a feature to state: `hybrid` and `gpu` state it.
-wgpu-device = ["dep:wgpu", "dep:ferroui-metal", "dep:objc2", "dep:objc2-metal"]
+wgpu-device = ["dep:wgpu", "dep:ferroui-metal", "dep:objc2", "dep:objc2-metal", "dep:x11-dl"]
 
 # The window of the macOS platform is drawn on the Metal device of the platform (gpu/metal.rs). The
 # bindings are the crates `wgpu` itself links for Metal, at the versions it asks for, so that the
 # objects are of the same types.
+# On Linux and Windows the GPU modes draw on a device of the backend's own
+# (gpu/window_surface.rs): `wgpu` with Vulkan and OpenGL (EGL) on Linux, and
+# with Direct3D 12 on Windows; on X11 the surface of a window is made with a connection to the X
+# server of the backend's own, through the Xlib the X11 platform loads too.
+[target.'cfg(target_os = "linux")'.dependencies]
+wgpu = { workspace = true, optional = true, features = ["vulkan", "gles"] }
+x11-dl = { workspace = true, optional = true }
+
+[target.'cfg(windows)'.dependencies]
+wgpu = { workspace = true, optional = true, features = ["dx12", "gles"] }
+
 [target.'cfg(target_os = "macos")'.dependencies]
 ferroui-metal = { workspace = true, optional = true }
 objc2 = { version = "0.6.3", optional = true }
 objc2-metal = { version = "0.3.2", optional = true, default-features = false, features = ["std", "MTLDevice", "MTLCommandQueue", "MTLCommandBuffer", "MTLTexture", "MTLResource", "MTLPixelFormat", "MTLTypes"] }
+
+# The windows of a platform whose graphics are OpenGL drawn in the CPU mode
+# and presented through its context (gl_window.rs), on every target but the
+# web, where the canvas is drawn otherwise.
+[target.'cfg(not(target_family = "wasm"))'.dependencies.ferroui-opengl]
+workspace = true
+
+# The thread pool of the CPU renderer, on every target but the web, where
+# the module is built without threads (docs/porting/vello-backend.md,
+# section 14).
+[target.'cfg(not(target_family = "wasm"))'.dependencies]
+vello_cpu = { workspace = true, features = ["multithreading"] }
 
 [dev-dependencies]
 ferroui-controls = { workspace = true, features = ["testing"] }

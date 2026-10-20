@@ -9,7 +9,7 @@ use crate::scene::{
 use crate::surface_render_target::{SurfaceRenderTarget, SurfaceRenderTargetCreateInfo};
 use crate::vello_extensions::{
     ellipse_path, rect_path, rounded_rect_path, to_affine, to_blend_mode, to_color, to_color_with_opacity,
-    to_extend, to_fill, to_kurbo_point,
+    to_extend, to_fill, to_kurbo_point, to_kurbo_rect,
 };
 use crate::vello_options::{VelloOptions, VelloRenderingMode};
 use crate::vello_platform::VelloPlatform;
@@ -567,7 +567,10 @@ impl DrawingContextImpl {
             }
         });
 
-        self.scene().push_clip(path, fill_rule, transform, anti_alias);
+        match rect {
+            Some(rect) => self.scene().push_clip_rect(to_kurbo_rect(rect), transform, anti_alias),
+            None => self.scene().push_clip(path, fill_rule, transform, anti_alias),
+        }
         self.save_with(SavedKind::Clip, record);
     }
 
@@ -597,10 +600,10 @@ impl DrawingContextImpl {
         blend_mode: BlendMode,
     ) {
         let pixel_transform = self.pixel_transform();
-        let path = rect_path(Rect::new(0.0, 0.0, width, height));
+        let rect = kurbo::Rect::new(0.0, 0.0, width, height);
         let paint = VelloScenePaint { brush, transform: Affine::IDENTITY };
 
-        self.sink().fill(&path, Fill::NonZero, pixel_transform, &paint, blend_mode, false);
+        self.sink().fill_rect(rect, pixel_transform, &paint, blend_mode, false);
     }
 
     /// The relative transform of a brush conjugated into target space: the
@@ -1328,7 +1331,15 @@ impl IDrawingContextImpl for DrawingContextImpl {
         let path = rounded_rect_path(rect);
 
         if let Some(brush) = brush {
-            self.fill_path(brush, rect.rect, &path, Fill::NonZero);
+            if rect.is_rounded() {
+                self.fill_path(brush, rect.rect, &path, Fill::NonZero);
+            } else {
+                let fill = self.create_paint(brush, rect.rect);
+                let kurbo_rect = to_kurbo_rect(rect.rect);
+                self.draw_with(fill, &|sink, paint, transform, anti_alias| {
+                    sink.fill_rect(kurbo_rect, transform, paint, BlendMode::default(), anti_alias);
+                });
+            }
         }
 
         self.draw_box_shadows(&rect, box_shadows, true);

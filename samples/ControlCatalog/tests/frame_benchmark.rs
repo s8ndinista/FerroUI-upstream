@@ -222,6 +222,16 @@ impl BenchSurface {
         BenchSurface { surface: BenchSurfaceKind::Raster(surface), compositor }
     }
 
+    /// How long the frames waited for the device to draw them, in all:
+    /// nothing on the raster surface.
+    pub(super) fn waited(&self) -> Duration {
+        match &self.surface {
+            BenchSurfaceKind::Raster(_) => Duration::ZERO,
+            #[cfg(target_os = "macos")]
+            BenchSurfaceKind::Metal(surface) => surface.waited(),
+        }
+    }
+
     /// The frames the surface received.
     pub(super) fn frames(&self) -> u32 {
         match &self.surface {
@@ -674,7 +684,9 @@ impl Bench {
         let mut totals = Vec::with_capacity(frames);
         let mut jobs = Vec::with_capacity(frames);
         let mut renders = Vec::with_capacity(frames);
+        let mut unwaited = Vec::with_capacity(frames);
         for frame in 0..frames {
+            let waited = self.surface.waited();
             let start = Instant::now();
             before_frame(frame);
             let input = start.elapsed();
@@ -682,6 +694,7 @@ impl Bench {
             totals.push(input + job + render);
             jobs.push(input + job);
             renders.push(render);
+            unwaited.push((input + job + render).saturating_sub(self.surface.waited() - waited));
         }
         let stats = Stats::of(&totals);
         println!(
@@ -695,6 +708,15 @@ impl Bench {
             Stats::of(&jobs).median,
             Stats::of(&renders).median,
         );
+        // A window on screen does not wait for the device to draw a frame:
+        // the frame without that wait (the Metal surface waits).
+        if unwaited != totals {
+            let unwaited = Stats::of(&unwaited);
+            println!(
+                "{name}: without waiting for the device: ms per frame: median {:.3}, mean {:.3}, p95 {:.3}",
+                unwaited.median, unwaited.mean, unwaited.p95
+            );
+        }
         // Where the Vello backend spent the frames (`ferroui_vello::perf`).
         if test_renderer().vello_mode().is_some() {
             print!("{}", ferroui_vello::perf::take_summary().report());

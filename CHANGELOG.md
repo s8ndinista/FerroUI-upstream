@@ -4,6 +4,25 @@ All notable changes to FerroUI are recorded in this file. The format follows [Ke
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-19
+
+The third release. It is `0.3.0-preview.1` as a stable release: the reactive foundation for applications written in the MVVM pattern, with nothing changed since the preview. It contains:
+- ports of Rx.NET, DynamicData, Splat and ReactiveUI, with ReactiveUI.Binding and ReactiveUI.Testing;
+- their integration with the controls;
+- the samples ReactiveDemo (a crate browser) and ReactiveUIExample (with a DynamicData page);
+- the guide [docs/mvvm.md](docs/mvvm.md).
+
+The additions and the known limitations are those of `0.3.0-preview.1` below. Within 0.3 the public API is kept; 0.4.0 may change it.
+
+## [0.3.0-preview.1] - 2026-10-19
+
+The first preview of 0.3. It adds the reactive foundation for applications written in the MVVM pattern:
+- ports of Rx.NET (System.Reactive and Microsoft.Reactive.Testing), DynamicData, Splat and ReactiveUI (with the run time of ReactiveUI.Binding and ReactiveUI.Testing);
+- their integration with the controls;
+- two samples and a guide ([docs/mvvm.md](docs/mvvm.md)).
+
+None of the new libraries depends on the user interface except the integration. Eight crates join: `ferroui-system`, `ferroui-reactive`, `ferroui-reactive-testing`, `ferroui-dynamic-data`, `ferroui-splat`, `ferroui-reactiveui`, `ferroui-reactiveui-testing` and `ferroui-reactiveui-controls`. As a preview, it may change any part of the public API.
+
 ### Added
 
 - **`ferroui-splat`**: a port of Splat (phase 6 of `docs/porting/reactive.md`): the service locator (`AppLocator`) with the modern and generic-first dependency resolvers, logging (`IEnableLogger`, `IFullLogger`, the log managers and wrapping loggers, `LogHost`), mode detection, feature usage tracking and the application builder (`AppBuilder`, `IModule`), with 864 ported tests.
@@ -13,7 +32,27 @@ All notable changes to FerroUI are recorded in this file. The format follows [Ke
 - **`ferroui-reactive` operators** (phase 3): the query operators of System.Reactive and the experimental ones of `ObservableEx`, the pull adapters (`collect`, `chunkify`, `most_recent`), `Subscribe` with a `CancellationToken`, `DisableOptimizations`, `ObserverBase` and `ObservableBase`; 2,453 ported unit tests. The blocking operators (`Wait`, `First`, `ToEnumerable`, ...) are left out on purpose: they would deadlock the only thread. The async forms come with phase 4.
 - **Tasks and asynchronous Rx** (phase 4): `ferroui-system` gains `Task<T>` and `TaskCompletionSource<T>`, the running of futures on their thread (`spawn_local`, a thread poster for wakes from other threads, `block_on`, `run` for background work), `CancellationToken::register_local`, `SynchronizationContext` and `IProgress<T>`. `ferroui-reactive` gains the asynchronous forms of Rx over them: `from_async`, `start_async`, `to_task`, `run_async` and `get_awaiter`, `for_each_async`, the task forms of `select_many`, `create`, `defer` and `using`, `schedule_async` with `sleep` and `yield_`, `to_async` for the arities 0 to 16, and the `SynchronizationContext` forms of `observe_on` and `subscribe_on`.
 - **`ferroui-dynamic-data`**: a port of DynamicData (phase 5 of `docs/porting/reactive.md`): change sets of keyed caches and of lists, `SourceCache` and `SourceList` with their nested edits, the cache and list operators (transforms with their asynchronous forms, filters, sorting, paging and virtualisation, grouping, joins, `And`/`Or`/`Xor`/`Except` and `Switch`, the lifecycle of items, buffering and expiry), the binding to observable collections (`ObservableCollectionExtended`, `Bind`, `SortAndBind`), aggregation (`Count`, `Sum`, `Avg`, `Min`, `Max`, `StdDev`) and `ObservableChangeSet`, with 2,193 ported tests. `ferroui-system` gains `Dictionary` with the order of enumeration of .NET, `ObservableCollection` and typed property paths (`PropertyPath`, `prop!`), the counterpart of upstream's expressions.
+- **`ferroui-reactiveui`** and **`ferroui-reactiveui-testing`**: a port of ReactiveUI in its System.Reactive flavour (phase 7 of `docs/porting/reactive.md`). It covers `ReactiveObject` and `ReactiveRecord` with the macros `reactive_object!` and `reactive_properties!` (the counterpart of the `[Reactive]` source generator), `ReactiveCommand`, interactions, the property observation of ReactiveUI.Binding (`when_any_value` and its family over typed property paths, `ObservableAsPropertyHelper` and `to_property`), the bindings (`bind`, `one_way_bind`, `bind_to`, `bind_command`, `bind_interaction`) with their type converters, views and view location, activation (`when_activated`), routing, the message bus, suspension and AutoPersist, `ReactiveProperty`, and the ReactiveUI builder. ReactiveUI.Testing is ported on the virtual-time `TestScheduler`. The crates have 2,207 ported tests. `ferroui-system` gains `INotifyPropertyChanging`, `INotifyDataErrorInfo`, `BackingField` and the type-erased steps of property paths.
+- **`ferroui-reactiveui-controls`**: the integration of ReactiveUI with FerroUI (phase 8 of `docs/porting/reactive.md`):
+  - `FerroScheduler` on the dispatcher, whose synchronization context becomes the UI thread's;
+  - the property observation of FerroUI objects (`ferro_prop!`), the view-thread invoker, and command binding to controls through `ReactiveCommandAdapter`;
+  - the activation of views on loading and unloading;
+  - `ReactiveUserControl` and `ReactiveWindow` (their view model follows `DataContext`), `RoutedViewHost` and `ViewModelViewHost`;
+  - the automatic item template of `ItemsControl`s, `AutoSuspendHelper`, view registration, and `use_reactive_ui` on the application builder;
+  - 166 ported tests.
+- **The ReactiveUI samples**, both on the WinUI 3 theme (`ferroui-themes-winui`):
+  - `samples/ReactiveDemo` (`cargo run -p reactive-demo`): the port of `ReactiveDemo`, the getting-started sample of ReactiveUI (ReactiveUI.Samples), a crates.io browser (the reference browses NuGet) with a throttled search, a reactive command and views located for their view models; with `--no-default-features` it searches an in-memory catalogue of crates instead of crates.io; 28 tests;
+  - `samples/ReactiveUIExample` (`cargo run -p reactiveui-example`): the port of the example application of the ReactiveUI integration (routing, view model view hosts, live metrics, a command lab with interactions, `AutoSuspendHelper`), with a DynamicData page that the reference does not have; 75 tests.
+- **Items sources from the reactive libraries**: the `ObservableCollection` of `ferroui-system` is an items source of the controls, as in .NET, so a collection that DynamicData's `sort_and_bind` or `bind` fills (`ObservableCollectionExtended::collection()`) is shown by a `ListBox` or an `ItemsControl` directly.
 - **Port tracking for several references**: the port-status tooling tracks Rx.NET beside the framework (`docs/porting/tracking/reactive/`).
+
+### Known limitations
+
+- **One thread.** The observables, view models and subscriptions are single-threaded, as FerroUI's object model is. Work on another thread goes through `ferroui_system::threading::tasks::run` and comes back to the thread that started it; there is no thread-pool scheduler.
+- **No reflection or expression trees.** Property paths (`prop!`) stand for the expressions of .NET. The `*Unsafe` overloads, `WhenAnyDynamic`, assembly scanning and the type-based APIs of Splat are not ported. The adapters of Splat and ReactiveUI to other dependency-injection containers are not ported either; a port of Microsoft.Extensions.DependencyInjection is tracked separately.
+- **Types that wait for a later preview.** The binding converters of `DateTime`, `DateTimeOffset`, `DateOnly`, `TimeOnly`, `Uri` and `Decimal`, and the Rx and DynamicData tests that use `Decimal`, wait until those types move from `ferroui-base` to `ferroui-system`.
+- Every difference from the reference libraries is recorded in `docs/porting/DEVIATIONS.md`, sections Reactive, DynamicData, Splat, ReactiveUI, ReactiveUI controls and Samples.
+- The limitations of 0.2.0 below still apply.
 
 ## [0.2.0] - 2026-10-18
 
@@ -200,7 +239,9 @@ The preview makes the framework available as crates so that it can be tried outs
 - **Documentation.** The API documentation is the documentation comments carried over by the port; there are no guides beyond the README and the documents under `docs/`. Not every crate is expected to build on docs.rs (see `docs/release.md`).
 - **Tests of the published crates.** The packages hold the sources of the tests but not the test fonts and images of the Skia backend; the test suites are run from the repository.
 
-[Unreleased]: https://github.com/wieslawsoltes/FerroUI/compare/v0.2.0...main
+[Unreleased]: https://github.com/wieslawsoltes/FerroUI/compare/v0.3.0...main
+[0.3.0]: https://github.com/wieslawsoltes/FerroUI/releases/tag/v0.3.0
+[0.3.0-preview.1]: https://github.com/wieslawsoltes/FerroUI/releases/tag/v0.3.0-preview.1
 [0.2.0]: https://github.com/wieslawsoltes/FerroUI/releases/tag/v0.2.0
 [0.1.0]: https://github.com/wieslawsoltes/FerroUI/releases/tag/v0.1.0
 [0.1.0-preview.4]: https://github.com/wieslawsoltes/FerroUI/releases/tag/v0.1.0-preview.4

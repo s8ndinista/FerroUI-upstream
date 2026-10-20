@@ -150,6 +150,8 @@ struct SurfaceState {
     /// Waits until a renderer that draws with a command queue of its own
     /// has drawn what it submitted.
     renderer_wait: Option<Arc<dyn Fn() + Send + Sync>>,
+    /// The nanoseconds the sessions waited for the device, in all.
+    waited: std::sync::atomic::AtomicU64,
 }
 
 /// A surface of a top-level that is rendered to with Metal and is not on
@@ -180,6 +182,7 @@ impl OffscreenMetalSurface {
                 last_frame: Mutex::new(None),
                 presentation,
                 renderer_wait,
+                waited: std::sync::atomic::AtomicU64::new(0),
             }),
         })
     }
@@ -192,6 +195,12 @@ impl OffscreenMetalSurface {
     /// The frames that were presented.
     pub fn frames(&self) -> u32 {
         self.state.frames.load(Ordering::SeqCst)
+    }
+
+    /// How long the sessions waited for the device to draw their frames, in
+    /// all: what a frame of a window on screen does not wait for.
+    pub fn waited(&self) -> std::time::Duration {
+        std::time::Duration::from_nanos(self.state.waited.load(Ordering::SeqCst))
     }
 
     /// The size and the pixels of the frame that was presented last, as
@@ -328,6 +337,7 @@ impl OffscreenMetalSession {
     /// Waits until the device has run what was committed to the queue
     /// before now.
     fn wait_for_device(&self) -> Option<()> {
+        let start = std::time::Instant::now();
         if let Some(renderer_wait) = &self.state.renderer_wait {
             renderer_wait();
         }
@@ -337,6 +347,7 @@ impl OffscreenMetalSession {
         let command_buffer = self.queue.commandBuffer()?;
         command_buffer.commit();
         command_buffer.waitUntilCompleted();
+        self.state.waited.fetch_add(start.elapsed().as_nanos() as u64, Ordering::SeqCst);
         Some(())
     }
 

@@ -1,5 +1,5 @@
 use crate::gpu::{log_render_failure, premultiplied_rgba, VelloGpuTexture, VelloWgpuDevice};
-use crate::scene::vello_cpu_scene_sink::{prepare, stroke_outline, ALIASING_THRESHOLD};
+use crate::scene::vello_cpu_scene_sink::{axis_aligned_rect, prepare, stroke_outline, ALIASING_THRESHOLD};
 use crate::scene::{
     IVelloSceneSink, VelloSceneBrush, VelloSceneCapabilities, VelloSceneFilter, VelloSceneFilterCapabilities,
     VelloSceneGlyphRun, VelloScenePaint, VelloScenePixelRect,
@@ -368,6 +368,36 @@ impl IVelloSceneSink for VelloHybridSceneSink {
         self.scene.set_blend_mode(BlendMode::default());
     }
 
+    fn fill_rect(
+        &mut self,
+        rect: kurbo::Rect,
+        transform: Affine,
+        paint: &VelloScenePaint,
+        blend_mode: BlendMode,
+        anti_alias: bool,
+    ) {
+        // A destructive mode takes the layer of `fill`.
+        let fast = axis_aligned_rect(rect, transform, anti_alias).filter(|_| !blend_mode.is_destructive());
+        let Some((rect, rect_transform)) = fast else {
+            self.fill(&rect.to_path(0.1), Fill::NonZero, transform, paint, blend_mode, anti_alias);
+            return;
+        };
+
+        let (paint_type, paint_transform) = self.paint(paint, transform);
+        let relative_paint_transform = match rect_transform == transform {
+            true => paint.transform,
+            false => paint_transform,
+        };
+
+        self.set_anti_alias(true);
+        self.scene.set_transform(rect_transform);
+        self.scene.set_paint(paint_type);
+        self.scene.set_paint_transform(relative_paint_transform);
+        self.scene.set_blend_mode(blend_mode);
+        self.scene.fill_rect(&rect);
+        self.scene.set_blend_mode(BlendMode::default());
+    }
+
     fn stroke(&mut self, path: &BezPath, stroke: &Stroke, transform: Affine, paint: &VelloScenePaint, anti_alias: bool) {
         // As in the CPU mode: the outline of the stroke, made here to the
         // tolerance of the sinks at the scale of the transform.
@@ -427,13 +457,19 @@ impl IVelloSceneSink for VelloHybridSceneSink {
                 builder = builder.glyph_transform(Affine::skew(glyph_run.skew, 0.0));
             }
 
-            // The glyphs of a font with bitmap strikes (a colour font of
-            // pictures) are images, which this renderer takes from an
-            // atlas of the device only: the glyph atlas of the renderer is
-            // on for such a font. Outlines are drawn as paths, as in the
-            // CPU mode: the atlas is the renderer's own experiment and
-            // draws them at other pixels.
-            if has_bitmap_strikes(glyph_run.font) {
+            // The glyph atlas of the renderer: a glyph is rasterized once
+            // into a texture, at a quarter of a pixel across and on a whole
+            // pixel down, and drawn from there, as Skia draws text. It is
+            // what makes text fast in this mode: the strips of every
+            // outline were made on the processor for every frame before.
+            // The pixels are those of the outlines at the quantized place,
+            // within a fraction of a percent of the CPU mode (measured in
+            // the comparison harness, `modes.rs`) and nearer to Skia than
+            // the outlines are. Aliased text is drawn as outlines: the
+            // atlas has anti-aliased glyphs only. The glyphs of a font with
+            // bitmap strikes (a colour font of pictures) are images, which
+            // this renderer takes from an atlas of the device only.
+            if anti_alias || has_bitmap_strikes(glyph_run.font) {
                 builder = builder.atlas_cache(true);
             }
 
@@ -451,6 +487,17 @@ impl IVelloSceneSink for VelloHybridSceneSink {
         self.scene.set_transform(path_transform);
         self.scene.set_fill_rule(fill_rule);
         self.scene.push_clip_path(&path);
+    }
+
+    fn push_clip_rect(&mut self, rect: kurbo::Rect, transform: Affine, anti_alias: bool) {
+        let Some((rect, rect_transform)) = axis_aligned_rect(rect, transform, anti_alias) else {
+            self.push_clip(&rect.to_path(0.1), Fill::NonZero, transform, anti_alias);
+            return;
+        };
+
+        self.set_anti_alias(true);
+        self.scene.set_transform(rect_transform);
+        self.scene.push_clip_rect(&rect);
     }
 
     fn pop_clip(&mut self) {
