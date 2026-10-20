@@ -765,6 +765,7 @@ impl X11Window {
         let mut surfaces: Vec<Arc<dyn IPlatformRenderSurface>> = vec![Arc::new(X11FramebufferSurface::new(
             x11.deferred_display(),
             render_handle,
+            handle,
             depth,
             platform.options().use_retained_framebuffer.unwrap_or(false),
         ))];
@@ -806,7 +807,7 @@ impl X11Window {
             );
         }
 
-        surfaces.push(Arc::new(SurfacePlatformHandle::new(&window)));
+        surfaces.push(Arc::new(SurfacePlatformHandle::new(&window, x11.deferred_display(), handle)));
 
         *window.surfaces.borrow_mut() = surfaces;
         window.update_effective_system_decorations();
@@ -2678,11 +2679,17 @@ impl IX11OptionsToplevelImplFeature for X11Window {
 /// (`SurfacePlatformHandle`).
 pub struct SurfacePlatformHandle {
     shared: Arc<WindowShared>,
+    display: XDisplay,
+    /// The top-level window the render window is in.
+    parent: XID,
 }
 
 impl SurfacePlatformHandle {
-    pub fn new(owner: &X11Window) -> Self {
-        Self { shared: owner.shared.clone() }
+    /// The handle surface of `owner`, whose top-level window is `parent`;
+    /// `display` is the connection a backend resizes its render window
+    /// with ([`RenderWindowHandle`]).
+    pub fn new(owner: &X11Window, display: XDisplay, parent: XID) -> Self {
+        Self { shared: owner.shared.clone(), display, parent }
     }
 
     fn client_size(&self) -> Size {
@@ -2712,8 +2719,70 @@ impl IPlatformRenderSurface for SurfacePlatformHandle {
         crate::x_resources::text_rendering_parameters()
     }
 
+    /// The handle of the window as a native handle surface, for a render
+    /// backend that makes a surface of its own from it (the Vello backend,
+    /// docs/porting/vello-backend.md, section 14).
+    fn try_get_surface_kind(&self, kind: std::any::TypeId) -> Option<Rc<dyn Any>> {
+        (kind == std::any::TypeId::of::<dyn INativePlatformHandleSurface>()).then(|| {
+            let handle: Rc<dyn INativePlatformHandleSurface> =
+                Rc::new(RenderWindowHandle { shared: self.shared.clone(), display: self.display, parent: self.parent });
+            Rc::new(handle) as Rc<dyn Any>
+        })
+    }
+
     fn as_any(&self) -> &dyn Any {
         self
+    }
+}
+
+/// The render window of a top-level as a backend that draws into it with a
+/// surface of its own sees it. Not from the reference (a view the Vello
+/// backend asks for, docs/porting/vello-backend.md, section 14): its size
+/// is the size of the top-level, and the render window inside it is
+/// resized to that size when it is asked for, as the surfaces of GLX and
+/// EGL resize it before they draw (`SurfaceInfo::size`); with GLX the
+/// platform resizes the render window only when a frame of GLX is drawn.
+struct RenderWindowHandle {
+    shared: Arc<WindowShared>,
+    display: XDisplay,
+    parent: XID,
+}
+
+impl IPlatformHandle for RenderWindowHandle {
+    fn handle(&self) -> isize {
+        self.shared.render_handle.load(Ordering::SeqCst) as isize
+    }
+
+    fn handle_descriptor(&self) -> Option<&str> {
+        Some("XID")
+    }
+
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+}
+
+impl IPlatformRenderSurface for RenderWindowHandle {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+}
+
+impl INativePlatformHandleSurface for RenderWindowHandle {
+    fn size(&self) -> PixelSize {
+        let render = self.shared.render_handle.load(Ordering::SeqCst) as XID;
+        xlib::x_lock_display(self.display);
+        let geometry = xlib::x_get_geometry(self.display, self.parent).unwrap_or_default();
+        if render != 0 && render != self.parent {
+            xlib::x_resize_window(self.display, render, geometry.width as _, geometry.height as _);
+            xlib::x_flush(self.display);
+        }
+        xlib::x_unlock_display(self.display);
+        PixelSize::new(geometry.width, geometry.height)
+    }
+
+    fn scaling(&self) -> f64 {
+        self.shared.scaling()
     }
 }
 

@@ -160,20 +160,54 @@ impl DrawingContextImpl {
 
     /// A scene of its own for something that is drawn through a filter and
     /// composed into the scene of the context as a picture: on the device
-    /// of the scene of the context when its renderer has filter layers (the
-    /// hybrid mode), by the CPU renderer otherwise.
+    /// of the scene of the context by the hybrid renderer, which has filter
+    /// layers, when the scene is drawn on a device (the hybrid mode, and the
+    /// GPU mode, whose renderer has no filters, in a build with both); by
+    /// the CPU renderer otherwise.
     pub(super) fn create_filter_scene(&mut self, width: u16, height: u16) -> Box<dyn IVelloSceneSink> {
         #[cfg(feature = "hybrid")]
-        {
-            let scene = self.scene();
-            if scene.rendering_mode() == crate::VelloRenderingMode::Hybrid && scene.filter_capabilities().filter_layers {
-                if let Some(device) = scene.device().cloned() {
-                    return Box::new(crate::scene::VelloHybridSceneSink::new(device, width, height));
-                }
-            }
+        if let Some(device) = self.filter_scene_device() {
+            return Box::new(crate::scene::VelloHybridSceneSink::new(device, width, height));
         }
 
-        Box::new(VelloCpuSceneSink::new(width, height))
+        Box::new(VelloCpuSceneSink::single_threaded(width, height))
+    }
+
+    /// The device a filter scene is drawn on (see
+    /// [`create_filter_scene`](Self::create_filter_scene)).
+    #[cfg(feature = "hybrid")]
+    fn filter_scene_device(&mut self) -> Option<std::sync::Arc<crate::gpu::VelloWgpuDevice>> {
+        let scene = self.scene();
+        let on_device = match scene.rendering_mode() {
+            crate::VelloRenderingMode::Hybrid => scene.filter_capabilities().filter_layers,
+            crate::VelloRenderingMode::Gpu => scene.capabilities().device_textures,
+            crate::VelloRenderingMode::Cpu => false,
+        };
+        on_device.then(|| scene.device().cloned()).flatten()
+    }
+
+    /// Whether [`create_filter_scene`](Self::create_filter_scene) makes a
+    /// scene of the device.
+    pub(super) fn filter_scene_on_device(&mut self) -> bool {
+        #[cfg(feature = "hybrid")]
+        return self.filter_scene_device().is_some();
+        #[cfg(not(feature = "hybrid"))]
+        false
+    }
+
+    /// Renders a scene of the CPU renderer that
+    /// [`create_filter_scene`](Self::create_filter_scene) made into a
+    /// picture.
+    pub(super) fn render_filter_scene_to_image(
+        &mut self,
+        scene: &mut dyn IVelloSceneSink,
+        phase: crate::perf::Phase,
+    ) -> peniko::ImageData {
+        let (width, height) = (scene.width(), scene.height());
+        crate::perf::count(phase, u64::from(width) * u64::from(height) * 4);
+        let mut rgba = vec![0u8; width as usize * height as usize * 4];
+        scene.render_to_pixels(&mut rgba);
+        to_image(rgba, PixelSize::new(width as i32, height as i32))
     }
 
     /// Renders a scene of [`create_filter_scene`](Self::create_filter_scene)

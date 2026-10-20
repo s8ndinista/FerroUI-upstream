@@ -52,6 +52,18 @@ const BOUNDS: &[(&str, VelloRenderingMode, Option<f64>, Option<f64>)] = &[
     // And for text: the aliased glyphs of the scene are anti-aliased
     // (measured: 2.473 % against both).
     ("text_aliased", VelloRenderingMode::Gpu, Some(3.76), Some(3.76)),
+    // The hybrid mode draws anti-aliased glyphs from the glyph atlas of its
+    // renderer, at a quarter of a pixel across and a whole pixel down,
+    // where the CPU mode fills the outlines at their places (measured
+    // against the CPU mode: 0.278 %, 0.770 %, 0.055 %, 0.165 %, 1.080 %,
+    // 0.330 %; against Skia every text scene is as near as in the CPU mode
+    // or nearer, within the bound of the scene).
+    ("text_latin_sizes", VelloRenderingMode::Hybrid, None, Some(0.47)),
+    ("text_interface_sizes", VelloRenderingMode::Hybrid, None, Some(1.21)),
+    ("text_mixed_scripts", VelloRenderingMode::Hybrid, None, Some(0.13)),
+    ("text_mixed_scripts_with_fallback", VelloRenderingMode::Hybrid, None, Some(0.30)),
+    ("text_decorations", VelloRenderingMode::Hybrid, None, Some(1.67)),
+    ("text_scaled", VelloRenderingMode::Hybrid, None, Some(0.55)),
 ];
 
 /// What a mode does not draw natively in a scene and how the sink of the

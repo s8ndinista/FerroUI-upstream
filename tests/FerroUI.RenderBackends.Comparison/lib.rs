@@ -185,7 +185,7 @@ pub fn compare(a: &Pixels, b: &Pixels) -> Difference {
 pub const GPU_MODE_REPEAT_PIXELS: usize = 16;
 
 /// Checks that a backend drew a scene the same way twice: the same pixels,
-/// and for the GPU mode of the Vello backend at most
+/// and for the GPU and the hybrid mode of the Vello backend at most
 /// [`GPU_MODE_REPEAT_PIXELS`] pixels one digit of a color apart.
 pub fn drawn_the_same_way_twice(backend: &Backend, first: &Pixels, second: &Pixels) -> Result<(), String> {
     if first == second {
@@ -194,7 +194,11 @@ pub fn drawn_the_same_way_twice(backend: &Backend, first: &Pixels, second: &Pixe
 
     let differing = first.rgba.chunks_exact(4).zip(second.rgba.chunks_exact(4)).filter(|(a, b)| a != b).count();
     let largest = first.rgba.iter().zip(&second.rgba).map(|(a, b)| a.abs_diff(*b)).max().unwrap_or(0);
-    if backend.name == "Vello GPU" && largest <= 1 && differing <= GPU_MODE_REPEAT_PIXELS {
+    // The hybrid mode draws text from the glyph atlas of its renderer,
+    // which holds the glyphs a frame drew for the next: measured, one pixel
+    // a digit apart between the first and the second draw of a text scene.
+    let repeats_loosely = backend.name == "Vello GPU" || backend.name == "Vello hybrid";
+    if repeats_loosely && largest <= 1 && differing <= GPU_MODE_REPEAT_PIXELS {
         return Ok(());
     }
 
