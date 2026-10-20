@@ -1,7 +1,8 @@
 //! Native launchers using FerroUI platform providers and the Vello render backend.
 //!
-//! macOS uses Metal with the hybrid renderer. Linux/X11 and Windows use Vello CPU
-//! rendering through their platform framebuffer contracts.
+//! The hybrid renderer draws through Metal on macOS and the platform OpenGL
+//! context on Linux/X11 and Windows. CPU framebuffers remain the fallback;
+//! `--software` explicitly requests that path.
 
 use ferroui_controls::AppBuilder;
 use ferroui_harfbuzz::HarfBuzzApplicationExtensions;
@@ -10,7 +11,19 @@ use std::rc::Rc;
 
 /// Configure services without creating a window or connecting to a display server.
 pub fn configure(builder: AppBuilder, software: bool) -> AppBuilder {
-    let builder = builder.use_harfbuzz().use_vello();
+    let renderer = if software {
+        VelloOptions::with_rendering_mode(VelloRenderingMode::Cpu)
+    } else {
+        VelloOptions {
+            rendering_modes: [
+                Some(VelloRenderingMode::Hybrid),
+                Some(VelloRenderingMode::Cpu),
+                None,
+            ],
+            ..VelloOptions::default()
+        }
+    };
+    let builder = builder.with(Rc::new(renderer)).use_harfbuzz().use_vello();
 
     #[cfg(target_os = "macos")]
     {
@@ -25,57 +38,46 @@ pub fn configure(builder: AppBuilder, software: bool) -> AppBuilder {
                 FerroNativeRenderingMode::Software,
             ]
         };
-        let renderer = if software {
-            VelloOptions::with_rendering_mode(VelloRenderingMode::Cpu)
-        } else {
-            VelloOptions {
-                rendering_modes: [
-                    Some(VelloRenderingMode::Hybrid),
-                    Some(VelloRenderingMode::Cpu),
-                    None,
-                ],
-                ..VelloOptions::default()
-            }
-        };
         builder
             .with(Rc::new(FerroNativePlatformOptions {
                 rendering_mode: modes,
                 ..FerroNativePlatformOptions::default()
             }))
-            .with(Rc::new(renderer))
             .use_ferro_native()
     }
 
     #[cfg(target_os = "linux")]
     {
         use ferroui_x11::{FerroX11PlatformExtensions, X11PlatformOptions, X11RenderingMode};
-        let _ = software;
+        let modes = if software {
+            vec![X11RenderingMode::Software]
+        } else {
+            vec![X11RenderingMode::Glx, X11RenderingMode::Software]
+        };
         builder
             .with(Rc::new(X11PlatformOptions {
-                rendering_mode: vec![X11RenderingMode::Software],
+                rendering_mode: modes,
                 wm_class: Some("FerroDesign".to_owned()),
                 use_retained_framebuffer: Some(true),
                 use_x_shm_framebuffer: Some(true),
                 ..X11PlatformOptions::default()
             }))
-            .with(Rc::new(VelloOptions::with_rendering_mode(
-                VelloRenderingMode::Cpu,
-            )))
             .use_x11()
     }
 
     #[cfg(windows)]
     {
         use ferroui_win32::{Win32ApplicationExtensions, Win32PlatformOptions, Win32RenderingMode};
-        let _ = software;
+        let modes = if software {
+            vec![Win32RenderingMode::Software]
+        } else {
+            vec![Win32RenderingMode::Wgl, Win32RenderingMode::Software]
+        };
         builder
             .with(Rc::new(Win32PlatformOptions {
-                rendering_mode: vec![Win32RenderingMode::Software],
+                rendering_mode: modes,
                 ..Win32PlatformOptions::default()
             }))
-            .with(Rc::new(VelloOptions::with_rendering_mode(
-                VelloRenderingMode::Cpu,
-            )))
             .use_win32()
     }
 

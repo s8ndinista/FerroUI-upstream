@@ -46,7 +46,7 @@ Useful build options:
 
 ## Native launcher
 
-Use Rust **1.99.0**, as required by this sample's Cargo manifest, and the platform prerequisites documented by the parent FerroUI repository. The setup environment above supplies the pinned toolchain for native builds as well. Linux native linking needs a C++ toolchain, `pkg-config`, and the Fontconfig and FreeType development packages (`libfontconfig1-dev` and `libfreetype6-dev` on Ubuntu). Windows uses the platform framebuffer without the optional ANGLE feature. macOS uses the Apple SDK and Metal backend.
+Use Rust **1.99.0**, as required by this sample's Cargo manifest, and the platform prerequisites documented by the parent FerroUI repository. The setup environment above supplies the pinned toolchain for native builds as well. Linux native linking needs a C++ toolchain, `pkg-config`, and the Fontconfig and FreeType development packages (`libfontconfig1-dev` and `libfreetype6-dev` on Ubuntu). Windows uses the system OpenGL provider with a CPU framebuffer fallback, without the optional ANGLE feature. macOS uses the Apple SDK and Metal backend.
 
 ```sh
 cargo run --locked -p ferrodesign-app
@@ -55,7 +55,7 @@ cargo run --locked -p ferrodesign-app -- --software
 cargo run --locked -p ferrodesign-app -- --render-smoke /tmp/ferrodesign.png
 ```
 
-The native configuration uses Vello CPU and platform framebuffers on Linux/X11 and Windows, and Vello hybrid/Metal with a CPU fallback on macOS. `--software` requests the CPU configuration. The headless smoke command draws the compiled-XAML application through a real Vello render target and writes PNG. These are configured platform paths; the source-tagged validation section records which builds and executions have actually completed.
+The native configuration uses Vello hybrid with Metal on macOS, GLX on Linux/X11, and WGL on Windows. Each platform retains a Vello CPU framebuffer fallback. `--software` requests the CPU configuration. The headless smoke command draws the compiled-XAML application through a real Vello render target and writes PNG. These are configured platform paths; the source-tagged validation section records which builds and executions have actually completed.
 
 Vello is selected through FerroUI's public `BrowserPlatformOptions` and `VelloApplicationExtensions`. Document drawing continues through FerroUI `DrawingContext`, retained geometry/brushes, `TextLayout`, compositing scopes and `RenderTargetBitmap`. The application does not issue backend-specific drawing calls. The retained scene, viewport bounds hierarchy, editing transactions and compiled XAML controls are shared across GPU and raster presentation.
 

@@ -19,7 +19,7 @@ The custom `DesignCanvas` extends FerroUI `Control` with `ferro_class!` and impl
 | Solid and gradient fills | Immutable solid, linear-gradient and radial-gradient brushes |
 | Raster image fills | `Bitmap`, `ImmutableImageBrush`, normalized source rectangles and stretch/alignment/tile modes |
 | Strokes | `ImmutablePen`, dash style, line caps/joins and widened geometry for alignment |
-| Text and rich text runs | `TextLayout`, run properties/cache, glyph runs and a text drawing sink |
+| Text and rich text runs | Cached `TextLayout`, run properties and `TextLayout::build_geometry` for positioned glyph/decoration contours |
 | Nested geometry | `push_transform`, clip and isolated `try_push_compositing_layer` scopes |
 | Shadows and layer blur | `BoxShadow`, `BoxShadows`, geometry and `ImmutableBlurEffect` |
 | Background blur | Bounded `RenderTargetBitmap` prefix/source/filter surfaces, geometry clips and premultiplied compositing |
@@ -27,7 +27,7 @@ The custom `DesignCanvas` extends FerroUI `Control` with `ferro_class!` and impl
 
 The browser app disables FerroUI.Browser's default features, enables only `vello`, and selects `BrowserRenderer::Vello`. The build checks the resolved target graph for Vello and rejects any active `ferroui-skia`, `skia-safe` or `skia-bindings` dependency. Optional packages in `Cargo.lock` are not linked merely because they appear there. The framework's independent backend implementations remain available to other applications.
 
-The default browser mode list is WebGL2 then Software2D: FerroUI Vello uses its hybrid renderer on the registered WebGL2 context or CPU rasterization to the platform framebuffer. An explicit `RenderingMode` selects exactly Software2D or WebGL2; WebGL1 is rejected before application startup. Native launchers use `VelloApplicationExtensions`, CPU framebuffers on Linux/X11 and Windows, and hybrid/Metal with CPU fallback on macOS. HarfBuzz shaping and embedded Inter fonts are shared with the XAML control tree. The headless smoke command uses Vello through FerroUI's render-target and bitmap APIs. Source-tagged validation distinguishes the earlier baseline from later editor changes; backend configuration alone does not establish a passing run.
+The default browser mode list is WebGL2 then Software2D: FerroUI Vello uses its hybrid renderer on the registered WebGL2 context or CPU rasterization to the platform framebuffer. An explicit `RenderingMode` selects exactly Software2D or WebGL2; WebGL1 is rejected before application startup. Native launchers use `VelloApplicationExtensions` with hybrid/Metal on macOS and the platform OpenGL contexts (GLX on Linux/X11, WGL on Windows). All retain CPU framebuffer fallback, and `--software` requests it directly. HarfBuzz shaping and embedded Inter fonts are shared with the XAML control tree. The headless smoke command uses Vello through FerroUI's render-target and bitmap APIs. Source-tagged validation distinguishes the earlier baseline from later editor changes; backend configuration alone does not establish a passing run.
 
 ## Retained scene and invalidation
 

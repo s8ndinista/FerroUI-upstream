@@ -30,7 +30,7 @@ wasm-bindgen = "=0.2.129"
 
 [target.'cfg(not(target_os = "emscripten"))'.dependencies]
 ferroui-headless = { path = "../../../../src/Headless/FerroUI.Headless" }
-ferroui-vello = { path = "../../../../src/Vello/FerroUI.Vello" }
+ferroui-vello = { path = "../../../../src/Vello/FerroUI.Vello", features = ["hybrid"] }
 ferroui-harfbuzz = { path = "../../../../src/HarfBuzz/FerroUI.HarfBuzz" }
 
 [target.'cfg(target_os = "linux")'.dependencies]
@@ -41,7 +41,6 @@ ferroui-win32 = { path = "../../../../src/Windows/FerroUI.Win32", default-featur
 
 [target.'cfg(target_os = "macos")'.dependencies]
 ferroui-native = { path = "../../../../src/FerroUI.Native" }
-ferroui-vello = { path = "../../../../src/Vello/FerroUI.Vello", features = ["hybrid"] }
 
 [build-dependencies]
 ferroui-build = { path = "../../../../src/FerroUI.Build.Tasks" }
