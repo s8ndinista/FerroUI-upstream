@@ -133,6 +133,80 @@ pub fn from_premul_rgba(
     format: PixelFormat,
     alpha_format: AlphaFormat,
 ) {
+    let (width, height) = (size.width.max(0) as usize, size.height.max(0) as usize);
+    from_premul_rgba_rect(rgba, data, row_bytes, size, format, alpha_format, (0, 0, width, height));
+}
+
+/// [`from_premul_rgba`] of the pixels of a rectangle only, `(x0, y0, x1,
+/// y1)` in pixels: the rest of `data` is left as it is.
+///
+/// Premultiplied RGBA and BGRA, the formats of the framebuffers of the
+/// desktop platforms, are converted a row at a time (a copy, or the swap of
+/// red and blue in every pixel); the other formats pixel by pixel.
+pub fn from_premul_rgba_rect(
+    rgba: &[u8],
+    data: &mut [u8],
+    row_bytes: usize,
+    size: PixelSize,
+    format: PixelFormat,
+    alpha_format: AlphaFormat,
+    rect: (usize, usize, usize, usize),
+) {
+    let width = size.width.max(0) as usize;
+    let height = size.height.max(0) as usize;
+    let (x0, y0) = (rect.0.min(width), rect.1.min(height));
+    let (x1, y1) = (rect.2.min(width).max(x0), rect.3.min(height).max(y0));
+    if x1 == x0 || y1 == y0 {
+        return;
+    }
+
+    let fast = matches!(format, PixelFormat::RGBA8888 | PixelFormat::BGRA8888)
+        && matches!(alpha_format, AlphaFormat::Premul | AlphaFormat::Opaque);
+    if !fast {
+        for y in y0..y1 {
+            let source = &rgba[(y * width + x0) * 4..(y * width + x1) * 4];
+            let pixel_bytes = bytes_per_pixel(format);
+            let Some(target) = data.get_mut(y * row_bytes + x0 * pixel_bytes..y * row_bytes + x1 * pixel_bytes) else {
+                break;
+            };
+            let row_size = PixelSize::new((x1 - x0) as i32, 1);
+            from_premul_rgba_slow(source, target, (x1 - x0) * pixel_bytes, row_size, format, alpha_format);
+        }
+        return;
+    }
+
+    let opaque = alpha_format == AlphaFormat::Opaque;
+    let swap = format == PixelFormat::BGRA8888;
+    for y in y0..y1 {
+        let source = &rgba[(y * width + x0) * 4..(y * width + x1) * 4];
+        let Some(target) = data.get_mut(y * row_bytes + x0 * 4..y * row_bytes + x1 * 4) else {
+            break;
+        };
+        if !swap && !opaque {
+            target.copy_from_slice(source);
+            continue;
+        }
+        let alpha = if opaque { 0xFF00_0000u32 } else { 0 };
+        for (target, source) in target.chunks_exact_mut(4).zip(source.chunks_exact(4)) {
+            let value = u32::from_le_bytes([source[0], source[1], source[2], source[3]]);
+            let value = match swap {
+                true => (value & 0xFF00_FF00) | ((value >> 16) & 0xFF) | ((value & 0xFF) << 16),
+                false => value,
+            };
+            target.copy_from_slice(&(value | alpha).to_le_bytes());
+        }
+    }
+}
+
+/// [`from_premul_rgba`] pixel by pixel, for every format.
+fn from_premul_rgba_slow(
+    rgba: &[u8],
+    data: &mut [u8],
+    row_bytes: usize,
+    size: PixelSize,
+    format: PixelFormat,
+    alpha_format: AlphaFormat,
+) {
     let pixel_bytes = bytes_per_pixel(format);
     let width = size.width.max(0) as usize;
 

@@ -63,6 +63,12 @@ ferroui-metal = { workspace = true, optional = true }
 objc2 = { version = "0.6.3", optional = true }
 objc2-metal = { version = "0.3.2", optional = true, default-features = false, features = ["std", "MTLDevice", "MTLCommandQueue", "MTLCommandBuffer", "MTLTexture", "MTLResource", "MTLPixelFormat", "MTLTypes"] }
 
+# The thread pool of the CPU renderer, on every target but the web, where
+# the module is built without threads (docs/porting/vello-backend.md,
+# section 14).
+[target.'cfg(not(target_family = "wasm"))'.dependencies]
+vello_cpu = { workspace = true, features = ["multithreading"] }
+
 [dev-dependencies]
 ferroui-controls = { workspace = true, features = ["testing"] }
 ferroui-fonts-inter.workspace = true

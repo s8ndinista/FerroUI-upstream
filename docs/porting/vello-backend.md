@@ -1302,9 +1302,43 @@ After the round, the same benchmarks:
 
 Bold: as fast as Skia or faster. The pixels: the comparison harness (32 tests), the tests of the crate (517, 3 new) and the render tests (376 pass, the one failure of section 8, the aliased circle) give what they gave before, but for the text of the hybrid mode (item 2).
 
-### 14.4 Linux and Windows, as found (2026-10-19)
+### 14.4 Round 2 (2026-10-20): software framebuffers, the thread pool, shadow pictures
+
+| # | Change | Where |
+|---|---|---|
+| 1 | **The framebuffer of a window keeps its frame** (premultiplied RGBA, the format of the renderers) and says that it retains it and can be drawn into directly: the compositor draws what changed into it, without a layer of its own, and the CPU mode renders only that (round 1, item 4). When the frame is presented it is converted into the framebuffer: where it changed when the platform keeps the framebuffer, all of it otherwise, row by row (premultiplied BGRA, the format of the platforms, is the swap of two bytes in a word). Before, the compositor drew into a layer, the layer was drawn whole into a scene of the framebuffer, and that scene was rendered and converted whole every frame. A new frame of a framebuffer the platform keeps starts with what the framebuffer holds | `framebuffer_render_target.rs`, `helpers/pixel_format_helper.rs` (`from_premul_rgba_rect`), `surface_render_target.rs` (`write_pixels`) |
+| 2 | **The thread pool of the CPU renderer** renders a scene of 512 by 512 pixels or more (the cores but one, at most seven workers), on every target but the web. Its render contexts are kept with the others (round 1, item 3), by size and number of workers; a context of the rectangles a kept target clears renders on the thread that draws. The renderer has no filter layers with its thread pool: such a scene says so, and the drawing context draws an effect into a scene of its own on the thread that draws, as it does for the GPU mode | `scene/vello_cpu_scene_sink.rs` (`render_threads`), `drawing_context_impl/effects.rs`, the manifest of the crate |
+| 3 | **The picture of a box shadow without a closed form is kept** on the thread that draws: the same shape, blur, color and size at another place on whole pixels or in the next frame is the same picture (32 MB of pictures at most, those used least recently go). Section 13.3, P7 | `drawing_context_impl/box_shadows.rs` (`ShadowPictures`) |
+
+The software framebuffer, as on Linux and Windows without a GPU, measured with the raster surface of the benchmarks (`FERROUI_BENCH_SURFACE` unset, 2560 by 1600), against Skia raster:
+
+| Scenario | Skia raster | CPU, before round 2 | CPU, after |
+|---|---|---|---|
+| buttons page, the pointer moving across the buttons | 1.56 | 4.11 | **0.57** |
+| buttons page, scrolled 20 pixels a frame | 3.38 | 8.03 | **2.51** |
+| text block page, drawn again | 2.49 | 7.52 | **2.01** |
+| effects page, every box drawn again | 77.16 | 38.52 | **20.44** |
+| effects page, one box drawn again | 6.18 | 12.57 | 6.34 |
+| catalog tour, first round | 1677 | 3136 | **1390** |
+| catalog tour, second round | 1745 | 3146 | **1403** |
+
+The Metal surface after round 2:
+
+| Scenario | Skia | hybrid | GPU | CPU |
+|---|---|---|---|---|
+| buttons page, the pointer moving across the buttons | 1.26 | **0.84** | 2.05 | **0.62** |
+| buttons page, scrolled 20 pixels a frame | 2.28 | 2.29 | 3.34 | 4.84 |
+| text block page, drawn again | 0.85 | 1.39 | 2.90 | 4.45 |
+| effects page, every box drawn again | 7.05 | 7.80 | 22.38 | 22.62 |
+| effects page, one box drawn again | 2.24 | 3.42 | 7.19 | 6.88 |
+| catalog tour, first round | 1028 | **891** | 1410 | 2179 |
+| catalog tour, second round | 472 | 945 | 1402 | 2191 |
+
+What a frame of the hybrid mode is now: on the text page about 0.85 ms on the processor (recording 0.64, of which glyph runs 0.36; the render call 0.19) and about 1 ms of waiting for the device, of which about 0.25 ms is the copy of the frame of the window into the drawable (measured by leaving it out) and about 0.3 ms the hand-over between the queues; in the tour 911 of 1511 samples of the frame are that wait. The Skia backend copies its layer into the drawable as well.
+
+### 14.5 Linux and Windows, as found (2026-10-19)
 
 - The backend draws a window of these platforms in the CPU mode only: `wgpu` is built with Metal alone, and `create_gpu` takes the Metal device of macOS only. A platform that hands out graphics (X11 with GLX, its default; Wayland with EGL, its default; Windows with ANGLE on Direct3D 11, its default) makes the backend panic; it draws when the platform renders in software.
-- In software every frame of these platforms is whole: the framebuffers are not kept (X11 `XPutImage` and `XShm`, Wayland `wl_shm` with a new buffer every frame, Windows `SetDIBitsToDevice`), so the compositor draws into a layer of its own and the whole layer into the framebuffer; the framebuffers are BGRA, so the CPU mode renders into pixels of its own and converts all of them.
+- In software every frame of these platforms was whole: the framebuffers are not kept (X11 `XPutImage` and `XShm`, Wayland `wl_shm` with a new buffer every frame, Windows `SetDIBitsToDevice`), so the compositor drew into a layer of its own and the whole layer into the framebuffer; the framebuffers are BGRA, so the CPU mode rendered into pixels of its own and converted all of them. Round 2 (item 1) keeps the frame in the render target instead: what changed is rendered, and only the conversion into the framebuffer is whole.
 - What will close it: a `wgpu` device of the backend's own on Vulkan (Linux) and Direct3D 12 (Windows) with a surface made from the handle of the window (`XID`, `HWND`), whatever graphics the platform chose; and a framebuffer target that keeps its frame in the format the renderer draws, converting only what changed.
 

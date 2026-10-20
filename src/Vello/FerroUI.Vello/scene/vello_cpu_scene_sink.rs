@@ -98,6 +98,9 @@ pub struct VelloCpuSceneSink {
     retained: Option<Vec<VelloScenePixelRect>>,
     /// The size of the target.
     target_size: (u16, u16),
+    /// The workers of the render context of the whole target
+    /// ([`render_threads`]).
+    threads: u16,
     /// Where the render context lies on the target: its top-left pixel. The
     /// context covers the whole target unless the scene was restricted to
     /// the rectangles it clears ([`IVelloSceneSink::retain_target`]).
@@ -134,12 +137,22 @@ enum FirstClip {
 }
 
 impl VelloCpuSceneSink {
-    /// Creates the scene of a target of the given size.
-    ///
-    /// The scene is rendered on the thread that draws: the renderer's own
-    /// thread pool is not compiled in (see the workspace manifest).
+    /// Creates the scene of a target of the given size: a large one is
+    /// rendered by the thread pool of the renderer ([`render_threads`]),
+    /// a small one on the thread that draws.
     pub fn new(width: u16, height: u16) -> Self {
-        let (context, resources) = RendererPool::take(width, height);
+        Self::with_threads(width, height, render_threads(width, height))
+    }
+
+    /// Creates the scene of a target of the given size rendered on the
+    /// thread that draws: the renderer has filter layers then (its thread
+    /// pool has none).
+    pub fn single_threaded(width: u16, height: u16) -> Self {
+        Self::with_threads(width, height, 0)
+    }
+
+    fn with_threads(width: u16, height: u16, threads: u16) -> Self {
+        let (context, resources) = RendererPool::take(width, height, threads);
 
         Self {
             context,
@@ -147,6 +160,7 @@ impl VelloCpuSceneSink {
             images: HashMap::new(),
             retained: None,
             target_size: (width, height),
+            threads,
             origin: (0, 0),
             first_clips: Some(Vec::new()),
             open_clips: 0,
@@ -189,7 +203,9 @@ impl VelloCpuSceneSink {
     /// Gives the scene a render context of `size` at `origin`, with the
     /// clips that were opened before anything was drawn opened again in it.
     fn place_context(&mut self, origin: (u16, u16), size: (u16, u16)) {
-        let context = RendererPool::take_context(size.0, size.1);
+        // A context of the size of the rectangle is made for it now and
+        // again: on the thread that draws, without a thread pool to start.
+        let context = RendererPool::take_context(size.0, size.1, 0);
         RendererPool::give_back_context(std::mem::replace(&mut self.context, context));
         self.origin = origin;
 
@@ -216,7 +232,7 @@ impl VelloCpuSceneSink {
     /// target, with the clips that are still open, and the bounded one is
     /// rendered first.
     fn unbound(&mut self) {
-        let context = RendererPool::take_context(self.target_size.0, self.target_size.1);
+        let context = RendererPool::take_context(self.target_size.0, self.target_size.1, self.threads);
         let bounded = std::mem::replace(&mut self.context, context);
         self.bounded = Some((bounded, self.origin));
         self.origin = (0, 0);
@@ -318,32 +334,27 @@ impl RendererPool {
     /// the surfaces of its effects at their sizes.
     const CONTEXTS: usize = 4;
 
-    /// A render context of the size and the resources of the thread, or new
-    /// ones.
-    fn take(width: u16, height: u16) -> (RenderContext, Resources) {
-        let pooled = RENDERER_POOL
-            .try_with(|pool| {
-                let mut pool = pool.borrow_mut();
-                let index = pool.contexts.iter().rposition(|context| context.width() == width && context.height() == height);
-                (index.map(|index| pool.contexts.remove(index)), pool.resources.take())
-            })
-            .unwrap_or((None, None));
-
-        let context = pooled.0.unwrap_or_else(|| Self::new_context(width, height));
-        (context, pooled.1.unwrap_or_default())
+    /// A render context of the size and of `threads` workers, and the
+    /// resources of the thread, or new ones.
+    fn take(width: u16, height: u16, threads: u16) -> (RenderContext, Resources) {
+        let resources = RENDERER_POOL.try_with(|pool| pool.borrow_mut().resources.take()).ok().flatten();
+        (Self::take_context(width, height, threads), resources.unwrap_or_default())
     }
 
-    /// A render context of the size from the pool, or a new one.
-    fn take_context(width: u16, height: u16) -> RenderContext {
+    /// A render context of the size and of `threads` workers from the
+    /// pool, or a new one.
+    fn take_context(width: u16, height: u16, threads: u16) -> RenderContext {
         let pooled = RENDERER_POOL
             .try_with(|pool| {
                 let mut pool = pool.borrow_mut();
-                let index = pool.contexts.iter().rposition(|context| context.width() == width && context.height() == height);
+                let index = pool.contexts.iter().rposition(|context| {
+                    (context.width(), context.height(), context.render_settings().num_threads) == (width, height, threads)
+                });
                 index.map(|index| pool.contexts.remove(index))
             })
             .ok()
             .flatten();
-        pooled.unwrap_or_else(|| Self::new_context(width, height))
+        pooled.unwrap_or_else(|| Self::new_context(width, height, threads))
     }
 
     /// Keeps a render context, reset, for a later scene of the thread.
@@ -358,28 +369,41 @@ impl RendererPool {
         });
     }
 
-    /// A render context of the size. The renderer's own thread pool is not
-    /// compiled in (see the workspace manifest): the scene is rendered on
-    /// the thread that draws.
-    fn new_context(width: u16, height: u16) -> RenderContext {
-        RenderContext::new_with(width, height, RenderSettings { num_threads: 0, ..RenderSettings::default() })
+    /// A render context of the size, rendered by `threads` workers of a
+    /// thread pool of its own, or on the thread that draws for none.
+    fn new_context(width: u16, height: u16, threads: u16) -> RenderContext {
+        RenderContext::new_with(width, height, RenderSettings { num_threads: threads, ..RenderSettings::default() })
     }
 
     /// Keeps a render context, reset, and the resources for the next scene
     /// of the thread.
-    fn give_back(mut context: RenderContext, resources: Resources) {
-        context.reset();
+    fn give_back(context: RenderContext, resources: Resources) {
+        Self::give_back_context(context);
         let _ = RENDERER_POOL.try_with(|pool| {
             let mut pool = pool.borrow_mut();
-            if pool.contexts.len() == Self::CONTEXTS {
-                pool.contexts.remove(0);
-            }
-            pool.contexts.push(context);
             if pool.resources.is_none() {
                 pool.resources = Some(resources);
             }
         });
     }
+}
+
+/// The workers that render a scene of `width` by `height` pixels in the
+/// CPU mode: none (the thread that draws renders it) for a small scene,
+/// where starting them costs more than they save, and in a web page, where
+/// the renderer is built without its thread pool (the manifest); otherwise
+/// the cores of the machine but one, at most seven.
+fn render_threads(width: u16, height: u16) -> u16 {
+    #[cfg(not(target_family = "wasm"))]
+    {
+        const LARGE: u32 = 512 * 512;
+        if u32::from(width) * u32::from(height) >= LARGE {
+            let cores = std::thread::available_parallelism().map_or(1, |cores| cores.get());
+            return (cores.saturating_sub(1)).min(7) as u16;
+        }
+    }
+    let _ = (width, height);
+    0
 }
 
 impl Drop for VelloCpuSceneSink {
@@ -389,7 +413,7 @@ impl Drop for VelloCpuSceneSink {
         if let Some((bounded, _)) = self.bounded.take() {
             RendererPool::give_back_context(bounded);
         }
-        let context = std::mem::replace(&mut self.context, RendererPool::new_context(1, 1));
+        let context = std::mem::replace(&mut self.context, RendererPool::new_context(1, 1, 0));
         RendererPool::give_back(context, std::mem::take(&mut self.resources));
     }
 }
@@ -476,7 +500,7 @@ impl IVelloSceneSink for VelloCpuSceneSink {
         self.unbounded = false;
         self.bounding_clips.clear();
         if self.origin != (0, 0) || (self.context.width(), self.context.height()) != self.target_size {
-            let context = RendererPool::take_context(self.target_size.0, self.target_size.1);
+            let context = RendererPool::take_context(self.target_size.0, self.target_size.1, self.threads);
             RendererPool::give_back_context(std::mem::replace(&mut self.context, context));
             self.origin = (0, 0);
         }
@@ -675,9 +699,10 @@ impl IVelloSceneSink for VelloCpuSceneSink {
     }
 
     fn filter_capabilities(&self) -> VelloSceneFilterCapabilities {
-        // The filters of the renderer panic with its thread pool, which is
-        // not compiled in.
-        VelloSceneFilterCapabilities { filter_layers: true, blurred_rounded_rects: true }
+        // The renderer has no filter layers with a thread pool: an effect is
+        // drawn into a scene of its own on the thread that draws, and
+        // composed (`drawing_context_impl/effects.rs`).
+        VelloSceneFilterCapabilities { filter_layers: self.threads == 0, blurred_rounded_rects: true }
     }
 
     fn push_filter_layer(&mut self, filter: &VelloSceneFilter, transform: Affine) {
