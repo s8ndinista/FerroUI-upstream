@@ -2,8 +2,8 @@
 // Licensed under the MIT License. See NOTICE.md in the containing module.
 
 use super::lined_flow_layout_algorithm::{
-    compute_fast_path, compute_regular_path, finish_line, frozen_line_range, line_scale,
-    ItemMetrics, LineOptions, LinedFlowLine,
+    compute_fast_path, compute_regular_path, displayed_line_range, finish_line, frozen_line_range,
+    line_scale, ItemMetrics, LineOptions, LinedFlowLine,
 };
 use super::lined_flow_layout_items_info_requested_event_args::LinedFlowItemsInfo;
 use super::*;
@@ -516,22 +516,40 @@ impl LinedFlowLayout {
             self.line_height()
         } else if context.item_count() == 0 {
             0.0
-        } else if let Some(element) = self.element_manager.get_element_if_realized(0) {
-            element.measure(available);
-            let height = element.desired_size().height;
-            let previous_width = self.measured_widths.borrow().get(&0).copied();
-            if let Some(width) = previous_width {
-                element.measure(Size::new(width, self.actual_line_height()));
-            }
-            height
         } else {
-            // ForceCreate without SuppressAutoRecycle lets the host recycle
-            // this probe at the end of measure, matching the upstream fix
-            // for recursive invalidation when it is explicitly recycled.
-            let element = context
-                .get_or_create_element_at_with_options(0, ElementRealizationOptions::FORCE_CREATE);
-            element.measure(available);
-            element.desired_size().height
+            let measured = self
+                .element_manager
+                .get_element_if_realized(0)
+                .filter(|_| self.actual_line_height() > 0.0)
+                .and_then(|element| {
+                    // GetDesiredSizeForAvailableSize restores the last
+                    // allocated width before returning. A natural desired
+                    // width is only its fallback: metadata and stretched or
+                    // shrunk rows have their own recorded allocation.
+                    let previous_width = self
+                        .lines
+                        .borrow()
+                        .first()
+                        .filter(|line| line.first == 0)
+                        .and_then(|line| line.widths.first().copied())
+                        .or_else(|| self.measured_widths.borrow().get(&0).copied())?;
+                    element.measure(available);
+                    let height = element.desired_size().height;
+                    element.measure(Size::new(previous_width, self.actual_line_height()));
+                    Some(height)
+                });
+            measured.unwrap_or_else(|| {
+                // With no recorded allocation, probing an existing control
+                // would leave it measured with an unrelated width. ForceCreate
+                // without SuppressAutoRecycle lets the host discard a separate
+                // probe at the end of measure, as in the source implementation.
+                let element = context.get_or_create_element_at_with_options(
+                    0,
+                    ElementRealizationOptions::FORCE_CREATE,
+                );
+                element.measure(available);
+                element.desired_size().height
+            })
         };
         let value = if value.is_finite() {
             value.max(0.0)
@@ -545,21 +563,47 @@ impl LinedFlowLayout {
         )
     }
     fn update_anchor(&self, context: &Ref<VirtualizingLayoutContext>) {
+        if self.uses_fast_path_layout() && context.realization_rect().height == 0.0 {
+            // EnsureItemRangeFastPath returns before observing a changed
+            // recommendation or decrementing its retained anchor.
+            return;
+        }
         let suggested = context.recommended_anchor_index();
         if suggested >= 0 && suggested < self.item_count.get() {
             self.anchor_index.set(suggested);
             self.anchor_retention.set(10);
-        } else if self.anchor_index.get() >= self.item_count.get() {
+        } else if self.anchor_index.get() >= self.item_count.get()
+            || self.anchor_retention.get() == 0
+        {
             self.anchor_index.set(-1);
             self.anchor_retention.set(0);
-        } else if self.anchor_retention.get() > 0 {
+        }
+    }
+    fn complete_anchor_measure(
+        &self,
+        context: &Ref<VirtualizingLayoutContext>,
+        previous: (i32, i32),
+    ) {
+        if self.uses_fast_path_layout() && context.realization_rect().height == 0.0 {
+            // The metadata request may have selected the fast path for the
+            // first time in this pass, after UpdateAnchor already ran.
+            self.anchor_index.set(previous.0);
+            self.anchor_retention.set(previous.1);
+            return;
+        }
+        let suggested = context.recommended_anchor_index();
+        if context.is_virtualizing()
+            && self.anchor_index.get() >= 0
+            && !(suggested >= 0 && suggested < self.item_count.get())
+        {
+            // The source centers this pass before expiring the anchor. Keep
+            // it available through sizing, frozen-line computation and actual
+            // realization so a countdown of ten retains all ten passes.
             let remaining = self.anchor_retention.get() - 1;
             self.anchor_retention.set(remaining);
             if remaining == 0 {
                 self.anchor_index.set(-1);
             }
-        } else {
-            self.anchor_index.set(-1);
         }
     }
     fn realization_window(&self, context: &Ref<VirtualizingLayoutContext>) -> Rect {
@@ -572,14 +616,33 @@ impl LinedFlowLayout {
         let round =
             |value: f64| (value * self.rounding_scale.get()).round() / self.rounding_scale.get();
         rect.y = round(rect.y + self.realization_shift.get());
+        if self.uses_fast_path_layout() {
+            // EnsureItemRangeFastPath realizes exactly the rectangle supplied
+            // by the host. The minimum realization/sizing windows below belong
+            // exclusively to the regular path, which must estimate line sizes.
+            let displayed = displayed_line_range(
+                rect.height,
+                rect.y,
+                height,
+                self.line_spacing(),
+                self.line_count(),
+            );
+            let anchor = self.anchor_index.get();
+            if anchor >= 0 && rect.height > 0.0 {
+                let line = self.line_index(anchor);
+                if line < displayed.0 || line > displayed.1 {
+                    rect.y = round(line as f64 * stride + height / 2.0 - rect.height / 2.0);
+                    self.invalidate_measure_async();
+                } else {
+                    self.anchor_index.set(-1);
+                }
+            }
+            return rect;
+        }
         let deficit = (3.0 * context.visible_rect().height - rect.height)
             .max(12.0 * stride - rect.height)
             .max(0.0);
-        let padding = if self.uses_fast_path_layout() {
-            deficit / 2.0
-        } else {
-            deficit / 2.0 / self.measure_countdown.get().max(1) as f64
-        };
+        let padding = deficit / 2.0 / self.measure_countdown.get().max(1) as f64;
         let near = rect.y - padding;
         let far = rect.y + rect.height + padding;
         let anchor = self.anchor_index.get();
@@ -775,7 +838,12 @@ impl LinedFlowLayout {
         // Handlers may cover a wider interval than requested. Retain that
         // interval so the public RequestedRange properties describe the data
         // we actually depend on, and the next scroll can reuse that prefetch.
-        let merged_start = received.iter().map(|info| info.start).min().unwrap().min(first);
+        let merged_start = received
+            .iter()
+            .map(|info| info.start)
+            .min()
+            .unwrap()
+            .min(first);
         let merged_end = received
             .iter()
             .map(LinedFlowItemsInfo::end)
@@ -783,11 +851,29 @@ impl LinedFlowLayout {
             .unwrap()
             .max(end)
             .min(self.item_count.get());
+        let retains_old_info = old.start >= 0 && old.start < merged_end && old.end() > merged_start;
+        // An absent width array differs from an array containing -1. In
+        // particular, GetMaxWidthFromItemsInfo takes the minimum of a supplied
+        // per-item value and the global maximum, so inventing -1 entries would
+        // suppress a valid global MaxWidth. Allocate optional arrays only when
+        // a retained or newly provided interval actually supplies them.
+        let has_min_widths = (retains_old_info && !old.min_widths.is_empty())
+            || received.iter().any(|info| !info.min_widths.is_empty());
+        let has_max_widths = (retains_old_info && !old.max_widths.is_empty())
+            || received.iter().any(|info| !info.max_widths.is_empty());
         let mut merged = LinedFlowItemsInfo {
             start: merged_start,
             ratios: Vec::with_capacity((merged_end - merged_start) as usize),
-            min_widths: Vec::with_capacity((merged_end - merged_start) as usize),
-            max_widths: Vec::with_capacity((merged_end - merged_start) as usize),
+            min_widths: Vec::with_capacity(if has_min_widths {
+                (merged_end - merged_start) as usize
+            } else {
+                0
+            }),
+            max_widths: Vec::with_capacity(if has_max_widths {
+                (merged_end - merged_start) as usize
+            } else {
+                0
+            }),
             min_width: globals.min_width,
             max_width: globals.max_width,
         };
@@ -806,18 +892,22 @@ impl LinedFlowLayout {
             // per-item limit across overlap; folding in a previous global
             // minimum would keep that obsolete limit after it is lowered.
             let offset: Option<usize> = (index - source.start).try_into().ok();
-            merged.min_widths.push(
-                offset
-                    .and_then(|offset| source.min_widths.get(offset))
-                    .copied()
-                    .unwrap_or(-1.0),
-            );
-            merged.max_widths.push(
-                offset
-                    .and_then(|offset| source.max_widths.get(offset))
-                    .copied()
-                    .unwrap_or(-1.0),
-            );
+            if has_min_widths {
+                merged.min_widths.push(
+                    offset
+                        .and_then(|offset| source.min_widths.get(offset))
+                        .copied()
+                        .unwrap_or(-1.0),
+                );
+            }
+            if has_max_widths {
+                merged.max_widths.push(
+                    offset
+                        .and_then(|offset| source.max_widths.get(offset))
+                        .copied()
+                        .unwrap_or(-1.0),
+                );
+            }
         }
         *self.items_info.borrow_mut() = Rc::new(merged);
         self.stop_timer();
@@ -1280,12 +1370,16 @@ impl LinedFlowLayout {
             (count - lines.last().expect("nonempty fast layout").widths.len() as i32) as f64
                 / (lines.len() - 1) as f64
         };
+        *self.lines.borrow_mut() = lines.clone();
         // The exact fast-path distribution is known, so its average is not
         // estimated or snapped. Keep only computed widths/counts after using
         // the potentially large application-owned metadata arrays.
         self.assign_average((average, average), false);
-        self.first_frozen_line.set(0);
-        self.last_frozen_line.set(lines.len() as i32 - 1);
+        // ExitRegularPath discards its sized/frozen windows. A fast-path
+        // distribution is known for the entire source, but is not a frozen
+        // window in the public diagnostic contract.
+        self.first_frozen_line.set(-1);
+        self.last_frozen_line.set(-1);
         *self.items_info.borrow_mut() = Rc::new(LinedFlowItemsInfo::default());
         self.unlock_items();
         lines
@@ -1300,30 +1394,72 @@ impl LinedFlowLayout {
         let stride = height + self.line_spacing();
         let window = self.realization_window(context);
         let anchor = self.anchor_index.get();
-        let selected = |line: &LinedFlowLine| {
-            !context.is_virtualizing()
-                || !metadata
-                || (line.index as f64 * stride + height >= window.y
-                    && line.index as f64 * stride <= window.y + window.height)
-                || (anchor >= line.first && anchor < line.end())
+        let (first, last) = if self.uses_fast_path_layout() && context.is_virtualizing() {
+            if window.height == 0.0 {
+                // A zero-height viewport does not discard the existing range
+                // in EnsureItemRangeFastPath. Remeasure its retained controls
+                // if the layout allocation changed while the viewport is zero.
+                let (first, last) = self.realized_range();
+                (
+                    (first >= 0).then_some(first),
+                    (last >= 0).then_some(last + 1),
+                )
+            } else {
+                let (first, last) = displayed_line_range(
+                    window.height,
+                    window.y,
+                    height,
+                    self.line_spacing(),
+                    lines.len() as i32,
+                );
+                // Fast-path lines have consecutive absolute indices. Direct
+                // indexing keeps scrolling independent of the source size.
+                (
+                    usize::try_from(first)
+                        .ok()
+                        .and_then(|index| lines.get(index))
+                        .map(|line| line.first),
+                    usize::try_from(last)
+                        .ok()
+                        .and_then(|index| lines.get(index))
+                        .map(|line| line.end()),
+                )
+            }
+        } else {
+            let selected = |line: &LinedFlowLine| {
+                !context.is_virtualizing()
+                    || !metadata
+                    || (line.index as f64 * stride + height >= window.y
+                        && line.index as f64 * stride <= window.y + window.height)
+                    || (anchor >= line.first && anchor < line.end())
+            };
+            (
+                lines
+                    .iter()
+                    .find(|line| selected(line))
+                    .map(|line| line.first),
+                lines
+                    .iter()
+                    .rfind(|line| selected(line))
+                    .map(|line| line.end()),
+            )
         };
-        let first = lines
-            .iter()
-            .find(|line| selected(line))
-            .map(|line| line.first);
-        let last = lines
-            .iter()
-            .rfind(|line| selected(line))
-            .map(|line| line.end());
         if let (Some(first), Some(end)) = (first, last) {
             let newly_realized = self.ensure_range(context, first, end);
             self.update_rounding_scale(&self.element_manager.get_realized_element(first));
-            for line in lines
+            let first_line = lines.partition_point(|line| line.end() <= first);
+            for line in lines[first_line..]
                 .iter()
-                .filter(|line| line.first >= first && line.end() <= end)
+                .take_while(|line| line.first < end)
             {
-                let mut x = 0.0;
-                for (offset, width) in line.widths.iter().enumerate() {
+                // A zero-height fast-path viewport retains its old item range
+                // even when a width change redistributes the lines. Measure
+                // the intersections of its partial boundary lines as well.
+                let begin = (first - line.first).max(0) as usize;
+                let end = (end - line.first).min(line.widths.len() as i32) as usize;
+                let mut x = line.widths[..begin].iter().sum::<f64>()
+                    + begin as f64 * self.min_item_spacing();
+                for (offset, width) in line.widths.iter().enumerate().take(end).skip(begin) {
                     let index = line.first + offset as i32;
                     let element = self.element_manager.get_realized_element(index);
                     element.measure(Size::new(*width, height));
@@ -1353,8 +1489,21 @@ impl LinedFlowLayout {
         let count = self.item_count.get();
         *self.items_info.borrow_mut() = Rc::new(LinedFlowItemsInfo::default());
         self.fast_path_layout.set(false);
+        let old_first = self.element_manager.first_realized_data_index();
+        let old_end = old_first + self.element_manager.realized_element_count();
         self.ensure_range(context, 0, count);
         let metrics = self.collect_metrics(context, 0, count, self.actual_line_height(), false);
+        // EnsureRange precedes CollectMetrics here, so the latter cannot see
+        // which controls were newly realized. Preserve MeasureUnconstrainedLine's
+        // deferred sizing for new controls still reporting only their minimum
+        // width while asynchronous content loads.
+        if context.is_virtualizing()
+            && metrics.iter().any(|item| {
+                (item.index < old_first || item.index >= old_end) && item.width == item.minimum
+            })
+        {
+            self.start_timer(0);
+        }
         let widths = metrics.iter().map(|item| item.width).collect::<Vec<_>>();
         let width =
             widths.iter().sum::<f64>() + self.min_item_spacing() * count.saturating_sub(1) as f64;
@@ -1493,6 +1642,7 @@ impl VirtualizingLayoutImpl for LinedFlowLayout {
         if this.measure_countdown.get() > 1 {
             this.measure_countdown.set(this.measure_countdown.get() - 1);
         }
+        let previous_anchor = (this.anchor_index.get(), this.anchor_retention.get());
         this.update_anchor(context);
         if this.update_actual_line_height(context, available) {
             this.force_relayout.set(true);
@@ -1570,7 +1720,9 @@ impl VirtualizingLayoutImpl for LinedFlowLayout {
             );
             break (lines, metadata);
         };
+        *this.lines.borrow_mut() = lines.clone();
         this.realize_and_measure_lines(context, &lines, metadata);
+        this.complete_anchor_measure(context, previous_anchor);
         let mut max_line_width = 0.0f64;
         for line in lines.iter() {
             if metadata {

@@ -3,8 +3,8 @@
 
 use super::layout_tests::{base, run, TestHost};
 use super::lined_flow_layout_algorithm::{
-    compute_fast_path, compute_regular_path, frozen_line_range, line_scale, ItemMetrics,
-    LineOptions,
+    compute_fast_path, compute_regular_path, displayed_line_range, frozen_line_range, line_scale,
+    ItemMetrics, LineOptions,
 };
 use super::*;
 use ferroui_base::{Rect, Size};
@@ -41,6 +41,31 @@ fn metrics(widths: &[f64]) -> Vec<ItemMetrics> {
 }
 fn close(actual: f64, expected: f64) {
     assert!((actual - expected).abs() < 1e-8, "{actual} != {expected}");
+}
+
+#[test]
+fn lined_flow_displayed_lines_use_host_boundaries_spacing_and_overscroll() {
+    let cases = [
+        (100.0, 0.0, 0.0, 100, (0, 4)),
+        (100.0, 200.0, 0.0, 100, (10, 14)),
+        (1.0, 20.0, 5.0, 100, (-1, -1)),
+        (5.0, 20.0, 5.0, 100, (-1, -1)),
+        (1.0, 24.5, 5.0, 100, (1, 1)),
+        (20.0, 25.0, 5.0, 100, (1, 1)),
+        (20.0, 1000.0, 5.0, 3, (2, 2)),
+        (100.0, -50.0, 0.0, 100, (0, 2)),
+        (100.0, -200.0, 0.0, 100, (-1, -1)),
+        (100.0, -0.009, 0.0, 100, (0, 4)),
+        (0.0, 0.0, 0.0, 100, (-1, -1)),
+        (f64::INFINITY, 0.0, 5.0, 3, (0, 2)),
+    ];
+    for (viewport, offset, spacing, count, expected) in cases {
+        assert_eq!(
+            displayed_line_range(viewport, offset, 20.0, spacing, count),
+            expected,
+            "viewport={viewport}, offset={offset}, spacing={spacing}, count={count}"
+        );
+    }
 }
 
 #[test]
@@ -279,11 +304,14 @@ fn lined_flow_fast_path_virtualizes_full_source_metadata_and_reuses_distribution
     assert!(layout.uses_fast_path_layout());
     assert_eq!(requests.get(), 1);
     close(size.height, 400_000.0);
-    assert!(host.live.borrow().len() < 100);
+    assert_eq!(layout.realized_range(), (0, 24));
+    assert_eq!(host.live.borrow().len(), 25);
+    assert_eq!(layout.frozen_range(), (-1, -1));
     host.window.set(Rect::new(0.0, 200_000.0, 100.0, 100.0));
     run(&layout, &context, Size::new(100.0, 100.0));
     assert_eq!(requests.get(), 1);
-    assert!(host.live.borrow().len() < 100);
+    assert_eq!(layout.realized_range(), (50_000, 50_024));
+    assert_eq!(host.live.borrow().len(), 25);
     assert!(host.element(50_000).bounds().y >= 200_000.0);
     layout.invalidate_items_info();
     run(&layout, &context, Size::new(100.0, 100.0));

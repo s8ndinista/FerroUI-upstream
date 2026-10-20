@@ -471,7 +471,10 @@ fn lowering_global_minimum_applies_to_retained_metadata_overlap() {
     close(retained.bounds().width, 50.0);
     let requests_before_scroll = requests.borrow().len();
     minimum.set(10.0);
-    fixture.scroll(40.0);
+    // The startup estimate may prefetch more items than the eventual two
+    // items per line. Move two viewports so the sized window crosses that
+    // retained metadata boundary while its leading part still overlaps.
+    fixture.scroll(200.0);
     assert!(requests.borrow().len() > requests_before_scroll);
     fixture.scroll(0.0);
     // The source deliberately preserves widths inside its frozen lines. A

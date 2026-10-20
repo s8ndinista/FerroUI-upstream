@@ -58,23 +58,20 @@ pub(super) struct LineOptions {
     pub wrap_multiplier: f64,
 }
 
-/// ComputeFrozenItemsRange and the partially displayed-line branch of
-/// GetFirstAndLastDisplayedLineIndexes. Frozen lines cover the viewport plus
-/// the larger of 80% of a viewport or 40% of each adjacent sized region.
-pub(super) fn frozen_line_range(
+/// GetFirstAndLastDisplayedLineIndexes for partially displayed lines with no
+/// padding. Lines touching an edge or hidden entirely in spacing do not count.
+pub(super) fn displayed_line_range(
     viewport: f64,
     mut offset: f64,
     height: f64,
     spacing: f64,
     line_count: i32,
-    sized: (i32, i32),
 ) -> (i32, i32) {
-    let (first_sized, last_sized) = sized;
-    if line_count <= 0 || first_sized > last_sized {
+    if line_count <= 0 {
         return (-1, -1);
     }
     if viewport == f64::INFINITY {
-        return sized;
+        return (0, line_count - 1);
     }
     let stride = height + spacing;
     if viewport <= 0.0 || stride <= 0.0 {
@@ -105,11 +102,40 @@ pub(super) fn frozen_line_range(
     if fractional_last - last_displayed as f64 <= spacing_portion {
         last_displayed = (last_displayed - 1).max(0);
     }
-    first_displayed = first_displayed.max(first_sized);
-    last_displayed = last_displayed.min(last_sized);
+    if first_displayed > last_displayed {
+        (-1, -1)
+    } else {
+        (first_displayed, last_displayed)
+    }
+}
+
+/// ComputeFrozenItemsRange. Frozen lines cover the viewport plus the larger
+/// of 80% of a viewport or 40% of each adjacent sized region.
+pub(super) fn frozen_line_range(
+    viewport: f64,
+    offset: f64,
+    height: f64,
+    spacing: f64,
+    line_count: i32,
+    sized: (i32, i32),
+) -> (i32, i32) {
+    let (first_sized, last_sized) = sized;
+    if line_count <= 0 || first_sized > last_sized {
+        return (-1, -1);
+    }
+    if viewport == f64::INFINITY {
+        return sized;
+    }
+    let displayed = displayed_line_range(viewport, offset, height, spacing, line_count);
+    if displayed.0 < 0 {
+        return (-1, -1);
+    }
+    let first_displayed = displayed.0.max(first_sized);
+    let last_displayed = displayed.1.min(last_sized);
     if first_displayed > last_displayed {
         return (-1, -1);
     }
+    let stride = height + spacing;
     let viewport_lines = (viewport / stride) as i32;
     let viewport_frozen = (0.8 * viewport_lines as f64) as i32 + 1;
     let near_sized = first_displayed - first_sized;
