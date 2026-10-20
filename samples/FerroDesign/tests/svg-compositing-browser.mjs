@@ -86,22 +86,25 @@ export async function svgCompositingRegressions(page, reference, check, helpers,
 
     await importFixture(page, empty());
     const before = await documentState(page);
+    // Opening a fixture is itself undoable and keeps the preceding scenarios'
+    // transactions. Verify this import's delta against that real history.
+    const historyBefore = (await state(page)).historyLength;
     await openSvg(source, "Native SVG mask fixture.svg");
     const imported = await documentState(page);
     assert.deepEqual(Object.values(imported.nodes).filter((node) => node.is_mask).map((node) => node.mask_type || "alpha").sort(),
         ["alpha", "luminance", "vector"]);
-    assert.equal((await state(page)).historyLength, 1);
+    assert.equal((await state(page)).historyLength, historyBefore + 1, "SVG import records exactly one transaction");
     await focusCanvas();
     const undoFrame = (await state(page)).renderedFrames;
     await page.keyboard.press("Control+z");
     await waitForNativeFrame(page, undoFrame, "Undo native SVG import");
     assert.deepEqual(await documentState(page), before, "One real Undo removes the whole imported mask graph");
-    assert.equal((await state(page)).historyLength, 0);
+    assert.equal((await state(page)).historyLength, historyBefore, "Undo restores the pre-import history depth");
     const redoFrame = (await state(page)).renderedFrames;
     await page.keyboard.press("Control+Shift+z");
     await waitForNativeFrame(page, redoFrame, "Redo native SVG import");
     assert.deepEqual(await documentState(page), imported, "One real Redo restores every mask, source and transform");
-    assert.equal((await state(page)).historyLength, 1);
+    assert.equal((await state(page)).historyLength, historyBefore + 1, "Redo restores exactly the SVG import transaction");
     check("Real Ctrl+O imports editable alpha/luminance/vector SVG mask scopes with exact one-step native undo/redo");
 
     const view = await state(page);
