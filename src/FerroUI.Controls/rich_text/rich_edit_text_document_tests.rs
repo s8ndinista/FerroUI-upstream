@@ -9,6 +9,9 @@ fn services(text: &str) -> RichEditTextDocument {
     RichEditTextDocument::new(RichTextDocument::from_text(text))
 }
 
+#[path = "rich_edit_text_empty_fragment_tests.rs"]
+mod empty_fragment_tests;
+
 #[test]
 fn use_lf_and_use_cr_lf() {
     let _scope = Dispatcher::unit_test_scope();

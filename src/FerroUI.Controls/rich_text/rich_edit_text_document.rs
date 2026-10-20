@@ -744,7 +744,10 @@ impl RichEditTextRange {
     pub fn set_snapshot(&self, snapshot: &DocumentSnapshot) -> Result<(), EditError> {
         snapshot.validate()?;
         self.editor.prepare_edit()?;
-        if snapshot.text_length() == 0 {
+        let empty_paragraph = (snapshot.text_length() == 0)
+            .then(|| snapshot.paragraphs.first())
+            .flatten();
+        if snapshot.paragraphs.is_empty() {
             return self.set_text("");
         }
         let range = self.range();
@@ -753,7 +756,23 @@ impl RichEditTextRange {
         let typing_format = self.editor.typing_format();
         self.editor.edit_group(|editor| {
             editor.set_selection(EditorSelection::new(range.start, range.end))?;
-            editor.insert_fragment(snapshot, EditKind::Paste)?;
+            if let Some(paragraph) = empty_paragraph {
+                // An empty rich paragraph still carries formatting. Delete the
+                // selected content and retain that paragraph if the resulting
+                // target is empty, without restyling surrounding surviving text.
+                editor.insert_text("", EditKind::Programmatic)?;
+                let mut document = self.document().snapshot();
+                let (index, _) = document.locate(range.start);
+                if document.paragraphs.is_empty() {
+                    document.paragraphs.push(paragraph.clone());
+                    editor.document().restore(&document)?;
+                } else if document.paragraphs[index].text_length() == 0 {
+                    document.paragraphs[index] = paragraph.clone();
+                    editor.document().restore(&document)?;
+                }
+            } else {
+                editor.insert_fragment(snapshot, EditKind::Paste)?;
+            }
             let inserted = self
                 .document()
                 .text_length()
@@ -769,7 +788,14 @@ impl RichEditTextRange {
             .document()
             .text_length()
             .saturating_sub(before_length - range.len());
-        self.set_range(range.start, range.start + inserted)
+        self.set_range(range.start, range.start + inserted)?;
+        if let Some(paragraph) = empty_paragraph {
+            // A degenerate independent range owns its insertion defaults; it
+            // must not apply those character properties to the user's selection
+            // or to unrelated content in a nonempty paragraph.
+            self.data.borrow_mut().typing_format = paragraph.format.character.clone();
+        }
+        Ok(())
     }
 
     fn apply_to_selection(
@@ -801,6 +827,7 @@ impl RichEditTextRange {
         self.apply_to_selection(|editor| editor.apply_format(format))
     }
     pub fn set_paragraph_format(&self, format: &ParagraphFormat) -> Result<(), EditError> {
+        format.validate()?;
         self.apply_to_selection(|editor| editor.apply_paragraph_format(format))
     }
 
