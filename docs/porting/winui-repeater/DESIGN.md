@@ -156,8 +156,12 @@ The hierarchical selection model is in
 Its source tree is separate from the realized visual tree. `IndexPath` identifies
 arbitrary-depth nodes; child-source requests are scoped to a callback lifetime.
 Selected index/item views are shared handles and materialize source data lazily.
-They publish native collection/property notifications so they can drive another
-FerroUI repeater without flattening the full hierarchy on every selection change.
+They implement the native read-only indexed-list contract. Bindings observe the
+model's `SelectedItems` and `SelectedIndices` property notifications and obtain
+replacement views, so they can drive another FerroUI repeater without flattening
+the full hierarchy on every selection change. The views themselves do not publish
+collection notifications; their captured count and weak-node access semantics
+are detailed in [API-SHAPES.md](API-SHAPES.md).
 
 The existing [inclusive `IndexRange`](../../../src/FerroUI.Controls/selection/index_range.rs)
 is reused. This avoids a second, subtly different interval implementation for

@@ -20,7 +20,7 @@ evidence described in [VALIDATION.md](VALIDATION.md).
 | `IReference<Boolean>` selection state | `Option<bool>` | `None` represents an indeterminate/partly selected branch; it does not collapse into `false` |
 | `Double[]` metadata input | `&[f64]` | The callback supplies borrowed input and the arguments copy the accepted interval into owned request storage |
 | Transition `IVector` | `Vec<Rc<ItemCollectionTransition>>` | The override receives an owned batch containing shared transition identities |
-| Read-only selected-item/index views | `SelectedItems<T>` plus native metadata view adapters | Views remain lazy and detect stale selection versions; native adapters publish binding notifications |
+| Read-only selected-item/index views | `SelectedItems<T>` plus native metadata view adapters | Lazy views capture their count and hold weak selection nodes; the model publishes replacement views through property notifications |
 | `IStringable` on `IndexPath` | `Display`/`Debug` | The source's `R.0.1` formatting remains available through normal Rust formatting |
 
 These mappings are implemented in the native
@@ -38,6 +38,17 @@ stable keys and indexed data access still use the existing native source
 interfaces. The resulting difference in size-query invocation counts is
 explicitly recorded in [WR-22](DEVIATIONS.md); it is not treated as an equivalent
 assertion in the source factory scenario.
+
+`SelectedItems<T>` follows the pinned
+[`SelectedItems.h`](https://github.com/microsoft/microsoft-ui-xaml/blob/1af995b98a02d86b1951c4babe35caa269a6d569/controls/dev/Repeater/SelectedItems.h)
+and [`SelectionModel.cpp`](https://github.com/microsoft/microsoft-ui-xaml/blob/1af995b98a02d86b1951c4babe35caa269a6d569/controls/dev/Repeater/SelectionModel.cpp):
+the count is captured when the view is constructed, while indexed access reads
+the current selected ranges of its referenced nodes. Access rejects a discarded
+node with `SelectionError::SelectionChanged`. A still-live node can expose a
+changed selection through an older view; there is no selection-version check or
+immutable item snapshot. The indexed-list adapters themselves do not publish
+collection notifications. Native bindings observe the model's `SelectedItems`
+and `SelectedIndices` property notifications and obtain refreshed views.
 
 ## Overload spelling
 
