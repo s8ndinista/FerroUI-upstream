@@ -126,7 +126,7 @@ Export options include editable JSON, SVG, PNG rendered through FerroUI's `Rende
 
 ## Validation
 
-The restored Vello configuration and subsequent editor features require a new native/WebAssembly/browser validation run. The completed results below belong to the preserved source-tagged baseline; they do not validate later application changes.
+The current editor checkpoint [`f83ad955`](https://github.com/wieslawsoltes/FerroUI/commit/f83ad9558c24117673e29077275f4176676a7acd) passes all 316 core unit tests. The five-target Vello dependency audit, 17 persistence-host cases, 5 real Chromium IndexedDB checks and 10 framework input/composition cases also pass for their unchanged component inputs. Current native pixels and complete WebAssembly/browser interaction validation are still in progress. [Validation details](docs/VALIDATION.md) distinguish these observations from the preserved complete baseline below.
 
 Vello implementation `945283ef` passed the complete [FerroDesign workflow](https://github.com/wieslawsoltes/FerroUI/actions/runs/39306364660): 219 core tests, 17 host tests, 64 native application tests, the actual Vello WebAssembly build, 5 Chromium IndexedDB checks, and 62 Software2D / 59 WebGL2 interaction checks with no page or console errors. The separate [framework CI](https://github.com/wieslawsoltes/FerroUI/actions/runs/39306373798) also passed all 14 jobs. [Source-tagged screenshots and raw evidence](docs/evidence/2026-10-19-945283ef/README.md) and [measurement details](docs/VALIDATION.md) preserve the exact test scope and source revision.
 

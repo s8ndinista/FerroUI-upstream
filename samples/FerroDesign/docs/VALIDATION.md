@@ -2,9 +2,26 @@
 
 This file distinguishes implemented paths, completed checks and measurements. Each observation belongs to its stated source and run; older successful runs do not validate later changes. The branch now incorporates FerroUI `ab7a15b8` / `0.4.0-preview.1`, restores Vello for every application target, and adds local style definition editing and public-API flattening. Those changes require their own validation. [PR #254](https://github.com/wieslawsoltes/FerroUI/pull/254) collects the complete source and current review status.
 
+## Current validation checkpoint: `f83ad955` (in progress)
+
+[Source `f83ad955`](https://github.com/wieslawsoltes/FerroUI/commit/f83ad9558c24117673e29077275f4176676a7acd) includes the complete local-style lifecycle, public geometry and shaped-text outlines, conservative flattening, current-color paint conversion and rejected-draft menu protection. The final core test artifact contains all three shadow-composition guards in this source.
+
+| Gate | Completed observation |
+| --- | --- |
+| Current document core | All 316 unit tests passed; the focused flatten filter separately passed all 13 selected cases |
+| Style comparison allocations | Linked and unlinked cohorts have identical allocation counts and requested bytes for both tested edit paths; see scope below |
+| Resolved application dependencies | Vello present and no active `ferroui-skia`, `skia-safe` or `skia-bindings` for Emscripten, Linux x64, Windows x64 and both macOS architectures |
+| Persistence host | All 17 JavaScript cases passed |
+| Actual Chromium IndexedDB | All 5 migration, rollback, conflict and large-document reload checks passed, including 12,000,042 document characters |
+| Framework browser bridge | Type checking, all 10 input/composition tests and bundling passed |
+
+The host, bridge, dependency and allocation checks preceded the final editor fixes; their exercised source inputs are unchanged by those fixes. The dependency checks establish backend selection, not native GUI execution. The current application WebAssembly build, full browser interactions, native pixel suite and public geometry API pixel gates are still in progress. The added assertions and older successful screenshots are not substitutes for those results.
+
+The allocation fixture performs 16 identical edits with a 262,144-byte synthetic image URI in each cohort. `update_node` requests 678 allocations and 21,659,936 bytes in both cohorts; `update_nodes_with_layout` requests 806 allocations and 25,875,872 bytes in both. These are cumulative allocator requests, not peak memory. The comparison establishes no additional binding-comparison allocation overhead for this fixture; history, cache and metadata copies still exist. It does not measure editing latency, rendering or FPS.
+
 ## Preserved validated baseline: `945283ef`
 
-This continuation adds typed native effect authoring, deferred auto-layout drag previews and transactional drops, a retained spatial index for prepared root bounds, and consistent shadow order through rounded and general geometry. Browser regressions additionally wait for a new native frame after selection and verify actual ComboBox popup focus before sending navigation keys.
+Checkpoint `945283ef` added typed native effect authoring, deferred auto-layout drag previews and transactional drops, a retained spatial index for prepared root bounds, and consistent shadow order through rounded and general geometry. Its browser regressions additionally wait for a new native frame after selection and verify actual ComboBox popup focus before sending navigation keys.
 
 The following local checks completed on Ubuntu 24.04 using the pinned Rust 1.99.0, Emscripten 6.0.10 and wasm-bindgen 0.2.129 tools:
 
@@ -73,9 +90,9 @@ Component synchronization retains full document history snapshots. Its separate 
 
 The separate [standard repository CI run 39306373798](https://github.com/wieslawsoltes/FerroUI/actions/runs/39306373798) completed successfully with all 14 jobs passing. Its checkout log and merge commit identify source `945283ef` tested as merge `70db461c11217d05d774a6736ec44bfa6c982f35` into base `0116724da88df86fa4e4575f7e9a0d78708f2204`. Source conventions, packaging, macOS, Windows x64/ARM64, Linux X11/Wayland/framebuffer, Android, iOS and all three browser configurations passed. These framework integration jobs are separate from the independent FerroDesign workspace's exact-source application tests; they do not establish native FerroDesign GUI execution on every platform.
 
-The preceding combined implementation `12cbecd3`, [run 39304233073](https://github.com/wieslawsoltes/FerroUI/actions/runs/39304233073), passed the core/host, preedit and public compositing gates, then native checking rejected a new test's incorrect `PixelFormat` import. The current source corrects that import; its complete local native suite and the CI native gate above pass. No browser result is attributed to the failed checkpoint.
+The preceding combined implementation `12cbecd3`, [run 39304233073](https://github.com/wieslawsoltes/FerroUI/actions/runs/39304233073), passed the core/host, preedit and public compositing gates, then native checking rejected a new test's incorrect `PixelFormat` import. Checkpoint `945283ef` corrected that import; its complete local native suite and the CI native gate above passed. No browser result is attributed to the failed checkpoint.
 
-The resumed baseline `bc2e9984`, [run 39254507451](https://github.com/wieslawsoltes/FerroUI/actions/runs/39254507451), passed its earlier gates and all 53 Software2D checks, then failed after 31 WebGL2 checks at the native blend selector. Its trace showed a changed selection before a new inspector frame; the subsequent arrow input nudged the selected layer. The revised harness retains native pointer/keyboard input, requires arranged controls and popup focus, and checks that blend selection does not move the layer. Both current modes now pass that regression. The older complete result below is retained as historical evidence.
+The resumed baseline `bc2e9984`, [run 39254507451](https://github.com/wieslawsoltes/FerroUI/actions/runs/39254507451), passed its earlier gates and all 53 Software2D checks, then failed after 31 WebGL2 checks at the native blend selector. Its trace showed a changed selection before a new inspector frame; the subsequent arrow input nudged the selected layer. The revised harness retains native pointer/keyboard input, requires arranged controls and popup focus, and checks that blend selection does not move the layer. Both modes at `945283ef` passed that regression. The older complete result below is retained as historical evidence.
 
 ## Complete continuation result: `ecd5078d`
 
@@ -263,11 +280,11 @@ cargo run --release -p ferrodesign-core --example performance -- 10000
 
 ## What the browser test verifies
 
-`tests/browser.mjs` launches the actual application at a 1600 by 1000 viewport in two contexts, requesting Software2D and WebGL2. It records the observed canvas context and allows the documented WebGL2-to-Software2D fallback. The CI browser may use SwiftShader; its results establish functional rendering, not real GPU throughput.
+`tests/browser.mjs` launches the actual application at a 1600 by 1000 viewport in two contexts, requesting Software2D and WebGL2. Each explicit mode must produce that exact canvas context; the test does not accept a fallback. Normal application startup tries WebGL2 and may fall back to Software2D. Chromium may use SwiftShader; that result establishes functional rendering, not hardware-GPU throughput.
 
 The test waits for a completed native frame and dismissal of the loading surface, inspects native pixel diversity, draws a rectangle, edits vector anchors and pen tangents, edits multiline Unicode in the native on-canvas TextBox, changes paints through the native dialog, and dispatches prototype hover/press/drag/key/delay actions. It checks one-transaction history, canceled text edits, UTF-8 rich-run ranges, JSON import/export equality, durable reload, and bounded virtualized rows with a 10,000-layer document larger than 5 MiB. Deterministic browser composition events exercise explicit native preedit state, exactly-once commits, focus loss and confirmed-text durability through pagehide/reload; they do not certify operating-system IME behavior on every platform. Prototype rules are imported as fixtures for runtime validation; interaction-dialog authoring controls have not been browser-operated by this suite. The separate IndexedDB browser test uses actual transactions for migration, rollback, stale-tab conflicts and a document larger than 10 MiB. The application browser test also collects console exceptions, startup failures and FerroUI render-thread panics. Its screenshots, Playwright traces and report are written under `browser-report` and uploaded by GitHub Actions.
 
-Lifecycle durability checks cover confirmed on-canvas text and committed document edits. Native inspector fields commit on Enter or focus loss; numeric arrow keys in Effects also commit. Page or window close does not flush a focused, uncommitted inspector draft, so these checks do not establish recovery of such drafts.
+Lifecycle durability checks cover confirmed on-canvas text and native inspector drafts. Native fields commit on Enter or focus loss; numeric arrow keys in Effects also commit. Save, export, page hide and window close flush confirmed focused drafts before serialization. Browser fixtures type into the actual Width and Effect radius controls, dispatch page hide, and verify the committed document, one-step history and durable reload. Invalid drafts retain their validation and unload guard, and pending IME preedit remains outside the saved document. Deterministic browser events do not certify every operating system's close or IME behavior.
 
 The focused native preedit gate can be reproduced from the sample directory:
 
@@ -283,4 +300,4 @@ An interaction test is evidence for those paths, not for every item in the featu
 
 ## Browser QA environment
 
-The connected local browser cannot reach the build container loopback server. The supported managed preview supervisor also fails during its process-mount setup (`bwrap: Cannot mount proc`), including the permitted escalated attempt. No replacement browser-control mechanism is used. Browser interaction evidence for this revision must come from the repository CI workflow and its rendered screenshots/reports; a successful native compile does not establish browser interaction success.
+The Playwright suites run Chromium against the actual static distribution using a loopback HTTP server. Set `FERRODESIGN_CHROMIUM=/absolute/path/to/chrome` to select an existing executable; otherwise they use Playwright's installed Chromium. The local validation environment uses Chrome for Testing 156.0.8078.4. Local reports and CI artifacts are distinct evidence sources, and each result above identifies its tested source. A successful native compile or a completed WebAssembly link does not establish browser interaction success.
