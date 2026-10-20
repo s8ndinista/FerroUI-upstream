@@ -1,0 +1,25 @@
+[package]
+name = "view-interop"
+description = "ferroui-view with XAML: a virtualized list whose items are components, XAML in a component, a component in XAML"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish = false
+
+[lib]
+path = "lib.rs"
+test = false
+doctest = false
+
+[[bin]]
+name = "view-interop"
+path = "main.rs"
+test = false
+
+[dependencies]
+ferroui-base = { workspace = true }
+ferroui-controls = { workspace = true }
+ferroui-view = { workspace = true, features = ["xaml"] }
+# The window in the WinUI 3 theme and its picture, as the 7GUIs samples run.
+seven-guis-model = { path = "../SevenGuis/Model" }

@@ -5,7 +5,7 @@ This document is for developers who know React. It compares `ferroui-view`, the 
 - where the two behave alike and where they differ;
 - what React has that FerroUI does not have yet.
 
-It describes FerroUI after phase 1 of issue #237 (components that run again, hooks, the reconciler) and React 18 and 19.
+It describes FerroUI after phases 1 and 2 of issue #237 (components that run again, hooks, the reconciler; XAML and data templates of components) and React 18 and 19.
 
 ## 1. Summary
 
@@ -58,6 +58,9 @@ What sets FerroUI apart from React is where the elements end up. React DOM rende
 | controlled input (`value` and `onChange`) | `text: name.get()` with `on_changed(TextBox::text_property(), ..)`, or `text: name.two_way()` | A two-way value is shorter. The hooks temperature converter shows both forms. |
 | uncontrolled input with a ref | a control with no bound value, read through a `NodeRef` | |
 | `createPortal` | not yet (phase 3: popups and flyouts) | A second window is `open_window(|| ..)`. |
+| a list virtualized with react-window or react-virtuoso | a virtualized `ListBox` with `item_template: template(|item: T| ..)` | The virtualizing panels of FerroUI realize the visible items. The template keeps a pool of hosts, so scrolling patches existing items instead of mounting new ones (as react-window reuses its rows). |
+| a React root inside a page of another framework (`createRoot(el).render(..)`) | `ComponentHost`, in XAML or any tree of controls | |
+| React inside a page of another framework, or that page inside React | `use_xaml(..)` puts XAML inside a component; `ComponentHost` puts a component inside XAML | |
 | error boundary | not yet (phase 6) | |
 | `Suspense`, `lazy`, `use(promise)` | not yet (phase 6: `use_resource`) | Futures run on the thread's executor, `ferroui_system::threading::tasks`. |
 | `useTransition`, `useDeferredValue` | none: rendering is synchronous | |
@@ -253,7 +256,7 @@ React runs `useLayoutEffect` after the DOM changes and before the browser paints
 - **Types end to end.** Every property setter, handler and component parameter is checked by the compiler, including the conversions (`8.0` to a thickness, `"Red"` to a brush). A typo is a compile error, not an `undefined`.
 - **Two-way values.** `text: name.two_way()` binds a field to a signal both ways, without an `onChange`.
 - **The property system.** Styles, themes, data bindings (`Bind(..)`), attached properties (`Grid.row: 1`), and resources apply to the controls of `rsx!` as they do to controls made by XAML.
-- **XAML alongside.** The same controls can be written in XAML, and phase 2 lets the two host each other.
+- **XAML alongside.** The same controls can be written in XAML, and the two host each other: `ComponentHost` in XAML, `use_xaml` in a component. An MVVM view can show a component that reads its view model with `use_data_context`.
 - **Native rendering everywhere.** One code base draws the same controls on macOS, Windows, Linux, iOS, Android and in the browser.
 
 ## 9. What React has that FerroUI does not have yet
@@ -266,7 +269,6 @@ React runs `useLayoutEffect` after the DOM changes and before the browser paints
 | Fast Refresh | phase 4: hot reload of the static parts of `rsx!` |
 | DevTools with the component tree | phase 4: the instance tree in the FerroUI DevTools |
 | Fewer moves of reordered keyed children | phase 5 (React's single pass; FerroUI plans the longest increasing subsequence) |
-| Virtualized lists of components (react-window and others) | phase 2: item templates that are components, over the virtualizing panels of FerroUI |
 | Concurrent rendering, transitions | not planned: rendering is synchronous by design |
 | Server components, server rendering | not planned |
 
