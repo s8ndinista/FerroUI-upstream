@@ -1,7 +1,7 @@
 use super::*;
 use crate::documents::{ParagraphSnapshot, UnderlineStyle};
 use crate::Border;
-use ferroui_base::media::{FontWeight, TextAlignment};
+use ferroui_base::media::{FontStyle, FontWeight, TextAlignment, TextDecorationLocation};
 use ferroui_base::threading::Dispatcher;
 
 fn services(text: &str) -> RichEditTextDocument {
@@ -66,7 +66,10 @@ fn rich_text_case_preserves_nested_links_soft_breaks_paragraph_formats_and_contr
     let fragment = DocumentSnapshot {
         paragraphs: vec![
             ParagraphSnapshot {
-                format: ParagraphFormat { text_alignment: Some(TextAlignment::Right), ..Default::default() },
+                format: ParagraphFormat {
+                    text_alignment: Some(TextAlignment::Right),
+                    ..Default::default()
+                },
                 inlines: vec![
                     InlineSnapshot {
                         format: CharacterFormat::default(),
@@ -84,29 +87,88 @@ fn rich_text_case_preserves_nested_links_soft_breaks_paragraph_formats_and_contr
                             underline_style: UnderlineStyle::Single,
                         },
                     },
-                    InlineSnapshot { format: CharacterFormat::default(), kind: InlineSnapshotKind::LineBreak },
-                    InlineSnapshot { format: CharacterFormat::default(), kind: InlineSnapshotKind::Embedded(Some(child.clone().upcast())) },
+                    InlineSnapshot {
+                        format: CharacterFormat::default(),
+                        kind: InlineSnapshotKind::LineBreak,
+                    },
+                    InlineSnapshot {
+                        format: CharacterFormat::default(),
+                        kind: InlineSnapshotKind::Embedded(Some(child.clone().upcast())),
+                    },
                     InlineSnapshot::run("z"),
                 ],
             },
-            ParagraphSnapshot { format: ParagraphFormat::default(), inlines: vec![InlineSnapshot::run("é")] },
+            ParagraphSnapshot {
+                format: ParagraphFormat::default(),
+                inlines: vec![InlineSnapshot::run("é")],
+            },
         ],
     };
     let model = RichTextDocument::new();
     model.restore(&fragment).unwrap();
+    // Restoring semantic containers supplies their intrinsic formatting. Use
+    // the actual pre-edit model as the preservation baseline, while explicitly
+    // checking that it contains the expected hyperlink and italic defaults.
+    let before = model.snapshot();
+    let link = &before.paragraphs[0].inlines[0];
+    assert!(matches!(
+        &link.kind,
+        InlineSnapshotKind::Hyperlink {
+            navigate_uri: Some(uri),
+            target_name: Some(target),
+            is_enabled: true,
+            is_tab_stop: true,
+            tab_index: 7,
+            is_visited: true,
+            underline_style: UnderlineStyle::Single,
+            ..
+        } if uri == "https://example.test/keep" && target == "target"
+    ));
+    assert!(link
+        .format
+        .text_decorations
+        .as_ref()
+        .and_then(Option::as_ref)
+        .is_some_and(|decorations| decorations
+            .list()
+            .snapshot()
+            .iter()
+            .any(|decoration| decoration.location() == TextDecorationLocation::Underline)));
+    let italic = &link.children().unwrap()[0];
+    assert!(matches!(italic.kind, InlineSnapshotKind::Italic(_)));
+    assert_eq!(italic.format.font_style, Some(FontStyle::Italic));
     let document = RichEditTextDocument::new(model);
-    document.document_range().unwrap().change_case(LetterCase::Upper).unwrap();
+    document
+        .document_range()
+        .unwrap()
+        .change_case(LetterCase::Upper)
+        .unwrap();
     let after = document.document().snapshot();
     let first = &after.paragraphs[0];
     assert_eq!(first.format, fragment.paragraphs[0].format);
-    let mut expected = fragment.clone();
-    if let InlineSnapshotKind::Run(text) = &mut expected.paragraphs[0].inlines[0].children_mut().unwrap()[0].children_mut().unwrap()[0].kind {
-        *text = "ASS".to_owned();
-    }
-    expected.paragraphs[0].inlines[3] = InlineSnapshot::run("Z");
-    expected.paragraphs[1].inlines[0] = InlineSnapshot::run("É");
+    let mut expected = before.clone();
+    let InlineSnapshotKind::Run(text) =
+        &mut expected.paragraphs[0].inlines[0].children_mut().unwrap()[0]
+            .children_mut()
+            .unwrap()[0]
+            .kind
+    else {
+        panic!("the hyperlink contains an italic run");
+    };
+    assert_eq!(text, "aß");
+    *text = "ASS".to_owned();
+    expected.paragraphs[0].inlines[3].kind = InlineSnapshotKind::Run("Z".to_owned());
+    expected.paragraphs[1].inlines[0].kind = InlineSnapshotKind::Run("É".to_owned());
     assert_eq!(after, expected);
-    assert!(matches!(&first.inlines[2].kind, InlineSnapshotKind::Embedded(Some(control)) if control == &child.clone().upcast::<crate::Control>()));
+    assert!(matches!(
+        first.inlines[1].kind,
+        InlineSnapshotKind::LineBreak
+    ));
+    assert!(
+        matches!(&first.inlines[2].kind, InlineSnapshotKind::Embedded(Some(control)) if control == &child.clone().upcast::<crate::Control>())
+    );
+    assert!(document.undo().unwrap());
+    assert_eq!(document.document().snapshot(), before);
 }
 
 #[test]

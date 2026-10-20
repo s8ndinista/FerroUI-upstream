@@ -1,6 +1,6 @@
 use crate::documents::{
     CharacterFormat, DocumentSnapshot, InlineSnapshot, InlineSnapshotKind, ParagraphFormat,
-    ParagraphSnapshot,
+    ParagraphSnapshot, TextGravity,
 };
 use crate::rich_text::{EditError, EditorSelection};
 use crate::{DisabledFormattingAccelerators, RichEditBox};
@@ -57,10 +57,13 @@ fn mixed_editor() -> ferroui_base::Ref<RichEditBox> {
 }
 
 fn decorations(editor: &RichEditBox, offset: usize) -> Vec<TextDecorationLocation> {
-    editor
+    // The probes address the start of each run, so inspect its forward side.
+    // character_format_at is a caret-format query with backward affinity.
+    let element = editor
         .document()
-        .character_format_at(offset)
-        .unwrap()
+        .element_at(offset, TextGravity::Forward)
+        .expect("the probed text run");
+    CharacterFormat::effective(&element)
         .text_decorations
         .flatten()
         .map_or_else(Vec::new, |items| {
@@ -111,6 +114,7 @@ fn rich_underline_command_preserves_each_runs_unrelated_decorations() {
     let _scope = Dispatcher::unit_test_scope();
     let editor = mixed_editor();
     let before = editor.document().snapshot();
+    assert!(decorations(&editor, 2).contains(&TextDecorationLocation::Overline));
     editor.toggle_underline().unwrap();
     assert_eq!(editor.underline_state(), Some(true));
     assert!(decorations(&editor, 0).contains(&TextDecorationLocation::Strikethrough));

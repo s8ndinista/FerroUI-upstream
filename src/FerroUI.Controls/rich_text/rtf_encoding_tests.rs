@@ -1,5 +1,5 @@
 use super::{RtfError, RtfLimits, RtfReader, RtfWriter};
-use crate::documents::{InlineSnapshotKind, RichTextDocument};
+use crate::documents::{CharacterFormat, InlineSnapshotKind, RichTextDocument, TextGravity};
 use ferroui_base::media::{FontFamily, FontWeight};
 use ferroui_base::threading::Dispatcher;
 
@@ -64,30 +64,17 @@ fn rich_edit_rtf_font_charsets_are_scoped_and_plain_restores_default_font() {
     assert_eq!(snapshot.text(), "łПр日żиł");
     let model = RichTextDocument::new();
     model.restore(&snapshot).unwrap();
-    assert_eq!(
-        model.character_format_at(0).unwrap().font_family,
-        Some(FontFamily::new("Latin"))
-    );
-    assert_eq!(
-        model.character_format_at(1).unwrap().font_family,
-        Some(FontFamily::new("Cyrillic"))
-    );
-    assert_eq!(
-        model.character_format_at(1).unwrap().font_weight,
-        Some(FontWeight::Bold)
-    );
-    assert_eq!(
-        model.character_format_at(3).unwrap().font_family,
-        Some(FontFamily::new("Japanese"))
-    );
-    assert_eq!(
-        model.character_format_at(4).unwrap().font_family,
-        Some(FontFamily::new("Latin"))
-    );
-    assert_eq!(
-        model.character_format_at(6).unwrap().font_family,
-        Some(FontFamily::new("Latin"))
-    );
+    // Probe the character after each offset; the caret-format API intentionally
+    // uses the preceding run at a boundary.
+    let character = |offset| {
+        CharacterFormat::effective(&model.element_at(offset, TextGravity::Forward).unwrap())
+    };
+    assert_eq!(character(0).font_family, Some(FontFamily::new("Latin")));
+    assert_eq!(character(1).font_family, Some(FontFamily::new("Cyrillic")));
+    assert_eq!(character(1).font_weight, Some(FontWeight::Bold));
+    assert_eq!(character(3).font_family, Some(FontFamily::new("Japanese")));
+    assert_eq!(character(4).font_family, Some(FontFamily::new("Latin")));
+    assert_eq!(character(6).font_family, Some(FontFamily::new("Latin")));
 }
 
 #[test]
@@ -100,6 +87,10 @@ fn rich_edit_rtf_font_code_page_overrides_charset_in_either_order() {
         r"\cpg1251\fcharset255",
         r"\fcharset130\cpg1251",
         r"\cpg1251\fcharset130",
+        r"\fcharset2\cpg1251",
+        r"\cpg1251\fcharset2",
+        r"\fcharset999\cpg1251",
+        r"\cpg1251\fcharset999",
     ] {
         let input = format!(r"{{\rtf1\deff0{{\fonttbl{{\f0{declaration} Cyrillic;}}}}\'cf\'f0}}");
         assert_eq!(RtfReader::read_str(&input).unwrap().text(), "Пр");
@@ -110,6 +101,39 @@ fn rich_edit_rtf_font_code_page_overrides_charset_in_either_order() {
             RtfReader::read_str(&input),
             Err(RtfError::UnsupportedCodePage(actual)) if actual == page
         ));
+    }
+    for charset in [2, 999] {
+        // Check name-byte decoding and finalization without any legacy bytes.
+        for name in ["Unsupported", r"\uc0\u83", ""] {
+            let input = format!(r"{{\rtf1{{\fonttbl{{\f0\fcharset{charset} {name};}}}}text}}");
+            assert!(matches!(
+                RtfReader::read_str(&input),
+                Err(RtfError::UnsupportedFeature("font character set"))
+            ));
+        }
+    }
+}
+
+#[test]
+fn rich_edit_rtf_font_code_page_override_keeps_multibyte_name_decoder_continuous() {
+    let _scope = Dispatcher::unit_test_scope();
+    for declaration in [
+        r"\fcharset2\cpg932",
+        r"\cpg932\fcharset2",
+        r"\fcharset999\cpg932",
+        r"\cpg932\fcharset999",
+    ] {
+        let mut input = format!(r"{{\rtf1\deff0{{\fonttbl{{\f0{declaration} ").into_bytes();
+        input.extend_from_slice(b"\\'96\xbe\x92\\'a9;}}\\'93\xfa\x96\\'7b}");
+        let snapshot = RtfReader::read(&input).unwrap();
+        assert_eq!(snapshot.text(), "日本", "{declaration}");
+        let model = RichTextDocument::new();
+        model.restore(&snapshot).unwrap();
+        assert_eq!(
+            model.character_format_at(0).unwrap().font_family,
+            Some(FontFamily::new("明朝")),
+            "{declaration}"
+        );
     }
 }
 

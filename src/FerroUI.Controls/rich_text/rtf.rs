@@ -5,7 +5,8 @@ use crate::documents::{
 use ferroui_base::media::immutable::ImmutableSolidColorBrush;
 use ferroui_base::media::{
     BaselineAlignment, Color, FlowDirection, FontFamily, FontStretch, FontStyle, FontWeight,
-    IBrush, TextAlignment, TextDecorationCollection, TextDecorationLocation, TextDecorations,
+    IBrush, PenLineCap, TextAlignment, TextDecorationCollection, TextDecorationLocation,
+    TextDecorationUnit, TextDecorations,
 };
 use ferroui_base::utilities::CultureInfo;
 use ferroui_base::Thickness;
@@ -20,6 +21,10 @@ use encoding::{font_code_page, validate_code_page, EncodedText};
 #[cfg(test)]
 #[path = "rtf_encoding_tests.rs"]
 mod encoding_tests;
+
+#[cfg(test)]
+#[path = "rtf_formatting_tests.rs"]
+mod formatting_tests;
 
 /// Explicit bounds for untrusted clipboard and file input.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -352,8 +357,9 @@ impl RtfReader {
             text_length: 0,
             encoded: EncodedText::default(),
         };
-        decoder.decode(&nodes, &mut State::default())?;
-        decoder.flush()?;
+        let mut state = State::default();
+        decoder.decode(&nodes, &mut state)?;
+        decoder.finish_paragraph(&state)?;
         decoder
             .document
             .validate()
@@ -380,6 +386,19 @@ impl Decoder {
             format,
             kind: InlineSnapshotKind::Run(text),
         });
+        Ok(())
+    }
+    fn finish_paragraph(&mut self, state: &State) -> Result<(), RtfError> {
+        self.flush()?;
+        let paragraph = self.paragraph();
+        if paragraph.text_length() == 0 {
+            // An empty paragraph has no run on which to retain the character
+            // properties of its paragraph mark. Keep them as paragraph defaults
+            // so an RTF round trip, or subsequent typing, does not lose them.
+            // Capture at an actual mark/end-of-document, never merely at a group
+            // boundary: character properties inside a group remain scoped.
+            paragraph.format.character = state.character.clone();
+        }
         Ok(())
     }
     fn append(&mut self, unit: u16, state: &State) -> Result<(), RtfError> {
@@ -795,7 +814,7 @@ impl Decoder {
                             self.set_line_spacing(state)?;
                         }
                         "par" => {
-                            self.flush()?;
+                            self.finish_paragraph(state)?;
                             self.text_length += 1;
                             if self.text_length > self.limits.max_text_length {
                                 return Err(RtfError::LimitExceeded("text length"));
@@ -883,6 +902,28 @@ impl Decoder {
         uc: usize,
         code_page: i32,
     ) -> Result<(), RtfError> {
+        fn select_code_page(
+            name: &mut DestinationText,
+            charset: Option<i32>,
+            explicit_page: Option<i32>,
+            document_page: i32,
+        ) -> Result<Option<i32>, RtfError> {
+            // Keep the charset unresolved until the name needs an encoding: a
+            // supported explicit cpg overrides even a Symbol/unknown charset.
+            let font_page = if explicit_page.is_some() {
+                explicit_page
+            } else {
+                charset.map(font_code_page).transpose()?.flatten()
+            };
+            let effective_page = font_page.unwrap_or(document_page);
+            validate_code_page(effective_page)?;
+            // Raw bytes and escaped bytes can be parts of one multibyte name.
+            // Reapplying an unchanged page must not finish that decoder early.
+            if name.code_page != effective_page {
+                name.set_code_page(effective_page)?;
+            }
+            Ok(font_page)
+        }
         fn visit(
             nodes: &[Node<'_>],
             fonts: &mut BTreeMap<i32, FontEntry>,
@@ -891,7 +932,7 @@ impl Decoder {
             limit: usize,
         ) -> Result<(), RtfError> {
             let mut id = None;
-            let mut charset_page = None;
+            let mut charset = None;
             let mut explicit_page = None;
             let mut name = DestinationText::new(uc, limit, code_page);
             for node in nodes {
@@ -909,16 +950,15 @@ impl Decoder {
                         }
                         name.finish_bytes()?;
                         id = Some(*number);
-                        charset_page = None;
+                        charset = None;
                         explicit_page = None;
                         name.code_page = code_page;
                         name.text.clear();
                     }
                     Node::Control("fcharset", value) => {
-                        charset_page = font_code_page(
-                            value.ok_or(RtfError::InvalidParameter("font character set"))?,
-                        )?;
-                        name.set_code_page(explicit_page.or(charset_page).unwrap_or(code_page))?;
+                        name.finish_bytes()?;
+                        charset =
+                            Some(value.ok_or(RtfError::InvalidParameter("font character set"))?);
                     }
                     Node::Control("cpg", value) => {
                         let value = value.ok_or(RtfError::InvalidParameter("font code page"))?;
@@ -929,6 +969,7 @@ impl Decoder {
                     Node::Group(children)
                         if destination(children).is_some_and(|(word, _)| word == "upr") =>
                     {
+                        select_code_page(&mut name, charset, explicit_page, code_page)?;
                         name.node(node)?;
                     }
                     Node::Group(children) => {
@@ -937,6 +978,11 @@ impl Decoder {
                         }
                     }
                     Node::Text(bytes) => {
+                        let font_page = if bytes.len() > name.skip {
+                            select_code_page(&mut name, charset, explicit_page, code_page)?
+                        } else {
+                            None
+                        };
                         for byte in *bytes {
                             if *byte == b';' && name.skip == 0 {
                                 if let Some(id) = id.take() {
@@ -946,7 +992,7 @@ impl Decoder {
                                             id,
                                             FontEntry {
                                                 family: FontFamily::new(value.trim()),
-                                                code_page: explicit_page.or(charset_page),
+                                                code_page: font_page,
                                             },
                                         );
                                     }
@@ -957,6 +1003,10 @@ impl Decoder {
                                 name.bytes(&[*byte])?;
                             }
                         }
+                    }
+                    Node::Byte(_) | Node::Symbol(b'\\' | b'{' | b'}') => {
+                        select_code_page(&mut name, charset, explicit_page, code_page)?;
+                        name.node(node)?;
                     }
                     _ => name.node(node)?,
                 }
@@ -1511,7 +1561,21 @@ impl Encoder {
             let (mut underline, mut strike) = (false, false);
             if let Some(decorations) = decorations {
                 for index in 0..decorations.len() {
-                    match decorations.get(index).location() {
+                    let decoration = decorations.get(index);
+                    if decoration.stroke().is_some()
+                        || decoration.stroke_thickness_unit() != TextDecorationUnit::FontRecommended
+                        || decoration.stroke_dash_array().is_some()
+                        || decoration.stroke_dash_offset() != 0.0
+                        || decoration.stroke_thickness() != 1.0
+                        || decoration.stroke_line_cap() != PenLineCap::Flat
+                        || decoration.stroke_offset() != 0.0
+                        || decoration.stroke_offset_unit() != TextDecorationUnit::FontRecommended
+                    {
+                        // The supported RTF controls carry only a standard
+                        // underline/strike effect, not the framework pen payload.
+                        return Err(RtfError::UnsupportedFeature("custom text decorations"));
+                    }
+                    match decoration.location() {
                         TextDecorationLocation::Underline => underline = true,
                         TextDecorationLocation::Strikethrough => strike = true,
                         _ => {
@@ -1546,12 +1610,37 @@ impl Encoder {
     }
     fn paragraph_format(&mut self, format: &ParagraphFormat) -> Result<(), RtfError> {
         if let Some(alignment) = format.text_alignment {
+            // RTF stores physical alignment. Resolve FerroUI's logical values
+            // against the paragraph direction supplied by the export caller.
+            let rtl = format.flow_direction == Some(FlowDirection::RightToLeft);
+            let alignment = match alignment {
+                TextAlignment::Start => {
+                    if rtl {
+                        TextAlignment::Right
+                    } else {
+                        TextAlignment::Left
+                    }
+                }
+                TextAlignment::End => {
+                    if rtl {
+                        TextAlignment::Left
+                    } else {
+                        TextAlignment::Right
+                    }
+                }
+                value => value,
+            };
             self.output.push_str(match alignment {
-                TextAlignment::Left | TextAlignment::Start => "\\ql",
+                TextAlignment::Left => "\\ql",
                 TextAlignment::Center => "\\qc",
-                TextAlignment::Right | TextAlignment::End => "\\qr",
+                TextAlignment::Right => "\\qr",
                 TextAlignment::Justify => "\\qj",
-                _ => "\\ql",
+                TextAlignment::DetectFromContent => {
+                    return Err(RtfError::UnsupportedFeature(
+                        "content-detected paragraph alignment requires a layout context",
+                    ));
+                }
+                TextAlignment::Start | TextAlignment::End => unreachable!("resolved above"),
             });
         }
         if let Some(direction) = format.flow_direction {
