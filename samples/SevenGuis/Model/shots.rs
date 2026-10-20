@@ -13,9 +13,11 @@ use std::path::{Path, PathBuf};
 use std::time::Duration;
 
 /// Runs the element of a task as the content of the main window, titled
-/// `title`, of `width` by `height`. `name` names its picture.
+/// `title`, of `width` by `height`, in the WinUI 3 theme. `name` names its
+/// picture.
 pub fn run(name: &'static str, title: &'static str, width: f64, height: f64, view: impl FnOnce() -> Element + 'static) {
-    launch_with(
+    launch_themed(
+        || ferroui_themes_winui::WinUITheme::new().as_style(),
         move || window().title(title).width(width).height(height).child(view()).into(),
         move |window| capture_if_asked(window, name),
     );

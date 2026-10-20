@@ -6,7 +6,9 @@ use crate::reactive::Owner;
 use ferroui_base::Ref;
 use ferroui_controls::{AppBuilder, Application, Window, WindowBaseImpl};
 use ferroui_desktop::AppBuilderDesktopExtensions;
+use ferroui_base::styling::IStyle;
 use ferroui_themes_fluent::FluentTheme;
+use std::rc::Rc;
 
 /// Mounts `view` as a window under an owner that is disposed when the window
 /// closes. `view` builds a `window()`; any other control becomes the content
@@ -51,10 +53,21 @@ pub fn launch(view: impl FnOnce() -> crate::Element + 'static) {
 /// [`launch`], calling `started` with the main window before the main loop
 /// runs (to drive the window from code: a demonstration, screenshots).
 pub fn launch_with(view: impl FnOnce() -> crate::Element + 'static, started: impl FnOnce(&Ref<Window>) + 'static) {
+    launch_themed(|| FluentTheme::new().as_style(), view, started);
+}
+
+/// [`launch_with`] with the theme `theme` makes (the WinUI theme of
+/// `ferroui-themes-winui`, the simple theme, a theme of the application)
+/// instead of the Fluent theme.
+pub fn launch_themed(
+    theme: impl FnOnce() -> Rc<dyn IStyle> + 'static,
+    view: impl FnOnce() -> crate::Element + 'static,
+    started: impl FnOnce(&Ref<Window>) + 'static,
+) {
     let args: Vec<String> = std::env::args().skip(1).collect();
     AppBuilder::configure::<Application>().use_platform_detect().start(
         move |app, _| {
-            app.styles().add(FluentTheme::new().as_style());
+            app.styles().add(theme());
             let window = mount_window(view);
             smoke_exit(&window);
             started(&window);
