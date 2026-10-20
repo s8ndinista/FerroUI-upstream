@@ -20,6 +20,7 @@ The custom `DesignCanvas` extends FerroUI `Control` with `ferro_class!` and impl
 | Raster image fills | `Bitmap`, `ImmutableImageBrush`, normalized source rectangles and stretch/alignment/tile modes |
 | Strokes | `ImmutablePen`, dash style, line caps/joins and widened geometry for alignment |
 | Text and rich text runs | Cached `TextLayout`, run properties and `TextLayout::build_geometry` for positioned glyph/decoration contours |
+| Editable outlines | `Geometry::try_get_path_data` and complete `TextLayout::try_build_geometry` capabilities |
 | Nested geometry | `push_transform`, clip and isolated `try_push_compositing_layer` scopes |
 | Shadows and layer blur | `BoxShadow`, `BoxShadows`, geometry and `ImmutableBlurEffect` |
 | Background blur | Bounded `RenderTargetBitmap` prefix/source/filter surfaces, geometry clips and premultiplied compositing |
@@ -71,7 +72,21 @@ The core `LayoutDragSession` retains the selected child's ID, the parent/childre
 
 On release, the canvas takes the retained gesture before releasing capture or raising shell callbacks. It checks document/editor revision, single-child selection and transaction ownership; `Editor::commit_layout_drag` additionally checks the original parent, sibling geometry, transforms and layout. Only a valid changed target stages a candidate document and commits its reorder/reflow as one transaction. Invalid or stale sessions leave history intact. Returning to the original slot or canceling for Escape, capture loss, tool/camera changes discards the session without a restoration write. An Undo command during the preview first cancels the owned interaction, preserving the previous committed history item for the next Undo. Late pointer events cannot reuse the discarded session.
 
-The supported operation reorders one directly selected automatic child within its existing auto-layout parent, with at least two automatic children. Row, column, wrap and grid targets use existing arranged geometry; parent rotation/shear/scale flows through the world marker. Reversed visual flow is translated back to stored sibling order. Hidden/absolute children and grid children with explicit row/column coordinates retain their original list slots; automatic grid spans are preserved. Absolute children keep ordinary movement. Hidden/locked ancestry, a locked source and materialized instance descendants are rejected. Cross-frame reparenting, multi-child layout reordering and pointer-based pinned-grid placement are not implemented.
+This indexed single-child path is complemented by `layout_transfer.rs` for multiple selected roots and cross-parent drops. A transfer session normalizes selected roots, retains their visual order and carries opaque editor/transaction ownership. It previews a layout insertion or free-parent destination without changing the document. Release stages one candidate that preserves world transforms in the destination coordinate system, validates hierarchy/layout and commits once. Entering automatic layout clears placement pins only on transferred roots; unselected hidden, absolute and pinned siblings retain their metadata. Empty layout frames, ordinary frames and the active page are destinations. A stale editor, selection, revision or transaction cannot commit or cancel another gesture's work.
+
+Both paths use arranged row, column, wrap or grid geometry, including reversed flow and affine parents. Hidden/locked ancestry, locked sources and materialized instance descendants are excluded. Returning to the initial placement, Escape and lost capture discard the preview. Pointer-based arbitrary empty-cell pinning remains in the native placement dialog.
+
+### Local style definitions
+
+`style_edit.rs` validates fill, typography and effect definitions before updating the live document. Creation/application, definition replacement, rename, detach and delete are explicit editor transactions. Definition edits traverse linked nodes across pages, preserve character overrides and update hidden/locked linked layers. Direct layer edits detach only changed bound properties. The common update paths borrow the already-captured prior node to compare style fields, avoiding another image/paint/effect payload copy on ordinary moves; an explicitly unrefreshed legacy document mutation uses a conservative snapshot fallback.
+
+Nodes retain effective values alongside style IDs. This supports independent portable rendering, appearance-preserving detach/delete and safe handling of old documents with customized stale bindings. The native `shell/styles.rs` controls edit complete supported stacks and typography through this API. They share the shell's draft registry, IME ownership, validation and lifecycle-save boundary. Bulk definition propagation remains a document-sized operation; the optimized comparison path does not make shared updates constant-time.
+
+### Editable geometry conversion
+
+The UI-independent `flatten.rs` creates and validates a conservative conversion plan before beginning history. It checks hierarchy, appearance, masks, component ownership and references to descendants that would be removed. The application supplies the geometry through `renderer/flatten.rs`, reusing the same prepared FerroUI geometry as scene painting. Public `GeometryPathData` preserves independent optional fill/stroke paths, fill rules and original curve segments. The application performs no backend downcast or curve sampling.
+
+`TextLayout::build_geometry` is a reusable public outline path for rendering effects. Its optional complete sibling, `try_build_geometry`, propagates capability failure for any run without complete monochrome outlines; the legacy API retains its partial-outline contract. Vello includes the same shaped glyph offsets as normal glyph rendering and conservatively declines color/bitmap/SVG-font conversion. Flatten checks every prepared text descendant, so a partially outlined mixed run cannot silently lose a glyph. Supported conversion preserves the surviving layer identity and its parent-relative coordinates; unsupported cases leave revision, allocation, selection and undo/redo untouched.
 
 ### Typed effect authoring
 

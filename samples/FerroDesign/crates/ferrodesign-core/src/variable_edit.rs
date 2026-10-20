@@ -321,6 +321,7 @@ fn apply_edit(document: &mut Document, edit: VariableEdit) -> Result<(&'static s
             for id in nodes.into_iter().collect::<BTreeSet<_>>() {
                 let node = document.nodes.get_mut(&id).unwrap();
                 if let Some(variable) = variable {
+                    crate::style_edit::detach_style_for_variable(node, &property);
                     if property == "stroke" && node.strokes.is_empty() { node.strokes.push(Stroke::new(Color::BLACK, 1.0)); }
                     node.variable_bindings.insert(property.clone(), variable);
                 } else { node.variable_bindings.remove(&property); }

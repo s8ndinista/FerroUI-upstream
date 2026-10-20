@@ -15,7 +15,7 @@ git clone --depth 1 --branch feat/ferrodesign-editor --single-branch https://git
 cd FerroUI/samples/FerroDesign
 ```
 
-The implementation began from upstream commit `325b3ce4b0fcf154eba79cbd92262536daf77e71` and incorporates upstream `3d8b473d95662c74d7bed4874a861233a09f3f05` (FerroUI 0.3.0-preview.1). The branch contains the complete application, independent browser backend selection, native text-input fixes and the public FerroUI isolated-compositing capability. [PR #254](https://github.com/wieslawsoltes/FerroUI/pull/254) collects the branch changes.
+The implementation began from upstream commit `325b3ce4b0fcf154eba79cbd92262536daf77e71` and incorporates upstream `ab7a15b8641a54c8964b6ec10a3efe9af38d29b5` (FerroUI 0.4.0-preview.1), including its Vello performance improvements. The branch contains the complete application, independent browser backend selection, native text-input fixes, public isolated compositing and editable geometry/text-outline APIs. [PR #254](https://github.com/wieslawsoltes/FerroUI/pull/254) collects the branch changes.
 
 ## Build and run in a browser
 
@@ -42,6 +42,7 @@ Useful build options:
 ./scripts/build-browser.sh --out /tmp/ferrodesign-dist
 ./scripts/build-browser.sh --skip-webapp  # when the unchanged FerroUI JS bridge is already built
 ./scripts/build-browser.sh --debug
+./scripts/check-renderer.sh             # audit all five supported target graphs
 ```
 
 ## Native launcher
@@ -93,6 +94,8 @@ Shortcuts are handled when the canvas has focus; text fields retain their normal
 
 The vector sidebar also offers Bend and Erase tools. Smooth and mirrored tangents remain constrained during later edits. Convert a path to a vector network to connect branches, shift-select vertices in boundary order, fill a region, join or weld vertices. Split edges retain stable identities and preserve their curves; the complete operation participates in document history.
 
+**Flatten selection** converts supported shapes, text and Boolean results into editable paths using the actual FerroUI geometry. Positioned glyph contours and text decorations follow the same shaped layout as rendering. Single-layer conversion preserves its ID, parent, stacking, transform and appearance; compatible opaque siblings can be combined in one undo step. A selection that cannot retain its appearance is rejected without changing the document or history. This includes multi-layer selections with different paint stacks, independent child opacity/effects, and bitmap or color-font glyphs without a complete monochrome outline. See the [flattening limits](docs/FEATURES.md#rendering-and-authoring-limits) for the supported subset.
+
 Double-click a text layer to edit directly on the canvas with a native FerroUI caret, selection, clipboard and IME. Ctrl/Cmd+Enter or moving focus commits one text transaction; Escape restores the original content. Pending IME preedit stays outside the document draft, so lifecycle saves retain the last confirmed text and formatting. Rich-text ranges remain valid UTF-8 byte ranges across edits. **Style selected characters…** opens a native range-selection editor with character styles and a rich preview. The same rich fonts, sizes, weights, colors and decorations now appear during native on-canvas editing. The rich-text editor also provides LTR/RTL/first-strong direction and validated OpenType feature tags such as `liga=0, ss01=1`.
 
 The active native text editor uses the first visible foreground paint for each run. Multiple fill stacks, effects and ancestor masks/blending remain canvas-renderer features outside the editing overlay. Automatic direction uses the first strong character of the layer; independent paragraph direction and paragraph-specific range layout remain unimplemented.
@@ -106,6 +109,8 @@ The **Effects** editor provides native controls for drop shadow, inner shadow, l
 The Appearance blend selector controls isolated or pass-through layer compositing. **Masks and compositing…** enables vector, alpha or luminance masks; **Create mask group** wraps selected siblings into one undoable group. Mask-aware selection skips transparent content and vector holes. Vello renders these operations through the same public FerroUI compositing and imaging APIs. Layer opacity applies once to the completed group. The first listed shadow of each kind paints above later shadows of that kind. Leaf shapes paint inner shadows between fills and strokes; container inner shadows sit above their compound content. Background blur samples earlier document content within the isolated group and caches its filtered result; [documented bounds](docs/FEATURES.md#rendering-and-authoring-limits) keep its allocations predictable. Shapes, ordinary fills, strokes and text continue to use native vector rendering.
 
 **Properties and variants…** creates component sets, assigns variant combinations and exposes text, visibility and nested instance-swap properties. Switching a variant preserves matching layer IDs and explicit overrides. The native variable editor manages collections, modes, typed values, aliases and layer bindings. Invalid authoring changes are rejected atomically.
+
+**Local styles** creates fill, text and effect styles from the selection. **Edit** opens native fields for name, description and the complete supported style definition, including ordered paint/effect stacks and typography. Definition changes update linked layers across pages; **Replace from selection**, **Detach selected**, and **Delete style** support the rest of the lifecycle. Detaching or deleting preserves each layer's effective appearance. Explicit application and detachment respect locks and compatible layer types; definition changes also reach locked linked layers. Editing a bound property directly makes that property independent, while moving a layer retains its styles. Each accepted command is one undo step, and invalid or unchanged drafts preserve history.
 
 In the Prototype tab, **Edit interactions…** adds trigger/action rules and transitions. Presentation supports animated transitions, Smart Animate, reversible hover/press interactions, scroll containers, wheel scrolling and ScrollTo. Preview changes operate on disposable state; the authored design is restored when presentation ends and remains the source for autosaves. `Layer data…` remains available for validated structured properties without a dedicated control.
 
@@ -127,6 +132,7 @@ Vello implementation `945283ef` passed the complete [FerroDesign workflow](https
 
 ```sh
 cargo test --locked -p ferrodesign-core
+./scripts/check-renderer.sh
 cargo check --locked -p ferrodesign-app
 cargo test --locked -p ferrodesign-app --lib -- --test-threads=1
 cargo run --release -p ferrodesign-core --example performance -- 10000
@@ -160,6 +166,8 @@ These mechanisms reduce preparation, bounds testing and control allocation. Root
 | `crates/ferrodesign-core/src/layout.rs` | Constraints and row/column/wrapped/grid auto layout |
 | `crates/ferrodesign-core/src/layout_drag.rs` | Immutable sibling geometry, indexed insertion targets and validated reorder commits |
 | `crates/ferrodesign-core/src/effects_edit.rs` | Typed effect commands, atomic batch validation and scoped history |
+| `crates/ferrodesign-core/src/style_edit.rs` | Validated local style definitions, propagation, detachment and history |
+| `crates/ferrodesign-core/src/flatten.rs` | Conservative flatten planning, reference checks and atomic replacement |
 | `crates/ferrodesign-core/src/spatial.rs` | Spatial index, clipping and geometry-aware hit testing |
 | `crates/ferrodesign-app/ui/Editor.xaml` | Compiled FerroUI editor shell and control styling |
 | `crates/ferrodesign-app/src/shell.rs` | Control events, property editing and document commands |
@@ -167,6 +175,7 @@ These mechanisms reduce preparation, bounds testing and control allocation. Root
 | `crates/ferrodesign-app/src/shell/` | Native authoring dialogs and the cached layer projection |
 | `crates/ferrodesign-app/src/prototype.rs` | Presentation snapshots and cancellable FerroUI dispatcher timers |
 | `crates/ferrodesign-app/src/renderer.rs` | Cached public-API scene renderer |
+| `crates/ferrodesign-app/src/renderer/flatten.rs` | Editable contours from public FerroUI geometry and complete text outlines |
 | `crates/ferrodesign-app/src/renderer/root_index.rs` | Prepared-root bounds hierarchy, refitting and retained ordered viewport candidates |
 | `crates/ferrodesign-app/src/platform.rs` | Browser/native storage, clipboard and downloads |
 | `crates/ferrodesign-app/src/desktop.rs` | Vello native configuration and headless rendering |

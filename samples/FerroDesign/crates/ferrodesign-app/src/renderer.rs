@@ -6,6 +6,7 @@
 //! No graphics-backend types occur in this module.
 
 mod backdrop;
+pub(crate) mod flatten;
 pub(crate) mod typography;
 mod incremental;
 #[cfg(all(test, not(target_os = "emscripten")))]
@@ -34,13 +35,13 @@ use ferroui_base::media::immutable::{
     ImmutablePen, ImmutableRadialGradientBrush, ImmutableSolidColorBrush,
 };
 use ferroui_base::media::text_formatting::{
-    GenericTextRunProperties, ITextDrawingSink, TextLayout, TextLayoutOptions, TextRunCache,
+    GenericTextRunProperties, TextLayout, TextLayoutOptions, TextRunCache,
     TextRunProperties,
 };
 use ferroui_base::media::{
     AlignmentX, AlignmentY, BaselineAlignment, BoxShadow, BoxShadows, CombinedGeometry,
     DrawingContext, EllipseGeometry, FlowDirection, FontFamily, FontStretch, FontStyle, FontWeight,
-    Geometry, GeometryCombineMode, GeometryGroup, GlyphRun, GradientSpreadMethod, IBrush, IEffect,
+    Geometry, GeometryCombineMode, GeometryGroup, GradientSpreadMethod, IBrush, IEffect,
     IImmutableBrush, IPen, ImmutableBlurEffect, MatrixTransform, PenLineCap, PenLineJoin,
     PushedState, RectangleGeometry, RenderOptions, StreamGeometry, Stretch, TextAlignment,
     TextDecorationCollection, TextDecorations, TextWrapping, TileMode, Typeface,
@@ -1574,77 +1575,9 @@ fn decorations(decoration: TextDecoration) -> Option<TextDecorationCollection> {
     }
 }
 
-/// Outlines the actual cached layout, so letter spacing, bidi glyph order,
-/// rich-text runs, alignment, line breaks, and decorations match visible text.
+/// Obtain contours from the same cached FerroUI layout used by visible text.
 fn text_outline(layout: &TextLayout, origin: UiPoint) -> Ref<Geometry> {
-    let group = GeometryGroup::new();
-    group.set_fill_rule(ferroui_base::media::FillRule::NonZero);
-    let mut sink = OutlineSink {
-        group,
-        transform: Matrix::IDENTITY,
-        stack: Vec::new(),
-    };
-    layout.draw(&mut sink, origin);
-    sink.group.upcast()
-}
-
-struct OutlineSink {
-    group: Ref<GeometryGroup>,
-    transform: Matrix,
-    stack: Vec<Matrix>,
-}
-
-impl OutlineSink {
-    fn append(&self, geometry: Ref<Geometry>) {
-        geometry.set_transform(MatrixTransform::with_matrix(self.transform));
-        self.group.children().add(geometry);
-    }
-
-    fn append_stroke(&self, geometry: &Ref<Geometry>, pen: &dyn IPen) {
-        // get_widened_geometry returns immutable platform geometry whose
-        // Transform setter cannot invalidate its fixed implementation. A
-        // mutable geometry group carries the text-line transform instead.
-        let group = GeometryGroup::new();
-        group.set_fill_rule(ferroui_base::media::FillRule::NonZero);
-        group.children().add(geometry.get_widened_geometry(pen));
-        self.append(group.upcast());
-    }
-}
-
-impl ITextDrawingSink for OutlineSink {
-    fn draw_glyph_run(&mut self, _foreground: Option<&Rc<dyn IBrush>>, glyph_run: &Rc<GlyphRun>) {
-        self.append(glyph_run.build_geometry());
-    }
-
-    fn draw_rectangle(
-        &mut self,
-        brush: Option<&Rc<dyn IBrush>>,
-        pen: Option<&Rc<dyn IPen>>,
-        rect: UiRect,
-    ) {
-        let geometry: Ref<Geometry> = RectangleGeometry::with_rect(rect).upcast();
-        if let Some(pen) = pen {
-            self.append_stroke(&geometry, pen.as_ref());
-        }
-        if brush.is_some() {
-            self.append(geometry);
-        }
-    }
-
-    fn draw_line(&mut self, pen: &Rc<dyn IPen>, p1: UiPoint, p2: UiPoint) {
-        let geometry = polyline_geometry(&[Point::new(p1.x, p1.y), Point::new(p2.x, p2.y)], false);
-        self.append_stroke(&geometry, pen.as_ref());
-    }
-
-    fn push_transform(&mut self, matrix: Matrix) {
-        self.stack.push(self.transform);
-        // FerroUI uses row-vector composition; local transforms precede parents.
-        self.transform = matrix * self.transform;
-    }
-
-    fn pop_transform(&mut self) {
-        self.transform = self.stack.pop().unwrap_or(Matrix::IDENTITY);
-    }
+    layout.build_geometry(origin)
 }
 
 fn byte_to_utf16(text: &str, byte_offset: usize) -> i32 {

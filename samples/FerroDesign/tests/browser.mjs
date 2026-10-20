@@ -16,6 +16,8 @@ import { floatingPanelRegressions } from "./panels-browser.mjs";
 import { layoutTransferRegressions } from "./layout-transfer-browser.mjs";
 import { selectionRegressions } from "./selection-browser.mjs";
 import { geometryAuthoringRegressions } from "./geometry-authoring-browser.mjs";
+import { flattenRegressions } from "./flatten-browser.mjs";
+import { localStyleRegressions } from "./styles-browser.mjs";
 import { compactAutosaveRegressions } from "./serialization-browser.mjs";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
@@ -742,6 +744,7 @@ async function prototypeInputRegressions(page, reference, check) {
 try {
     browser = await chromium.launch({
         headless: true,
+        executablePath: process.env.FERRODESIGN_CHROMIUM || undefined,
         args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"],
     });
     report.browser = browser.version();
@@ -936,6 +939,8 @@ try {
             await selectionRegressions(page, svgDocument, check,
                 nativeHelpers, output, mode);
             await geometryAuthoringRegressions(page, svgDocument, check, nativeHelpers, mode);
+            await flattenRegressions(page, svgDocument, check, nativeHelpers, mode);
+            await localStyleRegressions(page, svgDocument, check, nativeHelpers, mode);
             await compactAutosaveRegressions(page, svgDocument, check,
                 { fixtureNode, isolatedDocument, importFixture, documentState, state, clickWorld, clickNative, frames, flushStorage }, output, mode);
             await prototypeInputRegressions(page, svgDocument, check);

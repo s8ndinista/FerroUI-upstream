@@ -20,7 +20,7 @@ const base = `http://127.0.0.1:${server.address().port}`;
 let browser;
 const checks = [];
 try {
-    browser = await chromium.launch({ headless: true });
+    browser = await chromium.launch({ headless: true, executablePath: process.env.FERRODESIGN_CHROMIUM || undefined });
     const context = await browser.newContext();
     const page = await context.newPage();
     await page.goto(base);

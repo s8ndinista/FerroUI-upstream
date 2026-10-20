@@ -4,6 +4,7 @@ mod fields;
 mod panels;
 mod geometry_authoring;
 mod selection;
+mod styles;
 mod effects;
 mod compositing;
 mod components;
@@ -688,7 +689,7 @@ impl EditorShell {
                 if let Some(control) = visual.cast::<Control>() {
                     if let Some(name) = control
                         .name()
-                        .filter(|name| ["Paint", "Effect", "Interaction", "RichText", "Variable", "Component", "Compositing", "Crop", "Layout", "Action", "SelectLayer", "Affine", "FramePreset"]
+                        .filter(|name| ["Paint", "Effect", "Interaction", "RichText", "Variable", "Component", "Compositing", "Crop", "Layout", "Action", "SelectLayer", "Affine", "FramePreset", "Style"]
                             .iter().any(|prefix| name.starts_with(prefix)))
                     {
                         chrome.insert(name, native_bounds(&control));
@@ -2135,9 +2136,9 @@ impl EditorShell {
                 });
             }
             "flatten" => {
-                let flattened = self.editor.borrow_mut().flatten_selection().is_some();
-                if !flattened {
-                    self.toast("Select shapes or vectors to flatten. Text and boolean outlines are not supported yet.");
+                let result = crate::renderer::flatten::flatten_selection(&mut self.editor.borrow_mut());
+                if let Err(error) = result {
+                    self.toast(&error.to_string());
                     return false;
                 }
             }
@@ -2500,111 +2501,6 @@ impl EditorShell {
             .add(button);
     }
 
-    fn styles_dialog(self: &Rc<Self>) {
-        self.modal(
-            "Local styles",
-            "Apply a reusable fill, text, or effect style to the current selection.",
-        );
-        let styles: Vec<_> = self
-            .editor
-            .borrow()
-            .document
-            .styles
-            .values()
-            .cloned()
-            .collect();
-        let host = self.control::<StackPanel>("ModalContent");
-        for style in styles {
-            let kind = match &style.value {
-                core::StyleValue::Fill { .. } => "Fill",
-                core::StyleValue::Text { .. } => "Text",
-                core::StyleValue::Effect { .. } => "Effects",
-                core::StyleValue::Grid { .. } => "Grid",
-            };
-            let button = Button::new();
-            button.classes().add("layer");
-            button.set_content(Some(Rc::new(format!("{}  ·  {}", style.name, kind))));
-            let id = style.id;
-            let weak = Rc::downgrade(self);
-            button.click(move |_, _| {
-                if let Some(s) = weak.upgrade() {
-                    let mut editor = s.editor.borrow_mut();
-                    let selection = editor.selection.clone();
-                    if selection.is_empty() {
-                        drop(editor);
-                        s.toast("Select artwork before applying a style.");
-                        return;
-                    }
-                    editor.begin_transaction("Apply local style");
-                    let mut applied = false;
-                    for node in selection {
-                        applied |= editor.apply_style(node, id);
-                    }
-                    editor.commit_transaction();
-                    drop(editor);
-                    if applied {
-                        s.changed();
-                        s.close_modal();
-                    } else {
-                        s.toast("This style type has no visual application control yet.");
-                    }
-                }
-            });
-            host.children().add(button);
-        }
-        self.modal_button("Create fill style", "create-fill-style");
-        self.modal_button("Create text style", "create-text-style");
-        self.modal_button("Create effect style", "create-effect-style");
-    }
-    fn create_style(self: &Rc<Self>, command: &str) {
-        let node = {
-            let editor = self.editor.borrow();
-            editor
-                .selection
-                .first()
-                .and_then(|id| editor.document.nodes.get(id))
-                .cloned()
-        };
-        let Some(node) = node else {
-            self.toast("Select a layer to create a style from its properties.");
-            return;
-        };
-        let value = match command {
-            "create-text-style" => core::StyleValue::Text {
-                family: node.font_family,
-                size: node.font_size,
-                weight: node.font_weight,
-                line_height: node.line_height,
-                letter_spacing: node.letter_spacing,
-            },
-            "create-effect-style" => core::StyleValue::Effect {
-                effects: node.effects,
-            },
-            _ => core::StyleValue::Fill { fills: node.fills },
-        };
-        let mut editor = self.editor.borrow_mut();
-        editor.begin_transaction("Create local style");
-        let id = editor.transact("Create local style", |doc| {
-            let id = doc.allocate_id();
-            doc.styles.insert(
-                id,
-                core::Style {
-                    id,
-                    name: node.name,
-                    description: String::new(),
-                    value,
-                },
-            );
-            id
-        });
-        for node in editor.selection.clone() {
-            editor.apply_style(node, id);
-        }
-        editor.commit_transaction();
-        drop(editor);
-        self.changed();
-        self.styles_dialog();
-    }
     fn variables_dialog(self: &Rc<Self>) {
         let editor = self.editor.borrow();
         let value = serde_json::to_string_pretty(&editor.document.variables).unwrap_or_default();

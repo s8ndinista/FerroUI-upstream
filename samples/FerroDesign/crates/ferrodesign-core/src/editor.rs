@@ -465,13 +465,24 @@ impl Editor {
                 }
             }
             let content_changed = if let Some(old) = self.previous_nodes.get(id) {
+                // Ordinary leaf conversions retain traversal membership and
+                // sibling order. Their new geometry and ancestors can refresh
+                // in place; container, layout, component and mask roles keep
+                // the conservative structural path even without children.
+                let stable_leaf_role = !node.kind.is_container() && !old.kind.is_container()
+                    && node.children.is_empty() && old.children.is_empty()
+                    && node.layout.is_none() && old.layout.is_none()
+                    && node.component_id.is_none() && old.component_id.is_none()
+                    && node.component_source.is_none() && old.component_source.is_none()
+                    && !node.is_mask && !old.is_mask;
                 structural_change |= node.parent != old.parent
                     || node.children != old.children
                     || node.visible != old.visible
                     || (node.opacity > 0.0) != (old.opacity > 0.0)
-                    || node.kind != old.kind
+                    || (node.kind != old.kind && !stable_leaf_role)
                     || node.clip_content != old.clip_content;
-                if node.x != old.x
+                if node.kind != old.kind
+                    || node.x != old.x
                     || node.y != old.y
                     || node.width != old.width
                     || node.height != old.height
@@ -973,7 +984,13 @@ impl Editor {
         label: &str,
         update: impl FnOnce(&mut Node) -> R,
     ) -> Option<R> {
-        self.edit_nodes(label, &[id], |e| Some(update(e.document.nodes.get_mut(&id)?)))
+        self.edit_nodes(label, &[id], |e| {
+            let node = e.document.nodes.get_mut(&id)?;
+            let bindings = crate::style_edit::StyleBindingSnapshot::capture(node, e.previous_nodes.get(&id));
+            let result = update(node);
+            bindings.detach_changed(node);
+            Some(result)
+        })
     }
     /// Update each existing node once and retain one undo record. This scoped
     /// callback cannot mutate document metadata or unrelated nodes, so small
@@ -989,7 +1006,9 @@ impl Editor {
             let mut count = 0;
             for id in &ids {
                 if let Some(node) = editor.document.nodes.get_mut(id) {
+                    let bindings = crate::style_edit::StyleBindingSnapshot::capture(node, editor.previous_nodes.get(id));
                     update(node);
+                    bindings.detach_changed(node);
                     count += 1;
                 }
             }
@@ -1007,8 +1026,10 @@ impl Editor {
         mut update: impl FnMut(&mut Node),
     ) -> usize {
         let edits: Vec<_> = ids.iter().copied().collect::<BTreeSet<_>>().into_iter()
-            .filter_map(|id| self.document.nodes.get(&id).cloned().map(|mut node| {
+            .filter_map(|id| self.document.nodes.get(&id).map(|before| {
+                let mut node = before.clone();
                 update(&mut node);
+                crate::style_edit::detach_changed_style_bindings(before, &mut node);
                 (id, node)
             })).collect();
         let count = edits.len();
@@ -1685,40 +1706,7 @@ impl Editor {
         })
     }
     pub fn apply_style(&mut self, id: NodeId, style: StyleId) -> bool {
-        self.transact("Apply style", |d| {
-            let Some(s) = d.styles.get(&style).cloned() else {
-                return false;
-            };
-            let Some(n) = d.nodes.get_mut(&id) else {
-                return false;
-            };
-            match s.value {
-                StyleValue::Fill { fills } => {
-                    n.fills = fills;
-                    n.fill_style = Some(style)
-                }
-                StyleValue::Text {
-                    family,
-                    size,
-                    weight,
-                    line_height,
-                    letter_spacing,
-                } => {
-                    n.font_family = family;
-                    n.font_size = size;
-                    n.font_weight = weight;
-                    n.line_height = line_height;
-                    n.letter_spacing = letter_spacing;
-                    n.text_style = Some(style)
-                }
-                StyleValue::Effect { effects } => {
-                    n.effects = effects;
-                    n.effect_style = Some(style)
-                }
-                StyleValue::Grid { .. } => return false,
-            }
-            true
-        })
+        self.apply_local_style(&[id], style).is_ok_and(|changed| changed != 0)
     }
     pub fn set_variable_mode(&mut self, mode: impl Into<String>) {
         let mode = mode.into();
@@ -1891,77 +1879,7 @@ impl Editor {
         Some(result)
     }
 
-    pub fn flatten_selection(&mut self) -> Option<NodeId> {
-        self.edit("Flatten selection", |e| {
-            let roots = e.root_selection();
-            if roots.is_empty() {
-                return None;
-            }
-            let all: Vec<_> = roots
-                .iter()
-                .flat_map(|id| e.document.descendants(*id))
-                .collect();
-            if all.iter().any(|id| {
-                e.document
-                    .nodes
-                    .get(id)
-                    .is_some_and(|n| matches!(n.kind, NodeKind::Text | NodeKind::Boolean))
-            }) {
-                return None;
-            }
-            let b = roots
-                .iter()
-                .filter_map(|id| e.document.world_bounds(*id))
-                .reduce(|a, b| a.union(b))?;
-            let mut segments = Vec::new();
-            let origin = Transform::translation(-b.x, -b.y);
-            for id in all {
-                let n = e.document.nodes.get(&id)?;
-                if n.kind.is_container() && n.fills.is_empty() {
-                    continue;
-                }
-                let t = origin * e.document.world_transform(id)?;
-                for s in outline_path(n).segments {
-                    segments.push(match s {
-                        PathSegment::MoveTo { point } => PathSegment::MoveTo {
-                            point: t.apply(point),
-                        },
-                        PathSegment::LineTo { point } => PathSegment::LineTo {
-                            point: t.apply(point),
-                        },
-                        PathSegment::QuadraticTo { control, point } => PathSegment::QuadraticTo {
-                            control: t.apply(control),
-                            point: t.apply(point),
-                        },
-                        PathSegment::CubicTo {
-                            control1,
-                            control2,
-                            point,
-                        } => PathSegment::CubicTo {
-                            control1: t.apply(control1),
-                            control2: t.apply(control2),
-                            point: t.apply(point),
-                        },
-                        PathSegment::Close => PathSegment::Close,
-                    })
-                }
-            }
-            let fills = e.document.nodes.get(&roots[0])?.fills.clone();
-            let mut n = Node::new(NodeKind::Vector, "Vector", b.x, b.y, b.width, b.height);
-            n.path = VectorPath {
-                segments,
-                fill_rule: FillRule::NonZero,
-                ..VectorPath::default()
-            };
-            n.fills = fills;
-            let id = e.document.insert_node(e.active_page, n).ok()?;
-            for root in roots {
-                e.document.remove_subtree(root);
-            }
-            e.selection = vec![id];
-            Some(id)
-        })
-    }
+
 }
 #[derive(Clone, Copy, Debug, Default)]
 pub struct SnapResult {

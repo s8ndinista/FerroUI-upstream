@@ -1,8 +1,8 @@
 # Validation and measurements
 
-This file distinguishes implemented paths, completed checks and measurements. The current implementation is source `945283ef24202dab638c85bc9dc3d5f47fcc902d`, with exact-source validation in [CI run 39306364660](https://github.com/wieslawsoltes/FerroUI/actions/runs/39306364660). The observations below remain tied to their exact source and run; older successful runs do not validate later changes. [PR #254](https://github.com/wieslawsoltes/FerroUI/pull/254) collects the complete source and current review status.
+This file distinguishes implemented paths, completed checks and measurements. Each observation belongs to its stated source and run; older successful runs do not validate later changes. The branch now incorporates FerroUI `ab7a15b8` / `0.4.0-preview.1`, restores Vello for every application target, and adds local style definition editing and public-API flattening. Those changes require their own validation. [PR #254](https://github.com/wieslawsoltes/FerroUI/pull/254) collects the complete source and current review status.
 
-## Current continuation: `945283ef`
+## Preserved validated baseline: `945283ef`
 
 This continuation adds typed native effect authoring, deferred auto-layout drag previews and transactional drops, a retained spatial index for prepared root bounds, and consistent shadow order through rounded and general geometry. Browser regressions additionally wait for a new native frame after selection and verify actual ComboBox popup focus before sending navigation keys.
 

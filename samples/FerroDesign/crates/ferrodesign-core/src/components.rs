@@ -342,12 +342,24 @@ impl Document {
     }
 }
 
+fn preserve_variable_binding(node: &mut Node, old: &Node, property: &str) {
+    if let Some(variable) = old.variable_bindings.get(property) {
+        node.variable_bindings.insert(property.into(), *variable);
+    } else {
+        node.variable_bindings.remove(property);
+    }
+}
+
 fn preserve_overrides(node: &mut Node, old: &Node) {
     node.overridden_properties = old.overridden_properties.clone();
     for property in &old.overridden_properties {
         match property.as_str() {
             "text" => { node.text = old.text.clone(); node.text_runs = old.text_runs.clone(); }
-            "fills" => { node.fills = old.fills.clone(); node.fill_style = old.fill_style; }
+            "fills" => {
+                node.fills = old.fills.clone();
+                node.fill_style = old.fill_style;
+                preserve_variable_binding(node, old, "fill");
+            }
             "strokes" => node.strokes = old.strokes.clone(),
             "effects" => { node.effects = old.effects.clone(); node.effect_style = old.effect_style; }
             "visible" => node.visible = old.visible,
@@ -364,7 +376,10 @@ fn preserve_overrides(node: &mut Node, old: &Node) {
             "affine_transform" => node.affine_transform = old.affine_transform,
             "corner_radius" => { node.corner_radius = old.corner_radius; node.corner_radii = old.corner_radii; }
             "font_family" => node.font_family = old.font_family.clone(),
-            "font_size" => node.font_size = old.font_size,
+            "font_size" => {
+                node.font_size = old.font_size;
+                preserve_variable_binding(node, old, "font_size");
+            }
             "font_weight" => node.font_weight = old.font_weight,
             "italic" => node.italic = old.italic,
             "line_height" => node.line_height = old.line_height,
