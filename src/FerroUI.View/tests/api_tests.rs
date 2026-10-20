@@ -48,7 +48,8 @@ fn styles_of_an_element_apply_to_the_controls_below_it() {
     let _app = app();
     let accent: StyleBuilder = style("TextBlock.accent")
         .set(TextBlock::font_size_property(), 30.0)
-        .nested(style("^.strong").set(TextBlock::font_size_property(), 40.0));
+        .nested(style("^.strong").set(TextBlock::font_size_property(), 40.0))
+        .nested(style("^:not(.strong).dim").set(TextBlock::font_size_property(), 10.0));
     let owner = Owner::new_root();
     let panel = owner.with(|| {
         stack_panel()
