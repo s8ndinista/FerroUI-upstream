@@ -1,7 +1,7 @@
 use super::{EditError, EditKind, EditorSelection, RichTextEditor, RtfError, RtfReader, RtfWriter};
 use crate::documents::{
     CharacterFormat, DocumentError, DocumentSnapshot, InlineSnapshot, InlineSnapshotKind,
-    ParagraphFormat, RichTextDocument, TextGravity, TextPointer,
+    Paragraph, ParagraphFormat, RichTextDocument, TextGravity, TextPointer,
 };
 use crate::RichTextBlock;
 use ferroui_base::media::text_formatting::unicode::{GraphemeEnumerator, WordBreakEnumerator};
@@ -23,6 +23,8 @@ use units::TextUnits;
 /// editor's associated view and otherwise follow the native paragraph fallback.
 /// Character traverses Unicode scalars without splitting surrogate pairs; it is
 /// separate from the framework's grapheme-based caret and automation navigation.
+/// Cluster uses the associated view's shaping output and requires a complete,
+/// untrimmed layout. It never substitutes Unicode grapheme boundaries.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 #[repr(i32)]
 pub enum TextRangeUnit {
@@ -33,6 +35,7 @@ pub enum TextRangeUnit {
     Line = 4,
     Story = 5,
     HardParagraph = 12,
+    Cluster = 13,
 }
 impl TextRangeUnit {
     /// Compatibility name for the one story represented by a FerroUI document.
@@ -40,7 +43,7 @@ impl TextRangeUnit {
     pub const Document: Self = Self::Story;
 }
 ferroui_base::ferro_markup_enum!(TextRangeUnit {
-    Character, Word, Sentence, Paragraph, Line, Story, HardParagraph,
+    Character, Word, Sentence, Paragraph, Line, Story, HardParagraph, Cluster,
 }, { namespace: "FerroUI.Controls" });
 
 /// Framework Unicode boundaries used by search and automation. These deliberately
@@ -263,6 +266,32 @@ impl RichEditTextDocument {
         self.editor.set_default_paragraph_format(format)
     }
 
+    /// Default tab spacing in TOM points; shared by all facades of this editor.
+    pub fn default_tab_stop(&self) -> f64 {
+        self.editor
+            .default_paragraph_format()
+            .default_tab_stop
+            .unwrap_or(48.0)
+            * (72.0 / 96.0)
+    }
+
+    /// Applies document-wide implicit tab spacing as one undoable format edit.
+    /// Explicit paragraph stops and unrelated formatting are retained.
+    pub fn set_default_tab_stop(&self, points: f64) -> Result<(), EditError> {
+        let patch = ParagraphFormat {
+            default_tab_stop: Some(points * (96.0 / 72.0)),
+            ..Default::default()
+        };
+        patch.validate()?;
+        self.editor.edit_group(|editor| {
+            editor.set_default_paragraph_format(&patch)?;
+            editor
+                .document()
+                .apply_paragraph_format(0..editor.document().text_length(), &patch)?;
+            Ok(())
+        })
+    }
+
     /// Retrieves native paragraph separators while retaining the model's UTF-16
     /// coordinate system. The complete-story projection synthesizes its terminal
     /// paragraph mark for None or AllowFinalEop, as the source TOM fixture requires.
@@ -307,7 +336,7 @@ impl RichEditTextDocument {
         snapshot
     }
 
-    fn replace_document(
+    pub(crate) fn replace_document(
         &self,
         snapshot: &DocumentSnapshot,
         check_limit: bool,
@@ -326,6 +355,22 @@ impl RichEditTextDocument {
         let result = self.editor.edit_group(|editor| {
             if !check_limit && previous_limit > 0 {
                 editor.set_max_length(previous_limit.max(snapshot.text_length()));
+            }
+            let default_tab_stop = snapshot
+                .paragraphs
+                .iter()
+                .find_map(|paragraph| paragraph.format.default_tab_stop)
+                .unwrap_or(48.0);
+            if editor
+                .default_paragraph_format()
+                .default_tab_stop
+                .unwrap_or(48.0)
+                != default_tab_stop
+            {
+                editor.set_default_paragraph_format(&ParagraphFormat {
+                    default_tab_stop: Some(default_tab_stop),
+                    ..Default::default()
+                })?;
             }
             editor.document().restore(&snapshot)?;
             editor.set_selection(EditorSelection::caret(snapshot.text_length()))?;
@@ -436,8 +481,12 @@ impl RichEditTextRange {
             range.start = adjusted_text_start(&self.document().text(), range.start);
         }
         if options.contains(TextGetOptions::FORMAT_RTF) {
-            return Ok(RtfWriter::write(
+            return Ok(RtfWriter::write_with_default_tab_stop(
                 &self.snapshot_with_effective_paragraphs(range)?,
+                self.editor
+                    .default_paragraph_format()
+                    .default_tab_stop
+                    .unwrap_or(48.0),
             )?);
         }
         // Live model ranges do not include the native synthetic final paragraph
@@ -463,6 +512,14 @@ impl RichEditTextRange {
         for (index, paragraph) in snapshot.paragraphs.iter_mut().enumerate() {
             if let Some(original) = paragraphs.get(start + index) {
                 paragraph.format = ParagraphFormat::effective(original).overlay(&paragraph.format);
+                if !original.is_set(Paragraph::default_tab_stop_property().as_property()) {
+                    paragraph.format.default_tab_stop = Some(
+                        self.editor
+                            .default_paragraph_format()
+                            .default_tab_stop
+                            .unwrap_or(48.0),
+                    );
+                }
             }
         }
         Ok(snapshot)
@@ -633,6 +690,26 @@ impl RichEditTextRange {
         if let Some(fragment) = fragment {
             fragment.validate()?;
         }
+        // Native range insertion ignores RTF document defaults unless explicitly
+        // requested. The unsupported ApplyRtfDocumentDefaults option is rejected
+        // before this point; explicit paragraph stops are retained.
+        let normalized_rtf = if options.contains(TextSetOptions::FORMAT_RTF) {
+            fragment.map(|fragment| {
+                let mut fragment = fragment.clone();
+                let interval = self
+                    .editor
+                    .default_paragraph_format()
+                    .default_tab_stop
+                    .unwrap_or(48.0);
+                for paragraph in &mut fragment.paragraphs {
+                    paragraph.format.default_tab_stop = Some(interval);
+                }
+                fragment
+            })
+        } else {
+            None
+        };
+        let fragment = normalized_rtf.as_ref().or(fragment);
         let inserted_length = fragment.map_or_else(
             || DocumentSnapshot::from_text(text).text_length(),
             DocumentSnapshot::text_length,
@@ -1127,8 +1204,10 @@ impl RichEditTextSelection {
         if count == 0 {
             return Ok(0);
         }
-        let current = self.selection();
         let units = TextUnits::resolve(&self.editor, unit)?;
+        // Resolving display units can run layout callbacks that change selection.
+        // Read the directed endpoints afterwards, as the live range methods do.
+        let current = self.selection();
         let (position, moved) = if extend {
             units.move_position(current.active, count)
         } else {

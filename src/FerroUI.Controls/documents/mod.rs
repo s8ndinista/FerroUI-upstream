@@ -44,6 +44,7 @@ pub use italic::Italic;
 pub use line_break::LineBreak;
 pub use line_spacing_rule::LineSpacingRule;
 pub use paragraph::Paragraph;
+pub use ferroui_base::media::text_formatting::{TabAlignment, TabLeader, TextTabStop, TextTabStops};
 pub use rich_text_document::{
     DocumentChangeKind, DocumentChangedEventArgs, DocumentEditBatch, DocumentError,
     DocumentTextChange, RichTextDocument, WeakRichTextDocument,
@@ -72,3 +73,6 @@ mod rich_language_tests;
 
 #[cfg(test)]
 mod text_highlighter_tests;
+
+#[cfg(test)]
+mod rich_paragraph_tabs_tests;

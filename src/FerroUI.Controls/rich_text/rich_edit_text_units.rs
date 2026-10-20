@@ -1,6 +1,9 @@
 //! TOM logical navigation. Native Word/Sentence/Paragraph definitions come from
 //! the pinned Microsoft.UI.Text.xml; visual line units use FerroUI's live layout.
 use super::*;
+use crate::documents::EmbeddedControlRun;
+use crate::rich_text_layout::RichTextLayout;
+use ferroui_base::media::text_formatting::{LogicalTextRunEnumerator, ShapedTextRun};
 use ferroui_base::Ref;
 use std::collections::HashSet;
 
@@ -14,9 +17,15 @@ pub(super) struct TextUnits {
 impl TextUnits {
     pub(super) fn resolve(editor: &RichTextEditor, unit: TextRangeUnit) -> Result<Self, EditError> {
         let document = editor.document();
-        let revision = document.revision();
+        let mutation = document.mutation_version();
         let text = document.text();
         let length = text.encode_utf16().count();
+        let display_unit = matches!(unit, TextRangeUnit::Line | TextRangeUnit::Cluster);
+        let view = if display_unit {
+            editor.text_view()
+        } else {
+            None
+        };
         let ranges = match unit {
             // Native positions count UTF-16. The safe Rust range model never
             // exposes half a surrogate; one Character traverses a whole scalar.
@@ -24,16 +33,27 @@ impl TextUnits {
             TextRangeUnit::Word => word_ranges(&text),
             TextRangeUnit::Sentence => sentence_ranges(&text),
             TextRangeUnit::Paragraph => paragraph_ranges(&text),
-            TextRangeUnit::Line => match editor.text_view() {
-                Some(view) => line_ranges(&document, &text, view)?,
+            TextRangeUnit::Line => match &view {
+                Some(view) => line_ranges(&document, &text, view.clone())?,
                 None => paragraph_ranges(&text),
             },
             TextRangeUnit::Story => vec![0..length],
             TextRangeUnit::HardParagraph => hard_paragraph_ranges(&document.snapshot()),
+            TextRangeUnit::Cluster => match &view {
+                Some(view) => cluster_ranges(&document, &text, view.clone())?,
+                None => {
+                    return Err(DocumentError::InvalidFormat(
+                        "Cluster navigation requires an associated shaped text view.",
+                    )
+                    .into());
+                }
+            },
         };
         // Formatting a view can raise layout-property callbacks. Do not use a
         // stale boundary snapshot if an application edited during those callbacks.
-        if document.revision() != revision {
+        // Public revision events can be deferred by an outer document batch.
+        // The internal mutation identity also detects edits inside such a batch.
+        if document.mutation_version() != mutation || display_unit && editor.text_view() != view {
             return Err(EditError::ReentrantEdit);
         }
         let mut boundaries: Vec<_> = ranges
@@ -340,41 +360,23 @@ fn line_ranges(
     text: &str,
     first: Ref<RichTextBlock>,
 ) -> Result<Vec<Range<usize>>, EditError> {
-    let length = text.encode_utf16().count();
-    let mut current = Some(first);
-    let mut visited = HashSet::new();
+    let utf16: Vec<_> = text.encode_utf16().collect();
     let mut result = Vec::new();
-    while let Some(view) = current {
-        if !visited.insert(&*view as *const RichTextBlock as usize) {
-            return Err(
-                DocumentError::InvalidFormat("The text view chain contains a cycle.").into(),
-            );
-        }
-        ensure_view_document(document, &view)?;
-        let metrics = view.line_metrics();
-        if view.is_text_trimmed() {
-            return Err(DocumentError::InvalidFormat(
-                "Line navigation requires a complete, untrimmed text layout.",
-            )
-            .into());
-        }
-        ensure_view_document(document, &view)?;
-        for line in metrics {
-            let end = line
-                .start
-                .checked_add(line.length)
-                .ok_or(DocumentError::InvalidFormat(
-                    "A text line exceeds the document coordinate range.",
-                ))?;
-            if end > length {
+    for layout in story_layouts(document, first)? {
+        for line in &layout.lines {
+            let start = line.start();
+            let end = line.end();
+            if start > end || end > utf16.len() {
                 return Err(EditError::ReentrantEdit);
             }
-            document.validate_range(line.start..end)?;
-            result.push(line.start..end);
+            for position in [start, end] {
+                if !is_scalar_boundary(&utf16, position) {
+                    return Err(DocumentError::InvalidUtf16Boundary { offset: position }.into());
+                }
+            }
+            result.push(start..end);
         }
-        current = view.overflow_content_target().map(Ref::upcast);
     }
-    let utf16: Vec<_> = text.encode_utf16().collect();
     if result.first().is_none_or(|range| range.start != 0)
         || result.last().is_none_or(|range| range.end != utf16.len())
     {
@@ -401,6 +403,216 @@ fn line_ranges(
         result[index].end = next_start;
     }
     Ok(result)
+}
+
+/// Capture one coherent layout chain before reading its runs. Public document
+/// revisions do not detect inherited presentation changes or view replacement.
+/// Checking cached identity after all layout callbacks detects those changes
+/// without reshaping or allocating glyph runs on the ordinary cached path.
+fn story_layouts(
+    document: &RichTextDocument,
+    first: Ref<RichTextBlock>,
+) -> Result<Vec<Rc<RichTextLayout>>, EditError> {
+    let mut current = Some(first);
+    let mut visited = HashSet::new();
+    let mut snapshots = Vec::new();
+    while let Some(view) = current {
+        if !visited.insert(&*view as *const RichTextBlock as usize) {
+            return Err(
+                DocumentError::InvalidFormat("The text view chain contains a cycle.").into(),
+            );
+        }
+        ensure_view_document(document, &view)?;
+        let layout = view.page_layout();
+        ensure_view_document(document, &view)?;
+        if layout.is_trimmed {
+            return Err(DocumentError::InvalidFormat(
+                "Text-unit navigation requires a complete, untrimmed text layout.",
+            )
+            .into());
+        }
+        current = view.overflow_content_target().map(Ref::upcast);
+        snapshots.push((view, layout));
+    }
+    for (view, layout) in &snapshots {
+        ensure_view_document(document, view)?;
+        if !Rc::ptr_eq(layout, &view.page_layout()) {
+            return Err(EditError::ReentrantEdit);
+        }
+    }
+    Ok(snapshots.into_iter().map(|(_, layout)| layout).collect())
+}
+
+/// Uses the same logical run order and cluster origins as the live formatter.
+/// A visual-order scan would reverse RTL units, while grapheme segmentation
+/// cannot recover font-dependent ligatures or complex-script shaping clusters.
+fn cluster_ranges(
+    document: &RichTextDocument,
+    text: &str,
+    first: Ref<RichTextBlock>,
+) -> Result<Vec<Range<usize>>, EditError> {
+    let utf16: Vec<_> = text.encode_utf16().collect();
+    let mut result = Vec::new();
+    let mut covered = 0;
+    let mut has_line = false;
+    for layout in story_layouts(document, first)? {
+        for displayed in &layout.lines {
+            let start = displayed.start();
+            let end = displayed.end();
+            if (!has_line && start != 0) || start < covered || start > end || end > utf16.len() {
+                return Err(DocumentError::InvalidFormat(
+                    "The text view cluster ranges are not contiguous.",
+                )
+                .into());
+            }
+            has_line = true;
+            // Paragraph objects have one source mark outside their shaped runs.
+            append_break_clusters(&utf16, covered..start, &mut result)?;
+            let mut cursor = start;
+            let mut runs = LogicalTextRunEnumerator::new(&*displayed.line);
+            while let Some(run) = runs.move_next() {
+                // The formatter's final paragraph marker and empty caret glyph
+                // have no addressable source character in the document model.
+                if cursor == end {
+                    break;
+                }
+                let length = usize::try_from(run.length()).map_err(|_| {
+                    DocumentError::InvalidFormat("A shaped run has a negative length.")
+                })?;
+                let run_end = cursor.checked_add(length).filter(|run_end| *run_end <= end);
+                let run_end = run_end.ok_or(DocumentError::InvalidFormat(
+                    "A shaped run exceeds its source line.",
+                ))?;
+                if let Some(shaped) = run.downcast_ref::<ShapedTextRun>() {
+                    append_shaped_clusters(&utf16, cursor..run_end, shaped, &mut result)?;
+                } else if run.is::<EmbeddedControlRun>() && utf16[cursor..run_end] == [0xfffc] {
+                    result.push(cursor..run_end);
+                } else if run.as_text_end_of_line().is_some() {
+                    append_break_clusters(&utf16, cursor..run_end, &mut result)?;
+                } else if length != 0 {
+                    return Err(DocumentError::InvalidFormat(
+                        "Cluster navigation requires shaped text or a known structural run.",
+                    )
+                    .into());
+                }
+                cursor = run_end;
+            }
+            if cursor != end {
+                return Err(DocumentError::InvalidFormat(
+                    "The shaped runs do not cover their source line.",
+                )
+                .into());
+            }
+            covered = end;
+        }
+    }
+    if !has_line || covered != utf16.len() {
+        return Err(DocumentError::InvalidFormat(
+            "Cluster navigation requires layout for the complete story.",
+        )
+        .into());
+    }
+    Ok(result)
+}
+
+fn append_shaped_clusters(
+    text: &[u16],
+    range: Range<usize>,
+    run: &ShapedTextRun,
+    result: &mut Vec<Range<usize>>,
+) -> Result<(), EditError> {
+    let buffer = run.shaped_buffer();
+    if buffer.text().span() != &text[range.clone()] {
+        return Err(EditError::ReentrantEdit);
+    }
+    if range.is_empty() {
+        return Ok(());
+    }
+    let glyphs = buffer.glyph_infos();
+    let Some(origin) = glyphs.iter().map(|glyph| glyph.glyph_cluster).min() else {
+        // Some shapers omit newline glyphs altogether. Those explicit source
+        // separators remain navigable; missing ordinary text is not guessed.
+        return append_break_clusters(text, range, result);
+    };
+    if origin < 0 {
+        return Err(DocumentError::InvalidFormat("A glyph cluster has a negative origin.").into());
+    }
+    let mut starts = Vec::with_capacity(glyphs.len() + 2);
+    starts.push(range.start);
+    starts.push(range.end);
+    for glyph in glyphs.iter() {
+        // A wrapped/split shaped buffer retains its original cluster values.
+        // Normalize its first logical cluster to this run's source position.
+        let offset = usize::try_from(i64::from(glyph.glyph_cluster) - i64::from(origin))
+            .ok()
+            .filter(|offset| *offset < range.len())
+            .ok_or(DocumentError::InvalidFormat(
+                "A glyph cluster exceeds its source run.",
+            ))?;
+        starts.push(range.start + offset);
+    }
+    // A line-ending glyph can be absent even when the preceding run has glyphs.
+    // Keep explicit separators separate from the last rendered cluster.
+    let mut offset = range.start;
+    while offset < range.end {
+        if is_cluster_break(text[offset]) {
+            starts.push(offset);
+            offset += 1;
+            if text[offset - 1] == 0x0d && text.get(offset) == Some(&0x0a) && offset < range.end {
+                offset += 1;
+            }
+            starts.push(offset);
+        } else {
+            offset += 1;
+        }
+    }
+    starts.sort_unstable();
+    starts.dedup();
+    if starts
+        .iter()
+        .any(|&position| !is_scalar_boundary(text, position))
+    {
+        return Err(DocumentError::InvalidFormat(
+            "A glyph cluster splits a UTF-16 surrogate pair.",
+        )
+        .into());
+    }
+    result.extend(starts.windows(2).map(|pair| pair[0]..pair[1]));
+    Ok(())
+}
+
+fn is_scalar_boundary(text: &[u16], position: usize) -> bool {
+    position == 0
+        || position == text.len()
+        || !(0xd800..=0xdbff).contains(&text[position - 1])
+        || !(0xdc00..=0xdfff).contains(&text[position])
+}
+
+fn is_cluster_break(unit: u16) -> bool {
+    is_paragraph_separator(unit) || unit == 0x2028
+}
+
+fn append_break_clusters(
+    text: &[u16],
+    range: Range<usize>,
+    result: &mut Vec<Range<usize>>,
+) -> Result<(), EditError> {
+    let mut start = range.start;
+    while start < range.end {
+        if !is_cluster_break(text[start]) {
+            return Err(DocumentError::InvalidFormat(
+                "The text view omits nonstructural source characters.",
+            )
+            .into());
+        }
+        let mut end = start + 1;
+        if text[start] == 0x0d && end < range.end && text[end] == 0x0a {
+            end += 1;
+        }
+        result.push(start..end);
+        start = end;
+    }
+    Ok(())
 }
 
 #[cfg(test)]

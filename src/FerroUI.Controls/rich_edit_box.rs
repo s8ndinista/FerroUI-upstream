@@ -1,3 +1,4 @@
+use crate::automation::provider::TextEditChangeType;
 use crate::documents::{
     BlockCollection, CharacterFormat, DocumentSnapshot, InlineSnapshot, InlineSnapshotKind,
     LineStackingStrategy, ParagraphFormat, RichTextDocument, TextHighlighterCollection,
@@ -12,7 +13,7 @@ use crate::primitives::{
 use crate::rich_edit_box_text_input_method_client::RichEditBoxTextInputMethodClient;
 use crate::rich_text::{
     EditError, EditKind, EditorSelection, RichEditClipboardFormat, RichEditTextDocument,
-    RichTextEditor, RichTextTransfer, RtfError, RtfReader, RtfWriter,
+    RichTextCompositionChange, RichTextEditor, RichTextTransfer, RtfError, RtfReader, RtfWriter,
 };
 use crate::rich_text_block::RichTextSelectionChangedEventArgs;
 use crate::rich_text_layout::RichTextLineMetrics;
@@ -43,7 +44,7 @@ use ferroui_base::media::{
     subscribe_invalidated, Brushes, FontStyle, FontWeight, IBrush, TextAlignment,
     TextDecorationCollection, TextDecorationLocation, TextDecorations, TextWrapping,
 };
-use ferroui_base::reactive::{Disposable, IDisposable};
+use ferroui_base::reactive::{CompositeDisposable, Disposable, IDisposable};
 use ferroui_base::threading::{Dispatcher, DispatcherPriority, DispatcherTimer};
 use ferroui_base::utilities::HandlerList;
 use ferroui_base::{
@@ -241,6 +242,7 @@ impl Drop for RichEditBox {
             timer.stop();
         }
         for subscription in [
+            self.editor_subscription.get_mut().take(),
             self.context_flyout_closed_subscription.get_mut().take(),
             self.flyout_focus_subscription.get_mut().take(),
         ]
@@ -255,6 +257,12 @@ ferroui_base::ferro_class_info!(RichEditBox {
     new: RichEditBox::new,
     markup: {
         content: Blocks,
+        attributes: [
+            TemplatePart("ContentElement", type(Ref<Control>), IsRequired = true),
+            TemplatePart("HeaderContentPresenter", type(Ref<ContentPresenter>)),
+            TemplatePart("PlaceholderTextContentPresenter", type(Ref<TextBlock>)),
+            TemplatePart("DescriptionPresenter", type(Ref<ContentPresenter>)),
+        ],
         properties: [
             Blocks: BlockCollection { get: RichEditBox::blocks },
             TextHighlighters: TextHighlighterCollection { get: RichEditBox::text_highlighters },
@@ -500,7 +508,25 @@ impl InputElementImpl for RichEditBox {
         if event.handled() {
             return;
         }
-        if !this.is_read_only() {
+        if let Some(commit) = event.input_method_commit() {
+            if !commit.is_current() {
+                commit.complete(Err(
+                    ferroui_base::input::text_input::TextInputMethodError::StateChanged,
+                ));
+                event.set_handled(true);
+                return;
+            }
+            if let Some(text) = &event.text {
+                let result = this.insert_text(text);
+                commit.complete(
+                    result
+                        .as_ref()
+                        .copied()
+                        .map_err(crate::rich_edit_box_text_input_method_client::input_method_error),
+                );
+                this.handle_edit(result);
+            }
+        } else if !this.is_read_only() {
             if let Some(text) = &event.text {
                 this.handle_edit(this.insert_text(text));
             }
@@ -985,7 +1011,7 @@ impl RichEditBox {
             self.selection_highlight_color_when_not_focused()
         }
     }
-    fn context_flyout_contains_focus(&self, focused: Option<&InputElement>) -> bool {
+    pub(crate) fn context_flyout_contains_focus(&self, focused: Option<&InputElement>) -> bool {
         let Some(flyout) = self.context_flyout().filter(|flyout| {
             flyout.is_open() && flyout.target() == Some(self.to_ref().upcast::<Control>())
         }) else {
@@ -1434,8 +1460,43 @@ impl RichEditBox {
                 this.after_edit(&this.editor());
             }
         });
-        *self.editor_subscription.borrow_mut() = Some(subscription);
+        // The control observes accepted causes before a client ever requests
+        // its peer. Creating a peer while handling the first cause must not
+        // install another forwarding subscription for that same model.
+        let weak = self.to_ref().downgrade();
+        let weak_editor = Rc::downgrade(&editor);
+        let composition_subscription = editor.composition_changed(move |change| {
+            let (Some(this), Some(editor)) = (weak.upgrade(), weak_editor.upgrade()) else {
+                return;
+            };
+            let current = this
+                .editor
+                .borrow()
+                .as_ref()
+                .is_some_and(|current| Rc::ptr_eq(current, &editor));
+            if current && editor.document() == this.document() {
+                this.raise_automation_composition_changed(change);
+            }
+        });
+        *self.editor_subscription.borrow_mut() =
+            Some(Rc::new(CompositeDisposable::from_disposables([
+                subscription,
+                composition_subscription,
+            ])));
         editor
+    }
+
+    fn raise_automation_composition_changed(&self, change: &RichTextCompositionChange) {
+        let (cause, text) = match change {
+            RichTextCompositionChange::Preview { changed_text } => {
+                (TextEditChangeType::Composition, changed_text)
+            }
+            RichTextCompositionChange::Finalized { text } => {
+                (TextEditChangeType::CompositionFinalized, text)
+            }
+        };
+        self.get_or_create_automation_peer()
+            .raise_text_edit_text_changed_event(cause, vec![text.clone()]);
     }
 
     fn attach_document(&self) {
@@ -1812,19 +1873,47 @@ impl RichEditBox {
         }
         self.synchronize_editor_selection(&editor)?;
         let started = !editor.is_composing();
-        if started {
-            self.raise_composition(Self::text_composition_started_event(), text, false);
-        }
         let cursor = cursor.map(|offset| {
             self.filter_input(crate::rich_text::utf16_prefix(text, offset))
                 .encode_utf16()
                 .count()
         });
-        let result = editor.set_preedit(&self.filter_input(text), cursor);
-        if result.is_ok() {
-            self.raise_composition(Self::text_composition_changed_event(), text, false);
+        editor.set_preedit(&self.filter_input(text), cursor)?;
+        // Public composition notifications expose the accepted preview. A handler
+        // may replace the document, selection, or preview; the original platform
+        // operation must not adopt that newer state as its own composition.
+        let accepted_text = editor
+            .active_composition_range()
+            .and_then(|range| editor.document().get_text(range).ok())
+            .ok_or(EditError::ReentrantEdit)?;
+        let version = editor.document().mutation_version();
+        let selection = editor.selection();
+        let current = || {
+            Rc::ptr_eq(&editor, &self.editor())
+                && editor.is_composing()
+                && editor.document().mutation_version() == version
+                && editor.selection() == selection
+        };
+        if started {
+            self.raise_composition(
+                Self::text_composition_started_event(),
+                &accepted_text,
+                false,
+            );
+            if !current() {
+                return Err(EditError::ReentrantEdit);
+            }
         }
-        result
+        self.raise_composition(
+            Self::text_composition_changed_event(),
+            &accepted_text,
+            false,
+        );
+        if current() {
+            Ok(())
+        } else {
+            Err(EditError::ReentrantEdit)
+        }
     }
     pub fn cancel_composition(&self) -> Result<bool, EditError> {
         let editor = self.editor();
@@ -1858,11 +1947,17 @@ impl RichEditBox {
     }
 
     pub fn export_rtf(&self) -> Result<String, RtfError> {
-        RtfWriter::write(&self.document().snapshot())
+        RtfWriter::write_with_default_tab_stop(
+            &self.document().snapshot(),
+            self.editor()
+                .default_paragraph_format()
+                .default_tab_stop
+                .unwrap_or(48.0),
+        )
     }
     pub fn import_rtf(&self, bytes: &[u8]) -> Result<(), Box<dyn std::error::Error>> {
         let document = RtfReader::read(bytes)?;
-        self.document().restore(&document)?;
+        self.text_document().replace_document(&document, false)?;
         self.editor().clear_history();
         self.select(0, 0);
         self.update_command_states();
@@ -1927,6 +2022,11 @@ impl RichEditBox {
             self.raise_event(&event);
         }
         let format = self.clipboard_copy_format();
+        let default_tab_stop = self
+            .editor()
+            .default_paragraph_format()
+            .default_tab_stop
+            .unwrap_or(48.0);
         let fragment = if allowed && !event.handled() {
             Some(
                 document
@@ -1945,7 +2045,11 @@ impl RichEditBox {
             };
             let fragment = fragment?;
             clipboard
-                .set_data_async(Some(RichTextTransfer::create(&fragment, format)))
+                .set_data_async(Some(RichTextTransfer::create_with_default_tab_stop(
+                    &fragment,
+                    format,
+                    default_tab_stop,
+                )))
                 .await?;
             // The async clipboard may complete after typing or moving the selection. In that
             // case it has still copied the requested fragment, but must not delete new content.
@@ -1986,7 +2090,15 @@ impl RichEditBox {
             let Some(data) = clipboard.try_get_data_async().await? else {
                 return Ok(());
             };
-            let result = RichTextTransfer::read(data.as_ref(), plain_text_only).await;
+            let result = RichTextTransfer::read_for_insertion(
+                data.as_ref(),
+                plain_text_only,
+                this.editor()
+                    .default_paragraph_format()
+                    .default_tab_stop
+                    .unwrap_or(48.0),
+            )
+            .await;
             data.dispose();
             let Some(fragment) = result? else {
                 return Ok(());

@@ -1,4 +1,4 @@
-use super::{Block, Inline, LineSpacingRule, LineStackingStrategy, Paragraph, TextElement};
+use super::{Block, Inline, LineSpacingRule, LineStackingStrategy, Paragraph, TabAlignment, TabLeader, TextElement, TextTabStop, TextTabStops};
 use ferroui_base::media::{
     BaselineAlignment, FlowDirection, FontFamily, FontFeatureCollection, FontStretch, FontStyle,
     FontWeight, IBrush, MediaCollection, TextAlignment, TextDecoration, TextDecorationCollection,
@@ -316,6 +316,8 @@ pub struct ParagraphFormat {
     pub line_spacing: Option<f64>,
     pub left_indent: Option<f64>,
     pub right_indent: Option<f64>,
+    pub tab_stops: Option<TextTabStops>,
+    pub default_tab_stop: Option<f64>,
 }
 
 impl PartialEq for ParagraphFormat {
@@ -331,6 +333,8 @@ impl PartialEq for ParagraphFormat {
             && self.line_spacing == other.line_spacing
             && self.left_indent == other.left_indent
             && self.right_indent == other.right_indent
+            && self.tab_stops == other.tab_stops
+            && self.default_tab_stop == other.default_tab_stop
     }
 }
 
@@ -349,6 +353,8 @@ impl ParagraphFormat {
             line_spacing: paragraph.get_base_value(Paragraph::line_spacing_property()),
             left_indent: paragraph.get_base_value(Paragraph::left_indent_property()),
             right_indent: paragraph.get_base_value(Paragraph::right_indent_property()),
+            tab_stops: paragraph.get_base_value(Paragraph::tab_stops_property()),
+            default_tab_stop: paragraph.get_base_value(Paragraph::default_tab_stop_property()),
         }
     }
 
@@ -366,7 +372,51 @@ impl ParagraphFormat {
             line_spacing: Some(paragraph.line_spacing()),
             left_indent: Some(paragraph.left_indent()),
             right_indent: Some(paragraph.right_indent()),
+            tab_stops: Some(paragraph.tab_stops()),
+            default_tab_stop: Some(paragraph.default_tab_stop()),
         }
+    }
+
+    /// Adds or replaces an explicit tab. TOM positions are points; paragraph
+    /// properties, snapshots and the formatter retain layout units (96 per inch).
+    pub fn add_tab(
+        &mut self,
+        position: f64,
+        alignment: TabAlignment,
+        leader: TabLeader,
+    ) -> Result<(), super::DocumentError> {
+        let stop = TextTabStop::new(position * (96.0 / 72.0), alignment, leader);
+        let tabs = self.tab_stops.clone().unwrap_or_default()
+            .with_tab(stop)
+            .map_err(|error| super::DocumentError::InvalidFormat(error.message()))?;
+        self.tab_stops = Some(tabs);
+        Ok(())
+    }
+
+    /// Removes explicit tabs; default equally spaced stops remain active.
+    pub fn clear_all_tabs(&mut self) {
+        self.tab_stops = Some(TextTabStops::default());
+    }
+
+    pub fn delete_tab(&mut self, position: f64) -> Result<(), super::DocumentError> {
+        let tabs = self.tab_stops.clone().unwrap_or_default()
+            .without_tab(position * (96.0 / 72.0))
+            .map_err(|error| super::DocumentError::InvalidFormat(error.message()))?;
+        self.tab_stops = Some(tabs);
+        Ok(())
+    }
+
+    pub fn tab_count(&self) -> usize {
+        self.tab_stops.as_ref().map_or(0, TextTabStops::len)
+    }
+
+    /// Zero-based explicit tab query; positions are returned in TOM points.
+    pub fn get_tab(&self, index: usize) -> Result<(f64, TabAlignment, TabLeader), super::DocumentError> {
+        let stop = self.tab_stops.as_ref().ok_or(super::DocumentError::InvalidFormat(
+            "Tab index is outside the explicit tab collection"))?
+            .get(index)
+            .map_err(|error| super::DocumentError::InvalidFormat(error.message()))?;
+        Ok((stop.position * (72.0 / 96.0), stop.alignment, stop.leader))
     }
 
     /// Sets TOM indentation in points. Negative values are valid; paragraph
@@ -433,6 +483,9 @@ impl ParagraphFormat {
 
     pub fn validate(&self) -> Result<(), super::DocumentError> {
         self.character.validate()?;
+        if self.default_tab_stop.is_some_and(|value| !value.is_finite() || value <= 0.0) {
+            return Err(super::DocumentError::InvalidFormat("DefaultTabStop must be finite and positive"));
+        }
         self.line_spacing_rule
             .unwrap_or_default()
             .validate(self.line_spacing.unwrap_or(1.0))?;
@@ -486,8 +539,10 @@ impl ParagraphFormat {
             line_spacing_rule,
             line_spacing,
             left_indent,
-            right_indent
+            right_indent,
+            default_tab_stop
         );
+        if let Some(tabs) = &patch.tab_stops { result.tab_stops = Some(tabs.clone()); }
         result
     }
 
@@ -530,6 +585,8 @@ impl ParagraphFormat {
         if let Some(value) = self.right_indent {
             paragraph.set_right_indent(value);
         }
+        if let Some(tabs) = &self.tab_stops { paragraph.set_tab_stops(tabs.clone()); }
+        if let Some(value) = self.default_tab_stop { paragraph.set_default_tab_stop(value); }
     }
 
     pub(crate) fn replace_on(&self, paragraph: &Paragraph) {
@@ -544,6 +601,8 @@ impl ParagraphFormat {
         paragraph.clear_value(Paragraph::line_spacing_property());
         paragraph.clear_value(Paragraph::left_indent_property());
         paragraph.clear_value(Paragraph::right_indent_property());
+        paragraph.clear_value(Paragraph::tab_stops_property());
+        paragraph.clear_value(Paragraph::default_tab_stop_property());
         self.apply_to(paragraph);
     }
 }

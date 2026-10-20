@@ -95,6 +95,8 @@ ferro_class! {
         fn text_insets(this) -> Thickness;
         /// The formatter constraint, independent of a scrollable view's viewport.
         fn text_layout_constraint(this, available_size: Size) -> Size;
+        /// Implicit tab interval for a paragraph without an assigned override.
+        fn default_incremental_tab(this, font_size: f64) -> f64;
         /// Shared origin for text, inline controls, caret, selection and hit testing.
         fn text_origin(this) -> Point;
         /// Whether selection formatting is currently visible in this view.
@@ -258,6 +260,11 @@ impl RichTextBlockImpl for RichTextBlock {
 
     fn text_layout_constraint(this: &Self, available_size: Size) -> Size {
         available_size.deflate(this.text_insets())
+    }
+
+    fn default_incremental_tab(_this: &Self, font_size: f64) -> f64 {
+        // RichTextServices::TextParagraphProperties::GetDefaultIncrementalTab.
+        4.0 * font_size
     }
 
     fn text_origin(this: &Self) -> Point {
@@ -1204,6 +1211,18 @@ impl RichTextBlock {
                 result => result,
             }
         });
+    }
+
+    /// Exports using the same resolved tab intervals as this view and its overflow
+    /// chain. RTF has one document-wide default interval, so paragraphs resolving
+    /// to different intervals return an unsupported-feature error.
+    pub fn export_rtf(&self) -> Result<String, crate::rich_text::RtfError> {
+        let mut snapshot = self.document().snapshot();
+        let source = self.page_layout().source.clone();
+        for (paragraph, resolved) in snapshot.paragraphs.iter_mut().zip(&source.paragraphs) {
+            paragraph.format.default_tab_stop = Some(resolved.default_tab_stop);
+        }
+        crate::rich_text::RtfWriter::write(&snapshot)
     }
 
     pub fn hit_test_text_position(&self, point: Point) -> usize {

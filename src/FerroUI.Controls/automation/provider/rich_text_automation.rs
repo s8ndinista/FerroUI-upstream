@@ -228,6 +228,10 @@ impl TextContext {
 }
 
 impl ITextEditProvider for ProviderAdapter<RichEditBoxAutomationPeer> {
+    fn raises_text_edit_events_through_peer(&self) -> bool {
+        true
+    }
+
     fn get_active_composition(&self) -> Result<Option<Rc<dyn ITextRangeProvider>>, ProviderError> {
         let context = TextContext::from_peer(&*self.0)?;
         let owner = self

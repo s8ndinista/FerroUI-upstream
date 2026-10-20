@@ -1,6 +1,6 @@
 use super::{
     Block, BlockImpl, IInlineHost, Inline, InlineCollection, LineSpacingRule, TextElementImpl,
-    TextElementImplExt,
+    TextElementImplExt, TextTabStops,
 };
 use crate::Control;
 use ferroui_base::media::text_formatting::TextRun;
@@ -48,6 +48,8 @@ impl FerroObjectImpl for Paragraph {
             || change.property() == Self::line_spacing_property().as_property()
             || change.property() == Self::left_indent_property().as_property()
             || change.property() == Self::right_indent_property().as_property()
+            || change.property() == Self::tab_stops_property().as_property()
+            || change.property() == Self::default_tab_stop_property().as_property()
         {
             this.invalidate_format_change(change);
         }
@@ -87,6 +89,16 @@ impl BlockImpl for Paragraph {
 
 ferroui_base::ferro_properties! {
     impl Paragraph {
+        pub fn tab_stops_property() -> StyledProperty<TextTabStops> {
+            FerroProperty::register::<Paragraph, _>("TabStops", TextTabStops::default())
+        }
+
+        pub fn default_tab_stop_property() -> StyledProperty<f64> {
+            FerroProperty::register_with::<Paragraph, _>("DefaultTabStop",
+                StyledPropertyOptions::new(48.0)
+                    .validate(|value: &f64| value.is_finite() && *value > 0.0))
+        }
+
         pub fn text_indent_property() -> StyledProperty<f64> {
             FerroProperty::register_with::<Paragraph, _>("TextIndent",
                 StyledPropertyOptions::new(0.0).validate(|value: &f64| value.is_finite()))
@@ -148,6 +160,25 @@ impl Paragraph {
 
     pub fn add_child_control(&self, child: impl IntoRef<Control>) {
         self.inlines.add_control(child);
+    }
+
+    /// Immutable explicit stops, in layout units from the paragraph's leading page edge.
+    pub fn tab_stops(&self) -> TextTabStops {
+        self.get_value(Self::tab_stops_property())
+    }
+    pub fn set_tab_stops(&self, value: TextTabStops) {
+        self.set_value(Self::tab_stops_property(), value);
+    }
+
+    /// Spacing of implicit stops after the explicit configuration, in layout units.
+    pub fn default_tab_stop(&self) -> f64 {
+        self.get_value(Self::default_tab_stop_property())
+    }
+    /// Assigns an explicit interval in DIPs. When unassigned, the layout host
+    /// supplies the interval: four paragraph ems in RichTextBlock, or the editable
+    /// document's default (initially 48 DIPs / 36 points) in RichEditBox.
+    pub fn set_default_tab_stop(&self, value: f64) {
+        self.set_value(Self::default_tab_stop_property(), value);
     }
 
     pub fn text_indent(&self) -> f64 {

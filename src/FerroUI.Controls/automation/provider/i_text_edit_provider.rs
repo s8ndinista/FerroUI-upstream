@@ -34,6 +34,13 @@ pub struct TextEditTextChangedEventArgs {
 /// WinUI's TextEdit pattern, which inherits Text independently of Text2.
 /// Returned ranges use the same live document and UTF-16 positions as Text.
 pub trait ITextEditProvider: ITextProvider {
+    /// Whether this provider's owner already sends its causes through
+    /// AutomationPeer's platform event route. Backends then avoid installing a
+    /// second forwarding observer. Custom providers keep the default route.
+    fn raises_text_edit_events_through_peer(&self) -> bool {
+        false
+    }
+
     /// The full active IME preview, regardless of the caret within it. A live
     /// owner with no active composition returns `None`.
     fn get_active_composition(&self) -> Result<Option<Rc<dyn ITextRangeProvider>>, ProviderError>;

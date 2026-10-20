@@ -35,6 +35,7 @@ fn text_range_units_preserve_native_numeric_values_and_story_alias() {
     assert_eq!(TextRangeUnit::Line as i32, 4);
     assert_eq!(TextRangeUnit::Story as i32, 5);
     assert_eq!(TextRangeUnit::HardParagraph as i32, 12);
+    assert_eq!(TextRangeUnit::Cluster as i32, 13);
     assert_eq!(TextRangeUnit::Document, TextRangeUnit::Story);
 }
 
@@ -504,4 +505,388 @@ fn text_view_association_is_weak_and_rejects_another_story() {
     drop(view);
     assert!(weak.upgrade().is_none());
     assert_eq!(range.get_index(TextRangeUnit::Line).unwrap(), 1);
+}
+
+fn displayed_services(view: &Ref<RichTextBlock>) -> RichEditTextDocument {
+    let document = RichEditTextDocument::new(view.document());
+    document.editor().set_text_view(Some(view.clone())).unwrap();
+    document
+}
+
+fn cluster_strings(document: &RichEditTextDocument) -> Vec<String> {
+    let range = document
+        .get_range(document.text_length(), document.text_length())
+        .unwrap();
+    let count = range.get_index(TextRangeUnit::Cluster).unwrap();
+    (1..=count)
+        .map(|index| {
+            range
+                .set_index(TextRangeUnit::Cluster, index as i32, true)
+                .unwrap();
+            range.text().unwrap()
+        })
+        .collect()
+}
+
+#[test]
+fn cluster_units_use_shaping_ligatures_instead_of_unicode_graphemes() {
+    let _scope = test_scope();
+    let text = TextTestScope::new();
+    text.shaper().add_ligature("ffi");
+    let view = RichTextBlock::new();
+    view.blocks().add(Paragraph::with_text("office a\u{301}😀"));
+    measure(&view, 500.0, 100.0);
+    let document = displayed_services(&view);
+    assert_eq!(
+        cluster_strings(&document),
+        ["o", "ffi", "c", "e", " ", "a\u{301}", "😀"]
+    );
+    assert_eq!(
+        unit_ranges(&document.text(), UnicodeTextUnit::Character).len(),
+        9,
+        "Unicode graphemes do not merge the font's ffi ligature"
+    );
+    let range = document.get_range(2, 2).unwrap();
+    assert_eq!(range.expand(TextRangeUnit::Cluster).unwrap(), 3);
+    assert_eq!(range.range(), 1..4);
+    assert_eq!(range.get_index(TextRangeUnit::Cluster).unwrap(), 2);
+    assert!(!document.can_undo());
+}
+
+#[test]
+fn cluster_units_keep_indic_shaping_groups_distinct_from_scalar_navigation() {
+    use ferroui_base::media::text_formatting::testing::{TestFont, DEFAULT_FAMILY};
+    let _scope = test_scope();
+    let text = TextTestScope::with_fonts(vec![
+        TestFont::new(DEFAULT_FAMILY).with_ranges(&[(0x20, 0x7e), (0x900, 0x97f)])
+    ]);
+    text.shaper().add_ligature("\u{915}\u{94d}\u{937}\u{93f}");
+    let view = RichTextBlock::new();
+    view.blocks()
+        .add(Paragraph::with_text("\u{915}\u{94d}\u{937}\u{93f} x"));
+    measure(&view, 500.0, 100.0);
+    let document = displayed_services(&view);
+    assert_eq!(
+        cluster_strings(&document),
+        ["\u{915}\u{94d}\u{937}\u{93f}", " ", "x"]
+    );
+    let range = document.get_range(0, 0).unwrap();
+    assert_eq!(range.move_by(TextRangeUnit::Cluster, 1).unwrap(), 1);
+    assert_eq!(range.range(), 4..4);
+    range.set_range(0, 0).unwrap();
+    assert_eq!(range.move_by(TextRangeUnit::Character, 1).unwrap(), 1);
+    assert_eq!(range.range(), 1..1);
+}
+
+#[test]
+fn cluster_units_follow_logical_bidi_order_and_rebase_wrapped_buffer_origins() {
+    use ferroui_base::media::FlowDirection;
+    let _scope = test_scope();
+    let text = TextTestScope::new();
+    text.shaper().add_ligature("fi");
+    text.shaper().add_ligature("אב");
+    for direction in [FlowDirection::LeftToRight, FlowDirection::RightToLeft] {
+        let view = RichTextBlock::new();
+        let paragraph = Paragraph::with_text("xx אבג fi zz");
+        paragraph.set_flow_direction(direction);
+        view.blocks().add(paragraph);
+        view.set_text_wrapping(TextWrapping::Wrap);
+        let document = displayed_services(&view);
+        for width in [500.0, 40.0, 15.0, 500.0] {
+            measure(&view, width, 1000.0);
+            assert_eq!(
+                cluster_strings(&document),
+                ["x", "x", " ", "אב", "ג", " ", "fi", " ", "z", "z"]
+            );
+        }
+    }
+}
+
+#[test]
+fn cluster_units_cover_embedded_objects_soft_breaks_and_structural_paragraph_marks() {
+    use crate::documents::{InlineUIContainer, LineBreak, Run};
+    use crate::Border;
+    let _scope = test_scope();
+    let _text = TextTestScope::new();
+    let view = RichTextBlock::new();
+    let paragraph = Paragraph::with_text("a");
+    paragraph.add_child(InlineUIContainer::with_child(Border::new()));
+    paragraph.add_child(LineBreak::new());
+    paragraph.add_child(Run::with_text(Some("b")));
+    view.blocks().add(paragraph);
+    view.blocks().add(Paragraph::with_text("c"));
+    measure(&view, 500.0, 1000.0);
+    let document = displayed_services(&view);
+    let soft = InlineSnapshot {
+        format: CharacterFormat::default(),
+        kind: InlineSnapshotKind::LineBreak,
+    };
+    let soft_text = if soft.text_length() == 2 {
+        "\r\n"
+    } else {
+        "\n"
+    };
+    assert_eq!(
+        cluster_strings(&document),
+        ["a", "\u{fffc}", soft_text, "b", "\n", "c"]
+    );
+}
+
+#[test]
+fn cluster_units_keep_omitted_line_break_glyphs_addressable() {
+    let _scope = test_scope();
+    let text = TextTestScope::new();
+    text.shaper().set_drop_line_breaks(true);
+    let view = RichTextBlock::new();
+    view.blocks().add(Paragraph::with_text("a\r\nb\u{2028}c"));
+    measure(&view, 500.0, 1000.0);
+    let document = displayed_services(&view);
+    assert_eq!(
+        cluster_strings(&document),
+        ["a", "\r\n", "b", "\u{2028}", "c"]
+    );
+}
+
+#[test]
+fn cluster_units_traverse_linked_pages_and_refresh_after_format_changes() {
+    let _scope = test_scope();
+    let text = TextTestScope::new();
+    let view = RichTextBlock::new();
+    let paragraph = Paragraph::with_text("fi");
+    view.blocks().add(paragraph.clone());
+    view.blocks().add(Paragraph::with_text("fi"));
+    view.set_max_lines(1);
+    let overflow = RichTextBlockOverflow::new();
+    view.set_overflow_content_target(Some(overflow.clone()));
+    measure(&view, 300.0, 100.0);
+    measure(&overflow, 300.0, 100.0);
+    let document = displayed_services(&view);
+    assert_eq!(cluster_strings(&document), ["f", "i", "\n", "f", "i"]);
+    text.shaper().add_ligature("fi");
+    paragraph.set_font_size(18.0);
+    measure(&view, 300.0, 100.0);
+    measure(&overflow, 300.0, 100.0);
+    assert_eq!(cluster_strings(&document), ["fi", "\n", "fi"]);
+}
+
+#[test]
+fn cluster_navigation_requires_a_complete_untrimmed_live_view_without_fallback() {
+    let _scope = test_scope();
+    let _text = TextTestScope::new();
+    let view = RichTextBlock::new();
+    view.blocks().add(Paragraph::with_text("one"));
+    view.blocks().add(Paragraph::with_text("two"));
+    let document = RichEditTextDocument::new(view.document());
+    let range = document.get_range(1, 2).unwrap();
+    assert!(range.expand(TextRangeUnit::Cluster).is_err());
+    document.editor().set_text_view(Some(view.clone())).unwrap();
+    view.set_max_lines(1);
+    measure(&view, 100.0, 100.0);
+    assert!(range.set_index(TextRangeUnit::Cluster, 1, true).is_err());
+    view.set_text_trimming(<dyn TextTrimming>::character_ellipsis());
+    measure(&view, 100.0, 100.0);
+    assert!(range.move_by(TextRangeUnit::Cluster, 1).is_err());
+    assert_eq!(range.range(), 1..2);
+    assert_eq!(range.move_by(TextRangeUnit::Cluster, 0).unwrap(), 0);
+    assert!(!document.can_undo());
+    drop(view);
+    assert!(range.get_index(TextRangeUnit::Cluster).is_err());
+}
+
+#[test]
+fn cluster_unit_endpoints_and_directed_selection_use_shaped_boundaries() {
+    let _scope = test_scope();
+    let text = TextTestScope::new();
+    text.shaper().add_ligature("ffi");
+    let view = RichTextBlock::new();
+    view.blocks().add(Paragraph::with_text("office"));
+    measure(&view, 300.0, 100.0);
+    let document = displayed_services(&view);
+    let range = document.get_range(2, 3).unwrap();
+    assert_eq!(range.start_of(TextRangeUnit::Cluster, true).unwrap(), -1);
+    assert_eq!(range.end_of(TextRangeUnit::Cluster, true).unwrap(), 1);
+    assert_eq!(range.range(), 1..4);
+    assert_eq!(range.move_start(TextRangeUnit::Cluster, 2).unwrap(), 2);
+    assert_eq!(range.range(), 5..5);
+    assert_eq!(range.move_end(TextRangeUnit::Cluster, -2).unwrap(), -2);
+    assert_eq!(range.range(), 1..1);
+    document.selection().set_range(5, 2).unwrap();
+    assert_eq!(
+        document
+            .selection()
+            .move_by(TextRangeUnit::Cluster, -1, true)
+            .unwrap(),
+        -1
+    );
+    assert_eq!(document.selection().selection(), EditorSelection::new(5, 1));
+    assert_eq!(
+        document
+            .selection()
+            .move_by(TextRangeUnit::Cluster, 1, false)
+            .unwrap(),
+        1
+    );
+    assert_eq!(document.selection().selection(), EditorSelection::caret(5));
+    range.set_range(0, 0).unwrap();
+    assert_eq!(range.move_by(TextRangeUnit::Cluster, i32::MAX).unwrap(), 4);
+    assert_eq!(range.move_by(TextRangeUnit::Cluster, i32::MIN).unwrap(), -4);
+}
+
+#[test]
+fn empty_shaped_story_has_no_cluster_but_keeps_its_caret() {
+    let _scope = test_scope();
+    let _text = TextTestScope::new();
+    let view = RichTextBlock::new();
+    measure(&view, 100.0, 100.0);
+    let document = displayed_services(&view);
+    let range = document.document_range().unwrap();
+    assert_eq!(range.get_index(TextRangeUnit::Cluster).unwrap(), 0);
+    assert_eq!(range.expand(TextRangeUnit::Cluster).unwrap(), 0);
+    assert_eq!(range.move_by(TextRangeUnit::Cluster, 1).unwrap(), 0);
+    assert!(range.set_index(TextRangeUnit::Cluster, 1, true).is_err());
+    assert_eq!(range.range(), 0..0);
+}
+
+#[test]
+fn tom_layout_navigation_rejects_reentrant_formatting_inside_a_document_batch() {
+    use std::cell::Cell;
+    use std::rc::Rc;
+    let _scope = test_scope();
+    let _text = TextTestScope::new();
+    for unit in [TextRangeUnit::Cluster, TextRangeUnit::Line] {
+        let view = RichTextBlock::new();
+        let paragraph = Paragraph::with_text("unchanged text");
+        view.blocks().add(paragraph.clone());
+        let document = displayed_services(&view);
+        let range = document.get_range(1, 2).unwrap();
+        let revision = document.document().revision();
+        let batch = document.document().begin_edit();
+        let changed = Rc::new(Cell::new(false));
+        let observed = changed.clone();
+        let subscription = view.property_changed(move |change| {
+            if change.property().name() == "BaselineOffset" && !changed.replace(true) {
+                paragraph.set_font_size(24.0);
+            }
+        });
+        assert!(matches!(range.expand(unit), Err(EditError::ReentrantEdit)));
+        assert!(observed.get());
+        assert_eq!(
+            document.document().revision(),
+            revision,
+            "outer batch defers revisions"
+        );
+        assert_eq!(range.range(), 1..2);
+        subscription.dispose();
+        drop(batch);
+    }
+}
+
+#[test]
+fn malformed_shaped_clusters_are_rejected_before_returning_navigation_units() {
+    use ferroui_base::media::text_formatting::testing::run_properties;
+    use ferroui_base::media::text_formatting::{GlyphInfo, ShapedBuffer};
+    use ferroui_base::utilities::ReadOnlyMemory;
+    let _scope = test_scope();
+    let _text = TextTestScope::new();
+    let properties = run_properties(12.0);
+    for (text, clusters) in [
+        ("ab", vec![-1, 0]),
+        ("ab", vec![0, 2]),
+        ("😀", vec![0, 1]),
+        ("unshaped", vec![]),
+    ] {
+        let buffer = ShapedBuffer::new(
+            ReadOnlyMemory::from_str(text),
+            clusters.len(),
+            properties.cached_glyph_typeface(),
+            12.0,
+            0,
+        );
+        for (index, cluster) in clusters.into_iter().enumerate() {
+            buffer.set(index, GlyphInfo::new(1, cluster, 6.0));
+        }
+        let run = ShapedTextRun::new(buffer, properties.clone());
+        let utf16: Vec<_> = text.encode_utf16().collect();
+        let mut ranges = Vec::new();
+        assert!(append_shaped_clusters(&utf16, 0..utf16.len(), &run, &mut ranges).is_err());
+        assert!(
+            ranges.is_empty(),
+            "invalid shaping cannot yield guessed units"
+        );
+    }
+}
+
+#[test]
+fn tom_selection_navigation_reads_directed_endpoints_after_layout_callbacks() {
+    let _scope = test_scope();
+    let _text = TextTestScope::new();
+    for (unit, text, selected, expected) in [
+        (TextRangeUnit::Cluster, "abcd", 2, 3),
+        (TextRangeUnit::Line, "ab\ncd\nef", 3, 6),
+    ] {
+        let view = RichTextBlock::new();
+        view.set_document(RichTextDocument::from_text(text));
+        let document = displayed_services(&view);
+        let editor = document.editor();
+        let subscription = view.property_changed(move |change| {
+            if change.property().name() == "BaselineOffset" {
+                editor
+                    .set_selection(EditorSelection::caret(selected))
+                    .unwrap();
+            }
+        });
+        assert_eq!(document.selection().move_by(unit, 1, false).unwrap(), 1);
+        assert_eq!(
+            document.selection().selection(),
+            EditorSelection::caret(expected)
+        );
+        subscription.dispose();
+    }
+}
+
+#[test]
+fn tom_layout_navigation_rejects_reentrant_presentation_without_a_document_edit() {
+    use std::cell::Cell;
+    use std::rc::Rc;
+    let _scope = test_scope();
+    let _text = TextTestScope::new();
+    for unit in [TextRangeUnit::Cluster, TextRangeUnit::Line] {
+        let view = RichTextBlock::new();
+        view.blocks().add(Paragraph::with_text("unchanged text"));
+        let document = displayed_services(&view);
+        let range = document.get_range(1, 2).unwrap();
+        let version = document.document().mutation_version();
+        let changed = Rc::new(Cell::new(false));
+        let observed = changed.clone();
+        let weak = view.downgrade();
+        let subscription = view.property_changed(move |change| {
+            if change.property().name() == "BaselineOffset" && !changed.replace(true) {
+                weak.upgrade().unwrap().set_font_size(24.0);
+            }
+        });
+        assert!(matches!(range.expand(unit), Err(EditError::ReentrantEdit)));
+        assert!(observed.get());
+        assert_eq!(document.document().mutation_version(), version);
+        assert_eq!(range.range(), 1..2);
+        subscription.dispose();
+    }
+}
+
+#[test]
+fn cluster_units_preserve_zero_advance_soft_hyphens_and_joining_controls() {
+    let _scope = test_scope();
+    let text = TextTestScope::new();
+    text.shaper().add_ligature("fi");
+    let view = RichTextBlock::new();
+    view.blocks()
+        .add(Paragraph::with_text("fi\u{ad}fi\u{200b}x"));
+    view.set_text_wrapping(TextWrapping::Wrap);
+    let document = displayed_services(&view);
+    for width in [500.0, 12.0, 500.0] {
+        measure(&view, width, 1000.0);
+        assert_eq!(
+            cluster_strings(&document),
+            ["fi", "\u{ad}", "fi", "\u{200b}", "x"]
+        );
+    }
 }

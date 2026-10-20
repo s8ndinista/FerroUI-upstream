@@ -1,6 +1,6 @@
 use crate::documents::{
     CharacterFormat, DocumentSnapshot, InlineSnapshot, InlineSnapshotKind, LineSpacingRule,
-    LineStackingStrategy, ParagraphFormat, ParagraphSnapshot,
+    LineStackingStrategy, ParagraphFormat, ParagraphSnapshot, TabAlignment, TabLeader, TextTabStop,
 };
 use ferroui_base::media::immutable::ImmutableSolidColorBrush;
 use ferroui_base::media::{
@@ -233,18 +233,25 @@ struct State {
     strike: bool,
     line_spacing_twips: i32,
     line_spacing_multiple: bool,
+    tab_alignment: TabAlignment,
+    tab_leader: TabLeader,
 }
 impl Default for State {
     fn default() -> Self {
         Self {
             character: CharacterFormat::default(),
-            paragraph: ParagraphFormat::default(),
+            paragraph: ParagraphFormat {
+                default_tab_stop: Some(48.0),
+                ..Default::default()
+            },
             uc: 1,
             skip: 0,
             underline: false,
             strike: false,
             line_spacing_twips: 0,
             line_spacing_multiple: false,
+            tab_alignment: TabAlignment::Left,
+            tab_leader: TabLeader::Spaces,
         }
     }
 }
@@ -255,6 +262,7 @@ struct Decoder {
     colors: Vec<Option<Rc<dyn IBrush>>>,
     default_font: Option<i32>,
     default_language: Option<CultureInfo>,
+    default_tab_stop: Option<f64>,
     document: DocumentSnapshot,
     pending: Vec<u16>,
     pending_format: CharacterFormat,
@@ -304,9 +312,13 @@ impl RtfReader {
             colors: Vec::new(),
             default_font: None,
             default_language: None,
+            default_tab_stop: Some(48.0),
             document: DocumentSnapshot {
                 paragraphs: vec![ParagraphSnapshot {
-                    format: ParagraphFormat::default(),
+                    format: ParagraphFormat {
+                        default_tab_stop: Some(48.0),
+                        ..Default::default()
+                    },
                     inlines: Vec::new(),
                 }],
             },
@@ -579,7 +591,12 @@ impl Decoder {
                             )
                         }
                         "pard" => {
-                            state.paragraph = ParagraphFormat::default();
+                            state.paragraph = ParagraphFormat {
+                                default_tab_stop: self.default_tab_stop,
+                                ..Default::default()
+                            };
+                            state.tab_alignment = TabAlignment::Left;
+                            state.tab_leader = TabLeader::Spaces;
                             state.line_spacing_twips = 0;
                             state.line_spacing_multiple = false;
                             self.paragraph().format = state.paragraph.clone();
@@ -631,6 +648,65 @@ impl Decoder {
                                 _ => margin.bottom = value,
                             }
                             state.paragraph.margin = Some(margin);
+                            self.paragraph().format = state.paragraph.clone();
+                        }
+                        "deftab" => {
+                            let value = number
+                                .filter(|value| *value > 0)
+                                .ok_or(RtfError::InvalidParameter("default tab spacing"))?
+                                as f64
+                                / 15.0;
+                            self.default_tab_stop = Some(value);
+                            state.paragraph.default_tab_stop = Some(value);
+                            for paragraph in &mut self.document.paragraphs {
+                                paragraph.format.default_tab_stop = Some(value);
+                            }
+                        }
+                        "tql" | "tqc" | "tqr" | "tqdec" => {
+                            state.tab_alignment = match *word {
+                                "tqc" => TabAlignment::Center,
+                                "tqr" => TabAlignment::Right,
+                                "tqdec" => TabAlignment::Decimal,
+                                _ => TabAlignment::Left,
+                            };
+                        }
+                        "tldot" | "tlhyph" | "tlul" | "tlth" | "tleq" => {
+                            state.tab_leader = match *word {
+                                "tldot" => TabLeader::Dots,
+                                "tlhyph" => TabLeader::Dashes,
+                                "tlul" => TabLeader::Lines,
+                                "tlth" => TabLeader::ThickLines,
+                                _ => TabLeader::Equals,
+                            };
+                        }
+                        "tlmdot" => {
+                            return Err(RtfError::UnsupportedFeature("middle-dot tab leaders"))
+                        }
+                        "tx" | "tb" => {
+                            let position = number
+                                .filter(|value| *value >= 0)
+                                .ok_or(RtfError::InvalidParameter("tab position"))?
+                                as f64
+                                / 15.0;
+                            let stop = TextTabStop::new(
+                                position,
+                                if *word == "tb" {
+                                    TabAlignment::Bar
+                                } else {
+                                    state.tab_alignment
+                                },
+                                state.tab_leader,
+                            );
+                            let tabs = state
+                                .paragraph
+                                .tab_stops
+                                .clone()
+                                .unwrap_or_default()
+                                .with_tab(stop)
+                                .map_err(|_| RtfError::InvalidParameter("tab stops"))?;
+                            state.paragraph.tab_stops = Some(tabs);
+                            state.tab_alignment = TabAlignment::Left;
+                            state.tab_leader = TabLeader::Spaces;
                             self.paragraph().format = state.paragraph.clone();
                         }
                         "sl" => {
@@ -1076,7 +1152,31 @@ struct Encoder {
 }
 
 impl RtfWriter {
+    /// Writes a self-contained snapshot. Tabbed snapshots must assign their
+    /// paragraph intervals; an unassigned value cannot identify a layout host.
+    /// Use write_with_default_tab_stop for a known document default, or export
+    /// through RichTextBlock to resolve its font-scaled automatic intervals.
     pub fn write(document: &DocumentSnapshot) -> Result<String, RtfError> {
+        Self::write_with_tab_context(document, None)
+    }
+
+    /// Supplies the host interval, in DIPs, for unassigned paragraph defaults.
+    /// Explicit paragraph intervals still win. RTF represents only one interval
+    /// per document, so differing resolved intervals are reported as unsupported.
+    pub fn write_with_default_tab_stop(
+        document: &DocumentSnapshot,
+        default_tab_stop: f64,
+    ) -> Result<String, RtfError> {
+        if !default_tab_stop.is_finite() || default_tab_stop <= 0.0 {
+            return Err(RtfError::InvalidParameter("default tab spacing"));
+        }
+        Self::write_with_tab_context(document, Some(default_tab_stop))
+    }
+
+    fn write_with_tab_context(
+        document: &DocumentSnapshot,
+        default_tab_stop: Option<f64>,
+    ) -> Result<String, RtfError> {
         document
             .validate()
             .map_err(|_| RtfError::InvalidParameter("document formatting"))?;
@@ -1090,6 +1190,37 @@ impl RtfWriter {
             encoder.collect_inlines(&paragraph.inlines, 0)?;
         }
         encoder.output.push_str("{\\rtf1\\ansi\\ansicpg1252\\uc1");
+        if default_tab_stop.is_none()
+            && document.paragraphs.iter().any(|paragraph| {
+                paragraph.format.default_tab_stop.is_none() && paragraph.text().contains('\t')
+            })
+        {
+            return Err(RtfError::UnsupportedFeature(
+                "automatic default tab spacing requires a layout context",
+            ));
+        }
+        if let Some(default_tab) = document
+            .paragraphs
+            .iter()
+            .find_map(|p| p.format.default_tab_stop.or(default_tab_stop))
+        {
+            if document.paragraphs.iter().any(|p| {
+                p.format
+                    .default_tab_stop
+                    .or(default_tab_stop)
+                    .unwrap_or(48.0)
+                    != default_tab
+            }) {
+                return Err(RtfError::UnsupportedFeature(
+                    "different default tab spacing across paragraphs",
+                ));
+            }
+            let twips = rtf_measure(default_tab, 15.0, "default tab spacing")?;
+            if twips <= 0 {
+                return Err(RtfError::InvalidParameter("default tab spacing"));
+            }
+            let _ = write!(encoder.output, "\\deftab{twips}");
+        }
         if !encoder.fonts.is_empty() {
             encoder.output.push_str("{\\fonttbl");
             for (index, font) in encoder.fonts.iter().enumerate() {
@@ -1323,6 +1454,31 @@ impl Encoder {
             if value != 0.0 {
                 let value = rtf_measure(value, 15.0, "paragraph metric")?;
                 let _ = write!(self.output, "\\{word}{value}");
+            }
+        }
+        if let Some(tabs) = &format.tab_stops {
+            for tab in tabs.as_slice() {
+                self.output.push_str(match tab.alignment {
+                    TabAlignment::Left | TabAlignment::Bar => "",
+                    TabAlignment::Center => "\\tqc",
+                    TabAlignment::Right => "\\tqr",
+                    TabAlignment::Decimal => "\\tqdec",
+                });
+                self.output.push_str(match tab.leader {
+                    TabLeader::Spaces => "",
+                    TabLeader::Dots => "\\tldot",
+                    TabLeader::Dashes => "\\tlhyph",
+                    TabLeader::Lines => "\\tlul",
+                    TabLeader::ThickLines => "\\tlth",
+                    TabLeader::Equals => "\\tleq",
+                });
+                let position = rtf_measure(tab.position, 15.0, "tab position")?;
+                let word = if tab.alignment == TabAlignment::Bar {
+                    "tb"
+                } else {
+                    "tx"
+                };
+                let _ = write!(self.output, "\\{word}{position}");
             }
         }
         let rule = format.line_spacing_rule.unwrap_or_default();

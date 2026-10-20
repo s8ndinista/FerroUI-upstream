@@ -133,6 +133,7 @@ impl RichEditBoxAutomationPeer {
         Ok(())
     }
 }
+
 impl RichTextAutomationPeer for RichEditBoxAutomationPeer {
     fn text_host(&self) -> Option<RichTextAutomationHost> {
         self.try_owner()

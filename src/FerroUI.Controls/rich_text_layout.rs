@@ -12,7 +12,7 @@ use ferroui_base::media::text_formatting::{
     GenericTextParagraphProperties, GenericTextRunProperties, ITextDrawingSink,
     InterWordJustification, LogicalTextRunEnumerator, TextCollapsingProperties, TextEndOfParagraph,
     TextFormatter, TextFormatterImpl, TextLine, TextLineBreak, TextLineImpl,
-    TextParagraphProperties, TextRunCache, TextRunProperties,
+    TextParagraphProperties, TextRunCache, TextRunProperties, TextTabStops,
 };
 use ferroui_base::media::{
     BaselineAlignment, CharacterHit, TextAlignment, TextCollapsingCreateInfo, TextTrimming,
@@ -29,6 +29,7 @@ pub(crate) struct RichParagraphSource {
     pub offset: usize,
     pub length: usize,
     pub properties: Rc<dyn TextRunProperties>,
+    pub default_tab_stop: f64,
     pub cache: TextRunCache,
 }
 
@@ -96,6 +97,16 @@ impl RichTextSource {
                     block.font_features(),
                 ))
             };
+            let default_tab_stop = block
+                .to_ref()
+                .cast::<Paragraph>()
+                .filter(|paragraph| {
+                    paragraph.is_set(Paragraph::default_tab_stop_property().as_property())
+                })
+                .map_or_else(
+                    || view.default_incremental_tab(properties.font_rendering_em_size()),
+                    |paragraph| paragraph.default_tab_stop(),
+                );
             let modifiers = formatting_overrides(&runs, offset, &highlights, view);
             paragraphs.push(RichParagraphSource {
                 block,
@@ -103,6 +114,7 @@ impl RichTextSource {
                 offset,
                 length,
                 properties,
+                default_tab_stop,
                 cache: TextRunCache::new(),
             });
             offset += length + 1;
@@ -444,11 +456,14 @@ impl RichTextLayout {
                 } else {
                     0.0
                 };
+                let rtl = block.flow_direction() == ferroui_base::media::FlowDirection::RightToLeft;
+                let line_origin_x = margin.left + if rtl { 0.0 } else { indent };
+                let line_right_margin = margin.right + if rtl { indent } else { 0.0 };
                 // Indent is placed outside the formatter so both wrapping and
                 // embedded controls use the same available width and origin.
                 let line_width = (paragraph_width - indent).max(0.0);
-                let properties: Rc<dyn TextParagraphProperties> =
-                    Rc::new(GenericTextParagraphProperties::with_all(
+                let properties: Rc<dyn TextParagraphProperties> = Rc::new(
+                    GenericTextParagraphProperties::with_all(
                         block.flow_direction(),
                         block.text_alignment(),
                         local == 0,
@@ -466,7 +481,16 @@ impl RichTextLayout {
                         },
                         0.0,
                         block.letter_spacing(),
-                    ));
+                    )
+                    .with_tabs(
+                        block
+                            .to_ref()
+                            .cast::<Paragraph>()
+                            .map_or_else(TextTabStops::default, |paragraph| paragraph.tab_stops()),
+                        paragraph.default_tab_stop,
+                        indent + if rtl { margin.right } else { margin.left },
+                    ),
+                );
                 let input_break = previous.as_ref().map(|value| value.fork());
                 let Some(index) = i32::try_from(local).ok() else {
                     result.has_overflow = true;
@@ -556,20 +580,19 @@ impl RichTextLayout {
                     (line, source_spans) = collapse_line(line, collapsing);
                 }
                 widest = widest.max(
-                    margin.left
-                        + indent
+                    line_origin_x
                         + line.start()
                         + line.width_including_trailing_whitespace()
-                        + margin.right,
+                        + line_right_margin,
                 );
                 previous_baseline = Some(origin_y + line.baseline());
                 result.lines.push(RichTextLine {
                     line,
                     paragraph_offset: paragraph.offset,
                     paragraph_length: paragraph.length,
-                    origin: Point::new(margin.left + indent, origin_y),
+                    origin: Point::new(line_origin_x, origin_y),
                     advance,
-                    right_margin: margin.right,
+                    right_margin: line_right_margin,
                     source_spans,
                 });
                 y = origin_y + advance;

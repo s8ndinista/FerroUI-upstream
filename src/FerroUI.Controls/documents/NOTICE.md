@@ -4,6 +4,7 @@ The block, paragraph, block collection, hyperlink and text-position contracts
 are derived from Microsoft WinUI, pinned at commit
 `fe244ca6ac4d482712b234a9de3cf771cc6481de`:
 
+- `packaging/Intellisense/generated/Microsoft.UI.Text.xml` (paragraph tab APIs)
 - `dxaml/xcp/core/inc/BlockTextElement.h`
 - `dxaml/xcp/core/text/common/BlockCollection.cpp`
 - `dxaml/xcp/core/text/RichTextArea/paragraph.cpp`

@@ -1,7 +1,9 @@
 use crate::RichEditBox;
 use ferroui_base::input::text_input::{
-    ContextMenuAction, TextInputMethodClient, TextInputMethodClientEvents, TextSelection,
+    ContextMenuAction, TextInputMethodClient, TextInputMethodClientEvents, TextInputMethodEditing,
+    TextInputMethodError, TextSelection,
 };
+use ferroui_base::input::InputElement;
 use ferroui_base::{Rect, Ref, Visual, WeakRef};
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -33,6 +35,17 @@ impl RichEditBoxTextInputMethodClient {
 impl TextInputMethodClient for RichEditBoxTextInputMethodClient {
     fn events(&self) -> &TextInputMethodClientEvents {
         &self.events
+    }
+    fn input_method_owner(&self) -> Option<Ref<InputElement>> {
+        self.owner().map(Ref::upcast)
+    }
+    fn retains_input_method_focus(&self, focused: &InputElement) -> bool {
+        self.owner().is_some_and(|owner| {
+            !owner.is_read_only() && owner.context_flyout_contains_focus(Some(focused))
+        })
+    }
+    fn input_method_editing(&self) -> Option<&dyn TextInputMethodEditing> {
+        Some(self)
     }
     fn text_view_visual(&self) -> Option<Ref<Visual>> {
         self.owner().map(|owner| owner.text_presenter().upcast())
@@ -101,3 +114,49 @@ impl TextInputMethodClient for RichEditBoxTextInputMethodClient {
         }
     }
 }
+
+pub(crate) fn input_method_error(error: &crate::rich_text::EditError) -> TextInputMethodError {
+    match error {
+        crate::rich_text::EditError::ReadOnly => TextInputMethodError::ReadOnly,
+        crate::rich_text::EditError::ReentrantEdit => TextInputMethodError::ReentrantEdit,
+        crate::rich_text::EditError::Document(_) => TextInputMethodError::Rejected,
+    }
+}
+
+impl TextInputMethodEditing for RichEditBoxTextInputMethodClient {
+    fn begin_composition(&self) -> Result<(), TextInputMethodError> {
+        let owner = self.owner().ok_or(TextInputMethodError::Unavailable)?;
+        if owner.is_read_only() {
+            return Err(TextInputMethodError::ReadOnly);
+        }
+        let result = owner.cancel_composition();
+        result.as_ref().map_err(input_method_error)?;
+        owner.handle_edit(result);
+        Ok(())
+    }
+
+    fn update_composition(
+        &self,
+        text: &str,
+        cursor: Option<i32>,
+    ) -> Result<(), TextInputMethodError> {
+        let owner = self.owner().ok_or(TextInputMethodError::Unavailable)?;
+        let result =
+            owner.set_preedit_text(Some(text), cursor.map(|cursor| cursor.max(0) as usize));
+        let accepted = result.as_ref().map(|_| ()).map_err(input_method_error);
+        owner.handle_edit(result);
+        accepted
+    }
+
+    fn cancel_composition(&self) -> Result<bool, TextInputMethodError> {
+        let owner = self.owner().ok_or(TextInputMethodError::Unavailable)?;
+        let result = owner.cancel_composition();
+        let accepted = result.as_ref().copied().map_err(input_method_error);
+        owner.handle_edit(result);
+        accepted
+    }
+}
+
+#[cfg(test)]
+#[path = "rich_edit_input_method_tests.rs"]
+mod tests;

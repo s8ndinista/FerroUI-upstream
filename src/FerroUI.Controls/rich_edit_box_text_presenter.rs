@@ -76,6 +76,19 @@ impl InputElementImpl for RichEditBoxTextPresenter {
 }
 
 impl RichTextBlockImpl for RichEditBoxTextPresenter {
+    fn default_incremental_tab(this: &Self, font_size: f64) -> f64 {
+        this.owner().map_or_else(
+            || Self::parent_default_incremental_tab(this, font_size),
+            |owner| {
+                owner
+                    .editor()
+                    .default_paragraph_format()
+                    .default_tab_stop
+                    .unwrap_or(48.0)
+            },
+        )
+    }
+
     fn text_layout_constraint(this: &Self, _available_size: Size) -> Size {
         // A viewport is not a page boundary. RichEditBox owns all paragraphs,
         // including those below the currently visible portion of the document.
