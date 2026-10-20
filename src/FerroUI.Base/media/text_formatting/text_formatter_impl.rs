@@ -52,7 +52,8 @@ impl TextFormatterImpl {
 
         match paragraph_properties.text_wrapping() {
             TextWrapping::NoWrap => {
-                let line_runs = Self::add_ref_shaped_runs(&cached.shaped_runs);
+                let mut line_runs = Self::add_ref_shaped_runs(&cached.shaped_runs);
+                super::text_tab_layout::resolve_tabs(&mut line_runs, &**paragraph_properties, paragraph_width);
 
                 let text_line = TextLineImpl::new(
                     line_runs,
@@ -702,11 +703,42 @@ impl TextFormatterImpl {
             return Self::create_empty_text_line(first_text_source_index, paragraph_width, paragraph_properties);
         }
 
+        super::text_tab_layout::resolve_tabs(text_runs, &**paragraph_properties, paragraph_width);
         let measured_length = Self::find_wrap_length(text_runs, paragraph_width, &**paragraph_properties);
 
-        let (split, split_length) = Self::split_text_runs_with_length(text_runs, measured_length, object_pool);
+        let (split, mut split_length) = Self::split_text_runs_with_length(text_runs, measured_length, object_pool);
 
         let (mut pre_split_runs, mut post_split_runs) = split.deconstruct();
+
+        // A centered or decimal-aligned field acquires a wider tab gap when its
+        // visible fragment becomes shorter. Resolve against that fragment and
+        // repeat the existing cluster-aware wrap if the new gap overflows. Each
+        // successful pass removes text from this line, so progress is bounded by
+        // its source length; the usual one-oversize-cluster rule still applies.
+        while let Some(pre_split) = pre_split_runs.as_mut() {
+            if !super::text_tab_layout::resolve_tabs(pre_split, &**paragraph_properties, paragraph_width) {
+                break;
+            }
+            let adjusted_length = Self::find_wrap_length(pre_split, paragraph_width, &**paragraph_properties);
+            if adjusted_length >= split_length {
+                break;
+            }
+            let (adjusted, actual_length) = Self::split_text_runs_with_length(pre_split, adjusted_length, object_pool);
+            let (adjusted_first, mut adjusted_second) = adjusted.deconstruct();
+            object_pool.text_run_lists.return_optional(pre_split_runs.take());
+            if let Some(second) = adjusted_second.as_mut() {
+                if let Some(previous_remaining) = post_split_runs.as_mut() {
+                    second.append(previous_remaining);
+                }
+                object_pool.text_run_lists.return_optional(post_split_runs.take());
+                post_split_runs = adjusted_second;
+            }
+            pre_split_runs = adjusted_first;
+            if actual_length >= split_length {
+                break;
+            }
+            split_length = actual_length;
+        }
 
         let has_post_split_runs = post_split_runs.as_ref().is_some_and(|runs| !runs.is_empty());
 
@@ -1094,7 +1126,8 @@ impl TextFormatter for TextFormatterImpl {
         let text_line = match paragraph_properties.text_wrapping() {
             TextWrapping::NoWrap => {
                 // The runs are moved out of the rented list, which is returned below.
-                let line_runs: Vec<Rc<dyn TextRun>> = shaped_text_runs.drain(..).collect();
+                let mut line_runs: Vec<Rc<dyn TextRun>> = shaped_text_runs.drain(..).collect();
+                super::text_tab_layout::resolve_tabs(&mut line_runs, &**paragraph_properties, paragraph_width);
 
                 let text_line = TextLineImpl::new(
                     line_runs,

@@ -64,6 +64,8 @@ mod text_run_cache;
 mod text_run_properties;
 mod text_shaper;
 mod text_shaper_options;
+mod text_tab_stop;
+mod text_tab_layout;
 mod text_trailing_character_ellipsis;
 mod text_trailing_word_ellipsis;
 mod unshaped_text_run;
@@ -87,6 +89,8 @@ mod text_layout_tests;
 mod text_line_tests;
 #[cfg(test)]
 mod text_run_cache_tests;
+#[cfg(test)]
+mod text_tab_layout_tests;
 #[cfg(any(test, feature = "testing"))]
 pub mod testing;
 
@@ -133,6 +137,7 @@ pub(crate) use text_run_cache::CachedShapingResult;
 pub use text_run_properties::TextRunProperties;
 pub use text_shaper::TextShaper;
 pub use text_shaper_options::TextShaperOptions;
+pub use text_tab_stop::{TabAlignment, TabLeader, TextTabError, TextTabStop, TextTabStops};
 pub use text_trailing_character_ellipsis::TextTrailingCharacterEllipsis;
 pub use text_trailing_word_ellipsis::TextTrailingWordEllipsis;
 pub use unshaped_text_run::UnshapedTextRun;

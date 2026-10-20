@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use crate::media::text_formatting::TextRunProperties;
+use crate::media::text_formatting::{TextRunProperties, TextTabStop};
 use crate::media::{FlowDirection, TextAlignment, TextDecorationCollection, TextWrapping};
 
 /// Provides a set of properties that are used during the paragraph layout.
@@ -52,6 +52,19 @@ pub trait TextParagraphProperties: 'static {
 
     /// Gets the default incremental tab width.
     fn default_incremental_tab(&self) -> f64 {
+        0.0
+    }
+
+    /// Explicit paragraph tab stops. `Some(&[])` enables position-based default
+    /// stops; `None` retains the existing fixed-width shaping convention for
+    /// callers that have not opted into paragraph tab layout.
+    fn tab_stops(&self) -> Option<&[TextTabStop]> {
+        None
+    }
+
+    /// The current line's leading edge relative to the tab-stop origin, including
+    /// paragraph and first-line indentation. Units follow `default_incremental_tab`.
+    fn tab_origin(&self) -> f64 {
         0.0
     }
 

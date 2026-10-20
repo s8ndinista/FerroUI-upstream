@@ -1,7 +1,7 @@
 use std::cell::Cell;
 use std::rc::Rc;
 
-use crate::media::text_formatting::{TextParagraphProperties, TextRunProperties};
+use crate::media::text_formatting::{TextParagraphProperties, TextRunProperties, TextTabStop, TextTabStops};
 use crate::media::{FlowDirection, TextAlignment, TextWrapping};
 
 /// Generic implementation of `TextParagraphProperties`.
@@ -16,13 +16,22 @@ pub struct GenericTextParagraphProperties {
     indent: f64,
     letter_spacing: f64,
     line_spacing: Cell<f64>,
+    tabs: Option<TextTabStops>,
+    default_tab: f64,
+    tab_origin: f64,
 }
 
 impl GenericTextParagraphProperties {
     /// Creates left aligned, non wrapping paragraph properties with automatic
     /// line height and no letter spacing.
     pub fn new(default_text_run_properties: Rc<dyn TextRunProperties>) -> Self {
-        Self::with_options(default_text_run_properties, TextAlignment::Left, TextWrapping::NoWrap, 0.0, 0.0)
+        Self::with_options(
+            default_text_run_properties,
+            TextAlignment::Left,
+            TextWrapping::NoWrap,
+            0.0,
+            0.0,
+        )
     }
 
     /// Creates paragraph properties.
@@ -50,6 +59,9 @@ impl GenericTextParagraphProperties {
             indent: 0.0,
             letter_spacing,
             line_spacing: Cell::new(0.0),
+            tabs: None,
+            default_tab: 0.0,
+            tab_origin: 0.0,
         }
     }
 
@@ -77,7 +89,18 @@ impl GenericTextParagraphProperties {
             indent,
             letter_spacing,
             line_spacing: Cell::new(0.0),
+            tabs: None,
+            default_tab: 0.0,
+            tab_origin: 0.0,
         }
+    }
+
+    /// Enables paragraph tab-stop layout while retaining the existing run shaper.
+    pub fn with_tabs(mut self, tabs: TextTabStops, default_tab: f64, origin: f64) -> Self {
+        self.tabs = Some(tabs);
+        self.default_tab = default_tab;
+        self.tab_origin = origin;
+        self
     }
 
     /// Set line spacing: the additional space between lines.
@@ -87,7 +110,7 @@ impl GenericTextParagraphProperties {
 
     /// Creates a copy of other paragraph properties.
     pub fn from_properties(text_paragraph_properties: &dyn TextParagraphProperties) -> Self {
-        Self::with_all(
+        let mut result = Self::with_all(
             text_paragraph_properties.flow_direction(),
             text_paragraph_properties.text_alignment(),
             text_paragraph_properties.first_line_in_paragraph(),
@@ -97,7 +120,22 @@ impl GenericTextParagraphProperties {
             text_paragraph_properties.line_height(),
             text_paragraph_properties.indent(),
             text_paragraph_properties.letter_spacing(),
-        )
+        );
+        result.line_spacing.set(text_paragraph_properties.line_spacing());
+        result.default_tab = text_paragraph_properties.default_incremental_tab();
+        result.tab_origin = text_paragraph_properties.tab_origin();
+        if let Some(tabs) = text_paragraph_properties.tab_stops() {
+            // The source trait may be implemented by a caller; invalid custom
+            // values cannot enter the validated immutable collection.
+            if let Ok(tabs) = TextTabStops::new(tabs.iter().copied()) {
+                result = result.with_tabs(
+                    tabs,
+                    text_paragraph_properties.default_incremental_tab(),
+                    text_paragraph_properties.tab_origin(),
+                );
+            }
+        }
+        result
     }
 
     /// Set flow direction.
@@ -156,6 +194,18 @@ impl TextParagraphProperties for GenericTextParagraphProperties {
 
     fn indent(&self) -> f64 {
         self.indent
+    }
+
+    fn default_incremental_tab(&self) -> f64 {
+        self.default_tab
+    }
+
+    fn tab_stops(&self) -> Option<&[TextTabStop]> {
+        self.tabs.as_ref().map(TextTabStops::as_slice)
+    }
+
+    fn tab_origin(&self) -> f64 {
+        self.tab_origin
     }
 
     fn letter_spacing(&self) -> f64 {

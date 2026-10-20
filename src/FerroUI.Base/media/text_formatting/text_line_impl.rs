@@ -1074,6 +1074,33 @@ impl TextLine for TextLineImpl {
                 current_x += drawable_text_run.size().width;
             }
         }
+        drop(text_runs);
+        if let Some(stops) = self.paragraph_properties.tab_stops() {
+            let properties = self.paragraph_properties.default_text_run_properties();
+            if let Some(brush) = properties.foreground_brush() {
+                let pen: Rc<dyn crate::media::IPen> = crate::media::Pen::with_brush(
+                    Some(brush.clone()),
+                    (properties.font_rendering_em_size() / 16.0).max(0.5),
+                ).into();
+                for stop in stops.iter().filter(|stop| stop.alignment == super::TabAlignment::Bar) {
+                    let distance = stop.position - self.paragraph_properties.tab_origin();
+                    if !distance.is_finite() || distance < 0.0 || distance > self.paragraph_width {
+                        continue;
+                    }
+                    let x = line_origin.x
+                        + if self.paragraph_properties.flow_direction() == FlowDirection::RightToLeft {
+                            self.paragraph_width - distance
+                        } else {
+                            distance
+                        };
+                    drawing_context.draw_line(
+                        &pen,
+                        Point::new(x, line_origin.y),
+                        Point::new(x, line_origin.y + self.height()),
+                    );
+                }
+            }
+        }
     }
 
     fn collapse(
