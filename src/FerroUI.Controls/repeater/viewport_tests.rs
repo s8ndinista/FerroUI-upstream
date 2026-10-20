@@ -13,9 +13,9 @@ use crate::testing::{TestServices, UnitTestApplication};
 use crate::{
     Border, Control, Grid, ItemsSource, LayoutTransformControl, ScrollViewer, TextBlock, Window,
 };
-use ferroui_base::data::BindingPriority;
+use ferroui_base::data::{BindingPriority, ReflectionBinding};
 use ferroui_base::layout::{HorizontalAlignment, ILayoutManager, VerticalAlignment};
-use ferroui_base::media::ScaleTransform;
+use ferroui_base::media::{ScaleTransform, TextWrapping};
 use ferroui_base::threading::Dispatcher;
 use ferroui_base::{
     ferro_class, ferro_impl_classes, instantiate, BoxedValue, FerroObject, FerroObjectExtensions,
@@ -566,13 +566,23 @@ fn can_bring_into_view_elements_with_alignment_and_animation() {
     let repeater = ItemsRepeater::new();
     repeater.set_horizontal_cache_length(0.0);
     repeater.set_vertical_cache_length(0.0);
-    repeater.set_items_source(Some(ItemsSource::from_values(0..400)));
+    let lorem = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam laoreet erat vel massa rutrum, eget mollis massa vulputate. Vivamus semper augue leo, eget faucibus nulla mattis nec. Donec scelerisque lacus at dui ultricies, eget auctor ipsum placerat. Integer aliquet libero sed nisi eleifend, nec rutrum arcu lacinia.";
+    repeater.set_items_source(Some(ItemsSource::from_values(
+        (0..400).map(|index| format!("{index}: {}", &lorem[..250])),
+    )));
     repeater.set_data_template(Some(FuncDataTemplate::new(
         |_| true,
         |_, _| {
             let border = Border::new();
             border.set_height(94.0);
             border.set_margin(Thickness::uniform(5.0));
+            let text = TextBlock::new();
+            text.set_text_wrapping(TextWrapping::WrapWithOverflow);
+            text.bind_binding(
+                TextBlock::text_property().as_property(),
+                &*ReflectionBinding::empty(),
+            );
+            border.set_child(&text);
             Some(border.upcast())
         },
         true,
@@ -587,19 +597,28 @@ fn can_bring_into_view_elements_with_alignment_and_animation() {
     root.execute_initial_layout_pass();
     settle(&root);
 
-    // Preserve the source sequence and outer dimensions. FerroUI's native
-    // compatibility host supplies alignment/animation options, and its clock
-    // replaces CompositionTarget ticks without wall-clock sleeps.
-    for (step, (index, alignment, animate, expected_first, expected_last)) in [
-        (100, 0.5, false, 96, 103),
-        (103, 0.5, true, 99, 107),
-        (0, 0.5, true, 0, 6),
-        (20, 0.0, false, 19, 26),
+    // Preserve the source sequence and outer dimensions. Native requests use
+    // the fully arranged target. WinUI captures RenderSize before the first
+    // disconnected target is arranged, so its zero-height request realizes
+    // 96..=103. Centering the complete 94-DIP native target instead realizes
+    // 96..=104 at offset 10152. API-SHAPES.md records the source comparison.
+    // The native clock replaces CompositionTarget ticks without wall sleeps.
+    for (step, (index, alignment, animate, expected_first, expected_last, expected_offset)) in [
+        (100, 0.5, false, 96, 104, 10152.0),
+        (103, 0.5, true, 99, 107, 10464.0),
+        (0, 0.5, true, 0, 6, 0.0),
+        (20, 0.0, false, 19, 26, 2085.0),
     ]
     .into_iter()
     .enumerate()
     {
-        let target = repeater.get_or_create_element(index);
+        let target = if index == 103 {
+            repeater
+                .try_get_element(index)
+                .expect("already realized target")
+        } else {
+            repeater.get_or_create_element(index)
+        };
         host.start_bring_into_view(&target, 0.0, alignment, 0.0, 0.0, animate);
         settle(&root);
         if animate {
@@ -612,6 +631,14 @@ fn can_bring_into_view_elements_with_alignment_and_animation() {
             settle(&root);
         }
         assert!(!host.has_pending_bring_into_view());
+        assert_eq!(repeater.try_get_element(index), Some(target.clone()));
+        assert_eq!(target.bounds().size(), Size::new(390.0, 94.0));
+        assert_eq!(target.desired_size(), Size::new(400.0, 104.0));
+        assert!(
+            (scroll.offset().y - expected_offset).abs() < 0.01,
+            "target {index}: expected offset {expected_offset}, observed {:?}",
+            scroll.offset(),
+        );
         let mut realized: Vec<_> = repeater
             .realized_elements()
             .iter()
@@ -620,7 +647,13 @@ fn can_bring_into_view_elements_with_alignment_and_animation() {
         realized.sort_unstable();
         assert_eq!(
             realized,
-            (expected_first..=expected_last).collect::<Vec<_>>()
+            (expected_first..=expected_last).collect::<Vec<_>>(),
+            "index {index}, offset {:?}, viewport {:?}, target bounds {:?}, target desired {:?}, layout extent {:?}",
+            scroll.offset(),
+            repeater.visible_window(),
+            target.bounds(),
+            target.desired_size(),
+            repeater.viewport_manager.layout_extent(),
         );
         if index == 0 {
             assert_eq!(scroll.offset().y, 0.0);

@@ -116,6 +116,58 @@ framework's unsubscribe convention. Rust callbacks receive the typed arguments;
 native markup event adapters supply the sender and arguments required by the
 markup delegate contract. Reentrant event delivery takes a handler snapshot.
 
+## Native scrolling and bring targets
+
+Repeater registers candidates with the nearest native `IScrollAnchorProvider`
+ancestor, following pinned
+[`ViewportManager::EnsureScroller`](https://github.com/microsoft/microsoft-ui-xaml/blob/1af995b98a02d86b1951c4babe35caa269a6d569/controls/dev/Repeater/ViewportManager.cpp#L943).
+A native `ScrollContentPresenter` therefore owns the candidates even when an
+`ItemsRepeaterScrollHost` wraps its `ScrollViewer`. The compatibility host still
+supplies aligned and animated scroll requests. Native viewer anchoring remains
+observable through `ScrollViewer::current_anchor()`.
+
+FerroUI's default bring rectangle is the target's full arranged `Bounds`.
+[`Control::try_execute_bring_into_view`](../../../src/FerroUI.Controls/control_extensions.rs)
+waits until measure and arrange are valid before computing that rectangle. The
+[compatibility host](../../../src/FerroUI.Controls/repeater/items_repeater_scroll_host.rs)
+also waits for valid target and ancestor layout before capturing its transformed
+destination. This prevents a recycled control's parked bounds from determining
+the request and keeps a repeated aligned request stable.
+
+The pinned WinUI
+[`UIElement::StartBringIntoViewWithOptionsImpl`](https://github.com/microsoft/microsoft-ui-xaml/blob/1af995b98a02d86b1951c4babe35caa269a6d569/dxaml/xcp/dxaml/lib/UIElement_Partial.cpp#L1694)
+instead reads `RenderSize` immediately when `TargetRect` is omitted.
+[`ItemsRepeater::GetOrCreateElementImpl`](https://github.com/microsoft/microsoft-ui-xaml/blob/1af995b98a02d86b1951c4babe35caa269a6d569/controls/dev/Repeater/ItemsRepeater.cpp#L312)
+measures a new target without arranging it. Its first disconnected request can
+therefore capture a zero-height rectangle. This is a source transport
+difference, recorded under [WR-27](DEVIATIONS.md), rather than a change to the
+flow algorithm's realization boundaries.
+
+The [aligned-bring scenario](../../../src/FerroUI.Controls/repeater/viewport_tests.rs)
+retains the source's 400 × 600 viewport, wrapped bound text, 94-DIP border and
+5-DIP margin. A row has a 104-DIP desired height; the arranged target is
+390 × 94 DIPs. Centering item 100's full rectangle gives
+`100 × 104 + 5 − (600 − 94) / 2 = 10152`. The comparison with the pinned
+[source scenario](https://github.com/microsoft/microsoft-ui-xaml/blob/1af995b98a02d86b1951c4babe35caa269a6d569/controls/dev/Repeater/APITests/EffectiveViewportScrollViewerTests.cs#L370)
+is explicit in the test:
+
+| Target and vertical alignment | Pinned source realized indices | Native realized indices | Native offset |
+|---|---|---|---|
+| Disconnected 100, center | 96–103 | 96–104 | 10152 |
+| Already realized 103, center with animation | 99–107 | 99–107 | 10464 |
+| Disconnected 0, center, clamped to the start | 0–6 | 0–6 | 0 |
+| Disconnected 20, top | 19–26 | 19–26 | 2085 |
+
+Layout-visible rectangles use the layout's coordinate origin, while native
+scroll offsets and arranged child bounds use physical content coordinates.
+Pinned [`StackLayout::GetExtent`](https://github.com/microsoft/microsoft-ui-xaml/blob/1af995b98a02d86b1951c4babe35caa269a6d569/controls/dev/Repeater/StackLayout.cpp#L191)
+can retain a negative extent origin after making a distant anchor. For example,
+bringing row 500 of a 20-DIP stack establishes origin −10000. Scrolling back
+to native offset zero can correctly report layout-visible Y = −10000 while
+row 0 is arranged at Y = 0. The native regression verifies the zero scroll
+offset, the visible rectangle relative to the extent origin, row 0's bounds
+and recycling of the distant window.
+
 ## Defaults and sentinel values
 
 The IDL's attributes and the source constructors jointly define defaults. A

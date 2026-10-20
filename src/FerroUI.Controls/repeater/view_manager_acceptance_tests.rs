@@ -14,6 +14,7 @@ use crate::{
     ScrollViewer, StackPanel, TextBlock,
 };
 use ferroui_base::collections::{FerroList, NotifyCollectionChangedAction};
+use ferroui_base::data::ReflectionBinding;
 use ferroui_base::input::{
     IKeyboardNavigationHandler, InputElement, Key, KeyEventArgs, KeyModifiers, KeyboardNavigation,
     KeyboardNavigationHandler, KeyboardNavigationMode, NavigationDirection, NavigationMethod,
@@ -270,7 +271,15 @@ fn scrolling_repeater(
                 let element: Ref<Control> = if button {
                     Button::new().upcast()
                 } else {
-                    TextBlock::new().upcast()
+                    // Preserve the source template's Text='{Binding}'. An
+                    // empty text block has zero desired width, which changes
+                    // FlowLayout's backward realization intersection test.
+                    let text = TextBlock::new();
+                    text.bind_binding(
+                        TextBlock::text_property().as_property(),
+                        &*ReflectionBinding::empty(),
+                    );
+                    text.upcast()
                 };
                 element.set_height(height);
                 Some(element)

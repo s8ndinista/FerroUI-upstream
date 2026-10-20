@@ -149,12 +149,9 @@ impl ViewportManager {
         let mut visual = owner.visual_parent();
         let mut provider = None;
         while let Some(parent) = visual {
-            if parent.is::<ItemsRepeaterScrollHost>() {
+            if as_scroll_anchor_provider(&parent).is_some() {
                 provider = Some(parent);
                 break;
-            }
-            if provider.is_none() && as_scroll_anchor_provider(&parent).is_some() {
-                provider = Some(parent.clone());
             }
             visual = parent.visual_parent();
         }
