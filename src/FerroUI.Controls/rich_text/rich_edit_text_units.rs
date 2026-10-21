@@ -29,33 +29,38 @@ impl TextUnits {
         let ranges = match unit {
             // Native positions count UTF-16. The safe Rust range model never
             // exposes half a surrogate; one Character traverses a whole scalar.
-            TextRangeUnit::Character => scalar_ranges(&text),
-            TextRangeUnit::Word => word_ranges(&text),
-            TextRangeUnit::Sentence => sentence_ranges(&text),
-            TextRangeUnit::Paragraph => paragraph_ranges(&text),
+            TextRangeUnit::Character => Ok(scalar_ranges(&text)),
+            TextRangeUnit::Word => Ok(word_ranges(&text)),
+            TextRangeUnit::Sentence => Ok(sentence_ranges(&text)),
+            TextRangeUnit::Paragraph => Ok(paragraph_ranges(&text)),
             TextRangeUnit::Line => match &view {
-                Some(view) => line_ranges(&document, &text, view.clone())?,
-                None => paragraph_ranges(&text),
+                Some(view) => line_ranges(&document, &text, view.clone()),
+                None => Ok(paragraph_ranges(&text)),
             },
-            TextRangeUnit::Story => vec![0..length],
-            TextRangeUnit::HardParagraph => hard_paragraph_ranges(&document.snapshot()),
+            TextRangeUnit::Story => Ok(vec![0..length]),
+            TextRangeUnit::HardParagraph => Ok(hard_paragraph_ranges(&document.snapshot())),
             TextRangeUnit::Cluster => match &view {
-                Some(view) => cluster_ranges(&document, &text, view.clone())?,
-                None => {
-                    return Err(DocumentError::InvalidFormat(
-                        "Cluster navigation requires an associated shaped text view.",
-                    )
-                    .into());
-                }
+                Some(view) => cluster_ranges(&document, &text, view.clone()),
+                None => Err(DocumentError::InvalidFormat(
+                    "Cluster navigation requires an associated shaped text view.",
+                )
+                .into()),
             },
         };
         // Formatting a view can raise layout-property callbacks. Do not use a
         // stale boundary snapshot if an application edited during those callbacks.
         // Public revision events can be deferred by an outer document batch.
         // The internal mutation identity also detects edits inside such a batch.
-        if document.mutation_version() != mutation || display_unit && editor.text_view() != view {
+        if document.mutation_version() != mutation {
+            // Check even when layout itself returned an error. A stale group
+            // snapshot must never overwrite the callback's independent edit.
+            editor.observe_external_document_change();
             return Err(EditError::ReentrantEdit);
         }
+        if display_unit && editor.text_view() != view {
+            return Err(EditError::ReentrantEdit);
+        }
+        let ranges = ranges?;
         let mut boundaries: Vec<_> = ranges
             .iter()
             .flat_map(|range| [range.start, range.end])

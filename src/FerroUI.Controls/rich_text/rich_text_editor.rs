@@ -58,7 +58,19 @@ pub enum RichTextCompositionChange {
     Finalized { text: String },
 }
 
-/// A failed editing operation leaves the document and its undo history unchanged.
+/// The accepted final text and range captured by a composition transaction.
+/// Control events use this result rather than reconstructing accepted input from
+/// a caret that an application may move while the edit is being published.
+pub(crate) struct CompositionCommitResult {
+    pub text: String,
+    pub range: Range<usize>,
+    pub selection: EditorSelection,
+    pub mutation_version: u64,
+}
+
+/// An editing failure. Groups roll back ordinary transaction changes. Detected
+/// independent application edits survive failure and invalidate stale undo and
+/// composition state instead of being overwritten by an earlier snapshot.
 #[derive(Debug)]
 pub enum EditError {
     ReadOnly,
@@ -112,7 +124,10 @@ struct Composition {
 struct ExactComposition {
     /// Current structured content before temporary IME decorations.
     document: DocumentSnapshot,
-    range: Range<usize>,
+    /// A native start has no composed range yet. Its first replacement defines
+    /// the extent independently of the committed selection and the 0/0 event
+    /// sentinel used while the native composition string is unavailable.
+    range: Option<Range<usize>>,
 }
 
 #[derive(Default)]
@@ -145,6 +160,7 @@ pub struct RichTextEditor {
     undo_limit: Cell<usize>,
     in_operation: Cell<bool>,
     group_depth: Cell<usize>,
+    external_change_generation: Cell<u64>,
     changed: Rc<HandlerList<dyn Fn()>>,
     composition_changed: Rc<HandlerList<dyn Fn(&RichTextCompositionChange)>>,
     pending_composition_changes: RefCell<Vec<RichTextCompositionChange>>,
@@ -186,6 +202,7 @@ impl RichTextEditor {
             undo_limit: Cell::new(100),
             in_operation: Cell::new(false),
             group_depth: Cell::new(0),
+            external_change_generation: Cell::new(0),
             changed: Rc::new(HandlerList::new()),
             composition_changed: Rc::new(HandlerList::new()),
             pending_composition_changes: RefCell::new(Vec::new()),
@@ -255,25 +272,27 @@ impl RichTextEditor {
     pub fn is_composing(&self) -> bool {
         self.history.borrow().composition.is_some()
     }
-    /// Absolute UTF-16 extent of the current IME preview. A later external model
-    /// mutation invalidates this extent instead of exposing stale composition text.
+    /// Absolute UTF-16 extent of the current IME preview. An explicitly started
+    /// native composition has no range until its first accepted update; the
+    /// selected committed text remains outside that extent until replaced.
+    /// Routed lifecycle events project that pending state to the native 0/0
+    /// sentinel. A later external model mutation also invalidates this extent
+    /// instead of exposing stale composition text.
     pub fn active_composition_range(&self) -> Option<Range<usize>> {
-        let (version, start, length) = {
+        let (version, result) = {
             let history = self.history.borrow();
             let composition = history.composition.as_ref()?;
-            (
-                composition.preview_version,
-                composition.exact.as_ref().map_or_else(
-                    || composition.before.selection.range().start,
-                    |exact| exact.range.start,
-                ),
-                composition.preview_text.encode_utf16().count(),
-            )
+            let range = if let Some(exact) = &composition.exact {
+                exact.range.clone()?
+            } else {
+                let start = composition.before.selection.range().start;
+                start..start.checked_add(composition.preview_text.encode_utf16().count())?
+            };
+            (composition.preview_version, range)
         };
         if self.document.mutation_version() != version {
             return None;
         }
-        let result = start..start.checked_add(length)?;
         if self.document.mutation_version() != version
             || self.document.validate_range(result.clone()).is_err()
         {
@@ -459,14 +478,25 @@ impl RichTextEditor {
         if self.group_depth.get() > 0 || self.projecting_selection.get() {
             return;
         }
+        let mutation_version = self.document.mutation_version();
         self.project_selection();
         for (_, handler) in self.changed.snapshot().iter() {
             handler();
+        }
+        if self.document.mutation_version() != mutation_version {
+            // A notification callback replaced the state these queued causes
+            // described. Preserve its edit without emitting obsolete IME events.
+            self.observe_external_document_change();
+            return;
         }
         let changes = std::mem::take(&mut *self.pending_composition_changes.borrow_mut());
         for change in changes {
             for (_, handler) in self.composition_changed.snapshot().iter() {
                 handler(&change);
+            }
+            if self.document.mutation_version() != mutation_version {
+                self.observe_external_document_change();
+                return;
             }
         }
     }
@@ -535,6 +565,25 @@ impl RichTextEditor {
         drop(old);
         self.known_revision.set(self.document.revision());
         self.checkpoint();
+    }
+
+    pub(super) fn external_change_generation(&self) -> u64 {
+        self.external_change_generation.get()
+    }
+
+    /// Called only after a read/layout callback is proved to have mutated the
+    /// model. An enclosing transaction then cannot safely restore its snapshot.
+    pub(super) fn observe_external_document_change(&self) {
+        self.external_change_generation
+            .set(self.external_change_generation.get().wrapping_add(1));
+        self.discard_external_edit_state();
+    }
+
+    fn discard_external_edit_state(&self) {
+        self.clear_history();
+        *self.typing_format.borrow_mut() = CharacterFormat::default();
+        self.pending_composition_changes.borrow_mut().clear();
+        self.clamp_selection();
     }
 
     fn enter(&self, require_writable: bool) -> Result<Operation<'_>, EditError> {
@@ -608,7 +657,13 @@ impl RichTextEditor {
         if self.group_depth.get() > 0 {
             return;
         }
+        let mutation_version = self.document.mutation_version();
         self.project_selection();
+        if self.document.mutation_version() != mutation_version {
+            self.observe_external_document_change();
+            self.publish_changed();
+            return;
+        }
         // A group may finish with a visible preview. Only its preceding committed
         // edits belong in the undo unit; committing or cancelling the preview later
         // must not resurrect uncommitted IME text when redo restores this group.
@@ -883,7 +938,9 @@ impl RichTextEditor {
         Ok(())
     }
 
-    /// Executes multiple edits as one undo unit. An error rolls the group back atomically.
+    /// Executes multiple edits as one undo unit. An error rolls the group back
+    /// atomically. If a layout callback independently mutates the model, that
+    /// external state survives and the interrupted group discards its history.
     pub fn edit_group<T>(
         &self,
         action: impl FnOnce(&Self) -> Result<T, EditError>,
@@ -898,13 +955,24 @@ impl RichTextEditor {
         self.synchronize();
         let before = self.capture();
         let before_limit = self.max_length();
+        let external_generation = self.external_change_generation();
         let pending_start = self.pending_composition_changes.borrow().len();
         let depth = self.group_depth.get();
         self.group_depth.set(depth + 1);
         let batch = self.document.begin_edit();
         let result = action(self);
+        let interrupted = self.external_change_generation() != external_generation;
+        // Nested code may catch its immediate layout error. Every enclosing
+        // transaction still rejects the stale before/after history pair.
+        let mut result = if interrupted {
+            Err(EditError::ReentrantEdit)
+        } else {
+            result
+        };
         let _operation = self.enter(false)?;
-        if result.is_err() {
+        if interrupted {
+            self.discard_external_edit_state();
+        } else if result.is_err() {
             // TOM SetText may grow MaxLength inside a nested group. Failed
             // transactions restore that configuration along with the story.
             self.set_max_length(before_limit);
@@ -915,14 +983,27 @@ impl RichTextEditor {
                 .truncate(pending_start);
             self.restore(&before)?;
         }
+        let publication_version = self.document.mutation_version();
         drop(batch);
+        if self.document.mutation_version() != publication_version {
+            // Application document-change handlers run when the outer batch
+            // closes. Their direct model writes are independent of this group,
+            // even though editor commands remain guarded during publication.
+            self.observe_external_document_change();
+            result = Err(EditError::ReentrantEdit);
+        }
         self.group_depth.set(depth);
         self.known_revision.set(self.document.revision());
+        let notification_version = self.document.mutation_version();
         if result.is_ok() {
             self.checkpoint();
             self.record(before, EditKind::Group);
         } else {
             self.publish_changed();
+        }
+        if self.document.mutation_version() != notification_version {
+            self.observe_external_document_change();
+            result = Err(EditError::ReentrantEdit);
         }
         result
     }
@@ -1049,6 +1130,7 @@ impl RichTextEditor {
         let Some(composition) = composition else {
             return Ok(false);
         };
+        let batch = self.document.begin_edit();
         if self.document.mutation_version() == composition.preview_version {
             if let Err(error) = self.restore(&composition.before) {
                 self.history.borrow_mut().composition = Some(composition);
@@ -1058,24 +1140,53 @@ impl RichTextEditor {
             self.clear_history();
             self.clamp_selection();
         }
+        let version = self.document.mutation_version();
+        drop(batch);
+        if self.document.mutation_version() != version {
+            self.clear_history();
+            self.clamp_selection();
+            return Err(EditError::ReentrantEdit);
+        }
+        self.known_revision.set(self.document.revision());
         self.queue_composition_change(RichTextCompositionChange::Finalized {
             text: String::new(),
         });
         self.publish_changed();
+        if self.document.mutation_version() != version {
+            self.clear_history();
+            self.clamp_selection();
+            return Err(EditError::ReentrantEdit);
+        }
         Ok(true)
     }
 
     /// Ends a preview and inserts the accepted committed text as one transaction.
     /// Empty or fully rejected input ends the preview without replacing the original
-    /// committed selection. A writable/reentrant error preserves the preview.
+    /// committed selection. Failed write or entry checks preserve the preview;
+    /// an external edit during publication is retained and rejects the older commit.
     pub fn commit_composition(&self, text: &str) -> Result<bool, EditError> {
+        self.commit_composition_result(text)
+            .map(|(changed, _)| changed)
+    }
+
+    pub(crate) fn commit_composition_result(
+        &self,
+        text: &str,
+    ) -> Result<(bool, Option<CompositionCommitResult>), EditError> {
         let _operation = self.enter(true)?;
         self.synchronize();
         let composition = self.history.borrow_mut().composition.take();
         let Some(composition) = composition else {
             self.checkpoint();
-            return self.replace_text_core(text, EditKind::Composition, self.selection().range());
+            return self
+                .replace_text_core(text, EditKind::Composition, self.selection().range())
+                .map(|changed| (changed, None));
         };
+        let start = composition.before.selection.range().start;
+        let awaiting_text = composition
+            .exact
+            .as_ref()
+            .is_some_and(|exact| exact.range.is_none());
         let visible = self.capture();
         let batch = self.document.begin_edit();
         let result = (|| {
@@ -1095,21 +1206,43 @@ impl RichTextEditor {
                 return Err(error);
             }
         };
-        self.queue_composition_change(RichTextCompositionChange::Finalized {
-            text: accepted
-                .as_ref()
-                .map_or_else(String::new, |(_, text)| text.clone()),
-        });
+        let text = accepted
+            .as_ref()
+            .map_or_else(String::new, |(_, text)| text.clone());
+        let range = if awaiting_text && text.is_empty() {
+            0..0
+        } else {
+            start..start + text.encode_utf16().count()
+        };
+        let mutation_version = self.document.mutation_version();
         drop(batch);
+        if self.document.mutation_version() != mutation_version {
+            self.synchronize();
+            return Err(EditError::ReentrantEdit);
+        }
         self.known_revision.set(self.document.revision());
         self.checkpoint();
-        if let Some((before, _)) = accepted {
+        self.queue_composition_change(RichTextCompositionChange::Finalized { text: text.clone() });
+        let changed = if let Some((before, _)) = accepted {
             self.record(before, EditKind::Composition);
-            Ok(true)
+            true
         } else {
             self.publish_changed();
-            Ok(false)
+            false
+        };
+        if self.document.mutation_version() != mutation_version || self.is_composing() {
+            self.synchronize();
+            return Err(EditError::ReentrantEdit);
         }
+        Ok((
+            changed,
+            Some(CompositionCommitResult {
+                text,
+                range,
+                selection: self.selection(),
+                mutation_version,
+            }),
+        ))
     }
 
     fn restore_composition_state(

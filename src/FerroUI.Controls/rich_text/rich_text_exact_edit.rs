@@ -8,6 +8,38 @@ fn rejected() -> EditError {
 }
 
 impl RichTextEditor {
+    /// Captures the committed story without synthesizing an empty replacement.
+    /// The exact-composition state also accepts a first legacy preedit update;
+    /// that update keeps this snapshot as its cancellation/undo origin.
+    pub(crate) fn begin_input_method_composition(&self) -> Result<(), EditError> {
+        let _operation = self.enter(true)?;
+        self.synchronize();
+        if self.is_composing() {
+            return Err(EditError::ReentrantEdit);
+        }
+        let before = self.capture();
+        let selection = before.selection;
+        let version = self.document.mutation_version();
+        self.history.borrow_mut().composition = Some(Composition {
+            exact: Some(ExactComposition {
+                document: before.document.clone(),
+                range: None,
+            }),
+            before,
+            preview_version: version,
+            preview_text: String::new(),
+        });
+        self.publish_changed();
+        if self.document.mutation_version() != version
+            || self.selection() != selection
+            || !self.is_composing()
+        {
+            self.synchronize();
+            return Err(EditError::ReentrantEdit);
+        }
+        Ok(())
+    }
+
     pub(crate) fn apply_exact_input_edit(
         &self,
         edit: &TextInputMethodEdit,
@@ -61,15 +93,16 @@ impl RichTextEditor {
                 let active_range = previous
                     .as_ref()
                     .and_then(|old| old.exact.as_ref())
+                    .and_then(|old| old.range.as_ref())
                     .map_or_else(
                         || range.start..range.start + inserted,
                         |old| {
-                            let end = if old.range.end >= range.end {
-                                old.range.end - (range.end - range.start) + inserted
+                            let end = if old.end >= range.end {
+                                old.end - (range.end - range.start) + inserted
                             } else {
                                 range.start + inserted
                             };
-                            old.range.start.min(range.start)..end.max(range.start + inserted)
+                            old.start.min(range.start)..end.max(range.start + inserted)
                         },
                     );
                 let preview_text = self.document.get_text(active_range.clone())?;
@@ -89,7 +122,7 @@ impl RichTextEditor {
                     preview_text,
                     exact: Some(ExactComposition {
                         document: clean,
-                        range: active_range,
+                        range: Some(active_range),
                     }),
                 });
             }
@@ -159,9 +192,6 @@ impl RichTextEditor {
         let batch = self.document.begin_edit();
         self.document.restore(&exact.document)?;
         self.history.borrow_mut().composition = None;
-        self.queue_composition_change(RichTextCompositionChange::Finalized {
-            text: composition.preview_text,
-        });
         let version = self.document.mutation_version();
         drop(batch);
         if version != self.document.mutation_version() {
@@ -170,7 +200,14 @@ impl RichTextEditor {
         }
         self.known_revision.set(self.document.revision());
         self.checkpoint();
+        self.queue_composition_change(RichTextCompositionChange::Finalized {
+            text: composition.preview_text,
+        });
         self.record(composition.before, EditKind::Composition);
+        if version != self.document.mutation_version() || self.is_composing() {
+            self.synchronize();
+            return Err(EditError::ReentrantEdit);
+        }
         Ok(changed)
     }
 

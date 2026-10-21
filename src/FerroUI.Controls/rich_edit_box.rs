@@ -91,12 +91,43 @@ ferroui_base::ferro_markup_enum!(flags DisabledFormattingAccelerators {
     All = DisabledFormattingAccelerators::ALL,
 }, { namespace: "FerroUI.Controls" });
 
-#[derive(Clone, Default)]
+#[derive(Clone)]
 pub struct RichEditCompositionEventArgs {
     base: RoutedEventArgs,
     pub text: String,
     pub selection: EditorSelection,
     pub committed: bool,
+    start_index: i32,
+    length: i32,
+}
+
+impl Default for RichEditCompositionEventArgs {
+    fn default() -> Self {
+        Self {
+            base: RoutedEventArgs::default(),
+            text: String::new(),
+            selection: EditorSelection::default(),
+            committed: false,
+            // CTextCompositionEventArgsBase initializes an unavailable range
+            // with StartIndex=-1 and Length=0.
+            start_index: -1,
+            length: 0,
+        }
+    }
+}
+
+impl RichEditCompositionEventArgs {
+    /// UTF-16 start of the whole accepted composition, independently of its
+    /// current caret. An unavailable or unrepresentable range has index -1.
+    pub fn start_index(&self) -> i32 {
+        self.start_index
+    }
+
+    /// UTF-16 length of the whole accepted composition. Cancellation has an
+    /// empty range at its former start in the restored committed document.
+    pub fn length(&self) -> i32 {
+        self.length
+    }
 }
 ferro_routed_event_args!(RichEditCompositionEventArgs: RoutedEventArgs);
 ferroui_base::ferro_markup_type!(class RichEditCompositionEventArgs {
@@ -107,6 +138,8 @@ ferroui_base::ferro_markup_type!(class RichEditCompositionEventArgs {
         SelectionStart: i32 { get: |args: &RichEditCompositionEventArgs| args.selection.anchor.min(i32::MAX as usize) as i32 },
         SelectionEnd: i32 { get: |args: &RichEditCompositionEventArgs| args.selection.active.min(i32::MAX as usize) as i32 },
         Committed: bool { get: |args: &RichEditCompositionEventArgs| args.committed },
+        StartIndex: i32 { get: RichEditCompositionEventArgs::start_index },
+        Length: i32 { get: RichEditCompositionEventArgs::length },
         Handled: bool { get: |args: &RichEditCompositionEventArgs| args.handled(), set: |args: &RichEditCompositionEventArgs, value: bool| args.set_handled(value) },
     ],
 });
@@ -1781,17 +1814,11 @@ impl RichEditBox {
     pub fn insert_text(&self, text: &str) -> Result<bool, EditError> {
         let editor = self.editor();
         self.synchronize_editor_selection(&editor)?;
-        let text = self.filter_input(text);
-        let composing = editor.is_composing();
-        let result = if composing {
-            editor.commit_composition(&text)
+        if editor.is_composing() {
+            self.commit_composition(text)
         } else {
-            editor.insert_text(&text, EditKind::Typing)
-        };
-        if composing && result.is_ok() {
-            self.raise_composition(Self::text_composition_ended_event(), &text, true);
+            editor.insert_text(&self.filter_input(text), EditKind::Typing)
         }
-        result
     }
     pub fn replace_selection(&self, fragment: &DocumentSnapshot) -> Result<bool, EditError> {
         let editor = self.editor();
@@ -1842,6 +1869,41 @@ impl RichEditBox {
         true
     }
 
+    pub(crate) fn begin_input_method_composition(&self) -> Result<(), EditError> {
+        let editor = self.editor();
+        if editor.is_read_only() {
+            return Err(EditError::ReadOnly);
+        }
+        if editor.is_in_operation() {
+            return Err(EditError::ReentrantEdit);
+        }
+        // Superseding a session closes its lifecycle before opening the next.
+        // The cancellation fence preserves a newer session started by a handler.
+        self.cancel_composition()?;
+        if !Rc::ptr_eq(&editor, &self.editor()) {
+            return Err(EditError::ReentrantEdit);
+        }
+        self.synchronize_editor_selection(&editor)?;
+        editor.begin_input_method_composition()?;
+        let version = editor.document().mutation_version();
+        let selection = editor.selection();
+        let input_version = self.im_client.input_method_state_revision();
+        // EN_STARTCOMPOSITION precedes the first text replacement. WinUI maps
+        // its unavailable native composition string to StartIndex=0, Length=0,
+        // independently of the committed selection that may later be replaced.
+        self.raise_composition(Self::text_composition_started_event(), "", false, 0..0);
+        if Rc::ptr_eq(&editor, &self.editor())
+            && editor.is_composing()
+            && editor.document().mutation_version() == version
+            && editor.selection() == selection
+            && self.im_client.input_method_state_revision() == input_version
+        {
+            Ok(())
+        } else {
+            Err(EditError::ReentrantEdit)
+        }
+    }
+
     pub fn set_preedit_text(
         &self,
         text: Option<&str>,
@@ -1860,6 +1922,7 @@ impl RichEditBox {
         }
         self.synchronize_editor_selection(&editor)?;
         let started = !editor.is_composing();
+        let previous_text = editor.document().text();
         let cursor = cursor.map(|offset| {
             self.filter_input(crate::rich_text::utf16_prefix(text, offset))
                 .encode_utf16()
@@ -1869,33 +1932,40 @@ impl RichEditBox {
         // Public composition notifications expose the accepted preview. A handler
         // may replace the document, selection, or preview; the original platform
         // operation must not adopt that newer state as its own composition.
-        let accepted_text = editor
+        let accepted_range = editor
             .active_composition_range()
-            .and_then(|range| editor.document().get_text(range).ok())
             .ok_or(EditError::ReentrantEdit)?;
+        let accepted_text = editor.document().get_text(accepted_range.clone())?;
+        let changed = previous_text != editor.document().text();
         let version = editor.document().mutation_version();
         let selection = editor.selection();
+        let input_version = self.im_client.input_method_state_revision();
         let current = || {
             Rc::ptr_eq(&editor, &self.editor())
                 && editor.is_composing()
                 && editor.document().mutation_version() == version
                 && editor.selection() == selection
+                && self.im_client.input_method_state_revision() == input_version
         };
         if started {
             self.raise_composition(
                 Self::text_composition_started_event(),
                 &accepted_text,
                 false,
+                accepted_range.clone(),
             );
             if !current() {
                 return Err(EditError::ReentrantEdit);
             }
         }
-        self.raise_composition(
-            Self::text_composition_changed_event(),
-            &accepted_text,
-            false,
-        );
+        if changed {
+            self.raise_composition(
+                Self::text_composition_changed_event(),
+                &accepted_text,
+                false,
+                accepted_range,
+            );
+        }
         if current() {
             Ok(())
         } else {
@@ -1917,20 +1987,22 @@ impl RichEditBox {
         let changed = editor.apply_exact_input_edit(edit, composing)?;
         let version = editor.document().mutation_version();
         let selection = editor.selection();
+        let input_version = self.im_client.input_method_state_revision();
         let current = || Rc::ptr_eq(&editor, &self.editor())
             && editor.document().mutation_version() == version
             && editor.selection() == selection
-            && editor.is_composing() == composing;
+            && editor.is_composing() == composing
+            && self.im_client.input_method_state_revision() == input_version;
         if composing {
-            let text = editor.active_composition_range()
-                .and_then(|range| editor.document().get_text(range).ok())
+            let range = editor.active_composition_range()
                 .ok_or(EditError::ReentrantEdit)?;
+            let text = editor.document().get_text(range.clone())?;
             if started {
-                self.raise_composition(Self::text_composition_started_event(), &text, false);
+                self.raise_composition(Self::text_composition_started_event(), &text, false, range.clone());
                 if !current() { return Err(EditError::ReentrantEdit); }
             }
             if changed {
-                self.raise_composition(Self::text_composition_changed_event(), &text, false);
+                self.raise_composition(Self::text_composition_changed_event(), &text, false, range);
             }
         }
         if current() { Ok(changed) } else { Err(EditError::ReentrantEdit) }
@@ -1938,16 +2010,22 @@ impl RichEditBox {
 
     pub(crate) fn complete_input_method_composition(&self) -> Result<bool, EditError> {
         let editor = self.editor();
-        let text = editor.active_composition_range()
-            .and_then(|range| editor.document().get_text(range).ok()).unwrap_or_default();
+        let range = editor.active_composition_range();
+        let text = range.as_ref().and_then(|range| editor.document().get_text(range.clone()).ok())
+            .unwrap_or_default();
         let composing = editor.is_composing();
         let changed = editor.complete_exact_composition()?;
         if composing {
             let version = editor.document().mutation_version();
             let selection = editor.selection();
-            self.raise_composition(Self::text_composition_ended_event(), &text, true);
+            let input_version = self.im_client.input_method_state_revision();
+            // A successful completion with no active range closes an explicit
+            // native start that never received text. It uses the native null
+            // event extent without fabricating an automation composition range.
+            self.raise_composition(Self::text_composition_ended_event(), &text, true, range.unwrap_or(0..0));
             if !Rc::ptr_eq(&editor, &self.editor()) || version != editor.document().mutation_version()
-                || selection != editor.selection() || editor.is_composing() {
+                || selection != editor.selection() || editor.is_composing()
+                || self.im_client.input_method_state_revision() != input_version {
                 return Err(EditError::ReentrantEdit);
             }
         }
@@ -1956,32 +2034,67 @@ impl RichEditBox {
 
     pub fn cancel_composition(&self) -> Result<bool, EditError> {
         let editor = self.editor();
-        let result = editor.cancel_composition();
-        if matches!(result, Ok(true)) {
-            self.raise_composition(Self::text_composition_ended_event(), "", false);
+        let start = editor.active_composition_range().map_or(0, |range| range.start);
+        let changed = editor.cancel_composition()?;
+        if changed {
+            let version = editor.document().mutation_version();
+            let selection = editor.selection();
+            let input_version = self.im_client.input_method_state_revision();
+            self.raise_composition(Self::text_composition_ended_event(), "", false, start..start);
+            if !Rc::ptr_eq(&editor, &self.editor()) || editor.is_composing()
+                || editor.document().mutation_version() != version
+                || editor.selection() != selection
+                || self.im_client.input_method_state_revision() != input_version {
+                return Err(EditError::ReentrantEdit);
+            }
         }
-        result
+        Ok(changed)
     }
     pub fn commit_composition(&self, text: &str) -> Result<bool, EditError> {
         let editor = self.editor();
-        let composing = editor.is_composing();
-        let result = editor.commit_composition(&self.filter_input(text));
-        if composing && result.is_ok() {
-            self.raise_composition(Self::text_composition_ended_event(), text, true);
+        let (changed, composition) = editor.commit_composition_result(&self.filter_input(text))?;
+        if let Some(composition) = composition {
+            let input_version = self.im_client.input_method_state_revision();
+            let current = || {
+                Rc::ptr_eq(&editor, &self.editor())
+                    && editor.document().mutation_version() == composition.mutation_version
+                    && editor.selection() == composition.selection
+                    && !editor.is_composing()
+                    && self.im_client.input_method_state_revision() == input_version
+            };
+            if !current() {
+                return Err(EditError::ReentrantEdit);
+            }
+            self.raise_composition(
+                Self::text_composition_ended_event(),
+                &composition.text,
+                true,
+                composition.range.clone(),
+            );
+            if !current() {
+                return Err(EditError::ReentrantEdit);
+            }
         }
-        result
+        Ok(changed)
     }
     fn raise_composition(
         &self,
         event: &RoutedEvent<RichEditCompositionEventArgs>,
         text: &str,
         committed: bool,
+        range: Range<usize>,
     ) {
+        let extent = i32::try_from(range.start).ok().zip(
+            i32::try_from(range.end.saturating_sub(range.start)).ok(),
+        );
+        let (start_index, length) = extent.unwrap_or((-1, 0));
         self.raise_event(&RichEditCompositionEventArgs {
             base: RoutedEventArgs::with_event(event),
             text: text.to_owned(),
             selection: self.selection(),
             committed,
+            start_index,
+            length,
         });
     }
 

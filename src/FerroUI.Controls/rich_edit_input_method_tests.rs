@@ -146,6 +146,9 @@ impl Drop for Fixture {
 #[path = "rich_edit_exact_input_tests.rs"]
 mod exact_tests;
 
+#[path = "rich_edit_composition_event_tests.rs"]
+mod composition_event_tests;
+
 #[test]
 fn rich_input_method_start_preserves_styled_selection_and_commit_is_one_undo_unit() {
     let f = Fixture::new(true);
@@ -175,7 +178,7 @@ fn rich_input_method_cancel_restores_format_without_history_and_empty_start_is_n
     let f = Fixture::new(true);
     let before = f.owner.document().snapshot();
     let start = f.connection().begin_composition().unwrap();
-    assert!(!start.cancel().unwrap());
+    assert!(start.cancel().unwrap());
     assert_eq!(f.owner.document().snapshot(), before);
     let session = f.connection().begin_composition().unwrap();
     session.update("preview", None).unwrap();
@@ -447,7 +450,6 @@ fn rich_input_method_tunnel_document_edit_is_preserved_and_rejects_original_comm
 fn rich_input_method_composition_callbacks_observe_accepted_text_and_invalidate_older_input() {
     for started in [true, false] {
         let f = Fixture::new(true);
-        let session = f.connection().begin_composition().unwrap();
         let owner = f.owner.downgrade();
         let event = if started {
             RichEditBox::text_composition_started_event()
@@ -456,21 +458,28 @@ fn rich_input_method_composition_callbacks_observe_accepted_text_and_invalidate_
         };
         f.owner.add_handler(event, move |_, args| {
             let owner = owner.upgrade().unwrap();
-            assert_eq!(args.text, "preview");
-            assert_eq!(owner.text(), "apreviewd");
+            assert_eq!(args.text, if started { "" } else { "preview" });
+            assert_eq!(owner.text(), if started { "abcd" } else { "apreviewd" });
             owner.set_text("external").unwrap();
         });
 
-        assert_eq!(
-            session.update("preview", None),
-            Err(TextInputMethodError::ReentrantEdit)
-        );
-        assert_eq!(f.owner.text(), "external");
-        assert!(!session.is_current());
-        assert_eq!(
-            session.commit("stale", 0),
-            Err(TextInputMethodError::StateChanged)
-        );
+        if started {
+            assert!(matches!(
+                f.connection().begin_composition(),
+                Err(TextInputMethodError::ReentrantEdit)
+            ));
+        } else {
+            let session = f.connection().begin_composition().unwrap();
+            assert_eq!(
+                session.update("preview", None),
+                Err(TextInputMethodError::ReentrantEdit)
+            );
+            assert!(!session.is_current());
+            assert_eq!(
+                session.commit("stale", 0),
+                Err(TextInputMethodError::StateChanged)
+            );
+        }
         assert_eq!(f.owner.text(), "external");
     }
 }
@@ -502,7 +511,7 @@ fn rich_input_method_composition_events_report_the_filtered_and_length_limited_p
     assert_eq!(f.owner.text(), "axyd");
     assert_eq!(
         &*seen.borrow(),
-        &[("started", "xy".to_owned()), ("changed", "xy".to_owned())]
+        &[("started", String::new()), ("changed", "xy".to_owned())]
     );
     assert!(session.is_current());
 }

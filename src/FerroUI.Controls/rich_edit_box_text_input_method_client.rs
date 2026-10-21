@@ -220,13 +220,10 @@ impl TextInputMethodEditing for RichEditBoxTextInputMethodClient {
 
     fn begin_composition(&self) -> Result<(), TextInputMethodError> {
         let owner = self.owner().ok_or(TextInputMethodError::Unavailable)?;
-        if owner.is_read_only() {
-            return Err(TextInputMethodError::ReadOnly);
-        }
-        let result = owner.cancel_composition();
-        result.as_ref().map_err(input_method_error)?;
+        let result = owner.begin_input_method_composition();
+        let accepted = result.as_ref().map(|_| ()).map_err(input_method_error);
         owner.handle_edit(result);
-        Ok(())
+        accepted
     }
 
     fn update_composition(

@@ -19,6 +19,9 @@ pub use stream::{TextStreamEncoding, TextStreamOptions};
 mod case;
 pub use case::LetterCase;
 
+#[path = "rich_edit_text_range_operations.rs"]
+mod range_operations;
+
 #[path = "rich_edit_text_units.rs"]
 mod units;
 use units::TextUnits;
