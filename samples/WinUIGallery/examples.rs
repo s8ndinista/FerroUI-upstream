@@ -3,12 +3,11 @@
 
 use ferroui_base::media::immutable::ImmutableSolidColorBrush;
 use ferroui_base::media::Color;
-use ferroui_base::{BoxedValue, ObjectType, Ref, Thickness};
+use ferroui_base::{ObjectType, Ref, Thickness};
 use ferroui_controls::primitives::ToggleButton;
 use ferroui_controls::winui::{NumberBox, RadioButtons};
 use ferroui_controls::{
-    AutoCompleteBox, Border, Button, ComboBox, Control, ItemsSource, Slider, SplitButton,
-    TextBlock, TextBox, ToggleSplitButton,
+    Border, Button, ComboBox, Control, Slider, SplitButton, TextBlock, TextBox, ToggleSplitButton,
 };
 use ferroui_markup_xaml::XamlLoadException;
 use ferroui_markup_xaml_loader::FerroRuntimeXamlLoader;
@@ -33,13 +32,17 @@ macro_rules! page {
 }
 
 pub static ADAPTATIONS: &[PageAdaptation] = &[
+    page!("InfoBar", "All three original compositions use the opt-in InfoBar with severity, short/long messages, optional button/hyperlink and visibility/closability options. x:Bind is explicitly adapted to ordinary TwoWay Binding; final layout, icons and live-region acceptance remain pending."),
+    page!("Popup", "The source open/close handlers and offset/light-dismiss options use the native Popup. Placement is explicitly relative to its button; WinUI absolute-placement, acrylic and screen-edge parity remain pending."),
+    page!("Clipboard", "Text copy/paste, available formats and clear use the host clipboard service asynchronously. Bitmap/file operations, history/roaming, content-change notifications and original accessibility announcements remain pending."),
+    page!("PullToRefresh", "The source RefreshContainer request/deferral behavior inserts NewControl on the UI dispatcher. ListView is explicitly adapted to ListBox; the custom visualizer and full gesture/animation parity remain pending."),
     page!("PageTransition", "The original alternating sample-page layouts use the opt-in WinUI Frame/Page types, back/forward journals and Rust handlers. Navigation transition effects remain pending."),
     page!("AppBarButton", "The path-icon sample uses the shared CommandBarButton with native click output. Other icon types, accelerators and flyout examples remain pending."),
     page!("AppBarToggleButton", "The three-state path-icon sample uses CommandBarToggleButton; checked, unchecked and indeterminate state remain observable."),
     page!("AppBarSeparator", "The source command groups use CommandBarSeparator; Symbol icons remain pending in this adaptation."),
     page!("CommandBar", "The source primary/secondary commands use the shared CommandBar family, observable open state and an explicit HotKey adaptation. Dynamic symbol conversion and the full option set remain pending."),
     page!("AccessibilityColorContrast", "The original luminance/contrast calculation and pass thresholds run in Rust. Opaque RGB text inputs replace the Gallery's custom inline color pickers; those picker controls remain pending."),
-    page!("AutoSuggestBox", "Native AutoCompleteBox provides country suggestions; WinUI-specific event arguments remain a separate contract."),
+    page!("AutoSuggestBox", "Both examples use the opt-in AutoSuggestBox: 97 source cat names, user-only token filtering, chosen-item output and control search/query with original title/subtitle and embedded bitmap details. Catalog titles are explicit item values; CurrentCulture matching and full input/accessibility parity remain pending."),
     page!("NumberBox", "The opt-in WinUI NumberBox preserves spin-button, NaN and expression behavior using the original snippets. Locale-specific upstream number formatting remains pending."),
     page!("PipsPager", "The existing PipsPager provides page counts, selection and previous/next controls; wrapping remains explicit."),
     page!("TabView", "Native TabControl displays tab content; WinUI add/close/drag contracts remain pending."),
@@ -57,10 +60,10 @@ pub static ADAPTATIONS: &[PageAdaptation] = &[
     page!("RepeatButton", "Native RepeatButton repeats the same Rust click handler; holding behavior belongs to FerroUI input."),
     page!("ToggleButton", "Native ToggleButton checked state and output; the original handler is ported to Rust."),
     page!("ToggleSwitch", "IsOn maps to IsChecked on the existing ToggleSwitch; Header is composed with a label and an automation name, and states remain observable."),
-    page!("CheckBox", "Two-state and three-state inputs use native CheckBox; the output follows IsChecked."),
+    page!("CheckBox", "All three source compositions use native CheckBox with original two/three-state output and select-all synchronization. Keyboard, accessibility and exact rendering acceptance remain pending."),
     page!("RadioButton", "Both original groups use opt-in RadioButtons with the existing native RadioButton, source labels and Rust selection/color handlers. Focus, layout and screen-reader parity still require host verification."),
     page!("TextBox", "Text, placeholder, read-only and multiline examples use existing TextBox properties; Header is composed explicitly."),
-    page!("PasswordBox", "Password entry uses TextBox.PasswordChar and RevealPassword; a distinct PasswordBox API is still required."),
+    page!("PasswordBox", "The three source examples and original validation/reveal handlers use TextBox.PasswordChar and RevealPassword with composed Header. A distinct PasswordBox API and full input/accessibility parity remain pending."),
     page!("TextBlock", "Text content, wrapping, typography and inline text use native TextBlock."),
     page!("Slider", "WinUI StepFrequency becomes TickFrequency with IsSnapToTickEnabled. The sample output observes Value."),
     page!("ProgressBar", "Both determinate and indeterminate ProgressBar modes use the shared control."),
@@ -104,8 +107,12 @@ pub fn find(page_id: &str) -> Option<&'static PageAdaptation> {
 /// Creates real framework controls from the reviewed markup, then wires each
 /// behavior in Rust. No alternate drawing or input system is used.
 pub fn create(sample: &PageAdaptation) -> Result<Ref<Control>, XamlLoadException> {
+    crate::assets::register();
     let root = FerroRuntimeXamlLoader::parse_as::<Ref<Control>>(sample.xaml, None)?;
     crate::frame_sample::wire(&root)?;
+    crate::platform_samples::wire(&root);
+    crate::input_samples::wire(&root);
+    crate::control_samples::wire(&root);
     wire(&root);
     Ok(root)
 }
@@ -116,20 +123,6 @@ fn wire(root: &Ref<Control>) {
     let Some(output) = find_control::<TextBlock>(root, "Output") else {
         return;
     };
-    if let Some(suggestions) = find_control::<AutoCompleteBox>(root, "Suggestions") {
-        suggestions.set_items_source(Some(ItemsSource::from_items(
-            [
-                "France",
-                "Germany",
-                "Japan",
-                "Poland",
-                "United Kingdom",
-                "United States",
-            ]
-            .into_iter()
-            .map(|name| Some(Rc::new(name.to_string()) as BoxedValue)),
-        )));
-    }
     if let Some(number) = find_control::<NumberBox>(root, "Number") {
         let weak_output = output.downgrade();
         let weak_number = number.downgrade();

@@ -100,28 +100,99 @@ fn button_click_and_disabled_option_update_native_controls() {
 fn three_state_checkbox_preserves_null_and_reports_each_state() {
     let _application = start();
     let root = examples::create(examples::find("CheckBox").unwrap()).unwrap();
-    let primary = root.get_control::<ToggleButton>("Primary");
-    let output = root.get_control::<TextBlock>("Output");
+    let primary = root.get_control::<ToggleButton>("ThreeState");
+    let output = root.get_control::<TextBlock>("ThreeStateOutput");
     primary.set_is_checked(Some(true));
-    assert_eq!(output.text().as_deref(), Some("Checked"));
+    assert_eq!(output.text().as_deref(), Some("CheckBox is checked."));
     primary.set_is_checked(None);
-    assert_eq!(output.text().as_deref(), Some("Indeterminate"));
+    assert_eq!(
+        output.text().as_deref(),
+        Some("CheckBox state is indeterminate.")
+    );
     primary.set_is_checked(Some(false));
-    assert_eq!(output.text().as_deref(), Some("Unchecked"));
+    assert_eq!(output.text().as_deref(), Some("CheckBox is unchecked."));
 }
 
 #[test]
-fn textbox_counts_unicode_scalar_values_without_revealing_passwords() {
+fn textbox_counts_unicode_scalar_values() {
     let _application = start();
-    for page in ["TextBox", "PasswordBox"] {
-        let root = examples::create(examples::find(page).unwrap()).unwrap();
-        root.get_control::<TextBox>("Primary")
-            .set_text(Some("A🦀é"));
-        assert_eq!(
-            root.get_control::<TextBlock>("Output").text().as_deref(),
-            Some("3 characters")
-        );
-    }
+    let root = examples::create(examples::find("TextBox").unwrap()).unwrap();
+    root.get_control::<TextBox>("Primary")
+        .set_text(Some("A🦀é"));
+    assert_eq!(
+        root.get_control::<TextBlock>("Output").text().as_deref(),
+        Some("3 characters")
+    );
+}
+
+#[test]
+fn password_examples_keep_source_validation_and_reveal_behavior() {
+    let _application = start();
+    let root = examples::create(examples::find("PasswordBox").unwrap()).unwrap();
+    let password = root.get_control::<TextBox>("SimplePassword");
+    let validation = root.get_control::<TextBlock>("PasswordValidation");
+    password.set_text(Some("Password"));
+    assert_eq!(password.text().as_deref(), Some(""));
+    assert_eq!(
+        validation.text().as_deref(),
+        Some("'Password' is not allowed.")
+    );
+    assert!(validation.is_visible());
+    password.set_text(Some("a valid sample value"));
+    assert_eq!(validation.text().as_deref(), Some(""));
+    assert!(!validation.is_visible());
+    password.set_text(Some(""));
+    assert!(validation.is_visible());
+    let reveal = root.get_control::<CheckBox>("revealModeCheckBox");
+    let revealed = root.get_control::<TextBox>("passworBoxWithRevealmode");
+    assert!(!revealed.reveal_password());
+    reveal.set_is_checked(Some(true));
+    assert!(revealed.reveal_password());
+    reveal.set_is_checked(Some(false));
+    assert!(!revealed.reveal_password());
+}
+
+#[test]
+fn checkbox_select_all_keeps_source_aggregate_and_user_cycle_behavior() {
+    let _application = start();
+    let root = examples::create(examples::find("CheckBox").unwrap()).unwrap();
+    let all = root.get_control::<CheckBox>("OptionsAllCheckBox");
+    let options = ["Option1CheckBox", "Option2CheckBox", "Option3CheckBox"]
+        .map(|name| root.get_control::<CheckBox>(name));
+    assert_eq!(all.is_checked(), None);
+    options[1].set_is_checked(Some(false));
+    assert_eq!(all.is_checked(), Some(false));
+    all.set_is_checked(Some(true));
+    assert!(options
+        .iter()
+        .all(|option| option.is_checked() == Some(true)));
+    // A user cycle from checked to indeterminate clears all options in the
+    // source; a programmatic mixed aggregate is retained instead.
+    all.set_is_checked(None);
+    assert_eq!(all.is_checked(), Some(false));
+    assert!(options
+        .iter()
+        .all(|option| option.is_checked() == Some(false)));
+    options[0].set_is_checked(Some(true));
+    assert_eq!(all.is_checked(), None);
+    options[1].set_is_checked(Some(true));
+    options[2].set_is_checked(Some(true));
+    assert_eq!(all.is_checked(), Some(true));
+    let two_state = root.get_control::<CheckBox>("TwoState");
+    two_state.set_is_checked(Some(true));
+    assert_eq!(
+        root.get_control::<TextBlock>("TwoStateOutput")
+            .text()
+            .as_deref(),
+        Some("You checked the box.")
+    );
+    two_state.set_is_checked(Some(false));
+    assert_eq!(
+        root.get_control::<TextBlock>("TwoStateOutput")
+            .text()
+            .as_deref(),
+        Some("You unchecked the box.")
+    );
 }
 
 #[test]
@@ -168,6 +239,12 @@ fn every_catalog_page_opens_in_the_native_shell() {
     for entry in CATALOG {
         gallery.navigate(entry.id);
         assert_eq!(gallery.current_page(), Some(entry.id));
+        assert!(
+            gallery.native_example_error().is_none(),
+            "{}: {:?}",
+            entry.id,
+            gallery.native_example_error()
+        );
     }
 }
 
@@ -408,4 +485,430 @@ fn dropping_native_example_releases_handler_targets() {
     drop(root);
     assert!(primary.upgrade().is_none());
     assert!(output.upgrade().is_none());
+}
+
+#[test]
+fn popup_sample_opens_closes_and_observes_offset_options() {
+    use ferroui_controls::primitives::Popup;
+    use ferroui_controls::{Control, Window};
+    let _application = start();
+    let root = examples::create(examples::find("Popup").unwrap()).unwrap();
+    let window = Window::new();
+    window.set_content(Some(Control::boxed(root.clone())));
+    window.show();
+    let popup = root.get_control::<Popup>("StandardPopup");
+    root.get_control::<Slider>("HorizontalOffset")
+        .set_range_value(42.0);
+    root.get_control::<Slider>("VerticalOffset")
+        .set_range_value(-12.0);
+    assert_eq!(popup.horizontal_offset(), 42.0);
+    assert_eq!(popup.vertical_offset(), -12.0);
+    root.get_control::<Button>("ShowPopup")
+        .raise_event(&RoutedEventArgs::with_event(&Button::click_event()));
+    assert!(popup.is_open());
+    assert!(popup.host().is_some());
+    assert_eq!(
+        root.get_control::<TextBlock>("PopupOutput")
+            .text()
+            .as_deref(),
+        Some("Open")
+    );
+    root.get_control::<Button>("ClosePopup")
+        .raise_event(&RoutedEventArgs::with_event(&Button::click_event()));
+    assert!(!popup.is_open());
+    assert_eq!(
+        root.get_control::<TextBlock>("PopupOutput")
+            .text()
+            .as_deref(),
+        Some("Closed")
+    );
+    window.close();
+}
+
+#[test]
+fn clipboard_sample_uses_host_service_for_copy_paste_formats_and_clear() {
+    use ferroui_base::input::platform::IClipboard;
+    use ferroui_controls::testing::{MockWindowingPlatform, TestClipboardImpl};
+    use ferroui_controls::{Control, Window};
+    let _application = start();
+    let root = examples::create(examples::find("Clipboard").unwrap()).unwrap();
+    let clipboard = TestClipboardImpl::new();
+    let platform = MockWindowingPlatform::create_window_mock();
+    platform.setup_feature::<dyn IClipboard>(clipboard.clipboard());
+    let window = Window::with_impl(platform);
+    window.set_content(Some(Control::boxed(root.clone())));
+    window.show();
+    let click = |name| {
+        root.get_control::<Button>(name)
+            .raise_event(&RoutedEventArgs::with_event(&Button::click_event()))
+    };
+    click("CopyText");
+    assert_eq!(clipboard.text().as_deref(), Some("Copy this text"));
+    assert_eq!(clipboard.set_data_count(), 1);
+    clipboard.set_text(Some("External text 🦀"));
+    click("PasteText");
+    assert_eq!(
+        root.get_control::<TextBox>("PastedText").text().as_deref(),
+        Some("External text 🦀")
+    );
+    click("ShowClipboardFormats");
+    assert!(root
+        .get_control::<TextBlock>("ClipboardOutput")
+        .text()
+        .unwrap()
+        .starts_with("Available formats: "));
+    click("ClearClipboard");
+    assert_eq!(clipboard.clear_count(), 1);
+    assert!(clipboard.text().is_none());
+    click("PasteText");
+    assert_eq!(
+        root.get_control::<TextBlock>("ClipboardOutput")
+            .text()
+            .as_deref(),
+        Some("The clipboard has no text.")
+    );
+    window.close();
+}
+
+#[test]
+fn clipboard_sample_reports_missing_service_and_platform_failure() {
+    use ferroui_base::input::platform::{ClipboardErrorKind, IClipboard};
+    use ferroui_controls::testing::{MockWindowingPlatform, TestClipboardImpl};
+    use ferroui_controls::{Control, Window};
+    let _application = start();
+    let root = examples::create(examples::find("Clipboard").unwrap()).unwrap();
+    let copy = root.get_control::<Button>("CopyText");
+    copy.raise_event(&RoutedEventArgs::with_event(&Button::click_event()));
+    assert_eq!(
+        root.get_control::<TextBlock>("ClipboardOutput")
+            .text()
+            .as_deref(),
+        Some("This window has no clipboard service.")
+    );
+    let clipboard = TestClipboardImpl::throwing(ClipboardErrorKind::AccessDenied);
+    let platform = MockWindowingPlatform::create_window_mock();
+    platform.setup_feature::<dyn IClipboard>(clipboard.clipboard());
+    let window = Window::with_impl(platform);
+    window.set_content(Some(Control::boxed(root.clone())));
+    window.show();
+    copy.raise_event(&RoutedEventArgs::with_event(&Button::click_event()));
+    assert_eq!(
+        root.get_control::<TextBlock>("ClipboardOutput")
+            .text()
+            .as_deref(),
+        Some("Clipboard operation failed: Access to the clipboard was denied.")
+    );
+    window.close();
+}
+
+#[test]
+fn refresh_sample_inserts_source_item_and_completes_its_deferral() {
+    use ferroui_base::threading::Dispatcher;
+    use ferroui_controls::pull_to_refresh::{RefreshContainer, RefreshVisualizerState};
+    use ferroui_controls::{Control, ListBox, Window};
+    let _application = start();
+    let root = examples::create(examples::find("PullToRefresh").unwrap()).unwrap();
+    let window = Window::new();
+    ferroui_controls::testing::add_pull_to_refresh_themes(&window.styles());
+    window.set_content(Some(Control::boxed(root.clone())));
+    window.show();
+    let refresh = root.get_control::<RefreshContainer>("Refresh");
+    let items = root.get_control::<ListBox>("RefreshItems");
+    let visualizer = refresh
+        .visualizer()
+        .expect("the native theme creates a refresh visualizer");
+    assert_eq!(items.items().count(), 5);
+    root.get_control::<Button>("RequestRefresh")
+        .raise_event(&RoutedEventArgs::with_event(&Button::click_event()));
+    assert_eq!(
+        visualizer.refresh_visualizer_state(),
+        RefreshVisualizerState::Refreshing
+    );
+    assert_eq!(
+        root.get_control::<TextBlock>("RefreshOutput")
+            .text()
+            .as_deref(),
+        Some("Refreshing…")
+    );
+    Dispatcher::ui_thread().run_jobs(None);
+    assert_eq!(items.items().count(), 6);
+    assert_eq!(
+        items
+            .items()
+            .get_at(0)
+            .unwrap()
+            .downcast_ref::<String>()
+            .map(String::as_str),
+        Some("NewControl")
+    );
+    assert_eq!(
+        visualizer.refresh_visualizer_state(),
+        RefreshVisualizerState::Idle
+    );
+    assert_eq!(
+        root.get_control::<TextBlock>("RefreshOutput")
+            .text()
+            .as_deref(),
+        Some("NewControl inserted; refresh completed.")
+    );
+    window.close();
+}
+
+#[test]
+fn autosuggest_filter_preserves_all_source_names_and_word_matching() {
+    use crate::control_samples::cats_for_query;
+    assert_eq!(crate::cat_data::CATS.len(), 97);
+    assert_eq!(cats_for_query("").len(), 97);
+    assert_eq!(cats_for_query("AMERICAN BOBTAIL"), ["American Bobtail"]);
+    assert_eq!(cats_for_query("  British   Short "), ["British Shorthair"]);
+    assert_eq!(
+        cats_for_query("a breed absent from the source"),
+        ["No results found"]
+    );
+}
+
+#[test]
+fn autosuggest_example_filters_only_user_changes_and_reports_selected_cat() {
+    use ferroui_base::threading::Dispatcher;
+    use ferroui_controls::winui::AutoSuggestBox;
+    use ferroui_controls::{Control, ListBox, Window};
+    use std::cell::RefCell;
+    use std::rc::Rc;
+    use std::time::Duration;
+    let _application = start();
+    let root = examples::create(examples::find("AutoSuggestBox").unwrap()).unwrap();
+    let suggestions = root.get_control::<AutoSuggestBox>("CatSuggestions");
+    let parts = Rc::new(RefCell::new(None));
+    let captured = parts.clone();
+    suggestions.template_applied(move |_, args| {
+        if let (Some(editor), Some(list)) = (
+            args.name_scope().find_as::<TextBox>("PART_TextBox"),
+            args.name_scope().find_as::<ListBox>("PART_SuggestionsList"),
+        ) {
+            *captured.borrow_mut() = Some((editor, list));
+        }
+    });
+    let window = Window::new();
+    window.set_content(Some(Control::boxed(root.clone())));
+    window.show();
+    let (editor, list) = parts
+        .borrow()
+        .clone()
+        .expect("native editor and suggestion list");
+    let tick = || {
+        for timer in Dispatcher::timers_for_unit_tests() {
+            if timer.interval() == Duration::from_millis(150) {
+                Dispatcher::force_fire_timer_for_unit_tests(&timer);
+            }
+        }
+        Dispatcher::ui_thread().run_jobs(None);
+    };
+    suggestions.set_text("American");
+    tick();
+    assert_eq!(
+        suggestions.items().count(),
+        0,
+        "programmatic changes must not filter"
+    );
+    editor.set_text(Some("British Shorthair"));
+    tick();
+    assert_eq!(suggestions.items().count(), 1);
+    list.set_selected_index(0);
+    assert_eq!(
+        root.get_control::<TextBlock>("SuggestionOutput")
+            .text()
+            .as_deref(),
+        Some("British Shorthair")
+    );
+    editor.set_text(Some("no such breed"));
+    tick();
+    assert_eq!(
+        suggestions
+            .items()
+            .get_at(0)
+            .unwrap()
+            .downcast_ref::<String>()
+            .map(String::as_str),
+        Some("No results found")
+    );
+    window.close();
+}
+
+#[test]
+fn infobar_examples_keep_source_severity_message_action_and_options() {
+    use ferroui_controls::winui::{InfoBar, InfoBarSeverity};
+    use ferroui_controls::HyperlinkButton;
+    let _application = start();
+    let root = examples::create(examples::find("InfoBar").unwrap()).unwrap();
+    let first = root.get_control::<InfoBar>("TestInfoBar1");
+    root.get_control::<ComboBox>("SeverityComboBox")
+        .set_selected_index(3);
+    assert_eq!(first.severity(), InfoBarSeverity::Error);
+    first.set_is_open(false);
+    assert_eq!(
+        root.get_control::<CheckBox>("IsOpenCheckBox1").is_checked(),
+        Some(false)
+    );
+    root.get_control::<CheckBox>("IsOpenCheckBox1")
+        .set_is_checked(Some(true));
+    assert!(first.is_open());
+    let second = root.get_control::<InfoBar>("TestInfoBar2");
+    assert!(second.message().starts_with("A long essential app message"));
+    root.get_control::<ComboBox>("MessageComboBox")
+        .set_selected_index(0);
+    assert_eq!(second.message(), "A short essential app message.");
+    let action = root.get_control::<ComboBox>("ActionButtonComboBox");
+    action.set_selected_index(1);
+    assert_eq!(
+        second
+            .action_button()
+            .unwrap()
+            .content()
+            .unwrap()
+            .downcast_ref::<String>()
+            .map(String::as_str),
+        Some("Action")
+    );
+    action.set_selected_index(2);
+    assert!(second.action_button().unwrap().is::<HyperlinkButton>());
+    action.set_selected_index(0);
+    assert!(second.action_button().is_none());
+    let third = root.get_control::<InfoBar>("TestInfoBar3");
+    root.get_control::<CheckBox>("IsClosableCheckBox")
+        .set_is_checked(Some(false));
+    root.get_control::<CheckBox>("IsIconVisibleCheckBox")
+        .set_is_checked(Some(false));
+    assert!(!third.is_closable());
+    assert!(!third.is_icon_visible());
+}
+
+#[test]
+fn control_search_preserves_title_tokens_prefix_priority_and_unique_metadata() {
+    use crate::control_samples::controls_for_query;
+    assert_eq!(controls_for_query("").len(), 126);
+    assert_eq!(controls_for_query("button")[0].id, "Button");
+    assert_eq!(
+        controls_for_query("split button")
+            .iter()
+            .map(|entry| entry.id)
+            .collect::<Vec<_>>(),
+        ["SplitButton", "ToggleSplitButton"]
+    );
+    assert!(
+        controls_for_query("raises a Click event").is_empty(),
+        "the source searches titles, not subtitles"
+    );
+    let titles: HashSet<_> = CATALOG.iter().map(|entry| entry.title).collect();
+    assert_eq!(
+        titles.len(),
+        CATALOG.len(),
+        "title item values must resolve to one source entry"
+    );
+    assert_eq!(
+        catalog::find("Button").unwrap().subtitle,
+        "A control that responds to user input and raises a Click event."
+    );
+}
+
+#[test]
+fn control_search_uses_chosen_suggestion_before_free_query_and_preserves_no_result() {
+    use ferroui_base::input::{InputElement, Key, KeyEventArgs};
+    use ferroui_controls::winui::AutoSuggestBox;
+    use ferroui_controls::{ItemsSource, ListBox};
+    use std::cell::RefCell;
+    use std::rc::Rc;
+    let _application = start();
+    let root = examples::create(examples::find("AutoSuggestBox").unwrap()).unwrap();
+    let search = root.get_control::<AutoSuggestBox>("ControlSuggestions");
+    let list = Rc::new(RefCell::new(None));
+    let captured = list.clone();
+    search.template_applied(move |_, args| {
+        *captured.borrow_mut() = args.name_scope().find_as::<ListBox>("PART_SuggestionsList")
+    });
+    search.apply_template();
+    let list = list.borrow().clone().expect("native suggestions list");
+    search.set_items_source(Some(ItemsSource::from_strs(["Slider", "Button"])));
+    search.set_is_suggestion_list_open(true);
+    list.set_selected_index(0);
+    search.set_text("Button");
+    let mut enter = KeyEventArgs::new();
+    enter.key = Key::Enter;
+    enter.set_routed_event(Some(InputElement::key_down_event()));
+    search.raise_event(&enter);
+    assert_eq!(
+        root.get_control::<TextBlock>("ControlTitle")
+            .text()
+            .as_deref(),
+        Some("Slider")
+    );
+    search.set_text("button");
+    search.submit_query();
+    assert_eq!(
+        root.get_control::<TextBlock>("ControlTitle")
+            .text()
+            .as_deref(),
+        Some("Button")
+    );
+    assert_eq!(
+        root.get_control::<TextBlock>("ControlSubtitle")
+            .text()
+            .as_deref(),
+        Some(catalog::find("Button").unwrap().subtitle)
+    );
+    search.set_items_source(Some(ItemsSource::from_strs(["No results found"])));
+    search.set_text("No matching title exists");
+    search.set_is_suggestion_list_open(true);
+    list.set_selected_index(0);
+    assert_eq!(
+        search.text(),
+        "No matching title exists",
+        "the sentinel must not autocomplete the query"
+    );
+    let mut enter = KeyEventArgs::new();
+    enter.key = Key::Enter;
+    enter.set_routed_event(Some(InputElement::key_down_event()));
+    search.raise_event(&enter);
+    assert_eq!(
+        root.get_control::<TextBlock>("ControlTitle")
+            .text()
+            .as_deref(),
+        Some("Button")
+    );
+}
+
+#[test]
+fn embedded_control_images_resolve_original_uri_paths_and_exact_bytes() {
+    use ferroui_base::platform::AssetLoader;
+    use ferroui_base::utilities::{Uri, UriKind};
+    use std::io::Read;
+    let _application = start();
+    crate::assets::register();
+    assert_eq!(
+        crate::assets_data::ASSETS.len(),
+        110,
+        "108 files and two explicit source-path case aliases"
+    );
+    for entry in CATALOG {
+        let path = entry
+            .image_uri
+            .strip_prefix("ferres://WinUIGallery/")
+            .unwrap();
+        let expected = crate::assets_data::ASSETS
+            .iter()
+            .find(|(registered, _)| *registered == path)
+            .unwrap()
+            .1;
+        let uri = Uri::new(entry.image_uri, UriKind::Absolute).unwrap();
+        let mut actual = Vec::new();
+        AssetLoader::open(&uri, None)
+            .unwrap()
+            .read_to_end(&mut actual)
+            .unwrap();
+        assert_eq!(
+            actual, expected,
+            "{} resolves its original image bytes",
+            entry.id
+        );
+        assert!(actual.starts_with(b"\x89PNG\r\n\x1a\n"));
+    }
 }

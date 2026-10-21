@@ -6,6 +6,14 @@ The gallery shell is new FerroUI code. The Rust sample behaviors, navigation lay
 and color-contrast calculation adapt the pinned Gallery sources cited in their
 files; the original C# is retained for reference and is not executed.
 
+`Assets/ControlImages/` contains 108 original PNG files copied byte-for-byte from
+the same pinned Gallery repository. `assets-manifest.json` records each original
+path, SHA-256 hash, size and native resource registration. The source URI spellings
+`CheckBox.png` and `AnnotatedScrollbar.png` are registered as aliases for the
+original `Checkbox.png` and `AnnotatedScrollBar.png` files, preserving Windows
+path resolution on case-sensitive hosts. `cat_data.rs` preserves the original
+97 cat names from `AutoSuggestBoxPage.xaml.cs`; its source hash is recorded inline.
+
 ## Microsoft WinUI Gallery
 
     MIT License
@@ -29,4 +37,3 @@ files; the original C# is retained for reference and is not executed.
     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE
-

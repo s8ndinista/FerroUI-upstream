@@ -13,7 +13,7 @@ and live theme selection use real FerroUI controls.
 
 **This is not a completed port of every Gallery behavior.** `port-status.json`
 separates source coverage from executable page coverage. The initial native subset
-contains 62 explicit markup adaptations and a working ScratchPad editor, for 63 partial
+contains 66 explicit markup adaptations and a working ScratchPad editor, for 67 partial
 pages. Each remains `partial`; it does not imply that
 all examples, events, binding expressions, platform capabilities or exact pixels of
 the original page have been reproduced. The generated framework parity reports are
@@ -54,12 +54,30 @@ releases its control tree and callback state.
 
 `Pages/*.xaml` contains reviewed adaptations to the existing framework API.
 `examples.rs` records each adaptation and supplies Rust event handlers. Examples
-include button click output and disabled options, two/three-state check boxes,
-text/password character counts, sliders, selection, layout, dates, menus, flyouts,
+include button click output and disabled options, original two/three-state and
+select-all check-box handlers, password validation/reveal, text character counts,
+sliders, selection, layout, dates, menus, flyouts,
 scrolling, resources and element-name binding. The opt-in WinUI NumberBox, RadioButtons,
-FontIcon, SymbolIcon and Frame/Page contracts are exercised directly by examples
+FontIcon, SymbolIcon, AutoSuggestBox, InfoBar and Frame/Page contracts are exercised directly by examples
 adapted from upstream. They use the framework's property, input, layout, drawing,
 popup and automation infrastructure.
+
+Both AutoSuggestBox examples keep the original event-reason checks, word matching,
+chosen-suggestion precedence and no-results behavior. The detail view uses the
+original title, subtitle and 108 embedded control PNGs through native resource URIs.
+`assets-manifest.json` records exact bytes and the two explicit Windows path-case
+aliases. Unicode lowercase comparison is an explicit approximation to the source's
+CurrentCulture search. Mock-renderer tests verify asset paths/bytes and application
+selection behavior; the capture host performs actual bitmap decoding.
+
+`platform_samples.rs` ports the Popup open/close handlers, asynchronous clipboard
+text/format/clear operations and the RefreshContainer request/deferral example.
+Clipboard access comes from the containing window's existing platform service;
+missing services and operation errors produce visible output. Refresh work runs on
+the UI dispatcher and balances the native deferral even if the page is removed.
+The Popup's placement and the refresh sample's ListBox replacement are explicit
+adaptations. Bitmap/file clipboard operations, clipboard history and roaming,
+custom refresh visualizers and full operating-system/input acceptance remain pending.
 
 The color-contrast page ports the original relative-luminance calculation, contrast
 ratio and pass thresholds to Rust. Its native RGB text inputs and reactive preview
@@ -84,7 +102,9 @@ loader. A failed migration clears the preview and displays the error.
 
 ```sh
 python3 samples/WinUIGallery/generate_catalog.py /path/to/pinned/WinUI-Gallery --check
+python3 samples/WinUIGallery/generate_assets.py /path/to/pinned/WinUI-Gallery --check
 cargo test -p winui-gallery --lib
+cargo check -p winui-gallery --features desktop
 ```
 
 The catalog generator refuses a different upstream commit or tracked local source
@@ -99,6 +119,34 @@ construction of every native adaptation, the native gallery shell, strict WinUI
 preview behavior and actual native event/property interactions. Tests that construct
 controls do not claim an interactive desktop run, pixel equality, keyboard traversal,
 screen-reader interoperability or verification on every host.
+
+The current checkpoint passed **33 library tests** and the desktop compilation check.
+Real Skia/HarfBuzz captures rendered **all 126 pages in light** and five representative
+pages in dark. [Five reviewed frames](../../docs/porting/winui-gallery/captures/README.md)
+show actual native content and a pending page's source browser. The Linux host's
+missing Segoe icon fonts remain visible in AutoSuggestBox/InfoBar glyphs and are
+documented separately from the tested behavior.
+
+### Capture real rendered frames
+
+The optional `capture` feature uses the existing headless platform with real Skia
+drawing, HarfBuzz text shaping and the WinUI theme. It does not require a display
+server. The following command captures actual native sample content in the Gallery
+shell:
+
+```sh
+cargo run -p winui-gallery --features capture --bin winui-gallery-capture -- \
+  --pages=NumberBox,AutoSuggestBox,RadioButton,WebView2 --query=Button \
+  --output-dir=gallery-captures
+```
+
+Use `--dark` for the dark theme or `--all` to visit every catalog page. Capture is a
+rendering smoke check: it does not compare against upstream Windows pixels and does
+not turn a pending page into an implemented page. See `VALIDATION.md` for the tested
+checkpoint, exact commands, source hashes and remaining acceptance boundaries.
+Use `--pages=AutoSuggestBox --query=Button` to submit the source search example and
+capture its native text and image details; the command fails if the selected image
+cannot be decoded by the real renderer.
 
 ## Remaining acceptance
 

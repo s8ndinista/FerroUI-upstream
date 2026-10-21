@@ -28,6 +28,10 @@ pub struct CatalogEntry {
     pub title: &'static str,
     pub category: &'static str,
     pub description: &'static str,
+    /// Exact source metadata used by the AutoSuggestBox details example.
+    pub subtitle: &'static str,
+    /// Embedded native resource URI, retaining the source path's spelling.
+    pub image_uri: &'static str,
     pub source: &'static str,
     pub code_behind: &'static str,
     pub docs: &'static [DocumentationLink],

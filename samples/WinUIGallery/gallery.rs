@@ -39,6 +39,8 @@ struct GalleryState {
     filtered: RefCell<Vec<&'static CatalogEntry>>,
     history: RefCell<NavigationHistory>,
     updating: Cell<bool>,
+    native_example_error: RefCell<Option<String>>,
+    native_example: RefCell<Option<Ref<Control>>>,
     preview_options: WinUIXamlOptions,
 }
 
@@ -83,6 +85,8 @@ impl GalleryView {
             filtered: RefCell::new(Vec::new()),
             history: RefCell::new(NavigationHistory::default()),
             updating: Cell::new(false),
+            native_example_error: RefCell::new(None),
+            native_example: RefCell::new(None),
             preview_options,
         });
         let weak = Rc::downgrade(&state);
@@ -154,6 +158,18 @@ impl GalleryView {
 
     pub fn root(&self) -> Ref<Control> {
         self.state.root.clone()
+    }
+
+    /// The selected page's native construction failure, if any. Source-only
+    /// pages have no construction result and do not count as native coverage.
+    pub fn native_example_error(&self) -> Option<String> {
+        self.state.native_example_error.borrow().clone()
+    }
+
+    /// The selected page's actual native sample root, absent for source-only
+    /// pages or a failed adaptation. Useful to drive bounded host integration.
+    pub fn native_example(&self) -> Option<Ref<Control>> {
+        self.state.native_example.borrow().clone()
     }
     pub fn current_page(&self) -> Option<&'static str> {
         self.state.history.borrow().current()
@@ -244,6 +260,8 @@ impl GalleryState {
             return;
         };
         self.body.children().clear();
+        *self.native_example_error.borrow_mut() = None;
+        *self.native_example.borrow_mut() = None;
         let title = text(entry.title);
         title.set_font_size(32.0);
         title.set_font_weight(FontWeight::SemiBold);
@@ -266,11 +284,16 @@ impl GalleryState {
             heading.set_font_weight(FontWeight::SemiBold);
             self.body.children().add(heading);
             match examples::create(adaptation) {
-                Ok(control) => self.body.children().add(control),
-                Err(error) => self
-                    .body
-                    .children()
-                    .add(text(&format!("Native adaptation failed to load: {error}"))),
+                Ok(control) => {
+                    *self.native_example.borrow_mut() = Some(control.clone());
+                    self.body.children().add(control);
+                }
+                Err(error) => {
+                    *self.native_example_error.borrow_mut() = Some(error.to_string());
+                    self.body
+                        .children()
+                        .add(text(&format!("Native adaptation failed to load: {error}")));
+                }
             }
             self.body.children().add(text(adaptation.notes));
             self.body

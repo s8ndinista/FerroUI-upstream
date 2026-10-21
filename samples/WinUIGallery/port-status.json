@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "source_commit": "14061eeac21c38ae99f302edf3d9136d4f652c4c",
-  "coverage_rule": "The complete catalog and source browser do not establish page or API parity. The 42 native page adaptations remain partial. Runtime load tests establish constructibility; only named interaction tests establish their bounded behaviors.",
+  "coverage_rule": "The complete catalog and source browser do not establish page or API parity. Every native adaptation remains partial. Runtime load tests establish constructibility; only named interaction tests establish their bounded behaviors.",
   "pages": {
     "AccessibilityColorContrast": {
       "status": "partial",
@@ -88,7 +88,8 @@
               "name": "command_bar_examples_keep_click_and_three_state_handlers"
             }
           ],
-          "notes": "The path-icon sample uses the shared CommandBarButton with native click output. Other icon types, accelerators and flyout examples remain pending. Original source substitutions remain in the catalog viewer; chosen native inputs and Rust handlers are explicit adaptations. Rendering/accessibility/platform acceptance is pending."
+          "notes": "The path-icon sample uses the shared CommandBarButton with native click output. Other icon types, accelerators and flyout examples remain pending. Original source substitutions remain in the catalog viewer; chosen native inputs and Rust handlers are explicit adaptations. Rendering/accessibility/platform acceptance is pending.",
+          "source_sha256": "f622185434ea6a824b7758a4cd457087be865146aaa6935c50df6ed4548a78b1"
         }
       ]
     },
@@ -138,7 +139,8 @@
               "name": "command_bar_examples_keep_click_and_three_state_handlers"
             }
           ],
-          "notes": "The three-state path-icon sample uses CommandBarToggleButton; checked, unchecked and indeterminate state remain observable. Original source substitutions remain in the catalog viewer; chosen native inputs and Rust handlers are explicit adaptations. Rendering/accessibility/platform acceptance is pending."
+          "notes": "The three-state path-icon sample uses CommandBarToggleButton; checked, unchecked and indeterminate state remain observable. Original source substitutions remain in the catalog viewer; chosen native inputs and Rust handlers are explicit adaptations. Rendering/accessibility/platform acceptance is pending.",
+          "source_sha256": "d07e986796bdd5725f12fd4b234047ba72150d6ccfe0b39ef2fa2322be9b83bc"
         }
       ]
     },
@@ -146,16 +148,94 @@
       "status": "partial",
       "implementation": [
         "samples/WinUIGallery/Pages/AutoSuggestBox.xaml",
-        "samples/WinUIGallery/examples.rs"
+        "samples/WinUIGallery/examples.rs",
+        "samples/WinUIGallery/control_samples.rs",
+        "samples/WinUIGallery/cat_data.rs",
+        "samples/WinUIGallery/assets.rs",
+        "samples/WinUIGallery/assets_data.rs",
+        "samples/WinUIGallery/assets-manifest.json"
       ],
       "tests": [
         {
           "path": "samples/WinUIGallery/tests.rs",
           "name": "all_reviewed_native_adaptations_load_real_controls"
+        },
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "autosuggest_filter_preserves_all_source_names_and_word_matching"
+        },
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "autosuggest_example_filters_only_user_changes_and_reports_selected_cat"
+        },
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "control_search_preserves_title_tokens_prefix_priority_and_unique_metadata"
+        },
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "control_search_uses_chosen_suggestion_before_free_query_and_preserves_no_result"
+        },
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "embedded_control_images_resolve_original_uri_paths_and_exact_bytes"
         }
       ],
-      "notes": "Native AutoCompleteBox provides country suggestions; WinUI-specific event arguments remain a separate contract. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
-      "examples": []
+      "notes": "Both examples use the opt-in AutoSuggestBox: 97 source cat names, user-only token filtering, chosen-item output and control search/query with original title/subtitle and embedded bitmap details. Catalog titles are explicit item values; CurrentCulture matching and full input/accessibility parity remain pending. Original images retain exact bytes and paths with explicit Windows case aliases; see assets-manifest.json. All acceptance statuses remain partial.",
+      "examples": [
+        {
+          "source": "WinUIGallery/Samples/AutoSuggestBox/BasicAutosuggestBox.txt",
+          "source_sha256": "bf6373ec33a0eb9efb7bc5ae4f88e76b923b4473fc13e4b4827cad0c1ed91343",
+          "status": "partial",
+          "tests": [
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "all_reviewed_native_adaptations_load_real_controls"
+            },
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "autosuggest_filter_preserves_all_source_names_and_word_matching"
+            },
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "autosuggest_example_filters_only_user_changes_and_reports_selected_cat"
+            }
+          ],
+          "notes": "The basic source sample uses the opt-in AutoSuggestBox, all 97 source cat names, UserInput-only split-word filtering and SuggestionChosen output. The control-search/bitmap-detail example and host input/accessibility acceptance remain pending."
+        },
+        {
+          "source": "WinUIGallery/Samples/AutoSuggestBox/AutosuggestboxProvidesSearchboxExperience.txt",
+          "source_sha256": "1b29fd85e90f1d51bbcc88cc2f055a3c0caf3613f754d20e715b9bf31d56d32f",
+          "status": "partial",
+          "tests": [
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "all_reviewed_native_adaptations_load_real_controls"
+            },
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "autosuggest_filter_preserves_all_source_names_and_word_matching"
+            },
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "autosuggest_example_filters_only_user_changes_and_reports_selected_cat"
+            },
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "control_search_preserves_title_tokens_prefix_priority_and_unique_metadata"
+            },
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "control_search_uses_chosen_suggestion_before_free_query_and_preserves_no_result"
+            },
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "embedded_control_images_resolve_original_uri_paths_and_exact_bytes"
+            }
+          ],
+          "notes": "Both examples use the opt-in AutoSuggestBox: 97 source cat names, user-only token filtering, chosen-item output and control search/query with original title/subtitle and embedded bitmap details. Catalog titles are explicit item values; CurrentCulture matching and full input/accessibility parity remain pending. The catalog metadata provides original title/subtitle/image paths. Images decode through the native platform renderer; mock-only tests assert URI/byte provenance, not pixels."
+        }
+      ]
     },
     "Binding": {
       "status": "partial",
@@ -259,7 +339,8 @@
       "status": "partial",
       "implementation": [
         "samples/WinUIGallery/Pages/CheckBox.xaml",
-        "samples/WinUIGallery/examples.rs"
+        "samples/WinUIGallery/examples.rs",
+        "samples/WinUIGallery/input_samples.rs"
       ],
       "tests": [
         {
@@ -269,10 +350,160 @@
         {
           "path": "samples/WinUIGallery/tests.rs",
           "name": "three_state_checkbox_preserves_null_and_reports_each_state"
+        },
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "checkbox_select_all_keeps_source_aggregate_and_user_cycle_behavior"
         }
       ],
-      "notes": "Two-state and three-state inputs use native CheckBox; the output follows IsChecked. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
-      "examples": []
+      "notes": "All three source compositions use native CheckBox with original two/three-state output and select-all synchronization. Keyboard, accessibility and exact rendering acceptance remain pending. All examples remain partial pending complete input, platform, accessibility and rendering acceptance.",
+      "examples": [
+        {
+          "source": "WinUIGallery/Samples/CheckBox/CheckBoxTwoState.txt",
+          "source_sha256": "05b9e8cd42a8805527ff4e60c59f122fc455fab949b844ea5bd9bd6a214ebb0e",
+          "status": "partial",
+          "tests": [
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "all_reviewed_native_adaptations_load_real_controls"
+            },
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "three_state_checkbox_preserves_null_and_reports_each_state"
+            },
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "checkbox_select_all_keeps_source_aggregate_and_user_cycle_behavior"
+            }
+          ],
+          "notes": "All three source compositions use native CheckBox with original two/three-state output and select-all synchronization. Keyboard, accessibility and exact rendering acceptance remain pending. Original page code-behind supplies the corresponding Rust handlers; complete API/render/accessibility parity is not established."
+        },
+        {
+          "source": "WinUIGallery/Samples/CheckBox/CheckBoxThreeState.txt",
+          "source_sha256": "396c1db0163eafc630ed8cab26a509f15eefa0167b8653bfd4e486fc741fe0fb",
+          "status": "partial",
+          "tests": [
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "all_reviewed_native_adaptations_load_real_controls"
+            },
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "three_state_checkbox_preserves_null_and_reports_each_state"
+            },
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "checkbox_select_all_keeps_source_aggregate_and_user_cycle_behavior"
+            }
+          ],
+          "notes": "All three source compositions use native CheckBox with original two/three-state output and select-all synchronization. Keyboard, accessibility and exact rendering acceptance remain pending. Original page code-behind supplies the corresponding Rust handlers; complete API/render/accessibility parity is not established."
+        },
+        {
+          "source": "WinUIGallery/Samples/CheckBox/CheckBoxSelectAll.txt",
+          "source_sha256": "49151e331a2f44f61474f8975304bbc3d510894f41b605590777078ffe2c6c3e",
+          "status": "partial",
+          "tests": [
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "all_reviewed_native_adaptations_load_real_controls"
+            },
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "three_state_checkbox_preserves_null_and_reports_each_state"
+            },
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "checkbox_select_all_keeps_source_aggregate_and_user_cycle_behavior"
+            }
+          ],
+          "notes": "All three source compositions use native CheckBox with original two/three-state output and select-all synchronization. Keyboard, accessibility and exact rendering acceptance remain pending. Original page code-behind supplies the corresponding Rust handlers; complete API/render/accessibility parity is not established."
+        }
+      ]
+    },
+    "Clipboard": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/Clipboard.xaml",
+        "samples/WinUIGallery/examples.rs",
+        "samples/WinUIGallery/platform_samples.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        },
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "clipboard_sample_uses_host_service_for_copy_paste_formats_and_clear"
+        },
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "clipboard_sample_reports_missing_service_and_platform_failure"
+        }
+      ],
+      "notes": "Text copy/paste, available formats and clear use the host clipboard service asynchronously. Bitmap/file operations, history/roaming, content-change notifications and original accessibility announcements remain pending. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "examples": [
+        {
+          "source": "WinUIGallery/Samples/Clipboard/CopyTextClipboard.txt",
+          "status": "partial",
+          "tests": [
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "all_reviewed_native_adaptations_load_real_controls"
+            },
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "clipboard_sample_uses_host_service_for_copy_paste_formats_and_clear"
+            },
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "clipboard_sample_reports_missing_service_and_platform_failure"
+            }
+          ],
+          "notes": "Text copy/paste, available formats and clear use the host clipboard service asynchronously. Bitmap/file operations, history/roaming, content-change notifications and original accessibility announcements remain pending. Mock host tests establish application behavior; real operating-system integration and upstream visual/accessibility acceptance remain pending.",
+          "source_sha256": "2e2ce6ae3ad3b636976aba10f258a15bf544c43ccc3472e9b382d04f01c8595e"
+        },
+        {
+          "source": "WinUIGallery/Samples/Clipboard/PasteTextClipboard.txt",
+          "status": "partial",
+          "tests": [
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "all_reviewed_native_adaptations_load_real_controls"
+            },
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "clipboard_sample_uses_host_service_for_copy_paste_formats_and_clear"
+            },
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "clipboard_sample_reports_missing_service_and_platform_failure"
+            }
+          ],
+          "notes": "Text copy/paste, available formats and clear use the host clipboard service asynchronously. Bitmap/file operations, history/roaming, content-change notifications and original accessibility announcements remain pending. Mock host tests establish application behavior; real operating-system integration and upstream visual/accessibility acceptance remain pending.",
+          "source_sha256": "9728f168c5a1392dad61f9d33f9e34101d07d6fd70bc4a38d2105f2acfb813fd"
+        },
+        {
+          "source": "WinUIGallery/Samples/Clipboard/OtherClipboardOperations.txt",
+          "status": "partial",
+          "tests": [
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "all_reviewed_native_adaptations_load_real_controls"
+            },
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "clipboard_sample_uses_host_service_for_copy_paste_formats_and_clear"
+            },
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "clipboard_sample_reports_missing_service_and_platform_failure"
+            }
+          ],
+          "notes": "Text copy/paste, available formats and clear use the host clipboard service asynchronously. Bitmap/file operations, history/roaming, content-change notifications and original accessibility announcements remain pending. Mock host tests establish application behavior; real operating-system integration and upstream visual/accessibility acceptance remain pending.",
+          "source_sha256": "91205073ef0a6a12960db83044d8b9eb5f35db2197c5914244c34169de690a6a"
+        }
+      ]
     },
     "Color": {
       "status": "partial",
@@ -339,7 +570,8 @@
               "name": "command_bar_examples_keep_click_and_three_state_handlers"
             }
           ],
-          "notes": "The source primary/secondary commands use the shared CommandBar family, observable open state and an explicit HotKey adaptation. Dynamic symbol conversion and the full option set remain pending. Original source substitutions remain in the catalog viewer; chosen native inputs and Rust handlers are explicit adaptations. Rendering/accessibility/platform acceptance is pending."
+          "notes": "The source primary/secondary commands use the shared CommandBar family, observable open state and an explicit HotKey adaptation. Dynamic symbol conversion and the full option set remain pending. Original source substitutions remain in the catalog viewer; chosen native inputs and Rust handlers are explicit adaptations. Rendering/accessibility/platform acceptance is pending.",
+          "source_sha256": "538d33fdc980c18cdcf167e9722d42195f659fcab12565c27d340c80b69a1c44"
         }
       ]
     },
@@ -494,7 +726,8 @@
               "name": "icon_examples_preserve_source_symbol_and_font_glyph"
             }
           ],
-          "notes": "The original path, font and symbol icon examples use native PathIcon and the opt-in FontIcon/SymbolIcon types. Bitmap/SVG variants and unavailable host icon fonts remain pending. Original source substitutions remain in the catalog viewer; chosen native inputs and Rust handlers are explicit adaptations. Rendering/accessibility/platform acceptance is pending."
+          "notes": "The original path, font and symbol icon examples use native PathIcon and the opt-in FontIcon/SymbolIcon types. Bitmap/SVG variants and unavailable host icon fonts remain pending. Original source substitutions remain in the catalog viewer; chosen native inputs and Rust handlers are explicit adaptations. Rendering/accessibility/platform acceptance is pending.",
+          "source_sha256": "3d685830ba542269af10f57b79c62e2d968bc8634b168e664412e893990a90c5"
         },
         {
           "source": "WinUIGallery/Samples/IconElement/IconElementSymboliconButton.txt",
@@ -509,7 +742,8 @@
               "name": "icon_examples_preserve_source_symbol_and_font_glyph"
             }
           ],
-          "notes": "The original path, font and symbol icon examples use native PathIcon and the opt-in FontIcon/SymbolIcon types. Bitmap/SVG variants and unavailable host icon fonts remain pending. Original source substitutions remain in the catalog viewer; chosen native inputs and Rust handlers are explicit adaptations. Rendering/accessibility/platform acceptance is pending."
+          "notes": "The original path, font and symbol icon examples use native PathIcon and the opt-in FontIcon/SymbolIcon types. Bitmap/SVG variants and unavailable host icon fonts remain pending. Original source substitutions remain in the catalog viewer; chosen native inputs and Rust handlers are explicit adaptations. Rendering/accessibility/platform acceptance is pending.",
+          "source_sha256": "ba63288aa473383267134969af16fcd071e34c184037a755298e94bebaea2937"
         },
         {
           "source": "WinUIGallery/Samples/IconElement/IconElementFonticonGlyphSpecificFont.txt",
@@ -524,7 +758,77 @@
               "name": "icon_examples_preserve_source_symbol_and_font_glyph"
             }
           ],
-          "notes": "The original path, font and symbol icon examples use native PathIcon and the opt-in FontIcon/SymbolIcon types. Bitmap/SVG variants and unavailable host icon fonts remain pending. Original source substitutions remain in the catalog viewer; chosen native inputs and Rust handlers are explicit adaptations. Rendering/accessibility/platform acceptance is pending."
+          "notes": "The original path, font and symbol icon examples use native PathIcon and the opt-in FontIcon/SymbolIcon types. Bitmap/SVG variants and unavailable host icon fonts remain pending. Original source substitutions remain in the catalog viewer; chosen native inputs and Rust handlers are explicit adaptations. Rendering/accessibility/platform acceptance is pending.",
+          "source_sha256": "1e756bd5e5bd9a7995f3efec5e646e1c384dcd7497d50c7198ec9994027f2b2a"
+        }
+      ]
+    },
+    "InfoBar": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/InfoBar.xaml",
+        "samples/WinUIGallery/examples.rs",
+        "samples/WinUIGallery/control_samples.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        },
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "infobar_examples_keep_source_severity_message_action_and_options"
+        }
+      ],
+      "notes": "All three original compositions use the opt-in InfoBar with severity, short/long messages, optional button/hyperlink and visibility/closability options. x:Bind is explicitly adapted to ordinary TwoWay Binding; final layout, icons and live-region acceptance remain pending. This is bounded application behavior coverage, not complete source/API/render/accessibility acceptance.",
+      "examples": [
+        {
+          "source": "WinUIGallery/Samples/InfoBar/ClosableInfobarOptionsChange.txt",
+          "source_sha256": "8d728ad450ca0731c1335724d3ae52b1b282e689c01df518f3d5c7bf0e04926c",
+          "status": "partial",
+          "tests": [
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "all_reviewed_native_adaptations_load_real_controls"
+            },
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "infobar_examples_keep_source_severity_message_action_and_options"
+            }
+          ],
+          "notes": "All three original compositions use the opt-in InfoBar with severity, short/long messages, optional button/hyperlink and visibility/closability options. x:Bind is explicitly adapted to ordinary TwoWay Binding; final layout, icons and live-region acceptance remain pending."
+        },
+        {
+          "source": "WinUIGallery/Samples/InfoBar/ClosableInfobarLongShort.txt",
+          "source_sha256": "a75efd92ea14304b69005e89cb538dd5da5e6100c05a5305e6ec051f5ed50221",
+          "status": "partial",
+          "tests": [
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "all_reviewed_native_adaptations_load_real_controls"
+            },
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "infobar_examples_keep_source_severity_message_action_and_options"
+            }
+          ],
+          "notes": "All three original compositions use the opt-in InfoBar with severity, short/long messages, optional button/hyperlink and visibility/closability options. x:Bind is explicitly adapted to ordinary TwoWay Binding; final layout, icons and live-region acceptance remain pending."
+        },
+        {
+          "source": "WinUIGallery/Samples/InfoBar/ClosableInfobarOptionsDisplay.txt",
+          "source_sha256": "d1a0776f95de9546186eaffe15128996cdf1129bc3a5214d09415e760bae3ff1",
+          "status": "partial",
+          "tests": [
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "all_reviewed_native_adaptations_load_real_controls"
+            },
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "infobar_examples_keep_source_severity_message_action_and_options"
+            }
+          ],
+          "notes": "All three original compositions use the opt-in InfoBar with severity, short/long messages, optional button/hyperlink and visibility/closability options. x:Bind is explicitly adapted to ordinary TwoWay Binding; final layout, icons and live-region acceptance remain pending."
         }
       ]
     },
@@ -619,7 +923,8 @@
               "name": "winui_numberbox_example_keeps_expression_nan_and_valuechanged_behavior"
             }
           ],
-          "notes": "The opt-in WinUI NumberBox preserves spin-button, NaN and expression behavior using the original snippets. Locale-specific upstream number formatting remains pending. Original source substitutions remain in the catalog viewer; chosen native inputs and Rust handlers are explicit adaptations. Rendering/accessibility/platform acceptance is pending."
+          "notes": "The opt-in WinUI NumberBox preserves spin-button, NaN and expression behavior using the original snippets. Locale-specific upstream number formatting remains pending. Original source substitutions remain in the catalog viewer; chosen native inputs and Rust handlers are explicit adaptations. Rendering/accessibility/platform acceptance is pending.",
+          "source_sha256": "59699277ad9e163499f51c2cbbe822e76a458a7be9bed3b63a15d9121a94f236"
         },
         {
           "source": "WinUIGallery/Samples/NumberBox/NumberboxEvaluatesExpressions.txt",
@@ -634,7 +939,8 @@
               "name": "winui_numberbox_example_keeps_expression_nan_and_valuechanged_behavior"
             }
           ],
-          "notes": "The opt-in WinUI NumberBox preserves spin-button, NaN and expression behavior using the original snippets. Locale-specific upstream number formatting remains pending. Original source substitutions remain in the catalog viewer; chosen native inputs and Rust handlers are explicit adaptations. Rendering/accessibility/platform acceptance is pending."
+          "notes": "The opt-in WinUI NumberBox preserves spin-button, NaN and expression behavior using the original snippets. Locale-specific upstream number formatting remains pending. Original source substitutions remain in the catalog viewer; chosen native inputs and Rust handlers are explicit adaptations. Rendering/accessibility/platform acceptance is pending.",
+          "source_sha256": "d5848adadd320cd197313234679a1920aa6def65c28c8a8c73c14d3d5d2896e1"
         }
       ]
     },
@@ -672,7 +978,8 @@
               "name": "page_transition_sample_uses_winui_frame_journal_and_source_page_types"
             }
           ],
-          "notes": "The original alternating sample-page layouts use the opt-in WinUI Frame/Page types, back/forward journals and Rust handlers. Navigation transition effects remain pending. Original source substitutions remain in the catalog viewer; chosen native inputs and Rust handlers are explicit adaptations. Rendering/accessibility/platform acceptance is pending."
+          "notes": "The original alternating sample-page layouts use the opt-in WinUI Frame/Page types, back/forward journals and Rust handlers. Navigation transition effects remain pending. Original source substitutions remain in the catalog viewer; chosen native inputs and Rust handlers are explicit adaptations. Rendering/accessibility/platform acceptance is pending.",
+          "source_sha256": "c174de53636f3fa2943c062c973d273a80a563777221787ea68cfccd2e0187b9"
         }
       ]
     },
@@ -680,7 +987,8 @@
       "status": "partial",
       "implementation": [
         "samples/WinUIGallery/Pages/PasswordBox.xaml",
-        "samples/WinUIGallery/examples.rs"
+        "samples/WinUIGallery/examples.rs",
+        "samples/WinUIGallery/input_samples.rs"
       ],
       "tests": [
         {
@@ -689,11 +997,60 @@
         },
         {
           "path": "samples/WinUIGallery/tests.rs",
-          "name": "textbox_counts_unicode_scalar_values_without_revealing_passwords"
+          "name": "password_examples_keep_source_validation_and_reveal_behavior"
         }
       ],
-      "notes": "Password entry uses TextBox.PasswordChar and RevealPassword; a distinct PasswordBox API is still required. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
-      "examples": []
+      "notes": "The three source examples and original validation/reveal handlers use TextBox.PasswordChar and RevealPassword with composed Header. A distinct PasswordBox API and full input/accessibility parity remain pending. All examples remain partial pending complete input, platform, accessibility and rendering acceptance.",
+      "examples": [
+        {
+          "source": "WinUIGallery/Samples/PasswordBox/SimplePasswordbox.txt",
+          "source_sha256": "134ed71f6c67346d81b6b09a2207973f6a2028a4d970a93246b644696368788e",
+          "status": "partial",
+          "tests": [
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "all_reviewed_native_adaptations_load_real_controls"
+            },
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "password_examples_keep_source_validation_and_reveal_behavior"
+            }
+          ],
+          "notes": "The three source examples and original validation/reveal handlers use TextBox.PasswordChar and RevealPassword with composed Header. A distinct PasswordBox API and full input/accessibility parity remain pending. Original page code-behind supplies the corresponding Rust handlers; complete API/render/accessibility parity is not established."
+        },
+        {
+          "source": "WinUIGallery/Samples/PasswordBox/PasswordboxHeaderPlaceholderText.txt",
+          "source_sha256": "9702b97d4f7a7c469595c851894211da67897271815bc4388d89ea2563dbe1d8",
+          "status": "partial",
+          "tests": [
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "all_reviewed_native_adaptations_load_real_controls"
+            },
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "password_examples_keep_source_validation_and_reveal_behavior"
+            }
+          ],
+          "notes": "The three source examples and original validation/reveal handlers use TextBox.PasswordChar and RevealPassword with composed Header. A distinct PasswordBox API and full input/accessibility parity remain pending. Original page code-behind supplies the corresponding Rust handlers; complete API/render/accessibility parity is not established."
+        },
+        {
+          "source": "WinUIGallery/Samples/PasswordBox/PasswordboxRevealMode.txt",
+          "source_sha256": "3e852f716094e0f9210c3dc51b9f73dcbaadab89c12c83b5fb840b28b3283a50",
+          "status": "partial",
+          "tests": [
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "all_reviewed_native_adaptations_load_real_controls"
+            },
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "password_examples_keep_source_validation_and_reveal_behavior"
+            }
+          ],
+          "notes": "The three source examples and original validation/reveal handlers use TextBox.PasswordChar and RevealPassword with composed Header. A distinct PasswordBox API and full input/accessibility parity remain pending. Original page code-behind supplies the corresponding Rust handlers; complete API/render/accessibility parity is not established."
+        }
+      ]
     },
     "PipsPager": {
       "status": "partial",
@@ -725,6 +1082,43 @@
       "notes": "Native TabControl adapts the basic Pivot sample; Pivot-specific input and animation remain pending. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
       "examples": []
     },
+    "Popup": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/Popup.xaml",
+        "samples/WinUIGallery/examples.rs",
+        "samples/WinUIGallery/platform_samples.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        },
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "popup_sample_opens_closes_and_observes_offset_options"
+        }
+      ],
+      "notes": "The source open/close handlers and offset/light-dismiss options use the native Popup. Placement is explicitly relative to its button; WinUI absolute-placement, acrylic and screen-edge parity remain pending. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "examples": [
+        {
+          "source": "WinUIGallery/Samples/Popup/PopupOffsetPositioning.txt",
+          "status": "partial",
+          "tests": [
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "all_reviewed_native_adaptations_load_real_controls"
+            },
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "popup_sample_opens_closes_and_observes_offset_options"
+            }
+          ],
+          "notes": "The source open/close handlers and offset/light-dismiss options use the native Popup. Placement is explicitly relative to its button; WinUI absolute-placement, acrylic and screen-edge parity remain pending. Mock host tests establish application behavior; real operating-system integration and upstream visual/accessibility acceptance remain pending.",
+          "source_sha256": "9508ff9307fb7228d41fd424b569f586e7b1765ed07b7dac72ae601c117fbb96"
+        }
+      ]
+    },
     "ProgressBar": {
       "status": "partial",
       "implementation": [
@@ -739,6 +1133,43 @@
       ],
       "notes": "Both determinate and indeterminate ProgressBar modes use the shared control. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
       "examples": []
+    },
+    "PullToRefresh": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/PullToRefresh.xaml",
+        "samples/WinUIGallery/examples.rs",
+        "samples/WinUIGallery/platform_samples.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        },
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "refresh_sample_inserts_source_item_and_completes_its_deferral"
+        }
+      ],
+      "notes": "The source RefreshContainer request/deferral behavior inserts NewControl on the UI dispatcher. ListView is explicitly adapted to ListBox; the custom visualizer and full gesture/animation parity remain pending. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "examples": [
+        {
+          "source": "WinUIGallery/Samples/PullToRefresh/BasicPulltorefresh.txt",
+          "status": "partial",
+          "tests": [
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "all_reviewed_native_adaptations_load_real_controls"
+            },
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "refresh_sample_inserts_source_item_and_completes_its_deferral"
+            }
+          ],
+          "notes": "The source RefreshContainer request/deferral behavior inserts NewControl on the UI dispatcher. ListView is explicitly adapted to ListBox; the custom visualizer and full gesture/animation parity remain pending. Mock host tests establish application behavior; real operating-system integration and upstream visual/accessibility acceptance remain pending.",
+          "source_sha256": "612fe03ddb05e30068b17cdafb95885edb37dd1e3839e5ad303d7b6e49850941"
+        }
+      ]
     },
     "RadialGradientBrush": {
       "status": "partial",
@@ -786,7 +1217,8 @@
               "name": "radio_groups_port_original_selection_and_color_handlers"
             }
           ],
-          "notes": "Both original groups use opt-in RadioButtons with the existing native RadioButton, source labels and Rust selection/color handlers. Focus, layout and screen-reader parity still require host verification. Original source substitutions remain in the catalog viewer; chosen native inputs and Rust handlers are explicit adaptations. Rendering/accessibility/platform acceptance is pending."
+          "notes": "Both original groups use opt-in RadioButtons with the existing native RadioButton, source labels and Rust selection/color handlers. Focus, layout and screen-reader parity still require host verification. Original source substitutions remain in the catalog viewer; chosen native inputs and Rust handlers are explicit adaptations. Rendering/accessibility/platform acceptance is pending.",
+          "source_sha256": "458306b1d1ef00cb890c7e221d7a849399cf37343a6308a7100542c1484b8a1c"
         },
         {
           "source": "WinUIGallery/Samples/RadioButton/RadioButtonStrings.txt",
@@ -801,7 +1233,8 @@
               "name": "radio_groups_port_original_selection_and_color_handlers"
             }
           ],
-          "notes": "Both original groups use opt-in RadioButtons with the existing native RadioButton, source labels and Rust selection/color handlers. Focus, layout and screen-reader parity still require host verification. Original source substitutions remain in the catalog viewer; chosen native inputs and Rust handlers are explicit adaptations. Rendering/accessibility/platform acceptance is pending."
+          "notes": "Both original groups use opt-in RadioButtons with the existing native RadioButton, source labels and Rust selection/color handlers. Focus, layout and screen-reader parity still require host verification. Original source substitutions remain in the catalog viewer; chosen native inputs and Rust handlers are explicit adaptations. Rendering/accessibility/platform acceptance is pending.",
+          "source_sha256": "5cffd23881ad4c1ce0f68522e2dca2eb0f6c8bf3db7a8bc3e2ce321bafe2de10"
         }
       ]
     },
@@ -1024,7 +1457,7 @@
         },
         {
           "path": "samples/WinUIGallery/tests.rs",
-          "name": "textbox_counts_unicode_scalar_values_without_revealing_passwords"
+          "name": "textbox_counts_unicode_scalar_values"
         }
       ],
       "notes": "Text, placeholder, read-only and multiline examples use existing TextBox properties; Header is composed explicitly. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
