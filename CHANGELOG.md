@@ -4,6 +4,68 @@ All notable changes to FerroUI are recorded in this file. The format follows [Ke
 
 ## [Unreleased]
 
+### Added
+
+- **Components that run again** in `ferroui-view` (phase 1 of the declarative API, `docs/declarative-ui.md`, sections 7 and 8):
+  - `rerender(..)` and `#[component(rerender)]`: a component whose function runs again when a signal it read changes or its parent runs again; `#[component(rerender, memo)]` skips a run for equal parameters;
+  - hooks: `use_hook`, `use_signal`, `use_memo`, `use_effect`, `use_effect_with`; contexts: `provide_context`, `use_context`;
+  - a reconciler that patches the mounted controls into the elements a component returns: siblings matched by key and by place, equal values left alone, values that are gone cleared, handlers attached again, controls kept;
+  - the 7GUIs tasks as components that run again (`samples/SevenGuis/Hooks`), in the scenario tests with the other ports;
+  - `docs/declarative-ui-react.md`, a comparison of the API with React, and the plan of the phases that remain.
+- **XAML and templates** in `ferroui-view` (phase 2, `docs/declarative-ui.md`, section 9):
+  - `ComponentHost`, a control that shows a component in XAML or any tree of controls; `register_component` names components for its `Component` property; `register_types` registers the types of the crate for markup (`using:FerroUI.View`);
+  - `template(|item: T| ..)`, a data template whose items are components, which recycles its hosts through a pool so that a virtualized list patches its items as it scrolls;
+  - `use_data_context`, `use_data_context_value` and `use_parent_control`;
+  - with the feature `xaml`: `load_xaml`, `load_xaml_uri`, `xaml` and `use_xaml`, XAML in a component;
+  - the sample `samples/ViewInterop`: a virtualized directory of 10,000 people with XAML details and a component inside the XAML.
+- **The rest of the API** in `ferroui-view` (phase 3, `docs/declarative-ui.md`, section 10):
+  - the builders of the TreeDataGrid, the colour picker, the dialogs and the ReactiveUI controls, each behind a feature (`treedatagrid`, `color-picker`, `dialogs`, `reactiveui`), from the same generator;
+  - styles: `style("Button.accent").set(..).nested(style("^:pointerover")..)`, `style_of(selector)`, and `.styles([..])` of an element;
+  - hooks: `use_parent_property`, `use_theme_variant`, `use_resource`, `use_resource_as`;
+  - transitions and animations: `transition`, `transition_eased`, `transitions`, `ms`, `animation(..).key_frame(..)`, `use_animation`;
+  - a `Popup` holds its child element, and a property that holds a control of a class (`context_menu`) takes an element;
+  - `ferroui-view` exports its type model, so compiled XAML names `ComponentHost`; `samples/ViewInterop` compiles its XAML;
+  - the sample `samples/ViewGallery`: styles, the theme variant and resources, a transition, a context menu, a `ColorView` and a `TreeDataGrid`, light and dark.
+
+### Changed
+
+- **`ferroui-view`**: mounting is built on instances that the reconciler patches (`mount.rs`). A routed handler attached by an element is detached when the owner of the element ends. A dynamic list may give other dynamic lists.
+
+## [0.4.0-preview.1] - 2026-10-20
+
+The first preview of 0.4. It adds:
+- a declarative Rust API for user interfaces without XAML: element builders for every control, the `rsx!` macro and `#[component]`, and signals that the properties of controls follow ([docs/declarative-ui.md](docs/declarative-ui.md), phase 0 of issue #237);
+- the 7GUIs as samples, each task in two versions, one with the builders and one with the macros;
+- the performance work on the Vello backend: in software it is now as fast as Skia or faster on macOS, Linux and Windows, as it is with ANGLE on the Windows virtual machine, and on Metal it is faster for partial redraws and effects ([docs/porting/vello-performance.md](docs/porting/vello-performance.md)).
+
+Two crates join: `ferroui-view` and `ferroui-view-macros`. As a preview, it may change any part of the public API.
+
+### Added
+
+- **`ferroui-view`**: the declarative API, built beside the controls and adding nothing to them:
+  - an element tree that is data (the class, a key, a name, classes, property values, handlers and children), mounted into controls between `begin_init` and `end_init`;
+  - element builders with chained setters for every control and property of `ferroui-controls`, generated from their sources by `scripts/generate_view_builders.py` (a check in the continuous integration keeps them current); a setter takes a value, a signal, a memo or a closure, with conversions of the common types;
+  - a reactive runtime of signals, memos, effects and owners with `Copy` handles, which the properties of controls follow;
+  - children that follow state: keyed lists (`for_each`), conditions (`show`, `show_else`) and `dynamic`;
+  - `launch`, `launch_with`, `launch_themed` and `open_window` (feature `desktop`).
+- **`ferroui-view-macros`**: `rsx!`, with attributes, shorthand, attached properties (`Grid.row`), method-call attributes, `if` and `for`; and `#[component]`, which makes a function a component with its builder.
+- **The 7GUIs samples** (`samples/SevenGuis`): counter, temperature converter, flight booker, timer, CRUD, circle drawer and cells, each a crate of its own in a builders version and a macros version, on the WinUI 3 theme, with a shared crate for the logic and the state and 14 scenario tests. The screenshots and the code of each are in [docs/declarative-ui.md](docs/declarative-ui.md).
+- **Vello performance**, rounds 1 to 5 and an experimental round (#263 to #268), on the published Vello crates without patches:
+  - rectangles and rectangle clips drawn by the renderers' own paths; text of the hybrid mode from its glyph atlas;
+  - the CPU mode keeps its render contexts, renders kept targets and windows only where they changed, renders large scenes on the thread pool of `vello_cpu`, and keeps the pictures of box shadows;
+  - the GPU mode draws its filters on the device and renders kept targets only where they are cleared;
+  - on Linux and Windows a device of the backend's own (Vulkan or OpenGL through EGL; Direct3D 12), and the hybrid mode on the OpenGL context of the platform (ANGLE on Windows);
+  - a depth buffer for the hybrid renderer, so opaque content is drawn front to back; the Metal queues ordered by a shared event instead of a wait on the processor;
+  - `FERROUI_FRAME_TIMES`, and benchmark and profiling scripts (`scripts/vello-perf`).
+- **Draw-list fragments**: `IDrawingContextImplWithFragments` in `ferroui-base`, an optional extension of the drawing context (`None` by default), lets a backend keep what it made of the commands of a draw-list visual and draw it again in later frames until the commands or their resources change. The GPU mode of Vello uses it. The deviation is recorded in `docs/porting/DEVIATIONS.md`.
+
+### Known limitations
+
+- **No reconciler yet.** A component runs once; what changes later is changed through signals and the children that follow state. Running a component again and comparing its element trees is the next phase ([docs/declarative-ui.md](docs/declarative-ui.md), section 8).
+- **Builders for the controls of `ferroui-controls` only.** The TreeDataGrid, the colour picker and other crates of controls are used through `Element::Existing` until the generator covers them.
+- **Vello stays optional.** Skia is the default backend. On a real GPU, a full redraw (scrolling, a page drawn again) is still slower with Vello than with Skia. Vulkan and Direct3D 12 were tested in software only, not on hardware.
+- The limitations of 0.3.0 below still apply.
+
 ## [0.3.0] - 2026-10-19
 
 The third release. It is `0.3.0-preview.1` as a stable release: the reactive foundation for applications written in the MVVM pattern, with nothing changed since the preview. It contains:
@@ -239,7 +301,8 @@ The preview makes the framework available as crates so that it can be tried outs
 - **Documentation.** The API documentation is the documentation comments carried over by the port; there are no guides beyond the README and the documents under `docs/`. Not every crate is expected to build on docs.rs (see `docs/release.md`).
 - **Tests of the published crates.** The packages hold the sources of the tests but not the test fonts and images of the Skia backend; the test suites are run from the repository.
 
-[Unreleased]: https://github.com/wieslawsoltes/FerroUI/compare/v0.3.0...main
+[Unreleased]: https://github.com/wieslawsoltes/FerroUI/compare/v0.4.0-preview.1...main
+[0.4.0-preview.1]: https://github.com/wieslawsoltes/FerroUI/releases/tag/v0.4.0-preview.1
 [0.3.0]: https://github.com/wieslawsoltes/FerroUI/releases/tag/v0.3.0
 [0.3.0-preview.1]: https://github.com/wieslawsoltes/FerroUI/releases/tag/v0.3.0-preview.1
 [0.2.0]: https://github.com/wieslawsoltes/FerroUI/releases/tag/v0.2.0

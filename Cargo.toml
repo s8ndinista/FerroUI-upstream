@@ -11,6 +11,8 @@ members = [
     "src/FerroUI.ReactiveUI.Controls",
     "src/FerroUI.Base",
     "src/FerroUI.Controls",
+    "src/FerroUI.View",
+    "src/FerroUI.View.Macros",
     "src/FerroUI.Controls.ColorPicker",
     "src/TreeDataGrid/FerroUI.TreeDataGrid.Core",
     "src/TreeDataGrid/FerroUI.Controls.TreeDataGrid",
@@ -65,6 +67,31 @@ members = [
     "tests/FerroUI.IntegrationTests.Appium",
     "tests/FerroUI.IntegrationTests.Win32",
     "tests/FerroUI.DesignerSupport.Tests",
+    "samples/SevenGuis/Model",
+    "samples/SevenGuis/Builders/Counter",
+    "samples/SevenGuis/Macros/Counter",
+    "samples/SevenGuis/Builders/Temperature",
+    "samples/SevenGuis/Macros/Temperature",
+    "samples/SevenGuis/Builders/FlightBooker",
+    "samples/SevenGuis/Macros/FlightBooker",
+    "samples/SevenGuis/Builders/Timer",
+    "samples/SevenGuis/Macros/Timer",
+    "samples/SevenGuis/Builders/Crud",
+    "samples/SevenGuis/Macros/Crud",
+    "samples/SevenGuis/Builders/CircleDrawer",
+    "samples/SevenGuis/Macros/CircleDrawer",
+    "samples/SevenGuis/Builders/Cells",
+    "samples/SevenGuis/Macros/Cells",
+    "samples/SevenGuis/Hooks/Counter",
+    "samples/SevenGuis/Hooks/Temperature",
+    "samples/SevenGuis/Hooks/FlightBooker",
+    "samples/SevenGuis/Hooks/Timer",
+    "samples/SevenGuis/Hooks/Crud",
+    "samples/SevenGuis/Hooks/CircleDrawer",
+    "samples/SevenGuis/Hooks/Cells",
+    "samples/SevenGuis/Tests",
+    "samples/ViewInterop",
+    "samples/ViewGallery",
     "samples/MiniMvvm",
     "samples/ControlCatalog",
     "samples/ControlCatalog.Desktop",
@@ -125,6 +152,8 @@ ferroui-reactiveui-testing = { version = "=0.4.0-preview.1", path = "src/FerroUI
 ferroui-reactiveui-controls = { version = "=0.4.0-preview.1", path = "src/FerroUI.ReactiveUI.Controls" }
 ferroui-base = { version = "=0.4.0-preview.1", path = "src/FerroUI.Base" }
 ferroui-controls = { version = "=0.4.0-preview.1", path = "src/FerroUI.Controls" }
+ferroui-view = { version = "=0.4.0-preview.1", path = "src/FerroUI.View" }
+ferroui-view-macros = { version = "=0.4.0-preview.1", path = "src/FerroUI.View.Macros" }
 ferroui-controls-color-picker = { version = "=0.4.0-preview.1", path = "src/FerroUI.Controls.ColorPicker" }
 ferroui-treedatagrid-core = { version = "=0.4.0-preview.1", path = "src/TreeDataGrid/FerroUI.TreeDataGrid.Core" }
 ferroui-controls-treedatagrid = { version = "=0.4.0-preview.1", path = "src/TreeDataGrid/FerroUI.Controls.TreeDataGrid" }
