@@ -11,7 +11,7 @@
       "category": "build",
       "status": "not_applicable",
       "rust_files": [],
-      "notes": "C++/MSBuild project glue is replaced by the existing Cargo crate."
+      "notes": "C++/MSBuild project scaffolding is replaced by the existing Cargo crates; no runtime behavior is omitted by this build-file disposition."
     },
     {
       "path": "controls/dev/InkCanvas/APITests/InkCanvas_APITests.shproj",
@@ -20,43 +20,55 @@
       "category": "build",
       "status": "not_applicable",
       "rust_files": [],
-      "notes": "C++/MSBuild project glue is replaced by the existing Cargo crate."
+      "notes": "C++/MSBuild project scaffolding is replaced by the existing Cargo crates; no runtime behavior is omitted by this build-file disposition."
     },
     {
       "path": "controls/dev/InkCanvas/APITests/InkCanvasTests.cs",
       "sha": "e629c9751b8f50891ec10b40b7c0bbe1056d743b",
       "size": 17469,
       "category": "api-tests",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "status": "partial",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/inking_tests.rs"
+      ],
+      "notes": "Every source test method is retained in tests-map.json. Mapped Rust tests cover selected equivalent scenarios; missing UI, localization and platform checks remain explicit."
     },
     {
       "path": "controls/dev/InkCanvas/InkCanvas.cpp",
       "sha": "c71db8d44a9c03cb771df2ea0d3c8535be09d09d",
       "size": 30260,
       "category": "control",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "status": "partial",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_canvas.rs"
+      ],
+      "notes": "Uses FerroUI layout, drawing and routed input instead of a hosted external composition visual. Device-backed rendering/latency, exact native pixels and platform validation remain open."
     },
     {
       "path": "controls/dev/InkCanvas/InkCanvas.h",
       "sha": "40fb32f2ee89614eaabfe1b9e20d6b4f5bdbea96",
       "size": 5484,
       "category": "control",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "status": "partial",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_canvas.rs"
+      ],
+      "notes": "Uses FerroUI layout, drawing and routed input instead of a hosted external composition visual. Device-backed rendering/latency, exact native pixels and platform validation remain open."
     },
     {
       "path": "controls/dev/InkCanvas/InkCanvas.idl",
       "sha": "bf2ace84c1fe90352b9b4daca91bcfa1d275b7b0",
       "size": 8119,
       "category": "api-contract",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "status": "partial",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_presenter.rs",
+        "src/FerroUI.Controls/inking/ink_stroke_container.rs",
+        "src/FerroUI.Controls/inking/ink_input.rs",
+        "src/FerroUI.Controls/inking/ink_synchronizer.rs",
+        "src/FerroUI.Controls/inking/ink_canvas.rs"
+      ],
+      "notes": "Exact IDL snapshot is preserved. Every declared type and member has an individual mapping/status in api-map.json; Rust ownership and framework-specific signatures are intentional."
     },
     {
       "path": "controls/dev/InkCanvas/InkCanvas.vcxitems",
@@ -65,52 +77,74 @@
       "category": "build",
       "status": "not_applicable",
       "rust_files": [],
-      "notes": "C++/MSBuild project glue is replaced by the existing Cargo crate."
+      "notes": "C++/MSBuild project scaffolding is replaced by the existing Cargo crates; no runtime behavior is omitted by this build-file disposition."
     },
     {
       "path": "controls/dev/InkCanvas/InkCanvasAutomationPeer.cpp",
       "sha": "06c82689f9fe07f4768e3ed3fc84ae7c684278b7",
       "size": 4919,
       "category": "automation",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "status": "partial",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_canvas_automation_peer.rs"
+      ],
+      "notes": "Pane semantics and clipped FerroUI bounds are implemented. Upstream self-clip, scroll-viewport and detached-root cases require the remaining dedicated scenario tests."
     },
     {
       "path": "controls/dev/InkCanvas/InkCanvasAutomationPeer.h",
       "sha": "a11c0c4b0590956fd8d5c935c8473c9f877598cc",
       "size": 826,
       "category": "automation",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "status": "partial",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_canvas_automation_peer.rs"
+      ],
+      "notes": "Pane semantics and clipped FerroUI bounds are implemented. Upstream self-clip, scroll-viewport and detached-root cases require the remaining dedicated scenario tests."
     },
     {
       "path": "controls/dev/InkCanvas/InkCanvasAutomationPeer.idl",
       "sha": "f979448d37a2d70dbf93f3055e8ecc0abd724b01",
       "size": 227,
       "category": "api-contract",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "status": "adapted",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_canvas_automation_peer.rs"
+      ],
+      "notes": "Exact IDL snapshot is preserved. Every declared type and member has an individual mapping/status in api-map.json; Rust ownership and framework-specific signatures are intentional."
     },
     {
       "path": "controls/dev/InkCanvas/InkPresenter.cpp",
       "sha": "826d5cbd3f7ab7e5bd1c8f37f4cf745ee0a873e7",
       "size": 38802,
       "category": "service",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "status": "partial",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_presenter.rs",
+        "src/FerroUI.Controls/inking/ink_input.rs",
+        "src/FerroUI.Controls/inking/ink_events.rs",
+        "src/FerroUI.Controls/inking/ink_synchronizer.rs",
+        "src/FerroUI.Controls/inking/ink_stroke_container.rs",
+        "src/FerroUI.Controls/inking/ink_platform_services.rs",
+        "src/Windows/FerroUI.WinUI/inking.rs"
+      ],
+      "notes": "Split into portable service modules instead of an OS-proxy header/implementation. Cached properties/events, lifetimes and drying are mapped; native independent composition/thread behavior is not implemented."
     },
     {
       "path": "controls/dev/InkCanvas/InkPresenter.h",
       "sha": "e1191107642e3a69d4fdd639362531da68b38b07",
       "size": 23310,
       "category": "service",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "status": "partial",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_presenter.rs",
+        "src/FerroUI.Controls/inking/ink_input.rs",
+        "src/FerroUI.Controls/inking/ink_events.rs",
+        "src/FerroUI.Controls/inking/ink_synchronizer.rs",
+        "src/FerroUI.Controls/inking/ink_stroke_container.rs",
+        "src/FerroUI.Controls/inking/ink_platform_services.rs",
+        "src/Windows/FerroUI.WinUI/inking.rs"
+      ],
+      "notes": "Split into portable service modules instead of an OS-proxy header/implementation. Cached properties/events, lifetimes and drying are mapped; native independent composition/thread behavior is not implemented."
     },
     {
       "path": "controls/dev/InkCanvas/InteractionTests/InkCanvas_InteractionTests.projitems",
@@ -119,7 +153,7 @@
       "category": "build",
       "status": "not_applicable",
       "rust_files": [],
-      "notes": "C++/MSBuild project glue is replaced by the existing Cargo crate."
+      "notes": "C++/MSBuild project scaffolding is replaced by the existing Cargo crates; no runtime behavior is omitted by this build-file disposition."
     },
     {
       "path": "controls/dev/InkCanvas/InteractionTests/InkCanvas_InteractionTests.shproj",
@@ -128,7 +162,7 @@
       "category": "build",
       "status": "not_applicable",
       "rust_files": [],
-      "notes": "C++/MSBuild project glue is replaced by the existing Cargo crate."
+      "notes": "C++/MSBuild project scaffolding is replaced by the existing Cargo crates; no runtime behavior is omitted by this build-file disposition."
     },
     {
       "path": "controls/dev/InkCanvas/InteractionTests/InkCanvasTests.cs",
@@ -137,7 +171,7 @@
       "category": "interaction-tests",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "The Windows interaction harness and physical UI scenarios have not been ported/executed. In-process Rust tests are separately mapped and do not replace this suite."
     },
     {
       "path": "controls/dev/InkCanvas/TestUI/InkCanvas_TestUI.projitems",
@@ -146,7 +180,7 @@
       "category": "build",
       "status": "not_applicable",
       "rust_files": [],
-      "notes": "C++/MSBuild project glue is replaced by the existing Cargo crate."
+      "notes": "C++/MSBuild project scaffolding is replaced by the existing Cargo crates; no runtime behavior is omitted by this build-file disposition."
     },
     {
       "path": "controls/dev/InkCanvas/TestUI/InkCanvas_TestUI.shproj",
@@ -155,25 +189,31 @@
       "category": "build",
       "status": "not_applicable",
       "rust_files": [],
-      "notes": "C++/MSBuild project glue is replaced by the existing Cargo crate."
+      "notes": "C++/MSBuild project scaffolding is replaced by the existing Cargo crates; no runtime behavior is omitted by this build-file disposition."
     },
     {
       "path": "controls/dev/InkCanvas/TestUI/InkCanvasPage.xaml",
       "sha": "2738b9444b512ba55b7a29b2a975bc6d0014795b",
       "size": 1762,
       "category": "sample",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "status": "partial",
+      "rust_files": [
+        "samples/ControlCatalog/Pages/inking_page.rs",
+        "samples/ControlCatalog/Pages/InkingPage.xaml"
+      ],
+      "notes": "FerroUI ControlCatalog provides a combined canvas/toolbar demonstration with pen/mouse/touch enabled, clear and portable snapshot save/restore actions. It is a new framework sample, not a one-for-one lift of this Windows test-page scenario set."
     },
     {
       "path": "controls/dev/InkCanvas/TestUI/InkCanvasPage.xaml.cs",
       "sha": "118d49de9f3c86c7cbe3fc51796d240ba1d03cf9",
       "size": 636,
       "category": "sample",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "status": "partial",
+      "rust_files": [
+        "samples/ControlCatalog/Pages/inking_page.rs",
+        "samples/ControlCatalog/Pages/InkingPage.xaml"
+      ],
+      "notes": "FerroUI ControlCatalog provides a combined canvas/toolbar demonstration with pen/mouse/touch enabled, clear and portable snapshot save/restore actions. It is a new framework sample, not a one-for-one lift of this Windows test-page scenario set."
     },
     {
       "path": "controls/dev/InkToolbar/APITests/InkToolbar_APITests.projitems",
@@ -182,7 +222,7 @@
       "category": "build",
       "status": "not_applicable",
       "rust_files": [],
-      "notes": "C++/MSBuild project glue is replaced by the existing Cargo crate."
+      "notes": "C++/MSBuild project scaffolding is replaced by the existing Cargo crates; no runtime behavior is omitted by this build-file disposition."
     },
     {
       "path": "controls/dev/InkToolbar/APITests/InkToolbar_APITests.shproj",
@@ -191,43 +231,53 @@
       "category": "build",
       "status": "not_applicable",
       "rust_files": [],
-      "notes": "C++/MSBuild project glue is replaced by the existing Cargo crate."
+      "notes": "C++/MSBuild project scaffolding is replaced by the existing Cargo crates; no runtime behavior is omitted by this build-file disposition."
     },
     {
       "path": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
       "sha": "507a09671db4d5ba6bc1314965c48cc607adbdb9",
       "size": 74505,
       "category": "api-tests",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "status": "partial",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_tests.rs"
+      ],
+      "notes": "Every source test method is retained in tests-map.json. Mapped Rust tests cover selected equivalent scenarios; missing UI, localization and platform checks remain explicit."
     },
     {
       "path": "controls/dev/InkToolbar/ButtonManager.cpp",
       "sha": "7bbec749a08809d47ad84aae928db313f6e139c9",
       "size": 34550,
       "category": "support",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "status": "partial",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar.rs",
+        "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+      ],
+      "notes": "Functional default/custom children, active-tool orchestration, target precedence, palettes and erase-all behavior use FerroUI. Full upstream templates, locale/contrast behavior and native stencil details remain open."
     },
     {
       "path": "controls/dev/InkToolbar/ButtonManager.h",
       "sha": "acdf7e2919c09c7b310627649b8e8fa19e043d7f",
       "size": 7620,
       "category": "support",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "status": "partial",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar.rs",
+        "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+      ],
+      "notes": "Functional default/custom children, active-tool orchestration, target precedence, palettes and erase-all behavior use FerroUI. Full upstream templates, locale/contrast behavior and native stencil details remain open."
     },
     {
       "path": "controls/dev/InkToolbar/ColorNames.h",
       "sha": "85755c8bffc755d13703772d4247e26f05b7a25a",
       "size": 4023,
       "category": "support",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "status": "partial",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/color_names.rs"
+      ],
+      "notes": "Portable palette labels use an English color-name helper. Locale resources and the upstream complete localized naming behavior are not ported."
     },
     {
       "path": "controls/dev/InkToolbar/InkToolbar_themeresources.xaml",
@@ -236,34 +286,45 @@
       "category": "theme",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "Upstream XAML template/theme resource file is not translated. Functional controls reuse FerroUI base themes and composition; complete visual states, glyphs, template parts and animations need explicit mapping and comparisons."
     },
     {
       "path": "controls/dev/InkToolbar/InkToolbar.cpp",
       "sha": "c6b80cd271431f6f8611b51e6a024c3566c1acf1",
       "size": 68616,
       "category": "control",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "status": "partial",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar.rs",
+        "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+      ],
+      "notes": "Functional default/custom children, active-tool orchestration, target precedence, palettes and erase-all behavior use FerroUI. Full upstream templates, locale/contrast behavior and native stencil details remain open."
     },
     {
       "path": "controls/dev/InkToolbar/InkToolbar.h",
       "sha": "e11fcc63f00f5a004c8a3478d33ac413f10df908",
       "size": 11075,
       "category": "control",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "status": "partial",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar.rs",
+        "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+      ],
+      "notes": "Functional default/custom children, active-tool orchestration, target precedence, palettes and erase-all behavior use FerroUI. Full upstream templates, locale/contrast behavior and native stencil details remain open."
     },
     {
       "path": "controls/dev/InkToolbar/InkToolbar.idl",
       "sha": "40d610303b67f970dd49d3cb9af8c1d15b114e55",
       "size": 11741,
       "category": "api-contract",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "status": "partial",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_types.rs",
+        "src/FerroUI.Controls/inking/ink_toolbar.rs",
+        "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs",
+        "src/FerroUI.Controls/inking/ink_toolbar_configuration.rs"
+      ],
+      "notes": "Exact IDL snapshot is preserved. Every declared type and member has an individual mapping/status in api-map.json; Rust ownership and framework-specific signatures are intentional."
     },
     {
       "path": "controls/dev/InkToolbar/InkToolbar.vcxitems",
@@ -272,7 +333,7 @@
       "category": "build",
       "status": "not_applicable",
       "rust_files": [],
-      "notes": "C++/MSBuild project glue is replaced by the existing Cargo crate."
+      "notes": "C++/MSBuild project scaffolding is replaced by the existing Cargo crates; no runtime behavior is omitted by this build-file disposition."
     },
     {
       "path": "controls/dev/InkToolbar/InkToolbar.xaml",
@@ -281,358 +342,437 @@
       "category": "theme",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "Upstream XAML template/theme resource file is not translated. Functional controls reuse FerroUI base themes and composition; complete visual states, glyphs, template parts and animations need explicit mapping and comparisons."
     },
     {
       "path": "controls/dev/InkToolbar/InkToolbarAutomationPeer.cpp",
       "sha": "c46ff666e1d275f6cd2e58a3e9fa963588b92acf",
       "size": 798,
       "category": "automation",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "status": "partial",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_automation_peer.rs"
+      ],
+      "notes": "Named FerroUI peers provide selection/toggle/expand-collapse/range/value through framework providers. Complete pinned accessible names, flyout state behavior and localized descriptions still need scenario and UI comparison."
     },
     {
       "path": "controls/dev/InkToolbar/InkToolbarAutomationPeer.h",
       "sha": "c245bf19daf43a420365f70b75b961a0e80e6531",
       "size": 617,
       "category": "automation",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "status": "partial",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_automation_peer.rs"
+      ],
+      "notes": "Named FerroUI peers provide selection/toggle/expand-collapse/range/value through framework providers. Complete pinned accessible names, flyout state behavior and localized descriptions still need scenario and UI comparison."
     },
     {
       "path": "controls/dev/InkToolbar/InkToolbarAutomationPeer.idl",
       "sha": "002665c759e179176d3841d9b0d2d24befbeb12c",
       "size": 1276,
       "category": "api-contract",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "status": "adapted",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_automation_peer.rs"
+      ],
+      "notes": "Exact IDL snapshot is preserved. Every declared type and member has an individual mapping/status in api-map.json; Rust ownership and framework-specific signatures are intentional."
     },
     {
       "path": "controls/dev/InkToolbar/InkToolbarBallpointPenButton.h",
       "sha": "8cb94dfb35462eed51c21859ebe902e135189f45",
       "size": 1621,
       "category": "control",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "status": "partial",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+      ],
+      "notes": "Control family is consolidated into one idiomatic FerroUI subclass module with properties and behavior. Full upstream visual templates/localization, stencil manipulation or pencil pixel parity remain separately open as applicable."
     },
     {
       "path": "controls/dev/InkToolbar/InkToolbarCustomPen.h",
       "sha": "d1c2a7f9b4ed4f35fcba78d77dbfc18b0eb6eb9a",
       "size": 1318,
       "category": "control",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "status": "adapted",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+      ],
+      "notes": "Custom drawing-attribute virtual dispatch uses FerroUI class/trait extension hooks, preserving the public customization contract."
     },
     {
       "path": "controls/dev/InkToolbar/InkToolbarCustomPenButton.h",
       "sha": "c75724a0f589b7196646c142dc2066d26a0d3d14",
       "size": 1499,
       "category": "control",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "status": "partial",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+      ],
+      "notes": "Control family is consolidated into one idiomatic FerroUI subclass module with properties and behavior. Full upstream visual templates/localization, stencil manipulation or pencil pixel parity remain separately open as applicable."
     },
     {
       "path": "controls/dev/InkToolbar/InkToolbarCustomToggleButton.h",
       "sha": "a1dae037e016a1b07016d7eb8a27f50e3afbf224",
       "size": 656,
       "category": "control",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "status": "partial",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+      ],
+      "notes": "Control family is consolidated into one idiomatic FerroUI subclass module with properties and behavior. Full upstream visual templates/localization, stencil manipulation or pencil pixel parity remain separately open as applicable."
     },
     {
       "path": "controls/dev/InkToolbar/InkToolbarCustomToolButton.h",
       "sha": "a3680f93c0a448d680b3c9543c811b6d682431a8",
       "size": 950,
       "category": "control",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "status": "partial",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+      ],
+      "notes": "Control family is consolidated into one idiomatic FerroUI subclass module with properties and behavior. Full upstream visual templates/localization, stencil manipulation or pencil pixel parity remain separately open as applicable."
     },
     {
       "path": "controls/dev/InkToolbar/InkToolbarEraserButton.cpp",
       "sha": "bbd60aedc3452e2bc3a990106b10ba4d2e13e52e",
       "size": 20123,
       "category": "control",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "status": "partial",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+      ],
+      "notes": "Control family is consolidated into one idiomatic FerroUI subclass module with properties and behavior. Full upstream visual templates/localization, stencil manipulation or pencil pixel parity remain separately open as applicable."
     },
     {
       "path": "controls/dev/InkToolbar/InkToolbarEraserButton.h",
       "sha": "33d52f855ba4751a24a79028afab81f20f184426",
       "size": 4642,
       "category": "control",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "status": "partial",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+      ],
+      "notes": "Control family is consolidated into one idiomatic FerroUI subclass module with properties and behavior. Full upstream visual templates/localization, stencil manipulation or pencil pixel parity remain separately open as applicable."
     },
     {
       "path": "controls/dev/InkToolbar/InkToolbarEraserButtonInternal.h",
       "sha": "deffbe93ae76fcff678e1c270734efb83e9d54e9",
       "size": 450,
       "category": "control",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "status": "partial",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+      ],
+      "notes": "Control family is consolidated into one idiomatic FerroUI subclass module with properties and behavior. Full upstream visual templates/localization, stencil manipulation or pencil pixel parity remain separately open as applicable."
     },
     {
       "path": "controls/dev/InkToolbar/InkToolbarFlyoutHelper.h",
       "sha": "69c2138d0cb9fdda1f789b6e5fd9dfdacfe4183a",
       "size": 2359,
       "category": "support",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "status": "partial",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar.rs",
+        "src/FerroUI.Controls/inking/ink_toolbar_configuration.rs"
+      ],
+      "notes": "FerroUI Flyout/PopupFlyoutBase and control composition replace the Windows helper. Full automatic placement/edge and native popup visual behavior needs platform comparison."
     },
     {
       "path": "controls/dev/InkToolbar/InkToolbarFlyoutItem.cpp",
       "sha": "3c9da917e97fdf70cae910e837baa8a34385902f",
       "size": 21874,
       "category": "control",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "status": "partial",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_configuration.rs"
+      ],
+      "notes": "Live FerroUI palette/width/flyout controls implement the public surface. Upstream complete templates, headings/localization and visual states are separately missing."
     },
     {
       "path": "controls/dev/InkToolbar/InkToolbarFlyoutItem.h",
       "sha": "fe4dca9f2cca6078f86612fd61cc9b62e4990364",
       "size": 3870,
       "category": "control",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "status": "partial",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_configuration.rs"
+      ],
+      "notes": "Live FerroUI palette/width/flyout controls implement the public surface. Upstream complete templates, headings/localization and visual states are separately missing."
     },
     {
       "path": "controls/dev/InkToolbar/InkToolbarFlyoutItemAutomationPeer.h",
       "sha": "378fe51a6cc9cdd93e52b99ecce6be24c56d4ffa",
       "size": 4187,
       "category": "automation",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "status": "partial",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_automation_peer.rs"
+      ],
+      "notes": "Named FerroUI peers provide selection/toggle/expand-collapse/range/value through framework providers. Complete pinned accessible names, flyout state behavior and localized descriptions still need scenario and UI comparison."
     },
     {
       "path": "controls/dev/InkToolbar/InkToolbarHighlighterButton.h",
       "sha": "2feb4fb02096f4d9794fa671c2c337947ac012f4",
       "size": 2582,
       "category": "control",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "status": "partial",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+      ],
+      "notes": "Control family is consolidated into one idiomatic FerroUI subclass module with properties and behavior. Full upstream visual templates/localization, stencil manipulation or pencil pixel parity remain separately open as applicable."
     },
     {
       "path": "controls/dev/InkToolbar/InkToolbarIsStencilButtonCheckedChangedEventArgs.h",
       "sha": "1c65791409fd98a279866c485e10a6268ca184cd",
       "size": 1081,
       "category": "control",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "status": "adapted",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar.rs"
+      ],
+      "notes": "Replaced by immutable Rust event data containing a FerroUI control reference and stencil enum."
     },
     {
       "path": "controls/dev/InkToolbar/InkToolbarMenuButton.cpp",
       "sha": "897fd170d8cbc4ba6a84d538218b76c5eb86949b",
       "size": 6803,
       "category": "control",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "status": "partial",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+      ],
+      "notes": "Control family is consolidated into one idiomatic FerroUI subclass module with properties and behavior. Full upstream visual templates/localization, stencil manipulation or pencil pixel parity remain separately open as applicable."
     },
     {
       "path": "controls/dev/InkToolbar/InkToolbarMenuButton.h",
       "sha": "306be683e11c91be19cba0bf4c912facc863e2be",
       "size": 3074,
       "category": "control",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "status": "partial",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+      ],
+      "notes": "Control family is consolidated into one idiomatic FerroUI subclass module with properties and behavior. Full upstream visual templates/localization, stencil manipulation or pencil pixel parity remain separately open as applicable."
     },
     {
       "path": "controls/dev/InkToolbar/InkToolbarMenuButtonAutomationPeer.h",
       "sha": "75227dd6acd34740a9c78286886b62e166f98ea3",
       "size": 3771,
       "category": "automation",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "status": "partial",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_automation_peer.rs"
+      ],
+      "notes": "Named FerroUI peers provide selection/toggle/expand-collapse/range/value through framework providers. Complete pinned accessible names, flyout state behavior and localized descriptions still need scenario and UI comparison."
     },
     {
       "path": "controls/dev/InkToolbar/InkToolbarPenButton.cpp",
       "sha": "aac5dfa29f4710abdb23602ba989c0086c90cb06",
       "size": 9854,
       "category": "control",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "status": "partial",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+      ],
+      "notes": "Control family is consolidated into one idiomatic FerroUI subclass module with properties and behavior. Full upstream visual templates/localization, stencil manipulation or pencil pixel parity remain separately open as applicable."
     },
     {
       "path": "controls/dev/InkToolbar/InkToolbarPenButton.h",
       "sha": "fde8b69f9ce52d0d3e2af77c49e1fd3a7cf76577",
       "size": 3228,
       "category": "control",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "status": "partial",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+      ],
+      "notes": "Control family is consolidated into one idiomatic FerroUI subclass module with properties and behavior. Full upstream visual templates/localization, stencil manipulation or pencil pixel parity remain separately open as applicable."
     },
     {
       "path": "controls/dev/InkToolbar/InkToolbarPencilButton.h",
       "sha": "f190a6315818444e99b9339fa7a3e76b898d5488",
       "size": 1509,
       "category": "control",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "status": "partial",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+      ],
+      "notes": "Control family is consolidated into one idiomatic FerroUI subclass module with properties and behavior. Full upstream visual templates/localization, stencil manipulation or pencil pixel parity remain separately open as applicable."
     },
     {
       "path": "controls/dev/InkToolbar/InkToolbarPenConfigurationControl.cpp",
       "sha": "3c0b0916c50751e95d8f92ce3ab05179dda0b762",
       "size": 36160,
       "category": "control",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "status": "partial",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_configuration.rs"
+      ],
+      "notes": "Live FerroUI palette/width/flyout controls implement the public surface. Upstream complete templates, headings/localization and visual states are separately missing."
     },
     {
       "path": "controls/dev/InkToolbar/InkToolbarPenConfigurationControl.h",
       "sha": "e61cf3acd80f6a3ed922c6967e8232531b9f34f0",
       "size": 6439,
       "category": "control",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "status": "partial",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_configuration.rs"
+      ],
+      "notes": "Live FerroUI palette/width/flyout controls implement the public surface. Upstream complete templates, headings/localization and visual states are separately missing."
     },
     {
       "path": "controls/dev/InkToolbar/InkToolbarRulerButton.h",
       "sha": "5984026db56cd961c0f5484bb24430b2846ffda8",
       "size": 905,
       "category": "control",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "status": "partial",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+      ],
+      "notes": "Control family is consolidated into one idiomatic FerroUI subclass module with properties and behavior. Full upstream visual templates/localization, stencil manipulation or pencil pixel parity remain separately open as applicable."
     },
     {
       "path": "controls/dev/InkToolbar/InkToolbarStencilButton.cpp",
       "sha": "0faaa72a8fb7c8293666370c9fbf1af015b0071e",
       "size": 19581,
       "category": "control",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "status": "partial",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+      ],
+      "notes": "Control family is consolidated into one idiomatic FerroUI subclass module with properties and behavior. Full upstream visual templates/localization, stencil manipulation or pencil pixel parity remain separately open as applicable."
     },
     {
       "path": "controls/dev/InkToolbar/InkToolbarStencilButton.h",
       "sha": "133ed7e5e640f2f62188ba22e975892c8ea03247",
       "size": 3053,
       "category": "control",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "status": "partial",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+      ],
+      "notes": "Control family is consolidated into one idiomatic FerroUI subclass module with properties and behavior. Full upstream visual templates/localization, stencil manipulation or pencil pixel parity remain separately open as applicable."
     },
     {
       "path": "controls/dev/InkToolbar/InkToolbarStrokeWidthSlider.cpp",
       "sha": "c9ea07f3a8015c6240ed58c057c91025fe297437",
       "size": 1464,
       "category": "control",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "status": "partial",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_configuration.rs"
+      ],
+      "notes": "Live FerroUI palette/width/flyout controls implement the public surface. Upstream complete templates, headings/localization and visual states are separately missing."
     },
     {
       "path": "controls/dev/InkToolbar/InkToolbarStrokeWidthSlider.h",
       "sha": "7e2fcfd55108faecc12a7543b83459a2d64e9dd4",
       "size": 987,
       "category": "control",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "status": "partial",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_configuration.rs"
+      ],
+      "notes": "Live FerroUI palette/width/flyout controls implement the public surface. Upstream complete templates, headings/localization and visual states are separately missing."
     },
     {
       "path": "controls/dev/InkToolbar/InkToolbarStrokeWidthSlider.idl",
       "sha": "3cc5b156b0615e1caa2e8f830774abf9e28c581c",
       "size": 545,
       "category": "api-contract",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "status": "adapted",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_configuration.rs"
+      ],
+      "notes": "Exact IDL snapshot is preserved. Every declared type and member has an individual mapping/status in api-map.json; Rust ownership and framework-specific signatures are intentional."
     },
     {
       "path": "controls/dev/InkToolbar/InkToolbarStrokeWidthSliderAutomationPeer.cpp",
       "sha": "e558fc67789a3be15932c5cd387e41d209462997",
       "size": 4052,
       "category": "automation",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "status": "partial",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_automation_peer.rs"
+      ],
+      "notes": "Named FerroUI peers provide selection/toggle/expand-collapse/range/value through framework providers. Complete pinned accessible names, flyout state behavior and localized descriptions still need scenario and UI comparison."
     },
     {
       "path": "controls/dev/InkToolbar/InkToolbarStrokeWidthSliderAutomationPeer.h",
       "sha": "54f51807a3b2a366745f47158a6dfca66bb8e0f1",
       "size": 1260,
       "category": "automation",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "status": "partial",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_automation_peer.rs"
+      ],
+      "notes": "Named FerroUI peers provide selection/toggle/expand-collapse/range/value through framework providers. Complete pinned accessible names, flyout state behavior and localized descriptions still need scenario and UI comparison."
     },
     {
       "path": "controls/dev/InkToolbar/InkToolbarStrokeWidthSliderAutomationPeer.idl",
       "sha": "1e543b2fa2ff14d23613d483090c5fa25a6efa69",
       "size": 690,
       "category": "api-contract",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "status": "adapted",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_automation_peer.rs"
+      ],
+      "notes": "Exact IDL snapshot is preserved. Every declared type and member has an individual mapping/status in api-map.json; Rust ownership and framework-specific signatures are intentional."
     },
     {
       "path": "controls/dev/InkToolbar/InkToolbarToggleButton.cpp",
       "sha": "86e596aa13e26d842d75e430164c3b46b0247c30",
       "size": 2522,
       "category": "control",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "status": "partial",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+      ],
+      "notes": "Control family is consolidated into one idiomatic FerroUI subclass module with properties and behavior. Full upstream visual templates/localization, stencil manipulation or pencil pixel parity remain separately open as applicable."
     },
     {
       "path": "controls/dev/InkToolbar/InkToolbarToggleButton.h",
       "sha": "21c715eaa2186811ca93c1a52d1cfdabcd85d2e5",
       "size": 1604,
       "category": "control",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "status": "partial",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+      ],
+      "notes": "Control family is consolidated into one idiomatic FerroUI subclass module with properties and behavior. Full upstream visual templates/localization, stencil manipulation or pencil pixel parity remain separately open as applicable."
     },
     {
       "path": "controls/dev/InkToolbar/InkToolbarToolButton.cpp",
       "sha": "cbc092b4923639bf8e6a7dfa85d13cb33c46739e",
       "size": 6512,
       "category": "control",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "status": "partial",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+      ],
+      "notes": "Control family is consolidated into one idiomatic FerroUI subclass module with properties and behavior. Full upstream visual templates/localization, stencil manipulation or pencil pixel parity remain separately open as applicable."
     },
     {
       "path": "controls/dev/InkToolbar/InkToolbarToolButton.h",
       "sha": "df4334aa35dcd0cf832771d9edd228e7d60b677f",
       "size": 3158,
       "category": "control",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "status": "partial",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+      ],
+      "notes": "Control family is consolidated into one idiomatic FerroUI subclass module with properties and behavior. Full upstream visual templates/localization, stencil manipulation or pencil pixel parity remain separately open as applicable."
     },
     {
       "path": "controls/dev/InkToolbar/InkToolbarToolButtonAutomationPeer.h",
       "sha": "20dcbc4bbda900bf8393e3f4986ed75e210b32cc",
       "size": 5319,
       "category": "automation",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "status": "partial",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_automation_peer.rs"
+      ],
+      "notes": "Named FerroUI peers provide selection/toggle/expand-collapse/range/value through framework providers. Complete pinned accessible names, flyout state behavior and localized descriptions still need scenario and UI comparison."
     },
     {
       "path": "controls/dev/InkToolbar/InkToolbarTrace.h",
@@ -641,7 +781,7 @@
       "category": "diagnostics",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "Windows-specific InkToolbar trace/telemetry declarations are not reproduced. No claim of ETW event parity is made."
     },
     {
       "path": "controls/dev/InkToolbar/InteractionTests/InkToolbar_InteractionTests.projitems",
@@ -650,7 +790,7 @@
       "category": "build",
       "status": "not_applicable",
       "rust_files": [],
-      "notes": "C++/MSBuild project glue is replaced by the existing Cargo crate."
+      "notes": "C++/MSBuild project scaffolding is replaced by the existing Cargo crates; no runtime behavior is omitted by this build-file disposition."
     },
     {
       "path": "controls/dev/InkToolbar/InteractionTests/InkToolbar_InteractionTests.shproj",
@@ -659,7 +799,7 @@
       "category": "build",
       "status": "not_applicable",
       "rust_files": [],
-      "notes": "C++/MSBuild project glue is replaced by the existing Cargo crate."
+      "notes": "C++/MSBuild project scaffolding is replaced by the existing Cargo crates; no runtime behavior is omitted by this build-file disposition."
     },
     {
       "path": "controls/dev/InkToolbar/InteractionTests/InkToolbarTests.cs",
@@ -668,7 +808,7 @@
       "category": "interaction-tests",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "The Windows interaction harness and physical UI scenarios have not been ported/executed. In-process Rust tests are separately mapped and do not replace this suite."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/af-ZA/Resources.resw",
@@ -677,7 +817,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/am-ET/Resources.resw",
@@ -686,7 +826,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/ar-SA/Resources.resw",
@@ -695,7 +835,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/as-IN/Resources.resw",
@@ -704,7 +844,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/az-Latn-AZ/Resources.resw",
@@ -713,7 +853,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/bg-BG/Resources.resw",
@@ -722,7 +862,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/bn-IN/Resources.resw",
@@ -731,7 +871,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/bs-Latn-BA/Resources.resw",
@@ -740,7 +880,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/ca-Es-VALENCIA/Resources.resw",
@@ -749,7 +889,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/ca-ES/Resources.resw",
@@ -758,7 +898,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/cs-CZ/Resources.resw",
@@ -767,7 +907,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/cy-GB/Resources.resw",
@@ -776,7 +916,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/da-DK/Resources.resw",
@@ -785,7 +925,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/de-DE/Resources.resw",
@@ -794,7 +934,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/el-GR/Resources.resw",
@@ -803,7 +943,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/en-GB/Resources.resw",
@@ -812,7 +952,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/en-us/Resources.resw",
@@ -821,7 +961,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/es-ES/Resources.resw",
@@ -830,7 +970,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/es-MX/Resources.resw",
@@ -839,7 +979,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/et-EE/Resources.resw",
@@ -848,7 +988,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/eu-ES/Resources.resw",
@@ -857,7 +997,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/fa-IR/Resources.resw",
@@ -866,7 +1006,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/fi-FI/Resources.resw",
@@ -875,7 +1015,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/fil-PH/Resources.resw",
@@ -884,7 +1024,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/fr-CA/Resources.resw",
@@ -893,7 +1033,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/fr-FR/Resources.resw",
@@ -902,7 +1042,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/ga-IE/Resources.resw",
@@ -911,7 +1051,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/gd-gb/Resources.resw",
@@ -920,7 +1060,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/gl-ES/Resources.resw",
@@ -929,7 +1069,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/gu-IN/Resources.resw",
@@ -938,7 +1078,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/he-IL/Resources.resw",
@@ -947,7 +1087,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/hi-IN/Resources.resw",
@@ -956,7 +1096,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/hr-HR/Resources.resw",
@@ -965,7 +1105,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/hu-HU/Resources.resw",
@@ -974,7 +1114,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/hy-AM/Resources.resw",
@@ -983,7 +1123,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/id-ID/Resources.resw",
@@ -992,7 +1132,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/is-IS/Resources.resw",
@@ -1001,7 +1141,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/it-IT/Resources.resw",
@@ -1010,7 +1150,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/ja-JP/Resources.resw",
@@ -1019,7 +1159,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/ka-GE/Resources.resw",
@@ -1028,7 +1168,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/kk-KZ/Resources.resw",
@@ -1037,7 +1177,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/km-KH/Resources.resw",
@@ -1046,7 +1186,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/kn-IN/Resources.resw",
@@ -1055,7 +1195,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/ko-KR/Resources.resw",
@@ -1064,7 +1204,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/kok-IN/Resources.resw",
@@ -1073,7 +1213,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/lb-LU/Resources.resw",
@@ -1082,7 +1222,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/lo-LA/Resources.resw",
@@ -1091,7 +1231,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/lt-LT/Resources.resw",
@@ -1100,7 +1240,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/lv-LV/Resources.resw",
@@ -1109,7 +1249,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/mi-NZ/Resources.resw",
@@ -1118,7 +1258,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/mk-MK/Resources.resw",
@@ -1127,7 +1267,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/ml-IN/Resources.resw",
@@ -1136,7 +1276,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/mr-IN/Resources.resw",
@@ -1145,7 +1285,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/ms-MY/Resources.resw",
@@ -1154,7 +1294,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/mt-MT/Resources.resw",
@@ -1163,7 +1303,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/nb-NO/Resources.resw",
@@ -1172,7 +1312,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/ne-NP/Resources.resw",
@@ -1181,7 +1321,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/nl-NL/Resources.resw",
@@ -1190,7 +1330,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/nn-NO/Resources.resw",
@@ -1199,7 +1339,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/or-IN/Resources.resw",
@@ -1208,7 +1348,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/pa-IN/Resources.resw",
@@ -1217,7 +1357,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/pl-PL/Resources.resw",
@@ -1226,7 +1366,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/pt-BR/Resources.resw",
@@ -1235,7 +1375,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/pt-PT/Resources.resw",
@@ -1244,7 +1384,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/quz-PE/Resources.resw",
@@ -1253,7 +1393,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/ro-RO/Resources.resw",
@@ -1262,7 +1402,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/ru-RU/Resources.resw",
@@ -1271,7 +1411,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/sk-SK/Resources.resw",
@@ -1280,7 +1420,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/sl-SI/Resources.resw",
@@ -1289,7 +1429,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/sq-AL/Resources.resw",
@@ -1298,7 +1438,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/sr-Cyrl-BA/Resources.resw",
@@ -1307,7 +1447,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/sr-Cyrl-RS/Resources.resw",
@@ -1316,7 +1456,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/sr-Latn-RS/Resources.resw",
@@ -1325,7 +1465,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/sv-SE/Resources.resw",
@@ -1334,7 +1474,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/ta-IN/Resources.resw",
@@ -1343,7 +1483,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/te-IN/Resources.resw",
@@ -1352,7 +1492,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/th-TH/Resources.resw",
@@ -1361,7 +1501,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/tr-TR/Resources.resw",
@@ -1370,7 +1510,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/tt-RU/Resources.resw",
@@ -1379,7 +1519,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/ug-CN/Resources.resw",
@@ -1388,7 +1528,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/uk-UA/Resources.resw",
@@ -1397,7 +1537,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/ur-PK/Resources.resw",
@@ -1406,7 +1546,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/uz-Latn-UZ/Resources.resw",
@@ -1415,7 +1555,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/vi-VN/Resources.resw",
@@ -1424,7 +1564,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/zh-CN/Resources.resw",
@@ -1433,7 +1573,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/Strings/zh-TW/Resources.resw",
@@ -1442,7 +1582,7 @@
       "category": "localization",
       "status": "not_ported",
       "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "notes": "This exact locale resource remains unported. Current English fallback labels and color descriptions do not implement this locale."
     },
     {
       "path": "controls/dev/InkToolbar/TestUI/InkToolbar_TestUI.projitems",
@@ -1451,7 +1591,7 @@
       "category": "build",
       "status": "not_applicable",
       "rust_files": [],
-      "notes": "C++/MSBuild project glue is replaced by the existing Cargo crate."
+      "notes": "C++/MSBuild project scaffolding is replaced by the existing Cargo crates; no runtime behavior is omitted by this build-file disposition."
     },
     {
       "path": "controls/dev/InkToolbar/TestUI/InkToolbar_TestUI.shproj",
@@ -1460,25 +1600,31 @@
       "category": "build",
       "status": "not_applicable",
       "rust_files": [],
-      "notes": "C++/MSBuild project glue is replaced by the existing Cargo crate."
+      "notes": "C++/MSBuild project scaffolding is replaced by the existing Cargo crates; no runtime behavior is omitted by this build-file disposition."
     },
     {
       "path": "controls/dev/InkToolbar/TestUI/InkToolbarPage.xaml",
       "sha": "226d3202ce5db042944ef906f439bbf6a16475e6",
       "size": 4450,
       "category": "sample",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "status": "partial",
+      "rust_files": [
+        "samples/ControlCatalog/Pages/inking_page.rs",
+        "samples/ControlCatalog/Pages/InkingPage.xaml"
+      ],
+      "notes": "FerroUI ControlCatalog provides a combined canvas/toolbar demonstration with pen/mouse/touch enabled, clear and portable snapshot save/restore actions. It is a new framework sample, not a one-for-one lift of this Windows test-page scenario set."
     },
     {
       "path": "controls/dev/InkToolbar/TestUI/InkToolbarPage.xaml.cs",
       "sha": "38f47d6e90852430cfcc02ca520833262435d093",
       "size": 3632,
       "category": "sample",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Explicitly tracked; implementation and behavioral verification are recorded in the API and test ledgers."
+      "status": "partial",
+      "rust_files": [
+        "samples/ControlCatalog/Pages/inking_page.rs",
+        "samples/ControlCatalog/Pages/InkingPage.xaml"
+      ],
+      "notes": "FerroUI ControlCatalog provides a combined canvas/toolbar demonstration with pen/mouse/touch enabled, clear and portable snapshot save/restore actions. It is a new framework sample, not a one-for-one lift of this Windows test-page scenario set."
     }
   ]
 }

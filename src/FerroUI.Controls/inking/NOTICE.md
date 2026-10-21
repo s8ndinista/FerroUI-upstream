@@ -38,3 +38,14 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+## Optional Windows interoperability dependencies
+
+`src/Windows/FerroUI.WinUI/inking.rs` calls the installed Windows ink APIs through
+the Microsoft Rust for Windows projections: `windows` 0.62.2,
+`windows-collections` 0.3.2 and `windows-numerics` 0.3.1. These dependencies are
+licensed under MIT OR Apache-2.0 and retain their license files in the published
+crates. Their repository is <https://github.com/microsoft/windows-rs>. They are
+target-specific Cargo dependencies, not copied sources in this directory.
+The Windows ink engine, native recognizers and language data are OS services;
+this port does not distribute their implementation or data.

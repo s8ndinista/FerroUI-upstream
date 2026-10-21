@@ -41,19 +41,25 @@
       "kind": "runtimeclass",
       "base": "",
       "source": "controls/dev/InkCanvas/InkCanvas.idl",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Awaiting implementation reconciliation.",
+      "status": "adapted",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_presenter.rs"
+      ],
+      "notes": "Public surface is expressed using FerroUI classes/properties or Rc service values; per-member adaptations are recorded below. A type mapping does not establish visual or Windows-runtime parity.",
       "members": [
         {
           "name": "Strokes",
           "kind": "property",
           "declaration": "Windows.Foundation.Collections.IVectorView<Windows.UI.Input.Inking.InkStroke> Strokes{ get; };",
           "id": "InkStrokesCollectedEventArgs.Strokes",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_presenter.rs"
+          ],
+          "symbols": [
+            "strokes"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         }
       ]
     },
@@ -62,19 +68,25 @@
       "kind": "runtimeclass",
       "base": "",
       "source": "controls/dev/InkCanvas/InkCanvas.idl",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Awaiting implementation reconciliation.",
+      "status": "adapted",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_presenter.rs"
+      ],
+      "notes": "Public surface is expressed using FerroUI classes/properties or Rc service values; per-member adaptations are recorded below. A type mapping does not establish visual or Windows-runtime parity.",
       "members": [
         {
           "name": "Strokes",
           "kind": "property",
           "declaration": "Windows.Foundation.Collections.IVectorView<Windows.UI.Input.Inking.InkStroke> Strokes{ get; };",
           "id": "InkStrokesErasedEventArgs.Strokes",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_presenter.rs"
+          ],
+          "symbols": [
+            "strokes"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         }
       ]
     },
@@ -83,169 +95,253 @@
       "kind": "runtimeclass",
       "base": "",
       "source": "controls/dev/InkCanvas/InkCanvas.idl",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Awaiting implementation reconciliation.",
+      "status": "partial",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_stroke_container.rs"
+      ],
+      "notes": "Portable collection operations and bounded FERROINK persistence; optional Windows service provides actual ISF/GIF/clipboard APIs. Native interoperability has conversion boundaries and still needs Windows runtime fixtures.",
       "members": [
         {
           "name": "Clear",
           "kind": "method",
           "declaration": "void Clear();",
           "id": "InkStrokeContainer.Clear",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_stroke_container.rs"
+          ],
+          "symbols": [
+            "clear"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "GetStrokes",
           "kind": "method",
           "declaration": "Windows.Foundation.Collections.IVectorView<Windows.UI.Input.Inking.InkStroke> GetStrokes();",
           "id": "InkStrokeContainer.GetStrokes",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_stroke_container.rs"
+          ],
+          "symbols": [
+            "get_strokes"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "AddStroke",
           "kind": "method",
           "declaration": "void AddStroke(Windows.UI.Input.Inking.InkStroke stroke);",
           "id": "InkStrokeContainer.AddStroke",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_stroke_container.rs"
+          ],
+          "symbols": [
+            "add_stroke"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "AddStrokes",
           "kind": "method",
           "declaration": "void AddStrokes(Windows.Foundation.Collections.IIterable<Windows.UI.Input.Inking.InkStroke> strokes);",
           "id": "InkStrokeContainer.AddStrokes",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_stroke_container.rs"
+          ],
+          "symbols": [
+            "add_strokes"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "SaveAsync",
           "kind": "method",
           "declaration": "Windows.Foundation.IAsyncAction SaveAsync(Windows.Storage.Streams.IOutputStream outputStream);",
           "id": "InkStrokeContainer.SaveAsync",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "partial",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_stroke_container.rs",
+            "src/FerroUI.Controls/inking/ink_platform_services.rs",
+            "src/FerroUI.Controls/inking/persistence.rs",
+            "src/Windows/FerroUI.WinUI/inking.rs"
+          ],
+          "symbols": [
+            "save_async"
+          ],
+          "notes": "Portable bounded FERROINK bytes or an explicitly attached WindowsInkServices adapter. Windows uses real OS ISF/GIF/clipboard APIs, but exact ISF/clipboard round trips still require Windows execution; f32 conversion, fresh imported identities and unsupported twist are documented. Rust save_async defaults to Portable, unlike the native GIF default; request GifWithEmbeddedIsf explicitly for native compatibility."
         },
         {
           "name": "SaveWithFormatAsync",
           "kind": "method",
           "declaration": "Windows.Foundation.IAsyncAction SaveWithFormatAsync(Windows.Storage.Streams.IOutputStream outputStream, Windows.UI.Input.Inking.InkPersistenceFormat inkPersistenceFormat);",
           "id": "InkStrokeContainer.SaveWithFormatAsync",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "partial",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_stroke_container.rs",
+            "src/FerroUI.Controls/inking/ink_platform_services.rs",
+            "src/FerroUI.Controls/inking/persistence.rs",
+            "src/Windows/FerroUI.WinUI/inking.rs"
+          ],
+          "symbols": [
+            "save_with_format_async"
+          ],
+          "notes": "Portable bounded FERROINK bytes or an explicitly attached WindowsInkServices adapter. Windows uses real OS ISF/GIF/clipboard APIs, but exact ISF/clipboard round trips still require Windows execution; f32 conversion, fresh imported identities and unsupported twist are documented."
         },
         {
           "name": "LoadAsync",
           "kind": "method",
           "declaration": "Windows.Foundation.IAsyncAction LoadAsync(Windows.Storage.Streams.IInputStream inputStream);",
           "id": "InkStrokeContainer.LoadAsync",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "partial",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_stroke_container.rs",
+            "src/FerroUI.Controls/inking/ink_platform_services.rs",
+            "src/FerroUI.Controls/inking/persistence.rs",
+            "src/Windows/FerroUI.WinUI/inking.rs"
+          ],
+          "symbols": [
+            "load_async"
+          ],
+          "notes": "Portable bounded FERROINK bytes or an explicitly attached WindowsInkServices adapter. Windows uses real OS ISF/GIF/clipboard APIs, but exact ISF/clipboard round trips still require Windows execution; f32 conversion, fresh imported identities and unsupported twist are documented."
         },
         {
           "name": "GetStrokeById",
           "kind": "method",
           "declaration": "Windows.UI.Input.Inking.InkStroke GetStrokeById(UInt32 id);",
           "id": "InkStrokeContainer.GetStrokeById",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_stroke_container.rs"
+          ],
+          "symbols": [
+            "get_stroke_by_id"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "DeleteSelected",
           "kind": "method",
           "declaration": "Windows.Foundation.Rect DeleteSelected();",
           "id": "InkStrokeContainer.DeleteSelected",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_stroke_container.rs"
+          ],
+          "symbols": [
+            "delete_selected"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "MoveSelected",
           "kind": "method",
           "declaration": "Windows.Foundation.Rect MoveSelected(Windows.Foundation.Point translation);",
           "id": "InkStrokeContainer.MoveSelected",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_stroke_container.rs"
+          ],
+          "symbols": [
+            "move_selected"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "SelectWithLine",
           "kind": "method",
           "declaration": "Windows.Foundation.Rect SelectWithLine(Windows.Foundation.Point from, Windows.Foundation.Point to);",
           "id": "InkStrokeContainer.SelectWithLine",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_stroke_container.rs"
+          ],
+          "symbols": [
+            "select_with_line"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "SelectWithPolyLine",
           "kind": "method",
           "declaration": "Windows.Foundation.Rect SelectWithPolyLine(Windows.Foundation.Collections.IIterable<Windows.Foundation.Point> points);",
           "id": "InkStrokeContainer.SelectWithPolyLine",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_stroke_container.rs"
+          ],
+          "symbols": [
+            "select_with_poly_line"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "BoundingRect",
           "kind": "property",
           "declaration": "Windows.Foundation.Rect BoundingRect{ get; };",
           "id": "InkStrokeContainer.BoundingRect",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_stroke_container.rs"
+          ],
+          "symbols": [
+            "bounding_rect"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "CopySelectedToClipboard",
           "kind": "method",
           "declaration": "void CopySelectedToClipboard();",
           "id": "InkStrokeContainer.CopySelectedToClipboard",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "partial",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_stroke_container.rs",
+            "src/FerroUI.Controls/inking/ink_platform_services.rs",
+            "src/FerroUI.Controls/inking/persistence.rs",
+            "src/Windows/FerroUI.WinUI/inking.rs"
+          ],
+          "symbols": [
+            "copy_selected_to_clipboard"
+          ],
+          "notes": "Portable bounded FERROINK bytes or an explicitly attached WindowsInkServices adapter. Windows uses real OS ISF/GIF/clipboard APIs, but exact ISF/clipboard round trips still require Windows execution; f32 conversion, fresh imported identities and unsupported twist are documented."
         },
         {
           "name": "PasteFromClipboard",
           "kind": "method",
           "declaration": "Windows.Foundation.Rect PasteFromClipboard(Windows.Foundation.Point position);",
           "id": "InkStrokeContainer.PasteFromClipboard",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "partial",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_stroke_container.rs",
+            "src/FerroUI.Controls/inking/ink_platform_services.rs",
+            "src/FerroUI.Controls/inking/persistence.rs",
+            "src/Windows/FerroUI.WinUI/inking.rs"
+          ],
+          "symbols": [
+            "paste_from_clipboard"
+          ],
+          "notes": "Portable bounded FERROINK bytes or an explicitly attached WindowsInkServices adapter. Windows uses real OS ISF/GIF/clipboard APIs, but exact ISF/clipboard round trips still require Windows execution; f32 conversion, fresh imported identities and unsupported twist are documented."
         },
         {
           "name": "CanPasteFromClipboard",
           "kind": "method",
           "declaration": "Boolean CanPasteFromClipboard();",
           "id": "InkStrokeContainer.CanPasteFromClipboard",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "partial",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_stroke_container.rs",
+            "src/FerroUI.Controls/inking/ink_platform_services.rs",
+            "src/FerroUI.Controls/inking/persistence.rs",
+            "src/Windows/FerroUI.WinUI/inking.rs"
+          ],
+          "symbols": [
+            "can_paste_from_clipboard"
+          ],
+          "notes": "Portable bounded FERROINK bytes or an explicitly attached WindowsInkServices adapter. Windows uses real OS ISF/GIF/clipboard APIs, but exact ISF/clipboard round trips still require Windows execution; f32 conversion, fresh imported identities and unsupported twist are documented."
         }
       ]
     },
@@ -254,9 +350,11 @@
       "kind": "enum",
       "base": "",
       "source": "controls/dev/InkCanvas/InkCanvas.idl",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Awaiting implementation reconciliation.",
+      "status": "implemented",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_input.rs"
+      ],
+      "notes": "Rust enum preserves all pinned IDL names and numeric values.",
       "members": [
         {
           "name": "None",
@@ -264,10 +362,14 @@
           "declaration": "None = 0",
           "value": 0,
           "id": "InkInputProcessingMode.None",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "implemented",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_input.rs"
+          ],
+          "symbols": [
+            "None"
+          ],
+          "notes": "Same named enum value as the pinned IDL."
         },
         {
           "name": "Inking",
@@ -275,10 +377,14 @@
           "declaration": "Inking = 1",
           "value": 1,
           "id": "InkInputProcessingMode.Inking",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "implemented",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_input.rs"
+          ],
+          "symbols": [
+            "Inking"
+          ],
+          "notes": "Same named enum value as the pinned IDL."
         },
         {
           "name": "Erasing",
@@ -286,10 +392,14 @@
           "declaration": "Erasing = 2",
           "value": 2,
           "id": "InkInputProcessingMode.Erasing",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "implemented",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_input.rs"
+          ],
+          "symbols": [
+            "Erasing"
+          ],
+          "notes": "Same named enum value as the pinned IDL."
         }
       ]
     },
@@ -298,9 +408,11 @@
       "kind": "enum",
       "base": "",
       "source": "controls/dev/InkCanvas/InkCanvas.idl",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Awaiting implementation reconciliation.",
+      "status": "implemented",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_input.rs"
+      ],
+      "notes": "Rust enum preserves all pinned IDL names and numeric values.",
       "members": [
         {
           "name": "LeaveUnprocessed",
@@ -308,10 +420,14 @@
           "declaration": "LeaveUnprocessed = 0",
           "value": 0,
           "id": "InkInputRightDragAction.LeaveUnprocessed",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "implemented",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_input.rs"
+          ],
+          "symbols": [
+            "LeaveUnprocessed"
+          ],
+          "notes": "Same named enum value as the pinned IDL."
         },
         {
           "name": "AllowProcessing",
@@ -319,10 +435,14 @@
           "declaration": "AllowProcessing = 1",
           "value": 1,
           "id": "InkInputRightDragAction.AllowProcessing",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "implemented",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_input.rs"
+          ],
+          "symbols": [
+            "AllowProcessing"
+          ],
+          "notes": "Same named enum value as the pinned IDL."
         }
       ]
     },
@@ -331,29 +451,39 @@
       "kind": "runtimeclass",
       "base": "",
       "source": "controls/dev/InkCanvas/InkCanvas.idl",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Awaiting implementation reconciliation.",
+      "status": "adapted",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_input.rs"
+      ],
+      "notes": "Public surface is expressed using FerroUI classes/properties or Rc service values; per-member adaptations are recorded below. A type mapping does not establish visual or Windows-runtime parity.",
       "members": [
         {
           "name": "Mode",
           "kind": "property",
           "declaration": "InkInputProcessingMode Mode;",
           "id": "InkInputProcessingConfiguration.Mode",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_input.rs"
+          ],
+          "symbols": [
+            "mode"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "RightDragAction",
           "kind": "property",
           "declaration": "InkInputRightDragAction RightDragAction;",
           "id": "InkInputProcessingConfiguration.RightDragAction",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_input.rs"
+          ],
+          "symbols": [
+            "right_drag_action"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         }
       ]
     },
@@ -362,29 +492,39 @@
       "kind": "runtimeclass",
       "base": "",
       "source": "controls/dev/InkCanvas/InkCanvas.idl",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Awaiting implementation reconciliation.",
+      "status": "adapted",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_input.rs"
+      ],
+      "notes": "Public surface is expressed using FerroUI classes/properties or Rc service values; per-member adaptations are recorded below. A type mapping does not establish visual or Windows-runtime parity.",
       "members": [
         {
           "name": "IsPrimaryBarrelButtonInputEnabled",
           "kind": "property",
           "declaration": "Boolean IsPrimaryBarrelButtonInputEnabled;",
           "id": "InkInputConfiguration.IsPrimaryBarrelButtonInputEnabled",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_input.rs"
+          ],
+          "symbols": [
+            "is_primary_barrel_button_input_enabled"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "IsEraserInputEnabled",
           "kind": "property",
           "declaration": "Boolean IsEraserInputEnabled;",
           "id": "InkInputConfiguration.IsEraserInputEnabled",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_input.rs"
+          ],
+          "symbols": [
+            "is_eraser_input_enabled"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         }
       ]
     },
@@ -393,9 +533,11 @@
       "kind": "enum",
       "base": "",
       "source": "controls/dev/InkCanvas/InkCanvas.idl",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Awaiting implementation reconciliation.",
+      "status": "implemented",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_input.rs"
+      ],
+      "notes": "Rust enum preserves all pinned IDL names and numeric values.",
       "members": [
         {
           "name": "UseSystemColorsWhenNecessary",
@@ -403,10 +545,14 @@
           "declaration": "UseSystemColorsWhenNecessary = 0",
           "value": 0,
           "id": "InkHighContrastAdjustment.UseSystemColorsWhenNecessary",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "implemented",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_input.rs"
+          ],
+          "symbols": [
+            "UseSystemColorsWhenNecessary"
+          ],
+          "notes": "Same named enum value as the pinned IDL."
         },
         {
           "name": "UseSystemColors",
@@ -414,10 +560,14 @@
           "declaration": "UseSystemColors = 1",
           "value": 1,
           "id": "InkHighContrastAdjustment.UseSystemColors",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "implemented",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_input.rs"
+          ],
+          "symbols": [
+            "UseSystemColors"
+          ],
+          "notes": "Same named enum value as the pinned IDL."
         },
         {
           "name": "UseOriginalColors",
@@ -425,10 +575,14 @@
           "declaration": "UseOriginalColors = 2",
           "value": 2,
           "id": "InkHighContrastAdjustment.UseOriginalColors",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "implemented",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_input.rs"
+          ],
+          "symbols": [
+            "UseOriginalColors"
+          ],
+          "notes": "Same named enum value as the pinned IDL."
         }
       ]
     },
@@ -437,59 +591,81 @@
       "kind": "runtimeclass",
       "base": "",
       "source": "controls/dev/InkCanvas/InkCanvas.idl",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Awaiting implementation reconciliation.",
+      "status": "adapted",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_input.rs"
+      ],
+      "notes": "Public surface is expressed using FerroUI classes/properties or Rc service values; per-member adaptations are recorded below. A type mapping does not establish visual or Windows-runtime parity.",
       "members": [
         {
           "name": "StrokeStarted",
           "kind": "event",
           "declaration": "event Windows.Foundation.TypedEventHandler<InkStrokeInput, Windows.UI.Core.PointerEventArgs> StrokeStarted;",
           "id": "InkStrokeInput.StrokeStarted",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_input.rs"
+          ],
+          "symbols": [
+            "stroke_started"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "StrokeContinued",
           "kind": "event",
           "declaration": "event Windows.Foundation.TypedEventHandler<InkStrokeInput, Windows.UI.Core.PointerEventArgs> StrokeContinued;",
           "id": "InkStrokeInput.StrokeContinued",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_input.rs"
+          ],
+          "symbols": [
+            "stroke_continued"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "StrokeEnded",
           "kind": "event",
           "declaration": "event Windows.Foundation.TypedEventHandler<InkStrokeInput, Windows.UI.Core.PointerEventArgs> StrokeEnded;",
           "id": "InkStrokeInput.StrokeEnded",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_input.rs"
+          ],
+          "symbols": [
+            "stroke_ended"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "StrokeCanceled",
           "kind": "event",
           "declaration": "event Windows.Foundation.TypedEventHandler<InkStrokeInput, Windows.UI.Core.PointerEventArgs> StrokeCanceled;",
           "id": "InkStrokeInput.StrokeCanceled",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_input.rs"
+          ],
+          "symbols": [
+            "stroke_canceled"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "InkPresenter",
           "kind": "property",
           "declaration": "InkPresenter InkPresenter{ get; };",
           "id": "InkStrokeInput.InkPresenter",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_input.rs"
+          ],
+          "symbols": [
+            "ink_presenter"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         }
       ]
     },
@@ -498,89 +674,123 @@
       "kind": "runtimeclass",
       "base": "",
       "source": "controls/dev/InkCanvas/InkCanvas.idl",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Awaiting implementation reconciliation.",
+      "status": "adapted",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_input.rs"
+      ],
+      "notes": "Public surface is expressed using FerroUI classes/properties or Rc service values; per-member adaptations are recorded below. A type mapping does not establish visual or Windows-runtime parity.",
       "members": [
         {
           "name": "PointerEntered",
           "kind": "event",
           "declaration": "event Windows.Foundation.TypedEventHandler<InkUnprocessedInput, Windows.UI.Core.PointerEventArgs> PointerEntered;",
           "id": "InkUnprocessedInput.PointerEntered",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_input.rs"
+          ],
+          "symbols": [
+            "pointer_entered"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "PointerHovered",
           "kind": "event",
           "declaration": "event Windows.Foundation.TypedEventHandler<InkUnprocessedInput, Windows.UI.Core.PointerEventArgs> PointerHovered;",
           "id": "InkUnprocessedInput.PointerHovered",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_input.rs"
+          ],
+          "symbols": [
+            "pointer_hovered"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "PointerExited",
           "kind": "event",
           "declaration": "event Windows.Foundation.TypedEventHandler<InkUnprocessedInput, Windows.UI.Core.PointerEventArgs> PointerExited;",
           "id": "InkUnprocessedInput.PointerExited",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_input.rs"
+          ],
+          "symbols": [
+            "pointer_exited"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "PointerPressed",
           "kind": "event",
           "declaration": "event Windows.Foundation.TypedEventHandler<InkUnprocessedInput, Windows.UI.Core.PointerEventArgs> PointerPressed;",
           "id": "InkUnprocessedInput.PointerPressed",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_input.rs"
+          ],
+          "symbols": [
+            "pointer_pressed"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "PointerMoved",
           "kind": "event",
           "declaration": "event Windows.Foundation.TypedEventHandler<InkUnprocessedInput, Windows.UI.Core.PointerEventArgs> PointerMoved;",
           "id": "InkUnprocessedInput.PointerMoved",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_input.rs"
+          ],
+          "symbols": [
+            "pointer_moved"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "PointerReleased",
           "kind": "event",
           "declaration": "event Windows.Foundation.TypedEventHandler<InkUnprocessedInput, Windows.UI.Core.PointerEventArgs> PointerReleased;",
           "id": "InkUnprocessedInput.PointerReleased",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_input.rs"
+          ],
+          "symbols": [
+            "pointer_released"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "PointerLost",
           "kind": "event",
           "declaration": "event Windows.Foundation.TypedEventHandler<InkUnprocessedInput, Windows.UI.Core.PointerEventArgs> PointerLost;",
           "id": "InkUnprocessedInput.PointerLost",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_input.rs"
+          ],
+          "symbols": [
+            "pointer_lost"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "InkPresenter",
           "kind": "property",
           "declaration": "InkPresenter InkPresenter{ get; };",
           "id": "InkUnprocessedInput.InkPresenter",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_input.rs"
+          ],
+          "symbols": [
+            "ink_presenter"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         }
       ]
     },
@@ -589,29 +799,39 @@
       "kind": "runtimeclass",
       "base": "",
       "source": "controls/dev/InkCanvas/InkCanvas.idl",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Awaiting implementation reconciliation.",
+      "status": "partial",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_synchronizer.rs"
+      ],
+      "notes": "Transactional pending-ink snapshot and batch retirement are implemented. Coordination with a separately composited Windows ink thread is replaced by ordinary FerroUI redraws.",
       "members": [
         {
           "name": "BeginDry",
           "kind": "method",
           "declaration": "Windows.Foundation.Collections.IVectorView<Windows.UI.Input.Inking.InkStroke> BeginDry();",
           "id": "InkSynchronizer.BeginDry",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_synchronizer.rs"
+          ],
+          "symbols": [
+            "begin_dry"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "EndDry",
           "kind": "method",
           "declaration": "void EndDry();",
           "id": "InkSynchronizer.EndDry",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_synchronizer.rs"
+          ],
+          "symbols": [
+            "end_dry"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         }
       ]
     },
@@ -620,149 +840,209 @@
       "kind": "runtimeclass",
       "base": "",
       "source": "controls/dev/InkCanvas/InkCanvas.idl",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Awaiting implementation reconciliation.",
+      "status": "partial",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_presenter.rs"
+      ],
+      "notes": "Portable UI-thread presenter and stable weak-linked services. OS independent ink-thread rendering/prediction and complete native system-color behavior remain outside this replacement.",
       "members": [
         {
           "name": "InputDeviceTypes",
           "kind": "property",
           "declaration": "Windows.UI.Core.CoreInputDeviceTypes InputDeviceTypes;",
           "id": "InkPresenter.InputDeviceTypes",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_presenter.rs"
+          ],
+          "symbols": [
+            "input_device_types"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "IsInputEnabled",
           "kind": "property",
           "declaration": "Boolean IsInputEnabled;",
           "id": "InkPresenter.IsInputEnabled",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_presenter.rs"
+          ],
+          "symbols": [
+            "is_input_enabled"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "UpdateDefaultDrawingAttributes",
           "kind": "method",
           "declaration": "void UpdateDefaultDrawingAttributes(Windows.UI.Input.Inking.InkDrawingAttributes drawingAttributes);",
           "id": "InkPresenter.UpdateDefaultDrawingAttributes",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_presenter.rs"
+          ],
+          "symbols": [
+            "update_default_drawing_attributes"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "CopyDefaultDrawingAttributes",
           "kind": "method",
           "declaration": "Windows.UI.Input.Inking.InkDrawingAttributes CopyDefaultDrawingAttributes();",
           "id": "InkPresenter.CopyDefaultDrawingAttributes",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_presenter.rs"
+          ],
+          "symbols": [
+            "copy_default_drawing_attributes"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "SetPredefinedConfiguration",
           "kind": "method",
           "declaration": "void SetPredefinedConfiguration(Windows.UI.Input.Inking.InkPresenterPredefinedConfiguration configuration);",
           "id": "InkPresenter.SetPredefinedConfiguration",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "partial",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_presenter.rs",
+            "src/FerroUI.Controls/inking/ink_canvas.rs"
+          ],
+          "symbols": [
+            "set_predefined_configuration"
+          ],
+          "notes": "Configuration is applied to portable processing/rendering. Full native prediction/independent latency and exact live system-color palette equivalence are not established."
         },
         {
           "name": "HighContrastAdjustment",
           "kind": "property",
           "declaration": "InkHighContrastAdjustment HighContrastAdjustment;",
           "id": "InkPresenter.HighContrastAdjustment",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "partial",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_presenter.rs",
+            "src/FerroUI.Controls/inking/ink_canvas.rs"
+          ],
+          "symbols": [
+            "high_contrast_adjustment"
+          ],
+          "notes": "Configuration is applied to portable processing/rendering. Full native prediction/independent latency and exact live system-color palette equivalence are not established."
         },
         {
           "name": "StrokeContainer",
           "kind": "property",
           "declaration": "InkStrokeContainer StrokeContainer{ get; };",
           "id": "InkPresenter.StrokeContainer",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_presenter.rs"
+          ],
+          "symbols": [
+            "stroke_container"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "InputProcessingConfiguration",
           "kind": "property",
           "declaration": "InkInputProcessingConfiguration InputProcessingConfiguration{ get; };",
           "id": "InkPresenter.InputProcessingConfiguration",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_presenter.rs"
+          ],
+          "symbols": [
+            "input_processing_configuration"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "InputConfiguration",
           "kind": "property",
           "declaration": "InkInputConfiguration InputConfiguration{ get; };",
           "id": "InkPresenter.InputConfiguration",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_presenter.rs"
+          ],
+          "symbols": [
+            "input_configuration"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "StrokeInput",
           "kind": "property",
           "declaration": "InkStrokeInput StrokeInput{ get; };",
           "id": "InkPresenter.StrokeInput",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_presenter.rs"
+          ],
+          "symbols": [
+            "stroke_input"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "UnprocessedInput",
           "kind": "property",
           "declaration": "InkUnprocessedInput UnprocessedInput{ get; };",
           "id": "InkPresenter.UnprocessedInput",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_presenter.rs"
+          ],
+          "symbols": [
+            "unprocessed_input"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "ActivateCustomDrying",
           "kind": "method",
           "declaration": "InkSynchronizer ActivateCustomDrying();",
           "id": "InkPresenter.ActivateCustomDrying",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_presenter.rs"
+          ],
+          "symbols": [
+            "activate_custom_drying"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "StrokesCollected",
           "kind": "event",
           "declaration": "event Windows.Foundation.TypedEventHandler<InkPresenter, InkStrokesCollectedEventArgs> StrokesCollected;",
           "id": "InkPresenter.StrokesCollected",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_presenter.rs"
+          ],
+          "symbols": [
+            "strokes_collected"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "StrokesErased",
           "kind": "event",
           "declaration": "event Windows.Foundation.TypedEventHandler<InkPresenter, InkStrokesErasedEventArgs> StrokesErased;",
           "id": "InkPresenter.StrokesErased",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_presenter.rs"
+          ],
+          "symbols": [
+            "strokes_erased"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         }
       ]
     },
@@ -771,29 +1051,39 @@
       "kind": "runtimeclass",
       "base": "Microsoft.UI.Xaml.FrameworkElement",
       "source": "controls/dev/InkCanvas/InkCanvas.idl",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Awaiting implementation reconciliation.",
+      "status": "partial",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_canvas.rs"
+      ],
+      "notes": "FerroUI Control hosts drawing, routed/coalesced pointer samples and a stable presenter. Native DirectComposition/independent ink latency and exact OS rendering are not reproduced.",
       "members": [
         {
           "name": "InkCanvas",
           "kind": "constructor",
           "declaration": "InkCanvas();",
           "id": "InkCanvas.InkCanvas",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_canvas.rs"
+          ],
+          "symbols": [
+            "new"
+          ],
+          "notes": "Constructed with new and FerroUI Ref ownership (or the existing owner for an automation peer); no COM activation is required."
         },
         {
           "name": "InkPresenter",
           "kind": "property",
           "declaration": "InkPresenter InkPresenter{ get; };",
           "id": "InkCanvas.InkPresenter",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_canvas.rs"
+          ],
+          "symbols": [
+            "ink_presenter"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         }
       ]
     },
@@ -802,19 +1092,25 @@
       "kind": "runtimeclass",
       "base": "Microsoft.UI.Xaml.Automation.Peers.FrameworkElementAutomationPeer",
       "source": "controls/dev/InkCanvas/InkCanvasAutomationPeer.idl",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Awaiting implementation reconciliation.",
+      "status": "adapted",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_canvas_automation_peer.rs"
+      ],
+      "notes": "Public surface is expressed using FerroUI classes/properties or Rc service values; per-member adaptations are recorded below. A type mapping does not establish visual or Windows-runtime parity.",
       "members": [
         {
           "name": "InkCanvasAutomationPeer",
           "kind": "constructor",
           "declaration": "InkCanvasAutomationPeer(MU_XC_NAMESPACE.InkCanvas owner);",
           "id": "InkCanvasAutomationPeer.InkCanvasAutomationPeer",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_canvas_automation_peer.rs"
+          ],
+          "symbols": [
+            "new"
+          ],
+          "notes": "Constructed with new and FerroUI Ref ownership (or the existing owner for an automation peer); no COM activation is required."
         }
       ]
     },
@@ -823,9 +1119,11 @@
       "kind": "enum",
       "base": "",
       "source": "controls/dev/InkToolbar/InkToolbar.idl",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Awaiting implementation reconciliation.",
+      "status": "implemented",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_types.rs"
+      ],
+      "notes": "Rust enum preserves all pinned IDL names and numeric values.",
       "members": [
         {
           "name": "Auto",
@@ -833,10 +1131,14 @@
           "declaration": "Auto",
           "value": 0,
           "id": "InkToolbarButtonFlyoutPlacement.Auto",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "implemented",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_types.rs"
+          ],
+          "symbols": [
+            "Auto"
+          ],
+          "notes": "Same named enum value as the pinned IDL."
         },
         {
           "name": "Top",
@@ -844,10 +1146,14 @@
           "declaration": "Top",
           "value": 1,
           "id": "InkToolbarButtonFlyoutPlacement.Top",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "implemented",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_types.rs"
+          ],
+          "symbols": [
+            "Top"
+          ],
+          "notes": "Same named enum value as the pinned IDL."
         },
         {
           "name": "Bottom",
@@ -855,10 +1161,14 @@
           "declaration": "Bottom",
           "value": 2,
           "id": "InkToolbarButtonFlyoutPlacement.Bottom",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "implemented",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_types.rs"
+          ],
+          "symbols": [
+            "Bottom"
+          ],
+          "notes": "Same named enum value as the pinned IDL."
         },
         {
           "name": "Left",
@@ -866,10 +1176,14 @@
           "declaration": "Left",
           "value": 3,
           "id": "InkToolbarButtonFlyoutPlacement.Left",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "implemented",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_types.rs"
+          ],
+          "symbols": [
+            "Left"
+          ],
+          "notes": "Same named enum value as the pinned IDL."
         },
         {
           "name": "Right",
@@ -877,10 +1191,14 @@
           "declaration": "Right",
           "value": 4,
           "id": "InkToolbarButtonFlyoutPlacement.Right",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "implemented",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_types.rs"
+          ],
+          "symbols": [
+            "Right"
+          ],
+          "notes": "Same named enum value as the pinned IDL."
         }
       ]
     },
@@ -889,9 +1207,11 @@
       "kind": "enum",
       "base": "",
       "source": "controls/dev/InkToolbar/InkToolbar.idl",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Awaiting implementation reconciliation.",
+      "status": "implemented",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_types.rs"
+      ],
+      "notes": "Rust enum preserves all pinned IDL names and numeric values.",
       "members": [
         {
           "name": "Simple",
@@ -899,10 +1219,14 @@
           "declaration": "Simple",
           "value": 0,
           "id": "InkToolbarFlyoutItemKind.Simple",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "implemented",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_types.rs"
+          ],
+          "symbols": [
+            "Simple"
+          ],
+          "notes": "Same named enum value as the pinned IDL."
         },
         {
           "name": "Radio",
@@ -910,10 +1234,14 @@
           "declaration": "Radio",
           "value": 1,
           "id": "InkToolbarFlyoutItemKind.Radio",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "implemented",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_types.rs"
+          ],
+          "symbols": [
+            "Radio"
+          ],
+          "notes": "Same named enum value as the pinned IDL."
         },
         {
           "name": "Check",
@@ -921,10 +1249,14 @@
           "declaration": "Check",
           "value": 2,
           "id": "InkToolbarFlyoutItemKind.Check",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "implemented",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_types.rs"
+          ],
+          "symbols": [
+            "Check"
+          ],
+          "notes": "Same named enum value as the pinned IDL."
         },
         {
           "name": "RadioCheck",
@@ -932,10 +1264,14 @@
           "declaration": "RadioCheck",
           "value": 3,
           "id": "InkToolbarFlyoutItemKind.RadioCheck",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "implemented",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_types.rs"
+          ],
+          "symbols": [
+            "RadioCheck"
+          ],
+          "notes": "Same named enum value as the pinned IDL."
         }
       ]
     },
@@ -944,9 +1280,11 @@
       "kind": "enum",
       "base": "",
       "source": "controls/dev/InkToolbar/InkToolbar.idl",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Awaiting implementation reconciliation.",
+      "status": "implemented",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_types.rs"
+      ],
+      "notes": "Rust enum preserves all pinned IDL names and numeric values.",
       "members": [
         {
           "name": "All",
@@ -954,10 +1292,14 @@
           "declaration": "All",
           "value": 0,
           "id": "InkToolbarInitialControls.All",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "implemented",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_types.rs"
+          ],
+          "symbols": [
+            "All"
+          ],
+          "notes": "Same named enum value as the pinned IDL."
         },
         {
           "name": "None",
@@ -965,10 +1307,14 @@
           "declaration": "None",
           "value": 1,
           "id": "InkToolbarInitialControls.None",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "implemented",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_types.rs"
+          ],
+          "symbols": [
+            "None"
+          ],
+          "notes": "Same named enum value as the pinned IDL."
         },
         {
           "name": "PensOnly",
@@ -976,10 +1322,14 @@
           "declaration": "PensOnly",
           "value": 2,
           "id": "InkToolbarInitialControls.PensOnly",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "implemented",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_types.rs"
+          ],
+          "symbols": [
+            "PensOnly"
+          ],
+          "notes": "Same named enum value as the pinned IDL."
         },
         {
           "name": "AllExceptPens",
@@ -987,10 +1337,14 @@
           "declaration": "AllExceptPens",
           "value": 3,
           "id": "InkToolbarInitialControls.AllExceptPens",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "implemented",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_types.rs"
+          ],
+          "symbols": [
+            "AllExceptPens"
+          ],
+          "notes": "Same named enum value as the pinned IDL."
         }
       ]
     },
@@ -999,9 +1353,11 @@
       "kind": "enum",
       "base": "",
       "source": "controls/dev/InkToolbar/InkToolbar.idl",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Awaiting implementation reconciliation.",
+      "status": "implemented",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_types.rs"
+      ],
+      "notes": "Rust enum preserves all pinned IDL names and numeric values.",
       "members": [
         {
           "name": "Stencil",
@@ -1009,10 +1365,14 @@
           "declaration": "Stencil",
           "value": 0,
           "id": "InkToolbarMenuKind.Stencil",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "implemented",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_types.rs"
+          ],
+          "symbols": [
+            "Stencil"
+          ],
+          "notes": "Same named enum value as the pinned IDL."
         }
       ]
     },
@@ -1021,9 +1381,11 @@
       "kind": "enum",
       "base": "",
       "source": "controls/dev/InkToolbar/InkToolbar.idl",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Awaiting implementation reconciliation.",
+      "status": "implemented",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_types.rs"
+      ],
+      "notes": "Rust enum preserves all pinned IDL names and numeric values.",
       "members": [
         {
           "name": "Ruler",
@@ -1031,10 +1393,14 @@
           "declaration": "Ruler",
           "value": 0,
           "id": "InkToolbarStencilKind.Ruler",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "implemented",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_types.rs"
+          ],
+          "symbols": [
+            "Ruler"
+          ],
+          "notes": "Same named enum value as the pinned IDL."
         },
         {
           "name": "Protractor",
@@ -1042,10 +1408,14 @@
           "declaration": "Protractor",
           "value": 1,
           "id": "InkToolbarStencilKind.Protractor",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "implemented",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_types.rs"
+          ],
+          "symbols": [
+            "Protractor"
+          ],
+          "notes": "Same named enum value as the pinned IDL."
         }
       ]
     },
@@ -1054,9 +1424,11 @@
       "kind": "enum",
       "base": "",
       "source": "controls/dev/InkToolbar/InkToolbar.idl",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Awaiting implementation reconciliation.",
+      "status": "implemented",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_types.rs"
+      ],
+      "notes": "Rust enum preserves all pinned IDL names and numeric values.",
       "members": [
         {
           "name": "Ruler",
@@ -1064,10 +1436,14 @@
           "declaration": "Ruler",
           "value": 0,
           "id": "InkToolbarToggle.Ruler",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "implemented",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_types.rs"
+          ],
+          "symbols": [
+            "Ruler"
+          ],
+          "notes": "Same named enum value as the pinned IDL."
         },
         {
           "name": "Custom",
@@ -1075,10 +1451,14 @@
           "declaration": "Custom",
           "value": 1,
           "id": "InkToolbarToggle.Custom",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "implemented",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_types.rs"
+          ],
+          "symbols": [
+            "Custom"
+          ],
+          "notes": "Same named enum value as the pinned IDL."
         }
       ]
     },
@@ -1087,9 +1467,11 @@
       "kind": "enum",
       "base": "",
       "source": "controls/dev/InkToolbar/InkToolbar.idl",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Awaiting implementation reconciliation.",
+      "status": "implemented",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_types.rs"
+      ],
+      "notes": "Rust enum preserves all pinned IDL names and numeric values.",
       "members": [
         {
           "name": "BallpointPen",
@@ -1097,10 +1479,14 @@
           "declaration": "BallpointPen",
           "value": 0,
           "id": "InkToolbarTool.BallpointPen",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "implemented",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_types.rs"
+          ],
+          "symbols": [
+            "BallpointPen"
+          ],
+          "notes": "Same named enum value as the pinned IDL."
         },
         {
           "name": "Pencil",
@@ -1108,10 +1494,14 @@
           "declaration": "Pencil",
           "value": 1,
           "id": "InkToolbarTool.Pencil",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "implemented",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_types.rs"
+          ],
+          "symbols": [
+            "Pencil"
+          ],
+          "notes": "Same named enum value as the pinned IDL."
         },
         {
           "name": "Highlighter",
@@ -1119,10 +1509,14 @@
           "declaration": "Highlighter",
           "value": 2,
           "id": "InkToolbarTool.Highlighter",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "implemented",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_types.rs"
+          ],
+          "symbols": [
+            "Highlighter"
+          ],
+          "notes": "Same named enum value as the pinned IDL."
         },
         {
           "name": "Eraser",
@@ -1130,10 +1524,14 @@
           "declaration": "Eraser",
           "value": 3,
           "id": "InkToolbarTool.Eraser",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "implemented",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_types.rs"
+          ],
+          "symbols": [
+            "Eraser"
+          ],
+          "notes": "Same named enum value as the pinned IDL."
         },
         {
           "name": "CustomPen",
@@ -1141,10 +1539,14 @@
           "declaration": "CustomPen",
           "value": 4,
           "id": "InkToolbarTool.CustomPen",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "implemented",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_types.rs"
+          ],
+          "symbols": [
+            "CustomPen"
+          ],
+          "notes": "Same named enum value as the pinned IDL."
         },
         {
           "name": "CustomTool",
@@ -1152,10 +1554,14 @@
           "declaration": "CustomTool",
           "value": 5,
           "id": "InkToolbarTool.CustomTool",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "implemented",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_types.rs"
+          ],
+          "symbols": [
+            "CustomTool"
+          ],
+          "notes": "Same named enum value as the pinned IDL."
         }
       ]
     },
@@ -1164,29 +1570,39 @@
       "kind": "runtimeclass",
       "base": "",
       "source": "controls/dev/InkToolbar/InkToolbar.idl",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Awaiting implementation reconciliation.",
+      "status": "adapted",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar.rs"
+      ],
+      "notes": "Public surface is expressed using FerroUI classes/properties or Rc service values; per-member adaptations are recorded below. A type mapping does not establish visual or Windows-runtime parity.",
       "members": [
         {
           "name": "StencilButton",
           "kind": "property",
           "declaration": "Microsoft.UI.Xaml.Controls.InkToolbarStencilButton StencilButton{ get; };",
           "id": "InkToolbarIsStencilButtonCheckedChangedEventArgs.StencilButton",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar.rs"
+          ],
+          "symbols": [
+            "stencil_button"
+          ],
+          "notes": "Immutable Rust event snapshot exposes the originating FerroUI stencil button and selected stencil kind as public fields."
         },
         {
           "name": "StencilKind",
           "kind": "property",
           "declaration": "Microsoft.UI.Xaml.Controls.InkToolbarStencilKind StencilKind{ get; };",
           "id": "InkToolbarIsStencilButtonCheckedChangedEventArgs.StencilKind",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar.rs"
+          ],
+          "symbols": [
+            "stencil_kind"
+          ],
+          "notes": "Immutable Rust event snapshot exposes the originating FerroUI stencil button and selected stencil kind as public fields."
         }
       ]
     },
@@ -1195,39 +1611,53 @@
       "kind": "runtimeclass",
       "base": "Microsoft.UI.Xaml.DependencyObject",
       "source": "controls/dev/InkToolbar/InkToolbar.idl",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Awaiting implementation reconciliation.",
+      "status": "adapted",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+      ],
+      "notes": "Public surface is expressed using FerroUI classes/properties or Rc service values; per-member adaptations are recorded below. A type mapping does not establish visual or Windows-runtime parity.",
       "members": [
         {
           "name": "InkToolbarCustomPen",
           "kind": "constructor",
           "declaration": "protected InkToolbarCustomPen();",
           "id": "InkToolbarCustomPen.InkToolbarCustomPen",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+          ],
+          "symbols": [
+            "new"
+          ],
+          "notes": "Constructed with new and FerroUI Ref ownership (or the existing owner for an automation peer); no COM activation is required."
         },
         {
           "name": "CreateInkDrawingAttributes",
           "kind": "method",
           "declaration": "Windows.UI.Input.Inking.InkDrawingAttributes CreateInkDrawingAttributes(Microsoft.UI.Xaml.Media.Brush brush, Double strokeWidth);",
           "id": "InkToolbarCustomPen.CreateInkDrawingAttributes",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+          ],
+          "symbols": [
+            "create_ink_drawing_attributes"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "CreateInkDrawingAttributesCore",
           "kind": "method",
           "declaration": "overridable Windows.UI.Input.Inking.InkDrawingAttributes CreateInkDrawingAttributesCore(Microsoft.UI.Xaml.Media.Brush brush, Double strokeWidth);",
           "id": "InkToolbarCustomPen.CreateInkDrawingAttributesCore",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+          ],
+          "symbols": [
+            "create_ink_drawing_attributes_core"
+          ],
+          "notes": "FerroUI virtual-dispatch trait method allows custom pen implementations. The toolbar deliberately dispatches this virtual, correcting the pinned generic-attribute helper path."
         }
       ]
     },
@@ -1236,289 +1666,404 @@
       "kind": "runtimeclass",
       "base": "Microsoft.UI.Xaml.Controls.Control",
       "source": "controls/dev/InkToolbar/InkToolbar.idl",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Awaiting implementation reconciliation.",
+      "status": "partial",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar.rs"
+      ],
+      "notes": "Functional controls, target orchestration, properties, events and lazy flyouts use FerroUI. Complete upstream templates, glyphs, visual states, localized resources and contrast-filtered palettes remain open.",
       "members": [
         {
           "name": "InkToolbar",
           "kind": "constructor",
           "declaration": "InkToolbar();",
           "id": "InkToolbar.InkToolbar",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar.rs"
+          ],
+          "symbols": [
+            "new"
+          ],
+          "notes": "Constructed with new and FerroUI Ref ownership (or the existing owner for an automation peer); no COM activation is required."
         },
         {
           "name": "InitialControls",
           "kind": "property",
           "declaration": "Microsoft.UI.Xaml.Controls.InkToolbarInitialControls InitialControls;",
           "id": "InkToolbar.InitialControls",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar.rs"
+          ],
+          "symbols": [
+            "initial_controls"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "Children",
           "kind": "property",
           "declaration": "Microsoft.UI.Xaml.DependencyObjectCollection Children{ get; };",
           "id": "InkToolbar.Children",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar.rs"
+          ],
+          "symbols": [
+            "children"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "ActiveTool",
           "kind": "property",
           "declaration": "Microsoft.UI.Xaml.Controls.InkToolbarToolButton ActiveTool;",
           "id": "InkToolbar.ActiveTool",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar.rs"
+          ],
+          "symbols": [
+            "active_tool"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "InkDrawingAttributes",
           "kind": "property",
           "declaration": "Windows.UI.Input.Inking.InkDrawingAttributes InkDrawingAttributes{ get; };",
           "id": "InkToolbar.InkDrawingAttributes",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar.rs"
+          ],
+          "symbols": [
+            "ink_drawing_attributes"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "IsRulerButtonChecked",
           "kind": "property",
           "declaration": "Boolean IsRulerButtonChecked;",
           "id": "InkToolbar.IsRulerButtonChecked",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar.rs"
+          ],
+          "symbols": [
+            "is_ruler_button_checked"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "TargetInkCanvas",
           "kind": "property",
           "declaration": "Microsoft.UI.Xaml.Controls.InkCanvas TargetInkCanvas;",
           "id": "InkToolbar.TargetInkCanvas",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar.rs"
+          ],
+          "symbols": [
+            "target_ink_canvas"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "IsStencilButtonChecked",
           "kind": "property",
           "declaration": "Boolean IsStencilButtonChecked;",
           "id": "InkToolbar.IsStencilButtonChecked",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar.rs"
+          ],
+          "symbols": [
+            "is_stencil_button_checked"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "ButtonFlyoutPlacement",
           "kind": "property",
           "declaration": "Microsoft.UI.Xaml.Controls.InkToolbarButtonFlyoutPlacement ButtonFlyoutPlacement;",
           "id": "InkToolbar.ButtonFlyoutPlacement",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "partial",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar.rs"
+          ],
+          "symbols": [
+            "button_flyout_placement"
+          ],
+          "notes": "Maps requested directions to FerroUI flyout placement. Full upstream automatic placement/edge behavior needs visual platform comparison."
         },
         {
           "name": "Orientation",
           "kind": "property",
           "declaration": "Microsoft.UI.Xaml.Controls.Orientation Orientation;",
           "id": "InkToolbar.Orientation",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar.rs",
+            "src/FerroUI.Controls/stack_panel.rs"
+          ],
+          "symbols": [
+            "orientation"
+          ],
+          "notes": "Inherited StackPanel orientation uses FerroUI layout; OrientationProperty adds the InkToolbar owner."
         },
         {
           "name": "TargetInkPresenter",
           "kind": "property",
           "declaration": "Microsoft.UI.Xaml.Controls.InkPresenter TargetInkPresenter;",
           "id": "InkToolbar.TargetInkPresenter",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar.rs"
+          ],
+          "symbols": [
+            "target_ink_presenter"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "ActiveToolChanged",
           "kind": "event",
           "declaration": "event Windows.Foundation.TypedEventHandler<Microsoft.UI.Xaml.Controls.InkToolbar,Object> ActiveToolChanged;",
           "id": "InkToolbar.ActiveToolChanged",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar.rs"
+          ],
+          "symbols": [
+            "active_tool_changed"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "InkDrawingAttributesChanged",
           "kind": "event",
           "declaration": "event Windows.Foundation.TypedEventHandler<Microsoft.UI.Xaml.Controls.InkToolbar,Object> InkDrawingAttributesChanged;",
           "id": "InkToolbar.InkDrawingAttributesChanged",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar.rs"
+          ],
+          "symbols": [
+            "ink_drawing_attributes_changed"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "EraseAllClicked",
           "kind": "event",
           "declaration": "event Windows.Foundation.TypedEventHandler<Microsoft.UI.Xaml.Controls.InkToolbar,Object> EraseAllClicked;",
           "id": "InkToolbar.EraseAllClicked",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar.rs"
+          ],
+          "symbols": [
+            "erase_all_clicked"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "IsStencilButtonCheckedChanged",
           "kind": "event",
           "declaration": "event Windows.Foundation.TypedEventHandler<Microsoft.UI.Xaml.Controls.InkToolbar,Microsoft.UI.Xaml.Controls.InkToolbarIsStencilButtonCheckedChangedEventArgs> IsStencilButtonCheckedChanged;",
           "id": "InkToolbar.IsStencilButtonCheckedChanged",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar.rs"
+          ],
+          "symbols": [
+            "is_stencil_button_checked_changed"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "GetToolButton",
           "kind": "method",
           "declaration": "Microsoft.UI.Xaml.Controls.InkToolbarToolButton GetToolButton(Microsoft.UI.Xaml.Controls.InkToolbarTool tool);",
           "id": "InkToolbar.GetToolButton",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar.rs"
+          ],
+          "symbols": [
+            "get_tool_button"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "GetToggleButton",
           "kind": "method",
           "declaration": "Microsoft.UI.Xaml.Controls.InkToolbarToggleButton GetToggleButton(Microsoft.UI.Xaml.Controls.InkToolbarToggle tool);",
           "id": "InkToolbar.GetToggleButton",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar.rs"
+          ],
+          "symbols": [
+            "get_toggle_button"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "GetMenuButton",
           "kind": "method",
           "declaration": "Microsoft.UI.Xaml.Controls.InkToolbarMenuButton GetMenuButton(Microsoft.UI.Xaml.Controls.InkToolbarMenuKind menu);",
           "id": "InkToolbar.GetMenuButton",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar.rs"
+          ],
+          "symbols": [
+            "get_menu_button"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "InitialControlsProperty",
           "kind": "dependency_property",
           "declaration": "static Microsoft.UI.Xaml.DependencyProperty InitialControlsProperty{ get; };",
           "id": "InkToolbar.InitialControlsProperty",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar.rs"
+          ],
+          "symbols": [
+            "initial_controls_property"
+          ],
+          "notes": "Registered as a FerroUI StyledProperty or read-only DirectProperty with the original markup property name."
         },
         {
           "name": "ChildrenProperty",
           "kind": "dependency_property",
           "declaration": "static Microsoft.UI.Xaml.DependencyProperty ChildrenProperty{ get; };",
           "id": "InkToolbar.ChildrenProperty",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar.rs"
+          ],
+          "symbols": [
+            "children_property"
+          ],
+          "notes": "Registered as a FerroUI StyledProperty or read-only DirectProperty with the original markup property name."
         },
         {
           "name": "ActiveToolProperty",
           "kind": "dependency_property",
           "declaration": "static Microsoft.UI.Xaml.DependencyProperty ActiveToolProperty{ get; };",
           "id": "InkToolbar.ActiveToolProperty",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar.rs"
+          ],
+          "symbols": [
+            "active_tool_property"
+          ],
+          "notes": "Registered as a FerroUI StyledProperty or read-only DirectProperty with the original markup property name."
         },
         {
           "name": "InkDrawingAttributesProperty",
           "kind": "dependency_property",
           "declaration": "static Microsoft.UI.Xaml.DependencyProperty InkDrawingAttributesProperty{ get; };",
           "id": "InkToolbar.InkDrawingAttributesProperty",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar.rs"
+          ],
+          "symbols": [
+            "ink_drawing_attributes_property"
+          ],
+          "notes": "Registered as a FerroUI StyledProperty or read-only DirectProperty with the original markup property name."
         },
         {
           "name": "IsRulerButtonCheckedProperty",
           "kind": "dependency_property",
           "declaration": "static Microsoft.UI.Xaml.DependencyProperty IsRulerButtonCheckedProperty{ get; };",
           "id": "InkToolbar.IsRulerButtonCheckedProperty",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar.rs"
+          ],
+          "symbols": [
+            "is_ruler_button_checked_property"
+          ],
+          "notes": "Registered as a FerroUI StyledProperty or read-only DirectProperty with the original markup property name."
         },
         {
           "name": "TargetInkCanvasProperty",
           "kind": "dependency_property",
           "declaration": "static Microsoft.UI.Xaml.DependencyProperty TargetInkCanvasProperty{ get; };",
           "id": "InkToolbar.TargetInkCanvasProperty",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar.rs"
+          ],
+          "symbols": [
+            "target_ink_canvas_property"
+          ],
+          "notes": "Registered as a FerroUI StyledProperty or read-only DirectProperty with the original markup property name."
         },
         {
           "name": "IsStencilButtonCheckedProperty",
           "kind": "dependency_property",
           "declaration": "static Microsoft.UI.Xaml.DependencyProperty IsStencilButtonCheckedProperty{ get; };",
           "id": "InkToolbar.IsStencilButtonCheckedProperty",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar.rs"
+          ],
+          "symbols": [
+            "is_stencil_button_checked_property"
+          ],
+          "notes": "Registered as a FerroUI StyledProperty or read-only DirectProperty with the original markup property name."
         },
         {
           "name": "ButtonFlyoutPlacementProperty",
           "kind": "dependency_property",
           "declaration": "static Microsoft.UI.Xaml.DependencyProperty ButtonFlyoutPlacementProperty{ get; };",
           "id": "InkToolbar.ButtonFlyoutPlacementProperty",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar.rs"
+          ],
+          "symbols": [
+            "button_flyout_placement_property"
+          ],
+          "notes": "Registered as a FerroUI StyledProperty or read-only DirectProperty with the original markup property name."
         },
         {
           "name": "OrientationProperty",
           "kind": "dependency_property",
           "declaration": "static Microsoft.UI.Xaml.DependencyProperty OrientationProperty{ get; };",
           "id": "InkToolbar.OrientationProperty",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar.rs"
+          ],
+          "symbols": [
+            "orientation_property"
+          ],
+          "notes": "Registered as a FerroUI StyledProperty or read-only DirectProperty with the original markup property name."
         },
         {
           "name": "TargetInkPresenterProperty",
           "kind": "dependency_property",
           "declaration": "static Microsoft.UI.Xaml.DependencyProperty TargetInkPresenterProperty{ get; };",
           "id": "InkToolbar.TargetInkPresenterProperty",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar.rs"
+          ],
+          "symbols": [
+            "target_ink_presenter_property"
+          ],
+          "notes": "Registered as a FerroUI StyledProperty or read-only DirectProperty with the original markup property name."
         }
       ]
     },
@@ -1527,39 +2072,53 @@
       "kind": "runtimeclass",
       "base": "Microsoft.UI.Xaml.Controls.Control",
       "source": "controls/dev/InkToolbar/InkToolbar.idl",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Awaiting implementation reconciliation.",
+      "status": "partial",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_configuration.rs"
+      ],
+      "notes": "Live palette and width slider are composed from FerroUI controls. Upstream headings/localization, exact template and visual-state fidelity remain open.",
       "members": [
         {
           "name": "InkToolbarPenConfigurationControl",
           "kind": "constructor",
           "declaration": "InkToolbarPenConfigurationControl();",
           "id": "InkToolbarPenConfigurationControl.InkToolbarPenConfigurationControl",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_configuration.rs"
+          ],
+          "symbols": [
+            "new"
+          ],
+          "notes": "Constructed with new and FerroUI Ref ownership (or the existing owner for an automation peer); no COM activation is required."
         },
         {
           "name": "PenButton",
           "kind": "property",
           "declaration": "Microsoft.UI.Xaml.Controls.InkToolbarPenButton PenButton{ get; };",
           "id": "InkToolbarPenConfigurationControl.PenButton",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_configuration.rs"
+          ],
+          "symbols": [
+            "pen_button"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "PenButtonProperty",
           "kind": "dependency_property",
           "declaration": "static Microsoft.UI.Xaml.DependencyProperty PenButtonProperty{ get; };",
           "id": "InkToolbarPenConfigurationControl.PenButtonProperty",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_configuration.rs"
+          ],
+          "symbols": [
+            "pen_button_property"
+          ],
+          "notes": "Registered as a FerroUI StyledProperty or read-only DirectProperty with the original markup property name."
         }
       ]
     },
@@ -1568,79 +2127,111 @@
       "kind": "runtimeclass",
       "base": "Microsoft.UI.Xaml.Controls.Primitives.ButtonBase",
       "source": "controls/dev/InkToolbar/InkToolbar.idl",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Awaiting implementation reconciliation.",
+      "status": "adapted",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_configuration.rs"
+      ],
+      "notes": "Public surface is expressed using FerroUI classes/properties or Rc service values; per-member adaptations are recorded below. A type mapping does not establish visual or Windows-runtime parity.",
       "members": [
         {
           "name": "InkToolbarFlyoutItem",
           "kind": "constructor",
           "declaration": "InkToolbarFlyoutItem();",
           "id": "InkToolbarFlyoutItem.InkToolbarFlyoutItem",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_configuration.rs"
+          ],
+          "symbols": [
+            "new"
+          ],
+          "notes": "Constructed with new and FerroUI Ref ownership (or the existing owner for an automation peer); no COM activation is required."
         },
         {
           "name": "Kind",
           "kind": "property",
           "declaration": "Microsoft.UI.Xaml.Controls.InkToolbarFlyoutItemKind Kind;",
           "id": "InkToolbarFlyoutItem.Kind",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_configuration.rs"
+          ],
+          "symbols": [
+            "kind"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "IsChecked",
           "kind": "property",
           "declaration": "Boolean IsChecked;",
           "id": "InkToolbarFlyoutItem.IsChecked",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_configuration.rs",
+            "src/FerroUI.Controls/primitives/toggle_button.rs"
+          ],
+          "symbols": [
+            "is_checked"
+          ],
+          "notes": "Uses inherited FerroUI ToggleButton checked state/property; Option<bool> represents framework tri-state storage while flyout behavior uses true/false."
         },
         {
           "name": "Checked",
           "kind": "event",
           "declaration": "event Windows.Foundation.TypedEventHandler<Microsoft.UI.Xaml.Controls.InkToolbarFlyoutItem,Object> Checked;",
           "id": "InkToolbarFlyoutItem.Checked",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_configuration.rs"
+          ],
+          "symbols": [
+            "checked"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "Unchecked",
           "kind": "event",
           "declaration": "event Windows.Foundation.TypedEventHandler<Microsoft.UI.Xaml.Controls.InkToolbarFlyoutItem,Object> Unchecked;",
           "id": "InkToolbarFlyoutItem.Unchecked",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_configuration.rs"
+          ],
+          "symbols": [
+            "unchecked"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "KindProperty",
           "kind": "dependency_property",
           "declaration": "static Microsoft.UI.Xaml.DependencyProperty KindProperty{ get; };",
           "id": "InkToolbarFlyoutItem.KindProperty",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_configuration.rs"
+          ],
+          "symbols": [
+            "kind_property"
+          ],
+          "notes": "Registered as a FerroUI StyledProperty or read-only DirectProperty with the original markup property name."
         },
         {
           "name": "IsCheckedProperty",
           "kind": "dependency_property",
           "declaration": "static Microsoft.UI.Xaml.DependencyProperty IsCheckedProperty{ get; };",
           "id": "InkToolbarFlyoutItem.IsCheckedProperty",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_configuration.rs",
+            "src/FerroUI.Controls/primitives/toggle_button.rs"
+          ],
+          "symbols": [
+            "is_checked_property"
+          ],
+          "notes": "Uses inherited FerroUI ToggleButton checked state/property; Option<bool> represents framework tri-state storage while flyout behavior uses true/false."
         }
       ]
     },
@@ -1649,39 +2240,53 @@
       "kind": "runtimeclass",
       "base": "Microsoft.UI.Xaml.Controls.Primitives.ToggleButton",
       "source": "controls/dev/InkToolbar/InkToolbar.idl",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Awaiting implementation reconciliation.",
+      "status": "adapted",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+      ],
+      "notes": "Public surface is expressed using FerroUI classes/properties or Rc service values; per-member adaptations are recorded below. A type mapping does not establish visual or Windows-runtime parity.",
       "members": [
         {
           "name": "MenuKind",
           "kind": "property",
           "declaration": "Microsoft.UI.Xaml.Controls.InkToolbarMenuKind MenuKind{ get; };",
           "id": "InkToolbarMenuButton.MenuKind",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+          ],
+          "symbols": [
+            "menu_kind"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "IsExtensionGlyphShown",
           "kind": "property",
           "declaration": "Boolean IsExtensionGlyphShown;",
           "id": "InkToolbarMenuButton.IsExtensionGlyphShown",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+          ],
+          "symbols": [
+            "is_extension_glyph_shown"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "IsExtensionGlyphShownProperty",
           "kind": "dependency_property",
           "declaration": "static Microsoft.UI.Xaml.DependencyProperty IsExtensionGlyphShownProperty{ get; };",
           "id": "InkToolbarMenuButton.IsExtensionGlyphShownProperty",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+          ],
+          "symbols": [
+            "is_extension_glyph_shown_property"
+          ],
+          "notes": "Registered as a FerroUI StyledProperty or read-only DirectProperty with the original markup property name."
         }
       ]
     },
@@ -1690,119 +2295,169 @@
       "kind": "runtimeclass",
       "base": "Microsoft.UI.Xaml.Controls.InkToolbarMenuButton",
       "source": "controls/dev/InkToolbar/InkToolbar.idl",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Awaiting implementation reconciliation.",
+      "status": "partial",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+      ],
+      "notes": "Stable portable ruler/protractor services, selection and visibility are connected. Native stencil manipulation, full annotations and exact appearance remain incomplete.",
       "members": [
         {
           "name": "InkToolbarStencilButton",
           "kind": "constructor",
           "declaration": "InkToolbarStencilButton();",
           "id": "InkToolbarStencilButton.InkToolbarStencilButton",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+          ],
+          "symbols": [
+            "new"
+          ],
+          "notes": "Constructed with new and FerroUI Ref ownership (or the existing owner for an automation peer); no COM activation is required."
         },
         {
           "name": "Ruler",
           "kind": "property",
           "declaration": "Windows.UI.Input.Inking.InkPresenterRuler Ruler{ get; };",
           "id": "InkToolbarStencilButton.Ruler",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "partial",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs",
+            "src/FerroUI.Controls/inking/ink_presenter_stencil.rs"
+          ],
+          "symbols": [
+            "ruler"
+          ],
+          "notes": "Read-only stable Rc service of the effective presenter. Portable drawing/constraints are implemented; full OS stencil appearance, manipulation and annotation behavior remain incomplete."
         },
         {
           "name": "Protractor",
           "kind": "property",
           "declaration": "Windows.UI.Input.Inking.InkPresenterProtractor Protractor{ get; };",
           "id": "InkToolbarStencilButton.Protractor",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "partial",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs",
+            "src/FerroUI.Controls/inking/ink_presenter_stencil.rs"
+          ],
+          "symbols": [
+            "protractor"
+          ],
+          "notes": "Read-only stable Rc service of the effective presenter. Portable drawing/constraints are implemented; full OS stencil appearance, manipulation and annotation behavior remain incomplete."
         },
         {
           "name": "SelectedStencil",
           "kind": "property",
           "declaration": "Microsoft.UI.Xaml.Controls.InkToolbarStencilKind SelectedStencil;",
           "id": "InkToolbarStencilButton.SelectedStencil",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+          ],
+          "symbols": [
+            "selected_stencil"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "IsRulerItemVisible",
           "kind": "property",
           "declaration": "Boolean IsRulerItemVisible;",
           "id": "InkToolbarStencilButton.IsRulerItemVisible",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+          ],
+          "symbols": [
+            "is_ruler_item_visible"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "IsProtractorItemVisible",
           "kind": "property",
           "declaration": "Boolean IsProtractorItemVisible;",
           "id": "InkToolbarStencilButton.IsProtractorItemVisible",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+          ],
+          "symbols": [
+            "is_protractor_item_visible"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "RulerProperty",
           "kind": "dependency_property",
           "declaration": "static Microsoft.UI.Xaml.DependencyProperty RulerProperty{ get; };",
           "id": "InkToolbarStencilButton.RulerProperty",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "partial",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs",
+            "src/FerroUI.Controls/inking/ink_presenter_stencil.rs"
+          ],
+          "symbols": [
+            "ruler_property"
+          ],
+          "notes": "Read-only stable Rc service of the effective presenter. Portable drawing/constraints are implemented; full OS stencil appearance, manipulation and annotation behavior remain incomplete."
         },
         {
           "name": "ProtractorProperty",
           "kind": "dependency_property",
           "declaration": "static Microsoft.UI.Xaml.DependencyProperty ProtractorProperty{ get; };",
           "id": "InkToolbarStencilButton.ProtractorProperty",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "partial",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs",
+            "src/FerroUI.Controls/inking/ink_presenter_stencil.rs"
+          ],
+          "symbols": [
+            "protractor_property"
+          ],
+          "notes": "Read-only stable Rc service of the effective presenter. Portable drawing/constraints are implemented; full OS stencil appearance, manipulation and annotation behavior remain incomplete."
         },
         {
           "name": "SelectedStencilProperty",
           "kind": "dependency_property",
           "declaration": "static Microsoft.UI.Xaml.DependencyProperty SelectedStencilProperty{ get; };",
           "id": "InkToolbarStencilButton.SelectedStencilProperty",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+          ],
+          "symbols": [
+            "selected_stencil_property"
+          ],
+          "notes": "Registered as a FerroUI StyledProperty or read-only DirectProperty with the original markup property name."
         },
         {
           "name": "IsRulerItemVisibleProperty",
           "kind": "dependency_property",
           "declaration": "static Microsoft.UI.Xaml.DependencyProperty IsRulerItemVisibleProperty{ get; };",
           "id": "InkToolbarStencilButton.IsRulerItemVisibleProperty",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+          ],
+          "symbols": [
+            "is_ruler_item_visible_property"
+          ],
+          "notes": "Registered as a FerroUI StyledProperty or read-only DirectProperty with the original markup property name."
         },
         {
           "name": "IsProtractorItemVisibleProperty",
           "kind": "dependency_property",
           "declaration": "static Microsoft.UI.Xaml.DependencyProperty IsProtractorItemVisibleProperty{ get; };",
           "id": "InkToolbarStencilButton.IsProtractorItemVisibleProperty",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+          ],
+          "symbols": [
+            "is_protractor_item_visible_property"
+          ],
+          "notes": "Registered as a FerroUI StyledProperty or read-only DirectProperty with the original markup property name."
         }
       ]
     },
@@ -1811,19 +2466,25 @@
       "kind": "runtimeclass",
       "base": "Microsoft.UI.Xaml.Controls.CheckBox",
       "source": "controls/dev/InkToolbar/InkToolbar.idl",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Awaiting implementation reconciliation.",
+      "status": "adapted",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+      ],
+      "notes": "Public surface is expressed using FerroUI classes/properties or Rc service values; per-member adaptations are recorded below. A type mapping does not establish visual or Windows-runtime parity.",
       "members": [
         {
           "name": "ToggleKind",
           "kind": "property",
           "declaration": "Microsoft.UI.Xaml.Controls.InkToolbarToggle ToggleKind{ get; };",
           "id": "InkToolbarToggleButton.ToggleKind",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+          ],
+          "symbols": [
+            "toggle_kind"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         }
       ]
     },
@@ -1832,39 +2493,53 @@
       "kind": "runtimeclass",
       "base": "Microsoft.UI.Xaml.Controls.RadioButton",
       "source": "controls/dev/InkToolbar/InkToolbar.idl",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Awaiting implementation reconciliation.",
+      "status": "adapted",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+      ],
+      "notes": "Public surface is expressed using FerroUI classes/properties or Rc service values; per-member adaptations are recorded below. A type mapping does not establish visual or Windows-runtime parity.",
       "members": [
         {
           "name": "ToolKind",
           "kind": "property",
           "declaration": "Microsoft.UI.Xaml.Controls.InkToolbarTool ToolKind{ get; };",
           "id": "InkToolbarToolButton.ToolKind",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+          ],
+          "symbols": [
+            "tool_kind"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "IsExtensionGlyphShown",
           "kind": "property",
           "declaration": "Boolean IsExtensionGlyphShown;",
           "id": "InkToolbarToolButton.IsExtensionGlyphShown",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+          ],
+          "symbols": [
+            "is_extension_glyph_shown"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "IsExtensionGlyphShownProperty",
           "kind": "dependency_property",
           "declaration": "static Microsoft.UI.Xaml.DependencyProperty IsExtensionGlyphShownProperty{ get; };",
           "id": "InkToolbarToolButton.IsExtensionGlyphShownProperty",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+          ],
+          "symbols": [
+            "is_extension_glyph_shown_property"
+          ],
+          "notes": "Registered as a FerroUI StyledProperty or read-only DirectProperty with the original markup property name."
         }
       ]
     },
@@ -1873,19 +2548,25 @@
       "kind": "runtimeclass",
       "base": "Microsoft.UI.Xaml.Controls.InkToolbarToggleButton",
       "source": "controls/dev/InkToolbar/InkToolbar.idl",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Awaiting implementation reconciliation.",
+      "status": "adapted",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+      ],
+      "notes": "Public surface is expressed using FerroUI classes/properties or Rc service values; per-member adaptations are recorded below. A type mapping does not establish visual or Windows-runtime parity.",
       "members": [
         {
           "name": "InkToolbarCustomToggleButton",
           "kind": "constructor",
           "declaration": "InkToolbarCustomToggleButton();",
           "id": "InkToolbarCustomToggleButton.InkToolbarCustomToggleButton",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+          ],
+          "symbols": [
+            "new"
+          ],
+          "notes": "Constructed with new and FerroUI Ref ownership (or the existing owner for an automation peer); no COM activation is required."
         }
       ]
     },
@@ -1894,19 +2575,25 @@
       "kind": "runtimeclass",
       "base": "Microsoft.UI.Xaml.Controls.InkToolbarToggleButton",
       "source": "controls/dev/InkToolbar/InkToolbar.idl",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Awaiting implementation reconciliation.",
+      "status": "partial",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+      ],
+      "notes": "Legacy ruler toggle controls the portable ruler. Native stencil touch manipulation and visual fidelity remain incomplete.",
       "members": [
         {
           "name": "InkToolbarRulerButton",
           "kind": "constructor",
           "declaration": "InkToolbarRulerButton();",
           "id": "InkToolbarRulerButton.InkToolbarRulerButton",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+          ],
+          "symbols": [
+            "new"
+          ],
+          "notes": "Constructed with new and FerroUI Ref ownership (or the existing owner for an automation peer); no COM activation is required."
         }
       ]
     },
@@ -1915,39 +2602,53 @@
       "kind": "runtimeclass",
       "base": "Microsoft.UI.Xaml.Controls.InkToolbarToolButton",
       "source": "controls/dev/InkToolbar/InkToolbar.idl",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Awaiting implementation reconciliation.",
+      "status": "adapted",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+      ],
+      "notes": "Public surface is expressed using FerroUI classes/properties or Rc service values; per-member adaptations are recorded below. A type mapping does not establish visual or Windows-runtime parity.",
       "members": [
         {
           "name": "InkToolbarCustomToolButton",
           "kind": "constructor",
           "declaration": "InkToolbarCustomToolButton();",
           "id": "InkToolbarCustomToolButton.InkToolbarCustomToolButton",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+          ],
+          "symbols": [
+            "new"
+          ],
+          "notes": "Constructed with new and FerroUI Ref ownership (or the existing owner for an automation peer); no COM activation is required."
         },
         {
           "name": "ConfigurationContent",
           "kind": "property",
           "declaration": "Microsoft.UI.Xaml.UIElement ConfigurationContent;",
           "id": "InkToolbarCustomToolButton.ConfigurationContent",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+          ],
+          "symbols": [
+            "configuration_content"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "ConfigurationContentProperty",
           "kind": "dependency_property",
           "declaration": "static Microsoft.UI.Xaml.DependencyProperty ConfigurationContentProperty{ get; };",
           "id": "InkToolbarCustomToolButton.ConfigurationContentProperty",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+          ],
+          "symbols": [
+            "configuration_content_property"
+          ],
+          "notes": "Registered as a FerroUI StyledProperty or read-only DirectProperty with the original markup property name."
         }
       ]
     },
@@ -1956,39 +2657,53 @@
       "kind": "runtimeclass",
       "base": "Microsoft.UI.Xaml.Controls.InkToolbarToolButton",
       "source": "controls/dev/InkToolbar/InkToolbar.idl",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Awaiting implementation reconciliation.",
+      "status": "adapted",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+      ],
+      "notes": "Public surface is expressed using FerroUI classes/properties or Rc service values; per-member adaptations are recorded below. A type mapping does not establish visual or Windows-runtime parity.",
       "members": [
         {
           "name": "InkToolbarEraserButton",
           "kind": "constructor",
           "declaration": "InkToolbarEraserButton();",
           "id": "InkToolbarEraserButton.InkToolbarEraserButton",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+          ],
+          "symbols": [
+            "new"
+          ],
+          "notes": "Constructed with new and FerroUI Ref ownership (or the existing owner for an automation peer); no COM activation is required."
         },
         {
           "name": "IsClearAllVisible",
           "kind": "property",
           "declaration": "Boolean IsClearAllVisible;",
           "id": "InkToolbarEraserButton.IsClearAllVisible",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+          ],
+          "symbols": [
+            "is_clear_all_visible"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "IsClearAllVisibleProperty",
           "kind": "dependency_property",
           "declaration": "static Microsoft.UI.Xaml.DependencyProperty IsClearAllVisibleProperty{ get; };",
           "id": "InkToolbarEraserButton.IsClearAllVisibleProperty",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+          ],
+          "symbols": [
+            "is_clear_all_visible_property"
+          ],
+          "notes": "Registered as a FerroUI StyledProperty or read-only DirectProperty with the original markup property name."
         }
       ]
     },
@@ -1997,129 +2712,179 @@
       "kind": "runtimeclass",
       "base": "Microsoft.UI.Xaml.Controls.InkToolbarToolButton",
       "source": "controls/dev/InkToolbar/InkToolbar.idl",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Awaiting implementation reconciliation.",
+      "status": "adapted",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+      ],
+      "notes": "Public surface is expressed using FerroUI classes/properties or Rc service values; per-member adaptations are recorded below. A type mapping does not establish visual or Windows-runtime parity.",
       "members": [
         {
           "name": "Palette",
           "kind": "property",
           "declaration": "Windows.Foundation.Collections.IVector<Microsoft.UI.Xaml.Media.Brush> Palette;",
           "id": "InkToolbarPenButton.Palette",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+          ],
+          "symbols": [
+            "palette"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "MinStrokeWidth",
           "kind": "property",
           "declaration": "Double MinStrokeWidth;",
           "id": "InkToolbarPenButton.MinStrokeWidth",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+          ],
+          "symbols": [
+            "min_stroke_width"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "MaxStrokeWidth",
           "kind": "property",
           "declaration": "Double MaxStrokeWidth;",
           "id": "InkToolbarPenButton.MaxStrokeWidth",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+          ],
+          "symbols": [
+            "max_stroke_width"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "SelectedBrush",
           "kind": "property",
           "declaration": "Microsoft.UI.Xaml.Media.Brush SelectedBrush{ get; };",
           "id": "InkToolbarPenButton.SelectedBrush",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+          ],
+          "symbols": [
+            "selected_brush"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "SelectedBrushIndex",
           "kind": "property",
           "declaration": "Int32 SelectedBrushIndex;",
           "id": "InkToolbarPenButton.SelectedBrushIndex",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+          ],
+          "symbols": [
+            "selected_brush_index"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "SelectedStrokeWidth",
           "kind": "property",
           "declaration": "Double SelectedStrokeWidth;",
           "id": "InkToolbarPenButton.SelectedStrokeWidth",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+          ],
+          "symbols": [
+            "selected_stroke_width"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "PaletteProperty",
           "kind": "dependency_property",
           "declaration": "static Microsoft.UI.Xaml.DependencyProperty PaletteProperty{ get; };",
           "id": "InkToolbarPenButton.PaletteProperty",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+          ],
+          "symbols": [
+            "palette_property"
+          ],
+          "notes": "Registered as a FerroUI StyledProperty or read-only DirectProperty with the original markup property name."
         },
         {
           "name": "MinStrokeWidthProperty",
           "kind": "dependency_property",
           "declaration": "static Microsoft.UI.Xaml.DependencyProperty MinStrokeWidthProperty{ get; };",
           "id": "InkToolbarPenButton.MinStrokeWidthProperty",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+          ],
+          "symbols": [
+            "min_stroke_width_property"
+          ],
+          "notes": "Registered as a FerroUI StyledProperty or read-only DirectProperty with the original markup property name."
         },
         {
           "name": "MaxStrokeWidthProperty",
           "kind": "dependency_property",
           "declaration": "static Microsoft.UI.Xaml.DependencyProperty MaxStrokeWidthProperty{ get; };",
           "id": "InkToolbarPenButton.MaxStrokeWidthProperty",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+          ],
+          "symbols": [
+            "max_stroke_width_property"
+          ],
+          "notes": "Registered as a FerroUI StyledProperty or read-only DirectProperty with the original markup property name."
         },
         {
           "name": "SelectedBrushProperty",
           "kind": "dependency_property",
           "declaration": "static Microsoft.UI.Xaml.DependencyProperty SelectedBrushProperty{ get; };",
           "id": "InkToolbarPenButton.SelectedBrushProperty",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+          ],
+          "symbols": [
+            "selected_brush_property"
+          ],
+          "notes": "Registered as a FerroUI StyledProperty or read-only DirectProperty with the original markup property name."
         },
         {
           "name": "SelectedBrushIndexProperty",
           "kind": "dependency_property",
           "declaration": "static Microsoft.UI.Xaml.DependencyProperty SelectedBrushIndexProperty{ get; };",
           "id": "InkToolbarPenButton.SelectedBrushIndexProperty",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+          ],
+          "symbols": [
+            "selected_brush_index_property"
+          ],
+          "notes": "Registered as a FerroUI StyledProperty or read-only DirectProperty with the original markup property name."
         },
         {
           "name": "SelectedStrokeWidthProperty",
           "kind": "dependency_property",
           "declaration": "static Microsoft.UI.Xaml.DependencyProperty SelectedStrokeWidthProperty{ get; };",
           "id": "InkToolbarPenButton.SelectedStrokeWidthProperty",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+          ],
+          "symbols": [
+            "selected_stroke_width_property"
+          ],
+          "notes": "Registered as a FerroUI StyledProperty or read-only DirectProperty with the original markup property name."
         }
       ]
     },
@@ -2128,19 +2893,25 @@
       "kind": "runtimeclass",
       "base": "Microsoft.UI.Xaml.Controls.InkToolbarPenButton",
       "source": "controls/dev/InkToolbar/InkToolbar.idl",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Awaiting implementation reconciliation.",
+      "status": "adapted",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+      ],
+      "notes": "Public surface is expressed using FerroUI classes/properties or Rc service values; per-member adaptations are recorded below. A type mapping does not establish visual or Windows-runtime parity.",
       "members": [
         {
           "name": "InkToolbarBallpointPenButton",
           "kind": "constructor",
           "declaration": "InkToolbarBallpointPenButton();",
           "id": "InkToolbarBallpointPenButton.InkToolbarBallpointPenButton",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+          ],
+          "symbols": [
+            "new"
+          ],
+          "notes": "Constructed with new and FerroUI Ref ownership (or the existing owner for an automation peer); no COM activation is required."
         }
       ]
     },
@@ -2149,59 +2920,81 @@
       "kind": "runtimeclass",
       "base": "Microsoft.UI.Xaml.Controls.InkToolbarPenButton",
       "source": "controls/dev/InkToolbar/InkToolbar.idl",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Awaiting implementation reconciliation.",
+      "status": "adapted",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+      ],
+      "notes": "Public surface is expressed using FerroUI classes/properties or Rc service values; per-member adaptations are recorded below. A type mapping does not establish visual or Windows-runtime parity.",
       "members": [
         {
           "name": "InkToolbarCustomPenButton",
           "kind": "constructor",
           "declaration": "InkToolbarCustomPenButton();",
           "id": "InkToolbarCustomPenButton.InkToolbarCustomPenButton",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+          ],
+          "symbols": [
+            "new"
+          ],
+          "notes": "Constructed with new and FerroUI Ref ownership (or the existing owner for an automation peer); no COM activation is required."
         },
         {
           "name": "CustomPen",
           "kind": "property",
           "declaration": "Microsoft.UI.Xaml.Controls.InkToolbarCustomPen CustomPen;",
           "id": "InkToolbarCustomPenButton.CustomPen",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+          ],
+          "symbols": [
+            "custom_pen"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "ConfigurationContent",
           "kind": "property",
           "declaration": "Microsoft.UI.Xaml.UIElement ConfigurationContent;",
           "id": "InkToolbarCustomPenButton.ConfigurationContent",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+          ],
+          "symbols": [
+            "configuration_content"
+          ],
+          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
         },
         {
           "name": "CustomPenProperty",
           "kind": "dependency_property",
           "declaration": "static Microsoft.UI.Xaml.DependencyProperty CustomPenProperty{ get; };",
           "id": "InkToolbarCustomPenButton.CustomPenProperty",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+          ],
+          "symbols": [
+            "custom_pen_property"
+          ],
+          "notes": "Registered as a FerroUI StyledProperty or read-only DirectProperty with the original markup property name."
         },
         {
           "name": "ConfigurationContentProperty",
           "kind": "dependency_property",
           "declaration": "static Microsoft.UI.Xaml.DependencyProperty ConfigurationContentProperty{ get; };",
           "id": "InkToolbarCustomPenButton.ConfigurationContentProperty",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+          ],
+          "symbols": [
+            "configuration_content_property"
+          ],
+          "notes": "Registered as a FerroUI StyledProperty or read-only DirectProperty with the original markup property name."
         }
       ]
     },
@@ -2210,19 +3003,25 @@
       "kind": "runtimeclass",
       "base": "Microsoft.UI.Xaml.Controls.InkToolbarPenButton",
       "source": "controls/dev/InkToolbar/InkToolbar.idl",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Awaiting implementation reconciliation.",
+      "status": "adapted",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+      ],
+      "notes": "Public surface is expressed using FerroUI classes/properties or Rc service values; per-member adaptations are recorded below. A type mapping does not establish visual or Windows-runtime parity.",
       "members": [
         {
           "name": "InkToolbarHighlighterButton",
           "kind": "constructor",
           "declaration": "InkToolbarHighlighterButton();",
           "id": "InkToolbarHighlighterButton.InkToolbarHighlighterButton",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+          ],
+          "symbols": [
+            "new"
+          ],
+          "notes": "Constructed with new and FerroUI Ref ownership (or the existing owner for an automation peer); no COM activation is required."
         }
       ]
     },
@@ -2231,19 +3030,25 @@
       "kind": "runtimeclass",
       "base": "Microsoft.UI.Xaml.Controls.InkToolbarPenButton",
       "source": "controls/dev/InkToolbar/InkToolbar.idl",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Awaiting implementation reconciliation.",
+      "status": "partial",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+      ],
+      "notes": "Pencil attributes, width, palette and opacity are mapped; portable rendering approximates tilt shading and does not reproduce native pencil grain.",
       "members": [
         {
           "name": "InkToolbarPencilButton",
           "kind": "constructor",
           "declaration": "InkToolbarPencilButton();",
           "id": "InkToolbarPencilButton.InkToolbarPencilButton",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+          ],
+          "symbols": [
+            "new"
+          ],
+          "notes": "Constructed with new and FerroUI Ref ownership (or the existing owner for an automation peer); no COM activation is required."
         }
       ]
     },
@@ -2252,19 +3057,25 @@
       "kind": "runtimeclass",
       "base": "Microsoft.UI.Xaml.Automation.Peers.FrameworkElementAutomationPeer",
       "source": "controls/dev/InkToolbar/InkToolbarAutomationPeer.idl",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Awaiting implementation reconciliation.",
+      "status": "adapted",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_automation_peer.rs"
+      ],
+      "notes": "Public surface is expressed using FerroUI classes/properties or Rc service values; per-member adaptations are recorded below. A type mapping does not establish visual or Windows-runtime parity.",
       "members": [
         {
           "name": "InkToolbarAutomationPeer",
           "kind": "constructor",
           "declaration": "InkToolbarAutomationPeer(MU_XC_NAMESPACE.InkToolbar owner);",
           "id": "InkToolbarAutomationPeer.InkToolbarAutomationPeer",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_automation_peer.rs"
+          ],
+          "symbols": [
+            "new"
+          ],
+          "notes": "Constructed with new and FerroUI Ref ownership (or the existing owner for an automation peer); no COM activation is required."
         }
       ]
     },
@@ -2273,19 +3084,25 @@
       "kind": "runtimeclass",
       "base": "Microsoft.UI.Xaml.Automation.Peers.RadioButtonAutomationPeer,\n        Microsoft.UI.Xaml.Automation.Provider.IExpandCollapseProvider",
       "source": "controls/dev/InkToolbar/InkToolbarAutomationPeer.idl",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Awaiting implementation reconciliation.",
+      "status": "adapted",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_automation_peer.rs"
+      ],
+      "notes": "Public surface is expressed using FerroUI classes/properties or Rc service values; per-member adaptations are recorded below. A type mapping does not establish visual or Windows-runtime parity.",
       "members": [
         {
           "name": "InkToolbarToolButtonAutomationPeer",
           "kind": "constructor",
           "declaration": "InkToolbarToolButtonAutomationPeer(MU_XC_NAMESPACE.InkToolbarToolButton owner);",
           "id": "InkToolbarToolButtonAutomationPeer.InkToolbarToolButtonAutomationPeer",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_automation_peer.rs"
+          ],
+          "symbols": [
+            "new"
+          ],
+          "notes": "Constructed with new and FerroUI Ref ownership (or the existing owner for an automation peer); no COM activation is required."
         }
       ]
     },
@@ -2294,19 +3111,25 @@
       "kind": "runtimeclass",
       "base": "Microsoft.UI.Xaml.Automation.Peers.ToggleButtonAutomationPeer,\n        Microsoft.UI.Xaml.Automation.Provider.IExpandCollapseProvider",
       "source": "controls/dev/InkToolbar/InkToolbarAutomationPeer.idl",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Awaiting implementation reconciliation.",
+      "status": "adapted",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_automation_peer.rs"
+      ],
+      "notes": "Public surface is expressed using FerroUI classes/properties or Rc service values; per-member adaptations are recorded below. A type mapping does not establish visual or Windows-runtime parity.",
       "members": [
         {
           "name": "InkToolbarMenuButtonAutomationPeer",
           "kind": "constructor",
           "declaration": "InkToolbarMenuButtonAutomationPeer(MU_XC_NAMESPACE.InkToolbarMenuButton owner);",
           "id": "InkToolbarMenuButtonAutomationPeer.InkToolbarMenuButtonAutomationPeer",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_automation_peer.rs"
+          ],
+          "symbols": [
+            "new"
+          ],
+          "notes": "Constructed with new and FerroUI Ref ownership (or the existing owner for an automation peer); no COM activation is required."
         }
       ]
     },
@@ -2315,19 +3138,25 @@
       "kind": "runtimeclass",
       "base": "Microsoft.UI.Xaml.Automation.Peers.ButtonBaseAutomationPeer,\n        Microsoft.UI.Xaml.Automation.Provider.IInvokeProvider,\n        Microsoft.UI.Xaml.Automation.Provider.ISelectionItemProvider",
       "source": "controls/dev/InkToolbar/InkToolbarAutomationPeer.idl",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Awaiting implementation reconciliation.",
+      "status": "adapted",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_automation_peer.rs"
+      ],
+      "notes": "Public surface is expressed using FerroUI classes/properties or Rc service values; per-member adaptations are recorded below. A type mapping does not establish visual or Windows-runtime parity.",
       "members": [
         {
           "name": "InkToolbarFlyoutItemAutomationPeer",
           "kind": "constructor",
           "declaration": "InkToolbarFlyoutItemAutomationPeer(MU_XC_NAMESPACE.InkToolbarFlyoutItem owner);",
           "id": "InkToolbarFlyoutItemAutomationPeer.InkToolbarFlyoutItemAutomationPeer",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_automation_peer.rs"
+          ],
+          "symbols": [
+            "new"
+          ],
+          "notes": "Constructed with new and FerroUI Ref ownership (or the existing owner for an automation peer); no COM activation is required."
         }
       ]
     },
@@ -2336,19 +3165,25 @@
       "kind": "runtimeclass",
       "base": "Microsoft.UI.Xaml.Controls.Slider",
       "source": "controls/dev/InkToolbar/InkToolbarStrokeWidthSlider.idl",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Awaiting implementation reconciliation.",
+      "status": "adapted",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_configuration.rs"
+      ],
+      "notes": "Public surface is expressed using FerroUI classes/properties or Rc service values; per-member adaptations are recorded below. A type mapping does not establish visual or Windows-runtime parity.",
       "members": [
         {
           "name": "InkToolbarStrokeWidthSlider",
           "kind": "constructor",
           "declaration": "InkToolbarStrokeWidthSlider();",
           "id": "InkToolbarStrokeWidthSlider.InkToolbarStrokeWidthSlider",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_configuration.rs"
+          ],
+          "symbols": [
+            "new"
+          ],
+          "notes": "Constructed with new and FerroUI Ref ownership (or the existing owner for an automation peer); no COM activation is required."
         }
       ]
     },
@@ -2357,19 +3192,25 @@
       "kind": "runtimeclass",
       "base": "Microsoft.UI.Xaml.Automation.Peers.SliderAutomationPeer",
       "source": "controls/dev/InkToolbar/InkToolbarStrokeWidthSliderAutomationPeer.idl",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Awaiting implementation reconciliation.",
+      "status": "adapted",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_toolbar_automation_peer.rs"
+      ],
+      "notes": "Public surface is expressed using FerroUI classes/properties or Rc service values; per-member adaptations are recorded below. A type mapping does not establish visual or Windows-runtime parity.",
       "members": [
         {
           "name": "InkToolbarStrokeWidthSliderAutomationPeer",
           "kind": "constructor",
           "declaration": "InkToolbarStrokeWidthSliderAutomationPeer(MU_XCP_NAMESPACE.InkToolbarStrokeWidthSlider owner);",
           "id": "InkToolbarStrokeWidthSliderAutomationPeer.InkToolbarStrokeWidthSliderAutomationPeer",
-          "status": "not_ported",
-          "rust_files": [],
-          "symbols": [],
-          "notes": "Awaiting implementation reconciliation."
+          "status": "adapted",
+          "rust_files": [
+            "src/FerroUI.Controls/inking/ink_toolbar_automation_peer.rs"
+          ],
+          "symbols": [
+            "new"
+          ],
+          "notes": "Constructed with new and FerroUI Ref ownership (or the existing owner for an automation peer); no COM activation is required."
         }
       ]
     }

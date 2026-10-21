@@ -17,6 +17,8 @@ use ferroui_base::{StaticType, TypeInfo};
 /// declaring module.
 const NAMESPACES: &[(&str, &str)] = &[
     ("ferroui_controls", "FerroUI.Controls"),
+    ("ferroui_controls::inking::ink_canvas_automation_peer", "FerroUI.Automation.Peers"),
+    ("ferroui_controls::inking::ink_toolbar_automation_peer", "FerroUI.Automation.Peers"),
     ("ferroui_controls::animation", "FerroUI.Animation"),
     ("ferroui_controls::app_builder", "FerroUI"),
     ("ferroui_controls::application", "FerroUI"),
@@ -121,10 +123,36 @@ pub fn register_types() {
         crate::rust_paths::register_rust_paths();
         MarkupAssembly::register(&ASSEMBLY);
         crate::markup_types::register();
+        crate::inking::register_markup();
     });
 }
 
 const TYPES: &[&TypeInfo] = types![
+    crate::inking::InkToolbar,
+    crate::inking::InkToolbarToolButton,
+    crate::inking::InkToolbarPenButton,
+    crate::inking::InkToolbarBallpointPenButton,
+    crate::inking::InkToolbarPencilButton,
+    crate::inking::InkToolbarHighlighterButton,
+    crate::inking::InkToolbarEraserButton,
+    crate::inking::InkToolbarCustomPen,
+    crate::inking::InkToolbarCustomPenButton,
+    crate::inking::InkToolbarCustomToolButton,
+    crate::inking::InkToolbarToggleButton,
+    crate::inking::InkToolbarCustomToggleButton,
+    crate::inking::InkToolbarRulerButton,
+    crate::inking::InkToolbarMenuButton,
+    crate::inking::InkToolbarStencilButton,
+    crate::inking::InkToolbarStrokeWidthSlider,
+    crate::inking::InkToolbarPenConfigurationControl,
+    crate::inking::InkToolbarFlyoutItem,
+    crate::inking::InkToolbarAutomationPeer,
+    crate::inking::InkToolbarToolButtonAutomationPeer,
+    crate::inking::InkToolbarMenuButtonAutomationPeer,
+    crate::inking::InkToolbarFlyoutItemAutomationPeer,
+    crate::inking::InkToolbarStrokeWidthSliderAutomationPeer,
+    crate::inking::InkCanvas,
+    crate::inking::InkCanvasAutomationPeer,
     // FerroUI
     crate::application::Application,
     // FerroUI.Animation

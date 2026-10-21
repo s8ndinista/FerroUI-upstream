@@ -16,6 +16,7 @@ mod buttons_page;
 mod calendar_date_picker_page;
 mod calendar_page;
 mod canvas_page;
+mod inking_page;
 mod carousel_demo_page;
 mod carousel_page;
 mod check_box_page;
@@ -125,6 +126,7 @@ pub use buttons_page::{ButtonsPage, RelayCommand};
 pub use calendar_date_picker_page::CalendarDatePickerPage;
 pub use calendar_page::CalendarPage;
 pub use canvas_page::CanvasPage;
+pub use inking_page::InkingPage;
 pub use carousel_demo_page::CarouselDemoPage;
 pub use carousel_page::CarouselPage;
 pub use check_box_page::CheckBoxPage;
@@ -284,6 +286,7 @@ const ROOT_TYPES: &[&TypeInfo] = &[
     ButtonSpinnerPage::TYPE,
     ButtonsPage::TYPE,
     CanvasPage::TYPE,
+    InkingPage::TYPE,
     CheckBoxPage::TYPE,
     ClipboardPage::TYPE,
     ColorPickerPage::TYPE,
@@ -369,6 +372,7 @@ const ROOT_CLASSES: &[&XamlClass] = &[
     &ButtonSpinnerPage::XAML_CLASS,
     &ButtonsPage::XAML_CLASS,
     &CanvasPage::XAML_CLASS,
+    &InkingPage::XAML_CLASS,
     &CheckBoxPage::XAML_CLASS,
     &ClipboardPage::XAML_CLASS,
     &ColorPickerPage::XAML_CLASS,

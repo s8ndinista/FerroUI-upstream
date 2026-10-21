@@ -7,49 +7,79 @@
       "id": "InkCanvas.InkCanvasConstructionTest",
       "source": "controls/dev/InkCanvas/APITests/InkCanvasTests.cs",
       "method": "InkCanvasConstructionTest",
-      "status": "not_ported",
-      "rust_tests": [],
-      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+      "status": "adapted",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/inking_tests.rs",
+          "name": "ink_canvas_participates_in_layout_and_uses_a_stable_presenter"
+        }
+      ],
+      "notes": "Constructs the FerroUI canvas and verifies layout and a stable presenter."
     },
     {
       "id": "InkCanvas.InkCanvasInVisualTreeTest",
       "source": "controls/dev/InkCanvas/APITests/InkCanvasTests.cs",
       "method": "InkCanvasInVisualTreeTest",
-      "status": "not_ported",
-      "rust_tests": [],
-      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+      "status": "partial",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/inking_tests.rs",
+          "name": "canvas_peer_is_a_pane_and_respects_ancestor_clipping"
+        }
+      ],
+      "notes": "Attaches a canvas to TestRoot and runs layout; native composition-host behavior is not exercised."
     },
     {
       "id": "InkCanvas.InkCanvasInkPresenterAccessorTest",
       "source": "controls/dev/InkCanvas/APITests/InkCanvasTests.cs",
       "method": "InkCanvasInkPresenterAccessorTest",
-      "status": "not_ported",
-      "rust_tests": [],
-      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+      "status": "adapted",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/inking_tests.rs",
+          "name": "ink_canvas_participates_in_layout_and_uses_a_stable_presenter"
+        }
+      ],
+      "notes": "Repeated access returns the same presenter."
     },
     {
       "id": "InkCanvas.InkCanvasAutomationPeerReportsBounds",
       "source": "controls/dev/InkCanvas/APITests/InkCanvasTests.cs",
       "method": "InkCanvasAutomationPeerReportsBounds",
-      "status": "not_ported",
-      "rust_tests": [],
-      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+      "status": "partial",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/inking_tests.rs",
+          "name": "canvas_peer_is_a_pane_and_respects_ancestor_clipping"
+        }
+      ],
+      "notes": "Tests bounded visible dimensions and Pane role; exact transformed native coordinates are not compared."
     },
     {
       "id": "InkCanvas.InkCanvasAutomationPeerReportsOffscreen",
       "source": "controls/dev/InkCanvas/APITests/InkCanvasTests.cs",
       "method": "InkCanvasAutomationPeerReportsOffscreen",
-      "status": "not_ported",
-      "rust_tests": [],
-      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+      "status": "adapted",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/inking_tests.rs",
+          "name": "canvas_peer_is_a_pane_and_respects_ancestor_clipping"
+        }
+      ],
+      "notes": "Hidden ancestor makes the canvas peer offscreen in the FerroUI visual tree."
     },
     {
       "id": "InkCanvas.InkCanvasAutomationPeerClipsBoundsToScrollViewport",
       "source": "controls/dev/InkCanvas/APITests/InkCanvasTests.cs",
       "method": "InkCanvasAutomationPeerClipsBoundsToScrollViewport",
-      "status": "not_ported",
-      "rust_tests": [],
-      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+      "status": "partial",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/inking_tests.rs",
+          "name": "canvas_peer_is_a_pane_and_respects_ancestor_clipping"
+        }
+      ],
+      "notes": "Ancestor clipping is checked; the exact ScrollViewer scenario is not yet recreated."
     },
     {
       "id": "InkCanvas.InkCanvasAutomationPeerReportsOffscreenWhenClippedOut",
@@ -57,7 +87,7 @@
       "method": "InkCanvasAutomationPeerReportsOffscreenWhenClippedOut",
       "status": "not_ported",
       "rust_tests": [],
-      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+      "notes": "This exact upstream API scenario is not yet covered by a local equivalent test; related implementation does not count as test evidence."
     },
     {
       "id": "InkCanvas.InkCanvasAutomationPeerReportsOffscreenWhenSelfClippedOut",
@@ -65,7 +95,7 @@
       "method": "InkCanvasAutomationPeerReportsOffscreenWhenSelfClippedOut",
       "status": "not_ported",
       "rust_tests": [],
-      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+      "notes": "This exact upstream API scenario is not yet covered by a local equivalent test; related implementation does not count as test evidence."
     },
     {
       "id": "InkCanvas.InkCanvasAutomationPeerClipsBoundsToOwnClip",
@@ -73,15 +103,20 @@
       "method": "InkCanvasAutomationPeerClipsBoundsToOwnClip",
       "status": "not_ported",
       "rust_tests": [],
-      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+      "notes": "This exact upstream API scenario is not yet covered by a local equivalent test; related implementation does not count as test evidence."
     },
     {
       "id": "InkCanvas.InkCanvasMultipleInstancesTest",
       "source": "controls/dev/InkCanvas/APITests/InkCanvasTests.cs",
       "method": "InkCanvasMultipleInstancesTest",
-      "status": "not_ported",
-      "rust_tests": [],
-      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+      "status": "adapted",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/inking_tests.rs",
+          "name": "ink_canvas_participates_in_layout_and_uses_a_stable_presenter"
+        }
+      ],
+      "notes": "Distinct canvas instances have distinct presenters."
     },
     {
       "id": "InkCanvas.InkCanvasLoadUnloadDoesNotCrash",
@@ -89,7 +124,7 @@
       "method": "InkCanvasLoadUnloadDoesNotCrash",
       "status": "not_ported",
       "rust_tests": [],
-      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+      "notes": "This exact upstream API scenario is not yet covered by a local equivalent test; related implementation does not count as test evidence."
     },
     {
       "id": "InkCanvas.InkCanvasDestroyedBeforePendingCallbacksDoesNotCrash",
@@ -97,47 +132,76 @@
       "method": "InkCanvasDestroyedBeforePendingCallbacksDoesNotCrash",
       "status": "not_ported",
       "rust_tests": [],
-      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+      "notes": "This exact upstream API scenario is not yet covered by a local equivalent test; related implementation does not count as test evidence."
     },
     {
       "id": "InkToolbar.InkToolbarDefaultConstructorTest",
       "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
       "method": "InkToolbarDefaultConstructorTest",
-      "status": "not_ported",
-      "rust_tests": [],
-      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+      "status": "adapted",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
+          "name": "default_controls_and_selection_match_upstream"
+        }
+      ],
+      "notes": "Constructs the toolbar and verifies default children, active tool and orientation."
     },
     {
       "id": "InkToolbar.InkToolbarInitialControlsDefaultTest",
       "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
       "method": "InkToolbarInitialControlsDefaultTest",
-      "status": "not_ported",
-      "rust_tests": [],
-      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+      "status": "adapted",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
+          "name": "default_controls_and_selection_match_upstream"
+        }
+      ],
+      "notes": "Verifies the default set of five controls and ballpoint selection."
     },
     {
       "id": "InkToolbar.InkToolbarInitialControlsPropertyTest",
       "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
       "method": "InkToolbarInitialControlsPropertyTest",
-      "status": "not_ported",
-      "rust_tests": [],
-      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+      "status": "adapted",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
+          "name": "changing_initial_controls_preserves_application_children"
+        }
+      ],
+      "notes": "Changing initial controls rebuilds owned defaults while retaining application children."
     },
     {
       "id": "InkToolbar.InkToolbarChildrenPropertyTest",
       "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
       "method": "InkToolbarChildrenPropertyTest",
-      "status": "not_ported",
-      "rust_tests": [],
-      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+      "status": "adapted",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
+          "name": "changing_initial_controls_preserves_application_children"
+        },
+        {
+          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
+          "name": "readonly_contract_properties_are_registered_readonly"
+        }
+      ],
+      "notes": "Children are mutable through the collection but the property itself is read-only."
     },
     {
       "id": "InkToolbar.InkToolbarOrientationPropertyTest",
       "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
       "method": "InkToolbarOrientationPropertyTest",
-      "status": "not_ported",
-      "rust_tests": [],
-      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+      "status": "partial",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
+          "name": "default_controls_and_selection_match_upstream"
+        }
+      ],
+      "notes": "Default horizontal orientation is checked; explicit vertical setter/layout scenario remains untested."
     },
     {
       "id": "InkToolbar.InkToolbarButtonFlyoutPlacementPropertyTest",
@@ -145,7 +209,7 @@
       "method": "InkToolbarButtonFlyoutPlacementPropertyTest",
       "status": "not_ported",
       "rust_tests": [],
-      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+      "notes": "This exact upstream API scenario is not yet covered by a local equivalent test; related implementation does not count as test evidence."
     },
     {
       "id": "InkToolbar.InkToolbarIsRulerButtonCheckedPropertyTest",
@@ -153,47 +217,76 @@
       "method": "InkToolbarIsRulerButtonCheckedPropertyTest",
       "status": "not_ported",
       "rust_tests": [],
-      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+      "notes": "This exact upstream API scenario is not yet covered by a local equivalent test; related implementation does not count as test evidence."
     },
     {
       "id": "InkToolbar.InkToolbarIsStencilButtonCheckedPropertyTest",
       "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
       "method": "InkToolbarIsStencilButtonCheckedPropertyTest",
-      "status": "not_ported",
-      "rust_tests": [],
-      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+      "status": "adapted",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
+          "name": "stencil_switch_is_exclusive_and_target_change_hides_old_stencil"
+        }
+      ],
+      "notes": "The checked property drives the target stencil state."
     },
     {
       "id": "InkToolbar.InkToolbarStencilToggleWithTargetCanvasTest",
       "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
       "method": "InkToolbarStencilToggleWithTargetCanvasTest",
-      "status": "not_ported",
-      "rust_tests": [],
-      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+      "status": "partial",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
+          "name": "presenter_target_wins_then_falls_back_to_canvas"
+        },
+        {
+          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
+          "name": "stencil_switch_is_exclusive_and_target_change_hides_old_stencil"
+        }
+      ],
+      "notes": "Canvas target precedence and presenter stencil state are tested separately; exact native canvas-stencil rendering is not."
     },
     {
       "id": "InkToolbar.InkToolbarTargetInkCanvasPropertyTest",
       "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
       "method": "InkToolbarTargetInkCanvasPropertyTest",
-      "status": "not_ported",
-      "rust_tests": [],
-      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+      "status": "adapted",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
+          "name": "presenter_target_wins_then_falls_back_to_canvas"
+        }
+      ],
+      "notes": "Setting canvas target and clearing explicit presenter resolves to the canvas presenter."
     },
     {
       "id": "InkToolbar.InkToolbarActiveToolPropertyTest",
       "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
       "method": "InkToolbarActiveToolPropertyTest",
-      "status": "not_ported",
-      "rust_tests": [],
-      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+      "status": "adapted",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
+          "name": "tool_selection_changes_processing_mode"
+        }
+      ],
+      "notes": "Active eraser/custom/pen tool changes presenter processing mode."
     },
     {
       "id": "InkToolbar.InkToolbarGetToolButtonTest",
       "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
       "method": "InkToolbarGetToolButtonTest",
-      "status": "not_ported",
-      "rust_tests": [],
-      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+      "status": "adapted",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
+          "name": "tool_selection_changes_processing_mode"
+        }
+      ],
+      "notes": "Looks up and selects eraser and ballpoint by public enum."
     },
     {
       "id": "InkToolbar.InkToolbarGetToggleButtonTest",
@@ -201,55 +294,97 @@
       "method": "InkToolbarGetToggleButtonTest",
       "status": "not_ported",
       "rust_tests": [],
-      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+      "notes": "This exact upstream API scenario is not yet covered by a local equivalent test; related implementation does not count as test evidence."
     },
     {
       "id": "InkToolbar.InkToolbarGetMenuButtonTest",
       "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
       "method": "InkToolbarGetMenuButtonTest",
-      "status": "not_ported",
-      "rust_tests": [],
-      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+      "status": "adapted",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
+          "name": "default_controls_and_selection_match_upstream"
+        },
+        {
+          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
+          "name": "stencil_switch_is_exclusive_and_target_change_hides_old_stencil"
+        }
+      ],
+      "notes": "Finds the default stencil menu and accesses its concrete control."
     },
     {
       "id": "InkToolbar.InkToolbarInkDrawingAttributesTest",
       "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
       "method": "InkToolbarInkDrawingAttributesTest",
-      "status": "not_ported",
-      "rust_tests": [],
-      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+      "status": "adapted",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
+          "name": "presenter_target_wins_then_falls_back_to_canvas"
+        },
+        {
+          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
+          "name": "eraser_retains_last_pen_drawing_attributes"
+        }
+      ],
+      "notes": "Selected pen attributes are propagated and retained while erasing."
     },
     {
       "id": "InkToolbar.InkToolbarDependencyPropertiesExistTest",
       "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
       "method": "InkToolbarDependencyPropertiesExistTest",
-      "status": "not_ported",
-      "rust_tests": [],
-      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+      "status": "partial",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
+          "name": "readonly_contract_properties_are_registered_readonly"
+        }
+      ],
+      "notes": "All six read-only registrations are asserted; the upstream all-property enumeration is not repeated."
     },
     {
       "id": "InkToolbar.InkToolbarTargetInkPresenterPropertyTest",
       "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
       "method": "InkToolbarTargetInkPresenterPropertyTest",
-      "status": "not_ported",
-      "rust_tests": [],
-      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+      "status": "adapted",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
+          "name": "presenter_target_wins_then_falls_back_to_canvas"
+        }
+      ],
+      "notes": "Explicit target identity wins and clearing it falls back to the canvas."
     },
     {
       "id": "InkToolbar.InkToolbarDrivesTargetInkPresenterWithoutCanvasTest",
       "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
       "method": "InkToolbarDrivesTargetInkPresenterWithoutCanvasTest",
-      "status": "not_ported",
-      "rust_tests": [],
-      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+      "status": "adapted",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
+          "name": "tool_selection_changes_processing_mode"
+        }
+      ],
+      "notes": "A standalone presenter is driven without attaching any canvas."
     },
     {
       "id": "InkToolbar.InkToolbarActiveToolChangedEventTest",
       "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
       "method": "InkToolbarActiveToolChangedEventTest",
-      "status": "not_ported",
-      "rust_tests": [],
-      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+      "status": "adapted",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
+          "name": "event_subscriptions_can_be_disposed_and_handlers_reenter"
+        },
+        {
+          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
+          "name": "target_changes_do_not_raise_active_tool_changed"
+        }
+      ],
+      "notes": "Real tool changes notify; disposal and target-only changes do not emit spurious events."
     },
     {
       "id": "InkToolbar.InkToolbarInkDrawingAttributesChangedEventTest",
@@ -257,15 +392,20 @@
       "method": "InkToolbarInkDrawingAttributesChangedEventTest",
       "status": "not_ported",
       "rust_tests": [],
-      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+      "notes": "This exact upstream API scenario is not yet covered by a local equivalent test; related implementation does not count as test evidence."
     },
     {
       "id": "InkToolbar.InkToolbarEraseAllClickedEventTest",
       "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
       "method": "InkToolbarEraseAllClickedEventTest",
-      "status": "not_ported",
-      "rust_tests": [],
-      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+      "status": "adapted",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
+          "name": "erase_all_event_precedes_clear_and_restores_previous_tool"
+        }
+      ],
+      "notes": "Event sees pre-clear strokes, then collection clears and prior pen is restored."
     },
     {
       "id": "InkToolbar.InkToolbarInVisualTreeTest",
@@ -273,7 +413,7 @@
       "method": "InkToolbarInVisualTreeTest",
       "status": "not_ported",
       "rust_tests": [],
-      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+      "notes": "This exact upstream API scenario is not yet covered by a local equivalent test; related implementation does not count as test evidence."
     },
     {
       "id": "InkToolbar.InkToolbarWithTargetInkCanvasInVisualTreeTest",
@@ -281,7 +421,7 @@
       "method": "InkToolbarWithTargetInkCanvasInVisualTreeTest",
       "status": "not_ported",
       "rust_tests": [],
-      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+      "notes": "This exact upstream API scenario is not yet covered by a local equivalent test; related implementation does not count as test evidence."
     },
     {
       "id": "InkToolbar.InkToolbarMultipleInstancesTest",
@@ -289,39 +429,59 @@
       "method": "InkToolbarMultipleInstancesTest",
       "status": "not_ported",
       "rust_tests": [],
-      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+      "notes": "This exact upstream API scenario is not yet covered by a local equivalent test; related implementation does not count as test evidence."
     },
     {
       "id": "InkToolbar.InkToolbarBallpointPenButtonTest",
       "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
       "method": "InkToolbarBallpointPenButtonTest",
-      "status": "not_ported",
-      "rust_tests": [],
-      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+      "status": "partial",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
+          "name": "pen_palettes_and_widths_are_independent"
+        }
+      ],
+      "notes": "Exercises independent ballpoint/pencil state; not every constructor property of the source test is asserted."
     },
     {
       "id": "InkToolbar.InkToolbarPencilButtonTest",
       "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
       "method": "InkToolbarPencilButtonTest",
-      "status": "not_ported",
-      "rust_tests": [],
-      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+      "status": "partial",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
+          "name": "pen_palettes_and_widths_are_independent"
+        }
+      ],
+      "notes": "Exercises pencil attributes and independent pen state; OS pencil pixels and all defaults need separate evidence."
     },
     {
       "id": "InkToolbar.InkToolbarHighlighterButtonTest",
       "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
       "method": "InkToolbarHighlighterButtonTest",
-      "status": "not_ported",
-      "rust_tests": [],
-      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+      "status": "adapted",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
+          "name": "highlighter_uses_exact_palette_and_chisel_nib"
+        }
+      ],
+      "notes": "Checks the source palette, selected width and deliberate chisel-nib correction."
     },
     {
       "id": "InkToolbar.InkToolbarCustomToolButtonTest",
       "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
       "method": "InkToolbarCustomToolButtonTest",
-      "status": "not_ported",
-      "rust_tests": [],
-      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+      "status": "partial",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
+          "name": "tool_selection_changes_processing_mode"
+        }
+      ],
+      "notes": "Custom tool drives None mode; its entire template and configuration content contract are not compared."
     },
     {
       "id": "InkToolbar.InkToolbarCustomToggleButtonTest",
@@ -329,31 +489,54 @@
       "method": "InkToolbarCustomToggleButtonTest",
       "status": "not_ported",
       "rust_tests": [],
-      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+      "notes": "This exact upstream API scenario is not yet covered by a local equivalent test; related implementation does not count as test evidence."
     },
     {
       "id": "InkToolbar.InkToolbarStencilButtonTest",
       "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
       "method": "InkToolbarStencilButtonTest",
-      "status": "not_ported",
-      "rust_tests": [],
-      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+      "status": "partial",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
+          "name": "stencil_switch_is_exclusive_and_target_change_hides_old_stencil"
+        },
+        {
+          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
+          "name": "readonly_contract_properties_are_registered_readonly"
+        }
+      ],
+      "notes": "Checks stencil switching, target cleanup and read-only references; native interaction and visuals remain untested."
     },
     {
       "id": "InkToolbar.InkToolbarFlyoutItemTest",
       "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
       "method": "InkToolbarFlyoutItemTest",
-      "status": "not_ported",
-      "rust_tests": [],
-      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+      "status": "partial",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
+          "name": "configuration_slider_and_palette_stay_synchronized"
+        }
+      ],
+      "notes": "Palette checked-state synchronization is covered; every FlyoutItem kind/default is not separately tested."
     },
     {
       "id": "InkToolbar.InkToolbarPenConfigurationControlTest",
       "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
       "method": "InkToolbarPenConfigurationControlTest",
-      "status": "not_ported",
-      "rust_tests": [],
-      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+      "status": "adapted",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
+          "name": "configuration_slider_and_palette_stay_synchronized"
+        },
+        {
+          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
+          "name": "default_pen_configuration_is_created_lazily"
+        }
+      ],
+      "notes": "Palette selection and width slider synchronize in both directions; configuration is lazy."
     },
     {
       "id": "InkToolbar.InkToolbarPenConfigurationControlLocalizesHeadingsTest",
@@ -361,31 +544,50 @@
       "method": "InkToolbarPenConfigurationControlLocalizesHeadingsTest",
       "status": "not_ported",
       "rust_tests": [],
-      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+      "notes": "Locale-specific headings or palette descriptions are not ported/tested. English fallback strings cannot satisfy this scenario."
     },
     {
       "id": "InkToolbar.InkToolbarEraserButtonTest",
       "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
       "method": "InkToolbarEraserButtonTest",
-      "status": "not_ported",
-      "rust_tests": [],
-      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+      "status": "partial",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
+          "name": "tool_selection_changes_processing_mode"
+        },
+        {
+          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
+          "name": "erase_all_event_precedes_clear_and_restores_previous_tool"
+        }
+      ],
+      "notes": "Erasing mode and erase-all actions are checked; all source template/default assertions are not."
     },
     {
       "id": "InkToolbar.InkToolbarCustomPenTest",
       "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
       "method": "InkToolbarCustomPenTest",
-      "status": "not_ported",
-      "rust_tests": [],
-      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+      "status": "adapted",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
+          "name": "custom_pen_factory_is_dispatched_virtually_by_toolbar"
+        }
+      ],
+      "notes": "A derived custom pen factory is actually dispatched to produce attributes."
     },
     {
       "id": "InkToolbar.InkToolbarCustomPenButtonTest",
       "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
       "method": "InkToolbarCustomPenButtonTest",
-      "status": "not_ported",
-      "rust_tests": [],
-      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+      "status": "adapted",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
+          "name": "custom_pen_factory_is_dispatched_virtually_by_toolbar"
+        }
+      ],
+      "notes": "Attaching a custom factory to the toolbar button updates target attributes."
     },
     {
       "id": "InkToolbar.InkToolbarIsStencilButtonCheckedChangedEventTest",
@@ -393,7 +595,7 @@
       "method": "InkToolbarIsStencilButtonCheckedChangedEventTest",
       "status": "not_ported",
       "rust_tests": [],
-      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+      "notes": "This exact upstream API scenario is not yet covered by a local equivalent test; related implementation does not count as test evidence."
     },
     {
       "id": "InkToolbar.InkToolbarRulerButtonTest",
@@ -401,23 +603,33 @@
       "method": "InkToolbarRulerButtonTest",
       "status": "not_ported",
       "rust_tests": [],
-      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+      "notes": "This exact upstream API scenario is not yet covered by a local equivalent test; related implementation does not count as test evidence."
     },
     {
       "id": "InkToolbar.InkToolbarAutoPopulatesDefaultButtonsTest",
       "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
       "method": "InkToolbarAutoPopulatesDefaultButtonsTest",
-      "status": "not_ported",
-      "rust_tests": [],
-      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+      "status": "adapted",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
+          "name": "default_controls_and_selection_match_upstream"
+        }
+      ],
+      "notes": "Verifies five default buttons and the initial selected pen."
     },
     {
       "id": "InkToolbar.InkToolbarInitialControlsPensOnlyPopulatesPensTest",
       "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
       "method": "InkToolbarInitialControlsPensOnlyPopulatesPensTest",
-      "status": "not_ported",
-      "rust_tests": [],
-      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+      "status": "adapted",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
+          "name": "changing_initial_controls_preserves_application_children"
+        }
+      ],
+      "notes": "PensOnly creates three defaults while retaining an added custom child."
     },
     {
       "id": "InkToolbar.InkToolbarInitialControlsAllExceptPensPopulatesEraserTest",
@@ -425,15 +637,20 @@
       "method": "InkToolbarInitialControlsAllExceptPensPopulatesEraserTest",
       "status": "not_ported",
       "rust_tests": [],
-      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+      "notes": "This exact upstream API scenario is not yet covered by a local equivalent test; related implementation does not count as test evidence."
     },
     {
       "id": "InkToolbar.InkToolbarInitialControlsNonePopulatesNothingTest",
       "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
       "method": "InkToolbarInitialControlsNonePopulatesNothingTest",
-      "status": "not_ported",
-      "rust_tests": [],
-      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+      "status": "adapted",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
+          "name": "changing_initial_controls_preserves_application_children"
+        }
+      ],
+      "notes": "None removes generated defaults while retaining an added custom child."
     },
     {
       "id": "InkToolbar.InkToolbarStencilRendersWithIconTest",
@@ -441,31 +658,46 @@
       "method": "InkToolbarStencilRendersWithIconTest",
       "status": "not_ported",
       "rust_tests": [],
-      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+      "notes": "This exact upstream API scenario is not yet covered by a local equivalent test; related implementation does not count as test evidence."
     },
     {
       "id": "InkToolbar.InkToolbarToolButtonAutomationPeerExpandCollapseTest",
       "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
       "method": "InkToolbarToolButtonAutomationPeerExpandCollapseTest",
-      "status": "not_ported",
-      "rust_tests": [],
-      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+      "status": "partial",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
+          "name": "named_automation_peers_expose_expected_patterns"
+        }
+      ],
+      "notes": "Provider existence is checked; opening/closing real flyouts and native UIA event behavior still need tests."
     },
     {
       "id": "InkToolbar.InkToolbarToolButtonAutomationPeerSelectedStateTest",
       "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
       "method": "InkToolbarToolButtonAutomationPeerSelectedStateTest",
-      "status": "not_ported",
-      "rust_tests": [],
-      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+      "status": "partial",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
+          "name": "named_automation_peers_expose_expected_patterns"
+        }
+      ],
+      "notes": "SelectionItem provider is checked; the full upstream state-change sequence is not yet recreated."
     },
     {
       "id": "InkToolbar.InkToolbarStrokeWidthSliderAutomationPeerValueTest",
       "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
       "method": "InkToolbarStrokeWidthSliderAutomationPeerValueTest",
-      "status": "not_ported",
-      "rust_tests": [],
-      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+      "status": "adapted",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
+          "name": "slider_value_automation_validates_text_and_disabled_state"
+        }
+      ],
+      "notes": "Value provider updates width and rejects invalid, out-of-range and disabled writes."
     },
     {
       "id": "InkToolbar.InkToolbarMenuButtonAutomationPeerExpandCollapseTest",
@@ -473,7 +705,7 @@
       "method": "InkToolbarMenuButtonAutomationPeerExpandCollapseTest",
       "status": "not_ported",
       "rust_tests": [],
-      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+      "notes": "This exact upstream API scenario is not yet covered by a local equivalent test; related implementation does not count as test evidence."
     },
     {
       "id": "InkToolbar.InkToolbarSingleStencilAutomationPeerTest",
@@ -481,7 +713,7 @@
       "method": "InkToolbarSingleStencilAutomationPeerTest",
       "status": "not_ported",
       "rust_tests": [],
-      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+      "notes": "This exact upstream API scenario is not yet covered by a local equivalent test; related implementation does not count as test evidence."
     },
     {
       "id": "InkToolbar.InkToolbarFlyoutItemAutomationPeerSelectionTest",
@@ -489,7 +721,7 @@
       "method": "InkToolbarFlyoutItemAutomationPeerSelectionTest",
       "status": "not_ported",
       "rust_tests": [],
-      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+      "notes": "This exact upstream API scenario is not yet covered by a local equivalent test; related implementation does not count as test evidence."
     },
     {
       "id": "InkToolbar.InkToolbarEraserAndCustomToolAutomationPeerTest",
@@ -497,7 +729,7 @@
       "method": "InkToolbarEraserAndCustomToolAutomationPeerTest",
       "status": "not_ported",
       "rust_tests": [],
-      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+      "notes": "This exact upstream API scenario is not yet covered by a local equivalent test; related implementation does not count as test evidence."
     },
     {
       "id": "InkToolbar.InkToolbarToolButtonTooltipAndNameTest",
@@ -505,7 +737,7 @@
       "method": "InkToolbarToolButtonTooltipAndNameTest",
       "status": "not_ported",
       "rust_tests": [],
-      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+      "notes": "This exact upstream API scenario is not yet covered by a local equivalent test; related implementation does not count as test evidence."
     },
     {
       "id": "InkToolbar.InkToolbarPenConfigurationLocalizesHeadingsTest",
@@ -513,7 +745,7 @@
       "method": "InkToolbarPenConfigurationLocalizesHeadingsTest",
       "status": "not_ported",
       "rust_tests": [],
-      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+      "notes": "Locale-specific headings or palette descriptions are not ported/tested. English fallback strings cannot satisfy this scenario."
     },
     {
       "id": "InkToolbar.InkToolbarPaletteLocalizesDescriptionsTest",
@@ -521,7 +753,7 @@
       "method": "InkToolbarPaletteLocalizesDescriptionsTest",
       "status": "not_ported",
       "rust_tests": [],
-      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+      "notes": "Locale-specific headings or palette descriptions are not ported/tested. English fallback strings cannot satisfy this scenario."
     }
   ]
 }

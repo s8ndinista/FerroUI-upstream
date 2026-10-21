@@ -1,0 +1,647 @@
+//! Live toolbar orchestration over FerroUI controls and the portable ink presenter.
+use super::*;
+use crate::automation::peers::AutomationControlType;
+use crate::automation::AutomationProperties;
+use crate::primitives::{PopupFlyoutBase, ToggleButton};
+use crate::{
+    Button, Control, ControlImpl, Controls, Flyout, PanelImpl, PanelImplExt, PlacementMode,
+    StackPanel, StackPanelImpl,
+};
+use ferroui_base::collections::NotifyCollectionChangedEventArgs;
+use ferroui_base::input::InputElementImpl;
+use ferroui_base::interactivity::InteractiveImpl;
+use ferroui_base::layout::{LayoutableImpl, Orientation};
+use ferroui_base::metadata::{into_markup_value, MarkupDelegate};
+use ferroui_base::reactive::{Disposable, IDisposable};
+use ferroui_base::utilities::{EventArgs, HandlerList};
+use ferroui_base::BoxedValue;
+use ferroui_base::{
+    ferro_class, ferro_class_info, ferro_impl_classes, ferro_properties, instantiate,
+    DirectProperty, FerroObjectImpl, FerroObjectImplExt, FerroProperty,
+    FerroPropertyChangedEventArgs, Ref, StyledElementImpl, StyledProperty, VisualImpl, WeakRef,
+};
+use std::cell::{Cell, RefCell};
+use std::rc::Rc;
+
+type ToolbarHandlers = Rc<HandlerList<dyn Fn(&InkToolbar)>>;
+
+#[derive(Clone, PartialEq)]
+pub struct InkToolbarIsStencilButtonCheckedChangedEventArgs {
+    pub stencil_button: Ref<InkToolbarStencilButton>,
+    pub stencil_kind: InkToolbarStencilKind,
+}
+
+/// A functional inking toolbar using FerroUI's panel layout, control templates and input routing.
+#[repr(C)]
+pub struct InkToolbar {
+    base: StackPanel,
+    defaults: RefCell<Vec<Ref<Control>>>,
+    subscriptions: RefCell<Vec<(WeakRef<Control>, Rc<dyn IDisposable>)>>,
+    selection_sync: Cell<bool>,
+    recent_tool: RefCell<Option<WeakRef<InkToolbarToolButton>>>,
+    current_presenter: RefCell<Option<Rc<InkPresenter>>>,
+    drawing_attributes: Cell<Option<InkDrawingAttributes>>,
+    active_tool_changed: ToolbarHandlers,
+    ink_drawing_attributes_changed: ToolbarHandlers,
+    erase_all_clicked: ToolbarHandlers,
+    stencil_changed: Rc<HandlerList<dyn Fn(&InkToolbarIsStencilButtonCheckedChangedEventArgs)>>,
+}
+ferro_class!(InkToolbar: StackPanel);
+ferro_class_info!(InkToolbar { new: InkToolbar::new, markup: {
+    content: Children,
+    methods: [
+        fn GetToolButton(InkToolbarTool) -> Option<Ref<InkToolbarToolButton>> => InkToolbar::get_tool_button,
+        fn GetToggleButton(InkToolbarToggle) -> Option<Ref<InkToolbarToggleButton>> => InkToolbar::get_toggle_button,
+        fn GetMenuButton(InkToolbarMenuKind) -> Option<Ref<InkToolbarMenuButton>> => InkToolbar::get_menu_button,
+    ],
+    events: [
+        ActiveToolChanged(Option<BoxedValue>, EventArgs) => |this: &Ref<InkToolbar>, handler: MarkupDelegate| {
+            let sender=this.downgrade();
+            this.active_tool_changed(move |_| { handler.invoke(&[into_markup_value(sender.upgrade()),into_markup_value(EventArgs::EMPTY)]); })
+        },
+        InkDrawingAttributesChanged(Option<BoxedValue>, EventArgs) => |this: &Ref<InkToolbar>, handler: MarkupDelegate| {
+            let sender=this.downgrade();
+            this.ink_drawing_attributes_changed(move |_| { handler.invoke(&[into_markup_value(sender.upgrade()),into_markup_value(EventArgs::EMPTY)]); })
+        },
+        EraseAllClicked(Option<BoxedValue>, EventArgs) => |this: &Ref<InkToolbar>, handler: MarkupDelegate| {
+            let sender=this.downgrade();
+            this.erase_all_clicked(move |_| { handler.invoke(&[into_markup_value(sender.upgrade()),into_markup_value(EventArgs::EMPTY)]); })
+        },
+        IsStencilButtonCheckedChanged(Option<BoxedValue>, InkToolbarIsStencilButtonCheckedChangedEventArgs) => |this: &Ref<InkToolbar>, handler: MarkupDelegate| {
+            let sender=this.downgrade();
+            this.is_stencil_button_checked_changed(move |args| { handler.invoke(&[into_markup_value(sender.upgrade()),into_markup_value(args.clone())]); })
+        },
+    ],
+} });
+ferro_impl_classes!(InkToolbar:StyledElementImpl,VisualImpl,LayoutableImpl,InteractiveImpl,InputElementImpl,StackPanelImpl);
+impl ControlImpl for InkToolbar {
+    fn on_create_automation_peer(this: &Self) -> Ref<crate::automation::peers::AutomationPeer> {
+        super::InkToolbarAutomationPeer::new(this).upcast()
+    }
+}
+
+impl FerroObjectImpl for InkToolbar {
+    fn constructed(this: &Self) {
+        Self::parent_constructed(this);
+        this.set_spacing(4.0);
+        this.set_orientation(Orientation::Horizontal);
+        AutomationProperties::set_name(this, Some("Ink toolbar"));
+        this.set_value(
+            AutomationProperties::control_type_override_property(),
+            Some(AutomationControlType::ToolBar),
+        );
+        this.rebuild_default_buttons();
+    }
+    fn on_property_changed(this: &Self, change: &FerroPropertyChangedEventArgs<'_>) {
+        Self::parent_on_property_changed(this, change);
+        let property = change.property();
+        if property == Self::initial_controls_property().as_property() {
+            this.rebuild_default_buttons();
+        } else if property == Self::active_tool_property().as_property() {
+            this.apply_active_tool(true);
+        } else if property == Self::target_ink_canvas_property().as_property()
+            || property == Self::target_ink_presenter_property().as_property()
+        {
+            this.update_target();
+        } else if property == Self::is_ruler_button_checked_property().as_property()
+            || property == Self::is_stencil_button_checked_property().as_property()
+        {
+            this.apply_stencil();
+        } else if property == Self::button_flyout_placement_property().as_property()
+            || property == StackPanel::orientation_property().as_property()
+        {
+            this.update_flyout_placement();
+        }
+    }
+}
+impl PanelImpl for InkToolbar {
+    fn children_changed(this: &Self, e: &NotifyCollectionChangedEventArgs<'_, Ref<Control>>) {
+        Self::parent_children_changed(this, e);
+        let removed: Vec<_> = {
+            let mut slots = this.subscriptions.borrow_mut();
+            let mut removed = Vec::new();
+            slots.retain(|(weak, subscription)| {
+                let remove = weak
+                    .upgrade()
+                    .is_none_or(|child| e.old_items.contains(&child));
+                if remove {
+                    removed.push(subscription.clone());
+                }
+                !remove
+            });
+            removed
+        };
+        for subscription in removed {
+            subscription.dispose();
+        }
+        for child in e.new_items.iter() {
+            this.wire_child(child);
+        }
+        if let Some(active) = this.active_tool() {
+            let active_control: Ref<Control> = active.clone().upcast();
+            if e.old_items.contains(&active_control)
+                && !this.children().snapshot().contains(&active_control)
+            {
+                this.set_active_tool(None);
+            }
+        }
+    }
+}
+ferro_properties! {impl InkToolbar{
+    pub fn children_property()->DirectProperty<InkToolbar,Controls>{FerroProperty::register_direct::<InkToolbar,_>("Children",InkToolbar::children,None,Controls::new())}
+    pub fn initial_controls_property()->StyledProperty<InkToolbarInitialControls>{FerroProperty::register::<InkToolbar,_>("InitialControls",InkToolbarInitialControls::All)}
+    pub fn active_tool_property()->StyledProperty<Option<Ref<InkToolbarToolButton>>>{FerroProperty::register::<InkToolbar,_>("ActiveTool",None)}
+    pub fn ink_drawing_attributes_property()->DirectProperty<InkToolbar,Option<InkDrawingAttributes>>{FerroProperty::register_direct::<InkToolbar,_>("InkDrawingAttributes",InkToolbar::ink_drawing_attributes,None,None)}
+    pub fn is_ruler_button_checked_property()->StyledProperty<bool>{FerroProperty::register::<InkToolbar,_>("IsRulerButtonChecked",false)}
+    pub fn target_ink_canvas_property()->StyledProperty<Option<Ref<InkCanvas>>>{FerroProperty::register::<InkToolbar,_>("TargetInkCanvas",None)}
+    pub fn is_stencil_button_checked_property()->StyledProperty<bool>{FerroProperty::register::<InkToolbar,_>("IsStencilButtonChecked",false)}
+    pub fn button_flyout_placement_property()->StyledProperty<InkToolbarButtonFlyoutPlacement>{FerroProperty::register::<InkToolbar,_>("ButtonFlyoutPlacement",InkToolbarButtonFlyoutPlacement::Auto)}
+    pub fn orientation_property()->StyledProperty<Orientation>{StackPanel::orientation_property().add_owner::<InkToolbar>()}
+    pub fn target_ink_presenter_property()->StyledProperty<Option<Rc<InkPresenter>>>{FerroProperty::register::<InkToolbar,_>("TargetInkPresenter",None)}
+}}
+impl InkToolbar {
+    pub fn construct() -> Self {
+        Self {
+            base: StackPanel::construct(),
+            defaults: RefCell::new(Vec::new()),
+            subscriptions: RefCell::new(Vec::new()),
+            selection_sync: Cell::new(false),
+            recent_tool: RefCell::new(None),
+            current_presenter: RefCell::new(None),
+            drawing_attributes: Cell::new(None),
+            active_tool_changed: Rc::new(HandlerList::new()),
+            ink_drawing_attributes_changed: Rc::new(HandlerList::new()),
+            erase_all_clicked: Rc::new(HandlerList::new()),
+            stencil_changed: Rc::new(HandlerList::new()),
+        }
+    }
+    pub fn new() -> Ref<Self> {
+        instantiate(Self::construct())
+    }
+    pub fn children(&self) -> Controls {
+        self.base.children()
+    }
+    pub fn initial_controls(&self) -> InkToolbarInitialControls {
+        self.get_value(Self::initial_controls_property())
+    }
+    pub fn set_initial_controls(&self, value: InkToolbarInitialControls) {
+        self.set_value(Self::initial_controls_property(), value);
+    }
+    pub fn active_tool(&self) -> Option<Ref<InkToolbarToolButton>> {
+        self.get_value(Self::active_tool_property())
+    }
+    pub fn set_active_tool(&self, value: Option<Ref<InkToolbarToolButton>>) {
+        self.set_value(Self::active_tool_property(), value);
+    }
+    pub fn ink_drawing_attributes(&self) -> Option<InkDrawingAttributes> {
+        self.drawing_attributes.get()
+    }
+    pub fn is_ruler_button_checked(&self) -> bool {
+        self.get_value(Self::is_ruler_button_checked_property())
+    }
+    pub fn set_is_ruler_button_checked(&self, value: bool) {
+        self.set_value(Self::is_ruler_button_checked_property(), value);
+    }
+    pub fn target_ink_canvas(&self) -> Option<Ref<InkCanvas>> {
+        self.get_value(Self::target_ink_canvas_property())
+    }
+    pub fn set_target_ink_canvas(&self, value: Option<Ref<InkCanvas>>) {
+        self.set_value(Self::target_ink_canvas_property(), value);
+    }
+    pub fn is_stencil_button_checked(&self) -> bool {
+        self.get_value(Self::is_stencil_button_checked_property())
+    }
+    pub fn set_is_stencil_button_checked(&self, value: bool) {
+        self.set_value(Self::is_stencil_button_checked_property(), value);
+    }
+    pub fn button_flyout_placement(&self) -> InkToolbarButtonFlyoutPlacement {
+        self.get_value(Self::button_flyout_placement_property())
+    }
+    pub fn set_button_flyout_placement(&self, value: InkToolbarButtonFlyoutPlacement) {
+        self.set_value(Self::button_flyout_placement_property(), value);
+    }
+    pub fn target_ink_presenter(&self) -> Option<Rc<InkPresenter>> {
+        self.get_value(Self::target_ink_presenter_property())
+    }
+    pub fn set_target_ink_presenter(&self, value: Option<Rc<InkPresenter>>) {
+        self.set_value(Self::target_ink_presenter_property(), value);
+    }
+    pub fn effective_ink_presenter(&self) -> Option<Rc<InkPresenter>> {
+        self.target_ink_presenter().or_else(|| {
+            self.target_ink_canvas()
+                .map(|canvas| canvas.ink_presenter())
+        })
+    }
+    pub fn get_tool_button(&self, tool: InkToolbarTool) -> Option<Ref<InkToolbarToolButton>> {
+        self.children()
+            .snapshot()
+            .iter()
+            .filter_map(|c| c.cast::<InkToolbarToolButton>())
+            .find(|b| b.tool_kind() == tool)
+    }
+    pub fn get_toggle_button(&self, kind: InkToolbarToggle) -> Option<Ref<InkToolbarToggleButton>> {
+        self.children()
+            .snapshot()
+            .iter()
+            .filter_map(|c| c.cast::<InkToolbarToggleButton>())
+            .find(|b| b.toggle_kind() == kind)
+    }
+    pub fn get_menu_button(&self, kind: InkToolbarMenuKind) -> Option<Ref<InkToolbarMenuButton>> {
+        self.children()
+            .snapshot()
+            .iter()
+            .filter_map(|c| c.cast::<InkToolbarMenuButton>())
+            .find(|b| b.menu_kind() == kind)
+    }
+    pub fn active_tool_changed(
+        &self,
+        handler: impl Fn(&InkToolbar) + 'static,
+    ) -> Rc<dyn IDisposable> {
+        subscribe(&self.active_tool_changed, handler)
+    }
+    pub fn ink_drawing_attributes_changed(
+        &self,
+        handler: impl Fn(&InkToolbar) + 'static,
+    ) -> Rc<dyn IDisposable> {
+        subscribe(&self.ink_drawing_attributes_changed, handler)
+    }
+    pub fn erase_all_clicked(
+        &self,
+        handler: impl Fn(&InkToolbar) + 'static,
+    ) -> Rc<dyn IDisposable> {
+        subscribe(&self.erase_all_clicked, handler)
+    }
+    pub fn is_stencil_button_checked_changed(
+        &self,
+        handler: impl Fn(&InkToolbarIsStencilButtonCheckedChangedEventArgs) + 'static,
+    ) -> Rc<dyn IDisposable> {
+        let token = self.stencil_changed.add(Rc::new(handler));
+        let weak = Rc::downgrade(&self.stencil_changed);
+        Disposable::create(move || {
+            if let Some(list) = weak.upgrade() {
+                list.remove(token);
+            }
+        })
+    }
+    /// Raises EraseAllClicked before clearing, allowing callers to capture an undo snapshot.
+    pub fn erase_all(&self) {
+        let target = self.effective_ink_presenter();
+        for (_, handler) in self.erase_all_clicked.snapshot().iter() {
+            handler(self);
+        }
+        if let Some(target) = target {
+            target.stroke_container().clear();
+        }
+        let recent = self
+            .recent_tool
+            .borrow()
+            .as_ref()
+            .and_then(WeakRef::upgrade);
+        let children = self.children().snapshot();
+        let restore = recent.filter(|tool| children.contains(&tool.clone().upcast::<Control>()))
+            .or_else(|| children.iter().find_map(|child| child.cast::<InkToolbarPenButton>())
+                .map(|pen| pen.upcast()));
+        if let Some(restore) = restore {
+            self.set_active_tool(Some(restore));
+        }
+    }
+    fn rebuild_default_buttons(&self) {
+        let previous = self.defaults.replace(Vec::new());
+        for child in previous {
+            self.children().remove(child);
+        }
+        let mut defaults: Vec<Ref<Control>> = Vec::new();
+        match self.initial_controls() {
+            InkToolbarInitialControls::All | InkToolbarInitialControls::PensOnly => {
+                defaults.push(InkToolbarBallpointPenButton::new().upcast());
+                defaults.push(InkToolbarPencilButton::new().upcast());
+                defaults.push(InkToolbarHighlighterButton::new().upcast());
+            }
+            _ => {}
+        }
+        if matches!(
+            self.initial_controls(),
+            InkToolbarInitialControls::All | InkToolbarInitialControls::AllExceptPens
+        ) {
+            defaults.push(InkToolbarEraserButton::new().upcast());
+            defaults.push(InkToolbarStencilButton::new().upcast());
+        }
+        *self.defaults.borrow_mut() = defaults.clone();
+        for (index, child) in defaults.into_iter().enumerate() {
+            self.children().insert(index, child);
+        }
+        if self.active_tool().is_none() {
+            let first = self
+                .children()
+                .snapshot()
+                .iter()
+                .filter_map(|c| c.cast::<InkToolbarToolButton>())
+                .find(|c| c.tool_kind() != InkToolbarTool::Eraser);
+            self.set_active_tool(first);
+        }
+    }
+    fn wire_child(&self, child: &Ref<Control>) {
+        if self
+            .subscriptions
+            .borrow()
+            .iter()
+            .any(|(weak, _)| weak.upgrade().as_ref() == Some(child))
+        {
+            return;
+        }
+        let weak = self.to_ref().downgrade();
+        let weak_child = child.downgrade();
+        let subscription = child.property_changed(move |change| {
+            let (Some(toolbar), Some(child)) = (weak.upgrade(), weak_child.upgrade()) else {
+                return;
+            };
+            if toolbar.selection_sync.get() {
+                return;
+            }
+            if let Some(tool) = child.cast::<InkToolbarToolButton>() {
+                if change.property() == ToggleButton::is_checked_property().as_property()
+                    && tool.is_checked() == Some(true)
+                {
+                    toolbar.set_active_tool(Some(tool.clone()));
+                }
+                if toolbar.active_tool().as_ref() == Some(&tool) {
+                    toolbar.update_drawing_attributes();
+                }
+            } else if let Some(stencil) = child.cast::<InkToolbarStencilButton>() {
+                if change.property() == ToggleButton::is_checked_property().as_property() {
+                    toolbar.set_is_stencil_button_checked(stencil.is_checked() == Some(true));
+                }
+                if change.property()
+                    == InkToolbarStencilButton::selected_stencil_property().as_property()
+                {
+                    toolbar.apply_stencil();
+                }
+            } else if let Some(toggle) = child.cast::<InkToolbarToggleButton>() {
+                if toggle.toggle_kind() == InkToolbarToggle::Ruler
+                    && change.property() == ToggleButton::is_checked_property().as_property()
+                {
+                    toolbar.set_is_ruler_button_checked(toggle.is_checked() == Some(true));
+                }
+            }
+        });
+        self.subscriptions
+            .borrow_mut()
+            .push((child.downgrade(), subscription));
+        if let Some(pen) = child.cast::<InkToolbarPenButton>() {
+            let flyout = Flyout::new();
+            let weak_pen = pen.downgrade();
+            let weak_flyout = flyout.downgrade();
+            flyout.opening(move |_| {
+                let (Some(pen), Some(flyout)) = (weak_pen.upgrade(), weak_flyout.upgrade()) else {
+                    return;
+                };
+                if flyout.content().is_none() {
+                    let content = pen
+                        .cast::<InkToolbarCustomPenButton>()
+                        .and_then(|custom| custom.configuration_content())
+                        .unwrap_or_else(|| {
+                            InkToolbarPenConfigurationControl::for_pen(&pen).upcast()
+                        });
+                    flyout.set_content(Some(Rc::new(content)));
+                }
+            });
+            pen.set_flyout(flyout);
+        } else if let Some(eraser) = child.cast::<InkToolbarEraserButton>() {
+                let button = Button::new();
+                button.set_content(Some(Rc::new("Erase all ink".to_owned())));
+                button.bind_indexer(
+                    &ferroui_base::Visual::is_visible_property().bind(),
+                    &eraser.indexer(&InkToolbarEraserButton::is_clear_all_visible_property().bind()),
+                );
+                let weak = self.to_ref().downgrade();
+                button.add_handler(Button::click_event(), move |_, _| {
+                    if let Some(toolbar) = weak.upgrade() {
+                        toolbar.erase_all();
+                    }
+                });
+                let flyout = Flyout::new();
+                flyout.set_content(Some(Rc::new(button.upcast::<Control>())));
+                eraser.set_flyout(flyout);
+        } else if let Some(tool) = child.cast::<InkToolbarCustomToolButton>() {
+            let flyout = Flyout::new();
+            let weak_tool = tool.downgrade();
+            let weak_flyout = flyout.downgrade();
+            flyout.opening(move |_| {
+                if let (Some(tool), Some(flyout)) = (weak_tool.upgrade(), weak_flyout.upgrade()) {
+                    flyout.set_content(tool.configuration_content().map(|content| Rc::new(content) as ferroui_base::BoxedValue));
+                }
+            });
+            tool.set_flyout(flyout);
+        } else if let Some(stencil) = child.cast::<InkToolbarStencilButton>() {
+            stencil.set_presenter(self.effective_ink_presenter());
+            let panel = StackPanel::new();
+            for (kind, label) in [
+                (InkToolbarStencilKind::Ruler, "Ruler"),
+                (InkToolbarStencilKind::Protractor, "Protractor"),
+            ] {
+                let button = Button::new();
+                button.set_content(Some(Rc::new(label.to_owned())));
+                let visibility = match kind {
+                    InkToolbarStencilKind::Ruler => InkToolbarStencilButton::is_ruler_item_visible_property(),
+                    InkToolbarStencilKind::Protractor => InkToolbarStencilButton::is_protractor_item_visible_property(),
+                };
+                button.bind_indexer(&ferroui_base::Visual::is_visible_property().bind(), &stencil.indexer(&visibility.bind()));
+                let weak = stencil.downgrade();
+                button.add_handler(Button::click_event(), move |_, _| {
+                    if let Some(stencil) = weak.upgrade() {
+                        stencil.set_selected_stencil(kind);
+                        stencil.set_is_checked(Some(true));
+                    }
+                });
+                panel.children().add(button);
+            }
+            let flyout = Flyout::new();
+            flyout.set_content(Some(Rc::new(panel.upcast::<Control>())));
+            stencil.set_flyout(flyout);
+        }
+        self.update_flyout_placement();
+    }
+    fn apply_active_tool(&self, notify: bool) {
+        if self.selection_sync.replace(true) {
+            return;
+        }
+        let active = self.active_tool();
+        if notify {
+            for button in self
+                .children()
+                .snapshot()
+                .iter()
+                .filter_map(|c| c.cast::<Button>())
+            {
+                if let Some(flyout) = button.flyout() {
+                    flyout.hide();
+                }
+            }
+        }
+        for tool in self
+            .children()
+            .snapshot()
+            .iter()
+            .filter_map(|c| c.cast::<InkToolbarToolButton>())
+        {
+            tool.set_current_value(
+                ToggleButton::is_checked_property(),
+                Some(active.as_ref() == Some(&tool)),
+            );
+        }
+        if let Some(tool) = &active {
+            if tool.tool_kind() != InkToolbarTool::Eraser {
+                *self.recent_tool.borrow_mut() = Some(tool.downgrade());
+            }
+        }
+        self.selection_sync.set(false);
+        self.update_drawing_attributes();
+        if let Some(target) = self.effective_ink_presenter() {
+            let mode = match active.as_ref().map(|b| b.tool_kind()) {
+                Some(InkToolbarTool::Eraser) => InkInputProcessingMode::Erasing,
+                Some(
+                    InkToolbarTool::BallpointPen
+                    | InkToolbarTool::Pencil
+                    | InkToolbarTool::Highlighter
+                    | InkToolbarTool::CustomPen,
+                ) => InkInputProcessingMode::Inking,
+                _ => InkInputProcessingMode::None,
+            };
+            target.input_processing_configuration().set_mode(mode);
+        }
+        if notify {
+            for (_, handler) in self.active_tool_changed.snapshot().iter() {
+                handler(self);
+            }
+        }
+    }
+    fn update_drawing_attributes(&self) {
+        let Some(attrs) = self
+            .active_tool()
+            .and_then(|tool| tool.cast::<InkToolbarPenButton>())
+            .and_then(|pen| pen.create_ink_drawing_attributes().ok())
+        else {
+            return;
+        };
+        let attrs = Some(attrs);
+        let previous = self.ink_drawing_attributes();
+        self.set_and_raise_cell(
+            Self::ink_drawing_attributes_property(),
+            &self.drawing_attributes,
+            attrs,
+        );
+        if let (Some(attrs), Some(target)) = (attrs, self.effective_ink_presenter()) {
+            let _ = target.update_default_drawing_attributes(&attrs);
+        }
+        if previous != attrs {
+            for (_, handler) in self.ink_drawing_attributes_changed.snapshot().iter() {
+                handler(self);
+            }
+        }
+    }
+    fn update_target(&self) {
+        let next = self.effective_ink_presenter();
+        let previous = self.current_presenter.replace(next.clone());
+        if previous.as_ref().map(Rc::as_ptr) != next.as_ref().map(Rc::as_ptr) {
+            if let Some(old) = previous {
+                old.set_ruler_visible(false);
+                old.set_protractor_visible(false);
+            }
+        }
+        for stencil in self
+            .children()
+            .snapshot()
+            .iter()
+            .filter_map(|c| c.cast::<InkToolbarStencilButton>())
+        {
+            stencil.set_presenter(next.clone());
+        }
+        self.apply_active_tool(false);
+        self.apply_stencil();
+    }
+    fn apply_stencil(&self) {
+        let enabled = self.is_stencil_button_checked();
+        let ruler = self.is_ruler_button_checked();
+        let stencils: Vec<_> = self
+            .children()
+            .snapshot()
+            .iter()
+            .filter_map(|c| c.cast::<InkToolbarStencilButton>())
+            .collect();
+        let selected = stencils
+            .first()
+            .map(|b| b.selected_stencil())
+            .unwrap_or_default();
+        let was_sync = self.selection_sync.replace(true);
+        for stencil in &stencils {
+            stencil.set_current_value(ToggleButton::is_checked_property(), Some(enabled));
+        }
+        for toggle in self
+            .children()
+            .snapshot()
+            .iter()
+            .filter_map(|c| c.cast::<InkToolbarToggleButton>())
+            .filter(|b| b.toggle_kind() == InkToolbarToggle::Ruler)
+        {
+            toggle.set_current_value(ToggleButton::is_checked_property(), Some(ruler));
+        }
+        self.selection_sync.set(was_sync);
+        if let Some(target) = self.effective_ink_presenter() {
+            target
+                .set_ruler_visible(ruler || (enabled && selected == InkToolbarStencilKind::Ruler));
+            target.set_protractor_visible(
+                !ruler && enabled && selected == InkToolbarStencilKind::Protractor,
+            );
+        }
+        if let Some(stencil_button) = stencils.first() {
+            let args = InkToolbarIsStencilButtonCheckedChangedEventArgs {
+                stencil_button: stencil_button.clone(),
+                stencil_kind: selected,
+            };
+            for (_, handler) in self.stencil_changed.snapshot().iter() {
+                handler(&args);
+            }
+        }
+    }
+    fn update_flyout_placement(&self) {
+        let placement = match self.button_flyout_placement() {
+            InkToolbarButtonFlyoutPlacement::Top => PlacementMode::Top,
+            InkToolbarButtonFlyoutPlacement::Bottom => PlacementMode::Bottom,
+            InkToolbarButtonFlyoutPlacement::Left => PlacementMode::Left,
+            InkToolbarButtonFlyoutPlacement::Right => PlacementMode::Right,
+            InkToolbarButtonFlyoutPlacement::Auto => {
+                if self.orientation() == Orientation::Horizontal {
+                    PlacementMode::Bottom
+                } else {
+                    PlacementMode::Right
+                }
+            }
+        };
+        for button in self
+            .children()
+            .snapshot()
+            .iter()
+            .filter_map(|c| c.cast::<Button>())
+        {
+            if let Some(flyout) = button.flyout().and_then(|f| f.cast::<PopupFlyoutBase>()) {
+                flyout.set_placement(placement);
+            }
+        }
+    }
+}
+fn subscribe(
+    list: &ToolbarHandlers,
+    handler: impl Fn(&InkToolbar) + 'static,
+) -> Rc<dyn IDisposable> {
+    let token = list.add(Rc::new(handler));
+    let weak = Rc::downgrade(list);
+    Disposable::create(move || {
+        if let Some(list) = weak.upgrade() {
+            list.remove(token);
+        }
+    })
+}
+
+#[cfg(test)]
+#[path = "ink_toolbar_tests.rs"]
+mod tests;

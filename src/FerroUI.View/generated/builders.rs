@@ -634,6 +634,240 @@ pub fn image() -> El<ferroui_controls::Image> {
     El::new()
 }
 
+pub use ferroui_controls::InkCanvas;
+
+impl ViewClass for ferroui_controls::InkCanvas {
+    fn create() -> ferroui_base::Ref<Self> {
+        <ferroui_controls::InkCanvas>::new()
+    }
+}
+
+/// Starts an element of [`InkCanvas`](ferroui_controls::InkCanvas).
+pub fn ink_canvas() -> El<ferroui_controls::InkCanvas> {
+    El::new()
+}
+
+pub use ferroui_controls::InkToolbar;
+
+impl ViewClass for ferroui_controls::InkToolbar {
+    fn create() -> ferroui_base::Ref<Self> {
+        <ferroui_controls::InkToolbar>::new()
+    }
+}
+
+/// Starts an element of [`InkToolbar`](ferroui_controls::InkToolbar).
+pub fn ink_toolbar() -> El<ferroui_controls::InkToolbar> {
+    El::new()
+}
+
+pub use ferroui_controls::InkToolbarBallpointPenButton;
+
+impl ViewClass for ferroui_controls::InkToolbarBallpointPenButton {
+    fn create() -> ferroui_base::Ref<Self> {
+        <ferroui_controls::InkToolbarBallpointPenButton>::new()
+    }
+}
+
+/// Starts an element of [`InkToolbarBallpointPenButton`](ferroui_controls::InkToolbarBallpointPenButton).
+pub fn ink_toolbar_ballpoint_pen_button() -> El<ferroui_controls::InkToolbarBallpointPenButton> {
+    El::new()
+}
+
+pub use ferroui_controls::InkToolbarCustomPenButton;
+
+impl ViewClass for ferroui_controls::InkToolbarCustomPenButton {
+    fn create() -> ferroui_base::Ref<Self> {
+        <ferroui_controls::InkToolbarCustomPenButton>::new()
+    }
+}
+
+/// Starts an element of [`InkToolbarCustomPenButton`](ferroui_controls::InkToolbarCustomPenButton).
+pub fn ink_toolbar_custom_pen_button() -> El<ferroui_controls::InkToolbarCustomPenButton> {
+    El::new()
+}
+
+pub use ferroui_controls::InkToolbarCustomToggleButton;
+
+impl ViewClass for ferroui_controls::InkToolbarCustomToggleButton {
+    fn create() -> ferroui_base::Ref<Self> {
+        <ferroui_controls::InkToolbarCustomToggleButton>::new()
+    }
+}
+
+/// Starts an element of [`InkToolbarCustomToggleButton`](ferroui_controls::InkToolbarCustomToggleButton).
+pub fn ink_toolbar_custom_toggle_button() -> El<ferroui_controls::InkToolbarCustomToggleButton> {
+    El::new()
+}
+
+pub use ferroui_controls::InkToolbarCustomToolButton;
+
+impl ViewClass for ferroui_controls::InkToolbarCustomToolButton {
+    fn create() -> ferroui_base::Ref<Self> {
+        <ferroui_controls::InkToolbarCustomToolButton>::new()
+    }
+}
+
+/// Starts an element of [`InkToolbarCustomToolButton`](ferroui_controls::InkToolbarCustomToolButton).
+pub fn ink_toolbar_custom_tool_button() -> El<ferroui_controls::InkToolbarCustomToolButton> {
+    El::new()
+}
+
+pub use ferroui_controls::InkToolbarEraserButton;
+
+impl ViewClass for ferroui_controls::InkToolbarEraserButton {
+    fn create() -> ferroui_base::Ref<Self> {
+        <ferroui_controls::InkToolbarEraserButton>::new()
+    }
+}
+
+/// Starts an element of [`InkToolbarEraserButton`](ferroui_controls::InkToolbarEraserButton).
+pub fn ink_toolbar_eraser_button() -> El<ferroui_controls::InkToolbarEraserButton> {
+    El::new()
+}
+
+pub use ferroui_controls::InkToolbarFlyoutItem;
+
+impl ViewClass for ferroui_controls::InkToolbarFlyoutItem {
+    fn create() -> ferroui_base::Ref<Self> {
+        <ferroui_controls::InkToolbarFlyoutItem>::new()
+    }
+}
+
+/// Starts an element of [`InkToolbarFlyoutItem`](ferroui_controls::InkToolbarFlyoutItem).
+pub fn ink_toolbar_flyout_item() -> El<ferroui_controls::InkToolbarFlyoutItem> {
+    El::new()
+}
+
+pub use ferroui_controls::InkToolbarHighlighterButton;
+
+impl ViewClass for ferroui_controls::InkToolbarHighlighterButton {
+    fn create() -> ferroui_base::Ref<Self> {
+        <ferroui_controls::InkToolbarHighlighterButton>::new()
+    }
+}
+
+/// Starts an element of [`InkToolbarHighlighterButton`](ferroui_controls::InkToolbarHighlighterButton).
+pub fn ink_toolbar_highlighter_button() -> El<ferroui_controls::InkToolbarHighlighterButton> {
+    El::new()
+}
+
+pub use ferroui_controls::InkToolbarMenuButton;
+
+impl ViewClass for ferroui_controls::InkToolbarMenuButton {
+    fn create() -> ferroui_base::Ref<Self> {
+        <ferroui_controls::InkToolbarMenuButton>::new()
+    }
+}
+
+/// Starts an element of [`InkToolbarMenuButton`](ferroui_controls::InkToolbarMenuButton).
+pub fn ink_toolbar_menu_button() -> El<ferroui_controls::InkToolbarMenuButton> {
+    El::new()
+}
+
+pub use ferroui_controls::InkToolbarPenButton;
+
+impl ViewClass for ferroui_controls::InkToolbarPenButton {
+    fn create() -> ferroui_base::Ref<Self> {
+        <ferroui_controls::InkToolbarPenButton>::new()
+    }
+}
+
+/// Starts an element of [`InkToolbarPenButton`](ferroui_controls::InkToolbarPenButton).
+pub fn ink_toolbar_pen_button() -> El<ferroui_controls::InkToolbarPenButton> {
+    El::new()
+}
+
+pub use ferroui_controls::InkToolbarPenConfigurationControl;
+
+impl ViewClass for ferroui_controls::InkToolbarPenConfigurationControl {
+    fn create() -> ferroui_base::Ref<Self> {
+        <ferroui_controls::InkToolbarPenConfigurationControl>::new()
+    }
+}
+
+/// Starts an element of [`InkToolbarPenConfigurationControl`](ferroui_controls::InkToolbarPenConfigurationControl).
+pub fn ink_toolbar_pen_configuration_control() -> El<ferroui_controls::InkToolbarPenConfigurationControl> {
+    El::new()
+}
+
+pub use ferroui_controls::InkToolbarPencilButton;
+
+impl ViewClass for ferroui_controls::InkToolbarPencilButton {
+    fn create() -> ferroui_base::Ref<Self> {
+        <ferroui_controls::InkToolbarPencilButton>::new()
+    }
+}
+
+/// Starts an element of [`InkToolbarPencilButton`](ferroui_controls::InkToolbarPencilButton).
+pub fn ink_toolbar_pencil_button() -> El<ferroui_controls::InkToolbarPencilButton> {
+    El::new()
+}
+
+pub use ferroui_controls::InkToolbarRulerButton;
+
+impl ViewClass for ferroui_controls::InkToolbarRulerButton {
+    fn create() -> ferroui_base::Ref<Self> {
+        <ferroui_controls::InkToolbarRulerButton>::new()
+    }
+}
+
+/// Starts an element of [`InkToolbarRulerButton`](ferroui_controls::InkToolbarRulerButton).
+pub fn ink_toolbar_ruler_button() -> El<ferroui_controls::InkToolbarRulerButton> {
+    El::new()
+}
+
+pub use ferroui_controls::InkToolbarStencilButton;
+
+impl ViewClass for ferroui_controls::InkToolbarStencilButton {
+    fn create() -> ferroui_base::Ref<Self> {
+        <ferroui_controls::InkToolbarStencilButton>::new()
+    }
+}
+
+/// Starts an element of [`InkToolbarStencilButton`](ferroui_controls::InkToolbarStencilButton).
+pub fn ink_toolbar_stencil_button() -> El<ferroui_controls::InkToolbarStencilButton> {
+    El::new()
+}
+
+pub use ferroui_controls::InkToolbarStrokeWidthSlider;
+
+impl ViewClass for ferroui_controls::InkToolbarStrokeWidthSlider {
+    fn create() -> ferroui_base::Ref<Self> {
+        <ferroui_controls::InkToolbarStrokeWidthSlider>::new()
+    }
+}
+
+/// Starts an element of [`InkToolbarStrokeWidthSlider`](ferroui_controls::InkToolbarStrokeWidthSlider).
+pub fn ink_toolbar_stroke_width_slider() -> El<ferroui_controls::InkToolbarStrokeWidthSlider> {
+    El::new()
+}
+
+pub use ferroui_controls::InkToolbarToggleButton;
+
+impl ViewClass for ferroui_controls::InkToolbarToggleButton {
+    fn create() -> ferroui_base::Ref<Self> {
+        <ferroui_controls::InkToolbarToggleButton>::new()
+    }
+}
+
+/// Starts an element of [`InkToolbarToggleButton`](ferroui_controls::InkToolbarToggleButton).
+pub fn ink_toolbar_toggle_button() -> El<ferroui_controls::InkToolbarToggleButton> {
+    El::new()
+}
+
+pub use ferroui_controls::InkToolbarToolButton;
+
+impl ViewClass for ferroui_controls::InkToolbarToolButton {
+    fn create() -> ferroui_base::Ref<Self> {
+        <ferroui_controls::InkToolbarToolButton>::new()
+    }
+}
+
+/// Starts an element of [`InkToolbarToolButton`](ferroui_controls::InkToolbarToolButton).
+pub fn ink_toolbar_tool_button() -> El<ferroui_controls::InkToolbarToolButton> {
+    El::new()
+}
+
 pub use ferroui_controls::InputPaneAwareDecorator;
 
 impl ViewClass for ferroui_controls::InputPaneAwareDecorator {
@@ -3817,6 +4051,152 @@ pub trait ImageDrawingProps: ElementBuilder {
     }
 }
 impl<T: ObjectType + Upcast<ferroui_base::media::ImageDrawing>> ImageDrawingProps for El<T> {}
+
+/// The properties and routed events of [`InkToolbar`](ferroui_controls::InkToolbar).
+pub trait InkToolbarProps: ElementBuilder {
+    /// Sets [`InkToolbar::initial_controls_property`](ferroui_controls::InkToolbar::initial_controls_property).
+    fn initial_controls<M>(self, value: impl IntoProp<ferroui_controls::InkToolbarInitialControls, M>) -> Self {
+        self.prop(<ferroui_controls::InkToolbar>::initial_controls_property(), value)
+    }
+
+    /// Sets [`InkToolbar::active_tool_property`](ferroui_controls::InkToolbar::active_tool_property).
+    fn active_tool<M>(self, value: impl IntoProp<Option<ferroui_base::Ref<ferroui_controls::InkToolbarToolButton>>, M>) -> Self {
+        self.prop(<ferroui_controls::InkToolbar>::active_tool_property(), value)
+    }
+
+    /// Sets [`InkToolbar::is_ruler_button_checked_property`](ferroui_controls::InkToolbar::is_ruler_button_checked_property).
+    fn is_ruler_button_checked<M>(self, value: impl IntoProp<bool, M>) -> Self {
+        self.prop(<ferroui_controls::InkToolbar>::is_ruler_button_checked_property(), value)
+    }
+
+    /// Sets [`InkToolbar::target_ink_canvas_property`](ferroui_controls::InkToolbar::target_ink_canvas_property).
+    fn target_ink_canvas<M>(self, value: impl IntoProp<Option<ferroui_base::Ref<ferroui_controls::InkCanvas>>, M>) -> Self {
+        self.prop(<ferroui_controls::InkToolbar>::target_ink_canvas_property(), value)
+    }
+
+    /// Sets [`InkToolbar::is_stencil_button_checked_property`](ferroui_controls::InkToolbar::is_stencil_button_checked_property).
+    fn is_stencil_button_checked<M>(self, value: impl IntoProp<bool, M>) -> Self {
+        self.prop(<ferroui_controls::InkToolbar>::is_stencil_button_checked_property(), value)
+    }
+
+    /// Sets [`InkToolbar::button_flyout_placement_property`](ferroui_controls::InkToolbar::button_flyout_placement_property).
+    fn button_flyout_placement<M>(self, value: impl IntoProp<ferroui_controls::InkToolbarButtonFlyoutPlacement, M>) -> Self {
+        self.prop(<ferroui_controls::InkToolbar>::button_flyout_placement_property(), value)
+    }
+
+    /// Sets [`InkToolbar::target_ink_presenter_property`](ferroui_controls::InkToolbar::target_ink_presenter_property).
+    fn target_ink_presenter<M>(self, value: impl IntoProp<Option<std::rc::Rc<ferroui_controls::InkPresenter>>, M>) -> Self {
+        self.prop(<ferroui_controls::InkToolbar>::target_ink_presenter_property(), value)
+    }
+}
+impl<T: ObjectType + Upcast<ferroui_controls::InkToolbar>> InkToolbarProps for El<T> {}
+
+/// The properties and routed events of [`InkToolbarCustomPenButton`](ferroui_controls::InkToolbarCustomPenButton).
+pub trait InkToolbarCustomPenButtonProps: ElementBuilder {
+    /// Sets [`InkToolbarCustomPenButton::custom_pen_property`](ferroui_controls::InkToolbarCustomPenButton::custom_pen_property).
+    fn custom_pen<M>(self, value: impl IntoProp<Option<ferroui_base::Ref<ferroui_controls::InkToolbarCustomPen>>, M>) -> Self {
+        self.prop(<ferroui_controls::InkToolbarCustomPenButton>::custom_pen_property(), value)
+    }
+
+    /// Sets [`InkToolbarCustomPenButton::configuration_content_property`](ferroui_controls::InkToolbarCustomPenButton::configuration_content_property).
+    fn configuration_content<M>(self, value: impl IntoProp<Option<ferroui_base::Ref<ferroui_controls::Control>>, M>) -> Self {
+        self.prop(<ferroui_controls::InkToolbarCustomPenButton>::configuration_content_property(), value)
+    }
+}
+impl<T: ObjectType + Upcast<ferroui_controls::InkToolbarCustomPenButton>> InkToolbarCustomPenButtonProps for El<T> {}
+
+/// The properties and routed events of [`InkToolbarCustomToolButton`](ferroui_controls::InkToolbarCustomToolButton).
+pub trait InkToolbarCustomToolButtonProps: ElementBuilder {
+    /// Sets [`InkToolbarCustomToolButton::configuration_content_property`](ferroui_controls::InkToolbarCustomToolButton::configuration_content_property).
+    fn configuration_content<M>(self, value: impl IntoProp<Option<ferroui_base::Ref<ferroui_controls::Control>>, M>) -> Self {
+        self.prop(<ferroui_controls::InkToolbarCustomToolButton>::configuration_content_property(), value)
+    }
+}
+impl<T: ObjectType + Upcast<ferroui_controls::InkToolbarCustomToolButton>> InkToolbarCustomToolButtonProps for El<T> {}
+
+/// The properties and routed events of [`InkToolbarEraserButton`](ferroui_controls::InkToolbarEraserButton).
+pub trait InkToolbarEraserButtonProps: ElementBuilder {
+    /// Sets [`InkToolbarEraserButton::is_clear_all_visible_property`](ferroui_controls::InkToolbarEraserButton::is_clear_all_visible_property).
+    fn is_clear_all_visible<M>(self, value: impl IntoProp<bool, M>) -> Self {
+        self.prop(<ferroui_controls::InkToolbarEraserButton>::is_clear_all_visible_property(), value)
+    }
+}
+impl<T: ObjectType + Upcast<ferroui_controls::InkToolbarEraserButton>> InkToolbarEraserButtonProps for El<T> {}
+
+/// The properties and routed events of [`InkToolbarFlyoutItem`](ferroui_controls::InkToolbarFlyoutItem).
+pub trait InkToolbarFlyoutItemProps: ElementBuilder {
+    /// Sets [`InkToolbarFlyoutItem::kind_property`](ferroui_controls::InkToolbarFlyoutItem::kind_property).
+    fn kind<M>(self, value: impl IntoProp<ferroui_controls::InkToolbarFlyoutItemKind, M>) -> Self {
+        self.prop(<ferroui_controls::InkToolbarFlyoutItem>::kind_property(), value)
+    }
+}
+impl<T: ObjectType + Upcast<ferroui_controls::InkToolbarFlyoutItem>> InkToolbarFlyoutItemProps for El<T> {}
+
+/// The properties and routed events of [`InkToolbarMenuButton`](ferroui_controls::InkToolbarMenuButton).
+pub trait InkToolbarMenuButtonProps: ElementBuilder {
+    /// Sets [`InkToolbarMenuButton::is_extension_glyph_shown_property`](ferroui_controls::InkToolbarMenuButton::is_extension_glyph_shown_property).
+    fn is_extension_glyph_shown<M>(self, value: impl IntoProp<bool, M>) -> Self {
+        self.prop(<ferroui_controls::InkToolbarMenuButton>::is_extension_glyph_shown_property(), value)
+    }
+}
+impl<T: ObjectType + Upcast<ferroui_controls::InkToolbarMenuButton>> InkToolbarMenuButtonProps for El<T> {}
+
+/// The properties and routed events of [`InkToolbarPenButton`](ferroui_controls::InkToolbarPenButton).
+pub trait InkToolbarPenButtonProps: ElementBuilder {
+    /// Sets [`InkToolbarPenButton::palette_property`](ferroui_controls::InkToolbarPenButton::palette_property).
+    fn palette<M>(self, value: impl IntoProp<ferroui_base::collections::FerroList<std::rc::Rc<dyn ferroui_base::media::IBrush>>, M>) -> Self {
+        self.prop(<ferroui_controls::InkToolbarPenButton>::palette_property(), value)
+    }
+
+    /// Sets [`InkToolbarPenButton::min_stroke_width_property`](ferroui_controls::InkToolbarPenButton::min_stroke_width_property).
+    fn min_stroke_width<M>(self, value: impl IntoProp<f64, M>) -> Self {
+        self.prop(<ferroui_controls::InkToolbarPenButton>::min_stroke_width_property(), value)
+    }
+
+    /// Sets [`InkToolbarPenButton::max_stroke_width_property`](ferroui_controls::InkToolbarPenButton::max_stroke_width_property).
+    fn max_stroke_width<M>(self, value: impl IntoProp<f64, M>) -> Self {
+        self.prop(<ferroui_controls::InkToolbarPenButton>::max_stroke_width_property(), value)
+    }
+
+    /// Sets [`InkToolbarPenButton::selected_brush_index_property`](ferroui_controls::InkToolbarPenButton::selected_brush_index_property).
+    fn selected_brush_index<M>(self, value: impl IntoProp<i32, M>) -> Self {
+        self.prop(<ferroui_controls::InkToolbarPenButton>::selected_brush_index_property(), value)
+    }
+
+    /// Sets [`InkToolbarPenButton::selected_stroke_width_property`](ferroui_controls::InkToolbarPenButton::selected_stroke_width_property).
+    fn selected_stroke_width<M>(self, value: impl IntoProp<f64, M>) -> Self {
+        self.prop(<ferroui_controls::InkToolbarPenButton>::selected_stroke_width_property(), value)
+    }
+}
+impl<T: ObjectType + Upcast<ferroui_controls::InkToolbarPenButton>> InkToolbarPenButtonProps for El<T> {}
+
+/// The properties and routed events of [`InkToolbarStencilButton`](ferroui_controls::InkToolbarStencilButton).
+pub trait InkToolbarStencilButtonProps: ElementBuilder {
+    /// Sets [`InkToolbarStencilButton::selected_stencil_property`](ferroui_controls::InkToolbarStencilButton::selected_stencil_property).
+    fn selected_stencil<M>(self, value: impl IntoProp<ferroui_controls::InkToolbarStencilKind, M>) -> Self {
+        self.prop(<ferroui_controls::InkToolbarStencilButton>::selected_stencil_property(), value)
+    }
+
+    /// Sets [`InkToolbarStencilButton::is_ruler_item_visible_property`](ferroui_controls::InkToolbarStencilButton::is_ruler_item_visible_property).
+    fn is_ruler_item_visible<M>(self, value: impl IntoProp<bool, M>) -> Self {
+        self.prop(<ferroui_controls::InkToolbarStencilButton>::is_ruler_item_visible_property(), value)
+    }
+
+    /// Sets [`InkToolbarStencilButton::is_protractor_item_visible_property`](ferroui_controls::InkToolbarStencilButton::is_protractor_item_visible_property).
+    fn is_protractor_item_visible<M>(self, value: impl IntoProp<bool, M>) -> Self {
+        self.prop(<ferroui_controls::InkToolbarStencilButton>::is_protractor_item_visible_property(), value)
+    }
+}
+impl<T: ObjectType + Upcast<ferroui_controls::InkToolbarStencilButton>> InkToolbarStencilButtonProps for El<T> {}
+
+/// The properties and routed events of [`InkToolbarToolButton`](ferroui_controls::InkToolbarToolButton).
+pub trait InkToolbarToolButtonProps: ElementBuilder {
+    /// Sets [`InkToolbarToolButton::is_extension_glyph_shown_property`](ferroui_controls::InkToolbarToolButton::is_extension_glyph_shown_property).
+    fn is_extension_glyph_shown<M>(self, value: impl IntoProp<bool, M>) -> Self {
+        self.prop(<ferroui_controls::InkToolbarToolButton>::is_extension_glyph_shown_property(), value)
+    }
+}
+impl<T: ObjectType + Upcast<ferroui_controls::InkToolbarToolButton>> InkToolbarToolButtonProps for El<T> {}
 
 /// The properties and routed events of [`Inline`](ferroui_controls::documents::Inline).
 pub trait InlineProps: ElementBuilder {

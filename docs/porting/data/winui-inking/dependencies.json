@@ -7,7 +7,10 @@
       "upstream": "Windows.UI.Input.Inking.InkPoint / InkDrawingAttributes / PenTipShape",
       "scope": "required",
       "status": "partial",
-      "rust_files": ["src/FerroUI.Controls/inking/ink_point.rs", "src/FerroUI.Controls/inking/ink_drawing_attributes.rs"],
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_point.rs",
+        "src/FerroUI.Controls/inking/ink_drawing_attributes.rs"
+      ],
       "notes": "Portable validated value types replace WinRT objects. Pressure, tilt/twist/timestamps and drawing metadata can be retained without reproducing the OS renderer. Native pencil texture and full OS geometry conformance require separate validation."
     },
     {
@@ -15,7 +18,9 @@
       "upstream": "Windows.UI.Input.Inking.InkStroke / InkStrokeBuilder and the DirectInk renderer",
       "scope": "required",
       "status": "partial",
-      "rust_files": ["src/FerroUI.Controls/inking/ink_stroke.rs"],
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_stroke.rs"
+      ],
       "notes": "Safe Rust stroke geometry is a portable replacement, not a source translation of the unavailable DirectInk implementation. Native curve fitting, pencil shading, subpixel rasterization and latency equivalence have not been established."
     },
     {
@@ -38,57 +43,80 @@
       "id": "windows-isf",
       "upstream": "InkStrokeContainer.SaveAsync / LoadAsync, InkPersistenceFormat.Isf",
       "scope": "required",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "An internal portable stroke format is not ISF. Native ISF decoding/encoding requires a real codec or a Windows service adapter plus Windows-produced interoperability fixtures. The public ISF specification and the MIT WPF serializer are potential independently pinned references."
+      "status": "partial",
+      "rust_files": [
+        "src/Windows/FerroUI.WinUI/inking.rs",
+        "src/FerroUI.Controls/inking/ink_platform_services.rs",
+        "src/FerroUI.Controls/inking/ink_stroke_container.rs"
+      ],
+      "notes": "WindowsInkServices invokes the actual OS SaveWithFormatAsync(Isf)/LoadAsync through windows 0.62.2. Portable builds use FERROINK, not ISF. Windows execution/fixtures remain required; native f32 precision, fresh imported IDs and explicit twist-loss policy are documented."
     },
     {
       "id": "gif-with-embedded-isf",
       "upstream": "InkPersistenceFormat.GifWithEmbeddedIsf",
       "scope": "required",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "GIF preview generation plus embedded ISF data is a distinct Windows persistence contract. Neither ordinary GIF output nor a proprietary binary payload establishes compatibility."
+      "status": "partial",
+      "rust_files": [
+        "src/Windows/FerroUI.WinUI/inking.rs"
+      ],
+      "notes": "WindowsInkServices invokes the real OS SaveAsync GIF-with-ISF operation and LoadAsync decoder. Raster bounds and byte limits are checked. Windows-produced fixture/preview comparisons have not yet been executed."
     },
     {
       "id": "native-ink-clipboard",
       "upstream": "InkStrokeContainer.CopySelectedToClipboard / PasteFromClipboard / CanPasteFromClipboard",
       "scope": "required",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "Native Windows clipboard interoperability uses registered ink formats. Portable copy/paste of stroke objects or FerroUI payloads is useful but requires an explicit format name and cannot be advertised as native ink clipboard support without fixtures."
+      "status": "partial",
+      "rust_files": [
+        "src/Windows/FerroUI.WinUI/inking.rs",
+        "src/FerroUI.Controls/inking/ink_stroke_container.rs"
+      ],
+      "notes": "WindowsInkServices calls native CopySelectedToClipboard/CanPasteFromClipboard/PasteFromClipboard, preserving the selection contract using temporary native strokes. Cross-application Windows clipboard fixtures are still required; non-Windows payload copying remains distinct."
     },
     {
       "id": "ruler-and-protractor",
       "upstream": "Windows.UI.Input.Inking.InkPresenterRuler / InkPresenterProtractor",
       "scope": "required",
-      "status": "not_ported",
-      "rust_files": [],
-      "notes": "OS stencil visibility, geometry, constraints and manipulation are separate from toolbar toggle state. Portable stencil controls need rendering, constraint behavior and manipulation tests; OS object identity is not preserved."
+      "status": "partial",
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_presenter_stencil.rs",
+        "src/FerroUI.Controls/inking/ink_canvas.rs",
+        "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+      ],
+      "notes": "Stable portable stencil services expose visibility, transforms, size and basic annotation state. Canvas draws guides and constrains pen points. Full OS stencil touch manipulation, annotations and native appearance are not reproduced."
     },
     {
       "id": "high-contrast-services",
       "upstream": "AccessibilitySettings / UISettings / InkHighContrastAdjustment",
       "scope": "required",
       "status": "partial",
-      "rust_files": ["src/FerroUI.Controls/inking/ink_input.rs"],
-      "notes": "The adjustment enum is represented. Full system-color monitoring, the upstream contrast-filtered palette, theme-change propagation and rendered high-contrast comparisons remain independently tracked."
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_input.rs",
+        "src/FerroUI.Controls/inking/ink_canvas.rs",
+        "src/FerroUI.Controls/inking/ink_toolbar_configuration.rs"
+      ],
+      "notes": "Canvas implements adjustment modes using the application high-contrast/theme state. Exact OS-selected system colors, contrast-filtered pen palettes, full theme-change propagation and visual comparisons remain open."
     },
     {
       "id": "pointer-routing",
       "upstream": "Windows.UI.Core.PointerEventArgs / CoreInputDeviceTypes / CoreInkIndependentInputSource",
       "scope": "required",
       "status": "partial",
-      "rust_files": ["src/FerroUI.Controls/inking/ink_input.rs"],
-      "notes": "FerroUI pointer values and events replace WinRT event objects and preserve the device/processed/unprocessed contracts. Physical pressure, tilt and coalesced sample delivery depend on each existing platform backend; independent OS input dispatch is not emulated."
+      "rust_files": [
+        "src/FerroUI.Controls/inking/ink_input.rs",
+        "src/FerroUI.Controls/inking/ink_presenter.rs",
+        "src/FerroUI.Controls/inking/ink_canvas.rs"
+      ],
+      "notes": "Routed FerroUI pointer/capture and coalesced samples drive processed/unprocessed services; pressure, tilt, twist and normalized timestamps are retained when supplied. Hardware/platform precision and independent OS ink input scheduling are separate, unverified contracts."
     },
     {
       "id": "ink-recognition",
       "upstream": "Windows.UI.Input.Inking.InkRecognizerContainer and installed language recognizers",
       "scope": "adjacent_os_service",
-      "status": "external",
-      "rust_files": [],
-      "notes": "Handwriting recognition is adjacent to the inking API but is not called by the pinned InkCanvas/InkToolbar sources or exposed in their IDLs. It is not implemented or bundled by this port. A provider and language/model availability contract would be needed for an extended recognition API."
+      "status": "partial",
+      "rust_files": [
+        "src/Windows/FerroUI.WinUI/inking.rs"
+      ],
+      "notes": "Optional WindowsInkServices recognizers/recognize methods call installed OS handwriting engines, returning candidates, bounds and original FerroUI stroke IDs. This is an adjacent extension, not a WinUI control IDL member. Recognition runtime/language availability remains OS-dependent and has not been executed on this Linux host."
     },
     {
       "id": "ink-analysis",

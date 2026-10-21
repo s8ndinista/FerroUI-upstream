@@ -113,6 +113,7 @@ pub(super) fn page_sections() -> (Vec<Rc<HomeSection>>, Vec<UnavailablePage>) {
             s.add("/Pages/WrapPanelPage.xaml", "WrapPanel", Icons::LAYOUT, "Wrap children onto multiple lines");
         }),
         section("Media & Graphics", Icons::MEDIA, &mut unavailable, |s| {
+            s.add("/Pages/InkingPage.xaml", "Inking", Icons::CANVAS, "Pressure-sensitive ink, pens, eraser and stencil guides");
             s.add("/Pages/AcrylicPage.xaml", "Acrylic", Icons::BLUR, "Translucent acrylic window materials");
             s.add("/Pages/BitmapCachePage.xaml", "BitmapCache", Icons::LIGHTNING, "Cache visuals as bitmaps for performance");
             s.add("/Pages/CompositionPage.xaml", "Composition", Icons::LAYERS, "Composition-layer animations and effects");

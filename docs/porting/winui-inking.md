@@ -8,10 +8,11 @@ the WinUI source. Those replacements have explicit compatibility boundaries;
 this document does not treat a matching API name as proof of OS engine parity.
 
 The source/member ledger is authoritative for the remaining work. In particular,
-the complete WinUI templates, all localized resources, native ISF/clipboard
-interoperability and independent Windows ink-thread behavior are not established
-by the portable control implementation. The PR remains a draft while those
-requirements and the recorded validation gaps are unresolved.
+the complete WinUI templates, all localized resources and independent Windows
+ink-thread behavior remain open. A Windows adapter calls the genuine OS
+ISF/GIF, clipboard and optional recognition APIs; Windows runtime fixtures are
+still needed to verify its interoperability. The PR remains a draft while the
+recorded compatibility and validation gaps are unresolved.
 
 ## 1. Pinned sources and accounting
 
@@ -100,6 +101,9 @@ and individual missing members are in the ledger.
 | Tool/pen/toggle/menu subclasses | `ink_toolbar_buttons.rs` | FerroUI radio, toggle and checkbox control bases |
 | Public toolbar enums | `ink_toolbar_types.rs` | Rust enums preserving upstream values and XAML names |
 | Color labels/palettes | `color_names.rs` and pen-button code | FerroUI brushes and colors; localization completeness tracked separately |
+| Live pen configuration and width slider | `ink_toolbar_configuration.rs` | Existing flyout, toggle, panel and slider controls |
+| Toolbar accessibility | `ink_toolbar_automation_peer.rs` | Named peers with selection, toggle, expand/collapse, range and text-value providers |
+| Optional native persistence/clipboard | `ink_platform_services.rs`; `src/Windows/FerroUI.WinUI/inking.rs` outside this directory | Local Rust futures and safe Windows Runtime projections |
 
 The shared toolbar module is an intentional file mapping: the small C++ headers
 share control inheritance and boilerplate, while the source ledger retains their
@@ -134,7 +138,13 @@ ended and canceled events. Unprocessed input exposes entered, hovered, exited,
 pressed, moved, released and lost events. Capture loss, disabled input and
 detachment must cancel pending input without committing a stray stroke.
 
-Input samples retain their pressure, tilt, twist and timestamps. Availability of
+Input samples retain their pressure, tilt, twist and timestamps. The canvas feeds
+intermediate/coalesced samples from the framework and converts millisecond input
+timestamps to microseconds. Intermediate points currently share their enclosing
+event's timestamp because the framework's `PointerPoint` has no separate time
+field. Disabled barrel/eraser input is ignored rather than treated as an ordinary
+pen, and raw pointer loss is delivered even when no processed stroke is active.
+Availability of
 actual device measurements depends on the existing FerroUI platform backend;
 constructing a sample with these fields is not evidence that every platform
 driver supplies them. Coalesced sample delivery and hardware pen testing remain
@@ -147,7 +157,14 @@ geometry using FerroUI points and matrices. It preserves raw samples, caches
 derived smoothing/outline/bounds data and invalidates those caches when geometry
 inputs change. Selection alone does not need to rebuild tessellation.
 
-Highlighter contours need to be filled as one stroke geometry, so overlapping
+The circular nib is polygonized with 32 vertices, rectangular tips retain their
+corners, and full nib bounds are computed analytically. Bounded cubic Hermite
+smoothing retains raw telemetry; native DirectInk's curve model is not copied.
+Sparse pointer motion is erased by testing the whole movement segment. Lasso
+selection requires the entire rendered stroke to be inside the polygon,
+including concave-boundary checks; line selection tests intersections.
+
+Highlighter contours are filled as one nonzero compound geometry, so overlapping
 pieces of the same stroke are composited once. Separate highlighter strokes may
 still overlap. Pencil opacity and tilt response are portable approximations;
 native pencil grain and DirectInk's exact fit/rasterization are not claimed.
@@ -173,19 +190,85 @@ are not used as behavioral evidence.
 
 ### Persistence and clipboard
 
-The portable format and native Windows formats are distinct compatibility
-contracts. A bounded binary stroke document can preserve IDs, attributes,
-samples and transforms without being ISF. Unsupported native formats must fail
-explicitly. Loads must validate the complete document before replacing visible
-ink, and reject duplicate identities, malformed sizes and nonfinite geometry.
+The portable **FERROINK version 1** format has an eight-byte magic value,
+little-endian records and CRC32 integrity checking. It preserves stroke IDs,
+selection, all portable drawing attributes, raw samples and point transforms.
+The default budgets are 64 MiB, 100,000 strokes, 65,536 points per stroke and
+1,000,000 total points. Counts and record boundaries are checked before Rust
+allocation, and failed loads preserve the existing document. Portable
+`copy_selected`/`paste` exchange this format under
+`application/x-ferroui-ink`; paste creates fresh identities and positions the
+visible bounds at the requested point.
 
-Native ISF and GIF-with-embedded-ISF need a codec or a Windows adapter and
-Windows-produced fixtures. Clipboard support must state which data format it
-publishes; internal stroke copies and a FerroUI payload do not prove a Windows
-application can paste the data. The
+`save_async` intentionally defaults to `Portable`, unlike the Windows default
+GIF-with-ISF output. `save_with_format_async` makes the format explicit.
+`load_async` recognizes FERROINK magic and delegates other formats to an attached
+`IInkPlatformServices`. Missing native services produce `UnsupportedFormat`;
+`can_paste_from_clipboard` is false when no service is attached.
+
+The optional `ferroui-winui::WindowsInkServices` adapter is compiled only on
+Windows. It uses `windows = 0.62.2`, `windows-collections = 0.3.2` and
+`windows-numerics = 0.3.1`, with the Windows 10 1703 contracts for tilt/time and
+explicit ISF saving. Construction initializes WinRT through the existing
+FerroUI Windows backend, verifies native ink activation and keeps the service
+on the UI thread. No new `unsafe` code or blocking async wait is introduced.
+
+| Request | Native operation |
+|---|---|
+| `Isf` save | OS `InkStrokeContainer.SaveWithFormatAsync(Isf)` |
+| `GifWithEmbeddedIsf` save | OS `InkStrokeContainer.SaveAsync`, including the rendered GIF preview |
+| Native load | Memory stream and OS `InkStrokeContainer.LoadAsync` |
+| Native copy/paste/availability | OS `CopySelectedToClipboard`, `PasteFromClipboard`, `CanPasteFromClipboard` |
+| Optional handwriting recognition | Installed recognizer enumeration and OS `RecognizeAsync`, returning candidates, bounds and original FerroUI stroke IDs |
+
+These are genuine Windows engine calls, but cross-compilation alone does not
+validate their results. Native errors are returned as `InkError::Platform`,
+including missing classes, unsupported attributes or unavailable recognizers.
+All asynchronous stream/ink operations use `.await` on the application's local
+executor. The native decoder owns its internal allocations: byte limits apply
+before calling it, and Rust stroke/point count limits apply before constructing
+the returned vectors. GIF export also limits a side to 16,384 pixels and its
+estimated BGRA surface to the configured byte budget.
+
+To attach the service in a Windows application:
+
+```rust,ignore
+use std::rc::Rc;
+use ferroui_controls::{InkCanvas, InkError, InkPersistenceFormat};
+use ferroui_winui::WindowsInkServices;
+
+fn enable_windows_ink(canvas: &InkCanvas) -> Result<(), InkError> {
+    canvas.ink_presenter().stroke_container()
+        .set_platform_services(Some(Rc::new(WindowsInkServices::new()?)));
+    Ok(())
+}
+
+// Await on the existing UI executor:
+// let bytes = container.save_with_format_async(InkPersistenceFormat::Isf).await?;
+// container.load_async(bytes).await?;
+```
+
+The conversion is deliberately explicit. Windows coordinates/matrices are
+`f32`, ISF may quantize packet values, native load may reset timestamps, and
+imported strokes receive new FerroUI identities. WinRT `InkPoint` has no twist
+member, so native export rejects nonzero twist unless the application opts into
+`allow_twist_loss(true)`; native imports set twist to zero. Portable-only
+metadata, custom native extended properties, recognized state and stroke-start
+wall-clock values do not have a complete two-way mapping. Pencil supports a
+restricted set of native attributes; unsupported requested changes return the
+OS error rather than silently becoming another tool. Use FERROINK when exact
+portable round trips are required. The Windows formats and clipboard paths
+remain `partial` until real Windows fixtures exercise these boundaries.
+
+References: the official [format enum](https://learn.microsoft.com/en-us/uwp/api/windows.ui.input.inking.inkpersistenceformat),
+[save overloads](https://learn.microsoft.com/en-us/uwp/api/windows.ui.input.inking.inkstrokecontainer.saveasync),
+[InkPoint members](https://learn.microsoft.com/en-us/uwp/api/windows.ui.input.inking.inkpoint),
+[timestamp units](https://learn.microsoft.com/en-us/uwp/api/windows.ui.input.inking.inkpoint.timestamp)
+and [native pencil restrictions](https://learn.microsoft.com/en-us/uwp/api/windows.ui.input.inking.inkdrawingattributes.createforpencil).
+The
 [Microsoft ISF specification](https://learn.microsoft.com/en-us/uwp/specifications/ink-serialized-format)
 and [WPF's serializer](https://github.com/dotnet/wpf/tree/main/src/Microsoft.DotNet.Wpf/src/PresentationCore/MS/internal/Ink/InkSerializedFormat)
-are possible additional references, not code already imported by this port.
+are possible references for a future portable codec; neither is imported here.
 
 ## 4. Toolbar behavior and visual scope
 
@@ -214,6 +297,12 @@ file. The theme records remain open until those elements have concrete mappings
 and visual comparisons. Likewise, default English names do not stand in for the
 86 localized resources.
 
+The ControlCatalog sample is a combined framework page at
+`samples/ControlCatalog/Pages/InkingPage.xaml`. It enables pen/mouse/touch, wires
+the toolbar to the canvas and provides clear, portable snapshot save and restore
+actions. It is not a reproduction of every upstream TestUI screen or a Windows
+interoperability harness.
+
 ## 5. Accessibility and upstream limitations
 
 The canvas peer should report a Pane even when no strokes exist. Its visible
@@ -228,12 +317,20 @@ for configuration flyouts, accessible numeric width values and localized color
 help. Reusing a base peer covers only the patterns that base actually implements.
 Dedicated upstream peers and their tests remain explicit ledger records.
 
+Named canvas and toolbar/tool/menu/flyout/slider peers are present. Tests cover
+Pane/ToolBar roles, ancestor visibility/clipping, selection/expand-collapse
+provider discovery and numeric width edits including disabled-state errors.
+Remaining upstream cases are kept open where they need real flyout transitions,
+self-clips/ScrollViewer geometry, icon/name combinations or localized names.
+
 The pinned upstream toolbar itself documents lift gaps: `IsCustomDry` returns
 false, and target changes omit mid-stroke tracking, an internal high-contrast
 notification and independent input inspection. A FerroUI correction is useful
 but must be documented as a correction, not attributed to unavailable upstream
 implementation. Native recognizers and `InkAnalyzer` are adjacent Windows Ink
-services; neither is called by the two pinned control directories.
+services; neither is called by the two pinned control directories. The optional
+Windows adapter adds handwriting candidate recognition explicitly as an
+extension; it does not implement an InkAnalyzer.
 
 ## 6. Verification and completion gates
 
@@ -256,12 +353,49 @@ Rust validation is targeted at the controls crate and inking modules:
 ```sh
 cargo check -p ferroui-controls
 cargo test -p ferroui-controls --lib inking::
+cargo check -p ferroui-winui --target x86_64-pc-windows-gnu
+cargo check -p ferroui-winui --tests --target x86_64-pc-windows-gnu
 ```
 
 Execution results belong in the PR work log after the commands complete. A test
 listed in `tests-map.json` is a scenario mapping, not an assertion that a test
 run happened. Do not count a constructor test as coverage for an upstream
 clipping, localization or accessibility test.
+
+The reconciled ledger currently contains:
+
+| Records | Adapted | Implemented | Partial | Not ported | Not applicable | External |
+|---|---:|---:|---:|---:|---:|---:|
+| 164 source files | 6 | 0 | 53 | 91 | 14 | 0 |
+| 45 IDL types | 26 | 10 | 9 | 0 | 0 | 0 |
+| 181 IDL members | 136 | 32 | 13 | 0 | 0 | 0 |
+| 65 upstream API tests | 26 | 0 | 14 | 25 | 0 | 0 |
+| 12 dependency records | 0 | 0 | 9 | 0 | 0 | 3 |
+
+The ordinary ledger check passes. The strict completion gate still reports
+217 partial/missing/external records. These counts intentionally overlap by
+scope (a source file, its type and a member may each record the same boundary);
+they are not a percentage of implemented functionality. All declared public
+member names have mappings, while 13 retain an explicit semantic or platform
+boundary. All 91 unported source files remain visible: 86 locale resources,
+two templates, two interaction suites and the diagnostics header.
+
+### Known remaining work
+
+| Area | Concrete remaining evidence or implementation |
+|---|---|
+| Visual resources | Translate every required template part/state, tool glyph, animation, access-key resource and theme interaction from the two XAML source files; compare rendered results. |
+| Localization | Port the 86 resource files and connect localized palette names, pen configuration headings and tool descriptions to FerroUI's resource services. |
+| High contrast | Complete native system-color monitoring and palette filtering; compare real high-contrast themes, including changes while a palette is open. |
+| Stencils | Add full touch translation/rotation/resize and remaining protractor/ruler annotations. The angle-readout flag is stored but does not yet draw a readout. |
+| Toolbar edge cases | Compare automatic flyout placement, radial-controller integration, custom configuration presentation and duplicate stencil-button behavior. Multiple custom stencil children are currently accepted. |
+| Native interoperability | Run ISF/GIF fixtures, pencil/transform conversion, malformed files and cross-application clipboard on Windows; execute installed-language recognition cases. |
+| Runtime input/rendering | Exercise pointer capture, coalesced physical-pen telemetry and both renderer backends; compare smoothing, highlighter overlap and pencil appearance against Windows. |
+| Accessibility | Complete all remaining clipping, flyout transition, selected-state, localized name and native accessibility scenarios in the test ledger. |
+| OS independent input | Decide whether a separate Windows native presentation path is required for DirectInk latency. The portable renderer intentionally runs through FerroUI's existing pipeline. |
+
+No missing template/locale or OS/runtime evidence is dismissed because a related
+class compiles or an enum has been registered.
 
 The following evidence is needed before a full compatibility claim:
 
@@ -287,3 +421,14 @@ The following evidence is needed before a full compatibility claim:
    45-type/181-member map, 65-test map and dependency ledger.
 4. Added Microsoft attribution and a reproducible ledger check; implementation
    and test mappings are updated with each verified batch.
+5. Implemented portable stroke geometry, bounded persistence, service lifetimes,
+   processed/unprocessed input, custom drying, canvas, toolbar configuration,
+   named automation peers and the ControlCatalog sample.
+6. Audited public-source behavior and corrected lasso containment, builder
+   default snapshots, custom pen dispatch, chisel nibs, disabled barrel/eraser
+   input, unprocessed pointer loss, pencil opacity and pending-dry cleanup.
+7. Added the optional native Windows service adapter and recorded its explicit
+   conversion, resource-limit and runtime-validation boundaries.
+8. Reconciled every source/type/member/test/dependency record to the implemented
+   symbols; ordinary ledger validation passes while the full-parity gate stays
+   open for the remaining work above.

@@ -30,6 +30,16 @@ ferroui-microcom.workspace = true
 # The functions of the system the integration calls: declarations only, linked through
 # `windows-link`, so the crate is checked for a Windows target on any host.
 [target.'cfg(windows)'.dependencies]
+# Safe WinRT projections for genuine Windows ink persistence, clipboard and recognition.
+windows = { version = "=0.62.2", features = [
+    "Foundation",
+    "Foundation_Collections",
+    "Foundation_Numerics",
+    "Storage_Streams",
+    "UI_Input_Inking",
+] }
+windows-collections = "=0.3.2"
+windows-numerics = "=0.3.1"
 windows-sys = { workspace = true, features = [
     "Wdk_System_Threading",
     "Win32_Foundation",

@@ -27,6 +27,8 @@ pub mod interop;
 
 mod automation;
 mod ferro_swap_chain_panel;
+#[cfg(windows)]
+pub mod inking;
 mod process_end;
 mod win_ui_cursor_factory;
 mod win_ui_drag_source;
@@ -37,6 +39,8 @@ mod xaml_application;
 
 #[cfg(windows)]
 pub use ferro_swap_chain_panel::FerroSwapChainPanel;
+#[cfg(windows)]
+pub use inking::{WindowsInkRecognitionResult, WindowsInkServices};
 pub use windows_app_sdk::{parse_major_minor, WindowsAppSdkOptions};
 #[cfg(windows)]
 pub use process_end::{end_process, process_threads};

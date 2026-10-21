@@ -7,6 +7,8 @@ pub mod automation;
 pub mod chrome;
 pub mod diagnostics;
 pub mod embedding;
+pub mod inking;
+pub use inking::*;
 pub mod converters;
 pub mod metadata;
 pub mod notifications;
