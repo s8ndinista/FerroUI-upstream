@@ -348,7 +348,14 @@ fn delete_span(
         .then(|| snapshot.paragraphs[last].format.clone());
     let selection = editor.selection();
     let typing_format = editor.typing_format();
-    document.replace_text(range.clone(), "")?;
+    if first != last {
+        // Structural deletion has no inserted text that needs an insertion
+        // format. replace_text would synthesize an empty carrier with the old
+        // paragraph's defaults, keeping deleted formatting at the new caret.
+        document.replace_range(range.clone(), &DocumentSnapshot::default())?;
+    } else {
+        document.replace_text(range.clone(), "")?;
+    }
     if let Some(mut format) = following_format {
         // Paragraph formatting follows the surviving following paragraph. If a
         // prefix survives, retain its paragraph character defaults independently

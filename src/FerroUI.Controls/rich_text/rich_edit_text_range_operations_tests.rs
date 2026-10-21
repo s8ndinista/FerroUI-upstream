@@ -340,6 +340,9 @@ fn rich_range_delete_keeps_nested_formatting_and_embedded_control_identity() {
     };
     let model = RichTextDocument::new();
     model.restore(&snapshot).unwrap();
+    // Installing a semantic Hyperlink supplies its default underline. Undo must
+    // restore the actual pre-edit model, including that canonical formatting.
+    let before = model.snapshot();
     let document = RichEditTextDocument::new(model);
     document
         .get_range(2, 4)
@@ -357,7 +360,7 @@ fn rich_range_delete_keeps_nested_formatting_and_embedded_control_identity() {
     assert!(matches!(&after.paragraphs[0].inlines[1].kind,
         InlineSnapshotKind::Embedded(Some(kept)) if *kept == child.clone().upcast::<crate::Control>()));
     document.undo().unwrap();
-    assert_eq!(document.document().snapshot(), snapshot);
+    assert_eq!(document.document().snapshot(), before);
 }
 
 #[test]
