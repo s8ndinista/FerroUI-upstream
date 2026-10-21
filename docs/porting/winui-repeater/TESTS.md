@@ -11,7 +11,7 @@ The extraction contains **265 `[TestMethod]` declarations** (262 API scenarios a
 | known-upstream-difference | 1 |
 | name-matched | 204 |
 
-The scanned FerroUI areas contain 1012 Rust `#[test]` functions, including supplementary regressions and markup tests. This count is not a pass count.
+The scanned FerroUI areas contain 1059 Rust `#[test]` functions, including supplementary regressions and markup tests. This count is not a pass count.
 
 ## APITests/AccessibilityTests.cs
 

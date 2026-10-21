@@ -10,11 +10,15 @@ From the repository root:
 
 ```sh
 python3 scripts/winui-repeater/inventory.py --check
-cargo test -p ferroui-controls --lib repeater
-cargo test -p ferroui-controls --lib
-cargo test -p ferroui-base --lib
-cargo test -p xamlx --lib
-cargo test -p ferroui-markup-xaml-tests --lib
+cargo test --locked -p ferroui-build-scan --lib
+python3 scripts/generate_view_builders.py --check
+cargo test --locked -p ferroui-controls --lib repeater
+cargo test --locked -p ferroui-controls --lib
+cargo test --locked -p ferroui-base --lib
+cargo test --locked -p xamlx --lib
+cargo test --locked -p ferroui-markup-xaml-tests --lib
+cargo test --locked -p ferroui-view --lib
+cargo test --locked -p control-catalog --lib tests::items_repeater_page::
 ```
 
 Browser and catalog compilation follow the repository's normal
@@ -30,14 +34,106 @@ links for the pinned upstream scenarios are in [TESTS.md](TESTS.md).
 
 ## Recorded checkpoints
 
+### 2026-10-21 continuation
+
+The recovered remote head was `3facaa20`. The continuation merged main
+`86b6b4ab` and published metadata, scheduler/template and selection corrections
+as `91675d5b`, `46718059` and `aaab8857`. These checkpoints are separate from
+later scrolling/collection and rendered-catalog validation.
+
+The scrolling and pinned-collection correction is published in `e2a16bb3`,
+native diagnostics and strengthened ClearValue assertions in `8fd6b892`, and
+the compiled sample/browser regression in `9039d2a5`.
+
+The full local Controls run of these runtime sources passed **4,847 tests,
+0 failed, 0 ignored**, including **415 Repeater tests**. It used Rust 1.99.0
+on `x86_64-unknown-linux-gnu`, with one build job, incremental compilation
+disabled and reduced debug information:
+
+```sh
+CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 \
+CARGO_PROFILE_DEV_DEBUG=0 CARGO_PROFILE_TEST_DEBUG=0 MALLOC_ARENA_MAX=2 \
+cargo test --offline --locked -p ferroui-controls --lib \
+  --config profile.test.package.ferroui-controls.codegen-units=512 \
+  -- --test-threads=2
+```
+
+The codegen-unit override only reduced peak compiler memory; it is not a source
+or feature change. The run required permission to bind local loopback sockets
+for the six pre-existing remote-transport tests. An earlier sandboxed run
+reported those six `PermissionDenied` failures and one diagnostic regression
+whose setup reused cached Stack controls. The test now replaces its source to
+require a genuine realization; its exact event assertions remain intact. The
+successful complete rerun did not exclude any test. An earlier compiler attempt
+was killed by the shared environment's memory limit before tests executed.
+
+| Revision / run | Executed check | Result and limit |
+|---|---|---|
+| [`9039d2a5`, focused CI job 119200628970](https://github.com/wieslawsoltes/FerroUI/actions/runs/39593601866/job/119200628970) | Complete Controls library with `ferroui-base/testing,ferroui-base/compiler-metadata,ferroui-base/markup-functions` | **4,847 passed, 0 failed, 0 ignored**, including **415 Repeater tests**; the animated aligned-bring identity assertion and all new lifecycle regressions execute |
+| Same focused CI job | Regenerate both compiler snapshots, rebuild and execute runtime/compiled XAML, verify checked-in snapshot diff | **627 passed, 0 failed, 17 ignored** in the main suite; both explicitly invoked snapshot generators separately passed; generated Rust, source map and Rust-path check were current |
+| [`9039d2a5`, Android CI job 119200802343](https://github.com/wieslawsoltes/FerroUI/actions/runs/39593601938/job/119200802343) | Android host suite, Base with `--cfg ferro_tls_table`, Android catalog compilation and smoke-APK packaging | **159 Android and 4,380 Base tests passed, 0 failed, 0 ignored**; arm64 catalog compilation and packaging succeeded; not an on-device run |
+| [`9039d2a5`, Linux framebuffer CI job 119200802262](https://github.com/wieslawsoltes/FerroUI/actions/runs/39593601938/job/119200802262) | Framebuffer unit suite, native catalog build and virtual framebuffer/card smoke checks | **70 passed, 0 failed**; one separate documentation test ignored; catalog build and smoke checks succeeded; these are platform integration checks, not Repeater-specific captures |
+| [`9039d2a5`, iOS simulator CI job 119200802432](https://github.com/wieslawsoltes/FerroUI/actions/runs/39593601938/job/119200802432) | iOS unit and dispatcher integration suites, simulator build/install, device-target and catalog checks | **104 unit and 10 dispatcher tests passed, 0 failed**; simulator installation and target checks succeeded; not a Repeater-specific rendered or physical-device run |
+| Local `91675d5b` | `ferroui-build-scan` library suite and View-builder generator consistency | **44 passed**; direct bitflag expressions and generated native Repeater/layout builders are covered |
+| Local `9039d2a5` | `cargo test --offline --locked -p ferroui-view --lib -- --test-threads=2` | **49 passed, 0 failed, 0 ignored**; the generated Repeater/layout builders compile with the complete native View library and its XAML/reconciliation tests |
+| Local 2026-10-21, Base/XamlX sources from `aaab8857` | `cargo test --offline --locked -p ferroui-base -p xamlx --lib -- --test-threads=2` | **4,380 Base and 103 XamlX tests passed**, with no failures or ignored tests; native Linux host, Rust 1.99.0 |
+| Local `aaab8857` | Complete `repeater` filter in the native Controls library | **404 passed, 1 failed**; the only failure retained the target-identity assertion in animated aligned bring |
+| [`aaab8857`, focused CI job 119191031867](https://github.com/wieslawsoltes/FerroUI/actions/runs/39590722843/job/119191031867) | Regenerate both compiler snapshots, compile their output, execute runtime/compiled XAML suite, verify snapshot diff | **627 passed, 0 failed, 17 ignored**; both explicitly invoked snapshot generators passed and checked-in output was current |
+| Same focused CI job | Full Controls library with `ferroui-base/testing,ferroui-base/compiler-metadata,ferroui-base/markup-functions` | **4,836 passed, 1 failed**; the same animated aligned-bring target-identity assertion, with no failing test filtered out |
+| [`aaab8857`, Android CI job 119190990284](https://github.com/wieslawsoltes/FerroUI/actions/runs/39590722859/job/119190990284) | Android host suite, Base with `--cfg ferro_tls_table`, Android catalog cross-check/package | **159 Android and 4,380 Base tests passed**; catalog target checks succeeded; not an on-device run |
+
+The final-source focused run completed successfully. Its regenerated compiler
+output is retained in [snapshot artifact 12342684493](https://github.com/wieslawsoltes/FerroUI/actions/runs/39593601866/artifacts/12342684493).
+The workflow checks the pull-request merge commit `8286c00b` for branch head
+`9039d2a5`; that head includes every runtime and catalog change listed above.
+The earlier failed scrolling checkpoints below remain as the history of the
+regression, not an outstanding failure of this revision.
+
+The local compiled-catalog attempt stopped before test execution when the shared
+filesystem filled: `wgsl-parse` could not write an intermediate `.rmeta` file
+(`No space left on device`). This task's build intermediates were removed after
+the command exited; completed test logs were retained. No catalog pass is
+inferred from that attempt. CI catalog execution is recorded independently.
+
+The original `3facaa20` focused CI run had **4,827 passing Controls tests and
+the same single failure**, plus **627 passing XAML tests and 17 ignored**.
+The continuation read the completed logs instead of retaining the older
+handoff's list of three outstanding Controls failures.
+
+The new browser regression was first executed against the exact `3facaa20`
+nonthreaded `browser-sites` artifact from
+[CI run 39496708534](https://github.com/wieslawsoltes/FerroUI/actions/runs/39496708534).
+Both **WebGL2 and Software2D passed** real wheel input, all four layout switches,
+insert/move-to-end/remove/reset, realization bounds, glyph pixels and changed
+viewport pixels. The initial 10,000-item source realized 24 Stack, 162
+UniformGrid, 162 Flow and 259 LinedFlow items on the 1280 × 1000 test surface.
+Those counts describe that artifact and workload; they do not certify a later
+revision or a universal memory bound. Screenshot inspection exposed the
+sample's hard minimum-width interaction with LinedFlow's documented constrained
+row overflow, prompting a sample metadata correction and a later rebuild.
+
+The browser test and screenshot/report command is:
+
+```sh
+scripts/build-browser.sh control-catalog-browser
+node scripts/browser/tests/repeater.test.mjs target/browser/control-catalog-browser \
+  --screenshot-dir target/browser/screenshots/repeater
+```
+
+The test runs both rendering modes by default. The same script accepts the
+threaded site directory and supplies cross-origin isolation automatically.
+Generated reports identify the supplied site and backend, layout counters and
+visible item geometry. The browser CI screenshot artifact upload retains them.
+
+### Earlier recorded evidence
+
 | Checkpoint | Evidence | Scope |
 |---|---|---|
 | Recovered branch `5acfd247` | Remote commit records 4,380 Base tests passing, browser TypeScript typecheck/lint passing and DOM preference probes passing | Historical commit message evidence for the motion-preference change; not a fresh full-port test run |
 | 2026-10-20 inventory extraction | 302 upstream files and 265 test declarations extracted from the existing NOTICE pin; source hashes and IDL/include identities retained | Reproducible source mapping; no runtime pass claim |
-| 2026-10-20 CI, `5db512b2` | Completed Android job: 159 Android-crate host tests and 4,380 Base tests passed; Android catalog target checked successfully | Exact revision, configuration, commands and job link below; Controls and XAML unit results remain pending |
+| 2026-10-20 CI, `5db512b2` | Completed Android job: 159 Android-crate host tests and 4,380 Base tests passed; Android catalog target checked successfully | Exact revision, configuration, commands and job link below; Controls and XAML were not executed by this job |
 | 2026-10-20 Linux CI, `5db512b2` | Completed framebuffer and Wayland jobs: 70 and 116 backend tests passed, both built the native catalog and completed platform/catalog smoke checks | Actual native catalog-build evidence; captured pages exclude Repeater, and Wayland exercised the dmabuf fallback because a native render node was unavailable |
-| 2026-10-20 macOS CI, `5db512b2` | Workspace test build stopped with `E0599` in the acceptance grid-placement helper: `FerroList<i32>` has `count()`, not `len()` | The helper is corrected to the native `count()` API; a fresh compile/run is required. Controls tests did not execute in this job |
-| 2026-10-20 continuation | Fresh targeted/full integration results are recorded here as the validation run completes | Work in progress; no placeholder pass counts |
+| 2026-10-20 macOS CI, `5db512b2` | Workspace test build stopped with `E0599` in the acceptance grid-placement helper: `FerroList<i32>` has `count()`, not `len()` | The helper was corrected to the native `count()` API; subsequent focused CI compiled and executed Controls and XAML. This historical job executed neither suite |
 
 ### Completed Android job on `5db512b2`
 
@@ -57,8 +153,8 @@ The job used the Ubuntu 24.04 runner, host target
 
 These commands validate the named host suites and the Android catalog build.
 They do not execute the `ferroui-controls`, `xamlx` or
-`ferroui-markup-xaml-tests` unit suites. Those continuation results remain
-pending and must be recorded separately when their runs complete.
+`ferroui-markup-xaml-tests` unit suites. Subsequent continuation results are
+recorded separately above.
 
 ### Completed Linux catalog/platform jobs on `5db512b2`
 
@@ -100,8 +196,9 @@ verification helper called `len()` on `&FerroList<i32>`. FerroUI's collection AP
 uses `count()`. The helper has been corrected to call `source.count()`; its
 placement and realization assertions are unchanged. This is a source correction,
 not a successful validation result. **Controls tests did not execute**, and a
-fresh workspace compile/run must establish the corrected result. No Controls or
-XAML pass counts are inferred from this failed build.
+fresh workspace compile/run was required at that checkpoint. The later focused
+CI above compiled and executed both libraries. No Controls or XAML pass counts
+are inferred from this failed historical build.
 
 The continuation review found an existing `flow_layout_upstream_tests.rs` file
 that was not declared from its parent module. Its declaration has been restored
@@ -120,9 +217,9 @@ the source acceptance target.
 
 ## Acceptance boundaries
 
-Runtime and compiled XAML need actual native-template/interface/nullability
-round trips, not only type registration. The native class declaration scanner
-and actual catalog build are useful additional gates for those paths.
+Runtime and compiled XAML scenarios exercise native-template/interface/nullability
+round trips as well as type registration. The native class declaration scanner
+and actual catalog build are separate integration gates for those paths.
 
 Headless automation and keyboard-order tests establish portable peer/tree
 semantics. They do not establish Windows UI Automation client interoperability,

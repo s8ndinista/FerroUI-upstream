@@ -79,3 +79,93 @@ closes the mapping ledger, not the still-separate runtime validation gate.
 Future entries should state the concrete behavior changed, source comparison,
 regression test, executed command/result and published commit. Do not record an
 intended implementation or a source-name match as a completed parity gate.
+
+## 2026-10-21 — recover the published head and close native lifecycle gaps
+
+The continuation recovered PR #269 at `3facaa20`, then inspected the actual
+completed CI logs. The focused workflow had executed 627 passing XAML tests
+(17 intentionally ignored) and 4,827 passing Controls tests, with one failing
+animated aligned-bring target-identity assertion. These results supersede the
+older conversational handoff's three outstanding Controls failures.
+
+Commit `688d23f8` merges main `86b6b4ab` into the existing PR branch. The native
+View API requires generated builders for the new Repeater classes. Commit
+`91675d5b` regenerates those builders, corrects the catalog's two native page
+additions, and extends the metadata scanner's bounded bitflags evaluator. Direct
+`empty()` expressions now produce the same value as runtime metadata, while
+unknown/foreign calls remain unresolved and `from_bits_truncate` masks against
+declared flags. All 44 scanner library tests passed locally; generated builders
+also passed the generator's consistency check.
+
+Commit `46718059` makes scheduled work cancellable after it enters the current
+render-frame snapshot. The phasing regression cancels an obsolete callback
+while a prior callback recycles and replaces its element; replacement work
+starts on the next frame. Template/selector replacement also releases the old
+application implementation outside `RefCell` borrows, allowing reentrant
+destructors to observe or replace the newly published value safely.
+
+Commit `aaab8857` validates structural selection revisions across synchronous
+source reads, child-resolution callbacks and child-source initialization.
+Same-source edits, ancestor disposal and nested child realization now retain
+correct node identities or return `SelectionChanged`. Removing a source
+refreshes real `SelectedItem`/`SelectedItems.Count` bindings through one
+notification sequence. All five new selection regression functions passed;
+the combined native Repeater checkpoint reported 404 passed and the one
+previously known scrolling identity failure. No failing test was excluded.
+
+The current upstream main Repeater subtree was rechecked through the GitHub
+Contents API and still equals pinned tree
+`1de63a85615582e33d24e19795bd73d374195ac1`. The source pin remains unchanged.
+Native safety corrections are recorded in WR-23 through WR-31 rather than
+attributed to the pinned C++ behavior.
+
+
+## 2026-10-21 scrolling ownership and rendered catalog closeout
+
+Commit `e2a16bb3` keeps an animated bring target and each containing Repeater
+realization pinned through the operation, separately from the temporary layout
+anchor. Pin generations prevent old progress/completion from scrolling or
+unpinning a recycled control. Replacement, external scrolling, viewer/content
+changes and host/target detachment cancel against the original owners. Native
+clock regressions cover intermediate and final frames, caller-owned pins,
+nested containers and reuse of the exact control while an old request exists.
+The original aligned-bring identity assertion now passes with its exact final
+geometry, offsets and realization ranges retained.
+
+The new removed-target regression exposed a second issue inherited from the
+pinned source: a suppressing layout could release a pinned row, leaving the row
+outside layout tracking but still excluded by the view manager's automatic
+recycling flag. The correction retires affected pinned-pool rows on Remove,
+Replace and unkeyed Reset. Keyed Reset moves them into the existing key pool,
+keeping control identity, pins and generation for surviving keys and clearing
+leftovers at arrange. This is a recorded source correction, WR-29.
+
+Commit `8fd6b892` follows a trace dependency audit that found diagnostic item
+selectors had no runtime consumer even though the mapping advertised logging
+replacements. Selected
+lifecycle and arranged-bound snapshots now use the existing native Logger.
+Filtering and delivery are deferred through the dispatcher with weak references
+so application sinks can inspect layout state or change the source after the
+host operation. Windows ETW/debugger trace details and runtime-profiler class
+registration are explicitly separated from this portable diagnostic behavior.
+
+Commit `9039d2a5` adds the catalog/browser regression. Its first execution used
+an earlier CI artifact in both WebGL2 and
+Software2D and captured layouts, actual wheel scrolling, recycling and all four
+collection edits. Inspecting those pictures exposed clipped LinedFlow columns.
+The pinned algorithm explicitly permits regular-path overflow when minimum
+widths prevent shrinking, so the native sample now supplies complete
+ItemsInfoRequested aspect-ratio/minimum-width metadata. The compiled catalog
+regression checks resized viewports and mutations; the browser gate additionally
+rejects clipped or missing columns. Both browser CI variants retain PNGs and a
+JSON report. Exact executed revisions and results are recorded in VALIDATION.md.
+
+The focused CI run for `9039d2a5` rebuilt the generated compiler output, ran all
+4,847 Controls tests (including 415 Repeater tests) and 627 runtime/compiled
+XAML tests successfully, with no failures. The XAML suite retained 17 ignored
+tests, and both snapshot generators were explicitly executed successfully.
+The checked-in generated output matched. Separate local runs passed 4,380 Base,
+103 XamlX, 49 native View and 44 metadata-scanner tests. The Controls suite also
+passed locally in full after enabling the existing remote-transport tests to
+bind loopback sockets; no known failing test was filtered out. Rendered browser
+and compiled catalog results are recorded separately from these unit counts.

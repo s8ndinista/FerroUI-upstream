@@ -28,10 +28,11 @@
       "declared": 235,
       "ignored": 27
     },
-    "rust_test_functions": 1012,
+    "rust_test_functions": 1059,
     "dependency_boundaries": 90,
     "dependency_status": {
-      "framework-replacement": 90
+      "framework-replacement": 89,
+      "platform-diagnostic-omitted": 1
     }
   },
   "sources": [
@@ -1010,11 +1011,13 @@
       "sha256": "f2849f018d31f0d23fb646b05c599a223e207e55d3e958104401cce5e4b83b08",
       "targets": [
         "src/FerroUI.Base/logging/logger.rs",
+        "src/FerroUI.Controls/repeater/diagnostics.rs",
+        "src/FerroUI.Controls/repeater/view_manager.rs",
         "src/FerroUI.Controls/repeater/repeater_test_hooks.rs",
         "src/FerroUI.Controls/repeater/layouts/layouts_test_hooks.rs"
       ],
       "status": "framework-replacement",
-      "note": "WinUI ETW macros are represented by native logging and typed diagnostic hooks; ETW binary schema is not reproduced."
+      "note": "Native Logger sinks report selected-item Repeater realization/retention/recycling and arrangement snapshots through weak, deferred dispatcher delivery. Typed hooks retain their state and events. ETW schemas, debugger output, individual upstream trace messages and traces from non-Repeater layout hosts are not reproduced."
     },
     {
       "path": "controls/dev/Repeater/ItemsSourceView.cpp",
@@ -1298,11 +1301,13 @@
       "sha256": "9a5466c36abf82156c326c9912052c967326d8c292c89b062a44ccbe6867dbb0",
       "targets": [
         "src/FerroUI.Base/logging/logger.rs",
+        "src/FerroUI.Controls/repeater/diagnostics.rs",
+        "src/FerroUI.Controls/repeater/view_manager.rs",
         "src/FerroUI.Controls/repeater/repeater_test_hooks.rs",
         "src/FerroUI.Controls/repeater/layouts/layouts_test_hooks.rs"
       ],
       "status": "framework-replacement",
-      "note": "WinUI ETW macros are represented by native logging and typed diagnostic hooks; ETW binary schema is not reproduced."
+      "note": "Native Logger sinks report selected-item Repeater realization/retention/recycling and arrangement snapshots through weak, deferred dispatcher delivery. Typed hooks retain their state and events. ETW schemas, debugger output, individual upstream trace messages and traces from non-Repeater layout hosts are not reproduced."
     },
     {
       "path": "controls/dev/Repeater/NonVirtualizingLayout.cpp",
@@ -10277,7 +10282,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
           "name": "validate_children_peers",
-          "line": 715
+          "line": 720
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -10293,7 +10298,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
           "name": "verify_repeater_automation_peer_created_directly",
-          "line": 747
+          "line": 752
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -10309,7 +10314,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/viewport_tests.rs",
           "name": "validate_one_scroll_presenter_scenario",
-          "line": 202
+          "line": 207
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -10325,7 +10330,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/viewport_tests.rs",
           "name": "validate_two_scroll_presenters_scenario",
-          "line": 272
+          "line": 277
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -10341,7 +10346,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/viewport_tests.rs",
           "name": "can_grow_cache_buffer_with_scroll_presenter",
-          "line": 345
+          "line": 374
         }
       ],
       "note": "Native anchor-provider/viewport fixture exercises incremental cache growth; FerroUI does not host a WinUI ScrollPresenter."
@@ -10357,7 +10362,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/viewport_tests.rs",
           "name": "can_bring_into_view_elements_with_alignment_and_animation",
-          "line": 533
+          "line": 562
         }
       ],
       "note": "Native compatibility host and test clock preserve source target sequence 100, 103, 0, 20 with alignment/animation requests and realized-range assertions; WinUI ScrollViewer/ScrollPresenter transport is replaced by FerroUI services."
@@ -10373,7 +10378,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/viewport_tests.rs",
           "name": "validate_basic_scroll_viewer_scenario",
-          "line": 192
+          "line": 197
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -10389,7 +10394,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/viewport_tests.rs",
           "name": "validate_basic_scroll_viewer_scenario",
-          "line": 192
+          "line": 197
         }
       ],
       "note": "Native ScrollViewer fixture checks viewport geometry for a single scrolling ancestor."
@@ -10405,7 +10410,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/viewport_tests.rs",
           "name": "validate_two_scroll_viewer_scenario",
-          "line": 267
+          "line": 272
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -10421,7 +10426,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/viewport_tests.rs",
           "name": "can_grow_cache_buffer_with_scroll_viewer",
-          "line": 340
+          "line": 369
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -10437,7 +10442,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/viewport_tests.rs",
           "name": "can_bring_into_view_elements_with_alignment_and_animation",
-          "line": 533
+          "line": 562
         }
       ],
       "note": "Native compatibility host and test clock preserve source target sequence 100, 103, 0, 20 with alignment/animation requests and realized-range assertions; WinUI ScrollViewer/ScrollPresenter transport is replaced by FerroUI services."
@@ -10581,7 +10586,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/layouts/flow_layout_upstream_tests.rs",
           "name": "verify_element0_ownership_in_uniform_grid_layout",
-          "line": 864
+          "line": 971
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -10693,7 +10698,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/layouts/layout_tests.rs",
           "name": "validate_stack_layout",
-          "line": 207
+          "line": 211
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -10725,7 +10730,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/layouts/layout_tests.rs",
           "name": "validate_resizing_first_item_resizes_other_items_in_grid_layout",
-          "line": 330
+          "line": 334
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -10773,7 +10778,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/layouts/layout_tests.rs",
           "name": "validate_default_size_for_grid_layout_items_is_based_on_first_item",
-          "line": 286
+          "line": 290
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -10789,7 +10794,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/layouts/layout_tests.rs",
           "name": "validate_default_size_for_first_item_doesnt_override_preset_one",
-          "line": 350
+          "line": 354
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -10869,7 +10874,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/layouts/layout_tests.rs",
           "name": "validate_grid_layout_maximum_rows_or_columns",
-          "line": 391
+          "line": 395
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -10901,7 +10906,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/layouts/flow_layout_upstream_tests.rs",
           "name": "validate_flow_layout",
-          "line": 333
+          "line": 431
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -10917,7 +10922,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/layouts/layout_tests.rs",
           "name": "validate_flow_layout_varying_heights",
-          "line": 429
+          "line": 433
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -10933,7 +10938,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/layouts/layout_tests.rs",
           "name": "verify_flow_layout_line_alignment_positions",
-          "line": 475
+          "line": 479
         }
       ],
       "note": "The native layout test verifies the line-alignment positions under the ported Rust policy."
@@ -10949,7 +10954,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/layouts/flow_layout_upstream_tests.rs",
           "name": "validate_make_anchor",
-          "line": 525
+          "line": 632
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -10965,7 +10970,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/layouts/flow_layout_upstream_tests.rs",
           "name": "validate_estimations_stack_horizontal",
-          "line": 500
+          "line": 607
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -10981,7 +10986,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/layouts/flow_layout_upstream_tests.rs",
           "name": "validate_estimations_stack_vertical",
-          "line": 504
+          "line": 611
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -10997,7 +11002,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/layouts/flow_layout_upstream_tests.rs",
           "name": "validate_estimations_grid_horizontal",
-          "line": 508
+          "line": 615
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -11013,7 +11018,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/layouts/flow_layout_upstream_tests.rs",
           "name": "validate_estimations_grid_vertical",
-          "line": 512
+          "line": 619
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -11029,7 +11034,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/layouts/flow_layout_upstream_tests.rs",
           "name": "validate_estimations_flow_horizontal",
-          "line": 516
+          "line": 623
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -11045,7 +11050,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/layouts/flow_layout_upstream_tests.rs",
           "name": "validate_estimations_flow_vertical",
-          "line": 520
+          "line": 627
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -11061,7 +11066,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/layouts/flow_layout_upstream_tests.rs",
           "name": "verify_flow_layout_on_line_arranged",
-          "line": 411
+          "line": 518
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -11077,7 +11082,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/layouts/layout_tests.rs",
           "name": "validate_layout_sharing",
-          "line": 501
+          "line": 505
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -11093,7 +11098,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/layouts/flow_layout_upstream_tests.rs",
           "name": "validate_layout_with_infinite_measure_size_in_non_virtualizing_direction",
-          "line": 563
+          "line": 670
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -11109,7 +11114,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/layouts/flow_layout_upstream_tests.rs",
           "name": "validate_intersection_with_realization_window",
-          "line": 597
+          "line": 704
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -11125,7 +11130,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/layouts/layout_tests.rs",
           "name": "validate_uniform_grid_with_available_width_narrower_than_one_item",
-          "line": 371
+          "line": 375
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -11141,7 +11146,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/layouts/layout_tests.rs",
           "name": "validate_uniform_grid_with_no_items",
-          "line": 416
+          "line": 420
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -11157,7 +11162,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/layouts/flow_layout_upstream_tests.rs",
           "name": "validate_uniform_grid_with_items_relying_on_aspect_ratio",
-          "line": 834
+          "line": 941
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -11173,7 +11178,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/layouts/flow_layout_upstream_tests.rs",
           "name": "validate_flow_layout_with_one_item_has_non_zero_extent",
-          "line": 643
+          "line": 750
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -11189,7 +11194,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/layouts/flow_layout_upstream_tests.rs",
           "name": "validate_grid_layout_with_same_orientation_as_scrolling",
-          "line": 663
+          "line": 770
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -11205,7 +11210,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/layouts/flow_layout_upstream_tests.rs",
           "name": "verify_unconstrained_uniform_grid_layout",
-          "line": 689
+          "line": 796
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -11221,7 +11226,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/layouts/flow_layout_upstream_tests.rs",
           "name": "verify_items_get_full_space_in_major_direction_when_smaller_than_line_size",
-          "line": 713
+          "line": 820
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -11237,7 +11242,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/layouts/flow_layout_upstream_tests.rs",
           "name": "validate_stack_layout_arrange_with_stretch",
-          "line": 740
+          "line": 847
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -11253,7 +11258,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/layouts/flow_layout_upstream_tests.rs",
           "name": "validate_stack_layout_arrange_with_insertion",
-          "line": 759
+          "line": 866
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -11493,7 +11498,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/services_tests.rs",
           "name": "validate_item_collection_transition_provider",
-          "line": 1083
+          "line": 1207
         }
       ],
       "note": "Preserves source one Add/Remove/Move, source indices, trigger flags and old/new bounds, followed by add-only animation; native frame/dispatcher replaces CompositionTarget."
@@ -11509,7 +11514,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/services_tests.rs",
           "name": "verify_transition_lifecycle_without_animation",
-          "line": 888
+          "line": 1012
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -11525,7 +11530,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/services_tests.rs",
           "name": "verify_queue_transition_schedules_transitions_on_next_frame",
-          "line": 919
+          "line": 1043
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -11541,7 +11546,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/services_tests.rs",
           "name": "validate_recycling",
-          "line": 2490
+          "line": 3095
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -11557,7 +11562,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/services_tests.rs",
           "name": "validate_binding_and_template_selection",
-          "line": 2550
+          "line": 3155
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -11573,7 +11578,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/services_tests.rs",
           "name": "validate_custom_recycling_element_factory",
-          "line": 2677
+          "line": 3282
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -11589,7 +11594,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/services_tests.rs",
           "name": "validate_recycling_element_factory_with_single_template",
-          "line": 2682
+          "line": 3287
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -11605,7 +11610,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/services_tests.rs",
           "name": "validate_data_template_with_element_name_binding",
-          "line": 2790
+          "line": 3395
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -11621,7 +11626,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/services_tests.rs",
           "name": "validate_data_template_with_nested_element_name_binding",
-          "line": 2795
+          "line": 3400
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -11637,7 +11642,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/services_tests.rs",
           "name": "validate_data_template_as_item_template",
-          "line": 2800
+          "line": 3405
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -11653,7 +11658,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/services_tests.rs",
           "name": "validate_data_template_selector_as_item_template",
-          "line": 2859
+          "line": 3464
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -11669,12 +11674,12 @@
         {
           "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
           "name": "empty_template_still_invokes_layout_arrange",
-          "line": 885
+          "line": 890
         },
         {
           "path": "src/FerroUI.Controls/repeater/items_repeater_tests.rs",
           "name": "empty_template_is_measured_as_zero_and_can_be_replaced",
-          "line": 553
+          "line": 626
         }
       ],
       "note": "Native tests cover zero desired size and continued arrange dispatch for an empty template."
@@ -11690,7 +11695,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/services_tests.rs",
           "name": "validate_correct_size_when_empty_data_template_in_selector",
-          "line": 2884
+          "line": 3489
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -11706,7 +11711,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/services_tests.rs",
           "name": "validate_reycling_element_factory_with_no_template",
-          "line": 2917
+          "line": 3522
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -11722,7 +11727,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/services_tests.rs",
           "name": "validate_custom_element_factory",
-          "line": 2955
+          "line": 3560
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -11738,7 +11743,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
           "name": "validate_template_switching_refreshes_elements_virtualizing_layout",
-          "line": 1115
+          "line": 1120
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -11754,7 +11759,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
           "name": "validate_template_switching_refreshes_elements_non_virtualizing_layout",
-          "line": 1121
+          "line": 1126
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -11770,7 +11775,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
           "name": "validate_null_item_template_and_container_in_items",
-          "line": 1178
+          "line": 1183
         }
       ],
       "note": "Ten source controls retain identity/content with null ItemTemplate; clearing the source removes their visual parents."
@@ -11786,7 +11791,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/services_tests.rs",
           "name": "verify_select_template_layout_fallback",
-          "line": 2976
+          "line": 3581
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -11802,7 +11807,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/services_tests.rs",
           "name": "verify_null_template_gives_meaningfull_error",
-          "line": 1886
+          "line": 2491
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -11818,7 +11823,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/services_tests.rs",
           "name": "verify_recycling_element_factory_template_key_validation",
-          "line": 3013
+          "line": 3618
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -11834,7 +11839,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/services_tests.rs",
           "name": "verify_recycling_element_factory_templates_setter",
-          "line": 1765
+          "line": 2370
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -11850,7 +11855,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/services_tests.rs",
           "name": "verify_null_template_from_selector_fails_with_invalid_argument",
-          "line": 1863
+          "line": 2468
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -11866,7 +11871,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/services_tests.rs",
           "name": "verify_select_template_key_handler_removal",
-          "line": 1790
+          "line": 2395
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -11882,7 +11887,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/services_tests.rs",
           "name": "verify_selector_error_is_propagated",
-          "line": 1900
+          "line": 2505
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -11898,7 +11903,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/services_tests.rs",
           "name": "verify_anchor_ratio_properties_round_trip",
-          "line": 1534
+          "line": 2139
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -11914,7 +11919,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/services_tests.rs",
           "name": "verify_scroll_viewer_property_replaces_child",
-          "line": 1550
+          "line": 2155
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -11930,7 +11935,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/services_tests.rs",
           "name": "verify_current_anchor_is_candidate_closest_to_viewport_edge",
-          "line": 1568
+          "line": 2173
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -11946,7 +11951,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/services_tests.rs",
           "name": "verify_unregister_anchor_candidate_recomputes_anchor",
-          "line": 1599
+          "line": 2204
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -11962,7 +11967,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/services_tests.rs",
           "name": "verify_nan_anchor_ratio_yields_no_anchor",
-          "line": 1621
+          "line": 2226
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -11978,7 +11983,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/services_tests.rs",
           "name": "verify_anchor_and_relative_viewport_use_scroll_offset",
-          "line": 1633
+          "line": 2238
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -11994,7 +11999,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/services_tests.rs",
           "name": "verify_scrolling_surface_without_scroll_viewer",
-          "line": 1659
+          "line": 2264
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -12010,7 +12015,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/services_tests.rs",
           "name": "verify_scrolling_surface_events_can_be_subscribed_and_removed",
-          "line": 1671
+          "line": 2276
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -12026,7 +12031,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/items_repeater_tests.rs",
           "name": "validate_mapping_and_auto_recycling",
-          "line": 469
+          "line": 542
         }
       ],
       "note": "Source duplicate normal requests share identity, forced/suppressed requests create two independent roots, and a no-request measure recycles only the automatically managed element."
@@ -12095,7 +12100,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/layouts/layout_tests.rs",
           "name": "validate_stack_layout_disabled_virtualization_with_items_repeater",
-          "line": 268
+          "line": 272
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -12111,7 +12116,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
           "name": "verify_stack_layout_cycle_shortcut",
-          "line": 845
+          "line": 850
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -12127,7 +12132,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
           "name": "verify_layout_invalidate_arrange_rearranges_repeater",
-          "line": 824
+          "line": 829
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -12143,7 +12148,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
           "name": "verify_non_virtual_layout_remeasures_on_collection_change",
-          "line": 797
+          "line": 802
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -12164,7 +12169,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/layouts/layout_tests.rs",
           "name": "verify_virtualizing_layout_hosted_by_non_virtualizing_layout_context",
-          "line": 530
+          "line": 534
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -12180,7 +12185,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
           "name": "verify_non_virtualizing_layout_state_round_trip",
-          "line": 769
+          "line": 774
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -12212,7 +12217,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/layouts/layout_tests.rs",
           "name": "verify_built_in_layouts_adopt_or_reject_existing_layout_state",
-          "line": 578
+          "line": 582
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -12228,7 +12233,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/layouts/layout_tests.rs",
           "name": "verify_flow_layout_line_alignment_positions",
-          "line": 475
+          "line": 479
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -12324,7 +12329,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
           "name": "verify_stack_layout_alignment",
-          "line": 1214
+          "line": 1219
         }
       ],
       "note": "Native 400-DIP host asserts Left/Center/Right/Stretch offsets, nonzero Center/Right displacement and item realization."
@@ -12340,7 +12345,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/viewport_tests.rs",
           "name": "verify_uniform_grid_layout_doesnt_crash_when_trying_to_scroll_to_end",
-          "line": 445
+          "line": 474
         }
       ],
       "note": "Native ScrollViewer reproduces the end-scroll host workload and liveness assertion rather than relying on isolated extent-estimation tests."
@@ -12356,7 +12361,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/viewport_tests.rs",
           "name": "verify_uniform_grid_layout_doesnt_hang_when_trying_to_scroll_to_start",
-          "line": 476
+          "line": 505
         }
       ],
       "note": "Native ScrollViewer reproduces the return-to-start host workload and liveness assertion rather than relying on isolated extent-estimation tests."
@@ -12548,7 +12553,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/layouts/lined_flow_lifecycle_tests.rs",
           "name": "releasing_layout_with_a_queued_measure_timer_stops_it_and_allows_a_fresh_host",
-          "line": 232
+          "line": 503
         }
       ],
       "note": "Native deterministic regression drops the layout with a due dispatcher timer, asserts weak release and timer shutdown, drains queued jobs and lays out a fresh host. WinRT off-thread finalizer release is replaced by non-Send UI-thread ownership."
@@ -12580,7 +12585,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/services_tests.rs",
           "name": "validate_phase_invoke_and_ordering",
-          "line": 2423
+          "line": 3028
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -12596,7 +12601,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/services_tests.rs",
           "name": "validate_x_bind_without_phasing",
-          "line": 2428
+          "line": 3033
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -12612,7 +12617,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/services_tests.rs",
           "name": "validate_slow_phases_are_spread_over_frames",
-          "line": 2319
+          "line": 2924
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -12692,7 +12697,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/services_tests.rs",
           "name": "verify_pool_instance_is_used_for_data_template_recycling",
-          "line": 1978
+          "line": 2583
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -12708,7 +12713,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/services_tests.rs",
           "name": "verify_recycle_pool_overrides_are_called",
-          "line": 2035
+          "line": 2640
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -12724,7 +12729,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
           "name": "verify_items_repeater_dependency_properties",
-          "line": 266
+          "line": 271
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -12740,7 +12745,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
           "name": "verify_stack_layout_dependency_properties",
-          "line": 483
+          "line": 488
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -12756,7 +12761,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
           "name": "verify_uniform_grid_layout_dependency_properties",
-          "line": 519
+          "line": 524
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -12772,7 +12777,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
           "name": "verify_flow_layout_dependency_properties",
-          "line": 605
+          "line": 610
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -12788,7 +12793,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
           "name": "verify_lined_flow_layout_dependency_properties",
-          "line": 651
+          "line": 656
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -12804,12 +12809,12 @@
         {
           "path": "tests/FerroUI.Markup.Xaml.UnitTests/repeater_tests.rs",
           "name": "repeater_runtime_types_have_native_markup_names",
-          "line": 379
+          "line": 425
         },
         {
           "path": "tests/FerroUI.Markup.Xaml.UnitTests/repeater_tests.rs",
           "name": "repeater_service_metadata_has_native_names",
-          "line": 418
+          "line": 464
         }
       ],
       "note": "Native metadata asserts the FerroUI class/namespace identities for controls, layouts and services, replacing C++/WinRT runtime class names."
@@ -12825,7 +12830,7 @@
         {
           "path": "tests/FerroUI.Markup.Xaml.UnitTests/repeater_tests.rs",
           "name": "items_source_view_uses_its_native_class_name_and_preserves_binding_identity",
-          "line": 350
+          "line": 396
         }
       ],
       "note": "Native ItemsSourceView metadata name and binding identity replace the ignored WinRT class-name expectation."
@@ -12841,7 +12846,7 @@
         {
           "path": "tests/FerroUI.Markup.Xaml.UnitTests/repeater_tests.rs",
           "name": "repeater_markup_activation_requires_native_constructor_arguments",
-          "line": 480
+          "line": 545
         }
       ],
       "note": "Native constructors/type metadata reject activation lacking required constructor arguments; WinRT E_NOTIMPL activation factories are replaced by FerroUI construction rules."
@@ -12857,7 +12862,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
           "name": "verify_removing_last_event_handler_detaches_it",
-          "line": 1503
+          "line": 1508
         }
       ],
       "note": "Matches source SelectionModel.ChildrenRequested and RecyclingElementFactory.SelectTemplateKey last-handler removal, beyond the separate element-index event regression."
@@ -12873,7 +12878,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/view_manager_acceptance_tests.rs",
           "name": "tab_navigation_follows_source_order_after_scroll_and_bulk_removal",
-          "line": 767
+          "line": 865
         }
       ],
       "note": "Native keyboard lookup and routed Tab/ShiftTab exercise source 50 items of height 100, viewport 400, offset 2000 and repeated remove-at-21 operations until 21 remain; source ordering excludes pooled visuals. Windows input transport is replaced; ignored source state remains visible."
@@ -12921,7 +12926,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/view_manager_acceptance_tests.rs",
           "name": "items_source_switches_through_null_and_distinct_lists_in_order",
-          "line": 646
+          "line": 739
         }
       ],
       "note": "Native source identity/count/data checks preserve the ordered transitions through null and distinct five-item lists."
@@ -12937,7 +12942,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
           "name": "validate_get_set_items_source_preserves_supplied_view_identity",
-          "line": 363
+          "line": 368
         }
       ],
       "note": "Native ItemsSource conversion retains the supplied ItemsSourceView identity; the repeater exposes that exact shared view and preserves its source notifications/key mapping."
@@ -12969,7 +12974,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
           "name": "verify_clearing_items_source_clears_elements",
-          "line": 1159
+          "line": 1164
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -12985,7 +12990,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
           "name": "verify_items_repeater_dependency_properties",
-          "line": 266
+          "line": 271
         }
       ],
       "note": "The native test verifies inherited Panel background property set/get, handle identity and clearing."
@@ -13033,7 +13038,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/view_manager_acceptance_tests.rs",
           "name": "source_reset_to_empty_recycles_a_focused_element",
-          "line": 695
+          "line": 788
         }
       ],
       "note": "Both actual StackLayout and custom NonVirtualizingLayout exercise source reset-to-empty, focused-element release, cleared ownership/pins and absent index mappings."
@@ -13081,7 +13086,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/items_repeater_tests.rs",
           "name": "direct_control_items_preserve_data_context",
-          "line": 521
+          "line": 594
         }
       ],
       "note": "Native source controls keep their identity/data context through realization."
@@ -13097,7 +13102,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
           "name": "verify_repeater_does_not_leak_item_containers",
-          "line": 381
+          "line": 386
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -13113,7 +13118,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/view_manager_acceptance_tests.rs",
           "name": "bringing_the_already_visible_last_item_into_view_preserves_offset",
-          "line": 624
+          "line": 717
         }
       ],
       "note": "Native viewer at the end of a 100-item source retains its offset within one DIP when the already visible last item is requested and brought into view."
@@ -13129,7 +13134,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
           "name": "verify_repeater_with_recycled_elements_does_not_leak",
-          "line": 408
+          "line": 413
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -13145,7 +13150,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
           "name": "verify_repeater_with_recycling_element_factory_does_not_leak",
-          "line": 443
+          "line": 448
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -13161,12 +13166,12 @@
         {
           "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
           "name": "validate_data_context_does_not_get_overwritten",
-          "line": 1350
+          "line": 1355
         },
         {
           "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
           "name": "validate_data_context_gets_propagated",
-          "line": 1383
+          "line": 1388
         }
       ],
       "note": "Native generated roots receive source data while control-owned data context is preserved."
@@ -13182,7 +13187,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
           "name": "verify_get_or_create_element_rejects_invalid_requests",
-          "line": 1682
+          "line": 1687
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -13198,7 +13203,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/items_repeater_tests.rs",
           "name": "verify_repeater_apis_throw_when_called_during_layout",
-          "line": 597
+          "line": 670
         }
       ],
       "note": "Preserves measure-time GetOrCreateElement/ItemsSource/ItemTemplate rejection, arrange-time Layout rejection and restore rejection, the original five realized texts, layout identity and zero uninitializations. Native caught programmer-error panics replace COM E_FAIL; the native property store retains the rejected proposed layout value until the source-equivalent restoration."
@@ -13214,7 +13219,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/items_repeater_tests.rs",
           "name": "collection_mutation_during_measure_is_rejected",
-          "line": 800
+          "line": 873
         }
       ],
       "note": "Native collection notification during measurement is rejected and the guard is exercised."
@@ -13230,7 +13235,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/items_repeater_tests.rs",
           "name": "layout_reentrancy_guards_recover_after_caught_panics",
-          "line": 582
+          "line": 655
         }
       ],
       "note": "The native regression invokes recursive layout and verifies guard restoration after caught panics."
@@ -13246,7 +13251,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
           "name": "verify_layout_during_collection_change_is_rejected",
-          "line": 1320
+          "line": 1325
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -13262,7 +13267,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
           "name": "verify_collection_change_during_collection_change_throws",
-          "line": 1295
+          "line": 1300
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -13278,7 +13283,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
           "name": "verify_invalid_item_template_type_is_rejected",
-          "line": 1258
+          "line": 1263
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -13294,7 +13299,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/view_manager_acceptance_tests.rs",
           "name": "clearing_an_explicit_item_template_returns_to_default_text_blocks",
-          "line": 671
+          "line": 764
         }
       ],
       "note": "Clearing an explicit Button template restores native default TextBlocks with the expected data text and index mapping; source ignored state remains visible."
@@ -13310,7 +13315,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
           "name": "verify_changing_layout_clears_realized_elements",
-          "line": 1127
+          "line": 1132
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -13326,7 +13331,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
           "name": "verify_invalid_cache_lengths_are_rejected",
-          "line": 1275
+          "line": 1280
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -13854,7 +13859,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/selection/tests.rs",
           "name": "singleton_range_preserves_upstream_double_notification",
-          "line": 791
+          "line": 922
         }
       ],
       "note": "Source desired-once scenario is ignored for PC-SELECTION-DOUBLE-EVENT. The Rust test deliberately asserts the pinned implementation's two notifications, not the ignored desired result."
@@ -13934,7 +13939,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/selection/tests.rs",
           "name": "verify_selected_views_fail_after_selection_tree_is_discarded",
-          "line": 674
+          "line": 805
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -13950,7 +13955,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/selection/tests.rs",
           "name": "verify_insert_inside_selected_range_splits_range",
-          "line": 690
+          "line": 821
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -13966,7 +13971,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/selection/tests.rs",
           "name": "verify_adding_item_to_selected_group_makes_ancestors_partial",
-          "line": 703
+          "line": 834
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -13982,7 +13987,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/selection/tests.rs",
           "name": "verify_removing_unselected_item_makes_ancestors_selected",
-          "line": 720
+          "line": 851
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -13998,7 +14003,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/selection/tests.rs",
           "name": "verify_removing_item_under_unselected_ancestors_does_not_raise_selection_changed",
-          "line": 732
+          "line": 863
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -14014,7 +14019,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/items_repeater_tests.rs",
           "name": "can_query_element_factory",
-          "line": 697
+          "line": 770
         }
       ],
       "note": "Preserves the empty/add/remove sequence, exact data-read and factory callback counts, and supplied element/parent identities. Native ItemsSourceView queries live IItemsList::count; the source's cached GetSizeCore invocation counts are intentionally not retained and no count cache is introduced (WR-22)."
@@ -14030,7 +14035,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/view_manager_acceptance_tests.rs",
           "name": "nested_repeater_focus_pins_each_ancestor_once_and_releases_the_previous_group",
-          "line": 542
+          "line": 635
         }
       ],
       "note": "Native nested repeaters preserve focus pinning/recycling across groups and deletion; also assert each focused element/ancestor pin count is exactly one. The source typo checking inner item 0 twice is not retained."
@@ -14062,7 +14067,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/view_manager_acceptance_tests.rs",
           "name": "focus_survives_a_stable_reset_and_can_move_to_another_item",
-          "line": 448
+          "line": 541
         }
       ],
       "note": "Native focus remains on the retained first element after a keyed Reset and can then move to the second element."
@@ -14078,7 +14083,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/view_manager_acceptance_tests.rs",
           "name": "disconnected_bring_into_view_preserves_realization_order_with_both_cache_lengths",
-          "line": 1122
+          "line": 1387
         }
       ],
       "note": "Preserves exact realization event order for initial window then disconnected targets 99, 199, 49, 0, with both cache lengths 0 and 2, using native ScrollViewer and dispatcher layout."
@@ -14094,7 +14099,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/view_manager_acceptance_tests.rs",
           "name": "validate_element_events_through_insert_and_remove",
-          "line": 341
+          "line": 350
         }
       ],
       "note": "Native source mutation asserts the source exact prepared/cleared/index-change traces for insert at 1 then remove at 0."
@@ -14110,7 +14115,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/view_manager_acceptance_tests.rs",
           "name": "repeated_top_removals_prepare_new_items_in_the_realization_window",
-          "line": 381
+          "line": 474
         }
       ],
       "note": "Source 200-DIP native viewer, 24-DIP items and cache length 2 are fully settled; sixteen front removals must prepare replacement items."
@@ -14126,7 +14131,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/view_manager_acceptance_tests.rs",
           "name": "validate_stable_reset_element_index_event_trace",
-          "line": 356
+          "line": 365
         }
       ],
       "note": "Native keyed Reset source asserts the exact preparation/clearing/index-change traces when inserting then removing while retaining surviving identities."
@@ -14142,7 +14147,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/view_manager_acceptance_tests.rs",
           "name": "validate_get_element_at_caching_request_trace",
-          "line": 371
+          "line": 464
         }
       ],
       "note": "Preserves source get 0/1/1/10, recycle 1, get 0, recycle 10/0 sequence, identities and final empty realization."
@@ -14158,7 +14163,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/view_manager_acceptance_tests.rs",
           "name": "flow_layout_clears_scrolled_edges_from_the_outside_in",
-          "line": 595
+          "line": 688
         }
       ],
       "note": "Native ScrollViewer preserves exact clearing prefixes 0,1,2,3 then 14,13,12,11 while reversing scroll direction."
@@ -14174,7 +14179,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
           "name": "validate_data_context_does_not_get_overwritten",
-          "line": 1350
+          "line": 1355
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -14190,7 +14195,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
           "name": "validate_data_context_gets_propagated",
-          "line": 1383
+          "line": 1388
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -14206,7 +14211,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/view_manager_acceptance_tests.rs",
           "name": "focus_fallback_handles_first_last_and_multiple_removals_with_and_without_keys",
-          "line": 493
+          "line": 586
         }
       ],
       "note": "Native focus fixture retains the source first/last/bulk removal assertions; also exercises the keyed Reset variant."
@@ -14222,7 +14227,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/view_manager_acceptance_tests.rs",
           "name": "focus_fallback_handles_first_last_and_multiple_removals_with_and_without_keys",
-          "line": 493
+          "line": 586
         }
       ],
       "note": "Native keyed Reset preserves the source first/last/bulk removal focus-fallback assertions; source ignored state remains visible."
@@ -14254,7 +14259,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
           "name": "verify_focused_element_is_reused_from_pinned_pool",
-          "line": 896
+          "line": 901
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -14270,7 +14275,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
           "name": "verify_pinned_element_index_updates_on_insert_outside_realized_range",
-          "line": 933
+          "line": 938
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -14286,7 +14291,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/view_manager_acceptance_tests.rs",
           "name": "focused_item_removal_moves_to_adjacent_first_middle_and_last_items",
-          "line": 434
+          "line": 527
         }
       ],
       "note": "Preserves source deletion sequence 2/0/2, next-or-previous fallback and expected item values using native focus services."
@@ -14302,7 +14307,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/view_manager_acceptance_tests.rs",
           "name": "focused_descendant_removal_moves_to_adjacent_first_middle_and_last_items",
-          "line": 441
+          "line": 534
         }
       ],
       "note": "Preserves source deletion sequence 2/0/2 and expected descendant focus/item values using native focus services."
@@ -14318,7 +14323,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
           "name": "verify_invalid_replace_notifications_throw",
-          "line": 1456
+          "line": 1461
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -14334,7 +14339,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/viewport_tests.rs",
           "name": "validate_no_scrolling_surface_scenario",
-          "line": 120
+          "line": 121
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -14350,7 +14355,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/viewport_tests.rs",
           "name": "validate_no_scrolling_surface_in_popup_scenario",
-          "line": 135
+          "line": 140
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -14366,7 +14371,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/viewport_tests.rs",
           "name": "validate_items_repeater_scroll_host_scenario",
-          "line": 197
+          "line": 202
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -14382,7 +14387,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/viewport_tests.rs",
           "name": "validate_one_scroll_presenter_scenario",
-          "line": 202
+          "line": 207
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -14398,7 +14403,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/viewport_tests.rs",
           "name": "validate_scroll_starting_anticipation_for_horizontally_aligned_repeater",
-          "line": 399
+          "line": 428
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -14414,7 +14419,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/viewport_tests.rs",
           "name": "validate_scroll_starting_anticipation_for_vertically_aligned_repeater",
-          "line": 404
+          "line": 433
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -14430,7 +14435,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/viewport_tests.rs",
           "name": "validate_two_scroll_presenters_scenario",
-          "line": 272
+          "line": 277
         }
       ],
       "note": "Matching test name in the mapped suite; inspect assertions for behavioral acceptance."
@@ -14446,12 +14451,12 @@
         {
           "path": "src/FerroUI.Controls/repeater/items_repeater_tests.rs",
           "name": "cache_grows_by_forty_per_side_and_resets_after_distant_scroll",
-          "line": 866
+          "line": 939
         },
         {
           "path": "src/FerroUI.Controls/repeater/viewport_tests.rs",
           "name": "can_grow_cache_buffer_with_scroll_viewer",
-          "line": 340
+          "line": 369
         }
       ],
       "note": "Native viewer and isolated viewport regressions assert 40-DIP increments and reset behavior."
@@ -14467,7 +14472,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/viewport_tests.rs",
           "name": "detach_and_reparent_reset_viewport_cache_and_anchor_lifetimes",
-          "line": 610
+          "line": 931
         }
       ],
       "note": "Native attach/detach/reparent regression checks cache, anchor and viewport lifetime reset."
@@ -14483,7 +14488,7 @@
         {
           "path": "src/FerroUI.Controls/repeater/viewport_tests.rs",
           "name": "can_bring_into_view_elements_with_alignment_and_animation",
-          "line": 533
+          "line": 562
         }
       ],
       "note": "Native compatibility host and test clock preserve source target sequence 100, 103, 0, 20 with alignment/animation requests and realized-range assertions; WinUI ScrollViewer/ScrollPresenter transport is replaced by FerroUI services."
@@ -14601,202 +14606,217 @@
     {
       "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
       "name": "verify_items_repeater_dependency_properties",
-      "line": 266
+      "line": 271
     },
     {
       "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
       "name": "validate_get_set_items_source_preserves_supplied_view_identity",
-      "line": 363
+      "line": 368
     },
     {
       "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
       "name": "verify_repeater_does_not_leak_item_containers",
-      "line": 381
+      "line": 386
     },
     {
       "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
       "name": "verify_repeater_with_recycled_elements_does_not_leak",
-      "line": 408
+      "line": 413
     },
     {
       "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
       "name": "verify_repeater_with_recycling_element_factory_does_not_leak",
-      "line": 443
+      "line": 448
     },
     {
       "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
       "name": "verify_stack_layout_dependency_properties",
-      "line": 483
+      "line": 488
     },
     {
       "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
       "name": "verify_uniform_grid_layout_dependency_properties",
-      "line": 519
+      "line": 524
     },
     {
       "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
       "name": "verify_flow_layout_dependency_properties",
-      "line": 605
+      "line": 610
     },
     {
       "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
       "name": "verify_lined_flow_layout_dependency_properties",
-      "line": 651
+      "line": 656
     },
     {
       "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
       "name": "validate_children_peers",
-      "line": 715
+      "line": 720
     },
     {
       "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
       "name": "verify_repeater_automation_peer_created_directly",
-      "line": 747
+      "line": 752
     },
     {
       "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
       "name": "verify_non_virtualizing_layout_state_round_trip",
-      "line": 769
+      "line": 774
     },
     {
       "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
       "name": "verify_non_virtual_layout_remeasures_on_collection_change",
-      "line": 797
+      "line": 802
     },
     {
       "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
       "name": "verify_layout_invalidate_arrange_rearranges_repeater",
-      "line": 824
+      "line": 829
     },
     {
       "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
       "name": "verify_stack_layout_cycle_shortcut",
-      "line": 845
+      "line": 850
     },
     {
       "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
       "name": "layout_origin_survives_until_layout_explicitly_changes_it",
-      "line": 869
+      "line": 874
     },
     {
       "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
       "name": "empty_template_still_invokes_layout_arrange",
-      "line": 885
+      "line": 890
     },
     {
       "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
       "name": "verify_focused_element_is_reused_from_pinned_pool",
-      "line": 896
+      "line": 901
     },
     {
       "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
       "name": "verify_pinned_element_index_updates_on_insert_outside_realized_range",
-      "line": 933
+      "line": 938
     },
     {
       "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
       "name": "clearing_focus_prefers_next_layout_item_then_last_previous_descendant",
-      "line": 972
+      "line": 977
     },
     {
       "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
       "name": "keyboard_navigation_orders_descendants_and_skips_non_tab_stops",
-      "line": 1025
+      "line": 1030
     },
     {
       "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
       "name": "validate_template_switching_refreshes_elements_virtualizing_layout",
-      "line": 1115
+      "line": 1120
     },
     {
       "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
       "name": "validate_template_switching_refreshes_elements_non_virtualizing_layout",
-      "line": 1121
+      "line": 1126
     },
     {
       "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
       "name": "verify_changing_layout_clears_realized_elements",
-      "line": 1127
+      "line": 1132
     },
     {
       "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
       "name": "verify_clearing_items_source_clears_elements",
-      "line": 1159
+      "line": 1164
     },
     {
       "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
       "name": "validate_null_item_template_and_container_in_items",
-      "line": 1178
+      "line": 1183
     },
     {
       "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
       "name": "verify_stack_layout_alignment",
-      "line": 1214
+      "line": 1219
     },
     {
       "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
       "name": "verify_invalid_item_template_type_is_rejected",
-      "line": 1258
+      "line": 1263
     },
     {
       "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
       "name": "verify_invalid_cache_lengths_are_rejected",
-      "line": 1275
+      "line": 1280
     },
     {
       "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
       "name": "verify_collection_change_during_collection_change_throws",
-      "line": 1295
+      "line": 1300
     },
     {
       "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
       "name": "verify_layout_during_collection_change_is_rejected",
-      "line": 1320
+      "line": 1325
     },
     {
       "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
       "name": "validate_data_context_does_not_get_overwritten",
-      "line": 1350
+      "line": 1355
     },
     {
       "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
       "name": "validate_data_context_gets_propagated",
-      "line": 1383
+      "line": 1388
     },
     {
       "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
       "name": "stack_replace_rebinds_the_replaced_slot_and_preserves_other_elements",
-      "line": 1430
+      "line": 1435
     },
     {
       "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
       "name": "verify_invalid_replace_notifications_throw",
-      "line": 1456
+      "line": 1461
     },
     {
       "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
       "name": "removing_last_index_changed_handler_detaches_it",
-      "line": 1486
+      "line": 1491
     },
     {
       "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
       "name": "verify_removing_last_event_handler_detaches_it",
-      "line": 1503
+      "line": 1508
     },
     {
       "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
       "name": "implicit_template_is_published_before_factory_reset_and_handles_null_items",
-      "line": 1559
+      "line": 1564
     },
     {
       "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
       "name": "mixed_control_and_data_source_installs_one_implicit_template",
-      "line": 1633
+      "line": 1638
     },
     {
       "path": "src/FerroUI.Controls/repeater/conformance_tests.rs",
       "name": "verify_get_or_create_element_rejects_invalid_requests",
-      "line": 1682
+      "line": 1687
+    },
+    {
+      "path": "src/FerroUI.Controls/repeater/diagnostics_tests.rs",
+      "name": "selected_item_diagnostics_use_native_sinks_and_disable_with_negative_indices",
+      "line": 37
+    },
+    {
+      "path": "src/FerroUI.Controls/repeater/diagnostics_tests.rs",
+      "name": "selected_item_diagnostics_do_not_retain_released_repeaters",
+      "line": 143
+    },
+    {
+      "path": "src/FerroUI.Controls/repeater/diagnostics_tests.rs",
+      "name": "lined_flow_item_diagnostics_report_the_arranged_bounds_without_realizing_more_items",
+      "line": 174
     },
     {
       "path": "src/FerroUI.Controls/repeater/items_repeater_tests.rs",
@@ -14850,78 +14870,83 @@
     },
     {
       "path": "src/FerroUI.Controls/repeater/items_repeater_tests.rs",
-      "name": "source_change_and_drop_unsubscribe",
+      "name": "stable_reset_preserves_layout_released_pins_by_key_and_clears_leftovers",
       "line": 452
     },
     {
       "path": "src/FerroUI.Controls/repeater/items_repeater_tests.rs",
+      "name": "source_change_and_drop_unsubscribe",
+      "line": 525
+    },
+    {
+      "path": "src/FerroUI.Controls/repeater/items_repeater_tests.rs",
       "name": "validate_mapping_and_auto_recycling",
-      "line": 469
+      "line": 542
     },
     {
       "path": "src/FerroUI.Controls/repeater/items_repeater_tests.rs",
       "name": "template_change_preserves_old_pool_ownership_until_reuse",
-      "line": 501
+      "line": 574
     },
     {
       "path": "src/FerroUI.Controls/repeater/items_repeater_tests.rs",
       "name": "direct_control_items_preserve_data_context",
-      "line": 521
+      "line": 594
     },
     {
       "path": "src/FerroUI.Controls/repeater/items_repeater_tests.rs",
       "name": "empty_template_is_measured_as_zero_and_can_be_replaced",
-      "line": 553
+      "line": 626
     },
     {
       "path": "src/FerroUI.Controls/repeater/items_repeater_tests.rs",
       "name": "get_or_create_makes_out_of_range_anchor_and_rejects_invalid_index",
-      "line": 567
+      "line": 640
     },
     {
       "path": "src/FerroUI.Controls/repeater/items_repeater_tests.rs",
       "name": "layout_reentrancy_guards_recover_after_caught_panics",
-      "line": 582
+      "line": 655
     },
     {
       "path": "src/FerroUI.Controls/repeater/items_repeater_tests.rs",
       "name": "verify_repeater_apis_throw_when_called_during_layout",
-      "line": 597
+      "line": 670
     },
     {
       "path": "src/FerroUI.Controls/repeater/items_repeater_tests.rs",
       "name": "can_query_element_factory",
-      "line": 697
+      "line": 770
     },
     {
       "path": "src/FerroUI.Controls/repeater/items_repeater_tests.rs",
       "name": "collection_mutation_during_measure_is_rejected",
-      "line": 800
+      "line": 873
     },
     {
       "path": "src/FerroUI.Controls/repeater/items_repeater_tests.rs",
       "name": "stack_virtualization_does_not_enumerate_a_million_item_source",
-      "line": 825
+      "line": 898
     },
     {
       "path": "src/FerroUI.Controls/repeater/items_repeater_tests.rs",
       "name": "effective_viewport_without_scroller_remains_finite_without_cache",
-      "line": 853
+      "line": 926
     },
     {
       "path": "src/FerroUI.Controls/repeater/items_repeater_tests.rs",
       "name": "cache_grows_by_forty_per_side_and_resets_after_distant_scroll",
-      "line": 866
+      "line": 939
     },
     {
       "path": "src/FerroUI.Controls/repeater/items_repeater_tests.rs",
       "name": "tab_order_follows_source_indices_after_out_of_order_realization",
-      "line": 895
+      "line": 968
     },
     {
       "path": "src/FerroUI.Controls/repeater/items_repeater_tests.rs",
       "name": "layout_panel_insets_the_layout_and_adapts_fixed_children",
-      "line": 922
+      "line": 995
     },
     {
       "path": "src/FerroUI.Controls/repeater/layout_contract_tests.rs",
@@ -14979,6 +15004,11 @@
       "line": 610
     },
     {
+      "path": "src/FerroUI.Controls/repeater/layout_panel_tests.rs",
+      "name": "replacing_a_custom_panel_layout_releases_its_state_after_uninitialization",
+      "line": 81
+    },
+    {
       "path": "src/FerroUI.Controls/repeater/layouts/flow_layout_upstream_tests.rs",
       "name": "validate_grid_layout",
       "line": 140
@@ -15020,98 +15050,103 @@
     },
     {
       "path": "src/FerroUI.Controls/repeater/layouts/flow_layout_upstream_tests.rs",
+      "name": "grid_partial_lines_preserve_source_columns_for_every_justification",
+      "line": 336
+    },
+    {
+      "path": "src/FerroUI.Controls/repeater/layouts/flow_layout_upstream_tests.rs",
       "name": "validate_flow_layout",
-      "line": 333
+      "line": 431
     },
     {
       "path": "src/FerroUI.Controls/repeater/layouts/flow_layout_upstream_tests.rs",
       "name": "verify_flow_layout_on_line_arranged",
-      "line": 411
+      "line": 518
     },
     {
       "path": "src/FerroUI.Controls/repeater/layouts/flow_layout_upstream_tests.rs",
       "name": "validate_estimations_stack_horizontal",
-      "line": 500
+      "line": 607
     },
     {
       "path": "src/FerroUI.Controls/repeater/layouts/flow_layout_upstream_tests.rs",
       "name": "validate_estimations_stack_vertical",
-      "line": 504
+      "line": 611
     },
     {
       "path": "src/FerroUI.Controls/repeater/layouts/flow_layout_upstream_tests.rs",
       "name": "validate_estimations_grid_horizontal",
-      "line": 508
+      "line": 615
     },
     {
       "path": "src/FerroUI.Controls/repeater/layouts/flow_layout_upstream_tests.rs",
       "name": "validate_estimations_grid_vertical",
-      "line": 512
+      "line": 619
     },
     {
       "path": "src/FerroUI.Controls/repeater/layouts/flow_layout_upstream_tests.rs",
       "name": "validate_estimations_flow_horizontal",
-      "line": 516
+      "line": 623
     },
     {
       "path": "src/FerroUI.Controls/repeater/layouts/flow_layout_upstream_tests.rs",
       "name": "validate_estimations_flow_vertical",
-      "line": 520
+      "line": 627
     },
     {
       "path": "src/FerroUI.Controls/repeater/layouts/flow_layout_upstream_tests.rs",
       "name": "validate_make_anchor",
-      "line": 525
+      "line": 632
     },
     {
       "path": "src/FerroUI.Controls/repeater/layouts/flow_layout_upstream_tests.rs",
       "name": "validate_layout_with_infinite_measure_size_in_non_virtualizing_direction",
-      "line": 563
+      "line": 670
     },
     {
       "path": "src/FerroUI.Controls/repeater/layouts/flow_layout_upstream_tests.rs",
       "name": "validate_intersection_with_realization_window",
-      "line": 597
+      "line": 704
     },
     {
       "path": "src/FerroUI.Controls/repeater/layouts/flow_layout_upstream_tests.rs",
       "name": "validate_flow_layout_with_one_item_has_non_zero_extent",
-      "line": 643
+      "line": 750
     },
     {
       "path": "src/FerroUI.Controls/repeater/layouts/flow_layout_upstream_tests.rs",
       "name": "validate_grid_layout_with_same_orientation_as_scrolling",
-      "line": 663
+      "line": 770
     },
     {
       "path": "src/FerroUI.Controls/repeater/layouts/flow_layout_upstream_tests.rs",
       "name": "verify_unconstrained_uniform_grid_layout",
-      "line": 689
+      "line": 796
     },
     {
       "path": "src/FerroUI.Controls/repeater/layouts/flow_layout_upstream_tests.rs",
       "name": "verify_items_get_full_space_in_major_direction_when_smaller_than_line_size",
-      "line": 713
+      "line": 820
     },
     {
       "path": "src/FerroUI.Controls/repeater/layouts/flow_layout_upstream_tests.rs",
       "name": "validate_stack_layout_arrange_with_stretch",
-      "line": 740
+      "line": 847
     },
     {
       "path": "src/FerroUI.Controls/repeater/layouts/flow_layout_upstream_tests.rs",
       "name": "validate_stack_layout_arrange_with_insertion",
-      "line": 759
+      "line": 866
     },
     {
       "path": "src/FerroUI.Controls/repeater/layouts/flow_layout_upstream_tests.rs",
       "name": "validate_uniform_grid_with_items_relying_on_aspect_ratio",
-      "line": 834
+      "line": 941
     },
     {
       "path": "src/FerroUI.Controls/repeater/layouts/flow_layout_upstream_tests.rs",
       "name": "verify_element0_ownership_in_uniform_grid_layout",
-      "line": 864
+      "line": 971
     },
     {
       "path": "src/FerroUI.Controls/repeater/layouts/layout_collection_tests.rs",
@@ -15176,167 +15211,172 @@
     {
       "path": "src/FerroUI.Controls/repeater/layouts/layout_tests.rs",
       "name": "validate_stack_layout",
-      "line": 207
+      "line": 211
     },
     {
       "path": "src/FerroUI.Controls/repeater/layouts/layout_tests.rs",
       "name": "stack_scroll_recycles_out_of_window_containers",
-      "line": 239
+      "line": 243
     },
     {
       "path": "src/FerroUI.Controls/repeater/layouts/layout_tests.rs",
       "name": "validate_stack_layout_disabled_virtualization_with_items_repeater",
-      "line": 268
+      "line": 272
     },
     {
       "path": "src/FerroUI.Controls/repeater/layouts/layout_tests.rs",
       "name": "validate_default_size_for_grid_layout_items_is_based_on_first_item",
-      "line": 286
+      "line": 290
     },
     {
       "path": "src/FerroUI.Controls/repeater/layouts/layout_tests.rs",
       "name": "validate_resizing_first_item_resizes_other_items_in_grid_layout",
-      "line": 330
+      "line": 334
     },
     {
       "path": "src/FerroUI.Controls/repeater/layouts/layout_tests.rs",
       "name": "validate_default_size_for_first_item_doesnt_override_preset_one",
-      "line": 350
+      "line": 354
     },
     {
       "path": "src/FerroUI.Controls/repeater/layouts/layout_tests.rs",
       "name": "validate_uniform_grid_with_available_width_narrower_than_one_item",
-      "line": 371
+      "line": 375
     },
     {
       "path": "src/FerroUI.Controls/repeater/layouts/layout_tests.rs",
       "name": "validate_grid_layout_maximum_rows_or_columns",
-      "line": 391
+      "line": 395
     },
     {
       "path": "src/FerroUI.Controls/repeater/layouts/layout_tests.rs",
       "name": "validate_uniform_grid_with_no_items",
-      "line": 416
+      "line": 420
     },
     {
       "path": "src/FerroUI.Controls/repeater/layouts/layout_tests.rs",
       "name": "validate_flow_layout_varying_heights",
-      "line": 429
+      "line": 433
     },
     {
       "path": "src/FerroUI.Controls/repeater/layouts/layout_tests.rs",
       "name": "verify_flow_layout_line_alignment_positions",
-      "line": 475
+      "line": 479
     },
     {
       "path": "src/FerroUI.Controls/repeater/layouts/layout_tests.rs",
       "name": "validate_layout_sharing",
-      "line": 501
+      "line": 505
     },
     {
       "path": "src/FerroUI.Controls/repeater/layouts/layout_tests.rs",
       "name": "verify_virtualizing_layout_hosted_by_non_virtualizing_layout_context",
-      "line": 530
+      "line": 534
     },
     {
       "path": "src/FerroUI.Controls/repeater/layouts/layout_tests.rs",
       "name": "verify_built_in_layouts_adopt_or_reject_existing_layout_state",
-      "line": 578
+      "line": 582
     },
     {
       "path": "src/FerroUI.Controls/repeater/layouts/lined_flow_layout_tests.rs",
-      "name": "lined_flow_frozen_lines_cover_large_sized_regions_and_small_cache_boundaries",
+      "name": "lined_flow_displayed_lines_use_host_boundaries_spacing_and_overscroll",
       "line": 46
     },
     {
       "path": "src/FerroUI.Controls/repeater/layouts/lined_flow_layout_tests.rs",
+      "name": "lined_flow_frozen_lines_cover_large_sized_regions_and_small_cache_boundaries",
+      "line": 71
+    },
+    {
+      "path": "src/FerroUI.Controls/repeater/layouts/lined_flow_layout_tests.rs",
       "name": "lined_flow_frozen_lines_ignore_spacing_and_clamp_stale_scroll_offsets",
-      "line": 64
+      "line": 89
     },
     {
       "path": "src/FerroUI.Controls/repeater/layouts/lined_flow_layout_tests.rs",
       "name": "lined_flow_constraint_aware_expansion_and_shrinkage",
-      "line": 84
+      "line": 109
     },
     {
       "path": "src/FerroUI.Controls/repeater/layouts/lined_flow_layout_tests.rs",
       "name": "lined_flow_metadata_shrink_preserves_upstream_constraint_ordering",
-      "line": 96
-    },
-    {
-      "path": "src/FerroUI.Controls/repeater/layouts/lined_flow_layout_tests.rs",
-      "name": "lined_flow_fast_path_minimizes_distortion_and_shrinks_without_fill",
-      "line": 107
-    },
-    {
-      "path": "src/FerroUI.Controls/repeater/layouts/lined_flow_layout_tests.rs",
-      "name": "lined_flow_fast_path_commits_full_line_before_zero_width_successor",
       "line": 121
     },
     {
       "path": "src/FerroUI.Controls/repeater/layouts/lined_flow_layout_tests.rs",
-      "name": "lined_flow_fast_path_minimums_prevent_shrink_and_final_line_stays_unfilled",
+      "name": "lined_flow_fast_path_minimizes_distortion_and_shrinks_without_fill",
       "line": 132
     },
     {
       "path": "src/FerroUI.Controls/repeater/layouts/lined_flow_layout_tests.rs",
-      "name": "lined_flow_regular_partition_preserves_public_locks_in_both_directions",
+      "name": "lined_flow_fast_path_commits_full_line_before_zero_width_successor",
       "line": 146
     },
     {
       "path": "src/FerroUI.Controls/repeater/layouts/lined_flow_layout_tests.rs",
+      "name": "lined_flow_fast_path_minimums_prevent_shrink_and_final_line_stays_unfilled",
+      "line": 157
+    },
+    {
+      "path": "src/FerroUI.Controls/repeater/layouts/lined_flow_layout_tests.rs",
+      "name": "lined_flow_regular_partition_preserves_public_locks_in_both_directions",
+      "line": 171
+    },
+    {
+      "path": "src/FerroUI.Controls/repeater/layouts/lined_flow_layout_tests.rs",
       "name": "lined_flow_metadata_ranges_array_lengths_and_lifetime",
-      "line": 185
+      "line": 210
     },
     {
       "path": "src/FerroUI.Controls/repeater/layouts/lined_flow_layout_tests.rs",
       "name": "lined_flow_weighted_history_is_bounded_and_ignores_immature_distant_items",
-      "line": 218
+      "line": 243
     },
     {
       "path": "src/FerroUI.Controls/repeater/layouts/lined_flow_layout_tests.rs",
       "name": "lined_flow_fast_path_virtualizes_full_source_metadata_and_reuses_distribution",
-      "line": 260
+      "line": 285
     },
     {
       "path": "src/FerroUI.Controls/repeater/layouts/lined_flow_layout_tests.rs",
       "name": "lined_flow_regular_keeps_sizing_window_and_frozen_lines_on_small_scroll",
-      "line": 294
+      "line": 322
     },
     {
       "path": "src/FerroUI.Controls/repeater/layouts/lined_flow_layout_tests.rs",
       "name": "lined_flow_locks_interior_items_and_unlocks_after_invalidation_changes_average",
-      "line": 329
+      "line": 357
     },
     {
       "path": "src/FerroUI.Controls/repeater/layouts/lined_flow_layout_tests.rs",
       "name": "lined_flow_partial_metadata_requests_only_new_ranges",
-      "line": 361
+      "line": 389
     },
     {
       "path": "src/FerroUI.Controls/repeater/layouts/lined_flow_layout_tests.rs",
       "name": "layout_test_hooks_force_orientation_and_report_anchors",
-      "line": 401
+      "line": 429
     },
     {
       "path": "src/FerroUI.Controls/repeater/layouts/lined_flow_layout_tests.rs",
       "name": "lined_flow_test_hooks_change_real_layout_and_emit_typed_events",
-      "line": 441
+      "line": 469
     },
     {
       "path": "src/FerroUI.Controls/repeater/layouts/lined_flow_layout_tests.rs",
       "name": "lined_flow_test_hooks_disable_fast_path_for_complete_metadata",
-      "line": 500
+      "line": 528
     },
     {
       "path": "src/FerroUI.Controls/repeater/layouts/lined_flow_layout_tests.rs",
       "name": "lined_flow_edge_locks_notify_each_new_implicit_interior_lock",
-      "line": 523
+      "line": 551
     },
     {
       "path": "src/FerroUI.Controls/repeater/layouts/lined_flow_layout_tests.rs",
       "name": "lined_flow_startup_average_converges_before_freezing_steady_state",
-      "line": 570
+      "line": 598
     },
     {
       "path": "src/FerroUI.Controls/repeater/layouts/lined_flow_lifecycle_tests.rs",
@@ -15356,47 +15396,87 @@
     {
       "path": "src/FerroUI.Controls/repeater/layouts/lined_flow_lifecycle_tests.rs",
       "name": "declining_one_metadata_interval_falls_back_for_the_complete_window",
-      "line": 91
+      "line": 95
     },
     {
       "path": "src/FerroUI.Controls/repeater/layouts/lined_flow_lifecycle_tests.rs",
       "name": "expanded_metadata_range_is_retained_and_reused_without_another_request",
-      "line": 120
+      "line": 127
     },
     {
       "path": "src/FerroUI.Controls/repeater/layouts/lined_flow_lifecycle_tests.rs",
       "name": "expanded_metadata_is_clipped_to_the_items_source",
-      "line": 142
+      "line": 149
+    },
+    {
+      "path": "src/FerroUI.Controls/repeater/layouts/lined_flow_lifecycle_tests.rs",
+      "name": "regular_metadata_global_maximum_limits_realized_controls_without_per_item_limits",
+      "line": 165
+    },
+    {
+      "path": "src/FerroUI.Controls/repeater/layouts/lined_flow_lifecycle_tests.rs",
+      "name": "current_global_limits_apply_to_retained_raw_metadata_without_fabricated_width_arrays",
+      "line": 191
     },
     {
       "path": "src/FerroUI.Controls/repeater/layouts/lined_flow_lifecycle_tests.rs",
       "name": "prefetched_positive_ratios_update_history_before_negative_fallback_widths",
-      "line": 158
+      "line": 225
     },
     {
       "path": "src/FerroUI.Controls/repeater/layouts/lined_flow_lifecycle_tests.rs",
       "name": "regular_metadata_stops_delayed_control_measurement",
-      "line": 186
+      "line": 253
+    },
+    {
+      "path": "src/FerroUI.Controls/repeater/layouts/lined_flow_lifecycle_tests.rs",
+      "name": "fast_path_preserves_realization_while_viewport_is_zero_and_resumes_from_the_host_window",
+      "line": 278
+    },
+    {
+      "path": "src/FerroUI.Controls/repeater/layouts/lined_flow_lifecycle_tests.rs",
+      "name": "fast_path_remeasures_partial_retained_lines_when_resized_at_zero_height",
+      "line": 322
+    },
+    {
+      "path": "src/FerroUI.Controls/repeater/layouts/lined_flow_lifecycle_tests.rs",
+      "name": "fast_path_centers_only_the_host_realization_window_on_a_disconnected_anchor",
+      "line": 371
+    },
+    {
+      "path": "src/FerroUI.Controls/repeater/layouts/lined_flow_lifecycle_tests.rs",
+      "name": "automatic_line_height_probe_restores_the_metadata_allocation",
+      "line": 414
+    },
+    {
+      "path": "src/FerroUI.Controls/repeater/layouts/lined_flow_lifecycle_tests.rs",
+      "name": "automatic_line_height_uses_a_separate_probe_when_no_restorable_width_is_recorded",
+      "line": 437
+    },
+    {
+      "path": "src/FerroUI.Controls/repeater/layouts/lined_flow_lifecycle_tests.rs",
+      "name": "unconstrained_new_minimum_width_items_start_delayed_measurement",
+      "line": 459
     },
     {
       "path": "src/FerroUI.Controls/repeater/layouts/lined_flow_lifecycle_tests.rs",
       "name": "pending_invalidation_cannot_escape_into_a_replacement_context",
-      "line": 211
+      "line": 482
     },
     {
       "path": "src/FerroUI.Controls/repeater/layouts/lined_flow_lifecycle_tests.rs",
       "name": "releasing_layout_with_a_queued_measure_timer_stops_it_and_allows_a_fresh_host",
-      "line": 232
+      "line": 503
     },
     {
       "path": "src/FerroUI.Controls/repeater/layouts/lined_flow_lifecycle_tests.rs",
       "name": "detached_anchor_and_frozen_ranges_do_not_follow_the_layout_to_another_host",
-      "line": 263
+      "line": 537
     },
     {
       "path": "src/FerroUI.Controls/repeater/layouts/lined_flow_lifecycle_tests.rs",
       "name": "cache_shrink_uses_absolute_source_indices_at_a_distant_viewport",
-      "line": 286
+      "line": 560
     },
     {
       "path": "src/FerroUI.Controls/repeater/layouts/lined_flow_upstream_tests.rs",
@@ -15466,17 +15546,22 @@
     {
       "path": "src/FerroUI.Controls/repeater/selection/selected_items_binding_tests.rs",
       "name": "selected_views_bind_count_and_index_without_materializing_unread_items",
-      "line": 35
+      "line": 36
     },
     {
       "path": "src/FerroUI.Controls/repeater/selection/selected_items_binding_tests.rs",
       "name": "selection_count_binding_updates_through_native_property_notifications",
-      "line": 82
+      "line": 83
+    },
+    {
+      "path": "src/FerroUI.Controls/repeater/selection/selected_items_binding_tests.rs",
+      "name": "removing_source_refreshes_selected_item_and_count_bindings_once",
+      "line": 104
     },
     {
       "path": "src/FerroUI.Controls/repeater/selection/selected_items_binding_tests.rs",
       "name": "selected_items_binding_drives_a_native_repeater_and_refreshes_on_selection",
-      "line": 103
+      "line": 150
     },
     {
       "path": "src/FerroUI.Controls/repeater/selection/tests.rs",
@@ -15660,48 +15745,68 @@
     },
     {
       "path": "src/FerroUI.Controls/repeater/selection/tests.rs",
+      "name": "children_requested_rejects_same_source_collection_changes",
+      "line": 675
+    },
+    {
+      "path": "src/FerroUI.Controls/repeater/selection/tests.rs",
+      "name": "children_requested_rejects_discarded_ancestor_nodes",
+      "line": 715
+    },
+    {
+      "path": "src/FerroUI.Controls/repeater/selection/tests.rs",
+      "name": "children_requested_keeps_a_child_realized_by_a_nested_request",
+      "line": 747
+    },
+    {
+      "path": "src/FerroUI.Controls/repeater/selection/tests.rs",
+      "name": "child_source_read_rejects_reentrant_tree_reset",
+      "line": 775
+    },
+    {
+      "path": "src/FerroUI.Controls/repeater/selection/tests.rs",
       "name": "verify_selected_views_fail_after_selection_tree_is_discarded",
-      "line": 674
+      "line": 805
     },
     {
       "path": "src/FerroUI.Controls/repeater/selection/tests.rs",
       "name": "verify_insert_inside_selected_range_splits_range",
-      "line": 690
+      "line": 821
     },
     {
       "path": "src/FerroUI.Controls/repeater/selection/tests.rs",
       "name": "verify_adding_item_to_selected_group_makes_ancestors_partial",
-      "line": 703
+      "line": 834
     },
     {
       "path": "src/FerroUI.Controls/repeater/selection/tests.rs",
       "name": "verify_removing_unselected_item_makes_ancestors_selected",
-      "line": 720
+      "line": 851
     },
     {
       "path": "src/FerroUI.Controls/repeater/selection/tests.rs",
       "name": "verify_removing_item_under_unselected_ancestors_does_not_raise_selection_changed",
-      "line": 732
+      "line": 863
     },
     {
       "path": "src/FerroUI.Controls/repeater/selection/tests.rs",
       "name": "select_all_flat_does_not_read_source_items",
-      "line": 745
+      "line": 876
     },
     {
       "path": "src/FerroUI.Controls/repeater/selection/tests.rs",
       "name": "collection_subscriptions_are_revoked_when_model_is_dropped",
-      "line": 780
+      "line": 911
     },
     {
       "path": "src/FerroUI.Controls/repeater/selection/tests.rs",
       "name": "singleton_range_preserves_upstream_double_notification",
-      "line": 791
+      "line": 922
     },
     {
       "path": "src/FerroUI.Controls/repeater/selection/tests.rs",
       "name": "selection_views_are_shared_and_iterate_in_index_order",
-      "line": 802
+      "line": 933
     },
     {
       "path": "src/FerroUI.Controls/repeater/services_tests.rs",
@@ -15765,393 +15870,448 @@
     },
     {
       "path": "src/FerroUI.Controls/repeater/services_tests.rs",
+      "name": "template_replacement_releases_old_template_after_publishing_the_new_value",
+      "line": 456
+    },
+    {
+      "path": "src/FerroUI.Controls/repeater/services_tests.rs",
+      "name": "selector_replacement_releases_old_selector_after_publishing_the_new_value",
+      "line": 477
+    },
+    {
+      "path": "src/FerroUI.Controls/repeater/services_tests.rs",
       "name": "selector_retries_container_overload_and_empty_content_has_zero_size",
-      "line": 437
+      "line": 505
     },
     {
       "path": "src/FerroUI.Controls/repeater/services_tests.rs",
       "name": "selected_template_lives_with_the_realized_element_without_pool_cycles",
-      "line": 474
+      "line": 542
     },
     {
       "path": "src/FerroUI.Controls/repeater/services_tests.rs",
       "name": "direct_empty_template_is_detected_without_probing_incompatible_null_data",
-      "line": 496
+      "line": 564
     },
     {
       "path": "src/FerroUI.Controls/repeater/services_tests.rs",
       "name": "untyped_factory_conversion_preserves_object_and_template_identity",
-      "line": 509
+      "line": 577
     },
     {
       "path": "src/FerroUI.Controls/repeater/services_tests.rs",
       "name": "factory_args_have_shared_mutations_and_weak_parent_references",
-      "line": 530
+      "line": 598
     },
     {
       "path": "src/FerroUI.Controls/repeater/services_tests.rs",
       "name": "virtualization_ownership_state_machine_preserves_pins_and_reset_keys",
-      "line": 544
+      "line": 612
     },
     {
       "path": "src/FerroUI.Controls/repeater/services_tests.rs",
       "name": "virtualization_animator_ownership_clears_index_and_pins_from_reset_pool",
-      "line": 570
+      "line": 638
     },
     {
       "path": "src/FerroUI.Controls/repeater/services_tests.rs",
       "name": "unrealized_elements_cannot_be_pinned",
-      "line": 584
-    },
-    {
-      "path": "src/FerroUI.Controls/repeater/services_tests.rs",
-      "name": "unbalanced_unpin_is_rejected",
-      "line": 590
-    },
-    {
-      "path": "src/FerroUI.Controls/repeater/services_tests.rs",
-      "name": "unphased_elements_do_not_read_the_items_source_again",
       "line": 652
     },
     {
       "path": "src/FerroUI.Controls/repeater/services_tests.rs",
+      "name": "unbalanced_unpin_is_rejected",
+      "line": 658
+    },
+    {
+      "path": "src/FerroUI.Controls/repeater/services_tests.rs",
+      "name": "unphased_elements_do_not_read_the_items_source_again",
+      "line": 720
+    },
+    {
+      "path": "src/FerroUI.Controls/repeater/services_tests.rs",
       "name": "phasing_initializes_synchronously_and_prioritizes_visible_elements",
-      "line": 667
+      "line": 735
     },
     {
       "path": "src/FerroUI.Controls/repeater/services_tests.rs",
       "name": "phasing_orders_visible_items_by_phase_and_realization_order",
-      "line": 693
+      "line": 761
     },
     {
       "path": "src/FerroUI.Controls/repeater/services_tests.rs",
       "name": "staggered_phases_preserve_source_sort_and_tail_traversal",
-      "line": 711
+      "line": 779
     },
     {
       "path": "src/FerroUI.Controls/repeater/services_tests.rs",
       "name": "phase_zero_initialization_does_not_enqueue_until_preparation_finishes",
-      "line": 728
+      "line": 796
     },
     {
       "path": "src/FerroUI.Controls/repeater/services_tests.rs",
       "name": "animator_owned_elements_finish_pending_binding_phases_before_final_recycling",
-      "line": 746
+      "line": 814
     },
     {
       "path": "src/FerroUI.Controls/repeater/services_tests.rs",
       "name": "stop_phasing_cancels_queued_work_before_recycling",
-      "line": 762
+      "line": 830
     },
     {
       "path": "src/FerroUI.Controls/repeater/services_tests.rs",
       "name": "phasing_callback_can_recycle_its_own_element_without_rescheduling_it",
-      "line": 778
+      "line": 846
     },
     {
       "path": "src/FerroUI.Controls/repeater/services_tests.rs",
       "name": "phase_zero_callback_cancellation_does_not_restore_stale_binding_state",
-      "line": 802
+      "line": 870
     },
     {
       "path": "src/FerroUI.Controls/repeater/services_tests.rs",
       "name": "repeated_or_decreasing_phases_are_rejected",
-      "line": 827
+      "line": 895
     },
     {
       "path": "src/FerroUI.Controls/repeater/services_tests.rs",
       "name": "scheduler_orders_work_and_defers_work_registered_during_a_frame",
-      "line": 833
+      "line": 901
+    },
+    {
+      "path": "src/FerroUI.Controls/repeater/services_tests.rs",
+      "name": "scheduler_cancels_and_releases_work_already_selected_for_a_frame",
+      "line": 922
+    },
+    {
+      "path": "src/FerroUI.Controls/repeater/services_tests.rs",
+      "name": "recycling_during_another_callback_defers_replacement_phases_until_the_next_frame",
+      "line": 948
     },
     {
       "path": "src/FerroUI.Controls/repeater/services_tests.rs",
       "name": "build_tree_completed_fires_only_after_all_deferred_frames_are_drained",
-      "line": 854
+      "line": 978
     },
     {
       "path": "src/FerroUI.Controls/repeater/services_tests.rs",
       "name": "repeater_diagnostics_preserve_layout_and_element_identifiers",
-      "line": 875
+      "line": 999
     },
     {
       "path": "src/FerroUI.Controls/repeater/services_tests.rs",
       "name": "verify_transition_lifecycle_without_animation",
-      "line": 888
+      "line": 1012
     },
     {
       "path": "src/FerroUI.Controls/repeater/services_tests.rs",
       "name": "verify_queue_transition_schedules_transitions_on_next_frame",
-      "line": 919
+      "line": 1043
     },
     {
       "path": "src/FerroUI.Controls/repeater/services_tests.rs",
       "name": "disabled_animations_do_not_consult_the_provider_and_still_complete",
-      "line": 944
+      "line": 1068
     },
     {
       "path": "src/FerroUI.Controls/repeater/services_tests.rs",
       "name": "queued_transitions_observe_live_native_motion_settings_per_element",
-      "line": 1010
+      "line": 1134
     },
     {
       "path": "src/FerroUI.Controls/repeater/services_tests.rs",
       "name": "unattached_transitions_use_application_motion_preference_without_overriding_local_opt_out",
-      "line": 1037
+      "line": 1161
     },
     {
       "path": "src/FerroUI.Controls/repeater/services_tests.rs",
       "name": "validate_item_collection_transition_provider",
-      "line": 1083
+      "line": 1207
     },
     {
       "path": "src/FerroUI.Controls/repeater/services_tests.rs",
       "name": "removal_completion_invalidates_arrange_and_does_not_recycle_a_reused_element_twice",
-      "line": 1158
+      "line": 1282
+    },
+    {
+      "path": "src/FerroUI.Controls/repeater/services_tests.rs",
+      "name": "template_replacement_cancels_queued_transitions_without_affecting_shared_hosts",
+      "line": 1371
     },
     {
       "path": "src/FerroUI.Controls/repeater/services_tests.rs",
       "name": "shared_transition_provider_completes_only_the_repeaters_own_elements",
-      "line": 1214
+      "line": 1427
+    },
+    {
+      "path": "src/FerroUI.Controls/repeater/services_tests.rs",
+      "name": "clearing_transition_provider_recycles_pending_removals_before_their_render_frame",
+      "line": 1450
+    },
+    {
+      "path": "src/FerroUI.Controls/repeater/services_tests.rs",
+      "name": "replacing_transition_provider_stops_old_animations_and_preserves_new_removal_identity",
+      "line": 1499
+    },
+    {
+      "path": "src/FerroUI.Controls/repeater/services_tests.rs",
+      "name": "a_provider_change_from_cancellation_completion_supersedes_the_outer_change",
+      "line": 1594
     },
     {
       "path": "src/FerroUI.Controls/repeater/services_tests.rs",
       "name": "started_transitions_remain_available_until_the_full_keepalive_expires",
-      "line": 1237
+      "line": 1632
     },
     {
       "path": "src/FerroUI.Controls/repeater/services_tests.rs",
-      "name": "transition_callbacks_can_queue_a_new_independent_batch",
-      "line": 1264
-    },
-    {
-      "path": "src/FerroUI.Controls/repeater/services_tests.rs",
-      "name": "transition_manager_records_trigger_combinations_and_recycles_only_removals",
-      "line": 1288
-    },
-    {
-      "path": "src/FerroUI.Controls/repeater/services_tests.rs",
-      "name": "lined_transitions_run_full_remove_move_add_choreography_and_restore_styles",
-      "line": 1321
-    },
-    {
-      "path": "src/FerroUI.Controls/repeater/services_tests.rs",
-      "name": "initial_slide_in_animates_both_opacity_and_position_for_250_milliseconds",
-      "line": 1394
-    },
-    {
-      "path": "src/FerroUI.Controls/repeater/services_tests.rs",
-      "name": "replacing_an_animation_releases_its_transient_values_without_clobbering_new_binding_values",
-      "line": 1421
-    },
-    {
-      "path": "src/FerroUI.Controls/repeater/services_tests.rs",
-      "name": "reset_removals_and_layout_moves_are_completed_without_starting_animations",
-      "line": 1460
-    },
-    {
-      "path": "src/FerroUI.Controls/repeater/services_tests.rs",
-      "name": "verify_anchor_ratio_properties_round_trip",
-      "line": 1534
-    },
-    {
-      "path": "src/FerroUI.Controls/repeater/services_tests.rs",
-      "name": "verify_scroll_viewer_property_replaces_child",
-      "line": 1550
-    },
-    {
-      "path": "src/FerroUI.Controls/repeater/services_tests.rs",
-      "name": "verify_current_anchor_is_candidate_closest_to_viewport_edge",
-      "line": 1568
-    },
-    {
-      "path": "src/FerroUI.Controls/repeater/services_tests.rs",
-      "name": "legacy_scroll_host_uses_horizontal_ratio_for_the_vertical_edge",
-      "line": 1587
-    },
-    {
-      "path": "src/FerroUI.Controls/repeater/services_tests.rs",
-      "name": "verify_unregister_anchor_candidate_recomputes_anchor",
-      "line": 1599
-    },
-    {
-      "path": "src/FerroUI.Controls/repeater/services_tests.rs",
-      "name": "verify_nan_anchor_ratio_yields_no_anchor",
-      "line": 1621
-    },
-    {
-      "path": "src/FerroUI.Controls/repeater/services_tests.rs",
-      "name": "verify_anchor_and_relative_viewport_use_scroll_offset",
-      "line": 1633
-    },
-    {
-      "path": "src/FerroUI.Controls/repeater/services_tests.rs",
-      "name": "verify_scrolling_surface_without_scroll_viewer",
+      "name": "cancellation_preserves_started_progress_keepalive_and_repeated_public_completion",
       "line": 1659
     },
     {
       "path": "src/FerroUI.Controls/repeater/services_tests.rs",
-      "name": "verify_scrolling_surface_events_can_be_subscribed_and_removed",
-      "line": 1671
+      "name": "transition_callbacks_can_queue_a_new_independent_batch",
+      "line": 1694
     },
     {
       "path": "src/FerroUI.Controls/repeater/services_tests.rs",
-      "name": "scroll_host_tracks_anchor_when_preceding_content_changes_size",
-      "line": 1700
+      "name": "transition_manager_records_trigger_combinations_and_recycles_only_removals",
+      "line": 1718
     },
     {
       "path": "src/FerroUI.Controls/repeater/services_tests.rs",
-      "name": "scroll_host_bring_into_view_waits_for_arrange_and_applies_alignment_and_offsets",
-      "line": 1716
+      "name": "lined_transitions_run_full_remove_move_add_choreography_and_restore_styles",
+      "line": 1751
     },
     {
       "path": "src/FerroUI.Controls/repeater/services_tests.rs",
-      "name": "animated_bring_into_view_uses_the_native_clock_and_finishes_at_the_extent",
-      "line": 1731
+      "name": "initial_slide_in_animates_both_opacity_and_position_for_250_milliseconds",
+      "line": 1824
     },
     {
       "path": "src/FerroUI.Controls/repeater/services_tests.rs",
-      "name": "user_scroll_cancels_a_pending_animated_bring_into_view",
-      "line": 1748
+      "name": "replacing_an_animation_releases_its_transient_values_without_clobbering_new_binding_values",
+      "line": 1851
     },
     {
       "path": "src/FerroUI.Controls/repeater/services_tests.rs",
-      "name": "verify_recycling_element_factory_templates_setter",
-      "line": 1765
+      "name": "template_replacement_stops_native_animations_before_the_old_factory_reuses_controls",
+      "line": 1890
     },
     {
       "path": "src/FerroUI.Controls/repeater/services_tests.rs",
-      "name": "verify_select_template_key_handler_removal",
-      "line": 1790
+      "name": "reentrant_cancellation_prevents_later_direct_batch_transitions_from_starting",
+      "line": 2021
     },
     {
       "path": "src/FerroUI.Controls/repeater/services_tests.rs",
-      "name": "verify_null_template_from_selector_fails_with_invalid_argument",
-      "line": 1863
+      "name": "reset_removals_and_layout_moves_are_completed_without_starting_animations",
+      "line": 2065
     },
     {
       "path": "src/FerroUI.Controls/repeater/services_tests.rs",
-      "name": "verify_null_template_gives_meaningfull_error",
-      "line": 1886
+      "name": "verify_anchor_ratio_properties_round_trip",
+      "line": 2139
     },
     {
       "path": "src/FerroUI.Controls/repeater/services_tests.rs",
-      "name": "verify_selector_error_is_propagated",
-      "line": 1900
+      "name": "verify_scroll_viewer_property_replaces_child",
+      "line": 2155
     },
     {
       "path": "src/FerroUI.Controls/repeater/services_tests.rs",
-      "name": "verify_pool_instance_is_used_for_data_template_recycling",
-      "line": 1978
+      "name": "verify_current_anchor_is_candidate_closest_to_viewport_edge",
+      "line": 2173
     },
     {
       "path": "src/FerroUI.Controls/repeater/services_tests.rs",
-      "name": "verify_recycle_pool_overrides_are_called",
-      "line": 2035
+      "name": "legacy_scroll_host_uses_horizontal_ratio_for_the_vertical_edge",
+      "line": 2192
     },
     {
       "path": "src/FerroUI.Controls/repeater/services_tests.rs",
-      "name": "metadata_builds_keyed_templates_and_invokes_factory_events_and_methods",
-      "line": 2063
+      "name": "verify_unregister_anchor_candidate_recomputes_anchor",
+      "line": 2204
     },
     {
       "path": "src/FerroUI.Controls/repeater/services_tests.rs",
-      "name": "metadata_transition_methods_and_completion_events_preserve_handles",
-      "line": 2140
-    },
-    {
-      "path": "src/FerroUI.Controls/repeater/services_tests.rs",
-      "name": "metadata_static_build_completion_subscription_is_disposable",
-      "line": 2197
-    },
-    {
-      "path": "src/FerroUI.Controls/repeater/services_tests.rs",
-      "name": "scroll_animation_and_event_subscriptions_do_not_retain_a_dropped_host",
+      "name": "verify_nan_anchor_ratio_yields_no_anchor",
       "line": 2226
     },
     {
       "path": "src/FerroUI.Controls/repeater/services_tests.rs",
+      "name": "verify_anchor_and_relative_viewport_use_scroll_offset",
+      "line": 2238
+    },
+    {
+      "path": "src/FerroUI.Controls/repeater/services_tests.rs",
+      "name": "verify_scrolling_surface_without_scroll_viewer",
+      "line": 2264
+    },
+    {
+      "path": "src/FerroUI.Controls/repeater/services_tests.rs",
+      "name": "verify_scrolling_surface_events_can_be_subscribed_and_removed",
+      "line": 2276
+    },
+    {
+      "path": "src/FerroUI.Controls/repeater/services_tests.rs",
+      "name": "scroll_host_tracks_anchor_when_preceding_content_changes_size",
+      "line": 2305
+    },
+    {
+      "path": "src/FerroUI.Controls/repeater/services_tests.rs",
+      "name": "scroll_host_bring_into_view_waits_for_arrange_and_applies_alignment_and_offsets",
+      "line": 2321
+    },
+    {
+      "path": "src/FerroUI.Controls/repeater/services_tests.rs",
+      "name": "animated_bring_into_view_uses_the_native_clock_and_finishes_at_the_extent",
+      "line": 2336
+    },
+    {
+      "path": "src/FerroUI.Controls/repeater/services_tests.rs",
+      "name": "user_scroll_cancels_a_pending_animated_bring_into_view",
+      "line": 2353
+    },
+    {
+      "path": "src/FerroUI.Controls/repeater/services_tests.rs",
+      "name": "verify_recycling_element_factory_templates_setter",
+      "line": 2370
+    },
+    {
+      "path": "src/FerroUI.Controls/repeater/services_tests.rs",
+      "name": "verify_select_template_key_handler_removal",
+      "line": 2395
+    },
+    {
+      "path": "src/FerroUI.Controls/repeater/services_tests.rs",
+      "name": "verify_null_template_from_selector_fails_with_invalid_argument",
+      "line": 2468
+    },
+    {
+      "path": "src/FerroUI.Controls/repeater/services_tests.rs",
+      "name": "verify_null_template_gives_meaningfull_error",
+      "line": 2491
+    },
+    {
+      "path": "src/FerroUI.Controls/repeater/services_tests.rs",
+      "name": "verify_selector_error_is_propagated",
+      "line": 2505
+    },
+    {
+      "path": "src/FerroUI.Controls/repeater/services_tests.rs",
+      "name": "verify_pool_instance_is_used_for_data_template_recycling",
+      "line": 2583
+    },
+    {
+      "path": "src/FerroUI.Controls/repeater/services_tests.rs",
+      "name": "verify_recycle_pool_overrides_are_called",
+      "line": 2640
+    },
+    {
+      "path": "src/FerroUI.Controls/repeater/services_tests.rs",
+      "name": "metadata_builds_keyed_templates_and_invokes_factory_events_and_methods",
+      "line": 2668
+    },
+    {
+      "path": "src/FerroUI.Controls/repeater/services_tests.rs",
+      "name": "metadata_transition_methods_and_completion_events_preserve_handles",
+      "line": 2745
+    },
+    {
+      "path": "src/FerroUI.Controls/repeater/services_tests.rs",
+      "name": "metadata_static_build_completion_subscription_is_disposable",
+      "line": 2802
+    },
+    {
+      "path": "src/FerroUI.Controls/repeater/services_tests.rs",
+      "name": "scroll_animation_and_event_subscriptions_do_not_retain_a_dropped_host",
+      "line": 2831
+    },
+    {
+      "path": "src/FerroUI.Controls/repeater/services_tests.rs",
       "name": "validate_slow_phases_are_spread_over_frames",
-      "line": 2319
+      "line": 2924
     },
     {
       "path": "src/FerroUI.Controls/repeater/services_tests.rs",
       "name": "validate_phase_invoke_and_ordering",
-      "line": 2423
+      "line": 3028
     },
     {
       "path": "src/FerroUI.Controls/repeater/services_tests.rs",
       "name": "validate_x_bind_without_phasing",
-      "line": 2428
+      "line": 3033
     },
     {
       "path": "src/FerroUI.Controls/repeater/services_tests.rs",
       "name": "validate_recycling",
-      "line": 2490
+      "line": 3095
     },
     {
       "path": "src/FerroUI.Controls/repeater/services_tests.rs",
       "name": "validate_binding_and_template_selection",
-      "line": 2550
+      "line": 3155
     },
     {
       "path": "src/FerroUI.Controls/repeater/services_tests.rs",
       "name": "validate_custom_recycling_element_factory",
-      "line": 2677
+      "line": 3282
     },
     {
       "path": "src/FerroUI.Controls/repeater/services_tests.rs",
       "name": "validate_recycling_element_factory_with_single_template",
-      "line": 2682
+      "line": 3287
     },
     {
       "path": "src/FerroUI.Controls/repeater/services_tests.rs",
       "name": "validate_data_template_with_element_name_binding",
-      "line": 2790
+      "line": 3395
     },
     {
       "path": "src/FerroUI.Controls/repeater/services_tests.rs",
       "name": "validate_data_template_with_nested_element_name_binding",
-      "line": 2795
+      "line": 3400
     },
     {
       "path": "src/FerroUI.Controls/repeater/services_tests.rs",
       "name": "validate_data_template_as_item_template",
-      "line": 2800
+      "line": 3405
     },
     {
       "path": "src/FerroUI.Controls/repeater/services_tests.rs",
       "name": "validate_data_template_selector_as_item_template",
-      "line": 2859
+      "line": 3464
     },
     {
       "path": "src/FerroUI.Controls/repeater/services_tests.rs",
       "name": "validate_correct_size_when_empty_data_template_in_selector",
-      "line": 2884
+      "line": 3489
     },
     {
       "path": "src/FerroUI.Controls/repeater/services_tests.rs",
       "name": "validate_reycling_element_factory_with_no_template",
-      "line": 2917
+      "line": 3522
     },
     {
       "path": "src/FerroUI.Controls/repeater/services_tests.rs",
       "name": "validate_custom_element_factory",
-      "line": 2955
+      "line": 3560
     },
     {
       "path": "src/FerroUI.Controls/repeater/services_tests.rs",
       "name": "verify_select_template_layout_fallback",
-      "line": 2976
+      "line": 3581
     },
     {
       "path": "src/FerroUI.Controls/repeater/services_tests.rs",
       "name": "verify_recycling_element_factory_template_key_validation",
-      "line": 3013
+      "line": 3618
     },
     {
       "path": "src/FerroUI.Controls/repeater/services_tests.rs",
       "name": "host_bring_releases_a_distant_repeater_anchor_and_allows_scrolling_back",
-      "line": 3060
+      "line": 3665
     },
     {
       "path": "src/FerroUI.Controls/repeater/source_view_tests.rs",
@@ -16221,192 +16381,242 @@
     {
       "path": "src/FerroUI.Controls/repeater/view_manager_acceptance_tests.rs",
       "name": "validate_element_events_through_insert_and_remove",
-      "line": 341
+      "line": 350
     },
     {
       "path": "src/FerroUI.Controls/repeater/view_manager_acceptance_tests.rs",
       "name": "validate_stable_reset_element_index_event_trace",
-      "line": 356
+      "line": 365
+    },
+    {
+      "path": "src/FerroUI.Controls/repeater/view_manager_acceptance_tests.rs",
+      "name": "changing_template_during_a_keyed_reset_returns_every_old_element_to_its_factory",
+      "line": 380
     },
     {
       "path": "src/FerroUI.Controls/repeater/view_manager_acceptance_tests.rs",
       "name": "validate_get_element_at_caching_request_trace",
-      "line": 371
+      "line": 464
     },
     {
       "path": "src/FerroUI.Controls/repeater/view_manager_acceptance_tests.rs",
       "name": "repeated_top_removals_prepare_new_items_in_the_realization_window",
-      "line": 381
+      "line": 474
     },
     {
       "path": "src/FerroUI.Controls/repeater/view_manager_acceptance_tests.rs",
       "name": "focused_item_removal_moves_to_adjacent_first_middle_and_last_items",
-      "line": 434
+      "line": 527
     },
     {
       "path": "src/FerroUI.Controls/repeater/view_manager_acceptance_tests.rs",
       "name": "focused_descendant_removal_moves_to_adjacent_first_middle_and_last_items",
-      "line": 441
+      "line": 534
     },
     {
       "path": "src/FerroUI.Controls/repeater/view_manager_acceptance_tests.rs",
       "name": "focus_survives_a_stable_reset_and_can_move_to_another_item",
-      "line": 448
+      "line": 541
     },
     {
       "path": "src/FerroUI.Controls/repeater/view_manager_acceptance_tests.rs",
       "name": "keyed_reset_removing_a_focused_item_moves_focus_to_the_next_survivor",
-      "line": 466
+      "line": 559
     },
     {
       "path": "src/FerroUI.Controls/repeater/view_manager_acceptance_tests.rs",
       "name": "focus_fallback_handles_first_last_and_multiple_removals_with_and_without_keys",
-      "line": 493
+      "line": 586
     },
     {
       "path": "src/FerroUI.Controls/repeater/view_manager_acceptance_tests.rs",
       "name": "nested_repeater_focus_pins_each_ancestor_once_and_releases_the_previous_group",
-      "line": 542
+      "line": 635
     },
     {
       "path": "src/FerroUI.Controls/repeater/view_manager_acceptance_tests.rs",
       "name": "flow_layout_clears_scrolled_edges_from_the_outside_in",
-      "line": 595
+      "line": 688
     },
     {
       "path": "src/FerroUI.Controls/repeater/view_manager_acceptance_tests.rs",
       "name": "bringing_the_already_visible_last_item_into_view_preserves_offset",
-      "line": 624
+      "line": 717
     },
     {
       "path": "src/FerroUI.Controls/repeater/view_manager_acceptance_tests.rs",
       "name": "items_source_switches_through_null_and_distinct_lists_in_order",
-      "line": 646
+      "line": 739
     },
     {
       "path": "src/FerroUI.Controls/repeater/view_manager_acceptance_tests.rs",
       "name": "clearing_an_explicit_item_template_returns_to_default_text_blocks",
-      "line": 671
+      "line": 764
     },
     {
       "path": "src/FerroUI.Controls/repeater/view_manager_acceptance_tests.rs",
       "name": "source_reset_to_empty_recycles_a_focused_element",
-      "line": 695
+      "line": 788
     },
     {
       "path": "src/FerroUI.Controls/repeater/view_manager_acceptance_tests.rs",
       "name": "tab_navigation_follows_source_order_after_scroll_and_bulk_removal",
-      "line": 767
+      "line": 865
     },
     {
       "path": "src/FerroUI.Controls/repeater/view_manager_acceptance_tests.rs",
       "name": "native_tab_navigation_honors_once_local_cycle_contained_and_none_modes",
-      "line": 797
+      "line": 895
     },
     {
       "path": "src/FerroUI.Controls/repeater/view_manager_acceptance_tests.rs",
       "name": "native_once_navigation_does_not_return_to_a_recycled_or_animating_active_item",
-      "line": 852
+      "line": 950
     },
     {
       "path": "src/FerroUI.Controls/repeater/view_manager_acceptance_tests.rs",
       "name": "nested_once_navigation_remembers_the_inner_target_without_duplicating_pins",
-      "line": 901
+      "line": 999
     },
     {
       "path": "src/FerroUI.Controls/repeater/view_manager_acceptance_tests.rs",
       "name": "nested_focus_releases_pins_before_direct_or_factory_owned_rows_are_detached",
-      "line": 985
+      "line": 1083
+    },
+    {
+      "path": "src/FerroUI.Controls/repeater/view_manager_acceptance_tests.rs",
+      "name": "clearing_an_enclosing_row_releases_nested_focus_before_detach_or_pooling",
+      "line": 1220
     },
     {
       "path": "src/FerroUI.Controls/repeater/view_manager_acceptance_tests.rs",
       "name": "disconnected_bring_into_view_preserves_realization_order_with_both_cache_lengths",
-      "line": 1122
+      "line": 1387
     },
     {
       "path": "src/FerroUI.Controls/repeater/viewport_tests.rs",
       "name": "validate_no_scrolling_surface_scenario",
-      "line": 120
+      "line": 121
     },
     {
       "path": "src/FerroUI.Controls/repeater/viewport_tests.rs",
       "name": "validate_no_scrolling_surface_in_popup_scenario",
-      "line": 135
+      "line": 140
     },
     {
       "path": "src/FerroUI.Controls/repeater/viewport_tests.rs",
       "name": "validate_basic_scroll_viewer_scenario",
-      "line": 192
-    },
-    {
-      "path": "src/FerroUI.Controls/repeater/viewport_tests.rs",
-      "name": "validate_items_repeater_scroll_host_scenario",
       "line": 197
     },
     {
       "path": "src/FerroUI.Controls/repeater/viewport_tests.rs",
-      "name": "validate_one_scroll_presenter_scenario",
+      "name": "validate_items_repeater_scroll_host_scenario",
       "line": 202
     },
     {
       "path": "src/FerroUI.Controls/repeater/viewport_tests.rs",
-      "name": "validate_two_scroll_viewer_scenario",
-      "line": 267
+      "name": "validate_one_scroll_presenter_scenario",
+      "line": 207
     },
     {
       "path": "src/FerroUI.Controls/repeater/viewport_tests.rs",
-      "name": "validate_two_scroll_presenters_scenario",
+      "name": "validate_two_scroll_viewer_scenario",
       "line": 272
     },
     {
       "path": "src/FerroUI.Controls/repeater/viewport_tests.rs",
-      "name": "scale_transform_supplies_the_zoomed_effective_viewport",
+      "name": "validate_two_scroll_presenters_scenario",
       "line": 277
     },
     {
       "path": "src/FerroUI.Controls/repeater/viewport_tests.rs",
+      "name": "scale_transform_supplies_the_zoomed_effective_viewport",
+      "line": 282
+    },
+    {
+      "path": "src/FerroUI.Controls/repeater/viewport_tests.rs",
+      "name": "relative_render_transform_origin_refreshes_when_the_repeater_resizes",
+      "line": 307
+    },
+    {
+      "path": "src/FerroUI.Controls/repeater/viewport_tests.rs",
       "name": "can_grow_cache_buffer_with_scroll_viewer",
-      "line": 340
+      "line": 369
     },
     {
       "path": "src/FerroUI.Controls/repeater/viewport_tests.rs",
       "name": "can_grow_cache_buffer_with_scroll_presenter",
-      "line": 345
+      "line": 374
     },
     {
       "path": "src/FerroUI.Controls/repeater/viewport_tests.rs",
       "name": "validate_scroll_starting_anticipation_for_horizontally_aligned_repeater",
-      "line": 399
+      "line": 428
     },
     {
       "path": "src/FerroUI.Controls/repeater/viewport_tests.rs",
       "name": "validate_scroll_starting_anticipation_for_vertically_aligned_repeater",
-      "line": 404
+      "line": 433
     },
     {
       "path": "src/FerroUI.Controls/repeater/viewport_tests.rs",
       "name": "can_bring_into_view_elements_with_native_scroll_viewer",
-      "line": 409
+      "line": 438
     },
     {
       "path": "src/FerroUI.Controls/repeater/viewport_tests.rs",
       "name": "verify_uniform_grid_layout_doesnt_crash_when_trying_to_scroll_to_end",
-      "line": 445
+      "line": 474
     },
     {
       "path": "src/FerroUI.Controls/repeater/viewport_tests.rs",
       "name": "verify_uniform_grid_layout_doesnt_hang_when_trying_to_scroll_to_start",
-      "line": 476
+      "line": 505
     },
     {
       "path": "src/FerroUI.Controls/repeater/viewport_tests.rs",
       "name": "can_bring_into_view_elements_with_alignment_and_animation",
-      "line": 533
+      "line": 562
+    },
+    {
+      "path": "src/FerroUI.Controls/repeater/viewport_tests.rs",
+      "name": "cancelling_a_host_bring_preserves_independent_pins_and_releases_its_target",
+      "line": 723
+    },
+    {
+      "path": "src/FerroUI.Controls/repeater/viewport_tests.rs",
+      "name": "replacing_and_detaching_host_bring_releases_each_operation_pin",
+      "line": 754
+    },
+    {
+      "path": "src/FerroUI.Controls/repeater/viewport_tests.rs",
+      "name": "replacing_or_detaching_host_content_cancels_an_obsolete_target",
+      "line": 782
+    },
+    {
+      "path": "src/FerroUI.Controls/repeater/viewport_tests.rs",
+      "name": "source_mutations_clear_offscreen_pins_released_by_layout",
+      "line": 814
+    },
+    {
+      "path": "src/FerroUI.Controls/repeater/viewport_tests.rs",
+      "name": "stale_host_bring_cannot_scroll_or_unpin_a_recycled_target",
+      "line": 853
+    },
+    {
+      "path": "src/FerroUI.Controls/repeater/viewport_tests.rs",
+      "name": "detaching_a_nested_host_bring_releases_inner_and_outer_realization_pins",
+      "line": 907
     },
     {
       "path": "src/FerroUI.Controls/repeater/viewport_tests.rs",
       "name": "detach_and_reparent_reset_viewport_cache_and_anchor_lifetimes",
-      "line": 610
+      "line": 931
+    },
+    {
+      "path": "src/FerroUI.Controls/repeater/viewport_tests.rs",
+      "name": "reparenting_registers_surviving_layout_children_with_the_new_anchor_provider",
+      "line": 962
     },
     {
       "path": "tests/FerroUI.Markup.Xaml.UnitTests/converters/converter_tests.rs",
@@ -16586,127 +16796,147 @@
     {
       "path": "tests/FerroUI.Markup.Xaml.UnitTests/emitter/differential_tests.rs",
       "name": "compiled_repeater_templates_create_native_controls_and_layout",
-      "line": 574
+      "line": 577
     },
     {
       "path": "tests/FerroUI.Markup.Xaml.UnitTests/emitter/differential_tests.rs",
       "name": "compiled_repeater_factory_populates_and_builds_native_dictionary_entries",
-      "line": 590
+      "line": 593
     },
     {
       "path": "tests/FerroUI.Markup.Xaml.UnitTests/emitter/differential_tests.rs",
       "name": "compiled_repeater_bindings_infer_item_data_and_track_collection_changes",
-      "line": 605
+      "line": 608
     },
     {
       "path": "tests/FerroUI.Markup.Xaml.UnitTests/emitter/differential_tests.rs",
       "name": "compiled_repeater_preserves_native_control_items",
-      "line": 629
+      "line": 632
+    },
+    {
+      "path": "tests/FerroUI.Markup.Xaml.UnitTests/emitter/differential_tests.rs",
+      "name": "compiled_repeater_selection_view_bindings_track_native_selection_changes",
+      "line": 647
+    },
+    {
+      "path": "tests/FerroUI.Markup.Xaml.UnitTests/emitter/differential_tests.rs",
+      "name": "compiled_repeater_layout_anchor_info_is_a_native_value",
+      "line": 672
+    },
+    {
+      "path": "tests/FerroUI.Markup.Xaml.UnitTests/emitter/differential_tests.rs",
+      "name": "compiled_source_view_root_preserves_native_reference_and_item_identity",
+      "line": 683
+    },
+    {
+      "path": "tests/FerroUI.Markup.Xaml.UnitTests/emitter/differential_tests.rs",
+      "name": "compiled_selection_root_populates_native_service_and_value_properties",
+      "line": 710
     },
     {
       "path": "tests/FerroUI.Markup.Xaml.UnitTests/emitter/differential_tests.rs",
       "name": "generated_output_is_up_to_date",
-      "line": 644
+      "line": 725
     },
     {
       "path": "tests/FerroUI.Markup.Xaml.UnitTests/emitter/differential_tests.rs",
       "name": "regenerate_emitter_output",
-      "line": 666
+      "line": 747
     },
     {
       "path": "tests/FerroUI.Markup.Xaml.UnitTests/emitter/differential_tests.rs",
       "name": "output_does_not_depend_on_what_ran_before",
-      "line": 687
+      "line": 768
     },
     {
       "path": "tests/FerroUI.Markup.Xaml.UnitTests/emitter/differential_tests.rs",
       "name": "eligibility_of_the_corpus_is_as_expected",
-      "line": 715
+      "line": 796
     },
     {
       "path": "tests/FerroUI.Markup.Xaml.UnitTests/emitter/differential_tests.rs",
       "name": "both_back_ends_build_equal_object_trees",
-      "line": 742
+      "line": 823
     },
     {
       "path": "tests/FerroUI.Markup.Xaml.UnitTests/emitter/differential_tests.rs",
       "name": "documents_that_read_their_base_uri_build_equal_object_trees",
-      "line": 786
+      "line": 867
     },
     {
       "path": "tests/FerroUI.Markup.Xaml.UnitTests/emitter/differential_tests.rs",
       "name": "a_text_is_converted_by_the_type_converter_of_its_property",
-      "line": 819
+      "line": 900
     },
     {
       "path": "tests/FerroUI.Markup.Xaml.UnitTests/emitter/differential_tests.rs",
       "name": "compiled_bindings_read_properties_of_types_generated_code_cannot_name",
-      "line": 845
+      "line": 926
     },
     {
       "path": "tests/FerroUI.Markup.Xaml.UnitTests/emitter/differential_tests.rs",
       "name": "a_list_created_in_markup_is_the_list_of_the_run_time_loader",
-      "line": 874
+      "line": 955
     },
     {
       "path": "tests/FerroUI.Markup.Xaml.UnitTests/emitter/differential_tests.rs",
       "name": "a_method_is_a_command_in_both_back_ends",
-      "line": 937
+      "line": 1018
     },
     {
       "path": "tests/FerroUI.Markup.Xaml.UnitTests/emitter/differential_tests.rs",
       "name": "container_queries_are_built_by_both_back_ends",
-      "line": 999
+      "line": 1080
     },
     {
       "path": "tests/FerroUI.Markup.Xaml.UnitTests/emitter/differential_tests.rs",
       "name": "a_static_resource_in_element_syntax_is_the_value_of_its_property",
-      "line": 1032
+      "line": 1113
     },
     {
       "path": "tests/FerroUI.Markup.Xaml.UnitTests/emitter/differential_tests.rs",
       "name": "a_value_the_dump_cannot_read_fails_the_comparison",
-      "line": 1057
+      "line": 1138
     },
     {
       "path": "tests/FerroUI.Markup.Xaml.UnitTests/emitter/differential_tests.rs",
       "name": "a_failed_build_reports_the_exception_type_of_the_run_time_loader",
-      "line": 1070
+      "line": 1151
     },
     {
       "path": "tests/FerroUI.Markup.Xaml.UnitTests/emitter/differential_tests.rs",
       "name": "a_failure_below_the_first_line_reports_its_line",
-      "line": 1092
+      "line": 1173
     },
     {
       "path": "tests/FerroUI.Markup.Xaml.UnitTests/emitter/differential_tests.rs",
       "name": "a_failed_end_init_is_the_error_of_the_run_time_loader",
-      "line": 1104
+      "line": 1185
     },
     {
       "path": "tests/FerroUI.Markup.Xaml.UnitTests/emitter/differential_tests.rs",
       "name": "compiled_documents_are_registered_by_uri",
-      "line": 1118
+      "line": 1199
     },
     {
       "path": "tests/FerroUI.Markup.Xaml.UnitTests/emitter/differential_tests.rs",
       "name": "a_compiled_document_that_fails_to_build_fails_the_load",
-      "line": 1160
+      "line": 1241
     },
     {
       "path": "tests/FerroUI.Markup.Xaml.UnitTests/emitter/differential_tests.rs",
       "name": "print_transformed_tree",
-      "line": 1196
+      "line": 1277
     },
     {
       "path": "tests/FerroUI.Markup.Xaml.UnitTests/emitter/differential_tests.rs",
       "name": "a_list_built_from_text_is_one_list",
-      "line": 1217
+      "line": 1298
     },
     {
       "path": "tests/FerroUI.Markup.Xaml.UnitTests/emitter/differential_tests.rs",
       "name": "the_position_map_leads_back_to_the_document",
-      "line": 1231
+      "line": 1312
     },
     {
       "path": "tests/FerroUI.Markup.Xaml.UnitTests/emitter/event_handlers.rs",
@@ -16751,12 +16981,12 @@
     {
       "path": "tests/FerroUI.Markup.Xaml.UnitTests/emitter/model_emit.rs",
       "name": "corpus_is_emitted_the_same_against_the_model_type_system",
-      "line": 155
+      "line": 158
     },
     {
       "path": "tests/FerroUI.Markup.Xaml.UnitTests/emitter/model_emit.rs",
       "name": "a_document_the_models_cannot_answer_for_is_refused",
-      "line": 180
+      "line": 183
     },
     {
       "path": "tests/FerroUI.Markup.Xaml.UnitTests/emitter/model_transform.rs",
@@ -17781,82 +18011,92 @@
     {
       "path": "tests/FerroUI.Markup.Xaml.UnitTests/repeater_tests.rs",
       "name": "lined_flow_layout_properties_and_enumerations_load",
-      "line": 90
+      "line": 95
     },
     {
       "path": "tests/FerroUI.Markup.Xaml.UnitTests/repeater_tests.rs",
       "name": "recycling_factory_populates_its_nullable_native_dictionary",
-      "line": 107
+      "line": 112
     },
     {
       "path": "tests/FerroUI.Markup.Xaml.UnitTests/repeater_tests.rs",
       "name": "explicit_factory_templates_property_populates_existing_dictionary",
-      "line": 129
+      "line": 134
     },
     {
       "path": "tests/FerroUI.Markup.Xaml.UnitTests/repeater_tests.rs",
       "name": "resource_factory_and_recycle_pool_are_shared_native_instances",
-      "line": 142
+      "line": 147
     },
     {
       "path": "tests/FerroUI.Markup.Xaml.UnitTests/repeater_tests.rs",
       "name": "a_shared_layout_keeps_host_specific_state",
-      "line": 169
+      "line": 174
     },
     {
       "path": "tests/FerroUI.Markup.Xaml.UnitTests/repeater_tests.rs",
       "name": "layout_panel_uses_children_as_its_content",
-      "line": 190
+      "line": 195
     },
     {
       "path": "tests/FerroUI.Markup.Xaml.UnitTests/repeater_tests.rs",
       "name": "scroll_host_accepts_native_scroll_viewer_content",
-      "line": 207
+      "line": 212
     },
     {
       "path": "tests/FerroUI.Markup.Xaml.UnitTests/repeater_tests.rs",
       "name": "native_controls_in_a_markup_items_source_are_realized_without_wrappers",
-      "line": 223
+      "line": 228
     },
     {
       "path": "tests/FerroUI.Markup.Xaml.UnitTests/repeater_tests.rs",
       "name": "compiled_item_binding_infers_the_typed_source_element_and_tracks_changes",
-      "line": 240
+      "line": 245
     },
     {
       "path": "tests/FerroUI.Markup.Xaml.UnitTests/repeater_tests.rs",
       "name": "recycle_pool_attached_reuse_key_round_trips_in_markup",
-      "line": 282
+      "line": 287
     },
     {
       "path": "tests/FerroUI.Markup.Xaml.UnitTests/repeater_tests.rs",
       "name": "selection_service_loads_native_source_and_index_path",
-      "line": 290
+      "line": 295
+    },
+    {
+      "path": "tests/FerroUI.Markup.Xaml.UnitTests/repeater_tests.rs",
+      "name": "compiled_selection_view_bindings_track_native_selection_changes",
+      "line": 320
     },
     {
       "path": "tests/FerroUI.Markup.Xaml.UnitTests/repeater_tests.rs",
       "name": "repeater_conversions_are_registered_on_subsequent_ui_threads",
-      "line": 315
+      "line": 361
     },
     {
       "path": "tests/FerroUI.Markup.Xaml.UnitTests/repeater_tests.rs",
       "name": "items_source_view_uses_its_native_class_name_and_preserves_binding_identity",
-      "line": 350
+      "line": 396
     },
     {
       "path": "tests/FerroUI.Markup.Xaml.UnitTests/repeater_tests.rs",
       "name": "repeater_runtime_types_have_native_markup_names",
-      "line": 379
+      "line": 425
     },
     {
       "path": "tests/FerroUI.Markup.Xaml.UnitTests/repeater_tests.rs",
       "name": "repeater_service_metadata_has_native_names",
-      "line": 418
+      "line": 464
+    },
+    {
+      "path": "tests/FerroUI.Markup.Xaml.UnitTests/repeater_tests.rs",
+      "name": "repeater_static_helpers_resolve_by_their_declared_markup_namespace",
+      "line": 526
     },
     {
       "path": "tests/FerroUI.Markup.Xaml.UnitTests/repeater_tests.rs",
       "name": "repeater_markup_activation_requires_native_constructor_arguments",
-      "line": 480
+      "line": 545
     },
     {
       "path": "tests/FerroUI.Markup.Xaml.UnitTests/selector_tests_property_equals.rs",
@@ -20247,11 +20487,13 @@
       "include": "MUXControlsTestHooks.h",
       "targets": [
         "src/FerroUI.Base/logging/logger.rs",
+        "src/FerroUI.Controls/repeater/diagnostics.rs",
+        "src/FerroUI.Controls/repeater/view_manager.rs",
         "src/FerroUI.Controls/repeater/repeater_test_hooks.rs",
         "src/FerroUI.Controls/repeater/layouts/layouts_test_hooks.rs"
       ],
       "status": "framework-replacement",
-      "note": "Framework logging and typed test hooks cover portable diagnostics; Windows ETW/profiler registration is platform-specific.",
+      "note": "Native Logger sink/level/area filtering and typed diagnostic hooks replace Windows logging transport. Selected-item lifecycle and arrangement snapshots use weak deferred dispatcher delivery; ETW schemas and per-method upstream trace text are not reproduced.",
       "edges": [
         {
           "source": "controls/dev/Repeater/ItemsRepeaterTrace.h",
@@ -20269,11 +20511,13 @@
       "include": "MuxcTraceLogging.h",
       "targets": [
         "src/FerroUI.Base/logging/logger.rs",
+        "src/FerroUI.Controls/repeater/diagnostics.rs",
+        "src/FerroUI.Controls/repeater/view_manager.rs",
         "src/FerroUI.Controls/repeater/repeater_test_hooks.rs",
         "src/FerroUI.Controls/repeater/layouts/layouts_test_hooks.rs"
       ],
       "status": "framework-replacement",
-      "note": "Framework logging and typed test hooks cover portable diagnostics; Windows ETW/profiler registration is platform-specific.",
+      "note": "Native Logger sink/level/area filtering and typed diagnostic hooks replace Windows logging transport. Selected-item lifecycle and arrangement snapshots use weak deferred dispatcher delivery; ETW schemas and per-method upstream trace text are not reproduced.",
       "edges": [
         {
           "source": "controls/dev/Repeater/BuildTreeScheduler.cpp",
@@ -20567,13 +20811,9 @@
     },
     {
       "include": "RuntimeProfiler.h",
-      "targets": [
-        "src/FerroUI.Base/logging/logger.rs",
-        "src/FerroUI.Controls/repeater/repeater_test_hooks.rs",
-        "src/FerroUI.Controls/repeater/layouts/layouts_test_hooks.rs"
-      ],
-      "status": "framework-replacement",
-      "note": "Framework logging and typed test hooks cover portable diagnostics; Windows ETW/profiler registration is platform-specific.",
+      "targets": [],
+      "status": "platform-diagnostic-omitted",
+      "note": "Windows runtime-profiler class-registration markers have no native FerroUI counterpart and are intentionally omitted. Portable item lifecycle/layout diagnostics use the existing Logger, but do not reproduce profiler marker identifiers or class-registration telemetry.",
       "edges": [
         {
           "source": "controls/dev/Repeater/ItemsRepeater.cpp",
@@ -21042,12 +21282,11 @@
     {
       "include": "WinEventLogLevels.h",
       "targets": [
-        "src/FerroUI.Base/logging/logger.rs",
-        "src/FerroUI.Controls/repeater/repeater_test_hooks.rs",
-        "src/FerroUI.Controls/repeater/layouts/layouts_test_hooks.rs"
+        "src/FerroUI.Base/logging/log_event_level.rs",
+        "src/FerroUI.Controls/repeater/diagnostics.rs"
       ],
       "status": "framework-replacement",
-      "note": "Framework logging and typed test hooks cover portable diagnostics; Windows ETW/profiler registration is platform-specific.",
+      "note": "Native LogEventLevel and installed sink filtering replace Windows event-level constants; selected-item Repeater diagnostics use Information level.",
       "edges": [
         {
           "source": "controls/dev/Repeater/LayoutsTestHooks.h",

@@ -279,20 +279,24 @@
     "ItemsRepeaterTrace": {
       "targets": [
         "src/FerroUI.Base/logging/logger.rs",
+        "src/FerroUI.Controls/repeater/diagnostics.rs",
+        "src/FerroUI.Controls/repeater/view_manager.rs",
         "src/FerroUI.Controls/repeater/repeater_test_hooks.rs",
         "src/FerroUI.Controls/repeater/layouts/layouts_test_hooks.rs"
       ],
       "status": "framework-replacement",
-      "note": "WinUI ETW macros are represented by native logging and typed diagnostic hooks; ETW binary schema is not reproduced."
+      "note": "Native Logger sinks report selected-item Repeater realization/retention/recycling and arrangement snapshots through weak, deferred dispatcher delivery. Typed hooks retain their state and events. ETW schemas, debugger output, individual upstream trace messages and traces from non-Repeater layout hosts are not reproduced."
     },
     "LinedFlowLayoutTrace": {
       "targets": [
         "src/FerroUI.Base/logging/logger.rs",
+        "src/FerroUI.Controls/repeater/diagnostics.rs",
+        "src/FerroUI.Controls/repeater/view_manager.rs",
         "src/FerroUI.Controls/repeater/repeater_test_hooks.rs",
         "src/FerroUI.Controls/repeater/layouts/layouts_test_hooks.rs"
       ],
       "status": "framework-replacement",
-      "note": "WinUI ETW macros are represented by native logging and typed diagnostic hooks; ETW binary schema is not reproduced."
+      "note": "Native Logger sinks report selected-item Repeater realization/retention/recycling and arrangement snapshots through weak, deferred dispatcher delivery. Typed hooks retain their state and events. ETW schemas, debugger output, individual upstream trace messages and traces from non-Repeater layout hosts are not reproduced."
     },
     "ItemsRepeater.idl": {
       "targets": [
@@ -638,38 +642,37 @@
     "MUXControlsTestHooks.h": {
       "targets": [
         "src/FerroUI.Base/logging/logger.rs",
+        "src/FerroUI.Controls/repeater/diagnostics.rs",
+        "src/FerroUI.Controls/repeater/view_manager.rs",
         "src/FerroUI.Controls/repeater/repeater_test_hooks.rs",
         "src/FerroUI.Controls/repeater/layouts/layouts_test_hooks.rs"
       ],
       "status": "framework-replacement",
-      "note": "Framework logging and typed test hooks cover portable diagnostics; Windows ETW/profiler registration is platform-specific."
+      "note": "Native Logger sink/level/area filtering and typed diagnostic hooks replace Windows logging transport. Selected-item lifecycle and arrangement snapshots use weak deferred dispatcher delivery; ETW schemas and per-method upstream trace text are not reproduced."
     },
     "MuxcTraceLogging.h": {
       "targets": [
         "src/FerroUI.Base/logging/logger.rs",
+        "src/FerroUI.Controls/repeater/diagnostics.rs",
+        "src/FerroUI.Controls/repeater/view_manager.rs",
         "src/FerroUI.Controls/repeater/repeater_test_hooks.rs",
         "src/FerroUI.Controls/repeater/layouts/layouts_test_hooks.rs"
       ],
       "status": "framework-replacement",
-      "note": "Framework logging and typed test hooks cover portable diagnostics; Windows ETW/profiler registration is platform-specific."
+      "note": "Native Logger sink/level/area filtering and typed diagnostic hooks replace Windows logging transport. Selected-item lifecycle and arrangement snapshots use weak deferred dispatcher delivery; ETW schemas and per-method upstream trace text are not reproduced."
     },
     "RuntimeProfiler.h": {
-      "targets": [
-        "src/FerroUI.Base/logging/logger.rs",
-        "src/FerroUI.Controls/repeater/repeater_test_hooks.rs",
-        "src/FerroUI.Controls/repeater/layouts/layouts_test_hooks.rs"
-      ],
-      "status": "framework-replacement",
-      "note": "Framework logging and typed test hooks cover portable diagnostics; Windows ETW/profiler registration is platform-specific."
+      "targets": [],
+      "status": "platform-diagnostic-omitted",
+      "note": "Windows runtime-profiler class-registration markers have no native FerroUI counterpart and are intentionally omitted. Portable item lifecycle/layout diagnostics use the existing Logger, but do not reproduce profiler marker identifiers or class-registration telemetry."
     },
     "WinEventLogLevels.h": {
       "targets": [
-        "src/FerroUI.Base/logging/logger.rs",
-        "src/FerroUI.Controls/repeater/repeater_test_hooks.rs",
-        "src/FerroUI.Controls/repeater/layouts/layouts_test_hooks.rs"
+        "src/FerroUI.Base/logging/log_event_level.rs",
+        "src/FerroUI.Controls/repeater/diagnostics.rs"
       ],
       "status": "framework-replacement",
-      "note": "Framework logging and typed test hooks cover portable diagnostics; Windows ETW/profiler registration is platform-specific."
+      "note": "Native LogEventLevel and installed sink filtering replace Windows event-level constants; selected-item Repeater diagnostics use Information level."
     },
     "Utils.h": {
       "targets": [

@@ -131,3 +131,46 @@ Execution results, revisions and remaining platform gates belong in
 [VALIDATION.md](VALIDATION.md). This audit maps the implementation and tests;
 it does not claim that Windows composition or cross-platform visual equivalence
 has been measured.
+
+## Scrolling operations
+
+The compatibility scroll host captures the destination after native layout has
+arranged the target. Its temporary made anchor is then released so intermediate
+animation viewports can realize the correct items. Releasing that anchor must
+not allow the requested control to be recycled before the animation arrives.
+
+`BringIntoViewPins` owns one shared, idempotently released lease per operation.
+It pins the target's realized container and each containing Repeater container,
+retaining only weak owner/control references and their existing virtualization
+records. Cloning pending request state shares the lease. Completion,
+superseding requests, external scrolling, viewer/content replacement, target
+subtree or host detachment, and host disposal release it. Removing the last
+contribution invalidates the
+original owner's measure so the existing pinned pool can be pruned.
+
+Each virtualization record has a pin generation. Terminal transitions to the
+element factory or animator reset pins and advance that generation; stable-key
+reset ownership retains it. A stale operation cannot unpin a newly reused item.
+The same identity check guards animation progress, completion and made-anchor
+release, so an old weak control handle cannot redirect scrolling to a different
+item after recycling. Releasing a lease while its item is temporarily in the
+stable-key reset pool remains valid.
+
+A layout can use `SUPPRESS_AUTO_RECYCLE` while it owns a row, then recycle that
+row into the pinned pool. Once that transfer occurs, the layout no longer
+tracks the row. Remove, Replace and Reset notifications therefore clear
+affected pinned-pool rows independently of the old suppression flag. Stable-key
+reset instead transfers them into the key pool, preserving pin count and
+generation for keys that survive; arrange clears leftovers. This correction to
+the pinned source is recorded as WR-29. It prevents a removed row from retaining
+an obsolete index or blocking reuse of the exact same native control.
+
+The aligned-scroll scenario checks target identity at the first, intermediate
+and final frames, then exact final geometry, offset, realization range and zero
+remaining operation pins. Additional scenarios exercise independent caller
+pins, request replacement, retained detached hosts, nested Repeater pin chains,
+and the same native control removed and reused while an older request is active.
+The stale-request regression checks both an intermediate progress callback and
+later completion. Collection tests cover remove/replace/unkeyed reset and
+stable-key restoration with an independently pinned removed-key leftover.
+These tests use the native animation clock; they do not wait for wall time.

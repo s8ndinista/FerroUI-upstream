@@ -12,8 +12,9 @@ This is the derivation revision already recorded in the implementation's
 [`NOTICE.md`](../../../src/FerroUI.Controls/repeater/NOTICE.md). Moving WinUI
 `main` does not silently change the acceptance target.
 
-On 2026-10-20 the upstream GitHub Contents API identified the same Repeater
-directory tree, [`1de63a85615582e33d24e19795bd73d374195ac1`](https://api.github.com/repos/microsoft/microsoft-ui-xaml/git/trees/1de63a85615582e33d24e19795bd73d374195ac1),
+On 2026-10-20, rechecked on 2026-10-21, the upstream GitHub Contents API
+identified the same Repeater directory tree,
+[`1de63a85615582e33d24e19795bd73d374195ac1`](https://api.github.com/repos/microsoft/microsoft-ui-xaml/git/trees/1de63a85615582e33d24e19795bd73d374195ac1),
 at both this pinned revision and current `main`. The source subtree therefore
 needed no pin update at that checkpoint. This comparison covers Repeater's
 directory contents, not every transitive dependency in the WinUI repository.
@@ -31,8 +32,9 @@ published implementation checkpoints from source mapping and pending checks.
 | [API.md](API.md) | Every defined type/member in the five Repeater IDL files, including preview contracts and private test hooks |
 | [API-SHAPES.md](API-SHAPES.md) | Exact Rust overload spellings, nullability, error boundaries, callbacks and important default/sentinel distinctions |
 | [TESTS.md](TESTS.md) | All 265 upstream test declarations and their Rust scenario mappings |
-| [DEPENDENCIES.md](DEPENDENCIES.md) | Every direct C++ include boundary outside the Repeater directory and its native replacement |
+| [DEPENDENCIES.md](DEPENDENCIES.md) | Every direct C++ include boundary outside the Repeater directory and its native replacement or documented platform omission |
 | [DEVIATIONS.md](DEVIATIONS.md) | Deliberate Rust/framework adaptations and pinned-source corrections |
+| [TRANSITION-LIFECYCLE.md](TRANSITION-LIFECYCLE.md) | Transition cancellation, control reuse, animation completion and scoped scrolling pins |
 | [VALIDATION.md](VALIDATION.md) | Commands, actual execution evidence and the limits of that evidence |
 | [REMAINING.md](REMAINING.md) | Acceptance work that a source or test-name inventory cannot establish |
 | [JOURNAL.md](JOURNAL.md) | Recoverable checkpoints and implementation decisions |
@@ -63,12 +65,23 @@ windows, public item locks and transition-provider creation.
 The supporting implementation contains keyed/template recycling, extensible
 factories, phased template binding, frame scheduling, transition batching and
 completion, reduced-motion queries, diagnostic hooks, hierarchical index paths,
-lazy hierarchical selection and observable selected-item views. Runtime and
-compiled XAML use FerroUI metadata rather than C++/WinRT activation.
+lazy hierarchical selection, read-only selected-item views and observable
+selection-model properties. Runtime and compiled XAML use FerroUI metadata
+rather than C++/WinRT activation.
 
 These statements describe code present in the branch. The generated inventories
 do **not** turn source presence into a claim of complete semantic, native
 platform or visual parity. Each remaining acceptance item stays recorded.
+
+The runnable native example is
+[`ItemsRepeaterPage.xaml`](../../../samples/ControlCatalog/Pages/ItemsRepeaterPage.xaml)
+with its [Rust page implementation](../../../samples/ControlCatalog/Pages/items_repeater_page.rs).
+It switches the four layouts over a notifying 10,000-item collection, supplies
+lined-flow metadata, and exposes insertion, removal, movement and reset.
+The [compiled catalog tests](../../../samples/ControlCatalog/tests/items_repeater_page.rs)
+exercise virtualization, scrolling, metadata constraints and handler lifetime;
+the [browser regression](../../../scripts/browser/tests/repeater.test.mjs)
+checks the rendered page and real wheel input in both browser rendering modes.
 
 ## Regenerating the maps
 
@@ -106,7 +119,10 @@ the extraction; a count alone is not a source integrity check.
 
 `implementation-mapped` means a C++ implementation has named Rust targets.
 `framework-replacement` means an explicit native service replaces a WinRT/Windows
-mechanism. `symbol-found` means an identifier appears in its mapped source,
+mechanism. `platform-diagnostic-omitted` records Windows-only instrumentation
+that is intentionally not reproduced: the dependency map contains 89 native
+replacements and one such omission, runtime-profiler class registration.
+`symbol-found` means an identifier appears in its mapped source,
 including macro declarations; overloads, argument validation and behavior still
 need review and tests. `name-matched` means an existing Rust `#[test]` function
 matches the upstream test name in the mapped suite. None is a test pass count.
