@@ -18,6 +18,7 @@ pub mod remote;
 pub mod shapes;
 pub mod templates;
 pub mod utils;
+pub mod winui;
 
 mod acrylic_platform_compensation_levels;
 mod border;

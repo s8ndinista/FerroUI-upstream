@@ -19,6 +19,16 @@ links = "ferroui_controls_xaml"
 [lib]
 path = "lib.rs"
 
+[[test]]
+name = "winui_navigation"
+path = "tests/winui_navigation.rs"
+required-features = ["testing"]
+
+[[test]]
+name = "winui_number_box"
+path = "tests/winui_number_box.rs"
+required-features = ["testing"]
+
 [dependencies]
 # The hasher of identity-keyed maps on hot paths (the anchor candidates of a scroll presenter).
 rustc-hash = { workspace = true }
@@ -49,3 +59,13 @@ ferroui-build-scan = { workspace = true }
 # The group of the crate in the table of the README (docs/release.md).
 [package.metadata.release]
 group = "controls"
+
+[[test]]
+name = "winui_icons"
+path = "tests/winui_icons.rs"
+required-features = ["testing"]
+
+[[test]]
+name = "winui_radio_buttons"
+path = "tests/winui_radio_buttons.rs"
+required-features = ["testing"]

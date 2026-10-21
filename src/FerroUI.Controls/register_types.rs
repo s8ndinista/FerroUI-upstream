@@ -78,6 +78,7 @@ const NAMESPACES: &[(&str, &str)] = &[
     ("ferroui_controls::split_view::split_view_template_settings", "FerroUI.Controls.Primitives"),
     ("ferroui_controls::templates", "FerroUI.Controls.Templates"),
     ("ferroui_controls::utils", "FerroUI.Controls.Utils"),
+    ("ferroui_controls::winui", "FerroUI.Controls.WinUI"),
 ];
 
 /// What this crate states about itself for markup: its assembly name and
@@ -121,10 +122,21 @@ pub fn register_types() {
         crate::rust_paths::register_rust_paths();
         MarkupAssembly::register(&ASSEMBLY);
         crate::markup_types::register();
+        crate::winui::register_markup_types();
     });
 }
 
 const TYPES: &[&TypeInfo] = types![
+    // Opt-in WinUI contracts. These are not part of the default XML namespace.
+    crate::winui::Page,
+    crate::winui::Frame,
+    crate::winui::PageStackEntry,
+    crate::winui::NumberBox,
+    crate::winui::NumberBoxAutomationPeer,
+    crate::winui::FontIcon,
+    crate::winui::SymbolIcon,
+    crate::winui::RadioButtons,
+    crate::winui::RadioButtonsAutomationPeer,
     // FerroUI
     crate::application::Application,
     // FerroUI.Animation

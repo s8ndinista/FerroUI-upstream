@@ -1713,6 +1713,84 @@ pub fn visual_layer_manager() -> El<ferroui_controls::primitives::VisualLayerMan
     El::new()
 }
 
+pub use ferroui_controls::winui::FontIcon as WinUIFontIcon;
+
+impl ViewClass for ferroui_controls::winui::FontIcon {
+    fn create() -> ferroui_base::Ref<Self> {
+        <ferroui_controls::winui::FontIcon>::new()
+    }
+}
+
+/// Starts an element of [`WinUIFontIcon`](ferroui_controls::winui::FontIcon).
+pub fn win_ui_font_icon() -> El<ferroui_controls::winui::FontIcon> {
+    El::new()
+}
+
+pub use ferroui_controls::winui::Frame as WinUIFrame;
+
+impl ViewClass for ferroui_controls::winui::Frame {
+    fn create() -> ferroui_base::Ref<Self> {
+        <ferroui_controls::winui::Frame>::new()
+    }
+}
+
+/// Starts an element of [`WinUIFrame`](ferroui_controls::winui::Frame).
+pub fn win_ui_frame() -> El<ferroui_controls::winui::Frame> {
+    El::new()
+}
+
+pub use ferroui_controls::winui::NumberBox as WinUINumberBox;
+
+impl ViewClass for ferroui_controls::winui::NumberBox {
+    fn create() -> ferroui_base::Ref<Self> {
+        <ferroui_controls::winui::NumberBox>::new()
+    }
+}
+
+/// Starts an element of [`WinUINumberBox`](ferroui_controls::winui::NumberBox).
+pub fn win_ui_number_box() -> El<ferroui_controls::winui::NumberBox> {
+    El::new()
+}
+
+pub use ferroui_controls::winui::Page as WinUIPage;
+
+impl ViewClass for ferroui_controls::winui::Page {
+    fn create() -> ferroui_base::Ref<Self> {
+        <ferroui_controls::winui::Page>::new()
+    }
+}
+
+/// Starts an element of [`WinUIPage`](ferroui_controls::winui::Page).
+pub fn win_ui_page() -> El<ferroui_controls::winui::Page> {
+    El::new()
+}
+
+pub use ferroui_controls::winui::RadioButtons as WinUIRadioButtons;
+
+impl ViewClass for ferroui_controls::winui::RadioButtons {
+    fn create() -> ferroui_base::Ref<Self> {
+        <ferroui_controls::winui::RadioButtons>::new()
+    }
+}
+
+/// Starts an element of [`WinUIRadioButtons`](ferroui_controls::winui::RadioButtons).
+pub fn win_ui_radio_buttons() -> El<ferroui_controls::winui::RadioButtons> {
+    El::new()
+}
+
+pub use ferroui_controls::winui::SymbolIcon as WinUISymbolIcon;
+
+impl ViewClass for ferroui_controls::winui::SymbolIcon {
+    fn create() -> ferroui_base::Ref<Self> {
+        <ferroui_controls::winui::SymbolIcon>::new()
+    }
+}
+
+/// Starts an element of [`WinUISymbolIcon`](ferroui_controls::winui::SymbolIcon).
+pub fn win_ui_symbol_icon() -> El<ferroui_controls::winui::SymbolIcon> {
+    El::new()
+}
+
 pub use ferroui_controls::Window;
 
 impl ViewClass for ferroui_controls::Window {
@@ -7544,6 +7622,140 @@ pub trait VisualBrushProps: ElementBuilder {
     }
 }
 impl<T: ObjectType + Upcast<ferroui_base::media::VisualBrush>> VisualBrushProps for El<T> {}
+
+/// The properties and routed events of [`WinUIFontIcon`](ferroui_controls::winui::FontIcon).
+pub trait WinUIFontIconProps: ElementBuilder {
+    /// Sets [`WinUIFontIcon::glyph_property`](ferroui_controls::winui::FontIcon::glyph_property).
+    fn glyph<M>(self, value: impl IntoProp<String, M>) -> Self {
+        self.prop(<ferroui_controls::winui::FontIcon>::glyph_property(), value)
+    }
+
+    /// Sets [`WinUIFontIcon::mirrored_when_right_to_left_property`](ferroui_controls::winui::FontIcon::mirrored_when_right_to_left_property).
+    fn mirrored_when_right_to_left<M>(self, value: impl IntoProp<bool, M>) -> Self {
+        self.prop(<ferroui_controls::winui::FontIcon>::mirrored_when_right_to_left_property(), value)
+    }
+}
+impl<T: ObjectType + Upcast<ferroui_controls::winui::FontIcon>> WinUIFontIconProps for El<T> {}
+
+/// The properties and routed events of [`WinUIFrame`](ferroui_controls::winui::Frame).
+pub trait WinUIFrameProps: ElementBuilder {
+    /// Sets [`WinUIFrame::cache_size_property`](ferroui_controls::winui::Frame::cache_size_property).
+    fn cache_size<M>(self, value: impl IntoProp<i32, M>) -> Self {
+        self.prop(<ferroui_controls::winui::Frame>::cache_size_property(), value)
+    }
+
+    /// Sets [`WinUIFrame::is_navigation_stack_enabled_property`](ferroui_controls::winui::Frame::is_navigation_stack_enabled_property).
+    fn is_navigation_stack_enabled<M>(self, value: impl IntoProp<bool, M>) -> Self {
+        self.prop(<ferroui_controls::winui::Frame>::is_navigation_stack_enabled_property(), value)
+    }
+}
+impl<T: ObjectType + Upcast<ferroui_controls::winui::Frame>> WinUIFrameProps for El<T> {}
+
+/// The properties and routed events of [`WinUINumberBox`](ferroui_controls::winui::NumberBox).
+pub trait WinUINumberBoxProps: ElementBuilder {
+    /// Sets [`WinUINumberBox::minimum_property`](ferroui_controls::winui::NumberBox::minimum_property).
+    fn minimum<M>(self, value: impl IntoProp<f64, M>) -> Self {
+        self.prop(<ferroui_controls::winui::NumberBox>::minimum_property(), value)
+    }
+
+    /// Sets [`WinUINumberBox::maximum_property`](ferroui_controls::winui::NumberBox::maximum_property).
+    fn maximum<M>(self, value: impl IntoProp<f64, M>) -> Self {
+        self.prop(<ferroui_controls::winui::NumberBox>::maximum_property(), value)
+    }
+
+    /// Sets [`WinUINumberBox::value_property`](ferroui_controls::winui::NumberBox::value_property).
+    fn value<M>(self, value: impl IntoProp<f64, M>) -> Self {
+        self.prop(<ferroui_controls::winui::NumberBox>::value_property(), value)
+    }
+
+    /// Sets [`WinUINumberBox::small_change_property`](ferroui_controls::winui::NumberBox::small_change_property).
+    fn small_change<M>(self, value: impl IntoProp<f64, M>) -> Self {
+        self.prop(<ferroui_controls::winui::NumberBox>::small_change_property(), value)
+    }
+
+    /// Sets [`WinUINumberBox::large_change_property`](ferroui_controls::winui::NumberBox::large_change_property).
+    fn large_change<M>(self, value: impl IntoProp<f64, M>) -> Self {
+        self.prop(<ferroui_controls::winui::NumberBox>::large_change_property(), value)
+    }
+
+    /// Sets [`WinUINumberBox::text_property`](ferroui_controls::winui::NumberBox::text_property).
+    fn text<M>(self, value: impl IntoProp<String, M>) -> Self {
+        self.prop(<ferroui_controls::winui::NumberBox>::text_property(), value)
+    }
+
+    /// Sets [`WinUINumberBox::header_property`](ferroui_controls::winui::NumberBox::header_property).
+    fn header<M>(self, value: impl IntoProp<Option<ferroui_base::BoxedValue>, M>) -> Self {
+        self.prop(<ferroui_controls::winui::NumberBox>::header_property(), value)
+    }
+
+    /// Sets [`WinUINumberBox::header_template_property`](ferroui_controls::winui::NumberBox::header_template_property).
+    fn header_template<M>(self, value: impl IntoProp<Option<std::rc::Rc<dyn ferroui_controls::templates::IDataTemplate>>, M>) -> Self {
+        self.prop(<ferroui_controls::winui::NumberBox>::header_template_property(), value)
+    }
+
+    /// Sets [`WinUINumberBox::description_property`](ferroui_controls::winui::NumberBox::description_property).
+    fn description<M>(self, value: impl IntoProp<Option<ferroui_base::BoxedValue>, M>) -> Self {
+        self.prop(<ferroui_controls::winui::NumberBox>::description_property(), value)
+    }
+
+    /// Sets [`WinUINumberBox::placeholder_text_property`](ferroui_controls::winui::NumberBox::placeholder_text_property).
+    fn placeholder_text<M>(self, value: impl IntoProp<String, M>) -> Self {
+        self.prop(<ferroui_controls::winui::NumberBox>::placeholder_text_property(), value)
+    }
+
+    /// Sets [`WinUINumberBox::text_alignment_property`](ferroui_controls::winui::NumberBox::text_alignment_property).
+    fn text_alignment<M>(self, value: impl IntoProp<ferroui_base::media::TextAlignment, M>) -> Self {
+        self.prop(<ferroui_controls::winui::NumberBox>::text_alignment_property(), value)
+    }
+
+    /// Sets [`WinUINumberBox::validation_mode_property`](ferroui_controls::winui::NumberBox::validation_mode_property).
+    fn validation_mode<M>(self, value: impl IntoProp<ferroui_controls::winui::NumberBoxValidationMode, M>) -> Self {
+        self.prop(<ferroui_controls::winui::NumberBox>::validation_mode_property(), value)
+    }
+
+    /// Sets [`WinUINumberBox::spin_button_placement_mode_property`](ferroui_controls::winui::NumberBox::spin_button_placement_mode_property).
+    fn spin_button_placement_mode<M>(self, value: impl IntoProp<ferroui_controls::winui::NumberBoxSpinButtonPlacementMode, M>) -> Self {
+        self.prop(<ferroui_controls::winui::NumberBox>::spin_button_placement_mode_property(), value)
+    }
+
+    /// Sets [`WinUINumberBox::is_wrap_enabled_property`](ferroui_controls::winui::NumberBox::is_wrap_enabled_property).
+    fn is_wrap_enabled<M>(self, value: impl IntoProp<bool, M>) -> Self {
+        self.prop(<ferroui_controls::winui::NumberBox>::is_wrap_enabled_property(), value)
+    }
+
+    /// Sets [`WinUINumberBox::accepts_expression_property`](ferroui_controls::winui::NumberBox::accepts_expression_property).
+    fn accepts_expression<M>(self, value: impl IntoProp<bool, M>) -> Self {
+        self.prop(<ferroui_controls::winui::NumberBox>::accepts_expression_property(), value)
+    }
+}
+impl<T: ObjectType + Upcast<ferroui_controls::winui::NumberBox>> WinUINumberBoxProps for El<T> {}
+
+/// The properties and routed events of [`WinUIPage`](ferroui_controls::winui::Page).
+pub trait WinUIPageProps: ElementBuilder {
+    /// Sets [`WinUIPage::navigation_cache_mode_property`](ferroui_controls::winui::Page::navigation_cache_mode_property).
+    fn navigation_cache_mode<M>(self, value: impl IntoProp<ferroui_controls::winui::NavigationCacheMode, M>) -> Self {
+        self.prop(<ferroui_controls::winui::Page>::navigation_cache_mode_property(), value)
+    }
+}
+impl<T: ObjectType + Upcast<ferroui_controls::winui::Page>> WinUIPageProps for El<T> {}
+
+/// The properties and routed events of [`WinUIRadioButtons`](ferroui_controls::winui::RadioButtons).
+pub trait WinUIRadioButtonsProps: ElementBuilder {
+    /// Sets [`WinUIRadioButtons::max_columns_property`](ferroui_controls::winui::RadioButtons::max_columns_property).
+    fn max_columns<M>(self, value: impl IntoProp<i32, M>) -> Self {
+        self.prop(<ferroui_controls::winui::RadioButtons>::max_columns_property(), value)
+    }
+}
+impl<T: ObjectType + Upcast<ferroui_controls::winui::RadioButtons>> WinUIRadioButtonsProps for El<T> {}
+
+/// The properties and routed events of [`WinUISymbolIcon`](ferroui_controls::winui::SymbolIcon).
+pub trait WinUISymbolIconProps: ElementBuilder {
+    /// Sets [`WinUISymbolIcon::symbol_property`](ferroui_controls::winui::SymbolIcon::symbol_property).
+    fn symbol<M>(self, value: impl IntoProp<ferroui_controls::winui::Symbol, M>) -> Self {
+        self.prop(<ferroui_controls::winui::SymbolIcon>::symbol_property(), value)
+    }
+}
+impl<T: ObjectType + Upcast<ferroui_controls::winui::SymbolIcon>> WinUISymbolIconProps for El<T> {}
 
 /// The properties and routed events of [`Window`](ferroui_controls::Window).
 pub trait WindowProps: ElementBuilder {

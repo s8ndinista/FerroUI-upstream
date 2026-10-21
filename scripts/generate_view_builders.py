@@ -189,6 +189,10 @@ class Model:
         self.properties = {}       # owner -> [(kind, snake, type, target, accessor)]
         self.events = {}           # owner -> [(snake, args)]
         self.left_out = []
+        # Opt-in contracts can have the same simple name as an established
+        # class (Page). Keep their identities separate throughout inheritance
+        # and property resolution; a later scan must never replace the original.
+        self.scoped_names = {}
 
     def add_path(self, name, path):
         if name in self.paths and self.paths[name] != path:
@@ -203,12 +207,21 @@ def read_paths(model, directory, crate):
         if path.startswith("ferro_rust_paths"):
             continue
         name = path.split("::")[-1]
+        if crate == "ferroui_controls" and path.startswith("winui::"):
+            alias = "WinUI" + name
+            model.scoped_names[name] = alias
+            name = alias
         model.add_path(name, f"{crate}::{path}")
 
 
 def read_classes(model, directory, crate):
     for path in rust_files(os.path.join(ROOT, directory)):
         text = strip_comments(read(path))
+        if crate == "ferroui_controls" and os.path.relpath(path, os.path.join(ROOT, directory)).split(os.sep)[0] == "winui":
+            # The declaration reader below uses identifiers as keys. Qualify
+            # only identifiers in the opt-in module, including property types
+            # and bases, so Page and WinUIPage can coexist in the same output.
+            text = re.sub(r"\b[A-Z]\w*\b", lambda m: model.scoped_names.get(m.group(0), m.group(0)), text)
         for match in re.finditer(r"ferro_class!\s*[({]\s*([A-Z]\w*)\s*:\s*([A-Z]\w*)", text):
             model.bases[match.group(1)] = match.group(2)
             model.crate_of[match.group(1)] = crate
@@ -350,7 +363,8 @@ def generate(model, crates=None, title="FerroUI.Base and FerroUI.Controls", atta
             function = ident(snake(name))
             if function not in used_functions:
                 used_functions.add(function)
-                functions.append(f"pub use {path};\n")
+                alias = f" as {name}" if path.split("::")[-1] != name else ""
+                functions.append(f"pub use {path}{alias};\n")
                 functions.append(f"impl ViewClass for {path} {{\n    fn create() -> ferroui_base::Ref<Self> {{\n        <{path}>::new()\n    }}\n}}\n")
                 functions.append(f"/// Starts an element of [`{name}`]({path}).\npub fn {function}() -> El<{path}> {{\n    El::new()\n}}\n")
         inherited = set(names_of(model.bases[name])) if model.bases.get(name) else set()
