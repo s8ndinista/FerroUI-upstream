@@ -4728,6 +4728,9 @@ fn do_drag_drop_goes_through_the_platform_drag_source() {
 #[path = "text_input/text_input_method_revision_tests.rs"]
 mod text_input_method_revision_tests;
 
+#[path = "text_input/text_input_method_options_tests.rs"]
+mod text_input_method_options_tests;
+
 use text_input::{
     ContextMenuAction, ITextInputMethodImpl, TextInputContentType, TextInputMethodClient, TextInputMethodClientEvents,
     TextInputMethodClientRequeryRequestedEventArgs, TextInputOptions, TextInputReturnKeyType, TextSelection,

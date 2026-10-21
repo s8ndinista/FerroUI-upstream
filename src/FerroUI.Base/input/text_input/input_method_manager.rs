@@ -5,7 +5,7 @@ use super::{
 use crate::input::{InputElement, InputMethod};
 use crate::interactivity::{Interactive, RoutedEventHandlerToken};
 use crate::reactive::IDisposable;
-use crate::{Rect, Ref, WeakRef};
+use crate::{FerroProperty, Rect, Ref, WeakRef};
 use std::cell::{Cell, RefCell};
 use std::rc::{Rc, Weak};
 
@@ -29,6 +29,22 @@ fn same_input_method(
         (None, None) => true,
         _ => false,
     }
+}
+
+fn is_input_options_property(property: &FerroProperty) -> bool {
+    [
+        TextInputOptions::content_type_property().as_property(),
+        TextInputOptions::return_key_type_property().as_property(),
+        TextInputOptions::multiline_property().as_property(),
+        TextInputOptions::lowercase_property().as_property(),
+        TextInputOptions::uppercase_property().as_property(),
+        TextInputOptions::auto_capitalization_property().as_property(),
+        TextInputOptions::is_sensitive_property().as_property(),
+        TextInputOptions::show_suggestions_property().as_property(),
+        TextInputOptions::locale_hints_property().as_property(),
+    ]
+    .iter()
+    .any(|candidate| candidate.id() == property.id())
 }
 
 /// Connects a semantic text owner to its root's input method. Keyboard focus may
@@ -196,22 +212,41 @@ impl TextInputMethodManager {
                 }))
             };
             let reset = {
-                let weak = self.this.clone();
+                let (weak, sender) = (self.this.clone(), sender.clone());
                 client.reset_requested(Rc::new(move || {
                     if let Some(this) = weak.upgrade() {
                         this.on_reset_requested(&sender);
                     }
                 }))
             };
+            let mut subscriptions = vec![cursor, view, reset];
+            if let Some(owner) = owner {
+                let weak = self.this.clone();
+                let weak_owner = owner.downgrade();
+                subscriptions.push(owner.property_changed(move |event| {
+                    if event.is_effective_value_change()
+                        && is_input_options_property(event.property())
+                    {
+                        if let Some(this) = weak.upgrade() {
+                            // Reset retires a connection without reinstalling these
+                            // subscriptions. Check semantic identity here, then fence
+                            // this publication with the current binding generation.
+                            if this.owner() == weak_owner.upgrade()
+                                && this.is_current_client(&sender)
+                            {
+                                this.update_input_options(this.generation.get());
+                            }
+                        }
+                    }
+                }));
+            }
             if !self.current(generation) {
-                for subscription in [cursor, view, reset] {
+                for subscription in subscriptions {
                     subscription.dispose();
                 }
                 return;
             }
-            self.client_subscriptions
-                .borrow_mut()
-                .extend([cursor, view, reset]);
+            self.client_subscriptions.borrow_mut().extend(subscriptions);
             self.populate_im_with_initial_values(generation);
         } else if same_im {
             if let Some(im) = self.im() {
@@ -224,12 +259,7 @@ impl TextInputMethodManager {
         let Some(im) = self.im() else {
             return;
         };
-        let options = self
-            .owner()
-            .map_or_else(TextInputOptions::default_options, |owner| {
-                TextInputOptions::from_styled_element(&owner)
-            });
-        im.set_options(&options);
+        self.update_input_options(generation);
         if !self.current(generation) {
             return;
         }
@@ -242,6 +272,48 @@ impl TextInputMethodManager {
         im.set_client(client);
         if self.current(generation) {
             self.update_cursor_rect();
+        }
+    }
+
+    fn input_options(&self) -> TextInputOptions {
+        self.owner()
+            .map_or_else(TextInputOptions::default_options, |owner| {
+                TextInputOptions::from_styled_element(&owner)
+            })
+    }
+
+    fn update_input_options(&self, mut generation: u64) {
+        loop {
+            if !self.current(generation) {
+                return;
+            }
+            let Some(im) = self.im() else {
+                return;
+            };
+            let options = self.input_options();
+            // Property getters and the backend can call application code. Never
+            // retain manager borrows or install a captured client after that code
+            // changes the binding. Option changes alone do not reset composition.
+            if !self.current(generation) {
+                return;
+            }
+            im.set_options(&options);
+
+            generation = self.generation.get();
+            if !self.current(generation)
+                || self.client().is_none()
+                || !same_input_method(Some(&im), self.im().as_ref())
+            {
+                return;
+            }
+            let latest = self.input_options();
+            if self.current(generation) && latest == options {
+                return;
+            }
+            // A native setter may finish applying the old value after a
+            // callback updates options or replaces its client. Reapply the
+            // current owner's values only after that older setter returns.
+            generation = self.generation.get();
         }
     }
 

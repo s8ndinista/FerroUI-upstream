@@ -149,6 +149,9 @@ mod exact_tests;
 #[path = "rich_edit_composition_event_tests.rs"]
 mod composition_event_tests;
 
+#[path = "rich_edit_input_options_tests.rs"]
+mod input_options_tests;
+
 #[test]
 fn rich_input_method_start_preserves_styled_selection_and_commit_is_one_undo_unit() {
     let f = Fixture::new(true);

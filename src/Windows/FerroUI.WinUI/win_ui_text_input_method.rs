@@ -49,6 +49,7 @@ pub(crate) use imp::WinUITextInputMethod;
 #[cfg(windows)]
 mod imp {
     use super::{clamp, length, requested_units, splice, substring};
+    use crate::core_text_input_options::CoreTextInputOptions;
     use crate::core_text_synchronization::CoreTextSynchronization;
     use crate::ferro_swap_chain_panel::FerroSwapChainPanel;
     use crate::interop::event_handlers::*;
@@ -60,9 +61,9 @@ mod imp {
         IRawInputEventArgs, RawKeyEventArgs, RawKeyEventType, RawTextInputEventArgs,
     };
     use ferroui_base::input::text_input::{
-        ITextInputMethodImpl, TextInputContentType, TextInputMethodClient,
-        TextInputMethodComposition, TextInputMethodConnection, TextInputMethodEdit,
-        TextInputMethodState, TextInputOptions, TextSelection,
+        ITextInputMethodImpl, TextInputMethodClient, TextInputMethodComposition,
+        TextInputMethodConnection, TextInputMethodEdit, TextInputMethodState, TextInputOptions,
+        TextSelection,
     };
     use ferroui_base::input::{
         IInputDevice, IInputRoot, IKeyboardDevice, Key, KeyDeviceType, PhysicalKey,
@@ -88,6 +89,7 @@ mod imp {
         get_keyboard_device: KeyboardDeviceGetter,
 
         edit_context: RefCell<Option<ComPtr<ICoreTextEditContext>>>,
+        input_options: CoreTextInputOptions,
         client: RefCell<Option<Rc<dyn TextInputMethodClient>>>,
         /// The subscriptions to the events of the client.
         client_events: RefCell<Vec<Rc<dyn IDisposable>>>,
@@ -142,6 +144,7 @@ mod imp {
                 get_input_root,
                 get_keyboard_device,
                 edit_context: RefCell::new(None),
+                input_options: CoreTextInputOptions::default(),
                 client: RefCell::new(None),
                 client_events: RefCell::new(Vec::new()),
                 has_focus: Cell::new(false),
@@ -163,10 +166,13 @@ mod imp {
         }
 
         fn get_or_create_context(&self) -> Option<ComPtr<ICoreTextEditContext>> {
-            if let Some(edit_context) = self.edit_context.borrow().as_ref() {
-                return Some(edit_context.clone());
+            let existing = self.edit_context.borrow().clone();
+            if let Some(edit_context) = existing {
+                self.apply_input_options(&edit_context);
+                return Some(edit_context);
             }
 
+            let generation = self.client_generation.get();
             let ctx = (|| -> Result<ComPtr<ICoreTextEditContext>, HResult> {
                 let statics = factory::<ICoreTextServicesManagerStatics>(
                     "Windows.UI.Text.Core.CoreTextServicesManager",
@@ -174,7 +180,6 @@ mod imp {
                 let manager = statics.get_for_current_view()?.ok_or(HResult::POINTER)?;
                 let ctx = manager.create_edit_context()?.ok_or(HResult::POINTER)?;
                 ctx.set_input_pane_display_policy(CoreTextInputPaneDisplayPolicy::Automatic)?;
-                ctx.set_input_scope(CoreTextInputScope::Text)?;
 
                 macro_rules! subscribe {
                     ($add:ident, $handler:ident, $method:ident) => {
@@ -247,8 +252,31 @@ mod imp {
                 }
             };
 
+            // Context factories and event registration can invoke application
+            // callbacks. A replacement client may already have created its own
+            // context; an older initialization must not overwrite it.
+            if generation != self.client_generation.get() {
+                return self.edit_context.borrow().clone();
+            }
             *self.edit_context.borrow_mut() = Some(ctx.clone());
+            self.apply_input_options(&ctx);
             Some(ctx)
+        }
+
+        fn apply_input_options(&self, context: &ICoreTextEditContext) {
+            if let Err(error) = self
+                .input_options
+                .apply(|scope| context.set_input_scope(scope))
+            {
+                if let Some(logger) =
+                    Logger::try_get(LogEventLevel::Warning, LogArea::WINUI_PLATFORM)
+                {
+                    logger.log(
+                        None,
+                        &format!("Applying CoreText input options failed: {error}"),
+                    );
+                }
+            }
         }
 
         /// Called by the panel when it gains/loses focus.
@@ -1026,18 +1054,11 @@ mod imp {
         }
 
         fn set_options(&self, options: &TextInputOptions) {
+            self.input_options.update(options);
             let Some(edit_context) = self.edit_context.borrow().clone() else {
                 return;
             };
-            let _ = edit_context.set_input_scope(match options.content_type {
-                TextInputContentType::Email => CoreTextInputScope::EmailAddress,
-                TextInputContentType::Number => CoreTextInputScope::Number,
-                TextInputContentType::Password => CoreTextInputScope::Password,
-                TextInputContentType::Digits => CoreTextInputScope::Digits,
-                TextInputContentType::Url => CoreTextInputScope::Url,
-                TextInputContentType::Search => CoreTextInputScope::Search,
-                _ => CoreTextInputScope::Text,
-            });
+            self.apply_input_options(&edit_context);
         }
 
         fn reset(&self) {
