@@ -226,9 +226,16 @@ impl ViewManager {
             return;
         }
         let index = info.index();
-        if self.stable_reset_pending.get() && info.is_held_by_layout() {
+        if self.stable_reset_pending.get()
+            && (info.is_held_by_layout() || info.is_in_pinned_pool())
+        {
             self.reset_pool.add(info.unique_id(), element.clone());
-            info.move_ownership_to_unique_id_reset_pool_from_layout();
+            if info.is_in_pinned_pool() {
+                self.pinned.borrow_mut().retain(|pinned| pinned != element);
+                info.move_ownership_to_unique_id_reset_pool_from_pinned_pool();
+            } else {
+                info.move_ownership_to_unique_id_reset_pool_from_layout();
+            }
             self.untrack(index, element);
         } else if !info.is_in_pinned_pool() && owner.transition_manager().clear_element(element) {
             self.untrack(index, element);
@@ -395,11 +402,15 @@ impl ViewManager {
                 for element in elements {
                     let info = ItemsRepeater::get_virtualization_info(&element);
                     let index = info.index();
-                    if args.action == Remove
-                        && index >= start
+                    if index >= start
                         && index < start + count
-                        && info.auto_recycle_candidate()
+                        && (info.is_in_pinned_pool()
+                            || (args.action == Remove && info.auto_recycle_candidate()))
                     {
+                        // A layout may suppress auto-recycling while it owns
+                        // the element, then release it into the pinned pool.
+                        // That layout no longer tracks this row and cannot
+                        // retire it when its source item is removed/replaced.
                         owner.clear_element_impl(&element);
                     } else if index >= start + count {
                         self.update_element_index(owner, &element, index + added - count);
@@ -438,7 +449,8 @@ impl ViewManager {
                         .is_some_and(|items| items.has_key_index_mapping()),
                 );
                 for element in elements {
-                    if ItemsRepeater::get_virtualization_info(&element).auto_recycle_candidate() {
+                    let info = ItemsRepeater::get_virtualization_info(&element);
+                    if info.auto_recycle_candidate() || info.is_in_pinned_pool() {
                         owner.clear_element_impl(&element);
                     }
                 }

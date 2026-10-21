@@ -22,6 +22,7 @@ pub struct VirtualizationInfo {
     owner: Cell<ElementOwner>,
     index: Cell<i32>,
     pin_counter: Cell<u32>,
+    pin_generation: Cell<u64>,
     unique_id: RefCell<String>,
     arrange_bounds: Cell<Rect>,
     phase: Cell<i32>,
@@ -44,6 +45,7 @@ impl Default for VirtualizationInfo {
             owner: Cell::new(ElementOwner::ElementFactory),
             index: Cell::new(-1),
             pin_counter: Cell::new(0),
+            pin_generation: Cell::new(0),
             unique_id: RefCell::new(String::new()),
             arrange_bounds: Cell::new(Self::INVALID_RECT),
             phase: Cell::new(Self::PHASE_NOT_SPECIFIED),
@@ -77,6 +79,24 @@ impl VirtualizationInfo {
     }
     pub fn pin_count(&self) -> u32 {
         self.pin_counter.get()
+    }
+    pub(crate) fn pin_generation(&self) -> u64 {
+        self.pin_generation.get()
+    }
+    /// Release a scoped operation's contribution only while it still belongs
+    /// to this realization. Stable-key reset ownership retains that identity.
+    pub(crate) fn release_scoped_pin(&self, generation: u64) -> bool {
+        if self.pin_generation.get() != generation || !self.is_pinned() {
+            return false;
+        }
+        let count = self.pin_counter.get() - 1;
+        self.pin_counter.set(count);
+        count == 0
+    }
+    fn reset_pins(&self) {
+        self.pin_counter.set(0);
+        self.pin_generation
+            .set(self.pin_generation.get().wrapping_add(1));
     }
     pub fn is_held_by_layout(&self) -> bool {
         self.owner() == ElementOwner::Layout
@@ -163,13 +183,17 @@ impl VirtualizationInfo {
     pub fn move_ownership_to_element_factory(&self) {
         assert_ne!(self.owner(), ElementOwner::ElementFactory);
         self.owner.set(ElementOwner::ElementFactory);
-        self.pin_counter.set(0);
+        self.reset_pins();
         self.index.set(-1);
         self.unique_id.borrow_mut().clear();
         self.arrange_bounds.set(Self::INVALID_RECT);
     }
     pub fn move_ownership_to_unique_id_reset_pool_from_layout(&self) {
         assert_eq!(self.owner(), ElementOwner::Layout);
+        self.owner.set(ElementOwner::UniqueIdResetPool);
+    }
+    pub(crate) fn move_ownership_to_unique_id_reset_pool_from_pinned_pool(&self) {
+        assert_eq!(self.owner(), ElementOwner::PinnedPool);
         self.owner.set(ElementOwner::UniqueIdResetPool);
     }
     pub fn move_ownership_to_animator(&self) {
@@ -179,7 +203,7 @@ impl VirtualizationInfo {
         ));
         self.owner.set(ElementOwner::Animator);
         self.index.set(-1);
-        self.pin_counter.set(0);
+        self.reset_pins();
     }
     pub fn move_ownership_to_pinned_pool(&self) {
         assert_eq!(self.owner(), ElementOwner::Layout);

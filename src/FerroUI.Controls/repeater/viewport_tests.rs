@@ -625,13 +625,31 @@ fn can_bring_into_view_elements_with_alignment_and_animation() {
             let time = step as f64 * 1000.0;
             clock.pulse(time);
             settle(&root);
+            assert_eq!(
+                repeater.try_get_element(index),
+                Some(target.clone()),
+                "target {index} at animation start"
+            );
             clock.pulse(time + 125.0);
             settle(&root);
+            assert_eq!(
+                repeater.try_get_element(index),
+                Some(target.clone()),
+                "target {index} during animation"
+            );
             clock.pulse(time + 251.0);
             settle(&root);
         }
         assert!(!host.has_pending_bring_into_view());
-        assert_eq!(repeater.try_get_element(index), Some(target.clone()));
+        assert_eq!(
+            repeater.try_get_element(index),
+            Some(target.clone()),
+            "target {index} after completion"
+        );
+        assert_eq!(
+            ItemsRepeater::get_virtualization_info(&target).pin_count(),
+            0
+        );
         assert_eq!(target.bounds().size(), Size::new(390.0, 94.0));
         assert_eq!(target.desired_size(), Size::new(400.0, 104.0));
         assert!(
@@ -667,6 +685,247 @@ fn can_bring_into_view_elements_with_alignment_and_animation() {
             "repeating the same aligned request is a no-op"
         );
     }
+}
+
+fn hosted_repeater(
+    source: ItemsSource,
+) -> (
+    Ref<TestRoot>,
+    Ref<ItemsRepeaterScrollHost>,
+    Ref<ScrollViewer>,
+    Ref<ItemsRepeater>,
+) {
+    let repeater = ItemsRepeater::new();
+    repeater.set_horizontal_cache_length(0.0);
+    repeater.set_vertical_cache_length(0.0);
+    repeater.set_data_template(Some(FuncDataTemplate::new(
+        |_| true,
+        |_, _| {
+            let item = Border::new();
+            item.set_height(20.0);
+            Some(item.upcast())
+        },
+        true,
+    )));
+    repeater.set_items_source(Some(source));
+    let scroll = viewer(&repeater.clone().upcast(), None);
+    scroll.set_horizontal_scroll_bar_visibility(ScrollBarVisibility::Disabled);
+    let host = ItemsRepeaterScrollHost::new();
+    host.set_width(200.0);
+    host.set_height(200.0);
+    host.set_scroll_viewer(Some(scroll.clone()));
+    let root = TestRoot::with_child(&host);
+    root.execute_initial_layout_pass();
+    settle(&root);
+    (root, host, scroll, repeater)
+}
+
+#[test]
+fn cancelling_a_host_bring_preserves_independent_pins_and_releases_its_target() {
+    let _scope = test_scope();
+    let clock = super::services_tests::TestClock::install();
+    let (root, host, scroll, repeater) = hosted_repeater(ItemsSource::from_values(0..200));
+    let target = repeater.get_or_create_element(100);
+    repeater.pin_element(&target);
+    let info = ItemsRepeater::get_virtualization_info(&target);
+    host.start_bring_into_view(&target, 0.0, 0.0, 0.0, 0.0, true);
+    assert_eq!(info.pin_count(), 2);
+    settle(&root);
+    clock.pulse(0.0);
+    clock.pulse(100.0);
+    settle(&root);
+    assert_eq!(repeater.try_get_element(100), Some(target.clone()));
+    scroll.set_offset(Vector::new(0.0, 20.0));
+    assert!(!host.has_pending_bring_into_view());
+    assert_eq!(
+        info.pin_count(),
+        1,
+        "the caller's pin remains owned by the caller"
+    );
+    clock.pulse(251.0);
+    settle(&root);
+    assert_eq!(scroll.offset().y, 20.0);
+    assert_eq!(repeater.try_get_element(100), Some(target.clone()));
+    repeater.unpin_element(&target);
+    settle(&root);
+    assert!(repeater.try_get_element(100).is_none());
+}
+
+#[test]
+fn replacing_and_detaching_host_bring_releases_each_operation_pin() {
+    let _scope = test_scope();
+    let clock = super::services_tests::TestClock::install();
+    let (root, host, _, repeater) = hosted_repeater(ItemsSource::from_values(0..200));
+    let first = repeater.get_or_create_element(80);
+    host.start_bring_into_view(&first, 0.0, 0.0, 0.0, 0.0, true);
+    let first_info = ItemsRepeater::get_virtualization_info(&first);
+    assert_eq!(first_info.pin_count(), 1);
+    let second = repeater.get_or_create_element(100);
+    host.start_bring_into_view(&second, 0.0, 0.0, 0.0, 0.0, true);
+    assert_eq!(first_info.pin_count(), 0);
+    let second_info = ItemsRepeater::get_virtualization_info(&second);
+    assert_eq!(second_info.pin_count(), 1);
+    settle(&root);
+    clock.pulse(0.0);
+    assert!(host.has_pending_bring_into_view());
+    root.set_child(None::<Ref<Control>>);
+    assert!(!host.has_pending_bring_into_view());
+    assert_eq!(
+        second_info.pin_count(),
+        0,
+        "a retained detached host releases its lease"
+    );
+    clock.pulse(500.0);
+    assert_eq!(second_info.pin_count(), 0);
+}
+
+#[test]
+fn replacing_or_detaching_host_content_cancels_an_obsolete_target() {
+    let _scope = test_scope();
+    let clock = super::services_tests::TestClock::install();
+    for replace_content in [false, true] {
+        let (root, host, scroll, repeater) = hosted_repeater(ItemsSource::from_values(0..200));
+        let wrapper = Border::new();
+        scroll.set_content(None);
+        wrapper.set_child(&repeater);
+        scroll.set_content(Some(Control::boxed(&wrapper)));
+        settle(&root);
+        let target = repeater.get_or_create_element(100);
+        host.start_bring_into_view(&target, 0.0, 0.0, 0.0, 0.0, true);
+        settle(&root);
+        clock.pulse(0.0);
+        let info = ItemsRepeater::get_virtualization_info(&target);
+        assert_eq!(info.pin_count(), 1);
+        if replace_content {
+            scroll.set_content(Some(Control::boxed(Border::new())));
+        } else {
+            // The host/viewer stay attached, and the target still belongs to
+            // its original repeater. The full ancestry nevertheless changed.
+            wrapper.set_child(None::<Ref<Control>>);
+        }
+        let before = scroll.offset();
+        clock.pulse(251.0);
+        assert_eq!(scroll.offset(), before);
+        assert!(!host.has_pending_bring_into_view());
+        assert_eq!(info.pin_count(), 0);
+    }
+}
+
+#[test]
+fn source_mutations_clear_offscreen_pins_released_by_layout() {
+    use ferroui_base::collections::{FerroList, NotifyCollectionChangedAction};
+    for action in [
+        NotifyCollectionChangedAction::Remove,
+        NotifyCollectionChangedAction::Replace,
+        NotifyCollectionChangedAction::Reset,
+    ] {
+        let _scope = test_scope();
+        let clock = super::services_tests::TestClock::install();
+        let source = Rc::new(FerroList::from_items(0..200));
+        let (root, host, scroll, repeater) = hosted_repeater(source.clone().into());
+        let target = repeater.get_or_create_element(100);
+        host.start_bring_into_view(&target, 0.0, 0.0, 0.0, 0.0, true);
+        settle(&root);
+        clock.pulse(0.0);
+        let before = scroll.offset();
+        let info = ItemsRepeater::get_virtualization_info(&target);
+        assert_eq!(info.owner(), super::ElementOwner::PinnedPool);
+        assert!(!info.auto_recycle_candidate());
+        match action {
+            NotifyCollectionChangedAction::Remove => source.remove_at(100),
+            NotifyCollectionChangedAction::Replace => source.set(100, 999),
+            NotifyCollectionChangedAction::Reset => source.clear(),
+            _ => unreachable!(),
+        }
+        assert_eq!(
+            info.owner(),
+            super::ElementOwner::ElementFactory,
+            "{action:?}"
+        );
+        assert_eq!(info.pin_count(), 0, "{action:?}");
+        assert_eq!(repeater.get_element_index(&target), -1, "{action:?}");
+        clock.pulse(125.0);
+        assert!(!host.has_pending_bring_into_view(), "{action:?}");
+        assert_eq!(scroll.offset(), before, "{action:?}");
+    }
+}
+
+#[test]
+fn stale_host_bring_cannot_scroll_or_unpin_a_recycled_target() {
+    use ferroui_base::collections::FerroList;
+    let _scope = test_scope();
+    let clock = super::services_tests::TestClock::install();
+    let source = Rc::new(FerroList::from_items((0..200).map(|_| {
+        let item = Border::new();
+        item.set_height(20.0);
+        item.upcast::<Control>()
+    })));
+    let (root, host, scroll, repeater) = hosted_repeater(source.clone().into());
+    repeater.set_data_template(None);
+    settle(&root);
+    let target = repeater.get_or_create_element(100);
+    host.start_bring_into_view(&target, 0.0, 0.0, 0.0, 0.0, true);
+    settle(&root);
+    clock.pulse(0.0);
+    let before = scroll.offset();
+    source.remove_at(100);
+    source.insert(0, target.clone());
+    let replacement = repeater.get_or_create_element(0);
+    assert_eq!(
+        replacement, target,
+        "reuse the exact native control for a different item position"
+    );
+    repeater.pin_element(&replacement);
+    let info = ItemsRepeater::get_virtualization_info(&replacement);
+    assert_eq!(info.pin_count(), 1);
+    clock.pulse(125.0);
+    assert!(!host.has_pending_bring_into_view());
+    assert_eq!(
+        scroll.offset(),
+        before,
+        "the obsolete animation cannot commit its destination"
+    );
+    assert_eq!(
+        info.pin_count(),
+        1,
+        "the obsolete lease cannot release the new realization's pin"
+    );
+    assert_eq!(
+        repeater.viewport_manager.made_anchor(),
+        Some(replacement.clone())
+    );
+    clock.pulse(251.0);
+    assert_eq!(scroll.offset(), before);
+    assert_eq!(info.pin_count(), 1);
+    assert_eq!(
+        repeater.viewport_manager.made_anchor(),
+        Some(replacement.clone())
+    );
+    repeater.unpin_element(&replacement);
+}
+
+#[test]
+fn detaching_a_nested_host_bring_releases_inner_and_outer_realization_pins() {
+    let _scope = test_scope();
+    let _clock = super::services_tests::TestClock::install();
+    let (root, host, scroll, inner) = hosted_repeater(ItemsSource::from_values(0..200));
+    let outer = ItemsRepeater::new();
+    scroll.set_content(None);
+    outer.set_items_source(Some(ItemsSource::from_items([Some(Control::boxed(
+        &inner,
+    ))])));
+    scroll.set_content(Some(Control::boxed(&outer)));
+    settle(&root);
+    let target = inner.get_or_create_element(100);
+    host.start_bring_into_view(&target, 0.0, 0.0, 0.0, 0.0, true);
+    let inner_info = ItemsRepeater::get_virtualization_info(&target);
+    let outer_info = ItemsRepeater::get_virtualization_info(&inner);
+    assert_eq!(inner_info.pin_count(), 1);
+    assert_eq!(outer_info.pin_count(), 1);
+    root.set_child(None::<Ref<Control>>);
+    assert_eq!(inner_info.pin_count(), 0);
+    assert_eq!(outer_info.pin_count(), 0);
+    assert!(!host.has_pending_bring_into_view());
 }
 
 #[test]

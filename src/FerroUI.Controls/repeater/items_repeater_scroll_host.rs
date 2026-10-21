@@ -2,9 +2,10 @@
 // Licensed under the MIT License. See LICENSE in the project root for license information.
 
 use super::animation_manager::RepeaterAnimationProxy;
+use super::{ItemsRepeater, VirtualizationInfo};
 use crate::{
-    register_scroll_anchor_provider, Control, ControlImpl, IScrollAnchorProvider, Panel, PanelImpl,
-    ScrollViewer,
+    register_scroll_anchor_provider, ContentControl, Control, ControlImpl, IScrollAnchorProvider,
+    Panel, PanelImpl, ScrollViewer,
 };
 use ferroui_base::animation::easings::{Easing, SplineEasing};
 use ferroui_base::animation::{Animation, Cue, FillMode, IClock, IGlobalClock, KeyFrame, TimeSpan};
@@ -19,7 +20,7 @@ use ferroui_base::{
     ferro_class, ferro_class_info, ferro_impl_classes, ferro_properties, instantiate, FerroLocator,
     FerroObjectImpl, FerroObjectImplExt, FerroProperty, FerroPropertyChangedEventArgs,
     LocatorExtensions, Point, Rect, Ref, Size, StyledElementImpl, StyledProperty, Vector, Visual,
-    VisualImpl, WeakRef,
+    VisualImpl, VisualImplExt, VisualTreeAttachmentEventArgs, WeakRef,
 };
 use std::cell::{Cell, RefCell};
 use std::rc::Rc;
@@ -39,6 +40,83 @@ struct BringIntoViewState {
     animate: bool,
     change_view_called: bool,
     change_view_offset: Vector,
+    pins: Rc<BringIntoViewPins>,
+}
+
+struct BringIntoViewPin {
+    owner: WeakRef<ItemsRepeater>,
+    element: WeakRef<Control>,
+    info: Rc<VirtualizationInfo>,
+    generation: u64,
+}
+
+/// One shared lease per operation, independent of the temporary layout anchor.
+/// Cloning a pending request must not add or release another pin contribution.
+struct BringIntoViewPins {
+    pins: Vec<BringIntoViewPin>,
+    released: Cell<bool>,
+}
+
+impl BringIntoViewPins {
+    fn acquire(element: &Ref<Control>) -> Rc<Self> {
+        let mut pins = Vec::new();
+        let mut child = element.clone().upcast::<Visual>();
+        while let Some(parent) = child.visual_parent() {
+            if let (Some(owner), Some(element)) =
+                (parent.cast::<ItemsRepeater>(), child.cast::<Control>())
+            {
+                if let Some(info) = ItemsRepeater::try_get_virtualization_info(&element)
+                    .filter(|info| info.is_realized())
+                {
+                    info.add_pin();
+                    let generation = info.pin_generation();
+                    pins.push(BringIntoViewPin {
+                        owner: owner.downgrade(),
+                        element: element.downgrade(),
+                        info,
+                        generation,
+                    });
+                }
+            }
+            child = parent;
+        }
+        Rc::new(Self {
+            pins,
+            released: Cell::new(false),
+        })
+    }
+
+    fn is_valid(&self) -> bool {
+        self.pins.iter().all(|pin| {
+            pin.info.pin_generation() == pin.generation
+                && pin
+                    .owner
+                    .upgrade()
+                    .zip(pin.element.upgrade())
+                    .is_some_and(|(owner, element)| {
+                        element.visual_parent().as_ref() == Some(&owner.upcast::<Visual>())
+                    })
+        })
+    }
+
+    fn release(&self) {
+        if self.released.replace(true) {
+            return;
+        }
+        for pin in &self.pins {
+            if pin.info.release_scoped_pin(pin.generation) {
+                if let Some(owner) = pin.owner.upgrade() {
+                    owner.invalidate_measure();
+                }
+            }
+        }
+    }
+}
+
+impl Drop for BringIntoViewPins {
+    fn drop(&mut self) {
+        self.release();
+    }
 }
 
 struct ScrollAnimation {
@@ -120,8 +198,15 @@ ferro_class_info!(ItemsRepeaterScrollHost {
     },
 });
 ferro_impl_classes!(ItemsRepeaterScrollHost:
-    StyledElementImpl, VisualImpl, InteractiveImpl, InputElementImpl, ControlImpl, PanelImpl
+    StyledElementImpl, InteractiveImpl, InputElementImpl, ControlImpl, PanelImpl
 );
+
+impl VisualImpl for ItemsRepeaterScrollHost {
+    fn on_detached_from_visual_tree(this: &Self, args: &VisualTreeAttachmentEventArgs) {
+        this.cancel_scroll_animation();
+        Self::parent_on_detached_from_visual_tree(this, args);
+    }
+}
 
 impl FerroObjectImpl for ItemsRepeaterScrollHost {
     fn constructed(this: &Self) {
@@ -339,6 +424,7 @@ impl ItemsRepeaterScrollHost {
             animate,
             change_view_called: false,
             change_view_offset: Vector::default(),
+            pins: BringIntoViewPins::acquire(element),
         });
         self.invalidate_arrange();
     }
@@ -477,6 +563,9 @@ impl ItemsRepeaterScrollHost {
                     }
                     this.invalidate_anchor();
                     this.raise_viewport_changed(!this.has_pending_bring_into_view());
+                } else if change.property() == ContentControl::content_property().as_property() {
+                    this.cancel_scroll_animation();
+                    this.invalidate_anchor();
                 } else if change.property() == ScrollViewer::viewport_property().as_property()
                     || change.property() == ScrollViewer::extent_property().as_property()
                 {
@@ -497,14 +586,14 @@ impl ItemsRepeaterScrollHost {
         self.invalidate_measure();
     }
     fn set_offset(&self, viewer: &ScrollViewer, offset: Vector) {
-        struct Reset<'a>(&'a Cell<bool>);
+        struct Reset<'a>(&'a Cell<bool>, bool);
         impl Drop for Reset<'_> {
             fn drop(&mut self) {
-                self.0.set(false);
+                self.0.set(self.1);
             }
         }
-        self.changing_offset.set(true);
-        let _reset = Reset(&self.changing_offset);
+        let previous = self.changing_offset.replace(true);
+        let _reset = Reset(&self.changing_offset, previous);
         viewer.set_current_value(ScrollViewer::offset_property(), offset);
     }
     fn track_element(&self, element: &Control, previous: Rect, viewer: &ScrollViewer) {
@@ -541,6 +630,13 @@ impl ItemsRepeaterScrollHost {
         let Some(viewer) = self.scroll_viewer() else {
             return;
         };
+        let bring = self.pending_bring.borrow().clone();
+        if bring
+            .as_ref()
+            .is_some_and(|bring| !self.bring_target_is_current(bring))
+        {
+            self.cancel_scroll_animation();
+        }
         if self
             .pending_bring
             .borrow()
@@ -564,6 +660,10 @@ impl ItemsRepeaterScrollHost {
         let Some(mut bring) = self.pending_bring.borrow().clone() else {
             return;
         };
+        if !self.bring_target_is_current(&bring) {
+            self.cancel_scroll_animation();
+            return;
+        }
         let Some(target) = bring.target.upgrade() else {
             self.pending_bring.borrow_mut().take();
             return;
@@ -607,8 +707,9 @@ impl ItemsRepeaterScrollHost {
         bring.change_view_called = true;
         *self.pending_bring.borrow_mut() = Some(bring.clone());
         // The target has completed its first arrange and the destination is
-        // captured. Release its temporary realization anchor at the native
-        // layout boundary, matching the source's next rendering callback.
+        // captured. Release its temporary layout anchor at the native frame
+        // boundary; the operation's scoped pins retain target identity while
+        // intermediate animation viewports realize a different set of items.
         self.notify_bring_finished(&bring);
         let clock = viewer.clock().or_else(|| {
             FerroLocator::current()
@@ -642,6 +743,18 @@ impl ItemsRepeaterScrollHost {
         let weak_viewer = viewer.downgrade();
         proxy.set_changed(Some(Rc::new(move |progress| {
             if let (Some(this), Some(viewer)) = (weak.upgrade(), weak_viewer.upgrade()) {
+                let bring = this
+                    .pending_bring
+                    .borrow()
+                    .clone()
+                    .filter(|bring| bring.id == id);
+                let Some(bring) = bring else {
+                    return;
+                };
+                if !this.bring_target_is_current(&bring) {
+                    this.cancel_scroll_animation();
+                    return;
+                }
                 if this
                     .animation
                     .borrow()
@@ -688,6 +801,10 @@ impl ItemsRepeaterScrollHost {
         let Some(bring) = bring else {
             return;
         };
+        if !self.bring_target_is_current(&bring) {
+            self.cancel_scroll_animation();
+            return;
+        }
         // Native Animation invokes completion before applying its final fill.
         // Commit the destination while the operation still owns the offset;
         // disposing its private animation target must not strand the previous
@@ -706,6 +823,7 @@ impl ItemsRepeaterScrollHost {
         self.pending_bring.borrow_mut().take();
         let finished = self.animation.borrow_mut().take();
         drop(finished);
+        bring.pins.release();
         self.invalidate_anchor();
         self.notify_bring_finished(&bring);
         self.raise_viewport_changed(true);
@@ -714,6 +832,9 @@ impl ItemsRepeaterScrollHost {
         // Remove the pending identity before cancellation invokes completion.
         let bring = self.pending_bring.borrow_mut().take();
         let animation = self.animation.borrow_mut().take();
+        if let Some(bring) = &bring {
+            bring.pins.release();
+        }
         if let Some(animation) = animation {
             animation.cancellation.cancel();
         }
@@ -722,6 +843,9 @@ impl ItemsRepeaterScrollHost {
         }
     }
     fn notify_bring_finished(&self, bring: &BringIntoViewState) {
+        if !self.bring_target_is_current(bring) {
+            return;
+        }
         let Some(target) = bring.target.upgrade() else {
             return;
         };
@@ -745,6 +869,24 @@ impl ItemsRepeaterScrollHost {
             }
             ancestor = parent.visual_parent();
         }
+    }
+
+    fn bring_target_is_current(&self, bring: &BringIntoViewState) -> bool {
+        if !bring.pins.is_valid() {
+            return false;
+        }
+        let host = self.to_ref().upcast::<Visual>();
+        let mut ancestor = bring
+            .target
+            .upgrade()
+            .map(|target| target.upcast::<Visual>());
+        while let Some(visual) = ancestor {
+            if visual == host {
+                return true;
+            }
+            ancestor = visual.visual_parent();
+        }
+        false
     }
 }
 

@@ -450,6 +450,79 @@ fn validate_stable_reset_reuses_by_key_and_clears_leftovers_after_arrange() {
 }
 
 #[test]
+fn stable_reset_preserves_layout_released_pins_by_key_and_clears_leftovers() {
+    let _scope = test_scope();
+    let (repeater, window, factory) = fixture(0, &[]);
+    let source = KeyedSource::new(&["keep", "remove"]);
+    repeater.set_items_source(Some(ItemsSource::new(source.clone())));
+    *window.requests.borrow_mut() = vec![
+        (0, ElementRealizationOptions::SUPPRESS_AUTO_RECYCLE),
+        (1, ElementRealizationOptions::SUPPRESS_AUTO_RECYCLE),
+    ];
+    layout(&repeater);
+    let retained = repeater.try_get_element(0).unwrap();
+    let removed = repeater.try_get_element(1).unwrap();
+    let retained_info = ItemsRepeater::get_virtualization_info(&retained);
+    let removed_info = ItemsRepeater::get_virtualization_info(&removed);
+    let retained_generation = retained_info.pin_generation();
+    let removed_generation = removed_info.pin_generation();
+    repeater.pin_element(&retained);
+    repeater.pin_element(&removed);
+
+    // Flow layouts suppress automatic recycling, then explicitly release
+    // offscreen rows. Once pinned, these rows no longer belong to the layout.
+    let released = [retained.clone(), removed.clone()];
+    *window.measure_hook.borrow_mut() = Some(Rc::new(move |context| {
+        for element in &released {
+            context.recycle_element(element);
+        }
+    }));
+    window.set_indices(&[]);
+    layout(&repeater);
+    window.measure_hook.borrow_mut().take();
+    for info in [&retained_info, &removed_info] {
+        assert_eq!(info.owner(), ElementOwner::PinnedPool);
+        assert!(!info.auto_recycle_candidate());
+        assert_eq!(info.pin_count(), 1);
+    }
+    assert!(window.live.borrow().is_empty());
+
+    source.reset(&["new", "keep"]);
+    assert!(repeater.realized_elements().is_empty());
+    for info in [&retained_info, &removed_info] {
+        assert_eq!(info.owner(), ElementOwner::UniqueIdResetPool);
+        assert_eq!(info.pin_count(), 1);
+    }
+    assert_eq!(retained_info.pin_generation(), retained_generation);
+    assert_eq!(removed_info.pin_generation(), removed_generation);
+    assert!(factory.cleared.borrow().is_empty());
+
+    window.set_indices(&[1]);
+    repeater.measure(Size::new(100.0, 100.0));
+    assert_eq!(repeater.try_get_element(1), Some(retained.clone()));
+    assert_eq!(retained_info.owner(), ElementOwner::Layout);
+    assert_eq!(retained_info.index(), 1);
+    assert_eq!(retained_info.pin_count(), 1);
+    assert_eq!(retained_info.pin_generation(), retained_generation);
+    assert_eq!(removed_info.owner(), ElementOwner::UniqueIdResetPool);
+    assert!(factory.cleared.borrow().is_empty());
+
+    repeater.arrange(Rect::new(0.0, 0.0, 100.0, 100.0));
+    assert_eq!(&*factory.cleared.borrow(), &[removed.clone()]);
+    assert_eq!(removed_info.owner(), ElementOwner::ElementFactory);
+    assert_eq!(removed_info.pin_count(), 0);
+    assert_ne!(removed_info.pin_generation(), removed_generation);
+    assert_eq!(factory.created.get(), 2);
+
+    // Returning from the reset pool must also remove its old pinned-pool
+    // membership: unpinning a row still requested by layout cannot clear it.
+    repeater.unpin_element(&retained);
+    layout(&repeater);
+    assert_eq!(repeater.try_get_element(1), Some(retained));
+    assert_eq!(&*factory.cleared.borrow(), &[removed]);
+}
+
+#[test]
 fn source_change_and_drop_unsubscribe() {
     let _scope = test_scope();
     let first = Rc::new(FerroList::from_items([1, 2]));
