@@ -182,7 +182,7 @@ impl WinUITextInputMethod {
         };
         let result = (|| -> Result<(), HResult> {
             let request = args.request()?.ok_or(HResult::POINTER)?;
-            if request.is_canceled()? || !self.layout_request_is_current(&state) {
+            if request.is_canceled()? != 0 || !self.layout_request_is_current(&state) {
                 return Ok(());
             }
             let Some(owner) = self.capture_layout_owner(&state) else {
@@ -196,7 +196,7 @@ impl WinUITextInputMethod {
             // These are text/control bounds, never candidate-window bounds.
             geometry.publish(
                 || {
-                    request.is_canceled().is_ok_and(|canceled| !canceled)
+                    request.is_canceled().is_ok_and(|canceled| canceled == 0)
                         && self.layout_sender_is_current(sender)
                         && self.layout_owner_is_current(&state, &owner)
                 },
