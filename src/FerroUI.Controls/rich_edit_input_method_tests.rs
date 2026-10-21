@@ -267,6 +267,91 @@ fn rich_input_method_external_selection_and_document_mutations_invalidate_sessio
 }
 
 #[test]
+fn rich_input_method_preview_cursor_updates_preserve_committed_selection_notifications() {
+    use ferroui_base::input::text_input::TextSelection;
+
+    let f = Fixture::new(true);
+    let input = f.owner.text_input_method_client();
+    let seen = Rc::new(RefCell::new(Vec::new()));
+    let recorded = seen.clone();
+    let weak_input = Rc::downgrade(&input);
+    let subscription = input.selection_changed(Rc::new(move || {
+        recorded
+            .borrow_mut()
+            .push(weak_input.upgrade().unwrap().selection());
+    }));
+    let session = f.connection().begin_composition().unwrap();
+    for cursor in [1, 3, 0, 4] {
+        session.update("候😀補", Some(cursor)).unwrap();
+        assert_eq!(f.owner.text(), "a候😀補d");
+        assert_eq!(input.selection(), TextSelection::new(1, 3));
+        assert!(session.is_current());
+        assert!(seen.borrow().is_empty());
+    }
+    assert!(session.cancel().unwrap());
+    assert_eq!(f.owner.text(), "abcd");
+    assert_eq!(input.selection(), TextSelection::new(1, 3));
+    assert!(seen.borrow().is_empty());
+    assert!(!f.owner.can_undo());
+
+    let session = f.connection().begin_composition().unwrap();
+    session.update("候😀補", Some(3)).unwrap();
+    assert!(session.commit("確😀", 1).unwrap());
+    assert_eq!(&*seen.borrow(), &[TextSelection::new(4, 4)]);
+    assert!(f.owner.undo().unwrap());
+    assert_eq!(
+        &*seen.borrow(),
+        &[TextSelection::new(4, 4), TextSelection::new(1, 3)]
+    );
+    assert!(f.owner.redo().unwrap());
+    assert_eq!(
+        &*seen.borrow(),
+        &[
+            TextSelection::new(4, 4),
+            TextSelection::new(1, 3),
+            TextSelection::new(4, 4),
+        ]
+    );
+    subscription.dispose();
+}
+
+#[test]
+fn rich_input_method_external_caret_round_trip_invalidates_preview_without_selection_events() {
+    let f = Fixture::new(true);
+    let session = f.connection().begin_composition().unwrap();
+    session.update("preview", Some(3)).unwrap();
+    let input = f.owner.text_input_method_client();
+    let committed = input.selection();
+    let visible = (f.owner.selection_start(), f.owner.selection_end());
+    let snapshot = f.owner.document().snapshot();
+    let count = Rc::new(Cell::new(0));
+    let recorded = count.clone();
+    let subscription = input.selection_changed(Rc::new(move || {
+        recorded.set(recorded.get() + 1);
+    }));
+
+    // Do not query the session or its revision between the two changes. Merely
+    // comparing the final selection with the last queried one misses this case.
+    f.owner.select(0, 0);
+    f.owner.select(visible.0, visible.1);
+
+    assert_eq!(input.selection(), committed);
+    assert_eq!(count.get(), 0);
+    assert!(!session.is_current());
+    assert_eq!(
+        session.update("stale", None),
+        Err(TextInputMethodError::StateChanged)
+    );
+    assert_eq!(
+        session.commit("stale", 0),
+        Err(TextInputMethodError::StateChanged)
+    );
+    assert_eq!(f.owner.document().snapshot(), snapshot);
+    assert_eq!((f.owner.selection_start(), f.owner.selection_end()), visible);
+    subscription.dispose();
+}
+
+#[test]
 fn rich_input_method_reset_and_new_composition_retire_captured_sessions() {
     let f = Fixture::new(true);
     let connection = f.connection();

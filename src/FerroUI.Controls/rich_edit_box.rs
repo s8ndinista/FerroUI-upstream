@@ -216,7 +216,6 @@ pub struct RichEditBox {
     editor_subscription: RefCell<Option<Rc<dyn IDisposable>>>,
     projecting_selection: Cell<bool>,
     last_input_selection: Cell<EditorSelection>,
-    last_visible_input_selection: Cell<EditorSelection>,
     last_text: RefCell<String>,
     document_generation: Cell<u64>,
     header_presenter: RefCell<Option<Ref<ContentPresenter>>>,
@@ -736,7 +735,6 @@ impl RichEditBox {
             editor_subscription: RefCell::new(None),
             projecting_selection: Cell::new(false),
             last_input_selection: Cell::new(EditorSelection::default()),
-            last_visible_input_selection: Cell::new(EditorSelection::default()),
             last_text: RefCell::new(String::new()),
             document_generation: Cell::new(0),
             header_presenter: RefCell::new(None),
@@ -1635,14 +1633,14 @@ impl RichEditBox {
     fn notify_input_method_selection(&self) {
         let editor = self.editor();
         let selection = editor.input_method_selection();
-        let visible_selection = editor.selection();
         let committed_changed = self.last_input_selection.replace(selection) != selection;
-        let visible_changed = self.last_visible_input_selection.replace(visible_selection)
-            != visible_selection;
-        // Legacy surrounding-text queries intentionally retain the committed
-        // selection during preedit. The visible selection is still client state:
-        // an external caret move must invalidate a captured platform session.
-        if committed_changed || visible_changed {
+        // Observe every accepted visible change, including an external caret move
+        // away and back between native callbacks. The intrinsic revision fences
+        // captured sessions independently of the legacy event, whose selection
+        // getter intentionally stays in committed coordinates during preedit.
+        // Preview cursor movement must not announce a committed selection change.
+        self.im_client.input_method_state_revision();
+        if committed_changed {
             self.im_client.raise_selection_changed();
         }
     }

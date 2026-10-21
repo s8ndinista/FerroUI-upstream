@@ -191,6 +191,71 @@ fn rich_exact_composition_canceled_visible_selection_keeps_the_native_session_cu
 }
 
 #[test]
+fn rich_exact_composition_directed_selection_changes_only_publish_after_commit() {
+    let f = Fixture::new(true);
+    let input = f.owner.text_input_method_client();
+    let seen = Rc::new(RefCell::new(Vec::new()));
+    let recorded = seen.clone();
+    let weak_input = Rc::downgrade(&input);
+    let subscription = input.selection_changed(Rc::new(move || {
+        recorded
+            .borrow_mut()
+            .push(weak_input.upgrade().unwrap().selection());
+    }));
+    let session = f.connection().begin_composition().unwrap();
+    session.apply_edit(&edit(1, 3, "😀XYZ", 3, 3)).unwrap();
+    session.select_exact(TextSelection::new(6, 1)).unwrap();
+    session.select_exact(TextSelection::new(5, 3)).unwrap();
+    assert_eq!(input.selection(), TextSelection::new(1, 3));
+    assert_eq!(
+        f.connection().edit_state().unwrap().selection,
+        TextSelection::new(5, 3)
+    );
+    assert!(session.is_current());
+    assert!(seen.borrow().is_empty());
+    assert!(session.complete(0).unwrap());
+    assert_eq!(f.owner.text(), "a😀XYZd");
+    assert_eq!(&*seen.borrow(), &[TextSelection::new(5, 3)]);
+    assert!(f.owner.undo().unwrap());
+    assert_eq!(f.owner.text(), "abcd");
+    assert_eq!(
+        &*seen.borrow(),
+        &[TextSelection::new(5, 3), TextSelection::new(1, 3)]
+    );
+    subscription.dispose();
+}
+
+#[test]
+fn rich_exact_composition_external_selection_round_trip_invalidates_native_requests() {
+    let f = Fixture::new(true);
+    let session = f.connection().begin_composition().unwrap();
+    session.apply_edit(&edit(1, 3, "😀XYZ", 6, 3)).unwrap();
+    let input = f.owner.text_input_method_client();
+    let committed = input.selection();
+    let snapshot = f.owner.document().snapshot();
+    let count = Rc::new(Cell::new(0));
+    let recorded = count.clone();
+    let subscription = input.selection_changed(Rc::new(move || {
+        recorded.set(recorded.get() + 1);
+    }));
+
+    f.owner.select(3, 6);
+    f.owner.select(6, 3);
+
+    assert_eq!(input.selection(), committed);
+    assert_eq!(count.get(), 0);
+    assert!(!session.is_current());
+    assert_eq!(
+        session.select_exact(TextSelection::new(3, 3)),
+        Err(TextInputMethodError::StateChanged)
+    );
+    assert_eq!(session.complete(0), Err(TextInputMethodError::StateChanged));
+    assert_eq!(f.owner.document().snapshot(), snapshot);
+    assert_eq!((f.owner.selection_start(), f.owner.selection_end()), (6, 3));
+    subscription.dispose();
+}
+
+#[test]
 fn rich_exact_composition_rejects_external_mutation_before_document_batch_notification() {
     let f = Fixture::new(true);
     let session = f.connection().begin_composition().unwrap();
