@@ -666,6 +666,9 @@ impl EditorShell {
             if let Some(text) = control.downcast_ref::<TextBlock>() {
                 state["text"] = json!(text.text());
             }
+            if let Some(check) = control.downcast_ref::<CheckBox>() {
+                state["checked"] = json!(check.is_checked());
+            }
             if let Some(choice) = control.downcast_ref::<ComboBox>() {
                 // Popups have a separate visual ancestry. Report the realized
                 // item's actual keyboard focus instead of inferring it from

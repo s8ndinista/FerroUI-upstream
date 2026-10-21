@@ -142,6 +142,11 @@ export async function regionPaintRegressions(page, reference, check, helpers, ou
     await page.keyboard.press("Control+a");
     await page.keyboard.insertText("not-a-color");
     await page.keyboard.press("Enter");
+    await clickNative(page, "PaintVisible0", "ModalViewport");
+    assert.deepEqual(await documentState(page), added, "An invalid color draft refuses a visibility change without changing the region target");
+    assert.equal((await state(page)).historyLength, downDepth);
+    assert.equal((await state(page)).chrome.PaintVisible0.checked, true, "A rejected visibility change restores the committed native checkbox state");
+    assert.equal((await state(page)).chrome.PaintColor0.text, "not-a-color");
     await clickNative(page, "PaintDown0", "ModalViewport");
     assert.deepEqual(await documentState(page), added, "An invalid draft refuses structural paint edits without changing the region target");
     assert.equal((await state(page)).historyLength, downDepth);
@@ -228,4 +233,52 @@ export async function regionPaintRegressions(page, reference, check, helpers, ou
     await importFixture(page, inherited);
     assert.deepEqual(await documentState(page), inherited);
     check("Shift-click makes one region transparent without deleting its identity; Use layer fills restores inheritance, both edits undo/redo exactly, and the authored document round-trips");
+
+    const embedded = new PNG({ width: 2, height: 2 });
+    embedded.data.set([239, 68, 68, 255, 37, 99, 235, 255, 34, 197, 94, 255, 250, 204, 21, 255]);
+    const imageFill = { paint: { type: "image", scale: "fill",
+        href: "data:image/png;base64," + PNG.sync.write(embedded).toString("base64"),
+        crop: { x: 0.25, y: 0, width: 0.5, height: 1 } }, opacity: 1, visible: true };
+    await importFixture(page, isolatedDocument(reference, [fixtureNode(reference, 2, {
+        kind: "vector", name: "Embedded region image", x: 40, y: 40, width: 200, height: 120,
+        corner_radius: 0, corner_radii: null, fills: [imageFill], strokes: [],
+        path: { segments: [], fill_rule: "even_odd" }, vector_network: graph,
+    })], "Native regional image source"));
+    await clickNative(page, "SelectTool");
+    await page.keyboard.press("Escape");
+    await page.keyboard.press("Tab");
+    await page.waitForFunction(() => JSON.parse(globalThis.ferroDesign.ferroDesignState()).selection.join() === "2");
+    await edit();
+    await paint(90);
+    const imageBefore = await documentState(page), imageDepth = (await state(page)).historyLength;
+    const [imageRegion] = Object.keys(imageBefore.nodes[2].vector_network.regions);
+    assert.deepEqual(regionFills(imageBefore, imageRegion), [imageFill]);
+    await clickNative(page, "NetworkRegionPaintsButton", "InspectorViewport");
+    await page.waitForFunction(() => JSON.parse(globalThis.ferroDesign.ferroDesignState()).chrome.PaintCropCanvas0?.visible);
+    const directCropEnabled = (await state(page)).chrome.PaintCropCanvas0.enabled;
+    await clickNative(page, "PaintCropReset0", "ModalViewport");
+    await page.waitForFunction(id => JSON.parse(globalThis.ferroDesign.ferroDesignExportJson())
+        .nodes[2].vector_network.regions[id].fills[0].paint.crop === undefined, imageRegion);
+    const imageReset = await documentState(page);
+    assert.deepEqual(imageReset.nodes[2].fills, [imageFill], "Reset source changes only the active region");
+    assert.equal(regionFills(imageReset, imageRegion)[0].paint.href, imageFill.paint.href);
+    assert.equal((await state(page)).historyLength, imageDepth + 1);
+    await clickNative(page, "PaintOpacity0", "ModalViewport");
+    await page.keyboard.press("Control+a");
+    await page.keyboard.insertText("42");
+    const opacityFrame = (await state(page)).renderedFrames;
+    await page.keyboard.press("Enter");
+    await waitForNativeFrame(page, opacityFrame, "Region image opacity after Reset source");
+    const imageEdited = await documentState(page);
+    assert.deepEqual(imageEdited.nodes[2].fills, [imageFill], "Reset source must retain the region target for the next native paint edit");
+    assert.equal(regionFills(imageEdited, imageRegion)[0].opacity, 0.42);
+    assert.equal(directCropEnabled, false, "Direct canvas crop supports layer image fills and must be disabled for regional paints");
+    await clickNative(page, "PaintDone", "ModalActions");
+    await roundTrip(imageReset, imageEdited, imageDepth + 1, "Regional image opacity after reset");
+    let imageFrame = (await state(page)).renderedFrames;
+    await page.keyboard.press("Control+z");
+    await waitForNativeFrame(page, imageFrame, "Return to regional source reset");
+    assert.deepEqual(await documentState(page), imageReset);
+    await roundTrip(imageBefore, imageReset, imageDepth, "Regional image Reset source");
+    check("An embedded regional image retains its paint target after Reset source: subsequent native edits leave layer fills intact, both edits have exact single-step undo/redo, and unsupported direct canvas crop is disabled");
 }

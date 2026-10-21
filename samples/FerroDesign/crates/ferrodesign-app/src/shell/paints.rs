@@ -55,6 +55,18 @@ enum StackEdit {
 }
 
 impl EditorShell {
+    fn displayed_fills<'a>(&self, editor: &'a Editor) -> Option<&'a [Fill]> {
+        let id = *editor.selection.first()?;
+        let node = editor.document.nodes.get(&id)?;
+        if let Some((target, region)) = self.paint_region.get() {
+            if target != id || editor.selection.len() != 1 { return None; }
+            let region = node.vector_network.as_ref()?.regions.get(&region)?;
+            Some(region.fills.as_deref().unwrap_or(&node.fills))
+        } else {
+            Some(&node.fills)
+        }
+    }
+
     pub(super) fn paints_dialog(self: &Rc<Self>) {
         if !self.flush_inspector_drafts() { return; }
         self.paint_region.set(None);
@@ -151,11 +163,21 @@ impl EditorShell {
         let weak_preview = preview.downgrade();
         visible.is_checked_changed(move |_, _| {
             if let (Some(shell), Some(check)) = (weak_shell.upgrade(), weak_check.upgrade()) {
-                shell.edit_paints(
-                    "Toggle fill paint",
-                    StackEdit::Paint(index, PaintEdit::Visible(check.is_checked() == Some(true))),
-                    false,
-                );
+                if shell.updating.get() || !check.is_attached_to_visual_tree() { return; }
+                let requested = check.is_checked() == Some(true);
+                if shell.flush_inspector_drafts() {
+                    shell.edit_paints(
+                        "Toggle fill paint",
+                        StackEdit::Paint(index, PaintEdit::Visible(requested)),
+                        false,
+                    );
+                }
+                // The control remains mounted across edits. Read the latest
+                // committed target instead of restoring its initial value.
+                let committed = shell.displayed_fills(&shell.editor.borrow())
+                    .and_then(|fills| fills.get(index)).map(|fill| fill.visible);
+                let _updating = UpdatingPaints(&shell.updating, shell.updating.replace(true));
+                check.set_is_checked(committed);
                 shell.refresh_paint_preview(index, &weak_preview);
             }
         });
@@ -421,11 +443,12 @@ impl EditorShell {
                     PaintEdit::ImageCrop(Rect::new(0.0, 0.0, 1.0, 1.0))), false);
                 // Also discard unapplied percentage fields when the source was
                 // already full-sized and the document edit was a no-op.
-                shell.paints_dialog();
+                shell.show_paints_dialog();
             });
         Grid::set_column(&reset, 1);
         actions.children().add(reset);
-        let direct = matches!(fill.paint, Paint::Image { scale: core::ImageScale::Fill | core::ImageScale::Stretch, .. });
+        let direct = self.paint_region.get().is_none()
+            && matches!(fill.paint, Paint::Image { scale: core::ImageScale::Fill | core::ImageScale::Stretch, .. });
         let single = self.editor.borrow().selection.len() == 1;
         let button = self.paint_button("Crop on canvas", &format!("PaintCropCanvas{index}"), direct && single && fill.visible && fill.opacity > 0.0,
             move |shell| {
@@ -753,18 +776,7 @@ impl EditorShell {
             return;
         };
         let editor = self.editor.borrow();
-        if let Some(fill) = editor
-            .selection
-            .first()
-            .and_then(|id| editor.document.nodes.get(id))
-            .and_then(|node| {
-                if let Some((id, region)) = self.paint_region.get() {
-                    if node.id != id { return None; }
-                    node.vector_network.as_ref()?.regions.get(&region)?
-                        .fills.as_ref().unwrap_or(&node.fills).get(index)
-                } else { node.fills.get(index) }
-            })
-        {
+        if let Some(fill) = self.displayed_fills(&editor).and_then(|fills| fills.get(index)) {
             preview.set_background(Some(paint_preview(fill)));
         }
     }
