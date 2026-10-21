@@ -168,6 +168,8 @@ export async function storageEstimate() {
 
 /** Keep story links shareable and make browser Back/Forward follow the reader. */
 export function setLocation(item) {
+    // wasm-bindgen represents Option<String>::None as undefined.
+    item = item ?? null;
     const url = new URL(globalThis.location.href);
     const hashItem = /^(?:#item=|#\/?item\/)(\d+)$/.exec(url.hash)?.[1] ?? null;
     const current = url.searchParams.get("item") ?? hashItem;

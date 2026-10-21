@@ -24,6 +24,7 @@ const initScript = `(() => {
     globalThis.fetch = async (input, options) => {
         const url = new URL(typeof input === "string" || input instanceof URL ? input : input.url, location.href);
         if (!["hacker-news.firebaseio.com", "hn.algolia.com"].includes(url.hostname)) return original(input, options);
+        globalThis.__emberApiRequests = (globalThis.__emberApiRequests ?? 0) + 1;
         if (sessionStorage.getItem("ember-test-offline") === "1") throw new TypeError("Simulated offline connection");
         let value = null;
         if (url.hostname === "hn.algolia.com") value = { hits: [{ objectID: "101", title: items[101].title, author: "maker", points: 284, num_comments: 3, created_at_i: 1792573200, url: items[101].url }], nbHits: 1, nbPages: 1, page: 0, hitsPerPage: 30 };
@@ -48,6 +49,18 @@ const byName = (page, name) => click(page, element => element.name === name, nam
 const byText = (page, text) => click(page, element => element.text === text, text);
 const byAutomation = (page, name) => click(page, element => element.automationName === name, name);
 
+async function touchDrag(page, x, y, endX, endY) {
+    await page.send("Emulation.setTouchEmulationEnabled", { enabled: true, maxTouchPoints: 1 });
+    const point = (x, y) => ({ x, y, id: 1, radiusX: 6, radiusY: 6, force: 1 });
+    await page.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [point(x, y)] });
+    for (let step = 1; step <= 10; ++step) {
+        await page.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [point(x + (endX - x) * step / 10, y + (endY - y) * step / 10)] });
+        await sleep(20);
+    }
+    await page.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+    await sleep(300);
+}
+
 async function reveal(page, predicate, direction = 1) {
     for (let attempt = 0; attempt < 12; ++attempt) {
         const snapshot = await state(page);
@@ -63,6 +76,16 @@ async function applyTheme(page, index) {
     await page.press("Home");
     for (let step = 0; step < index; ++step) await page.press("ArrowDown");
     await page.press("Enter");
+    const theme = (await state(page)).elements.find(element => element.automationName === "Theme");
+    assert(theme?.selectedIndex === index, `Theme selection is ${theme?.selectedIndex}, expected ${index}`);
+    if (index === 3) {
+        for (const [label, value] of [["Accent color", "#4EB9A4"], ["Custom background", "#172126"]]) {
+            await reveal(page, element => element.automationName === label);
+            await byAutomation(page, label);
+            await page.press("a", ["ctrl"]);
+            await page.type(value);
+        }
+    }
     await reveal(page, element => element.automationName === "Apply preferences");
     await byAutomation(page, "Apply preferences");
     await sleep(350);
@@ -94,7 +117,7 @@ await run([
             const shot = await page.screenshot(path.join(captures, "desktop-thread.png"));
             assert(colours(shot) > 40, "The screenshot does not contain a rendered reader");
             await byName(page, "ThemeButton");
-            await waitText(page, "Appearance and reading preferences");
+            await waitText(page, "Make Ember yours");
             await page.screenshot(path.join(captures, "desktop-settings.png"));
             await applyTheme(page, 2);
             const dark = await page.screenshot(path.join(captures, "desktop-dark.png"));
@@ -105,7 +128,7 @@ await run([
         } catch (error) { await failure(page, "desktop"); throw error; }
         finally { await page.close(); }
     }],
-    ["phone navigation, saved-state persistence, and offline reload", async () => {
+    ["phone touch gestures, navigation, downloads, persistence, and offline reload", async () => {
         const page = await start(390, 844);
         try {
             const screen = await state(page);
@@ -113,11 +136,36 @@ await run([
             assert(targets.length === 5, `Expected five mobile navigation targets, got ${targets.length}`);
             assert(targets.every(element => element.height >= 44 && element.width >= 44), "A mobile navigation target is too small");
             await page.screenshot(path.join(captures, "phone-feed.png"));
+            const headline = screen.elements.find(element => element.hit && element.text === title);
+            assert(headline, "The first story has no touch target");
+            const fingerX = Math.min(screen.width - 35, headline.x + headline.width - 15);
+            const fingerY = headline.y + headline.height / 2;
+            await touchDrag(page, fingerX, fingerY, fingerX - 180, fingerY);
+            await waitText(page, "SAVED");
+            assert(!(await page.evaluate("new URL(location.href).searchParams.has('item')")), "Swiping a card also opened its discussion");
+            await byName(page, "DismissStatus");
+            const heading = (await state(page)).elements.find(element => element.name === "FeedTitle");
+            assert(heading, "The feed heading is absent");
+            const beforeRefresh = await page.evaluate("globalThis.__emberApiRequests");
+            const pullY = heading.y + 2;
+            await touchDrag(page, heading.x + 100, pullY, heading.x + 100, pullY + 120);
+            await page.waitFor(`globalThis.__emberApiRequests > ${beforeRefresh}`, 10000);
+            await waitText(page, title);
             await byText(page, title);
             await page.waitFor("JSON.parse(ember.emberState()).elements.some(e => e.name === 'SaveButton')");
             await byName(page, "SaveButton");
+            await waitText(page, "Removed from Saved stories.");
+            await byName(page, "SaveButton");
+            await waitText(page, "Added to Saved stories. Download the thread to keep all its comments offline.");
             await sleep(400);
+            await byName(page, "DownloadButton");
+            await waitText(page, "Discussion downloaded. It is available offline in Saved stories.");
+            await byName(page, "DismissStatus");
             await page.screenshot(path.join(captures, "phone-thread.png"));
+            await page.wheel(340, 600, 0, 440);
+            await page.screenshot(path.join(captures, "phone-comments.png"));
+            await page.wheel(340, 400, 0, -1000);
+            await waitText(page, title);
             await page.evaluate("history.back()");
             await page.waitFor("!new URL(location.href).searchParams.has('item')");
             await byName(page, "MobileSaved");
@@ -130,7 +178,9 @@ await run([
             await page.evaluate("sessionStorage.setItem('ember-test-offline', '1')");
             await page.send("Network.enable");
             await page.send("Network.emulateNetworkConditions", { offline: true, latency: 0, downloadThroughput: 0, uploadThroughput: 0 });
+            const previousDocument = await page.evaluate("performance.timeOrigin");
             await page.send("Page.reload", {});
+            await page.waitFor(`performance.timeOrigin !== ${previousDocument}`);
             await page.waitForView();
             await page.waitFor("globalThis.ember?.emberState");
             await page.waitFor("JSON.parse(ember.emberState()).elements.some(e => e.name === 'ThreadFind')");
@@ -144,4 +194,4 @@ await run([
         } catch (error) { await failure(page, "phone"); throw error; }
         finally { await page.close(); }
     }],
-]);
+].filter(([name]) => !process.env.EMBER_BROWSER_CASE || name.includes(process.env.EMBER_BROWSER_CASE)));

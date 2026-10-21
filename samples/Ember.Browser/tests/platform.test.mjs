@@ -97,6 +97,7 @@ test("reader navigation retains rendering options and does not duplicate browser
         setLocation("javascript:alert(1)");
         assert.equal(locations.length, 1);
         setLocation(null);
+        setLocation(undefined);
         assert.equal(locations.length, 2);
         assert.equal(new URL(locations[1]).searchParams.get("item"), null);
         for (const hash of ["#item=42", "#item/42", "#/item/42"]) {

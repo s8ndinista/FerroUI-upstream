@@ -12,7 +12,7 @@ try {
         const navigate = () => runtime.emberNavigate(globalThis.location.href);
         globalThis.addEventListener("popstate", navigate);
         globalThis.addEventListener("hashchange", navigate);
-        if ("serviceWorker" in navigator && isSecureContext && !globalThis.ferrouiModule?.threads) {
+        if ("serviceWorker" in navigator && isSecureContext && navigator.onLine !== false && !globalThis.ferrouiModule?.threads) {
             // The build wrapper adds offline shell support to the same service
             // worker used by FerroUI's file picker; registrations never compete.
             navigator.serviceWorker.register("./ferroui-sw.js", { updateViaCache: "none" })

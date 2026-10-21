@@ -86,9 +86,9 @@ CHROME=/path/to/chrome node samples/Ember.Browser/tests/browser-smoke.mjs
 ```
 
 The interaction checks supply deterministic HN responses at the network boundary.
-They exercise real pointer and keyboard input, rendering, URL history, themes,
-phone navigation, IndexedDB persistence and service-worker startup with the network
-disabled. Screenshots and failure diagnostics are written under
+They exercise real pointer, keyboard and touch input, swipe-to-save, pull-to-refresh,
+rendering, URL history, themes, phone navigation, discussion downloads, IndexedDB
+persistence and service-worker startup with the network disabled. Screenshots and failure diagnostics are written under
 `target/ember-browser-smoke`.
 
 ## Other hosts
