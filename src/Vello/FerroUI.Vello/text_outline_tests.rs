@@ -12,6 +12,7 @@ use ferroui_base::platform::AlphaFormat;
 use ferroui_base::{RelativePoint, RelativeUnit};
 use kurbo::{Affine, BezPath, Stroke};
 use peniko::{BlendMode, Fill};
+use skrifa::MetadataProvider;
 
 fn scalable_options() -> TextOptions {
     TextOptions {
@@ -35,6 +36,39 @@ fn max_pixel_difference(first: &TextTarget, second: &TextTarget) -> u8 {
         })
         .max()
         .unwrap_or(0)
+}
+
+#[test]
+fn synthetic_bold_public_outlines_keep_the_canonical_shape_at_every_size() {
+    let plain = VelloTypeface::from_bytes(INTER.to_vec(), FontSimulations::None).unwrap();
+    let h = plain.face().font_ref().charmap().map('H').unwrap().to_u32() as u16;
+    for simulations in [FontSimulations::Bold, FontSimulations::Bold | FontSimulations::Oblique] {
+        let face = VelloTypeface::from_bytes(INTER.to_vec(), simulations).unwrap();
+        for character in ['H', 'o', '&', '@', ' '] {
+            let glyph = face.face().font_ref().charmap().map(character).unwrap().to_u32() as u16;
+            let canonical = face.face().glyph_path(glyph, 64.0).unwrap();
+            for size in [9.0, 12.0, 20.0, 28.0, 36.0, 72.0] {
+                let outline = face.face().glyph_path(glyph, size).unwrap();
+                assert_eq!(
+                    outline,
+                    Affine::scale(size / 64.0) * &canonical,
+                    "{character:?} at {size} with {simulations:?} must scale the completed public path"
+                );
+            }
+        }
+        if simulations == FontSimulations::Bold {
+            for size in [9.0, 20.0, 28.0, 72.0] {
+                let before = kurbo::Shape::bounding_box(&plain.face().glyph_path(h, size).unwrap());
+                let after = kurbo::Shape::bounding_box(&face.face().glyph_path(h, size).unwrap());
+                // Skia's public paths apply fake bold at size 64, hence a
+                // stroke width of 1/32 em at every requested size. Size 28
+                // must grow by 0.875, not the native glyph's ~0.9614 width.
+                let width = size / 32.0;
+                assert!((after.width() - before.width() - width).abs() < 1e-9);
+                assert!((after.height() - before.height() - width).abs() < 1e-9);
+            }
+        }
+    }
 }
 
 #[test]

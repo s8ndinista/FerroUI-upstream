@@ -179,8 +179,12 @@ fn font_manager_creates_typefaces_from_streams() {
     let plain = outline_bounds(FontSimulations::None);
     let bold = outline_bounds(FontSimulations::Bold);
     let oblique = outline_bounds(FontSimulations::Oblique);
-    let added = bold_simulation_outline_width(20.0);
-    assert!((added - 20.0 * (1.0 / 24.0 + (1.0 / 32.0 - 1.0 / 24.0) * 11.0 / 27.0)).abs() < 1e-12);
+    // Public paths expand at the canonical size of 64, where fake bold is
+    // 1/32 em, then scale. Native raster glyphs retain their size-dependent
+    // expansion; these are distinct contracts even at a small requested size.
+    let added = 20.0 / 32.0;
+    let native_added = bold_simulation_outline_width(20.0);
+    assert!((native_added - 20.0 * (1.0 / 24.0 + (1.0 / 32.0 - 1.0 / 24.0) * 11.0 / 27.0)).abs() < 1e-12);
     assert!((bold.width() - plain.width() - added).abs() < 0.02, "{bold:?} {plain:?}");
     assert!((bold.height() - plain.height() - added).abs() < 0.02, "{bold:?} {plain:?}");
     assert!((oblique.width() - plain.width() - 0.3 * plain.height()).abs() < 1e-9, "{oblique:?} {plain:?}");
