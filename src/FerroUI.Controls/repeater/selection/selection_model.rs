@@ -26,6 +26,7 @@ pub struct SelectionModel {
     root: Rc<SelectionNode>,
     single_select: Cell<bool>,
     selection_invalidated: Cell<bool>,
+    tree_revision: Cell<u64>,
     selected_indices: RefCell<Option<SelectedItems<IndexPath>>>,
     selected_items: RefCell<Option<SelectedItems<Option<BoxedValue>>>>,
     selection_changed: HandlerList<dyn Fn(&SelectionModelSelectionChangedEventArgs)>,
@@ -38,15 +39,17 @@ impl SelectionModel {
         Rc::new_cyclic(|this| Self {
             this: this.clone(), root: SelectionNode::new(this.clone(), Weak::new()),
             single_select: Cell::new(false), selection_invalidated: Cell::new(false),
+            tree_revision: Cell::new(0),
             selected_indices: RefCell::new(None), selected_items: RefCell::new(None),
             selection_changed: HandlerList::new(), children_requested: HandlerList::new(), property_changed: Event::new(),
         })
     }
     pub fn source(&self) -> Option<ItemsSource> { self.root.source() }
     pub fn set_source(&self, source: Option<ItemsSource>) {
+        let removing_source = self.source().is_some() && source.is_none();
         self.clear_selection_core(true, false);
         self.root.set_source(source);
-        self.on_selection_changed();
+        self.on_selection_changed_with_item_notifications(removing_source);
         self.on_property_changed("Source");
     }
     pub fn single_select(&self) -> bool { self.single_select.get() }
@@ -191,6 +194,10 @@ impl SelectionModel {
     }
     pub fn on_property_changed(&self, property_name: &str) { self.property_changed.raise(property_name); }
     pub fn is_selection_invalidated_due_to_collection_change(&self) -> bool { self.selection_invalidated.get() }
+    pub(crate) fn tree_revision(&self) -> u64 { self.tree_revision.get() }
+    pub(crate) fn invalidate_tree(&self) {
+        self.tree_revision.set(self.tree_revision.get().wrapping_add(1));
+    }
     pub(crate) fn selection_invalidated_due_to_collection_change(&self) {
         self.selection_invalidated.set(true);
         let _reset = ResetFlag(&self.selection_invalidated);
@@ -215,17 +222,23 @@ impl SelectionModel {
         self.selected_items.borrow_mut().take();
     }
     fn clear_selection_core(&self, reset_anchor: bool, raise: bool) {
+        self.invalidate_tree();
         traverse(&self.root, false, |node, _| node.clear()).expect("traversing realized selection nodes cannot fail");
         self.clear_cached_views();
         if reset_anchor { self.set_anchor_index(None).expect("clearing an anchor cannot fail"); }
         if raise { self.on_selection_changed(); }
     }
     fn on_selection_changed(&self) {
+        self.on_selection_changed_with_item_notifications(false);
+    }
+    fn on_selection_changed_with_item_notifications(&self, removing_source: bool) {
         self.clear_cached_views();
         for (_, handler) in self.selection_changed.snapshot().iter() { handler(&SelectionModelSelectionChangedEventArgs); }
         self.on_property_changed("SelectedIndex");
         self.on_property_changed("SelectedIndices");
-        if self.source().is_some() {
+        // Removing a source must also replace the old lazy item view in native bindings.
+        // Ordinary source-less selection continues to notify only the index properties.
+        if removing_source || self.source().is_some() {
             self.on_property_changed("SelectedItem");
             self.on_property_changed("SelectedItems");
         }

@@ -7,10 +7,11 @@ use crate::templates::FuncDataTemplate;
 use crate::test_support::{test_scope, TestRoot};
 use crate::{Border, Control, IItemsList, ItemsSource, TextBlock};
 use ferroui_base::data::core::{ValueType, ValueTypes};
+use ferroui_base::data::model::INotifyPropertyChanged;
 use ferroui_base::data::ReflectionBinding;
 use ferroui_base::metadata::{MarkupTyped, MarkupValue};
 use ferroui_base::{BoxedValue, FerroObjectExtensions};
-use std::cell::Cell;
+use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 
 struct CountingSource {
@@ -101,6 +102,52 @@ fn selection_count_binding_updates_through_native_property_notifications() {
 }
 
 #[test]
+fn removing_source_refreshes_selected_item_and_count_bindings_once() {
+    let _scope = test_scope();
+    register_markup_types();
+    let model = SelectionModel::new();
+    model.set_source(Some(ItemsSource::from_values([10_i32, 20, 30])));
+    let text = TextBlock::new();
+    text.set_data_context(Some(Rc::new(model.clone())));
+    text.bind_binding(
+        TextBlock::text_property().as_property(),
+        &*ReflectionBinding::new("SelectedItems.Count"),
+    );
+    let selected = Border::new();
+    selected.set_data_context(Some(Rc::new(model.clone())));
+    selected.bind_binding(
+        Control::tag_property().as_property(),
+        &*ReflectionBinding::new("SelectedItem"),
+    );
+    model.select(1).unwrap();
+    model.select(2).unwrap();
+    assert_eq!(text.text().as_deref(), Some("2"));
+    assert_eq!(selected.tag().unwrap().downcast_ref::<i32>(), Some(&20));
+
+    let names = Rc::new(RefCell::new(Vec::new()));
+    let changed = names.clone();
+    model.property_changed().add(Rc::new(move |name| {
+        changed.borrow_mut().push(name.to_string());
+    }));
+    let events = Rc::new(Cell::new(0));
+    let called = events.clone();
+    model.selection_changed(move |_| called.set(called.get() + 1));
+    model.set_source(None);
+
+    assert_eq!(text.text().as_deref(), Some("0"));
+    assert!(selected.tag().is_none());
+    assert_eq!(events.get(), 1);
+    assert_eq!(*names.borrow(), [
+        "AnchorIndex", "SelectedIndex", "SelectedIndices", "SelectedItem", "SelectedItems", "Source",
+    ]);
+    names.borrow_mut().clear();
+    model.select(5).unwrap();
+    assert_eq!(*names.borrow(), ["AnchorIndex", "SelectedIndex", "SelectedIndices"]);
+    assert_eq!(text.text().as_deref(), Some("0"));
+    assert!(selected.tag().is_none());
+}
+
+#[test]
 fn selected_items_binding_drives_a_native_repeater_and_refreshes_on_selection() {
     let _scope = test_scope();
     register_markup_types();
@@ -153,5 +200,18 @@ fn selected_items_binding_drives_a_native_repeater_and_refreshes_on_selection() 
             .unwrap()
             .downcast_ref::<i32>(),
         Some(&30)
+    );
+
+    model.set_source(None);
+    root.layout_manager().execute_layout_pass();
+    assert_eq!(repeater.items_source_view().unwrap().count(), 0);
+    assert!(repeater.realized_elements().is_empty());
+    model.set_source(Some(ItemsSource::from_values([40_i32])));
+    model.select(0).unwrap();
+    root.layout_manager().execute_layout_pass();
+    assert_eq!(repeater.items_source_view().unwrap().count(), 1);
+    assert_eq!(
+        repeater.try_get_element(0).unwrap().data_context().unwrap().downcast_ref::<i32>(),
+        Some(&40)
     );
 }

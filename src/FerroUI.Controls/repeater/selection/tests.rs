@@ -671,6 +671,137 @@ fn verify_children_requested_handler_removal() {
     assert_eq!(calls.get(), 1);
 }
 
+// FerroUI additions: synchronous source callbacks must not install stale child identities.
+#[test]
+fn children_requested_rejects_same_source_collection_changes() {
+    for mutation in ["insert", "remove", "replace", "move", "reset"] {
+        let first = FerroList::from_items([10, 11]);
+        let second = FerroList::from_items([20, 21]);
+        let groups = FerroList::from_items([
+            ItemsSource::from(Rc::new(first.clone())),
+            ItemsSource::from(Rc::new(second.clone())),
+        ]);
+        let model = SelectionModel::new();
+        model.set_source(Some(Rc::new(groups.clone()).into()));
+        let edited = groups.clone();
+        let subscription = model.children_requested(move |args| {
+            args.set_children(
+                args.source().unwrap().as_ref().and_then(SelectionModel::source_from_item),
+            );
+            match mutation {
+                "insert" => edited.insert(0, ItemsSource::from_values([30, 31])),
+                "remove" => { edited.remove_at(0); }
+                "replace" => edited.set(0, ItemsSource::from_values([30, 31])),
+                "move" => edited.move_item(0, 1),
+                "reset" => edited.clear(),
+                _ => unreachable!(),
+            }
+        });
+
+        assert_eq!(model.select_with_group(0, 0), Err(SelectionError::SelectionChanged), "{mutation}");
+        assert!(model.selected_indices().is_empty(), "{mutation}");
+        assert!(!first.has_collection_changed_subscribers(), "{mutation}");
+        assert!(!second.has_collection_changed_subscribers(), "{mutation}");
+
+        subscription.dispose();
+        if groups.count() > 0 {
+            model.select_with_group(0, 0).unwrap();
+            let expected = groups.get(0).get_at(0).unwrap();
+            assert_eq!(model.selected_item().unwrap().downcast_ref::<i32>(), expected.downcast_ref::<i32>());
+        }
+    }
+}
+
+#[test]
+fn children_requested_rejects_discarded_ancestor_nodes() {
+    for clear_source in [false, true] {
+        let leaves = FerroList::from_items([10, 11]);
+        let groups = FerroList::from_items([ItemsSource::from_values([
+            ItemsSource::from(Rc::new(leaves.clone())),
+        ])]);
+        let model = SelectionModel::new();
+        model.set_source(Some(Rc::new(groups.clone()).into()));
+        let weak = Rc::downgrade(&model);
+        let edited = groups.clone();
+        let subscription = model.children_requested(move |args| {
+            args.set_children(
+                args.source().unwrap().as_ref().and_then(SelectionModel::source_from_item),
+            );
+            if args.source_index().unwrap() == path(&[0, 0]) {
+                if clear_source { edited.clear(); }
+                else { weak.upgrade().unwrap().clear_selection(); }
+            }
+        });
+
+        assert_eq!(model.select_at(&path(&[0, 0, 1])), Err(SelectionError::SelectionChanged));
+        assert!(model.selected_indices().is_empty());
+        assert!(!leaves.has_collection_changed_subscribers());
+        subscription.dispose();
+        if !clear_source {
+            model.select_at(&path(&[0, 0, 1])).unwrap();
+            assert_eq!(indices(&model), ["R.0.0.1"]);
+        }
+    }
+}
+
+#[test]
+fn children_requested_keeps_a_child_realized_by_a_nested_request() {
+    let leaves = FerroList::from_items([10, 11]);
+    let model = SelectionModel::new();
+    model.set_source(Some(ItemsSource::from_values([
+        ItemsSource::from(Rc::new(leaves.clone())),
+    ])));
+    let weak = Rc::downgrade(&model);
+    let calls = Rc::new(Cell::new(0));
+    let called = calls.clone();
+    model.children_requested(move |args| {
+        let call = called.get();
+        called.set(call + 1);
+        args.set_children(
+            args.source().unwrap().as_ref().and_then(SelectionModel::source_from_item),
+        );
+        if call == 0 { weak.upgrade().unwrap().select_with_group(0, 1).unwrap(); }
+    });
+
+    model.select_with_group(0, 0).unwrap();
+    assert_eq!(calls.get(), 2);
+    assert_eq!(indices(&model), ["R.0.0", "R.0.1"]);
+    leaves.insert(0, 9);
+    assert_eq!(indices(&model), ["R.0.1", "R.0.2"]);
+    model.clear_selection();
+    assert!(!leaves.has_collection_changed_subscribers());
+}
+
+#[test]
+fn child_source_read_rejects_reentrant_tree_reset() {
+    struct Source {
+        model: std::rc::Weak<SelectionModel>,
+        child: ItemsSource,
+        reset: Cell<bool>,
+    }
+    impl IItemsList for Source {
+        fn count(&self) -> usize { 1 }
+        fn get_at(&self, _: usize) -> Option<BoxedValue> {
+            if self.reset.replace(false) { self.model.upgrade().unwrap().clear_selection(); }
+            Some(Rc::new(self.child.clone()))
+        }
+        fn as_any(&self) -> &dyn std::any::Any { self }
+    }
+    let model = SelectionModel::new();
+    let leaves = FerroList::from_items([10, 11]);
+    model.set_source(Some(ItemsSource::new(Rc::new(Source {
+        model: Rc::downgrade(&model),
+        child: Rc::new(leaves.clone()).into(),
+        reset: Cell::new(true),
+    }))));
+
+    assert_eq!(model.select_with_group(0, 0), Err(SelectionError::SelectionChanged));
+    assert!(model.selected_indices().is_empty());
+    assert!(!leaves.has_collection_changed_subscribers());
+    model.select_with_group(0, 1).unwrap();
+    assert_eq!(indices(&model), ["R.0.1"]);
+}
+
 #[test]
 fn verify_selected_views_fail_after_selection_tree_is_discarded() {
     let (model, _) = nested();

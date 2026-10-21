@@ -56,23 +56,39 @@ impl SelectionNode {
             return Ok(child.clone());
         }
         if !realize { return Ok(Child::Unrealized); }
-        let source = self.source().ok_or(SelectionError::SourceRequired)?;
-        if index >= source.count() { return Err(SelectionError::IndexOutOfRange); }
-        let data = source.get_at(index);
         let manager = self.manager.upgrade().ok_or(SelectionError::SelectionChanged)?;
+        let revision = manager.tree_revision();
+        let source = self.source().ok_or(SelectionError::SourceRequired)?;
+        let count = source.count();
+        if manager.tree_revision() != revision { return Err(SelectionError::SelectionChanged); }
+        if index >= count { return Err(SelectionError::IndexOutOfRange); }
+        let data = source.get_at(index);
+        if manager.tree_revision() != revision { return Err(SelectionError::SelectionChanged); }
         let resolved = if data.is_some() { manager.resolve_path(data, self.index_path().clone_with_child_index(index as i32)) } else { None };
-        // The callback can replace the source or discard this node. Resolve only against its original source.
-        if self.source().as_ref() != Some(&source) { return Err(SelectionError::SelectionChanged); }
+        // User callbacks can mutate the same source or discard an ancestor without changing this
+        // node's source identity. A shared revision prevents installing a child at a stale path.
+        if manager.tree_revision() != revision || self.source().as_ref() != Some(&source) {
+            return Err(SelectionError::SelectionChanged);
+        }
+        if let Some(child) = self.children.borrow().get(index).filter(|child| !matches!(child, Child::Unrealized)) {
+            // A nested request can realize this slot and select its descendants. Keep that node.
+            return Ok(child.clone());
+        }
         let child = if let Some(source) = resolved {
             let child = Self::new(self.manager.clone(), self.this.clone());
             child.set_source(Some(source));
             Child::Branch(child)
         } else { Child::Leaf };
-        let mut children = self.children.borrow_mut();
-        if children.is_empty() { children.resize(source.count(), Child::Unrealized); }
-        if index >= children.len() { return Err(SelectionError::SelectionChanged); }
-        children[index] = child.clone();
-        Ok(child)
+        // Reading a custom child source's count and subscribing to it are callbacks too.
+        if manager.tree_revision() != revision { return Err(SelectionError::SelectionChanged); }
+        let installed = {
+            let mut children = self.children.borrow_mut();
+            if children.is_empty() { children.resize(count, Child::Unrealized); }
+            if index >= children.len() { return Err(SelectionError::SelectionChanged); }
+            if matches!(children[index], Child::Unrealized) { children[index] = child.clone(); }
+            children[index].clone()
+        };
+        Ok(installed)
     }
     pub fn index_path(&self) -> IndexPath {
         let mut path = Vec::new();
@@ -143,6 +159,7 @@ impl SelectionNode {
         drop(children);
     }
     fn source_changed(&self, args: &ItemsChangedEventArgs<'_>) {
+        if let Some(manager) = self.manager.upgrade() { manager.invalidate_tree(); }
         let previous_state = self.evaluate();
         let mut changed = false;
         match args.action {
