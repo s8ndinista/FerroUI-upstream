@@ -1,0 +1,527 @@
+{
+  "schema_version": 1,
+  "commit": "9427b7216337ea3d7b19ac32d48c327286ee7138",
+  "scope": "Public methods in the two API-test suites; source-map separately records interaction tests and test UI.",
+  "tests": [
+    {
+      "id": "InkCanvas.InkCanvasConstructionTest",
+      "source": "controls/dev/InkCanvas/APITests/InkCanvasTests.cs",
+      "method": "InkCanvasConstructionTest",
+      "status": "not_ported",
+      "rust_tests": [],
+      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+    },
+    {
+      "id": "InkCanvas.InkCanvasInVisualTreeTest",
+      "source": "controls/dev/InkCanvas/APITests/InkCanvasTests.cs",
+      "method": "InkCanvasInVisualTreeTest",
+      "status": "not_ported",
+      "rust_tests": [],
+      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+    },
+    {
+      "id": "InkCanvas.InkCanvasInkPresenterAccessorTest",
+      "source": "controls/dev/InkCanvas/APITests/InkCanvasTests.cs",
+      "method": "InkCanvasInkPresenterAccessorTest",
+      "status": "not_ported",
+      "rust_tests": [],
+      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+    },
+    {
+      "id": "InkCanvas.InkCanvasAutomationPeerReportsBounds",
+      "source": "controls/dev/InkCanvas/APITests/InkCanvasTests.cs",
+      "method": "InkCanvasAutomationPeerReportsBounds",
+      "status": "not_ported",
+      "rust_tests": [],
+      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+    },
+    {
+      "id": "InkCanvas.InkCanvasAutomationPeerReportsOffscreen",
+      "source": "controls/dev/InkCanvas/APITests/InkCanvasTests.cs",
+      "method": "InkCanvasAutomationPeerReportsOffscreen",
+      "status": "not_ported",
+      "rust_tests": [],
+      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+    },
+    {
+      "id": "InkCanvas.InkCanvasAutomationPeerClipsBoundsToScrollViewport",
+      "source": "controls/dev/InkCanvas/APITests/InkCanvasTests.cs",
+      "method": "InkCanvasAutomationPeerClipsBoundsToScrollViewport",
+      "status": "not_ported",
+      "rust_tests": [],
+      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+    },
+    {
+      "id": "InkCanvas.InkCanvasAutomationPeerReportsOffscreenWhenClippedOut",
+      "source": "controls/dev/InkCanvas/APITests/InkCanvasTests.cs",
+      "method": "InkCanvasAutomationPeerReportsOffscreenWhenClippedOut",
+      "status": "not_ported",
+      "rust_tests": [],
+      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+    },
+    {
+      "id": "InkCanvas.InkCanvasAutomationPeerReportsOffscreenWhenSelfClippedOut",
+      "source": "controls/dev/InkCanvas/APITests/InkCanvasTests.cs",
+      "method": "InkCanvasAutomationPeerReportsOffscreenWhenSelfClippedOut",
+      "status": "not_ported",
+      "rust_tests": [],
+      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+    },
+    {
+      "id": "InkCanvas.InkCanvasAutomationPeerClipsBoundsToOwnClip",
+      "source": "controls/dev/InkCanvas/APITests/InkCanvasTests.cs",
+      "method": "InkCanvasAutomationPeerClipsBoundsToOwnClip",
+      "status": "not_ported",
+      "rust_tests": [],
+      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+    },
+    {
+      "id": "InkCanvas.InkCanvasMultipleInstancesTest",
+      "source": "controls/dev/InkCanvas/APITests/InkCanvasTests.cs",
+      "method": "InkCanvasMultipleInstancesTest",
+      "status": "not_ported",
+      "rust_tests": [],
+      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+    },
+    {
+      "id": "InkCanvas.InkCanvasLoadUnloadDoesNotCrash",
+      "source": "controls/dev/InkCanvas/APITests/InkCanvasTests.cs",
+      "method": "InkCanvasLoadUnloadDoesNotCrash",
+      "status": "not_ported",
+      "rust_tests": [],
+      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+    },
+    {
+      "id": "InkCanvas.InkCanvasDestroyedBeforePendingCallbacksDoesNotCrash",
+      "source": "controls/dev/InkCanvas/APITests/InkCanvasTests.cs",
+      "method": "InkCanvasDestroyedBeforePendingCallbacksDoesNotCrash",
+      "status": "not_ported",
+      "rust_tests": [],
+      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+    },
+    {
+      "id": "InkToolbar.InkToolbarDefaultConstructorTest",
+      "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
+      "method": "InkToolbarDefaultConstructorTest",
+      "status": "not_ported",
+      "rust_tests": [],
+      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+    },
+    {
+      "id": "InkToolbar.InkToolbarInitialControlsDefaultTest",
+      "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
+      "method": "InkToolbarInitialControlsDefaultTest",
+      "status": "not_ported",
+      "rust_tests": [],
+      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+    },
+    {
+      "id": "InkToolbar.InkToolbarInitialControlsPropertyTest",
+      "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
+      "method": "InkToolbarInitialControlsPropertyTest",
+      "status": "not_ported",
+      "rust_tests": [],
+      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+    },
+    {
+      "id": "InkToolbar.InkToolbarChildrenPropertyTest",
+      "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
+      "method": "InkToolbarChildrenPropertyTest",
+      "status": "not_ported",
+      "rust_tests": [],
+      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+    },
+    {
+      "id": "InkToolbar.InkToolbarOrientationPropertyTest",
+      "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
+      "method": "InkToolbarOrientationPropertyTest",
+      "status": "not_ported",
+      "rust_tests": [],
+      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+    },
+    {
+      "id": "InkToolbar.InkToolbarButtonFlyoutPlacementPropertyTest",
+      "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
+      "method": "InkToolbarButtonFlyoutPlacementPropertyTest",
+      "status": "not_ported",
+      "rust_tests": [],
+      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+    },
+    {
+      "id": "InkToolbar.InkToolbarIsRulerButtonCheckedPropertyTest",
+      "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
+      "method": "InkToolbarIsRulerButtonCheckedPropertyTest",
+      "status": "not_ported",
+      "rust_tests": [],
+      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+    },
+    {
+      "id": "InkToolbar.InkToolbarIsStencilButtonCheckedPropertyTest",
+      "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
+      "method": "InkToolbarIsStencilButtonCheckedPropertyTest",
+      "status": "not_ported",
+      "rust_tests": [],
+      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+    },
+    {
+      "id": "InkToolbar.InkToolbarStencilToggleWithTargetCanvasTest",
+      "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
+      "method": "InkToolbarStencilToggleWithTargetCanvasTest",
+      "status": "not_ported",
+      "rust_tests": [],
+      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+    },
+    {
+      "id": "InkToolbar.InkToolbarTargetInkCanvasPropertyTest",
+      "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
+      "method": "InkToolbarTargetInkCanvasPropertyTest",
+      "status": "not_ported",
+      "rust_tests": [],
+      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+    },
+    {
+      "id": "InkToolbar.InkToolbarActiveToolPropertyTest",
+      "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
+      "method": "InkToolbarActiveToolPropertyTest",
+      "status": "not_ported",
+      "rust_tests": [],
+      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+    },
+    {
+      "id": "InkToolbar.InkToolbarGetToolButtonTest",
+      "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
+      "method": "InkToolbarGetToolButtonTest",
+      "status": "not_ported",
+      "rust_tests": [],
+      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+    },
+    {
+      "id": "InkToolbar.InkToolbarGetToggleButtonTest",
+      "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
+      "method": "InkToolbarGetToggleButtonTest",
+      "status": "not_ported",
+      "rust_tests": [],
+      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+    },
+    {
+      "id": "InkToolbar.InkToolbarGetMenuButtonTest",
+      "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
+      "method": "InkToolbarGetMenuButtonTest",
+      "status": "not_ported",
+      "rust_tests": [],
+      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+    },
+    {
+      "id": "InkToolbar.InkToolbarInkDrawingAttributesTest",
+      "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
+      "method": "InkToolbarInkDrawingAttributesTest",
+      "status": "not_ported",
+      "rust_tests": [],
+      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+    },
+    {
+      "id": "InkToolbar.InkToolbarDependencyPropertiesExistTest",
+      "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
+      "method": "InkToolbarDependencyPropertiesExistTest",
+      "status": "not_ported",
+      "rust_tests": [],
+      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+    },
+    {
+      "id": "InkToolbar.InkToolbarTargetInkPresenterPropertyTest",
+      "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
+      "method": "InkToolbarTargetInkPresenterPropertyTest",
+      "status": "not_ported",
+      "rust_tests": [],
+      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+    },
+    {
+      "id": "InkToolbar.InkToolbarDrivesTargetInkPresenterWithoutCanvasTest",
+      "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
+      "method": "InkToolbarDrivesTargetInkPresenterWithoutCanvasTest",
+      "status": "not_ported",
+      "rust_tests": [],
+      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+    },
+    {
+      "id": "InkToolbar.InkToolbarActiveToolChangedEventTest",
+      "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
+      "method": "InkToolbarActiveToolChangedEventTest",
+      "status": "not_ported",
+      "rust_tests": [],
+      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+    },
+    {
+      "id": "InkToolbar.InkToolbarInkDrawingAttributesChangedEventTest",
+      "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
+      "method": "InkToolbarInkDrawingAttributesChangedEventTest",
+      "status": "not_ported",
+      "rust_tests": [],
+      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+    },
+    {
+      "id": "InkToolbar.InkToolbarEraseAllClickedEventTest",
+      "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
+      "method": "InkToolbarEraseAllClickedEventTest",
+      "status": "not_ported",
+      "rust_tests": [],
+      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+    },
+    {
+      "id": "InkToolbar.InkToolbarInVisualTreeTest",
+      "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
+      "method": "InkToolbarInVisualTreeTest",
+      "status": "not_ported",
+      "rust_tests": [],
+      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+    },
+    {
+      "id": "InkToolbar.InkToolbarWithTargetInkCanvasInVisualTreeTest",
+      "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
+      "method": "InkToolbarWithTargetInkCanvasInVisualTreeTest",
+      "status": "not_ported",
+      "rust_tests": [],
+      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+    },
+    {
+      "id": "InkToolbar.InkToolbarMultipleInstancesTest",
+      "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
+      "method": "InkToolbarMultipleInstancesTest",
+      "status": "not_ported",
+      "rust_tests": [],
+      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+    },
+    {
+      "id": "InkToolbar.InkToolbarBallpointPenButtonTest",
+      "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
+      "method": "InkToolbarBallpointPenButtonTest",
+      "status": "not_ported",
+      "rust_tests": [],
+      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+    },
+    {
+      "id": "InkToolbar.InkToolbarPencilButtonTest",
+      "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
+      "method": "InkToolbarPencilButtonTest",
+      "status": "not_ported",
+      "rust_tests": [],
+      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+    },
+    {
+      "id": "InkToolbar.InkToolbarHighlighterButtonTest",
+      "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
+      "method": "InkToolbarHighlighterButtonTest",
+      "status": "not_ported",
+      "rust_tests": [],
+      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+    },
+    {
+      "id": "InkToolbar.InkToolbarCustomToolButtonTest",
+      "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
+      "method": "InkToolbarCustomToolButtonTest",
+      "status": "not_ported",
+      "rust_tests": [],
+      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+    },
+    {
+      "id": "InkToolbar.InkToolbarCustomToggleButtonTest",
+      "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
+      "method": "InkToolbarCustomToggleButtonTest",
+      "status": "not_ported",
+      "rust_tests": [],
+      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+    },
+    {
+      "id": "InkToolbar.InkToolbarStencilButtonTest",
+      "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
+      "method": "InkToolbarStencilButtonTest",
+      "status": "not_ported",
+      "rust_tests": [],
+      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+    },
+    {
+      "id": "InkToolbar.InkToolbarFlyoutItemTest",
+      "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
+      "method": "InkToolbarFlyoutItemTest",
+      "status": "not_ported",
+      "rust_tests": [],
+      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+    },
+    {
+      "id": "InkToolbar.InkToolbarPenConfigurationControlTest",
+      "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
+      "method": "InkToolbarPenConfigurationControlTest",
+      "status": "not_ported",
+      "rust_tests": [],
+      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+    },
+    {
+      "id": "InkToolbar.InkToolbarPenConfigurationControlLocalizesHeadingsTest",
+      "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
+      "method": "InkToolbarPenConfigurationControlLocalizesHeadingsTest",
+      "status": "not_ported",
+      "rust_tests": [],
+      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+    },
+    {
+      "id": "InkToolbar.InkToolbarEraserButtonTest",
+      "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
+      "method": "InkToolbarEraserButtonTest",
+      "status": "not_ported",
+      "rust_tests": [],
+      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+    },
+    {
+      "id": "InkToolbar.InkToolbarCustomPenTest",
+      "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
+      "method": "InkToolbarCustomPenTest",
+      "status": "not_ported",
+      "rust_tests": [],
+      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+    },
+    {
+      "id": "InkToolbar.InkToolbarCustomPenButtonTest",
+      "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
+      "method": "InkToolbarCustomPenButtonTest",
+      "status": "not_ported",
+      "rust_tests": [],
+      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+    },
+    {
+      "id": "InkToolbar.InkToolbarIsStencilButtonCheckedChangedEventTest",
+      "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
+      "method": "InkToolbarIsStencilButtonCheckedChangedEventTest",
+      "status": "not_ported",
+      "rust_tests": [],
+      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+    },
+    {
+      "id": "InkToolbar.InkToolbarRulerButtonTest",
+      "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
+      "method": "InkToolbarRulerButtonTest",
+      "status": "not_ported",
+      "rust_tests": [],
+      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+    },
+    {
+      "id": "InkToolbar.InkToolbarAutoPopulatesDefaultButtonsTest",
+      "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
+      "method": "InkToolbarAutoPopulatesDefaultButtonsTest",
+      "status": "not_ported",
+      "rust_tests": [],
+      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+    },
+    {
+      "id": "InkToolbar.InkToolbarInitialControlsPensOnlyPopulatesPensTest",
+      "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
+      "method": "InkToolbarInitialControlsPensOnlyPopulatesPensTest",
+      "status": "not_ported",
+      "rust_tests": [],
+      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+    },
+    {
+      "id": "InkToolbar.InkToolbarInitialControlsAllExceptPensPopulatesEraserTest",
+      "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
+      "method": "InkToolbarInitialControlsAllExceptPensPopulatesEraserTest",
+      "status": "not_ported",
+      "rust_tests": [],
+      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+    },
+    {
+      "id": "InkToolbar.InkToolbarInitialControlsNonePopulatesNothingTest",
+      "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
+      "method": "InkToolbarInitialControlsNonePopulatesNothingTest",
+      "status": "not_ported",
+      "rust_tests": [],
+      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+    },
+    {
+      "id": "InkToolbar.InkToolbarStencilRendersWithIconTest",
+      "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
+      "method": "InkToolbarStencilRendersWithIconTest",
+      "status": "not_ported",
+      "rust_tests": [],
+      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+    },
+    {
+      "id": "InkToolbar.InkToolbarToolButtonAutomationPeerExpandCollapseTest",
+      "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
+      "method": "InkToolbarToolButtonAutomationPeerExpandCollapseTest",
+      "status": "not_ported",
+      "rust_tests": [],
+      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+    },
+    {
+      "id": "InkToolbar.InkToolbarToolButtonAutomationPeerSelectedStateTest",
+      "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
+      "method": "InkToolbarToolButtonAutomationPeerSelectedStateTest",
+      "status": "not_ported",
+      "rust_tests": [],
+      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+    },
+    {
+      "id": "InkToolbar.InkToolbarStrokeWidthSliderAutomationPeerValueTest",
+      "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
+      "method": "InkToolbarStrokeWidthSliderAutomationPeerValueTest",
+      "status": "not_ported",
+      "rust_tests": [],
+      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+    },
+    {
+      "id": "InkToolbar.InkToolbarMenuButtonAutomationPeerExpandCollapseTest",
+      "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
+      "method": "InkToolbarMenuButtonAutomationPeerExpandCollapseTest",
+      "status": "not_ported",
+      "rust_tests": [],
+      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+    },
+    {
+      "id": "InkToolbar.InkToolbarSingleStencilAutomationPeerTest",
+      "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
+      "method": "InkToolbarSingleStencilAutomationPeerTest",
+      "status": "not_ported",
+      "rust_tests": [],
+      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+    },
+    {
+      "id": "InkToolbar.InkToolbarFlyoutItemAutomationPeerSelectionTest",
+      "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
+      "method": "InkToolbarFlyoutItemAutomationPeerSelectionTest",
+      "status": "not_ported",
+      "rust_tests": [],
+      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+    },
+    {
+      "id": "InkToolbar.InkToolbarEraserAndCustomToolAutomationPeerTest",
+      "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
+      "method": "InkToolbarEraserAndCustomToolAutomationPeerTest",
+      "status": "not_ported",
+      "rust_tests": [],
+      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+    },
+    {
+      "id": "InkToolbar.InkToolbarToolButtonTooltipAndNameTest",
+      "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
+      "method": "InkToolbarToolButtonTooltipAndNameTest",
+      "status": "not_ported",
+      "rust_tests": [],
+      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+    },
+    {
+      "id": "InkToolbar.InkToolbarPenConfigurationLocalizesHeadingsTest",
+      "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
+      "method": "InkToolbarPenConfigurationLocalizesHeadingsTest",
+      "status": "not_ported",
+      "rust_tests": [],
+      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+    },
+    {
+      "id": "InkToolbar.InkToolbarPaletteLocalizesDescriptionsTest",
+      "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
+      "method": "InkToolbarPaletteLocalizesDescriptionsTest",
+      "status": "not_ported",
+      "rust_tests": [],
+      "notes": "Upstream scenario retained in the ledger; no equivalent execution claimed."
+    }
+  ]
+}

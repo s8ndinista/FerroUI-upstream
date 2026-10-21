@@ -1,0 +1,102 @@
+{
+  "schema_version": 1,
+  "commit": "9427b7216337ea3d7b19ac32d48c327286ee7138",
+  "dependencies": [
+    {
+      "id": "windows-ink-points-and-attributes",
+      "upstream": "Windows.UI.Input.Inking.InkPoint / InkDrawingAttributes / PenTipShape",
+      "scope": "required",
+      "status": "partial",
+      "rust_files": ["src/FerroUI.Controls/inking/ink_point.rs", "src/FerroUI.Controls/inking/ink_drawing_attributes.rs"],
+      "notes": "Portable validated value types replace WinRT objects. Pressure, tilt/twist/timestamps and drawing metadata can be retained without reproducing the OS renderer. Native pencil texture and full OS geometry conformance require separate validation."
+    },
+    {
+      "id": "windows-ink-stroke-renderer",
+      "upstream": "Windows.UI.Input.Inking.InkStroke / InkStrokeBuilder and the DirectInk renderer",
+      "scope": "required",
+      "status": "partial",
+      "rust_files": ["src/FerroUI.Controls/inking/ink_stroke.rs"],
+      "notes": "Safe Rust stroke geometry is a portable replacement, not a source translation of the unavailable DirectInk implementation. Native curve fitting, pencil shading, subpixel rasterization and latency equivalence have not been established."
+    },
+    {
+      "id": "ink-desktop-host",
+      "upstream": "InkDesktopHost COM class, IInkDesktopHost, ink-thread work queue",
+      "scope": "required",
+      "status": "external",
+      "rust_files": [],
+      "notes": "WinUI creates and services the OS presenter on the native ink host thread. FerroUI uses its existing UI/input/render services. No independent native ink thread or Windows latency guarantee is claimed, and no OS binary is bundled."
+    },
+    {
+      "id": "direct-composition-host",
+      "upstream": "IDCompositionDevice / IDCompositionTarget / SystemVisualLink",
+      "scope": "required",
+      "status": "external",
+      "rust_files": [],
+      "notes": "The Windows-specific external composition visual is not copied into the portable control. FerroUI drawing and its existing render backends must present the ink. Native independent composition latency and pixel parity need platform evidence."
+    },
+    {
+      "id": "windows-isf",
+      "upstream": "InkStrokeContainer.SaveAsync / LoadAsync, InkPersistenceFormat.Isf",
+      "scope": "required",
+      "status": "not_ported",
+      "rust_files": [],
+      "notes": "An internal portable stroke format is not ISF. Native ISF decoding/encoding requires a real codec or a Windows service adapter plus Windows-produced interoperability fixtures. The public ISF specification and the MIT WPF serializer are potential independently pinned references."
+    },
+    {
+      "id": "gif-with-embedded-isf",
+      "upstream": "InkPersistenceFormat.GifWithEmbeddedIsf",
+      "scope": "required",
+      "status": "not_ported",
+      "rust_files": [],
+      "notes": "GIF preview generation plus embedded ISF data is a distinct Windows persistence contract. Neither ordinary GIF output nor a proprietary binary payload establishes compatibility."
+    },
+    {
+      "id": "native-ink-clipboard",
+      "upstream": "InkStrokeContainer.CopySelectedToClipboard / PasteFromClipboard / CanPasteFromClipboard",
+      "scope": "required",
+      "status": "not_ported",
+      "rust_files": [],
+      "notes": "Native Windows clipboard interoperability uses registered ink formats. Portable copy/paste of stroke objects or FerroUI payloads is useful but requires an explicit format name and cannot be advertised as native ink clipboard support without fixtures."
+    },
+    {
+      "id": "ruler-and-protractor",
+      "upstream": "Windows.UI.Input.Inking.InkPresenterRuler / InkPresenterProtractor",
+      "scope": "required",
+      "status": "not_ported",
+      "rust_files": [],
+      "notes": "OS stencil visibility, geometry, constraints and manipulation are separate from toolbar toggle state. Portable stencil controls need rendering, constraint behavior and manipulation tests; OS object identity is not preserved."
+    },
+    {
+      "id": "high-contrast-services",
+      "upstream": "AccessibilitySettings / UISettings / InkHighContrastAdjustment",
+      "scope": "required",
+      "status": "partial",
+      "rust_files": ["src/FerroUI.Controls/inking/ink_input.rs"],
+      "notes": "The adjustment enum is represented. Full system-color monitoring, the upstream contrast-filtered palette, theme-change propagation and rendered high-contrast comparisons remain independently tracked."
+    },
+    {
+      "id": "pointer-routing",
+      "upstream": "Windows.UI.Core.PointerEventArgs / CoreInputDeviceTypes / CoreInkIndependentInputSource",
+      "scope": "required",
+      "status": "partial",
+      "rust_files": ["src/FerroUI.Controls/inking/ink_input.rs"],
+      "notes": "FerroUI pointer values and events replace WinRT event objects and preserve the device/processed/unprocessed contracts. Physical pressure, tilt and coalesced sample delivery depend on each existing platform backend; independent OS input dispatch is not emulated."
+    },
+    {
+      "id": "ink-recognition",
+      "upstream": "Windows.UI.Input.Inking.InkRecognizerContainer and installed language recognizers",
+      "scope": "adjacent_os_service",
+      "status": "external",
+      "rust_files": [],
+      "notes": "Handwriting recognition is adjacent to the inking API but is not called by the pinned InkCanvas/InkToolbar sources or exposed in their IDLs. It is not implemented or bundled by this port. A provider and language/model availability contract would be needed for an extended recognition API."
+    },
+    {
+      "id": "ink-analysis",
+      "upstream": "Windows.UI.Input.Inking.Analysis.InkAnalyzer",
+      "scope": "adjacent_os_service",
+      "status": "external",
+      "rust_files": [],
+      "notes": "Document/shape/text analysis is outside the two pinned WinUI control directories and is not required by their public IDLs. It is tracked explicitly because a broader Windows Ink feature claim would otherwise be ambiguous. No analyzer implementation or recognition-model parity is claimed."
+    }
+  ]
+}
