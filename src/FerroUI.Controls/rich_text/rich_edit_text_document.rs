@@ -25,6 +25,9 @@ mod range_operations;
 #[path = "rich_edit_text_selection_navigation.rs"]
 mod selection_navigation;
 
+#[path = "rich_edit_text_selection_movement.rs"]
+mod selection_movement;
+
 #[path = "rich_edit_text_units.rs"]
 mod units;
 use units::TextUnits;
@@ -1196,8 +1199,19 @@ impl RichEditTextSelection {
         self.editor.selection()
     }
     pub fn set_range(&self, anchor: usize, active: usize) -> Result<(), EditError> {
-        self.editor
-            .set_selection(EditorSelection::new(anchor, active))
+        let requested = EditorSelection::new(anchor, active);
+        let generation = self.editor.navigation_generation();
+        let result = self.editor.set_selection(requested);
+        if result.is_ok()
+            && self.selection() == requested
+            && self.editor.navigation_generation() == generation
+        {
+            // Explicit source offsets carry no retained column or line-end
+            // affinity, even when equal to the current offsets. Preserve any
+            // newer decision made by a reentrant navigation callback.
+            self.editor.clear_navigation_affinity();
+        }
+        result
     }
     pub fn range(&self) -> Result<RichEditTextRange, EditError> {
         RichEditTextRange::new(self.editor.clone(), self.selection().range())
@@ -1238,20 +1252,7 @@ impl RichEditTextSelection {
         self.editor.apply_paragraph_format(format)
     }
     pub fn move_by(&self, unit: TextRangeUnit, count: i32, extend: bool) -> Result<i32, EditError> {
-        if count == 0 {
-            return Ok(0);
-        }
-        let units = TextUnits::resolve(&self.editor, unit)?;
-        // Resolving display units can run layout callbacks that change selection.
-        // Read the directed endpoints afterwards, as the live range methods do.
-        let current = self.selection();
-        let (position, moved) = if extend {
-            units.move_position(current.active, count)
-        } else {
-            units.move_range(current.range(), count)
-        };
-        self.set_range(if extend { current.anchor } else { position }, position)?;
-        Ok(moved)
+        self.move_logically(unit, count, extend)
     }
 }
 

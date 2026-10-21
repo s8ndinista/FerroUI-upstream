@@ -39,6 +39,273 @@ fn navigate(
 }
 
 #[test]
+fn rich_selection_home_end_matches_observed_msftedit_real_paragraph_endpoints() {
+    let _scope = test_scope();
+    let _text = TextTestScope::new();
+    // Literal observations from MSFTEDIT 6.2.26100.33438 on Windows 10.0.26100.
+    // FerroUI structural LF and the oracle's CR occupy the same UTF-16 position.
+    // These rows contain real paragraph marks, not the native synthetic EOP.
+    for associated in [false, true] {
+        for (text, rows) in [
+            (
+                "abc\ndefg\nhij",
+                vec![
+                    (1, 6, false, false, 0, -6),
+                    (1, 6, false, true, 8, 2),
+                    (1, 6, true, false, 4, -2),
+                    (1, 6, true, true, 9, 3),
+                    (6, 1, false, false, 0, -1),
+                    (6, 1, false, true, 8, 7),
+                    (6, 1, true, false, 0, -1),
+                    (6, 1, true, true, 4, 3),
+                ],
+            ),
+            (
+                "A😀B\nxy",
+                vec![
+                    (1, 6, false, false, 0, -6),
+                    (1, 6, false, true, 7, 1),
+                    (1, 6, true, false, 5, -1),
+                    (6, 1, false, false, 0, -1),
+                    (6, 1, false, true, 7, 6),
+                    (6, 1, true, false, 0, -1),
+                    (6, 1, true, true, 5, 4),
+                ],
+            ),
+        ] {
+            let view = RichTextBlock::new();
+            view.set_document(RichTextDocument::from_text(text));
+            let document = if associated {
+                measure(&view, 300.0, 500.0);
+                displayed(&view)
+            } else {
+                RichEditTextDocument::new(view.document())
+            };
+            for (anchor, active, extend, to_end, target, delta) in rows {
+                document.selection().set_range(anchor, active).unwrap();
+                assert_eq!(
+                    navigate(&document, TextRangeUnit::Line, extend, to_end).unwrap(),
+                    delta
+                );
+                assert_eq!(
+                    document.selection().selection(),
+                    EditorSelection::new(if extend { anchor } else { target }, target)
+                );
+                assert_eq!(
+                    navigate(&document, TextRangeUnit::Line, extend, to_end).unwrap(),
+                    0
+                );
+            }
+        }
+    }
+}
+
+#[test]
+fn rich_selection_extended_end_includes_empty_paragraph_marks_without_synthetic_eop() {
+    let _scope = Dispatcher::unit_test_scope();
+    let document = services("ab\n\nxy\n");
+    document.selection().set_range(3, 3).unwrap();
+    assert_eq!(
+        document
+            .selection()
+            .end_key(TextRangeUnit::Line, true)
+            .unwrap(),
+        1
+    );
+    assert_eq!(document.selection().selection(), EditorSelection::new(3, 4));
+    assert_eq!(document.selection().text().unwrap(), "\n");
+    assert_eq!(
+        document
+            .selection()
+            .end_key(TextRangeUnit::Line, true)
+            .unwrap(),
+        0
+    );
+    document.selection().set_range(7, 7).unwrap();
+    for unit in [TextRangeUnit::Line, TextRangeUnit::Story] {
+        assert_eq!(document.selection().end_key(unit, true).unwrap(), 0);
+        assert_eq!(document.selection().selection(), EditorSelection::caret(7));
+    }
+    let empty = services("");
+    assert_eq!(
+        empty
+            .selection()
+            .end_key(TextRangeUnit::Line, true)
+            .unwrap(),
+        0
+    );
+    assert_eq!(
+        empty
+            .selection()
+            .end_key(TextRangeUnit::Story, true)
+            .unwrap(),
+        0
+    );
+    assert_eq!(empty.text_length(), 0);
+}
+
+#[test]
+fn rich_selection_extended_end_affinity_invalidates_on_selection_model_and_view_changes() {
+    let _scope = test_scope();
+    let _text = TextTestScope::new();
+    for change in 0..3 {
+        let view = RichTextBlock::new();
+        view.set_document(RichTextDocument::from_text("abc\ndefg\nhij"));
+        measure(&view, 300.0, 500.0);
+        let document = displayed(&view);
+        document.selection().set_range(1, 6).unwrap();
+        assert_eq!(
+            document
+                .selection()
+                .end_key(TextRangeUnit::Line, true)
+                .unwrap(),
+            3
+        );
+        let replacement = RichTextBlock::new();
+        match change {
+            0 => {
+                document.selection().set_range(1, 10).unwrap();
+                document.selection().set_range(1, 9).unwrap();
+            }
+            1 => {
+                document.document().replace_text(0..1, "q").unwrap();
+            }
+            _ => {
+                // A document has one owning root view. Explicitly release that
+                // ownership before attaching it to a different shaped view.
+                assert!(view.try_set_document(RichTextDocument::new()));
+                assert!(replacement.try_set_document(document.document()));
+                measure(&replacement, 300.0, 500.0);
+                document
+                    .editor()
+                    .set_text_view(Some(replacement.clone()))
+                    .unwrap();
+            }
+        }
+        assert_eq!(
+            document
+                .selection()
+                .end_key(TextRangeUnit::Line, true)
+                .unwrap(),
+            3
+        );
+        assert_eq!(
+            document.selection().selection(),
+            EditorSelection::new(1, 12)
+        );
+    }
+}
+
+#[test]
+fn rich_selection_extended_end_cancellation_retains_affinity() {
+    let _scope = Dispatcher::unit_test_scope();
+    let owner = RichEditBox::new();
+    owner.set_text("abc\ndefg\nhij").unwrap();
+    owner.select(1, 6);
+    let document = owner.text_document();
+    assert_eq!(
+        document
+            .selection()
+            .end_key(TextRangeUnit::Line, true)
+            .unwrap(),
+        3
+    );
+    owner.selection_changing(|_, args| args.set_cancel(true));
+    assert_eq!(
+        document
+            .selection()
+            .home_key(TextRangeUnit::Story, false)
+            .unwrap(),
+        0
+    );
+    assert_eq!(document.selection().selection(), EditorSelection::new(1, 9));
+    assert_eq!(
+        document
+            .selection()
+            .end_key(TextRangeUnit::Line, true)
+            .unwrap(),
+        0
+    );
+}
+
+#[test]
+fn rich_selection_extended_end_nested_same_offset_navigation_owns_affinity() {
+    let _scope = Dispatcher::unit_test_scope();
+    let owner = RichEditBox::new();
+    owner.set_text("abc\ndefg\nhij").unwrap();
+    owner.select(1, 6);
+    let document = owner.text_document();
+    let nested = document.selection();
+    let changed = Rc::new(Cell::new(false));
+    let observed = changed.clone();
+    owner.selection_changing(move |_, _| {
+        if !changed.replace(true) {
+            assert_eq!(nested.selection(), EditorSelection::new(1, 9));
+            // Home accepts the same endpoint as a following-line start. The
+            // enclosing End must not overwrite this newer affinity decision.
+            assert_eq!(nested.home_key(TextRangeUnit::Line, true).unwrap(), 0);
+        }
+    });
+    assert_eq!(
+        document
+            .selection()
+            .end_key(TextRangeUnit::Line, true)
+            .unwrap(),
+        3
+    );
+    assert!(observed.get());
+    assert_eq!(
+        document
+            .selection()
+            .end_key(TextRangeUnit::Line, true)
+            .unwrap(),
+        3
+    );
+    assert_eq!(
+        document.selection().selection(),
+        EditorSelection::new(1, 12)
+    );
+}
+
+#[test]
+fn rich_selection_extended_end_view_detach_during_publication_invalidates_old_affinity() {
+    let _scope = test_scope();
+    let _text = TextTestScope::new();
+    let owner = RichEditBox::new();
+    owner.set_text("abc\ndefg\nhij").unwrap();
+    owner.select(1, 6);
+    let document = owner.text_document();
+    let view = owner.text_presenter().upcast::<RichTextBlock>();
+    measure(&view, 300.0, 500.0);
+    document.editor().set_text_view(Some(view.clone())).unwrap();
+    let editor = document.editor();
+    let changed = Rc::new(Cell::new(false));
+    owner.selection_changing(move |_, _| {
+        if !changed.replace(true) {
+            editor.set_text_view(None).unwrap();
+        }
+    });
+    assert_eq!(
+        document
+            .selection()
+            .end_key(TextRangeUnit::Line, true)
+            .unwrap(),
+        3
+    );
+    assert_eq!(
+        document
+            .selection()
+            .end_key(TextRangeUnit::Line, true)
+            .unwrap(),
+        3
+    );
+    assert_eq!(
+        document.selection().selection(),
+        EditorSelection::new(1, 12)
+    );
+}
+
+#[test]
 fn rich_selection_home_end_story_uses_active_utf16_end_and_preserves_extension_anchor() {
     let _scope = Dispatcher::unit_test_scope();
     let document = services("A😀B\ncd");
@@ -103,7 +370,15 @@ fn rich_selection_home_end_headless_lines_keep_paragraph_ends_and_empty_lines() 
         for extend in [false, true] {
             for to_end in [false, true] {
                 document.selection().set_range(9, active).unwrap();
-                let target = if to_end { end } else { start };
+                let target = if to_end {
+                    if extend {
+                        (end + 1).min(9)
+                    } else {
+                        9
+                    }
+                } else {
+                    start
+                };
                 assert_eq!(
                     navigate(&document, TextRangeUnit::Line, extend, to_end).unwrap(),
                     target as isize - active as isize
@@ -119,6 +394,7 @@ fn rich_selection_home_end_headless_lines_keep_paragraph_ends_and_empty_lines() 
         let document = services(text);
         for position in 0..=document.text_length() {
             document.selection().set_range(position, position).unwrap();
+            let end = (position + 1).min(document.text_length());
             assert_eq!(
                 document
                     .selection()
@@ -131,11 +407,11 @@ fn rich_selection_home_end_headless_lines_keep_paragraph_ends_and_empty_lines() 
                     .selection()
                     .end_key(TextRangeUnit::Line, true)
                     .unwrap(),
-                0
+                end as isize - position as isize
             );
             assert_eq!(
                 document.selection().selection(),
-                EditorSelection::caret(position)
+                EditorSelection::new(position, end)
             );
         }
     }
@@ -370,11 +646,11 @@ fn rich_selection_home_end_uses_complete_linked_overflow_lines() {
             .selection()
             .end_key(TextRangeUnit::Line, true)
             .unwrap(),
-        2
+        3
     );
     assert_eq!(
         document.selection().selection(),
-        EditorSelection::new(13, 7)
+        EditorSelection::new(13, 8)
     );
 }
 
@@ -507,12 +783,18 @@ fn rich_selection_home_end_recaptures_active_end_after_layout_selection_callback
                     editor.set_selection(EditorSelection::new(1, 5)).unwrap();
                 }
             });
+            let target = if to_end {
+                7
+            } else if extend {
+                3
+            } else {
+                0
+            };
             assert_eq!(
                 navigate(&document, TextRangeUnit::Line, extend, to_end).unwrap(),
-                if to_end { 2 } else { -2 }
+                target as isize - 5
             );
             assert!(observed.get());
-            let target = if to_end { 7 } else { 3 };
             assert_eq!(
                 document.selection().selection(),
                 EditorSelection::new(if extend { 1 } else { target }, target)

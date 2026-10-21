@@ -6,9 +6,9 @@
 use super::*;
 
 impl RichEditTextSelection {
-    /// Moves the active caret to the logical start of its Line or the Story.
-    /// Extension retains the anchor; otherwise the selection collapses at the
-    /// target. Other units are rejected before changing selection or composition.
+    /// Moves to the logical start of a Line or the Story. Extension follows the
+    /// active end and retains the anchor. A collapsed Line request first chooses
+    /// the normalized selection start. Other units are rejected before effects.
     ///
     /// The result is the accepted signed UTF-16 displacement of the active end,
     /// including application changes made through cancellable selection events.
@@ -18,9 +18,12 @@ impl RichEditTextSelection {
         self.move_to_caret_boundary(unit, extend, false)
     }
 
-    /// Moves the active caret to the logical end of its Line or the Story.
-    /// A Line target excludes its actual line/paragraph terminator. Story ends at
-    /// the model's final caret; no synthetic terminal CR is exposed.
+    /// Moves to the logical end of a Line or the Story. A collapsed Line request
+    /// chooses the normalized selection end and excludes its terminator. An
+    /// extended Line request follows the active end, includes real hard paragraph
+    /// marks, and retains that line-end affinity on repetition. Soft-break and
+    /// wrap affinity retain FerroUI's existing caret policy. Story ends at the
+    /// model's final caret; no synthetic terminal CR is exposed.
     /// See [`home_key`](Self::home_key) for extension, layout and result policy.
     pub fn end_key(&self, unit: TextRangeUnit, extend: bool) -> Result<isize, EditError> {
         self.move_to_caret_boundary(unit, extend, true)
@@ -40,24 +43,36 @@ impl RichEditTextSelection {
         }
         let units = TextUnits::resolve(&self.editor, unit)?;
         // Formatting can run callbacks that change the directed selection.
-        // Capture the live active end after the validated layout is available.
+        // Capture live endpoints after validated layout. MSFTEDIT collapses to
+        // the directional range edge before choosing a line; extension instead
+        // navigates from the directed active end.
         let before = self.selection();
-        let bounds = units.caret_bounds(before.active);
-        let target = if to_end { bounds.end } else { bounds.start };
+        let source = if extend {
+            before.active
+        } else if to_end {
+            before.range().end
+        } else {
+            before.range().start
+        };
+        let bounds = units.caret_bounds(source);
+        let (target, line_end_start) = if extend && to_end && unit == TextRangeUnit::Line {
+            units.extended_line_end(source, self.editor.line_end_navigation_start())
+        } else {
+            (if to_end { bounds.end } else { bounds.start }, None)
+        };
         // Validate representability before a selection callback can run.
         units::signed_displacement(target, before.active)?;
-        let document = self.editor.document();
-        let version = document.mutation_version();
-        let result = self.set_range(if extend { before.anchor } else { target }, target);
-        if document.mutation_version() != version {
-            // A selection or editor notification can publish an independent edit
-            // even inside an application-owned batch. Never acknowledge stale
-            // navigation or permit an enclosing group to restore that old model.
-            self.editor.observe_external_document_change();
-            return Err(EditError::ReentrantEdit);
+        let requested = EditorSelection::new(if extend { before.anchor } else { target }, target);
+        let published =
+            self.publish_navigation(before, requested, self.editor.document().mutation_version())?;
+        if published.uncontested {
+            if let Some(start) = line_end_start {
+                self.editor.remember_line_end_navigation(start);
+            } else {
+                self.editor.clear_navigation_affinity();
+            }
         }
-        result?;
-        units::signed_displacement(self.selection().active, before.active)
+        units::signed_displacement(published.accepted.active, before.active)
     }
 }
 

@@ -3,15 +3,16 @@
 use super::*;
 use crate::documents::EmbeddedControlRun;
 use crate::rich_text_layout::RichTextLayout;
-use ferroui_base::media::text_formatting::{LogicalTextRunEnumerator, ShapedTextRun};
+use ferroui_base::media::text_formatting::{LogicalTextRunEnumerator, ShapedTextRun, TextLine};
 use ferroui_base::Ref;
 use std::collections::HashSet;
 
 pub(super) struct TextUnits {
     ranges: Vec<Range<usize>>,
-    // Line movement includes terminators; Home/End caret targets exclude them.
+    // Line movement includes terminators; collapsed Home/End targets exclude them.
     // Keep the formatter's actual content ends rather than guessing from glyphs.
     line_caret_ends: Option<Vec<usize>>,
+    line_paragraph_ends: Option<Vec<usize>>,
     boundaries: Vec<usize>,
     length: usize,
     terminal_caret_in_last_unit: bool,
@@ -30,6 +31,14 @@ impl TextUnits {
             None
         };
         let mut line_caret_ends = None;
+        // MSFTEDIT End(Line, extend) includes real hard paragraph marks. Keep
+        // those source boundaries separate from inline soft breaks and wraps;
+        // their native extension affinity has not been characterized yet.
+        let line_paragraph_ends = (unit == TextRangeUnit::Line).then(|| {
+            let mut paragraphs = hard_paragraph_ranges(&document.snapshot());
+            paragraphs.pop(); // The final model paragraph has no terminal EOP.
+            paragraphs.into_iter().map(|range| range.end).collect()
+        });
         let ranges = match unit {
             // Native positions count UTF-16. The safe Rust range model never
             // exposes half a surrogate; one Character traverses a whole scalar.
@@ -89,6 +98,7 @@ impl TextUnits {
         Ok(Self {
             ranges,
             line_caret_ends,
+            line_paragraph_ends,
             boundaries,
             length,
             terminal_caret_in_last_unit: matches!(
@@ -131,6 +141,39 @@ impl TextUnits {
                 .line_caret_ends
                 .as_ref()
                 .map_or(range.end, |ends| ends[index])
+    }
+
+    /// Extended End includes a real hard paragraph mark. A retained source-line
+    /// start resolves its boundary on repetition without treating that same
+    /// offset as the start of the following line. Reflow can invalidate it.
+    pub(super) fn extended_line_end(
+        &self,
+        position: usize,
+        retained_start: Option<usize>,
+    ) -> (usize, Option<usize>) {
+        let retained = retained_start.and_then(|start| {
+            self.ranges
+                .iter()
+                .position(|range| range.start == start && range.end == position)
+        });
+        let Some(index) = retained.or_else(|| self.containing_index(position)) else {
+            return (position, None);
+        };
+        let range = &self.ranges[index];
+        let caret_end = self
+            .line_caret_ends
+            .as_ref()
+            .map_or(range.end, |ends| ends[index]);
+        if range.end > caret_end
+            && self
+                .line_paragraph_ends
+                .as_ref()
+                .is_some_and(|ends| ends.binary_search(&range.end).is_ok())
+        {
+            (range.end, Some(range.start))
+        } else {
+            (caret_end, None)
+        }
     }
 
     pub(super) fn expanded(&self, range: Range<usize>) -> Range<usize> {
@@ -212,12 +255,18 @@ impl TextUnits {
     }
 
     pub(super) fn move_position(&self, position: usize, count: i32) -> (usize, i32) {
+        let (position, moved) = self.move_position_wide(position, i64::from(count));
+        // Movement is bounded by the original i32 request, including i32::MIN.
+        (position, moved as i32)
+    }
+
+    pub(super) fn move_position_wide(&self, position: usize, count: i64) -> (usize, i64) {
         if count == 0 {
             return (position, 0);
         }
         // A single boundary lookup and a clamped displacement also handle extreme
         // i32::MIN/MAX requests without repeated scans or signed abs overflow.
-        let requested = count.unsigned_abs() as usize;
+        let requested = usize::try_from(count.unsigned_abs()).unwrap_or(usize::MAX);
         if count < 0 {
             let before = self
                 .boundaries
@@ -226,7 +275,7 @@ impl TextUnits {
             if moved == 0 {
                 return (position, 0);
             }
-            (self.boundaries[before - moved], (-(moved as i64)) as i32)
+            (self.boundaries[before - moved], -(moved as i64))
         } else {
             let after = self
                 .boundaries
@@ -235,7 +284,22 @@ impl TextUnits {
             if moved == 0 {
                 return (position, 0);
             }
-            (self.boundaries[after + moved - 1], moved as i32)
+            (self.boundaries[after + moved - 1], moved as i64)
+        }
+    }
+
+    /// Counts actual crossed boundaries after a selection callback redirects a
+    /// command. An arbitrary partial unit is not reported as a full unit, and
+    /// UTF-16 displacement never substitutes for Character/Word/Line counts.
+    pub(super) fn crossed_boundaries(&self, from: usize, to: usize) -> i128 {
+        if to >= from {
+            (self.boundaries.partition_point(|boundary| *boundary <= to)
+                - self
+                    .boundaries
+                    .partition_point(|boundary| *boundary <= from)) as i128
+        } else {
+            -((self.boundaries.partition_point(|boundary| *boundary < from)
+                - self.boundaries.partition_point(|boundary| *boundary < to)) as i128)
         }
     }
 }
@@ -414,9 +478,49 @@ fn line_ranges(
     text: &str,
     first: Ref<RichTextBlock>,
 ) -> Result<(Vec<Range<usize>>, Vec<usize>), EditError> {
+    let lines = display_lines(document, text, first)?;
+    Ok(lines
+        .into_iter()
+        .map(|line| (line.range, line.caret_end))
+        .unzip())
+}
+
+/// One real shaped display line in story order. The source range includes any
+/// structural separator after the line; the caret end excludes all terminators.
+pub(super) struct DisplayLine {
+    pub(super) line: Rc<dyn TextLine>,
+    pub(super) range: Range<usize>,
+    pub(super) caret_end: usize,
+    pub(super) paragraph_offset: usize,
+    pub(super) origin: Point,
+}
+
+pub(super) fn resolve_display_lines(
+    editor: &RichTextEditor,
+) -> Result<Vec<DisplayLine>, EditError> {
+    let document = editor.document();
+    let mutation = document.mutation_version();
+    let view = editor.text_view().ok_or(DocumentError::InvalidFormat(
+        "Vertical Line navigation requires an associated shaped text view.",
+    ))?;
+    let result = display_lines(&document, &document.text(), view.clone());
+    if document.mutation_version() != mutation {
+        editor.observe_external_document_change();
+        return Err(EditError::ReentrantEdit);
+    }
+    if editor.text_view().as_ref() != Some(&view) {
+        return Err(EditError::ReentrantEdit);
+    }
+    result
+}
+
+fn display_lines(
+    document: &RichTextDocument,
+    text: &str,
+    first: Ref<RichTextBlock>,
+) -> Result<Vec<DisplayLine>, EditError> {
     let utf16: Vec<_> = text.encode_utf16().collect();
     let mut result = Vec::new();
-    let mut caret_ends = Vec::new();
     for layout in story_layouts(document, first)? {
         for line in &layout.lines {
             let start = line.start();
@@ -443,12 +547,19 @@ fn line_ranges(
                     return Err(DocumentError::InvalidUtf16Boundary { offset: position }.into());
                 }
             }
-            result.push(start..end);
-            caret_ends.push(caret_end);
+            result.push(DisplayLine {
+                line: line.line.clone(),
+                range: start..end,
+                caret_end,
+                paragraph_offset: line.paragraph_offset,
+                origin: line.origin,
+            });
         }
     }
-    if result.first().is_none_or(|range| range.start != 0)
-        || result.last().is_none_or(|range| range.end != utf16.len())
+    if result.first().is_none_or(|line| line.range.start != 0)
+        || result
+            .last()
+            .is_none_or(|line| line.range.end != utf16.len())
     {
         return Err(DocumentError::InvalidFormat(
             "Line navigation requires layout for the complete story.",
@@ -456,8 +567,8 @@ fn line_ranges(
         .into());
     }
     for index in 0..result.len().saturating_sub(1) {
-        let next_start = result[index + 1].start;
-        let end = result[index].end;
+        let next_start = result[index + 1].range.start;
+        let end = result[index].range.end;
         if end > next_start
             || !utf16[end..next_start]
                 .iter()
@@ -470,9 +581,9 @@ fn line_ranges(
         }
         // The formatter omits a structural paragraph mark from line metrics.
         // Assign it to the preceding display line, keeping every position covered.
-        result[index].end = next_start;
+        result[index].range.end = next_start;
     }
-    Ok((result, caret_ends))
+    Ok(result)
 }
 
 /// Capture one coherent layout chain before reading its runs. Public document

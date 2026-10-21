@@ -137,6 +137,15 @@ struct History {
     composition: Option<Composition>,
 }
 
+#[derive(Clone, Copy)]
+struct NavigationAffinity {
+    vertical_x: Option<f64>,
+    line_end_start: Option<usize>,
+    selection: EditorSelection,
+    mutation_version: u64,
+    checkpoint: u64,
+}
+
 /// Portable rich-text transactions shared by input, commands, clipboard, and automation.
 ///
 /// The document remains the authoritative structured object model. Undo snapshots retain
@@ -147,6 +156,8 @@ pub struct RichTextEditor {
     document: RichTextDocument,
     text_view: RefCell<Option<WeakRef<crate::RichTextBlock>>>,
     selection: Cell<EditorSelection>,
+    navigation_affinity: Cell<Option<NavigationAffinity>>,
+    navigation_generation: Cell<u64>,
     typing_format: RefCell<CharacterFormat>,
     default_character_format: RefCell<CharacterFormat>,
     default_paragraph_format: RefCell<ParagraphFormat>,
@@ -190,6 +201,8 @@ impl RichTextEditor {
             document,
             text_view: RefCell::new(None),
             selection: Cell::new(EditorSelection::default()),
+            navigation_affinity: Cell::new(None),
+            navigation_generation: Cell::new(0),
             typing_format: RefCell::new(CharacterFormat::default()),
             default_character_format: RefCell::new(CharacterFormat::default()),
             default_paragraph_format: RefCell::new(ParagraphFormat::default()),
@@ -225,8 +238,19 @@ impl RichTextEditor {
             )
             .into());
         }
+        // Layout and scrolling re-announce the presenter's live association.
+        // Keep its caret affinity when the validated view is unchanged. An
+        // explicit detach still invalidates state, including an expired weak
+        // association, so a subsequent attachment starts a new navigation run.
+        if view
+            .as_ref()
+            .is_some_and(|view| self.text_view().as_ref() == Some(view))
+        {
+            return Ok(());
+        }
         let previous = self.text_view.replace(view.as_ref().map(Ref::downgrade));
         drop(previous);
+        self.clear_navigation_affinity();
         Ok(())
     }
 
@@ -235,6 +259,61 @@ impl RichTextEditor {
     }
     pub fn selection(&self) -> EditorSelection {
         self.selection.get()
+    }
+
+    /// Accepted selection changes and edit checkpoints invalidate stored caret
+    /// affinity. Commands record it only after accepted publication; cancelled
+    /// and failed requests retain the preceding state.
+    pub(super) fn navigation_checkpoint(&self) -> u64 {
+        self.merge_generation.get()
+    }
+
+    pub(super) fn navigation_generation(&self) -> u64 {
+        self.navigation_generation.get()
+    }
+
+    fn current_navigation_affinity(&self) -> Option<NavigationAffinity> {
+        self.navigation_affinity.get().filter(|navigation| {
+            navigation.selection == self.selection()
+                && navigation.mutation_version == self.document.mutation_version()
+                && navigation.checkpoint == self.navigation_checkpoint()
+        })
+    }
+
+    pub(super) fn vertical_navigation_x(&self) -> Option<f64> {
+        self.current_navigation_affinity()
+            .and_then(|navigation| navigation.vertical_x)
+    }
+
+    pub(super) fn line_end_navigation_start(&self) -> Option<usize> {
+        self.current_navigation_affinity()
+            .and_then(|navigation| navigation.line_end_start)
+    }
+
+    pub(super) fn remember_vertical_navigation_x(&self, x: f64) {
+        self.remember_navigation_affinity(Some(x), None);
+    }
+
+    pub(super) fn remember_line_end_navigation(&self, start: usize) {
+        self.remember_navigation_affinity(None, Some(start));
+    }
+
+    fn remember_navigation_affinity(&self, vertical_x: Option<f64>, line_end_start: Option<usize>) {
+        self.navigation_generation
+            .set(self.navigation_generation.get().wrapping_add(1));
+        self.navigation_affinity.set(Some(NavigationAffinity {
+            vertical_x,
+            line_end_start,
+            selection: self.selection(),
+            mutation_version: self.document.mutation_version(),
+            checkpoint: self.navigation_checkpoint(),
+        }));
+    }
+
+    pub(super) fn clear_navigation_affinity(&self) {
+        self.navigation_generation
+            .set(self.navigation_generation.get().wrapping_add(1));
+        self.navigation_affinity.set(None);
     }
     pub fn is_read_only(&self) -> bool {
         self.is_read_only.get()
@@ -534,6 +613,7 @@ impl RichTextEditor {
         let previous = self.selection.replace(selection);
         if previous != selection {
             let previous_format = self.typing_format.replace(CharacterFormat::default());
+            let navigation_generation = self.navigation_generation();
             // A nested owner request must immediately update the view's proposal.
             // The view suppresses recursive SelectionChanging, while this guard
             // suppresses nested editor publication until the outer request settles.
@@ -542,7 +622,18 @@ impl RichTextEditor {
                 *self.typing_format.borrow_mut() = previous_format;
                 return Ok(());
             }
+            // A nested navigation may accept the proposed offsets without
+            // changing them, yet choose its own desired column or line affinity.
+            // Preserve that accepted state across this enclosing request's undo
+            // checkpoint. Ordinary checkpoints still invalidate prior affinity.
+            let nested_affinity = (self.navigation_generation() != navigation_generation)
+                .then(|| self.current_navigation_affinity())
+                .flatten();
             self.checkpoint();
+            if let Some(mut affinity) = nested_affinity {
+                affinity.checkpoint = self.navigation_checkpoint();
+                self.navigation_affinity.set(Some(affinity));
+            }
             self.publish_changed();
         }
         Ok(())
