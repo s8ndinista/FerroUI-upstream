@@ -46,13 +46,26 @@ const SIZE = { width: 1280, height: 1000 };
 const START_TIMEOUT = 180_000;
 const FRAME_TIMEOUT = 60_000;
 const ITEM_COUNT = 10_000;
+// ItemsRepeaterPage.xaml: the status stretches across row 2, then a 12-DIP row gap and the
+// row-3 Border inset (1 border + 12 padding) surround the scroller. The bare ContentPage fills
+// the fixed-height browser view, with no bottom command bar or extra content padding.
+const PAGE_ROW_SPACING = 12;
+const SCROLLER_BORDER = 1;
+const SCROLLER_PADDING = 12;
 const layouts = [
     { button: "StackLayoutButton", name: "stack", columns: false },
     { button: "UniformGridLayoutButton", name: "uniform-grid", columns: true },
     { button: "FlowLayoutButton", name: "flow", columns: true },
     { button: "LinedFlowLayoutButton", name: "lined-flow", columns: true }
 ];
-const report = { site, query: extraQuery, threaded, started: new Date().toISOString(), runs: [] };
+const report = {
+    site, query: extraQuery, threaded, started: new Date().toISOString(),
+    viewportDerivation: {
+        source: "ItemsRepeaterPage.xaml and the measured RealizationStatus bounds; the host does not export ScrollViewer bounds",
+        rowSpacing: PAGE_ROW_SPACING, border: SCROLLER_BORDER, padding: SCROLLER_PADDING, pageBottom: SIZE.height
+    },
+    runs: []
+};
 
 /** The page's counters, updated after collection changes and layout. */
 function counters(state) {
@@ -61,10 +74,29 @@ function counters(state) {
     return match ? Object.fromEntries(["items", "realized", "prepared", "cleared"].map((name, i) => [name, Number(match[i + 1])])) : null;
 }
 
-/** Item labels whose centres are inside the drawn viewport, ordered as they appear in the layout. */
+function itemViewport(state) {
+    // catalogState exports TextBlock/TextBox/Button/Image, not the named RepeaterScroller. Derive
+    // this fixed sample's scroller from exported layout geometry and its declared XAML insets.
+    const status = state.elements.find((element) => element.name === "RealizationStatus");
+    const inset = SCROLLER_BORDER + SCROLLER_PADDING;
+    return status && status.width > 2 * inset && status.height > 0 ? {
+        left: status.x + inset,
+        top: status.y + status.height + PAGE_ROW_SPACING + inset,
+        right: status.x + status.width - inset,
+        bottom: SIZE.height - inset
+    } : null;
+}
+
+/** Item labels whose centres are inside the scroller, ordered as they appear in the layout. */
 function visibleItems(state) {
+    const viewport = itemViewport(state);
+    if (!viewport) { return []; }
     return state.elements.filter((element) => element.type === "TextBlock" && inContent(element)
-        && /^(?:Item \d{5}|Inserted item \d+)$/.test(element.text ?? ""))
+        && /^(?:Item \d{5}|Inserted item \d+)$/.test(element.text ?? "")
+        // catalogState's hit flag can include buffered rows clipped by this ancestor. A hit alone
+        // must not make an offscreen label overlap the toolbar in our visibility or pixel checks.
+        && element.x + element.width / 2 >= viewport.left && element.x + element.width / 2 < viewport.right
+        && element.y + element.height / 2 >= viewport.top && element.y + element.height / 2 < viewport.bottom)
         .sort((a, b) => a.y - b.y || a.x - b.x);
 }
 const hasItem = (state, text) => visibleItems(state).some((item) => item.text === text);
@@ -100,14 +132,19 @@ async function capture(page, mode, name, state, modeReport) {
     await page.drawn(FRAME_TIMEOUT);
     const file = screenshotDirectory ? path.join(screenshotDirectory, `${mode.toLowerCase()}-${name}.png`) : undefined;
     const picture = await page.screenshot(file);
+    const viewport = itemViewport(state);
+    assert(viewport !== null, `${mode}/${name}: the sample's scroller viewport could not be derived`);
     const first = visibleItems(state)[0];
+    const probe = visibleItems(state).find((item) => item.x >= viewport.left && item.y >= viewport.top
+        && item.x + item.width <= viewport.right && item.y + item.height <= viewport.bottom);
+    assert(probe !== undefined, `${mode}/${name}: no item's complete text bounds are inside the scroller`);
     const colours = new Set();
-    for (let y = Math.max(0, Math.floor(first.y)); y < Math.min(picture.height, Math.ceil(first.y + first.height)); y++) {
-        for (let x = Math.max(0, Math.floor(first.x)); x < Math.min(picture.width, Math.ceil(first.x + first.width)); x++) {
+    for (let y = Math.max(0, Math.floor(probe.y)); y < Math.min(picture.height, Math.ceil(probe.y + probe.height)); y++) {
+        for (let x = Math.max(0, Math.floor(probe.x)); x < Math.min(picture.width, Math.ceil(probe.x + probe.width)); x++) {
             colours.add(picture.pixel(x, y).join(","));
         }
     }
-    assert(colours.size > 4, `${mode}/${name}: the first item's text bounds contain only ${colours.size} colours; its glyphs were not drawn`);
+    assert(colours.size > 4, `${mode}/${name}: the visible item's text bounds contain only ${colours.size} colours; its glyphs were not drawn`);
     // The initial stack's text bounds span the same horizontal viewport as every other layout.
     // Inspect labels even when their centres fail hit testing: a partially clipped last column can
     // still appear in catalogState, while filtering by `hit` alone would silently omit that bug.
@@ -125,7 +162,12 @@ async function capture(page, mode, name, state, modeReport) {
             `${mode}/${name}: the drawn rows omit or repeat an item between ${indexes[i - 1]} and ${indexes[i]}`);
     }
     const counts = assertVirtualized(state);
-    modeReport.stages.push({ name, ...counts, visible: visibleItems(state).map(({ text, x, y, width, height }) => ({ text, x, y, width, height })), ...(file ? { screenshot: file } : {}) });
+    modeReport.stages.push({
+        name, ...counts, viewport,
+        glyphProbe: { text: probe.text, bounds: { x: probe.x, y: probe.y, width: probe.width, height: probe.height }, colours: colours.size },
+        visible: visibleItems(state).map(({ text, x, y, width, height }) => ({ text, x, y, width, height })),
+        ...(file ? { screenshot: file } : {})
+    });
     console.log(`      ${mode}/${name}: ${counts.items} items, ${counts.realized} realized, ${counts.prepared} prepared, ${counts.cleared} cleared`);
     return picture;
 }
