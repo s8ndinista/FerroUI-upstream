@@ -1,0 +1,201 @@
+{
+  "schema_version": 1,
+  "types": {
+    "Microsoft.UI.Xaml.Controls.AutoSuggestBox": {
+      "kind": "candidate-requiring-adapter",
+      "members": {
+        "PlaceholderText": "watermark"
+      },
+      "notes": "SuggestionChosen, QuerySubmitted, TextChanged reason and asynchronous filtering require dedicated adapters.",
+      "target": "FerroUI.Controls.AutoCompleteBox"
+    },
+    "Microsoft.UI.Xaml.Controls.ContentPresenter": {
+      "kind": "shared-core-adaptation",
+      "members": {},
+      "notes": "Reuse content presentation; WinUI template and alignment semantics require review.",
+      "target": "FerroUI.Controls.Presenters.ContentPresenter"
+    },
+    "Microsoft.UI.Xaml.Controls.ListView": {
+      "kind": "candidate-requiring-adapter",
+      "members": {},
+      "notes": "Selection modes, containers, item-click behavior and incremental data loading are not implied by this candidate.",
+      "target": "FerroUI.Controls.ListBox"
+    },
+    "Microsoft.UI.Xaml.Controls.ListViewItem": {
+      "kind": "candidate-requiring-adapter",
+      "members": {},
+      "notes": "Container behavior and presentation require explicit tests.",
+      "target": "FerroUI.Controls.ListBoxItem"
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationView": {
+      "kind": "candidate-requiring-adapter",
+      "members": {},
+      "notes": "DrawerPage provides an existing composition primitive; NavigationView selection, top mode, footer items and hierarchical containers require a new facade.",
+      "target": "FerroUI.Controls.DrawerPage"
+    },
+    "Microsoft.UI.Xaml.Controls.NumberBox": {
+      "kind": "candidate-requiring-adapter",
+      "members": {
+        "PlaceholderText": "watermark",
+        "SmallChange": "increment"
+      },
+      "notes": "NumberBox NaN, expressions, formatter and validation contracts differ from NumericUpDown; this is not a direct alias.",
+      "target": "FerroUI.Controls.NumericUpDown"
+    },
+    "Microsoft.UI.Xaml.Controls.TabView": {
+      "kind": "candidate-requiring-adapter",
+      "members": {
+        "TabItems": "items"
+      },
+      "notes": "Closing, adding, dragging, tear-out and WinUI tab sizing are additional contracts.",
+      "target": "FerroUI.Controls.TabControl"
+    },
+    "Microsoft.UI.Xaml.Controls.ToggleSwitch": {
+      "kind": "reviewed-syntax-adaptation",
+      "members": {
+        "IsOn": "is_checked"
+      },
+      "notes": "WinUI XAML IsOn maps to the existing IsChecked property; event contracts and logical behavior still require conformance evidence.",
+      "target": "FerroUI.Controls.ToggleSwitch"
+    },
+    "Microsoft.UI.Xaml.DataTemplate": {
+      "kind": "shared-core-adaptation",
+      "members": {},
+      "notes": "Reuse the native template service; WinUI x:Bind and template directives remain separate compatibility work.",
+      "target": "FerroUI.Markup.Xaml.Templates.DataTemplate"
+    },
+    "Microsoft.UI.Xaml.DependencyObject": {
+      "kind": "shared-core-adaptation",
+      "members": {},
+      "notes": "Reuse the existing object and property system. WinUI dependency-property precedence and callbacks require explicit semantic review.",
+      "target": "FerroUI.FerroObject"
+    },
+    "Microsoft.UI.Xaml.FrameworkElement": {
+      "kind": "shared-core-adaptation",
+      "members": {
+        "FindName": "find_control"
+      },
+      "notes": "Layout, resources and inherited data context share the existing framework. WinUI defaults and XAML member spellings remain adapter contracts.",
+      "target": "FerroUI.Controls.Control"
+    },
+    "Microsoft.UI.Xaml.StaticResource": {
+      "kind": "shared-core-adaptation",
+      "members": {},
+      "notes": "Reuse the native static-resource markup extension; cross-dictionary lookup and missing-key behavior require conformance evidence.",
+      "target": "FerroUI.Markup.Xaml.MarkupExtensions.StaticResourceExtension"
+    },
+    "Microsoft.UI.Xaml.UIElement": {
+      "kind": "shared-core-adaptation",
+      "members": {
+        "Visibility": "is_visible"
+      },
+      "notes": "Reuse routing, focus and pointer ownership. The inheritance trees and event argument shapes differ.",
+      "target": "FerroUI.Input.InputElement"
+    }
+  },
+  "xaml_features": {
+    "markup:Binding": {
+      "disposition": "implemented-subset",
+      "implementation": [
+        "src/Markup/FerroUI.Markup.Xaml.Loader/winui/migration.rs"
+      ],
+      "notes": "Missing Mode becomes explicit OneWay. Existing binding engine handles the resulting markup; Mode=Default requires explicit review.",
+      "tests": [
+        {
+          "name": "implicit_winui_binding_modes_are_one_way_even_for_two_way_target_properties",
+          "path": "src/Markup/FerroUI.Markup.Xaml.Loader/winui/migration_tests.rs"
+        },
+        {
+          "name": "object_element_binding_defaults_and_explicit_modes_are_preserved",
+          "path": "src/Markup/FerroUI.Markup.Xaml.Loader/winui/migration_tests.rs"
+        }
+      ]
+    },
+    "markup:ThemeResource": {
+      "disposition": "implemented-subset",
+      "implementation": [
+        "src/Markup/FerroUI.Markup.Xaml.Loader/winui/migration.rs"
+      ],
+      "notes": "Explicit for_winui_theme policy maps to live DynamicResource lookup. Ported dictionaries and theme scopes must be supplied; this is not proof of all WinUI theme semantics.",
+      "tests": [
+        {
+          "name": "theme_resources_require_explicit_policy_and_nested_lookups_are_recorded",
+          "path": "src/Markup/FerroUI.Markup.Xaml.Loader/winui/migration_tests.rs"
+        }
+      ]
+    },
+    "markup:x:Bind": {
+      "disposition": "rejected",
+      "implementation": [
+        "src/Markup/FerroUI.Markup.Xaml.Loader/winui/migration.rs"
+      ],
+      "notes": "Typed root/named-element sources, OneTime default, function expressions and generated lifecycle require a dedicated implementation. Migration emits a diagnostic rather than substituting Binding.",
+      "tests": [
+        {
+          "name": "xbind_reports_root_source_semantics_even_with_an_alternative_xaml_prefix",
+          "path": "src/Markup/FerroUI.Markup.Xaml.Loader/winui/migration_tests.rs"
+        }
+      ]
+    },
+    "x:Class": {
+      "disposition": "implemented-subset",
+      "implementation": [
+        "src/Markup/FerroUI.Markup.Xaml.Loader/winui/migration.rs"
+      ],
+      "notes": "Application namespace mappings rewrite class identity explicitly. C# code-behind still requires a Rust port.",
+      "tests": [
+        {
+          "name": "custom_namespace_maps_update_class_identity_without_rewriting_user_text",
+          "path": "src/Markup/FerroUI.Markup.Xaml.Loader/winui/migration_tests.rs"
+        }
+      ]
+    },
+    "x:DataType": {
+      "disposition": "implemented-subset",
+      "implementation": [
+        "src/Markup/FerroUI.Markup.Xaml.Loader/winui/migration.rs"
+      ],
+      "notes": "Type references follow explicit alias mappings; this does not implement x:Bind expression semantics.",
+      "tests": [
+        {
+          "name": "aliases_resolve_type_references_in_templates_directives_and_type_extensions",
+          "path": "src/Markup/FerroUI.Markup.Xaml.Loader/winui/migration_tests.rs"
+        }
+      ]
+    },
+    "x:Load": {
+      "disposition": "rejected",
+      "implementation": [
+        "src/Markup/FerroUI.Markup.Xaml.Loader/winui/migration.rs"
+      ],
+      "notes": "Deferred creation and named-element lifetime require implementation; the migration pass reports the directive.",
+      "tests": [
+        {
+          "name": "unknown_state_lifecycle_and_localization_contracts_are_not_discarded",
+          "path": "src/Markup/FerroUI.Markup.Xaml.Loader/winui/migration_tests.rs"
+        }
+      ]
+    },
+    "x:Name": {
+      "disposition": "shared-syntax-candidate",
+      "implementation": [
+        "src/Markup/FerroUI.Markup.Xaml.Loader/winui/migration.rs"
+      ],
+      "notes": "Namescope spelling is preserved; named field/code-behind creation remains owned by the normal XAML compiler.",
+      "tests": [
+        {
+          "name": "event_handlers_and_entity_spelling_stay_exactly_as_authored",
+          "path": "src/Markup/FerroUI.Markup.Xaml.Loader/winui/migration_tests.rs"
+        }
+      ]
+    },
+    "x:Phase": {
+      "disposition": "rejected",
+      "implementation": [
+        "src/Markup/FerroUI.Markup.Xaml.Loader/winui/migration.rs"
+      ],
+      "notes": "Phased rendering lifecycle is not implemented by renaming this directive.",
+      "tests": []
+    }
+  }
+}
