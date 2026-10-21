@@ -21,8 +21,9 @@ ENGINE = re.compile(
     r"file_version=(\d+\.\d+\.\d+\.\d+)"
 )
 FIXTURE = re.compile(
-    r'(VERTICAL_)?FIXTURE name=(\S+) text=("(?:\\.|[^"\\])*") '
+    r'(VERTICAL_|HORIZONTAL_)?FIXTURE name=(\S+) text=("(?:\\.|[^"\\])*") '
     r"(?:supplied_)?utf16_length=(\d+) native_story_length=(\d+)"
+    r"(?: window_ex_style=(\d+))?"
 )
 HOME_END = re.compile(
     r"HOME_END fixture=(\S+) supplied_utf16_length=(\d+) native_story_length=(\d+) "
@@ -42,6 +43,54 @@ VERTICAL = re.compile(
     + r" anchor=(-?\d+) active=(-?\d+) delta=(-?\d+) active_displacement=(-?\d+) "
     r"hresult=(0x[0-9A-F]{8})"
 )
+HORIZONTAL = re.compile(
+    r"HORIZONTAL fixture=(\S+) unit=(\w+) count=(-?\d+) extend=(true|false) "
+    r"operation=(Left|Right) before=" + STATE + r" before_type=(-?\d+) after="
+    + STATE + r" after_type=(-?\d+) anchor=(-?\d+) active=(-?\d+) "
+    r"delta=(-?\d+) active_displacement=(-?\d+) hresult=(0x[0-9A-F]{8})"
+)
+
+
+def rust_string(encoded: str) -> str:
+    """Decode a Rust Debug string, including non-printing Unicode scalars.
+
+    Rust writes a ZWJ as a braced Unicode escape rather than JSON's fixed-width
+    form. Walk escapes in order so a literal backslash followed by 'u' stays
+    literal, and reject malformed/unknown escapes rather than losing text.
+    """
+    if not (encoded.startswith('"') and encoded.endswith('"')):
+        raise ValueError("fixture string is not quoted")
+    escapes = {'"': '"', "\\": "\\", "n": "\n", "r": "\r", "t": "\t", "0": "\0"}
+    result = []
+    index = 1
+    end = len(encoded) - 1
+    while index < end:
+        char = encoded[index]
+        index += 1
+        if char != "\\":
+            if char == '"' or ord(char) < 0x20 or 0xD800 <= ord(char) <= 0xDFFF:
+                raise ValueError("invalid literal in fixture string")
+            result.append(char)
+            continue
+        if index >= end:
+            raise ValueError("unterminated fixture escape")
+        escape = encoded[index]
+        index += 1
+        if escape in escapes:
+            result.append(escapes[escape])
+        elif escape == "u" and index < end and encoded[index] == "{":
+            closing = encoded.find("}", index + 1, end)
+            digits = encoded[index + 1:closing] if closing >= 0 else ""
+            if not re.fullmatch(r"[0-9a-fA-F]{1,6}", digits):
+                raise ValueError("invalid fixture Unicode escape")
+            value = int(digits, 16)
+            if value > 0x10FFFF or 0xD800 <= value <= 0xDFFF:
+                raise ValueError("fixture escape is not a Unicode scalar")
+            result.append(chr(value))
+            index = closing + 1
+        else:
+            raise ValueError("unsupported fixture string escape")
+    return "".join(result)
 
 
 def state(values: tuple[str, ...]) -> dict:
@@ -79,6 +128,7 @@ def extract(log: str) -> dict:
     fixtures = []
     home_end = []
     vertical = []
+    horizontal = []
     completed = {}
     for line_number, line in enumerate(log.splitlines(), 1):
         marker = line.find(PREFIX)
@@ -98,16 +148,27 @@ def extract(log: str) -> dict:
             continue
         match = FIXTURE.fullmatch(row)
         if match:
-            text = json.loads(match[3])
+            text = rust_string(match[3])
             if len(text.encode("utf-16-le")) // 2 != int(match[4]):
                 raise ValueError("fixture text disagrees with supplied UTF-16 length")
-            fixtures.append({
-                "family": "vertical" if match[1] else "home_end",
+            fixture = {
+                "family": {
+                    None: "home_end",
+                    "VERTICAL_": "vertical",
+                    "HORIZONTAL_": "horizontal",
+                }[match[1]],
                 "name": match[2],
                 "text": text,
                 "supplied_utf16_length": int(match[4]),
                 "native_story_length": int(match[5]),
-            })
+            }
+            if fixture["family"] == "horizontal":
+                if match[6] is None or int(match[6]) > 0xFFFFFFFF:
+                    raise ValueError("horizontal fixture needs its native u32 window style")
+                fixture["window_ex_style"] = int(match[6])
+            elif match[6] is not None:
+                raise ValueError("unexpected window style outside horizontal fixture")
+            fixtures.append(fixture)
             continue
         match = HOME_END.fullmatch(row)
         if match:
@@ -151,6 +212,23 @@ def extract(log: str) -> dict:
                 **movement(values, 5),
             })
             continue
+        match = HORIZONTAL.fullmatch(row)
+        if match:
+            values = match.groups()
+            # Reuse exact directed-state/displacement validation while keeping
+            # the two native selection types adjacent to their own states.
+            moved = movement(values[:8] + values[9:12] + values[13:], 5)
+            moved["before"]["selection_type"] = int(values[8])
+            moved["after"]["selection_type"] = int(values[12])
+            horizontal.append({
+                "fixture": values[0],
+                "unit": values[1],
+                "count": int(values[2]),
+                "extend": values[3] == "true",
+                "operation": values[4],
+                **moved,
+            })
+            continue
         match = re.fullmatch(r"PROBE_COMPLETE commands=(\d+) repeated_noops=(\d+)", row)
         if match:
             if "home_end" in completed:
@@ -163,6 +241,12 @@ def extract(log: str) -> dict:
                 raise ValueError("duplicate vertical completion")
             completed["vertical"] = int(match[1])
             continue
+        match = re.fullmatch(r"HORIZONTAL_PROBE_COMPLETE commands=(\d+)", row)
+        if match:
+            if "horizontal" in completed:
+                raise ValueError("duplicate horizontal completion")
+            completed["horizontal"] = int(match[1])
+            continue
         raise ValueError(f"unrecognized probe row on log line {line_number}: {row}")
 
     if engine is None or not completed:
@@ -174,13 +258,18 @@ def extract(log: str) -> dict:
     if vertical or "vertical" in completed:
         if len(vertical) != completed.get("vertical") or not vertical:
             raise ValueError("vertical observations do not match the completion count")
+    if horizontal or "horizontal" in completed:
+        if len(horizontal) != completed.get("horizontal") or not horizontal:
+            raise ValueError("horizontal observations do not match the completion count")
     by_fixture = {}
     for fixture in fixtures:
         identity = (fixture["family"], fixture["name"])
         if identity in by_fixture:
             raise ValueError("duplicate fixture identity")
         by_fixture[identity] = fixture
-    for family, rows in (("home_end", home_end), ("vertical", vertical)):
+    for family, rows in (
+        ("home_end", home_end), ("vertical", vertical), ("horizontal", horizontal)
+    ):
         for row in rows:
             fixture = by_fixture.get((family, row["fixture"]))
             if fixture is None:
@@ -193,7 +282,7 @@ def extract(log: str) -> dict:
                 states.append(row["repeat"]["after"])
             if any(value["end"] > fixture["native_story_length"] for value in states):
                 raise ValueError("command range exceeds its native story")
-    return {
+    result = {
         "engine": engine,
         "fixtures": fixtures,
         "home_end": home_end,
@@ -204,6 +293,12 @@ def extract(log: str) -> dict:
             "vertical": len(vertical),
         },
     }
+    # Keep regeneration of the earlier versioned records byte-identical.
+    # The optional horizontal family is present only after an executed probe.
+    if horizontal:
+        result["horizontal"] = horizontal
+        result["counts"]["horizontal"] = len(horizontal)
+    return result
 
 
 def main() -> None:

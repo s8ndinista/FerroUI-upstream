@@ -1,7 +1,7 @@
 //! Characterization of the system MSFTEDIT engine, not WinUI's text engine.
 //!
-//! This probe prints native HomeKey/EndKey and MoveUp/MoveDown destinations,
-//! active-end flags, HRESULTs and signed deltas. Its assertions validate setup and unambiguous
+//! This probe prints native HomeKey/EndKey and directional movement destinations,
+//! active-end flags, selection types, HRESULTs and signed deltas. Its assertions validate setup and unambiguous
 //! invariants; the first-run destination/count observations are not Rust parity
 //! assertions. Keep the engine version with any fixture derived from its output.
 //!
@@ -14,6 +14,10 @@
 //! https://learn.microsoft.com/windows/win32/api/tom/nf-tom-itextselection-endkey
 //! https://learn.microsoft.com/windows/win32/api/tom/nf-tom-itextselection-moveup
 //! https://learn.microsoft.com/windows/win32/api/tom/nf-tom-itextselection-movedown
+//! https://learn.microsoft.com/windows/win32/api/tom/nf-tom-itextselection-moveleft
+//! https://learn.microsoft.com/windows/win32/api/tom/nf-tom-itextselection-moveright
+//! https://learn.microsoft.com/windows/win32/api/tom/nf-tom-itextselection-gettype
+//! https://learn.microsoft.com/windows/win32/controls/em-geteditstyle
 
 use crate::automation::marshalling::{free_bstr, ptr_to_string_bstr};
 use crate::interop::unmanaged_methods::rtl_get_version;
@@ -31,7 +35,7 @@ use windows_sys::Win32::System::LibraryLoader::{
 use windows_sys::Win32::System::Ole::{OleInitialize, OleUninitialize};
 use windows_sys::Win32::UI::WindowsAndMessaging::{
     CreateWindowExW, DestroyWindow, SendMessageW, SetWindowTextW, ES_AUTOHSCROLL, ES_AUTOVSCROLL,
-    ES_MULTILINE, WS_POPUP,
+    ES_MULTILINE, WS_EX_RTLREADING, WS_POPUP,
 };
 
 type TestResult<T = ()> = Result<T, String>;
@@ -71,7 +75,9 @@ struct TextSelectionVTable {
     _in_range_through_get_embedded_object: [*const c_void; 29],
     get_flags: Getter,
     _set_flags: *const c_void,
-    _get_type_and_horizontal_movement: [*const c_void; 3],
+    get_type: Getter,
+    move_left: MoveMethod,
+    move_right: MoveMethod,
     move_up: MoveMethod,
     move_down: MoveMethod,
     home_key: BoundaryMethod,
@@ -87,6 +93,9 @@ const _: () = {
     assert!(offset_of!(TextSelectionVTable, get_story_length) == 22 * slot);
     assert!(offset_of!(TextSelectionVTable, set_range) == 28 * slot);
     assert!(offset_of!(TextSelectionVTable, get_flags) == 58 * slot);
+    assert!(offset_of!(TextSelectionVTable, get_type) == 60 * slot);
+    assert!(offset_of!(TextSelectionVTable, move_left) == 61 * slot);
+    assert!(offset_of!(TextSelectionVTable, move_right) == 62 * slot);
     assert!(offset_of!(TextSelectionVTable, move_up) == 63 * slot);
     assert!(offset_of!(TextSelectionVTable, move_down) == 64 * slot);
     assert!(offset_of!(TextSelectionVTable, home_key) == 65 * slot);
@@ -226,6 +235,10 @@ struct HiddenRichEdit(HWND);
 
 impl HiddenRichEdit {
     fn new() -> TestResult<Self> {
+        Self::with_extended_style(0)
+    }
+
+    fn with_extended_style(extended_style: u32) -> TestResult<Self> {
         // SAFETY: null names the current executable module and does not AddRef it.
         let instance = unsafe { GetModuleHandleW(null()) };
         if instance.is_null() {
@@ -236,7 +249,7 @@ impl HiddenRichEdit {
         // has no parent, menu or creation data. AutoHScroll excludes soft wraps.
         let hwnd = unsafe {
             CreateWindowExW(
-                0,
+                extended_style,
                 wide("RICHEDIT50W").as_ptr(),
                 wide("").as_ptr(),
                 WS_POPUP | ES_MULTILINE as u32 | ES_AUTOHSCROLL as u32 | ES_AUTOVSCROLL as u32,
@@ -414,6 +427,33 @@ impl NativeSelection {
         check_hresult(result, if down { "MoveDown" } else { "MoveUp" })?;
         Ok((result, delta))
     }
+
+    fn move_horizontal(
+        &self,
+        unit: Unit,
+        count: i32,
+        extend: bool,
+        right: bool,
+    ) -> TestResult<(i32, i32)> {
+        let method = if right {
+            self.table().move_right
+        } else {
+            self.table().move_left
+        };
+        let mut delta = i32::MIN;
+        // SAFETY: SDK slots 61 and 62 take Unit, Count, Extend and a writable LONG.
+        let result = unsafe {
+            method(
+                self.0.as_ptr().cast(),
+                unit as i32,
+                count,
+                i32::from(extend),
+                &mut delta,
+            )
+        };
+        check_hresult(result, if right { "MoveRight" } else { "MoveLeft" })?;
+        Ok((result, delta))
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -437,6 +477,8 @@ impl SelectionState {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[repr(i32)]
 enum Unit {
+    Character = 1,
+    Word = 2,
     Paragraph = 4,
     Line = 5,
     Story = 6,
@@ -792,4 +834,196 @@ fn rich_text_tom_oracle_system_msftedit_vertical_characterization() {
         .join()
         .expect("the native vertical TOM probe thread panicked")
         .expect("the native vertical TOM probe failed");
+}
+
+#[derive(Clone, Copy)]
+struct HorizontalCase {
+    anchor: i32,
+    active: i32,
+    unit: Unit,
+    count: i32,
+    extend: bool,
+    right: bool,
+}
+
+fn horizontal_cases(ranges: &[(i32, i32)], units: &[Unit], counts: &[i32]) -> Vec<HorizontalCase> {
+    let mut cases = Vec::new();
+    for &(anchor, active) in ranges {
+        for &unit in units {
+            for extend in [false, true] {
+                for right in [false, true] {
+                    for &count in counts {
+                        cases.push(HorizontalCase {
+                            anchor,
+                            active,
+                            unit,
+                            count,
+                            extend,
+                            right,
+                        });
+                    }
+                }
+            }
+        }
+    }
+    cases
+}
+
+fn characterize_horizontal_fixture(
+    name: &str,
+    text: &str,
+    window_ex_style: u32,
+    cases: &[HorizontalCase],
+) -> TestResult<usize> {
+    let length = text.encode_utf16().count() as i32;
+    for (index, case) in cases.iter().enumerate() {
+        // Every command starts with a fresh control. SetRange alone does not
+        // reset every native caret/column flag, as the vertical probe showed.
+        let window = HiddenRichEdit::with_extended_style(window_ex_style)?;
+        window.set_text(text)?;
+        let selection = window.selection()?;
+        selection.set_range(0, length)?;
+        assert_eq!(selection.text()?, text, "{name}: exact native setup");
+        let story_length =
+            selection.number(selection.table().get_story_length, "GetStoryLength")?;
+        assert!(story_length >= length);
+        if index == 0 {
+            println!(
+                "SYSTEM_MSFTEDIT_HORIZONTAL_FIXTURE name={name} text={text:?} supplied_utf16_length={length} native_story_length={story_length} window_ex_style={window_ex_style}"
+            );
+        }
+        selection.set_range(case.anchor, case.active)?;
+        let before = selection.state()?;
+        assert_eq!(
+            before.directed(),
+            (case.anchor, case.active),
+            "{name}: native fixture direction"
+        );
+        let before_type =
+            selection.number(selection.table().get_type, "ITextSelection::GetType")?;
+        let (result, delta) =
+            selection.move_horizontal(case.unit, case.count, case.extend, case.right)?;
+        let after = selection.state()?;
+        let after_type = selection.number(selection.table().get_type, "ITextSelection::GetType")?;
+        let (accepted_anchor, accepted_active) = after.directed();
+        println!(
+            "SYSTEM_MSFTEDIT_HORIZONTAL fixture={name} unit={:?} count={} extend={} operation={} before={before:?} before_type={before_type} after={after:?} after_type={after_type} anchor={accepted_anchor} active={accepted_active} delta={delta} active_displacement={} hresult=0x{:08X}",
+            case.unit,
+            case.count,
+            case.extend,
+            if case.right { "Right" } else { "Left" },
+            accepted_active - case.active,
+            result as u32,
+        );
+        assert!(0 <= after.start && after.start <= after.end && after.end <= story_length);
+        if case.extend {
+            assert_eq!(
+                accepted_anchor, case.anchor,
+                "extension retains the native anchor"
+            );
+        } else if case.count != 0 {
+            assert_eq!(after.start, after.end, "movement leaves a native caret");
+        }
+        // Capture all observable navigation state before this independent
+        // verification changes the selection. Movement must not edit the story.
+        selection.set_range(0, length)?;
+        assert_eq!(
+            selection.text()?,
+            text,
+            "{name}: navigation preserves native text"
+        );
+        assert_eq!(
+            selection.number(selection.table().get_story_length, "GetStoryLength")?,
+            story_length
+        );
+    }
+    Ok(cases.len())
+}
+
+fn characterize_horizontal() -> TestResult {
+    // Selection and HWND guards are local to each case; the SDK apartment and
+    // System32 library outlive all of them, including early failure/unwind.
+    let _apartment = OleApartment::new()?;
+    let library = SystemRichEditLibrary::load()?;
+    library.describe()?;
+    let mut commands = 0;
+    let units = [Unit::Character, Unit::Word];
+
+    // Forward/reversed ranges distinguish active-end from directional collapse;
+    // 0, 1, 2 and negative counts expose collapse accounting and signed results.
+    let mut cases = horizontal_cases(&[(1, 6), (6, 1)], &units, &[0, 1, 2, -1]);
+    cases.extend(horizontal_cases(&[(5, 5)], &units, &[1, -1]));
+    for (position, right) in [(0, false), (13, true)] {
+        for unit in units {
+            for extend in [false, true] {
+                cases.push(HorizontalCase {
+                    anchor: position,
+                    active: position,
+                    unit,
+                    count: 1,
+                    extend,
+                    right,
+                });
+            }
+        }
+    }
+    commands += characterize_horizontal_fixture("horizontal_ascii", "one two three", 0, &cases)?;
+
+    // UTF-16 scalar boundaries, a position inside a combining sequence, and an
+    // emoji ZWJ sequence distinguish Character keyboard movement from scalar,
+    // code-unit and grapheme movement. Their destinations remain observations.
+    commands += characterize_horizontal_fixture(
+        "horizontal_graphemes",
+        "A😀e\u{301}👩\u{200d}👩\u{200d}👦B",
+        0,
+        &horizontal_cases(
+            &[(1, 1), (3, 3), (4, 4), (5, 5), (13, 13)],
+            &[Unit::Character],
+            &[1],
+        ),
+    )?;
+    commands += characterize_horizontal_fixture(
+        "horizontal_word_boundaries",
+        "one, two\tthree\r四五 six",
+        0,
+        &horizontal_cases(
+            &[(3, 3), (4, 4), (8, 8), (14, 14), (15, 15), (17, 17)],
+            &[Unit::Word],
+            &[1],
+        ),
+    )?;
+
+    // The SDK documents WS_EX_RTLREADING as enabling Rich Edit bidi processing.
+    // Record the window style, not an inferred paragraph-direction property.
+    // Mixed runs and reversed cross-run selections expose logical/visual order.
+    let bidi = horizontal_cases(&[(4, 4), (5, 5), (7, 7), (2, 6), (6, 2)], &units, &[1]);
+    for (name, window_ex_style) in [
+        ("horizontal_bidi_default", 0),
+        ("horizontal_bidi_rtl_reading", WS_EX_RTLREADING),
+    ] {
+        commands += characterize_horizontal_fixture(name, "abc אבג xyz", window_ex_style, &bidi)?;
+    }
+    commands += characterize_horizontal_fixture(
+        "horizontal_empty_story",
+        "",
+        0,
+        &horizontal_cases(&[(0, 0)], &units, &[1]),
+    )?;
+    assert_eq!(
+        commands, 220,
+        "keep the deterministic characterization matrix complete"
+    );
+    println!("SYSTEM_MSFTEDIT_HORIZONTAL_PROBE_COMPLETE commands={commands}");
+    Ok(())
+}
+
+#[test]
+fn rich_text_tom_oracle_system_msftedit_horizontal_characterization() {
+    std::thread::Builder::new()
+        .name("system-msftedit-horizontal".into())
+        .spawn(characterize_horizontal)
+        .expect("start the native horizontal TOM probe thread")
+        .join()
+        .expect("the native horizontal TOM probe thread panicked")
+        .expect("the native horizontal TOM probe failed");
 }
