@@ -2061,6 +2061,13 @@ fn rich_edit_end_stops_before_an_inline_line_break() {
     let editor = RichEditBox::new();
     editor.set_template(Some(rich_edit_box_template()));
     let _root = crate::test_support::TestRoot::with_child(editor.clone());
+    let line_break = InlineSnapshot {
+        format: CharacterFormat::default(),
+        kind: InlineSnapshotKind::LineBreak,
+    };
+    // Inline LineBreak uses the platform newline: CRLF occupies two UTF-16
+    // positions on Windows, so the following line does not always start at 4.
+    let following_line_start = 3 + line_break.text_length();
     editor
         .document()
         .restore(&DocumentSnapshot {
@@ -2068,10 +2075,7 @@ fn rich_edit_end_stops_before_an_inline_line_break() {
                 format: ParagraphFormat::default(),
                 inlines: vec![
                     run("abc", CharacterFormat::default()),
-                    InlineSnapshot {
-                        format: CharacterFormat::default(),
-                        kind: InlineSnapshotKind::LineBreak,
-                    },
+                    line_break,
                     run("def", CharacterFormat::default()),
                 ],
             }],
@@ -2081,9 +2085,9 @@ fn rich_edit_end_stops_before_an_inline_line_break() {
     editor.select(0, 0);
     rich_edit_press_key(&editor, Key::End);
     assert_eq!(editor.caret_index(), 3);
-    editor.select(4, 4);
+    editor.select(following_line_start, following_line_start);
     rich_edit_press_key(&editor, Key::Home);
-    assert_eq!(editor.caret_index(), 4);
+    assert_eq!(editor.caret_index(), following_line_start);
 }
 
 #[test]
