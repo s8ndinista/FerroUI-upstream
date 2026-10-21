@@ -402,7 +402,7 @@ window. Browser and mobile hosts supply their usual application/theme services.
 | Markup integration | `cargo test --locked --offline -p ferroui-markup-xaml --lib`: 196 passed; Charts runtime XAML also exercises the live `RuntimeList` source bridge |
 | Compiled/runtime sample and native render | `cargo test --locked --offline -p charts-demo --features render-smoke --lib`: four passed; generated and inspected 1120×880 light, dark and live-mutation PNGs using real Vello CPU drawing, HarfBuzz and installed fonts |
 | Facade feature | `cargo check --locked --offline -p ferroui --no-default-features --features charts`: passed |
-| Optional desktop runner | Verification remains incomplete because setup of the external Skia native dependency failed. The compiled sample and real Vello CPU render are verified independently |
+| Optional desktop runner | `cargo check --locked --offline -p charts-demo --features desktop`: passed using the matching official Skia prebuilt; compilation evidence, not an interactive desktop-window run |
 | Browser build | `cargo check --locked --offline -p ferroui-controls-charts --target wasm32-unknown-emscripten`: passed; compilation evidence, not browser execution |
 | Pixel comparison with internal implementation | Unverified; reference execution/source unavailable here |
 
@@ -411,6 +411,11 @@ and `CARGO_PROFILE_TEST_DEBUG=0`. These keep build
 artifacts within the available disk space; they do not bypass tests. The first
 full run found the object-typed XAML list conversion gap described in section
 3; the subsequent passing run includes its live-mutation regression.
+The desktop check initially failed while setting up the external Skia native
+dependency. It passed after downloading the official `skia-bindings 0.153.3`
+prebuilt matching the locked crate's revision and enabled features and pointing
+`SKIA_BINARIES_URL` at that local archive. No dependency versions or registry
+sources were changed, and the successful check did not compile Skia from source.
 The offscreen sample supplies actual renderer/font/shaping services to the test
 application, a mock window host and a manual animation clock that finishes
 theme transitions before capture. It exercises real drawing and checks that
