@@ -31671,6 +31671,18 @@
       "commit": "132c7853a17553e475e842d8c7c3327a60a37e6e",
       "command": "Rebuild established XAML feature graph through ordinary Base/Controls; source-identical public harness --test-threads=1",
       "result": "235 original public tests passed, zero failures/ignored, in 2.88 seconds: preceding 203 plus four focus handoff and 28 TOM clipboard cases. Both Base variants and ordinary Controls rebuilt successfully in 222.97 seconds; relevant source hashes were unchanged throughout build and run. Cargo was deliberately stopped only after completed Controls artifact, before downstream linking; this is scoped library compilation and direct public-source execution, not a successful full Cargo no-run command. The three private startup tests remain excluded whole locally and retained in full CI. Before repair, the same four focus fixtures produced two expected template-remount failures and two cancellation passes against prior libraries. This checkpoint precedes InputScope and the new extended-column repair."
+    },
+    {
+      "kind": "native_runtime",
+      "commit": "17a84805be35267ef580624d24f8657819038f88",
+      "command": "Windows rich-text.yml job 119276997549: native adapter check; WinUI --lib; exact_hstring; rich_text_tom_oracle; Controls --lib rich_",
+      "result": "Completed successfully at https://github.com/wieslawsoltes/FerroUI/actions/runs/39615974131/job/119276997549. The ABI cancellation fix compiled, all 49 WinUI tests passed (including the six new Windows-only layout ownership cases), both exact HSTRING tests, both native TOM probes and 529 rich Controls tests passed; zero failures/ignored. native-msftedit-navigation-confirmed.json preserves 60 Home/End + 60 repeats + 282 vertical commands on Windows 10.0.26100/MSFTEDIT 6.2.26100.33648. Every exact text fixture and all rows equal the preceding 282-command 6.2.26100.33438 record. These adapter fixtures still do not create a real OS CoreText candidate/proofing session or establish external WinUI engine parity. This checkpoint precedes focus handoff, independent clipboard, InputScope and extended-column correction."
+    },
+    {
+      "kind": "full_runtime",
+      "commit": "17a84805be35267ef580624d24f8657819038f88",
+      "command": "Linux rich-text.yml job 119276997010: full Base/Controls/Win32/WinUI/theme/XAML suites; all five generators; generated-reference comparison",
+      "result": "Completed successfully at https://github.com/wieslawsoltes/FerroUI/actions/runs/39615974131/job/119276997010. Base 4,413, Controls 4,970, Win32 308, WinUI host 39, Fluent 210 (2 ignored), Simple 213 (3 ignored), WinUI theme 296 (2 ignored), and XAML 611 (17 ignored) passed with zero failures. The separate doctest had 0 passed and 1 ignored. All five explicit reference generators passed and all checked-in generated outputs matched exactly. Together with the successful native Windows job, this is a full green workflow at 17a84805, before the focus/clipboard, InputScope and extended-column changes."
     }
   ]
 }

@@ -128,6 +128,22 @@ failures (15 versus 12, 14 versus 10, and -3 versus -2) and two passes against
 those exact libraries. They establish the next correction's starting point;
 they are not included in the 235-test passing claim.
 
+The subsequent [Windows job at 17a84805](https://github.com/wieslawsoltes/FerroUI/actions/runs/39615974131/job/119276997549)
+completed successfully: native adapter compilation, **49 WinUI tests**, both
+exact HSTRING tests, both native probes and **529 rich Controls tests** passed,
+with zero failures/ignored. The six new Windows-only layout ownership fixtures
+therefore executed successfully. They are adapter callback fixtures, not real
+OS candidate/proofing sessions. This native run precedes the focus/clipboard
+source checkpoint and InputScope/extended-column work.
+
+The [matching Linux job](https://github.com/wieslawsoltes/FerroUI/actions/runs/39615974131/job/119276997010)
+also passed: Base **4,413**, Controls **4,970**, Win32 **308**, WinUI host **39**,
+Fluent **210** (2 ignored), Simple **213** (3 ignored), WinUI theme **296**
+(2 ignored), and XAML **611** (17 ignored); zero failures. The separate doctest
+had zero executed tests and one ignored. All five explicit generators passed
+and the final checked-in reference comparison was clean. This makes the full
+17a84805 workflow green without extending its claim to later source changes.
+
 ### Earlier checkpoints
 
 The restored core checkpoint
@@ -220,6 +236,27 @@ difference was reused state, but extended-column behavior is a real remaining
 Rust correction. The two native probe tests passed; this does not turn the
 separate failing CoreText compilation into a passing Windows job.
 
+The [fourth record](native-msftedit-navigation-confirmed.json) is the successful
+17a84805 Windows run above, using MSFTEDIT 6.2.26100.33648. All exact text
+fixtures and all 60 Home/End + 60 repeat + 282 vertical rows equal the previous
+6.2.26100.33438 record, including the 18 isolated observations.
+
+The next source probe defines **220 fresh-control horizontal commands**:
+88 ASCII, 20 UTF-16/combining/ZWJ, 24 word-boundary, 40 mixed-bidi default-window,
+40 mixed-bidi RTL-reading-window and 8 empty-story cases. It records native
+selection type with both directed states and the actual window extended style.
+Slots 60/61/62 and Character/Word constants are checked against the SDK
+projection. The source asserts setup, direction, bounds and unchanged content;
+first-run destinations, deltas and types remain observations. These 220 commands
+have not yet executed at this checkpoint.
+
+The extractor now accepts that optional horizontal family and strictly decodes
+Rust Debug Unicode scalar escapes, including ZWJ, while retaining literal
+escaped backslash sequences. Both earlier 264/282 records re-extract unchanged.
+Parser-only checks covered three literal escape examples, six invalid Unicode/
+escape examples, one synthetic horizontal row, and nine invalid horizontal
+records. This validates extraction behavior and is not native execution.
+
 ### Rust families
 
 | Rust family | Concrete evidence and current limits |
@@ -239,7 +276,7 @@ separate failing CoreText compilation into a passing Windows job.
 | [Cursor publication tests](../../../src/FerroUI.Controls/rich_edit_input_geometry_tests.rs) | Three public input-manager cases deliberately return an old rectangle after getter callbacks change owner/client, reset, leave/return, or publish newer geometry for the same client. The accepted backend rectangle, connection and history are asserted without exposing private manager APIs. |
 | [CoreText geometry tests](../../../src/Windows/FerroUI.WinUI/core_text_layout.rs) and [native adapter tests](../../../src/Windows/FerroUI.WinUI/win_ui_text_input_method_reentrancy_tests.rs) | Seven portable geometry cases cover complete rectangle transforms, reflection/rotation, scaling/origin, caret-only minimum, unavailable geometry, cancellation/reentry and native setter failure. Six Windows-only cases cover semantic ownership, accessor/revision replacement, deferred mutation, nested/focus/reset invalidation and a real attached owner resized by the final revision callback. Arbitrary requested-range and candidate-window geometry remain pending; native execution is recorded separately. |
 | [Shared formatter marker regression](../../../src/FerroUI.Base/media/text_formatting/text_line_tests.rs) | The direct structural-terminator case covers LTR/RTL caret-distance/hit inverses, selected fragment bounds, nonzero source starts, one/two-unit line/paragraph markers and trailing marker positions. It failed against the preceding Base library and passed after the shared correction. |
-| [System MSFTEDIT probe](../../../src/Windows/FerroUI.Win32/rich_text_tom_oracle_tests.rs) | Windows-only native TOM setup, 60 Home/End commands plus 60 repeated no-ops, and 282 Line/Paragraph MoveUp/MoveDown commands in the current source. The versioned records contain 264 and then 282 commands; the latter adds 18 fresh-control/sequence observations and confirms an extended-column difference still requiring a Rust correction. The vertical matrix includes directed selections, zero/positive/negative counts, empty and UTF-16 stories, boundary no-ops and retained-column sequences. Logs Windows/DLL versions, exact UTF-16 fixture text, native story length, directed endpoints/flags, HRESULT and signed deltas. Initial destination/count rows are observations; the probe is not a WinUI-engine conformance fixture. |
+| [System MSFTEDIT probe](../../../src/Windows/FerroUI.Win32/rich_text_tom_oracle_tests.rs) | Windows-only native TOM setup, 60 Home/End commands plus 60 repeated no-ops, and 282 Line/Paragraph MoveUp/MoveDown commands in the current source. The versioned records contain 264 and then 282 vertical commands; both recorded DLL versions agree on all 282. A further 220 fresh-window horizontal commands are defined but not yet executed at this checkpoint. The vertical matrix includes directed selections, zero/positive/negative counts, empty and UTF-16 stories, boundary no-ops and retained-column sequences. Logs Windows/DLL versions, exact UTF-16 fixture text, native story length, directed endpoints/flags, HRESULT and signed deltas. Initial destination/count rows are observations; the probe is not a WinUI-engine conformance fixture. |
 | [Text stream tests](../../../src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs) | UTF-8/UTF-16 and BOM handling, raw RTF, validation before I/O/mutation, exact byte bounds, interrupted and partial I/O, prefix failure, caller position/ownership, transactional range replacement and reentrant output snapshots. |
 | [Language tests](../../../src/FerroUI.Controls/documents/rich_language_tests.rs) | Source validation grammar, inheritance into shaping, local overrides, snapshots/history, RTF default/scope/plain reset, representability errors and owner/presenter identity. |
 | [Inherited presentation tests](../../../src/FerroUI.Controls/documents/rich_presentation_invalidation_tests.rs) | Theme/owner presentation preserves semantic revision, mutation identity, undo and active composition; font/language/flow and inherited mutable collections still invalidate layout. Explicit local formatting and clearing to inheritance remain semantic changes. The Base inheritance tests distinguish actual notification origin from the resulting inherited priority and preserve it in owned event arguments. |

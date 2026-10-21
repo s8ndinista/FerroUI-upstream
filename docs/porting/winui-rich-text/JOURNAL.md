@@ -4,6 +4,46 @@ This journal records how the port is developed. [PROGRESS.md](PROGRESS.md) and
 the reviewed mapping remain the authority for implementation status; a checkpoint
 preserves work and does not establish complete parity.
 
+## Native repair confirmed and horizontal probe prepared — 2026-10-21
+
+The [Windows job at 17a84805](https://github.com/wieslawsoltes/FerroUI/actions/runs/39615974131/job/119276997549)
+completed successfully. Native CoreText compilation and **49 WinUI tests**
+passed, including all six new Windows-only layout ownership regressions.
+Both exact-string tests, both native probes and **529 rich Controls tests**
+also passed, with zero failures/ignored. This closes the two ABI-boolean compile
+errors from the preceding checkpoint. It does not imply execution of a real OS
+candidate/proofing session.
+
+The [Linux job at the same commit](https://github.com/wieslawsoltes/FerroUI/actions/runs/39615974131/job/119276997010)
+also completed successfully: 4,413 Base, 4,970 Controls, 308 Win32, 39 WinUI host,
+210 Fluent, 213 Simple, 296 WinUI theme and 611 XAML tests passed. The existing
+ignored counts are recorded in TESTS.md. All five reference generators passed
+and their checked-in outputs matched exactly. Both jobs in this workflow are
+therefore green; this result precedes the newly prepared focus/clipboard and
+InputScope/extended-column changes.
+
+The [confirmed navigation record](native-msftedit-navigation-confirmed.json)
+uses MSFTEDIT 6.2.26100.33648. Every fixture and all 60 Home/End + 60 repeat + 282 vertical
+rows exactly equal the preceding 6.2.26100.33438 record. The newly isolated
+extension-column behavior is therefore reproduced across both recorded versions.
+
+The next probe source adds 220 fresh-window horizontal commands over ASCII
+directed selections, positive/negative/zero counts, UTF-16/combining/ZWJ carets,
+word boundaries and mixed Hebrew/LTR text. Separate default and RTL-reading
+window fixtures record the actual extended style without claiming that it
+alone establishes paragraph direction. Native selection types and flags are
+recorded before/after each command. SDK slots 60/61/62 and Character/Word values
+were checked before adding the typed probe calls.
+
+The parser adds an optional horizontal family, native integer type fields,
+required u32 window-style provenance and strict Rust Debug string decoding.
+Existing 264/282 records re-extract unchanged. Synthetic parsing checks verify
+Unicode/escaped-backslash preservation and rejection of malformed escapes,
+missing/overflowed styles, mismatched counts, invalid directed endpoints and
+unrecognized fixtures. These are extraction checks. No native horizontal
+destinations or production horizontal/Options semantics are inferred before
+the new Windows probe executes.
+
 ## Focus handoff, independent clipboard and isolated native evidence — 2026-10-21
 
 The documentation, native cancellation fix and fresh probe results were
