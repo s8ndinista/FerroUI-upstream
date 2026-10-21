@@ -313,18 +313,22 @@ folding implementation. Remaining units/options stay in the exact API inventory.
 ### Selection Home and End
 
 `RichEditTextSelection::home_key(unit, extend)` and `end_key(unit, extend)`
-accept `Line` and `Story`. The current Rust projection uses the directed active
-endpoint: extension keeps its anchor, while a nonextending operation collapses
-at the chosen boundary. The result is the accepted signed UTF-16 displacement,
-including cancellation or replacement by selection-event handlers. Other units
-fail before changing the selection, composition or history.
+accept `Line` and `Story`. A nonextending Line operation first chooses the
+normalized start for Home or end for End, then finds that line's boundary.
+Extension instead uses the directed active endpoint and keeps the anchor.
+The result is the accepted signed UTF-16 displacement, including cancellation
+or replacement by selection-event handlers. Other units fail before changing
+the selection, composition or history.
 
 Line navigation uses the same complete, untrimmed layout as range movement,
-including linked overflow and logical ordering in RTL text. End targets exclude
-the formatter's actual newline extent. A shared wrap boundary belongs to the
-following line; explicit native caret gravity is not yet represented. Without
-an associated measured view, the existing paragraph fallback supplies line
-boundaries. Story navigation needs no layout and ends at the model's final caret.
+including linked overflow and logical ordering in RTL text. A collapsed End
+excludes the formatter's newline extent; an extended End includes a real hard
+paragraph mark. It retains the source line so repeating the same extended End
+does not advance again at that boundary. General caret gravity and exact
+soft-break/wrap extension affinity are still separate contracts. Without an
+associated measured view, the existing paragraph fallback supplies line
+boundaries. Story navigation needs no layout and ends at the model's final caret;
+the model does not contain the native synthetic terminal paragraph mark.
 
 These operations preserve active composition and redo and work in a read-only
 document. They create no editing group. Layout callbacks can change selection,
@@ -333,15 +337,66 @@ selection or publication callback changes the document itself, the operation
 preserves that external state, invalidates stale history and reports
 `ReentrantEdit` instead of acknowledging an obsolete destination.
 
-The [Win32 HomeKey](https://learn.microsoft.com/en-us/windows/win32/api/tom/nf-tom-itextselection-homekey)
+The initial implementation exposed an ambiguity between the
+[Win32 HomeKey](https://learn.microsoft.com/en-us/windows/win32/api/tom/nf-tom-itextselection-homekey)
 and [EndKey](https://learn.microsoft.com/en-us/windows/win32/api/tom/nf-tom-itextselection-endkey)
-parameter tables describe the first/last selected line, while the
-[WinUI HomeKey remarks](https://learn.microsoft.com/en-us/windows/windows-app-sdk/api/winrt/microsoft.ui.text.itextselection.homekey)
-emphasize the active endpoint and a preceding collapse. Exact
-native collapse destinations and return counts therefore remain an explicit
-conformance boundary in RT-I21. The Windows test probe records system MSFTEDIT
-observations, engine version and terminal-EOP conventions; it is not the external
-WinUI engine and does not by itself establish WinUI equivalence.
+parameter tables and the
+[WinUI HomeKey remarks](https://learn.microsoft.com/en-us/windows/windows-app-sdk/api/winrt/microsoft.ui.text.itextselection.homekey).
+The completed [system MSFTEDIT observations](native-msftedit-home-end.json)
+establish the collapse-edge and real-paragraph-mark behavior described above.
+Six additional regressions cover those endpoints, empty paragraphs, repeated
+End affinity, cancellation and callback ownership. The engine identity and exact
+fixture text remain attached to the observations. Synthetic terminal EOP and
+external WinUI engine equivalence are still open under RT-I21.
+
+### Selection vertical movement
+
+`move_up(unit, count, extend)` and `move_down(unit, count, extend)` accept
+`Line` and `Paragraph`. Line movement uses actual shaped lines and hit testing
+from a complete, untrimmed associated view. It retains the physical horizontal
+position across short lines, mixed line heights, bidi text and linked overflow.
+Paragraph movement uses logical boundaries and needs no view. Screen and Window
+are absent from the current `TextRangeUnit`; other exposed units reject before
+side effects.
+
+Negative counts reverse the command. A zero count does not need layout.
+Extreme counts widen before negation and saturate by index, avoiding signed
+overflow and iteration proportional to the request. A nonempty collapsed move
+chooses the normalized edge in the direction of travel and applies the full
+requested distance from that edge. If collapsing is the only accepted change,
+it counts as one unit. This vertical rule differs from ordinary range Move's
+collapse-and-consume contract.
+Returned values count accepted units relative to the command direction, rather
+than UTF-16 displacement. Cancellation returns zero; a redirected result counts
+the boundaries or display lines actually crossed.
+
+The shared publisher also serves logical selection movement. It fences document
+mutation and selection publication without creating an edit group. A separate
+navigation generation prevents an outer callback from replacing a newer view or
+affinity decision even when selection offsets happen to match. Explicit
+selection changes, model edits and actual view replacement invalidate retained
+navigation state. Reassociating the same validated live presenter is inert, so
+normal caret scrolling retains the horizontal position. Read-only movement
+preserves composition and redo.
+
+Line extension beyond the first or last line can reach a real story edge as one
+additional unit. Accepted redirection counts the same unit, including an edge
+on the original line. The [264-command native record](native-msftedit-navigation.json)
+supplies collapse/count and edge observations. Some extended-column/EOL rows
+differ after repeated SetRange on a reused native control. Eighteen additional
+fresh-control and intentional-sequence observations are defined in the next
+282-command probe to distinguish that state. Their source definition is not an
+executed result. Synthetic terminal EOP and the remaining Gravity/Options/Type
+contracts remain explicit under RT-I23.
+
+Validation also exposed an existing shared formatter prerequisite: structural
+EOL/EOP markers were entering RTL directional glyph groups, causing every caret
+on a Hebrew line to resolve to the same edge. The formatter now separates those
+markers and anchors their caret/bounds to the preceding logical run. A direct
+formatter fixture checks LTR/RTL inverse hit testing, nonzero source starts,
+one/two-unit markers, and selected ranges; it first failed against the old
+library and passed after the correction. This changes geometry bookkeeping,
+not glyph shaping or native pixel parity.
 
 ### Editor template, viewport and focus
 
@@ -600,11 +655,76 @@ These shared policies do not implement native proofing, dictionary prediction, h
 candidate-window services. The native `InputScope.Names` collection, its name
 wrappers and complete `InputScopeNameValue` family are separately inventoried;
 the single framework content type does not provide those public APIs. Native
-context-menu coordinates/cancellation and candidate-window alignment also retain
-their own pending mappings (RT-I20). Real platform composition, cancellation and focus
+context-menu coordinates/cancellation now have the partial request bridge below;
+candidate-window alignment retains its pending mapping (RT-I20). Real platform composition, cancellation and focus
 flows remain separate tests from the deterministic control suite. Synchronous TextChanging, deferred TextChanged and cancellable/reentrant
 SelectionChanging now follow the mapped native host contracts. Real platform
 input ordering still requires separate backend verification.
+
+### Context-menu opening and placement
+
+`RichEditBox::context_menu_opening` exposes a typed callback over the shared
+`ContextMenuEventArgs`. Its readonly `cursor_left` and `cursor_top` are root-relative
+device-independent coordinates. The inherited routed `Handled` state is shared
+by typed Rust callbacks and markup handlers; setting it cancels default opening.
+The source contract is the modern synchronous
+[`TextControlFlyoutHelper::ShowAt`](https://github.com/microsoft/microsoft-ui-xaml/blob/fe244ca6ac4d482712b234a9de3cf771cc6481de/dxaml/xcp/dxaml/lib/TextControlFlyoutHelper.cpp)
+path and the root-coordinate projection in
+[`TextBoxBase.cpp`](https://github.com/microsoft/microsoft-ui-xaml/blob/fe244ca6ac4d482712b234a9de3cf771cc6481de/dxaml/xcp/core/native/text/Controls/TextBoxBase.cpp).
+
+The control handles the bubbling `ContextRequested` request from pointer release,
+Apps, Shift+F10 or holding. The nearest rich editor owns it. The opening event runs
+before the default menu is read, so a callback can attach, replace or remove the
+menu. Nested requests and detach/reattach invalidate the outer request. Shaping
+callbacks also check the model, directed selection and visual owner before
+publishing a computed point. A canceled menu opening is consumed once and cannot
+be retried by an instance handler captured in the original event route.
+
+Keyboard placement follows the native normalized selection-edge rule: the last
+selected grapheme's bottom/right for LTR or the first selected grapheme's
+bottom/left for RTL, independent of selection direction. A collapsed selection
+uses the shaped caret. Resolving the selected fragment keeps an edge exactly at
+a soft wrap on its selected line. The edge is chosen in presenter coordinates
+before transforming the point, following the native order. Choosing a corner of
+an already transformed bounding box would swap the selected side under RTL
+reflection. FerroUI coordinates already use DIPs, so the native
+rasterization-scale division is not repeated.
+
+The point is an actual popup anchor. `ContextRequestedEventArgs` carries an
+optional rectangle relative to a weak visual owner and converts it into the
+consumer's coordinates. `ContextMenu` and the rectangle-aware `PopupFlyoutBase`
+path reuse ordinary precedence, opening cancellation, ownership, focus,
+dismissal and holding feedback. The existing positioner applies RTL gravity and
+screen constraints. Its point-rectangle branch preserves a zero-size anchor
+instead of erasing it through an area-only intersection. No temporary change to
+the public flyout placement properties is needed.
+
+Ordinary popup dismissal retains the semantic input connection and active
+composition. Focus return no longer emits a redundant text-view identity
+notification for the unchanged persistent presenter while the keyboard device
+is still publishing focus events. Cursor/layout notifications remain, and
+actual view/template changes still announce their new view. A separate
+regression verifies that an application redirecting focus outside the editor
+retires the old connection and cancels its preview. Synchronous application
+template replacement during focus return is a separately reproduced follow-up;
+the ordinary-dismissal fix does not establish that broader requery behavior.
+
+The markup review found a second integration issue in existing composition,
+selection-changing and text-changing arguments: typed metadata expected concrete
+values while actual handlers receive a shared routed-argument handle. Their
+metadata now uses checked payload downcasts through
+`Rc<dyn IRoutedEventArgs>` and the normal routed base. Runtime/generated handlers
+can accept `RoutedEventArgs`, while typed Rust subscribers see the same live
+payload and cancellation state. The three original metadata failures were
+reproduced before repair; context arguments have the same explicit coverage.
+
+An already open owned popup is repositioned in place. Native text flyouts can
+close/reopen their internal popup to refresh commands; that notification sequence
+is not reproduced. Automatic native selection floaties, legacy asynchronous
+command-gated `PopupMenu`, exact `EM_GETSELECTIONEDGES` metrics and direct calls to
+an arbitrary generic `Flyout.ShowAt` remain separate contracts (RT-I22). Runtime,
+compiled markup and control fixtures are recorded independently from real
+platform execution.
 
 ### Exact native replacement requests and acknowledgement
 
@@ -633,6 +753,44 @@ keep late client acknowledgements and reentrant older notifications from hiding
 newer work. Unsupported clause FormatUpdating returns Failed. This path does not
 assert support for native clause display or proofing/candidates, and the legacy
 TextBox route and actual Windows execution remain separate gates (RT-I16).
+
+### Native layout geometry and cursor ownership
+
+CoreText's [ControlBounds](https://learn.microsoft.com/uwp/api/windows.ui.text.core.coretextlayoutbounds.controlbounds)
+describes the whole input control in screen coordinates. The previous adapter
+copied its caret rectangle into both TextBounds and ControlBounds, and transformed
+only the top-left point. The adapter now captures the manager connection's
+semantic owner, with explicit owner/text-view fallbacks for legacy direct
+clients. It obtains the complete control rectangle through FerroUI visual
+transforms, applies native `TransformBounds` to both complete rectangles, then
+uses validated rasterization scale and the HWND client-to-screen origin.
+
+The existing minimum caret size applies in root DIPs before the native transform;
+it does not inflate the whole control. Missing native roots, invalid scale,
+unavailable HWND screen mapping, invalid rectangles or stale ownership leave the
+request unpopulated. TextBounds still uses the current caret. An arbitrary
+`LayoutRequest.Range` requires a framework client capability for the exact
+visible UTF-16 story, including preedit; it remains pending.
+
+Publication checks client/connection/composition identity, intrinsic revision,
+focus, root, owner, bounds, transform and nested-request generation around
+callback-bearing queries and native setters. The final revision callback runs
+before the last pure geometry comparison. Cancellation and sender identity are
+checked between the text/control setters. No active borrow crosses client or
+native callbacks.
+
+A prerequisite was fixed in the shared input manager: a custom caret getter can
+focus another owner, replace its client, reset the connection, leave and return,
+or synchronously publish newer same-client geometry. Binding and per-query
+generations now reject the old result, and the accepted owner transform is read
+after the getter. Three public integration regressions exercise those sequences
+without exposing private manager internals.
+
+Existing `Name` and `Pin` content hints now map to CoreText
+`PersonalFullName` and `PinNumeric`. These are input hints and impose no text
+validation or PIN length. The full InputScope object/Names/enum family remains
+pending. Actual candidate-window observations/alignment are separate services;
+neither caret nor control layout bounds establish the candidate window's bounds.
 
 ## Text accessibility
 

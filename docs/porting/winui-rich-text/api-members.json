@@ -891,9 +891,134 @@
       "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
       "owner": "Microsoft.UI.Xaml.Controls.RichEditBox",
       "kind": "E",
-      "state": "pending",
-      "targets": [],
-      "tests": []
+      "state": "partial",
+      "targets": [
+        {
+          "path": "src/FerroUI.Controls/context_menu_event_args.rs",
+          "symbol": "pub struct ContextMenuEventArgs"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_context_menu.rs",
+          "symbol": "pub fn context_menu_opening_event()"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_context_menu.rs",
+          "symbol": "pub fn context_menu_opening("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_context_menu.rs",
+          "symbol": "pub(super) fn on_context_requested("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_context_menu.rs",
+          "symbol": "fn keyboard_context_menu_position("
+        },
+        {
+          "path": "src/FerroUI.Base/input/context_requested_event_args.rs",
+          "symbol": "pub fn set_placement_rect("
+        },
+        {
+          "path": "src/FerroUI.Controls/context_menu.rs",
+          "symbol": "pub(crate) fn control_context_requested("
+        },
+        {
+          "path": "src/FerroUI.Controls/flyouts/popup_flyout_base.rs",
+          "symbol": "fn show_at_rect_core("
+        },
+        {
+          "path": "src/FerroUI.Controls/primitives/popup_positioning/i_popup_positioner.rs",
+          "symbol": "fn calculate_anchor_rect("
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Controls/rich_edit_context_menu_tests.rs",
+          "symbol": "rich_context_args_share_handled_and_request_anchors_have_weak_owners"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_context_menu_tests.rs",
+          "symbol": "rich_context_pointer_reports_root_dips_once_and_handled_cancels_both_menu_kinds"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_context_menu_tests.rs",
+          "symbol": "rich_context_pointer_opens_at_request_point_without_changing_flyout_placement"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_context_menu_tests.rs",
+          "symbol": "rich_context_repeated_request_repositions_the_existing_owned_popup"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_context_menu_tests.rs",
+          "symbol": "rich_context_ordinary_control_requests_keep_pointer_and_keyboard_defaults"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_context_menu_tests.rs",
+          "symbol": "rich_context_keyboard_uses_normalized_selection_edges_and_rtl_popup_gravity"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_context_menu_tests.rs",
+          "symbol": "rich_context_collapsed_keyboard_request_tracks_the_shaped_caret"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_context_menu_tests.rs",
+          "symbol": "rich_context_keyboard_selection_end_at_soft_wrap_stays_on_selected_line"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_context_menu_tests.rs",
+          "symbol": "rich_context_parent_handled_and_prehandled_context_requests_do_not_open"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_context_menu_tests.rs",
+          "symbol": "rich_context_opening_can_install_replace_or_remove_the_current_flyout"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_context_menu_tests.rs",
+          "symbol": "rich_context_nested_request_consumes_outer_opening_and_uses_new_selection"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_context_menu_tests.rs",
+          "symbol": "rich_context_detach_and_reattach_during_opening_invalidates_the_request"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_context_menu_tests.rs",
+          "symbol": "rich_context_menu_precedence_and_opening_cancellation_are_not_retried"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_context_menu_tests.rs",
+          "symbol": "rich_context_menu_uses_the_same_anchor_and_takes_precedence_over_the_flyout"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_context_menu_tests.rs",
+          "symbol": "rich_context_flyout_opening_cancellation_is_not_retried"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_context_menu_tests.rs",
+          "symbol": "rich_context_opening_preserves_live_composition_and_owned_popup_focus"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_context_menu_tests.rs",
+          "symbol": "rich_context_holding_routes_opening_and_feedback_only_for_an_opened_menu"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs",
+          "symbol": "rich_context_menu_arguments_metadata_keeps_coordinates_read_only_and_handled_live"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/emitter/event_handlers.rs",
+          "symbol": "rich_context_menu_event_calls_the_method_with_live_arguments"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_context_menu_tests.rs",
+          "symbol": "rich_context_dismissal_focus_redirection_retires_the_original_composition"
+        }
+      ],
+      "reason": "RichEditBox now projects pointer, Apps/Shift+F10 and holding ContextRequested into one synchronous bubble ContextMenuOpening before default menu dispatch. Immutable f64 CursorLeft/Top use root DIPs and shared inherited Handled cancels the request. Keyboard anchors use the normalized LTR end/bottom or RTL start/bottom selected grapheme edge, independently of directed anchor, with shaped caret fallback and soft-wrap retention. The edge is selected in presenter coordinates before transforming the point, preserving the selected side under reflection/rotation. Weak per-request rectangles carry the actual anchor through existing ContextMenu/PopupFlyoutBase lifecycle, RTL gravity and constrained popup positioning; zero-size points remain valid. Handlers may install/replace/remove menus; nested requests, stale layout and detach/reattach are fenced, canceled openings are consumed once, and existing precedence/focus/IME retention remain shared. Ordinary popup dismissal retains composition and the semantic connection by avoiding a redundant unchanged-view requery during GotFocus; a real redirected focus retires that session. Routed metadata and named runtime/compiled handlers use the live base-argument handle. Native automatic selection floaties, legacy asynchronous command-gated PopupMenu, exact native edge metrics and close/reopen event order remain pending. An already open owned FerroUI popup is repositioned in place; this does not claim native WinUI flyout or platform event conformance. Test definitions and their actual completed execution records are tracked separately.",
+      "deviations": [
+        "RT-A01",
+        "RT-A04",
+        "RT-I06",
+        "RT-I22"
+      ]
     },
     {
       "id": "E:Microsoft.UI.Xaml.Controls.RichEditBox.CopyingToClipboard",
@@ -10013,9 +10138,41 @@
         {
           "path": "src/FerroUI.Controls/rich_text/rich_edit_text_units.rs",
           "symbol": "pub(super) fn caret_bounds("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement.rs",
+          "symbol": "pub(super) fn publish_navigation("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_text_editor.rs",
+          "symbol": "struct NavigationAffinity"
         }
       ],
       "tests": [
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_matches_observed_msftedit_real_paragraph_endpoints"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_extended_end_includes_empty_paragraph_marks_without_synthetic_eop"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_extended_end_affinity_invalidates_on_selection_model_and_view_changes"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_extended_end_cancellation_retains_affinity"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_extended_end_nested_same_offset_navigation_owns_affinity"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_extended_end_view_detach_during_publication_invalidates_old_affinity"
+        },
         {
           "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
           "symbol": "rich_selection_home_end_story_uses_active_utf16_end_and_preserves_extension_anchor"
@@ -10082,7 +10239,7 @@
         }
       ],
       "implementation_source": "external WinUIEdit/Microsoft.UI.Text implementation",
-      "reason": "Logical Line/Story navigation uses the directed active endpoint, preserving the anchor when extending and otherwise collapsing at the target. The Rust result is accepted signed UTF-16 displacement after cancellable/reentrant selection handlers. Line uses complete untrimmed shaping, actual content ends and linked overflow, with paragraph fallback when headless; shared wrap boundaries use forward affinity. Other units fail before mutation. Navigation preserves read-only behavior, active composition and redo; layout/selection/publication model-write fences retain external state and reject stale acknowledgement. Exact native collapse destinations, return counts, caret Gravity and terminal-EOP behavior remain conformance boundaries; the system MSFTEDIT probe is not a WinUI engine oracle.",
+      "reason": "Line/Story Home/End now uses the normalized first/last selected line when collapsing and the directed active endpoint when extending. Extended Line End includes a real hard paragraph mark and retains source-line end affinity across repeated calls; a collapsed End excludes that mark. These endpoint choices are derived from the recorded system MSFTEDIT run, not assumed from conflicting documentation wording. The result is accepted signed UTF-16 displacement after cancellable/reentrant selection handlers. Line uses complete untrimmed shaping and linked overflow, with paragraph fallback when headless. Read-only navigation preserves active composition and redo; layout/selection/publication model-write fences retain external state and reject stale acknowledgement. An independent navigation generation protects newer callback-owned view/affinity decisions even at identical selection offsets. The model excludes native synthetic terminal EOP; soft-break/wrap extension affinity, general Gravity and the external WinUI engine remain separate conformance boundaries.",
       "deviations": [
         "RT-I01",
         "RT-I08",
@@ -10103,9 +10260,41 @@
         {
           "path": "src/FerroUI.Controls/rich_text/rich_edit_text_units.rs",
           "symbol": "pub(super) fn caret_bounds("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement.rs",
+          "symbol": "pub(super) fn publish_navigation("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_text_editor.rs",
+          "symbol": "struct NavigationAffinity"
         }
       ],
       "tests": [
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_matches_observed_msftedit_real_paragraph_endpoints"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_extended_end_includes_empty_paragraph_marks_without_synthetic_eop"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_extended_end_affinity_invalidates_on_selection_model_and_view_changes"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_extended_end_cancellation_retains_affinity"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_extended_end_nested_same_offset_navigation_owns_affinity"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_extended_end_view_detach_during_publication_invalidates_old_affinity"
+        },
         {
           "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
           "symbol": "rich_selection_home_end_story_uses_active_utf16_end_and_preserves_extension_anchor"
@@ -10172,7 +10361,7 @@
         }
       ],
       "implementation_source": "external WinUIEdit/Microsoft.UI.Text implementation",
-      "reason": "Logical Line/Story navigation uses the directed active endpoint, preserving the anchor when extending and otherwise collapsing at the target. The Rust result is accepted signed UTF-16 displacement after cancellable/reentrant selection handlers. Line uses complete untrimmed shaping, actual content ends and linked overflow, with paragraph fallback when headless; shared wrap boundaries use forward affinity. Other units fail before mutation. Navigation preserves read-only behavior, active composition and redo; layout/selection/publication model-write fences retain external state and reject stale acknowledgement. Exact native collapse destinations, return counts, caret Gravity and terminal-EOP behavior remain conformance boundaries; the system MSFTEDIT probe is not a WinUI engine oracle.",
+      "reason": "Line/Story Home/End now uses the normalized first/last selected line when collapsing and the directed active endpoint when extending. Extended Line End includes a real hard paragraph mark and retains source-line end affinity across repeated calls; a collapsed End excludes that mark. These endpoint choices are derived from the recorded system MSFTEDIT run, not assumed from conflicting documentation wording. The result is accepted signed UTF-16 displacement after cancellable/reentrant selection handlers. Line uses complete untrimmed shaping and linked overflow, with paragraph fallback when headless. Read-only navigation preserves active composition and redo; layout/selection/publication model-write fences retain external state and reject stale acknowledgement. An independent navigation generation protects newer callback-owned view/affinity decisions even at identical selection offsets. The model excludes native synthetic terminal EOP; soft-break/wrap extension affinity, general Gravity and the external WinUI engine remain separate conformance boundaries.",
       "deviations": [
         "RT-I01",
         "RT-I08",
@@ -10184,10 +10373,159 @@
       "source": "packaging/Intellisense/generated/Microsoft.UI.Text.xml",
       "owner": "Microsoft.UI.Text.ITextSelection",
       "kind": "M",
-      "state": "pending",
-      "targets": [],
-      "tests": [],
-      "implementation_source": "external WinUIEdit/Microsoft.UI.Text implementation"
+      "state": "partial",
+      "targets": [
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement.rs",
+          "symbol": "pub fn move_down("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement.rs",
+          "symbol": "impl RichEditTextSelection"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement.rs",
+          "symbol": "pub(super) fn publish_navigation("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_units.rs",
+          "symbol": "pub(super) fn resolve_display_lines("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_text_editor.rs",
+          "symbol": "struct NavigationAffinity"
+        },
+        {
+          "path": "src/FerroUI.Base/media/text_formatting/text_line_impl.rs",
+          "symbol": "fn get_distance_from_character_hit("
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_same_view_callback_retains_desired_column"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_presenter_scroll_retains_desired_column"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_keeps_desired_column_across_short_lines_and_facades"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_counts_actual_adjacent_lines_with_mixed_heights"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_collapse_and_extension_respect_directed_endpoints"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_paragraphs_handle_utf16_empty_units_and_extreme_counts"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_paragraph_collapse_moves_from_the_directional_endpoint"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_matches_system_msftedit_collapse_and_count_observations"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_extension_reaches_story_edges_without_synthetic_eop"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_rejects_unsupported_units_and_zero_needs_no_layout"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_reflows_wrapped_lines_and_saturates_without_iteration"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_keeps_empty_soft_break_lines_and_structural_carets"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_follows_complete_linked_overflow_layout"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_uses_shaped_rtl_and_utf16_caret_geometry"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_requires_complete_untrimmed_and_live_view"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_readonly_navigation_preserves_preview_and_redo"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_recaptures_selection_after_layout_callbacks"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_preserves_external_layout_edits_and_invalidates_groups"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_cancel_retains_column_and_redirect_counts_accepted_lines"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_redirected_extensions_count_actual_story_edge_units"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_view_detach_during_selection_does_not_store_old_column"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_nested_boundary_command_owns_its_column_at_same_offsets"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_explicit_selection_and_edits_invalidate_column"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_move_by_cancellation_reports_zero_without_history_changes"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_move_by_reports_actual_units_after_directed_callback_redirection"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_move_by_counts_collapse_once_and_keeps_existing_unit_alignment"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_move_by_external_model_write_survives_deferred_model_publication"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_move_by_external_editor_publication_preserves_handler_state"
+        },
+        {
+          "path": "src/FerroUI.Base/media/text_formatting/text_line_tests.rs",
+          "symbol": "structural_terminators_preserve_bidi_caret_and_range_geometry"
+        }
+      ],
+      "implementation_source": "external WinUIEdit/Microsoft.UI.Text implementation",
+      "reason": "Rust MoveUp/MoveDown accept Line and Paragraph. Line uses actual complete untrimmed shaped display lines, caret hit testing and a retained physical horizontal coordinate across short lines, mixed heights, bidi text and linked overflow. Paragraph uses logical boundaries without requiring a view. Negative counts reverse the command and extreme signed counts saturate without iteration or negation overflow. A nonempty collapse chooses the directional normalized edge and then applies the full requested distance; collapse alone counts as one unit if no further movement occurs. Return values count accepted units in the command direction; cancellation returns zero and callback redirection is measured by actual crossed boundaries/line indices. Shared publication fences preserve external model edits, nested navigation and newer view-affinity ownership; explicit selection/edit changes invalidate cached navigation, while reassociating the same validated live view retains it. Extended first/last-line moves count a real story-edge unit, including accepted callback redirection. Unsupported exposed units reject before side effects; Screen/Window units are not represented by the current enum. The recorded 264-command system MSFTEDIT run supplies collapse/count and story-edge observations. Extended-column/EOL differences in reused controls remain ambiguous; 18 additional fresh-control/sequence commands are defined for the next Windows run and are not yet executed evidence. Native terminal EOP, general caret Gravity, selection Options/Type and external WinUI engine equivalence remain pending. A shared formatter prerequisite keeps structural EOL/EOP markers out of RTL glyph groups and anchors their caret/bounds to the preceding logical run; direct LTR/RTL inverse-geometry coverage is included.",
+      "deviations": [
+        "RT-I01",
+        "RT-I08",
+        "RT-I21",
+        "RT-I23"
+      ]
     },
     {
       "id": "M:Microsoft.UI.Text.ITextSelection.MoveLeft(Microsoft.UI.Text.TextRangeUnit,System.Int32,System.Boolean)",
@@ -10214,10 +10552,159 @@
       "source": "packaging/Intellisense/generated/Microsoft.UI.Text.xml",
       "owner": "Microsoft.UI.Text.ITextSelection",
       "kind": "M",
-      "state": "pending",
-      "targets": [],
-      "tests": [],
-      "implementation_source": "external WinUIEdit/Microsoft.UI.Text implementation"
+      "state": "partial",
+      "targets": [
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement.rs",
+          "symbol": "pub fn move_up("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement.rs",
+          "symbol": "impl RichEditTextSelection"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement.rs",
+          "symbol": "pub(super) fn publish_navigation("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_units.rs",
+          "symbol": "pub(super) fn resolve_display_lines("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_text_editor.rs",
+          "symbol": "struct NavigationAffinity"
+        },
+        {
+          "path": "src/FerroUI.Base/media/text_formatting/text_line_impl.rs",
+          "symbol": "fn get_distance_from_character_hit("
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_same_view_callback_retains_desired_column"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_presenter_scroll_retains_desired_column"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_keeps_desired_column_across_short_lines_and_facades"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_counts_actual_adjacent_lines_with_mixed_heights"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_collapse_and_extension_respect_directed_endpoints"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_paragraphs_handle_utf16_empty_units_and_extreme_counts"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_paragraph_collapse_moves_from_the_directional_endpoint"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_matches_system_msftedit_collapse_and_count_observations"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_extension_reaches_story_edges_without_synthetic_eop"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_rejects_unsupported_units_and_zero_needs_no_layout"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_reflows_wrapped_lines_and_saturates_without_iteration"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_keeps_empty_soft_break_lines_and_structural_carets"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_follows_complete_linked_overflow_layout"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_uses_shaped_rtl_and_utf16_caret_geometry"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_requires_complete_untrimmed_and_live_view"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_readonly_navigation_preserves_preview_and_redo"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_recaptures_selection_after_layout_callbacks"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_preserves_external_layout_edits_and_invalidates_groups"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_cancel_retains_column_and_redirect_counts_accepted_lines"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_redirected_extensions_count_actual_story_edge_units"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_view_detach_during_selection_does_not_store_old_column"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_nested_boundary_command_owns_its_column_at_same_offsets"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_explicit_selection_and_edits_invalidate_column"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_move_by_cancellation_reports_zero_without_history_changes"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_move_by_reports_actual_units_after_directed_callback_redirection"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_move_by_counts_collapse_once_and_keeps_existing_unit_alignment"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_move_by_external_model_write_survives_deferred_model_publication"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_move_by_external_editor_publication_preserves_handler_state"
+        },
+        {
+          "path": "src/FerroUI.Base/media/text_formatting/text_line_tests.rs",
+          "symbol": "structural_terminators_preserve_bidi_caret_and_range_geometry"
+        }
+      ],
+      "implementation_source": "external WinUIEdit/Microsoft.UI.Text implementation",
+      "reason": "Rust MoveUp/MoveDown accept Line and Paragraph. Line uses actual complete untrimmed shaped display lines, caret hit testing and a retained physical horizontal coordinate across short lines, mixed heights, bidi text and linked overflow. Paragraph uses logical boundaries without requiring a view. Negative counts reverse the command and extreme signed counts saturate without iteration or negation overflow. A nonempty collapse chooses the directional normalized edge and then applies the full requested distance; collapse alone counts as one unit if no further movement occurs. Return values count accepted units in the command direction; cancellation returns zero and callback redirection is measured by actual crossed boundaries/line indices. Shared publication fences preserve external model edits, nested navigation and newer view-affinity ownership; explicit selection/edit changes invalidate cached navigation, while reassociating the same validated live view retains it. Extended first/last-line moves count a real story-edge unit, including accepted callback redirection. Unsupported exposed units reject before side effects; Screen/Window units are not represented by the current enum. The recorded 264-command system MSFTEDIT run supplies collapse/count and story-edge observations. Extended-column/EOL differences in reused controls remain ambiguous; 18 additional fresh-control/sequence commands are defined for the next Windows run and are not yet executed evidence. Native terminal EOP, general caret Gravity, selection Options/Type and external WinUI engine equivalence remain pending. A shared formatter prerequisite keeps structural EOL/EOP markers out of RTL glyph groups and anchors their caret/bounds to the preceding logical run; direct LTR/RTL inverse-geometry coverage is included.",
+      "deviations": [
+        "RT-I01",
+        "RT-I08",
+        "RT-I21",
+        "RT-I23"
+      ]
     },
     {
       "id": "M:Microsoft.UI.Text.ITextSelection.TypeText(System.String)",
@@ -18270,14 +18757,41 @@
       "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
       "owner": "Microsoft.UI.Xaml.Controls.ContextMenuEventArgs",
       "kind": "P",
-      "state": "pending",
-      "targets": [],
-      "tests": [],
-      "reason": "FerroUI ContextRequested/ContextFlyout infrastructure does not yet implement the native synchronous ContextMenuOpening event, ContextMenuEventArgs root-coordinate cursor fields/Handled contract or its projected delegate. These exact public dependencies remain pending.",
+      "state": "partial",
+      "targets": [
+        {
+          "path": "src/FerroUI.Controls/context_menu_event_args.rs",
+          "symbol": "pub fn cursor_left("
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Controls/rich_edit_context_menu_tests.rs",
+          "symbol": "rich_context_args_share_handled_and_request_anchors_have_weak_owners"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_context_menu_tests.rs",
+          "symbol": "rich_context_pointer_reports_root_dips_once_and_handled_cancels_both_menu_kinds"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_context_menu_tests.rs",
+          "symbol": "rich_context_keyboard_uses_normalized_selection_edges_and_rtl_popup_gravity"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs",
+          "symbol": "rich_context_menu_arguments_metadata_keeps_coordinates_read_only_and_handled_live"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/emitter/event_handlers.rs",
+          "symbol": "rich_context_menu_event_calls_the_method_with_live_arguments"
+        }
+      ],
+      "reason": "RichEditBox now projects pointer, Apps/Shift+F10 and holding ContextRequested into one synchronous bubble ContextMenuOpening before default menu dispatch. Immutable f64 CursorLeft/Top use root DIPs and shared inherited Handled cancels the request. Keyboard anchors use the normalized LTR end/bottom or RTL start/bottom selected grapheme edge, independently of directed anchor, with shaped caret fallback and soft-wrap retention. The edge is selected in presenter coordinates before transforming the point, preserving the selected side under reflection/rotation. Weak per-request rectangles carry the actual anchor through existing ContextMenu/PopupFlyoutBase lifecycle, RTL gravity and constrained popup positioning; zero-size points remain valid. Handlers may install/replace/remove menus; nested requests, stale layout and detach/reattach are fenced, canceled openings are consumed once, and existing precedence/focus/IME retention remain shared. Ordinary popup dismissal retains composition and the semantic connection by avoiding a redundant unchanged-view requery during GotFocus; a real redirected focus retires that session. Routed metadata and named runtime/compiled handlers use the live base-argument handle. Native automatic selection floaties, legacy asynchronous command-gated PopupMenu, exact native edge metrics and close/reopen event order remain pending. An already open owned FerroUI popup is repositioned in place; this does not claim native WinUI flyout or platform event conformance. Test definitions and their actual completed execution records are tracked separately.",
       "deviations": [
+        "RT-A01",
         "RT-A04",
-        "RT-P04",
-        "RT-I20"
+        "RT-I06",
+        "RT-I22"
       ]
     },
     {
@@ -18285,14 +18799,41 @@
       "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
       "owner": "Microsoft.UI.Xaml.Controls.ContextMenuEventArgs",
       "kind": "P",
-      "state": "pending",
-      "targets": [],
-      "tests": [],
-      "reason": "FerroUI ContextRequested/ContextFlyout infrastructure does not yet implement the native synchronous ContextMenuOpening event, ContextMenuEventArgs root-coordinate cursor fields/Handled contract or its projected delegate. These exact public dependencies remain pending.",
+      "state": "partial",
+      "targets": [
+        {
+          "path": "src/FerroUI.Controls/context_menu_event_args.rs",
+          "symbol": "pub fn cursor_top("
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Controls/rich_edit_context_menu_tests.rs",
+          "symbol": "rich_context_args_share_handled_and_request_anchors_have_weak_owners"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_context_menu_tests.rs",
+          "symbol": "rich_context_pointer_reports_root_dips_once_and_handled_cancels_both_menu_kinds"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_context_menu_tests.rs",
+          "symbol": "rich_context_keyboard_uses_normalized_selection_edges_and_rtl_popup_gravity"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs",
+          "symbol": "rich_context_menu_arguments_metadata_keeps_coordinates_read_only_and_handled_live"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/emitter/event_handlers.rs",
+          "symbol": "rich_context_menu_event_calls_the_method_with_live_arguments"
+        }
+      ],
+      "reason": "RichEditBox now projects pointer, Apps/Shift+F10 and holding ContextRequested into one synchronous bubble ContextMenuOpening before default menu dispatch. Immutable f64 CursorLeft/Top use root DIPs and shared inherited Handled cancels the request. Keyboard anchors use the normalized LTR end/bottom or RTL start/bottom selected grapheme edge, independently of directed anchor, with shaped caret fallback and soft-wrap retention. The edge is selected in presenter coordinates before transforming the point, preserving the selected side under reflection/rotation. Weak per-request rectangles carry the actual anchor through existing ContextMenu/PopupFlyoutBase lifecycle, RTL gravity and constrained popup positioning; zero-size points remain valid. Handlers may install/replace/remove menus; nested requests, stale layout and detach/reattach are fenced, canceled openings are consumed once, and existing precedence/focus/IME retention remain shared. Ordinary popup dismissal retains composition and the semantic connection by avoiding a redundant unchanged-view requery during GotFocus; a real redirected focus retires that session. Routed metadata and named runtime/compiled handlers use the live base-argument handle. Native automatic selection floaties, legacy asynchronous command-gated PopupMenu, exact native edge metrics and close/reopen event order remain pending. An already open owned FerroUI popup is repositioned in place; this does not claim native WinUI flyout or platform event conformance. Test definitions and their actual completed execution records are tracked separately.",
       "deviations": [
+        "RT-A01",
         "RT-A04",
-        "RT-P04",
-        "RT-I20"
+        "RT-I06",
+        "RT-I22"
       ]
     },
     {
@@ -18300,14 +18841,41 @@
       "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
       "owner": "Microsoft.UI.Xaml.Controls.ContextMenuEventArgs",
       "kind": "P",
-      "state": "pending",
-      "targets": [],
-      "tests": [],
-      "reason": "FerroUI ContextRequested/ContextFlyout infrastructure does not yet implement the native synchronous ContextMenuOpening event, ContextMenuEventArgs root-coordinate cursor fields/Handled contract or its projected delegate. These exact public dependencies remain pending.",
+      "state": "partial",
+      "targets": [
+        {
+          "path": "src/FerroUI.Controls/context_menu_event_args.rs",
+          "symbol": "ferro_routed_event_args!(ContextMenuEventArgs: RoutedEventArgs)"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Controls/rich_edit_context_menu_tests.rs",
+          "symbol": "rich_context_args_share_handled_and_request_anchors_have_weak_owners"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_context_menu_tests.rs",
+          "symbol": "rich_context_pointer_reports_root_dips_once_and_handled_cancels_both_menu_kinds"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_context_menu_tests.rs",
+          "symbol": "rich_context_keyboard_uses_normalized_selection_edges_and_rtl_popup_gravity"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs",
+          "symbol": "rich_context_menu_arguments_metadata_keeps_coordinates_read_only_and_handled_live"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/emitter/event_handlers.rs",
+          "symbol": "rich_context_menu_event_calls_the_method_with_live_arguments"
+        }
+      ],
+      "reason": "RichEditBox now projects pointer, Apps/Shift+F10 and holding ContextRequested into one synchronous bubble ContextMenuOpening before default menu dispatch. Immutable f64 CursorLeft/Top use root DIPs and shared inherited Handled cancels the request. Keyboard anchors use the normalized LTR end/bottom or RTL start/bottom selected grapheme edge, independently of directed anchor, with shaped caret fallback and soft-wrap retention. The edge is selected in presenter coordinates before transforming the point, preserving the selected side under reflection/rotation. Weak per-request rectangles carry the actual anchor through existing ContextMenu/PopupFlyoutBase lifecycle, RTL gravity and constrained popup positioning; zero-size points remain valid. Handlers may install/replace/remove menus; nested requests, stale layout and detach/reattach are fenced, canceled openings are consumed once, and existing precedence/focus/IME retention remain shared. Ordinary popup dismissal retains composition and the semantic connection by avoiding a redundant unchanged-view requery during GotFocus; a real redirected focus retires that session. Routed metadata and named runtime/compiled handlers use the live base-argument handle. Native automatic selection floaties, legacy asynchronous command-gated PopupMenu, exact native edge metrics and close/reopen event order remain pending. An already open owned FerroUI popup is repositioned in place; this does not claim native WinUI flyout or platform event conformance. Test definitions and their actual completed execution records are tracked separately.",
       "deviations": [
+        "RT-A01",
         "RT-A04",
-        "RT-P04",
-        "RT-I20"
+        "RT-I06",
+        "RT-I22"
       ]
     },
     {
@@ -19346,6 +19914,10 @@
         {
           "path": "src/Windows/FerroUI.WinUI/win_ui_text_input_method.rs",
           "symbol": "fn apply_input_options("
+        },
+        {
+          "path": "src/Windows/FerroUI.WinUI/core_text_input_options.rs",
+          "symbol": "pub(crate) fn update("
         }
       ],
       "tests": [
@@ -19400,9 +19972,13 @@
         {
           "path": "src/Windows/FerroUI.WinUI/core_text_input_options.rs",
           "symbol": "core_text_failed_option_application_preserves_the_latest_value_for_retry"
+        },
+        {
+          "path": "src/Windows/FerroUI.WinUI/core_text_input_options.rs",
+          "symbol": "core_text_content_types_preserve_native_name_and_numeric_pin_semantics"
         }
       ],
-      "reason": "The rich control registers and consumes this input/presentation value through FerroUI. Backend capabilities, complete native presentation and every platform edge case remain separate. Effective changes to all nine attached TextInputOptions are observed on the semantic owner, including inherited/cleared values, without resetting composition or replacing the client/connection. Weak subscriptions survive reset and are disposed on owner replacement/teardown. Reentrant same-transport setter completion reapplies the newest owner policies; initial client installation retains its generation fence. This is shared option transport, not native prediction/proofing behavior or complete InputScope.Names semantics. CoreText retains options received before lazy context creation, applies the latest scope before focus entry, serializes nested setters and retains desired state after failure for retry. The existing seven native scope outcomes remain the supported subset; other native policies and real OS sessions need separate evidence.",
+      "reason": "The rich control registers and consumes this input/presentation value through FerroUI. Backend capabilities, complete native presentation and every platform edge case remain separate. Effective changes to all nine attached TextInputOptions are observed on the semantic owner, including inherited/cleared values, without resetting composition or replacing the client/connection. Weak subscriptions survive reset and are disposed on owner replacement/teardown. Reentrant same-transport setter completion reapplies the newest owner policies; initial client installation retains its generation fence. This is shared option transport, not native prediction/proofing behavior or complete InputScope.Names semantics. CoreText retains options received before lazy context creation, applies the latest scope before focus entry, serializes nested setters and retains desired state after failure for retry. The supported scope subset now includes verified PersonalFullName and PinNumeric mappings for existing Name/Pin content types; other native policies and real OS sessions need separate evidence.",
       "deviations": [
         "RT-I01",
         "RT-I06",
@@ -20224,6 +20800,10 @@
         {
           "path": "src/FerroUI.Controls/rich_text_block.rs",
           "symbol": "pub fn select("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "fn typed_rich_edit_event_args<"
         }
       ],
       "tests": [
@@ -20246,9 +20826,17 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
           "symbol": "rich_edit_selection_property_keyboard_and_ime_requests_share_cancellation"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs",
+          "symbol": "rich_selection_changing_event_arguments_metadata_mutates_the_shared_cancel_flag"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/emitter/event_handlers.rs",
+          "symbol": "rich_editor_events_accept_base_code_behind_and_exact_typed_handlers"
         }
       ],
-      "reason": "SelectionChanging exposes the proposed view/TOM selection and a shared Cancel flag before publication. Cancellation preserves the prior selection, while reentrant view or TOM selection overrides cancellation and publishes the final selection once. Temporary grouped edit ranges stay internal; accepted post-edit selection participates in undo/redo. Native ABI and backend input scenarios remain separate acceptance work.",
+      "reason": "SelectionChanging exposes the proposed view/TOM selection and a shared Cancel flag before publication. Cancellation preserves the prior selection, while reentrant view or TOM selection overrides cancellation and publishes the final selection once. Temporary grouped edit ranges stay internal; accepted post-edit selection participates in undo/redo. Native ABI and backend input scenarios remain separate acceptance work. Markup metadata receives the framework shared Rc<dyn IRoutedEventArgs> handle, downcasts checked payload access, and inherits the routed base. Runtime and generated code-behind can accept RoutedEventArgs while typed Rust subscribers observe the same live payload/Cancel/Handled state; concrete-value metadata previously rejected that actual handler representation.",
       "deviations": [
         "RT-A01",
         "RT-I07"
@@ -20272,6 +20860,10 @@
         {
           "path": "src/FerroUI.Controls/rich_text_block.rs",
           "symbol": "pub fn select("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "fn typed_rich_edit_event_args<"
         }
       ],
       "tests": [
@@ -20294,9 +20886,17 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
           "symbol": "rich_edit_selection_property_keyboard_and_ime_requests_share_cancellation"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs",
+          "symbol": "rich_selection_changing_event_arguments_metadata_mutates_the_shared_cancel_flag"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/emitter/event_handlers.rs",
+          "symbol": "rich_editor_events_accept_base_code_behind_and_exact_typed_handlers"
         }
       ],
-      "reason": "SelectionChanging exposes the proposed view/TOM selection and a shared Cancel flag before publication. Cancellation preserves the prior selection, while reentrant view or TOM selection overrides cancellation and publishes the final selection once. Temporary grouped edit ranges stay internal; accepted post-edit selection participates in undo/redo. Native ABI and backend input scenarios remain separate acceptance work.",
+      "reason": "SelectionChanging exposes the proposed view/TOM selection and a shared Cancel flag before publication. Cancellation preserves the prior selection, while reentrant view or TOM selection overrides cancellation and publishes the final selection once. Temporary grouped edit ranges stay internal; accepted post-edit selection participates in undo/redo. Native ABI and backend input scenarios remain separate acceptance work. Markup metadata receives the framework shared Rc<dyn IRoutedEventArgs> handle, downcasts checked payload access, and inherits the routed base. Runtime and generated code-behind can accept RoutedEventArgs while typed Rust subscribers observe the same live payload/Cancel/Handled state; concrete-value metadata previously rejected that actual handler representation.",
       "deviations": [
         "RT-A01",
         "RT-I07"
@@ -20320,6 +20920,10 @@
         {
           "path": "src/FerroUI.Controls/rich_text_block.rs",
           "symbol": "pub fn select("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "fn typed_rich_edit_event_args<"
         }
       ],
       "tests": [
@@ -20342,9 +20946,17 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
           "symbol": "rich_edit_selection_property_keyboard_and_ime_requests_share_cancellation"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs",
+          "symbol": "rich_selection_changing_event_arguments_metadata_mutates_the_shared_cancel_flag"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/emitter/event_handlers.rs",
+          "symbol": "rich_editor_events_accept_base_code_behind_and_exact_typed_handlers"
         }
       ],
-      "reason": "SelectionChanging exposes the proposed view/TOM selection and a shared Cancel flag before publication. Cancellation preserves the prior selection, while reentrant view or TOM selection overrides cancellation and publishes the final selection once. Temporary grouped edit ranges stay internal; accepted post-edit selection participates in undo/redo. Native ABI and backend input scenarios remain separate acceptance work.",
+      "reason": "SelectionChanging exposes the proposed view/TOM selection and a shared Cancel flag before publication. Cancellation preserves the prior selection, while reentrant view or TOM selection overrides cancellation and publishes the final selection once. Temporary grouped edit ranges stay internal; accepted post-edit selection participates in undo/redo. Native ABI and backend input scenarios remain separate acceptance work. Markup metadata receives the framework shared Rc<dyn IRoutedEventArgs> handle, downcasts checked payload access, and inherits the routed base. Runtime and generated code-behind can accept RoutedEventArgs while typed Rust subscribers observe the same live payload/Cancel/Handled state; concrete-value metadata previously rejected that actual handler representation.",
       "deviations": [
         "RT-A01",
         "RT-I07"
@@ -20368,6 +20980,10 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_box.rs",
           "symbol": "pub fn text_changed_event("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "fn typed_rich_edit_event_args<"
         }
       ],
       "tests": [
@@ -20382,9 +20998,17 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
           "symbol": "rich_edit_deferred_notifications_do_not_retain_the_control"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs",
+          "symbol": "rich_text_changing_event_arguments_metadata_reads_the_shared_handler_payload"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/emitter/event_handlers.rs",
+          "symbol": "rich_editor_events_accept_base_code_behind_and_exact_typed_handlers"
         }
       ],
-      "reason": "TextChanging is raised synchronously after backing-document mutation, with IsContentChanging distinguishing text from formatting changes. TextChanged uses RoutedEventArgs and is queued at Dispatcher LOADED, preserving separate notifications while dropping obsolete document generations and retaining the owner weakly. This follows the pinned host order; real native input/backend event sequences remain a separate gate.",
+      "reason": "TextChanging is raised synchronously after backing-document mutation, with IsContentChanging distinguishing text from formatting changes. TextChanged uses RoutedEventArgs and is queued at Dispatcher LOADED, preserving separate notifications while dropping obsolete document generations and retaining the owner weakly. This follows the pinned host order; real native input/backend event sequences remain a separate gate. Markup metadata receives the framework shared Rc<dyn IRoutedEventArgs> handle, downcasts checked payload access, and inherits the routed base. Runtime and generated code-behind can accept RoutedEventArgs while typed Rust subscribers observe the same live payload/Cancel/Handled state; concrete-value metadata previously rejected that actual handler representation.",
       "deviations": [
         "RT-A01",
         "RT-I07"
@@ -22387,6 +23011,10 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs",
           "symbol": "fn begin_composition("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "fn typed_rich_edit_event_args<"
         }
       ],
       "tests": [
@@ -22465,9 +23093,17 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_composition_start_tests.rs",
           "symbol": "rich_native_intercepted_empty_completion_keeps_its_lifecycle_open_for_retry"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs",
+          "symbol": "rich_composition_event_arguments_metadata_reads_the_shared_handler_payload"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/emitter/event_handlers.rs",
+          "symbol": "rich_editor_events_accept_base_code_behind_and_exact_typed_handlers"
         }
       ],
-      "reason": "The three native composition argument classes map to one routed Rust RichEditCompositionEventArgs with readonly signed StartIndex/Length, native unavailable defaults -1/0, accepted replacement text and directed selection. Ranges count normalized UTF-16 model positions and cover the whole accepted composition independently of its caret. Cursor-only movement emits no changed event; filtered/truncated commit payloads report accepted text. Reentrant changes before end publication suppress stale successful completion reporting. Changes made by an Ended handler invalidate the native acknowledgement after event delivery. Shared Rust argument identity, FerroUI model coordinates, native nested asynchronous event dispatch and real backend ordering remain explicit differences. Explicit native begin captures committed content/selection without mutation or history, immediately raises empty 0/0 started args, and keeps active_composition_range absent until an accepted update. First exact replacement establishes its own extent. Empty completion/cancel closes once without undo or lost redo; legacy first-preedit implicit startup remains supported. Reentrant end/start callbacks cannot replace a newer session with an older request. Pending automation range absence is a framework projection; native pre-update automation and nested asynchronous event dispatch remain conformance boundaries.",
+      "reason": "The three native composition argument classes map to one routed Rust RichEditCompositionEventArgs with readonly signed StartIndex/Length, native unavailable defaults -1/0, accepted replacement text and directed selection. Ranges count normalized UTF-16 model positions and cover the whole accepted composition independently of its caret. Cursor-only movement emits no changed event; filtered/truncated commit payloads report accepted text. Reentrant changes before end publication suppress stale successful completion reporting. Changes made by an Ended handler invalidate the native acknowledgement after event delivery. Shared Rust argument identity, FerroUI model coordinates, native nested asynchronous event dispatch and real backend ordering remain explicit differences. Explicit native begin captures committed content/selection without mutation or history, immediately raises empty 0/0 started args, and keeps active_composition_range absent until an accepted update. First exact replacement establishes its own extent. Empty completion/cancel closes once without undo or lost redo; legacy first-preedit implicit startup remains supported. Reentrant end/start callbacks cannot replace a newer session with an older request. Pending automation range absence is a framework projection; native pre-update automation and nested asynchronous event dispatch remain conformance boundaries. Markup metadata receives the framework shared Rc<dyn IRoutedEventArgs> handle, downcasts checked payload access, and inherits the routed base. Runtime and generated code-behind can accept RoutedEventArgs while typed Rust subscribers observe the same live payload/Cancel/Handled state; concrete-value metadata previously rejected that actual handler representation.",
       "deviations": [
         "RT-I01",
         "RT-I07",
@@ -22494,6 +23130,10 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs",
           "symbol": "fn begin_composition("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "fn typed_rich_edit_event_args<"
         }
       ],
       "tests": [
@@ -22572,9 +23212,17 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_composition_start_tests.rs",
           "symbol": "rich_native_intercepted_empty_completion_keeps_its_lifecycle_open_for_retry"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs",
+          "symbol": "rich_composition_event_arguments_metadata_reads_the_shared_handler_payload"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/emitter/event_handlers.rs",
+          "symbol": "rich_editor_events_accept_base_code_behind_and_exact_typed_handlers"
         }
       ],
-      "reason": "The three native composition argument classes map to one routed Rust RichEditCompositionEventArgs with readonly signed StartIndex/Length, native unavailable defaults -1/0, accepted replacement text and directed selection. Ranges count normalized UTF-16 model positions and cover the whole accepted composition independently of its caret. Cursor-only movement emits no changed event; filtered/truncated commit payloads report accepted text. Reentrant changes before end publication suppress stale successful completion reporting. Changes made by an Ended handler invalidate the native acknowledgement after event delivery. Shared Rust argument identity, FerroUI model coordinates, native nested asynchronous event dispatch and real backend ordering remain explicit differences. Explicit native begin captures committed content/selection without mutation or history, immediately raises empty 0/0 started args, and keeps active_composition_range absent until an accepted update. First exact replacement establishes its own extent. Empty completion/cancel closes once without undo or lost redo; legacy first-preedit implicit startup remains supported. Reentrant end/start callbacks cannot replace a newer session with an older request. Pending automation range absence is a framework projection; native pre-update automation and nested asynchronous event dispatch remain conformance boundaries.",
+      "reason": "The three native composition argument classes map to one routed Rust RichEditCompositionEventArgs with readonly signed StartIndex/Length, native unavailable defaults -1/0, accepted replacement text and directed selection. Ranges count normalized UTF-16 model positions and cover the whole accepted composition independently of its caret. Cursor-only movement emits no changed event; filtered/truncated commit payloads report accepted text. Reentrant changes before end publication suppress stale successful completion reporting. Changes made by an Ended handler invalidate the native acknowledgement after event delivery. Shared Rust argument identity, FerroUI model coordinates, native nested asynchronous event dispatch and real backend ordering remain explicit differences. Explicit native begin captures committed content/selection without mutation or history, immediately raises empty 0/0 started args, and keeps active_composition_range absent until an accepted update. First exact replacement establishes its own extent. Empty completion/cancel closes once without undo or lost redo; legacy first-preedit implicit startup remains supported. Reentrant end/start callbacks cannot replace a newer session with an older request. Pending automation range absence is a framework projection; native pre-update automation and nested asynchronous event dispatch remain conformance boundaries. Markup metadata receives the framework shared Rc<dyn IRoutedEventArgs> handle, downcasts checked payload access, and inherits the routed base. Runtime and generated code-behind can accept RoutedEventArgs while typed Rust subscribers observe the same live payload/Cancel/Handled state; concrete-value metadata previously rejected that actual handler representation.",
       "deviations": [
         "RT-I01",
         "RT-I07",
@@ -22601,6 +23249,10 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs",
           "symbol": "fn begin_composition("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "fn typed_rich_edit_event_args<"
         }
       ],
       "tests": [
@@ -22679,9 +23331,17 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_composition_start_tests.rs",
           "symbol": "rich_native_intercepted_empty_completion_keeps_its_lifecycle_open_for_retry"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs",
+          "symbol": "rich_composition_event_arguments_metadata_reads_the_shared_handler_payload"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/emitter/event_handlers.rs",
+          "symbol": "rich_editor_events_accept_base_code_behind_and_exact_typed_handlers"
         }
       ],
-      "reason": "The three native composition argument classes map to one routed Rust RichEditCompositionEventArgs with readonly signed StartIndex/Length, native unavailable defaults -1/0, accepted replacement text and directed selection. Ranges count normalized UTF-16 model positions and cover the whole accepted composition independently of its caret. Cursor-only movement emits no changed event; filtered/truncated commit payloads report accepted text. Reentrant changes before end publication suppress stale successful completion reporting. Changes made by an Ended handler invalidate the native acknowledgement after event delivery. Shared Rust argument identity, FerroUI model coordinates, native nested asynchronous event dispatch and real backend ordering remain explicit differences. Explicit native begin captures committed content/selection without mutation or history, immediately raises empty 0/0 started args, and keeps active_composition_range absent until an accepted update. First exact replacement establishes its own extent. Empty completion/cancel closes once without undo or lost redo; legacy first-preedit implicit startup remains supported. Reentrant end/start callbacks cannot replace a newer session with an older request. Pending automation range absence is a framework projection; native pre-update automation and nested asynchronous event dispatch remain conformance boundaries.",
+      "reason": "The three native composition argument classes map to one routed Rust RichEditCompositionEventArgs with readonly signed StartIndex/Length, native unavailable defaults -1/0, accepted replacement text and directed selection. Ranges count normalized UTF-16 model positions and cover the whole accepted composition independently of its caret. Cursor-only movement emits no changed event; filtered/truncated commit payloads report accepted text. Reentrant changes before end publication suppress stale successful completion reporting. Changes made by an Ended handler invalidate the native acknowledgement after event delivery. Shared Rust argument identity, FerroUI model coordinates, native nested asynchronous event dispatch and real backend ordering remain explicit differences. Explicit native begin captures committed content/selection without mutation or history, immediately raises empty 0/0 started args, and keeps active_composition_range absent until an accepted update. First exact replacement establishes its own extent. Empty completion/cancel closes once without undo or lost redo; legacy first-preedit implicit startup remains supported. Reentrant end/start callbacks cannot replace a newer session with an older request. Pending automation range absence is a framework projection; native pre-update automation and nested asynchronous event dispatch remain conformance boundaries. Markup metadata receives the framework shared Rc<dyn IRoutedEventArgs> handle, downcasts checked payload access, and inherits the routed base. Runtime and generated code-behind can accept RoutedEventArgs while typed Rust subscribers observe the same live payload/Cancel/Handled state; concrete-value metadata previously rejected that actual handler representation.",
       "deviations": [
         "RT-I01",
         "RT-I07",
@@ -22708,6 +23368,10 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs",
           "symbol": "fn begin_composition("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "fn typed_rich_edit_event_args<"
         }
       ],
       "tests": [
@@ -22786,9 +23450,17 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_composition_start_tests.rs",
           "symbol": "rich_native_intercepted_empty_completion_keeps_its_lifecycle_open_for_retry"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs",
+          "symbol": "rich_composition_event_arguments_metadata_reads_the_shared_handler_payload"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/emitter/event_handlers.rs",
+          "symbol": "rich_editor_events_accept_base_code_behind_and_exact_typed_handlers"
         }
       ],
-      "reason": "The three native composition argument classes map to one routed Rust RichEditCompositionEventArgs with readonly signed StartIndex/Length, native unavailable defaults -1/0, accepted replacement text and directed selection. Ranges count normalized UTF-16 model positions and cover the whole accepted composition independently of its caret. Cursor-only movement emits no changed event; filtered/truncated commit payloads report accepted text. Reentrant changes before end publication suppress stale successful completion reporting. Changes made by an Ended handler invalidate the native acknowledgement after event delivery. Shared Rust argument identity, FerroUI model coordinates, native nested asynchronous event dispatch and real backend ordering remain explicit differences. Explicit native begin captures committed content/selection without mutation or history, immediately raises empty 0/0 started args, and keeps active_composition_range absent until an accepted update. First exact replacement establishes its own extent. Empty completion/cancel closes once without undo or lost redo; legacy first-preedit implicit startup remains supported. Reentrant end/start callbacks cannot replace a newer session with an older request. Pending automation range absence is a framework projection; native pre-update automation and nested asynchronous event dispatch remain conformance boundaries.",
+      "reason": "The three native composition argument classes map to one routed Rust RichEditCompositionEventArgs with readonly signed StartIndex/Length, native unavailable defaults -1/0, accepted replacement text and directed selection. Ranges count normalized UTF-16 model positions and cover the whole accepted composition independently of its caret. Cursor-only movement emits no changed event; filtered/truncated commit payloads report accepted text. Reentrant changes before end publication suppress stale successful completion reporting. Changes made by an Ended handler invalidate the native acknowledgement after event delivery. Shared Rust argument identity, FerroUI model coordinates, native nested asynchronous event dispatch and real backend ordering remain explicit differences. Explicit native begin captures committed content/selection without mutation or history, immediately raises empty 0/0 started args, and keeps active_composition_range absent until an accepted update. First exact replacement establishes its own extent. Empty completion/cancel closes once without undo or lost redo; legacy first-preedit implicit startup remains supported. Reentrant end/start callbacks cannot replace a newer session with an older request. Pending automation range absence is a framework projection; native pre-update automation and nested asynchronous event dispatch remain conformance boundaries. Markup metadata receives the framework shared Rc<dyn IRoutedEventArgs> handle, downcasts checked payload access, and inherits the routed base. Runtime and generated code-behind can accept RoutedEventArgs while typed Rust subscribers observe the same live payload/Cancel/Handled state; concrete-value metadata previously rejected that actual handler representation.",
       "deviations": [
         "RT-I01",
         "RT-I07",
@@ -22815,6 +23487,10 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs",
           "symbol": "fn begin_composition("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "fn typed_rich_edit_event_args<"
         }
       ],
       "tests": [
@@ -22893,9 +23569,17 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_composition_start_tests.rs",
           "symbol": "rich_native_intercepted_empty_completion_keeps_its_lifecycle_open_for_retry"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs",
+          "symbol": "rich_composition_event_arguments_metadata_reads_the_shared_handler_payload"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/emitter/event_handlers.rs",
+          "symbol": "rich_editor_events_accept_base_code_behind_and_exact_typed_handlers"
         }
       ],
-      "reason": "The three native composition argument classes map to one routed Rust RichEditCompositionEventArgs with readonly signed StartIndex/Length, native unavailable defaults -1/0, accepted replacement text and directed selection. Ranges count normalized UTF-16 model positions and cover the whole accepted composition independently of its caret. Cursor-only movement emits no changed event; filtered/truncated commit payloads report accepted text. Reentrant changes before end publication suppress stale successful completion reporting. Changes made by an Ended handler invalidate the native acknowledgement after event delivery. Shared Rust argument identity, FerroUI model coordinates, native nested asynchronous event dispatch and real backend ordering remain explicit differences. Explicit native begin captures committed content/selection without mutation or history, immediately raises empty 0/0 started args, and keeps active_composition_range absent until an accepted update. First exact replacement establishes its own extent. Empty completion/cancel closes once without undo or lost redo; legacy first-preedit implicit startup remains supported. Reentrant end/start callbacks cannot replace a newer session with an older request. Pending automation range absence is a framework projection; native pre-update automation and nested asynchronous event dispatch remain conformance boundaries.",
+      "reason": "The three native composition argument classes map to one routed Rust RichEditCompositionEventArgs with readonly signed StartIndex/Length, native unavailable defaults -1/0, accepted replacement text and directed selection. Ranges count normalized UTF-16 model positions and cover the whole accepted composition independently of its caret. Cursor-only movement emits no changed event; filtered/truncated commit payloads report accepted text. Reentrant changes before end publication suppress stale successful completion reporting. Changes made by an Ended handler invalidate the native acknowledgement after event delivery. Shared Rust argument identity, FerroUI model coordinates, native nested asynchronous event dispatch and real backend ordering remain explicit differences. Explicit native begin captures committed content/selection without mutation or history, immediately raises empty 0/0 started args, and keeps active_composition_range absent until an accepted update. First exact replacement establishes its own extent. Empty completion/cancel closes once without undo or lost redo; legacy first-preedit implicit startup remains supported. Reentrant end/start callbacks cannot replace a newer session with an older request. Pending automation range absence is a framework projection; native pre-update automation and nested asynchronous event dispatch remain conformance boundaries. Markup metadata receives the framework shared Rc<dyn IRoutedEventArgs> handle, downcasts checked payload access, and inherits the routed base. Runtime and generated code-behind can accept RoutedEventArgs while typed Rust subscribers observe the same live payload/Cancel/Handled state; concrete-value metadata previously rejected that actual handler representation.",
       "deviations": [
         "RT-I01",
         "RT-I07",
@@ -22922,6 +23606,10 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs",
           "symbol": "fn begin_composition("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "fn typed_rich_edit_event_args<"
         }
       ],
       "tests": [
@@ -23000,9 +23688,17 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_composition_start_tests.rs",
           "symbol": "rich_native_intercepted_empty_completion_keeps_its_lifecycle_open_for_retry"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs",
+          "symbol": "rich_composition_event_arguments_metadata_reads_the_shared_handler_payload"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/emitter/event_handlers.rs",
+          "symbol": "rich_editor_events_accept_base_code_behind_and_exact_typed_handlers"
         }
       ],
-      "reason": "The three native composition argument classes map to one routed Rust RichEditCompositionEventArgs with readonly signed StartIndex/Length, native unavailable defaults -1/0, accepted replacement text and directed selection. Ranges count normalized UTF-16 model positions and cover the whole accepted composition independently of its caret. Cursor-only movement emits no changed event; filtered/truncated commit payloads report accepted text. Reentrant changes before end publication suppress stale successful completion reporting. Changes made by an Ended handler invalidate the native acknowledgement after event delivery. Shared Rust argument identity, FerroUI model coordinates, native nested asynchronous event dispatch and real backend ordering remain explicit differences. Explicit native begin captures committed content/selection without mutation or history, immediately raises empty 0/0 started args, and keeps active_composition_range absent until an accepted update. First exact replacement establishes its own extent. Empty completion/cancel closes once without undo or lost redo; legacy first-preedit implicit startup remains supported. Reentrant end/start callbacks cannot replace a newer session with an older request. Pending automation range absence is a framework projection; native pre-update automation and nested asynchronous event dispatch remain conformance boundaries.",
+      "reason": "The three native composition argument classes map to one routed Rust RichEditCompositionEventArgs with readonly signed StartIndex/Length, native unavailable defaults -1/0, accepted replacement text and directed selection. Ranges count normalized UTF-16 model positions and cover the whole accepted composition independently of its caret. Cursor-only movement emits no changed event; filtered/truncated commit payloads report accepted text. Reentrant changes before end publication suppress stale successful completion reporting. Changes made by an Ended handler invalidate the native acknowledgement after event delivery. Shared Rust argument identity, FerroUI model coordinates, native nested asynchronous event dispatch and real backend ordering remain explicit differences. Explicit native begin captures committed content/selection without mutation or history, immediately raises empty 0/0 started args, and keeps active_composition_range absent until an accepted update. First exact replacement establishes its own extent. Empty completion/cancel closes once without undo or lost redo; legacy first-preedit implicit startup remains supported. Reentrant end/start callbacks cannot replace a newer session with an older request. Pending automation range absence is a framework projection; native pre-update automation and nested asynchronous event dispatch remain conformance boundaries. Markup metadata receives the framework shared Rc<dyn IRoutedEventArgs> handle, downcasts checked payload access, and inherits the routed base. Runtime and generated code-behind can accept RoutedEventArgs while typed Rust subscribers observe the same live payload/Cancel/Handled state; concrete-value metadata previously rejected that actual handler representation.",
       "deviations": [
         "RT-I01",
         "RT-I07",
@@ -26096,6 +26792,22 @@
         {
           "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation.rs",
           "symbol": "impl RichEditTextSelection"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement.rs",
+          "symbol": "impl RichEditTextSelection"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement.rs",
+          "symbol": "pub(super) fn publish_navigation("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_units.rs",
+          "symbol": "pub(super) fn resolve_display_lines("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_text_editor.rs",
+          "symbol": "struct NavigationAffinity"
         }
       ],
       "tests": [
@@ -26166,14 +26878,151 @@
         {
           "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
           "symbol": "rich_selection_home_end_editor_publication_model_write_preserves_external_state"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_matches_observed_msftedit_real_paragraph_endpoints"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_extended_end_includes_empty_paragraph_marks_without_synthetic_eop"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_extended_end_affinity_invalidates_on_selection_model_and_view_changes"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_extended_end_cancellation_retains_affinity"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_extended_end_nested_same_offset_navigation_owns_affinity"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_extended_end_view_detach_during_publication_invalidates_old_affinity"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_keeps_desired_column_across_short_lines_and_facades"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_counts_actual_adjacent_lines_with_mixed_heights"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_collapse_and_extension_respect_directed_endpoints"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_paragraphs_handle_utf16_empty_units_and_extreme_counts"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_paragraph_collapse_moves_from_the_directional_endpoint"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_rejects_unsupported_units_and_zero_needs_no_layout"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_reflows_wrapped_lines_and_saturates_without_iteration"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_keeps_empty_soft_break_lines_and_structural_carets"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_follows_complete_linked_overflow_layout"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_uses_shaped_rtl_and_utf16_caret_geometry"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_requires_complete_untrimmed_and_live_view"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_readonly_navigation_preserves_preview_and_redo"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_recaptures_selection_after_layout_callbacks"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_preserves_external_layout_edits_and_invalidates_groups"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_cancel_retains_column_and_redirect_counts_accepted_lines"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_view_detach_during_selection_does_not_store_old_column"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_nested_boundary_command_owns_its_column_at_same_offsets"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_explicit_selection_and_edits_invalidate_column"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_move_by_cancellation_reports_zero_without_history_changes"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_move_by_reports_actual_units_after_directed_callback_redirection"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_move_by_counts_collapse_once_and_keeps_existing_unit_alignment"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_move_by_external_model_write_survives_deferred_model_publication"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_move_by_external_editor_publication_preserves_handler_state"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_same_view_callback_retains_desired_column"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_presenter_scroll_retains_desired_column"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_matches_system_msftedit_collapse_and_count_observations"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_extension_reaches_story_edges_without_synthetic_eop"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_redirected_extensions_count_actual_story_edge_units"
         }
       ],
       "implementation_source": "external WinUIEdit/Microsoft.UI.Text implementation",
-      "reason": "The Rust selection facade shares editor selection/history and implements logical Line/Story Home/End with directed extension, layout validation and reentrant selection handling. Exact native collapse/count/Gravity conventions, remaining directional movement, options and selection-type surface remain pending.",
+      "reason": "The Rust selection facade shares editor selection/history and implements Line/Story Home/End plus Line/Paragraph MoveUp/MoveDown with directed extension, accepted-result accounting, shaped geometry and reentrant publication fences. Native-derived Home/End corrections retain real paragraph marks and line-end affinity; vertical movement retains the desired horizontal coordinate. Synthetic terminal EOP, full native Gravity, remaining directional units, Options/Type and external-engine equivalence remain pending.",
       "deviations": [
         "RT-I01",
         "RT-I08",
-        "RT-I21"
+        "RT-I21",
+        "RT-I23"
       ]
     },
     {
@@ -27204,14 +28053,45 @@
       "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
       "owner": "Microsoft.UI.Xaml.Controls.ContextMenuEventArgs",
       "kind": "T",
-      "state": "pending",
-      "targets": [],
-      "tests": [],
-      "reason": "FerroUI ContextRequested/ContextFlyout infrastructure does not yet implement the native synchronous ContextMenuOpening event, ContextMenuEventArgs root-coordinate cursor fields/Handled contract or its projected delegate. These exact public dependencies remain pending.",
+      "state": "partial",
+      "targets": [
+        {
+          "path": "src/FerroUI.Controls/context_menu_event_args.rs",
+          "symbol": "pub struct ContextMenuEventArgs"
+        },
+        {
+          "path": "src/FerroUI.Controls/context_menu_event_args.rs",
+          "symbol": "class ContextMenuEventArgs"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Controls/rich_edit_context_menu_tests.rs",
+          "symbol": "rich_context_args_share_handled_and_request_anchors_have_weak_owners"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_context_menu_tests.rs",
+          "symbol": "rich_context_pointer_reports_root_dips_once_and_handled_cancels_both_menu_kinds"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_context_menu_tests.rs",
+          "symbol": "rich_context_keyboard_uses_normalized_selection_edges_and_rtl_popup_gravity"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs",
+          "symbol": "rich_context_menu_arguments_metadata_keeps_coordinates_read_only_and_handled_live"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/emitter/event_handlers.rs",
+          "symbol": "rich_context_menu_event_calls_the_method_with_live_arguments"
+        }
+      ],
+      "reason": "RichEditBox now projects pointer, Apps/Shift+F10 and holding ContextRequested into one synchronous bubble ContextMenuOpening before default menu dispatch. Immutable f64 CursorLeft/Top use root DIPs and shared inherited Handled cancels the request. Keyboard anchors use the normalized LTR end/bottom or RTL start/bottom selected grapheme edge, independently of directed anchor, with shaped caret fallback and soft-wrap retention. The edge is selected in presenter coordinates before transforming the point, preserving the selected side under reflection/rotation. Weak per-request rectangles carry the actual anchor through existing ContextMenu/PopupFlyoutBase lifecycle, RTL gravity and constrained popup positioning; zero-size points remain valid. Handlers may install/replace/remove menus; nested requests, stale layout and detach/reattach are fenced, canceled openings are consumed once, and existing precedence/focus/IME retention remain shared. Ordinary popup dismissal retains composition and the semantic connection by avoiding a redundant unchanged-view requery during GotFocus; a real redirected focus retires that session. Routed metadata and named runtime/compiled handlers use the live base-argument handle. Native automatic selection floaties, legacy asynchronous command-gated PopupMenu, exact native edge metrics and close/reopen event order remain pending. An already open owned FerroUI popup is repositioned in place; this does not claim native WinUI flyout or platform event conformance. Test definitions and their actual completed execution records are tracked separately.",
       "deviations": [
+        "RT-A01",
         "RT-A04",
-        "RT-P04",
-        "RT-I20"
+        "RT-I06",
+        "RT-I22"
       ]
     },
     {
@@ -27219,14 +28099,41 @@
       "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
       "owner": "Microsoft.UI.Xaml.Controls.ContextMenuOpeningEventHandler",
       "kind": "T",
-      "state": "pending",
-      "targets": [],
-      "tests": [],
-      "reason": "FerroUI ContextRequested/ContextFlyout infrastructure does not yet implement the native synchronous ContextMenuOpening event, ContextMenuEventArgs root-coordinate cursor fields/Handled contract or its projected delegate. These exact public dependencies remain pending.",
+      "state": "partial",
+      "targets": [
+        {
+          "path": "src/FerroUI.Controls/rich_edit_context_menu.rs",
+          "symbol": "pub fn context_menu_opening("
+        },
+        {
+          "path": "src/FerroUI.Controls/context_menu_event_args.rs",
+          "symbol": "pub struct ContextMenuOpeningRoutedEvent"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Controls/rich_edit_context_menu_tests.rs",
+          "symbol": "rich_context_args_share_handled_and_request_anchors_have_weak_owners"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_context_menu_tests.rs",
+          "symbol": "rich_context_pointer_reports_root_dips_once_and_handled_cancels_both_menu_kinds"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs",
+          "symbol": "rich_context_menu_arguments_metadata_keeps_coordinates_read_only_and_handled_live"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/emitter/event_handlers.rs",
+          "symbol": "rich_context_menu_event_calls_the_method_with_live_arguments"
+        }
+      ],
+      "reason": "RichEditBox now projects pointer, Apps/Shift+F10 and holding ContextRequested into one synchronous bubble ContextMenuOpening before default menu dispatch. Immutable f64 CursorLeft/Top use root DIPs and shared inherited Handled cancels the request. Keyboard anchors use the normalized LTR end/bottom or RTL start/bottom selected grapheme edge, independently of directed anchor, with shaped caret fallback and soft-wrap retention. The edge is selected in presenter coordinates before transforming the point, preserving the selected side under reflection/rotation. Weak per-request rectangles carry the actual anchor through existing ContextMenu/PopupFlyoutBase lifecycle, RTL gravity and constrained popup positioning; zero-size points remain valid. Handlers may install/replace/remove menus; nested requests, stale layout and detach/reattach are fenced, canceled openings are consumed once, and existing precedence/focus/IME retention remain shared. Ordinary popup dismissal retains composition and the semantic connection by avoiding a redundant unchanged-view requery during GotFocus; a real redirected focus retires that session. Routed metadata and named runtime/compiled handlers use the live base-argument handle. Native automatic selection floaties, legacy asynchronous command-gated PopupMenu, exact native edge metrics and close/reopen event order remain pending. An already open owned FerroUI popup is repositioned in place; this does not claim native WinUI flyout or platform event conformance. Test definitions and their actual completed execution records are tracked separately.",
       "deviations": [
+        "RT-A01",
         "RT-A04",
-        "RT-P04",
-        "RT-I20"
+        "RT-I06",
+        "RT-I22"
       ]
     },
     {
@@ -27247,6 +28154,26 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_box_text_presenter.rs",
           "symbol": "RichEditBoxTextPresenter: RichTextBlock"
+        },
+        {
+          "path": "src/FerroUI.Controls/context_menu_event_args.rs",
+          "symbol": "pub struct ContextMenuEventArgs"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_context_menu.rs",
+          "symbol": "pub fn context_menu_opening_event()"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_context_menu.rs",
+          "symbol": "pub fn context_menu_opening("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_context_menu.rs",
+          "symbol": "pub(super) fn on_context_requested("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_context_menu.rs",
+          "symbol": "fn keyboard_context_menu_position("
         }
       ],
       "tests": [
@@ -27281,13 +28208,90 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
           "symbol": "rich_edit_retemplate_preserves_composition_history_and_live_document_services"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_context_menu_tests.rs",
+          "symbol": "rich_context_args_share_handled_and_request_anchors_have_weak_owners"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_context_menu_tests.rs",
+          "symbol": "rich_context_pointer_reports_root_dips_once_and_handled_cancels_both_menu_kinds"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_context_menu_tests.rs",
+          "symbol": "rich_context_pointer_opens_at_request_point_without_changing_flyout_placement"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_context_menu_tests.rs",
+          "symbol": "rich_context_repeated_request_repositions_the_existing_owned_popup"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_context_menu_tests.rs",
+          "symbol": "rich_context_ordinary_control_requests_keep_pointer_and_keyboard_defaults"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_context_menu_tests.rs",
+          "symbol": "rich_context_keyboard_uses_normalized_selection_edges_and_rtl_popup_gravity"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_context_menu_tests.rs",
+          "symbol": "rich_context_collapsed_keyboard_request_tracks_the_shaped_caret"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_context_menu_tests.rs",
+          "symbol": "rich_context_keyboard_selection_end_at_soft_wrap_stays_on_selected_line"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_context_menu_tests.rs",
+          "symbol": "rich_context_parent_handled_and_prehandled_context_requests_do_not_open"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_context_menu_tests.rs",
+          "symbol": "rich_context_opening_can_install_replace_or_remove_the_current_flyout"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_context_menu_tests.rs",
+          "symbol": "rich_context_nested_request_consumes_outer_opening_and_uses_new_selection"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_context_menu_tests.rs",
+          "symbol": "rich_context_detach_and_reattach_during_opening_invalidates_the_request"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_context_menu_tests.rs",
+          "symbol": "rich_context_menu_precedence_and_opening_cancellation_are_not_retried"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_context_menu_tests.rs",
+          "symbol": "rich_context_menu_uses_the_same_anchor_and_takes_precedence_over_the_flyout"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_context_menu_tests.rs",
+          "symbol": "rich_context_flyout_opening_cancellation_is_not_retried"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_context_menu_tests.rs",
+          "symbol": "rich_context_opening_preserves_live_composition_and_owned_popup_focus"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_context_menu_tests.rs",
+          "symbol": "rich_context_holding_routes_opening_and_feedback_only_for_an_opened_menu"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/emitter/event_handlers.rs",
+          "symbol": "rich_context_menu_event_calls_the_method_with_live_arguments"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_context_menu_tests.rs",
+          "symbol": "rich_context_dismissal_focus_redirection_retires_the_original_composition"
         }
       ],
-      "reason": "RichEditBox derives from FerroUI TemplatedControl and owns one persistent RichEditBoxTextPresenter with shared model, layout, directed selection, history and input services. Real template parts and retemplating retain composition and live services. Native windowless ABI, remaining platform services and unmapped public members remain pending.",
+      "reason": "RichEditBox derives from FerroUI TemplatedControl and owns one persistent RichEditBoxTextPresenter with shared model, layout, directed selection, history and input services. Real template parts and retemplating retain composition and live services. Native windowless ABI, remaining platform services and unmapped public members remain pending. RichEditBox now projects pointer, Apps/Shift+F10 and holding ContextRequested into one synchronous bubble ContextMenuOpening before default menu dispatch. Immutable f64 CursorLeft/Top use root DIPs and shared inherited Handled cancels the request. Keyboard anchors use the normalized LTR end/bottom or RTL start/bottom selected grapheme edge, independently of directed anchor, with shaped caret fallback and soft-wrap retention. The edge is selected in presenter coordinates before transforming the point, preserving the selected side under reflection/rotation. Weak per-request rectangles carry the actual anchor through existing ContextMenu/PopupFlyoutBase lifecycle, RTL gravity and constrained popup positioning; zero-size points remain valid. Handlers may install/replace/remove menus; nested requests, stale layout and detach/reattach are fenced, canceled openings are consumed once, and existing precedence/focus/IME retention remain shared. Ordinary popup dismissal retains composition and the semantic connection by avoiding a redundant unchanged-view requery during GotFocus; a real redirected focus retires that session. Routed metadata and named runtime/compiled handlers use the live base-argument handle. Native automatic selection floaties, legacy asynchronous command-gated PopupMenu, exact native edge metrics and close/reopen event order remain pending. An already open owned FerroUI popup is repositioned in place; this does not claim native WinUI flyout or platform event conformance. Test definitions and their actual completed execution records are tracked separately.",
       "deviations": [
         "RT-I06",
         "RT-I07",
-        "RT-I08"
+        "RT-I08",
+        "RT-I22"
       ]
     },
     {
@@ -27308,6 +28312,10 @@
         {
           "path": "src/FerroUI.Controls/rich_text_block.rs",
           "symbol": "pub fn select("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "fn typed_rich_edit_event_args<"
         }
       ],
       "tests": [
@@ -27330,9 +28338,17 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
           "symbol": "rich_edit_selection_property_keyboard_and_ime_requests_share_cancellation"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs",
+          "symbol": "rich_selection_changing_event_arguments_metadata_mutates_the_shared_cancel_flag"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/emitter/event_handlers.rs",
+          "symbol": "rich_editor_events_accept_base_code_behind_and_exact_typed_handlers"
         }
       ],
-      "reason": "SelectionChanging exposes the proposed view/TOM selection and a shared Cancel flag before publication. Cancellation preserves the prior selection, while reentrant view or TOM selection overrides cancellation and publishes the final selection once. Temporary grouped edit ranges stay internal; accepted post-edit selection participates in undo/redo. Native ABI and backend input scenarios remain separate acceptance work.",
+      "reason": "SelectionChanging exposes the proposed view/TOM selection and a shared Cancel flag before publication. Cancellation preserves the prior selection, while reentrant view or TOM selection overrides cancellation and publishes the final selection once. Temporary grouped edit ranges stay internal; accepted post-edit selection participates in undo/redo. Native ABI and backend input scenarios remain separate acceptance work. Markup metadata receives the framework shared Rc<dyn IRoutedEventArgs> handle, downcasts checked payload access, and inherits the routed base. Runtime and generated code-behind can accept RoutedEventArgs while typed Rust subscribers observe the same live payload/Cancel/Handled state; concrete-value metadata previously rejected that actual handler representation.",
       "deviations": [
         "RT-A01",
         "RT-I07"
@@ -27356,6 +28372,10 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_box.rs",
           "symbol": "pub fn text_changed_event("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "fn typed_rich_edit_event_args<"
         }
       ],
       "tests": [
@@ -27370,9 +28390,17 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
           "symbol": "rich_edit_deferred_notifications_do_not_retain_the_control"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs",
+          "symbol": "rich_text_changing_event_arguments_metadata_reads_the_shared_handler_payload"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/emitter/event_handlers.rs",
+          "symbol": "rich_editor_events_accept_base_code_behind_and_exact_typed_handlers"
         }
       ],
-      "reason": "TextChanging is raised synchronously after backing-document mutation, with IsContentChanging distinguishing text from formatting changes. TextChanged uses RoutedEventArgs and is queued at Dispatcher LOADED, preserving separate notifications while dropping obsolete document generations and retaining the owner weakly. This follows the pinned host order; real native input/backend event sequences remain a separate gate.",
+      "reason": "TextChanging is raised synchronously after backing-document mutation, with IsContentChanging distinguishing text from formatting changes. TextChanged uses RoutedEventArgs and is queued at Dispatcher LOADED, preserving separate notifications while dropping obsolete document generations and retaining the owner weakly. This follows the pinned host order; real native input/backend event sequences remain a separate gate. Markup metadata receives the framework shared Rc<dyn IRoutedEventArgs> handle, downcasts checked payload access, and inherits the routed base. Runtime and generated code-behind can accept RoutedEventArgs while typed Rust subscribers observe the same live payload/Cancel/Handled state; concrete-value metadata previously rejected that actual handler representation.",
       "deviations": [
         "RT-A01",
         "RT-I07"
@@ -27502,6 +28530,10 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs",
           "symbol": "fn begin_composition("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "fn typed_rich_edit_event_args<"
         }
       ],
       "tests": [
@@ -27580,9 +28612,17 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_composition_start_tests.rs",
           "symbol": "rich_native_intercepted_empty_completion_keeps_its_lifecycle_open_for_retry"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs",
+          "symbol": "rich_composition_event_arguments_metadata_reads_the_shared_handler_payload"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/emitter/event_handlers.rs",
+          "symbol": "rich_editor_events_accept_base_code_behind_and_exact_typed_handlers"
         }
       ],
-      "reason": "The three native composition argument classes map to one routed Rust RichEditCompositionEventArgs with readonly signed StartIndex/Length, native unavailable defaults -1/0, accepted replacement text and directed selection. Ranges count normalized UTF-16 model positions and cover the whole accepted composition independently of its caret. Cursor-only movement emits no changed event; filtered/truncated commit payloads report accepted text. Reentrant changes before end publication suppress stale successful completion reporting. Changes made by an Ended handler invalidate the native acknowledgement after event delivery. Shared Rust argument identity, FerroUI model coordinates, native nested asynchronous event dispatch and real backend ordering remain explicit differences. Explicit native begin captures committed content/selection without mutation or history, immediately raises empty 0/0 started args, and keeps active_composition_range absent until an accepted update. First exact replacement establishes its own extent. Empty completion/cancel closes once without undo or lost redo; legacy first-preedit implicit startup remains supported. Reentrant end/start callbacks cannot replace a newer session with an older request. Pending automation range absence is a framework projection; native pre-update automation and nested asynchronous event dispatch remain conformance boundaries.",
+      "reason": "The three native composition argument classes map to one routed Rust RichEditCompositionEventArgs with readonly signed StartIndex/Length, native unavailable defaults -1/0, accepted replacement text and directed selection. Ranges count normalized UTF-16 model positions and cover the whole accepted composition independently of its caret. Cursor-only movement emits no changed event; filtered/truncated commit payloads report accepted text. Reentrant changes before end publication suppress stale successful completion reporting. Changes made by an Ended handler invalidate the native acknowledgement after event delivery. Shared Rust argument identity, FerroUI model coordinates, native nested asynchronous event dispatch and real backend ordering remain explicit differences. Explicit native begin captures committed content/selection without mutation or history, immediately raises empty 0/0 started args, and keeps active_composition_range absent until an accepted update. First exact replacement establishes its own extent. Empty completion/cancel closes once without undo or lost redo; legacy first-preedit implicit startup remains supported. Reentrant end/start callbacks cannot replace a newer session with an older request. Pending automation range absence is a framework projection; native pre-update automation and nested asynchronous event dispatch remain conformance boundaries. Markup metadata receives the framework shared Rc<dyn IRoutedEventArgs> handle, downcasts checked payload access, and inherits the routed base. Runtime and generated code-behind can accept RoutedEventArgs while typed Rust subscribers observe the same live payload/Cancel/Handled state; concrete-value metadata previously rejected that actual handler representation.",
       "deviations": [
         "RT-I01",
         "RT-I07",
@@ -27609,6 +28649,10 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs",
           "symbol": "fn begin_composition("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "fn typed_rich_edit_event_args<"
         }
       ],
       "tests": [
@@ -27687,9 +28731,17 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_composition_start_tests.rs",
           "symbol": "rich_native_intercepted_empty_completion_keeps_its_lifecycle_open_for_retry"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs",
+          "symbol": "rich_composition_event_arguments_metadata_reads_the_shared_handler_payload"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/emitter/event_handlers.rs",
+          "symbol": "rich_editor_events_accept_base_code_behind_and_exact_typed_handlers"
         }
       ],
-      "reason": "The three native composition argument classes map to one routed Rust RichEditCompositionEventArgs with readonly signed StartIndex/Length, native unavailable defaults -1/0, accepted replacement text and directed selection. Ranges count normalized UTF-16 model positions and cover the whole accepted composition independently of its caret. Cursor-only movement emits no changed event; filtered/truncated commit payloads report accepted text. Reentrant changes before end publication suppress stale successful completion reporting. Changes made by an Ended handler invalidate the native acknowledgement after event delivery. Shared Rust argument identity, FerroUI model coordinates, native nested asynchronous event dispatch and real backend ordering remain explicit differences. Explicit native begin captures committed content/selection without mutation or history, immediately raises empty 0/0 started args, and keeps active_composition_range absent until an accepted update. First exact replacement establishes its own extent. Empty completion/cancel closes once without undo or lost redo; legacy first-preedit implicit startup remains supported. Reentrant end/start callbacks cannot replace a newer session with an older request. Pending automation range absence is a framework projection; native pre-update automation and nested asynchronous event dispatch remain conformance boundaries.",
+      "reason": "The three native composition argument classes map to one routed Rust RichEditCompositionEventArgs with readonly signed StartIndex/Length, native unavailable defaults -1/0, accepted replacement text and directed selection. Ranges count normalized UTF-16 model positions and cover the whole accepted composition independently of its caret. Cursor-only movement emits no changed event; filtered/truncated commit payloads report accepted text. Reentrant changes before end publication suppress stale successful completion reporting. Changes made by an Ended handler invalidate the native acknowledgement after event delivery. Shared Rust argument identity, FerroUI model coordinates, native nested asynchronous event dispatch and real backend ordering remain explicit differences. Explicit native begin captures committed content/selection without mutation or history, immediately raises empty 0/0 started args, and keeps active_composition_range absent until an accepted update. First exact replacement establishes its own extent. Empty completion/cancel closes once without undo or lost redo; legacy first-preedit implicit startup remains supported. Reentrant end/start callbacks cannot replace a newer session with an older request. Pending automation range absence is a framework projection; native pre-update automation and nested asynchronous event dispatch remain conformance boundaries. Markup metadata receives the framework shared Rc<dyn IRoutedEventArgs> handle, downcasts checked payload access, and inherits the routed base. Runtime and generated code-behind can accept RoutedEventArgs while typed Rust subscribers observe the same live payload/Cancel/Handled state; concrete-value metadata previously rejected that actual handler representation.",
       "deviations": [
         "RT-I01",
         "RT-I07",
@@ -27716,6 +28768,10 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs",
           "symbol": "fn begin_composition("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "fn typed_rich_edit_event_args<"
         }
       ],
       "tests": [
@@ -27794,9 +28850,17 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_composition_start_tests.rs",
           "symbol": "rich_native_intercepted_empty_completion_keeps_its_lifecycle_open_for_retry"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs",
+          "symbol": "rich_composition_event_arguments_metadata_reads_the_shared_handler_payload"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/emitter/event_handlers.rs",
+          "symbol": "rich_editor_events_accept_base_code_behind_and_exact_typed_handlers"
         }
       ],
-      "reason": "The three native composition argument classes map to one routed Rust RichEditCompositionEventArgs with readonly signed StartIndex/Length, native unavailable defaults -1/0, accepted replacement text and directed selection. Ranges count normalized UTF-16 model positions and cover the whole accepted composition independently of its caret. Cursor-only movement emits no changed event; filtered/truncated commit payloads report accepted text. Reentrant changes before end publication suppress stale successful completion reporting. Changes made by an Ended handler invalidate the native acknowledgement after event delivery. Shared Rust argument identity, FerroUI model coordinates, native nested asynchronous event dispatch and real backend ordering remain explicit differences. Explicit native begin captures committed content/selection without mutation or history, immediately raises empty 0/0 started args, and keeps active_composition_range absent until an accepted update. First exact replacement establishes its own extent. Empty completion/cancel closes once without undo or lost redo; legacy first-preedit implicit startup remains supported. Reentrant end/start callbacks cannot replace a newer session with an older request. Pending automation range absence is a framework projection; native pre-update automation and nested asynchronous event dispatch remain conformance boundaries.",
+      "reason": "The three native composition argument classes map to one routed Rust RichEditCompositionEventArgs with readonly signed StartIndex/Length, native unavailable defaults -1/0, accepted replacement text and directed selection. Ranges count normalized UTF-16 model positions and cover the whole accepted composition independently of its caret. Cursor-only movement emits no changed event; filtered/truncated commit payloads report accepted text. Reentrant changes before end publication suppress stale successful completion reporting. Changes made by an Ended handler invalidate the native acknowledgement after event delivery. Shared Rust argument identity, FerroUI model coordinates, native nested asynchronous event dispatch and real backend ordering remain explicit differences. Explicit native begin captures committed content/selection without mutation or history, immediately raises empty 0/0 started args, and keeps active_composition_range absent until an accepted update. First exact replacement establishes its own extent. Empty completion/cancel closes once without undo or lost redo; legacy first-preedit implicit startup remains supported. Reentrant end/start callbacks cannot replace a newer session with an older request. Pending automation range absence is a framework projection; native pre-update automation and nested asynchronous event dispatch remain conformance boundaries. Markup metadata receives the framework shared Rc<dyn IRoutedEventArgs> handle, downcasts checked payload access, and inherits the routed base. Runtime and generated code-behind can accept RoutedEventArgs while typed Rust subscribers observe the same live payload/Cancel/Handled state; concrete-value metadata previously rejected that actual handler representation.",
       "deviations": [
         "RT-I01",
         "RT-I07",
