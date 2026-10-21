@@ -617,7 +617,7 @@ fn definitions_propagate_across_pages_and_delete_cleans_all_legacy_binding_slots
 }
 
 #[test]
-fn grid_definitions_are_editable_but_application_is_explicitly_rejected() {
+fn grid_definitions_remain_editable_and_skip_incompatible_layers() {
     let (mut editor, a, _, _) = fixture();
     let style = editor
         .create_local_style(
@@ -630,7 +630,7 @@ fn grid_definitions_are_editable_but_application_is_explicitly_rejected() {
         )
         .unwrap();
     let before = editor.to_json().unwrap();
-    assert!(editor.apply_local_style(&[a], style).is_err());
+    assert_eq!(editor.apply_local_style(&[a], style).unwrap(), 0);
     assert_eq!(editor.to_json().unwrap(), before);
     editor
         .update_local_style(
@@ -949,4 +949,176 @@ fn style_and_variable_ownership_survives_component_reconciliation_both_direction
         editor.document.nodes[&child].fills,
         vec![Fill::solid(Color::BLACK)]
     );
+}
+
+
+fn grid_fixture() -> (Editor, NodeId, NodeId, NodeId) {
+    let (mut editor, a, b, text) = fixture();
+    editor.document.nodes.get_mut(&a).unwrap().kind = NodeKind::Frame;
+    editor.document.nodes.get_mut(&b).unwrap().kind = NodeKind::Frame;
+    editor.refresh();
+    (editor, a, b, text)
+}
+
+fn square_style(size: f64) -> StyleValue {
+    StyleValue::Grid { size, color: Color::rgba(240, 30, 90, 80) }
+}
+
+#[test]
+fn grid_create_apply_propagate_detach_delete_preserves_effective_values_and_history() {
+    let (mut editor, a, b, text) = grid_fixture();
+    let original = editor.to_json().unwrap();
+    let style = editor.create_local_style_for_nodes(&[a, text, b, a], LocalStyleKind::Grid, "Spacing/8", "").unwrap();
+    assert_eq!(editor.document.local_style_usage(style), 2);
+    assert!(editor.document.nodes[&text].layout_grid.is_none());
+    assert_eq!(editor.document.nodes[&a].layout_grid, Some(LayoutGrid::default()));
+    let created = editor.to_json().unwrap();
+    editor.update_local_style(style, "Spacing/16", "Shared guides", square_style(16.0)).unwrap();
+    assert_eq!(editor.document.nodes[&a].layout_grid.unwrap().size, 16.0);
+    assert_eq!(editor.document.nodes[&b].grid_style, Some(style));
+    assert_eq!(editor.detach_local_style(&[a], LocalStyleKind::Grid).unwrap(), 1);
+    assert_eq!(editor.document.nodes[&a].grid_style, None);
+    assert_eq!(editor.document.nodes[&a].layout_grid, editor.document.nodes[&b].layout_grid);
+    let detached = editor.to_json().unwrap();
+    assert_eq!(editor.remove_local_style(style).unwrap(), 1);
+    assert_eq!(editor.document.nodes[&b].grid_style, None);
+    assert_eq!(editor.document.nodes[&b].layout_grid.unwrap().size, 16.0);
+    let removed = editor.to_json().unwrap();
+    assert_eq!(Document::from_json(&removed).unwrap().to_json().unwrap(), removed);
+    assert!(editor.undo()); assert_eq!(editor.to_json().unwrap(), detached);
+    assert!(editor.redo()); assert_eq!(editor.to_json().unwrap(), removed);
+    for _ in 0..3 { assert!(editor.undo()); }
+    assert_eq!(editor.to_json().unwrap(), created);
+    assert!(editor.undo()); assert_eq!(editor.to_json().unwrap(), original);
+}
+
+#[test]
+fn grid_definition_updates_locked_cross_page_users_but_preserves_visibility_and_custom_values() {
+    let (mut editor, a, b, _) = grid_fixture();
+    let second = editor.add_page("Other page");
+    editor.document.reparent(b, second, 0).unwrap();
+    editor.refresh();
+    let style = editor.create_local_style("Grid", "", square_style(8.0)).unwrap();
+    assert_eq!(editor.apply_local_style(&[a, b], style).unwrap(), 2);
+    editor.edit_layout_grids(&[b], LayoutGridEdit::Visible(false)).unwrap();
+    assert_eq!(editor.document.nodes[&b].grid_style, Some(style));
+    editor.document.nodes.get_mut(&b).unwrap().locked = true;
+    editor.refresh();
+    let before = editor.to_json().unwrap();
+    let updated = editor.update_local_style(style, "Grid", "", square_style(24.0)).unwrap();
+    assert_eq!(updated.updated_nodes, 2);
+    assert_eq!(editor.document.nodes[&b].layout_grid.unwrap().size, 24.0);
+    assert!(!editor.document.nodes[&b].layout_grid.unwrap().visible);
+    assert_eq!(editor.detach_local_style(&[b], LocalStyleKind::Grid).unwrap(), 0);
+    assert_eq!(editor.edit_layout_grids(&[b], LayoutGridEdit::Remove).unwrap(), 0);
+    assert!(editor.undo()); assert_eq!(editor.to_json().unwrap(), before);
+    editor.document.nodes.get_mut(&b).unwrap().layout_grid.as_mut().unwrap().size = 31.0;
+    editor.refresh();
+    let updated = editor.update_local_style(style, "Grid", "", square_style(48.0)).unwrap();
+    assert_eq!(updated.updated_nodes, 1);
+    assert_eq!(updated.detached_overrides, 1);
+    assert_eq!(editor.document.nodes[&b].grid_style, None);
+    assert_eq!(editor.document.nodes[&b].layout_grid.unwrap().size, 31.0);
+}
+
+#[test]
+fn grid_direct_edits_detach_only_grid_binding_and_visibility_keeps_style_ownership() {
+    let (mut editor, a, _, _) = grid_fixture();
+    let grid = editor.create_local_style("Grid", "", square_style(8.0)).unwrap();
+    let fill = editor.create_local_style("Fill", "", red()).unwrap();
+    editor.apply_local_style(&[a], grid).unwrap();
+    editor.apply_local_style(&[a], fill).unwrap();
+    editor.update_node(a, "Move", |node| node.x += 10.0);
+    assert_eq!(editor.document.nodes[&a].grid_style, Some(grid));
+    editor.edit_layout_grids(&[a], LayoutGridEdit::Visible(false)).unwrap();
+    assert_eq!(editor.document.nodes[&a].grid_style, Some(grid));
+    let hidden = editor.to_json().unwrap();
+    editor.edit_layout_grids(&[a], LayoutGridEdit::Size(12.0)).unwrap();
+    assert_eq!(editor.document.nodes[&a].grid_style, None);
+    assert_eq!(editor.document.nodes[&a].fill_style, Some(fill));
+    assert!(!editor.document.nodes[&a].layout_grid.unwrap().visible);
+    assert!(editor.undo()); assert_eq!(editor.to_json().unwrap(), hidden);
+    editor.update_nodes_with_layout(&[a], "Local grid color", |node| node.layout_grid.as_mut().unwrap().color = Color::BLACK);
+    assert_eq!(editor.document.nodes[&a].grid_style, None);
+    assert_eq!(editor.document.nodes[&a].fill_style, Some(fill));
+}
+
+#[test]
+fn grid_missing_invalid_and_unchanged_operations_preserve_redo_and_change_feed() {
+    let (mut editor, a, b, text) = grid_fixture();
+    editor.edit_layout_grids(&[a], LayoutGridEdit::Add).unwrap();
+    editor.update_node(a, "Move", |node| node.x += 5.0);
+    editor.undo();
+    let before = editor.to_json().unwrap();
+    let token = editor.render_change_token();
+    for edit in [LayoutGridEdit::Size(0.0), LayoutGridEdit::Size(-1.0), LayoutGridEdit::Size(f64::INFINITY), LayoutGridEdit::Size(f64::NAN)] {
+        assert!(editor.edit_layout_grids(&[a, b], edit).is_err());
+    }
+    assert!(editor.edit_layout_grids(&[a, 9999], LayoutGridEdit::Remove).is_err());
+    assert_eq!(editor.edit_layout_grids(&[a], LayoutGridEdit::Size(8.0)).unwrap(), 0);
+    assert_eq!(editor.edit_layout_grids(&[a], LayoutGridEdit::Add).unwrap(), 0);
+    assert_eq!(editor.edit_layout_grids(&[b], LayoutGridEdit::Visible(false)).unwrap(), 0);
+    assert_eq!(editor.edit_layout_grids(&[text], LayoutGridEdit::Add).unwrap(), 0);
+    assert_eq!(editor.to_json().unwrap(), before);
+    assert_eq!(editor.render_change_token(), token);
+    assert!(editor.redo());
+}
+
+#[test]
+fn grid_edits_respect_ancestor_locks_and_remove_is_one_scoped_transaction() {
+    let (mut editor, a, b, _) = grid_fixture();
+    let child = editor.document.insert_node(a, Node::new(NodeKind::Frame, "Nested", 0.0, 0.0, 20.0, 20.0)).unwrap();
+    editor.document.nodes.get_mut(&a).unwrap().locked = true;
+    editor.refresh();
+    assert_eq!(editor.edit_layout_grids(&[a, b, child, b], LayoutGridEdit::Add).unwrap(), 1);
+    assert!(editor.document.nodes[&a].layout_grid.is_none());
+    assert!(editor.document.nodes[&child].layout_grid.is_none());
+    let before = editor.to_json().unwrap();
+    let token = editor.render_change_token();
+    assert_eq!(editor.edit_layout_grids(&[b], LayoutGridEdit::Remove).unwrap(), 1);
+    assert_eq!(editor.render_changes_since(&token), EditorRenderChanges::Nodes { nodes: vec![b], ancestors: vec![] });
+    assert!(editor.undo()); assert_eq!(editor.to_json().unwrap(), before);
+}
+
+#[test]
+fn grid_json_is_backward_compatible_and_rejects_invalid_layer_grids() {
+    let (mut editor, a, _, text) = grid_fixture();
+    let original = editor.to_json().unwrap();
+    assert!(!original.contains("layout_grid"));
+    assert!(!original.contains("grid_style"));
+    assert_eq!(Document::from_json(&original).unwrap().to_json().unwrap(), original);
+    editor.document.nodes.get_mut(&a).unwrap().layout_grid = Some(LayoutGrid::default());
+    assert!(editor.document.validate().is_ok());
+    editor.document.nodes.get_mut(&a).unwrap().layout_grid.as_mut().unwrap().size = 0.0;
+    assert!(editor.document.validate().is_err());
+    editor.document.nodes.get_mut(&a).unwrap().layout_grid = None;
+    editor.document.nodes.get_mut(&text).unwrap().layout_grid = Some(LayoutGrid::default());
+    assert!(editor.document.validate().is_err());
+}
+
+#[test]
+fn grid_component_reconciliation_preserves_local_visibility_and_explicit_style_ownership() {
+    let (mut editor, a, _, _) = grid_fixture();
+    editor.selection = vec![a];
+    let component = editor.create_component().unwrap();
+    let inherited = editor.create_local_style("Source grid", "", square_style(8.0)).unwrap();
+    editor.apply_local_style(&[component], inherited).unwrap();
+    let instance = editor.create_instance(component, 400.0, 10.0).unwrap();
+    editor.edit_layout_grids(&[instance], LayoutGridEdit::Visible(false)).unwrap();
+    editor.update_local_style(inherited, "Source grid", "", square_style(16.0)).unwrap();
+    editor.refresh_component_instances(component).unwrap();
+    assert_eq!(editor.document.nodes[&instance].grid_style, Some(inherited));
+    let grid = editor.document.nodes[&instance].layout_grid.unwrap();
+    assert_eq!(grid.size, 16.0);
+    assert!(!grid.visible);
+    let owned = editor.create_local_style("Own grid", "", square_style(32.0)).unwrap();
+    editor.apply_local_style(&[instance], owned).unwrap();
+    editor.refresh_component_instances(component).unwrap();
+    assert_eq!(editor.document.nodes[&instance].grid_style, Some(owned));
+    assert_eq!(editor.document.nodes[&instance].layout_grid.unwrap().size, 32.0);
+    assert!(!editor.document.nodes[&instance].layout_grid.unwrap().visible);
+    editor.edit_layout_grids(&[instance], LayoutGridEdit::Remove).unwrap();
+    editor.refresh_component_instances(component).unwrap();
+    assert!(editor.document.nodes[&instance].layout_grid.is_none());
+    assert!(editor.document.nodes[&instance].grid_style.is_none());
 }

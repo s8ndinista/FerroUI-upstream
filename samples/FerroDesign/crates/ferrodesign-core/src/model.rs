@@ -695,6 +695,32 @@ impl VectorPath {
         }
     }
 }
+/// Editor-only square layout grid. Its effective values travel with the frame,
+/// so detaching or deleting a local grid style preserves the authored grid.
+/// Grid overlays do not enter artwork exports or prototype presentations.
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct LayoutGrid {
+    pub size: f64,
+    pub color: Color,
+    pub visible: bool,
+}
+impl Default for LayoutGrid {
+    fn default() -> Self {
+        Self { size: 8.0, color: Color::rgba(255, 0, 0, 26), visible: true }
+    }
+}
+impl LayoutGrid {
+    pub fn supports(kind: NodeKind) -> bool {
+        matches!(kind, NodeKind::Frame | NodeKind::Component | NodeKind::Instance)
+    }
+    pub fn validate(self) -> Result<(), DocumentError> {
+        if !self.size.is_finite() || self.size <= 0.0 {
+            return Err(DocumentError::Invalid("Layout grid size must be positive and finite.".into()));
+        }
+        Ok(())
+    }
+}
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Node {
@@ -770,6 +796,10 @@ pub struct Node {
     pub fill_style: Option<StyleId>,
     pub text_style: Option<StyleId>,
     pub effect_style: Option<StyleId>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub grid_style: Option<StyleId>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub layout_grid: Option<LayoutGrid>,
     pub variable_bindings: BTreeMap<String, VariableId>,
     pub interactions: Vec<Interaction>,
     pub export_settings: Vec<ExportSetting>,
@@ -836,6 +866,8 @@ impl Default for Node {
             fill_style: None,
             text_style: None,
             effect_style: None,
+            grid_style: None,
+            layout_grid: None,
             variable_bindings: BTreeMap::new(),
             interactions: Vec::new(),
             export_settings: Vec::new(),
@@ -1042,7 +1074,7 @@ impl Node {
             }
             NodeKind::Vector => {
                 if let Some(network) = &self.vector_network {
-                    return network.hit_test(p, stroke, self.fills.iter().any(|f| f.visible && f.opacity > 0.0));
+                    return network.hit_test_with_fills(p, stroke, &self.fills);
                 }
                 self.path.contains(p)
                     || self.path.flattened(0.35).iter().any(|c| {
@@ -1714,6 +1746,12 @@ impl Document {
                 return Err(DocumentError::Invalid(format!(
                     "invalid geometry on node {id}"
                 )));
+            }
+            if let Some(grid) = n.layout_grid {
+                if !LayoutGrid::supports(n.kind) {
+                    return Err(DocumentError::Invalid(format!("Layout grids require a frame, component or instance on node {id}")));
+                }
+                grid.validate().map_err(|error| DocumentError::Invalid(format!("Node {id}: {error}")))?;
             }
             if let Some(grid) = n.layout_child.grid {
                 grid.validate().map_err(|error| DocumentError::Invalid(format!("Node {id}: {error}")))?;

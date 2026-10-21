@@ -420,7 +420,7 @@ fn svg_vector_mask_exports_opaque_fill_and_stroke_geometry_without_effects() {
     let mask = document.nodes.get_mut(&alpha).unwrap();
     mask.mask_type = MaskType::Vector;
     mask.opacity = 0.3;
-    mask.strokes = vec![Stroke::new(Color::rgba(0, 0, 255, 0), 6.0)];
+    mask.strokes = vec![Stroke::new(Color::rgba(0, 0, 255, 128), 6.0)];
     mask.effects = vec![Effect {
         kind: EffectKind::LayerBlur,
         radius: 20.0,

@@ -362,6 +362,12 @@ fn preserve_overrides(node: &mut Node, old: &Node) {
             }
             "strokes" => node.strokes = old.strokes.clone(),
             "effects" => { node.effects = old.effects.clone(); node.effect_style = old.effect_style; }
+            "layout_grid" => { node.layout_grid = old.layout_grid; node.grid_style = old.grid_style; }
+            "layout_grid_visible" => {
+                if let (Some(grid), Some(old_grid)) = (&mut node.layout_grid, old.layout_grid) {
+                    grid.visible = old_grid.visible;
+                }
+            }
             "visible" => node.visible = old.visible,
             "opacity" => node.opacity = old.opacity,
             "blend_mode" => node.blend_mode = old.blend_mode,

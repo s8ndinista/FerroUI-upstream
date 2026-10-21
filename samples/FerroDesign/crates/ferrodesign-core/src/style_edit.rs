@@ -6,7 +6,7 @@
 //! instance overrides. Legacy bindings whose values were independently edited
 //! are detached on propagation rather than losing those edits.
 use crate::{
-    Document, DocumentError, Editor, Node, NodeId, NodeKind, Paint, Style, StyleId, StyleValue,
+    Document, DocumentError, Editor, LayoutGrid, Node, NodeId, NodeKind, Paint, Style, StyleId, StyleValue,
 };
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -31,7 +31,7 @@ impl LocalStyleKind {
     pub fn accepts(self, node: &Node) -> bool {
         match self {
             Self::Text => node.kind == NodeKind::Text,
-            Self::Grid => false,
+            Self::Grid => LayoutGrid::supports(node.kind),
             _ => true,
         }
     }
@@ -41,7 +41,7 @@ impl LocalStyleKind {
             Self::Fill => node.fill_style,
             Self::Text => node.text_style,
             Self::Effect => node.effect_style,
-            Self::Grid => None,
+            Self::Grid => node.grid_style,
         }
     }
 
@@ -50,7 +50,7 @@ impl LocalStyleKind {
             Self::Fill => node.fill_style = id,
             Self::Text => node.text_style = id,
             Self::Effect => node.effect_style = id,
-            Self::Grid => {}
+            Self::Grid => node.grid_style = id,
         }
     }
 
@@ -66,7 +66,7 @@ impl LocalStyleKind {
                     && before.letter_spacing == after.letter_spacing
             }
             Self::Effect => before.effects == after.effects,
-            Self::Grid => true,
+            Self::Grid => grid_values(before) == grid_values(after),
         }
     }
 
@@ -89,7 +89,9 @@ impl LocalStyleKind {
                 ]
                 .map(str::to_string),
             ),
-            Self::Grid => {}
+            Self::Grid => {
+                node.overridden_properties.insert("layout_grid".into());
+            }
         }
     }
 }
@@ -153,7 +155,10 @@ impl StyleValue {
             LocalStyleKind::Effect => Self::Effect {
                 effects: node.effects.clone(),
             },
-            LocalStyleKind::Grid => unreachable!("grid styles have no layer binding"),
+            LocalStyleKind::Grid => {
+                let grid = node.layout_grid.unwrap_or_default();
+                Self::Grid { size: grid.size, color: grid.color }
+            }
         };
         value.validate()?;
         Ok(value)
@@ -250,7 +255,7 @@ impl StyleValue {
                     && node.letter_spacing == *letter_spacing
             }
             Self::Effect { effects } => node.effects == *effects,
-            Self::Grid { .. } => false,
+            Self::Grid { size, color } => grid_values(node) == Some((*size, *color)),
         }
     }
 
@@ -271,9 +276,16 @@ impl StyleValue {
                 node.letter_spacing = *letter_spacing;
             }
             Self::Effect { effects } => node.effects.clone_from(effects),
-            Self::Grid { .. } => {}
+            Self::Grid { size, color } => {
+                let visible = node.layout_grid.map_or(true, |grid| grid.visible);
+                node.layout_grid = Some(LayoutGrid { size: *size, color: *color, visible });
+            }
         }
     }
+}
+
+fn grid_values(node: &Node) -> Option<(f64, crate::Color)> {
+    node.layout_grid.map(|grid| (grid.size, grid.color))
 }
 
 fn style_definition(
@@ -330,13 +342,65 @@ impl Document {
         self.nodes
             .values()
             .filter(|node| {
-                [node.fill_style, node.text_style, node.effect_style].contains(&Some(style))
+                [node.fill_style, node.text_style, node.effect_style, node.grid_style].contains(&Some(style))
             })
             .count()
     }
 }
 
+/// Per-frame settings stay distinct from the editor's background snap grid.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum LayoutGridEdit {
+    Add,
+    Size(f64),
+    Color(crate::Color),
+    Visible(bool),
+    Remove,
+}
+
 impl Editor {
+    /// Edit compatible unlocked frames atomically, retaining style ownership on
+    /// visibility changes and detaching it only when effective size/color change.
+    /// Missing targets and invalid values reject the whole batch before history.
+    pub fn edit_layout_grids(
+        &mut self,
+        ids: &[NodeId],
+        edit: LayoutGridEdit,
+    ) -> Result<usize, DocumentError> {
+        if let LayoutGridEdit::Size(size) = edit {
+            LayoutGrid { size, ..LayoutGrid::default() }.validate()?;
+        }
+        let mut changed = Vec::new();
+        for id in ids.iter().copied().collect::<BTreeSet<_>>() {
+            let node = self.document.nodes.get(&id).ok_or(DocumentError::MissingNode(id))?;
+            if self.document.effective_locked(id) || !LayoutGrid::supports(node.kind) {
+                continue;
+            }
+            let differs = match edit {
+                LayoutGridEdit::Add => node.layout_grid.is_none(),
+                LayoutGridEdit::Size(value) => node.layout_grid.is_some_and(|grid| grid.size != value),
+                LayoutGridEdit::Color(value) => node.layout_grid.is_some_and(|grid| grid.color != value),
+                LayoutGridEdit::Visible(value) => node.layout_grid.is_some_and(|grid| grid.visible != value),
+                LayoutGridEdit::Remove => node.layout_grid.is_some() || node.grid_style.is_some(),
+            };
+            if differs { changed.push(id); }
+        }
+        if changed.is_empty() { return Ok(0); }
+        self.update_nodes(&changed, "Edit layout grid", |node| {
+            match edit {
+                LayoutGridEdit::Add => node.layout_grid = Some(LayoutGrid::default()),
+                LayoutGridEdit::Size(value) => node.layout_grid.as_mut().unwrap().size = value,
+                LayoutGridEdit::Color(value) => node.layout_grid.as_mut().unwrap().color = value,
+                LayoutGridEdit::Visible(value) => node.layout_grid.as_mut().unwrap().visible = value,
+                LayoutGridEdit::Remove => { node.layout_grid = None; node.grid_style = None; }
+            }
+            node.overridden_properties.insert(
+                if matches!(edit, LayoutGridEdit::Visible(_)) { "layout_grid_visible" } else { "layout_grid" }.into()
+            );
+        });
+        Ok(changed.len())
+    }
+
     pub fn create_local_style(
         &mut self,
         name: &str,
@@ -397,7 +461,7 @@ impl Editor {
     }
 
     /// Applying a text style to a mixed selection affects only text layers.
-    /// Grid styles remain portable definitions without a layer application.
+    /// Grid styles affect only frames, components and instances; visibility stays local.
     pub fn apply_local_style(
         &mut self,
         ids: &[NodeId],
@@ -414,9 +478,6 @@ impl Editor {
         }
         style.value.validate()?;
         let kind = style.value.kind();
-        if kind == LocalStyleKind::Grid {
-            return Err(invalid("Grid styles do not have a layer binding."));
-        }
         let mut nodes = BTreeMap::new();
         for id in ids.iter().copied().collect::<BTreeSet<_>>() {
             let node = self
@@ -556,7 +617,7 @@ impl Editor {
             .nodes
             .values()
             .filter(|node| {
-                [node.fill_style, node.text_style, node.effect_style].contains(&Some(id))
+                [node.fill_style, node.text_style, node.effect_style, node.grid_style].contains(&Some(id))
             })
             .map(|node| node.id)
             .collect();
@@ -571,6 +632,7 @@ impl Editor {
                     LocalStyleKind::Fill,
                     LocalStyleKind::Text,
                     LocalStyleKind::Effect,
+                    LocalStyleKind::Grid,
                 ] {
                     if kind.binding(node) == Some(id) {
                         kind.bind(node, None);
@@ -620,6 +682,7 @@ impl<'a> StyleBindingSnapshot<'a> {
                 LocalStyleKind::Fill,
                 LocalStyleKind::Text,
                 LocalStyleKind::Effect,
+                LocalStyleKind::Grid,
             ]
             .into_iter()
             .all(|kind| {
@@ -639,6 +702,7 @@ impl<'a> StyleBindingSnapshot<'a> {
             LocalStyleKind::Fill,
             LocalStyleKind::Text,
             LocalStyleKind::Effect,
+            LocalStyleKind::Grid,
         ] {
             if let Some(id) = kind.binding(node) {
                 // A malformed legacy text binding can still be detached by an
@@ -674,6 +738,7 @@ pub(crate) fn detach_changed_style_bindings(before: &Node, node: &mut Node) {
         LocalStyleKind::Fill,
         LocalStyleKind::Text,
         LocalStyleKind::Effect,
+        LocalStyleKind::Grid,
     ] {
         if let Some(id) = kind.binding(before) {
             if kind.accepts(before)

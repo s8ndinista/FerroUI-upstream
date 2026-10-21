@@ -2,6 +2,9 @@ use crate::*;
 use std::collections::BTreeSet;
 use std::fmt::Write;
 
+#[path = "svg_regions.rs"]
+mod regions;
+
 #[derive(Clone, Debug)]
 pub struct SvgExport {
     pub source: String,
@@ -78,6 +81,19 @@ fn paint_opacity(paint: &Paint, opacity: f64) -> f64 {
 }
 
 fn paint_definition(paint: &Paint, id: &str, node: &Node, stroke: Option<&Stroke>, out: &mut String) {
+    paint_definition_in_bounds(paint, id, node, stroke, None, out);
+}
+
+/// `bounds` pins brush coordinates to the original region, before replacement
+/// clips remove overlaps. Ordinary SVG paths retain their existing paint API.
+fn paint_definition_in_bounds(
+    paint: &Paint,
+    id: &str,
+    node: &Node,
+    stroke: Option<&Stroke>,
+    bounds: Option<Rect>,
+    out: &mut String,
+) {
     match paint {
         Paint::Solid(_) => {}
         Paint::LinearGradient { start, end, stops } => {
@@ -108,7 +124,10 @@ fn paint_definition(paint: &Paint, id: &str, node: &Node, stroke: Option<&Stroke
             out.push_str("</radialGradient>");
         }
         Paint::AngularGradient { center, angle, stops } => {
-            let (paint_bounds, tile_bounds) = angular_paint_bounds(node, stroke);
+            let (paint_bounds, tile_bounds) = bounds.map_or_else(
+                || angular_paint_bounds(node, stroke),
+                |bounds| (bounds, bounds),
+            );
             angular_gradient_definition(*center, *angle, stops, id, paint_bounds, tile_bounds, out);
         }
         Paint::Image { href, scale, crop } => {
@@ -117,8 +136,9 @@ fn paint_definition(paint: &Paint, id: &str, node: &Node, stroke: Option<&Stroke
                 ImageScale::Fit => "xMidYMid meet",
                 _ => "none",
             };
+            let target = bounds.unwrap_or_else(|| node.local_bounds());
             let size = crate::embedded_image_size(href)
-                .unwrap_or(Point::new(node.width.max(0.001), node.height.max(0.001)));
+                .unwrap_or(Point::new(target.width.max(0.001), target.height.max(0.001)));
             let crop = crop.unwrap_or(Rect::new(0.0, 0.0, 1.0, 1.0));
             let source = Rect::new(
                 crop.x * size.x,
@@ -130,12 +150,18 @@ fn paint_definition(paint: &Paint, id: &str, node: &Node, stroke: Option<&Stroke
             let (width, height) = if tiled {
                 (source.width, source.height)
             } else {
-                (node.width.max(0.001), node.height.max(0.001))
+                (target.width.max(0.001), target.height.max(0.001))
             };
-            let viewport = Rect::new(0.0, 0.0, width, height);
+            let viewport = Rect::new(target.x, target.y, width, height);
             let _ = write!(
                 out,
-                r#"<pattern id="{id}" width="{}" height="{}" patternUnits="userSpaceOnUse"><svg x="{}" y="{}" width="{}" height="{}" viewBox="{} {} {} {}" preserveAspectRatio="{mode}" overflow="hidden"><image href="{}" width="{}" height="{}" preserveAspectRatio="none"/></svg></pattern>"#,
+                r#"<pattern id="{id}" x="{}" y="{}" width="{}" height="{}" patternUnits="userSpaceOnUse" viewBox="{} {} {} {}" preserveAspectRatio="none"><svg x="{}" y="{}" width="{}" height="{}" viewBox="{} {} {} {}" preserveAspectRatio="{mode}" overflow="hidden"><image href="{}" width="{}" height="{}" preserveAspectRatio="none"/></svg></pattern>"#,
+                number(viewport.x),
+                number(viewport.y),
+                number(width),
+                number(height),
+                number(viewport.x),
+                number(viewport.y),
                 number(width),
                 number(height),
                 number(viewport.x),
@@ -792,6 +818,13 @@ impl Document {
         }
     }
 
+    fn svg_has_region_paint_overrides(&self, id: NodeId, depth: usize) -> bool {
+        let Some(node) = self.nodes.get(&id).filter(|node| node.visible) else { return false; };
+        if depth >= MAX_DOCUMENT_DEPTH { return true; }
+        node.vector_network.as_ref().is_some_and(|network| network.regions.values().any(|region| region.fills.is_some()))
+            || node.children.iter().any(|child| self.svg_has_region_paint_overrides(*child, depth + 1))
+    }
+
     fn export_svg_siblings(
         &self,
         children: &[NodeId],
@@ -838,7 +871,10 @@ impl Document {
                     number(region.y),
                     number(region.width.max(0.0)),
                     number(region.height.max(0.0)),
-                    if geometry_only {
+                    // Standard alpha coverage preserves internal replacement
+                    // masks on reimport. A geometry-only role would treat their
+                    // black cutters as positive vector geometry.
+                    if geometry_only && !self.svg_has_region_paint_overrides(*id, depth) {
                         r#" data-ferro-mask-type="vector""#
                     } else {
                         ""
@@ -884,10 +920,17 @@ impl Document {
             geometry.blend_mode = BlendMode::PassThrough;
             geometry.effects.clear();
             for fill in &mut geometry.fills {
-                fill.paint = Paint::Solid(Color::WHITE);
-                fill.opacity = 1.0;
+                regions::whiten_vector_fill(fill);
+            }
+            if let Some(network) = &mut geometry.vector_network {
+                for fills in network.regions.values_mut().filter_map(|region| region.fills.as_mut()) {
+                    for fill in fills {
+                        regions::whiten_vector_fill(fill);
+                    }
+                }
             }
             for stroke in &mut geometry.strokes {
+                stroke.visible &= stroke.opacity > 0.0 && regions::paint_has_alpha(&stroke.paint);
                 stroke.paint = Paint::Solid(Color::WHITE);
                 stroke.opacity = 1.0;
             }
@@ -898,7 +941,10 @@ impl Document {
         } else {
             node
         };
-        if node.fills.iter().any(|fill| fill.visible && matches!(fill.paint, Paint::AngularGradient { .. }))
+        if node.fills.iter().chain(node.vector_network.iter().flat_map(|network| {
+            network.regions.values().filter_map(|region| region.fills.as_ref()).flatten()
+        }))
+            .any(|fill| fill.visible && matches!(fill.paint, Paint::AngularGradient { .. }))
             || node.strokes.iter().any(|stroke| stroke.visible && matches!(stroke.paint, Paint::AngularGradient { .. }))
         {
             warnings.push(format!("Layer {}: SVG has no portable angular-gradient primitive; the gradient is approximated by at most 1024 vector sectors per paint. JSON and PNG retain the native angular paint. Complex aligned strokes, arrows, and text may differ in paint bounds.", node.name));
@@ -991,17 +1037,21 @@ impl Document {
         if node.kind == NodeKind::Boolean {
             self.export_boolean(node, defs, body, warnings);
         } else {
-            for (i, fill) in node.fills.iter().enumerate().filter(|(_, f)| f.visible) {
-                let paint_id = format!("fill-{id}-{i}");
-                paint_definition(&fill.paint, &paint_id, node, None, defs);
-                body.push_str(&node_shape(
-                    node,
-                    &format!(
-                        r#"fill="{}" fill-opacity="{}" stroke="none""#,
-                        paint_color(&fill.paint, &paint_id),
-                        number(paint_opacity(&fill.paint, fill.opacity))
-                    ),
-                ));
+            if let Some(network) = &node.vector_network {
+                regions::export_network_fills(node, network, defs, body);
+            } else {
+                for (i, fill) in node.fills.iter().enumerate().rev().filter(|(_, f)| f.visible) {
+                    let paint_id = format!("fill-{id}-{i}");
+                    paint_definition(&fill.paint, &paint_id, node, None, defs);
+                    body.push_str(&node_shape(
+                        node,
+                        &format!(
+                            r#"fill="{}" fill-opacity="{}" stroke="none""#,
+                            paint_color(&fill.paint, &paint_id),
+                            number(paint_opacity(&fill.paint, fill.opacity))
+                        ),
+                    ));
+                }
             }
             if node.kind == NodeKind::Text && node.fills.is_empty() {
                 body.push_str(&node_shape(node, r#"fill="none""#));
@@ -1019,6 +1069,7 @@ impl Document {
                 .strokes
                 .iter()
                 .enumerate()
+                .rev()
                 .filter(|(_, s)| s.visible && s.width > 0.0)
             {
                 let paint_id = format!("stroke-{id}-{i}");
@@ -1176,7 +1227,7 @@ impl Document {
             }
         }
         defs.push_str("</mask>");
-        for (i, fill) in node.fills.iter().enumerate().filter(|(_, f)| f.visible) {
+        for (i, fill) in node.fills.iter().enumerate().rev().filter(|(_, f)| f.visible) {
             let paint_id = format!("fill-{id}-{i}");
             paint_definition(&fill.paint, &paint_id, node, None, defs);
             let _ = write!(
