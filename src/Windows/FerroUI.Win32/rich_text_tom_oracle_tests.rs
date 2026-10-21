@@ -699,8 +699,88 @@ fn characterize_vertical() -> TestResult {
             commands += 1;
         }
     }
+    commands += characterize_isolated_vertical()?;
     println!("SYSTEM_MSFTEDIT_VERTICAL_PROBE_COMPLETE commands={commands}");
     Ok(())
+}
+
+/// SetRange resets the endpoints, but the first matrix exposed column/EOL
+/// observations which may retain other native navigation state. Give each of
+/// those commands a fresh HWND, then separately observe intentional sequences.
+/// The caller keeps the OLE apartment and System32 library alive throughout.
+fn characterize_isolated_vertical() -> TestResult<usize> {
+    let mut commands = 0;
+    for (name, text, cases) in [
+        (
+            "vertical_isolated_multiline",
+            "abcdef\rxy\rabcdef\rpqrs",
+            &[
+                (5, 5, true, 2, false),
+                (5, 5, true, 2, true),
+                (5, 5, false, -2, false),
+                (5, 5, false, -2, true),
+                (2, 12, true, 1, false),
+                (12, 2, false, 1, false),
+            ][..],
+        ),
+        (
+            "vertical_isolated_empty_lines",
+            "ab\r\rxy\r",
+            &[
+                (7, 7, false, 1, true),
+                (7, 7, true, -1, true),
+                (7, 7, false, 2, true),
+                (7, 7, true, -2, true),
+            ][..],
+        ),
+    ] {
+        for (index, &(anchor, active, down, count, extend)) in cases.iter().enumerate() {
+            let window = HiddenRichEdit::new()?;
+            window.set_text(text)?;
+            let selection = window.selection()?;
+            let length = text.encode_utf16().count() as i32;
+            selection.set_range(0, length)?;
+            assert_eq!(selection.text()?, text, "{name}: exact isolated setup");
+            let story_length =
+                selection.number(selection.table().get_story_length, "GetStoryLength")?;
+            if index == 0 {
+                println!("SYSTEM_MSFTEDIT_VERTICAL_FIXTURE name={name} text={text:?} supplied_utf16_length={length} native_story_length={story_length}");
+            }
+            selection.set_range(anchor, active)?;
+            assert_eq!(selection.state()?.directed(), (anchor, active));
+            observe_vertical(
+                &selection,
+                name,
+                story_length,
+                Unit::Line,
+                count,
+                extend,
+                down,
+            )?;
+            commands += 1;
+        }
+    }
+    let text = "abcdef\rx\rabcdef";
+    for (name, extend) in [
+        ("vertical_isolated_column_collapse", false),
+        ("vertical_isolated_column_extend", true),
+    ] {
+        let window = HiddenRichEdit::new()?;
+        window.set_text(text)?;
+        let selection = window.selection()?;
+        let length = text.encode_utf16().count() as i32;
+        selection.set_range(0, length)?;
+        assert_eq!(selection.text()?, text, "{name}: exact isolated setup");
+        let story_length =
+            selection.number(selection.table().get_story_length, "GetStoryLength")?;
+        println!("SYSTEM_MSFTEDIT_VERTICAL_FIXTURE name={name} text={text:?} supplied_utf16_length={length} native_story_length={story_length}");
+        selection.set_range(5, 5)?;
+        for down in [true, true, false, false] {
+            observe_vertical(&selection, name, story_length, Unit::Line, 1, extend, down)?;
+            commands += 1;
+        }
+    }
+    Ok(commands)
 }
 
 #[test]
