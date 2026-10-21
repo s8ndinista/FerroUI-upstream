@@ -1,0 +1,36 @@
+[package]
+name = "winui-gallery"
+description = "The pinned WinUI Gallery catalog and its native FerroUI sample port"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+autotests = false
+autobins = false
+
+[lib]
+path = "lib.rs"
+
+[[bin]]
+name = "winui-gallery"
+path = "main.rs"
+required-features = ["desktop"]
+
+[features]
+default = []
+desktop = ["dep:ferroui-desktop", "theme"]
+theme = ["dep:ferroui-themes-winui"]
+
+[dependencies]
+ferroui-base = { workspace = true }
+ferroui-controls = { workspace = true }
+ferroui-markup-xaml = { workspace = true }
+ferroui-markup-xaml-loader = { workspace = true, features = ["runtime"] }
+ferroui-desktop = { workspace = true, optional = true }
+ferroui-themes-winui = { workspace = true, optional = true }
+
+[dev-dependencies]
+ferroui-base = { workspace = true, features = ["testing"] }
+ferroui-controls = { workspace = true, features = ["testing"] }

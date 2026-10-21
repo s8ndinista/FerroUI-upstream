@@ -1,0 +1,27 @@
+//! Native FerroUI port of the pinned Microsoft WinUI Gallery catalog.
+//!
+//! The complete catalog and its original sample sources remain browsable. Executable
+//! examples and migration diagnostics have separate states; browsing a page is never
+//! represented as completing its WinUI behavior. See `README.md` and `port-status.json`.
+
+#![forbid(unsafe_code)]
+
+pub mod catalog;
+mod catalog_data;
+pub mod contrast;
+pub mod examples;
+mod frame_sample;
+pub mod gallery;
+pub mod navigation;
+
+#[cfg(feature = "desktop")]
+mod app;
+
+pub use catalog::{CatalogEntry, DocumentationLink, SampleDefinition, CATALOG, SOURCE_COMMIT};
+pub use gallery::GalleryView;
+
+#[cfg(feature = "desktop")]
+pub use app::App;
+
+#[cfg(test)]
+mod tests;

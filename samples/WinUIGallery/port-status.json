@@ -1,0 +1,1199 @@
+{
+  "schema_version": 1,
+  "source_commit": "14061eeac21c38ae99f302edf3d9136d4f652c4c",
+  "coverage_rule": "The complete catalog and source browser do not establish page or API parity. The 42 native page adaptations remain partial. Runtime load tests establish constructibility; only named interaction tests establish their bounded behaviors.",
+  "pages": {
+    "AccessibilityColorContrast": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/AccessibilityColorContrast.xaml",
+        "samples/WinUIGallery/examples.rs",
+        "samples/WinUIGallery/contrast.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        },
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "contrast_calculation_matches_original_endpoints_symmetry_and_thresholds"
+        },
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "contrast_inputs_update_ratio_and_report_invalid_values"
+        }
+      ],
+      "notes": "The original luminance/contrast calculation and pass thresholds run in Rust. Opaque RGB text inputs replace the Gallery's custom inline color pickers; those picker controls remain pending. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "examples": []
+    },
+    "AccessibilityKeyboard": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/AccessibilityKeyboard.xaml",
+        "samples/WinUIGallery/examples.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        }
+      ],
+      "notes": "Tab order examples use native enabled/focusable controls and explicit TabIndex. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "examples": []
+    },
+    "AccessibilityScreenReader": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/AccessibilityScreenReader.xaml",
+        "samples/WinUIGallery/examples.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        }
+      ],
+      "notes": "Native automation names and decorative accessibility views are assigned; screen-reader execution remains unverified. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "examples": []
+    },
+    "AppBarButton": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/AppBarButton.xaml",
+        "samples/WinUIGallery/examples.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        },
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "command_bar_examples_keep_click_and_three_state_handlers"
+        }
+      ],
+      "notes": "The path-icon sample uses the shared CommandBarButton with native click output. Other icon types, accelerators and flyout examples remain pending. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "examples": [
+        {
+          "source": "WinUIGallery/Samples/AppBarButton/AppbarbuttonPathIcon.txt",
+          "status": "partial",
+          "tests": [
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "all_reviewed_native_adaptations_load_real_controls"
+            },
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "command_bar_examples_keep_click_and_three_state_handlers"
+            }
+          ],
+          "notes": "The path-icon sample uses the shared CommandBarButton with native click output. Other icon types, accelerators and flyout examples remain pending. Original source substitutions remain in the catalog viewer; chosen native inputs and Rust handlers are explicit adaptations. Rendering/accessibility/platform acceptance is pending."
+        }
+      ]
+    },
+    "AppBarSeparator": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/AppBarSeparator.xaml",
+        "samples/WinUIGallery/examples.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        }
+      ],
+      "notes": "The source command groups use CommandBarSeparator; Symbol icons remain pending in this adaptation. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "examples": []
+    },
+    "AppBarToggleButton": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/AppBarToggleButton.xaml",
+        "samples/WinUIGallery/examples.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        },
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "command_bar_examples_keep_click_and_three_state_handlers"
+        }
+      ],
+      "notes": "The three-state path-icon sample uses CommandBarToggleButton; checked, unchecked and indeterminate state remain observable. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "examples": [
+        {
+          "source": "WinUIGallery/Samples/AppBarToggleButton/ThreeStateAppbartogglebuttonPath.txt",
+          "status": "partial",
+          "tests": [
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "all_reviewed_native_adaptations_load_real_controls"
+            },
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "command_bar_examples_keep_click_and_three_state_handlers"
+            }
+          ],
+          "notes": "The three-state path-icon sample uses CommandBarToggleButton; checked, unchecked and indeterminate state remain observable. Original source substitutions remain in the catalog viewer; chosen native inputs and Rust handlers are explicit adaptations. Rendering/accessibility/platform acceptance is pending."
+        }
+      ]
+    },
+    "AutoSuggestBox": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/AutoSuggestBox.xaml",
+        "samples/WinUIGallery/examples.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        }
+      ],
+      "notes": "Native AutoCompleteBox provides country suggestions; WinUI-specific event arguments remain a separate contract. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "examples": []
+    },
+    "Binding": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/Binding.xaml",
+        "samples/WinUIGallery/examples.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        }
+      ],
+      "notes": "Element-name binding is explicitly ported to a normal shared Binding with an explicit mode. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "examples": []
+    },
+    "Border": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/Border.xaml",
+        "samples/WinUIGallery/examples.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        }
+      ],
+      "notes": "The source Border/TextBlock composition uses the shared Border control. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "examples": []
+    },
+    "Button": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/Button.xaml",
+        "samples/WinUIGallery/examples.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        },
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "button_click_and_disabled_option_update_native_controls"
+        },
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "dropping_native_example_releases_handler_targets"
+        }
+      ],
+      "notes": "Text, graphical content, disabled state and click output use native Button; custom styles remain tracked separately. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "examples": []
+    },
+    "CalendarDatePicker": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/CalendarDatePicker.xaml",
+        "samples/WinUIGallery/examples.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        }
+      ],
+      "notes": "Native CalendarDatePicker; header is composed and placeholder uses the shared property. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "examples": []
+    },
+    "CalendarView": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/CalendarView.xaml",
+        "samples/WinUIGallery/examples.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        }
+      ],
+      "notes": "CalendarView is adapted to the shared Calendar; WinUI-specific day item customization is pending. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "examples": []
+    },
+    "Canvas": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/Canvas.xaml",
+        "samples/WinUIGallery/examples.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        }
+      ],
+      "notes": "Canvas coordinates use shared attached properties; ZIndex is the shared visual property. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "examples": []
+    },
+    "CheckBox": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/CheckBox.xaml",
+        "samples/WinUIGallery/examples.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        },
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "three_state_checkbox_preserves_null_and_reports_each_state"
+        }
+      ],
+      "notes": "Two-state and three-state inputs use native CheckBox; the output follows IsChecked. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "examples": []
+    },
+    "Color": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/Color.xaml",
+        "samples/WinUIGallery/examples.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        }
+      ],
+      "notes": "Native brushes display the color swatches; the full upstream color tools are not claimed. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "examples": []
+    },
+    "ComboBox": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/ComboBox.xaml",
+        "samples/WinUIGallery/examples.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        },
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "slider_and_combobox_outputs_observe_shared_properties"
+        }
+      ],
+      "notes": "Inline color choices and editable choices use native ComboBox; Header is composed explicitly. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "examples": []
+    },
+    "CommandBar": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/CommandBar.xaml",
+        "samples/WinUIGallery/examples.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        },
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "command_bar_examples_keep_click_and_three_state_handlers"
+        }
+      ],
+      "notes": "The source primary/secondary commands use the shared CommandBar family, observable open state and an explicit HotKey adaptation. Dynamic symbol conversion and the full option set remain pending. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "examples": [
+        {
+          "source": "WinUIGallery/Samples/CommandBar/CommandBarLabelsSide.txt",
+          "status": "partial",
+          "tests": [
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "all_reviewed_native_adaptations_load_real_controls"
+            },
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "command_bar_examples_keep_click_and_three_state_handlers"
+            }
+          ],
+          "notes": "The source primary/secondary commands use the shared CommandBar family, observable open state and an explicit HotKey adaptation. Dynamic symbol conversion and the full option set remain pending. Original source substitutions remain in the catalog viewer; chosen native inputs and Rust handlers are explicit adaptations. Rendering/accessibility/platform acceptance is pending."
+        }
+      ]
+    },
+    "CustomUserControls": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/CustomUserControls.xaml",
+        "samples/WinUIGallery/examples.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        }
+      ],
+      "notes": "A native UserControl hosts the counter behavior; the original additional custom controls remain pending. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "examples": []
+    },
+    "DatePicker": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/DatePicker.xaml",
+        "samples/WinUIGallery/examples.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        }
+      ],
+      "notes": "Native DatePicker composes a label for WinUI Header. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "examples": []
+    },
+    "DropDownButton": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/DropDownButton.xaml",
+        "samples/WinUIGallery/examples.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        }
+      ],
+      "notes": "MenuFlyout entries map to native MenuItem headers; flyout ownership remains native. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "examples": []
+    },
+    "Expander": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/Expander.xaml",
+        "samples/WinUIGallery/examples.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        }
+      ],
+      "notes": "Header, content, expanded state and alignment use the shared Expander. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "examples": []
+    },
+    "Flyout": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/Flyout.xaml",
+        "samples/WinUIGallery/examples.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        }
+      ],
+      "notes": "Native Button.Flyout hosts the confirmation content; the action uses a Rust click handler. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "examples": []
+    },
+    "Geometry": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/Geometry.xaml",
+        "samples/WinUIGallery/examples.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        }
+      ],
+      "notes": "Shared Path geometry renders a triangle and a cubic curve; the upstream geometry editor remains pending. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "examples": []
+    },
+    "Grid": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/Grid.xaml",
+        "samples/WinUIGallery/examples.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        }
+      ],
+      "notes": "The source grid uses shared row/column definitions and spacing. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "examples": []
+    },
+    "HyperlinkButton": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/HyperlinkButton.xaml",
+        "samples/WinUIGallery/examples.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        }
+      ],
+      "notes": "Native HyperlinkButton is used; external navigation remains explicit through NavigateUri. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "examples": []
+    },
+    "IconElement": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/IconElement.xaml",
+        "samples/WinUIGallery/examples.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        },
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "icon_examples_preserve_source_symbol_and_font_glyph"
+        }
+      ],
+      "notes": "The original path, font and symbol icon examples use native PathIcon and the opt-in FontIcon/SymbolIcon types. Bitmap/SVG variants and unavailable host icon fonts remain pending. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "examples": [
+        {
+          "source": "WinUIGallery/Samples/IconElement/IconElementPathiconButton.txt",
+          "status": "partial",
+          "tests": [
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "all_reviewed_native_adaptations_load_real_controls"
+            },
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "icon_examples_preserve_source_symbol_and_font_glyph"
+            }
+          ],
+          "notes": "The original path, font and symbol icon examples use native PathIcon and the opt-in FontIcon/SymbolIcon types. Bitmap/SVG variants and unavailable host icon fonts remain pending. Original source substitutions remain in the catalog viewer; chosen native inputs and Rust handlers are explicit adaptations. Rendering/accessibility/platform acceptance is pending."
+        },
+        {
+          "source": "WinUIGallery/Samples/IconElement/IconElementSymboliconButton.txt",
+          "status": "partial",
+          "tests": [
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "all_reviewed_native_adaptations_load_real_controls"
+            },
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "icon_examples_preserve_source_symbol_and_font_glyph"
+            }
+          ],
+          "notes": "The original path, font and symbol icon examples use native PathIcon and the opt-in FontIcon/SymbolIcon types. Bitmap/SVG variants and unavailable host icon fonts remain pending. Original source substitutions remain in the catalog viewer; chosen native inputs and Rust handlers are explicit adaptations. Rendering/accessibility/platform acceptance is pending."
+        },
+        {
+          "source": "WinUIGallery/Samples/IconElement/IconElementFonticonGlyphSpecificFont.txt",
+          "status": "partial",
+          "tests": [
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "all_reviewed_native_adaptations_load_real_controls"
+            },
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "icon_examples_preserve_source_symbol_and_font_glyph"
+            }
+          ],
+          "notes": "The original path, font and symbol icon examples use native PathIcon and the opt-in FontIcon/SymbolIcon types. Bitmap/SVG variants and unavailable host icon fonts remain pending. Original source substitutions remain in the catalog viewer; chosen native inputs and Rust handlers are explicit adaptations. Rendering/accessibility/platform acceptance is pending."
+        }
+      ]
+    },
+    "Line": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/Line.xaml",
+        "samples/WinUIGallery/examples.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        }
+      ],
+      "notes": "Shared Line and Polyline use native geometry and stroke properties. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "examples": []
+    },
+    "ListView": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/ListView.xaml",
+        "samples/WinUIGallery/examples.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        }
+      ],
+      "notes": "ListView is explicitly adapted to ListBox for selection; WinUI container/event parity remains pending. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "examples": []
+    },
+    "MenuBar": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/MenuBar.xaml",
+        "samples/WinUIGallery/examples.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        }
+      ],
+      "notes": "Native Menu with MenuItems represents WinUI MenuBar. Shortcuts remain shared key gestures. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "examples": []
+    },
+    "MenuFlyout": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/MenuFlyout.xaml",
+        "samples/WinUIGallery/examples.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        }
+      ],
+      "notes": "Native MenuFlyout/MenuItem and separators preserve popup ownership and selection behavior. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "examples": []
+    },
+    "NumberBox": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/NumberBox.xaml",
+        "samples/WinUIGallery/examples.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        },
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "winui_numberbox_example_keeps_expression_nan_and_valuechanged_behavior"
+        }
+      ],
+      "notes": "The opt-in WinUI NumberBox preserves spin-button, NaN and expression behavior using the original snippets. Locale-specific upstream number formatting remains pending. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "examples": [
+        {
+          "source": "WinUIGallery/Samples/NumberBox/NumberboxSpinButton.txt",
+          "status": "partial",
+          "tests": [
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "all_reviewed_native_adaptations_load_real_controls"
+            },
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "winui_numberbox_example_keeps_expression_nan_and_valuechanged_behavior"
+            }
+          ],
+          "notes": "The opt-in WinUI NumberBox preserves spin-button, NaN and expression behavior using the original snippets. Locale-specific upstream number formatting remains pending. Original source substitutions remain in the catalog viewer; chosen native inputs and Rust handlers are explicit adaptations. Rendering/accessibility/platform acceptance is pending."
+        },
+        {
+          "source": "WinUIGallery/Samples/NumberBox/NumberboxEvaluatesExpressions.txt",
+          "status": "partial",
+          "tests": [
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "all_reviewed_native_adaptations_load_real_controls"
+            },
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "winui_numberbox_example_keeps_expression_nan_and_valuechanged_behavior"
+            }
+          ],
+          "notes": "The opt-in WinUI NumberBox preserves spin-button, NaN and expression behavior using the original snippets. Locale-specific upstream number formatting remains pending. Original source substitutions remain in the catalog viewer; chosen native inputs and Rust handlers are explicit adaptations. Rendering/accessibility/platform acceptance is pending."
+        }
+      ]
+    },
+    "PageTransition": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/PageTransition.xaml",
+        "samples/WinUIGallery/examples.rs",
+        "samples/WinUIGallery/frame_sample.rs",
+        "samples/WinUIGallery/Pages/NavigationSample1.xaml",
+        "samples/WinUIGallery/Pages/NavigationSample2.xaml"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        },
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "page_transition_sample_uses_winui_frame_journal_and_source_page_types"
+        }
+      ],
+      "notes": "The original alternating sample-page layouts use the opt-in WinUI Frame/Page types, back/forward journals and Rust handlers. Navigation transition effects remain pending. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "examples": [
+        {
+          "source": "WinUIGallery/Samples/PageTransition/PageTransitions.txt",
+          "status": "partial",
+          "tests": [
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "all_reviewed_native_adaptations_load_real_controls"
+            },
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "page_transition_sample_uses_winui_frame_journal_and_source_page_types"
+            }
+          ],
+          "notes": "The original alternating sample-page layouts use the opt-in WinUI Frame/Page types, back/forward journals and Rust handlers. Navigation transition effects remain pending. Original source substitutions remain in the catalog viewer; chosen native inputs and Rust handlers are explicit adaptations. Rendering/accessibility/platform acceptance is pending."
+        }
+      ]
+    },
+    "PasswordBox": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/PasswordBox.xaml",
+        "samples/WinUIGallery/examples.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        },
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "textbox_counts_unicode_scalar_values_without_revealing_passwords"
+        }
+      ],
+      "notes": "Password entry uses TextBox.PasswordChar and RevealPassword; a distinct PasswordBox API is still required. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "examples": []
+    },
+    "PipsPager": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/PipsPager.xaml",
+        "samples/WinUIGallery/examples.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        }
+      ],
+      "notes": "The existing PipsPager provides page counts, selection and previous/next controls; wrapping remains explicit. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "examples": []
+    },
+    "Pivot": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/Pivot.xaml",
+        "samples/WinUIGallery/examples.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        }
+      ],
+      "notes": "Native TabControl adapts the basic Pivot sample; Pivot-specific input and animation remain pending. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "examples": []
+    },
+    "ProgressBar": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/ProgressBar.xaml",
+        "samples/WinUIGallery/examples.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        }
+      ],
+      "notes": "Both determinate and indeterminate ProgressBar modes use the shared control. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "examples": []
+    },
+    "RadialGradientBrush": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/RadialGradientBrush.xaml",
+        "samples/WinUIGallery/examples.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        }
+      ],
+      "notes": "The shared RadialGradientBrush renders the source gradient with explicit relative radii. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "examples": []
+    },
+    "RadioButton": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/RadioButton.xaml",
+        "samples/WinUIGallery/examples.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        },
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "radio_groups_port_original_selection_and_color_handlers"
+        }
+      ],
+      "notes": "Both original groups use opt-in RadioButtons with the existing native RadioButton, source labels and Rust selection/color handlers. Focus, layout and screen-reader parity still require host verification. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "examples": [
+        {
+          "source": "WinUIGallery/Samples/RadioButton/RadioButtonGroup.txt",
+          "status": "partial",
+          "tests": [
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "all_reviewed_native_adaptations_load_real_controls"
+            },
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "radio_groups_port_original_selection_and_color_handlers"
+            }
+          ],
+          "notes": "Both original groups use opt-in RadioButtons with the existing native RadioButton, source labels and Rust selection/color handlers. Focus, layout and screen-reader parity still require host verification. Original source substitutions remain in the catalog viewer; chosen native inputs and Rust handlers are explicit adaptations. Rendering/accessibility/platform acceptance is pending."
+        },
+        {
+          "source": "WinUIGallery/Samples/RadioButton/RadioButtonStrings.txt",
+          "status": "partial",
+          "tests": [
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "all_reviewed_native_adaptations_load_real_controls"
+            },
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "radio_groups_port_original_selection_and_color_handlers"
+            }
+          ],
+          "notes": "Both original groups use opt-in RadioButtons with the existing native RadioButton, source labels and Rust selection/color handlers. Focus, layout and screen-reader parity still require host verification. Original source substitutions remain in the catalog viewer; chosen native inputs and Rust handlers are explicit adaptations. Rendering/accessibility/platform acceptance is pending."
+        }
+      ]
+    },
+    "RelativePanel": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/RelativePanel.xaml",
+        "samples/WinUIGallery/examples.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        }
+      ],
+      "notes": "The source relative constraints use the shared RelativePanel and named controls. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "examples": []
+    },
+    "RepeatButton": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/RepeatButton.xaml",
+        "samples/WinUIGallery/examples.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        }
+      ],
+      "notes": "Native RepeatButton repeats the same Rust click handler; holding behavior belongs to FerroUI input. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "examples": []
+    },
+    "ScratchPad": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/gallery.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "every_catalog_page_opens_in_the_native_shell"
+        },
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "winui_preview_uses_opt_in_public_loader_and_rejects_unported_bindings"
+        },
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "winui_preview_reports_missing_resource_without_unwinding"
+        }
+      ],
+      "notes": "The native editable WinUI XAML document uses the explicit compatibility policy, displays migration diagnostics and previews real controls. Original compiled bindings, code-behind, visual states, platform resources and complete upstream ScratchPad behavior remain pending.",
+      "examples": []
+    },
+    "ScrollViewer": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/ScrollViewer.xaml",
+        "samples/WinUIGallery/examples.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        }
+      ],
+      "notes": "Native ScrollViewer hosts oversized content and scroll bars. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "examples": []
+    },
+    "Shape": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/Shape.xaml",
+        "samples/WinUIGallery/examples.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        }
+      ],
+      "notes": "Shared Ellipse, Rectangle and Polygon render through the framework geometry backend. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "examples": []
+    },
+    "Slider": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/Slider.xaml",
+        "samples/WinUIGallery/examples.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        },
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "slider_and_combobox_outputs_observe_shared_properties"
+        }
+      ],
+      "notes": "WinUI StepFrequency becomes TickFrequency with IsSnapToTickEnabled. The sample output observes Value. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "examples": []
+    },
+    "Spacing": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/Spacing.xaml",
+        "samples/WinUIGallery/examples.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        }
+      ],
+      "notes": "Native element binding changes StackPanel spacing interactively. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "examples": []
+    },
+    "SplitButton": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/SplitButton.xaml",
+        "samples/WinUIGallery/examples.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        }
+      ],
+      "notes": "Native SplitButton and Flyout keep separate primary and secondary actions. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "examples": []
+    },
+    "SplitView": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/SplitView.xaml",
+        "samples/WinUIGallery/examples.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        }
+      ],
+      "notes": "Native SplitView uses explicit IsPaneOpen binding to a ToggleButton; no x:Bind rewrite is assumed. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "examples": []
+    },
+    "StackPanel": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/StackPanel.xaml",
+        "samples/WinUIGallery/examples.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        }
+      ],
+      "notes": "Horizontal/vertical orientation and spacing use the shared StackPanel. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "examples": []
+    },
+    "TabView": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/TabView.xaml",
+        "samples/WinUIGallery/examples.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        }
+      ],
+      "notes": "Native TabControl displays tab content; WinUI add/close/drag contracts remain pending. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "examples": []
+    },
+    "Templates": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/Templates.xaml",
+        "samples/WinUIGallery/examples.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        }
+      ],
+      "notes": "A shared ControlTemplate presents button content through TemplateBinding. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "examples": []
+    },
+    "TextBlock": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/TextBlock.xaml",
+        "samples/WinUIGallery/examples.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        }
+      ],
+      "notes": "Text content, wrapping, typography and inline text use native TextBlock. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "examples": []
+    },
+    "TextBox": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/TextBox.xaml",
+        "samples/WinUIGallery/examples.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        },
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "textbox_counts_unicode_scalar_values_without_revealing_passwords"
+        }
+      ],
+      "notes": "Text, placeholder, read-only and multiline examples use existing TextBox properties; Header is composed explicitly. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "examples": []
+    },
+    "TimePicker": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/TimePicker.xaml",
+        "samples/WinUIGallery/examples.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        }
+      ],
+      "notes": "Native TimePicker demonstrates 12/24-hour clocks and minute increments. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "examples": []
+    },
+    "ToggleButton": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/ToggleButton.xaml",
+        "samples/WinUIGallery/examples.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        }
+      ],
+      "notes": "Native ToggleButton checked state and output; the original handler is ported to Rust. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "examples": []
+    },
+    "ToggleSplitButton": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/ToggleSplitButton.xaml",
+        "samples/WinUIGallery/examples.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        }
+      ],
+      "notes": "Native ToggleSplitButton owns its checked state and secondary flyout. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "examples": []
+    },
+    "ToggleSwitch": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/ToggleSwitch.xaml",
+        "samples/WinUIGallery/examples.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        }
+      ],
+      "notes": "IsOn maps to IsChecked on the existing ToggleSwitch; Header is composed with a label and an automation name, and states remain observable. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "examples": []
+    },
+    "ToolTip": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/ToolTip.xaml",
+        "samples/WinUIGallery/examples.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        }
+      ],
+      "notes": "ToolTipService.ToolTip is explicitly mapped to the shared ToolTip.Tip attached property. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "examples": []
+    },
+    "TreeView": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/TreeView.xaml",
+        "samples/WinUIGallery/examples.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        }
+      ],
+      "notes": "Native TreeViewItem hierarchy demonstrates expansion and selection; WinUI TreeViewNode parity is pending. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "examples": []
+    },
+    "Typography": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/Typography.xaml",
+        "samples/WinUIGallery/examples.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        }
+      ],
+      "notes": "The WinUI type ramp is expressed with shared TextBlock font sizes and weights. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "examples": []
+    },
+    "Viewbox": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/Viewbox.xaml",
+        "samples/WinUIGallery/examples.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        }
+      ],
+      "notes": "The Viewbox scales native vector content; the upstream bitmap asset is a separate pending sample. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "examples": []
+    },
+    "WrapPanel": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/WrapPanel.xaml",
+        "samples/WinUIGallery/examples.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        }
+      ],
+      "notes": "The source wrapping layout uses shared WrapPanel; ItemsStretch and Padding require explicit owner adaptation. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "examples": []
+    },
+    "XamlResources": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/XamlResources.xaml",
+        "samples/WinUIGallery/examples.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        }
+      ],
+      "notes": "Static and dynamic resource examples use the shared resource dictionary; broader WinUI lookup rules remain tracked. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "examples": []
+    },
+    "XamlStyles": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/XamlStyles.xaml",
+        "samples/WinUIGallery/examples.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        }
+      ],
+      "notes": "The explicit WinUI style example is adapted to an opt-in ControlTheme; implicit WinUI style semantics are not changed globally. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "examples": []
+    }
+  }
+}

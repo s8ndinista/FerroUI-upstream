@@ -1,0 +1,4 @@
+<!-- Adapted from the pinned Microsoft WinUI Gallery; see ../NOTICE.md. -->
+<StackPanel xmlns="https://github.com/ferroui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Spacing="12">
+  <CheckBox x:Name="Primary" Content="Three-state CheckBox" IsThreeState="True"/><CheckBox Content="Two-state CheckBox"/><CheckBox Content="Initially checked" IsChecked="True"/><TextBlock x:Name="Output" Text="Unchecked"/>
+</StackPanel>

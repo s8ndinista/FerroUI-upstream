@@ -115,6 +115,7 @@ members = [
     "samples/ControlGallery.WinUI",
     "samples/WinUIEmbedSample",
     "samples/WinUIThemeGallery",
+    "samples/WinUIGallery",
     "samples/SafeAreaDemo",
     "samples/SafeAreaDemo.Desktop",
     "samples/SafeAreaDemo.Android",
